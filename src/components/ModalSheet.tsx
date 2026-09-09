@@ -1,7 +1,7 @@
-import { View, Text, Modal, Pressable, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, Modal, Pressable, StyleSheet } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme } from '@/constants/theme';
-import { useKeyboardHeight } from '@/lib/useKeyboardHeight';
 
 interface Props {
   visible: boolean;
@@ -31,7 +31,6 @@ export function ModalSheet({
   scrollable = true,
 }: Props) {
   const insets = useSafeAreaInsets();
-  const keyboardHeight = useKeyboardHeight();
   const isSheet = variant === 'sheet';
 
   const body = (
@@ -56,30 +55,26 @@ export function ModalSheet({
         {/* The backdrop is its own sibling rather than a parent of the sheet:
             a parent Pressable would swallow every tap inside the sheet too. */}
         <Pressable style={styles.backdrop} onPress={onClose} accessibilityLabel="Close" />
-        {/* `paddingBottom: keyboardHeight` (read from real Keyboard events via
-            useKeyboardHeight, not KeyboardAvoidingView) lifts the whole sheet
-            clear of the keyboard. KeyboardAvoidingView's Android 'height'
-            behavior was unreliable here because a Modal renders as its own
-            Android Dialog window, which doesn't reliably participate in the
-            resize/measurement that component expects — inputs could end up
-            hidden behind the keyboard while typing. */}
+        {/* KeyboardAwareScrollView (react-native-keyboard-controller) scrolls the
+            focused input clear of the keyboard and animates in sync with it,
+            inside the Modal's own Android Dialog window where the built-in
+            KeyboardAvoidingView / manual keyboard-height padding both fell
+            short. `bottomOffset` keeps a small gap between the field and the
+            keyboard's top edge. */}
         <View
-          style={[
-            styles.flex,
-            isSheet ? styles.alignBottom : styles.alignCenter,
-            { paddingBottom: keyboardHeight },
-          ]}
+          style={[styles.flex, isSheet ? styles.alignBottom : styles.alignCenter]}
           pointerEvents="box-none"
         >
           {scrollable ? (
-            <ScrollView
+            <KeyboardAwareScrollView
               style={isSheet ? styles.scrollSheet : styles.scrollDialog}
               contentContainerStyle={isSheet ? undefined : styles.scrollDialogContent}
+              bottomOffset={24}
               keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator={false}
             >
               {body}
-            </ScrollView>
+            </KeyboardAwareScrollView>
           ) : (
             body
           )}

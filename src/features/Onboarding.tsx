@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { View, Text, StyleSheet, Pressable, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, StyleSheet, Pressable, TextInput } from 'react-native';
+import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { setHasOnboarded, setUserName } from '@/db/settings';
 import { FlynnIllustration } from '@/components/FlynnIllustration';
@@ -79,7 +80,7 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
   return (
     <KeyboardAvoidingView
       style={[styles.container, { paddingTop: insets.top + 16, paddingBottom: insets.bottom }]}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      behavior="padding"
     >
       <Pressable style={[styles.skip, { top: insets.top + 12 }]} onPress={finish} hitSlop={10}>
         <Text style={styles.skipText}>Skip</Text>

@@ -8,7 +8,7 @@ import { getDefaultCurrency, setDefaultCurrency, SUPPORTED_CURRENCIES, ACCENT_SW
 import { isDeviceSecured } from '@/lib/appLock';
 import { useAppLock } from '@/lib/AppLockContext';
 import { usePrivacy } from '@/theme/PrivacyContext';
-import { AppHeader, HeaderPrivacyToggle } from '@/components/AppHeader';
+import { AppHeader } from '@/components/AppHeader';
 import { ModalSheet } from '@/components/ModalSheet';
 import { SettingsRowIcon } from '@/components/SettingsRowIcon';
 import { ToggleSwitch } from '@/components/ToggleSwitch';
@@ -143,7 +143,7 @@ export default function SettingsScreen() {
 
   return (
     <View style={styles.container}>
-      <AppHeader title="Settings" showBack right={<HeaderPrivacyToggle />} />
+      <AppHeader title="Settings" showBack />
 
       <ScrollView contentContainerStyle={{ paddingBottom: 40 + insets.bottom }}>
         <Group title="Appearance">
@@ -230,7 +230,7 @@ export default function SettingsScreen() {
             icon="eye-off-outline"
             iconBg={theme.colors.gold}
             label="Hide savings & investment amounts"
-            sub="Masks Savings Deposit/Investments amounts — toggle anytime from the eye icon on any screen"
+            sub="Masks Savings Deposit/Investments amounts — also toggleable from the eye icon on your Profile"
             right={<ToggleSwitch value={hideAmounts} onChange={toggleHideAmounts} />}
             last
           />

@@ -1,15 +1,6 @@
 import { useCallback, useState } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  Pressable,
-  TextInput,
-  Animated,
-  KeyboardAvoidingView,
-  Platform,
-  Alert,
-} from 'react-native';
+import { View, Text, Pressable, TextInput, Animated, Alert } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { useFocusEffect } from 'expo-router';
 import Feather from '@expo/vector-icons/Feather';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -127,12 +118,13 @@ export default function ProfileScreen() {
   };
 
   return (
-    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <View style={styles.container}>
       <AppHeader title="Profile" showBack right={<HeaderPrivacyToggle />} />
 
-      <ScrollView
+      <KeyboardAwareScrollView
         contentContainerStyle={{ paddingBottom: 110 + insets.bottom }}
         keyboardShouldPersistTaps="handled"
+        bottomOffset={20}
       >
         {loadError && (
           <View style={styles.errorBanner}>
@@ -265,7 +257,7 @@ export default function ProfileScreen() {
             ))}
           </>
         )}
-      </ScrollView>
+      </KeyboardAwareScrollView>
 
       <AddAccountModal
         visible={addAccountVisible}
@@ -284,7 +276,7 @@ export default function ProfileScreen() {
           await load();
         }}
       />
-    </KeyboardAvoidingView>
+    </View>
   );
 }
 

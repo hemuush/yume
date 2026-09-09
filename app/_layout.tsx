@@ -3,6 +3,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect, useRef, useState } from 'react';
 import { View, Text, ActivityIndicator, StyleSheet, AppState, AppStateStatus } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { useFonts } from 'expo-font';
 // Scoped per-weight imports (not the package root) so Metro only bundles the
 // exact font files used — importing from the package root pulls in every
@@ -101,15 +102,17 @@ export default function RootLayout() {
   }
 
   return (
-    <SafeAreaProvider>
-      <AppLockProvider>
-        <AccentProvider>
-          <PrivacyProvider>
-            <AppGate needsOnboarding={needsOnboarding} initialLocked={initialLocked} />
-          </PrivacyProvider>
-        </AccentProvider>
-      </AppLockProvider>
-    </SafeAreaProvider>
+    <KeyboardProvider>
+      <SafeAreaProvider>
+        <AppLockProvider>
+          <AccentProvider>
+            <PrivacyProvider>
+              <AppGate needsOnboarding={needsOnboarding} initialLocked={initialLocked} />
+            </PrivacyProvider>
+          </AccentProvider>
+        </AppLockProvider>
+      </SafeAreaProvider>
+    </KeyboardProvider>
   );
 }
 

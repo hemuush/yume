@@ -1,15 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  Pressable,
-  Alert,
-  TextInput,
-  KeyboardAvoidingView,
-  Platform,
-  Animated,
-} from 'react-native';
+import { View, Text, ScrollView, Pressable, Alert, TextInput, Animated } from 'react-native';
+import { KeyboardAwareScrollView, KeyboardStickyView } from 'react-native-keyboard-controller';
 import { router, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { listAccounts, listCategories, createTransaction } from '@/db/ledger';
@@ -365,11 +356,12 @@ export default function AddHistoricalScreen() {
   };
 
   return (
-    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <View style={styles.container}>
       <AppHeader title="Add Past Data" showBack />
-      <ScrollView
+      <KeyboardAwareScrollView
         contentContainerStyle={{ paddingBottom: 140 + insets.bottom }}
         keyboardShouldPersistTaps="handled"
+        bottomOffset={20}
       >
         <Text style={styles.introText}>
           Pick the month once, then add as many entries as you need — nothing is saved until you tap Save at
@@ -597,10 +589,13 @@ export default function AddHistoricalScreen() {
             </Animated.View>
           </>
         )}
-      </ScrollView>
+      </KeyboardAwareScrollView>
 
       {rows.length > 0 && (
-        <View style={[styles.footer, { paddingBottom: insets.bottom + 12 }]}>
+        <KeyboardStickyView
+          offset={{ opened: insets.bottom }}
+          style={[styles.footer, { paddingBottom: insets.bottom + 12 }]}
+        >
           <View style={styles.footerTotals}>
             <View>
               <Text style={styles.footerLabel}>Income</Text>
@@ -624,8 +619,8 @@ export default function AddHistoricalScreen() {
             onPress={saveAll}
             disabled={saving}
           />
-        </View>
+        </KeyboardStickyView>
       )}
-    </KeyboardAvoidingView>
+    </View>
   );
 }
