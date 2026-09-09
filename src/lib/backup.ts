@@ -108,6 +108,19 @@ export async function restoreFromSnapshot(snapshot: BackupSnapshot): Promise<voi
   } finally {
     await db.execAsync('PRAGMA foreign_keys = ON;');
   }
+  // A backup taken before the is_system column existed restores the built-in
+  // categories unflagged; re-assert the flag now (restore doesn't run
+  // migrations, and the app isn't relaunched after a restore). Mirrors
+  // flagSystemCategories() in src/db/client.ts — kept inline here to avoid a
+  // circular-ish import back into the db layer.
+  await db.runAsync(
+    `UPDATE categories SET is_system = 1 WHERE is_system = 0 AND parent_id IS NULL AND (
+       (name = 'Loan EMI' AND kind = 'expense') OR
+       (name = 'Loan Repayment' AND kind = 'income') OR
+       (name = 'Fees & Charges' AND kind = 'expense') OR
+       (name = 'Friends & Family')
+     )`
+  );
   // The restore above writes the settings table directly, bypassing every
   // setter in db/settings.ts — without this, formatMoney() and every other
   // cached-setting reader would keep showing pre-restore values (wrong

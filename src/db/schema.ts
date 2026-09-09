@@ -29,7 +29,12 @@ CREATE TABLE IF NOT EXISTS categories (
   color TEXT NOT NULL DEFAULT '#6366F1',
   archived INTEGER NOT NULL DEFAULT 0,
   sort_order INTEGER NOT NULL DEFAULT 0,
-  is_sensitive INTEGER NOT NULL DEFAULT 0
+  is_sensitive INTEGER NOT NULL DEFAULT 0,
+  -- Set for the handful of seeded categories the app looks up by name to
+  -- auto-file real transactions (Loan EMI, Loan Repayment, Fees & Charges,
+  -- Friends & Family). Blocked from delete / archive / rename so that match
+  -- can't silently break. User-created categories are never system.
+  is_system INTEGER NOT NULL DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS loans (

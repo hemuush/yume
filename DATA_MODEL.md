@@ -16,7 +16,9 @@ An account's `currentBalanceMinor` is **never stored** — it's computed on ever
 
 ## Categories (`categories`)
 
-Fully user-defined: name, income/expense kind, optional parent (for subcategories — one level deep, enforced in `assertValidParent`), icon, color, archive flag, and an `is_sensitive` flag. Archiving keeps historical transactions intact while removing the category from new-entry pickers, and cascades to subcategories — nothing is ever hard-deleted if it has transaction history. When `is_sensitive` is set and the global "hide sensitive amounts" setting is on, that category's amounts render masked everywhere (Savings Deposit and Investments start flagged).
+Mostly user-defined: name, income/expense kind, optional parent (for subcategories — one level deep, enforced in `assertValidParent`), icon, color, archive flag, an `is_sensitive` flag, and an `is_system` flag. Archiving keeps historical transactions intact while removing the category from new-entry pickers, and cascades to subcategories — nothing is ever hard-deleted if it has transaction history. When `is_sensitive` is set and the global "hide sensitive amounts" setting is on, that category's amounts render masked everywhere (Savings Deposit and Investments start flagged).
+
+**`is_system`** marks the five built-in categories the app looks up *by name* at runtime to auto-file real transactions: **Loan EMI** (expense), **Loan Repayment** (income), **Fees & Charges** (expense), and **Friends & Family** (one income, one expense). The loan and Friends & Family screens do `categories.find(c => c.name === '…') ?? categories[0]`, so a delete, archive, or rename would silently mis-file EMI/fee/friend transactions — `deleteCategory` / `archiveCategory` / `updateCategory` (name change) all reject a system category. Icon, colour, `is_sensitive`, and adding subcategories stay editable. User-created categories are never system, even one named identically to a built-in. `flagSystemCategories` in `src/db/client.ts` re-asserts the flag on every launch (and `restoreFromSnapshot` repeats it inline, for a backup taken before the column existed).
 
 ## Transactions (`transactions`)
 
@@ -67,4 +69,4 @@ A plain key/value table — default currency, accent color, user name, onboardin
 
 ## Migrations
 
-`CREATE_TABLES_SQL` runs `IF NOT EXISTS` on every launch for fresh installs; `runMigrations` in `src/db/client.ts` adds any column an older install is missing (via `ensureColumn`, which also drives one-time backfills). Category flags like `is_sensitive` and the built-in "Friends & Family" category are seeded on a fresh install and backfilled for upgrades.
+`CREATE_TABLES_SQL` runs `IF NOT EXISTS` on every launch for fresh installs; `runMigrations` in `src/db/client.ts` adds any column an older install is missing (via `ensureColumn`, which also drives one-time backfills). Category flags like `is_sensitive` / `is_system` and the built-in "Friends & Family" category are seeded on a fresh install and backfilled for upgrades.

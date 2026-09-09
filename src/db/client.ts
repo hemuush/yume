@@ -103,6 +103,30 @@ async function ensureColumn(db: AppDb, table: string, column: string, ddl: strin
   return true;
 }
 
+/**
+ * Flags the built-in categories the app matches by name (Loan EMI, Loan
+ * Repayment, Fees & Charges, Friends & Family — see src/features/loans/*,
+ * src/features/PeopleSection.tsx, app/add-historical.tsx) as `is_system` so
+ * they can't be deleted / archived / renamed out from under that match.
+ *
+ * Idempotent, run on every startup. `restoreFromSnapshot` in src/lib/backup.ts
+ * repeats the same UPDATE inline (a backup taken before this column existed
+ * brings the built-ins back unflagged, and restore doesn't re-run
+ * migrations). Scoped to still-unflagged top-level rows named exactly as
+ * seeded, so a user's own same-named category, or one they've since renamed,
+ * is never touched.
+ */
+async function flagSystemCategories(db: AppDb): Promise<void> {
+  await db.runAsync(
+    `UPDATE categories SET is_system = 1 WHERE is_system = 0 AND parent_id IS NULL AND (
+       (name = 'Loan EMI' AND kind = 'expense') OR
+       (name = 'Loan Repayment' AND kind = 'income') OR
+       (name = 'Fees & Charges' AND kind = 'expense') OR
+       (name = 'Friends & Family')
+     )`
+  );
+}
+
 async function runMigrations(db: AppDb): Promise<void> {
   await ensureColumn(db, 'loans', 'rate_type', `rate_type TEXT NOT NULL DEFAULT 'fixed'`);
   await ensureColumn(db, 'loans', 'person_id', `person_id TEXT REFERENCES people(id) ON DELETE SET NULL`);
@@ -115,6 +139,9 @@ async function runMigrations(db: AppDb): Promise<void> {
     'is_sensitive',
     `is_sensitive INTEGER NOT NULL DEFAULT 0`
   );
+  await ensureColumn(db, 'categories', 'is_system', `is_system INTEGER NOT NULL DEFAULT 0`);
+  await flagSystemCategories(db);
+
   if (addedIsSensitive) {
     // One-time backfill for an upgrading install: the two built-in categories
     // this feature exists for start flagged, same as a fresh install gets via
@@ -142,8 +169,8 @@ async function runMigrations(db: AppDb): Promise<void> {
       if (!existing) {
         const def = DEFAULT_CATEGORIES.find((c) => c.name === 'Friends & Family' && c.kind === kind)!;
         await db.runAsync(
-          `INSERT INTO categories (id, name, kind, parent_id, icon, color, sort_order, is_sensitive) VALUES (?, ?, ?, NULL, ?, ?, ?, 0)`,
-          [newId(), def.name, def.kind, def.icon, def.color, def.sortOrder]
+          `INSERT INTO categories (id, name, kind, parent_id, icon, color, sort_order, is_sensitive, is_system) VALUES (?, ?, ?, NULL, ?, ?, ?, 0, ?)`,
+          [newId(), def.name, def.kind, def.icon, def.color, def.sortOrder, def.system ? 1 : 0]
         );
       }
     }
@@ -178,9 +205,19 @@ async function seedDefaultCategoriesIfEmpty(db: AppDb) {
   await db.withTransactionAsync(async (tx) => {
     for (const cat of DEFAULT_CATEGORIES) {
       await tx.runAsync(
-        `INSERT INTO categories (id, name, kind, parent_id, icon, color, sort_order, is_sensitive)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-        [newId(), cat.name, cat.kind, null, cat.icon, cat.color, cat.sortOrder, cat.sensitive ? 1 : 0]
+        `INSERT INTO categories (id, name, kind, parent_id, icon, color, sort_order, is_sensitive, is_system)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          newId(),
+          cat.name,
+          cat.kind,
+          null,
+          cat.icon,
+          cat.color,
+          cat.sortOrder,
+          cat.sensitive ? 1 : 0,
+          cat.system ? 1 : 0,
+        ]
       );
     }
   });

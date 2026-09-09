@@ -243,6 +243,7 @@ function rowToCategory(row: any): Category {
     archived: !!row.archived,
     sortOrder: row.sort_order,
     isSensitive: !!row.is_sensitive,
+    isSystem: !!row.is_system,
   };
 }
 
@@ -321,10 +322,34 @@ export async function createCategory(input: {
  */
 export async function archiveCategory(id: string): Promise<void> {
   const db = await getDb();
+  await assertNotSystemCategory(db, id, 'archived');
   await db.withTransactionAsync(async (tx) => {
     await tx.runAsync('UPDATE categories SET archived = 1 WHERE id = ?', [id]);
     await tx.runAsync('UPDATE categories SET archived = 1 WHERE parent_id = ?', [id]);
   });
+}
+
+/**
+ * The five seeded categories flagged `is_system` (Loan EMI, Loan Repayment,
+ * Fees & Charges, Friends & Family income + expense) are looked up by name
+ * at runtime to auto-file loan and Friends & Family transactions — deleting,
+ * archiving, or renaming one silently breaks that match, so all three are
+ * blocked here where every UI path funnels through.
+ */
+async function assertNotSystemCategory(
+  db: Awaited<ReturnType<typeof getDb>>,
+  id: string,
+  action: 'deleted' | 'archived'
+): Promise<void> {
+  const row = await db.getFirstAsync<{ name: string; is_system: number }>(
+    'SELECT name, is_system FROM categories WHERE id = ?',
+    [id]
+  );
+  if (row?.is_system) {
+    throw new Error(
+      `"${row.name}" is a built-in category Flynse uses to auto-categorise EMI, fees and Friends & Family entries — it can't be ${action}.`
+    );
+  }
 }
 
 export async function unarchiveCategory(id: string): Promise<void> {
@@ -339,6 +364,11 @@ export async function updateCategory(
   const db = await getDb();
   const current = await db.getFirstAsync<any>('SELECT * FROM categories WHERE id = ?', [id]);
   if (!current) throw new Error('Category not found');
+  // A built-in category is matched by name at runtime — its icon, colour,
+  // sensitivity and subcategories stay editable, but the name is fixed.
+  if (current.is_system && input.name.trim() !== current.name) {
+    throw new Error("The name of a built-in category can't be changed.");
+  }
   // `parentId` omitted entirely means "leave it as-is" — every existing call
   // site predates re-parenting support and never passes it, so defaulting a
   // missing field to null here would silently strip the parent off every
@@ -385,6 +415,7 @@ export async function updateCategory(
  */
 export async function deleteCategory(id: string): Promise<void> {
   const db = await getDb();
+  await assertNotSystemCategory(db, id, 'deleted');
   const children = await db.getAllAsync<{ id: string }>('SELECT id FROM categories WHERE parent_id = ?', [
     id,
   ]);
