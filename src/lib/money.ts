@@ -5,8 +5,14 @@ import { getCachedCurrency } from '@/db/settings';
 // EMI math. The active currency is user-configurable in Settings — nothing
 // in this file assumes INR/USD/any specific currency.
 
+// `toMinor` is the single entry point for turning a user-typed amount into a
+// stored value, and it quantizes to whole major units: the app deliberately
+// keeps every ledger amount, balance and loan figure a round rupee (no
+// "205.55") so that on-screen totals reconcile with their parts without any
+// sub-unit drift. Amounts that arrive already in minor units (EMI splits,
+// derived balances) stay exact — this only governs fresh input.
 export function toMinor(major: number): number {
-  return Math.round(major * 100);
+  return Math.round(major) * 100;
 }
 
 export function toMajor(minor: number): number {

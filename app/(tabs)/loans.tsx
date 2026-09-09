@@ -4,6 +4,7 @@ import { useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { listLoans } from '@/db/loans';
 import { formatMoney } from '@/lib/money';
+import { roundedMinor } from '@/lib/round';
 import { Loan } from '@/types';
 import { SegmentedControl } from '@/components/SegmentedControl';
 import { EmptyState } from '@/components/EmptyState';
@@ -62,12 +63,14 @@ export default function LoansScreen() {
   // A defaulted loan is still money owed (or owed to you) — excluding it
   // here (as a stricter 'active'-only filter previously did) would drop it
   // from the very totals meant to tell you what you still owe.
+  // Sum the per-loan outstanding values already rounded to whole rupees (the
+  // same figure each LoanCard shows) so the header total equals the list.
   const totalBorrowedOutstanding = loans
     .filter((l) => l.direction === 'borrowed' && l.status !== 'closed')
-    .reduce((sum, l) => sum + l.outstandingPrincipalMinor, 0);
+    .reduce((sum, l) => sum + roundedMinor(l.outstandingPrincipalMinor), 0);
   const totalLentOutstanding = loans
     .filter((l) => l.direction === 'lent' && l.status !== 'closed')
-    .reduce((sum, l) => sum + l.outstandingPrincipalMinor, 0);
+    .reduce((sum, l) => sum + roundedMinor(l.outstandingPrincipalMinor), 0);
   // Active loans need attention (a payment due, a rate to update); closed
   // ones are done and were previously sitting in the same list with the
   // same weight — a status tag was the only way to tell them apart.

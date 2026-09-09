@@ -10,6 +10,7 @@ import { computeTrackedBalance } from '@/db/reports';
 import { listPeople } from '@/db/people';
 import { getUserName, setUserName, getMemberSinceYear, getDefaultCurrency } from '@/db/settings';
 import { formatMoney } from '@/lib/money';
+import { roundedMinor } from '@/lib/round';
 import { Account } from '@/types';
 import { AppHeader, HeaderPrivacyToggle } from '@/components/AppHeader';
 import { EmptyState } from '@/components/EmptyState';
@@ -47,7 +48,7 @@ export default function ProfileScreen() {
   const [activeLoanCount, setActiveLoanCount] = useState(0);
   const [peopleCount, setPeopleCount] = useState(0);
   const [netWorth, setNetWorth] = useState(0);
-  const [totalBalance, setTotalBalance] = useState(0);
+  const [defaultCurrency, setDefaultCurrencyState] = useState('INR');
   const [hasOtherCurrency, setHasOtherCurrency] = useState(false);
   const [hasUntrackedAssetLoan, setHasUntrackedAssetLoan] = useState(false);
   const [addAccountVisible, setAddAccountVisible] = useState(false);
@@ -74,10 +75,7 @@ export default function ProfileScreen() {
       setPeopleCount(people.length);
 
       setActiveLoanCount(loans.filter((l) => l.status === 'active').length);
-      const accountsTotal = accs
-        .filter((a) => a.currency === currency)
-        .reduce((sum, a) => sum + a.currentBalanceMinor, 0);
-      setTotalBalance(accountsTotal);
+      setDefaultCurrencyState(currency);
       setHasOtherCurrency(accs.some((a) => a.currency !== currency));
       // Shared with Home so the two screens can never show a different
       // headline number — a not-yet-closed loan with a tracked asset value
@@ -116,6 +114,15 @@ export default function ProfileScreen() {
       Alert.alert('Could not save name', String(e?.message ?? e));
     }
   };
+
+  // Every balance on this screen is shown as whole rupees. Each account row
+  // rounds its own balance, and the ACCOUNT BALANCE stat is the sum of those
+  // rounded rows (default-currency accounts only) so the list always adds up
+  // to the number shown above it.
+  const dispAccountBalance = (a: Account) => roundedMinor(a.currentBalanceMinor);
+  const totalBalance = accounts
+    .filter((a) => a.currency === defaultCurrency)
+    .reduce((sum, a) => sum + dispAccountBalance(a), 0);
 
   return (
     <View style={styles.container}>
@@ -178,7 +185,7 @@ export default function ProfileScreen() {
         <NeoTile style={styles.netWorthCard}>
           <Text style={styles.netWorthLabel}>TRACKED BALANCE</Text>
           <Text style={styles.netWorthValue} numberOfLines={1} adjustsFontSizeToFit>
-            {formatMoney(netWorth)}
+            {formatMoney(roundedMinor(netWorth))}
           </Text>
           <Text style={styles.netWorthHint}>
             Cash + loans + people{hasOtherCurrency ? ' · default-currency accounts only' : ''}.
@@ -219,7 +226,7 @@ export default function ProfileScreen() {
                       <Text style={styles.accountType}>{acc.type.replace('_', ' ')}</Text>
                     </View>
                     <Amount
-                      minor={acc.currentBalanceMinor}
+                      minor={dispAccountBalance(acc)}
                       currency={acc.currency}
                       sensitive={acc.type === 'savings'}
                       style={[styles.accountBalance, acc.currentBalanceMinor < 0 && styles.negative]}
@@ -246,7 +253,7 @@ export default function ProfileScreen() {
                       <Text style={styles.accountType}>{acc.type.replace('_', ' ')} · archived</Text>
                     </View>
                     <Amount
-                      minor={acc.currentBalanceMinor}
+                      minor={dispAccountBalance(acc)}
                       currency={acc.currency}
                       sensitive={acc.type === 'savings'}
                       style={styles.accountBalance}

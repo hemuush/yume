@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { View, Text } from 'react-native';
 import { applyPrepayment } from '@/db/loans';
 import { toMinor, formatMoney } from '@/lib/money';
+import { roundedMinor } from '@/lib/round';
 import { Loan, Account } from '@/types';
 import { FormInput } from '@/components/FormInput';
 import { PrimaryButton } from '@/components/PrimaryButton';
@@ -48,9 +49,10 @@ export function PrepayModal({
 
   const amountMinor = toMinor(parseFloat(amount || '0'));
   const chargeBaseMinor = Math.round(amountMinor * (parseFloat(chargePercent || '0') / 100));
-  const chargeMinor = Math.max(
-    0,
-    chargeBaseMinor + Math.round(chargeBaseMinor * (parseFloat(taxPercent || '0') / 100))
+  // Rounded to a whole rupee like every other stored amount, so the "Charge +
+  // amount = total debited" line the user sees actually adds up.
+  const chargeMinor = roundedMinor(
+    Math.max(0, chargeBaseMinor + Math.round(chargeBaseMinor * (parseFloat(taxPercent || '0') / 100)))
   );
   const taxPreset = TAX_ON_FEE_PRESETS[account.currency];
 
@@ -62,7 +64,7 @@ export function PrepayModal({
     }
     if (amountMinor > loan.outstandingPrincipalMinor) {
       setError(
-        `Amount can't exceed the outstanding balance of ${formatMoney(loan.outstandingPrincipalMinor)}`
+        `Amount can't exceed the outstanding balance of ${formatMoney(roundedMinor(loan.outstandingPrincipalMinor))}`
       );
       return;
     }
@@ -85,7 +87,9 @@ export function PrepayModal({
 
   return (
     <ModalSheet visible onClose={onClose} variant="center" title="Make a prepayment">
-      <Text style={styles.cardSub}>Outstanding: {formatMoney(loan.outstandingPrincipalMinor)}</Text>
+      <Text style={styles.cardSub}>
+        Outstanding: {formatMoney(roundedMinor(loan.outstandingPrincipalMinor))}
+      </Text>
       <FormInput
         label="Amount"
         value={amount}

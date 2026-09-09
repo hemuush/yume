@@ -15,6 +15,7 @@ import {
 import { listAccounts, listCategories } from '@/db/ledger';
 import { listLoansForPerson } from '@/db/loans';
 import { formatMoney, toMinor } from '@/lib/money';
+import { roundedMinor, allocateRoundedMinor } from '@/lib/round';
 import { Account, Category, Loan, PersonLedgerEntry } from '@/types';
 import { FormInput } from '@/components/FormInput';
 import { PrimaryButton } from '@/components/PrimaryButton';
@@ -60,8 +61,11 @@ export function PeopleSection() {
     }, [load])
   );
 
-  const totalOwedToYou = people.reduce((sum, p) => sum + Math.max(0, p.balanceMinor), 0);
-  const totalYouOwe = people.reduce((sum, p) => sum + Math.max(0, -p.balanceMinor), 0);
+  // Each person's balance is shown rounded to a whole rupee; the two summary
+  // totals are the sum of those rounded balances so they match the list.
+  const dispPersonBalance = (p: PersonWithBalance) => roundedMinor(p.balanceMinor);
+  const totalOwedToYou = people.reduce((sum, p) => sum + Math.max(0, dispPersonBalance(p)), 0);
+  const totalYouOwe = people.reduce((sum, p) => sum + Math.max(0, -dispPersonBalance(p)), 0);
 
   return (
     <View style={styles.container}>
@@ -159,7 +163,7 @@ function PersonRow({
         numberOfLines={1}
       >
         {person.balanceMinor >= 0 ? 'owes you ' : 'you owe '}
-        {formatMoney(Math.abs(person.balanceMinor))}
+        {formatMoney(Math.abs(roundedMinor(person.balanceMinor)))}
       </Text>
     </AnimatedPersonRow>
   );
@@ -268,6 +272,13 @@ function PersonDetailModal({
   // snapshot taken when the modal opened and goes stale the moment a new
   // entry is recorded below.
   const liveBalanceMinor = ledger.reduce((sum, e) => sum + e.amountMinor, 0);
+  // Show each history entry rounded so the running list adds up to the
+  // rounded balance shown at the top of the sheet.
+  const dispEntryAmounts = allocateRoundedMinor(
+    ledger.map((e) => e.amountMinor),
+    liveBalanceMinor
+  );
+  const dispBalanceMinor = dispEntryAmounts.reduce((sum, v) => sum + v, 0);
 
   // "They owe more" (sign 1) with an account selected means cash actually
   // left that account to cover them — recorded as a real expense transaction
@@ -374,7 +385,7 @@ function PersonDetailModal({
         ]}
       >
         {liveBalanceMinor >= 0 ? 'Owes you ' : 'You owe '}
-        {formatMoney(Math.abs(liveBalanceMinor))}
+        {formatMoney(Math.abs(dispBalanceMinor))}
       </Text>
 
       {linkedLoans.length > 0 && (
@@ -389,7 +400,7 @@ function PersonDetailModal({
                 </Text>
                 <Text style={styles.rowSub}>{loan.status}</Text>
               </View>
-              <Text style={styles.rowValue}>{formatMoney(loan.outstandingPrincipalMinor)}</Text>
+              <Text style={styles.rowValue}>{formatMoney(roundedMinor(loan.outstandingPrincipalMinor))}</Text>
             </Pressable>
           ))}
           <Text style={styles.hintText}>
@@ -489,7 +500,7 @@ function PersonDetailModal({
         <Text style={styles.emptyText}>No entries yet.</Text>
       ) : (
         <>
-          {ledger.map((entry) => (
+          {ledger.map((entry, i) => (
             <Pressable
               key={entry.id}
               style={styles.row}
@@ -509,7 +520,7 @@ function PersonDetailModal({
                 ]}
               >
                 {entry.amountMinor >= 0 ? '+' : '-'}
-                {formatMoney(Math.abs(entry.amountMinor))}
+                {formatMoney(Math.abs(dispEntryAmounts[i]))}
               </Text>
             </Pressable>
           ))}

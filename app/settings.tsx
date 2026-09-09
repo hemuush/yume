@@ -5,6 +5,7 @@ import Feather from '@expo/vector-icons/Feather';
 import * as Application from 'expo-application';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getDefaultCurrency, setDefaultCurrency, SUPPORTED_CURRENCIES, ACCENT_SWATCHES } from '@/db/settings';
+import { countFractionalLedgerAmounts, roundLedgerAmountsToWholeRupees } from '@/db/maintenance';
 import { isDeviceSecured } from '@/lib/appLock';
 import { useAppLock } from '@/lib/AppLockContext';
 import { usePrivacy } from '@/theme/PrivacyContext';
@@ -100,9 +101,16 @@ export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
   const [currency, setCurrency] = useState('INR');
   const [currencyPickerOpen, setCurrencyPickerOpen] = useState(false);
+  const [fractionalCount, setFractionalCount] = useState(0);
+  const [rounding, setRounding] = useState(false);
 
   const load = useCallback(async () => {
     setCurrency(await getDefaultCurrency());
+    try {
+      setFractionalCount((await countFractionalLedgerAmounts()).total);
+    } catch {
+      setFractionalCount(0);
+    }
   }, []);
 
   useFocusEffect(
@@ -125,6 +133,43 @@ export default function SettingsScreen() {
       setCurrency(previous);
       Alert.alert('Could not change currency', String(e?.message ?? e));
     }
+  };
+
+  const onRoundAmounts = () => {
+    if (rounding) return;
+    if (fractionalCount === 0) {
+      Alert.alert('Nothing to round', 'Every stored amount is already a whole rupee.');
+      return;
+    }
+    Alert.alert(
+      'Round amounts to whole rupees?',
+      `${fractionalCount} stored amount${fractionalCount === 1 ? '' : 's'} still ` +
+        `carr${fractionalCount === 1 ? 'ies' : 'y'} paise. Rounding them makes on-screen ` +
+        'totals line up with their parts. Loan schedules are left untouched. Some account ' +
+        'balances may shift by a rupee or two. This cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Round them',
+          style: 'destructive',
+          onPress: async () => {
+            setRounding(true);
+            try {
+              const changed = await roundLedgerAmountsToWholeRupees();
+              setFractionalCount(0);
+              Alert.alert(
+                'Done',
+                `Rounded ${changed.total} amount${changed.total === 1 ? '' : 's'} to whole rupees.`
+              );
+            } catch (e: any) {
+              Alert.alert('Could not round amounts', String(e?.message ?? e));
+            } finally {
+              setRounding(false);
+            }
+          },
+        },
+      ]
+    );
   };
 
   const onToggleLock = async (enabled: boolean) => {
@@ -214,6 +259,19 @@ export default function SettingsScreen() {
             label="Backup & Restore"
             sub="Google Drive, local folder, export"
             onPress={() => router.push('/backup')}
+          />
+          <Row
+            icon="calculator-variant-outline"
+            iconBg={theme.colors.accentTint}
+            label="Round off amounts"
+            sub={
+              rounding
+                ? 'Rounding…'
+                : fractionalCount === 0
+                  ? 'All amounts are whole rupees'
+                  : `${fractionalCount} old amount${fractionalCount === 1 ? '' : 's'} still carry paise — tap to fix`
+            }
+            onPress={onRoundAmounts}
             last
           />
         </Group>

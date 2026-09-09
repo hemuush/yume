@@ -14,13 +14,14 @@ const CURRENCIES = ['INR', 'USD', 'EUR', 'GBP', 'AED', 'AUD', 'CAD', 'SGD', 'JPY
 
 describe('money conversion matrix — every amount × currency combination', () => {
   for (const amount of MAJOR_AMOUNTS) {
-    it(`₹${amount}: toMinor/toMajor round-trips exactly`, () => {
+    it(`₹${amount}: toMinor/toMajor round-trips to the nearest whole rupee`, () => {
       const minor = toMinor(amount);
-      expect(toMajor(minor)).toBeCloseTo(amount, 2);
+      expect(toMajor(minor)).toBeCloseTo(Math.round(amount), 2);
     });
 
-    it(`₹${amount}: toMinor produces a whole number of minor units, never a fraction`, () => {
+    it(`₹${amount}: toMinor produces a whole rupee in minor units, never a fraction`, () => {
       expect(Number.isInteger(toMinor(amount))).toBe(true);
+      expect(toMinor(amount) % 100 === 0).toBe(true);
     });
 
     for (const currency of CURRENCIES) {
@@ -37,7 +38,7 @@ describe('money conversion matrix — every amount × currency combination', () 
   it('negative amounts round-trip and format with a visible negative sign', () => {
     for (const amount of [-1, -100, -9999.99, -10000000]) {
       const minor = toMinor(amount);
-      expect(toMajor(minor)).toBeCloseTo(amount, 2);
+      expect(toMajor(minor)).toBeCloseTo(Math.round(amount), 2);
       const formatted = formatMoney(minor, 'INR');
       expect(formatted).toMatch(/-/);
     }
@@ -56,9 +57,9 @@ describe('money conversion matrix — every amount × currency combination', () 
   });
 
   it('sub-unit amounts (a few paise) round to whole-unit display, same as zero', () => {
-    // formatMoney rounds every amount to whole currency units for display —
-    // storage still keeps the exact minor-unit value (asserted below), it's
-    // only the rendered string that collapses tiny fractions into "0".
+    // A stray paisa can still exist on legacy data / EMI splits; formatMoney
+    // collapses it to "0" for display just like an exact zero. (New input can
+    // no longer create one — see the toMinor quantization tests above.)
     expect(toMajor(1)).toBe(0.01);
     expect(formatMoney(1, 'INR')).toBe(formatMoney(0, 'INR'));
   });

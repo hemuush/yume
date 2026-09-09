@@ -2,6 +2,7 @@ import { getDb } from './client';
 import { newId } from '@/lib/id';
 import { Loan, LoanPayment } from '@/types';
 import { calculateEmi, generateAmortizationSchedule, recalculateAfterPrepayment } from '@/lib/loan';
+import { formatMoney } from '@/lib/money';
 import { scheduleLoanDueReminder, cancelLoanDueReminder } from '@/lib/notifications';
 
 /** Schedules a reminder for the loan's next pending installment, or cancels any reminder if none remains. */
@@ -539,7 +540,7 @@ export async function applyRateChange(
     : loan.outstanding_principal_minor;
   if (mode === 'keepEmi' && stillOwesAfterSchedule > 0) {
     throw new Error(
-      `At ${(opts.newAnnualRateBp / 100).toFixed(2)}% p.a., the current EMI of ${loan.emi_amount_minor / 100} doesn't even cover the monthly interest — this loan would never pay off. Increase the EMI (via a new loan entry) or choose a lower rate.`
+      `At ${(opts.newAnnualRateBp / 100).toFixed(2)}% p.a., the current EMI of ${formatMoney(loan.emi_amount_minor)} doesn't even cover the monthly interest — this loan would never pay off. Increase the EMI (via a new loan entry) or choose a lower rate.`
     );
   }
 
@@ -723,7 +724,7 @@ export async function applyPrepayment(
     : newOutstanding;
   if (stillOwesAfterSchedule > 0) {
     throw new Error(
-      `The current EMI of ${loan.emi_amount_minor / 100} doesn't cover the interest on the remaining balance after this prepayment — this loan would never pay off. Try a larger prepayment amount.`
+      `The current EMI of ${formatMoney(loan.emi_amount_minor)} doesn't cover the interest on the remaining balance after this prepayment — this loan would never pay off. Try a larger prepayment amount.`
     );
   }
 
