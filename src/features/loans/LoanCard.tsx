@@ -1,5 +1,6 @@
 import { View, Text, Pressable, Animated } from 'react-native';
 import { formatMoney } from '@/lib/money';
+import { roundedMinor } from '@/lib/round';
 import { Loan } from '@/types';
 import { theme } from '@/constants/theme';
 import { usePressScale } from '@/lib/usePressScale';
@@ -64,7 +65,7 @@ export function LoanCard({
               <View>
                 <Text style={styles.statLabel}>Outstanding</Text>
                 <Text style={styles.statValue} numberOfLines={1} adjustsFontSizeToFit>
-                  {formatMoney(loan.outstandingPrincipalMinor)}
+                  {formatMoney(roundedMinor(loan.outstandingPrincipalMinor))}
                 </Text>
               </View>
               <View>

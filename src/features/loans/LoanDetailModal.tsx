@@ -11,6 +11,7 @@ import {
 } from '@/db/loans';
 import { listAccounts, listCategories } from '@/db/ledger';
 import { formatMoney } from '@/lib/money';
+import { allocateRoundedMinor } from '@/lib/round';
 import { Loan, LoanPayment, Account, Category } from '@/types';
 import { FormInput } from '@/components/FormInput';
 import { PrimaryButton } from '@/components/PrimaryButton';
@@ -200,6 +201,14 @@ export function LoanDetailModal({
   const visibleSchedule = scheduleExpanded ? schedule : pendingInstallments.slice(0, 2);
   const hiddenCount = schedule.length - visibleSchedule.length;
 
+  // Round outstanding and asset value the same way they're displayed, then
+  // derive equity from those rounded figures so "equity" always equals the
+  // asset value minus the outstanding as they appear on screen.
+  const toWholeRupee = (minor: number) => Math.round(minor / 100) * 100;
+  const dispOutstanding = toWholeRupee(liveLoan.outstandingPrincipalMinor);
+  const dispAssetValue = toWholeRupee(liveLoan.assetValueMinor ?? 0);
+  const dispEquity = dispAssetValue - dispOutstanding;
+
   return (
     <>
       <ModalSheet visible onClose={onClose} title={liveLoan.counterparty}>
@@ -227,7 +236,7 @@ export function LoanDetailModal({
             <View>
               <Text style={styles.statLabel}>Outstanding</Text>
               <Text style={styles.statValue} numberOfLines={1} adjustsFontSizeToFit>
-                {formatMoney(liveLoan.outstandingPrincipalMinor)}
+                {formatMoney(dispOutstanding)}
               </Text>
             </View>
             <View>
@@ -261,19 +270,10 @@ export function LoanDetailModal({
               <>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.rowLabel}>{liveLoan.assetLabel || 'Asset'}</Text>
-                  <Text style={styles.rowSub}>
-                    Value {formatMoney(liveLoan.assetValueMinor)} · tap to update
-                  </Text>
+                  <Text style={styles.rowSub}>Value {formatMoney(dispAssetValue)} · tap to update</Text>
                 </View>
-                <Text
-                  style={[
-                    styles.rowValue,
-                    liveLoan.assetValueMinor - liveLoan.outstandingPrincipalMinor >= 0
-                      ? styles.income
-                      : styles.expense,
-                  ]}
-                >
-                  {formatMoney(liveLoan.assetValueMinor - liveLoan.outstandingPrincipalMinor)} equity
+                <Text style={[styles.rowValue, dispEquity >= 0 ? styles.income : styles.expense]}>
+                  {formatMoney(dispEquity)} equity
                 </Text>
               </>
             ) : liveLoan.assetLabel ? (
@@ -320,23 +320,34 @@ export function LoanDetailModal({
         )}
 
         <Text style={styles.sectionTitle}>{scheduleExpanded ? 'Full schedule' : 'Next up'}</Text>
-        {visibleSchedule.map((p) => (
-          <View key={p.id} style={styles.scheduleRow}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.rowLabel}>
-                #{p.installmentNumber} · {p.dueDate}
-              </Text>
-              <Text style={styles.rowSub}>
-                Principal {formatMoney(p.principalComponentMinor)} · Interest{' '}
-                {formatMoney(p.interestComponentMinor)}
-              </Text>
+        {visibleSchedule.map((p) => {
+          // Show the principal and interest split rounded so it adds up to the
+          // rounded EMI exactly — the stored paise components already sum to
+          // emiAmountMinor, this just keeps that true after rounding for
+          // display (otherwise "₹274 + ₹783" can read next to a "₹1,056" EMI).
+          const [dispPrincipal, dispInterest] = allocateRoundedMinor(
+            [p.principalComponentMinor, p.interestComponentMinor],
+            p.emiAmountMinor
+          );
+          return (
+            <View key={p.id} style={styles.scheduleRow}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.rowLabel}>
+                  #{p.installmentNumber} · {p.dueDate}
+                </Text>
+                <Text style={styles.rowSub}>
+                  Principal {formatMoney(dispPrincipal)} · Interest {formatMoney(dispInterest)}
+                </Text>
+              </View>
+              <View style={{ alignItems: 'flex-end' }}>
+                <Text style={styles.rowValue}>{formatMoney(p.emiAmountMinor)}</Text>
+                <Text style={[styles.statusTag, p.status === 'paid' && styles.statusTagPaid]}>
+                  {p.status}
+                </Text>
+              </View>
             </View>
-            <View style={{ alignItems: 'flex-end' }}>
-              <Text style={styles.rowValue}>{formatMoney(p.emiAmountMinor)}</Text>
-              <Text style={[styles.statusTag, p.status === 'paid' && styles.statusTagPaid]}>{p.status}</Text>
-            </View>
-          </View>
-        ))}
+          );
+        })}
         {!scheduleExpanded && hiddenCount > 0 && (
           <Pressable onPress={() => setScheduleExpanded(true)} style={{ paddingVertical: 10 }}>
             <Text style={styles.viewAllText}>View full schedule ({hiddenCount} more) ›</Text>

@@ -1,7 +1,9 @@
 /**
  * Combinatorial coverage of the money helpers. Everything in the app moves
- * through integer minor units; toMinor/toMajor are the only conversion, and
- * formatMoney must never throw regardless of currency or magnitude.
+ * through integer minor units; `toMinor` is the only entry point for stored
+ * amounts and quantizes user input to whole major units (no sub-unit
+ * "205.55" ever lands in the ledger). `formatMoney` must never throw
+ * regardless of currency or magnitude.
  */
 import { toMinor, toMajor, formatMoney, getCurrencySymbol } from './money';
 import { SUPPORTED_CURRENCIES } from '@/db/settings';
@@ -12,33 +14,34 @@ const MAJORS = [
 const NEGATIVES = MAJORS.filter((m) => m > 0).map((m) => -m);
 const CODES = SUPPORTED_CURRENCIES.map((c) => c.code);
 
-describe('toMinor — rounds major units to integer minor units', () => {
+describe('toMinor — quantizes a major amount to whole-rupee minor units', () => {
   for (const major of [...MAJORS, ...NEGATIVES]) {
     it(`${major}`, () => {
       const minor = toMinor(major);
       expect(Number.isInteger(minor)).toBe(true);
-      expect(minor).toBe(Math.round(major * 100));
+      // Always a whole major unit: rounded to the nearest rupee, times 100.
+      expect(minor).toBe(Math.round(major) * 100);
+      expect(minor % 100 === 0).toBe(true);
     });
   }
 });
 
-describe('toMajor ∘ toMinor round-trips any 2-decimal major value exactly', () => {
+describe('toMajor ∘ toMinor round-trips to the nearest whole major unit', () => {
   for (const major of [...MAJORS, ...NEGATIVES]) {
     it(`${major}`, () => {
-      // Values here all have at most 2 decimal places, so the round-trip is exact.
-      expect(toMajor(toMinor(major))).toBeCloseTo(major, 10);
+      expect(toMajor(toMinor(major))).toBeCloseTo(Math.round(major), 10);
     });
   }
 });
 
-describe('toMinor is additive over a running total (no float drift across many small adds)', () => {
-  for (const step of [0.01, 0.05, 0.1, 0.33, 1.99, 12.5]) {
+describe('toMinor is additive over a running total (no float drift across many adds)', () => {
+  for (const step of [1, 7, 42.4, 199.5, 1234.99, 2500]) {
     for (const count of [3, 10, 50, 137]) {
       it(`${count} × ${step}`, () => {
         let minorTotal = 0;
         for (let i = 0; i < count; i++) minorTotal += toMinor(step);
         expect(minorTotal).toBe(toMinor(step) * count);
-        expect(Number.isInteger(minorTotal)).toBe(true);
+        expect(minorTotal % 100 === 0).toBe(true);
       });
     }
   }

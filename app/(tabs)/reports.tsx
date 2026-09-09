@@ -18,6 +18,7 @@ import {
 import { ModalSheet } from '@/components/ModalSheet';
 import { formatMoney } from '@/lib/money';
 import { formatPctChange } from '@/lib/format';
+import { roundedMinor, allocateRoundedMinor } from '@/lib/round';
 import { SegmentedControl } from '@/components/SegmentedControl';
 import { SectionLabel } from '@/components/SectionLabel';
 import { InsightCard } from '@/components/InsightCard';
@@ -162,7 +163,20 @@ export default function ReportsScreen() {
   const topCategories = current.categoryBreakdown.slice(0, 6);
   const topGrowing = findTopGrowingCategory(current.categoryBreakdown, previous.categoryBreakdown);
   const hasAnyActivity = current.incomeMinor > 0 || current.expenseMinor > 0;
-  const netIsPositive = current.netMinor >= 0;
+  // Every figure on this screen is shown rounded to whole rupees; derive the
+  // ones that are sums/differences from those same rounded parts so "Net"
+  // always equals shown Income − shown Expenses − shown "moved to savings",
+  // and the category rows add up to the shown total spend.
+  const dispIncome = roundedMinor(current.incomeMinor);
+  const dispExpense = roundedMinor(current.expenseMinor);
+  const dispSavings = roundedMinor(current.savingsContributionMinor);
+  const dispNet = dispIncome - dispExpense - dispSavings;
+  const categoryBreakdownDisp = allocateRoundedMinor(
+    current.categoryBreakdown.map((c) => c.totalMinor),
+    dispExpense
+  );
+
+  const netIsPositive = dispNet >= 0;
   const netColor = netIsPositive ? theme.colors.income : theme.colors.expense;
 
   const insight = topGrowing
@@ -219,7 +233,7 @@ export default function ReportsScreen() {
             />
           </View>
           <Text style={[styles.heroValue, { color: netColor }]} numberOfLines={1} adjustsFontSizeToFit>
-            {formatMoney(current.netMinor)}
+            {formatMoney(dispNet)}
           </Text>
           <Text style={styles.heroSub}>
             {current.incomeMinor > 0
@@ -237,7 +251,7 @@ export default function ReportsScreen() {
                 numberOfLines={1}
                 adjustsFontSizeToFit
               >
-                {formatMoney(current.incomeMinor)}
+                {formatMoney(dispIncome)}
               </Text>
               {incomeChangePct != null && (
                 <Text style={styles.splitTrend}>
@@ -256,7 +270,7 @@ export default function ReportsScreen() {
                 numberOfLines={1}
                 adjustsFontSizeToFit
               >
-                {formatMoney(current.expenseMinor)}
+                {formatMoney(dispExpense)}
               </Text>
               {expenseChangePct != null && (
                 <Text style={styles.splitTrend}>
@@ -267,13 +281,13 @@ export default function ReportsScreen() {
           </View>
         </NeoTile>
 
-        {current.savingsContributionMinor !== 0 && (
+        {dispSavings !== 0 && (
           <View style={styles.savingsRow}>
             <View style={{ flex: 1 }}>
               <Text style={styles.savingsLabel}>Moved to savings</Text>
               <Text style={styles.savingsHint}>New transfers this period only, not your running balance</Text>
             </View>
-            <Text style={styles.savingsValue}>{formatMoney(current.savingsContributionMinor)}</Text>
+            <Text style={styles.savingsValue}>{formatMoney(dispSavings)}</Text>
           </View>
         )}
 
@@ -292,9 +306,9 @@ export default function ReportsScreen() {
             <NeoTile style={styles.chartCard}>
               {breakdownView === 'bars' ? (
                 <HorizontalBarList
-                  items={current.categoryBreakdown.map((c) => ({
+                  items={current.categoryBreakdown.map((c, i) => ({
                     label: c.name,
-                    value: c.totalMinor,
+                    value: categoryBreakdownDisp[i],
                     color: c.color,
                     onPress: c.hasSubcategories ? () => openDrillDown(c) : undefined,
                     sensitive: c.isSensitive,
@@ -305,7 +319,7 @@ export default function ReportsScreen() {
                   <PieChartDoodle
                     size={112}
                     slices={topCategories.map((c) => ({ value: c.totalMinor, color: c.color }))}
-                    centerValue={formatMoney(current.expenseMinor)}
+                    centerValue={formatMoney(dispExpense)}
                     centerLabel="Spent"
                   />
                   <View style={styles.pieLegend}>
@@ -350,7 +364,7 @@ export default function ReportsScreen() {
         <NeoTile style={styles.chartCard}>
           {trendView === 'spend' ? (
             <>
-              <Text style={styles.trendTotal}>{formatMoney(current.expenseMinor)}</Text>
+              <Text style={styles.trendTotal}>{formatMoney(dispExpense)}</Text>
               <Text style={styles.trendSub}>
                 Expenses, last {trend.length} months · {formatMoney(Math.min(...trendValues, 0))} to{' '}
                 {formatMoney(Math.max(...trendValues, 0))}

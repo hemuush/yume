@@ -14,6 +14,7 @@ import {
 } from '@/db/reports';
 import { getUserName, getDefaultCurrency } from '@/db/settings';
 import { formatMoney } from '@/lib/money';
+import { roundedMinor } from '@/lib/round';
 import { Account, Category, Transaction, Loan } from '@/types';
 import { theme, ID_PALETTE } from '@/constants/theme';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
@@ -148,7 +149,11 @@ export default function DashboardScreen() {
   // sitting free to allocate, so it no longer counts as "surplus". Withdrawing
   // from savings works the other way: savingsInPeriod goes negative, adding
   // that money back into surplus.
-  const surplusInPeriod = incomeInPeriod - expenseInPeriod - savingsInPeriod;
+  // Displayed rounded to whole rupees; surplus is derived from the same
+  // rounded income/expense the tiles show so the subtraction holds on screen.
+  const dispIncomeInPeriod = roundedMinor(incomeInPeriod);
+  const dispExpenseInPeriod = roundedMinor(expenseInPeriod);
+  const surplusInPeriod = dispIncomeInPeriod - dispExpenseInPeriod - roundedMinor(savingsInPeriod);
   const expenseChangePct = comparison?.expenseChangePct;
   const comparisonLabel = previousPeriodLabel(cursor);
   const periodName = periodLabel(cursor).toUpperCase();
@@ -243,7 +248,7 @@ export default function DashboardScreen() {
           <NeoTile backgroundColor={theme.colors.ink} borderRadius={theme.radius.xl} style={styles.heroTile}>
             <Text style={styles.heroLabel}>TRACKED BALANCE</Text>
             <Text style={styles.heroValue} numberOfLines={1} adjustsFontSizeToFit>
-              {formatMoney(netWorth)}
+              {formatMoney(roundedMinor(netWorth))}
             </Text>
             <Text style={styles.heroSub}>Cash + loans + people</Text>
           </NeoTile>
@@ -260,7 +265,7 @@ export default function DashboardScreen() {
                 SPENT · {periodName}
               </Text>
               <Text style={styles.smallValue} numberOfLines={1} adjustsFontSizeToFit>
-                {formatMoney(expenseInPeriod)}
+                {formatMoney(dispExpenseInPeriod)}
               </Text>
               {expenseChangePct != null && (
                 <Text style={styles.smallTrend}>
@@ -274,7 +279,7 @@ export default function DashboardScreen() {
               </View>
               <Text style={styles.smallLabel}>INCOME</Text>
               <Text style={styles.smallValue} numberOfLines={1} adjustsFontSizeToFit>
-                {formatMoney(incomeInPeriod)}
+                {formatMoney(dispIncomeInPeriod)}
               </Text>
               {incomeChangePct != null && (
                 <Text style={styles.smallTrend}>
@@ -309,7 +314,7 @@ export default function DashboardScreen() {
             </View>
             <Text style={styles.smallLabel}>DEBT LEFT</Text>
             <Text style={styles.smallValue} numberOfLines={1} adjustsFontSizeToFit>
-              {formatMoney(totalOutstandingLoans)}
+              {formatMoney(roundedMinor(totalOutstandingLoans))}
             </Text>
             <Text style={styles.smallTrend}>{totalOutstandingLoans === 0 ? '✓ All clear!' : ' '}</Text>
           </NeoTile>
