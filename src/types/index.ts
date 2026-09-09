@@ -31,6 +31,8 @@ export interface Category {
   sortOrder: number;
   /** When on and the "hide savings & investment amounts" setting is also on, this category's amounts show masked wherever they appear. */
   isSensitive: boolean;
+  /** A built-in category the app matches by name to auto-file loan / Friends & Family transactions — can't be deleted, archived, or renamed. */
+  isSystem: boolean;
 }
 
 export type TransactionType = 'income' | 'expense' | 'transfer';

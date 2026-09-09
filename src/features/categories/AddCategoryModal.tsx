@@ -97,10 +97,23 @@ export function AddCategoryModal({
     }
   };
 
+  const isSystem = !!category?.isSystem;
+
   return (
     <ModalSheet visible={visible} onClose={onClose} title={category ? 'Edit Category' : 'New Category'}>
-      <FormInput label="Name" value={name} onChangeText={setName} placeholder="e.g. Pet Care" />
-      {category ? (
+      <FormInput
+        label="Name"
+        value={name}
+        onChangeText={setName}
+        placeholder="e.g. Pet Care"
+        editable={!isSystem}
+      />
+      {isSystem ? (
+        <Text style={styles.modalHint}>
+          Built-in category — its name and type are fixed because Flynse files loan and Friends & Family
+          transactions under it automatically. Colour, icon and sensitivity can still be changed.
+        </Text>
+      ) : category ? (
         <Text style={styles.modalHint}>
           Type ({kind}) can't be changed once a category exists — archive and recreate it instead.
         </Text>
