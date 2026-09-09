@@ -33,6 +33,11 @@ yarn-error.*
 # local env files
 .env*.local
 
+# editor / tooling local config
+.claude/settings.local.json
+.vscode/
+.idea/
+
 # typescript
 *.tsbuildinfo
 
