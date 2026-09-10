@@ -95,6 +95,19 @@ export const theme = {
   // confident neobrutalist card from a flat one with just a border.
   shadowOffset: 4,
   spacing: (n: number) => n * 4,
+  // Layout metrics shared between the tab bar and the screens that must
+  // scroll clear of it. The floating pill tab bar is `tabBar.height` tall and
+  // floats `tabBar.bottomGap` above the device's safe-area inset, `tabBar.
+  // sideInset` in from each edge. A scrolling tab screen therefore needs
+  // `tabScreenScrollPad` of bottom padding (gap + bar height + a comfortable
+  // margin) so its last row is never hidden; a plain pushed screen with no
+  // tab bar only needs `screenScrollPad`. Every caller adds `insets.bottom`
+  // on top of these.
+  layout: {
+    tabBar: { height: 58, bottomGap: 8, sideInset: 16 },
+    tabScreenScrollPad: 8 + 58 + 28,
+    screenScrollPad: 40,
+  },
   font: {
     body: 'Archivo_400Regular',
     bodyMedium: 'Archivo_600SemiBold',

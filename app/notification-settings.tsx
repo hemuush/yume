@@ -206,7 +206,7 @@ export default function NotificationSettingsScreen() {
           phone. Bill alerts fire from your loan due dates, overspending alerts check right after you log an
           expense, and the weekly summary arrives every Sunday.
         </Text>
-        <View style={{ height: 40 + insets.bottom }} />
+        <View style={{ height: theme.layout.screenScrollPad + insets.bottom }} />
       </ScrollView>
     </View>
   );

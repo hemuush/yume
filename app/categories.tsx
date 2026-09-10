@@ -4,6 +4,7 @@ import { useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { listCategories, archiveCategory, unarchiveCategory, deleteCategory } from '@/db/ledger';
 import { Category } from '@/types';
+import { theme } from '@/constants/theme';
 import { AppHeader, HeaderIconButton } from '@/components/AppHeader';
 import { AddButton } from '@/components/AddButton';
 import { styles } from '@/features/categories/categories.styles';
@@ -148,7 +149,7 @@ export default function CategoriesScreen() {
         }
       />
 
-      <ScrollView contentContainerStyle={{ paddingBottom: 40 + insets.bottom }}>
+      <ScrollView contentContainerStyle={{ paddingBottom: theme.layout.screenScrollPad + insets.bottom }}>
         <Text style={styles.sectionTitle}>Expense</Text>
         <CategorySection cats={expenseCats} onEdit={setEditingCategory} onManage={onManage} />
 

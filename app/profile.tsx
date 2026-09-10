@@ -129,7 +129,7 @@ export default function ProfileScreen() {
       <AppHeader title="Profile" showBack right={<HeaderPrivacyToggle />} />
 
       <KeyboardAwareScrollView
-        contentContainerStyle={{ paddingBottom: 110 + insets.bottom }}
+        contentContainerStyle={{ paddingBottom: theme.layout.screenScrollPad + insets.bottom }}
         keyboardShouldPersistTaps="handled"
         bottomOffset={20}
       >

@@ -70,10 +70,10 @@ export default function TabsLayout() {
         // pad their scroll views past it.
         tabBarStyle: {
           position: 'absolute',
-          left: 16,
-          right: 16,
-          bottom: insets.bottom + 8,
-          height: 58,
+          left: theme.layout.tabBar.sideInset,
+          right: theme.layout.tabBar.sideInset,
+          bottom: insets.bottom + theme.layout.tabBar.bottomGap,
+          height: theme.layout.tabBar.height,
           borderRadius: theme.radius.pill,
           backgroundColor: theme.colors.primary,
           borderTopWidth: 0,
@@ -84,7 +84,7 @@ export default function TabsLayout() {
           shadowRadius: 16,
           elevation: 10,
         },
-        tabBarItemStyle: { height: 58, paddingTop: 0, paddingBottom: 0 },
+        tabBarItemStyle: { height: theme.layout.tabBar.height, paddingTop: 0, paddingBottom: 0 },
       }}
     >
       <Tabs.Screen

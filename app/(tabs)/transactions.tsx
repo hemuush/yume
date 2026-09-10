@@ -305,7 +305,7 @@ export default function TransactionsScreen() {
         </View>
       )}
 
-      <ScrollView contentContainerStyle={{ paddingBottom: 110 + insets.bottom }}>
+      <ScrollView contentContainerStyle={{ paddingBottom: theme.layout.tabScreenScrollPad + insets.bottom }}>
         {accounts.length === 0 && (
           <Text style={styles.emptyText}>Add an account first before recording transactions.</Text>
         )}

@@ -153,7 +153,7 @@ export default function NotificationsScreen() {
             </Animated.View>
           ))
         )}
-        <View style={{ height: 40 + insets.bottom }} />
+        <View style={{ height: theme.layout.screenScrollPad + insets.bottom }} />
       </ScrollView>
     </View>
   );

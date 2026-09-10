@@ -226,7 +226,7 @@ export default function BackupScreen() {
   return (
     <View style={styles.container}>
       <AppHeader title="Backup & Restore" showBack />
-      <ScrollView contentContainerStyle={{ paddingBottom: 40 + insets.bottom }}>
+      <ScrollView contentContainerStyle={{ paddingBottom: theme.layout.screenScrollPad + insets.bottom }}>
         <Text style={styles.sectionTitle}>Automatic backup frequency</Text>
         <View style={styles.freqWrap}>
           <SegmentedControl options={FREQUENCIES} value={frequency} onChange={onChangeFrequency} />

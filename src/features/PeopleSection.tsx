@@ -85,7 +85,7 @@ export function PeopleSection() {
         </View>
       </View>
 
-      <ScrollView contentContainerStyle={{ paddingBottom: 110 + insets.bottom }}>
+      <ScrollView contentContainerStyle={{ paddingBottom: theme.layout.tabScreenScrollPad + insets.bottom }}>
         {people.length === 0 ? (
           <EmptyState title="No one here yet" subtitle="Add a friend or family member." />
         ) : (
