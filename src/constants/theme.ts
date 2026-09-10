@@ -10,6 +10,8 @@
 // only where they happened to look worst. Every screen reads these tokens
 // rather than hardcoding hex values.
 
+import { StyleSheet } from 'react-native';
+
 export const theme = {
   colors: {
     background: '#EDE7D6',
@@ -121,9 +123,9 @@ export const settingsRowStyle = {
   marginHorizontal: 20,
   marginBottom: 8,
   backgroundColor: theme.colors.surface,
-  borderWidth: theme.border.thick,
-  borderColor: theme.colors.ink,
-  borderRadius: theme.radius.md,
+  borderWidth: StyleSheet.hairlineWidth,
+  borderColor: theme.colors.borderSoft,
+  borderRadius: theme.radius.lg,
   padding: 12,
 };
 

@@ -1,5 +1,6 @@
+import { useEffect, useState } from 'react';
 import { Tabs, router } from 'expo-router';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Animated } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from '@expo/vector-icons/Feather';
 import { theme } from '@/constants/theme';
@@ -8,13 +9,24 @@ import { HomeIcon, ActivityIcon, LoanIcon, ReportsIcon } from '@/components/icon
 /**
  * A tab's icon inside the floating pill. The active tab — and the centre
  * "+", which is always "on" — sits in a filled ink circle with a cream
- * glyph; the rest are ink line icons on the sage pill.
+ * glyph; the rest are ink line icons on the sage pill. Becoming active
+ * gives the circle a small pop.
  */
 function TabIcon({ Icon, focused }: { Icon: typeof HomeIcon; focused: boolean }) {
+  // Lazy state init (not useRef.current) so the Animated.Value reads as a
+  // plain value in render — the shape the hooks lint rules want.
+  const [scale] = useState(() => new Animated.Value(1));
+  useEffect(() => {
+    if (!focused) return;
+    Animated.sequence([
+      Animated.timing(scale, { toValue: 1.12, duration: 110, useNativeDriver: true }),
+      Animated.spring(scale, { toValue: 1, useNativeDriver: true, speed: 18, bounciness: 8 }),
+    ]).start();
+  }, [focused, scale]);
   return (
-    <View style={[styles.circle, focused && styles.circleFilled]}>
+    <Animated.View style={[styles.circle, focused && styles.circleFilled, { transform: [{ scale }] }]}>
       <Icon color={focused ? theme.colors.surface : theme.colors.ink} size={21} />
-    </View>
+    </Animated.View>
   );
 }
 
@@ -40,6 +52,8 @@ export default function TabsLayout() {
         headerShown: false,
         tabBarShowLabel: false,
         tabBarHideOnKeyboard: true,
+        // A quick cross-fade between tabs rather than an instant cut.
+        animation: 'fade',
         // A floating sage pill, clear of the device's own gesture bar. It
         // sits above the content (position: absolute); the tab screens all
         // pad their scroll views past it.

@@ -283,7 +283,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.surfaceAlt,
   },
   timeValue: {
-    fontFamily: theme.font.display,
+    fontFamily: theme.font.roundedBold,
     fontSize: 22,
     color: theme.colors.textPrimary,
     minWidth: 110,

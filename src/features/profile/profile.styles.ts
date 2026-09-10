@@ -28,7 +28,7 @@ export const styles = StyleSheet.create({
   },
   avatarInitial: { fontFamily: theme.font.display, fontSize: 30 },
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 12 },
-  name: { fontFamily: theme.font.display, fontSize: 20, color: theme.colors.textPrimary },
+  name: { fontFamily: theme.font.roundedBold, fontSize: 20, color: theme.colors.textPrimary },
   nameEditRow: {
     flexDirection: 'row',
     alignItems: 'center',

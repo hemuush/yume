@@ -408,7 +408,12 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.ink,
     borderRadius: theme.radius.lg,
   },
-  aboutName: { fontFamily: theme.font.display, fontSize: 20, color: theme.colors.textPrimary, marginTop: 10 },
+  aboutName: {
+    fontFamily: theme.font.roundedBold,
+    fontSize: 20,
+    color: theme.colors.textPrimary,
+    marginTop: 10,
+  },
   aboutTagline: { fontFamily: theme.font.body, fontSize: 12.5, color: theme.colors.textMuted, marginTop: 3 },
   aboutFacts: { alignSelf: 'stretch', gap: 10, marginTop: 18 },
   aboutFactRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },

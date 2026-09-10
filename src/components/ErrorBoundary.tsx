@@ -46,6 +46,11 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.background,
     padding: 28,
   },
-  title: { fontFamily: theme.font.display, fontSize: 19, color: theme.colors.textPrimary, marginBottom: 8 },
+  title: {
+    fontFamily: theme.font.roundedBold,
+    fontSize: 19,
+    color: theme.colors.textPrimary,
+    marginBottom: 8,
+  },
   detail: { fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textMuted, textAlign: 'center' },
 });

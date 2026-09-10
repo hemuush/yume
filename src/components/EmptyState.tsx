@@ -23,8 +23,8 @@ export function EmptyState({ illustration = <SuuIllustration pose="sleepy" />, t
 const styles = StyleSheet.create({
   wrap: { alignItems: 'center', paddingVertical: 28, paddingHorizontal: 32 },
   title: {
-    fontFamily: theme.font.bodyMedium,
-    fontSize: 14,
+    fontFamily: theme.font.roundedMedium,
+    fontSize: 14.5,
     color: theme.colors.textSecondary,
     marginTop: 14,
     textAlign: 'center',

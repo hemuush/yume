@@ -171,7 +171,19 @@ function AppGate({ needsOnboarding, initialLocked }: { needsOnboarding: boolean;
           amounts" from the Profile header left the Settings switch showing
           the old state until a full remount. The screens here are light, so
           keeping them live costs little. */}
-      <Stack screenOptions={{ headerShown: false, animation: 'slide_from_right', freezeOnBlur: false }}>
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          animation: 'slide_from_right',
+          animationDuration: 260,
+          // Swipe from anywhere on the screen to go back, not just the left
+          // edge — a pushed screen (Settings, a detail view) should feel as
+          // dismissible as it looks.
+          gestureEnabled: true,
+          fullScreenGestureEnabled: true,
+          freezeOnBlur: false,
+        }}
+      >
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="categories" />
         <Stack.Screen name="profile" />
