@@ -69,8 +69,10 @@ export default function RootLayout() {
         // every cold start — scheduled notifications already survive a
         // normal restart, but this keeps them self-healing after a
         // reinstall or an OS-level clear.
-        void getNotificationPrefs().then(syncDailyReminder);
-        void getNotificationPrefs().then(syncWeeklySummary);
+        void getNotificationPrefs().then((prefs) => {
+          void syncDailyReminder(prefs);
+          void syncWeeklySummary(prefs);
+        });
 
         setInitialLocked(await getAppLockEnabled());
 
