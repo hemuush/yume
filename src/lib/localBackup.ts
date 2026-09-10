@@ -33,6 +33,32 @@ function backupFilename(dateIso: string): string {
   return `yume-backup-${dateIso}`;
 }
 
+// How many days of local backups to keep in the chosen folder. Backups are
+// one-per-calendar-day, so this is roughly two weeks of history; older files
+// are pruned after each successful write so the folder can't grow without
+// bound over months of use. Yesterday's file always survives, which covers
+// the "today's data got corrupted, restore the last good copy" case.
+const KEEP_DAILY_BACKUPS = 14;
+
+/**
+ * Deletes all but the newest `KEEP_DAILY_BACKUPS` backup files in the folder.
+ * The ISO date in each filename sorts correctly as a string (see
+ * backupFilename), so "newest" is just the tail of a lexical sort. Best
+ * effort — a failed delete here must never fail the backup that just
+ * succeeded.
+ */
+async function pruneOldLocalBackups(directoryUri: string): Promise<void> {
+  try {
+    const uris = await StorageAccessFramework.readDirectoryAsync(directoryUri);
+    const backups = uris.filter((u) => decodeURIComponent(u).includes('yume-backup-')).sort();
+    for (const uri of backups.slice(0, Math.max(0, backups.length - KEEP_DAILY_BACKUPS))) {
+      await StorageAccessFramework.deleteAsync(uri).catch(() => {});
+    }
+  } catch {
+    // folder listing failed — nothing to prune, and not worth surfacing
+  }
+}
+
 /**
  * Writes a fresh snapshot into the chosen folder right now, replacing
  * today's backup if one already exists rather than adding another one next
@@ -62,6 +88,7 @@ export async function writeLocalBackupNow(directoryUri: string): Promise<{ sizeB
   const fileUri = await StorageAccessFramework.createFileAsync(directoryUri, filename, 'application/json');
   await StorageAccessFramework.writeAsStringAsync(fileUri, json);
   await setLastLocalBackupAt(new Date().toISOString());
+  await pruneOldLocalBackups(directoryUri);
   return { sizeBytes: json.length };
 }
 

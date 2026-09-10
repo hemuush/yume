@@ -167,13 +167,21 @@ export default function BackupScreen() {
             style: 'destructive',
             onPress: async () => {
               try {
-                await restoreFromSnapshot(snapshot);
+                const { skippedColumns } = await restoreFromSnapshot(snapshot);
                 resolve();
                 // A restore replaces every table — every screen's loaded
                 // state is now stale. Each screen reloads via useFocusEffect,
                 // so bouncing to Home is enough for the rest of the app to
                 // pick up the restored data as tabs are visited.
-                Alert.alert('Restore complete', 'Your data has been restored.', [
+                const note =
+                  skippedColumns.length > 0
+                    ? `\n\nHeads up: ${skippedColumns.length} field${
+                        skippedColumns.length === 1 ? '' : 's'
+                      } in this backup aren't part of this version of Yume and were skipped (${skippedColumns.join(
+                        ', '
+                      )}). Everything else was restored.`
+                    : '';
+                Alert.alert('Restore complete', `Your data has been restored.${note}`, [
                   { text: 'OK', onPress: () => router.replace('/(tabs)') },
                 ]);
               } catch (e) {
