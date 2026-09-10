@@ -72,7 +72,7 @@ export function RateChangeModal({
   };
 
   return (
-    <ModalSheet visible onClose={onClose} variant="center" title="Update interest rate">
+    <ModalSheet visible onClose={onClose} variant="center" showClose title="Update interest rate">
       <Text style={styles.cardSub}>Current rate: {(loan.interestRateAnnualBp / 100).toFixed(2)}%</Text>
       <FormInput
         label="New annual interest rate (%)"

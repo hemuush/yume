@@ -110,7 +110,14 @@ export const styles = StyleSheet.create({
   negative: { color: theme.colors.expense },
   archivedCard: { opacity: 0.6 },
 
-  fieldLabel: { fontSize: 13, fontWeight: '600', color: theme.colors.textSecondary, marginBottom: 6 },
+  fieldLabel: {
+    fontSize: 10.5,
+    fontFamily: theme.font.roundedMedium,
+    letterSpacing: 0.4,
+    textTransform: 'uppercase',
+    color: theme.colors.textMuted,
+    marginBottom: 6,
+  },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 10 },
   hintText: { fontSize: 12, color: theme.colors.textMuted, marginBottom: 14, lineHeight: 17 },
   errorText: { color: theme.colors.expense, fontSize: 13, marginBottom: 12 },

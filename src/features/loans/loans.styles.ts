@@ -175,7 +175,14 @@ export const styles = StyleSheet.create({
     alignSelf: 'center',
     width: '90%',
   },
-  fieldLabel: { fontSize: 13, fontWeight: '600', color: theme.colors.textSecondary, marginBottom: 6 },
+  fieldLabel: {
+    fontSize: 10.5,
+    fontFamily: theme.font.roundedMedium,
+    letterSpacing: 0.4,
+    textTransform: 'uppercase',
+    color: theme.colors.textMuted,
+    marginBottom: 6,
+  },
   wizardEyebrow: {
     fontSize: 10.5,
     fontWeight: '800',
@@ -184,8 +191,8 @@ export const styles = StyleSheet.create({
     marginBottom: 8,
   },
   progressRow: { flexDirection: 'row', gap: 5, marginBottom: 16 },
-  progressSeg: { flex: 1, height: 3, borderRadius: 2, backgroundColor: theme.colors.borderSoft },
-  progressSegDone: { backgroundColor: theme.colors.textPrimary },
+  progressSeg: { flex: 1, height: 4, borderRadius: 999, backgroundColor: theme.colors.surfaceAlt },
+  progressSegDone: { backgroundColor: theme.colors.primary },
   endDateRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',

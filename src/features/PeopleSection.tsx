@@ -201,7 +201,7 @@ function AddPersonModal({
   };
 
   return (
-    <ModalSheet visible={visible} onClose={onClose} title="New Person">
+    <ModalSheet visible={visible} onClose={onClose} variant="center" showClose title="New person">
       <FormInput label="Name" value={name} onChangeText={setName} placeholder="e.g. Abhinav" />
       {error && <Text style={styles.errorText}>{error}</Text>}
       <View style={styles.modalActions}>

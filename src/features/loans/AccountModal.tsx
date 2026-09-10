@@ -39,7 +39,7 @@ export function AccountModal({
   };
 
   return (
-    <ModalSheet visible onClose={onClose} variant="center" title="EMI account">
+    <ModalSheet visible onClose={onClose} variant="center" showClose title="EMI account">
       <Text style={styles.hintText}>
         Which account future EMIs for this loan come out of. This only changes payments made from here on — it
         never rewrites transactions already recorded.

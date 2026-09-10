@@ -61,7 +61,7 @@ export function AssetModal({
   };
 
   return (
-    <ModalSheet visible onClose={onClose} variant="center" title="Loan asset">
+    <ModalSheet visible onClose={onClose} variant="center" showClose title="Loan asset">
       <FormInput label="What is it?" value={label} onChangeText={setLabel} placeholder="e.g. Home, Car" />
       <FormInput
         label="Current estimated value (optional)"

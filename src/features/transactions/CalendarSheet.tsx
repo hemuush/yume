@@ -64,7 +64,14 @@ export function CalendarSheet({
   }
 
   return (
-    <ModalSheet visible={visible} onClose={onClose} variant="center" scrollable={false} title="Pick a date">
+    <ModalSheet
+      visible={visible}
+      onClose={onClose}
+      variant="center"
+      showClose
+      scrollable={false}
+      title="Pick a date"
+    >
       <View style={styles.header}>
         <Pressable
           onPress={() => setViewMonth(addMonthsToIsoDate(`${viewMonth}-01`, -1).slice(0, 7))}
