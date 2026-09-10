@@ -212,29 +212,6 @@ export async function getMemberSinceYear(): Promise<number> {
   return Number.isFinite(year) ? year : new Date().getFullYear();
 }
 
-const LAST_DRIVE_BACKUP_KEY = 'last_backup_at';
-let cachedLastDriveBackupAt: string | null | undefined;
-
-export async function getLastDriveBackupAt(): Promise<string | null> {
-  if (cachedLastDriveBackupAt !== undefined) return cachedLastDriveBackupAt;
-  const db = await getDb();
-  const row = await db.getFirstAsync<{ value: string }>('SELECT value FROM settings WHERE key = ?', [
-    LAST_DRIVE_BACKUP_KEY,
-  ]);
-  cachedLastDriveBackupAt = row?.value ?? null;
-  return cachedLastDriveBackupAt;
-}
-
-export async function setLastDriveBackupAt(iso: string): Promise<void> {
-  const db = await getDb();
-  await db.runAsync(
-    `INSERT INTO settings (key, value) VALUES (?, ?)
-     ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
-    [LAST_DRIVE_BACKUP_KEY, iso]
-  );
-  cachedLastDriveBackupAt = iso;
-}
-
 const LOCAL_BACKUP_FOLDER_KEY = 'local_backup_folder_uri';
 let cachedLocalBackupFolder: string | null | undefined;
 
@@ -351,9 +328,7 @@ export const BACKUP_FREQUENCY_MS: Record<BackupFrequency, number> = {
 
 export type BackupOutcome = { at: string; ok: boolean; sizeBytes?: number; error?: string };
 
-const LAST_DRIVE_BACKUP_RESULT_KEY = 'last_drive_backup_result';
 const LAST_LOCAL_BACKUP_RESULT_KEY = 'last_local_backup_result';
-let cachedLastDriveResult: BackupOutcome | null | undefined;
 let cachedLastLocalResult: BackupOutcome | null | undefined;
 
 async function getBackupOutcome(key: string): Promise<BackupOutcome | null> {
@@ -376,17 +351,6 @@ async function setBackupOutcome(key: string, outcome: BackupOutcome): Promise<vo
   );
 }
 
-export async function getLastDriveBackupResult(): Promise<BackupOutcome | null> {
-  if (cachedLastDriveResult !== undefined) return cachedLastDriveResult;
-  cachedLastDriveResult = await getBackupOutcome(LAST_DRIVE_BACKUP_RESULT_KEY);
-  return cachedLastDriveResult;
-}
-
-export async function setLastDriveBackupResult(outcome: BackupOutcome): Promise<void> {
-  await setBackupOutcome(LAST_DRIVE_BACKUP_RESULT_KEY, outcome);
-  cachedLastDriveResult = outcome;
-}
-
 export async function getLastLocalBackupResult(): Promise<BackupOutcome | null> {
   if (cachedLastLocalResult !== undefined) return cachedLastLocalResult;
   cachedLastLocalResult = await getBackupOutcome(LAST_LOCAL_BACKUP_RESULT_KEY);
@@ -402,12 +366,10 @@ export function resetSettingsCache(): void {
   cachedCurrency = null;
   cachedAccent = null;
   cachedUserName = undefined;
-  cachedLastDriveBackupAt = undefined;
   cachedLocalBackupFolder = undefined;
   cachedLastLocalBackupAt = undefined;
   cachedAppLockEnabled = undefined;
   cachedBackupFrequency = undefined;
-  cachedLastDriveResult = undefined;
   cachedLastLocalResult = undefined;
   cachedLastOverspendNotified = undefined;
   cachedHideSensitiveAmounts = undefined;

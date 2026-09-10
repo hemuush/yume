@@ -254,10 +254,10 @@ export default function SettingsScreen() {
             onPress={() => router.push('/notification-settings')}
           />
           <Row
-            icon="cloud-outline"
+            icon="folder-outline"
             iconBg={theme.colors.flatBlue}
             label="Backup & Restore"
-            sub="Google Drive, local folder, export"
+            sub="Local folder, export, import from Flynse"
             onPress={() => router.push('/backup')}
           />
           <Row

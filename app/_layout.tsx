@@ -20,7 +20,6 @@ import { Fredoka_600SemiBold } from '@expo-google-fonts/fredoka/600SemiBold';
 import { getDb } from '@/db/client';
 import { getNotificationPrefs, getHasOnboarded, setHasOnboarded, getAppLockEnabled } from '@/db/settings';
 import { listAccounts, listTransactions } from '@/db/ledger';
-import { runAutoBackupIfDue } from '@/lib/autoBackup';
 import { runLocalBackupIfDue } from '@/lib/localBackup';
 import { runDueRecurringRules } from '@/db/recurring';
 import { ensureAndroidChannel, syncDailyReminder, syncWeeklySummary } from '@/lib/notifications';
@@ -53,7 +52,7 @@ export default function RootLayout() {
     getDb()
       .then(async () => {
         setDbReady(true);
-        void runAutoBackupIfDue(); // fire-and-forget; never blocks startup or shows an error
+        // fire-and-forget; never blocks startup or shows an error
         void runLocalBackupIfDue();
         // Catches up any missed recurring transactions since last open. Each
         // rule now isolates its own failures internally; this catch only
