@@ -4,6 +4,7 @@
   "main": "expo-router/entry",
   "dependencies": {
     "@expo-google-fonts/archivo": "^0.4.2",
+    "@expo-google-fonts/fredoka": "^0.4.1",
     "@expo-google-fonts/space-mono": "^0.4.2",
     "@expo/metro-runtime": "~57.0.15",
     "@expo/vector-icons": "^15.1.1",

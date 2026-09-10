@@ -9,12 +9,7 @@ import { HomeIcon, ActivityIcon, LoanIcon, ReportsIcon } from '@/components/icon
 function TabIcon({ Icon, focused }: { Icon: typeof HomeIcon; focused: boolean }) {
   const { accent, onAccent } = useAccent();
   return (
-    <View
-      style={[
-        styles.iconWrap,
-        focused && { backgroundColor: accent, borderWidth: theme.border.thin, borderColor: theme.colors.ink },
-      ]}
-    >
+    <View style={[styles.iconWrap, focused && { backgroundColor: accent }]}>
       <Icon color={focused ? onAccent : theme.colors.ink} size={19} />
     </View>
   );
@@ -51,13 +46,16 @@ export default function TabsLayout() {
         headerShown: false,
         tabBarStyle: {
           backgroundColor: theme.colors.surface,
-          borderTopColor: theme.colors.ink,
-          borderTopWidth: theme.border.thick,
-          height: 58 + insets.bottom,
-          paddingTop: 8,
+          borderTopColor: theme.colors.borderSoft,
+          borderTopWidth: StyleSheet.hairlineWidth,
+          height: 64 + insets.bottom,
+          paddingTop: 6,
           paddingBottom: insets.bottom,
         },
-        tabBarShowLabel: false,
+        tabBarShowLabel: true,
+        tabBarLabelStyle: { fontFamily: theme.font.roundedMedium, fontSize: 10.5, marginTop: 2 },
+        tabBarActiveTintColor: theme.colors.ink,
+        tabBarInactiveTintColor: theme.colors.textMuted,
         tabBarHideOnKeyboard: true,
       }}
     >
@@ -117,19 +115,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  fabSlot: { top: -18, alignItems: 'center', justifyContent: 'center' },
+  fabSlot: { top: -16, alignItems: 'center', justifyContent: 'center' },
   fabInner: {
     width: 54,
     height: 54,
     borderRadius: 27,
-    borderWidth: theme.border.thick,
-    borderColor: theme.colors.ink,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.borderSoft,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: theme.colors.ink,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 1,
-    shadowRadius: 0,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.18,
+    shadowRadius: 10,
+    elevation: 6,
   },
 });

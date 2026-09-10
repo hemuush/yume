@@ -64,7 +64,7 @@ export function HeaderPrivacyToggle() {
 }
 
 /** The profile button — an avatar bubble showing the user's initial, accent-filled. */
-export function HeaderUserButton() {
+export function HeaderUserButton({ soft }: { soft?: boolean } = {}) {
   const { accent, onAccent } = useAccent();
   // getCachedUserName() is a plain module-level cache, not reactive state —
   // reading it once at mount (as this used to) meant editing your name on
@@ -84,7 +84,7 @@ export function HeaderUserButton() {
       hitSlop={8}
       accessibilityRole="button"
       accessibilityLabel="Your profile"
-      style={[styles.iconBtn, { backgroundColor: accent }]}
+      style={[styles.iconBtn, soft && styles.iconBtnSoft, { backgroundColor: accent }]}
     >
       {initial ? (
         <Text style={[styles.initial, { color: onAccent }]}>{initial}</Text>
@@ -100,11 +100,14 @@ export function HeaderIconButton({
   onPress,
   label,
   badge,
+  soft,
 }: {
   icon: React.ComponentProps<typeof Feather>['name'];
   onPress: () => void;
   label: string;
   badge?: boolean;
+  /** Hairline instead of the 3px ink border — for the softer Home header. */
+  soft?: boolean;
 }) {
   return (
     <Pressable
@@ -112,7 +115,7 @@ export function HeaderIconButton({
       hitSlop={8}
       accessibilityRole="button"
       accessibilityLabel={label}
-      style={[styles.iconBtn, { backgroundColor: theme.colors.surface }]}
+      style={[styles.iconBtn, soft && styles.iconBtnSoft, { backgroundColor: theme.colors.surface }]}
     >
       <Feather name={icon} size={16} color={theme.colors.ink} />
       {badge && <View style={styles.badge} />}
@@ -152,6 +155,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  iconBtnSoft: { borderWidth: StyleSheet.hairlineWidth, borderColor: theme.colors.borderSoft },
   initial: { fontFamily: theme.font.bodyBold, fontSize: 14 },
   badge: {
     position: 'absolute',
