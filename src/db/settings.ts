@@ -315,10 +315,6 @@ export async function getBackupFrequency(): Promise<BackupFrequency> {
   return cachedBackupFrequency;
 }
 
-export function getCachedBackupFrequency(): BackupFrequency {
-  return cachedBackupFrequency ?? 'daily';
-}
-
 export async function setBackupFrequency(value: BackupFrequency): Promise<void> {
   const db = await getDb();
   await db.runAsync(

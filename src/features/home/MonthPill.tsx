@@ -16,7 +16,7 @@ import {
  * The compact period control in the Home header — "September 2026 ▾". Tapping
  * opens a small menu with prev/next, a "This month" reset, and the Month/Year
  * toggle, so browsing history and switching to the yearly view both stay
- * reachable without the full PeriodNavigator bar the other screens use.
+ * reachable without a full prev/next period bar taking up header space.
  */
 export function MonthPill({
   cursor,
