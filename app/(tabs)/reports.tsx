@@ -1,107 +1,80 @@
-import { useCallback, useState } from 'react';
-import { View, Text, ScrollView, ActivityIndicator, Pressable } from 'react-native';
+import { useCallback, useMemo, useState } from 'react';
+import { View, Text, ScrollView, ActivityIndicator, Pressable, StyleSheet } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Feather from '@expo/vector-icons/Feather';
+import Svg, { Path, Line, Circle } from 'react-native-svg';
 import {
   getRangeComparison,
   PeriodComparison,
   findTopGrowingCategory,
   getMonthlyExpenseTrend,
-  getIncomeExpenseTrend,
-  getNetWorthTrend,
   getSubcategoryBreakdown,
+  getDailyExpenseTotals,
   TrendPoint,
-  IncomeExpensePoint,
-  NetWorthPoint,
+  DailyExpensePoint,
   CategoryBreakdownItem,
 } from '@/db/reports';
+import { listTransactions } from '@/db/ledger';
+import { Transaction } from '@/types';
 import { ModalSheet } from '@/components/ModalSheet';
+import { AppHeader } from '@/components/AppHeader';
+import { Amount } from '@/components/Amount';
 import { formatMoney } from '@/lib/money';
 import { formatPctChange } from '@/lib/format';
 import { roundedMinor, allocateRoundedMinor } from '@/lib/round';
-import { SegmentedControl } from '@/components/SegmentedControl';
-import { SectionLabel } from '@/components/SectionLabel';
-import { InsightCard } from '@/components/InsightCard';
-import { HorizontalBarList } from '@/components/HorizontalBarList';
-import { PieChartDoodle } from '@/components/PieChartDoodle';
-import { LineChartDoodle } from '@/components/LineChartDoodle';
-import { DualLineChartDoodle } from '@/components/DualLineChartDoodle';
-import { AppHeader } from '@/components/AppHeader';
-import { PeriodNavigator } from '@/components/PeriodNavigator';
 import {
   CURRENT_PERIOD,
   PeriodCursor,
+  periodLabel,
   periodRange,
   previousPeriodRange,
   previousPeriodLabel,
-  periodLabel,
+  stepPeriod,
+  setGranularity,
+  canStepForward,
 } from '@/lib/period';
 import { parseLocalIsoDate } from '@/lib/date';
 import { theme } from '@/constants/theme';
-import { NeoTile } from '@/components/NeoTile';
-import { styles } from '@/features/reports/reports.styles';
-import { SavingsRing } from '@/features/reports/SavingsRing';
+import { SpendHeatmap, HeatCell } from '@/features/reports/SpendHeatmap';
+import {
+  heatLevel,
+  baselineFromTrend,
+  recurringVsDiscretionary,
+  categoryDeltas,
+  describeSpendingPattern,
+} from '@/features/reports/reportsInsights';
 
-const BREAKDOWN_VIEWS: { label: string; value: 'bars' | 'pie' }[] = [
-  { label: 'Bars', value: 'bars' },
-  { label: 'Pie', value: 'pie' },
-];
-
-const TREND_VIEWS: { label: string; value: 'spend' | 'io' | 'net' }[] = [
-  { label: 'Spending', value: 'spend' },
-  { label: 'Income/Exp', value: 'io' },
-  { label: 'Net worth', value: 'net' },
-];
+const WEEKDAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
 export default function ReportsScreen() {
   const insets = useSafeAreaInsets();
   const [cursor, setCursor] = useState<PeriodCursor>(CURRENT_PERIOD);
   const [comparison, setComparison] = useState<PeriodComparison | null>(null);
   const [trend, setTrend] = useState<TrendPoint[]>([]);
-  const [incomeExpenseTrend, setIncomeExpenseTrend] = useState<IncomeExpensePoint[]>([]);
-  const [netWorthTrend, setNetWorthTrend] = useState<NetWorthPoint[]>([]);
-  const [breakdownView, setBreakdownView] = useState<'bars' | 'pie'>('bars');
-  const [trendView, setTrendView] = useState<'spend' | 'io' | 'net'>('spend');
-  // Distinguishes "still loading" from "loaded, but this month has no data"
-  // from "the query failed" — previously all three rendered as a blank page
-  // with no way to tell which had happened.
+  const [daily, setDaily] = useState<DailyExpensePoint[]>([]);
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
   const [errorText, setErrorText] = useState<string | null>(null);
-  // A rolled-up category (one with subcategories) can be drilled into — this
-  // holds which one and its own split, fetched on demand rather than
-  // upfront for every category on the screen.
-  const [drillDown, setDrillDown] = useState<{ categoryId: string; name: string } | null>(null);
-  const [drillItems, setDrillItems] = useState<CategoryBreakdownItem[] | null>(null);
 
-  const openDrillDown = useCallback(
-    async (cat: { categoryId: string; name: string }) => {
-      setDrillDown(cat);
-      setDrillItems(null);
-      const items = await getSubcategoryBreakdown(cat.categoryId, periodRange(cursor));
-      setDrillItems(items);
-    },
-    [cursor]
-  );
+  const [drill, setDrill] = useState<{ categoryId: string; name: string } | null>(null);
+  const [drillItems, setDrillItems] = useState<CategoryBreakdownItem[] | null>(null);
+  const [daySheet, setDaySheet] = useState<string | null>(null);
+  const [dayTx, setDayTx] = useState<Transaction[] | null>(null);
 
   const load = useCallback(async (c: PeriodCursor) => {
     const range = periodRange(c);
-    // Trends run backwards from the end of whatever period is being viewed,
-    // so browsing to March 2025 shows the months leading up to March 2025 —
-    // not the six months before today.
     const anchor = parseLocalIsoDate(range.end);
-    const trendMonths = c.granularity === 'year' ? 12 : 6;
+    const trendMonths = c.granularity === 'year' ? 12 : 7;
     try {
       setStatus((s) => (s === 'ready' ? s : 'loading'));
-      const [cmp, tr, iet, nwt] = await Promise.all([
+      const [cmp, tr, dy] = await Promise.all([
         getRangeComparison(range, previousPeriodRange(c), c.granularity),
         getMonthlyExpenseTrend(trendMonths, anchor),
-        getIncomeExpenseTrend(trendMonths, anchor),
-        getNetWorthTrend(trendMonths, anchor),
+        getDailyExpenseTotals(range),
       ]);
       setComparison(cmp);
       setTrend(tr);
-      setIncomeExpenseTrend(iet);
-      setNetWorthTrend(nwt);
+      setDaily(dy);
       setStatus('ready');
       setErrorText(null);
     } catch (e: any) {
@@ -116,10 +89,27 @@ export default function ReportsScreen() {
     }, [load, cursor])
   );
 
+  const openDrill = useCallback(
+    async (cat: { categoryId: string; name: string }) => {
+      setDrill(cat);
+      setDrillItems(null);
+      setDrillItems(await getSubcategoryBreakdown(cat.categoryId, periodRange(cursor)));
+    },
+    [cursor]
+  );
+
+  const openDay = useCallback(async (iso: string) => {
+    setDaySheet(iso);
+    setDayTx(null);
+    setDayTx(await listTransactions({ fromDate: iso, toDate: iso }));
+  }, []);
+
+  const dailyByDate = useMemo(() => new Map(daily.map((d) => [d.date, d.totalMinor])), [daily]);
+
   const header = (
     <>
       <AppHeader title="Reports" />
-      <PeriodNavigator cursor={cursor} onChange={setCursor} />
+      <PeriodRow cursor={cursor} onChange={setCursor} />
     </>
   );
 
@@ -127,327 +117,551 @@ export default function ReportsScreen() {
     return (
       <View style={styles.container}>
         {header}
-        <View style={styles.centerBox}>
-          <Text style={styles.errorTitle}>Couldn't build your report</Text>
-          <Text style={styles.errorDetail}>{errorText}</Text>
+        <View style={styles.center}>
+          <Text style={styles.errTitle}>Couldn&rsquo;t build your report</Text>
+          <Text style={styles.errDetail}>{errorText}</Text>
         </View>
       </View>
     );
   }
-
   if (!comparison) {
     return (
       <View style={styles.container}>
         {header}
-        <View style={styles.centerBox}>
+        <View style={styles.center}>
           <ActivityIndicator color={theme.colors.ink} />
         </View>
       </View>
     );
   }
 
-  const { current, previous, incomeChangePct, expenseChangePct } = comparison;
+  const { current, previous } = comparison;
   const comparisonLabel = previousPeriodLabel(cursor);
-  // current.netMinor already excludes money moved into savings this period
-  // (see reports.ts) — so this is "how much of my income is still
-  // uncommitted", not "how much did I keep in total" (which would also
-  // count what was already moved to savings).
-  const savingsRate = current.incomeMinor > 0 ? (current.netMinor / current.incomeMinor) * 100 : 0;
-  // A single large one-off expense (a loan disbursement, a big purchase)
-  // against modest income produces a mathematically-correct but nonsense
-  // reading like "-4280%" — clamped to a sane range so the ring/label stays
-  // legible instead of turning into a four-digit number nobody can use.
-  const savingsRateClamped = Math.max(-100, Math.min(100, savingsRate));
-  const savingsRateLabel =
-    savingsRate > 999 ? '>999%' : savingsRate < -999 ? '<-999%' : `${Math.round(savingsRate)}%`;
-  const topCategories = current.categoryBreakdown.slice(0, 6);
-  const topGrowing = findTopGrowingCategory(current.categoryBreakdown, previous.categoryBreakdown);
-  const hasAnyActivity = current.incomeMinor > 0 || current.expenseMinor > 0;
-  // Every figure on this screen is shown rounded to whole rupees; derive the
-  // ones that are sums/differences from those same rounded parts so "Net"
-  // always equals shown Income − shown Expenses − shown "moved to savings",
-  // and the category rows add up to the shown total spend.
-  const dispIncome = roundedMinor(current.incomeMinor);
   const dispExpense = roundedMinor(current.expenseMinor);
-  const dispSavings = roundedMinor(current.savingsContributionMinor);
-  const dispNet = dispIncome - dispExpense - dispSavings;
-  const categoryBreakdownDisp = allocateRoundedMinor(
+  const hasSpend = current.expenseMinor > 0;
+
+  const range = periodRange(cursor);
+  const rangeStart = parseLocalIsoDate(range.start);
+  const rangeEnd = parseLocalIsoDate(range.end);
+  const daysInPeriod = Math.round((rangeEnd.getTime() - rangeStart.getTime()) / 86400000) + 1;
+
+  const baseline = baselineFromTrend(trend);
+  const vsUsualPct = baseline && baseline > 0 ? ((current.expenseMinor - baseline) / baseline) * 100 : null;
+  const perDay = daysInPeriod > 0 ? Math.round(dispExpense / daysInPeriod) : 0;
+  const spendDays = daily.filter((d) => d.totalMinor > 0).length;
+
+  const reads = describeSpendingPattern(daily, daysInPeriod);
+
+  const { recurringMinor, discretionaryMinor } = recurringVsDiscretionary(current.categoryBreakdown);
+  const rTotal = recurringMinor + discretionaryMinor;
+
+  const deltas = categoryDeltas(current.categoryBreakdown, previous.categoryBreakdown);
+  const catDisp = allocateRoundedMinor(
     current.categoryBreakdown.map((c) => c.totalMinor),
     dispExpense
   );
+  const maxCat = Math.max(1, ...current.categoryBreakdown.map((c) => c.totalMinor));
 
-  const netIsPositive = dispNet >= 0;
-  const netColor = netIsPositive ? theme.colors.income : theme.colors.expense;
+  const topGrowing = findTopGrowingCategory(current.categoryBreakdown, previous.categoryBreakdown);
+  const moverPrev = topGrowing
+    ? (previous.categoryBreakdown.find((c) => c.categoryId === topGrowing.categoryId)?.totalMinor ?? 0)
+    : 0;
+  const moverCur = topGrowing
+    ? (current.categoryBreakdown.find((c) => c.categoryId === topGrowing.categoryId)?.totalMinor ?? 0)
+    : 0;
 
-  const insight = topGrowing
-    ? {
-        icon: '⚠️',
-        tone: 'warn' as const,
-        text: `${topGrowing.name} is up ${formatPctChange(topGrowing.pctChange)} vs ${comparisonLabel} — the biggest jump.`,
-      }
-    : expenseChangePct == null
-      ? {
-          icon: '🐦',
-          tone: 'default' as const,
-          text: "Log a few more days and I'll start spotting trends here.",
-        }
-      : {
-          icon: '🐦',
-          tone: 'default' as const,
-          text:
-            expenseChangePct <= 0
-              ? `spending is down ${formatPctChange(expenseChangePct)} vs ${comparisonLabel} — steady as she goes.`
-              : `spending is up ${formatPctChange(expenseChangePct)} vs ${comparisonLabel}.`,
-        };
-
-  const trendValues = trend.map((t) => t.totalMinor);
-  const netWorthValues = netWorthTrend.map((t) => t.netWorthMinor);
-  const ioValues = incomeExpenseTrend.flatMap((t) => [t.incomeMinor, t.expenseMinor]);
+  // ---- heatmap cells ----
+  let heatCells: HeatCell[] = [];
+  let leadingPad = 0;
+  let heatCols = 7;
+  let heatWeekdays: string[] | undefined = WEEKDAYS;
+  if (cursor.granularity === 'year') {
+    heatCols = 4;
+    heatWeekdays = undefined;
+    const maxMonth = Math.max(1, ...trend.map((t) => t.totalMinor));
+    heatCells = trend.map((t, i) => ({
+      key: `m-${i}`,
+      label: t.label,
+      level: heatLevel(t.totalMinor, maxMonth),
+    }));
+  } else {
+    const y = rangeStart.getFullYear();
+    const m = rangeStart.getMonth();
+    const daysInMonth = new Date(y, m + 1, 0).getDate();
+    leadingPad = new Date(y, m, 1).getDay();
+    const maxDay = Math.max(1, ...daily.map((d) => d.totalMinor));
+    heatCells = Array.from({ length: daysInMonth }, (_, i) => {
+      const day = i + 1;
+      const iso = `${y}-${String(m + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      const total = dailyByDate.get(iso) ?? 0;
+      const dow = new Date(y, m, day).getDay();
+      return {
+        key: iso,
+        label: String(day),
+        level: heatLevel(total, maxDay),
+        isWeekend: dow === 0 || dow === 6,
+        onPress: total > 0 ? () => openDay(iso) : undefined,
+      };
+    });
+  }
 
   return (
     <View style={styles.container}>
       {header}
-
-      <ScrollView contentContainerStyle={{ paddingBottom: 110 + insets.bottom }}>
-        {!hasAnyActivity && (
-          <View style={styles.emptyBanner}>
-            <Text style={styles.emptyBannerText}>
-              Nothing was recorded in this period. Use ‹ › above to look back at a month that has data.
-            </Text>
-          </View>
-        )}
-
-        {/* Net leads — one number that actually answers "how did this month
-            go?" — with Income/Expenses as supporting detail underneath,
-            instead of three separate boxes fighting for equal attention.
-            Stays a plain white card rather than a colored one — Net's own
-            sign already carries the good/bad meaning (green or red), so a
-            fixed identity color here would just fight that instead of
-            reinforcing it. */}
-        <NeoTile borderRadius={theme.radius.xl} style={styles.heroCard}>
-          <View style={styles.heroTop}>
-            <Text style={styles.heroLabel}>NET · {previousPeriodLabelCaps(cursor)}</Text>
-            <SavingsRing
-              pct={savingsRateClamped}
-              color={savingsRate === 0 ? theme.colors.textMuted : netColor}
-            />
-          </View>
-          <Text style={[styles.heroValue, { color: netColor }]} numberOfLines={1} adjustsFontSizeToFit>
-            {formatMoney(dispNet)}
+      <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 110 + insets.bottom }}>
+        {!hasSpend ? (
+          <Text style={styles.empty}>
+            Nothing spent in this period. Use the arrows above to look back at a month with data.
           </Text>
-          <Text style={styles.heroSub}>
-            {current.incomeMinor > 0
-              ? `${savingsRateLabel} of income still uncommitted`
-              : 'No income logged this period'}
-          </Text>
-          <View style={styles.heroSplit}>
-            <View style={styles.splitItem}>
-              <View style={styles.splitLabelRow}>
-                <View style={[styles.splitDot, { backgroundColor: theme.colors.income }]} />
-                <Text style={styles.splitLabel}>Income</Text>
-              </View>
-              <Text
-                style={[styles.splitValue, { color: theme.colors.income }]}
-                numberOfLines={1}
-                adjustsFontSizeToFit
-              >
-                {formatMoney(dispIncome)}
-              </Text>
-              {incomeChangePct != null && (
-                <Text style={styles.splitTrend}>
-                  {incomeChangePct >= 0 ? '↑' : '↓'} {formatPctChange(incomeChangePct)} vs {comparisonLabel}
-                </Text>
-              )}
-            </View>
-            <View style={styles.splitDivider} />
-            <View style={styles.splitItem}>
-              <View style={styles.splitLabelRow}>
-                <View style={[styles.splitDot, { backgroundColor: theme.colors.expense }]} />
-                <Text style={styles.splitLabel}>Expenses</Text>
-              </View>
-              <Text
-                style={[styles.splitValue, { color: theme.colors.expense }]}
-                numberOfLines={1}
-                adjustsFontSizeToFit
-              >
-                {formatMoney(dispExpense)}
-              </Text>
-              {expenseChangePct != null && (
-                <Text style={styles.splitTrend}>
-                  {expenseChangePct >= 0 ? '↑' : '↓'} {formatPctChange(expenseChangePct)} vs {comparisonLabel}
-                </Text>
-              )}
-            </View>
-          </View>
-        </NeoTile>
-
-        {dispSavings !== 0 && (
-          <View style={styles.savingsRow}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.savingsLabel}>Moved to savings</Text>
-              <Text style={styles.savingsHint}>New transfers this period only, not your running balance</Text>
-            </View>
-            <Text style={styles.savingsValue}>{formatMoney(dispSavings)}</Text>
-          </View>
-        )}
-
-        <InsightCard icon={insight.icon} boldPrefix="Flynn says:" text={insight.text} tone={insight.tone} />
-
-        <SectionLabel color={theme.colors.accent} tint={theme.colors.accentTint}>
-          WHERE IT WENT
-        </SectionLabel>
-        {topCategories.length === 0 ? (
-          <Text style={styles.emptyText}>No expenses recorded for this period.</Text>
         ) : (
           <>
-            <View style={styles.chartToggleWrap}>
-              <SegmentedControl options={BREAKDOWN_VIEWS} value={breakdownView} onChange={setBreakdownView} />
-            </View>
-            <NeoTile style={styles.chartCard}>
-              {breakdownView === 'bars' ? (
-                <HorizontalBarList
-                  items={current.categoryBreakdown.map((c, i) => ({
-                    label: c.name,
-                    value: categoryBreakdownDisp[i],
-                    color: c.color,
-                    onPress: c.hasSubcategories ? () => openDrillDown(c) : undefined,
-                    sensitive: c.isSensitive,
-                  }))}
-                />
-              ) : (
-                <View style={styles.pieView}>
-                  <PieChartDoodle
-                    size={112}
-                    slices={topCategories.map((c) => ({ value: c.totalMinor, color: c.color }))}
-                    centerValue={formatMoney(dispExpense)}
-                    centerLabel="Spent"
-                  />
-                  <View style={styles.pieLegend}>
-                    {/* Matches exactly what's drawn — topCategories, not the
-                        full breakdown — so every legend row has a real slice
-                        behind it and the percentages sum to what the pie
-                        actually shows. */}
-                    {topCategories.map((cat) => {
-                      const row = (
-                        <View style={styles.pieLegendRow}>
-                          <View style={[styles.dot, { backgroundColor: cat.color }]} />
-                          <Text style={styles.pieLegendName} numberOfLines={1}>
-                            {cat.name}
-                            {cat.hasSubcategories ? ' ›' : ''}
-                          </Text>
-                          <Text style={styles.pieLegendPct}>
-                            {Math.round((cat.totalMinor / Math.max(1, current.expenseMinor)) * 100)}%
-                          </Text>
-                        </View>
-                      );
-                      return cat.hasSubcategories ? (
-                        <Pressable key={cat.categoryId} onPress={() => openDrillDown(cat)}>
-                          {row}
-                        </Pressable>
-                      ) : (
-                        <View key={cat.categoryId}>{row}</View>
-                      );
-                    })}
-                  </View>
+            {/* headline */}
+            <View style={styles.headlineRow}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.eyebrow}>Spent in {periodLabel(cursor)}</Text>
+                <Text style={styles.big} numberOfLines={1} adjustsFontSizeToFit>
+                  {formatMoney(dispExpense)}
+                </Text>
+              </View>
+              {vsUsualPct != null && (
+                <View style={styles.vs}>
+                  <Text
+                    style={[
+                      styles.vsPct,
+                      { color: vsUsualPct > 0 ? theme.colors.expense : theme.colors.income },
+                    ]}
+                  >
+                    {vsUsualPct > 0 ? '+' : '−'}
+                    {formatPctChange(vsUsualPct)}
+                  </Text>
+                  <Text style={styles.vsLabel}>
+                    vs your usual{'\n'}({formatMoney(Math.round(baseline!))})
+                  </Text>
                 </View>
               )}
-            </NeoTile>
+            </View>
+            <Text style={styles.headlineSub}>
+              {formatMoney(perDay)} / day · {spendDays} spending {spendDays === 1 ? 'day' : 'days'}
+              {daysInPeriod - spendDays > 0 ? ` · ${daysInPeriod - spendDays} no-spend` : ''}
+            </Text>
+
+            {/* heatmap */}
+            <View style={styles.hmTitleRow}>
+              <Text style={styles.blockTitle}>{periodLabel(cursor)}</Text>
+              <View style={styles.legend}>
+                <Text style={styles.legendText}>less</Text>
+                {[0, 1, 2, 3, 4].map((l) => (
+                  <View
+                    key={l}
+                    style={[
+                      styles.legendSwatch,
+                      l === 0
+                        ? { borderWidth: StyleSheet.hairlineWidth, borderColor: theme.colors.borderSoft }
+                        : {
+                            backgroundColor: [
+                              '',
+                              'rgba(224,126,95,0.16)',
+                              'rgba(224,126,95,0.36)',
+                              'rgba(214,84,54,0.62)',
+                              'rgba(196,64,42,0.92)',
+                            ][l],
+                          },
+                    ]}
+                  />
+                ))}
+                <Text style={styles.legendText}>more</Text>
+              </View>
+            </View>
+            <SpendHeatmap
+              cells={heatCells}
+              leadingPad={leadingPad}
+              columns={heatCols}
+              weekdayLabels={heatWeekdays}
+            />
+            {reads.length > 0 && (
+              <View style={styles.reads}>
+                {reads.map((r, i) => (
+                  <View key={i} style={styles.readRow}>
+                    <Text style={styles.readBullet}>▸</Text>
+                    <Text style={styles.readText}>{r}</Text>
+                  </View>
+                ))}
+              </View>
+            )}
+
+            <View style={styles.rule} />
+
+            {/* recurring vs discretionary */}
+            {rTotal > 0 && (
+              <>
+                <Text style={styles.blockTitle}>Recurring vs the rest</Text>
+                <View style={styles.rdBar}>
+                  <View
+                    style={{
+                      width: `${(recurringMinor / rTotal) * 100}%`,
+                      backgroundColor: theme.colors.accent,
+                    }}
+                  />
+                  <View
+                    style={{
+                      width: `${(discretionaryMinor / rTotal) * 100}%`,
+                      backgroundColor: theme.colors.idCoralDeep,
+                    }}
+                  />
+                </View>
+                <View style={styles.rdLegend}>
+                  <View style={styles.rdItem}>
+                    <View style={[styles.rdDot, { backgroundColor: theme.colors.accent }]} />
+                    <Text style={styles.rdItemLabel}>Recurring</Text>
+                    <Text style={styles.rdValue}>{formatMoney(roundedMinor(recurringMinor))}</Text>
+                  </View>
+                  <View style={styles.rdItem}>
+                    <View style={[styles.rdDot, { backgroundColor: theme.colors.idCoralDeep }]} />
+                    <Text style={styles.rdItemLabel}>Discretionary</Text>
+                    <Text style={styles.rdValue}>{formatMoney(roundedMinor(discretionaryMinor))}</Text>
+                  </View>
+                </View>
+                <Text style={styles.rdNote}>
+                  EMI, rent, subscriptions &amp; insurance — the fixed load you can&rsquo;t easily move.
+                </Text>
+                <View style={styles.rule} />
+              </>
+            )}
+
+            {/* where it went */}
+            <Text style={styles.blockTitle}>Where it went</Text>
+            {current.categoryBreakdown.map((c, i) => {
+              const d = deltas.get(c.categoryId);
+              return (
+                <Pressable
+                  key={c.categoryId}
+                  disabled={!c.hasSubcategories}
+                  onPress={() => openDrill(c)}
+                  style={styles.catRow}
+                >
+                  <View style={styles.catTop}>
+                    <View style={[styles.catDot, { backgroundColor: c.color }]} />
+                    <Text style={styles.catName} numberOfLines={1}>
+                      {c.name}
+                      {c.hasSubcategories ? ' ›' : ''}
+                    </Text>
+                    <View style={styles.catRight}>
+                      <Amount minor={catDisp[i]} sensitive={c.isSensitive} style={styles.catAmt} />
+                      {d != null && Math.abs(d) >= 10 && (
+                        <Text
+                          style={[
+                            styles.catDelta,
+                            { color: d > 0 ? theme.colors.expense : theme.colors.income },
+                          ]}
+                        >
+                          {d > 0 ? '↑' : '↓'}
+                          {formatPctChange(d)}
+                        </Text>
+                      )}
+                    </View>
+                  </View>
+                  <View style={styles.catTrack}>
+                    <View
+                      style={{
+                        width: `${Math.max(3, (c.totalMinor / maxCat) * 100)}%`,
+                        height: '100%',
+                        borderRadius: 4,
+                        backgroundColor: c.color,
+                      }}
+                    />
+                  </View>
+                </Pressable>
+              );
+            })}
+
+            {trend.length >= 3 && (
+              <>
+                <View style={styles.rule} />
+                <Text style={styles.blockTitle}>Against your last {trend.length} months</Text>
+                <Sparkline values={trend.map((t) => t.totalMinor)} baseline={baseline} />
+                {baseline != null && (
+                  <Text style={styles.rdNote}>
+                    The dashed line is your average.{' '}
+                    {current.expenseMinor > baseline
+                      ? `${periodLabel(cursor)} is above it.`
+                      : `${periodLabel(cursor)} is below it.`}
+                  </Text>
+                )}
+              </>
+            )}
+
+            {topGrowing && (
+              <>
+                <View style={styles.rule} />
+                <View style={styles.mover}>
+                  <View style={styles.moverIcon}>
+                    <Feather name="trending-up" size={14} color={theme.colors.ink} />
+                  </View>
+                  <Text style={styles.moverText}>
+                    <Text style={styles.moverBold}>{topGrowing.name}</Text> is the mover —{' '}
+                    {formatMoney(roundedMinor(moverPrev))} → {formatMoney(roundedMinor(moverCur))} (
+                    {formatPctChange(topGrowing.pctChange)} vs {comparisonLabel}).
+                  </Text>
+                </View>
+              </>
+            )}
           </>
         )}
-
-        <SectionLabel color={theme.colors.flatBlue} tint={theme.colors.secondaryTint}>
-          TRENDS
-        </SectionLabel>
-        <View style={styles.chartToggleWrap}>
-          <SegmentedControl options={TREND_VIEWS} value={trendView} onChange={setTrendView} />
-        </View>
-        <NeoTile style={styles.chartCard}>
-          {trendView === 'spend' ? (
-            <>
-              <Text style={styles.trendTotal}>{formatMoney(dispExpense)}</Text>
-              <Text style={styles.trendSub}>
-                Expenses, last {trend.length} months · {formatMoney(Math.min(...trendValues, 0))} to{' '}
-                {formatMoney(Math.max(...trendValues, 0))}
-              </Text>
-              <LineChartDoodle points={trend.map((t) => ({ label: t.label, value: t.totalMinor }))} />
-            </>
-          ) : trendView === 'io' ? (
-            <>
-              <View style={styles.legendRow}>
-                <View style={styles.legendItem}>
-                  <View style={[styles.legendDot, { backgroundColor: theme.colors.income }]} />
-                  <Text style={styles.legendLabel}>Income</Text>
-                </View>
-                <View style={styles.legendItem}>
-                  <View style={[styles.legendDot, { backgroundColor: theme.colors.expense }]} />
-                  <Text style={styles.legendLabel}>Expense</Text>
-                </View>
-              </View>
-              <Text style={styles.trendSub}>
-                Last {incomeExpenseTrend.length} months · up to {formatMoney(Math.max(...ioValues, 0))}
-              </Text>
-              <DualLineChartDoodle
-                points={incomeExpenseTrend.map((t) => ({
-                  label: t.label,
-                  a: t.incomeMinor,
-                  b: t.expenseMinor,
-                }))}
-              />
-            </>
-          ) : (
-            <>
-              <Text
-                style={[
-                  styles.trendTotal,
-                  {
-                    color:
-                      (netWorthTrend[netWorthTrend.length - 1]?.netWorthMinor ?? 0) >= 0
-                        ? theme.colors.income
-                        : theme.colors.expense,
-                  },
-                ]}
-              >
-                {formatMoney(netWorthTrend[netWorthTrend.length - 1]?.netWorthMinor ?? 0)}
-              </Text>
-              <Text style={styles.trendSub}>
-                Accounts + loans + people, last {netWorthTrend.length} months ·{' '}
-                {formatMoney(Math.min(...netWorthValues, 0))} to {formatMoney(Math.max(...netWorthValues, 0))}
-              </Text>
-              <LineChartDoodle
-                points={netWorthTrend.map((t) => ({ label: t.label, value: t.netWorthMinor }))}
-              />
-            </>
-          )}
-        </NeoTile>
       </ScrollView>
 
-      <ModalSheet visible={!!drillDown} onClose={() => setDrillDown(null)} title={drillDown?.name}>
+      <ModalSheet visible={!!drill} onClose={() => setDrill(null)} title={drill?.name}>
         {drillItems === null ? (
           <ActivityIndicator color={theme.colors.ink} />
         ) : drillItems.length === 0 ? (
-          <Text style={styles.emptyText}>Nothing logged here this period.</Text>
+          <Text style={styles.empty}>Nothing logged here this period.</Text>
         ) : (
-          <HorizontalBarList
-            items={drillItems.map((c) => ({
-              label: c.name,
-              value: c.totalMinor,
-              color: c.color,
-              sensitive: c.isSensitive,
-            }))}
-          />
+          drillItems.map((c) => (
+            <View key={c.categoryId} style={styles.drillRow}>
+              <View style={[styles.catDot, { backgroundColor: c.color }]} />
+              <Text style={styles.drillName} numberOfLines={1}>
+                {c.name}
+              </Text>
+              <Amount minor={c.totalMinor} sensitive={c.isSensitive} style={styles.catAmt} />
+            </View>
+          ))
+        )}
+      </ModalSheet>
+
+      <ModalSheet
+        visible={!!daySheet}
+        onClose={() => setDaySheet(null)}
+        title={
+          daySheet
+            ? parseLocalIsoDate(daySheet).toLocaleDateString(undefined, { day: 'numeric', month: 'long' })
+            : ''
+        }
+      >
+        {dayTx === null ? (
+          <ActivityIndicator color={theme.colors.ink} />
+        ) : dayTx.length === 0 ? (
+          <Text style={styles.empty}>Nothing on this day.</Text>
+        ) : (
+          dayTx.map((tx) => (
+            <View key={tx.id} style={styles.drillRow}>
+              <Text style={styles.drillName} numberOfLines={1}>
+                {tx.note || tx.type}
+              </Text>
+              <Text
+                style={[
+                  styles.catAmt,
+                  tx.type === 'income' && { color: theme.colors.income },
+                  tx.type === 'expense' && { color: theme.colors.expense },
+                ]}
+              >
+                {tx.type === 'expense' ? '−' : tx.type === 'income' ? '+' : ''}
+                <Amount minor={tx.amountMinor} />
+              </Text>
+            </View>
+          ))
         )}
       </ModalSheet>
     </View>
   );
 }
 
-/**
- * Uppercased period label for the hero, e.g. "SEPTEMBER" or "2026" — reuses
- * `periodLabel` (anchored to day 1 of the target month) rather than
- * `new Date().setMonth(...)` against *today's* day-of-month, which rolls
- * into the wrong month once today is the 29th-31st and the target month is
- * shorter (e.g. browsing back from Aug 31 to February would land on March).
- */
-function previousPeriodLabelCaps(cursor: PeriodCursor): string {
-  return periodLabel(cursor).toUpperCase();
+function PeriodRow({ cursor, onChange }: { cursor: PeriodCursor; onChange: (c: PeriodCursor) => void }) {
+  const fwd = canStepForward(cursor);
+  return (
+    <View style={styles.periodRow}>
+      <View style={styles.periodPill}>
+        <Pressable onPress={() => onChange(stepPeriod(cursor, -1))} hitSlop={8} style={styles.periodArrow}>
+          <Feather name="chevron-left" size={16} color={theme.colors.ink} />
+        </Pressable>
+        <Text style={styles.periodLabel}>{periodLabel(cursor)}</Text>
+        <Pressable
+          onPress={() => onChange(stepPeriod(cursor, 1))}
+          disabled={!fwd}
+          hitSlop={8}
+          style={[styles.periodArrow, !fwd && { opacity: 0.25 }]}
+        >
+          <Feather name="chevron-right" size={16} color={theme.colors.ink} />
+        </Pressable>
+      </View>
+      <View style={styles.gran}>
+        {(['month', 'year'] as const).map((g) => {
+          const active = cursor.granularity === g;
+          return (
+            <Pressable
+              key={g}
+              onPress={() => onChange(setGranularity(cursor, g))}
+              style={[styles.granBtn, active && styles.granBtnOn]}
+            >
+              <Text style={[styles.granText, active && styles.granTextOn]}>
+                {g === 'month' ? 'Month' : 'Year'}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
+    </View>
+  );
 }
+
+function Sparkline({ values, baseline }: { values: number[]; baseline: number | null }) {
+  const W = 300;
+  const H = 60;
+  const max = Math.max(1, ...values);
+  const min = Math.min(...values, 0);
+  const span = Math.max(1, max - min);
+  const x = (i: number) => (values.length <= 1 ? 0 : (i / (values.length - 1)) * W);
+  const y = (v: number) => H - 6 - ((v - min) / span) * (H - 12);
+  const d = values.map((v, i) => `${i === 0 ? 'M' : 'L'}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
+  const baseY = baseline != null ? y(baseline) : null;
+  return (
+    <View style={styles.spark}>
+      <Svg width="100%" height="100%" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none">
+        {baseY != null && (
+          <Line x1={0} y1={baseY} x2={W} y2={baseY} stroke={theme.colors.borderSoft} strokeDasharray="4 3" />
+        )}
+        <Path d={d} fill="none" stroke={theme.colors.idCoralDeep} strokeWidth={2} />
+        <Circle
+          cx={x(values.length - 1)}
+          cy={y(values[values.length - 1])}
+          r={3.5}
+          fill={theme.colors.idCoralDeep}
+        />
+      </Svg>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: theme.colors.background },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
+  errTitle: { fontFamily: theme.font.bodyBold, fontSize: 14, color: theme.colors.expense },
+  errDetail: { fontSize: 12, color: theme.colors.textSecondary, marginTop: 4, textAlign: 'center' },
+  empty: { fontSize: 13, color: theme.colors.textMuted, marginVertical: 16 },
+
+  periodRow: { flexDirection: 'row', gap: 8, paddingHorizontal: 20, marginBottom: 16 },
+  periodPill: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.borderSoft,
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.radius.pill,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+  },
+  periodArrow: { width: 28, height: 28, alignItems: 'center', justifyContent: 'center' },
+  periodLabel: { fontFamily: theme.font.roundedBold, fontSize: 13, color: theme.colors.textPrimary },
+  gran: {
+    flexDirection: 'row',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.borderSoft,
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.radius.pill,
+    padding: 3,
+  },
+  granBtn: { paddingHorizontal: 11, paddingVertical: 6, borderRadius: theme.radius.pill },
+  granBtnOn: { backgroundColor: theme.colors.secondaryTint },
+  granText: { fontFamily: theme.font.bodyMedium, fontSize: 11, color: theme.colors.textMuted },
+  granTextOn: { color: theme.colors.textPrimary },
+
+  headlineRow: { flexDirection: 'row', alignItems: 'flex-end', marginTop: 4 },
+  eyebrow: {
+    fontFamily: theme.font.mono,
+    fontSize: 9,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    color: theme.colors.textMuted,
+  },
+  big: { fontFamily: theme.font.monoBold, fontSize: 30, color: theme.colors.textPrimary, marginTop: 2 },
+  vs: { alignItems: 'flex-end' },
+  vsPct: { fontFamily: theme.font.monoBold, fontSize: 15 },
+  vsLabel: { fontFamily: theme.font.body, fontSize: 8.5, color: theme.colors.textMuted, textAlign: 'right' },
+  headlineSub: {
+    fontFamily: theme.font.body,
+    fontSize: 10.5,
+    color: theme.colors.textMuted,
+    marginTop: 4,
+    marginBottom: 22,
+  },
+
+  blockTitle: {
+    fontFamily: theme.font.roundedBold,
+    fontSize: 12,
+    letterSpacing: 0.4,
+    textTransform: 'uppercase',
+    color: theme.colors.textSecondary,
+    marginBottom: 10,
+  },
+  hmTitleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'baseline',
+    marginBottom: 9,
+  },
+  legend: { flexDirection: 'row', alignItems: 'center', gap: 3 },
+  legendText: { fontFamily: theme.font.body, fontSize: 8, color: theme.colors.textMuted },
+  legendSwatch: { width: 9, height: 9, borderRadius: 3 },
+
+  reads: { marginTop: 14, gap: 6 },
+  readRow: { flexDirection: 'row', gap: 6 },
+  readBullet: { fontSize: 10, color: theme.colors.idCoralDeep, lineHeight: 16 },
+  readText: {
+    flex: 1,
+    fontFamily: theme.font.body,
+    fontSize: 11.5,
+    color: theme.colors.textSecondary,
+    lineHeight: 16,
+  },
+
+  rule: { height: StyleSheet.hairlineWidth, backgroundColor: theme.colors.borderSoft, marginVertical: 22 },
+
+  rdBar: { flexDirection: 'row', height: 15, borderRadius: 8, overflow: 'hidden' },
+  rdLegend: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 8, flexWrap: 'wrap', gap: 6 },
+  rdItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  rdItemLabel: { fontFamily: theme.font.bodyMedium, fontSize: 10, color: theme.colors.textSecondary },
+  rdDot: { width: 8, height: 8, borderRadius: 3 },
+  rdValue: { fontFamily: theme.font.monoBold, fontSize: 11.5, color: theme.colors.textPrimary },
+  rdNote: { fontFamily: theme.font.body, fontSize: 9.5, color: theme.colors.textMuted, marginTop: 6 },
+
+  catRow: { marginBottom: 12 },
+  catTop: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 },
+  catName: { flex: 1, fontFamily: theme.font.bodyMedium, fontSize: 11.5, color: theme.colors.textPrimary },
+  catDot: { width: 8, height: 8, borderRadius: 4 },
+  catRight: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  catAmt: { fontFamily: theme.font.monoBold, fontSize: 10.5, color: theme.colors.textPrimary },
+  catDelta: { fontFamily: theme.font.mono, fontSize: 8 },
+  catTrack: { height: 7, borderRadius: 4, backgroundColor: 'rgba(18,19,15,0.05)', overflow: 'hidden' },
+
+  spark: { height: 62, marginTop: 4 },
+
+  mover: { flexDirection: 'row', gap: 9, alignItems: 'flex-start' },
+  moverIcon: {
+    width: 26,
+    height: 26,
+    borderRadius: 8,
+    backgroundColor: theme.colors.goldTint,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.borderSoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  moverText: {
+    flex: 1,
+    fontFamily: theme.font.body,
+    fontSize: 11,
+    color: theme.colors.textSecondary,
+    lineHeight: 16,
+  },
+  moverBold: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
+
+  drillRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 10,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: theme.colors.borderSoft,
+  },
+  drillName: { flex: 1, fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textPrimary },
+});

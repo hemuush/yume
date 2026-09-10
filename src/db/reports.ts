@@ -206,6 +206,26 @@ export async function getSubcategoryBreakdown(
   }));
 }
 
+export interface DailyExpensePoint {
+  date: string; // YYYY-MM-DD
+  totalMinor: number;
+}
+
+/** Total expense for each day that had spending within `range` — one grouped query. */
+export async function getDailyExpenseTotals(range: DateRange): Promise<DailyExpensePoint[]> {
+  const db = await getDb();
+  const currency = await getDefaultCurrency();
+  const rows = await db.getAllAsync<{ date: string; total: number }>(
+    `SELECT t.date as date, SUM(t.amount_minor) as total
+     FROM transactions t
+     JOIN accounts a ON a.id = t.account_id
+     WHERE t.type = 'expense' AND a.currency = ? AND t.date >= ? AND t.date <= ?
+     GROUP BY t.date`,
+    [currency, range.start, range.end]
+  );
+  return rows.map((r) => ({ date: r.date, totalMinor: r.total }));
+}
+
 export interface PeriodComparison {
   period: ReportPeriod;
   current: PeriodSummary;
