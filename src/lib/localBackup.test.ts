@@ -78,4 +78,21 @@ describe('writeLocalBackupNow', () => {
 
     expect(StorageAccessFramework.deleteAsync).not.toHaveBeenCalled();
   });
+
+  it('prunes the oldest backups once more than 14 days have accumulated, keeping the newest 14', async () => {
+    // 20 distinct past days plus whatever today writes — the 6 oldest should
+    // be pruned, none of the recent 14 touched.
+    const days = Array.from({ length: 20 }, (_, i) => {
+      const d = String(i + 1).padStart(2, '0');
+      return `content://tree/primary/yume-backup-2025-01-${d}`;
+    });
+    (StorageAccessFramework.readDirectoryAsync as jest.Mock).mockResolvedValue(days);
+    (StorageAccessFramework.createFileAsync as jest.Mock).mockResolvedValue('content://new-file');
+
+    await writeLocalBackupNow('content://tree/primary');
+
+    const deleted = (StorageAccessFramework.deleteAsync as jest.Mock).mock.calls.map((c) => c[0]);
+    expect(deleted).toEqual(days.slice(0, 6));
+    expect(deleted).not.toContain(days[6]);
+  });
 });
