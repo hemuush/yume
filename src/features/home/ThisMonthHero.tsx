@@ -3,7 +3,6 @@ import Feather from '@expo/vector-icons/Feather';
 import { theme } from '@/constants/theme';
 import { formatMoney } from '@/lib/money';
 import { formatPctChange } from '@/lib/format';
-import { clampSavingsRate, savingsRateLabel } from '@/lib/savingsRate';
 import { FlynnIllustration } from '@/components/FlynnIllustration';
 import { SoftCard } from './SoftCard';
 import type { FlynnLine } from './flynnLine';
@@ -18,18 +17,19 @@ export function ThisMonthHero({
   spentMinor,
   incomeChangePct,
   expenseChangePct,
-  savingsPct,
   flynn,
 }: {
   incomeMinor: number;
   spentMinor: number;
   incomeChangePct: number | null | undefined;
   expenseChangePct: number | null | undefined;
-  savingsPct: number;
   flynn: FlynnLine;
 }) {
   const hasIncome = incomeMinor > 0;
-  const barPct = hasIncome ? Math.max(0, clampSavingsRate(savingsPct)) : 0;
+  const overspent = hasIncome && spentMinor > incomeMinor;
+  // Bar spans this month's income: coral for the spent share, mint for the rest.
+  const spentPct = hasIncome ? Math.min(100, (spentMinor / incomeMinor) * 100) : 0;
+  const keptPct = Math.max(0, 100 - spentPct);
 
   return (
     <SoftCard elevated backgroundColor={theme.colors.primaryTint} style={styles.card}>
@@ -60,10 +60,21 @@ export function ThisMonthHero({
       </View>
 
       <View style={styles.track}>
-        <View style={[styles.fill, { width: `${barPct}%` }]} />
+        {overspent ? (
+          <View style={[styles.fillOver, { width: '100%' }]} />
+        ) : (
+          <>
+            <View style={[styles.fillSpent, { width: `${spentPct}%` }]} />
+            <View style={[styles.fillKept, { width: `${keptPct}%` }]} />
+          </>
+        )}
       </View>
-      <Text style={styles.barLabel}>
-        {hasIncome ? `${savingsRateLabel(savingsPct)} of income saved` : 'Add income to track your saving'}
+      <Text style={[styles.barLabel, overspent && styles.barLabelOver]}>
+        {!hasIncome
+          ? 'Add income to track your saving'
+          : overspent
+            ? `Spent ${formatMoney(spentMinor - incomeMinor)} more than came in`
+            : `${formatMoney(spentMinor)} spent · ${Math.round(keptPct)}% kept`}
       </Text>
     </SoftCard>
   );
@@ -133,7 +144,8 @@ const styles = StyleSheet.create({
   },
 
   track: {
-    height: 10,
+    flexDirection: 'row',
+    height: 11,
     borderRadius: theme.radius.pill,
     backgroundColor: theme.colors.surface,
     borderWidth: StyleSheet.hairlineWidth,
@@ -141,11 +153,17 @@ const styles = StyleSheet.create({
     marginTop: 16,
     overflow: 'hidden',
   },
-  fill: { height: '100%', backgroundColor: theme.colors.secondary, borderRadius: theme.radius.pill },
+  fillSpent: { height: '100%', backgroundColor: theme.colors.idCoralDeep },
+  fillKept: { height: '100%', backgroundColor: theme.colors.secondary },
+  fillOver: {
+    height: '100%',
+    backgroundColor: theme.colors.expense,
+  },
   barLabel: {
     fontFamily: theme.font.bodyMedium,
     fontSize: 11.5,
     color: theme.colors.textSecondary,
     marginTop: 7,
   },
+  barLabelOver: { color: theme.colors.expense, fontFamily: theme.font.bodyBold },
 });
