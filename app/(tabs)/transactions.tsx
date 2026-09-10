@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { View, Text, ScrollView, Pressable, Animated } from 'react-native';
-import { useFocusEffect, useLocalSearchParams, router } from 'expo-router';
+import { useFocusEffect, router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { listAccounts, listCategories, listTransactions } from '@/db/ledger';
 import { Account, Category, Transaction, TransactionType } from '@/types';
@@ -17,7 +17,6 @@ import { MonthPickerModal } from '@/features/transactions/MonthPickerModal';
 import { FilterModal } from '@/features/transactions/FilterModal';
 import { TransactionRow } from '@/features/transactions/TransactionRow';
 import { TransactionDetailModal } from '@/features/transactions/TransactionDetailModal';
-import { AddTransactionModal } from '@/features/transactions/AddTransactionModal';
 
 function isoDate(d: Date): string {
   return toLocalIsoDate(d);
@@ -57,12 +56,8 @@ export default function TransactionsScreen() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [modalVisible, setModalVisible] = useState(false);
-  const [initialType, setInitialType] = useState<TransactionType>('expense');
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [detailTx, setDetailTx] = useState<Transaction | null>(null);
-  const [editingTx, setEditingTx] = useState<Transaction | null>(null);
-  const params = useLocalSearchParams<{ openAdd?: string }>();
   // Refreshed on every focus (below), not frozen at mount — this screen
   // stays alive for the whole app session (it's a tab, never unmounted), so
   // a `useMemo(..., [])` "today" would keep reporting yesterday's date to
@@ -159,19 +154,6 @@ export default function TransactionsScreen() {
     setViewScope(scope);
     setSelectedDate(null);
   };
-
-  // The center nav "+" button routes here with ?openAdd=expense|income|transfer
-  // (see app/quick-add.tsx) rather than duplicating the whole transaction
-  // form on a second screen — this just opens the same modal pre-set to the
-  // chosen type. The param is cleared immediately so returning to this tab
-  // later doesn't reopen the modal on its own.
-  useEffect(() => {
-    if (params.openAdd) {
-      setInitialType(params.openAdd as TransactionType);
-      setModalVisible(true);
-      router.setParams({ openAdd: undefined });
-    }
-  }, [params.openAdd]);
 
   const onSelectDay = (iso: string) => {
     setSelectedDate((prev) => (prev === iso ? null : iso));
@@ -361,23 +343,6 @@ export default function TransactionsScreen() {
         )}
       </ScrollView>
 
-      <AddTransactionModal
-        visible={modalVisible || !!editingTx}
-        accounts={accounts}
-        categories={categories}
-        editing={editingTx}
-        initialType={initialType}
-        onClose={() => {
-          setModalVisible(false);
-          setEditingTx(null);
-        }}
-        onSaved={async () => {
-          setModalVisible(false);
-          setEditingTx(null);
-          await load(visibleRange);
-        }}
-      />
-
       <TransactionDetailModal
         tx={detailTx}
         accounts={accounts}
@@ -385,7 +350,7 @@ export default function TransactionsScreen() {
         onClose={() => setDetailTx(null)}
         onEdit={(tx) => {
           setDetailTx(null);
-          setEditingTx(tx);
+          router.push(`/add-transaction?id=${tx.id}`);
         }}
         onChanged={async () => {
           setDetailTx(null);
