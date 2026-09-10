@@ -43,7 +43,7 @@ export interface NotificationPrefs {
   overspendAlerts: boolean;
   billAlerts: boolean;
   weeklySummary: boolean;
-  flynnCheckins: boolean;
+  suuCheckins: boolean;
 }
 
 const NOTIFICATION_PREFS_KEY = 'notification_prefs';
@@ -54,7 +54,7 @@ const DEFAULT_NOTIFICATION_PREFS: NotificationPrefs = {
   overspendAlerts: true,
   billAlerts: true,
   weeklySummary: false,
-  flynnCheckins: true,
+  suuCheckins: true,
 };
 
 export async function getNotificationPrefs(): Promise<NotificationPrefs> {
@@ -64,7 +64,16 @@ export async function getNotificationPrefs(): Promise<NotificationPrefs> {
   ]);
   if (!row) return DEFAULT_NOTIFICATION_PREFS;
   try {
-    return { ...DEFAULT_NOTIFICATION_PREFS, ...JSON.parse(row.value) };
+    const stored = JSON.parse(row.value);
+    // `flynnCheckins` was renamed to `suuCheckins` with the mascot rename
+    // (Flynn the bird → Suu the moon sprite). Carry an existing install's
+    // choice across so anyone who had turned check-ins off doesn't silently
+    // get them back on.
+    if ('flynnCheckins' in stored && !('suuCheckins' in stored)) {
+      stored.suuCheckins = stored.flynnCheckins;
+    }
+    delete stored.flynnCheckins;
+    return { ...DEFAULT_NOTIFICATION_PREFS, ...stored };
   } catch {
     return DEFAULT_NOTIFICATION_PREFS;
   }

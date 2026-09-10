@@ -8,7 +8,7 @@ interface Props {
   tone?: 'default' | 'warn';
 }
 
-// "Flynn says" — a proactive one-line insight card. Every message shown
+// "Suu says" — a proactive one-line insight card. Every message shown
 // through this component must come from a real computed value (period
 // comparison, category pace, schedule) — never a placeholder number.
 export function InsightCard({ icon, text, boldPrefix, tone = 'default' }: Props) {

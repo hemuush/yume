@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
-import { FlynnIllustration } from './FlynnIllustration';
+import { SuuIllustration } from './SuuIllustration';
 
 interface Props {
   illustration?: React.ReactNode;
@@ -8,9 +8,9 @@ interface Props {
   subtitle?: string;
 }
 
-// Defaults to Flynn (sleepy pose) rather than requiring every screen to pick
+// Defaults to Suu (sleepy pose) rather than requiring every screen to pick
 // its own bespoke icon — one consistent mascot across every empty state.
-export function EmptyState({ illustration = <FlynnIllustration pose="sleepy" />, title, subtitle }: Props) {
+export function EmptyState({ illustration = <SuuIllustration pose="sleepy" />, title, subtitle }: Props) {
   return (
     <View style={styles.wrap}>
       {illustration}

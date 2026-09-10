@@ -6,7 +6,7 @@ import Feather from '@expo/vector-icons/Feather';
 import { AppHeader } from '@/components/AppHeader';
 import { ToggleSwitch } from '@/components/ToggleSwitch';
 import { SettingsRowIcon } from '@/components/SettingsRowIcon';
-import { FlynnIllustration } from '@/components/FlynnIllustration';
+import { SuuIllustration } from '@/components/SuuIllustration';
 import { getNotificationPrefs, setNotificationPrefs, NotificationPrefs } from '@/db/settings';
 import { requestNotificationPermission, syncDailyReminder, syncWeeklySummary } from '@/lib/notifications';
 import { resyncAllLoanReminders } from '@/db/loans';
@@ -138,9 +138,9 @@ export default function NotificationSettingsScreen() {
               },
             ]}
           >
-            <FlynnIllustration size={34} />
+            <SuuIllustration size={34} />
             <View style={{ flex: 1, marginLeft: 10 }}>
-              <Text style={styles.previewTitle}>Flynn</Text>
+              <Text style={styles.previewTitle}>Suu</Text>
               <Text style={styles.previewBody}>Time to log today's spending 👀</Text>
             </View>
           </Animated.View>
@@ -195,10 +195,10 @@ export default function NotificationSettingsScreen() {
         </View>
         <View style={styles.row}>
           <View style={[styles.rowIcon, { backgroundColor: theme.colors.flatMint }]}>
-            <Text>🐦</Text>
+            <Text>🌙</Text>
           </View>
-          <Text style={styles.rowLabel}>Flynn's check-ins</Text>
-          <ToggleSwitch value={prefs.flynnCheckins} onChange={(v) => save({ ...prefs, flynnCheckins: v })} />
+          <Text style={styles.rowLabel}>Suu's check-ins</Text>
+          <ToggleSwitch value={prefs.suuCheckins} onChange={(v) => save({ ...prefs, suuCheckins: v })} />
         </View>
 
         <Text style={styles.footNote}>
