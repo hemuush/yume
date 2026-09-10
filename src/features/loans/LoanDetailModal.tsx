@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
 import { View, Text, Pressable, Alert } from 'react-native';
+import Feather from '@expo/vector-icons/Feather';
 import { useFocusEffect } from 'expo-router';
 import {
   getLoanSchedule,
@@ -16,7 +17,7 @@ import { Loan, LoanPayment, Account, Category } from '@/types';
 import { FormInput } from '@/components/FormInput';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { ModalSheet } from '@/components/ModalSheet';
-import { theme } from '@/constants/theme';
+import { modalFooterStyles as f, theme } from '@/constants/theme';
 import { toLocalIsoDate, partsToIsoDate, parseLocalIsoDate } from '@/lib/date';
 import { NeoTile } from '@/components/NeoTile';
 import { styles } from './loans.styles';
@@ -211,7 +212,12 @@ export function LoanDetailModal({
 
   return (
     <>
-      <ModalSheet visible onClose={onClose} title={liveLoan.counterparty}>
+      <ModalSheet
+        visible
+        onClose={onClose}
+        title={liveLoan.counterparty}
+        footer={<PrimaryButton title="Close" variant="secondary" onPress={onClose} disabled={busy} />}
+      >
         {loadError && <Text style={styles.errorText}>Couldn't load the latest details: {loadError}</Text>}
 
         {/* Colored by direction, matching the loan's card in the list —
@@ -228,8 +234,15 @@ export function LoanDetailModal({
                 {liveLoan.rateType === 'floating' ? 'Floating' : 'Fixed'} · {liveLoan.status}
               </Text>
             </View>
-            <Pressable onPress={showMoreActions} hitSlop={10} style={styles.kebabBtn} disabled={busy}>
-              <Text style={styles.kebabText}>⋯</Text>
+            <Pressable
+              onPress={showMoreActions}
+              hitSlop={10}
+              style={styles.kebabBtn}
+              disabled={busy}
+              accessibilityRole="button"
+              accessibilityLabel="More loan actions"
+            >
+              <Feather name="more-horizontal" size={16} color={theme.colors.ink} />
             </Pressable>
           </View>
           <View style={styles.cardStatsRow}>
@@ -381,14 +394,6 @@ export function LoanDetailModal({
             ))}
           </>
         )}
-
-        <PrimaryButton
-          title="Close"
-          variant="secondary"
-          onPress={onClose}
-          style={{ marginTop: 10 }}
-          disabled={busy}
-        />
       </ModalSheet>
 
       {payVisible && nextInstallment && (
@@ -398,6 +403,26 @@ export function LoanDetailModal({
           variant="center"
           scrollable={false}
           title={isPayingEarly ? 'Pay ahead of schedule?' : 'Confirm payment'}
+          footer={
+            <View style={f.footerCol}>
+              {!paidDateIso && <Text style={styles.errorText}>Enter a valid date</Text>}
+              <View style={f.footerRow}>
+                <PrimaryButton
+                  title="Cancel"
+                  variant="secondary"
+                  onPress={() => setPayVisible(false)}
+                  disabled={busy}
+                  style={f.footerBtn}
+                />
+                <PrimaryButton
+                  title={busy ? 'Recording...' : isPayingEarly ? 'Pay Early' : 'Confirm'}
+                  onPress={markPaid}
+                  disabled={busy || !paidDateIso}
+                  style={f.footerBtn}
+                />
+              </View>
+            </View>
+          }
         >
           <Text style={styles.cardSub}>
             {formatMoney(nextInstallment.emiAmountMinor)} from {defaultAccount?.name ?? '—'}
@@ -446,22 +471,6 @@ export function LoanDetailModal({
             Defaults to this installment's due date — change it if you're catching up on a payment that
             actually happened on a different day.
           </Text>
-          {!paidDateIso && <Text style={styles.errorText}>Enter a valid date</Text>}
-          <View style={styles.modalActions}>
-            <PrimaryButton
-              title="Cancel"
-              variant="secondary"
-              onPress={() => setPayVisible(false)}
-              disabled={busy}
-              style={{ flex: 1, marginRight: 8 }}
-            />
-            <PrimaryButton
-              title={busy ? 'Recording...' : isPayingEarly ? 'Pay Early' : 'Confirm'}
-              onPress={markPaid}
-              disabled={busy || !paidDateIso}
-              style={{ flex: 1 }}
-            />
-          </View>
         </ModalSheet>
       )}
 

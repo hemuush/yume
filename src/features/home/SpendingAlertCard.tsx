@@ -1,6 +1,7 @@
 import { View, Text, StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
 import { formatPctChange } from '@/lib/format';
+import { SuuIllustration } from '@/components/SuuIllustration';
 import { SoftCard } from './SoftCard';
 
 /**
@@ -20,7 +21,7 @@ export function SpendingAlertCard({
   return (
     <SoftCard backgroundColor={theme.colors.goldTint} padding={13} style={styles.card}>
       <View style={styles.icon}>
-        <Text style={styles.iconGlyph}>👀</Text>
+        <SuuIllustration size={26} pose="default" />
       </View>
       <Text style={styles.text}>
         <Text style={styles.bold}>Suu: </Text>
@@ -36,13 +37,10 @@ const styles = StyleSheet.create({
   icon: {
     width: 30,
     height: 30,
-    borderRadius: 15,
-    backgroundColor: theme.colors.gold,
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,
   },
-  iconGlyph: { fontSize: 14 },
   text: {
     flex: 1,
     fontFamily: theme.font.body,

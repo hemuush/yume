@@ -115,7 +115,13 @@ export function TransactionDetailModal({
   };
 
   return (
-    <ModalSheet visible onClose={onClose} variant="center" scrollable={false}>
+    <ModalSheet
+      visible
+      onClose={onClose}
+      variant="center"
+      scrollable={false}
+      footer={<PrimaryButton title="Close" variant="secondary" onPress={onClose} disabled={busy} />}
+    >
       <View style={styles.detailHeaderRow}>
         <CategoryIcon
           name={tx.type === 'transfer' ? 'swap-horizontal' : (cat?.icon ?? 'tag')}
@@ -189,14 +195,6 @@ export function TransactionDetailModal({
           This is a loan disbursement or prepayment — editing isn't supported yet.
         </Text>
       )}
-
-      <PrimaryButton
-        title="Close"
-        variant="secondary"
-        onPress={onClose}
-        style={{ marginTop: 10 }}
-        disabled={busy}
-      />
     </ModalSheet>
   );
 }

@@ -8,6 +8,7 @@ import {
 } from '@/db/recurring';
 import { Account, Category, RecurringRule, RecurrenceFrequency, TransactionType } from '@/types';
 import { ModalSheet } from '@/components/ModalSheet';
+import { modalFooterStyles as f } from '@/constants/theme';
 import { FormInput } from '@/components/FormInput';
 import { SegmentedControl } from '@/components/SegmentedControl';
 import { PrimaryButton } from '@/components/PrimaryButton';
@@ -213,6 +214,29 @@ export function RuleModal({
       visible={visible}
       onClose={onClose}
       title={editing ? 'Edit Recurring Entry' : 'New Recurring Entry'}
+      footer={
+        <View style={f.footerCol}>
+          {error && <Text style={styles.errorText}>{error}</Text>}
+          <View style={f.footerRow}>
+            <PrimaryButton
+              title="Cancel"
+              variant="secondary"
+              onPress={onClose}
+              style={f.footerBtn}
+              disabled={saving}
+            />
+            <PrimaryButton
+              title={saving ? 'Saving...' : editing ? 'Save' : 'Create'}
+              onPress={submit}
+              disabled={saving}
+              style={f.footerBtn}
+            />
+          </View>
+          {editing && (
+            <PrimaryButton title="Delete" variant="secondary" onPress={confirmDelete} disabled={saving} />
+          )}
+        </View>
+      }
     >
       <SegmentedControl options={TX_TYPES} value={type} onChange={onTypeChange} />
 
@@ -349,33 +373,6 @@ export function RuleModal({
       )}
 
       <FormInput label="Note (optional)" value={note} onChangeText={setNote} placeholder="e.g. Netflix" />
-
-      {error && <Text style={styles.errorText}>{error}</Text>}
-
-      <View style={styles.modalActions}>
-        <PrimaryButton
-          title="Cancel"
-          variant="secondary"
-          onPress={onClose}
-          style={{ flex: 1, marginRight: 8 }}
-          disabled={saving}
-        />
-        <PrimaryButton
-          title={saving ? 'Saving...' : editing ? 'Save' : 'Create'}
-          onPress={submit}
-          disabled={saving}
-          style={{ flex: 1 }}
-        />
-      </View>
-      {editing && (
-        <PrimaryButton
-          title="Delete"
-          variant="secondary"
-          onPress={confirmDelete}
-          disabled={saving}
-          style={{ marginTop: 8 }}
-        />
-      )}
     </ModalSheet>
   );
 }

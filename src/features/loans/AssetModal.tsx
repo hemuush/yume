@@ -6,6 +6,7 @@ import { Loan } from '@/types';
 import { FormInput } from '@/components/FormInput';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { ModalSheet } from '@/components/ModalSheet';
+import { modalFooterStyles as f } from '@/constants/theme';
 import { styles } from './loans.styles';
 
 export function AssetModal({
@@ -61,7 +62,41 @@ export function AssetModal({
   };
 
   return (
-    <ModalSheet visible onClose={onClose} variant="center" showClose title="Loan asset">
+    <ModalSheet
+      visible
+      onClose={onClose}
+      variant="center"
+      showClose
+      title="Loan asset"
+      footer={
+        <View style={f.footerCol}>
+          {error && <Text style={styles.errorText}>{error}</Text>}
+          <View style={f.footerRow}>
+            <PrimaryButton
+              title="Cancel"
+              variant="secondary"
+              onPress={onClose}
+              disabled={saving}
+              style={f.footerBtn}
+            />
+            <PrimaryButton
+              title={saving ? 'Saving...' : 'Save'}
+              onPress={submit}
+              disabled={saving}
+              style={f.footerBtn}
+            />
+          </View>
+          {!!loan.assetValueMinor && (
+            <PrimaryButton
+              title="Stop tracking this asset"
+              variant="secondary"
+              onPress={stopTracking}
+              disabled={saving}
+            />
+          )}
+        </View>
+      }
+    >
       <FormInput label="What is it?" value={label} onChangeText={setLabel} placeholder="e.g. Home, Car" />
       <FormInput
         label="Current estimated value (optional)"
@@ -75,31 +110,6 @@ export function AssetModal({
         still owed ({formatMoney(loan.outstandingPrincipalMinor)}) counts toward Tracked Balance/Net Worth.
         Yume doesn't estimate it for you, so update it whenever the real value changes.
       </Text>
-      {error && <Text style={styles.errorText}>{error}</Text>}
-      <View style={styles.modalActions}>
-        <PrimaryButton
-          title="Cancel"
-          variant="secondary"
-          onPress={onClose}
-          disabled={saving}
-          style={{ flex: 1, marginRight: 8 }}
-        />
-        <PrimaryButton
-          title={saving ? 'Saving...' : 'Save'}
-          onPress={submit}
-          disabled={saving}
-          style={{ flex: 1 }}
-        />
-      </View>
-      {!!loan.assetValueMinor && (
-        <PrimaryButton
-          title="Stop tracking this asset"
-          variant="secondary"
-          onPress={stopTracking}
-          disabled={saving}
-          style={{ marginTop: 8 }}
-        />
-      )}
     </ModalSheet>
   );
 }
