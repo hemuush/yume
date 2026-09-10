@@ -181,9 +181,7 @@ function AppGate({ needsOnboarding, initialLocked }: { needsOnboarding: boolean;
         <Stack.Screen name="notification-settings" />
         <Stack.Screen name="notifications" />
         <Stack.Screen name="add-transaction" />
-        <Stack.Screen name="add-historical" />
         <Stack.Screen name="recurring" />
-        <Stack.Screen name="quick-add" options={{ presentation: 'transparentModal', animation: 'fade' }} />
       </Stack>
     </ErrorBoundary>
   );
