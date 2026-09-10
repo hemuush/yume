@@ -1,14 +1,18 @@
-// Yume's visual identity: a hand-drawn "doodle" register — warm cream
-// surfaces, thick black outlines on every card, and a soft sage-lime as the
-// one signature accent color. The original mockup's lime (#D6FF3D) was a
-// near-neon safety-vest chartreuse sitting noticeably darker/more saturated
-// than every other flat card color — the one users flagged as hard on the
-// eyes across a whole header band or a 2x2 stat grid. Every other flat color
-// sits around 74-83% lightness at full saturation, which is what makes them
-// read as gentle pastels rather than neon; this lime (and gold, the other
-// outlier) were lightened to match that same band instead of getting fixed
-// only where they happened to look worst. Every screen reads these tokens
-// rather than hardcoding hex values.
+// Yume's visual identity, single source of truth. Every screen reads these
+// tokens rather than hardcoding hex values, radii, or font names — change a
+// value here and it changes everywhere.
+//
+// The current register is a calm, minimal one: warm cream surfaces, thin
+// hairline borders (`borderSoft`) and whitespace to separate cards, pill
+// shapes for nav/buttons/chips, and a soft sage-lime (`primary`) plus mint
+// (`secondary`) as the signature accents. All flat/pastel swatches sit in a
+// 74-83% lightness band so they read as gentle pastels, never neon.
+//
+// A heavier "doodle" layer still exists under this — thick ink borders
+// (`border.thin`/`border.thick`) and the hard offset shadow (`shadowOffset`,
+// rendered by NeoTile) — and is still used by the loans, transactions and
+// recurring cards that the minimal pass hasn't reached yet. New UI should
+// prefer the hairline/pill register above.
 
 import { StyleSheet } from 'react-native';
 
@@ -46,23 +50,15 @@ export const theme = {
     flatPink: '#FFA8CE',
     flatBlue: '#8FCBFF',
     onFlat: '#12130F',
-    // One loud, rarely-used accent for the "Bold Bento" register — a FAB, a
-    // small status badge — never a full card fill. Deliberately separate
-    // from `accent` (lavender) above, which stays what SectionLabel/etc.
-    // already use; this is additive, not a replacement.
-    pop: '#FF5B45',
 
-    // A real combination for identity cards (stat tiles, accounts, loan
-    // cards) instead of one-of-each-swatch: teal/sage both read as "good
-    // news" (income, surplus) — closely related greens, tellable apart but
-    // not fighting each other; coral/gold both read as "worth a look"
-    // (spend, debt) — adjacent warm tones instead of a hot pink next to a
-    // lime green. Each pair is a pale fill plus one deeper same-family tone
-    // for an icon circle, never mixed across families on one card.
+    // Identity-card tones (stat tiles, accounts, loan cards): teal/sage read
+    // as "good news" (income, surplus) — closely related greens; coral/gold
+    // read as "worth a look" (spend, debt) — adjacent warm tones. Each is a
+    // pale fill; coral and gold also carry a deeper same-family tone for an
+    // icon circle or an emphasised figure. Never mixed across families on
+    // one card.
     idTeal: '#DAF5F0',
-    idTealDeep: '#5FB3A8',
     idSage: '#E9F3DA',
-    idSageDeep: '#8FBF6B',
     idCoral: '#FFE3D6',
     idCoralDeep: '#F0876A',
     idGold: '#FBF0CE',
@@ -73,6 +69,10 @@ export const theme = {
     // shadow. `border`/`ink` above stay as they were for buttons, chips,
     // inputs, and modal sheets, which weren't part of this pass.
     borderSoft: '#E6DFC9',
+
+    // Ink at very low opacity — a faint fill for inactive tracks, weekend
+    // cells, and other "barely there" surfaces on a cream ground.
+    inkWash: 'rgba(18,19,15,0.05)',
   },
   radius: {
     sm: 8,
@@ -96,9 +96,6 @@ export const theme = {
   shadowOffset: 4,
   spacing: (n: number) => n * 4,
   font: {
-    display: 'Archivo_700Bold',
-    displayBlack: 'Archivo_900Black',
-    displayMedium: 'Archivo_600SemiBold',
     body: 'Archivo_400Regular',
     bodyMedium: 'Archivo_600SemiBold',
     bodyBold: 'Archivo_700Bold',
@@ -173,9 +170,24 @@ export const ID_PALETTE = [
   theme.colors.idCoral,
   theme.colors.idSage,
 ];
-export const ID_PALETTE_DEEP = [
-  theme.colors.idGoldDeep,
-  theme.colors.idTealDeep,
-  theme.colors.idCoralDeep,
-  theme.colors.idSageDeep,
-];
+
+// Reports spend-heatmap intensity ramp — a 5-step translucent coral scale
+// indexed by `HeatCell.level` (0 = no spend that day, 4 = heaviest). Used by
+// both the heatmap cells (SpendHeatmap) and the "less → more" legend
+// (reports.tsx), so the two can never drift apart.
+export const SPEND_HEAT_SCALE = [
+  'transparent',
+  'rgba(224,126,95,0.16)',
+  'rgba(224,126,95,0.36)',
+  'rgba(214,84,54,0.62)',
+  'rgba(196,64,42,0.92)',
+] as const;
+// The matching cell-label colour per level — dark ink on the two palest
+// steps, white once the wash is dark enough to carry it.
+export const SPEND_HEAT_TEXT = [
+  theme.colors.textMuted,
+  theme.colors.textMuted,
+  theme.colors.textSecondary,
+  theme.colors.white,
+  theme.colors.white,
+] as const;

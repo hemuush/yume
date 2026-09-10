@@ -37,7 +37,7 @@ import {
   canStepForward,
 } from '@/lib/period';
 import { parseLocalIsoDate } from '@/lib/date';
-import { theme } from '@/constants/theme';
+import { theme, SPEND_HEAT_SCALE } from '@/constants/theme';
 import { SpendHeatmap, HeatCell } from '@/features/reports/SpendHeatmap';
 import {
   heatLevel,
@@ -264,15 +264,7 @@ export default function ReportsScreen() {
                       styles.legendSwatch,
                       l === 0
                         ? { borderWidth: StyleSheet.hairlineWidth, borderColor: theme.colors.borderSoft }
-                        : {
-                            backgroundColor: [
-                              '',
-                              'rgba(224,126,95,0.16)',
-                              'rgba(224,126,95,0.36)',
-                              'rgba(214,84,54,0.62)',
-                              'rgba(196,64,42,0.92)',
-                            ][l],
-                          },
+                        : { backgroundColor: SPEND_HEAT_SCALE[l] },
                     ]}
                   />
                 ))}
@@ -708,7 +700,12 @@ const styles = StyleSheet.create({
   catRight: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   catAmt: { fontFamily: theme.font.monoBold, fontSize: 10.5, color: theme.colors.textPrimary },
   catDelta: { fontFamily: theme.font.mono, fontSize: 8 },
-  catTrack: { height: 7, borderRadius: 4, backgroundColor: 'rgba(18,19,15,0.05)', overflow: 'hidden' },
+  catTrack: {
+    height: 7,
+    borderRadius: 4,
+    backgroundColor: theme.colors.inkWash,
+    overflow: 'hidden',
+  },
 
   spark: { height: 62, marginTop: 4 },
 

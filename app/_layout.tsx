@@ -11,7 +11,6 @@ import { useFonts } from 'expo-font';
 import { Archivo_400Regular } from '@expo-google-fonts/archivo/400Regular';
 import { Archivo_600SemiBold } from '@expo-google-fonts/archivo/600SemiBold';
 import { Archivo_700Bold } from '@expo-google-fonts/archivo/700Bold';
-import { Archivo_900Black } from '@expo-google-fonts/archivo/900Black';
 import { SpaceMono_400Regular } from '@expo-google-fonts/space-mono/400Regular';
 import { SpaceMono_700Bold } from '@expo-google-fonts/space-mono/700Bold';
 import { Fredoka_400Regular } from '@expo-google-fonts/fredoka/400Regular';
@@ -45,7 +44,6 @@ export default function RootLayout() {
     Archivo_400Regular,
     Archivo_600SemiBold,
     Archivo_700Bold,
-    Archivo_900Black,
     SpaceMono_400Regular,
     SpaceMono_700Bold,
     Fredoka_400Regular,
