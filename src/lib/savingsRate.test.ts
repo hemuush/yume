@@ -1,7 +1,7 @@
 import { savingsRatePct, clampSavingsRate, savingsRateLabel } from './savingsRate';
 
 describe('savingsRatePct', () => {
-  it('is net as a percentage of income', () => {
+  it('is income-not-spent as a percentage of income', () => {
     expect(savingsRatePct(13_576_400, 18_926_000)).toBeCloseTo(71.73, 1);
   });
 

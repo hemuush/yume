@@ -125,7 +125,9 @@ export default function DashboardScreen() {
         : null
       : ((surplusInPeriod - prevSurplus) / Math.abs(prevSurplus)) * 100;
 
-  const savingsPct = savingsRatePct(comparison?.current.netMinor ?? 0, comparison?.current.incomeMinor ?? 0);
+  // "Saved" = income not spent (kept in any account), so the bar reflects
+  // aggressive savers instead of reading 0% when they sweep cash into a pot.
+  const savingsPct = savingsRatePct(dispIncome - dispExpense, dispIncome);
   const flynn = flynnLine(savingsPct, expenseChangePct ?? null);
 
   const topGrowing =
