@@ -257,8 +257,15 @@ export default function SettingsScreen() {
             icon="folder-outline"
             iconBg={theme.colors.flatBlue}
             label="Backup & Restore"
-            sub="Local folder, export, import from Flynse"
+            sub="Local folder, file export & restore"
             onPress={() => router.push('/backup')}
+          />
+          <Row
+            icon="database-import-outline"
+            iconBg={theme.colors.accentTint}
+            label="Move data from Flynse"
+            sub="Bring everything across from the old app in one step"
+            onPress={() => router.push('/backup?import=1')}
           />
           <Row
             icon="calculator-variant-outline"

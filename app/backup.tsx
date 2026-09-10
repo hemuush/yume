@@ -1,6 +1,6 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, Alert } from 'react-native';
-import { router, useFocusEffect } from 'expo-router';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from '@expo/vector-icons/Feather';
 import { File, Paths } from 'expo-file-system';
@@ -78,6 +78,7 @@ function StatusPill({ lastAt, outcome }: { lastAt: string | null; outcome: Backu
 
 export default function BackupScreen() {
   const insets = useSafeAreaInsets();
+  const { import: importParam } = useLocalSearchParams<{ import?: string }>();
   const [localFolderUri, setLocalFolderUri] = useState<string | null>(null);
   const [lastLocalBackup, setLastLocalBackup] = useState<string | null>(null);
   const [localResult, setLocalResult] = useState<BackupOutcome | null>(null);
@@ -222,6 +223,19 @@ export default function BackupScreen() {
       }
       await confirmAndRestore(snapshot);
     });
+
+  // Opened via "Move data from Flynse" in Settings (/backup?import=1) — jump
+  // straight to the file picker so the user isn't left hunting for the card.
+  // The ref guard stops a re-render (or lingering param on back-nav) from
+  // re-opening the picker.
+  const autoImportFired = useRef(false);
+  useEffect(() => {
+    if (importParam && !autoImportFired.current) {
+      autoImportFired.current = true;
+      restoreFromFile('import');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [importParam]);
 
   return (
     <View style={styles.container}>
