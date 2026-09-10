@@ -190,7 +190,7 @@ export default function SettingsScreen() {
     <View style={styles.container}>
       <AppHeader title="Settings" showBack />
 
-      <ScrollView contentContainerStyle={{ paddingBottom: 40 + insets.bottom }}>
+      <ScrollView contentContainerStyle={{ paddingBottom: theme.layout.screenScrollPad + insets.bottom }}>
         <Group title="Appearance">
           <View style={[styles.row, styles.rowDivider, styles.swatchRow]}>
             <View style={styles.rowText}>

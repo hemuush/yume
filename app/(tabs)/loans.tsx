@@ -116,7 +116,9 @@ export default function LoansScreen() {
             </NeoTile>
           </View>
 
-          <ScrollView contentContainerStyle={{ paddingBottom: 110 + insets.bottom }}>
+          <ScrollView
+            contentContainerStyle={{ paddingBottom: theme.layout.tabScreenScrollPad + insets.bottom }}
+          >
             {loans.length === 0 ? (
               <EmptyState title="No loans yet" subtitle="Tap + Loan to add one with an EMI schedule." />
             ) : (

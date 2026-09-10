@@ -8,7 +8,7 @@ import { Account, Category, RecurringRule } from '@/types';
 import { AppHeader } from '@/components/AppHeader';
 import { AddButton } from '@/components/AddButton';
 import { EmptyState } from '@/components/EmptyState';
-import { ID_PALETTE } from '@/constants/theme';
+import { theme, ID_PALETTE } from '@/constants/theme';
 import { styles } from '@/features/recurring/recurring.styles';
 import { RuleCard } from '@/features/recurring/RuleCard';
 import { RuleModal } from '@/features/recurring/RuleModal';
@@ -83,7 +83,12 @@ export default function RecurringScreen() {
         shows up in Transactions exactly like any entry you typed in yourself.
       </Text>
 
-      <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 40 + insets.bottom }}>
+      <ScrollView
+        contentContainerStyle={{
+          paddingHorizontal: 20,
+          paddingBottom: theme.layout.screenScrollPad + insets.bottom,
+        }}
+      >
         {accounts.length === 0 ? (
           <EmptyState
             title="Add an account first"
