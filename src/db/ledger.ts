@@ -579,6 +579,12 @@ export async function listTransactions(filters?: {
   return rows.map(rowToTransaction);
 }
 
+export async function getTransactionById(id: string): Promise<Transaction | null> {
+  const db = await getDb();
+  const row = await db.getFirstAsync<any>('SELECT * FROM transactions WHERE id = ?', [id]);
+  return row ? rowToTransaction(row) : null;
+}
+
 export interface UpdateTransactionInput {
   type: TransactionType;
   accountId: string;

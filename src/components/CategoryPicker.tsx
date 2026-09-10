@@ -102,7 +102,7 @@ export function CategoryPicker({ categories, selectedId, onSelect, variant }: Pr
           const active = selectedId === cat.id;
           return (
             <Pressable key={cat.id} style={styles.medalItem} onPress={() => onPressTopLevel(cat)}>
-              <View style={[styles.medalRing, active && { borderColor: cat.color }]}>
+              <View style={[styles.medalRing, active && styles.medalRingActive]}>
                 <CategoryIcon name={cat.icon} color={cat.color} size={20} square={48} />
               </View>
               <Text style={styles.medalName} numberOfLines={1}>
@@ -120,7 +120,7 @@ export function CategoryPicker({ categories, selectedId, onSelect, variant }: Pr
               const active = selectedId === cat.id;
               return (
                 <Pressable key={cat.id} style={styles.medalItemSub} onPress={() => onSelect(cat.id)}>
-                  <View style={[styles.medalRing, styles.medalRingSub, active && { borderColor: cat.color }]}>
+                  <View style={[styles.medalRing, styles.medalRingSub, active && styles.medalRingActive]}>
                     <CategoryIcon name={cat.icon} color={cat.color} size={16} square={38} />
                   </View>
                   <Text style={styles.medalName} numberOfLines={1}>
@@ -141,9 +141,18 @@ const styles = StyleSheet.create({
   medalGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 14 },
   medalItem: { width: 64, alignItems: 'center' },
   medalItemSub: { width: 56, alignItems: 'center' },
-  medalRing: { borderRadius: 16, borderWidth: 2, borderColor: 'transparent', padding: 1 },
+  medalRing: { borderRadius: 16, borderWidth: 2, borderColor: 'transparent', padding: 2 },
+  // One consistent "selected" ring across the picker (mint), instead of each
+  // tile lighting up in its own category colour.
+  medalRingActive: { borderColor: theme.colors.secondary },
   medalRingSub: { opacity: 0.88 },
-  medalName: { fontSize: 10.5, color: theme.colors.textSecondary, marginTop: 5, textAlign: 'center' },
+  medalName: {
+    fontFamily: theme.font.rounded,
+    fontSize: 10.5,
+    color: theme.colors.textSecondary,
+    marginTop: 5,
+    textAlign: 'center',
+  },
   subGroup: {
     marginTop: 10,
     paddingTop: 10,
