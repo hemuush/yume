@@ -50,7 +50,9 @@ export interface AppDb {
   withTransactionAsync(task: (tx: AppDb) => Promise<void>): Promise<void>;
 }
 
-let dbInstance: AppDb | null = null;
+// The in-flight (or resolved) db setup — see getDb(). Cached as a promise so
+// concurrent first callers share one setup run.
+let dbSetup: Promise<AppDb> | null = null;
 
 /** Wraps a raw expo-sqlite connection with zero queuing — used both as the transaction `tx` handle and during one-time startup setup, before any screen exists to race against. */
 function toAppDb(raw: SQLite.SQLiteDatabase): AppDb {
@@ -204,8 +206,26 @@ async function runMigrations(db: AppDb): Promise<void> {
   }
 }
 
-export async function getDb(): Promise<AppDb> {
-  if (dbInstance) return dbInstance;
+/**
+ * Resolves to the one shared db handle, running first-launch setup (file
+ * migration, CREATE TABLE, column migrations, category seeding) exactly
+ * once. The in-flight setup promise is cached, not just its result, so two
+ * concurrent first calls can't both run the setup — without that,
+ * `seedDefaultCategoriesIfEmpty` could pass its "is the table empty?" check
+ * twice and seed the default categories twice. A failed setup clears the
+ * cache so a later call can retry a transient error.
+ */
+export function getDb(): Promise<AppDb> {
+  if (!dbSetup) {
+    dbSetup = initDb().catch((e) => {
+      dbSetup = null;
+      throw e;
+    });
+  }
+  return dbSetup;
+}
+
+async function initDb(): Promise<AppDb> {
   await migrateDbFilename();
   const raw = await SQLite.openDatabaseAsync(DB_NAME);
   const unqueued = toAppDb(raw);
@@ -222,8 +242,7 @@ export async function getDb(): Promise<AppDb> {
   // Setup above runs once, sequentially, before any screen can call getDb()
   // — nothing to serialize yet. Every call after this point goes through
   // the queue, since multiple screens/components can call getDb() at once.
-  dbInstance = serializeDb(raw);
-  return dbInstance;
+  return serializeDb(raw);
 }
 
 async function seedDefaultCategoriesIfEmpty(db: AppDb) {
