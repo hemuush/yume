@@ -39,8 +39,8 @@ async function migrateDbFilename(): Promise<void> {
  * different contract: it hands its callback a `tx` argument for nested
  * calls (see serializeDb below for why). Only the methods actually called
  * anywhere in this codebase are included; the test harness
- * (scripts/realDataTestDb.ts's AsyncDb) mirrors this exact shape so
- * `getDb()` can be mocked identically in both.
+ * (src/test-support/realDataTestDb.ts's AsyncDb) mirrors this exact shape
+ * so `getDb()` can be mocked identically in both.
  */
 export interface AppDb {
   getFirstAsync<T>(sql: string, params?: any[]): Promise<T | null>;
