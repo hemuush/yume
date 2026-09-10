@@ -18,8 +18,8 @@ function TabIcon({ Icon, focused }: { Icon: typeof HomeIcon; focused: boolean })
 /**
  * The raised center "+". Rendered purely as `tabBarIcon` — the default
  * tabBarButton (left untouched) still handles the actual touch and still
- * fires `tabPress`, which the Tabs.Screen below intercepts to open
- * quick-add instead of navigating. A custom `tabBarButton` would replace
+ * fires `tabPress`, which the Tabs.Screen below intercepts to open the Add
+ * screen instead of navigating. A custom `tabBarButton` would replace
  * that default touch handling entirely and silently break the tap.
  */
 function CenterAddButton() {
@@ -83,9 +83,9 @@ export default function TabsLayout() {
           tabPress: (e) => {
             // Never actually navigate to the "add" route itself — it exists
             // only so this slot has a place in the tab bar; the real
-            // destination is the quick-add sheet, pushed onto the Stack.
+            // destination is the Add screen, pushed onto the Stack.
             e.preventDefault();
-            router.push('/quick-add');
+            router.push('/add-transaction');
           },
         }}
       />
