@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Yume",
-    "slug": "flynse",
+    "slug": "yume",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -20,11 +20,8 @@
         "backgroundImage": "./assets/android-icon-background.png"
       },
       "predictiveBackGestureEnabled": false,
-      "versionCode": 44,
-      "permissions": [
-        "android.permission.USE_BIOMETRIC",
-        "android.permission.USE_FINGERPRINT"
-      ]
+      "versionCode": 45,
+      "permissions": ["android.permission.USE_BIOMETRIC", "android.permission.USE_FINGERPRINT"]
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -61,11 +58,8 @@
       ]
     ],
     "extra": {
-      "router": {},
-      "eas": {
-        "projectId": "0d81f9fc-b41f-4ff6-999a-2b1a9121adcd"
-      }
+      "router": {}
     },
-    "owner": "flynse"
+    "owner": "yume"
   }
 }

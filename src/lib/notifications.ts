@@ -17,7 +17,7 @@ Notifications.setNotificationHandler({
   }),
 });
 
-const DAILY_REMINDER_ID = 'flynse-daily-reminder';
+const DAILY_REMINDER_ID = 'yume-daily-reminder';
 
 export async function ensureAndroidChannel(): Promise<void> {
   if (Platform.OS !== 'android') return;
@@ -33,6 +33,25 @@ export async function requestNotificationPermission(): Promise<boolean> {
   if (existing.granted) return true;
   const result = await Notifications.requestPermissionsAsync();
   return result.granted;
+}
+
+/**
+ * One-time cleanup: notification identifiers were `flynse-*` before the
+ * rename to Yume. Any still scheduled under the old prefix would otherwise
+ * linger forever (the new sync functions only ever cancel the new IDs).
+ * Best-effort, run once on startup.
+ */
+export async function cancelLegacyScheduledNotifications(): Promise<void> {
+  try {
+    const all = await Notifications.getAllScheduledNotificationsAsync();
+    await Promise.all(
+      all
+        .filter((n) => typeof n.identifier === 'string' && n.identifier.startsWith('flynse-'))
+        .map((n) => Notifications.cancelScheduledNotificationAsync(n.identifier).catch(() => {}))
+    );
+  } catch {
+    // best effort — an OS that clears these on reinstall makes it moot anyway
+  }
 }
 
 /**
@@ -58,7 +77,7 @@ export async function syncDailyReminder(prefs: NotificationPrefs): Promise<void>
   });
 }
 
-const WEEKLY_SUMMARY_ID = 'flynse-weekly-summary';
+const WEEKLY_SUMMARY_ID = 'yume-weekly-summary';
 
 /**
  * Cancels any previously scheduled weekly summary and, if enabled, schedules
@@ -86,7 +105,7 @@ export async function syncWeeklySummary(prefs: NotificationPrefs): Promise<void>
 }
 
 function loanDueReminderId(loanId: string): string {
-  return `flynse-loan-due-${loanId}`;
+  return `yume-loan-due-${loanId}`;
 }
 
 /**

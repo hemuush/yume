@@ -1,10 +1,37 @@
 import * as SQLite from 'expo-sqlite';
+import { Directory, File, Paths } from 'expo-file-system';
 import { CREATE_TABLES_SQL } from './schema';
 import { DEFAULT_CATEGORIES } from '@/constants/categories';
 import { newId } from '@/lib/id';
 import { primeCurrencyCache } from './settings';
 
-const DB_NAME = 'flynse.db';
+const DB_NAME = 'yume.db';
+const LEGACY_DB_NAME = 'flynse.db';
+
+/**
+ * The database file was `flynse.db` before the rename to Yume. Rename it in
+ * place on first launch of the new build so an existing install keeps all of
+ * its data instead of opening a fresh, empty `yume.db`. Best-effort: if
+ * anything goes wrong the app just starts on an empty database, which is
+ * recoverable from a backup.
+ */
+async function migrateDbFilename(): Promise<void> {
+  try {
+    const sqliteDir = new Directory(Paths.document, 'SQLite');
+    if (!sqliteDir.exists) return;
+    const legacyMain = new File(sqliteDir, LEGACY_DB_NAME);
+    const newMain = new File(sqliteDir, DB_NAME);
+    if (!legacyMain.exists || newMain.exists) return;
+    for (const suffix of ['', '-wal', '-shm', '-journal']) {
+      const src = new File(sqliteDir, `${LEGACY_DB_NAME}${suffix}`);
+      if (src.exists) {
+        await src.move(new File(sqliteDir, `${DB_NAME}${suffix}`));
+      }
+    }
+  } catch (e) {
+    console.warn('DB filename migration skipped:', e);
+  }
+}
 
 /**
  * The app-facing db handle — deliberately its own type rather than
@@ -179,6 +206,7 @@ async function runMigrations(db: AppDb): Promise<void> {
 
 export async function getDb(): Promise<AppDb> {
   if (dbInstance) return dbInstance;
+  await migrateDbFilename();
   const raw = await SQLite.openDatabaseAsync(DB_NAME);
   const unqueued = toAppDb(raw);
   await unqueued.execAsync('PRAGMA foreign_keys = ON;');

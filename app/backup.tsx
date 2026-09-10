@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, Alert } from 'react-native';
-import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from '@expo/vector-icons/Feather';
 import { File, Paths } from 'expo-file-system';
@@ -78,7 +78,6 @@ function StatusPill({ lastAt, outcome }: { lastAt: string | null; outcome: Backu
 
 export default function BackupScreen() {
   const insets = useSafeAreaInsets();
-  const { import: importParam } = useLocalSearchParams<{ import?: string }>();
   const [localFolderUri, setLocalFolderUri] = useState<string | null>(null);
   const [lastLocalBackup, setLastLocalBackup] = useState<string | null>(null);
   const [localResult, setLocalResult] = useState<BackupOutcome | null>(null);
@@ -138,8 +137,8 @@ export default function BackupScreen() {
       }
     });
 
-  const restoreFromFile = (busyLabel: string) =>
-    run(busyLabel, async () => {
+  const restoreFromFile = () =>
+    run('restore-file', async () => {
       // Accepting any file type and validating the JSON afterward is what
       // actually works across devices — many file managers report a .json
       // file's MIME type inconsistently, which would otherwise grey out the
@@ -151,7 +150,7 @@ export default function BackupScreen() {
       try {
         snapshot = JSON.parse(content);
       } catch {
-        throw new Error("That file isn't valid JSON — pick a full backup exported from Yume or from Flynse.");
+        throw new Error("That file isn't valid JSON — pick a full backup Yume exported.");
       }
       await confirmAndRestore(snapshot);
     });
@@ -224,41 +223,10 @@ export default function BackupScreen() {
       await confirmAndRestore(snapshot);
     });
 
-  // Opened via "Move data from Flynse" in Settings (/backup?import=1) — jump
-  // straight to the file picker so the user isn't left hunting for the card.
-  // The ref guard stops a re-render (or lingering param on back-nav) from
-  // re-opening the picker.
-  const autoImportFired = useRef(false);
-  useEffect(() => {
-    if (importParam && !autoImportFired.current) {
-      autoImportFired.current = true;
-      restoreFromFile('import');
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [importParam]);
-
   return (
     <View style={styles.container}>
       <AppHeader title="Backup & Restore" showBack />
       <ScrollView contentContainerStyle={{ paddingBottom: 40 + insets.bottom }}>
-        <Text style={styles.sectionTitle}>Coming from Flynse?</Text>
-        <View style={[styles.card, styles.cardHighlight]}>
-          <Text style={styles.cardText}>
-            Bring your data across in two steps:
-            {'\n\n'}1. In Flynse: <Text style={styles.bold}>Settings → Backup → Export full backup</Text>, and
-            save the file.
-            {'\n'}2. Come back here and pick that file. Everything — transactions, accounts, loans, Friends
-            &amp; Family — moves over.
-            {'\n\n'}You can uninstall Flynse afterwards.
-          </Text>
-          <PrimaryButton
-            title={busy === 'import' ? 'Importing…' : 'Import from Flynse'}
-            onPress={() => restoreFromFile('import')}
-            disabled={!!busy}
-            style={{ marginTop: 12 }}
-          />
-        </View>
-
         <Text style={styles.sectionTitle}>Automatic backup frequency</Text>
         <View style={styles.freqWrap}>
           <SegmentedControl options={FREQUENCIES} value={frequency} onChange={onChangeFrequency} />
@@ -336,13 +304,11 @@ export default function BackupScreen() {
 
         <Text style={styles.sectionTitle}>Restore</Text>
         <View style={styles.card}>
-          <Text style={styles.cardText}>
-            Restore from a backup JSON file saved on this device — a Yume backup, or one exported from Flynse.
-          </Text>
+          <Text style={styles.cardText}>Restore from a backup JSON file saved on this device.</Text>
           <PrimaryButton
             title={busy === 'restore-file' ? 'Restoring...' : 'Restore from file'}
             variant="secondary"
-            onPress={() => restoreFromFile('restore-file')}
+            onPress={restoreFromFile}
             disabled={!!busy}
             style={{ marginTop: 10 }}
           />
@@ -375,14 +341,12 @@ const styles = StyleSheet.create({
   card: {
     marginHorizontal: 20,
     padding: 16,
-    borderRadius: 14,
+    borderRadius: theme.radius.xl,
     backgroundColor: theme.colors.surface,
-    borderWidth: theme.border.thick,
-    borderColor: theme.colors.border,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.borderSoft,
   },
-  cardHighlight: { backgroundColor: theme.colors.primaryTint },
   cardText: { fontSize: 13, color: theme.colors.textSecondary, lineHeight: 19 },
-  bold: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
   buttonRow: { flexDirection: 'row', marginTop: 12 },
   statusRow: { marginTop: 10, gap: 4 },
   pill: {

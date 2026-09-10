@@ -21,16 +21,7 @@ From the same screen, **Choose folder** grants Yume write access to one folder o
 - **Restore latest from folder** reads the newest backup file in that folder and restores it, after confirmation.
 - **Forget folder** revokes the access grant; no further automatic backups run until you pick a folder again.
 
-The relevant code is `src/lib/localBackup.ts` (`runLocalBackupIfDue`, `writeLocalBackupNow`, `readNewestLocalBackup`).
-
-## Coming from Flynse
-
-Yume is the renamed continuation of **Flynse**. The backup format is unchanged, so:
-
-1. In Flynse: **Settings → Backup → Export full backup**, save the file.
-2. In Yume: **Settings → Backup & Restore → Import from Flynse**, pick that file.
-
-Everything — transactions, accounts, loans, Friends & Family — moves over. The two apps have different Android package names (`com.flynse.app` vs `com.yume.app`) and separate sandboxes, so this file hand-off is the migration path; there is no automatic in-place upgrade. You can uninstall Flynse afterwards.
+The relevant code is `src/lib/localBackup.ts` (`runLocalBackupIfDue`, `writeLocalBackupNow`, `readNewestLocalBackup`). Backup files are named `yume-backup-<date>.json`.
 
 ## Restore safety
 
