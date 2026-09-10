@@ -16,11 +16,6 @@ export function orderCategoriesForPicker(categories: Category[]): Category[] {
   return out;
 }
 
-/** "↳ Zomato" for a subcategory, or the plain name for a top-level category — the one label format every picker/chip uses. */
-export function categoryPickerLabel(category: Category): string {
-  return category.parentId ? `↳ ${category.name}` : category.name;
-}
-
 /** Just the top-level categories — the collapsed-by-default view every picker shows before a parent is expanded. */
 export function topLevelOnly(categories: Category[]): Category[] {
   return categories.filter((c) => !c.parentId);
