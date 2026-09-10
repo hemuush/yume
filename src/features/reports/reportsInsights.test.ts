@@ -4,6 +4,7 @@ import {
   recurringVsDiscretionary,
   categoryDeltas,
   describeSpendingPattern,
+  summariseDayTotal,
 } from './reportsInsights';
 import type { CategoryBreakdownItem } from '@/db/reports';
 
@@ -81,5 +82,51 @@ describe('describeSpendingPattern', () => {
     ];
     const lines = describeSpendingPattern(daily, 30);
     expect(lines.some((l) => l.includes('Heaviest day') && l.includes('1 Sep'))).toBe(true);
+  });
+});
+
+describe('summariseDayTotal', () => {
+  it('shows total spent when the day has only expenses', () => {
+    expect(
+      summariseDayTotal([
+        { type: 'expense', amountMinor: 12000 },
+        { type: 'expense', amountMinor: 8000 },
+      ])
+    ).toEqual({ label: 'Total spent', amountMinor: 20000, sign: '−' });
+  });
+
+  it('shows a positive net when income outweighs spend that day', () => {
+    expect(
+      summariseDayTotal([
+        { type: 'income', amountMinor: 8600000 },
+        { type: 'expense', amountMinor: 50000 },
+      ])
+    ).toEqual({ label: 'Net this day', amountMinor: 8550000, sign: '+' });
+  });
+
+  it('shows a negative net when spend outweighs income that day', () => {
+    expect(
+      summariseDayTotal([
+        { type: 'income', amountMinor: 10000 },
+        { type: 'expense', amountMinor: 25000 },
+      ])
+    ).toEqual({ label: 'Net this day', amountMinor: 15000, sign: '−' });
+  });
+
+  it('ignores transfers between the user’s own accounts', () => {
+    expect(
+      summariseDayTotal([
+        { type: 'transfer', amountMinor: 500000 },
+        { type: 'expense', amountMinor: 3000 },
+      ])
+    ).toEqual({ label: 'Total spent', amountMinor: 3000, sign: '−' });
+  });
+
+  it('handles a day with no countable movement', () => {
+    expect(summariseDayTotal([{ type: 'transfer', amountMinor: 500000 }])).toEqual({
+      label: 'Total spent',
+      amountMinor: 0,
+      sign: '',
+    });
   });
 });
