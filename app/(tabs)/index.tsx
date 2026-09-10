@@ -28,7 +28,7 @@ import { HomeSection } from '@/features/home/HomeSection';
 import { UpcomingRow } from '@/features/home/UpcomingRow';
 import { RecentTransactionRow } from '@/features/home/RecentTransactionRow';
 import { AccountChip } from '@/features/home/AccountChip';
-import { flynnLine } from '@/features/home/flynnLine';
+import { suuLine } from '@/features/home/suuLine';
 
 /** "today" / "in N days" for a near due date; the actual calendar date once it's
  * far enough out that a raw day-count reads as broken rather than useful. */
@@ -128,7 +128,7 @@ export default function DashboardScreen() {
   // "Saved" = income not spent (kept in any account), so the bar reflects
   // aggressive savers instead of reading 0% when they sweep cash into a pot.
   const savingsPct = savingsRatePct(dispIncome - dispExpense, dispIncome);
-  const flynn = flynnLine(savingsPct, expenseChangePct ?? null);
+  const suu = suuLine(savingsPct, expenseChangePct ?? null);
 
   const topGrowing =
     comparison &&
@@ -159,7 +159,7 @@ export default function DashboardScreen() {
           spentMinor={dispExpense}
           incomeChangePct={incomeChangePct}
           expenseChangePct={expenseChangePct}
-          flynn={flynn}
+          suu={suu}
         />
 
         {showAlert && (

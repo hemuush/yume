@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { FlynnIllustration } from './FlynnIllustration';
+import { SuuIllustration } from './SuuIllustration';
 import { PrimaryButton } from './PrimaryButton';
 import { theme } from '@/constants/theme';
 import { authenticate, isDeviceSecured } from '@/lib/appLock';
@@ -61,7 +61,7 @@ export function LockScreen({ onUnlocked }: { onUnlocked: () => void }) {
 
   return (
     <View style={styles.container}>
-      <FlynnIllustration size={110} pose="sleepy" />
+      <SuuIllustration size={110} pose="sleepy" />
       <Text style={styles.title}>Yume is locked</Text>
       <Text style={styles.subtitle}>Unlock with your fingerprint, face, or device PIN.</Text>
       {failed && !deviceUnsecured && <Text style={styles.failedText}>That didn't work — try again.</Text>}

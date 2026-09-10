@@ -5,7 +5,7 @@ import { SoftCard } from './SoftCard';
 
 /**
  * Shown only when spending is up on the previous period — the softer stand-in
- * for the old "Flynn says" warn card. A flag plus, where we have one, the
+ * for the old "Suu says" warn card. A flag plus, where we have one, the
  * category that moved most, so it points somewhere.
  */
 export function SpendingAlertCard({
@@ -23,7 +23,7 @@ export function SpendingAlertCard({
         <Text style={styles.iconGlyph}>👀</Text>
       </View>
       <Text style={styles.text}>
-        <Text style={styles.bold}>Flynn: </Text>
+        <Text style={styles.bold}>Suu: </Text>
         spending&rsquo;s up {formatPctChange(changePct)} on {comparisonLabel}
         {topCategoryName ? ` — mostly ${topCategoryName}.` : '.'}
       </Text>

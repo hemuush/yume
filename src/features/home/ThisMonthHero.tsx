@@ -3,13 +3,13 @@ import Feather from '@expo/vector-icons/Feather';
 import { theme } from '@/constants/theme';
 import { formatMoney } from '@/lib/money';
 import { formatPctChange } from '@/lib/format';
-import { FlynnIllustration } from '@/components/FlynnIllustration';
+import { SuuIllustration } from '@/components/SuuIllustration';
 import { SoftCard } from './SoftCard';
-import type { FlynnLine } from './flynnLine';
+import type { SuuLine } from './suuLine';
 
 /**
  * The month's headline: what came in and what went out, side by side, over a
- * single "how much of it you kept" bar — plus Flynn with one encouraging
+ * single "how much of it you kept" bar — plus Suu with one encouraging
  * line. Replaces the old 2×2 tile grid as the one thing the eye lands on.
  */
 export function ThisMonthHero({
@@ -17,13 +17,13 @@ export function ThisMonthHero({
   spentMinor,
   incomeChangePct,
   expenseChangePct,
-  flynn,
+  suu,
 }: {
   incomeMinor: number;
   spentMinor: number;
   incomeChangePct: number | null | undefined;
   expenseChangePct: number | null | undefined;
-  flynn: FlynnLine;
+  suu: SuuLine;
 }) {
   const hasIncome = incomeMinor > 0;
   const overspent = hasIncome && spentMinor > incomeMinor;
@@ -53,9 +53,9 @@ export function ThisMonthHero({
           />
         </View>
 
-        <View style={styles.flynn}>
-          <FlynnIllustration size={62} pose={flynn.pose} />
-          <Text style={styles.flynnText}>{flynn.text}</Text>
+        <View style={styles.suu}>
+          <SuuIllustration size={62} pose={suu.pose} />
+          <Text style={styles.suuText}>{suu.text}</Text>
         </View>
       </View>
 
@@ -133,8 +133,8 @@ const styles = StyleSheet.create({
   },
   figureTrend: { fontFamily: theme.font.body, fontSize: 10.5, color: theme.colors.textMuted, marginTop: 2 },
 
-  flynn: { width: 118, alignItems: 'center', justifyContent: 'center' },
-  flynnText: {
+  suu: { width: 118, alignItems: 'center', justifyContent: 'center' },
+  suuText: {
     fontFamily: theme.font.rounded,
     fontSize: 11.5,
     lineHeight: 15,

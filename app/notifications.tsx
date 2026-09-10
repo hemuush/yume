@@ -84,13 +84,13 @@ export default function NotificationsScreen() {
         onPress: () => router.push('/backup'),
       });
 
-      if (prefs.flynnCheckins && comparison.expenseChangePct != null) {
+      if (prefs.suuCheckins && comparison.expenseChangePct != null) {
         const pct = comparison.expenseChangePct;
         feed.push({
-          key: 'flynn',
-          icon: '🐦',
+          key: 'suu',
+          icon: '🌙',
           iconBg: theme.colors.flatBlue,
-          title: "Flynn's check-in",
+          title: "Suu's check-in",
           subtitle:
             pct <= 0
               ? `You're spending ${formatPctChange(pct)} less than last month — nice pace.`
@@ -126,7 +126,7 @@ export default function NotificationsScreen() {
         {rows === null ? null : rows.length === 0 ? (
           <EmptyState
             title="All caught up"
-            subtitle="No alerts right now — Flynn will let you know when something needs attention."
+            subtitle="No alerts right now — Suu will let you know when something needs attention."
           />
         ) : (
           rows.map((row) => (

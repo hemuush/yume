@@ -13,7 +13,7 @@ import { AppHeader } from '@/components/AppHeader';
 import { ModalSheet } from '@/components/ModalSheet';
 import { SettingsRowIcon } from '@/components/SettingsRowIcon';
 import { ToggleSwitch } from '@/components/ToggleSwitch';
-import { FlynnIllustration } from '@/components/FlynnIllustration';
+import { SuuIllustration } from '@/components/SuuIllustration';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useAccent } from '@/theme/AccentContext';
 import { theme } from '@/constants/theme';
@@ -303,7 +303,7 @@ export default function SettingsScreen() {
 
         <Text style={styles.groupTitle}>About</Text>
         <View style={styles.aboutCard}>
-          <FlynnIllustration size={56} />
+          <SuuIllustration size={56} />
           <Text style={styles.aboutName}>Yume</Text>
           <Text style={styles.aboutTagline}>Track every rupee, on your terms.</Text>
           <View style={styles.aboutFacts}>

@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, Pressable, TextInput } from 'react-native';
 import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { setHasOnboarded, setUserName } from '@/db/settings';
-import { FlynnIllustration } from '@/components/FlynnIllustration';
+import { SuuIllustration } from '@/components/SuuIllustration';
 import { theme } from '@/constants/theme';
 import { useAccent } from '@/theme/AccentContext';
 
@@ -88,7 +88,7 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
       </Pressable>
 
       <View style={styles.illustWrap}>
-        <FlynnIllustration size={140} pose={slide.pose} />
+        <SuuIllustration size={140} pose={slide.pose} />
       </View>
 
       <Text style={styles.title}>{slide.title}</Text>
