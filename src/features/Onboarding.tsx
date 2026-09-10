@@ -16,25 +16,26 @@ interface Slide {
 
 const SLIDES: Slide[] = [
   {
-    title: 'Meet Flynn',
+    title: 'Better money, bigger dreams',
     subtitle:
-      'Track every rupee, grow your wealth — loans, savings, and daily spending in one place, fully offline.',
+      'Yume keeps every rupee in one calm place — daily spending, savings, and the friends you owe. Fully offline.',
     pose: 'default',
   },
   {
-    title: 'Loans made simple',
-    subtitle: 'EMI, interest, prepayment — Yume does the maths so you always know exactly where you stand.',
+    title: 'Loans, without the headache',
+    subtitle:
+      'EMI, interest, prepayments — Yume does the maths so you always know how close you are to done.',
     pose: 'peek',
   },
   {
-    title: 'Nothing leaves your device',
+    title: 'Yours, and only yours',
     subtitle:
-      "Your data stays local by default. Back up to your own Google Drive whenever you're ready — never required.",
+      "Nothing leaves your phone. Back up to your own Google Drive whenever you're ready — never required.",
     pose: 'sleepy',
   },
   {
-    title: 'What should Flynn call you?',
-    subtitle: 'Totally optional — you can always change or add this later in Settings.',
+    title: 'What should we call you?',
+    subtitle: 'Optional — you can change or add this anytime in Settings.',
     pose: 'default',
     isNameStep: true,
   },

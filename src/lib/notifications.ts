@@ -22,7 +22,7 @@ const DAILY_REMINDER_ID = 'flynse-daily-reminder';
 export async function ensureAndroidChannel(): Promise<void> {
   if (Platform.OS !== 'android') return;
   await Notifications.setNotificationChannelAsync('default', {
-    name: 'Flynn reminders',
+    name: 'Yume reminders',
     importance: Notifications.AndroidImportance.DEFAULT,
     lightColor: '#E0F0A8',
   });
@@ -47,8 +47,8 @@ export async function syncDailyReminder(prefs: NotificationPrefs): Promise<void>
   await Notifications.scheduleNotificationAsync({
     identifier: DAILY_REMINDER_ID,
     content: {
-      title: 'Flynn',
-      body: "Time to log today's spending 👀",
+      title: 'A minute for Yume?',
+      body: "Log today's spending while it's still fresh 🌱",
     },
     trigger: {
       type: Notifications.SchedulableTriggerInputTypes.DAILY,
@@ -73,8 +73,8 @@ export async function syncWeeklySummary(prefs: NotificationPrefs): Promise<void>
   await Notifications.scheduleNotificationAsync({
     identifier: WEEKLY_SUMMARY_ID,
     content: {
-      title: 'Flynn',
-      body: 'Your week in review is ready — see what changed.',
+      title: 'Your week, wrapped',
+      body: 'See what moved this week and how you tracked against your usual.',
     },
     trigger: {
       type: Notifications.SchedulableTriggerInputTypes.WEEKLY,
@@ -114,8 +114,8 @@ export async function scheduleLoanDueReminder(
   await Notifications.scheduleNotificationAsync({
     identifier: loanDueReminderId(loanId),
     content: {
-      title: 'Flynn',
-      body: `EMI due today for ${counterparty} — ${formatMoney(emiAmountMinor)}`,
+      title: 'EMI due today',
+      body: `${counterparty} — ${formatMoney(emiAmountMinor)}. One step closer to done.`,
     },
     trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: dueAt },
   });
@@ -137,7 +137,7 @@ export async function notifyOverspend(categoryName: string, pctChange: number): 
   await ensureAndroidChannel();
   await Notifications.scheduleNotificationAsync({
     content: {
-      title: 'Flynn',
+      title: 'Worth a peek 👀',
       body: `${categoryName} spending is up ${formatPctChange(pctChange)} vs last month.`,
     },
     trigger: null,
