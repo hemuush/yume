@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SuuIllustration } from './SuuIllustration';
 import { YumeLogo } from './YumeLogo';
 import { PrimaryButton } from './PrimaryButton';
@@ -8,6 +9,7 @@ import { authenticate, isDeviceSecured } from '@/lib/appLock';
 import { useAppLock } from '@/lib/AppLockContext';
 
 export function LockScreen({ onUnlocked }: { onUnlocked: () => void }) {
+  const insets = useSafeAreaInsets();
   const { setLockEnabled } = useAppLock();
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -62,7 +64,7 @@ export function LockScreen({ onUnlocked }: { onUnlocked: () => void }) {
 
   return (
     <View style={styles.container}>
-      <View style={styles.wordmark}>
+      <View style={[styles.wordmark, { top: insets.top + 24 }]}>
         <YumeLogo size={18} />
         <Text style={styles.wordmarkText}>Yume</Text>
       </View>
@@ -105,7 +107,6 @@ const styles = StyleSheet.create({
   },
   wordmark: {
     position: 'absolute',
-    top: 64,
     left: 0,
     right: 0,
     flexDirection: 'row',
