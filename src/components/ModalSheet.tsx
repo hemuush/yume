@@ -66,7 +66,12 @@ export function ModalSheet({
 
   const heading =
     title || subtitle ? (
-      <View style={framed ? undefined : styles.headingBlock}>
+      <View
+        style={[
+          framed ? undefined : styles.headingBlock,
+          showClose && !framed && styles.headingInsetForClose,
+        ]}
+      >
         {title ? (
           <Text style={styles.title} numberOfLines={1}>
             {title}
@@ -187,19 +192,27 @@ const styles = StyleSheet.create({
   scrollDialogContent: { justifyContent: 'center' },
   sheet: {
     backgroundColor: theme.colors.background,
-    borderTopLeftRadius: 22,
-    borderTopRightRadius: 22,
-    borderTopWidth: theme.border.thick,
-    borderColor: theme.colors.ink,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
     padding: 20,
+    shadowColor: theme.colors.ink,
+    shadowOffset: { width: 0, height: -6 },
+    shadowOpacity: 0.12,
+    shadowRadius: 22,
+    elevation: 14,
   },
   dialog: {
-    backgroundColor: theme.colors.background,
-    borderRadius: 20,
-    borderWidth: theme.border.thick,
-    borderColor: theme.colors.ink,
+    backgroundColor: theme.colors.surface,
+    borderRadius: 24,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.borderSoft,
     padding: 20,
     marginHorizontal: 24,
+    shadowColor: theme.colors.ink,
+    shadowOffset: { width: 0, height: 16 },
+    shadowOpacity: 0.2,
+    shadowRadius: 34,
+    elevation: 16,
   },
   dialogFramed: {
     padding: 0,
@@ -226,15 +239,15 @@ const styles = StyleSheet.create({
   },
   grabber: {
     alignSelf: 'center',
-    width: 42,
-    height: 5,
-    borderRadius: 3,
-    backgroundColor: theme.colors.textMuted,
-    opacity: 0.4,
-    marginBottom: 14,
+    width: 38,
+    height: 4,
+    borderRadius: 999,
+    backgroundColor: theme.colors.borderSoft,
+    marginBottom: 16,
   },
   headingBlock: { marginBottom: 16 },
-  title: { fontFamily: theme.font.display, fontSize: 19, color: theme.colors.textPrimary },
+  headingInsetForClose: { paddingRight: 34 },
+  title: { fontFamily: theme.font.roundedBold, fontSize: 18, color: theme.colors.textPrimary },
   subtitle: {
     fontFamily: theme.font.mono,
     fontSize: 11,

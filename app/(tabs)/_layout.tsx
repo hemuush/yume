@@ -3,60 +3,63 @@ import { View, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from '@expo/vector-icons/Feather';
 import { theme } from '@/constants/theme';
-import { useAccent } from '@/theme/AccentContext';
 import { HomeIcon, ActivityIcon, LoanIcon, ReportsIcon } from '@/components/icons/TabIcons';
 
+/**
+ * A tab's icon inside the floating pill. The active tab — and the centre
+ * "+", which is always "on" — sits in a filled ink circle with a cream
+ * glyph; the rest are ink line icons on the sage pill.
+ */
 function TabIcon({ Icon, focused }: { Icon: typeof HomeIcon; focused: boolean }) {
-  const { accent, onAccent } = useAccent();
   return (
-    <View style={[styles.iconWrap, focused && { backgroundColor: accent }]}>
-      <Icon color={focused ? onAccent : theme.colors.ink} size={19} />
+    <View style={[styles.circle, focused && styles.circleFilled]}>
+      <Icon color={focused ? theme.colors.surface : theme.colors.ink} size={21} />
     </View>
   );
 }
 
 /**
- * The raised center "+". Rendered purely as `tabBarIcon` — the default
- * tabBarButton (left untouched) still handles the actual touch and still
- * fires `tabPress`, which the Tabs.Screen below intercepts to open the Add
- * screen instead of navigating. A custom `tabBarButton` would replace
- * that default touch handling entirely and silently break the tap.
+ * The centre "+". Rendered purely as `tabBarIcon` — the default tabBarButton
+ * (left untouched) still handles the actual touch and still fires
+ * `tabPress`, which the Tabs.Screen below intercepts to open the Add screen.
  */
 function CenterAddButton() {
-  const { accent, onAccent } = useAccent();
   return (
-    <View style={styles.fabSlot}>
-      <View style={[styles.fabInner, { backgroundColor: accent }]}>
-        <Feather name="plus" size={24} color={onAccent} />
-      </View>
+    <View style={[styles.circle, styles.circleFilled]}>
+      <Feather name="plus" size={21} color={theme.colors.surface} />
     </View>
   );
 }
 
 export default function TabsLayout() {
-  // The bottom tab bar must clear the device's own gesture/nav bar — a fixed
-  // height here previously let Android's system bar overlap our icons on
-  // gesture-nav devices, so the bar's total height and content padding both
-  // add the live safe-area inset instead of a guessed constant.
   const insets = useSafeAreaInsets();
 
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarStyle: {
-          backgroundColor: theme.colors.surface,
-          borderTopColor: theme.colors.borderSoft,
-          borderTopWidth: StyleSheet.hairlineWidth,
-          height: 64 + insets.bottom,
-          paddingTop: 6,
-          paddingBottom: insets.bottom,
-        },
-        tabBarShowLabel: true,
-        tabBarLabelStyle: { fontFamily: theme.font.roundedMedium, fontSize: 10.5, marginTop: 2 },
-        tabBarActiveTintColor: theme.colors.ink,
-        tabBarInactiveTintColor: theme.colors.textMuted,
+        tabBarShowLabel: false,
         tabBarHideOnKeyboard: true,
+        // A floating sage pill, clear of the device's own gesture bar. It
+        // sits above the content (position: absolute); the tab screens all
+        // pad their scroll views past it.
+        tabBarStyle: {
+          position: 'absolute',
+          left: 16,
+          right: 16,
+          bottom: insets.bottom + 8,
+          height: 58,
+          borderRadius: theme.radius.pill,
+          backgroundColor: theme.colors.primary,
+          borderTopWidth: 0,
+          paddingHorizontal: 6,
+          shadowColor: theme.colors.ink,
+          shadowOffset: { width: 0, height: 8 },
+          shadowOpacity: 0.22,
+          shadowRadius: 16,
+          elevation: 10,
+        },
+        tabBarItemStyle: { height: 58, paddingTop: 0, paddingBottom: 0 },
       }}
     >
       <Tabs.Screen
@@ -81,9 +84,9 @@ export default function TabsLayout() {
         }}
         listeners={{
           tabPress: (e) => {
-            // Never actually navigate to the "add" route itself — it exists
-            // only so this slot has a place in the tab bar; the real
-            // destination is the Add screen, pushed onto the Stack.
+            // Never navigate to the "add" route itself — it exists only so
+            // this slot has a place in the pill; the real destination is the
+            // Add screen, pushed onto the Stack.
             e.preventDefault();
             router.push('/add-transaction');
           },
@@ -108,26 +111,12 @@ export default function TabsLayout() {
 }
 
 const styles = StyleSheet.create({
-  iconWrap: {
-    width: 40,
-    height: 34,
-    borderRadius: theme.radius.md,
+  circle: {
+    width: 38,
+    height: 38,
+    borderRadius: theme.radius.pill,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  fabSlot: { top: -16, alignItems: 'center', justifyContent: 'center' },
-  fabInner: {
-    width: 54,
-    height: 54,
-    borderRadius: 27,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: theme.colors.ink,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.18,
-    shadowRadius: 10,
-    elevation: 6,
-  },
+  circleFilled: { backgroundColor: theme.colors.ink },
 });

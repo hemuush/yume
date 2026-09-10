@@ -86,7 +86,7 @@ export function PrepayModal({
   };
 
   return (
-    <ModalSheet visible onClose={onClose} variant="center" title="Make a prepayment">
+    <ModalSheet visible onClose={onClose} variant="center" showClose title="Make a prepayment">
       <Text style={styles.cardSub}>
         Outstanding: {formatMoney(roundedMinor(loan.outstandingPrincipalMinor))}
       </Text>

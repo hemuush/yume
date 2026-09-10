@@ -42,7 +42,14 @@ export function MonthPickerModal({
   };
 
   return (
-    <ModalSheet visible={visible} onClose={onClose} variant="center" scrollable={false} title="Jump to month">
+    <ModalSheet
+      visible={visible}
+      onClose={onClose}
+      variant="center"
+      showClose
+      scrollable={false}
+      title="Jump to month"
+    >
       <View style={styles.yearRow}>
         <Pressable onPress={() => setYear((y) => y - 1)} hitSlop={10} style={styles.weekNavBtn}>
           <Text style={styles.weekNavArrow}>‹</Text>

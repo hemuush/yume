@@ -68,7 +68,14 @@ export const styles = StyleSheet.create({
   },
   iconGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 20 },
   modalTitle: { fontSize: 18, fontWeight: '700', color: theme.colors.textPrimary, marginBottom: 16 },
-  fieldLabel: { fontSize: 13, fontWeight: '600', color: theme.colors.textSecondary, marginBottom: 6 },
+  fieldLabel: {
+    fontSize: 10.5,
+    fontFamily: theme.font.roundedMedium,
+    letterSpacing: 0.4,
+    textTransform: 'uppercase',
+    color: theme.colors.textMuted,
+    marginBottom: 6,
+  },
   colorRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 20 },
   colorSwatch: {
     width: 32,

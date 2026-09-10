@@ -144,7 +144,7 @@ export default function DashboardScreen() {
 
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={{ paddingTop: 14, paddingBottom: 60 + insets.bottom }}
+        contentContainerStyle={{ paddingTop: 14, paddingBottom: 100 + insets.bottom }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       >
         {loadError && (
