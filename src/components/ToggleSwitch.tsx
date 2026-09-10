@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Pressable, Animated, StyleSheet } from 'react-native';
+import { View, Pressable, Animated, StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
 import { useAccent } from '@/theme/AccentContext';
 
@@ -17,14 +17,29 @@ export function ToggleSwitch({ value, onChange, disabled }: Props) {
     Animated.timing(anim, { toValue: value ? 1 : 0, duration: 180, useNativeDriver: false }).start();
   }, [value, anim]);
 
-  const trackColor = anim.interpolate({ inputRange: [0, 1], outputRange: [theme.colors.surface, accent] });
   const knobLeft = anim.interpolate({ inputRange: [0, 1], outputRange: [2, 22] });
 
   return (
-    <Pressable onPress={() => !disabled && onChange(!value)} disabled={disabled} hitSlop={8}>
-      <Animated.View style={[styles.track, { backgroundColor: trackColor }, disabled && styles.disabled]}>
+    <Pressable
+      onPress={() => !disabled && onChange(!value)}
+      disabled={disabled}
+      hitSlop={8}
+      accessibilityRole="switch"
+      accessibilityState={{ checked: value, disabled: !!disabled }}
+    >
+      {/* Track colour is driven straight off `value`, not the animation, so
+          the switch always shows its true state even if the slide animation
+          was skipped (e.g. this screen re-rendered after being off-screen).
+          `anim` only slides the knob. */}
+      <View
+        style={[
+          styles.track,
+          { backgroundColor: value ? accent : theme.colors.surface },
+          disabled && styles.disabled,
+        ]}
+      >
         <Animated.View style={[styles.knob, { left: knobLeft }]} />
-      </Animated.View>
+      </View>
     </Pressable>
   );
 }

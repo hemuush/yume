@@ -77,6 +77,9 @@ export const theme = {
     md: 12,
     lg: 14,
     xl: 18,
+    // Generous corner for the softer "calm card" register introduced on the
+    // Home screen (SoftCard) — rounder than the doodle cards' `xl`.
+    xl2: 22,
     pill: 999,
   },
   // Every card/button/chip border is thick and black (the doodle look) —
@@ -99,6 +102,12 @@ export const theme = {
     bodyBold: 'Archivo_700Bold',
     mono: 'SpaceMono_400Regular',
     monoBold: 'SpaceMono_700Bold',
+    // Fredoka — a rounded, friendly face used for the Home screen's warmer
+    // register: the brand wordmark, section titles, and hero headings. Body
+    // copy stays Archivo and amounts stay Space Mono.
+    rounded: 'Fredoka_400Regular',
+    roundedMedium: 'Fredoka_500Medium',
+    roundedBold: 'Fredoka_600SemiBold',
   },
 };
 

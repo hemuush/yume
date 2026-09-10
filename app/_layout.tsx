@@ -14,6 +14,9 @@ import { Archivo_700Bold } from '@expo-google-fonts/archivo/700Bold';
 import { Archivo_900Black } from '@expo-google-fonts/archivo/900Black';
 import { SpaceMono_400Regular } from '@expo-google-fonts/space-mono/400Regular';
 import { SpaceMono_700Bold } from '@expo-google-fonts/space-mono/700Bold';
+import { Fredoka_400Regular } from '@expo-google-fonts/fredoka/400Regular';
+import { Fredoka_500Medium } from '@expo-google-fonts/fredoka/500Medium';
+import { Fredoka_600SemiBold } from '@expo-google-fonts/fredoka/600SemiBold';
 import { getDb } from '@/db/client';
 import { getNotificationPrefs, getHasOnboarded, setHasOnboarded, getAppLockEnabled } from '@/db/settings';
 import { listAccounts, listTransactions } from '@/db/ledger';
@@ -41,6 +44,9 @@ export default function RootLayout() {
     Archivo_900Black,
     SpaceMono_400Regular,
     SpaceMono_700Bold,
+    Fredoka_400Regular,
+    Fredoka_500Medium,
+    Fredoka_600SemiBold,
   });
 
   useEffect(() => {
@@ -160,7 +166,13 @@ function AppGate({ needsOnboarding, initialLocked }: { needsOnboarding: boolean;
   return (
     <ErrorBoundary>
       <StatusBar style="dark" />
-      <Stack screenOptions={{ headerShown: false, animation: 'slide_from_right' }}>
+      {/* freezeOnBlur is left OFF: with it on (the navigator default), a
+          blurred screen's React tree is suspended and can miss context
+          updates that happen while it's off-screen — e.g. toggling "hide
+          amounts" from the Profile header left the Settings switch showing
+          the old state until a full remount. The screens here are light, so
+          keeping them live costs little. */}
+      <Stack screenOptions={{ headerShown: false, animation: 'slide_from_right', freezeOnBlur: false }}>
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="categories" />
         <Stack.Screen name="profile" />
