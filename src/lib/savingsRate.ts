@@ -1,15 +1,14 @@
-// Savings rate = how much of this period's income is still uncommitted,
-// i.e. `net ÷ income`. `netMinor` from a PeriodSummary already excludes money
-// moved into savings-type accounts this period (see src/db/reports.ts), so
-// this reads as "% of income kept / not yet spent", not "% saved in total".
+// Savings rate = how much of this period's income you didn't spend, i.e.
+// `(income − expense) ÷ income`. Note this is deliberately NOT `net ÷ income`
+// (net also subtracts money moved into savings accounts, which would make
+// someone who saves aggressively read as "0% saved"). Money kept is money
+// saved, whether it's sitting in checking or was swept into a savings pot.
 //
-// This logic previously lived only inside app/(tabs)/reports.tsx; it's pulled
-// here so the Home screen's savings bar and the Reports ring compute it the
-// exact same way. Pure — no behaviour change to any existing figure.
+// Pure — no behaviour change to any existing stored figure.
 
-/** Raw percentage. Can be negative, or absurd (e.g. -4280%) from a one-off expense. */
-export function savingsRatePct(netMinor: number, incomeMinor: number): number {
-  return incomeMinor > 0 ? (netMinor / incomeMinor) * 100 : 0;
+/** Raw percentage. Can be negative (spent more than earned) or huge. */
+export function savingsRatePct(savedMinor: number, incomeMinor: number): number {
+  return incomeMinor > 0 ? (savedMinor / incomeMinor) * 100 : 0;
 }
 
 /**
