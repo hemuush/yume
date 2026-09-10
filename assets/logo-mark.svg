@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+    <defs><mask id="crmask0" maskUnits="userSpaceOnUse" x="-60" y="-60" width="632" height="632">
+      <rect x="-60" y="-60" width="632" height="632" fill="#fff"/>
+      <circle cx="374" cy="224" r="176" fill="#000"/>
+    </mask></defs>
+    <circle cx="246" cy="258" r="190" fill="#12130F" mask="url(#crmask0)"/>
+    <path d="M232,356 C240,322 276,298 306,286" fill="none" stroke="#12130F" stroke-width="24" stroke-linecap="round"/>
+    <path d="M306,296 Q308.3387135660532,221.22346344704135 252,172 Q249.66128643394683,246.77653655295865 306,296 Z" fill="#E0F0A8" stroke="#12130F" stroke-width="9" stroke-linejoin="round"/>
+    <path d="M306,296 Q378.04208346777466,263.15280514835115 380,184 Q307.95791653222534,216.84719485164888 306,296 Z" fill="#8FE8C8" stroke="#12130F" stroke-width="9" stroke-linejoin="round"/></svg>
