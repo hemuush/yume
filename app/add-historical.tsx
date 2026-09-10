@@ -111,7 +111,9 @@ function recentMonths(count: number): { label: string; month: number; year: numb
 export default function AddHistoricalScreen() {
   const insets = useSafeAreaInsets();
   const months = useMemo(() => recentMonths(24), []);
-  const [selectedMonth, setSelectedMonth] = useState(months[1] ?? months[0]);
+  // Default to the latest month in the list (the current one) rather than
+  // last month — the strip is ordered most-recent-first, so months[0].
+  const [selectedMonth, setSelectedMonth] = useState(months[0]);
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [rows, setRows] = useState<PendingRow[]>([]);
