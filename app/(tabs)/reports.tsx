@@ -15,11 +15,13 @@ import {
   DailyExpensePoint,
   CategoryBreakdownItem,
 } from '@/db/reports';
-import { listTransactions } from '@/db/ledger';
-import { Transaction } from '@/types';
+import { listTransactions, listCategories } from '@/db/ledger';
+import { Transaction, Category } from '@/types';
 import { ModalSheet } from '@/components/ModalSheet';
 import { AppHeader } from '@/components/AppHeader';
 import { Amount } from '@/components/Amount';
+import { CategoryIcon } from '@/components/CategoryIcon';
+import { SuuIllustration } from '@/components/SuuIllustration';
 import { formatMoney } from '@/lib/money';
 import { formatPctChange } from '@/lib/format';
 import { roundedMinor, allocateRoundedMinor } from '@/lib/round';
@@ -43,6 +45,7 @@ import {
   recurringVsDiscretionary,
   categoryDeltas,
   describeSpendingPattern,
+  summariseDayTotal,
 } from '@/features/reports/reportsInsights';
 
 const WEEKDAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
@@ -60,6 +63,7 @@ export default function ReportsScreen() {
   const [drillItems, setDrillItems] = useState<CategoryBreakdownItem[] | null>(null);
   const [daySheet, setDaySheet] = useState<string | null>(null);
   const [dayTx, setDayTx] = useState<Transaction[] | null>(null);
+  const [categories, setCategories] = useState<Category[]>([]);
 
   const load = useCallback(async (c: PeriodCursor) => {
     const range = periodRange(c);
@@ -67,14 +71,16 @@ export default function ReportsScreen() {
     const trendMonths = c.granularity === 'year' ? 12 : 7;
     try {
       setStatus((s) => (s === 'ready' ? s : 'loading'));
-      const [cmp, tr, dy] = await Promise.all([
+      const [cmp, tr, dy, cats] = await Promise.all([
         getRangeComparison(range, previousPeriodRange(c), c.granularity),
         getMonthlyExpenseTrend(trendMonths, anchor),
         getDailyExpenseTotals(range),
+        listCategories(),
       ]);
       setComparison(cmp);
       setTrend(tr);
       setDaily(dy);
+      setCategories(cats);
       setStatus('ready');
       setErrorText(null);
     } catch (e: any) {
@@ -105,6 +111,7 @@ export default function ReportsScreen() {
   }, []);
 
   const dailyByDate = useMemo(() => new Map(daily.map((d) => [d.date, d.totalMinor])), [daily]);
+  const catById = useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories]);
 
   const header = (
     <>
@@ -409,19 +416,41 @@ export default function ReportsScreen() {
         )}
       </ScrollView>
 
-      <ModalSheet visible={!!drill} onClose={() => setDrill(null)} title={drill?.name}>
-        {drillItems === null ? (
-          <ActivityIndicator color={theme.colors.ink} />
-        ) : drillItems.length === 0 ? (
-          <Text style={styles.empty}>Nothing logged here this period.</Text>
-        ) : (
-          drillItems.map((c) => (
-            <View key={c.categoryId} style={styles.drillRow}>
-              <View style={[styles.catDot, { backgroundColor: c.color }]} />
-              <Text style={styles.drillName} numberOfLines={1}>
-                {c.name}
+      <ModalSheet
+        visible={!!drill}
+        onClose={() => setDrill(null)}
+        variant="center"
+        showClose
+        scrollable={false}
+        title={drill?.name}
+        footer={
+          drillItems && drillItems.length > 0 ? (
+            <View style={styles.dayTotalRow}>
+              <Text style={styles.dayTotalLabel}>Total</Text>
+              <Text style={styles.dayTotalValue}>
+                {formatMoney(drillItems.reduce((s, c) => s + c.totalMinor, 0))}
               </Text>
-              <Amount minor={c.totalMinor} sensitive={c.isSensitive} style={styles.catAmt} />
+            </View>
+          ) : undefined
+        }
+      >
+        {drillItems === null ? (
+          <ActivityIndicator color={theme.colors.ink} style={styles.daySpinner} />
+        ) : drillItems.length === 0 ? (
+          <View style={styles.dayEmpty}>
+            <SuuIllustration size={64} pose="sleepy" />
+            <Text style={styles.empty}>Nothing logged here this period.</Text>
+          </View>
+        ) : (
+          drillItems.map((c, i) => (
+            <View key={c.categoryId} style={[styles.dayRow, i === 0 && styles.dayRowFirst]}>
+              <View style={[styles.catDot, { backgroundColor: c.color }]} />
+              <View style={styles.dayMid}>
+                <Text style={styles.dayName} numberOfLines={1}>
+                  {c.name}
+                </Text>
+              </View>
+              <Amount minor={c.totalMinor} sensitive={c.isSensitive} style={styles.dayAmt} />
             </View>
           ))
         )}
@@ -430,36 +459,84 @@ export default function ReportsScreen() {
       <ModalSheet
         visible={!!daySheet}
         onClose={() => setDaySheet(null)}
+        variant="center"
+        showClose
+        scrollable={false}
         title={
           daySheet
             ? parseLocalIsoDate(daySheet).toLocaleDateString(undefined, { day: 'numeric', month: 'long' })
             : ''
         }
+        subtitle={
+          dayTx && dayTx.length > 0
+            ? `${dayTx.length} transaction${dayTx.length === 1 ? '' : 's'}`
+            : undefined
+        }
+        footer={dayTx && dayTx.length > 0 ? <DayTotal txs={dayTx} /> : undefined}
       >
         {dayTx === null ? (
-          <ActivityIndicator color={theme.colors.ink} />
+          <ActivityIndicator color={theme.colors.ink} style={styles.daySpinner} />
         ) : dayTx.length === 0 ? (
-          <Text style={styles.empty}>Nothing on this day.</Text>
+          <View style={styles.dayEmpty}>
+            <SuuIllustration size={72} pose="sleepy" />
+            <Text style={styles.empty}>Nothing on this day.</Text>
+          </View>
         ) : (
-          dayTx.map((tx) => (
-            <View key={tx.id} style={styles.drillRow}>
-              <Text style={styles.drillName} numberOfLines={1}>
-                {tx.note || tx.type}
-              </Text>
-              <Text
-                style={[
-                  styles.catAmt,
-                  tx.type === 'income' && { color: theme.colors.income },
-                  tx.type === 'expense' && { color: theme.colors.expense },
-                ]}
-              >
-                {tx.type === 'expense' ? '−' : tx.type === 'income' ? '+' : ''}
-                <Amount minor={tx.amountMinor} />
-              </Text>
-            </View>
-          ))
+          dayTx.map((tx, i) => {
+            const cat = tx.categoryId ? catById.get(tx.categoryId) : undefined;
+            const primary =
+              cat?.name ??
+              (tx.type === 'transfer' ? 'Transfer' : tx.type === 'income' ? 'Income' : 'Expense');
+            const note = tx.note && tx.note !== primary ? tx.note : null;
+            const sign = tx.type === 'expense' ? '−' : tx.type === 'income' ? '+' : '';
+            return (
+              <View key={tx.id} style={[styles.dayRow, i === 0 && styles.dayRowFirst]}>
+                <CategoryIcon name={cat?.icon ?? 'swap-horizontal'} color={cat?.color} square={34} />
+                <View style={styles.dayMid}>
+                  <Text style={styles.dayName} numberOfLines={1}>
+                    {primary}
+                  </Text>
+                  {note ? (
+                    <Text style={styles.daySub} numberOfLines={1}>
+                      {note}
+                    </Text>
+                  ) : null}
+                </View>
+                <Text
+                  style={[
+                    styles.dayAmt,
+                    tx.type === 'income' && { color: theme.colors.income },
+                    tx.type === 'expense' && { color: theme.colors.idCoralDeep },
+                    tx.type === 'transfer' && { color: theme.colors.textSecondary },
+                  ]}
+                >
+                  {sign}
+                  <Amount minor={tx.amountMinor} sensitive={cat?.isSensitive} />
+                </Text>
+              </View>
+            );
+          })
         )}
       </ModalSheet>
+    </View>
+  );
+}
+
+/** The pinned footer of the day-detail popup — the day's net, or its total spend. */
+function DayTotal({ txs }: { txs: Transaction[] }) {
+  const { label, amountMinor, sign } = summariseDayTotal(txs);
+  return (
+    <View style={styles.dayTotalRow}>
+      <Text style={styles.dayTotalLabel}>{label}</Text>
+      <Text
+        style={[
+          styles.dayTotalValue,
+          { color: sign === '+' ? theme.colors.income : theme.colors.idCoralDeep },
+        ]}
+      >
+        {sign}
+        {formatMoney(amountMinor)}
+      </Text>
     </View>
   );
 }
@@ -655,13 +732,37 @@ const styles = StyleSheet.create({
   },
   moverBold: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
 
-  drillRow: {
+  // day-detail / drill popup
+  dayRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    paddingVertical: 10,
+    gap: 10,
+    paddingVertical: 9,
+    paddingHorizontal: 18,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: theme.colors.borderSoft,
   },
-  drillName: { flex: 1, fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textPrimary },
+  dayRowFirst: { borderTopWidth: 0 },
+  dayMid: { flex: 1, minWidth: 0 },
+  dayName: {
+    fontFamily: theme.font.bodyBold,
+    fontSize: 12.5,
+    color: theme.colors.textPrimary,
+  },
+  daySub: {
+    fontFamily: theme.font.body,
+    fontSize: 10,
+    color: theme.colors.textMuted,
+    marginTop: 1,
+  },
+  dayAmt: { fontFamily: theme.font.monoBold, fontSize: 12, color: theme.colors.textPrimary },
+  daySpinner: { paddingVertical: 24 },
+  dayEmpty: { alignItems: 'center', paddingVertical: 8, gap: 4 },
+  dayTotalRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  dayTotalLabel: {
+    fontFamily: theme.font.bodyMedium,
+    fontSize: 11.5,
+    color: theme.colors.textSecondary,
+  },
+  dayTotalValue: { fontFamily: theme.font.monoBold, fontSize: 13, color: theme.colors.textPrimary },
 });

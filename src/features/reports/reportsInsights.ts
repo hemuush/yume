@@ -5,6 +5,29 @@ import type { CategoryBreakdownItem, DailyExpensePoint, TrendPoint } from '@/db/
 /** Which categories count as a fixed monthly load rather than a choice. */
 export const FIXED_CATEGORY_NAMES = ['Loan EMI', 'Rent', 'Insurance', 'Subscriptions'];
 
+/**
+ * The day-detail popup's footer figure. When the day has any income it shows
+ * the net (income − expense, signed); otherwise the plain total spent.
+ * Transfers move money between the user's own accounts and never count.
+ */
+export function summariseDayTotal(txs: { type: 'income' | 'expense' | 'transfer'; amountMinor: number }[]): {
+  label: 'Net this day' | 'Total spent';
+  amountMinor: number;
+  sign: '+' | '−' | '';
+} {
+  let inMinor = 0;
+  let outMinor = 0;
+  for (const t of txs) {
+    if (t.type === 'income') inMinor += t.amountMinor;
+    else if (t.type === 'expense') outMinor += t.amountMinor;
+  }
+  if (inMinor > 0) {
+    const net = inMinor - outMinor;
+    return { label: 'Net this day', amountMinor: Math.abs(net), sign: net >= 0 ? '+' : '−' };
+  }
+  return { label: 'Total spent', amountMinor: outMinor, sign: outMinor > 0 ? '−' : '' };
+}
+
 /** Bucket a day's spend into one of 5 heat levels (0 = none). `max` is the heaviest day. */
 export function heatLevel(amountMinor: number, maxMinor: number): 0 | 1 | 2 | 3 | 4 {
   if (amountMinor <= 0) return 0;
