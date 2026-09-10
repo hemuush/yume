@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { SuuIllustration } from './SuuIllustration';
+import { YumeLogo } from './YumeLogo';
 import { PrimaryButton } from './PrimaryButton';
 import { theme } from '@/constants/theme';
 import { authenticate, isDeviceSecured } from '@/lib/appLock';
@@ -61,6 +62,10 @@ export function LockScreen({ onUnlocked }: { onUnlocked: () => void }) {
 
   return (
     <View style={styles.container}>
+      <View style={styles.wordmark}>
+        <YumeLogo size={18} />
+        <Text style={styles.wordmarkText}>Yume</Text>
+      </View>
       <SuuIllustration size={110} pose="sleepy" />
       <Text style={styles.title}>Yume is locked</Text>
       <Text style={styles.subtitle}>Unlock with your fingerprint, face, or device PIN.</Text>
@@ -97,6 +102,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     padding: 24,
+  },
+  wordmark: {
+    position: 'absolute',
+    top: 64,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+  },
+  wordmarkText: {
+    fontFamily: theme.font.roundedBold,
+    fontSize: 14,
+    color: theme.colors.textSecondary,
+    letterSpacing: 0.2,
   },
   title: { fontFamily: theme.font.roundedBold, fontSize: 20, color: theme.colors.textPrimary, marginTop: 20 },
   subtitle: { fontSize: 13, color: theme.colors.textMuted, marginTop: 8, textAlign: 'center' },
