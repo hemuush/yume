@@ -215,7 +215,12 @@ export default function ReportsScreen() {
   return (
     <View style={styles.container}>
       {header}
-      <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 110 + insets.bottom }}>
+      <ScrollView
+        contentContainerStyle={{
+          paddingHorizontal: 20,
+          paddingBottom: theme.layout.tabScreenScrollPad + insets.bottom,
+        }}
+      >
         {!hasSpend ? (
           <Text style={styles.empty}>
             Nothing spent in this period. Use the arrows above to look back at a month with data.
