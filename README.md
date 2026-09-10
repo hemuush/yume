@@ -39,9 +39,9 @@ src/
                         so the app/ route file stays a thin orchestrator
   constants/            Theme tokens and default categories
   theme/                Accent + privacy React contexts
-  test-support/         better-sqlite3 test harness (realDataTestDb)
+  test-support/         better-sqlite3 test harness
   __tests__/            Cross-cutting integration tests
-scripts/                Dev-only scripts + test fixtures (not shipped)
+scripts/                Dev-only scripts (not shipped)
 ```
 
 ## Running locally
