@@ -5,6 +5,7 @@ import { Account } from '@/types';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { Chip } from '@/components/Chip';
 import { ModalSheet } from '@/components/ModalSheet';
+import { modalFooterStyles as f } from '@/constants/theme';
 import { styles } from './loans.styles';
 
 export function AccountModal({
@@ -39,7 +40,33 @@ export function AccountModal({
   };
 
   return (
-    <ModalSheet visible onClose={onClose} variant="center" showClose title="EMI account">
+    <ModalSheet
+      visible
+      onClose={onClose}
+      variant="center"
+      showClose
+      title="EMI account"
+      footer={
+        <View style={f.footerCol}>
+          {error && <Text style={styles.errorText}>{error}</Text>}
+          <View style={f.footerRow}>
+            <PrimaryButton
+              title="Cancel"
+              variant="secondary"
+              onPress={onClose}
+              disabled={saving}
+              style={f.footerBtn}
+            />
+            <PrimaryButton
+              title={saving ? 'Saving...' : 'Save'}
+              onPress={submit}
+              disabled={saving || !selected}
+              style={f.footerBtn}
+            />
+          </View>
+        </View>
+      }
+    >
       <Text style={styles.hintText}>
         Which account future EMIs for this loan come out of. This only changes payments made from here on — it
         never rewrites transactions already recorded.
@@ -53,22 +80,6 @@ export function AccountModal({
             onPress={() => setSelected(acc.id)}
           />
         ))}
-      </View>
-      {error && <Text style={styles.errorText}>{error}</Text>}
-      <View style={styles.modalActions}>
-        <PrimaryButton
-          title="Cancel"
-          variant="secondary"
-          onPress={onClose}
-          disabled={saving}
-          style={{ flex: 1, marginRight: 8 }}
-        />
-        <PrimaryButton
-          title={saving ? 'Saving...' : 'Save'}
-          onPress={submit}
-          disabled={saving || !selected}
-          style={{ flex: 1 }}
-        />
       </View>
     </ModalSheet>
   );

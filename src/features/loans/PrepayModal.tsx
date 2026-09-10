@@ -8,6 +8,7 @@ import { FormInput } from '@/components/FormInput';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { Chip } from '@/components/Chip';
 import { ModalSheet } from '@/components/ModalSheet';
+import { modalFooterStyles as f } from '@/constants/theme';
 import { toLocalIsoDate } from '@/lib/date';
 import { styles } from './loans.styles';
 
@@ -86,7 +87,27 @@ export function PrepayModal({
   };
 
   return (
-    <ModalSheet visible onClose={onClose} variant="center" showClose title="Make a prepayment">
+    <ModalSheet
+      visible
+      onClose={onClose}
+      variant="center"
+      showClose
+      title="Make a prepayment"
+      footer={
+        <View style={f.footerCol}>
+          {error && <Text style={styles.errorText}>{error}</Text>}
+          <View style={f.footerRow}>
+            <PrimaryButton title="Cancel" variant="secondary" onPress={onClose} style={f.footerBtn} />
+            <PrimaryButton
+              title={saving ? 'Saving...' : 'Confirm'}
+              onPress={submit}
+              disabled={saving}
+              style={f.footerBtn}
+            />
+          </View>
+        </View>
+      }
+    >
       <Text style={styles.cardSub}>
         Outstanding: {formatMoney(roundedMinor(loan.outstandingPrincipalMinor))}
       </Text>
@@ -137,23 +158,6 @@ export function PrepayModal({
           {formatMoney(amountMinor + chargeMinor)}.
         </Text>
       )}
-
-      {error && <Text style={styles.errorText}>{error}</Text>}
-
-      <View style={styles.modalActions}>
-        <PrimaryButton
-          title="Cancel"
-          variant="secondary"
-          onPress={onClose}
-          style={{ flex: 1, marginRight: 8 }}
-        />
-        <PrimaryButton
-          title={saving ? 'Saving...' : 'Confirm'}
-          onPress={submit}
-          disabled={saving}
-          style={{ flex: 1 }}
-        />
-      </View>
     </ModalSheet>
   );
 }

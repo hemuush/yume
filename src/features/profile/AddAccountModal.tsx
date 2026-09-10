@@ -5,6 +5,7 @@ import { getDefaultCurrency, SUPPORTED_CURRENCIES } from '@/db/settings';
 import { toMinor } from '@/lib/money';
 import { AccountType } from '@/types';
 import { ModalSheet } from '@/components/ModalSheet';
+import { modalFooterStyles as f } from '@/constants/theme';
 import { FormInput } from '@/components/FormInput';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { Chip } from '@/components/Chip';
@@ -72,7 +73,25 @@ export function AddAccountModal({
   };
 
   return (
-    <ModalSheet visible={visible} onClose={onClose} title="New Account">
+    <ModalSheet
+      visible={visible}
+      onClose={onClose}
+      title="New Account"
+      footer={
+        <View style={f.footerCol}>
+          {error && <Text style={styles.errorText}>{error}</Text>}
+          <View style={f.footerRow}>
+            <PrimaryButton title="Cancel" variant="secondary" onPress={onClose} style={f.footerBtn} />
+            <PrimaryButton
+              title={saving ? 'Saving...' : 'Create'}
+              onPress={submit}
+              disabled={saving}
+              style={f.footerBtn}
+            />
+          </View>
+        </View>
+      }
+    >
       <FormInput label="Name" value={name} onChangeText={setName} placeholder="e.g. HDFC Savings" />
       <Text style={styles.fieldLabel}>Type</Text>
       <View style={styles.chipRow}>
@@ -114,21 +133,6 @@ export function AddAccountModal({
           placeholder="e.g. 100000"
         />
       )}
-      {error && <Text style={styles.errorText}>{error}</Text>}
-      <View style={styles.modalActions}>
-        <PrimaryButton
-          title="Cancel"
-          variant="secondary"
-          onPress={onClose}
-          style={{ flex: 1, marginRight: 8 }}
-        />
-        <PrimaryButton
-          title={saving ? 'Saving...' : 'Create'}
-          onPress={submit}
-          disabled={saving}
-          style={{ flex: 1 }}
-        />
-      </View>
     </ModalSheet>
   );
 }

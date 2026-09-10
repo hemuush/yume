@@ -8,6 +8,7 @@ import { FormInput } from '@/components/FormInput';
 import { SegmentedControl } from '@/components/SegmentedControl';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { ModalSheet } from '@/components/ModalSheet';
+import { modalFooterStyles as f } from '@/constants/theme';
 import { partsToIsoDate } from '@/lib/date';
 import { styles } from './loans.styles';
 
@@ -72,7 +73,27 @@ export function RateChangeModal({
   };
 
   return (
-    <ModalSheet visible onClose={onClose} variant="center" showClose title="Update interest rate">
+    <ModalSheet
+      visible
+      onClose={onClose}
+      variant="center"
+      showClose
+      title="Update interest rate"
+      footer={
+        <View style={f.footerCol}>
+          {error && <Text style={styles.errorText}>{error}</Text>}
+          <View style={f.footerRow}>
+            <PrimaryButton title="Cancel" variant="secondary" onPress={onClose} style={f.footerBtn} />
+            <PrimaryButton
+              title={saving ? 'Saving...' : 'Confirm'}
+              onPress={submit}
+              disabled={saving}
+              style={f.footerBtn}
+            />
+          </View>
+        </View>
+      }
+    >
       <Text style={styles.cardSub}>Current rate: {(loan.interestRateAnnualBp / 100).toFixed(2)}%</Text>
       <FormInput
         label="New annual interest rate (%)"
@@ -133,21 +154,6 @@ export function RateChangeModal({
           {previewNewEmi != null ? ` — new EMI would be ${formatMoney(previewNewEmi)}` : ''}.
         </Text>
       )}
-      {error && <Text style={styles.errorText}>{error}</Text>}
-      <View style={styles.modalActions}>
-        <PrimaryButton
-          title="Cancel"
-          variant="secondary"
-          onPress={onClose}
-          style={{ flex: 1, marginRight: 8 }}
-        />
-        <PrimaryButton
-          title={saving ? 'Saving...' : 'Confirm'}
-          onPress={submit}
-          disabled={saving}
-          style={{ flex: 1 }}
-        />
-      </View>
     </ModalSheet>
   );
 }

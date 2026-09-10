@@ -8,7 +8,7 @@ import { ToggleSwitch } from '@/components/ToggleSwitch';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { ModalSheet } from '@/components/ModalSheet';
 import { CategoryIcon } from '@/components/CategoryIcon';
-import { CATEGORY_COLOR_PALETTE, theme } from '@/constants/theme';
+import { CATEGORY_COLOR_PALETTE, modalFooterStyles as f, theme } from '@/constants/theme';
 import { CATEGORY_ICON_CHOICES } from '@/constants/categories';
 import { styles } from './categories.styles';
 
@@ -100,7 +100,25 @@ export function AddCategoryModal({
   const isSystem = !!category?.isSystem;
 
   return (
-    <ModalSheet visible={visible} onClose={onClose} title={category ? 'Edit Category' : 'New Category'}>
+    <ModalSheet
+      visible={visible}
+      onClose={onClose}
+      title={category ? 'Edit Category' : 'New Category'}
+      footer={
+        <View style={f.footerCol}>
+          {error && <Text style={styles.errorText}>{error}</Text>}
+          <View style={f.footerRow}>
+            <PrimaryButton title="Cancel" variant="secondary" onPress={onClose} style={f.footerBtn} />
+            <PrimaryButton
+              title={saving ? 'Saving...' : category ? 'Save' : 'Create'}
+              onPress={submit}
+              disabled={saving}
+              style={f.footerBtn}
+            />
+          </View>
+        </View>
+      }
+    >
       <FormInput
         label="Name"
         value={name}
@@ -168,11 +186,15 @@ export function AddCategoryModal({
       <Text style={styles.fieldLabel}>Icon</Text>
       <View style={styles.iconGrid}>
         {CATEGORY_ICON_CHOICES.map((iconName) => (
-          <Pressable key={iconName} onPress={() => setIcon(iconName)}>
+          <Pressable
+            key={iconName}
+            onPress={() => setIcon(iconName)}
+            style={[styles.iconChoice, icon === iconName && styles.iconChoiceActive]}
+          >
             <CategoryIcon
               name={iconName}
-              color={icon === iconName ? color : theme.colors.surfaceAlt}
-              square={40}
+              color={icon === iconName ? color : theme.colors.surface}
+              square={38}
               size={18}
             />
           </Pressable>
@@ -187,21 +209,6 @@ export function AddCategoryModal({
           </Text>
         </View>
         <ToggleSwitch value={isSensitive} onChange={setIsSensitive} />
-      </View>
-      {error && <Text style={styles.errorText}>{error}</Text>}
-      <View style={styles.modalActions}>
-        <PrimaryButton
-          title="Cancel"
-          variant="secondary"
-          onPress={onClose}
-          style={{ flex: 1, marginRight: 8 }}
-        />
-        <PrimaryButton
-          title={saving ? 'Saving...' : category ? 'Save' : 'Create'}
-          onPress={submit}
-          disabled={saving}
-          style={{ flex: 1 }}
-        />
       </View>
     </ModalSheet>
   );

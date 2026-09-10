@@ -5,6 +5,7 @@ import { SegmentedControl } from '@/components/SegmentedControl';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { Chip } from '@/components/Chip';
 import { ModalSheet } from '@/components/ModalSheet';
+import { modalFooterStyles as f } from '@/constants/theme';
 import { orderCategoriesForPicker, topLevelOnly, childrenOf } from '@/lib/categoryTree';
 import { styles } from './transactions.styles';
 
@@ -91,7 +92,26 @@ export function FilterModal({
   };
 
   return (
-    <ModalSheet visible={visible} onClose={onClose} title="Filter transactions">
+    <ModalSheet
+      visible={visible}
+      onClose={onClose}
+      title="Filter transactions"
+      footer={
+        <View style={f.footerRow}>
+          <PrimaryButton
+            title="Clear filters"
+            variant="secondary"
+            onPress={() => onApply('all', [])}
+            style={f.footerBtn}
+          />
+          <PrimaryButton
+            title="Apply"
+            onPress={() => onApply(draftType, draftCategoryIds)}
+            style={f.footerBtn}
+          />
+        </View>
+      }
+    >
       <Text style={styles.fieldLabel}>Type</Text>
       <SegmentedControl options={FILTER_TYPES} value={draftType} onChange={onTypeChange} />
 
@@ -127,20 +147,6 @@ export function FilterModal({
           )}
         </>
       )}
-
-      <View style={styles.modalActions}>
-        <PrimaryButton
-          title="Clear filters"
-          variant="secondary"
-          onPress={() => onApply('all', [])}
-          style={{ flex: 1, marginRight: 8 }}
-        />
-        <PrimaryButton
-          title="Apply"
-          onPress={() => onApply(draftType, draftCategoryIds)}
-          style={{ flex: 1 }}
-        />
-      </View>
     </ModalSheet>
   );
 }
