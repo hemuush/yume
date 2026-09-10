@@ -50,6 +50,7 @@ export function ModalSheet({
       transparent
       onRequestClose={onClose}
       statusBarTranslucent
+      navigationBarTranslucent
     >
       <View style={styles.flex}>
         {/* The backdrop is its own sibling rather than a parent of the sheet:
@@ -61,8 +62,15 @@ export function ModalSheet({
             KeyboardAvoidingView / manual keyboard-height padding both fell
             short. `bottomOffset` keeps a small gap between the field and the
             keyboard's top edge. */}
+        {/* paddingTop keeps the sheet (grabber + title) clear of the
+            translucent status bar even when its content is tall enough to
+            fill the screen or the keyboard has pushed it up. */}
         <View
-          style={[styles.flex, isSheet ? styles.alignBottom : styles.alignCenter]}
+          style={[
+            styles.flex,
+            isSheet ? styles.alignBottom : styles.alignCenter,
+            { paddingTop: insets.top + 8 },
+          ]}
           pointerEvents="box-none"
         >
           {scrollable ? (
