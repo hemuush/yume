@@ -59,11 +59,6 @@ export async function createPerson(input: { name: string; notes?: string }): Pro
   return rowToPerson(row);
 }
 
-export async function archivePerson(id: string): Promise<void> {
-  const db = await getDb();
-  await db.runAsync('UPDATE people SET archived = 1 WHERE id = ?', [id]);
-}
-
 export async function getPersonLedger(personId: string): Promise<PersonLedgerEntry[]> {
   const db = await getDb();
   const rows = await db.getAllAsync<any>(

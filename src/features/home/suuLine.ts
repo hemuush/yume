@@ -7,8 +7,7 @@ export interface SuuLine {
 
 /**
  * The one encouraging line Suu says in the Home hero. Derived entirely from
- * this period's real figures — never a placeholder — mirroring the rule the
- * old "Suu says" InsightCard followed.
+ * this period's real figures — never a placeholder.
  *
  * A spending-is-up nudge is left to `SpendingAlertCard` (which can name the
  * category that moved) — Suu only turns cautionary when the month actually

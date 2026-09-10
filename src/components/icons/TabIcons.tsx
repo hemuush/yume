@@ -1,4 +1,4 @@
-import Svg, { Path, Circle, Rect } from 'react-native-svg';
+import Svg, { Path, Rect } from 'react-native-svg';
 
 // One consistent 1.8px rounded-stroke line-icon set, drawn for Yume rather
 // than pulled from emoji or a generic icon font — emoji icons are one of the
@@ -66,31 +66,6 @@ export function ReportsIcon({ color, size = 22 }: IconProps) {
         strokeLinejoin="round"
       />
       <Path d="M3 20h18" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
-    </Svg>
-  );
-}
-
-export function WalletIcon({ color, size = 22 }: IconProps) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Path
-        d="M3 8a2 2 0 0 1 2-2h13a1 1 0 0 1 1 1v2"
-        stroke={color}
-        strokeWidth="1.8"
-        strokeLinecap="round"
-      />
-      <Rect x="3" y="8" width="18" height="12" rx="2.4" stroke={color} strokeWidth="1.8" />
-      <Circle cx="16" cy="14" r="1.6" fill={color} />
-    </Svg>
-  );
-}
-
-export function MoreIcon({ color, size = 22 }: IconProps) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Circle cx="5" cy="12" r="1.7" fill={color} />
-      <Circle cx="12" cy="12" r="1.7" fill={color} />
-      <Circle cx="19" cy="12" r="1.7" fill={color} />
     </Svg>
   );
 }
