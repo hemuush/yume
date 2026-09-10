@@ -61,13 +61,28 @@ function isValidSnapshotShape(snapshot: any): snapshot is BackupSnapshot {
   );
 }
 
-export async function restoreFromSnapshot(snapshot: BackupSnapshot): Promise<void> {
+export interface RestoreResult {
+  /**
+   * `"table.column"` for every key present in the backup that isn't a real
+   * column in this version's schema and was therefore not restored. Usually
+   * empty; non-empty means the file was made by a build whose schema has
+   * since changed (or was hand-edited), and the listed data did not come
+   * back — the Backup screen surfaces this so a silent partial restore
+   * can't pass for a complete one.
+   */
+  skippedColumns: string[];
+}
+
+export async function restoreFromSnapshot(snapshot: BackupSnapshot): Promise<RestoreResult> {
   if (!isValidSnapshotShape(snapshot)) {
     throw new Error("This doesn't look like a Yume backup file.");
   }
   if (snapshot.formatVersion > BACKUP_FORMAT_VERSION) {
     throw new Error('This backup was made with a newer version of Yume. Please update the app first.');
   }
+  // Older formatVersions currently restore as-is (v1 is the only format that
+  // has ever shipped). When the format is first bumped, translate an older
+  // snapshot up to the current shape here, before the insert loop below.
   const db = await getDb();
 
   const deleteOrder = [...TABLES].reverse();
@@ -77,12 +92,14 @@ export async function restoreFromSnapshot(snapshot: BackupSnapshot): Promise<voi
   // never trusted to describe its own SQL shape. Column names come only from
   // the real table schema (via PRAGMA, itself just SQLite identifiers we
   // already control, not the file), and any key in a row that isn't a real
-  // column is silently dropped rather than spliced into an INSERT statement.
+  // column is dropped rather than spliced into an INSERT statement — but
+  // every dropped key is recorded and reported back (see RestoreResult).
   const columnsByTable: Record<string, Set<string>> = {};
   for (const table of TABLES) {
     const info = await db.getAllAsync<{ name: string }>(`PRAGMA table_info(${table})`);
     columnsByTable[table] = new Set(info.map((c) => c.name));
   }
+  const skipped = new Set<string>();
 
   await db.execAsync('PRAGMA foreign_keys = OFF;');
   try {
@@ -94,7 +111,11 @@ export async function restoreFromSnapshot(snapshot: BackupSnapshot): Promise<voi
         const rows = snapshot.tables[table] ?? [];
         const validColumns = columnsByTable[table];
         for (const row of rows) {
-          const columns = Object.keys(row).filter((c) => validColumns.has(c));
+          const columns: string[] = [];
+          for (const key of Object.keys(row)) {
+            if (validColumns.has(key)) columns.push(key);
+            else skipped.add(`${table}.${key}`);
+          }
           if (columns.length === 0) continue;
           const placeholders = columns.map(() => '?').join(', ');
           const values = columns.map((c) => row[c]);
@@ -126,4 +147,6 @@ export async function restoreFromSnapshot(snapshot: BackupSnapshot): Promise<voi
   // cached-setting reader would keep showing pre-restore values (wrong
   // currency symbol, wrong accent, etc.) until the app is fully relaunched.
   resetSettingsCache();
+
+  return { skippedColumns: [...skipped].sort() };
 }
