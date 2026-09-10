@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme } from '@/constants/theme';
 import { useAccent } from '@/theme/AccentContext';
 import { ScallopedEdge } from '@/components/ScallopedEdge';
+import { YumeLogo } from '@/components/YumeLogo';
 import { HeaderUserButton, HeaderIconButton } from '@/components/AppHeader';
 import { PeriodCursor } from '@/lib/period';
 import { MonthPill } from './MonthPill';
@@ -39,7 +40,10 @@ export function HomeHeader({
     <>
       <View style={[styles.band, { backgroundColor: accent, paddingTop: insets.top + 10 }]}>
         <View style={styles.row}>
-          <Text style={[styles.brand, { color: onAccent }]}>Yume</Text>
+          <View style={styles.brandRow}>
+            <YumeLogo size={22} />
+            <Text style={[styles.brand, { color: onAccent }]}>Yume</Text>
+          </View>
           <View style={styles.actions}>
             <HeaderIconButton
               icon="bell"
@@ -79,6 +83,7 @@ export function HomeHeader({
 const styles = StyleSheet.create({
   band: { paddingHorizontal: 20, paddingBottom: 14, gap: 12 },
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
+  brandRow: { flexDirection: 'row', alignItems: 'center', gap: 7 },
   brand: { fontFamily: theme.font.roundedBold, fontSize: 21, letterSpacing: 0.2 },
   actions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   greetWrap: { flex: 1, minWidth: 0 },
