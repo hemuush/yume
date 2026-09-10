@@ -21,10 +21,7 @@
       },
       "predictiveBackGestureEnabled": false,
       "versionCode": 46,
-      "permissions": [
-        "android.permission.USE_BIOMETRIC",
-        "android.permission.USE_FINGERPRINT"
-      ]
+      "permissions": ["android.permission.USE_BIOMETRIC", "android.permission.USE_FINGERPRINT"]
     },
     "web": {
       "favicon": "./assets/favicon.png"
