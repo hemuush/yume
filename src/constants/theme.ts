@@ -1,4 +1,4 @@
-// Flynse's visual identity: a hand-drawn "doodle" register — warm cream
+// Yume's visual identity: a hand-drawn "doodle" register — warm cream
 // surfaces, thick black outlines on every card, and a soft sage-lime as the
 // one signature accent color. The original mockup's lime (#D6FF3D) was a
 // near-neon safety-vest chartreuse sitting noticeably darker/more saturated

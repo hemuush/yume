@@ -1,4 +1,4 @@
-// SQLite DDL for Flynse. Money = integer minor units. IDs = UUID text.
+// SQLite DDL for Yume. Money = integer minor units. IDs = UUID text.
 // Balance integrity: account balances are NEVER stored as free-standing mutable
 // fields updated ad-hoc — they're recomputed from ledger entries by db/ledger.ts
 // so a bug in one screen can never silently desync a balance from its transactions.
@@ -54,7 +54,7 @@ CREATE TABLE IF NOT EXISTS loans (
   notes TEXT NOT NULL DEFAULT '',
   -- What a *borrowed* loan actually financed (a home, a vehicle), and its
   -- current tracked value — both null by default, matching the original
-  -- "Flynse doesn't track assets" behavior exactly for anyone who doesn't
+  -- "Yume doesn't track assets" behavior exactly for anyone who doesn't
   -- set one. Once set, the loan's own net-worth contribution becomes its
   -- real equity (asset value minus what's still owed) instead of counting
   -- pure debt with nothing offsetting it.

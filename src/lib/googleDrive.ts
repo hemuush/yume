@@ -11,6 +11,9 @@ const DISCOVERY = {
 };
 
 const SCOPES = ['https://www.googleapis.com/auth/drive.file'];
+// Kept as "Flynse Backups" / the old SecureStore key name so a device that
+// linked Drive before the rename to Yume keeps finding its existing backups
+// and doesn't have to re-authorise. Only the display name changed.
 const BACKUP_FOLDER_NAME = 'Flynse Backups';
 const REFRESH_TOKEN_KEY = 'flynse_drive_refresh_token';
 
@@ -38,12 +41,12 @@ let cachedAuth: DriveAuth | null = null;
 
 /**
  * Runs the interactive Google sign-in flow (PKCE, no client secret needed)
- * and returns an access token scoped to files this app creates — Flynse
+ * and returns an access token scoped to files this app creates — Yume
  * never gets read access to the rest of the user's Drive.
  */
 export async function signInToGoogleDrive(): Promise<DriveAuth> {
   const clientId = getClientId();
-  const redirectUri = AuthSession.makeRedirectUri({ scheme: 'flynse' });
+  const redirectUri = AuthSession.makeRedirectUri({ scheme: 'yume' });
 
   const request = new AuthSession.AuthRequest({
     clientId,
@@ -150,7 +153,7 @@ async function findOrCreateBackupFolder(accessToken: string): Promise<string> {
     body: JSON.stringify({ name: BACKUP_FOLDER_NAME, mimeType: 'application/vnd.google-apps.folder' }),
   });
   const createJson = await createRes.json();
-  if (!createJson.id) throw new Error('Could not create the Flynse Backups folder in Drive.');
+  if (!createJson.id) throw new Error('Could not create the backup folder in Drive.');
   return createJson.id;
 }
 

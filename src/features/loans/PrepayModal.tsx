@@ -12,12 +12,12 @@ import { toLocalIsoDate } from '@/lib/date';
 import { styles } from './loans.styles';
 
 /**
- * Jurisdiction-specific tax-on-fee conventions that Flynse can offer as a
+ * Jurisdiction-specific tax-on-fee conventions that Yume can offer as a
  * one-tap fill-in, purely as a labeled convenience — never a silent
  * default. Nothing in the actual charge math assumes any of these; a user
  * whose account isn't in one of these currencies just sees a plain
  * percentage field with no quick-fill at all, which is the correct default
- * for a jurisdiction Flynse knows nothing about.
+ * for a jurisdiction Yume knows nothing about.
  */
 const TAX_ON_FEE_PRESETS: Record<string, { label: string; percent: number }> = {
   INR: { label: '18% GST', percent: 18 },
@@ -39,7 +39,7 @@ export function PrepayModal({
   const [amount, setAmount] = useState('');
   // No jurisdiction default is assumed here at all — whether a prepayment
   // charge applies, and how much, depends entirely on the individual loan
-  // agreement and the laws where it was taken out, neither of which Flynse
+  // agreement and the laws where it was taken out, neither of which Yume
   // knows. Starts blank for every loan; the hint text below explains what
   // to go check rather than guessing a number.
   const [chargePercent, setChargePercent] = useState('');

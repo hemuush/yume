@@ -110,7 +110,7 @@ export function AddCategoryModal({
       />
       {isSystem ? (
         <Text style={styles.modalHint}>
-          Built-in category — its name and type are fixed because Flynse files loan and Friends & Family
+          Built-in category — its name and type are fixed because Yume files loan and Friends & Family
           transactions under it automatically. Colour, icon and sensitivity can still be changed.
         </Text>
       ) : category ? (

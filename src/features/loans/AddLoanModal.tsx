@@ -241,7 +241,7 @@ export function AddLoanModal({
     }
     // Both branches now share one date picker — a real disbursement date is
     // routinely earlier than the day you get around to entering it into
-    // Flynse (or even earlier than a sanction letter's own print date), so
+    // Yume (or even earlier than a sanction letter's own print date), so
     // "new" can no longer only mean "today."
     const startDate = partsToIsoDate(startYear, startMonth, startDay);
     if (!startDate) {
@@ -429,7 +429,7 @@ export function AddLoanModal({
 
       {wizardStep === 2 && (
         <>
-          <Text style={styles.fieldLabel}>Should Flynse record the disbursement?</Text>
+          <Text style={styles.fieldLabel}>Should Yume record the disbursement?</Text>
           <SegmentedControl
             options={[
               { label: 'Yes — track the cash move', value: 'new' },
@@ -564,7 +564,7 @@ export function AddLoanModal({
             <>
               <Text style={styles.hintText}>
                 For a loan you're already partway through — no fake transaction is created for money that
-                already moved before you started using Flynse. 0 already paid is fine if you're only just past
+                already moved before you started using Yume. 0 already paid is fine if you're only just past
                 disbursement with nothing due yet.
               </Text>
               <FormInput

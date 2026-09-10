@@ -35,7 +35,7 @@ export function RateChangeModal({
   const [mode, setMode] = useState<'keepEmi' | 'keepTenure'>('keepEmi');
   // Previously always "today", with no way to say a rate change actually
   // took effect earlier — a floating rate reset the bank applied two
-  // statements ago, only now being entered into Flynse, had nowhere to
+  // statements ago, only now being entered into Yume, had nowhere to
   // record when it really happened.
   const [effYear, setEffYear] = useState(String(today.getFullYear()));
   const [effMonth, setEffMonth] = useState(String(today.getMonth() + 1));

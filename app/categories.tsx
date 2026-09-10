@@ -103,7 +103,7 @@ export default function CategoriesScreen() {
     if (cat.isSystem) {
       Alert.alert(
         'Built-in category',
-        `"${cat.name}" is used by Flynse to auto-categorise loan EMIs, fees and Friends & Family entries, so it can't be archived, deleted, or renamed. You can still change its icon and colour.`
+        `"${cat.name}" is used by Yume to auto-categorise loan EMIs, fees and Friends & Family entries, so it can't be archived, deleted, or renamed. You can still change its icon and colour.`
       );
       return;
     }

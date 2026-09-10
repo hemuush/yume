@@ -10,7 +10,7 @@ export function LockScreen({ onUnlocked }: { onUnlocked: () => void }) {
   const { setLockEnabled } = useAppLock();
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
-  // Flynse never stores a password of its own — it locks using whatever the
+  // Yume never stores a password of its own — it locks using whatever the
   // phone itself is secured with. If the user later removes their device
   // PIN/biometric entirely (Settings only checks this once, at the moment
   // the toggle is turned on), authenticateAsync can never succeed again,
@@ -18,7 +18,7 @@ export function LockScreen({ onUnlocked }: { onUnlocked: () => void }) {
   // first passing this screen. Without an escape hatch that's a permanent,
   // unrecoverable lockout of the user's own financial data. It's safe to
   // offer one here specifically: if the device has no lock method at all,
-  // the phone itself is already unsecured, so turning off Flynse's own
+  // the phone itself is already unsecured, so turning off Yume's own
   // lock adds no new exposure beyond what already exists.
   const [deviceUnsecured, setDeviceUnsecured] = useState(false);
   const mounted = useRef(true);
@@ -62,13 +62,13 @@ export function LockScreen({ onUnlocked }: { onUnlocked: () => void }) {
   return (
     <View style={styles.container}>
       <FlynnIllustration size={110} pose="sleepy" />
-      <Text style={styles.title}>Flynse is locked</Text>
+      <Text style={styles.title}>Yume is locked</Text>
       <Text style={styles.subtitle}>Unlock with your fingerprint, face, or device PIN.</Text>
       {failed && !deviceUnsecured && <Text style={styles.failedText}>That didn't work — try again.</Text>}
       {deviceUnsecured && (
         <Text style={styles.failedText}>
-          Your device no longer has a screen lock set up, so Flynse can't verify you this way. Set one up
-          again in your phone's settings, or turn off Flynse's lock below.
+          Your device no longer has a screen lock set up, so Yume can't verify you this way. Set one up again
+          in your phone's settings, or turn off Yume's lock below.
         </Text>
       )}
       <PrimaryButton
@@ -79,7 +79,7 @@ export function LockScreen({ onUnlocked }: { onUnlocked: () => void }) {
       />
       {deviceUnsecured && (
         <PrimaryButton
-          title="Turn off Flynse's lock"
+          title="Turn off Yume's lock"
           variant="secondary"
           onPress={turnOffLock}
           disabled={busy}

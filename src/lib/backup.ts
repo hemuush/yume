@@ -63,10 +63,10 @@ function isValidSnapshotShape(snapshot: any): snapshot is BackupSnapshot {
 
 export async function restoreFromSnapshot(snapshot: BackupSnapshot): Promise<void> {
   if (!isValidSnapshotShape(snapshot)) {
-    throw new Error("This doesn't look like a Flynse backup file.");
+    throw new Error("This doesn't look like a Yume backup file.");
   }
   if (snapshot.formatVersion > BACKUP_FORMAT_VERSION) {
-    throw new Error('This backup was made with a newer version of Flynse. Please update the app first.');
+    throw new Error('This backup was made with a newer version of Yume. Please update the app first.');
   }
   const db = await getDb();
 

@@ -449,7 +449,7 @@ export function computeTrackedBalance(input: {
  * net to zero across the whole account set, so the account total only needs
  * income/expense effects, not a per-account transfer trace.
  *
- * For a loan's installments paid before it was entered into Flynse
+ * For a loan's installments paid before it was entered into Yume
  * (`alreadyPaidInstallments`, which have no real `paid_date`), the
  * installment's `due_date` is used as the best available stand-in for when
  * it was actually paid — historical dates for those simply aren't known.

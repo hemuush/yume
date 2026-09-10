@@ -1,19 +1,19 @@
 {
   "expo": {
-    "name": "flynse",
+    "name": "Yume",
     "slug": "flynse",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "scheme": "flynse",
+    "scheme": "yume",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.flynse.app"
+      "bundleIdentifier": "com.yume.app"
     },
     "android": {
-      "package": "com.flynse.app",
+      "package": "com.yume.app",
       "adaptiveIcon": {
         "backgroundColor": "#FEFBF1",
         "foregroundImage": "./assets/android-icon-foreground.png",

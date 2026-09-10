@@ -39,7 +39,7 @@ export function HomeHeader({
     <>
       <View style={[styles.band, { backgroundColor: accent, paddingTop: insets.top + 10 }]}>
         <View style={styles.row}>
-          <Text style={[styles.brand, { color: onAccent }]}>Flynse</Text>
+          <Text style={[styles.brand, { color: onAccent }]}>Yume</Text>
           <View style={styles.actions}>
             <HeaderIconButton
               icon="bell"

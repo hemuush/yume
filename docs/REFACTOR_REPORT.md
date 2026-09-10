@@ -1,4 +1,4 @@
-# Flynse — Cleanup, Restructure & Test-Coverage Report
+# Yume — Cleanup, Restructure & Test-Coverage Report
 
 _Generated at the end of the multi-step cleanup pass. Every number below was produced by
 running the commands in the [Verification](#7-verification) section against the working
@@ -77,7 +77,7 @@ plus `scripts/fixtures/`. Every Jest spec is co-located.
 | `src/__tests__/validateRealDataBackup.test.ts` | `scripts/validateRealDataBackup.test.ts` |
 | `src/test-support/realDataTestDb.ts` | `scripts/realDataTestDb.ts` (the better-sqlite3 harness) |
 
-Plus the fixture: `scripts/fixtures/flynse-real-data-import.json` (was at the repo root).
+Plus the fixture: `scripts/fixtures/yume-real-data-import.json` (was at the repo root).
 
 ### New combinatorial test files (6 — see §4 for what they cover)
 

@@ -178,7 +178,7 @@ export default function SettingsScreen() {
       if (!secured) {
         Alert.alert(
           'No screen lock found',
-          "Set up a fingerprint, face unlock, or PIN/pattern in your phone's own settings first — Flynse locks using whatever your phone is already secured with."
+          "Set up a fingerprint, face unlock, or PIN/pattern in your phone's own settings first — Yume locks using whatever your phone is already secured with."
         );
         return;
       }
@@ -297,7 +297,7 @@ export default function SettingsScreen() {
         <Text style={styles.groupTitle}>About</Text>
         <View style={styles.aboutCard}>
           <FlynnIllustration size={56} />
-          <Text style={styles.aboutName}>Flynse</Text>
+          <Text style={styles.aboutName}>Yume</Text>
           <Text style={styles.aboutTagline}>Track every rupee, on your terms.</Text>
           <View style={styles.aboutFacts}>
             <AboutFact icon="wifi-off" text="Works fully offline — no account, no server, no signup." />

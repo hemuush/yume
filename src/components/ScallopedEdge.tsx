@@ -4,7 +4,7 @@ import { Dimensions } from 'react-native';
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 /**
- * Flynse's one recurring shape motif: a scalloped (wave) edge, used
+ * Yume's one recurring shape motif: a scalloped (wave) edge, used
  * wherever a solid-color section hands off to the cream body — instead of
  * every screen defaulting to a flat rule or a rounded-rectangle card
  * floating on the background, which is what nearly every other app does.

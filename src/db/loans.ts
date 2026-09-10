@@ -93,7 +93,7 @@ export interface CreateLoanInput {
   assetValueMinor?: number | null;
   /**
    * How many installments were already paid before you started tracking
-   * this loan in Flynse (0 for a brand-new loan). Those installments are
+   * this loan in Yume (0 for a brand-new loan). Those installments are
    * marked 'paid' with no linked transaction — the app never fabricates
    * historical cash movements it didn't witness — and the loan's starting
    * outstanding balance is taken from the schedule at that point, not the
@@ -651,7 +651,7 @@ export async function undoInstallmentPayment(loanPaymentId: string): Promise<voi
  * ever reducing outstanding principal or feeding into the amortization
  * schedule. Per RBI's Pre-payment Charges on Loans Directions, floating-rate
  * loans to individual borrowers (non-business) cannot legally carry this
- * charge at all — Flynse never assumes one; it's purely what the caller
+ * charge at all — Yume never assumes one; it's purely what the caller
  * (the UI) passes in, since only the user's actual loan agreement knows the
  * real number for a fixed-rate loan.
  */

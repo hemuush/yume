@@ -80,7 +80,7 @@ export default function NotificationSettingsScreen() {
     if (!granted) {
       Alert.alert(
         'Notifications disabled',
-        'Enable notification permission for Flynse in your device settings to use reminders.'
+        'Enable notification permission for Yume in your device settings to use reminders.'
       );
     }
     return granted;

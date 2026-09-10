@@ -13,7 +13,7 @@ import {
 
 /**
  * Opens Android's folder picker once; the returned URI is a persistent
- * grant Flynse can keep writing into without asking again. Returns null if
+ * grant Yume can keep writing into without asking again. Returns null if
  * the user cancels.
  */
 export async function pickBackupFolder(): Promise<string | null> {

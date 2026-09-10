@@ -12,12 +12,12 @@ export async function isDeviceSecured(): Promise<boolean> {
 /**
  * Shows the phone's own biometric prompt, falling back to its device
  * PIN/pattern/password automatically (disableDeviceFallback: false) — so
- * one call covers both "biometric" and "PIN" without Flynse ever handling
+ * one call covers both "biometric" and "PIN" without Yume ever handling
  * a credential itself.
  */
 export async function authenticate(): Promise<boolean> {
   const result = await LocalAuthentication.authenticateAsync({
-    promptMessage: 'Unlock Flynse',
+    promptMessage: 'Unlock Yume',
     disableDeviceFallback: false,
   });
   return result.success;

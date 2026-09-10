@@ -1,6 +1,6 @@
 # Building an installable APK
 
-Flynse is an Expo app, so a real Android APK is built in Expo's cloud build service (EAS Build) — this keeps your own laptop from ever running a heavy Android/Gradle toolchain locally.
+Yume is an Expo app, so a real Android APK is built in Expo's cloud build service (EAS Build) — this keeps your own laptop from ever running a heavy Android/Gradle toolchain locally.
 
 ## One-time setup
 
