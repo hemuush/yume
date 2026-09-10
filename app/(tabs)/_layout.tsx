@@ -5,28 +5,38 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from '@expo/vector-icons/Feather';
 import { theme } from '@/constants/theme';
 import { HomeIcon, ActivityIcon, LoanIcon, ReportsIcon } from '@/components/icons/TabIcons';
+import { useReduceMotion } from '@/lib/useReduceMotion';
 
 /**
- * A tab's icon inside the floating pill. The active tab — and the centre
- * "+", which is always "on" — sits in a filled ink circle with a cream
- * glyph; the rest are ink line icons on the sage pill. Becoming active
- * gives the circle a small pop.
+ * A tab's icon inside the floating pill. The ink circle behind the active
+ * tab grows and fades in as the indicator "lands" on it, and shrinks away
+ * as you leave — a per-tab stand-in for a bar-wide sliding indicator.
  */
 function TabIcon({ Icon, focused }: { Icon: typeof HomeIcon; focused: boolean }) {
+  const reduce = useReduceMotion();
   // Lazy state init (not useRef.current) so the Animated.Value reads as a
   // plain value in render — the shape the hooks lint rules want.
-  const [scale] = useState(() => new Animated.Value(1));
+  const [fill] = useState(() => new Animated.Value(focused ? 1 : 0));
   useEffect(() => {
-    if (!focused) return;
-    Animated.sequence([
-      Animated.timing(scale, { toValue: 1.12, duration: 110, useNativeDriver: true }),
-      Animated.spring(scale, { toValue: 1, useNativeDriver: true, speed: 18, bounciness: 8 }),
-    ]).start();
-  }, [focused, scale]);
+    if (reduce) {
+      fill.setValue(focused ? 1 : 0);
+      return;
+    }
+    Animated.spring(fill, {
+      toValue: focused ? 1 : 0,
+      useNativeDriver: true,
+      speed: 16,
+      bounciness: 6,
+    }).start();
+  }, [focused, reduce, fill]);
   return (
-    <Animated.View style={[styles.circle, focused && styles.circleFilled, { transform: [{ scale }] }]}>
+    <View style={styles.circle}>
+      <Animated.View
+        style={[styles.circleFill, { opacity: fill, transform: [{ scale: fill }] }]}
+        pointerEvents="none"
+      />
       <Icon color={focused ? theme.colors.surface : theme.colors.ink} size={21} />
-    </Animated.View>
+    </View>
   );
 }
 
@@ -37,7 +47,8 @@ function TabIcon({ Icon, focused }: { Icon: typeof HomeIcon; focused: boolean })
  */
 function CenterAddButton() {
   return (
-    <View style={[styles.circle, styles.circleFilled]}>
+    <View style={styles.circle}>
+      <View style={[styles.circleFill, styles.circleFillStatic]} pointerEvents="none" />
       <Feather name="plus" size={21} color={theme.colors.surface} />
     </View>
   );
@@ -132,5 +143,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  circleFilled: { backgroundColor: theme.colors.ink },
+  circleFill: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    borderRadius: theme.radius.pill,
+    backgroundColor: theme.colors.ink,
+  },
+  circleFillStatic: { opacity: 1 },
 });
