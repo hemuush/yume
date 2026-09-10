@@ -7,7 +7,7 @@ import { toMajor } from './money';
 import { Account, Category, Loan, Transaction } from '@/types';
 
 /**
- * Flynse's own palette, as plain 6-digit RGB hex (xlsx-js-style's CellStyleColor
+ * Yume's own palette, as plain 6-digit RGB hex (xlsx-js-style's CellStyleColor
  * takes "RRGGBB", no alpha) — mirrors src/constants/theme.ts exactly, so the
  * exported workbook reads as the same app, not a generic spreadsheet.
  */
@@ -179,7 +179,7 @@ export function buildExportWorkbook(data: ExportData): XLSX.WorkBook {
     setCell(summary, ref, v, style, type);
     extendRef(summary, ref);
   };
-  put('A1', 'Flynse', titleStyle);
+  put('A1', 'Yume', titleStyle);
   put('B1', '', titleStyle);
   put('C1', '', titleStyle);
   put('A2', `Financial export — generated ${new Date().toLocaleString()}`, subtitleStyle);
@@ -217,7 +217,7 @@ export function buildExportWorkbook(data: ExportData): XLSX.WorkBook {
   stat('Transactions exported', transactions.length, C.ink, false);
   stat('Date range', dateRange ? `${dateRange.from} to ${dateRange.to}` : 'No transactions', C.ink, false);
   r++;
-  put(`A${r + 1}`, 'Exported from Flynse — this is a point-in-time snapshot of your own on-device data.', {
+  put(`A${r + 1}`, 'Exported from Yume — this is a point-in-time snapshot of your own on-device data.', {
     font: { name: FONT_NAME, italic: true, sz: 9.5, color: { rgb: C.textMuted } },
   });
   summary['!cols'] = [{ wch: 34 }, { wch: 2 }, { wch: 22 }];

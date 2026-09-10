@@ -238,7 +238,7 @@ describe('transaction-wrapped writes against a real SQLite engine', () => {
     ).rejects.toThrow("can't be before the loan itself started");
 
     // A backdated but valid effective date (the bank actually applied this
-    // two "months" ago, only now being entered into Flynse).
+    // two "months" ago, only now being entered into Yume).
     await applyRateChange(loan.id, { newAnnualRateBp: 800, effectiveDate: '2026-01-20', mode: 'keepEmi' });
     const history = (await require('@/db/loans').getLoanRateHistory(loan.id)) as any[];
     expect(history).toHaveLength(1);

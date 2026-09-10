@@ -1,6 +1,6 @@
 import Svg, { Path, Circle, Rect } from 'react-native-svg';
 
-// One consistent 1.8px rounded-stroke line-icon set, drawn for Flynse rather
+// One consistent 1.8px rounded-stroke line-icon set, drawn for Yume rather
 // than pulled from emoji or a generic icon font — emoji icons are one of the
 // clearest "default template" signals a UI can give off.
 

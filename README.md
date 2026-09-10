@@ -1,10 +1,10 @@
-# Flynse
+# Yume
 
 A complete personal finance tracker: daily expenses, income, savings pots, loans with proper EMI amortization, credit cards, fully custom categories, and an informal IOU ledger for friends and family — built as a local-first mobile app with optional Google Drive backup.
 
 ## Why local-first
 
-All data lives in an on-device SQLite database. Nothing is sent to any server except a backup you explicitly export, or an automatic sync to your own Google Drive once you choose to link it — both scoped to a single folder Flynse creates, using no client-side encryption of its own beyond Google's normal HTTPS transport and Drive-side storage. See [DATA_MODEL.md](./DATA_MODEL.md) for the schema and [BACKUP.md](./BACKUP.md) for how backup/restore works and how to set up your own Google OAuth credentials.
+All data lives in an on-device SQLite database. Nothing is sent to any server except a backup you explicitly export, or an automatic sync to your own Google Drive once you choose to link it — both scoped to a single folder Yume creates, using no client-side encryption of its own beyond Google's normal HTTPS transport and Drive-side storage. See [DATA_MODEL.md](./DATA_MODEL.md) for the schema and [BACKUP.md](./BACKUP.md) for how backup/restore works and how to set up your own Google OAuth credentials.
 
 ## Stack
 

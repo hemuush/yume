@@ -135,7 +135,7 @@ export default function BackupScreen() {
   const exportJsonLocally = () =>
     run('export-json', async () => {
       const snapshot = await buildBackupSnapshot();
-      const file = new File(Paths.document, `flynse-backup-${Date.now()}.json`);
+      const file = new File(Paths.document, `yume-backup-${Date.now()}.json`);
       file.create();
       file.write(JSON.stringify(snapshot, null, 2));
       if (await Sharing.isAvailableAsync()) {
@@ -146,13 +146,13 @@ export default function BackupScreen() {
   const exportExcelLocally = () =>
     run('export-excel', async () => {
       const bytes = await generateExportWorkbookBytes();
-      const file = new File(Paths.document, `flynse-export-${Date.now()}.xlsx`);
+      const file = new File(Paths.document, `yume-export-${Date.now()}.xlsx`);
       file.create();
       file.write(bytes);
       if (await Sharing.isAvailableAsync()) {
         await Sharing.shareAsync(file.uri, {
           mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-          dialogTitle: 'Export Flynse data',
+          dialogTitle: 'Export Yume data',
         });
       }
     });
@@ -177,7 +177,7 @@ export default function BackupScreen() {
         snapshot = JSON.parse(content);
       } catch {
         throw new Error(
-          "That file isn't valid JSON — pick the backup file Flynse exported (Export full backup, or a file saved from Google Drive/your local folder)."
+          "That file isn't valid JSON — pick the backup file Yume exported (Export full backup, or a file saved from Google Drive/your local folder)."
         );
       }
       await confirmAndRestore(snapshot);
@@ -200,6 +200,8 @@ export default function BackupScreen() {
         if (!auth) auth = await signInToGoogleDrive();
         const snapshot = await buildBackupSnapshot();
         const json = JSON.stringify(snapshot);
+        // Filename kept as flynse-* so "restore latest" still finds a backup
+        // uploaded before the rename to Yume.
         await uploadBackupToDrive(auth.accessToken, 'flynse-backup-latest.json', json);
         const now = new Date().toISOString();
         await setLastDriveBackupAt(now);
@@ -220,7 +222,7 @@ export default function BackupScreen() {
       if (!auth) auth = await signInToGoogleDrive();
       const content = await downloadLatestBackupFromDrive(auth.accessToken);
       if (!content) {
-        Alert.alert('No backup found', 'There is no backup file in your Flynse Backups folder yet.');
+        Alert.alert('No backup found', 'There is no backup file in your Drive backup folder yet.');
         return;
       }
       const snapshot: BackupSnapshot = JSON.parse(content);
@@ -333,7 +335,7 @@ export default function BackupScreen() {
           <View style={styles.card}>
             <Text style={styles.cardText}>
               {linked
-                ? 'Linked. Flynse can only see files it creates in a "Flynse Backups" folder — nothing else in your Drive.'
+                ? 'Linked. Yume can only see files it creates in its own backup folder in your Drive — nothing else.'
                 : 'Link your Google account so backups upload automatically in the background, and after you restart the app.'}
             </Text>
             <StatusPill lastAt={lastBackup} outcome={driveResult} />
@@ -380,7 +382,7 @@ export default function BackupScreen() {
           <Text style={styles.cardText}>
             {localFolderUri
               ? 'A backup is written to your chosen folder automatically, on the schedule above. Nothing leaves your device.'
-              : 'Pick a folder on your phone once — Flynse writes a backup there automatically, with no share-sheet tap needed.'}
+              : 'Pick a folder on your phone once — Yume writes a backup there automatically, with no share-sheet tap needed.'}
           </Text>
           {localFolderUri && <StatusPill lastAt={lastLocalBackup} outcome={localResult} />}
           <View style={styles.buttonRow}>
@@ -423,7 +425,7 @@ export default function BackupScreen() {
         <Text style={styles.sectionTitle}>Local Export</Text>
         <View style={styles.card}>
           <Text style={styles.cardText}>
-            Save a full backup (JSON, for restoring into Flynse) or a styled Excel workbook — transactions,
+            Save a full backup (JSON, for restoring into Yume) or a styled Excel workbook — transactions,
             accounts, category totals, loans, and Friends & Family, each on its own sheet — to share, print,
             or store anywhere you like.
           </Text>

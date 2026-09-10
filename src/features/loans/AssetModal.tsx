@@ -73,7 +73,7 @@ export function AssetModal({
       <Text style={styles.hintText}>
         Leave it blank if you don't have an estimate yet — you can add one later. Once set, value minus what's
         still owed ({formatMoney(loan.outstandingPrincipalMinor)}) counts toward Tracked Balance/Net Worth.
-        Flynse doesn't estimate it for you, so update it whenever the real value changes.
+        Yume doesn't estimate it for you, so update it whenever the real value changes.
       </Text>
       {error && <Text style={styles.errorText}>{error}</Text>}
       <View style={styles.modalActions}>

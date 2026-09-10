@@ -23,7 +23,7 @@ const MONTHS = [
 ];
 
 /**
- * A small month-grid date picker — Flynse has no calendar library, and the
+ * A small month-grid date picker — Yume has no calendar library, and the
  * transaction form only ever needs to pick one day. Steps by month with the
  * ‹ › arrows; a day past `maxDate` (usually today, for a new entry) is
  * disabled. Value in / out is a plain YYYY-MM-DD string.

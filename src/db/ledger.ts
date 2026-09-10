@@ -347,7 +347,7 @@ async function assertNotSystemCategory(
   );
   if (row?.is_system) {
     throw new Error(
-      `"${row.name}" is a built-in category Flynse uses to auto-categorise EMI, fees and Friends & Family entries — it can't be ${action}.`
+      `"${row.name}" is a built-in category Yume uses to auto-categorise EMI, fees and Friends & Family entries — it can't be ${action}.`
     );
   }
 }

@@ -23,7 +23,7 @@ const SLIDES: Slide[] = [
   },
   {
     title: 'Loans made simple',
-    subtitle: 'EMI, interest, prepayment — Flynse does the maths so you always know exactly where you stand.',
+    subtitle: 'EMI, interest, prepayment — Yume does the maths so you always know exactly where you stand.',
     pose: 'peek',
   },
   {

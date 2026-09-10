@@ -190,7 +190,7 @@ export async function setUserName(name: string): Promise<void> {
 /**
  * The default categories are always seeded exactly once, on first launch —
  * their earliest created_at is a real, always-present proxy for "when this
- * install first started using Flynse" without needing a dedicated setting.
+ * install first started using Yume" without needing a dedicated setting.
  */
 export async function getMemberSinceYear(): Promise<number> {
   const db = await getDb();

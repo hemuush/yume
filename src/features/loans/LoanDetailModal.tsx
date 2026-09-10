@@ -49,7 +49,7 @@ export function LoanDetailModal({
   const [scheduleExpanded, setScheduleExpanded] = useState(false);
   // The date actually paid — defaults to the installment's own due date, not
   // "today", so backfilling an EMI that was really paid months ago (common
-  // when someone starts using Flynse partway through an existing loan)
+  // when someone starts using Yume partway through an existing loan)
   // records it on the date it actually happened instead of dating every
   // catch-up payment "today" and cluttering the transaction list with a pile
   // of same-day entries that never happened that day.

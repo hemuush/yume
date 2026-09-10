@@ -1,4 +1,4 @@
-// Core domain types for Flynse — personal finance tracker.
+// Core domain types for Yume — personal finance tracker.
 // Money is always stored as integer minor units (paise) to avoid float errors.
 
 export type AccountType = 'bank' | 'cash' | 'wallet' | 'credit_card' | 'savings';

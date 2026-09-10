@@ -7,7 +7,7 @@ interface Props {
   pose?: 'default' | 'peek' | 'sleepy';
 }
 
-// Flynn — Flynse's mascot (a round bird whose scarf matches the app's
+// Flynn — Yume's mascot (a round bird whose scarf matches the app's
 // accent color), drawn once here in the same hand-outlined doodle style as
 // the rest of the UI so every screen that shows him stays visually
 // identical instead of drifting per-instance.

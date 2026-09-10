@@ -79,7 +79,7 @@ export default function RecurringScreen() {
       )}
 
       <Text style={styles.introText}>
-        Set up something once (rent, a subscription, salary) and Flynse logs it automatically on schedule — it
+        Set up something once (rent, a subscription, salary) and Yume logs it automatically on schedule — it
         shows up in Transactions exactly like any entry you typed in yourself.
       </Text>
 
