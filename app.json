@@ -21,7 +21,10 @@
       },
       "predictiveBackGestureEnabled": false,
       "versionCode": 45,
-      "permissions": ["android.permission.USE_BIOMETRIC", "android.permission.USE_FINGERPRINT"]
+      "permissions": [
+        "android.permission.USE_BIOMETRIC",
+        "android.permission.USE_FINGERPRINT"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -58,8 +61,11 @@
       ]
     ],
     "extra": {
-      "router": {}
+      "router": {},
+      "eas": {
+        "projectId": "751af11d-e45c-4422-9acb-ca11f7322b25"
+      }
     },
-    "owner": "yume"
+    "owner": "hemantshar3004"
   }
 }
