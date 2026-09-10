@@ -9,30 +9,17 @@ import * as DocumentPicker from 'expo-document-picker';
 import { buildBackupSnapshot, restoreFromSnapshot, BackupSnapshot } from '@/lib/backup';
 import { generateExportWorkbookBytes } from '@/lib/exportExcel';
 import {
-  signInToGoogleDrive,
-  isDriveLinked,
-  isDriveConfigured,
-  unlinkGoogleDrive,
-  getAuthSilently,
-  uploadBackupToDrive,
-  downloadLatestBackupFromDrive,
-} from '@/lib/googleDrive';
-import {
   pickBackupFolder,
   forgetBackupFolder,
   writeLocalBackupNow,
   readNewestLocalBackup,
 } from '@/lib/localBackup';
 import {
-  getLastDriveBackupAt,
-  setLastDriveBackupAt,
   getLocalBackupFolderUri,
   getLastLocalBackupAt,
   getBackupFrequency,
   setBackupFrequency,
-  getLastDriveBackupResult,
   getLastLocalBackupResult,
-  setLastDriveBackupResult,
   setLastLocalBackupResult,
   BackupFrequency,
   BackupOutcome,
@@ -91,10 +78,6 @@ function StatusPill({ lastAt, outcome }: { lastAt: string | null; outcome: Backu
 
 export default function BackupScreen() {
   const insets = useSafeAreaInsets();
-  const [linked, setLinked] = useState(false);
-  const driveConfigured = isDriveConfigured();
-  const [lastBackup, setLastBackup] = useState<string | null>(null);
-  const [driveResult, setDriveResult] = useState<BackupOutcome | null>(null);
   const [localFolderUri, setLocalFolderUri] = useState<string | null>(null);
   const [lastLocalBackup, setLastLocalBackup] = useState<string | null>(null);
   const [localResult, setLocalResult] = useState<BackupOutcome | null>(null);
@@ -102,9 +85,6 @@ export default function BackupScreen() {
   const [busy, setBusy] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    setLinked(await isDriveLinked());
-    setLastBackup(await getLastDriveBackupAt());
-    setDriveResult(await getLastDriveBackupResult());
     setLocalFolderUri(await getLocalBackupFolderUri());
     setLastLocalBackup(await getLastLocalBackupAt());
     setLocalResult(await getLastLocalBackupResult());
@@ -157,18 +137,12 @@ export default function BackupScreen() {
       }
     });
 
-  const restoreFromFile = () =>
-    run('restore-file', async () => {
-      // Restricting to 'application/json' previously meant Android's own
-      // file picker — which many file managers/content providers report a
-      // .json file's MIME type inconsistently through (octet-stream, plain
-      // text, or nothing at all) — could silently grey out or hide the very
-      // backup file the user was trying to pick, with no error and nothing
-      // visibly wrong: restore just looked like it "didn't work" because
-      // there was never anything to select. Accepting any file type here
-      // and validating the actual JSON content afterward (already done via
-      // isValidSnapshotShape inside restoreFromSnapshot) is what actually
-      // works reliably across devices.
+  const restoreFromFile = (busyLabel: string) =>
+    run(busyLabel, async () => {
+      // Accepting any file type and validating the JSON afterward is what
+      // actually works across devices — many file managers report a .json
+      // file's MIME type inconsistently, which would otherwise grey out the
+      // very file the user is trying to pick.
       const result = await DocumentPicker.getDocumentAsync({ type: '*/*' });
       if (result.canceled || !result.assets?.[0]) return;
       const content = await new File(result.assets[0].uri).text();
@@ -176,56 +150,8 @@ export default function BackupScreen() {
       try {
         snapshot = JSON.parse(content);
       } catch {
-        throw new Error(
-          "That file isn't valid JSON — pick the backup file Yume exported (Export full backup, or a file saved from Google Drive/your local folder)."
-        );
+        throw new Error("That file isn't valid JSON — pick a full backup exported from Yume or from Flynse.");
       }
-      await confirmAndRestore(snapshot);
-    });
-
-  const linkDrive = () =>
-    run('link', async () => {
-      await signInToGoogleDrive();
-    });
-
-  const unlinkDrive = () =>
-    run('unlink', async () => {
-      await unlinkGoogleDrive();
-    });
-
-  const backupNowToDrive = () =>
-    run('backup-now', async () => {
-      try {
-        let auth = await getAuthSilently();
-        if (!auth) auth = await signInToGoogleDrive();
-        const snapshot = await buildBackupSnapshot();
-        const json = JSON.stringify(snapshot);
-        // Filename kept as flynse-* so "restore latest" still finds a backup
-        // uploaded before the rename to Yume.
-        await uploadBackupToDrive(auth.accessToken, 'flynse-backup-latest.json', json);
-        const now = new Date().toISOString();
-        await setLastDriveBackupAt(now);
-        await setLastDriveBackupResult({ at: now, ok: true, sizeBytes: json.length });
-      } catch (e: any) {
-        await setLastDriveBackupResult({
-          at: new Date().toISOString(),
-          ok: false,
-          error: String(e?.message ?? e),
-        });
-        throw e;
-      }
-    });
-
-  const restoreFromDrive = () =>
-    run('restore-drive', async () => {
-      let auth = await getAuthSilently();
-      if (!auth) auth = await signInToGoogleDrive();
-      const content = await downloadLatestBackupFromDrive(auth.accessToken);
-      if (!content) {
-        Alert.alert('No backup found', 'There is no backup file in your Drive backup folder yet.');
-        return;
-      }
-      const snapshot: BackupSnapshot = JSON.parse(content);
       await confirmAndRestore(snapshot);
     });
 
@@ -243,23 +169,14 @@ export default function BackupScreen() {
               try {
                 await restoreFromSnapshot(snapshot);
                 resolve();
-                // A restore replaces every table in the database — every
-                // screen's already-loaded state is now stale. Every screen
-                // in this app reloads its data via useFocusEffect, so
-                // navigating back to Home now (rather than leaving the user
-                // here to remember to reopen the app) is enough for the
-                // rest of the app to pick up the restored data as each tab
-                // is visited; this also gets the user off a backup screen
-                // whose own on-screen figures (last backup time, etc.) are
-                // themselves now stale.
+                // A restore replaces every table — every screen's loaded
+                // state is now stale. Each screen reloads via useFocusEffect,
+                // so bouncing to Home is enough for the rest of the app to
+                // pick up the restored data as tabs are visited.
                 Alert.alert('Restore complete', 'Your data has been restored.', [
                   { text: 'OK', onPress: () => router.replace('/(tabs)') },
                 ]);
               } catch (e) {
-                // Previously an unhandled throw here left this promise
-                // pending forever — the caller's `run()` was awaiting it, so
-                // its try/catch/finally never ran: the "Restoring..." button
-                // stayed stuck disabled permanently with no error shown.
                 reject(e);
               }
             },
@@ -271,7 +188,7 @@ export default function BackupScreen() {
   const choosePickFolder = () =>
     run('pick-folder', async () => {
       const uri = await pickBackupFolder();
-      if (uri) await writeLocalBackupNow(uri); // confirm the grant actually works with a first backup right away
+      if (uri) await writeLocalBackupNow(uri); // confirm the grant works with a first backup right away
     });
 
   const backupNowLocal = () =>
@@ -310,72 +227,31 @@ export default function BackupScreen() {
     <View style={styles.container}>
       <AppHeader title="Backup & Restore" showBack />
       <ScrollView contentContainerStyle={{ paddingBottom: 40 + insets.bottom }}>
+        <Text style={styles.sectionTitle}>Coming from Flynse?</Text>
+        <View style={[styles.card, styles.cardHighlight]}>
+          <Text style={styles.cardText}>
+            Bring your data across in two steps:
+            {'\n\n'}1. In Flynse: <Text style={styles.bold}>Settings → Backup → Export full backup</Text>, and
+            save the file.
+            {'\n'}2. Come back here and pick that file. Everything — transactions, accounts, loans, Friends
+            &amp; Family — moves over.
+            {'\n\n'}You can uninstall Flynse afterwards.
+          </Text>
+          <PrimaryButton
+            title={busy === 'import' ? 'Importing…' : 'Import from Flynse'}
+            onPress={() => restoreFromFile('import')}
+            disabled={!!busy}
+            style={{ marginTop: 12 }}
+          />
+        </View>
+
         <Text style={styles.sectionTitle}>Automatic backup frequency</Text>
         <View style={styles.freqWrap}>
           <SegmentedControl options={FREQUENCIES} value={frequency} onChange={onChangeFrequency} />
         </View>
         <Text style={styles.freqHint}>
-          Applies to both Google Drive and the local folder below. Backups also only run while the app is
-          open.
+          Applies to the local folder backup below. Backups only run while the app is open.
         </Text>
-
-        <Text style={styles.sectionTitle}>Google Drive</Text>
-        {!driveConfigured ? (
-          <View style={styles.card}>
-            <View style={styles.comingSoonRow}>
-              <Feather name="cloud" size={16} color={theme.colors.textMuted} />
-              <Text style={styles.comingSoonLabel}>Coming soon</Text>
-            </View>
-            <Text style={styles.cardText}>
-              Google Drive backup isn't set up on this build yet. The local folder backup below already covers
-              automatic backups without needing this — use that in the meantime.
-            </Text>
-          </View>
-        ) : (
-          <View style={styles.card}>
-            <Text style={styles.cardText}>
-              {linked
-                ? 'Linked. Yume can only see files it creates in its own backup folder in your Drive — nothing else.'
-                : 'Link your Google account so backups upload automatically in the background, and after you restart the app.'}
-            </Text>
-            <StatusPill lastAt={lastBackup} outcome={driveResult} />
-            <View style={styles.buttonRow}>
-              {!linked ? (
-                <PrimaryButton
-                  title={busy === 'link' ? 'Linking...' : 'Link Google Drive'}
-                  onPress={linkDrive}
-                  disabled={!!busy}
-                  style={{ flex: 1 }}
-                />
-              ) : (
-                <>
-                  <PrimaryButton
-                    title={busy === 'backup-now' ? 'Backing up...' : 'Backup now'}
-                    onPress={backupNowToDrive}
-                    disabled={!!busy}
-                    style={{ flex: 1, marginRight: 8 }}
-                  />
-                  <PrimaryButton
-                    title="Unlink"
-                    variant="secondary"
-                    onPress={unlinkDrive}
-                    disabled={!!busy}
-                    style={{ flex: 1 }}
-                  />
-                </>
-              )}
-            </View>
-            {linked && (
-              <PrimaryButton
-                title={busy === 'restore-drive' ? 'Restoring...' : 'Restore latest from Drive'}
-                variant="secondary"
-                onPress={restoreFromDrive}
-                disabled={!!busy}
-                style={{ marginTop: 10 }}
-              />
-            )}
-          </View>
-        )}
 
         <Text style={styles.sectionTitle}>Local Folder Backup</Text>
         <View style={styles.card}>
@@ -446,11 +322,13 @@ export default function BackupScreen() {
 
         <Text style={styles.sectionTitle}>Restore</Text>
         <View style={styles.card}>
-          <Text style={styles.cardText}>Restore from a backup JSON file saved on this device.</Text>
+          <Text style={styles.cardText}>
+            Restore from a backup JSON file saved on this device — a Yume backup, or one exported from Flynse.
+          </Text>
           <PrimaryButton
             title={busy === 'restore-file' ? 'Restoring...' : 'Restore from file'}
             variant="secondary"
-            onPress={restoreFromFile}
+            onPress={() => restoreFromFile('restore-file')}
             disabled={!!busy}
             style={{ marginTop: 10 }}
           />
@@ -488,15 +366,9 @@ const styles = StyleSheet.create({
     borderWidth: theme.border.thick,
     borderColor: theme.colors.border,
   },
+  cardHighlight: { backgroundColor: theme.colors.primaryTint },
   cardText: { fontSize: 13, color: theme.colors.textSecondary, lineHeight: 19 },
-  comingSoonRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 },
-  comingSoonLabel: {
-    fontFamily: theme.font.bodyBold,
-    fontSize: 11.5,
-    letterSpacing: 0.4,
-    textTransform: 'uppercase',
-    color: theme.colors.textMuted,
-  },
+  bold: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
   buttonRow: { flexDirection: 'row', marginTop: 12 },
   statusRow: { marginTop: 10, gap: 4 },
   pill: {

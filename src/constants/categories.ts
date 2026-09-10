@@ -15,7 +15,7 @@ export interface DefaultCategory {
 // Seeded once on first launch. Everything here is user-editable/archivable
 // afterward, EXCEPT the five flagged `system: true` — those are matched by
 // name at runtime (src/features/loans/*, src/features/PeopleSection.tsx,
-// app/add-historical.tsx) to auto-categorise loan and Friends & Family
+// app/add-transaction.tsx) to auto-categorise loan and Friends & Family
 // transactions, so they're protected from delete/archive/rename.
 export const DEFAULT_CATEGORIES: DefaultCategory[] = [
   { name: 'Salary', kind: 'income', icon: 'briefcase', color: '#22C55E', sortOrder: 0 },

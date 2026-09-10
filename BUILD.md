@@ -39,5 +39,4 @@ This produces an `.aab` (Android App Bundle), the format the Play Store requires
 
 ## Before shipping
 
-- Set `googleDriveClientId` in `app.json` (see [BACKUP.md](./BACKUP.md)) if you want Drive backup working in the built APK — get the production build's SHA-1 from `eas credentials` and register it in Google Cloud Console the same way as the debug one.
 - Update the app icon/splash assets in `assets/` if you want custom branding beyond the defaults.

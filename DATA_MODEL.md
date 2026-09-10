@@ -65,7 +65,7 @@ A rule is a template (type, account(s), category, amount, note) plus a cadence (
 
 ## Settings (`settings`)
 
-A plain key/value table — default currency, accent color, user name, onboarding flag, app-lock toggle, "hide sensitive amounts" privacy toggle, notification preferences, backup frequency, and the last local/Drive backup timestamps and outcomes. Deliberately schema-less so a new preference never needs a migration; hot values (currency, accent, user name, …) are cached in memory and re-primed after a restore via `resetSettingsCache()`.
+A plain key/value table — default currency, accent color, user name, onboarding flag, app-lock toggle, "hide sensitive amounts" privacy toggle, notification preferences, backup frequency, the chosen local backup folder, and the last local backup timestamp and outcome. Deliberately schema-less so a new preference never needs a migration; hot values (currency, accent, user name, …) are cached in memory and re-primed after a restore via `resetSettingsCache()`.
 
 ## Migrations
 

@@ -4,7 +4,7 @@ import { useFocusEffect, router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getNextDueInstallment } from '@/db/loans';
 import { getPeriodComparison, findTopGrowingCategory } from '@/db/reports';
-import { getLastDriveBackupAt, getNotificationPrefs } from '@/db/settings';
+import { getLastLocalBackupAt, getNotificationPrefs } from '@/db/settings';
 import { formatMoney } from '@/lib/money';
 import { formatPctChange } from '@/lib/format';
 import { daysUntilIsoDate } from '@/lib/date';
@@ -40,7 +40,7 @@ export default function NotificationsScreen() {
       const [nextDue, comparison, lastBackup, prefs] = await Promise.all([
         getNextDueInstallment(),
         getPeriodComparison('month'),
-        getLastDriveBackupAt(),
+        getLastLocalBackupAt(),
         getNotificationPrefs(),
       ]);
 
@@ -75,12 +75,12 @@ export default function NotificationsScreen() {
 
       feed.push({
         key: 'backup',
-        icon: '☁️',
+        icon: '💾',
         iconBg: theme.colors.flatMint,
         title: lastBackup ? 'Backup up to date' : 'No backup yet',
         subtitle: lastBackup
           ? `Last backed up ${timeAgo(lastBackup)}.`
-          : 'Link Google Drive in Settings to back up your data.',
+          : 'Pick a backup folder in Settings to save your data automatically.',
         onPress: () => router.push('/backup'),
       });
 

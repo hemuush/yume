@@ -30,7 +30,7 @@ const SLIDES: Slide[] = [
   {
     title: 'Yours, and only yours',
     subtitle:
-      "Nothing leaves your phone. Back up to your own Google Drive whenever you're ready — never required.",
+      'Nothing leaves your phone. Back up to a folder you choose, or export a file whenever you want — never required.',
     pose: 'sleepy',
   },
   {

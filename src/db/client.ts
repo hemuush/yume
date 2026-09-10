@@ -106,7 +106,7 @@ async function ensureColumn(db: AppDb, table: string, column: string, ddl: strin
 /**
  * Flags the built-in categories the app matches by name (Loan EMI, Loan
  * Repayment, Fees & Charges, Friends & Family — see src/features/loans/*,
- * src/features/PeopleSection.tsx, app/add-historical.tsx) as `is_system` so
+ * src/features/PeopleSection.tsx, app/add-transaction.tsx) as `is_system` so
  * they can't be deleted / archived / renamed out from under that match.
  *
  * Idempotent, run on every startup. `restoreFromSnapshot` in src/lib/backup.ts
