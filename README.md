@@ -4,11 +4,6 @@
 spending, income, savings pots, loans with proper EMI amortization, credit cards, fully custom
 categories, and an informal IOU ledger for friends and family — with fully local backups.
 
-> Renamed from **Flynse**. A few internal identifiers (the SQLite file name, backup file-name
-> prefixes, notification IDs, and the EAS project slug) are still `flynse` on purpose, so a device
-> that ran the old build keeps its data. To move data between the two apps, export a full backup in
-> Flynse and use **Import from Flynse** in Yume's Backup screen.
-
 ## Why local-first
 
 All data lives in an on-device SQLite database. Nothing is ever sent to any server. Backups are files you export yourself or an automatic write to a folder you choose on the device — no account, no network. See [DATA_MODEL.md](./DATA_MODEL.md) for the schema and [BACKUP.md](./BACKUP.md) for how backup/restore works.
@@ -29,7 +24,7 @@ app/                    Screens (expo-router file-based routing)
   profile.tsx           Identity + accounts (pushed from the header avatar)
   categories.tsx        Category management
   settings.tsx          Currency, accent, app lock, privacy
-  backup.tsx            Backup & restore (local folder, file export, import from Flynse)
+  backup.tsx            Backup & restore (local folder, file export & restore)
   recurring.tsx         Recurring-transaction rules
   add-transaction.tsx   Unified add screen — single entry, bulk backfill, friend IOU
   notifications.tsx / notification-settings.tsx   In-app feed + reminder prefs

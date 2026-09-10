@@ -22,7 +22,12 @@ import { getNotificationPrefs, getHasOnboarded, setHasOnboarded, getAppLockEnabl
 import { listAccounts, listTransactions } from '@/db/ledger';
 import { runLocalBackupIfDue } from '@/lib/localBackup';
 import { runDueRecurringRules } from '@/db/recurring';
-import { ensureAndroidChannel, syncDailyReminder, syncWeeklySummary } from '@/lib/notifications';
+import {
+  ensureAndroidChannel,
+  syncDailyReminder,
+  syncWeeklySummary,
+  cancelLegacyScheduledNotifications,
+} from '@/lib/notifications';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { AccentProvider } from '@/theme/AccentContext';
 import { PrivacyProvider } from '@/theme/PrivacyContext';
@@ -59,6 +64,9 @@ export default function RootLayout() {
         // guards the outer query (e.g. getDb()) from an unhandled rejection.
         void runDueRecurringRules().catch((err) => console.error('runDueRecurringRules failed:', err));
         void ensureAndroidChannel();
+        // One-time: drop notifications still scheduled under the pre-rename
+        // `flynse-*` identifiers.
+        void cancelLegacyScheduledNotifications();
         // Re-schedules the daily reminder and weekly summary (if enabled) on
         // every cold start — scheduled notifications already survive a
         // normal restart, but this keeps them self-healing after a

@@ -39,10 +39,10 @@ describe('writeLocalBackupNow', () => {
 
   it('deletes an existing same-day backup before creating the new one', async () => {
     const todayIso = toLocalIsoDate(new Date());
-    const existingUri = `content://tree/primary/flynse-backup-${todayIso}`;
+    const existingUri = `content://tree/primary/yume-backup-${todayIso}`;
     (StorageAccessFramework.readDirectoryAsync as jest.Mock).mockResolvedValue([
       existingUri,
-      'content://tree/primary/flynse-backup-2020-01-01', // an older day's file — left alone
+      'content://tree/primary/yume-backup-2020-01-01', // an older day's file — left alone
     ]);
     (StorageAccessFramework.createFileAsync as jest.Mock).mockResolvedValue('content://new-file');
 
@@ -52,7 +52,7 @@ describe('writeLocalBackupNow', () => {
     expect(StorageAccessFramework.deleteAsync).toHaveBeenCalledWith(existingUri);
     expect(StorageAccessFramework.createFileAsync).toHaveBeenCalledWith(
       'content://tree/primary',
-      `flynse-backup-${todayIso}`,
+      `yume-backup-${todayIso}`,
       'application/json'
     );
   });
@@ -69,8 +69,8 @@ describe('writeLocalBackupNow', () => {
 
   it("never deletes a different day's backup file", async () => {
     (StorageAccessFramework.readDirectoryAsync as jest.Mock).mockResolvedValue([
-      'content://tree/primary/flynse-backup-2020-01-01',
-      'content://tree/primary/flynse-backup-2020-01-02',
+      'content://tree/primary/yume-backup-2020-01-01',
+      'content://tree/primary/yume-backup-2020-01-02',
     ]);
     (StorageAccessFramework.createFileAsync as jest.Mock).mockResolvedValue('content://new-file');
 

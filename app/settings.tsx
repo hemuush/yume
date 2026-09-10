@@ -261,13 +261,6 @@ export default function SettingsScreen() {
             onPress={() => router.push('/backup')}
           />
           <Row
-            icon="database-import-outline"
-            iconBg={theme.colors.accentTint}
-            label="Move data from Flynse"
-            sub="Bring everything across from the old app in one step"
-            onPress={() => router.push('/backup?import=1')}
-          />
-          <Row
             icon="calculator-variant-outline"
             iconBg={theme.colors.accentTint}
             label="Round off amounts"

@@ -30,7 +30,7 @@ export async function forgetBackupFolder(): Promise<void> {
 // One file per calendar day, not per backup run — no extension here (see
 // below), and named by date only rather than a full timestamp.
 function backupFilename(dateIso: string): string {
-  return `flynse-backup-${dateIso}`;
+  return `yume-backup-${dateIso}`;
 }
 
 /**
@@ -102,7 +102,7 @@ export async function runLocalBackupIfDue(): Promise<void> {
  */
 export async function readNewestLocalBackup(directoryUri: string): Promise<BackupSnapshot | null> {
   const uris = await StorageAccessFramework.readDirectoryAsync(directoryUri);
-  const backupUris = uris.filter((u) => decodeURIComponent(u).includes('flynse-backup-'));
+  const backupUris = uris.filter((u) => decodeURIComponent(u).includes('yume-backup-'));
   if (backupUris.length === 0) return null;
 
   // SAF gives no reliable modified-time; the ISO timestamp embedded in the
