@@ -1,7 +1,7 @@
 import { View, Text, Modal, Pressable, StyleSheet, ScrollView } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaProvider, useSafeAreaInsets, initialWindowMetrics } from 'react-native-safe-area-context';
 import { theme } from '@/constants/theme';
 
 interface Props {
@@ -34,8 +34,29 @@ interface Props {
  *    action buttons are never sitting underneath it;
  *  - an optional ✕ and a pinned footer for list-style dialogs.
  */
-export function ModalSheet({
-  visible,
+export function ModalSheet(props: Props) {
+  const { visible, onClose, variant = 'sheet' } = props;
+  return (
+    <Modal
+      visible={visible}
+      animationType={variant === 'sheet' ? 'slide' : 'fade'}
+      transparent
+      onRequestClose={onClose}
+      statusBarTranslucent
+      navigationBarTranslucent
+    >
+      {/* A fresh SafeAreaProvider: on Android a <Modal> is its own window,
+          which the root provider in app/_layout.tsx doesn't measure — without
+          this, useSafeAreaInsets() reads { bottom: 0 } inside here and every
+          sheet's footer buttons end up clipped behind the system nav bar. */}
+      <SafeAreaProvider initialMetrics={initialWindowMetrics}>
+        <ModalSheetBody {...props} />
+      </SafeAreaProvider>
+    </Modal>
+  );
+}
+
+function ModalSheetBody({
   onClose,
   title,
   subtitle,
@@ -83,35 +104,28 @@ export function ModalSheet({
 
   if (framed) {
     return (
-      <Modal
-        visible={visible}
-        animationType="fade"
-        transparent
-        onRequestClose={onClose}
-        statusBarTranslucent
-        navigationBarTranslucent
-      >
-        <View style={styles.flex}>
-          <Pressable style={styles.backdrop} onPress={onClose} accessibilityLabel="Close" />
-          <View
-            style={[styles.flex, styles.alignCenter, { paddingTop: insets.top + 8 }]}
-            pointerEvents="box-none"
-          >
-            <View style={[styles.dialog, styles.dialogFramed, { marginBottom: insets.bottom }]}>
-              <View style={styles.framedHeader}>{heading}</View>
-              {closeBtn}
-              <ScrollView
-                style={styles.framedBody}
-                contentContainerStyle={styles.framedBodyContent}
-                showsVerticalScrollIndicator={false}
-              >
-                {children}
-              </ScrollView>
-              {footer != null && <View style={styles.framedFooter}>{footer}</View>}
-            </View>
+      <View style={styles.flex}>
+        <Pressable style={styles.backdrop} onPress={onClose} accessibilityLabel="Close" />
+        <View
+          style={[styles.flex, styles.alignCenter, { paddingVertical: insets.top + 12 }]}
+          pointerEvents="box-none"
+        >
+          <View style={[styles.dialog, styles.dialogFramed]}>
+            <View style={styles.framedHeader}>{heading}</View>
+            {closeBtn}
+            <ScrollView
+              style={styles.framedBody}
+              contentContainerStyle={styles.framedBodyContent}
+              showsVerticalScrollIndicator={false}
+            >
+              {children}
+            </ScrollView>
+            {footer != null && (
+              <View style={[styles.framedFooter, { paddingBottom: 12 + insets.bottom }]}>{footer}</View>
+            )}
           </View>
         </View>
-      </Modal>
+      </View>
     );
   }
 
@@ -127,51 +141,42 @@ export function ModalSheet({
   );
 
   return (
-    <Modal
-      visible={visible}
-      animationType={isSheet ? 'slide' : 'fade'}
-      transparent
-      onRequestClose={onClose}
-      statusBarTranslucent
-      navigationBarTranslucent
-    >
-      <View style={styles.flex}>
-        {/* The backdrop is its own sibling rather than a parent of the sheet:
-            a parent Pressable would swallow every tap inside the sheet too. */}
-        <Pressable style={styles.backdrop} onPress={onClose} accessibilityLabel="Close" />
-        {/* KeyboardAwareScrollView (react-native-keyboard-controller) scrolls the
-            focused input clear of the keyboard and animates in sync with it,
-            inside the Modal's own Android Dialog window where the built-in
-            KeyboardAvoidingView / manual keyboard-height padding both fell
-            short. `bottomOffset` keeps a small gap between the field and the
-            keyboard's top edge. */}
-        {/* paddingTop keeps the sheet (grabber + title) clear of the
-            translucent status bar even when its content is tall enough to
-            fill the screen or the keyboard has pushed it up. */}
-        <View
-          style={[
-            styles.flex,
-            isSheet ? styles.alignBottom : styles.alignCenter,
-            { paddingTop: insets.top + 8 },
-          ]}
-          pointerEvents="box-none"
-        >
-          {scrollable ? (
-            <KeyboardAwareScrollView
-              style={isSheet ? styles.scrollSheet : styles.scrollDialog}
-              contentContainerStyle={isSheet ? undefined : styles.scrollDialogContent}
-              bottomOffset={24}
-              keyboardShouldPersistTaps="handled"
-              showsVerticalScrollIndicator={false}
-            >
-              {body}
-            </KeyboardAwareScrollView>
-          ) : (
-            body
-          )}
-        </View>
+    <View style={styles.flex}>
+      {/* The backdrop is its own sibling rather than a parent of the sheet:
+          a parent Pressable would swallow every tap inside the sheet too. */}
+      <Pressable style={styles.backdrop} onPress={onClose} accessibilityLabel="Close" />
+      {/* KeyboardAwareScrollView (react-native-keyboard-controller) scrolls the
+          focused input clear of the keyboard and animates in sync with it,
+          inside the Modal's own Android Dialog window where the built-in
+          KeyboardAvoidingView / manual keyboard-height padding both fell
+          short. `bottomOffset` keeps a small gap between the field and the
+          keyboard's top edge. */}
+      {/* paddingTop keeps the sheet (grabber + title) clear of the
+          translucent status bar even when its content is tall enough to
+          fill the screen or the keyboard has pushed it up. */}
+      <View
+        style={[
+          styles.flex,
+          isSheet ? styles.alignBottom : styles.alignCenter,
+          { paddingTop: insets.top + 8 },
+        ]}
+        pointerEvents="box-none"
+      >
+        {scrollable ? (
+          <KeyboardAwareScrollView
+            style={isSheet ? styles.scrollSheet : styles.scrollDialog}
+            contentContainerStyle={isSheet ? undefined : styles.scrollDialogContent}
+            bottomOffset={24}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            {body}
+          </KeyboardAwareScrollView>
+        ) : (
+          body
+        )}
       </View>
-    </Modal>
+    </View>
   );
 }
 
@@ -183,7 +188,9 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.45)',
+    // Opaque enough that the bright floating tab bar behind doesn't ghost
+    // through as a muddy band under the sheet.
+    backgroundColor: 'rgba(0,0,0,0.55)',
   },
   alignBottom: { justifyContent: 'flex-end' },
   alignCenter: { justifyContent: 'center' },
