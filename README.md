@@ -1,6 +1,12 @@
 # Yume
 
-A complete personal finance tracker: daily expenses, income, savings pots, loans with proper EMI amortization, credit cards, fully custom categories, and an informal IOU ledger for friends and family — built as a local-first mobile app with optional Google Drive backup.
+**Better money, bigger dreams.** A warm, private, offline-first money tracker made for India: daily
+spending, income, savings pots, loans with proper EMI amortization, credit cards, fully custom
+categories, and an informal IOU ledger for friends and family — with optional Google Drive backup.
+
+> Renamed from **Flynse**. A few internal identifiers (the SQLite file name, the Drive backup folder
+> and token key, backup file-name prefixes, notification IDs, and the EAS project slug) are still
+> `flynse` on purpose, so a device that ran the old build keeps its data and its Drive link.
 
 ## Why local-first
 
