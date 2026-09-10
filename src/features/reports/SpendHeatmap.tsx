@@ -1,5 +1,5 @@
 import { View, Text, Pressable, StyleSheet } from 'react-native';
-import { theme } from '@/constants/theme';
+import { theme, SPEND_HEAT_SCALE, SPEND_HEAT_TEXT } from '@/constants/theme';
 
 export interface HeatCell {
   key: string;
@@ -8,21 +8,6 @@ export interface HeatCell {
   isWeekend?: boolean;
   onPress?: () => void;
 }
-
-const LEVEL_BG = [
-  'transparent',
-  'rgba(224,126,95,0.16)',
-  'rgba(224,126,95,0.36)',
-  'rgba(214,84,54,0.62)',
-  'rgba(196,64,42,0.92)',
-];
-const LEVEL_TEXT = [
-  theme.colors.textMuted,
-  theme.colors.textMuted,
-  theme.colors.textSecondary,
-  '#fff',
-  '#fff',
-];
 
 /**
  * A transparent month calendar tinted by daily spend — no card around it, it
@@ -57,10 +42,10 @@ export function SpendHeatmap({
         ))}
         {cells.map((c) => {
           const bg =
-            c.level === 0 ? (c.isWeekend ? 'rgba(18,19,15,0.04)' : 'transparent') : LEVEL_BG[c.level];
+            c.level === 0 ? (c.isWeekend ? theme.colors.inkWash : 'transparent') : SPEND_HEAT_SCALE[c.level];
           const inner = (
             <View style={[styles.cell, c.level === 0 && styles.cellEmpty, { backgroundColor: bg }]}>
-              <Text style={[styles.cellLabel, { color: LEVEL_TEXT[c.level] }]}>{c.label}</Text>
+              <Text style={[styles.cellLabel, { color: SPEND_HEAT_TEXT[c.level] }]}>{c.label}</Text>
             </View>
           );
           return (
