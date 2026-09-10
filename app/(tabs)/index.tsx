@@ -159,7 +159,6 @@ export default function DashboardScreen() {
           spentMinor={dispExpense}
           incomeChangePct={incomeChangePct}
           expenseChangePct={expenseChangePct}
-          savingsPct={savingsPct}
           flynn={flynn}
         />
 
