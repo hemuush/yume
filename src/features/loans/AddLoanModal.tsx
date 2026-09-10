@@ -11,7 +11,7 @@ import { SegmentedControl } from '@/components/SegmentedControl';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { Chip } from '@/components/Chip';
 import { ModalSheet } from '@/components/ModalSheet';
-import { theme } from '@/constants/theme';
+import { modalFooterStyles as f, theme } from '@/constants/theme';
 import { useAccent } from '@/theme/AccentContext';
 import {
   toLocalIsoDate,
@@ -323,7 +323,40 @@ export function AddLoanModal({
   };
 
   return (
-    <ModalSheet visible={visible} onClose={onClose} title="New Loan">
+    <ModalSheet
+      visible={visible}
+      onClose={onClose}
+      title="New Loan"
+      footer={
+        <View style={f.footerCol}>
+          {error && <Text style={styles.errorText}>{error}</Text>}
+          <View style={f.footerRow}>
+            {wizardStep === 1 ? (
+              <>
+                <PrimaryButton title="Cancel" variant="secondary" onPress={onClose} style={f.footerBtn} />
+                <PrimaryButton title="Next" onPress={nextStep} style={f.footerBtn} />
+              </>
+            ) : (
+              <>
+                <PrimaryButton
+                  title="Back"
+                  variant="secondary"
+                  onPress={() => setWizardStep(1)}
+                  style={f.footerBtn}
+                  disabled={saving}
+                />
+                <PrimaryButton
+                  title={saving ? 'Saving...' : 'Create loan'}
+                  onPress={submit}
+                  disabled={saving}
+                  style={f.footerBtn}
+                />
+              </>
+            )}
+          </View>
+        </View>
+      }
+    >
       <Text style={styles.wizardEyebrow}>
         STEP {wizardStep} OF 2 · {wizardStep === 1 ? "WHAT'S THE LOAN?" : 'HOW DID IT START?'}
       </Text>
@@ -610,38 +643,6 @@ export function AddLoanModal({
           )}
         </>
       )}
-
-      {error && <Text style={styles.errorText}>{error}</Text>}
-
-      <View style={styles.modalActions}>
-        {wizardStep === 1 ? (
-          <>
-            <PrimaryButton
-              title="Cancel"
-              variant="secondary"
-              onPress={onClose}
-              style={{ flex: 1, marginRight: 8 }}
-            />
-            <PrimaryButton title="Next" onPress={nextStep} style={{ flex: 1 }} />
-          </>
-        ) : (
-          <>
-            <PrimaryButton
-              title="Back"
-              variant="secondary"
-              onPress={() => setWizardStep(1)}
-              style={{ flex: 1, marginRight: 8 }}
-              disabled={saving}
-            />
-            <PrimaryButton
-              title={saving ? 'Saving...' : 'Create loan'}
-              onPress={submit}
-              disabled={saving}
-              style={{ flex: 1 }}
-            />
-          </>
-        )}
-      </View>
     </ModalSheet>
   );
 }

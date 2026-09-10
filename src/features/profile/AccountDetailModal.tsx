@@ -10,6 +10,7 @@ import {
 import { toMinor } from '@/lib/money';
 import { Account, AccountType } from '@/types';
 import { ModalSheet } from '@/components/ModalSheet';
+import { modalFooterStyles as f } from '@/constants/theme';
 import { FormInput } from '@/components/FormInput';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { Chip } from '@/components/Chip';
@@ -146,7 +147,31 @@ export function AccountDetailModal({
   };
 
   return (
-    <ModalSheet visible onClose={onClose} title="Edit Account">
+    <ModalSheet
+      visible
+      onClose={onClose}
+      title="Edit Account"
+      footer={
+        <View style={f.footerCol}>
+          {error && <Text style={styles.errorText}>{error}</Text>}
+          <View style={f.footerRow}>
+            <PrimaryButton
+              title="Cancel"
+              variant="secondary"
+              onPress={onClose}
+              style={f.footerBtn}
+              disabled={saving || busy}
+            />
+            <PrimaryButton
+              title={saving ? 'Saving...' : 'Save'}
+              onPress={submit}
+              disabled={saving || busy}
+              style={f.footerBtn}
+            />
+          </View>
+        </View>
+      }
+    >
       <FormInput label="Name" value={name} onChangeText={setName} placeholder="e.g. HDFC Savings" />
       <Text style={styles.fieldLabel}>Type</Text>
       <View style={styles.chipRow}>
@@ -170,23 +195,6 @@ export function AccountDetailModal({
           placeholder="e.g. 100000"
         />
       )}
-      {error && <Text style={styles.errorText}>{error}</Text>}
-      <View style={styles.modalActions}>
-        <PrimaryButton
-          title="Cancel"
-          variant="secondary"
-          onPress={onClose}
-          style={{ flex: 1, marginRight: 8 }}
-          disabled={saving || busy}
-        />
-        <PrimaryButton
-          title={saving ? 'Saving...' : 'Save'}
-          onPress={submit}
-          disabled={saving || busy}
-          style={{ flex: 1 }}
-        />
-      </View>
-
       <Text style={styles.dangerLabel}>DANGER ZONE</Text>
       {account.archived ? (
         <PrimaryButton

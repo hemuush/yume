@@ -10,8 +10,9 @@ interface Props {
   square?: number;
 }
 
-// Renders a category's icon inside a tinted, black-outlined square — every
-// chip in the doodle system gets an outline, never a borderless tint.
+// Renders a category's icon inside a soft, borderless tinted square — matches
+// the calm hairline register (SoftCard, the Home hero) rather than the older
+// thick-ink outline.
 export function CategoryIcon({ name, color, size = 17, square = 38 }: Props) {
   const { accent } = useAccent();
   const resolvedColor = color ?? accent;
@@ -19,7 +20,7 @@ export function CategoryIcon({ name, color, size = 17, square = 38 }: Props) {
     <View
       style={[
         styles.chip,
-        { width: square, height: square, borderRadius: square * 0.32, backgroundColor: resolvedColor + '33' },
+        { width: square, height: square, borderRadius: square * 0.32, backgroundColor: resolvedColor + '40' },
       ]}
     >
       <MaterialCommunityIcons name={name as any} size={size} color={theme.colors.ink} />
@@ -31,7 +32,5 @@ const styles = StyleSheet.create({
   chip: {
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: theme.border.thin,
-    borderColor: theme.colors.ink,
   },
 });

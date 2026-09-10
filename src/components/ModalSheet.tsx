@@ -18,9 +18,11 @@ interface Props {
   /** Show an ✕ button top-right that calls `onClose`. */
   showClose?: boolean;
   /**
-   * A pinned footer for the centered variant — stays put while `children`
-   * scroll between it and a pinned header. Passing this switches the centered
-   * dialog to a fixed header / scrolling body / fixed footer layout.
+   * A pinned action bar. Passing this switches the modal to a three-band
+   * layout — fixed grabber + title on top, scrolling content in the middle,
+   * `footer` pinned to the bottom (padded past the system nav bar) — so the
+   * Cancel / Save / Close row is always visible and never scrolls away.
+   * Works for both the bottom `sheet` and the centered dialog.
    */
   footer?: React.ReactNode;
 }
@@ -68,10 +70,11 @@ function ModalSheetBody({
 }: Props) {
   const insets = useSafeAreaInsets();
   const isSheet = variant === 'sheet';
-  // A footer only makes sense on the centered dialog, and it needs a
-  // three-band layout (fixed header / scrolling body / fixed footer) rather
-  // than the single scrolling column the other variants use.
-  const framed = !isSheet && footer !== undefined;
+  // A pinned footer means the three-band layout (fixed header / scrolling
+  // body / fixed footer) instead of the single scrolling column.
+  const framed = footer !== undefined;
+  const framedCenter = framed && !isSheet;
+  const framedSheet = framed && isSheet;
 
   const closeBtn = showClose ? (
     <Pressable
@@ -85,24 +88,24 @@ function ModalSheetBody({
     </Pressable>
   ) : null;
 
-  const heading =
+  const headingTexts =
     title || subtitle ? (
-      <View
-        style={[
-          framed ? undefined : styles.headingBlock,
-          showClose && !framed && styles.headingInsetForClose,
-        ]}
-      >
+      <>
         {title ? (
           <Text style={styles.title} numberOfLines={1}>
             {title}
           </Text>
         ) : null}
         {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
-      </View>
+      </>
     ) : null;
 
-  if (framed) {
+  const heading = headingTexts ? (
+    <View style={[styles.headingBlock, showClose && styles.headingInsetForClose]}>{headingTexts}</View>
+  ) : null;
+
+  // Centered dialog with a pinned footer.
+  if (framedCenter) {
     return (
       <View style={styles.flex}>
         <Pressable style={styles.backdrop} onPress={onClose} accessibilityLabel="Close" />
@@ -111,7 +114,7 @@ function ModalSheetBody({
           pointerEvents="box-none"
         >
           <View style={[styles.dialog, styles.dialogFramed]}>
-            <View style={styles.framedHeader}>{heading}</View>
+            {headingTexts ? <View style={styles.framedHeader}>{headingTexts}</View> : null}
             {closeBtn}
             <ScrollView
               style={styles.framedBody}
@@ -120,9 +123,43 @@ function ModalSheetBody({
             >
               {children}
             </ScrollView>
-            {footer != null && (
-              <View style={[styles.framedFooter, { paddingBottom: 12 + insets.bottom }]}>{footer}</View>
+            <View style={[styles.framedFooter, { paddingBottom: 12 + insets.bottom }]}>{footer}</View>
+          </View>
+        </View>
+      </View>
+    );
+  }
+
+  // Bottom sheet with a pinned footer: fixed grabber + title, scrolling
+  // content, action bar pinned to the bottom above the nav bar.
+  if (framedSheet) {
+    return (
+      <View style={styles.flex}>
+        <Pressable style={styles.backdrop} onPress={onClose} accessibilityLabel="Close" />
+        <View
+          style={[styles.flex, styles.alignBottom, { paddingTop: insets.top + 8 }]}
+          pointerEvents="box-none"
+        >
+          <View style={styles.framedSheet}>
+            <View style={styles.grabber} />
+            {headingTexts ? (
+              <View style={styles.framedSheetHeader}>
+                {headingTexts}
+                {closeBtn}
+              </View>
+            ) : (
+              closeBtn
             )}
+            <KeyboardAwareScrollView
+              style={styles.framedSheetBody}
+              contentContainerStyle={styles.framedSheetBodyContent}
+              bottomOffset={24}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+            >
+              {children}
+            </KeyboardAwareScrollView>
+            <View style={[styles.framedSheetFooter, { paddingBottom: 14 + insets.bottom }]}>{footer}</View>
           </View>
         </View>
       </View>
@@ -158,7 +195,7 @@ function ModalSheetBody({
         style={[
           styles.flex,
           isSheet ? styles.alignBottom : styles.alignCenter,
-          { paddingTop: insets.top + 8 },
+          isSheet ? { paddingTop: insets.top + 8 } : { paddingVertical: insets.top + 12 },
         ]}
         pointerEvents="box-none"
       >
@@ -197,6 +234,35 @@ const styles = StyleSheet.create({
   scrollSheet: { flexGrow: 0, maxHeight: '88%' },
   scrollDialog: { flexGrow: 0, maxHeight: '85%' },
   scrollDialogContent: { justifyContent: 'center' },
+
+  // --- pinned-footer bottom sheet ---
+  framedSheet: {
+    backgroundColor: theme.colors.background,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    paddingTop: 10,
+    maxHeight: '92%',
+    flexShrink: 1,
+    shadowColor: theme.colors.ink,
+    shadowOffset: { width: 0, height: -6 },
+    shadowOpacity: 0.12,
+    shadowRadius: 22,
+    elevation: 14,
+  },
+  framedSheetHeader: {
+    paddingHorizontal: 20,
+    paddingTop: 2,
+    paddingBottom: 12,
+  },
+  framedSheetBody: { flexGrow: 0, flexShrink: 1 },
+  framedSheetBodyContent: { paddingHorizontal: 20, paddingTop: 4, paddingBottom: 16 },
+  framedSheetFooter: {
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: theme.colors.borderSoft,
+    backgroundColor: theme.colors.surface,
+  },
   sheet: {
     backgroundColor: theme.colors.background,
     borderTopLeftRadius: 28,

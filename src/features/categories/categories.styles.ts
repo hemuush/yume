@@ -67,6 +67,12 @@ export const styles = StyleSheet.create({
     textAlign: 'center',
   },
   iconGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 20 },
+  iconChoice: {
+    borderRadius: 14,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.borderSoft,
+  },
+  iconChoiceActive: { borderWidth: 2, borderColor: theme.colors.ink },
   modalTitle: { fontSize: 18, fontWeight: '700', color: theme.colors.textPrimary, marginBottom: 16 },
   fieldLabel: {
     fontSize: 10.5,
@@ -81,10 +87,10 @@ export const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    borderWidth: theme.border.thin,
-    borderColor: theme.colors.ink,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(18,19,15,0.15)',
   },
-  colorSwatchActive: { borderWidth: 3, borderColor: theme.colors.textPrimary },
+  colorSwatchActive: { borderWidth: 2.5, borderColor: theme.colors.ink },
   parentChip: {
     paddingHorizontal: 12,
     paddingVertical: 7,

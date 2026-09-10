@@ -377,12 +377,12 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 11,
-    borderWidth: theme.border.thin,
-    borderColor: theme.colors.ink,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(18,19,15,0.15)',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  swatchActive: { borderWidth: theme.border.thick },
+  swatchActive: { borderWidth: 2.5, borderColor: theme.colors.ink },
 
   pickerHint: {
     fontFamily: theme.font.body,

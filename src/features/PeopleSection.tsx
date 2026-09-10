@@ -23,7 +23,7 @@ import { EmptyState } from '@/components/EmptyState';
 import { AddButton } from '@/components/AddButton';
 import { ModalSheet } from '@/components/ModalSheet';
 import { Chip } from '@/components/Chip';
-import { theme, FLAT_PALETTE } from '@/constants/theme';
+import { theme, FLAT_PALETTE, modalFooterStyles as f } from '@/constants/theme';
 import { parseLocalIsoDate, partsToIsoDate } from '@/lib/date';
 import { useFadeIn } from '@/lib/useFadeIn';
 import { usePressScale } from '@/lib/usePressScale';
@@ -201,23 +201,28 @@ function AddPersonModal({
   };
 
   return (
-    <ModalSheet visible={visible} onClose={onClose} variant="center" showClose title="New person">
+    <ModalSheet
+      visible={visible}
+      onClose={onClose}
+      variant="center"
+      showClose
+      title="New person"
+      footer={
+        <View style={f.footerCol}>
+          {error && <Text style={styles.errorText}>{error}</Text>}
+          <View style={f.footerRow}>
+            <PrimaryButton title="Cancel" variant="secondary" onPress={onClose} style={f.footerBtn} />
+            <PrimaryButton
+              title={saving ? 'Saving...' : 'Add'}
+              onPress={submit}
+              disabled={saving}
+              style={f.footerBtn}
+            />
+          </View>
+        </View>
+      }
+    >
       <FormInput label="Name" value={name} onChangeText={setName} placeholder="e.g. Abhinav" />
-      {error && <Text style={styles.errorText}>{error}</Text>}
-      <View style={styles.modalActions}>
-        <PrimaryButton
-          title="Cancel"
-          variant="secondary"
-          onPress={onClose}
-          style={{ flex: 1, marginRight: 8 }}
-        />
-        <PrimaryButton
-          title={saving ? 'Saving...' : 'Add'}
-          onPress={submit}
-          disabled={saving}
-          style={{ flex: 1 }}
-        />
-      </View>
     </ModalSheet>
   );
 }

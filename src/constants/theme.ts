@@ -139,6 +139,15 @@ export const settingsRowStyle = {
   padding: 12,
 };
 
+// The action-button block passed as a ModalSheet `footer` — a column that
+// can hold an optional error line, the Cancel/Save row, and an optional
+// full-width Delete. Shared so every modal's pinned footer lays out the same.
+export const modalFooterStyles = StyleSheet.create({
+  footerCol: { gap: 8 },
+  footerRow: { flexDirection: 'row', gap: 8 },
+  footerBtn: { flex: 1 },
+});
+
 // Every swatch sits in the same 74-83%-lightness pastel band described up
 // top — added colors were picked to fill gaps in hue coverage (rose, teal,
 // sage, tan, mauve, cyan, periwinkle, a paler butter yellow) rather than
