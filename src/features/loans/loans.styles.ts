@@ -25,7 +25,7 @@ export const styles = StyleSheet.create({
   },
   errorTitle: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.expense },
   errorDetail: { fontSize: 11.5, color: theme.colors.textSecondary, marginTop: 3, lineHeight: 16 },
-  sectionHeading: { fontFamily: theme.font.display, fontSize: 17, color: theme.colors.textPrimary },
+  sectionHeading: { fontFamily: theme.font.roundedBold, fontSize: 16, color: theme.colors.textPrimary },
   summaryRow: { flexDirection: 'row', paddingHorizontal: 20, gap: 10, marginBottom: 16 },
   summaryCard: { flex: 1, padding: 14 },
   summaryLabel: { fontSize: 12, color: theme.colors.onFlat, opacity: 0.65, marginBottom: 4 },

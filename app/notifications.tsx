@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, Pressable } from 'react-native';
+import Animated, { FadeInDown, ReduceMotion } from 'react-native-reanimated';
 import { useFocusEffect, router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getNextDueInstallment } from '@/db/loans';
@@ -129,20 +130,27 @@ export default function NotificationsScreen() {
             subtitle="No alerts right now — Suu will let you know when something needs attention."
           />
         ) : (
-          rows.map((row) => (
-            <Pressable key={row.key} style={styles.row} onPress={row.onPress} disabled={!row.onPress}>
-              <View style={[styles.icon, { backgroundColor: row.iconBg }]}>
-                <Text style={styles.iconText}>{row.icon}</Text>
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.rowTitle} numberOfLines={1}>
-                  {row.title}
-                </Text>
-                <Text style={styles.rowSubtitle} numberOfLines={2}>
-                  {row.subtitle}
-                </Text>
-              </View>
-            </Pressable>
+          rows.map((row, i) => (
+            <Animated.View
+              key={row.key}
+              entering={FadeInDown.duration(260)
+                .delay(i * 45)
+                .reduceMotion(ReduceMotion.System)}
+            >
+              <Pressable style={styles.row} onPress={row.onPress} disabled={!row.onPress}>
+                <View style={[styles.icon, { backgroundColor: row.iconBg }]}>
+                  <Text style={styles.iconText}>{row.icon}</Text>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.rowTitle} numberOfLines={1}>
+                    {row.title}
+                  </Text>
+                  <Text style={styles.rowSubtitle} numberOfLines={2}>
+                    {row.subtitle}
+                  </Text>
+                </View>
+              </Pressable>
+            </Animated.View>
           ))
         )}
         <View style={{ height: 40 + insets.bottom }} />
@@ -170,23 +178,28 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
     marginBottom: 10,
     backgroundColor: theme.colors.surface,
-    borderWidth: theme.border.thick,
-    borderColor: theme.colors.ink,
-    borderRadius: theme.radius.lg,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.borderSoft,
+    borderRadius: theme.radius.xl,
     padding: 14,
+    shadowColor: theme.colors.ink,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.05,
+    shadowRadius: 16,
+    elevation: 1,
   },
   icon: {
     width: 36,
     height: 36,
     borderRadius: 12,
-    borderWidth: theme.border.thin,
-    borderColor: theme.colors.ink,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.borderSoft,
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,
   },
   iconText: { fontSize: 16 },
-  rowTitle: { fontFamily: theme.font.bodyBold, fontSize: 13.5, color: theme.colors.textPrimary },
+  rowTitle: { fontFamily: theme.font.roundedBold, fontSize: 13, color: theme.colors.textPrimary },
   rowSubtitle: {
     fontFamily: theme.font.body,
     fontSize: 12,

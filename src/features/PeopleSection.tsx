@@ -575,7 +575,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     marginBottom: 12,
   },
-  sectionHeading: { fontFamily: theme.font.display, fontSize: 17, color: theme.colors.textPrimary },
+  sectionHeading: { fontFamily: theme.font.roundedBold, fontSize: 16, color: theme.colors.textPrimary },
   detailBalance: { fontSize: 20, fontWeight: '700', marginBottom: 16 },
   modalActions: { flexDirection: 'row', marginTop: 8 },
   sectionTitle: {

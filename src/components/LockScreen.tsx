@@ -98,7 +98,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 24,
   },
-  title: { fontFamily: theme.font.display, fontSize: 20, color: theme.colors.textPrimary, marginTop: 20 },
+  title: { fontFamily: theme.font.roundedBold, fontSize: 20, color: theme.colors.textPrimary, marginTop: 20 },
   subtitle: { fontSize: 13, color: theme.colors.textMuted, marginTop: 8, textAlign: 'center' },
   failedText: { fontSize: 12, color: theme.colors.expense, marginTop: 14 },
 });
