@@ -142,7 +142,7 @@ export default function ProfileScreen() {
         <View style={styles.identity}>
           <View style={[styles.avatar, { backgroundColor: accent }]}>
             <Text style={[styles.avatarInitial, { color: onAccent }]}>
-              {(name?.trim().charAt(0) || 'F').toUpperCase()}
+              {(name?.trim().charAt(0) || 'Y').toUpperCase()}
             </Text>
           </View>
 
