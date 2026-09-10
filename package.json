@@ -8,7 +8,7 @@
     "@expo-google-fonts/space-mono": "^0.4.2",
     "@expo/metro-runtime": "~57.0.15",
     "@expo/vector-icons": "^15.1.1",
-    "expo": "~57.0.20",
+    "expo": "~57.0.21",
     "expo-application": "~57.0.2",
     "expo-build-properties": "~57.0.17",
     "expo-constants": "~57.0.17",
@@ -19,7 +19,7 @@
     "expo-local-authentication": "~57.0.2",
     "expo-navigation-bar": "~57.0.2",
     "expo-notifications": "~57.0.17",
-    "expo-router": "~57.0.19",
+    "expo-router": "~57.0.20",
     "expo-sharing": "~57.0.18",
     "expo-sqlite": "~57.0.2",
     "expo-status-bar": "~57.0.1",
@@ -38,7 +38,7 @@
   "devDependencies": {
     "@react-native/jest-preset": "^0.86.3",
     "@types/better-sqlite3": "^9.6.0",
-    "@types/jest": "^30.0.0",
+    "@types/jest": "~29.5",
     "@types/react": "~19.2.2",
     "better-sqlite3": "^13.0.3",
     "eslint": "^9.39.5",
@@ -49,6 +49,9 @@
     "jest-expo": "~57.0.1",
     "prettier": "^3.9.6",
     "typescript": "~6.0.3"
+  },
+  "engines": {
+    "node": ">=22"
   },
   "scripts": {
     "start": "expo start",

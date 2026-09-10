@@ -41,7 +41,6 @@ src/
   theme/                Accent + privacy React contexts
   test-support/         better-sqlite3 test harness
   __tests__/            Cross-cutting integration tests
-scripts/                Dev-only scripts (not shipped)
 ```
 
 ## Running locally
