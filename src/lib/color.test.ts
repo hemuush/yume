@@ -1,4 +1,4 @@
-import { hexToHsl, hslToHex, shade } from './color';
+import { hexToHsl, hslToHex, shade, hexToRgba, spendHeatScale } from './color';
 
 // Helper: how far apart two hex colours are, channel-by-channel — used
 // instead of exact string equality since HSL<->RGB round-trips through
@@ -58,5 +58,46 @@ describe('shade', () => {
     expect(h2).toBeCloseTo(h, 0);
     expect(l2).toBeCloseTo(l, 0);
     expect(s2).toBeCloseTo(Math.min(100, s + 10), 0);
+  });
+});
+
+describe('hexToRgba', () => {
+  it('carries the exact RGB channels through at the given alpha', () => {
+    expect(hexToRgba('#E0F0A8', 0.5)).toBe('rgba(224, 240, 168, 0.5)');
+  });
+
+  it('accepts 3-digit shorthand', () => {
+    expect(hexToRgba('#fff', 1)).toBe('rgba(255, 255, 255, 1)');
+  });
+});
+
+describe('spendHeatScale', () => {
+  it('produces 5 steps, increasingly opaque, for every accent swatch', () => {
+    const swatches = ['#E0F0A8', '#8FE8C8', '#8FCBFF', '#C9B8FF', '#FFA8CE', '#F0A387', '#5FB3A8', '#E0AC3F'];
+    for (const accent of swatches) {
+      const scale = spendHeatScale(accent);
+      expect(scale).toHaveLength(5);
+      expect(scale[0]).toBe('transparent');
+      const alphaOf = (rgba: string) => Number(rgba.slice(rgba.lastIndexOf(',') + 1, -1));
+      const alphas = scale.slice(1).map(alphaOf);
+      for (let i = 1; i < alphas.length; i++) {
+        expect(alphas[i]).toBeGreaterThan(alphas[i - 1]);
+      }
+    }
+  });
+
+  it('the two deepest steps stay the same hue as the accent', () => {
+    const accent = '#8FCBFF'; // sky
+    const [accentHue] = hexToHsl(accent);
+    const scale = spendHeatScale(accent);
+    const rgbaHue = (rgba: string) => {
+      const [r, g, b] = rgba
+        .slice(rgba.indexOf('(') + 1, rgba.lastIndexOf(','))
+        .split(',')
+        .map(Number);
+      return hexToHsl(`#${[r, g, b].map((v) => Math.round(v).toString(16).padStart(2, '0')).join('')}`)[0];
+    };
+    expect(rgbaHue(scale[3])).toBeCloseTo(accentHue, -1);
+    expect(rgbaHue(scale[4])).toBeCloseTo(accentHue, -1);
   });
 });
