@@ -15,10 +15,11 @@ import { Account } from '@/types';
 import { AppHeader, HeaderPrivacyToggle } from '@/components/AppHeader';
 import { EmptyState } from '@/components/EmptyState';
 import { FlatIconBadge } from '@/components/FlatIconBadge';
+import { SettingsRowIcon } from '@/components/SettingsRowIcon';
 import { Amount } from '@/components/Amount';
 import { AddButton } from '@/components/AddButton';
 import { SectionLabel } from '@/components/SectionLabel';
-import { theme, ID_PALETTE } from '@/constants/theme';
+import { theme } from '@/constants/theme';
 import { useAccent } from '@/theme/AccentContext';
 import { NeoTile } from '@/components/NeoTile';
 import { useFadeIn } from '@/lib/useFadeIn';
@@ -210,10 +211,30 @@ export default function ProfileScreen() {
         </NeoTile>
 
         <View style={styles.statsGrid}>
-          <Stat value={formatMoney(totalBalance)} label="ACCOUNT BALANCE" color={theme.colors.idTeal} />
-          <Stat value={String(txCount)} label="ENTRIES" color={theme.colors.idSage} />
-          <Stat value={String(activeLoanCount)} label="ACTIVE LOANS" color={theme.colors.idGold} />
-          <Stat value={String(peopleCount)} label="PEOPLE" color={theme.colors.idCoral} />
+          <Stat
+            value={formatMoney(totalBalance)}
+            label="ACCOUNT BALANCE"
+            icon="wallet-outline"
+            iconBg={theme.colors.idTeal}
+          />
+          <Stat
+            value={String(txCount)}
+            label="ENTRIES"
+            icon="format-list-bulleted"
+            iconBg={theme.colors.idSage}
+          />
+          <Stat
+            value={String(activeLoanCount)}
+            label="ACTIVE LOANS"
+            icon="bank-outline"
+            iconBg={theme.colors.idGold}
+          />
+          <Stat
+            value={String(peopleCount)}
+            label="PEOPLE"
+            icon="account-group-outline"
+            iconBg={theme.colors.idCoral}
+          />
         </View>
 
         <View style={styles.sectionHeader}>
@@ -225,11 +246,10 @@ export default function ProfileScreen() {
         {accounts.length === 0 ? (
           <EmptyState title="No accounts yet" subtitle="Tap + Account to create one." />
         ) : (
-          accounts.map((acc, i) => {
-            const flat = ID_PALETTE[i % ID_PALETTE.length];
+          accounts.map((acc) => {
             return (
               <Animated.View key={acc.id} style={[styles.accountCardWrap, accountsFadeStyle]}>
-                <NeoTile backgroundColor={flat} style={styles.accountCard}>
+                <NeoTile style={styles.accountCard}>
                   <AnimatedAccountPressable
                     onPress={() => setDetailAccount(acc)}
                     style={styles.accountCardInner}
@@ -257,9 +277,9 @@ export default function ProfileScreen() {
             <SectionLabel color={theme.colors.textMuted} tint={theme.colors.surfaceAlt}>
               ARCHIVED ACCOUNTS
             </SectionLabel>
-            {archivedAccounts.map((acc, i) => (
+            {archivedAccounts.map((acc) => (
               <View key={acc.id} style={[styles.accountCardWrap, styles.archivedCard]}>
-                <NeoTile backgroundColor={ID_PALETTE[i % ID_PALETTE.length]} style={styles.accountCard}>
+                <NeoTile style={styles.accountCard}>
                   <Pressable onPress={() => setDetailAccount(acc)} style={styles.accountCardInner}>
                     <FlatIconBadge name={ACCOUNT_ICON[acc.type] ?? 'credit-card'} />
                     <View style={{ flex: 1, marginLeft: 14 }}>
@@ -303,13 +323,26 @@ export default function ProfileScreen() {
 
 const AnimatedAccountPressable = Animated.createAnimatedComponent(Pressable);
 
-function Stat({ value, label, color }: { value: string; label: string; color: string }) {
+function Stat({
+  value,
+  label,
+  icon,
+  iconBg,
+}: {
+  value: string;
+  label: string;
+  icon: string;
+  iconBg: string;
+}) {
   return (
-    <NeoTile backgroundColor={color} style={styles.statCell}>
-      <Text style={styles.statValue} numberOfLines={1} adjustsFontSizeToFit>
-        {value}
-      </Text>
-      <Text style={styles.statLabel}>{label}</Text>
+    <NeoTile style={styles.statCell}>
+      <SettingsRowIcon name={icon} backgroundColor={iconBg} />
+      <View style={styles.statText}>
+        <Text style={styles.statValue} numberOfLines={1} adjustsFontSizeToFit>
+          {value}
+        </Text>
+        <Text style={styles.statLabel}>{label}</Text>
+      </View>
     </NeoTile>
   );
 }

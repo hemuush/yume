@@ -220,12 +220,15 @@ export function LoanDetailModal({
       >
         {loadError && <Text style={styles.errorText}>Couldn't load the latest details: {loadError}</Text>}
 
-        {/* Colored by direction, matching the loan's card in the list —
-              and everything but Pay lives behind "⋯" now, so this reads the
-              same whether it's a 6-month loan or a 240-month one. */}
+        {/* A neutral card with the same red/green direction rail as the
+              loan's card in the list — everything but Pay lives behind "⋯"
+              now, so this reads the same whether it's a 6-month loan or a
+              240-month one. */}
         <NeoTile
-          backgroundColor={liveLoan.direction === 'borrowed' ? theme.colors.idCoral : theme.colors.idTeal}
-          style={styles.detailHero}
+          style={[
+            styles.detailHero,
+            liveLoan.direction === 'borrowed' ? styles.cardRailBorrowed : styles.cardRailLent,
+          ]}
         >
           <View style={styles.detailHeroTop}>
             <View style={{ flex: 1 }}>

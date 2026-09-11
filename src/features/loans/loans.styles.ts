@@ -28,8 +28,20 @@ export const styles = StyleSheet.create({
   sectionHeading: { fontFamily: theme.font.roundedBold, fontSize: 16, color: theme.colors.textPrimary },
   summaryRow: { flexDirection: 'row', paddingHorizontal: 20, gap: 10, marginBottom: 16 },
   summaryCard: { flex: 1, padding: 14 },
-  summaryLabel: { fontSize: 12, color: theme.colors.onFlat, opacity: 0.65, marginBottom: 4 },
-  summaryValue: { fontSize: 17, fontFamily: theme.font.bodyBold, color: theme.colors.onFlat },
+  summaryIcon: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
+  summaryIconExpense: { backgroundColor: theme.colors.expenseTint },
+  summaryIconIncome: { backgroundColor: theme.colors.incomeTint },
+  summaryLabel: { fontSize: 12, color: theme.colors.textMuted, marginBottom: 4 },
+  summaryValue: { fontSize: 17, fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
+  summaryValueExpense: { color: theme.colors.expense },
+  summaryValueIncome: { color: theme.colors.income },
   emptyText: { marginHorizontal: 20, color: theme.colors.textMuted, fontSize: 13 },
   card: {
     marginHorizontal: 20,
@@ -37,6 +49,11 @@ export const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 12,
   },
+  // Direction reads as a slim rail, not a full-bleed wash — the same
+  // red/green the rest of the app already uses for money out vs in, applied
+  // as one accent line rather than tinting the whole card.
+  cardRailBorrowed: { borderLeftWidth: 3, borderLeftColor: theme.colors.expense },
+  cardRailLent: { borderLeftWidth: 3, borderLeftColor: theme.colors.income },
   cardMuted: { opacity: 0.6 },
   closedDivider: {
     fontFamily: theme.font.bodyBold,
