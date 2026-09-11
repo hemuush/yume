@@ -1,7 +1,7 @@
 import { View, Text, StyleSheet } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Svg, { Defs, LinearGradient, Stop, Rect } from 'react-native-svg';
+import { LinearGradient } from 'expo-linear-gradient';
 import { theme } from '@/constants/theme';
 import { useAccent } from '@/theme/AccentContext';
 import { shade } from '@/lib/color';
@@ -20,15 +20,25 @@ function greetingWord(): string {
 }
 
 // Four small "sparks" scattered through the gradient — a wink at "Yume"
-// (dream) rather than a busy repeating pattern. Positions are fractions of
-// the band's own size so they scale with it instead of needing a fixed
-// height.
+// (dream) rather than a busy repeating pattern. `top` is a pixel offset from
+// the start of the *content* area (i.e. below the status-bar inset, added
+// separately) so they never land up in the status bar itself regardless of
+// device. `left` is a plain percentage of the band's width.
 const SPARKS: { top: number; left: number; size: number; opacity: number }[] = [
-  { top: 0.2, left: 0.58, size: 5, opacity: 0.9 },
-  { top: 0.44, left: 0.78, size: 3, opacity: 0.75 },
-  { top: 0.62, left: 0.5, size: 4, opacity: 0.55 },
-  { top: 0.28, left: 0.36, size: 3, opacity: 0.7 },
+  { top: 4, left: 58, size: 5, opacity: 0.9 },
+  { top: 26, left: 78, size: 3, opacity: 0.75 },
+  { top: 58, left: 50, size: 4, opacity: 0.5 },
+  { top: 12, left: 36, size: 3, opacity: 0.7 },
 ];
+
+// Suu's own box, offset from the start of the content area (same reasoning
+// as SPARKS above) rather than the band's bare top edge — the band extends
+// edge-to-edge under the status bar, so an offset measured from its raw top
+// would land Suu up among the clock/battery icons instead of inside the
+// header's own content.
+const SUU_SIZE = 64;
+const SUU_TOP = 0;
+const SUU_RIGHT = 8;
 
 /**
  * The Home screen's own header — previously a flat block of the user's
@@ -56,19 +66,16 @@ export function HomeHeader({
   const insets = useSafeAreaInsets();
   const gradientTop = shade(accent, 88, 4);
   const gradientBottom = shade(accent, 96, 2);
+  const contentTop = insets.top + 10;
 
   return (
     <>
-      <View style={[styles.band, { paddingTop: insets.top + 10 }]}>
-        <Svg style={StyleSheet.absoluteFill} width="100%" height="100%">
-          <Defs>
-            <LinearGradient id="homeBandGrad" x1="0" y1="0" x2="0" y2="1">
-              <Stop offset="0" stopColor={gradientTop} />
-              <Stop offset="1" stopColor={gradientBottom} />
-            </LinearGradient>
-          </Defs>
-          <Rect x={0} y={0} width="100%" height="100%" fill="url(#homeBandGrad)" />
-        </Svg>
+      <View style={[styles.band, { paddingTop: contentTop }]}>
+        <LinearGradient
+          colors={[gradientTop, gradientBottom]}
+          style={StyleSheet.absoluteFill}
+          pointerEvents="none"
+        />
 
         {SPARKS.map((s, i) => (
           <View
@@ -76,8 +83,8 @@ export function HomeHeader({
             style={[
               styles.spark,
               {
-                top: `${s.top * 100}%`,
-                left: `${s.left * 100}%`,
+                top: contentTop + s.top,
+                left: `${s.left}%`,
                 width: s.size,
                 height: s.size,
                 borderRadius: s.size / 2,
@@ -87,8 +94,8 @@ export function HomeHeader({
           />
         ))}
 
-        <View style={styles.suuWrap} pointerEvents="none">
-          <SuuIllustration size={74} />
+        <View style={[styles.suuWrap, { top: contentTop + SUU_TOP, right: SUU_RIGHT }]} pointerEvents="none">
+          <SuuIllustration size={SUU_SIZE} />
         </View>
 
         <View style={styles.row}>
@@ -132,7 +139,7 @@ const styles = StyleSheet.create({
   spark: { position: 'absolute', backgroundColor: theme.colors.surface },
   // Half-hidden behind the greeting, top-right — "just woke up with you"
   // rather than a mascot posed front and centre.
-  suuWrap: { position: 'absolute', top: 4, right: 8 },
+  suuWrap: { position: 'absolute' },
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
   brandRow: { flexDirection: 'row', alignItems: 'center', gap: 7 },
   brand: { fontFamily: theme.font.roundedBold, fontSize: 21, letterSpacing: 0.2, color: theme.colors.ink },
