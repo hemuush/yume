@@ -42,7 +42,7 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 10,
     paddingTop: 10,
-    borderTopWidth: theme.border.thin,
+    borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: theme.colors.borderSoft,
   },
   pauseLabel: { fontSize: 11.5, fontFamily: theme.font.bodyBold, color: theme.colors.textSecondary },

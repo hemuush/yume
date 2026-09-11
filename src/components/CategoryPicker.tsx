@@ -156,7 +156,7 @@ const styles = StyleSheet.create({
   subGroup: {
     marginTop: 10,
     paddingTop: 10,
-    borderTopWidth: theme.border.thin,
+    borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: theme.colors.borderSoft,
   },
   subGroupLabel: {
