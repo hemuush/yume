@@ -38,8 +38,10 @@ import {
 } from '@/lib/period';
 import { parseLocalIsoDate } from '@/lib/date';
 import { theme, SPEND_HEAT_SCALE } from '@/constants/theme';
+import { useAccent } from '@/theme/AccentContext';
+import { shade } from '@/lib/color';
 import { SpendHeatmap, HeatCell } from '@/features/reports/SpendHeatmap';
-import { MoonPhase } from '@/features/reports/MoonPhase';
+import { MoonPhase, moonPhaseShades } from '@/features/reports/MoonPhase';
 import { SkylineRibbon } from '@/features/reports/SkylineRibbon';
 import {
   heatLevel,
@@ -55,6 +57,7 @@ const CAT_COLLAPSE_COUNT = 5;
 
 export default function ReportsScreen() {
   const insets = useSafeAreaInsets();
+  const { accent } = useAccent();
   const [cursor, setCursor] = useState<PeriodCursor>(CURRENT_PERIOD);
   const [comparison, setComparison] = useState<PeriodComparison | null>(null);
   const [trend, setTrend] = useState<TrendPoint[]>([]);
@@ -169,6 +172,13 @@ export default function ReportsScreen() {
 
   const { recurringMinor, discretionaryMinor } = recurringVsDiscretionary(current.categoryBreakdown);
   const rTotal = recurringMinor + discretionaryMinor;
+  // The moon card's own colours: two shades of the user's accent hue rather
+  // than fixed ones. moonShades.dark (a pale tint) is right for the disc and
+  // the small legend dot, but too light to read as body text on a cream
+  // card — moonTextShades.dark is a mid-dark version of the same hue for
+  // the "Discretionary" figure specifically.
+  const moonShades = moonPhaseShades(accent);
+  const moonTextShades = { dark: shade(accent, 55, -2) };
 
   const deltas = categoryDeltas(current.categoryBreakdown, previous.categoryBreakdown);
   const catDisp = allocateRoundedMinor(
@@ -305,30 +315,34 @@ export default function ReportsScreen() {
 
             {/* recurring vs discretionary — a moon phase, not a bar: the lit
                 fraction of the disc is drawn to the exact recurring/total
-                ratio (see MoonPhase's lune construction). */}
+                ratio (see MoonPhase's lune construction). Both the moon and
+                its legend are shades of the user's own accent colour, not
+                fixed hues, so it's always in the same colour family as the
+                rest of the app instead of clashing with whatever accent is
+                picked. */}
             {rTotal > 0 && (
               <>
                 <View style={styles.moonCard}>
                   <Text style={styles.moonEyebrow}>
                     This month&rsquo;s {formatMoney(roundedMinor(rTotal))}
                   </Text>
-                  <MoonPhase litFraction={recurringMinor / rTotal} size={132} />
+                  <MoonPhase litFraction={recurringMinor / rTotal} size={132} accent={accent} />
                   <View style={styles.moonFigs}>
                     <View style={styles.moonFig}>
                       <View style={styles.moonFigLabelRow}>
-                        <View style={[styles.rdDot, { backgroundColor: theme.colors.gold }]} />
+                        <View style={[styles.rdDot, { backgroundColor: moonShades.lit }]} />
                         <Text style={styles.moonFigLabel}>Recurring</Text>
                       </View>
-                      <Text style={[styles.moonFigValue, { color: theme.colors.idGoldDeep }]}>
+                      <Text style={[styles.moonFigValue, { color: moonShades.lit }]}>
                         {formatMoney(roundedMinor(recurringMinor))}
                       </Text>
                     </View>
                     <View style={styles.moonFig}>
                       <View style={styles.moonFigLabelRow}>
-                        <View style={[styles.rdDot, { backgroundColor: theme.colors.idCoralDeep }]} />
+                        <View style={[styles.rdDot, { backgroundColor: moonShades.dark }]} />
                         <Text style={styles.moonFigLabel}>Discretionary</Text>
                       </View>
-                      <Text style={[styles.moonFigValue, { color: theme.colors.idCoralDeep }]}>
+                      <Text style={[styles.moonFigValue, { color: moonTextShades.dark }]}>
                         {formatMoney(roundedMinor(discretionaryMinor))}
                       </Text>
                     </View>
