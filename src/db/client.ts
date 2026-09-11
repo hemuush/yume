@@ -156,6 +156,56 @@ async function flagSystemCategories(db: AppDb): Promise<void> {
   );
 }
 
+// DEFAULT_CATEGORIES used to seed with a bolder, more saturated palette
+// (Tailwind-style hues) instead of the app's calm pastel band. An install
+// that seeded before this change keeps those colours forever unless
+// remapped here — scoped to name + kind + still holding the exact original
+// colour, so a category the user has since recoloured (or a same-named one
+// they created themselves after deleting the built-in) is never touched.
+// Idempotent: once remapped, the WHERE no longer matches.
+const LEGACY_CATEGORY_COLOR_REMAP: { name: string; kind: 'income' | 'expense'; from: string; to: string }[] =
+  [
+    { name: 'Salary', kind: 'income', from: '#22C55E', to: '#7FE0A8' },
+    { name: 'Business', kind: 'income', from: '#16A34A', to: '#8FE8C8' },
+    { name: 'Interest & Dividends', kind: 'income', from: '#15803D', to: '#C5E0A0' },
+    { name: 'Gifts Received', kind: 'income', from: '#4ADE80', to: '#FFEA9E' },
+    { name: 'Other Income', kind: 'income', from: '#86EFAC', to: '#A8D8FF' },
+    { name: 'Loan Repayment', kind: 'income', from: '#0F766E', to: '#8FE0DC' },
+    { name: 'Friends & Family', kind: 'income', from: '#65A30D', to: '#D8B8FF' },
+    { name: 'Food & Dining', kind: 'expense', from: '#F97316', to: '#FF9E7D' },
+    { name: 'Groceries', kind: 'expense', from: '#EA580C', to: '#FFC24D' },
+    { name: 'Rent', kind: 'expense', from: '#DC2626', to: '#FF8FA3' },
+    { name: 'Utilities', kind: 'expense', from: '#B91C1C', to: '#8FE0F0' },
+    { name: 'Transport', kind: 'expense', from: '#0EA5E9', to: '#8FCBFF' },
+    { name: 'Fuel', kind: 'expense', from: '#0284C7', to: '#A8B8FF' },
+    { name: 'Health & Medical', kind: 'expense', from: '#E11D48', to: '#FFA8CE' },
+    { name: 'Shopping', kind: 'expense', from: '#A855F7', to: '#C9B8FF' },
+    { name: 'Entertainment', kind: 'expense', from: '#8B5CF6', to: '#FFD84D' },
+    { name: 'Education', kind: 'expense', from: '#6366F1', to: '#A8D8FF' },
+    { name: 'Subscriptions', kind: 'expense', from: '#4F46E5', to: '#8FE8C8' },
+    { name: 'Insurance', kind: 'expense', from: '#334155', to: '#E0C29A' },
+    { name: 'Loan EMI', kind: 'expense', from: '#78350F', to: '#E0A8C9' },
+    { name: 'Credit Card Payment', kind: 'expense', from: '#92400E', to: '#C5E0A0' },
+    { name: 'Investments', kind: 'expense', from: '#0D9488', to: '#8FE0DC' },
+    { name: 'Savings Deposit', kind: 'expense', from: '#0F766E', to: '#7FE0A8' },
+    { name: 'Gifts & Donations', kind: 'expense', from: '#DB2777', to: '#FFEA9E' },
+    { name: 'Travel', kind: 'expense', from: '#0891B2', to: '#8FE0F0' },
+    { name: 'Fees & Charges', kind: 'expense', from: '#57534E', to: '#E0C29A' },
+    { name: 'Friends & Family', kind: 'expense', from: '#65A30D', to: '#D8B8FF' },
+    { name: 'Miscellaneous', kind: 'expense', from: '#71717A', to: '#A8D8FF' },
+  ];
+
+async function remapLegacyCategoryColors(db: AppDb): Promise<void> {
+  for (const r of LEGACY_CATEGORY_COLOR_REMAP) {
+    await db.runAsync('UPDATE categories SET color = ? WHERE name = ? AND kind = ? AND color = ?', [
+      r.to,
+      r.name,
+      r.kind,
+      r.from,
+    ]);
+  }
+}
+
 async function runMigrations(db: AppDb): Promise<void> {
   await ensureColumn(db, 'loans', 'rate_type', `rate_type TEXT NOT NULL DEFAULT 'fixed'`);
   await ensureColumn(db, 'loans', 'person_id', `person_id TEXT REFERENCES people(id) ON DELETE SET NULL`);
@@ -170,6 +220,7 @@ async function runMigrations(db: AppDb): Promise<void> {
   );
   await ensureColumn(db, 'categories', 'is_system', `is_system INTEGER NOT NULL DEFAULT 0`);
   await flagSystemCategories(db);
+  await remapLegacyCategoryColors(db);
 
   if (addedIsSensitive) {
     // One-time backfill for an upgrading install: the two built-in categories
