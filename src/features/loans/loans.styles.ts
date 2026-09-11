@@ -172,7 +172,7 @@ export const styles = StyleSheet.create({
     marginTop: 10,
     padding: 12,
     borderRadius: theme.radius.md,
-    borderWidth: theme.border.thin,
+    borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
   },
   income: { color: theme.colors.income },

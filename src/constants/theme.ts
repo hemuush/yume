@@ -8,11 +8,10 @@
 // (`secondary`) as the signature accents. All flat/pastel swatches sit in a
 // 74-83% lightness band so they read as gentle pastels, never neon.
 //
-// A heavier "doodle" layer still exists under this — thick ink borders
-// (`border.thin`/`border.thick`) and the hard offset shadow (`shadowOffset`,
-// rendered by NeoTile) — and is still used by the loans, transactions and
-// recurring cards that the minimal pass hasn't reached yet. New UI should
-// prefer the hairline/pill register above.
+// `border.thin` (2px) is now only for deliberate emphasis — a coloured
+// callout border (an error banner, an EMI preview) — never a plain card or
+// divider outline; those use a hairline (`StyleSheet.hairlineWidth`) with
+// `borderSoft` instead.
 
 import { StyleSheet } from 'react-native';
 
@@ -84,16 +83,11 @@ export const theme = {
     xl2: 22,
     pill: 999,
   },
-  // Every card/button/chip border is thick and black (the doodle look) —
-  // components pull from here instead of hardcoding a width.
+  // A deliberate, coloured emphasis border (an error banner, an EMI
+  // preview) — see the note up top. Everything else uses a hairline.
   border: {
     thin: 2,
-    thick: 3,
   },
-  // A hard, un-blurred offset shadow (rendered as a solid ink shape behind
-  // the card via NeoTile, not a native shadow prop) is what separates a
-  // confident neobrutalist card from a flat one with just a border.
-  shadowOffset: 4,
   spacing: (n: number) => n * 4,
   // Layout metrics shared between the tab bar and the screens that must
   // scroll clear of it. The tab bar is docked flush to the bottom edge —
