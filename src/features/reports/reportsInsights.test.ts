@@ -7,6 +7,7 @@ import {
   summariseDayTotal,
 } from './reportsInsights';
 import type { CategoryBreakdownItem } from '@/db/reports';
+import { parseLocalIsoDate } from '@/lib/date';
 
 const cat = (id: string, name: string, totalMinor: number): CategoryBreakdownItem => ({
   categoryId: id,
@@ -81,7 +82,17 @@ describe('describeSpendingPattern', () => {
       { date: '2026-09-15', totalMinor: 2000 },
     ];
     const lines = describeSpendingPattern(daily, 30);
-    expect(lines.some((l) => l.includes('Heaviest day') && l.includes('1 Sep'))).toBe(true);
+    // Built via the same `toLocaleDateString(undefined, ...)` call the
+    // production code uses, rather than a hardcoded "1 Sep" literal — the
+    // default locale's day/month order differs by environment (e.g. "1 Sept"
+    // on a machine defaulting to a day-first locale vs "Sep 1" on one
+    // defaulting to en-US), so a hardcoded order passed locally but failed
+    // in CI.
+    const expectedDate = parseLocalIsoDate('2026-09-01').toLocaleDateString(undefined, {
+      day: 'numeric',
+      month: 'short',
+    });
+    expect(lines.some((l) => l.includes('Heaviest day') && l.includes(expectedDate))).toBe(true);
   });
 });
 
