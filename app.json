@@ -19,7 +19,7 @@
         "backgroundImage": "./assets/android-icon-background.png"
       },
       "predictiveBackGestureEnabled": false,
-      "versionCode": 48,
+      "versionCode": 49,
       "permissions": ["android.permission.USE_BIOMETRIC", "android.permission.USE_FINGERPRINT"]
     },
     "web": {
