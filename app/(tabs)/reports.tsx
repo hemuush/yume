@@ -39,6 +39,8 @@ import {
 import { parseLocalIsoDate } from '@/lib/date';
 import { theme, SPEND_HEAT_SCALE } from '@/constants/theme';
 import { SpendHeatmap, HeatCell } from '@/features/reports/SpendHeatmap';
+import { MoonPhase } from '@/features/reports/MoonPhase';
+import { SkylineRibbon } from '@/features/reports/SkylineRibbon';
 import {
   heatLevel,
   baselineFromTrend,
@@ -49,6 +51,7 @@ import {
 } from '@/features/reports/reportsInsights';
 
 const WEEKDAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+const CAT_COLLAPSE_COUNT = 5;
 
 export default function ReportsScreen() {
   const insets = useSafeAreaInsets();
@@ -64,8 +67,13 @@ export default function ReportsScreen() {
   const [daySheet, setDaySheet] = useState<string | null>(null);
   const [dayTx, setDayTx] = useState<Transaction[] | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
+  // "Where it went" shows the top 5 categories by default, like every other
+  // long list in the app — reset whenever the period changes so switching
+  // months never leaves a stale month's list expanded.
+  const [catExpanded, setCatExpanded] = useState(false);
 
   const load = useCallback(async (c: PeriodCursor) => {
+    setCatExpanded(false);
     const range = periodRange(c);
     const anchor = parseLocalIsoDate(range.end);
     const trendMonths = c.granularity === 'year' ? 12 : 7;
@@ -295,94 +303,118 @@ export default function ReportsScreen() {
 
             <View style={styles.rule} />
 
-            {/* recurring vs discretionary */}
+            {/* recurring vs discretionary — a moon phase, not a bar: the lit
+                fraction of the disc is drawn to the exact recurring/total
+                ratio (see MoonPhase's lune construction). */}
             {rTotal > 0 && (
               <>
-                <Text style={styles.blockTitle}>Recurring vs the rest</Text>
-                <View style={styles.rdBar}>
-                  <View
-                    style={{
-                      width: `${(recurringMinor / rTotal) * 100}%`,
-                      backgroundColor: theme.colors.accent,
-                    }}
-                  />
-                  <View
-                    style={{
-                      width: `${(discretionaryMinor / rTotal) * 100}%`,
-                      backgroundColor: theme.colors.idCoralDeep,
-                    }}
-                  />
-                </View>
-                <View style={styles.rdLegend}>
-                  <View style={styles.rdItem}>
-                    <View style={[styles.rdDot, { backgroundColor: theme.colors.accent }]} />
-                    <Text style={styles.rdItemLabel}>Recurring</Text>
-                    <Text style={styles.rdValue}>{formatMoney(roundedMinor(recurringMinor))}</Text>
+                <View style={styles.moonCard}>
+                  <Text style={styles.moonEyebrow}>
+                    This month&rsquo;s {formatMoney(roundedMinor(rTotal))}
+                  </Text>
+                  <MoonPhase litFraction={recurringMinor / rTotal} size={132} />
+                  <View style={styles.moonFigs}>
+                    <View style={styles.moonFig}>
+                      <View style={styles.moonFigLabelRow}>
+                        <View style={[styles.rdDot, { backgroundColor: theme.colors.gold }]} />
+                        <Text style={styles.moonFigLabel}>Recurring</Text>
+                      </View>
+                      <Text style={[styles.moonFigValue, { color: theme.colors.idGoldDeep }]}>
+                        {formatMoney(roundedMinor(recurringMinor))}
+                      </Text>
+                    </View>
+                    <View style={styles.moonFig}>
+                      <View style={styles.moonFigLabelRow}>
+                        <View style={[styles.rdDot, { backgroundColor: theme.colors.idCoralDeep }]} />
+                        <Text style={styles.moonFigLabel}>Discretionary</Text>
+                      </View>
+                      <Text style={[styles.moonFigValue, { color: theme.colors.idCoralDeep }]}>
+                        {formatMoney(roundedMinor(discretionaryMinor))}
+                      </Text>
+                    </View>
                   </View>
-                  <View style={styles.rdItem}>
-                    <View style={[styles.rdDot, { backgroundColor: theme.colors.idCoralDeep }]} />
-                    <Text style={styles.rdItemLabel}>Discretionary</Text>
-                    <Text style={styles.rdValue}>{formatMoney(roundedMinor(discretionaryMinor))}</Text>
-                  </View>
+                  <Text style={styles.moonCaption}>
+                    {formatPctChange((recurringMinor / rTotal) * 100)} of what you spent this month was
+                    already spoken for — EMI, rent, subscriptions &amp; insurance.
+                  </Text>
                 </View>
-                <Text style={styles.rdNote}>
-                  EMI, rent, subscriptions &amp; insurance — the fixed load you can&rsquo;t easily move.
-                </Text>
                 <View style={styles.rule} />
               </>
             )}
 
             {/* where it went */}
             <Text style={styles.blockTitle}>Where it went</Text>
-            {current.categoryBreakdown.map((c, i) => {
-              const d = deltas.get(c.categoryId);
-              return (
-                <Pressable
-                  key={c.categoryId}
-                  disabled={!c.hasSubcategories}
-                  onPress={() => openDrill(c)}
-                  style={styles.catRow}
-                >
-                  <View style={styles.catTop}>
-                    <View style={[styles.catDot, { backgroundColor: c.color }]} />
-                    <Text style={styles.catName} numberOfLines={1}>
-                      {c.name}
-                      {c.hasSubcategories ? ' ›' : ''}
-                    </Text>
-                    <View style={styles.catRight}>
-                      <Amount minor={catDisp[i]} sensitive={c.isSensitive} style={styles.catAmt} />
-                      {d != null && Math.abs(d) >= 10 && (
-                        <Text
-                          style={[
-                            styles.catDelta,
-                            { color: d > 0 ? theme.colors.expense : theme.colors.income },
-                          ]}
-                        >
-                          {d > 0 ? '↑' : '↓'}
-                          {formatPctChange(d)}
-                        </Text>
-                      )}
+            <SkylineRibbon categories={current.categoryBreakdown} totalMinor={dispExpense} />
+            <View style={styles.catCard}>
+              {(catExpanded
+                ? current.categoryBreakdown
+                : current.categoryBreakdown.slice(0, CAT_COLLAPSE_COUNT)
+              ).map((c) => {
+                const i = current.categoryBreakdown.indexOf(c);
+                const d = deltas.get(c.categoryId);
+                const pct = dispExpense > 0 ? Math.round((c.totalMinor / dispExpense) * 100) : 0;
+                return (
+                  <Pressable
+                    key={c.categoryId}
+                    disabled={!c.hasSubcategories}
+                    onPress={() => openDrill(c)}
+                    style={styles.catRow}
+                  >
+                    <View style={styles.catTop}>
+                      <View style={[styles.catDot, { backgroundColor: c.color }]} />
+                      <Text style={styles.catName} numberOfLines={1}>
+                        {c.name}
+                        {c.hasSubcategories ? ' ›' : ''}
+                      </Text>
+                      <Text style={styles.catPct}>{pct}%</Text>
+                      <View style={styles.catRight}>
+                        <Amount minor={catDisp[i]} sensitive={c.isSensitive} style={styles.catAmt} />
+                        {d != null && Math.abs(d) >= 10 && (
+                          <Text
+                            style={[
+                              styles.catDelta,
+                              { color: d > 0 ? theme.colors.expense : theme.colors.income },
+                            ]}
+                          >
+                            {d > 0 ? '↑' : '↓'}
+                            {formatPctChange(d)}
+                          </Text>
+                        )}
+                      </View>
                     </View>
-                  </View>
-                  <View style={styles.catTrack}>
-                    <View
-                      style={{
-                        width: `${Math.max(3, (c.totalMinor / maxCat) * 100)}%`,
-                        height: '100%',
-                        borderRadius: 4,
-                        backgroundColor: c.color,
-                      }}
-                    />
-                  </View>
+                    <View style={styles.catTrack}>
+                      <View
+                        style={{
+                          width: `${Math.max(3, (c.totalMinor / maxCat) * 100)}%`,
+                          height: '100%',
+                          borderRadius: 4,
+                          backgroundColor: c.color,
+                        }}
+                      />
+                    </View>
+                  </Pressable>
+                );
+              })}
+              {current.categoryBreakdown.length > CAT_COLLAPSE_COUNT && (
+                <Pressable onPress={() => setCatExpanded((v) => !v)} style={styles.catMore}>
+                  <Text style={styles.catMoreText}>
+                    {catExpanded
+                      ? 'Show less ︿'
+                      : `${current.categoryBreakdown.length - CAT_COLLAPSE_COUNT} more ⌄`}
+                  </Text>
                 </Pressable>
-              );
-            })}
+              )}
+            </View>
 
             {trend.length >= 3 && (
               <>
                 <View style={styles.rule} />
                 <Text style={styles.blockTitle}>Against your last {trend.length} months</Text>
-                <Sparkline values={trend.map((t) => t.totalMinor)} baseline={baseline} />
+                <Sparkline
+                  values={trend.map((t) => t.totalMinor)}
+                  labels={trend.map((t) => t.label)}
+                  baseline={baseline}
+                />
                 {baseline != null && (
                   <Text style={styles.rdNote}>
                     The dashed line is your average.{' '}
@@ -576,7 +608,22 @@ function PeriodRow({ cursor, onChange }: { cursor: PeriodCursor; onChange: (c: P
   );
 }
 
-function Sparkline({ values, baseline }: { values: number[]; baseline: number | null }) {
+/**
+ * The month-over-month trend, drawn as a constellation rather than the
+ * filled-gradient area chart every other finance app uses for this — a
+ * faint line connecting a small star at each month, with the current month
+ * as a brighter, ringed point. Same trend data and dashed-average baseline
+ * as before, only how it's drawn changed.
+ */
+function Sparkline({
+  values,
+  labels,
+  baseline,
+}: {
+  values: number[];
+  labels: string[];
+  baseline: number | null;
+}) {
   const W = 300;
   const H = 60;
   const max = Math.max(1, ...values);
@@ -586,20 +633,52 @@ function Sparkline({ values, baseline }: { values: number[]; baseline: number | 
   const y = (v: number) => H - 6 - ((v - min) / span) * (H - 12);
   const d = values.map((v, i) => `${i === 0 ? 'M' : 'L'}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
   const baseY = baseline != null ? y(baseline) : null;
+  const lastIndex = values.length - 1;
+  // A 12-point year view would crowd every month's initial under the chart —
+  // thin the axis to every other label past 8 points, always keeping the
+  // current (last) one.
+  const showLabel = (i: number) => values.length <= 8 || i === lastIndex || i % 2 === 0;
   return (
-    <View style={styles.spark}>
-      <Svg width="100%" height="100%" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none">
-        {baseY != null && (
-          <Line x1={0} y1={baseY} x2={W} y2={baseY} stroke={theme.colors.borderSoft} strokeDasharray="4 3" />
-        )}
-        <Path d={d} fill="none" stroke={theme.colors.idCoralDeep} strokeWidth={2} />
-        <Circle
-          cx={x(values.length - 1)}
-          cy={y(values[values.length - 1])}
-          r={3.5}
-          fill={theme.colors.idCoralDeep}
-        />
-      </Svg>
+    <View>
+      <View style={styles.spark}>
+        <Svg width="100%" height="100%" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none">
+          {baseY != null && (
+            <Line
+              x1={0}
+              y1={baseY}
+              x2={W}
+              y2={baseY}
+              stroke={theme.colors.borderSoft}
+              strokeDasharray="4 3"
+            />
+          )}
+          <Path d={d} fill="none" stroke={theme.colors.ink} strokeOpacity={0.3} strokeWidth={1.3} />
+          {values.slice(0, lastIndex).map((v, i) => (
+            <Circle key={i} cx={x(i)} cy={y(v)} r={3} fill={theme.colors.ink} fillOpacity={0.3} />
+          ))}
+          <Circle
+            cx={x(lastIndex)}
+            cy={y(values[lastIndex])}
+            r={8}
+            fill="none"
+            stroke={theme.colors.idCoralDeep}
+            strokeOpacity={0.35}
+            strokeWidth={1.3}
+          />
+          <Circle cx={x(lastIndex)} cy={y(values[lastIndex])} r={5} fill={theme.colors.idCoralDeep} />
+        </Svg>
+      </View>
+      <View style={styles.sparkAxis}>
+        {labels.map((label, i) => (
+          <Text
+            key={i}
+            style={[styles.sparkAxisLabel, i === lastIndex && styles.sparkAxisLabelOn]}
+            numberOfLines={1}
+          >
+            {showLabel(i) ? label : ''}
+          </Text>
+        ))}
+      </View>
     </View>
   );
 }
@@ -690,29 +769,82 @@ const styles = StyleSheet.create({
 
   rule: { height: StyleSheet.hairlineWidth, backgroundColor: theme.colors.borderSoft, marginVertical: 22 },
 
-  rdBar: { flexDirection: 'row', height: 15, borderRadius: 8, overflow: 'hidden' },
-  rdLegend: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 8, flexWrap: 'wrap', gap: 6 },
-  rdItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  rdItemLabel: { fontFamily: theme.font.bodyMedium, fontSize: 10, color: theme.colors.textSecondary },
+  // The recurring/discretionary dot is the one style still shared with the
+  // moon-split card's legend below.
   rdDot: { width: 8, height: 8, borderRadius: 3 },
-  rdValue: { fontFamily: theme.font.monoBold, fontSize: 11.5, color: theme.colors.textPrimary },
   rdNote: { fontFamily: theme.font.body, fontSize: 9.5, color: theme.colors.textMuted, marginTop: 6 },
 
-  catRow: { marginBottom: 12 },
+  moonCard: {
+    backgroundColor: theme.colors.surface,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.borderSoft,
+    borderRadius: theme.radius.xl2,
+    padding: 18,
+    alignItems: 'center',
+  },
+  moonEyebrow: {
+    fontFamily: theme.font.bodyBold,
+    fontSize: 11,
+    letterSpacing: 0.4,
+    textTransform: 'uppercase',
+    color: theme.colors.textMuted,
+    marginBottom: 10,
+  },
+  moonFigs: { flexDirection: 'row', gap: 22, marginTop: 14 },
+  moonFig: { alignItems: 'flex-start' },
+  moonFigLabelRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  moonFigLabel: { fontFamily: theme.font.bodyMedium, fontSize: 11, color: theme.colors.textSecondary },
+  moonFigValue: { fontFamily: theme.font.monoBold, fontSize: 15, marginTop: 3 },
+  moonCaption: {
+    fontFamily: theme.font.body,
+    fontSize: 11,
+    color: theme.colors.textMuted,
+    textAlign: 'center',
+    lineHeight: 16,
+    marginTop: 14,
+    maxWidth: 260,
+  },
+
+  catCard: {
+    backgroundColor: theme.colors.surface,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.borderSoft,
+    borderRadius: theme.radius.xl,
+    paddingHorizontal: 14,
+  },
+  catRow: { paddingVertical: 10 },
   catTop: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 },
   catName: { flex: 1, fontFamily: theme.font.bodyMedium, fontSize: 11.5, color: theme.colors.textPrimary },
   catDot: { width: 8, height: 8, borderRadius: 4 },
-  catRight: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  catPct: {
+    fontFamily: theme.font.mono,
+    fontSize: 9,
+    color: theme.colors.textMuted,
+    width: 28,
+    textAlign: 'right',
+  },
+  catRight: { flexDirection: 'row', alignItems: 'center', gap: 5, marginLeft: 8 },
   catAmt: { fontFamily: theme.font.monoBold, fontSize: 10.5, color: theme.colors.textPrimary },
   catDelta: { fontFamily: theme.font.mono, fontSize: 8 },
   catTrack: {
-    height: 7,
-    borderRadius: 4,
+    height: 5,
+    borderRadius: 3,
     backgroundColor: theme.colors.inkWash,
     overflow: 'hidden',
   },
+  catMore: { paddingVertical: 12, alignItems: 'center' },
+  catMoreText: { fontFamily: theme.font.bodyMedium, fontSize: 11.5, color: theme.colors.textMuted },
 
   spark: { height: 62, marginTop: 4 },
+  sparkAxis: { flexDirection: 'row', marginTop: 2 },
+  sparkAxisLabel: {
+    flex: 1,
+    fontFamily: theme.font.mono,
+    fontSize: 8.5,
+    color: theme.colors.textMuted,
+    textAlign: 'center',
+  },
+  sparkAxisLabelOn: { color: theme.colors.idCoralDeep, fontFamily: theme.font.monoBold },
 
   mover: { flexDirection: 'row', gap: 9, alignItems: 'flex-start' },
   moverIcon: {
