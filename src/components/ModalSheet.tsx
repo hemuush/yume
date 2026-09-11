@@ -37,11 +37,19 @@ interface Props {
  *  - an optional ✕ and a pinned footer for list-style dialogs.
  */
 export function ModalSheet(props: Props) {
-  const { visible, onClose, variant = 'sheet' } = props;
+  const { visible, onClose } = props;
   return (
     <Modal
       visible={visible}
-      animationType={variant === 'sheet' ? 'slide' : 'fade'}
+      // Always 'fade', never 'slide': RN's <Modal> animates its whole
+      // presented tree — backdrop included — as one unit. 'slide' translates
+      // that whole unit up from off-screen, so the backdrop hasn't reached
+      // full-screen coverage for the first stretch of the animation either —
+      // a screenshot caught right as a sheet opens shows the real screen
+      // behind it at full brightness through that gap. 'fade' only ramps
+      // opacity; the backdrop's position never moves, so it covers the full
+      // screen for the whole transition, never just partially.
+      animationType="fade"
       transparent
       onRequestClose={onClose}
       statusBarTranslucent
