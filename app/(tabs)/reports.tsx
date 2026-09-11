@@ -37,9 +37,9 @@ import {
   canStepForward,
 } from '@/lib/period';
 import { parseLocalIsoDate } from '@/lib/date';
-import { theme, SPEND_HEAT_SCALE } from '@/constants/theme';
+import { theme } from '@/constants/theme';
 import { useAccent } from '@/theme/AccentContext';
-import { shade } from '@/lib/color';
+import { shade, spendHeatScale } from '@/lib/color';
 import { SpendHeatmap, HeatCell } from '@/features/reports/SpendHeatmap';
 import { MoonPhase, moonPhaseShades } from '@/features/reports/MoonPhase';
 import { SkylineRibbon } from '@/features/reports/SkylineRibbon';
@@ -178,6 +178,7 @@ export default function ReportsScreen() {
   // card — moonTextShades.dark is a mid-dark version of the same hue for
   // the "Discretionary" figure specifically.
   const moonShades = moonPhaseShades(accent);
+  const heatScale = spendHeatScale(accent);
   const moonTextShades = { dark: shade(accent, 55, -2) };
 
   const deltas = categoryDeltas(current.categoryBreakdown, previous.categoryBreakdown);
@@ -287,7 +288,7 @@ export default function ReportsScreen() {
                       styles.legendSwatch,
                       l === 0
                         ? { borderWidth: StyleSheet.hairlineWidth, borderColor: theme.colors.borderSoft }
-                        : { backgroundColor: SPEND_HEAT_SCALE[l] },
+                        : { backgroundColor: heatScale[l] },
                     ]}
                   />
                 ))}

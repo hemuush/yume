@@ -194,18 +194,10 @@ export const ID_PALETTE = [
   theme.colors.idSage,
 ];
 
-// Reports spend-heatmap intensity ramp — a 5-step translucent coral scale
-// indexed by `HeatCell.level` (0 = no spend that day, 4 = heaviest). Used by
-// both the heatmap cells (SpendHeatmap) and the "less → more" legend
-// (reports.tsx), so the two can never drift apart.
-export const SPEND_HEAT_SCALE = [
-  'transparent',
-  'rgba(224,126,95,0.16)',
-  'rgba(224,126,95,0.36)',
-  'rgba(214,84,54,0.62)',
-  'rgba(196,64,42,0.92)',
-] as const;
-// The matching cell-label colour per level — dark ink on the two palest
+// The Reports spend-heatmap's intensity ramp itself is derived from the
+// user's accent colour (`spendHeatScale` in `src/lib/color.ts`), not a fixed
+// swatch here — see that function's comment. This is just the matching
+// cell-label colour per level — dark ink on the two palest
 // steps, white once the wash is dark enough to carry it.
 export const SPEND_HEAT_TEXT = [
   theme.colors.textMuted,

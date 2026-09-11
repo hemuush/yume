@@ -1,5 +1,7 @@
 import { View, Text, Pressable, StyleSheet } from 'react-native';
-import { theme, SPEND_HEAT_SCALE, SPEND_HEAT_TEXT } from '@/constants/theme';
+import { theme, SPEND_HEAT_TEXT } from '@/constants/theme';
+import { spendHeatScale } from '@/lib/color';
+import { useAccent } from '@/theme/AccentContext';
 
 export interface HeatCell {
   key: string;
@@ -25,6 +27,8 @@ export function SpendHeatmap({
   columns?: number;
   weekdayLabels?: string[];
 }) {
+  const { accent } = useAccent();
+  const heatScale = spendHeatScale(accent);
   return (
     <View>
       {weekdayLabels && (
@@ -42,7 +46,7 @@ export function SpendHeatmap({
         ))}
         {cells.map((c) => {
           const bg =
-            c.level === 0 ? (c.isWeekend ? theme.colors.inkWash : 'transparent') : SPEND_HEAT_SCALE[c.level];
+            c.level === 0 ? (c.isWeekend ? theme.colors.inkWash : 'transparent') : heatScale[c.level];
           const inner = (
             <View style={[styles.cell, c.level === 0 && styles.cellEmpty, { backgroundColor: bg }]}>
               <Text style={[styles.cellLabel, { color: SPEND_HEAT_TEXT[c.level] }]}>{c.label}</Text>
