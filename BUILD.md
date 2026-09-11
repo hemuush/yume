@@ -27,7 +27,7 @@ This uses the `preview` profile in `eas.json`, which is configured to output a d
 
 The app targets whatever Android API level the current Expo SDK ships with (SDK 57 → a recent, current `targetSdkVersion`, managed automatically by Expo — you don't set this by hand in `app.json`). Note that "Android 17" isn't an existing OS version as of this writing (Android's naming is currently in the low teens by version number); this build config targets the **latest available Android APIs**, which by Android's own backward-compatibility guarantees will keep working correctly on every future Android release, not just the current one — a compliant app built against a recent SDK doesn't need to be rebuilt for each new Android version to keep functioning.
 
-The app also runs on older devices — `expo-sqlite`, `expo-router`, and everything else used here has no unusual minimum-version requirements beyond what Expo SDK 57 itself supports.
+The app also runs on older devices — `expo-sqlite`, `expo-router`, and everything else used here has no unusual minimum-version requirements beyond what Expo SDK 57 itself supports. `android.predictiveBackGestureEnabled` is `true` in `app.json`, opting into the standard Android 13+ back-gesture preview animation rather than disabling it (Expo's own scaffold default).
 
 ## Production builds (Play Store)
 

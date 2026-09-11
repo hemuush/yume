@@ -21,9 +21,11 @@ All data lives in an on-device SQLite database. Nothing is ever sent to any serv
 app/                    Screens (expo-router file-based routing)
   (tabs)/               Bottom tabs: index (Home), transactions (Activity),
                         add (raised "+", opens add-transaction), loans, reports
-  profile.tsx           Identity + accounts (pushed from the header avatar)
+  profile.tsx           Identity + accounts (pushed from the header avatar);
+                        also the one entry point into Settings
   categories.tsx        Category management
-  settings.tsx          Currency, accent, app lock, privacy
+  settings.tsx          Currency, accent, app lock, privacy (reached only
+                        from Profile — no screen links to itself)
   backup.tsx            Backup & restore (local folder, file export & restore)
   recurring.tsx         Recurring-transaction rules
   add-transaction.tsx   Unified add screen — single entry, bulk backfill, friend IOU
