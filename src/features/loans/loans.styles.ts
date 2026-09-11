@@ -27,7 +27,7 @@ export const styles = StyleSheet.create({
   errorDetail: { fontSize: 11.5, color: theme.colors.textSecondary, marginTop: 3, lineHeight: 16 },
   sectionHeading: { fontFamily: theme.font.roundedBold, fontSize: 16, color: theme.colors.textPrimary },
   summaryRow: { flexDirection: 'row', paddingHorizontal: 20, gap: 10, marginBottom: 16 },
-  summaryCard: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 14 },
+  summaryCard: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10, padding: 14 },
   summaryText: { flex: 1, minWidth: 0 },
   summaryIcon: {
     width: 32,
