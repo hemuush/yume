@@ -14,7 +14,6 @@ import { AppHeader } from '@/components/AppHeader';
 import { PeopleSection } from '@/features/PeopleSection';
 import { theme } from '@/constants/theme';
 import { useFadeIn } from '@/lib/useFadeIn';
-import { NeoTile } from '@/components/NeoTile';
 import { styles } from '@/features/loans/loans.styles';
 import { LoanCard } from '@/features/loans/LoanCard';
 import { LoanDetailModal } from '@/features/loans/LoanDetailModal';
@@ -97,7 +96,7 @@ export default function LoansScreen() {
           )}
 
           <View style={styles.summaryRow}>
-            <NeoTile style={styles.summaryCard}>
+            <View style={styles.summaryCard}>
               <View style={[styles.summaryIcon, styles.summaryIconExpense]}>
                 <Feather name="arrow-up-right" size={14} color={theme.colors.expense} />
               </View>
@@ -111,8 +110,8 @@ export default function LoansScreen() {
                   {formatMoney(totalBorrowedOutstanding)}
                 </Text>
               </View>
-            </NeoTile>
-            <NeoTile style={styles.summaryCard}>
+            </View>
+            <View style={styles.summaryCard}>
               <View style={[styles.summaryIcon, styles.summaryIconIncome]}>
                 <Feather name="arrow-down-left" size={14} color={theme.colors.income} />
               </View>
@@ -126,7 +125,7 @@ export default function LoansScreen() {
                   {formatMoney(totalLentOutstanding)}
                 </Text>
               </View>
-            </NeoTile>
+            </View>
           </View>
 
           <ScrollView
