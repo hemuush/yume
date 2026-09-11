@@ -71,3 +71,34 @@ export function shade(hex: string, lightness: number, saturationDelta = 0): stri
   const [h, s] = hexToHsl(hex);
   return hslToHex(h, s + saturationDelta, lightness);
 }
+
+/** #RGB/#RRGGBB to an 'rgba(r, g, b, alpha)' string at the given alpha. */
+export function hexToRgba(hex: string, alpha: number): string {
+  const clean = hex.replace('#', '');
+  const full = clean.length === 3 ? clean.replace(/./g, (c) => c + c) : clean;
+  const r = parseInt(full.slice(0, 2), 16);
+  const g = parseInt(full.slice(2, 4), 16);
+  const b = parseInt(full.slice(4, 6), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+/**
+ * The Reports spend-heatmap's 5-step intensity ramp (index 0 unused —
+ * "no spend" cells are handled separately), derived from the user's chosen
+ * accent instead of a fixed coral scale, so the heatmap reads as "this
+ * app's colour" no matter which accent is picked — the same idea as
+ * `moonPhaseShades`. The first two steps are the accent itself at a light
+ * wash; the last two darken and re-saturate it so the heaviest-spend days
+ * stay legible instead of fading into the same pale tint.
+ */
+export function spendHeatScale(accent: string): readonly [string, string, string, string, string] {
+  const deep = shade(accent, 58, 8);
+  const deepest = shade(accent, 44, 14);
+  return [
+    'transparent',
+    hexToRgba(accent, 0.22),
+    hexToRgba(accent, 0.42),
+    hexToRgba(deep, 0.68),
+    hexToRgba(deepest, 0.94),
+  ];
+}
