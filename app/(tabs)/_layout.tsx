@@ -1,12 +1,39 @@
 import { useEffect, useState } from 'react';
 import { Tabs, router } from 'expo-router';
-import { View, StyleSheet, Animated } from 'react-native';
+import { View, StyleSheet, Animated, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from '@expo/vector-icons/Feather';
 import { theme } from '@/constants/theme';
 import { useAccent } from '@/theme/AccentContext';
 import { HomeIcon, ActivityIcon, LoanIcon, ReportsIcon } from '@/components/icons/TabIcons';
 import { useReduceMotion } from '@/lib/useReduceMotion';
+import { usePressScale } from '@/lib/usePressScale';
+
+/**
+ * The library's own default tab button paints a native Android ripple sized
+ * to the whole tab item's touch target — much bigger than the icon inside
+ * it — which showed up as a large grey circle ballooning out past the top
+ * of the bar on press. `android_ripple`'s colour is forced transparent to
+ * kill that ripple entirely; a small press-down scale (the same
+ * `usePressScale` every other button in the app uses) replaces it as the
+ * actual feedback, applied to the icon/indicator only so the item's own
+ * touch-target size (laid out by `style`, which the navigator controls)
+ * doesn't change.
+ */
+function TabButton({ children, style, ...rest }: any) {
+  const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.88);
+  return (
+    <Pressable
+      {...rest}
+      onPressIn={onPressIn}
+      onPressOut={onPressOut}
+      android_ripple={{ color: 'transparent' }}
+      style={style}
+    >
+      <Animated.View style={[styles.tabButtonInner, animatedStyle]}>{children}</Animated.View>
+    </Pressable>
+  );
+}
 
 /**
  * A tab's icon in the docked bar. The bar itself is always the app's own
@@ -47,11 +74,11 @@ function TabIcon({ Icon, focused }: { Icon: typeof HomeIcon; focused: boolean })
 }
 
 /**
- * The centre "+". Rendered purely as `tabBarIcon` — the default tabBarButton
- * (left untouched) still handles the actual touch and still fires
- * `tabPress`, which the Tabs.Screen below intercepts to open the Add screen.
- * Always a plain ink circle, deliberately independent of the accent — the
- * one thing on the bar that should never change colour with the theme.
+ * The centre "+". Rendered purely as `tabBarIcon` — the shared `TabButton`
+ * above still handles the actual touch and still fires `tabPress`, which
+ * the Tabs.Screen below intercepts to open the Add screen. Always a plain
+ * ink circle, deliberately independent of the accent — the one thing on the
+ * bar that should never change colour with the theme.
  */
 function CenterAddButton() {
   return (
@@ -103,6 +130,7 @@ export default function TabsLayout() {
           elevation: 10,
         },
         tabBarItemStyle: { height: theme.layout.tabBar.height, paddingTop: 0, paddingBottom: 0 },
+        tabBarButton: (props) => <TabButton {...props} />,
       }}
     >
       <Tabs.Screen
@@ -154,6 +182,7 @@ export default function TabsLayout() {
 }
 
 const styles = StyleSheet.create({
+  tabButtonInner: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   slot: {
     width: 42,
     height: 38,
