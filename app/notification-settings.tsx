@@ -149,7 +149,7 @@ export default function NotificationSettingsScreen() {
 
         <Text style={styles.sectionLabel}>Daily Reminder</Text>
         <View style={styles.row}>
-          <SettingsRowIcon name="clock-outline" backgroundColor={theme.colors.gold} />
+          <SettingsRowIcon name="clock-outline" backgroundColor={theme.colors.goldTint} />
           <Text style={styles.rowLabel}>Remind me daily</Text>
           <ToggleSwitch value={prefs.reminderEnabled} onChange={onToggleReminder} />
         </View>
@@ -179,24 +179,24 @@ export default function NotificationSettingsScreen() {
 
         <Text style={styles.sectionLabel}>Smart Alerts</Text>
         <View style={styles.row}>
-          <SettingsRowIcon name="alert-outline" backgroundColor={theme.colors.flatPink} />
+          <SettingsRowIcon name="alert-outline" backgroundColor={theme.colors.idCoral} />
           <Text style={styles.rowLabel}>Overspending alerts</Text>
           <ToggleSwitch value={prefs.overspendAlerts} onChange={onToggleOverspend} />
         </View>
         <View style={styles.row}>
-          <SettingsRowIcon name="credit-card-outline" backgroundColor={theme.colors.gold} />
+          <SettingsRowIcon name="credit-card-outline" backgroundColor={theme.colors.idGold} />
           <Text style={styles.rowLabel}>Bill & EMI due alerts</Text>
           <ToggleSwitch value={prefs.billAlerts} onChange={onToggleBillAlerts} />
         </View>
         <View style={styles.row}>
-          <SettingsRowIcon name="chart-bar" backgroundColor={theme.colors.flatBlue} />
+          <SettingsRowIcon name="chart-bar" backgroundColor={theme.colors.accentTint} />
           <Text style={styles.rowLabel}>Weekly summary</Text>
           <ToggleSwitch value={prefs.weeklySummary} onChange={onToggleWeeklySummary} />
         </View>
         <View style={styles.row}>
-          <View style={[styles.rowIcon, { backgroundColor: theme.colors.flatMint }]}>
-            <Text>🌙</Text>
-          </View>
+          {/* A vector icon, not an emoji — matches every other row here and
+              the app's own stance against emoji-as-icon elsewhere. */}
+          <SettingsRowIcon name="weather-night" backgroundColor={theme.colors.secondaryTint} />
           <Text style={styles.rowLabel}>Suu's check-ins</Text>
           <ToggleSwitch value={prefs.suuCheckins} onChange={(v) => save({ ...prefs, suuCheckins: v })} />
         </View>
@@ -244,15 +244,6 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   row: settingsRowStyle,
-  rowIcon: {
-    width: 30,
-    height: 30,
-    borderRadius: 9,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   rowLabel: { flex: 1, fontFamily: theme.font.roundedBold, fontSize: 13, color: theme.colors.textPrimary },
 
   timeCard: {
