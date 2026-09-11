@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import { View, Text, ScrollView } from 'react-native';
 import { useFocusEffect } from 'expo-router';
+import Feather from '@expo/vector-icons/Feather';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { listLoans } from '@/db/loans';
 import { formatMoney } from '@/lib/money';
@@ -18,12 +19,6 @@ import { styles } from '@/features/loans/loans.styles';
 import { LoanCard } from '@/features/loans/LoanCard';
 import { LoanDetailModal } from '@/features/loans/LoanDetailModal';
 import { AddLoanModal } from '@/features/loans/AddLoanModal';
-
-// Same pairing Home uses for Spent/Income — coral for "money going out"
-// metrics, teal for "money coming back" ones — so the color means the same
-// thing on both screens instead of resetting per screen.
-const PILL_YOU_OWE = theme.colors.idCoral;
-const PILL_OWED_TO_YOU = theme.colors.idTeal;
 
 const SECTIONS: { label: string; value: 'loans' | 'people' }[] = [
   { label: 'Loans', value: 'loans' },
@@ -102,15 +97,29 @@ export default function LoansScreen() {
           )}
 
           <View style={styles.summaryRow}>
-            <NeoTile backgroundColor={PILL_YOU_OWE} style={styles.summaryCard}>
+            <NeoTile style={styles.summaryCard}>
+              <View style={[styles.summaryIcon, styles.summaryIconExpense]}>
+                <Feather name="arrow-up-right" size={14} color={theme.colors.expense} />
+              </View>
               <Text style={styles.summaryLabel}>You owe</Text>
-              <Text style={styles.summaryValue} numberOfLines={1} adjustsFontSizeToFit>
+              <Text
+                style={[styles.summaryValue, styles.summaryValueExpense]}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+              >
                 {formatMoney(totalBorrowedOutstanding)}
               </Text>
             </NeoTile>
-            <NeoTile backgroundColor={PILL_OWED_TO_YOU} style={styles.summaryCard}>
+            <NeoTile style={styles.summaryCard}>
+              <View style={[styles.summaryIcon, styles.summaryIconIncome]}>
+                <Feather name="arrow-down-left" size={14} color={theme.colors.income} />
+              </View>
               <Text style={styles.summaryLabel}>Owed to you</Text>
-              <Text style={styles.summaryValue} numberOfLines={1} adjustsFontSizeToFit>
+              <Text
+                style={[styles.summaryValue, styles.summaryValueIncome]}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+              >
                 {formatMoney(totalLentOutstanding)}
               </Text>
             </NeoTile>

@@ -2,7 +2,6 @@ import { View, Text, Pressable, Animated } from 'react-native';
 import { formatMoney } from '@/lib/money';
 import { roundedMinor } from '@/lib/round';
 import { Loan } from '@/types';
-import { theme } from '@/constants/theme';
 import { usePressScale } from '@/lib/usePressScale';
 import { NeoTile } from '@/components/NeoTile';
 import { styles } from './loans.styles';
@@ -33,14 +32,17 @@ export function LoanCard({
         : styles.statusDotClosed;
   return (
     <Animated.View style={fadeStyle}>
-      {/* Colored by direction — borrowed = coral, lent = teal, the same
-          pairing as the You-owe/Owed-to-you summary above — so the color
-          means the same thing whether you're scanning the list or reading
-          one card. Closed loans keep the color but fade, same "still here,
-          not where the action is" idea as everywhere else. */}
+      {/* A neutral card with a slim red/green rail by direction — the same
+          "money out vs in" meaning as the You-owe/Owed-to-you summary above,
+          without tinting the whole card. Closed loans keep the rail but
+          fade, same "still here, not where the action is" idea as
+          everywhere else. */}
       <NeoTile
-        style={[styles.card, muted && styles.cardMuted]}
-        backgroundColor={loan.direction === 'borrowed' ? theme.colors.idCoral : theme.colors.idTeal}
+        style={[
+          styles.card,
+          loan.direction === 'borrowed' ? styles.cardRailBorrowed : styles.cardRailLent,
+          muted && styles.cardMuted,
+        ]}
       >
         <Animated.View style={animatedStyle}>
           <Pressable onPress={onPress} onPressIn={onPressIn} onPressOut={onPressOut}>
