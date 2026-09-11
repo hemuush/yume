@@ -308,7 +308,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: theme.colors.borderSoft,
-    backgroundColor: theme.colors.primaryTint,
+    backgroundColor: theme.colors.surface,
   },
   grabber: {
     alignSelf: 'center',
