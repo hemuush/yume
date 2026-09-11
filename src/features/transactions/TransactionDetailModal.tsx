@@ -44,24 +44,28 @@ export function TransactionDetailModal({
   const accountName = (id: string) => accounts.find((a) => a.id === id)?.name ?? '—';
 
   const confirmDelete = () => {
-    Alert.alert('Delete transaction', 'This removes it permanently — account balances update immediately.', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: async () => {
-          setBusy(true);
-          try {
-            await deleteTransaction(tx.id);
-            onChanged();
-          } catch (e: any) {
-            Alert.alert('Could not delete', String(e?.message ?? e));
-          } finally {
-            setBusy(false);
-          }
+    Alert.alert(
+      'Delete this transaction?',
+      'This removes it permanently — account balances update immediately.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            setBusy(true);
+            try {
+              await deleteTransaction(tx.id);
+              onChanged();
+            } catch (e: any) {
+              Alert.alert('Could not delete', String(e?.message ?? e));
+            } finally {
+              setBusy(false);
+            }
+          },
         },
-      },
-    ]);
+      ]
+    );
   };
 
   const confirmUndoLoan = (loanPaymentId: string) => {

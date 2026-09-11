@@ -53,10 +53,10 @@ export default function CategoriesScreen() {
   const onArchive = (cat: Category) => {
     const childCount = allCategories.filter((c) => c.parentId === cat.id).length;
     Alert.alert(
-      'Archive category',
+      `Archive "${cat.name}"?`,
       childCount > 0
-        ? `Hide "${cat.name}" and its ${childCount} subcategor${childCount === 1 ? 'y' : 'ies'} from pickers? Past transactions keep them.`
-        : `Hide "${cat.name}" from pickers? Past transactions keep it.`,
+        ? `Hides it and its ${childCount} subcategor${childCount === 1 ? 'y' : 'ies'} from pickers. Past transactions keep them.`
+        : `Hides it from pickers. Past transactions keep it.`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
