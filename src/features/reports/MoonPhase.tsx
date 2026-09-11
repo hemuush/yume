@@ -1,5 +1,6 @@
 import Svg, { Circle, Path } from 'react-native-svg';
 import { theme } from '@/constants/theme';
+import { shade } from '@/lib/color';
 
 /**
  * The path for a lune (crescent/gibbous) covering exactly `k` of a circle's
@@ -25,18 +26,27 @@ function lunePath(cx: number, cy: number, r: number, k: number): string {
  * A disc split by illuminated fraction `litFraction` (0-1) — the lit lune
  * covers exactly that share of the circle's area, not just its width, so it
  * doubles as an actual proportion chart rather than a mood illustration.
+ *
+ * Both the lit and dark regions are shades of the same accent hue (see
+ * `moonPhaseShades`) rather than two unrelated fixed colours — the moon
+ * should always sit in the same colour family as whatever accent the user
+ * has actually picked, not clash with it.
  */
+export function moonPhaseShades(accent: string): { lit: string; dark: string } {
+  return { lit: shade(accent, 45, 6), dark: shade(accent, 78, -4) };
+}
+
 export function MoonPhase({
   size = 150,
   litFraction,
-  litColor = theme.colors.gold,
-  darkColor = theme.colors.expenseTint,
+  accent,
 }: {
   size?: number;
   litFraction: number;
-  litColor?: string;
-  darkColor?: string;
+  /** The colour to derive both the lit and dark shade from — pass the user's accent. */
+  accent: string;
 }) {
+  const { lit: litColor, dark: darkColor } = moonPhaseShades(accent);
   const r = size / 2 - 2;
   const c = size / 2;
   return (
