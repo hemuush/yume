@@ -344,21 +344,25 @@ export default function AddTransactionScreen() {
 
   const onDelete = () => {
     if (!editing) return;
-    Alert.alert('Delete transaction?', 'This cannot be undone.', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            await deleteTransaction(editing.id);
-            router.back();
-          } catch (e: any) {
-            setError(String(e?.message ?? e));
-          }
+    Alert.alert(
+      'Delete this transaction?',
+      'This removes it permanently — account balances update immediately.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deleteTransaction(editing.id);
+              router.back();
+            } catch (e: any) {
+              setError(String(e?.message ?? e));
+            }
+          },
         },
-      },
-    ]);
+      ]
+    );
   };
 
   const title = editing ? 'Edit Transaction' : 'Add';
