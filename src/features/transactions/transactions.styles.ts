@@ -136,5 +136,4 @@ export const styles = StyleSheet.create({
     marginBottom: 8,
   },
   errorText: { color: theme.colors.expense, fontSize: 13, marginBottom: 12 },
-  modalActions: { flexDirection: 'row', marginTop: 8 },
 });

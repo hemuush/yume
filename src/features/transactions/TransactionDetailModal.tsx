@@ -8,7 +8,7 @@ import { PrimaryButton } from '@/components/PrimaryButton';
 import { CategoryIcon } from '@/components/CategoryIcon';
 import { Amount } from '@/components/Amount';
 import { ModalSheet } from '@/components/ModalSheet';
-import { theme } from '@/constants/theme';
+import { theme, modalFooterStyles as f } from '@/constants/theme';
 import { styles } from './transactions.styles';
 
 export function TransactionDetailModal({
@@ -118,14 +118,29 @@ export function TransactionDetailModal({
     );
   };
 
+  // Every other detail popup in the app (account, loan) is this same bottom
+  // sheet — a grabber + title, then a pinned footer — so this one no longer
+  // stands alone as a small centered dialog with its own floating "Close"
+  // button; swiping down or tapping the backdrop closes it like everywhere
+  // else.
+  const footer =
+    link === null ? (
+      <View style={f.footerRow}>
+        <PrimaryButton
+          title="Delete"
+          variant="secondary"
+          onPress={confirmDelete}
+          disabled={busy}
+          style={f.footerBtn}
+        />
+        <PrimaryButton title="Edit" onPress={() => onEdit(tx)} disabled={busy} style={f.footerBtn} />
+      </View>
+    ) : link !== undefined ? (
+      <PrimaryButton title="Close" variant="secondary" onPress={onClose} disabled={busy} />
+    ) : undefined;
+
   return (
-    <ModalSheet
-      visible
-      onClose={onClose}
-      variant="center"
-      scrollable={false}
-      footer={<PrimaryButton title="Close" variant="secondary" onPress={onClose} disabled={busy} />}
-    >
+    <ModalSheet visible onClose={onClose} title="Transaction" footer={footer}>
       <View style={styles.detailHeaderRow}>
         <CategoryIcon
           name={tx.type === 'transfer' ? 'swap-horizontal' : (cat?.icon ?? 'tag')}
@@ -158,23 +173,7 @@ export function TransactionDetailModal({
 
       {link === undefined ? (
         <Text style={styles.hintText}>Checking...</Text>
-      ) : link === null ? (
-        <View style={styles.modalActions}>
-          <PrimaryButton
-            title="Edit"
-            onPress={() => onEdit(tx)}
-            disabled={busy}
-            style={{ flex: 1, marginRight: 8 }}
-          />
-          <PrimaryButton
-            title="Delete"
-            variant="secondary"
-            onPress={confirmDelete}
-            disabled={busy}
-            style={{ flex: 1 }}
-          />
-        </View>
-      ) : link.kind === 'loan' ? (
+      ) : link === null ? null : link.kind === 'loan' ? (
         <>
           <Text style={styles.hintText}>This is a loan EMI payment — it can't be edited directly.</Text>
           <PrimaryButton
