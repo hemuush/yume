@@ -49,8 +49,8 @@ const styles = StyleSheet.create({
     width: 46,
     height: 26,
     borderRadius: 13,
-    borderWidth: theme.border.thin,
-    borderColor: theme.colors.ink,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.borderSoft,
     justifyContent: 'center',
   },
   knob: {

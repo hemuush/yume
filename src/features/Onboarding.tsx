@@ -155,9 +155,10 @@ const styles = StyleSheet.create({
   nameInput: {
     marginTop: 20,
     alignSelf: 'stretch',
-    backgroundColor: theme.colors.surface,
-    borderWidth: theme.border.thick,
-    borderRadius: theme.radius.md,
+    backgroundColor: theme.colors.surfaceAlt,
+    borderWidth: 1.5,
+    borderColor: 'transparent',
+    borderRadius: theme.radius.lg,
     paddingHorizontal: 16,
     paddingVertical: 12,
     fontFamily: theme.font.bodyMedium,
