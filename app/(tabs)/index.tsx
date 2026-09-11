@@ -1,15 +1,17 @@
 import { useCallback, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, RefreshControl, Animated } from 'react-native';
+import Feather from '@expo/vector-icons/Feather';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFadeIn } from '@/lib/useFadeIn';
 import { router, useFocusEffect } from 'expo-router';
 import { listAccounts, listCategories, listTransactions } from '@/db/ledger';
 import { listLoans, getNextDueInstallment, NextDueInstallment } from '@/db/loans';
+import { listRecurringRules } from '@/db/recurring';
 import { getRangeComparison, PeriodComparison, findTopGrowingCategory } from '@/db/reports';
 import { getUserName } from '@/db/settings';
 import { roundedMinor } from '@/lib/round';
 import { savingsRatePct } from '@/lib/savingsRate';
-import { Account, Category, Transaction, Loan } from '@/types';
+import { Account, Category, Transaction, Loan, RecurringRule } from '@/types';
 import { theme, ID_PALETTE } from '@/constants/theme';
 import { EmptyState } from '@/components/EmptyState';
 import {
@@ -22,6 +24,7 @@ import {
 import { daysUntilIsoDate } from '@/lib/date';
 import { HomeHeader } from '@/features/home/HomeHeader';
 import { ThisMonthHero } from '@/features/home/ThisMonthHero';
+import { QuickActionsRow } from '@/features/home/QuickActionsRow';
 import { MoneyStatCard } from '@/features/home/MoneyStatCard';
 import { SpendingAlertCard } from '@/features/home/SpendingAlertCard';
 import { HomeSection } from '@/features/home/HomeSection';
@@ -45,6 +48,7 @@ export default function DashboardScreen() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [recent, setRecent] = useState<Transaction[]>([]);
   const [loans, setLoans] = useState<Loan[]>([]);
+  const [recurringRules, setRecurringRules] = useState<RecurringRule[]>([]);
   const [comparison, setComparison] = useState<PeriodComparison | null>(null);
   const [nextDue, setNextDue] = useState<NextDueInstallment | null>(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -55,7 +59,7 @@ export default function DashboardScreen() {
   const load = useCallback(async (c: PeriodCursor) => {
     const range = periodRange(c);
     try {
-      const [accs, cats, tx, ln, cmp, due, name] = await Promise.all([
+      const [accs, cats, tx, ln, rules, cmp, due, name] = await Promise.all([
         listAccounts(),
         listCategories(),
         // Scoped to the same period as the navigator above it — showing the
@@ -63,6 +67,7 @@ export default function DashboardScreen() {
         // made "Recent Activity" contradict whatever month/year was selected.
         listTransactions({ fromDate: range.start, toDate: range.end, limit: 30 }),
         listLoans(),
+        listRecurringRules(),
         getRangeComparison(range, previousPeriodRange(c), c.granularity),
         getNextDueInstallment(),
         getUserName(),
@@ -73,6 +78,7 @@ export default function DashboardScreen() {
       // A defaulted loan is still real money owed (or owed to you) — only a
       // 'closed' loan (fully paid off) should ever drop out of these totals.
       setLoans(ln.filter((l) => l.status !== 'closed'));
+      setRecurringRules(rules);
       setComparison(cmp);
       setNextDue(due);
       setUserNameState(name);
@@ -138,6 +144,58 @@ export default function DashboardScreen() {
 
   const recentFadeStyle = useFadeIn([recent]);
 
+  // "Upcoming" used to show only the next loan EMI — every recurring rule
+  // (rent, subscriptions, salary) was invisible on Home even though it's
+  // exactly the kind of thing "what's coming up" should answer. Merged into
+  // one list here, soonest first, so a bill isn't a surprise just because
+  // it happens to be a recurring one rather than a loan.
+  interface UpcomingItem {
+    key: string;
+    icon: React.ComponentProps<typeof Feather>['name'];
+    iconBg: string;
+    iconColor?: string;
+    title: string;
+    subtitle: string;
+    amountMinor: number;
+    sign: '+' | '-' | '';
+    sortDate: string;
+    onPress: () => void;
+  }
+  const upcomingItems: UpcomingItem[] = [];
+  if (nextDue) {
+    upcomingItems.push({
+      key: 'loan',
+      icon: 'calendar',
+      iconBg: theme.colors.goldTint,
+      iconColor: theme.colors.idGoldDeep,
+      title: `${nextDue.counterparty} EMI`,
+      subtitle: `Due ${dueDateLabel(nextDue.dueDate)}`,
+      amountMinor: nextDue.emiAmountMinor,
+      sign: '-',
+      sortDate: nextDue.dueDate,
+      onPress: () => router.push('/loans'),
+    });
+  }
+  for (const rule of recurringRules) {
+    if (!rule.active) continue;
+    const isTransfer = rule.type === 'transfer';
+    upcomingItems.push({
+      key: rule.id,
+      icon: isTransfer ? 'repeat' : rule.type === 'income' ? 'arrow-up-right' : 'arrow-down-right',
+      iconBg: theme.colors.secondaryTint,
+      title: isTransfer
+        ? `${accountName(rule.accountId) ?? '—'} → ${accountName(rule.toAccountId) ?? '—'}`
+        : rule.note || categoryFor(rule.categoryId)?.name || 'Recurring',
+      subtitle: `Due ${dueDateLabel(rule.nextRunDate)}`,
+      amountMinor: rule.amountMinor,
+      sign: rule.type === 'income' ? '+' : rule.type === 'expense' ? '-' : '',
+      sortDate: rule.nextRunDate,
+      onPress: () => router.push('/recurring'),
+    });
+  }
+  upcomingItems.sort((a, b) => (a.sortDate < b.sortDate ? -1 : a.sortDate > b.sortDate ? 1 : 0));
+  const visibleUpcoming = upcomingItems.slice(0, 3);
+
   return (
     <View style={styles.container}>
       <HomeHeader cursor={cursor} onChange={setCursor} userName={userName} hasAlerts={hasAlerts} />
@@ -156,6 +214,8 @@ export default function DashboardScreen() {
             <Text style={styles.errorDetail}>{loadError}</Text>
           </View>
         )}
+
+        <QuickActionsRow />
 
         <ThisMonthHero
           incomeMinor={dispIncome}
@@ -188,14 +248,27 @@ export default function DashboardScreen() {
           />
         </View>
 
-        {nextDue && (
-          <HomeSection title="Upcoming" onSeeAll={() => router.push('/loans')}>
-            <UpcomingRow
-              counterparty={nextDue.counterparty}
-              dueLabel={dueDateLabel(nextDue.dueDate)}
-              amountMinor={nextDue.emiAmountMinor}
-              onPress={() => router.push('/loans')}
-            />
+        {visibleUpcoming.length > 0 && (
+          // No single "see all" destination now that this mixes loan EMIs
+          // (Loans tab) and recurring rules (Recurring screen) — each row
+          // already deep-links to where it actually lives.
+          <HomeSection title="Upcoming">
+            <View style={styles.card}>
+              {visibleUpcoming.map((item, i) => (
+                <UpcomingRow
+                  key={item.key}
+                  icon={item.icon}
+                  iconBg={item.iconBg}
+                  iconColor={item.iconColor}
+                  title={item.title}
+                  subtitle={item.subtitle}
+                  amountMinor={item.amountMinor}
+                  sign={item.sign}
+                  onPress={item.onPress}
+                  divider={i > 0}
+                />
+              ))}
+            </View>
           </HomeSection>
         )}
 
