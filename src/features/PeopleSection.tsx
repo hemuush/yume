@@ -382,7 +382,28 @@ function PersonDetailModal({
   };
 
   return (
-    <ModalSheet visible onClose={onClose} title={person.name}>
+    <ModalSheet
+      visible
+      onClose={onClose}
+      title={person.name}
+      footer={
+        <View style={f.footerRow}>
+          <PrimaryButton
+            title={saving ? '...' : 'They owe more'}
+            variant="secondary"
+            onPress={() => record(1)}
+            disabled={saving || !entryDateIso}
+            style={f.footerBtn}
+          />
+          <PrimaryButton
+            title={saving ? '...' : 'They repaid'}
+            onPress={() => record(-1)}
+            disabled={saving || !entryDateIso}
+            style={f.footerBtn}
+          />
+        </View>
+      }
+    >
       <Text
         style={[
           styles.detailBalance,
@@ -484,22 +505,6 @@ function PersonDetailModal({
 
       {error && <Text style={styles.errorText}>{error}</Text>}
 
-      <View style={styles.modalActions}>
-        <PrimaryButton
-          title={saving ? '...' : 'They owe more'}
-          variant="secondary"
-          onPress={() => record(1)}
-          disabled={saving || !entryDateIso}
-          style={{ flex: 1, marginRight: 8 }}
-        />
-        <PrimaryButton
-          title={saving ? '...' : 'They repaid'}
-          onPress={() => record(-1)}
-          disabled={saving || !entryDateIso}
-          style={{ flex: 1 }}
-        />
-      </View>
-
       <Text style={styles.sectionTitle}>History</Text>
       {ledger.length === 0 ? (
         <Text style={styles.emptyText}>No entries yet.</Text>
@@ -532,8 +537,6 @@ function PersonDetailModal({
           <Text style={styles.hintText}>Hold an entry above to delete it.</Text>
         </>
       )}
-
-      <PrimaryButton title="Close" variant="secondary" onPress={onClose} style={{ marginTop: 16 }} />
     </ModalSheet>
   );
 }
@@ -583,7 +586,6 @@ const styles = StyleSheet.create({
   },
   sectionHeading: { fontFamily: theme.font.roundedBold, fontSize: 16, color: theme.colors.textPrimary },
   detailBalance: { fontSize: 20, fontWeight: '700', marginBottom: 16 },
-  modalActions: { flexDirection: 'row', marginTop: 8 },
   sectionTitle: {
     fontSize: 13,
     fontWeight: '700',
