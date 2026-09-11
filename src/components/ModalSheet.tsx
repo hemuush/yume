@@ -310,7 +310,7 @@ const styles = StyleSheet.create({
     borderBottomColor: theme.colors.borderSoft,
   },
   framedBody: { flexGrow: 0, flexShrink: 1 },
-  framedBodyContent: { paddingVertical: 4 },
+  framedBodyContent: { paddingHorizontal: 18, paddingVertical: 4 },
   framedFooter: {
     paddingHorizontal: 18,
     paddingVertical: 12,
