@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, Pressable } from 'react-native';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import Animated, { FadeInDown, ReduceMotion } from 'react-native-reanimated';
 import { useFocusEffect, router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -51,8 +52,8 @@ export default function NotificationsScreen() {
         const d = daysUntilIsoDate(nextDue.dueDate);
         feed.push({
           key: 'emi',
-          icon: '⏰',
-          iconBg: theme.colors.gold,
+          icon: 'calendar-clock',
+          iconBg: theme.colors.goldTint,
           title: 'EMI due soon',
           subtitle: `${nextDue.counterparty} — ${formatMoney(nextDue.emiAmountMinor)} due ${d <= 0 ? 'today' : `in ${d} day${d === 1 ? '' : 's'}`}.`,
           onPress: () => router.push('/loans'),
@@ -66,8 +67,8 @@ export default function NotificationsScreen() {
       if (topGrowing) {
         feed.push({
           key: 'overspend',
-          icon: '⚠️',
-          iconBg: theme.colors.flatPink,
+          icon: 'alert-outline',
+          iconBg: theme.colors.idCoral,
           title: 'Category over pace',
           subtitle: `${topGrowing.name} is up ${formatPctChange(topGrowing.pctChange)} vs last month.`,
           onPress: () => router.push('/reports'),
@@ -76,8 +77,8 @@ export default function NotificationsScreen() {
 
       feed.push({
         key: 'backup',
-        icon: '💾',
-        iconBg: theme.colors.flatMint,
+        icon: 'folder-outline',
+        iconBg: theme.colors.idTeal,
         title: lastBackup ? 'Backup up to date' : 'No backup yet',
         subtitle: lastBackup
           ? `Last backed up ${timeAgo(lastBackup)}.`
@@ -89,8 +90,8 @@ export default function NotificationsScreen() {
         const pct = comparison.expenseChangePct;
         feed.push({
           key: 'suu',
-          icon: '🌙',
-          iconBg: theme.colors.flatBlue,
+          icon: 'weather-night',
+          iconBg: theme.colors.secondaryTint,
           title: "Suu's check-in",
           subtitle:
             pct <= 0
@@ -139,7 +140,7 @@ export default function NotificationsScreen() {
             >
               <Pressable style={styles.row} onPress={row.onPress} disabled={!row.onPress}>
                 <View style={[styles.icon, { backgroundColor: row.iconBg }]}>
-                  <Text style={styles.iconText}>{row.icon}</Text>
+                  <MaterialCommunityIcons name={row.icon as any} size={16} color={theme.colors.ink} />
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.rowTitle} numberOfLines={1}>
@@ -198,7 +199,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     flexShrink: 0,
   },
-  iconText: { fontSize: 16 },
   rowTitle: { fontFamily: theme.font.roundedBold, fontSize: 13, color: theme.colors.textPrimary },
   rowSubtitle: {
     fontFamily: theme.font.body,
