@@ -101,27 +101,31 @@ export default function LoansScreen() {
               <View style={[styles.summaryIcon, styles.summaryIconExpense]}>
                 <Feather name="arrow-up-right" size={14} color={theme.colors.expense} />
               </View>
-              <Text style={styles.summaryLabel}>You owe</Text>
-              <Text
-                style={[styles.summaryValue, styles.summaryValueExpense]}
-                numberOfLines={1}
-                adjustsFontSizeToFit
-              >
-                {formatMoney(totalBorrowedOutstanding)}
-              </Text>
+              <View style={styles.summaryText}>
+                <Text style={styles.summaryLabel}>You owe</Text>
+                <Text
+                  style={[styles.summaryValue, styles.summaryValueExpense]}
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                >
+                  {formatMoney(totalBorrowedOutstanding)}
+                </Text>
+              </View>
             </NeoTile>
             <NeoTile style={styles.summaryCard}>
               <View style={[styles.summaryIcon, styles.summaryIconIncome]}>
                 <Feather name="arrow-down-left" size={14} color={theme.colors.income} />
               </View>
-              <Text style={styles.summaryLabel}>Owed to you</Text>
-              <Text
-                style={[styles.summaryValue, styles.summaryValueIncome]}
-                numberOfLines={1}
-                adjustsFontSizeToFit
-              >
-                {formatMoney(totalLentOutstanding)}
-              </Text>
+              <View style={styles.summaryText}>
+                <Text style={styles.summaryLabel}>Owed to you</Text>
+                <Text
+                  style={[styles.summaryValue, styles.summaryValueIncome]}
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                >
+                  {formatMoney(totalLentOutstanding)}
+                </Text>
+              </View>
             </NeoTile>
           </View>
 
