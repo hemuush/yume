@@ -12,17 +12,25 @@ interface Props {
   title: string;
   /** Shows a back chevron before the title — for pushed screens, not tabs. */
   showBack?: boolean;
-  /** Screen-specific action (e.g. an AddButton), placed left of the profile/settings pair. */
+  /** Screen-specific action (e.g. an AddButton), placed left of the profile button. */
   right?: React.ReactNode;
+  /**
+   * Suppresses the profile avatar button — for the Profile screen itself,
+   * which would otherwise show a button whose destination is the screen
+   * already on-screen.
+   */
+  hideUser?: boolean;
 }
 
 /**
- * The one header every screen uses. The profile and settings buttons sit in
- * the same place on every single screen — a fixed anchor the user can reach
- * without first working out which screen they're on — so they are rendered
- * here rather than left to each screen to remember.
+ * The one header every screen uses. The profile button sits in the same
+ * place on every screen — a fixed anchor to "you" that the user can reach
+ * without first working out which screen they're on — so it's rendered here
+ * rather than left to each screen to remember. Settings used to live here
+ * too, but it pointed at the same place from every screen including
+ * Settings itself; it now only lives inside Profile.
  */
-export function AppHeader({ title, showBack, right }: Props) {
+export function AppHeader({ title, showBack, right, hideUser }: Props) {
   const insets = useSafeAreaInsets();
   return (
     <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
@@ -38,8 +46,7 @@ export function AppHeader({ title, showBack, right }: Props) {
       </View>
       <View style={styles.actions}>
         {right}
-        <HeaderUserButton />
-        <HeaderIconButton icon="settings" onPress={() => router.push('/settings')} label="Settings" />
+        {!hideUser && <HeaderUserButton />}
       </View>
     </View>
   );

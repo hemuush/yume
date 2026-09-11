@@ -51,6 +51,27 @@ export const styles = StyleSheet.create({
   nameSave: { paddingLeft: 10 },
   memberSince: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, marginTop: 4 },
 
+  settingsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginHorizontal: 20,
+    marginTop: 16,
+    padding: 14,
+    backgroundColor: theme.colors.surface,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.borderSoft,
+    borderRadius: theme.radius.lg,
+  },
+  settingsRowText: { flex: 1, minWidth: 0 },
+  settingsRowLabel: { fontFamily: theme.font.bodyBold, fontSize: 14.5, color: theme.colors.textPrimary },
+  settingsRowSub: {
+    fontFamily: theme.font.body,
+    fontSize: 11.5,
+    color: theme.colors.textMuted,
+    marginTop: 1,
+  },
+
   netWorthCard: { marginHorizontal: 20, marginTop: 16, padding: 16 },
   netWorthLabel: {
     fontFamily: theme.font.bodyBold,
