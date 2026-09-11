@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { View, Text, ScrollView, Pressable, Animated } from 'react-native';
 import { useFocusEffect, router } from 'expo-router';
+import Feather from '@expo/vector-icons/Feather';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { listAccounts, listCategories, listTransactions } from '@/db/ledger';
 import { Account, Category, Transaction, TransactionType } from '@/types';
@@ -175,7 +176,8 @@ export default function TransactionsScreen() {
               accessibilityRole="button"
               accessibilityLabel="Filter transactions"
             >
-              <Text style={styles.filterBtnText}>⚙ Filter{hasActiveFilter ? ' •' : ''}</Text>
+              <Feather name="sliders" size={13} color={theme.colors.textPrimary} />
+              <Text style={styles.filterBtnText}>Filter{hasActiveFilter ? ' •' : ''}</Text>
             </Pressable>
           </View>
         }
@@ -280,12 +282,7 @@ export default function TransactionsScreen() {
               <Pressable key={d.iso} style={styles.dayCell} onPress={() => onSelectDay(d.iso)}>
                 <Text style={styles.dayWeekday}>{d.weekday}</Text>
                 {active ? (
-                  <NeoTile
-                    backgroundColor={theme.colors.ink}
-                    borderRadius={15}
-                    shadowOffset={3}
-                    style={styles.dayNumWrap}
-                  >
+                  <NeoTile backgroundColor={theme.colors.ink} borderRadius={15} style={styles.dayNumWrap}>
                     <Text style={[styles.dayNum, { color: dayNumActiveColor }]}>{d.day}</Text>
                   </NeoTile>
                 ) : (

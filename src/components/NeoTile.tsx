@@ -5,10 +5,6 @@ interface Props {
   children: React.ReactNode;
   backgroundColor?: string;
   borderRadius?: number;
-  /** Unused — kept so existing call sites (which pass 0 for a muted/closed
-   * state, or the default elsewhere) don't need editing now that every card
-   * uses the same plain hairline regardless. */
-  shadowOffset?: number;
   style?: StyleProp<ViewStyle>;
 }
 
