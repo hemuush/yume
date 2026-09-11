@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 import { View, Text, Pressable, TextInput, Animated, Alert } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
-import { useFocusEffect } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import Feather from '@expo/vector-icons/Feather';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { listAccounts, listTransactions } from '@/db/ledger';
@@ -126,7 +126,7 @@ export default function ProfileScreen() {
 
   return (
     <View style={styles.container}>
-      <AppHeader title="Profile" showBack right={<HeaderPrivacyToggle />} />
+      <AppHeader title="Profile" showBack hideUser right={<HeaderPrivacyToggle />} />
 
       <KeyboardAwareScrollView
         contentContainerStyle={{ paddingBottom: theme.layout.screenScrollPad + insets.bottom }}
@@ -181,6 +181,20 @@ export default function ProfileScreen() {
 
           <Text style={styles.memberSince}>Member since {memberSince ?? new Date().getFullYear()}</Text>
         </View>
+
+        <Pressable
+          style={styles.settingsRow}
+          onPress={() => router.push('/settings')}
+          accessibilityRole="button"
+          accessibilityLabel="App settings"
+        >
+          <FlatIconBadge name="settings" />
+          <View style={styles.settingsRowText}>
+            <Text style={styles.settingsRowLabel}>App settings</Text>
+            <Text style={styles.settingsRowSub}>Currency, categories, security, backup</Text>
+          </View>
+          <Feather name="chevron-right" size={19} color={theme.colors.textMuted} />
+        </Pressable>
 
         <NeoTile style={styles.netWorthCard}>
           <Text style={styles.netWorthLabel}>TRACKED BALANCE</Text>

@@ -5,7 +5,7 @@ import { theme } from '@/constants/theme';
 import { useAccent } from '@/theme/AccentContext';
 import { ScallopedEdge } from '@/components/ScallopedEdge';
 import { YumeLogo } from '@/components/YumeLogo';
-import { HeaderUserButton, HeaderIconButton } from '@/components/AppHeader';
+import { HeaderIconButton, HeaderUserButton } from '@/components/AppHeader';
 import { PeriodCursor } from '@/lib/period';
 import { MonthPill } from './MonthPill';
 
@@ -53,12 +53,6 @@ export function HomeHeader({
               soft
             />
             <HeaderUserButton soft />
-            <HeaderIconButton
-              icon="settings"
-              onPress={() => router.push('/settings')}
-              label="Settings"
-              soft
-            />
           </View>
         </View>
 
