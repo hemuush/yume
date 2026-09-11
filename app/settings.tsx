@@ -207,13 +207,10 @@ export default function SettingsScreen() {
                 accessibilityRole="button"
                 accessibilityLabel={`Accent ${hex}`}
               >
-                {accent === hex && (
-                  <Feather
-                    name="check"
-                    size={15}
-                    color={hex === '#12130F' ? theme.colors.primary : theme.colors.ink}
-                  />
-                )}
+                {/* Every current swatch is light/medium enough for an ink
+                    checkmark to stay readable — no per-swatch contrast
+                    switch needed now that Ink itself isn't one of them. */}
+                {accent === hex && <Feather name="check" size={15} color={theme.colors.ink} />}
               </Pressable>
             ))}
           </View>

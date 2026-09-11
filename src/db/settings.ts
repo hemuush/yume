@@ -100,14 +100,21 @@ export function getCachedAccentColor(): string {
   return cachedAccent ?? DEFAULT_ACCENT;
 }
 
-// Anyone who already picked (or was defaulted to) the old, harsher shade
-// before it was softened would otherwise stay stuck on it forever — the
-// stored hex is just a string, so a code-level palette change alone never
-// reaches an existing install. Remapped once here, then persisted so the fix
-// sticks.
+// Anyone who already picked (or was defaulted to) a shade no longer offered
+// would otherwise stay stuck on it forever — the stored hex is just a
+// string, so a code-level palette change alone never reaches an existing
+// install. Remapped once here, then persisted so the fix sticks.
 const LEGACY_ACCENT_REMAP: Record<string, string> = {
-  '#D6FF3D': '#E0F0A8',
-  '#FFB84D': '#EFD3A8',
+  '#D6FF3D': '#E0F0A8', // original neon-lime mockup colour, softened
+  '#FFB84D': '#EFD3A8', // original harsher gold/tan
+  // Ink and Cream were dropped from ACCENT_SWATCHES — neither is really an
+  // "accent" (they're the app's own text and page colours), so picking
+  // either one just turned buttons black or switched accents off entirely.
+  '#12130F': '#E0F0A8',
+  '#FFFDF6': '#E0F0A8',
+  // Tan was dropped for reading muddy next to the other pastels — remapped
+  // to its closest replacement (Terracotta) rather than the plain default.
+  '#EFD3A8': '#F0A387',
 };
 
 export async function getAccentColor(): Promise<string> {
@@ -133,15 +140,22 @@ export async function setAccentColor(hex: string): Promise<void> {
   cachedAccent = hex;
 }
 
+// Ink and Cream were dropped — an "accent" that's just the app's own text
+// colour or its own page colour isn't a real choice. Tan was dropped for
+// reading muddy next to the rest. Terracotta/Teal/Gold added in their place:
+// a warmer earth tone, and two more confident/grounded options (deeper,
+// more saturated than the five pastels on purpose) alongside the playful
+// ones, per current fintech colour-design guidance. See LEGACY_ACCENT_REMAP
+// for what an existing install on one of the dropped colours becomes.
 export const ACCENT_SWATCHES = [
-  '#12130F',
-  '#E0F0A8',
-  '#EFD3A8',
-  '#8FCBFF',
-  '#C9B8FF',
-  '#FFA8CE',
-  '#8FE8C8',
-  '#FFFDF6',
+  '#E0F0A8', // Sage (default)
+  '#8FE8C8', // Mint
+  '#8FCBFF', // Sky
+  '#C9B8FF', // Lavender
+  '#FFA8CE', // Pink
+  '#F0A387', // Terracotta
+  '#5FB3A8', // Teal
+  '#E0AC3F', // Gold
 ];
 
 const HAS_ONBOARDED_KEY = 'has_onboarded';
