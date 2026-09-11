@@ -50,9 +50,9 @@ const SLIDES: Slide[] = [
 export function Onboarding({ onDone }: { onDone: () => void }) {
   const { accent } = useAccent();
   const insets = useSafeAreaInsets();
-  const ctaTextColor = accent === theme.colors.ink ? theme.colors.white : accent;
   const [index, setIndex] = useState(0);
   const [name, setName] = useState('');
+  const [nameFocused, setNameFocused] = useState(false);
   const isLast = index === SLIDES.length - 1;
   const slide = SLIDES[index];
 
@@ -96,11 +96,13 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
 
       {slide.isNameStep && (
         <TextInput
-          style={[styles.nameInput, { borderColor: theme.colors.ink }]}
+          style={[styles.nameInput, nameFocused && styles.nameInputFocused]}
           placeholder="Your name"
           placeholderTextColor={theme.colors.textMuted}
           value={name}
           onChangeText={setName}
+          onFocus={() => setNameFocused(true)}
+          onBlur={() => setNameFocused(false)}
           maxLength={40}
           autoCapitalize="words"
           returnKeyType="done"
@@ -110,12 +112,15 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
 
       <View style={styles.dots}>
         {SLIDES.map((_, i) => (
-          <View key={i} style={[styles.dot, i === index && { width: 20, backgroundColor: accent }]} />
+          <View
+            key={i}
+            style={[styles.dot, i === index && { width: 20, backgroundColor: accent, opacity: 1 }]}
+          />
         ))}
       </View>
 
       <Pressable style={styles.cta} onPress={next}>
-        <Text style={[styles.ctaText, { color: ctaTextColor }]}>{isLast ? 'Get Started' : 'Next'}</Text>
+        <Text style={[styles.ctaText, { color: accent }]}>{isLast ? 'Get Started' : 'Next'}</Text>
       </Pressable>
     </KeyboardAvoidingView>
   );
@@ -166,14 +171,17 @@ const styles = StyleSheet.create({
     color: theme.colors.textPrimary,
     textAlign: 'center',
   },
+  nameInputFocused: { backgroundColor: theme.colors.surface, borderColor: theme.colors.secondary },
   dots: { flexDirection: 'row', justifyContent: 'center', gap: 6, marginTop: 28 },
+  // A plain muted fill rather than an outlined dot — a hairline border was
+  // barely visible against the page's own cream anyway, and a solid fill
+  // reads clearly with no border needed.
   dot: {
     width: 7,
     height: 7,
     borderRadius: 4,
-    backgroundColor: theme.colors.surfaceAlt,
-    borderWidth: 1.5,
-    borderColor: theme.colors.ink,
+    backgroundColor: theme.colors.textMuted,
+    opacity: 0.35,
   },
   cta: {
     marginTop: 'auto',

@@ -219,7 +219,7 @@ export default function SettingsScreen() {
         <Group title="Money">
           <Row
             icon="currency-inr"
-            iconBg={theme.colors.gold}
+            iconBg={theme.colors.goldTint}
             label="Default currency"
             sub="New accounts and displayed amounts"
             value={currency}
@@ -227,14 +227,14 @@ export default function SettingsScreen() {
           />
           <Row
             icon="tag-outline"
-            iconBg={theme.colors.flatPink}
+            iconBg={theme.colors.idCoral}
             label="Categories"
             sub="Add, rename, or archive"
             onPress={() => router.push('/categories')}
           />
           <Row
             icon="autorenew"
-            iconBg={theme.colors.flatBlue}
+            iconBg={theme.colors.secondaryTint}
             label="Recurring transactions"
             sub="Rent, subscriptions, salary — logged automatically"
             onPress={() => router.push('/recurring')}
@@ -245,21 +245,21 @@ export default function SettingsScreen() {
         <Group title="Alerts & data">
           <Row
             icon="bell-outline"
-            iconBg={theme.colors.secondary}
+            iconBg={theme.colors.accentTint}
             label="Notifications"
             sub="Reminders, bill alerts, weekly summary"
             onPress={() => router.push('/notification-settings')}
           />
           <Row
             icon="folder-outline"
-            iconBg={theme.colors.flatBlue}
+            iconBg={theme.colors.idTeal}
             label="Backup & Restore"
             sub="Local folder, file export & restore"
             onPress={() => router.push('/backup')}
           />
           <Row
             icon="calculator-variant-outline"
-            iconBg={theme.colors.accentTint}
+            iconBg={theme.colors.primaryTint}
             label="Round off amounts"
             sub={
               rounding
@@ -276,14 +276,14 @@ export default function SettingsScreen() {
         <Group title="Security">
           <Row
             icon="fingerprint"
-            iconBg={theme.colors.flatMint}
+            iconBg={theme.colors.idSage}
             label="Require unlock"
             sub="Fingerprint, face, or your phone's PIN"
             right={<ToggleSwitch value={lockEnabled} onChange={onToggleLock} />}
           />
           <Row
             icon="eye-off-outline"
-            iconBg={theme.colors.gold}
+            iconBg={theme.colors.idGold}
             label="Hide savings & investment amounts"
             sub="Masks Savings Deposit/Investments amounts — also toggleable from the eye icon on your Profile"
             right={<ToggleSwitch value={hideAmounts} onChange={toggleHideAmounts} />}

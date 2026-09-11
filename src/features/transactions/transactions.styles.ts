@@ -80,7 +80,9 @@ export const styles = StyleSheet.create({
   // passed as-is to NeoTile (which owns those for the selected day) as well
   // as the plain View below (unselected days).
   dayNumWrap: { width: 30, height: 30, marginTop: 4, alignItems: 'center', justifyContent: 'center' },
-  dayNumWrapPlain: { borderRadius: 15, borderWidth: theme.border.thin, borderColor: 'transparent' },
+  dayNumWrapPlain: { borderRadius: 15, borderWidth: StyleSheet.hairlineWidth, borderColor: 'transparent' },
+  // The only thing marking a day as "today" in this strip (every number is
+  // already bold) — a thin ink ring, not the old 2px doodle border.
   dayNumWrapToday: { borderColor: theme.colors.ink },
   dayNum: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textPrimary },
   txCard: { marginHorizontal: 20 },
