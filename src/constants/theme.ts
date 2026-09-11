@@ -96,16 +96,17 @@ export const theme = {
   shadowOffset: 4,
   spacing: (n: number) => n * 4,
   // Layout metrics shared between the tab bar and the screens that must
-  // scroll clear of it. The floating pill tab bar is `tabBar.height` tall and
-  // floats `tabBar.bottomGap` above the device's safe-area inset, `tabBar.
-  // sideInset` in from each edge. A scrolling tab screen therefore needs
-  // `tabScreenScrollPad` of bottom padding (gap + bar height + a comfortable
+  // scroll clear of it. The tab bar is docked flush to the bottom edge —
+  // `tabBar.height` tall, `tabBar.topRadius` rounding only its top corners —
+  // with the device's safe-area inset added as its own bottom padding rather
+  // than left as empty page below it. A scrolling tab screen therefore needs
+  // `tabScreenScrollPad` of bottom padding (bar height + a comfortable
   // margin) so its last row is never hidden; a plain pushed screen with no
   // tab bar only needs `screenScrollPad`. Every caller adds `insets.bottom`
-  // on top of these.
+  // on top of both.
   layout: {
-    tabBar: { height: 58, bottomGap: 8, sideInset: 16 },
-    tabScreenScrollPad: 8 + 58 + 28,
+    tabBar: { height: 58, topRadius: 20 },
+    tabScreenScrollPad: 58 + 24,
     screenScrollPad: 40,
   },
   font: {

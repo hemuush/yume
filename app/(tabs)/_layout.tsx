@@ -9,11 +9,12 @@ import { HomeIcon, ActivityIcon, LoanIcon, ReportsIcon } from '@/components/icon
 import { useReduceMotion } from '@/lib/useReduceMotion';
 
 /**
- * A tab's icon inside the floating pill. The bar itself is the user's accent
- * colour (matching the Home header); the active tab gets a soft chip in the
- * contrast colour with the icon punched through in the accent hue, inactive
- * icons are the contrast colour at low opacity. The chip fades + scales in
- * over 160ms — calmer than the old spring bounce.
+ * A tab's icon in the docked bar. The bar itself is always the app's own
+ * cream surface — never the accent (see the redesign note below) — so the
+ * accent only ever has to stay legible inside one small pill, not across an
+ * entire bar. Inactive icons are plain ink at low opacity; the active tab
+ * gets a pill in the accent colour with the icon punched through in the
+ * contrast colour. Fades + scales in over 160ms rather than springing.
  */
 function TabIcon({ Icon, focused }: { Icon: typeof HomeIcon; focused: boolean }) {
   const { accent, onAccent } = useAccent();
@@ -35,11 +36,11 @@ function TabIcon({ Icon, focused }: { Icon: typeof HomeIcon; focused: boolean })
   return (
     <View style={styles.slot}>
       <Animated.View
-        style={[styles.indicator, { backgroundColor: onAccent, opacity: fill, transform: [{ scale: fill }] }]}
+        style={[styles.indicator, { backgroundColor: accent, opacity: fill, transform: [{ scale: fill }] }]}
         pointerEvents="none"
       />
-      <View style={{ opacity: focused ? 1 : 0.45 }}>
-        <Icon color={focused ? accent : onAccent} size={21} />
+      <View style={{ opacity: focused ? 1 : 0.4 }}>
+        <Icon color={focused ? onAccent : theme.colors.ink} size={20} />
       </View>
     </View>
   );
@@ -49,22 +50,20 @@ function TabIcon({ Icon, focused }: { Icon: typeof HomeIcon; focused: boolean })
  * The centre "+". Rendered purely as `tabBarIcon` — the default tabBarButton
  * (left untouched) still handles the actual touch and still fires
  * `tabPress`, which the Tabs.Screen below intercepts to open the Add screen.
- * Always a solid contrast-colour circle so it stays the obvious action on
- * any accent.
+ * Always a plain ink circle, deliberately independent of the accent — the
+ * one thing on the bar that should never change colour with the theme.
  */
 function CenterAddButton() {
-  const { accent, onAccent } = useAccent();
   return (
     <View style={styles.slot}>
-      <View style={[styles.plus, { backgroundColor: onAccent }]} pointerEvents="none" />
-      <Feather name="plus" size={21} color={accent} />
+      <View style={styles.plus} pointerEvents="none" />
+      <Feather name="plus" size={20} color={theme.colors.surface} />
     </View>
   );
 }
 
 export default function TabsLayout() {
   const insets = useSafeAreaInsets();
-  const { accent } = useAccent();
 
   return (
     <Tabs
@@ -74,24 +73,30 @@ export default function TabsLayout() {
         tabBarHideOnKeyboard: true,
         // A quick cross-fade between tabs rather than an instant cut.
         animation: 'fade',
-        // A floating pill in the user's accent colour, clear of the device's
-        // own gesture bar. It sits above the content (position: absolute);
-        // the tab screens all pad their scroll views past it via
-        // theme.layout.tabScreenScrollPad.
+        // Docked flush to the bottom edge in the app's own cream surface —
+        // never the accent colour. An earlier floating, accent-filled pill
+        // broke badly at both ends of the accent picker (nearly invisible
+        // on Cream, a heavy black slab on Ink); a neutral bar can never
+        // break regardless of which accent is picked. The device's own
+        // safe-area inset becomes the bar's bottom padding instead of empty
+        // page below it; tab screens clear it via theme.layout.
+        // tabScreenScrollPad.
         tabBarStyle: {
           position: 'absolute',
-          left: theme.layout.tabBar.sideInset,
-          right: theme.layout.tabBar.sideInset,
-          bottom: insets.bottom + theme.layout.tabBar.bottomGap,
-          height: theme.layout.tabBar.height,
-          borderRadius: theme.radius.pill,
-          backgroundColor: accent,
-          borderTopWidth: 0,
-          paddingHorizontal: 6,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          height: theme.layout.tabBar.height + insets.bottom,
+          paddingBottom: insets.bottom,
+          borderTopLeftRadius: theme.layout.tabBar.topRadius,
+          borderTopRightRadius: theme.layout.tabBar.topRadius,
+          backgroundColor: theme.colors.surface,
+          borderTopWidth: StyleSheet.hairlineWidth,
+          borderTopColor: theme.colors.borderSoft,
           shadowColor: theme.colors.ink,
-          shadowOffset: { width: 0, height: 8 },
-          shadowOpacity: 0.18,
-          shadowRadius: 16,
+          shadowOffset: { width: 0, height: -4 },
+          shadowOpacity: 0.08,
+          shadowRadius: 12,
           elevation: 10,
         },
         tabBarItemStyle: { height: theme.layout.tabBar.height, paddingTop: 0, paddingBottom: 0 },
@@ -147,13 +152,12 @@ export default function TabsLayout() {
 
 const styles = StyleSheet.create({
   slot: {
-    width: 44,
+    width: 42,
     height: 38,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  // The active-tab chip — a soft rounded rectangle, slightly wider than tall,
-  // sitting behind the icon.
+  // The active-tab pill — a soft rounded rectangle behind the icon.
   indicator: {
     position: 'absolute',
     top: 2,
@@ -164,10 +168,11 @@ const styles = StyleSheet.create({
   },
   plus: {
     position: 'absolute',
-    top: 1,
-    left: 5,
-    right: 5,
-    bottom: 1,
+    top: 2,
+    left: 6,
+    right: 6,
+    bottom: 2,
     borderRadius: theme.radius.pill,
+    backgroundColor: theme.colors.ink,
   },
 });
