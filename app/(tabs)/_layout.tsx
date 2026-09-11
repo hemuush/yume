@@ -71,8 +71,11 @@ export default function TabsLayout() {
         headerShown: false,
         tabBarShowLabel: false,
         tabBarHideOnKeyboard: true,
-        // A quick cross-fade between tabs rather than an instant cut.
-        animation: 'fade',
+        // No custom screen-transition animation: `animation: 'fade'` here
+        // raced a tab's first-ever mount (each screen is lazy by default) —
+        // the fade transition could finish before the screen had painted
+        // anything, leaving it blank until the tab was left and revisited.
+        // The platform default switch doesn't carry that race.
         // Docked flush to the bottom edge in the app's own cream surface —
         // never the accent colour. An earlier floating, accent-filled pill
         // broke badly at both ends of the accent picker (nearly invisible

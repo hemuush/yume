@@ -61,8 +61,8 @@ export const styles = StyleSheet.create({
   infoBox: {
     flex: 1,
     backgroundColor: theme.colors.surfaceAlt,
-    borderWidth: theme.border.thin,
-    borderColor: theme.colors.ink,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.borderSoft,
     borderRadius: theme.radius.md,
     padding: 10,
   },

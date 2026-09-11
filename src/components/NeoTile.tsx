@@ -90,6 +90,6 @@ const styles = StyleSheet.create({
   // (a plain block child only auto-stretches on the cross axis, not the
   // main one) — otherwise the wrap can end up taller than the visible card
   // when stretched to match a taller sibling (e.g. in the Home bento row).
-  card: { flex: 1, borderWidth: theme.border.thin, borderColor: theme.colors.borderSoft },
+  card: { flex: 1, borderWidth: StyleSheet.hairlineWidth, borderColor: theme.colors.borderSoft },
   cardColored: { borderWidth: 0 },
 });

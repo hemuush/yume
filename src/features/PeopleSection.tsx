@@ -541,12 +541,13 @@ function PersonDetailModal({
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
   summaryRow: { flexDirection: 'row', paddingHorizontal: 20, gap: 10, marginBottom: 16 },
+  // A colored flat-fill identity card carries its own separation from the
+  // page via that color — no border on top of it, matching every other
+  // colored stat tile in the app (NeoTile's own colored-card rule).
   summaryCard: {
     flex: 1,
     borderRadius: 16,
     padding: 14,
-    borderWidth: theme.border.thick,
-    borderColor: theme.colors.ink,
   },
   summaryLabel: { fontSize: 12, color: theme.colors.onFlat, opacity: 0.65, marginBottom: 4 },
   summaryValue: { fontSize: 18, fontWeight: '800', color: theme.colors.onFlat },
@@ -566,8 +567,8 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 19,
-    borderWidth: theme.border.thin,
-    borderColor: theme.colors.ink,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.borderSoft,
     alignItems: 'center',
     justifyContent: 'center',
   },
