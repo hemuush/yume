@@ -8,6 +8,23 @@ export function monthlyRateFromAnnualBp(annualRateBp: number): number {
 }
 
 /**
+ * How much of a loan's principal has actually been repaid, as a 0-1
+ * fraction — `(principal − outstanding) / principal`, clamped so a rounding
+ * edge case or a bad input can never render a negative or over-100% bar.
+ * Principal-based rather than installment-count-based on purpose: a
+ * reducing-balance loan's early installments are interest-heavy, so
+ * "42 of 60 installments paid" (70%) and "42/60ths of the principal repaid"
+ * are genuinely different numbers — this is the one that reflects real money
+ * moved, and the only one computable from a `Loan` row alone with no extra
+ * schedule query.
+ */
+export function payoffFraction(principalMinor: number, outstandingPrincipalMinor: number): number {
+  if (!Number.isFinite(principalMinor) || principalMinor <= 0) return 0;
+  const paid = principalMinor - outstandingPrincipalMinor;
+  return Math.max(0, Math.min(1, paid / principalMinor));
+}
+
+/**
  * Standard reducing-balance EMI formula:
  *   EMI = P * r * (1+r)^n / ((1+r)^n - 1)
  * Falls back to a straight-line split when r = 0 (interest-free loan).

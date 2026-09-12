@@ -4,6 +4,8 @@ import { NotificationPrefs, getNotificationPrefs } from '@/db/settings';
 import { parseLocalIsoDate } from './date';
 import { formatMoney } from './money';
 import { formatPctChange } from './format';
+import { pickRandom } from './pickRandom';
+import { DAILY_REMINDER_COPY, WEEKLY_SUMMARY_COPY, loanDueCopy, overspendCopy } from './notificationCopy';
 
 // Foreground behavior — without this, a notification fired while the app is
 // open never shows anything at all on some platforms.
@@ -65,10 +67,11 @@ export async function syncDailyReminder(prefs: NotificationPrefs): Promise<void>
   await ensureAndroidChannel();
   await Notifications.scheduleNotificationAsync({
     identifier: DAILY_REMINDER_ID,
-    content: {
-      title: 'A minute for Yume?',
-      body: "Log today's spending while it's still fresh 🌱",
-    },
+    // A fresh variant each time this (re)schedules — every cold start and
+    // every settings save, not literally once per calendar day; see
+    // notificationCopy.ts's own note on why a repeating OS trigger can't
+    // roll the wording on every single firing.
+    content: pickRandom(DAILY_REMINDER_COPY),
     trigger: {
       type: Notifications.SchedulableTriggerInputTypes.DAILY,
       hour: prefs.reminderHour,
@@ -91,10 +94,7 @@ export async function syncWeeklySummary(prefs: NotificationPrefs): Promise<void>
   await ensureAndroidChannel();
   await Notifications.scheduleNotificationAsync({
     identifier: WEEKLY_SUMMARY_ID,
-    content: {
-      title: 'Your week, wrapped',
-      body: 'See what moved this week and how you tracked against your usual.',
-    },
+    content: pickRandom(WEEKLY_SUMMARY_COPY),
     trigger: {
       type: Notifications.SchedulableTriggerInputTypes.WEEKLY,
       weekday: 1, // Sunday
@@ -132,10 +132,7 @@ export async function scheduleLoanDueReminder(
   await ensureAndroidChannel();
   await Notifications.scheduleNotificationAsync({
     identifier: loanDueReminderId(loanId),
-    content: {
-      title: 'EMI due today',
-      body: `${counterparty} — ${formatMoney(emiAmountMinor)}. One step closer to done.`,
-    },
+    content: loanDueCopy(counterparty, formatMoney(emiAmountMinor)),
     trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: dueAt },
   });
 }
@@ -155,10 +152,7 @@ export async function notifyOverspend(categoryName: string, pctChange: number): 
 
   await ensureAndroidChannel();
   await Notifications.scheduleNotificationAsync({
-    content: {
-      title: 'Worth a peek 👀',
-      body: `${categoryName} spending is up ${formatPctChange(pctChange)} vs last month.`,
-    },
+    content: overspendCopy(categoryName, formatPctChange(pctChange)),
     trigger: null,
   });
 }

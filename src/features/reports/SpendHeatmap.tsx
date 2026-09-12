@@ -1,7 +1,13 @@
 import { View, Text, Pressable, StyleSheet } from 'react-native';
+import Animated, { FadeIn, ReduceMotion } from 'react-native-reanimated';
 import { theme, SPEND_HEAT_TEXT } from '@/constants/theme';
 import { spendHeatScale } from '@/lib/color';
 import { useAccent } from '@/theme/AccentContext';
+
+// Capped so a 31-day month still finishes staggering in well under a
+// second — the same reasoning `formatPctChange`'s own cap uses elsewhere:
+// a real limit exists, it's just applied here instead of left unbounded.
+const MAX_STAGGER_MS = 320;
 
 export interface HeatCell {
   key: string;
@@ -44,7 +50,7 @@ export function SpendHeatmap({
         {Array.from({ length: leadingPad }).map((_, i) => (
           <View key={`pad-${i}`} style={[styles.cellWrap, { width: `${100 / columns}%` }]} />
         ))}
-        {cells.map((c) => {
+        {cells.map((c, i) => {
           const bg =
             c.level === 0 ? (c.isWeekend ? theme.colors.inkWash : 'transparent') : heatScale[c.level];
           const inner = (
@@ -53,7 +59,14 @@ export function SpendHeatmap({
             </View>
           );
           return (
-            <View key={c.key} style={[styles.cellWrap, { width: `${100 / columns}%` }]}>
+            <Animated.View
+              key={c.key}
+              entering={FadeIn.delay(Math.min(i * 12, MAX_STAGGER_MS))
+                .duration(260)
+                .springify()
+                .reduceMotion(ReduceMotion.System)}
+              style={[styles.cellWrap, { width: `${100 / columns}%` }]}
+            >
               {c.onPress ? (
                 <Pressable onPress={c.onPress} accessibilityRole="button">
                   {inner}
@@ -61,7 +74,7 @@ export function SpendHeatmap({
               ) : (
                 inner
               )}
-            </View>
+            </Animated.View>
           );
         })}
       </View>

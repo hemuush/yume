@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Animated } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import { theme } from '@/constants/theme';
@@ -6,6 +6,7 @@ import { formatMoney } from '@/lib/money';
 import { formatPctChange } from '@/lib/format';
 import { useReduceMotion } from '@/lib/useReduceMotion';
 import { SuuIllustration } from '@/components/SuuIllustration';
+import { CountUpAmount } from '@/components/CountUpAmount';
 import { SoftCard } from './SoftCard';
 import type { SuuLine } from './suuLine';
 
@@ -94,42 +95,6 @@ export function ThisMonthHero({
   );
 }
 
-/**
- * A rupee figure that counts up on first mount and eases between values when
- * the month changes. Uses a JS listener (`useNativeDriver: false`) because
- * text content itself can't be driven natively — it's two short numbers, so
- * the per-frame `formatMoney` cost is negligible.
- */
-function CountUpMoney({ minor, style }: { minor: number; style: object }) {
-  const reduce = useReduceMotion();
-  const [display, setDisplay] = useState(minor);
-  const [t] = useState(() => new Animated.Value(1));
-  const prev = useRef(minor);
-  const mounted = useRef(false);
-  useEffect(() => {
-    if (reduce) {
-      setDisplay(minor);
-      prev.current = minor;
-      mounted.current = true;
-      return;
-    }
-    const from = mounted.current ? prev.current : 0;
-    prev.current = minor;
-    mounted.current = true;
-    t.setValue(0);
-    const id = t.addListener(({ value }) => setDisplay(Math.round(from + (minor - from) * value)));
-    Animated.timing(t, { toValue: 1, duration: 550, useNativeDriver: false }).start(() => {
-      setDisplay(minor);
-    });
-    return () => t.removeListener(id);
-  }, [minor, reduce, t]);
-  return (
-    <Text style={style} numberOfLines={1} adjustsFontSizeToFit>
-      {formatMoney(display)}
-    </Text>
-  );
-}
-
 function Figure({
   label,
   amountMinor,
@@ -149,7 +114,7 @@ function Figure({
         <Feather name={icon} size={13} color={color} />
         <Text style={styles.figureLabel}>{label}</Text>
       </View>
-      <CountUpMoney minor={amountMinor} style={styles.figureAmount} />
+      <CountUpAmount minor={amountMinor} style={styles.figureAmount} numberOfLines={1} adjustsFontSizeToFit />
       {changePct != null && (
         <Text style={styles.figureTrend}>
           {changePct >= 0 ? '↑' : '↓'} {formatPctChange(changePct)} vs last

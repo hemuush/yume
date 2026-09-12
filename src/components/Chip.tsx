@@ -1,5 +1,8 @@
-import { Pressable, Text, StyleSheet } from 'react-native';
+import { Animated, Pressable, Text, StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
+import { usePressScale } from '@/lib/usePressScale';
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 interface Props {
   label: string;
@@ -13,19 +16,23 @@ interface Props {
 // "Add ___" modal — one accent-aware component instead of four copy-pastes.
 export function Chip({ label, active, onPress, activeBorderColor }: Props) {
   const tinted = active && activeBorderColor;
+  const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.94);
   return (
-    <Pressable
+    <AnimatedPressable
       style={[
         styles.chip,
         active && !tinted && styles.chipActive,
         tinted && { backgroundColor: activeBorderColor + '1A', borderColor: activeBorderColor },
+        animatedStyle,
       ]}
       onPress={onPress}
+      onPressIn={onPressIn}
+      onPressOut={onPressOut}
     >
       <Text style={[styles.text, active && styles.textActive]} numberOfLines={1}>
         {label}
       </Text>
-    </Pressable>
+    </AnimatedPressable>
   );
 }
 

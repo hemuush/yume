@@ -1,0 +1,46 @@
+import { TextWidget } from 'react-native-android-widget';
+import { WidgetShell, MoonPhaseRow } from './WidgetShell';
+import { widgetColor } from './widgetTheme';
+import type { SuuWidgetData } from './data';
+
+/**
+ * "Suu Check-in" — the 2×2 widget. The one widget a generic finance app
+ * couldn't ship: Suu's own line (`suuLine()`, unchanged — savings nudge,
+ * spend-up warning, or a top-growing category, in that priority order) on
+ * the home screen. The crescent redrawn as a seven-dot moon-phase row
+ * instead of a filled icon shape RemoteViews can't easily reproduce, and
+ * because it echoes the dot language the other widgets already use. Taps
+ * open the app to Home, where the full hero card lives.
+ */
+export function SuuWidget({ line }: SuuWidgetData) {
+  return (
+    <WidgetShell clickAction="OPEN_APP">
+      <MoonPhaseRow />
+      <TextWidget
+        text={line.text}
+        maxLines={3}
+        style={{
+          width: 'match_parent',
+          fontSize: 12,
+          color: widgetColor.ink,
+          textAlign: 'center',
+          lineHeight: 16,
+          marginTop: 10,
+          fontWeight: '500',
+        }}
+      />
+      <TextWidget
+        text="SUU SAYS"
+        style={{
+          width: 'match_parent',
+          fontSize: 8.5,
+          color: widgetColor.textMuted,
+          letterSpacing: 1,
+          textAlign: 'center',
+          marginTop: 7,
+          fontWeight: '600',
+        }}
+      />
+    </WidgetShell>
+  );
+}

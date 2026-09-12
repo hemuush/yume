@@ -1,6 +1,9 @@
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { View, Text, Pressable, Animated, StyleSheet } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import { theme } from '@/constants/theme';
+import { usePressScale } from '@/lib/usePressScale';
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 /**
  * A titled block on the Home screen — a rounded-face heading with an optional
@@ -16,21 +19,24 @@ export function HomeSection({
   onSeeAll?: () => void;
   children: React.ReactNode;
 }) {
+  const { animatedStyle, onPressIn, onPressOut } = usePressScale();
   return (
     <View style={styles.wrap}>
       <View style={styles.head}>
         <Text style={styles.title}>{title}</Text>
         {onSeeAll && (
-          <Pressable
+          <AnimatedPressable
             onPress={onSeeAll}
+            onPressIn={onPressIn}
+            onPressOut={onPressOut}
             hitSlop={8}
             accessibilityRole="button"
             accessibilityLabel={`See all — ${title}`}
-            style={styles.seeAll}
+            style={[styles.seeAll, animatedStyle]}
           >
             <Text style={styles.seeAllText}>See all</Text>
             <Feather name="arrow-right" size={13} color={theme.colors.textSecondary} />
-          </Pressable>
+          </AnimatedPressable>
         )}
       </View>
       {children}

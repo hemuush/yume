@@ -83,6 +83,7 @@ export default function BackupScreen() {
   const [localResult, setLocalResult] = useState<BackupOutcome | null>(null);
   const [frequency, setFrequency] = useState<BackupFrequency>('daily');
   const [busy, setBusy] = useState<string | null>(null);
+  const [doneLabel, setDoneLabel] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLocalFolderUri(await getLocalBackupFolderUri());
@@ -97,10 +98,18 @@ export default function BackupScreen() {
     }, [load])
   );
 
-  const run = async (label: string, fn: () => Promise<void>) => {
+  const run = async (label: string, fn: () => Promise<void>, opts?: { confirm?: boolean }) => {
     setBusy(label);
     try {
       await fn();
+      // A brief "done" checkmark (PrimaryButton's own `done` prop) — only
+      // for the one action this is actually wired to (`backup-now-local`,
+      // see `opts.confirm` below), not every button this helper runs.
+      if (opts?.confirm) {
+        setDoneLabel(label);
+        await new Promise((resolve) => setTimeout(resolve, 380));
+        setDoneLabel(null);
+      }
     } catch (e: any) {
       Alert.alert('Something went wrong', String(e?.message ?? e));
     } finally {
@@ -200,20 +209,24 @@ export default function BackupScreen() {
     });
 
   const backupNowLocal = () =>
-    run('backup-now-local', async () => {
-      if (!localFolderUri) return;
-      try {
-        const { sizeBytes } = await writeLocalBackupNow(localFolderUri);
-        await setLastLocalBackupResult({ at: new Date().toISOString(), ok: true, sizeBytes });
-      } catch (e: any) {
-        await setLastLocalBackupResult({
-          at: new Date().toISOString(),
-          ok: false,
-          error: String(e?.message ?? e),
-        });
-        throw e;
-      }
-    });
+    run(
+      'backup-now-local',
+      async () => {
+        if (!localFolderUri) return;
+        try {
+          const { sizeBytes } = await writeLocalBackupNow(localFolderUri);
+          await setLastLocalBackupResult({ at: new Date().toISOString(), ok: true, sizeBytes });
+        } catch (e: any) {
+          await setLastLocalBackupResult({
+            at: new Date().toISOString(),
+            ok: false,
+            error: String(e?.message ?? e),
+          });
+          throw e;
+        }
+      },
+      { confirm: true }
+    );
 
   const forgetFolder = () =>
     run('forget-folder', async () => {
@@ -263,6 +276,7 @@ export default function BackupScreen() {
               <>
                 <PrimaryButton
                   title={busy === 'backup-now-local' ? 'Backing up...' : 'Backup now'}
+                  done={doneLabel === 'backup-now-local'}
                   onPress={backupNowLocal}
                   disabled={!!busy}
                   style={{ flex: 1, marginRight: 8 }}

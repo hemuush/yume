@@ -102,3 +102,20 @@ export function spendHeatScale(accent: string): readonly [string, string, string
     hexToRgba(deepest, 0.94),
   ];
 }
+
+/**
+ * A stable index into a palette of length `modulo`, derived from `id` — for
+ * picking a person/entity's own colour so it stays the same regardless of
+ * where they land in a list (unlike `array[i % array.length]` keyed to
+ * position, which reassigns everyone's colour the moment the list is
+ * reordered or someone new is added ahead of them). A plain djb2-style
+ * string hash — not cryptographic, just needs to spread ids evenly across
+ * the palette.
+ */
+export function stableIndexFromId(id: string, modulo: number): number {
+  let hash = 5381;
+  for (let i = 0; i < id.length; i++) {
+    hash = (hash * 33) ^ id.charCodeAt(i);
+  }
+  return Math.abs(hash) % modulo;
+}

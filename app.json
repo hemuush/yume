@@ -19,8 +19,11 @@
         "backgroundImage": "./assets/android-icon-background.png"
       },
       "predictiveBackGestureEnabled": true,
-      "versionCode": 52,
-      "permissions": ["android.permission.USE_BIOMETRIC", "android.permission.USE_FINGERPRINT"]
+      "versionCode": 57,
+      "permissions": [
+        "android.permission.USE_BIOMETRIC",
+        "android.permission.USE_FINGERPRINT"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -55,7 +58,76 @@
           }
         }
       ],
-      "expo-sharing"
+      "expo-sharing",
+      [
+        "react-native-android-widget",
+        {
+          "fonts": [
+            "./assets/fonts/DotGothic16.ttf"
+          ],
+          "widgets": [
+            {
+              "name": "ThisMonth",
+              "label": "This Month",
+              "description": "This month's spend, the change vs last month, and the spend/kept bar.",
+              "previewImage": "./assets/widget-preview/this-month.png",
+              "minWidth": "250dp",
+              "minHeight": "110dp",
+              "targetCellWidth": 4,
+              "targetCellHeight": 2,
+              "resizeMode": "horizontal|vertical",
+              "updatePeriodMillis": 1800000
+            },
+            {
+              "name": "QuickAdd",
+              "label": "Quick Add",
+              "description": "One tap into Add Transaction, pre-set to Expense or Income.",
+              "previewImage": "./assets/widget-preview/quick-add.png",
+              "minWidth": "110dp",
+              "minHeight": "110dp",
+              "targetCellWidth": 2,
+              "targetCellHeight": 2,
+              "resizeMode": "horizontal|vertical"
+            },
+            {
+              "name": "Suu",
+              "label": "Suu Check-in",
+              "description": "Suu's one-line nudge about this month's spending, right on your home screen.",
+              "previewImage": "./assets/widget-preview/suu.png",
+              "minWidth": "110dp",
+              "minHeight": "110dp",
+              "targetCellWidth": 2,
+              "targetCellHeight": 2,
+              "resizeMode": "horizontal|vertical",
+              "updatePeriodMillis": 1800000
+            },
+            {
+              "name": "NextDue",
+              "label": "Next Due",
+              "description": "The soonest loan EMI or recurring bill coming up.",
+              "previewImage": "./assets/widget-preview/next-due.png",
+              "minWidth": "250dp",
+              "minHeight": "60dp",
+              "targetCellWidth": 4,
+              "targetCellHeight": 1,
+              "resizeMode": "horizontal",
+              "updatePeriodMillis": 1800000
+            },
+            {
+              "name": "Accounts",
+              "label": "Accounts",
+              "description": "Live balances for your accounts, right on the home screen.",
+              "previewImage": "./assets/widget-preview/accounts.png",
+              "minWidth": "250dp",
+              "minHeight": "110dp",
+              "targetCellWidth": 4,
+              "targetCellHeight": 2,
+              "resizeMode": "horizontal|vertical",
+              "updatePeriodMillis": 1800000
+            }
+          ]
+        }
+      ]
     ],
     "extra": {
       "router": {},

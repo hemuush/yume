@@ -1,10 +1,13 @@
 import { useState } from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { View, Text, Pressable, Animated, StyleSheet } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import { ModalSheet } from '@/components/ModalSheet';
 import { theme } from '@/constants/theme';
 import { useAccent } from '@/theme/AccentContext';
+import { usePressScale } from '@/lib/usePressScale';
 import { parseLocalIsoDate, toLocalIsoDate, addMonthsToIsoDate } from '@/lib/date';
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 const WEEKDAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 const MONTHS = [
@@ -42,6 +45,8 @@ export function CalendarSheet({
   onPick: (isoDate: string) => void;
 }) {
   const { accent, onAccent } = useAccent();
+  const prevBtn = usePressScale();
+  const nextBtn = usePressScale();
   // The month currently on screen — starts on the selected date's month.
   const [viewMonth, setViewMonth] = useState(() => value.slice(0, 7));
 
@@ -73,25 +78,29 @@ export function CalendarSheet({
       title="Pick a date"
     >
       <View style={styles.header}>
-        <Pressable
+        <AnimatedPressable
           onPress={() => setViewMonth(addMonthsToIsoDate(`${viewMonth}-01`, -1).slice(0, 7))}
+          onPressIn={prevBtn.onPressIn}
+          onPressOut={prevBtn.onPressOut}
           hitSlop={10}
-          style={styles.navBtn}
+          style={[styles.navBtn, prevBtn.animatedStyle]}
           accessibilityLabel="Previous month"
         >
           <Feather name="chevron-left" size={20} color={theme.colors.ink} />
-        </Pressable>
+        </AnimatedPressable>
         <Text style={styles.monthLabel}>
           {MONTHS[m - 1]} {y}
         </Text>
-        <Pressable
+        <AnimatedPressable
           onPress={() => setViewMonth(addMonthsToIsoDate(`${viewMonth}-01`, 1).slice(0, 7))}
+          onPressIn={nextBtn.onPressIn}
+          onPressOut={nextBtn.onPressOut}
           hitSlop={10}
-          style={styles.navBtn}
+          style={[styles.navBtn, nextBtn.animatedStyle]}
           accessibilityLabel="Next month"
         >
           <Feather name="chevron-right" size={20} color={theme.colors.ink} />
-        </Pressable>
+        </AnimatedPressable>
       </View>
 
       <View style={styles.weekRow}>
@@ -109,37 +118,67 @@ export function CalendarSheet({
           const isToday = iso === today;
           const disabled = maxDate ? iso > maxDate : false;
           return (
-            <Pressable
+            <DayCell
               key={i}
-              style={styles.cell}
+              iso={iso}
               disabled={disabled}
+              isToday={isToday}
+              selected={selected}
+              accent={accent}
+              onAccent={onAccent}
               onPress={() => {
                 onPick(iso);
                 onClose();
               }}
-            >
-              <View
-                style={[
-                  styles.day,
-                  isToday && styles.dayToday,
-                  selected && { backgroundColor: accent, borderColor: theme.colors.ink },
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.dayText,
-                    disabled && styles.dayTextDisabled,
-                    selected && { color: onAccent },
-                  ]}
-                >
-                  {parseLocalIsoDate(iso).getDate()}
-                </Text>
-              </View>
-            </Pressable>
+            />
           );
         })}
       </View>
     </ModalSheet>
+  );
+}
+
+function DayCell({
+  iso,
+  disabled,
+  isToday,
+  selected,
+  accent,
+  onAccent,
+  onPress,
+}: {
+  iso: string;
+  disabled: boolean;
+  isToday: boolean;
+  selected: boolean;
+  accent: string;
+  onAccent: string;
+  onPress: () => void;
+}) {
+  // Squashes just the inner circle, not the 1/7-width outer cell — squashing
+  // the cell itself would visibly nudge its neighbours in the grid.
+  const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.88);
+  return (
+    <Pressable
+      style={styles.cell}
+      disabled={disabled}
+      onPress={onPress}
+      onPressIn={onPressIn}
+      onPressOut={onPressOut}
+    >
+      <Animated.View
+        style={[
+          styles.day,
+          isToday && styles.dayToday,
+          selected && { backgroundColor: accent, borderColor: theme.colors.ink },
+          animatedStyle,
+        ]}
+      >
+        <Text style={[styles.dayText, disabled && styles.dayTextDisabled, selected && { color: onAccent }]}>
+          {parseLocalIsoDate(iso).getDate()}
+        </Text>
+      </Animated.View>
+    </Pressable>
   );
 }
 

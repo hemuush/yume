@@ -1,8 +1,11 @@
-import { View, Text, Modal, Pressable, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, Modal, Pressable, Animated, StyleSheet, ScrollView } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { SafeAreaProvider, useSafeAreaInsets, initialWindowMetrics } from 'react-native-safe-area-context';
 import { theme } from '@/constants/theme';
+import { usePressScale } from '@/lib/usePressScale';
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 interface Props {
   visible: boolean;
@@ -66,6 +69,23 @@ export function ModalSheet(props: Props) {
   );
 }
 
+function ModalCloseButton({ onClose }: { onClose: () => void }) {
+  const { animatedStyle, onPressIn, onPressOut } = usePressScale();
+  return (
+    <AnimatedPressable
+      style={[styles.closeBtn, animatedStyle]}
+      onPress={onClose}
+      onPressIn={onPressIn}
+      onPressOut={onPressOut}
+      hitSlop={10}
+      accessibilityRole="button"
+      accessibilityLabel="Close"
+    >
+      <Feather name="x" size={16} color={theme.colors.textSecondary} />
+    </AnimatedPressable>
+  );
+}
+
 function ModalSheetBody({
   onClose,
   title,
@@ -84,17 +104,7 @@ function ModalSheetBody({
   const framedCenter = framed && !isSheet;
   const framedSheet = framed && isSheet;
 
-  const closeBtn = showClose ? (
-    <Pressable
-      style={styles.closeBtn}
-      onPress={onClose}
-      hitSlop={10}
-      accessibilityRole="button"
-      accessibilityLabel="Close"
-    >
-      <Feather name="x" size={16} color={theme.colors.textSecondary} />
-    </Pressable>
-  ) : null;
+  const closeBtn = showClose ? <ModalCloseButton onClose={onClose} /> : null;
 
   const headingTexts =
     title || subtitle ? (
