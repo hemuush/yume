@@ -73,6 +73,21 @@ export function daysUntilIsoDate(isoDate: string): number {
 }
 
 /**
+ * Every ISO date from `from` to `to` inclusive, in order — used wherever a UI
+ * needs one entry per calendar day in a range (e.g. one bar per day in a
+ * spend chart), rather than each caller re-deriving it with its own loop.
+ */
+export function isoDatesInRange(from: string, to: string): string[] {
+  const dates: string[] = [];
+  let cursor = from;
+  while (cursor <= to) {
+    dates.push(cursor);
+    cursor = addDaysToIsoDate(cursor, 1);
+  }
+  return dates;
+}
+
+/**
  * Turns free-typed Day/Month/Year text fields into a YYYY-MM-DD date, or
  * null if the combination isn't a real calendar date (e.g. "31/2/2026").
  * Built from plain numbers rather than `new Date(y, m, d)` alone so an

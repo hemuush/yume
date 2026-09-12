@@ -1,4 +1,36 @@
-import { calculateEmi, generateAmortizationSchedule, recalculateAfterPrepayment } from './loan';
+import {
+  calculateEmi,
+  generateAmortizationSchedule,
+  recalculateAfterPrepayment,
+  payoffFraction,
+} from './loan';
+
+describe('payoffFraction', () => {
+  it('is the share of principal actually repaid', () => {
+    expect(payoffFraction(100000, 30000)).toBeCloseTo(0.7);
+  });
+
+  it('is 0 for a brand-new loan (outstanding equals principal)', () => {
+    expect(payoffFraction(100000, 100000)).toBe(0);
+  });
+
+  it('is 1 for a fully closed loan', () => {
+    expect(payoffFraction(100000, 0)).toBe(1);
+  });
+
+  it('clamps rather than going negative when outstanding somehow exceeds principal', () => {
+    expect(payoffFraction(100000, 150000)).toBe(0);
+  });
+
+  it('clamps rather than exceeding 1 for a negative outstanding value', () => {
+    expect(payoffFraction(100000, -5000)).toBe(1);
+  });
+
+  it('is 0 for a non-positive principal instead of dividing by zero', () => {
+    expect(payoffFraction(0, 0)).toBe(0);
+    expect(payoffFraction(-100, 0)).toBe(0);
+  });
+});
 
 describe('calculateEmi', () => {
   it('matches a known reducing-balance EMI table (₹10,00,000 @ 9% for 240 months)', () => {

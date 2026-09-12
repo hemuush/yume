@@ -1,4 +1,10 @@
-import { toLocalIsoDate, addMonthsToIsoDate, monthsBetweenIsoDates, daysUntilIsoDate } from './date';
+import {
+  toLocalIsoDate,
+  addMonthsToIsoDate,
+  monthsBetweenIsoDates,
+  daysUntilIsoDate,
+  isoDatesInRange,
+} from './date';
 
 describe('toLocalIsoDate', () => {
   it("formats using the Date object's own local fields, not a UTC conversion", () => {
@@ -8,6 +14,30 @@ describe('toLocalIsoDate', () => {
 
   it('pads single-digit months and days', () => {
     expect(toLocalIsoDate(new Date(2024, 2, 5))).toBe('2024-03-05');
+  });
+});
+
+describe('isoDatesInRange', () => {
+  it('lists every date from `from` to `to`, inclusive', () => {
+    expect(isoDatesInRange('2026-09-08', '2026-09-11')).toEqual([
+      '2026-09-08',
+      '2026-09-09',
+      '2026-09-10',
+      '2026-09-11',
+    ]);
+  });
+
+  it('is a single date when `from` equals `to`', () => {
+    expect(isoDatesInRange('2026-09-10', '2026-09-10')).toEqual(['2026-09-10']);
+  });
+
+  it('rolls over a month boundary correctly', () => {
+    expect(isoDatesInRange('2026-09-29', '2026-10-02')).toEqual([
+      '2026-09-29',
+      '2026-09-30',
+      '2026-10-01',
+      '2026-10-02',
+    ]);
   });
 });
 

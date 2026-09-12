@@ -1,12 +1,15 @@
 import { useCallback, useState } from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { View, Text, Pressable, Animated, StyleSheet } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import Feather from '@expo/vector-icons/Feather';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme } from '@/constants/theme';
 import { useAccent } from '@/theme/AccentContext';
 import { usePrivacy } from '@/theme/PrivacyContext';
+import { usePressScale } from '@/lib/usePressScale';
 import { getCachedUserName } from '@/db/settings';
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 interface Props {
   title: string;
@@ -32,13 +35,20 @@ interface Props {
  */
 export function AppHeader({ title, showBack, right, hideUser }: Props) {
   const insets = useSafeAreaInsets();
+  const { animatedStyle, onPressIn, onPressOut } = usePressScale();
   return (
     <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
       <View style={styles.left}>
         {showBack && (
-          <Pressable onPress={() => router.back()} hitSlop={12} style={styles.backBtn}>
+          <AnimatedPressable
+            onPress={() => router.back()}
+            onPressIn={onPressIn}
+            onPressOut={onPressOut}
+            hitSlop={12}
+            style={[styles.backBtn, animatedStyle]}
+          >
             <Feather name="chevron-left" size={20} color={theme.colors.ink} />
-          </Pressable>
+          </AnimatedPressable>
         )}
         <Text style={styles.title} numberOfLines={1}>
           {title}
@@ -85,20 +95,23 @@ export function HeaderUserButton({ soft }: { soft?: boolean } = {}) {
     }, [])
   );
   const initial = name?.trim().charAt(0).toUpperCase();
+  const { animatedStyle, onPressIn, onPressOut } = usePressScale();
   return (
-    <Pressable
+    <AnimatedPressable
       onPress={() => router.push('/profile')}
+      onPressIn={onPressIn}
+      onPressOut={onPressOut}
       hitSlop={8}
       accessibilityRole="button"
       accessibilityLabel="Your profile"
-      style={[styles.iconBtn, soft && styles.iconBtnSoft, { backgroundColor: accent }]}
+      style={[styles.iconBtn, soft && styles.iconBtnSoft, { backgroundColor: accent }, animatedStyle]}
     >
       {initial ? (
         <Text style={[styles.initial, { color: onAccent }]}>{initial}</Text>
       ) : (
         <Feather name="user" size={16} color={onAccent} />
       )}
-    </Pressable>
+    </AnimatedPressable>
   );
 }
 
@@ -116,17 +129,25 @@ export function HeaderIconButton({
   /** Hairline instead of the 3px ink border — for the softer Home header. */
   soft?: boolean;
 }) {
+  const { animatedStyle, onPressIn, onPressOut } = usePressScale();
   return (
-    <Pressable
+    <AnimatedPressable
       onPress={onPress}
+      onPressIn={onPressIn}
+      onPressOut={onPressOut}
       hitSlop={8}
       accessibilityRole="button"
       accessibilityLabel={label}
-      style={[styles.iconBtn, soft && styles.iconBtnSoft, { backgroundColor: theme.colors.surface }]}
+      style={[
+        styles.iconBtn,
+        soft && styles.iconBtnSoft,
+        { backgroundColor: theme.colors.surface },
+        animatedStyle,
+      ]}
     >
       <Feather name={icon} size={16} color={theme.colors.ink} />
       {badge && <View style={styles.badge} />}
-    </Pressable>
+    </AnimatedPressable>
   );
 }
 
