@@ -1,7 +1,7 @@
 {
   "name": "yume",
   "version": "1.0.0",
-  "main": "expo-router/entry",
+  "main": "index.js",
   "dependencies": {
     "@expo-google-fonts/archivo": "^0.4.2",
     "@expo-google-fonts/fredoka": "^0.4.1",
@@ -15,6 +15,7 @@
     "expo-document-picker": "~57.0.2",
     "expo-file-system": "~57.0.6",
     "expo-font": "~57.0.3",
+    "expo-haptics": "~57.0.3",
     "expo-linear-gradient": "~57.0.2",
     "expo-linking": "~57.0.10",
     "expo-local-authentication": "~57.0.3",
@@ -27,6 +28,7 @@
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-native": "0.86.3",
+    "react-native-android-widget": "^0.22.1",
     "react-native-keyboard-controller": "1.21.9",
     "react-native-reanimated": "4.5.1",
     "react-native-safe-area-context": "~5.7.0",

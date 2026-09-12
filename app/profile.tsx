@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { View, Text, Pressable, TextInput, Animated, Alert } from 'react-native';
+import { View, Text, Pressable, TextInput, Animated, Alert, ActivityIndicator } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { router, useFocusEffect } from 'expo-router';
 import Feather from '@expo/vector-icons/Feather';
@@ -54,6 +54,9 @@ export default function ProfileScreen() {
   const [hasUntrackedAssetLoan, setHasUntrackedAssetLoan] = useState(false);
   const [addAccountVisible, setAddAccountVisible] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+  // Several fields here start at `0`/`[]`/`null`, all indistinguishable from
+  // a genuinely fresh profile — an explicit flag is what gates the spinner.
+  const [loaded, setLoaded] = useState(false);
   const accountsFadeStyle = useFadeIn([accounts]);
 
   const load = useCallback(async () => {
@@ -97,6 +100,8 @@ export default function ProfileScreen() {
       // every field at its zero/empty default with no indication anything
       // had gone wrong — this surfaces it instead.
       setLoadError(String(e?.message ?? e));
+    } finally {
+      setLoaded(true);
     }
   }, []);
 
@@ -124,6 +129,17 @@ export default function ProfileScreen() {
   const totalBalance = accounts
     .filter((a) => a.currency === defaultCurrency)
     .reduce((sum, a) => sum + dispAccountBalance(a), 0);
+
+  if (!loaded && !loadError) {
+    return (
+      <View style={styles.container}>
+        <AppHeader title="Profile" showBack hideUser />
+        <View style={styles.center}>
+          <ActivityIndicator color={theme.colors.ink} />
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -211,36 +227,17 @@ export default function ProfileScreen() {
         </NeoTile>
 
         <View style={styles.statsGrid}>
-          <Stat
-            value={formatMoney(totalBalance)}
-            label="ACCOUNT BALANCE"
-            icon="wallet-outline"
-            iconBg={theme.colors.idTeal}
-          />
-          <Stat
-            value={String(txCount)}
-            label="ENTRIES"
-            icon="format-list-bulleted"
-            iconBg={theme.colors.idSage}
-          />
-          <Stat
-            value={String(activeLoanCount)}
-            label="ACTIVE LOANS"
-            icon="bank-outline"
-            iconBg={theme.colors.idGold}
-          />
-          <Stat
-            value={String(peopleCount)}
-            label="PEOPLE"
-            icon="account-group-outline"
-            iconBg={theme.colors.idCoral}
-          />
+          <Stat value={formatMoney(totalBalance)} label="ACCOUNT BALANCE" icon="wallet-outline" />
+          <Stat value={String(txCount)} label="ENTRIES" icon="format-list-bulleted" />
+          <Stat value={String(activeLoanCount)} label="ACTIVE LOANS" icon="bank-outline" />
+          <Stat value={String(peopleCount)} label="PEOPLE" icon="account-group-outline" />
         </View>
 
         <View style={styles.sectionHeader}>
-          <SectionLabel color={theme.colors.secondary} tint={theme.colors.secondaryTint}>
-            ACCOUNTS
-          </SectionLabel>
+          {/* No explicit color/tint — SectionLabel's own default already uses
+              the user's real accent; this used to override that with a fixed
+              mint unrelated to anything the user picked. */}
+          <SectionLabel>ACCOUNTS</SectionLabel>
           <AddButton onPress={() => setAddAccountVisible(true)} label="+ Account" />
         </View>
         {accounts.length === 0 ? (
@@ -323,20 +320,14 @@ export default function ProfileScreen() {
 
 const AnimatedAccountPressable = Animated.createAnimatedComponent(Pressable);
 
-function Stat({
-  value,
-  label,
-  icon,
-  iconBg,
-}: {
-  value: string;
-  label: string;
-  icon: string;
-  iconBg: string;
-}) {
+function Stat({ value, label, icon }: { value: string; label: string; icon: string }) {
+  // Was a different fixed pastel per stat (teal/sage/gold/coral) — four hues
+  // unrelated to anything the user chose. One colour, the user's own accent,
+  // used consistently instead — matches MoneyStatCard's own fix on Home.
+  const { accent, onAccent } = useAccent();
   return (
     <NeoTile style={styles.statCell}>
-      <SettingsRowIcon name={icon} backgroundColor={iconBg} />
+      <SettingsRowIcon name={icon} backgroundColor={accent} iconColor={onAccent} />
       <View style={styles.statText}>
         <Text style={styles.statValue} numberOfLines={1} adjustsFontSizeToFit>
           {value}

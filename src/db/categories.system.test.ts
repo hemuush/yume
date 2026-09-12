@@ -110,7 +110,9 @@ describe('is_system enforcement', () => {
   it('a user-created category named like a built-in is NOT system and can be deleted', async () => {
     const impostor = await createCategory({ name: 'Loan EMI', kind: 'expense' });
     expect(impostor.isSystem).toBe(false);
-    await expect(deleteCategory(impostor.id)).resolves.toBeUndefined();
+    // Returns a snapshot of the deleted row(s) now (for Undo), not void —
+    // this just guards that it resolves at all rather than throwing.
+    await expect(deleteCategory(impostor.id)).resolves.toBeInstanceOf(Array);
   });
 
   it('still deletes and archives a normal built-in category', async () => {

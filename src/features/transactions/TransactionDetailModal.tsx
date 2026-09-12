@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { View, Text, Alert } from 'react-native';
-import { deleteTransaction, getTransactionLink, TransactionLink } from '@/db/ledger';
+import { deleteTransaction, restoreTransaction, getTransactionLink, TransactionLink } from '@/db/ledger';
 import { undoInstallmentPayment } from '@/db/loans';
 import { undoPersonTransaction } from '@/db/people';
 import { Account, Category, Transaction } from '@/types';
@@ -9,6 +9,8 @@ import { CategoryIcon } from '@/components/CategoryIcon';
 import { Amount } from '@/components/Amount';
 import { ModalSheet } from '@/components/ModalSheet';
 import { theme, modalFooterStyles as f } from '@/constants/theme';
+import { useUndoToast } from '@/components/UndoToast';
+import { haptics } from '@/lib/haptics';
 import { styles } from './transactions.styles';
 
 export function TransactionDetailModal({
@@ -26,6 +28,7 @@ export function TransactionDetailModal({
   onEdit: (tx: Transaction) => void;
   onChanged: () => void;
 }) {
+  const { show: showUndo } = useUndoToast();
   const [link, setLink] = useState<TransactionLink | undefined>(undefined);
   const [busy, setBusy] = useState(false);
 
@@ -43,29 +46,21 @@ export function TransactionDetailModal({
   const cat = categories.find((c) => c.id === tx.categoryId);
   const accountName = (id: string) => accounts.find((a) => a.id === id)?.name ?? '—';
 
-  const confirmDelete = () => {
-    Alert.alert(
-      'Delete this transaction?',
-      'This removes it permanently — account balances update immediately.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            setBusy(true);
-            try {
-              await deleteTransaction(tx.id);
-              onChanged();
-            } catch (e: any) {
-              Alert.alert('Could not delete', String(e?.message ?? e));
-            } finally {
-              setBusy(false);
-            }
-          },
-        },
-      ]
-    );
+  const confirmDelete = async () => {
+    setBusy(true);
+    try {
+      const snapshot = await deleteTransaction(tx.id);
+      haptics.warn();
+      onChanged();
+      showUndo('Deleted transaction', async () => {
+        await restoreTransaction(snapshot);
+        onChanged();
+      });
+    } catch (e: any) {
+      Alert.alert('Could not delete', String(e?.message ?? e));
+    } finally {
+      setBusy(false);
+    }
   };
 
   const confirmUndoLoan = (loanPaymentId: string) => {
