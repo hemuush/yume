@@ -4,6 +4,7 @@ import { Loan, LoanPayment } from '@/types';
 import { calculateEmi, generateAmortizationSchedule, recalculateAfterPrepayment } from '@/lib/loan';
 import { formatMoney } from '@/lib/money';
 import { scheduleLoanDueReminder, cancelLoanDueReminder } from '@/lib/notifications';
+import { captureRow, captureRows, restoreRows, RowSnapshot } from './undoSnapshot';
 
 /** Schedules a reminder for the loan's next pending installment, or cancels any reminder if none remains. */
 async function syncDueReminder(loanId: string): Promise<void> {
@@ -812,7 +813,7 @@ export async function applyPrepayment(
  * removing a mis-entered loan now takes them with it instead of leaving
  * them behind as orphaned "Loan disbursement" rows with nothing to point to.
  */
-export async function deleteLoan(loanId: string): Promise<void> {
+export async function deleteLoan(loanId: string): Promise<RowSnapshot[]> {
   const db = await getDb();
   const linkedPayment = await db.getFirstAsync<{ id: string }>(
     `SELECT id FROM loan_payments WHERE loan_id = ? AND transaction_id IS NOT NULL LIMIT 1`,
@@ -830,8 +831,27 @@ export async function deleteLoan(loanId: string): Promise<void> {
       "This loan has a recorded prepayment, which can't be undone yet — it can't be deleted while that exists."
     );
   }
+  // The loan row goes first: `loan_payments`, `loan_rate_changes`, and the
+  // loan's own disbursement/fee `transactions` all foreign-key back to it
+  // (each `ON DELETE CASCADE`), so restoring in this same order gives every
+  // child row its parent before it needs it.
+  const loanSnapshot = await captureRow(db, 'loans', loanId);
+  const cascaded = [
+    ...(await captureRows(db, 'loan_payments', 'loan_id = ?', [loanId])),
+    ...(await captureRows(db, 'loan_rate_changes', 'loan_id = ?', [loanId])),
+    ...(await captureRows(db, 'transactions', 'loan_id = ?', [loanId])),
+  ];
   await db.runAsync('DELETE FROM loans WHERE id = ?', [loanId]);
   await cancelLoanDueReminder(loanId);
+  return loanSnapshot ? [loanSnapshot, ...cascaded] : cascaded;
+}
+
+/** Undoes `deleteLoan` — re-inserts the loan and everything that cascaded away with it, then re-syncs its due reminder. */
+export async function restoreLoan(snapshots: RowSnapshot[]): Promise<void> {
+  const db = await getDb();
+  await restoreRows(db, snapshots);
+  const loanId = snapshots.find((s) => s.table === 'loans')?.row.id;
+  if (loanId) await syncDueReminder(loanId);
 }
 
 /**

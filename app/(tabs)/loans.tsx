@@ -1,7 +1,6 @@
 import { useCallback, useState } from 'react';
-import { View, Text, ScrollView } from 'react-native';
+import { View, Text, ScrollView, ActivityIndicator } from 'react-native';
 import { useFocusEffect } from 'expo-router';
-import Feather from '@expo/vector-icons/Feather';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { listLoans } from '@/db/loans';
 import { formatMoney } from '@/lib/money';
@@ -11,7 +10,7 @@ import { SegmentedControl } from '@/components/SegmentedControl';
 import { EmptyState } from '@/components/EmptyState';
 import { AddButton } from '@/components/AddButton';
 import { AppHeader } from '@/components/AppHeader';
-import { PeopleSection } from '@/features/PeopleSection';
+import { PeopleSection } from '@/features/people/PeopleSection';
 import { theme } from '@/constants/theme';
 import { useFadeIn } from '@/lib/useFadeIn';
 import { styles } from '@/features/loans/loans.styles';
@@ -35,6 +34,11 @@ export default function LoansScreen() {
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedLoan, setSelectedLoan] = useState<Loan | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
+  // `loans` starts at `[]`, the same shape as "genuinely no loans yet" — so
+  // unlike Transactions/Reports (whose primary state starts `null`), this
+  // needs its own explicit "has the first load actually finished" flag to
+  // gate the spinner correctly instead of reading an empty list as loaded.
+  const [loaded, setLoaded] = useState(false);
   const listFadeStyle = useFadeIn([loans]);
 
   const load = useCallback(async () => {
@@ -45,6 +49,8 @@ export default function LoansScreen() {
       // A failed query previously left `loans` at its stale/empty state
       // with nothing on screen to say why — this makes that visible.
       setLoadError(String(e?.message ?? e));
+    } finally {
+      setLoaded(true);
     }
   }, []);
 
@@ -71,6 +77,17 @@ export default function LoansScreen() {
   const activeLoans = loans.filter((l) => l.status !== 'closed');
   const closedLoans = loans.filter((l) => l.status === 'closed');
 
+  if (!loaded && !loadError) {
+    return (
+      <View style={styles.container}>
+        <AppHeader title="Borrowed & Lent" />
+        <View style={styles.center}>
+          <ActivityIndicator color={theme.colors.ink} />
+        </View>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <AppHeader title="Borrowed & Lent" />
@@ -96,35 +113,25 @@ export default function LoansScreen() {
           )}
 
           <View style={styles.summaryRow}>
-            <View style={styles.summaryCard}>
-              <View style={[styles.summaryIcon, styles.summaryIconExpense]}>
-                <Feather name="arrow-up-right" size={14} color={theme.colors.expense} />
-              </View>
-              <View style={styles.summaryText}>
-                <Text style={styles.summaryLabel}>You owe</Text>
-                <Text
-                  style={[styles.summaryValue, styles.summaryValueExpense]}
-                  numberOfLines={1}
-                  ellipsizeMode="tail"
-                >
-                  {formatMoney(totalBorrowedOutstanding)}
-                </Text>
-              </View>
+            <View style={styles.summaryText}>
+              <Text style={styles.summaryLabel}>You owe</Text>
+              <Text
+                style={[styles.summaryValue, styles.summaryValueExpense]}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+              >
+                {formatMoney(totalBorrowedOutstanding)}
+              </Text>
             </View>
-            <View style={styles.summaryCard}>
-              <View style={[styles.summaryIcon, styles.summaryIconIncome]}>
-                <Feather name="arrow-down-left" size={14} color={theme.colors.income} />
-              </View>
-              <View style={styles.summaryText}>
-                <Text style={styles.summaryLabel}>Owed to you</Text>
-                <Text
-                  style={[styles.summaryValue, styles.summaryValueIncome]}
-                  numberOfLines={1}
-                  ellipsizeMode="tail"
-                >
-                  {formatMoney(totalLentOutstanding)}
-                </Text>
-              </View>
+            <View style={styles.summaryText}>
+              <Text style={styles.summaryLabel}>Owed to you</Text>
+              <Text
+                style={[styles.summaryValue, styles.summaryValueIncome]}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+              >
+                {formatMoney(totalLentOutstanding)}
+              </Text>
             </View>
           </View>
 

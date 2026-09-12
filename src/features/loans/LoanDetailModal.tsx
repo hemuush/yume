@@ -7,16 +7,20 @@ import {
   payInstallment,
   getLoanById,
   deleteLoan,
+  restoreLoan,
   getLoanRateHistory,
   LoanRateChange,
 } from '@/db/loans';
 import { listAccounts, listCategories } from '@/db/ledger';
 import { formatMoney } from '@/lib/money';
 import { allocateRoundedMinor } from '@/lib/round';
+import { useUndoToast } from '@/components/UndoToast';
+import { haptics } from '@/lib/haptics';
 import { Loan, LoanPayment, Account, Category } from '@/types';
 import { FormInput } from '@/components/FormInput';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { ModalSheet } from '@/components/ModalSheet';
+import { ActionSheet, ActionSheetItem } from '@/components/ActionSheet';
 import { modalFooterStyles as f, theme } from '@/constants/theme';
 import { toLocalIsoDate, partsToIsoDate, parseLocalIsoDate } from '@/lib/date';
 import { NeoTile } from '@/components/NeoTile';
@@ -35,6 +39,7 @@ export function LoanDetailModal({
   onClose: () => void;
   onChanged: () => void;
 }) {
+  const { show: showUndo } = useUndoToast();
   const [liveLoan, setLiveLoan] = useState<Loan>(loan);
   const [schedule, setSchedule] = useState<LoanPayment[]>([]);
   const [rateHistory, setRateHistory] = useState<LoanRateChange[]>([]);
@@ -46,6 +51,8 @@ export function LoanDetailModal({
   const [assetModalVisible, setAssetModalVisible] = useState(false);
   const [accountModalVisible, setAccountModalVisible] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [paidDone, setPaidDone] = useState(false);
+  const [moreActionsVisible, setMoreActionsVisible] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [scheduleExpanded, setScheduleExpanded] = useState(false);
   // The date actually paid — defaults to the installment's own due date, not
@@ -139,63 +146,75 @@ export function LoanDetailModal({
       });
       await load();
       await onChanged();
+      // A brief "done" checkmark (PrimaryButton's own `done` prop) before
+      // the sheet closes, instead of it vanishing the instant the write
+      // finishes — the actual data is already saved by this point, so the
+      // extra ~380ms is purely a felt confirmation, nothing riskier.
+      setPaidDone(true);
+      setTimeout(() => {
+        setPaidDone(false);
+        setBusy(false);
+        setPayVisible(false);
+      }, 380);
     } catch (e: any) {
       Alert.alert('Could not record payment', String(e?.message ?? e));
-    } finally {
       setBusy(false);
-      setPayVisible(false);
     }
   };
 
   // Pay is the one thing you do almost every time you open a loan, so it
   // stays as the single visible action; Prepay/Update rate/Delete are real
   // but rare, moved behind "⋯" so a 240-month home loan's detail screen
-  // looks exactly as simple as a 6-month one.
-  const showMoreActions = () => {
-    // Android's native alert dialog supports at most 3 buttons — a 4th is
-    // silently dropped rather than shown or wrapped. With an explicit
-    // "Cancel" always appended, a floating active loan with a pending
-    // installment (prepay + update rate + delete + cancel = 4) lost Cancel
-    // entirely, leaving no way to dismiss the sheet except the device back
-    // gesture. Dropping the explicit Cancel button and relying on Android's
-    // own cancelable-dialog behavior (back button / tap outside) instead
-    // keeps every real action visible regardless of how many apply.
-    const buttons: { text: string; style?: 'default' | 'cancel' | 'destructive'; onPress?: () => void }[] =
-      [];
-    if (liveLoan.status === 'active' && nextInstallment) {
-      buttons.push({ text: 'Make a prepayment', onPress: () => setPrepayVisible(true) });
-    }
-    if (liveLoan.status === 'active' && liveLoan.rateType === 'floating') {
-      buttons.push({ text: 'Update interest rate', onPress: () => setRateChangeVisible(true) });
-    }
-    buttons.push({ text: 'Delete loan', style: 'destructive', onPress: confirmDelete });
-    Alert.alert('More options', undefined, buttons, { cancelable: true });
-  };
+  // looks exactly as simple as a 6-month one. Rendered via the app's own
+  // `ActionSheet` (styled to match the rest of Yume) rather than
+  // `Alert.alert` — see that component's own comment for why, and for how
+  // it also removes the 3-button ceiling this used to work around by
+  // dropping an explicit Cancel row.
+  const moreActionItems: ActionSheetItem[] = [];
+  if (liveLoan.status === 'active' && nextInstallment) {
+    moreActionItems.push({
+      key: 'prepay',
+      label: 'Make a prepayment',
+      icon: 'trending-up',
+      onPress: () => setPrepayVisible(true),
+    });
+  }
+  if (liveLoan.status === 'active' && liveLoan.rateType === 'floating') {
+    moreActionItems.push({
+      key: 'rate',
+      label: 'Update interest rate',
+      icon: 'percent',
+      onPress: () => setRateChangeVisible(true),
+    });
+  }
+  moreActionItems.push({
+    key: 'delete',
+    label: 'Delete loan',
+    icon: 'trash-2',
+    destructive: true,
+    // A wrapped call, not a direct reference — `confirmDelete` is declared
+    // further down this same render, so a direct reference here would be a
+    // temporal-dead-zone error; by the time this item is actually clicked
+    // (long after this render finished), `confirmDelete` is defined either way.
+    onPress: () => confirmDelete(),
+  });
 
-  const confirmDelete = () => {
-    Alert.alert(
-      'Delete this loan?',
-      "This removes the loan, its schedule, and any disbursement or fee transaction it recorded — for fixing a loan entered with wrong details, not for one that's simply paid off. This can't be undone.",
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            setBusy(true);
-            try {
-              await deleteLoan(liveLoan.id);
-              await onChanged();
-              onClose();
-            } catch (e: any) {
-              Alert.alert('Could not delete loan', String(e?.message ?? e));
-            } finally {
-              setBusy(false);
-            }
-          },
-        },
-      ]
-    );
+  const confirmDelete = async () => {
+    setBusy(true);
+    try {
+      const snapshot = await deleteLoan(liveLoan.id);
+      haptics.warn();
+      onChanged();
+      onClose();
+      showUndo(`Deleted "${liveLoan.counterparty}"`, async () => {
+        await restoreLoan(snapshot);
+        onChanged();
+      });
+    } catch (e: any) {
+      Alert.alert('Could not delete loan', String(e?.message ?? e));
+    } finally {
+      setBusy(false);
+    }
   };
 
   const pendingInstallments = schedule.filter((p) => p.status === 'pending');
@@ -238,7 +257,7 @@ export function LoanDetailModal({
               </Text>
             </View>
             <Pressable
-              onPress={showMoreActions}
+              onPress={() => setMoreActionsVisible(true)}
               hitSlop={10}
               style={styles.kebabBtn}
               disabled={busy}
@@ -419,6 +438,7 @@ export function LoanDetailModal({
                 />
                 <PrimaryButton
                   title={busy ? 'Recording...' : isPayingEarly ? 'Pay Early' : 'Confirm'}
+                  done={paidDone}
                   onPress={markPaid}
                   disabled={busy || !paidDateIso}
                   style={f.footerBtn}
@@ -529,6 +549,13 @@ export function LoanDetailModal({
           loanId={liveLoan.id}
         />
       )}
+
+      <ActionSheet
+        visible={moreActionsVisible}
+        onClose={() => setMoreActionsVisible(false)}
+        title="More options"
+        items={moreActionItems}
+      />
     </>
   );
 }

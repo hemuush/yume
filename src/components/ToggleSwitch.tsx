@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { View, Pressable, Animated, StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
 import { useAccent } from '@/theme/AccentContext';
+import { haptics } from '@/lib/haptics';
 
 interface Props {
   value: boolean;
@@ -21,7 +22,11 @@ export function ToggleSwitch({ value, onChange, disabled }: Props) {
 
   return (
     <Pressable
-      onPress={() => !disabled && onChange(!value)}
+      onPress={() => {
+        if (disabled) return;
+        haptics.tap();
+        onChange(!value);
+      }}
       disabled={disabled}
       hitSlop={8}
       accessibilityRole="switch"

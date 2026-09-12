@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, Pressable, Animated, Alert } from 'react-native';
+import ReanimatedAnimated, { FadeIn, ReduceMotion } from 'react-native-reanimated';
 import { useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -10,6 +11,7 @@ import {
   recordMoneyGivenToPerson,
   recordMoneyReceivedFromPerson,
   deleteLedgerEntry,
+  restoreLedgerEntry,
   PersonWithBalance,
 } from '@/db/people';
 import { listAccounts, listCategories } from '@/db/ledger';
@@ -25,8 +27,16 @@ import { ModalSheet } from '@/components/ModalSheet';
 import { Chip } from '@/components/Chip';
 import { theme, FLAT_PALETTE, modalFooterStyles as f } from '@/constants/theme';
 import { parseLocalIsoDate, partsToIsoDate } from '@/lib/date';
-import { useFadeIn } from '@/lib/useFadeIn';
 import { usePressScale } from '@/lib/usePressScale';
+import { stableIndexFromId } from '@/lib/color';
+import { CountUpAmount } from '@/components/CountUpAmount';
+import { useUndoToast } from '@/components/UndoToast';
+import { haptics } from '@/lib/haptics';
+
+// Capped the same way Reports' own heatmap caps its per-cell stagger — a
+// long list still finishes settling in well under a second instead of the
+// last row arriving noticeably late.
+const MAX_STAGGER_MS = 320;
 
 function lastActivityLabel(dateStr: string | null): string {
   if (!dateStr) return 'No activity yet';
@@ -49,7 +59,6 @@ export function PeopleSection() {
   const [people, setPeople] = useState<PersonWithBalance[]>([]);
   const [addVisible, setAddVisible] = useState(false);
   const [selected, setSelected] = useState<PersonWithBalance | null>(null);
-  const listFadeStyle = useFadeIn([people]);
 
   const load = useCallback(async () => {
     setPeople(await listPeople());
@@ -74,14 +83,24 @@ export function PeopleSection() {
         <AddButton onPress={() => setAddVisible(true)} label="+ Person" />
       </View>
 
+      {/* Plain figures, not full-colour-fill cards — matches the same fix
+          already applied to Loans' own You-owe/Owed-to-you row: colour lives
+          on the number itself (green for real money owed to you), not the
+          whole tile. This section hadn't had that pass yet. */}
       <View style={styles.summaryRow}>
-        <View style={[styles.summaryCard, { backgroundColor: theme.colors.flatMint }]}>
+        <View style={styles.summaryStat}>
           <Text style={styles.summaryLabel}>Owed to you</Text>
-          <Text style={styles.summaryValue}>{formatMoney(totalOwedToYou)}</Text>
+          <CountUpAmount
+            minor={totalOwedToYou}
+            style={[styles.summaryValue, totalOwedToYou > 0 && styles.summaryValueIncome]}
+          />
         </View>
-        <View style={[styles.summaryCard, { backgroundColor: theme.colors.flatPink }]}>
+        <View style={styles.summaryStat}>
           <Text style={styles.summaryLabel}>You owe</Text>
-          <Text style={styles.summaryValue}>{formatMoney(totalYouOwe)}</Text>
+          <CountUpAmount
+            minor={totalYouOwe}
+            style={[styles.summaryValue, totalYouOwe > 0 && styles.summaryValueExpense]}
+          />
         </View>
       </View>
 
@@ -93,8 +112,14 @@ export function PeopleSection() {
             <PersonRow
               key={p.id}
               person={p}
-              color={FLAT_PALETTE[i % FLAT_PALETTE.length]}
-              fadeStyle={listFadeStyle}
+              // Stable per-person (hashed from their own id), not per list
+              // position — the same fix already applied to AccountChip,
+              // MoneyStatCard, Profile's stats, and RuleCard: a colour tied
+              // to list order means two people can swap colours just by one
+              // of them being renamed (re-sorting the list) or a third
+              // person being added ahead of them.
+              color={FLAT_PALETTE[stableIndexFromId(p.id, FLAT_PALETTE.length)]}
+              index={i}
               onPress={() => setSelected(p)}
             />
           ))
@@ -128,44 +153,55 @@ const AnimatedPersonRow = Animated.createAnimatedComponent(Pressable);
 function PersonRow({
   person,
   color,
-  fadeStyle,
+  index,
   onPress,
 }: {
   person: PersonWithBalance;
   color: string;
-  fadeStyle: any;
+  index: number;
   onPress: () => void;
 }) {
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.98);
   return (
-    <AnimatedPersonRow
-      style={[styles.row, fadeStyle, animatedStyle]}
-      onPress={onPress}
-      onPressIn={onPressIn}
-      onPressOut={onPressOut}
+    // Entrance (reanimated) and press-feedback (a plain RN Animated.Value)
+    // are two different animation drivers, so the stagger lives on this
+    // outer wrapper rather than fighting the press-scale style for the same
+    // node — the same split SpendHeatmap's cells use.
+    <ReanimatedAnimated.View
+      entering={FadeIn.delay(Math.min(index * 45, MAX_STAGGER_MS))
+        .duration(280)
+        .springify()
+        .reduceMotion(ReduceMotion.System)}
     >
-      <View style={[styles.avatar, { backgroundColor: color }]}>
-        <Text style={styles.avatarInitial}>{person.name.trim().charAt(0).toUpperCase() || '?'}</Text>
-      </View>
-      <View style={{ flex: 1, marginLeft: 12 }}>
-        <Text style={styles.rowLabel} numberOfLines={1}>
-          {person.name}
-        </Text>
-        <Text style={styles.rowSub} numberOfLines={1}>
-          {lastActivityLabel(person.lastActivityDate)}
-        </Text>
-      </View>
-      <Text
-        style={[
-          styles.rowValue,
-          { color: person.balanceMinor >= 0 ? theme.colors.income : theme.colors.expense },
-        ]}
-        numberOfLines={1}
+      <AnimatedPersonRow
+        style={[styles.row, animatedStyle]}
+        onPress={onPress}
+        onPressIn={onPressIn}
+        onPressOut={onPressOut}
       >
-        {person.balanceMinor >= 0 ? 'owes you ' : 'you owe '}
-        {formatMoney(Math.abs(roundedMinor(person.balanceMinor)))}
-      </Text>
-    </AnimatedPersonRow>
+        <View style={[styles.avatar, { backgroundColor: color }]}>
+          <Text style={styles.avatarInitial}>{person.name.trim().charAt(0).toUpperCase() || '?'}</Text>
+        </View>
+        <View style={{ flex: 1, marginLeft: 12 }}>
+          <Text style={styles.rowLabel} numberOfLines={1}>
+            {person.name}
+          </Text>
+          <Text style={styles.rowSub} numberOfLines={1}>
+            {lastActivityLabel(person.lastActivityDate)}
+          </Text>
+        </View>
+        <Text
+          style={[
+            styles.rowValue,
+            { color: person.balanceMinor >= 0 ? theme.colors.income : theme.colors.expense },
+          ]}
+          numberOfLines={1}
+        >
+          {person.balanceMinor >= 0 ? 'owes you ' : 'you owe '}
+          {formatMoney(Math.abs(roundedMinor(person.balanceMinor)))}
+        </Text>
+      </AnimatedPersonRow>
+    </ReanimatedAnimated.View>
   );
 }
 
@@ -236,6 +272,7 @@ function PersonDetailModal({
   onClose: () => void;
   onChanged: () => void;
 }) {
+  const { show: showUndo } = useUndoToast();
   const [ledger, setLedger] = useState<PersonLedgerEntry[]>([]);
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -353,32 +390,23 @@ function PersonDetailModal({
   // FROM the ledger side (rather than from Transactions, which only reaches
   // entries that have a linked transaction) covers "just adjust balance"
   // entries too.
-  const onDeleteEntry = (entry: PersonLedgerEntry) => {
-    Alert.alert(
-      'Delete this entry?',
-      `${entry.note || (entry.amountMinor >= 0 ? 'Lent' : 'Repaid')} · ${formatMoney(Math.abs(entry.amountMinor))} on ${entry.date}.${
-        entry.transactionId ? ' Its linked transaction will be removed too.' : ''
-      } This can't be undone.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            setSaving(true);
-            try {
-              await deleteLedgerEntry(entry.id);
-              await load();
-              await onChanged();
-            } catch (e: any) {
-              Alert.alert('Could not delete entry', String(e?.message ?? e));
-            } finally {
-              setSaving(false);
-            }
-          },
-        },
-      ]
-    );
+  const onDeleteEntry = async (entry: PersonLedgerEntry) => {
+    setSaving(true);
+    try {
+      const snapshot = await deleteLedgerEntry(entry.id);
+      haptics.warn();
+      await load();
+      await onChanged();
+      showUndo(`Deleted ${entry.note || (entry.amountMinor >= 0 ? 'Lent' : 'Repaid')}`, async () => {
+        await restoreLedgerEntry(snapshot);
+        await load();
+        await onChanged();
+      });
+    } catch (e: any) {
+      Alert.alert('Could not delete entry', String(e?.message ?? e));
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -543,17 +571,23 @@ function PersonDetailModal({
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
-  summaryRow: { flexDirection: 'row', paddingHorizontal: 20, gap: 10, marginBottom: 16 },
-  // A colored flat-fill identity card carries its own separation from the
-  // page via that color — no border on top of it, matching every other
-  // colored stat tile in the app (NeoTile's own colored-card rule).
-  summaryCard: {
-    flex: 1,
-    borderRadius: 16,
-    padding: 14,
+  summaryRow: { flexDirection: 'row', paddingHorizontal: 20, gap: 26, marginBottom: 16 },
+  summaryStat: { flex: 1 },
+  summaryLabel: {
+    fontFamily: theme.font.mono,
+    fontSize: 9,
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
+    color: theme.colors.textMuted,
   },
-  summaryLabel: { fontSize: 12, color: theme.colors.onFlat, opacity: 0.65, marginBottom: 4 },
-  summaryValue: { fontSize: 18, fontWeight: '800', color: theme.colors.onFlat },
+  summaryValue: {
+    fontFamily: theme.font.monoBold,
+    fontSize: 20,
+    color: theme.colors.textPrimary,
+    marginTop: 4,
+  },
+  summaryValueIncome: { color: theme.colors.income },
+  summaryValueExpense: { color: theme.colors.expense },
   emptyText: { marginHorizontal: 20, color: theme.colors.textMuted, fontSize: 13 },
   row: {
     flexDirection: 'row',

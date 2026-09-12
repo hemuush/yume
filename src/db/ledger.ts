@@ -1,5 +1,6 @@
 import { getDb } from './client';
 import { newId } from '@/lib/id';
+import { captureRow, captureRows, restoreRow, restoreRows, RowSnapshot } from './undoSnapshot';
 import {
   getDefaultCurrency,
   getNotificationPrefs,
@@ -221,7 +222,7 @@ export async function unarchiveAccount(id: string): Promise<void> {
  * reject the raw delete anyway, but checking first here means the user gets
  * a clear explanation instead of a raw SQLite constraint error.
  */
-export async function deleteAccount(id: string): Promise<void> {
+export async function deleteAccount(id: string): Promise<RowSnapshot> {
   const count = await getAccountTransactionCount(id);
   if (count > 0) {
     throw new Error(
@@ -229,7 +230,15 @@ export async function deleteAccount(id: string): Promise<void> {
     );
   }
   const db = await getDb();
+  const snapshot = await captureRow(db, 'accounts', id);
   await db.runAsync('DELETE FROM accounts WHERE id = ?', [id]);
+  return snapshot!;
+}
+
+/** Undoes `deleteAccount` — re-inserts the exact row, never a fresh one. */
+export async function restoreAccount(snapshot: RowSnapshot): Promise<void> {
+  const db = await getDb();
+  await restoreRow(db, snapshot);
 }
 
 function rowToCategory(row: any): Category {
@@ -413,7 +422,7 @@ export async function updateCategory(
  * unused above) and any budgets (schema's own `ON DELETE CASCADE` —
  * harmless today since nothing creates budgets yet).
  */
-export async function deleteCategory(id: string): Promise<void> {
+export async function deleteCategory(id: string): Promise<RowSnapshot[]> {
   const db = await getDb();
   await assertNotSystemCategory(db, id, 'deleted');
   const children = await db.getAllAsync<{ id: string }>('SELECT id FROM categories WHERE parent_id = ?', [
@@ -444,7 +453,19 @@ export async function deleteCategory(id: string): Promise<void> {
     );
   }
 
+  // Sorted parent-first: `restoreCategory` re-inserts in this same order, and
+  // a child row's `parent_id` foreign key needs its parent to already exist.
+  const snapshots = (await captureRows(db, 'categories', 'id = ? OR parent_id = ?', [id, id])).sort((a) =>
+    a.row.id === id ? -1 : 1
+  );
   await db.runAsync('DELETE FROM categories WHERE id = ? OR parent_id = ?', [id, id]);
+  return snapshots;
+}
+
+/** Undoes `deleteCategory` — re-inserts the category (and any subcategories it took with it), in the same parent-first order they were captured. */
+export async function restoreCategory(snapshots: RowSnapshot[]): Promise<void> {
+  const db = await getDb();
+  await restoreRows(db, snapshots);
 }
 
 function parseTags(raw: string | null): string[] {
@@ -680,10 +701,18 @@ export async function isLinkedTransaction(id: string): Promise<boolean> {
  * leave a person's balance including money that no longer moved. Use
  * undoInstallmentPayment / undoPersonTransaction for those instead.
  */
-export async function deleteTransaction(id: string): Promise<void> {
+export async function deleteTransaction(id: string): Promise<RowSnapshot> {
   if (await isLinkedTransaction(id)) {
     throw new Error('This transaction is linked to a loan or person entry — undo it from there instead.');
   }
   const db = await getDb();
+  const snapshot = await captureRow(db, 'transactions', id);
   await db.runAsync('DELETE FROM transactions WHERE id = ?', [id]);
+  return snapshot!;
+}
+
+/** Undoes `deleteTransaction` — re-inserts the exact row, never a fresh one. */
+export async function restoreTransaction(snapshot: RowSnapshot): Promise<void> {
+  const db = await getDb();
+  await restoreRow(db, snapshot);
 }

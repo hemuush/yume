@@ -1,8 +1,8 @@
 import { useCallback, useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, RefreshControl, Animated } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, RefreshControl } from 'react-native';
+import Animated, { FadeInDown, FadeIn, ReduceMotion } from 'react-native-reanimated';
 import Feather from '@expo/vector-icons/Feather';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useFadeIn } from '@/lib/useFadeIn';
 import { router, useFocusEffect } from 'expo-router';
 import { listAccounts, listCategories, listTransactions } from '@/db/ledger';
 import { listLoans, getNextDueInstallment, NextDueInstallment } from '@/db/loans';
@@ -12,26 +12,26 @@ import { getUserName } from '@/db/settings';
 import { roundedMinor } from '@/lib/round';
 import { savingsRatePct } from '@/lib/savingsRate';
 import { Account, Category, Transaction, Loan, RecurringRule } from '@/types';
-import { theme, ID_PALETTE } from '@/constants/theme';
+import { theme } from '@/constants/theme';
+import { useAccent } from '@/theme/AccentContext';
+import { hexToRgba } from '@/lib/color';
 import { EmptyState } from '@/components/EmptyState';
-import {
-  CURRENT_PERIOD,
-  PeriodCursor,
-  periodRange,
-  previousPeriodLabel,
-  previousPeriodRange,
-} from '@/lib/period';
+import { CURRENT_PERIOD, PeriodCursor, periodRange, previousPeriodRange } from '@/lib/period';
 import { daysUntilIsoDate } from '@/lib/date';
 import { HomeHeader } from '@/features/home/HomeHeader';
 import { ThisMonthHero } from '@/features/home/ThisMonthHero';
 import { QuickActionsRow } from '@/features/home/QuickActionsRow';
 import { MoneyStatCard } from '@/features/home/MoneyStatCard';
-import { SpendingAlertCard } from '@/features/home/SpendingAlertCard';
 import { HomeSection } from '@/features/home/HomeSection';
-import { UpcomingRow } from '@/features/home/UpcomingRow';
+import { UpcomingRow, UpcomingMoreRow } from '@/features/home/UpcomingRow';
+import { useCappedList } from '@/lib/useCappedList';
 import { RecentTransactionRow } from '@/features/home/RecentTransactionRow';
 import { AccountChip } from '@/features/home/AccountChip';
 import { suuLine } from '@/features/home/suuLine';
+
+// Capped the same way Reports' own heatmap caps its per-cell stagger — a
+// long list still finishes settling in well under a second.
+const MAX_STAGGER_MS = 320;
 
 /** "today" / "in N days" for a near due date; the actual calendar date once it's
  * far enough out that a raw day-count reads as broken rather than useful. */
@@ -44,6 +44,7 @@ function dueDateLabel(dateStr: string): string {
 
 export default function DashboardScreen() {
   const insets = useSafeAreaInsets();
+  const { accent } = useAccent();
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [recent, setRecent] = useState<Transaction[]>([]);
@@ -117,7 +118,6 @@ export default function DashboardScreen() {
 
   const incomeChangePct = comparison?.incomeChangePct;
   const expenseChangePct = comparison?.expenseChangePct;
-  const comparisonLabel = previousPeriodLabel(cursor);
 
   const prevSurplus = comparison
     ? comparison.previous.incomeMinor -
@@ -131,18 +131,19 @@ export default function DashboardScreen() {
         : null
       : ((surplusInPeriod - prevSurplus) / Math.abs(prevSurplus)) * 100;
 
-  // "Saved" = income not spent (kept in any account), so the bar reflects
-  // aggressive savers instead of reading 0% when they sweep cash into a pot.
-  const savingsPct = savingsRatePct(dispIncome - dispExpense, dispIncome);
-  const suu = suuLine(savingsPct, expenseChangePct ?? null);
-
   const topGrowing =
     comparison &&
     findTopGrowingCategory(comparison.current.categoryBreakdown, comparison.previous.categoryBreakdown);
-  const showAlert = expenseChangePct != null && expenseChangePct > 0;
-  const hasAlerts = nextDue !== null || !!topGrowing;
 
-  const recentFadeStyle = useFadeIn([recent]);
+  // "Saved" = income not spent (kept in any account), so the bar reflects
+  // aggressive savers instead of reading 0% when they sweep cash into a pot.
+  // The spend-is-up nudge (previously its own SpendingAlertCard, which just
+  // repeated this hero's own "N% vs last" figure) is now folded into Suu's
+  // line itself — see suuLine's own comment for why that takes priority.
+  const savingsPct = savingsRatePct(dispIncome - dispExpense, dispIncome);
+  const suu = suuLine(savingsPct, expenseChangePct ?? null, topGrowing?.name ?? null);
+
+  const hasAlerts = nextDue !== null || !!topGrowing;
 
   // "Upcoming" used to show only the next loan EMI — every recurring rule
   // (rent, subscriptions, salary) was invisible on Home even though it's
@@ -166,8 +167,11 @@ export default function DashboardScreen() {
     upcomingItems.push({
       key: 'loan',
       icon: 'calendar',
-      iconBg: theme.colors.goldTint,
-      iconColor: theme.colors.idGoldDeep,
+      // Was a fixed gold tint, unrelated to anything the user picked — now a
+      // light wash of their own accent, so the one card that keeps a colour
+      // uses the user's colour rather than an arbitrary one.
+      iconBg: hexToRgba(accent, 0.18),
+      iconColor: accent,
       title: `${nextDue.counterparty} EMI`,
       subtitle: `Due ${dueDateLabel(nextDue.dueDate)}`,
       amountMinor: nextDue.emiAmountMinor,
@@ -194,7 +198,10 @@ export default function DashboardScreen() {
     });
   }
   upcomingItems.sort((a, b) => (a.sortDate < b.sortDate ? -1 : a.sortDate > b.sortDate ? 1 : 0));
-  const visibleUpcoming = upcomingItems.slice(0, 3);
+  const { shown: visibleUpcoming, hidden: hiddenUpcoming, expand: expandUpcoming } = useCappedList(
+    upcomingItems,
+    3
+  );
 
   return (
     <View style={styles.container}>
@@ -225,27 +232,29 @@ export default function DashboardScreen() {
           suu={suu}
         />
 
-        {showAlert && (
-          <SpendingAlertCard
-            changePct={expenseChangePct}
-            comparisonLabel={comparisonLabel}
-            topCategoryName={topGrowing?.name}
-          />
-        )}
-
         <View style={styles.statRow}>
-          <MoneyStatCard
-            label="Surplus"
-            amountMinor={surplusInPeriod}
-            changePct={surplusChangePct}
-            tone={surplusInPeriod < 0 ? 'watch' : 'good'}
-          />
-          <MoneyStatCard
-            label="Debt left"
-            amountMinor={roundedMinor(totalOutstandingLoans)}
-            tone={totalOutstandingLoans === 0 ? 'good' : 'neutral'}
-            footnote={totalOutstandingLoans === 0 ? '✓ All clear' : undefined}
-          />
+          <Animated.View
+            style={{ flex: 1 }}
+            entering={FadeInDown.duration(360).springify().reduceMotion(ReduceMotion.System)}
+          >
+            <MoneyStatCard
+              label="Surplus"
+              amountMinor={surplusInPeriod}
+              changePct={surplusChangePct}
+              tone={surplusInPeriod < 0 ? 'watch' : 'good'}
+            />
+          </Animated.View>
+          <Animated.View
+            style={{ flex: 1 }}
+            entering={FadeInDown.duration(360).delay(60).springify().reduceMotion(ReduceMotion.System)}
+          >
+            <MoneyStatCard
+              label="Debt left"
+              amountMinor={roundedMinor(totalOutstandingLoans)}
+              tone={totalOutstandingLoans === 0 ? 'good' : 'neutral'}
+              footnote={totalOutstandingLoans === 0 ? '✓ All clear' : undefined}
+            />
+          </Animated.View>
         </View>
 
         {visibleUpcoming.length > 0 && (
@@ -255,19 +264,28 @@ export default function DashboardScreen() {
           <HomeSection title="Upcoming">
             <View style={styles.card}>
               {visibleUpcoming.map((item, i) => (
-                <UpcomingRow
+                <Animated.View
                   key={item.key}
-                  icon={item.icon}
-                  iconBg={item.iconBg}
-                  iconColor={item.iconColor}
-                  title={item.title}
-                  subtitle={item.subtitle}
-                  amountMinor={item.amountMinor}
-                  sign={item.sign}
-                  onPress={item.onPress}
-                  divider={i > 0}
-                />
+                  entering={FadeIn.delay(Math.min(i * 60, MAX_STAGGER_MS))
+                    .duration(280)
+                    .reduceMotion(ReduceMotion.System)}
+                >
+                  <UpcomingRow
+                    icon={item.icon}
+                    iconBg={item.iconBg}
+                    iconColor={item.iconColor}
+                    title={item.title}
+                    subtitle={item.subtitle}
+                    amountMinor={item.amountMinor}
+                    sign={item.sign}
+                    onPress={item.onPress}
+                    divider={i > 0}
+                  />
+                </Animated.View>
               ))}
+              {hiddenUpcoming.length > 0 && (
+                <UpcomingMoreRow count={hiddenUpcoming.length} divider onPress={expandUpcoming} />
+              )}
             </View>
           </HomeSection>
         )}
@@ -279,18 +297,24 @@ export default function DashboardScreen() {
               subtitle="Use the month pill above to check another period."
             />
           ) : (
-            <Animated.View style={[styles.card, recentFadeStyle]}>
+            <View style={styles.card}>
               {recent.slice(0, 4).map((tx, i) => (
-                <RecentTransactionRow
+                <Animated.View
                   key={tx.id}
-                  tx={tx}
-                  category={categoryFor(tx.categoryId) ?? undefined}
-                  accountName={accountName(tx.accountId)}
-                  toAccountName={accountName(tx.toAccountId)}
-                  divider={i > 0}
-                />
+                  entering={FadeIn.delay(Math.min(i * 60, MAX_STAGGER_MS))
+                    .duration(280)
+                    .reduceMotion(ReduceMotion.System)}
+                >
+                  <RecentTransactionRow
+                    tx={tx}
+                    category={categoryFor(tx.categoryId) ?? undefined}
+                    accountName={accountName(tx.accountId)}
+                    toAccountName={accountName(tx.toAccountId)}
+                    divider={i > 0}
+                  />
+                </Animated.View>
               ))}
-            </Animated.View>
+            </View>
           )}
         </HomeSection>
 
@@ -304,7 +328,14 @@ export default function DashboardScreen() {
               contentContainerStyle={styles.accountStrip}
             >
               {accounts.map((acc, i) => (
-                <AccountChip key={acc.id} account={acc} fill={ID_PALETTE[i % ID_PALETTE.length]} />
+                <Animated.View
+                  key={acc.id}
+                  entering={FadeIn.delay(Math.min(i * 60, MAX_STAGGER_MS))
+                    .duration(280)
+                    .reduceMotion(ReduceMotion.System)}
+                >
+                  <AccountChip account={acc} />
+                </Animated.View>
               ))}
             </ScrollView>
           )}
