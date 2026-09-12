@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import { View, Text, ScrollView, ActivityIndicator, Pressable, StyleSheet } from 'react-native';
+import ReanimatedAnimated, { FadeIn } from 'react-native-reanimated';
 import { useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from '@expo/vector-icons/Feather';
@@ -22,6 +23,7 @@ import { AppHeader } from '@/components/AppHeader';
 import { Amount } from '@/components/Amount';
 import { CategoryIcon } from '@/components/CategoryIcon';
 import { SuuIllustration } from '@/components/SuuIllustration';
+import { CountUpAmount } from '@/components/CountUpAmount';
 import { formatMoney } from '@/lib/money';
 import { formatPctChange } from '@/lib/format';
 import { roundedMinor, allocateRoundedMinor } from '@/lib/round';
@@ -40,9 +42,11 @@ import { parseLocalIsoDate } from '@/lib/date';
 import { theme } from '@/constants/theme';
 import { useAccent } from '@/theme/AccentContext';
 import { shade, spendHeatScale } from '@/lib/color';
+import { useSwipeStep } from '@/lib/useSwipeStep';
 import { SpendHeatmap, HeatCell } from '@/features/reports/SpendHeatmap';
 import { MoonPhase, moonPhaseShades } from '@/features/reports/MoonPhase';
 import { SkylineRibbon } from '@/features/reports/SkylineRibbon';
+import { AnimatedCategoryFill } from '@/features/reports/AnimatedCategoryFill';
 import {
   heatLevel,
   baselineFromTrend,
@@ -250,9 +254,12 @@ export default function ReportsScreen() {
             <View style={styles.headlineRow}>
               <View style={{ flex: 1 }}>
                 <Text style={styles.eyebrow}>Spent in {periodLabel(cursor)}</Text>
-                <Text style={styles.big} numberOfLines={1} adjustsFontSizeToFit>
-                  {formatMoney(dispExpense)}
-                </Text>
+                <CountUpAmount
+                  minor={dispExpense}
+                  style={styles.big}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                />
               </View>
               {vsUsualPct != null && (
                 <View style={styles.vs}>
@@ -340,7 +347,12 @@ export default function ReportsScreen() {
                     </View>
                     <View style={styles.moonFig}>
                       <View style={styles.moonFigLabelRow}>
-                        <View style={[styles.rdDot, { backgroundColor: moonShades.dark }]} />
+                        {/* moonShades.dark (the raw moon-disc tint) reads too
+                            close to the card's own cream background at this
+                            tiny size — moonTextShades.dark is the same darker
+                            shade the figure text right below already uses for
+                            legibility, reused here for the dot too. */}
+                        <View style={[styles.rdDot, { backgroundColor: moonTextShades.dark }]} />
                         <Text style={styles.moonFigLabel}>Discretionary</Text>
                       </View>
                       <Text style={[styles.moonFigValue, { color: moonTextShades.dark }]}>
@@ -398,13 +410,10 @@ export default function ReportsScreen() {
                       </View>
                     </View>
                     <View style={styles.catTrack}>
-                      <View
-                        style={{
-                          width: `${Math.max(3, (c.totalMinor / maxCat) * 100)}%`,
-                          height: '100%',
-                          borderRadius: 4,
-                          backgroundColor: c.color,
-                        }}
+                      <AnimatedCategoryFill
+                        targetPct={Math.max(3, (c.totalMinor / maxCat) * 100)}
+                        color={c.color}
+                        delay={Math.min(i, 8) * 60}
                       />
                     </View>
                   </Pressable>
@@ -587,13 +596,21 @@ function DayTotal({ txs }: { txs: Transaction[] }) {
 
 function PeriodRow({ cursor, onChange }: { cursor: PeriodCursor; onChange: (c: PeriodCursor) => void }) {
   const fwd = canStepForward(cursor);
+  // A drag anywhere on the pill steps the period the same as tapping its own
+  // chevrons, without needing to land on the small 36px arrow itself.
+  const swipe = useSwipeStep(
+    () => onChange(stepPeriod(cursor, -1)),
+    () => fwd && onChange(stepPeriod(cursor, 1))
+  );
   return (
     <View style={styles.periodRow}>
-      <View style={styles.periodPill}>
+      <View style={styles.periodPill} {...swipe.panHandlers}>
         <Pressable onPress={() => onChange(stepPeriod(cursor, -1))} hitSlop={8} style={styles.periodArrow}>
           <Feather name="chevron-left" size={16} color={theme.colors.ink} />
         </Pressable>
-        <Text style={styles.periodLabel}>{periodLabel(cursor)}</Text>
+        <ReanimatedAnimated.Text key={periodLabel(cursor)} entering={FadeIn.duration(150)} style={styles.periodLabel}>
+          {periodLabel(cursor)}
+        </ReanimatedAnimated.Text>
         <Pressable
           onPress={() => onChange(stepPeriod(cursor, 1))}
           disabled={!fwd}

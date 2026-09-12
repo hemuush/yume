@@ -1,7 +1,10 @@
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { View, Text, Pressable, Animated, StyleSheet } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import { theme } from '@/constants/theme';
 import { formatMoney } from '@/lib/money';
+import { usePressScale } from '@/lib/usePressScale';
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 /**
  * One row in the "Upcoming" list — a loan EMI or a recurring rule's next
@@ -31,12 +34,15 @@ export function UpcomingRow({
   onPress: () => void;
   divider?: boolean;
 }) {
+  const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.98);
   return (
-    <Pressable
+    <AnimatedPressable
       onPress={onPress}
+      onPressIn={onPressIn}
+      onPressOut={onPressOut}
       accessibilityRole="button"
       accessibilityLabel={`${title}, ${subtitle}`}
-      style={[styles.row, divider && styles.divider]}
+      style={[styles.row, divider && styles.divider, animatedStyle]}
     >
       <View style={[styles.iconWrap, { backgroundColor: iconBg }]}>
         <Feather name={icon} size={14} color={iconColor} />
@@ -54,7 +60,40 @@ export function UpcomingRow({
         {formatMoney(amountMinor)}
       </Text>
       <Feather name="chevron-right" size={16} color={theme.colors.textMuted} />
-    </Pressable>
+    </AnimatedPressable>
+  );
+}
+
+/**
+ * The row that stands in for whatever's past `useCappedList`'s cap — same
+ * shape as a real `UpcomingRow` (icon left, label filling the middle) so it
+ * reads as one more row in the list rather than a different kind of thing,
+ * the same "+N more" language `DayCard` uses for a busy day.
+ */
+export function UpcomingMoreRow({
+  count,
+  divider,
+  onPress,
+}: {
+  count: number;
+  divider?: boolean;
+  onPress: () => void;
+}) {
+  const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.98);
+  return (
+    <AnimatedPressable
+      onPress={onPress}
+      onPressIn={onPressIn}
+      onPressOut={onPressOut}
+      accessibilityRole="button"
+      accessibilityLabel={`${count} more upcoming`}
+      style={[styles.row, divider && styles.divider, animatedStyle]}
+    >
+      <View style={[styles.iconWrap, { backgroundColor: theme.colors.surfaceAlt }]}>
+        <Feather name="more-horizontal" size={14} color={theme.colors.textMuted} />
+      </View>
+      <Text style={styles.moreText}>+{count} more</Text>
+    </AnimatedPressable>
   );
 }
 
@@ -68,4 +107,5 @@ const styles = StyleSheet.create({
   amount: { fontFamily: theme.font.monoBold, fontSize: 13, color: theme.colors.textPrimary },
   income: { color: theme.colors.income },
   expense: { color: theme.colors.expense },
+  moreText: { flex: 1, fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textSecondary },
 });

@@ -2,6 +2,7 @@ import { getDb, AppDb } from './client';
 import { newId } from '@/lib/id';
 import { Person, PersonLedgerEntry } from '@/types';
 import { checkOverspendAndNotify } from './ledger';
+import { captureRow, restoreRows, RowSnapshot } from './undoSnapshot';
 
 function rowToPerson(row: any): Person {
   return {
@@ -197,17 +198,25 @@ export async function undoPersonTransaction(transactionId: string): Promise<void
  * the person's own History list, where a mistaken entry previously had no
  * way to be removed at all.
  */
-export async function deleteLedgerEntry(entryId: string): Promise<void> {
+export async function deleteLedgerEntry(entryId: string): Promise<RowSnapshot[]> {
   const db = await getDb();
-  const entry = await db.getFirstAsync<{ transaction_id: string | null }>(
-    'SELECT transaction_id FROM person_ledger_entries WHERE id = ?',
-    [entryId]
-  );
-  if (!entry) throw new Error('Entry not found');
+  const entrySnapshot = await captureRow(db, 'person_ledger_entries', entryId);
+  if (!entrySnapshot) throw new Error('Entry not found');
+  const linkedTxId = entrySnapshot.row.transaction_id as string | null;
+  const txSnapshot = linkedTxId ? await captureRow(db, 'transactions', linkedTxId) : null;
   await db.withTransactionAsync(async (tx) => {
     await tx.runAsync('DELETE FROM person_ledger_entries WHERE id = ?', [entryId]);
-    if (entry.transaction_id) {
-      await tx.runAsync('DELETE FROM transactions WHERE id = ?', [entry.transaction_id]);
+    if (linkedTxId) {
+      await tx.runAsync('DELETE FROM transactions WHERE id = ?', [linkedTxId]);
     }
   });
+  // Transaction first (if any) — the entry's own `transaction_id` foreign
+  // key needs it to already exist.
+  return txSnapshot ? [txSnapshot, entrySnapshot] : [entrySnapshot];
+}
+
+/** Undoes `deleteLedgerEntry` — re-inserts the entry (and its linked transaction, if it had one), in the same order they were captured. */
+export async function restoreLedgerEntry(snapshots: RowSnapshot[]): Promise<void> {
+  const db = await getDb();
+  await restoreRows(db, snapshots);
 }

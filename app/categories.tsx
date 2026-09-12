@@ -1,25 +1,41 @@
 import { useCallback, useState } from 'react';
-import { View, Text, ScrollView, Alert } from 'react-native';
+import { View, Text, ScrollView, Alert, ActivityIndicator } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { listCategories, archiveCategory, unarchiveCategory, deleteCategory } from '@/db/ledger';
+import { listCategories, archiveCategory, unarchiveCategory, deleteCategory, restoreCategory } from '@/db/ledger';
 import { Category } from '@/types';
 import { theme } from '@/constants/theme';
 import { AppHeader, HeaderIconButton } from '@/components/AppHeader';
 import { AddButton } from '@/components/AddButton';
+import { ActionSheet, ActionSheetItem } from '@/components/ActionSheet';
 import { styles } from '@/features/categories/categories.styles';
 import { CategorySection, CategoryTile } from '@/features/categories/CategorySection';
 import { AddCategoryModal } from '@/features/categories/AddCategoryModal';
+import { useUndoToast } from '@/components/UndoToast';
+import { haptics } from '@/lib/haptics';
 
 export default function CategoriesScreen() {
   const insets = useSafeAreaInsets();
+  const { show: showUndo } = useUndoToast();
   const [allCategories, setAllCategories] = useState<Category[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [showArchived, setShowArchived] = useState(false);
+  // Which category the "manage" sheet is open for, and whether it was
+  // opened from the active or archived section — that's the only thing
+  // that changes which two actions the sheet offers (Archive/Delete vs
+  // Restore/Delete).
+  const [manageTarget, setManageTarget] = useState<{ cat: Category; archived: boolean } | null>(null);
+  // `allCategories` starts at `[]`, indistinguishable from "genuinely no
+  // categories yet" — an explicit flag is what gates the spinner correctly.
+  const [loaded, setLoaded] = useState(false);
 
   const load = useCallback(async () => {
-    setAllCategories(await listCategories(true));
+    try {
+      setAllCategories(await listCategories(true));
+    } finally {
+      setLoaded(true);
+    }
   }, []);
 
   useFocusEffect(
@@ -75,31 +91,23 @@ export default function CategoriesScreen() {
     );
   };
 
-  const onDelete = (cat: Category) => {
-    const childCount = allCategories.filter((c) => c.parentId === cat.id).length;
-    Alert.alert(
-      `Delete "${cat.name}"?`,
-      (childCount > 0
-        ? `This also deletes its ${childCount} subcategor${childCount === 1 ? 'y' : 'ies'}. `
-        : '') + "This can't be undone.",
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await deleteCategory(cat.id);
-              await load();
-            } catch (e: any) {
-              Alert.alert('Could not delete category', String(e?.message ?? e));
-            }
-          },
-        },
-      ]
-    );
+  const onDelete = async (cat: Category) => {
+    try {
+      const snapshot = await deleteCategory(cat.id);
+      haptics.warn();
+      await load();
+      showUndo(`Deleted "${cat.name}"`, async () => {
+        await restoreCategory(snapshot);
+        await load();
+      });
+    } catch (e: any) {
+      Alert.alert('Could not delete category', String(e?.message ?? e));
+    }
   };
 
+  // A single-button information notice, not a menu — stays a plain
+  // `Alert.alert` (the platform's normal idiom for "here's why not"), unlike
+  // the two functions below.
   const onManage = (cat: Category) => {
     if (cat.isSystem) {
       Alert.alert(
@@ -108,28 +116,58 @@ export default function CategoriesScreen() {
       );
       return;
     }
-    Alert.alert(
-      'Manage category',
-      undefined,
-      [
-        { text: 'Archive', onPress: () => onArchive(cat) },
-        { text: 'Delete', style: 'destructive', onPress: () => onDelete(cat) },
-      ],
-      { cancelable: true }
-    );
+    setManageTarget({ cat, archived: false });
   };
 
   const onManageArchived = (cat: Category) => {
-    Alert.alert(
-      'Manage archived category',
-      undefined,
-      [
-        { text: 'Restore', onPress: () => onUnarchive(cat) },
-        { text: 'Delete', style: 'destructive', onPress: () => onDelete(cat) },
-      ],
-      { cancelable: true }
-    );
+    setManageTarget({ cat, archived: true });
   };
+
+  // Feeds the one shared `ActionSheet` below — its two rows are the only
+  // thing that differs between an active category's menu (Archive/Delete)
+  // and an archived one's (Restore/Delete). Previously two separate
+  // `Alert.alert` calls (native platform dialogs, styled entirely by the
+  // OS) — see `ActionSheet`'s own comment for why that looked like a
+  // different, unstyled app dropped into the middle of Yume.
+  const manageItems: ActionSheetItem[] = manageTarget
+    ? manageTarget.archived
+      ? [
+          {
+            key: 'restore',
+            label: 'Restore',
+            icon: 'rotate-ccw',
+            onPress: () => onUnarchive(manageTarget.cat),
+          },
+          {
+            key: 'delete',
+            label: 'Delete',
+            icon: 'trash-2',
+            destructive: true,
+            onPress: () => onDelete(manageTarget.cat),
+          },
+        ]
+      : [
+          { key: 'archive', label: 'Archive', icon: 'archive', onPress: () => onArchive(manageTarget.cat) },
+          {
+            key: 'delete',
+            label: 'Delete',
+            icon: 'trash-2',
+            destructive: true,
+            onPress: () => onDelete(manageTarget.cat),
+          },
+        ]
+    : [];
+
+  if (!loaded) {
+    return (
+      <View style={styles.container}>
+        <AppHeader title="Categories" showBack />
+        <View style={styles.center}>
+          <ActivityIndicator color={theme.colors.ink} />
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -211,6 +249,13 @@ export default function CategoriesScreen() {
           setEditingCategory(null);
           await load();
         }}
+      />
+
+      <ActionSheet
+        visible={!!manageTarget}
+        onClose={() => setManageTarget(null)}
+        title={manageTarget?.archived ? 'Manage archived category' : 'Manage category'}
+        items={manageItems}
       />
     </View>
   );

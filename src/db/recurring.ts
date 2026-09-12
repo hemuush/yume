@@ -1,6 +1,7 @@
 import { getDb } from './client';
 import { newId } from '@/lib/id';
 import { createTransaction } from './ledger';
+import { captureRow, restoreRow, RowSnapshot } from './undoSnapshot';
 import { RecurringRule, RecurrenceFrequency, TransactionType, PaymentMode } from '@/types';
 import { toLocalIsoDate, addDaysToIsoDate, addMonthsToIsoDate } from '@/lib/date';
 
@@ -139,9 +140,17 @@ export async function setRecurringRuleActive(id: string, active: boolean): Promi
   await db.runAsync('UPDATE recurring_rules SET active = ? WHERE id = ?', [active ? 1 : 0, id]);
 }
 
-export async function deleteRecurringRule(id: string): Promise<void> {
+export async function deleteRecurringRule(id: string): Promise<RowSnapshot> {
   const db = await getDb();
+  const snapshot = await captureRow(db, 'recurring_rules', id);
   await db.runAsync('DELETE FROM recurring_rules WHERE id = ?', [id]);
+  return snapshot!;
+}
+
+/** Undoes `deleteRecurringRule` — re-inserts the exact row, never a fresh one. */
+export async function restoreRecurringRule(snapshot: RowSnapshot): Promise<void> {
+  const db = await getDb();
+  await restoreRow(db, snapshot);
 }
 
 /**

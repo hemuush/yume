@@ -28,11 +28,13 @@ import {
   cancelLegacyScheduledNotifications,
 } from '@/lib/notifications';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { refreshAllWidgets } from '@/widgets/notifyWidgets';
 import { AccentProvider } from '@/theme/AccentContext';
 import { PrivacyProvider } from '@/theme/PrivacyContext';
 import { AppLockProvider, useAppLock } from '@/lib/AppLockContext';
+import { UndoToastProvider } from '@/components/UndoToast';
 import { LockScreen } from '@/components/LockScreen';
-import { Onboarding } from '@/features/Onboarding';
+import { Onboarding } from '@/features/onboarding/Onboarding';
 import { theme } from '@/constants/theme';
 
 export default function RootLayout() {
@@ -49,6 +51,10 @@ export default function RootLayout() {
     Fredoka_400Regular,
     Fredoka_500Medium,
     Fredoka_600SemiBold,
+    // Not a Google Fonts package like the others — the same .ttf already
+    // bundled for the widgets (see theme.font.dotMatrix's own comment),
+    // loaded here too for LockScreen's clock.
+    DotGothic16: require('../assets/fonts/DotGothic16.ttf'),
   });
 
   useEffect(() => {
@@ -150,6 +156,21 @@ function AppGate({ needsOnboarding, initialLocked }: { needsOnboarding: boolean;
     return () => sub.remove();
   }, [lockEnabled]);
 
+  // Home-screen widgets refresh on their own every 30 minutes, but that's
+  // too slow right after an edit — this catches every real change at once,
+  // the moment the user actually backgrounds the app to go look at their
+  // home screen, instead of a separate refresh call wired into every
+  // individual transaction/loan/recurring-rule mutation across the app.
+  // Deliberately its own effect (not folded into the lock one above, which
+  // only runs at all when app-lock is enabled) so the widgets stay fresh
+  // regardless of that setting.
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (next: AppStateStatus) => {
+      if (next.match(/inactive|background/)) refreshAllWidgets();
+    });
+    return () => sub.remove();
+  }, []);
+
   if (showOnboarding) {
     return (
       <>
@@ -173,35 +194,37 @@ function AppGate({ needsOnboarding, initialLocked }: { needsOnboarding: boolean;
   return (
     <ErrorBoundary>
       <StatusBar style="dark" />
-      {/* freezeOnBlur is left OFF: with it on (the navigator default), a
-          blurred screen's React tree is suspended and can miss context
-          updates that happen while it's off-screen — e.g. toggling "hide
-          amounts" from the Profile header left the Settings switch showing
-          the old state until a full remount. The screens here are light, so
-          keeping them live costs little. */}
-      <Stack
-        screenOptions={{
-          headerShown: false,
-          animation: 'slide_from_right',
-          animationDuration: 260,
-          // Swipe from anywhere on the screen to go back, not just the left
-          // edge — a pushed screen (Settings, a detail view) should feel as
-          // dismissible as it looks.
-          gestureEnabled: true,
-          fullScreenGestureEnabled: true,
-          freezeOnBlur: false,
-        }}
-      >
-        <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="categories" />
-        <Stack.Screen name="profile" />
-        <Stack.Screen name="settings" />
-        <Stack.Screen name="backup" />
-        <Stack.Screen name="notification-settings" />
-        <Stack.Screen name="notifications" />
-        <Stack.Screen name="add-transaction" />
-        <Stack.Screen name="recurring" />
-      </Stack>
+      <UndoToastProvider>
+        {/* freezeOnBlur is left OFF: with it on (the navigator default), a
+            blurred screen's React tree is suspended and can miss context
+            updates that happen while it's off-screen — e.g. toggling "hide
+            amounts" from the Profile header left the Settings switch showing
+            the old state until a full remount. The screens here are light, so
+            keeping them live costs little. */}
+        <Stack
+          screenOptions={{
+            headerShown: false,
+            animation: 'slide_from_right',
+            animationDuration: 260,
+            // Swipe from anywhere on the screen to go back, not just the left
+            // edge — a pushed screen (Settings, a detail view) should feel as
+            // dismissible as it looks.
+            gestureEnabled: true,
+            fullScreenGestureEnabled: true,
+            freezeOnBlur: false,
+          }}
+        >
+          <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="categories" />
+          <Stack.Screen name="profile" />
+          <Stack.Screen name="settings" />
+          <Stack.Screen name="backup" />
+          <Stack.Screen name="notification-settings" />
+          <Stack.Screen name="notifications" />
+          <Stack.Screen name="add-transaction" />
+          <Stack.Screen name="recurring" />
+        </Stack>
+      </UndoToastProvider>
     </ErrorBoundary>
   );
 }

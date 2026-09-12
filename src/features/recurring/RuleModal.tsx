@@ -4,8 +4,11 @@ import {
   createRecurringRule,
   updateRecurringRule,
   deleteRecurringRule,
+  restoreRecurringRule,
   RecurringRuleInput,
 } from '@/db/recurring';
+import { useUndoToast } from '@/components/UndoToast';
+import { haptics } from '@/lib/haptics';
 import { Account, Category, RecurringRule, RecurrenceFrequency, TransactionType } from '@/types';
 import { ModalSheet } from '@/components/ModalSheet';
 import { modalFooterStyles as f } from '@/constants/theme';
@@ -50,6 +53,7 @@ export function RuleModal({
   onSaved: () => void;
   onDeleted: () => void;
 }) {
+  const { show: showUndo } = useUndoToast();
   const today = useMemo(() => new Date(), []);
   const [type, setType] = useState<TransactionType>('expense');
   const [accountId, setAccountId] = useState<string | null>(null);
@@ -183,30 +187,22 @@ export function RuleModal({
     }
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (!editing) return;
-    Alert.alert(
-      'Delete this recurring entry?',
-      'Past transactions it already created stay untouched — only future occurrences stop.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            setSaving(true);
-            try {
-              await deleteRecurringRule(editing.id);
-              onDeleted();
-            } catch (e: any) {
-              Alert.alert('Could not delete', String(e?.message ?? e));
-            } finally {
-              setSaving(false);
-            }
-          },
-        },
-      ]
-    );
+    setSaving(true);
+    try {
+      const snapshot = await deleteRecurringRule(editing.id);
+      haptics.warn();
+      onDeleted();
+      showUndo('Deleted recurring entry', async () => {
+        await restoreRecurringRule(snapshot);
+        onDeleted();
+      });
+    } catch (e: any) {
+      Alert.alert('Could not delete', String(e?.message ?? e));
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (

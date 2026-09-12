@@ -5,6 +5,7 @@ import {
   archiveAccount,
   unarchiveAccount,
   deleteAccount,
+  restoreAccount,
   getAccountTransactionCount,
 } from '@/db/ledger';
 import { toMinor } from '@/lib/money';
@@ -14,6 +15,8 @@ import { modalFooterStyles as f } from '@/constants/theme';
 import { FormInput } from '@/components/FormInput';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { Chip } from '@/components/Chip';
+import { useUndoToast } from '@/components/UndoToast';
+import { haptics } from '@/lib/haptics';
 import { styles } from './profile.styles';
 import { ACCOUNT_TYPES } from './profile.constants';
 
@@ -36,6 +39,7 @@ export function AccountDetailModal({
   onClose: () => void;
   onChanged: () => void;
 }) {
+  const { show: showUndo } = useUndoToast();
   const [name, setName] = useState('');
   const [type, setType] = useState<AccountType>('bank');
   const [opening, setOpening] = useState('0');
@@ -121,29 +125,21 @@ export function AccountDetailModal({
     }
   };
 
-  const confirmDelete = () => {
-    Alert.alert(
-      'Delete this account?',
-      "This account has never been used, so this can't be undone but nothing else is affected.",
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            setBusy(true);
-            try {
-              await deleteAccount(account.id);
-              onChanged();
-            } catch (e: any) {
-              Alert.alert('Could not delete', String(e?.message ?? e));
-            } finally {
-              setBusy(false);
-            }
-          },
-        },
-      ]
-    );
+  const confirmDelete = async () => {
+    setBusy(true);
+    try {
+      const snapshot = await deleteAccount(account.id);
+      haptics.warn();
+      onChanged();
+      showUndo(`Deleted "${account.name}"`, async () => {
+        await restoreAccount(snapshot);
+        onChanged();
+      });
+    } catch (e: any) {
+      Alert.alert('Could not delete', String(e?.message ?? e));
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
