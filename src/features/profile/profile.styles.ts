@@ -5,6 +5,7 @@ import { theme } from '@/constants/theme';
 // AccountDetailModal).
 export const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
   errorBanner: {
     marginHorizontal: 20,
     marginBottom: 12,
@@ -25,6 +26,11 @@ export const styles = StyleSheet.create({
     borderColor: theme.colors.borderSoft,
     alignItems: 'center',
     justifyContent: 'center',
+    // Without this, a circular View's coloured background can render
+    // clipped to a stale layout measurement on Android (the classic
+    // "half-circle avatar" symptom) rather than the declared 76×76 size —
+    // a real bug, not a styling choice.
+    overflow: 'hidden',
   },
   avatarInitial: { fontFamily: theme.font.roundedBold, fontSize: 30 },
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 12 },
@@ -141,7 +147,6 @@ export const styles = StyleSheet.create({
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 10 },
   hintText: { fontSize: 12, color: theme.colors.textMuted, marginBottom: 14, lineHeight: 17 },
   errorText: { color: theme.colors.expense, fontSize: 13, marginBottom: 12 },
-  modalActions: { flexDirection: 'row', marginTop: 8 },
   dangerLabel: {
     fontSize: 11,
     fontFamily: theme.font.bodyBold,
