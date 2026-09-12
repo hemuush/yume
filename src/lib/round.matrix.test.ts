@@ -4,7 +4,7 @@
  * (a) are each a multiple of 100, and (b) sum to exactly the rounded total —
  * so a breakdown shown next to its total on screen always reconciles.
  */
-import { allocateRoundedMinor, allocateAndFormat, roundedMinor } from './round';
+import { allocateRoundedMinor, roundedMinor } from './round';
 
 const roundHalfAwayFromZero = (v: number) => Math.sign(v) * Math.round(Math.abs(v));
 const roundedTotalRupees = (parts: number[], total?: number) =>
@@ -105,13 +105,5 @@ describe('roundedMinor — one exact amount to its displayed whole rupee', () =>
 
   it('is idempotent on an already-whole value', () => {
     for (const v of [0, 100, -300, 500000]) expect(roundedMinor(v)).toBe(v);
-  });
-
-  it('allocateAndFormat maps each allocated value through the formatter', () => {
-    // 3 × ₹104.40 = ₹313.20 → shows as 313; the spare rupee goes to the
-    // first entry (equal remainders, stable tie-break).
-    const out = allocateAndFormat([10440, 10440, 10440], (m) => String(m / 100));
-    expect(out).toEqual(['105', '104', '104']);
-    expect(out.reduce((s, v) => s + Number(v), 0)).toBe(313);
   });
 });

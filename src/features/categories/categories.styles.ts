@@ -5,6 +5,7 @@ import { theme } from '@/constants/theme';
 // CategoryTile / SubcategoryPill) and AddCategoryModal.
 export const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
   sectionTitle: {
     fontSize: 12,
     fontFamily: theme.font.bodyBold,
@@ -73,7 +74,6 @@ export const styles = StyleSheet.create({
     borderColor: theme.colors.borderSoft,
   },
   iconChoiceActive: { borderWidth: 2, borderColor: theme.colors.ink },
-  modalTitle: { fontSize: 18, fontWeight: '700', color: theme.colors.textPrimary, marginBottom: 16 },
   fieldLabel: {
     fontSize: 10.5,
     fontFamily: theme.font.roundedMedium,
@@ -102,5 +102,4 @@ export const styles = StyleSheet.create({
   parentChipActive: { backgroundColor: theme.colors.ink, borderColor: theme.colors.ink },
   parentChipText: { fontSize: 12.5, fontFamily: theme.font.bodyMedium, color: theme.colors.textPrimary },
   parentChipTextActive: { color: theme.colors.white },
-  modalActions: { flexDirection: 'row', marginTop: 8 },
 });

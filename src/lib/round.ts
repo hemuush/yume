@@ -72,16 +72,3 @@ export function allocateRoundedMinor(partsMinor: number[], totalMinor?: number):
 
   return base.map((b) => b * 100);
 }
-
-/**
- * Convenience wrapper: `allocateRoundedMinor` followed by `formatMoney` on
- * each allocated value, so a component can render a reconciling breakdown in
- * one call.
- */
-export function allocateAndFormat(
-  partsMinor: number[],
-  format: (minor: number) => string,
-  totalMinor?: number
-): string[] {
-  return allocateRoundedMinor(partsMinor, totalMinor).map(format);
-}
