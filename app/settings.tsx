@@ -11,12 +11,13 @@ import { useAppLock } from '@/lib/AppLockContext';
 import { usePrivacy } from '@/theme/PrivacyContext';
 import { AppHeader } from '@/components/AppHeader';
 import { ModalSheet } from '@/components/ModalSheet';
+import { PrimaryButton } from '@/components/PrimaryButton';
 import { SettingsRowIcon } from '@/components/SettingsRowIcon';
 import { ToggleSwitch } from '@/components/ToggleSwitch';
 import { YumeLogo } from '@/components/YumeLogo';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useAccent } from '@/theme/AccentContext';
-import { theme } from '@/constants/theme';
+import { theme, modalFooterStyles as f } from '@/constants/theme';
 import { usePressScale } from '@/lib/usePressScale';
 
 const AnimatedRow = Animated.createAnimatedComponent(Pressable);
@@ -312,6 +313,24 @@ export default function SettingsScreen() {
         visible={currencyPickerOpen}
         onClose={() => setCurrencyPickerOpen(false)}
         title="Default currency"
+        // A footer switches ModalSheet to its pinned three-band layout — the
+        // same one New Loan's multi-field form uses — so this list gets a
+        // Close button that's always visible instead of ending mid-scroll
+        // with no way out but the backdrop or a row tap. footerRow + the
+        // shared footerBtn (flex: 1) is the same sizing every other modal's
+        // footer button uses, so a single button here fills the row exactly
+        // like a two-button footer does rather than sitting at its own
+        // intrinsic width.
+        footer={
+          <View style={f.footerRow}>
+            <PrimaryButton
+              title="Close"
+              variant="secondary"
+              onPress={() => setCurrencyPickerOpen(false)}
+              style={f.footerBtn}
+            />
+          </View>
+        }
       >
         <Text style={styles.pickerHint}>
           Existing accounts keep whatever currency they were created with. Combined totals only add up
@@ -356,7 +375,13 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 14, paddingVertical: 13 },
-  rowDivider: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: theme.colors.textMuted },
+  // Was theme.colors.textMuted — the only divider in the whole app on the
+  // wrong token. Every other hairline (Loans' cards, the ActionSheet menus,
+  // Transactions' rows) uses borderSoft, a much paler warm line; textMuted
+  // is a text colour, not a divider one, and reads noticeably heavier —
+  // which is exactly why Settings' rows (and this currency list, which
+  // shares the style) looked out of step with the rest of the app.
+  rowDivider: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: theme.colors.borderSoft },
   rowText: { flex: 1, minWidth: 0 },
   rowLabel: { fontFamily: theme.font.bodyMedium, fontSize: 14.5, color: theme.colors.textPrimary },
   rowSub: {
