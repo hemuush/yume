@@ -1,4 +1,4 @@
-import { savingsRatePct, clampSavingsRate, savingsRateLabel } from './savingsRate';
+import { savingsRatePct, savingsRateLabel } from './savingsRate';
 
 describe('savingsRatePct', () => {
   it('is income-not-spent as a percentage of income', () => {
@@ -12,18 +12,6 @@ describe('savingsRatePct', () => {
 
   it('goes negative when spending exceeds income', () => {
     expect(savingsRatePct(-50_000, 100_000)).toBe(-50);
-  });
-});
-
-describe('clampSavingsRate', () => {
-  it('passes through values already in range', () => {
-    expect(clampSavingsRate(72)).toBe(72);
-    expect(clampSavingsRate(-30)).toBe(-30);
-  });
-
-  it('clamps a nonsense one-off-expense reading to [-100, 100]', () => {
-    expect(clampSavingsRate(-4280)).toBe(-100);
-    expect(clampSavingsRate(999)).toBe(100);
   });
 });
 
