@@ -8,6 +8,13 @@ import { styles } from './transactions.styles';
 
 const AnimatedRowPressable = Animated.createAnimatedComponent(Pressable);
 
+/**
+ * One row in a day's group — sits directly on the page with a hairline
+ * bottom border, not inside a card. The date used to live in this row's own
+ * subtitle; it's now the day-group header above a whole run of these, so the
+ * subtitle here is just the account, the same way Apple Card's own
+ * transaction rows carry no per-row date once they're grouped by day.
+ */
 export function TransactionRow({
   tx,
   cat,
@@ -26,7 +33,7 @@ export function TransactionRow({
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.98);
   return (
     <AnimatedRowPressable
-      style={[styles.row, divider && styles.rowDivider, animatedStyle]}
+      style={[styles.flatRow, divider && styles.flatRowDivider, animatedStyle]}
       onPress={onPress}
       onPressIn={onPressIn}
       onPressOut={onPressOut}
@@ -34,8 +41,8 @@ export function TransactionRow({
       <CategoryIcon
         name={tx.type === 'transfer' ? 'swap-horizontal' : (cat?.icon ?? 'tag')}
         color={tx.type === 'transfer' ? theme.colors.secondary : (cat?.color ?? theme.colors.textMuted)}
-        square={36}
-        size={16}
+        square={30}
+        size={14}
       />
       <View style={{ flex: 1, marginLeft: 12 }}>
         <Text style={styles.rowLabel} numberOfLines={1}>
@@ -44,16 +51,12 @@ export function TransactionRow({
           ) : (
             <>
               {categoryName(tx.categoryId)}
-              {/* The note (e.g. "YT Premium" under Entertainment) sits right
-                  next to the category it belongs to, not three fields deep
-                  in the subtitle where a longer date/account string could
-                  truncate it out of view entirely. */}
               {!!tx.note && <Text style={styles.rowNoteInline}> · {tx.note}</Text>}
             </>
           )}
         </Text>
         <Text style={styles.rowSub} numberOfLines={1}>
-          {tx.date} · {accountName(tx.accountId)}
+          {tx.type === 'transfer' ? 'Own accounts' : accountName(tx.accountId)}
         </Text>
       </View>
       <Text

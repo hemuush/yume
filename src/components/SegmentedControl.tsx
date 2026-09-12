@@ -1,5 +1,8 @@
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { View, Text, Pressable, Animated, StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
+import { usePressScale } from '@/lib/usePressScale';
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 interface Props<T extends string> {
   options: { label: string; value: T }[];
@@ -10,19 +13,29 @@ interface Props<T extends string> {
 export function SegmentedControl<T extends string>({ options, value, onChange }: Props<T>) {
   return (
     <View style={styles.wrap}>
-      {options.map((opt) => {
-        const active = opt.value === value;
-        return (
-          <Pressable
-            key={opt.value}
-            style={[styles.segment, active && styles.segmentActive]}
-            onPress={() => onChange(opt.value)}
-          >
-            <Text style={[styles.segmentText, active && styles.segmentTextActive]}>{opt.label}</Text>
-          </Pressable>
-        );
-      })}
+      {options.map((opt) => (
+        <Segment
+          key={opt.value}
+          active={opt.value === value}
+          label={opt.label}
+          onPress={() => onChange(opt.value)}
+        />
+      ))}
     </View>
+  );
+}
+
+function Segment({ active, label, onPress }: { active: boolean; label: string; onPress: () => void }) {
+  const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.95);
+  return (
+    <AnimatedPressable
+      style={[styles.segment, active && styles.segmentActive, animatedStyle]}
+      onPress={onPress}
+      onPressIn={onPressIn}
+      onPressOut={onPressOut}
+    >
+      <Text style={[styles.segmentText, active && styles.segmentTextActive]}>{label}</Text>
+    </AnimatedPressable>
   );
 }
 

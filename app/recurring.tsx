@@ -8,7 +8,7 @@ import { Account, Category, RecurringRule } from '@/types';
 import { AppHeader } from '@/components/AppHeader';
 import { AddButton } from '@/components/AddButton';
 import { EmptyState } from '@/components/EmptyState';
-import { theme, ID_PALETTE } from '@/constants/theme';
+import { theme } from '@/constants/theme';
 import { styles } from '@/features/recurring/recurring.styles';
 import { RuleCard } from '@/features/recurring/RuleCard';
 import { RuleModal } from '@/features/recurring/RuleModal';
@@ -105,9 +105,9 @@ export default function RecurringScreen() {
               <RuleCard
                 key={rule.id}
                 rule={rule}
-                color={ID_PALETTE[i % ID_PALETTE.length]}
                 accountName={accountName}
                 categoryName={categoryName}
+                index={i}
                 onPress={() => setEditingRule(rule)}
                 onTogglePause={() => togglePause(rule)}
               />
@@ -119,9 +119,9 @@ export default function RecurringScreen() {
                   <RuleCard
                     key={rule.id}
                     rule={rule}
-                    color={ID_PALETTE[i % ID_PALETTE.length]}
                     accountName={accountName}
                     categoryName={categoryName}
+                    index={i}
                     onPress={() => setEditingRule(rule)}
                     onTogglePause={() => togglePause(rule)}
                     muted

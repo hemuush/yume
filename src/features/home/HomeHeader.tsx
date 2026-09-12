@@ -1,4 +1,5 @@
 import { View, Text, StyleSheet } from 'react-native';
+import ReanimatedAnimated, { FadeInDown, ReduceMotion } from 'react-native-reanimated';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -7,7 +8,6 @@ import { useAccent } from '@/theme/AccentContext';
 import { shade } from '@/lib/color';
 import { ScallopedEdge } from '@/components/ScallopedEdge';
 import { YumeLogo } from '@/components/YumeLogo';
-import { SuuIllustration } from '@/components/SuuIllustration';
 import { HeaderIconButton, HeaderUserButton } from '@/components/AppHeader';
 import { PeriodCursor } from '@/lib/period';
 import { MonthPill } from './MonthPill';
@@ -31,25 +31,18 @@ const SPARKS: { top: number; left: number; size: number; opacity: number }[] = [
   { top: 12, left: 36, size: 3, opacity: 0.7 },
 ];
 
-// Suu's own box, offset from the start of the content area (same reasoning
-// as SPARKS above) rather than the band's bare top edge — the band extends
-// edge-to-edge under the status bar, so an offset measured from its raw top
-// would land Suu up among the clock/battery icons instead of inside the
-// header's own content.
-const SUU_SIZE = 64;
-const SUU_TOP = 0;
-const SUU_RIGHT = 8;
-
 /**
- * The Home screen's own header — previously a flat block of the user's
- * accent colour (read as "too dark" against the rest of the app's calm,
- * mostly-neutral register). Now a soft gradient from a light wash of that
- * same accent down into the page's own cream — like early light rather than
- * a solid panel — with Suu (the mascot, otherwise boxed into a card lower on
- * the page) waking up in the corner. "Yume" means dream; this is the one
- * place in the app that gets to feel like one. Still fully derived from the
- * user's chosen accent (same `shade()` technique as the Reports moon and
- * heatmap), so picking a different accent retints the whole thing.
+ * The Home screen's own header — a soft gradient from a light wash of the
+ * user's accent down into the page's own cream, derived the same way the
+ * Reports moon/heatmap are (`shade()`), so picking a different accent
+ * retints the whole thing.
+ *
+ * Previously taller: Suu sat in the top-right corner, and the greeting sat
+ * on its own row above a second row holding just the month pill. Suu is
+ * gone (it had no job here beyond decoration, and competed with the
+ * greeting for the same corner), and the greeting/tagline now share one row
+ * with the month pill instead of stacking — together this takes the band
+ * from roughly 230px down to about 120px of vertical space.
  */
 export function HomeHeader({
   cursor,
@@ -94,10 +87,6 @@ export function HomeHeader({
           />
         ))}
 
-        <View style={[styles.suuWrap, { top: contentTop + SUU_TOP, right: SUU_RIGHT }]} pointerEvents="none">
-          <SuuIllustration size={SUU_SIZE} />
-        </View>
-
         <View style={styles.row}>
           <View style={styles.brandRow}>
             <YumeLogo size={22} />
@@ -115,18 +104,24 @@ export function HomeHeader({
           </View>
         </View>
 
-        <View style={styles.greetWrap}>
-          <Text style={styles.greet} numberOfLines={1}>
-            Good {greetingWord()}
-            {userName ? `, ${userName}` : ''}
-          </Text>
-          <Text style={styles.tagline} numberOfLines={1}>
-            Better money. Bigger dreams.
-          </Text>
-        </View>
-
-        <View style={styles.monthRow}>
-          <MonthPill cursor={cursor} onChange={onChange} />
+        <View style={styles.greetRow}>
+          <ReanimatedAnimated.View
+            style={styles.greetBlock}
+            entering={FadeInDown.duration(420).springify().reduceMotion(ReduceMotion.System)}
+          >
+            <Text style={styles.greet} numberOfLines={1}>
+              Good {greetingWord()}
+              {userName ? `, ${userName}` : ''}
+            </Text>
+            <Text style={styles.tagline} numberOfLines={1}>
+              Better money. Bigger dreams.
+            </Text>
+          </ReanimatedAnimated.View>
+          <ReanimatedAnimated.View
+            entering={FadeInDown.duration(420).delay(90).springify().reduceMotion(ReduceMotion.System)}
+          >
+            <MonthPill cursor={cursor} onChange={onChange} />
+          </ReanimatedAnimated.View>
         </View>
       </View>
       <ScallopedEdge color={gradientBottom} height={14} />
@@ -137,15 +132,18 @@ export function HomeHeader({
 const styles = StyleSheet.create({
   band: { paddingHorizontal: 20, paddingBottom: 14, gap: 12, overflow: 'hidden' },
   spark: { position: 'absolute', backgroundColor: theme.colors.surface },
-  // Half-hidden behind the greeting, top-right — "just woke up with you"
-  // rather than a mascot posed front and centre.
-  suuWrap: { position: 'absolute' },
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
   brandRow: { flexDirection: 'row', alignItems: 'center', gap: 7 },
   brand: { fontFamily: theme.font.roundedBold, fontSize: 21, letterSpacing: 0.2, color: theme.colors.ink },
   actions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  greetWrap: { marginTop: 22 },
+  greetRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+    marginTop: 16,
+  },
+  greetBlock: { flex: 1, minWidth: 0 },
   greet: { fontFamily: theme.font.roundedMedium, fontSize: 15, color: theme.colors.ink },
   tagline: { fontFamily: theme.font.body, fontSize: 11.5, color: theme.colors.inkSoft, marginTop: 1 },
-  monthRow: { flexDirection: 'row', justifyContent: 'flex-end', marginTop: 10 },
 });

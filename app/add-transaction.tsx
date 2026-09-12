@@ -107,6 +107,7 @@ export default function AddTransactionScreen() {
 
   const [rows, setRows] = useState<Staged[]>([]);
   const [saving, setSaving] = useState(false);
+  const [saveDone, setSaveDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const listFade = useFadeIn([rows.length]);
@@ -279,6 +280,15 @@ export default function AddTransactionScreen() {
     });
   };
 
+  // A brief "done" checkmark (PrimaryButton's own `done` prop) before
+  // navigating back, instead of the screen vanishing the instant the write
+  // finishes — the data is already saved by this point, so the short delay
+  // is purely a felt confirmation.
+  const goBackAfterSave = () => {
+    setSaveDone(true);
+    setTimeout(() => router.back(), 320);
+  };
+
   const onSaveSingleEdit = async () => {
     setError(null);
     const res = formToStaged();
@@ -299,7 +309,7 @@ export default function AddTransactionScreen() {
         date: r.date,
         note: r.note,
       });
-      router.back();
+      goBackAfterSave();
     } catch (e: any) {
       setError(String(e?.message ?? e));
       setSaving(false);
@@ -329,7 +339,7 @@ export default function AddTransactionScreen() {
         await persistRow(r);
         saved += 1;
       }
-      router.back();
+      goBackAfterSave();
     } catch (e: any) {
       // Keep only what didn't make it in, so a retry doesn't double up.
       setRows(pending.slice(saved));
@@ -575,6 +585,7 @@ export default function AddTransactionScreen() {
         )}
         <PrimaryButton
           title={saveTitle}
+          done={saveDone}
           onPress={editing ? onSaveSingleEdit : onSaveAll}
           disabled={saving || isLinked}
         />

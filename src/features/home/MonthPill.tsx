@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { View, Text, Pressable, Modal, StyleSheet } from 'react-native';
+import { View, Text, Pressable, Animated, Modal, StyleSheet } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import { theme } from '@/constants/theme';
 import { useAccent } from '@/theme/AccentContext';
+import { usePressScale } from '@/lib/usePressScale';
 import {
   PeriodCursor,
   PeriodGranularity,
@@ -11,6 +12,8 @@ import {
   setGranularity,
   stepPeriod,
 } from '@/lib/period';
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 /**
  * The compact period control in the Home header — "September 2026 ▾". Tapping
@@ -28,6 +31,7 @@ export function MonthPill({
   const { accent, onAccent } = useAccent();
   const [open, setOpen] = useState(false);
   const forward = canStepForward(cursor);
+  const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.97);
 
   const pick = (next: PeriodCursor) => {
     onChange(next);
@@ -36,19 +40,21 @@ export function MonthPill({
 
   return (
     <>
-      <Pressable
+      <AnimatedPressable
         onPress={() => setOpen(true)}
+        onPressIn={onPressIn}
+        onPressOut={onPressOut}
         hitSlop={6}
         accessibilityRole="button"
         accessibilityLabel={`Change period, currently ${periodLabel(cursor)}`}
-        style={styles.pill}
+        style={[styles.pill, animatedStyle]}
       >
         <Feather name="calendar" size={13} color={theme.colors.ink} />
         <Text style={styles.pillText} numberOfLines={1}>
           {periodLabel(cursor)}
         </Text>
         <Feather name="chevron-down" size={14} color={theme.colors.ink} />
-      </Pressable>
+      </AnimatedPressable>
 
       <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
         <Pressable style={styles.backdrop} onPress={() => setOpen(false)}>

@@ -1,4 +1,5 @@
 import Svg, { Circle, Path } from 'react-native-svg';
+import Animated, { FadeIn, ReduceMotion } from 'react-native-reanimated';
 import { theme } from '@/constants/theme';
 import { shade } from '@/lib/color';
 
@@ -50,10 +51,18 @@ export function MoonPhase({
   const r = size / 2 - 2;
   const c = size / 2;
   return (
-    <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-      <Circle cx={c} cy={c} r={r} fill={darkColor} />
-      <Path d={lunePath(c, c, r, litFraction)} fill={litColor} />
-      <Circle cx={c} cy={c} r={r} fill="none" stroke={theme.colors.ink} strokeWidth={1.5} opacity={0.25} />
-    </Svg>
+    <Animated.View
+      // Keyed by litFraction so a genuine month/period change (a different
+      // ratio) re-triggers the reveal, while an unrelated re-render with the
+      // same fraction doesn't replay it.
+      key={litFraction}
+      entering={FadeIn.duration(700).springify().reduceMotion(ReduceMotion.System)}
+    >
+      <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+        <Circle cx={c} cy={c} r={r} fill={darkColor} />
+        <Path d={lunePath(c, c, r, litFraction)} fill={litColor} />
+        <Circle cx={c} cy={c} r={r} fill="none" stroke={theme.colors.ink} strokeWidth={1.5} opacity={0.25} />
+      </Svg>
+    </Animated.View>
   );
 }
