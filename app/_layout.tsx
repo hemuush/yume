@@ -51,10 +51,6 @@ export default function RootLayout() {
     Fredoka_400Regular,
     Fredoka_500Medium,
     Fredoka_600SemiBold,
-    // Not a Google Fonts package like the others — the same .ttf already
-    // bundled for the widgets (see theme.font.dotMatrix's own comment),
-    // loaded here too for LockScreen's clock.
-    DotGothic16: require('../assets/fonts/DotGothic16.ttf'),
   });
 
   useEffect(() => {
