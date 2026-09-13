@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { getAccentColor, setAccentColor, getCachedAccentColor } from '@/db/settings';
+import { getAccentColor, setAccentColor, getCachedAccentColor, getThemeId, setThemeId } from '@/db/settings';
+import { THEMES, DEFAULT_THEME_ID, themeById } from './themes';
 
 function hexToRgb(hex: string): [number, number, number] {
   const clean = hex.replace('#', '');
@@ -16,31 +17,71 @@ function contrastColor(hex: string): string {
 }
 
 interface AccentContextValue {
+  /** The active pack's id — drives which card the Theme picker highlights. */
+  themeId: string;
+  /** The active pack's primary — unchanged name/shape from before this was
+   *  theme-aware, so every existing `useAccent().accent` reader (buttons,
+   *  the active tab, Reports' moon phase, the home widget, …) keeps working
+   *  with no changes of its own. */
   accent: string;
+  /** The active pack's secondary — new. */
+  secondary: string;
+  /** Suu's dot colour — usually equal to `secondary`, except the default
+   *  pack, which keeps Suu's original coral. */
+  dot: string;
   onAccent: string;
-  setAccent: (hex: string) => void;
+  setTheme: (id: string) => void;
 }
 
+const cachedInitial = themeById(DEFAULT_THEME_ID)!;
+
 const AccentContext = createContext<AccentContextValue>({
+  themeId: DEFAULT_THEME_ID,
   accent: getCachedAccentColor(),
+  secondary: cachedInitial.secondary,
+  dot: cachedInitial.dot ?? cachedInitial.secondary,
   onAccent: contrastColor(getCachedAccentColor()),
-  setAccent: () => {},
+  setTheme: () => {},
 });
 
 export function AccentProvider({ children }: { children: ReactNode }) {
+  const [themeId, setThemeIdState] = useState(DEFAULT_THEME_ID);
   const [accent, setAccentState] = useState(getCachedAccentColor());
 
   useEffect(() => {
-    getAccentColor().then(setAccentState);
+    // Reads whichever pack was last picked. A pre-theme install (or one
+    // that only ever set a raw accent hex) has no `theme_id` row yet — that
+    // read comes back `null`, so it falls back to the stored accent hex
+    // as-is (never silently overwritten) with the default pack's secondary,
+    // rather than snapping an existing custom-looking accent back to Yume's.
+    Promise.all([getThemeId(), getAccentColor()])
+      .then(([id, hex]) => {
+        setAccentState(hex);
+        setThemeIdState(id ?? DEFAULT_THEME_ID);
+      })
+      .catch(() => {});
   }, []);
 
-  const setAccent = (hex: string) => {
-    setAccentState(hex);
-    void setAccentColor(hex);
+  const setTheme = (id: string) => {
+    const pack = themeById(id);
+    if (!pack) return;
+    setThemeIdState(id);
+    setAccentState(pack.primary);
+    void setThemeId(id);
+    void setAccentColor(pack.primary);
   };
 
+  // Anything reading `secondary`/`dot` for a pack this install hasn't
+  // actually selected (the pre-theme fallback above) gets the default
+  // pack's values — the same ones it would already be seeing today.
+  const activePack = themeById(themeId) ?? cachedInitial;
+  const secondary = activePack.secondary;
+  const dot = activePack.dot ?? activePack.secondary;
+
   return (
-    <AccentContext.Provider value={{ accent, onAccent: contrastColor(accent), setAccent }}>
+    <AccentContext.Provider
+      value={{ themeId, accent, secondary, dot, onAccent: contrastColor(accent), setTheme }}
+    >
       {children}
     </AccentContext.Provider>
   );
@@ -49,3 +90,5 @@ export function AccentProvider({ children }: { children: ReactNode }) {
 export function useAccent(): AccentContextValue {
   return useContext(AccentContext);
 }
+
+export { THEMES };

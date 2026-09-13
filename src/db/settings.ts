@@ -143,23 +143,37 @@ export async function setAccentColor(hex: string): Promise<void> {
   cachedAccent = hex;
 }
 
-// Ink and Cream were dropped — an "accent" that's just the app's own text
-// colour or its own page colour isn't a real choice. Tan was dropped for
-// reading muddy next to the rest. Terracotta/Teal/Gold added in their place:
-// a warmer earth tone, and two more confident/grounded options (deeper,
-// more saturated than the five pastels on purpose) alongside the playful
-// ones, per current fintech colour-design guidance. See LEGACY_ACCENT_REMAP
-// for what an existing install on one of the dropped colours becomes.
-export const ACCENT_SWATCHES = [
-  '#8FCBFF', // Sky (default)
-  '#E0F0A8', // Sage
-  '#8FE8C8', // Mint
-  '#C9B8FF', // Lavender
-  '#FFA8CE', // Pink
-  '#F0A387', // Terracotta
-  '#5FB3A8', // Teal
-  '#E0AC3F', // Gold
-];
+const THEME_ID_KEY = 'theme_id';
+let cachedThemeId: string | null | undefined; // undefined = not yet read; null = read, nothing stored
+
+export function getCachedThemeId(): string | null {
+  return cachedThemeId ?? null;
+}
+
+// The theme's own `primary` is still written to `accent_color` (below) so
+// every existing reader of `getAccentColor()`/`useAccent().accent` — the
+// home-screen widget included — keeps working unchanged; `theme_id` is
+// purely the picker's own memory of *which* pack that hex came from, so it
+// can re-select the right card and look up the matching `secondary`.
+export async function getThemeId(): Promise<string | null> {
+  if (cachedThemeId !== undefined) return cachedThemeId;
+  const db = await getDb();
+  const row = await db.getFirstAsync<{ value: string }>('SELECT value FROM settings WHERE key = ?', [
+    THEME_ID_KEY,
+  ]);
+  cachedThemeId = row?.value ?? null;
+  return cachedThemeId;
+}
+
+export async function setThemeId(id: string): Promise<void> {
+  const db = await getDb();
+  await db.runAsync(
+    `INSERT INTO settings (key, value) VALUES (?, ?)
+     ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
+    [THEME_ID_KEY, id]
+  );
+  cachedThemeId = id;
+}
 
 const HAS_ONBOARDED_KEY = 'has_onboarded';
 
@@ -387,6 +401,7 @@ export async function setLastLocalBackupResult(outcome: BackupOutcome): Promise<
 export function resetSettingsCache(): void {
   cachedCurrency = null;
   cachedAccent = null;
+  cachedThemeId = undefined;
   cachedUserName = undefined;
   cachedLocalBackupFolder = undefined;
   cachedLastLocalBackupAt = undefined;
