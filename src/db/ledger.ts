@@ -231,8 +231,9 @@ export async function deleteAccount(id: string): Promise<RowSnapshot> {
   }
   const db = await getDb();
   const snapshot = await captureRow(db, 'accounts', id);
+  if (!snapshot) throw new Error('This account is already deleted.');
   await db.runAsync('DELETE FROM accounts WHERE id = ?', [id]);
-  return snapshot!;
+  return snapshot;
 }
 
 /** Undoes `deleteAccount` — re-inserts the exact row, never a fresh one. */
@@ -455,8 +456,8 @@ export async function deleteCategory(id: string): Promise<RowSnapshot[]> {
 
   // Sorted parent-first: `restoreCategory` re-inserts in this same order, and
   // a child row's `parent_id` foreign key needs its parent to already exist.
-  const snapshots = (await captureRows(db, 'categories', 'id = ? OR parent_id = ?', [id, id])).sort((a) =>
-    a.row.id === id ? -1 : 1
+  const snapshots = (await captureRows(db, 'categories', 'id = ? OR parent_id = ?', [id, id])).sort((a, b) =>
+    a.row.id === id ? -1 : b.row.id === id ? 1 : 0
   );
   await db.runAsync('DELETE FROM categories WHERE id = ? OR parent_id = ?', [id, id]);
   return snapshots;
@@ -600,6 +601,39 @@ export async function listTransactions(filters?: {
   return rows.map(rowToTransaction);
 }
 
+/**
+ * Cross-period text search — matches a transaction's own note, its
+ * category's name, or either side of the account it moved through (a
+ * transfer matches on either account). Deliberately not scoped by date the
+ * way `listTransactions` is: the whole point is finding something outside
+ * whatever week/month the Transactions screen currently has in view.
+ */
+export async function searchTransactions(query: string, limit = 50): Promise<Transaction[]> {
+  const trimmed = query.trim();
+  if (!trimmed) return [];
+  const db = await getDb();
+  // `%` and `_` are SQL LIKE wildcards — without escaping them, searching
+  // for a literal "50%" (a plausible note, e.g. "50% off coupon") would
+  // instead match "50" followed by anything, silently over-matching.
+  const escaped = trimmed.replace(/[\\%_]/g, (c) => `\\${c}`);
+  const like = `%${escaped}%`;
+  const cappedLimit = Number.isFinite(limit) && limit > 0 ? Math.floor(limit) : 50;
+  const rows = await db.getAllAsync<any>(
+    `SELECT t.* FROM transactions t
+     LEFT JOIN categories c ON c.id = t.category_id
+     LEFT JOIN accounts a ON a.id = t.account_id
+     LEFT JOIN accounts ta ON ta.id = t.to_account_id
+     WHERE t.note LIKE ? ESCAPE '\\'
+        OR c.name LIKE ? ESCAPE '\\'
+        OR a.name LIKE ? ESCAPE '\\'
+        OR ta.name LIKE ? ESCAPE '\\'
+     ORDER BY t.date DESC, t.created_at DESC
+     LIMIT ?`,
+    [like, like, like, like, cappedLimit]
+  );
+  return rows.map(rowToTransaction);
+}
+
 export async function getTransactionById(id: string): Promise<Transaction | null> {
   const db = await getDb();
   const row = await db.getFirstAsync<any>('SELECT * FROM transactions WHERE id = ?', [id]);
@@ -707,8 +741,9 @@ export async function deleteTransaction(id: string): Promise<RowSnapshot> {
   }
   const db = await getDb();
   const snapshot = await captureRow(db, 'transactions', id);
+  if (!snapshot) throw new Error('This transaction is already deleted.');
   await db.runAsync('DELETE FROM transactions WHERE id = ?', [id]);
-  return snapshot!;
+  return snapshot;
 }
 
 /** Undoes `deleteTransaction` — re-inserts the exact row, never a fresh one. */

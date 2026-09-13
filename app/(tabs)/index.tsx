@@ -9,15 +9,18 @@ import { listLoans, getNextDueInstallment, NextDueInstallment } from '@/db/loans
 import { listRecurringRules } from '@/db/recurring';
 import { getRangeComparison, PeriodComparison, findTopGrowingCategory } from '@/db/reports';
 import { getUserName } from '@/db/settings';
+import { listBudgetsForMonth, BudgetProgress } from '@/db/budgets';
+import { listSavingsGoals } from '@/db/savingsGoals';
 import { roundedMinor } from '@/lib/round';
 import { savingsRatePct } from '@/lib/savingsRate';
-import { Account, Category, Transaction, Loan, RecurringRule } from '@/types';
+import { Account, Category, Transaction, Loan, RecurringRule, SavingsGoal } from '@/types';
 import { theme } from '@/constants/theme';
 import { useAccent } from '@/theme/AccentContext';
 import { hexToRgba } from '@/lib/color';
 import { EmptyState } from '@/components/EmptyState';
 import { CURRENT_PERIOD, PeriodCursor, periodRange, previousPeriodRange } from '@/lib/period';
-import { daysUntilIsoDate } from '@/lib/date';
+import { dueDateLabel } from '@/lib/dueDate';
+import { MAX_LIST_STAGGER_MS } from '@/lib/animation';
 import { HomeHeader } from '@/features/home/HomeHeader';
 import { ThisMonthHero } from '@/features/home/ThisMonthHero';
 import { QuickActionsRow } from '@/features/home/QuickActionsRow';
@@ -28,19 +31,8 @@ import { useCappedList } from '@/lib/useCappedList';
 import { RecentTransactionRow } from '@/features/home/RecentTransactionRow';
 import { AccountChip } from '@/features/home/AccountChip';
 import { suuLine } from '@/features/home/suuLine';
-
-// Capped the same way Reports' own heatmap caps its per-cell stagger — a
-// long list still finishes settling in well under a second.
-const MAX_STAGGER_MS = 320;
-
-/** "today" / "in N days" for a near due date; the actual calendar date once it's
- * far enough out that a raw day-count reads as broken rather than useful. */
-function dueDateLabel(dateStr: string): string {
-  const days = daysUntilIsoDate(dateStr);
-  if (days <= 0) return 'today';
-  if (days <= 90) return `in ${days} days`;
-  return `on ${dateStr}`;
-}
+import { BudgetRow } from '@/features/budgets/BudgetRow';
+import { GoalChip } from '@/features/goals/GoalChip';
 
 export default function DashboardScreen() {
   const insets = useSafeAreaInsets();
@@ -52,6 +44,8 @@ export default function DashboardScreen() {
   const [recurringRules, setRecurringRules] = useState<RecurringRule[]>([]);
   const [comparison, setComparison] = useState<PeriodComparison | null>(null);
   const [nextDue, setNextDue] = useState<NextDueInstallment | null>(null);
+  const [budgets, setBudgets] = useState<BudgetProgress[]>([]);
+  const [goals, setGoals] = useState<SavingsGoal[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [userName, setUserNameState] = useState<string | null>(null);
   const [cursor, setCursor] = useState<PeriodCursor>(CURRENT_PERIOD);
@@ -60,7 +54,7 @@ export default function DashboardScreen() {
   const load = useCallback(async (c: PeriodCursor) => {
     const range = periodRange(c);
     try {
-      const [accs, cats, tx, ln, rules, cmp, due, name] = await Promise.all([
+      const [accs, cats, tx, ln, rules, cmp, due, name, budgetList, goalList] = await Promise.all([
         listAccounts(),
         listCategories(),
         // Scoped to the same period as the navigator above it — showing the
@@ -72,6 +66,11 @@ export default function DashboardScreen() {
         getRangeComparison(range, previousPeriodRange(c), c.granularity),
         getNextDueInstallment(),
         getUserName(),
+        // Budgets and goals are always about *now*, not whatever period the
+        // cursor above is browsing — a budget is inherently this calendar
+        // month, and a goal has no period at all.
+        listBudgetsForMonth(),
+        listSavingsGoals(),
       ]);
       setAccounts(accs);
       setCategories(cats);
@@ -83,6 +82,8 @@ export default function DashboardScreen() {
       setComparison(cmp);
       setNextDue(due);
       setUserNameState(name);
+      setBudgets(budgetList);
+      setGoals(goalList);
       setLoadError(null);
     } catch (e: any) {
       // Guard the throw so a transient DB error shows a banner instead of
@@ -198,10 +199,15 @@ export default function DashboardScreen() {
     });
   }
   upcomingItems.sort((a, b) => (a.sortDate < b.sortDate ? -1 : a.sortDate > b.sortDate ? 1 : 0));
-  const { shown: visibleUpcoming, hidden: hiddenUpcoming, expand: expandUpcoming } = useCappedList(
-    upcomingItems,
-    3
-  );
+  const {
+    shown: visibleUpcoming,
+    hidden: hiddenUpcoming,
+    expand: expandUpcoming,
+  } = useCappedList(upcomingItems, 3);
+
+  // Already sorted most-urgent (closest to or over its limit) first.
+  const topBudgets = budgets.slice(0, 3);
+  const activeGoals = goals.filter((g) => !g.archived);
 
   return (
     <View style={styles.container}>
@@ -257,6 +263,23 @@ export default function DashboardScreen() {
           </Animated.View>
         </View>
 
+        {topBudgets.length > 0 && (
+          <HomeSection title="Budgets" onSeeAll={() => router.push('/budgets')}>
+            <View style={styles.card}>
+              {topBudgets.map((progress, i) => (
+                <Animated.View
+                  key={progress.budget.id}
+                  entering={FadeIn.delay(Math.min(i * 60, MAX_LIST_STAGGER_MS))
+                    .duration(280)
+                    .reduceMotion(ReduceMotion.System)}
+                >
+                  <BudgetRow progress={progress} divider={i > 0} onPress={() => router.push('/budgets')} />
+                </Animated.View>
+              ))}
+            </View>
+          </HomeSection>
+        )}
+
         {visibleUpcoming.length > 0 && (
           // No single "see all" destination now that this mixes loan EMIs
           // (Loans tab) and recurring rules (Recurring screen) — each row
@@ -266,7 +289,7 @@ export default function DashboardScreen() {
               {visibleUpcoming.map((item, i) => (
                 <Animated.View
                   key={item.key}
-                  entering={FadeIn.delay(Math.min(i * 60, MAX_STAGGER_MS))
+                  entering={FadeIn.delay(Math.min(i * 60, MAX_LIST_STAGGER_MS))
                     .duration(280)
                     .reduceMotion(ReduceMotion.System)}
                 >
@@ -290,6 +313,27 @@ export default function DashboardScreen() {
           </HomeSection>
         )}
 
+        {activeGoals.length > 0 && (
+          <HomeSection title="Savings goals" onSeeAll={() => router.push('/savings-goals')}>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.accountStrip}
+            >
+              {activeGoals.map((goal, i) => (
+                <Animated.View
+                  key={goal.id}
+                  entering={FadeIn.delay(Math.min(i * 60, MAX_LIST_STAGGER_MS))
+                    .duration(280)
+                    .reduceMotion(ReduceMotion.System)}
+                >
+                  <GoalChip goal={goal} onPress={() => router.push('/savings-goals')} />
+                </Animated.View>
+              ))}
+            </ScrollView>
+          </HomeSection>
+        )}
+
         <HomeSection title="Recent activity" onSeeAll={() => router.push('/transactions')}>
           {recent.length === 0 ? (
             <EmptyState
@@ -301,7 +345,7 @@ export default function DashboardScreen() {
               {recent.slice(0, 4).map((tx, i) => (
                 <Animated.View
                   key={tx.id}
-                  entering={FadeIn.delay(Math.min(i * 60, MAX_STAGGER_MS))
+                  entering={FadeIn.delay(Math.min(i * 60, MAX_LIST_STAGGER_MS))
                     .duration(280)
                     .reduceMotion(ReduceMotion.System)}
                 >
@@ -330,7 +374,7 @@ export default function DashboardScreen() {
               {accounts.map((acc, i) => (
                 <Animated.View
                   key={acc.id}
-                  entering={FadeIn.delay(Math.min(i * 60, MAX_STAGGER_MS))
+                  entering={FadeIn.delay(Math.min(i * 60, MAX_LIST_STAGGER_MS))
                     .duration(280)
                     .reduceMotion(ReduceMotion.System)}
                 >
