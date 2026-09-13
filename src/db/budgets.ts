@@ -47,7 +47,22 @@ function monthRange(periodMonth: string): { start: string; end: string } {
   return { start: `${periodMonth}-01`, end: `${periodMonth}-${String(lastDay).padStart(2, '0')}` };
 }
 
-/** Same-currency-only spend, matching how every other report figure in the app is scoped. */
+/**
+ * Same-currency-only spend, matching how every other report figure in the
+ * app is scoped. When `categoryId` is a top-level category, this also rolls
+ * up every one of its subcategories' spend — the same grouping
+ * `getRangeComparison`'s "Where it went" breakdown already does
+ * (`JOIN categories top ON top.id = COALESCE(c.parent_id, c.id)`). Budgeting
+ * "Food" and then logging everything under "Food > Groceries" used to leave
+ * that budget's spend permanently at ₹0 — the exact-match-only query below
+ * never saw a transaction actually tagged with the parent's own id.
+ *
+ * `c.parent_id = ?` only ever matches something when `categoryId` genuinely
+ * is a parent (subcategories don't have their own children in this app's
+ * two-level model), so this stays a no-op — exact match only — when
+ * `categoryId` is itself a subcategory, which is exactly the scoping a
+ * subcategory-specific budget should keep.
+ */
 async function categorySpend(
   db: AppDb,
   currency: string,
@@ -56,9 +71,13 @@ async function categorySpend(
 ): Promise<number> {
   const row = await db.getFirstAsync<{ total: number }>(
     `SELECT COALESCE(SUM(t.amount_minor), 0) as total
-     FROM transactions t JOIN accounts a ON a.id = t.account_id
-     WHERE t.type = 'expense' AND a.currency = ? AND t.category_id = ? AND t.date >= ? AND t.date <= ?`,
-    [currency, categoryId, range.start, range.end]
+     FROM transactions t
+     JOIN accounts a ON a.id = t.account_id
+     JOIN categories c ON c.id = t.category_id
+     WHERE t.type = 'expense' AND a.currency = ?
+       AND (t.category_id = ? OR c.parent_id = ?)
+       AND t.date >= ? AND t.date <= ?`,
+    [currency, categoryId, categoryId, range.start, range.end]
   );
   return row?.total ?? 0;
 }
