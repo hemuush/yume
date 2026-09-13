@@ -15,7 +15,7 @@ const C = {
   ink: '12130F',
   surface: 'FFFDF6',
   surfaceAlt: 'F3ECE0',
-  lime: 'E0F0A8',
+  sky: '8FCBFF', // theme.colors.primary — was 'lime' (sage), ring-mark rebrand
   mint: '8FE8C8',
   gold: 'F0E1A8',
   income: '1C9A5B',
@@ -31,7 +31,7 @@ const FONT_NAME = 'Calibri'; // Archivo (the app's own display font) isn't avail
 type CellStyle = XLSX.CellStyle;
 
 const titleStyle: CellStyle = {
-  font: { name: FONT_NAME, bold: true, sz: 18, color: { rgb: C.lime } },
+  font: { name: FONT_NAME, bold: true, sz: 18, color: { rgb: C.sky } },
   fill: { fgColor: { rgb: C.ink }, patternType: 'solid' },
   alignment: { vertical: 'center', horizontal: 'left' },
 };

@@ -98,7 +98,7 @@ export function ConstellationDots({ accent, lit = [0, 4] }: { accent: ColorProp;
   );
 }
 
-/** Suu's crescent, redrawn as a seven-dot moon-phase row instead of a filled icon — same dot language as ConstellationDots, shaped like the thing Suu already is. */
+/** Suu, redrawn as a seven-dot row with one highlighted center dot instead of the ring shape RemoteViews can't easily draw — same dot language as ConstellationDots, and now also literally how Suu itself works: one dot carrying the personality. */
 export function MoonPhaseRow() {
   const opacities = [0.15, 0.4, 0.7, 1, 0.7, 0.4, 0.15];
   return (
@@ -111,7 +111,7 @@ export function MoonPhaseRow() {
             height: 5,
             borderRadius: 2.5,
             marginLeft: i === 0 ? 0 : 3,
-            backgroundColor: i === 3 ? widgetColor.sage : `rgba(18, 19, 15, ${o})`,
+            backgroundColor: i === 3 ? widgetColor.sky : `rgba(18, 19, 15, ${o})`,
             borderWidth: i === 3 ? 1 : 0,
             borderColor: widgetColor.ink,
           }}

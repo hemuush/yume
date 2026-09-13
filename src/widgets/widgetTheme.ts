@@ -20,7 +20,7 @@ export const widgetColor = {
   expense: '#E23F55',
   mint: '#8FE8C8', // theme.colors.secondary — "kept" share of the spend bar
   coralDeep: '#F0876A', // theme.colors.idCoralDeep — "spent" share, and the credit/savings account badge
-  sage: '#E0F0A8', // theme.colors.primary — Suu's moon highlight
+  sky: '#8FCBFF', // theme.colors.primary — Suu's moon highlight (was sage, ring-mark rebrand)
 } as const;
 
 /**
