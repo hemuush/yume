@@ -1,12 +1,11 @@
 import { View, Image, Text, StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
+import { useAccent } from '@/theme/AccentContext';
 
 interface Props {
   size?: number;
   pose?: 'default' | 'peek' | 'sleepy';
 }
-
-const CORAL = theme.colors.idCoralDeep;
 
 // Suu — Yume's mascot, redrawn after the ring-mark rebrand. Earlier attempts
 // tried to give Suu its own crescent shape, and later to put a face on the
@@ -14,11 +13,13 @@ const CORAL = theme.colors.idCoralDeep;
 // as a face awkwardly stuck onto a shape that was never built to hold one.
 // This is a different idea, signed off in session: Suu isn't a character
 // wearing the logo, Suu *is* the logo — the same ring asset the app icon
-// uses, with no face at all. Personality comes entirely from the one coral
-// dot: centered and full-size at rest, shrunk/dimmed/drifted down for
-// 'sleepy'. 'peek' renders like 'default', matching every earlier version
-// of this component.
+// uses, with no face at all. Personality comes entirely from the one dot:
+// centered and full-size at rest, shrunk/dimmed/drifted down for 'sleepy'.
+// 'peek' renders like 'default', matching every earlier version of this
+// component. The dot's colour comes from the active theme pack (coral by
+// default, unchanged from before packs existed) — see `AccentContext`.
 export function SuuIllustration({ size = 90, pose = 'default' }: Props) {
+  const { dot } = useAccent();
   const sleepy = pose === 'sleepy';
   const dotSize = size * (sleepy ? 0.24 : 0.33);
 
@@ -32,6 +33,7 @@ export function SuuIllustration({ size = 90, pose = 'default' }: Props) {
       <View
         style={[
           styles.dot,
+          { backgroundColor: dot },
           {
             width: dotSize,
             height: dotSize,
@@ -53,6 +55,6 @@ export function SuuIllustration({ size = 90, pose = 'default' }: Props) {
 }
 
 const styles = StyleSheet.create({
-  dot: { position: 'absolute', backgroundColor: CORAL },
+  dot: { position: 'absolute' },
   z: { position: 'absolute', fontFamily: theme.font.roundedBold, color: theme.colors.ink },
 });

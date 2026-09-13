@@ -1,6 +1,6 @@
 import { TextWidget } from 'react-native-android-widget';
 import { WidgetShell, MoonPhaseRow } from './WidgetShell';
-import { widgetColor } from './widgetTheme';
+import { widgetColor, asWidgetColor } from './widgetTheme';
 import type { SuuWidgetData } from './data';
 
 /**
@@ -14,10 +14,10 @@ import type { SuuWidgetData } from './data';
  * just standing in for it. Taps open the app to Home, where the full hero
  * card lives.
  */
-export function SuuWidget({ line }: SuuWidgetData) {
+export function SuuWidget({ line, dot }: SuuWidgetData) {
   return (
     <WidgetShell clickAction="OPEN_APP">
-      <MoonPhaseRow />
+      <MoonPhaseRow dot={asWidgetColor(dot)} />
       <TextWidget
         text={line.text}
         maxLines={3}

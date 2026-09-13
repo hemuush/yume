@@ -201,17 +201,35 @@ export const styles = StyleSheet.create({
   rowValue: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textSecondary },
 
   swatchRow: { paddingBottom: 10 },
-  swatchGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, padding: 14, paddingTop: 12 },
-  swatch: {
-    width: 38,
-    height: 38,
-    borderRadius: 11,
+
+  // The theme picker — one row per pack, each showing its primary/secondary
+  // pair as a split-circle swatch. Replaced the old free-colour swatch grid;
+  // see AccentContext/theme/themes.ts.
+  themeList: { padding: 14, paddingTop: 12, gap: 8 },
+  themeCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    padding: 10,
+    borderRadius: theme.radius.lg,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(18,19,15,0.15)',
+    borderColor: theme.colors.borderSoft,
+    backgroundColor: theme.colors.surface,
+  },
+  themeCardActive: { borderColor: theme.colors.ink },
+  themeSwatch: { width: 38, height: 38, borderRadius: 11, overflow: 'hidden', flexDirection: 'row' },
+  themeSwatchHalf: { flex: 1, height: '100%' },
+  themeInfo: { flex: 1, minWidth: 0 },
+  themeName: { fontFamily: theme.font.roundedMedium, fontSize: 13.5, color: theme.colors.textPrimary },
+  themeSub: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textMuted, marginTop: 1 },
+  themeCheck: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: theme.colors.ink,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  swatchActive: { borderWidth: 2.5, borderColor: theme.colors.ink },
 
   pickerHint: {
     fontFamily: theme.font.body,
