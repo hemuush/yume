@@ -20,7 +20,12 @@ export async function captureRow(db: AppDb, table: string, id: string): Promise<
 }
 
 /** Captures every row a query matches — for the two deletes that remove more than one row (a category's subcategories, a loan's payments/linked transactions). */
-export async function captureRows(db: AppDb, table: string, where: string, params: any[]): Promise<RowSnapshot[]> {
+export async function captureRows(
+  db: AppDb,
+  table: string,
+  where: string,
+  params: any[]
+): Promise<RowSnapshot[]> {
   const rows = await db.getAllAsync<Record<string, any>>(`SELECT * FROM ${table} WHERE ${where}`, params);
   return rows.map((row) => ({ table, row }));
 }

@@ -32,11 +32,7 @@ import { stableIndexFromId } from '@/lib/color';
 import { CountUpAmount } from '@/components/CountUpAmount';
 import { useUndoToast } from '@/components/UndoToast';
 import { haptics } from '@/lib/haptics';
-
-// Capped the same way Reports' own heatmap caps its per-cell stagger — a
-// long list still finishes settling in well under a second instead of the
-// last row arriving noticeably late.
-const MAX_STAGGER_MS = 320;
+import { MAX_LIST_STAGGER_MS } from '@/lib/animation';
 
 function lastActivityLabel(dateStr: string | null): string {
   if (!dateStr) return 'No activity yet';
@@ -168,7 +164,7 @@ function PersonRow({
     // outer wrapper rather than fighting the press-scale style for the same
     // node — the same split SpendHeatmap's cells use.
     <ReanimatedAnimated.View
-      entering={FadeIn.delay(Math.min(index * 45, MAX_STAGGER_MS))
+      entering={FadeIn.delay(Math.min(index * 45, MAX_LIST_STAGGER_MS))
         .duration(280)
         .springify()
         .reduceMotion(ReduceMotion.System)}
@@ -390,7 +386,7 @@ function PersonDetailModal({
   // FROM the ledger side (rather than from Transactions, which only reaches
   // entries that have a linked transaction) covers "just adjust balance"
   // entries too.
-  const onDeleteEntry = async (entry: PersonLedgerEntry) => {
+  const runDeleteEntry = async (entry: PersonLedgerEntry) => {
     setSaving(true);
     try {
       const snapshot = await deleteLedgerEntry(entry.id);
@@ -407,6 +403,25 @@ function PersonDetailModal({
     } finally {
       setSaving(false);
     }
+  };
+
+  // A "just adjust balance" entry is a single row, deleted instantly like
+  // everywhere else — one with a linked transaction cascades (that
+  // transaction goes with it, and account balances update immediately), so
+  // that case gets an extra confirm step first.
+  const onDeleteEntry = (entry: PersonLedgerEntry) => {
+    if (!entry.transactionId) {
+      runDeleteEntry(entry);
+      return;
+    }
+    Alert.alert(
+      'Delete this entry?',
+      'Its linked transaction will be removed too, and account balances will update immediately. You can undo right after, if needed.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Delete', style: 'destructive', onPress: () => runDeleteEntry(entry) },
+      ]
+    );
   };
 
   return (

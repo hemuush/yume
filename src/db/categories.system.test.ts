@@ -111,8 +111,16 @@ describe('is_system enforcement', () => {
     const impostor = await createCategory({ name: 'Loan EMI', kind: 'expense' });
     expect(impostor.isSystem).toBe(false);
     // Returns a snapshot of the deleted row(s) now (for Undo), not void —
-    // this just guards that it resolves at all rather than throwing.
-    await expect(deleteCategory(impostor.id)).resolves.toBeInstanceOf(Array);
+    // this just guards that it resolves to an array rather than throwing.
+    // `Array.isArray`, not `toBeInstanceOf(Array)` — under the full suite,
+    // this value can come back as an array from a different realm than this
+    // file's own `Array` global (a known Jest + native-addon interaction,
+    // here via better-sqlite3), which `instanceof` rejects but
+    // `Array.isArray` correctly accepts. That mismatch, not the app code,
+    // was the entire source of this test's long-standing flakiness under
+    // parallel workers.
+    const result = await deleteCategory(impostor.id);
+    expect(Array.isArray(result)).toBe(true);
   });
 
   it('still deletes and archives a normal built-in category', async () => {

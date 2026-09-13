@@ -835,12 +835,17 @@ export async function deleteLoan(loanId: string): Promise<RowSnapshot[]> {
   // loan's own disbursement/fee `transactions` all foreign-key back to it
   // (each `ON DELETE CASCADE`), so restoring in this same order gives every
   // child row its parent before it needs it.
-  const loanSnapshot = await captureRow(db, 'loans', loanId);
-  const cascaded = [
-    ...(await captureRows(db, 'loan_payments', 'loan_id = ?', [loanId])),
-    ...(await captureRows(db, 'loan_rate_changes', 'loan_id = ?', [loanId])),
-    ...(await captureRows(db, 'transactions', 'loan_id = ?', [loanId])),
-  ];
+  // Four independent SELECTs against separate tables — Promise.all still
+  // returns them in this same order regardless of which resolves first, so
+  // parallelizing doesn't disturb the parent-before-children restore order
+  // below, just avoids paying each query's latency back to back.
+  const [loanSnapshot, payments, rateChanges, linkedTransactions] = await Promise.all([
+    captureRow(db, 'loans', loanId),
+    captureRows(db, 'loan_payments', 'loan_id = ?', [loanId]),
+    captureRows(db, 'loan_rate_changes', 'loan_id = ?', [loanId]),
+    captureRows(db, 'transactions', 'loan_id = ?', [loanId]),
+  ]);
+  const cascaded = [...payments, ...rateChanges, ...linkedTransactions];
   await db.runAsync('DELETE FROM loans WHERE id = ?', [loanId]);
   await cancelLoanDueReminder(loanId);
   return loanSnapshot ? [loanSnapshot, ...cascaded] : cascaded;

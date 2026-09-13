@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useRef, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
 import ReanimatedAnimated, { FadeInDown, FadeOutDown, ReduceMotion } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -25,35 +25,72 @@ const AUTO_DISMISS_MS = 4000;
  * Mounted once near the root (`app/_layout.tsx`), so any screen can call
  * `useUndoToast().show(...)` after a delete without prop-drilling a toast
  * down through every modal that might trigger one. A second delete while one
- * is already showing replaces it outright — undoing the first would silently
- * resurrect a row the user has already moved on from.
+ * is already showing used to just replace it outright — silently discarding
+ * the still-live ability to undo the first delete, even though that row was
+ * only ever removed moments ago. Instead, only one toast is ever on screen
+ * at a time, but a delete that lands while another is still showing joins a
+ * queue and gets its own full `AUTO_DISMISS_MS` window once its turn comes,
+ * so no undo is ever dropped without the user having actually seen it.
  */
 export function UndoToastProvider({ children }: { children: React.ReactNode }) {
   const [toast, setToast] = useState<ToastState | null>(null);
+  const [queuedCount, setQueuedCount] = useState(0);
+  const queue = useRef<ToastState[]>([]);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const keyRef = useRef(0);
 
-  const show = useCallback((message: string, onUndo: () => void) => {
-    if (timer.current) clearTimeout(timer.current);
-    keyRef.current += 1;
-    setToast({ key: keyRef.current, message, onUndo });
-    timer.current = setTimeout(() => setToast(null), AUTO_DISMISS_MS);
+  // A ref, not a direct recursive reference — `showNext` scheduling its own
+  // next call by name would read the binding before it's fully initialized.
+  const showNextRef = useRef<() => void>(() => {});
+  const showNext = useCallback(() => {
+    timer.current = null;
+    const next = queue.current.shift() ?? null;
+    setToast(next);
+    setQueuedCount(queue.current.length);
+    if (next) timer.current = setTimeout(() => showNextRef.current(), AUTO_DISMISS_MS);
   }, []);
+  // A ref is only ever safe to write outside render (`showNext`'s identity
+  // never actually changes — it closes over nothing but stable refs and
+  // setState functions — but this keeps the write out of the render body).
+  useEffect(() => {
+    showNextRef.current = showNext;
+  }, [showNext]);
+
+  const show = useCallback(
+    (message: string, onUndo: () => void) => {
+      keyRef.current += 1;
+      queue.current.push({ key: keyRef.current, message, onUndo });
+      if (!timer.current) {
+        showNext();
+      } else {
+        setQueuedCount(queue.current.length);
+      }
+    },
+    [showNext]
+  );
 
   const dismiss = useCallback(() => {
     if (timer.current) clearTimeout(timer.current);
-    setToast(null);
-  }, []);
+    showNext();
+  }, [showNext]);
 
   return (
     <UndoToastContext.Provider value={{ show }}>
       {children}
-      {toast && <ToastView key={toast.key} toast={toast} onDismiss={dismiss} />}
+      {toast && <ToastView key={toast.key} toast={toast} onDismiss={dismiss} queued={queuedCount} />}
     </UndoToastContext.Provider>
   );
 }
 
-function ToastView({ toast, onDismiss }: { toast: ToastState; onDismiss: () => void }) {
+function ToastView({
+  toast,
+  onDismiss,
+  queued,
+}: {
+  toast: ToastState;
+  onDismiss: () => void;
+  queued: number;
+}) {
   const insets = useSafeAreaInsets();
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.94);
 
@@ -67,6 +104,9 @@ function ToastView({ toast, onDismiss }: { toast: ToastState; onDismiss: () => v
       <View style={styles.pill}>
         <Text style={styles.message} numberOfLines={1}>
           {toast.message}
+          {/* Another delete landed while this toast was still showing — say so,
+              so the still-queued undo doesn't feel like it vanished. */}
+          {queued > 0 ? ` · +${queued} more` : ''}
         </Text>
         <AnimatedPressable
           onPress={() => {
