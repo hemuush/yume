@@ -19,7 +19,7 @@
         "backgroundImage": "./assets/android-icon-background.png"
       },
       "predictiveBackGestureEnabled": true,
-      "versionCode": 77,
+      "versionCode": 79,
       "permissions": [
         "android.permission.USE_BIOMETRIC",
         "android.permission.USE_FINGERPRINT"
@@ -131,10 +131,14 @@
     ],
     "extra": {
       "router": {},
+      "expo-navigation-bar": {
+        "enforceContrast": false,
+        "style": "dark"
+      },
       "eas": {
-        "projectId": "95b58454-0520-4507-beb7-502cbc000385"
+        "projectId": "1e86ab0c-45af-4db3-9c88-6917c80f815e"
       }
     },
-    "owner": "xyumex"
+    "owner": "hemant.shar.3004"
   }
 }
