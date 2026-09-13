@@ -6,6 +6,17 @@ import { theme } from '@/constants/theme';
 export const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
+  errorBanner: {
+    marginHorizontal: 20,
+    marginTop: 12,
+    padding: 14,
+    borderRadius: theme.radius.md,
+    backgroundColor: theme.colors.expenseTint,
+    borderWidth: theme.border.thin,
+    borderColor: theme.colors.expense,
+  },
+  errorTitle: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.expense },
+  errorDetail: { fontSize: 11.5, color: theme.colors.textSecondary, marginTop: 3, lineHeight: 16 },
   sectionTitle: {
     fontSize: 12,
     fontFamily: theme.font.bodyBold,

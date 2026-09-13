@@ -3,11 +3,7 @@ import Animated, { FadeIn, ReduceMotion } from 'react-native-reanimated';
 import { theme, SPEND_HEAT_TEXT } from '@/constants/theme';
 import { spendHeatScale } from '@/lib/color';
 import { useAccent } from '@/theme/AccentContext';
-
-// Capped so a 31-day month still finishes staggering in well under a
-// second — the same reasoning `formatPctChange`'s own cap uses elsewhere:
-// a real limit exists, it's just applied here instead of left unbounded.
-const MAX_STAGGER_MS = 320;
+import { MAX_LIST_STAGGER_MS } from '@/lib/animation';
 
 export interface HeatCell {
   key: string;
@@ -61,7 +57,7 @@ export function SpendHeatmap({
           return (
             <Animated.View
               key={c.key}
-              entering={FadeIn.delay(Math.min(i * 12, MAX_STAGGER_MS))
+              entering={FadeIn.delay(Math.min(i * 12, MAX_LIST_STAGGER_MS))
                 .duration(260)
                 .springify()
                 .reduceMotion(ReduceMotion.System)}

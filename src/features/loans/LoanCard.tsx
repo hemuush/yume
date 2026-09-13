@@ -1,6 +1,6 @@
 import { View, Text, Pressable, Animated } from 'react-native';
 import { formatMoney } from '@/lib/money';
-import { formatPctChange } from '@/lib/format';
+import { formatRatioPct } from '@/lib/format';
 import { payoffFraction } from '@/lib/loan';
 import { roundedMinor } from '@/lib/round';
 import { Loan } from '@/types';
@@ -66,8 +66,7 @@ export function LoanCard({
             </View>
             <View style={styles.payoffCaption}>
               <Text style={styles.payoffCaptionText}>
-                <Text style={styles.payoffCaptionBold}>{formatPctChange(fraction * 100)}</Text> of principal
-                repaid
+                <Text style={styles.payoffCaptionBold}>{formatRatioPct(fraction)}</Text> of principal repaid
               </Text>
               <Text style={styles.payoffCaptionText}>
                 {isClosed ? 'Done' : loan.nextDueDate ? `Next due ${loan.nextDueDate}` : ' '}

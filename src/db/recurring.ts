@@ -143,8 +143,9 @@ export async function setRecurringRuleActive(id: string, active: boolean): Promi
 export async function deleteRecurringRule(id: string): Promise<RowSnapshot> {
   const db = await getDb();
   const snapshot = await captureRow(db, 'recurring_rules', id);
+  if (!snapshot) throw new Error('This recurring entry is already deleted.');
   await db.runAsync('DELETE FROM recurring_rules WHERE id = ?', [id]);
-  return snapshot!;
+  return snapshot;
 }
 
 /** Undoes `deleteRecurringRule` — re-inserts the exact row, never a fresh one. */

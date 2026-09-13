@@ -159,6 +159,12 @@ export function LoanDetailModal({
     } catch (e: any) {
       Alert.alert('Could not record payment', String(e?.message ?? e));
       setBusy(false);
+      // Always closes on any outcome, same as before the "done" checkmark
+      // delay was added to the success path — an error left the sheet open
+      // afterwards, in a stale not-busy state suggesting Confirm was still
+      // safe to retry immediately, when the accompanying alert already
+      // gives the user the chance to reopen Pay and try again properly.
+      setPayVisible(false);
     }
   };
 
@@ -199,7 +205,7 @@ export function LoanDetailModal({
     onPress: () => confirmDelete(),
   });
 
-  const confirmDelete = async () => {
+  const runDelete = async () => {
     setBusy(true);
     try {
       const snapshot = await deleteLoan(liveLoan.id);
@@ -215,6 +221,21 @@ export function LoanDetailModal({
     } finally {
       setBusy(false);
     }
+  };
+
+  // Deleting a loan always cascades — its whole schedule, any rate-change
+  // history, and any disbursement/fee transactions it recorded go with it —
+  // so unlike a single transaction or account, this always gets a confirm
+  // step before the instant-delete + undo toast that follows.
+  const confirmDelete = () => {
+    Alert.alert(
+      `Delete "${liveLoan.counterparty}"?`,
+      'This also removes its payment schedule and any transactions it recorded. You can undo right after, if needed.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Delete', style: 'destructive', onPress: () => runDelete() },
+      ]
+    );
   };
 
   const pendingInstallments = schedule.filter((p) => p.status === 'pending');
