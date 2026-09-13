@@ -26,7 +26,7 @@ export async function ensureAndroidChannel(): Promise<void> {
   await Notifications.setNotificationChannelAsync('default', {
     name: 'Yume reminders',
     importance: Notifications.AndroidImportance.DEFAULT,
-    lightColor: '#E0F0A8',
+    lightColor: '#8FCBFF', // theme.colors.primary — was sage, ring-mark rebrand
   });
 }
 

@@ -7,10 +7,12 @@ import type { SuuWidgetData } from './data';
  * "Suu Check-in" — the 2×2 widget. The one widget a generic finance app
  * couldn't ship: Suu's own line (`suuLine()`, unchanged — savings nudge,
  * spend-up warning, or a top-growing category, in that priority order) on
- * the home screen. The crescent redrawn as a seven-dot moon-phase row
- * instead of a filled icon shape RemoteViews can't easily reproduce, and
- * because it echoes the dot language the other widgets already use. Taps
- * open the app to Home, where the full hero card lives.
+ * the home screen. Suu itself redrawn as a seven-dot row with one
+ * highlighted center dot, instead of the ring shape RemoteViews can't
+ * easily reproduce — which, since the ring-mark rebrand, actually echoes
+ * Suu's own design (one moving dot carries the personality) rather than
+ * just standing in for it. Taps open the app to Home, where the full hero
+ * card lives.
  */
 export function SuuWidget({ line }: SuuWidgetData) {
   return (

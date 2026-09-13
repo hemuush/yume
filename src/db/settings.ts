@@ -89,11 +89,14 @@ export async function setNotificationPrefs(prefs: NotificationPrefs): Promise<vo
 }
 
 const ACCENT_COLOR_KEY = 'accent_color';
-// Soft sage-lime — the original mockup's neon lime (#D6FF3D) sat noticeably
-// darker/more saturated than the rest of the palette and read as harsh
-// across a full header band; this keeps the same signature hue, lightened
-// to match. See theme.ts for the full rationale.
-const DEFAULT_ACCENT = '#E0F0A8';
+// Sky-blue — the signature accent since the ring-mark rebrand (was sage
+// `#E0F0A8`, itself a lightened version of the original mockup's harsher
+// neon lime). This is the value anyone who's never opened the accent
+// picker actually sees; theme.ts's `primary` token carries the same
+// rebrand for the smaller set of screens that read it directly rather
+// than through `useAccent()`. Sage is still a selectable swatch below for
+// anyone who prefers it or already explicitly picked it.
+const DEFAULT_ACCENT = '#8FCBFF';
 let cachedAccent: string | null = null;
 
 export function getCachedAccentColor(): string {
@@ -148,9 +151,9 @@ export async function setAccentColor(hex: string): Promise<void> {
 // ones, per current fintech colour-design guidance. See LEGACY_ACCENT_REMAP
 // for what an existing install on one of the dropped colours becomes.
 export const ACCENT_SWATCHES = [
-  '#E0F0A8', // Sage (default)
+  '#8FCBFF', // Sky (default)
+  '#E0F0A8', // Sage
   '#8FE8C8', // Mint
-  '#8FCBFF', // Sky
   '#C9B8FF', // Lavender
   '#FFA8CE', // Pink
   '#F0A387', // Terracotta
