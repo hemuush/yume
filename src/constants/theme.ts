@@ -4,9 +4,14 @@
 //
 // The current register is a calm, minimal one: warm cream surfaces, thin
 // hairline borders (`borderSoft`) and whitespace to separate cards, pill
-// shapes for nav/buttons/chips, and a soft sage-lime (`primary`) plus mint
+// shapes for nav/buttons/chips, and a soft sky-blue (`primary`) plus mint
 // (`secondary`) as the signature accents. All flat/pastel swatches sit in a
 // 74-83% lightness band so they read as gentle pastels, never neon.
+//
+// `primary` was sage-lime until the ring-mark rebrand (sign-off in session);
+// it's sky-blue now, matching the new app icon. It's the same value as
+// `flatBlue` below, just promoted from an account-tag color into the lead
+// accent — nothing else in this file changed for that pass.
 //
 // `border.thin` (2px) is now only for deliberate emphasis — a coloured
 // callout border (an error banner, an EMI preview) — never a plain card or
@@ -25,8 +30,12 @@ export const theme = {
     ink: '#12130F',
     inkSoft: '#5B5748',
 
-    primary: '#E0F0A8', // soft sage-lime — the one signature accent
-    primaryTint: '#F4F7E6',
+    // Sky-blue is the signature accent (was soft sage-lime) — the swap that
+    // came out of the ring-mark rebrand sign-off. It isn't a new color to
+    // the app: it's the same value `flatBlue` already used for account
+    // tags, just promoted into the lead role.
+    primary: '#8FCBFF',
+    primaryTint: '#EAF3FE',
     secondary: '#8FE8C8', // mint
     secondaryTint: '#E4FAF1',
     accent: '#C9B8FF', // lavender

@@ -4,15 +4,21 @@ import { theme } from '@/constants/theme';
 
 interface Props {
   size?: number;
-  /** 'color' = ink moon + sage/mint sprout; 'mono' = a single-colour silhouette. */
+  /** 'color' = ink moon + sky/mint sprout (was sage/mint before the ring-mark rebrand); 'mono' = a single-colour silhouette. */
   tone?: 'color' | 'mono';
   color?: string;
 }
 
 /**
- * The Yume mark — the same crescent-moon-and-sprout as the app icon, drawn
- * from the shared path data so the two never drift. Used in the Home header,
+ * The Yume mark — an ink crescent-moon-and-sprout. Used in the Home header,
  * Settings → About and the lock screen.
+ *
+ * The app icon moved to its own abstract ring mark in the ring-mark rebrand
+ * (sign-off in session); this component wasn't part of that change, so it
+ * and the app icon no longer share a silhouette — only the leaf colors
+ * picked up the new sky/coral automatically, since they read
+ * `theme.colors.primary`/`secondary` directly. Redrawing this to match the
+ * new icon is a separate, still-open decision.
  */
 export function YumeLogo({ size = 28, tone = 'color', color }: Props) {
   const raw = useId();

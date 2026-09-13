@@ -1,5 +1,4 @@
-import { useId } from 'react';
-import Svg, { Circle, Path, Rect, Defs, Mask, ClipPath, Text as SvgText } from 'react-native-svg';
+import { View, Image, Text, StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
 
 interface Props {
@@ -7,94 +6,53 @@ interface Props {
   pose?: 'default' | 'peek' | 'sleepy';
 }
 
-const INK = theme.colors.ink;
-const SAGE = theme.colors.primary;
-const MINT = theme.colors.secondary;
+const CORAL = theme.colors.idCoralDeep;
 
-// Suu — Yume's mascot: a plump crescent-moon sprite, drawn in the same
-// crescent-plus-leaf language as the app logo so the two stay visually of a
-// piece. Body is a sage disc with a circular "bite" (via a mask); the concave
-// edge gets its outline back through a clip-path. Only 'sleepy' differs from
-// 'default' — 'peek' renders like 'default', matching the old mascot.
+// Suu — Yume's mascot, redrawn after the ring-mark rebrand. Earlier attempts
+// tried to give Suu its own crescent shape, and later to put a face on the
+// app icon's exact silhouette — both read as a mismatch with the icon, or
+// as a face awkwardly stuck onto a shape that was never built to hold one.
+// This is a different idea, signed off in session: Suu isn't a character
+// wearing the logo, Suu *is* the logo — the same ring asset the app icon
+// uses, with no face at all. Personality comes entirely from the one coral
+// dot: centered and full-size at rest, shrunk/dimmed/drifted down for
+// 'sleepy'. 'peek' renders like 'default', matching every earlier version
+// of this component.
 export function SuuIllustration({ size = 90, pose = 'default' }: Props) {
-  const raw = useId();
-  const uid = raw.replace(/[^a-zA-Z0-9]/g, '');
-  const maskId = `suuBody${uid}`;
-  const clipId = `suuClip${uid}`;
   const sleepy = pose === 'sleepy';
+  const dotSize = size * (sleepy ? 0.24 : 0.33);
 
   return (
-    <Svg width={size} height={size} viewBox="0 0 100 100">
-      <Defs>
-        <Mask id={maskId} maskUnits="userSpaceOnUse" x={-20} y={-20} width={140} height={140}>
-          <Rect x={-20} y={-20} width={140} height={140} fill="#fff" />
-          <Circle cx={80} cy={40} r={37} fill="#000" />
-        </Mask>
-        <ClipPath id={clipId}>
-          <Circle cx={45} cy={55} r={40} />
-        </ClipPath>
-      </Defs>
-
-      {/* crescent body + its outline */}
-      <Circle cx={45} cy={55} r={40} fill={SAGE} stroke={INK} strokeWidth={2.6} mask={`url(#${maskId})`} />
-      {/* outline along the concave (bitten) edge only */}
-      <Circle
-        cx={80}
-        cy={40}
-        r={37}
-        fill="none"
-        stroke={INK}
-        strokeWidth={2.6}
-        clipPath={`url(#${clipId})`}
+    <View style={{ width: size, height: size }}>
+      <Image
+        source={require('../../assets/suu-ring.png')}
+        style={{ width: size, height: size }}
+        resizeMode="contain"
       />
-
-      {/* blush */}
-      <Circle cx={25} cy={61} r={3.6} fill={MINT} opacity={0.85} />
-      <Circle cx={51} cy={63} r={3.6} fill={MINT} opacity={0.85} />
-
-      {/* eyes */}
-      {sleepy ? (
-        <>
-          <Path d="M27 52 q4 4 8 0" fill="none" stroke={INK} strokeWidth={3} strokeLinecap="round" />
-          <Path d="M43 54 q4 4 8 0" fill="none" stroke={INK} strokeWidth={3} strokeLinecap="round" />
-        </>
-      ) : (
-        <>
-          <Circle cx={31} cy={53} r={3.4} fill={INK} />
-          <Circle cx={47} cy={55} r={3.4} fill={INK} />
-          <Circle cx={29.8} cy={51.8} r={1} fill={theme.colors.white} />
-          <Circle cx={45.8} cy={53.8} r={1} fill={theme.colors.white} />
-        </>
-      )}
-
-      {/* mouth */}
-      <Path
-        d={sleepy ? 'M34 64 q5 3 10 1' : 'M33 63 q6 6 13 1'}
-        fill="none"
-        stroke={INK}
-        strokeWidth={2.6}
-        strokeLinecap="round"
+      <View
+        style={[
+          styles.dot,
+          {
+            width: dotSize,
+            height: dotSize,
+            borderRadius: dotSize / 2,
+            left: size * (sleepy ? 0.5 : 0.47) - dotSize / 2,
+            top: size * (sleepy ? 0.34 : 0.24) - dotSize / 2,
+            opacity: sleepy ? 0.55 : 1,
+          },
+        ]}
       />
-
-      {/* leaf sprouting from the top horn */}
-      <Path
-        d="M44 19 Q56.66 14.44 56 1 Q43.34 5.56 44 19 Z"
-        fill={MINT}
-        stroke={INK}
-        strokeWidth={2.6}
-        strokeLinejoin="round"
-      />
-
       {sleepy && (
         <>
-          <SvgText x={70} y={26} fontFamily={theme.font.roundedBold} fontSize={13} fill={INK}>
-            z
-          </SvgText>
-          <SvgText x={79} y={17} fontFamily={theme.font.roundedBold} fontSize={9} fill={INK}>
-            z
-          </SvgText>
+          <Text style={[styles.z, { fontSize: size * 0.16, right: size * 0.14, top: size * 0.08 }]}>z</Text>
+          <Text style={[styles.z, { fontSize: size * 0.11, right: size * 0.06, top: size * 0.01 }]}>z</Text>
         </>
       )}
-    </Svg>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  dot: { position: 'absolute', backgroundColor: CORAL },
+  z: { position: 'absolute', fontFamily: theme.font.roundedBold, color: theme.colors.ink },
+});
