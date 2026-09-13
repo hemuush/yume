@@ -6,10 +6,7 @@ import { NeoTile } from '@/components/NeoTile';
 import { formatMoney } from '@/lib/money';
 import { styles } from './recurring.styles';
 import { ruleCadenceLabel } from './recurring.helpers';
-
-// Capped the same way Reports' own heatmap caps its per-cell stagger — a
-// long rule list still finishes settling in well under a second.
-const MAX_STAGGER_MS = 320;
+import { MAX_LIST_STAGGER_MS } from '@/lib/animation';
 
 export function RuleCard({
   rule,
@@ -41,7 +38,7 @@ export function RuleCard({
     // had zero entrance motion at all, unlike every other list in the app —
     // now settles in staggered, same easing as everywhere else.
     <Animated.View
-      entering={FadeIn.delay(Math.min(index * 60, MAX_STAGGER_MS))
+      entering={FadeIn.delay(Math.min(index * 60, MAX_LIST_STAGGER_MS))
         .duration(300)
         .springify()
         .reduceMotion(ReduceMotion.System)}

@@ -608,7 +608,11 @@ function PeriodRow({ cursor, onChange }: { cursor: PeriodCursor; onChange: (c: P
         <Pressable onPress={() => onChange(stepPeriod(cursor, -1))} hitSlop={8} style={styles.periodArrow}>
           <Feather name="chevron-left" size={16} color={theme.colors.ink} />
         </Pressable>
-        <ReanimatedAnimated.Text key={periodLabel(cursor)} entering={FadeIn.duration(150)} style={styles.periodLabel}>
+        <ReanimatedAnimated.Text
+          key={periodLabel(cursor)}
+          entering={FadeIn.duration(150)}
+          style={styles.periodLabel}
+        >
           {periodLabel(cursor)}
         </ReanimatedAnimated.Text>
         <Pressable

@@ -22,6 +22,13 @@ export function useSwipeStep(onPrev: () => void, onNext: () => void, threshold =
     onNextRef.current = onNext;
   });
 
+  // react-hooks/refs flags this: it can't tell that `onPrevRef`/`onNextRef`
+  // are only ever read from *inside* `onPanResponderRelease` — a callback
+  // PanResponder invokes later, on an actual gesture release, never
+  // synchronously while this initializer itself runs. That's exactly the
+  // "latest ref" pattern the effect above sets up, so the read is safe;
+  // the lint rule just can't see through the callback boundary.
+  // eslint-disable-next-line react-hooks/refs
   const [responder] = useState(() =>
     PanResponder.create({
       // Mostly-horizontal drags only — a mostly-vertical one is a scroll

@@ -4,6 +4,7 @@ import { useAccent } from '@/theme/AccentContext';
 import { Account } from '@/types';
 import { Amount } from '@/components/Amount';
 import { FlatIconBadge } from '@/components/FlatIconBadge';
+import { accountBadgeColor } from '@/lib/account';
 import { SoftCard } from './SoftCard';
 
 const ACCOUNT_ICON: Record<Account['type'], string> = {
@@ -26,8 +27,7 @@ const ACCOUNT_ICON: Record<Account['type'], string> = {
  */
 export function AccountChip({ account }: { account: Account }) {
   const { accent } = useAccent();
-  const badgeColor =
-    account.type === 'savings' || account.type === 'credit_card' ? theme.colors.idCoralDeep : accent;
+  const badgeColor = accountBadgeColor(account.type, accent);
   return (
     <SoftCard style={styles.card}>
       <FlatIconBadge name={ACCOUNT_ICON[account.type] ?? 'credit-card'} backgroundColor={badgeColor} />

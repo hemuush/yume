@@ -1,6 +1,5 @@
 import { useCallback, useState } from 'react';
 import { View, Text, ScrollView, ActivityIndicator } from 'react-native';
-import { useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { listLoans } from '@/db/loans';
 import { formatMoney } from '@/lib/money';
@@ -13,6 +12,7 @@ import { AppHeader } from '@/components/AppHeader';
 import { PeopleSection } from '@/features/people/PeopleSection';
 import { theme } from '@/constants/theme';
 import { useFadeIn } from '@/lib/useFadeIn';
+import { useScreenLoad } from '@/lib/useScreenLoad';
 import { styles } from '@/features/loans/loans.styles';
 import { LoanCard } from '@/features/loans/LoanCard';
 import { LoanDetailModal } from '@/features/loans/LoanDetailModal';
@@ -33,32 +33,12 @@ export default function LoansScreen() {
   const [loans, setLoans] = useState<Loan[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedLoan, setSelectedLoan] = useState<Loan | null>(null);
-  const [loadError, setLoadError] = useState<string | null>(null);
-  // `loans` starts at `[]`, the same shape as "genuinely no loans yet" — so
-  // unlike Transactions/Reports (whose primary state starts `null`), this
-  // needs its own explicit "has the first load actually finished" flag to
-  // gate the spinner correctly instead of reading an empty list as loaded.
-  const [loaded, setLoaded] = useState(false);
   const listFadeStyle = useFadeIn([loans]);
 
-  const load = useCallback(async () => {
-    try {
-      setLoans(await listLoans());
-      setLoadError(null);
-    } catch (e: any) {
-      // A failed query previously left `loans` at its stale/empty state
-      // with nothing on screen to say why — this makes that visible.
-      setLoadError(String(e?.message ?? e));
-    } finally {
-      setLoaded(true);
-    }
+  const loadLoans = useCallback(async () => {
+    setLoans(await listLoans());
   }, []);
-
-  useFocusEffect(
-    useCallback(() => {
-      load();
-    }, [load])
-  );
+  const { loaded, loadError, reload: load } = useScreenLoad(loadLoans);
 
   // A defaulted loan is still money owed (or owed to you) — excluding it
   // here (as a stricter 'active'-only filter previously did) would drop it

@@ -1,8 +1,14 @@
 import { useCallback, useState } from 'react';
 import { View, Text, ScrollView, Alert, ActivityIndicator } from 'react-native';
-import { useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { listCategories, archiveCategory, unarchiveCategory, deleteCategory, restoreCategory } from '@/db/ledger';
+import { useScreenLoad } from '@/lib/useScreenLoad';
+import {
+  listCategories,
+  archiveCategory,
+  unarchiveCategory,
+  deleteCategory,
+  restoreCategory,
+} from '@/db/ledger';
 import { Category } from '@/types';
 import { theme } from '@/constants/theme';
 import { AppHeader, HeaderIconButton } from '@/components/AppHeader';
@@ -26,23 +32,17 @@ export default function CategoriesScreen() {
   // that changes which two actions the sheet offers (Archive/Delete vs
   // Restore/Delete).
   const [manageTarget, setManageTarget] = useState<{ cat: Category; archived: boolean } | null>(null);
-  // `allCategories` starts at `[]`, indistinguishable from "genuinely no
-  // categories yet" — an explicit flag is what gates the spinner correctly.
-  const [loaded, setLoaded] = useState(false);
 
-  const load = useCallback(async () => {
-    try {
-      setAllCategories(await listCategories(true));
-    } finally {
-      setLoaded(true);
-    }
+  const loadCategories = useCallback(async () => {
+    setAllCategories(await listCategories(true));
   }, []);
-
-  useFocusEffect(
-    useCallback(() => {
-      load();
-    }, [load])
-  );
+  const { loaded, loadError, reload: load } = useScreenLoad(loadCategories);
+  // Guards the manage sheet's Archive/Delete/Restore actions against a
+  // double-tap firing the same mutation twice before the sheet closes —
+  // every other screen's equivalent delete flow (LoanDetailModal,
+  // AccountDetailModal, RuleModal, TransactionDetailModal) already disables
+  // its trigger the same way while its own async call is in flight.
+  const [actionBusy, setActionBusy] = useState(false);
 
   const categories = allCategories.filter((c) => !c.archived);
   const archivedCategories = allCategories.filter((c) => c.archived);
@@ -55,11 +55,15 @@ export default function CategoriesScreen() {
       {
         text: 'Restore',
         onPress: async () => {
+          if (actionBusy) return;
+          setActionBusy(true);
           try {
             await unarchiveCategory(cat.id);
             await load();
           } catch (e: any) {
             Alert.alert('Could not restore category', String(e?.message ?? e));
+          } finally {
+            setActionBusy(false);
           }
         },
       },
@@ -79,11 +83,15 @@ export default function CategoriesScreen() {
           text: 'Archive',
           style: 'destructive',
           onPress: async () => {
+            if (actionBusy) return;
+            setActionBusy(true);
             try {
               await archiveCategory(cat.id);
               await load();
             } catch (e: any) {
               Alert.alert('Could not archive category', String(e?.message ?? e));
+            } finally {
+              setActionBusy(false);
             }
           },
         },
@@ -91,7 +99,9 @@ export default function CategoriesScreen() {
     );
   };
 
-  const onDelete = async (cat: Category) => {
+  const runDelete = async (cat: Category) => {
+    if (actionBusy) return;
+    setActionBusy(true);
     try {
       const snapshot = await deleteCategory(cat.id);
       haptics.warn();
@@ -102,7 +112,29 @@ export default function CategoriesScreen() {
       });
     } catch (e: any) {
       Alert.alert('Could not delete category', String(e?.message ?? e));
+    } finally {
+      setActionBusy(false);
     }
+  };
+
+  const onDelete = (cat: Category) => {
+    // A single category is instant-delete + undo like everywhere else, but
+    // one with subcategories cascades — deleting it takes every subcategory
+    // with it in the same tap, which the undo toast alone doesn't make
+    // obvious up front, so that case gets an extra confirm step first.
+    const childCount = allCategories.filter((c) => c.parentId === cat.id).length;
+    if (childCount === 0) {
+      runDelete(cat);
+      return;
+    }
+    Alert.alert(
+      `Delete "${cat.name}"?`,
+      `This also deletes its ${childCount} subcategor${childCount === 1 ? 'y' : 'ies'}. You can undo right after, if needed.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Delete', style: 'destructive', onPress: () => runDelete(cat) },
+      ]
+    );
   };
 
   // A single-button information notice, not a menu — stays a plain
@@ -158,7 +190,7 @@ export default function CategoriesScreen() {
         ]
     : [];
 
-  if (!loaded) {
+  if (!loaded && !loadError) {
     return (
       <View style={styles.container}>
         <AppHeader title="Categories" showBack />
@@ -188,6 +220,12 @@ export default function CategoriesScreen() {
       />
 
       <ScrollView contentContainerStyle={{ paddingBottom: theme.layout.screenScrollPad + insets.bottom }}>
+        {loadError && (
+          <View style={styles.errorBanner}>
+            <Text style={styles.errorTitle}>Couldn't load your categories</Text>
+            <Text style={styles.errorDetail}>{loadError}</Text>
+          </View>
+        )}
         <Text style={styles.sectionTitle}>Expense</Text>
         <CategorySection cats={expenseCats} onEdit={setEditingCategory} onManage={onManage} />
 

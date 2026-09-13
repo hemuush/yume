@@ -36,6 +36,38 @@ export const styles = StyleSheet.create({
   },
   filterBtnActive: { backgroundColor: theme.colors.idGold },
   filterBtnText: { fontSize: 12, fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
+
+  // Search is its own mode (see the screen's own comment) — this row
+  // replaces the scope pills/week nav while it's active, in the same slot.
+  searchBarRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingHorizontal: 20,
+    marginBottom: 14,
+  },
+  searchBar: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+    borderRadius: theme.radius.pill,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.borderSoft,
+    backgroundColor: theme.colors.surface,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 14,
+    fontFamily: theme.font.body,
+    color: theme.colors.textPrimary,
+    padding: 0,
+  },
+  searchCancel: { fontSize: 13, fontFamily: theme.font.roundedMedium, color: theme.colors.textSecondary },
+  searchLoading: { paddingVertical: 40, alignItems: 'center' },
+
   scopeRow: { paddingHorizontal: 20 },
   weekNavRow: {
     flexDirection: 'row',
