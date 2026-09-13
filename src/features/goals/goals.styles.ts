@@ -80,6 +80,15 @@ export const styles = StyleSheet.create({
   },
   dateFieldsRow: { flexDirection: 'row', gap: 10 },
   dateFieldInput: { textAlign: 'center' },
+  noteInput: { minHeight: 70, textAlignVertical: 'top', paddingTop: 12 },
+  letterNote: {
+    fontFamily: theme.font.body,
+    fontStyle: 'italic',
+    fontSize: 13,
+    color: theme.colors.textSecondary,
+    lineHeight: 19,
+    marginBottom: 16,
+  },
 
   dangerLabel: {
     fontSize: 10.5,

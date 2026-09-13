@@ -244,6 +244,13 @@ export function GoalDetailModal({
         </>
       )}
 
+      {goal.letterRevealed && goal.noteToSelf && (
+        <>
+          <Text style={styles.fieldLabel}>Why you started this</Text>
+          <Text style={styles.letterNote}>&ldquo;{goal.noteToSelf}&rdquo;</Text>
+        </>
+      )}
+
       <Text style={styles.dangerLabel}>DANGER ZONE</Text>
       {goal.archived ? (
         <PrimaryButton

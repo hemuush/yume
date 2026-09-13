@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { View, Text } from 'react-native';
-import { contributeToGoal } from '@/db/savingsGoals';
+import { contributeToGoal, markGoalLetterRevealed } from '@/db/savingsGoals';
 import { toMinor, formatMoney } from '@/lib/money';
 import { SavingsGoal } from '@/types';
 import { ModalSheet } from '@/components/ModalSheet';
@@ -8,6 +8,7 @@ import { modalFooterStyles as f } from '@/constants/theme';
 import { FormInput } from '@/components/FormInput';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { SegmentedControl } from '@/components/SegmentedControl';
+import { GoalLetterReveal } from './GoalLetterReveal';
 import { haptics } from '@/lib/haptics';
 import { styles } from './goals.styles';
 
@@ -31,12 +32,19 @@ export function ContributeModal({
   const [amount, setAmount] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Set only when this contribution is the one that first pushes the goal
+  // to its target and there's a sealed note to hand back — see submit()
+  // below. Holding this locally (rather than calling onContributed right
+  // away) is what keeps the sheet open on the reveal instead of the host
+  // screen closing it out from under this component.
+  const [reveal, setReveal] = useState<{ note: string } | null>(null);
 
   useEffect(() => {
     if (!goal) return;
     setDirection('add');
     setAmount('');
     setError(null);
+    setReveal(null);
   }, [goal]);
 
   if (!goal) return null;
@@ -50,9 +58,24 @@ export function ContributeModal({
     }
     setSaving(true);
     try {
-      await contributeToGoal(goal.id, direction === 'add' ? amountMinor : -amountMinor);
+      const deltaMinor = direction === 'add' ? amountMinor : -amountMinor;
+      await contributeToGoal(goal.id, deltaMinor);
       haptics.tap();
-      onContributed();
+      // The crossing check lives here, not in contributeToGoal — this is
+      // the one place that already holds both the pre-contribution amount
+      // and the note, with no extra read needed. `>=` on the *new* total
+      // is deliberate: someone who adds more than needed in one go still
+      // gets the reveal, same as landing exactly on the target.
+      const justCompleted =
+        direction === 'add' &&
+        goal.currentAmountMinor < goal.targetAmountMinor &&
+        goal.currentAmountMinor + deltaMinor >= goal.targetAmountMinor;
+      if (justCompleted && goal.noteToSelf && !goal.letterRevealed) {
+        await markGoalLetterRevealed(goal.id);
+        setReveal({ note: goal.noteToSelf });
+      } else {
+        onContributed();
+      }
     } catch (e: any) {
       setError(String(e?.message ?? e));
     } finally {
@@ -63,36 +86,50 @@ export function ContributeModal({
   return (
     <ModalSheet
       visible
-      onClose={onClose}
-      title={goal.name}
+      onClose={reveal ? onContributed : onClose}
+      title={reveal ? undefined : goal.name}
       footer={
-        <View style={f.footerCol}>
-          {error && <Text style={styles.errorText}>{error}</Text>}
-          <View style={f.footerRow}>
-            <PrimaryButton title="Cancel" variant="secondary" onPress={onClose} style={f.footerBtn} />
-            <PrimaryButton
-              title={saving ? 'Saving...' : direction === 'add' ? 'Add' : 'Withdraw'}
-              onPress={submit}
-              disabled={saving}
-              style={f.footerBtn}
-            />
+        reveal ? (
+          <PrimaryButton title="Nice, thanks Suu" onPress={onContributed} />
+        ) : (
+          <View style={f.footerCol}>
+            {error && <Text style={styles.errorText}>{error}</Text>}
+            <View style={f.footerRow}>
+              <PrimaryButton title="Cancel" variant="secondary" onPress={onClose} style={f.footerBtn} />
+              <PrimaryButton
+                title={saving ? 'Saving...' : direction === 'add' ? 'Add' : 'Withdraw'}
+                onPress={submit}
+                disabled={saving}
+                style={f.footerBtn}
+              />
+            </View>
           </View>
-        </View>
+        )
       }
     >
-      <Text style={styles.modalHint}>
-        Currently {formatMoney(goal.currentAmountMinor)} of {formatMoney(goal.targetAmountMinor)} saved.
-      </Text>
-      <SegmentedControl options={DIRECTIONS} value={direction} onChange={setDirection} />
-      <View style={{ height: 14 }} />
-      <FormInput
-        label="Amount"
-        value={amount}
-        onChangeText={setAmount}
-        keyboardType="numeric"
-        placeholder="e.g. 2000"
-        autoFocus
-      />
+      {reveal ? (
+        <GoalLetterReveal
+          goalName={goal.name}
+          note={reveal.note}
+          targetAmountMinor={goal.targetAmountMinor}
+        />
+      ) : (
+        <>
+          <Text style={styles.modalHint}>
+            Currently {formatMoney(goal.currentAmountMinor)} of {formatMoney(goal.targetAmountMinor)} saved.
+          </Text>
+          <SegmentedControl options={DIRECTIONS} value={direction} onChange={setDirection} />
+          <View style={{ height: 14 }} />
+          <FormInput
+            label="Amount"
+            value={amount}
+            onChangeText={setAmount}
+            keyboardType="numeric"
+            placeholder="e.g. 2000"
+            autoFocus
+          />
+        </>
+      )}
     </ModalSheet>
   );
 }
