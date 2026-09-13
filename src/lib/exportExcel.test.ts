@@ -176,10 +176,11 @@ describe('buildExportWorkbook', () => {
     const wb = buildExportWorkbook(data);
     const ws = wb.Sheets['Categories'];
     const rows = XLSX.utils.sheet_to_json<any[]>(ws, { header: 1 });
-    const foodRow = rows.find((r) => r[0] === 'Food & Dining');
+    // Column 0 is the colour-swatch column (no text), so the name is column 1.
+    const foodRow = rows.find((r) => r[1] === 'Food & Dining');
     expect(foodRow).toBeDefined();
-    expect(foodRow![2]).toBe(750); // 30000 (Food & Dining) + 45000 (Zomato) = 75000 minor -> 750 major
-    expect(rows.some((r) => r[0] === 'Zomato')).toBe(false);
+    expect(foodRow![3]).toBe(750); // 30000 (Food & Dining) + 45000 (Zomato) = 75000 minor -> 750 major
+    expect(rows.some((r) => r[1] === 'Zomato')).toBe(false);
   });
 
   it('the Transactions total row is a SUBTOTAL formula, not a hardcoded value', () => {
