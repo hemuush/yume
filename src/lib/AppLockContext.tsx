@@ -21,7 +21,13 @@ export function AppLockProvider({ children }: { children: ReactNode }) {
   const [lockEnabled, setLockEnabledState] = useState(false);
 
   useEffect(() => {
-    getAppLockEnabled().then(setLockEnabledState);
+    // A rejection here already left state at its initial `false` before
+    // this fix (since `setLockEnabledState` simply never ran) — this only
+    // removes the resulting unhandled-promise-rejection, it doesn't change
+    // that fallback behavior.
+    getAppLockEnabled()
+      .then(setLockEnabledState)
+      .catch(() => {});
   }, []);
 
   const setLockEnabled = (enabled: boolean) => {
