@@ -113,9 +113,12 @@ describe('Profile / Loans tab / Home all agree after a realistic create-delete-p
     }
   });
 
-  it("every screen's Promise.all batch (Profile's, and Home's) resolves without throwing and agrees on totals", async () => {
-    // Exactly Profile's own load(): if any one of these seven calls throws,
-    // Promise.all rejects and Profile silently keeps every field at its
+  it("every screen's Promise.all batch (Profile's YouSection, and Home's) resolves without throwing and agrees on totals", async () => {
+    // The core subset of YouSection's own load() (now split from the shell's
+    // identity-only load, and since expanded with budgets/goals/recurring —
+    // this covers the accounts/loans/people/currency slice that feeds
+    // computeTrackedBalance below): if any one of these calls throws,
+    // Promise.all rejects and the screen silently keeps every field at its
     // zero/empty default with no visible error — which is what "accounts
     // not visible" looked like on-device.
     const [accs, txs, loans, people, userName, since, currency] = await Promise.all([
