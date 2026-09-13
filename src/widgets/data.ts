@@ -6,9 +6,9 @@ import { getAccentColor } from '@/db/settings';
 import { CURRENT_PERIOD, periodRange, previousPeriodRange } from '@/lib/period';
 import { roundedMinor } from '@/lib/round';
 import { savingsRatePct } from '@/lib/savingsRate';
-import { daysUntilIsoDate } from '@/lib/date';
+import { dueDateLabel } from '@/lib/dueDate';
+import { accountBadgeColor } from '@/lib/account';
 import { suuLine, SuuLine } from '@/features/home/suuLine';
-import { theme } from '@/constants/theme';
 
 /**
  * Every widget's data source, one function per widget — each is the exact
@@ -20,28 +20,66 @@ import { theme } from '@/constants/theme';
  * widget to refresh immediately — see `notifyWidgets.ts`.
  */
 
+/**
+ * `refreshAllWidgets()` fires every placed widget's data function back to
+ * back in the same tick, and several of them need the exact same query
+ * (this month vs last month, the user's accent colour) — without this,
+ * having both the This Month and Suu widgets placed doubles the "this
+ * month vs last month" DB aggregation, and every widget that reads the
+ * accent colour re-queries it separately. Coalescing calls that land within
+ * a short window into one shared promise means one real burst of refreshes
+ * still only queries each of these once; the window is short enough that a
+ * genuinely later refresh (the 30-minute timer, or backgrounding again)
+ * always sees fresh data rather than a stale cache.
+ */
+function coalesced<T>(fn: () => Promise<T>, windowMs = 2000): () => Promise<T> {
+  let pending: { at: number; promise: Promise<T> } | null = null;
+  return () => {
+    const now = Date.now();
+    if (pending && now - pending.at < windowMs) return pending.promise;
+    const promise = fn();
+    const entry = { at: now, promise };
+    pending = entry;
+    // A transient failure (a cold-start DB migration still running, a
+    // one-off query hiccup) shouldn't get replayed as the *same* failure to
+    // every other widget in this refresh burst — clear the cache the moment
+    // it rejects so the next widget's call retries independently instead of
+    // awaiting this same doomed promise.
+    promise.catch(() => {
+      if (pending === entry) pending = null;
+    });
+    return promise;
+  };
+}
+
+const getAccentColorOnce = coalesced(getAccentColor);
+const getMonthComparisonOnce = coalesced(() =>
+  getRangeComparison(periodRange(CURRENT_PERIOD), previousPeriodRange(CURRENT_PERIOD), 'month')
+);
+
 export interface ThisMonthWidgetData {
   spentMinor: number;
   changePct: number | null;
   spentPct: number;
   keptPct: number;
   overspent: boolean;
+  // Home's own ThisMonthHero swaps the bar's caption for "Add income to
+  // track your saving" whenever there's no income yet this month — without
+  // it, spentPct/keptPct default to 0/100, and the widget would otherwise
+  // show real spending next to a fully "kept" bar with nothing to say why.
+  hasIncome: boolean;
   accent: string;
 }
 
 export async function getThisMonthWidgetData(): Promise<ThisMonthWidgetData> {
-  const range = periodRange(CURRENT_PERIOD);
-  const [cmp, accent] = await Promise.all([
-    getRangeComparison(range, previousPeriodRange(CURRENT_PERIOD), 'month'),
-    getAccentColor(),
-  ]);
+  const [cmp, accent] = await Promise.all([getMonthComparisonOnce(), getAccentColorOnce()]);
   const incomeMinor = roundedMinor(cmp.current.incomeMinor);
   const spentMinor = roundedMinor(cmp.current.expenseMinor);
   const hasIncome = incomeMinor > 0;
   const overspent = hasIncome && spentMinor > incomeMinor;
   const spentPct = hasIncome ? Math.min(100, (spentMinor / incomeMinor) * 100) : 0;
   const keptPct = Math.max(0, 100 - spentPct);
-  return { spentMinor, changePct: cmp.expenseChangePct, spentPct, keptPct, overspent, accent };
+  return { spentMinor, changePct: cmp.expenseChangePct, spentPct, keptPct, overspent, hasIncome, accent };
 }
 
 export interface SuuWidgetData {
@@ -49,22 +87,13 @@ export interface SuuWidgetData {
 }
 
 export async function getSuuWidgetData(): Promise<SuuWidgetData> {
-  const range = periodRange(CURRENT_PERIOD);
-  const cmp = await getRangeComparison(range, previousPeriodRange(CURRENT_PERIOD), 'month');
+  const cmp = await getMonthComparisonOnce();
   const incomeMinor = roundedMinor(cmp.current.incomeMinor);
   const expenseMinor = roundedMinor(cmp.current.expenseMinor);
   const savingsPct = savingsRatePct(incomeMinor - expenseMinor, incomeMinor);
   const topGrowing = findTopGrowingCategory(cmp.current.categoryBreakdown, cmp.previous.categoryBreakdown);
   const line = suuLine(savingsPct, cmp.expenseChangePct ?? null, topGrowing?.name ?? null);
   return { line };
-}
-
-/** "today" / "in N days" — the exact copy Home's own Upcoming list uses. */
-function dueDateLabel(dateStr: string): string {
-  const days = daysUntilIsoDate(dateStr);
-  if (days <= 0) return 'today';
-  if (days <= 90) return `in ${days} days`;
-  return `on ${dateStr}`;
 }
 
 export interface NextDueWidgetData {
@@ -91,7 +120,7 @@ export async function getNextDueWidgetData(): Promise<NextDueWidgetData | null> 
     getNextDueInstallment(),
     listRecurringRules(),
     listCategories(),
-    getAccentColor(),
+    getAccentColorOnce(),
   ]);
 
   const candidates: DueCandidate[] = [];
@@ -143,14 +172,11 @@ export interface AccountWidgetRow {
 }
 
 export async function getAccountsWidgetData(): Promise<{ accounts: AccountWidgetRow[] }> {
-  const [accounts, accent] = await Promise.all([listAccounts(), getAccentColor()]);
+  const [accounts, accent] = await Promise.all([listAccounts(), getAccentColorOnce()]);
   const rows: AccountWidgetRow[] = accounts.slice(0, 3).map((a) => ({
     name: a.name,
     balanceMinor: a.currentBalanceMinor,
-    // Same rule AccountChip uses in-app: colour by account *type*, not by
-    // list position — a savings/credit account gets the warm tone, every
-    // other account gets the user's own accent.
-    badgeColor: a.type === 'savings' || a.type === 'credit_card' ? theme.colors.idCoralDeep : accent,
+    badgeColor: accountBadgeColor(a.type, accent),
   }));
   return { accounts: rows };
 }

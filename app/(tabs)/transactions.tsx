@@ -1,18 +1,20 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
-import { View, Text, FlatList, Pressable, ActivityIndicator } from 'react-native';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { View, Text, FlatList, Pressable, ActivityIndicator, TextInput } from 'react-native';
 import ReanimatedAnimated, { FadeIn, ReduceMotion } from 'react-native-reanimated';
 import { useFocusEffect, router } from 'expo-router';
 import Feather from '@expo/vector-icons/Feather';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { listAccounts, listCategories, listTransactions } from '@/db/ledger';
+import { listAccounts, listCategories, listTransactions, searchTransactions } from '@/db/ledger';
 import { getRangeComparison, PeriodComparison } from '@/db/reports';
 import { Account, Category, Transaction, TransactionType } from '@/types';
 import { SegmentedControl } from '@/components/SegmentedControl';
-import { AppHeader } from '@/components/AppHeader';
+import { AppHeader, HeaderIconButton } from '@/components/AppHeader';
+import { EmptyState } from '@/components/EmptyState';
 import { CountUpAmount } from '@/components/CountUpAmount';
 import { theme } from '@/constants/theme';
 import { toLocalIsoDate, parseLocalIsoDate, addDaysToIsoDate, isoDatesInRange } from '@/lib/date';
 import { formatPctChange } from '@/lib/format';
+import { MAX_LIST_STAGGER_MS } from '@/lib/animation';
 import { useSwipeStep } from '@/lib/useSwipeStep';
 import { styles } from '@/features/transactions/transactions.styles';
 import { MONTH_NAMES } from '@/features/transactions/transactions.constants';
@@ -79,14 +81,21 @@ function groupByDate(txs: Transaction[]): { date: string; items: Transaction[] }
   return groups;
 }
 
-// Capped the same way Reports' own heatmap caps its per-cell stagger — a
-// month with many day groups still finishes settling in well under a second.
-const MAX_STAGGER_MS = 320;
-
 const VIEW_SCOPES: { label: string; value: 'week' | 'month' }[] = [
   { label: 'Week', value: 'week' },
   { label: 'Month', value: 'month' },
 ];
+
+// Fires the actual DB query this long after the last keystroke — typing
+// "zomato" shouldn't run five separate queries for "z", "zo", "zom" ...
+const SEARCH_DEBOUNCE_MS = 300;
+// Below this, there's rarely enough signal in the query to narrow anything
+// meaningfully, and firing a query on every single keystroke of a short
+// word is wasted work.
+const SEARCH_MIN_CHARS = 2;
+// Search spans the whole ledger, not one week/month — capped so a very
+// common word doesn't dump years of history into one scroll.
+const SEARCH_RESULT_LIMIT = 50;
 
 export default function TransactionsScreen() {
   const insets = useSafeAreaInsets();
@@ -106,6 +115,39 @@ export default function TransactionsScreen() {
   const [filterVisible, setFilterVisible] = useState(false);
   const [filterType, setFilterType] = useState<TransactionType | 'all'>('all');
   const [filterCategoryIds, setFilterCategoryIds] = useState<string[]>([]);
+  // Search is its own mode, not a filter layered on the current week/month —
+  // it queries the whole ledger, so the period nav/chart/Filter (which only
+  // ever apply to what's already loaded for the visible range) step aside
+  // while it's active rather than trying to combine with it.
+  const [searching, setSearching] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<Transaction[]>([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  // Extracted so both the debounced typing effect below and a transaction
+  // edited/deleted from within a search result (via TransactionDetailModal,
+  // and via the focus effect below for the full add-transaction screen) can
+  // re-run the same query — otherwise either path would leave the search
+  // list showing a row exactly as it was before the edit, or one that no
+  // longer exists at all after a delete.
+  const runSearch = useCallback(async (trimmed: string) => {
+    if (trimmed.length < SEARCH_MIN_CHARS) {
+      setSearchResults([]);
+      setSearchLoading(false);
+      return;
+    }
+    setSearchLoading(true);
+    try {
+      const results = await searchTransactions(trimmed, SEARCH_RESULT_LIMIT);
+      setSearchResults(results);
+    } catch {
+      // A failed search just shows "no matches" rather than its own error
+      // banner — nothing here is destructive or worth interrupting typing
+      // over, and the query can simply be retried by editing it further.
+      setSearchResults([]);
+    } finally {
+      setSearchLoading(false);
+    }
+  }, []);
   const days = useMemo(() => sevenDaysEndingOn(anchor), [anchor]);
   const today = isoDate(todayDate);
   const isCurrentWeek = days.some((d) => d.iso === today);
@@ -113,6 +155,11 @@ export default function TransactionsScreen() {
     anchor.getFullYear() === todayDate.getFullYear() && anchor.getMonth() === todayDate.getMonth();
   const [loadError, setLoadError] = useState<string | null>(null);
   const scrollRef = useRef<FlatList<{ date: string; items: Transaction[] }>>(null);
+  // Which day-groups the user has tapped "+N more" on, kept here rather than
+  // inside DayCard itself — DayCard is a row in the FlatList below, which
+  // unmounts/remounts rows as they scroll off- and back on-screen, and local
+  // state there would silently re-collapse a day the user had just expanded.
+  const [expandedDays, setExpandedDays] = useState<Set<string>>(new Set());
 
   // Shared by the nav row's own chevron buttons and the swipe gesture below,
   // so stepping the period is one piece of logic instead of two copies.
@@ -198,27 +245,31 @@ export default function TransactionsScreen() {
 
   const load = useCallback(async (range: { fromDate: string; toDate: string }, scope: 'week' | 'month') => {
     try {
-      const prev = previousRangeFor(range, scope);
-      const [tx, accs, cats, cmp] = await Promise.all([
-        listTransactions(range),
-        listAccounts(),
-        listCategories(),
-        getRangeComparison(
-          { start: range.fromDate, end: range.toDate },
-          { start: prev.fromDate, end: prev.toDate },
-          scope
-        ),
-      ]);
+      const [tx, accs, cats] = await Promise.all([listTransactions(range), listAccounts(), listCategories()]);
       setTransactions(tx);
       setAccounts(accs);
       setCategories(cats);
-      setComparison(cmp);
       setLoadError(null);
     } catch (e: any) {
       // Previously unguarded — a transient DB failure left the screen
       // silently showing stale/empty data with no indication anything
       // went wrong, the same class of bug already fixed on the other tabs.
       setLoadError(String(e?.message ?? e));
+    }
+    // Fetched and caught separately from the list/accounts/categories above
+    // — this only feeds the secondary "N% more/less than last …" headline
+    // figure, so a failure here (or the comparison query being slower than
+    // the rest) shouldn't blank the transaction list itself.
+    try {
+      const prev = previousRangeFor(range, scope);
+      const cmp = await getRangeComparison(
+        { start: range.fromDate, end: range.toDate },
+        { start: prev.fromDate, end: prev.toDate },
+        scope
+      );
+      setComparison(cmp);
+    } catch {
+      setComparison(null);
     }
   }, []);
 
@@ -231,8 +282,39 @@ export default function TransactionsScreen() {
       const now = new Date();
       setTodayDate((prev) => (isoDate(prev) === isoDate(now) ? prev : now));
       load({ fromDate: rangeFromDate, toDate: rangeToDate }, viewScope);
-    }, [load, rangeFromDate, rangeToDate, viewScope])
+      // Coming back from the full add-transaction screen (edited or deleted
+      // a row reached from a search result) — re-run the same query so the
+      // list doesn't keep showing it exactly as it was before that edit.
+      if (searching) runSearch(searchQuery.trim());
+    }, [load, rangeFromDate, rangeToDate, viewScope, searching, searchQuery, runSearch])
   );
+
+  // Debounced, cross-period text search — queries the whole ledger via
+  // searchTransactions, independent of whatever week/month is loaded above.
+  useEffect(() => {
+    if (!searching) return;
+    const trimmed = searchQuery.trim();
+    if (trimmed.length < SEARCH_MIN_CHARS) {
+      setSearchResults([]);
+      setSearchLoading(false);
+      return;
+    }
+    setSearchLoading(true);
+    const handle = setTimeout(() => runSearch(trimmed), SEARCH_DEBOUNCE_MS);
+    return () => clearTimeout(handle);
+  }, [searching, searchQuery, runSearch]);
+
+  const openSearch = () => setSearching(true);
+  const closeSearch = () => {
+    setSearching(false);
+    setSearchQuery('');
+    setSearchResults([]);
+    setSearchLoading(false);
+  };
+
+  const searchGroupedDays = useMemo(() => groupByDate(searchResults), [searchResults]);
+  const displayedGroups = searching ? searchGroupedDays : groupedDays;
+  const trimmedQuery = searchQuery.trim();
 
   const onChangeViewScope = (scope: 'week' | 'month') => setViewScope(scope);
 
@@ -250,8 +332,14 @@ export default function TransactionsScreen() {
     if (index >= 0) scrollRef.current?.scrollToIndex({ index, animated: true, viewPosition: 0 });
   };
 
-  const accountName = (id: string) => accounts.find((a) => a.id === id)?.name ?? '—';
-  const categoryName = (id: string | null) => categories.find((c) => c.id === id)?.name ?? '—';
+  // Built once per accounts/categories change rather than `.find()`-ing
+  // through the full list for every transaction row on every render — with
+  // C categories and V visible rows that was an O(V*C) scan (repeated again
+  // on each "expand a day" tap, since that re-renders every mounted row).
+  const accountsById = useMemo(() => new Map(accounts.map((a) => [a.id, a])), [accounts]);
+  const categoriesById = useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories]);
+  const accountName = (id: string) => accountsById.get(id)?.name ?? '—';
+  const categoryName = (id: string | null) => (id ? categoriesById.get(id)?.name : undefined) ?? '—';
 
   const expenseChangePct = comparison?.expenseChangePct ?? null;
 
@@ -276,16 +364,23 @@ export default function TransactionsScreen() {
         title="Transactions"
         right={
           <View style={styles.headerActions}>
-            <Pressable
-              onPress={() => setFilterVisible(true)}
-              hitSlop={8}
-              style={[styles.filterBtn, hasActiveFilter && styles.filterBtnActive]}
-              accessibilityRole="button"
-              accessibilityLabel="Filter transactions"
-            >
-              <Feather name="sliders" size={13} color={theme.colors.textPrimary} />
-              <Text style={styles.filterBtnText}>Filter{hasActiveFilter ? ' •' : ''}</Text>
-            </Pressable>
+            <HeaderIconButton
+              icon="search"
+              onPress={searching ? closeSearch : openSearch}
+              label={searching ? 'Close search' : 'Search transactions'}
+            />
+            {!searching && (
+              <Pressable
+                onPress={() => setFilterVisible(true)}
+                hitSlop={8}
+                style={[styles.filterBtn, hasActiveFilter && styles.filterBtnActive]}
+                accessibilityRole="button"
+                accessibilityLabel="Filter transactions"
+              >
+                <Feather name="sliders" size={13} color={theme.colors.textPrimary} />
+                <Text style={styles.filterBtnText}>Filter{hasActiveFilter ? ' •' : ''}</Text>
+              </Pressable>
+            )}
           </View>
         }
       />
@@ -297,44 +392,69 @@ export default function TransactionsScreen() {
         </View>
       )}
 
-      <View style={styles.scopeRow}>
-        <SegmentedControl options={VIEW_SCOPES} value={viewScope} onChange={onChangeViewScope} />
-      </View>
+      {searching && (
+        <View style={styles.searchBarRow}>
+          <View style={styles.searchBar}>
+            <Feather name="search" size={14} color={theme.colors.textMuted} />
+            <TextInput
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              placeholder="Search notes, categories, accounts…"
+              placeholderTextColor={theme.colors.textMuted}
+              style={styles.searchInput}
+              autoFocus
+              returnKeyType="search"
+              accessibilityLabel="Search transactions"
+            />
+          </View>
+          <Pressable onPress={closeSearch} hitSlop={8}>
+            <Text style={styles.searchCancel}>Cancel</Text>
+          </Pressable>
+        </View>
+      )}
 
-      <View style={styles.weekNavRow} {...weekNavSwipe.panHandlers}>
-        <Pressable onPress={stepBack} hitSlop={10} style={styles.weekNavBtn}>
-          <Text style={styles.weekNavArrow}>‹</Text>
-        </Pressable>
-        <Pressable onPress={() => setMonthPickerVisible(true)} hitSlop={6}>
-          <ReanimatedAnimated.Text
-            key={`${viewScope}-${anchor.toDateString()}`}
-            entering={FadeIn.duration(150)}
-            style={styles.weekNavLabel}
+      {!searching && (
+        <View style={styles.scopeRow}>
+          <SegmentedControl options={VIEW_SCOPES} value={viewScope} onChange={onChangeViewScope} />
+        </View>
+      )}
+
+      {!searching && (
+        <View style={styles.weekNavRow} {...weekNavSwipe.panHandlers}>
+          <Pressable onPress={stepBack} hitSlop={10} style={styles.weekNavBtn}>
+            <Text style={styles.weekNavArrow}>‹</Text>
+          </Pressable>
+          <Pressable onPress={() => setMonthPickerVisible(true)} hitSlop={6}>
+            <ReanimatedAnimated.Text
+              key={`${viewScope}-${anchor.toDateString()}`}
+              entering={FadeIn.duration(150)}
+              style={styles.weekNavLabel}
+            >
+              {viewScope === 'month'
+                ? `${anchor.toLocaleDateString(undefined, { month: 'long' })}${isCurrentMonth ? '' : ` ${anchor.getFullYear()}`}`
+                : isCurrentWeek
+                  ? 'This week'
+                  : `${MONTH_NAMES[days[0].month]} ${days[0].day}${days[0].year !== days[6].year || days[0].month !== days[6].month ? ` – ${MONTH_NAMES[days[6].month]} ${days[6].day}` : ` – ${days[6].day}`}, ${days[6].year}`}
+              {'  ▾'}
+            </ReanimatedAnimated.Text>
+          </Pressable>
+          <Pressable
+            onPress={stepForward}
+            hitSlop={10}
+            disabled={viewScope === 'month' ? isCurrentMonth : isCurrentWeek}
+            style={styles.weekNavBtn}
           >
-            {viewScope === 'month'
-              ? `${anchor.toLocaleDateString(undefined, { month: 'long' })}${isCurrentMonth ? '' : ` ${anchor.getFullYear()}`}`
-              : isCurrentWeek
-                ? 'This week'
-                : `${MONTH_NAMES[days[0].month]} ${days[0].day}${days[0].year !== days[6].year || days[0].month !== days[6].month ? ` – ${MONTH_NAMES[days[6].month]} ${days[6].day}` : ` – ${days[6].day}`}, ${days[6].year}`}
-            {'  ▾'}
-          </ReanimatedAnimated.Text>
-        </Pressable>
-        <Pressable
-          onPress={stepForward}
-          hitSlop={10}
-          disabled={viewScope === 'month' ? isCurrentMonth : isCurrentWeek}
-          style={styles.weekNavBtn}
-        >
-          <Text
-            style={[
-              styles.weekNavArrow,
-              (viewScope === 'month' ? isCurrentMonth : isCurrentWeek) && styles.weekNavArrowDisabled,
-            ]}
-          >
-            ›
-          </Text>
-        </Pressable>
-      </View>
+            <Text
+              style={[
+                styles.weekNavArrow,
+                (viewScope === 'month' ? isCurrentMonth : isCurrentWeek) && styles.weekNavArrowDisabled,
+              ]}
+            >
+              ›
+            </Text>
+          </Pressable>
+        </View>
+      )}
 
       <MonthPickerModal
         visible={monthPickerVisible}
@@ -363,7 +483,7 @@ export default function TransactionsScreen() {
 
       <FlatList
         ref={scrollRef}
-        data={groupedDays}
+        data={displayedGroups}
         keyExtractor={(group) => group.date}
         contentContainerStyle={{ paddingBottom: theme.layout.tabScreenScrollPad + insets.bottom }}
         // Variable-height cards (a day's row count, and whether it's
@@ -374,61 +494,98 @@ export default function TransactionsScreen() {
           setTimeout(() => scrollRef.current?.scrollToIndex({ index: info.index, animated: true }), 250);
         }}
         ListHeaderComponent={
-          <>
-            <View style={styles.headline}>
-              <CountUpAmount
-                minor={comparison?.current.expenseMinor ?? 0}
-                style={styles.headlineAmt}
-                numberOfLines={1}
-                adjustsFontSizeToFit
-              />
-              <Text style={styles.headlineSub}>
-                spent this {viewScope}
-                {expenseChangePct != null && (
-                  <>
-                    {' · '}
-                    <Text style={expenseChangePct > 0 ? styles.headlineSubUp : styles.headlineSubDown}>
-                      {formatPctChange(expenseChangePct)} {expenseChangePct > 0 ? 'more' : 'less'}
-                    </Text>{' '}
-                    than last {viewScope}
-                  </>
-                )}
-              </Text>
-            </View>
+          searching ? (
+            <>
+              {trimmedQuery.length < SEARCH_MIN_CHARS ? (
+                <EmptyState
+                  title="Search your transactions"
+                  subtitle="Matches notes, categories, and accounts — across your whole history, not just this week or month."
+                />
+              ) : searchLoading ? (
+                <View style={styles.searchLoading}>
+                  <ActivityIndicator color={theme.colors.ink} />
+                </View>
+              ) : searchResults.length === 0 ? (
+                <EmptyState
+                  title={`No matches for "${trimmedQuery}"`}
+                  subtitle="Try a shorter word, or check the spelling — search looks at each transaction's note, category, and account."
+                />
+              ) : null}
+            </>
+          ) : (
+            <>
+              <View style={styles.headline}>
+                <CountUpAmount
+                  minor={comparison?.current.expenseMinor ?? 0}
+                  style={styles.headlineAmt}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                />
+                <Text style={styles.headlineSub}>
+                  spent this {viewScope}
+                  {expenseChangePct != null && (
+                    <>
+                      {' · '}
+                      <Text style={expenseChangePct > 0 ? styles.headlineSubUp : styles.headlineSubDown}>
+                        {formatPctChange(expenseChangePct)} {expenseChangePct > 0 ? 'more' : 'less'}
+                      </Text>{' '}
+                      than last {viewScope}
+                    </>
+                  )}
+                </Text>
+              </View>
 
-            <SpendBarChart bars={bars} onPressDay={scrollToDay} />
-            <ChartLegend items={legend} />
-            <View style={styles.rule} />
+              <SpendBarChart bars={bars} onPressDay={scrollToDay} />
+              <ChartLegend items={legend} />
+              <View style={styles.rule} />
 
-            {accounts.length === 0 && (
-              <Text style={styles.emptyText}>Add an account first before recording transactions.</Text>
-            )}
-            {accounts.length > 0 && transactions.length > 0 && filteredTransactions.length === 0 && (
-              <Text style={styles.emptyText}>Nothing matches the current filter.</Text>
-            )}
-            {accounts.length > 0 && transactions.length === 0 && (
-              <Text style={styles.emptyText}>
-                {viewScope === 'month' ? 'Nothing logged this month.' : 'Nothing logged this week.'}
-              </Text>
-            )}
-          </>
+              {accounts.length === 0 && (
+                <Text style={styles.emptyText}>Add an account first before recording transactions.</Text>
+              )}
+              {accounts.length > 0 && transactions.length > 0 && filteredTransactions.length === 0 && (
+                <Text style={styles.emptyText}>Nothing matches the current filter.</Text>
+              )}
+              {accounts.length > 0 && transactions.length === 0 && (
+                <Text style={styles.emptyText}>
+                  {viewScope === 'month' ? 'Nothing logged this month.' : 'Nothing logged this week.'}
+                </Text>
+              )}
+            </>
+          )
         }
         renderItem={({ item: group, index: gi }) => (
           <DayCard
             label={
               group.date === today
                 ? 'Today'
-                : parseLocalIsoDate(group.date).toLocaleDateString(undefined, { weekday: 'long' })
+                : searching
+                  ? parseLocalIsoDate(group.date).toLocaleDateString(undefined, {
+                      month: 'short',
+                      day: 'numeric',
+                    })
+                  : parseLocalIsoDate(group.date).toLocaleDateString(undefined, { weekday: 'long' })
             }
-            dateLabel={parseLocalIsoDate(group.date)
-              .toLocaleDateString(undefined, { day: 'numeric', month: 'short' })
-              .toUpperCase()}
+            dateLabel={
+              searching && group.date !== today
+                ? String(parseLocalIsoDate(group.date).getFullYear())
+                : parseLocalIsoDate(group.date)
+                    .toLocaleDateString(undefined, { day: 'numeric', month: 'short' })
+                    .toUpperCase()
+            }
             items={group.items}
             categories={categories}
             accountName={accountName}
             categoryName={categoryName}
             onPressTx={setDetailTx}
-            entering={FadeIn.delay(Math.min(gi * 45, MAX_STAGGER_MS))
+            expanded={expandedDays.has(group.date)}
+            onExpand={() =>
+              setExpandedDays((prev) => {
+                const next = new Set(prev);
+                next.add(group.date);
+                return next;
+              })
+            }
+            entering={FadeIn.delay(Math.min(gi * 45, MAX_LIST_STAGGER_MS))
               .duration(280)
               .reduceMotion(ReduceMotion.System)}
           />
@@ -447,6 +604,7 @@ export default function TransactionsScreen() {
         onChanged={async () => {
           setDetailTx(null);
           await load(visibleRange, viewScope);
+          if (searching) await runSearch(trimmedQuery);
         }}
       />
     </View>

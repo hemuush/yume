@@ -166,7 +166,13 @@ function AppGate({ needsOnboarding, initialLocked }: { needsOnboarding: boolean;
   // regardless of that setting.
   useEffect(() => {
     const sub = AppState.addEventListener('change', (next: AppStateStatus) => {
-      if (next.match(/inactive|background/)) refreshAllWidgets();
+      // 'inactive' alone isn't a real exit — it fires on plenty of
+      // transient interruptions too (a permission dialog, an incoming call,
+      // the notification shade, a share sheet), each of which would
+      // otherwise trigger a full widget-data refresh (DB reads for every
+      // placed widget) for no reason. Only 'background' means the user
+      // actually left to go look at their home screen.
+      if (next === 'background') refreshAllWidgets();
     });
     return () => sub.remove();
   }, []);
@@ -207,7 +213,7 @@ function AppGate({ needsOnboarding, initialLocked }: { needsOnboarding: boolean;
             animation: 'slide_from_right',
             animationDuration: 260,
             // Swipe from anywhere on the screen to go back, not just the left
-            // edge — a pushed screen (Settings, a detail view) should feel as
+            // edge — a pushed screen (Profile, a detail view) should feel as
             // dismissible as it looks.
             gestureEnabled: true,
             fullScreenGestureEnabled: true,
@@ -217,12 +223,13 @@ function AppGate({ needsOnboarding, initialLocked }: { needsOnboarding: boolean;
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="categories" />
           <Stack.Screen name="profile" />
-          <Stack.Screen name="settings" />
           <Stack.Screen name="backup" />
           <Stack.Screen name="notification-settings" />
           <Stack.Screen name="notifications" />
           <Stack.Screen name="add-transaction" />
           <Stack.Screen name="recurring" />
+          <Stack.Screen name="budgets" />
+          <Stack.Screen name="savings-goals" />
         </Stack>
       </UndoToastProvider>
     </ErrorBoundary>
