@@ -1,8 +1,11 @@
 import { StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
 
-// Shared by the Profile screen and its account modals (AddAccountModal,
-// AccountDetailModal).
+// Shared by the merged Profile screen (its shell, YouSection, and
+// SettingsSection) and the account modals (AddAccountModal,
+// AccountDetailModal). SettingsSection's own keys (group/row/swatch/about/
+// picker*) were folded in from the old standalone settings.tsx — same
+// values, nothing restyled.
 export const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
@@ -56,27 +59,6 @@ export const styles = StyleSheet.create({
   },
   nameSave: { paddingLeft: 10 },
   memberSince: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, marginTop: 4 },
-
-  settingsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    marginHorizontal: 20,
-    marginTop: 16,
-    padding: 14,
-    backgroundColor: theme.colors.surface,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-    borderRadius: theme.radius.lg,
-  },
-  settingsRowText: { flex: 1, minWidth: 0 },
-  settingsRowLabel: { fontFamily: theme.font.bodyBold, fontSize: 14.5, color: theme.colors.textPrimary },
-  settingsRowSub: {
-    fontFamily: theme.font.body,
-    fontSize: 11.5,
-    color: theme.colors.textMuted,
-    marginTop: 1,
-  },
 
   netWorthCard: { marginHorizontal: 20, marginTop: 16, padding: 16 },
   netWorthLabel: {
@@ -156,4 +138,131 @@ export const styles = StyleSheet.create({
     marginBottom: 8,
   },
   deleteButton: { backgroundColor: theme.colors.expenseTint, borderColor: theme.colors.expense },
+
+  // ---- "You" / "Settings" segmented control, right below identity ----
+  // SegmentedControl already draws its own pill/background — this just adds
+  // the horizontal margin every other section on this screen has, which the
+  // component itself has no opinion about.
+  tabWrap: { marginHorizontal: 20, marginBottom: 6 },
+
+  // ---- YouSection: goal strip, "See all" link ----
+  goalStrip: { flexDirection: 'row', gap: 10, paddingHorizontal: 20 },
+  seeAllLink: { fontSize: 12, fontFamily: theme.font.bodyMedium, color: theme.colors.textSecondary },
+
+  // ---- YouSection section headers — matches Home's HomeSection heading, not
+  // the colored SectionLabel pill, so the two screens read as one screen
+  // when Budgets/Savings Goals appear on both (design sign-off: "one header
+  // style, everywhere"). SectionLabel itself is kept only for the quieter
+  // "ARCHIVED ACCOUNTS" row further down.
+  sectionTitle: { fontFamily: theme.font.roundedBold, fontSize: 16, color: theme.colors.textPrimary },
+  // Recurring's "See all" reads as an outlined pill instead of a bare text
+  // link, so it sits at the same visual weight as the "+ Account"/"+ Add"
+  // pills next to it — a different action (browse vs. create), not a
+  // lesser one.
+  seeAllPill: {
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: theme.radius.pill,
+    borderWidth: 1,
+    borderColor: theme.colors.borderSoft,
+  },
+  seeAllPillText: { fontSize: 12, fontFamily: theme.font.bodyMedium, color: theme.colors.textSecondary },
+
+  // ---- SettingsSection (formerly settings.tsx's own StyleSheet) ----
+  groupTitle: {
+    fontFamily: theme.font.bodyBold,
+    fontSize: 11.5,
+    color: theme.colors.textMuted,
+    textTransform: 'uppercase',
+    letterSpacing: 0.7,
+    marginHorizontal: 20,
+    marginTop: 22,
+    marginBottom: 8,
+  },
+  group: {
+    marginHorizontal: 20,
+    backgroundColor: theme.colors.surface,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.borderSoft,
+    borderRadius: theme.radius.lg,
+    overflow: 'hidden',
+  },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 14, paddingVertical: 13 },
+  rowDivider: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: theme.colors.borderSoft },
+  rowText: { flex: 1, minWidth: 0 },
+  rowLabel: { fontFamily: theme.font.bodyMedium, fontSize: 14.5, color: theme.colors.textPrimary },
+  rowSub: {
+    fontFamily: theme.font.body,
+    fontSize: 11.5,
+    color: theme.colors.textMuted,
+    marginTop: 2,
+    lineHeight: 16,
+  },
+  rowValue: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textSecondary },
+
+  swatchRow: { paddingBottom: 10 },
+  swatchGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, padding: 14, paddingTop: 12 },
+  swatch: {
+    width: 38,
+    height: 38,
+    borderRadius: 11,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(18,19,15,0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  swatchActive: { borderWidth: 2.5, borderColor: theme.colors.ink },
+
+  pickerHint: {
+    fontFamily: theme.font.body,
+    fontSize: 12.5,
+    color: theme.colors.textMuted,
+    lineHeight: 18,
+    marginBottom: 12,
+  },
+
+  aboutCard: {
+    marginHorizontal: 20,
+    alignItems: 'center',
+    padding: 20,
+    backgroundColor: theme.colors.surface,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.borderSoft,
+    borderRadius: theme.radius.lg,
+  },
+  aboutName: {
+    fontFamily: theme.font.roundedBold,
+    fontSize: 20,
+    color: theme.colors.textPrimary,
+    marginTop: 10,
+  },
+  aboutTagline: { fontFamily: theme.font.body, fontSize: 12.5, color: theme.colors.textMuted, marginTop: 3 },
+  aboutFacts: { alignSelf: 'stretch', gap: 10, marginTop: 18 },
+  aboutFactRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
+  aboutFactText: {
+    flex: 1,
+    fontFamily: theme.font.body,
+    fontSize: 12.5,
+    color: theme.colors.textSecondary,
+    lineHeight: 17,
+  },
+  aboutVersion: {
+    fontFamily: theme.font.bodyBold,
+    fontSize: 11,
+    color: theme.colors.textMuted,
+    marginTop: 18,
+    letterSpacing: 0.4,
+  },
+  pickerRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 13 },
+  codeBubble: {
+    width: 44,
+    height: 30,
+    borderRadius: 9,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.borderSoft,
+    backgroundColor: theme.colors.surfaceAlt,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  codeText: { fontFamily: theme.font.bodyBold, fontSize: 11, color: theme.colors.ink },
 });

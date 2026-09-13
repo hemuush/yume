@@ -1,0 +1,341 @@
+import { useCallback, useState } from 'react';
+import { View, Text, Pressable, Alert, Animated } from 'react-native';
+import { useFocusEffect, router } from 'expo-router';
+import Feather from '@expo/vector-icons/Feather';
+import * as Application from 'expo-application';
+import { getDefaultCurrency, setDefaultCurrency, SUPPORTED_CURRENCIES, ACCENT_SWATCHES } from '@/db/settings';
+import { countFractionalLedgerAmounts, roundLedgerAmountsToWholeRupees } from '@/db/maintenance';
+import { isDeviceSecured } from '@/lib/appLock';
+import { useAppLock } from '@/lib/AppLockContext';
+import { usePrivacy } from '@/theme/PrivacyContext';
+import { ModalSheet } from '@/components/ModalSheet';
+import { PrimaryButton } from '@/components/PrimaryButton';
+import { SettingsRowIcon } from '@/components/SettingsRowIcon';
+import { ToggleSwitch } from '@/components/ToggleSwitch';
+import { YumeLogo } from '@/components/YumeLogo';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import { useAccent } from '@/theme/AccentContext';
+import { theme, modalFooterStyles as f } from '@/constants/theme';
+import { usePressScale } from '@/lib/usePressScale';
+import { styles } from './profile.styles';
+
+const AnimatedRow = Animated.createAnimatedComponent(Pressable);
+
+/**
+ * Rows are grouped into one bordered card per section, with hairline
+ * dividers between them — the previous layout gave every single row its own
+ * heavy outlined card, so ten currencies read as ten equally-important
+ * buttons and the page had no visual hierarchy at all.
+ */
+function Group({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <>
+      <Text style={styles.groupTitle}>{title}</Text>
+      <View style={styles.group}>{children}</View>
+    </>
+  );
+}
+
+function Row({
+  icon,
+  iconBg,
+  label,
+  sub,
+  value,
+  onPress,
+  right,
+  last,
+}: {
+  icon: string;
+  iconBg: string;
+  label: string;
+  sub?: string;
+  value?: string;
+  onPress?: () => void;
+  right?: React.ReactNode;
+  last?: boolean;
+}) {
+  const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.99);
+  const content = (
+    <>
+      <SettingsRowIcon name={icon} backgroundColor={iconBg} />
+      <View style={styles.rowText}>
+        <Text style={styles.rowLabel} numberOfLines={1}>
+          {label}
+        </Text>
+        {sub ? <Text style={styles.rowSub}>{sub}</Text> : null}
+      </View>
+      {value ? <Text style={styles.rowValue}>{value}</Text> : null}
+      {right ?? (onPress ? <Feather name="chevron-right" size={19} color={theme.colors.textMuted} /> : null)}
+    </>
+  );
+
+  if (!onPress) {
+    return <View style={[styles.row, !last && styles.rowDivider]}>{content}</View>;
+  }
+  return (
+    <AnimatedRow
+      style={[styles.row, !last && styles.rowDivider, animatedStyle]}
+      onPress={onPress}
+      onPressIn={onPressIn}
+      onPressOut={onPressOut}
+    >
+      {content}
+    </AnimatedRow>
+  );
+}
+
+function AboutFact({ icon, text }: { icon: string; text: string }) {
+  return (
+    <View style={styles.aboutFactRow}>
+      <MaterialCommunityIcons name={icon as any} size={16} color={theme.colors.textSecondary} />
+      <Text style={styles.aboutFactText}>{text}</Text>
+    </View>
+  );
+}
+
+/**
+ * Every row Settings used to have, minus the three that moved to Profile's
+ * "You" tab (Recurring transactions, Budgets, Savings goals — content you
+ * check often, not app configuration) — see YouSection.tsx. "Money" here is
+ * now just the two things that actually are one-time setup: Default
+ * currency and Categories.
+ */
+export function SettingsSection() {
+  const { accent, setAccent } = useAccent();
+  const { lockEnabled, setLockEnabled } = useAppLock();
+  const { hideAmounts, toggleHideAmounts } = usePrivacy();
+  const [currency, setCurrency] = useState('INR');
+  const [currencyPickerOpen, setCurrencyPickerOpen] = useState(false);
+  const [fractionalCount, setFractionalCount] = useState(0);
+  const [rounding, setRounding] = useState(false);
+
+  const load = useCallback(async () => {
+    setCurrency(await getDefaultCurrency());
+    try {
+      setFractionalCount((await countFractionalLedgerAmounts()).total);
+    } catch {
+      setFractionalCount(0);
+    }
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      load();
+    }, [load])
+  );
+
+  const onSelectCurrency = async (code: string) => {
+    const previous = currency;
+    setCurrency(code);
+    setCurrencyPickerOpen(false);
+    try {
+      await setDefaultCurrency(code);
+    } catch (e: any) {
+      // Previously unguarded — a failed write here left the screen showing
+      // the newly picked currency while the cached value every formatMoney()
+      // call actually reads from stayed on the old one, a silent mismatch
+      // with no error shown.
+      setCurrency(previous);
+      Alert.alert('Could not change currency', String(e?.message ?? e));
+    }
+  };
+
+  const onRoundAmounts = () => {
+    if (rounding) return;
+    if (fractionalCount === 0) {
+      Alert.alert('Nothing to round', 'Every stored amount is already a whole rupee.');
+      return;
+    }
+    Alert.alert(
+      'Round amounts to whole rupees?',
+      `${fractionalCount} stored amount${fractionalCount === 1 ? '' : 's'} still ` +
+        `carr${fractionalCount === 1 ? 'ies' : 'y'} paise. Rounding them makes on-screen ` +
+        'totals line up with their parts. Loan schedules are left untouched. Some account ' +
+        'balances may shift by a rupee or two. This cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Round them',
+          style: 'destructive',
+          onPress: async () => {
+            setRounding(true);
+            try {
+              const changed = await roundLedgerAmountsToWholeRupees();
+              setFractionalCount(0);
+              Alert.alert(
+                'Done',
+                `Rounded ${changed.total} amount${changed.total === 1 ? '' : 's'} to whole rupees.`
+              );
+            } catch (e: any) {
+              Alert.alert('Could not round amounts', String(e?.message ?? e));
+            } finally {
+              setRounding(false);
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const onToggleLock = async (enabled: boolean) => {
+    if (enabled) {
+      const secured = await isDeviceSecured();
+      if (!secured) {
+        Alert.alert(
+          'No screen lock found',
+          "Set up a fingerprint, face unlock, or PIN/pattern in your phone's own settings first — Yume locks using whatever your phone is already secured with."
+        );
+        return;
+      }
+    }
+    setLockEnabled(enabled);
+  };
+
+  return (
+    <>
+      <Group title="Appearance">
+        <View style={[styles.row, styles.rowDivider, styles.swatchRow]}>
+          <View style={styles.rowText}>
+            <Text style={styles.rowLabel}>Accent colour</Text>
+            <Text style={styles.rowSub}>Buttons, active tab, and highlights</Text>
+          </View>
+        </View>
+        <View style={styles.swatchGrid}>
+          {ACCENT_SWATCHES.map((hex) => (
+            <Pressable
+              key={hex}
+              style={[styles.swatch, { backgroundColor: hex }, accent === hex && styles.swatchActive]}
+              onPress={() => setAccent(hex)}
+              accessibilityRole="button"
+              accessibilityLabel={`Accent ${hex}`}
+            >
+              {/* Every current swatch is light/medium enough for an ink
+                  checkmark to stay readable — no per-swatch contrast
+                  switch needed now that Ink itself isn't one of them. */}
+              {accent === hex && <Feather name="check" size={15} color={theme.colors.ink} />}
+            </Pressable>
+          ))}
+        </View>
+      </Group>
+
+      <Group title="Money">
+        <Row
+          icon="currency-inr"
+          iconBg={theme.colors.goldTint}
+          label="Default currency"
+          sub="New accounts and displayed amounts"
+          value={currency}
+          onPress={() => setCurrencyPickerOpen(true)}
+        />
+        <Row
+          icon="tag-outline"
+          iconBg={theme.colors.idCoral}
+          label="Categories"
+          sub="Add, rename, or archive"
+          onPress={() => router.push('/categories')}
+          last
+        />
+      </Group>
+
+      <Group title="Alerts & data">
+        <Row
+          icon="bell-outline"
+          iconBg={theme.colors.accentTint}
+          label="Notifications"
+          sub="Reminders, bill alerts, weekly summary"
+          onPress={() => router.push('/notification-settings')}
+        />
+        <Row
+          icon="folder-outline"
+          iconBg={theme.colors.idTeal}
+          label="Backup & Restore"
+          sub="Local folder, file export & restore"
+          onPress={() => router.push('/backup')}
+        />
+        <Row
+          icon="calculator-variant-outline"
+          iconBg={theme.colors.primaryTint}
+          label="Round off amounts"
+          sub={
+            rounding
+              ? 'Rounding…'
+              : fractionalCount === 0
+                ? 'All amounts are whole rupees'
+                : `${fractionalCount} old amount${fractionalCount === 1 ? '' : 's'} still carry paise — tap to fix`
+          }
+          onPress={onRoundAmounts}
+          last
+        />
+      </Group>
+
+      <Group title="Security">
+        <Row
+          icon="fingerprint"
+          iconBg={theme.colors.idSage}
+          label="Require unlock"
+          sub="Fingerprint, face, or your phone's PIN"
+          right={<ToggleSwitch value={lockEnabled} onChange={onToggleLock} />}
+        />
+        <Row
+          icon="eye-off-outline"
+          iconBg={theme.colors.idGold}
+          label="Hide savings & investment amounts"
+          sub="Masks Savings Deposit/Investments amounts — also toggleable from the eye icon above"
+          right={<ToggleSwitch value={hideAmounts} onChange={toggleHideAmounts} />}
+          last
+        />
+      </Group>
+
+      <Text style={styles.groupTitle}>About</Text>
+      <View style={styles.aboutCard}>
+        <YumeLogo size={50} />
+        <Text style={styles.aboutName}>Yume</Text>
+        <Text style={styles.aboutTagline}>Track every rupee, on your terms.</Text>
+        <View style={styles.aboutFacts}>
+          <AboutFact icon="wifi-off" text="Works fully offline — no account, no server, no signup." />
+          <AboutFact icon="lock-outline" text="Your data never leaves this device unless you back it up." />
+          <AboutFact
+            icon="file-document-outline"
+            text="Backups are plain JSON you can open and read yourself."
+          />
+        </View>
+        <Text style={styles.aboutVersion}>Version {Application.nativeApplicationVersion ?? '1.0.0'}</Text>
+      </View>
+
+      <ModalSheet
+        visible={currencyPickerOpen}
+        onClose={() => setCurrencyPickerOpen(false)}
+        title="Default currency"
+        footer={
+          <View style={f.footerRow}>
+            <PrimaryButton
+              title="Close"
+              variant="secondary"
+              onPress={() => setCurrencyPickerOpen(false)}
+              style={f.footerBtn}
+            />
+          </View>
+        }
+      >
+        <Text style={styles.pickerHint}>
+          Existing accounts keep whatever currency they were created with. Combined totals only add up
+          accounts in this currency.
+        </Text>
+        {SUPPORTED_CURRENCIES.map((c, i) => (
+          <Pressable
+            key={c.code}
+            style={[styles.pickerRow, i < SUPPORTED_CURRENCIES.length - 1 && styles.rowDivider]}
+            onPress={() => onSelectCurrency(c.code)}
+          >
+            <View style={styles.codeBubble}>
+              <Text style={styles.codeText}>{c.code}</Text>
+            </View>
+            <Text style={[styles.rowLabel, { flex: 1 }]}>{c.label}</Text>
+            {currency === c.code && <Feather name="check" size={18} color={theme.colors.ink} />}
+          </Pressable>
+        ))}
+      </ModalSheet>
+    </>
+  );
+}
