@@ -24,9 +24,23 @@ const C = {
   expenseTint: 'FBE1E4',
   white: 'FFFFFF',
   textMuted: '948E7C',
+  borderSoft: 'E6DFC9', // theme.colors.borderSoft — the app's own hairline colour, used for the grid below
 };
 
 const FONT_NAME = 'Calibri'; // Archivo (the app's own display font) isn't available to Excel — bold + color carries the identity instead.
+
+// Freeze panes were part of the sign-off design (the Transactions header row
+// staying put on scroll) but there turned out to be no way to do it:
+// xlsx-js-style has no `!freeze`/sheetView API at all, and writing one
+// requires the paid SheetJS Pro tier or hand-patching the zip's sheet XML
+// after the fact — both a lot of fragile surface area for one nice-to-have.
+// Dropped rather than shipped half-working, exactly as flagged going in.
+
+/** A thin border on all four sides — every bordered cell in this file uses this, so the grid reads as one table instead of colour patches with no edges (the actual complaint that started this rework). */
+function allBorders(color: string, style: XLSX.BorderType = 'thin') {
+  const side = { style, color: { rgb: color } };
+  return { top: side, bottom: side, left: side, right: side };
+}
 
 type CellStyle = XLSX.CellStyle;
 
@@ -47,7 +61,10 @@ function headerStyle(fill: string = C.ink, fontColor: string = C.white): CellSty
     font: { name: FONT_NAME, bold: true, sz: 11, color: { rgb: fontColor } },
     fill: { fgColor: { rgb: fill }, patternType: 'solid' },
     alignment: { vertical: 'center', horizontal: 'left' },
-    border: { bottom: { style: 'thin', color: { rgb: C.ink } } },
+    // A full border, not just the bottom edge — the header used to be the
+    // one row with any border at all, so it sat on top of the borderless
+    // body like a lid rather than the first row of the same table.
+    border: allBorders(C.ink),
   };
 }
 
@@ -56,6 +73,11 @@ function bodyStyle(shaded: boolean, extra?: CellStyle): CellStyle {
     font: { name: FONT_NAME, sz: 10.5, ...(extra?.font ?? {}) },
     fill: { fgColor: { rgb: shaded ? C.surfaceAlt : C.surface }, patternType: 'solid' },
     alignment: { vertical: 'center', horizontal: extra?.alignment?.horizontal ?? 'left' },
+    // Every body cell gets a hairline border now — this is the actual fix
+    // for the export reading as "unclean": a coloured fill with no border
+    // just floats over Excel's own default gridlines instead of forming a
+    // table with them.
+    border: allBorders(C.borderSoft),
     numFmt: extra?.numFmt,
   };
 }
@@ -64,25 +86,32 @@ function totalRowStyle(extra?: CellStyle): CellStyle {
   return {
     font: { name: FONT_NAME, bold: true, sz: 10.5, color: { rgb: C.ink } },
     fill: { fgColor: { rgb: C.gold }, patternType: 'solid' },
-    border: { top: { style: 'thin', color: { rgb: C.ink } } },
+    border: allBorders(C.ink),
     alignment: { vertical: 'center', horizontal: extra?.alignment?.horizontal ?? 'left' },
     numFmt: extra?.numFmt,
   };
 }
 
-function statLabelStyle(): CellStyle {
+/** One Summary KPI tile's fill+border, applied to every physical cell in its merge so the block reads as one solid card, not just its top-left cell. */
+function tileStyle(fill: string): CellStyle {
   return {
-    font: { name: FONT_NAME, bold: true, sz: 10.5, color: { rgb: C.ink } },
-    fill: { fgColor: { rgb: C.surfaceAlt }, patternType: 'solid' },
+    fill: { fgColor: { rgb: fill }, patternType: 'solid' },
+    border: allBorders(C.ink),
     alignment: { vertical: 'center', horizontal: 'left' },
   };
 }
 
-function statValueStyle(numFmt: string, color: string = C.ink): CellStyle {
+function tileLabelStyle(fill: string): CellStyle {
   return {
-    font: { name: FONT_NAME, bold: true, sz: 11, color: { rgb: color } },
-    fill: { fgColor: { rgb: C.surface }, patternType: 'solid' },
-    alignment: { vertical: 'center', horizontal: 'right' },
+    ...tileStyle(fill),
+    font: { name: FONT_NAME, sz: 9, color: { rgb: C.textMuted } },
+  };
+}
+
+function tileValueStyle(fill: string, numFmt: string, color: string = C.ink): CellStyle {
+  return {
+    ...tileStyle(fill),
+    font: { name: FONT_NAME, bold: true, sz: 13, color: { rgb: color } },
     numFmt,
   };
 }
@@ -173,54 +202,103 @@ export function buildExportWorkbook(data: ExportData): XLSX.WorkBook {
   const wb = XLSX.utils.book_new();
 
   // ---------------------------------------------------------------- Summary
+  // Redesigned from a label/value list (narrow, mostly empty at the sheet's
+  // actual width) into a 3-across grid of KPI tiles, the same shape as the
+  // app's own stat tiles on Profile → You — six numbers at a glance instead
+  // of a list you scroll.
   const summary = XLSX.utils.aoa_to_sheet([['', '']]);
-  let r = 0;
   const put = (ref: string, v: any, style?: CellStyle, type?: 'n' | 's') => {
     setCell(summary, ref, v, style, type);
     extendRef(summary, ref);
   };
-  put('A1', 'Yume', titleStyle);
-  put('B1', '', titleStyle);
-  put('C1', '', titleStyle);
-  put('A2', `Financial export — generated ${new Date().toLocaleString()}`, subtitleStyle);
-  put('B2', '', subtitleStyle);
-  put('C2', '', subtitleStyle);
+  const SUMMARY_COLS = 6; // 3 tiles across, 2 columns wide each
+  put('A1', 'Yume — Financial Export', titleStyle);
+  put('A2', `Generated ${new Date().toLocaleString()}`, subtitleStyle);
   summary['!merges'] = [
-    { s: { r: 0, c: 0 }, e: { r: 0, c: 2 } },
-    { s: { r: 1, c: 0 }, e: { r: 1, c: 2 } },
+    { s: { r: 0, c: 0 }, e: { r: 0, c: SUMMARY_COLS - 1 } },
+    { s: { r: 1, c: 0 }, e: { r: 1, c: SUMMARY_COLS - 1 } },
   ];
-  r = 3; // row index 3 = spreadsheet row 4, one blank row after the banner
-  const stat = (label: string, value: number | string, color?: string, isMoney = true) => {
-    const row = r++;
-    put(`A${row + 1}`, label, statLabelStyle());
-    put(`B${row + 1}`, '', statLabelStyle());
-    if (typeof value === 'number') {
+  for (let c = 1; c < SUMMARY_COLS; c++) {
+    put(XLSX.utils.encode_cell({ r: 0, c }), '', titleStyle);
+    put(XLSX.utils.encode_cell({ r: 1, c }), '', subtitleStyle);
+  }
+
+  const TILE_BASE_ROW = 3; // one blank row after the banner
+  interface Tile {
+    label: string;
+    value: number | string;
+    fill: string;
+    color?: string;
+    numFmt?: string;
+  }
+  const putTile = (index: number, tile: Tile) => {
+    const colStart = (index % 3) * 2;
+    const labelRow = TILE_BASE_ROW + Math.floor(index / 3) * 2;
+    const valueRow = labelRow + 1;
+    const numFmt = tile.numFmt ?? moneyStyle;
+    const value = typeof tile.value === 'number' ? toMajor(tile.value) : tile.value;
+    for (const col of [colStart, colStart + 1]) {
       put(
-        `C${row + 1}`,
-        isMoney ? toMajor(value) : value,
-        statValueStyle(isMoney ? moneyStyle : '#,##0', color)
+        XLSX.utils.encode_cell({ r: labelRow, c: col }),
+        col === colStart ? tile.label : '',
+        tileLabelStyle(tile.fill)
       );
-    } else {
-      put(`C${row + 1}`, value, {
-        ...statValueStyle('@', color),
-        alignment: { horizontal: 'right', vertical: 'center' },
-      });
+      put(
+        XLSX.utils.encode_cell({ r: valueRow, c: col }),
+        col === colStart ? value : '',
+        col === colStart
+          ? tileValueStyle(tile.fill, typeof tile.value === 'number' ? numFmt : '@', tile.color)
+          : {
+              ...tileValueStyle(tile.fill, '@', tile.color),
+              alignment: { horizontal: 'left', vertical: 'center' },
+            }
+      );
     }
-    summary['!merges']!.push({ s: { r: row, c: 0 }, e: { r: row, c: 1 } });
+    summary['!merges']!.push(
+      { s: { r: labelRow, c: colStart }, e: { r: labelRow, c: colStart + 1 } },
+      { s: { r: valueRow, c: colStart }, e: { r: valueRow, c: colStart + 1 } }
+    );
   };
-  stat('Total income (all exported transactions)', totalIncome, C.income);
-  stat('Total expense (all exported transactions)', totalExpense, C.expense);
-  stat('Net', totalIncome - totalExpense, totalIncome - totalExpense >= 0 ? C.income : C.expense);
-  stat('Combined account balance', totalBalance, totalBalance >= 0 ? C.ink : C.expense);
-  stat('Outstanding debt (active loans)', totalDebt, C.expense);
-  stat('Owed to you (active loans)', totalReceivable, C.income);
-  stat('Transactions exported', transactions.length, C.ink, false);
-  stat('Date range', dateRange ? `${dateRange.from} to ${dateRange.to}` : 'No transactions', C.ink, false);
-  r++;
-  put(`A${r + 1}`, 'Exported from Yume — this is a point-in-time snapshot of your own on-device data.', {
-    font: { name: FONT_NAME, italic: true, sz: 9.5, color: { rgb: C.textMuted } },
+
+  const netMinor = totalIncome - totalExpense;
+  putTile(0, { label: 'Total income', value: totalIncome, fill: C.incomeTint, color: C.income });
+  putTile(1, { label: 'Total expense', value: totalExpense, fill: C.expenseTint, color: C.expense });
+  putTile(2, {
+    label: 'Net',
+    value: netMinor,
+    fill: C.surfaceAlt,
+    color: netMinor >= 0 ? C.income : C.expense,
   });
-  summary['!cols'] = [{ wch: 34 }, { wch: 2 }, { wch: 22 }];
+  putTile(3, {
+    label: 'Combined balance',
+    value: totalBalance,
+    fill: C.surfaceAlt,
+    color: totalBalance >= 0 ? C.ink : C.expense,
+  });
+  putTile(4, { label: 'Outstanding debt', value: totalDebt, fill: C.expenseTint, color: C.expense });
+  putTile(5, { label: 'Owed to you', value: totalReceivable, fill: C.incomeTint, color: C.income });
+
+  const footerRow = TILE_BASE_ROW + 5; // one blank row after the two tile rows
+  put(
+    XLSX.utils.encode_cell({ r: footerRow, c: 0 }),
+    `${transactions.length} transaction${transactions.length === 1 ? '' : 's'} exported` +
+      (dateRange ? ` · ${dateRange.from} to ${dateRange.to}` : ' · no transactions') +
+      ' · Exported from Yume — a point-in-time snapshot of your own on-device data.',
+    { font: { name: FONT_NAME, italic: true, sz: 9.5, color: { rgb: C.textMuted } } }
+  );
+  summary['!cols'] = Array.from({ length: SUMMARY_COLS }, () => ({ wch: 18 }));
+  // Banner rows tall enough to read as a real header; tile label rows short,
+  // value rows tall — the label/value height contrast is what makes each
+  // pair read as one tile rather than two ordinary rows.
+  summary['!rows'] = [
+    { hpt: 26 },
+    { hpt: 20 },
+    { hpt: 6 },
+    { hpt: 16 },
+    { hpt: 26 },
+    { hpt: 16 },
+    { hpt: 26 },
+  ];
   XLSX.utils.book_append_sheet(wb, summary, 'Summary');
 
   // ----------------------------------------------------------- Transactions
@@ -343,7 +421,10 @@ export function buildExportWorkbook(data: ExportData): XLSX.WorkBook {
   XLSX.utils.book_append_sheet(wb, accSheet, 'Accounts');
 
   // ------------------------------------------------------------- Categories
-  const catTotals = new Map<string, { name: string; kind: string; total: number; count: number }>();
+  const catTotals = new Map<
+    string,
+    { name: string; kind: string; total: number; count: number; color: string }
+  >();
   for (const t of transactions) {
     if (t.type === 'transfer' || !t.categoryId) continue;
     const cat = categoryById.get(t.categoryId);
@@ -351,36 +432,47 @@ export function buildExportWorkbook(data: ExportData): XLSX.WorkBook {
     const top = categoryById.get(topId);
     const key = topId;
     const name = top?.name ?? cat?.name ?? 'Deleted category';
+    const color = top?.color ?? cat?.color ?? C.textMuted;
     const existing = catTotals.get(key);
     if (existing) {
       existing.total += t.amountMinor;
       existing.count += 1;
     } else {
-      catTotals.set(key, { name, kind: t.type, total: t.amountMinor, count: 1 });
+      catTotals.set(key, { name, kind: t.type, total: t.amountMinor, count: 1, color });
     }
   }
   const catRowsData = [...catTotals.values()].sort((a, b) =>
     a.kind === b.kind ? b.total - a.total : a.kind === 'expense' ? -1 : 1
   );
-  const catHeaders = ['Category', 'Kind', 'Total', 'Transactions'];
+  // A leading colour-swatch column, reading each category's own stored
+  // `color` — the same hex every chip and icon badge for that category
+  // already uses in the app, so this sheet ties back to it visually instead
+  // of being names with no link to how the category actually looks in Yume.
+  const catHeaders = ['', 'Category', 'Kind', 'Total', 'Transactions'];
   const catSheet = XLSX.utils.aoa_to_sheet([
     catHeaders,
-    ...catRowsData.map((c) => [c.name, c.kind, toMajor(c.total), c.count]),
+    ...catRowsData.map((c) => ['', c.name, c.kind, toMajor(c.total), c.count]),
   ]);
   for (let c = 0; c < catHeaders.length; c++) catSheet[XLSX.utils.encode_cell({ r: 0, c })].s = headerStyle();
   catRowsData.forEach((c, i) => {
     const shaded = i % 2 === 1;
-    const color = c.kind === 'income' ? C.income : C.expense;
-    for (let col = 0; col < 4; col++) {
+    const amountColor = c.kind === 'income' ? C.income : C.expense;
+    for (let col = 0; col < 5; col++) {
       const ref = XLSX.utils.encode_cell({ r: i + 1, c: col });
-      catSheet[ref].s =
-        col === 2
-          ? bodyStyle(shaded, {
-              numFmt: moneyStyle,
-              font: { color: { rgb: color }, bold: true },
-              alignment: { horizontal: 'right' },
-            })
-          : bodyStyle(shaded, col === 3 ? { alignment: { horizontal: 'right' } } : undefined);
+      if (col === 0) {
+        catSheet[ref].s = {
+          fill: { fgColor: { rgb: c.color.replace('#', '') }, patternType: 'solid' },
+          border: allBorders(C.borderSoft),
+        };
+      } else if (col === 3) {
+        catSheet[ref].s = bodyStyle(shaded, {
+          numFmt: moneyStyle,
+          font: { color: { rgb: amountColor }, bold: true },
+          alignment: { horizontal: 'right' },
+        });
+      } else {
+        catSheet[ref].s = bodyStyle(shaded, col === 4 ? { alignment: { horizontal: 'right' } } : undefined);
+      }
     }
   });
   catSheet['!autofilter'] = {
@@ -389,7 +481,7 @@ export function buildExportWorkbook(data: ExportData): XLSX.WorkBook {
       e: { r: Math.max(catRowsData.length, 1), c: catHeaders.length - 1 },
     }),
   };
-  catSheet['!cols'] = [{ wch: 24 }, { wch: 10 }, { wch: 16 }, { wch: 14 }];
+  catSheet['!cols'] = [{ wch: 3 }, { wch: 24 }, { wch: 10 }, { wch: 16 }, { wch: 14 }];
   XLSX.utils.book_append_sheet(wb, catSheet, 'Categories');
 
   // ----------------------------------------------------------------- Loans
