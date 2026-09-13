@@ -106,6 +106,69 @@ describe('budgets', () => {
     expect(progress.percentUsed).toBeCloseTo(82, 0);
   });
 
+  it('a budget on a top-level category rolls up spend logged against its subcategories too', async () => {
+    const restaurantsId = (
+      await createCategory({ name: 'Restaurants', kind: 'expense', parentId: groceriesId })
+    ).id;
+    await createBudget({
+      categoryId: groceriesId,
+      limitAmountMinor: 500000,
+      rollover: false,
+      periodMonth: '2027-01',
+    });
+    // Logged directly against the parent...
+    await createTransaction({
+      type: 'expense',
+      accountId,
+      categoryId: groceriesId,
+      amountMinor: 100000,
+      date: '2027-01-05',
+    });
+    // ...and against one of its subcategories — both must count toward the
+    // parent's budget. Before the fix, `categorySpend` matched `category_id`
+    // exactly, so this second transaction never showed up at all and a
+    // budget set on "Groceries" while everything was actually logged under
+    // "Groceries > Restaurants" stayed permanently at ₹0 spent.
+    await createTransaction({
+      type: 'expense',
+      accountId,
+      categoryId: restaurantsId,
+      amountMinor: 150000,
+      date: '2027-01-06',
+    });
+
+    const progress = (await listBudgetsForMonth('2027-01'))[0];
+    expect(progress.spentMinor).toBe(250000);
+  });
+
+  it("a budget on a subcategory itself stays scoped to just that subcategory's own spend", async () => {
+    const suppliesId = (await createCategory({ name: 'Supplies', kind: 'expense', parentId: diningId })).id;
+    await createBudget({
+      categoryId: suppliesId,
+      limitAmountMinor: 200000,
+      rollover: false,
+      periodMonth: '2027-02',
+    });
+    // The parent's own direct spend must not leak into a subcategory's budget.
+    await createTransaction({
+      type: 'expense',
+      accountId,
+      categoryId: diningId,
+      amountMinor: 999999,
+      date: '2027-02-07',
+    });
+    await createTransaction({
+      type: 'expense',
+      accountId,
+      categoryId: suppliesId,
+      amountMinor: 50000,
+      date: '2027-02-08',
+    });
+
+    const progress = (await listBudgetsForMonth('2027-02'))[0];
+    expect(progress.spentMinor).toBe(50000);
+  });
+
   it('flags overBudget once spend passes the limit', async () => {
     const budget = await createBudget({
       categoryId: diningId,
