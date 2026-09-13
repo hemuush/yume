@@ -67,7 +67,12 @@ export default function RootLayout() {
         // rule now isolates its own failures internally; this catch only
         // guards the outer query (e.g. getDb()) from an unhandled rejection.
         void runDueRecurringRules().catch((err) => console.error('runDueRecurringRules failed:', err));
-        void ensureAndroidChannel();
+        // Unlike runDueRecurringRules/runLocalBackupIfDue above,
+        // ensureAndroidChannel/syncDailyReminder/syncWeeklySummary have no
+        // internal try/catch — each can genuinely reject (a bad trigger, a
+        // permission the OS revoked), so this fire-and-forget chain needs
+        // its own catch or a real rejection on cold start goes unhandled.
+        void ensureAndroidChannel().catch((err) => console.error('ensureAndroidChannel failed:', err));
         // One-time: drop notifications still scheduled under the pre-rename
         // `flynse-*` identifiers.
         void cancelLegacyScheduledNotifications();
@@ -75,10 +80,12 @@ export default function RootLayout() {
         // every cold start — scheduled notifications already survive a
         // normal restart, but this keeps them self-healing after a
         // reinstall or an OS-level clear.
-        void getNotificationPrefs().then((prefs) => {
-          void syncDailyReminder(prefs);
-          void syncWeeklySummary(prefs);
-        });
+        void getNotificationPrefs()
+          .then((prefs) => {
+            void syncDailyReminder(prefs).catch((err) => console.error('syncDailyReminder failed:', err));
+            void syncWeeklySummary(prefs).catch((err) => console.error('syncWeeklySummary failed:', err));
+          })
+          .catch((err) => console.error('getNotificationPrefs failed:', err));
 
         setInitialLocked(await getAppLockEnabled());
 

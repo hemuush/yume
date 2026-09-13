@@ -19,7 +19,7 @@
         "backgroundImage": "./assets/android-icon-background.png"
       },
       "predictiveBackGestureEnabled": true,
-      "versionCode": 71,
+      "versionCode": 77,
       "permissions": [
         "android.permission.USE_BIOMETRIC",
         "android.permission.USE_FINGERPRINT"
@@ -45,7 +45,7 @@
         "expo-notifications",
         {
           "icon": "./assets/notification-icon.png",
-          "color": "#E0F0A8"
+          "color": "#8FCBFF"
         }
       ],
       [
@@ -131,10 +131,6 @@
     ],
     "extra": {
       "router": {},
-      "expo-navigation-bar": {
-        "enforceContrast": false,
-        "style": "dark"
-      },
       "eas": {
         "projectId": "95b58454-0520-4507-beb7-502cbc000385"
       }

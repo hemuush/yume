@@ -38,7 +38,9 @@ export function TransactionDetailModal({
       return;
     }
     setLink(undefined);
-    getTransactionLink(tx.id).then(setLink);
+    getTransactionLink(tx.id)
+      .then(setLink)
+      .catch(() => {});
   }, [tx]);
 
   if (!tx) return null;

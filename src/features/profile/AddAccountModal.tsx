@@ -35,7 +35,10 @@ export function AddAccountModal({
   // currency set at creation, since it can never be changed afterward once
   // real transactions exist against it.
   useEffect(() => {
-    if (visible) getDefaultCurrency().then(setCurrency);
+    if (visible)
+      getDefaultCurrency()
+        .then(setCurrency)
+        .catch(() => {});
   }, [visible]);
 
   const reset = () => {
