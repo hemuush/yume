@@ -102,6 +102,10 @@ export interface SavingsGoal {
   currentAmountMinor: number;
   targetDate: string | null;
   linkedAccountId: string | null;
+  /** An optional note written at creation, sealed until the goal first reaches 100% — see contributeToGoal. */
+  noteToSelf: string | null;
+  /** Flips to true exactly once, the moment the completion reveal is shown — see markGoalLetterRevealed. */
+  letterRevealed: boolean;
   archived: boolean;
   createdAt: string;
 }

@@ -19,6 +19,7 @@ import {
   createSavingsGoal,
   updateSavingsGoal,
   contributeToGoal,
+  markGoalLetterRevealed,
   archiveSavingsGoal,
   unarchiveSavingsGoal,
   deleteSavingsGoal,
@@ -160,5 +161,35 @@ describe('savings goals', () => {
     });
     await deleteSavingsGoal(goal.id);
     await expect(deleteSavingsGoal(goal.id)).rejects.toThrow('already deleted');
+  });
+
+  it('stores an optional note to self, sealed (letterRevealed false) until explicitly marked', async () => {
+    const withNote = await createSavingsGoal({
+      name: 'Trip to Goa',
+      targetAmountMinor: 500000,
+      targetDate: null,
+      linkedAccountId: null,
+      noteToSelf: '  For the first proper vacation in years.  ',
+    });
+    // Trimmed, same as the name field already is.
+    expect(withNote.noteToSelf).toBe('For the first proper vacation in years.');
+    expect(withNote.letterRevealed).toBe(false);
+
+    await markGoalLetterRevealed(withNote.id);
+    const revealed = (await listSavingsGoals()).find((g) => g.id === withNote.id)!;
+    expect(revealed.letterRevealed).toBe(true);
+    // Marking it revealed never touches the note itself.
+    expect(revealed.noteToSelf).toBe('For the first proper vacation in years.');
+  });
+
+  it('a goal created without a note stores null, not an empty string', async () => {
+    const noNote = await createSavingsGoal({
+      name: 'No Note Here',
+      targetAmountMinor: 500000,
+      targetDate: null,
+      linkedAccountId: null,
+      noteToSelf: '',
+    });
+    expect(noNote.noteToSelf).toBeNull();
   });
 });

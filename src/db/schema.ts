@@ -124,7 +124,13 @@ CREATE TABLE IF NOT EXISTS savings_goals (
   target_date TEXT,
   linked_account_id TEXT REFERENCES accounts(id) ON DELETE SET NULL,
   archived INTEGER NOT NULL DEFAULT 0,
-  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  -- An optional note written at goal creation, sealed (never shown) until a
+  -- contribution first pushes the goal to 100% — see contributeToGoal's own
+  -- comment. letter_revealed flips to 1 exactly once, the moment that
+  -- reveal happens, so it's never shown as a "surprise" a second time.
+  note_to_self TEXT,
+  letter_revealed INTEGER NOT NULL DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS budgets (
