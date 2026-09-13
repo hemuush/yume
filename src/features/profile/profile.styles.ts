@@ -229,6 +229,28 @@ export const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 
+  // Compact Save/Clear pair inside the daily-spending-goal accordion —
+  // deliberately smaller than the full-width PrimaryButton used in modal
+  // footers, since this sits inline inside a settings row, not its own screen.
+  dailyGoalBtnRow: { flexDirection: 'row', gap: 8, marginTop: 2 },
+  dailyGoalBtn: { flex: 1, borderRadius: theme.radius.pill, paddingVertical: 9, alignItems: 'center' },
+  dailyGoalBtnPrimary: { backgroundColor: theme.colors.ink },
+  dailyGoalBtnPrimaryText: {
+    fontFamily: theme.font.roundedBold,
+    fontSize: 12.5,
+    color: theme.colors.surface,
+  },
+  dailyGoalBtnGhost: {
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.borderSoft,
+    backgroundColor: 'transparent',
+  },
+  dailyGoalBtnGhostText: {
+    fontFamily: theme.font.roundedMedium,
+    fontSize: 12.5,
+    color: theme.colors.textMuted,
+  },
+
   pickerHint: {
     fontFamily: theme.font.body,
     fontSize: 12.5,
