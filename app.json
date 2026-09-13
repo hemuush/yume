@@ -19,11 +19,8 @@
         "backgroundImage": "./assets/android-icon-background.png"
       },
       "predictiveBackGestureEnabled": true,
-      "versionCode": 79,
-      "permissions": [
-        "android.permission.USE_BIOMETRIC",
-        "android.permission.USE_FINGERPRINT"
-      ]
+      "versionCode": 80,
+      "permissions": ["android.permission.USE_BIOMETRIC", "android.permission.USE_FINGERPRINT"]
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -62,9 +59,7 @@
       [
         "react-native-android-widget",
         {
-          "fonts": [
-            "./assets/fonts/DotGothic16.ttf"
-          ],
+          "fonts": ["./assets/fonts/DotGothic16.ttf"],
           "widgets": [
             {
               "name": "ThisMonth",
