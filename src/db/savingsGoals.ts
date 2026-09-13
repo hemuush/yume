@@ -21,6 +21,8 @@ function rowToGoal(row: any): SavingsGoal {
     currentAmountMinor: row.current_amount_minor,
     targetDate: row.target_date,
     linkedAccountId: row.linked_account_id,
+    noteToSelf: row.note_to_self,
+    letterRevealed: !!row.letter_revealed,
     archived: !!row.archived,
     createdAt: row.created_at,
   };
@@ -39,6 +41,8 @@ export interface SavingsGoalInput {
   targetAmountMinor: number;
   targetDate: string | null;
   linkedAccountId: string | null;
+  /** Only ever set at creation — see `SavingsGoal.noteToSelf`'s own comment. */
+  noteToSelf?: string | null;
 }
 
 function validateInput(input: SavingsGoalInput): void {
@@ -53,9 +57,16 @@ export async function createSavingsGoal(input: SavingsGoalInput): Promise<Saving
   const db = await getDb();
   const id = newId();
   await db.runAsync(
-    `INSERT INTO savings_goals (id, name, target_amount_minor, current_amount_minor, target_date, linked_account_id, archived)
-     VALUES (?, ?, ?, 0, ?, ?, 0)`,
-    [id, input.name.trim(), input.targetAmountMinor, input.targetDate, input.linkedAccountId]
+    `INSERT INTO savings_goals (id, name, target_amount_minor, current_amount_minor, target_date, linked_account_id, note_to_self, letter_revealed, archived)
+     VALUES (?, ?, ?, 0, ?, ?, ?, 0, 0)`,
+    [
+      id,
+      input.name.trim(),
+      input.targetAmountMinor,
+      input.targetDate,
+      input.linkedAccountId,
+      input.noteToSelf?.trim() || null,
+    ]
   );
   const row = await db.getFirstAsync<any>('SELECT * FROM savings_goals WHERE id = ?', [id]);
   return rowToGoal(row);
@@ -87,6 +98,20 @@ export async function contributeToGoal(id: string, deltaMinor: number): Promise<
     'UPDATE savings_goals SET current_amount_minor = MAX(0, current_amount_minor + ?) WHERE id = ?',
     [deltaMinor, id]
   );
+}
+
+/**
+ * Flips `letter_revealed` to 1, exactly once — called right after
+ * `contributeToGoal` when the caller (`ContributeModal`) detects a
+ * contribution just crossed the goal's target for the first time and a
+ * `noteToSelf` exists. That crossing check lives client-side, not here:
+ * the caller already holds the pre-contribution amount, so there's nothing
+ * this function needs to compute or branch on — it only ever marks the
+ * letter as shown.
+ */
+export async function markGoalLetterRevealed(id: string): Promise<void> {
+  const db = await getDb();
+  await db.runAsync('UPDATE savings_goals SET letter_revealed = 1 WHERE id = ?', [id]);
 }
 
 export async function archiveSavingsGoal(id: string): Promise<void> {

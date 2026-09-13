@@ -255,6 +255,9 @@ async function runMigrations(db: AppDb): Promise<void> {
       }
     }
   }
+
+  await ensureColumn(db, 'savings_goals', 'note_to_self', `note_to_self TEXT`);
+  await ensureColumn(db, 'savings_goals', 'letter_revealed', `letter_revealed INTEGER NOT NULL DEFAULT 0`);
 }
 
 /**

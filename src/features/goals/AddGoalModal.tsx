@@ -31,6 +31,7 @@ export function AddGoalModal({
   const [month, setMonth] = useState(String(today.getMonth() + 1));
   const [year, setYear] = useState(String(today.getFullYear() + 1));
   const [linkedAccountId, setLinkedAccountId] = useState<string | null>(null);
+  const [noteToSelf, setNoteToSelf] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -43,6 +44,7 @@ export function AddGoalModal({
     setMonth(String(today.getMonth() + 1));
     setYear(String(today.getFullYear() + 1));
     setLinkedAccountId(null);
+    setNoteToSelf('');
     setError(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible]);
@@ -68,7 +70,13 @@ export function AddGoalModal({
     }
     setSaving(true);
     try {
-      await createSavingsGoal({ name: name.trim(), targetAmountMinor, targetDate, linkedAccountId });
+      await createSavingsGoal({
+        name: name.trim(),
+        targetAmountMinor,
+        targetDate,
+        linkedAccountId,
+        noteToSelf,
+      });
       onCreated();
     } catch (e: any) {
       setError(String(e?.message ?? e));
@@ -165,6 +173,17 @@ export function AddGoalModal({
           </Text>
         </>
       )}
+
+      <FormInput
+        label="Why this goal? (optional)"
+        value={noteToSelf}
+        onChangeText={setNoteToSelf}
+        placeholder="For the trip I keep putting off..."
+        multiline
+        numberOfLines={3}
+        style={styles.noteInput}
+      />
+      <Text style={styles.modalHint}>Sealed until you finish saving — Suu hands it back to you then.</Text>
     </ModalSheet>
   );
 }
