@@ -24,6 +24,7 @@ import {
   getIncomeExpenseTrend,
   getNetWorthTrend,
   getPeriodRanges,
+  getTodaySpend,
 } from '@/db/reports';
 
 describe('report queries against a real SQLite engine', () => {
@@ -103,5 +104,12 @@ describe('report queries against a real SQLite engine', () => {
     const trend = await getNetWorthTrend(2, new Date('2026-02-28'));
     expect(trend).toHaveLength(2);
     expect(trend[1].netWorthMinor).toBe(500000 - 12000 + 500000 - 15000);
+  });
+
+  it('getTodaySpend totals just the given day, and is 0 for a day with no expense', async () => {
+    expect(await getTodaySpend('2026-01-10')).toBe(12000);
+    expect(await getTodaySpend('2026-01-11')).toBe(0);
+    // The income-only day above shouldn't leak into a "spend" figure either.
+    expect(await getTodaySpend('2026-01-05')).toBe(0);
   });
 });

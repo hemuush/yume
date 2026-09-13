@@ -226,6 +226,17 @@ export async function getDailyExpenseTotals(range: DateRange): Promise<DailyExpe
   return rows.map((r) => ({ date: r.date, totalMinor: r.total }));
 }
 
+/**
+ * Today's total spend — the same scoping every other spend figure in the
+ * app uses (expense-type transactions, default-currency accounts only),
+ * just narrowed to a single day. Powers the "Today" strip on Home; reuses
+ * `getDailyExpenseTotals`'s own query shape rather than a separate one.
+ */
+export async function getTodaySpend(today: string = toIso(new Date())): Promise<number> {
+  const totals = await getDailyExpenseTotals({ start: today, end: today });
+  return totals[0]?.totalMinor ?? 0;
+}
+
 export interface PeriodComparison {
   period: ReportPeriod;
   current: PeriodSummary;
