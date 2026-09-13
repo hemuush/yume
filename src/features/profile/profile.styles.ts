@@ -200,8 +200,6 @@ export const styles = StyleSheet.create({
   },
   rowValue: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textSecondary },
 
-  swatchRow: { paddingBottom: 10 },
-
   // The theme picker — one row per pack, each showing its primary/secondary
   // pair as a split-circle swatch. Replaced the old free-colour swatch grid;
   // see AccentContext/theme/themes.ts.
@@ -271,6 +269,18 @@ export const styles = StyleSheet.create({
     marginTop: 18,
     letterSpacing: 0.4,
   },
+  // Accordion body for the Theme/Currency rows below — expands in place
+  // under the row that opened it, inside the same bordered group card, so
+  // it reads as revealing more of the same row rather than a separate block.
+  accordionBody: {
+    paddingHorizontal: 12,
+    paddingBottom: 10,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: theme.colors.borderSoft,
+  },
+  rowPreviewSwatch: { width: 20, height: 20, borderRadius: 6, overflow: 'hidden', flexDirection: 'row' },
+  rowPreviewSwatchHalf: { flex: 1 },
+
   pickerRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 13 },
   codeBubble: {
     width: 44,
