@@ -8,14 +8,12 @@ import { countFractionalLedgerAmounts, roundLedgerAmountsToWholeRupees } from '@
 import { isDeviceSecured } from '@/lib/appLock';
 import { useAppLock } from '@/lib/AppLockContext';
 import { usePrivacy } from '@/theme/PrivacyContext';
-import { ModalSheet } from '@/components/ModalSheet';
-import { PrimaryButton } from '@/components/PrimaryButton';
 import { SettingsRowIcon } from '@/components/SettingsRowIcon';
 import { ToggleSwitch } from '@/components/ToggleSwitch';
 import { YumeLogo } from '@/components/YumeLogo';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useAccent, THEMES } from '@/theme/AccentContext';
-import { theme, modalFooterStyles as f } from '@/constants/theme';
+import { theme } from '@/constants/theme';
 import { usePressScale } from '@/lib/usePressScale';
 import { styles } from './profile.styles';
 
@@ -106,9 +104,15 @@ export function SettingsSection() {
   const { lockEnabled, setLockEnabled } = useAppLock();
   const { hideAmounts, toggleHideAmounts } = usePrivacy();
   const [currency, setCurrency] = useState('INR');
-  const [currencyPickerOpen, setCurrencyPickerOpen] = useState(false);
+  // Both are plain pick-one lists (a theme pack, a currency code) — each
+  // gets a collapsed row that expands in place to the exact same list this
+  // screen already rendered, instead of always showing Theme's cards
+  // inline or pushing Currency into its own full-screen sheet.
+  const [themeOpen, setThemeOpen] = useState(false);
+  const [currencyOpen, setCurrencyOpen] = useState(false);
   const [fractionalCount, setFractionalCount] = useState(0);
   const [rounding, setRounding] = useState(false);
+  const activeTheme = THEMES.find((t) => t.id === themeId) ?? THEMES[0];
 
   const load = useCallback(async () => {
     setCurrency(await getDefaultCurrency());
@@ -128,7 +132,10 @@ export function SettingsSection() {
   const onSelectCurrency = async (code: string) => {
     const previous = currency;
     setCurrency(code);
-    setCurrencyPickerOpen(false);
+    // Closes the accordion on pick, same as the modal it replaces did — a
+    // pick-one list, unlike Theme, has nothing left to check once you've
+    // made the one choice it offers.
+    setCurrencyOpen(false);
     try {
       await setDefaultCurrency(code);
     } catch (e: any) {
@@ -195,40 +202,60 @@ export function SettingsSection() {
   return (
     <>
       <Group title="Appearance">
-        <View style={[styles.row, styles.rowDivider, styles.swatchRow]}>
-          <View style={styles.rowText}>
-            <Text style={styles.rowLabel}>Theme</Text>
-            <Text style={styles.rowSub}>Buttons, active tab, highlights, and Suu's dot</Text>
+        <Row
+          icon="palette-outline"
+          iconBg={theme.colors.idSage}
+          label="Theme"
+          sub="Buttons, active tab, highlights, and Suu's dot"
+          onPress={() => setThemeOpen((v) => !v)}
+          last
+          right={
+            <>
+              <View style={styles.rowPreviewSwatch}>
+                <View style={[styles.rowPreviewSwatchHalf, { backgroundColor: activeTheme.primary }]} />
+                <View style={[styles.rowPreviewSwatchHalf, { backgroundColor: activeTheme.secondary }]} />
+              </View>
+              <Text style={styles.rowValue}>{activeTheme.name}</Text>
+              <Feather
+                name={themeOpen ? 'chevron-up' : 'chevron-down'}
+                size={19}
+                color={theme.colors.textMuted}
+              />
+            </>
+          }
+        />
+        {themeOpen && (
+          <View style={styles.accordionBody}>
+            <View style={styles.themeList}>
+              {THEMES.map((pack) => {
+                const active = themeId === pack.id;
+                return (
+                  <Pressable
+                    key={pack.id}
+                    style={[styles.themeCard, active && styles.themeCardActive]}
+                    onPress={() => setTheme(pack.id)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Theme ${pack.name}`}
+                  >
+                    <View style={styles.themeSwatch}>
+                      <View style={[styles.themeSwatchHalf, { backgroundColor: pack.primary }]} />
+                      <View style={[styles.themeSwatchHalf, { backgroundColor: pack.secondary }]} />
+                    </View>
+                    <View style={styles.themeInfo}>
+                      <Text style={styles.themeName}>{pack.name}</Text>
+                      <Text style={styles.themeSub}>{pack.sub}</Text>
+                    </View>
+                    {active && (
+                      <View style={styles.themeCheck}>
+                        <Feather name="check" size={13} color={theme.colors.surface} />
+                      </View>
+                    )}
+                  </Pressable>
+                );
+              })}
+            </View>
           </View>
-        </View>
-        <View style={styles.themeList}>
-          {THEMES.map((pack) => {
-            const active = themeId === pack.id;
-            return (
-              <Pressable
-                key={pack.id}
-                style={[styles.themeCard, active && styles.themeCardActive]}
-                onPress={() => setTheme(pack.id)}
-                accessibilityRole="button"
-                accessibilityLabel={`Theme ${pack.name}`}
-              >
-                <View style={styles.themeSwatch}>
-                  <View style={[styles.themeSwatchHalf, { backgroundColor: pack.primary }]} />
-                  <View style={[styles.themeSwatchHalf, { backgroundColor: pack.secondary }]} />
-                </View>
-                <View style={styles.themeInfo}>
-                  <Text style={styles.themeName}>{pack.name}</Text>
-                  <Text style={styles.themeSub}>{pack.sub}</Text>
-                </View>
-                {active && (
-                  <View style={styles.themeCheck}>
-                    <Feather name="check" size={13} color={theme.colors.surface} />
-                  </View>
-                )}
-              </Pressable>
-            );
-          })}
-        </View>
+        )}
       </Group>
 
       <Group title="Money">
@@ -237,9 +264,45 @@ export function SettingsSection() {
           iconBg={theme.colors.goldTint}
           label="Default currency"
           sub="New accounts and displayed amounts"
-          value={currency}
-          onPress={() => setCurrencyPickerOpen(true)}
+          onPress={() => setCurrencyOpen((v) => !v)}
+          last
+          right={
+            <>
+              <Text style={styles.rowValue}>{currency}</Text>
+              <Feather
+                name={currencyOpen ? 'chevron-up' : 'chevron-down'}
+                size={19}
+                color={theme.colors.textMuted}
+              />
+            </>
+          }
         />
+        {currencyOpen && (
+          <View style={styles.accordionBody}>
+            <Text style={styles.pickerHint}>
+              Existing accounts keep whatever currency they were created with. Combined totals only add up
+              accounts in this currency.
+            </Text>
+            {SUPPORTED_CURRENCIES.map((c, i) => (
+              <Pressable
+                key={c.code}
+                style={[styles.pickerRow, i < SUPPORTED_CURRENCIES.length - 1 && styles.rowDivider]}
+                onPress={() => onSelectCurrency(c.code)}
+              >
+                <View style={styles.codeBubble}>
+                  <Text style={styles.codeText}>{c.code}</Text>
+                </View>
+                <Text style={[styles.rowLabel, { flex: 1 }]}>{c.label}</Text>
+                {currency === c.code && <Feather name="check" size={18} color={theme.colors.ink} />}
+              </Pressable>
+            ))}
+          </View>
+        )}
+        {/* Currency isn't the last row in this group (Categories follows) —
+            its own bottom divider is suppressed above (`last`) so it never
+            doubles up with accordionBody's top border when open, so this
+            stands in for it either way, open or collapsed. */}
+        <View style={styles.rowDivider} />
         <Row
           icon="tag-outline"
           iconBg={theme.colors.idCoral}
@@ -314,40 +377,6 @@ export function SettingsSection() {
         </View>
         <Text style={styles.aboutVersion}>Version {Application.nativeApplicationVersion ?? '1.0.0'}</Text>
       </View>
-
-      <ModalSheet
-        visible={currencyPickerOpen}
-        onClose={() => setCurrencyPickerOpen(false)}
-        title="Default currency"
-        footer={
-          <View style={f.footerRow}>
-            <PrimaryButton
-              title="Close"
-              variant="secondary"
-              onPress={() => setCurrencyPickerOpen(false)}
-              style={f.footerBtn}
-            />
-          </View>
-        }
-      >
-        <Text style={styles.pickerHint}>
-          Existing accounts keep whatever currency they were created with. Combined totals only add up
-          accounts in this currency.
-        </Text>
-        {SUPPORTED_CURRENCIES.map((c, i) => (
-          <Pressable
-            key={c.code}
-            style={[styles.pickerRow, i < SUPPORTED_CURRENCIES.length - 1 && styles.rowDivider]}
-            onPress={() => onSelectCurrency(c.code)}
-          >
-            <View style={styles.codeBubble}>
-              <Text style={styles.codeText}>{c.code}</Text>
-            </View>
-            <Text style={[styles.rowLabel, { flex: 1 }]}>{c.label}</Text>
-            {currency === c.code && <Feather name="check" size={18} color={theme.colors.ink} />}
-          </Pressable>
-        ))}
-      </ModalSheet>
     </>
   );
 }
