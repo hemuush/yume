@@ -3,7 +3,7 @@ import { View, Text, Pressable, Alert, Animated } from 'react-native';
 import { useFocusEffect, router } from 'expo-router';
 import Feather from '@expo/vector-icons/Feather';
 import * as Application from 'expo-application';
-import { getDefaultCurrency, setDefaultCurrency, SUPPORTED_CURRENCIES, ACCENT_SWATCHES } from '@/db/settings';
+import { getDefaultCurrency, setDefaultCurrency, SUPPORTED_CURRENCIES } from '@/db/settings';
 import { countFractionalLedgerAmounts, roundLedgerAmountsToWholeRupees } from '@/db/maintenance';
 import { isDeviceSecured } from '@/lib/appLock';
 import { useAppLock } from '@/lib/AppLockContext';
@@ -14,7 +14,7 @@ import { SettingsRowIcon } from '@/components/SettingsRowIcon';
 import { ToggleSwitch } from '@/components/ToggleSwitch';
 import { YumeLogo } from '@/components/YumeLogo';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { useAccent } from '@/theme/AccentContext';
+import { useAccent, THEMES } from '@/theme/AccentContext';
 import { theme, modalFooterStyles as f } from '@/constants/theme';
 import { usePressScale } from '@/lib/usePressScale';
 import { styles } from './profile.styles';
@@ -102,7 +102,7 @@ function AboutFact({ icon, text }: { icon: string; text: string }) {
  * currency and Categories.
  */
 export function SettingsSection() {
-  const { accent, setAccent } = useAccent();
+  const { themeId, setTheme } = useAccent();
   const { lockEnabled, setLockEnabled } = useAppLock();
   const { hideAmounts, toggleHideAmounts } = usePrivacy();
   const [currency, setCurrency] = useState('INR');
@@ -197,25 +197,37 @@ export function SettingsSection() {
       <Group title="Appearance">
         <View style={[styles.row, styles.rowDivider, styles.swatchRow]}>
           <View style={styles.rowText}>
-            <Text style={styles.rowLabel}>Accent colour</Text>
-            <Text style={styles.rowSub}>Buttons, active tab, and highlights</Text>
+            <Text style={styles.rowLabel}>Theme</Text>
+            <Text style={styles.rowSub}>Buttons, active tab, highlights, and Suu's dot</Text>
           </View>
         </View>
-        <View style={styles.swatchGrid}>
-          {ACCENT_SWATCHES.map((hex) => (
-            <Pressable
-              key={hex}
-              style={[styles.swatch, { backgroundColor: hex }, accent === hex && styles.swatchActive]}
-              onPress={() => setAccent(hex)}
-              accessibilityRole="button"
-              accessibilityLabel={`Accent ${hex}`}
-            >
-              {/* Every current swatch is light/medium enough for an ink
-                  checkmark to stay readable — no per-swatch contrast
-                  switch needed now that Ink itself isn't one of them. */}
-              {accent === hex && <Feather name="check" size={15} color={theme.colors.ink} />}
-            </Pressable>
-          ))}
+        <View style={styles.themeList}>
+          {THEMES.map((pack) => {
+            const active = themeId === pack.id;
+            return (
+              <Pressable
+                key={pack.id}
+                style={[styles.themeCard, active && styles.themeCardActive]}
+                onPress={() => setTheme(pack.id)}
+                accessibilityRole="button"
+                accessibilityLabel={`Theme ${pack.name}`}
+              >
+                <View style={styles.themeSwatch}>
+                  <View style={[styles.themeSwatchHalf, { backgroundColor: pack.primary }]} />
+                  <View style={[styles.themeSwatchHalf, { backgroundColor: pack.secondary }]} />
+                </View>
+                <View style={styles.themeInfo}>
+                  <Text style={styles.themeName}>{pack.name}</Text>
+                  <Text style={styles.themeSub}>{pack.sub}</Text>
+                </View>
+                {active && (
+                  <View style={styles.themeCheck}>
+                    <Feather name="check" size={13} color={theme.colors.surface} />
+                  </View>
+                )}
+              </Pressable>
+            );
+          })}
         </View>
       </Group>
 

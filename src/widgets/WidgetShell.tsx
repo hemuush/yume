@@ -98,8 +98,16 @@ export function ConstellationDots({ accent, lit = [0, 4] }: { accent: ColorProp;
   );
 }
 
-/** Suu, redrawn as a seven-dot row with one highlighted center dot instead of the ring shape RemoteViews can't easily draw — same dot language as ConstellationDots, and now also literally how Suu itself works: one dot carrying the personality. */
-export function MoonPhaseRow() {
+/**
+ * Suu, redrawn as a seven-dot row with one highlighted center dot instead of
+ * the ring shape RemoteViews can't easily draw — same dot language as
+ * ConstellationDots, and now also literally how Suu itself works: one dot
+ * carrying the personality. `dot` is the active theme's mascot-dot colour
+ * (see `resolveActiveTheme`/`getSuuWidgetData`) — this used to be hardcoded
+ * to `widgetColor.sky` regardless of theme, the one place Suu's dot never
+ * actually followed a picked pack.
+ */
+export function MoonPhaseRow({ dot }: { dot: ColorProp }) {
   const opacities = [0.15, 0.4, 0.7, 1, 0.7, 0.4, 0.15];
   return (
     <FlexWidget style={{ flexDirection: 'row', justifyContent: 'center', width: 'match_parent' }}>
@@ -111,7 +119,7 @@ export function MoonPhaseRow() {
             height: 5,
             borderRadius: 2.5,
             marginLeft: i === 0 ? 0 : 3,
-            backgroundColor: i === 3 ? widgetColor.sky : `rgba(18, 19, 15, ${o})`,
+            backgroundColor: i === 3 ? dot : `rgba(18, 19, 15, ${o})`,
             borderWidth: i === 3 ? 1 : 0,
             borderColor: widgetColor.ink,
           }}

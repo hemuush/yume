@@ -2,7 +2,8 @@ import { listAccounts, listCategories } from '@/db/ledger';
 import { getRangeComparison, findTopGrowingCategory } from '@/db/reports';
 import { getNextDueInstallment } from '@/db/loans';
 import { listRecurringRules } from '@/db/recurring';
-import { getAccentColor } from '@/db/settings';
+import { getAccentColor, getThemeId } from '@/db/settings';
+import { resolveActiveTheme } from '@/theme/themes';
 import { CURRENT_PERIOD, periodRange, previousPeriodRange } from '@/lib/period';
 import { roundedMinor } from '@/lib/round';
 import { savingsRatePct } from '@/lib/savingsRate';
@@ -53,6 +54,7 @@ function coalesced<T>(fn: () => Promise<T>, windowMs = 2000): () => Promise<T> {
 }
 
 const getAccentColorOnce = coalesced(getAccentColor);
+const getActiveThemeOnce = coalesced(() => resolveActiveTheme(getThemeId, getAccentColor));
 const getMonthComparisonOnce = coalesced(() =>
   getRangeComparison(periodRange(CURRENT_PERIOD), previousPeriodRange(CURRENT_PERIOD), 'month')
 );
@@ -84,16 +86,22 @@ export async function getThisMonthWidgetData(): Promise<ThisMonthWidgetData> {
 
 export interface SuuWidgetData {
   line: SuuLine;
+  // Previously missing entirely — the in-app Suu retints its one dot per
+  // the active theme (see AccentContext's `dot`), but this widget had no
+  // equivalent path to that value at all, so its moon-phase dot stayed
+  // hardcoded to the default pack's colour regardless of which theme was
+  // picked. See `resolveActiveTheme`.
+  dot: string;
 }
 
 export async function getSuuWidgetData(): Promise<SuuWidgetData> {
-  const cmp = await getMonthComparisonOnce();
+  const [cmp, theme] = await Promise.all([getMonthComparisonOnce(), getActiveThemeOnce()]);
   const incomeMinor = roundedMinor(cmp.current.incomeMinor);
   const expenseMinor = roundedMinor(cmp.current.expenseMinor);
   const savingsPct = savingsRatePct(incomeMinor - expenseMinor, incomeMinor);
   const topGrowing = findTopGrowingCategory(cmp.current.categoryBreakdown, cmp.previous.categoryBreakdown);
   const line = suuLine(savingsPct, cmp.expenseChangePct ?? null, topGrowing?.name ?? null);
-  return { line };
+  return { line, dot: theme.dot };
 }
 
 export interface NextDueWidgetData {
