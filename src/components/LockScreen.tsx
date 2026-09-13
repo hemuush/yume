@@ -21,27 +21,33 @@ const SPARK_COLOR = theme.colors.surface;
  * Scattered stars through the gradient — the same idea as HomeHeader's own
  * "sparks" (a wink at "Yume"/dream). Fixed positions, not random, so the
  * screen renders identically every time rather than reshuffling on every
- * mount.
+ * mount. Spread across the full height now that the centered content below
+ * no longer leaves a big empty stretch above it — previously clustered near
+ * the top, where the clock used to sit.
  */
 const STARS: { top: number; left: number; size: number; opacity: number }[] = [
   { top: 58, left: 12, size: 2, opacity: 0.5 },
   { top: 44, left: 82, size: 2.5, opacity: 0.65 },
   { top: 132, left: 30, size: 2, opacity: 0.4 },
-  { top: 170, left: 90, size: 2, opacity: 0.5 },
-  { top: 216, left: 55, size: 3, opacity: 0.55 },
-  { top: 258, left: 8, size: 2, opacity: 0.35 },
-  { top: 300, left: 68, size: 2, opacity: 0.45 },
+  { top: 108, left: 90, size: 2, opacity: 0.5 },
   { top: 20, left: 45, size: 2, opacity: 0.5 },
+  { top: 440, left: 10, size: 2, opacity: 0.4 },
+  { top: 470, left: 86, size: 2.5, opacity: 0.55 },
+  { top: 520, left: 60, size: 2, opacity: 0.4 },
 ];
 
 /** Suu's dot row, from the widgets' own dot language — the RN-view equivalent of `src/widgets/WidgetShell.tsx`'s `MoonPhaseRow` (that one is built from RemoteViews primitives and can't be reused here). */
 const MOON_PHASE_OPACITY = [0.15, 0.4, 0.7, 1, 0.7, 0.4, 0.15];
-function MoonPhaseRow() {
+// `accent` is the active theme's own colour (see AccentContext) — this used
+// to be the static `theme.colors.primary` token, so the lock screen's
+// gradient retinted with a picked theme but this one highlighted dot never
+// did.
+function MoonPhaseRow({ accent }: { accent: string }) {
   return (
     <View style={styles.moonRow}>
       {MOON_PHASE_OPACITY.map((o, i) =>
         i === 3 ? (
-          <View key={i} style={[styles.moonDot, styles.moonDotHighlight]} />
+          <View key={i} style={[styles.moonDot, styles.moonDotHighlight, { backgroundColor: accent }]} />
         ) : (
           <View key={i} style={[styles.moonDot, { backgroundColor: hexToRgba(theme.colors.ink, o) }]} />
         )
@@ -60,8 +66,12 @@ function MoonPhaseRow() {
  * already built and approved elsewhere rather than inventing a new look:
  * the Home header's own "Dreamlight" gradient technique (`shade()` off the
  * user's accent, the exact same daytime values HomeHeader itself uses), and
- * the widgets' dot-matrix/moon-phase language. Content is anchored to the
- * bottom third, matching where Face ID's own system prompt actually sits.
+ * the widgets' dot-matrix/moon-phase language. The clock that used to sit
+ * under the wordmark was dropped — the phone's own status bar/system lock
+ * screen already shows the time a moment before this screen ever appears,
+ * so it was pure duplication — and the rest of the content is centered in
+ * the space that frees up rather than staying anchored to the bottom third
+ * with empty gradient above it.
  */
 export function LockScreen({ onUnlocked }: { onUnlocked: () => void }) {
   const insets = useSafeAreaInsets();
@@ -69,7 +79,6 @@ export function LockScreen({ onUnlocked }: { onUnlocked: () => void }) {
   const { setLockEnabled } = useAppLock();
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
-  const [now, setNow] = useState(() => new Date());
   // See LockScreen's original comment (kept below on tryUnlock): an escape
   // hatch for when the phone itself no longer has any lock method at all.
   const [deviceUnsecured, setDeviceUnsecured] = useState(false);
@@ -80,13 +89,6 @@ export function LockScreen({ onUnlocked }: { onUnlocked: () => void }) {
     },
     []
   );
-
-  // A live clock — updates every 30s, which is plenty for a screen looked
-  // at for a few seconds while unlocking, without a per-second re-render.
-  useEffect(() => {
-    const id = setInterval(() => setNow(new Date()), 30000);
-    return () => clearInterval(id);
-  }, []);
 
   // Suu breathes slowly instead of sitting static — a subtle scale pulse,
   // easy on the eye (and battery) at this pace.
@@ -165,17 +167,8 @@ export function LockScreen({ onUnlocked }: { onUnlocked: () => void }) {
         <Text style={styles.wordmarkText}>Yume</Text>
       </View>
 
-      <View style={[styles.clock, { top: insets.top + 78 }]}>
-        <Text style={styles.time}>
-          {now.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}
-        </Text>
-        <Text style={styles.date}>
-          {now.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' })}
-        </Text>
-      </View>
-
-      <View style={[styles.lower, { paddingBottom: insets.bottom + 28 }]}>
-        <MoonPhaseRow />
+      <View style={[styles.centered, { top: insets.top + 64, bottom: insets.bottom + 28 }]}>
+        <MoonPhaseRow accent={accent} />
         <Animated.View style={{ transform: [{ scale: suuScale }] }}>
           <SuuIllustration size={92} pose="sleepy" />
         </Animated.View>
@@ -227,22 +220,21 @@ const styles = StyleSheet.create({
     color: theme.colors.textSecondary,
     letterSpacing: 0.2,
   },
-  clock: { position: 'absolute', left: 0, right: 0, alignItems: 'center' },
-  time: { fontFamily: theme.font.dotMatrix, fontSize: 46, color: theme.colors.textPrimary, letterSpacing: 1 },
-  date: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, marginTop: 2 },
-
-  lower: {
+  // Fills the space between the wordmark and the bottom safe area, and
+  // centers Suu/the message/the button inside it — replaces the old
+  // bottom-anchored `lower` block now that there's no clock above it
+  // holding that space open on its own.
+  centered: {
     position: 'absolute',
     left: 0,
     right: 0,
-    bottom: 0,
     alignItems: 'center',
+    justifyContent: 'center',
     paddingHorizontal: 28,
   },
   moonRow: { flexDirection: 'row', gap: 4, marginBottom: 18 },
   moonDot: { width: 6, height: 6, borderRadius: 3 },
   moonDotHighlight: {
-    backgroundColor: theme.colors.primary,
     borderWidth: 1,
     borderColor: theme.colors.ink,
   },
