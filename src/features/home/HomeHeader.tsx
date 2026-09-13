@@ -1,11 +1,22 @@
+import { useEffect } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import ReanimatedAnimated, { FadeInDown, ReduceMotion } from 'react-native-reanimated';
+import ReanimatedAnimated, {
+  FadeInDown,
+  ReduceMotion,
+  useSharedValue,
+  useAnimatedStyle,
+  withRepeat,
+  withTiming,
+  withDelay,
+  cancelAnimation,
+} from 'react-native-reanimated';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { theme } from '@/constants/theme';
 import { useAccent } from '@/theme/AccentContext';
 import { shade } from '@/lib/color';
+import { useReduceMotion } from '@/lib/useReduceMotion';
 import { ScallopedEdge } from '@/components/ScallopedEdge';
 import { YumeLogo } from '@/components/YumeLogo';
 import { HeaderIconButton, HeaderUserButton } from '@/components/AppHeader';
@@ -30,6 +41,75 @@ const SPARKS: { top: number; left: number; size: number; opacity: number }[] = [
   { top: 58, left: 50, size: 4, opacity: 0.5 },
   { top: 12, left: 36, size: 3, opacity: 0.7 },
 ];
+
+/**
+ * One spark, gently breathing — scale and opacity loop up to a brighter
+ * peak and back, staggered by `delay` so the four never pulse in sync (that
+ * read as a single blinking cluster rather than an ambient scatter). Built
+ * entirely on `react-native-reanimated`'s own shared values — never mixed
+ * with core React Native's `Animated`, which is exactly the import
+ * mismatch that crashed BudgetRow/GoalCard/GoalChip earlier this session.
+ * `useReduceMotion` (not reanimated's `entering`-only `ReduceMotion`, which
+ * doesn't cover a continuous loop like this) skips the loop entirely when
+ * the OS setting is on, leaving the spark at its plain static opacity —
+ * exactly what every spark already did before this change.
+ */
+export function Spark({
+  top,
+  left,
+  size,
+  opacity,
+  delay,
+}: {
+  top: number;
+  left: number;
+  size: number;
+  opacity: number;
+  delay: number;
+}) {
+  const reduce = useReduceMotion();
+  const scale = useSharedValue(1);
+  const glow = useSharedValue(opacity);
+
+  useEffect(() => {
+    if (reduce) {
+      // `useReduceMotion` starts at `false` and only flips to the real OS
+      // value once its async check resolves — if that happened after the
+      // loop below already started, this run's own cleanup (below) already
+      // cancelled it by the time this branch executes; this just snaps the
+      // values back to their plain static rest state.
+      scale.value = 1;
+      glow.value = opacity;
+      return;
+    }
+    scale.value = withDelay(delay, withRepeat(withTiming(1.4, { duration: 1400 }), -1, true));
+    glow.value = withDelay(delay, withRepeat(withTiming(1, { duration: 1400 }), -1, true));
+    // Runs before every re-run of this effect (a reduce-motion flip) and on
+    // unmount — an infinite (-1) loop otherwise keeps running on the UI
+    // thread regardless: a normal navigate-away-and-back on Home would
+    // silently pile up one more orphaned loop per Spark every time, forever.
+    return () => {
+      cancelAnimation(scale);
+      cancelAnimation(glow);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reduce]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+    opacity: glow.value,
+  }));
+
+  return (
+    <ReanimatedAnimated.View
+      style={[
+        styles.spark,
+        { top, left: `${left}%`, width: size, height: size, borderRadius: size / 2 },
+        animatedStyle,
+      ]}
+    />
+  );
+}
 
 /**
  * The Home screen's own header — a soft gradient from a light wash of the
@@ -71,19 +151,13 @@ export function HomeHeader({
         />
 
         {SPARKS.map((s, i) => (
-          <View
+          <Spark
             key={i}
-            style={[
-              styles.spark,
-              {
-                top: contentTop + s.top,
-                left: `${s.left}%`,
-                width: s.size,
-                height: s.size,
-                borderRadius: s.size / 2,
-                opacity: s.opacity,
-              },
-            ]}
+            top={contentTop + s.top}
+            left={s.left}
+            size={s.size}
+            opacity={s.opacity}
+            delay={i * 700}
           />
         ))}
 

@@ -57,7 +57,14 @@ export function AccountDetailModal({
     setCreditLimit(account.creditLimitMinor != null ? (account.creditLimitMinor / 100).toString() : '');
     setError(null);
     setTxCount(null);
-    getAccountTransactionCount(account.id).then(setTxCount);
+    // Leaves txCount at null on failure — same as before this fix, which
+    // only removes the unhandled rejection. A stuck "Checking usage..."
+    // state on a real DB error is a pre-existing, separate UX gap (it
+    // permanently blocks the delete/archive decision below), not
+    // introduced here.
+    getAccountTransactionCount(account.id)
+      .then(setTxCount)
+      .catch(() => {});
   }, [account]);
 
   if (!account) return null;

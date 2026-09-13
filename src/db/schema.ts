@@ -183,6 +183,15 @@ CREATE TABLE IF NOT EXISTS recurring_rules (
 CREATE INDEX IF NOT EXISTS idx_transactions_date ON transactions(date);
 CREATE INDEX IF NOT EXISTS idx_transactions_account ON transactions(account_id);
 CREATE INDEX IF NOT EXISTS idx_transactions_category ON transactions(category_id);
+-- Added alongside the Budgets/Goals and loan-delete-cascade work: both
+-- WHERE loan_id = ? (a loan's own transactions — deleteLoan's cascade
+-- capture, the prepayment lookup) and WHERE account_id = ? OR
+-- to_account_id = ? (an account's full activity, transfers included) were
+-- running a full table scan on transactions with no supporting index.
+-- budgets(category_id, period_month) needs no equivalent since its own
+-- UNIQUE constraint below already backs that lookup.
+CREATE INDEX IF NOT EXISTS idx_transactions_loan ON transactions(loan_id);
+CREATE INDEX IF NOT EXISTS idx_transactions_to_account ON transactions(to_account_id);
 CREATE INDEX IF NOT EXISTS idx_loan_payments_loan ON loan_payments(loan_id);
 CREATE INDEX IF NOT EXISTS idx_loan_rate_changes_loan ON loan_rate_changes(loan_id);
 CREATE INDEX IF NOT EXISTS idx_categories_parent ON categories(parent_id);

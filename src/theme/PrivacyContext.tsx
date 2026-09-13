@@ -26,7 +26,11 @@ export function PrivacyProvider({ children }: { children: ReactNode }) {
   const [hideAmounts, setHideAmountsState] = useState(getCachedHideSensitiveAmounts());
 
   useEffect(() => {
-    getHideSensitiveAmounts().then(setHideAmountsState);
+    // Same reasoning as AccentContext: falls back to the cached default
+    // already seeded above rather than leaving an unhandled rejection.
+    getHideSensitiveAmounts()
+      .then(setHideAmountsState)
+      .catch(() => {});
   }, []);
 
   const toggleHideAmounts = () => {
