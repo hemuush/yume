@@ -7,8 +7,8 @@ import { router, useFocusEffect } from 'expo-router';
 import { listAccounts, listCategories, listTransactions } from '@/db/ledger';
 import { listLoans, getNextDueInstallment, NextDueInstallment } from '@/db/loans';
 import { listRecurringRules } from '@/db/recurring';
-import { getRangeComparison, PeriodComparison, findTopGrowingCategory } from '@/db/reports';
-import { getUserName } from '@/db/settings';
+import { getRangeComparison, PeriodComparison, findTopGrowingCategory, getTodaySpend } from '@/db/reports';
+import { getUserName, getDailySpendingGoal } from '@/db/settings';
 import { listBudgetsForMonth, BudgetProgress } from '@/db/budgets';
 import { listSavingsGoals } from '@/db/savingsGoals';
 import { roundedMinor } from '@/lib/round';
@@ -23,6 +23,7 @@ import { dueDateLabel } from '@/lib/dueDate';
 import { MAX_LIST_STAGGER_MS } from '@/lib/animation';
 import { HomeHeader } from '@/features/home/HomeHeader';
 import { ThisMonthHero } from '@/features/home/ThisMonthHero';
+import { TodaySpendStrip } from '@/features/home/TodaySpendStrip';
 import { QuickActionsRow } from '@/features/home/QuickActionsRow';
 import { MoneyStatCard } from '@/features/home/MoneyStatCard';
 import { HomeSection } from '@/features/home/HomeSection';
@@ -46,6 +47,12 @@ export default function DashboardScreen() {
   const [nextDue, setNextDue] = useState<NextDueInstallment | null>(null);
   const [budgets, setBudgets] = useState<BudgetProgress[]>([]);
   const [goals, setGoals] = useState<SavingsGoal[]>([]);
+  // Both are "always about today", not whatever period the cursor is
+  // browsing — same reasoning as Budgets/Goals below. `dailyGoal` stays
+  // `null` (the strip renders nothing) until the user actually sets one in
+  // Settings → Money.
+  const [todaySpendMinor, setTodaySpendMinor] = useState(0);
+  const [dailyGoalMinor, setDailyGoalMinor] = useState<number | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [userName, setUserNameState] = useState<string | null>(null);
   const [cursor, setCursor] = useState<PeriodCursor>(CURRENT_PERIOD);
@@ -54,24 +61,28 @@ export default function DashboardScreen() {
   const load = useCallback(async (c: PeriodCursor) => {
     const range = periodRange(c);
     try {
-      const [accs, cats, tx, ln, rules, cmp, due, name, budgetList, goalList] = await Promise.all([
-        listAccounts(),
-        listCategories(),
-        // Scoped to the same period as the navigator above it — showing the
-        // single most-recent transactions regardless of period previously
-        // made "Recent Activity" contradict whatever month/year was selected.
-        listTransactions({ fromDate: range.start, toDate: range.end, limit: 30 }),
-        listLoans(),
-        listRecurringRules(),
-        getRangeComparison(range, previousPeriodRange(c), c.granularity),
-        getNextDueInstallment(),
-        getUserName(),
-        // Budgets and goals are always about *now*, not whatever period the
-        // cursor above is browsing — a budget is inherently this calendar
-        // month, and a goal has no period at all.
-        listBudgetsForMonth(),
-        listSavingsGoals(),
-      ]);
+      const [accs, cats, tx, ln, rules, cmp, due, name, budgetList, goalList, todaySpend, dailyGoal] =
+        await Promise.all([
+          listAccounts(),
+          listCategories(),
+          // Scoped to the same period as the navigator above it — showing the
+          // single most-recent transactions regardless of period previously
+          // made "Recent Activity" contradict whatever month/year was selected.
+          listTransactions({ fromDate: range.start, toDate: range.end, limit: 30 }),
+          listLoans(),
+          listRecurringRules(),
+          getRangeComparison(range, previousPeriodRange(c), c.granularity),
+          getNextDueInstallment(),
+          getUserName(),
+          // Budgets and goals are always about *now*, not whatever period the
+          // cursor above is browsing — a budget is inherently this calendar
+          // month, and a goal has no period at all. Same for today's spend
+          // and the daily goal below.
+          listBudgetsForMonth(),
+          listSavingsGoals(),
+          getTodaySpend(),
+          getDailySpendingGoal(),
+        ]);
       setAccounts(accs);
       setCategories(cats);
       setRecent(tx);
@@ -84,6 +95,8 @@ export default function DashboardScreen() {
       setUserNameState(name);
       setBudgets(budgetList);
       setGoals(goalList);
+      setTodaySpendMinor(todaySpend);
+      setDailyGoalMinor(dailyGoal);
       setLoadError(null);
     } catch (e: any) {
       // Guard the throw so a transient DB error shows a banner instead of
@@ -237,6 +250,10 @@ export default function DashboardScreen() {
           expenseChangePct={expenseChangePct}
           suu={suu}
         />
+
+        {dailyGoalMinor != null && (
+          <TodaySpendStrip spentMinor={todaySpendMinor} goalMinor={dailyGoalMinor} />
+        )}
 
         <View style={styles.statRow}>
           <Animated.View

@@ -175,6 +175,43 @@ export async function setThemeId(id: string): Promise<void> {
   cachedThemeId = id;
 }
 
+const DAILY_SPENDING_GOAL_KEY = 'daily_spending_goal_minor';
+let cachedDailySpendingGoal: number | null | undefined; // undefined = not yet read; null = read, nothing stored (feature off)
+
+export function getCachedDailySpendingGoal(): number | null {
+  return cachedDailySpendingGoal ?? null;
+}
+
+/**
+ * A single overall daily spending cap, in minor units — deliberately just
+ * one number with no per-category split and no rollover of an unspent day
+ * into the next (unlike category Budgets). `null` means the feature is off;
+ * Home's "Today" strip only renders once this is actually set.
+ */
+export async function getDailySpendingGoal(): Promise<number | null> {
+  if (cachedDailySpendingGoal !== undefined) return cachedDailySpendingGoal;
+  const db = await getDb();
+  const row = await db.getFirstAsync<{ value: string }>('SELECT value FROM settings WHERE key = ?', [
+    DAILY_SPENDING_GOAL_KEY,
+  ]);
+  cachedDailySpendingGoal = row ? Number(row.value) : null;
+  return cachedDailySpendingGoal;
+}
+
+export async function setDailySpendingGoal(minor: number | null): Promise<void> {
+  const db = await getDb();
+  if (minor == null) {
+    await db.runAsync('DELETE FROM settings WHERE key = ?', [DAILY_SPENDING_GOAL_KEY]);
+  } else {
+    await db.runAsync(
+      `INSERT INTO settings (key, value) VALUES (?, ?)
+       ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
+      [DAILY_SPENDING_GOAL_KEY, String(minor)]
+    );
+  }
+  cachedDailySpendingGoal = minor;
+}
+
 const HAS_ONBOARDED_KEY = 'has_onboarded';
 
 export async function getHasOnboarded(): Promise<boolean> {
@@ -402,6 +439,7 @@ export function resetSettingsCache(): void {
   cachedCurrency = null;
   cachedAccent = null;
   cachedThemeId = undefined;
+  cachedDailySpendingGoal = undefined;
   cachedUserName = undefined;
   cachedLocalBackupFolder = undefined;
   cachedLastLocalBackupAt = undefined;

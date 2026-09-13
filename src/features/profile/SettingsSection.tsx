@@ -3,13 +3,21 @@ import { View, Text, Pressable, Alert, Animated } from 'react-native';
 import { useFocusEffect, router } from 'expo-router';
 import Feather from '@expo/vector-icons/Feather';
 import * as Application from 'expo-application';
-import { getDefaultCurrency, setDefaultCurrency, SUPPORTED_CURRENCIES } from '@/db/settings';
+import {
+  getDefaultCurrency,
+  setDefaultCurrency,
+  SUPPORTED_CURRENCIES,
+  getDailySpendingGoal,
+  setDailySpendingGoal,
+} from '@/db/settings';
 import { countFractionalLedgerAmounts, roundLedgerAmountsToWholeRupees } from '@/db/maintenance';
+import { toMinor, toMajor, getCurrencySymbol } from '@/lib/money';
 import { isDeviceSecured } from '@/lib/appLock';
 import { useAppLock } from '@/lib/AppLockContext';
 import { usePrivacy } from '@/theme/PrivacyContext';
 import { SettingsRowIcon } from '@/components/SettingsRowIcon';
 import { ToggleSwitch } from '@/components/ToggleSwitch';
+import { FormInput } from '@/components/FormInput';
 import { YumeLogo } from '@/components/YumeLogo';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useAccent, THEMES } from '@/theme/AccentContext';
@@ -114,8 +122,19 @@ export function SettingsSection() {
   const [rounding, setRounding] = useState(false);
   const activeTheme = THEMES.find((t) => t.id === themeId) ?? THEMES[0];
 
+  // A single overall daily spending cap (see the "Today" strip on Home) —
+  // `null` means it's off. `dailyGoalInput` is only the accordion's own
+  // draft text, reset from the real value each time it opens so a typo
+  // never lingers after closing without saving.
+  const [dailyGoal, setDailyGoalState] = useState<number | null>(null);
+  const [dailyGoalOpen, setDailyGoalOpen] = useState(false);
+  const [dailyGoalInput, setDailyGoalInput] = useState('');
+  const [dailyGoalError, setDailyGoalError] = useState<string | null>(null);
+  const [dailyGoalSaving, setDailyGoalSaving] = useState(false);
+
   const load = useCallback(async () => {
     setCurrency(await getDefaultCurrency());
+    setDailyGoalState(await getDailySpendingGoal());
     try {
       setFractionalCount((await countFractionalLedgerAmounts()).total);
     } catch {
@@ -145,6 +164,42 @@ export function SettingsSection() {
       // with no error shown.
       setCurrency(previous);
       Alert.alert('Could not change currency', String(e?.message ?? e));
+    }
+  };
+
+  const toggleDailyGoal = () => {
+    if (!dailyGoalOpen) setDailyGoalInput(dailyGoal != null ? String(toMajor(dailyGoal)) : '');
+    setDailyGoalError(null);
+    setDailyGoalOpen((v) => !v);
+  };
+
+  const saveDailyGoal = async () => {
+    setDailyGoalError(null);
+    const minor = toMinor(parseFloat(dailyGoalInput || '0'));
+    if (!Number.isFinite(minor) || minor <= 0) {
+      setDailyGoalError('Enter a valid daily amount');
+      return;
+    }
+    setDailyGoalSaving(true);
+    try {
+      await setDailySpendingGoal(minor);
+      setDailyGoalState(minor);
+      setDailyGoalOpen(false);
+    } catch (e: any) {
+      setDailyGoalError(String(e?.message ?? e));
+    } finally {
+      setDailyGoalSaving(false);
+    }
+  };
+
+  const clearDailyGoal = async () => {
+    setDailyGoalSaving(true);
+    try {
+      await setDailySpendingGoal(null);
+      setDailyGoalState(null);
+      setDailyGoalOpen(false);
+    } finally {
+      setDailyGoalSaving(false);
     }
   };
 
@@ -298,10 +353,61 @@ export function SettingsSection() {
             ))}
           </View>
         )}
-        {/* Currency isn't the last row in this group (Categories follows) —
+        {/* Currency isn't the last row in this group (more rows follow) —
             its own bottom divider is suppressed above (`last`) so it never
             doubles up with accordionBody's top border when open, so this
             stands in for it either way, open or collapsed. */}
+        <View style={styles.rowDivider} />
+        <Row
+          icon="gauge"
+          iconBg={theme.colors.idTeal}
+          label="Daily spending goal"
+          sub="Shown on Home each day"
+          onPress={toggleDailyGoal}
+          last
+          right={
+            <>
+              <Text style={styles.rowValue}>
+                {dailyGoal != null ? `${getCurrencySymbol(currency)}${toMajor(dailyGoal)}/day` : 'Not set'}
+              </Text>
+              <Feather
+                name={dailyGoalOpen ? 'chevron-up' : 'chevron-down'}
+                size={19}
+                color={theme.colors.textMuted}
+              />
+            </>
+          }
+        />
+        {dailyGoalOpen && (
+          <View style={styles.accordionBody}>
+            <FormInput
+              label={`Amount per day (${getCurrencySymbol(currency)})`}
+              value={dailyGoalInput}
+              onChangeText={setDailyGoalInput}
+              keyboardType="decimal-pad"
+              placeholder="e.g. 800"
+            />
+            {dailyGoalError && <Text style={styles.errorText}>{dailyGoalError}</Text>}
+            <View style={styles.dailyGoalBtnRow}>
+              {dailyGoal != null && (
+                <Pressable
+                  style={[styles.dailyGoalBtn, styles.dailyGoalBtnGhost]}
+                  onPress={clearDailyGoal}
+                  disabled={dailyGoalSaving}
+                >
+                  <Text style={styles.dailyGoalBtnGhostText}>Clear</Text>
+                </Pressable>
+              )}
+              <Pressable
+                style={[styles.dailyGoalBtn, styles.dailyGoalBtnPrimary]}
+                onPress={saveDailyGoal}
+                disabled={dailyGoalSaving}
+              >
+                <Text style={styles.dailyGoalBtnPrimaryText}>{dailyGoalSaving ? 'Saving...' : 'Save'}</Text>
+              </Pressable>
+            </View>
+          </View>
+        )}
         <View style={styles.rowDivider} />
         <Row
           icon="tag-outline"
