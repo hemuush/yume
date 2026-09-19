@@ -75,13 +75,13 @@ export function AccountModal({
         {accounts
           .filter((a) => a.type !== 'savings')
           .map((acc) => (
-          <Chip
-            key={acc.id}
-            label={acc.name}
-            active={selected === acc.id}
-            onPress={() => setSelected(acc.id)}
-          />
-        ))}
+            <Chip
+              key={acc.id}
+              label={acc.name}
+              active={selected === acc.id}
+              onPress={() => setSelected(acc.id)}
+            />
+          ))}
       </View>
     </ModalSheet>
   );

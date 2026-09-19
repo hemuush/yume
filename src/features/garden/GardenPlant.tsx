@@ -33,7 +33,9 @@ export function GardenPlant({ stage, size = 44 }: { stage: GrowthStage; size?: n
         <Circle cx={22} cy={baseY - 3} r={2.6} fill={theme.colors.ink} opacity={0.45} />
       ) : (
         <G>
-          {stage === 'bloom' && <Circle cx={22} cy={13} r={15} fill={theme.colors.ink} mask="url(#crescent)" />}
+          {stage === 'bloom' && (
+            <Circle cx={22} cy={13} r={15} fill={theme.colors.ink} mask="url(#crescent)" />
+          )}
           <Rect x={21} y={stemTopY} width={2} height={stemH} fill={theme.colors.ink} />
           <Ellipse
             cx={22 - 8 * leafScale}

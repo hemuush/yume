@@ -19,7 +19,12 @@ describe('getFrequentAmountsForCategory', () => {
 
   beforeAll(async () => {
     await mockTestDb.execAsync(CREATE_TABLES_SQL);
-    const account = await createAccount({ name: 'Bank', type: 'bank', currency: 'INR', openingBalanceMinor: 0 });
+    const account = await createAccount({
+      name: 'Bank',
+      type: 'bank',
+      currency: 'INR',
+      openingBalanceMinor: 0,
+    });
     accountId = account.id;
     const food = await createCategory({ name: 'Food', kind: 'expense' });
     foodId = food.id;
@@ -33,11 +38,29 @@ describe('getFrequentAmountsForCategory', () => {
     for (const date of ['2026-01-02', '2026-01-08']) {
       await createTransaction({ type: 'expense', accountId, categoryId: foodId, amountMinor: 22000, date });
     }
-    await createTransaction({ type: 'expense', accountId, categoryId: foodId, amountMinor: 90000, date: '2026-01-12' });
+    await createTransaction({
+      type: 'expense',
+      accountId,
+      categoryId: foodId,
+      amountMinor: 90000,
+      date: '2026-01-12',
+    });
     // Way outside the 90-day window — must not affect the ranking.
-    await createTransaction({ type: 'expense', accountId, categoryId: foodId, amountMinor: 500000, date: '2025-01-01' });
+    await createTransaction({
+      type: 'expense',
+      accountId,
+      categoryId: foodId,
+      amountMinor: 500000,
+      date: '2025-01-01',
+    });
     // A different category entirely — must not leak into Food's ranking.
-    await createTransaction({ type: 'expense', accountId, categoryId: travelId, amountMinor: 99999, date: '2026-01-12' });
+    await createTransaction({
+      type: 'expense',
+      accountId,
+      categoryId: travelId,
+      amountMinor: 99999,
+      date: '2026-01-12',
+    });
   });
 
   it('ranks by frequency, most-repeated amount first', async () => {

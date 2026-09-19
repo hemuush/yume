@@ -49,7 +49,10 @@ export function SuuRefreshBadge({ refreshing }: { refreshing: boolean }) {
   });
 
   return (
-    <Animated.View pointerEvents="none" style={[styles.badge, { opacity, transform: [{ scale }, { rotate }] }]}>
+    <Animated.View
+      pointerEvents="none"
+      style={[styles.badge, { opacity, transform: [{ scale }, { rotate }] }]}
+    >
       <SuuIllustration size={40} pose="peek" />
     </Animated.View>
   );

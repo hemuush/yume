@@ -91,9 +91,7 @@ function PrepaymentReveal({ summary, onDone }: { summary: PrepaymentSummary; onD
       <Animated.View
         style={{
           opacity: progress.interpolate({ inputRange: [0, 0.6, 1], outputRange: [0, 0, 1] }),
-          transform: [
-            { translateY: progress.interpolate({ inputRange: [0, 1], outputRange: [6, 0] }) },
-          ],
+          transform: [{ translateY: progress.interpolate({ inputRange: [0, 1], outputRange: [6, 0] }) }],
         }}
       >
         <Text style={revealStyles.saved}>
@@ -132,7 +130,13 @@ const revealStyles = StyleSheet.create({
   tick: { width: 6, height: 14, borderRadius: 2, backgroundColor: theme.colors.borderSoft },
   tickShaved: { backgroundColor: theme.colors.secondary },
   saved: { fontFamily: theme.font.monoBold, fontSize: 18, color: theme.colors.income, marginTop: 14 },
-  sub: { fontFamily: theme.font.body, fontSize: 11.5, color: theme.colors.textSecondary, marginTop: 4, lineHeight: 16 },
+  sub: {
+    fontFamily: theme.font.body,
+    fontSize: 11.5,
+    color: theme.colors.textSecondary,
+    marginTop: 4,
+    lineHeight: 16,
+  },
   doneBtn: { marginTop: 20 },
 });
 

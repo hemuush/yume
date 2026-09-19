@@ -92,40 +92,28 @@ export default function DashboardScreen() {
   const load = useCallback(async (c: PeriodCursor) => {
     const range = periodRange(c);
     try {
-      const [
-        accs,
-        cats,
-        tx,
-        ln,
-        rules,
-        cmp,
-        due,
-        name,
-        budgetList,
-        goalList,
-        todaySpend,
-        dailyGoal,
-      ] = await Promise.all([
-        listAccounts(),
-        listCategories(),
-        // Scoped to the same period as the navigator above it — showing the
-        // single most-recent transactions regardless of period previously
-        // made "Recent Activity" contradict whatever month/year was selected.
-        listTransactions({ fromDate: range.start, toDate: range.end, limit: 30 }),
-        listLoans(),
-        listRecurringRules(),
-        getRangeComparison(range, previousPeriodRange(c), c.granularity),
-        getNextDueInstallment(),
-        getUserName(),
-        // Budgets and goals are always about *now*, not whatever period the
-        // cursor above is browsing — a budget is inherently this calendar
-        // month, and a goal has no period at all. Same for today's spend and
-        // the daily goal.
-        listBudgetsForMonth(),
-        listSavingsGoals(),
-        getTodaySpend(),
-        getDailySpendingGoal(),
-      ]);
+      const [accs, cats, tx, ln, rules, cmp, due, name, budgetList, goalList, todaySpend, dailyGoal] =
+        await Promise.all([
+          listAccounts(),
+          listCategories(),
+          // Scoped to the same period as the navigator above it — showing the
+          // single most-recent transactions regardless of period previously
+          // made "Recent Activity" contradict whatever month/year was selected.
+          listTransactions({ fromDate: range.start, toDate: range.end, limit: 30 }),
+          listLoans(),
+          listRecurringRules(),
+          getRangeComparison(range, previousPeriodRange(c), c.granularity),
+          getNextDueInstallment(),
+          getUserName(),
+          // Budgets and goals are always about *now*, not whatever period the
+          // cursor above is browsing — a budget is inherently this calendar
+          // month, and a goal has no period at all. Same for today's spend and
+          // the daily goal.
+          listBudgetsForMonth(),
+          listSavingsGoals(),
+          getTodaySpend(),
+          getDailySpendingGoal(),
+        ]);
       setAccounts(accs);
       setCategories(cats);
       setRecent(tx);

@@ -16,7 +16,13 @@ export const styles = StyleSheet.create({
     borderColor: theme.colors.expense,
   },
   errorTitle: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.expense },
-  errorDetail: { fontFamily: theme.font.body, fontSize: 11.5, color: theme.colors.textSecondary, marginTop: 3, lineHeight: 16 },
+  errorDetail: {
+    fontFamily: theme.font.body,
+    fontSize: 11.5,
+    color: theme.colors.textSecondary,
+    marginTop: 3,
+    lineHeight: 16,
+  },
   intro: {
     fontFamily: theme.font.body,
     fontSize: 12,
@@ -59,7 +65,12 @@ export const styles = StyleSheet.create({
   potToday: { backgroundColor: theme.colors.primaryTint, borderRadius: 16, paddingVertical: 6 },
   plantSlot: { height: 58, justifyContent: 'flex-end', alignItems: 'center' },
   soil: { width: 36, height: 11, backgroundColor: theme.colors.inkWash, borderRadius: 6 },
-  dayLabel: { fontFamily: theme.font.body, fontSize: 9, color: theme.colors.textMuted, textTransform: 'uppercase' },
+  dayLabel: {
+    fontFamily: theme.font.body,
+    fontSize: 9,
+    color: theme.colors.textMuted,
+    textTransform: 'uppercase',
+  },
   dayLabelToday: { fontFamily: theme.font.bodyBold, color: theme.colors.ink },
 
   legend: { flexDirection: 'row', marginHorizontal: 20, marginTop: 14 },
@@ -73,7 +84,12 @@ export const styles = StyleSheet.create({
     borderRadius: theme.radius.lg,
     padding: 13,
   },
-  noteLabel: { fontFamily: theme.font.roundedMedium, fontSize: 12, color: theme.colors.textSecondary, marginBottom: 3 },
+  noteLabel: {
+    fontFamily: theme.font.roundedMedium,
+    fontSize: 12,
+    color: theme.colors.textSecondary,
+    marginBottom: 3,
+  },
   noteText: { fontFamily: theme.font.body, fontSize: 12.5, color: theme.colors.textPrimary, lineHeight: 18 },
 
   goalsSummary: {
