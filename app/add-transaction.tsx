@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { View, Text, TextInput, Pressable, Alert, StyleSheet, Animated } from 'react-native';
 import { KeyboardAwareScrollView, KeyboardStickyView } from 'react-native-keyboard-controller';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
@@ -12,6 +12,7 @@ import {
   deleteTransaction,
   getTransactionById,
   getTransactionLink,
+  getFrequentAmountsForCategory,
 } from '@/db/ledger';
 import {
   listPeople,
@@ -35,6 +36,7 @@ import { SoftCard } from '@/features/home/SoftCard';
 import { CalendarSheet } from '@/features/transactions/CalendarSheet';
 import { useAccent } from '@/theme/AccentContext';
 import { accountBadgeColor } from '@/lib/account';
+import { shade } from '@/lib/color';
 
 // Same icon-per-type mapping AccountChip.tsx already uses for the Home
 // accounts strip — reused here (not redefined with different names/colours)
@@ -56,6 +58,25 @@ const ADD_TYPES: { label: string; value: EntryType }[] = [
   { label: 'Friend', value: 'friend' },
 ];
 const EDIT_TYPES = ADD_TYPES.slice(0, 3);
+
+// Same technique QuickActionsRow already uses to get readable small-caps
+// text out of the app's pale sky-blue/lavender accents, which are too
+// light at their own lightness to read as text on cream.
+const TRANSFER_TEXT = shade(theme.colors.primary, 45, 8);
+const FRIEND_TEXT = shade(theme.colors.accent, 45, 8);
+
+/**
+ * A wash colour + a readable accent tone per entry type, all four already-
+ * existing theme tokens — confirms "this is an expense/income/transfer/
+ * friend entry" from the top of the screen down, the same job colour
+ * already does for Income/Spent on Home, just moved earlier in this flow.
+ */
+const TYPE_WASH: Record<EntryType, { bg: string; accent: string }> = {
+  expense: { bg: theme.colors.idCoral, accent: theme.colors.idCoralDeep },
+  income: { bg: theme.colors.incomeTint, accent: theme.colors.income },
+  transfer: { bg: theme.colors.primaryTint, accent: TRANSFER_TEXT },
+  friend: { bg: theme.colors.accentTint, accent: FRIEND_TEXT },
+};
 
 interface StagedTx {
   id: string;
@@ -123,8 +144,27 @@ export default function AddTransactionScreen() {
   const [saving, setSaving] = useState(false);
   const [saveDone, setSaveDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [frequentAmounts, setFrequentAmounts] = useState<number[]>([]);
 
   const listFade = useFadeIn([rows.length]);
+
+  // Only expense/income have a "usual amount for this category" in the
+  // first place — transfers move whatever the transfer needs to move, and
+  // friend entries are keyed to a person, not a category. Re-fetches on
+  // every categoryId change, which is exactly when it needs to be different.
+  useEffect(() => {
+    if ((type !== 'expense' && type !== 'income') || !categoryId) {
+      setFrequentAmounts([]);
+      return;
+    }
+    let cancelled = false;
+    getFrequentAmountsForCategory(categoryId).then((amounts) => {
+      if (!cancelled) setFrequentAmounts(amounts);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [type, categoryId]);
 
   const load = useCallback(async () => {
     const [accs, cats, ppl] = await Promise.all([listAccounts(), listCategories(), listPeople()]);
@@ -399,6 +439,7 @@ export default function AddTransactionScreen() {
     );
   };
 
+  const wash = TYPE_WASH[type];
   const title = editing ? 'Edit Transaction' : 'Add';
   const saveTitle = saving
     ? 'Saving…'
@@ -441,14 +482,14 @@ export default function AddTransactionScreen() {
           </SoftCard>
         )}
 
-        <View style={styles.section}>
+        <SoftCard backgroundColor={wash.bg} padding={16} style={styles.heroCard}>
           <SegmentedControl options={editing ? EDIT_TYPES : ADD_TYPES} value={type} onChange={onTypeChange} />
-        </View>
 
-        <View style={styles.section}>
-          <Text style={styles.heroLabel}>Amount</Text>
+          <Text style={[styles.heroLabel, { color: wash.accent }]}>
+            {type === 'friend' ? 'Amount' : `${type[0].toUpperCase()}${type.slice(1)} amount`}
+          </Text>
           <View style={styles.amountRow}>
-            <Text style={styles.amountCurrency}>₹</Text>
+            <Text style={[styles.amountCurrency, { color: wash.accent }]}>₹</Text>
             <TextInput
               value={amount}
               onChangeText={setAmount}
@@ -458,7 +499,29 @@ export default function AddTransactionScreen() {
               style={styles.amountInput}
             />
           </View>
-        </View>
+
+          {frequentAmounts.length > 0 && (
+            <View style={styles.frequentRow}>
+              {frequentAmounts.map((amountMinor) => {
+                // Compares parsed numeric minor units, not raw strings — a
+                // string compare ("150.5" vs a user-typed "150.50") missed
+                // the match for any amount with a non-canonical decimal form.
+                const active = amount.trim() !== '' && toMinor(parseFloat(amount)) === amountMinor;
+                return (
+                  <Pressable
+                    key={amountMinor}
+                    onPress={() => setAmount((amountMinor / 100).toString())}
+                    style={[styles.frequentChip, active && styles.frequentChipActive]}
+                  >
+                    <Text style={[styles.frequentChipText, active && styles.frequentChipTextActive]}>
+                      {formatMoney(amountMinor)}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          )}
+        </SoftCard>
 
         {type === 'friend' ? (
           <FriendFields
@@ -555,12 +618,18 @@ export default function AddTransactionScreen() {
 
         {rows.length > 0 && (
           <Animated.View style={[styles.staged, listFade]}>
-            <Text style={styles.stagedHead}>{rows.length} staged</Text>
-            {rows.map((r) => {
+            <View style={styles.stagedHeadRow}>
+              <Text style={styles.stagedHead}>{rows.length} staged</Text>
+              <Text style={styles.stagedHeadTotal}>
+                {totals.income - totals.expense >= 0 ? '+' : '−'}
+                {formatMoney(Math.abs(totals.income - totals.expense))}
+              </Text>
+            </View>
+            {rows.map((r, i) => {
               const incomeLike = r.kind === 'transaction' ? r.type === 'income' : r.sign === -1;
               const expenseLike = r.kind === 'transaction' ? r.type === 'expense' : r.sign === 1;
               return (
-                <View key={r.id} style={styles.stagedRow}>
+                <View key={r.id} style={[styles.stagedRow, i > 0 && styles.stagedRowDivider]}>
                   <CategoryIcon
                     name={r.kind === 'transaction' ? r.categoryIcon : 'account-multiple'}
                     color={r.kind === 'transaction' ? r.categoryColor : theme.colors.secondary}
@@ -784,6 +853,20 @@ const styles = StyleSheet.create({
     minWidth: 60,
   },
 
+  heroCard: { marginBottom: 18 },
+  frequentRow: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 7, marginTop: 4 },
+  frequentChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: theme.radius.pill,
+    backgroundColor: 'rgba(255,255,255,0.55)',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(18,19,15,0.1)',
+  },
+  frequentChipActive: { backgroundColor: theme.colors.ink, borderColor: theme.colors.ink },
+  frequentChipText: { fontFamily: theme.font.monoBold, fontSize: 11, color: theme.colors.textPrimary },
+  frequentChipTextActive: { color: theme.colors.surface },
+
   accountRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 14 },
   accountTile: { width: 64, alignItems: 'center' },
   accountRing: { borderRadius: 16, borderWidth: 2, borderColor: 'transparent', padding: 2 },
@@ -835,26 +918,48 @@ const styles = StyleSheet.create({
   },
   addToListText: { fontFamily: theme.font.roundedBold, fontSize: 13, color: theme.colors.textPrimary },
 
-  staged: { marginTop: 18 },
+  // Redrawn as one continuous "receipt" rather than a stack of bordered
+  // mini-cards — a thicker dashed top edge stands in for a torn paper edge
+  // (React Native has no CSS clip-path for the literal zigzag), and rows
+  // inside share one card with dashed dividers between them instead of
+  // each getting its own border.
+  staged: {
+    marginTop: 18,
+    backgroundColor: theme.colors.surface,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.borderSoft,
+    borderTopWidth: 3,
+    borderTopColor: theme.colors.idCoralDeep,
+    borderStyle: 'dashed',
+    borderRadius: 14,
+    paddingHorizontal: 12,
+    paddingTop: 12,
+    paddingBottom: 4,
+  },
+  stagedHeadRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'baseline',
+    marginBottom: 4,
+  },
   stagedHead: {
     fontFamily: theme.font.roundedBold,
     fontSize: 11,
     letterSpacing: 0.4,
     textTransform: 'uppercase',
     color: theme.colors.textSecondary,
-    marginBottom: 8,
   },
+  stagedHeadTotal: { fontFamily: theme.font.monoBold, fontSize: 12.5, color: theme.colors.textPrimary },
   stagedRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-    borderRadius: 13,
-    backgroundColor: theme.colors.surface,
-    paddingHorizontal: 11,
     paddingVertical: 9,
-    marginBottom: 7,
+  },
+  stagedRowDivider: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: theme.colors.borderSoft,
+    borderStyle: 'dashed',
   },
   stagedMid: { flex: 1, minWidth: 0 },
   stagedLabel: { fontFamily: theme.font.bodyMedium, fontSize: 12.5, color: theme.colors.textPrimary },

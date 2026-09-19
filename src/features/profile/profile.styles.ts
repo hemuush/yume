@@ -96,6 +96,20 @@ export const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
 
+  gardenLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginHorizontal: 20,
+    marginTop: 12,
+    backgroundColor: theme.colors.secondaryTint,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.secondary,
+    borderRadius: theme.radius.lg,
+    padding: 13,
+  },
+  gardenLinkText: { flex: 1, fontFamily: theme.font.roundedMedium, fontSize: 13, color: theme.colors.ink },
+
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
