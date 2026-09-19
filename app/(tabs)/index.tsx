@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, RefreshControl } from 'react-native';
+import { View, Text, ScrollView, Pressable, StyleSheet, RefreshControl } from 'react-native';
 import Animated, { FadeIn, ReduceMotion } from 'react-native-reanimated';
 import Feather from '@expo/vector-icons/Feather';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -28,6 +28,7 @@ import { TodaySpendStrip } from '@/features/home/TodaySpendStrip';
 import { QuickActionsRow } from '@/features/home/QuickActionsRow';
 import { SuuRefreshBadge } from '@/features/home/SuuRefreshBadge';
 import { HomeSection } from '@/features/home/HomeSection';
+import { HomeSwipeCard, SwipePage } from '@/features/home/HomeSwipeCard';
 import { UpcomingRow, UpcomingMoreRow } from '@/features/home/UpcomingRow';
 import { useCappedList } from '@/lib/useCappedList';
 import { RecentTransactionRow } from '@/features/home/RecentTransactionRow';
@@ -262,6 +263,111 @@ export default function DashboardScreen() {
   // Already sorted most-urgent (closest to or over its limit) first.
   const topBudgets = budgets.slice(0, 3);
   const activeGoals = goals.filter((g) => !g.archived);
+  // Capped rather than its own horizontal ScrollView — nesting a
+  // horizontal-scrolling strip inside the swipe card's own horizontal
+  // pager would fight the page-swipe gesture on the same axis, so this
+  // page shows as many chips as comfortably fit and a "+N" tile for the
+  // rest instead, the same cap-and-link pattern Budgets/Upcoming use.
+  const topGoals = activeGoals.slice(0, 2);
+  const hiddenGoalsCount = activeGoals.length - topGoals.length;
+
+  const homeSwipePages: SwipePage[] = [
+    ...(topBudgets.length > 0
+      ? [
+          {
+            key: 'budgets',
+            label: 'Budgets',
+            onSeeAll: () => router.push('/budgets'),
+            content: (
+              <View style={styles.pageList}>
+                {topBudgets.map((progress, i) => (
+                  <Animated.View
+                    key={progress.budget.id}
+                    entering={FadeIn.delay(Math.min(i * 60, MAX_LIST_STAGGER_MS))
+                      .duration(280)
+                      .reduceMotion(ReduceMotion.System)}
+                  >
+                    <BudgetRow progress={progress} divider={i > 0} onPress={() => router.push('/budgets')} />
+                  </Animated.View>
+                ))}
+              </View>
+            ),
+          },
+        ]
+      : []),
+    ...(visibleUpcoming.length > 0
+      ? [
+          {
+            key: 'upcoming',
+            label: 'Upcoming',
+            // No single "see all" destination — this mixes loan EMIs (Loans
+            // tab) and recurring rules (Recurring screen); each row already
+            // deep-links to where it actually lives.
+            content: (
+              <View style={styles.pageList}>
+                {visibleUpcoming.map((item, i) => (
+                  <Animated.View
+                    key={item.key}
+                    entering={FadeIn.delay(Math.min(i * 60, MAX_LIST_STAGGER_MS))
+                      .duration(280)
+                      .reduceMotion(ReduceMotion.System)}
+                  >
+                    <UpcomingRow
+                      icon={item.icon}
+                      iconBg={item.iconBg}
+                      iconColor={item.iconColor}
+                      title={item.title}
+                      subtitle={item.subtitle}
+                      amountMinor={item.amountMinor}
+                      sign={item.sign}
+                      onPress={item.onPress}
+                      divider={i > 0}
+                      urgent={item.urgent}
+                    />
+                  </Animated.View>
+                ))}
+                {hiddenUpcoming.length > 0 && (
+                  <UpcomingMoreRow count={hiddenUpcoming.length} divider onPress={expandUpcoming} />
+                )}
+              </View>
+            ),
+          },
+        ]
+      : []),
+    ...(topGoals.length > 0
+      ? [
+          {
+            key: 'goals',
+            label: 'Goals',
+            onSeeAll: () => router.push('/savings-goals'),
+            content: (
+              <View style={styles.goalsPageRow}>
+                {topGoals.map((goal, i) => (
+                  <Animated.View
+                    key={goal.id}
+                    entering={FadeIn.delay(Math.min(i * 60, MAX_LIST_STAGGER_MS))
+                      .duration(280)
+                      .reduceMotion(ReduceMotion.System)}
+                  >
+                    <GoalChip goal={goal} onPress={() => router.push('/savings-goals')} />
+                  </Animated.View>
+                ))}
+                {hiddenGoalsCount > 0 && (
+                  <Pressable
+                    onPress={() => router.push('/savings-goals')}
+                    style={styles.goalsMoreTile}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${hiddenGoalsCount} more goals`}
+                  >
+                    <Text style={styles.goalsMoreText}>+{hiddenGoalsCount} more</Text>
+                  </Pressable>
+                )}
+              </View>
+            ),
+          },
+        ]
+      : []),
+  ];
 
   return (
     <View style={styles.container}>
@@ -313,15 +419,9 @@ export default function DashboardScreen() {
 
         {!loaded && (
           <>
-            <HomeSection title="Budgets">
+            <View style={{ marginTop: 22 }}>
               <CardRowsSkeleton rows={2} meter />
-            </HomeSection>
-            <HomeSection title="Upcoming">
-              <CardRowsSkeleton rows={1} subtitle />
-            </HomeSection>
-            <HomeSection title="Savings goals">
-              <StripSkeleton count={2} />
-            </HomeSection>
+            </View>
             <HomeSection title="Recent activity">
               <CardRowsSkeleton rows={3} subtitle />
             </HomeSection>
@@ -331,77 +431,7 @@ export default function DashboardScreen() {
           </>
         )}
 
-        {loaded && topBudgets.length > 0 && (
-          <HomeSection title="Budgets" onSeeAll={() => router.push('/budgets')}>
-            <View style={styles.card}>
-              {topBudgets.map((progress, i) => (
-                <Animated.View
-                  key={progress.budget.id}
-                  entering={FadeIn.delay(Math.min(i * 60, MAX_LIST_STAGGER_MS))
-                    .duration(280)
-                    .reduceMotion(ReduceMotion.System)}
-                >
-                  <BudgetRow progress={progress} divider={i > 0} onPress={() => router.push('/budgets')} />
-                </Animated.View>
-              ))}
-            </View>
-          </HomeSection>
-        )}
-
-        {loaded && visibleUpcoming.length > 0 && (
-          // No single "see all" destination now that this mixes loan EMIs
-          // (Loans tab) and recurring rules (Recurring screen) — each row
-          // already deep-links to where it actually lives.
-          <HomeSection title="Upcoming">
-            <View style={styles.card}>
-              {visibleUpcoming.map((item, i) => (
-                <Animated.View
-                  key={item.key}
-                  entering={FadeIn.delay(Math.min(i * 60, MAX_LIST_STAGGER_MS))
-                    .duration(280)
-                    .reduceMotion(ReduceMotion.System)}
-                >
-                  <UpcomingRow
-                    icon={item.icon}
-                    iconBg={item.iconBg}
-                    iconColor={item.iconColor}
-                    title={item.title}
-                    subtitle={item.subtitle}
-                    amountMinor={item.amountMinor}
-                    sign={item.sign}
-                    onPress={item.onPress}
-                    divider={i > 0}
-                    urgent={item.urgent}
-                  />
-                </Animated.View>
-              ))}
-              {hiddenUpcoming.length > 0 && (
-                <UpcomingMoreRow count={hiddenUpcoming.length} divider onPress={expandUpcoming} />
-              )}
-            </View>
-          </HomeSection>
-        )}
-
-        {loaded && activeGoals.length > 0 && (
-          <HomeSection title="Savings goals" onSeeAll={() => router.push('/savings-goals')}>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.accountStrip}
-            >
-              {activeGoals.map((goal, i) => (
-                <Animated.View
-                  key={goal.id}
-                  entering={FadeIn.delay(Math.min(i * 60, MAX_LIST_STAGGER_MS))
-                    .duration(280)
-                    .reduceMotion(ReduceMotion.System)}
-                >
-                  <GoalChip goal={goal} onPress={() => router.push('/savings-goals')} />
-                </Animated.View>
-              ))}
-            </ScrollView>
-          </HomeSection>
-        )}
+        {loaded && <HomeSwipeCard pages={homeSwipePages} />}
 
         {loaded && (
           <HomeSection title="Recent activity" onSeeAll={() => router.push('/transactions')}>
@@ -485,4 +515,18 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   accountStrip: { paddingHorizontal: 20, gap: 12, paddingBottom: 4 },
+  // Rows inside a HomeSwipeCard page — no outer border/background of their
+  // own (the card already draws that), BudgetRow/UpcomingRow already carry
+  // their own horizontal padding.
+  pageList: { paddingHorizontal: 2 },
+  goalsPageRow: { flexDirection: 'row', gap: 10, paddingHorizontal: 14 },
+  goalsMoreTile: {
+    width: 90,
+    borderRadius: theme.radius.lg,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.borderSoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  goalsMoreText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textSecondary },
 });
