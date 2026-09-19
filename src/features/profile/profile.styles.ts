@@ -110,6 +110,34 @@ export const styles = StyleSheet.create({
   },
   gardenLinkText: { flex: 1, fontFamily: theme.font.roundedMedium, fontSize: 13, color: theme.colors.ink },
 
+  emptyCard: { marginHorizontal: 20, padding: 14, borderRadius: 16 },
+  emptyCardRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  emptyCardIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  emptyCardTitle: { fontFamily: theme.font.roundedMedium, fontSize: 13.5, color: theme.colors.textPrimary },
+  emptyCardSubtitle: {
+    fontFamily: theme.font.body,
+    fontSize: 11,
+    color: theme.colors.textMuted,
+    marginTop: 1,
+    lineHeight: 15,
+  },
+  emptyCardCta: {
+    marginTop: 12,
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
+    borderRadius: 11,
+    paddingVertical: 9,
+    alignItems: 'center',
+  },
+  emptyCardCtaText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textPrimary },
+
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
