@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { View, Text, ScrollView, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useScreenLoad } from '@/lib/useScreenLoad';
 import {
@@ -19,6 +19,7 @@ import { CategorySection, CategoryTile } from '@/features/categories/CategorySec
 import { AddCategoryModal } from '@/features/categories/AddCategoryModal';
 import { useUndoToast } from '@/components/UndoToast';
 import { haptics } from '@/lib/haptics';
+import { Skeleton } from '@/components/Skeleton';
 
 export default function CategoriesScreen() {
   const insets = useSafeAreaInsets();
@@ -194,8 +195,16 @@ export default function CategoriesScreen() {
     return (
       <View style={styles.container}>
         <AppHeader title="Categories" showBack />
-        <View style={styles.center}>
-          <ActivityIndicator color={theme.colors.ink} />
+        <View style={{ paddingTop: 20 }}>
+          <Skeleton width={100} height={13} radius={4} style={{ marginHorizontal: 20, marginBottom: 14 }} />
+          <View style={styles.grid}>
+            {Array.from({ length: 8 }, (_, i) => (
+              <View key={i} style={styles.tile}>
+                <Skeleton width={56} height={56} circle radius={16} />
+                <Skeleton width={48} height={9} radius={4} style={{ marginTop: 6 }} />
+              </View>
+            ))}
+          </View>
         </View>
       </View>
     );

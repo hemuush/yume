@@ -12,6 +12,7 @@ import { formatPctChange } from '@/lib/format';
 import { daysUntilIsoDate } from '@/lib/date';
 import { AppHeader } from '@/components/AppHeader';
 import { EmptyState } from '@/components/EmptyState';
+import { Skeleton } from '@/components/Skeleton';
 import { theme } from '@/constants/theme';
 
 interface FeedRow {
@@ -125,7 +126,19 @@ export default function NotificationsScreen() {
             <Text style={styles.errorDetail}>{loadError}</Text>
           </View>
         )}
-        {rows === null ? null : rows.length === 0 ? (
+        {rows === null ? (
+          <>
+            {[0, 1, 2].map((i) => (
+              <View key={i} style={styles.row}>
+                <Skeleton width={36} height={36} radius={12} />
+                <View style={{ flex: 1 }}>
+                  <Skeleton width={130} height={12} radius={4} />
+                  <Skeleton width={190} height={10} radius={4} style={{ marginTop: 6 }} />
+                </View>
+              </View>
+            ))}
+          </>
+        ) : rows.length === 0 ? (
           <EmptyState
             title="All caught up"
             subtitle="No alerts right now — Suu will let you know when something needs attention."

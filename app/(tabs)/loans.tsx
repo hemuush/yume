@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { View, Text, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { listLoans } from '@/db/loans';
 import { formatMoney } from '@/lib/money';
@@ -13,6 +13,7 @@ import { PeopleSection } from '@/features/people/PeopleSection';
 import { theme } from '@/constants/theme';
 import { useFadeIn } from '@/lib/useFadeIn';
 import { useScreenLoad } from '@/lib/useScreenLoad';
+import { Skeleton } from '@/components/Skeleton';
 import { styles } from '@/features/loans/loans.styles';
 import { LoanCard } from '@/features/loans/LoanCard';
 import { LoanDetailModal } from '@/features/loans/LoanDetailModal';
@@ -61,8 +62,27 @@ export default function LoansScreen() {
     return (
       <View style={styles.container}>
         <AppHeader title="Borrowed & Lent" />
-        <View style={styles.center}>
-          <ActivityIndicator color={theme.colors.ink} />
+        <View style={styles.sectionSwitch}>
+          <SegmentedControl options={SECTIONS} value={section} onChange={setSection} />
+        </View>
+        <View style={{ paddingTop: 16 }}>
+          <View style={styles.summaryRow}>
+            <View style={styles.summaryText}>
+              <Skeleton width={54} height={9} radius={4} />
+              <Skeleton width={90} height={22} radius={5} style={{ marginTop: 6 }} />
+            </View>
+            <View style={styles.summaryText}>
+              <Skeleton width={54} height={9} radius={4} />
+              <Skeleton width={90} height={22} radius={5} style={{ marginTop: 6 }} />
+            </View>
+          </View>
+          {[0, 1].map((i) => (
+            <View key={i} style={[styles.card, { backgroundColor: theme.colors.surface }]}>
+              <Skeleton width={140} height={14} radius={4} />
+              <Skeleton width={100} height={10} radius={4} style={{ marginTop: 8 }} />
+              <Skeleton width={220} height={6} radius={3} style={{ marginTop: 12 }} />
+            </View>
+          ))}
         </View>
       </View>
     );

@@ -30,8 +30,22 @@ import { SegmentedControl } from '@/components/SegmentedControl';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { CategoryPicker } from '@/components/CategoryPicker';
 import { CategoryIcon } from '@/components/CategoryIcon';
+import { OdometerAmount } from '@/components/OdometerAmount';
 import { SoftCard } from '@/features/home/SoftCard';
 import { CalendarSheet } from '@/features/transactions/CalendarSheet';
+import { useAccent } from '@/theme/AccentContext';
+import { accountBadgeColor } from '@/lib/account';
+
+// Same icon-per-type mapping AccountChip.tsx already uses for the Home
+// accounts strip — reused here (not redefined with different names/colours)
+// so an account looks like the same thing everywhere it appears.
+const ACCOUNT_ICON: Record<Account['type'], string> = {
+  bank: 'bank',
+  cash: 'cash',
+  wallet: 'wallet',
+  credit_card: 'credit-card',
+  savings: 'piggy-bank',
+};
 
 type EntryType = TransactionType | 'friend';
 
@@ -146,7 +160,17 @@ export default function AddTransactionScreen() {
     [categories, type]
   );
 
-  const effectiveAccountId = accountId ?? accounts[0]?.id ?? null;
+  // Savings accounts aren't spendable directly — money has to be transferred
+  // out to a bank/cash/wallet account first, so expense/income/friend entries
+  // only offer non-savings accounts. Transfers still see every account, since
+  // that's the only way money moves in or out of savings. createTransaction
+  // (src/db/ledger.ts) enforces this too, so a legacy expense/income row
+  // still pointing at a savings account gets reassigned to a spendable one
+  // the moment it's opened for edit rather than being re-savable as-is.
+  const spendableAccounts = useMemo(() => accounts.filter((a) => a.type !== 'savings'), [accounts]);
+  const pickableAccounts = type === 'transfer' ? accounts : spendableAccounts;
+  const effectiveAccountId =
+    accountId && pickableAccounts.some((a) => a.id === accountId) ? accountId : (pickableAccounts[0]?.id ?? null);
   const today = toLocalIsoDate(new Date());
   const yesterday = addDaysToIsoDate(today, -1);
 
@@ -422,7 +446,7 @@ export default function AddTransactionScreen() {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.label}>Amount</Text>
+          <Text style={styles.heroLabel}>Amount</Text>
           <View style={styles.amountRow}>
             <Text style={styles.amountCurrency}>₹</Text>
             <TextInput
@@ -439,7 +463,7 @@ export default function AddTransactionScreen() {
         {type === 'friend' ? (
           <FriendFields
             people={people}
-            accounts={accounts}
+            accounts={spendableAccounts}
             personId={personId}
             setPersonId={setPersonId}
             friendSign={friendSign}
@@ -451,11 +475,11 @@ export default function AddTransactionScreen() {
           <>
             <View style={styles.section}>
               <Text style={styles.label}>{type === 'transfer' ? 'From' : 'Account'}</Text>
-              <View style={styles.chipRow}>
-                {accounts.map((acc) => (
-                  <Chip
+              <View style={styles.accountRow}>
+                {pickableAccounts.map((acc) => (
+                  <AccountTile
                     key={acc.id}
-                    label={acc.name}
+                    account={acc}
                     active={effectiveAccountId === acc.id}
                     onPress={() => setAccountId(acc.id)}
                   />
@@ -466,13 +490,13 @@ export default function AddTransactionScreen() {
             {type === 'transfer' && (
               <View style={styles.section}>
                 <Text style={styles.label}>To</Text>
-                <View style={styles.chipRow}>
+                <View style={styles.accountRow}>
                   {accounts
                     .filter((a) => a.id !== effectiveAccountId)
                     .map((acc) => (
-                      <Chip
+                      <AccountTile
                         key={acc.id}
-                        label={acc.name}
+                        account={acc}
                         active={toAccountId === acc.id}
                         onPress={() => setToAccountId(acc.id)}
                       />
@@ -609,11 +633,35 @@ function Chip({ label, active, onPress }: { label: string; active: boolean; onPr
   );
 }
 
+/**
+ * An account, drawn the same way CategoryPicker's 'medal' tiles draw a
+ * category — an icon in a soft tinted square, a name underneath, a mint
+ * ring when selected — instead of the plain text pill this screen used to
+ * reuse `Chip` for. Same icon/colour identity AccountChip.tsx already gives
+ * each account by type, just rendered through CategoryIcon (which never
+ * assumed "category" specifically, only "icon + tint + optional colour") so
+ * the two pickers on this screen read as one system instead of two.
+ */
+function AccountTile({ account, active, onPress }: { account: Account; active: boolean; onPress: () => void }) {
+  const { accent } = useAccent();
+  const badgeColor = accountBadgeColor(account.type, accent);
+  return (
+    <Pressable onPress={onPress} style={styles.accountTile}>
+      <View style={[styles.accountRing, active && styles.accountRingActive]}>
+        <CategoryIcon name={ACCOUNT_ICON[account.type] ?? 'credit-card'} color={badgeColor} size={20} square={48} />
+      </View>
+      <Text style={styles.accountName} numberOfLines={1}>
+        {account.name}
+      </Text>
+    </Pressable>
+  );
+}
+
 function Totals({ label, value, color }: { label: string; value: number; color: string }) {
   return (
     <View style={styles.total}>
       <Text style={styles.totalLabel}>{label}</Text>
-      <Text style={[styles.totalValue, { color }]}>{formatMoney(value)}</Text>
+      <OdometerAmount minor={value} style={[styles.totalValue, { color }]} />
     </View>
   );
 }
@@ -709,23 +757,43 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
 
+  // Amount is the one figure the whole transaction hangs on — centered and
+  // large, no boxed input, the same "biggest number wins" treatment the
+  // This Month card and stat tiles already use elsewhere on Home.
+  heroLabel: {
+    fontFamily: theme.font.bodyBold,
+    fontSize: 11.5,
+    letterSpacing: 0.4,
+    textTransform: 'uppercase',
+    color: theme.colors.textMuted,
+    textAlign: 'center',
+    marginBottom: 6,
+  },
   amountRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-    borderRadius: 16,
-    backgroundColor: theme.colors.surface,
-    paddingHorizontal: 16,
+    justifyContent: 'center',
+    gap: 4,
+    paddingVertical: 6,
   },
-  amountCurrency: { fontFamily: theme.font.monoBold, fontSize: 22, color: theme.colors.textMuted },
+  amountCurrency: { fontFamily: theme.font.monoBold, fontSize: 28, color: theme.colors.textMuted },
   amountInput: {
-    flex: 1,
     fontFamily: theme.font.monoBold,
-    fontSize: 24,
+    fontSize: 46,
     color: theme.colors.textPrimary,
-    paddingVertical: 14,
+    minWidth: 60,
+  },
+
+  accountRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 14 },
+  accountTile: { width: 64, alignItems: 'center' },
+  accountRing: { borderRadius: 16, borderWidth: 2, borderColor: 'transparent', padding: 2 },
+  accountRingActive: { borderColor: theme.colors.secondary },
+  accountName: {
+    fontFamily: theme.font.rounded,
+    fontSize: 10.5,
+    color: theme.colors.textSecondary,
+    marginTop: 5,
+    textAlign: 'center',
   },
   noteInput: {
     borderWidth: StyleSheet.hairlineWidth,

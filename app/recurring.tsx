@@ -12,6 +12,7 @@ import { theme } from '@/constants/theme';
 import { styles } from '@/features/recurring/recurring.styles';
 import { RuleCard } from '@/features/recurring/RuleCard';
 import { RuleModal } from '@/features/recurring/RuleModal';
+import { Skeleton } from '@/components/Skeleton';
 
 /**
  * Rent, subscriptions, salary — anything that happens on its own schedule
@@ -29,6 +30,10 @@ export default function RecurringScreen() {
   const [modalVisible, setModalVisible] = useState(false);
   const [editingRule, setEditingRule] = useState<RecurringRule | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
+  // Without this, "Add an account first" (an `accounts.length === 0` check)
+  // flashed on every cold open for someone who has plenty of accounts —
+  // the check just hadn't heard back from the DB yet.
+  const [loaded, setLoaded] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -39,6 +44,8 @@ export default function RecurringScreen() {
       setLoadError(null);
     } catch (e: any) {
       setLoadError(String(e?.message ?? e));
+    } finally {
+      setLoaded(true);
     }
   }, []);
 
@@ -89,7 +96,16 @@ export default function RecurringScreen() {
           paddingBottom: theme.layout.screenScrollPad + insets.bottom,
         }}
       >
-        {accounts.length === 0 ? (
+        {!loaded ? (
+          <>
+            {[0, 1, 2].map((i) => (
+              <View key={i} style={styles.card}>
+                <Skeleton width={140} height={13} radius={4} />
+                <Skeleton width={100} height={10} radius={4} style={{ marginTop: 8 }} />
+              </View>
+            ))}
+          </>
+        ) : accounts.length === 0 ? (
           <EmptyState
             title="Add an account first"
             subtitle="You need at least one account before setting up a recurring entry."

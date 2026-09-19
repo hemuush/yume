@@ -8,37 +8,9 @@
  */
 import { create, act } from 'react-test-renderer';
 
-// react-native-reanimated needs the native worklets runtime even for its own
-// official mock.js (same issue GoalRing.test.tsx hit) — this stands in only
-// for what HomeHeader.tsx actually imports, none of it needing to run a real
-// worklet: useSharedValue/withTiming/withRepeat/withDelay just need to not
-// throw and to carry a `.value` through, and FadeInDown only needs to be
-// chainable since it's never invoked by rendering `Spark` alone.
-export const mockCancelAnimation = jest.fn();
-
-jest.mock('react-native-reanimated', () => {
-  const { View } = require('react-native');
-  const { useRef } = require('react');
-  const chainable = () => chainableProxy;
-  const chainableProxy: any = new Proxy(chainable, { get: () => chainable });
-  return {
-    __esModule: true,
-    default: { View, createAnimatedComponent: (Component: unknown) => Component },
-    FadeInDown: chainableProxy,
-    ReduceMotion: { System: 'system' },
-    // A real useRef, not a fresh object per render — otherwise a rerender
-    // would trivially "reset" scale/glow on its own, and the cancellation
-    // test below would pass even if HomeHeader's own reset logic were
-    // removed. Matches useSharedValue's real persist-across-renders
-    // semantics closely enough for this.
-    useSharedValue: (initial: unknown) => useRef({ value: initial }).current,
-    useAnimatedStyle: (fn: () => unknown) => fn(),
-    withRepeat: (toValue: unknown) => toValue,
-    withTiming: (toValue: unknown) => toValue,
-    withDelay: (_delay: number, toValue: unknown) => toValue,
-    cancelAnimation: (...args: unknown[]) => mockCancelAnimation(...args),
-  };
-});
+// See src/test-support/reanimatedMock.ts for why this exists at all.
+jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMock').createReanimatedMock());
+import { mockCancelAnimation } from '@/test-support/reanimatedMock';
 
 import { Spark } from './HomeHeader';
 

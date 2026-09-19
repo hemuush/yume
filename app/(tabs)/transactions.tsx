@@ -10,10 +10,8 @@ import { Account, Category, Transaction, TransactionType } from '@/types';
 import { SegmentedControl } from '@/components/SegmentedControl';
 import { AppHeader, HeaderIconButton } from '@/components/AppHeader';
 import { EmptyState } from '@/components/EmptyState';
-import { CountUpAmount } from '@/components/CountUpAmount';
 import { theme } from '@/constants/theme';
 import { toLocalIsoDate, parseLocalIsoDate, addDaysToIsoDate, isoDatesInRange } from '@/lib/date';
-import { formatPctChange } from '@/lib/format';
 import { MAX_LIST_STAGGER_MS } from '@/lib/animation';
 import { useSwipeStep } from '@/lib/useSwipeStep';
 import { styles } from '@/features/transactions/transactions.styles';
@@ -22,7 +20,8 @@ import { MonthPickerModal } from '@/features/transactions/MonthPickerModal';
 import { FilterModal } from '@/features/transactions/FilterModal';
 import { DayCard } from '@/features/transactions/DayCard';
 import { TransactionDetailModal } from '@/features/transactions/TransactionDetailModal';
-import { SpendBarChart, ChartLegend } from '@/features/transactions/SpendBarChart';
+import { TransactionsHeadline } from '@/features/transactions/TransactionsHeadline';
+import { TransactionsSkeleton } from '@/features/transactions/TransactionsSkeleton';
 import { buildDailySpendBars, buildWeeklySpendBars, legendForBars } from '@/features/transactions/spendChart';
 
 function isoDate(d: Date): string {
@@ -160,17 +159,26 @@ export default function TransactionsScreen() {
   // unmounts/remounts rows as they scroll off- and back on-screen, and local
   // state there would silently re-collapse a day the user had just expanded.
   const [expandedDays, setExpandedDays] = useState<Set<string>>(new Set());
+  // Which way the headline/chart should slide on the next period change —
+  // set alongside stepBack/stepForward/onPick/the scope toggle below, read
+  // by TransactionsHeadline. 0 (a plain crossfade) for anything that isn't a
+  // simple one-step move: picking an arbitrary month, or switching Week↔Month
+  // itself, where a guessed slide direction wouldn't mean anything.
+  const [direction, setDirection] = useState<-1 | 0 | 1>(0);
 
   // Shared by the nav row's own chevron buttons and the swipe gesture below,
   // so stepping the period is one piece of logic instead of two copies.
-  const stepBack = () =>
+  const stepBack = () => {
+    setDirection(-1);
     setAnchor((a) => {
       if (viewScope === 'month') return new Date(a.getFullYear(), a.getMonth() - 1, 1);
       const d = new Date(a);
       d.setDate(d.getDate() - 7);
       return d;
     });
-  const stepForward = () =>
+  };
+  const stepForward = () => {
+    setDirection(1);
     setAnchor((a) => {
       const next =
         viewScope === 'month'
@@ -182,6 +190,7 @@ export default function TransactionsScreen() {
             })();
       return next > todayDate ? todayDate : next;
     });
+  };
   // A drag anywhere on the nav row steps the period the same as tapping its
   // own chevrons — `atCurrent` mirrors the same guard the forward button
   // itself uses, so swiping past "This week"/the current month is a no-op
@@ -316,7 +325,10 @@ export default function TransactionsScreen() {
   const displayedGroups = searching ? searchGroupedDays : groupedDays;
   const trimmedQuery = searchQuery.trim();
 
-  const onChangeViewScope = (scope: 'week' | 'month') => setViewScope(scope);
+  const onChangeViewScope = (scope: 'week' | 'month') => {
+    setDirection(0);
+    setViewScope(scope);
+  };
 
   const scrollToDay = (key: string) => {
     // Week scope: the bar's own key is already the exact date a group is
@@ -351,9 +363,7 @@ export default function TransactionsScreen() {
     return (
       <View style={styles.container}>
         <AppHeader title="Transactions" />
-        <View style={styles.center}>
-          <ActivityIndicator color={theme.colors.ink} />
-        </View>
+        <TransactionsSkeleton />
       </View>
     );
   }
@@ -462,6 +472,7 @@ export default function TransactionsScreen() {
         todayDate={todayDate}
         onClose={() => setMonthPickerVisible(false)}
         onPick={(d) => {
+          setDirection(0);
           setAnchor(d);
           setViewScope('month');
           setMonthPickerVisible(false);
@@ -514,30 +525,16 @@ export default function TransactionsScreen() {
             </>
           ) : (
             <>
-              <View style={styles.headline}>
-                <CountUpAmount
-                  minor={comparison?.current.expenseMinor ?? 0}
-                  style={styles.headlineAmt}
-                  numberOfLines={1}
-                  adjustsFontSizeToFit
-                />
-                <Text style={styles.headlineSub}>
-                  spent this {viewScope}
-                  {expenseChangePct != null && (
-                    <>
-                      {' · '}
-                      <Text style={expenseChangePct > 0 ? styles.headlineSubUp : styles.headlineSubDown}>
-                        {formatPctChange(expenseChangePct)} {expenseChangePct > 0 ? 'more' : 'less'}
-                      </Text>{' '}
-                      than last {viewScope}
-                    </>
-                  )}
-                </Text>
-              </View>
-
-              <SpendBarChart bars={bars} onPressDay={scrollToDay} />
-              <ChartLegend items={legend} />
-              <View style={styles.rule} />
+              <TransactionsHeadline
+                periodKey={`${viewScope}-${anchor.toDateString()}`}
+                direction={direction}
+                expenseMinor={comparison?.current.expenseMinor ?? 0}
+                expenseChangePct={expenseChangePct}
+                viewScope={viewScope}
+                bars={bars}
+                legend={legend}
+                onPressDay={scrollToDay}
+              />
 
               {accounts.length === 0 && (
                 <Text style={styles.emptyText}>Add an account first before recording transactions.</Text>

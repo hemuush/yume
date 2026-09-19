@@ -7,6 +7,7 @@ import { AppHeader } from '@/components/AppHeader';
 import { ToggleSwitch } from '@/components/ToggleSwitch';
 import { SettingsRowIcon } from '@/components/SettingsRowIcon';
 import { SuuIllustration } from '@/components/SuuIllustration';
+import { Skeleton } from '@/components/Skeleton';
 import { getNotificationPrefs, setNotificationPrefs, NotificationPrefs } from '@/db/settings';
 import { requestNotificationPermission, syncDailyReminder, syncWeeklySummary } from '@/lib/notifications';
 import { resyncAllLoanReminders } from '@/db/loans';
@@ -120,7 +121,24 @@ export default function NotificationSettingsScreen() {
     await save({ ...prefs, reminderHour: Math.floor(total / 60), reminderMinute: total % 60 });
   };
 
-  if (!prefs) return <View style={styles.container} />;
+  if (!prefs) {
+    return (
+      <View style={styles.container}>
+        <AppHeader title="Notifications" showBack />
+        <View style={{ paddingTop: 16 }}>
+          {[0, 1, 2, 3].map((i) => (
+            <View key={i} style={settingsRowStyle}>
+              <Skeleton width={32} height={32} circle radius={16} />
+              <View style={{ flex: 1 }}>
+                <Skeleton width={140} height={12} radius={4} />
+                <Skeleton width={100} height={9} radius={4} style={{ marginTop: 6 }} />
+              </View>
+            </View>
+          ))}
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>

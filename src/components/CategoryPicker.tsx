@@ -1,10 +1,15 @@
 import { useEffect, useState } from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { View, Text, Pressable, Animated, StyleSheet } from 'react-native';
+import ReanimatedAnimated, { FadeIn, ReduceMotion } from 'react-native-reanimated';
 import { Category } from '@/types';
 import { theme } from '@/constants/theme';
 import { CategoryIcon } from './CategoryIcon';
 import { Chip } from './Chip';
 import { topLevelOnly, childrenOf } from '@/lib/categoryTree';
+import { usePressScale } from '@/lib/usePressScale';
+import { MAX_LIST_STAGGER_MS } from '@/lib/animation';
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 interface Props {
   /** Already filtered to the relevant kind (income/expense) — this component doesn't filter by kind itself. */
@@ -98,41 +103,76 @@ export function CategoryPicker({ categories, selectedId, onSelect, variant }: Pr
   return (
     <View>
       <View style={styles.medalGrid}>
-        {topLevel.map((cat) => {
-          const active = selectedId === cat.id;
-          return (
-            <Pressable key={cat.id} style={styles.medalItem} onPress={() => onPressTopLevel(cat)}>
-              <View style={[styles.medalRing, active && styles.medalRingActive]}>
-                <CategoryIcon name={cat.icon} color={cat.color} size={20} square={48} />
-              </View>
-              <Text style={styles.medalName} numberOfLines={1}>
-                {cat.name}
-              </Text>
-            </Pressable>
-          );
-        })}
+        {topLevel.map((cat) => (
+          <MedalTile
+            key={cat.id}
+            active={selectedId === cat.id}
+            name={cat.name}
+            icon={cat.icon}
+            color={cat.color}
+            onPress={() => onPressTopLevel(cat)}
+          />
+        ))}
       </View>
       {expandedChildren.length > 0 && (
         <View style={styles.subGroup}>
           <Text style={styles.subGroupLabel}>{expandedParent?.name} —</Text>
           <View style={styles.medalGrid}>
-            {expandedChildren.map((cat) => {
-              const active = selectedId === cat.id;
-              return (
-                <Pressable key={cat.id} style={styles.medalItemSub} onPress={() => onSelect(cat.id)}>
-                  <View style={[styles.medalRing, styles.medalRingSub, active && styles.medalRingActive]}>
-                    <CategoryIcon name={cat.icon} color={cat.color} size={16} square={38} />
-                  </View>
-                  <Text style={styles.medalName} numberOfLines={1}>
-                    {cat.name}
-                  </Text>
-                </Pressable>
-              );
-            })}
+            {expandedChildren.map((cat, i) => (
+              <ReanimatedAnimated.View
+                key={cat.id}
+                entering={FadeIn.delay(Math.min(i * 40, MAX_LIST_STAGGER_MS))
+                  .duration(220)
+                  .reduceMotion(ReduceMotion.System)}
+              >
+                <MedalTile
+                  active={selectedId === cat.id}
+                  name={cat.name}
+                  icon={cat.icon}
+                  color={cat.color}
+                  onPress={() => onSelect(cat.id)}
+                  sub
+                />
+              </ReanimatedAnimated.View>
+            ))}
           </View>
         </View>
       )}
     </View>
+  );
+}
+
+/** One tile in the medal grid — its own component (not inlined in the .map() above) so each gets its own `usePressScale` instance. */
+function MedalTile({
+  active,
+  name,
+  icon,
+  color,
+  onPress,
+  sub,
+}: {
+  active: boolean;
+  name: string;
+  icon: string;
+  color: string;
+  onPress: () => void;
+  sub?: boolean;
+}) {
+  const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.92);
+  return (
+    <AnimatedPressable
+      style={[sub ? styles.medalItemSub : styles.medalItem, animatedStyle]}
+      onPress={onPress}
+      onPressIn={onPressIn}
+      onPressOut={onPressOut}
+    >
+      <View style={[styles.medalRing, sub && styles.medalRingSub, active && styles.medalRingActive]}>
+        <CategoryIcon name={icon} color={color} size={sub ? 16 : 20} square={sub ? 38 : 48} />
+      </View>
+      <Text style={styles.medalName} numberOfLines={1}>
+        {name}
+      </Text>
+    </AnimatedPressable>
   );
 }
 

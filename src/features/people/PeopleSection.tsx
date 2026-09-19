@@ -33,6 +33,7 @@ import { CountUpAmount } from '@/components/CountUpAmount';
 import { useUndoToast } from '@/components/UndoToast';
 import { haptics } from '@/lib/haptics';
 import { MAX_LIST_STAGGER_MS } from '@/lib/animation';
+import { NeoTile } from '@/components/NeoTile';
 
 function lastActivityLabel(dateStr: string | null): string {
   if (!dateStr) return 'No activity yet';
@@ -82,21 +83,16 @@ export function PeopleSection() {
       {/* Plain figures, not full-colour-fill cards — matches the same fix
           already applied to Loans' own You-owe/Owed-to-you row: colour lives
           on the number itself (green for real money owed to you), not the
-          whole tile. This section hadn't had that pass yet. */}
+          whole tile. Column order and always-on colour also now match
+          Loans' summary row exactly, per the signed-off consistency pass. */}
       <View style={styles.summaryRow}>
         <View style={styles.summaryStat}>
-          <Text style={styles.summaryLabel}>Owed to you</Text>
-          <CountUpAmount
-            minor={totalOwedToYou}
-            style={[styles.summaryValue, totalOwedToYou > 0 && styles.summaryValueIncome]}
-          />
+          <Text style={styles.summaryLabel}>You owe</Text>
+          <CountUpAmount minor={totalYouOwe} style={[styles.summaryValue, styles.summaryValueExpense]} />
         </View>
         <View style={styles.summaryStat}>
-          <Text style={styles.summaryLabel}>You owe</Text>
-          <CountUpAmount
-            minor={totalYouOwe}
-            style={[styles.summaryValue, totalYouOwe > 0 && styles.summaryValueExpense]}
-          />
+          <Text style={styles.summaryLabel}>Owed to you</Text>
+          <CountUpAmount minor={totalOwedToYou} style={[styles.summaryValue, styles.summaryValueIncome]} />
         </View>
       </View>
 
@@ -158,6 +154,7 @@ function PersonRow({
   onPress: () => void;
 }) {
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.98);
+  const balanceColor = person.balanceMinor >= 0 ? theme.colors.income : theme.colors.expense;
   return (
     // Entrance (reanimated) and press-feedback (a plain RN Animated.Value)
     // are two different animation drivers, so the stagger lives on this
@@ -169,34 +166,35 @@ function PersonRow({
         .springify()
         .reduceMotion(ReduceMotion.System)}
     >
-      <AnimatedPersonRow
-        style={[styles.row, animatedStyle]}
-        onPress={onPress}
-        onPressIn={onPressIn}
-        onPressOut={onPressOut}
-      >
-        <View style={[styles.avatar, { backgroundColor: color }]}>
-          <Text style={styles.avatarInitial}>{person.name.trim().charAt(0).toUpperCase() || '?'}</Text>
-        </View>
-        <View style={{ flex: 1, marginLeft: 12 }}>
-          <Text style={styles.rowLabel} numberOfLines={1}>
-            {person.name}
-          </Text>
-          <Text style={styles.rowSub} numberOfLines={1}>
-            {lastActivityLabel(person.lastActivityDate)}
-          </Text>
-        </View>
-        <Text
-          style={[
-            styles.rowValue,
-            { color: person.balanceMinor >= 0 ? theme.colors.income : theme.colors.expense },
-          ]}
-          numberOfLines={1}
+      <NeoTile style={styles.card}>
+        <AnimatedPersonRow
+          style={animatedStyle}
+          onPress={onPress}
+          onPressIn={onPressIn}
+          onPressOut={onPressOut}
         >
-          {person.balanceMinor >= 0 ? 'owes you ' : 'you owe '}
-          {formatMoney(Math.abs(roundedMinor(person.balanceMinor)))}
-        </Text>
-      </AnimatedPersonRow>
+          <View style={styles.cardTop}>
+            <View style={styles.who}>
+              <View style={[styles.avatar, { backgroundColor: color }]}>
+                <Text style={styles.avatarInitial}>{person.name.trim().charAt(0).toUpperCase() || '?'}</Text>
+              </View>
+              <Text style={styles.cardName} numberOfLines={1}>
+                {person.name}
+              </Text>
+            </View>
+            <Text
+              style={[styles.cardBalance, { color: balanceColor }]}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+            >
+              {formatMoney(Math.abs(roundedMinor(person.balanceMinor)))}
+            </Text>
+          </View>
+          <Text style={styles.cardSub} numberOfLines={1}>
+            {lastActivityLabel(person.lastActivityDate)} · {person.balanceMinor >= 0 ? 'owes you' : 'you owe'}
+          </Text>
+        </AnimatedPersonRow>
+      </NeoTile>
     </ReanimatedAnimated.View>
   );
 }
@@ -597,13 +595,31 @@ const styles = StyleSheet.create({
   },
   summaryValue: {
     fontFamily: theme.font.monoBold,
-    fontSize: 20,
+    fontSize: 22,
     color: theme.colors.textPrimary,
     marginTop: 4,
   },
   summaryValueIncome: { color: theme.colors.income },
   summaryValueExpense: { color: theme.colors.expense },
   emptyText: { marginHorizontal: 20, color: theme.colors.textMuted, fontSize: 13 },
+  // Each person's own bordered tile — same spacing/radius Loans' own
+  // LoanCard uses, so the two segments of this tab read as one design
+  // instead of a card list next to a plain divided list.
+  card: { marginHorizontal: 20, marginBottom: 10, padding: 16, borderRadius: 12 },
+  cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  who: { flexDirection: 'row', alignItems: 'center', flex: 1, minWidth: 0, marginRight: 8 },
+  cardName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: theme.colors.textPrimary,
+    marginLeft: 12,
+    flexShrink: 1,
+  },
+  cardBalance: { fontSize: 16, fontFamily: theme.font.monoBold, flexShrink: 0 },
+  cardSub: { fontSize: 12, color: theme.colors.textMuted, marginTop: 8, marginLeft: 50 },
+  // Kept for PersonDetailModal's linked-loans and ledger-history rows below
+  // (a plain divided list still suits a modal's inner list, unlike the
+  // section's own top-level person list above).
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',

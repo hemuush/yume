@@ -1,6 +1,6 @@
 import { getDb } from './client';
 import { newId } from '@/lib/id';
-import { createTransaction } from './ledger';
+import { createTransaction, assertSpendableAccount } from './ledger';
 import { captureRow, restoreRow, RowSnapshot } from './undoSnapshot';
 import { RecurringRule, RecurrenceFrequency, TransactionType, PaymentMode } from '@/types';
 import { toLocalIsoDate, addDaysToIsoDate, addMonthsToIsoDate } from '@/lib/date';
@@ -51,7 +51,7 @@ export interface RecurringRuleInput {
   endDate?: string | null;
 }
 
-function validate(input: RecurringRuleInput) {
+async function validate(input: RecurringRuleInput) {
   if (!Number.isFinite(input.amountMinor) || input.amountMinor <= 0) {
     throw new Error('Amount must be a positive number');
   }
@@ -70,6 +70,10 @@ function validate(input: RecurringRuleInput) {
   if (input.endDate && input.endDate < input.nextRunDate) {
     throw new Error('End date must be on or after the start date');
   }
+  // Same rule createTransaction enforces when a rule actually fires — reject
+  // it at save time too, so a bad rule can't sit there failing silently
+  // every cycle.
+  await assertSpendableAccount(input.type, input.accountId);
 }
 
 export async function listRecurringRules(): Promise<RecurringRule[]> {
@@ -81,7 +85,7 @@ export async function listRecurringRules(): Promise<RecurringRule[]> {
 }
 
 export async function createRecurringRule(input: RecurringRuleInput): Promise<RecurringRule> {
-  validate(input);
+  await validate(input);
   const db = await getDb();
   const id = newId();
   await db.runAsync(
@@ -109,7 +113,7 @@ export async function createRecurringRule(input: RecurringRuleInput): Promise<Re
 }
 
 export async function updateRecurringRule(id: string, input: RecurringRuleInput): Promise<RecurringRule> {
-  validate(input);
+  await validate(input);
   const db = await getDb();
   await db.runAsync(
     `UPDATE recurring_rules SET

@@ -1,6 +1,7 @@
 import { View, Text, StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
 import { formatMoney } from '@/lib/money';
+import { LimitMeter } from '@/components/LimitMeter';
 
 /**
  * The "how's today going" line, right under the "This month" hero — a thin
@@ -33,8 +34,8 @@ export function TodaySpendStrip({ spentMinor, goalMinor }: { spentMinor: number;
             </>
           )}
         </Text>
-        <View style={styles.track}>
-          <View style={[styles.fill, { width: `${Math.min(100, pct)}%`, backgroundColor: colors.border }]} />
+        <View style={styles.meter}>
+          <LimitMeter pct={pct} tone={tone} />
         </View>
       </View>
     </View>
@@ -62,12 +63,5 @@ const styles = StyleSheet.create({
   dot: { width: 8, height: 8, borderRadius: 4, marginTop: 1 },
   text: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textPrimary, lineHeight: 16 },
   bold: { fontFamily: theme.font.bodyBold },
-  track: {
-    height: 4,
-    backgroundColor: 'rgba(18,19,15,0.08)',
-    borderRadius: theme.radius.pill,
-    marginTop: 6,
-    overflow: 'hidden',
-  },
-  fill: { height: '100%', borderRadius: theme.radius.pill },
+  meter: { marginTop: 6 },
 });
