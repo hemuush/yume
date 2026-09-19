@@ -1,8 +1,8 @@
 import { View, Text, Pressable, Animated } from 'react-native';
 import { BudgetProgress } from '@/db/budgets';
 import { formatMoney } from '@/lib/money';
-import { theme } from '@/constants/theme';
 import { CategoryIcon } from '@/components/CategoryIcon';
+import { LimitMeter } from '@/components/LimitMeter';
 import { usePressScale } from '@/lib/usePressScale';
 import { styles } from './budgets.styles';
 
@@ -43,17 +43,7 @@ export function BudgetRow({
           <Text style={styles.rowAmountOf}> / {formatMoney(progress.effectiveLimitMinor)}</Text>
         </Text>
       </View>
-      <View style={styles.track}>
-        <View
-          style={[
-            styles.fill,
-            {
-              width: `${barPct}%`,
-              backgroundColor: progress.overBudget ? theme.colors.expense : theme.colors.secondary,
-            },
-          ]}
-        />
-      </View>
+      <LimitMeter pct={barPct} tone={progress.overBudget ? 'over' : 'ok'} />
       <Text style={[styles.rowNote, progress.overBudget && styles.rowNoteOver]}>
         {progress.overBudget
           ? `${formatMoney(Math.abs(progress.remainingMinor))} over budget`

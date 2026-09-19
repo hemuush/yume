@@ -36,30 +36,47 @@ export interface SuuLine {
  *                          no comparison yet (a fresh install / empty month)
  * @param topCategoryName  the category that grew the most, if any grew
  *                         >20% — folded into the sentence as "— mostly X."
+ * @param hour  the caller's real local hour (0-23) — required, not defaulted
+ *              to `new Date()` in here, so this stays a pure function tests
+ *              can call deterministically at any time of day. Only ever
+ *              nudges the *pose*, never the wording: what Suu says is still
+ *              purely about the numbers, not the clock. A real financial
+ *              situation (overspending) always wins over the hour — telling
+ *              someone to relax at 2am while they're in deficit would be the
+ *              wrong instinct in either direction.
  */
 export function suuLine(
   savingsPct: number,
   expenseChangePct: number | null,
-  topCategoryName?: string | null
+  topCategoryName?: string | null,
+  hour?: number
 ): SuuLine {
-  if (expenseChangePct == null) {
-    return { text: pickRandom(NO_DATA_LINES), pose: 'default' };
+  const result = ((): SuuLine => {
+    if (expenseChangePct == null) {
+      return { text: pickRandom(NO_DATA_LINES), pose: 'default' };
+    }
+    if (savingsPct < 0) {
+      return { text: pickRandom(OVERSPENT_LINES), pose: 'sleepy' };
+    }
+    if (expenseChangePct > 0) {
+      const base = fillSuuTemplate(pickRandom(SPEND_UP_TEMPLATES), formatPctChange(expenseChangePct));
+      return {
+        text: `${base}${topCategoryName ? ` — mostly ${topCategoryName}.` : '.'}`,
+        pose: 'default',
+      };
+    }
+    if (savingsPct >= 20) {
+      return {
+        text: fillSuuTemplate(pickRandom(GOOD_SAVINGS_TEMPLATES), savingsRateLabel(savingsPct)),
+        pose: 'default',
+      };
+    }
+    return { text: pickRandom(THIN_SAVINGS_LINES), pose: 'default' };
+  })();
+
+  const isLateNight = hour != null && (hour >= 23 || hour < 5);
+  if (result.pose === 'default' && isLateNight) {
+    return { ...result, pose: 'sleepy' };
   }
-  if (savingsPct < 0) {
-    return { text: pickRandom(OVERSPENT_LINES), pose: 'sleepy' };
-  }
-  if (expenseChangePct > 0) {
-    const base = fillSuuTemplate(pickRandom(SPEND_UP_TEMPLATES), formatPctChange(expenseChangePct));
-    return {
-      text: `${base}${topCategoryName ? ` — mostly ${topCategoryName}.` : '.'}`,
-      pose: 'default',
-    };
-  }
-  if (savingsPct >= 20) {
-    return {
-      text: fillSuuTemplate(pickRandom(GOOD_SAVINGS_TEMPLATES), savingsRateLabel(savingsPct)),
-      pose: 'default',
-    };
-  }
-  return { text: pickRandom(THIN_SAVINGS_LINES), pose: 'default' };
+  return result;
 }

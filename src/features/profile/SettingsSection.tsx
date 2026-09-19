@@ -9,6 +9,9 @@ import {
   SUPPORTED_CURRENCIES,
   getDailySpendingGoal,
   setDailySpendingGoal,
+  getNotificationPrefs,
+  getLastLocalBackupResult,
+  NotificationPrefs,
 } from '@/db/settings';
 import { countFractionalLedgerAmounts, roundLedgerAmountsToWholeRupees } from '@/db/maintenance';
 import { toMinor, toMajor, getCurrencySymbol } from '@/lib/money';
@@ -47,6 +50,7 @@ function Row({
   iconBg,
   label,
   sub,
+  subColor,
   value,
   onPress,
   right,
@@ -56,6 +60,8 @@ function Row({
   iconBg: string;
   label: string;
   sub?: string;
+  /** Overrides the sub text colour — used for a "never backed up" nudge, otherwise left at the default muted tone. */
+  subColor?: string;
   value?: string;
   onPress?: () => void;
   right?: React.ReactNode;
@@ -69,7 +75,7 @@ function Row({
         <Text style={styles.rowLabel} numberOfLines={1}>
           {label}
         </Text>
-        {sub ? <Text style={styles.rowSub}>{sub}</Text> : null}
+        {sub ? <Text style={[styles.rowSub, subColor && { color: subColor }]}>{sub}</Text> : null}
       </View>
       {value ? <Text style={styles.rowValue}>{value}</Text> : null}
       {right ?? (onPress ? <Feather name="chevron-right" size={19} color={theme.colors.textMuted} /> : null)}
@@ -89,6 +95,15 @@ function Row({
       {content}
     </AnimatedRow>
   );
+}
+
+/** "today" / "yesterday" / "N days ago" — deliberately coarse, no hours/minutes. */
+function daysAgoLabel(iso: string): string {
+  const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+  const days = Math.round((startOfDay(new Date()) - startOfDay(new Date(iso))) / 86400000);
+  if (days <= 0) return 'today';
+  if (days === 1) return 'yesterday';
+  return `${days} days ago`;
 }
 
 function AboutFact({ icon, text }: { icon: string; text: string }) {
@@ -132,6 +147,13 @@ export function SettingsSection() {
   const [dailyGoalError, setDailyGoalError] = useState<string | null>(null);
   const [dailyGoalSaving, setDailyGoalSaving] = useState(false);
 
+  // Read-only summaries for two rows that used to describe what they *do*
+  // ("Reminders, bill alerts...") rather than their actual current state —
+  // Theme and Currency already show their live pick; these two bring
+  // Notifications and Backup in line with that.
+  const [notifPrefs, setNotifPrefs] = useState<NotificationPrefs | null>(null);
+  const [lastBackupAt, setLastBackupAt] = useState<string | null>(null);
+
   const load = useCallback(async () => {
     setCurrency(await getDefaultCurrency());
     setDailyGoalState(await getDailySpendingGoal());
@@ -140,6 +162,9 @@ export function SettingsSection() {
     } catch {
       setFractionalCount(0);
     }
+    setNotifPrefs(await getNotificationPrefs());
+    const lastBackup = await getLastLocalBackupResult();
+    setLastBackupAt(lastBackup?.ok ? lastBackup.at : null);
   }, []);
 
   useFocusEffect(
@@ -424,14 +449,27 @@ export function SettingsSection() {
           icon="bell-outline"
           iconBg={theme.colors.accentTint}
           label="Notifications"
-          sub="Reminders, bill alerts, weekly summary"
+          sub={
+            notifPrefs
+              ? `${
+                  [
+                    notifPrefs.reminderEnabled,
+                    notifPrefs.overspendAlerts,
+                    notifPrefs.billAlerts,
+                    notifPrefs.weeklySummary,
+                    notifPrefs.suuCheckins,
+                  ].filter(Boolean).length
+                } of 5 on`
+              : 'Reminders, bill alerts, weekly summary'
+          }
           onPress={() => router.push('/notification-settings')}
         />
         <Row
           icon="folder-outline"
           iconBg={theme.colors.idTeal}
           label="Backup & Restore"
-          sub="Local folder, file export & restore"
+          sub={lastBackupAt ? `Last backup ${daysAgoLabel(lastBackupAt)}` : 'Never backed up'}
+          subColor={lastBackupAt ? undefined : theme.colors.idCoralDeep}
           onPress={() => router.push('/backup')}
         />
         <Row

@@ -176,6 +176,23 @@ export async function updateAccount(id: string, input: UpdateAccountInput): Prom
     throw new Error('Credit limit must be a valid, non-negative number');
   }
   const db = await getDb();
+  if (input.type === 'savings') {
+    // Retyping an account that an active income/expense recurring rule still
+    // points at would otherwise pass silently here and only surface much
+    // later: the next runDueRecurringRules() pass hits assertSpendableAccount
+    // inside createTransaction, throws, and the rule gets deactivated with
+    // just a console.error — no visible reason to the user. Same reasoning
+    // as deleteCategory's block below for recurring_rules.category_id.
+    const blockingRule = await db.getFirstAsync<{ note: string | null }>(
+      `SELECT note FROM recurring_rules WHERE account_id = ? AND type != 'transfer' AND active = 1 LIMIT 1`,
+      [id]
+    );
+    if (blockingRule) {
+      throw new Error(
+        `A recurring rule${blockingRule.note ? ` ("${blockingRule.note}")` : ''} still posts income/expenses from this account — pause or reassign it first.`
+      );
+    }
+  }
   await db.runAsync(
     `UPDATE accounts SET name = ?, type = ?, opening_balance_minor = ?, credit_limit_minor = ? WHERE id = ?`,
     [input.name.trim(), input.type, input.openingBalanceMinor, input.creditLimitMinor ?? null, id]
@@ -513,6 +530,23 @@ export interface CreateTransactionInput {
   loanPaymentId?: string | null;
 }
 
+/**
+ * Savings accounts aren't spendable in place — money has to move out via a
+ * transfer before it can be logged as income or an expense. Enforced here
+ * (not just in the account pickers) so every path that writes a transaction
+ * — the add-transaction screen, recurring rules, friend ledger entries,
+ * imports — is held to the same rule, regardless of what UI or lack of UI
+ * produced the input.
+ */
+export async function assertSpendableAccount(type: TransactionType, accountId: string): Promise<void> {
+  if (type === 'transfer') return;
+  const db = await getDb();
+  const acc = await db.getFirstAsync<{ type: string }>('SELECT type FROM accounts WHERE id = ?', [accountId]);
+  if (acc?.type === 'savings') {
+    throw new Error('Savings accounts can’t be used for income or expenses — transfer to a spendable account first.');
+  }
+}
+
 export async function createTransaction(input: CreateTransactionInput): Promise<Transaction> {
   if (!Number.isFinite(input.amountMinor) || input.amountMinor <= 0) {
     throw new Error('Amount must be a positive number');
@@ -526,6 +560,7 @@ export async function createTransaction(input: CreateTransactionInput): Promise<
   if (input.type !== 'transfer' && !input.categoryId) {
     throw new Error('Income/expense requires a category');
   }
+  await assertSpendableAccount(input.type, input.accountId);
 
   const db = await getDb();
   const id = newId();
@@ -670,6 +705,7 @@ export async function updateTransaction(id: string, input: UpdateTransactionInpu
   if (input.type !== 'transfer' && !input.categoryId) {
     throw new Error('Income/expense requires a category');
   }
+  await assertSpendableAccount(input.type, input.accountId);
 
   const db = await getDb();
   await db.runAsync(

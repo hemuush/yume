@@ -1,8 +1,10 @@
 import { getDb } from './client';
 import { newId } from '@/lib/id';
+import { assertSpendableAccount } from './ledger';
 import { Loan, LoanPayment } from '@/types';
 import { calculateEmi, generateAmortizationSchedule, recalculateAfterPrepayment } from '@/lib/loan';
 import { formatMoney } from '@/lib/money';
+import { toLocalIsoDate } from '@/lib/date';
 import { scheduleLoanDueReminder, cancelLoanDueReminder } from '@/lib/notifications';
 import { captureRow, captureRows, restoreRows, RowSnapshot } from './undoSnapshot';
 
@@ -199,6 +201,15 @@ export async function createLoan(input: CreateLoanInput): Promise<Loan> {
   ) {
     throw new Error('Asset value must be a valid, non-negative number');
   }
+  if (input.disbursement) {
+    await assertSpendableAccount(input.direction === 'borrowed' ? 'income' : 'expense', input.disbursement.accountId);
+    // The processing fee (if any) posts as its own 'expense' row on this same
+    // account regardless of direction — check that separately since a
+    // borrowed loan's disbursement itself is 'income' and wouldn't catch it.
+    if (feeAmountMinor > 0) {
+      await assertSpendableAccount('expense', input.disbursement.accountId);
+    }
+  }
 
   await db.withTransactionAsync(async (tx) => {
     // The loan row is inserted before its disbursement/fee transactions —
@@ -329,6 +340,74 @@ export async function listLoansForPerson(personId: string): Promise<Loan[]> {
   return rows.map(rowToLoan);
 }
 
+export interface OutstandingLoanPoint {
+  label: string;
+  outstandingMinor: number;
+}
+
+/**
+ * Total outstanding principal across every *borrowed* loan (lent loans are
+ * money owed to the user, not debt), reconstructed at each of the last
+ * `months` month-ends. Nothing stores a loan's balance history directly —
+ * this walks `loan_payments.outstanding_after_minor`, the snapshot already
+ * recorded after each paid installment, back to whichever one was most
+ * recent as of that month-end. A loan not yet started by a given month-end
+ * contributes nothing; one started but with no paid installment yet
+ * contributes its full principal. Includes loans that have since fully
+ * closed — their real trajectory (paid down to zero) is part of the trend,
+ * not excluded just because they don't carry debt today. Powers Home's
+ * Debt-left stat card sparkline.
+ */
+export async function getOutstandingLoanTrend(
+  months = 6,
+  reference: Date = new Date()
+): Promise<OutstandingLoanPoint[]> {
+  const db = await getDb();
+  const loans = await db.getAllAsync<{ id: string; principal_minor: number; start_date: string }>(
+    `SELECT id, principal_minor, start_date FROM loans WHERE direction = 'borrowed'`
+  );
+  const monthLabel = (d: Date) => d.toLocaleDateString(undefined, { month: 'short' });
+
+  if (loans.length === 0) {
+    return Array.from({ length: months }, (_, idx) => ({
+      label: monthLabel(new Date(reference.getFullYear(), reference.getMonth() - (months - 1 - idx), 1)),
+      outstandingMinor: 0,
+    }));
+  }
+
+  // Sorted ascending across all loans together, so once one payment's date
+  // is past the month-end being checked, every payment after it in this
+  // array is too — the inner loop below can stop right there.
+  const payments = await db.getAllAsync<{
+    loan_id: string;
+    paid_date: string;
+    outstanding_after_minor: number;
+  }>(
+    `SELECT loan_id, paid_date, outstanding_after_minor FROM loan_payments
+     WHERE paid_date IS NOT NULL ORDER BY paid_date ASC`
+  );
+
+  const points: OutstandingLoanPoint[] = [];
+  for (let i = months - 1; i >= 0; i--) {
+    const monthEndIso = toLocalIsoDate(new Date(reference.getFullYear(), reference.getMonth() - i + 1, 0));
+    let total = 0;
+    for (const loan of loans) {
+      if (loan.start_date > monthEndIso) continue;
+      let latest: number | null = null;
+      for (const p of payments) {
+        if (p.paid_date > monthEndIso) break;
+        if (p.loan_id === loan.id) latest = p.outstanding_after_minor;
+      }
+      total += latest ?? loan.principal_minor;
+    }
+    points.push({
+      label: monthLabel(new Date(reference.getFullYear(), reference.getMonth() - i, 1)),
+      outstandingMinor: total,
+    });
+  }
+  return points;
+}
+
 export async function getLoanById(id: string): Promise<Loan | null> {
   const db = await getDb();
   const row = await db.getFirstAsync<any>(`${LOAN_SELECT} WHERE l.id = ?`, [id]);
@@ -416,6 +495,7 @@ export async function payInstallment(
   if (payment.status === 'paid') throw new Error('This installment has already been paid');
   const loan = await db.getFirstAsync<any>('SELECT * FROM loans WHERE id = ?', [payment.loan_id]);
   if (!loan) throw new Error('Loan not found');
+  await assertSpendableAccount(loan.direction === 'borrowed' ? 'expense' : 'income', opts.accountId);
 
   // The transaction insert lives inside the same withTransactionAsync block
   // as the loan_payments/loans updates (rather than going through the
@@ -656,6 +736,18 @@ export async function undoInstallmentPayment(loanPaymentId: string): Promise<voi
  * (the UI) passes in, since only the user's actual loan agreement knows the
  * real number for a fixed-rate loan.
  */
+export interface PrepaymentSummary {
+  interestSavedMinor: number;
+  /** Remaining installments shaved off — `oldRemainingCount - newRemainingCount`. */
+  monthsShaved: number;
+  /** Installments still pending before this prepayment was applied. */
+  oldRemainingCount: number;
+  /** Installments still pending after — 0 means this prepayment closed the loan outright. */
+  newRemainingCount: number;
+  oldPayoffDate: string;
+  newPayoffDate: string;
+}
+
 export async function applyPrepayment(
   loanId: string,
   opts: {
@@ -665,7 +757,7 @@ export async function applyPrepayment(
     date: string;
     chargeAmountMinor?: number;
   }
-): Promise<void> {
+): Promise<PrepaymentSummary> {
   if (!Number.isFinite(opts.amountMinor) || opts.amountMinor <= 0) {
     throw new Error('Prepayment amount must be a valid positive number');
   }
@@ -678,6 +770,12 @@ export async function applyPrepayment(
   const db = await getDb();
   const loan = await db.getFirstAsync<any>('SELECT * FROM loans WHERE id = ?', [loanId]);
   if (!loan) throw new Error('Loan not found');
+  await assertSpendableAccount(loan.direction === 'borrowed' ? 'expense' : 'income', opts.accountId);
+  if (opts.chargeAmountMinor) {
+    // Always posts as its own 'expense' row regardless of direction — see
+    // the identical note above the insert below.
+    await assertSpendableAccount('expense', opts.accountId);
+  }
   // The UI already blocks this, but this function has no other caller-side
   // guarantee — an over-prepayment would otherwise record a transaction for
   // more cash than the loan needed, with the excess never tracked anywhere.
@@ -700,6 +798,15 @@ export async function applyPrepayment(
     [loanId, nextInstallmentNumber]
   );
   const scheduleAnchorDate = nextPending?.due_date ?? opts.date;
+
+  // Read before the pending rows below get deleted and replaced — this is
+  // the "before" half of the interest-saved/months-shaved comparison
+  // returned at the end, so PrepayModal can show what the prepayment
+  // actually bought instead of just closing silently.
+  const oldPending = await db.getAllAsync<{ interest_component_minor: number; due_date: string }>(
+    `SELECT interest_component_minor, due_date FROM loan_payments WHERE loan_id = ? AND status = 'pending' ORDER BY installment_number ASC`,
+    [loanId]
+  );
 
   const newOutstanding = Math.max(0, loan.outstanding_principal_minor - opts.amountMinor);
 
@@ -793,6 +900,21 @@ export async function applyPrepayment(
     }
   });
   await syncDueReminder(loanId);
+
+  const oldTotalInterestMinor = oldPending.reduce((sum, p) => sum + p.interest_component_minor, 0);
+  const newTotalInterestMinor = newSchedule.reduce((sum, p) => sum + p.interestComponentMinor, 0);
+  return {
+    // Clamped defensively — the two schedules are computed differently
+    // enough (fixed EMI/rounding drift) that a rare edge case could put the
+    // new total a paisa above the old one; this is a "you saved" figure, it
+    // should never read negative.
+    interestSavedMinor: Math.max(0, oldTotalInterestMinor - newTotalInterestMinor),
+    monthsShaved: Math.max(0, oldPending.length - newSchedule.length),
+    oldRemainingCount: oldPending.length,
+    newRemainingCount: newSchedule.length,
+    oldPayoffDate: oldPending.length ? oldPending[oldPending.length - 1].due_date : opts.date,
+    newPayoffDate: newSchedule.length ? newSchedule[newSchedule.length - 1].dueDate : opts.date,
+  };
 }
 
 /**

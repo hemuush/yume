@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { View, Text, Pressable, TextInput, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, Pressable, TextInput, Alert } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import Feather from '@expo/vector-icons/Feather';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -9,6 +9,7 @@ import { SegmentedControl } from '@/components/SegmentedControl';
 import { theme } from '@/constants/theme';
 import { useAccent } from '@/theme/AccentContext';
 import { useScreenLoad } from '@/lib/useScreenLoad';
+import { Skeleton } from '@/components/Skeleton';
 import { styles } from '@/features/profile/profile.styles';
 import { YouSection } from '@/features/profile/YouSection';
 import { SettingsSection } from '@/features/profile/SettingsSection';
@@ -59,8 +60,10 @@ export default function ProfileScreen() {
     return (
       <View style={styles.container}>
         <AppHeader title="Profile" showBack hideUser />
-        <View style={styles.center}>
-          <ActivityIndicator color={theme.colors.ink} />
+        <View style={[styles.identity, { paddingTop: 20 }]}>
+          <Skeleton width={76} height={76} circle radius={38} />
+          <Skeleton width={130} height={16} radius={5} style={{ marginTop: 14 }} />
+          <Skeleton width={100} height={11} radius={4} style={{ marginTop: 8 }} />
         </View>
       </View>
     );

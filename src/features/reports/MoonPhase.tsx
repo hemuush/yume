@@ -16,7 +16,7 @@ import { shade } from '@/lib/color';
  * half-circle too (the full disc). Between those, the enclosed area is k
  * exactly — this is the same construction real moon-phase icons use.
  */
-function lunePath(cx: number, cy: number, r: number, k: number): string {
+export function lunePath(cx: number, cy: number, r: number, k: number): string {
   const clamped = Math.max(0, Math.min(1, k));
   const a = r * Math.abs(1 - 2 * clamped);
   const sweepEllipse = clamped < 0.5 ? 0 : 1;

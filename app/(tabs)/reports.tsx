@@ -1,18 +1,29 @@
-import { useCallback, useMemo, useState } from 'react';
-import { View, Text, ScrollView, ActivityIndicator, Pressable, StyleSheet } from 'react-native';
+import { useCallback, useMemo, useRef, useState } from 'react';
+import {
+  View,
+  Text,
+  ScrollView,
+  ActivityIndicator,
+  Pressable,
+  StyleSheet,
+  LayoutChangeEvent,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
+} from 'react-native';
 import ReanimatedAnimated, { FadeIn } from 'react-native-reanimated';
 import { useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from '@expo/vector-icons/Feather';
-import Svg, { Path, Line, Circle } from 'react-native-svg';
 import {
   getRangeComparison,
   PeriodComparison,
   findTopGrowingCategory,
   getMonthlyExpenseTrend,
+  getNetWorthTrend,
   getSubcategoryBreakdown,
   getDailyExpenseTotals,
   TrendPoint,
+  NetWorthPoint,
   DailyExpensePoint,
   CategoryBreakdownItem,
 } from '@/db/reports';
@@ -47,6 +58,7 @@ import { SpendHeatmap, HeatCell } from '@/features/reports/SpendHeatmap';
 import { MoonPhase, moonPhaseShades } from '@/features/reports/MoonPhase';
 import { SkylineRibbon } from '@/features/reports/SkylineRibbon';
 import { AnimatedCategoryFill } from '@/features/reports/AnimatedCategoryFill';
+import { ReportsSkeleton } from '@/features/reports/ReportsSkeleton';
 import {
   heatLevel,
   baselineFromTrend,
@@ -65,6 +77,7 @@ export default function ReportsScreen() {
   const [cursor, setCursor] = useState<PeriodCursor>(CURRENT_PERIOD);
   const [comparison, setComparison] = useState<PeriodComparison | null>(null);
   const [trend, setTrend] = useState<TrendPoint[]>([]);
+  const [netWorthTrend, setNetWorthTrend] = useState<NetWorthPoint[]>([]);
   const [daily, setDaily] = useState<DailyExpensePoint[]>([]);
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
   const [errorText, setErrorText] = useState<string | null>(null);
@@ -79,6 +92,56 @@ export default function ReportsScreen() {
   // months never leaves a stale month's list expanded.
   const [catExpanded, setCatExpanded] = useState(false);
 
+  // A category with no subcategories used to be a dead tap — `openDrill`
+  // only ever made sense for one with children to show a split for. This is
+  // that same tap for the flat case: the actual transaction list, reusing
+  // the day-detail sheet's own row rendering just filtered by category
+  // instead of date.
+  const [catTxSheet, setCatTxSheet] = useState<{ categoryId: string; name: string; isSensitive: boolean } | null>(
+    null
+  );
+  const [catTx, setCatTx] = useState<Transaction[] | null>(null);
+
+  // The jump bar below (Overview / Categories / Trends) — `sectionY` is
+  // filled in by each section's own onLayout, not measured up front, since
+  // heights here depend on real data (how many categories, whether the
+  // moon card even renders this period).
+  const scrollRef = useRef<ScrollView>(null);
+  const sectionY = useRef<Record<string, number>>({});
+  const [activeSection, setActiveSection] = useState<'overview' | 'categories' | 'trends'>('overview');
+  const onSectionLayout = (key: string) => (e: LayoutChangeEvent) => {
+    sectionY.current[key] = e.nativeEvent.layout.y;
+  };
+  // A tap-to-jump animates the scroll over ~300ms, and onScroll keeps firing
+  // throughout that animation with every intermediate position it passes
+  // through on the way — left unguarded, the chip you just tapped would
+  // flicker through whichever section happens to scroll by mid-animation
+  // before landing on the right one. This suppresses onScroll's own
+  // recompute for as long as a jump is in flight, so the tapped chip stays
+  // lit the whole time instead of visibly flickering through the others.
+  const jumpingRef = useRef(false);
+  const jumpTo = (key: string) => {
+    jumpingRef.current = true;
+    setActiveSection(key as 'overview' | 'categories' | 'trends');
+    scrollRef.current?.scrollTo({ y: Math.max(0, (sectionY.current[key] ?? 0) - 8), animated: true });
+    setTimeout(() => {
+      jumpingRef.current = false;
+    }, 500);
+  };
+  // Whichever section's top has scrolled past (with a little lead-in so the
+  // switch feels like it happens as that section arrives, not once it's
+  // already filled the screen) is the active one — checked in layout order
+  // so a section further down never wins over one still above it.
+  const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    if (jumpingRef.current) return;
+    const y = e.nativeEvent.contentOffset.y;
+    let current: 'overview' | 'categories' | 'trends' = 'overview';
+    for (const key of ['overview', 'categories', 'trends'] as const) {
+      if (y >= (sectionY.current[key] ?? Infinity) - 60) current = key;
+    }
+    setActiveSection(current);
+  };
+
   const load = useCallback(async (c: PeriodCursor) => {
     setCatExpanded(false);
     const range = periodRange(c);
@@ -86,14 +149,16 @@ export default function ReportsScreen() {
     const trendMonths = c.granularity === 'year' ? 12 : 7;
     try {
       setStatus((s) => (s === 'ready' ? s : 'loading'));
-      const [cmp, tr, dy, cats] = await Promise.all([
+      const [cmp, tr, nw, dy, cats] = await Promise.all([
         getRangeComparison(range, previousPeriodRange(c), c.granularity),
         getMonthlyExpenseTrend(trendMonths, anchor),
+        getNetWorthTrend(trendMonths, anchor),
         getDailyExpenseTotals(range),
         listCategories(),
       ]);
       setComparison(cmp);
       setTrend(tr);
+      setNetWorthTrend(nw);
       setDaily(dy);
       setCategories(cats);
       setStatus('ready');
@@ -125,13 +190,46 @@ export default function ReportsScreen() {
     setDayTx(await listTransactions({ fromDate: iso, toDate: iso }));
   }, []);
 
+  const openCategoryTx = useCallback(
+    async (cat: { categoryId: string; name: string; isSensitive: boolean }) => {
+      setCatTxSheet(cat);
+      setCatTx(null);
+      const r = periodRange(cursor);
+      setCatTx(await listTransactions({ categoryId: cat.categoryId, fromDate: r.start, toDate: r.end }));
+    },
+    [cursor]
+  );
+
   const dailyByDate = useMemo(() => new Map(daily.map((d) => [d.date, d.totalMinor])), [daily]);
   const catById = useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories]);
 
+  // Pinned (outside the ScrollView, not scrolled away) rather than the
+  // jump bar living inline in the scrolling content — it stays reachable
+  // and keeps showing which section you're in no matter how far down
+  // you've scrolled, not just at the top of the page.
   const header = (
     <>
       <AppHeader title="Reports" />
       <PeriodRow cursor={cursor} onChange={setCursor} />
+      {comparison && comparison.current.expenseMinor > 0 && (
+        <View style={styles.jumpBar}>
+          {(
+            [
+              ['overview', 'Overview'],
+              ['categories', 'Categories'],
+              ['trends', 'Trends'],
+            ] as const
+          ).map(([key, label]) => (
+            <Pressable
+              key={key}
+              onPress={() => jumpTo(key)}
+              style={[styles.jumpChip, activeSection === key && styles.jumpChipOn]}
+            >
+              <Text style={[styles.jumpChipText, activeSection === key && styles.jumpChipTextOn]}>{label}</Text>
+            </Pressable>
+          ))}
+        </View>
+      )}
     </>
   );
 
@@ -150,9 +248,7 @@ export default function ReportsScreen() {
     return (
       <View style={styles.container}>
         {header}
-        <View style={styles.center}>
-          <ActivityIndicator color={theme.colors.ink} />
-        </View>
+        <ReportsSkeleton />
       </View>
     );
   }
@@ -239,6 +335,9 @@ export default function ReportsScreen() {
     <View style={styles.container}>
       {header}
       <ScrollView
+        ref={scrollRef}
+        onScroll={onScroll}
+        scrollEventThrottle={32}
         contentContainerStyle={{
           paddingHorizontal: 20,
           paddingBottom: theme.layout.tabScreenScrollPad + insets.bottom,
@@ -250,6 +349,8 @@ export default function ReportsScreen() {
           </Text>
         ) : (
           <>
+            {/* ============ overview ============ */}
+            <View onLayout={onSectionLayout('overview')}>
             {/* headline */}
             <View style={styles.headlineRow}>
               <View style={{ flex: 1 }}>
@@ -262,18 +363,24 @@ export default function ReportsScreen() {
                 />
               </View>
               {vsUsualPct != null && (
-                <View style={styles.vs}>
+                <View
+                  style={[
+                    styles.vsBadge,
+                    { backgroundColor: vsUsualPct > 0 ? theme.colors.expenseTint : theme.colors.incomeTint },
+                  ]}
+                >
+                  <Feather
+                    name={vsUsualPct > 0 ? 'arrow-up-right' : 'arrow-down-right'}
+                    size={12}
+                    color={vsUsualPct > 0 ? theme.colors.expense : theme.colors.income}
+                  />
                   <Text
                     style={[
-                      styles.vsPct,
+                      styles.vsBadgeText,
                       { color: vsUsualPct > 0 ? theme.colors.expense : theme.colors.income },
                     ]}
                   >
-                    {vsUsualPct > 0 ? '+' : '−'}
-                    {formatPctChange(vsUsualPct)}
-                  </Text>
-                  <Text style={styles.vsLabel}>
-                    vs your usual{'\n'}({formatMoney(Math.round(baseline!))})
+                    {formatPctChange(vsUsualPct)} {vsUsualPct > 0 ? 'above' : 'below'} usual
                   </Text>
                 </View>
               )}
@@ -318,9 +425,12 @@ export default function ReportsScreen() {
                 ))}
               </View>
             )}
+            </View>
 
             <View style={styles.rule} />
 
+            {/* ============ categories ============ */}
+            <View onLayout={onSectionLayout('categories')}>
             {/* recurring vs discretionary — a moon phase, not a bar: the lit
                 fraction of the disc is drawn to the exact recurring/total
                 ratio (see MoonPhase's lune construction). Both the moon and
@@ -383,8 +493,11 @@ export default function ReportsScreen() {
                 return (
                   <Pressable
                     key={c.categoryId}
-                    disabled={!c.hasSubcategories}
-                    onPress={() => openDrill(c)}
+                    onPress={() =>
+                      c.hasSubcategories
+                        ? openDrill(c)
+                        : openCategoryTx({ categoryId: c.categoryId, name: c.name, isSensitive: c.isSensitive })
+                    }
                     style={styles.catRow}
                   >
                     <View style={styles.catTop}>
@@ -429,7 +542,10 @@ export default function ReportsScreen() {
                 </Pressable>
               )}
             </View>
+            </View>
 
+            {/* ============ trends ============ */}
+            <View onLayout={onSectionLayout('trends')}>
             {trend.length >= 3 && (
               <>
                 <View style={styles.rule} />
@@ -465,6 +581,38 @@ export default function ReportsScreen() {
                 </View>
               </>
             )}
+
+            {netWorthTrend.length >= 3 && (
+              <>
+                <View style={styles.rule} />
+                <Text style={styles.blockTitle}>Net worth</Text>
+                <Sparkline
+                  values={netWorthTrend.map((t) => t.netWorthMinor)}
+                  labels={netWorthTrend.map((t) => t.label)}
+                  baseline={null}
+                  emphasisColor={
+                    netWorthTrend[netWorthTrend.length - 1].netWorthMinor >= 0
+                      ? theme.colors.income
+                      : theme.colors.expense
+                  }
+                />
+                {(() => {
+                  const first = netWorthTrend[0].netWorthMinor;
+                  const last = netWorthTrend[netWorthTrend.length - 1].netWorthMinor;
+                  const delta = last - first;
+                  return (
+                    <Text style={styles.rdNote}>
+                      {delta >= 0 ? '↑ ' : '↓ '}
+                      <Text style={{ color: delta >= 0 ? theme.colors.income : theme.colors.expense }}>
+                        {formatMoney(Math.abs(roundedMinor(delta)))}
+                      </Text>{' '}
+                      over the last {netWorthTrend.length} months
+                    </Text>
+                  );
+                })()}
+              </>
+            )}
+            </View>
           </>
         )}
       </ScrollView>
@@ -571,6 +719,44 @@ export default function ReportsScreen() {
           })
         )}
       </ModalSheet>
+
+      <ModalSheet
+        visible={!!catTxSheet}
+        onClose={() => setCatTxSheet(null)}
+        variant="center"
+        showClose
+        scrollable={false}
+        title={catTxSheet?.name}
+        subtitle={catTx && catTx.length > 0 ? `${catTx.length} transaction${catTx.length === 1 ? '' : 's'}` : undefined}
+        footer={catTx && catTx.length > 0 ? <DayTotal txs={catTx} /> : undefined}
+      >
+        {catTx === null ? (
+          <ActivityIndicator color={theme.colors.ink} style={styles.daySpinner} />
+        ) : catTx.length === 0 ? (
+          <View style={styles.dayEmpty}>
+            <SuuIllustration size={72} pose="sleepy" />
+            <Text style={styles.empty}>Nothing logged in this category this period.</Text>
+          </View>
+        ) : (
+          catTx.map((tx, i) => (
+            <View key={tx.id} style={[styles.dayRow, i === 0 && styles.dayRowFirst]}>
+              <View style={styles.dayMid}>
+                <Text style={styles.dayName} numberOfLines={1}>
+                  {parseLocalIsoDate(tx.date).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}
+                </Text>
+                {tx.note ? (
+                  <Text style={styles.daySub} numberOfLines={1}>
+                    {tx.note}
+                  </Text>
+                ) : null}
+              </View>
+              <Text style={[styles.dayAmt, { color: theme.colors.idCoralDeep }]}>
+                −<Amount minor={tx.amountMinor} sensitive={catTxSheet?.isSensitive} />
+              </Text>
+            </View>
+          ))
+        )}
+      </ModalSheet>
     </View>
   );
 }
@@ -644,65 +830,75 @@ function PeriodRow({ cursor, onChange }: { cursor: PeriodCursor; onChange: (c: P
   );
 }
 
+/** ₹21,079 → "21k", ₹4,82,600 → "4.8L" — full rupee formatting doesn't fit above a ~35px-wide bar. */
+function compactRupees(minor: number): string {
+  const rupees = Math.abs(minor) / 100;
+  const sign = minor < 0 ? '-' : '';
+  if (rupees >= 100000) return `${sign}₹${(rupees / 100000).toFixed(rupees % 100000 === 0 ? 0 : 1)}L`;
+  if (rupees >= 1000) return `${sign}₹${Math.round(rupees / 1000)}k`;
+  return `${sign}₹${Math.round(rupees)}`;
+}
+
+const BAR_MAX_HEIGHT = 56;
+
 /**
- * The month-over-month trend, drawn as a constellation rather than the
- * filled-gradient area chart every other finance app uses for this — a
- * faint line connecting a small star at each month, with the current month
- * as a brighter, ringed point. Same trend data and dashed-average baseline
- * as before, only how it's drawn changed.
+ * The month-over-month trend, drawn as a plain labeled bar per month — the
+ * signed-off replacement for the previous "constellation" dot-and-line
+ * chart, which read as a shape but never told you what a given month
+ * actually was without close inspection. Every bar carries its own value;
+ * the current month's bar and label pick up `emphasisColor`. Same
+ * `values`/`labels`/`baseline`/`emphasisColor` signature as before, so both
+ * call sites (spend trend, net worth) are untouched.
  */
 function Sparkline({
   values,
   labels,
   baseline,
+  emphasisColor = theme.colors.idCoralDeep,
 }: {
   values: number[];
   labels: string[];
   baseline: number | null;
+  /** Color of the current (last) bar + its value label — defaults to the
+   *  same coral every existing caller (the spend trend, always non-negative)
+   *  already uses. Net worth passes its own sign-aware color instead, since
+   *  unlike a spend trend, net worth's sign is actually meaningful. */
+  emphasisColor?: string;
 }) {
-  const W = 300;
-  const H = 60;
   const max = Math.max(1, ...values);
   const min = Math.min(...values, 0);
   const span = Math.max(1, max - min);
-  const x = (i: number) => (values.length <= 1 ? 0 : (i / (values.length - 1)) * W);
-  const y = (v: number) => H - 6 - ((v - min) / span) * (H - 12);
-  const d = values.map((v, i) => `${i === 0 ? 'M' : 'L'}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
-  const baseY = baseline != null ? y(baseline) : null;
+  const barHeight = (v: number) => Math.max(3, ((v - min) / span) * BAR_MAX_HEIGHT);
   const lastIndex = values.length - 1;
+  const baseBottom = baseline != null ? ((baseline - min) / span) * BAR_MAX_HEIGHT : null;
   // A 12-point year view would crowd every month's initial under the chart —
   // thin the axis to every other label past 8 points, always keeping the
   // current (last) one.
   const showLabel = (i: number) => values.length <= 8 || i === lastIndex || i % 2 === 0;
   return (
     <View>
-      <View style={styles.spark}>
-        <Svg width="100%" height="100%" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none">
-          {baseY != null && (
-            <Line
-              x1={0}
-              y1={baseY}
-              x2={W}
-              y2={baseY}
-              stroke={theme.colors.borderSoft}
-              strokeDasharray="4 3"
+      <View style={styles.barChart}>
+        {baseBottom != null && <View style={[styles.barBaseline, { bottom: baseBottom }]} />}
+        {values.map((v, i) => (
+          <View key={i} style={styles.barCol}>
+            <Text
+              style={[styles.barValue, i === lastIndex && { color: emphasisColor }]}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+            >
+              {compactRupees(v)}
+            </Text>
+            <View
+              style={[
+                styles.bar,
+                {
+                  height: barHeight(v),
+                  backgroundColor: i === lastIndex ? emphasisColor : theme.colors.borderSoft,
+                },
+              ]}
             />
-          )}
-          <Path d={d} fill="none" stroke={theme.colors.ink} strokeOpacity={0.3} strokeWidth={1.3} />
-          {values.slice(0, lastIndex).map((v, i) => (
-            <Circle key={i} cx={x(i)} cy={y(v)} r={3} fill={theme.colors.ink} fillOpacity={0.3} />
-          ))}
-          <Circle
-            cx={x(lastIndex)}
-            cy={y(values[lastIndex])}
-            r={8}
-            fill="none"
-            stroke={theme.colors.idCoralDeep}
-            strokeOpacity={0.35}
-            strokeWidth={1.3}
-          />
-          <Circle cx={x(lastIndex)} cy={y(values[lastIndex])} r={5} fill={theme.colors.idCoralDeep} />
-        </Svg>
+          </View>
+        ))}
       </View>
       <View style={styles.sparkAxis}>
         {labels.map((label, i) => (
@@ -754,6 +950,22 @@ const styles = StyleSheet.create({
   granText: { fontFamily: theme.font.bodyMedium, fontSize: 11, color: theme.colors.textMuted },
   granTextOn: { color: theme.colors.textPrimary },
 
+  // The Overview/Categories/Trends jump bar — pinned in `header`, outside
+  // the ScrollView, so it's reachable and shows the current section no
+  // matter how far down the page you've scrolled.
+  jumpBar: { flexDirection: 'row', gap: 8, paddingHorizontal: 20, marginBottom: 14 },
+  jumpChip: {
+    paddingHorizontal: 13,
+    paddingVertical: 7,
+    borderRadius: theme.radius.pill,
+    backgroundColor: theme.colors.surface,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.borderSoft,
+  },
+  jumpChipOn: { backgroundColor: theme.colors.ink, borderColor: theme.colors.ink },
+  jumpChipText: { fontFamily: theme.font.bodyBold, fontSize: 11.5, color: theme.colors.textSecondary },
+  jumpChipTextOn: { color: theme.colors.surface },
+
   headlineRow: { flexDirection: 'row', alignItems: 'flex-end', marginTop: 4 },
   eyebrow: {
     fontFamily: theme.font.mono,
@@ -763,9 +975,18 @@ const styles = StyleSheet.create({
     color: theme.colors.textMuted,
   },
   big: { fontFamily: theme.font.monoBold, fontSize: 30, color: theme.colors.textPrimary, marginTop: 2 },
-  vs: { alignItems: 'flex-end' },
-  vsPct: { fontFamily: theme.font.monoBold, fontSize: 15 },
-  vsLabel: { fontFamily: theme.font.body, fontSize: 8.5, color: theme.colors.textMuted, textAlign: 'right' },
+  // Same red/green + arrow badge language This Month's KPI tiles and the
+  // stat cards already use, instead of a small two-line corner label.
+  vsBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    borderRadius: theme.radius.pill,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    marginBottom: 3,
+  },
+  vsBadgeText: { fontFamily: theme.font.bodyBold, fontSize: 11.5 },
   headlineSub: {
     fontFamily: theme.font.body,
     fontSize: 10.5,
@@ -871,8 +1092,29 @@ const styles = StyleSheet.create({
   catMore: { paddingVertical: 12, alignItems: 'center' },
   catMoreText: { fontFamily: theme.font.bodyMedium, fontSize: 11.5, color: theme.colors.textMuted },
 
-  spark: { height: 62, marginTop: 4 },
-  sparkAxis: { flexDirection: 'row', marginTop: 2 },
+  barChart: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: 6,
+    height: BAR_MAX_HEIGHT + 18,
+    marginTop: 4,
+  },
+  barBaseline: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: theme.colors.borderSoft,
+  },
+  barCol: { flex: 1, alignItems: 'center', justifyContent: 'flex-end' },
+  barValue: {
+    fontFamily: theme.font.mono,
+    fontSize: 8,
+    color: theme.colors.textMuted,
+    marginBottom: 3,
+  },
+  bar: { width: '68%', borderRadius: 3, minHeight: 3 },
+  sparkAxis: { flexDirection: 'row', marginTop: 4 },
   sparkAxisLabel: {
     flex: 1,
     fontFamily: theme.font.mono,

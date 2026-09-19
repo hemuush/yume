@@ -119,6 +119,10 @@ async function insertPersonMoneyMovement(
   if (!Number.isFinite(input.amountMinor) || input.amountMinor <= 0) {
     throw new Error('Amount must be a positive number');
   }
+  const acc = await tx.getFirstAsync<{ type: string }>('SELECT type FROM accounts WHERE id = ?', [input.accountId]);
+  if (acc?.type === 'savings') {
+    throw new Error('Savings accounts can’t be used for income or expenses — transfer to a spendable account first.');
+  }
   const txId = newId();
   await tx.runAsync(
     `INSERT INTO transactions (id, type, account_id, category_id, amount_minor, date, note, tags)

@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { View, Text, ScrollView, ActivityIndicator, Pressable, Alert } from 'react-native';
+import { View, Text, ScrollView, Pressable, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { listCategories } from '@/db/ledger';
 import {
@@ -20,7 +20,10 @@ import { AddButton } from '@/components/AddButton';
 import { EmptyState } from '@/components/EmptyState';
 import { ActionSheet, ActionSheetItem } from '@/components/ActionSheet';
 import { CategoryIcon } from '@/components/CategoryIcon';
+import { LimitMeter } from '@/components/LimitMeter';
 import { useUndoToast } from '@/components/UndoToast';
+import { Skeleton } from '@/components/Skeleton';
+import { CardRowsSkeleton } from '@/components/ListSkeleton';
 import { useScreenLoad } from '@/lib/useScreenLoad';
 import { haptics } from '@/lib/haptics';
 import { BudgetRow } from '@/features/budgets/BudgetRow';
@@ -119,8 +122,13 @@ export default function BudgetsScreen() {
     return (
       <View style={styles.container}>
         <AppHeader title="Budgets" showBack />
-        <View style={styles.center}>
-          <ActivityIndicator color={theme.colors.ink} />
+        <View style={{ paddingTop: 14 }}>
+          <Skeleton width={110} height={12} radius={4} style={{ marginHorizontal: 20 }} />
+          <Skeleton width={220} height={26} radius={6} style={{ marginHorizontal: 20, marginTop: 8 }} />
+          <Skeleton width={260} height={9} radius={4} style={{ marginHorizontal: 20, marginTop: 14 }} />
+          <View style={{ marginTop: 20 }}>
+            <CardRowsSkeleton rows={4} meter />
+          </View>
         </View>
       </View>
     );
@@ -152,15 +160,10 @@ export default function BudgetsScreen() {
                 {budgets.length === 1 ? 'y' : 'ies'}
               </Text>
             </View>
-            <View style={styles.summaryTrack}>
-              <View
-                style={[
-                  styles.summaryFill,
-                  {
-                    width: `${totalLimit > 0 ? Math.min(100, (totalSpent / totalLimit) * 100) : 0}%`,
-                    backgroundColor: overallOver ? theme.colors.expense : theme.colors.secondary,
-                  },
-                ]}
+            <View style={styles.summaryTrackWrap}>
+              <LimitMeter
+                pct={totalLimit > 0 ? (totalSpent / totalLimit) * 100 : 0}
+                tone={overallOver ? 'over' : 'ok'}
               />
             </View>
           </View>

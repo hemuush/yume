@@ -23,6 +23,7 @@ export function UpcomingRow({
   sign = '',
   onPress,
   divider,
+  urgent,
 }: {
   icon: React.ComponentProps<typeof Feather>['name'];
   iconBg: string;
@@ -33,6 +34,8 @@ export function UpcomingRow({
   sign?: '+' | '-' | '';
   onPress: () => void;
   divider?: boolean;
+  /** Due today or already overdue — swaps the icon badge and subtitle to the coral "worth a look" tone instead of the neutral default. */
+  urgent?: boolean;
 }) {
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.98);
   return (
@@ -44,14 +47,14 @@ export function UpcomingRow({
       accessibilityLabel={`${title}, ${subtitle}`}
       style={[styles.row, divider && styles.divider, animatedStyle]}
     >
-      <View style={[styles.iconWrap, { backgroundColor: iconBg }]}>
-        <Feather name={icon} size={14} color={iconColor} />
+      <View style={[styles.iconWrap, { backgroundColor: urgent ? theme.colors.expenseTint : iconBg }]}>
+        <Feather name={icon} size={14} color={urgent ? theme.colors.expense : iconColor} />
       </View>
       <View style={styles.mid}>
         <Text style={styles.title} numberOfLines={1}>
           {title}
         </Text>
-        <Text style={styles.sub} numberOfLines={1}>
+        <Text style={[styles.sub, urgent && styles.subUrgent]} numberOfLines={1}>
           {subtitle}
         </Text>
       </View>
@@ -104,6 +107,7 @@ const styles = StyleSheet.create({
   mid: { flex: 1, minWidth: 0 },
   title: { fontFamily: theme.font.bodyBold, fontSize: 13.5, color: theme.colors.textPrimary },
   sub: { fontFamily: theme.font.body, fontSize: 11.5, color: theme.colors.textMuted, marginTop: 1 },
+  subUrgent: { color: theme.colors.expense, fontFamily: theme.font.bodyBold },
   amount: { fontFamily: theme.font.monoBold, fontSize: 13, color: theme.colors.textPrimary },
   income: { color: theme.colors.income },
   expense: { color: theme.colors.expense },

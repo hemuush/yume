@@ -21,6 +21,20 @@ export interface SpendBar {
 
 const WEEKDAY_INITIAL = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
+// A stable bucket for any expense with no (or an unresolvable) category —
+// loan EMI payments and other transactions written directly via a raw SQL
+// insert (see payInstallment) are exactly as real an expense as a normal
+// categorized one, and used to be silently invisible here: this function
+// required a valid categoryId just to count a transaction toward the total
+// at all, not only for the segment breakdown, so an uncategorized expense
+// quietly vanished from both the bar's height and the month's own "spent"
+// figure on this screen — while Home/Reports (which sum straight from the
+// database with no such requirement) kept showing the real total. Now a
+// transaction always counts toward `totalMinor` the moment it's a real
+// expense in range; only which *segment* it lands in depends on whether a
+// category resolves.
+const UNCATEGORIZED_ID = '__uncategorized__';
+
 function summariseExpenses(
   transactions: Transaction[],
   catById: Map<string, Category>,
@@ -28,22 +42,28 @@ function summariseExpenses(
   toDate: string
 ): { totalMinor: number; segments: SpendBarSegment[] } {
   const byCategory = new Map<string, number>();
+  let totalMinor = 0;
   for (const tx of transactions) {
-    if (tx.type !== 'expense' || !tx.categoryId) continue;
+    if (tx.type !== 'expense') continue;
     if (tx.date < fromDate || tx.date > toDate) continue;
-    const cat = catById.get(tx.categoryId);
-    const topId = cat?.parentId ?? tx.categoryId;
+    totalMinor += tx.amountMinor;
+    const cat = tx.categoryId ? catById.get(tx.categoryId) : undefined;
+    const topId = cat ? (cat.parentId ?? tx.categoryId!) : UNCATEGORIZED_ID;
     byCategory.set(topId, (byCategory.get(topId) ?? 0) + tx.amountMinor);
   }
   const segments = [...byCategory.entries()]
     .map(([categoryId, amountMinor]) => {
       const cat = catById.get(categoryId);
-      return { categoryId, amountMinor, name: cat?.name ?? 'Other', color: cat?.color ?? '#948E7C' };
+      return {
+        categoryId,
+        amountMinor,
+        name: cat?.name ?? 'Uncategorized',
+        color: cat?.color ?? '#948E7C',
+      };
     })
     // Largest segment first — it anchors the bottom of the stack, matching
     // SpendBarChart's own bottom-up (column-reverse) rendering.
     .sort((a, b) => b.amountMinor - a.amountMinor);
-  const totalMinor = segments.reduce((sum, s) => sum + s.amountMinor, 0);
   return { totalMinor, segments };
 }
 

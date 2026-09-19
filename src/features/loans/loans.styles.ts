@@ -175,8 +175,17 @@ export const styles = StyleSheet.create({
     marginBottom: 8,
   },
   progressRow: { flexDirection: 'row', gap: 5, marginBottom: 16 },
-  progressSeg: { flex: 1, height: 4, borderRadius: 999, backgroundColor: theme.colors.surfaceAlt },
+  progressSeg: {
+    flex: 1,
+    height: 4,
+    borderRadius: 999,
+    backgroundColor: theme.colors.surfaceAlt,
+    overflow: 'hidden',
+  },
   progressSegDone: { backgroundColor: theme.colors.primary },
+  // Cross-faded in over the base segment above rather than swapped for it —
+  // see AddLoanModal's own step2Fill comment.
+  progressSegOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: 999 },
   endDateRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
