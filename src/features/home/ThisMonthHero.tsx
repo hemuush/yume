@@ -237,14 +237,22 @@ export function ThisMonthHero({
         <View style={styles.figsRow}>
           <View style={styles.fig}>
             <Text style={styles.figLabel}>Income</Text>
-            <Text style={[styles.figVal, { color: theme.colors.income }]} numberOfLines={1} adjustsFontSizeToFit>
+            <Text
+              style={[styles.figVal, { color: theme.colors.income }]}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+            >
               {formatMoney(displayed.incomeMinor)}
             </Text>
           </View>
           <Text style={styles.figSep}>·</Text>
           <View style={styles.fig}>
             <Text style={styles.figLabel}>Spent</Text>
-            <Text style={[styles.figVal, { color: theme.colors.idCoralDeep }]} numberOfLines={1} adjustsFontSizeToFit>
+            <Text
+              style={[styles.figVal, { color: theme.colors.idCoralDeep }]}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+            >
               {formatMoney(displayed.spentMinor)}
             </Text>
           </View>

@@ -202,7 +202,10 @@ export async function createLoan(input: CreateLoanInput): Promise<Loan> {
     throw new Error('Asset value must be a valid, non-negative number');
   }
   if (input.disbursement) {
-    await assertSpendableAccount(input.direction === 'borrowed' ? 'income' : 'expense', input.disbursement.accountId);
+    await assertSpendableAccount(
+      input.direction === 'borrowed' ? 'income' : 'expense',
+      input.disbursement.accountId
+    );
     // The processing fee (if any) posts as its own 'expense' row on this same
     // account regardless of direction — check that separately since a
     // borrowed loan's disbursement itself is 'income' and wouldn't catch it.

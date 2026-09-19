@@ -391,7 +391,11 @@ export default function TransactionsScreen() {
                 onPressIn={filterPress.onPressIn}
                 onPressOut={filterPress.onPressOut}
                 hitSlop={8}
-                style={[styles.filterBtn, hasActiveFilter && styles.filterBtnActive, filterPress.animatedStyle]}
+                style={[
+                  styles.filterBtn,
+                  hasActiveFilter && styles.filterBtnActive,
+                  filterPress.animatedStyle,
+                ]}
                 accessibilityRole="button"
                 accessibilityLabel="Filter transactions"
               >

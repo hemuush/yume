@@ -52,7 +52,12 @@ export function ReportsSkeleton() {
 
 const styles = StyleSheet.create({
   wrap: { paddingHorizontal: 20 },
-  headlineRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: 4 },
+  headlineRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+    marginTop: 4,
+  },
   centered: { alignSelf: 'center' },
   rule: { height: StyleSheet.hairlineWidth, backgroundColor: theme.colors.borderSoft, marginVertical: 22 },
   catCard: {

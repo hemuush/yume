@@ -3,7 +3,15 @@ import { theme } from '@/constants/theme';
 import { Skeleton } from './Skeleton';
 
 /** One skeleton row inside a list-shaped card — `subtitle` adds a second, shorter line under the title (an Upcoming/Recent-activity row); `meter` adds the thin progress-bar-shaped line a Budget row has underneath. */
-function RowSkeleton({ subtitle, meter, divider }: { subtitle?: boolean; meter?: boolean; divider?: boolean }) {
+function RowSkeleton({
+  subtitle,
+  meter,
+  divider,
+}: {
+  subtitle?: boolean;
+  meter?: boolean;
+  divider?: boolean;
+}) {
   return (
     <View style={[styles.row, divider && styles.rowDivider]}>
       <Skeleton width={subtitle ? 26 : 24} height={subtitle ? 26 : 24} circle radius={subtitle ? 13 : 8} />

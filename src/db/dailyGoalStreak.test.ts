@@ -20,7 +20,12 @@ describe('getDailyGoalStreakSeries', () => {
 
   beforeAll(async () => {
     await mockTestDb.execAsync(CREATE_TABLES_SQL);
-    const account = await createAccount({ name: 'Bank', type: 'bank', currency: 'INR', openingBalanceMinor: 0 });
+    const account = await createAccount({
+      name: 'Bank',
+      type: 'bank',
+      currency: 'INR',
+      openingBalanceMinor: 0,
+    });
     accountId = account.id;
     const food = await createCategory({ name: 'Food', kind: 'expense' });
     categoryId = food.id;

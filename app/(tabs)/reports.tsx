@@ -97,9 +97,11 @@ export default function ReportsScreen() {
   // that same tap for the flat case: the actual transaction list, reusing
   // the day-detail sheet's own row rendering just filtered by category
   // instead of date.
-  const [catTxSheet, setCatTxSheet] = useState<{ categoryId: string; name: string; isSensitive: boolean } | null>(
-    null
-  );
+  const [catTxSheet, setCatTxSheet] = useState<{
+    categoryId: string;
+    name: string;
+    isSensitive: boolean;
+  } | null>(null);
   const [catTx, setCatTx] = useState<Transaction[] | null>(null);
 
   // The jump bar below (Overview / Categories / Trends) — `sectionY` is
@@ -225,7 +227,9 @@ export default function ReportsScreen() {
               onPress={() => jumpTo(key)}
               style={[styles.jumpChip, activeSection === key && styles.jumpChipOn]}
             >
-              <Text style={[styles.jumpChipText, activeSection === key && styles.jumpChipTextOn]}>{label}</Text>
+              <Text style={[styles.jumpChipText, activeSection === key && styles.jumpChipTextOn]}>
+                {label}
+              </Text>
             </Pressable>
           ))}
         </View>
@@ -351,267 +355,273 @@ export default function ReportsScreen() {
           <>
             {/* ============ overview ============ */}
             <View onLayout={onSectionLayout('overview')}>
-            {/* headline */}
-            <View style={styles.headlineRow}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.eyebrow}>Spent in {periodLabel(cursor)}</Text>
-                <CountUpAmount
-                  minor={dispExpense}
-                  style={styles.big}
-                  numberOfLines={1}
-                  adjustsFontSizeToFit
-                />
-              </View>
-              {vsUsualPct != null && (
-                <View
-                  style={[
-                    styles.vsBadge,
-                    { backgroundColor: vsUsualPct > 0 ? theme.colors.expenseTint : theme.colors.incomeTint },
-                  ]}
-                >
-                  <Feather
-                    name={vsUsualPct > 0 ? 'arrow-up-right' : 'arrow-down-right'}
-                    size={12}
-                    color={vsUsualPct > 0 ? theme.colors.expense : theme.colors.income}
+              {/* headline */}
+              <View style={styles.headlineRow}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.eyebrow}>Spent in {periodLabel(cursor)}</Text>
+                  <CountUpAmount
+                    minor={dispExpense}
+                    style={styles.big}
+                    numberOfLines={1}
+                    adjustsFontSizeToFit
                   />
-                  <Text
+                </View>
+                {vsUsualPct != null && (
+                  <View
                     style={[
-                      styles.vsBadgeText,
-                      { color: vsUsualPct > 0 ? theme.colors.expense : theme.colors.income },
+                      styles.vsBadge,
+                      {
+                        backgroundColor: vsUsualPct > 0 ? theme.colors.expenseTint : theme.colors.incomeTint,
+                      },
                     ]}
                   >
-                    {formatPctChange(vsUsualPct)} {vsUsualPct > 0 ? 'above' : 'below'} usual
-                  </Text>
+                    <Feather
+                      name={vsUsualPct > 0 ? 'arrow-up-right' : 'arrow-down-right'}
+                      size={12}
+                      color={vsUsualPct > 0 ? theme.colors.expense : theme.colors.income}
+                    />
+                    <Text
+                      style={[
+                        styles.vsBadgeText,
+                        { color: vsUsualPct > 0 ? theme.colors.expense : theme.colors.income },
+                      ]}
+                    >
+                      {formatPctChange(vsUsualPct)} {vsUsualPct > 0 ? 'above' : 'below'} usual
+                    </Text>
+                  </View>
+                )}
+              </View>
+              <Text style={styles.headlineSub}>
+                {formatMoney(perDay)} / day · {spendDays} spending {spendDays === 1 ? 'day' : 'days'}
+                {daysInPeriod - spendDays > 0 ? ` · ${daysInPeriod - spendDays} no-spend` : ''}
+              </Text>
+
+              {/* heatmap */}
+              <View style={styles.hmTitleRow}>
+                <Text style={styles.blockTitle}>{periodLabel(cursor)}</Text>
+                <View style={styles.legend}>
+                  <Text style={styles.legendText}>less</Text>
+                  {[0, 1, 2, 3, 4].map((l) => (
+                    <View
+                      key={l}
+                      style={[
+                        styles.legendSwatch,
+                        l === 0
+                          ? { borderWidth: StyleSheet.hairlineWidth, borderColor: theme.colors.borderSoft }
+                          : { backgroundColor: heatScale[l] },
+                      ]}
+                    />
+                  ))}
+                  <Text style={styles.legendText}>more</Text>
+                </View>
+              </View>
+              <SpendHeatmap
+                cells={heatCells}
+                leadingPad={leadingPad}
+                columns={heatCols}
+                weekdayLabels={heatWeekdays}
+              />
+              {reads.length > 0 && (
+                <View style={styles.reads}>
+                  {reads.map((r, i) => (
+                    <View key={i} style={styles.readRow}>
+                      <Text style={styles.readBullet}>▸</Text>
+                      <Text style={styles.readText}>{r}</Text>
+                    </View>
+                  ))}
                 </View>
               )}
-            </View>
-            <Text style={styles.headlineSub}>
-              {formatMoney(perDay)} / day · {spendDays} spending {spendDays === 1 ? 'day' : 'days'}
-              {daysInPeriod - spendDays > 0 ? ` · ${daysInPeriod - spendDays} no-spend` : ''}
-            </Text>
-
-            {/* heatmap */}
-            <View style={styles.hmTitleRow}>
-              <Text style={styles.blockTitle}>{periodLabel(cursor)}</Text>
-              <View style={styles.legend}>
-                <Text style={styles.legendText}>less</Text>
-                {[0, 1, 2, 3, 4].map((l) => (
-                  <View
-                    key={l}
-                    style={[
-                      styles.legendSwatch,
-                      l === 0
-                        ? { borderWidth: StyleSheet.hairlineWidth, borderColor: theme.colors.borderSoft }
-                        : { backgroundColor: heatScale[l] },
-                    ]}
-                  />
-                ))}
-                <Text style={styles.legendText}>more</Text>
-              </View>
-            </View>
-            <SpendHeatmap
-              cells={heatCells}
-              leadingPad={leadingPad}
-              columns={heatCols}
-              weekdayLabels={heatWeekdays}
-            />
-            {reads.length > 0 && (
-              <View style={styles.reads}>
-                {reads.map((r, i) => (
-                  <View key={i} style={styles.readRow}>
-                    <Text style={styles.readBullet}>▸</Text>
-                    <Text style={styles.readText}>{r}</Text>
-                  </View>
-                ))}
-              </View>
-            )}
             </View>
 
             <View style={styles.rule} />
 
             {/* ============ categories ============ */}
             <View onLayout={onSectionLayout('categories')}>
-            {/* recurring vs discretionary — a moon phase, not a bar: the lit
+              {/* recurring vs discretionary — a moon phase, not a bar: the lit
                 fraction of the disc is drawn to the exact recurring/total
                 ratio (see MoonPhase's lune construction). Both the moon and
                 its legend are shades of the user's own accent colour, not
                 fixed hues, so it's always in the same colour family as the
                 rest of the app instead of clashing with whatever accent is
                 picked. */}
-            {rTotal > 0 && (
-              <>
-                <View style={styles.moonCard}>
-                  <Text style={styles.moonEyebrow}>
-                    This month&rsquo;s {formatMoney(roundedMinor(rTotal))}
-                  </Text>
-                  <MoonPhase litFraction={recurringMinor / rTotal} size={132} accent={accent} />
-                  <View style={styles.moonFigs}>
-                    <View style={styles.moonFig}>
-                      <View style={styles.moonFigLabelRow}>
-                        <View style={[styles.rdDot, { backgroundColor: moonShades.lit }]} />
-                        <Text style={styles.moonFigLabel}>Recurring</Text>
+              {rTotal > 0 && (
+                <>
+                  <View style={styles.moonCard}>
+                    <Text style={styles.moonEyebrow}>
+                      This month&rsquo;s {formatMoney(roundedMinor(rTotal))}
+                    </Text>
+                    <MoonPhase litFraction={recurringMinor / rTotal} size={132} accent={accent} />
+                    <View style={styles.moonFigs}>
+                      <View style={styles.moonFig}>
+                        <View style={styles.moonFigLabelRow}>
+                          <View style={[styles.rdDot, { backgroundColor: moonShades.lit }]} />
+                          <Text style={styles.moonFigLabel}>Recurring</Text>
+                        </View>
+                        <Text style={[styles.moonFigValue, { color: moonShades.lit }]}>
+                          {formatMoney(roundedMinor(recurringMinor))}
+                        </Text>
                       </View>
-                      <Text style={[styles.moonFigValue, { color: moonShades.lit }]}>
-                        {formatMoney(roundedMinor(recurringMinor))}
-                      </Text>
-                    </View>
-                    <View style={styles.moonFig}>
-                      <View style={styles.moonFigLabelRow}>
-                        {/* moonShades.dark (the raw moon-disc tint) reads too
+                      <View style={styles.moonFig}>
+                        <View style={styles.moonFigLabelRow}>
+                          {/* moonShades.dark (the raw moon-disc tint) reads too
                             close to the card's own cream background at this
                             tiny size — moonTextShades.dark is the same darker
                             shade the figure text right below already uses for
                             legibility, reused here for the dot too. */}
-                        <View style={[styles.rdDot, { backgroundColor: moonTextShades.dark }]} />
-                        <Text style={styles.moonFigLabel}>Discretionary</Text>
+                          <View style={[styles.rdDot, { backgroundColor: moonTextShades.dark }]} />
+                          <Text style={styles.moonFigLabel}>Discretionary</Text>
+                        </View>
+                        <Text style={[styles.moonFigValue, { color: moonTextShades.dark }]}>
+                          {formatMoney(roundedMinor(discretionaryMinor))}
+                        </Text>
                       </View>
-                      <Text style={[styles.moonFigValue, { color: moonTextShades.dark }]}>
-                        {formatMoney(roundedMinor(discretionaryMinor))}
-                      </Text>
                     </View>
+                    <Text style={styles.moonCaption}>
+                      {formatPctChange((recurringMinor / rTotal) * 100)} of what you spent this month was
+                      already spoken for — EMI, rent, subscriptions &amp; insurance.
+                    </Text>
                   </View>
-                  <Text style={styles.moonCaption}>
-                    {formatPctChange((recurringMinor / rTotal) * 100)} of what you spent this month was
-                    already spoken for — EMI, rent, subscriptions &amp; insurance.
-                  </Text>
-                </View>
-                <View style={styles.rule} />
-              </>
-            )}
-
-            {/* where it went */}
-            <Text style={styles.blockTitle}>Where it went</Text>
-            <SkylineRibbon categories={current.categoryBreakdown} totalMinor={dispExpense} />
-            <View style={styles.catCard}>
-              {(catExpanded
-                ? current.categoryBreakdown
-                : current.categoryBreakdown.slice(0, CAT_COLLAPSE_COUNT)
-              ).map((c) => {
-                const i = current.categoryBreakdown.indexOf(c);
-                const d = deltas.get(c.categoryId);
-                const pct = dispExpense > 0 ? Math.round((c.totalMinor / dispExpense) * 100) : 0;
-                return (
-                  <Pressable
-                    key={c.categoryId}
-                    onPress={() =>
-                      c.hasSubcategories
-                        ? openDrill(c)
-                        : openCategoryTx({ categoryId: c.categoryId, name: c.name, isSensitive: c.isSensitive })
-                    }
-                    style={styles.catRow}
-                  >
-                    <View style={styles.catTop}>
-                      <View style={[styles.catDot, { backgroundColor: c.color }]} />
-                      <Text style={styles.catName} numberOfLines={1}>
-                        {c.name}
-                        {c.hasSubcategories ? ' ›' : ''}
-                      </Text>
-                      <Text style={styles.catPct}>{pct}%</Text>
-                      <View style={styles.catRight}>
-                        <Amount minor={catDisp[i]} sensitive={c.isSensitive} style={styles.catAmt} />
-                        {d != null && Math.abs(d) >= 10 && (
-                          <Text
-                            style={[
-                              styles.catDelta,
-                              { color: d > 0 ? theme.colors.expense : theme.colors.income },
-                            ]}
-                          >
-                            {d > 0 ? '↑' : '↓'}
-                            {formatPctChange(d)}
-                          </Text>
-                        )}
-                      </View>
-                    </View>
-                    <View style={styles.catTrack}>
-                      <AnimatedCategoryFill
-                        targetPct={Math.max(3, (c.totalMinor / maxCat) * 100)}
-                        color={c.color}
-                        delay={Math.min(i, 8) * 60}
-                      />
-                    </View>
-                  </Pressable>
-                );
-              })}
-              {current.categoryBreakdown.length > CAT_COLLAPSE_COUNT && (
-                <Pressable onPress={() => setCatExpanded((v) => !v)} style={styles.catMore}>
-                  <Text style={styles.catMoreText}>
-                    {catExpanded
-                      ? 'Show less ︿'
-                      : `${current.categoryBreakdown.length - CAT_COLLAPSE_COUNT} more ⌄`}
-                  </Text>
-                </Pressable>
+                  <View style={styles.rule} />
+                </>
               )}
-            </View>
+
+              {/* where it went */}
+              <Text style={styles.blockTitle}>Where it went</Text>
+              <SkylineRibbon categories={current.categoryBreakdown} totalMinor={dispExpense} />
+              <View style={styles.catCard}>
+                {(catExpanded
+                  ? current.categoryBreakdown
+                  : current.categoryBreakdown.slice(0, CAT_COLLAPSE_COUNT)
+                ).map((c) => {
+                  const i = current.categoryBreakdown.indexOf(c);
+                  const d = deltas.get(c.categoryId);
+                  const pct = dispExpense > 0 ? Math.round((c.totalMinor / dispExpense) * 100) : 0;
+                  return (
+                    <Pressable
+                      key={c.categoryId}
+                      onPress={() =>
+                        c.hasSubcategories
+                          ? openDrill(c)
+                          : openCategoryTx({
+                              categoryId: c.categoryId,
+                              name: c.name,
+                              isSensitive: c.isSensitive,
+                            })
+                      }
+                      style={styles.catRow}
+                    >
+                      <View style={styles.catTop}>
+                        <View style={[styles.catDot, { backgroundColor: c.color }]} />
+                        <Text style={styles.catName} numberOfLines={1}>
+                          {c.name}
+                          {c.hasSubcategories ? ' ›' : ''}
+                        </Text>
+                        <Text style={styles.catPct}>{pct}%</Text>
+                        <View style={styles.catRight}>
+                          <Amount minor={catDisp[i]} sensitive={c.isSensitive} style={styles.catAmt} />
+                          {d != null && Math.abs(d) >= 10 && (
+                            <Text
+                              style={[
+                                styles.catDelta,
+                                { color: d > 0 ? theme.colors.expense : theme.colors.income },
+                              ]}
+                            >
+                              {d > 0 ? '↑' : '↓'}
+                              {formatPctChange(d)}
+                            </Text>
+                          )}
+                        </View>
+                      </View>
+                      <View style={styles.catTrack}>
+                        <AnimatedCategoryFill
+                          targetPct={Math.max(3, (c.totalMinor / maxCat) * 100)}
+                          color={c.color}
+                          delay={Math.min(i, 8) * 60}
+                        />
+                      </View>
+                    </Pressable>
+                  );
+                })}
+                {current.categoryBreakdown.length > CAT_COLLAPSE_COUNT && (
+                  <Pressable onPress={() => setCatExpanded((v) => !v)} style={styles.catMore}>
+                    <Text style={styles.catMoreText}>
+                      {catExpanded
+                        ? 'Show less ︿'
+                        : `${current.categoryBreakdown.length - CAT_COLLAPSE_COUNT} more ⌄`}
+                    </Text>
+                  </Pressable>
+                )}
+              </View>
             </View>
 
             {/* ============ trends ============ */}
             <View onLayout={onSectionLayout('trends')}>
-            {trend.length >= 3 && (
-              <>
-                <View style={styles.rule} />
-                <Text style={styles.blockTitle}>Against your last {trend.length} months</Text>
-                <Sparkline
-                  values={trend.map((t) => t.totalMinor)}
-                  labels={trend.map((t) => t.label)}
-                  baseline={baseline}
-                />
-                {baseline != null && (
-                  <Text style={styles.rdNote}>
-                    The dashed line is your average.{' '}
-                    {current.expenseMinor > baseline
-                      ? `${periodLabel(cursor)} is above it.`
-                      : `${periodLabel(cursor)} is below it.`}
-                  </Text>
-                )}
-              </>
-            )}
-
-            {topGrowing && (
-              <>
-                <View style={styles.rule} />
-                <View style={styles.mover}>
-                  <View style={styles.moverIcon}>
-                    <Feather name="trending-up" size={14} color={theme.colors.ink} />
-                  </View>
-                  <Text style={styles.moverText}>
-                    <Text style={styles.moverBold}>{topGrowing.name}</Text> is the mover —{' '}
-                    {formatMoney(roundedMinor(moverPrev))} → {formatMoney(roundedMinor(moverCur))} (
-                    {formatPctChange(topGrowing.pctChange)} vs {comparisonLabel}).
-                  </Text>
-                </View>
-              </>
-            )}
-
-            {netWorthTrend.length >= 3 && (
-              <>
-                <View style={styles.rule} />
-                <Text style={styles.blockTitle}>Net worth</Text>
-                <Sparkline
-                  values={netWorthTrend.map((t) => t.netWorthMinor)}
-                  labels={netWorthTrend.map((t) => t.label)}
-                  baseline={null}
-                  emphasisColor={
-                    netWorthTrend[netWorthTrend.length - 1].netWorthMinor >= 0
-                      ? theme.colors.income
-                      : theme.colors.expense
-                  }
-                />
-                {(() => {
-                  const first = netWorthTrend[0].netWorthMinor;
-                  const last = netWorthTrend[netWorthTrend.length - 1].netWorthMinor;
-                  const delta = last - first;
-                  return (
+              {trend.length >= 3 && (
+                <>
+                  <View style={styles.rule} />
+                  <Text style={styles.blockTitle}>Against your last {trend.length} months</Text>
+                  <Sparkline
+                    values={trend.map((t) => t.totalMinor)}
+                    labels={trend.map((t) => t.label)}
+                    baseline={baseline}
+                  />
+                  {baseline != null && (
                     <Text style={styles.rdNote}>
-                      {delta >= 0 ? '↑ ' : '↓ '}
-                      <Text style={{ color: delta >= 0 ? theme.colors.income : theme.colors.expense }}>
-                        {formatMoney(Math.abs(roundedMinor(delta)))}
-                      </Text>{' '}
-                      over the last {netWorthTrend.length} months
+                      The dashed line is your average.{' '}
+                      {current.expenseMinor > baseline
+                        ? `${periodLabel(cursor)} is above it.`
+                        : `${periodLabel(cursor)} is below it.`}
                     </Text>
-                  );
-                })()}
-              </>
-            )}
+                  )}
+                </>
+              )}
+
+              {topGrowing && (
+                <>
+                  <View style={styles.rule} />
+                  <View style={styles.mover}>
+                    <View style={styles.moverIcon}>
+                      <Feather name="trending-up" size={14} color={theme.colors.ink} />
+                    </View>
+                    <Text style={styles.moverText}>
+                      <Text style={styles.moverBold}>{topGrowing.name}</Text> is the mover —{' '}
+                      {formatMoney(roundedMinor(moverPrev))} → {formatMoney(roundedMinor(moverCur))} (
+                      {formatPctChange(topGrowing.pctChange)} vs {comparisonLabel}).
+                    </Text>
+                  </View>
+                </>
+              )}
+
+              {netWorthTrend.length >= 3 && (
+                <>
+                  <View style={styles.rule} />
+                  <Text style={styles.blockTitle}>Net worth</Text>
+                  <Sparkline
+                    values={netWorthTrend.map((t) => t.netWorthMinor)}
+                    labels={netWorthTrend.map((t) => t.label)}
+                    baseline={null}
+                    emphasisColor={
+                      netWorthTrend[netWorthTrend.length - 1].netWorthMinor >= 0
+                        ? theme.colors.income
+                        : theme.colors.expense
+                    }
+                  />
+                  {(() => {
+                    const first = netWorthTrend[0].netWorthMinor;
+                    const last = netWorthTrend[netWorthTrend.length - 1].netWorthMinor;
+                    const delta = last - first;
+                    return (
+                      <Text style={styles.rdNote}>
+                        {delta >= 0 ? '↑ ' : '↓ '}
+                        <Text style={{ color: delta >= 0 ? theme.colors.income : theme.colors.expense }}>
+                          {formatMoney(Math.abs(roundedMinor(delta)))}
+                        </Text>{' '}
+                        over the last {netWorthTrend.length} months
+                      </Text>
+                    );
+                  })()}
+                </>
+              )}
             </View>
           </>
         )}
@@ -727,7 +737,11 @@ export default function ReportsScreen() {
         showClose
         scrollable={false}
         title={catTxSheet?.name}
-        subtitle={catTx && catTx.length > 0 ? `${catTx.length} transaction${catTx.length === 1 ? '' : 's'}` : undefined}
+        subtitle={
+          catTx && catTx.length > 0
+            ? `${catTx.length} transaction${catTx.length === 1 ? '' : 's'}`
+            : undefined
+        }
         footer={catTx && catTx.length > 0 ? <DayTotal txs={catTx} /> : undefined}
       >
         {catTx === null ? (
@@ -742,7 +756,10 @@ export default function ReportsScreen() {
             <View key={tx.id} style={[styles.dayRow, i === 0 && styles.dayRowFirst]}>
               <View style={styles.dayMid}>
                 <Text style={styles.dayName} numberOfLines={1}>
-                  {parseLocalIsoDate(tx.date).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}
+                  {parseLocalIsoDate(tx.date).toLocaleDateString(undefined, {
+                    day: 'numeric',
+                    month: 'short',
+                  })}
                 </Text>
                 {tx.note ? (
                   <Text style={styles.daySub} numberOfLines={1}>
