@@ -25,8 +25,10 @@ function noteFor(stage: GrowthStage, streak: number): string {
   // (stageForStreak's own threshold) — today's own spend, once logged,
   // resolves the streak immediately rather than leaving it "pending", so
   // there's no separate in-between state to word differently here.
-  if (stage === 'seed') return "No streak going right now — spend under today's goal to plant the first seed.";
-  if (stage === 'sprout') return `${streak} day${streak === 1 ? '' : 's'} running. A couple more and it's a sapling.`;
+  if (stage === 'seed')
+    return "No streak going right now — spend under today's goal to plant the first seed.";
+  if (stage === 'sprout')
+    return `${streak} day${streak === 1 ? '' : 's'} running. A couple more and it's a sapling.`;
   if (stage === 'sapling') return `${streak} days running — getting there. A full week and it blooms.`;
   return `${streak} days running. Miss a day and it just pauses — it never wilts back to a seed.`;
 }
@@ -65,8 +67,10 @@ export default function GardenScreen() {
   const avgFundedPct =
     fundedGoals.length > 0
       ? Math.round(
-          fundedGoals.reduce((sum, g) => sum + goalProgress(g.currentAmountMinor, g.targetAmountMinor).percent, 0) /
-            fundedGoals.length
+          fundedGoals.reduce(
+            (sum, g) => sum + goalProgress(g.currentAmountMinor, g.targetAmountMinor).percent,
+            0
+          ) / fundedGoals.length
         )
       : 0;
 
@@ -156,7 +160,8 @@ export default function GardenScreen() {
           <View style={styles.goalsSummary}>
             <SuuIllustration size={16} />
             <Text style={styles.goalsSummaryText}>
-              {fundedGoals.length} savings goal{fundedGoals.length === 1 ? '' : 's'} with real progress — {avgFundedPct}% funded on average.
+              {fundedGoals.length} savings goal{fundedGoals.length === 1 ? '' : 's'} with real progress —{' '}
+              {avgFundedPct}% funded on average.
             </Text>
           </View>
         )}

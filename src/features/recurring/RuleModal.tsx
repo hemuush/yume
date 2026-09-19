@@ -128,7 +128,9 @@ export function RuleModal({
   const spendableAccounts = useMemo(() => accounts.filter((a) => a.type !== 'savings'), [accounts]);
   const pickableAccounts = type === 'transfer' ? accounts : spendableAccounts;
   const effectiveAccountId =
-    accountId && pickableAccounts.some((a) => a.id === accountId) ? accountId : (pickableAccounts[0]?.id ?? null);
+    accountId && pickableAccounts.some((a) => a.id === accountId)
+      ? accountId
+      : (pickableAccounts[0]?.id ?? null);
 
   const onTypeChange = (next: TransactionType) => {
     setType(next);

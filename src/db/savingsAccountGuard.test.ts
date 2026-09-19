@@ -26,7 +26,7 @@ import { createRecurringRule, updateRecurringRule } from '@/db/recurring';
 import { createPerson, recordMoneyGivenToPerson, recordMoneyReceivedFromPerson } from '@/db/people';
 import { createLoan, payInstallment, applyPrepayment, getLoanSchedule } from '@/db/loans';
 
-const SAVINGS_ERROR = "Savings accounts can’t be used for income or expenses";
+const SAVINGS_ERROR = 'Savings accounts can’t be used for income or expenses';
 
 describe('savings accounts are never a valid income/expense account', () => {
   let bankId: string;
@@ -37,7 +37,8 @@ describe('savings accounts are never a valid income/expense account', () => {
 
   beforeAll(async () => {
     await mockTestDb.execAsync(CREATE_TABLES_SQL);
-    bankId = (await createAccount({ name: 'Bank', type: 'bank', currency: 'INR', openingBalanceMinor: 0 })).id;
+    bankId = (await createAccount({ name: 'Bank', type: 'bank', currency: 'INR', openingBalanceMinor: 0 }))
+      .id;
     savingsId = (
       await createAccount({ name: 'Savings', type: 'savings', currency: 'INR', openingBalanceMinor: 0 })
     ).id;
@@ -241,16 +242,29 @@ describe('savings accounts are never a valid income/expense account', () => {
     const schedule = await getLoanSchedule(loan.id);
 
     await expect(
-      payInstallment(schedule[0].id, { accountId: savingsId, categoryId: expenseCategoryId, paidDate: '2026-02-01' })
+      payInstallment(schedule[0].id, {
+        accountId: savingsId,
+        categoryId: expenseCategoryId,
+        paidDate: '2026-02-01',
+      })
     ).rejects.toThrow(SAVINGS_ERROR);
 
     await expect(
-      applyPrepayment(loan.id, { amountMinor: 10000, accountId: savingsId, categoryId: expenseCategoryId, date: '2026-01-15' })
+      applyPrepayment(loan.id, {
+        amountMinor: 10000,
+        accountId: savingsId,
+        categoryId: expenseCategoryId,
+        date: '2026-01-15',
+      })
     ).rejects.toThrow(SAVINGS_ERROR);
 
     // Sanity: the same calls succeed against a spendable account.
     await expect(
-      payInstallment(schedule[0].id, { accountId: bankId, categoryId: expenseCategoryId, paidDate: '2026-02-01' })
+      payInstallment(schedule[0].id, {
+        accountId: bankId,
+        categoryId: expenseCategoryId,
+        paidDate: '2026-02-01',
+      })
     ).resolves.not.toThrow();
   });
 });

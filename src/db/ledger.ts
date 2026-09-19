@@ -543,7 +543,9 @@ export async function assertSpendableAccount(type: TransactionType, accountId: s
   const db = await getDb();
   const acc = await db.getFirstAsync<{ type: string }>('SELECT type FROM accounts WHERE id = ?', [accountId]);
   if (acc?.type === 'savings') {
-    throw new Error('Savings accounts can’t be used for income or expenses — transfer to a spendable account first.');
+    throw new Error(
+      'Savings accounts can’t be used for income or expenses — transfer to a spendable account first.'
+    );
   }
 }
 

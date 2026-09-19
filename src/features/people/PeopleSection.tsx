@@ -159,9 +159,24 @@ function personStatus(dispBalanceMinor: number): PersonStatus {
 }
 
 const STATUS_PILL: Record<PersonStatus, { bg: string; dot: string; text: string; label: string }> = {
-  owed: { bg: theme.colors.secondaryTint, dot: theme.colors.income, text: theme.colors.income, label: 'Owes you' },
-  owe: { bg: theme.colors.expenseTint, dot: theme.colors.expense, text: theme.colors.expense, label: 'You owe' },
-  settled: { bg: theme.colors.surfaceAlt, dot: theme.colors.textMuted, text: theme.colors.textSecondary, label: 'Settled' },
+  owed: {
+    bg: theme.colors.secondaryTint,
+    dot: theme.colors.income,
+    text: theme.colors.income,
+    label: 'Owes you',
+  },
+  owe: {
+    bg: theme.colors.expenseTint,
+    dot: theme.colors.expense,
+    text: theme.colors.expense,
+    label: 'You owe',
+  },
+  settled: {
+    bg: theme.colors.surfaceAlt,
+    dot: theme.colors.textMuted,
+    text: theme.colors.textSecondary,
+    label: 'Settled',
+  },
 };
 
 function PersonRow({
@@ -179,7 +194,12 @@ function PersonRow({
   const dispBalanceMinor = roundedMinor(person.balanceMinor);
   const status = personStatus(dispBalanceMinor);
   const pill = STATUS_PILL[status];
-  const balanceColor = status === 'settled' ? theme.colors.textMuted : status === 'owed' ? theme.colors.income : theme.colors.expense;
+  const balanceColor =
+    status === 'settled'
+      ? theme.colors.textMuted
+      : status === 'owed'
+        ? theme.colors.income
+        : theme.colors.expense;
   return (
     // Entrance (reanimated) and press-feedback (a plain RN Animated.Value)
     // are two different animation drivers, so the stagger lives on this
@@ -592,7 +612,10 @@ function PersonDetailModal({
               <View
                 style={[
                   styles.historyIcon,
-                  { backgroundColor: entry.amountMinor >= 0 ? theme.colors.incomeTint : theme.colors.expenseTint },
+                  {
+                    backgroundColor:
+                      entry.amountMinor >= 0 ? theme.colors.incomeTint : theme.colors.expenseTint,
+                  },
                 ]}
               >
                 <Feather
@@ -644,7 +667,12 @@ const styles = StyleSheet.create({
   },
   summaryValueIncome: { color: theme.colors.income },
   summaryValueExpense: { color: theme.colors.expense },
-  emptyText: { fontFamily: theme.font.body, marginHorizontal: 20, color: theme.colors.textMuted, fontSize: 13 },
+  emptyText: {
+    fontFamily: theme.font.body,
+    marginHorizontal: 20,
+    color: theme.colors.textMuted,
+    fontSize: 13,
+  },
   // Each person's own bordered tile — same spacing/radius Loans' own
   // LoanCard uses, so the two segments of this tab read as one design
   // instead of a card list next to a plain divided list.
@@ -725,7 +753,13 @@ const styles = StyleSheet.create({
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 8 },
   dateFieldsRow: { flexDirection: 'row', gap: 10 },
   dateFieldInput: { flex: 1, textAlign: 'center' },
-  hintText: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, marginBottom: 10, lineHeight: 17 },
+  hintText: {
+    fontFamily: theme.font.body,
+    fontSize: 12,
+    color: theme.colors.textMuted,
+    marginBottom: 10,
+    lineHeight: 17,
+  },
   errorText: { fontFamily: theme.font.bodyBold, color: theme.colors.expense, fontSize: 13, marginBottom: 10 },
   historyIcon: {
     width: 30,

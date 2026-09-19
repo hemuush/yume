@@ -53,7 +53,12 @@ export function Skeleton({ width, height, radius = 6, circle = false, style }: P
   const r = circle ? height / 2 : radius;
 
   return (
-    <View style={[{ width, height, borderRadius: r, backgroundColor: theme.colors.surfaceAlt, overflow: 'hidden' }, style]}>
+    <View
+      style={[
+        { width, height, borderRadius: r, backgroundColor: theme.colors.surfaceAlt, overflow: 'hidden' },
+        style,
+      ]}
+    >
       {!reduce && (
         <ReanimatedAnimated.View style={[StyleSheet.absoluteFill, { width: bandWidth }, animatedStyle]}>
           <LinearGradient

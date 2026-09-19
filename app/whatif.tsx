@@ -49,7 +49,9 @@ export default function WhatIfScreen() {
   const load = useCallback(async () => {
     const [avgs, goalList] = await Promise.all([getCategoryMonthlyAverages(3), listSavingsGoals()]);
     const spendable = avgs.filter((c) => c.totalMinor > 0);
-    const openGoals = goalList.filter((g) => !g.archived && !goalProgress(g.currentAmountMinor, g.targetAmountMinor).done);
+    const openGoals = goalList.filter(
+      (g) => !g.archived && !goalProgress(g.currentAmountMinor, g.targetAmountMinor).done
+    );
     setCategories(spendable);
     setGoals(openGoals);
     // Falls back to the first item both when nothing's picked yet AND when
@@ -57,7 +59,9 @@ export default function WhatIfScreen() {
     // went to 0, or the goal it pointed at was just finished/archived) —
     // otherwise a stale id survives with nothing in the list to match it,
     // and every chip below renders with none of them active.
-    setCategoryId((prev) => (prev && spendable.some((c) => c.categoryId === prev) ? prev : (spendable[0]?.categoryId ?? null)));
+    setCategoryId((prev) =>
+      prev && spendable.some((c) => c.categoryId === prev) ? prev : (spendable[0]?.categoryId ?? null)
+    );
     setGoalId((prev) => (prev && openGoals.some((g) => g.id === prev) ? prev : (openGoals[0]?.id ?? null)));
   }, []);
   const { loaded, loadError } = useScreenLoad(load);
@@ -92,7 +96,9 @@ export default function WhatIfScreen() {
           </View>
         )}
 
-        <Text style={styles.intro}>Try a change, see where it lands. Nothing here is saved until you act on it.</Text>
+        <Text style={styles.intro}>
+          Try a change, see where it lands. Nothing here is saved until you act on it.
+        </Text>
 
         {categories.length === 0 ? (
           <EmptyState
@@ -119,7 +125,8 @@ export default function WhatIfScreen() {
                 <View style={styles.avgRow}>
                   <Text style={styles.avgLabel}>currently</Text>
                   <Text style={styles.avgValue}>
-                    <Amount minor={selectedCategory.totalMinor} sensitive={selectedCategory.isSensitive} /> / month
+                    <Amount minor={selectedCategory.totalMinor} sensitive={selectedCategory.isSensitive} /> /
+                    month
                   </Text>
                 </View>
               )}
@@ -150,18 +157,24 @@ export default function WhatIfScreen() {
               <View style={styles.goalCard}>
                 <Text style={styles.extraLabel}>No open savings goals</Text>
                 <Text style={[styles.avgLabel, { marginTop: 6 }]}>
-                  Set a savings goal from the Savings goals section to see how much sooner this change could get
-                  you there.
+                  Set a savings goal from the Savings goals section to see how much sooner this change could
+                  get you there.
                 </Text>
               </View>
             ) : cut ? (
               <View style={styles.goalCard}>
                 <Text style={styles.extraLabel}>
-                  Extra <Amount minor={cut.extraMinor} sensitive={selectedCategory?.isSensitive} /> / month toward
+                  Extra <Amount minor={cut.extraMinor} sensitive={selectedCategory?.isSensitive} /> / month
+                  toward
                 </Text>
                 <View style={[styles.chipRow, { marginTop: 10 }]}>
                   {goals.map((g) => (
-                    <Chip key={g.id} label={g.name} active={g.id === goalId} onPress={() => setGoalId(g.id)} />
+                    <Chip
+                      key={g.id}
+                      label={g.name}
+                      active={g.id === goalId}
+                      onPress={() => setGoalId(g.id)}
+                    />
                   ))}
                 </View>
 
@@ -170,25 +183,37 @@ export default function WhatIfScreen() {
                     <View>
                       <View style={styles.paceHeadRow}>
                         <Text style={styles.paceLabel}>Current pace</Text>
-                        <Text style={styles.paceDate}>{pace.currentEtaDate ? formatShortDate(pace.currentEtaDate) : '—'}</Text>
-                      </View>
-                      <View style={styles.paceTrack}>
-                        <View
-                          style={[styles.paceFill, { width: pace.currentEtaDate ? '80%' : '0%', backgroundColor: theme.colors.textMuted }]}
-                        />
-                      </View>
-                    </View>
-                    <View style={{ marginTop: 10 }}>
-                      <View style={styles.paceHeadRow}>
-                        <Text style={styles.paceLabelStrong}>With this change</Text>
-                        <Text style={styles.paceDateStrong}>{pace.newEtaDate ? formatShortDate(pace.newEtaDate) : '—'}</Text>
+                        <Text style={styles.paceDate}>
+                          {pace.currentEtaDate ? formatShortDate(pace.currentEtaDate) : '—'}
+                        </Text>
                       </View>
                       <View style={styles.paceTrack}>
                         <View
                           style={[
                             styles.paceFill,
                             {
-                              width: pace.newEtaDate ? `${Math.max(20, 80 - Math.min(60, pace.daysSooner / 3))}%` : '0%',
+                              width: pace.currentEtaDate ? '80%' : '0%',
+                              backgroundColor: theme.colors.textMuted,
+                            },
+                          ]}
+                        />
+                      </View>
+                    </View>
+                    <View style={{ marginTop: 10 }}>
+                      <View style={styles.paceHeadRow}>
+                        <Text style={styles.paceLabelStrong}>With this change</Text>
+                        <Text style={styles.paceDateStrong}>
+                          {pace.newEtaDate ? formatShortDate(pace.newEtaDate) : '—'}
+                        </Text>
+                      </View>
+                      <View style={styles.paceTrack}>
+                        <View
+                          style={[
+                            styles.paceFill,
+                            {
+                              width: pace.newEtaDate
+                                ? `${Math.max(20, 80 - Math.min(60, pace.daysSooner / 3))}%`
+                                : '0%',
                               backgroundColor: theme.colors.income,
                             },
                           ]}

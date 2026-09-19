@@ -210,7 +210,9 @@ export default function AddTransactionScreen() {
   const spendableAccounts = useMemo(() => accounts.filter((a) => a.type !== 'savings'), [accounts]);
   const pickableAccounts = type === 'transfer' ? accounts : spendableAccounts;
   const effectiveAccountId =
-    accountId && pickableAccounts.some((a) => a.id === accountId) ? accountId : (pickableAccounts[0]?.id ?? null);
+    accountId && pickableAccounts.some((a) => a.id === accountId)
+      ? accountId
+      : (pickableAccounts[0]?.id ?? null);
   const today = toLocalIsoDate(new Date());
   const yesterday = addDaysToIsoDate(today, -1);
 
@@ -711,13 +713,26 @@ function Chip({ label, active, onPress }: { label: string; active: boolean; onPr
  * assumed "category" specifically, only "icon + tint + optional colour") so
  * the two pickers on this screen read as one system instead of two.
  */
-function AccountTile({ account, active, onPress }: { account: Account; active: boolean; onPress: () => void }) {
+function AccountTile({
+  account,
+  active,
+  onPress,
+}: {
+  account: Account;
+  active: boolean;
+  onPress: () => void;
+}) {
   const { accent } = useAccent();
   const badgeColor = accountBadgeColor(account.type, accent);
   return (
     <Pressable onPress={onPress} style={styles.accountTile}>
       <View style={[styles.accountRing, active && styles.accountRingActive]}>
-        <CategoryIcon name={ACCOUNT_ICON[account.type] ?? 'credit-card'} color={badgeColor} size={20} square={48} />
+        <CategoryIcon
+          name={ACCOUNT_ICON[account.type] ?? 'credit-card'}
+          color={badgeColor}
+          size={20}
+          square={48}
+        />
       </View>
       <Text style={styles.accountName} numberOfLines={1}>
         {account.name}
