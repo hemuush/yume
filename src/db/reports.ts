@@ -1,5 +1,6 @@
 import { getDb } from './client';
-import { toLocalIsoDate } from '@/lib/date';
+import { toLocalIsoDate, addDaysToIsoDate, isoDatesInRange, monthsBetweenIsoDates } from '@/lib/date';
+import { streakSeries } from '@/lib/gardenGrowth';
 import { getDefaultCurrency } from './settings';
 
 export type ReportPeriod = 'day' | 'week' | 'month' | 'year';
@@ -235,6 +236,92 @@ export async function getDailyExpenseTotals(range: DateRange): Promise<DailyExpe
 export async function getTodaySpend(today: string = toIso(new Date())): Promise<number> {
   const totals = await getDailyExpenseTotals({ start: today, end: today });
   return totals[0]?.totalMinor ?? 0;
+}
+
+export interface DailyGoalStreakPoint {
+  date: string;
+  streakDays: number;
+}
+
+/**
+ * For each of the last `days` calendar days (oldest to newest, ending
+ * `today`), the length of the consecutive under-daily-goal streak ending on
+ * that day — powers Suu's Garden. Looks back well beyond the visible window
+ * so a streak that started earlier still reads as continuing on day one of
+ * the chart, rather than appearing to reset to 1. A day with zero expenses
+ * counts as under the goal, same as `getTodaySpend`'s own scoping.
+ */
+export async function getDailyGoalStreakSeries(
+  goalMinor: number,
+  days = 5,
+  today: string = toIso(new Date())
+): Promise<DailyGoalStreakPoint[]> {
+  const db = await getDb();
+  const currency = await getDefaultCurrency();
+  // Without this floor, a day with no transaction rows reads as "spent
+  // nothing, so it's under the goal" all the way back into calendar time
+  // before the install even existed — a brand-new user would open the
+  // Garden and see a decades-long streak on day one. Clamping the lookback
+  // to no earlier than the very first transaction on record means history
+  // that genuinely doesn't exist can never masquerade as days kept. Scoped
+  // to expense/default-currency, matching `getDailyExpenseTotals` right
+  // below — an earlier income or foreign-currency transaction would
+  // otherwise push this floor before the account's real expense-tracking
+  // history actually starts.
+  const earliestRow = await db.getFirstAsync<{ earliest: string | null }>(
+    `SELECT MIN(t.date) as earliest FROM transactions t
+     JOIN accounts a ON a.id = t.account_id
+     WHERE t.type = 'expense' AND a.currency = ?`,
+    [currency]
+  );
+  const earliestTxDate = earliestRow?.earliest ?? today;
+  const lookbackDays = days + 55;
+  const computedStart = addDaysToIsoDate(today, -(lookbackDays - 1));
+  const start = computedStart > earliestTxDate ? computedStart : earliestTxDate;
+
+  const totals = await getDailyExpenseTotals({ start, end: today });
+  const totalByDate = new Map(totals.map((t) => [t.date, t.totalMinor]));
+  const historyDates = isoDatesInRange(start, today);
+  const underGoal = historyDates.map((d) => (totalByDate.get(d) ?? 0) <= goalMinor);
+  const series = streakSeries(underGoal);
+  const streakByDate = new Map(historyDates.map((d, i) => [d, series[i]]));
+
+  const visibleDates = isoDatesInRange(addDaysToIsoDate(today, -(days - 1)), today);
+  return visibleDates.map((date) => ({ date, streakDays: streakByDate.get(date) ?? 0 }));
+}
+
+/**
+ * A category's average monthly expense over the last `months` full
+ * calendar months (today's own partial month excluded) — powers the
+ * what-if sandbox's "currently ₹X/month" figure. Reuses
+ * `getPeriodSummary`'s own category-breakdown query rather than a separate
+ * one; only the averaging is new.
+ */
+export async function getCategoryMonthlyAverages(
+  months = 3,
+  reference: Date = new Date()
+): Promise<CategoryBreakdownItem[]> {
+  const db = await getDb();
+  const currency = await getDefaultCurrency();
+  const end = toIso(new Date(reference.getFullYear(), reference.getMonth(), 0)); // last day of the previous month
+  const start = toIso(new Date(reference.getFullYear(), reference.getMonth() - months, 1));
+
+  // Dividing by the requested window size regardless of how much history
+  // actually exists in it silently under-reports a new install's (or a
+  // freshly-added category's) real average — one real month of spend
+  // divided by a 3-month window reads as a third of the true figure.
+  // Floors the divisor to the months that actually have expense history,
+  // same type/currency scoping getPeriodSummary itself already uses.
+  const earliestRow = await db.getFirstAsync<{ earliest: string | null }>(
+    `SELECT MIN(t.date) as earliest FROM transactions t
+     JOIN accounts a ON a.id = t.account_id
+     WHERE t.type = 'expense' AND a.currency = ? AND t.date >= ? AND t.date <= ?`,
+    [currency, start, end]
+  );
+  const { categoryBreakdown } = await getPeriodSummary({ start, end });
+  const earliestExpenseDate = earliestRow?.earliest ?? start;
+  const actualMonths = Math.min(months, Math.max(1, monthsBetweenIsoDates(earliestExpenseDate, end) + 1));
+  return categoryBreakdown.map((c) => ({ ...c, totalMinor: Math.round(c.totalMinor / actualMonths) }));
 }
 
 export interface PeriodComparison {
