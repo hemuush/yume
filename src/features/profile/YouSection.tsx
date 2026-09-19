@@ -29,6 +29,7 @@ import { SectionLabel } from '@/components/SectionLabel';
 import { ActionSheet, ActionSheetItem } from '@/components/ActionSheet';
 import { useUndoToast } from '@/components/UndoToast';
 import { theme } from '@/constants/theme';
+import { shade } from '@/lib/color';
 import { useAccent } from '@/theme/AccentContext';
 import { NeoTile } from '@/components/NeoTile';
 import { useFadeIn } from '@/lib/useFadeIn';
@@ -47,6 +48,11 @@ import { ContributeModal } from '@/features/goals/ContributeModal';
 import { RuleCard } from '@/features/recurring/RuleCard';
 
 const AnimatedAccountPressable = Animated.createAnimatedComponent(Pressable);
+
+// The sky-blue `primary` accent is too light at its own lightness to read
+// as an icon stroke on its own pale tint — same fix QuickActionsRow and
+// Add Transaction's type wash already apply to this exact colour.
+const BUDGET_ICON_COLOR = shade(theme.colors.primary, 45, 8);
 
 /** How many active recurring rules to show before "See all" takes over — rules can pile up over time in a way budgets/goals rarely do. */
 const RECURRING_PREVIEW_CAP = 3;
@@ -278,9 +284,18 @@ export function YouSection() {
         />
       </View>
       {budgets.length === 0 ? (
-        <EmptyState
+        <SectionEmptyCard
+          icon="clock"
+          iconBg={theme.colors.primaryTint}
+          iconColor={BUDGET_ICON_COLOR}
           title="No budgets yet"
-          subtitle="Set a monthly limit for a category to see how close you are."
+          subtitle="A monthly limit per category, so you can see how close you are."
+          ctaLabel="+ Set a budget"
+          ctaColor={theme.colors.primary}
+          onPress={() => {
+            setEditingBudget(null);
+            setBudgetModalVisible(true);
+          }}
         />
       ) : (
         <View style={budgetsStyles.listCard}>
@@ -315,9 +330,15 @@ export function YouSection() {
         </View>
       </View>
       {goals.length === 0 ? (
-        <EmptyState
+        <SectionEmptyCard
+          icon="flag"
+          iconBg={theme.colors.secondaryTint}
+          iconColor={theme.colors.income}
           title="No savings goals yet"
-          subtitle="Set something you're saving toward — a trip, an emergency fund, a big purchase."
+          subtitle="A trip, an emergency fund, a big purchase — something to aim at."
+          ctaLabel="+ Set a goal"
+          ctaColor={theme.colors.secondary}
+          onPress={() => setAddGoalVisible(true)}
         />
       ) : (
         <ScrollView
@@ -465,6 +486,59 @@ export function YouSection() {
         }}
       />
     </>
+  );
+}
+
+/**
+ * A compact replacement for the shared `EmptyState` in exactly this one
+ * spot — Budgets and Savings goals used to each show the same full-size
+ * sleepy-Suu illustration back to back, ~90px of illustration plus padding
+ * apiece, with the only way to act on it up in the header above. This
+ * keeps a per-section icon (so the two don't read as the same screenshot
+ * twice), and puts the call to action inside the card itself, in the same
+ * dashed-button language Add Transaction's "+ Add to list" already uses.
+ * Scoped to YouSection only — every other screen's empty state is
+ * untouched.
+ */
+function SectionEmptyCard({
+  icon,
+  iconBg,
+  iconColor,
+  title,
+  subtitle,
+  ctaLabel,
+  ctaColor,
+  onPress,
+}: {
+  icon: React.ComponentProps<typeof Feather>['name'];
+  iconBg: string;
+  iconColor: string;
+  title: string;
+  subtitle: string;
+  ctaLabel: string;
+  ctaColor: string;
+  onPress: () => void;
+}) {
+  return (
+    <NeoTile style={styles.emptyCard}>
+      <View style={styles.emptyCardRow}>
+        <View style={[styles.emptyCardIcon, { backgroundColor: iconBg }]}>
+          <Feather name={icon} size={18} color={iconColor} />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.emptyCardTitle}>{title}</Text>
+          <Text style={styles.emptyCardSubtitle}>{subtitle}</Text>
+        </View>
+      </View>
+      <Pressable
+        onPress={onPress}
+        style={[styles.emptyCardCta, { borderColor: ctaColor }]}
+        accessibilityRole="button"
+        accessibilityLabel={ctaLabel}
+      >
+        <Text style={styles.emptyCardCtaText}>{ctaLabel}</Text>
+      </Pressable>
+    </NeoTile>
   );
 }
 
