@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { View, Text, FlatList, Pressable, ActivityIndicator, TextInput } from 'react-native';
+import { View, Text, FlatList, Pressable, Animated, ActivityIndicator, TextInput } from 'react-native';
 import ReanimatedAnimated, { FadeIn, ReduceMotion } from 'react-native-reanimated';
 import { useFocusEffect, router } from 'expo-router';
 import Feather from '@expo/vector-icons/Feather';
@@ -14,6 +14,7 @@ import { theme } from '@/constants/theme';
 import { toLocalIsoDate, parseLocalIsoDate, addDaysToIsoDate, isoDatesInRange } from '@/lib/date';
 import { MAX_LIST_STAGGER_MS } from '@/lib/animation';
 import { useSwipeStep } from '@/lib/useSwipeStep';
+import { usePressScale } from '@/lib/usePressScale';
 import { styles } from '@/features/transactions/transactions.styles';
 import { MONTH_NAMES } from '@/features/transactions/transactions.constants';
 import { MonthPickerModal } from '@/features/transactions/MonthPickerModal';
@@ -27,6 +28,8 @@ import { buildDailySpendBars, buildWeeklySpendBars, legendForBars } from '@/feat
 function isoDate(d: Date): string {
   return toLocalIsoDate(d);
 }
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 // A 7-day window ending on `anchor`, oldest first — `anchor` is a plain day
 // step, not a week counter, so jumping straight to a chosen month (via the
@@ -197,6 +200,9 @@ export default function TransactionsScreen() {
   // rather than sliding into the future.
   const atCurrent = viewScope === 'month' ? isCurrentMonth : isCurrentWeek;
   const weekNavSwipe = useSwipeStep(stepBack, () => !atCurrent && stepForward());
+  const stepBackPress = usePressScale();
+  const stepForwardPress = usePressScale();
+  const filterPress = usePressScale();
 
   const monthRange = useMemo(() => {
     const y = anchor.getFullYear();
@@ -380,16 +386,18 @@ export default function TransactionsScreen() {
               label={searching ? 'Close search' : 'Search transactions'}
             />
             {!searching && (
-              <Pressable
+              <AnimatedPressable
                 onPress={() => setFilterVisible(true)}
+                onPressIn={filterPress.onPressIn}
+                onPressOut={filterPress.onPressOut}
                 hitSlop={8}
-                style={[styles.filterBtn, hasActiveFilter && styles.filterBtnActive]}
+                style={[styles.filterBtn, hasActiveFilter && styles.filterBtnActive, filterPress.animatedStyle]}
                 accessibilityRole="button"
                 accessibilityLabel="Filter transactions"
               >
                 <Feather name="sliders" size={13} color={theme.colors.textPrimary} />
                 <Text style={styles.filterBtnText}>Filter{hasActiveFilter ? ' •' : ''}</Text>
-              </Pressable>
+              </AnimatedPressable>
             )}
           </View>
         }
@@ -431,9 +439,15 @@ export default function TransactionsScreen() {
 
       {!searching && (
         <View style={styles.weekNavRow} {...weekNavSwipe.panHandlers}>
-          <Pressable onPress={stepBack} hitSlop={10} style={styles.weekNavBtn}>
+          <AnimatedPressable
+            onPress={stepBack}
+            onPressIn={stepBackPress.onPressIn}
+            onPressOut={stepBackPress.onPressOut}
+            hitSlop={10}
+            style={[styles.weekNavBtn, stepBackPress.animatedStyle]}
+          >
             <Text style={styles.weekNavArrow}>‹</Text>
-          </Pressable>
+          </AnimatedPressable>
           <Pressable onPress={() => setMonthPickerVisible(true)} hitSlop={6}>
             <ReanimatedAnimated.Text
               key={`${viewScope}-${anchor.toDateString()}`}
@@ -448,11 +462,13 @@ export default function TransactionsScreen() {
               {'  ▾'}
             </ReanimatedAnimated.Text>
           </Pressable>
-          <Pressable
+          <AnimatedPressable
             onPress={stepForward}
+            onPressIn={stepForwardPress.onPressIn}
+            onPressOut={stepForwardPress.onPressOut}
             hitSlop={10}
             disabled={viewScope === 'month' ? isCurrentMonth : isCurrentWeek}
-            style={styles.weekNavBtn}
+            style={[styles.weekNavBtn, stepForwardPress.animatedStyle]}
           >
             <Text
               style={[
@@ -462,7 +478,7 @@ export default function TransactionsScreen() {
             >
               ›
             </Text>
-          </Pressable>
+          </AnimatedPressable>
         </View>
       )}
 

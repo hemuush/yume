@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, Pressable, Animated, Alert } from 'react-native';
 import ReanimatedAnimated, { FadeIn, ReduceMotion } from 'react-native-reanimated';
+import Feather from '@expo/vector-icons/Feather';
 import { useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -35,14 +36,17 @@ import { haptics } from '@/lib/haptics';
 import { MAX_LIST_STAGGER_MS } from '@/lib/animation';
 import { NeoTile } from '@/components/NeoTile';
 
-function lastActivityLabel(dateStr: string | null): string {
-  if (!dateStr) return 'No activity yet';
+// Compact — sits next to the balance on the card now rather than in a full
+// sentence at the bottom; the pill above already says who-owes-whom.
+function lastActivityShort(dateStr: string | null): string {
+  if (!dateStr) return 'No activity';
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const days = Math.round((today.getTime() - parseLocalIsoDate(dateStr).getTime()) / 86400000);
-  if (days <= 0) return 'Last: today';
-  if (days === 1) return 'Last: yesterday';
-  return `Last: ${days} days ago`;
+  if (days <= 0) return 'Today';
+  if (days === 1) return 'Yesterday';
+  if (days < 14) return `${days}d ago`;
+  return `${Math.round(days / 7)}w ago`;
 }
 
 /**
@@ -142,6 +146,24 @@ export function PeopleSection() {
 
 const AnimatedPersonRow = Animated.createAnimatedComponent(Pressable);
 
+// Rounded to whole rupees first (`dispPersonBalance`'s own rounding, applied
+// before this is ever called) — a balance that rounds to exactly 0 reads as
+// genuinely settled, not as a still-open debt that merely happens to be
+// small. Distinct from PeopleSection's own aggregate You-owe/Owed-to-you
+// totals below, which are sums, not a single person's sign, and keep their
+// existing always-green/coral treatment.
+type PersonStatus = 'owed' | 'owe' | 'settled';
+function personStatus(dispBalanceMinor: number): PersonStatus {
+  if (dispBalanceMinor === 0) return 'settled';
+  return dispBalanceMinor > 0 ? 'owed' : 'owe';
+}
+
+const STATUS_PILL: Record<PersonStatus, { bg: string; dot: string; text: string; label: string }> = {
+  owed: { bg: theme.colors.secondaryTint, dot: theme.colors.income, text: theme.colors.income, label: 'Owes you' },
+  owe: { bg: theme.colors.expenseTint, dot: theme.colors.expense, text: theme.colors.expense, label: 'You owe' },
+  settled: { bg: theme.colors.surfaceAlt, dot: theme.colors.textMuted, text: theme.colors.textSecondary, label: 'Settled' },
+};
+
 function PersonRow({
   person,
   color,
@@ -154,7 +176,10 @@ function PersonRow({
   onPress: () => void;
 }) {
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.98);
-  const balanceColor = person.balanceMinor >= 0 ? theme.colors.income : theme.colors.expense;
+  const dispBalanceMinor = roundedMinor(person.balanceMinor);
+  const status = personStatus(dispBalanceMinor);
+  const pill = STATUS_PILL[status];
+  const balanceColor = status === 'settled' ? theme.colors.textMuted : status === 'owed' ? theme.colors.income : theme.colors.expense;
   return (
     // Entrance (reanimated) and press-feedback (a plain RN Animated.Value)
     // are two different animation drivers, so the stagger lives on this
@@ -178,21 +203,27 @@ function PersonRow({
               <View style={[styles.avatar, { backgroundColor: color }]}>
                 <Text style={styles.avatarInitial}>{person.name.trim().charAt(0).toUpperCase() || '?'}</Text>
               </View>
-              <Text style={styles.cardName} numberOfLines={1}>
-                {person.name}
-              </Text>
+              <View style={{ flexShrink: 1 }}>
+                <Text style={styles.cardName} numberOfLines={1}>
+                  {person.name}
+                </Text>
+                <View style={[styles.statusPill, { backgroundColor: pill.bg }]}>
+                  <View style={[styles.statusDot, { backgroundColor: pill.dot }]} />
+                  <Text style={[styles.statusPillText, { color: pill.text }]}>{pill.label}</Text>
+                </View>
+              </View>
             </View>
-            <Text
-              style={[styles.cardBalance, { color: balanceColor }]}
-              numberOfLines={1}
-              adjustsFontSizeToFit
-            >
-              {formatMoney(Math.abs(roundedMinor(person.balanceMinor)))}
-            </Text>
+            <View style={styles.cardRight}>
+              <Text
+                style={[styles.cardBalance, { color: balanceColor }]}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+              >
+                {formatMoney(Math.abs(dispBalanceMinor))}
+              </Text>
+              <Text style={styles.cardSub}>{lastActivityShort(person.lastActivityDate)}</Text>
+            </View>
           </View>
-          <Text style={styles.cardSub} numberOfLines={1}>
-            {lastActivityLabel(person.lastActivityDate)} · {person.balanceMinor >= 0 ? 'owes you' : 'you owe'}
-          </Text>
         </AnimatedPersonRow>
       </NeoTile>
     </ReanimatedAnimated.View>
@@ -558,6 +589,18 @@ function PersonDetailModal({
               onLongPress={() => onDeleteEntry(entry)}
               disabled={saving}
             >
+              <View
+                style={[
+                  styles.historyIcon,
+                  { backgroundColor: entry.amountMinor >= 0 ? theme.colors.incomeTint : theme.colors.expenseTint },
+                ]}
+              >
+                <Feather
+                  name={entry.amountMinor >= 0 ? 'arrow-up' : 'arrow-down'}
+                  size={13}
+                  color={entry.amountMinor >= 0 ? theme.colors.income : theme.colors.expense}
+                />
+              </View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.rowLabel}>
                   {entry.note || (entry.amountMinor >= 0 ? 'Lent' : 'Repaid')}
@@ -601,36 +644,49 @@ const styles = StyleSheet.create({
   },
   summaryValueIncome: { color: theme.colors.income },
   summaryValueExpense: { color: theme.colors.expense },
-  emptyText: { marginHorizontal: 20, color: theme.colors.textMuted, fontSize: 13 },
+  emptyText: { fontFamily: theme.font.body, marginHorizontal: 20, color: theme.colors.textMuted, fontSize: 13 },
   // Each person's own bordered tile — same spacing/radius Loans' own
   // LoanCard uses, so the two segments of this tab read as one design
   // instead of a card list next to a plain divided list.
-  card: { marginHorizontal: 20, marginBottom: 10, padding: 16, borderRadius: 12 },
+  card: { marginHorizontal: 20, marginBottom: 10, padding: 16, borderRadius: 14 },
   cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   who: { flexDirection: 'row', alignItems: 'center', flex: 1, minWidth: 0, marginRight: 8 },
   cardName: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontFamily: theme.font.roundedMedium,
+    fontSize: 15,
     color: theme.colors.textPrimary,
     marginLeft: 12,
-    flexShrink: 1,
   },
-  cardBalance: { fontSize: 16, fontFamily: theme.font.monoBold, flexShrink: 0 },
-  cardSub: { fontSize: 12, color: theme.colors.textMuted, marginTop: 8, marginLeft: 50 },
+  statusPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    alignSelf: 'flex-start',
+    borderRadius: theme.radius.pill,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    marginTop: 4,
+    marginLeft: 12,
+  },
+  statusDot: { width: 5, height: 5, borderRadius: 2.5 },
+  statusPillText: { fontFamily: theme.font.bodyBold, fontSize: 9.5 },
+  cardRight: { alignItems: 'flex-end', flexShrink: 0 },
+  cardBalance: { fontSize: 16, fontFamily: theme.font.monoBold },
+  cardSub: { fontFamily: theme.font.body, fontSize: 9.5, color: theme.colors.textMuted, marginTop: 2 },
   // Kept for PersonDetailModal's linked-loans and ledger-history rows below
   // (a plain divided list still suits a modal's inner list, unlike the
   // section's own top-level person list above).
   row: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    gap: 10,
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: theme.colors.border,
   },
-  rowLabel: { fontSize: 15, color: theme.colors.textPrimary, fontWeight: '500' },
-  rowSub: { fontSize: 12, color: theme.colors.textMuted, marginTop: 2 },
+  rowLabel: { fontFamily: theme.font.bodyMedium, fontSize: 14, color: theme.colors.textPrimary },
+  rowSub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, marginTop: 2 },
   avatar: {
     width: 38,
     height: 38,
@@ -641,7 +697,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   avatarInitial: { fontFamily: theme.font.bodyBold, fontSize: 15, color: theme.colors.onFlat },
-  rowValue: { fontSize: 14, fontWeight: '600' },
+  rowValue: { fontFamily: theme.font.monoBold, fontSize: 13.5 },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -650,18 +706,18 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   sectionHeading: { fontFamily: theme.font.roundedBold, fontSize: 16, color: theme.colors.textPrimary },
-  detailBalance: { fontSize: 20, fontWeight: '700', marginBottom: 16 },
+  detailBalance: { fontFamily: theme.font.monoBold, fontSize: 20, marginBottom: 16 },
   sectionTitle: {
-    fontSize: 13,
-    fontWeight: '700',
+    fontFamily: theme.font.bodyBold,
+    fontSize: 12,
     color: theme.colors.textMuted,
     textTransform: 'uppercase',
     marginTop: 20,
     marginBottom: 4,
   },
   fieldLabel: {
+    fontFamily: theme.font.bodyMedium,
     fontSize: 13,
-    fontWeight: '600',
     color: theme.colors.textSecondary,
     marginBottom: 6,
     marginTop: 4,
@@ -669,6 +725,14 @@ const styles = StyleSheet.create({
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 8 },
   dateFieldsRow: { flexDirection: 'row', gap: 10 },
   dateFieldInput: { flex: 1, textAlign: 'center' },
-  hintText: { fontSize: 12, color: theme.colors.textMuted, marginBottom: 10, lineHeight: 17 },
-  errorText: { color: theme.colors.expense, fontSize: 13, marginBottom: 10 },
+  hintText: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, marginBottom: 10, lineHeight: 17 },
+  errorText: { fontFamily: theme.font.bodyBold, color: theme.colors.expense, fontSize: 13, marginBottom: 10 },
+  historyIcon: {
+    width: 30,
+    height: 30,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
 });

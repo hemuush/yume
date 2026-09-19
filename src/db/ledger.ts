@@ -10,7 +10,7 @@ import {
 import { Account, Category, Transaction, TransactionType, PaymentMode } from '@/types';
 import { notifyOverspend } from '@/lib/notifications';
 import { getPeriodComparison, findTopGrowingCategory } from './reports';
-import { toLocalIsoDate } from '@/lib/date';
+import { toLocalIsoDate, addDaysToIsoDate } from '@/lib/date';
 
 /**
  * After an expense is recorded, checks whether that category's spend this
@@ -634,6 +634,41 @@ export async function listTransactions(filters?: {
     args
   );
   return rows.map(rowToTransaction);
+}
+
+/**
+ * The most-used amounts logged against a category recently — powers Add
+ * Transaction's "frequent amounts" quick-pick row. Ranked by how often an
+ * exact amount recurs (not by recency alone), so a genuinely repeated
+ * figure ("₹150 for the metro card, every time") surfaces even if a
+ * one-off bigger purchase happened more recently; ties break toward the
+ * most recent. Scoped to the last 90 days so an old, since-abandoned habit
+ * doesn't keep crowding out how the category is actually used now.
+ */
+export async function getFrequentAmountsForCategory(
+  categoryId: string,
+  limit = 4,
+  today: string = toLocalIsoDate(new Date())
+): Promise<number[]> {
+  const db = await getDb();
+  const currency = await getDefaultCurrency();
+  const since = addDaysToIsoDate(today, -90);
+  // Same currency scoping every other aggregate in the app uses (see
+  // getPeriodSummary's own comment) — without the accounts join, a
+  // transaction logged against a foreign-currency account would rank
+  // alongside default-currency ones and surface as a quick-pick chip
+  // showing that face value mislabeled in the default currency.
+  const rows = await db.getAllAsync<{ amount_minor: number }>(
+    `SELECT t.amount_minor as amount_minor, COUNT(*) as freq, MAX(t.date) as lastDate
+     FROM transactions t
+     JOIN accounts a ON a.id = t.account_id
+     WHERE t.category_id = ? AND a.currency = ? AND t.date >= ? AND t.date <= ?
+     GROUP BY t.amount_minor
+     ORDER BY freq DESC, lastDate DESC, t.amount_minor ASC
+     LIMIT ?`,
+    [categoryId, currency, since, today, limit]
+  );
+  return rows.map((r) => r.amount_minor);
 }
 
 /**

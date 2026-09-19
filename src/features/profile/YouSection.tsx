@@ -228,6 +228,17 @@ export function YouSection() {
         <Stat value={String(peopleCount)} label="PEOPLE" icon="account-group-outline" />
       </View>
 
+      <Pressable
+        onPress={() => router.push('/garden')}
+        style={styles.gardenLink}
+        accessibilityRole="button"
+        accessibilityLabel="Suu's Garden"
+      >
+        <SettingsRowIcon name="sprout-outline" backgroundColor={theme.colors.secondary} />
+        <Text style={styles.gardenLinkText}>Suu's Garden — see what's grown</Text>
+        <Feather name="chevron-right" size={16} color={theme.colors.textMuted} />
+      </Pressable>
+
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>Accounts</Text>
         <AddButton onPress={() => setAddAccountVisible(true)} label="+ Account" />
@@ -290,7 +301,18 @@ export function YouSection() {
 
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>Savings goals</Text>
-        <AddButton onPress={() => setAddGoalVisible(true)} label="+ Add" />
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+          <Pressable
+            onPress={() => router.push('/whatif')}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel="What if — try a change"
+            style={styles.seeAll}
+          >
+            <Text style={styles.seeAllText}>What if?</Text>
+          </Pressable>
+          <AddButton onPress={() => setAddGoalVisible(true)} label="+ Add" />
+        </View>
       </View>
       {goals.length === 0 ? (
         <EmptyState

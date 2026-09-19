@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { View, Text, Pressable, Alert } from 'react-native';
+import { View, Text, Pressable, Animated, Alert } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import { useFocusEffect } from 'expo-router';
 import {
@@ -16,6 +16,7 @@ import { formatMoney } from '@/lib/money';
 import { allocateRoundedMinor } from '@/lib/round';
 import { useUndoToast } from '@/components/UndoToast';
 import { haptics } from '@/lib/haptics';
+import { usePressScale } from '@/lib/usePressScale';
 import { Loan, LoanPayment, Account, Category } from '@/types';
 import { FormInput } from '@/components/FormInput';
 import { PrimaryButton } from '@/components/PrimaryButton';
@@ -29,6 +30,8 @@ import { AssetModal } from './AssetModal';
 import { AccountModal } from './AccountModal';
 import { RateChangeModal } from './RateChangeModal';
 import { PrepayModal } from './PrepayModal';
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 export function LoanDetailModal({
   loan,
@@ -64,6 +67,12 @@ export function LoanDetailModal({
   const [payYear, setPayYear] = useState('');
   const [payMonth, setPayMonth] = useState('');
   const [payDay, setPayDay] = useState('');
+
+  const kebabPress = usePressScale();
+  const accountRowPress = usePressScale();
+  const assetRowPress = usePressScale();
+  const expandPress = usePressScale();
+  const collapsePress = usePressScale();
 
   // Re-fetches the loan row itself, not just derived props — after a
   // payment or prepayment, outstandingPrincipalMinor and status change on
@@ -277,16 +286,18 @@ export function LoanDetailModal({
                 {liveLoan.rateType === 'floating' ? 'Floating' : 'Fixed'} · {liveLoan.status}
               </Text>
             </View>
-            <Pressable
+            <AnimatedPressable
               onPress={() => setMoreActionsVisible(true)}
+              onPressIn={kebabPress.onPressIn}
+              onPressOut={kebabPress.onPressOut}
               hitSlop={10}
-              style={styles.kebabBtn}
+              style={[styles.kebabBtn, kebabPress.animatedStyle]}
               disabled={busy}
               accessibilityRole="button"
               accessibilityLabel="More loan actions"
             >
               <Feather name="more-horizontal" size={16} color={theme.colors.ink} />
-            </Pressable>
+            </AnimatedPressable>
           </View>
           <View style={styles.cardStatsRow}>
             <View>
@@ -310,7 +321,12 @@ export function LoanDetailModal({
           </View>
         </NeoTile>
 
-        <Pressable onPress={() => setAccountModalVisible(true)} style={styles.assetRow}>
+        <AnimatedPressable
+          onPress={() => setAccountModalVisible(true)}
+          onPressIn={accountRowPress.onPressIn}
+          onPressOut={accountRowPress.onPressOut}
+          style={[styles.assetRow, accountRowPress.animatedStyle]}
+        >
           <View style={{ flex: 1 }}>
             <Text style={styles.rowLabel}>EMI account</Text>
             <Text style={styles.rowSub}>
@@ -318,10 +334,15 @@ export function LoanDetailModal({
             </Text>
           </View>
           <Text style={styles.viewAllText}>Change ›</Text>
-        </Pressable>
+        </AnimatedPressable>
 
         {liveLoan.direction === 'borrowed' && (
-          <Pressable onPress={() => setAssetModalVisible(true)} style={styles.assetRow}>
+          <AnimatedPressable
+            onPress={() => setAssetModalVisible(true)}
+            onPressIn={assetRowPress.onPressIn}
+            onPressOut={assetRowPress.onPressOut}
+            style={[styles.assetRow, assetRowPress.animatedStyle]}
+          >
             {liveLoan.assetValueMinor ? (
               <>
                 <View style={{ flex: 1 }}>
@@ -343,7 +364,7 @@ export function LoanDetailModal({
             ) : (
               <Text style={styles.viewAllText}>+ Track what this loan financed (home, car) ›</Text>
             )}
-          </Pressable>
+          </AnimatedPressable>
         )}
 
         {liveLoan.status === 'active' && nextInstallment && (
@@ -405,14 +426,30 @@ export function LoanDetailModal({
           );
         })}
         {!scheduleExpanded && hiddenCount > 0 && (
-          <Pressable onPress={() => setScheduleExpanded(true)} style={{ paddingVertical: 10 }}>
+          <AnimatedPressable
+            onPress={() => {
+              haptics.tap();
+              setScheduleExpanded(true);
+            }}
+            onPressIn={expandPress.onPressIn}
+            onPressOut={expandPress.onPressOut}
+            style={[{ paddingVertical: 10 }, expandPress.animatedStyle]}
+          >
             <Text style={styles.viewAllText}>View full schedule ({hiddenCount} more) ›</Text>
-          </Pressable>
+          </AnimatedPressable>
         )}
         {scheduleExpanded && (
-          <Pressable onPress={() => setScheduleExpanded(false)} style={{ paddingVertical: 10 }}>
+          <AnimatedPressable
+            onPress={() => {
+              haptics.tap();
+              setScheduleExpanded(false);
+            }}
+            onPressIn={collapsePress.onPressIn}
+            onPressOut={collapsePress.onPressOut}
+            style={[{ paddingVertical: 10 }, collapsePress.animatedStyle]}
+          >
             <Text style={styles.viewAllText}>Show less ‹</Text>
-          </Pressable>
+          </AnimatedPressable>
         )}
 
         {rateHistory.length > 0 && (

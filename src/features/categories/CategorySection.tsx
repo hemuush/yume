@@ -49,13 +49,20 @@ function SubcategoryPill({
   onPress: () => void;
   onLongPress: () => void;
 }) {
+  const { animatedStyle, onPressIn, onPressOut } = usePressScale();
   return (
-    <Pressable style={styles.pill} onPress={onPress} onLongPress={onLongPress}>
+    <AnimatedPressable
+      style={[styles.pill, animatedStyle]}
+      onPressIn={onPressIn}
+      onPressOut={onPressOut}
+      onPress={onPress}
+      onLongPress={onLongPress}
+    >
       <View style={[styles.pillDot, { backgroundColor: category.color }]} />
       <Text style={styles.pillText} numberOfLines={1}>
         {category.name}
       </Text>
-    </Pressable>
+    </AnimatedPressable>
   );
 }
 
@@ -90,17 +97,12 @@ export function CategorySection({
         const kids = childrenOf(cats, parent.id);
         return (
           <View key={parent.id} style={styles.groupCard}>
-            <Pressable
-              style={styles.groupCardHeader}
+            <GroupCardHeader
+              parent={parent}
+              count={kids.length}
               onPress={() => onEdit(parent)}
               onLongPress={() => onManage(parent)}
-            >
-              <CategoryIcon name={parent.icon} color={parent.color} square={36} size={17} />
-              <Text style={styles.groupCardTitle}>{parent.name}</Text>
-              <Text style={styles.groupCardCount}>
-                {kids.length} subcategor{kids.length === 1 ? 'y' : 'ies'}
-              </Text>
-            </Pressable>
+            />
             <View style={styles.pillRow}>
               {kids.map((child) => (
                 <SubcategoryPill
@@ -115,5 +117,34 @@ export function CategorySection({
         );
       })}
     </>
+  );
+}
+
+function GroupCardHeader({
+  parent,
+  count,
+  onPress,
+  onLongPress,
+}: {
+  parent: Category;
+  count: number;
+  onPress: () => void;
+  onLongPress: () => void;
+}) {
+  const { animatedStyle, onPressIn, onPressOut } = usePressScale();
+  return (
+    <AnimatedPressable
+      style={[styles.groupCardHeader, animatedStyle]}
+      onPressIn={onPressIn}
+      onPressOut={onPressOut}
+      onPress={onPress}
+      onLongPress={onLongPress}
+    >
+      <CategoryIcon name={parent.icon} color={parent.color} square={36} size={17} />
+      <Text style={styles.groupCardTitle}>{parent.name}</Text>
+      <Text style={styles.groupCardCount}>
+        {count} subcategor{count === 1 ? 'y' : 'ies'}
+      </Text>
+    </AnimatedPressable>
   );
 }
