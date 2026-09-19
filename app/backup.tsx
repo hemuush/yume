@@ -27,6 +27,7 @@ import {
 import { AppHeader } from '@/components/AppHeader';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { SegmentedControl } from '@/components/SegmentedControl';
+import { Skeleton } from '@/components/Skeleton';
 import { theme } from '@/constants/theme';
 
 const FREQUENCIES: { label: string; value: BackupFrequency }[] = [
@@ -84,12 +85,17 @@ export default function BackupScreen() {
   const [frequency, setFrequency] = useState<BackupFrequency>('daily');
   const [busy, setBusy] = useState<string | null>(null);
   const [doneLabel, setDoneLabel] = useState<string | null>(null);
+  // Without this, `!localFolderUri` (its default, unloaded state) briefly
+  // showed the "choose a folder" call-to-action even for someone who
+  // already has one configured, until the real value came back.
+  const [loaded, setLoaded] = useState(false);
 
   const load = useCallback(async () => {
     setLocalFolderUri(await getLocalBackupFolderUri());
     setLastLocalBackup(await getLastLocalBackupAt());
     setLocalResult(await getLastLocalBackupResult());
     setFrequency(await getBackupFrequency());
+    setLoaded(true);
   }, []);
 
   useFocusEffect(
@@ -258,47 +264,57 @@ export default function BackupScreen() {
 
         <Text style={styles.sectionTitle}>Local Folder Backup</Text>
         <View style={styles.card}>
-          <Text style={styles.cardText}>
-            {localFolderUri
-              ? 'A backup is written to your chosen folder automatically, on the schedule above. Nothing leaves your device.'
-              : 'Pick a folder on your phone once — Yume writes a backup there automatically, with no share-sheet tap needed.'}
-          </Text>
-          {localFolderUri && <StatusPill lastAt={lastLocalBackup} outcome={localResult} />}
-          <View style={styles.buttonRow}>
-            {!localFolderUri ? (
-              <PrimaryButton
-                title={busy === 'pick-folder' ? 'Choosing...' : 'Choose folder'}
-                onPress={choosePickFolder}
-                disabled={!!busy}
-                style={{ flex: 1 }}
-              />
-            ) : (
-              <>
+          {!loaded ? (
+            <>
+              <Skeleton width={260} height={12} radius={4} />
+              <Skeleton width={180} height={12} radius={4} style={{ marginTop: 6 }} />
+              <Skeleton width={140} height={30} radius={999} style={{ marginTop: 12 }} />
+            </>
+          ) : (
+            <>
+              <Text style={styles.cardText}>
+                {localFolderUri
+                  ? 'A backup is written to your chosen folder automatically, on the schedule above. Nothing leaves your device.'
+                  : 'Pick a folder on your phone once — Yume writes a backup there automatically, with no share-sheet tap needed.'}
+              </Text>
+              {localFolderUri && <StatusPill lastAt={lastLocalBackup} outcome={localResult} />}
+              <View style={styles.buttonRow}>
+                {!localFolderUri ? (
+                  <PrimaryButton
+                    title={busy === 'pick-folder' ? 'Choosing...' : 'Choose folder'}
+                    onPress={choosePickFolder}
+                    disabled={!!busy}
+                    style={{ flex: 1 }}
+                  />
+                ) : (
+                  <>
+                    <PrimaryButton
+                      title={busy === 'backup-now-local' ? 'Backing up...' : 'Backup now'}
+                      done={doneLabel === 'backup-now-local'}
+                      onPress={backupNowLocal}
+                      disabled={!!busy}
+                      style={{ flex: 1, marginRight: 8 }}
+                    />
+                    <PrimaryButton
+                      title="Forget folder"
+                      variant="secondary"
+                      onPress={forgetFolder}
+                      disabled={!!busy}
+                      style={{ flex: 1 }}
+                    />
+                  </>
+                )}
+              </View>
+              {localFolderUri && (
                 <PrimaryButton
-                  title={busy === 'backup-now-local' ? 'Backing up...' : 'Backup now'}
-                  done={doneLabel === 'backup-now-local'}
-                  onPress={backupNowLocal}
-                  disabled={!!busy}
-                  style={{ flex: 1, marginRight: 8 }}
-                />
-                <PrimaryButton
-                  title="Forget folder"
+                  title={busy === 'restore-local' ? 'Restoring...' : 'Restore latest from folder'}
                   variant="secondary"
-                  onPress={forgetFolder}
+                  onPress={restoreFromLocal}
                   disabled={!!busy}
-                  style={{ flex: 1 }}
+                  style={{ marginTop: 10 }}
                 />
-              </>
-            )}
-          </View>
-          {localFolderUri && (
-            <PrimaryButton
-              title={busy === 'restore-local' ? 'Restoring...' : 'Restore latest from folder'}
-              variant="secondary"
-              onPress={restoreFromLocal}
-              disabled={!!busy}
-              style={{ marginTop: 10 }}
-            />
+              )}
+            </>
           )}
         </View>
 

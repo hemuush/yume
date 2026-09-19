@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { View, Text, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { listAccounts } from '@/db/ledger';
 import { listSavingsGoals } from '@/db/savingsGoals';
@@ -9,6 +9,7 @@ import { AppHeader, HeaderIconButton } from '@/components/AppHeader';
 import { AddButton } from '@/components/AddButton';
 import { EmptyState } from '@/components/EmptyState';
 import { useScreenLoad } from '@/lib/useScreenLoad';
+import { Skeleton } from '@/components/Skeleton';
 import { GoalCard } from '@/features/goals/GoalCard';
 import { AddGoalModal } from '@/features/goals/AddGoalModal';
 import { GoalDetailModal } from '@/features/goals/GoalDetailModal';
@@ -39,8 +40,19 @@ export default function SavingsGoalsScreen() {
     return (
       <View style={styles.container}>
         <AppHeader title="Savings Goals" showBack />
-        <View style={styles.center}>
-          <ActivityIndicator color={theme.colors.ink} />
+        <View style={{ paddingTop: 24 }}>
+          {[0, 1].map((i) => (
+            <View key={i} style={styles.card}>
+              <View style={styles.cardTop}>
+                <Skeleton width={46} height={46} circle radius={23} />
+                <View>
+                  <Skeleton width={120} height={13} radius={4} />
+                  <Skeleton width={90} height={9} radius={4} style={{ marginTop: 5 }} />
+                </View>
+              </View>
+              <Skeleton width={280} height={6} radius={3} />
+            </View>
+          ))}
         </View>
       </View>
     );

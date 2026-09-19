@@ -1,6 +1,6 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, RefreshControl } from 'react-native';
-import Animated, { FadeInDown, FadeIn, ReduceMotion } from 'react-native-reanimated';
+import Animated, { FadeIn, ReduceMotion } from 'react-native-reanimated';
 import Feather from '@expo/vector-icons/Feather';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useFocusEffect } from 'expo-router';
@@ -19,13 +19,14 @@ import { useAccent } from '@/theme/AccentContext';
 import { hexToRgba } from '@/lib/color';
 import { EmptyState } from '@/components/EmptyState';
 import { CURRENT_PERIOD, PeriodCursor, periodRange, previousPeriodRange } from '@/lib/period';
-import { dueDateLabel } from '@/lib/dueDate';
+import { dueDateLabel, isDueUrgent } from '@/lib/dueDate';
 import { MAX_LIST_STAGGER_MS } from '@/lib/animation';
 import { HomeHeader } from '@/features/home/HomeHeader';
 import { ThisMonthHero } from '@/features/home/ThisMonthHero';
+import { ThisMonthHeroSkeleton, CardRowsSkeleton, StripSkeleton } from '@/features/home/HomeSkeleton';
 import { TodaySpendStrip } from '@/features/home/TodaySpendStrip';
 import { QuickActionsRow } from '@/features/home/QuickActionsRow';
-import { MoneyStatCard } from '@/features/home/MoneyStatCard';
+import { SuuRefreshBadge } from '@/features/home/SuuRefreshBadge';
 import { HomeSection } from '@/features/home/HomeSection';
 import { UpcomingRow, UpcomingMoreRow } from '@/features/home/UpcomingRow';
 import { useCappedList } from '@/lib/useCappedList';
@@ -57,32 +58,74 @@ export default function DashboardScreen() {
   const [userName, setUserNameState] = useState<string | null>(null);
   const [cursor, setCursor] = useState<PeriodCursor>(CURRENT_PERIOD);
   const [loadError, setLoadError] = useState<string | null>(null);
+  // The data below all starts at its own default ([], 0, null) — genuinely
+  // indistinguishable from "actually loaded and this period really is
+  // empty" — so this is the one flag the skeleton below gates on, set once
+  // the very first `load()` finishes (success or failure) and never reset
+  // afterward: a pull-to-refresh or period change re-fetches in place, it
+  // doesn't send the screen back to a loading state a user already passed.
+  const [loaded, setLoaded] = useState(false);
+  // Which way the hero should slide when the month changes — +1/-1 for a
+  // step within the same granularity, 0 for anything else (a month↔year
+  // toggle, or "jump to this month"), where a plain crossfade reads better
+  // than a slide in an arbitrary direction. State, not a ref: ThisMonthHero
+  // needs "which way did we just move" as a prop, and a ref can't be read
+  // during render. Set in the same event as `setCursor` below, so React
+  // batches both into the one re-render that also carries the new data.
+  const [heroDirection, setHeroDirection] = useState<-1 | 0 | 1>(0);
+  const handleCursorChange = useCallback(
+    (next: PeriodCursor) => {
+      setHeroDirection(
+        next.granularity !== cursor.granularity
+          ? 0
+          : next.offset > cursor.offset
+            ? 1
+            : next.offset < cursor.offset
+              ? -1
+              : 0
+      );
+      setCursor(next);
+    },
+    [cursor]
+  );
 
   const load = useCallback(async (c: PeriodCursor) => {
     const range = periodRange(c);
     try {
-      const [accs, cats, tx, ln, rules, cmp, due, name, budgetList, goalList, todaySpend, dailyGoal] =
-        await Promise.all([
-          listAccounts(),
-          listCategories(),
-          // Scoped to the same period as the navigator above it — showing the
-          // single most-recent transactions regardless of period previously
-          // made "Recent Activity" contradict whatever month/year was selected.
-          listTransactions({ fromDate: range.start, toDate: range.end, limit: 30 }),
-          listLoans(),
-          listRecurringRules(),
-          getRangeComparison(range, previousPeriodRange(c), c.granularity),
-          getNextDueInstallment(),
-          getUserName(),
-          // Budgets and goals are always about *now*, not whatever period the
-          // cursor above is browsing — a budget is inherently this calendar
-          // month, and a goal has no period at all. Same for today's spend
-          // and the daily goal below.
-          listBudgetsForMonth(),
-          listSavingsGoals(),
-          getTodaySpend(),
-          getDailySpendingGoal(),
-        ]);
+      const [
+        accs,
+        cats,
+        tx,
+        ln,
+        rules,
+        cmp,
+        due,
+        name,
+        budgetList,
+        goalList,
+        todaySpend,
+        dailyGoal,
+      ] = await Promise.all([
+        listAccounts(),
+        listCategories(),
+        // Scoped to the same period as the navigator above it — showing the
+        // single most-recent transactions regardless of period previously
+        // made "Recent Activity" contradict whatever month/year was selected.
+        listTransactions({ fromDate: range.start, toDate: range.end, limit: 30 }),
+        listLoans(),
+        listRecurringRules(),
+        getRangeComparison(range, previousPeriodRange(c), c.granularity),
+        getNextDueInstallment(),
+        getUserName(),
+        // Budgets and goals are always about *now*, not whatever period the
+        // cursor above is browsing — a budget is inherently this calendar
+        // month, and a goal has no period at all. Same for today's spend and
+        // the daily goal.
+        listBudgetsForMonth(),
+        listSavingsGoals(),
+        getTodaySpend(),
+        getDailySpendingGoal(),
+      ]);
       setAccounts(accs);
       setCategories(cats);
       setRecent(tx);
@@ -102,6 +145,8 @@ export default function DashboardScreen() {
       // Guard the throw so a transient DB error shows a banner instead of
       // freezing stale data + a stuck pull-to-refresh spinner.
       setLoadError(String(e?.message ?? e));
+    } finally {
+      setLoaded(true);
     }
   }, []);
 
@@ -124,26 +169,31 @@ export default function DashboardScreen() {
     .filter((l) => l.direction === 'borrowed')
     .reduce((sum, l) => sum + l.outstandingPrincipalMinor, 0);
 
+  // Fires the Debt tile's celebration only on the real crossing — going
+  // from a real positive balance to zero within this session (e.g. the
+  // final EMI was just marked paid) — never on a plain re-render/refresh
+  // while it's already zero, and never on first load either (`prevDebtRef`
+  // starts at `null`, not 0, so a user who's never carried debt at all
+  // never sees it fire).
+  const prevDebtRef = useRef<number | null>(null);
+  const [justClearedDebt, setJustClearedDebt] = useState(false);
+  useEffect(() => {
+    const prev = prevDebtRef.current;
+    prevDebtRef.current = totalOutstandingLoans;
+    if (prev != null && prev > 0 && totalOutstandingLoans === 0) {
+      setJustClearedDebt(true);
+      const t = setTimeout(() => setJustClearedDebt(false), 1500);
+      return () => clearTimeout(t);
+    }
+  }, [totalOutstandingLoans]);
+
   const dispIncome = roundedMinor(comparison?.current.incomeMinor ?? 0);
   const dispExpense = roundedMinor(comparison?.current.expenseMinor ?? 0);
   const savingsInPeriod = roundedMinor(comparison?.current.savingsContributionMinor ?? 0);
   // Income − expense − whatever was already moved into savings this period.
   const surplusInPeriod = dispIncome - dispExpense - savingsInPeriod;
 
-  const incomeChangePct = comparison?.incomeChangePct;
   const expenseChangePct = comparison?.expenseChangePct;
-
-  const prevSurplus = comparison
-    ? comparison.previous.incomeMinor -
-      comparison.previous.expenseMinor -
-      comparison.previous.savingsContributionMinor
-    : 0;
-  const surplusChangePct =
-    !comparison || prevSurplus === 0
-      ? surplusInPeriod === 0
-        ? 0
-        : null
-      : ((surplusInPeriod - prevSurplus) / Math.abs(prevSurplus)) * 100;
 
   const topGrowing =
     comparison &&
@@ -155,7 +205,7 @@ export default function DashboardScreen() {
   // repeated this hero's own "N% vs last" figure) is now folded into Suu's
   // line itself — see suuLine's own comment for why that takes priority.
   const savingsPct = savingsRatePct(dispIncome - dispExpense, dispIncome);
-  const suu = suuLine(savingsPct, expenseChangePct ?? null, topGrowing?.name ?? null);
+  const suu = suuLine(savingsPct, expenseChangePct ?? null, topGrowing?.name ?? null, new Date().getHours());
 
   const hasAlerts = nextDue !== null || !!topGrowing;
 
@@ -175,6 +225,7 @@ export default function DashboardScreen() {
     sign: '+' | '-' | '';
     sortDate: string;
     onPress: () => void;
+    urgent: boolean;
   }
   const upcomingItems: UpcomingItem[] = [];
   if (nextDue) {
@@ -187,11 +238,12 @@ export default function DashboardScreen() {
       iconBg: hexToRgba(accent, 0.18),
       iconColor: accent,
       title: `${nextDue.counterparty} EMI`,
-      subtitle: `Due ${dueDateLabel(nextDue.dueDate)}`,
+      subtitle: dueDateLabel(nextDue.dueDate),
       amountMinor: nextDue.emiAmountMinor,
       sign: '-',
       sortDate: nextDue.dueDate,
       onPress: () => router.push('/loans'),
+      urgent: isDueUrgent(nextDue.dueDate),
     });
   }
   for (const rule of recurringRules) {
@@ -199,16 +251,17 @@ export default function DashboardScreen() {
     const isTransfer = rule.type === 'transfer';
     upcomingItems.push({
       key: rule.id,
-      icon: isTransfer ? 'repeat' : rule.type === 'income' ? 'arrow-up-right' : 'arrow-down-right',
+      icon: isTransfer ? 'repeat' : rule.type === 'income' ? 'arrow-down-right' : 'arrow-up-right',
       iconBg: theme.colors.secondaryTint,
       title: isTransfer
         ? `${accountName(rule.accountId) ?? '—'} → ${accountName(rule.toAccountId) ?? '—'}`
         : rule.note || categoryFor(rule.categoryId)?.name || 'Recurring',
-      subtitle: `Due ${dueDateLabel(rule.nextRunDate)}`,
+      subtitle: dueDateLabel(rule.nextRunDate),
       amountMinor: rule.amountMinor,
       sign: rule.type === 'income' ? '+' : rule.type === 'expense' ? '-' : '',
       sortDate: rule.nextRunDate,
       onPress: () => router.push('/recurring'),
+      urgent: isDueUrgent(rule.nextRunDate),
     });
   }
   upcomingItems.sort((a, b) => (a.sortDate < b.sortDate ? -1 : a.sortDate > b.sortDate ? 1 : 0));
@@ -224,7 +277,8 @@ export default function DashboardScreen() {
 
   return (
     <View style={styles.container}>
-      <HomeHeader cursor={cursor} onChange={setCursor} userName={userName} hasAlerts={hasAlerts} />
+      <HomeHeader cursor={cursor} onChange={handleCursorChange} userName={userName} hasAlerts={hasAlerts} />
+      <SuuRefreshBadge refreshing={refreshing} />
 
       <ScrollView
         style={styles.scroll}
@@ -232,7 +286,14 @@ export default function DashboardScreen() {
           paddingTop: 14,
           paddingBottom: theme.layout.tabScreenScrollPad + insets.bottom,
         }}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={accent}
+            colors={[accent]}
+          />
+        }
       >
         {loadError && (
           <View style={styles.errorBanner}>
@@ -243,44 +304,46 @@ export default function DashboardScreen() {
 
         <QuickActionsRow />
 
-        <ThisMonthHero
-          incomeMinor={dispIncome}
-          spentMinor={dispExpense}
-          incomeChangePct={incomeChangePct}
-          expenseChangePct={expenseChangePct}
-          suu={suu}
-        />
+        {loaded ? (
+          <ThisMonthHero
+            periodKey={`${cursor.granularity}:${cursor.offset}`}
+            direction={heroDirection}
+            incomeMinor={dispIncome}
+            spentMinor={dispExpense}
+            surplusMinor={surplusInPeriod}
+            outstandingLoansMinor={roundedMinor(totalOutstandingLoans)}
+            suu={suu}
+            celebrateDebtCleared={justClearedDebt}
+          />
+        ) : (
+          <ThisMonthHeroSkeleton />
+        )}
 
         {dailyGoalMinor != null && (
           <TodaySpendStrip spentMinor={todaySpendMinor} goalMinor={dailyGoalMinor} />
         )}
 
-        <View style={styles.statRow}>
-          <Animated.View
-            style={{ flex: 1 }}
-            entering={FadeInDown.duration(360).springify().reduceMotion(ReduceMotion.System)}
-          >
-            <MoneyStatCard
-              label="Surplus"
-              amountMinor={surplusInPeriod}
-              changePct={surplusChangePct}
-              tone={surplusInPeriod < 0 ? 'watch' : 'good'}
-            />
-          </Animated.View>
-          <Animated.View
-            style={{ flex: 1 }}
-            entering={FadeInDown.duration(360).delay(60).springify().reduceMotion(ReduceMotion.System)}
-          >
-            <MoneyStatCard
-              label="Debt left"
-              amountMinor={roundedMinor(totalOutstandingLoans)}
-              tone={totalOutstandingLoans === 0 ? 'good' : 'neutral'}
-              footnote={totalOutstandingLoans === 0 ? '✓ All clear' : undefined}
-            />
-          </Animated.View>
-        </View>
+        {!loaded && (
+          <>
+            <HomeSection title="Budgets">
+              <CardRowsSkeleton rows={2} meter />
+            </HomeSection>
+            <HomeSection title="Upcoming">
+              <CardRowsSkeleton rows={1} subtitle />
+            </HomeSection>
+            <HomeSection title="Savings goals">
+              <StripSkeleton count={2} />
+            </HomeSection>
+            <HomeSection title="Recent activity">
+              <CardRowsSkeleton rows={3} subtitle />
+            </HomeSection>
+            <HomeSection title="Your accounts">
+              <StripSkeleton count={2} />
+            </HomeSection>
+          </>
+        )}
 
-        {topBudgets.length > 0 && (
+        {loaded && topBudgets.length > 0 && (
           <HomeSection title="Budgets" onSeeAll={() => router.push('/budgets')}>
             <View style={styles.card}>
               {topBudgets.map((progress, i) => (
@@ -297,7 +360,7 @@ export default function DashboardScreen() {
           </HomeSection>
         )}
 
-        {visibleUpcoming.length > 0 && (
+        {loaded && visibleUpcoming.length > 0 && (
           // No single "see all" destination now that this mixes loan EMIs
           // (Loans tab) and recurring rules (Recurring screen) — each row
           // already deep-links to where it actually lives.
@@ -320,6 +383,7 @@ export default function DashboardScreen() {
                     sign={item.sign}
                     onPress={item.onPress}
                     divider={i > 0}
+                    urgent={item.urgent}
                   />
                 </Animated.View>
               ))}
@@ -330,7 +394,7 @@ export default function DashboardScreen() {
           </HomeSection>
         )}
 
-        {activeGoals.length > 0 && (
+        {loaded && activeGoals.length > 0 && (
           <HomeSection title="Savings goals" onSeeAll={() => router.push('/savings-goals')}>
             <ScrollView
               horizontal
@@ -351,56 +415,60 @@ export default function DashboardScreen() {
           </HomeSection>
         )}
 
-        <HomeSection title="Recent activity" onSeeAll={() => router.push('/transactions')}>
-          {recent.length === 0 ? (
-            <EmptyState
-              title="Nothing logged in this period"
-              subtitle="Use the month pill above to check another period."
-            />
-          ) : (
-            <View style={styles.card}>
-              {recent.slice(0, 4).map((tx, i) => (
-                <Animated.View
-                  key={tx.id}
-                  entering={FadeIn.delay(Math.min(i * 60, MAX_LIST_STAGGER_MS))
-                    .duration(280)
-                    .reduceMotion(ReduceMotion.System)}
-                >
-                  <RecentTransactionRow
-                    tx={tx}
-                    category={categoryFor(tx.categoryId) ?? undefined}
-                    accountName={accountName(tx.accountId)}
-                    toAccountName={accountName(tx.toAccountId)}
-                    divider={i > 0}
-                  />
-                </Animated.View>
-              ))}
-            </View>
-          )}
-        </HomeSection>
+        {loaded && (
+          <HomeSection title="Recent activity" onSeeAll={() => router.push('/transactions')}>
+            {recent.length === 0 ? (
+              <EmptyState
+                title="Nothing logged in this period"
+                subtitle="Use the month pill above to check another period."
+              />
+            ) : (
+              <View style={styles.card}>
+                {recent.slice(0, 4).map((tx, i) => (
+                  <Animated.View
+                    key={tx.id}
+                    entering={FadeIn.delay(Math.min(i * 60, MAX_LIST_STAGGER_MS))
+                      .duration(280)
+                      .reduceMotion(ReduceMotion.System)}
+                  >
+                    <RecentTransactionRow
+                      tx={tx}
+                      category={categoryFor(tx.categoryId) ?? undefined}
+                      accountName={accountName(tx.accountId)}
+                      toAccountName={accountName(tx.toAccountId)}
+                      divider={i > 0}
+                    />
+                  </Animated.View>
+                ))}
+              </View>
+            )}
+          </HomeSection>
+        )}
 
-        <HomeSection title="Your accounts" onSeeAll={() => router.push('/profile')}>
-          {accounts.length === 0 ? (
-            <EmptyState title="No accounts yet" subtitle="Add one from your profile." />
-          ) : (
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.accountStrip}
-            >
-              {accounts.map((acc, i) => (
-                <Animated.View
-                  key={acc.id}
-                  entering={FadeIn.delay(Math.min(i * 60, MAX_LIST_STAGGER_MS))
-                    .duration(280)
-                    .reduceMotion(ReduceMotion.System)}
-                >
-                  <AccountChip account={acc} />
-                </Animated.View>
-              ))}
-            </ScrollView>
-          )}
-        </HomeSection>
+        {loaded && (
+          <HomeSection title="Your accounts" onSeeAll={() => router.push('/profile')}>
+            {accounts.length === 0 ? (
+              <EmptyState title="No accounts yet" subtitle="Add one from your profile." />
+            ) : (
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.accountStrip}
+              >
+                {accounts.map((acc, i) => (
+                  <Animated.View
+                    key={acc.id}
+                    entering={FadeIn.delay(Math.min(i * 60, MAX_LIST_STAGGER_MS))
+                      .duration(280)
+                      .reduceMotion(ReduceMotion.System)}
+                  >
+                    <AccountChip account={acc} />
+                  </Animated.View>
+                ))}
+              </ScrollView>
+            )}
+          </HomeSection>
+        )}
       </ScrollView>
     </View>
   );
@@ -420,7 +488,6 @@ const styles = StyleSheet.create({
   },
   errorTitle: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.expense },
   errorDetail: { fontSize: 11.5, color: theme.colors.textSecondary, marginTop: 3, lineHeight: 16 },
-  statRow: { flexDirection: 'row', gap: 10, marginHorizontal: 20, marginTop: 12 },
   card: {
     marginHorizontal: 20,
     backgroundColor: theme.colors.surface,

@@ -72,7 +72,9 @@ export function AccountModal({
         never rewrites transactions already recorded.
       </Text>
       <View style={styles.chipRow}>
-        {accounts.map((acc) => (
+        {accounts
+          .filter((a) => a.type !== 'savings')
+          .map((acc) => (
           <Chip
             key={acc.id}
             label={acc.name}

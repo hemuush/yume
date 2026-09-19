@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
 import { View, Text, Pressable, Animated, ScrollView, Alert, ActivityIndicator } from 'react-native';
+import Feather from '@expo/vector-icons/Feather';
 import { router } from 'expo-router';
 import { listAccounts, listTransactions, listCategories } from '@/db/ledger';
 import { listLoans } from '@/db/loans';
@@ -310,8 +311,15 @@ export function YouSection() {
 
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>Recurring</Text>
-        <Pressable onPress={() => router.push('/recurring')} hitSlop={8} style={styles.seeAllPill}>
-          <Text style={styles.seeAllPillText}>See all</Text>
+        <Pressable
+          onPress={() => router.push('/recurring')}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel="See all — Recurring"
+          style={styles.seeAll}
+        >
+          <Text style={styles.seeAllText}>See all</Text>
+          <Feather name="arrow-right" size={13} color={theme.colors.textSecondary} />
         </Pressable>
       </View>
       {visibleRules.length === 0 ? (

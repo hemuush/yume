@@ -43,6 +43,23 @@ describe('buildDailySpendBars', () => {
     expect(bars[0].segments).toHaveLength(1);
   });
 
+  it('counts an expense with no category toward the total — e.g. a loan EMI payment, written directly via SQL with no categoryId requirement', () => {
+    const categories = [cat('food', 'Food & Dining', '#FF9E7D')];
+    const transactions = [
+      tx({ id: 'a', categoryId: 'food', amountMinor: 5000, date: '2026-09-10' }),
+      tx({ id: 'b', categoryId: null, amountMinor: 180700, date: '2026-09-10', note: 'EMI #1' }),
+    ];
+    const bars = buildDailySpendBars(transactions, categories, ['2026-09-10'], '2026-09-10');
+    expect(bars[0].totalMinor).toBe(185700);
+    expect(bars[0].segments).toHaveLength(2);
+    const uncategorized = bars[0].segments.find((s) => s.name === 'Uncategorized');
+    expect(uncategorized?.amountMinor).toBe(180700);
+    // Segments must always sum to the same total the bar itself reports —
+    // otherwise the stacked-segment heights in the chart wouldn't add up to
+    // the bar's own visible height.
+    expect(bars[0].segments.reduce((sum, s) => sum + s.amountMinor, 0)).toBe(bars[0].totalMinor);
+  });
+
   it("rolls a subcategory's spend up into its parent's segment", () => {
     const categories = [cat('food', 'Food & Dining', '#FF9E7D'), cat('zomato', 'Zomato', '#FF9E7D', 'food')];
     const transactions = [

@@ -121,7 +121,14 @@ export function RuleModal({
     () => categories.filter((c) => c.kind === (type === 'income' ? 'income' : 'expense')),
     [categories, type]
   );
-  const effectiveAccountId = accountId ?? accounts[0]?.id ?? null;
+  // Same rule as the one-off add-transaction screen: a recurring
+  // expense/income can't be set to fire straight out of a savings account —
+  // that money has to be transferred out first. validate() in
+  // src/db/recurring.ts enforces this too.
+  const spendableAccounts = useMemo(() => accounts.filter((a) => a.type !== 'savings'), [accounts]);
+  const pickableAccounts = type === 'transfer' ? accounts : spendableAccounts;
+  const effectiveAccountId =
+    accountId && pickableAccounts.some((a) => a.id === accountId) ? accountId : (pickableAccounts[0]?.id ?? null);
 
   const onTypeChange = (next: TransactionType) => {
     setType(next);
@@ -246,7 +253,7 @@ export function RuleModal({
 
       <Text style={styles.fieldLabel}>{type === 'transfer' ? 'From account' : 'Account'}</Text>
       <View style={styles.chipRow}>
-        {accounts.map((acc) => (
+        {pickableAccounts.map((acc) => (
           <Chip
             key={acc.id}
             label={acc.name}

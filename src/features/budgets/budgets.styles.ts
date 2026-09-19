@@ -30,14 +30,9 @@ export const styles = StyleSheet.create({
   summaryAmountRow: { flexDirection: 'row', alignItems: 'baseline', gap: 6 },
   summaryAmount: { fontFamily: theme.font.monoBold, fontSize: 18, color: theme.colors.textPrimary },
   summaryOf: { fontSize: 12, color: theme.colors.textMuted },
-  summaryTrack: {
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: theme.colors.borderSoft,
-    marginTop: 10,
-    overflow: 'hidden',
-  },
-  summaryFill: { height: '100%', borderRadius: 3 },
+  // LimitMeter (src/components/LimitMeter.tsx) draws the bar itself now —
+  // this only keeps the same spacing the old inline track/fill pair had.
+  summaryTrackWrap: { marginTop: 10 },
 
   lapsedCard: {
     marginHorizontal: 20,
@@ -98,9 +93,6 @@ export const styles = StyleSheet.create({
   rowAmountOf: { color: theme.colors.textMuted, fontFamily: theme.font.mono },
   rowNote: { fontSize: 11, color: theme.colors.textMuted, marginTop: 6 },
   rowNoteOver: { color: theme.colors.expense, fontFamily: theme.font.bodyBold },
-
-  track: { height: 5, borderRadius: 3, backgroundColor: theme.colors.borderSoft, overflow: 'hidden' },
-  fill: { height: '100%', borderRadius: 3 },
 
   modalHint: { fontSize: 12, color: theme.colors.textMuted, marginBottom: 14, lineHeight: 17 },
   fieldLabel: {

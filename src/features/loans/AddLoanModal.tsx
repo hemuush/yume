@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { View, Text } from 'react-native';
+import { View, Text, Animated } from 'react-native';
+import { useReduceMotion } from '@/lib/useReduceMotion';
 import { createLoan } from '@/db/loans';
 import { listAccounts, listCategories } from '@/db/ledger';
 import { listPeople, PersonWithBalance } from '@/db/people';
@@ -95,6 +96,22 @@ export function AddLoanModal({
   // doesn't need a processing fee or already-paid count has to see those
   // fields before they're relevant.
   const [wizardStep, setWizardStep] = useState<1 | 2>(1);
+  // The step-2 progress segment used to just snap between its two colors —
+  // a small cross-fade instead, same reduce-motion guard as every other
+  // hand-rolled Animated value in the app.
+  const reduceMotion = useReduceMotion();
+  const [step2Fill] = useState(() => new Animated.Value(0));
+  useEffect(() => {
+    if (reduceMotion) {
+      step2Fill.setValue(wizardStep === 2 ? 1 : 0);
+      return;
+    }
+    Animated.timing(step2Fill, {
+      toValue: wizardStep === 2 ? 1 : 0,
+      duration: 220,
+      useNativeDriver: true,
+    }).start();
+  }, [wizardStep, reduceMotion, step2Fill]);
 
   useEffect(() => {
     if (visible) {
@@ -150,6 +167,10 @@ export function AddLoanModal({
   // (matching the disbursement itself), so it can't also tag the fee, or an
   // expense would end up carrying an income-kind category.
   const feeCategories = useMemo(() => categories.filter((c) => c.kind === 'expense'), [categories]);
+  // Disbursement and EMI money move as a real income/expense transaction
+  // (see createTransaction / payInstallment in src/db/loans.ts), and those
+  // reject a savings account — so it can't be offered here either.
+  const spendableAccounts = useMemo(() => accounts.filter((a) => a.type !== 'savings'), [accounts]);
 
   // A loan disbursement or its processing fee isn't a real spending/earning
   // choice the way "Groceries" vs "Entertainment" is — asking the user to
@@ -362,7 +383,11 @@ export function AddLoanModal({
       </Text>
       <View style={styles.progressRow}>
         <View style={styles.progressSeg} />
-        <View style={[styles.progressSeg, wizardStep === 2 && styles.progressSegDone]} />
+        <View style={styles.progressSeg}>
+          <Animated.View
+            style={[styles.progressSegDone, styles.progressSegOverlay, { opacity: step2Fill }]}
+          />
+        </View>
       </View>
 
       {wizardStep === 1 && (
@@ -523,7 +548,7 @@ export function AddLoanModal({
                 {direction === 'borrowed' ? 'Deposit into' : 'Pay from'} account
               </Text>
               <View style={styles.chipRow}>
-                {accounts.map((acc) => (
+                {spendableAccounts.map((acc) => (
                   <Chip
                     key={acc.id}
                     label={acc.name}
@@ -609,7 +634,7 @@ export function AddLoanModal({
               />
               <Text style={styles.fieldLabel}>Future EMIs come out of</Text>
               <View style={styles.chipRow}>
-                {accounts.map((acc) => (
+                {spendableAccounts.map((acc) => (
                   <Chip
                     key={acc.id}
                     label={acc.name}

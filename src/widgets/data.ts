@@ -135,7 +135,7 @@ export async function getNextDueWidgetData(): Promise<NextDueWidgetData | null> 
   if (nextDue) {
     candidates.push({
       title: `${nextDue.counterparty} EMI`,
-      subtitle: `Due ${dueDateLabel(nextDue.dueDate)}`,
+      subtitle: dueDateLabel(nextDue.dueDate),
       amountMinor: nextDue.emiAmountMinor,
       sign: '-',
       route: '/loans',
@@ -151,7 +151,7 @@ export async function getNextDueWidgetData(): Promise<NextDueWidgetData | null> 
     const catName = categories.find((c) => c.id === rule.categoryId)?.name;
     candidates.push({
       title: rule.note || catName || 'Recurring',
-      subtitle: `Due ${dueDateLabel(rule.nextRunDate)}`,
+      subtitle: dueDateLabel(rule.nextRunDate),
       amountMinor: rule.amountMinor,
       sign: rule.type === 'income' ? '+' : '-',
       route: '/recurring',

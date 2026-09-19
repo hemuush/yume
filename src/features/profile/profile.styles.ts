@@ -159,14 +159,11 @@ export const styles = StyleSheet.create({
   // link, so it sits at the same visual weight as the "+ Account"/"+ Add"
   // pills next to it — a different action (browse vs. create), not a
   // lesser one.
-  seeAllPill: {
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-    borderRadius: theme.radius.pill,
-    borderWidth: 1,
-    borderColor: theme.colors.borderSoft,
-  },
-  seeAllPillText: { fontSize: 12, fontFamily: theme.font.bodyMedium, color: theme.colors.textSecondary },
+  // Matches Home's own "See all" (HomeSection.tsx) exactly — this used to be
+  // a bordered pill, the only place in the app that affordance appeared;
+  // unified to the plain text+arrow style used everywhere else.
+  seeAll: { flexDirection: 'row', alignItems: 'center', gap: 3 },
+  seeAllText: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textSecondary },
 
   // ---- SettingsSection (formerly settings.tsx's own StyleSheet) ----
   groupTitle: {

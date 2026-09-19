@@ -63,4 +63,30 @@ describe('suuLine', () => {
     expect(THIN_SAVINGS_LINES).toContain(line.text);
     expect(line.pose).toBe('default');
   });
+
+  it('turns sleepy late at night even when the numbers are otherwise fine', () => {
+    // Pose only — the wording still comes from the same GOOD_SAVINGS_TEMPLATES
+    // pool a healthy month always uses, the clock never changes what Suu says.
+    const late = suuLine(72, -3, null, 23);
+    expect(late.pose).toBe('sleepy');
+    const early = suuLine(72, -3, null, 3);
+    expect(early.pose).toBe('sleepy');
+    const pct = savingsRateLabel(72);
+    expect(GOOD_SAVINGS_TEMPLATES.map((t) => fillSuuTemplate(t, pct))).toContain(late.text);
+  });
+
+  it('stays awake during the day and when no hour is given at all', () => {
+    expect(suuLine(72, -3, null, 12).pose).toBe('default');
+    expect(suuLine(72, -3, null, 5).pose).toBe('default');
+    expect(suuLine(72, -3, null, 22).pose).toBe('default');
+    expect(suuLine(72, -3).pose).toBe('default');
+  });
+
+  it('an actual overspending deficit still wins over the hour', () => {
+    // Already sleepy for the real financial reason — the night check only
+    // ever nudges a pose that would otherwise be 'default'.
+    const line = suuLine(-12, 5, null, 2);
+    expect(OVERSPENT_LINES).toContain(line.text);
+    expect(line.pose).toBe('sleepy');
+  });
 });

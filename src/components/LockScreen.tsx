@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { View, Text, StyleSheet, Animated } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SuuIllustration } from './SuuIllustration';
@@ -90,21 +90,6 @@ export function LockScreen({ onUnlocked }: { onUnlocked: () => void }) {
     []
   );
 
-  // Suu breathes slowly instead of sitting static — a subtle scale pulse,
-  // easy on the eye (and battery) at this pace.
-  const [breath] = useState(() => new Animated.Value(0));
-  useEffect(() => {
-    const loop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(breath, { toValue: 1, duration: 1600, useNativeDriver: true }),
-        Animated.timing(breath, { toValue: 0, duration: 1600, useNativeDriver: true }),
-      ])
-    );
-    loop.start();
-    return () => loop.stop();
-  }, [breath]);
-  const suuScale = breath.interpolate({ inputRange: [0, 1], outputRange: [1, 1.045] });
-
   const tryUnlock = async () => {
     setBusy(true);
     setFailed(false);
@@ -169,9 +154,12 @@ export function LockScreen({ onUnlocked }: { onUnlocked: () => void }) {
 
       <View style={[styles.centered, { top: insets.top + 64, bottom: insets.bottom + 28 }]}>
         <MoonPhaseRow accent={accent} />
-        <Animated.View style={{ transform: [{ scale: suuScale }] }}>
-          <SuuIllustration size={92} pose="sleepy" />
-        </Animated.View>
+        {/* SuuIllustration now breathes on its own (see its own comment) —
+            this used to wrap it in a second, independent scale loop, which
+            after that change would have compounded with the inner one:
+            two unsynchronized loops multiplying together into a wobble
+            rather than a single subtle pulse. */}
+        <SuuIllustration size={92} pose="sleepy" />
         <Text style={styles.title}>Yume is locked</Text>
         <Text style={styles.subtitle}>Unlock with your fingerprint, face, or device PIN.</Text>
         {failed && !deviceUnsecured && <Text style={styles.failedText}>That didn't work — try again.</Text>}
