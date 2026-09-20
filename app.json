@@ -19,7 +19,7 @@
         "backgroundImage": "./assets/android-icon-background.png"
       },
       "predictiveBackGestureEnabled": true,
-      "versionCode": 92,
+      "versionCode": 93,
       "permissions": ["android.permission.USE_BIOMETRIC", "android.permission.USE_FINGERPRINT"]
     },
     "web": {
@@ -131,9 +131,9 @@
         "style": "dark"
       },
       "eas": {
-        "projectId": "1e86ab0c-45af-4db3-9c88-6917c80f815e"
+        "projectId": "e3104b4a-7ea1-43d9-bd95-09504739b27f"
       }
     },
-    "owner": "hemant.shar.3004"
+    "owner": "yume-the-finance-app"
   }
 }
