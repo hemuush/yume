@@ -371,7 +371,12 @@ export function YouSection() {
           subtitle="Rent, subscriptions, salary — logged automatically."
         />
       ) : (
-        <>
+        // RuleCard's own style carries no horizontal margin — the dedicated
+        // Recurring screen supplies that itself via its scroll container's
+        // padding, but this preview list sits directly in Profile's, which
+        // doesn't. Without this wrapper the cards ran edge-to-edge, the one
+        // un-inset block on the whole screen.
+        <View style={{ marginHorizontal: 20 }}>
           {visibleRules.map((rule, i) => (
             <RuleCard
               key={rule.id}
@@ -391,7 +396,7 @@ export function YouSection() {
               <Text style={styles.seeAllLink}>+{hiddenRuleCount} more</Text>
             </Pressable>
           )}
-        </>
+        </View>
       )}
 
       {archivedAccounts.length > 0 && (
