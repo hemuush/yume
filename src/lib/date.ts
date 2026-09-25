@@ -18,10 +18,30 @@ export function toLocalIsoDate(d: Date): string {
  * strings as UTC midnight, which — mixed with local getMonth/setMonth — can
  * shift the result by a day depending on the device's timezone offset; this
  * avoids that entirely by building the target date from plain numbers.
+ *
+ * A day that doesn't exist in the target month is clamped to that month's
+ * last day (Jan 31 + 1 month = Feb 28/29), never overflowed into the next
+ * month the way `new Date(y, m, 31)` does — overflow previously gave a
+ * Jan-31 loan no February EMI and two in March, and walked a monthly rule on
+ * the 31st permanently onto the 3rd.
+ *
+ * `anchorDay` is for callers that step a schedule forward one period at a
+ * time from an already-clamped date: without it, Jan 31 → Feb 28 → Mar 28
+ * would lose the real due day for good. Passing the schedule's original day
+ * (31) makes that Feb 28 → Mar 31 instead. Defaults to `isoDate`'s own day.
  */
-export function addMonthsToIsoDate(isoDate: string, months: number): string {
+export function addMonthsToIsoDate(isoDate: string, months: number, anchorDay?: number): string {
   const [year, month, day] = isoDate.split('-').map(Number);
-  return toLocalIsoDate(new Date(year, month - 1 + months, day));
+  const firstOfTarget = new Date(year, month - 1 + months, 1);
+  const targetYear = firstOfTarget.getFullYear();
+  const targetMonth = firstOfTarget.getMonth();
+  const lastDayOfTarget = new Date(targetYear, targetMonth + 1, 0).getDate();
+  return toLocalIsoDate(new Date(targetYear, targetMonth, Math.min(anchorDay ?? day, lastDayOfTarget)));
+}
+
+/** The day-of-month (1–31) of a YYYY-MM-DD date — the `anchorDay` a schedule keeps across clamped months. */
+export function dayOfIsoDate(isoDate: string): number {
+  return Number(isoDate.split('-')[2]);
 }
 
 /**

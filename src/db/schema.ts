@@ -111,6 +111,10 @@ CREATE TABLE IF NOT EXISTS transactions (
   -- loan removes these along with it, rather than leaving them behind as
   -- transactions with no loan to point back to.
   loan_id TEXT REFERENCES loans(id) ON DELETE CASCADE,
+  -- Which of those loan_id rows this is (see db/loanTxKind.ts) — only a
+  -- 'prepayment' actually reduces the loan's principal. NULL whenever
+  -- loan_id is.
+  loan_tx_kind TEXT CHECK (loan_tx_kind IN ('disbursement','fee','prepayment','prepayment_charge')),
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   CHECK (type != 'transfer' OR to_account_id IS NOT NULL),
   CHECK (type = 'transfer' OR category_id IS NOT NULL)
@@ -183,7 +187,12 @@ CREATE TABLE IF NOT EXISTS recurring_rules (
   interval_count INTEGER NOT NULL DEFAULT 1,
   next_run_date TEXT NOT NULL,
   end_date TEXT,
-  active INTEGER NOT NULL DEFAULT 1
+  active INTEGER NOT NULL DEFAULT 1,
+  -- The day-of-month a monthly/yearly rule really falls on (31 for "last
+  -- day of every month" set up on Jan 31) — next_run_date alone can't hold
+  -- it once a short month clamps it to Feb 28. Null on rules saved before
+  -- this column existed, which fall back to next_run_date's own day.
+  anchor_day INTEGER
 );
 
 CREATE INDEX IF NOT EXISTS idx_transactions_date ON transactions(date);

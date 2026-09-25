@@ -6,7 +6,6 @@ import { listSavingsGoals } from '@/db/savingsGoals';
 import { goalProgress } from '@/lib/savingsGoalProgress';
 import { projectedMonthlySpend, projectGoalPace } from '@/lib/whatIf';
 import { parseLocalIsoDate } from '@/lib/date';
-import { formatMoney } from '@/lib/money';
 import { SavingsGoal } from '@/types';
 import { AppHeader } from '@/components/AppHeader';
 import { EmptyState } from '@/components/EmptyState';

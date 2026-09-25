@@ -25,6 +25,55 @@ async function syncDueReminder(loanId: string): Promise<void> {
   await scheduleLoanDueReminder(loanId, next.due_date, loan.counterparty, next.emi_amount_minor);
 }
 
+/**
+ * Where a regenerated schedule (prepayment, rate change) counts its due
+ * dates from: installment #1's own due date, the same anchor
+ * generateAmortizationSchedule used when the loan was created. Anchoring to
+ * the next *pending* installment instead would inherit a clamped day (a
+ * 31st-of-the-month loan's Feb 28 installment) and every regenerated date
+ * after it would stay on the 28th; anchoring to the date the prepayment was
+ * made would drag every future due-day to that day. Installment #1 is never
+ * clamped (offset 0), and either stays in place (already paid) or is
+ * regenerated at offset 0 from itself, so it always carries the loan's real
+ * due day. Falls back to the next pending installment only if #1 is somehow
+ * missing.
+ */
+async function scheduleAnchor(
+  db: Awaited<ReturnType<typeof getDb>>,
+  loanId: string,
+  nextInstallmentNumber: number,
+  fallbackDate: string
+): Promise<{ fromDate: string; anchorInstallmentNumber: number }> {
+  const first = await db.getFirstAsync<{ due_date: string }>(
+    'SELECT due_date FROM loan_payments WHERE loan_id = ? AND installment_number = 1',
+    [loanId]
+  );
+  if (first) return { fromDate: first.due_date, anchorInstallmentNumber: 1 };
+  const nextPending = await db.getFirstAsync<{ due_date: string }>(
+    'SELECT due_date FROM loan_payments WHERE loan_id = ? AND installment_number = ?',
+    [loanId, nextInstallmentNumber]
+  );
+  return { fromDate: nextPending?.due_date ?? fallbackDate, anchorInstallmentNumber: nextInstallmentNumber };
+}
+
+/**
+ * The expense category a lent loan's prepayment charge is filed under: the
+ * built-in "Fees & Charges" (is_system, so it can't have been renamed,
+ * archived or deleted), or — only if that row is somehow missing — the
+ * first active expense category.
+ */
+async function feeCategoryId(db: Awaited<ReturnType<typeof getDb>>): Promise<string> {
+  const row =
+    (await db.getFirstAsync<{ id: string }>(
+      `SELECT id FROM categories WHERE is_system = 1 AND kind = 'expense' AND name = 'Fees & Charges' LIMIT 1`
+    )) ??
+    (await db.getFirstAsync<{ id: string }>(
+      `SELECT id FROM categories WHERE kind = 'expense' AND archived = 0 ORDER BY sort_order ASC LIMIT 1`
+    ));
+  if (!row) throw new Error('No expense category available to file the prepayment charge under.');
+  return row.id;
+}
+
 function rowToLoan(row: any): Loan {
   return {
     id: row.id,
@@ -247,8 +296,8 @@ export async function createLoan(input: CreateLoanInput): Promise<Loan> {
 
     if (disbursementTxId && input.disbursement) {
       await tx.runAsync(
-        `INSERT INTO transactions (id, type, account_id, category_id, amount_minor, date, note, loan_id)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO transactions (id, type, account_id, category_id, amount_minor, date, note, loan_id, loan_tx_kind)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'disbursement')`,
         [
           disbursementTxId,
           input.direction === 'borrowed' ? 'income' : 'expense',
@@ -266,8 +315,8 @@ export async function createLoan(input: CreateLoanInput): Promise<Loan> {
         // (lent), either way real cash left the account through processing/
         // documentation charges, separate from the principal itself.
         await tx.runAsync(
-          `INSERT INTO transactions (id, type, account_id, category_id, amount_minor, date, note, loan_id)
-           VALUES (?, 'expense', ?, ?, ?, ?, ?, ?)`,
+          `INSERT INTO transactions (id, type, account_id, category_id, amount_minor, date, note, loan_id, loan_tx_kind)
+           VALUES (?, 'expense', ?, ?, ?, ?, ?, ?, 'fee')`,
           [
             newId(),
             input.disbursement.accountId,
@@ -352,10 +401,10 @@ export interface OutstandingLoanPoint {
  * Total outstanding principal across every *borrowed* loan (lent loans are
  * money owed to the user, not debt), reconstructed at each of the last
  * `months` month-ends. Nothing stores a loan's balance history directly —
- * this walks `loan_payments.outstanding_after_minor`, the snapshot already
- * recorded after each paid installment, back to whichever one was most
- * recent as of that month-end. A loan not yet started by a given month-end
- * contributes nothing; one started but with no paid installment yet
+ * this is principal minus all principal repaid by that month-end (paid
+ * installments' principal components, plus prepayments), the same
+ * reconstruction getNetWorthTrend uses. A loan not yet started by a given
+ * month-end contributes nothing; one started but with nothing repaid yet
  * contributes its full principal. Includes loans that have since fully
  * closed — their real trajectory (paid down to zero) is part of the trend,
  * not excluded just because they don't carry debt today. Powers Home's
@@ -378,16 +427,19 @@ export async function getOutstandingLoanTrend(
     }));
   }
 
-  // Sorted ascending across all loans together, so once one payment's date
-  // is past the month-end being checked, every payment after it in this
-  // array is too — the inner loop below can stop right there.
-  const payments = await db.getAllAsync<{
-    loan_id: string;
-    paid_date: string;
-    outstanding_after_minor: number;
-  }>(
-    `SELECT loan_id, paid_date, outstanding_after_minor FROM loan_payments
-     WHERE paid_date IS NOT NULL ORDER BY paid_date ASC`
+  // Principal actually repaid, dated: every paid installment's principal
+  // component plus every prepayment. An installment paid before the loan
+  // was entered into Yume has no paid_date, so its due_date stands in (the
+  // same fallback getNetWorthTrend uses) — skipping those rows showed a loan
+  // entered mid-way through at its full original principal. A prepayment
+  // isn't a loan_payments row at all; leaving it out overstated the balance
+  // from the prepayment until the next installment was paid.
+  const repayments = await db.getAllAsync<{ loan_id: string; on_date: string; principal_minor: number }>(
+    `SELECT loan_id, COALESCE(paid_date, due_date) AS on_date, principal_component_minor AS principal_minor
+     FROM loan_payments WHERE status = 'paid'
+     UNION ALL
+     SELECT loan_id, date AS on_date, amount_minor AS principal_minor
+     FROM transactions WHERE loan_tx_kind = 'prepayment'`
   );
 
   const points: OutstandingLoanPoint[] = [];
@@ -396,12 +448,11 @@ export async function getOutstandingLoanTrend(
     let total = 0;
     for (const loan of loans) {
       if (loan.start_date > monthEndIso) continue;
-      let latest: number | null = null;
-      for (const p of payments) {
-        if (p.paid_date > monthEndIso) break;
-        if (p.loan_id === loan.id) latest = p.outstanding_after_minor;
+      let repaid = 0;
+      for (const r of repayments) {
+        if (r.loan_id === loan.id && r.on_date <= monthEndIso) repaid += r.principal_minor;
       }
-      total += latest ?? loan.principal_minor;
+      total += Math.max(0, loan.principal_minor - repaid);
     }
     points.push({
       label: monthLabel(new Date(reference.getFullYear(), reference.getMonth() - i, 1)),
@@ -575,16 +626,12 @@ export async function applyRateChange(
     [loanId]
   );
   const nextInstallmentNumber = paidInstallments.length ? paidInstallments[0].installment_number + 1 : 1;
-  // Anchored to the installment's own original due date, not the date the
-  // rate change was actually made — otherwise every future installment's
-  // due-day silently shifts to whatever day of the month this happened to
-  // be done on (e.g. a loan due on the 5th permanently moving to the 20th
-  // just because that's when the rate was updated).
-  const nextPending = await db.getFirstAsync<{ due_date: string }>(
-    `SELECT due_date FROM loan_payments WHERE loan_id = ? AND installment_number = ?`,
-    [loanId, nextInstallmentNumber]
-  );
-  const scheduleAnchorDate = nextPending?.due_date ?? opts.effectiveDate;
+  // Anchored to the loan's own original due dates, not the date the rate
+  // change was actually made — otherwise every future installment's due-day
+  // silently shifts to whatever day of the month this happened to be done
+  // on (e.g. a loan due on the 5th permanently moving to the 20th just
+  // because that's when the rate was updated). See scheduleAnchor.
+  const anchor = await scheduleAnchor(db, loanId, nextInstallmentNumber, opts.effectiveDate);
 
   // The EMI recalculateAfterPrepayment amortizes against — fixed (the old
   // EMI) in keepEmi mode, or freshly computed to close out in exactly the
@@ -607,7 +654,14 @@ export async function applyRateChange(
           annualRateBp: opts.newAnnualRateBp,
           emiAmountMinor: emiForSchedule,
           fromInstallmentNumber: nextInstallmentNumber,
-          fromDate: scheduleAnchorDate,
+          fromDate: anchor.fromDate,
+          anchorInstallmentNumber: anchor.anchorInstallmentNumber,
+          // keepTenure promises the payoff date never moves — the EMI above
+          // is rounded to the paisa, so without a hard last installment the
+          // leftover rounding (often 1 paisa) spilled into a phantom extra
+          // installment a month past that date. The last one absorbs it
+          // instead, same as generateAmortizationSchedule's own final row.
+          lastInstallmentNumber: mode === 'keepTenure' ? loan.tenure_months : undefined,
         })
       : [];
 
@@ -701,13 +755,15 @@ export async function undoInstallmentPayment(loanPaymentId: string): Promise<voi
     );
   }
 
-  const previousInstallment = await db.getFirstAsync<{ outstanding_after_minor: number }>(
-    'SELECT outstanding_after_minor FROM loan_payments WHERE loan_id = ? AND installment_number = ?',
-    [payment.loan_id, payment.installment_number - 1]
-  );
-  const loan = await db.getFirstAsync<any>('SELECT * FROM loans WHERE id = ?', [payment.loan_id]);
+  const loan = await db.getFirstAsync<{ id: string }>('SELECT id FROM loans WHERE id = ?', [payment.loan_id]);
   if (!loan) throw new Error('Loan not found');
-  const restoredOutstanding = previousInstallment?.outstanding_after_minor ?? loan.principal_minor;
+  // Exactly the balance this installment was amortized against — every
+  // schedule row (original, or regenerated after a prepayment/rate change)
+  // is built as `outstanding_after = balance − principal_component`. The
+  // previous installment's own `outstanding_after` is NOT that balance once
+  // a prepayment sits between the two: it predates the prepayment, so
+  // restoring it put the prepaid amount back on the loan.
+  const restoredOutstanding = payment.outstanding_after_minor + payment.principal_component_minor;
 
   await db.withTransactionAsync(async (tx) => {
     if (payment.transaction_id) {
@@ -779,6 +835,13 @@ export async function applyPrepayment(
     // the identical note above the insert below.
     await assertSpendableAccount('expense', opts.accountId);
   }
+  // The charge is an expense, so it needs an expense category. For a
+  // borrowed loan `categoryId` already is one (Loan EMI) and stays the
+  // charge's category exactly as before; for a lent loan it's the INCOME
+  // category the repayment itself is filed under, which filed the charge
+  // as an expense tagged "Loan Repayment".
+  const chargeCategoryId =
+    loan.direction === 'borrowed' || !opts.chargeAmountMinor ? opts.categoryId : await feeCategoryId(db);
   // The UI already blocks this, but this function has no other caller-side
   // guarantee — an over-prepayment would otherwise record a transaction for
   // more cash than the loan needed, with the excess never tracked anywhere.
@@ -791,16 +854,12 @@ export async function applyPrepayment(
     [loanId]
   );
   const nextInstallmentNumber = paidInstallments.length ? paidInstallments[0].installment_number + 1 : 1;
-  // Anchored to the installment's own original due date, not the date the
+  // Anchored to the loan's own original due dates, not the date the
   // prepayment happened to be made — see the identical note in
   // applyRateChange. Without this, paying extra on the 20th of the month
   // permanently drags every future EMI's due-day from (say) the 5th to the
   // 20th, and can silently clear an "overdue" flag on the next installment.
-  const nextPending = await db.getFirstAsync<{ due_date: string }>(
-    `SELECT due_date FROM loan_payments WHERE loan_id = ? AND installment_number = ?`,
-    [loanId, nextInstallmentNumber]
-  );
-  const scheduleAnchorDate = nextPending?.due_date ?? opts.date;
+  const anchor = await scheduleAnchor(db, loanId, nextInstallmentNumber, opts.date);
 
   // Read before the pending rows below get deleted and replaced — this is
   // the "before" half of the interest-saved/months-shaved comparison
@@ -821,7 +880,8 @@ export async function applyPrepayment(
           annualRateBp: loan.interest_rate_annual_bp,
           emiAmountMinor: loan.emi_amount_minor,
           fromInstallmentNumber: nextInstallmentNumber,
-          fromDate: scheduleAnchorDate,
+          fromDate: anchor.fromDate,
+          anchorInstallmentNumber: anchor.anchorInstallmentNumber,
         })
       : [];
 
@@ -843,8 +903,8 @@ export async function applyPrepayment(
   const chargeAmountMinor = opts.chargeAmountMinor ?? 0;
   await db.withTransactionAsync(async (tx) => {
     await tx.runAsync(
-      `INSERT INTO transactions (id, type, account_id, category_id, amount_minor, date, note, loan_id)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO transactions (id, type, account_id, category_id, amount_minor, date, note, loan_id, loan_tx_kind)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'prepayment')`,
       [
         txId,
         loan.direction === 'borrowed' ? 'expense' : 'income',
@@ -862,12 +922,12 @@ export async function applyPrepayment(
       // early doesn't waive a bank's charge on the account the repayment
       // passes through) — always 'expense', never touches the loan schedule.
       await tx.runAsync(
-        `INSERT INTO transactions (id, type, account_id, category_id, amount_minor, date, note, loan_id)
-         VALUES (?, 'expense', ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO transactions (id, type, account_id, category_id, amount_minor, date, note, loan_id, loan_tx_kind)
+         VALUES (?, 'expense', ?, ?, ?, ?, ?, ?, 'prepayment_charge')`,
         [
           newId(),
           opts.accountId,
-          opts.categoryId,
+          chargeCategoryId,
           chargeAmountMinor,
           opts.date,
           `Prepayment charge — ${loan.counterparty}`,
@@ -948,7 +1008,7 @@ export async function deleteLoan(loanId: string): Promise<RowSnapshot[]> {
     throw new Error('This loan has real recorded payments — undo those first before deleting it.');
   }
   const prepayment = await db.getFirstAsync<{ id: string }>(
-    `SELECT id FROM transactions WHERE loan_id = ? AND note LIKE 'Prepayment%' LIMIT 1`,
+    `SELECT id FROM transactions WHERE loan_id = ? AND loan_tx_kind IN ('prepayment', 'prepayment_charge') LIMIT 1`,
     [loanId]
   );
   if (prepayment) {

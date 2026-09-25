@@ -1,4 +1,4 @@
-import { DateRange } from '@/db/reports';
+import type { DateRange } from '@/types';
 import { toLocalIsoDate } from './date';
 
 export type PeriodGranularity = 'month' | 'year';

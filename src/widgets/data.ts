@@ -2,7 +2,8 @@ import { listAccounts, listCategories } from '@/db/ledger';
 import { getRangeComparison, findTopGrowingCategory } from '@/db/reports';
 import { getNextDueInstallment } from '@/db/loans';
 import { listRecurringRules } from '@/db/recurring';
-import { getAccentColor, getThemeId } from '@/db/settings';
+import { getAccentColor, getThemeId, getHideSensitiveAmounts } from '@/db/settings';
+import { formatMaskableMoney } from '@/lib/money';
 import { resolveActiveTheme } from '@/theme/themes';
 import { CURRENT_PERIOD, periodRange, previousPeriodRange } from '@/lib/period';
 import { roundedMinor } from '@/lib/round';
@@ -175,15 +176,27 @@ export async function getNextDueWidgetData(): Promise<NextDueWidgetData | null> 
 
 export interface AccountWidgetRow {
   name: string;
-  balanceMinor: number;
+  /** Already formatted — in the account's own currency, and masked exactly when the in-app balance would be. */
+  balanceText: string;
   badgeColor: string;
 }
 
 export async function getAccountsWidgetData(): Promise<{ accounts: AccountWidgetRow[] }> {
-  const [accounts, accent] = await Promise.all([listAccounts(), getAccentColorOnce()]);
+  const [accounts, accent, hideAmounts] = await Promise.all([
+    listAccounts(),
+    getAccentColorOnce(),
+    getHideSensitiveAmounts(),
+  ]);
   const rows: AccountWidgetRow[] = accounts.slice(0, 3).map((a) => ({
     name: a.name,
-    balanceMinor: a.currentBalanceMinor,
+    // Same rule as Home's AccountChip: the account's own currency (this
+    // used to format every balance in the default currency), and a savings
+    // balance masked when "hide savings & investment amounts" is on — the
+    // widget previously showed it in full on the home screen regardless.
+    balanceText: formatMaskableMoney(a.currentBalanceMinor, {
+      currency: a.currency,
+      masked: hideAmounts && a.type === 'savings',
+    }),
     badgeColor: accountBadgeColor(a.type, accent),
   }));
   return { accounts: rows };

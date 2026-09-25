@@ -1,5 +1,5 @@
 import { Text, TextProps } from 'react-native';
-import { formatMoney, getCurrencySymbol } from '@/lib/money';
+import { formatMaskableMoney } from '@/lib/money';
 import { usePrivacy } from '@/theme/PrivacyContext';
 
 interface Props extends TextProps {
@@ -24,7 +24,7 @@ export function Amount({ minor, sensitive, currency, style, ...rest }: Props) {
   const masked = hideAmounts && sensitive;
   return (
     <Text style={style} {...rest}>
-      {masked ? `${getCurrencySymbol(currency)}••••` : formatMoney(minor, currency)}
+      {formatMaskableMoney(minor, { currency, masked })}
     </Text>
   );
 }

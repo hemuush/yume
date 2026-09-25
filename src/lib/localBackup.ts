@@ -1,6 +1,7 @@
 import { StorageAccessFramework } from 'expo-file-system/legacy';
 import { buildBackupSnapshot, BackupSnapshot } from './backup';
 import { toLocalIsoDate } from './date';
+import { withoutRelock } from './appLock';
 import {
   getLocalBackupFolderUri,
   setLocalBackupFolderUri,
@@ -17,7 +18,7 @@ import {
  * the user cancels.
  */
 export async function pickBackupFolder(): Promise<string | null> {
-  const result = await StorageAccessFramework.requestDirectoryPermissionsAsync();
+  const result = await withoutRelock(() => StorageAccessFramework.requestDirectoryPermissionsAsync());
   if (!result.granted) return null;
   await setLocalBackupFolderUri(result.directoryUri);
   return result.directoryUri;
@@ -72,6 +73,11 @@ async function pruneOldLocalBackups(directoryUri: string): Promise<void> {
  * on top of the automatic one, or just tapping it twice) silently piled up
  * duplicate same-day files forever, and "restore the newest" got less
  * reliable the more of them accumulated.
+ *
+ * The old same-day file is only deleted AFTER the new one is fully written.
+ * Deleting it first meant a failed write (storage full, the folder grant
+ * revoked mid-way) left no backup for today at all — and a half-written new
+ * file is removed rather than left behind to be picked up as "the newest".
  */
 export async function writeLocalBackupNow(directoryUri: string): Promise<{ sizeBytes: number }> {
   const snapshot = await buildBackupSnapshot();
@@ -79,14 +85,18 @@ export async function writeLocalBackupNow(directoryUri: string): Promise<{ sizeB
   const filename = backupFilename(toLocalIsoDate(new Date()));
 
   const existing = await StorageAccessFramework.readDirectoryAsync(directoryUri);
-  for (const uri of existing) {
-    if (decodeURIComponent(uri).includes(filename)) {
-      await StorageAccessFramework.deleteAsync(uri).catch(() => {});
-    }
-  }
+  const sameDay = existing.filter((uri) => decodeURIComponent(uri).includes(filename));
 
   const fileUri = await StorageAccessFramework.createFileAsync(directoryUri, filename, 'application/json');
-  await StorageAccessFramework.writeAsStringAsync(fileUri, json);
+  try {
+    await StorageAccessFramework.writeAsStringAsync(fileUri, json);
+  } catch (e) {
+    await StorageAccessFramework.deleteAsync(fileUri).catch(() => {});
+    throw e;
+  }
+  for (const uri of sameDay) {
+    if (uri !== fileUri) await StorageAccessFramework.deleteAsync(uri).catch(() => {});
+  }
   await setLastLocalBackupAt(new Date().toISOString());
   await pruneOldLocalBackups(directoryUri);
   return { sizeBytes: json.length };

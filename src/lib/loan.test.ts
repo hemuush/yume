@@ -87,13 +87,37 @@ describe('generateAmortizationSchedule', () => {
       startDate: '2024-01-31',
     });
     expect(schedule[0].dueDate).toBe('2024-01-31');
+    // One installment in every calendar month — a month without a 31st
+    // clamps to its own last day rather than overflowing into the next
+    // month (which used to skip February and double up March).
     expect(schedule.map((r) => r.dueDate)).toEqual([
       '2024-01-31',
-      '2024-03-02',
+      '2024-02-29',
       '2024-03-31',
-      '2024-05-01',
+      '2024-04-30',
       '2024-05-31',
-      '2024-07-01',
+      '2024-06-30',
+    ]);
+  });
+
+  it('a regenerated schedule anchored to installment #1 keeps the real due day past a short month', () => {
+    // A 31st-of-the-month loan regenerated from installment 2 onward (after
+    // a prepayment/rate change), anchored to installment #1 = Jan 31.
+    const schedule = recalculateAfterPrepayment({
+      loanId: 'loan-anchor',
+      outstandingPrincipalMinor: 50000_00,
+      annualRateBp: 900,
+      emiAmountMinor: 10000_00,
+      fromInstallmentNumber: 2,
+      fromDate: '2025-01-31',
+      anchorInstallmentNumber: 1,
+    });
+    expect(schedule[0].installmentNumber).toBe(2);
+    expect(schedule.slice(0, 4).map((r) => r.dueDate)).toEqual([
+      '2025-02-28',
+      '2025-03-31',
+      '2025-04-30',
+      '2025-05-31',
     ]);
   });
 

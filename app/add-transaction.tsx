@@ -257,6 +257,15 @@ export default function AddTransactionScreen() {
     if (type === 'transfer' && (!toAccountId || toAccountId === effectiveAccountId)) {
       return { error: 'Pick a different destination account' };
     }
+    if (type === 'transfer') {
+      // Same rule createTransaction enforces — caught here so it shows as a
+      // form error instead of a half-saved batch.
+      const fromCurrency = accounts.find((a) => a.id === effectiveAccountId)?.currency;
+      const toCurrency = accounts.find((a) => a.id === toAccountId)?.currency;
+      if (fromCurrency && toCurrency && fromCurrency !== toCurrency) {
+        return { error: `These accounts use different currencies (${fromCurrency} and ${toCurrency})` };
+      }
+    }
     const cat = categories.find((c) => c.id === categoryId);
     return {
       row: {

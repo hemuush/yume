@@ -53,6 +53,7 @@ import {
   deleteLedgerEntry,
 } from '@/db/people';
 import { buildBackupSnapshot, restoreFromSnapshot } from '@/lib/backup';
+import { addMonthsToIsoDate } from '@/lib/date';
 
 describe('transaction-wrapped writes against a real SQLite engine', () => {
   let accountId: string;
@@ -376,6 +377,101 @@ describe('transaction-wrapped writes against a real SQLite engine', () => {
     expect(chargeTx).toBeDefined();
     expect(chargeTx!.type).toBe('expense');
     expect(chargeTx!.amountMinor).toBe(2360);
+  });
+
+  it('a loan due on the 31st keeps its real due day through a prepayment and a rate change', async () => {
+    const loan = await createLoan({
+      direction: 'borrowed',
+      counterparty: 'MonthEnd Bank',
+      principalMinor: 600000,
+      interestRateAnnualBp: 1200,
+      tenureMonths: 6,
+      startDate: '2026-01-31',
+      rateType: 'floating',
+      disbursement: { accountId, categoryId: incomeCategoryId },
+    });
+    let schedule = await getLoanSchedule(loan.id);
+    expect(schedule.map((p) => p.dueDate)).toEqual([
+      '2026-01-31',
+      '2026-02-28',
+      '2026-03-31',
+      '2026-04-30',
+      '2026-05-31',
+      '2026-06-30',
+    ]);
+
+    // Pay #1 and #2, so the next pending installment would sit right after
+    // the clamped Feb 28 — the case that used to lock the schedule onto the 28th.
+    await payInstallment(schedule[0].id, {
+      accountId,
+      categoryId: expenseCategoryId,
+      paidDate: '2026-01-31',
+    });
+    await payInstallment(schedule[1].id, {
+      accountId,
+      categoryId: expenseCategoryId,
+      paidDate: '2026-02-28',
+    });
+
+    await applyPrepayment(loan.id, {
+      amountMinor: 50000,
+      accountId,
+      categoryId: expenseCategoryId,
+      date: '2026-03-10',
+    });
+    schedule = await getLoanSchedule(loan.id);
+    const pendingAfterPrepay = schedule.filter((p) => p.status === 'pending').map((p) => p.dueDate);
+    const realDueDays = ['2026-03-31', '2026-04-30', '2026-05-31', '2026-06-30'];
+    expect(pendingAfterPrepay.length).toBeGreaterThan(0);
+    expect(pendingAfterPrepay).toEqual(realDueDays.slice(0, pendingAfterPrepay.length));
+
+    await applyRateChange(loan.id, { newAnnualRateBp: 1300, effectiveDate: '2026-03-15' });
+    schedule = await getLoanSchedule(loan.id);
+    const pendingAfterRate = schedule.filter((p) => p.status === 'pending').map((p) => p.dueDate);
+    expect(pendingAfterRate.length).toBeGreaterThan(0);
+    expect(pendingAfterRate).toEqual(realDueDays.slice(0, pendingAfterRate.length));
+  });
+
+  it('regenerating a schedule stored under the old overflow math snaps its dates back to the real due day', async () => {
+    const loan = await createLoan({
+      direction: 'borrowed',
+      counterparty: 'Legacy Overflow Bank',
+      principalMinor: 600000,
+      interestRateAnnualBp: 1200,
+      tenureMonths: 6,
+      startDate: '2026-01-31',
+      rateType: 'floating',
+      disbursement: { accountId, categoryId: incomeCategoryId },
+    });
+    // Recreate what an install on the old date math actually stored.
+    const legacyDates = ['2026-01-31', '2026-03-03', '2026-03-31', '2026-05-01', '2026-05-31', '2026-07-01'];
+    for (let n = 1; n <= 6; n++) {
+      await mockTestDb.runAsync(
+        'UPDATE loan_payments SET due_date = ? WHERE loan_id = ? AND installment_number = ?',
+        [legacyDates[n - 1], loan.id, n]
+      );
+    }
+
+    await applyRateChange(loan.id, {
+      newAnnualRateBp: 1200,
+      effectiveDate: '2026-02-01',
+      mode: 'keepTenure',
+    });
+
+    const schedule = await getLoanSchedule(loan.id);
+    expect(schedule.slice(0, 6).map((p) => p.dueDate)).toEqual([
+      '2026-01-31',
+      '2026-02-28',
+      '2026-03-31',
+      '2026-04-30',
+      '2026-05-31',
+      '2026-06-30',
+    ]);
+    // Every installment, however many the regenerated schedule has, sits on
+    // "installment #1 + (n − 1) months", clamped.
+    for (const p of schedule) {
+      expect(p.dueDate).toBe(addMonthsToIsoDate('2026-01-31', p.installmentNumber - 1));
+    }
   });
 
   it('applyPrepayment with no charge specified behaves exactly as before (backward compatible)', async () => {

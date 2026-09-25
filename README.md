@@ -70,8 +70,12 @@ src/
 
 ```bash
 npm install
-npm run android      # or: npx expo start, then open in Expo Go / a dev client
+npx expo run:android   # builds and installs a development build, then starts Metro
 ```
+
+Expo Go can't run Yume: it depends on native modules Expo Go doesn't include
+(`react-native-android-widget`, `react-native-keyboard-controller`). Once a development build is
+installed on the device, `npm start` is enough for day-to-day work.
 
 ## Checks
 
