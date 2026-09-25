@@ -156,3 +156,9 @@ export interface RecurringRule {
   endDate: string | null;
   active: boolean;
 }
+
+/** An inclusive calendar-date range, both ends YYYY-MM-DD — what every report/period query takes. */
+export interface DateRange {
+  start: string; // inclusive, YYYY-MM-DD
+  end: string; // inclusive, YYYY-MM-DD
+}

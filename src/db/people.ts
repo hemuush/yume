@@ -33,19 +33,19 @@ export interface PersonWithBalance extends Person {
 
 export async function listPeople(includeArchived = false): Promise<PersonWithBalance[]> {
   const db = await getDb();
+  // One grouped query instead of one extra query per person (each a
+  // separate trip through the app-wide statement queue).
   const rows = await db.getAllAsync<any>(
-    `SELECT * FROM people ${includeArchived ? '' : 'WHERE archived = 0'} ORDER BY created_at ASC`
+    `SELECT p.*,
+       (SELECT SUM(e.amount_minor) FROM person_ledger_entries e WHERE e.person_id = p.id) AS balance_total,
+       (SELECT MAX(e.date) FROM person_ledger_entries e WHERE e.person_id = p.id) AS last_date
+     FROM people p ${includeArchived ? '' : 'WHERE p.archived = 0'} ORDER BY p.created_at ASC`
   );
-  const people = rows.map(rowToPerson);
-  const withBalances: PersonWithBalance[] = [];
-  for (const person of people) {
-    const bal = await db.getFirstAsync<{ total: number | null; lastDate: string | null }>(
-      'SELECT SUM(amount_minor) as total, MAX(date) as lastDate FROM person_ledger_entries WHERE person_id = ?',
-      [person.id]
-    );
-    withBalances.push({ ...person, balanceMinor: bal?.total ?? 0, lastActivityDate: bal?.lastDate ?? null });
-  }
-  return withBalances;
+  return rows.map((row) => ({
+    ...rowToPerson(row),
+    balanceMinor: row.balance_total ?? 0,
+    lastActivityDate: row.last_date ?? null,
+  }));
 }
 
 export async function createPerson(input: { name: string; notes?: string }): Promise<Person> {

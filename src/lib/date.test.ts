@@ -46,8 +46,21 @@ describe('addMonthsToIsoDate', () => {
     expect(addMonthsToIsoDate('2024-11-15', 2)).toBe('2025-01-15');
   });
 
-  it('overflows a nonexistent day (Jan 31 + 1 month) into the next valid date, same as native Date', () => {
-    expect(addMonthsToIsoDate('2024-01-31', 1)).toBe('2024-03-02'); // 2024 is a leap year: Feb has 29 days
+  it('clamps a nonexistent day (Jan 31 + 1 month) to the last day of the target month, never overflowing into the next', () => {
+    expect(addMonthsToIsoDate('2024-01-31', 1)).toBe('2024-02-29'); // 2024 is a leap year: Feb has 29 days
+    expect(addMonthsToIsoDate('2023-01-31', 1)).toBe('2023-02-28');
+    expect(addMonthsToIsoDate('2026-03-31', 1)).toBe('2026-04-30');
+    expect(addMonthsToIsoDate('2026-05-31', -1)).toBe('2026-04-30'); // clamps going backwards too
+    expect(addMonthsToIsoDate('2024-02-29', 12)).toBe('2025-02-28'); // leap day, a year on
+  });
+
+  it('with an anchorDay, climbs back to the real day once the month has room for it', () => {
+    // Stepping forward from an already-clamped Feb 28 without the anchor would stick on the 28th.
+    expect(addMonthsToIsoDate('2026-02-28', 1)).toBe('2026-03-28');
+    expect(addMonthsToIsoDate('2026-02-28', 1, 31)).toBe('2026-03-31');
+    expect(addMonthsToIsoDate('2026-03-31', 1, 31)).toBe('2026-04-30');
+    expect(addMonthsToIsoDate('2025-02-28', 12, 29)).toBe('2026-02-28');
+    expect(addMonthsToIsoDate('2027-02-28', 12, 29)).toBe('2028-02-29');
   });
 
   it('is a no-op for 0 months', () => {

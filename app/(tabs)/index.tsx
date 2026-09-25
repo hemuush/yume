@@ -90,7 +90,13 @@ export default function DashboardScreen() {
     [cursor]
   );
 
+  // Stepping the period quickly starts overlapping loads; each is a long
+  // chain through the app-wide statement queue, so an earlier one can finish
+  // last. Only the most recent load may write state — otherwise last month's
+  // data could land under this month's label.
+  const loadSeq = useRef(0);
   const load = useCallback(async (c: PeriodCursor) => {
+    const seq = ++loadSeq.current;
     const range = periodRange(c);
     try {
       const [accs, cats, tx, ln, rules, cmp, due, name, budgetList, goalList, todaySpend, dailyGoal] =
@@ -115,6 +121,7 @@ export default function DashboardScreen() {
           getTodaySpend(),
           getDailySpendingGoal(),
         ]);
+      if (seq !== loadSeq.current) return;
       setAccounts(accs);
       setCategories(cats);
       setRecent(tx);
@@ -131,11 +138,12 @@ export default function DashboardScreen() {
       setDailyGoalMinor(dailyGoal);
       setLoadError(null);
     } catch (e: any) {
+      if (seq !== loadSeq.current) return;
       // Guard the throw so a transient DB error shows a banner instead of
       // freezing stale data + a stuck pull-to-refresh spinner.
       setLoadError(String(e?.message ?? e));
     } finally {
-      setLoaded(true);
+      if (seq === loadSeq.current) setLoaded(true);
     }
   }, []);
 

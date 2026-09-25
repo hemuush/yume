@@ -4,6 +4,8 @@ import { CREATE_TABLES_SQL } from './schema';
 import { DEFAULT_CATEGORIES } from '@/constants/categories';
 import { newId } from '@/lib/id';
 import { primeCurrencyCache } from './settings';
+import { BACKFILL_LOAN_TX_KIND_SQL } from './loanTxKind';
+import { addMonthsToIsoDate } from '@/lib/date';
 
 const DB_NAME = 'yume.db';
 const LEGACY_DB_NAME = 'flynse.db';
@@ -48,6 +50,16 @@ export interface AppDb {
   runAsync(sql: string, params?: any[]): Promise<void>;
   execAsync(sql: string): Promise<void>;
   withTransactionAsync(task: (tx: AppDb) => Promise<void>): Promise<void>;
+  /**
+   * Runs `task` as ONE entry in the queue, handing it the raw connection —
+   * for work that must not interleave with any other screen's statements
+   * but can't be a single transaction: toggling `PRAGMA foreign_keys`
+   * (only allowed outside a transaction) around a restore, or reading every
+   * table for a backup so the snapshot is one consistent point in time.
+   * Same `tx` rule as withTransactionAsync: use the handle passed in, never
+   * the outer db, or the task waits on itself forever.
+   */
+  exclusiveAsync<T>(task: (db: AppDb) => Promise<T>): Promise<T>;
 }
 
 // The in-flight (or resolved) db setup — see getDb(). Cached as a promise so
@@ -64,6 +76,7 @@ function toAppDb(raw: SQLite.SQLiteDatabase): AppDb {
     },
     execAsync: (sql) => raw.execAsync(sql),
     withTransactionAsync: (task) => raw.withTransactionAsync(() => task(self)),
+    exclusiveAsync: (task) => task(self),
   };
   return self;
 }
@@ -116,6 +129,7 @@ function serializeDb(raw: SQLite.SQLiteDatabase): AppDb {
     runAsync: (sql, params) => serialize(() => rawDb.runAsync(sql, params)),
     execAsync: (sql) => serialize(() => rawDb.execAsync(sql)),
     withTransactionAsync: (task) => serialize(() => rawDb.withTransactionAsync(task)),
+    exclusiveAsync: (task) => serialize(() => task(rawDb)),
   };
 }
 
@@ -206,7 +220,8 @@ async function remapLegacyCategoryColors(db: AppDb): Promise<void> {
   }
 }
 
-async function runMigrations(db: AppDb): Promise<void> {
+/** Exported for tests only — the app runs this once, inside initDb. */
+export async function runMigrations(db: AppDb): Promise<void> {
   await ensureColumn(db, 'loans', 'rate_type', `rate_type TEXT NOT NULL DEFAULT 'fixed'`);
   await ensureColumn(db, 'loans', 'person_id', `person_id TEXT REFERENCES people(id) ON DELETE SET NULL`);
   await ensureColumn(db, 'transactions', 'loan_id', `loan_id TEXT REFERENCES loans(id) ON DELETE CASCADE`);
@@ -258,6 +273,69 @@ async function runMigrations(db: AppDb): Promise<void> {
 
   await ensureColumn(db, 'savings_goals', 'note_to_self', `note_to_self TEXT`);
   await ensureColumn(db, 'savings_goals', 'letter_revealed', `letter_revealed INTEGER NOT NULL DEFAULT 0`);
+  // Left null on existing rules rather than backfilled from next_run_date:
+  // a rule that already drifted (31st → 3rd under the old overflow math)
+  // would just have its drifted day locked in, and null already falls back
+  // to exactly that day at run time — see runDueRecurringRules.
+  await ensureColumn(db, 'recurring_rules', 'anchor_day', `anchor_day INTEGER`);
+
+  await ensureColumn(
+    db,
+    'transactions',
+    'loan_tx_kind',
+    `loan_tx_kind TEXT CHECK (loan_tx_kind IN ('disbursement','fee','prepayment','prepayment_charge'))`
+  );
+  await db.runAsync(BACKFILL_LOAN_TX_KIND_SQL);
+
+  loanDueDatesRepaired = await repairLoanDueDates(db);
+}
+
+/**
+ * Loans whose pending due dates were just corrected by repairLoanDueDates
+ * during this launch's setup — read once by app/_layout.tsx, which then
+ * re-schedules due reminders (a reminder already set for the old, wrong
+ * date would otherwise still fire on that date). Lives here rather than
+ * calling into db/loans.ts directly: loans.ts imports this file, and
+ * migrations run before notification setup anyway.
+ */
+let loanDueDatesRepaired = 0;
+export function consumeLoanDueDateRepairs(): number {
+  const n = loanDueDatesRepaired;
+  loanDueDatesRepaired = 0;
+  return n;
+}
+
+/**
+ * Month arithmetic used to overflow a missing day into the next month
+ * (Jan 31 + 1 month = Mar 3), so a loan due on the 29th–31st could have
+ * pending installments stored on the wrong date — no February EMI, two in
+ * March. Rewrites every *pending* installment to "installment #1 + (n − 1)
+ * months, clamped", exactly what generateAmortizationSchedule produces
+ * today. Paid installments are history and left alone. A no-op for every
+ * loan due on the 1st–28th (the old and new math agree there), and
+ * idempotent: a second run finds nothing to change.
+ */
+async function repairLoanDueDates(db: AppDb): Promise<number> {
+  const rows = await db.getAllAsync<{
+    id: string;
+    installment_number: number;
+    due_date: string;
+    anchor: string;
+  }>(
+    `SELECT lp.id AS id, lp.installment_number AS installment_number, lp.due_date AS due_date, anchor_row.due_date AS anchor
+     FROM loan_payments lp
+     JOIN loan_payments anchor_row ON anchor_row.loan_id = lp.loan_id AND anchor_row.installment_number = 1
+     WHERE lp.status = 'pending' AND CAST(substr(anchor_row.due_date, 9, 2) AS INTEGER) > 28`
+  );
+  let changed = 0;
+  for (const row of rows) {
+    const expected = addMonthsToIsoDate(row.anchor, row.installment_number - 1);
+    if (expected !== row.due_date) {
+      await db.runAsync('UPDATE loan_payments SET due_date = ? WHERE id = ?', [expected, row.id]);
+      changed++;
+    }
+  }
+  return changed;
 }
 
 /**
@@ -285,7 +363,11 @@ async function initDb(): Promise<AppDb> {
   const unqueued = toAppDb(raw);
   await unqueued.execAsync('PRAGMA foreign_keys = ON;');
   await unqueued.execAsync(CREATE_TABLES_SQL);
-  await runMigrations(unqueued);
+  // One transaction for the whole batch: a failure partway through (a
+  // crash, a bad statement) rolls every migration back together instead of
+  // leaving an install half-migrated — e.g. a column added but its one-time
+  // backfill never run, which ensureColumn would then never retry.
+  await unqueued.withTransactionAsync((tx) => runMigrations(tx));
   await seedDefaultCategoriesIfEmpty(unqueued);
 
   const currencyRow = await unqueued.getFirstAsync<{ value: string }>(
@@ -322,20 +404,4 @@ async function seedDefaultCategoriesIfEmpty(db: AppDb) {
       );
     }
   });
-}
-
-// Test-only / reset helper. Never call from production UI flows.
-export async function _resetDatabase() {
-  const db = await getDb();
-  await db.execAsync(`
-    DELETE FROM loan_payments;
-    DELETE FROM loans;
-    DELETE FROM transactions;
-    DELETE FROM budgets;
-    DELETE FROM recurring_rules;
-    DELETE FROM savings_goals;
-    DELETE FROM categories;
-    DELETE FROM accounts;
-  `);
-  await seedDefaultCategoriesIfEmpty(db);
 }

@@ -2,13 +2,12 @@ import { getDb } from './client';
 import { toLocalIsoDate, addDaysToIsoDate, isoDatesInRange, monthsBetweenIsoDates } from '@/lib/date';
 import { streakSeries } from '@/lib/gardenGrowth';
 import { getDefaultCurrency } from './settings';
+import type { DateRange } from '@/types';
 
 export type ReportPeriod = 'day' | 'week' | 'month' | 'year';
 
-export interface DateRange {
-  start: string; // inclusive, YYYY-MM-DD
-  end: string; // inclusive, YYYY-MM-DD
-}
+// Defined in @/types (so src/lib can use it without importing the db layer); re-exported here for existing callers.
+export type { DateRange };
 
 const toIso = toLocalIsoDate;
 
@@ -646,12 +645,18 @@ export async function getNetWorthTrend(months = 6, reference: Date = new Date())
       paid_principal: number | null;
       asset_value_minor: number | null;
     }>(
+      // A prepayment reduces principal too, but isn't a loan_payments row —
+      // without the second SUM its cash left the accounts total above while
+      // the debt never went down, so a prepaid loan showed that amount as
+      // phantom debt forever (even after closing).
       `SELECT l.direction as direction, l.principal_minor as principal_minor, l.asset_value_minor as asset_value_minor,
          (SELECT COALESCE(SUM(lp.principal_component_minor), 0) FROM loan_payments lp
-           WHERE lp.loan_id = l.id AND lp.status = 'paid' AND COALESCE(lp.paid_date, lp.due_date) <= ?) as paid_principal
+           WHERE lp.loan_id = l.id AND lp.status = 'paid' AND COALESCE(lp.paid_date, lp.due_date) <= ?) +
+         (SELECT COALESCE(SUM(pt.amount_minor), 0) FROM transactions pt
+           WHERE pt.loan_id = l.id AND pt.loan_tx_kind = 'prepayment' AND pt.date <= ?) as paid_principal
        FROM loans l
        WHERE l.start_date <= ?`,
-      [cutoffIso, cutoffIso]
+      [cutoffIso, cutoffIso, cutoffIso]
     );
     let loansNet = 0;
     for (const row of loanRows) {

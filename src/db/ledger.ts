@@ -1,4 +1,4 @@
-import { getDb } from './client';
+import { getDb, AppDb } from './client';
 import { newId } from '@/lib/id';
 import { captureRow, captureRows, restoreRow, restoreRows, RowSnapshot } from './undoSnapshot';
 import {
@@ -100,14 +100,27 @@ function rowToAccount(row: any): Account {
 
 export async function listAccounts(includeArchived = false): Promise<Account[]> {
   const db = await getDb();
+  // One query for every account's balance — the same derivation as
+  // getAccountBalance (opening + income/transfers-in − expenses/transfers-out),
+  // just grouped. It used to be two extra queries per account, each a
+  // separate trip through the app-wide statement queue that every other
+  // screen's loads wait behind.
   const rows = await db.getAllAsync<any>(
-    `SELECT * FROM accounts ${includeArchived ? '' : 'WHERE archived = 0'} ORDER BY created_at ASC`
+    `SELECT a.*,
+       a.opening_balance_minor + COALESCE((
+         SELECT SUM(CASE
+             WHEN t.type = 'income' AND t.account_id = a.id THEN t.amount_minor
+             WHEN t.type = 'transfer' AND t.to_account_id = a.id THEN t.amount_minor
+             WHEN t.type = 'expense' AND t.account_id = a.id THEN -t.amount_minor
+             WHEN t.type = 'transfer' AND t.account_id = a.id THEN -t.amount_minor
+             ELSE 0
+           END)
+         FROM transactions t
+         WHERE t.account_id = a.id OR t.to_account_id = a.id
+       ), 0) AS current_balance_minor
+     FROM accounts a ${includeArchived ? '' : 'WHERE a.archived = 0'} ORDER BY a.created_at ASC`
   );
-  const accounts = rows.map(rowToAccount);
-  for (const acc of accounts) {
-    acc.currentBalanceMinor = await getAccountBalance(acc.id);
-  }
-  return accounts;
+  return rows.map(rowToAccount);
 }
 
 export async function createAccount(input: {
@@ -549,7 +562,39 @@ export async function assertSpendableAccount(type: TransactionType, accountId: s
   }
 }
 
-export async function createTransaction(input: CreateTransactionInput): Promise<Transaction> {
+/**
+ * A transfer moves the same stored number out of one account and into the
+ * other — there's no exchange rate anywhere in the schema — so between two
+ * accounts in different currencies it would silently turn ₹1,000 into
+ * $1,000. Rejected until the app has real conversion support.
+ */
+export async function assertSameCurrencyTransfer(
+  type: TransactionType,
+  accountId: string,
+  toAccountId: string | null | undefined
+): Promise<void> {
+  if (type !== 'transfer' || !toAccountId) return;
+  const db = await getDb();
+  const rows = await db.getAllAsync<{ id: string; currency: string }>(
+    'SELECT id, currency FROM accounts WHERE id IN (?, ?)',
+    [accountId, toAccountId]
+  );
+  const from = rows.find((r) => r.id === accountId)?.currency;
+  const to = rows.find((r) => r.id === toAccountId)?.currency;
+  if (from && to && from !== to) {
+    throw new Error(
+      `These accounts use different currencies (${from} and ${to}) — Yume can't convert between them, so a transfer between them isn't supported.`
+    );
+  }
+}
+
+/**
+ * Every check createTransaction applies before writing — shared with
+ * runDueRecurringRules, which has to do its own insert inside a
+ * transaction (see insertTransactionRow) but must hold each occurrence to
+ * exactly the same rules a hand-typed entry gets.
+ */
+export async function assertValidTransactionInput(input: CreateTransactionInput): Promise<void> {
   if (!Number.isFinite(input.amountMinor) || input.amountMinor <= 0) {
     throw new Error('Amount must be a positive number');
   }
@@ -563,8 +608,16 @@ export async function createTransaction(input: CreateTransactionInput): Promise<
     throw new Error('Income/expense requires a category');
   }
   await assertSpendableAccount(input.type, input.accountId);
+  await assertSameCurrencyTransfer(input.type, input.accountId, input.toAccountId);
+}
 
-  const db = await getDb();
+/**
+ * The raw INSERT behind createTransaction, against whichever handle it's
+ * given — the outer db, or a `tx` inside withTransactionAsync (calling
+ * createTransaction there would queue behind the transaction itself and
+ * deadlock). Does no validation; run assertValidTransactionInput first.
+ */
+export async function insertTransactionRow(db: AppDb, input: CreateTransactionInput): Promise<string> {
   const id = newId();
   await db.runAsync(
     `INSERT INTO transactions
@@ -584,7 +637,11 @@ export async function createTransaction(input: CreateTransactionInput): Promise<
       input.loanPaymentId ?? null,
     ]
   );
-  const row = await db.getFirstAsync<any>('SELECT * FROM transactions WHERE id = ?', [id]);
+  return id;
+}
+
+/** The post-write overspend check every new expense gets — see checkOverspendAndNotify. Never throws. */
+export async function checkOverspendForNewTransaction(input: CreateTransactionInput): Promise<void> {
   // The overspend check compares this month's spend to last month's — firing
   // it for a backdated entry (e.g. logging January while it's September)
   // would compare the wrong month entirely and could pop a bogus "overspend"
@@ -593,6 +650,14 @@ export async function createTransaction(input: CreateTransactionInput): Promise<
   if (input.type === 'expense' && input.categoryId && isCurrentMonth) {
     await checkOverspendAndNotify(input.categoryId).catch(() => {});
   }
+}
+
+export async function createTransaction(input: CreateTransactionInput): Promise<Transaction> {
+  await assertValidTransactionInput(input);
+  const db = await getDb();
+  const id = await insertTransactionRow(db, input);
+  const row = await db.getFirstAsync<any>('SELECT * FROM transactions WHERE id = ?', [id]);
+  await checkOverspendForNewTransaction(input);
   return rowToTransaction(row);
 }
 
@@ -602,6 +667,13 @@ export async function listTransactions(filters?: {
   fromDate?: string;
   toDate?: string;
   limit?: number;
+  /**
+   * With `categoryId`, also match that category's subcategories — the same
+   * rollup Reports' "Where it went" totals use, so tapping a category lists
+   * exactly the transactions its total was built from. A no-op for a
+   * category with no subcategories.
+   */
+  includeSubcategories?: boolean;
 }): Promise<Transaction[]> {
   const db = await getDb();
   const clauses: string[] = [];
@@ -611,7 +683,10 @@ export async function listTransactions(filters?: {
     clauses.push('(account_id = ? OR to_account_id = ?)');
     args.push(filters.accountId, filters.accountId);
   }
-  if (filters?.categoryId) {
+  if (filters?.categoryId && filters.includeSubcategories) {
+    clauses.push('(category_id = ? OR category_id IN (SELECT id FROM categories WHERE parent_id = ?))');
+    args.push(filters.categoryId, filters.categoryId);
+  } else if (filters?.categoryId) {
     clauses.push('category_id = ?');
     args.push(filters.categoryId);
   }
@@ -743,11 +818,18 @@ export async function updateTransaction(id: string, input: UpdateTransactionInpu
     throw new Error('Income/expense requires a category');
   }
   await assertSpendableAccount(input.type, input.accountId);
+  await assertSameCurrencyTransfer(input.type, input.accountId, input.toAccountId);
 
   const db = await getDb();
+  // `paymentMode` omitted means "leave it as-is": the edit screen has no
+  // payment-mode field, so writing `?? null` here used to wipe the mode a
+  // recurring rule had stamped on the transaction every time it was edited.
+  const keepPaymentMode = input.paymentMode === undefined;
   await db.runAsync(
     `UPDATE transactions
-     SET type = ?, account_id = ?, to_account_id = ?, category_id = ?, amount_minor = ?, date = ?, note = ?, payment_mode = ?
+     SET type = ?, account_id = ?, to_account_id = ?, category_id = ?, amount_minor = ?, date = ?, note = ?${
+       keepPaymentMode ? '' : ', payment_mode = ?'
+     }
      WHERE id = ?`,
     [
       input.type,
@@ -757,7 +839,7 @@ export async function updateTransaction(id: string, input: UpdateTransactionInpu
       input.amountMinor,
       input.date,
       input.note ?? '',
-      input.paymentMode ?? null,
+      ...(keepPaymentMode ? [] : [input.paymentMode ?? null]),
       id,
     ]
   );

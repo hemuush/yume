@@ -111,7 +111,11 @@ export default function ReportsScreen() {
   const scrollRef = useRef<ScrollView>(null);
   const sectionY = useRef<Record<string, number>>({});
   const [activeSection, setActiveSection] = useState<'overview' | 'categories' | 'trends'>('overview');
+  // react-hooks/refs misreads this: calling onSectionLayout(key) in render
+  // only *builds* the onLayout handler — the ref is written inside it, when
+  // layout fires, never during render.
   const onSectionLayout = (key: string) => (e: LayoutChangeEvent) => {
+    // eslint-disable-next-line react-hooks/refs
     sectionY.current[key] = e.nativeEvent.layout.y;
   };
   // A tap-to-jump animates the scroll over ~300ms, and onScroll keeps firing
@@ -144,7 +148,11 @@ export default function ReportsScreen() {
     setActiveSection(current);
   };
 
+  // Only the most recent load may write state — stepping periods quickly
+  // starts overlapping loads, and an earlier one can finish last.
+  const loadSeq = useRef(0);
   const load = useCallback(async (c: PeriodCursor) => {
+    const seq = ++loadSeq.current;
     setCatExpanded(false);
     const range = periodRange(c);
     const anchor = parseLocalIsoDate(range.end);
@@ -158,6 +166,7 @@ export default function ReportsScreen() {
         getDailyExpenseTotals(range),
         listCategories(),
       ]);
+      if (seq !== loadSeq.current) return;
       setComparison(cmp);
       setTrend(tr);
       setNetWorthTrend(nw);
@@ -166,6 +175,7 @@ export default function ReportsScreen() {
       setStatus('ready');
       setErrorText(null);
     } catch (e: any) {
+      if (seq !== loadSeq.current) return;
       setErrorText(String(e?.message ?? e));
       setStatus('error');
     }
@@ -197,7 +207,18 @@ export default function ReportsScreen() {
       setCatTxSheet(cat);
       setCatTx(null);
       const r = periodRange(cursor);
-      setCatTx(await listTransactions({ categoryId: cat.categoryId, fromDate: r.start, toDate: r.end }));
+      // Rolled up like the category's total itself — spend under a since-
+      // archived subcategory counts toward the parent's total (and the
+      // drill-down isn't offered once every subcategory is archived), so the
+      // list has to include it too or it wouldn't add up to that total.
+      setCatTx(
+        await listTransactions({
+          categoryId: cat.categoryId,
+          includeSubcategories: true,
+          fromDate: r.start,
+          toDate: r.end,
+        })
+      );
     },
     [cursor]
   );

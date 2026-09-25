@@ -15,6 +15,7 @@ export interface AsyncDb {
   // concurrency to guard against) so app code written against the real
   // queued/unqueued split runs unmodified against this test harness.
   withTransactionAsync(fn: (tx: AsyncDb) => Promise<void>): Promise<void>;
+  exclusiveAsync<T>(fn: (db: AsyncDb) => Promise<T>): Promise<T>;
 }
 
 export function createRealDataTestDb(): AsyncDb {
@@ -48,6 +49,9 @@ export function createRealDataTestDb(): AsyncDb {
         db.exec('ROLLBACK');
         throw e;
       }
+    },
+    async exclusiveAsync<T>(fn: (db: AsyncDb) => Promise<T>): Promise<T> {
+      return fn(asyncDb);
     },
   };
   return asyncDb;

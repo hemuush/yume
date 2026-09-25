@@ -16,7 +16,9 @@ import { SpaceMono_700Bold } from '@expo-google-fonts/space-mono/700Bold';
 import { Fredoka_400Regular } from '@expo-google-fonts/fredoka/400Regular';
 import { Fredoka_500Medium } from '@expo-google-fonts/fredoka/500Medium';
 import { Fredoka_600SemiBold } from '@expo-google-fonts/fredoka/600SemiBold';
-import { getDb } from '@/db/client';
+import { getDb, consumeLoanDueDateRepairs } from '@/db/client';
+import { resyncAllLoanReminders } from '@/db/loans';
+import { isReturningFromOwnActivity } from '@/lib/appLock';
 import { getNotificationPrefs, getHasOnboarded, setHasOnboarded, getAppLockEnabled } from '@/db/settings';
 import { listAccounts, listTransactions } from '@/db/ledger';
 import { runLocalBackupIfDue } from '@/lib/localBackup';
@@ -63,6 +65,12 @@ export default function RootLayout() {
         // rule now isolates its own failures internally; this catch only
         // guards the outer query (e.g. getDb()) from an unhandled rejection.
         void runDueRecurringRules().catch((err) => console.error('runDueRecurringRules failed:', err));
+        // Setup just moved some pending loan installments off dates the old
+        // month-end math got wrong (see repairLoanDueDates in db/client.ts) —
+        // any due reminder already scheduled was for the old date.
+        if (consumeLoanDueDateRepairs() > 0) {
+          void resyncAllLoanReminders().catch((err) => console.error('resyncAllLoanReminders failed:', err));
+        }
         // Unlike runDueRecurringRules/runLocalBackupIfDue above,
         // ensureAndroidChannel/syncDailyReminder/syncWeeklySummary have no
         // internal try/catch — each can genuinely reject (a bad trigger, a
@@ -151,7 +159,11 @@ function AppGate({ needsOnboarding, initialLocked }: { needsOnboarding: boolean;
   useEffect(() => {
     if (!lockEnabled) return;
     const sub = AppState.addEventListener('change', (next: AppStateStatus) => {
-      if (appState.current.match(/inactive|background/) && next === 'active') {
+      if (
+        appState.current.match(/inactive|background/) &&
+        next === 'active' &&
+        !isReturningFromOwnActivity()
+      ) {
         setIsLocked(true);
       }
       appState.current = next;

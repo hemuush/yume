@@ -93,6 +93,15 @@ export function generateAmortizationSchedule(params: {
  * Recompute a fresh schedule for the remaining tenure after a prepayment,
  * keeping EMI fixed and reducing tenure. Returns the new schedule starting
  * from the given installment number.
+ *
+ * `fromDate` is the due date of installment `anchorInstallmentNumber`
+ * (defaults to `fromInstallmentNumber`, i.e. the first regenerated one), and
+ * every due date is offset from it rather than chained installment to
+ * installment. Callers pass installment #1's own due date with
+ * `anchorInstallmentNumber: 1` — the same anchor generateAmortizationSchedule
+ * uses — so a loan due on the 31st keeps landing on the 31st (or the month's
+ * last day) after a prepayment or rate change, instead of inheriting
+ * whatever clamped day the next pending installment happened to fall on.
  */
 export function recalculateAfterPrepayment(params: {
   loanId: string;
@@ -101,9 +110,18 @@ export function recalculateAfterPrepayment(params: {
   emiAmountMinor: number;
   fromInstallmentNumber: number;
   fromDate: string;
+  anchorInstallmentNumber?: number;
+  /**
+   * If set, this installment closes the loan out exactly (principal = all
+   * that's left), absorbing rounding residue — for a schedule that must end
+   * on a fixed installment (keepTenure). Omitted, the schedule runs until
+   * the balance reaches zero on its own.
+   */
+  lastInstallmentNumber?: number;
 }): Omit<LoanPayment, 'transactionId' | 'paidDate' | 'status'>[] {
   const { loanId, outstandingPrincipalMinor, annualRateBp, emiAmountMinor, fromInstallmentNumber, fromDate } =
     params;
+  const anchorInstallmentNumber = params.anchorInstallmentNumber ?? fromInstallmentNumber;
   const r = monthlyRateFromAnnualBp(annualRateBp);
   const schedule: Omit<LoanPayment, 'transactionId' | 'paidDate' | 'status'>[] = [];
   let outstanding = outstandingPrincipalMinor;
@@ -124,7 +142,7 @@ export function recalculateAfterPrepayment(params: {
       break;
     }
 
-    if (principalComponent >= outstanding) {
+    if (principalComponent >= outstanding || i === params.lastInstallmentNumber) {
       principalComponent = outstanding;
       installmentEmi = principalComponent + interestComponent;
     }
@@ -135,7 +153,7 @@ export function recalculateAfterPrepayment(params: {
       id: newId(),
       loanId,
       installmentNumber: i,
-      dueDate: addMonthsToIsoDate(fromDate, i - fromInstallmentNumber),
+      dueDate: addMonthsToIsoDate(fromDate, i - anchorInstallmentNumber),
       emiAmountMinor: installmentEmi,
       principalComponentMinor: principalComponent,
       interestComponentMinor: interestComponent,

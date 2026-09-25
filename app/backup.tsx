@@ -23,12 +23,29 @@ import {
   setLastLocalBackupResult,
   BackupFrequency,
   BackupOutcome,
+  getNotificationPrefs,
 } from '@/db/settings';
+import { resyncAllLoanReminders } from '@/db/loans';
+import { syncDailyReminder, syncWeeklySummary } from '@/lib/notifications';
+import { withoutRelock } from '@/lib/appLock';
+import { refreshAllWidgets } from '@/widgets/notifyWidgets';
 import { AppHeader } from '@/components/AppHeader';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { SegmentedControl } from '@/components/SegmentedControl';
 import { Skeleton } from '@/components/Skeleton';
 import { theme } from '@/constants/theme';
+
+async function resyncAfterRestore(): Promise<void> {
+  await resyncAllLoanReminders().catch((err) => console.error('resyncAllLoanReminders failed:', err));
+  try {
+    const prefs = await getNotificationPrefs();
+    await syncDailyReminder(prefs);
+    await syncWeeklySummary(prefs);
+  } catch (err) {
+    console.error('Reminder resync after restore failed:', err);
+  }
+  refreshAllWidgets();
+}
 
 const FREQUENCIES: { label: string; value: BackupFrequency }[] = [
   { label: 'Daily', value: 'daily' },
@@ -134,7 +151,7 @@ export default function BackupScreen() {
       file.create();
       file.write(JSON.stringify(snapshot, null, 2));
       if (await Sharing.isAvailableAsync()) {
-        await Sharing.shareAsync(file.uri, { mimeType: 'application/json' });
+        await withoutRelock(() => Sharing.shareAsync(file.uri, { mimeType: 'application/json' }));
       }
     });
 
@@ -145,10 +162,12 @@ export default function BackupScreen() {
       file.create();
       file.write(bytes);
       if (await Sharing.isAvailableAsync()) {
-        await Sharing.shareAsync(file.uri, {
-          mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-          dialogTitle: 'Export Yume data',
-        });
+        await withoutRelock(() =>
+          Sharing.shareAsync(file.uri, {
+            mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            dialogTitle: 'Export Yume data',
+          })
+        );
       }
     });
 
@@ -158,7 +177,7 @@ export default function BackupScreen() {
       // actually works across devices — many file managers report a .json
       // file's MIME type inconsistently, which would otherwise grey out the
       // very file the user is trying to pick.
-      const result = await DocumentPicker.getDocumentAsync({ type: '*/*' });
+      const result = await withoutRelock(() => DocumentPicker.getDocumentAsync({ type: '*/*' }));
       if (result.canceled || !result.assets?.[0]) return;
       const content = await new File(result.assets[0].uri).text();
       let snapshot: BackupSnapshot;
@@ -184,6 +203,12 @@ export default function BackupScreen() {
               try {
                 const { skippedColumns } = await restoreFromSnapshot(snapshot);
                 resolve();
+                // Everything scheduled outside the database still describes
+                // the pre-restore data: loan due reminders for loans that may
+                // no longer exist (or miss ones that now do), the reminder
+                // schedule from the old notification prefs, and home-screen
+                // widgets. Best-effort — the restore itself already succeeded.
+                void resyncAfterRestore();
                 // A restore replaces every table — every screen's loaded
                 // state is now stale. Each screen reloads via useFocusEffect,
                 // so bouncing to Home is enough for the rest of the app to
