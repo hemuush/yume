@@ -18,7 +18,7 @@ export function SuuRefreshBadge({ refreshing }: { refreshing: boolean }) {
   const reduce = useReduceMotion();
   const wasRefreshing = useRef(false);
   const [visible, setVisible] = useState(false);
-  const progress = useRef(new Animated.Value(0)).current;
+  const [progress] = useState(() => new Animated.Value(0));
 
   useEffect(() => {
     if (wasRefreshing.current && !refreshing && !reduce) {

@@ -1,9 +1,16 @@
 import { getDb } from './client';
 import { newId } from '@/lib/id';
-import { createTransaction, assertSpendableAccount } from './ledger';
+import {
+  assertSpendableAccount,
+  assertSameCurrencyTransfer,
+  assertValidTransactionInput,
+  insertTransactionRow,
+  checkOverspendForNewTransaction,
+  CreateTransactionInput,
+} from './ledger';
 import { captureRow, restoreRow, RowSnapshot } from './undoSnapshot';
 import { RecurringRule, RecurrenceFrequency, TransactionType, PaymentMode } from '@/types';
-import { toLocalIsoDate, addDaysToIsoDate, addMonthsToIsoDate } from '@/lib/date';
+import { toLocalIsoDate, addDaysToIsoDate, addMonthsToIsoDate, dayOfIsoDate } from '@/lib/date';
 
 function rowToRule(row: any): RecurringRule {
   return {
@@ -23,17 +30,27 @@ function rowToRule(row: any): RecurringRule {
   };
 }
 
-/** One step of a rule's own cadence — e.g. every 2 weeks advances 14 days at a time. */
-function advanceDate(date: string, frequency: RecurrenceFrequency, intervalCount: number): string {
+/**
+ * One step of a rule's own cadence — e.g. every 2 weeks advances 14 days at a
+ * time. `anchorDay` is the rule's real day-of-month: each step is chained
+ * from the previous (possibly clamped) date, so without it a rule on the
+ * 31st would ride Feb 28 → Mar 28 → … forever.
+ */
+function advanceDate(
+  date: string,
+  frequency: RecurrenceFrequency,
+  intervalCount: number,
+  anchorDay: number
+): string {
   switch (frequency) {
     case 'daily':
       return addDaysToIsoDate(date, intervalCount);
     case 'weekly':
       return addDaysToIsoDate(date, intervalCount * 7);
     case 'monthly':
-      return addMonthsToIsoDate(date, intervalCount);
+      return addMonthsToIsoDate(date, intervalCount, anchorDay);
     case 'yearly':
-      return addMonthsToIsoDate(date, intervalCount * 12);
+      return addMonthsToIsoDate(date, intervalCount * 12, anchorDay);
   }
 }
 
@@ -70,10 +87,11 @@ async function validate(input: RecurringRuleInput) {
   if (input.endDate && input.endDate < input.nextRunDate) {
     throw new Error('End date must be on or after the start date');
   }
-  // Same rule createTransaction enforces when a rule actually fires — reject
-  // it at save time too, so a bad rule can't sit there failing silently
+  // Same rules createTransaction enforces when a rule actually fires — reject
+  // them at save time too, so a bad rule can't sit there failing silently
   // every cycle.
   await assertSpendableAccount(input.type, input.accountId);
+  await assertSameCurrencyTransfer(input.type, input.accountId, input.toAccountId);
 }
 
 export async function listRecurringRules(): Promise<RecurringRule[]> {
@@ -91,8 +109,8 @@ export async function createRecurringRule(input: RecurringRuleInput): Promise<Re
   await db.runAsync(
     `INSERT INTO recurring_rules
       (id, type, account_id, to_account_id, category_id, amount_minor, note, payment_mode,
-       frequency, interval_count, next_run_date, end_date, active)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)`,
+       frequency, interval_count, next_run_date, end_date, active, anchor_day)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?)`,
     [
       id,
       input.type,
@@ -106,6 +124,7 @@ export async function createRecurringRule(input: RecurringRuleInput): Promise<Re
       input.intervalCount,
       input.nextRunDate,
       input.endDate ?? null,
+      dayOfIsoDate(input.nextRunDate),
     ]
   );
   const row = await db.getFirstAsync<any>('SELECT * FROM recurring_rules WHERE id = ?', [id]);
@@ -115,10 +134,22 @@ export async function createRecurringRule(input: RecurringRuleInput): Promise<Re
 export async function updateRecurringRule(id: string, input: RecurringRuleInput): Promise<RecurringRule> {
   await validate(input);
   const db = await getDb();
+  // Keep the rule's real day unless the user actually moved its date: an
+  // edit to just the amount of a "31st of every month" rule, made while its
+  // next run shows the clamped Feb 28, must not quietly turn it into a
+  // "28th" rule. A genuinely new date re-anchors to that date's own day.
+  const current = await db.getFirstAsync<{ next_run_date: string; anchor_day: number | null }>(
+    'SELECT next_run_date, anchor_day FROM recurring_rules WHERE id = ?',
+    [id]
+  );
+  const anchorDay =
+    current && current.next_run_date === input.nextRunDate
+      ? (current.anchor_day ?? dayOfIsoDate(input.nextRunDate))
+      : dayOfIsoDate(input.nextRunDate);
   await db.runAsync(
     `UPDATE recurring_rules SET
        type = ?, account_id = ?, to_account_id = ?, category_id = ?, amount_minor = ?, note = ?,
-       payment_mode = ?, frequency = ?, interval_count = ?, next_run_date = ?, end_date = ?
+       payment_mode = ?, frequency = ?, interval_count = ?, next_run_date = ?, end_date = ?, anchor_day = ?
      WHERE id = ?`,
     [
       input.type,
@@ -132,6 +163,7 @@ export async function updateRecurringRule(id: string, input: RecurringRuleInput)
       input.intervalCount,
       input.nextRunDate,
       input.endDate ?? null,
+      anchorDay,
       id,
     ]
   );
@@ -163,19 +195,39 @@ export async function restoreRecurringRule(snapshot: RowSnapshot): Promise<void>
  * missed occurrence (not just the most recent) — a rule left un-run for
  * three months while the app sat unused produces the three transactions
  * that genuinely should have happened, rather than silently collapsing them
- * into one or skipping straight to "now". Each occurrence goes through the
- * same createTransaction() every manual entry uses, so it behaves exactly
- * like a transaction the user typed in themselves (balances, reports,
- * overspend alerts all see it identically).
+ * into one or skipping straight to "now". Each occurrence is held to the
+ * same checks createTransaction() applies to every manual entry, so it
+ * behaves exactly like a transaction the user typed in themselves
+ * (balances, reports, overspend alerts all see it identically).
+ *
+ * Each occurrence's insert and the rule's `next_run_date` advance commit
+ * together in one transaction. They used to be separate writes — every
+ * occurrence committed on its own and the rule only advanced once the whole
+ * loop finished — so the app being killed mid-catch-up (or one occurrence
+ * failing) left posted transactions behind with the rule still pointing at
+ * the first of them, and the next launch posted them all again.
  *
  * Capped at 500 occurrences per rule as a defensive backstop — a
  * misconfigured daily rule with no end date left completely unattended for
  * years is the only realistic way to approach that, and stopping there
  * (rather than looping unbounded on app startup) is safer than hanging.
+ *
+ * Concurrent calls share one run: a second caller while a catch-up is still
+ * going gets that same run's promise instead of reading the same due rules
+ * and posting every occurrence a second time.
  */
-export async function runDueRecurringRules(
-  referenceDate: string = toLocalIsoDate(new Date())
-): Promise<number> {
+let inFlightRun: Promise<number> | null = null;
+
+export function runDueRecurringRules(referenceDate: string = toLocalIsoDate(new Date())): Promise<number> {
+  if (!inFlightRun) {
+    inFlightRun = runDueRecurringRulesOnce(referenceDate).finally(() => {
+      inFlightRun = null;
+    });
+  }
+  return inFlightRun;
+}
+
+async function runDueRecurringRulesOnce(referenceDate: string): Promise<number> {
   const db = await getDb();
   const dueRules = await db.getAllAsync<any>(
     `SELECT * FROM recurring_rules WHERE active = 1 AND next_run_date <= ?`,
@@ -185,34 +237,44 @@ export async function runDueRecurringRules(
   let created = 0;
   for (const row of dueRules) {
     const rule = rowToRule(row);
+    // Null on rules saved before anchor_day existed — their stored date's own
+    // day is the best record of their real day that survives.
+    const anchorDay: number = row.anchor_day ?? dayOfIsoDate(rule.nextRunDate);
+    const occurrence = (date: string): CreateTransactionInput => ({
+      type: rule.type,
+      accountId: rule.accountId,
+      toAccountId: rule.toAccountId,
+      categoryId: rule.categoryId,
+      amountMinor: rule.amountMinor,
+      date,
+      note: rule.note,
+      paymentMode: rule.paymentMode ?? undefined,
+    });
     try {
+      // Nothing checked here varies by date, so once per rule covers every
+      // occurrence — and it has to run out here: these checks read through
+      // the outer db, which would deadlock inside the transaction below.
+      await assertValidTransactionInput(occurrence(rule.nextRunDate));
       let cursor = rule.nextRunDate;
       let iterations = 0;
-      let expired = false;
       while (cursor <= referenceDate && iterations < 500) {
-        await createTransaction({
-          type: rule.type,
-          accountId: rule.accountId,
-          toAccountId: rule.toAccountId,
-          categoryId: rule.categoryId,
-          amountMinor: rule.amountMinor,
-          date: cursor,
-          note: rule.note,
-          paymentMode: rule.paymentMode ?? undefined,
+        const input = occurrence(cursor);
+        const next = advanceDate(cursor, rule.frequency, rule.intervalCount, anchorDay);
+        const expired = !!rule.endDate && next > rule.endDate;
+        await db.withTransactionAsync(async (tx) => {
+          await insertTransactionRow(tx, input);
+          await tx.runAsync('UPDATE recurring_rules SET next_run_date = ?, active = ? WHERE id = ?', [
+            next,
+            expired ? 0 : 1,
+            rule.id,
+          ]);
         });
+        await checkOverspendForNewTransaction(input);
         created++;
         iterations++;
-        cursor = advanceDate(cursor, rule.frequency, rule.intervalCount);
-        if (rule.endDate && cursor > rule.endDate) {
-          expired = true;
-          break;
-        }
+        cursor = next;
+        if (expired) break;
       }
-      await db.runAsync('UPDATE recurring_rules SET next_run_date = ?, active = ? WHERE id = ?', [
-        cursor,
-        expired ? 0 : 1,
-        rule.id,
-      ]);
     } catch (err) {
       // One rule's failure (e.g. its category was deleted out from under it)
       // must not stop the rest of the batch from running, and must not spin

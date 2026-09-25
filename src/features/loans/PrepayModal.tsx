@@ -1,15 +1,14 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { View, Text, Animated, Easing, StyleSheet } from 'react-native';
 import { applyPrepayment, PrepaymentSummary } from '@/db/loans';
 import { toMinor, formatMoney } from '@/lib/money';
 import { roundedMinor } from '@/lib/round';
-import { theme } from '@/constants/theme';
+import { theme, modalFooterStyles as f } from '@/constants/theme';
 import { Loan, Account } from '@/types';
 import { FormInput } from '@/components/FormInput';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { Chip } from '@/components/Chip';
 import { ModalSheet } from '@/components/ModalSheet';
-import { modalFooterStyles as f } from '@/constants/theme';
 import { toLocalIsoDate, parseLocalIsoDate } from '@/lib/date';
 import { useReduceMotion } from '@/lib/useReduceMotion';
 import { styles } from './loans.styles';
@@ -38,8 +37,8 @@ const MAX_TICKS = 26;
 
 function PrepaymentReveal({ summary, onDone }: { summary: PrepaymentSummary; onDone: () => void }) {
   const reduce = useReduceMotion();
-  const progress = useRef(new Animated.Value(reduce ? 1 : 0)).current;
-  const glow = useRef(new Animated.Value(0)).current;
+  const [progress] = useState(() => new Animated.Value(reduce ? 1 : 0));
+  const [glow] = useState(() => new Animated.Value(0));
 
   useEffect(() => {
     if (reduce) return;

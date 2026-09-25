@@ -1,4 +1,4 @@
-import { Component, ReactNode } from 'react';
+import { Component, ErrorInfo, ReactNode } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
 import { PrimaryButton } from './PrimaryButton';
@@ -20,6 +20,13 @@ export class ErrorBoundary extends Component<Props, State> {
 
   static getDerivedStateFromError(error: Error): State {
     return { error };
+  }
+
+  // Kept on-device only (logcat) — no crash reporting service, by design.
+  // Without this the error and its component stack vanished entirely once
+  // the fallback rendered, leaving nothing to debug from.
+  componentDidCatch(error: Error, info: ErrorInfo) {
+    console.error('ErrorBoundary caught:', error, info.componentStack);
   }
 
   reset = () => this.setState({ error: null });

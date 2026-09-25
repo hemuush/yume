@@ -27,7 +27,7 @@ Three types:
 - `expense` — decreases an account's balance, requires a category
 - `transfer` — moves money between two accounts, no category (the accounts themselves say what it was: e.g. spending → savings)
 
-A transaction can optionally link to a `loan_payment_id` (it was an EMI payment) — this is how loan repayments show up in both the loan's amortization schedule and the ordinary transaction list without being duplicated data. It can also carry a `loan_id` for a loan's own disbursement, processing-fee, and prepayment transactions (`ON DELETE CASCADE`, so deleting a mis-entered loan removes them with it). `getTransactionLink` / `isLinkedTransaction` (`src/db/ledger.ts`) detect both cases so the UI routes edits/deletes of linked rows through the loan or person "undo" flow instead of a raw write.
+A transaction can optionally link to a `loan_payment_id` (it was an EMI payment) — this is how loan repayments show up in both the loan's amortization schedule and the ordinary transaction list without being duplicated data. It can also carry a `loan_id` for a loan's own disbursement, processing-fee, and prepayment transactions (`ON DELETE CASCADE`, so deleting a mis-entered loan removes them with it). Those rows also record which of the four they are in `loan_tx_kind` (`disbursement`, `fee`, `prepayment`, `prepayment_charge`) — only a `prepayment` reduces the loan's principal, which is how the net-worth trend and the Home debt sparkline count it. `getTransactionLink` / `isLinkedTransaction` (`src/db/ledger.ts`) detect both cases so the UI routes edits/deletes of linked rows through the loan or person "undo" flow instead of a raw write.
 
 ## Loans (`loans`, `loan_payments`)
 
@@ -61,7 +61,7 @@ Period comparisons (day/week/month/year vs. the immediately preceding equivalent
 
 ## Recurring rules (`recurring_rules`)
 
-A rule is a template (type, account(s), category, amount, note) plus a cadence (`frequency` × `interval_count`) and a `next_run_date`. On every app open, `runDueRecurringRules` catches each active rule up to today, creating **one real transaction per missed occurrence** through the same `createTransaction` a manual entry uses (capped at 500 per rule). A rule that fails once (e.g. its category was deleted) is deactivated rather than retried forever.
+A rule is a template (type, account(s), category, amount, note) plus a cadence (`frequency` × `interval_count`) and a `next_run_date`. On every app open, `runDueRecurringRules` catches each active rule up to today, creating **one real transaction per missed occurrence** through the same `createTransaction` a manual entry uses (capped at 500 per rule). A rule that fails once (e.g. its category was deleted) is deactivated rather than retried forever. Each occurrence is inserted in the same database transaction that advances `next_run_date`, so an interrupted catch-up never re-posts occurrences it already wrote. A monthly/yearly rule also keeps its real day-of-month in `anchor_day`: a rule on the 31st runs on each month's last day when the month is shorter (Feb 28), then goes back to the 31st.
 
 ## Settings (`settings`)
 

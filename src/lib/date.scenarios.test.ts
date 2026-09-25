@@ -47,9 +47,33 @@ describe('date calculation matrix — every year × month × day combination', (
   }
 
   it('Jan 31 + 1 month lands on the last valid day of February for both leap and non-leap years', () => {
-    expect(addMonthsToIsoDate('2024-01-31', 1)).toBe('2024-03-02'); // 2024 leap: native Date overflow rolls into March
-    expect(addMonthsToIsoDate('2023-01-31', 1)).toBe('2023-03-03'); // 2023 non-leap: same overflow behavior, one day later
+    expect(addMonthsToIsoDate('2024-01-31', 1)).toBe('2024-02-29'); // 2024 leap
+    expect(addMonthsToIsoDate('2023-01-31', 1)).toBe('2023-02-28'); // 2023 non-leap
   });
+
+  // Every month-end start day × every step, across leap and non-leap years:
+  // the result must always sit in exactly the target calendar month (never
+  // spill into the one after), on the start day or that month's last day,
+  // whichever is smaller.
+  for (const year of YEARS) {
+    for (const month of MONTHS) {
+      for (const day of [29, 30, 31]) {
+        const lastOfStartMonth = new Date(year, month, 0).getDate();
+        if (day > lastOfStartMonth) continue; // not a real start date
+        const iso = `${year}-${String(month).padStart(2, '0')}-${day}`;
+        it(`${iso}: +1..24 months always lands inside the target month, clamped to its last day`, () => {
+          for (let n = 1; n <= 24; n++) {
+            const target = new Date(year, month - 1 + n, 1);
+            const lastOfTarget = new Date(target.getFullYear(), target.getMonth() + 1, 0).getDate();
+            const later = parseLocalIsoDate(addMonthsToIsoDate(iso, n));
+            expect(later.getFullYear()).toBe(target.getFullYear());
+            expect(later.getMonth()).toBe(target.getMonth());
+            expect(later.getDate()).toBe(Math.min(day, lastOfTarget));
+          }
+        });
+      }
+    }
+  }
 
   it('monthsBetweenIsoDates floors a partial final month consistently across every tested year', () => {
     for (const year of YEARS) {

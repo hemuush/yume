@@ -37,7 +37,7 @@ describe('writeLocalBackupNow', () => {
     (StorageAccessFramework.deleteAsync as jest.Mock).mockResolvedValue(undefined);
   });
 
-  it('deletes an existing same-day backup before creating the new one', async () => {
+  it('replaces an existing same-day backup, deleting the old one only after the new one is written', async () => {
     const todayIso = toLocalIsoDate(new Date());
     const existingUri = `content://tree/primary/yume-backup-${todayIso}`;
     (StorageAccessFramework.readDirectoryAsync as jest.Mock).mockResolvedValue([
@@ -55,6 +55,23 @@ describe('writeLocalBackupNow', () => {
       `yume-backup-${todayIso}`,
       'application/json'
     );
+    const writeOrder = (StorageAccessFramework.writeAsStringAsync as jest.Mock).mock.invocationCallOrder[0];
+    const deleteOrder = (StorageAccessFramework.deleteAsync as jest.Mock).mock.invocationCallOrder[0];
+    expect(writeOrder).toBeLessThan(deleteOrder);
+  });
+
+  it("keeps today's existing backup when writing the new one fails, and removes the half-written file", async () => {
+    const todayIso = toLocalIsoDate(new Date());
+    const existingUri = `content://tree/primary/yume-backup-${todayIso}`;
+    (StorageAccessFramework.readDirectoryAsync as jest.Mock).mockResolvedValue([existingUri]);
+    (StorageAccessFramework.createFileAsync as jest.Mock).mockResolvedValue('content://new-file');
+    (StorageAccessFramework.writeAsStringAsync as jest.Mock).mockRejectedValueOnce(new Error('disk full'));
+
+    await expect(writeLocalBackupNow('content://tree/primary')).rejects.toThrow('disk full');
+
+    const deleted = (StorageAccessFramework.deleteAsync as jest.Mock).mock.calls.map((c) => c[0]);
+    expect(deleted).toEqual(['content://new-file']);
+    expect(deleted).not.toContain(existingUri);
   });
 
   it('creates the file with no delete when nothing exists for today yet', async () => {

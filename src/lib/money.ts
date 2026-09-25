@@ -34,6 +34,20 @@ export function getCurrencySymbol(currency?: string): string {
 }
 
 /**
+ * An amount as the "hide savings & investment amounts" privacy toggle shows
+ * it: the real formatted figure, or — when `masked` — a placeholder that
+ * still reads as money (keeps the currency symbol). The one rendering both
+ * the in-app `<Amount>` and the home-screen widgets use, so the two can't
+ * disagree about what a hidden amount looks like.
+ */
+export function formatMaskableMoney(
+  minor: number,
+  opts: { currency?: string; masked?: boolean } = {}
+): string {
+  return opts.masked ? `${getCurrencySymbol(opts.currency)}••••` : formatMoney(minor, opts.currency);
+}
+
+/**
  * Formats minor units using the device's locale, so digit grouping and the
  * currency symbol/placement follow the reader's own conventions rather than
  * a hardcoded locale. `currency` defaults to whatever the user picked in

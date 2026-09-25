@@ -67,7 +67,7 @@ function DigitReel({
   height: number;
   textStyle?: StyleProp<TextStyle>;
 }) {
-  const v = useRef(new Animated.Value(0)).current;
+  const [v] = useState(() => new Animated.Value(0));
   useEffect(() => {
     v.setValue(0);
     Animated.timing(v, {

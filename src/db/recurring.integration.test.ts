@@ -230,6 +230,84 @@ describe('recurring rules', () => {
     expect(refreshedPoisoned.active).toBe(false);
   });
 
+  it('a monthly rule on the 31st posts once in every month, clamping short months and returning to the 31st', async () => {
+    const rule = await createRecurringRule({
+      type: 'expense',
+      accountId,
+      categoryId: expenseCategoryId,
+      amountMinor: 1500,
+      note: 'Month-end Rule',
+      frequency: 'monthly',
+      intervalCount: 1,
+      nextRunDate: '2030-01-31',
+    });
+
+    await runDueRecurringRules('2030-05-31');
+
+    const dates = (await listTransactions({ limit: 1000 }))
+      .filter((t) => t.note === 'Month-end Rule')
+      .map((t) => t.date)
+      .sort();
+    expect(dates).toEqual(['2030-01-31', '2030-02-28', '2030-03-31', '2030-04-30', '2030-05-31']);
+    const [refreshed] = (await listRecurringRules()).filter((r) => r.id === rule.id);
+    expect(refreshed.nextRunDate).toBe('2030-06-30');
+    await setRecurringRuleActive(rule.id, false);
+  });
+
+  it('editing only the amount while the next run sits on a clamped day keeps the rule on its real day', async () => {
+    const rule = await createRecurringRule({
+      type: 'expense',
+      accountId,
+      categoryId: expenseCategoryId,
+      amountMinor: 1500,
+      note: 'Anchored Edit Rule',
+      frequency: 'monthly',
+      intervalCount: 1,
+      nextRunDate: '2032-01-31',
+    });
+    await runDueRecurringRules('2032-01-31'); // next run is now the clamped 2032-02-29
+    const [afterRun] = (await listRecurringRules()).filter((r) => r.id === rule.id);
+    expect(afterRun.nextRunDate).toBe('2032-02-29');
+
+    await updateRecurringRule(rule.id, {
+      type: 'expense',
+      accountId,
+      categoryId: expenseCategoryId,
+      amountMinor: 2500,
+      note: 'Anchored Edit Rule',
+      frequency: 'monthly',
+      intervalCount: 1,
+      nextRunDate: afterRun.nextRunDate,
+    });
+    await runDueRecurringRules('2032-02-29');
+    const [afterEdit] = (await listRecurringRules()).filter((r) => r.id === rule.id);
+    expect(afterEdit.nextRunDate).toBe('2032-03-31');
+    await setRecurringRuleActive(rule.id, false);
+  });
+
+  it('a rule saved before anchor_day existed keeps stepping from its stored day', async () => {
+    const rule = await createRecurringRule({
+      type: 'expense',
+      accountId,
+      categoryId: expenseCategoryId,
+      amountMinor: 1500,
+      note: 'Legacy Anchor Rule',
+      frequency: 'monthly',
+      intervalCount: 1,
+      nextRunDate: '2033-01-15',
+    });
+    await mockTestDb.runAsync('UPDATE recurring_rules SET anchor_day = NULL WHERE id = ?', [rule.id]);
+
+    await runDueRecurringRules('2033-03-15');
+
+    const dates = (await listTransactions({ limit: 1000 }))
+      .filter((t) => t.note === 'Legacy Anchor Rule')
+      .map((t) => t.date)
+      .sort();
+    expect(dates).toEqual(['2033-01-15', '2033-02-15', '2033-03-15']);
+    await setRecurringRuleActive(rule.id, false);
+  });
+
   it('a transfer rule requires a distinct destination account, matching createTransaction', async () => {
     await expect(
       createRecurringRule({

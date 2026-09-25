@@ -1,5 +1,4 @@
 import { FlexWidget, TextWidget } from 'react-native-android-widget';
-import { formatMoney } from '@/lib/money';
 import { WidgetShell, WidgetLabel, ConstellationDots } from './WidgetShell';
 import { widgetColor, asWidgetColor } from './widgetTheme';
 import type { AccountWidgetRow } from './data';
@@ -50,7 +49,7 @@ export function AccountsWidget({ accounts }: { accounts: AccountWidgetRow[] }) {
               />
             </FlexWidget>
             <TextWidget
-              text={formatMoney(acc.balanceMinor)}
+              text={acc.balanceText}
               style={{ fontSize: 12.5, fontWeight: '700', color: widgetColor.ink }}
             />
           </FlexWidget>

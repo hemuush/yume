@@ -258,14 +258,20 @@ export default function TransactionsScreen() {
   const legend = useMemo(() => legendForBars(bars), [bars]);
   const groupedDays = useMemo(() => groupByDate(filteredTransactions), [filteredTransactions]);
 
+  // Only the most recent load may write state — paging week/month quickly
+  // starts overlapping loads, and an earlier one can finish last.
+  const loadSeq = useRef(0);
   const load = useCallback(async (range: { fromDate: string; toDate: string }, scope: 'week' | 'month') => {
+    const seq = ++loadSeq.current;
     try {
       const [tx, accs, cats] = await Promise.all([listTransactions(range), listAccounts(), listCategories()]);
+      if (seq !== loadSeq.current) return;
       setTransactions(tx);
       setAccounts(accs);
       setCategories(cats);
       setLoadError(null);
     } catch (e: any) {
+      if (seq !== loadSeq.current) return;
       // Previously unguarded — a transient DB failure left the screen
       // silently showing stale/empty data with no indication anything
       // went wrong, the same class of bug already fixed on the other tabs.
@@ -282,9 +288,9 @@ export default function TransactionsScreen() {
         { start: prev.fromDate, end: prev.toDate },
         scope
       );
-      setComparison(cmp);
+      if (seq === loadSeq.current) setComparison(cmp);
     } catch {
-      setComparison(null);
+      if (seq === loadSeq.current) setComparison(null);
     }
   }, []);
 
