@@ -68,6 +68,9 @@ src/
 
 ## Running locally
 
+Yume is **Android-only** — there is no iOS build (backups use Android's Storage Access Framework, and the
+home-screen widgets are Android widgets).
+
 ```bash
 npm install
 npx expo run:android   # builds and installs a development build, then starts Metro
