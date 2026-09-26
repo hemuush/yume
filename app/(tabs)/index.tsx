@@ -4,11 +4,19 @@ import Animated, { FadeIn, ReduceMotion } from 'react-native-reanimated';
 import Feather from '@expo/vector-icons/Feather';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useFocusEffect } from 'expo-router';
-import { listAccounts, listCategories, listTransactions } from '@/db/ledger';
+import { listAccounts, listCategories, listTransactions, countTransactions } from '@/db/ledger';
 import { listLoans, getNextDueInstallment, NextDueInstallment } from '@/db/loans';
 import { listRecurringRules } from '@/db/recurring';
 import { getRangeComparison, PeriodComparison, findTopGrowingCategory, getTodaySpend } from '@/db/reports';
-import { getUserName, getDailySpendingGoal } from '@/db/settings';
+import {
+  getUserName,
+  getDailySpendingGoal,
+  getLocalBackupFolderUri,
+  getLastLocalBackupResult,
+  getBackupNudgeSnoozedUntil,
+  setBackupNudgeSnoozedUntil,
+  BackupOutcome,
+} from '@/db/settings';
 import { listBudgetsForMonth, BudgetProgress } from '@/db/budgets';
 import { listSavingsGoals } from '@/db/savingsGoals';
 import { roundedMinor } from '@/lib/round';
@@ -36,6 +44,11 @@ import { AccountChip } from '@/features/home/AccountChip';
 import { suuLine } from '@/features/home/suuLine';
 import { BudgetRow } from '@/features/budgets/BudgetRow';
 import { GoalChip } from '@/features/goals/GoalChip';
+import { NeedsYouCard } from '@/features/home/NeedsYouCard';
+import { buildNeedsYouItems, NeedsYouItem } from '@/features/home/needsYou';
+import { AddAccountModal } from '@/features/profile/AddAccountModal';
+import { PrimaryButton } from '@/components/PrimaryButton';
+import { toLocalIsoDate } from '@/lib/date';
 
 export default function DashboardScreen() {
   const insets = useSafeAreaInsets();
@@ -55,6 +68,13 @@ export default function DashboardScreen() {
   // Settings → Money.
   const [todaySpendMinor, setTodaySpendMinor] = useState(0);
   const [dailyGoalMinor, setDailyGoalMinor] = useState<number | null>(null);
+  // Inputs to the Needs you row (see features/home/needsYou.ts) — backup
+  // health and whether there's enough data yet for a missing backup to matter.
+  const [backupFolderUri, setBackupFolderUri] = useState<string | null>(null);
+  const [lastBackupResult, setLastBackupResult] = useState<BackupOutcome | null>(null);
+  const [backupNudgeSnoozedUntil, setBackupNudgeSnoozedUntilState] = useState<string | null>(null);
+  const [transactionCount, setTransactionCount] = useState(0);
+  const [addAccountVisible, setAddAccountVisible] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [userName, setUserNameState] = useState<string | null>(null);
   const [cursor, setCursor] = useState<PeriodCursor>(CURRENT_PERIOD);
@@ -99,28 +119,48 @@ export default function DashboardScreen() {
     const seq = ++loadSeq.current;
     const range = periodRange(c);
     try {
-      const [accs, cats, tx, ln, rules, cmp, due, name, budgetList, goalList, todaySpend, dailyGoal] =
-        await Promise.all([
-          listAccounts(),
-          listCategories(),
-          // Scoped to the same period as the navigator above it — showing the
-          // single most-recent transactions regardless of period previously
-          // made "Recent Activity" contradict whatever month/year was selected.
-          listTransactions({ fromDate: range.start, toDate: range.end, limit: 30 }),
-          listLoans(),
-          listRecurringRules(),
-          getRangeComparison(range, previousPeriodRange(c), c.granularity),
-          getNextDueInstallment(),
-          getUserName(),
-          // Budgets and goals are always about *now*, not whatever period the
-          // cursor above is browsing — a budget is inherently this calendar
-          // month, and a goal has no period at all. Same for today's spend and
-          // the daily goal.
-          listBudgetsForMonth(),
-          listSavingsGoals(),
-          getTodaySpend(),
-          getDailySpendingGoal(),
-        ]);
+      const [
+        accs,
+        cats,
+        tx,
+        ln,
+        rules,
+        cmp,
+        due,
+        name,
+        budgetList,
+        goalList,
+        todaySpend,
+        dailyGoal,
+        folderUri,
+        lastBackup,
+        nudgeSnoozedUntil,
+        txCount,
+      ] = await Promise.all([
+        listAccounts(),
+        listCategories(),
+        // Scoped to the same period as the navigator above it — showing the
+        // single most-recent transactions regardless of period previously
+        // made "Recent Activity" contradict whatever month/year was selected.
+        listTransactions({ fromDate: range.start, toDate: range.end, limit: 30 }),
+        listLoans(),
+        listRecurringRules(),
+        getRangeComparison(range, previousPeriodRange(c), c.granularity),
+        getNextDueInstallment(),
+        getUserName(),
+        // Budgets and goals are always about *now*, not whatever period the
+        // cursor above is browsing — a budget is inherently this calendar
+        // month, and a goal has no period at all. Same for today's spend and
+        // the daily goal.
+        listBudgetsForMonth(),
+        listSavingsGoals(),
+        getTodaySpend(),
+        getDailySpendingGoal(),
+        getLocalBackupFolderUri(),
+        getLastLocalBackupResult(),
+        getBackupNudgeSnoozedUntil(),
+        countTransactions(),
+      ]);
       if (seq !== loadSeq.current) return;
       setAccounts(accs);
       setCategories(cats);
@@ -136,6 +176,10 @@ export default function DashboardScreen() {
       setGoals(goalList);
       setTodaySpendMinor(todaySpend);
       setDailyGoalMinor(dailyGoal);
+      setBackupFolderUri(folderUri);
+      setLastBackupResult(lastBackup);
+      setBackupNudgeSnoozedUntilState(nudgeSnoozedUntil);
+      setTransactionCount(txCount);
       setLoadError(null);
     } catch (e: any) {
       if (seq !== loadSeq.current) return;
@@ -377,6 +421,32 @@ export default function DashboardScreen() {
       : []),
   ];
 
+  const now = new Date();
+  const needsYouItems = buildNeedsYouItems({
+    nextDue,
+    budgets,
+    backup: {
+      folderUri: backupFolderUri,
+      lastResult: lastBackupResult,
+      snoozedUntil: backupNudgeSnoozedUntil,
+    },
+    transactionCount,
+    today: toLocalIsoDate(now),
+    now,
+  });
+  const openNeedsYou = (item: NeedsYouItem) => {
+    if (item.action === 'loans') router.push('/loans');
+    else if (item.action === 'budgets') router.push('/budgets');
+    else router.push('/backup');
+  };
+  // Hides the "No backup yet" reminder for 30 days. Shown as hidden straight
+  // away; a failed write only means it may reappear on the next load.
+  const snoozeNeedsYou = () => {
+    const until = new Date(Date.now() + 30 * 86400000).toISOString();
+    setBackupNudgeSnoozedUntilState(until);
+    setBackupNudgeSnoozedUntil(until).catch(() => {});
+  };
+
   return (
     <View style={styles.container}>
       <HomeHeader cursor={cursor} onChange={handleCursorChange} userName={userName} hasAlerts={hasAlerts} />
@@ -424,6 +494,8 @@ export default function DashboardScreen() {
         {dailyGoalMinor != null && (
           <TodaySpendStrip spentMinor={todaySpendMinor} goalMinor={dailyGoalMinor} />
         )}
+
+        {loaded && <NeedsYouCard items={needsYouItems} onOpen={openNeedsYou} onSnooze={snoozeNeedsYou} />}
 
         {!loaded && (
           <>
@@ -474,7 +546,19 @@ export default function DashboardScreen() {
         {loaded && (
           <HomeSection title="Your accounts" onSeeAll={() => router.push('/profile')}>
             {accounts.length === 0 ? (
-              <EmptyState title="No accounts yet" subtitle="Add one from your profile." />
+              // Opens the same Add Account form Profile uses, right here — the
+              // old hint sent a brand-new user three taps away to find it.
+              <View>
+                <EmptyState
+                  title="No accounts yet"
+                  subtitle="Add where your money lives: a bank account, cash, or a UPI wallet."
+                />
+                <PrimaryButton
+                  title="Add an account"
+                  onPress={() => setAddAccountVisible(true)}
+                  style={styles.emptyCta}
+                />
+              </View>
             ) : (
               <ScrollView
                 horizontal
@@ -496,6 +580,15 @@ export default function DashboardScreen() {
           </HomeSection>
         )}
       </ScrollView>
+
+      <AddAccountModal
+        visible={addAccountVisible}
+        onClose={() => setAddAccountVisible(false)}
+        onCreated={async () => {
+          setAddAccountVisible(false);
+          await load(cursor);
+        }}
+      />
     </View>
   );
 }
@@ -523,6 +616,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   accountStrip: { paddingHorizontal: 20, gap: 12, paddingBottom: 4 },
+  emptyCta: { marginHorizontal: 40, marginTop: -8 },
   // Rows inside a HomeSwipeCard page — no outer border/background of their
   // own (the card already draws that), BudgetRow/UpcomingRow already carry
   // their own horizontal padding.
