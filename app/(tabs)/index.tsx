@@ -15,6 +15,7 @@ import {
   getLastLocalBackupResult,
   getBackupNudgeSnoozedUntil,
   setBackupNudgeSnoozedUntil,
+  setMonthReviewDismissed,
   BackupOutcome,
 } from '@/db/settings';
 import { listBudgetsForMonth, BudgetProgress } from '@/db/budgets';
@@ -45,6 +46,8 @@ import { suuLine } from '@/features/home/suuLine';
 import { BudgetRow } from '@/features/budgets/BudgetRow';
 import { GoalChip } from '@/features/goals/GoalChip';
 import { NeedsYouCard } from '@/features/home/NeedsYouCard';
+import { MonthInReviewCard } from '@/features/home/MonthInReviewCard';
+import { loadMonthReview, MonthReview } from '@/features/home/monthReview';
 import { buildNeedsYouItems, NeedsYouItem } from '@/features/home/needsYou';
 import { AddAccountModal } from '@/features/profile/AddAccountModal';
 import { PrimaryButton } from '@/components/PrimaryButton';
@@ -76,6 +79,8 @@ export default function DashboardScreen() {
   const [backupNudgeSnoozedUntil, setBackupNudgeSnoozedUntilState] = useState<string | null>(null);
   const [transactionCount, setTransactionCount] = useState(0);
   const [addAccountVisible, setAddAccountVisible] = useState(false);
+  // Last month's look-back, first week of each month only (see monthReview.ts).
+  const [monthReview, setMonthReview] = useState<MonthReview | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [userName, setUserNameState] = useState<string | null>(null);
   const [cursor, setCursor] = useState<PeriodCursor>(CURRENT_PERIOD);
@@ -137,6 +142,7 @@ export default function DashboardScreen() {
         lastBackup,
         nudgeSnoozedUntil,
         txCount,
+        review,
       ] = await Promise.all([
         listAccounts(),
         listCategories(),
@@ -161,6 +167,7 @@ export default function DashboardScreen() {
         getLastLocalBackupResult(),
         getBackupNudgeSnoozedUntil(),
         countTransactions(),
+        loadMonthReview(),
       ]);
       if (seq !== loadSeq.current) return;
       setAccounts(accs);
@@ -181,6 +188,7 @@ export default function DashboardScreen() {
       setLastBackupResult(lastBackup);
       setBackupNudgeSnoozedUntilState(nudgeSnoozedUntil);
       setTransactionCount(txCount);
+      setMonthReview(review);
       setLoadError(null);
     } catch (e: any) {
       if (seq !== loadSeq.current) return;
@@ -499,6 +507,19 @@ export default function DashboardScreen() {
         )}
 
         {loaded && <NeedsYouCard items={needsYouItems} onOpen={openNeedsYou} onSnooze={snoozeNeedsYou} />}
+
+        {/* After Needs you on purpose: anything due always comes first. */}
+        {loaded && monthReview && (
+          <MonthInReviewCard
+            review={monthReview}
+            onOpen={() => router.push('/reports?month=-1')}
+            onDismiss={() => {
+              const key = monthReview.monthKey;
+              setMonthReview(null);
+              setMonthReviewDismissed(key).catch(() => {});
+            }}
+          />
+        )}
 
         {!loaded && (
           <>

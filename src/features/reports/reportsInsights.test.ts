@@ -4,6 +4,7 @@ import {
   recurringVsDiscretionary,
   categoryDeltas,
   describeSpendingPattern,
+  buildInShortLines,
   summariseDayTotal,
 } from './reportsInsights';
 import type { CategoryBreakdownItem } from '@/db/reports';
@@ -139,5 +140,62 @@ describe('summariseDayTotal', () => {
       amountMinor: 0,
       sign: '',
     });
+  });
+});
+
+describe('buildInShortLines', () => {
+  const base = {
+    mover: null as { name: string; pctChange: number } | null,
+    comparisonLabel: 'the month before',
+    patternReads: [] as string[],
+    recurringMinor: 0,
+    discretionaryMinor: 0,
+    spendDays: 20,
+    isCurrentPeriod: false,
+  };
+
+  it('leads with the category that grew the most, then pattern reads, capped at three', () => {
+    const { lines, tooEarly } = buildInShortLines({
+      ...base,
+      mover: { name: 'Food', pctChange: 32.4 },
+      patternReads: [
+        'Weekends run 64% above your weekday average.',
+        'Heaviest day was 12 Sep.',
+        'Third read.',
+      ],
+      recurringMinor: 4100,
+      discretionaryMinor: 5900,
+    });
+    expect(tooEarly).toBe(false);
+    expect(lines.map((l) => [l.key, l.bold ?? '', l.text, l.target])).toEqual([
+      ['mover', 'Food', ' is up 32% vs the month before', 'categories'],
+      ['read-0', '', 'Weekends run 64% above your weekday average.', 'overview'],
+      ['read-1', '', 'Heaviest day was 12 Sep.', 'overview'],
+    ]);
+  });
+
+  it('fills a short card with the fixed-bills share, and only then', () => {
+    const { lines } = buildInShortLines({ ...base, recurringMinor: 4100, discretionaryMinor: 5900 });
+    expect(lines).toEqual([
+      { key: 'fixed', icon: 'repeat', text: 'Fixed bills are 41% of the spending', target: 'categories' },
+    ]);
+    expect(buildInShortLines({ ...base, recurringMinor: 0, discretionaryMinor: 5900 }).lines).toEqual([]);
+  });
+
+  it('says it is too early rather than guessing, for a period in progress with under 3 spending days', () => {
+    const early = { ...base, isCurrentPeriod: true, spendDays: 2, mover: { name: 'Food', pctChange: 80 } };
+    expect(buildInShortLines(early)).toEqual({ lines: [], tooEarly: true });
+    expect(buildInShortLines({ ...early, spendDays: 3 }).tooEarly).toBe(false);
+    // A finished period is never "too early" — it just has fewer lines.
+    expect(buildInShortLines({ ...early, isCurrentPeriod: false }).tooEarly).toBe(false);
+  });
+
+  it('works for a year view with no pattern reads', () => {
+    const { lines } = buildInShortLines({
+      ...base,
+      comparisonLabel: 'last year',
+      mover: { name: 'Travel', pctChange: 1500 },
+    });
+    expect(lines.map((l) => l.text)).toEqual([' is up >999% vs last year']);
   });
 });
