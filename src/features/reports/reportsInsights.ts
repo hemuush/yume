@@ -1,4 +1,4 @@
-import { parseLocalIsoDate } from '@/lib/date';
+import { parseLocalIsoDate, toLocalIsoDate } from '@/lib/date';
 import { formatMoney } from '@/lib/money';
 import { formatPctChange } from '@/lib/format';
 import type { CategoryBreakdownItem, DailyExpensePoint, TrendPoint } from '@/db/reports';
@@ -45,7 +45,7 @@ const WEEKDAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
 /**
  * The heatmap's grid for a period. A month is a calendar (7 columns, blank
- * cells before the 1st, weekends marked, a spend day tappable via
+ * cells before the 1st, today marked, a spend day tappable via
  * `onDayPress`); a year is its 12 months in 4 columns, from `trend`.
  */
 export function buildHeatGrid(input: {
@@ -55,6 +55,8 @@ export function buildHeatGrid(input: {
   trend: TrendPoint[];
   daily: DailyExpensePoint[];
   onDayPress: (iso: string) => void;
+  /** Injectable for tests; defaults to today. */
+  todayIso?: string;
 }): { cells: HeatCell[]; leadingPad: number; columns: number; weekdayLabels?: string[] } {
   if (input.granularity === 'year') {
     const maxMonth = Math.max(1, ...input.trend.map((t) => t.totalMinor));
@@ -73,16 +75,16 @@ export function buildHeatGrid(input: {
   const daysInMonth = new Date(y, m + 1, 0).getDate();
   const byDate = new Map(input.daily.map((d) => [d.date, d.totalMinor]));
   const maxDay = Math.max(1, ...input.daily.map((d) => d.totalMinor));
+  const todayIso = input.todayIso ?? toLocalIsoDate(new Date());
   const cells = Array.from({ length: daysInMonth }, (_, i): HeatCell => {
     const day = i + 1;
     const iso = `${y}-${String(m + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
     const total = byDate.get(iso) ?? 0;
-    const dow = new Date(y, m, day).getDay();
     return {
       key: iso,
       label: String(day),
       level: heatLevel(total, maxDay),
-      isWeekend: dow === 0 || dow === 6,
+      isToday: iso === todayIso,
       onPress: total > 0 ? () => input.onDayPress(iso) : undefined,
     };
   });

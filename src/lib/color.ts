@@ -83,24 +83,14 @@ export function hexToRgba(hex: string, alpha: number): string {
 }
 
 /**
- * The Reports spend-heatmap's 5-step intensity ramp (index 0 unused —
- * "no spend" cells are handled separately), derived from the user's chosen
- * accent instead of a fixed coral scale, so the heatmap reads as "this
- * app's colour" no matter which accent is picked — the same idea as
- * `moonPhaseShades`. The first two steps are the accent itself at a light
- * wash; the last two darken and re-saturate it so the heaviest-spend days
- * stay legible instead of fading into the same pale tint.
+ * The Reports spend-heatmap's 5-step intensity ramp (index 0 is "no spend",
+ * drawn as an outline instead), derived from the user's chosen accent so the
+ * calendar reads as "this app's colour" whichever accent is picked. It rises
+ * from a faint wash to the accent itself and stops there: the busiest day is
+ * the full pastel accent, never a darkened, saturated version of it.
  */
 export function spendHeatScale(accent: string): readonly [string, string, string, string, string] {
-  const deep = shade(accent, 58, 8);
-  const deepest = shade(accent, 44, 14);
-  return [
-    'transparent',
-    hexToRgba(accent, 0.22),
-    hexToRgba(accent, 0.42),
-    hexToRgba(deep, 0.68),
-    hexToRgba(deepest, 0.94),
-  ];
+  return ['transparent', hexToRgba(accent, 0.2), hexToRgba(accent, 0.42), hexToRgba(accent, 0.7), accent];
 }
 
 /**
