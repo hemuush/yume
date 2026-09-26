@@ -26,11 +26,9 @@ export function ReportsHeadline({
   const up = vsUsualPct != null && vsUsualPct > 0;
   return (
     <>
+      <Text style={styles.eyebrow}>Spent in {periodName}</Text>
       <View style={styles.headlineRow}>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.eyebrow}>Spent in {periodName}</Text>
-          <CountUpAmount minor={spentMinor} style={styles.big} numberOfLines={1} adjustsFontSizeToFit />
-        </View>
+        <CountUpAmount minor={spentMinor} style={styles.big} numberOfLines={1} adjustsFontSizeToFit />
         {vsUsualPct != null && (
           <View
             style={[

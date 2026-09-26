@@ -314,7 +314,7 @@ export default function ReportsScreen() {
               />
               <InShortCard lines={inShort.lines} tooEarly={inShort.tooEarly} onJump={jumpTo} />
               <HeatmapSection
-                title={periodName}
+                title={cursor.granularity === 'year' ? 'Month by month' : 'Day by day'}
                 grid={buildHeatGrid({
                   granularity: cursor.granularity,
                   start: rangeStart,
@@ -331,7 +331,11 @@ export default function ReportsScreen() {
             <View onLayout={onSectionLayout('categories')}>
               {recurringMinor + discretionaryMinor > 0 && (
                 <>
-                  <MoonCard recurringMinor={recurringMinor} discretionaryMinor={discretionaryMinor} />
+                  <MoonCard
+                    periodName={periodName}
+                    recurringMinor={recurringMinor}
+                    discretionaryMinor={discretionaryMinor}
+                  />
                   <View style={styles.rule} />
                 </>
               )}

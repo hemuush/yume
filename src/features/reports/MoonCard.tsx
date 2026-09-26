@@ -15,9 +15,11 @@ import { styles } from './reports.styles';
  * the user's own accent, so it always sits in the app's colour family.
  */
 export function MoonCard({
+  periodName,
   recurringMinor,
   discretionaryMinor,
 }: {
+  periodName: string;
   recurringMinor: number;
   discretionaryMinor: number;
 }) {
@@ -30,7 +32,8 @@ export function MoonCard({
   const discretionaryInk = shade(accent, 55, -2);
   return (
     <View style={styles.moonCard}>
-      <Text style={styles.moonEyebrow}>This month&rsquo;s {formatMoney(roundedMinor(total))}</Text>
+      <Text style={styles.moonTitle}>Fixed vs flexible</Text>
+      <Text style={styles.moonSub}>How much of {periodName} was already spoken for</Text>
       <MoonPhase litFraction={recurringMinor / total} size={132} accent={accent} />
       <View style={styles.moonFigs}>
         <View style={styles.moonFig}>
@@ -53,8 +56,8 @@ export function MoonCard({
         </View>
       </View>
       <Text style={styles.moonCaption}>
-        {formatPctChange((recurringMinor / total) * 100)} of what you spent this month was already spoken for
-        — EMI, rent, subscriptions &amp; insurance.
+        {formatPctChange((recurringMinor / total) * 100)} of what you spent was already spoken for — EMI,
+        rent, subscriptions &amp; insurance.
       </Text>
     </View>
   );
