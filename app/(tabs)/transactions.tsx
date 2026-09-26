@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { onTransactionsChanged } from '@/lib/dataEvents';
-import { View, Text, FlatList, Pressable, Animated, ActivityIndicator, TextInput } from 'react-native';
+import { View, FlatList, Pressable, Animated, ActivityIndicator } from 'react-native';
+import { Text, TextInput, MAX_FONT_SCALE } from '@/components/Text';
 import ReanimatedAnimated, { FadeIn, ReduceMotion } from 'react-native-reanimated';
 import { useFocusEffect, router } from 'expo-router';
 import Feather from '@expo/vector-icons/Feather';
@@ -415,6 +416,7 @@ export default function TransactionsScreen() {
           </AnimatedPressable>
           <Pressable onPress={() => setMonthPickerVisible(true)} hitSlop={6}>
             <ReanimatedAnimated.Text
+              maxFontSizeMultiplier={MAX_FONT_SCALE}
               key={`${viewScope}-${anchor.toDateString()}`}
               entering={FadeIn.duration(150)}
               style={styles.weekNavLabel}

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { View, Text, Alert } from 'react-native';
+import { View, Alert } from 'react-native';
+import { Text } from '@/components/Text';
 import {
   createRecurringRule,
   updateRecurringRule,

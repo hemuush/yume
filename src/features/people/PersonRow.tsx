@@ -1,4 +1,5 @@
-import { View, Text, Pressable, Animated } from 'react-native';
+import { View, Pressable, Animated } from 'react-native';
+import { Text } from '@/components/Text';
 import ReanimatedAnimated, { FadeIn, ReduceMotion } from 'react-native-reanimated';
 import { PersonWithBalance } from '@/db/people';
 import { formatMoney } from '@/lib/money';

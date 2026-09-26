@@ -1,4 +1,5 @@
-import { View, Text, Modal, Pressable, Animated, StyleSheet, ScrollView } from 'react-native';
+import { View, Modal, Pressable, Animated, StyleSheet, ScrollView } from 'react-native';
+import { Text } from '@/components/Text';
 import Feather from '@expo/vector-icons/Feather';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { SafeAreaProvider, useSafeAreaInsets, initialWindowMetrics } from 'react-native-safe-area-context';

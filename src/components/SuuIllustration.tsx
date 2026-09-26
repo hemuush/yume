@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
-import { Image, Text, StyleSheet } from 'react-native';
+import { Image, StyleSheet } from 'react-native';
+import { Text } from '@/components/Text';
 import ReanimatedAnimated, {
   useSharedValue,
   useAnimatedStyle,

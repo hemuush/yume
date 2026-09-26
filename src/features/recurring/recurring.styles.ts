@@ -42,7 +42,7 @@ export const styles = StyleSheet.create({
   cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
   cardTitle: { fontSize: 15, fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
   cardSub: { fontFamily: theme.font.body, fontSize: 11.5, color: theme.colors.textMuted, marginTop: 3 },
-  cardAmount: { fontSize: 15, fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
+  cardAmount: { fontSize: 15, fontFamily: theme.font.monoBold, color: theme.colors.textPrimary },
   cardFooter: {
     flexDirection: 'row',
     justifyContent: 'space-between',

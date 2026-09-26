@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
-import { View, Text } from 'react-native';
+import { View } from 'react-native';
+import { Text } from '@/components/Text';
 import { applyRateChange } from '@/db/loans';
 import { calculateEmi } from '@/lib/loan';
 import { formatMoney } from '@/lib/money';

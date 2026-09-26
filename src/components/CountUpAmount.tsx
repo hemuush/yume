@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { Animated, Text, TextProps } from 'react-native';
+import { Animated, TextProps } from 'react-native';
+import { Text } from '@/components/Text';
 import { formatMoney } from '@/lib/money';
 import { useReduceMotion } from '@/lib/useReduceMotion';
 

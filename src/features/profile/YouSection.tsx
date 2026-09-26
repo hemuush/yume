@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
-import { View, Text, Pressable, Animated, ActivityIndicator } from 'react-native';
+import { View, Pressable, Animated, ActivityIndicator } from 'react-native';
+import { Text } from '@/components/Text';
 import Feather from '@expo/vector-icons/Feather';
 import { router } from 'expo-router';
 import { listAccounts, countTransactions } from '@/db/ledger';

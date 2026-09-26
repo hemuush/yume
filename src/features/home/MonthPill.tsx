@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { View, Text, Pressable, Animated, Modal, StyleSheet } from 'react-native';
+import { View, Pressable, Animated, Modal, StyleSheet } from 'react-native';
+import { Text } from '@/components/Text';
 import Feather from '@expo/vector-icons/Feather';
 import { theme } from '@/constants/theme';
 import { useAccent } from '@/theme/AccentContext';

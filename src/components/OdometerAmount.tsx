@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { View, Text, StyleSheet, Animated, Easing, TextStyle, StyleProp } from 'react-native';
+import { View, StyleSheet, Animated, Easing, TextStyle, StyleProp } from 'react-native';
+import { Text } from '@/components/Text';
 import { formatMoney } from '@/lib/money';
 import { useReduceMotion } from '@/lib/useReduceMotion';
 

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { View, Text, Animated, Easing, StyleSheet } from 'react-native';
+import { View, Animated, Easing, StyleSheet } from 'react-native';
+import { Text } from '@/components/Text';
 import { applyPrepayment, previewPrepayment, PrepaymentSummary } from '@/db/loans';
 import { toMinor, formatMoney } from '@/lib/money';
 import { roundedMinor } from '@/lib/round';

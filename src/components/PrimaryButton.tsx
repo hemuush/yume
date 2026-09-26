@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { Animated, Pressable, StyleSheet, PressableProps } from 'react-native';
+import { MAX_FONT_SCALE } from '@/components/Text';
 import ReanimatedAnimated, { FadeIn } from 'react-native-reanimated';
 import { theme } from '@/constants/theme';
 import { usePressScale } from '@/lib/usePressScale';
@@ -61,6 +62,7 @@ export function PrimaryButton({
           instant the new one mounts, which reads fine since it's masked by
           the concurrent press-scale settle. */}
       <ReanimatedAnimated.Text
+        maxFontSizeMultiplier={MAX_FONT_SCALE}
         key={done ? 'done' : 'label'}
         entering={FadeIn.duration(140)}
         style={[styles.text, textStyle]}

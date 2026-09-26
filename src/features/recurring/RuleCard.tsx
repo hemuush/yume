@@ -1,4 +1,5 @@
-import { View, Text, Pressable } from 'react-native';
+import { View, Pressable } from 'react-native';
+import { Text } from '@/components/Text';
 import Animated, { FadeIn, ReduceMotion } from 'react-native-reanimated';
 import { RecurringRule } from '@/types';
 import { ToggleSwitch } from '@/components/ToggleSwitch';

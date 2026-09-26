@@ -1,12 +1,13 @@
 import { forwardRef, useState } from 'react';
-import { View, Text, TextInput, StyleSheet, TextInputProps } from 'react-native';
+import { View, StyleSheet, TextInputProps, type TextInput as RNTextInput } from 'react-native';
+import { Text, TextInput } from '@/components/Text';
 import { theme } from '@/constants/theme';
 
 interface Props extends TextInputProps {
   label: string;
 }
 
-export const FormInput = forwardRef<TextInput, Props>(function FormInput(
+export const FormInput = forwardRef<RNTextInput, Props>(function FormInput(
   { label, style, onFocus, onBlur, ...rest },
   ref
 ) {

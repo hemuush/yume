@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { View, Text, Pressable } from 'react-native';
+import { View, Pressable } from 'react-native';
+import { Text } from '@/components/Text';
 import { createCategory, updateCategory } from '@/db/ledger';
 import { Category, CategoryKind } from '@/types';
 import { FormInput } from '@/components/FormInput';

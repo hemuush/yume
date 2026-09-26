@@ -1,4 +1,5 @@
-import { View, Text, Pressable, StyleSheet, Animated } from 'react-native';
+import { View, Pressable, StyleSheet, Animated } from 'react-native';
+import { Text } from '@/components/Text';
 import Feather from '@expo/vector-icons/Feather';
 import { router } from 'expo-router';
 import { theme } from '@/constants/theme';
