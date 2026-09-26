@@ -5,9 +5,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from '@expo/vector-icons/Feather';
 import { theme } from '@/constants/theme';
 import { useAccent } from '@/theme/AccentContext';
-import { HomeIcon, ActivityIcon, LoanIcon, ReportsIcon } from '@/components/icons/TabIcons';
+import { HomeIcon, ActivityIcon, PlanIcon, ReportsIcon } from '@/components/icons/TabIcons';
 import { useReduceMotion } from '@/lib/useReduceMotion';
 import { usePressScale } from '@/lib/usePressScale';
+import { haptics } from '@/lib/haptics';
+import { RepeatEntrySheet } from '@/features/home/RepeatEntrySheet';
 
 /**
  * The library's own default tab button paints a native Android ripple sized
@@ -91,93 +93,106 @@ function CenterAddButton() {
 
 export default function TabsLayout() {
   const insets = useSafeAreaInsets();
+  const [repeatSheetVisible, setRepeatSheetVisible] = useState(false);
 
   return (
-    <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarShowLabel: false,
-        tabBarHideOnKeyboard: true,
-        // No custom screen-transition animation: `animation: 'fade'` here
-        // raced a tab's first-ever mount (each screen is lazy by default) —
-        // the fade transition could finish before the screen had painted
-        // anything, leaving it blank until the tab was left and revisited.
-        // The platform default switch doesn't carry that race.
-        // Docked flush to the bottom edge in the app's own cream surface —
-        // never the accent colour. An earlier floating, accent-filled pill
-        // broke badly at both ends of the accent picker (nearly invisible
-        // on Cream, a heavy black slab on Ink); a neutral bar can never
-        // break regardless of which accent is picked. The device's own
-        // safe-area inset becomes the bar's bottom padding instead of empty
-        // page below it; tab screens clear it via theme.layout.
-        // tabScreenScrollPad.
-        tabBarStyle: {
-          position: 'absolute',
-          left: 0,
-          right: 0,
-          bottom: 0,
-          height: theme.layout.tabBar.height + insets.bottom,
-          paddingBottom: insets.bottom,
-          borderTopLeftRadius: theme.layout.tabBar.topRadius,
-          borderTopRightRadius: theme.layout.tabBar.topRadius,
-          backgroundColor: theme.colors.surface,
-          borderTopWidth: StyleSheet.hairlineWidth,
-          borderTopColor: theme.colors.borderSoft,
-          shadowColor: theme.colors.ink,
-          shadowOffset: { width: 0, height: -4 },
-          shadowOpacity: 0.08,
-          shadowRadius: 12,
-          elevation: 10,
-        },
-        tabBarItemStyle: { height: theme.layout.tabBar.height, paddingTop: 0, paddingBottom: 0 },
-        tabBarButton: (props) => <TabButton {...props} />,
-      }}
-    >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Home',
-          tabBarIcon: ({ focused }) => <TabIcon Icon={HomeIcon} focused={focused} />,
-        }}
-      />
-      <Tabs.Screen
-        name="transactions"
-        options={{
-          title: 'Activity',
-          tabBarIcon: ({ focused }) => <TabIcon Icon={ActivityIcon} focused={focused} />,
-        }}
-      />
-      <Tabs.Screen
-        name="add"
-        options={{
-          title: '',
-          tabBarIcon: () => <CenterAddButton />,
-        }}
-        listeners={{
-          tabPress: (e) => {
-            // Never navigate to the "add" route itself — it exists only so
-            // this slot has a place in the pill; the real destination is the
-            // Add screen, pushed onto the Stack.
-            e.preventDefault();
-            router.push('/add-transaction');
+    <>
+      <Tabs
+        screenOptions={{
+          headerShown: false,
+          tabBarShowLabel: false,
+          tabBarHideOnKeyboard: true,
+          // No custom screen-transition animation: `animation: 'fade'` here
+          // raced a tab's first-ever mount (each screen is lazy by default) —
+          // the fade transition could finish before the screen had painted
+          // anything, leaving it blank until the tab was left and revisited.
+          // The platform default switch doesn't carry that race.
+          // Docked flush to the bottom edge in the app's own cream surface —
+          // never the accent colour. An earlier floating, accent-filled pill
+          // broke badly at both ends of the accent picker (nearly invisible
+          // on Cream, a heavy black slab on Ink); a neutral bar can never
+          // break regardless of which accent is picked. The device's own
+          // safe-area inset becomes the bar's bottom padding instead of empty
+          // page below it; tab screens clear it via theme.layout.
+          // tabScreenScrollPad.
+          tabBarStyle: {
+            position: 'absolute',
+            left: 0,
+            right: 0,
+            bottom: 0,
+            height: theme.layout.tabBar.height + insets.bottom,
+            paddingBottom: insets.bottom,
+            borderTopLeftRadius: theme.layout.tabBar.topRadius,
+            borderTopRightRadius: theme.layout.tabBar.topRadius,
+            backgroundColor: theme.colors.surface,
+            borderTopWidth: StyleSheet.hairlineWidth,
+            borderTopColor: theme.colors.borderSoft,
+            shadowColor: theme.colors.ink,
+            shadowOffset: { width: 0, height: -4 },
+            shadowOpacity: 0.08,
+            shadowRadius: 12,
+            elevation: 10,
           },
+          tabBarItemStyle: { height: theme.layout.tabBar.height, paddingTop: 0, paddingBottom: 0 },
+          tabBarButton: (props) => <TabButton {...props} />,
         }}
-      />
-      <Tabs.Screen
-        name="loans"
-        options={{
-          title: 'Borrowed & Lent',
-          tabBarIcon: ({ focused }) => <TabIcon Icon={LoanIcon} focused={focused} />,
-        }}
-      />
-      <Tabs.Screen
-        name="reports"
-        options={{
-          title: 'Reports',
-          tabBarIcon: ({ focused }) => <TabIcon Icon={ReportsIcon} focused={focused} />,
-        }}
-      />
-    </Tabs>
+      >
+        <Tabs.Screen
+          name="index"
+          options={{
+            title: 'Home',
+            tabBarIcon: ({ focused }) => <TabIcon Icon={HomeIcon} focused={focused} />,
+          }}
+        />
+        <Tabs.Screen
+          name="transactions"
+          options={{
+            title: 'Activity',
+            tabBarIcon: ({ focused }) => <TabIcon Icon={ActivityIcon} focused={focused} />,
+          }}
+        />
+        <Tabs.Screen
+          name="add"
+          options={{
+            title: '',
+            tabBarIcon: () => <CenterAddButton />,
+            tabBarAccessibilityLabel: 'Add a transaction',
+          }}
+          listeners={{
+            tabPress: (e) => {
+              // Never navigate to the "add" route itself — it exists only so
+              // this slot has a place in the pill; the real destination is the
+              // Add screen, pushed onto the Stack.
+              e.preventDefault();
+              router.push('/add-transaction');
+            },
+            // Long-press: the "Log again" sheet — the user's most repeated
+            // entries, saved for today in one tap (see RepeatEntrySheet).
+            tabLongPress: () => {
+              haptics.tap();
+              setRepeatSheetVisible(true);
+            },
+          }}
+        />
+        {/* Plan replaced a Borrowed & Lent tab — loans and people now sit on
+          Plan alongside budgets, goals and recurring (app/loans.tsx). */}
+        <Tabs.Screen
+          name="plan"
+          options={{
+            title: 'Plan',
+            tabBarIcon: ({ focused }) => <TabIcon Icon={PlanIcon} focused={focused} />,
+          }}
+        />
+        <Tabs.Screen
+          name="reports"
+          options={{
+            title: 'Reports',
+            tabBarIcon: ({ focused }) => <TabIcon Icon={ReportsIcon} focused={focused} />,
+          }}
+        />
+      </Tabs>
+      <RepeatEntrySheet visible={repeatSheetVisible} onClose={() => setRepeatSheetVisible(false)} />
+    </>
   );
 }
 

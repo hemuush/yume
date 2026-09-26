@@ -39,6 +39,7 @@ import {
   applyRateChange,
   deleteLoan,
   getOutstandingLoanTrend,
+  previewPrepayment,
   CreateLoanInput,
 } from '@/db/loans';
 import { getNetWorthTrend } from '@/db/reports';
@@ -316,5 +317,45 @@ describe('loan integrity', () => {
 
     const paidSecond = (await getLoanSchedule(loan.id)).find((p) => p.id === second.id)!;
     expect(paidSecond.dueDate).toBe('2026-03-03');
+  });
+
+  it('previewPrepayment matches exactly what applyPrepayment then records, and writes nothing', async () => {
+    const loan = await borrowed('Preview Bank', { startDate: '2026-01-31' });
+    const [first] = await getLoanSchedule(loan.id);
+    await payInstallment(first.id, { accountId, categoryId: emiCategoryId, paidDate: '2026-01-31' });
+
+    const countRows = async () =>
+      (await mockTestDb.getFirstAsync<{ n: number }>(
+        'SELECT (SELECT COUNT(*) FROM transactions) + (SELECT COUNT(*) FROM loan_payments) AS n'
+      ))!.n;
+    const before = await countRows();
+    const scheduleBefore = await getLoanSchedule(loan.id);
+
+    const preview = await previewPrepayment(loan.id, 150000, '2026-02-10');
+    expect(await countRows()).toBe(before);
+    expect(await getLoanSchedule(loan.id)).toEqual(scheduleBefore);
+    expect(preview).not.toBeNull();
+    expect(preview!.neverPaysOff).toBe(false);
+    expect(preview!.interestSavedMinor).toBeGreaterThan(0);
+
+    const applied = await applyPrepayment(loan.id, {
+      amountMinor: 150000,
+      accountId,
+      categoryId: emiCategoryId,
+      date: '2026-02-10',
+    });
+    const { neverPaysOff, ...previewSummary } = preview!;
+    expect(neverPaysOff).toBe(false);
+    expect(applied).toEqual(previewSummary);
+  });
+
+  it('previewPrepayment returns null for an amount that could not be applied', async () => {
+    const loan = await borrowed('Preview Null Bank');
+    expect(await previewPrepayment(loan.id, 0, '2026-01-10')).toBeNull();
+    expect(await previewPrepayment(loan.id, Number.NaN, '2026-01-10')).toBeNull();
+    expect(await previewPrepayment(loan.id, 600001, '2026-01-10')).toBeNull(); // more than owed
+    expect(await previewPrepayment('no-such-loan', 1000, '2026-01-10')).toBeNull();
+    const full = await previewPrepayment(loan.id, 600000, '2026-01-10');
+    expect(full).toMatchObject({ newRemainingCount: 0, neverPaysOff: false });
   });
 });

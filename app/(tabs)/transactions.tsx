@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { onTransactionsChanged } from '@/lib/dataEvents';
 import { View, Text, FlatList, Pressable, Animated, ActivityIndicator, TextInput } from 'react-native';
 import ReanimatedAnimated, { FadeIn, ReduceMotion } from 'react-native-reanimated';
 import { useFocusEffect, router } from 'expo-router';
@@ -308,6 +309,11 @@ export default function TransactionsScreen() {
       // list doesn't keep showing it exactly as it was before that edit.
       if (searching) runSearch(searchQuery.trim());
     }, [load, rangeFromDate, rangeToDate, viewScope, searching, searchQuery, runSearch])
+  );
+  // A save that doesn't leave this screen (the + long-press sheet) — reload in place.
+  useEffect(
+    () => onTransactionsChanged(() => void load({ fromDate: rangeFromDate, toDate: rangeToDate }, viewScope)),
+    [load, rangeFromDate, rangeToDate, viewScope]
   );
 
   // Debounced, cross-period text search — queries the whole ledger via

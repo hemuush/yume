@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react';
 import { View, Text, Pressable, Animated, ScrollView, Alert, ActivityIndicator } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import { router } from 'expo-router';
-import { listAccounts, listTransactions, listCategories } from '@/db/ledger';
+import { listAccounts, countTransactions, listCategories } from '@/db/ledger';
 import { listLoans } from '@/db/loans';
 import { computeTrackedBalance } from '@/db/reports';
 import { listPeople } from '@/db/people';
@@ -98,11 +98,13 @@ export function YouSection() {
   const periodMonth = periodMonthOf();
 
   const loadYou = useCallback(async () => {
-    const [accs, allAccs, txs, loans, people, currency, budgetList, cats, goalList, rules] =
+    const [accs, allAccs, txCountNow, loans, people, currency, budgetList, cats, goalList, rules] =
       await Promise.all([
         listAccounts(),
         listAccounts(true),
-        listTransactions({ limit: 100000 }),
+        // Only the count is shown — loading every row just to take .length
+        // was the single heaviest query on this screen.
+        countTransactions(),
         listLoans(),
         listPeople(),
         getDefaultCurrency(),
@@ -113,7 +115,7 @@ export function YouSection() {
       ]);
     setAccounts(accs);
     setArchivedAccounts(allAccs.filter((a) => a.archived));
-    setTxCount(txs.length);
+    setTxCount(txCountNow);
     setPeopleCount(people.length);
     setActiveLoanCount(loans.filter((l) => l.status === 'active').length);
     setDefaultCurrencyState(currency);

@@ -19,7 +19,9 @@ import {
   archiveCategory,
   getRecentCategoryIds,
   countTransactions,
+  getRepeatEntries,
 } from '@/db/ledger';
+import { createRecurringRule } from '@/db/recurring';
 import { getAddDefaults, setAddDefaults, setDefaultCurrency } from '@/db/settings';
 
 describe('Add Transaction helpers', () => {
@@ -92,5 +94,28 @@ describe('Add Transaction helpers', () => {
       await mockTestDb.runAsync(`UPDATE settings SET value = ? WHERE key = 'add_defaults'`, [bad]);
       expect(await getAddDefaults()).toEqual({});
     }
+  });
+
+  it('offers entries logged at least twice, most repeated first, excluding system, archived and one-offs', async () => {
+    const entries = await getRepeatEntries(3, '2026-09-25');
+    expect(entries.map((e) => [e.categoryName, e.timesLogged, e.amountMinor])).toEqual([
+      ['Transport', 3, 1000],
+      ['Food', 2, 1000],
+    ]);
+    expect(entries[0]).toMatchObject({ type: 'expense', accountId: bank, accountCurrency: 'INR' });
+  });
+
+  it('leaves out anything an active recurring rule already posts, so a tap never doubles it', async () => {
+    await createRecurringRule({
+      type: 'expense',
+      accountId: bank,
+      categoryId: cat['Food'],
+      amountMinor: 1000,
+      frequency: 'monthly',
+      intervalCount: 1,
+      nextRunDate: '2027-01-01',
+    });
+    const entries = await getRepeatEntries(3, '2026-09-25');
+    expect(entries.map((e) => e.categoryName)).toEqual(['Transport']);
   });
 });

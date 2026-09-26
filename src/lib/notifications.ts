@@ -71,7 +71,10 @@ export async function syncDailyReminder(prefs: NotificationPrefs): Promise<void>
     // every settings save, not literally once per calendar day; see
     // notificationCopy.ts's own note on why a repeating OS trigger can't
     // roll the wording on every single firing.
-    content: pickRandom(DAILY_REMINDER_COPY),
+    content: {
+      ...pickRandom(DAILY_REMINDER_COPY),
+      data: { url: '/add-transaction' satisfies NotificationRoute },
+    },
     trigger: {
       type: Notifications.SchedulableTriggerInputTypes.DAILY,
       hour: prefs.reminderHour,
@@ -94,7 +97,7 @@ export async function syncWeeklySummary(prefs: NotificationPrefs): Promise<void>
   await ensureAndroidChannel();
   await Notifications.scheduleNotificationAsync({
     identifier: WEEKLY_SUMMARY_ID,
-    content: pickRandom(WEEKLY_SUMMARY_COPY),
+    content: { ...pickRandom(WEEKLY_SUMMARY_COPY), data: { url: '/reports' satisfies NotificationRoute } },
     trigger: {
       type: Notifications.SchedulableTriggerInputTypes.WEEKLY,
       weekday: 1, // Sunday
@@ -132,7 +135,10 @@ export async function scheduleLoanDueReminder(
   await ensureAndroidChannel();
   await Notifications.scheduleNotificationAsync({
     identifier: loanDueReminderId(loanId),
-    content: loanDueCopy(counterparty, formatMoney(emiAmountMinor)),
+    content: {
+      ...loanDueCopy(counterparty, formatMoney(emiAmountMinor)),
+      data: { url: '/loans' satisfies NotificationRoute },
+    },
     trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: dueAt },
   });
 }
@@ -152,7 +158,55 @@ export async function notifyOverspend(categoryName: string, pctChange: number): 
 
   await ensureAndroidChannel();
   await Notifications.scheduleNotificationAsync({
-    content: overspendCopy(categoryName, formatPctChange(pctChange)),
+    content: {
+      ...overspendCopy(categoryName, formatPctChange(pctChange)),
+      data: { url: '/reports' satisfies NotificationRoute },
+    },
     trigger: null,
   });
+}
+
+/**
+ * Where tapping each kind of Yume notification takes you: the daily
+ * reminder opens Add (it's asking you to log something), an EMI reminder
+ * opens Loans, the weekly summary and overspend alerts open Reports. A fixed
+ * list — a notification can only ever route to one of these, whatever its
+ * payload says.
+ */
+export const NOTIFICATION_ROUTES = ['/add-transaction', '/loans', '/reports'] as const;
+export type NotificationRoute = (typeof NOTIFICATION_ROUTES)[number];
+
+/** The route a tapped notification asks for, or null if it carries none this app knows. */
+export function notificationRoute(
+  response: Notifications.NotificationResponse | null
+): NotificationRoute | null {
+  const url = response?.notification.request.content.data?.url;
+  return typeof url === 'string' && (NOTIFICATION_ROUTES as readonly string[]).includes(url)
+    ? (url as NotificationRoute)
+    : null;
+}
+
+/**
+ * Calls `onRoute` whenever the user taps a Yume notification — including the
+ * one that just cold-started the app. That launch response is cleared once
+ * read: the system otherwise keeps returning it on every later launch, which
+ * would reopen the same screen each time the app is opened normally.
+ * Returns the unsubscribe function.
+ */
+export function subscribeToNotificationTaps(onRoute: (route: NotificationRoute) => void): () => void {
+  let active = true;
+  const take = (response: Notifications.NotificationResponse | null) => {
+    if (!response) return;
+    Notifications.clearLastNotificationResponseAsync().catch(() => {});
+    const route = notificationRoute(response);
+    if (route && active) onRoute(route);
+  };
+  Notifications.getLastNotificationResponseAsync()
+    .then(take)
+    .catch(() => {});
+  const sub = Notifications.addNotificationResponseReceivedListener(take);
+  return () => {
+    active = false;
+    sub.remove();
+  };
 }

@@ -807,6 +807,106 @@ export interface PrepaymentSummary {
   newPayoffDate: string;
 }
 
+/**
+ * Everything a prepayment of `amountMinor` on `date` would do to this loan,
+ * computed without writing anything: the new outstanding balance, the
+ * regenerated schedule, and the before/after comparison. applyPrepayment
+ * runs exactly this and then writes it; previewPrepayment runs exactly this
+ * and stops — so the preview a user sees before confirming can never differ
+ * from what confirming then records.
+ */
+async function planPrepayment(
+  db: Awaited<ReturnType<typeof getDb>>,
+  loan: {
+    id: string;
+    outstanding_principal_minor: number;
+    interest_rate_annual_bp: number;
+    emi_amount_minor: number;
+  },
+  amountMinor: number,
+  date: string
+): Promise<{
+  newOutstanding: number;
+  newSchedule: ReturnType<typeof recalculateAfterPrepayment>;
+  summary: PrepaymentSummary;
+  /** The existing EMI can't cover the interest on what's left — the loan would never close. */
+  neverPaysOff: boolean;
+}> {
+  const loanId = loan.id;
+  const paidInstallments = await db.getAllAsync<any>(
+    `SELECT * FROM loan_payments WHERE loan_id = ? AND status = 'paid' ORDER BY installment_number DESC LIMIT 1`,
+    [loanId]
+  );
+  const nextInstallmentNumber = paidInstallments.length ? paidInstallments[0].installment_number + 1 : 1;
+  // Anchored to the loan's own original due dates, not the date the
+  // prepayment happened to be made — see the identical note in
+  // applyRateChange. Without this, paying extra on the 20th of the month
+  // permanently drags every future EMI's due-day from (say) the 5th to the
+  // 20th, and can silently clear an "overdue" flag on the next installment.
+  const anchor = await scheduleAnchor(db, loanId, nextInstallmentNumber, date);
+
+  // The "before" half of the interest-saved/months-shaved comparison — read
+  // before any pending rows are replaced.
+  const oldPending = await db.getAllAsync<{ interest_component_minor: number; due_date: string }>(
+    `SELECT interest_component_minor, due_date FROM loan_payments WHERE loan_id = ? AND status = 'pending' ORDER BY installment_number ASC`,
+    [loanId]
+  );
+
+  const newOutstanding = Math.max(0, loan.outstanding_principal_minor - amountMinor);
+
+  const newSchedule =
+    newOutstanding > 0
+      ? recalculateAfterPrepayment({
+          loanId,
+          outstandingPrincipalMinor: newOutstanding,
+          annualRateBp: loan.interest_rate_annual_bp,
+          emiAmountMinor: loan.emi_amount_minor,
+          fromInstallmentNumber: nextInstallmentNumber,
+          fromDate: anchor.fromDate,
+          anchorInstallmentNumber: anchor.anchorInstallmentNumber,
+        })
+      : [];
+
+  const stillOwesAfterSchedule = newSchedule.length
+    ? newSchedule[newSchedule.length - 1].outstandingAfterMinor
+    : newOutstanding;
+
+  const oldTotalInterestMinor = oldPending.reduce((sum, p) => sum + p.interest_component_minor, 0);
+  const newTotalInterestMinor = newSchedule.reduce((sum, p) => sum + p.interestComponentMinor, 0);
+  const summary: PrepaymentSummary = {
+    // Clamped defensively — the two schedules are computed differently
+    // enough (fixed EMI/rounding drift) that a rare edge case could put the
+    // new total a paisa above the old one; this is a "you saved" figure, it
+    // should never read negative.
+    interestSavedMinor: Math.max(0, oldTotalInterestMinor - newTotalInterestMinor),
+    monthsShaved: Math.max(0, oldPending.length - newSchedule.length),
+    oldRemainingCount: oldPending.length,
+    newRemainingCount: newSchedule.length,
+    oldPayoffDate: oldPending.length ? oldPending[oldPending.length - 1].due_date : date,
+    newPayoffDate: newSchedule.length ? newSchedule[newSchedule.length - 1].dueDate : date,
+  };
+  return { newOutstanding, newSchedule, summary, neverPaysOff: stillOwesAfterSchedule > 0 };
+}
+
+/**
+ * What a prepayment would save, before any money moves — read-only, the
+ * same calculation applyPrepayment then records (see planPrepayment).
+ * Returns null for an amount that couldn't be applied at all (not positive,
+ * or more than is owed); `neverPaysOff` is the case applyPrepayment refuses.
+ */
+export async function previewPrepayment(
+  loanId: string,
+  amountMinor: number,
+  date: string
+): Promise<(PrepaymentSummary & { neverPaysOff: boolean }) | null> {
+  if (!Number.isFinite(amountMinor) || amountMinor <= 0) return null;
+  const db = await getDb();
+  const loan = await db.getFirstAsync<any>('SELECT * FROM loans WHERE id = ?', [loanId]);
+  if (!loan || amountMinor > loan.outstanding_principal_minor) return null;
+  const { summary, neverPaysOff } = await planPrepayment(db, loan, amountMinor, date);
+  return { ...summary, neverPaysOff };
+}
+
 export async function applyPrepayment(
   loanId: string,
   opts: {
@@ -849,51 +949,18 @@ export async function applyPrepayment(
     throw new Error('Prepayment cannot exceed the outstanding balance');
   }
 
-  const paidInstallments = await db.getAllAsync<any>(
-    `SELECT * FROM loan_payments WHERE loan_id = ? AND status = 'paid' ORDER BY installment_number DESC LIMIT 1`,
-    [loanId]
+  const { newOutstanding, newSchedule, summary, neverPaysOff } = await planPrepayment(
+    db,
+    loan,
+    opts.amountMinor,
+    opts.date
   );
-  const nextInstallmentNumber = paidInstallments.length ? paidInstallments[0].installment_number + 1 : 1;
-  // Anchored to the loan's own original due dates, not the date the
-  // prepayment happened to be made — see the identical note in
-  // applyRateChange. Without this, paying extra on the 20th of the month
-  // permanently drags every future EMI's due-day from (say) the 5th to the
-  // 20th, and can silently clear an "overdue" flag on the next installment.
-  const anchor = await scheduleAnchor(db, loanId, nextInstallmentNumber, opts.date);
-
-  // Read before the pending rows below get deleted and replaced — this is
-  // the "before" half of the interest-saved/months-shaved comparison
-  // returned at the end, so PrepayModal can show what the prepayment
-  // actually bought instead of just closing silently.
-  const oldPending = await db.getAllAsync<{ interest_component_minor: number; due_date: string }>(
-    `SELECT interest_component_minor, due_date FROM loan_payments WHERE loan_id = ? AND status = 'pending' ORDER BY installment_number ASC`,
-    [loanId]
-  );
-
-  const newOutstanding = Math.max(0, loan.outstanding_principal_minor - opts.amountMinor);
-
-  const newSchedule =
-    newOutstanding > 0
-      ? recalculateAfterPrepayment({
-          loanId,
-          outstandingPrincipalMinor: newOutstanding,
-          annualRateBp: loan.interest_rate_annual_bp,
-          emiAmountMinor: loan.emi_amount_minor,
-          fromInstallmentNumber: nextInstallmentNumber,
-          fromDate: anchor.fromDate,
-          anchorInstallmentNumber: anchor.anchorInstallmentNumber,
-        })
-      : [];
-
   // Same guard `applyRateChange` already has: if the existing EMI can't
   // cover interest on what's left after this prepayment, recalculateAfterPrepayment
   // defensively stops early rather than looping forever — without this
   // check that silently leaves the loan "active" with a truncated schedule
   // and no future installments to ever close it.
-  const stillOwesAfterSchedule = newSchedule.length
-    ? newSchedule[newSchedule.length - 1].outstandingAfterMinor
-    : newOutstanding;
-  if (stillOwesAfterSchedule > 0) {
+  if (neverPaysOff) {
     throw new Error(
       `The current EMI of ${formatMoney(loan.emi_amount_minor)} doesn't cover the interest on the remaining balance after this prepayment — this loan would never pay off. Try a larger prepayment amount.`
     );
@@ -964,20 +1031,7 @@ export async function applyPrepayment(
   });
   await syncDueReminder(loanId);
 
-  const oldTotalInterestMinor = oldPending.reduce((sum, p) => sum + p.interest_component_minor, 0);
-  const newTotalInterestMinor = newSchedule.reduce((sum, p) => sum + p.interestComponentMinor, 0);
-  return {
-    // Clamped defensively — the two schedules are computed differently
-    // enough (fixed EMI/rounding drift) that a rare edge case could put the
-    // new total a paisa above the old one; this is a "you saved" figure, it
-    // should never read negative.
-    interestSavedMinor: Math.max(0, oldTotalInterestMinor - newTotalInterestMinor),
-    monthsShaved: Math.max(0, oldPending.length - newSchedule.length),
-    oldRemainingCount: oldPending.length,
-    newRemainingCount: newSchedule.length,
-    oldPayoffDate: oldPending.length ? oldPending[oldPending.length - 1].due_date : opts.date,
-    newPayoffDate: newSchedule.length ? newSchedule[newSchedule.length - 1].dueDate : opts.date,
-  };
+  return summary;
 }
 
 /**

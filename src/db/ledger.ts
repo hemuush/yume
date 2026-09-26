@@ -812,6 +812,77 @@ export async function searchTransactions(query: string, limit = 50): Promise<Tra
   return rows.map(rowToTransaction);
 }
 
+export interface RepeatEntry {
+  type: 'expense' | 'income';
+  accountId: string;
+  accountCurrency: string;
+  categoryId: string;
+  categoryName: string;
+  categoryIcon: string;
+  categoryColor: string;
+  amountMinor: number;
+  /** The note from the most recent occurrence, '' if it had none. */
+  note: string;
+  timesLogged: number;
+}
+
+/**
+ * The exact entries (same type, account, category and amount) the user has
+ * logged by hand at least twice in the last 90 days, most repeated first —
+ * the + button's long-press "Log again" list. Left out on purpose:
+ *   - anything a loan or friend flow wrote (EMIs, disbursements, IOUs) or
+ *     filed under a built-in category — logging those by hand mis-files them;
+ *   - anything an active recurring rule already posts (rent, salary) — a
+ *     one-tap repeat of those would double them;
+ *   - archived categories/accounts and savings accounts, which can't take a
+ *     new expense or income anyway.
+ */
+export async function getRepeatEntries(
+  limit = 3,
+  today: string = toLocalIsoDate(new Date())
+): Promise<RepeatEntry[]> {
+  const db = await getDb();
+  const since = addDaysToIsoDate(today, -90);
+  // `t.note` is a bare column next to the single MAX(): SQLite takes it from
+  // that same row, i.e. the most recent occurrence's note.
+  const rows = await db.getAllAsync<any>(
+    `SELECT t.type AS type, t.account_id AS account_id, a.currency AS currency,
+       t.category_id AS category_id, c.name AS category_name, c.icon AS category_icon, c.color AS category_color,
+       t.amount_minor AS amount_minor, COUNT(*) AS freq,
+       MAX(t.date || ' ' || t.created_at) AS last_key, t.note AS note
+     FROM transactions t
+     JOIN categories c ON c.id = t.category_id
+     JOIN accounts a ON a.id = t.account_id
+     WHERE t.type IN ('expense', 'income') AND t.loan_id IS NULL
+       AND c.archived = 0 AND c.is_system = 0 AND a.archived = 0 AND a.type != 'savings'
+       AND t.date >= ? AND t.date <= ?
+       AND NOT EXISTS (SELECT 1 FROM loan_payments lp WHERE lp.transaction_id = t.id)
+       AND NOT EXISTS (SELECT 1 FROM person_ledger_entries pe WHERE pe.transaction_id = t.id)
+       AND NOT EXISTS (
+         SELECT 1 FROM recurring_rules r
+         WHERE r.active = 1 AND r.type = t.type AND r.account_id = t.account_id
+           AND r.category_id = t.category_id AND r.amount_minor = t.amount_minor
+       )
+     GROUP BY t.type, t.account_id, t.category_id, t.amount_minor
+     HAVING COUNT(*) >= 2
+     ORDER BY freq DESC, last_key DESC
+     LIMIT ?`,
+    [since, today, limit]
+  );
+  return rows.map((r) => ({
+    type: r.type,
+    accountId: r.account_id,
+    accountCurrency: r.currency,
+    categoryId: r.category_id,
+    categoryName: r.category_name,
+    categoryIcon: r.category_icon,
+    categoryColor: r.category_color,
+    amountMinor: r.amount_minor,
+    note: r.note ?? '',
+    timesLogged: r.freq,
+  }));
+}
+
 /** How many transactions exist at all — a cheap COUNT for UI that only needs "is there real data yet". */
 export async function countTransactions(): Promise<number> {
   const db = await getDb();

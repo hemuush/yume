@@ -46,6 +46,8 @@ export function AppHeader({ title, showBack, right, hideUser }: Props) {
             onPressOut={onPressOut}
             hitSlop={12}
             style={[styles.backBtn, animatedStyle]}
+            accessibilityRole="button"
+            accessibilityLabel="Back"
           >
             <Feather name="chevron-left" size={20} color={theme.colors.ink} />
           </AnimatedPressable>

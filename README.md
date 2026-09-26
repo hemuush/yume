@@ -39,10 +39,12 @@ All data lives in an on-device SQLite database. Nothing is ever sent to any serv
 ```
 app/                    Screens (expo-router file-based routing)
   (tabs)/               Bottom tabs: index (Home), transactions (Activity),
-                        add (raised "+", opens add-transaction), loans, reports
+                        add (raised "+", opens add-transaction), plan, reports
+  loans.tsx             Borrowed & Lent — loans and Friends & Family IOUs, reached
+                        from Plan
   profile.tsx           Identity, accounts, budgets, savings goals, and Settings
                         (currency, theme, app lock, privacy) — pushed from the
-                        header avatar; the one entry point into all of it
+                        header avatar
   categories.tsx        Category management
   budgets.tsx           Monthly category budgets
   savings-goals.tsx     Savings goals and contributions

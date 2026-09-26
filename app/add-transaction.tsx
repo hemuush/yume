@@ -792,7 +792,13 @@ export default function AddTransactionScreen() {
                     {incomeLike ? '+' : expenseLike ? '−' : ''}
                     {formatMoney(r.amountMinor)}
                   </Text>
-                  <Pressable onPress={() => removeRow(r.id)} hitSlop={10} style={styles.removeBtn}>
+                  <Pressable
+                    onPress={() => removeRow(r.id)}
+                    hitSlop={10}
+                    style={styles.removeBtn}
+                    accessibilityRole="button"
+                    accessibilityLabel="Remove this entry from the list"
+                  >
                     <Feather name="x" size={14} color={theme.colors.textMuted} />
                   </Pressable>
                 </View>
@@ -918,7 +924,7 @@ function FriendFields({
   if (people.length === 0) {
     return (
       <View style={styles.section}>
-        <Text style={styles.hint}>Add a person in Borrowed &amp; Lent → Friends &amp; Family first.</Text>
+        <Text style={styles.hint}>Add a person first: Plan → Loans &amp; people → Friends &amp; Family.</Text>
       </View>
     );
   }
