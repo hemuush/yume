@@ -110,34 +110,6 @@ export const styles = StyleSheet.create({
   },
   gardenLinkText: { flex: 1, fontFamily: theme.font.roundedMedium, fontSize: 13, color: theme.colors.ink },
 
-  emptyCard: { marginHorizontal: 20, padding: 14, borderRadius: 16 },
-  emptyCardRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  emptyCardIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
-  },
-  emptyCardTitle: { fontFamily: theme.font.roundedMedium, fontSize: 13.5, color: theme.colors.textPrimary },
-  emptyCardSubtitle: {
-    fontFamily: theme.font.body,
-    fontSize: 11,
-    color: theme.colors.textMuted,
-    marginTop: 1,
-    lineHeight: 15,
-  },
-  emptyCardCta: {
-    marginTop: 12,
-    borderWidth: 1.5,
-    borderStyle: 'dashed',
-    borderRadius: 11,
-    paddingVertical: 9,
-    alignItems: 'center',
-  },
-  emptyCardCtaText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textPrimary },
-
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -187,26 +159,12 @@ export const styles = StyleSheet.create({
   // component itself has no opinion about.
   tabWrap: { marginHorizontal: 20, marginBottom: 6 },
 
-  // ---- YouSection: goal strip, "See all" link ----
-  goalStrip: { flexDirection: 'row', gap: 10, paddingHorizontal: 20 },
-  seeAllLink: { fontSize: 12, fontFamily: theme.font.bodyMedium, color: theme.colors.textSecondary },
-
   // ---- YouSection section headers — matches Home's HomeSection heading, not
   // the colored SectionLabel pill, so the two screens read as one screen
   // when Budgets/Savings Goals appear on both (design sign-off: "one header
   // style, everywhere"). SectionLabel itself is kept only for the quieter
   // "ARCHIVED ACCOUNTS" row further down.
   sectionTitle: { fontFamily: theme.font.roundedBold, fontSize: 16, color: theme.colors.textPrimary },
-  // Recurring's "See all" reads as an outlined pill instead of a bare text
-  // link, so it sits at the same visual weight as the "+ Account"/"+ Add"
-  // pills next to it — a different action (browse vs. create), not a
-  // lesser one.
-  // Matches Home's own "See all" (HomeSection.tsx) exactly — this used to be
-  // a bordered pill, the only place in the app that affordance appeared;
-  // unified to the plain text+arrow style used everywhere else.
-  seeAll: { flexDirection: 'row', alignItems: 'center', gap: 3 },
-  seeAllText: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textSecondary },
-
   // ---- SettingsSection (formerly settings.tsx's own StyleSheet) ----
   groupTitle: {
     fontFamily: theme.font.bodyBold,
