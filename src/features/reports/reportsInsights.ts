@@ -1,5 +1,6 @@
 import { parseLocalIsoDate } from '@/lib/date';
 import { formatMoney } from '@/lib/money';
+import { formatPctChange } from '@/lib/format';
 import type { CategoryBreakdownItem, DailyExpensePoint, TrendPoint } from '@/db/reports';
 
 /** Which categories count as a fixed monthly load rather than a choice. */
@@ -142,4 +143,76 @@ export function describeSpendingPattern(daily: DailyExpensePoint[], totalDaysInP
   }
 
   return lines.slice(0, 3);
+}
+
+export type InShortTarget = 'overview' | 'categories' | 'trends';
+
+export interface InShortLine {
+  key: string;
+  /** A Feather icon name. */
+  icon: 'trending-up' | 'calendar' | 'repeat';
+  /** Shown bold, before `text` (e.g. a category name). */
+  bold?: string;
+  text: string;
+  /** Which Reports section tapping the line scrolls to. */
+  target: InShortTarget;
+}
+
+export interface InShortInput {
+  /** The category that grew most vs the comparison period (findTopGrowingCategory), if any. */
+  mover: { name: string; pctChange: number } | null;
+  /** "the month before" / "last year" — previousPeriodLabel. */
+  comparisonLabel: string;
+  /**
+   * describeSpendingPattern's reads — pass [] for a year view: they describe
+   * a month's daily shape ("first 8 days", weekends) and don't mean anything
+   * across twelve months.
+   */
+  patternReads: string[];
+  recurringMinor: number;
+  discretionaryMinor: number;
+  /** Days in the period with any spending. */
+  spendDays: number;
+  /** True when the period is the one in progress (this month / this year). */
+  isCurrentPeriod: boolean;
+}
+
+/**
+ * The Reports "In short" card: up to three plain-language lines, most
+ * telling first, each built from something Reports already calculates —
+ * nothing here invents a new figure. Order: the category that grew the most,
+ * then the daily-pattern reads, then (only to fill the card) the fixed-bills
+ * share. How this period compares with the usual month is left out on
+ * purpose: the headline's "above/below usual" badge already says it.
+ *
+ * `tooEarly` is set instead of guessing when the period in progress has
+ * fewer than three spending days — the card then says so rather than
+ * presenting a two-day pattern as a finding.
+ */
+export function buildInShortLines(input: InShortInput): { lines: InShortLine[]; tooEarly: boolean } {
+  if (input.isCurrentPeriod && input.spendDays < 3) return { lines: [], tooEarly: true };
+
+  const lines: InShortLine[] = [];
+  if (input.mover) {
+    lines.push({
+      key: 'mover',
+      icon: 'trending-up',
+      bold: input.mover.name,
+      text: ` is up ${formatPctChange(input.mover.pctChange)} vs ${input.comparisonLabel}`,
+      target: 'categories',
+    });
+  }
+  input.patternReads.forEach((read, i) => {
+    if (lines.length < 3) lines.push({ key: `read-${i}`, icon: 'calendar', text: read, target: 'overview' });
+  });
+  const total = input.recurringMinor + input.discretionaryMinor;
+  if (lines.length < 3 && total > 0 && input.recurringMinor > 0) {
+    lines.push({
+      key: 'fixed',
+      icon: 'repeat',
+      text: `Fixed bills are ${Math.round((input.recurringMinor / total) * 100)}% of the spending`,
+      target: 'categories',
+    });
+  }
+  return { lines, tooEarly: false };
 }

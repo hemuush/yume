@@ -575,3 +575,23 @@ export async function setBackupNudgeSnoozedUntil(iso: string): Promise<void> {
     [BACKUP_NUDGE_SNOOZED_UNTIL_KEY, iso]
   );
 }
+
+/** "YYYY-MM" of the month whose Home "month in review" card was last dismissed with ✕ — the card stays hidden for that month only. */
+const MONTH_REVIEW_DISMISSED_KEY = 'month_review_dismissed';
+
+export async function getMonthReviewDismissed(): Promise<string | null> {
+  const db = await getDb();
+  const row = await db.getFirstAsync<{ value: string }>('SELECT value FROM settings WHERE key = ?', [
+    MONTH_REVIEW_DISMISSED_KEY,
+  ]);
+  return row?.value ?? null;
+}
+
+export async function setMonthReviewDismissed(monthKey: string): Promise<void> {
+  const db = await getDb();
+  await db.runAsync(
+    `INSERT INTO settings (key, value) VALUES (?, ?)
+     ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
+    [MONTH_REVIEW_DISMISSED_KEY, monthKey]
+  );
+}

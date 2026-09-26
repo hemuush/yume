@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -11,7 +11,7 @@ import {
   NativeSyntheticEvent,
 } from 'react-native';
 import ReanimatedAnimated, { FadeIn } from 'react-native-reanimated';
-import { useFocusEffect } from 'expo-router';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from '@expo/vector-icons/Feather';
 import {
@@ -54,6 +54,7 @@ import { theme } from '@/constants/theme';
 import { useAccent } from '@/theme/AccentContext';
 import { shade, spendHeatScale } from '@/lib/color';
 import { useSwipeStep } from '@/lib/useSwipeStep';
+import { InShortCard } from '@/features/reports/InShortCard';
 import { SpendHeatmap, HeatCell } from '@/features/reports/SpendHeatmap';
 import { MoonPhase, moonPhaseShades } from '@/features/reports/MoonPhase';
 import { SkylineRibbon } from '@/features/reports/SkylineRibbon';
@@ -65,6 +66,7 @@ import {
   recurringVsDiscretionary,
   categoryDeltas,
   describeSpendingPattern,
+  buildInShortLines,
   summariseDayTotal,
 } from '@/features/reports/reportsInsights';
 
@@ -75,6 +77,19 @@ export default function ReportsScreen() {
   const insets = useSafeAreaInsets();
   const { accent } = useAccent();
   const [cursor, setCursor] = useState<PeriodCursor>(CURRENT_PERIOD);
+  // `/reports?month=-1` opens on a specific month (0 = this month, -1 = last
+  // month) — used by Home's month-in-review card. Reports is a tab, so it may
+  // already be mounted: this reacts to each new link, then clears the param
+  // so a later visit to the tab isn't pulled back to that month.
+  const { month: monthParam } = useLocalSearchParams<{ month?: string }>();
+  useEffect(() => {
+    if (monthParam == null) return;
+    const offset = Number(monthParam);
+    if (Number.isInteger(offset) && offset <= 0 && offset >= -120) {
+      setCursor({ granularity: 'month', offset });
+    }
+    router.setParams({ month: undefined });
+  }, [monthParam]);
   const [comparison, setComparison] = useState<PeriodComparison | null>(null);
   const [trend, setTrend] = useState<TrendPoint[]>([]);
   const [netWorthTrend, setNetWorthTrend] = useState<NetWorthPoint[]>([]);
@@ -314,12 +329,22 @@ export default function ReportsScreen() {
   const maxCat = Math.max(1, ...current.categoryBreakdown.map((c) => c.totalMinor));
 
   const topGrowing = findTopGrowingCategory(current.categoryBreakdown, previous.categoryBreakdown);
-  const moverPrev = topGrowing
-    ? (previous.categoryBreakdown.find((c) => c.categoryId === topGrowing.categoryId)?.totalMinor ?? 0)
-    : 0;
-  const moverCur = topGrowing
-    ? (current.categoryBreakdown.find((c) => c.categoryId === topGrowing.categoryId)?.totalMinor ?? 0)
-    : 0;
+
+  // "In short": the answers first (see buildInShortLines). The daily-pattern
+  // reads describe a month's shape, so a year view gets none here — it keeps
+  // showing them under its heatmap exactly as before.
+  const inShort = buildInShortLines({
+    mover: topGrowing ? { name: topGrowing.name, pctChange: topGrowing.pctChange } : null,
+    comparisonLabel,
+    patternReads: cursor.granularity === 'month' ? reads : [],
+    recurringMinor,
+    discretionaryMinor,
+    spendDays,
+    isCurrentPeriod: cursor.offset === 0,
+  });
+  // Each answer appears once: reads already shown in the card aren't repeated
+  // under the heatmap.
+  const remainingReads = reads.filter((_, i) => !inShort.lines.some((l) => l.key === `read-${i}`));
 
   // ---- heatmap cells ----
   let heatCells: HeatCell[] = [];
@@ -417,6 +442,12 @@ export default function ReportsScreen() {
                 {daysInPeriod - spendDays > 0 ? ` · ${daysInPeriod - spendDays} no-spend` : ''}
               </Text>
 
+              <InShortCard
+                lines={inShort.lines}
+                tooEarly={inShort.tooEarly}
+                onJump={(target) => jumpTo(target)}
+              />
+
               {/* heatmap */}
               <View style={styles.hmTitleRow}>
                 <Text style={styles.blockTitle}>{periodLabel(cursor)}</Text>
@@ -442,9 +473,9 @@ export default function ReportsScreen() {
                 columns={heatCols}
                 weekdayLabels={heatWeekdays}
               />
-              {reads.length > 0 && (
+              {remainingReads.length > 0 && (
                 <View style={styles.reads}>
-                  {reads.map((r, i) => (
+                  {remainingReads.map((r, i) => (
                     <View key={i} style={styles.readRow}>
                       <Text style={styles.readBullet}>▸</Text>
                       <Text style={styles.readText}>{r}</Text>
@@ -597,22 +628,8 @@ export default function ReportsScreen() {
                 </>
               )}
 
-              {topGrowing && (
-                <>
-                  <View style={styles.rule} />
-                  <View style={styles.mover}>
-                    <View style={styles.moverIcon}>
-                      <Feather name="trending-up" size={14} color={theme.colors.ink} />
-                    </View>
-                    <Text style={styles.moverText}>
-                      <Text style={styles.moverBold}>{topGrowing.name}</Text> is the mover —{' '}
-                      {formatMoney(roundedMinor(moverPrev))} → {formatMoney(roundedMinor(moverCur))} (
-                      {formatPctChange(topGrowing.pctChange)} vs {comparisonLabel}).
-                    </Text>
-                  </View>
-                </>
-              )}
-
+              {/* The "mover" line that used to sit here now leads Reports' "In
+                  short" card, so it isn't repeated. */}
               {netWorthTrend.length >= 3 && (
                 <>
                   <View style={styles.rule} />
@@ -1170,26 +1187,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   sparkAxisLabelOn: { color: theme.colors.idCoralDeep, fontFamily: theme.font.monoBold },
-
-  mover: { flexDirection: 'row', gap: 9, alignItems: 'flex-start' },
-  moverIcon: {
-    width: 26,
-    height: 26,
-    borderRadius: 8,
-    backgroundColor: theme.colors.goldTint,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  moverText: {
-    flex: 1,
-    fontFamily: theme.font.body,
-    fontSize: 11,
-    color: theme.colors.textSecondary,
-    lineHeight: 16,
-  },
-  moverBold: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
 
   // day-detail / drill popup
   dayRow: {
