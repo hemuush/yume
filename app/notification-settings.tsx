@@ -255,7 +255,13 @@ const styles = StyleSheet.create({
     color: theme.colors.textSecondary,
     marginTop: 1,
   },
-  previewHint: { fontSize: 11, color: theme.colors.textMuted, textAlign: 'center', marginTop: 2 },
+  previewHint: {
+    fontFamily: theme.font.body,
+    fontSize: 11,
+    color: theme.colors.textMuted,
+    textAlign: 'center',
+    marginTop: 2,
+  },
 
   sectionLabel: {
     fontSize: 11,
@@ -306,6 +312,7 @@ const styles = StyleSheet.create({
   },
 
   footNote: {
+    fontFamily: theme.font.body,
     fontSize: 11,
     color: theme.colors.textMuted,
     marginHorizontal: 20,

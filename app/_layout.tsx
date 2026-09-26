@@ -297,6 +297,16 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.background,
     padding: 24,
   },
-  errorText: { fontSize: 16, fontWeight: '600', color: theme.colors.expense, marginBottom: 8 },
-  errorDetail: { fontSize: 13, color: theme.colors.textSecondary, textAlign: 'center' },
+  errorText: {
+    fontFamily: theme.font.bodyMedium,
+    fontSize: 16,
+    color: theme.colors.expense,
+    marginBottom: 8,
+  },
+  errorDetail: {
+    fontFamily: theme.font.body,
+    fontSize: 13,
+    color: theme.colors.textSecondary,
+    textAlign: 'center',
+  },
 });

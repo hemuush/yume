@@ -676,7 +676,7 @@ const styles = StyleSheet.create({
   // Each person's own bordered tile — same spacing/radius Loans' own
   // LoanCard uses, so the two segments of this tab read as one design
   // instead of a card list next to a plain divided list.
-  card: { marginHorizontal: 20, marginBottom: 10, padding: 16, borderRadius: 14 },
+  card: { marginHorizontal: 20, marginBottom: 10, padding: 16, borderRadius: theme.radius.xl2 },
   cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   who: { flexDirection: 'row', alignItems: 'center', flex: 1, minWidth: 0, marginRight: 8 },
   cardName: {
@@ -736,10 +736,9 @@ const styles = StyleSheet.create({
   sectionHeading: { fontFamily: theme.font.roundedBold, fontSize: 16, color: theme.colors.textPrimary },
   detailBalance: { fontFamily: theme.font.monoBold, fontSize: 20, marginBottom: 16 },
   sectionTitle: {
-    fontFamily: theme.font.bodyBold,
-    fontSize: 12,
-    color: theme.colors.textMuted,
-    textTransform: 'uppercase',
+    fontFamily: theme.font.roundedBold,
+    fontSize: 16,
+    color: theme.colors.textPrimary,
     marginTop: 20,
     marginBottom: 4,
   },
