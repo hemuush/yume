@@ -215,16 +215,3 @@ export const ID_PALETTE = [
   theme.colors.idCoral,
   theme.colors.idSage,
 ];
-
-// The Reports spend-heatmap's intensity ramp itself is derived from the
-// user's accent colour (`spendHeatScale` in `src/lib/color.ts`), not a fixed
-// swatch here — see that function's comment. This is just the matching
-// cell-label colour per level — dark ink on the two palest
-// steps, white once the wash is dark enough to carry it.
-export const SPEND_HEAT_TEXT = [
-  theme.colors.textMuted,
-  theme.colors.textMuted,
-  theme.colors.textSecondary,
-  theme.colors.white,
-  theme.colors.white,
-] as const;

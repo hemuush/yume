@@ -109,6 +109,8 @@ describe('Reports screen', () => {
         'Overview',
         'Categories',
         'Trends',
+        'Day by day',
+        'Fixed vs flexible',
         'Where it went',
         'Rent',
         'Food',

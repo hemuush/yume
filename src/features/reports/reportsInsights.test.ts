@@ -202,7 +202,7 @@ describe('buildInShortLines', () => {
 });
 
 describe('buildHeatGrid', () => {
-  it('lays a month out as a calendar: blanks before the 1st, weekends marked, spend days tappable', () => {
+  it('lays a month out as a calendar: blanks before the 1st, today marked, spend days tappable', () => {
     const onDayPress = jest.fn();
     const grid = buildHeatGrid({
       granularity: 'month',
@@ -213,15 +213,16 @@ describe('buildHeatGrid', () => {
         { date: '2026-09-06', totalMinor: 10000 },
       ],
       onDayPress,
+      todayIso: '2026-09-06',
     });
     expect(grid.columns).toBe(7);
     expect(grid.leadingPad).toBe(2);
     expect(grid.weekdayLabels).toHaveLength(7);
     expect(grid.cells).toHaveLength(30);
     const sat = grid.cells[4];
-    expect(sat).toMatchObject({ key: '2026-09-05', label: '5', level: 4, isWeekend: true });
-    expect(grid.cells[5]).toMatchObject({ key: '2026-09-06', level: 1, isWeekend: true });
-    expect(grid.cells[0]).toMatchObject({ level: 0, isWeekend: false, onPress: undefined });
+    expect(sat).toMatchObject({ key: '2026-09-05', label: '5', level: 4, isToday: false });
+    expect(grid.cells[5]).toMatchObject({ key: '2026-09-06', level: 1, isToday: true });
+    expect(grid.cells[0]).toMatchObject({ level: 0, isToday: false, onPress: undefined });
     sat.onPress!();
     expect(onDayPress).toHaveBeenCalledWith('2026-09-05');
   });

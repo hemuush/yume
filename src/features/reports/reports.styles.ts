@@ -1,6 +1,9 @@
 import { StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
 
+/** The even gap between Reports' blocks (headline, "In short", calendar). */
+export const BLOCK_GAP = 22;
+
 /** Tallest bar in TrendBars, in px — the bar chart's own height is derived from it. */
 export const BAR_MAX_HEIGHT = 56;
 
@@ -62,7 +65,7 @@ export const styles = StyleSheet.create({
   jumpChipText: { fontFamily: theme.font.bodyBold, fontSize: 11.5, color: theme.colors.textSecondary },
   jumpChipTextOn: { color: theme.colors.surface },
 
-  headlineRow: { flexDirection: 'row', alignItems: 'flex-end', marginTop: 4 },
+  headlineRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 2 },
   eyebrow: {
     fontFamily: theme.font.mono,
     fontSize: 9,
@@ -70,7 +73,13 @@ export const styles = StyleSheet.create({
     textTransform: 'uppercase',
     color: theme.colors.textMuted,
   },
-  big: { fontFamily: theme.font.monoBold, fontSize: 30, color: theme.colors.textPrimary, marginTop: 2 },
+  big: {
+    flex: 1,
+    fontFamily: theme.font.monoBold,
+    fontSize: 30,
+    letterSpacing: -1.5,
+    color: theme.colors.textPrimary,
+  },
   // Same red/green + arrow badge language This Month's KPI tiles and the
   // stat cards already use, instead of a small two-line corner label.
   vsBadge: {
@@ -78,36 +87,32 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 4,
     borderRadius: theme.radius.pill,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    marginBottom: 3,
+    paddingHorizontal: 9,
+    paddingVertical: 4,
   },
-  vsBadgeText: { fontFamily: theme.font.bodyBold, fontSize: 11.5 },
+  vsBadgeText: { fontFamily: theme.font.bodyBold, fontSize: 10.5 },
   headlineSub: {
     fontFamily: theme.font.body,
     fontSize: 10.5,
     color: theme.colors.textMuted,
-    marginTop: 4,
-    marginBottom: 22,
+    marginTop: 3,
+    marginBottom: BLOCK_GAP,
   },
 
   blockTitle: {
     fontFamily: theme.font.roundedBold,
-    fontSize: 12,
-    letterSpacing: 0.4,
-    textTransform: 'uppercase',
-    color: theme.colors.textSecondary,
-    marginBottom: 10,
+    fontSize: 15,
+    color: theme.colors.textPrimary,
+    marginBottom: 8,
   },
   hmTitleRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'baseline',
-    marginBottom: 9,
+    alignItems: 'center',
   },
-  legend: { flexDirection: 'row', alignItems: 'center', gap: 3 },
-  legendText: { fontFamily: theme.font.body, fontSize: 8, color: theme.colors.textMuted },
-  legendSwatch: { width: 9, height: 9, borderRadius: 3 },
+  legend: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 8 },
+  legendText: { fontFamily: theme.font.body, fontSize: 9.5, color: theme.colors.textMuted },
+  legendSwatch: { width: 11, height: 11, borderRadius: 3 },
 
   reads: { marginTop: 14, gap: 6 },
   readRow: { flexDirection: 'row', gap: 6 },
@@ -135,13 +140,13 @@ export const styles = StyleSheet.create({
     padding: 18,
     alignItems: 'center',
   },
-  moonEyebrow: {
-    fontFamily: theme.font.bodyBold,
-    fontSize: 11,
-    letterSpacing: 0.4,
-    textTransform: 'uppercase',
+  moonTitle: { fontFamily: theme.font.roundedBold, fontSize: 15, color: theme.colors.textPrimary },
+  moonSub: {
+    fontFamily: theme.font.body,
+    fontSize: 10.5,
     color: theme.colors.textMuted,
-    marginBottom: 10,
+    marginTop: 2,
+    marginBottom: 12,
   },
   moonFigs: { flexDirection: 'row', gap: 22, marginTop: 14 },
   moonFig: { alignItems: 'flex-start' },

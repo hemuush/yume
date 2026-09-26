@@ -8,7 +8,7 @@ import { styles } from './reports.styles';
 
 const LEVELS = [0, 1, 2, 3, 4] as const;
 
-/** The period's heatmap with its less → more legend, and any pattern reads not already in "In short". */
+/** The period's heatmap under its title and less → more legend, and any pattern reads not already in "In short". */
 export function HeatmapSection({
   title,
   grid,

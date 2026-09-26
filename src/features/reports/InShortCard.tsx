@@ -2,6 +2,7 @@ import { View, Pressable, Animated, StyleSheet } from 'react-native';
 import { Text } from '@/components/Text';
 import Feather from '@expo/vector-icons/Feather';
 import { theme } from '@/constants/theme';
+import { BLOCK_GAP } from './reports.styles';
 import { usePressScale } from '@/lib/usePressScale';
 import type { InShortLine, InShortTarget } from './reportsInsights';
 
@@ -68,7 +69,7 @@ function InShortRow({ line, onPress }: { line: InShortLine; onPress: () => void 
 
 const styles = StyleSheet.create({
   card: {
-    marginTop: 14,
+    marginBottom: BLOCK_GAP,
     backgroundColor: theme.colors.surface,
     borderRadius: theme.radius.xl2,
     borderWidth: StyleSheet.hairlineWidth,

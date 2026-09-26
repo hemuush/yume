@@ -72,32 +72,21 @@ describe('hexToRgba', () => {
 });
 
 describe('spendHeatScale', () => {
-  it('produces 5 steps, increasingly opaque, for every accent swatch', () => {
-    const swatches = ['#E0F0A8', '#8FE8C8', '#8FCBFF', '#C9B8FF', '#FFA8CE', '#F0A387', '#5FB3A8', '#E0AC3F'];
+  const swatches = ['#E0F0A8', '#8FE8C8', '#8FCBFF', '#C9B8FF', '#FFA8CE', '#F0A387', '#5FB3A8', '#E0AC3F'];
+  const alphaOf = (rgba: string) => Number(rgba.slice(rgba.lastIndexOf(',') + 1, -1));
+
+  it('rises through washes of the accent, increasingly opaque', () => {
     for (const accent of swatches) {
       const scale = spendHeatScale(accent);
       expect(scale).toHaveLength(5);
       expect(scale[0]).toBe('transparent');
-      const alphaOf = (rgba: string) => Number(rgba.slice(rgba.lastIndexOf(',') + 1, -1));
-      const alphas = scale.slice(1).map(alphaOf);
-      for (let i = 1; i < alphas.length; i++) {
-        expect(alphas[i]).toBeGreaterThan(alphas[i - 1]);
-      }
+      const alphas = scale.slice(1, 4).map(alphaOf);
+      expect(alphas[0]).toBeLessThan(alphas[1]);
+      expect(alphas[1]).toBeLessThan(alphas[2]);
     }
   });
 
-  it('the two deepest steps stay the same hue as the accent', () => {
-    const accent = '#8FCBFF'; // sky
-    const [accentHue] = hexToHsl(accent);
-    const scale = spendHeatScale(accent);
-    const rgbaHue = (rgba: string) => {
-      const [r, g, b] = rgba
-        .slice(rgba.indexOf('(') + 1, rgba.lastIndexOf(','))
-        .split(',')
-        .map(Number);
-      return hexToHsl(`#${[r, g, b].map((v) => Math.round(v).toString(16).padStart(2, '0')).join('')}`)[0];
-    };
-    expect(rgbaHue(scale[3])).toBeCloseTo(accentHue, -1);
-    expect(rgbaHue(scale[4])).toBeCloseTo(accentHue, -1);
+  it('tops out at the accent itself, never a darker shade of it', () => {
+    for (const accent of swatches) expect(spendHeatScale(accent)[4]).toBe(accent);
   });
 });
