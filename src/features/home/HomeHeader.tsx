@@ -23,6 +23,7 @@ import { YumeLogo } from '@/components/YumeLogo';
 import { HeaderIconButton, HeaderUserButton } from '@/components/AppHeader';
 import { PeriodCursor } from '@/lib/period';
 import { MonthPill } from './MonthPill';
+import { MOTION } from '@/lib/animation';
 
 function greetingWord(): string {
   const h = new Date().getHours();
@@ -112,29 +113,33 @@ export function Spark({
   );
 }
 
+const EDGE_HEIGHT = 14;
+
 /**
  * The Home screen's own header — a soft gradient from a light wash of the
  * user's accent down into the page's own cream, derived the same way the
  * Reports moon/heatmap are (`shade()`), so picking a different accent
  * retints the whole thing.
  *
- * Previously taller: Suu sat in the top-right corner, and the greeting sat
- * on its own row above a second row holding just the month pill. Suu is
- * gone (it had no job here beyond decoration, and competed with the
- * greeting for the same corner), and the greeting/tagline now share one row
- * with the month pill instead of stacking — together this takes the band
- * from roughly 230px down to about 120px of vertical space.
+ * Brand row, then the greeting/tagline beside the month pill, then
+ * `children` along the bottom of the band — Home puts its Expense / Income /
+ * Transfer shortcuts there (the "arranged Home" sign-off), so they sit in
+ * the header instead of adding one more row to the page. Scrolls with the
+ * page; it no longer collapses (that was for a taller header over a longer
+ * page).
  */
 export function HomeHeader({
   cursor,
   onChange,
   userName,
   hasAlerts,
+  children,
 }: {
   cursor: PeriodCursor;
   onChange: (next: PeriodCursor) => void;
   userName: string | null;
   hasAlerts: boolean;
+  children?: React.ReactNode;
 }) {
   const { accent } = useAccent();
   const insets = useSafeAreaInsets();
@@ -143,7 +148,7 @@ export function HomeHeader({
   const contentTop = insets.top + 10;
 
   return (
-    <>
+    <View>
       <View style={[styles.band, { paddingTop: contentTop }]}>
         <LinearGradient
           colors={[gradientTop, gradientBottom]}
@@ -182,7 +187,7 @@ export function HomeHeader({
         <View style={styles.greetRow}>
           <ReanimatedAnimated.View
             style={styles.greetBlock}
-            entering={FadeInDown.duration(420).springify().reduceMotion(ReduceMotion.System)}
+            entering={FadeInDown.duration(MOTION.enter).easing(MOTION.ease).reduceMotion(ReduceMotion.System)}
           >
             <Text style={styles.greet} numberOfLines={1}>
               Good {greetingWord()}
@@ -193,14 +198,19 @@ export function HomeHeader({
             </Text>
           </ReanimatedAnimated.View>
           <ReanimatedAnimated.View
-            entering={FadeInDown.duration(420).delay(90).springify().reduceMotion(ReduceMotion.System)}
+            entering={FadeInDown.duration(MOTION.enter)
+              .delay(MOTION.enterStep)
+              .easing(MOTION.ease)
+              .reduceMotion(ReduceMotion.System)}
           >
             <MonthPill cursor={cursor} onChange={onChange} />
           </ReanimatedAnimated.View>
         </View>
+
+        {children}
       </View>
-      <ScallopedEdge color={gradientBottom} height={14} />
-    </>
+      <ScallopedEdge color={gradientBottom} height={EDGE_HEIGHT} />
+    </View>
   );
 }
 
@@ -216,7 +226,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: 12,
-    marginTop: 16,
+    marginTop: 4,
   },
   greetBlock: { flex: 1, minWidth: 0 },
   greet: { fontFamily: theme.font.roundedMedium, fontSize: 15, color: theme.colors.ink },

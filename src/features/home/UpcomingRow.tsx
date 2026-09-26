@@ -4,6 +4,7 @@ import Feather from '@expo/vector-icons/Feather';
 import { theme } from '@/constants/theme';
 import { formatMoney } from '@/lib/money';
 import { usePressScale } from '@/lib/usePressScale';
+import { homeStyles as h, HOME } from './homeStyles';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -49,7 +50,7 @@ export function UpcomingRow({
       style={[styles.row, divider && styles.divider, animatedStyle]}
     >
       <View style={[styles.iconWrap, { backgroundColor: urgent ? theme.colors.expenseTint : iconBg }]}>
-        <Feather name={icon} size={14} color={urgent ? theme.colors.expense : iconColor} />
+        <Feather name={icon} size={HOME.iconGlyph} color={urgent ? theme.colors.expense : iconColor} />
       </View>
       <View style={styles.mid}>
         <Text style={styles.title} numberOfLines={1}>
@@ -94,7 +95,7 @@ export function UpcomingMoreRow({
       style={[styles.row, divider && styles.divider, animatedStyle]}
     >
       <View style={[styles.iconWrap, { backgroundColor: theme.colors.surfaceAlt }]}>
-        <Feather name="more-horizontal" size={14} color={theme.colors.textMuted} />
+        <Feather name="more-horizontal" size={HOME.iconGlyph} color={theme.colors.textMuted} />
       </View>
       <Text style={styles.moreText}>+{count} more</Text>
     </AnimatedPressable>
@@ -102,15 +103,15 @@ export function UpcomingMoreRow({
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center', gap: 11, paddingVertical: 11, paddingHorizontal: 14 },
-  divider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.borderSoft },
-  iconWrap: { width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
-  mid: { flex: 1, minWidth: 0 },
-  title: { fontFamily: theme.font.bodyBold, fontSize: 13.5, color: theme.colors.textPrimary },
-  sub: { fontFamily: theme.font.body, fontSize: 11.5, color: theme.colors.textMuted, marginTop: 1 },
-  subUrgent: { color: theme.colors.expense, fontFamily: theme.font.bodyBold },
-  amount: { fontFamily: theme.font.monoBold, fontSize: 13, color: theme.colors.textPrimary },
-  income: { color: theme.colors.income },
-  expense: { color: theme.colors.expense },
+  row: h.row,
+  divider: h.divider,
+  iconWrap: h.iconTile,
+  mid: h.mid,
+  title: h.title,
+  sub: h.sub,
+  subUrgent: h.subUrgent,
+  amount: h.amount,
+  income: h.income,
+  expense: h.expense,
   moreText: { flex: 1, fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textSecondary },
 });

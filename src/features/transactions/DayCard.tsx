@@ -10,6 +10,7 @@ import { theme } from '@/constants/theme';
 import { usePressScale } from '@/lib/usePressScale';
 import { haptics } from '@/lib/haptics';
 import { styles } from './transactions.styles';
+import { homeStyles as h, HOME } from '@/features/home/homeStyles';
 
 const AnimatedMoreRow = Animated.createAnimatedComponent(Pressable);
 
@@ -29,14 +30,17 @@ function netMinorOf(items: Transaction[]): number {
 /** `+₹1,234` / `-₹1,234` / `''` for a dead-even day — shared by the card's own total and its "+N more" row. */
 function signedAmount(netMinor: number): { text: string; style: object | undefined } {
   if (netMinor === 0) return { text: formatMoney(0), style: undefined };
-  const sign = netMinor > 0 ? '+' : '-';
   return {
-    text: `${sign}${formatMoney(Math.abs(netMinor))}`,
+    text: `${netMinor > 0 ? '+' : '−'}${formatMoney(Math.abs(netMinor))}`,
     style: netMinor > 0 ? styles.income : styles.expense,
   };
 }
 
 /**
+ * One day's transactions: the day ("Today · 26 Sep") and its net total as a
+ * heading above, the rows in a card below — the same card and row style as
+ * Home and Plan (homeStyles), so the three tabs read as one app.
+ *
  * One day's transactions, boxed — the day itself is the unit worth a
  * glance-and-move-on read, not each transaction inside it. Rows past
  * `ROW_CAP` start collapsed behind a "+N more" row so a ten-transaction day
@@ -90,43 +94,47 @@ export function DayCard({
   const categoriesById = useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories]);
 
   return (
-    <ReanimatedAnimated.View style={styles.dayCard} entering={entering}>
-      <View style={styles.dayCardHead}>
-        <Text style={styles.dayLabel}>
+    <ReanimatedAnimated.View entering={entering}>
+      <View style={styles.dayHead}>
+        <Text style={styles.dayTitle}>
           {label}
           {'  '}
-          <Text style={styles.dayLabelDate}>{dateLabel}</Text>
+          <Text style={styles.dayDate}>{dateLabel}</Text>
         </Text>
-        <Text style={[styles.dayCardTotal, total.style]}>{total.text}</Text>
+        {total.text !== formatMoney(0) && <Text style={[styles.dayTotal, total.style]}>{total.text}</Text>}
       </View>
-      {shown.map((tx, i) => {
-        const cat = tx.categoryId ? categoriesById.get(tx.categoryId) : undefined;
-        return (
-          <TransactionRow
-            key={tx.id}
-            tx={tx}
-            cat={cat}
-            accountName={accountName}
-            categoryName={categoryName}
-            divider={i > 0}
-            onPress={() => onPressTx(tx)}
-          />
-        );
-      })}
-      {!expanded && hidden.length > 0 && (
-        <AnimatedMoreRow
-          style={[styles.dayMoreRow, animatedStyle]}
-          onPress={expand}
-          onPressIn={onPressIn}
-          onPressOut={onPressOut}
-        >
-          <View style={styles.dayMoreDots}>
-            <Feather name="more-horizontal" size={16} color={theme.colors.textMuted} />
-          </View>
-          <Text style={styles.dayMoreText}>+{hidden.length} more</Text>
-          <Text style={styles.dayMoreAmt}>{hiddenTotal.text}</Text>
-        </AnimatedMoreRow>
-      )}
+      <View style={h.card}>
+        {shown.map((tx, i) => {
+          const cat = tx.categoryId ? categoriesById.get(tx.categoryId) : undefined;
+          return (
+            <TransactionRow
+              key={tx.id}
+              tx={tx}
+              cat={cat}
+              accountName={accountName}
+              categoryName={categoryName}
+              divider={i > 0}
+              onPress={() => onPressTx(tx)}
+            />
+          );
+        })}
+        {!expanded && hidden.length > 0 && (
+          <AnimatedMoreRow
+            style={[h.row, h.divider, animatedStyle]}
+            onPress={expand}
+            onPressIn={onPressIn}
+            onPressOut={onPressOut}
+            accessibilityRole="button"
+            accessibilityLabel={`${hidden.length} more on ${label}`}
+          >
+            <View style={[h.iconTile, { backgroundColor: theme.colors.surfaceAlt }]}>
+              <Feather name="more-horizontal" size={HOME.iconGlyph} color={theme.colors.textMuted} />
+            </View>
+            <Text style={styles.dayMoreText}>+{hidden.length} more</Text>
+            <Text style={styles.dayMoreAmt}>{hiddenTotal.text}</Text>
+          </AnimatedMoreRow>
+        )}
+      </View>
     </ReanimatedAnimated.View>
   );
 }

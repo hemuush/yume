@@ -69,6 +69,9 @@ export const theme = {
     idSage: '#E9F3DA',
     idCoral: '#FFE3D6',
     idCoralDeep: '#F0876A',
+    // The "spent" side of Home's moon — a step deeper than idCoral so it holds
+    // its own next to the mint and sky slices (signed off with the moon hero).
+    spentSoft: '#FFC9B3',
     idGold: '#FBF0CE',
     idGoldDeep: '#E0AC3F',
 

@@ -4,6 +4,7 @@ import { theme } from '@/constants/theme';
 import { Category, Transaction } from '@/types';
 import { CategoryIcon } from '@/components/CategoryIcon';
 import { Amount } from '@/components/Amount';
+import { homeStyles as h } from './homeStyles';
 
 /**
  * One recent-activity row. Merchant/note leads, "category · account" sits
@@ -61,12 +62,12 @@ export function RecentTransactionRow({
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 11, paddingHorizontal: 14 },
-  divider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.borderSoft },
-  mid: { flex: 1, minWidth: 0 },
-  title: { fontFamily: theme.font.bodyMedium, fontSize: 14, color: theme.colors.textPrimary },
-  sub: { fontFamily: theme.font.body, fontSize: 11.5, color: theme.colors.textMuted, marginTop: 1 },
-  amount: { fontFamily: theme.font.monoBold, fontSize: 13, color: theme.colors.textPrimary },
-  income: { color: theme.colors.income },
-  expense: { color: theme.colors.expense },
+  row: h.row,
+  divider: h.divider,
+  mid: h.mid,
+  title: h.title,
+  sub: h.sub,
+  amount: h.amount,
+  income: h.income,
+  expense: h.expense,
 });

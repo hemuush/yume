@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { View, ScrollView, Pressable, StyleSheet, RefreshControl } from 'react-native';
 import { Text } from '@/components/Text';
-import Animated, { FadeIn, ReduceMotion } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 import Feather from '@expo/vector-icons/Feather';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useFocusEffect } from 'expo-router';
@@ -28,26 +28,35 @@ import { theme } from '@/constants/theme';
 import { useAccent } from '@/theme/AccentContext';
 import { hexToRgba } from '@/lib/color';
 import { EmptyState } from '@/components/EmptyState';
-import { CURRENT_PERIOD, PeriodCursor, periodRange, previousPeriodRange } from '@/lib/period';
+import {
+  CURRENT_PERIOD,
+  PeriodCursor,
+  periodRange,
+  previousPeriodRange,
+  periodLabel,
+  stepPeriod,
+  canStepForward,
+} from '@/lib/period';
 import { dueDateLabel, isDueUrgent } from '@/lib/dueDate';
-import { MAX_LIST_STAGGER_MS } from '@/lib/animation';
+import { homeRowEntering, hasPlayedHomeOpening, markHomeOpeningPlayed } from '@/lib/animation';
 import { HomeHeader } from '@/features/home/HomeHeader';
 import { ThisMonthHero } from '@/features/home/ThisMonthHero';
 import { ThisMonthHeroSkeleton, CardRowsSkeleton, StripSkeleton } from '@/features/home/HomeSkeleton';
-import { TodaySpendStrip } from '@/features/home/TodaySpendStrip';
 import { QuickActionsRow } from '@/features/home/QuickActionsRow';
 import { SuuRefreshBadge } from '@/features/home/SuuRefreshBadge';
 import { HomeSection } from '@/features/home/HomeSection';
+import { homeStyles, HOME } from '@/features/home/homeStyles';
 import { HomeSwipeCard, SwipePage } from '@/features/home/HomeSwipeCard';
 import { UpcomingRow, UpcomingMoreRow } from '@/features/home/UpcomingRow';
 import { useCappedList } from '@/lib/useCappedList';
 import { RecentTransactionRow } from '@/features/home/RecentTransactionRow';
-import { AccountChip } from '@/features/home/AccountChip';
+import { AccountChip, ACCOUNT_CHIP_WIDTH, ACCOUNT_STRIP_GAP } from '@/features/home/AccountChip';
+import { AccountSummarySheet } from '@/features/home/AccountSummarySheet';
+import { AccountDetailModal } from '@/features/profile/AccountDetailModal';
 import { suuLine } from '@/features/home/suuLine';
 import { BudgetRow } from '@/features/budgets/BudgetRow';
 import { GoalChip } from '@/features/goals/GoalChip';
 import { NeedsYouCard } from '@/features/home/NeedsYouCard';
-import { MonthInReviewCard } from '@/features/home/MonthInReviewCard';
 import { loadMonthReview, MonthReview } from '@/features/home/monthReview';
 import { buildNeedsYouItems, NeedsYouItem } from '@/features/home/needsYou';
 import { AddAccountModal } from '@/features/profile/AddAccountModal';
@@ -80,11 +89,20 @@ export default function DashboardScreen() {
   const [backupNudgeSnoozedUntil, setBackupNudgeSnoozedUntilState] = useState<string | null>(null);
   const [transactionCount, setTransactionCount] = useState(0);
   const [addAccountVisible, setAddAccountVisible] = useState(false);
+  // Tapping an account card opens its summary; "Edit account" there swaps
+  // it for the full edit form.
+  const [summaryAccount, setSummaryAccount] = useState<Account | null>(null);
+  const [editAccount, setEditAccount] = useState<Account | null>(null);
   // Last month's look-back, first week of each month only (see monthReview.ts).
   const [monthReview, setMonthReview] = useState<MonthReview | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [userName, setUserNameState] = useState<string | null>(null);
   const [cursor, setCursor] = useState<PeriodCursor>(CURRENT_PERIOD);
+  // The period the figures on screen actually belong to. `cursor` moves the
+  // moment the month is changed; this only catches up once that month's data
+  // has loaded — the hero turns its page on this, so it never slides in with
+  // the previous month's numbers under the new month's name.
+  const [loadedCursor, setLoadedCursor] = useState<PeriodCursor>(CURRENT_PERIOD);
   const [loadError, setLoadError] = useState<string | null>(null);
   // The data below all starts at its own default ([], 0, null) — genuinely
   // indistinguishable from "actually loaded and this period really is
@@ -93,6 +111,20 @@ export default function DashboardScreen() {
   // afterward: a pull-to-refresh or period change re-fetches in place, it
   // doesn't send the screen back to a loading state a user already passed.
   const [loaded, setLoaded] = useState(false);
+  // The staggered opening fade plays on the first load after the app opens
+  // only; rows that appear after that (a new month, a refresh) get one quick
+  // fade instead. Flipped a moment after the first load, once the opening
+  // rows have mounted with their stagger.
+  const [openingDone, setOpeningDone] = useState(hasPlayedHomeOpening);
+  useEffect(() => {
+    if (!loaded || openingDone) return;
+    const t = setTimeout(() => {
+      markHomeOpeningPlayed();
+      setOpeningDone(true);
+    }, 800);
+    return () => clearTimeout(t);
+  }, [loaded, openingDone]);
+  const rowEntering = (i: number) => homeRowEntering(i, !openingDone);
   // Which way the hero should slide when the month changes — +1/-1 for a
   // step within the same granularity, 0 for anything else (a month↔year
   // toggle, or "jump to this month"), where a plain crossfade reads better
@@ -101,6 +133,7 @@ export default function DashboardScreen() {
   // during render. Set in the same event as `setCursor` below, so React
   // batches both into the one re-render that also carries the new data.
   const [heroDirection, setHeroDirection] = useState<-1 | 0 | 1>(0);
+
   const handleCursorChange = useCallback(
     (next: PeriodCursor) => {
       setHeroDirection(
@@ -190,6 +223,7 @@ export default function DashboardScreen() {
       setBackupNudgeSnoozedUntilState(nudgeSnoozedUntil);
       setTransactionCount(txCount);
       setMonthReview(review);
+      setLoadedCursor(c);
       setLoadError(null);
     } catch (e: any) {
       if (seq !== loadSeq.current) return;
@@ -335,30 +369,8 @@ export default function DashboardScreen() {
   const topGoals = activeGoals.slice(0, 2);
   const hiddenGoalsCount = activeGoals.length - topGoals.length;
 
+  // Upcoming first — it's the time-sensitive one — then Budgets and Goals.
   const homeSwipePages: SwipePage[] = [
-    ...(topBudgets.length > 0
-      ? [
-          {
-            key: 'budgets',
-            label: 'Budgets',
-            onSeeAll: () => router.push('/budgets'),
-            content: (
-              <View style={styles.pageList}>
-                {topBudgets.map((progress, i) => (
-                  <Animated.View
-                    key={progress.budget.id}
-                    entering={FadeIn.delay(Math.min(i * 60, MAX_LIST_STAGGER_MS))
-                      .duration(280)
-                      .reduceMotion(ReduceMotion.System)}
-                  >
-                    <BudgetRow progress={progress} divider={i > 0} onPress={() => router.push('/budgets')} />
-                  </Animated.View>
-                ))}
-              </View>
-            ),
-          },
-        ]
-      : []),
     ...(visibleUpcoming.length > 0
       ? [
           {
@@ -370,12 +382,7 @@ export default function DashboardScreen() {
             content: (
               <View style={styles.pageList}>
                 {visibleUpcoming.map((item, i) => (
-                  <Animated.View
-                    key={item.key}
-                    entering={FadeIn.delay(Math.min(i * 60, MAX_LIST_STAGGER_MS))
-                      .duration(280)
-                      .reduceMotion(ReduceMotion.System)}
-                  >
+                  <Animated.View key={item.key} entering={rowEntering(i)}>
                     <UpcomingRow
                       icon={item.icon}
                       iconBg={item.iconBg}
@@ -398,6 +405,24 @@ export default function DashboardScreen() {
           },
         ]
       : []),
+    ...(topBudgets.length > 0
+      ? [
+          {
+            key: 'budgets',
+            label: 'Budgets',
+            onSeeAll: () => router.push('/budgets'),
+            content: (
+              <View style={styles.pageList}>
+                {topBudgets.map((progress, i) => (
+                  <Animated.View key={progress.budget.id} entering={rowEntering(i)}>
+                    <BudgetRow progress={progress} divider={i > 0} onPress={() => router.push('/budgets')} />
+                  </Animated.View>
+                ))}
+              </View>
+            ),
+          },
+        ]
+      : []),
     ...(topGoals.length > 0
       ? [
           {
@@ -407,12 +432,7 @@ export default function DashboardScreen() {
             content: (
               <View style={styles.goalsPageRow}>
                 {topGoals.map((goal, i) => (
-                  <Animated.View
-                    key={goal.id}
-                    entering={FadeIn.delay(Math.min(i * 60, MAX_LIST_STAGGER_MS))
-                      .duration(280)
-                      .reduceMotion(ReduceMotion.System)}
-                  >
+                  <Animated.View key={goal.id} entering={rowEntering(i)}>
                     <GoalChip goal={goal} onPress={() => router.push('/savings-goals')} />
                   </Animated.View>
                 ))}
@@ -461,15 +481,12 @@ export default function DashboardScreen() {
 
   return (
     <View style={styles.container}>
-      <HomeHeader cursor={cursor} onChange={handleCursorChange} userName={userName} hasAlerts={hasAlerts} />
-      <SuuRefreshBadge refreshing={refreshing} />
-
+      {/* Top to bottom, the "arranged Home" sign-off: the header (with the
+          quick actions in it), your month, what needs you, your plans, then
+          history — recent activity and accounts. */}
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={{
-          paddingTop: 14,
-          paddingBottom: theme.layout.tabScreenScrollPad + insets.bottom,
-        }}
+        contentContainerStyle={{ paddingBottom: theme.layout.tabScreenScrollPad + insets.bottom }}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -479,6 +496,10 @@ export default function DashboardScreen() {
           />
         }
       >
+        <HomeHeader cursor={cursor} onChange={handleCursorChange} userName={userName} hasAlerts={hasAlerts}>
+          <QuickActionsRow />
+        </HomeHeader>
+
         {loadError && (
           <View style={styles.errorBanner}>
             <Text style={styles.errorTitle}>Couldn&rsquo;t load your data</Text>
@@ -486,35 +507,49 @@ export default function DashboardScreen() {
           </View>
         )}
 
-        <QuickActionsRow />
+        <View style={styles.heroGap}>
+          {loaded ? (
+            <ThisMonthHero
+              periodKey={`${loadedCursor.granularity}:${loadedCursor.offset}`}
+              direction={heroDirection}
+              title={
+                cursor.offset === 0
+                  ? cursor.granularity === 'year'
+                    ? 'This year'
+                    : 'This month'
+                  : 'Looking back'
+              }
+              periodName={periodLabel(cursor)}
+              canStepForward={canStepForward(cursor)}
+              onStep={(dir) => handleCursorChange(stepPeriod(cursor, dir))}
+              incomeMinor={dispIncome}
+              spentMinor={dispExpense}
+              savingsMinor={savingsInPeriod}
+              surplusMinor={surplusInPeriod}
+              outstandingLoansMinor={roundedMinor(totalOutstandingLoans)}
+              suu={suu}
+              celebrateDebtCleared={justClearedDebt}
+              // Today is always about today — only alongside the current period.
+              today={
+                dailyGoalMinor != null && cursor.offset === 0
+                  ? { spentMinor: todaySpendMinor, goalMinor: dailyGoalMinor }
+                  : null
+              }
+            />
+          ) : (
+            <ThisMonthHeroSkeleton />
+          )}
+        </View>
 
-        {loaded ? (
-          <ThisMonthHero
-            periodKey={`${cursor.granularity}:${cursor.offset}`}
-            direction={heroDirection}
-            incomeMinor={dispIncome}
-            spentMinor={dispExpense}
-            surplusMinor={surplusInPeriod}
-            outstandingLoansMinor={roundedMinor(totalOutstandingLoans)}
-            suu={suu}
-            celebrateDebtCleared={justClearedDebt}
-          />
-        ) : (
-          <ThisMonthHeroSkeleton />
-        )}
-
-        {dailyGoalMinor != null && (
-          <TodaySpendStrip spentMinor={todaySpendMinor} goalMinor={dailyGoalMinor} />
-        )}
-
-        {loaded && <NeedsYouCard items={needsYouItems} onOpen={openNeedsYou} onSnooze={snoozeNeedsYou} />}
-
-        {/* After Needs you on purpose: anything due always comes first. */}
-        {loaded && monthReview && (
-          <MonthInReviewCard
+        {loaded && (
+          <NeedsYouCard
+            items={needsYouItems}
+            onOpen={openNeedsYou}
+            onSnooze={snoozeNeedsYou}
             review={monthReview}
-            onOpen={() => router.push('/reports?month=-1')}
-            onDismiss={() => {
+            onOpenReview={() => router.push('/reports?month=-1')}
+            onDismissReview={() => {
+              if (!monthReview) return;
               const key = monthReview.monthKey;
               setMonthReview(null);
               setMonthReviewDismissed(key).catch(() => {});
@@ -524,7 +559,7 @@ export default function DashboardScreen() {
 
         {!loaded && (
           <>
-            <View style={{ marginTop: 22 }}>
+            <View style={{ marginTop: HOME.sectionGap }}>
               <CardRowsSkeleton rows={2} meter />
             </View>
             <HomeSection title="Recent activity">
@@ -546,14 +581,9 @@ export default function DashboardScreen() {
                 subtitle="Use the month pill above to check another period."
               />
             ) : (
-              <View style={styles.card}>
+              <View style={homeStyles.card}>
                 {recent.slice(0, 4).map((tx, i) => (
-                  <Animated.View
-                    key={tx.id}
-                    entering={FadeIn.delay(Math.min(i * 60, MAX_LIST_STAGGER_MS))
-                      .duration(280)
-                      .reduceMotion(ReduceMotion.System)}
-                  >
+                  <Animated.View key={tx.id} entering={rowEntering(i)}>
                     <RecentTransactionRow
                       tx={tx}
                       category={categoryFor(tx.categoryId) ?? undefined}
@@ -589,15 +619,16 @@ export default function DashboardScreen() {
                 horizontal
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={styles.accountStrip}
+                // One card per flick, landing flush with the page gutter, so
+                // the next card always peeks in at the edge instead of
+                // stopping cut off mid-way.
+                snapToInterval={ACCOUNT_CHIP_WIDTH + ACCOUNT_STRIP_GAP}
+                snapToAlignment="start"
+                decelerationRate="fast"
               >
                 {accounts.map((acc, i) => (
-                  <Animated.View
-                    key={acc.id}
-                    entering={FadeIn.delay(Math.min(i * 60, MAX_LIST_STAGGER_MS))
-                      .duration(280)
-                      .reduceMotion(ReduceMotion.System)}
-                  >
-                    <AccountChip account={acc} />
+                  <Animated.View key={acc.id} entering={rowEntering(i)}>
+                    <AccountChip account={acc} onPress={() => setSummaryAccount(acc)} />
                   </Animated.View>
                 ))}
               </ScrollView>
@@ -605,6 +636,35 @@ export default function DashboardScreen() {
           </HomeSection>
         )}
       </ScrollView>
+
+      <SuuRefreshBadge refreshing={refreshing} />
+
+      <AccountSummarySheet
+        account={summaryAccount}
+        cursor={cursor}
+        accounts={accounts}
+        categories={categories}
+        onClose={() => setSummaryAccount(null)}
+        onAdd={(acc) => {
+          setSummaryAccount(null);
+          router.push(
+            `/add-transaction?type=${acc.type === 'savings' ? 'transfer' : 'expense'}&accountId=${acc.id}`
+          );
+        }}
+        onEdit={(acc) => {
+          setSummaryAccount(null);
+          setEditAccount(acc);
+        }}
+      />
+
+      <AccountDetailModal
+        account={editAccount}
+        onClose={() => setEditAccount(null)}
+        onChanged={async () => {
+          setEditAccount(null);
+          await load(cursor);
+        }}
+      />
 
       <AddAccountModal
         visible={addAccountVisible}
@@ -621,6 +681,7 @@ export default function DashboardScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
   scroll: { flex: 1 },
+  heroGap: { marginTop: 18 },
   errorBanner: {
     marginHorizontal: 20,
     marginBottom: 14,
@@ -638,15 +699,7 @@ const styles = StyleSheet.create({
     marginTop: 3,
     lineHeight: 16,
   },
-  card: {
-    marginHorizontal: 20,
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.radius.xl2,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-    overflow: 'hidden',
-  },
-  accountStrip: { paddingHorizontal: 20, gap: 12, paddingBottom: 4 },
+  accountStrip: { paddingHorizontal: 20, gap: ACCOUNT_STRIP_GAP, paddingBottom: 4 },
   emptyCta: { marginHorizontal: 40, marginTop: -8 },
   // Rows inside a HomeSwipeCard page — no outer border/background of their
   // own (the card already draws that), BudgetRow/UpcomingRow already carry

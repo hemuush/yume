@@ -217,6 +217,31 @@ export async function updateAccount(id: string, input: UpdateAccountInput): Prom
   return account;
 }
 
+/**
+ * Money into and out of one account over a date range (inclusive) — the
+ * same four movements getAccountBalance sums, split by direction: income
+ * and transfers in, expenses and transfers out. In the account's own
+ * currency, so unlike the report totals there's no default-currency filter.
+ * Powers Home's account summary sheet.
+ */
+export async function getAccountFlow(
+  accountId: string,
+  range: { start: string; end: string }
+): Promise<{ inMinor: number; outMinor: number }> {
+  const db = await getDb();
+  const row = await db.getFirstAsync<{ in_total: number | null; out_total: number | null }>(
+    `SELECT
+       SUM(CASE WHEN (type = 'income' AND account_id = ?) OR (type = 'transfer' AND to_account_id = ?)
+         THEN amount_minor ELSE 0 END) AS in_total,
+       SUM(CASE WHEN (type = 'expense' AND account_id = ?) OR (type = 'transfer' AND account_id = ?)
+         THEN amount_minor ELSE 0 END) AS out_total
+     FROM transactions
+     WHERE (account_id = ? OR to_account_id = ?) AND date >= ? AND date <= ?`,
+    [accountId, accountId, accountId, accountId, accountId, accountId, range.start, range.end]
+  );
+  return { inMinor: row?.in_total ?? 0, outMinor: row?.out_total ?? 0 };
+}
+
 /** How many transactions reference this account, either as the source or (for a transfer) the destination — the basis for offering Delete vs. Archive. */
 export async function getAccountTransactionCount(accountId: string): Promise<number> {
   const db = await getDb();

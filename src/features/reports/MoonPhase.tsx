@@ -33,7 +33,7 @@ export function lunePath(cx: number, cy: number, r: number, k: number): string {
  * should always sit in the same colour family as whatever accent the user
  * has actually picked, not clash with it.
  */
-export function moonPhaseShades(accent: string): { lit: string; dark: string } {
+function moonPhaseShades(accent: string): { lit: string; dark: string } {
   return { lit: shade(accent, 45, 6), dark: shade(accent, 78, -4) };
 }
 

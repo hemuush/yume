@@ -57,3 +57,32 @@ export function groupByDate(txs: Transaction[]): { date: string; items: Transact
   }
   return groups;
 }
+
+/**
+ * The Activity period bar's title and the quieter line beside it. A week is
+ * the 7 days ending on the anchor, so "This week" carries its real dates
+ * ("20–26 Sep") alongside; a past week leads with its dates. A month is its
+ * name, plus the year only when it isn't this year's.
+ */
+export function periodHeading(input: {
+  scope: 'week' | 'month';
+  days: WeekDay[];
+  anchor: Date;
+  today: Date;
+  monthNames: readonly string[];
+}): { title: string; sub: string } {
+  const { scope, days, anchor, today, monthNames } = input;
+  if (scope === 'month') {
+    const title = anchor.toLocaleDateString(undefined, { month: 'long' });
+    return { title, sub: anchor.getFullYear() === today.getFullYear() ? '' : String(anchor.getFullYear()) };
+  }
+  const first = days[0];
+  const last = days[days.length - 1];
+  const range =
+    first.month === last.month
+      ? `${first.day}–${last.day} ${monthNames[last.month]}`
+      : `${first.day} ${monthNames[first.month]} – ${last.day} ${monthNames[last.month]}`;
+  const isCurrent = days.some((d) => d.iso === toLocalIsoDate(today));
+  if (isCurrent) return { title: 'This week', sub: range };
+  return { title: range, sub: last.year === today.getFullYear() ? '' : String(last.year) };
+}
