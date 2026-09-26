@@ -5,7 +5,6 @@ import { theme } from '@/constants/theme';
 // ContributeModal / GoalDetailModal.
 export const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
   errorBanner: {
     marginHorizontal: 20,
     marginTop: 12,
@@ -94,8 +93,4 @@ export const styles = StyleSheet.create({
     marginBottom: 10,
   },
   deleteButton: { backgroundColor: theme.colors.expenseTint },
-
-  contributeRow: { flexDirection: 'row', gap: 8, marginBottom: 6 },
-  contributeInput: { flex: 1 },
-  segRow: { flexDirection: 'row', gap: 8, marginBottom: 16 },
 });

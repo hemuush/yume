@@ -146,10 +146,6 @@ export async function setAccentColor(hex: string): Promise<void> {
 const THEME_ID_KEY = 'theme_id';
 let cachedThemeId: string | null | undefined; // undefined = not yet read; null = read, nothing stored
 
-export function getCachedThemeId(): string | null {
-  return cachedThemeId ?? null;
-}
-
 // The theme's own `primary` is still written to `accent_color` (below) so
 // every existing reader of `getAccentColor()`/`useAccent().accent` — the
 // home-screen widget included — keeps working unchanged; `theme_id` is
@@ -177,10 +173,6 @@ export async function setThemeId(id: string): Promise<void> {
 
 const DAILY_SPENDING_GOAL_KEY = 'daily_spending_goal_minor';
 let cachedDailySpendingGoal: number | null | undefined; // undefined = not yet read; null = read, nothing stored (feature off)
-
-export function getCachedDailySpendingGoal(): number | null {
-  return cachedDailySpendingGoal ?? null;
-}
 
 /**
  * A single overall daily spending cap, in minor units — deliberately just

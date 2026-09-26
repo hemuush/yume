@@ -7,11 +7,3 @@ export const ACCOUNT_TYPES: { label: string; value: AccountType }[] = [
   { label: 'Savings', value: 'savings' },
   { label: 'Credit Card', value: 'credit_card' },
 ];
-
-export const ACCOUNT_ICON: Record<AccountType, string> = {
-  bank: 'bank',
-  cash: 'cash',
-  wallet: 'wallet',
-  credit_card: 'credit-card',
-  savings: 'piggy-bank',
-};

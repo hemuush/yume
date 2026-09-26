@@ -15,6 +15,7 @@ export const widgetColor = {
   inkSoft: '#5B5748',
   textMuted: '#948E7C',
   cream: '#FFFDF6',
+  white: '#FFFFFF',
   borderSoft: '#E6DFC9',
   income: '#1C9A5B',
   expense: '#E23F55',
@@ -31,6 +32,8 @@ export const widgetColor = {
  * it, which was the actual goal.
  */
 export const WIDGET_GLASS_BG = 'rgba(255, 253, 246, 0.93)' as const;
+/** The glass card's bright rim. */
+export const WIDGET_GLASS_BORDER = 'rgba(255, 255, 255, 0.6)' as const;
 
 /**
  * Bundled via the config plugin's `fonts` array (app.json) — filename minus

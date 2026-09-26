@@ -25,64 +25,13 @@ import { TransactionDetailModal } from '@/features/transactions/TransactionDetai
 import { TransactionsHeadline } from '@/features/transactions/TransactionsHeadline';
 import { TransactionsSkeleton } from '@/features/transactions/TransactionsSkeleton';
 import { buildDailySpendBars, buildWeeklySpendBars, legendForBars } from '@/features/transactions/spendChart';
-
-function isoDate(d: Date): string {
-  return toLocalIsoDate(d);
-}
+import {
+  sevenDaysEndingOn,
+  previousRangeFor,
+  groupByDate,
+} from '@/features/transactions/transactions.helpers';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
-
-// A 7-day window ending on `anchor`, oldest first — `anchor` is a plain day
-// step, not a week counter, so jumping straight to a chosen month (via the
-// picker below) works the same way stepping by one day does. Only the
-// metadata (for the "Sep 7 – 13" label) comes from this now — the day pills
-// themselves were replaced by the spend chart, which is the actual way to
-// jump to a day these days (tap a bar).
-function sevenDaysEndingOn(
-  anchor: Date
-): { iso: string; weekday: string; day: number; month: number; year: number }[] {
-  const days: { iso: string; weekday: string; day: number; month: number; year: number }[] = [];
-  const labels = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
-  for (let i = 6; i >= 0; i--) {
-    const d = new Date(anchor);
-    d.setDate(d.getDate() - i);
-    days.push({
-      iso: isoDate(d),
-      weekday: labels[d.getDay()],
-      day: d.getDate(),
-      month: d.getMonth(),
-      year: d.getFullYear(),
-    });
-  }
-  return days;
-}
-
-/** The equivalent immediately-prior range, for the headline's "N% less/more than last …" line. */
-function previousRangeFor(
-  range: { fromDate: string; toDate: string },
-  scope: 'week' | 'month'
-): { fromDate: string; toDate: string } {
-  if (scope === 'week') {
-    const prevEnd = addDaysToIsoDate(range.fromDate, -1);
-    const prevStart = addDaysToIsoDate(prevEnd, -6);
-    return { fromDate: prevStart, toDate: prevEnd };
-  }
-  const start = parseLocalIsoDate(range.fromDate);
-  const prevStart = new Date(start.getFullYear(), start.getMonth() - 1, 1);
-  const prevEnd = new Date(start.getFullYear(), start.getMonth(), 0);
-  return { fromDate: toLocalIsoDate(prevStart), toDate: toLocalIsoDate(prevEnd) };
-}
-
-/** Consecutive same-date runs — relies on `txs` already being date-sorted (the query's own ORDER BY), not a separate grouping pass over unsorted data. */
-function groupByDate(txs: Transaction[]): { date: string; items: Transaction[] }[] {
-  const groups: { date: string; items: Transaction[] }[] = [];
-  for (const tx of txs) {
-    const last = groups[groups.length - 1];
-    if (last && last.date === tx.date) last.items.push(tx);
-    else groups.push({ date: tx.date, items: [tx] });
-  }
-  return groups;
-}
 
 const VIEW_SCOPES: { label: string; value: 'week' | 'month' }[] = [
   { label: 'Week', value: 'week' },
@@ -152,7 +101,7 @@ export default function TransactionsScreen() {
     }
   }, []);
   const days = useMemo(() => sevenDaysEndingOn(anchor), [anchor]);
-  const today = isoDate(todayDate);
+  const today = toLocalIsoDate(todayDate);
   const isCurrentWeek = days.some((d) => d.iso === today);
   const isCurrentMonth =
     anchor.getFullYear() === todayDate.getFullYear() && anchor.getMonth() === todayDate.getMonth();
@@ -302,7 +251,7 @@ export default function TransactionsScreen() {
   useFocusEffect(
     useCallback(() => {
       const now = new Date();
-      setTodayDate((prev) => (isoDate(prev) === isoDate(now) ? prev : now));
+      setTodayDate((prev) => (toLocalIsoDate(prev) === toLocalIsoDate(now) ? prev : now));
       load({ fromDate: rangeFromDate, toDate: rangeToDate }, viewScope);
       // Coming back from the full add-transaction screen (edited or deleted
       // a row reached from a search result) — re-run the same query so the

@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { getAccentColor, setAccentColor, getCachedAccentColor, getThemeId, setThemeId } from '@/db/settings';
 import { THEMES, DEFAULT_THEME_ID, themeById } from './themes';
+import { theme } from '@/constants/theme';
 
 function hexToRgb(hex: string): [number, number, number] {
   const clean = hex.replace('#', '');
@@ -13,7 +14,7 @@ function hexToRgb(hex: string): [number, number, number] {
 function contrastColor(hex: string): string {
   const [r, g, b] = hexToRgb(hex);
   const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-  return luminance > 0.6 ? '#12130F' : '#FFFDF6';
+  return luminance > 0.6 ? theme.colors.ink : theme.colors.surface;
 }
 
 interface AccentContextValue {

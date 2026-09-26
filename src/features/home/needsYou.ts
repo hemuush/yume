@@ -38,11 +38,11 @@ export interface NeedsYouInput {
 }
 
 /** A budget at or past this share of its limit is worth a look. */
-export const BUDGET_ALERT_PCT = 90;
+const BUDGET_ALERT_PCT = 90;
 /** Don't nag about backups before the user has put real effort in. */
 export const BACKUP_NUDGE_MIN_TRANSACTIONS = 10;
 /** Most items the row shows; the most pressing win. */
-export const NEEDS_YOU_MAX = 3;
+const NEEDS_YOU_MAX = 3;
 
 function wholeDaysBetween(fromIso: string, toIso: string): number {
   return Math.round((parseLocalIsoDate(toIso).getTime() - parseLocalIsoDate(fromIso).getTime()) / 86400000);

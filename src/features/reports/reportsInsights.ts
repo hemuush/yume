@@ -4,7 +4,7 @@ import { formatPctChange } from '@/lib/format';
 import type { CategoryBreakdownItem, DailyExpensePoint, TrendPoint } from '@/db/reports';
 
 /** Which categories count as a fixed monthly load rather than a choice. */
-export const FIXED_CATEGORY_NAMES = ['Loan EMI', 'Rent', 'Insurance', 'Subscriptions'];
+const FIXED_CATEGORY_NAMES = ['Loan EMI', 'Rent', 'Insurance', 'Subscriptions'];
 
 /**
  * The day-detail popup's footer figure. When the day has any income it shows

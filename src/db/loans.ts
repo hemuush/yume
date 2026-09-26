@@ -4,7 +4,6 @@ import { assertSpendableAccount } from './ledger';
 import { Loan, LoanPayment } from '@/types';
 import { calculateEmi, generateAmortizationSchedule, recalculateAfterPrepayment } from '@/lib/loan';
 import { formatMoney } from '@/lib/money';
-import { toLocalIsoDate } from '@/lib/date';
 import { scheduleLoanDueReminder, cancelLoanDueReminder } from '@/lib/notifications';
 import { captureRow, captureRows, restoreRows, RowSnapshot } from './undoSnapshot';
 
@@ -390,76 +389,6 @@ export async function listLoansForPerson(personId: string): Promise<Loan[]> {
     personId,
   ]);
   return rows.map(rowToLoan);
-}
-
-export interface OutstandingLoanPoint {
-  label: string;
-  outstandingMinor: number;
-}
-
-/**
- * Total outstanding principal across every *borrowed* loan (lent loans are
- * money owed to the user, not debt), reconstructed at each of the last
- * `months` month-ends. Nothing stores a loan's balance history directly —
- * this is principal minus all principal repaid by that month-end (paid
- * installments' principal components, plus prepayments), the same
- * reconstruction getNetWorthTrend uses. A loan not yet started by a given
- * month-end contributes nothing; one started but with nothing repaid yet
- * contributes its full principal. Includes loans that have since fully
- * closed — their real trajectory (paid down to zero) is part of the trend,
- * not excluded just because they don't carry debt today. Powers Home's
- * Debt-left stat card sparkline.
- */
-export async function getOutstandingLoanTrend(
-  months = 6,
-  reference: Date = new Date()
-): Promise<OutstandingLoanPoint[]> {
-  const db = await getDb();
-  const loans = await db.getAllAsync<{ id: string; principal_minor: number; start_date: string }>(
-    `SELECT id, principal_minor, start_date FROM loans WHERE direction = 'borrowed'`
-  );
-  const monthLabel = (d: Date) => d.toLocaleDateString(undefined, { month: 'short' });
-
-  if (loans.length === 0) {
-    return Array.from({ length: months }, (_, idx) => ({
-      label: monthLabel(new Date(reference.getFullYear(), reference.getMonth() - (months - 1 - idx), 1)),
-      outstandingMinor: 0,
-    }));
-  }
-
-  // Principal actually repaid, dated: every paid installment's principal
-  // component plus every prepayment. An installment paid before the loan
-  // was entered into Yume has no paid_date, so its due_date stands in (the
-  // same fallback getNetWorthTrend uses) — skipping those rows showed a loan
-  // entered mid-way through at its full original principal. A prepayment
-  // isn't a loan_payments row at all; leaving it out overstated the balance
-  // from the prepayment until the next installment was paid.
-  const repayments = await db.getAllAsync<{ loan_id: string; on_date: string; principal_minor: number }>(
-    `SELECT loan_id, COALESCE(paid_date, due_date) AS on_date, principal_component_minor AS principal_minor
-     FROM loan_payments WHERE status = 'paid'
-     UNION ALL
-     SELECT loan_id, date AS on_date, amount_minor AS principal_minor
-     FROM transactions WHERE loan_tx_kind = 'prepayment'`
-  );
-
-  const points: OutstandingLoanPoint[] = [];
-  for (let i = months - 1; i >= 0; i--) {
-    const monthEndIso = toLocalIsoDate(new Date(reference.getFullYear(), reference.getMonth() - i + 1, 0));
-    let total = 0;
-    for (const loan of loans) {
-      if (loan.start_date > monthEndIso) continue;
-      let repaid = 0;
-      for (const r of repayments) {
-        if (r.loan_id === loan.id && r.on_date <= monthEndIso) repaid += r.principal_minor;
-      }
-      total += Math.max(0, loan.principal_minor - repaid);
-    }
-    points.push({
-      label: monthLabel(new Date(reference.getFullYear(), reference.getMonth() - i, 1)),
-      outstandingMinor: total,
-    });
-  }
-  return points;
 }
 
 export async function getLoanById(id: string): Promise<Loan | null> {
