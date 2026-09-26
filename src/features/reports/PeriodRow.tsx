@@ -1,4 +1,5 @@
-import { View, Text, Pressable } from 'react-native';
+import { View, Pressable } from 'react-native';
+import { Text, MAX_FONT_SCALE } from '@/components/Text';
 import ReanimatedAnimated, { FadeIn } from 'react-native-reanimated';
 import Feather from '@expo/vector-icons/Feather';
 import { PeriodCursor, periodLabel, stepPeriod, setGranularity, canStepForward } from '@/lib/period';
@@ -34,6 +35,7 @@ export function PeriodRow({
           <Feather name="chevron-left" size={16} color={theme.colors.ink} />
         </Pressable>
         <ReanimatedAnimated.Text
+          maxFontSizeMultiplier={MAX_FONT_SCALE}
           key={periodLabel(cursor)}
           entering={FadeIn.duration(150)}
           style={styles.periodLabel}

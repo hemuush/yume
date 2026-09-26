@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
-import { View, Text, Pressable, TextInput, Alert } from 'react-native';
+import { View, Pressable, Alert } from 'react-native';
+import { Text, TextInput } from '@/components/Text';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import Feather from '@expo/vector-icons/Feather';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';

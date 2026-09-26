@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
-import { View, Text, ScrollView } from 'react-native';
+import { View, ScrollView } from 'react-native';
+import { Text } from '@/components/Text';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { listPeople, PersonWithBalance } from '@/db/people';
 import { theme, FLAT_PALETTE } from '@/constants/theme';

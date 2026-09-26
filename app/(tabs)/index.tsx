@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { View, Text, ScrollView, Pressable, StyleSheet, RefreshControl } from 'react-native';
+import { View, ScrollView, Pressable, StyleSheet, RefreshControl } from 'react-native';
+import { Text } from '@/components/Text';
 import Animated, { FadeIn, ReduceMotion } from 'react-native-reanimated';
 import Feather from '@expo/vector-icons/Feather';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';

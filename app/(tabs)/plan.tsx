@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
-import { View, Text, ScrollView, Pressable, Animated, StyleSheet } from 'react-native';
+import { View, ScrollView, Pressable, Animated, StyleSheet } from 'react-native';
+import { Text } from '@/components/Text';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import Feather from '@expo/vector-icons/Feather';

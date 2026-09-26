@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, Pressable } from 'react-native';
+import { View, ScrollView, StyleSheet, Pressable } from 'react-native';
+import { Text } from '@/components/Text';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import Animated, { FadeInDown, ReduceMotion } from 'react-native-reanimated';
 import { useFocusEffect, router } from 'expo-router';

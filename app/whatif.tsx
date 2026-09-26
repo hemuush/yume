@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
-import { View, Text, ScrollView } from 'react-native';
+import { View, ScrollView } from 'react-native';
+import { Text } from '@/components/Text';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getCategoryMonthlyAverages, CategoryBreakdownItem } from '@/db/reports';
 import { listSavingsGoals } from '@/db/savingsGoals';

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { View, Text, Pressable, Animated } from 'react-native';
+import { View, Pressable, Animated } from 'react-native';
+import { Text } from '@/components/Text';
 import { ModalSheet } from '@/components/ModalSheet';
 import { usePressScale } from '@/lib/usePressScale';
 import { styles } from './transactions.styles';

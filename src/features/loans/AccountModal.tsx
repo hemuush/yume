@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { View, Text } from 'react-native';
+import { View } from 'react-native';
+import { Text } from '@/components/Text';
 import { updateLoanAccount } from '@/db/loans';
 import { Account } from '@/types';
 import { PrimaryButton } from '@/components/PrimaryButton';

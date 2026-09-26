@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { View, Text } from 'react-native';
+import { View } from 'react-native';
+import { Text } from '@/components/Text';
 import { contributeToGoal, markGoalLetterRevealed } from '@/db/savingsGoals';
 import { toMinor, formatMoney } from '@/lib/money';
 import { SavingsGoal } from '@/types';

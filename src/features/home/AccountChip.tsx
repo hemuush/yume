@@ -1,4 +1,5 @@
-import { Text, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
+import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
 import { useAccent } from '@/theme/AccentContext';
 import { Account } from '@/types';

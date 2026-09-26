@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { View, Text } from 'react-native';
+import { View } from 'react-native';
+import { Text } from '@/components/Text';
 import { Category, TransactionType } from '@/types';
 import { SegmentedControl } from '@/components/SegmentedControl';
 import { PrimaryButton } from '@/components/PrimaryButton';

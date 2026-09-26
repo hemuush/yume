@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { View, Text, Animated } from 'react-native';
+import { View, Animated } from 'react-native';
+import { Text } from '@/components/Text';
 import { useReduceMotion } from '@/lib/useReduceMotion';
 import { createLoan } from '@/db/loans';
 import { listAccounts, listCategories } from '@/db/ledger';

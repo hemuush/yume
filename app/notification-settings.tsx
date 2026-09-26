@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, Pressable, Alert, Animated } from 'react-native';
+import { View, ScrollView, StyleSheet, Pressable, Alert, Animated } from 'react-native';
+import { Text } from '@/components/Text';
 import { useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from '@expo/vector-icons/Feather';

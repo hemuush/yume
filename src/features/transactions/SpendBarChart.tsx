@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { View, Text, Pressable, StyleSheet, Animated } from 'react-native';
+import { View, Pressable, StyleSheet, Animated } from 'react-native';
+import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
 import { useReduceMotion } from '@/lib/useReduceMotion';
 import { SpendBar, ChartLegendItem } from './spendChart';

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { View, Text } from 'react-native';
+import { View } from 'react-native';
+import { Text } from '@/components/Text';
 import { createAccount } from '@/db/ledger';
 import { getDefaultCurrency, SUPPORTED_CURRENCIES } from '@/db/settings';
 import { toMinor } from '@/lib/money';
