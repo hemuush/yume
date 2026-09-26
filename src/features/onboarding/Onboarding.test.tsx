@@ -63,8 +63,16 @@ async function goToAccountStep(tree: ReactTestRenderer) {
 // Loads React Native's lazily-required components once, up front, with a
 // generous budget — on a cold, fully parallel run (CI) their first load can
 // outlast a single test's time limit, which failed this file intermittently.
+// It walks all the way to the account step: that step's inputs and toggles
+// are only drawn there, and loading them inside the first test is what
+// timed it out (its unfinished work then leaked into the next test).
 beforeAll(async () => {
-  await render();
+  createAccountMock.mockResolvedValue({});
+  const tree = await render();
+  await goToAccountStep(tree);
+  await act(async () => {
+    tree.unmount();
+  });
 }, 180000);
 
 describe('Onboarding account step', () => {
