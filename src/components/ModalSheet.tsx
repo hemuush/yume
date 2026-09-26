@@ -245,7 +245,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     // Opaque enough that the bright floating tab bar behind doesn't ghost
     // through as a muddy band under the sheet.
-    backgroundColor: 'rgba(0,0,0,0.55)',
+    backgroundColor: theme.colors.scrim,
   },
   alignBottom: { justifyContent: 'flex-end' },
   alignCenter: { justifyContent: 'center' },
@@ -352,7 +352,7 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: 'rgba(18,19,15,0.06)',
+    backgroundColor: theme.colors.inkWash,
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 2,

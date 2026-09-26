@@ -8,7 +8,6 @@ import { theme } from '@/constants/theme';
 // values, nothing restyled.
 export const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
   errorBanner: {
     marginHorizontal: 20,
     marginBottom: 12,

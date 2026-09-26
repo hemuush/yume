@@ -988,7 +988,7 @@ export async function getTransactionLink(id: string): Promise<TransactionLink> {
 }
 
 /** True if this transaction is the cash-side of a loan payment or a Friends & Family ledger entry. */
-export async function isLinkedTransaction(id: string): Promise<boolean> {
+async function isLinkedTransaction(id: string): Promise<boolean> {
   return (await getTransactionLink(id)) !== null;
 }
 

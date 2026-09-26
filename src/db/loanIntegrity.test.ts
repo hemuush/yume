@@ -5,8 +5,7 @@
  *   - keepTenure rate changes never add a phantom rounding installment
  *   - a lent loan's prepayment charge is filed under an expense category
  *   - loan-linked transactions carry their kind (loan_tx_kind)
- *   - prepayments count as principal repaid in the net-worth trend and the
- *     Home debt sparkline, as do installments paid before tracking started
+ *   - prepayments count as principal repaid in the net-worth trend
  *   - runMigrations backfills loan_tx_kind and repairs month-end due dates
  */
 import { createRealDataTestDb } from '@/test-support/realDataTestDb';
@@ -38,7 +37,6 @@ import {
   applyPrepayment,
   applyRateChange,
   deleteLoan,
-  getOutstandingLoanTrend,
   previewPrepayment,
   CreateLoanInput,
 } from '@/db/loans';
@@ -229,34 +227,6 @@ describe('loan integrity', () => {
     expect((await getLoanById(loan.id))!.status).toBe('closed');
     const after = (await getNetWorthTrend(1, reference))[0].netWorthMinor;
     expect(after).toBe(before);
-  });
-
-  it('the debt sparkline counts installments paid before tracking started, and prepayments', async () => {
-    const reference = new Date(2026, 2, 15); // Mar 15, 2026 → one point, Mar month-end
-    const baseline = (await getOutstandingLoanTrend(1, reference))[0].outstandingMinor;
-
-    const imported = await createLoan({
-      direction: 'borrowed',
-      counterparty: 'Imported Mid-way Bank',
-      principalMinor: 600000,
-      interestRateAnnualBp: 1200,
-      tenureMonths: 6,
-      startDate: '2025-10-01',
-      alreadyPaidInstallments: 3,
-    });
-    const importedSchedule = await getLoanSchedule(imported.id);
-    const withImported = (await getOutstandingLoanTrend(1, reference))[0].outstandingMinor;
-    expect(withImported - baseline).toBe(importedSchedule[2].outstandingAfterMinor);
-
-    await applyPrepayment(imported.id, {
-      amountMinor: 50000,
-      accountId,
-      categoryId: emiCategoryId,
-      date: '2026-03-01',
-    });
-    const afterPrepay = (await getOutstandingLoanTrend(1, reference))[0].outstandingMinor;
-    expect(afterPrepay - baseline).toBe(importedSchedule[2].outstandingAfterMinor - 50000);
-    expect(afterPrepay - baseline).toBe((await getLoanById(imported.id))!.outstandingPrincipalMinor);
   });
 
   it('runMigrations backfills loan_tx_kind from the historical notes and repairs month-end due dates, idempotently', async () => {

@@ -5,10 +5,6 @@ import { theme } from '@/constants/theme';
 // FilterModal, TransactionRow, TransactionDetailModal, AddTransactionModal).
 export const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
-  // Shown only before the first successful load — the same "gate on the
-  // primary data being null" pattern Reports already uses, so a cold nav
-  // never flashes "Nothing logged" before the real data has even arrived.
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
   emptyText: {
     fontFamily: theme.font.body,
     marginHorizontal: 20,

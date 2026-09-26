@@ -4,7 +4,6 @@ import { theme } from '@/constants/theme';
 // Shared by the Budgets screen, BudgetRow, and AddBudgetModal.
 export const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
   errorBanner: {
     marginHorizontal: 20,
     marginTop: 12,
@@ -120,7 +119,6 @@ export const styles = StyleSheet.create({
     color: theme.colors.textMuted,
     marginBottom: 6,
   },
-  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 },
   toggleRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
   errorText: { fontFamily: theme.font.body, color: theme.colors.expense, fontSize: 13, marginBottom: 12 },
 });

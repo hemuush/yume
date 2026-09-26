@@ -1,5 +1,5 @@
 import { FlexWidget, TextWidget, type ColorProp } from 'react-native-android-widget';
-import { widgetColor, widgetRgba, WIDGET_GLASS_BG, WIDGET_RADIUS } from './widgetTheme';
+import { widgetColor, widgetRgba, WIDGET_GLASS_BG, WIDGET_GLASS_BORDER, WIDGET_RADIUS } from './widgetTheme';
 
 /**
  * The one shell every widget is built on — same radius, same border, same
@@ -39,7 +39,7 @@ export function WidgetShell({
         backgroundColor: WIDGET_GLASS_BG,
         borderRadius: WIDGET_RADIUS,
         borderWidth: 1,
-        borderColor: 'rgba(255, 255, 255, 0.6)',
+        borderColor: WIDGET_GLASS_BORDER,
         padding,
       }}
     >
@@ -119,7 +119,7 @@ export function MoonPhaseRow({ dot }: { dot: ColorProp }) {
             height: 5,
             borderRadius: 2.5,
             marginLeft: i === 0 ? 0 : 3,
-            backgroundColor: i === 3 ? dot : `rgba(18, 19, 15, ${o})`,
+            backgroundColor: i === 3 ? dot : widgetRgba(18, 19, 15, o), // widgetColor.ink, faded
             borderWidth: i === 3 ? 1 : 0,
             borderColor: widgetColor.ink,
           }}
