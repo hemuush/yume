@@ -2,6 +2,7 @@ import { parseLocalIsoDate } from '@/lib/date';
 import { formatMoney } from '@/lib/money';
 import { formatPctChange } from '@/lib/format';
 import type { CategoryBreakdownItem, DailyExpensePoint, TrendPoint } from '@/db/reports';
+import type { HeatCell } from './SpendHeatmap';
 
 /** Which categories count as a fixed monthly load rather than a choice. */
 const FIXED_CATEGORY_NAMES = ['Loan EMI', 'Rent', 'Insurance', 'Subscriptions'];
@@ -38,6 +39,54 @@ export function heatLevel(amountMinor: number, maxMinor: number): 0 | 1 | 2 | 3 
   if (r > 0.33) return 3;
   if (r > 0.12) return 2;
   return 1;
+}
+
+const WEEKDAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+
+/**
+ * The heatmap's grid for a period. A month is a calendar (7 columns, blank
+ * cells before the 1st, weekends marked, a spend day tappable via
+ * `onDayPress`); a year is its 12 months in 4 columns, from `trend`.
+ */
+export function buildHeatGrid(input: {
+  granularity: 'month' | 'year';
+  /** First day of the period. */
+  start: Date;
+  trend: TrendPoint[];
+  daily: DailyExpensePoint[];
+  onDayPress: (iso: string) => void;
+}): { cells: HeatCell[]; leadingPad: number; columns: number; weekdayLabels?: string[] } {
+  if (input.granularity === 'year') {
+    const maxMonth = Math.max(1, ...input.trend.map((t) => t.totalMinor));
+    return {
+      cells: input.trend.map((t, i) => ({
+        key: `m-${i}`,
+        label: t.label,
+        level: heatLevel(t.totalMinor, maxMonth),
+      })),
+      leadingPad: 0,
+      columns: 4,
+    };
+  }
+  const y = input.start.getFullYear();
+  const m = input.start.getMonth();
+  const daysInMonth = new Date(y, m + 1, 0).getDate();
+  const byDate = new Map(input.daily.map((d) => [d.date, d.totalMinor]));
+  const maxDay = Math.max(1, ...input.daily.map((d) => d.totalMinor));
+  const cells = Array.from({ length: daysInMonth }, (_, i): HeatCell => {
+    const day = i + 1;
+    const iso = `${y}-${String(m + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    const total = byDate.get(iso) ?? 0;
+    const dow = new Date(y, m, day).getDay();
+    return {
+      key: iso,
+      label: String(day),
+      level: heatLevel(total, maxDay),
+      isWeekend: dow === 0 || dow === 6,
+      onPress: total > 0 ? () => input.onDayPress(iso) : undefined,
+    };
+  });
+  return { cells, leadingPad: new Date(y, m, 1).getDay(), columns: 7, weekdayLabels: WEEKDAYS };
 }
 
 /** Rolling average of the prior months in a monthly trend (excludes the last / current point). */
