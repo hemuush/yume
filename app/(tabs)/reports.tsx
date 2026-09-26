@@ -829,7 +829,13 @@ function PeriodRow({ cursor, onChange }: { cursor: PeriodCursor; onChange: (c: P
   return (
     <View style={styles.periodRow}>
       <View style={styles.periodPill} {...swipe.panHandlers}>
-        <Pressable onPress={() => onChange(stepPeriod(cursor, -1))} hitSlop={8} style={styles.periodArrow}>
+        <Pressable
+          onPress={() => onChange(stepPeriod(cursor, -1))}
+          hitSlop={8}
+          style={styles.periodArrow}
+          accessibilityRole="button"
+          accessibilityLabel="Previous period"
+        >
           <Feather name="chevron-left" size={16} color={theme.colors.ink} />
         </Pressable>
         <ReanimatedAnimated.Text
@@ -844,6 +850,9 @@ function PeriodRow({ cursor, onChange }: { cursor: PeriodCursor; onChange: (c: P
           disabled={!fwd}
           hitSlop={8}
           style={[styles.periodArrow, !fwd && { opacity: 0.25 }]}
+          accessibilityRole="button"
+          accessibilityLabel="Next period"
+          accessibilityState={{ disabled: !fwd }}
         >
           <Feather name="chevron-right" size={16} color={theme.colors.ink} />
         </Pressable>

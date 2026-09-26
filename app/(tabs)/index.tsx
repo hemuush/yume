@@ -49,6 +49,7 @@ import { buildNeedsYouItems, NeedsYouItem } from '@/features/home/needsYou';
 import { AddAccountModal } from '@/features/profile/AddAccountModal';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { toLocalIsoDate } from '@/lib/date';
+import { onTransactionsChanged } from '@/lib/dataEvents';
 
 export default function DashboardScreen() {
   const insets = useSafeAreaInsets();
@@ -196,6 +197,8 @@ export default function DashboardScreen() {
       load(cursor);
     }, [load, cursor])
   );
+  // A save that doesn't leave Home (the + long-press sheet) — reload in place.
+  useEffect(() => onTransactionsChanged(() => void load(cursor)), [load, cursor]);
 
   const onRefresh = async () => {
     setRefreshing(true);

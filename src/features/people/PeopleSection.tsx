@@ -52,7 +52,7 @@ function lastActivityShort(dateStr: string | null): string {
 /**
  * Friends & Family — informal, interest-free IOUs. Lives here as a section
  * rather than its own screen so it can sit beside formal loans in the
- * Borrowed & Lent tab: both answer the same question ("who owes whom"), and
+ * Borrowed & Lent screen (Plan → Loans & people): both answer the same question ("who owes whom"), and
  * splitting them across a tab and a buried menu made them feel unrelated.
  */
 export function PeopleSection() {
@@ -100,7 +100,7 @@ export function PeopleSection() {
         </View>
       </View>
 
-      <ScrollView contentContainerStyle={{ paddingBottom: theme.layout.tabScreenScrollPad + insets.bottom }}>
+      <ScrollView contentContainerStyle={{ paddingBottom: theme.layout.screenScrollPad + insets.bottom }}>
         {people.length === 0 ? (
           <EmptyState title="No one here yet" subtitle="Add a friend or family member." />
         ) : (

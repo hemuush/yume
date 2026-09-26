@@ -106,7 +106,13 @@ export default function ProfileScreen() {
                 returnKeyType="done"
                 onSubmitEditing={saveName}
               />
-              <Pressable onPress={saveName} hitSlop={10} style={styles.nameSave}>
+              <Pressable
+                onPress={saveName}
+                hitSlop={10}
+                style={styles.nameSave}
+                accessibilityRole="button"
+                accessibilityLabel="Save name"
+              >
                 <Feather name="check" size={18} color={theme.colors.ink} />
               </Pressable>
             </View>

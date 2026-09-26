@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { View, Text, Animated, Easing, StyleSheet } from 'react-native';
-import { applyPrepayment, PrepaymentSummary } from '@/db/loans';
+import { applyPrepayment, previewPrepayment, PrepaymentSummary } from '@/db/loans';
 import { toMinor, formatMoney } from '@/lib/money';
 import { roundedMinor } from '@/lib/round';
 import { theme, modalFooterStyles as f } from '@/constants/theme';
@@ -28,6 +28,70 @@ const TAX_ON_FEE_PRESETS: Record<string, { label: string; percent: number }> = {
 function monthLabel(iso: string): string {
   return parseLocalIsoDate(iso).toLocaleDateString(undefined, { month: 'short', year: 'numeric' });
 }
+
+/** The before-you-confirm version of PrepaymentReveal: the same three numbers, as plain rows. */
+function PrepaymentPreview({ preview }: { preview: PrepaymentSummary & { neverPaysOff: boolean } }) {
+  if (preview.neverPaysOff) {
+    return (
+      <Text style={styles.errorText}>
+        At this amount the current EMI wouldn&rsquo;t cover the interest on what&rsquo;s left. Try a larger
+        prepayment.
+      </Text>
+    );
+  }
+  const closes = preview.newRemainingCount === 0;
+  return (
+    <View style={previewStyles.card} accessibilityLabel="Prepayment preview">
+      <Text style={previewStyles.head}>If you prepay this today</Text>
+      <PreviewRow label="Interest saved" value={formatMoney(preview.interestSavedMinor)} strong />
+      <PreviewRow
+        label="Loan ends"
+        value={closes ? 'Closed today' : monthLabel(preview.newPayoffDate)}
+        was={closes || preview.monthsShaved > 0 ? monthLabel(preview.oldPayoffDate) : undefined}
+      />
+      <PreviewRow label="EMIs saved" value={String(preview.monthsShaved)} />
+    </View>
+  );
+}
+
+function PreviewRow({
+  label,
+  value,
+  was,
+  strong,
+}: {
+  label: string;
+  value: string;
+  was?: string;
+  strong?: boolean;
+}) {
+  return (
+    <View style={previewStyles.row}>
+      <Text style={previewStyles.label}>{label}</Text>
+      <Text style={[previewStyles.value, strong && previewStyles.valueStrong]}>
+        {was && <Text style={previewStyles.was}>{was} </Text>}
+        {value}
+      </Text>
+    </View>
+  );
+}
+
+const previewStyles = StyleSheet.create({
+  card: {
+    marginTop: 10,
+    marginBottom: 6,
+    padding: 12,
+    gap: 6,
+    borderRadius: theme.radius.lg,
+    backgroundColor: theme.colors.incomeTint,
+  },
+  head: { fontFamily: theme.font.bodyBold, fontSize: 11.5, color: theme.colors.textSecondary },
+  row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: 12 },
+  label: { fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textPrimary },
+  value: { fontFamily: theme.font.monoBold, fontSize: 13, color: theme.colors.textPrimary },
+  valueStrong: { color: theme.colors.income },
+  was: { fontFamily: theme.font.mono, color: theme.colors.textMuted, textDecorationLine: 'line-through' },
+});
 
 // A decorative tick row, not a literal one-tick-per-installment schedule — a
 // 240-month home loan would overflow a row at that scale. Scaled down
@@ -177,6 +241,32 @@ export function PrepayModal({
   );
   const taxPreset = TAX_ON_FEE_PRESETS[account.currency];
 
+  // What this amount would save, shown before Confirm — the same
+  // calculation Confirm records (previewPrepayment/planPrepayment), so the
+  // reveal afterwards can never disagree with it. Recomputed a beat after
+  // typing stops; a slower earlier result is dropped if the amount changed.
+  const [preview, setPreview] = useState<(PrepaymentSummary & { neverPaysOff: boolean }) | null>(null);
+  useEffect(() => {
+    if (!Number.isFinite(amountMinor) || amountMinor <= 0) {
+      setPreview(null);
+      return;
+    }
+    let cancelled = false;
+    const timer = setTimeout(() => {
+      previewPrepayment(loan.id, amountMinor, toLocalIsoDate(new Date()))
+        .then((p) => {
+          if (!cancelled) setPreview(p);
+        })
+        .catch(() => {
+          if (!cancelled) setPreview(null);
+        });
+    }, 250);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [amountMinor, loan.id]);
+
   const submit = async () => {
     setError(null);
     if (!Number.isFinite(amountMinor) || amountMinor <= 0) {
@@ -247,6 +337,7 @@ export function PrepayModal({
         placeholder="0.00"
       />
       <Text style={styles.hintText}>EMI stays the same; the remaining tenure shortens.</Text>
+      {preview && <PrepaymentPreview preview={preview} />}
 
       <FormInput
         label="Prepayment charge, if any (%)"

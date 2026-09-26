@@ -57,8 +57,14 @@ export function MonthPill({
       </AnimatedPressable>
 
       <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
-        <Pressable style={styles.backdrop} onPress={() => setOpen(false)}>
-          <Pressable style={styles.menu} onPress={(e) => e.stopPropagation()}>
+        <Pressable
+          style={styles.backdrop}
+          onPress={() => setOpen(false)}
+          accessibilityRole="button"
+          accessibilityLabel="Close period picker"
+        >
+          {/* Only swallows taps so they do not reach the backdrop — not a control itself. */}
+          <Pressable style={styles.menu} onPress={(e) => e.stopPropagation()} accessible={false}>
             <View style={styles.stepRow}>
               <Pressable
                 onPress={() => pick(stepPeriod(cursor, -1))}
