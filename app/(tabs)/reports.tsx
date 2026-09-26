@@ -983,8 +983,14 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
   errTitle: { fontFamily: theme.font.bodyBold, fontSize: 14, color: theme.colors.expense },
-  errDetail: { fontSize: 12, color: theme.colors.textSecondary, marginTop: 4, textAlign: 'center' },
-  empty: { fontSize: 13, color: theme.colors.textMuted, marginVertical: 16 },
+  errDetail: {
+    fontFamily: theme.font.body,
+    fontSize: 12,
+    color: theme.colors.textSecondary,
+    marginTop: 4,
+    textAlign: 'center',
+  },
+  empty: { fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textMuted, marginVertical: 16 },
 
   periodRow: { flexDirection: 'row', gap: 8, paddingHorizontal: 20, marginBottom: 16 },
   periodPill: {
@@ -1079,7 +1085,7 @@ const styles = StyleSheet.create({
 
   reads: { marginTop: 14, gap: 6 },
   readRow: { flexDirection: 'row', gap: 6 },
-  readBullet: { fontSize: 10, color: theme.colors.idCoralDeep, lineHeight: 16 },
+  readBullet: { fontFamily: theme.font.body, fontSize: 10, color: theme.colors.idCoralDeep, lineHeight: 16 },
   readText: {
     flex: 1,
     fontFamily: theme.font.body,
@@ -1130,7 +1136,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.surface,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
-    borderRadius: theme.radius.xl,
+    borderRadius: theme.radius.xl2,
     paddingHorizontal: 14,
   },
   catRow: { paddingVertical: 10 },

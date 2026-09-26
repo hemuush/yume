@@ -395,6 +395,7 @@ const styles = StyleSheet.create({
   },
   freqWrap: { marginHorizontal: 20 },
   freqHint: {
+    fontFamily: theme.font.body,
     fontSize: 12,
     color: theme.colors.textMuted,
     marginHorizontal: 20,
@@ -404,12 +405,12 @@ const styles = StyleSheet.create({
   card: {
     marginHorizontal: 20,
     padding: 16,
-    borderRadius: theme.radius.xl,
+    borderRadius: theme.radius.xl2,
     backgroundColor: theme.colors.surface,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
   },
-  cardText: { fontSize: 13, color: theme.colors.textSecondary, lineHeight: 19 },
+  cardText: { fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textSecondary, lineHeight: 19 },
   buttonRow: { flexDirection: 'row', marginTop: 12 },
   statusRow: { marginTop: 10, gap: 4 },
   pill: {
@@ -427,6 +428,6 @@ const styles = StyleSheet.create({
   pillError: { backgroundColor: theme.colors.expenseTint },
   pillNeutral: { backgroundColor: theme.colors.surfaceAlt },
   pillText: { fontFamily: theme.font.bodyBold, fontSize: 11, color: theme.colors.textSecondary },
-  lastBackupText: { fontSize: 12, color: theme.colors.textMuted },
-  errorDetail: { fontSize: 11.5, color: theme.colors.expense, lineHeight: 15 },
+  lastBackupText: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
+  errorDetail: { fontFamily: theme.font.body, fontSize: 11.5, color: theme.colors.expense, lineHeight: 15 },
 });

@@ -5,6 +5,7 @@ import { theme } from '@/constants/theme';
 export const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
   introText: {
+    fontFamily: theme.font.body,
     fontSize: 13,
     color: theme.colors.textSecondary,
     marginHorizontal: 20,
@@ -21,7 +22,13 @@ export const styles = StyleSheet.create({
     borderColor: theme.colors.expense,
   },
   errorTitle: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.expense },
-  errorDetail: { fontSize: 11.5, color: theme.colors.textSecondary, marginTop: 3, lineHeight: 16 },
+  errorDetail: {
+    fontFamily: theme.font.body,
+    fontSize: 11.5,
+    color: theme.colors.textSecondary,
+    marginTop: 3,
+    lineHeight: 16,
+  },
   sectionDivider: {
     fontFamily: theme.font.bodyBold,
     fontSize: 11,
@@ -34,7 +41,7 @@ export const styles = StyleSheet.create({
   cardMuted: { opacity: 0.6 },
   cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
   cardTitle: { fontSize: 15, fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
-  cardSub: { fontSize: 11.5, color: theme.colors.textMuted, marginTop: 3 },
+  cardSub: { fontFamily: theme.font.body, fontSize: 11.5, color: theme.colors.textMuted, marginTop: 3 },
   cardAmount: { fontSize: 15, fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
   cardFooter: {
     flexDirection: 'row',
@@ -67,5 +74,11 @@ export const styles = StyleSheet.create({
     marginTop: 10,
     marginBottom: 8,
   },
-  errorText: { color: theme.colors.expense, fontSize: 13, marginTop: 4, marginBottom: 12 },
+  errorText: {
+    fontFamily: theme.font.body,
+    color: theme.colors.expense,
+    fontSize: 13,
+    marginTop: 4,
+    marginBottom: 12,
+  },
 });
