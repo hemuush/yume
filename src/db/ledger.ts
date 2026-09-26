@@ -749,6 +749,37 @@ export async function getFrequentAmountsForCategory(
 }
 
 /**
+ * The categories of one kind the user actually logs against most, most
+ * used first — powers Add Transaction's "Recent" row, so a habitual
+ * expense is one tap instead of a hunt through the full grid. Same 90-day
+ * window and frequency-then-recency ranking getFrequentAmountsForCategory
+ * uses. Built-in system categories (Loan EMI, Friends & Family, Fees &
+ * Charges) are left out: the app files those automatically from the loan
+ * and friend flows, so suggesting them for a hand-typed entry would only
+ * invite mis-filing. Archived categories are left out too.
+ */
+export async function getRecentCategoryIds(
+  kind: Category['kind'],
+  limit = 5,
+  today: string = toLocalIsoDate(new Date())
+): Promise<string[]> {
+  const db = await getDb();
+  const since = addDaysToIsoDate(today, -90);
+  const rows = await db.getAllAsync<{ category_id: string }>(
+    `SELECT t.category_id AS category_id, COUNT(*) AS freq, MAX(t.date) AS last_date
+     FROM transactions t
+     JOIN categories c ON c.id = t.category_id
+     WHERE c.kind = ? AND c.archived = 0 AND c.is_system = 0
+       AND t.date >= ? AND t.date <= ?
+     GROUP BY t.category_id
+     ORDER BY freq DESC, last_date DESC
+     LIMIT ?`,
+    [kind, since, today, limit]
+  );
+  return rows.map((r) => r.category_id);
+}
+
+/**
  * Cross-period text search — matches a transaction's own note, its
  * category's name, or either side of the account it moved through (a
  * transfer matches on either account). Deliberately not scoped by date the
@@ -779,6 +810,13 @@ export async function searchTransactions(query: string, limit = 50): Promise<Tra
     [like, like, like, like, cappedLimit]
   );
   return rows.map(rowToTransaction);
+}
+
+/** How many transactions exist at all — a cheap COUNT for UI that only needs "is there real data yet". */
+export async function countTransactions(): Promise<number> {
+  const db = await getDb();
+  const row = await db.getFirstAsync<{ n: number }>('SELECT COUNT(*) AS n FROM transactions');
+  return row?.n ?? 0;
 }
 
 export async function getTransactionById(id: string): Promise<Transaction | null> {

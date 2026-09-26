@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, TextInput, Pressable, Alert, StyleSheet, Animated } from 'react-native';
 import { KeyboardAwareScrollView, KeyboardStickyView } from 'react-native-keyboard-controller';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
@@ -13,7 +13,9 @@ import {
   getTransactionById,
   getTransactionLink,
   getFrequentAmountsForCategory,
+  getRecentCategoryIds,
 } from '@/db/ledger';
+import { getAddDefaults, setAddDefaults, AddDefaults } from '@/db/settings';
 import {
   listPeople,
   recordMoneyGivenToPerson,
@@ -37,6 +39,7 @@ import { CalendarSheet } from '@/features/transactions/CalendarSheet';
 import { useAccent } from '@/theme/AccentContext';
 import { accountBadgeColor } from '@/lib/account';
 import { shade } from '@/lib/color';
+import { AddAccountModal } from '@/features/profile/AddAccountModal';
 
 // Same icon-per-type mapping AccountChip.tsx already uses for the Home
 // accounts strip — reused here (not redefined with different names/colours)
@@ -118,6 +121,7 @@ export default function AddTransactionScreen() {
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ type?: string; id?: string }>();
   const editingId = params.id;
+  const initialType = params.type;
 
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -145,6 +149,11 @@ export default function AddTransactionScreen() {
   const [saveDone, setSaveDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [frequentAmounts, setFrequentAmounts] = useState<number[]>([]);
+  const [recentCategoryIds, setRecentCategoryIds] = useState<string[]>([]);
+  const [addAccountVisible, setAddAccountVisible] = useState(false);
+  // What each entry type was last saved with (see AddDefaults) — loaded once
+  // for a new entry, never for an edit, which always shows the entry's own values.
+  const addDefaults = useRef<AddDefaults>({});
 
   const listFade = useFadeIn([rows.length]);
 
@@ -166,6 +175,47 @@ export default function AddTransactionScreen() {
     };
   }, [type, categoryId]);
 
+  // The user's most-used categories of the current kind, for the one-tap
+  // "Recent" row. Expense/income only, same as frequent amounts above.
+  useEffect(() => {
+    if (type !== 'expense' && type !== 'income') {
+      setRecentCategoryIds([]);
+      return;
+    }
+    let cancelled = false;
+    getRecentCategoryIds(type)
+      .then((ids) => {
+        if (!cancelled) setRecentCategoryIds(ids);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [type]);
+
+  /**
+   * Pre-selects what this entry type was last saved with. Anything that no
+   * longer fits is skipped rather than applied: an account that's gone (or a
+   * savings account for an expense/income, which can't hold one), or a
+   * category that's gone, archived, or the wrong kind. Skipped values fall
+   * back exactly as before this existed (first spendable account, no category).
+   */
+  const applyDefaults = useCallback((t: EntryType, accs: Account[], cats: Category[]) => {
+    if (t === 'friend') return;
+    const d = addDefaults.current;
+    if (t === 'transfer') {
+      const td = d.transfer;
+      if (td && accs.some((a) => a.id === td.accountId)) setAccountId(td.accountId);
+      if (td?.toAccountId && accs.some((a) => a.id === td.toAccountId)) setToAccountId(td.toAccountId);
+      return;
+    }
+    const td = d[t];
+    if (td && accs.some((a) => a.id === td.accountId && a.type !== 'savings')) setAccountId(td.accountId);
+    setCategoryId(
+      td?.categoryId && cats.some((c) => c.id === td.categoryId && c.kind === t) ? td.categoryId : null
+    );
+  }, []);
+
   const load = useCallback(async () => {
     const [accs, cats, ppl] = await Promise.all([listAccounts(), listCategories(), listPeople()]);
     setAccounts(accs);
@@ -185,14 +235,27 @@ export default function AddTransactionScreen() {
         setNote(tx.note);
         setDate(tx.date);
       }
+    } else if (!editingId && !seeded) {
+      addDefaults.current = await getAddDefaults().catch(() => ({}));
+      applyDefaults(isTxType(initialType) ? initialType : 'expense', accs, cats);
     }
     setSeeded(true);
-  }, [editingId, seeded]);
+  }, [editingId, seeded, initialType, applyDefaults]);
 
   useFocusEffect(
     useCallback(() => {
       load();
     }, [load])
+  );
+
+  // Only ids that still resolve to a category of the current kind (the
+  // list below is already non-archived), in most-used order.
+  const recentCategories = useMemo(
+    () =>
+      recentCategoryIds
+        .map((id) => categories.find((c) => c.id === id))
+        .filter((c): c is Category => !!c && c.kind === (type === 'income' ? 'income' : 'expense')),
+    [recentCategoryIds, categories, type]
   );
 
   const filteredCategories = useMemo(
@@ -219,6 +282,21 @@ export default function AddTransactionScreen() {
   const onTypeChange = (next: EntryType) => {
     setType(next);
     setCategoryId(null);
+    // A new entry switches to what this type was last saved with; an edit
+    // keeps its own values, exactly as before.
+    if (!editing) applyDefaults(next, accounts, categories);
+  };
+
+  /** Remembers what was just saved, per type, for the next new entry. Best-effort. */
+  const rememberDefaults = (saved: Staged[]) => {
+    const next: AddDefaults = { ...addDefaults.current };
+    for (const r of saved) {
+      if (r.kind !== 'transaction') continue;
+      if (r.type === 'transfer') next.transfer = { accountId: r.accountId, toAccountId: r.toAccountId };
+      else next[r.type] = { accountId: r.accountId, categoryId: r.categoryId };
+    }
+    addDefaults.current = next;
+    setAddDefaults(next).catch(() => {});
   };
 
   const clearForm = () => {
@@ -414,6 +492,7 @@ export default function AddTransactionScreen() {
         await persistRow(r);
         saved += 1;
       }
+      rememberDefaults(pending);
       goBackAfterSave();
     } catch (e: any) {
       // Keep only what didn't make it in, so a retry doesn't double up.
@@ -508,8 +587,36 @@ export default function AddTransactionScreen() {
               placeholder="0"
               placeholderTextColor={theme.colors.textMuted}
               style={styles.amountInput}
+              // A new entry starts typing straight away — the amount is
+              // what every entry needs first. An edit opens without the
+              // keyboard, since it's often only the category or date changing.
+              autoFocus={!editingId}
+              accessibilityLabel="Amount"
             />
           </View>
+
+          {recentCategories.length > 0 && !isLinked && (
+            <View style={styles.recentRow}>
+              {recentCategories.map((cat) => {
+                const active = categoryId === cat.id;
+                return (
+                  <Pressable
+                    key={cat.id}
+                    onPress={() => setCategoryId(cat.id)}
+                    style={[styles.recentChip, active && styles.recentChipActive]}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: active }}
+                    accessibilityLabel={`Category ${cat.name}`}
+                  >
+                    <CategoryIcon name={cat.icon} color={cat.color} size={11} square={20} />
+                    <Text style={styles.recentChipText} numberOfLines={1}>
+                      {cat.name}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          )}
 
           {frequentAmounts.length > 0 && (
             <View style={styles.frequentRow}>
@@ -547,6 +654,26 @@ export default function AddTransactionScreen() {
           />
         ) : (
           <>
+            {pickableAccounts.length === 0 && (
+              // Nothing to record this against yet — used to surface only as a
+              // "Pick an account" error on Save. Opens the same Add Account form
+              // Profile uses, right here.
+              <SoftCard backgroundColor={theme.colors.primaryTint} padding={14} style={styles.noAccountCard}>
+                <Text style={styles.noAccountTitle}>
+                  {accounts.length === 0 ? 'Add your first account' : 'Add a spendable account'}
+                </Text>
+                <Text style={styles.noAccountText}>
+                  {accounts.length === 0
+                    ? 'A bank account, cash, or a UPI wallet. That is where this entry will be recorded.'
+                    : 'Savings accounts can only send or receive transfers. Add a bank, cash or wallet account for spending.'}
+                </Text>
+                <PrimaryButton
+                  title="Add an account"
+                  onPress={() => setAddAccountVisible(true)}
+                  style={styles.noAccountBtn}
+                />
+              </SoftCard>
+            )}
             <View style={styles.section}>
               <Text style={styles.label}>{type === 'transfer' ? 'From' : 'Account'}</Text>
               <View style={styles.accountRow}>
@@ -694,6 +821,16 @@ export default function AddTransactionScreen() {
           disabled={saving || isLinked}
         />
       </KeyboardStickyView>
+
+      <AddAccountModal
+        visible={addAccountVisible}
+        onClose={() => setAddAccountVisible(false)}
+        onCreated={async () => {
+          setAddAccountVisible(false);
+          setError(null);
+          await load();
+        }}
+      />
 
       <CalendarSheet
         visible={calendarOpen}
@@ -878,6 +1015,37 @@ const styles = StyleSheet.create({
   },
 
   heroCard: { marginBottom: 18 },
+  recentRow: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 7, marginTop: 6 },
+  recentChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingLeft: 4,
+    paddingRight: 11,
+    paddingVertical: 4,
+    borderRadius: theme.radius.pill,
+    backgroundColor: 'rgba(255,255,255,0.55)',
+    borderWidth: 1.5,
+    borderColor: 'transparent',
+    maxWidth: '100%',
+  },
+  recentChipActive: { backgroundColor: theme.colors.surface, borderColor: theme.colors.secondary },
+  recentChipText: {
+    fontFamily: theme.font.bodyMedium,
+    fontSize: 11.5,
+    color: theme.colors.textPrimary,
+    flexShrink: 1,
+  },
+  noAccountCard: { marginBottom: 18 },
+  noAccountTitle: { fontFamily: theme.font.roundedBold, fontSize: 15, color: theme.colors.textPrimary },
+  noAccountText: {
+    fontFamily: theme.font.body,
+    fontSize: 12,
+    color: theme.colors.textSecondary,
+    lineHeight: 17,
+    marginTop: 4,
+  },
+  noAccountBtn: { marginTop: 12 },
   frequentRow: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 7, marginTop: 4 },
   frequentChip: {
     paddingHorizontal: 12,

@@ -153,6 +153,9 @@ export function SettingsSection() {
   // Notifications and Backup in line with that.
   const [notifPrefs, setNotifPrefs] = useState<NotificationPrefs | null>(null);
   const [lastBackupAt, setLastBackupAt] = useState<string | null>(null);
+  // A failed last attempt used to fall through to "Never backed up" — wrong
+  // either way (there may well be older backups), and it hid the failure.
+  const [lastBackupFailed, setLastBackupFailed] = useState(false);
 
   const load = useCallback(async () => {
     setCurrency(await getDefaultCurrency());
@@ -165,6 +168,7 @@ export function SettingsSection() {
     setNotifPrefs(await getNotificationPrefs());
     const lastBackup = await getLastLocalBackupResult();
     setLastBackupAt(lastBackup?.ok ? lastBackup.at : null);
+    setLastBackupFailed(lastBackup?.ok === false);
   }, []);
 
   useFocusEffect(
@@ -468,8 +472,14 @@ export function SettingsSection() {
           icon="folder-outline"
           iconBg={theme.colors.idTeal}
           label="Backup & Restore"
-          sub={lastBackupAt ? `Last backup ${daysAgoLabel(lastBackupAt)}` : 'Never backed up'}
-          subColor={lastBackupAt ? undefined : theme.colors.idCoralDeep}
+          sub={
+            lastBackupFailed
+              ? 'Last backup failed — tap to check'
+              : lastBackupAt
+                ? `Last backup ${daysAgoLabel(lastBackupAt)}`
+                : 'Never backed up'
+          }
+          subColor={lastBackupAt && !lastBackupFailed ? undefined : theme.colors.idCoralDeep}
           onPress={() => router.push('/backup')}
         />
         <Row
