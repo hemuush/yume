@@ -1,12 +1,14 @@
 import { daysUntilIsoDate } from '@/lib/date';
+import { formatMoney } from '@/lib/money';
 import { goalProgress } from '@/lib/savingsGoalProgress';
+import { peopleTotals } from '@/features/people/people.helpers';
 
 /**
- * The Plan tab's six tiles, each with one live line so the page is worth a
+ * The Plan tab's seven tiles, each with one live line so the page is worth a
  * glance rather than being a menu. Pure — the screen fetches, this decides
  * what each tile says — so every rule here is unit-tested.
  */
-export type PlanRoute = '/budgets' | '/savings-goals' | '/recurring' | '/loans' | '/whatif' | '/garden';
+type PlanRoute = '/budgets' | '/savings-goals' | '/recurring' | '/whatif' | '/loans' | '/people' | '/garden';
 
 export interface PlanTile {
   key: string;
@@ -14,6 +16,8 @@ export interface PlanTile {
   /** The live line; `null` would mean "nothing to say", but every tile always has something. */
   line: string;
   route: PlanRoute;
+  /** Spans the whole row — the last, odd tile, so the two-column grid ends evenly. */
+  wide?: boolean;
 }
 
 export interface PlanInput {
@@ -22,11 +26,14 @@ export interface PlanInput {
   recurring: { active: boolean; nextRunDate: string; label: string }[];
   nextEmiDueDate: string | null;
   activeLoanCount: number;
-  peopleCount: number;
+  /** Each person's balance; positive means they owe you. */
+  people: { balanceMinor: number }[];
   /** Today's under-goal streak, or null when no daily spending goal is set. */
   gardenStreakDays: number | null;
   /** Injectable for tests; defaults to the real "days from today". */
   daysUntil?: (iso: string) => number;
+  /** Injectable for tests; defaults to the app's money format. */
+  money?: (minor: number) => string;
 }
 
 /** A budget counts as on track below this share of its limit — the same line Home's "Needs you" uses. */
@@ -41,6 +48,7 @@ function whenLabel(days: number): string {
 
 export function buildPlanTiles(input: PlanInput): PlanTile[] {
   const daysUntil = input.daysUntil ?? daysUntilIsoDate;
+  const money = input.money ?? formatMoney;
 
   const budgetLine = (() => {
     const n = input.budgets.length;
@@ -70,12 +78,18 @@ export function buildPlanTiles(input: PlanInput): PlanTile[] {
 
   const loansLine = (() => {
     if (input.nextEmiDueDate) return `Next EMI ${whenLabel(daysUntil(input.nextEmiDueDate))}`;
-    const parts: string[] = [];
-    if (input.activeLoanCount > 0)
-      parts.push(`${input.activeLoanCount} loan${input.activeLoanCount === 1 ? '' : 's'}`);
-    if (input.peopleCount > 0)
-      parts.push(`${input.peopleCount} ${input.peopleCount === 1 ? 'person' : 'people'}`);
-    return parts.length > 0 ? parts.join(' · ') : 'Loans and IOUs';
+    const n = input.activeLoanCount;
+    return n > 0 ? `${n} loan${n === 1 ? '' : 's'}` : 'Track an EMI';
+  })();
+
+  const peopleLine = (() => {
+    if (input.people.length === 0) return 'Track money with friends';
+    const { owedToYouMinor, youOweMinor } = peopleTotals(input.people);
+    if (owedToYouMinor > 0 && youOweMinor > 0)
+      return `${money(owedToYouMinor)} to you · you owe ${money(youOweMinor)}`;
+    if (owedToYouMinor > 0) return `${money(owedToYouMinor)} owed to you`;
+    if (youOweMinor > 0) return `You owe ${money(youOweMinor)}`;
+    return 'All settled up';
   })();
 
   const gardenLine =
@@ -85,8 +99,9 @@ export function buildPlanTiles(input: PlanInput): PlanTile[] {
     { key: 'budgets', title: 'Budgets', line: budgetLine, route: '/budgets' },
     { key: 'goals', title: 'Goals', line: goalLine, route: '/savings-goals' },
     { key: 'recurring', title: 'Recurring', line: recurringLine, route: '/recurring' },
-    { key: 'loans', title: 'Loans & people', line: loansLine, route: '/loans' },
     { key: 'whatif', title: 'What-if', line: 'Try a spending cut', route: '/whatif' },
-    { key: 'garden', title: "Suu's Garden", line: gardenLine, route: '/garden' },
+    { key: 'loans', title: 'Loans', line: loansLine, route: '/loans' },
+    { key: 'people', title: 'Friends & Family', line: peopleLine, route: '/people' },
+    { key: 'garden', title: "Suu's Garden", line: gardenLine, route: '/garden', wide: true },
   ];
 }
