@@ -1,13 +1,10 @@
 import { StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
 
-/** The even gap between Reports' blocks (headline, "In short", calendar). */
+/** The even gap between Reports' blocks (heatmap card, story cards, "Where it went", trends). */
 export const BLOCK_GAP = 22;
 
-/** Tallest bar in TrendBars, in px — the bar chart's own height is derived from it. */
-export const BAR_MAX_HEIGHT = 56;
-
-// Shared by the Reports screen and its pieces (PeriodRow, TrendBars, DayTotal).
+// Shared by the Reports screen and its pieces (PeriodRow, HeatmapCard, StoryCards, CategoryMosaic, TrendChart, DayTotal).
 export const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
@@ -91,12 +88,106 @@ export const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   vsBadgeText: { fontFamily: theme.font.bodyBold, fontSize: 10.5 },
-  headlineSub: {
-    fontFamily: theme.font.body,
-    fontSize: 10.5,
-    color: theme.colors.textMuted,
-    marginTop: 3,
+
+  // The heatmap card at the top: headline + the day-by-day grid in one card.
+  hmCard: {
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.radius.xl2,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.borderSoft,
+    padding: 14,
+    gap: 10,
     marginBottom: BLOCK_GAP,
+  },
+  hmHead: { flexDirection: 'row', alignItems: 'flex-end', gap: 10 },
+  hmHeadMain: { flex: 1, minWidth: 0 },
+  hmFacts: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
+  hmFactStrong: { fontFamily: theme.font.monoBold, color: theme.colors.textPrimary },
+  hmFoot: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
+  hmHint: { flex: 1, fontFamily: theme.font.body, fontSize: 11.5, color: theme.colors.textSecondary },
+
+  // Story cards: the period "in short", swiped sideways.
+  storyBlock: { marginBottom: BLOCK_GAP },
+  storyHead: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },
+  storyPos: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
+  story: {
+    minHeight: 168,
+    borderRadius: theme.radius.xl2,
+    padding: 16,
+    justifyContent: 'space-between',
+    gap: 10,
+  },
+  storyKicker: {
+    fontFamily: theme.font.monoBold,
+    fontSize: 10.5,
+    letterSpacing: 0.4,
+    color: theme.colors.inkSoft,
+  },
+  storyBig: {
+    fontFamily: theme.font.roundedBold,
+    fontSize: 28,
+    lineHeight: 32,
+    color: theme.colors.textPrimary,
+  },
+  storyDetail: {
+    fontFamily: theme.font.body,
+    fontSize: 13.5,
+    lineHeight: 19,
+    color: theme.colors.textPrimary,
+    marginTop: 4,
+  },
+  storyFoot: { fontFamily: theme.font.bodyBold, fontSize: 12.5, color: theme.colors.textSecondary },
+  storyMoonRow: { flexDirection: 'row', alignItems: 'center', gap: 14 },
+  storyMoonText: { flex: 1, minWidth: 0 },
+  storyDots: { flexDirection: 'row', justifyContent: 'center', gap: 5, marginTop: 10 },
+  storyDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: theme.colors.borderSoft },
+  storyDotOn: { width: 16, backgroundColor: theme.colors.ink },
+
+  // "Where it went" mosaic.
+  mosaic: { position: 'relative', marginBottom: 12 },
+  tile: {
+    position: 'absolute',
+    borderRadius: theme.radius.md,
+    borderWidth: 2,
+    borderColor: theme.colors.background,
+    padding: 8,
+    justifyContent: 'space-between',
+    overflow: 'hidden',
+  },
+  tileRest: { backgroundColor: theme.colors.surfaceAlt },
+  tileName: { fontFamily: theme.font.bodyBold, fontSize: 12, lineHeight: 15, color: theme.colors.ink },
+  tilePct: { fontFamily: theme.font.roundedBold, fontSize: 18, lineHeight: 20, color: theme.colors.ink },
+  tilePctSmall: { fontFamily: theme.font.roundedBold, fontSize: 12, lineHeight: 14 },
+  tileAmt: { fontFamily: theme.font.mono, fontSize: 10.5, color: theme.colors.ink },
+  tileUp: { fontFamily: theme.font.monoBold, color: theme.colors.expense },
+  tileDown: { fontFamily: theme.font.monoBold, color: theme.colors.income },
+
+  // Trends: one line chart with a Spending / Net worth switch.
+  trendCard: {
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.radius.xl2,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.borderSoft,
+    padding: 14,
+    gap: 6,
+  },
+  trendHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
+  trendTitle: { fontFamily: theme.font.roundedBold, fontSize: 15, color: theme.colors.textPrimary },
+  trendSwitch: {
+    flexDirection: 'row',
+    padding: 3,
+    borderRadius: theme.radius.pill,
+    backgroundColor: theme.colors.surfaceAlt,
+  },
+  trendSwitchBtn: { paddingHorizontal: 11, paddingVertical: 4, borderRadius: theme.radius.pill },
+  trendSwitchBtnOn: { backgroundColor: theme.colors.ink },
+  trendSwitchText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textSecondary },
+  trendSwitchTextOn: { fontFamily: theme.font.bodyBold, color: theme.colors.surface },
+  trendRead: {
+    fontFamily: theme.font.body,
+    fontSize: 12.5,
+    lineHeight: 17,
+    color: theme.colors.textSecondary,
   },
 
   blockTitle: {
@@ -105,63 +196,11 @@ export const styles = StyleSheet.create({
     color: theme.colors.textPrimary,
     marginBottom: 8,
   },
-  hmTitleRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  legend: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 8 },
+  legend: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   legendText: { fontFamily: theme.font.body, fontSize: 9.5, color: theme.colors.textMuted },
   legendSwatch: { width: 11, height: 11, borderRadius: 3 },
 
-  reads: { marginTop: 14, gap: 6 },
-  readRow: { flexDirection: 'row', gap: 6 },
-  readBullet: { fontFamily: theme.font.body, fontSize: 10, color: theme.colors.idCoralDeep, lineHeight: 16 },
-  readText: {
-    flex: 1,
-    fontFamily: theme.font.body,
-    fontSize: 11.5,
-    color: theme.colors.textSecondary,
-    lineHeight: 16,
-  },
-
   rule: { height: StyleSheet.hairlineWidth, backgroundColor: theme.colors.borderSoft, marginVertical: 22 },
-
-  // The recurring/discretionary dot is the one style still shared with the
-  // moon-split card's legend below.
-  rdDot: { width: 8, height: 8, borderRadius: 3 },
-  rdNote: { fontFamily: theme.font.body, fontSize: 9.5, color: theme.colors.textMuted, marginTop: 6 },
-
-  moonCard: {
-    backgroundColor: theme.colors.surface,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-    borderRadius: theme.radius.xl2,
-    padding: 18,
-    alignItems: 'center',
-  },
-  moonTitle: { fontFamily: theme.font.roundedBold, fontSize: 15, color: theme.colors.textPrimary },
-  moonSub: {
-    fontFamily: theme.font.body,
-    fontSize: 10.5,
-    color: theme.colors.textMuted,
-    marginTop: 2,
-    marginBottom: 12,
-  },
-  moonFigs: { flexDirection: 'row', gap: 22, marginTop: 14 },
-  moonFig: { alignItems: 'flex-start' },
-  moonFigLabelRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  moonFigLabel: { fontFamily: theme.font.bodyMedium, fontSize: 11, color: theme.colors.textSecondary },
-  moonFigValue: { fontFamily: theme.font.monoBold, fontSize: 15, marginTop: 3 },
-  moonCaption: {
-    fontFamily: theme.font.body,
-    fontSize: 11,
-    color: theme.colors.textMuted,
-    textAlign: 'center',
-    lineHeight: 16,
-    marginTop: 14,
-    maxWidth: 260,
-  },
 
   catCard: {
     backgroundColor: theme.colors.surface,
@@ -192,38 +231,6 @@ export const styles = StyleSheet.create({
   },
   catMore: { paddingVertical: 12, alignItems: 'center' },
   catMoreText: { fontFamily: theme.font.bodyMedium, fontSize: 11.5, color: theme.colors.textMuted },
-
-  barChart: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    gap: 6,
-    height: BAR_MAX_HEIGHT + 18,
-    marginTop: 4,
-  },
-  barBaseline: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    height: StyleSheet.hairlineWidth,
-    backgroundColor: theme.colors.borderSoft,
-  },
-  barCol: { flex: 1, alignItems: 'center', justifyContent: 'flex-end' },
-  barValue: {
-    fontFamily: theme.font.mono,
-    fontSize: 8,
-    color: theme.colors.textMuted,
-    marginBottom: 3,
-  },
-  bar: { width: '68%', borderRadius: 3, minHeight: 3 },
-  sparkAxis: { flexDirection: 'row', marginTop: 4 },
-  sparkAxisLabel: {
-    flex: 1,
-    fontFamily: theme.font.mono,
-    fontSize: 8.5,
-    color: theme.colors.textMuted,
-    textAlign: 'center',
-  },
-  sparkAxisLabelOn: { color: theme.colors.idCoralDeep, fontFamily: theme.font.monoBold },
 
   // day-detail / drill popup
   dayRow: {

@@ -1,9 +1,9 @@
 import { View, Pressable } from 'react-native';
 import { Text } from '@/components/Text';
-import { InShortTarget } from './reportsInsights';
+import { StoryTarget } from './reportsInsights';
 import { styles } from './reports.styles';
 
-export type ReportSection = InShortTarget;
+export type ReportSection = StoryTarget;
 
 const SECTIONS: [ReportSection, string][] = [
   ['overview', 'Overview'],

@@ -55,7 +55,7 @@ export function periodLabel(cursor: PeriodCursor, reference: Date = new Date()):
 }
 
 /** Short label for the period one step back, used in "vs …" comparison text. */
-export function previousPeriodLabel(cursor: PeriodCursor, reference: Date = new Date()): string {
+export function previousPeriodLabel(cursor: PeriodCursor): string {
   return cursor.granularity === 'year' ? 'last year' : 'the month before';
 }
 

@@ -5,7 +5,9 @@ import { theme } from '@/constants/theme';
 import { formatMoney } from '@/lib/money';
 import { usePressScale } from '@/lib/usePressScale';
 import { HomeSection } from './HomeSection';
+import { homeStyles as h, HOME } from './homeStyles';
 import type { NeedsYouItem, NeedsYouTone } from './needsYou';
+import type { MonthReview } from './monthReview';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -15,6 +17,10 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
  * nothing, so a calm month leaves Home calmer rather than showing an empty
  * card. Rows are drawn exactly like UpcomingRow (same sizes, same card),
  * so this reads as part of Home's existing language, not a new widget.
+ *
+ * In the first week of a month, last month's review (see monthReview.ts) is
+ * the first row: tap it for that month's report, ✕ to hide it until next
+ * month. It used to be a card of its own.
  */
 const TONE: Record<
   NeedsYouTone,
@@ -34,26 +40,85 @@ export function NeedsYouCard({
   items,
   onOpen,
   onSnooze,
+  review = null,
+  onOpenReview,
+  onDismissReview,
 }: {
   items: NeedsYouItem[];
   onOpen: (item: NeedsYouItem) => void;
   onSnooze: (item: NeedsYouItem) => void;
+  review?: MonthReview | null;
+  onOpenReview?: () => void;
+  onDismissReview?: () => void;
 }) {
-  if (items.length === 0) return null;
+  const count = items.length + (review ? 1 : 0);
+  if (count === 0) return null;
   return (
-    <HomeSection title="Needs you">
+    <HomeSection title="Needs you" badge={count}>
       <View style={styles.card}>
+        {review && (
+          <ReviewRow review={review} onPress={() => onOpenReview?.()} onDismiss={() => onDismissReview?.()} />
+        )}
         {items.map((item, i) => (
           <NeedsYouRow
             key={item.key}
             item={item}
-            divider={i > 0}
+            divider={i > 0 || !!review}
             onPress={() => onOpen(item)}
             onSnooze={() => onSnooze(item)}
           />
         ))}
       </View>
     </HomeSection>
+  );
+}
+
+function ReviewRow({
+  review,
+  onPress,
+  onDismiss,
+}: {
+  review: MonthReview;
+  onPress: () => void;
+  onDismiss: () => void;
+}) {
+  const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.98);
+  const detail = [
+    `Spent ${formatMoney(review.spentMinor)}`,
+    review.line ?? (review.keptLabel ? `${review.keptLabel} kept` : null),
+  ]
+    .filter(Boolean)
+    .join(' · ');
+  return (
+    <AnimatedPressable
+      onPress={onPress}
+      onPressIn={onPressIn}
+      onPressOut={onPressOut}
+      accessibilityRole="button"
+      accessibilityLabel={`${review.monthLabel} in review: ${detail}. Opens ${review.monthLabel}'s report`}
+      style={[styles.row, animatedStyle]}
+    >
+      <View style={[styles.iconWrap, { backgroundColor: theme.colors.primaryTint }]}>
+        <Feather name="bar-chart-2" size={HOME.iconGlyph} color={theme.colors.ink} />
+      </View>
+      <View style={styles.mid}>
+        <Text style={styles.title} numberOfLines={1}>
+          {review.monthLabel} in review
+        </Text>
+        <Text style={styles.sub} numberOfLines={1}>
+          {detail}
+        </Text>
+      </View>
+      <Pressable
+        onPress={onDismiss}
+        hitSlop={10}
+        accessibilityRole="button"
+        accessibilityLabel="Hide until next month"
+        style={styles.close}
+      >
+        <Feather name="x" size={13} color={theme.colors.textSecondary} />
+      </Pressable>
+    </AnimatedPressable>
   );
 }
 
@@ -81,7 +146,7 @@ function NeedsYouRow({
       style={[styles.row, divider && styles.divider, animatedStyle]}
     >
       <View style={[styles.iconWrap, { backgroundColor: tone.bg }]}>
-        <Feather name={icon} size={14} color={tone.fg} />
+        <Feather name={icon} size={HOME.iconGlyph} color={tone.fg} />
       </View>
       <View style={styles.mid}>
         <Text style={styles.title} numberOfLines={1}>
@@ -110,22 +175,23 @@ function NeedsYouRow({
 }
 
 const styles = StyleSheet.create({
-  card: {
-    marginHorizontal: 20,
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.radius.xl2,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-    overflow: 'hidden',
+  card: h.card,
+  row: h.row,
+  divider: h.divider,
+  iconWrap: h.iconTile,
+  mid: h.mid,
+  title: h.title,
+  sub: h.sub,
+  subUrgent: h.subUrgent,
+  amount: { ...h.amount, color: theme.colors.expense },
+  close: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: theme.colors.surfaceAlt,
   },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 11, paddingVertical: 11, paddingHorizontal: 14 },
-  divider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.borderSoft },
-  iconWrap: { width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
-  mid: { flex: 1, minWidth: 0 },
-  title: { fontFamily: theme.font.bodyBold, fontSize: 13.5, color: theme.colors.textPrimary },
-  sub: { fontFamily: theme.font.body, fontSize: 11.5, color: theme.colors.textMuted, marginTop: 1 },
-  subUrgent: { color: theme.colors.expense, fontFamily: theme.font.bodyBold },
-  amount: { fontFamily: theme.font.monoBold, fontSize: 13, color: theme.colors.expense },
   later: {
     paddingHorizontal: 12,
     paddingVertical: 6,

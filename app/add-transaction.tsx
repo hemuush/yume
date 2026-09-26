@@ -51,9 +51,12 @@ import { Chip, AccountTile, Totals, FriendFields } from '@/features/add/AddField
 
 export default function AddTransactionScreen() {
   const insets = useSafeAreaInsets();
-  const params = useLocalSearchParams<{ type?: string; id?: string }>();
+  // `accountId` pre-selects the account (the "from" side of a transfer) —
+  // Home's account summary sheet opens Add this way.
+  const params = useLocalSearchParams<{ type?: string; id?: string; accountId?: string }>();
   const editingId = params.id;
   const initialType = params.type;
+  const initialAccountId = params.accountId;
 
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -169,10 +172,15 @@ export default function AddTransactionScreen() {
       }
     } else if (!editingId && !seeded) {
       addDefaults.current = await getAddDefaults().catch(() => ({}));
-      applyDefaults(isTxType(initialType) ? initialType : 'expense', accs, cats);
+      const startType = isTxType(initialType) ? initialType : 'expense';
+      applyDefaults(startType, accs, cats);
+      // Wins over the remembered default — but only if it can actually take
+      // this entry (a savings account can only be a transfer's "from").
+      const asked = initialAccountId ? accs.find((a) => a.id === initialAccountId) : undefined;
+      if (asked && (startType === 'transfer' || asked.type !== 'savings')) setAccountId(asked.id);
     }
     setSeeded(true);
-  }, [editingId, seeded, initialType, applyDefaults]);
+  }, [editingId, seeded, initialType, initialAccountId, applyDefaults]);
 
   useFocusEffect(
     useCallback(() => {

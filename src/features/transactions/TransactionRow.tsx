@@ -6,6 +6,7 @@ import { Amount } from '@/components/Amount';
 import { theme } from '@/constants/theme';
 import { usePressScale } from '@/lib/usePressScale';
 import { styles } from './transactions.styles';
+import { homeStyles as h } from '@/features/home/homeStyles';
 
 const AnimatedRowPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -34,7 +35,7 @@ export function TransactionRow({
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.98);
   return (
     <AnimatedRowPressable
-      style={[styles.flatRow, divider && styles.flatRowDivider, animatedStyle]}
+      style={[h.row, divider && h.divider, animatedStyle]}
       onPress={onPress}
       onPressIn={onPressIn}
       onPressOut={onPressOut}
@@ -42,11 +43,9 @@ export function TransactionRow({
       <CategoryIcon
         name={tx.type === 'transfer' ? 'swap-horizontal' : (cat?.icon ?? 'tag')}
         color={tx.type === 'transfer' ? theme.colors.secondary : (cat?.color ?? theme.colors.textMuted)}
-        square={30}
-        size={14}
       />
-      <View style={{ flex: 1, marginLeft: 12 }}>
-        <Text style={styles.rowLabel} numberOfLines={1}>
+      <View style={h.mid}>
+        <Text style={h.title} numberOfLines={1}>
           {tx.type === 'transfer' ? (
             `${accountName(tx.accountId)} → ${accountName(tx.toAccountId!)}`
           ) : (
@@ -56,18 +55,12 @@ export function TransactionRow({
             </>
           )}
         </Text>
-        <Text style={styles.rowSub} numberOfLines={1}>
+        <Text style={h.sub} numberOfLines={1}>
           {tx.type === 'transfer' ? 'Own accounts' : accountName(tx.accountId)}
         </Text>
       </View>
-      <Text
-        style={[
-          styles.rowValue,
-          tx.type === 'income' && styles.income,
-          tx.type === 'expense' && styles.expense,
-        ]}
-      >
-        {tx.type === 'expense' ? '-' : tx.type === 'income' ? '+' : ''}
+      <Text style={[h.amount, tx.type === 'income' && h.income, tx.type === 'expense' && h.expense]}>
+        {tx.type === 'expense' ? '−' : tx.type === 'income' ? '+' : ''}
         <Amount minor={tx.amountMinor} sensitive={cat?.isSensitive} />
       </Text>
     </AnimatedRowPressable>

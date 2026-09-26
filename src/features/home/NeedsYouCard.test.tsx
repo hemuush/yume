@@ -13,6 +13,7 @@ jest.setTimeout(30000);
 import { Text } from 'react-native';
 import { NeedsYouCard } from './NeedsYouCard';
 import { NeedsYouItem } from './needsYou';
+import type { MonthReview } from './monthReview';
 
 const emi: NeedsYouItem = {
   key: 'emi',
@@ -77,6 +78,80 @@ describe('NeedsYouCard', () => {
     const later = tree.root.find((n) => n.props.accessibilityLabel === 'Remind me later' && n.props.onPress);
     act(() => later.props.onPress());
     expect(onSnooze).toHaveBeenCalledWith(noBackup);
+    expect(onOpen).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('NeedsYouCard — last month in review', () => {
+  const review: MonthReview = {
+    monthKey: '2026-09',
+    monthLabel: 'September',
+    spentMinor: 3842000,
+    keptLabel: '22%',
+    topCategoryName: 'Food',
+    line: 'Food was up 32% on August.',
+  };
+
+  async function renderWithReview(
+    items: NeedsYouItem[],
+    r: MonthReview | null,
+    onOpenReview = jest.fn(),
+    onDismissReview = jest.fn()
+  ) {
+    let tree!: ReactTestRenderer;
+    await act(async () => {
+      tree = create(
+        <NeedsYouCard
+          items={items}
+          onOpen={jest.fn()}
+          onSnooze={jest.fn()}
+          review={r}
+          onOpenReview={onOpenReview}
+          onDismissReview={onDismissReview}
+        />
+      );
+    });
+    return tree;
+  }
+
+  it('shows the review as the first row, even when nothing else needs you', async () => {
+    const shown = texts(await renderWithReview([], review));
+    expect(shown).toEqual(
+      expect.arrayContaining([
+        'Needs you',
+        'September in review',
+        'Spent ₹38,420 · Food was up 32% on August.',
+      ])
+    );
+  });
+
+  it('counts the review in the badge', async () => {
+    expect(texts(await renderWithReview([emi], review))).toContain('2');
+  });
+
+  it('falls back to the kept share when there is no line', async () => {
+    const shown = texts(await renderWithReview([], { ...review, line: null }));
+    expect(shown).toContain('Spent ₹38,420 · 22% kept');
+  });
+
+  it('opens the report from the row, and ✕ only hides it', async () => {
+    const onOpen = jest.fn();
+    const onDismiss = jest.fn();
+    const tree = await renderWithReview([], review, onOpen, onDismiss);
+    act(() =>
+      tree.root
+        .find((n) => n.props.accessibilityLabel === 'Hide until next month' && n.props.onPress)
+        .props.onPress()
+    );
+    expect(onDismiss).toHaveBeenCalledTimes(1);
+    expect(onOpen).not.toHaveBeenCalled();
+    const row = tree.root.find(
+      (n) =>
+        typeof n.props.accessibilityLabel === 'string' &&
+        n.props.accessibilityLabel.startsWith('September in review') &&
+        n.props.onPress
+    );
+    act(() => row.props.onPress());
     expect(onOpen).toHaveBeenCalledTimes(1);
   });
 });

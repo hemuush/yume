@@ -383,6 +383,51 @@ export async function resyncAllLoanReminders(): Promise<void> {
   }
 }
 
+export interface LoanProgress {
+  loanId: string;
+  /** Installments marked paid — including ones paid before the loan was entered. */
+  paidCount: number;
+  /** Installments on the schedule, paid or pending. */
+  totalCount: number;
+  /** The earliest pending installment's due date and amount; null once nothing is pending. */
+  nextDueDate: string | null;
+  nextEmiMinor: number | null;
+}
+
+/**
+ * Every loan's schedule progress in one grouped query — Plan's Loans card
+ * shows "42 of 240 paid" and the next EMI for each loan, which would
+ * otherwise be one full schedule read per loan through the shared queue.
+ * The next EMI's amount is the pending installment's own (a loan's last
+ * installment usually differs from its regular EMI).
+ */
+export async function getLoanProgress(): Promise<LoanProgress[]> {
+  const db = await getDb();
+  const rows = await db.getAllAsync<{
+    loan_id: string;
+    paid_count: number;
+    total_count: number;
+    next_due_date: string | null;
+    next_emi_minor: number | null;
+  }>(
+    `SELECT l.id AS loan_id,
+       (SELECT COUNT(*) FROM loan_payments p WHERE p.loan_id = l.id AND p.status = 'paid') AS paid_count,
+       (SELECT COUNT(*) FROM loan_payments p WHERE p.loan_id = l.id) AS total_count,
+       (SELECT p.due_date FROM loan_payments p WHERE p.loan_id = l.id AND p.status = 'pending'
+          ORDER BY p.installment_number ASC LIMIT 1) AS next_due_date,
+       (SELECT p.emi_amount_minor FROM loan_payments p WHERE p.loan_id = l.id AND p.status = 'pending'
+          ORDER BY p.installment_number ASC LIMIT 1) AS next_emi_minor
+     FROM loans l`
+  );
+  return rows.map((r) => ({
+    loanId: r.loan_id,
+    paidCount: r.paid_count,
+    totalCount: r.total_count,
+    nextDueDate: r.next_due_date ?? null,
+    nextEmiMinor: r.next_emi_minor ?? null,
+  }));
+}
+
 export async function listLoansForPerson(personId: string): Promise<Loan[]> {
   const db = await getDb();
   const rows = await db.getAllAsync<any>(`${LOAN_SELECT} WHERE l.person_id = ? ORDER BY l.created_at DESC`, [

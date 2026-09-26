@@ -123,12 +123,15 @@ export function HeaderIconButton({
   onPress,
   label,
   badge,
+  count,
   soft,
 }: {
   icon: React.ComponentProps<typeof Feather>['name'];
   onPress: () => void;
   label: string;
   badge?: boolean;
+  /** A small number in the corner instead of the dot — e.g. how many filters are on. Hidden at 0. */
+  count?: number;
   /** Hairline instead of the 3px ink border — for the softer Home header. */
   soft?: boolean;
 }) {
@@ -149,7 +152,13 @@ export function HeaderIconButton({
       ]}
     >
       <Feather name={icon} size={16} color={theme.colors.ink} />
-      {badge && <View style={styles.badge} />}
+      {count != null && count > 0 ? (
+        <View style={styles.countBadge}>
+          <Text style={styles.countText}>{count}</Text>
+        </View>
+      ) : (
+        badge && <View style={styles.badge} />
+      )}
     </AnimatedPressable>
   );
 }
@@ -189,6 +198,19 @@ const styles = StyleSheet.create({
   // Kept as an alias — the base button is already soft now.
   iconBtnSoft: { borderWidth: StyleSheet.hairlineWidth, borderColor: theme.colors.borderSoft },
   initial: { fontFamily: theme.font.bodyBold, fontSize: 14 },
+  countBadge: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    minWidth: 17,
+    height: 17,
+    paddingHorizontal: 4,
+    borderRadius: 9,
+    backgroundColor: theme.colors.ink,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  countText: { fontFamily: theme.font.monoBold, fontSize: 10, color: theme.colors.surface },
   badge: {
     position: 'absolute',
     top: -2,

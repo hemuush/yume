@@ -129,32 +129,62 @@ export function categoryDeltas(
 const WEEKDAY = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 /**
- * One-to-three plain-language reads of a month's daily-spend shape. Only the
- * genuinely notable ones are returned — a flat month gets fewer lines.
+ * One notable thing about a period's daily-spend shape: `sentence` is the
+ * plain-language read (what describeSpendingPattern returns), `kicker` and
+ * `big` are the same finding as a story card's label and headline.
  */
-export function describeSpendingPattern(daily: DailyExpensePoint[], totalDaysInPeriod: number): string[] {
+export interface PatternFact {
+  key: 'heaviest' | 'frontLoaded' | 'weekends' | 'noSpend' | 'busiestDay';
+  kicker: string;
+  big: string;
+  /** The rest of the card, under `big`. */
+  detail: string;
+  sentence: string;
+}
+
+/**
+ * The notable reads of a month's daily-spend shape, most telling first, at
+ * most three. Only the genuinely notable ones are returned — a flat month
+ * gets fewer.
+ */
+export function patternFacts(daily: DailyExpensePoint[], totalDaysInPeriod: number): PatternFact[] {
   const spent = daily.filter((d) => d.totalMinor > 0);
   if (spent.length < 3) return [];
 
-  const lines: string[] = [];
+  const facts: PatternFact[] = [];
+  const total = spent.reduce((s, d) => s + d.totalMinor, 0);
 
   // 1 — heaviest day
   const heaviest = spent.reduce((a, b) => (b.totalMinor > a.totalMinor ? b : a));
-  const hd = parseLocalIsoDate(heaviest.date);
-  const heaviestShare = heaviest.totalMinor / spent.reduce((s, d) => s + d.totalMinor, 0);
+  const heaviestShare = heaviest.totalMinor / total;
   if (heaviestShare > 0.2) {
-    lines.push(
-      `Heaviest day was ${hd.toLocaleDateString(undefined, { day: 'numeric', month: 'short' })} — ${formatMoney(heaviest.totalMinor)}, ${Math.round(heaviestShare * 100)}% of the month.`
-    );
+    const day = parseLocalIsoDate(heaviest.date).toLocaleDateString(undefined, {
+      day: 'numeric',
+      month: 'short',
+    });
+    const pct = Math.round(heaviestShare * 100);
+    facts.push({
+      key: 'heaviest',
+      kicker: 'Heaviest day',
+      big: day,
+      detail: `${formatMoney(heaviest.totalMinor)} went out — ${pct}% of the month in one day.`,
+      sentence: `Heaviest day was ${day} — ${formatMoney(heaviest.totalMinor)}, ${pct}% of the month.`,
+    });
   }
 
   // 2 — front-loaded (bills week)
   const firstWeek = spent
     .filter((d) => parseLocalIsoDate(d.date).getDate() <= 8)
     .reduce((s, d) => s + d.totalMinor, 0);
-  const total = spent.reduce((s, d) => s + d.totalMinor, 0);
   if (total > 0 && firstWeek / total > 0.55) {
-    lines.push(`${Math.round((firstWeek / total) * 100)}% of the month was spent in the first 8 days.`);
+    const pct = Math.round((firstWeek / total) * 100);
+    facts.push({
+      key: 'frontLoaded',
+      kicker: 'Front-loaded',
+      big: `${pct}% in 8 days`,
+      detail: 'Most of the month went out in its first eight days.',
+      sentence: `${pct}% of the month was spent in the first 8 days.`,
+    });
   }
 
   // 3 — weekday vs weekend
@@ -173,97 +203,224 @@ export function describeSpendingPattern(daily: DailyExpensePoint[], totalDaysInP
     const wdAvg = wk.wdSum / wk.wdN;
     const weAvg = wk.weSum / wk.weN;
     if (wdAvg > 0 && weAvg < wdAvg * 0.6) {
-      lines.push(`Weekends run ${Math.round((1 - weAvg / wdAvg) * 100)}% below your weekday average.`);
+      const pct = Math.round((1 - weAvg / wdAvg) * 100);
+      facts.push({
+        key: 'weekends',
+        kicker: 'Your rhythm',
+        big: `Weekends −${pct}%`,
+        detail: 'Saturdays and Sundays ran below your weekday average.',
+        sentence: `Weekends run ${pct}% below your weekday average.`,
+      });
     } else if (weAvg > wdAvg * 1.4) {
-      lines.push(`Weekends run ${Math.round((weAvg / wdAvg - 1) * 100)}% above your weekday average.`);
+      const pct = Math.round((weAvg / wdAvg - 1) * 100);
+      facts.push({
+        key: 'weekends',
+        kicker: 'Your rhythm',
+        big: `Weekends +${pct}%`,
+        detail: 'Saturdays and Sundays ran above your weekday average.',
+        sentence: `Weekends run ${pct}% above your weekday average.`,
+      });
     }
   }
 
-  // 4 — quiet stretch (fallback so there's usually at least one line)
-  if (lines.length === 0) {
+  // 4 — quiet stretch (fallback so there's usually at least one read)
+  if (facts.length === 0) {
     const noSpend = totalDaysInPeriod - spent.length;
-    if (noSpend >= 3) lines.push(`${noSpend} no-spend days this period.`);
+    if (noSpend >= 3) {
+      facts.push({
+        key: 'noSpend',
+        kicker: 'Quiet days',
+        big: `${noSpend} no-spend days`,
+        detail: 'Days nothing went out at all.',
+        sentence: `${noSpend} no-spend days this period.`,
+      });
+    }
   }
 
   // 5 — busiest weekday
-  if (lines.length < 3) {
+  if (facts.length < 3) {
     const byDow = new Array(7).fill(0);
     for (const d of daily) byDow[parseLocalIsoDate(d.date).getDay()] += d.totalMinor;
     const maxDow = byDow.indexOf(Math.max(...byDow));
-    if (byDow[maxDow] > 0) lines.push(`${WEEKDAY[maxDow]}s are your biggest spending day.`);
+    if (byDow[maxDow] > 0) {
+      facts.push({
+        key: 'busiestDay',
+        kicker: 'Your rhythm',
+        big: `${WEEKDAY[maxDow]}s`,
+        detail: 'Your biggest spending day of the week.',
+        sentence: `${WEEKDAY[maxDow]}s are your biggest spending day.`,
+      });
+    }
   }
 
-  return lines.slice(0, 3);
+  return facts.slice(0, 3);
 }
 
-export type InShortTarget = 'overview' | 'categories' | 'trends';
+/**
+ * One-to-three plain-language reads of a month's daily-spend shape. Only the
+ * genuinely notable ones are returned — a flat month gets fewer lines.
+ */
+export function describeSpendingPattern(daily: DailyExpensePoint[], totalDaysInPeriod: number): string[] {
+  return patternFacts(daily, totalDaysInPeriod).map((f) => f.sentence);
+}
 
-export interface InShortLine {
+export interface QuietDays {
+  /** Days counted so far: the whole period, or up to today for the one in progress. */
+  countedDays: number;
+  noSpendDays: number;
+  /** The longest unbroken run of no-spend days, if any lasted 2+ days. */
+  longestRun: { days: number; start: string; end: string } | null;
+}
+
+/** How many of the period's days (so far) had no spending at all, and the longest such run. */
+export function quietDays(
+  daily: DailyExpensePoint[],
+  range: { start: string; end: string },
+  today: string
+): QuietDays {
+  const last = today < range.end ? today : range.end;
+  const spentOn = new Set(daily.filter((d) => d.totalMinor > 0).map((d) => d.date));
+  let countedDays = 0;
+  let noSpendDays = 0;
+  let run: { days: number; start: string; end: string } | null = null;
+  let best: { days: number; start: string; end: string } | null = null;
+  for (let d = parseLocalIsoDate(range.start); toLocalIsoDate(d) <= last; d.setDate(d.getDate() + 1)) {
+    const iso = toLocalIsoDate(d);
+    countedDays++;
+    if (spentOn.has(iso)) {
+      run = null;
+      continue;
+    }
+    noSpendDays++;
+    run = run ? { days: run.days + 1, start: run.start, end: iso } : { days: 1, start: iso, end: iso };
+    if (!best || run.days > best.days) best = run;
+  }
+  return { countedDays, noSpendDays, longestRun: best && best.days >= 2 ? best : null };
+}
+
+export type StoryTarget = 'overview' | 'categories' | 'trends';
+export type StoryTone = 'coral' | 'sky' | 'lavender' | 'mint' | 'gold';
+
+export interface StoryCard {
   key: string;
-  /** A Feather icon name. */
-  icon: 'trending-up' | 'calendar' | 'repeat';
-  /** Shown bold, before `text` (e.g. a category name). */
-  bold?: string;
-  text: string;
-  /** Which Reports section tapping the line scrolls to. */
-  target: InShortTarget;
+  kicker: string;
+  big: string;
+  detail: string;
+  /** A quieter line at the bottom, if any. */
+  foot?: string;
+  tone: StoryTone;
+  /** Which Reports section tapping the card scrolls to. */
+  target: StoryTarget;
+  /** For the "already spoken for" card: the fixed share, drawn as a moon. */
+  moonFraction?: number;
 }
 
-export interface InShortInput {
-  /** The category that grew most vs the comparison period (findTopGrowingCategory), if any. */
-  mover: { name: string; pctChange: number } | null;
+export interface StoryInput {
+  /** The category that grew most vs the comparison period, with this period's total. */
+  mover: { name: string; pctChange: number; totalMinor: number } | null;
   /** "the month before" / "last year" — previousPeriodLabel. */
   comparisonLabel: string;
-  /**
-   * describeSpendingPattern's reads — pass [] for a year view: they describe
-   * a month's daily shape ("first 8 days", weekends) and don't mean anything
-   * across twelve months.
-   */
-  patternReads: string[];
+  /** patternFacts — pass [] for a year view: they describe a month's daily shape. */
+  patterns: PatternFact[];
   recurringMinor: number;
   discretionaryMinor: number;
+  quiet: QuietDays;
   /** Days in the period with any spending. */
   spendDays: number;
   /** True when the period is the one in progress (this month / this year). */
   isCurrentPeriod: boolean;
+  /** "month" or "year" — used in the wording. */
+  unit: 'month' | 'year';
+}
+
+const PATTERN_TONE: StoryTone[] = ['sky', 'gold'];
+
+function shortDay(iso: string): string {
+  return parseLocalIsoDate(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
 }
 
 /**
- * The Reports "In short" card: up to three plain-language lines, most
- * telling first, each built from something Reports already calculates —
- * nothing here invents a new figure. Order: the category that grew the most,
- * then the daily-pattern reads, then (only to fill the card) the fixed-bills
- * share. How this period compares with the usual month is left out on
- * purpose: the headline's "above/below usual" badge already says it.
- *
- * `tooEarly` is set instead of guessing when the period in progress has
- * fewer than three spending days — the card then says so rather than
- * presenting a two-day pattern as a finding.
+ * Reports' story cards: the period told in a few big answers, most telling
+ * first — what moved, the daily rhythm, how much was already spoken for
+ * (the fixed-vs-flexible moon), and the quiet days. Every card is built
+ * from something Reports already calculates; nothing here invents a figure.
+ * A period in progress with fewer than three spending days gets one "too
+ * early" card instead of presenting a two-day pattern as a finding.
  */
-export function buildInShortLines(input: InShortInput): { lines: InShortLine[]; tooEarly: boolean } {
-  if (input.isCurrentPeriod && input.spendDays < 3) return { lines: [], tooEarly: true };
+export function buildStoryCards(input: StoryInput): StoryCard[] {
+  if (input.isCurrentPeriod && input.spendDays < 3) {
+    return [
+      {
+        key: 'early',
+        kicker: 'Too early to tell',
+        big: 'Check back soon',
+        detail: `A few more days of spending and there'll be a story to tell about this ${input.unit}.`,
+        tone: 'mint',
+        target: 'overview',
+      },
+    ];
+  }
 
-  const lines: InShortLine[] = [];
+  const cards: StoryCard[] = [];
   if (input.mover) {
-    lines.push({
+    cards.push({
       key: 'mover',
-      icon: 'trending-up',
-      bold: input.mover.name,
-      text: ` is up ${formatPctChange(input.mover.pctChange)} vs ${input.comparisonLabel}`,
+      kicker: 'What moved',
+      big: `${input.mover.name} +${formatPctChange(input.mover.pctChange)}`,
+      detail: `The biggest jump on ${input.comparisonLabel}. It took ${formatMoney(input.mover.totalMinor)} this ${input.unit}.`,
+      tone: 'coral',
       target: 'categories',
     });
   }
-  input.patternReads.forEach((read, i) => {
-    if (lines.length < 3) lines.push({ key: `read-${i}`, icon: 'calendar', text: read, target: 'overview' });
-  });
+  input.patterns
+    .filter((p) => p.key !== 'noSpend')
+    .slice(0, 2)
+    .forEach((p, i) => {
+      cards.push({
+        key: `pattern-${p.key}`,
+        kicker: p.kicker,
+        big: p.big,
+        detail: p.detail,
+        tone: PATTERN_TONE[i % PATTERN_TONE.length],
+        target: 'overview',
+      });
+    });
+
   const total = input.recurringMinor + input.discretionaryMinor;
-  if (lines.length < 3 && total > 0 && input.recurringMinor > 0) {
-    lines.push({
+  if (total > 0 && input.recurringMinor > 0) {
+    const share = input.recurringMinor / total;
+    cards.push({
       key: 'fixed',
-      icon: 'repeat',
-      text: `Fixed bills are ${Math.round((input.recurringMinor / total) * 100)}% of the spending`,
+      kicker: 'Already spoken for',
+      big: `${Math.round(share * 100)}%`,
+      detail: `${formatMoney(input.recurringMinor)} of it was EMI, rent, insurance and subscriptions — fixed before the ${input.unit} began.`,
+      foot: `${formatMoney(input.discretionaryMinor)} was flexible`,
+      tone: 'lavender',
       target: 'categories',
+      moonFraction: share,
     });
   }
-  return { lines, tooEarly: false };
+
+  const q = input.quiet;
+  if (q.countedDays > 0) {
+    cards.push({
+      key: 'quiet',
+      kicker: 'Quiet days',
+      big:
+        q.noSpendDays === 0
+          ? 'No quiet days'
+          : `${q.noSpendDays} no-spend ${q.noSpendDays === 1 ? 'day' : 'days'}`,
+      detail:
+        q.noSpendDays === 0
+          ? `Something went out on each of the ${q.countedDays} days${input.isCurrentPeriod ? ' so far' : ''}.`
+          : `Out of ${q.countedDays}${input.isCurrentPeriod ? ' so far' : ''}.${
+              q.longestRun
+                ? ` Your longest run was ${q.longestRun.days} days, ${shortDay(q.longestRun.start)} – ${shortDay(q.longestRun.end)}.`
+                : ''
+            }`,
+      tone: 'mint',
+      target: 'overview',
+    });
+  }
+  return cards;
 }

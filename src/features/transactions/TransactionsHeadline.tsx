@@ -9,6 +9,7 @@ import ReanimatedAnimated, {
 } from 'react-native-reanimated';
 import { CountUpAmount } from '@/components/CountUpAmount';
 import { formatPctChange } from '@/lib/format';
+import { formatMoney } from '@/lib/money';
 import { useReduceMotion } from '@/lib/useReduceMotion';
 import { SpendBarChart, ChartLegend } from './SpendBarChart';
 import { SpendBar, ChartLegendItem } from './spendChart';
@@ -16,6 +17,7 @@ import { styles } from './transactions.styles';
 
 interface HeadlineContent {
   expenseMinor: number;
+  incomeMinor: number;
   expenseChangePct: number | null;
   viewScope: 'week' | 'month';
   bars: SpendBar[];
@@ -42,15 +44,27 @@ export function TransactionsHeadline({
   periodKey,
   direction,
   expenseMinor,
+  incomeMinor,
   expenseChangePct,
   viewScope,
   bars,
   legend,
   onPressDay,
-}: HeadlineContent & { periodKey: string; direction: -1 | 0 | 1; onPressDay: (key: string) => void }) {
+  selectedKey,
+  hint,
+}: HeadlineContent & {
+  periodKey: string;
+  direction: -1 | 0 | 1;
+  onPressDay: (key: string) => void;
+  /** The tapped bar, if any — see SpendBarChart's `selectedKey`. */
+  selectedKey: string | null;
+  /** The line under the chart: what the tapped bar cost, or how to use it. */
+  hint: string;
+}) {
   const reduce = useReduceMotion();
   const [displayed, setDisplayed] = useState<HeadlineContent>({
     expenseMinor,
+    incomeMinor,
     expenseChangePct,
     viewScope,
     bars,
@@ -74,7 +88,7 @@ export function TransactionsHeadline({
 
   useEffect(() => {
     const myRun = ++runId.current;
-    const next: HeadlineContent = { expenseMinor, expenseChangePct, viewScope, bars, legend };
+    const next: HeadlineContent = { expenseMinor, incomeMinor, expenseChangePct, viewScope, bars, legend };
     const isPeriodTurn = prevPeriodKey.current !== periodKey;
     prevPeriodKey.current = periodKey;
 
@@ -113,40 +127,57 @@ export function TransactionsHeadline({
       opacity.value = withTiming(1, { duration: 220 });
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [periodKey, expenseMinor, expenseChangePct, viewScope, bars, legend, reduce]);
+  }, [periodKey, expenseMinor, incomeMinor, expenseChangePct, viewScope, bars, legend, reduce]);
 
   const slideStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: tx.value }],
     opacity: opacity.value,
   }));
 
+  const net = displayed.incomeMinor - displayed.expenseMinor;
   return (
-    <ReanimatedAnimated.View style={slideStyle}>
-      <View style={styles.headline}>
-        <CountUpAmount
-          minor={displayed.expenseMinor}
-          style={styles.headlineAmt}
-          numberOfLines={1}
-          adjustsFontSizeToFit
-        />
-        <Text style={styles.headlineSub}>
-          spent this {displayed.viewScope}
-          {displayed.expenseChangePct != null && (
-            <>
-              {' · '}
-              <Text style={displayed.expenseChangePct > 0 ? styles.headlineSubUp : styles.headlineSubDown}>
-                {formatPctChange(displayed.expenseChangePct)}{' '}
-                {displayed.expenseChangePct > 0 ? 'more' : 'less'}
-              </Text>{' '}
-              than last {displayed.viewScope}
-            </>
-          )}
-        </Text>
-      </View>
+    <View style={styles.sumCard}>
+      <ReanimatedAnimated.View style={slideStyle}>
+        <View style={styles.sumTop}>
+          <View style={styles.sumMain}>
+            <Text style={styles.sumKicker}>Spent</Text>
+            <CountUpAmount
+              minor={displayed.expenseMinor}
+              style={styles.headlineAmt}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+            />
+            {displayed.expenseChangePct != null && (
+              <Text style={styles.headlineSub}>
+                <Text style={displayed.expenseChangePct > 0 ? styles.headlineSubUp : styles.headlineSubDown}>
+                  {formatPctChange(displayed.expenseChangePct)}{' '}
+                  {displayed.expenseChangePct > 0 ? 'more' : 'less'}
+                </Text>{' '}
+                than last {displayed.viewScope}
+              </Text>
+            )}
+          </View>
+          <View style={styles.sumSide}>
+            <Text style={styles.sumSideLabel}>
+              In{' '}
+              <Text style={[styles.sumSideValue, styles.income]}>+{formatMoney(displayed.incomeMinor)}</Text>
+            </Text>
+            <Text style={styles.sumSideLabel}>
+              Net{' '}
+              <Text style={[styles.sumSideValue, net > 0 && styles.income, net < 0 && styles.expense]}>
+                {net > 0 ? '+' : net < 0 ? '−' : ''}
+                {formatMoney(Math.abs(net))}
+              </Text>
+            </Text>
+          </View>
+        </View>
 
-      <SpendBarChart bars={displayed.bars} onPressDay={onPressDay} />
-      <ChartLegend items={displayed.legend} />
-      <View style={styles.rule} />
-    </ReanimatedAnimated.View>
+        <View style={styles.sumChart}>
+          <SpendBarChart bars={displayed.bars} onPressDay={onPressDay} selectedKey={selectedKey} inset={0} />
+        </View>
+        <ChartLegend items={displayed.legend} inset={0} />
+      </ReanimatedAnimated.View>
+      <Text style={styles.sumHint}>{hint}</Text>
+    </View>
   );
 }

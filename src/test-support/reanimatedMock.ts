@@ -42,5 +42,15 @@ export function createReanimatedMock() {
     withTiming: (toValue: unknown) => toValue,
     withDelay: (_delay: number, toValue: unknown) => toValue,
     cancelAnimation: (...args: unknown[]) => mockCancelAnimation(...args),
+    // src/lib/animation.ts builds its shared curve at import time.
+    Easing: {
+      out: (f: unknown) => f,
+      in: (f: unknown) => f,
+      inOut: (f: unknown) => f,
+      cubic: (t: number) => t,
+      quad: (t: number) => t,
+      linear: (t: number) => t,
+    },
+    runOnJS: (fn: (...args: unknown[]) => unknown) => fn,
   };
 }
