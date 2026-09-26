@@ -514,3 +514,64 @@ export const SUPPORTED_CURRENCIES = [
   { code: 'JPY', label: 'Japanese Yen' },
   { code: 'NPR', label: 'Nepalese Rupee' },
 ];
+
+/**
+ * What Add Transaction pre-selects for each entry type: the account (and,
+ * for a transfer, the destination) and category the user last saved one
+ * with. Stored as ids only — the Add screen ignores any that no longer
+ * resolve (a deleted or archived account/category, or a savings account for
+ * an expense), falling back exactly as it did before this existed.
+ */
+export interface AddDefaults {
+  expense?: { accountId: string; categoryId: string | null };
+  income?: { accountId: string; categoryId: string | null };
+  transfer?: { accountId: string; toAccountId: string | null };
+}
+
+const ADD_DEFAULTS_KEY = 'add_defaults';
+
+export async function getAddDefaults(): Promise<AddDefaults> {
+  const db = await getDb();
+  const row = await db.getFirstAsync<{ value: string }>('SELECT value FROM settings WHERE key = ?', [
+    ADD_DEFAULTS_KEY,
+  ]);
+  if (!row) return {};
+  try {
+    const parsed = JSON.parse(row.value);
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+export async function setAddDefaults(defaults: AddDefaults): Promise<void> {
+  const db = await getDb();
+  await db.runAsync(
+    `INSERT INTO settings (key, value) VALUES (?, ?)
+     ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
+    [ADD_DEFAULTS_KEY, JSON.stringify(defaults)]
+  );
+}
+
+/**
+ * Until when (ISO timestamp) Home's "set up backups" reminder stays hidden
+ * after the user taps "Later" on it. Null when never snoozed.
+ */
+const BACKUP_NUDGE_SNOOZED_UNTIL_KEY = 'backup_nudge_snoozed_until';
+
+export async function getBackupNudgeSnoozedUntil(): Promise<string | null> {
+  const db = await getDb();
+  const row = await db.getFirstAsync<{ value: string }>('SELECT value FROM settings WHERE key = ?', [
+    BACKUP_NUDGE_SNOOZED_UNTIL_KEY,
+  ]);
+  return row?.value ?? null;
+}
+
+export async function setBackupNudgeSnoozedUntil(iso: string): Promise<void> {
+  const db = await getDb();
+  await db.runAsync(
+    `INSERT INTO settings (key, value) VALUES (?, ?)
+     ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
+    [BACKUP_NUDGE_SNOOZED_UNTIL_KEY, iso]
+  );
+}
