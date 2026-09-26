@@ -33,7 +33,7 @@ export function BudgetRow({
       onLongPress={onLongPress}
     >
       <View style={styles.rowTop}>
-        <CategoryIcon name={progress.categoryIcon} color={progress.categoryColor} square={36} size={16} />
+        <CategoryIcon name={progress.categoryIcon} color={progress.categoryColor} square={38} size={17} />
         <Text style={styles.rowName} numberOfLines={1}>
           {progress.categoryName}
         </Text>

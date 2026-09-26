@@ -4,7 +4,10 @@ import {
   recurringVsDiscretionary,
   categoryDeltas,
   describeSpendingPattern,
-  buildInShortLines,
+  buildStoryCards,
+  patternFacts,
+  quietDays,
+  StoryInput,
   summariseDayTotal,
   buildHeatGrid,
 } from './reportsInsights';
@@ -144,60 +147,113 @@ describe('summariseDayTotal', () => {
   });
 });
 
-describe('buildInShortLines', () => {
-  const base = {
-    mover: null as { name: string; pctChange: number } | null,
-    comparisonLabel: 'the month before',
-    patternReads: [] as string[],
-    recurringMinor: 0,
-    discretionaryMinor: 0,
-    spendDays: 20,
-    isCurrentPeriod: false,
-  };
+describe('patternFacts', () => {
+  it('gives each read a card headline alongside the same sentence describeSpendingPattern returns', () => {
+    // Four quiet weekdays, then a heavy weekend: weekends run well above weekdays.
+    const daily = [
+      { date: '2026-09-07', totalMinor: 10000 },
+      { date: '2026-09-08', totalMinor: 10000 },
+      { date: '2026-09-09', totalMinor: 10000 },
+      { date: '2026-09-10', totalMinor: 10000 },
+      { date: '2026-09-12', totalMinor: 30000 },
+      { date: '2026-09-13', totalMinor: 30000 },
+    ];
+    const facts = patternFacts(daily, 30);
+    const weekend = facts.find((f) => f.key === 'weekends')!;
+    expect(weekend.big).toBe('Weekends +200%');
+    expect(weekend.sentence).toBe('Weekends run 200% above your weekday average.');
+    expect(facts.map((f) => f.sentence)).toEqual(describeSpendingPattern(daily, 30));
+  });
+});
 
-  it('leads with the category that grew the most, then pattern reads, capped at three', () => {
-    const { lines, tooEarly } = buildInShortLines({
-      ...base,
-      mover: { name: 'Food', pctChange: 32.4 },
-      patternReads: [
-        'Weekends run 64% above your weekday average.',
-        'Heaviest day was 12 Sep.',
-        'Third read.',
-      ],
-      recurringMinor: 4100,
-      discretionaryMinor: 5900,
+describe('quietDays', () => {
+  const range = { start: '2026-09-01', end: '2026-09-30' };
+  const spent = (days: number[]) =>
+    days.map((d) => ({ date: `2026-09-${String(d).padStart(2, '0')}`, totalMinor: 100 }));
+
+  it('counts no-spend days only up to today in the period in progress, with the longest run', () => {
+    // Spent on 1–10 except 4, 5, 6 (a 3-day run) and 9.
+    const q = quietDays(spent([1, 2, 3, 7, 8, 10]), range, '2026-09-10');
+    expect(q).toEqual({
+      countedDays: 10,
+      noSpendDays: 4,
+      longestRun: { days: 3, start: '2026-09-04', end: '2026-09-06' },
     });
-    expect(tooEarly).toBe(false);
-    expect(lines.map((l) => [l.key, l.bold ?? '', l.text, l.target])).toEqual([
-      ['mover', 'Food', ' is up 32% vs the month before', 'categories'],
-      ['read-0', '', 'Weekends run 64% above your weekday average.', 'overview'],
-      ['read-1', '', 'Heaviest day was 12 Sep.', 'overview'],
-    ]);
   });
 
-  it('fills a short card with the fixed-bills share, and only then', () => {
-    const { lines } = buildInShortLines({ ...base, recurringMinor: 4100, discretionaryMinor: 5900 });
-    expect(lines).toEqual([
-      { key: 'fixed', icon: 'repeat', text: 'Fixed bills are 41% of the spending', target: 'categories' },
+  it('counts the whole period once it is over, and leaves out a run of just one day', () => {
+    const every = Array.from({ length: 30 }, (_, i) => i + 1).filter((d) => d !== 15);
+    expect(quietDays(spent(every), range, '2026-10-20')).toEqual({
+      countedDays: 30,
+      noSpendDays: 1,
+      longestRun: null,
+    });
+  });
+});
+
+describe('buildStoryCards', () => {
+  const base: StoryInput = {
+    mover: null,
+    comparisonLabel: 'the month before',
+    patterns: [],
+    recurringMinor: 0,
+    discretionaryMinor: 0,
+    quiet: {
+      countedDays: 26,
+      noSpendDays: 5,
+      longestRun: { days: 2, start: '2026-09-11', end: '2026-09-12' },
+    },
+    spendDays: 21,
+    isCurrentPeriod: true,
+    unit: 'month',
+  };
+  const facts = patternFacts(
+    [
+      { date: '2026-09-07', totalMinor: 10000 },
+      { date: '2026-09-08', totalMinor: 10000 },
+      { date: '2026-09-09', totalMinor: 10000 },
+      { date: '2026-09-10', totalMinor: 10000 },
+      { date: '2026-09-12', totalMinor: 30000 },
+      { date: '2026-09-13', totalMinor: 30000 },
+    ],
+    30
+  );
+
+  it('tells the period in order: what moved, the rhythm, what was spoken for, quiet days', () => {
+    const cards = buildStoryCards({
+      ...base,
+      mover: { name: 'Food', pctChange: 32.4, totalMinor: 2600000 },
+      patterns: facts,
+      recurringMinor: 2500000,
+      discretionaryMinor: 7500000,
+    });
+    expect(cards.map((c) => [c.key, c.target])).toEqual([
+      ['mover', 'categories'],
+      ...facts.slice(0, 2).map((f) => [`pattern-${f.key}`, 'overview']),
+      ['fixed', 'categories'],
+      ['quiet', 'overview'],
     ]);
-    expect(buildInShortLines({ ...base, recurringMinor: 0, discretionaryMinor: 5900 }).lines).toEqual([]);
+    expect(cards[0].big).toBe('Food +32%');
+    const fixed = cards.find((c) => c.key === 'fixed')!;
+    expect(fixed.big).toBe('25%');
+    expect(fixed.moonFraction).toBeCloseTo(0.25, 3);
+  });
+
+  it('says how many quiet days there were, and the longest run', () => {
+    const quiet = buildStoryCards(base).find((c) => c.key === 'quiet')!;
+    expect(quiet.big).toBe('5 no-spend days');
+    expect(quiet.detail).toMatch(/^Out of 26 so far\. Your longest run was 2 days, /);
+  });
+
+  it('leaves out the fixed card when nothing fixed was paid', () => {
+    const cards = buildStoryCards({ ...base, discretionaryMinor: 5000 });
+    expect(cards.some((c) => c.key === 'fixed')).toBe(false);
   });
 
   it('says it is too early rather than guessing, for a period in progress with under 3 spending days', () => {
-    const early = { ...base, isCurrentPeriod: true, spendDays: 2, mover: { name: 'Food', pctChange: 80 } };
-    expect(buildInShortLines(early)).toEqual({ lines: [], tooEarly: true });
-    expect(buildInShortLines({ ...early, spendDays: 3 }).tooEarly).toBe(false);
-    // A finished period is never "too early" — it just has fewer lines.
-    expect(buildInShortLines({ ...early, isCurrentPeriod: false }).tooEarly).toBe(false);
-  });
-
-  it('works for a year view with no pattern reads', () => {
-    const { lines } = buildInShortLines({
-      ...base,
-      comparisonLabel: 'last year',
-      mover: { name: 'Travel', pctChange: 1500 },
-    });
-    expect(lines.map((l) => l.text)).toEqual([' is up >999% vs last year']);
+    expect(buildStoryCards({ ...base, spendDays: 2 }).map((c) => c.key)).toEqual(['early']);
+    // A finished period is never "too early".
+    expect(buildStoryCards({ ...base, spendDays: 2, isCurrentPeriod: false })[0].key).not.toBe('early');
   });
 });
 

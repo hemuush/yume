@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
-import { Animated, TextProps } from 'react-native';
+import { Animated, Easing, TextProps } from 'react-native';
 import { Text } from '@/components/Text';
 import { formatMoney } from '@/lib/money';
 import { useReduceMotion } from '@/lib/useReduceMotion';
+import { MOTION } from '@/lib/animation';
 
 interface Props extends TextProps {
   /** Amount in minor units, same as formatMoney. */
@@ -38,7 +39,13 @@ export function CountUpAmount({ minor, currency, style, ...rest }: Props) {
     mounted.current = true;
     t.setValue(0);
     const id = t.addListener(({ value }) => setDisplay(Math.round(from + (minor - from) * value)));
-    Animated.timing(t, { toValue: 1, duration: 550, useNativeDriver: false }).start(() => {
+    // Core Animated here, so the shared curve is spelled out with core Easing.
+    Animated.timing(t, {
+      toValue: 1,
+      duration: MOTION.count,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: false,
+    }).start(() => {
       setDisplay(minor);
     });
     return () => t.removeListener(id);

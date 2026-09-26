@@ -1,8 +1,10 @@
 /**
  * The Reports screen, assembled from its section components: with a month of
- * spending it shows the headline, "In short", the heatmap, the moon card,
- * "Where it went", and both trends; tapping a category with no subcategories
- * opens its transactions.
+ * spending it shows the heatmap card (with the headline in it), the story
+ * cards, "Where it went" and the trend chart; tapping a category with no
+ * subcategories opens its transactions. (The story cards, mosaic and chart
+ * draw once they've measured their width, which the test renderer never
+ * does — their own logic is tested in reportsInsights / mosaicLayout.)
  */
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
 import { Text } from 'react-native';
@@ -109,18 +111,18 @@ describe('Reports screen', () => {
         'Overview',
         'Categories',
         'Trends',
-        'Day by day',
-        'Fixed vs flexible',
+        'Tap a day to see what went out',
         'Where it went',
         'Rent',
         'Food',
-        'Recurring',
-        'Discretionary',
+        'Spending',
         'Net worth',
-        'Against your last 7 months',
       ])
     );
     expect(shown.some((t) => t.startsWith('Spent in '))).toBe(true);
+    expect(shown.some((t) => t.endsWith(', in short'))).toBe(true);
+    // The heatmap card leads: its headline comes before "Where it went".
+    expect(shown.findIndex((t) => t.startsWith('Spent in '))).toBeLessThan(shown.indexOf('Where it went'));
   });
 
   it("tapping a category without subcategories lists that category's transactions", async () => {

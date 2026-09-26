@@ -1,15 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { onTransactionsChanged } from '@/lib/dataEvents';
-import { View, FlatList, Pressable, Animated, ActivityIndicator } from 'react-native';
-import { Text, TextInput, MAX_FONT_SCALE } from '@/components/Text';
-import ReanimatedAnimated, { FadeIn, ReduceMotion } from 'react-native-reanimated';
+import { View, FlatList, Pressable, Animated, ActivityIndicator, ScrollView } from 'react-native';
+import { Text, TextInput } from '@/components/Text';
+import { FadeIn, ReduceMotion } from 'react-native-reanimated';
 import { useFocusEffect, router } from 'expo-router';
 import Feather from '@expo/vector-icons/Feather';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { listAccounts, listCategories, listTransactions, searchTransactions } from '@/db/ledger';
 import { getRangeComparison, PeriodComparison } from '@/db/reports';
 import { Account, Category, Transaction, TransactionType } from '@/types';
-import { SegmentedControl } from '@/components/SegmentedControl';
 import { AppHeader, HeaderIconButton } from '@/components/AppHeader';
 import { EmptyState } from '@/components/EmptyState';
 import { theme } from '@/constants/theme';
@@ -30,13 +29,25 @@ import {
   sevenDaysEndingOn,
   previousRangeFor,
   groupByDate,
+  periodHeading,
 } from '@/features/transactions/transactions.helpers';
+import { formatMoney } from '@/lib/money';
+import { haptics } from '@/lib/haptics';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 const VIEW_SCOPES: { label: string; value: 'week' | 'month' }[] = [
   { label: 'Week', value: 'week' },
   { label: 'Month', value: 'month' },
+];
+
+// The one-tap type chips above the list — the same `filterType` the filter
+// sheet sets, just without opening it.
+const TYPE_CHIPS: { label: string; value: TransactionType | 'all' }[] = [
+  { label: 'All', value: 'all' },
+  { label: 'Spent', value: 'expense' },
+  { label: 'Income', value: 'income' },
+  { label: 'Transfers', value: 'transfer' },
 ];
 
 // Fires the actual DB query this long after the last keystroke — typing
@@ -119,6 +130,10 @@ export default function TransactionsScreen() {
   // simple one-step move: picking an arbitrary month, or switching Week↔Month
   // itself, where a guessed slide direction wouldn't mean anything.
   const [direction, setDirection] = useState<-1 | 0 | 1>(0);
+  // The chart bar last tapped — it lifts and the rest fade (see
+  // SpendBarChart). Cleared whenever the period changes, since its key
+  // belongs to the old period's bars.
+  const [selectedBar, setSelectedBar] = useState<string | null>(null);
 
   // Shared by the nav row's own chevron buttons and the swipe gesture below,
   // so stepping the period is one piece of logic instead of two copies.
@@ -153,7 +168,6 @@ export default function TransactionsScreen() {
   const weekNavSwipe = useSwipeStep(stepBack, () => !atCurrent && stepForward());
   const stepBackPress = usePressScale();
   const stepForwardPress = usePressScale();
-  const filterPress = usePressScale();
 
   const monthRange = useMemo(() => {
     const y = anchor.getFullYear();
@@ -161,7 +175,6 @@ export default function TransactionsScreen() {
     return { fromDate: toLocalIsoDate(new Date(y, m, 1)), toDate: toLocalIsoDate(new Date(y, m + 1, 0)) };
   }, [anchor]);
   const visibleRange = viewScope === 'month' ? monthRange : { fromDate: days[0].iso, toDate: days[6].iso };
-  const hasActiveFilter = filterType !== 'all' || filterCategoryIds.length > 0;
   const filteredTransactions = useMemo(
     () =>
       transactions.filter((t) => {
@@ -207,6 +220,25 @@ export default function TransactionsScreen() {
     [transactions, categories, viewScope, visibleRange.fromDate, visibleRange.toDate, today]
   );
   const legend = useMemo(() => legendForBars(bars), [bars]);
+  const heading = periodHeading({
+    scope: viewScope,
+    days,
+    anchor,
+    today: todayDate,
+    monthNames: MONTH_NAMES,
+  });
+  const pickedBar = bars.find((b) => b.key === selectedBar);
+  const barHint = pickedBar
+    ? `${
+        viewScope === 'week'
+          ? parseLocalIsoDate(pickedBar.key).toLocaleDateString(undefined, {
+              weekday: 'long',
+              day: 'numeric',
+              month: 'short',
+            })
+          : `${pickedBar.label} ${MONTH_NAMES[parseLocalIsoDate(pickedBar.key).getMonth()]}`
+      } · ${pickedBar.totalMinor > 0 ? `${formatMoney(pickedBar.totalMinor)} spent` : 'nothing spent'}`
+    : `Tap a bar to jump to that ${viewScope === 'week' ? 'day' : 'week'}.`;
   const groupedDays = useMemo(() => groupByDate(filteredTransactions), [filteredTransactions]);
 
   // Only the most recent load may write state — paging week/month quickly
@@ -249,6 +281,7 @@ export default function TransactionsScreen() {
   // not the fresh `visibleRange` object rebuilt every render (which would
   // re-run the load on every render).
   const { fromDate: rangeFromDate, toDate: rangeToDate } = visibleRange;
+  useEffect(() => setSelectedBar(null), [rangeFromDate, rangeToDate, viewScope]);
   useFocusEffect(
     useCallback(() => {
       const now = new Date();
@@ -298,6 +331,16 @@ export default function TransactionsScreen() {
     setViewScope(scope);
   };
 
+  const onPressBar = (key: string) => {
+    haptics.tap();
+    if (selectedBar === key) {
+      setSelectedBar(null);
+      return;
+    }
+    setSelectedBar(key);
+    scrollToDay(key);
+  };
+
   const scrollToDay = (key: string) => {
     // Week scope: the bar's own key is already the exact date a group is
     // keyed by. Month scope: the key is a week-bucket's start date, so jump
@@ -330,7 +373,7 @@ export default function TransactionsScreen() {
   if (!comparison && !loadError) {
     return (
       <View style={styles.container}>
-        <AppHeader title="Transactions" />
+        <AppHeader title="Activity" />
         <TransactionsSkeleton />
       </View>
     );
@@ -339,7 +382,7 @@ export default function TransactionsScreen() {
   return (
     <View style={styles.container}>
       <AppHeader
-        title="Transactions"
+        title="Activity"
         right={
           <View style={styles.headerActions}>
             <HeaderIconButton
@@ -348,22 +391,16 @@ export default function TransactionsScreen() {
               label={searching ? 'Close search' : 'Search transactions'}
             />
             {!searching && (
-              <AnimatedPressable
+              <HeaderIconButton
+                icon="sliders"
                 onPress={() => setFilterVisible(true)}
-                onPressIn={filterPress.onPressIn}
-                onPressOut={filterPress.onPressOut}
-                hitSlop={8}
-                style={[
-                  styles.filterBtn,
-                  hasActiveFilter && styles.filterBtnActive,
-                  filterPress.animatedStyle,
-                ]}
-                accessibilityRole="button"
-                accessibilityLabel="Filter transactions"
-              >
-                <Feather name="sliders" size={13} color={theme.colors.textPrimary} />
-                <Text style={styles.filterBtnText}>Filter{hasActiveFilter ? ' •' : ''}</Text>
-              </AnimatedPressable>
+                label={
+                  filterCategoryIds.length > 0
+                    ? `Filter by category, ${filterCategoryIds.length} on`
+                    : 'Filter by category'
+                }
+                count={filterCategoryIds.length}
+              />
             )}
           </View>
         }
@@ -398,54 +435,65 @@ export default function TransactionsScreen() {
       )}
 
       {!searching && (
-        <View style={styles.scopeRow}>
-          <SegmentedControl options={VIEW_SCOPES} value={viewScope} onChange={onChangeViewScope} />
-        </View>
-      )}
-
-      {!searching && (
-        <View style={styles.weekNavRow} {...weekNavSwipe.panHandlers}>
+        // One row: ‹ period title › and the Week/Month switch. Dragging
+        // anywhere on it steps the period, same as the chevrons.
+        <View style={styles.periodRow} {...weekNavSwipe.panHandlers}>
           <AnimatedPressable
             onPress={stepBack}
             onPressIn={stepBackPress.onPressIn}
             onPressOut={stepBackPress.onPressOut}
-            hitSlop={10}
-            style={[styles.weekNavBtn, stepBackPress.animatedStyle]}
+            hitSlop={6}
+            style={[styles.periodNav, stepBackPress.animatedStyle]}
+            accessibilityRole="button"
+            accessibilityLabel={viewScope === 'month' ? 'Previous month' : 'Previous week'}
           >
-            <Text style={styles.weekNavArrow}>‹</Text>
+            <Feather name="chevron-left" size={20} color={theme.colors.textPrimary} />
           </AnimatedPressable>
-          <Pressable onPress={() => setMonthPickerVisible(true)} hitSlop={6}>
-            <ReanimatedAnimated.Text
-              maxFontSizeMultiplier={MAX_FONT_SCALE}
-              key={`${viewScope}-${anchor.toDateString()}`}
-              entering={FadeIn.duration(150)}
-              style={styles.weekNavLabel}
-            >
-              {viewScope === 'month'
-                ? `${anchor.toLocaleDateString(undefined, { month: 'long' })}${isCurrentMonth ? '' : ` ${anchor.getFullYear()}`}`
-                : isCurrentWeek
-                  ? 'This week'
-                  : `${MONTH_NAMES[days[0].month]} ${days[0].day}${days[0].year !== days[6].year || days[0].month !== days[6].month ? ` – ${MONTH_NAMES[days[6].month]} ${days[6].day}` : ` – ${days[6].day}`}, ${days[6].year}`}
-              {'  ▾'}
-            </ReanimatedAnimated.Text>
+          <Pressable
+            onPress={() => setMonthPickerVisible(true)}
+            hitSlop={6}
+            style={styles.periodTitleBtn}
+            accessibilityRole="button"
+            accessibilityLabel={`${heading.title}${heading.sub ? `, ${heading.sub}` : ''}. Pick a month`}
+          >
+            <Text style={styles.periodTitle} numberOfLines={1}>
+              {heading.title}
+            </Text>
+            {!!heading.sub && (
+              <Text style={styles.periodSub} numberOfLines={1}>
+                {heading.sub}
+              </Text>
+            )}
           </Pressable>
           <AnimatedPressable
             onPress={stepForward}
             onPressIn={stepForwardPress.onPressIn}
             onPressOut={stepForwardPress.onPressOut}
-            hitSlop={10}
-            disabled={viewScope === 'month' ? isCurrentMonth : isCurrentWeek}
-            style={[styles.weekNavBtn, stepForwardPress.animatedStyle]}
+            hitSlop={6}
+            disabled={atCurrent}
+            style={[styles.periodNav, atCurrent && styles.periodNavOff, stepForwardPress.animatedStyle]}
+            accessibilityRole="button"
+            accessibilityLabel={viewScope === 'month' ? 'Next month' : 'Next week'}
+            accessibilityState={{ disabled: atCurrent }}
           >
-            <Text
-              style={[
-                styles.weekNavArrow,
-                (viewScope === 'month' ? isCurrentMonth : isCurrentWeek) && styles.weekNavArrowDisabled,
-              ]}
-            >
-              ›
-            </Text>
+            <Feather name="chevron-right" size={20} color={theme.colors.textPrimary} />
           </AnimatedPressable>
+          <View style={styles.scopeSwitch} accessibilityRole="radiogroup">
+            {VIEW_SCOPES.map((o) => {
+              const on = viewScope === o.value;
+              return (
+                <Pressable
+                  key={o.value}
+                  onPress={() => onChangeViewScope(o.value)}
+                  style={[styles.scopeBtn, on && styles.scopeBtnOn]}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected: on }}
+                >
+                  <Text style={[styles.scopeText, on && styles.scopeTextOn]}>{o.label}</Text>
+                </Pressable>
+              );
+            })}
+          </View>
         </View>
       )}
 
@@ -512,12 +560,50 @@ export default function TransactionsScreen() {
                 periodKey={`${viewScope}-${anchor.toDateString()}`}
                 direction={direction}
                 expenseMinor={comparison?.current.expenseMinor ?? 0}
+                incomeMinor={comparison?.current.incomeMinor ?? 0}
                 expenseChangePct={expenseChangePct}
                 viewScope={viewScope}
                 bars={bars}
                 legend={legend}
-                onPressDay={scrollToDay}
+                onPressDay={onPressBar}
+                selectedKey={selectedBar}
+                hint={barHint}
               />
+
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.chipsRow}
+                keyboardShouldPersistTaps="handled"
+              >
+                {TYPE_CHIPS.map((c) => {
+                  const on = filterType === c.value;
+                  return (
+                    <Pressable
+                      key={c.value}
+                      onPress={() => setFilterType(c.value)}
+                      style={[styles.chip, on && styles.chipOn]}
+                      accessibilityRole="button"
+                      accessibilityState={{ selected: on }}
+                      accessibilityLabel={`Show ${c.label.toLowerCase()}`}
+                    >
+                      <Text style={[styles.chipText, on && styles.chipTextOn]}>{c.label}</Text>
+                    </Pressable>
+                  );
+                })}
+                {filterCategoryIds.map((id) => (
+                  <Pressable
+                    key={id}
+                    onPress={() => setFilterCategoryIds((ids) => ids.filter((x) => x !== id))}
+                    style={[styles.chip, styles.chipCat]}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Remove the ${categoryName(id)} filter`}
+                  >
+                    <Text style={styles.chipText}>{categoryName(id)}</Text>
+                    <Feather name="x" size={12} color={theme.colors.textSecondary} />
+                  </Pressable>
+                ))}
+              </ScrollView>
 
               {accounts.length === 0 && (
                 <Text style={styles.emptyText}>Add an account first before recording transactions.</Text>

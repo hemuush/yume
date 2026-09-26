@@ -60,22 +60,37 @@ function AnimatedBarStack({
  * no separate "dense" mode anymore: a single generous layout reads fine at
  * both counts, and it removes what a dense 30-bar grid needed to lean on.
  */
-export function SpendBarChart({ bars, onPressDay }: { bars: SpendBar[]; onPressDay: (key: string) => void }) {
+export function SpendBarChart({
+  bars,
+  onPressDay,
+  selectedKey = null,
+  inset = 22,
+}: {
+  bars: SpendBar[];
+  onPressDay: (key: string) => void;
+  /** The tapped bar: it lifts slightly and the rest fade back, so the chart shows what you picked. */
+  selectedKey?: string | null;
+  /** Side padding — 0 when the chart sits inside a card that already pads it. */
+  inset?: number;
+}) {
   const maxTotal = Math.max(1, ...bars.map((b) => b.totalMinor));
 
   return (
-    <View style={styles.row}>
+    <View style={[styles.row, { paddingHorizontal: inset }]}>
       {bars.map((bar, i) => {
         const heightPct = bar.totalMinor > 0 ? Math.max(6, (bar.totalMinor / maxTotal) * 100) : 0;
+        const selected = selectedKey === bar.key;
+        const faded = selectedKey != null && !selected;
         return (
           <Pressable
             key={bar.key}
             onPress={() => onPressDay(bar.key)}
-            style={styles.col}
+            style={[styles.col, faded && styles.colFaded]}
             accessibilityRole="button"
+            accessibilityState={{ selected }}
             accessibilityLabel={`${bar.label}${bar.totalMinor > 0 ? `, spent ${bar.totalMinor / 100}` : ', nothing spent'}`}
           >
-            <View style={styles.barTrack}>
+            <View style={[styles.barTrack, selected && styles.barLifted]}>
               {bar.totalMinor > 0 ? (
                 <AnimatedBarStack
                   heightPct={heightPct}
@@ -117,10 +132,10 @@ export function SpendBarChart({ bars, onPressDay }: { bars: SpendBar[]; onPressD
 }
 
 /** The chart's own colour key — only the categories it's actually showing. */
-export function ChartLegend({ items }: { items: ChartLegendItem[] }) {
+export function ChartLegend({ items, inset = 22 }: { items: ChartLegendItem[]; inset?: number }) {
   if (items.length === 0) return null;
   return (
-    <View style={styles.legend}>
+    <View style={[styles.legend, { paddingHorizontal: inset }]}>
       {items.map((item) => (
         <View key={item.categoryId} style={styles.legendItem}>
           <View style={[styles.legendDot, { backgroundColor: item.color }]} />
@@ -137,10 +152,11 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     justifyContent: 'space-between',
     height: MAX_BAR_HEIGHT + 22,
-    paddingHorizontal: 22,
   },
   col: { width: `${100 / 7.4}%`, alignItems: 'center', height: '100%', justifyContent: 'flex-end' },
+  colFaded: { opacity: 0.35 },
   barTrack: { height: MAX_BAR_HEIGHT, justifyContent: 'flex-end', alignItems: 'center' },
+  barLifted: { transform: [{ translateY: -3 }] },
   stack: {
     width: 20,
     borderRadius: 6,
@@ -155,8 +171,8 @@ const styles = StyleSheet.create({
   baseline: { width: 20, height: 2, borderRadius: 1, backgroundColor: theme.colors.borderSoft },
   label: { fontFamily: theme.font.mono, fontSize: 9, color: theme.colors.textMuted, marginTop: 8 },
   labelCurrent: { color: theme.colors.textPrimary, fontFamily: theme.font.monoBold },
-  legend: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, paddingHorizontal: 22, marginTop: 14 },
+  legend: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 14 },
   legendItem: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  legendDot: { width: 7, height: 7, borderRadius: 2 },
-  legendText: { fontFamily: theme.font.body, fontSize: 9.5, color: theme.colors.textMuted },
+  legendDot: { width: 8, height: 8, borderRadius: 3 },
+  legendText: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textSecondary },
 });

@@ -28,18 +28,16 @@ import {
   previousPeriodRange,
   previousPeriodLabel,
 } from '@/lib/period';
-import { parseLocalIsoDate } from '@/lib/date';
+import { parseLocalIsoDate, toLocalIsoDate } from '@/lib/date';
 import { theme } from '@/constants/theme';
-import { InShortCard } from '@/features/reports/InShortCard';
-import { SkylineRibbon } from '@/features/reports/SkylineRibbon';
 import { ReportsSkeleton } from '@/features/reports/ReportsSkeleton';
 import { PeriodRow } from '@/features/reports/PeriodRow';
 import { JumpBar, ReportSection } from '@/features/reports/JumpBar';
-import { ReportsHeadline } from '@/features/reports/ReportsHeadline';
-import { HeatmapSection } from '@/features/reports/HeatmapSection';
-import { MoonCard } from '@/features/reports/MoonCard';
+import { HeatmapCard } from '@/features/reports/HeatmapCard';
+import { StoryCards } from '@/features/reports/StoryCards';
+import { CategoryMosaic } from '@/features/reports/CategoryMosaic';
 import { CategoryList } from '@/features/reports/CategoryList';
-import { TrendsSection } from '@/features/reports/TrendsSection';
+import { TrendChart } from '@/features/reports/TrendChart';
 import { SubcategorySheet, DaySheet, CategoryTxSheet } from '@/features/reports/ReportSheets';
 import { styles } from '@/features/reports/reports.styles';
 import {
@@ -47,8 +45,9 @@ import {
   baselineFromTrend,
   recurringVsDiscretionary,
   categoryDeltas,
-  describeSpendingPattern,
-  buildInShortLines,
+  patternFacts,
+  quietDays,
+  buildStoryCards,
 } from '@/features/reports/reportsInsights';
 
 export default function ReportsScreen() {
@@ -263,27 +262,39 @@ export default function ReportsScreen() {
 
   const baseline = baselineFromTrend(trend);
   const vsUsualPct = baseline && baseline > 0 ? ((current.expenseMinor - baseline) / baseline) * 100 : null;
-  const perDay = daysInPeriod > 0 ? Math.round(dispExpense / daysInPeriod) : 0;
   const spendDays = daily.filter((d) => d.totalMinor > 0).length;
-  const reads = describeSpendingPattern(daily, daysInPeriod);
   const { recurringMinor, discretionaryMinor } = recurringVsDiscretionary(current.categoryBreakdown);
   const topGrowing = findTopGrowingCategory(current.categoryBreakdown, previous.categoryBreakdown);
+  const isYear = cursor.granularity === 'year';
+  // Days counted so far — today, for the period in progress.
+  const quiet = quietDays(daily, range, toLocalIsoDate(new Date()));
+  const perDay = quiet.countedDays > 0 ? Math.round(dispExpense / quiet.countedDays) : 0;
 
-  // "In short": the answers first (see buildInShortLines). The daily-pattern
-  // reads describe a month's shape, so a year view gets none here — it keeps
-  // showing them under its heatmap exactly as before.
-  const inShort = buildInShortLines({
-    mover: topGrowing ? { name: topGrowing.name, pctChange: topGrowing.pctChange } : null,
+  // The period "in short" as story cards (see buildStoryCards). The daily
+  // pattern reads describe a month's shape, so a year view gets none.
+  const stories = buildStoryCards({
+    mover: topGrowing
+      ? {
+          name: topGrowing.name,
+          pctChange: topGrowing.pctChange,
+          totalMinor:
+            current.categoryBreakdown.find((c) => c.categoryId === topGrowing.categoryId)?.totalMinor ?? 0,
+        }
+      : null,
     comparisonLabel: previousPeriodLabel(cursor),
-    patternReads: cursor.granularity === 'month' ? reads : [],
+    patterns: isYear ? [] : patternFacts(daily, daysInPeriod),
     recurringMinor,
     discretionaryMinor,
+    quiet,
     spendDays,
     isCurrentPeriod: cursor.offset === 0,
+    unit: isYear ? 'year' : 'month',
   });
-  // Each answer appears once: reads already shown in the card aren't repeated
-  // under the heatmap.
-  const remainingReads = reads.filter((_, i) => !inShort.lines.some((l) => l.key === `read-${i}`));
+  const deltas = categoryDeltas(current.categoryBreakdown, previous.categoryBreakdown);
+  const onPressCategory = (c: CategoryBreakdownItem) =>
+    c.hasSubcategories
+      ? openDrill(c)
+      : openCategoryTx({ categoryId: c.categoryId, name: c.name, isSensitive: c.isSensitive });
 
   return (
     <View style={styles.container}>
@@ -303,18 +314,16 @@ export default function ReportsScreen() {
           </Text>
         ) : (
           <>
+            {/* Overview: the heatmap on top (with the headline in it), then the period in short. */}
             <View onLayout={onSectionLayout('overview')}>
-              <ReportsHeadline
+              <HeatmapCard
                 periodName={periodName}
                 spentMinor={dispExpense}
                 vsUsualPct={vsUsualPct}
                 perDayMinor={perDay}
                 spendDays={spendDays}
-                daysInPeriod={daysInPeriod}
-              />
-              <InShortCard lines={inShort.lines} tooEarly={inShort.tooEarly} onJump={jumpTo} />
-              <HeatmapSection
-                title={cursor.granularity === 'year' ? 'Month by month' : 'Day by day'}
+                countedDays={quiet.countedDays}
+                isYear={isYear}
                 grid={buildHeatGrid({
                   granularity: cursor.granularity,
                   start: rangeStart,
@@ -322,41 +331,32 @@ export default function ReportsScreen() {
                   daily,
                   onDayPress: openDay,
                 })}
-                reads={remainingReads}
               />
+              <StoryCards title={`${periodName}, in short`} cards={stories} onJump={jumpTo} />
             </View>
 
-            <View style={styles.rule} />
-
             <View onLayout={onSectionLayout('categories')}>
-              {recurringMinor + discretionaryMinor > 0 && (
-                <>
-                  <MoonCard
-                    periodName={periodName}
-                    recurringMinor={recurringMinor}
-                    discretionaryMinor={discretionaryMinor}
-                  />
-                  <View style={styles.rule} />
-                </>
-              )}
               <Text style={styles.blockTitle}>Where it went</Text>
-              <SkylineRibbon categories={current.categoryBreakdown} totalMinor={dispExpense} />
+              <CategoryMosaic
+                breakdown={current.categoryBreakdown}
+                spentMinor={dispExpense}
+                deltas={deltas}
+                onPressCategory={onPressCategory}
+                onPressRest={() => setCatExpanded(true)}
+              />
               <CategoryList
                 breakdown={current.categoryBreakdown}
                 spentMinor={dispExpense}
-                deltas={categoryDeltas(current.categoryBreakdown, previous.categoryBreakdown)}
+                deltas={deltas}
                 expanded={catExpanded}
                 onToggleExpanded={() => setCatExpanded((v) => !v)}
-                onPressCategory={(c) =>
-                  c.hasSubcategories
-                    ? openDrill(c)
-                    : openCategoryTx({ categoryId: c.categoryId, name: c.name, isSensitive: c.isSensitive })
-                }
+                onPressCategory={onPressCategory}
               />
             </View>
 
-            <View onLayout={onSectionLayout('trends')}>
-              <TrendsSection
+            <View onLayout={onSectionLayout('trends')} style={{ marginTop: 22 }}>
+              <Text style={styles.blockTitle}>Trends</Text>
+              <TrendChart
                 periodName={periodName}
                 spentMinor={current.expenseMinor}
                 trend={trend}

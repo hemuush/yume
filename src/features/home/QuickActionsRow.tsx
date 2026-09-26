@@ -29,9 +29,12 @@ const ACTIONS: {
  * matters — the nav bar's own + still opens the same screen on the default
  * (Expense) segment, this just skips the extra tap for the other two.
  * Each pill's icon+label carries its type's own colour (matching Income/
- * Spent, Surplus/Debt, and every other figure on Home) instead of a tinted
+ * Spent, Free to use/Debt left, and every other figure on Home) instead of a tinted
  * fill — the pill itself stays a plain neutral surface, so colour lives in
  * the figure, not the card, the one rule the whole screen now follows.
+ *
+ * Lives inside Home's sky header band (HomeHeader's `children`), so the
+ * pills are a soft frosted surface there rather than outlined cards.
  */
 function ActionPill({ type, label, icon, color }: (typeof ACTIONS)[number]) {
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.95);
@@ -63,7 +66,7 @@ export function QuickActionsRow() {
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', gap: 8, marginHorizontal: 20, marginBottom: 14 },
+  row: { flexDirection: 'row', gap: 8 },
   pillWrap: { flex: 1 },
   pill: {
     flexDirection: 'row',
@@ -71,10 +74,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 6,
     height: 38,
-    borderRadius: theme.radius.pill,
-    backgroundColor: theme.colors.surface,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
+    borderRadius: theme.radius.lg,
+    backgroundColor: theme.colors.glass,
   },
   label: { fontFamily: theme.font.bodyBold, fontSize: 12.5 },
 });
