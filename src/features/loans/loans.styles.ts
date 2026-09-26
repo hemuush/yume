@@ -6,17 +6,6 @@ import { theme } from '@/constants/theme';
 // styling stays in one place instead of a 2000-line screen file.
 export const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
-  // Shown only before the first successful load, same gate as Transactions/
-  // Reports — see the note on `loaded` in loans.tsx.
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
-  sectionSwitch: { paddingHorizontal: 20 },
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    marginBottom: 12,
-  },
   errorBanner: {
     marginHorizontal: 20,
     marginBottom: 12,
@@ -34,27 +23,6 @@ export const styles = StyleSheet.create({
     marginTop: 3,
     lineHeight: 16,
   },
-  sectionHeading: { fontFamily: theme.font.roundedBold, fontSize: 16, color: theme.colors.textPrimary },
-  // Plain stats, not flat-coloured cards — matches Transactions' own
-  // headline treatment (one confident figure, no colour blocking) rather
-  // than two boxed tiles competing with the loan list below them.
-  summaryRow: { flexDirection: 'row', paddingHorizontal: 20, gap: 28, marginBottom: 18 },
-  summaryText: { flex: 1, minWidth: 0 },
-  summaryLabel: {
-    fontFamily: theme.font.mono,
-    fontSize: 9,
-    letterSpacing: 0.5,
-    textTransform: 'uppercase',
-    color: theme.colors.textMuted,
-  },
-  summaryValue: {
-    fontSize: 22,
-    fontFamily: theme.font.monoBold,
-    color: theme.colors.textPrimary,
-    marginTop: 4,
-  },
-  summaryValueExpense: { color: theme.colors.expense },
-  summaryValueIncome: { color: theme.colors.income },
   card: {
     marginHorizontal: 20,
     marginBottom: 10,

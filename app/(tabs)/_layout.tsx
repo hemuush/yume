@@ -174,8 +174,8 @@ export default function TabsLayout() {
             },
           }}
         />
-        {/* Plan replaced a Borrowed & Lent tab — loans and people now sit on
-          Plan alongside budgets, goals and recurring (app/loans.tsx). */}
+        {/* Plan replaced a Borrowed & Lent tab — Loans and Friends & Family
+          are tiles on Plan beside budgets, goals and recurring. */}
         <Tabs.Screen
           name="plan"
           options={{

@@ -40,7 +40,9 @@ jest.mock('@/db/loans', () => ({
   listLoans: async () => [{ status: 'active' }],
   getNextDueInstallment: async () => null,
 }));
-jest.mock('@/db/people', () => ({ listPeople: async () => [{}, {}] }));
+jest.mock('@/db/people', () => ({
+  listPeople: async () => [{ balanceMinor: 0 }, { balanceMinor: 0 }],
+}));
 jest.mock('@/db/ledger', () => ({ listAccounts: async () => [], listCategories: async () => [] }));
 jest.mock('@/db/reports', () => ({ getDailyGoalStreakSeries: async () => [{ streakDays: 4 }] }));
 jest.mock('@/db/settings', () => ({
@@ -80,8 +82,10 @@ describe('Plan tab', () => {
         'Goals',
         'Goa trip · 64%',
         'Recurring',
-        'Loans & people',
-        '1 loan · 2 people',
+        'Loans',
+        '1 loan',
+        'Friends & Family',
+        'All settled up',
         'What-if',
         "Suu's Garden",
         '4-day streak',
@@ -92,13 +96,16 @@ describe('Plan tab', () => {
 
   it("opens a tile's own screen when tapped", async () => {
     const tree = await render();
-    const loansTile = tree.root.find(
-      (n) =>
-        typeof n.props.accessibilityLabel === 'string' &&
-        n.props.accessibilityLabel.startsWith('Loans & people') &&
-        n.props.onPress
-    );
-    act(() => loansTile.props.onPress());
-    expect(router.push).toHaveBeenCalledWith('/loans');
+    const tile = (title: string) =>
+      tree.root.find(
+        (n) =>
+          typeof n.props.accessibilityLabel === 'string' &&
+          n.props.accessibilityLabel.startsWith(`${title}, `) &&
+          n.props.onPress
+      );
+    act(() => tile('Loans').props.onPress());
+    expect(router.push).toHaveBeenLastCalledWith('/loans');
+    act(() => tile('Friends & Family').props.onPress());
+    expect(router.push).toHaveBeenLastCalledWith('/people');
   });
 });

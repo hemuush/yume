@@ -40,8 +40,8 @@ All data lives in an on-device SQLite database. Nothing is ever sent to any serv
 app/                    Screens (expo-router file-based routing)
   (tabs)/               Bottom tabs: index (Home), transactions (Activity),
                         add (raised "+", opens add-transaction), plan, reports
-  loans.tsx             Borrowed & Lent — loans and Friends & Family IOUs, reached
-                        from Plan
+  loans.tsx             Loans with an EMI schedule, reached from Plan
+  people.tsx            Friends & Family — informal IOUs, reached from Plan
   profile.tsx           Identity, tracked balance, accounts, and Settings
                         (currency, theme, app lock, privacy) — pushed from the
                         header avatar
