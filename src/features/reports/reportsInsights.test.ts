@@ -6,6 +6,7 @@ import {
   describeSpendingPattern,
   buildInShortLines,
   summariseDayTotal,
+  buildHeatGrid,
 } from './reportsInsights';
 import type { CategoryBreakdownItem } from '@/db/reports';
 import { parseLocalIsoDate } from '@/lib/date';
@@ -197,5 +198,52 @@ describe('buildInShortLines', () => {
       mover: { name: 'Travel', pctChange: 1500 },
     });
     expect(lines.map((l) => l.text)).toEqual([' is up >999% vs last year']);
+  });
+});
+
+describe('buildHeatGrid', () => {
+  it('lays a month out as a calendar: blanks before the 1st, weekends marked, spend days tappable', () => {
+    const onDayPress = jest.fn();
+    const grid = buildHeatGrid({
+      granularity: 'month',
+      start: new Date(2026, 8, 1), // Tue Sep 1 2026
+      trend: [],
+      daily: [
+        { date: '2026-09-05', totalMinor: 90000 },
+        { date: '2026-09-06', totalMinor: 10000 },
+      ],
+      onDayPress,
+    });
+    expect(grid.columns).toBe(7);
+    expect(grid.leadingPad).toBe(2);
+    expect(grid.weekdayLabels).toHaveLength(7);
+    expect(grid.cells).toHaveLength(30);
+    const sat = grid.cells[4];
+    expect(sat).toMatchObject({ key: '2026-09-05', label: '5', level: 4, isWeekend: true });
+    expect(grid.cells[5]).toMatchObject({ key: '2026-09-06', level: 1, isWeekend: true });
+    expect(grid.cells[0]).toMatchObject({ level: 0, isWeekend: false, onPress: undefined });
+    sat.onPress!();
+    expect(onDayPress).toHaveBeenCalledWith('2026-09-05');
+  });
+
+  it('lays a year out as its months, four to a row, with no weekday header', () => {
+    const grid = buildHeatGrid({
+      granularity: 'year',
+      start: new Date(2026, 0, 1),
+      trend: [
+        { label: 'Jan', totalMinor: 100 },
+        { label: 'Feb', totalMinor: 0 },
+      ],
+      daily: [],
+      onDayPress: jest.fn(),
+    });
+    expect(grid).toEqual({
+      cells: [
+        { key: 'm-0', label: 'Jan', level: 4 },
+        { key: 'm-1', label: 'Feb', level: 0 },
+      ],
+      leadingPad: 0,
+      columns: 4,
+    });
   });
 });
