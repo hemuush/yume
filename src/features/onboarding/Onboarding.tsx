@@ -275,7 +275,7 @@ const styles = StyleSheet.create({
   accountsList: { gap: 10, paddingBottom: 4 },
   accountCard: {
     backgroundColor: theme.colors.surface,
-    borderRadius: theme.radius.xl,
+    borderRadius: theme.radius.xl2,
     borderWidth: 1.5,
     borderColor: theme.colors.borderSoft,
     padding: 10,

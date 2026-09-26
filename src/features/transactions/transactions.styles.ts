@@ -9,7 +9,13 @@ export const styles = StyleSheet.create({
   // primary data being null" pattern Reports already uses, so a cold nav
   // never flashes "Nothing logged" before the real data has even arrived.
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
-  emptyText: { marginHorizontal: 20, color: theme.colors.textMuted, fontSize: 13, marginBottom: 10 },
+  emptyText: {
+    fontFamily: theme.font.body,
+    marginHorizontal: 20,
+    color: theme.colors.textMuted,
+    fontSize: 13,
+    marginBottom: 10,
+  },
   errorBanner: {
     marginHorizontal: 20,
     marginBottom: 12,
@@ -20,7 +26,13 @@ export const styles = StyleSheet.create({
     borderColor: theme.colors.expense,
   },
   errorTitle: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.expense },
-  errorDetail: { fontSize: 11.5, color: theme.colors.textSecondary, marginTop: 3, lineHeight: 16 },
+  errorDetail: {
+    fontFamily: theme.font.body,
+    fontSize: 11.5,
+    color: theme.colors.textSecondary,
+    marginTop: 3,
+    lineHeight: 16,
+  },
   headerActions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   filterBtn: {
     flexDirection: 'row',
@@ -85,7 +97,7 @@ export const styles = StyleSheet.create({
   // day-strip/spotlight-card approach entirely. See SpendBarChart.tsx.
   headline: { paddingHorizontal: 22, marginTop: 14 },
   headlineAmt: { fontFamily: theme.font.monoBold, fontSize: 34, color: theme.colors.textPrimary },
-  headlineSub: { fontSize: 12, color: theme.colors.textSecondary, marginTop: 2 },
+  headlineSub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary, marginTop: 2 },
   headlineSubUp: { fontFamily: theme.font.bodyBold, color: theme.colors.expense },
   headlineSubDown: { fontFamily: theme.font.bodyBold, color: theme.colors.income },
   rule: { height: 1, backgroundColor: theme.colors.borderSoft, marginHorizontal: 22, marginTop: 20 },
@@ -175,7 +187,7 @@ export const styles = StyleSheet.create({
   monthCellTextDisabled: { color: theme.colors.textMuted },
   rowLabel: { fontSize: 15, color: theme.colors.textPrimary, fontFamily: theme.font.bodyMedium },
   rowNoteInline: { fontSize: 13, color: theme.colors.textSecondary, fontFamily: theme.font.bodyMedium },
-  rowSub: { fontSize: 12, color: theme.colors.textMuted, marginTop: 2 },
+  rowSub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, marginTop: 2 },
   rowValue: { fontSize: 14, fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
   income: { color: theme.colors.income },
   expense: { color: theme.colors.expense },
@@ -187,8 +199,15 @@ export const styles = StyleSheet.create({
     color: theme.colors.textPrimary,
     marginTop: 14,
   },
-  detailNote: { fontSize: 13, color: theme.colors.textSecondary, marginTop: 6 },
-  hintText: { fontSize: 12, color: theme.colors.textMuted, marginTop: 14, marginBottom: 10, lineHeight: 17 },
+  detailNote: { fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textSecondary, marginTop: 6 },
+  hintText: {
+    fontFamily: theme.font.body,
+    fontSize: 12,
+    color: theme.colors.textMuted,
+    marginTop: 14,
+    marginBottom: 10,
+    lineHeight: 17,
+  },
   fieldLabel: {
     fontSize: 10.5,
     fontFamily: theme.font.roundedMedium,

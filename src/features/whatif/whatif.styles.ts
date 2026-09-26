@@ -38,7 +38,7 @@ export const styles = StyleSheet.create({
     backgroundColor: theme.colors.surface,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
-    borderRadius: theme.radius.xl,
+    borderRadius: theme.radius.xl2,
     padding: 16,
   },
   fieldLabel: {
@@ -71,7 +71,7 @@ export const styles = StyleSheet.create({
     backgroundColor: theme.colors.secondaryTint,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.secondary,
-    borderRadius: theme.radius.xl,
+    borderRadius: theme.radius.xl2,
     padding: 16,
   },
   extraLabel: {

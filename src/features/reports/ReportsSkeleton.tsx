@@ -65,7 +65,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.surface,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
-    borderRadius: theme.radius.xl,
+    borderRadius: theme.radius.xl2,
     paddingHorizontal: 14,
   },
   catRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12 },

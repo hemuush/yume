@@ -15,7 +15,13 @@ export const styles = StyleSheet.create({
     borderColor: theme.colors.expense,
   },
   errorTitle: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.expense },
-  errorDetail: { fontSize: 11.5, color: theme.colors.textSecondary, marginTop: 3, lineHeight: 16 },
+  errorDetail: {
+    fontFamily: theme.font.body,
+    fontSize: 11.5,
+    color: theme.colors.textSecondary,
+    marginTop: 3,
+    lineHeight: 16,
+  },
 
   summaryCard: {
     marginHorizontal: 20,
@@ -26,10 +32,15 @@ export const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
   },
-  summaryLabel: { fontSize: 11, color: theme.colors.textSecondary, marginBottom: 6 },
+  summaryLabel: {
+    fontFamily: theme.font.body,
+    fontSize: 11,
+    color: theme.colors.textSecondary,
+    marginBottom: 6,
+  },
   summaryAmountRow: { flexDirection: 'row', alignItems: 'baseline', gap: 6 },
   summaryAmount: { fontFamily: theme.font.monoBold, fontSize: 18, color: theme.colors.textPrimary },
-  summaryOf: { fontSize: 12, color: theme.colors.textMuted },
+  summaryOf: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
   // LimitMeter (src/components/LimitMeter.tsx) draws the bar itself now —
   // this only keeps the same spacing the old inline track/fill pair had.
   summaryTrackWrap: { marginTop: 10 },
@@ -91,10 +102,16 @@ export const styles = StyleSheet.create({
   },
   rowAmountOver: { color: theme.colors.expense, fontFamily: theme.font.monoBold },
   rowAmountOf: { color: theme.colors.textMuted, fontFamily: theme.font.mono },
-  rowNote: { fontSize: 11, color: theme.colors.textMuted, marginTop: 6 },
+  rowNote: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textMuted, marginTop: 6 },
   rowNoteOver: { color: theme.colors.expense, fontFamily: theme.font.bodyBold },
 
-  modalHint: { fontSize: 12, color: theme.colors.textMuted, marginBottom: 14, lineHeight: 17 },
+  modalHint: {
+    fontFamily: theme.font.body,
+    fontSize: 12,
+    color: theme.colors.textMuted,
+    marginBottom: 14,
+    lineHeight: 17,
+  },
   fieldLabel: {
     fontSize: 10.5,
     fontFamily: theme.font.roundedMedium,
@@ -105,5 +122,5 @@ export const styles = StyleSheet.create({
   },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 },
   toggleRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
-  errorText: { color: theme.colors.expense, fontSize: 13, marginBottom: 12 },
+  errorText: { fontFamily: theme.font.body, color: theme.colors.expense, fontSize: 13, marginBottom: 12 },
 });

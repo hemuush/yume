@@ -60,7 +60,7 @@ function splitStyle(style: StyleProp<ViewStyle>): [ViewStyle, ViewStyle] {
 export function NeoTile({
   children,
   backgroundColor = theme.colors.surface,
-  borderRadius = theme.radius.lg,
+  borderRadius = theme.radius.xl2,
   style,
 }: Props) {
   const [outerStyle, innerStyle] = splitStyle(style);

@@ -16,23 +16,12 @@ export const styles = StyleSheet.create({
     borderColor: theme.colors.expense,
   },
   errorTitle: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.expense },
-  errorDetail: { fontSize: 11.5, color: theme.colors.textSecondary, marginTop: 3, lineHeight: 16 },
-  sectionTitle: {
-    fontSize: 12,
-    fontFamily: theme.font.bodyBold,
-    color: theme.colors.textMuted,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginHorizontal: 20,
-    marginTop: 20,
-    marginBottom: 10,
-  },
-  hintText: {
-    fontSize: 12,
-    color: theme.colors.textMuted,
-    marginHorizontal: 20,
-    marginTop: 14,
-    lineHeight: 17,
+  errorDetail: {
+    fontFamily: theme.font.body,
+    fontSize: 11.5,
+    color: theme.colors.textSecondary,
+    marginTop: 3,
+    lineHeight: 16,
   },
 
   card: {
@@ -47,7 +36,7 @@ export const styles = StyleSheet.create({
   cardArchived: { opacity: 0.6 },
   cardTop: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 11 },
   cardName: { fontSize: 14.5, fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
-  cardTarget: { fontSize: 11, color: theme.colors.textMuted, marginTop: 2 },
+  cardTarget: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textMuted, marginTop: 2 },
   track: { height: 6, borderRadius: 3, backgroundColor: theme.colors.borderSoft, overflow: 'hidden' },
   fill: { height: '100%', borderRadius: 3 },
   contributeBtn: {
@@ -61,8 +50,14 @@ export const styles = StyleSheet.create({
   },
   contributeBtnText: { fontSize: 12, fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
 
-  errorText: { color: theme.colors.expense, fontSize: 13, marginBottom: 12 },
-  modalHint: { fontSize: 12, color: theme.colors.textMuted, marginBottom: 14, lineHeight: 17 },
+  errorText: { fontFamily: theme.font.body, color: theme.colors.expense, fontSize: 13, marginBottom: 12 },
+  modalHint: {
+    fontFamily: theme.font.body,
+    fontSize: 12,
+    color: theme.colors.textMuted,
+    marginBottom: 14,
+    lineHeight: 17,
+  },
   fieldLabel: {
     fontSize: 10.5,
     fontFamily: theme.font.roundedMedium,
