@@ -1,4 +1,5 @@
-import { Animated, Pressable, Text, StyleSheet } from 'react-native';
+import { Animated, Pressable, StyleSheet } from 'react-native';
+import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
 import { usePressScale } from '@/lib/usePressScale';
 

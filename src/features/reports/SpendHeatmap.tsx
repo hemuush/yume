@@ -1,4 +1,5 @@
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { View, Pressable, StyleSheet } from 'react-native';
+import { Text } from '@/components/Text';
 import Animated, { FadeIn, ReduceMotion } from 'react-native-reanimated';
 import { theme, SPEND_HEAT_TEXT } from '@/constants/theme';
 import { spendHeatScale } from '@/lib/color';

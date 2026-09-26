@@ -1,13 +1,13 @@
 import { useRef, useState } from 'react';
 import {
   View,
-  Text,
   ScrollView,
   Pressable,
   NativeSyntheticEvent,
   NativeScrollEvent,
   StyleSheet,
 } from 'react-native';
+import { Text } from '@/components/Text';
 import Feather from '@expo/vector-icons/Feather';
 import { theme } from '@/constants/theme';
 import { HomeSection } from './HomeSection';

@@ -75,11 +75,11 @@ export const styles = StyleSheet.create({
   cardSub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, marginTop: 4 },
   cardStatsRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 12 },
   statLabel: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textMuted },
-  statValue: { fontSize: 14, fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary, marginTop: 2 },
+  statValue: { fontSize: 14, fontFamily: theme.font.monoBold, color: theme.colors.textPrimary, marginTop: 2 },
   emiPreview: { borderRadius: 10, padding: 14, marginBottom: 14, borderWidth: theme.border.thin },
   emiPreviewLabel: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.primary },
   emiPreviewValue: {
-    fontFamily: theme.font.bodyBold,
+    fontFamily: theme.font.monoBold,
     fontSize: 20,
     color: theme.colors.primary,
     marginTop: 2,
@@ -128,7 +128,7 @@ export const styles = StyleSheet.create({
   },
   rowLabel: { fontFamily: theme.font.bodyMedium, fontSize: 14, color: theme.colors.textPrimary },
   rowSub: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textMuted, marginTop: 2 },
-  rowValue: { fontFamily: theme.font.bodyMedium, fontSize: 14, color: theme.colors.textPrimary },
+  rowValue: { fontFamily: theme.font.monoBold, fontSize: 14, color: theme.colors.textPrimary },
   assetRow: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -1,4 +1,5 @@
-import { View, Text, Pressable, Animated } from 'react-native';
+import { View, Pressable, Animated } from 'react-native';
+import { Text } from '@/components/Text';
 import { SavingsGoal } from '@/types';
 import { formatMoney } from '@/lib/money';
 import { theme } from '@/constants/theme';

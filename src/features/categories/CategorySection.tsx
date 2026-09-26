@@ -1,4 +1,5 @@
-import { View, Text, Pressable, Animated } from 'react-native';
+import { View, Pressable, Animated } from 'react-native';
+import { Text } from '@/components/Text';
 import { Category } from '@/types';
 import { topLevelOnly, childrenOf } from '@/lib/categoryTree';
 import { CategoryIcon } from '@/components/CategoryIcon';

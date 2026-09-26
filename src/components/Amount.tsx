@@ -1,4 +1,5 @@
-import { Text, TextProps } from 'react-native';
+import { TextProps } from 'react-native';
+import { Text } from '@/components/Text';
 import { formatMaskableMoney } from '@/lib/money';
 import { usePrivacy } from '@/theme/PrivacyContext';
 

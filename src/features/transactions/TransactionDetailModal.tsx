@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { View, Text, Alert } from 'react-native';
+import { View, Alert } from 'react-native';
+import { Text } from '@/components/Text';
 import { deleteTransaction, restoreTransaction, getTransactionLink, TransactionLink } from '@/db/ledger';
 import { undoInstallmentPayment } from '@/db/loans';
 import { undoPersonTransaction } from '@/db/people';

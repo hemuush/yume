@@ -1,4 +1,5 @@
-import { View, Text, Pressable } from 'react-native';
+import { View, Pressable } from 'react-native';
+import { Text } from '@/components/Text';
 import { PersonWithBalance } from '@/db/people';
 import { Account } from '@/types';
 import { CategoryIcon } from '@/components/CategoryIcon';
