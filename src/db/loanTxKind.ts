@@ -8,10 +8,7 @@
  *
  * Imported by both db/client.ts (migration) and lib/backup.ts (restore) —
  * this file imports nothing from either, so neither import is circular.
- */
-export type LoanTxKind = 'disbursement' | 'fee' | 'prepayment' | 'prepayment_charge';
-
-/**
+ *
  * Fills `loan_tx_kind` for loan-linked rows written before the column
  * existed (an upgrading install, or a restored older backup), from the
  * exact note prefixes db/loans.ts has always written. "Prepayment charge"

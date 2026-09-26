@@ -64,7 +64,7 @@ function ActionRow({
           justifyContent: 'center',
         }}
       >
-        <TextWidget text="+" style={{ fontSize: 13, fontWeight: '700', color: '#FFFFFF' }} />
+        <TextWidget text="+" style={{ fontSize: 13, fontWeight: '700', color: widgetColor.white }} />
       </FlexWidget>
       <FlexWidget style={{ width: 9, height: 'match_parent' }} />
       <TextWidget text={label} style={{ fontSize: 12.5, fontWeight: '600', color: widgetColor.ink }} />

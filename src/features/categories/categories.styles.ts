@@ -5,7 +5,6 @@ import { theme } from '@/constants/theme';
 // CategoryTile / SubcategoryPill) and AddCategoryModal.
 export const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
   errorBanner: {
     marginHorizontal: 20,
     marginTop: 12,
@@ -110,7 +109,7 @@ export const styles = StyleSheet.create({
     height: 32,
     borderRadius: 16,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(18,19,15,0.15)',
+    borderColor: theme.colors.inkHairline,
   },
   colorSwatchActive: { borderWidth: 2.5, borderColor: theme.colors.ink },
   parentChip: {

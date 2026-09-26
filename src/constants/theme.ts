@@ -81,6 +81,18 @@ export const theme = {
     // Ink at very low opacity — a faint fill for inactive tracks, weekend
     // cells, and other "barely there" surfaces on a cream ground.
     inkWash: 'rgba(18,19,15,0.05)',
+    // Ink at a little more opacity — a hairline on a translucent chip.
+    inkHairline: 'rgba(18,19,15,0.1)',
+    // White at partial opacity — a frosted chip or figure sitting on a
+    // pastel card, letting the card's colour show through.
+    glass: 'rgba(255,255,255,0.6)',
+    // Dimmed backdrops behind a sheet (`scrim`) or a small popover (`scrimLight`).
+    scrim: 'rgba(0,0,0,0.55)',
+    scrimLight: 'rgba(0,0,0,0.35)',
+    // Cream on an ink card (the goal letter): a faint fill, its hairline, and soft text.
+    onInkWash: 'rgba(255,253,246,0.06)',
+    onInkHairline: 'rgba(255,253,246,0.15)',
+    onInkSoft: '#D8D3C0',
   },
   radius: {
     sm: 8,

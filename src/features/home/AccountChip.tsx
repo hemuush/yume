@@ -4,16 +4,8 @@ import { useAccent } from '@/theme/AccentContext';
 import { Account } from '@/types';
 import { Amount } from '@/components/Amount';
 import { FlatIconBadge } from '@/components/FlatIconBadge';
-import { accountBadgeColor } from '@/lib/account';
+import { accountBadgeColor, accountIcon } from '@/lib/account';
 import { SoftCard } from './SoftCard';
-
-const ACCOUNT_ICON: Record<Account['type'], string> = {
-  bank: 'bank',
-  cash: 'cash',
-  wallet: 'wallet',
-  credit_card: 'credit-card',
-  savings: 'piggy-bank',
-};
 
 /**
  * One account in the horizontal "Your accounts" strip. Previously cycled
@@ -30,7 +22,7 @@ export function AccountChip({ account }: { account: Account }) {
   const badgeColor = accountBadgeColor(account.type, accent);
   return (
     <SoftCard style={styles.card}>
-      <FlatIconBadge name={ACCOUNT_ICON[account.type] ?? 'credit-card'} backgroundColor={badgeColor} />
+      <FlatIconBadge name={accountIcon(account.type)} backgroundColor={badgeColor} />
       <Text style={styles.name} numberOfLines={1}>
         {account.name}
       </Text>

@@ -1,5 +1,6 @@
 import { Category, Transaction } from '@/types';
 import { addDaysToIsoDate, parseLocalIsoDate } from '@/lib/date';
+import { theme } from '@/constants/theme';
 
 export interface SpendBarSegment {
   categoryId: string;
@@ -58,7 +59,7 @@ function summariseExpenses(
         categoryId,
         amountMinor,
         name: cat?.name ?? 'Uncategorized',
-        color: cat?.color ?? '#948E7C',
+        color: cat?.color ?? theme.colors.textMuted,
       };
     })
     // Largest segment first — it anchors the bottom of the stack, matching

@@ -1,10 +1,10 @@
 /**
  * Runs every report function that touches SQL directly against a real
  * SQLite engine. The rest of reports.ts's test coverage (src/db/reports.test.ts)
- * only exercises pure functions with no database — that gap is exactly how
- * a real bug (`getIncomeExpenseTrend`'s GROUP BY referencing an unqualified
- * `type` column that's ambiguous once joined against `accounts`, which also
- * has a `type` column) shipped without any test catching it. These tests
+ * only exercises pure functions with no database — that gap once let a real
+ * bug (a GROUP BY on an unqualified `type` column, ambiguous once joined
+ * against `accounts`, which also has one) ship without any test catching
+ * it. These tests
  * seed real data and call the real functions so a broken query fails here,
  * not on a user's device.
  */
@@ -21,7 +21,6 @@ import {
   getPeriodSummary,
   getRangeComparison,
   getMonthlyExpenseTrend,
-  getIncomeExpenseTrend,
   getNetWorthTrend,
   getPeriodRanges,
   getTodaySpend,
@@ -92,12 +91,6 @@ describe('report queries against a real SQLite engine', () => {
   it('getMonthlyExpenseTrend runs without a SQL error and totals each month', async () => {
     const trend = await getMonthlyExpenseTrend(2, new Date('2026-02-28'));
     expect(trend.map((t) => t.totalMinor)).toEqual([12000, 15000]);
-  });
-
-  it('getIncomeExpenseTrend runs without a SQL error — regression test for the ambiguous "type" column bug', async () => {
-    const trend = await getIncomeExpenseTrend(2, new Date('2026-02-28'));
-    expect(trend.map((t) => t.incomeMinor)).toEqual([500000, 500000]);
-    expect(trend.map((t) => t.expenseMinor)).toEqual([12000, 15000]);
   });
 
   it('getNetWorthTrend runs without a SQL error across multiple months', async () => {

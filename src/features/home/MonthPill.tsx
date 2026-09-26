@@ -138,7 +138,7 @@ const styles = StyleSheet.create({
 
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.35)',
+    backgroundColor: theme.colors.scrimLight,
     alignItems: 'center',
     justifyContent: 'center',
     padding: 32,

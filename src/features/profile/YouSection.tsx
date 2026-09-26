@@ -22,7 +22,7 @@ import { NeoTile } from '@/components/NeoTile';
 import { useFadeIn } from '@/lib/useFadeIn';
 import { useScreenLoad } from '@/lib/useScreenLoad';
 import { styles } from './profile.styles';
-import { ACCOUNT_ICON } from './profile.constants';
+import { accountIcon } from '@/lib/account';
 import { AddAccountModal } from './AddAccountModal';
 import { AccountDetailModal } from './AccountDetailModal';
 
@@ -138,7 +138,7 @@ export function YouSection() {
           <Animated.View key={acc.id} style={[styles.accountCardWrap, accountsFadeStyle]}>
             <NeoTile style={styles.accountCard}>
               <AnimatedAccountPressable onPress={() => setDetailAccount(acc)} style={styles.accountCardInner}>
-                <FlatIconBadge name={ACCOUNT_ICON[acc.type] ?? 'credit-card'} />
+                <FlatIconBadge name={accountIcon(acc.type)} />
                 <View style={{ flex: 1, marginLeft: 14 }}>
                   <Text style={styles.accountName}>{acc.name}</Text>
                   <Text style={styles.accountType}>{acc.type.replace('_', ' ')}</Text>
@@ -179,7 +179,7 @@ export function YouSection() {
             <View key={acc.id} style={[styles.accountCardWrap, styles.archivedCard]}>
               <NeoTile style={styles.accountCard}>
                 <Pressable onPress={() => setDetailAccount(acc)} style={styles.accountCardInner}>
-                  <FlatIconBadge name={ACCOUNT_ICON[acc.type] ?? 'credit-card'} />
+                  <FlatIconBadge name={accountIcon(acc.type)} />
                   <View style={{ flex: 1, marginLeft: 14 }}>
                     <Text style={styles.accountName}>{acc.name}</Text>
                     <Text style={styles.accountType}>{acc.type.replace('_', ' ')} · archived</Text>

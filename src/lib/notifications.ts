@@ -1,6 +1,7 @@
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 import { NotificationPrefs, getNotificationPrefs } from '@/db/settings';
+import { theme } from '@/constants/theme';
 import { parseLocalIsoDate } from './date';
 import { formatMoney } from './money';
 import { formatPctChange } from './format';
@@ -26,7 +27,7 @@ export async function ensureAndroidChannel(): Promise<void> {
   await Notifications.setNotificationChannelAsync('default', {
     name: 'Yume reminders',
     importance: Notifications.AndroidImportance.DEFAULT,
-    lightColor: '#8FCBFF', // theme.colors.primary — was sage, ring-mark rebrand
+    lightColor: theme.colors.primary,
   });
 }
 
