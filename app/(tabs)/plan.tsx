@@ -26,19 +26,17 @@ const TILE_LOOK: Record<string, { icon: string; color: string }> = {
   budgets: { icon: 'chart-donut', color: theme.colors.flatLime },
   goals: { icon: 'flag-checkered', color: theme.colors.secondary },
   recurring: { icon: 'sync', color: theme.colors.primary },
-  loans: { icon: 'handshake-outline', color: theme.colors.gold },
   whatif: { icon: 'lightbulb-on-outline', color: theme.colors.accent },
+  loans: { icon: 'handshake-outline', color: theme.colors.gold },
+  people: { icon: 'account-heart-outline', color: theme.colors.idCoral },
   garden: { icon: 'sprout', color: theme.colors.flatPink },
 };
 
 /**
- * One place for everything you're planning: budgets, goals, recurring,
- * loans & people, the What-if sandbox and Suu's Garden. These used to be
- * scattered — Loans had a whole bottom tab (empty for anyone without a
- * loan), while What-if and the Garden could only be found deep inside
- * Profile. Each tile carries one live line (see planTiles.ts) so the page
- * is worth a glance, not just a menu. Every destination is the same screen
- * it always was; Profile still manages accounts, budgets and goals too.
+ * One place for everything you're planning: budgets, goals, recurring, the
+ * What-if sandbox, loans, friends & family, and Suu's Garden. Each tile
+ * carries one live line (see planTiles.ts) so the page is worth a glance,
+ * not just a menu.
  */
 export default function PlanScreen() {
   const insets = useSafeAreaInsets();
@@ -73,7 +71,7 @@ export default function PlanScreen() {
       })),
       nextEmiDueDate: nextDue?.dueDate ?? null,
       activeLoanCount: loans.filter((l) => l.status !== 'closed').length,
-      peopleCount: people.length,
+      people,
       gardenStreakDays: streak ? (streak[streak.length - 1]?.streakDays ?? 0) : null,
     });
   }, []);
@@ -86,7 +84,7 @@ export default function PlanScreen() {
       recurring: [],
       nextEmiDueDate: null,
       activeLoanCount: 0,
-      peopleCount: 0,
+      people: [],
       gardenStreakDays: null,
     }
   );
@@ -119,6 +117,7 @@ export default function PlanScreen() {
 function PlanTileCard({ tile, loading }: { tile: PlanTile; loading: boolean }) {
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.97);
   const look = TILE_LOOK[tile.key];
+  const chevron = <Feather name="chevron-right" size={16} color={theme.colors.textMuted} />;
   return (
     <AnimatedPressable
       onPress={() => router.push(tile.route)}
@@ -126,22 +125,25 @@ function PlanTileCard({ tile, loading }: { tile: PlanTile; loading: boolean }) {
       onPressOut={onPressOut}
       accessibilityRole="button"
       accessibilityLabel={loading ? tile.title : `${tile.title}, ${tile.line}`}
-      style={[styles.tile, animatedStyle]}
+      style={[styles.tile, tile.wide && styles.tileWide, animatedStyle]}
     >
-      <View style={styles.tileTop}>
+      <View style={tile.wide ? styles.wideIcon : styles.tileTop}>
         <CategoryIcon name={look.icon} color={look.color} size={17} square={36} />
-        <Feather name="chevron-right" size={16} color={theme.colors.textMuted} />
+        {!tile.wide && chevron}
       </View>
-      <Text style={styles.tileTitle} numberOfLines={1}>
-        {tile.title}
-      </Text>
-      {loading ? (
-        <Skeleton width={96} height={10} radius={4} style={{ marginTop: 6 }} />
-      ) : (
-        <Text style={styles.tileLine} numberOfLines={2}>
-          {tile.line}
+      <View style={tile.wide && styles.wideText}>
+        <Text style={styles.tileTitle} numberOfLines={1}>
+          {tile.title}
         </Text>
-      )}
+        {loading ? (
+          <Skeleton width={96} height={10} radius={4} style={{ marginTop: 6 }} />
+        ) : (
+          <Text style={styles.tileLine} numberOfLines={2}>
+            {tile.line}
+          </Text>
+        )}
+      </View>
+      {tile.wide && chevron}
     </AnimatedPressable>
   );
 }
@@ -160,6 +162,10 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.borderSoft,
     padding: 14,
   },
+  // The last, odd tile: one row across — icon, text, chevron.
+  tileWide: { flexBasis: '100%', minHeight: 0, flexDirection: 'row', alignItems: 'center' },
+  wideIcon: { marginRight: 12 },
+  wideText: { flex: 1, minWidth: 0 },
   tileTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 },
   tileTitle: { fontFamily: theme.font.roundedBold, fontSize: 15, color: theme.colors.textPrimary },
   tileLine: {

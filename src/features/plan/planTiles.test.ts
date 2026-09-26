@@ -6,24 +6,34 @@ const base = (over: Partial<PlanInput> = {}): PlanInput => ({
   recurring: [],
   nextEmiDueDate: null,
   activeLoanCount: 0,
-  peopleCount: 0,
+  people: [],
   gardenStreakDays: null,
   // Dates in these fixtures encode their own distance: 'd+N' = N days away.
   daysUntil: (iso) => Number(iso.replace('d', '')),
+  money: (minor) => `₹${minor / 100}`,
   ...over,
 });
 const line = (input: PlanInput, key: string) => buildPlanTiles(input).find((t) => t.key === key)!.line;
 
 describe('buildPlanTiles', () => {
-  it('always returns the six tiles, in order, each pointing at its screen', () => {
+  it('always returns the seven tiles, in order, each pointing at its screen', () => {
     expect(buildPlanTiles(base()).map((t) => [t.key, t.route])).toEqual([
       ['budgets', '/budgets'],
       ['goals', '/savings-goals'],
       ['recurring', '/recurring'],
-      ['loans', '/loans'],
       ['whatif', '/whatif'],
+      ['loans', '/loans'],
+      ['people', '/people'],
       ['garden', '/garden'],
     ]);
+  });
+
+  it('makes only the last, odd tile full-width', () => {
+    expect(
+      buildPlanTiles(base())
+        .filter((t) => t.wide)
+        .map((t) => t.key)
+    ).toEqual(['garden']);
   });
 
   it('invites a first step when a feature is unused', () => {
@@ -32,8 +42,9 @@ describe('buildPlanTiles', () => {
       'Set a monthly limit',
       'Save toward something',
       'Rent, salary, subscriptions',
-      'Loans and IOUs',
       'Try a spending cut',
+      'Track an EMI',
+      'Track money with friends',
       'Set a daily goal',
     ]);
   });
@@ -66,12 +77,21 @@ describe('buildPlanTiles', () => {
     expect(line(base({ recurring }), 'recurring')).toBe('Netflix due tomorrow');
   });
 
-  it('leads loans with the next EMI, otherwise counts loans and people', () => {
+  it('leads loans with the next EMI, otherwise counts open loans', () => {
     expect(line(base({ nextEmiDueDate: 'd0', activeLoanCount: 2 }), 'loans')).toBe('Next EMI due today');
     expect(line(base({ nextEmiDueDate: 'd-3' }), 'loans')).toBe('Next EMI overdue');
     expect(line(base({ nextEmiDueDate: 'd12' }), 'loans')).toBe('Next EMI in 12 days');
-    expect(line(base({ activeLoanCount: 1, peopleCount: 3 }), 'loans')).toBe('1 loan · 3 people');
-    expect(line(base({ peopleCount: 1 }), 'loans')).toBe('1 person');
+    expect(line(base({ activeLoanCount: 1 }), 'loans')).toBe('1 loan');
+    expect(line(base({ activeLoanCount: 3 }), 'loans')).toBe('3 loans');
+  });
+
+  it('says what friends & family owe, each way, on whole-rupee totals', () => {
+    const people = (...b: number[]) => base({ people: b.map((balanceMinor) => ({ balanceMinor })) });
+    expect(line(people(90000, 30000), 'people')).toBe('₹1200 owed to you');
+    expect(line(people(-30000), 'people')).toBe('You owe ₹300');
+    expect(line(people(120000, -30000), 'people')).toBe('₹1200 to you · you owe ₹300');
+    // 40 paise rounds to ₹0, so it reads as settled, like the person's row.
+    expect(line(people(0, 40), 'people')).toBe('All settled up');
   });
 
   it("shows the garden streak once there's a daily goal", () => {

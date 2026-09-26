@@ -14,7 +14,7 @@ export interface DefaultCategory {
 
 // Seeded once on first launch. Everything here is user-editable/archivable
 // afterward, EXCEPT the five flagged `system: true` — those are matched by
-// name at runtime (src/features/loans/*, src/features/PeopleSection.tsx,
+// name at runtime (src/features/loans/*, src/features/people/*,
 // app/add-transaction.tsx) to auto-categorise loan and Friends & Family
 // transactions, so they're protected from delete/archive/rename.
 //
