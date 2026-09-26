@@ -26,7 +26,9 @@ const SECTIONS: { label: string; value: 'loans' | 'people' }[] = [
 
 /**
  * Formal loans and informal IOUs both answer "who owes whom", so they share
- * one tab as two segments rather than living in a tab and a buried menu.
+ * one screen as two segments. Reached from the Plan tab's "Loans & people"
+ * tile (and Home's EMI rows / the Next Due widget via /loans) — it used to be
+ * a bottom tab of its own, which sat empty for anyone without a loan.
  */
 export default function LoansScreen() {
   const insets = useSafeAreaInsets();
@@ -61,7 +63,7 @@ export default function LoansScreen() {
   if (!loaded && !loadError) {
     return (
       <View style={styles.container}>
-        <AppHeader title="Borrowed & Lent" />
+        <AppHeader title="Borrowed & Lent" showBack />
         <View style={styles.sectionSwitch}>
           <SegmentedControl options={SECTIONS} value={section} onChange={setSection} />
         </View>
@@ -90,7 +92,7 @@ export default function LoansScreen() {
 
   return (
     <View style={styles.container}>
-      <AppHeader title="Borrowed & Lent" />
+      <AppHeader title="Borrowed & Lent" showBack />
 
       <View style={styles.sectionSwitch}>
         <SegmentedControl options={SECTIONS} value={section} onChange={setSection} />
@@ -135,9 +137,7 @@ export default function LoansScreen() {
             </View>
           </View>
 
-          <ScrollView
-            contentContainerStyle={{ paddingBottom: theme.layout.tabScreenScrollPad + insets.bottom }}
-          >
+          <ScrollView contentContainerStyle={{ paddingBottom: theme.layout.screenScrollPad + insets.bottom }}>
             {loans.length === 0 ? (
               <EmptyState title="No loans yet" subtitle="Tap + Loan to add one with an EMI schedule." />
             ) : (

@@ -39,18 +39,14 @@ export function ActivityIcon({ color, size = 22 }: IconProps) {
   );
 }
 
-export function LoanIcon({ color, size = 22 }: IconProps) {
+/** Plan: four rounded tiles — the tab is a grid of everything you're planning. */
+export function PlanIcon({ color, size = 22 }: IconProps) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Path
-        d="M3 10 12 4l9 6"
-        stroke={color}
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <Path d="M5 10v9M10 10v9M14 10v9M19 10v9" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
-      <Path d="M3 19h18" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
+      <Rect x="4" y="4" width="7" height="7" rx="2" stroke={color} strokeWidth="1.8" />
+      <Rect x="13" y="4" width="7" height="7" rx="2" stroke={color} strokeWidth="1.8" />
+      <Rect x="4" y="13" width="7" height="7" rx="2" stroke={color} strokeWidth="1.8" />
+      <Rect x="13" y="13" width="7" height="7" rx="3.5" stroke={color} strokeWidth="1.8" />
     </Svg>
   );
 }

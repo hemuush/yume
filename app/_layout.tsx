@@ -1,4 +1,4 @@
-import { Stack } from 'expo-router';
+import { Stack, router, useRootNavigationState } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useRef, useState } from 'react';
 import { View, Text, ActivityIndicator, StyleSheet, AppState, AppStateStatus } from 'react-native';
@@ -28,6 +28,8 @@ import {
   syncDailyReminder,
   syncWeeklySummary,
   cancelLegacyScheduledNotifications,
+  subscribeToNotificationTaps,
+  NotificationRoute,
 } from '@/lib/notifications';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { refreshAllWidgets } from '@/widgets/notifyWidgets';
@@ -38,6 +40,17 @@ import { UndoToastProvider } from '@/components/UndoToast';
 import { LockScreen } from '@/components/LockScreen';
 import { Onboarding } from '@/features/onboarding/Onboarding';
 import { theme } from '@/constants/theme';
+
+/**
+ * Opening a deep link straight into a pushed screen (the Next Due widget's
+ * yume://loans or yume://recurring, Quick Add's yume://add-transaction) on a
+ * cold start used to leave that screen alone in the stack — Back exited the
+ * app. Anchoring to the tabs puts Home underneath, so Back lands there.
+ * Only affects deep links; in-app navigation is unchanged.
+ */
+export const unstable_settings = {
+  anchor: '(tabs)',
+};
 
 export default function RootLayout() {
   const [dbReady, setDbReady] = useState(false);
@@ -152,6 +165,30 @@ function AppGate({ needsOnboarding, initialLocked }: { needsOnboarding: boolean;
   const [showOnboarding, setShowOnboarding] = useState(needsOnboarding);
   const appState = useRef(AppState.currentState);
 
+  // A tapped notification's screen (see NOTIFICATION_ROUTES) waits here until
+  // it can actually be shown: the app unlocked, past onboarding, and the
+  // navigator mounted (it isn't while the lock screen replaces the tree).
+  // Opening it any earlier would be lost, or land behind the lock screen.
+  const navState = useRootNavigationState();
+  const navReady = !!navState?.key;
+  const [pendingRoute, setPendingRoute] = useState<NotificationRoute | null>(null);
+  useEffect(() => subscribeToNotificationTaps(setPendingRoute), []);
+  useEffect(() => {
+    if (!pendingRoute || isLocked || showOnboarding || !navReady) return;
+    // Next tick, not this render: right after unlocking, the navigator is
+    // remounting. If opening it still fails, the app simply stays where it
+    // opened — the same as before notifications carried a route at all.
+    const timer = setTimeout(() => {
+      setPendingRoute(null);
+      try {
+        router.push(pendingRoute);
+      } catch (e) {
+        console.warn("Could not open the notification's screen:", e);
+      }
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [pendingRoute, isLocked, showOnboarding, navReady]);
+
   // Re-arms the lock whenever the app returns from the background. Reading
   // `lockEnabled` from shared context (rather than a value only set once at
   // cold start) means toggling the Settings switch takes effect on the very
@@ -245,6 +282,7 @@ function AppGate({ needsOnboarding, initialLocked }: { needsOnboarding: boolean;
           <Stack.Screen name="recurring" />
           <Stack.Screen name="budgets" />
           <Stack.Screen name="savings-goals" />
+          <Stack.Screen name="loans" />
         </Stack>
       </UndoToastProvider>
     </ErrorBoundary>

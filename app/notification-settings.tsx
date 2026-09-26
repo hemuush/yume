@@ -180,6 +180,9 @@ export default function NotificationSettingsScreen() {
               disabled={!prefs.reminderEnabled}
               onPress={() => adjustTime(-30)}
               hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel="Reminder 30 minutes earlier"
+              accessibilityState={{ disabled: !prefs.reminderEnabled }}
             >
               <Feather name="chevron-down" size={18} color={theme.colors.ink} />
             </Pressable>
@@ -189,6 +192,9 @@ export default function NotificationSettingsScreen() {
               disabled={!prefs.reminderEnabled}
               onPress={() => adjustTime(30)}
               hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel="Reminder 30 minutes later"
+              accessibilityState={{ disabled: !prefs.reminderEnabled }}
             >
               <Feather name="chevron-up" size={18} color={theme.colors.ink} />
             </Pressable>
