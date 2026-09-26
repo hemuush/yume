@@ -1,4 +1,4 @@
-import { View } from 'react-native';
+import { View, Text } from 'react-native';
 import { useRef } from 'react';
 
 /**
@@ -28,7 +28,8 @@ export function createReanimatedMock() {
   const chainableProxy: any = new Proxy(chainable, { get: () => chainable });
   return {
     __esModule: true,
-    default: { View, createAnimatedComponent: (Component: unknown) => Component },
+    // Text too: PrimaryButton renders a ReanimatedAnimated.Text for its label.
+    default: { View, Text, createAnimatedComponent: (Component: unknown) => Component },
     FadeIn: chainableProxy,
     FadeInDown: chainableProxy,
     ReduceMotion: { System: 'system' },
