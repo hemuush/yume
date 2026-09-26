@@ -42,7 +42,7 @@ app/                    Screens (expo-router file-based routing)
                         add (raised "+", opens add-transaction), plan, reports
   loans.tsx             Borrowed & Lent — loans and Friends & Family IOUs, reached
                         from Plan
-  profile.tsx           Identity, accounts, budgets, savings goals, and Settings
+  profile.tsx           Identity, tracked balance, accounts, and Settings
                         (currency, theme, app lock, privacy) — pushed from the
                         header avatar
   categories.tsx        Category management
