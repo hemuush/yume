@@ -6,3 +6,5 @@ package-lock.json
 android/
 ios/
 *.md
+# EAS rewrites app.json in its own layout every time it bumps versionCode.
+app.json
