@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { View, ScrollView, Pressable, StyleSheet } from 'react-native';
+import { View, ScrollView, Pressable, StyleSheet, useWindowDimensions } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from '@expo/vector-icons/Feather';
@@ -42,6 +42,7 @@ type Picking = { mode: 'add' } | { mode: 'change'; key: string };
  */
 export function SplitScreen() {
   const insets = useSafeAreaInsets();
+  const { height: screenHeight } = useWindowDimensions();
   const [session] = useState(getSplitSession);
   const [parts, setParts] = useState<DraftPart[]>(() => session?.parts ?? []);
   // The part the pad types into; never the first, which holds the rest.
@@ -263,19 +264,32 @@ export function SplitScreen() {
         )}
       </View>
 
+      {/* The sheet hugs its grid and sits on the bottom edge; the grid scrolls in
+          place only when a long category list needs it. */}
       <ModalSheet
         visible={picking !== null}
         onClose={() => setPicking(null)}
         title={picking?.mode === 'add' ? 'Add a category' : 'Change category'}
+        scrollable={false}
       >
         {pickNote && <Text style={[styles.pickNote, styles.bad]}>{pickNote}</Text>}
-        <CategoryPicker
-          categories={categories}
-          selectedId={pickingKey ? (parts.find((p) => p.key === pickingKey)?.categoryId ?? null) : null}
-          onSelect={onPickCategory}
-          variant="medal"
-          searchable
-        />
+        <ScrollView
+          style={{ maxHeight: screenHeight * 0.62 }}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          <CategoryPicker
+            categories={categories}
+            selectedId={pickingKey ? (parts.find((p) => p.key === pickingKey)?.categoryId ?? null) : null}
+            onSelect={onPickCategory}
+            variant="medal"
+            searchable
+            // Already in this split: faded, so it's clear which ones are taken.
+            dimmedIds={parts
+              .filter((p) => p.key !== pickingKey && p.categoryId)
+              .map((p) => p.categoryId as string)}
+          />
+        </ScrollView>
       </ModalSheet>
     </View>
   );

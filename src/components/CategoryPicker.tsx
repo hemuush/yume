@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { View, Pressable, Animated, StyleSheet, Keyboard } from 'react-native';
+import { View, Pressable, Animated, StyleSheet, Keyboard, LayoutChangeEvent } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import { Text, TextInput } from '@/components/Text';
 import ReanimatedAnimated, { FadeIn, ReduceMotion } from 'react-native-reanimated';
@@ -15,6 +15,8 @@ import { DURATIONS } from '@/lib/motionTimings';
 import { withPressed } from '@/lib/pressed';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+/** The narrowest a medal column gets: the 48px tile, its ring, and room for a short name. */
+const MEDAL_MIN_WIDTH = 70;
 
 interface Props {
   /** Already filtered to the relevant kind (income/expense) — this component doesn't filter by kind itself. */
@@ -27,6 +29,8 @@ interface Props {
   searchable?: boolean;
   /** Tells the host when the search field has the keyboard (Add hides its number pad). */
   onSearchFocusChange?: (focused: boolean) => void;
+  /** Shown faded: already used elsewhere (a split's other parts). Still tappable, so the host can say why. */
+  dimmedIds?: string[];
 }
 
 /**
@@ -45,8 +49,19 @@ export function CategoryPicker({
   variant,
   searchable,
   onSearchFocusChange,
+  dimmedIds,
 }: Props) {
   const topLevel = topLevelOnly(categories);
+  // The medal grid fills its width evenly: as many columns as fit, each an equal share,
+  // so a row never ends in a lopsided gap on the right.
+  const [gridWidth, setGridWidth] = useState(0);
+  const cols = gridWidth > 0 ? Math.max(4, Math.floor(gridWidth / MEDAL_MIN_WIDTH)) : 0;
+  const tileWidth = cols > 0 ? Math.floor(gridWidth / cols) : undefined;
+  const onGridLayout = (e: LayoutChangeEvent) => {
+    const w = Math.round(e.nativeEvent.layout.width);
+    if (w !== gridWidth) setGridWidth(w);
+  };
+  const dimmed = (id: string) => !!dimmedIds?.includes(id);
   const [query, setQuery] = useState('');
   const matches = searchCategories(categories, query);
   const [expandedParentId, setExpandedParentId] = useState<string | null>(() => {
@@ -161,10 +176,12 @@ export function CategoryPicker({
         {matches.length === 0 ? (
           <Text style={styles.noMatch}>No category called "{query.trim()}"</Text>
         ) : (
-          <View style={styles.medalGrid}>
+          <View style={styles.medalGrid} onLayout={onGridLayout}>
             {matches.map((cat) => (
               <MedalTile
                 key={cat.id}
+                width={tileWidth}
+                dimmed={dimmed(cat.id)}
                 active={selectedId === cat.id}
                 name={cat.name}
                 hint={parentName(cat) ? `in ${parentName(cat)}` : undefined}
@@ -186,10 +203,12 @@ export function CategoryPicker({
   return (
     <View>
       {search}
-      <View style={styles.medalGrid}>
+      <View style={styles.medalGrid} onLayout={onGridLayout}>
         {topLevel.map((cat) => (
           <MedalTile
             key={cat.id}
+            width={tileWidth}
+            dimmed={dimmed(cat.id)}
             active={selectedId === cat.id}
             name={cat.name}
             icon={cat.icon}
@@ -205,11 +224,14 @@ export function CategoryPicker({
             {expandedChildren.map((cat, i) => (
               <ReanimatedAnimated.View
                 key={cat.id}
+                style={tileWidth ? { width: tileWidth } : undefined}
                 entering={FadeIn.delay(Math.min(i * DURATIONS.enterStep, MAX_LIST_STAGGER_MS))
                   .duration(DURATIONS.enter)
                   .reduceMotion(ReduceMotion.System)}
               >
                 <MedalTile
+                  width={tileWidth}
+                  dimmed={dimmed(cat.id)}
                   active={selectedId === cat.id}
                   name={cat.name}
                   icon={cat.icon}
@@ -235,6 +257,8 @@ function MedalTile({
   onPress,
   sub,
   hint,
+  width,
+  dimmed,
 }: {
   active: boolean;
   name: string;
@@ -244,33 +268,42 @@ function MedalTile({
   sub?: boolean;
   /** A second, quieter line — a search result's parent ("in Travel"). */
   hint?: string;
+  /** An equal share of the grid's width; the fixed default until the grid has measured itself. */
+  width?: number;
+  dimmed?: boolean;
 }) {
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.92);
   return (
     <AnimatedPressable
-      style={[sub ? styles.medalItemSub : styles.medalItem, animatedStyle]}
+      style={[sub ? styles.medalItemSub : styles.medalItem, width != null && { width }, animatedStyle]}
       onPress={onPress}
       onPressIn={onPressIn}
       onPressOut={onPressOut}
     >
-      <View style={[styles.medalRing, sub && styles.medalRingSub, active && styles.medalRingActive]}>
-        <CategoryIcon name={icon} color={color} size={sub ? 16 : 20} square={sub ? 38 : 48} />
-      </View>
-      <Text style={styles.medalName} numberOfLines={1}>
-        {name}
-      </Text>
-      {hint && (
-        <Text style={styles.medalHint} numberOfLines={1}>
-          {hint}
+      {/* The fade sits on the contents, not the pressable: the press animation drives the pressable's own opacity. */}
+      <View style={[styles.medalBody, dimmed && styles.medalDimmed]}>
+        <View style={[styles.medalRing, sub && styles.medalRingSub, active && styles.medalRingActive]}>
+          <CategoryIcon name={icon} color={color} size={sub ? 16 : 20} square={sub ? 38 : 48} />
+        </View>
+        <Text style={styles.medalName} numberOfLines={2}>
+          {name}
         </Text>
-      )}
+        {hint && (
+          <Text style={styles.medalHint} numberOfLines={1}>
+            {hint}
+          </Text>
+        )}
+      </View>
     </AnimatedPressable>
   );
 }
 
 const styles = StyleSheet.create({
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  medalGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 14 },
+  // Columns are an equal share of the width (see `cols` above), so only rows need a gap.
+  medalGrid: { flexDirection: 'row', flexWrap: 'wrap', rowGap: 14 },
+  medalBody: { alignItems: 'center', alignSelf: 'stretch' },
+  medalDimmed: { opacity: 0.35 },
   medalItem: { width: 64, alignItems: 'center' },
   medalItemSub: { width: 56, alignItems: 'center' },
   medalRing: { borderRadius: 16, borderWidth: 2, borderColor: 'transparent', padding: 2 },
@@ -281,9 +314,11 @@ const styles = StyleSheet.create({
   medalName: {
     fontFamily: theme.font.rounded,
     fontSize: 10.5,
+    lineHeight: 13,
     color: theme.colors.textSecondary,
     marginTop: 5,
     textAlign: 'center',
+    paddingHorizontal: 2,
   },
   medalHint: {
     fontFamily: theme.font.body,

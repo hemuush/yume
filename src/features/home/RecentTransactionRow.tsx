@@ -40,6 +40,7 @@ export function RecentTransactionRow({
       <CategoryIcon
         name={isTransfer ? 'swap-horizontal' : (category?.icon ?? 'tag')}
         color={isTransfer ? theme.colors.secondary : (category?.color ?? theme.colors.textMuted)}
+        round
       />
       <View style={styles.mid}>
         <Text style={styles.title} numberOfLines={1}>
@@ -52,13 +53,8 @@ export function RecentTransactionRow({
           </Text>
         )}
       </View>
-      <Text
-        style={[
-          styles.amount,
-          tx.type === 'income' && styles.income,
-          tx.type === 'expense' && styles.expense,
-        ]}
-      >
+      {/* Spending reads in ink with its minus; only money in is coloured (green). */}
+      <Text style={[styles.amount, tx.type === 'income' && styles.income]}>
         {tx.type === 'expense' ? '−' : tx.type === 'income' ? '+' : ''}
         <Amount minor={tx.amountMinor} sensitive={category?.isSensitive} />
       </Text>
@@ -74,6 +70,5 @@ const styles = StyleSheet.create({
   sub: h.sub,
   amount: h.amount,
   income: h.income,
-  expense: h.expense,
   refund: { fontFamily: theme.font.bodyBold, color: theme.colors.income },
 });

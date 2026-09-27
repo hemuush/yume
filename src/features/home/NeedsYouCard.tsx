@@ -156,12 +156,13 @@ const styles = StyleSheet.create({
   card: h.card,
   row: h.row,
   divider: h.divider,
-  iconWrap: h.iconTile,
+  // A circle rather than the square tile (the Home A sign-off: round icons on Home).
+  iconWrap: { ...h.iconTile, borderRadius: HOME.iconTile / 2 },
   mid: h.mid,
   title: h.title,
   sub: h.sub,
   subUrgent: h.subUrgent,
-  amount: { ...h.amount, color: theme.colors.expense },
+  amount: h.amount,
   close: {
     width: 26,
     height: 26,

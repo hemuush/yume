@@ -317,6 +317,7 @@ export default function DashboardScreen() {
     accent,
     accountName,
     categoryName: (id) => categoryFor(id)?.name,
+    categoryColor: (id) => categoryFor(id)?.color,
   });
 
   const openNeedsYou = (item: NeedsYouItem) => {

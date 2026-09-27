@@ -4,6 +4,7 @@ import Feather from '@expo/vector-icons/Feather';
 import { theme } from '@/constants/theme';
 import { formatMoney } from '@/lib/money';
 import { usePressScale } from '@/lib/usePressScale';
+import { parseLocalIsoDate } from '@/lib/date';
 import { homeStyles as h, HOME } from './homeStyles';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -26,6 +27,7 @@ export function UpcomingRow({
   onPress,
   divider,
   urgent,
+  date,
 }: {
   icon: React.ComponentProps<typeof Feather>['name'];
   iconBg: string;
@@ -38,6 +40,8 @@ export function UpcomingRow({
   divider?: boolean;
   /** Due today or already overdue — swaps the icon badge and subtitle to the coral "worth a look" tone instead of the neutral default. */
   urgent?: boolean;
+  /** The due date (YYYY-MM-DD): shown as a date tile ("01 OCT") in place of the icon, as Plan does. */
+  date?: string;
 }) {
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.98);
   return (
@@ -49,9 +53,20 @@ export function UpcomingRow({
       accessibilityLabel={`${title}, ${subtitle}`}
       style={[styles.row, divider && styles.divider, animatedStyle]}
     >
-      <View style={[styles.iconWrap, { backgroundColor: urgent ? theme.colors.expenseTint : iconBg }]}>
-        <Feather name={icon} size={HOME.iconGlyph} color={urgent ? theme.colors.expense : iconColor} />
-      </View>
+      {date ? (
+        <View style={[styles.dateTile, { backgroundColor: urgent ? theme.colors.expenseTint : iconBg }]}>
+          <Text style={[styles.dateDay, urgent && styles.dateUrgent]}>
+            {String(parseLocalIsoDate(date).getDate()).padStart(2, '0')}
+          </Text>
+          <Text style={[styles.dateMonth, urgent && styles.dateUrgent]}>
+            {parseLocalIsoDate(date).toLocaleDateString(undefined, { month: 'short' }).toUpperCase()}
+          </Text>
+        </View>
+      ) : (
+        <View style={[styles.iconWrap, { backgroundColor: urgent ? theme.colors.expenseTint : iconBg }]}>
+          <Feather name={icon} size={HOME.iconGlyph} color={urgent ? theme.colors.expense : iconColor} />
+        </View>
+      )}
       <View style={styles.mid}>
         <Text style={styles.title} numberOfLines={1}>
           {title}
@@ -60,7 +75,8 @@ export function UpcomingRow({
           {subtitle}
         </Text>
       </View>
-      <Text style={[styles.amount, sign === '+' && styles.income, sign === '-' && styles.expense]}>
+      {/* A bill reads in ink; only money coming in is coloured (green). */}
+      <Text style={[styles.amount, sign === '+' && styles.income]}>
         {sign}
         {formatMoney(amountMinor)}
       </Text>
@@ -111,6 +127,26 @@ const styles = StyleSheet.create({
   subUrgent: h.subUrgent,
   amount: h.amount,
   income: h.income,
-  expense: h.expense,
+  dateTile: {
+    width: HOME.iconTile + 4,
+    height: HOME.iconTile + 6,
+    borderRadius: 13,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dateDay: {
+    fontFamily: theme.font.roundedBold,
+    fontSize: 15,
+    lineHeight: 17,
+    color: theme.colors.textPrimary,
+  },
+  dateMonth: {
+    fontFamily: theme.font.bodyBold,
+    fontSize: 8.5,
+    letterSpacing: 0.7,
+    color: theme.colors.textSecondary,
+    marginTop: 1,
+  },
+  dateUrgent: { color: theme.colors.expense },
   moreText: { flex: 1, fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textSecondary },
 });

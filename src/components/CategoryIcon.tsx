@@ -9,19 +9,26 @@ interface Props {
   color?: string;
   size?: number;
   square?: number;
+  /** A circle instead of a rounded square — Home's rows (the Home A sign-off). */
+  round?: boolean;
 }
 
 // Renders a category's icon inside a soft, borderless tinted square — matches
 // the calm hairline register (SoftCard, the Home hero) rather than the older
 // thick-ink outline.
-export function CategoryIcon({ name, color, size = 17, square = 38 }: Props) {
+export function CategoryIcon({ name, color, size = 17, square = 38, round = false }: Props) {
   const { accent } = useAccent();
   const resolvedColor = color ?? accent;
   return (
     <View
       style={[
         styles.chip,
-        { width: square, height: square, borderRadius: square * 0.32, backgroundColor: resolvedColor + '40' },
+        {
+          width: square,
+          height: square,
+          borderRadius: round ? square / 2 : square * 0.32,
+          backgroundColor: resolvedColor + '40',
+        },
       ]}
     >
       <MaterialCommunityIcons name={name as McIconName} size={size} color={theme.colors.ink} />

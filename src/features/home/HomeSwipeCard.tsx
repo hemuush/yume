@@ -15,6 +15,8 @@ import { theme } from '@/constants/theme';
 import { HomeSection } from './HomeSection';
 import { haptics } from '@/lib/haptics';
 import { homeStyles } from './homeStyles';
+import { SECTION_GAP } from '@/constants/textStyles';
+import Feather from '@expo/vector-icons/Feather';
 import { withPressed } from '@/lib/pressed';
 
 export interface SwipePage {
@@ -35,9 +37,9 @@ export interface SwipePage {
  * shrinks to however many of the three actually have anything to show —
  * and renders nothing at all if none do.
  *
- * The tabs sit in the section's heading slot (see HomeSection's `heading`),
- * so this card lines up with every other Home section instead of carrying
- * its own header row and page dots inside the card.
+ * The tabs are one pill track at the top of the card itself, with a white
+ * highlight that slides to the page you're on (the Home A sign-off), and a
+ * page with its own list elsewhere ends in a "See all" row.
  *
  * The card is as tall as the page you're on, not the tallest page: a
  * horizontally paged ScrollView otherwise stretches every page to the
@@ -67,6 +69,17 @@ export function HomeSwipeCard({ pages }: { pages: SwipePage[] }) {
       reduce || height.value === 0 ? targetHeight : withTiming(targetHeight, timing(MOTION.standard));
   }, [targetHeight, reduce, height]);
   const heightStyle = useAnimatedStyle(() => (height.value > 0 ? { height: height.value } : {}));
+  // The tab highlight slides to the active tab.
+  const [trackWidth, setTrackWidth] = useState(0);
+  const tabX = useSharedValue(0);
+  const tabCount = Math.max(1, pages.length);
+  const tabWidth = trackWidth > 0 ? (trackWidth - TRACK_PAD * 2) / tabCount : 0;
+  const shownIndex = Math.min(activeIndex, Math.max(0, pages.length - 1));
+  useEffect(() => {
+    const x = shownIndex * tabWidth;
+    tabX.value = reduce || tabWidth === 0 ? x : withTiming(x, timing(MOTION.standard));
+  }, [shownIndex, tabWidth, reduce, tabX]);
+  const highlightStyle = useAnimatedStyle(() => ({ transform: [{ translateX: tabX.value }] }));
 
   if (pages.length === 0) return null;
 
@@ -109,77 +122,115 @@ export function HomeSwipeCard({ pages }: { pages: SwipePage[] }) {
   const safeIndex = Math.min(activeIndex, pages.length - 1);
   const active = pages[safeIndex];
 
-  const tabs = (
-    <View style={styles.tabs} accessibilityRole="tablist">
-      {pages.map((p, i) => (
-        <Pressable
-          key={p.key}
-          onPress={() => goToPage(i)}
-          style={withPressed([styles.tab, i === safeIndex && styles.tabActive])}
-          accessibilityRole="tab"
-          accessibilityState={{ selected: i === safeIndex }}
-          accessibilityLabel={p.label}
-        >
-          <Text style={[styles.tabText, i === safeIndex && styles.tabTextActive]}>{p.label}</Text>
-        </Pressable>
-      ))}
-    </View>
-  );
-
   return (
-    <HomeSection title={active.label} heading={tabs} onSeeAll={active.onSeeAll}>
-      <ReanimatedAnimated.View
-        style={[homeStyles.card, heightStyle]}
-        onLayout={(e) => {
-          // Only set once — a width that keeps changing (e.g. a re-render
-          // with a slightly different measured value) would fight
-          // `goToPage`'s own scrollTo math mid-swipe.
-          if (cardWidth === 0) setCardWidth(e.nativeEvent.layout.width);
-        }}
-      >
-        {cardWidth > 0 && (
-          <ScrollView
-            ref={scrollRef}
-            horizontal
-            pagingEnabled
-            showsHorizontalScrollIndicator={false}
-            onScroll={onScroll}
-            scrollEventThrottle={16}
-            // Pages top-aligned: the card clips whatever is below the
-            // active page's own height.
-            contentContainerStyle={styles.pagesRow}
-          >
-            {pages.map((p) => (
-              <View key={p.key} style={{ width: cardWidth }}>
-                <View
-                  onLayout={(e) => {
-                    const h = Math.round(e.nativeEvent.layout.height);
-                    setPageHeights((prev) => (prev[p.key] === h ? prev : { ...prev, [p.key]: h }));
-                  }}
-                >
-                  {p.content}
+    <View style={styles.wrap}>
+      <View style={homeStyles.card}>
+        <View
+          style={styles.track}
+          accessibilityRole="tablist"
+          onLayout={(e) => setTrackWidth(e.nativeEvent.layout.width)}
+        >
+          {tabWidth > 0 && (
+            <ReanimatedAnimated.View style={[styles.highlight, { width: tabWidth }, highlightStyle]} />
+          )}
+          {pages.map((p, i) => (
+            <Pressable
+              key={p.key}
+              onPress={() => goToPage(i)}
+              style={withPressed(styles.tab)}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: i === safeIndex }}
+              accessibilityLabel={p.label}
+            >
+              <Text style={[styles.tabText, i === safeIndex && styles.tabTextActive]}>{p.label}</Text>
+            </Pressable>
+          ))}
+        </View>
+        <ReanimatedAnimated.View
+          style={heightStyle}
+          onLayout={(e) => {
+            if (cardWidth === 0) setCardWidth(e.nativeEvent.layout.width);
+          }}
+        >
+          {cardWidth > 0 && (
+            <ScrollView
+              ref={scrollRef}
+              horizontal
+              pagingEnabled
+              showsHorizontalScrollIndicator={false}
+              onScroll={onScroll}
+              scrollEventThrottle={16}
+              contentContainerStyle={styles.pagesRow}
+            >
+              {pages.map((p) => (
+                <View key={p.key} style={{ width: cardWidth }}>
+                  <View
+                    onLayout={(e) => {
+                      const h = Math.round(e.nativeEvent.layout.height);
+                      setPageHeights((prev) => (prev[p.key] === h ? prev : { ...prev, [p.key]: h }));
+                    }}
+                  >
+                    {p.content}
+                  </View>
                 </View>
-              </View>
-            ))}
-          </ScrollView>
+              ))}
+            </ScrollView>
+          )}
+        </ReanimatedAnimated.View>
+        {active.onSeeAll && (
+          <Pressable
+            onPress={active.onSeeAll}
+            style={withPressed(styles.seeAll)}
+            accessibilityRole="button"
+            accessibilityLabel={`See all ${active.label.toLowerCase()}`}
+          >
+            <Text style={styles.seeAllText}>See all {active.label.toLowerCase()}</Text>
+            <Feather name="arrow-right" size={13} color={theme.colors.textSecondary} />
+          </Pressable>
         )}
-      </ReanimatedAnimated.View>
-    </HomeSection>
+      </View>
+    </View>
   );
 }
 
+/** Space between the pill track's edge and its tabs. */
+const TRACK_PAD = 3;
+
 const styles = StyleSheet.create({
+  wrap: { marginTop: SECTION_GAP.top, marginHorizontal: 0 },
   pagesRow: { alignItems: 'flex-start' },
-  tabs: {
+  track: {
     flexDirection: 'row',
-    backgroundColor: theme.colors.surface,
+    margin: 12,
+    marginBottom: 4,
+    padding: TRACK_PAD,
     borderRadius: theme.radius.pill,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-    padding: 3,
+    backgroundColor: theme.colors.surfaceAlt,
   },
-  tab: { paddingHorizontal: 12, paddingVertical: 5, borderRadius: theme.radius.pill },
-  tabActive: { backgroundColor: theme.colors.ink },
-  tabText: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textSecondary },
-  tabTextActive: { fontFamily: theme.font.bodyBold, color: theme.colors.surface },
+  highlight: {
+    position: 'absolute',
+    top: TRACK_PAD,
+    bottom: TRACK_PAD,
+    left: TRACK_PAD,
+    borderRadius: theme.radius.pill,
+    backgroundColor: theme.colors.surface,
+    shadowColor: theme.colors.ink,
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 1 },
+    elevation: 1,
+  },
+  tab: { flex: 1, alignItems: 'center', paddingVertical: 7, borderRadius: theme.radius.pill },
+  tabText: { fontFamily: theme.font.roundedMedium, fontSize: 13, color: theme.colors.textSecondary },
+  tabTextActive: { color: theme.colors.textPrimary },
+  seeAll: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    paddingVertical: 11,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: theme.colors.borderSoft,
+  },
+  seeAllText: { fontFamily: theme.font.roundedMedium, fontSize: 12.5, color: theme.colors.textSecondary },
 });

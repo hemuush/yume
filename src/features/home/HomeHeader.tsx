@@ -21,7 +21,7 @@ import { theme } from '@/constants/theme';
 import { useAccent } from '@/theme/AccentContext';
 import { shade } from '@/lib/color';
 import { useReduceMotion } from '@/lib/useReduceMotion';
-import { ScallopedEdge } from '@/components/ScallopedEdge';
+import { HeaderHills } from './HeaderHills';
 import { YumeLogo } from '@/components/YumeLogo';
 import { HeaderIconButton, HeaderUserButton } from '@/components/AppHeader';
 import { PeriodCursor } from '@/lib/period';
@@ -122,7 +122,6 @@ export function Spark({
   );
 }
 
-const EDGE_HEIGHT = 14;
 // The collapsed band keeps just the brand row plus this much padding under it.
 const COLLAPSED_BOTTOM_PAD = 10;
 
@@ -171,7 +170,7 @@ export function HomeHeader({
   onPlayWrap?: (wrap: ReadyWrap) => void;
   children?: React.ReactNode;
 }) {
-  const { accent } = useAccent();
+  const { accent, secondary } = useAccent();
   const insets = useSafeAreaInsets();
   const gradientTop = shade(accent, 88, 4);
   const gradientBottom = shade(accent, 96, 2);
@@ -312,7 +311,7 @@ export function HomeHeader({
           {children}
         </ReanimatedAnimated.View>
       </View>
-      <ScallopedEdge color={gradientBottom} height={EDGE_HEIGHT} />
+      <HeaderHills sky={gradientBottom} primary={accent} secondary={secondary} />
     </ReanimatedAnimated.View>
   );
 }

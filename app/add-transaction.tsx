@@ -232,13 +232,13 @@ export default function AddTransactionScreen() {
   }, [categoryId, type, accounts, editingId]);
 
   /**
-   * Pre-selects what this entry type was last saved with. Anything that no
-   * longer fits is skipped rather than applied: an account that's gone (or a
-   * savings account for an expense/income, which can't hold one), or a
-   * category that's gone, archived, or the wrong kind. Skipped values fall
-   * back exactly as before this existed (first spendable account, no category).
+   * Pre-selects the account this entry type was last saved with, skipping one
+   * that no longer fits (gone, or a savings account for an expense/income,
+   * which can't hold one) — that falls back to the first spendable account.
+   * The category always starts empty: you pick what this entry is for, rather
+   * than correcting a guess from the last one.
    */
-  const applyDefaults = useCallback((t: EntryType, accs: Account[], cats: Category[]) => {
+  const applyDefaults = useCallback((t: EntryType, accs: Account[]) => {
     if (t === 'friend') return;
     const d = addDefaults.current;
     if (t === 'transfer') {
@@ -249,9 +249,7 @@ export default function AddTransactionScreen() {
     }
     const td = d[t];
     if (td && accs.some((a) => a.id === td.accountId && a.type !== 'savings')) setAccountId(td.accountId);
-    setCategoryId(
-      td?.categoryId && cats.some((c) => c.id === td.categoryId && c.kind === t) ? td.categoryId : null
-    );
+    setCategoryId(null);
   }, []);
 
   const load = useCallback(async () => {
@@ -286,7 +284,7 @@ export default function AddTransactionScreen() {
     } else if (!editingId && !seeded) {
       addDefaults.current = await getAddDefaults().catch(() => ({}));
       const startType = isTxType(initialType) ? initialType : 'expense';
-      applyDefaults(startType, accs, cats);
+      applyDefaults(startType, accs);
       // Wins over the remembered default — but only if it can actually take
       // this entry (a savings account can only be a transfer's "from").
       if (refundParam === '1') {
@@ -380,7 +378,7 @@ export default function AddTransactionScreen() {
     }
     // A new entry switches to what this type was last saved with; an edit
     // keeps its own values, exactly as before.
-    if (!editing) applyDefaults(next, accounts, categories);
+    if (!editing) applyDefaults(next, accounts);
   };
 
   const pickAccount = (id: string) => {
