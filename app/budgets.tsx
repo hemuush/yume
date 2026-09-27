@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
 import { View, ScrollView, Pressable, Alert } from 'react-native';
+import { MovingRow } from '@/components/MovingRow';
 import { Text } from '@/components/Text';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { listCategories } from '@/db/ledger';
@@ -29,6 +30,7 @@ import { useScreenLoad } from '@/lib/useScreenLoad';
 import { haptics } from '@/lib/haptics';
 import { BudgetRow } from '@/features/budgets/BudgetRow';
 import { AddBudgetModal } from '@/features/budgets/AddBudgetModal';
+import { router } from 'expo-router';
 import { styles } from '@/features/budgets/budgets.styles';
 
 export default function BudgetsScreen() {
@@ -109,6 +111,15 @@ export default function BudgetsScreen() {
 
   const manageItems: ActionSheetItem[] = manageTarget
     ? [
+        {
+          key: 'edit',
+          label: 'Edit limit',
+          icon: 'edit-2',
+          onPress: () => {
+            setEditingBudget(manageTarget);
+            setModalVisible(true);
+          },
+        },
         {
           key: 'delete',
           label: 'Delete',
@@ -204,16 +215,15 @@ export default function BudgetsScreen() {
           budgets.length > 0 && (
             <View style={styles.listCard}>
               {budgets.map((progress, i) => (
-                <BudgetRow
-                  key={progress.budget.id}
-                  progress={progress}
-                  divider={i > 0}
-                  onPress={() => {
-                    setEditingBudget(progress);
-                    setModalVisible(true);
-                  }}
-                  onLongPress={() => setManageTarget(progress)}
-                />
+                <MovingRow key={progress.budget.id}>
+                  <BudgetRow
+                    progress={progress}
+                    divider={i > 0}
+                    // The row opens its category's page; Edit and Delete are in ⋯.
+                    onPress={() => router.push(`/category/${progress.budget.categoryId}`)}
+                    onMore={() => setManageTarget(progress)}
+                  />
+                </MovingRow>
               ))}
             </View>
           )

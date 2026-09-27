@@ -1,5 +1,12 @@
 import { Transaction } from '@/types';
-import { sevenDaysEndingOn, previousRangeFor, groupByDate, periodHeading } from './transactions.helpers';
+import {
+  sevenDaysEndingOn,
+  previousRangeFor,
+  groupByDate,
+  periodHeading,
+  filterActivity,
+} from './transactions.helpers';
+import type { ActivityFilter } from './FilterModal';
 
 describe('Activity helpers', () => {
   it('builds the 7 days ending on the anchor, oldest first, across a month edge', () => {
@@ -79,5 +86,47 @@ describe('periodHeading', () => {
     expect(periodHeading({ scope: 'month', days: [], anchor: today, today, monthNames: MONTHS }).sub).toBe(
       ''
     );
+  });
+});
+
+describe('filterActivity', () => {
+  const tx = (
+    id: string,
+    type: 'expense' | 'income' | 'transfer',
+    accountId: string,
+    categoryId: string | null,
+    toAccountId: string | null = null
+  ) =>
+    ({ id, type, accountId, toAccountId, categoryId, amountMinor: 100, date: '2026-09-10', note: '' }) as any;
+  const cats = [
+    { id: 'food', parentId: null },
+    { id: 'zomato', parentId: 'food' },
+    { id: 'travel', parentId: null },
+  ] as any[];
+  const list = [
+    tx('lunch', 'expense', 'sbi', 'food'),
+    tx('order', 'expense', 'hdfc', 'zomato'),
+    tx('cab', 'expense', 'sbi', 'travel'),
+    tx('move', 'transfer', 'savings', null, 'sbi'),
+  ];
+  const none: ActivityFilter = { type: 'all', categoryIds: [], accountIds: [] };
+  const ids = (f: Partial<ActivityFilter>) => filterActivity(list, { ...none, ...f }, cats).map((t) => t.id);
+
+  it('keeps everything with no filter', () => {
+    expect(ids({})).toEqual(['lunch', 'order', 'cab', 'move']);
+  });
+
+  it('matches an account on either side of a transfer', () => {
+    expect(ids({ accountIds: ['sbi'] })).toEqual(['lunch', 'cab', 'move']);
+    expect(ids({ accountIds: ['savings'] })).toEqual(['move']);
+  });
+
+  it("matches a parent category's subcategories too", () => {
+    expect(ids({ categoryIds: ['food'] })).toEqual(['lunch', 'order']);
+  });
+
+  it('needs every kind of filter to match', () => {
+    expect(ids({ categoryIds: ['food'], accountIds: ['hdfc'] })).toEqual(['order']);
+    expect(ids({ type: 'transfer', accountIds: ['sbi'] })).toEqual(['move']);
   });
 });

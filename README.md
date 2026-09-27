@@ -7,18 +7,27 @@ with fully local backups and nothing sent to any server.
 
 ## Features
 
-- **Transactions** — expense/income/transfer entry with bulk backfill, search, and filters
+- **Transactions** — expense/income/transfer entry with a calculator keypad, "Your usual" one-tap
+  entries, a repeat-entry warning, bulk backfill, search (words or amounts), and filters by
+  category, account and type
 - **Accounts** — bank, cash, credit card and savings accounts, each with its own currency
 - **Loans** — EMI amortization, prepayments, rate changes, and a linked asset's tracked equity
-- **Budgets & savings goals** — monthly category limits and progress rings toward a target
-- **Recurring rules** — bills and regular transfers that post themselves on schedule
+- **Budgets & savings goals** — monthly category limits with a spending-pace marker and 80% / over
+  alerts; goals filled by hand or following a savings account's balance
+- **Recurring rules** — bills and regular transfers that post themselves on schedule, with a
+  monthly and yearly total and suggestions for subscriptions not set up yet
 - **People** — an informal ledger for money owed to or by friends and family, net of settlements
-- **Reports** — category breakdowns, a spend heatmap, and month-over-month comparisons
+- **Reports** — spending and income by category, a spend heatmap, month-over-month comparisons,
+  any custom date range (financial years included), and a page for each category
 - **Home-screen widgets** — live balances, this month's spend, next due bill, and a Suu check-in
 - **Exclusive themes** — a handful of named colour packs (see `src/theme/themes.ts`) alongside the
   default, switchable from Settings → Appearance
 - **App lock & privacy** — biometric/PIN lock (via whatever the phone itself is secured with) and a
   one-tap "hide amounts" toggle
+- **Needs you** — one list of what wants attention: EMIs due, budgets running hot, failed
+  backups, and things to tidy
+- **Tidy up** — finds likely duplicate entries and starting balances logged as income, each fix
+  undoable
 - **Suu** — the app's mascot, with a one-line nudge about how the month's going
 
 ## Why local-first
@@ -48,10 +57,12 @@ app/                    Screens (expo-router file-based routing)
   categories.tsx        Category management
   budgets.tsx           Monthly category budgets
   savings-goals.tsx     Savings goals and contributions
-  recurring.tsx         Recurring-transaction rules
+  recurring.tsx         Recurring-transaction rules, subscriptions and bills
+  category/[id].tsx     One category's page: total, budget, split, months, entries
+  tidy-up.tsx           Duplicates and starting balances to fix
   backup.tsx            Backup & restore (local folder, file export & restore)
   add-transaction.tsx   Unified add screen — single entry, bulk backfill, friend IOU
-  notifications.tsx / notification-settings.tsx   In-app feed + reminder prefs
+  notifications.tsx / notification-settings.tsx   Needs you (the full list) + reminder prefs
 src/
   db/                   All data access — schema, ledger, loans, people, recurring,
                         budgets, reports, settings (co-located *.test.ts integration tests)

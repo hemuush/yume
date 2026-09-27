@@ -70,6 +70,16 @@ export const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: theme.colors.border,
   },
+  moreBtn: {
+    width: 30,
+    height: 30,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.borderSoft,
+    backgroundColor: theme.colors.surface,
+  },
   rowLabel: { fontFamily: theme.font.bodyMedium, fontSize: 14, color: theme.colors.textPrimary },
   rowSub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, marginTop: 2 },
   avatar: {
@@ -99,8 +109,6 @@ export const styles = StyleSheet.create({
     marginTop: 4,
   },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 8 },
-  dateFieldsRow: { flexDirection: 'row', gap: 10 },
-  dateFieldInput: { flex: 1, textAlign: 'center' },
   hintText: {
     fontFamily: theme.font.body,
     fontSize: 12,

@@ -4,9 +4,7 @@ import { ModalSheet } from '@/components/ModalSheet';
 import { Amount } from '@/components/Amount';
 import { CategoryIcon } from '@/components/CategoryIcon';
 import { SuuIllustration } from '@/components/SuuIllustration';
-import { CategoryBreakdownItem } from '@/db/reports';
 import { Category, Transaction } from '@/types';
-import { formatMoney } from '@/lib/money';
 import { parseLocalIsoDate } from '@/lib/date';
 import { theme } from '@/constants/theme';
 import { DayTotal } from './DayTotal';
@@ -36,54 +34,6 @@ function SheetBody<T>({
       </View>
     );
   return <>{children(items)}</>;
-}
-
-/** A category with subcategories: its split for the period. `items` is null while loading. */
-export function SubcategorySheet({
-  title,
-  items,
-  onClose,
-}: {
-  title: string | null;
-  items: CategoryBreakdownItem[] | null;
-  onClose: () => void;
-}) {
-  return (
-    <ModalSheet
-      visible={title != null}
-      onClose={onClose}
-      variant="center"
-      showClose
-      scrollable={false}
-      title={title ?? undefined}
-      footer={
-        items && items.length > 0 ? (
-          <View style={styles.dayTotalRow}>
-            <Text style={styles.dayTotalLabel}>Total</Text>
-            <Text style={styles.dayTotalValue}>
-              {formatMoney(items.reduce((s, c) => s + c.totalMinor, 0))}
-            </Text>
-          </View>
-        ) : undefined
-      }
-    >
-      <SheetBody items={items} emptyText="Nothing logged here this period." suuSize={64}>
-        {(list) =>
-          list.map((c, i) => (
-            <View key={c.categoryId} style={[styles.dayRow, i === 0 && styles.dayRowFirst]}>
-              <View style={[styles.catDot, { backgroundColor: c.color }]} />
-              <View style={styles.dayMid}>
-                <Text style={styles.dayName} numberOfLines={1}>
-                  {c.name}
-                </Text>
-              </View>
-              <Amount minor={c.totalMinor} sensitive={c.isSensitive} style={styles.dayAmt} />
-            </View>
-          ))
-        }
-      </SheetBody>
-    </ModalSheet>
-  );
 }
 
 /** One heatmap day's transactions. `txs` is null while loading. */
@@ -147,55 +97,6 @@ export function DaySheet({
               </View>
             );
           })
-        }
-      </SheetBody>
-    </ModalSheet>
-  );
-}
-
-/** A category without subcategories: its transactions for the period. `txs` is null while loading. */
-export function CategoryTxSheet({
-  category,
-  txs,
-  onClose,
-}: {
-  category: { name: string; isSensitive: boolean } | null;
-  txs: Transaction[] | null;
-  onClose: () => void;
-}) {
-  return (
-    <ModalSheet
-      visible={category != null}
-      onClose={onClose}
-      variant="center"
-      showClose
-      scrollable={false}
-      title={category?.name}
-      subtitle={txCount(txs)}
-      footer={txs && txs.length > 0 ? <DayTotal txs={txs} /> : undefined}
-    >
-      <SheetBody items={txs} emptyText="Nothing logged in this category this period." suuSize={72}>
-        {(list) =>
-          list.map((tx, i) => (
-            <View key={tx.id} style={[styles.dayRow, i === 0 && styles.dayRowFirst]}>
-              <View style={styles.dayMid}>
-                <Text style={styles.dayName} numberOfLines={1}>
-                  {parseLocalIsoDate(tx.date).toLocaleDateString(undefined, {
-                    day: 'numeric',
-                    month: 'short',
-                  })}
-                </Text>
-                {tx.note ? (
-                  <Text style={styles.daySub} numberOfLines={1}>
-                    {tx.note}
-                  </Text>
-                ) : null}
-              </View>
-              <Text style={[styles.dayAmt, { color: theme.colors.idCoralDeep }]}>
-                −<Amount minor={tx.amountMinor} sensitive={category?.isSensitive} />
-              </Text>
-            </View>
-          ))
         }
       </SheetBody>
     </ModalSheet>

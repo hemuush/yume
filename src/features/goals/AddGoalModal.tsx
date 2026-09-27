@@ -3,14 +3,15 @@ import { View } from 'react-native';
 import { Text } from '@/components/Text';
 import { createSavingsGoal } from '@/db/savingsGoals';
 import { toMinor } from '@/lib/money';
-import { partsToIsoDate } from '@/lib/date';
+import { toLocalIsoDate, addMonthsToIsoDate } from '@/lib/date';
+import { DateField } from '@/components/DateField';
 import { Account } from '@/types';
 import { ModalSheet } from '@/components/ModalSheet';
 import { modalFooterStyles as f } from '@/constants/theme';
 import { FormInput } from '@/components/FormInput';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { ToggleSwitch } from '@/components/ToggleSwitch';
-import { Chip } from '@/components/Chip';
+import { GoalAccountField } from './GoalAccountField';
 import { styles } from './goals.styles';
 
 export function AddGoalModal({
@@ -24,14 +25,13 @@ export function AddGoalModal({
   onClose: () => void;
   onCreated: () => void;
 }) {
-  const today = new Date();
+  const today = toLocalIsoDate(new Date());
   const [name, setName] = useState('');
   const [target, setTarget] = useState('');
   const [hasTargetDate, setHasTargetDate] = useState(false);
-  const [day, setDay] = useState(String(today.getDate()));
-  const [month, setMonth] = useState(String(today.getMonth() + 1));
-  const [year, setYear] = useState(String(today.getFullYear() + 1));
+  const [targetDateValue, setTargetDateValue] = useState(() => addMonthsToIsoDate(today, 12));
   const [linkedAccountId, setLinkedAccountId] = useState<string | null>(null);
+  const [tracksAccount, setTracksAccount] = useState(false);
   const [noteToSelf, setNoteToSelf] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -41,14 +41,20 @@ export function AddGoalModal({
     setName('');
     setTarget('');
     setHasTargetDate(false);
-    setDay(String(today.getDate()));
-    setMonth(String(today.getMonth() + 1));
-    setYear(String(today.getFullYear() + 1));
+    setTargetDateValue(addMonthsToIsoDate(today, 12));
     setLinkedAccountId(null);
+    setTracksAccount(false);
     setNoteToSelf('');
     setError(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible]);
+
+  // A savings account is almost always where a goal's money really sits,
+  // so picking one starts on Follow; any other account starts by hand.
+  const pickAccount = (id: string | null) => {
+    setLinkedAccountId(id);
+    setTracksAccount(accounts.find((a) => a.id === id)?.type === 'savings');
+  };
 
   const submit = async () => {
     setError(null);
@@ -61,14 +67,7 @@ export function AddGoalModal({
       setError('Enter a valid target amount');
       return;
     }
-    let targetDate: string | null = null;
-    if (hasTargetDate) {
-      targetDate = partsToIsoDate(year, month, day);
-      if (!targetDate) {
-        setError('Enter a valid target date');
-        return;
-      }
-    }
+    const targetDate = hasTargetDate ? targetDateValue : null;
     setSaving(true);
     try {
       await createSavingsGoal({
@@ -76,6 +75,7 @@ export function AddGoalModal({
         targetAmountMinor,
         targetDate,
         linkedAccountId,
+        tracksAccount,
         noteToSelf,
       });
       onCreated();
@@ -120,60 +120,21 @@ export function AddGoalModal({
         <ToggleSwitch value={hasTargetDate} onChange={setHasTargetDate} />
       </View>
       {hasTargetDate && (
-        <View style={styles.dateFieldsRow}>
-          <View style={{ flex: 1 }}>
-            <FormInput
-              label="Day"
-              value={day}
-              onChangeText={setDay}
-              keyboardType="numeric"
-              placeholder="DD"
-              style={styles.dateFieldInput}
-            />
-          </View>
-          <View style={{ flex: 1 }}>
-            <FormInput
-              label="Month"
-              value={month}
-              onChangeText={setMonth}
-              keyboardType="numeric"
-              placeholder="MM"
-              style={styles.dateFieldInput}
-            />
-          </View>
-          <View style={{ flex: 1.3 }}>
-            <FormInput
-              label="Year"
-              value={year}
-              onChangeText={setYear}
-              keyboardType="numeric"
-              placeholder="YYYY"
-              style={styles.dateFieldInput}
-            />
-          </View>
-        </View>
+        <DateField
+          label="Target date"
+          value={targetDateValue}
+          onChange={setTargetDateValue}
+          minDate={today}
+        />
       )}
 
-      {accounts.length > 0 && (
-        <>
-          <Text style={styles.fieldLabel}>Keeping it in (optional)</Text>
-          <View style={styles.chipRow}>
-            <Chip label="None" active={linkedAccountId === null} onPress={() => setLinkedAccountId(null)} />
-            {accounts.map((a) => (
-              <Chip
-                key={a.id}
-                label={a.name}
-                active={linkedAccountId === a.id}
-                onPress={() => setLinkedAccountId(a.id)}
-              />
-            ))}
-          </View>
-          <Text style={styles.modalHint}>
-            Just a label for where this money actually sits — adding to this goal never touches the account's
-            own balance.
-          </Text>
-        </>
-      )}
+      <GoalAccountField
+        accounts={accounts}
+        accountId={linkedAccountId}
+        tracks={tracksAccount}
+        onChangeAccount={pickAccount}
+        onChangeTracks={setTracksAccount}
+      />
 
       <FormInput
         label="Why this goal? (optional)"

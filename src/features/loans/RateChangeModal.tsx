@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { View } from 'react-native';
 import { Text } from '@/components/Text';
 import { applyRateChange } from '@/db/loans';
@@ -10,7 +10,8 @@ import { SegmentedControl } from '@/components/SegmentedControl';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { ModalSheet } from '@/components/ModalSheet';
 import { modalFooterStyles as f } from '@/constants/theme';
-import { partsToIsoDate } from '@/lib/date';
+import { toLocalIsoDate } from '@/lib/date';
+import { DateField } from '@/components/DateField';
 import { styles } from './loans.styles';
 
 const RATE_CHANGE_MODES: { label: string; value: 'keepEmi' | 'keepTenure' }[] = [
@@ -29,7 +30,6 @@ export function RateChangeModal({
   onClose: () => void;
   onDone: () => void;
 }) {
-  const today = useMemo(() => new Date(), []);
   const [newRate, setNewRate] = useState((loan.interestRateAnnualBp / 100).toString());
   // Real lenders always offer both — reduce/raise the EMI and keep the same
   // payoff date, or keep the EMI exactly as-is and let the remaining tenure
@@ -39,9 +39,7 @@ export function RateChangeModal({
   // took effect earlier — a floating rate reset the bank applied two
   // statements ago, only now being entered into Yume, had nowhere to
   // record when it really happened.
-  const [effYear, setEffYear] = useState(String(today.getFullYear()));
-  const [effMonth, setEffMonth] = useState(String(today.getMonth() + 1));
-  const [effDay, setEffDay] = useState(String(today.getDate()));
+  const [effectiveDate, setEffectiveDate] = useState(() => toLocalIsoDate(new Date()));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -55,11 +53,6 @@ export function RateChangeModal({
     setError(null);
     if (!Number.isFinite(rateBp) || rateBp < 0) {
       setError('Enter a valid interest rate');
-      return;
-    }
-    const effectiveDate = partsToIsoDate(effYear, effMonth, effDay);
-    if (!effectiveDate) {
-      setError('Enter a valid effective date');
       return;
     }
     setSaving(true);
@@ -103,39 +96,7 @@ export function RateChangeModal({
         keyboardType="numeric"
         placeholder="e.g. 9.75"
       />
-      <Text style={styles.fieldLabel}>Effective from</Text>
-      <View style={styles.dateFieldsRow}>
-        <View style={{ flex: 1 }}>
-          <FormInput
-            label="Day"
-            value={effDay}
-            onChangeText={setEffDay}
-            keyboardType="numeric"
-            placeholder="DD"
-            style={styles.dateFieldInput}
-          />
-        </View>
-        <View style={{ flex: 1 }}>
-          <FormInput
-            label="Month"
-            value={effMonth}
-            onChangeText={setEffMonth}
-            keyboardType="numeric"
-            placeholder="MM"
-            style={styles.dateFieldInput}
-          />
-        </View>
-        <View style={{ flex: 1.3 }}>
-          <FormInput
-            label="Year"
-            value={effYear}
-            onChangeText={setEffYear}
-            keyboardType="numeric"
-            placeholder="YYYY"
-            style={styles.dateFieldInput}
-          />
-        </View>
-      </View>
+      <DateField label="Effective from" value={effectiveDate} onChange={setEffectiveDate} pastFacing />
       <Text style={styles.hintText}>
         Defaults to today — change it if your bank actually applied this rate change earlier and you're only
         entering it now. This doesn't rewrite already-paid installments; it only affects which ones are still

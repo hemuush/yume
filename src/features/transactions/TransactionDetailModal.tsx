@@ -1,7 +1,15 @@
-import { useEffect, useState } from 'react';
-import { View, Alert } from 'react-native';
+import { useEffect, useMemo, useState } from 'react';
+import { View, Alert, Pressable } from 'react-native';
+import Feather from '@expo/vector-icons/Feather';
+import { router } from 'expo-router';
 import { Text } from '@/components/Text';
-import { deleteTransaction, restoreTransaction, getTransactionLink, TransactionLink } from '@/db/ledger';
+import {
+  createTransaction,
+  deleteTransaction,
+  restoreTransaction,
+  getTransactionLink,
+  TransactionLink,
+} from '@/db/ledger';
 import { undoInstallmentPayment } from '@/db/loans';
 import { undoPersonTransaction } from '@/db/people';
 import { Account, Category, Transaction } from '@/types';
@@ -12,6 +20,9 @@ import { ModalSheet } from '@/components/ModalSheet';
 import { theme, modalFooterStyles as f } from '@/constants/theme';
 import { useUndoToast } from '@/components/UndoToast';
 import { haptics } from '@/lib/haptics';
+import { emitTransactionsChanged } from '@/lib/dataEvents';
+import { toLocalIsoDate, nextMonthlyDateAfter } from '@/lib/date';
+import { RuleModal } from '@/features/recurring/RuleModal';
 import { styles } from './transactions.styles';
 
 export function TransactionDetailModal({
@@ -32,6 +43,23 @@ export function TransactionDetailModal({
   const { show: showUndo } = useUndoToast();
   const [link, setLink] = useState<TransactionLink | undefined>(undefined);
   const [busy, setBusy] = useState(false);
+  const [ruleOpen, setRuleOpen] = useState(false);
+
+  // "Make it recurring": the same entry, monthly, from its next same day of
+  // the month still ahead. Memoised — the rule form resets whenever this changes.
+  const rulePrefill = useMemo(() => {
+    if (!tx) return undefined;
+    const next = nextMonthlyDateAfter(tx.date, toLocalIsoDate(new Date()));
+    return {
+      type: tx.type,
+      accountId: tx.accountId,
+      toAccountId: tx.toAccountId,
+      categoryId: tx.categoryId,
+      amountMinor: tx.amountMinor,
+      note: tx.note,
+      nextRunDate: next,
+    };
+  }, [tx]);
 
   useEffect(() => {
     if (!tx) {
@@ -48,6 +76,34 @@ export function TransactionDetailModal({
 
   const cat = categories.find((c) => c.id === tx.categoryId);
   const accountName = (id: string) => accounts.find((a) => a.id === id)?.name ?? '—';
+
+  /** Saves the same entry for today, with an undo — like ↻ Repeat on Add. */
+  const logAgainToday = async () => {
+    setBusy(true);
+    try {
+      const again = await createTransaction({
+        type: tx.type,
+        accountId: tx.accountId,
+        toAccountId: tx.toAccountId,
+        categoryId: tx.categoryId,
+        amountMinor: tx.amountMinor,
+        date: toLocalIsoDate(new Date()),
+        note: tx.note,
+      });
+      haptics.confirm();
+      emitTransactionsChanged();
+      onChanged();
+      showUndo('Logged again for today', async () => {
+        await deleteTransaction(again.id);
+        emitTransactionsChanged();
+        onChanged();
+      });
+    } catch (e: any) {
+      Alert.alert('Could not log it', String(e?.message ?? e));
+    } finally {
+      setBusy(false);
+    }
+  };
 
   const confirmDelete = async () => {
     setBusy(true);
@@ -169,6 +225,39 @@ export function TransactionDetailModal({
       </Text>
       {!!tx.note && <Text style={styles.detailNote}>{tx.note}</Text>}
 
+      {cat && tx.type !== 'transfer' && (
+        <Pressable
+          onPress={() => {
+            onClose();
+            router.push(`/category/${cat.id}`);
+          }}
+          style={styles.detailLink}
+          accessibilityRole="button"
+        >
+          <Text style={styles.detailLinkText}>See everything in {cat.name}</Text>
+          <Feather name="chevron-right" size={14} color={theme.colors.textSecondary} />
+        </Pressable>
+      )}
+
+      {link === null && (
+        <View style={styles.detailActions}>
+          <PrimaryButton
+            title="Log again today"
+            variant="secondary"
+            onPress={logAgainToday}
+            disabled={busy}
+            style={styles.detailAction}
+          />
+          <PrimaryButton
+            title="Make it recurring"
+            variant="secondary"
+            onPress={() => setRuleOpen(true)}
+            disabled={busy}
+            style={styles.detailAction}
+          />
+        </View>
+      )}
+
       {link === undefined ? (
         <Text style={styles.hintText}>Checking...</Text>
       ) : link === null ? null : link.kind === 'loan' ? (
@@ -196,6 +285,19 @@ export function TransactionDetailModal({
           This is a loan disbursement or prepayment — editing isn't supported yet.
         </Text>
       )}
+      <RuleModal
+        visible={ruleOpen}
+        editing={null}
+        accounts={accounts}
+        categories={categories}
+        prefill={rulePrefill}
+        onClose={() => setRuleOpen(false)}
+        onSaved={() => {
+          setRuleOpen(false);
+          haptics.confirm();
+        }}
+        onDeleted={() => setRuleOpen(false)}
+      />
     </ModalSheet>
   );
 }

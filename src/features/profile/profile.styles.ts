@@ -1,15 +1,15 @@
 import { StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
+import { HOME } from '@/features/home/homeStyles';
 
-// Shared by the merged Profile screen (its shell, YouSection, and
-// SettingsSection) and the account modals (AddAccountModal,
-// AccountDetailModal). SettingsSection's own keys (group/row/swatch/about/
-// picker*) were folded in from the old standalone settings.tsx — same
-// values, nothing restyled.
+// Shared by the Profile screen (its shell, YouSection, and SettingsSection)
+// and the account modals (AddAccountModal, AccountDetailModal). Cards, rows
+// and section headings come from Home's one visual system (homeStyles,
+// HomeSection); these are only what Profile adds on top.
 export const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
   errorBanner: {
-    marginHorizontal: 20,
+    marginHorizontal: HOME.gutter,
     marginBottom: 12,
     padding: 14,
     borderRadius: theme.radius.md,
@@ -25,30 +25,34 @@ export const styles = StyleSheet.create({
     marginTop: 3,
     lineHeight: 16,
   },
-  identity: { alignItems: 'center', paddingHorizontal: 20, paddingBottom: 8 },
+
+  // ---- identity: avatar beside name and member since ----
+  identity: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    paddingHorizontal: HOME.gutter,
+    paddingTop: 8,
+    paddingBottom: 4,
+  },
+  identityText: { flex: 1, minWidth: 0 },
   avatar: {
-    width: 76,
-    height: 76,
-    borderRadius: 38,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
+    width: 58,
+    height: 58,
+    borderRadius: 29,
     alignItems: 'center',
     justifyContent: 'center',
     // Without this, a circular View's coloured background can render
     // clipped to a stale layout measurement on Android (the classic
-    // "half-circle avatar" symptom) rather than the declared 76×76 size —
-    // a real bug, not a styling choice.
+    // "half-circle avatar" symptom) rather than the declared size.
     overflow: 'hidden',
   },
-  avatarInitial: { fontFamily: theme.font.roundedBold, fontSize: 30 },
-  nameRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 12 },
-  name: { fontFamily: theme.font.roundedBold, fontSize: 20, color: theme.colors.textPrimary },
+  avatarInitial: { fontFamily: theme.font.roundedBold, fontSize: 24 },
+  nameRow: { flexDirection: 'row', alignItems: 'center', gap: 8, alignSelf: 'flex-start', maxWidth: '100%' },
+  name: { fontFamily: theme.font.roundedBold, fontSize: 21, color: theme.colors.textPrimary, flexShrink: 1 },
   nameEditRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    alignSelf: 'stretch',
-    marginTop: 12,
-    marginHorizontal: 20,
     backgroundColor: theme.colors.surface,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
@@ -57,87 +61,208 @@ export const styles = StyleSheet.create({
   },
   nameInput: {
     flex: 1,
-    paddingVertical: 10,
+    paddingVertical: 8,
     fontFamily: theme.font.bodyMedium,
     fontSize: 15,
     color: theme.colors.textPrimary,
   },
   nameSave: { paddingLeft: 10 },
-  memberSince: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, marginTop: 4 },
+  memberSince: { fontFamily: theme.font.body, fontSize: 12.5, color: theme.colors.textMuted, marginTop: 2 },
+  // SegmentedControl draws its own pill; this only places it.
+  tabWrap: { marginHorizontal: HOME.gutter, marginTop: 16 },
 
-  netWorthCard: { marginHorizontal: 20, marginTop: 16, padding: 16 },
-  netWorthLabel: {
+  // ---- You: tracked balance as a sum ----
+  balanceCard: { marginTop: 18 },
+  balanceHead: { paddingHorizontal: 16, paddingTop: 16 },
+  balanceLabel: {
     fontFamily: theme.font.bodyBold,
-    fontSize: 10.5,
+    fontSize: 11,
     color: theme.colors.textMuted,
-    letterSpacing: 0.6,
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
   },
-  // Profile's one hero number — the only place on this screen mono shows
-  // up, matching the "rationed to one big figure per screen" rule.
-  netWorthValue: {
+  // Profile's one hero number — the only big mono figure on this screen.
+  balanceValue: {
     fontFamily: theme.font.monoBold,
-    fontSize: 26,
+    fontSize: 27,
     color: theme.colors.textPrimary,
-    marginTop: 4,
+    marginTop: 2,
   },
-  netWorthHint: { fontFamily: theme.font.body, fontSize: 11.5, color: theme.colors.textMuted, marginTop: 4 },
-
-  statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, paddingHorizontal: 20, marginTop: 12 },
-  statCell: {
-    flexGrow: 1,
-    flexBasis: '45%',
+  sumLines: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 12, gap: 6 },
+  sumLine: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  sumKey: { width: 10, height: 10, borderRadius: 3 },
+  sumLabel: { flex: 1, fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textSecondary },
+  sumValue: { fontFamily: theme.font.monoBold, fontSize: 13, color: theme.colors.textPrimary },
+  balanceHint: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    padding: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: theme.colors.borderSoft,
   },
-  statText: { flex: 1, minWidth: 0 },
-  statValue: { fontFamily: theme.font.roundedBold, fontSize: 16, color: theme.colors.textPrimary },
-  statLabel: {
-    fontFamily: theme.font.bodyBold,
-    fontSize: 9.5,
-    color: theme.colors.textMuted,
-    marginTop: 1,
-    letterSpacing: 0.5,
+  balanceHintWarn: { backgroundColor: theme.colors.idGold },
+  balanceHintText: {
+    flex: 1,
+    fontFamily: theme.font.body,
+    fontSize: 12,
+    lineHeight: 16,
+    color: theme.colors.textSecondary,
   },
+  stats: {
+    flexDirection: 'row',
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: theme.colors.borderSoft,
+  },
+  stat: { flex: 1, alignItems: 'center', paddingVertical: 11 },
+  statDivider: { borderLeftWidth: StyleSheet.hairlineWidth, borderLeftColor: theme.colors.borderSoft },
+  statValue: { fontFamily: theme.font.roundedBold, fontSize: 18, color: theme.colors.textPrimary },
+  statLabel: { fontFamily: theme.font.bodyMedium, fontSize: 11, color: theme.colors.textMuted },
 
-  gardenLink: {
+  // ---- You: accounts ----
+  cardFoot: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    marginHorizontal: 20,
-    marginTop: 12,
+    justifyContent: 'space-between',
+    paddingHorizontal: 14,
+    paddingVertical: 11,
+  },
+  cardFootLabel: { fontFamily: theme.font.body, fontSize: 12.5, color: theme.colors.textMuted },
+  cardFootValue: { fontFamily: theme.font.monoBold, fontSize: 13.5, color: theme.colors.textPrimary },
+  archivedCard: { marginTop: 10 },
+  archivedDim: { opacity: 0.6 },
+  planLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginHorizontal: HOME.gutter,
+    marginTop: 14,
     backgroundColor: theme.colors.secondaryTint,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.secondary,
-    borderRadius: theme.radius.lg,
-    padding: 13,
+    borderRadius: theme.radius.xl2,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
   },
-  gardenLinkText: { flex: 1, fontFamily: theme.font.roundedMedium, fontSize: 13, color: theme.colors.ink },
+  planLinkIcon: { width: 32, height: 32, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  planLinkText: { flex: 1, fontFamily: theme.font.roundedMedium, fontSize: 13.5, color: theme.colors.ink },
 
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginHorizontal: 20,
-    marginTop: 22,
-    marginBottom: 4,
+  // ---- Settings: at a glance ----
+  glanceRow: { flexDirection: 'row', gap: 8, marginHorizontal: HOME.gutter, marginTop: 18 },
+  glanceTile: {
+    flex: 1,
+    minWidth: 0,
+    gap: 3,
+    padding: 10,
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.radius.lg,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.borderSoft,
   },
-  accountCardWrap: { marginHorizontal: 20, marginTop: 10 },
-  accountCard: { padding: 16, borderRadius: theme.radius.xl2 },
-  accountCardInner: { flexDirection: 'row', alignItems: 'center' },
-  accountName: { fontSize: 16, fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
-  accountType: {
+  glanceIcon: {
+    width: 24,
+    height: 24,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 2,
+  },
+  glanceTitle: { fontFamily: theme.font.bodyBold, fontSize: 12.5, color: theme.colors.textPrimary },
+  glanceSub: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textMuted },
+
+  // ---- Settings: rows ----
+  rowValue: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textSecondary },
+  // Opens in place under the row that opened it, inside the same card.
+  accordionBody: {
+    paddingHorizontal: 14,
+    paddingTop: 12,
+    paddingBottom: 12,
+    backgroundColor: theme.colors.surfaceAlt,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: theme.colors.borderSoft,
+  },
+  pickerHint: {
+    fontFamily: theme.font.body,
+    fontSize: 12.5,
+    color: theme.colors.textMuted,
+    lineHeight: 18,
+    marginBottom: 6,
+  },
+  pickerRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 11 },
+  codeBubble: {
+    width: 44,
+    height: 30,
+    borderRadius: 9,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.borderSoft,
+    backgroundColor: theme.colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  codeText: { fontFamily: theme.font.bodyBold, fontSize: 11, color: theme.colors.ink },
+  // Compact Save/Clear pair inside the daily-spending-goal accordion —
+  // smaller than the full-width PrimaryButton used in modal footers, since
+  // this sits inline inside a settings row, not its own screen.
+  dailyGoalBtnRow: { flexDirection: 'row', gap: 8, marginTop: 2 },
+  dailyGoalBtn: { flex: 1, borderRadius: theme.radius.pill, paddingVertical: 9, alignItems: 'center' },
+  dailyGoalBtnPrimary: { backgroundColor: theme.colors.ink },
+  dailyGoalBtnPrimaryText: {
+    fontFamily: theme.font.roundedBold,
+    fontSize: 12.5,
+    color: theme.colors.surface,
+  },
+  dailyGoalBtnGhost: {
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.borderSoft,
+    backgroundColor: theme.colors.surface,
+  },
+  dailyGoalBtnGhostText: {
+    fontFamily: theme.font.roundedMedium,
+    fontSize: 12.5,
+    color: theme.colors.textMuted,
+  },
+
+  // ---- Settings: theme swatches ----
+  themeCaption: {
     fontFamily: theme.font.body,
     fontSize: 12,
     color: theme.colors.textMuted,
-    marginTop: 2,
-    textTransform: 'capitalize',
+    paddingHorizontal: 14,
+    paddingTop: 12,
   },
-  accountBalance: { fontSize: 16, fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
-  negative: { color: theme.colors.expense },
-  archivedCard: { opacity: 0.6 },
+  themeStrip: { gap: 6, paddingHorizontal: 10, paddingTop: 10, paddingBottom: 12 },
+  themeOption: { width: 64, alignItems: 'center', gap: 5 },
+  themeRing: { padding: 3, borderRadius: 28, borderWidth: 2, borderColor: 'transparent' },
+  themeRingActive: { borderColor: theme.colors.ink },
+  themeSwatch: { width: 44, height: 44, borderRadius: 22, overflow: 'hidden', flexDirection: 'row' },
+  themeSwatchHalf: { flex: 1 },
+  themeName: {
+    fontFamily: theme.font.bodyMedium,
+    fontSize: 10.5,
+    lineHeight: 13,
+    color: theme.colors.textSecondary,
+    textAlign: 'center',
+  },
+  themeNameActive: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
 
+  // ---- Settings: about ----
+  aboutCard: { padding: 14, gap: 12 },
+  aboutTop: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  aboutName: { fontFamily: theme.font.roundedBold, fontSize: 18, color: theme.colors.textPrimary },
+  aboutTagline: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, marginTop: 1 },
+  aboutVersion: { fontFamily: theme.font.monoBold, fontSize: 11, color: theme.colors.textMuted },
+  aboutFacts: { gap: 8 },
+  aboutFactRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
+  aboutFactText: {
+    flex: 1,
+    fontFamily: theme.font.body,
+    fontSize: 12.5,
+    color: theme.colors.textSecondary,
+    lineHeight: 17,
+  },
+
+  // ---- account modals ----
   fieldLabel: {
     fontSize: 10.5,
     fontFamily: theme.font.roundedMedium,
@@ -164,164 +289,4 @@ export const styles = StyleSheet.create({
     marginBottom: 8,
   },
   deleteButton: { backgroundColor: theme.colors.expenseTint, borderColor: theme.colors.expense },
-
-  // ---- "You" / "Settings" segmented control, right below identity ----
-  // SegmentedControl already draws its own pill/background — this just adds
-  // the horizontal margin every other section on this screen has, which the
-  // component itself has no opinion about.
-  tabWrap: { marginHorizontal: 20, marginBottom: 6 },
-
-  // ---- YouSection section headers — matches Home's HomeSection heading, not
-  // the colored SectionLabel pill, so the two screens read as one screen
-  // when Budgets/Savings Goals appear on both (design sign-off: "one header
-  // style, everywhere"). SectionLabel itself is kept only for the quieter
-  // "ARCHIVED ACCOUNTS" row further down.
-  sectionTitle: { fontFamily: theme.font.roundedBold, fontSize: 16, color: theme.colors.textPrimary },
-  // ---- SettingsSection (formerly settings.tsx's own StyleSheet) ----
-  groupTitle: {
-    fontFamily: theme.font.bodyBold,
-    fontSize: 11.5,
-    color: theme.colors.textMuted,
-    textTransform: 'uppercase',
-    letterSpacing: 0.7,
-    marginHorizontal: 20,
-    marginTop: 22,
-    marginBottom: 8,
-  },
-  group: {
-    marginHorizontal: 20,
-    backgroundColor: theme.colors.surface,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-    borderRadius: theme.radius.lg,
-    overflow: 'hidden',
-  },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 14, paddingVertical: 13 },
-  rowDivider: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: theme.colors.borderSoft },
-  rowText: { flex: 1, minWidth: 0 },
-  rowLabel: { fontFamily: theme.font.bodyMedium, fontSize: 14.5, color: theme.colors.textPrimary },
-  rowSub: {
-    fontFamily: theme.font.body,
-    fontSize: 11.5,
-    color: theme.colors.textMuted,
-    marginTop: 2,
-    lineHeight: 16,
-  },
-  rowValue: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textSecondary },
-
-  // The theme picker — one row per pack, each showing its primary/secondary
-  // pair as a split-circle swatch. Replaced the old free-colour swatch grid;
-  // see AccentContext/theme/themes.ts.
-  themeList: { padding: 14, paddingTop: 12, gap: 8 },
-  themeCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    padding: 10,
-    borderRadius: theme.radius.lg,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-    backgroundColor: theme.colors.surface,
-  },
-  themeCardActive: { borderColor: theme.colors.ink },
-  themeSwatch: { width: 38, height: 38, borderRadius: 11, overflow: 'hidden', flexDirection: 'row' },
-  themeSwatchHalf: { flex: 1, height: '100%' },
-  themeInfo: { flex: 1, minWidth: 0 },
-  themeName: { fontFamily: theme.font.roundedMedium, fontSize: 13.5, color: theme.colors.textPrimary },
-  themeSub: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textMuted, marginTop: 1 },
-  themeCheck: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    backgroundColor: theme.colors.ink,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
-  // Compact Save/Clear pair inside the daily-spending-goal accordion —
-  // deliberately smaller than the full-width PrimaryButton used in modal
-  // footers, since this sits inline inside a settings row, not its own screen.
-  dailyGoalBtnRow: { flexDirection: 'row', gap: 8, marginTop: 2 },
-  dailyGoalBtn: { flex: 1, borderRadius: theme.radius.pill, paddingVertical: 9, alignItems: 'center' },
-  dailyGoalBtnPrimary: { backgroundColor: theme.colors.ink },
-  dailyGoalBtnPrimaryText: {
-    fontFamily: theme.font.roundedBold,
-    fontSize: 12.5,
-    color: theme.colors.surface,
-  },
-  dailyGoalBtnGhost: {
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-    backgroundColor: 'transparent',
-  },
-  dailyGoalBtnGhostText: {
-    fontFamily: theme.font.roundedMedium,
-    fontSize: 12.5,
-    color: theme.colors.textMuted,
-  },
-
-  pickerHint: {
-    fontFamily: theme.font.body,
-    fontSize: 12.5,
-    color: theme.colors.textMuted,
-    lineHeight: 18,
-    marginBottom: 12,
-  },
-
-  aboutCard: {
-    marginHorizontal: 20,
-    alignItems: 'center',
-    padding: 20,
-    backgroundColor: theme.colors.surface,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-    borderRadius: theme.radius.lg,
-  },
-  aboutName: {
-    fontFamily: theme.font.roundedBold,
-    fontSize: 20,
-    color: theme.colors.textPrimary,
-    marginTop: 10,
-  },
-  aboutTagline: { fontFamily: theme.font.body, fontSize: 12.5, color: theme.colors.textMuted, marginTop: 3 },
-  aboutFacts: { alignSelf: 'stretch', gap: 10, marginTop: 18 },
-  aboutFactRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
-  aboutFactText: {
-    flex: 1,
-    fontFamily: theme.font.body,
-    fontSize: 12.5,
-    color: theme.colors.textSecondary,
-    lineHeight: 17,
-  },
-  aboutVersion: {
-    fontFamily: theme.font.bodyBold,
-    fontSize: 11,
-    color: theme.colors.textMuted,
-    marginTop: 18,
-    letterSpacing: 0.4,
-  },
-  // Accordion body for the Theme/Currency rows below — expands in place
-  // under the row that opened it, inside the same bordered group card, so
-  // it reads as revealing more of the same row rather than a separate block.
-  accordionBody: {
-    paddingHorizontal: 12,
-    paddingBottom: 10,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: theme.colors.borderSoft,
-  },
-  rowPreviewSwatch: { width: 20, height: 20, borderRadius: 6, overflow: 'hidden', flexDirection: 'row' },
-  rowPreviewSwatchHalf: { flex: 1 },
-
-  pickerRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 13 },
-  codeBubble: {
-    width: 44,
-    height: 30,
-    borderRadius: 9,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-    backgroundColor: theme.colors.surfaceAlt,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  codeText: { fontFamily: theme.font.bodyBold, fontSize: 11, color: theme.colors.ink },
 });

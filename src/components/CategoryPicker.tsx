@@ -1,13 +1,15 @@
 import { useEffect, useState } from 'react';
-import { View, Pressable, Animated, StyleSheet } from 'react-native';
-import { Text } from '@/components/Text';
+import { View, Pressable, Animated, StyleSheet, Keyboard } from 'react-native';
+import Feather from '@expo/vector-icons/Feather';
+import { Text, TextInput } from '@/components/Text';
 import ReanimatedAnimated, { FadeIn, ReduceMotion } from 'react-native-reanimated';
 import { Category } from '@/types';
 import { theme } from '@/constants/theme';
 import { CategoryIcon } from './CategoryIcon';
 import { Chip } from './Chip';
-import { topLevelOnly, childrenOf } from '@/lib/categoryTree';
+import { topLevelOnly, childrenOf, searchCategories } from '@/lib/categoryTree';
 import { usePressScale } from '@/lib/usePressScale';
+import { haptics } from '@/lib/haptics';
 import { MAX_LIST_STAGGER_MS } from '@/lib/animation';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -19,6 +21,10 @@ interface Props {
   onSelect: (id: string) => void;
   /** 'medal' matches the icon-tile picker (New Transaction); 'chip' matches the plain pill picker used elsewhere. */
   variant: 'medal' | 'chip';
+  /** Adds "Find a category" above the medal grid. */
+  searchable?: boolean;
+  /** Tells the host when the search field has the keyboard (Add hides its number pad). */
+  onSearchFocusChange?: (focused: boolean) => void;
 }
 
 /**
@@ -30,8 +36,17 @@ interface Props {
  * alongside every top-level category. Replaces three near-duplicate
  * category pickers (New Transaction, Add Past Data, Recurring).
  */
-export function CategoryPicker({ categories, selectedId, onSelect, variant }: Props) {
+export function CategoryPicker({
+  categories,
+  selectedId,
+  onSelect,
+  variant,
+  searchable,
+  onSearchFocusChange,
+}: Props) {
   const topLevel = topLevelOnly(categories);
+  const [query, setQuery] = useState('');
+  const matches = searchCategories(categories, query);
   const [expandedParentId, setExpandedParentId] = useState<string | null>(() => {
     const selected = categories.find((c) => c.id === selectedId);
     if (!selected) return null;
@@ -57,8 +72,14 @@ export function CategoryPicker({ categories, selectedId, onSelect, variant }: Pr
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedId]);
 
+  // A light tick on every pick, the same one toggles and tabs give.
+  const select = (id: string) => {
+    haptics.tap();
+    onSelect(id);
+  };
+
   const onPressTopLevel = (cat: Category) => {
-    onSelect(cat.id);
+    select(cat.id);
     const kids = childrenOf(categories, cat.id);
     setExpandedParentId(kids.length ? cat.id : null);
   };
@@ -89,7 +110,7 @@ export function CategoryPicker({ categories, selectedId, onSelect, variant }: Pr
                   key={cat.id}
                   label={cat.name}
                   active={selectedId === cat.id}
-                  onPress={() => onSelect(cat.id)}
+                  onPress={() => select(cat.id)}
                   activeBorderColor={cat.color}
                 />
               ))}
@@ -101,8 +122,67 @@ export function CategoryPicker({ categories, selectedId, onSelect, variant }: Pr
   }
 
   // 'medal' — the icon-tile picker.
+  const search = searchable && (
+    <View style={styles.search}>
+      <Feather name="search" size={14} color={theme.colors.textMuted} />
+      <TextInput
+        value={query}
+        onChangeText={setQuery}
+        placeholder="Find a category"
+        placeholderTextColor={theme.colors.textMuted}
+        style={styles.searchInput}
+        returnKeyType="done"
+        onFocus={() => onSearchFocusChange?.(true)}
+        onBlur={() => onSearchFocusChange?.(false)}
+        accessibilityLabel="Find a category"
+      />
+      {query !== '' && (
+        <Pressable
+          onPress={() => setQuery('')}
+          hitSlop={10}
+          accessibilityRole="button"
+          accessibilityLabel="Clear search"
+        >
+          <Feather name="x" size={14} color={theme.colors.textMuted} />
+        </Pressable>
+      )}
+    </View>
+  );
+
+  if (query.trim() !== '') {
+    const parentName = (c: Category) =>
+      c.parentId ? categories.find((p) => p.id === c.parentId)?.name : undefined;
+    return (
+      <View>
+        {search}
+        {matches.length === 0 ? (
+          <Text style={styles.noMatch}>No category called "{query.trim()}"</Text>
+        ) : (
+          <View style={styles.medalGrid}>
+            {matches.map((cat) => (
+              <MedalTile
+                key={cat.id}
+                active={selectedId === cat.id}
+                name={cat.name}
+                hint={parentName(cat) ? `in ${parentName(cat)}` : undefined}
+                icon={cat.icon}
+                color={cat.color}
+                onPress={() => {
+                  select(cat.id);
+                  setQuery('');
+                  Keyboard.dismiss();
+                }}
+              />
+            ))}
+          </View>
+        )}
+      </View>
+    );
+  }
+
   return (
     <View>
+      {search}
       <View style={styles.medalGrid}>
         {topLevel.map((cat) => (
           <MedalTile
@@ -131,7 +211,7 @@ export function CategoryPicker({ categories, selectedId, onSelect, variant }: Pr
                   name={cat.name}
                   icon={cat.icon}
                   color={cat.color}
-                  onPress={() => onSelect(cat.id)}
+                  onPress={() => select(cat.id)}
                   sub
                 />
               </ReanimatedAnimated.View>
@@ -151,6 +231,7 @@ function MedalTile({
   color,
   onPress,
   sub,
+  hint,
 }: {
   active: boolean;
   name: string;
@@ -158,6 +239,8 @@ function MedalTile({
   color: string;
   onPress: () => void;
   sub?: boolean;
+  /** A second, quieter line — a search result's parent ("in Travel"). */
+  hint?: string;
 }) {
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.92);
   return (
@@ -173,6 +256,11 @@ function MedalTile({
       <Text style={styles.medalName} numberOfLines={1}>
         {name}
       </Text>
+      {hint && (
+        <Text style={styles.medalHint} numberOfLines={1}>
+          {hint}
+        </Text>
+      )}
     </AnimatedPressable>
   );
 }
@@ -194,6 +282,31 @@ const styles = StyleSheet.create({
     marginTop: 5,
     textAlign: 'center',
   },
+  medalHint: {
+    fontFamily: theme.font.body,
+    fontSize: 9.5,
+    color: theme.colors.textMuted,
+    textAlign: 'center',
+  },
+  search: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 12,
+    paddingHorizontal: 12,
+    borderRadius: 14,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.borderSoft,
+    backgroundColor: theme.colors.surface,
+  },
+  searchInput: {
+    flex: 1,
+    paddingVertical: 9,
+    fontFamily: theme.font.body,
+    fontSize: 13.5,
+    color: theme.colors.textPrimary,
+  },
+  noMatch: { fontFamily: theme.font.body, fontSize: 12.5, color: theme.colors.textMuted, paddingVertical: 8 },
   subGroup: {
     marginTop: 10,
     paddingTop: 10,

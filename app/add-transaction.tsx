@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View, Pressable, Alert, Animated } from 'react-native';
+import { MovingRow } from '@/components/MovingRow';
 import { Text, TextInput } from '@/components/Text';
 import { KeyboardAwareScrollView, KeyboardStickyView } from 'react-native-keyboard-controller';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
@@ -14,7 +15,10 @@ import {
   getTransactionById,
   getTransactionLink,
   getFrequentAmountsForCategory,
-  getRecentCategoryIds,
+  getRepeatEntries,
+  RepeatEntry,
+  getLastAccountForCategory,
+  findRecentRepeat,
 } from '@/db/ledger';
 import { getAddDefaults, setAddDefaults, AddDefaults } from '@/db/settings';
 import {
@@ -26,17 +30,21 @@ import {
 } from '@/db/people';
 import { Account, Category, Transaction } from '@/types';
 import { theme } from '@/constants/theme';
-import { toMinor, formatMoney } from '@/lib/money';
+import { toMinor, formatMoney, getCurrencySymbol } from '@/lib/money';
 import { toLocalIsoDate, addDaysToIsoDate } from '@/lib/date';
 import { useFadeIn } from '@/lib/useFadeIn';
+import { haptics } from '@/lib/haptics';
 import { AppHeader } from '@/components/AppHeader';
 import { SegmentedControl } from '@/components/SegmentedControl';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { CategoryPicker } from '@/components/CategoryPicker';
 import { CategoryIcon } from '@/components/CategoryIcon';
+import { ModalSheet } from '@/components/ModalSheet';
 import { SoftCard } from '@/features/home/SoftCard';
-import { CalendarSheet } from '@/features/transactions/CalendarSheet';
+import { CalendarSheet } from '@/components/CalendarSheet';
 import { AddAccountModal } from '@/features/profile/AddAccountModal';
+import { AddPersonModal } from '@/features/people/AddPersonModal';
+import { RepeatEntrySheet } from '@/features/home/RepeatEntrySheet';
 import { styles } from '@/features/add/add.styles';
 import {
   EntryType,
@@ -46,17 +54,38 @@ import {
   Staged,
   isTxType,
   dateChipLabel,
+  repeatKey,
 } from '@/features/add/addEntry';
-import { Chip, AccountTile, Totals, FriendFields } from '@/features/add/AddFields';
+import { applyPadKey, evaluateAmount, exprFromMinor, hasOperator, PadKey } from '@/features/add/padMath';
+import { AmountPad } from '@/features/add/AmountPad';
+import { AccountTile, Totals, FriendFields, DetailChip } from '@/features/add/AddFields';
+
+/** How many "Your usual" chips Add shows. */
+const USUAL_COUNT = 4;
+
+/** "1,500.5" while typing a single number: grouped whole part, decimals exactly as typed. */
+function formatTyped(expr: string): string {
+  if (expr === '') return '0';
+  const [whole, decimals] = expr.split('.');
+  const grouped = new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 }).format(Number(whole || '0'));
+  return decimals === undefined ? grouped : `${grouped}.${decimals}`;
+}
 
 export default function AddTransactionScreen() {
   const insets = useSafeAreaInsets();
   // `accountId` pre-selects the account (the "from" side of a transfer) —
   // Home's account summary sheet opens Add this way.
-  const params = useLocalSearchParams<{ type?: string; id?: string; accountId?: string }>();
+  const params = useLocalSearchParams<{
+    type?: string;
+    id?: string;
+    accountId?: string;
+    toAccountId?: string;
+  }>();
   const editingId = params.id;
   const initialType = params.type;
   const initialAccountId = params.accountId;
+  // A transfer's destination, e.g. "Move money here" on a goal that follows an account.
+  const initialToAccountId = params.toAccountId;
 
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -66,13 +95,13 @@ export default function AddTransactionScreen() {
   const [seeded, setSeeded] = useState(false);
 
   const [type, setType] = useState<EntryType>(isTxType(params.type) ? params.type : 'expense');
-  const [amount, setAmount] = useState('');
+  // What's been typed on the number pad — a number, or a sum like "120+45".
+  const [expr, setExpr] = useState('');
   const [accountId, setAccountId] = useState<string | null>(null);
   const [toAccountId, setToAccountId] = useState<string | null>(null);
   const [categoryId, setCategoryId] = useState<string | null>(null);
   const [note, setNote] = useState('');
   const [date, setDate] = useState(() => toLocalIsoDate(new Date()));
-  const [calendarOpen, setCalendarOpen] = useState(false);
 
   // Friend mode
   const [personId, setPersonId] = useState<string | null>(null);
@@ -84,13 +113,33 @@ export default function AddTransactionScreen() {
   const [saveDone, setSaveDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [frequentAmounts, setFrequentAmounts] = useState<number[]>([]);
-  const [recentCategoryIds, setRecentCategoryIds] = useState<string[]>([]);
+  const [usual, setUsual] = useState<RepeatEntry[]>([]);
+  const [searchFocused, setSearchFocused] = useState(false);
+
+  // The pad is up for a new entry straight away (the amount is what every
+  // entry needs first); an edit opens without it, since it's often only the
+  // category or date changing — tapping the amount brings it up.
+  const [padOpen, setPadOpen] = useState(!editingId);
+  const [noteEditing, setNoteEditing] = useState(false);
+  const [calendarOpen, setCalendarOpen] = useState(false);
+  const [accountSheetOpen, setAccountSheetOpen] = useState(false);
   const [addAccountVisible, setAddAccountVisible] = useState(false);
+  const [addPersonVisible, setAddPersonVisible] = useState(false);
+  const [repeatSheetVisible, setRepeatSheetVisible] = useState(false);
+  // A repeat warning names the entry it's about; tapping Save again with
+  // that same entry saves it anyway. Any change to the entry clears it.
+  const [repeatWarning, setRepeatWarning] = useState<{ key: string; message: string } | null>(null);
+
   // What each entry type was last saved with (see AddDefaults) — loaded once
   // for a new entry, never for an edit, which always shows the entry's own values.
   const addDefaults = useRef<AddDefaults>({});
+  // Once you pick an account yourself, picking a category stops choosing one for you.
+  const accountPickedByHand = useRef(false);
 
   const listFade = useFadeIn([rows.length]);
+
+  const amountValue = evaluateAmount(expr);
+  const amountMinor = amountValue === null ? 0 : toMinor(amountValue);
 
   // Only expense/income have a "usual amount for this category" in the
   // first place — transfers move whatever the transfer needs to move, and
@@ -110,23 +159,41 @@ export default function AddTransactionScreen() {
     };
   }, [type, categoryId]);
 
-  // The user's most-used categories of the current kind, for the one-tap
-  // "Recent" row. Expense/income only, same as frequent amounts above.
+  // "Your usual": the entries of this type logged most in the last 90 days
+  // (category, amount and account together), one tap each. New entries only.
   useEffect(() => {
-    if (type !== 'expense' && type !== 'income') {
-      setRecentCategoryIds([]);
+    if (editingId || (type !== 'expense' && type !== 'income')) {
+      setUsual([]);
       return;
     }
     let cancelled = false;
-    getRecentCategoryIds(type)
-      .then((ids) => {
-        if (!cancelled) setRecentCategoryIds(ids);
+    getRepeatEntries(USUAL_COUNT, toLocalIsoDate(new Date()), type)
+      .then((entries) => {
+        if (!cancelled) setUsual(entries);
       })
       .catch(() => {});
     return () => {
       cancelled = true;
     };
-  }, [type]);
+  }, [type, editingId]);
+
+  // A new entry's account follows its category: the account that category
+  // was last used with (Food usually goes on the same card) — until you pick
+  // an account yourself.
+  useEffect(() => {
+    if (editingId || accountPickedByHand.current || !categoryId) return;
+    if (type !== 'expense' && type !== 'income') return;
+    let cancelled = false;
+    getLastAccountForCategory(categoryId)
+      .then((id) => {
+        if (cancelled || !id) return;
+        if (accounts.some((a) => a.id === id && a.type !== 'savings')) setAccountId(id);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [categoryId, type, accounts, editingId]);
 
   /**
    * Pre-selects what this entry type was last saved with. Anything that no
@@ -163,7 +230,7 @@ export default function AddTransactionScreen() {
         setEditing(tx);
         setIsLinked(link !== null);
         setType(tx.type);
-        setAmount((tx.amountMinor / 100).toString());
+        setExpr(exprFromMinor(tx.amountMinor));
         setAccountId(tx.accountId);
         setToAccountId(tx.toAccountId);
         setCategoryId(tx.categoryId);
@@ -177,25 +244,28 @@ export default function AddTransactionScreen() {
       // Wins over the remembered default — but only if it can actually take
       // this entry (a savings account can only be a transfer's "from").
       const asked = initialAccountId ? accs.find((a) => a.id === initialAccountId) : undefined;
-      if (asked && (startType === 'transfer' || asked.type !== 'savings')) setAccountId(asked.id);
+      if (asked && (startType === 'transfer' || asked.type !== 'savings')) {
+        setAccountId(asked.id);
+        accountPickedByHand.current = true;
+      }
+      const askedTo = initialToAccountId ? accs.find((a) => a.id === initialToAccountId) : undefined;
+      if (askedTo && startType === 'transfer') {
+        setToAccountId(askedTo.id);
+        // Moving money into an account can't come from that same account.
+        setAccountId((from) =>
+          from && from !== askedTo.id
+            ? from
+            : (accs.find((a) => a.id !== askedTo.id && !a.archived && a.type !== 'savings')?.id ?? from)
+        );
+      }
     }
     setSeeded(true);
-  }, [editingId, seeded, initialType, initialAccountId, applyDefaults]);
+  }, [editingId, seeded, initialType, initialAccountId, initialToAccountId, applyDefaults]);
 
   useFocusEffect(
     useCallback(() => {
       load();
     }, [load])
-  );
-
-  // Only ids that still resolve to a category of the current kind (the
-  // list below is already non-archived), in most-used order.
-  const recentCategories = useMemo(
-    () =>
-      recentCategoryIds
-        .map((id) => categories.find((c) => c.id === id))
-        .filter((c): c is Category => !!c && c.kind === (type === 'income' ? 'income' : 'expense')),
-    [recentCategoryIds, categories, type]
   );
 
   const filteredCategories = useMemo(
@@ -216,8 +286,19 @@ export default function AddTransactionScreen() {
     accountId && pickableAccounts.some((a) => a.id === accountId)
       ? accountId
       : (pickableAccounts[0]?.id ?? null);
+  const effectiveAccount = accounts.find((a) => a.id === effectiveAccountId);
   const today = toLocalIsoDate(new Date());
   const yesterday = addDaysToIsoDate(today, -1);
+  // The amount's currency: the account it's going on (a friend entry's, if cash moved).
+  const currency =
+    (type === 'friend'
+      ? accounts.find((a) => a.id === friendAccountId)?.currency
+      : effectiveAccount?.currency) ?? undefined;
+
+  // Any change to what's being entered clears a repeat warning about the old entry.
+  useEffect(() => {
+    setRepeatWarning(null);
+  }, [expr, type, effectiveAccountId, toAccountId, categoryId, date]);
 
   const onTypeChange = (next: EntryType) => {
     setType(next);
@@ -225,6 +306,16 @@ export default function AddTransactionScreen() {
     // A new entry switches to what this type was last saved with; an edit
     // keeps its own values, exactly as before.
     if (!editing) applyDefaults(next, accounts, categories);
+  };
+
+  const pickAccount = (id: string) => {
+    accountPickedByHand.current = true;
+    setAccountId(id);
+  };
+
+  const onPadKey = (key: PadKey) => {
+    setError(null);
+    setExpr((prev) => applyPadKey(prev, key));
   };
 
   /** Remembers what was just saved, per type, for the next new entry. Best-effort. */
@@ -240,14 +331,14 @@ export default function AddTransactionScreen() {
   };
 
   const clearForm = () => {
-    setAmount('');
+    setExpr('');
     setNote('');
+    setNoteEditing(false);
   };
 
   /** Validate the current form into a staged row, or return an error string. */
   const formToStaged = (): { row: Staged } | { error: string } => {
-    const amountMinor = toMinor(parseFloat(amount || '0'));
-    if (!Number.isFinite(amountMinor) || amountMinor <= 0) return { error: 'Enter a valid amount' };
+    if (amountMinor <= 0) return { error: 'Enter a valid amount' };
     const id = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 
     if (type === 'friend') {
@@ -303,13 +394,45 @@ export default function AddTransactionScreen() {
     };
   };
 
-  const addRow = () => {
+  /**
+   * True (and shows a note) when `row` looks like one already saved in the
+   * last 30 minutes or already on the list below — the first Save only
+   * warns. Tapping Save again for the same entry goes ahead. Friend entries
+   * and edits aren't checked.
+   */
+  const warnIfRepeat = async (row: Staged): Promise<boolean> => {
+    if (editing || row.kind !== 'transaction') return false;
+    const key = repeatKey(row);
+    if (repeatWarning?.key === key) return false;
+    const what = `${formatMoney(row.amountMinor, currency)} · ${row.label}`;
+    let message: string | null = null;
+    if (rows.some((r) => r.kind === 'transaction' && repeatKey(r) === key)) {
+      message = `${what} is already on your list below. Tap again to add it anyway.`;
+    } else {
+      const hit = await findRecentRepeat(row).catch(() => null);
+      if (hit) {
+        const at = new Date(hit.savedAt).toLocaleTimeString(undefined, {
+          hour: 'numeric',
+          minute: '2-digit',
+        });
+        const from = accounts.find((a) => a.id === row.accountId)?.name;
+        message = `You added ${what}${from ? ` from ${from}` : ''} at ${at}. Tap again to add it anyway.`;
+      }
+    }
+    if (!message) return false;
+    haptics.warn();
+    setRepeatWarning({ key, message });
+    return true;
+  };
+
+  const addRow = async () => {
     setError(null);
     const res = formToStaged();
     if ('error' in res) {
       setError(res.error);
       return;
     }
+    if (await warnIfRepeat(res.row)) return;
     setRows((prev) => [...prev, res.row]);
     clearForm();
   };
@@ -412,12 +535,13 @@ export default function AddTransactionScreen() {
   const onSaveAll = async () => {
     setError(null);
     const pending = [...rows];
-    if (amount.trim() !== '') {
+    if (expr !== '') {
       const res = formToStaged();
       if ('error' in res) {
         setError(res.error);
         return;
       }
+      if (await warnIfRepeat(res.row)) return;
       pending.push(res.row);
     }
     if (pending.length === 0) {
@@ -469,15 +593,56 @@ export default function AddTransactionScreen() {
     );
   };
 
+  /** Picks the person just added in the new-person sheet. */
+  const onPersonAdded = async () => {
+    setAddPersonVisible(false);
+    const before = new Set(people.map((p) => p.id));
+    const ppl = await listPeople();
+    setPeople(ppl);
+    const added = ppl.find((p) => !before.has(p.id));
+    if (added) setPersonId(added.id);
+  };
+
   const wash = TYPE_WASH[type];
   const title = editing ? 'Edit Transaction' : 'Add';
   const saveTitle = saving
     ? 'Saving…'
     : editing
       ? 'Save changes'
-      : rows.length > 0
-        ? `Save ${rows.length} ${rows.length === 1 ? 'entry' : 'entries'}`
-        : 'Save';
+      : repeatWarning
+        ? 'Save anyway'
+        : rows.length > 0
+          ? `Save ${rows.length} ${rows.length === 1 ? 'entry' : 'entries'}`
+          : 'Save';
+  const sum = hasOperator(expr);
+  const shownAmount = sum
+    ? amountValue === null
+      ? '0'
+      : formatTyped(String(amountValue))
+    : formatTyped(expr);
+  // The pad steps aside whenever the phone keyboard is up (a note, a category search).
+  const padVisible = padOpen && !noteEditing && !searchFocused && !isLinked;
+
+  const saveButton = (
+    <PrimaryButton
+      title={saveTitle}
+      done={saveDone}
+      onPress={editing ? onSaveSingleEdit : onSaveAll}
+      disabled={saving || isLinked}
+      style={styles.saveBtn}
+    />
+  );
+  const addToListButton = !editing && (
+    <Pressable
+      onPress={addRow}
+      style={styles.addToList}
+      accessibilityRole="button"
+      accessibilityHint="Keeps this entry on a list and starts the next one; Save saves them all"
+    >
+      <Feather name="plus" size={14} color={theme.colors.textPrimary} />
+      <Text style={styles.addToListText}>Add to list</Text>
+    </Pressable>
+  );
 
   return (
     <View style={styles.container}>
@@ -485,22 +650,35 @@ export default function AddTransactionScreen() {
         title={title}
         showBack
         right={
-          editing && !isLinked ? (
+          editing ? (
+            !isLinked ? (
+              <Pressable
+                onPress={onDelete}
+                hitSlop={8}
+                accessibilityRole="button"
+                accessibilityLabel="Delete transaction"
+                style={styles.trashBtn}
+              >
+                <Feather name="trash-2" size={16} color={theme.colors.expense} />
+              </Pressable>
+            ) : undefined
+          ) : (
             <Pressable
-              onPress={onDelete}
+              onPress={() => setRepeatSheetVisible(true)}
               hitSlop={8}
               accessibilityRole="button"
-              accessibilityLabel="Delete transaction"
-              style={styles.trashBtn}
+              accessibilityLabel="Repeat a recent entry"
+              style={styles.repeatBtn}
             >
-              <Feather name="trash-2" size={16} color={theme.colors.expense} />
+              <Feather name="rotate-ccw" size={13} color={theme.colors.textPrimary} />
+              <Text style={styles.repeatBtnText}>Repeat</Text>
             </Pressable>
-          ) : undefined
+          )
         }
       />
 
       <KeyboardAwareScrollView
-        contentContainerStyle={{ padding: 20, paddingBottom: 150 + insets.bottom }}
+        contentContainerStyle={{ padding: 20, paddingBottom: 28 }}
         keyboardShouldPersistTaps="handled"
         bottomOffset={20}
       >
@@ -518,61 +696,43 @@ export default function AddTransactionScreen() {
           <Text style={[styles.heroLabel, { color: wash.accent }]}>
             {type === 'friend' ? 'Amount' : `${type[0].toUpperCase()}${type.slice(1)} amount`}
           </Text>
-          <View style={styles.amountRow}>
-            <Text style={[styles.amountCurrency, { color: wash.accent }]}>₹</Text>
-            <TextInput
-              value={amount}
-              onChangeText={setAmount}
-              keyboardType="numeric"
-              placeholder="0"
-              placeholderTextColor={theme.colors.textMuted}
-              style={styles.amountInput}
-              // A new entry starts typing straight away — the amount is
-              // what every entry needs first. An edit opens without the
-              // keyboard, since it's often only the category or date changing.
-              autoFocus={!editingId}
-              accessibilityLabel="Amount"
-            />
-          </View>
-
-          {recentCategories.length > 0 && !isLinked && (
-            <View style={styles.recentRow}>
-              {recentCategories.map((cat) => {
-                const active = categoryId === cat.id;
-                return (
-                  <Pressable
-                    key={cat.id}
-                    onPress={() => setCategoryId(cat.id)}
-                    style={[styles.recentChip, active && styles.recentChipActive]}
-                    accessibilityRole="button"
-                    accessibilityState={{ selected: active }}
-                    accessibilityLabel={`Category ${cat.name}`}
-                  >
-                    <CategoryIcon name={cat.icon} color={cat.color} size={11} square={20} />
-                    <Text style={styles.recentChipText} numberOfLines={1}>
-                      {cat.name}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </View>
-          )}
+          <Pressable
+            onPress={() => setPadOpen(true)}
+            disabled={isLinked}
+            style={styles.amountRow}
+            accessibilityRole="button"
+            accessibilityLabel={`Amount, ${expr === '' ? 'empty' : shownAmount}`}
+            accessibilityHint={padVisible ? undefined : 'Opens the number pad'}
+          >
+            <Text style={[styles.amountCurrency, { color: wash.accent }]}>{getCurrencySymbol(currency)}</Text>
+            <Text
+              style={[styles.amountText, expr === '' && styles.amountPlaceholder]}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+            >
+              {shownAmount}
+            </Text>
+            {padVisible && <View style={styles.caret} />}
+          </Pressable>
+          {sum && <Text style={styles.expression}>{expr.replace(/([+−×÷])/g, ' $1 ')}</Text>}
 
           {frequentAmounts.length > 0 && (
             <View style={styles.frequentRow}>
-              {frequentAmounts.map((amountMinor) => {
-                // Compares parsed numeric minor units, not raw strings — a
-                // string compare ("150.5" vs a user-typed "150.50") missed
-                // the match for any amount with a non-canonical decimal form.
-                const active = amount.trim() !== '' && toMinor(parseFloat(amount)) === amountMinor;
+              {frequentAmounts.map((minor) => {
+                const active = amountMinor === minor;
                 return (
                   <Pressable
-                    key={amountMinor}
-                    onPress={() => setAmount((amountMinor / 100).toString())}
+                    key={minor}
+                    onPress={() => {
+                      haptics.tap();
+                      setExpr(exprFromMinor(minor));
+                    }}
                     style={[styles.frequentChip, active && styles.frequentChipActive]}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: active }}
                   >
                     <Text style={[styles.frequentChipText, active && styles.frequentChipTextActive]}>
-                      {formatMoney(amountMinor)}
+                      {formatMoney(minor, currency)}
                     </Text>
                   </Pressable>
                 );
@@ -580,6 +740,13 @@ export default function AddTransactionScreen() {
             </View>
           )}
         </SoftCard>
+
+        {repeatWarning && (
+          <View style={styles.repeatNote} accessibilityLiveRegion="polite">
+            <Feather name="alert-triangle" size={14} color={theme.colors.idGoldDeep} />
+            <Text style={styles.repeatNoteText}>{repeatWarning.message}</Text>
+          </View>
+        )}
 
         {type === 'friend' ? (
           <FriendFields
@@ -591,6 +758,7 @@ export default function AddTransactionScreen() {
             setFriendSign={setFriendSign}
             friendAccountId={friendAccountId}
             setFriendAccountId={setFriendAccountId}
+            onAddPerson={() => setAddPersonVisible(true)}
           />
         ) : (
           <>
@@ -614,84 +782,130 @@ export default function AddTransactionScreen() {
                 />
               </SoftCard>
             )}
-            <View style={styles.section}>
-              <Text style={styles.label}>{type === 'transfer' ? 'From' : 'Account'}</Text>
-              <View style={styles.accountRow}>
-                {pickableAccounts.map((acc) => (
-                  <AccountTile
-                    key={acc.id}
-                    account={acc}
-                    active={effectiveAccountId === acc.id}
-                    onPress={() => setAccountId(acc.id)}
-                  />
-                ))}
-              </View>
-            </View>
 
-            {type === 'transfer' && (
-              <View style={styles.section}>
-                <Text style={styles.label}>To</Text>
-                <View style={styles.accountRow}>
-                  {accounts
-                    .filter((a) => a.id !== effectiveAccountId)
-                    .map((acc) => (
+            {type === 'transfer' ? (
+              <>
+                <View style={styles.section}>
+                  <Text style={styles.label}>From</Text>
+                  <View style={styles.accountRow}>
+                    {pickableAccounts.map((acc) => (
                       <AccountTile
                         key={acc.id}
                         account={acc}
-                        active={toAccountId === acc.id}
-                        onPress={() => setToAccountId(acc.id)}
+                        active={effectiveAccountId === acc.id}
+                        onPress={() => pickAccount(acc.id)}
                       />
                     ))}
+                  </View>
                 </View>
-              </View>
-            )}
-
-            {type !== 'transfer' && (
+                <View style={styles.section}>
+                  <Text style={styles.label}>To</Text>
+                  <View style={styles.accountRow}>
+                    {accounts
+                      .filter((a) => a.id !== effectiveAccountId)
+                      .map((acc) => (
+                        <AccountTile
+                          key={acc.id}
+                          account={acc}
+                          active={toAccountId === acc.id}
+                          onPress={() => setToAccountId(acc.id)}
+                        />
+                      ))}
+                  </View>
+                </View>
+              </>
+            ) : (
               <View style={styles.section}>
-                <Text style={styles.label}>Category</Text>
+                {usual.length > 0 && !isLinked && (
+                  <>
+                    <Text style={styles.label}>Your usual</Text>
+                    <View style={styles.recentRow}>
+                      {usual.map((u) => {
+                        const active =
+                          categoryId === u.categoryId &&
+                          amountMinor === u.amountMinor &&
+                          effectiveAccountId === u.accountId;
+                        return (
+                          <Pressable
+                            key={`${u.categoryId}:${u.amountMinor}:${u.accountId}`}
+                            onPress={() => {
+                              haptics.tap();
+                              setCategoryId(u.categoryId);
+                              setExpr(exprFromMinor(u.amountMinor));
+                              pickAccount(u.accountId);
+                            }}
+                            style={[styles.recentChip, active && styles.recentChipActive]}
+                            accessibilityRole="button"
+                            accessibilityState={{ selected: active }}
+                            accessibilityLabel={`${u.categoryName}, ${formatMoney(u.amountMinor, u.accountCurrency)}, logged ${u.timesLogged} times`}
+                          >
+                            <CategoryIcon
+                              name={u.categoryIcon}
+                              color={u.categoryColor}
+                              size={11}
+                              square={20}
+                            />
+                            <Text style={styles.recentChipText} numberOfLines={1}>
+                              {u.categoryName} ·
+                            </Text>
+                            <Text style={styles.recentChipAmount}>
+                              {formatMoney(u.amountMinor, u.accountCurrency)}
+                            </Text>
+                          </Pressable>
+                        );
+                      })}
+                    </View>
+                  </>
+                )}
                 <CategoryPicker
                   categories={filteredCategories}
                   selectedId={categoryId}
                   onSelect={setCategoryId}
                   variant="medal"
+                  searchable
+                  onSearchFocusChange={setSearchFocused}
                 />
               </View>
             )}
           </>
         )}
 
-        <View style={styles.section}>
-          <Text style={styles.label}>Date</Text>
-          <View style={styles.chipRow}>
-            <Chip label="Today" active={date === today} onPress={() => setDate(today)} />
-            <Chip label="Yesterday" active={date === yesterday} onPress={() => setDate(yesterday)} />
-            <Pressable
-              onPress={() => setCalendarOpen(true)}
-              style={[styles.chip, date !== today && date !== yesterday && styles.chipActive]}
-            >
-              <Feather name="calendar" size={12} color={theme.colors.ink} />
-              <Text style={styles.chipText}> {dateChipLabel(date)} </Text>
-              <Feather name="chevron-down" size={12} color={theme.colors.ink} />
-            </Pressable>
-          </View>
+        <View style={styles.detailRow}>
+          {(type === 'expense' || type === 'income') && effectiveAccount && (
+            <DetailChip
+              icon="credit-card"
+              label={effectiveAccount.name}
+              onPress={() => setAccountSheetOpen(true)}
+              accessibilityLabel={`Account, ${effectiveAccount.name}. Change`}
+            />
+          )}
+          <DetailChip
+            icon="calendar"
+            label={date === today ? 'Today' : date === yesterday ? 'Yesterday' : dateChipLabel(date)}
+            onPress={() => setCalendarOpen(true)}
+            accessibilityLabel={`Date, ${dateChipLabel(date)}. Change`}
+          />
+          <DetailChip
+            icon="edit-3"
+            label={note.trim() || 'Note'}
+            muted={!note.trim()}
+            onPress={() => setNoteEditing(true)}
+            accessibilityLabel={note.trim() ? `Note, ${note}. Edit` : 'Add a note'}
+          />
         </View>
-
-        <View style={styles.section}>
-          <Text style={styles.label}>Note (optional)</Text>
+        {noteEditing && (
           <TextInput
             value={note}
             onChangeText={setNote}
             placeholder="e.g. Lunch with team"
             placeholderTextColor={theme.colors.textMuted}
             style={styles.noteInput}
+            autoFocus
+            returnKeyType="done"
+            onSubmitEditing={() => setNoteEditing(false)}
+            onBlur={() => setNoteEditing(false)}
+            accessibilityLabel="Note"
           />
-        </View>
-
-        {!editing && (
-          <Pressable onPress={addRow} style={styles.addToList}>
-            <Feather name="plus" size={14} color={theme.colors.textPrimary} />
-            <Text style={styles.addToListText}>Add to list</Text>
-          </Pressable>
         )}
 
         {rows.length > 0 && (
@@ -707,7 +921,7 @@ export default function AddTransactionScreen() {
               const incomeLike = r.kind === 'transaction' ? r.type === 'income' : r.sign === -1;
               const expenseLike = r.kind === 'transaction' ? r.type === 'expense' : r.sign === 1;
               return (
-                <View key={r.id} style={[styles.stagedRow, i > 0 && styles.stagedRowDivider]}>
+                <MovingRow key={r.id} style={[styles.stagedRow, i > 0 && styles.stagedRowDivider]}>
                   <CategoryIcon
                     name={r.kind === 'transaction' ? r.categoryIcon : 'account-multiple'}
                     color={r.kind === 'transaction' ? r.categoryColor : theme.colors.secondary}
@@ -734,14 +948,14 @@ export default function AddTransactionScreen() {
                   </Text>
                   <Pressable
                     onPress={() => removeRow(r.id)}
-                    hitSlop={10}
+                    hitSlop={14}
                     style={styles.removeBtn}
                     accessibilityRole="button"
                     accessibilityLabel="Remove this entry from the list"
                   >
                     <Feather name="x" size={14} color={theme.colors.textMuted} />
                   </Pressable>
-                </View>
+                </MovingRow>
               );
             })}
           </Animated.View>
@@ -760,13 +974,39 @@ export default function AddTransactionScreen() {
             <Totals label="Net" value={totals.income - totals.expense} color={theme.colors.textPrimary} />
           </View>
         )}
-        <PrimaryButton
-          title={saveTitle}
-          done={saveDone}
-          onPress={editing ? onSaveSingleEdit : onSaveAll}
-          disabled={saving || isLinked}
-        />
+        {padVisible ? (
+          <AmountPad onKey={onPadKey} onClear={() => setExpr('')}>
+            {addToListButton}
+            {saveButton}
+          </AmountPad>
+        ) : (
+          <View style={styles.actionRow}>
+            {addToListButton}
+            {saveButton}
+          </View>
+        )}
       </KeyboardStickyView>
+
+      <ModalSheet
+        visible={accountSheetOpen}
+        onClose={() => setAccountSheetOpen(false)}
+        title="Account"
+        scrollable={false}
+      >
+        <View style={styles.accountRow}>
+          {pickableAccounts.map((acc) => (
+            <AccountTile
+              key={acc.id}
+              account={acc}
+              active={effectiveAccountId === acc.id}
+              onPress={() => {
+                pickAccount(acc.id);
+                setAccountSheetOpen(false);
+              }}
+            />
+          ))}
+        </View>
+      </ModalSheet>
 
       <AddAccountModal
         visible={addAccountVisible}
@@ -778,11 +1018,25 @@ export default function AddTransactionScreen() {
         }}
       />
 
+      <AddPersonModal
+        visible={addPersonVisible}
+        onClose={() => setAddPersonVisible(false)}
+        onCreated={() => void onPersonAdded()}
+      />
+
       <CalendarSheet
         visible={calendarOpen}
         value={date}
+        quickPicks
         onClose={() => setCalendarOpen(false)}
         onPick={setDate}
+      />
+
+      <RepeatEntrySheet
+        visible={repeatSheetVisible}
+        onClose={() => setRepeatSheetVisible(false)}
+        fromAdd
+        onLogged={() => router.back()}
       />
     </View>
   );

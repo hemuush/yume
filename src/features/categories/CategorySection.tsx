@@ -1,4 +1,5 @@
 import { View, Pressable, Animated } from 'react-native';
+import { MovingRow } from '@/components/MovingRow';
 import { Text } from '@/components/Text';
 import { Category } from '@/types';
 import { topLevelOnly, childrenOf } from '@/lib/categoryTree';
@@ -91,13 +92,15 @@ export function CategorySection({
     <>
       <View style={styles.grid}>
         {leaves.map((cat) => (
-          <CategoryTile key={cat.id} category={cat} onPress={() => onEdit(cat)} onLongPress={onManage} />
+          <MovingRow key={cat.id}>
+            <CategoryTile category={cat} onPress={() => onEdit(cat)} onLongPress={onManage} />
+          </MovingRow>
         ))}
       </View>
       {parents.map((parent) => {
         const kids = childrenOf(cats, parent.id);
         return (
-          <View key={parent.id} style={styles.groupCard}>
+          <MovingRow key={parent.id} style={styles.groupCard}>
             <GroupCardHeader
               parent={parent}
               count={kids.length}
@@ -114,7 +117,7 @@ export function CategorySection({
                 />
               ))}
             </View>
-          </View>
+          </MovingRow>
         );
       })}
     </>

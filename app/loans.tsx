@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react';
 import { View, ScrollView } from 'react-native';
 import { Text } from '@/components/Text';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { listLoans } from '@/db/loans';
+import { listLoans, getLoanProgress } from '@/db/loans';
 import { roundedMinor } from '@/lib/round';
 import { Loan } from '@/types';
 import { EmptyState } from '@/components/EmptyState';
@@ -33,12 +33,16 @@ function outstanding(loans: Loan[], direction: Loan['direction']): number {
 export default function LoansScreen() {
   const insets = useSafeAreaInsets();
   const [loans, setLoans] = useState<Loan[]>([]);
+  // Each loan's last pending EMI, for the "Debt-free in …" line on its card.
+  const [lastDue, setLastDue] = useState<Record<string, string | null>>({});
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedLoan, setSelectedLoan] = useState<Loan | null>(null);
   const listFadeStyle = useFadeIn([loans]);
 
   const loadLoans = useCallback(async () => {
-    setLoans(await listLoans());
+    const [list, progress] = await Promise.all([listLoans(), getLoanProgress()]);
+    setLoans(list);
+    setLastDue(Object.fromEntries(progress.map((p) => [p.loanId, p.lastDueDate])));
   }, []);
   const { loaded, loadError, reload: load } = useScreenLoad(loadLoans);
   const loading = !loaded && !loadError;
@@ -88,6 +92,7 @@ export default function LoansScreen() {
                 loan={loan}
                 fadeStyle={listFadeStyle}
                 onPress={() => setSelectedLoan(loan)}
+                lastDueDate={lastDue[loan.id]}
               />
             ))}
             {closedLoans.length > 0 && (

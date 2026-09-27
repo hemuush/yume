@@ -1,9 +1,10 @@
 import { useCallback, useState } from 'react';
 import { View, ScrollView } from 'react-native';
+import { MovingRow } from '@/components/MovingRow';
 import { Text } from '@/components/Text';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { listAccounts } from '@/db/ledger';
-import { listSavingsGoals } from '@/db/savingsGoals';
+import { listSavingsGoals, markGoalLetterRevealed } from '@/db/savingsGoals';
 import { Account, SavingsGoal } from '@/types';
 import { theme } from '@/constants/theme';
 import { AppHeader, HeaderIconButton } from '@/components/AppHeader';
@@ -15,6 +16,9 @@ import { GoalCard } from '@/features/goals/GoalCard';
 import { AddGoalModal } from '@/features/goals/AddGoalModal';
 import { GoalDetailModal } from '@/features/goals/GoalDetailModal';
 import { ContributeModal } from '@/features/goals/ContributeModal';
+import { GoalLetterReveal } from '@/features/goals/GoalLetterReveal';
+import { ModalSheet } from '@/components/ModalSheet';
+import { PrimaryButton } from '@/components/PrimaryButton';
 import { styles } from '@/features/goals/goals.styles';
 
 export default function SavingsGoalsScreen() {
@@ -26,10 +30,27 @@ export default function SavingsGoalsScreen() {
   const [editingGoal, setEditingGoal] = useState<SavingsGoal | null>(null);
   const [contributingGoal, setContributingGoal] = useState<SavingsGoal | null>(null);
 
+  // A goal that follows its account can reach its target with no tap here
+  // at all (a transfer in, a salary landing), so its sealed letter opens the
+  // next time this screen loads — once, like a goal filled by hand.
+  const [letterGoal, setLetterGoal] = useState<SavingsGoal | null>(null);
+
   const loadGoals = useCallback(async () => {
     const [goals, accs] = await Promise.all([listSavingsGoals(true), listAccounts()]);
     setAllGoals(goals);
     setAccounts(accs);
+    const reached = goals.find(
+      (g) =>
+        g.tracksAccount &&
+        !g.archived &&
+        !!g.noteToSelf &&
+        !g.letterRevealed &&
+        g.currentAmountMinor >= g.targetAmountMinor
+    );
+    if (reached) {
+      await markGoalLetterRevealed(reached.id);
+      setLetterGoal(reached);
+    }
   }, []);
   const { loaded, loadError, reload: load } = useScreenLoad(loadGoals);
 
@@ -98,12 +119,14 @@ export default function SavingsGoalsScreen() {
           />
         ) : (
           visibleGoals.map((goal) => (
-            <GoalCard
-              key={goal.id}
-              goal={goal}
-              onPress={() => setEditingGoal(goal)}
-              onContribute={() => setContributingGoal(goal)}
-            />
+            <MovingRow key={goal.id}>
+              <GoalCard
+                goal={goal}
+                accountName={accounts.find((a) => a.id === goal.linkedAccountId)?.name}
+                onPress={() => setEditingGoal(goal)}
+                onContribute={() => setContributingGoal(goal)}
+              />
+            </MovingRow>
           ))
         )}
       </ScrollView>
@@ -127,6 +150,20 @@ export default function SavingsGoalsScreen() {
           await load();
         }}
       />
+
+      {letterGoal && (
+        <ModalSheet
+          visible
+          onClose={() => setLetterGoal(null)}
+          footer={<PrimaryButton title="Nice, thanks Suu" onPress={() => setLetterGoal(null)} />}
+        >
+          <GoalLetterReveal
+            goalName={letterGoal.name}
+            note={letterGoal.noteToSelf ?? ''}
+            targetAmountMinor={letterGoal.targetAmountMinor}
+          />
+        </ModalSheet>
+      )}
 
       <ContributeModal
         goal={contributingGoal}

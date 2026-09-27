@@ -272,9 +272,10 @@ export default function CategoriesScreen() {
         )}
 
         <Text style={styles.hintText}>
-          Tap a category to edit it, or hold to archive or delete it. A category with subcategories (like
-          "Food & Dining" with "Zomato") gets its own card below the grid, listing them as pills — tap or hold
-          a pill the same way. Add a subcategory from + Add or from its parent's own edit screen.
+          Tap a category to edit it — Archive and Delete are at the bottom of that sheet (holding a category
+          opens them directly too). A category with subcategories (like "Food & Dining" with "Zomato") gets
+          its own card below the grid, listing them as pills — tap a pill the same way. Add a subcategory from
+          + Add or from its parent's own edit screen.
         </Text>
       </ScrollView>
 
@@ -292,6 +293,11 @@ export default function CategoriesScreen() {
         visible={!!editingCategory}
         category={editingCategory}
         allCategories={categories}
+        onManage={() => {
+          const cat = editingCategory;
+          setEditingCategory(null);
+          if (cat) onManage(cat);
+        }}
         onClose={() => setEditingCategory(null)}
         onSaved={async () => {
           setEditingCategory(null);

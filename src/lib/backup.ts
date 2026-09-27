@@ -235,3 +235,60 @@ export async function restoreFromSnapshot(snapshot: BackupSnapshot): Promise<Res
 
   return { skippedColumns: [...skipped].sort() };
 }
+
+/** What a backup holds, in the terms the restore preview shows. */
+export interface BackupSummary {
+  entries: number;
+  /** The latest entry's date, YYYY-MM-DD, or null with no entries. */
+  lastEntryDate: string | null;
+  accounts: number;
+  loans: number;
+}
+
+/** A backup file's summary — or null when the file isn't a Yume backup at all. */
+export function summarizeSnapshot(snapshot: unknown): BackupSummary | null {
+  const tables = (snapshot as BackupSnapshot | null)?.tables;
+  if (!tables || !Array.isArray(tables.transactions) || !Array.isArray(tables.accounts)) return null;
+  const dates = tables.transactions
+    .map((t: { date?: unknown }) => t.date)
+    .filter((d): d is string => typeof d === 'string');
+  return {
+    entries: tables.transactions.length,
+    lastEntryDate: dates.length > 0 ? dates.reduce((a, b) => (b > a ? b : a)) : null,
+    accounts: tables.accounts.length,
+    loans: Array.isArray(tables.loans) ? tables.loans.length : 0,
+  };
+}
+
+/** The same summary for what's on the phone right now. */
+export async function getCurrentSummary(): Promise<BackupSummary> {
+  const db = await getDb();
+  const row = await db.getFirstAsync<{
+    entries: number;
+    last: string | null;
+    accounts: number;
+    loans: number;
+  }>(
+    `SELECT (SELECT COUNT(*) FROM transactions) AS entries,
+       (SELECT MAX(date) FROM transactions) AS last,
+       (SELECT COUNT(*) FROM accounts) AS accounts,
+       (SELECT COUNT(*) FROM loans) AS loans`
+  );
+  return {
+    entries: row?.entries ?? 0,
+    lastEntryDate: row?.last ?? null,
+    accounts: row?.accounts ?? 0,
+    loans: row?.loans ?? 0,
+  };
+}
+
+/** How many entries were saved after `iso` — what restoring a backup made then would lose. */
+export async function countEntriesSavedAfter(iso: string): Promise<number> {
+  const db = await getDb();
+  const since = new Date(iso).toISOString().slice(0, 19).replace('T', ' ');
+  const row = await db.getFirstAsync<{ n: number }>(
+    'SELECT COUNT(*) AS n FROM transactions WHERE created_at > ?',
+    [since]
+  );
+  return row?.n ?? 0;
+}

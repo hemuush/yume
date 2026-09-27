@@ -21,13 +21,18 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
  * opens a small menu with prev/next, a "This month" reset, and the Month/Year
  * toggle, so browsing history and switching to the yearly view both stay
  * reachable without a full prev/next period bar taking up header space.
+ *
+ * `compact` is the smaller copy that fades into the collapsed header's brand
+ * row: no calendar icon, a shorter max width, same menu.
  */
 export function MonthPill({
   cursor,
   onChange,
+  compact,
 }: {
   cursor: PeriodCursor;
   onChange: (next: PeriodCursor) => void;
+  compact?: boolean;
 }) {
   const { accent, onAccent } = useAccent();
   const [open, setOpen] = useState(false);
@@ -48,10 +53,10 @@ export function MonthPill({
         hitSlop={6}
         accessibilityRole="button"
         accessibilityLabel={`Change period, currently ${periodLabel(cursor)}`}
-        style={[styles.pill, animatedStyle]}
+        style={[styles.pill, compact && styles.pillCompact, animatedStyle]}
       >
-        <Feather name="calendar" size={13} color={theme.colors.ink} />
-        <Text style={styles.pillText} numberOfLines={1}>
+        {!compact && <Feather name="calendar" size={13} color={theme.colors.ink} />}
+        <Text style={[styles.pillText, compact && styles.pillTextCompact]} numberOfLines={1}>
           {periodLabel(cursor)}
         </Text>
         <Feather name="chevron-down" size={14} color={theme.colors.ink} />
@@ -136,6 +141,8 @@ const styles = StyleSheet.create({
     maxWidth: 168,
   },
   pillText: { fontFamily: theme.font.roundedMedium, fontSize: 12.5, color: theme.colors.ink, flexShrink: 1 },
+  pillCompact: { gap: 4, paddingHorizontal: 10, paddingVertical: 5, maxWidth: 140 },
+  pillTextCompact: { fontFamily: theme.font.roundedMedium, fontSize: 12 },
 
   backdrop: {
     flex: 1,

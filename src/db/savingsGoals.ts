@@ -4,23 +4,45 @@ import { captureRow, restoreRow, RowSnapshot } from './undoSnapshot';
 import { SavingsGoal } from '@/types';
 
 /**
- * A target you're saving toward, tracked entirely by its own
- * `current_amount_minor` — deliberately not by a ledger of contribution
- * rows (there's no such table in the schema, unlike `loan_payments` or
- * `person_ledger_entries`, both of which do have one). `linkedAccountId` is
- * informational only ("this is the account I'm keeping it in"), not wired
- * to that account's real balance — nothing here creates a transaction, so
- * adding to a goal can never be confused with actually moving money.
+ * A target you're saving toward, tracked one of two ways:
+ *
+ * - By hand (the default): its own `current_amount_minor`, moved by "+ Add
+ *   money" — deliberately not a ledger of contribution rows (there's no such
+ *   table, unlike `loan_payments` or `person_ledger_entries`). Nothing here
+ *   creates a transaction, so adding to a goal can never be confused with
+ *   actually moving money. A linked account is then only a label.
+ * - Following its linked account (`track_account = 1`): progress is that
+ *   account's balance, worked out on every read the same way
+ *   `getAccountBalance` does, so an entry or transfer moves the goal with no
+ *   extra step. `current_amount_minor` is left untouched meanwhile.
  */
 
+/** Reads SELECTed through GOAL_SELECT: the goal's row plus its account's balance when it follows one. */
+const GOAL_SELECT = `
+  SELECT g.*,
+    CASE WHEN g.track_account = 1 AND a.id IS NOT NULL THEN
+      a.opening_balance_minor
+      + COALESCE((SELECT SUM(t.amount_minor) FROM transactions t
+                  WHERE (t.type = 'income' AND t.account_id = a.id)
+                     OR (t.type = 'transfer' AND t.to_account_id = a.id)), 0)
+      - COALESCE((SELECT SUM(t.amount_minor) FROM transactions t
+                  WHERE (t.type = 'expense' AND t.account_id = a.id)
+                     OR (t.type = 'transfer' AND t.account_id = a.id)), 0)
+    END AS account_balance_minor
+  FROM savings_goals g
+  LEFT JOIN accounts a ON a.id = g.linked_account_id`;
+
 function rowToGoal(row: any): SavingsGoal {
+  const tracksAccount =
+    !!row.track_account && row.linked_account_id != null && row.account_balance_minor != null;
   return {
     id: row.id,
     name: row.name,
     targetAmountMinor: row.target_amount_minor,
-    currentAmountMinor: row.current_amount_minor,
+    currentAmountMinor: tracksAccount ? Math.max(0, row.account_balance_minor) : row.current_amount_minor,
     targetDate: row.target_date,
     linkedAccountId: row.linked_account_id,
+    tracksAccount,
     noteToSelf: row.note_to_self,
     letterRevealed: !!row.letter_revealed,
     archived: !!row.archived,
@@ -31,7 +53,7 @@ function rowToGoal(row: any): SavingsGoal {
 export async function listSavingsGoals(includeArchived = false): Promise<SavingsGoal[]> {
   const db = await getDb();
   const rows = await db.getAllAsync<any>(
-    `SELECT * FROM savings_goals ${includeArchived ? '' : 'WHERE archived = 0'} ORDER BY created_at ASC`
+    `${GOAL_SELECT} ${includeArchived ? '' : 'WHERE g.archived = 0'} ORDER BY g.created_at ASC`
   );
   return rows.map(rowToGoal);
 }
@@ -41,6 +63,8 @@ export interface SavingsGoalInput {
   targetAmountMinor: number;
   targetDate: string | null;
   linkedAccountId: string | null;
+  /** Follow the linked account's balance instead of adding money by hand. Ignored without an account. */
+  tracksAccount?: boolean;
   /** Only ever set at creation — see `SavingsGoal.noteToSelf`'s own comment. */
   noteToSelf?: string | null;
 }
@@ -52,13 +76,27 @@ function validateInput(input: SavingsGoalInput): void {
   }
 }
 
+const trackFlag = (input: SavingsGoalInput) => (input.tracksAccount && input.linkedAccountId ? 1 : 0);
+
+/** Other goals, not archived, that already follow this account — the form warns before a second one does. */
+export async function goalsFollowingAccount(accountId: string, exceptGoalId?: string): Promise<string[]> {
+  const db = await getDb();
+  const rows = await db.getAllAsync<{ name: string }>(
+    `SELECT name FROM savings_goals
+     WHERE track_account = 1 AND archived = 0 AND linked_account_id = ? AND id != ?
+     ORDER BY created_at ASC`,
+    [accountId, exceptGoalId ?? '']
+  );
+  return rows.map((r) => r.name);
+}
+
 export async function createSavingsGoal(input: SavingsGoalInput): Promise<SavingsGoal> {
   validateInput(input);
   const db = await getDb();
   const id = newId();
   await db.runAsync(
-    `INSERT INTO savings_goals (id, name, target_amount_minor, current_amount_minor, target_date, linked_account_id, note_to_self, letter_revealed, archived)
-     VALUES (?, ?, ?, 0, ?, ?, ?, 0, 0)`,
+    `INSERT INTO savings_goals (id, name, target_amount_minor, current_amount_minor, target_date, linked_account_id, note_to_self, letter_revealed, archived, track_account)
+     VALUES (?, ?, ?, 0, ?, ?, ?, 0, 0, ?)`,
     [
       id,
       input.name.trim(),
@@ -66,9 +104,10 @@ export async function createSavingsGoal(input: SavingsGoalInput): Promise<Saving
       input.targetDate,
       input.linkedAccountId,
       input.noteToSelf?.trim() || null,
+      trackFlag(input),
     ]
   );
-  const row = await db.getFirstAsync<any>('SELECT * FROM savings_goals WHERE id = ?', [id]);
+  const row = await db.getFirstAsync<any>(`${GOAL_SELECT} WHERE g.id = ?`, [id]);
   return rowToGoal(row);
 }
 
@@ -76,8 +115,15 @@ export async function updateSavingsGoal(id: string, input: SavingsGoalInput): Pr
   validateInput(input);
   const db = await getDb();
   await db.runAsync(
-    `UPDATE savings_goals SET name = ?, target_amount_minor = ?, target_date = ?, linked_account_id = ? WHERE id = ?`,
-    [input.name.trim(), input.targetAmountMinor, input.targetDate, input.linkedAccountId, id]
+    `UPDATE savings_goals SET name = ?, target_amount_minor = ?, target_date = ?, linked_account_id = ?, track_account = ? WHERE id = ?`,
+    [
+      input.name.trim(),
+      input.targetAmountMinor,
+      input.targetDate,
+      input.linkedAccountId,
+      trackFlag(input),
+      id,
+    ]
   );
 }
 
@@ -92,8 +138,15 @@ export async function contributeToGoal(id: string, deltaMinor: number): Promise<
     throw new Error('Enter an amount to add or remove');
   }
   const db = await getDb();
-  const existing = await db.getFirstAsync<{ id: string }>('SELECT id FROM savings_goals WHERE id = ?', [id]);
+  const existing = await db.getFirstAsync<{
+    id: string;
+    track_account: number;
+    linked_account_id: string | null;
+  }>('SELECT id, track_account, linked_account_id FROM savings_goals WHERE id = ?', [id]);
   if (!existing) throw new Error('This goal no longer exists');
+  if (existing.track_account && existing.linked_account_id) {
+    throw new Error("This goal follows its account's balance — move money into the account instead.");
+  }
   await db.runAsync(
     'UPDATE savings_goals SET current_amount_minor = MAX(0, current_amount_minor + ?) WHERE id = ?',
     [deltaMinor, id]

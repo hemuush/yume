@@ -2,8 +2,10 @@ import { useCallback, useState } from 'react';
 import { View, ScrollView } from 'react-native';
 import { Text } from '@/components/Text';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useLocalSearchParams } from 'expo-router';
 import { getCategoryMonthlyAverages, CategoryBreakdownItem } from '@/db/reports';
 import { listSavingsGoals } from '@/db/savingsGoals';
+import { getAccountMonthlyGrowth } from '@/db/ledger';
 import { goalProgress } from '@/lib/savingsGoalProgress';
 import { projectedMonthlySpend, projectGoalPace } from '@/lib/whatIf';
 import { parseLocalIsoDate } from '@/lib/date';
@@ -40,11 +42,15 @@ function soonerLabel(days: number): string {
  */
 export default function WhatIfScreen() {
   const insets = useSafeAreaInsets();
+  // `category` opens What-if with that category already chosen (from its category page).
+  const { category: askedCategoryId } = useLocalSearchParams<{ category?: string }>();
   const [categories, setCategories] = useState<CategoryBreakdownItem[]>([]);
   const [goals, setGoals] = useState<SavingsGoal[]>([]);
   const [categoryId, setCategoryId] = useState<string | null>(null);
   const [goalId, setGoalId] = useState<string | null>(null);
   const [cutPct, setCutPct] = useState(DEFAULT_CUT_PCT);
+  // Monthly growth of the account each following goal tracks, by goal id.
+  const [growth, setGrowth] = useState<Record<string, number>>({});
 
   const load = useCallback(async () => {
     const [avgs, goalList] = await Promise.all([getCategoryMonthlyAverages(3), listSavingsGoals()]);
@@ -52,6 +58,12 @@ export default function WhatIfScreen() {
     const openGoals = goalList.filter(
       (g) => !g.archived && !goalProgress(g.currentAmountMinor, g.targetAmountMinor).done
     );
+    const followed = await Promise.all(
+      openGoals
+        .filter((g) => g.tracksAccount && g.linkedAccountId)
+        .map(async (g) => [g.id, await getAccountMonthlyGrowth(g.linkedAccountId!)] as const)
+    );
+    setGrowth(Object.fromEntries(followed));
     setCategories(spendable);
     setGoals(openGoals);
     // Falls back to the first item both when nothing's picked yet AND when
@@ -59,17 +71,27 @@ export default function WhatIfScreen() {
     // went to 0, or the goal it pointed at was just finished/archived) —
     // otherwise a stale id survives with nothing in the list to match it,
     // and every chip below renders with none of them active.
-    setCategoryId((prev) =>
-      prev && spendable.some((c) => c.categoryId === prev) ? prev : (spendable[0]?.categoryId ?? null)
-    );
+    setCategoryId((prev) => {
+      if (prev && spendable.some((c) => c.categoryId === prev)) return prev;
+      if (askedCategoryId && spendable.some((c) => c.categoryId === askedCategoryId)) return askedCategoryId;
+      return spendable[0]?.categoryId ?? null;
+    });
     setGoalId((prev) => (prev && openGoals.some((g) => g.id === prev) ? prev : (openGoals[0]?.id ?? null)));
-  }, []);
+  }, [askedCategoryId]);
   const { loaded, loadError } = useScreenLoad(load);
 
   const selectedCategory = categories.find((c) => c.categoryId === categoryId) ?? null;
   const selectedGoal = goals.find((g) => g.id === goalId) ?? null;
   const cut = selectedCategory ? projectedMonthlySpend(selectedCategory.totalMinor, cutPct) : null;
-  const pace = selectedGoal && cut ? projectGoalPace(selectedGoal, cut.extraMinor) : null;
+  const pace =
+    selectedGoal && cut
+      ? projectGoalPace(
+          selectedGoal,
+          cut.extraMinor,
+          undefined,
+          selectedGoal.tracksAccount ? (growth[selectedGoal.id] ?? 0) : undefined
+        )
+      : null;
 
   const reset = () => setCutPct(DEFAULT_CUT_PCT);
 
@@ -227,7 +249,9 @@ export default function WhatIfScreen() {
                       <Text style={styles.neutralText}>
                         {pace.currentEtaDate
                           ? "This change doesn't move the date — try a bigger cut."
-                          : 'Add a bit more progress to this goal first to project a date.'}
+                          : selectedGoal?.tracksAccount
+                            ? "Its account hasn't grown in the last 3 months, so there's no date to compare yet."
+                            : 'Add a bit more progress to this goal first to project a date.'}
                       </Text>
                     )}
                   </View>

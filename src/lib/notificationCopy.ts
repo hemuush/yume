@@ -140,3 +140,22 @@ export function overspendCopy(categoryName: string, pctLabel: string): Notificat
     body: fillNotificationTemplate(t.body, { category: categoryName, pct: pctLabel }),
   };
 }
+
+/** A budget passing 80% of its limit ('near'), or going over it. Plain and specific — no random templates. */
+export function budgetNudgeCopy(
+  level: 'near' | 'over',
+  categoryName: string,
+  spent: string,
+  limit: string,
+  left: string
+): NotificationCopy {
+  return level === 'over'
+    ? {
+        title: `${categoryName} went over budget`,
+        body: `${spent} of ${limit} this month. Tap to see Budgets.`,
+      }
+    : {
+        title: `${categoryName} is at 80% of its budget`,
+        body: `${left} of ${limit} left this month. Suu's keeping an eye on it.`,
+      };
+}

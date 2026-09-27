@@ -3,7 +3,7 @@ import { onTransactionsChanged } from '@/lib/dataEvents';
 import { View, FlatList, Pressable, Animated, ActivityIndicator, ScrollView } from 'react-native';
 import { Text, TextInput } from '@/components/Text';
 import { FadeIn, ReduceMotion } from 'react-native-reanimated';
-import { useFocusEffect, router } from 'expo-router';
+import { useFocusEffect, router, useLocalSearchParams } from 'expo-router';
 import Feather from '@expo/vector-icons/Feather';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { listAccounts, listCategories, listTransactions, searchTransactions } from '@/db/ledger';
@@ -30,6 +30,7 @@ import {
   previousRangeFor,
   groupByDate,
   periodHeading,
+  filterActivity,
 } from '@/features/transactions/transactions.helpers';
 import { formatMoney } from '@/lib/money';
 import { haptics } from '@/lib/haptics';
@@ -79,6 +80,7 @@ export default function TransactionsScreen() {
   const [filterVisible, setFilterVisible] = useState(false);
   const [filterType, setFilterType] = useState<TransactionType | 'all'>('all');
   const [filterCategoryIds, setFilterCategoryIds] = useState<string[]>([]);
+  const [filterAccountIds, setFilterAccountIds] = useState<string[]>([]);
   // Search is its own mode, not a filter layered on the current week/month —
   // it queries the whole ledger, so the period nav/chart/Filter (which only
   // ever apply to what's already loaded for the visible range) step aside
@@ -130,6 +132,23 @@ export default function TransactionsScreen() {
   // simple one-step move: picking an arbitrary month, or switching Week↔Month
   // itself, where a guessed slide direction wouldn't mean anything.
   const [direction, setDirection] = useState<-1 | 0 | 1>(0);
+  // A link can open Activity already filtered: ?category= (a category page's
+  // "See all") or ?account= (Home's account sheet), with ?month=YYYY-MM.
+  const linkParams = useLocalSearchParams<{ category?: string; account?: string; month?: string }>();
+  useEffect(() => {
+    const { category, account, month } = linkParams;
+    if (!category && !account) return;
+    setFilterType('all');
+    setFilterCategoryIds(category ? [category] : []);
+    setFilterAccountIds(account ? [account] : []);
+    if (month && /^\d{4}-\d{2}$/.test(month)) {
+      const [y, m] = month.split('-').map(Number);
+      setDirection(0);
+      setAnchor(new Date(y, m - 1, 1));
+      setViewScope('month');
+    }
+    router.setParams({ category: undefined, account: undefined, month: undefined });
+  }, [linkParams]);
   // The chart bar last tapped — it lifts and the rest fade (see
   // SpendBarChart). Cleared whenever the period changes, since its key
   // belongs to the old period's bars.
@@ -138,6 +157,7 @@ export default function TransactionsScreen() {
   // Shared by the nav row's own chevron buttons and the swipe gesture below,
   // so stepping the period is one piece of logic instead of two copies.
   const stepBack = () => {
+    haptics.tap();
     setDirection(-1);
     setAnchor((a) => {
       if (viewScope === 'month') return new Date(a.getFullYear(), a.getMonth() - 1, 1);
@@ -147,6 +167,7 @@ export default function TransactionsScreen() {
     });
   };
   const stepForward = () => {
+    haptics.tap();
     setDirection(1);
     setAnchor((a) => {
       const next =
@@ -177,24 +198,12 @@ export default function TransactionsScreen() {
   const visibleRange = viewScope === 'month' ? monthRange : { fromDate: days[0].iso, toDate: days[6].iso };
   const filteredTransactions = useMemo(
     () =>
-      transactions.filter((t) => {
-        if (filterType !== 'all' && t.type !== filterType) return false;
-        if (filterCategoryIds.length > 0) {
-          if (!t.categoryId) return false;
-          const cat = categories.find((c) => c.id === t.categoryId);
-          // Selecting a parent (e.g. "Food & Dining") also matches its
-          // subcategories ("Zomato", "Bistro Central") — otherwise picking
-          // the parent chip would only ever surface transactions tagged
-          // directly against it, which is narrower than what "Food &
-          // Dining" means once it has children with spend rolled up to it
-          // everywhere else (Reports).
-          const matchesDirectly = filterCategoryIds.includes(t.categoryId);
-          const matchesViaParent = !!cat?.parentId && filterCategoryIds.includes(cat.parentId);
-          if (!matchesDirectly && !matchesViaParent) return false;
-        }
-        return true;
-      }),
-    [transactions, filterType, filterCategoryIds, categories]
+      filterActivity(
+        transactions,
+        { type: filterType, categoryIds: filterCategoryIds, accountIds: filterAccountIds },
+        categories
+      ),
+    [transactions, filterType, filterCategoryIds, filterAccountIds, categories]
   );
 
   // The chart and headline reflect the real, unfiltered period — same as
@@ -327,6 +336,7 @@ export default function TransactionsScreen() {
   const trimmedQuery = searchQuery.trim();
 
   const onChangeViewScope = (scope: 'week' | 'month') => {
+    if (scope !== viewScope) haptics.tap();
     setDirection(0);
     setViewScope(scope);
   };
@@ -365,6 +375,8 @@ export default function TransactionsScreen() {
   const categoryName = (id: string | null) => (id ? categoriesById.get(id)?.name : undefined) ?? '—';
 
   const expenseChangePct = comparison?.expenseChangePct ?? null;
+  // Categories and accounts picked in the filter sheet (the type has its own chips).
+  const filterCount = filterCategoryIds.length + filterAccountIds.length;
 
   // Before the first successful load (and only then — `loadError` set means
   // fall through to the normal render, which already shows an inline error
@@ -394,12 +406,8 @@ export default function TransactionsScreen() {
               <HeaderIconButton
                 icon="sliders"
                 onPress={() => setFilterVisible(true)}
-                label={
-                  filterCategoryIds.length > 0
-                    ? `Filter by category, ${filterCategoryIds.length} on`
-                    : 'Filter by category'
-                }
-                count={filterCategoryIds.length}
+                label={filterCount > 0 ? `Filters, ${filterCount} on` : 'Filters'}
+                count={filterCount}
               />
             )}
           </View>
@@ -420,7 +428,7 @@ export default function TransactionsScreen() {
             <TextInput
               value={searchQuery}
               onChangeText={setSearchQuery}
-              placeholder="Search notes, categories, accounts…"
+              placeholder="Search notes, categories, amounts, dates…"
               placeholderTextColor={theme.colors.textMuted}
               style={styles.searchInput}
               autoFocus
@@ -513,12 +521,13 @@ export default function TransactionsScreen() {
       <FilterModal
         visible={filterVisible}
         categories={categories}
-        type={filterType}
-        categoryIds={filterCategoryIds}
+        accounts={accounts}
+        filter={{ type: filterType, categoryIds: filterCategoryIds, accountIds: filterAccountIds }}
         onClose={() => setFilterVisible(false)}
-        onApply={(type, categoryIds) => {
-          setFilterType(type);
-          setFilterCategoryIds(categoryIds);
+        onApply={(next) => {
+          setFilterType(next.type);
+          setFilterCategoryIds(next.categoryIds);
+          setFilterAccountIds(next.accountIds);
           setFilterVisible(false);
         }}
       />
@@ -541,7 +550,7 @@ export default function TransactionsScreen() {
               {trimmedQuery.length < SEARCH_MIN_CHARS ? (
                 <EmptyState
                   title="Search your transactions"
-                  subtitle="Matches notes, categories, and accounts — across your whole history, not just this week or month."
+                  subtitle="Matches notes, categories, accounts, amounts (184, ₹1,807) and days (24 sep) — across your whole history, not just this week or month."
                 />
               ) : searchLoading ? (
                 <View style={styles.searchLoading}>
@@ -550,7 +559,7 @@ export default function TransactionsScreen() {
               ) : searchResults.length === 0 ? (
                 <EmptyState
                   title={`No matches for "${trimmedQuery}"`}
-                  subtitle="Try a shorter word, or check the spelling — search looks at each transaction's note, category, and account."
+                  subtitle="Try a shorter word, or check the spelling — search looks at each transaction's note, category, account, amount and day."
                 />
               ) : null}
             </>
@@ -603,6 +612,31 @@ export default function TransactionsScreen() {
                     <Feather name="x" size={12} color={theme.colors.textSecondary} />
                   </Pressable>
                 ))}
+                {filterAccountIds.map((id) => (
+                  <Pressable
+                    key={id}
+                    onPress={() => setFilterAccountIds((ids) => ids.filter((x) => x !== id))}
+                    style={[styles.chip, styles.chipCat]}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Remove the ${accountName(id)} filter`}
+                  >
+                    <Feather name="credit-card" size={11} color={theme.colors.textSecondary} />
+                    <Text style={styles.chipText}>{accountName(id)}</Text>
+                    <Feather name="x" size={12} color={theme.colors.textSecondary} />
+                  </Pressable>
+                ))}
+                {filterCount > 1 && (
+                  <Pressable
+                    onPress={() => {
+                      setFilterCategoryIds([]);
+                      setFilterAccountIds([]);
+                    }}
+                    style={styles.chip}
+                    accessibilityRole="button"
+                  >
+                    <Text style={styles.chipText}>Clear all</Text>
+                  </Pressable>
+                )}
               </ScrollView>
 
               {accounts.length === 0 && (

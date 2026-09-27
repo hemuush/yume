@@ -23,6 +23,7 @@ const comparison = (over: {
     netMinor: 0,
     savingsContributionMinor: 0,
     categoryBreakdown: over.current ?? [cat('Food', 980000), cat('Rent', 900000)],
+    incomeBreakdown: [],
   },
   previous: {
     incomeMinor: 0,
@@ -30,6 +31,7 @@ const comparison = (over: {
     netMinor: 0,
     savingsContributionMinor: 0,
     categoryBreakdown: over.previous ?? [cat('Food', 740000), cat('Rent', 900000)],
+    incomeBreakdown: [],
   },
   incomeChangePct: null,
   expenseChangePct: null,

@@ -22,11 +22,16 @@ import { RepeatEntrySheet } from '@/features/home/RepeatEntrySheet';
  * touch-target size (laid out by `style`, which the navigator controls)
  * doesn't change.
  */
-function TabButton({ children, style, ...rest }: any) {
+function TabButton({ children, style, onPress, ...rest }: any) {
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.88);
   return (
     <Pressable
       {...rest}
+      onPress={(e) => {
+        // A light tick on every tab switch — only when it's a different tab.
+        if (!rest.accessibilityState?.selected) haptics.tap();
+        onPress?.(e);
+      }}
       onPressIn={onPressIn}
       onPressOut={onPressOut}
       android_ripple={{ color: 'transparent' }}

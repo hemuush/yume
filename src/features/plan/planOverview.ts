@@ -29,6 +29,8 @@ export interface PlanLoanProgressInput {
   totalCount: number;
   nextDueDate: string | null;
   nextEmiMinor: number | null;
+  /** The last installment's due date — when the loan is done. */
+  lastDueDate?: string | null;
 }
 
 export interface PlanLoanRow {
@@ -40,6 +42,8 @@ export interface PlanLoanRow {
   nextEmiMinor: number | null;
   paidCount: number;
   totalCount: number;
+  /** When its last EMI is due (YYYY-MM-DD), if known. */
+  endDate: string | null;
 }
 
 export interface LoansSummary {
@@ -52,6 +56,8 @@ export interface LoansSummary {
   /** 0–1: share of borrowed principal repaid. */
   paidFraction: number;
   borrowedCount: number;
+  /** The last EMI across everything borrowed — the month you're debt-free. Null if unknown. */
+  debtFreeDate: string | null;
   /** Outstanding on money you lent out — owed to you. */
   lentLeftMinor: number;
   /** Every open loan: borrowed first, soonest EMI first, then money lent. */
@@ -76,6 +82,7 @@ export function buildLoansSummary(loans: PlanLoanInput[], progress: PlanLoanProg
       nextEmiMinor: p?.nextEmiMinor ?? null,
       paidCount: p?.paidCount ?? 0,
       totalCount: p?.totalCount ?? 0,
+      endDate: p?.lastDueDate ?? null,
     };
   });
   rows.sort((a, b) => {
@@ -90,6 +97,9 @@ export function buildLoansSummary(loans: PlanLoanInput[], progress: PlanLoanProg
     borrowedPrincipalMinor,
     paidFraction: borrowedPrincipalMinor > 0 ? Math.min(1, paidOffMinor / borrowedPrincipalMinor) : 0,
     borrowedCount: borrowed.length,
+    debtFreeDate: rows
+      .filter((row) => row.direction === 'borrowed' && row.endDate)
+      .reduce<string | null>((latest, row) => (latest && latest > row.endDate! ? latest : row.endDate), null),
     lentLeftMinor: open
       .filter((l) => l.direction === 'lent')
       .reduce((s, l) => s + l.outstandingPrincipalMinor, 0),
@@ -118,6 +128,8 @@ export interface PlanDueItem {
   dueDate: string;
   amountMinor: number;
   route: '/loans' | '/recurring';
+  /** Set on an EMI — Coming up's Paid button records that loan's next installment. */
+  loanId?: string;
 }
 
 /**
@@ -136,6 +148,7 @@ export function buildDueItems(loanRows: PlanLoanRow[], rules: PlanRuleInput[]): 
       dueDate: l.nextDueDate,
       amountMinor: l.nextEmiMinor,
       route: '/loans',
+      loanId: l.id,
     });
   }
   for (const r of rules) {
@@ -170,7 +183,8 @@ export interface DueSoon {
  * your own accounts aren't money going out, so they don't count.
  */
 export function buildDueSoon(items: PlanDueItem[], today: string, days = DUE_SOON_DAYS): DueSoon {
-  const untilDate = addDaysToIsoDate(today, days);
+  // Today plus the next 13 days — the same 14 days the strip draws and Coming up lists.
+  const untilDate = addDaysToIsoDate(today, days - 1);
   let emiMinor = 0;
   let billMinor = 0;
   let count = 0;
@@ -182,6 +196,61 @@ export function buildDueSoon(items: PlanDueItem[], today: string, days = DUE_SOO
     count++;
   }
   return { totalMinor: emiMinor + billMinor, emiMinor, billMinor, count, untilDate };
+}
+
+/** One day of the next 14, for the Plan hero's strip. */
+export interface DueDay {
+  date: string;
+  /** What's due that day: EMIs and bills only (money going out). */
+  emi: boolean;
+  bill: boolean;
+}
+
+/** A day with things due, for Coming up — its items and their total going out. */
+export interface DueGroup {
+  date: string;
+  items: PlanDueItem[];
+  outMinor: number;
+}
+
+/**
+ * The next `days` days from today, each marked with whether an EMI or a
+ * bill falls on it; anything already overdue counts on today.
+ */
+export function buildDueDays(items: PlanDueItem[], today: string, days = DUE_SOON_DAYS): DueDay[] {
+  return Array.from({ length: days }, (_, i) => {
+    const date = addDaysToIsoDate(today, i);
+    const on = items.filter((it) => (i === 0 ? it.dueDate <= date : it.dueDate === date));
+    return { date, emi: on.some((it) => it.kind === 'emi'), bill: on.some((it) => it.kind === 'bill') };
+  });
+}
+
+/**
+ * Coming up, grouped by day: everything due within `days` (overdue first,
+ * on its own date), soonest first. When nothing falls in that window, the
+ * next few upcoming items instead, so the list is never blank while rules
+ * or loans exist.
+ */
+export function groupDueItems(
+  items: PlanDueItem[],
+  today: string,
+  days = DUE_SOON_DAYS,
+  fallback = 3
+): DueGroup[] {
+  const until = addDaysToIsoDate(today, days - 1);
+  const soon = items.filter((it) => it.dueDate <= until);
+  const shown = soon.length > 0 ? soon : items.slice(0, fallback);
+  const groups: DueGroup[] = [];
+  for (const it of shown) {
+    let g = groups[groups.length - 1];
+    if (!g || g.date !== it.dueDate) {
+      g = { date: it.dueDate, items: [], outMinor: 0 };
+      groups.push(g);
+    }
+    g.items.push(it);
+    if (it.kind === 'emi' || it.kind === 'bill') g.outMinor += it.amountMinor;
+  }
+  return groups;
 }
 
 /* ---------- Budgets ---------- */
@@ -216,9 +285,6 @@ export function buildBudgetsSummary(budgets: PlanBudgetInput[]): BudgetsSummary 
     rows: budgets,
   };
 }
-
-/** A budget at or past this share of its limit reads as "close" — the same line Home's Needs you uses. */
-export const BUDGET_NEAR_PCT = 90;
 
 /* ---------- Friends & Family ---------- */
 

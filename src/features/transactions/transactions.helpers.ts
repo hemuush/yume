@@ -1,4 +1,5 @@
-import { Transaction } from '@/types';
+import { Category, Transaction } from '@/types';
+import type { ActivityFilter } from './FilterModal';
 import { toLocalIsoDate, parseLocalIsoDate, addDaysToIsoDate } from '@/lib/date';
 
 /** One day of the Activity week, enough for its "Sep 7 – 13" label and range. */
@@ -85,4 +86,36 @@ export function periodHeading(input: {
   const isCurrent = days.some((d) => d.iso === toLocalIsoDate(today));
   if (isCurrent) return { title: 'This week', sub: range };
   return { title: range, sub: last.year === today.getFullYear() ? '' : String(last.year) };
+}
+
+/**
+ * Activity's list after its filters: the type, then any accounts (a
+ * transfer matches either side), then any categories — where picking a
+ * parent ("Food & Dining") also matches its subcategories ("Zomato"), the
+ * same rollup Reports uses.
+ */
+export function filterActivity(
+  transactions: Transaction[],
+  filter: ActivityFilter,
+  categories: Category[]
+): Transaction[] {
+  const parentOf = new Map(categories.map((c) => [c.id, c.parentId]));
+  return transactions.filter((t) => {
+    if (filter.type !== 'all' && t.type !== filter.type) return false;
+    if (
+      filter.accountIds.length > 0 &&
+      !filter.accountIds.includes(t.accountId) &&
+      !(t.toAccountId && filter.accountIds.includes(t.toAccountId))
+    ) {
+      return false;
+    }
+    if (filter.categoryIds.length > 0) {
+      if (!t.categoryId) return false;
+      const parent = parentOf.get(t.categoryId);
+      if (!filter.categoryIds.includes(t.categoryId) && !(parent && filter.categoryIds.includes(parent))) {
+        return false;
+      }
+    }
+    return true;
+  });
 }

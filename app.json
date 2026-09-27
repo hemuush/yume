@@ -16,7 +16,7 @@
         "backgroundImage": "./assets/android-icon-background.png"
       },
       "predictiveBackGestureEnabled": true,
-      "versionCode": 100,
+      "versionCode": 102,
       "permissions": ["android.permission.USE_BIOMETRIC", "android.permission.USE_FINGERPRINT"]
     },
     "web": {
@@ -53,6 +53,7 @@
         }
       ],
       "expo-sharing",
+      "./plugins/withAppShortcuts",
       [
         "react-native-android-widget",
         {

@@ -57,7 +57,9 @@ Distinct from `loans` on purpose: this is for informal, interest-free IOUs — "
 
 ## Reports (`src/db/reports.ts`)
 
-Period comparisons (day/week/month/year vs. the immediately preceding equivalent period) are computed directly from the transaction and account tables — there's no separate aggregation table to keep in sync. `getPeriodSummary` returns income, expenses, net, net savings-account contribution, and a per-category expense breakdown for any date range; `getPeriodComparison` runs it twice (current + previous period) and computes percentage change. Every aggregate query joins to `accounts` and filters to the default currency, so totals are never summed across currencies. The category breakdown rolls subcategory spend up into the parent row, with `getSubcategoryBreakdown` for the drill-down. `getNetWorthTrend` reconstructs net worth as of the end of each of the last N months from the same tables filtered to a cutoff date.
+Period comparisons (day/week/month/year vs. the immediately preceding equivalent period) are computed directly from the transaction and account tables — there's no separate aggregation table to keep in sync. `getPeriodSummary` returns income, expenses, net, net savings-account contribution, and per-category expense and income breakdowns for any date range; `getPeriodComparison` runs it twice (current + previous period) and computes percentage change. Every aggregate query joins to `accounts` and filters to the default currency, so totals are never summed across currencies. The category breakdown rolls subcategory spend up into the parent row, with `getSubcategoryBreakdown` for the drill-down. `getNetWorthTrend` reconstructs net worth as of the end of each of the last N months from the same tables filtered to a cutoff date.
+
+Reports looks at a *report window* (`src/lib/period.ts`): a month or year by offset from today, or a custom range the person picks. A custom range made of whole months steps by that many months (so a financial year, 1 April to 31 March, steps to the next one); any other range steps by its number of days, and is compared with the same number of days just before it.
 
 ## Recurring rules (`recurring_rules`)
 
@@ -67,9 +69,22 @@ A rule is a template (type, account(s), category, amount, note) plus a cadence (
 
 A plain key/value table — default currency, accent color, user name, onboarding flag, app-lock toggle, "hide sensitive amounts" privacy toggle, notification preferences, backup frequency, the chosen local backup folder, and the last local backup timestamp and outcome. Deliberately schema-less so a new preference never needs a migration; hot values (currency, accent, user name, …) are cached in memory and re-primed after a restore via `resetSettingsCache()`.
 
-## Reserved tables with no UI yet (`savings_goals`, `budgets`)
+## Savings goals (`savings_goals`)
 
-Both tables exist in the schema — `savings_goals` (a named target amount, optional target date and linked account) and `budgets` (a per-category monthly spending limit, with an optional rollover flag) — but neither has any screen, db module, or UI reading or writing them yet. They're schema placeholders for features that haven't been built, not dead code to remove: dropping them would be a real (if currently inconsequential) schema change for no benefit. If either is ever built out, it gets its own `src/db/*.ts` module and feature folder the same way every other table above does.
+A named target amount with an optional target date, an optional linked account, and an optional note sealed until the goal is first reached (`note_to_self`, `letter_revealed`). Progress works one of two ways (`src/db/savingsGoals.ts`):
+
+- **By hand** (`track_account = 0`, the default): `current_amount_minor`, moved by "+ Add money". There is no contribution ledger and nothing creates a transaction, so adding to a goal is never confused with moving money. A linked account is then only a label.
+- **Following the linked account** (`track_account = 1`): progress is that account's balance, worked out on every read in the same query that loads the goal (opening balance + income and transfers in − expenses and transfers out, never below zero). `current_amount_minor` is left untouched meanwhile, so switching back to "by hand" brings the old amount back. "+ Add money" is refused; the goal's button opens a transfer into the account instead. What-if uses the account's net growth over the last 90 days as the goal's saving rate (`getAccountMonthlyGrowth`), not the whole balance, which includes money from before the goal existed.
+
+If the linked account is deleted, `linked_account_id` goes null and the goal falls back to its hand-tracked amount.
+
+## Budgets (`budgets`)
+
+A per-category monthly spending limit (`src/db/budgets.ts`). Progress is the category's spend this month, subcategories included; a pace marker compares it with an even spread across the month (`src/lib/pace.ts`). Each budget sends at most one notification at 80% and one when over, per month (`budget_nudges_sent` in settings).
+
+## Subscriptions and bills (`src/db/subscriptions.ts`)
+
+Not a table: worked out from `recurring_rules` and `transactions` for the Recurring screen. `subscriptionTotals` adds up running expense rules at their monthly share (a weekly rule counts about 4.35 times, a yearly one a twelfth). Suggestions come from two places: entries under a Subscriptions subcategory in the last 60 days with no running rule, and `findMonthlyPatterns`, which finds the same category charged once a month for three months in a row (within 10% of the latest amount and five days of its day of the month, the latest in this month or last). Loan entries, system categories, and categories that already have a running rule are never suggested. A suggestion hidden with ✕ is stored in `hidden_subscription_suggestions`; a pattern also shows in Needs you, and hiding it in either place hides it in both.
 
 ## Migrations
 

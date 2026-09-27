@@ -167,14 +167,26 @@ export async function notifyOverspend(categoryName: string, pctChange: number): 
   });
 }
 
+/** A budget passing 80% of its limit, or going over — see checkBudgetNudge in db/ledger.ts. Opens Budgets. */
+export async function notifyBudget(copy: { title: string; body: string }): Promise<void> {
+  const existing = await Notifications.getPermissionsAsync();
+  if (!existing.granted) return;
+
+  await ensureAndroidChannel();
+  await Notifications.scheduleNotificationAsync({
+    content: { ...copy, data: { url: '/budgets' satisfies NotificationRoute } },
+    trigger: null,
+  });
+}
+
 /**
  * Where tapping each kind of Yume notification takes you: the daily
  * reminder opens Add (it's asking you to log something), an EMI reminder
- * opens Loans, the weekly summary and overspend alerts open Reports. A fixed
- * list — a notification can only ever route to one of these, whatever its
- * payload says.
+ * opens Loans, the weekly summary and overspend alerts open Reports, and a
+ * budget nudge opens Budgets. A fixed list — a notification can only ever
+ * route to one of these, whatever its payload says.
  */
-export const NOTIFICATION_ROUTES = ['/add-transaction', '/loans', '/reports'] as const;
+export const NOTIFICATION_ROUTES = ['/add-transaction', '/loans', '/reports', '/budgets'] as const;
 export type NotificationRoute = (typeof NOTIFICATION_ROUTES)[number];
 
 /** The route a tapped notification asks for, or null if it carries none this app knows. */

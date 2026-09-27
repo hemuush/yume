@@ -5,6 +5,7 @@ import ReanimatedAnimated from 'react-native-reanimated';
 import Feather from '@expo/vector-icons/Feather';
 import { Category, Transaction } from '@/types';
 import { TransactionRow } from './TransactionRow';
+import { MovingRow } from '@/components/MovingRow';
 import { formatMoney } from '@/lib/money';
 import { theme } from '@/constants/theme';
 import { usePressScale } from '@/lib/usePressScale';
@@ -107,15 +108,16 @@ export function DayCard({
         {shown.map((tx, i) => {
           const cat = tx.categoryId ? categoriesById.get(tx.categoryId) : undefined;
           return (
-            <TransactionRow
-              key={tx.id}
-              tx={tx}
-              cat={cat}
-              accountName={accountName}
-              categoryName={categoryName}
-              divider={i > 0}
-              onPress={() => onPressTx(tx)}
-            />
+            <MovingRow key={tx.id}>
+              <TransactionRow
+                tx={tx}
+                cat={cat}
+                accountName={accountName}
+                categoryName={categoryName}
+                divider={i > 0}
+                onPress={() => onPressTx(tx)}
+              />
+            </MovingRow>
           );
         })}
         {!expanded && hidden.length > 0 && (

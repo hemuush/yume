@@ -3,6 +3,7 @@ import {
   findTopGrowingCategory,
   loanNetWorthContribution,
   computeTrackedBalance,
+  trackedBalanceParts,
   CategoryBreakdownItem,
 } from './reports';
 
@@ -170,5 +171,24 @@ describe('computeTrackedBalance', () => {
       defaultCurrency: 'INR',
     });
     expect(result).toBe(1150_00);
+  });
+
+  it('is the sum of trackedBalanceParts, which keeps the three terms apart', () => {
+    const input = {
+      accounts: [acc('INR', 1000_00), acc('USD', 99_00)],
+      loans: [
+        loan('borrowed', 'active', 2000_00),
+        loan('lent', 'active', 300_00),
+        loan('borrowed', 'closed', 0),
+      ],
+      people: [{ balanceMinor: 150_00 }],
+      defaultCurrency: 'INR',
+    };
+    expect(trackedBalanceParts(input)).toEqual({
+      accountsMinor: 1000_00,
+      loansMinor: -1700_00,
+      peopleMinor: 150_00,
+    });
+    expect(computeTrackedBalance(input)).toBe(-550_00);
   });
 });

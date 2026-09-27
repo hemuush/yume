@@ -7,6 +7,7 @@ import { roundedMinor } from '@/lib/round';
 import { Loan } from '@/types';
 import { usePressScale } from '@/lib/usePressScale';
 import { NeoTile } from '@/components/NeoTile';
+import { payoffMonth } from '@/lib/loanPayoff';
 import { styles } from './loans.styles';
 
 /**
@@ -23,11 +24,14 @@ export function LoanCard({
   fadeStyle,
   onPress,
   muted,
+  lastDueDate,
 }: {
   loan: Loan;
   fadeStyle: any;
   onPress: () => void;
   muted?: boolean;
+  /** The loan's last pending EMI (getLoanProgress) — shown as "Debt-free in …". */
+  lastDueDate?: string | null;
 }) {
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.98);
   const isClosed = loan.status === 'closed';
@@ -70,7 +74,13 @@ export function LoanCard({
                 <Text style={styles.payoffCaptionBold}>{formatRatioPct(fraction)}</Text> of principal repaid
               </Text>
               <Text style={styles.payoffCaptionText}>
-                {isClosed ? 'Done' : loan.nextDueDate ? `Next due ${loan.nextDueDate}` : ' '}
+                {isClosed
+                  ? 'Done'
+                  : lastDueDate
+                    ? `${loan.direction === 'borrowed' ? 'Debt-free' : 'Repaid'} in ${payoffMonth(lastDueDate)}`
+                    : loan.nextDueDate
+                      ? `Next due ${loan.nextDueDate}`
+                      : ' '}
               </Text>
             </View>
           </Pressable>

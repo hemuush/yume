@@ -92,6 +92,16 @@ export const styles = StyleSheet.create({
   row: { paddingVertical: 14, paddingHorizontal: 14 },
   rowDivider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.borderSoft },
   rowTop: { flexDirection: 'row', alignItems: 'center', gap: 11, marginBottom: 8 },
+  moreBtn: {
+    width: 30,
+    height: 30,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.borderSoft,
+    backgroundColor: theme.colors.surface,
+  },
   rowName: { flex: 1, fontSize: 14.5, fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
   rowAmount: {
     fontFamily: theme.font.mono,
@@ -101,7 +111,16 @@ export const styles = StyleSheet.create({
   },
   rowAmountOver: { color: theme.colors.expense, fontFamily: theme.font.monoBold },
   rowAmountOf: { color: theme.colors.textMuted, fontFamily: theme.font.mono },
-  rowNote: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textMuted, marginTop: 6 },
+  rowFoot: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'baseline',
+    gap: 8,
+    marginTop: 6,
+  },
+  rowNote: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textMuted },
+  rowPace: { fontFamily: theme.font.bodyBold, fontSize: 11, color: theme.colors.income },
+  rowPaceAhead: { color: theme.colors.idGoldDeep },
   rowNoteOver: { color: theme.colors.expense, fontFamily: theme.font.bodyBold },
 
   modalHint: {

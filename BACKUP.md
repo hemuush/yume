@@ -10,22 +10,24 @@ From **Settings → Backup & Restore**:
 
 - **Export full backup (JSON)** — every table, serialized, shareable via any app (email, a cloud drive, a file manager). This is the complete source of truth for a restore.
 - **Export to Excel (.xlsx)** — a real, styled workbook matching Yume's own colors: Summary (key totals), Transactions (with an AutoFilter and a live SUBTOTAL total row), Accounts, Categories (rolled up the same way Reports does), Loans, and Friends & Family — each its own sheet, opens directly in Excel/Sheets/Numbers.
-- **Restore from file** — pick a previously exported JSON file; this **replaces all current data** after a confirmation prompt.
+- **Restore from file** — pick a previously exported JSON file; this **replaces all current data** after the restore preview (see *Restore safety*).
+
+On a new phone, the first onboarding page has **I have a Yume backup**: pick the file, check the same preview, and Yume restores it and skips the rest of setup.
 
 ## Local folder backup
 
 From the same screen, **Choose folder** grants Yume write access to one folder on the device (via the Storage Access Framework). Once set:
 
-- Yume writes a fresh backup file into that folder automatically, on the schedule you pick (daily / weekly / monthly), checked whenever the app is opened. This is an app-open check, not a true OS background job — if you don't open the app for several days, backup resumes the next time you do.
+- Yume writes a fresh backup file into that folder automatically, on the schedule you pick (daily / weekly / monthly), checked whenever the app is opened or comes back to the foreground. Daily means once per calendar day. This is an app-open check, not a true OS background job — if you don't open the app for several days, backup resumes the next time you do.
 - **Backup now** triggers it manually any time.
-- **Restore latest from folder** reads the newest backup file in that folder and restores it, after confirmation.
+- The screen lists the newest backups in that folder (up to 14), each with its date, size and what it holds, and its own **Restore**.
 - **Forget folder** revokes the access grant; no further automatic backups run until you pick a folder again.
 
-The relevant code is `src/lib/localBackup.ts` (`runLocalBackupIfDue`, `writeLocalBackupNow`, `readNewestLocalBackup`). Backup files are named `yume-backup-<date>.json`.
+The relevant code is `src/lib/localBackup.ts` (`runLocalBackupIfDue`, `writeLocalBackupNow`, `listLocalBackups`, `readLocalBackup`). Backup files are named `yume-backup-<date>.json`.
 
 ## Restore safety
 
-Restoring **replaces every table**. The app always shows a confirmation dialog naming the backup's export date before doing this, and the restore itself runs inside a single database transaction — if it fails partway through, nothing is left half-restored. Before anything is replaced, the file is checked: a damaged file, or one whose records point at data missing from it (e.g. transactions for an account that isn't in the file), is rejected with the current data untouched. Settings that belong to this phone rather than the data — the chosen backup folder, the last-backup status, and the app lock — keep their current values instead of the backup's. Loan due reminders, the daily/weekly reminders and home-screen widgets are re-synced to the restored data. Cached settings are re-primed via `resetSettingsCache()` and the app returns to Home so every tab reloads the restored data.
+Restoring **replaces every table**. Before doing this, every restore path (a file, a folder backup, onboarding) shows a preview: what's in the backup (entries and the latest one's date, accounts, loans) next to what's on the phone now, and how many entries saved after the backup was made would be lost (`src/features/backup/RestorePreviewSheet.tsx`). The restore itself runs inside a single database transaction — if it fails partway through, nothing is left half-restored. Before anything is replaced, the file is checked: a damaged file, or one whose records point at data missing from it (e.g. transactions for an account that isn't in the file), is rejected with the current data untouched. Settings that belong to this phone rather than the data — the chosen backup folder, the last-backup status, and the app lock — keep their current values instead of the backup's. Loan due reminders, the daily/weekly reminders and home-screen widgets are re-synced to the restored data. Cached settings are re-primed via `resetSettingsCache()` and the app returns to Home so every tab reloads the restored data.
 
 ### Undoing a restore (the safety copy)
 

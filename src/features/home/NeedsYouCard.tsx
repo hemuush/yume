@@ -12,8 +12,9 @@ import type { MonthReview } from './monthReview';
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 /**
- * Home's "Needs you" block — at most three things that want action today
- * (see needsYou.ts for the rules). Renders nothing at all when there's
+ * Home's "Needs you" block — the top three things that want action (see
+ * needsYou.ts for the rules), with "See all" opening the bell's full list
+ * when there are more; the badge counts all of them. Renders nothing at all when there's
  * nothing, so a calm month leaves Home calmer rather than showing an empty
  * card. Rows are drawn exactly like UpcomingRow (same sizes, same card),
  * so this reads as part of Home's existing language, not a new widget.
@@ -22,6 +23,9 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
  * the first row: tap it for that month's report, ✕ to hide it until next
  * month. It used to be a card of its own.
  */
+/** How many items the Home card shows; the rest are one tap away. */
+const NEEDS_YOU_ON_HOME = 3;
+
 const TONE: Record<
   NeedsYouTone,
   { bg: string; fg: string; icon: React.ComponentProps<typeof Feather>['name'] }
@@ -34,12 +38,16 @@ const TONE: Record<
 const ACTION_ICON: Partial<Record<NeedsYouItem['action'], React.ComponentProps<typeof Feather>['name']>> = {
   loans: 'calendar',
   backup: 'folder',
+  reports: 'trending-up',
+  tidy: 'check-square',
+  recurring: 'repeat',
 };
 
 export function NeedsYouCard({
   items,
   onOpen,
   onSnooze,
+  onSeeAll,
   review = null,
   onOpenReview,
   onDismissReview,
@@ -47,19 +55,25 @@ export function NeedsYouCard({
   items: NeedsYouItem[];
   onOpen: (item: NeedsYouItem) => void;
   onSnooze: (item: NeedsYouItem) => void;
+  onSeeAll: () => void;
   review?: MonthReview | null;
   onOpenReview?: () => void;
   onDismissReview?: () => void;
 }) {
   const count = items.length + (review ? 1 : 0);
   if (count === 0) return null;
+  const shown = items.slice(0, NEEDS_YOU_ON_HOME);
   return (
-    <HomeSection title="Needs you" badge={count}>
+    <HomeSection
+      title="Needs you"
+      badge={count}
+      onSeeAll={items.length > shown.length ? onSeeAll : undefined}
+    >
       <View style={styles.card}>
         {review && (
           <ReviewRow review={review} onPress={() => onOpenReview?.()} onDismiss={() => onDismissReview?.()} />
         )}
-        {items.map((item, i) => (
+        {shown.map((item, i) => (
           <NeedsYouRow
             key={item.key}
             item={item}
@@ -122,16 +136,25 @@ function ReviewRow({
   );
 }
 
-function NeedsYouRow({
+/**
+ * One Needs you item. `onDismiss` adds a ✕ (the full list on the bell's
+ * screen); without it the row ends in a chevron, as on Home.
+ */
+export function NeedsYouRow({
   item,
   divider,
   onPress,
   onSnooze,
+  onDismiss,
+  dismissLabel = 'Dismiss',
 }: {
   item: NeedsYouItem;
   divider: boolean;
   onPress: () => void;
   onSnooze: () => void;
+  onDismiss?: () => void;
+  /** The ✕'s spoken label — "Show again" on an already-dismissed row. */
+  dismissLabel?: string;
 }) {
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.98);
   const tone = TONE[item.tone];
@@ -166,6 +189,20 @@ function NeedsYouRow({
           style={styles.later}
         >
           <Text style={styles.laterText}>Later</Text>
+        </Pressable>
+      ) : onDismiss ? (
+        <Pressable
+          onPress={onDismiss}
+          hitSlop={12}
+          accessibilityRole="button"
+          accessibilityLabel={`${dismissLabel}: ${item.title}`}
+          style={styles.close}
+        >
+          <Feather
+            name={dismissLabel === 'Dismiss' ? 'x' : 'rotate-ccw'}
+            size={13}
+            color={theme.colors.textSecondary}
+          />
         </Pressable>
       ) : (
         <Feather name="chevron-right" size={16} color={theme.colors.textMuted} />

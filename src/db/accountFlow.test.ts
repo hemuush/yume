@@ -73,18 +73,36 @@ describe('getAccountFlow', () => {
 
   const september = { start: '2026-09-01', end: '2026-09-30' };
 
-  it('counts income and transfers in as in, expenses and transfers out as out', async () => {
-    expect(await getAccountFlow(bankId, september)).toEqual({ inMinor: 1050000, outMinor: 320000 });
+  it('counts income and transfers in as in, expenses and transfers out as out, and keeps them apart', async () => {
+    expect(await getAccountFlow(bankId, september)).toEqual({
+      inMinor: 1050000,
+      outMinor: 320000,
+      incomeMinor: 1000000,
+      transferInMinor: 50000,
+      expenseMinor: 20000,
+      transferOutMinor: 300000,
+    });
   });
 
   it('sees the other side of each transfer from the destination account', async () => {
-    expect(await getAccountFlow(savingsId, september)).toEqual({ inMinor: 300000, outMinor: 50000 });
+    expect(await getAccountFlow(savingsId, september)).toMatchObject({
+      inMinor: 300000,
+      outMinor: 50000,
+      incomeMinor: 0,
+      transferInMinor: 300000,
+      expenseMinor: 0,
+      transferOutMinor: 50000,
+    });
   });
 
   it('ignores the opening balance and anything outside the range', async () => {
     expect(await getAccountFlow(bankId, { start: '2026-07-01', end: '2026-07-31' })).toEqual({
       inMinor: 0,
       outMinor: 0,
+      incomeMinor: 0,
+      transferInMinor: 0,
+      expenseMinor: 0,
+      transferOutMinor: 0,
     });
   });
 });

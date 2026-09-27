@@ -19,7 +19,8 @@ import { PrimaryButton } from '@/components/PrimaryButton';
 import { Chip } from '@/components/Chip';
 import { ToggleSwitch } from '@/components/ToggleSwitch';
 import { toMinor } from '@/lib/money';
-import { partsToIsoDate } from '@/lib/date';
+import { toLocalIsoDate, addMonthsToIsoDate } from '@/lib/date';
+import { DateField } from '@/components/DateField';
 import { CategoryPicker } from '@/components/CategoryPicker';
 import { styles } from './recurring.styles';
 import { frequencyNoun } from './recurring.helpers';
@@ -45,6 +46,7 @@ export function RuleModal({
   onClose,
   onSaved,
   onDeleted,
+  prefill,
 }: {
   visible: boolean;
   editing: RecurringRule | null;
@@ -53,9 +55,19 @@ export function RuleModal({
   onClose: () => void;
   onSaved: () => void;
   onDeleted: () => void;
+  /** A new rule's starting values — "Make it recurring" on an entry fills the form from it. */
+  prefill?: {
+    type: TransactionType;
+    accountId: string;
+    toAccountId: string | null;
+    categoryId: string | null;
+    amountMinor: number;
+    note: string;
+    nextRunDate: string;
+  };
 }) {
   const { show: showUndo } = useUndoToast();
-  const today = useMemo(() => new Date(), []);
+  const today = useMemo(() => toLocalIsoDate(new Date()), []);
   const [type, setType] = useState<TransactionType>('expense');
   const [accountId, setAccountId] = useState<string | null>(null);
   const [toAccountId, setToAccountId] = useState<string | null>(null);
@@ -64,13 +76,9 @@ export function RuleModal({
   const [note, setNote] = useState('');
   const [frequency, setFrequency] = useState<RecurrenceFrequency>('monthly');
   const [intervalCount, setIntervalCount] = useState('1');
-  const [startYear, setStartYear] = useState(String(today.getFullYear()));
-  const [startMonth, setStartMonth] = useState(String(today.getMonth() + 1));
-  const [startDay, setStartDay] = useState(String(today.getDate()));
+  const [startDate, setStartDate] = useState(today);
   const [hasEndDate, setHasEndDate] = useState(false);
-  const [endYear, setEndYear] = useState(String(today.getFullYear() + 1));
-  const [endMonth, setEndMonth] = useState(String(today.getMonth() + 1));
-  const [endDay, setEndDay] = useState(String(today.getDate()));
+  const [endDate, setEndDate] = useState(() => addMonthsToIsoDate(today, 12));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -85,38 +93,24 @@ export function RuleModal({
       setNote(editing.note);
       setFrequency(editing.frequency);
       setIntervalCount(String(editing.intervalCount));
-      const [sy, sm, sd] = editing.nextRunDate.split('-');
-      setStartYear(sy);
-      setStartMonth(String(Number(sm)));
-      setStartDay(String(Number(sd)));
-      if (editing.endDate) {
-        setHasEndDate(true);
-        const [ey, em, ed] = editing.endDate.split('-');
-        setEndYear(ey);
-        setEndMonth(String(Number(em)));
-        setEndDay(String(Number(ed)));
-      } else {
-        setHasEndDate(false);
-      }
+      setStartDate(editing.nextRunDate);
+      setHasEndDate(!!editing.endDate);
+      setEndDate(editing.endDate ?? addMonthsToIsoDate(editing.nextRunDate, 12));
     } else {
-      setType('expense');
-      setAccountId(accounts[0]?.id ?? null);
-      setToAccountId(null);
-      setCategoryId(null);
-      setAmount('');
-      setNote('');
+      setType(prefill?.type ?? 'expense');
+      setAccountId(prefill?.accountId ?? accounts[0]?.id ?? null);
+      setToAccountId(prefill?.toAccountId ?? null);
+      setCategoryId(prefill?.categoryId ?? null);
+      setAmount(prefill ? (prefill.amountMinor / 100).toString() : '');
+      setNote(prefill?.note ?? '');
       setFrequency('monthly');
       setIntervalCount('1');
-      setStartYear(String(today.getFullYear()));
-      setStartMonth(String(today.getMonth() + 1));
-      setStartDay(String(today.getDate()));
+      setStartDate(prefill?.nextRunDate ?? today);
       setHasEndDate(false);
-      setEndYear(String(today.getFullYear() + 1));
-      setEndMonth(String(today.getMonth() + 1));
-      setEndDay(String(today.getDate()));
+      setEndDate(addMonthsToIsoDate(today, 12));
     }
     setError(null);
-  }, [visible, editing, accounts, today]);
+  }, [visible, editing, accounts, today, prefill]);
 
   const filteredCategories = useMemo(
     () => categories.filter((c) => c.kind === (type === 'income' ? 'income' : 'expense')),
@@ -153,14 +147,8 @@ export function RuleModal({
       setError('Pick a different destination account');
       return;
     }
-    const startDate = partsToIsoDate(startYear, startMonth, startDay);
-    if (!startDate) {
-      setError('Enter a valid start date');
-      return;
-    }
-    const endDate = hasEndDate ? partsToIsoDate(endYear, endMonth, endDay) : null;
-    if (hasEndDate && !endDate) {
-      setError('Enter a valid end date');
+    if (hasEndDate && endDate < startDate) {
+      setError('The end date is before the start date');
       return;
     }
     const interval = parseInt(intervalCount || '0', 10);
@@ -179,7 +167,7 @@ export function RuleModal({
       frequency,
       intervalCount: interval,
       nextRunDate: startDate,
-      endDate,
+      endDate: hasEndDate ? endDate : null,
     };
 
     setSaving(true);
@@ -305,78 +293,13 @@ export function RuleModal({
         placeholder="1"
       />
 
-      <Text style={styles.fieldLabel}>Starts on</Text>
-      <View style={styles.dateFieldsRow}>
-        <View style={{ flex: 1 }}>
-          <FormInput
-            label="Day"
-            value={startDay}
-            onChangeText={setStartDay}
-            keyboardType="numeric"
-            placeholder="DD"
-            style={styles.dateFieldInput}
-          />
-        </View>
-        <View style={{ flex: 1 }}>
-          <FormInput
-            label="Month"
-            value={startMonth}
-            onChangeText={setStartMonth}
-            keyboardType="numeric"
-            placeholder="MM"
-            style={styles.dateFieldInput}
-          />
-        </View>
-        <View style={{ flex: 1.3 }}>
-          <FormInput
-            label="Year"
-            value={startYear}
-            onChangeText={setStartYear}
-            keyboardType="numeric"
-            placeholder="YYYY"
-            style={styles.dateFieldInput}
-          />
-        </View>
-      </View>
+      <DateField label="Starts on" value={startDate} onChange={setStartDate} />
 
       <View style={styles.endDateRow}>
         <Text style={styles.fieldLabel}>Ends on a specific date</Text>
         <ToggleSwitch value={hasEndDate} onChange={setHasEndDate} />
       </View>
-      {hasEndDate && (
-        <View style={styles.dateFieldsRow}>
-          <View style={{ flex: 1 }}>
-            <FormInput
-              label="Day"
-              value={endDay}
-              onChangeText={setEndDay}
-              keyboardType="numeric"
-              placeholder="DD"
-              style={styles.dateFieldInput}
-            />
-          </View>
-          <View style={{ flex: 1 }}>
-            <FormInput
-              label="Month"
-              value={endMonth}
-              onChangeText={setEndMonth}
-              keyboardType="numeric"
-              placeholder="MM"
-              style={styles.dateFieldInput}
-            />
-          </View>
-          <View style={{ flex: 1.3 }}>
-            <FormInput
-              label="Year"
-              value={endYear}
-              onChangeText={setEndYear}
-              keyboardType="numeric"
-              placeholder="YYYY"
-              style={styles.dateFieldInput}
-            />
-          </View>
-        </View>
-      )}
+      {hasEndDate && <DateField label="Ends on" value={endDate} onChange={setEndDate} minDate={startDate} />}
 
       <FormInput label="Note (optional)" value={note} onChangeText={setNote} placeholder="e.g. Netflix" />
     </ModalSheet>

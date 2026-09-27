@@ -134,7 +134,11 @@ CREATE TABLE IF NOT EXISTS savings_goals (
   -- comment. letter_revealed flips to 1 exactly once, the moment that
   -- reveal happens, so it's never shown as a "surprise" a second time.
   note_to_self TEXT,
-  letter_revealed INTEGER NOT NULL DEFAULT 0
+  letter_revealed INTEGER NOT NULL DEFAULT 0,
+  -- 1 = progress is the linked account's balance (worked out, never
+  -- stored); current_amount_minor is then left alone, so switching back
+  -- to adding money by hand brings the old amount back.
+  track_account INTEGER NOT NULL DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS budgets (
@@ -211,4 +215,9 @@ CREATE INDEX IF NOT EXISTS idx_loan_payments_loan ON loan_payments(loan_id);
 CREATE INDEX IF NOT EXISTS idx_loan_rate_changes_loan ON loan_rate_changes(loan_id);
 CREATE INDEX IF NOT EXISTS idx_categories_parent ON categories(parent_id);
 CREATE INDEX IF NOT EXISTS idx_person_ledger_person ON person_ledger_entries(person_id);
+-- "Is this entry the cash side of a loan payment or a Friends & Family
+-- entry?" — asked per entry by getTransactionLink and Tidy up's checks,
+-- which otherwise scan both tables once for every transaction.
+CREATE INDEX IF NOT EXISTS idx_loan_payments_transaction ON loan_payments(transaction_id);
+CREATE INDEX IF NOT EXISTS idx_person_ledger_transaction ON person_ledger_entries(transaction_id);
 `;

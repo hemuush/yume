@@ -24,12 +24,15 @@ export function AddCategoryModal({
   allCategories,
   onClose,
   onSaved,
+  onManage,
 }: {
   visible: boolean;
   category: Category | null;
   allCategories: Category[];
   onClose: () => void;
   onSaved: () => void;
+  /** Opens Archive / Delete for the category being edited — shown for your own categories only. */
+  onManage?: () => void;
 }) {
   const [name, setName] = useState('');
   const [kind, setKind] = useState<CategoryKind>('expense');
@@ -117,6 +120,14 @@ export function AddCategoryModal({
               style={f.footerBtn}
             />
           </View>
+          {category && !category.isSystem && onManage && (
+            <PrimaryButton
+              title="Archive or delete…"
+              variant="secondary"
+              onPress={onManage}
+              disabled={saving}
+            />
+          )}
         </View>
       }
     >

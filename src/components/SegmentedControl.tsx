@@ -1,6 +1,7 @@
 import { View, Pressable, Animated, StyleSheet } from 'react-native';
 import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
+import { haptics } from '@/lib/haptics';
 import { usePressScale } from '@/lib/usePressScale';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -31,7 +32,13 @@ function Segment({ active, label, onPress }: { active: boolean; label: string; o
   return (
     <AnimatedPressable
       style={[styles.segment, active && styles.segmentActive, animatedStyle]}
-      onPress={onPress}
+      onPress={() => {
+        // A light tick when the choice actually changes — every switch in the app gets it here.
+        if (!active) haptics.tap();
+        onPress();
+      }}
+      accessibilityRole="button"
+      accessibilityState={{ selected: active }}
       onPressIn={onPressIn}
       onPressOut={onPressOut}
     >
