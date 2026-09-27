@@ -11,6 +11,7 @@ import { gridRows } from '@/lib/gridRows';
 import { parseLocalIsoDate, toLocalIsoDate, addMonthsToIsoDate, addDaysToIsoDate } from '@/lib/date';
 import { customRangeLabel, financialYearOf, financialYearRange } from '@/lib/period';
 import type { DateRange } from '@/types';
+import { dayMonthYear } from '@/lib/dateLabels';
 
 const WEEKDAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
@@ -32,9 +33,6 @@ export function rangeQuickPicks(today: string): { label: string; range: DateRang
     },
   ];
 }
-
-const shortDay = (iso: string) =>
-  parseLocalIsoDate(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
 
 /**
  * Reports' "Custom": pick any range — a trip, the last 30 days, a financial
@@ -183,7 +181,7 @@ export function RangeSheet({
                 onPress={() => tapDay(iso)}
                 accessibilityRole="button"
                 accessibilityState={{ selected: isEnd || inside, disabled: future }}
-                accessibilityLabel={shortDay(iso)}
+                accessibilityLabel={dayMonthYear(iso)}
                 testID={`range-day-${iso}`}
               >
                 <View
@@ -203,8 +201,8 @@ export function RangeSheet({
 
       <Text style={styles.summary}>
         {end
-          ? `From ${shortDay(start)} to ${shortDay(end)}`
-          : `From ${shortDay(start)} — now tap the last day`}
+          ? `From ${dayMonthYear(start)} to ${dayMonthYear(end)}`
+          : `From ${dayMonthYear(start)} — now tap the last day`}
       </Text>
     </ModalSheet>
   );

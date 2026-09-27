@@ -10,9 +10,10 @@ import { FormInput } from '@/components/FormInput';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { Chip } from '@/components/Chip';
 import { ModalSheet } from '@/components/ModalSheet';
-import { toLocalIsoDate, parseLocalIsoDate } from '@/lib/date';
+import { toLocalIsoDate } from '@/lib/date';
 import { useReduceMotion } from '@/lib/useReduceMotion';
 import { styles } from './loans.styles';
+import { shortMonthYear } from '@/lib/dateLabels';
 
 /**
  * Jurisdiction-specific tax-on-fee conventions that Yume can offer as a
@@ -25,10 +26,6 @@ import { styles } from './loans.styles';
 const TAX_ON_FEE_PRESETS: Record<string, { label: string; percent: number }> = {
   INR: { label: '18% GST', percent: 18 },
 };
-
-function monthLabel(iso: string): string {
-  return parseLocalIsoDate(iso).toLocaleDateString(undefined, { month: 'short', year: 'numeric' });
-}
 
 /** The before-you-confirm version of PrepaymentReveal: the same three numbers, as plain rows. */
 function PrepaymentPreview({ preview }: { preview: PrepaymentSummary & { neverPaysOff: boolean } }) {
@@ -47,8 +44,8 @@ function PrepaymentPreview({ preview }: { preview: PrepaymentSummary & { neverPa
       <PreviewRow label="Interest saved" value={formatMoney(preview.interestSavedMinor)} strong />
       <PreviewRow
         label="Loan ends"
-        value={closes ? 'Closed today' : monthLabel(preview.newPayoffDate)}
-        was={closes || preview.monthsShaved > 0 ? monthLabel(preview.oldPayoffDate) : undefined}
+        value={closes ? 'Closed today' : shortMonthYear(preview.newPayoffDate)}
+        was={closes || preview.monthsShaved > 0 ? shortMonthYear(preview.oldPayoffDate) : undefined}
       />
       <PreviewRow label="EMIs saved" value={String(preview.monthsShaved)} />
     </View>
@@ -169,7 +166,7 @@ function PrepaymentReveal({ summary, onDone }: { summary: PrepaymentSummary; onD
           {closedOutright
             ? `Fully paid off — no installments left.`
             : summary.monthsShaved > 0
-              ? `${summary.monthsShaved} installment${summary.monthsShaved === 1 ? '' : 's'} shaved off — done in ${monthLabel(summary.newPayoffDate)} instead of ${monthLabel(summary.oldPayoffDate)}.`
+              ? `${summary.monthsShaved} installment${summary.monthsShaved === 1 ? '' : 's'} shaved off — done in ${shortMonthYear(summary.newPayoffDate)} instead of ${shortMonthYear(summary.oldPayoffDate)}.`
               : `Payoff date unchanged, but you now owe less along the way.`}
         </Text>
       </Animated.View>

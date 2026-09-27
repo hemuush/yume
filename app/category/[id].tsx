@@ -23,6 +23,7 @@ import { PeriodRow } from '@/features/reports/PeriodRow';
 import { BudgetRow } from '@/features/budgets/BudgetRow';
 import { TransactionRow } from '@/features/transactions/TransactionRow';
 import { TransactionDetailModal } from '@/features/transactions/TransactionDetailModal';
+import { longMonthYear, shortMonth } from '@/lib/dateLabels';
 
 const isIsoDate = (v: string | undefined): v is string => !!v && /^\d{4}-\d{2}-\d{2}$/.test(v);
 const isThisMonth = (w: ReportWindow) => w.granularity === 'month' && w.offset === 0;
@@ -32,10 +33,8 @@ const SPLIT_SHOWN = 4;
 /** Latest entries listed on the page; "See all in Activity" has the rest. */
 const ENTRIES_SHOWN = 8;
 
-const monthLong = (key: string) =>
-  parseLocalIsoDate(`${key}-01`).toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
-const monthShort = (key: string) =>
-  parseLocalIsoDate(`${key}-01`).toLocaleDateString(undefined, { month: 'short' });
+const monthLong = (key: string) => longMonthYear(`${key}-01`);
+const monthShort = (key: string) => shortMonth(`${key}-01`);
 
 /**
  * One category's whole story in one place — what it came to this period,
