@@ -5,6 +5,7 @@ import { theme } from '@/constants/theme';
 import { spendHeatScale, hexToHsl } from '@/lib/color';
 import { useAccent } from '@/theme/AccentContext';
 import { MAX_LIST_STAGGER_MS } from '@/lib/animation';
+import { gridRows } from '@/lib/gridRows';
 
 export interface HeatCell {
   key: string;
@@ -16,9 +17,11 @@ export interface HeatCell {
 }
 
 /**
- * A transparent month calendar tinted by daily spend — no card around it, it
- * sits on the page. Days with no spend are just a hairline; spend days carry
- * the accent at rising strength (spendHeatScale); today has an ink ring.
+ * A month calendar tinted by daily spend. Days with no spend are just a
+ * hairline; spend days carry the accent at rising strength
+ * (spendHeatScale); today has an ink ring.
+ *
+ * Laid out as explicit rows of equal-share slots (see gridRows for why).
  */
 export function SpendHeatmap({
   cells,
@@ -37,75 +40,79 @@ export function SpendHeatmap({
   // ink or cream on the full accent at the top level, whichever reads.
   const onAccent = hexToHsl(accent)[2] > 55 ? theme.colors.ink : theme.colors.surface;
   const labelColor = [theme.colors.textMuted, theme.colors.ink, theme.colors.ink, theme.colors.ink, onAccent];
+  const rows = gridRows(cells, leadingPad, columns);
   return (
     <View>
       {weekdayLabels && (
-        <View style={styles.weekRow}>
+        <View style={styles.row}>
           {weekdayLabels.map((w, i) => (
-            <Text key={i} style={[styles.weekday, { width: `${100 / columns}%` }]}>
+            <Text key={i} style={[styles.slot, styles.weekday]}>
               {w}
             </Text>
           ))}
         </View>
       )}
-      <View style={styles.grid}>
-        {Array.from({ length: leadingPad }).map((_, i) => (
-          <View key={`pad-${i}`} style={[styles.cellWrap, { width: `${100 / columns}%` }]} />
-        ))}
-        {cells.map((c, i) => {
-          const inner = (
-            <View
-              style={[
-                styles.cell,
-                c.level === 0 && styles.cellEmpty,
-                c.isToday && styles.cellToday,
-                { backgroundColor: heatScale[c.level] },
-              ]}
-            >
-              <Text
+      {rows.map((row, r) => (
+        <View key={r} style={styles.row}>
+          {row.map((c, col) => {
+            if (!c) return <View key={`blank-${col}`} style={[styles.slot, styles.cellWrap]} />;
+            const i = r * columns + col - leadingPad;
+            const inner = (
+              <View
                 style={[
-                  styles.cellLabel,
-                  c.level === 4 && styles.cellLabelTop,
-                  { color: labelColor[c.level] },
+                  styles.cell,
+                  c.level === 0 && styles.cellEmpty,
+                  c.isToday && styles.cellToday,
+                  { backgroundColor: heatScale[c.level] },
                 ]}
               >
-                {c.label}
-              </Text>
-            </View>
-          );
-          return (
-            <Animated.View
-              key={c.key}
-              entering={FadeIn.delay(Math.min(i * 12, MAX_LIST_STAGGER_MS))
-                .duration(260)
-                .springify()
-                .reduceMotion(ReduceMotion.System)}
-              style={[styles.cellWrap, { width: `${100 / columns}%` }]}
-            >
-              {c.onPress ? (
-                <Pressable onPress={c.onPress} accessibilityRole="button">
-                  {inner}
-                </Pressable>
-              ) : (
-                inner
-              )}
-            </Animated.View>
-          );
-        })}
-      </View>
+                <Text
+                  style={[
+                    styles.cellLabel,
+                    c.level === 4 && styles.cellLabelTop,
+                    { color: labelColor[c.level] },
+                  ]}
+                >
+                  {c.label}
+                </Text>
+              </View>
+            );
+            return (
+              <Animated.View
+                key={c.key}
+                entering={FadeIn.delay(Math.min(i * 12, MAX_LIST_STAGGER_MS))
+                  .duration(260)
+                  .springify()
+                  .reduceMotion(ReduceMotion.System)}
+                style={[styles.slot, styles.cellWrap]}
+              >
+                {c.onPress ? (
+                  <Pressable onPress={c.onPress} accessibilityRole="button">
+                    {inner}
+                  </Pressable>
+                ) : (
+                  inner
+                )}
+              </Animated.View>
+            );
+          })}
+        </View>
+      ))}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  weekRow: { flexDirection: 'row', marginBottom: 5 },
+  row: { flexDirection: 'row' },
+  // Every slot in a row takes an equal share — see the component's comment.
+  slot: { flex: 1, minWidth: 0 },
   weekday: {
+    marginBottom: 5,
     textAlign: 'center',
     fontFamily: theme.font.mono,
     fontSize: 9,
     color: theme.colors.textMuted,
   },
-  grid: { flexDirection: 'row', flexWrap: 'wrap' },
   cellWrap: { padding: 2 },
   cell: { height: 34, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
   cellEmpty: { borderWidth: StyleSheet.hairlineWidth, borderColor: theme.colors.borderSoft },

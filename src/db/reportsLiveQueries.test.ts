@@ -77,6 +77,17 @@ describe('report queries against a real SQLite engine', () => {
     expect(summary.expenseMinor).toBe(12000);
   });
 
+  it('breaks income down by category too, and a custom range totals the same as its months', async () => {
+    const jan = await getPeriodSummary({ start: '2026-01-01', end: '2026-01-31' });
+    expect(jan.incomeBreakdown.map((c) => [c.name, c.totalMinor])).toEqual([['Salary', 500000]]);
+    expect(jan.categoryBreakdown.map((c) => [c.name, c.totalMinor])).toEqual([['Food', 12000]]);
+    const feb = await getPeriodSummary({ start: '2026-02-01', end: '2026-02-28' });
+    const both = await getPeriodSummary({ start: '2026-01-01', end: '2026-02-28' });
+    expect(both.incomeMinor).toBe(jan.incomeMinor + feb.incomeMinor);
+    expect(both.expenseMinor).toBe(jan.expenseMinor + feb.expenseMinor);
+    expect(both.incomeBreakdown[0].totalMinor).toBe(1000000);
+  });
+
   it('getRangeComparison runs for both month and year granularity without a SQL error', async () => {
     const monthRanges = getPeriodRanges('month', new Date('2026-02-15'));
     const monthCmp = await getRangeComparison(monthRanges.current, monthRanges.previous, 'month');

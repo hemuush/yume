@@ -92,6 +92,8 @@ export interface PeriodSummary {
   netMinor: number;
   savingsContributionMinor: number; // net money moved into savings-type accounts
   categoryBreakdown: CategoryBreakdownItem[];
+  /** Where money came in, rolled up the same way — Reports' Income view. */
+  incomeBreakdown: CategoryBreakdownItem[];
 }
 
 /**
@@ -137,19 +139,30 @@ export async function getPeriodSummary(range: DateRange): Promise<PeriodSummary>
   // "Zomato") is folded into its parent's row ("Food & Dining") rather than
   // appearing as its own independent slice/bar. `hasSubcategories` tells the
   // caller whether this row can be drilled into via getSubcategoryBreakdown.
-  const breakdown = await db.getAllAsync<any>(
-    `SELECT top.id as categoryId, top.name as name, top.color as color, SUM(t.amount_minor) as total,
-       EXISTS(SELECT 1 FROM categories ch WHERE ch.parent_id = top.id AND ch.archived = 0) as hasSubcategories,
-       MAX(c.is_sensitive) as isSensitive
-     FROM transactions t
-     JOIN categories c ON c.id = t.category_id
-     JOIN categories top ON top.id = COALESCE(c.parent_id, c.id)
-     JOIN accounts a ON a.id = t.account_id
-     WHERE t.type = 'expense' AND a.currency = ? AND t.date >= ? AND t.date <= ?
-     GROUP BY top.id
-     ORDER BY total DESC`,
-    [currency, range.start, range.end]
-  );
+  const breakdownOf = (type: 'expense' | 'income') =>
+    db.getAllAsync<any>(
+      `SELECT top.id as categoryId, top.name as name, top.color as color, SUM(t.amount_minor) as total,
+         EXISTS(SELECT 1 FROM categories ch WHERE ch.parent_id = top.id AND ch.archived = 0) as hasSubcategories,
+         MAX(c.is_sensitive) as isSensitive
+       FROM transactions t
+       JOIN categories c ON c.id = t.category_id
+       JOIN categories top ON top.id = COALESCE(c.parent_id, c.id)
+       JOIN accounts a ON a.id = t.account_id
+       WHERE t.type = ? AND a.currency = ? AND t.date >= ? AND t.date <= ?
+       GROUP BY top.id
+       ORDER BY total DESC`,
+      [type, currency, range.start, range.end]
+    );
+  const breakdown = await breakdownOf('expense');
+  const incomeRows = await breakdownOf('income');
+  const toItem = (r: any): CategoryBreakdownItem => ({
+    categoryId: r.categoryId,
+    name: r.name,
+    color: r.color,
+    totalMinor: r.total,
+    hasSubcategories: !!r.hasSubcategories,
+    isSensitive: !!r.isSensitive,
+  });
 
   const savingsContributionMinor = (savingsIn?.total ?? 0) - (savingsOut?.total ?? 0);
   return {
@@ -157,14 +170,8 @@ export async function getPeriodSummary(range: DateRange): Promise<PeriodSummary>
     expenseMinor: expense?.total ?? 0,
     netMinor: (income?.total ?? 0) - (expense?.total ?? 0) - savingsContributionMinor,
     savingsContributionMinor,
-    categoryBreakdown: breakdown.map((r) => ({
-      categoryId: r.categoryId,
-      name: r.name,
-      color: r.color,
-      totalMinor: r.total,
-      hasSubcategories: !!r.hasSubcategories,
-      isSensitive: !!r.isSensitive,
-    })),
+    categoryBreakdown: breakdown.map(toItem),
+    incomeBreakdown: incomeRows.map(toItem),
   };
 }
 
@@ -177,7 +184,8 @@ export async function getPeriodSummary(range: DateRange): Promise<PeriodSummary>
  */
 export async function getSubcategoryBreakdown(
   parentCategoryId: string,
-  range: DateRange
+  range: DateRange,
+  kind: 'expense' | 'income' = 'expense'
 ): Promise<CategoryBreakdownItem[]> {
   const db = await getDb();
   const currency = await getDefaultCurrency();
@@ -190,11 +198,11 @@ export async function getSubcategoryBreakdown(
      FROM transactions t
      JOIN categories c ON c.id = t.category_id
      JOIN accounts a ON a.id = t.account_id
-     WHERE t.type = 'expense' AND a.currency = ? AND t.date >= ? AND t.date <= ?
+     WHERE t.type = ? AND a.currency = ? AND t.date >= ? AND t.date <= ?
        AND (c.id = ? OR c.parent_id = ?)
      GROUP BY c.id
      ORDER BY total DESC`,
-    [currency, range.start, range.end, parentCategoryId, parentCategoryId]
+    [kind, currency, range.start, range.end, parentCategoryId, parentCategoryId]
   );
   return rows.map((r) => ({
     categoryId: r.categoryId,
@@ -204,6 +212,80 @@ export async function getSubcategoryBreakdown(
     hasSubcategories: false,
     isSensitive: !!r.isSensitive,
   }));
+}
+
+export interface CategoryOverview {
+  /** The period's total for the category, its subcategories included. */
+  totalMinor: number;
+  count: number;
+  /** Per subcategory (the parent's own entries as "Other …"), largest first — see getSubcategoryBreakdown. */
+  split: CategoryBreakdownItem[];
+  /** The last `months` calendar months ending with the period's last month, oldest first. */
+  months: { month: string; totalMinor: number }[];
+}
+
+/**
+ * Everything the category page shows about one category over a period:
+ * its total and entry count, where within it the money went, and a run of
+ * monthly totals. Subcategories roll up into their parent, the same way
+ * Reports totals them, so the page and Reports always agree.
+ */
+export async function getCategoryOverview(
+  categoryId: string,
+  kind: 'expense' | 'income',
+  range: DateRange,
+  months = 6
+): Promise<CategoryOverview> {
+  const db = await getDb();
+  const currency = await getDefaultCurrency();
+  const inCategory = `(t.category_id = ? OR t.category_id IN (SELECT id FROM categories WHERE parent_id = ?))`;
+
+  const totals = await db.getFirstAsync<{ total: number | null; count: number }>(
+    `SELECT SUM(t.amount_minor) AS total, COUNT(*) AS count FROM transactions t
+     JOIN accounts a ON a.id = t.account_id
+     WHERE t.type = ? AND a.currency = ? AND t.date >= ? AND t.date <= ? AND ${inCategory}`,
+    [kind, currency, range.start, range.end, categoryId, categoryId]
+  );
+
+  const [y, m] = range.end.split('-').map(Number);
+  const monthKeys = Array.from({ length: months }, (_, i) => {
+    const d = new Date(y, m - 1 - (months - 1 - i), 1);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+  });
+  const lastDay = new Date(y, m, 0).getDate();
+  const rows = await db.getAllAsync<{ month: string; total: number }>(
+    `SELECT substr(t.date, 1, 7) AS month, SUM(t.amount_minor) AS total FROM transactions t
+     JOIN accounts a ON a.id = t.account_id
+     WHERE t.type = ? AND a.currency = ? AND t.date >= ? AND t.date <= ? AND ${inCategory}
+     GROUP BY month`,
+    [
+      kind,
+      currency,
+      `${monthKeys[0]}-01`,
+      `${monthKeys[months - 1]}-${String(lastDay).padStart(2, '0')}`,
+      categoryId,
+      categoryId,
+    ]
+  );
+  const byMonth = new Map(rows.map((r) => [r.month, r.total]));
+
+  return {
+    totalMinor: totals?.total ?? 0,
+    count: totals?.count ?? 0,
+    split: await getSubcategoryBreakdown(categoryId, range, kind),
+    months: monthKeys.map((month) => ({ month, totalMinor: byMonth.get(month) ?? 0 })),
+  };
+}
+
+/**
+ * "Your usual" for a category: the average of the three months before the
+ * last one in the series — only once all three had spending, since one or
+ * two months say too little. Null otherwise.
+ */
+export function usualMonthly(months: { totalMinor: number }[]): number | null {
+  const before = months.slice(-4, -1);
+  if (before.length < 3 || before.some((mo) => mo.totalMinor <= 0)) return null;
+  return Math.round(before.reduce((sum, mo) => sum + mo.totalMinor, 0) / 3);
 }
 
 export interface DailyExpensePoint {
@@ -235,6 +317,51 @@ export async function getDailyExpenseTotals(range: DateRange): Promise<DailyExpe
 export async function getTodaySpend(today: string = toIso(new Date())): Promise<number> {
   const totals = await getDailyExpenseTotals({ start: today, end: today });
   return totals[0]?.totalMinor ?? 0;
+}
+
+/**
+ * What Home's month forecast (monthPace in lib/pace.ts) needs beyond the
+ * month's total spend: everyday spending from the 1st through `today` —
+ * leaving out the categories the app files itself (Loan EMI, fees, Friends &
+ * Family) — and what's still due after today and before the month ends:
+ * pending EMIs on active borrowed loans, and active recurring expenses.
+ * Default currency only, like every other total.
+ */
+export async function getMonthPaceInputs(
+  today: string = toIso(new Date())
+): Promise<{ everydaySpentMinor: number; dueRestOfMonthMinor: number }> {
+  const db = await getDb();
+  const currency = await getDefaultCurrency();
+  const monthStart = `${today.slice(0, 7)}-01`;
+  const [y, m] = today.split('-').map(Number);
+  const monthEnd = `${today.slice(0, 7)}-${String(new Date(y, m, 0).getDate()).padStart(2, '0')}`;
+
+  const everyday = await db.getFirstAsync<{ total: number | null }>(
+    `SELECT SUM(t.amount_minor) AS total FROM transactions t
+     JOIN accounts a ON a.id = t.account_id
+     LEFT JOIN categories c ON c.id = t.category_id
+     WHERE t.type = 'expense' AND a.currency = ? AND IFNULL(c.is_system, 0) = 0
+       AND t.date >= ? AND t.date <= ?`,
+    [currency, monthStart, today]
+  );
+  const emis = await db.getFirstAsync<{ total: number | null }>(
+    `SELECT SUM(p.emi_amount_minor) AS total FROM loan_payments p
+     JOIN loans l ON l.id = p.loan_id
+     WHERE p.status = 'pending' AND l.status = 'active' AND l.direction = 'borrowed'
+       AND p.due_date > ? AND p.due_date <= ?`,
+    [today, monthEnd]
+  );
+  const bills = await db.getFirstAsync<{ total: number | null }>(
+    `SELECT SUM(r.amount_minor) AS total FROM recurring_rules r
+     JOIN accounts a ON a.id = r.account_id
+     WHERE r.active = 1 AND r.type = 'expense' AND a.currency = ?
+       AND r.next_run_date > ? AND r.next_run_date <= ?`,
+    [currency, today, monthEnd]
+  );
+  return {
+    everydaySpentMinor: everyday?.total ?? 0,
+    dueRestOfMonthMinor: (emis?.total ?? 0) + (bills?.total ?? 0),
+  };
 }
 
 export interface DailyGoalStreakPoint {
@@ -472,7 +599,12 @@ export function loanNetWorthContribution(
  * A defaulted loan still counts (money is still owed either way); only a
  * fully 'closed' loan drops out.
  */
-export function computeTrackedBalance(input: {
+export function computeTrackedBalance(input: TrackedBalanceInput): number {
+  const parts = trackedBalanceParts(input);
+  return parts.accountsMinor + parts.loansMinor + parts.peopleMinor;
+}
+
+export interface TrackedBalanceInput {
   accounts: { currency: string; currentBalanceMinor: number }[];
   loans: {
     direction: 'borrowed' | 'lent';
@@ -482,19 +614,32 @@ export function computeTrackedBalance(input: {
   }[];
   people: { balanceMinor: number }[];
   defaultCurrency: string;
-}): number {
-  const accountsTotal = input.accounts
-    .filter((a) => a.currency === input.defaultCurrency)
-    .reduce((sum, a) => sum + a.currentBalanceMinor, 0);
-  const loansNet = input.loans
-    .filter((l) => l.status !== 'closed')
-    .reduce(
-      (sum, l) =>
-        sum + loanNetWorthContribution(l.direction, l.outstandingPrincipalMinor, 0, l.assetValueMinor ?? 0),
-      0
-    );
-  const peopleNet = input.people.reduce((sum, p) => sum + p.balanceMinor, 0);
-  return accountsTotal + loansNet + peopleNet;
+}
+
+export interface TrackedBalanceParts {
+  /** Default-currency account balances. */
+  accountsMinor: number;
+  /** Every not-yet-closed loan's net-worth contribution (loanNetWorthContribution). */
+  loansMinor: number;
+  /** The net of every friends-and-family balance. */
+  peopleMinor: number;
+}
+
+/** The three terms computeTrackedBalance adds up — Profile shows them as a sum. */
+export function trackedBalanceParts(input: TrackedBalanceInput): TrackedBalanceParts {
+  return {
+    accountsMinor: input.accounts
+      .filter((a) => a.currency === input.defaultCurrency)
+      .reduce((sum, a) => sum + a.currentBalanceMinor, 0),
+    loansMinor: input.loans
+      .filter((l) => l.status !== 'closed')
+      .reduce(
+        (sum, l) =>
+          sum + loanNetWorthContribution(l.direction, l.outstandingPrincipalMinor, 0, l.assetValueMinor ?? 0),
+        0
+      ),
+    peopleMinor: input.people.reduce((sum, p) => sum + p.balanceMinor, 0),
+  };
 }
 
 /**

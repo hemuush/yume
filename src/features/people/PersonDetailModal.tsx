@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { View, Pressable, Alert } from 'react-native';
 import { Text } from '@/components/Text';
 import Feather from '@expo/vector-icons/Feather';
@@ -22,9 +22,11 @@ import { PrimaryButton } from '@/components/PrimaryButton';
 import { ModalSheet } from '@/components/ModalSheet';
 import { Chip } from '@/components/Chip';
 import { theme, modalFooterStyles as f } from '@/constants/theme';
-import { partsToIsoDate } from '@/lib/date';
+import { toLocalIsoDate } from '@/lib/date';
+import { DateField } from '@/components/DateField';
 import { useUndoToast } from '@/components/UndoToast';
 import { haptics } from '@/lib/haptics';
+import { ActionSheet } from '@/components/ActionSheet';
 import { styles } from './people.styles';
 
 /** One person: their live balance, linked loans, a form to record money either way, and history. */
@@ -50,11 +52,9 @@ export function PersonDetailModal({
   // Defaults to today but stays editable — previously hardcoded to "today"
   // with no field to change it at all, so catching up on a friend's expense
   // from last week always misdated it as happening today.
-  const today = useMemo(() => new Date(), []);
-  const [entryYear, setEntryYear] = useState(String(today.getFullYear()));
-  const [entryMonth, setEntryMonth] = useState(String(today.getMonth() + 1));
-  const [entryDay, setEntryDay] = useState(String(today.getDate()));
-  const entryDateIso = partsToIsoDate(entryYear, entryMonth, entryDay);
+  const [entryDateIso, setEntryDateIso] = useState(() => toLocalIsoDate(new Date()));
+  // The history entry whose ⋯ menu is open.
+  const [menuEntry, setMenuEntry] = useState<PersonLedgerEntry | null>(null);
 
   const load = useCallback(async () => {
     const [led, accs, cats, loans] = await Promise.all([
@@ -96,10 +96,6 @@ export function PersonDetailModal({
     const amountMinor = toMinor(parseFloat(amount || '0'));
     if (!Number.isFinite(amountMinor) || amountMinor <= 0) {
       setError('Enter a valid amount');
-      return;
-    }
-    if (!entryDateIso) {
-      setError('Enter a valid date');
       return;
     }
     setSaving(true);
@@ -210,13 +206,13 @@ export function PersonDetailModal({
             title={saving ? '...' : 'They owe more'}
             variant="secondary"
             onPress={() => record(1)}
-            disabled={saving || !entryDateIso}
+            disabled={saving}
             style={f.footerBtn}
           />
           <PrimaryButton
             title={saving ? '...' : 'They repaid'}
             onPress={() => record(-1)}
-            disabled={saving || !entryDateIso}
+            disabled={saving}
             style={f.footerBtn}
           />
         </View>
@@ -268,40 +264,7 @@ export function PersonDetailModal({
         placeholder="e.g. Dinner split"
       />
 
-      <Text style={styles.fieldLabel}>Date</Text>
-      <View style={styles.dateFieldsRow}>
-        <View style={{ flex: 1 }}>
-          <FormInput
-            label="Day"
-            value={entryDay}
-            onChangeText={setEntryDay}
-            keyboardType="numeric"
-            placeholder="DD"
-            style={styles.dateFieldInput}
-          />
-        </View>
-        <View style={{ flex: 1 }}>
-          <FormInput
-            label="Month"
-            value={entryMonth}
-            onChangeText={setEntryMonth}
-            keyboardType="numeric"
-            placeholder="MM"
-            style={styles.dateFieldInput}
-          />
-        </View>
-        <View style={{ flex: 1.3 }}>
-          <FormInput
-            label="Year"
-            value={entryYear}
-            onChangeText={setEntryYear}
-            keyboardType="numeric"
-            placeholder="YYYY"
-            style={styles.dateFieldInput}
-          />
-        </View>
-      </View>
-      {!entryDateIso && <Text style={styles.errorText}>Enter a valid date</Text>}
+      <DateField label="Date" value={entryDateIso} onChange={setEntryDateIso} pastFacing />
 
       <Text style={styles.fieldLabel}>Did cash actually move?</Text>
       <View style={styles.chipRow}>
@@ -365,11 +328,42 @@ export function PersonDetailModal({
                 {entry.amountMinor >= 0 ? '+' : '-'}
                 {formatMoney(Math.abs(dispEntryAmounts[i]))}
               </Text>
+              <Pressable
+                onPress={() => setMenuEntry(entry)}
+                hitSlop={10}
+                disabled={saving}
+                style={styles.moreBtn}
+                accessibilityRole="button"
+                accessibilityLabel={`More for the ${entry.date} entry`}
+              >
+                <Feather name="more-horizontal" size={15} color={theme.colors.textSecondary} />
+              </Pressable>
             </Pressable>
           ))}
-          <Text style={styles.hintText}>Hold an entry above to delete it.</Text>
         </>
       )}
+      <ActionSheet
+        visible={!!menuEntry}
+        onClose={() => setMenuEntry(null)}
+        title={
+          menuEntry
+            ? `${menuEntry.note || (menuEntry.amountMinor >= 0 ? 'Lent' : 'Repaid')} · ${menuEntry.date}`
+            : undefined
+        }
+        items={
+          menuEntry
+            ? [
+                {
+                  key: 'delete',
+                  label: 'Delete entry',
+                  icon: 'trash-2',
+                  destructive: true,
+                  onPress: () => onDeleteEntry(menuEntry),
+                },
+              ]
+            : []
+        }
+      />
     </ModalSheet>
   );
 }

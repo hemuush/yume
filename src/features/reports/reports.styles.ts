@@ -32,7 +32,14 @@ export const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   periodArrow: { width: 28, height: 28, alignItems: 'center', justifyContent: 'center' },
-  periodLabel: { fontFamily: theme.font.roundedBold, fontSize: 13, color: theme.colors.textPrimary },
+  // Shrinks and wraps rather than clipping a long custom range ("20 Dec 2025 – 4 Jan 2026").
+  periodLabel: {
+    flexShrink: 1,
+    textAlign: 'center',
+    fontFamily: theme.font.roundedBold,
+    fontSize: 13,
+    color: theme.colors.textPrimary,
+  },
   gran: {
     flexDirection: 'row',
     borderWidth: StyleSheet.hairlineWidth,
@@ -41,7 +48,7 @@ export const styles = StyleSheet.create({
     borderRadius: theme.radius.pill,
     padding: 3,
   },
-  granBtn: { paddingHorizontal: 11, paddingVertical: 6, borderRadius: theme.radius.pill },
+  granBtn: { paddingHorizontal: 9, paddingVertical: 6, borderRadius: theme.radius.pill },
   granBtnOn: { backgroundColor: theme.colors.secondaryTint },
   granText: { fontFamily: theme.font.bodyMedium, fontSize: 11, color: theme.colors.textMuted },
   granTextOn: { color: theme.colors.textPrimary },
@@ -190,6 +197,20 @@ export const styles = StyleSheet.create({
     color: theme.colors.textSecondary,
   },
 
+  flowSwitch: { marginBottom: 12 },
+  tidyNudge: {
+    marginTop: 10,
+    padding: 12,
+    borderRadius: theme.radius.lg,
+    backgroundColor: theme.colors.idGold,
+  },
+  tidyNudgeText: {
+    fontFamily: theme.font.body,
+    fontSize: 12.5,
+    lineHeight: 18,
+    color: theme.colors.textPrimary,
+  },
+  tidyNudgeLink: { fontFamily: theme.font.bodyBold, textDecorationLine: 'underline' },
   blockTitle: {
     fontFamily: theme.font.roundedBold,
     fontSize: 15,

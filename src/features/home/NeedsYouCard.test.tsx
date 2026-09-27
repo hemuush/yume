@@ -34,10 +34,10 @@ const noBackup: NeedsYouItem = {
 
 // Async so the icon font's own load (a state update inside @expo/vector-icons)
 // settles inside act, rather than warning after the test has moved on.
-async function render(items: NeedsYouItem[], onOpen = jest.fn(), onSnooze = jest.fn()) {
+async function render(items: NeedsYouItem[], onOpen = jest.fn(), onSnooze = jest.fn(), onSeeAll = jest.fn()) {
   let tree!: ReactTestRenderer;
   await act(async () => {
-    tree = create(<NeedsYouCard items={items} onOpen={onOpen} onSnooze={onSnooze} />);
+    tree = create(<NeedsYouCard items={items} onOpen={onOpen} onSnooze={onSnooze} onSeeAll={onSeeAll} />);
   });
   return tree;
 }
@@ -55,6 +55,32 @@ beforeAll(async () => {
 describe('NeedsYouCard', () => {
   it('renders nothing when there is nothing to do', async () => {
     expect((await render([])).toJSON()).toBeNull();
+  });
+
+  it('shows the top three, counts all of them, and links to the rest', async () => {
+    const budget = (n: number): NeedsYouItem => ({
+      key: `budget-${n}-near`,
+      tone: 'warn',
+      title: `Budget ${n}`,
+      detail: '95% used',
+      action: 'budgets',
+    });
+    const onSeeAll = jest.fn();
+    const tree = await render([emi, budget(1), budget(2), noBackup], jest.fn(), jest.fn(), onSeeAll);
+    const shown = texts(tree);
+    expect(shown).toEqual(expect.arrayContaining(['4', 'Home loan EMI', 'Budget 1', 'Budget 2']));
+    expect(shown).not.toContain('No backup yet');
+    act(() =>
+      tree.root
+        .find((n) => n.props.accessibilityLabel === 'See all — Needs you' && n.props.onPress)
+        .props.onPress()
+    );
+    expect(onSeeAll).toHaveBeenCalled();
+  });
+
+  it('has no See all when everything fits', async () => {
+    const tree = await render([emi, noBackup]);
+    expect(tree.root.findAll((n) => n.props.accessibilityLabel === 'See all — Needs you')).toHaveLength(0);
   });
 
   it('renders a titled row for each item', async () => {
@@ -105,6 +131,7 @@ describe('NeedsYouCard — last month in review', () => {
           items={items}
           onOpen={jest.fn()}
           onSnooze={jest.fn()}
+          onSeeAll={jest.fn()}
           review={r}
           onOpenReview={onOpenReview}
           onDismissReview={onDismissReview}

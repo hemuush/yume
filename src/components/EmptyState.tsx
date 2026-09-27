@@ -7,16 +7,24 @@ interface Props {
   illustration?: React.ReactNode;
   title: string;
   subtitle?: string;
+  /** What to do about it — a button (or a small form) that does the thing, not directions to it. */
+  children?: React.ReactNode;
 }
 
 // Defaults to Suu (sleepy pose) rather than requiring every screen to pick
 // its own bespoke icon — one consistent mascot across every empty state.
-export function EmptyState({ illustration = <SuuIllustration pose="sleepy" />, title, subtitle }: Props) {
+export function EmptyState({
+  illustration = <SuuIllustration pose="sleepy" />,
+  title,
+  subtitle,
+  children,
+}: Props) {
   return (
     <View style={styles.wrap}>
       {illustration}
       <Text style={styles.title}>{title}</Text>
       {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
+      {children && <View style={styles.action}>{children}</View>}
     </View>
   );
 }
@@ -38,4 +46,5 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 18,
   },
+  action: { alignSelf: 'stretch', marginTop: 16 },
 });

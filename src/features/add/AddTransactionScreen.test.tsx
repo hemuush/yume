@@ -6,6 +6,9 @@
  *   - staged entries save together; if one fails, only the unsaved ones stay
  *   - a friend entry without an account only adjusts the person's balance
  *   - editing updates the transaction instead of creating one
+ *   - the number pad does sums; the repeat check warns once, then saves
+ *   - the account follows the category until you pick one yourself
+ *   - "Your usual" fills category, amount and account; the search finds subcategories
  */
 import { create, act, ReactTestRenderer, ReactTestInstance } from 'react-test-renderer';
 import { Alert, Text } from 'react-native';
@@ -23,9 +26,22 @@ jest.mock('react-native-keyboard-controller', () => ({
 jest.mock('@/components/AppHeader', () => ({ AppHeader: () => null }));
 jest.mock('@/components/OdometerAmount', () => ({ OdometerAmount: () => null }));
 jest.mock('@/features/profile/AddAccountModal', () => ({ AddAccountModal: () => null }));
-jest.mock('@/features/transactions/CalendarSheet', () => ({ CalendarSheet: () => null }));
+jest.mock('@/components/CalendarSheet', () => ({ CalendarSheet: () => null }));
+jest.mock('@/features/home/RepeatEntrySheet', () => ({ RepeatEntrySheet: () => null }));
+// Sheets render their contents in place while open.
+jest.mock('@/components/ModalSheet', () => ({
+  ModalSheet: ({ visible, children }: { visible: boolean; children: React.ReactNode }) =>
+    visible ? children : null,
+}));
+const mockAddPersonVisible = { current: false };
+jest.mock('@/features/people/AddPersonModal', () => ({
+  AddPersonModal: ({ visible }: { visible: boolean }) => {
+    mockAddPersonVisible.current = visible;
+    return null;
+  },
+}));
 
-const mockParams: { current: { type?: string; id?: string } } = { current: {} };
+const mockParams: { current: { type?: string; id?: string; toAccountId?: string } } = { current: {} };
 jest.mock('expo-router', () => ({
   router: { back: jest.fn() },
   useLocalSearchParams: () => mockParams.current,
@@ -53,6 +69,8 @@ jest.mock('@/db/ledger', () => ({
   listAccounts: jest.fn(async () => [account('bank', 'Bank'), account('cash', 'Cash', 'cash')]),
   listCategories: jest.fn(async () => [
     category('food', 'Food', 'expense'),
+    category('travel', 'Travel', 'expense'),
+    { ...category('rapido', 'Rapido', 'expense'), parentId: 'travel' },
     category('salary', 'Salary', 'income'),
   ]),
   createTransaction: jest.fn(async () => ({})),
@@ -61,7 +79,9 @@ jest.mock('@/db/ledger', () => ({
   getTransactionById: jest.fn(async () => null),
   getTransactionLink: jest.fn(async () => null),
   getFrequentAmountsForCategory: jest.fn(async () => []),
-  getRecentCategoryIds: jest.fn(async () => []),
+  getRepeatEntries: jest.fn(async () => []),
+  getLastAccountForCategory: jest.fn(async () => null),
+  findRecentRepeat: jest.fn(async () => null),
 }));
 jest.mock('@/db/settings', () => ({
   ...jest.requireActual('@/db/settings'),
@@ -77,9 +97,16 @@ jest.mock('@/db/people', () => ({
 
 import AddTransactionScreen from '../../../app/add-transaction';
 import { router } from 'expo-router';
-import { createTransaction, updateTransaction, getTransactionById } from '@/db/ledger';
+import {
+  createTransaction,
+  updateTransaction,
+  getTransactionById,
+  getLastAccountForCategory,
+  findRecentRepeat,
+  getRepeatEntries,
+} from '@/db/ledger';
 import { getAddDefaults, setAddDefaults } from '@/db/settings';
-import { addLedgerEntry } from '@/db/people';
+import { addLedgerEntry, listPeople } from '@/db/people';
 
 const settle = () => new Promise<void>((resolve) => setTimeout(resolve, 0));
 
@@ -109,11 +136,40 @@ async function press(tree: ReactTestRenderer, label: string) {
     await settle();
   });
 }
+const KEY_LABEL: Record<string, string> = {
+  '.': 'decimal point',
+  '+': 'plus',
+  '−': 'minus',
+  '×': 'times',
+  '÷': 'divide',
+};
+/** Taps each character on the number pad. */
 async function typeAmount(tree: ReactTestRenderer, value: string) {
+  for (const ch of value) {
+    const label = KEY_LABEL[ch] ?? ch;
+    await act(async () => {
+      tree.root
+        .find((n) => n.props.accessibilityLabel === label && typeof n.props.onPress === 'function')
+        .props.onPress();
+    });
+  }
+}
+/** Opens the pad from the amount (as an edit needs), and clears it with a long-press on ⌫. */
+async function clearAmount(tree: ReactTestRenderer) {
   await act(async () => {
     tree.root
-      .find((n) => n.props.accessibilityLabel === 'Amount' && n.props.onChangeText)
-      .props.onChangeText(value);
+      .find(
+        (n) =>
+          typeof n.props.accessibilityLabel === 'string' &&
+          n.props.accessibilityLabel.startsWith('Amount,') &&
+          n.props.onPress
+      )
+      .props.onPress();
+  });
+  await act(async () => {
+    tree.root
+      .find((n) => n.props.accessibilityLabel === 'delete' && typeof n.props.onLongPress === 'function')
+      .props.onLongPress();
   });
 }
 /** Save, then wait past the short "done" tick before going back. */
@@ -215,6 +271,7 @@ describe('Add screen', () => {
       date: '2026-09-20',
     });
     const tree = await render();
+    await clearAmount(tree);
     await typeAmount(tree, '500');
     await save(tree, 'Save changes');
 
@@ -223,5 +280,160 @@ describe('Add screen', () => {
       expect.objectContaining({ amountMinor: 50000, categoryId: 'food', note: 'Dinner', date: '2026-09-20' })
     );
     expect(createTransaction).not.toHaveBeenCalled();
+  });
+  it('adds up a sum typed on the pad', async () => {
+    (getAddDefaults as jest.Mock).mockResolvedValueOnce({
+      expense: { accountId: 'bank', categoryId: 'food' },
+    });
+    const tree = await render();
+    await typeAmount(tree, '120+45');
+    expect(texts(tree)).toEqual(expect.arrayContaining(['165', '120 + 45']));
+    await save(tree);
+    expect(createTransaction).toHaveBeenCalledWith(expect.objectContaining({ amountMinor: 16500 }));
+  });
+
+  it('warns about a likely repeat on the first Save, and saves on the second', async () => {
+    (getAddDefaults as jest.Mock).mockResolvedValueOnce({
+      expense: { accountId: 'bank', categoryId: 'food' },
+    });
+    (findRecentRepeat as jest.Mock).mockResolvedValue({ savedAt: '2026-09-26T08:22:00Z' });
+    const tree = await render();
+    await typeAmount(tree, '50');
+    await save(tree);
+    expect(createTransaction).not.toHaveBeenCalled();
+    expect(texts(tree).some((t) => t.startsWith('You added ₹50 · Food from Bank at'))).toBe(true);
+
+    await save(tree, 'Save anyway');
+    expect(createTransaction).toHaveBeenCalledTimes(1);
+    (findRecentRepeat as jest.Mock).mockResolvedValue(null);
+  });
+
+  it('forgets the warning once the entry changes', async () => {
+    (getAddDefaults as jest.Mock).mockResolvedValueOnce({
+      expense: { accountId: 'bank', categoryId: 'food' },
+    });
+    (findRecentRepeat as jest.Mock).mockResolvedValueOnce({ savedAt: '2026-09-26T08:22:00Z' });
+    const tree = await render();
+    await typeAmount(tree, '50');
+    await save(tree);
+    expect(texts(tree).some((t) => t.startsWith('You added'))).toBe(true);
+    await typeAmount(tree, '0');
+    expect(texts(tree).some((t) => t.startsWith('You added'))).toBe(false);
+    expect(texts(tree)).toContain('Save');
+  });
+
+  it('warns when the same entry is already on the list', async () => {
+    (getAddDefaults as jest.Mock).mockResolvedValueOnce({
+      expense: { accountId: 'bank', categoryId: 'food' },
+    });
+    const tree = await render();
+    await typeAmount(tree, '80');
+    await press(tree, 'Add to list');
+    await typeAmount(tree, '80');
+    await press(tree, 'Add to list');
+    expect(texts(tree)).toContain('₹80 · Food is already on your list below. Tap again to add it anyway.');
+    expect(texts(tree)).toContain('1 staged');
+  });
+
+  it('uses the account the category was last used with, until you pick one yourself', async () => {
+    (getLastAccountForCategory as jest.Mock).mockResolvedValue('cash');
+    const tree = await render();
+    await press(tree, 'Food');
+    await typeAmount(tree, '60');
+    await save(tree);
+    expect(createTransaction).toHaveBeenLastCalledWith(expect.objectContaining({ accountId: 'cash' }));
+
+    const tree2 = await render();
+    await act(async () => {
+      tree2.root
+        .find(
+          (n) =>
+            typeof n.props.accessibilityLabel === 'string' &&
+            n.props.accessibilityLabel.startsWith('Account,') &&
+            n.props.onPress
+        )
+        .props.onPress();
+    });
+    await press(tree2, 'Bank');
+    await press(tree2, 'Food');
+    await typeAmount(tree2, '60');
+    await save(tree2);
+    expect(createTransaction).toHaveBeenLastCalledWith(expect.objectContaining({ accountId: 'bank' }));
+    (getLastAccountForCategory as jest.Mock).mockResolvedValue(null);
+  });
+
+  it('offers to add a person right here when there is nobody yet', async () => {
+    const everyone = await (listPeople as jest.Mock)();
+    (listPeople as jest.Mock).mockResolvedValue([]);
+    const tree = await render();
+    await press(tree, 'Friend');
+    expect(mockAddPersonVisible.current).toBe(false);
+    await act(async () => {
+      tree.root
+        .find((n) => n.props.title === 'Add a person' && typeof n.props.onPress === 'function')
+        .props.onPress();
+    });
+    expect(mockAddPersonVisible.current).toBe(true);
+    (listPeople as jest.Mock).mockResolvedValue(everyone);
+  });
+  it('fills category, amount and account from a "Your usual" chip', async () => {
+    (getRepeatEntries as jest.Mock).mockResolvedValue([
+      {
+        type: 'expense',
+        accountId: 'cash',
+        accountCurrency: 'INR',
+        categoryId: 'rapido',
+        categoryName: 'Rapido',
+        categoryIcon: 'bike',
+        categoryColor: '#8FCBFF',
+        amountMinor: 12600,
+        note: '',
+        timesLogged: 3,
+      },
+    ]);
+    const tree = await render();
+    expect(texts(tree)).toContain('Your usual');
+    // The chip's name and amount are separate texts, so the amount is never the part cut short.
+    expect(texts(tree)).toEqual(expect.arrayContaining(['Rapido ·', '₹126']));
+    await act(async () => {
+      tree.root
+        .find((n) => n.props.accessibilityLabel === 'Rapido, ₹126, logged 3 times' && n.props.onPress)
+        .props.onPress();
+    });
+    await save(tree);
+    expect(createTransaction).toHaveBeenLastCalledWith(
+      expect.objectContaining({ categoryId: 'rapido', amountMinor: 12600, accountId: 'cash' })
+    );
+    (getRepeatEntries as jest.Mock).mockResolvedValue([]);
+  });
+
+  it('opens a transfer into the account a goal follows, from a different account', async () => {
+    mockParams.current = { type: 'transfer', toAccountId: 'bank' };
+    const tree = await render();
+    await typeAmount(tree, '5000');
+    await save(tree);
+    expect(createTransaction).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        type: 'transfer',
+        accountId: 'cash',
+        toAccountId: 'bank',
+        amountMinor: 500000,
+      })
+    );
+  });
+
+  it('finds a subcategory by name without opening its parent', async () => {
+    const tree = await render();
+    expect(texts(tree)).not.toContain('Rapido');
+    await act(async () => {
+      tree.root
+        .find((n) => n.props.accessibilityLabel === 'Find a category' && n.props.onChangeText)
+        .props.onChangeText('rap');
+    });
+    expect(texts(tree)).toEqual(expect.arrayContaining(['Rapido', 'in Travel']));
+    await press(tree, 'Rapido');
+    await typeAmount(tree, '126');
+    await save(tree);
+    expect(createTransaction).toHaveBeenLastCalledWith(expect.objectContaining({ categoryId: 'rapido' }));
   });
 });

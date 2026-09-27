@@ -1,12 +1,19 @@
 import { useRef, useState } from 'react';
-import { View, StyleSheet, Pressable, ScrollView } from 'react-native';
+import { View, StyleSheet, Pressable, ScrollView, Alert } from 'react-native';
 import { Text, TextInput } from '@/components/Text';
 import Feather from '@expo/vector-icons/Feather';
 import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
+import * as DocumentPicker from 'expo-document-picker';
+import { File } from 'expo-file-system';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { setHasOnboarded, setUserName } from '@/db/settings';
 import { createAccount } from '@/db/ledger';
 import { toMinor } from '@/lib/money';
+import { BackupSnapshot, summarizeSnapshot, getCurrentSummary } from '@/lib/backup';
+import { restoreKeepingSafetyCopy, SafetyCopyError } from '@/lib/safetyCopy';
+import { resyncAfterRestore } from '@/lib/restoreSync';
+import { withoutRelock } from '@/lib/appLock';
+import { RestorePreviewSheet, RestorePreview } from '@/features/backup/RestorePreviewSheet';
 import { AccountType } from '@/types';
 import { CategoryIcon } from '@/components/CategoryIcon';
 import { SuuIllustration } from '@/components/SuuIllustration';
@@ -92,6 +99,11 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
   // Starter accounts already created — a retry after a partial failure must
   // never create the same account twice.
   const createdKeys = useRef(new Set<string>());
+  const [pendingRestore, setPendingRestore] = useState<{
+    snapshot: BackupSnapshot;
+    preview: RestorePreview;
+  } | null>(null);
+  const [restoring, setRestoring] = useState(false);
   const isLast = index === SLIDES.length - 1;
   const slide = SLIDES[index];
 
@@ -138,6 +150,60 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
     } finally {
       onDone();
     }
+  };
+
+  /**
+   * "I have a Yume backup" — someone on a new phone picks their backup file
+   * and lands in the app with everything back, instead of setting up
+   * accounts only to replace them a minute later. Same preview as the
+   * Backup screen; Cancel leaves them on this slide.
+   */
+  const pickBackup = async () => {
+    try {
+      const result = await withoutRelock(() => DocumentPicker.getDocumentAsync({ type: '*/*' }));
+      if (result.canceled || !result.assets?.[0]) return;
+      const content = await new File(result.assets[0].uri).text();
+      let snapshot: BackupSnapshot;
+      try {
+        snapshot = JSON.parse(content);
+      } catch {
+        throw new Error("That file isn't valid JSON — pick a full backup Yume exported.");
+      }
+      const backup = summarizeSnapshot(snapshot);
+      if (!backup) throw new Error("That file isn't a Yume backup — pick a full backup Yume exported.");
+      const exportedAt = Number.isNaN(Date.parse(snapshot.exportedAt))
+        ? new Date().toISOString()
+        : snapshot.exportedAt;
+      const current = await getCurrentSummary();
+      setPendingRestore({ snapshot, preview: { exportedAt, backup, current, lostCount: 0 } });
+    } catch (e) {
+      Alert.alert("Couldn't open that backup", String((e as Error)?.message ?? e));
+    }
+  };
+
+  const restorePending = async () => {
+    if (!pendingRestore) return;
+    const { snapshot, preview } = pendingRestore;
+    setRestoring(true);
+    try {
+      try {
+        await restoreKeepingSafetyCopy(snapshot);
+      } catch (e) {
+        // A first-run phone has nothing to keep a copy of — if saving that
+        // (empty) copy fails, restoring without it loses nothing. With data
+        // already here, stop instead; the Backup screen can do it knowingly.
+        if (!(e instanceof SafetyCopyError) || preview.current.entries > 0) throw e;
+        await restoreKeepingSafetyCopy(snapshot, { withoutCopy: true });
+      }
+    } catch (e) {
+      setRestoring(false);
+      setPendingRestore(null);
+      Alert.alert("Couldn't restore that backup", String((e as Error)?.message ?? e));
+      return;
+    }
+    await resyncAfterRestore();
+    setPendingRestore(null);
+    await finish();
   };
 
   const next = () => {
@@ -240,7 +306,7 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
       </View>
 
       <Pressable
-        style={[styles.cta, creating && styles.ctaBusy]}
+        style={[styles.cta, index === 0 && styles.ctaWithLink, creating && styles.ctaBusy]}
         onPress={next}
         disabled={creating}
         accessibilityRole="button"
@@ -250,6 +316,26 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
           {creating ? 'Setting up…' : isLast ? 'Get Started' : 'Next'}
         </Text>
       </Pressable>
+
+      {index === 0 && (
+        <Pressable
+          style={styles.restoreLink}
+          onPress={pickBackup}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel="I have a Yume backup"
+        >
+          <Feather name="download" size={14} color={theme.colors.textSecondary} />
+          <Text style={styles.restoreLinkText}>I have a Yume backup</Text>
+        </Pressable>
+      )}
+
+      <RestorePreviewSheet
+        preview={pendingRestore?.preview ?? null}
+        busy={restoring}
+        onCancel={() => setPendingRestore(null)}
+        onRestore={restorePending}
+      />
     </KeyboardAvoidingView>
   );
 }
@@ -360,6 +446,16 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
     alignItems: 'center',
   },
+  ctaWithLink: { marginBottom: 6 },
   ctaBusy: { opacity: 0.6 },
+  restoreLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 10,
+    marginBottom: 8,
+  },
+  restoreLinkText: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textSecondary },
   ctaText: { fontFamily: theme.font.bodyBold, fontSize: 15 },
 });

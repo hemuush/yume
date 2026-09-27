@@ -62,10 +62,27 @@ describe('BudgetRow', () => {
             progress={makeProgress({ spentMinor: 0, remainingMinor: 500000, percentUsed: 0 })}
             divider={false}
             onPress={() => {}}
-            onLongPress={() => {}}
+            onMore={() => {}}
           />
         );
       });
     }).not.toThrow();
+  });
+
+  it('opens its actions from a visible button, and from a long-press too', () => {
+    const onMore = jest.fn();
+    let tree!: ReturnType<typeof create>;
+    act(() => {
+      tree = create(
+        <BudgetRow progress={makeProgress()} divider={false} onPress={() => {}} onMore={onMore} />
+      );
+    });
+    act(() =>
+      tree.root
+        .find((n) => n.props.accessibilityLabel === 'More for Groceries budget' && n.props.onPress)
+        .props.onPress()
+    );
+    act(() => tree.root.find((n) => typeof n.props.onLongPress === 'function').props.onLongPress());
+    expect(onMore).toHaveBeenCalledTimes(2);
   });
 });

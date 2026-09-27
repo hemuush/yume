@@ -128,6 +128,7 @@ export function ThisMonthHero({
   suu,
   celebrateDebtCleared = false,
   today = null,
+  pace = null,
 }: HeroContent & {
   periodKey: string;
   direction: -1 | 0 | 1;
@@ -142,6 +143,8 @@ export function ThisMonthHero({
   celebrateDebtCleared?: boolean;
   /** Today's spend against the daily goal — only when a goal is set and the current period is showing. */
   today?: { spentMinor: number; goalMinor: number } | null;
+  /** Where this month's spending is heading (monthPace) — the current month only, from the 5th. */
+  pace?: { projectedMinor: number; byLabel: string } | null;
 }) {
   const reduce = useReduceMotion();
   const { dot } = useAccent();
@@ -437,12 +440,25 @@ export function ThisMonthHero({
                 />
               </Svg>
             )}
-            <Text style={styles.lineValue} numberOfLines={1}>
+            <Text style={styles.lineValue} numberOfLines={1} adjustsFontSizeToFit>
               {formatMoney(displayed.outstandingLoansMinor)}
             </Text>
             {confettiPlaying &&
               confetti.map((piece, i) => <ConfettiDot key={i} progress={confettiProgress} piece={piece} />)}
           </View>
+
+          {pace && (
+            <View style={[styles.line, styles.lineDivider]}>
+              <Feather name="trending-up" size={15} color={theme.colors.textSecondary} />
+              <Text style={styles.lineLabel} numberOfLines={1}>
+                At this pace, about{' '}
+                <Text style={styles.lineMoney}>
+                  {formatMoney(Math.round(pace.projectedMinor / 10000) * 10000)}
+                </Text>{' '}
+                by {pace.byLabel}
+              </Text>
+            </View>
+          )}
 
           {today && (
             <View style={[styles.line, styles.lineDivider]}>

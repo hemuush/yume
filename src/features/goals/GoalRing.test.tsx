@@ -19,6 +19,7 @@ function makeGoal(overrides: Partial<SavingsGoal> = {}): SavingsGoal {
     currentAmountMinor: 0,
     targetDate: null,
     linkedAccountId: null,
+    tracksAccount: false,
     noteToSelf: null,
     letterRevealed: false,
     archived: false,

@@ -2,6 +2,7 @@
  * The first-run account step: picked starter accounts are created with
  * their typed balance, a failure keeps the user on the step to retry without
  * ever creating the same account twice, and Skip always gets them out.
+ * "I have a Yume backup" on the first slide restores straight into the app.
  */
 import { create, act, ReactTestRenderer, ReactTestInstance } from 'react-test-renderer';
 
@@ -17,6 +18,32 @@ jest.mock('react-native-safe-area-context', () => ({
 }));
 jest.mock('@/components/SuuIllustration', () => ({ SuuIllustration: () => null }));
 jest.mock('@/db/ledger', () => ({ createAccount: jest.fn() }));
+jest.mock('@/components/ModalSheet', () => ({
+  ModalSheet: ({ visible, children, footer }: { visible: boolean; children: any; footer?: any }) =>
+    visible ? (
+      <>
+        {children}
+        {footer}
+      </>
+    ) : null,
+}));
+const mockBackupFile = { current: '' };
+jest.mock('expo-document-picker', () => ({
+  getDocumentAsync: jest.fn(async () => ({ canceled: false, assets: [{ uri: 'file:///backup.json' }] })),
+}));
+jest.mock('expo-file-system', () => ({
+  File: jest.fn().mockImplementation(() => ({ text: async () => mockBackupFile.current })),
+}));
+jest.mock('@/lib/appLock', () => ({ withoutRelock: (fn: () => unknown) => fn() }));
+jest.mock('@/lib/backup', () => ({
+  ...jest.requireActual('@/lib/backup'),
+  getCurrentSummary: jest.fn(async () => ({ entries: 0, lastEntryDate: null, accounts: 0, loans: 0 })),
+}));
+jest.mock('@/lib/safetyCopy', () => ({
+  ...jest.requireActual('@/lib/safetyCopy'),
+  restoreKeepingSafetyCopy: jest.fn(async () => ({ skippedColumns: [], undoAvailable: true })),
+}));
+jest.mock('@/lib/restoreSync', () => ({ resyncAfterRestore: jest.fn(async () => {}) }));
 jest.mock('@/db/settings', () => ({
   ...jest.requireActual('@/db/settings'),
   setHasOnboarded: jest.fn(async () => {}),
@@ -26,6 +53,9 @@ jest.mock('@/db/settings', () => ({
 import { Onboarding } from './Onboarding';
 import { createAccount } from '@/db/ledger';
 import { setHasOnboarded } from '@/db/settings';
+import { restoreKeepingSafetyCopy } from '@/lib/safetyCopy';
+import { resyncAfterRestore } from '@/lib/restoreSync';
+import { Alert } from 'react-native';
 
 const createAccountMock = createAccount as jest.Mock;
 
@@ -133,5 +163,68 @@ describe('Onboarding account step', () => {
     await press(byLabel(tree, 'Skip'));
     expect(createAccountMock).not.toHaveBeenCalled();
     expect(onDone).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('Onboarding restore from a backup', () => {
+  const backup = {
+    formatVersion: 1,
+    exportedAt: '2026-09-20T08:00:00.000Z',
+    tables: {
+      accounts: [{ id: 'a1' }],
+      transactions: [{ date: '2026-09-19' }, { date: '2026-09-18' }],
+      loans: [],
+    },
+  };
+  const titled = (tree: ReactTestRenderer, title: string) =>
+    tree.root.find((n) => n.props.title === title && typeof n.props.onPress === 'function');
+
+  beforeEach(() => {
+    mockBackupFile.current = JSON.stringify(backup);
+    (setHasOnboarded as jest.Mock).mockClear();
+  });
+
+  it('previews the picked backup, restores it and skips the setup', async () => {
+    const onDone = jest.fn();
+    const tree = await render(onDone);
+    await press(byLabel(tree, 'I have a Yume backup'));
+    const texts = tree.root.findAll((n) => typeof n.props.children === 'string').map((n) => n.props.children);
+    expect(texts.some((t: string) => t.startsWith('2 entries'))).toBe(true);
+
+    await press(titled(tree, 'Restore'));
+    expect(restoreKeepingSafetyCopy).toHaveBeenCalledWith(backup);
+    expect(resyncAfterRestore).toHaveBeenCalled();
+    expect(setHasOnboarded).toHaveBeenCalledWith(true);
+    expect(onDone).toHaveBeenCalledTimes(1);
+    expect(createAccountMock).not.toHaveBeenCalled();
+  });
+
+  it('Cancel leaves the user on onboarding with nothing restored', async () => {
+    const onDone = jest.fn();
+    const tree = await render(onDone);
+    await press(byLabel(tree, 'I have a Yume backup'));
+    await press(titled(tree, 'Cancel'));
+    expect(restoreKeepingSafetyCopy).not.toHaveBeenCalled();
+    expect(onDone).not.toHaveBeenCalled();
+    expect(tree.root.findAll((n) => n.props.title === 'Restore')).toHaveLength(0);
+  });
+
+  it("says so when the file isn't a backup, and restores nothing", async () => {
+    const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+    mockBackupFile.current = '{"hello": 1}';
+    const tree = await render();
+    await press(byLabel(tree, 'I have a Yume backup'));
+    expect(alert).toHaveBeenCalledWith(
+      "Couldn't open that backup",
+      expect.stringContaining("isn't a Yume backup")
+    );
+    expect(tree.root.findAll((n) => n.props.title === 'Restore')).toHaveLength(0);
+    alert.mockRestore();
+  });
+
+  it('only offers it on the first slide', async () => {
+    const tree = await render();
+    await press(cta(tree));
+    expect(tree.root.findAll((n) => n.props.accessibilityLabel === 'I have a Yume backup')).toHaveLength(0);
   });
 });

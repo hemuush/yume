@@ -15,13 +15,8 @@ import { Chip } from '@/components/Chip';
 import { ModalSheet } from '@/components/ModalSheet';
 import { modalFooterStyles as f, theme } from '@/constants/theme';
 import { useAccent } from '@/theme/AccentContext';
-import {
-  toLocalIsoDate,
-  monthsBetweenIsoDates,
-  partsToIsoDate,
-  parseLocalIsoDate,
-  addMonthsToIsoDate,
-} from '@/lib/date';
+import { toLocalIsoDate, monthsBetweenIsoDates, addMonthsToIsoDate } from '@/lib/date';
+import { DateField } from '@/components/DateField';
 import { ToggleSwitch } from '@/components/ToggleSwitch';
 import { styles } from './loans.styles';
 
@@ -34,6 +29,15 @@ const DIRECTIONS: { label: string; value: LoanDirection }[] = [
   { label: 'I Borrowed', value: 'borrowed' },
   { label: 'I Lent', value: 'lent' },
 ];
+
+/** "20 years", "1 year 6 months", "9 months" — a loan's length, for its interest line. */
+function tenureLabel(months: number): string {
+  const years = Math.floor(months / 12);
+  const rest = months % 12;
+  const y = years > 0 ? `${years} year${years === 1 ? '' : 's'}` : '';
+  const m = rest > 0 ? `${rest} month${rest === 1 ? '' : 's'}` : '';
+  return [y, m].filter(Boolean).join(' ');
+}
 
 export function AddLoanModal({
   visible,
@@ -66,20 +70,14 @@ export function AddLoanModal({
   const [assetValue, setAssetValue] = useState('');
   const [loanTiming, setLoanTiming] = useState<'new' | 'existing'>('new');
   const [alreadyPaid, setAlreadyPaid] = useState('0');
-  const [startYear, setStartYear] = useState(String(today.getFullYear()));
-  const [startMonth, setStartMonth] = useState(String(today.getMonth() + 1));
-  const [startDay, setStartDay] = useState(String(today.getDate()));
+  const [startDate, setStartDate] = useState(() => toLocalIsoDate(today));
   // First EMI due date, separate from the disbursement date above — real
   // lenders routinely leave a gap between the two. Defaults to one month
   // after the disbursement date and re-derives automatically until the user
   // actually edits it, at which point it stops following the disbursement
   // date around.
   const [emiTouched, setEmiTouched] = useState(false);
-  const emiDefault = useMemo(() => addMonthsToIsoDate(toLocalIsoDate(today), 1), [today]);
-  const emiDefaultParts = parseLocalIsoDate(emiDefault);
-  const [emiYear, setEmiYear] = useState(String(emiDefaultParts.getFullYear()));
-  const [emiMonth, setEmiMonth] = useState(String(emiDefaultParts.getMonth() + 1));
-  const [emiDay, setEmiDay] = useState(String(emiDefaultParts.getDate()));
+  const [emiStartDate, setEmiStartDate] = useState(() => addMonthsToIsoDate(toLocalIsoDate(today), 1));
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [people, setPeople] = useState<PersonWithBalance[]>([]);
@@ -144,15 +142,8 @@ export function AddLoanModal({
   // Keeps the EMI-start default following the disbursement date until the
   // user deliberately edits the EMI date field itself.
   useEffect(() => {
-    if (emiTouched) return;
-    const disb = partsToIsoDate(startYear, startMonth, startDay);
-    if (!disb) return;
-    const next = addMonthsToIsoDate(disb, 1);
-    const d = parseLocalIsoDate(next);
-    setEmiYear(String(d.getFullYear()));
-    setEmiMonth(String(d.getMonth() + 1));
-    setEmiDay(String(d.getDate()));
-  }, [startYear, startMonth, startDay, emiTouched]);
+    if (!emiTouched) setEmiStartDate(addMonthsToIsoDate(startDate, 1));
+  }, [startDate, emiTouched]);
 
   const principalMinor = toMinor(parseFloat(principal || '0'));
   const rateBp = Math.round(parseFloat(rate || '0') * 100);
@@ -214,14 +205,9 @@ export function AddLoanModal({
     setAssetValue('');
     setLoanTiming('new');
     setAlreadyPaid('0');
-    setStartYear(String(today.getFullYear()));
-    setStartMonth(String(today.getMonth() + 1));
-    setStartDay(String(today.getDate()));
+    setStartDate(toLocalIsoDate(today));
     setEmiTouched(false);
-    const d = parseLocalIsoDate(addMonthsToIsoDate(toLocalIsoDate(today), 1));
-    setEmiYear(String(d.getFullYear()));
-    setEmiMonth(String(d.getMonth() + 1));
-    setEmiDay(String(d.getDate()));
+    setEmiStartDate(addMonthsToIsoDate(toLocalIsoDate(today), 1));
     setPersonId(null);
     setDisbCategoryId(null);
     setDisbFee('');
@@ -265,14 +251,8 @@ export function AddLoanModal({
     // routinely earlier than the day you get around to entering it into
     // Yume (or even earlier than a sanction letter's own print date), so
     // "new" can no longer only mean "today."
-    const startDate = partsToIsoDate(startYear, startMonth, startDay);
-    if (!startDate) {
-      setError('Enter a valid loan start date');
-      return;
-    }
-    const emiStartDate = partsToIsoDate(emiYear, emiMonth, emiDay);
-    if (loanTiming === 'new' && !emiStartDate) {
-      setError('Enter a valid first EMI due date');
+    if (loanTiming === 'new' && emiStartDate < startDate) {
+      setError('The first EMI is before the disbursement date');
       return;
     }
     if (loanTiming === 'existing' && alreadyPaidCount > 0) {
@@ -318,7 +298,7 @@ export function AddLoanModal({
         interestRateAnnualBp: rateBp,
         tenureMonths,
         startDate,
-        emiStartDate: loanTiming === 'new' ? (emiStartDate ?? undefined) : undefined,
+        emiStartDate: loanTiming === 'new' ? emiStartDate : undefined,
         rateType,
         personId,
         assetLabel: trackAsset ? assetLabel.trim() || 'Asset' : null,
@@ -445,6 +425,10 @@ export function AddLoanModal({
               <Text style={[styles.emiPreviewValue, { color: theme.colors.textPrimary }]}>
                 {formatMoney(previewEmi)}/month
               </Text>
+              <Text style={[styles.emiPreviewLabel, { color: theme.colors.textSecondary }]}>
+                {formatMoney(Math.max(0, previewEmi * tenureMonths - principalMinor))} interest over{' '}
+                {tenureLabel(tenureMonths)}
+              </Text>
             </View>
           )}
 
@@ -498,41 +482,11 @@ export function AddLoanModal({
             onChange={setLoanTiming}
           />
 
-          <Text style={styles.fieldLabel}>
-            {loanTiming === 'new' ? 'Disbursement date' : 'First EMI period started on'}
-          </Text>
-          <View style={styles.dateFieldsRow}>
-            <View style={{ flex: 1 }}>
-              <FormInput
-                label="Day"
-                value={startDay}
-                onChangeText={setStartDay}
-                keyboardType="numeric"
-                placeholder="DD"
-                style={styles.dateFieldInput}
-              />
-            </View>
-            <View style={{ flex: 1 }}>
-              <FormInput
-                label="Month"
-                value={startMonth}
-                onChangeText={setStartMonth}
-                keyboardType="numeric"
-                placeholder="MM"
-                style={styles.dateFieldInput}
-              />
-            </View>
-            <View style={{ flex: 1.3 }}>
-              <FormInput
-                label="Year"
-                value={startYear}
-                onChangeText={setStartYear}
-                keyboardType="numeric"
-                placeholder="YYYY"
-                style={styles.dateFieldInput}
-              />
-            </View>
-          </View>
+          <DateField
+            label={loanTiming === 'new' ? 'Disbursement date' : 'First EMI period started on'}
+            value={startDate}
+            onChange={setStartDate}
+          />
           <Text style={styles.hintText}>
             This is when the amortization actually starts — often the day the money was disbursed, not the
             date on a sanction letter or the day you happen to be entering this. Defaults to today; change it
@@ -571,48 +525,15 @@ export function AddLoanModal({
                 expense on the same day, separate from the disbursement itself. Leave at 0 if none applied.
               </Text>
 
-              <Text style={styles.fieldLabel}>First EMI due date</Text>
-              <View style={styles.dateFieldsRow}>
-                <View style={{ flex: 1 }}>
-                  <FormInput
-                    label="Day"
-                    value={emiDay}
-                    onChangeText={(v) => {
-                      setEmiTouched(true);
-                      setEmiDay(v);
-                    }}
-                    keyboardType="numeric"
-                    placeholder="DD"
-                    style={styles.dateFieldInput}
-                  />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <FormInput
-                    label="Month"
-                    value={emiMonth}
-                    onChangeText={(v) => {
-                      setEmiTouched(true);
-                      setEmiMonth(v);
-                    }}
-                    keyboardType="numeric"
-                    placeholder="MM"
-                    style={styles.dateFieldInput}
-                  />
-                </View>
-                <View style={{ flex: 1.3 }}>
-                  <FormInput
-                    label="Year"
-                    value={emiYear}
-                    onChangeText={(v) => {
-                      setEmiTouched(true);
-                      setEmiYear(v);
-                    }}
-                    keyboardType="numeric"
-                    placeholder="YYYY"
-                    style={styles.dateFieldInput}
-                  />
-                </View>
-              </View>
+              <DateField
+                label="First EMI due date"
+                value={emiStartDate}
+                onChange={(iso) => {
+                  setEmiTouched(true);
+                  setEmiStartDate(iso);
+                }}
+                minDate={startDate}
+              />
               <Text style={styles.hintText}>
                 When the amortization schedule actually starts — often a month after disbursement, not the
                 same day. Defaults to one month after the disbursement date above; check your loan agreement's

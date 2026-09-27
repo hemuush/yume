@@ -1,24 +1,22 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { View, ScrollView, Pressable, StyleSheet, RefreshControl } from 'react-native';
 import { Text } from '@/components/Text';
-import Animated from 'react-native-reanimated';
+import Animated, { useSharedValue, useAnimatedScrollHandler } from 'react-native-reanimated';
 import Feather from '@expo/vector-icons/Feather';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useFocusEffect } from 'expo-router';
-import { listAccounts, listCategories, listTransactions, countTransactions } from '@/db/ledger';
+import { listAccounts, listCategories, listTransactions } from '@/db/ledger';
 import { listLoans, getNextDueInstallment, NextDueInstallment } from '@/db/loans';
 import { listRecurringRules } from '@/db/recurring';
-import { getRangeComparison, PeriodComparison, findTopGrowingCategory, getTodaySpend } from '@/db/reports';
 import {
-  getUserName,
-  getDailySpendingGoal,
-  getLocalBackupFolderUri,
-  getLastLocalBackupResult,
-  getBackupNudgeSnoozedUntil,
-  setBackupNudgeSnoozedUntil,
-  setMonthReviewDismissed,
-  BackupOutcome,
-} from '@/db/settings';
+  getRangeComparison,
+  PeriodComparison,
+  findTopGrowingCategory,
+  getTodaySpend,
+  getMonthPaceInputs,
+} from '@/db/reports';
+import { monthPace } from '@/lib/pace';
+import { getUserName, getDailySpendingGoal, setMonthReviewDismissed } from '@/db/settings';
 import { listBudgetsForMonth, BudgetProgress } from '@/db/budgets';
 import { listSavingsGoals } from '@/db/savingsGoals';
 import { roundedMinor } from '@/lib/round';
@@ -38,7 +36,13 @@ import {
   canStepForward,
 } from '@/lib/period';
 import { dueDateLabel, isDueUrgent } from '@/lib/dueDate';
-import { homeRowEntering, hasPlayedHomeOpening, markHomeOpeningPlayed } from '@/lib/animation';
+import {
+  homeRowEntering,
+  hasPlayedHomeOpening,
+  markHomeOpeningPlayed,
+  ROW_LAYOUT,
+  ROW_EXIT,
+} from '@/lib/animation';
 import { HomeHeader } from '@/features/home/HomeHeader';
 import { ThisMonthHero } from '@/features/home/ThisMonthHero';
 import { ThisMonthHeroSkeleton, CardRowsSkeleton, StripSkeleton } from '@/features/home/HomeSkeleton';
@@ -58,7 +62,8 @@ import { BudgetRow } from '@/features/budgets/BudgetRow';
 import { GoalChip } from '@/features/goals/GoalChip';
 import { NeedsYouCard } from '@/features/home/NeedsYouCard';
 import { loadMonthReview, MonthReview } from '@/features/home/monthReview';
-import { buildNeedsYouItems, NeedsYouItem } from '@/features/home/needsYou';
+import { NeedsYouItem } from '@/features/home/needsYou';
+import { loadNeedsYou, snoozeBackupReminder } from '@/features/home/needsYouData';
 import { AddAccountModal } from '@/features/profile/AddAccountModal';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { toLocalIsoDate } from '@/lib/date';
@@ -82,12 +87,14 @@ export default function DashboardScreen() {
   // Settings → Money.
   const [todaySpendMinor, setTodaySpendMinor] = useState(0);
   const [dailyGoalMinor, setDailyGoalMinor] = useState<number | null>(null);
-  // Inputs to the Needs you row (see features/home/needsYou.ts) — backup
-  // health and whether there's enough data yet for a missing backup to matter.
-  const [backupFolderUri, setBackupFolderUri] = useState<string | null>(null);
-  const [lastBackupResult, setLastBackupResult] = useState<BackupOutcome | null>(null);
-  const [backupNudgeSnoozedUntil, setBackupNudgeSnoozedUntilState] = useState<string | null>(null);
-  const [transactionCount, setTransactionCount] = useState(0);
+  // Inputs to the month forecast under the moon (see lib/pace.ts).
+  const [paceInputs, setPaceInputs] = useState<{
+    everydaySpentMinor: number;
+    dueRestOfMonthMinor: number;
+  } | null>(null);
+  // Everything that needs you (see features/home/needsYou.ts) — the card
+  // shows the top three; the bell opens the full list with the same count.
+  const [needsYou, setNeedsYou] = useState<NeedsYouItem[]>([]);
   const [addAccountVisible, setAddAccountVisible] = useState(false);
   // Tapping an account card opens its summary; "Edit account" there swaps
   // it for the full edit form.
@@ -134,6 +141,16 @@ export default function DashboardScreen() {
   // batches both into the one re-render that also carries the new data.
   const [heroDirection, setHeroDirection] = useState<-1 | 0 | 1>(0);
 
+  // The header sits over the ScrollView and collapses as it scrolls (see
+  // HomeHeader). Its expanded height pads the content so nothing starts
+  // hidden under it; the estimate only covers the first frame before the
+  // header measures itself.
+  const scrollY = useSharedValue(0);
+  const onScroll = useAnimatedScrollHandler((e) => {
+    scrollY.value = e.contentOffset.y;
+  });
+  const [headerHeight, setHeaderHeight] = useState(insets.top + 200);
+
   const handleCursorChange = useCallback(
     (next: PeriodCursor) => {
       setHeroDirection(
@@ -172,10 +189,8 @@ export default function DashboardScreen() {
         goalList,
         todaySpend,
         dailyGoal,
-        folderUri,
-        lastBackup,
-        nudgeSnoozedUntil,
-        txCount,
+        paceIn,
+        needs,
         review,
       ] = await Promise.all([
         listAccounts(),
@@ -197,10 +212,8 @@ export default function DashboardScreen() {
         listSavingsGoals(),
         getTodaySpend(),
         getDailySpendingGoal(),
-        getLocalBackupFolderUri(),
-        getLastLocalBackupResult(),
-        getBackupNudgeSnoozedUntil(),
-        countTransactions(),
+        getMonthPaceInputs(),
+        loadNeedsYou(),
         loadMonthReview(),
       ]);
       if (seq !== loadSeq.current) return;
@@ -218,10 +231,8 @@ export default function DashboardScreen() {
       setGoals(goalList);
       setTodaySpendMinor(todaySpend);
       setDailyGoalMinor(dailyGoal);
-      setBackupFolderUri(folderUri);
-      setLastBackupResult(lastBackup);
-      setBackupNudgeSnoozedUntilState(nudgeSnoozedUntil);
-      setTransactionCount(txCount);
+      setPaceInputs(paceIn);
+      setNeedsYou(needs.shown);
       setMonthReview(review);
       setLoadedCursor(c);
       setLoadError(null);
@@ -276,6 +287,17 @@ export default function DashboardScreen() {
 
   const dispIncome = roundedMinor(comparison?.current.incomeMinor ?? 0);
   const dispExpense = roundedMinor(comparison?.current.expenseMinor ?? 0);
+  // Where this month is heading — the current month only, and only once
+  // there's enough of it to go on (monthPace returns null before the 5th).
+  const todayIso = toLocalIsoDate(new Date());
+  const paceMinor =
+    paceInputs && comparison && cursor.granularity === 'month' && cursor.offset === 0
+      ? monthPace({ spentMinor: comparison.current.expenseMinor, ...paceInputs, today: todayIso })
+      : null;
+  const monthEndLabel = (() => {
+    const [y, m] = todayIso.split('-').map(Number);
+    return new Date(y, m, 0).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
+  })();
   const savingsInPeriod = roundedMinor(comparison?.current.savingsContributionMinor ?? 0);
   // Income − expense − whatever was already moved into savings this period.
   const surplusInPeriod = dispIncome - dispExpense - savingsInPeriod;
@@ -293,8 +315,6 @@ export default function DashboardScreen() {
   // line itself — see suuLine's own comment for why that takes priority.
   const savingsPct = savingsRatePct(dispIncome - dispExpense, dispIncome);
   const suu = suuLine(savingsPct, expenseChangePct ?? null, topGrowing?.name ?? null, new Date().getHours());
-
-  const hasAlerts = nextDue !== null || !!topGrowing;
 
   // "Upcoming" used to show only the next loan EMI — every recurring rule
   // (rent, subscriptions, salary) was invisible on Home even though it's
@@ -453,30 +473,19 @@ export default function DashboardScreen() {
       : []),
   ];
 
-  const now = new Date();
-  const needsYouItems = buildNeedsYouItems({
-    nextDue,
-    budgets,
-    backup: {
-      folderUri: backupFolderUri,
-      lastResult: lastBackupResult,
-      snoozedUntil: backupNudgeSnoozedUntil,
-    },
-    transactionCount,
-    today: toLocalIsoDate(now),
-    now,
-  });
   const openNeedsYou = (item: NeedsYouItem) => {
     if (item.action === 'loans') router.push('/loans');
     else if (item.action === 'budgets') router.push('/budgets');
+    else if (item.action === 'reports') router.navigate('/reports');
+    else if (item.action === 'tidy') router.push('/tidy-up');
+    else if (item.action === 'recurring') router.push('/recurring');
     else router.push('/backup');
   };
-  // Hides the "No backup yet" reminder for 30 days. Shown as hidden straight
-  // away; a failed write only means it may reappear on the next load.
-  const snoozeNeedsYou = () => {
-    const until = new Date(Date.now() + 30 * 86400000).toISOString();
-    setBackupNudgeSnoozedUntilState(until);
-    setBackupNudgeSnoozedUntil(until).catch(() => {});
+  // "Later" on the no-backup reminder hides it for a month. Shown as hidden
+  // straight away; a failed write only means it may reappear on the next load.
+  const snoozeNeedsYou = (item: NeedsYouItem) => {
+    setNeedsYou((prev) => prev.filter((i) => i.key !== item.key));
+    snoozeBackupReminder().catch(() => {});
   };
 
   return (
@@ -484,22 +493,26 @@ export default function DashboardScreen() {
       {/* Top to bottom, the "arranged Home" sign-off: the header (with the
           quick actions in it), your month, what needs you, your plans, then
           history — recent activity and accounts. */}
-      <ScrollView
+      <Animated.ScrollView
         style={styles.scroll}
-        contentContainerStyle={{ paddingBottom: theme.layout.tabScreenScrollPad + insets.bottom }}
+        onScroll={onScroll}
+        scrollEventThrottle={16}
+        contentContainerStyle={{
+          paddingTop: headerHeight,
+          paddingBottom: theme.layout.tabScreenScrollPad + insets.bottom,
+        }}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
             tintColor={accent}
             colors={[accent]}
+            // Android draws the spinner at the ScrollView's top edge, which is
+            // under the header — start it below the header instead.
+            progressViewOffset={headerHeight}
           />
         }
       >
-        <HomeHeader cursor={cursor} onChange={handleCursorChange} userName={userName} hasAlerts={hasAlerts}>
-          <QuickActionsRow />
-        </HomeHeader>
-
         {loadError && (
           <View style={styles.errorBanner}>
             <Text style={styles.errorTitle}>Couldn&rsquo;t load your data</Text>
@@ -535,6 +548,7 @@ export default function DashboardScreen() {
                   ? { spentMinor: todaySpendMinor, goalMinor: dailyGoalMinor }
                   : null
               }
+              pace={paceMinor != null ? { projectedMinor: paceMinor, byLabel: monthEndLabel } : null}
             />
           ) : (
             <ThisMonthHeroSkeleton />
@@ -543,8 +557,9 @@ export default function DashboardScreen() {
 
         {loaded && (
           <NeedsYouCard
-            items={needsYouItems}
+            items={needsYou}
             onOpen={openNeedsYou}
+            onSeeAll={() => router.push('/notifications')}
             onSnooze={snoozeNeedsYou}
             review={monthReview}
             onOpenReview={() => router.push('/reports?month=-1')}
@@ -583,7 +598,7 @@ export default function DashboardScreen() {
             ) : (
               <View style={homeStyles.card}>
                 {recent.slice(0, 4).map((tx, i) => (
-                  <Animated.View key={tx.id} entering={rowEntering(i)}>
+                  <Animated.View key={tx.id} entering={rowEntering(i)} layout={ROW_LAYOUT} exiting={ROW_EXIT}>
                     <RecentTransactionRow
                       tx={tx}
                       category={categoryFor(tx.categoryId) ?? undefined}
@@ -635,8 +650,18 @@ export default function DashboardScreen() {
             )}
           </HomeSection>
         )}
-      </ScrollView>
+      </Animated.ScrollView>
 
+      <HomeHeader
+        cursor={cursor}
+        onChange={handleCursorChange}
+        userName={userName}
+        alertCount={needsYou.length}
+        scrollY={scrollY}
+        onHeight={setHeaderHeight}
+      >
+        <QuickActionsRow />
+      </HomeHeader>
       <SuuRefreshBadge refreshing={refreshing} />
 
       <AccountSummarySheet
@@ -654,6 +679,12 @@ export default function DashboardScreen() {
         onEdit={(acc) => {
           setSummaryAccount(null);
           setEditAccount(acc);
+        }}
+        onSeeAll={(acc) => {
+          setSummaryAccount(null);
+          const month =
+            cursor.granularity === 'month' ? `&month=${periodRange(cursor).start.slice(0, 7)}` : '';
+          router.navigate(`/transactions?account=${acc.id}${month}`);
         }}
       />
 

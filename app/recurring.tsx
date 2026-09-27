@@ -1,10 +1,14 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { View, ScrollView, Alert } from 'react-native';
 import { Text } from '@/components/Text';
 import { useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { listRecurringRules, setRecurringRuleActive } from '@/db/recurring';
 import { listAccounts, listCategories } from '@/db/ledger';
+import { getHiddenSubscriptionSuggestions, hideSubscriptionSuggestion } from '@/db/settings';
+import { getSubscriptionSuggestions, subscriptionTotals, SubscriptionSuggestion } from '@/db/subscriptions';
+import { SubscriptionsSection } from '@/features/recurring/SubscriptionsSection';
+import { nextMonthlyDateAfter, toLocalIsoDate } from '@/lib/date';
 import { Account, Category, RecurringRule } from '@/types';
 import { AppHeader } from '@/components/AppHeader';
 import { AddButton } from '@/components/AddButton';
@@ -14,6 +18,8 @@ import { styles } from '@/features/recurring/recurring.styles';
 import { RuleCard } from '@/features/recurring/RuleCard';
 import { RuleModal } from '@/features/recurring/RuleModal';
 import { Skeleton } from '@/components/Skeleton';
+import { PrimaryButton } from '@/components/PrimaryButton';
+import { AddAccountModal } from '@/features/profile/AddAccountModal';
 
 /**
  * Rent, subscriptions, salary — anything that happens on its own schedule
@@ -30,7 +36,11 @@ export default function RecurringScreen() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [editingRule, setEditingRule] = useState<RecurringRule | null>(null);
+  const [suggestions, setSuggestions] = useState<SubscriptionSuggestion[]>([]);
+  // "Make recurring" on a suggestion: the rule form, filled in from it.
+  const [fromSuggestion, setFromSuggestion] = useState<SubscriptionSuggestion | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [addAccountVisible, setAddAccountVisible] = useState(false);
   // Without this, "Add an account first" (an `accounts.length === 0` check)
   // flashed on every cold open for someone who has plenty of accounts —
   // the check just hadn't heard back from the DB yet.
@@ -38,8 +48,15 @@ export default function RecurringScreen() {
 
   const load = useCallback(async () => {
     try {
-      const [r, accs, cats] = await Promise.all([listRecurringRules(), listAccounts(), listCategories()]);
+      const [r, accs, cats, hidden] = await Promise.all([
+        listRecurringRules(),
+        listAccounts(),
+        listCategories(),
+        getHiddenSubscriptionSuggestions(),
+      ]);
       setRules(r);
+      // A suggestion is a nicety — if it fails, the rules still show.
+      setSuggestions(await getSubscriptionSuggestions(hidden).catch(() => []));
       setAccounts(accs);
       setCategories(cats);
       setLoadError(null);
@@ -61,6 +78,29 @@ export default function RecurringScreen() {
 
   const activeRules = rules.filter((r) => r.active);
   const pausedRules = rules.filter((r) => !r.active);
+
+  // Memoized: the form resets whenever its prefill changes identity, so a
+  // fresh object each render would wipe whatever was typed.
+  const rulePrefill = useMemo(
+    () =>
+      fromSuggestion
+        ? {
+            type: 'expense' as const,
+            accountId: fromSuggestion.accountId,
+            toAccountId: null,
+            categoryId: fromSuggestion.categoryId,
+            amountMinor: fromSuggestion.amountMinor,
+            note: fromSuggestion.note,
+            nextRunDate: nextMonthlyDateAfter(fromSuggestion.date, toLocalIsoDate(new Date())),
+          }
+        : undefined,
+    [fromSuggestion]
+  );
+
+  const hideSuggestion = async (s: SubscriptionSuggestion) => {
+    setSuggestions((prev) => prev.filter((x) => x.key !== s.key));
+    await hideSubscriptionSuggestion(s.key).catch(() => {});
+  };
 
   const togglePause = async (rule: RecurringRule) => {
     try {
@@ -109,15 +149,23 @@ export default function RecurringScreen() {
         ) : accounts.length === 0 ? (
           <EmptyState
             title="Add an account first"
-            subtitle="You need at least one account before setting up a recurring entry."
-          />
-        ) : rules.length === 0 ? (
+            subtitle="A recurring entry needs an account to come out of, or go into."
+          >
+            <PrimaryButton title="Add an account" onPress={() => setAddAccountVisible(true)} />
+          </EmptyState>
+        ) : rules.length === 0 && suggestions.length === 0 ? (
           <EmptyState
             title="Nothing recurring yet"
             subtitle="Tap + to add rent, a subscription, or your salary."
           />
         ) : (
           <>
+            <SubscriptionsSection
+              totals={subscriptionTotals(rules)}
+              suggestions={suggestions}
+              onMakeRecurring={setFromSuggestion}
+              onHide={hideSuggestion}
+            />
             {activeRules.map((rule, i) => (
               <RuleCard
                 key={rule.id}
@@ -151,21 +199,32 @@ export default function RecurringScreen() {
       </ScrollView>
 
       <RuleModal
-        visible={modalVisible || !!editingRule}
+        visible={modalVisible || !!editingRule || !!fromSuggestion}
         editing={editingRule}
         accounts={accounts}
         categories={categories}
+        prefill={rulePrefill}
         onClose={() => {
           setModalVisible(false);
           setEditingRule(null);
+          setFromSuggestion(null);
         }}
         onSaved={async () => {
           setModalVisible(false);
           setEditingRule(null);
+          setFromSuggestion(null);
           await load();
         }}
         onDeleted={async () => {
           setEditingRule(null);
+          await load();
+        }}
+      />
+      <AddAccountModal
+        visible={addAccountVisible}
+        onClose={() => setAddAccountVisible(false)}
+        onCreated={async () => {
+          setAddAccountVisible(false);
           await load();
         }}
       />

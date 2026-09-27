@@ -1,0 +1,114 @@
+import { View, Pressable, Animated, StyleSheet } from 'react-native';
+import { Text } from '@/components/Text';
+import Feather from '@expo/vector-icons/Feather';
+import { theme } from '@/constants/theme';
+import { usePressScale } from '@/lib/usePressScale';
+import { haptics } from '@/lib/haptics';
+import { PadKey } from './padMath';
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+
+const ROWS: PadKey[][] = [
+  ['7', '8', '9', '÷'],
+  ['4', '5', '6', '×'],
+  ['1', '2', '3', '−'],
+  ['.', '0', 'back', '+'],
+];
+const LABELS: Partial<Record<PadKey, string>> = {
+  '÷': 'divide',
+  '×': 'times',
+  '−': 'minus',
+  '+': 'plus',
+  '.': 'decimal point',
+  back: 'delete',
+};
+
+/**
+ * The Add screen's own number pad, in place of the phone keyboard — it takes
+ * the keyboard's space but keeps the category grid above it in view, and it
+ * can do sums (see padMath.ts). `children` is the pad's last row: Add to
+ * list and Save. Long-pressing ⌫ clears the whole amount.
+ */
+export function AmountPad({
+  onKey,
+  onClear,
+  children,
+}: {
+  onKey: (key: PadKey) => void;
+  onClear: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <View style={styles.pad}>
+      {ROWS.map((row, r) => (
+        <View key={r} style={styles.row}>
+          {row.map((key) => (
+            <PadButton
+              key={key}
+              padKey={key}
+              onPress={() => onKey(key)}
+              onLongPress={key === 'back' ? onClear : undefined}
+            />
+          ))}
+        </View>
+      ))}
+      <View style={styles.row}>{children}</View>
+    </View>
+  );
+}
+
+function PadButton({
+  padKey,
+  onPress,
+  onLongPress,
+}: {
+  padKey: PadKey;
+  onPress: () => void;
+  onLongPress?: () => void;
+}) {
+  const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.94);
+  const operator = padKey === '÷' || padKey === '×' || padKey === '−' || padKey === '+';
+  return (
+    <AnimatedPressable
+      style={[styles.key, operator && styles.keyOperator, animatedStyle]}
+      onPress={() => {
+        haptics.tap();
+        onPress();
+      }}
+      onLongPress={
+        onLongPress &&
+        (() => {
+          haptics.warn();
+          onLongPress();
+        })
+      }
+      onPressIn={onPressIn}
+      onPressOut={onPressOut}
+      accessibilityRole="button"
+      accessibilityLabel={LABELS[padKey] ?? padKey}
+      accessibilityHint={padKey === 'back' ? 'Hold to clear the amount' : undefined}
+    >
+      {padKey === 'back' ? (
+        <Feather name="delete" size={19} color={theme.colors.ink} />
+      ) : (
+        <Text style={[styles.keyText, operator && styles.keyOperatorText]}>{padKey}</Text>
+      )}
+    </AnimatedPressable>
+  );
+}
+
+const styles = StyleSheet.create({
+  pad: { gap: 7 },
+  row: { flexDirection: 'row', gap: 7 },
+  key: {
+    flex: 1,
+    height: 46,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: theme.colors.surfaceAlt,
+  },
+  keyOperator: { backgroundColor: theme.colors.accentTint },
+  keyText: { fontFamily: theme.font.monoBold, fontSize: 18, color: theme.colors.textPrimary },
+  keyOperatorText: { fontFamily: theme.font.monoBold, fontSize: 19 },
+});

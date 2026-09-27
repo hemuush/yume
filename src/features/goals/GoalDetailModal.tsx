@@ -9,24 +9,26 @@ import {
   restoreSavingsGoal,
 } from '@/db/savingsGoals';
 import { toMinor } from '@/lib/money';
-import { partsToIsoDate, parseLocalIsoDate } from '@/lib/date';
+import { toLocalIsoDate, addMonthsToIsoDate } from '@/lib/date';
+import { DateField } from '@/components/DateField';
 import { Account, SavingsGoal } from '@/types';
 import { ModalSheet } from '@/components/ModalSheet';
 import { modalFooterStyles as f } from '@/constants/theme';
 import { FormInput } from '@/components/FormInput';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { ToggleSwitch } from '@/components/ToggleSwitch';
-import { Chip } from '@/components/Chip';
+import { GoalAccountField } from './GoalAccountField';
 import { useUndoToast } from '@/components/UndoToast';
 import { haptics } from '@/lib/haptics';
 import { styles } from './goals.styles';
 
 /**
  * Editing/archiving/deleting a goal, opened by tapping a GoalCard. Same
- * danger-zone split as AccountDetailModal: any real progress
+ * danger-zone split as AccountDetailModal: any real progress added by hand
  * (`currentAmountMinor > 0`) means Archive is the only option (hides it,
  * keeps the number intact); a goal that was never funded can be properly
- * deleted.
+ * deleted. A goal following an account holds no money of its own, so it
+ * can always be deleted — the account and its entries are untouched.
  */
 export function GoalDetailModal({
   goal,
@@ -43,10 +45,11 @@ export function GoalDetailModal({
   const [name, setName] = useState('');
   const [target, setTarget] = useState('');
   const [hasTargetDate, setHasTargetDate] = useState(false);
-  const [day, setDay] = useState('1');
-  const [month, setMonth] = useState('1');
-  const [year, setYear] = useState('2026');
+  const [targetDateValue, setTargetDateValue] = useState(() =>
+    addMonthsToIsoDate(toLocalIsoDate(new Date()), 12)
+  );
   const [linkedAccountId, setLinkedAccountId] = useState<string | null>(null);
+  const [tracksAccount, setTracksAccount] = useState(false);
   const [saving, setSaving] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -56,15 +59,9 @@ export function GoalDetailModal({
     setName(goal.name);
     setTarget((goal.targetAmountMinor / 100).toString());
     setLinkedAccountId(goal.linkedAccountId);
-    if (goal.targetDate) {
-      setHasTargetDate(true);
-      const d = parseLocalIsoDate(goal.targetDate);
-      setDay(String(d.getDate()));
-      setMonth(String(d.getMonth() + 1));
-      setYear(String(d.getFullYear()));
-    } else {
-      setHasTargetDate(false);
-    }
+    setTracksAccount(goal.tracksAccount);
+    setHasTargetDate(!!goal.targetDate);
+    setTargetDateValue(goal.targetDate ?? addMonthsToIsoDate(toLocalIsoDate(new Date()), 12));
     setError(null);
   }, [goal]);
 
@@ -81,17 +78,16 @@ export function GoalDetailModal({
       setError('Enter a valid target amount');
       return;
     }
-    let targetDate: string | null = null;
-    if (hasTargetDate) {
-      targetDate = partsToIsoDate(year, month, day);
-      if (!targetDate) {
-        setError('Enter a valid target date');
-        return;
-      }
-    }
+    const targetDate = hasTargetDate ? targetDateValue : null;
     setSaving(true);
     try {
-      await updateSavingsGoal(goal.id, { name: name.trim(), targetAmountMinor, targetDate, linkedAccountId });
+      await updateSavingsGoal(goal.id, {
+        name: name.trim(),
+        targetAmountMinor,
+        targetDate,
+        linkedAccountId,
+        tracksAccount,
+      });
       onChanged();
     } catch (e: any) {
       setError(String(e?.message ?? e));
@@ -194,56 +190,18 @@ export function GoalDetailModal({
         <ToggleSwitch value={hasTargetDate} onChange={setHasTargetDate} />
       </View>
       {hasTargetDate && (
-        <View style={styles.dateFieldsRow}>
-          <View style={{ flex: 1 }}>
-            <FormInput
-              label="Day"
-              value={day}
-              onChangeText={setDay}
-              keyboardType="numeric"
-              placeholder="DD"
-              style={styles.dateFieldInput}
-            />
-          </View>
-          <View style={{ flex: 1 }}>
-            <FormInput
-              label="Month"
-              value={month}
-              onChangeText={setMonth}
-              keyboardType="numeric"
-              placeholder="MM"
-              style={styles.dateFieldInput}
-            />
-          </View>
-          <View style={{ flex: 1.3 }}>
-            <FormInput
-              label="Year"
-              value={year}
-              onChangeText={setYear}
-              keyboardType="numeric"
-              placeholder="YYYY"
-              style={styles.dateFieldInput}
-            />
-          </View>
-        </View>
+        <DateField label="Target date" value={targetDateValue} onChange={setTargetDateValue} />
       )}
 
-      {accounts.length > 0 && (
-        <>
-          <Text style={styles.fieldLabel}>Keeping it in (optional)</Text>
-          <View style={styles.chipRow}>
-            <Chip label="None" active={linkedAccountId === null} onPress={() => setLinkedAccountId(null)} />
-            {accounts.map((a) => (
-              <Chip
-                key={a.id}
-                label={a.name}
-                active={linkedAccountId === a.id}
-                onPress={() => setLinkedAccountId(a.id)}
-              />
-            ))}
-          </View>
-        </>
-      )}
+      <GoalAccountField
+        accounts={accounts}
+        accountId={linkedAccountId}
+        tracks={tracksAccount}
+        onChangeAccount={setLinkedAccountId}
+        onChangeTracks={setTracksAccount}
+        goalId={goal.id}
+        manualAmountMinor={goal.tracksAccount ? 0 : goal.currentAmountMinor}
+      />
 
       {goal.letterRevealed && goal.noteToSelf && (
         <>
@@ -260,7 +218,7 @@ export function GoalDetailModal({
           onPress={onUnarchive}
           disabled={busy}
         />
-      ) : goal.currentAmountMinor > 0 ? (
+      ) : !goal.tracksAccount && goal.currentAmountMinor > 0 ? (
         <PrimaryButton
           title={busy ? 'Working...' : 'Archive goal (has progress)'}
           variant="secondary"

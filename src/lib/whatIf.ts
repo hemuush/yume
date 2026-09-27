@@ -41,7 +41,13 @@ export interface GoalPaceProjection {
 export function projectGoalPace(
   goal: { currentAmountMinor: number; targetAmountMinor: number; createdAt: string },
   extraMonthlyMinor: number,
-  today: string = toLocalIsoDate(new Date())
+  today: string = toLocalIsoDate(new Date()),
+  /**
+   * The real monthly rate when it's known some other way — a goal following
+   * an account uses that account's recent growth, since its balance includes
+   * money that was there long before the goal existed.
+   */
+  knownMonthlyRateMinor?: number
 ): GoalPaceProjection {
   const remaining = Math.max(0, goal.targetAmountMinor - goal.currentAmountMinor);
   if (remaining <= 0) {
@@ -60,7 +66,7 @@ export function projectGoalPace(
   const createdDate = goal.createdAt.slice(0, 10);
   const daysSinceCreated = Math.max(1, daysBetweenIsoDates(createdDate, today));
   const monthsSinceCreated = Math.max(1, daysSinceCreated / 30.44);
-  const currentMonthlyRateMinor = goal.currentAmountMinor / monthsSinceCreated;
+  const currentMonthlyRateMinor = knownMonthlyRateMinor ?? goal.currentAmountMinor / monthsSinceCreated;
 
   const etaFrom = (monthlyRate: number): string | null => {
     if (monthlyRate <= 0) return null;

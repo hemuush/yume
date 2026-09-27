@@ -1,4 +1,4 @@
-import { View, Text } from 'react-native';
+import { View, Text, ScrollView } from 'react-native';
 import { useRef } from 'react';
 
 /**
@@ -29,9 +29,12 @@ export function createReanimatedMock() {
   return {
     __esModule: true,
     // Text too: PrimaryButton renders a ReanimatedAnimated.Text for its label.
-    default: { View, Text, createAnimatedComponent: (Component: unknown) => Component },
+    default: { View, Text, ScrollView, createAnimatedComponent: (Component: unknown) => Component },
     FadeIn: chainableProxy,
     FadeInDown: chainableProxy,
+    FadeOut: chainableProxy,
+    FadeOutDown: chainableProxy,
+    LinearTransition: chainableProxy,
     ReduceMotion: { System: 'system' },
     // A real useRef, not a fresh object per render — otherwise a rerender
     // would trivially "reset" a shared value on its own, defeating any test
@@ -51,6 +54,10 @@ export function createReanimatedMock() {
       quad: (t: number) => t,
       linear: (t: number) => t,
     },
+    // Home's collapsing header: a scroll handler that never fires, and a
+    // reaction that never runs outside a real UI thread.
+    useAnimatedScrollHandler: () => () => {},
+    useAnimatedReaction: () => {},
     runOnJS: (fn: (...args: unknown[]) => unknown) => fn,
   };
 }

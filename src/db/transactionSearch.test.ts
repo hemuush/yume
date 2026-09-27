@@ -129,4 +129,27 @@ describe('searchTransactions', () => {
     const capped = await searchTransactions('o', 2);
     expect(capped.length).toBeLessThanOrEqual(2);
   });
+
+  it('finds an amount as it is shown, with or without ₹ and commas', async () => {
+    const byAmount = await searchTransactions('420', 50, '2026-09-26');
+    expect(byAmount.map((t) => t.amountMinor)).toEqual([42000]);
+    expect((await searchTransactions('₹680', 50, '2026-09-26')).map((t) => t.date)).toEqual(['2026-08-22']);
+    expect(await searchTransactions('421', 50, '2026-09-26')).toEqual([]);
+  });
+
+  it('finds a day', async () => {
+    const onTheDay = await searchTransactions('10 sep', 50, '2026-09-26');
+    expect(onTheDay.map((t) => t.note)).toEqual(['Zomato order']);
+    expect((await searchTransactions('22/8', 50, '2026-09-26')).map((t) => t.note)).toEqual([
+      'Zomato lunch with team',
+    ]);
+  });
+
+  it('needs every word to match: text, amount and day together', async () => {
+    expect((await searchTransactions('zomato 680', 50, '2026-09-26')).map((t) => t.date)).toEqual([
+      '2026-08-22',
+    ]);
+    expect(await searchTransactions('zomato 150', 50, '2026-09-26')).toEqual([]);
+    expect(await searchTransactions('zomato 5 jul', 50, '2026-09-26')).toEqual([]);
+  });
 });

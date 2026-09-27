@@ -392,6 +392,8 @@ export interface LoanProgress {
   /** The earliest pending installment's due date and amount; null once nothing is pending. */
   nextDueDate: string | null;
   nextEmiMinor: number | null;
+  /** The last pending installment's due date — when the loan is done. Null once nothing is pending. */
+  lastDueDate: string | null;
 }
 
 /**
@@ -409,6 +411,7 @@ export async function getLoanProgress(): Promise<LoanProgress[]> {
     total_count: number;
     next_due_date: string | null;
     next_emi_minor: number | null;
+    last_due_date: string | null;
   }>(
     `SELECT l.id AS loan_id,
        (SELECT COUNT(*) FROM loan_payments p WHERE p.loan_id = l.id AND p.status = 'paid') AS paid_count,
@@ -416,7 +419,8 @@ export async function getLoanProgress(): Promise<LoanProgress[]> {
        (SELECT p.due_date FROM loan_payments p WHERE p.loan_id = l.id AND p.status = 'pending'
           ORDER BY p.installment_number ASC LIMIT 1) AS next_due_date,
        (SELECT p.emi_amount_minor FROM loan_payments p WHERE p.loan_id = l.id AND p.status = 'pending'
-          ORDER BY p.installment_number ASC LIMIT 1) AS next_emi_minor
+          ORDER BY p.installment_number ASC LIMIT 1) AS next_emi_minor,
+       (SELECT MAX(p.due_date) FROM loan_payments p WHERE p.loan_id = l.id AND p.status = 'pending') AS last_due_date
      FROM loans l`
   );
   return rows.map((r) => ({
@@ -425,6 +429,7 @@ export async function getLoanProgress(): Promise<LoanProgress[]> {
     totalCount: r.total_count,
     nextDueDate: r.next_due_date ?? null,
     nextEmiMinor: r.next_emi_minor ?? null,
+    lastDueDate: r.last_due_date ?? null,
   }));
 }
 
@@ -449,6 +454,46 @@ export async function getLoanSchedule(loanId: string): Promise<LoanPayment[]> {
     [loanId]
   );
   return rows.map(rowToLoanPayment);
+}
+
+/** What paying a loan's next EMI needs — see getLoanPaymentContext. */
+export interface LoanPaymentContext {
+  installment: LoanPayment;
+  account: { id: string; name: string } | null;
+  categoryId: string | null;
+}
+
+/**
+ * A loan's next unpaid EMI, the account it's paid from and the category it's
+ * filed under — the same choices the loan's own screen makes: its linked
+ * account if that still exists (otherwise the first account), and "Loan EMI"
+ * (or "Loan Repayment" for money lent) of the matching kind. Null when
+ * nothing is left to pay. Lets Plan's Coming up record an EMI in one tap.
+ */
+export async function getLoanPaymentContext(loanId: string): Promise<LoanPaymentContext | null> {
+  const db = await getDb();
+  const loan = await db.getFirstAsync<{ direction: 'borrowed' | 'lent'; linked_account_id: string | null }>(
+    'SELECT direction, linked_account_id FROM loans WHERE id = ?',
+    [loanId]
+  );
+  if (!loan) return null;
+  const next = await db.getFirstAsync<any>(
+    `SELECT * FROM loan_payments WHERE loan_id = ? AND status = 'pending' ORDER BY installment_number ASC LIMIT 1`,
+    [loanId]
+  );
+  if (!next) return null;
+  const accounts = await db.getAllAsync<{ id: string; name: string }>(
+    'SELECT id, name FROM accounts WHERE archived = 0 ORDER BY created_at ASC'
+  );
+  const account = accounts.find((a) => a.id === loan.linked_account_id) ?? accounts[0] ?? null;
+  const kind = loan.direction === 'borrowed' ? 'expense' : 'income';
+  const categories = await db.getAllAsync<{ id: string; name: string }>(
+    'SELECT id, name FROM categories WHERE kind = ? AND archived = 0 ORDER BY name COLLATE NOCASE',
+    [kind]
+  );
+  const category =
+    categories.find((c) => c.name === 'Loan EMI' || c.name === 'Loan Repayment') ?? categories[0] ?? null;
+  return { installment: rowToLoanPayment(next), account, categoryId: category?.id ?? null };
 }
 
 export interface LoanRateChange {

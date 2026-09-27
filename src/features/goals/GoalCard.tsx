@@ -1,5 +1,7 @@
 import { View, Pressable, Animated } from 'react-native';
 import { Text } from '@/components/Text';
+import Feather from '@expo/vector-icons/Feather';
+import { router } from 'expo-router';
 import { SavingsGoal } from '@/types';
 import { formatMoney } from '@/lib/money';
 import { theme } from '@/constants/theme';
@@ -10,16 +12,24 @@ import { styles } from './goals.styles';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-/** One goal, full-width — tap opens edit/archive/delete, the button below opens the contribute sheet. */
+/**
+ * One goal, full-width — tap opens edit/archive/delete. The button below
+ * opens the contribute sheet, or for a goal following its account, a
+ * transfer into that account (the only way its progress moves).
+ */
 export function GoalCard({
   goal,
+  accountName,
   onPress,
   onContribute,
 }: {
   goal: SavingsGoal;
+  /** The linked account's name — shown when the goal follows it. */
+  accountName?: string | null;
   onPress: () => void;
   onContribute: () => void;
 }) {
+  const following = goal.tracksAccount && !!goal.linkedAccountId;
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.98);
   const { percent, done } = goalProgress(goal.currentAmountMinor, goal.targetAmountMinor);
   const ringColor = done ? theme.colors.income : theme.colors.secondary;
@@ -44,14 +54,30 @@ export function GoalCard({
                 ? `By ${goal.targetDate} · ${formatMoney(goal.currentAmountMinor)} of ${formatMoney(goal.targetAmountMinor)}`
                 : `${formatMoney(goal.currentAmountMinor)} of ${formatMoney(goal.targetAmountMinor)}`}
           </Text>
+          {following && (
+            <View style={styles.followTag}>
+              <Feather name="refresh-cw" size={10} color={theme.colors.textSecondary} />
+              <Text style={styles.followTagText} numberOfLines={1}>
+                Following {accountName ?? 'its account'}
+              </Text>
+            </View>
+          )}
         </View>
       </AnimatedPressable>
       <View style={styles.track}>
         <View style={[styles.fill, { width: `${percent}%`, backgroundColor: ringColor }]} />
       </View>
       {!goal.archived && (
-        <Pressable style={styles.contributeBtn} onPress={onContribute} accessibilityRole="button">
-          <Text style={styles.contributeBtnText}>+ Add money</Text>
+        <Pressable
+          style={styles.contributeBtn}
+          onPress={
+            following
+              ? () => router.push(`/add-transaction?type=transfer&toAccountId=${goal.linkedAccountId}`)
+              : onContribute
+          }
+          accessibilityRole="button"
+        >
+          <Text style={styles.contributeBtnText}>{following ? 'Move money here' : '+ Add money'}</Text>
         </Pressable>
       )}
     </View>

@@ -25,3 +25,21 @@ export function topLevelOnly(categories: Category[]): Category[] {
 export function childrenOf(categories: Category[], parentId: string): Category[] {
   return categories.filter((c) => c.parentId === parentId);
 }
+
+/**
+ * Categories whose name matches `query` (case-insensitive), names that start
+ * with it first — Add's "Find a category", which reaches a subcategory
+ * ("Rapido") without opening its parent ("Travel") first. Empty for a blank query.
+ */
+export function searchCategories(categories: Category[], query: string): Category[] {
+  const q = query.trim().toLowerCase();
+  if (!q) return [];
+  const starts: Category[] = [];
+  const contains: Category[] = [];
+  for (const c of categories) {
+    const name = c.name.toLowerCase();
+    if (name.startsWith(q)) starts.push(c);
+    else if (name.includes(q)) contains.push(c);
+  }
+  return [...starts, ...contains];
+}

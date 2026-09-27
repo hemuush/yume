@@ -28,6 +28,7 @@ export function CategoryList({
   expanded,
   onToggleExpanded,
   onPressCategory,
+  kind = 'expense',
 }: {
   breakdown: CategoryBreakdownItem[];
   /** The period's rounded total — the rows' rounded amounts add up to it. */
@@ -37,7 +38,10 @@ export function CategoryList({
   expanded: boolean;
   onToggleExpanded: () => void;
   onPressCategory: (c: CategoryBreakdownItem) => void;
+  /** Income: a rise is good news, so it's green rather than red. */
+  kind?: 'expense' | 'income';
 }) {
+  const upIsBad = kind === 'expense';
   const shown = expanded ? breakdown : breakdown.slice(0, COLLAPSED_COUNT);
   const rounded = allocateRoundedMinor(
     breakdown.map((c) => c.totalMinor),
@@ -62,7 +66,10 @@ export function CategoryList({
                 <Amount minor={rounded[i]} sensitive={c.isSensitive} style={styles.catAmt} />
                 {d != null && Math.abs(d) >= DELTA_MIN_PCT && (
                   <Text
-                    style={[styles.catDelta, { color: d > 0 ? theme.colors.expense : theme.colors.income }]}
+                    style={[
+                      styles.catDelta,
+                      { color: d > 0 === upIsBad ? theme.colors.expense : theme.colors.income },
+                    ]}
                   >
                     {d > 0 ? '↑' : '↓'}
                     {formatPctChange(d)}

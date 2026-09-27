@@ -189,6 +189,16 @@ export const styles = StyleSheet.create({
     marginBottom: 8,
   },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 14 },
-  dateFieldsRow: { flexDirection: 'row', gap: 10 },
-  dateFieldInput: { flex: 1, textAlign: 'center' },
+  payoffCard: {
+    marginTop: 12,
+    padding: 14,
+    gap: 4,
+    borderRadius: theme.radius.xl2,
+    backgroundColor: theme.colors.surface,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.borderSoft,
+  },
+  payoffMonth: { fontFamily: theme.font.roundedBold, fontSize: 22, color: theme.colors.textPrimary },
+  payoffMoney: { fontFamily: theme.font.monoBold, color: theme.colors.textPrimary },
+  payoffAxis: { flexDirection: 'row', justifyContent: 'space-between' },
 });

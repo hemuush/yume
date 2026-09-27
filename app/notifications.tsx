@@ -1,174 +1,169 @@
 import { useCallback, useState } from 'react';
 import { View, ScrollView, StyleSheet, Pressable } from 'react-native';
 import { Text } from '@/components/Text';
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import Animated, { FadeInDown, ReduceMotion } from 'react-native-reanimated';
-import { useFocusEffect, router } from 'expo-router';
+import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { getNextDueInstallment } from '@/db/loans';
-import { getPeriodComparison, findTopGrowingCategory } from '@/db/reports';
-import { getLastLocalBackupAt, getNotificationPrefs } from '@/db/settings';
-import { formatMoney } from '@/lib/money';
+import { getPeriodComparison } from '@/db/reports';
+import { getNotificationPrefs } from '@/db/settings';
 import { formatPctChange } from '@/lib/format';
-import { daysUntilIsoDate } from '@/lib/date';
+import { haptics } from '@/lib/haptics';
+import { useScreenLoad } from '@/lib/useScreenLoad';
 import { AppHeader } from '@/components/AppHeader';
 import { EmptyState } from '@/components/EmptyState';
-import { Skeleton } from '@/components/Skeleton';
+import { CardRowsSkeleton } from '@/components/ListSkeleton';
+import { useUndoToast } from '@/components/UndoToast';
 import { theme } from '@/constants/theme';
+import { useAccent } from '@/theme/AccentContext';
+import { HomeSection } from '@/features/home/HomeSection';
+import { homeStyles as h } from '@/features/home/homeStyles';
+import { NeedsYouRow } from '@/features/home/NeedsYouCard';
+import { NeedsYouItem } from '@/features/home/needsYou';
+import {
+  loadNeedsYou,
+  dismissNeedsYou,
+  restoreNeedsYou,
+  snoozeBackupReminder,
+} from '@/features/home/needsYouData';
 
-interface FeedRow {
-  key: string;
-  icon: string;
-  iconBg: string;
-  title: string;
-  subtitle: string;
-  onPress?: () => void;
-}
-
-function timeAgo(iso: string): string {
-  const diffMs = Date.now() - new Date(iso).getTime();
-  const hours = Math.floor(diffMs / 3600000);
-  if (hours < 1) return 'just now';
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  return days === 1 ? 'yesterday' : `${days} days ago`;
-}
-
-export default function NotificationsScreen() {
+/**
+ * The bell's screen: everything that needs you, in full — the same list
+ * Home's card shows the top three of, so the count on the bell and on Home
+ * always match. ✕ hides an item until its situation changes (with undo);
+ * dismissed items can be shown and brought back. Suu's check-in sits under
+ * the list as a line, not an alert.
+ */
+export default function NeedsYouScreen() {
   const insets = useSafeAreaInsets();
-  const [rows, setRows] = useState<FeedRow[] | null>(null);
-  const [loadError, setLoadError] = useState<string | null>(null);
+  const { dot } = useAccent();
+  const { show: showUndo } = useUndoToast();
+  const [shown, setShown] = useState<NeedsYouItem[] | null>(null);
+  const [dismissed, setDismissed] = useState<NeedsYouItem[]>([]);
+  const [showDismissed, setShowDismissed] = useState(false);
+  const [suuLine, setSuuLine] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    try {
-      const [nextDue, comparison, lastBackup, prefs] = await Promise.all([
-        getNextDueInstallment(),
-        getPeriodComparison('month'),
-        getLastLocalBackupAt(),
-        getNotificationPrefs(),
-      ]);
-
-      const feed: FeedRow[] = [];
-
-      if (nextDue) {
-        const d = daysUntilIsoDate(nextDue.dueDate);
-        feed.push({
-          key: 'emi',
-          icon: 'calendar-clock',
-          iconBg: theme.colors.goldTint,
-          title: 'EMI due soon',
-          subtitle: `${nextDue.counterparty} — ${formatMoney(nextDue.emiAmountMinor)} due ${d <= 0 ? 'today' : `in ${d} day${d === 1 ? '' : 's'}`}.`,
-          onPress: () => router.push('/loans'),
-        });
-      }
-
-      const topGrowing = findTopGrowingCategory(
-        comparison.current.categoryBreakdown,
-        comparison.previous.categoryBreakdown
-      );
-      if (topGrowing) {
-        feed.push({
-          key: 'overspend',
-          icon: 'alert-outline',
-          iconBg: theme.colors.idCoral,
-          title: 'Category over pace',
-          subtitle: `${topGrowing.name} is up ${formatPctChange(topGrowing.pctChange)} vs last month.`,
-          onPress: () => router.push('/reports'),
-        });
-      }
-
-      feed.push({
-        key: 'backup',
-        icon: 'folder-outline',
-        iconBg: theme.colors.idTeal,
-        title: lastBackup ? 'Backup up to date' : 'No backup yet',
-        subtitle: lastBackup
-          ? `Last backed up ${timeAgo(lastBackup)}.`
-          : 'Pick a backup folder in Settings to save your data automatically.',
-        onPress: () => router.push('/backup'),
-      });
-
-      if (prefs.suuCheckins && comparison.expenseChangePct != null) {
-        const pct = comparison.expenseChangePct;
-        feed.push({
-          key: 'suu',
-          icon: 'weather-night',
-          iconBg: theme.colors.secondaryTint,
-          title: "Suu's check-in",
-          subtitle:
-            pct <= 0
-              ? `You're spending ${formatPctChange(pct)} less than last month — nice pace.`
-              : `You're spending ${formatPctChange(pct)} more than last month.`,
-        });
-      }
-
-      setRows(feed);
-      setLoadError(null);
-    } catch (e: any) {
-      // Previously an unguarded throw here left `rows` at null forever — an
-      // indefinitely blank screen with no error and no way to know why.
-      setLoadError(String(e?.message ?? e));
-    }
+    const [needs, prefs, comparison] = await Promise.all([
+      loadNeedsYou(),
+      getNotificationPrefs(),
+      getPeriodComparison('month'),
+    ]);
+    setShown(needs.shown);
+    setDismissed(needs.dismissed);
+    const pct = comparison.expenseChangePct;
+    setSuuLine(
+      prefs.suuCheckins && pct != null
+        ? pct <= 0
+          ? `You're spending ${formatPctChange(pct)} less than last month — nice pace.`
+          : `You're spending ${formatPctChange(pct)} more than last month. A lighter week would even it out.`
+        : null
+    );
   }, []);
+  const { loadError, reload } = useScreenLoad(load);
 
-  useFocusEffect(
-    useCallback(() => {
-      load();
-    }, [load])
-  );
+  const open = (item: NeedsYouItem) => {
+    if (item.action === 'loans') router.push('/loans');
+    else if (item.action === 'budgets') router.push('/budgets');
+    else if (item.action === 'reports') router.navigate('/reports');
+    else if (item.action === 'tidy') router.push('/tidy-up');
+    else if (item.action === 'recurring') router.push('/recurring');
+    else router.push('/backup');
+  };
+
+  const dismiss = async (item: NeedsYouItem) => {
+    haptics.tap();
+    setShown((prev) => prev?.filter((i) => i.key !== item.key) ?? prev);
+    setDismissed((prev) => [...prev, item]);
+    await dismissNeedsYou(item.key);
+    showUndo(`Dismissed ${item.title}`, async () => {
+      await restoreNeedsYou(item.key);
+      await reload();
+    });
+  };
+
+  const bringBack = async (item: NeedsYouItem) => {
+    haptics.tap();
+    await restoreNeedsYou(item.key);
+    await reload();
+  };
+
+  const snooze = async (item: NeedsYouItem) => {
+    setShown((prev) => prev?.filter((i) => i.key !== item.key) ?? prev);
+    await snoozeBackupReminder();
+  };
 
   return (
     <View style={styles.container}>
-      <AppHeader title="Alerts" showBack />
-      <ScrollView>
+      <AppHeader title="Needs you" showBack />
+      <ScrollView contentContainerStyle={{ paddingBottom: theme.layout.screenScrollPad + insets.bottom }}>
         {loadError && (
           <View style={styles.errorBanner}>
-            <Text style={styles.errorTitle}>Couldn't load your alerts</Text>
+            <Text style={styles.errorTitle}>Couldn't load what needs you</Text>
             <Text style={styles.errorDetail}>{loadError}</Text>
           </View>
         )}
-        {rows === null ? (
-          <>
-            {[0, 1, 2].map((i) => (
-              <View key={i} style={styles.row}>
-                <Skeleton width={36} height={36} radius={12} />
-                <View style={{ flex: 1 }}>
-                  <Skeleton width={130} height={12} radius={4} />
-                  <Skeleton width={190} height={10} radius={4} style={{ marginTop: 6 }} />
-                </View>
-              </View>
-            ))}
-          </>
-        ) : rows.length === 0 ? (
+
+        {shown === null ? (
+          <View style={{ marginTop: 16 }}>
+            <CardRowsSkeleton rows={3} />
+          </View>
+        ) : shown.length === 0 ? (
           <EmptyState
             title="All caught up"
-            subtitle="No alerts right now — Suu will let you know when something needs attention."
+            subtitle="Nothing needs you right now. Suu will say when something does."
           />
         ) : (
-          rows.map((row, i) => (
-            <Animated.View
-              key={row.key}
-              entering={FadeInDown.duration(260)
-                .delay(i * 45)
-                .reduceMotion(ReduceMotion.System)}
-            >
-              <Pressable style={styles.row} onPress={row.onPress} disabled={!row.onPress}>
-                <View style={[styles.icon, { backgroundColor: row.iconBg }]}>
-                  <MaterialCommunityIcons name={row.icon as any} size={16} color={theme.colors.ink} />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.rowTitle} numberOfLines={1}>
-                    {row.title}
-                  </Text>
-                  <Text style={styles.rowSubtitle} numberOfLines={2}>
-                    {row.subtitle}
-                  </Text>
-                </View>
-              </Pressable>
-            </Animated.View>
-          ))
+          <View style={[h.card, styles.list]}>
+            {shown.map((item, i) => (
+              <NeedsYouRow
+                key={item.key}
+                item={item}
+                divider={i > 0}
+                onPress={() => open(item)}
+                onSnooze={() => void snooze(item)}
+                onDismiss={() => void dismiss(item)}
+              />
+            ))}
+          </View>
         )}
-        <View style={{ height: theme.layout.screenScrollPad + insets.bottom }} />
+
+        {suuLine && (
+          <HomeSection title="Suu says">
+            <View style={[h.card, styles.suu]}>
+              <View style={[styles.suuDot, { backgroundColor: dot }]} />
+              <Text style={styles.suuText}>{suuLine}</Text>
+            </View>
+          </HomeSection>
+        )}
+
+        {dismissed.length > 0 && (
+          <>
+            <Pressable
+              onPress={() => setShowDismissed((v) => !v)}
+              style={styles.dismissedToggle}
+              accessibilityRole="button"
+              accessibilityState={{ expanded: showDismissed }}
+            >
+              <Text style={styles.dismissedToggleText}>
+                {showDismissed ? 'Hide dismissed' : `Show dismissed (${dismissed.length})`}
+              </Text>
+            </Pressable>
+            {showDismissed && (
+              <View style={[h.card, styles.dismissedList]}>
+                {dismissed.map((item, i) => (
+                  <NeedsYouRow
+                    key={item.key}
+                    item={{ ...item, snoozable: false }}
+                    divider={i > 0}
+                    onPress={() => open(item)}
+                    onSnooze={() => {}}
+                    onDismiss={() => void bringBack(item)}
+                    dismissLabel="Show again"
+                  />
+                ))}
+              </View>
+            )}
+          </>
+        )}
       </ScrollView>
     </View>
   );
@@ -176,6 +171,7 @@ export default function NotificationsScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
+  list: { marginTop: 16 },
   errorBanner: {
     marginHorizontal: 20,
     marginTop: 14,
@@ -193,38 +189,20 @@ const styles = StyleSheet.create({
     marginTop: 3,
     lineHeight: 16,
   },
-  row: {
-    flexDirection: 'row',
-    gap: 12,
-    marginHorizontal: 20,
-    marginBottom: 10,
-    backgroundColor: theme.colors.surface,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-    borderRadius: theme.radius.xl,
-    padding: 14,
-    shadowColor: theme.colors.ink,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.05,
-    shadowRadius: 16,
-    elevation: 1,
-  },
-  icon: {
-    width: 36,
-    height: 36,
-    borderRadius: 12,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
-  },
-  rowTitle: { fontFamily: theme.font.roundedBold, fontSize: 13, color: theme.colors.textPrimary },
-  rowSubtitle: {
+  suu: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, padding: 14 },
+  suuDot: { width: 8, height: 8, borderRadius: 4, marginTop: 6 },
+  suuText: {
+    flex: 1,
     fontFamily: theme.font.body,
-    fontSize: 12,
+    fontSize: 13,
+    lineHeight: 19,
     color: theme.colors.textSecondary,
-    marginTop: 2,
-    lineHeight: 17,
   },
+  dismissedToggle: { alignSelf: 'center', marginTop: 20, paddingHorizontal: 14, paddingVertical: 8 },
+  dismissedToggleText: {
+    fontFamily: theme.font.bodyMedium,
+    fontSize: 12.5,
+    color: theme.colors.textSecondary,
+  },
+  dismissedList: { opacity: 0.75 },
 });

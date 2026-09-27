@@ -47,6 +47,7 @@ describe('getLoanProgress', () => {
     expect(p.totalCount).toBe(schedule.length);
     expect(p.nextDueDate).toBe(schedule[4].dueDate);
     expect(p.nextEmiMinor).toBe(schedule[4].emiAmountMinor);
+    expect(p.lastDueDate).toBe(schedule[schedule.length - 1].dueDate);
   });
 
   it('reports no next EMI once every installment is paid', async () => {
@@ -66,6 +67,7 @@ describe('getLoanProgress', () => {
       totalCount: 3,
       nextDueDate: null,
       nextEmiMinor: null,
+      lastDueDate: null,
     });
   });
 });
