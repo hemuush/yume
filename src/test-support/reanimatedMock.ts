@@ -41,6 +41,16 @@ export function createReanimatedMock() {
     // that checks state survives across renders.
     useSharedValue: (initial: unknown) => useRef({ value: initial }).current,
     useAnimatedStyle: (fn: () => unknown) => fn(),
+    // Home's month ring and the debt tick draw through animated SVG props.
+    useAnimatedProps: (fn: () => unknown) => fn(),
+    interpolate: (value: number, input: number[], output: number[]) => {
+      const i = Math.max(
+        0,
+        input.findIndex((x, k) => value <= x || k === input.length - 1)
+      );
+      return output[Math.min(i, output.length - 1)];
+    },
+    Extrapolation: { CLAMP: 'clamp' },
     withRepeat: (toValue: unknown) => toValue,
     withTiming: (toValue: unknown) => toValue,
     withDelay: (_delay: number, toValue: unknown) => toValue,

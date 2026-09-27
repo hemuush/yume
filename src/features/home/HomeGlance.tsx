@@ -42,6 +42,8 @@ export function buildUpcomingItems(input: {
   accent: string;
   accountName: (id: string | null | undefined) => string | undefined;
   categoryName: (id: string | null) => string | undefined;
+  /** A bill's date tile takes a wash of its category's own colour. */
+  categoryColor?: (id: string | null) => string | undefined;
 }): UpcomingItem[] {
   const items: UpcomingItem[] = [];
   const { nextDue } = input;
@@ -66,7 +68,10 @@ export function buildUpcomingItems(input: {
     items.push({
       key: rule.id,
       icon: isTransfer ? 'repeat' : rule.type === 'income' ? 'arrow-down-right' : 'arrow-up-right',
-      iconBg: theme.colors.secondaryTint,
+      iconBg: (() => {
+        const c = isTransfer ? undefined : input.categoryColor?.(rule.categoryId);
+        return c ? hexToRgba(c, 0.28) : theme.colors.secondaryTint;
+      })(),
       title: isTransfer
         ? `${input.accountName(rule.accountId) ?? '—'} → ${input.accountName(rule.toAccountId) ?? '—'}`
         : rule.note || input.categoryName(rule.categoryId) || 'Recurring',
@@ -137,6 +142,7 @@ export function HomeGlance({
                       onPress={() => router.push(item.route)}
                       divider={i > 0}
                       urgent={item.urgent}
+                      date={item.sortDate}
                     />
                   </Animated.View>
                 ))}

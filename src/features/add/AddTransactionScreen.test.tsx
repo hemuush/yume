@@ -200,11 +200,29 @@ beforeEach(() => {
 });
 
 describe('Add screen', () => {
-  it('saves a new expense with the remembered account and category, remembers them, and goes back', async () => {
+  it('opens with no category picked, even one saved before, but keeps the account', async () => {
     (getAddDefaults as jest.Mock).mockResolvedValueOnce({
       expense: { accountId: 'cash', categoryId: 'food' },
     });
     const tree = await render();
+    await typeAmount(tree, '250');
+    await save(tree);
+    expect(texts(tree)).toContain('Pick a category');
+    expect(createTransaction).not.toHaveBeenCalled();
+    await press(tree, 'Food');
+    await save(tree);
+    expect(createTransaction).toHaveBeenCalledWith(
+      expect.objectContaining({ accountId: 'cash', categoryId: 'food' })
+    );
+  });
+
+  it('saves a new expense with the remembered account and the picked category, remembers them, and goes back', async () => {
+    (getAddDefaults as jest.Mock).mockResolvedValueOnce({
+      expense: { accountId: 'cash', categoryId: 'food' },
+    });
+    const tree = await render();
+    // Add opens with no category picked; this entry is Food.
+    await press(tree, 'Food');
     await typeAmount(tree, '250');
     await save(tree);
 
@@ -237,6 +255,8 @@ describe('Add screen', () => {
     (createTransaction as jest.Mock).mockResolvedValueOnce({}).mockRejectedValueOnce(new Error('disk full'));
     const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
     const tree = await render();
+    // Add opens with no category picked; this entry is Food.
+    await press(tree, 'Food');
 
     await typeAmount(tree, '100');
     await press(tree, 'Add to list');
@@ -293,6 +313,8 @@ describe('Add screen', () => {
       expense: { accountId: 'bank', categoryId: 'food' },
     });
     const tree = await render();
+    // Add opens with no category picked; this entry is Food.
+    await press(tree, 'Food');
     await typeAmount(tree, '120+45');
     expect(texts(tree)).toEqual(expect.arrayContaining(['165', '120 + 45']));
     await save(tree);
@@ -305,6 +327,8 @@ describe('Add screen', () => {
     });
     (findRecentRepeat as jest.Mock).mockResolvedValue({ savedAt: '2026-09-26T08:22:00Z' });
     const tree = await render();
+    // Add opens with no category picked; this entry is Food.
+    await press(tree, 'Food');
     await typeAmount(tree, '50');
     await save(tree);
     expect(createTransaction).not.toHaveBeenCalled();
@@ -321,6 +345,8 @@ describe('Add screen', () => {
     });
     (findRecentRepeat as jest.Mock).mockResolvedValueOnce({ savedAt: '2026-09-26T08:22:00Z' });
     const tree = await render();
+    // Add opens with no category picked; this entry is Food.
+    await press(tree, 'Food');
     await typeAmount(tree, '50');
     await save(tree);
     expect(texts(tree).some((t) => t.startsWith('You added'))).toBe(true);
@@ -334,6 +360,8 @@ describe('Add screen', () => {
       expense: { accountId: 'bank', categoryId: 'food' },
     });
     const tree = await render();
+    // Add opens with no category picked; this entry is Food.
+    await press(tree, 'Food');
     await typeAmount(tree, '80');
     await press(tree, 'Add to list');
     await typeAmount(tree, '80');
@@ -477,6 +505,8 @@ describe('Add screen — money back', () => {
       expense: { accountId: 'bank', categoryId: 'food' },
     });
     const tree = await render();
+    // Add opens with no category picked; this entry is Food.
+    await press(tree, 'Food');
     await typeAmount(tree, '250');
     await act(async () => {
       tree.root
@@ -513,6 +543,8 @@ describe('Add screen — money back', () => {
       expense: { accountId: 'cash', categoryId: 'food' },
     });
     const tree = await render();
+    // Add opens with no category picked; this entry is Food.
+    await press(tree, 'Food');
     await typeAmount(tree, '2400');
     await act(async () => {
       tree.root
