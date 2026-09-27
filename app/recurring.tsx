@@ -1,7 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import { View, ScrollView, Alert } from 'react-native';
 import { Text } from '@/components/Text';
-import { useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { listRecurringRules, setRecurringRuleActive } from '@/db/recurring';
 import { listAccounts, listCategories } from '@/db/ledger';
@@ -11,6 +10,7 @@ import { SubscriptionsSection } from '@/features/recurring/SubscriptionsSection'
 import { nextMonthlyDateAfter, toLocalIsoDate } from '@/lib/date';
 import { Account, Category, RecurringRule } from '@/types';
 import { AppHeader } from '@/components/AppHeader';
+import { useScreenLoad } from '@/lib/useScreenLoad';
 import { AddButton } from '@/components/AddButton';
 import { EmptyState } from '@/components/EmptyState';
 import { theme } from '@/constants/theme';
@@ -39,39 +39,23 @@ export default function RecurringScreen() {
   const [suggestions, setSuggestions] = useState<SubscriptionSuggestion[]>([]);
   // "Make recurring" on a suggestion: the rule form, filled in from it.
   const [fromSuggestion, setFromSuggestion] = useState<SubscriptionSuggestion | null>(null);
-  const [loadError, setLoadError] = useState<string | null>(null);
   const [addAccountVisible, setAddAccountVisible] = useState(false);
-  // Without this, "Add an account first" (an `accounts.length === 0` check)
-  // flashed on every cold open for someone who has plenty of accounts —
-  // the check just hadn't heard back from the DB yet.
-  const [loaded, setLoaded] = useState(false);
-
-  const load = useCallback(async () => {
-    try {
-      const [r, accs, cats, hidden] = await Promise.all([
-        listRecurringRules(),
-        listAccounts(),
-        listCategories(),
-        getHiddenSubscriptionSuggestions(),
-      ]);
-      setRules(r);
-      // A suggestion is a nicety — if it fails, the rules still show.
-      setSuggestions(await getSubscriptionSuggestions(hidden).catch(() => []));
-      setAccounts(accs);
-      setCategories(cats);
-      setLoadError(null);
-    } catch (e: any) {
-      setLoadError(String(e?.message ?? e));
-    } finally {
-      setLoaded(true);
-    }
+  const loadRules = useCallback(async () => {
+    const [r, accs, cats, hidden] = await Promise.all([
+      listRecurringRules(),
+      listAccounts(),
+      listCategories(),
+      getHiddenSubscriptionSuggestions(),
+    ]);
+    setRules(r);
+    // A suggestion is a nicety — if it fails, the rules still show.
+    setSuggestions(await getSubscriptionSuggestions(hidden).catch(() => []));
+    setAccounts(accs);
+    setCategories(cats);
   }, []);
-
-  useFocusEffect(
-    useCallback(() => {
-      load();
-    }, [load])
-  );
+  // `loaded` keeps "Add an account first" (an `accounts.length === 0` check)
+  // from flashing on every cold open before the DB has answered.
+  const { loaded, loadError, reload: load } = useScreenLoad(loadRules);
 
   const accountName = (id: string) => accounts.find((a) => a.id === id)?.name ?? '—';
   const categoryName = (id: string | null) => categories.find((c) => c.id === id)?.name ?? '—';
@@ -165,6 +149,7 @@ export default function RecurringScreen() {
               suggestions={suggestions}
               onMakeRecurring={setFromSuggestion}
               onHide={hideSuggestion}
+              hasRunning={activeRules.length > 0}
             />
             {activeRules.map((rule, i) => (
               <RuleCard

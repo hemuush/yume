@@ -8,7 +8,6 @@ import { listSavingsGoals } from '@/db/savingsGoals';
 import { getAccountMonthlyGrowth } from '@/db/ledger';
 import { goalProgress } from '@/lib/savingsGoalProgress';
 import { projectedMonthlySpend, projectGoalPace } from '@/lib/whatIf';
-import { parseLocalIsoDate } from '@/lib/date';
 import { SavingsGoal } from '@/types';
 import { AppHeader } from '@/components/AppHeader';
 import { EmptyState } from '@/components/EmptyState';
@@ -19,13 +18,10 @@ import { PrimaryButton } from '@/components/PrimaryButton';
 import { theme } from '@/constants/theme';
 import { useScreenLoad } from '@/lib/useScreenLoad';
 import { styles } from '@/features/whatif/whatif.styles';
+import { dayMonth } from '@/lib/dateLabels';
 
 const CUT_OPTIONS = [10, 20, 30, 40, 50];
 const DEFAULT_CUT_PCT = 20;
-
-function formatShortDate(iso: string): string {
-  return parseLocalIsoDate(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-}
 
 function soonerLabel(days: number): string {
   if (days >= 14) return `${Math.round(days / 7)} weeks sooner`;
@@ -206,7 +202,7 @@ export default function WhatIfScreen() {
                       <View style={styles.paceHeadRow}>
                         <Text style={styles.paceLabel}>Current pace</Text>
                         <Text style={styles.paceDate}>
-                          {pace.currentEtaDate ? formatShortDate(pace.currentEtaDate) : '—'}
+                          {pace.currentEtaDate ? dayMonth(pace.currentEtaDate) : '—'}
                         </Text>
                       </View>
                       <View style={styles.paceTrack}>
@@ -225,7 +221,7 @@ export default function WhatIfScreen() {
                       <View style={styles.paceHeadRow}>
                         <Text style={styles.paceLabelStrong}>With this change</Text>
                         <Text style={styles.paceDateStrong}>
-                          {pace.newEtaDate ? formatShortDate(pace.newEtaDate) : '—'}
+                          {pace.newEtaDate ? dayMonth(pace.newEtaDate) : '—'}
                         </Text>
                       </View>
                       <View style={styles.paceTrack}>

@@ -3,7 +3,6 @@ import {
   baselineFromTrend,
   recurringVsDiscretionary,
   categoryDeltas,
-  describeSpendingPattern,
   buildStoryCards,
   patternFacts,
   quietDays,
@@ -75,9 +74,9 @@ describe('categoryDeltas', () => {
   });
 });
 
-describe('describeSpendingPattern', () => {
+describe('patternFacts: the heaviest day', () => {
   it('returns nothing for a near-empty month', () => {
-    expect(describeSpendingPattern([{ date: '2026-09-03', totalMinor: 500 }], 30)).toEqual([]);
+    expect(patternFacts([{ date: '2026-09-03', totalMinor: 500 }], 30)).toEqual([]);
   });
   it('calls out a dominant single day', () => {
     const daily = [
@@ -86,18 +85,15 @@ describe('describeSpendingPattern', () => {
       { date: '2026-09-09', totalMinor: 2000 },
       { date: '2026-09-15', totalMinor: 2000 },
     ];
-    const lines = describeSpendingPattern(daily, 30);
-    // Built via the same `toLocaleDateString(undefined, ...)` call the
-    // production code uses, rather than a hardcoded "1 Sep" literal — the
-    // default locale's day/month order differs by environment (e.g. "1 Sept"
-    // on a machine defaulting to a day-first locale vs "Sep 1" on one
-    // defaulting to en-US), so a hardcoded order passed locally but failed
-    // in CI.
+    // Built with the same toLocaleDateString call as the code: day/month order differs by locale.
     const expectedDate = parseLocalIsoDate('2026-09-01').toLocaleDateString(undefined, {
       day: 'numeric',
       month: 'short',
     });
-    expect(lines.some((l) => l.includes('Heaviest day') && l.includes(expectedDate))).toBe(true);
+    const heaviest = patternFacts(daily, 30).find((f) => f.key === 'heaviest')!;
+    expect(heaviest.kicker).toBe('Heaviest day');
+    expect(heaviest.big).toBe(expectedDate);
+    expect(heaviest.detail).toMatch(/94% of the month in one day/);
   });
 });
 
@@ -148,7 +144,7 @@ describe('summariseDayTotal', () => {
 });
 
 describe('patternFacts', () => {
-  it('gives each read a card headline alongside the same sentence describeSpendingPattern returns', () => {
+  it('gives each read a card label, headline and detail', () => {
     // Four quiet weekdays, then a heavy weekend: weekends run well above weekdays.
     const daily = [
       { date: '2026-09-07', totalMinor: 10000 },
@@ -161,8 +157,8 @@ describe('patternFacts', () => {
     const facts = patternFacts(daily, 30);
     const weekend = facts.find((f) => f.key === 'weekends')!;
     expect(weekend.big).toBe('Weekends +200%');
-    expect(weekend.sentence).toBe('Weekends run 200% above your weekday average.');
-    expect(facts.map((f) => f.sentence)).toEqual(describeSpendingPattern(daily, 30));
+    expect(weekend.kicker).toBeTruthy();
+    expect(weekend.detail).toBeTruthy();
   });
 });
 

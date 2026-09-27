@@ -28,6 +28,7 @@ import {
   PlanRoute,
   WHAT_IF_CUTS,
 } from './planOverview';
+import { dayMonth, weekdayDayMonth, longMonthYear, shortMonthYear } from '@/lib/dateLabels';
 
 /**
  * The Plan tab as a bento (the Plan sign-off, direction A): a grid of
@@ -41,26 +42,13 @@ import {
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 type FeatherName = React.ComponentProps<typeof Feather>['name'];
 
-/** "5 Oct" */
-const shortDate = (iso: string) =>
-  parseLocalIsoDate(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
-/** "Thu 1 Oct" */
-const dayDate = (iso: string) =>
-  parseLocalIsoDate(iso).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' });
-/** "January 2045" */
-const monthYear = (iso: string) =>
-  parseLocalIsoDate(iso).toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
-/** "Jan 2045" */
-const shortMonthYear = (iso: string) =>
-  parseLocalIsoDate(iso).toLocaleDateString(undefined, { month: 'short', year: 'numeric' });
-
 /** "5 & 7 Oct", or "30 Sep & 5 Oct" across months. */
 export function joinDays(dates: string[]): string {
   if (dates.length === 0) return '';
   const sameMonth = dates.every((d) => d.slice(0, 7) === dates[0].slice(0, 7));
   const parts = sameMonth
-    ? [...dates.slice(0, -1).map((d) => String(Number(d.slice(8)))), shortDate(dates[dates.length - 1])]
-    : dates.map(shortDate);
+    ? [...dates.slice(0, -1).map((d) => String(Number(d.slice(8)))), dayMonth(dates[dates.length - 1])]
+    : dates.map((d) => dayMonth(d));
   return parts.length === 1 ? parts[0] : `${parts.slice(0, -1).join(', ')} & ${parts[parts.length - 1]}`;
 }
 
@@ -157,7 +145,7 @@ export function DueTile({
       )}
       {next && next.outMinor > 0 && (
         <Text style={styles.tileSub} numberOfLines={2}>
-          Next: {describeGroup(next)} on {dayDate(next.date)} ({formatMoney(next.outMinor)}),{' '}
+          Next: {describeGroup(next)} on {weekdayDayMonth(next.date)} ({formatMoney(next.outMinor)}),{' '}
           {dueDateLabel(next.date).replace('Due ', '').toLowerCase()}
         </Text>
       )}
@@ -238,7 +226,7 @@ export function EmiTile({
             {nextEmi?.nextEmiMinor != null ? formatMoney(nextEmi.nextEmiMinor) : '—'}
           </Text>
           <Text style={styles.tileSub} numberOfLines={2}>
-            {nextEmi?.nextDueDate ? `Next on ${shortDate(nextEmi.nextDueDate)}` : 'None due soon'}
+            {nextEmi?.nextDueDate ? `Next on ${dayMonth(nextEmi.nextDueDate)}` : 'None due soon'}
           </Text>
         </>
       )}
@@ -326,11 +314,11 @@ export function DebtTile({ loans, onOpen }: { loans: LoansSummary; onOpen: () =>
       wide
       onPress={onOpen}
       label={`${formatMoney(loans.debtLeftMinor)} of debt left${
-        loans.debtFreeDate ? `, debt-free in ${monthYear(loans.debtFreeDate)}` : ''
+        loans.debtFreeDate ? `, debt-free in ${longMonthYear(loans.debtFreeDate)}` : ''
       }. Open loans`}
     >
       <Kicker icon={kIcon('flag')}>
-        {loans.debtFreeDate ? `Debt-free · ${monthYear(loans.debtFreeDate)}` : 'Debt left'}
+        {loans.debtFreeDate ? `Debt-free · ${longMonthYear(loans.debtFreeDate)}` : 'Debt left'}
       </Kicker>
       <Text style={styles.value} numberOfLines={1} adjustsFontSizeToFit>
         {formatMoney(loans.debtLeftMinor)}{' '}
@@ -691,7 +679,7 @@ export function ComingUpSection({
           groups.map((g, gi) => (
             <View key={g.date}>
               <View style={[styles.dayHead, gi > 0 && h.divider]}>
-                <Text style={styles.dayHeadText}>{dayDate(g.date)}</Text>
+                <Text style={styles.dayHeadText}>{weekdayDayMonth(g.date)}</Text>
                 {g.outMinor > 0 && <Text style={styles.dayHeadAmount}>{formatMoney(g.outMinor)}</Text>}
               </View>
               {g.items.map((it) => (

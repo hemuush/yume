@@ -6,12 +6,9 @@ import { CategoryIcon } from '@/components/CategoryIcon';
 import { MovingRow } from '@/components/MovingRow';
 import { SubscriptionSuggestion, SubscriptionTotals } from '@/db/subscriptions';
 import { formatMoney } from '@/lib/money';
-import { parseLocalIsoDate } from '@/lib/date';
 import { theme } from '@/constants/theme';
 import { styles } from './recurring.styles';
-
-const shortDay = (iso: string) =>
-  parseLocalIsoDate(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
+import { dayMonth } from '@/lib/dateLabels';
 
 /**
  * The top of Recurring: what the running expense rules cost a month (and a
@@ -23,11 +20,14 @@ export function SubscriptionsSection({
   suggestions,
   onMakeRecurring,
   onHide,
+  hasRunning,
 }: {
   totals: SubscriptionTotals;
   suggestions: SubscriptionSuggestion[];
   onMakeRecurring: (s: SubscriptionSuggestion) => void;
   onHide: (s: SubscriptionSuggestion) => void;
+  /** Whether any rule is running — the RUNNING heading only shows above real rows. */
+  hasRunning: boolean;
 }) {
   if (totals.count === 0 && suggestions.length === 0) return null;
   return (
@@ -59,7 +59,7 @@ export function SubscriptionsSection({
                   <Text style={styles.subsRowSub}>
                     {s.source === 'pattern'
                       ? `${formatMoney(s.amountMinor)} each month · ${s.months} months in a row`
-                      : `${formatMoney(s.amountMinor)} on ${shortDay(s.date)}`}
+                      : `${formatMoney(s.amountMinor)} on ${dayMonth(s.date)}`}
                   </Text>
                 </View>
                 <Pressable
@@ -88,7 +88,7 @@ export function SubscriptionsSection({
         </>
       )}
 
-      <Text style={styles.sectionDivider}>RUNNING</Text>
+      {hasRunning && <Text style={styles.sectionDivider}>RUNNING</Text>}
     </>
   );
 }

@@ -45,6 +45,7 @@ async function render(props: Partial<React.ComponentProps<typeof SubscriptionsSe
         suggestions={[streamA, wifi]}
         onMakeRecurring={jest.fn()}
         onHide={jest.fn()}
+        hasRunning
         {...props}
       />
     );
@@ -78,5 +79,10 @@ describe('SubscriptionsSection', () => {
   it('shows nothing with no rules and no suggestions', async () => {
     const tree = await render({ totals: { monthlyMinor: 0, yearlyMinor: 0, count: 0 }, suggestions: [] });
     expect(tree.toJSON()).toBeNull();
+  });
+
+  it('only heads the rule list RUNNING when a rule is running', async () => {
+    expect(texts(await render())).toContain('RUNNING');
+    expect(texts(await render({ hasRunning: false }))).not.toContain('RUNNING');
   });
 });
