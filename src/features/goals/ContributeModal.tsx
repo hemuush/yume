@@ -12,6 +12,7 @@ import { SegmentedControl } from '@/components/SegmentedControl';
 import { GoalLetterReveal } from './GoalLetterReveal';
 import { haptics } from '@/lib/haptics';
 import { styles } from './goals.styles';
+import { errorMessage } from '@/lib/errorMessage';
 
 type Direction = 'add' | 'withdraw';
 const DIRECTIONS: { label: string; value: Direction }[] = [
@@ -77,8 +78,8 @@ export function ContributeModal({
       } else {
         onContributed();
       }
-    } catch (e: any) {
-      setError(String(e?.message ?? e));
+    } catch (e) {
+      setError(errorMessage(e));
     } finally {
       setSaving(false);
     }
@@ -98,7 +99,7 @@ export function ContributeModal({
             <View style={f.footerRow}>
               <PrimaryButton title="Cancel" variant="secondary" onPress={onClose} style={f.footerBtn} />
               <PrimaryButton
-                title={saving ? 'Saving...' : direction === 'add' ? 'Add' : 'Withdraw'}
+                title={saving ? 'Saving…' : direction === 'add' ? 'Add' : 'Withdraw'}
                 onPress={submit}
                 disabled={saving}
                 style={f.footerBtn}

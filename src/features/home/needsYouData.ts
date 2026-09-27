@@ -17,6 +17,7 @@ import {
 } from '@/db/settings';
 import { toLocalIsoDate } from '@/lib/date';
 import { buildNeedsYouItems, splitDismissed, NeedsYouItem } from './needsYou';
+import { listCardCycles } from '@/db/cardCycles';
 
 /** How long "Later" hides the no-backup reminder. */
 const BACKUP_SNOOZE_DAYS = 30;
@@ -41,6 +42,7 @@ export async function loadNeedsYou(
     dismissedKeys,
     patterns,
     hiddenSuggestions,
+    cardCycles,
   ] = await Promise.all([
     getNextDueInstallment(),
     listBudgetsForMonth(),
@@ -53,6 +55,7 @@ export async function loadNeedsYou(
     getNeedsYouDismissed(),
     findMonthlyPatterns(toLocalIsoDate(now)).catch(() => []),
     getHiddenSubscriptionSuggestions().catch(() => [] as string[]),
+    listCardCycles(toLocalIsoDate(now)).catch(() => []),
   ]);
   const items = buildNeedsYouItems({
     nextDue,
@@ -65,6 +68,7 @@ export async function loadNeedsYou(
     ),
     tidyCount: tidy ? tidyUpCount(tidy) : 0,
     monthlyPatterns: patterns,
+    cardBills: cardCycles,
     today: toLocalIsoDate(now),
     now,
   });

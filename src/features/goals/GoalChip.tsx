@@ -25,6 +25,7 @@ export function GoalChip({ goal, onPress }: { goal: SavingsGoal; onPress: () => 
         color={done ? theme.colors.income : theme.colors.secondary}
         done={done}
         size={40}
+        animKey={`goal-chip:${goal.id}`}
       />
       <Text style={styles.name} numberOfLines={1}>
         {goal.name}

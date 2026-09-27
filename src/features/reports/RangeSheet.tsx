@@ -12,6 +12,7 @@ import { parseLocalIsoDate, toLocalIsoDate, addMonthsToIsoDate, addDaysToIsoDate
 import { customRangeLabel, financialYearOf, financialYearRange } from '@/lib/period';
 import type { DateRange } from '@/types';
 import { dayMonthYear } from '@/lib/dateLabels';
+import { withPressed } from '@/lib/pressed';
 
 const WEEKDAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
@@ -128,7 +129,10 @@ export function RangeSheet({
                 setEnd(p.range.end);
                 setViewMonth((p.range.end > today ? today : p.range.end).slice(0, 7));
               }}
-              style={[styles.pick, on && { backgroundColor: accent, borderColor: theme.colors.ink }]}
+              style={withPressed([
+                styles.pick,
+                on && { backgroundColor: accent, borderColor: theme.colors.ink },
+              ])}
               accessibilityRole="button"
               accessibilityState={{ selected: on }}
             >
@@ -142,7 +146,7 @@ export function RangeSheet({
         <Pressable
           onPress={() => stepMonth(-1)}
           hitSlop={10}
-          style={styles.navBtn}
+          style={withPressed(styles.navBtn)}
           accessibilityLabel="Previous month"
         >
           <Feather name="chevron-left" size={20} color={theme.colors.ink} />
@@ -152,7 +156,7 @@ export function RangeSheet({
           onPress={() => canNext && stepMonth(1)}
           disabled={!canNext}
           hitSlop={10}
-          style={[styles.navBtn, !canNext && { opacity: 0.25 }]}
+          style={withPressed([styles.navBtn, !canNext && { opacity: 0.25 }])}
           accessibilityLabel="Next month"
         >
           <Feather name="chevron-right" size={20} color={theme.colors.ink} />
@@ -176,7 +180,11 @@ export function RangeSheet({
             return (
               <Pressable
                 key={iso}
-                style={[styles.slot, styles.cell, inside && { backgroundColor: theme.colors.primaryTint }]}
+                style={withPressed([
+                  styles.slot,
+                  styles.cell,
+                  inside && { backgroundColor: theme.colors.primaryTint },
+                ])}
                 disabled={future}
                 onPress={() => tapDay(iso)}
                 accessibilityRole="button"

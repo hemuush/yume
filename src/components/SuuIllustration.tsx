@@ -28,6 +28,8 @@ interface Props {
 // 'peek' renders like 'default', matching every earlier version of this
 // component. The dot's colour comes from the active theme pack (coral by
 // default, unchanged from before packs existed) — see `AccentContext`.
+const BREATH_REPEATS = 6;
+
 export function SuuIllustration({ size = 90, pose = 'default' }: Props) {
   const { dot } = useAccent();
   const sleepy = pose === 'sleepy';
@@ -52,8 +54,14 @@ export function SuuIllustration({ size = 90, pose = 'default' }: Props) {
       dotOpacity.value = dotRestOpacity;
       return;
     }
-    scale.value = withRepeat(withTiming(1.035, { duration: 1600 }), -1, true);
-    dotOpacity.value = withRepeat(withTiming(dotRestOpacity * 0.78, { duration: 1600 }), -1, true);
+    // Three breaths when Suu comes on screen, then rest (the Quiet motion
+    // sign-off): in and out counts as two repeats, so 6 ends at rest.
+    scale.value = withRepeat(withTiming(1.035, { duration: 1600 }), BREATH_REPEATS, true);
+    dotOpacity.value = withRepeat(
+      withTiming(dotRestOpacity * 0.78, { duration: 1600 }),
+      BREATH_REPEATS,
+      true
+    );
     return () => {
       cancelAnimation(scale);
       cancelAnimation(dotOpacity);

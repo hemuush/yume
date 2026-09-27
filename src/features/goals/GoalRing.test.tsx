@@ -11,6 +11,10 @@ import { GoalChip } from './GoalChip';
 import { GoalCard } from './GoalCard';
 import { SavingsGoal } from '@/types';
 
+// Bars and rings animate to their values (useGrowFrom); fake timers keep those
+// frames inside the test instead of firing after it ends.
+jest.useFakeTimers();
+
 function makeGoal(overrides: Partial<SavingsGoal> = {}): SavingsGoal {
   return {
     id: 'g1',

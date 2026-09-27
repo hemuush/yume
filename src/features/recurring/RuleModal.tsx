@@ -24,6 +24,7 @@ import { DateField } from '@/components/DateField';
 import { CategoryPicker } from '@/components/CategoryPicker';
 import { styles } from './recurring.styles';
 import { frequencyNoun } from './recurring.helpers';
+import { errorMessage } from '@/lib/errorMessage';
 
 const TX_TYPES: { label: string; value: TransactionType }[] = [
   { label: 'Expense', value: 'expense' },
@@ -178,8 +179,8 @@ export function RuleModal({
         await createRecurringRule(input);
       }
       onSaved();
-    } catch (e: any) {
-      setError(String(e?.message ?? e));
+    } catch (e) {
+      setError(errorMessage(e));
     } finally {
       setSaving(false);
     }
@@ -196,8 +197,8 @@ export function RuleModal({
         await restoreRecurringRule(snapshot);
         onDeleted();
       });
-    } catch (e: any) {
-      Alert.alert('Could not delete', String(e?.message ?? e));
+    } catch (e) {
+      Alert.alert("Couldn't delete", errorMessage(e));
     } finally {
       setSaving(false);
     }
@@ -207,7 +208,7 @@ export function RuleModal({
     <ModalSheet
       visible={visible}
       onClose={onClose}
-      title={editing ? 'Edit Recurring Entry' : 'New Recurring Entry'}
+      title={editing ? 'Edit recurring entry' : 'New recurring entry'}
       footer={
         <View style={f.footerCol}>
           {error && <Text style={styles.errorText}>{error}</Text>}
@@ -220,7 +221,7 @@ export function RuleModal({
               disabled={saving}
             />
             <PrimaryButton
-              title={saving ? 'Saving...' : editing ? 'Save' : 'Create'}
+              title={saving ? 'Saving…' : editing ? 'Save' : 'Create'}
               onPress={submit}
               disabled={saving}
               style={f.footerBtn}

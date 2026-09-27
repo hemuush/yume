@@ -19,6 +19,8 @@ import { toLocalIsoDate, monthsBetweenIsoDates, addMonthsToIsoDate } from '@/lib
 import { DateField } from '@/components/DateField';
 import { ToggleSwitch } from '@/components/ToggleSwitch';
 import { styles } from './loans.styles';
+import { errorMessage } from '@/lib/errorMessage';
+import { DURATIONS } from '@/lib/motionTimings';
 
 const RATE_TYPES: { label: string; value: LoanRateType }[] = [
   { label: 'Fixed', value: 'fixed' },
@@ -26,8 +28,8 @@ const RATE_TYPES: { label: string; value: LoanRateType }[] = [
 ];
 
 const DIRECTIONS: { label: string; value: LoanDirection }[] = [
-  { label: 'I Borrowed', value: 'borrowed' },
-  { label: 'I Lent', value: 'lent' },
+  { label: 'I borrowed', value: 'borrowed' },
+  { label: 'I lent', value: 'lent' },
 ];
 
 /** "20 years", "1 year 6 months", "9 months" — a loan's length, for its interest line. */
@@ -107,7 +109,7 @@ export function AddLoanModal({
     }
     Animated.timing(step2Fill, {
       toValue: wizardStep === 2 ? 1 : 0,
-      duration: 220,
+      duration: DURATIONS.standard,
       useNativeDriver: true,
     }).start();
   }, [wizardStep, reduceMotion, step2Fill]);
@@ -129,12 +131,12 @@ export function AddLoanModal({
         setPeople(ppl);
         setDisbAccountId((prev) => prev ?? accs[0]?.id ?? null);
         setRepayAccountId((prev) => prev ?? accs[0]?.id ?? null);
-      } catch (e: any) {
+      } catch (e) {
         // Previously unguarded — a failure here silently left accounts and
         // categories empty, so submit() would reject with the confusing
         // "Pick an account and category" validation message instead of the
         // real underlying error.
-        setError(String(e?.message ?? e));
+        setError(errorMessage(e));
       }
     })();
   }, [visible]);
@@ -227,7 +229,7 @@ export function AddLoanModal({
   const nextStep = () => {
     setError(null);
     if (step1Invalid) {
-      setError('Fill in counterparty, principal, tenure, and a valid interest rate');
+      setError("Fill in who it's with, the amount, the tenure and a valid interest rate");
       return;
     }
     setWizardStep(2);
@@ -236,7 +238,7 @@ export function AddLoanModal({
   const submit = async () => {
     setError(null);
     if (step1Invalid) {
-      setError('Fill in counterparty, principal, tenure, and a valid interest rate');
+      setError("Fill in who it's with, the amount, the tenure and a valid interest rate");
       return;
     }
     if (loanTiming === 'new' && (!disbAccountId || !disbCategoryId)) {
@@ -317,8 +319,8 @@ export function AddLoanModal({
       });
       reset();
       onCreated();
-    } catch (e: any) {
-      setError(String(e?.message ?? e));
+    } catch (e) {
+      setError(errorMessage(e));
     } finally {
       setSaving(false);
     }
@@ -348,7 +350,7 @@ export function AddLoanModal({
                   disabled={saving}
                 />
                 <PrimaryButton
-                  title={saving ? 'Saving...' : 'Create loan'}
+                  title={saving ? 'Saving…' : 'Create loan'}
                   onPress={submit}
                   disabled={saving}
                   style={f.footerBtn}

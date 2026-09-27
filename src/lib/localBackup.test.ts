@@ -19,6 +19,17 @@ jest.mock('./backup', () => ({
   buildBackupSnapshot: jest.fn(async () => ({ formatVersion: 1, exportedAt: 'x', tables: {} })),
   summarizeSnapshot: (s: any) => (s?.tables?.transactions ? { entries: s.tables.transactions.length } : null),
 }));
+// The phone's backup index, in memory.
+const mockIndex = { current: {} as Record<string, any> };
+jest.mock('./backupIndex', () => ({
+  readBackupIndex: jest.fn(async () => ({ ...mockIndex.current })),
+  writeBackupIndex: jest.fn((index: Record<string, any>) => {
+    mockIndex.current = { ...index };
+  }),
+  rememberBackupFile: jest.fn(async (uri: string, info: any) => {
+    mockIndex.current = { ...mockIndex.current, [uri]: info };
+  }),
+}));
 jest.mock('@/db/settings', () => ({
   getLocalBackupFolderUri: jest.fn(),
   setLocalBackupFolderUri: jest.fn(),
@@ -147,7 +158,10 @@ describe('listLocalBackups', () => {
   const folder = 'content://folder';
   const file = (date: string) => `${folder}/yume-backup-${date}`;
 
-  beforeEach(() => jest.clearAllMocks());
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockIndex.current = {};
+  });
 
   it('lists backup files newest first, each with what is inside', async () => {
     (StorageAccessFramework.readDirectoryAsync as jest.Mock).mockResolvedValue([
@@ -184,5 +198,42 @@ describe('listLocalBackups', () => {
     const files = await listLocalBackups(folder, 14);
     expect(files).toHaveLength(14);
     expect(files[0].uri).toBe(file('2026-09-20'));
+  });
+
+  it("reads a file only once: after that, what's inside comes from the index", async () => {
+    (StorageAccessFramework.readDirectoryAsync as jest.Mock).mockResolvedValue([file('2026-09-25')]);
+    (StorageAccessFramework.readAsStringAsync as jest.Mock).mockResolvedValue(
+      JSON.stringify({ exportedAt: '2026-09-25T10:00:00Z', tables: { transactions: [{}] } })
+    );
+    const first = await listLocalBackups(folder);
+    expect(StorageAccessFramework.readAsStringAsync).toHaveBeenCalledTimes(1);
+    const second = await listLocalBackups(folder);
+    expect(StorageAccessFramework.readAsStringAsync).toHaveBeenCalledTimes(1);
+    expect(second).toEqual(first);
+  });
+
+  it('forgets files that have left the folder, and retries ones it could not read', async () => {
+    mockIndex.current = {
+      [file('2026-09-01')]: { exportedAt: 'old', sizeBytes: 5, summary: null },
+    };
+    (StorageAccessFramework.readDirectoryAsync as jest.Mock).mockResolvedValue([file('2026-09-25')]);
+    (StorageAccessFramework.readAsStringAsync as jest.Mock).mockResolvedValue('not json');
+    await listLocalBackups(folder);
+    expect(mockIndex.current).toEqual({});
+    await listLocalBackups(folder);
+    expect(StorageAccessFramework.readAsStringAsync).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe('writeLocalBackupNow and the index', () => {
+  it('remembers the file it just wrote, so the list never has to read it', async () => {
+    mockIndex.current = {};
+    (StorageAccessFramework.readDirectoryAsync as jest.Mock).mockResolvedValue([]);
+    (StorageAccessFramework.createFileAsync as jest.Mock).mockResolvedValue('content://folder/new');
+    (StorageAccessFramework.writeAsStringAsync as jest.Mock).mockResolvedValue(undefined);
+    await writeLocalBackupNow('content://folder');
+    expect(mockIndex.current['content://folder/new']).toEqual(
+      expect.objectContaining({ exportedAt: 'x', sizeBytes: expect.any(Number) })
+    );
   });
 });

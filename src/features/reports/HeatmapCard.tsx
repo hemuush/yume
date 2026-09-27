@@ -1,4 +1,4 @@
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Animated } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import { Text } from '@/components/Text';
 import { CountUpAmount } from '@/components/CountUpAmount';
@@ -9,6 +9,7 @@ import { theme } from '@/constants/theme';
 import { useAccent } from '@/theme/AccentContext';
 import { SpendHeatmap, HeatCell } from './SpendHeatmap';
 import { styles } from './reports.styles';
+import { useSlideIn } from '@/lib/useSlideIn';
 
 const LEVELS = [0, 1, 2, 3, 4] as const;
 
@@ -28,8 +29,11 @@ export function HeatmapCard({
   countedDays,
   grid,
   isYear,
+  slideDirection = 0,
 }: {
   periodName: string;
+  /** Which way the period just moved: the headline slides in from that side. */
+  slideDirection?: -1 | 0 | 1;
   spentMinor: number;
   vsUsualPct: number | null;
   perDayMinor: number;
@@ -41,9 +45,10 @@ export function HeatmapCard({
 }) {
   const heatScale = spendHeatScale(useAccent().accent);
   const up = vsUsualPct != null && vsUsualPct > 0;
+  const slide = useSlideIn(periodName, slideDirection);
   return (
     <View style={styles.hmCard}>
-      <View style={styles.hmHead}>
+      <Animated.View style={[styles.hmHead, slide]}>
         <View style={styles.hmHeadMain}>
           <Text style={styles.eyebrow}>Spent in {periodName}</Text>
           <CountUpAmount minor={spentMinor} style={styles.big} numberOfLines={1} adjustsFontSizeToFit />
@@ -65,7 +70,7 @@ export function HeatmapCard({
             </Text>
           </View>
         )}
-      </View>
+      </Animated.View>
       <Text style={styles.hmFacts}>
         <Text style={styles.hmFactStrong}>{formatMoney(perDayMinor)}</Text> a day · spent on{' '}
         <Text style={styles.hmFactStrong}>{spendDays}</Text> of {countedDays} days

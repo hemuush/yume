@@ -126,6 +126,9 @@ export const theme = {
     tabBar: { height: 58, topRadius: 20 },
     tabScreenScrollPad: 58 + 24,
     screenScrollPad: 40,
+    // Between a screen's header (which already leaves 12 below its title) and
+    // the screen's first block — the same 20 in total on every screen.
+    screenTopGap: 8,
   },
   font: {
     body: 'Archivo_400Regular',
@@ -147,22 +150,6 @@ export const theme = {
     // removed — see LockScreen.tsx).
     dotMatrix: 'DotGothic16',
   },
-};
-
-// The outlined settings/preferences row card — identical across
-// settings.tsx and notification-settings.tsx, kept as one definition instead
-// of two copies that could quietly drift apart.
-export const settingsRowStyle = {
-  flexDirection: 'row' as const,
-  alignItems: 'center' as const,
-  gap: 12,
-  marginHorizontal: 20,
-  marginBottom: 8,
-  backgroundColor: theme.colors.surface,
-  borderWidth: StyleSheet.hairlineWidth,
-  borderColor: theme.colors.borderSoft,
-  borderRadius: theme.radius.lg,
-  padding: 12,
 };
 
 // The action-button block passed as a ModalSheet `footer` — a column that

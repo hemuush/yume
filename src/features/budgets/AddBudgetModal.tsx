@@ -12,6 +12,7 @@ import { ToggleSwitch } from '@/components/ToggleSwitch';
 import { CategoryPicker } from '@/components/CategoryPicker';
 import { topLevelOnly } from '@/lib/categoryTree';
 import { styles } from './budgets.styles';
+import { errorMessage } from '@/lib/errorMessage';
 
 /**
  * Creates a new month's budget, or edits an existing one's limit/rollover —
@@ -87,8 +88,8 @@ export function AddBudgetModal({
         await createBudget({ categoryId: categoryId!, limitAmountMinor, rollover });
       }
       onSaved();
-    } catch (e: any) {
-      setError(String(e?.message ?? e));
+    } catch (e) {
+      setError(errorMessage(e));
     } finally {
       setSaving(false);
     }
@@ -98,14 +99,14 @@ export function AddBudgetModal({
     <ModalSheet
       visible={visible}
       onClose={onClose}
-      title={editing ? 'Edit Budget' : 'New Budget'}
+      title={editing ? 'Edit budget' : 'New budget'}
       footer={
         <View style={f.footerCol}>
           {error && <Text style={styles.errorText}>{error}</Text>}
           <View style={f.footerRow}>
             <PrimaryButton title="Cancel" variant="secondary" onPress={onClose} style={f.footerBtn} />
             <PrimaryButton
-              title={saving ? 'Saving...' : editing ? 'Save' : 'Create'}
+              title={saving ? 'Saving…' : editing ? 'Save' : 'Create'}
               onPress={submit}
               disabled={saving}
               style={f.footerBtn}
@@ -120,7 +121,7 @@ export function AddBudgetModal({
           once a budget exists.
         </Text>
       ) : categories.length === 0 ? (
-        <Text style={styles.modalHint}>Add an expense category first before budgeting one.</Text>
+        <Text style={styles.modalHint}>Add an expense category before setting a budget.</Text>
       ) : (
         <>
           <Text style={styles.fieldLabel}>Category</Text>

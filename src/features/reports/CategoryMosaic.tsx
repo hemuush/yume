@@ -8,6 +8,7 @@ import { allocateRoundedMinor } from '@/lib/round';
 import { usePrivacy } from '@/theme/PrivacyContext';
 import { squarify } from './mosaicLayout';
 import { styles } from './reports.styles';
+import { withPressed } from '@/lib/pressed';
 
 const MOSAIC_HEIGHT = 220;
 /** A change smaller than this (in %) isn't worth an arrow — the same threshold as the category list. */
@@ -70,11 +71,11 @@ export function CategoryMosaic({
             <Pressable
               key="rest"
               onPress={onPressRest}
-              style={[
+              style={withPressed([
                 styles.tile,
                 styles.tileRest,
                 { left: t.x, top: t.y, width: t.width, height: t.height },
-              ]}
+              ])}
               accessibilityRole="button"
               accessibilityLabel={`${rest.length} more categories, ${pct}% of ${of}. Show the full list`}
             >
@@ -95,10 +96,10 @@ export function CategoryMosaic({
           <Pressable
             key={c.categoryId}
             onPress={() => onPressCategory(c)}
-            style={[
+            style={withPressed([
               styles.tile,
               { left: t.x, top: t.y, width: t.width, height: t.height, backgroundColor: c.color },
-            ]}
+            ])}
             accessibilityRole="button"
             accessibilityLabel={`${c.name}, ${pct}% of ${of}, ${amount}${
               showDelta ? `, ${d! > 0 ? 'up' : 'down'} ${formatPctChange(d!)}` : ''

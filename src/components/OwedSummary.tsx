@@ -3,6 +3,7 @@ import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
 import { CountUpAmount } from './CountUpAmount';
 import { Skeleton } from './Skeleton';
+import { EYEBROW } from '@/constants/textStyles';
 
 /**
  * The "You owe · Owed to you" pair at the top of Loans and Friends & Family.
@@ -49,15 +50,16 @@ export function OwedSummary({
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', paddingHorizontal: 20, gap: 28, marginBottom: 18 },
-  stat: { flex: 1, minWidth: 0 },
-  label: {
-    fontFamily: theme.font.mono,
-    fontSize: 9,
-    letterSpacing: 0.5,
-    textTransform: 'uppercase',
-    color: theme.colors.textMuted,
+  // The first block on Loans and Friends & Family, so it sits at the standard gap under the header.
+  row: {
+    flexDirection: 'row',
+    paddingHorizontal: 20,
+    gap: 28,
+    marginTop: theme.layout.screenTopGap,
+    marginBottom: 18,
   },
+  stat: { flex: 1, minWidth: 0 },
+  label: EYEBROW,
   value: { fontFamily: theme.font.monoBold, fontSize: 22, marginTop: 4 },
   valueSkeleton: { marginTop: 6 },
 });

@@ -8,6 +8,7 @@ import { roundedMinor } from '@/lib/round';
 import { theme } from '@/constants/theme';
 import { haptics } from '@/lib/haptics';
 import { styles } from './reports.styles';
+import { withPressed } from '@/lib/pressed';
 
 /** A trend needs at least this many points to be worth drawing. */
 const MIN_POINTS = 3;
@@ -92,7 +93,7 @@ export function TrendChart({
                 <Pressable
                   key={k}
                   onPress={() => pick(k)}
-                  style={[styles.trendSwitchBtn, on && styles.trendSwitchBtnOn]}
+                  style={withPressed([styles.trendSwitchBtn, on && styles.trendSwitchBtnOn])}
                   accessibilityRole="radio"
                   accessibilityState={{ selected: on }}
                 >

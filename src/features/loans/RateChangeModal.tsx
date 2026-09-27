@@ -13,6 +13,7 @@ import { modalFooterStyles as f } from '@/constants/theme';
 import { toLocalIsoDate } from '@/lib/date';
 import { DateField } from '@/components/DateField';
 import { styles } from './loans.styles';
+import { errorMessage } from '@/lib/errorMessage';
 
 const RATE_CHANGE_MODES: { label: string; value: 'keepEmi' | 'keepTenure' }[] = [
   { label: 'Keep EMI, change tenure', value: 'keepEmi' },
@@ -59,8 +60,8 @@ export function RateChangeModal({
     try {
       await applyRateChange(loan.id, { newAnnualRateBp: rateBp, effectiveDate, mode });
       onDone();
-    } catch (e: any) {
-      setError(String(e?.message ?? e));
+    } catch (e) {
+      setError(errorMessage(e));
     } finally {
       setSaving(false);
     }
@@ -79,7 +80,7 @@ export function RateChangeModal({
           <View style={f.footerRow}>
             <PrimaryButton title="Cancel" variant="secondary" onPress={onClose} style={f.footerBtn} />
             <PrimaryButton
-              title={saving ? 'Saving...' : 'Confirm'}
+              title={saving ? 'Saving…' : 'Confirm'}
               onPress={submit}
               disabled={saving}
               style={f.footerBtn}

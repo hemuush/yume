@@ -12,6 +12,9 @@ import { PrimaryButton } from '@/components/PrimaryButton';
 import { Chip } from '@/components/Chip';
 import { styles } from './profile.styles';
 import { ACCOUNT_TYPES } from './profile.constants';
+import { errorMessage } from '@/lib/errorMessage';
+import { CardCycleFields } from './CardCycleFields';
+import { parseCycleDays } from '@/lib/cardCycle';
 
 export function AddAccountModal({
   visible,
@@ -26,6 +29,8 @@ export function AddAccountModal({
   const [type, setType] = useState<AccountType>('bank');
   const [opening, setOpening] = useState('0');
   const [creditLimit, setCreditLimit] = useState('');
+  const [statementDay, setStatementDay] = useState('');
+  const [dueDay, setDueDay] = useState('');
   const [currency, setCurrency] = useState('INR');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -47,6 +52,8 @@ export function AddAccountModal({
     setType('bank');
     setOpening('0');
     setCreditLimit('');
+    setStatementDay('');
+    setDueDay('');
   };
 
   const submit = async () => {
@@ -64,13 +71,27 @@ export function AddAccountModal({
       setError('Enter a valid opening balance and credit limit');
       return;
     }
+    const days =
+      type === 'credit_card' ? parseCycleDays(statementDay, dueDay) : { statementDay: null, dueDay: null };
+    if ('error' in days) {
+      setError(days.error);
+      return;
+    }
     setSaving(true);
     try {
-      await createAccount({ name: name.trim(), type, currency, openingBalanceMinor, creditLimitMinor });
+      await createAccount({
+        name: name.trim(),
+        type,
+        currency,
+        openingBalanceMinor,
+        creditLimitMinor,
+        statementDay: days.statementDay,
+        dueDay: days.dueDay,
+      });
       reset();
       onCreated();
-    } catch (e: any) {
-      setError(String(e?.message ?? e));
+    } catch (e) {
+      setError(errorMessage(e));
     } finally {
       setSaving(false);
     }
@@ -87,7 +108,7 @@ export function AddAccountModal({
           <View style={f.footerRow}>
             <PrimaryButton title="Cancel" variant="secondary" onPress={onClose} style={f.footerBtn} />
             <PrimaryButton
-              title={saving ? 'Saving...' : 'Create'}
+              title={saving ? 'Saving…' : 'Create'}
               onPress={submit}
               disabled={saving}
               style={f.footerBtn}
@@ -129,13 +150,21 @@ export function AddAccountModal({
         placeholder="0"
       />
       {type === 'credit_card' && (
-        <FormInput
-          label="Credit limit"
-          value={creditLimit}
-          onChangeText={setCreditLimit}
-          keyboardType="numeric"
-          placeholder="e.g. 100000"
-        />
+        <>
+          <FormInput
+            label="Credit limit"
+            value={creditLimit}
+            onChangeText={setCreditLimit}
+            keyboardType="numeric"
+            placeholder="e.g. 100000"
+          />
+          <CardCycleFields
+            statementDay={statementDay}
+            dueDay={dueDay}
+            onChangeStatementDay={setStatementDay}
+            onChangeDueDay={setDueDay}
+          />
+        </>
       )}
     </ModalSheet>
   );

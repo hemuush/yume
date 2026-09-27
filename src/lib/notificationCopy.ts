@@ -49,28 +49,18 @@ export const DAILY_REMINDER_COPY: readonly NotificationCopy[] = [
   { title: 'Tiny task, big payoff', body: "Log today's spending — a minute now, clarity later." },
 ];
 
-/** No dynamic content — a prompt to review the week just closed. */
+/** No dynamic content: an invitation, on Monday, to play the week just closed as a Wrap. */
 export const WEEKLY_SUMMARY_COPY: readonly NotificationCopy[] = [
-  { title: 'Your week, wrapped', body: 'See what moved this week and how you tracked against your usual.' },
-  { title: 'Week in review', body: "A look back at where this week's money actually went." },
-  { title: 'Sunday check-in', body: "This week's spending is ready — worth a two-minute look." },
-  { title: 'How was the week?', body: 'Your spending pattern for the week is ready to browse.' },
-  { title: "This week's story", body: 'A quick look at what changed since last week.' },
-  { title: 'Weekly wrap', body: 'See how this week compared to your usual rhythm.' },
-  { title: 'Seven days, summed up', body: 'Your week at a glance — worth a look before Monday.' },
-  { title: 'Week closed', body: "Here's how the last seven days shaped up." },
-  { title: 'Your week, at a glance', body: 'What came in, what went out, and how it compares.' },
-  { title: 'A look back', body: "This week's numbers are in — see how they line up." },
-  { title: 'Sunday summary', body: "Your week's spending, laid out and ready to review." },
-  { title: 'Worth a look', body: "This week's spending pattern is ready — see what stood out." },
-  { title: 'Week wrapped up', body: 'See how this week measured up against your usual pace.' },
-  { title: 'Before Monday', body: 'A quick look back at how this week went, money-wise.' },
-  { title: 'Your rhythm this week', body: 'See where this week landed compared to your average.' },
-  { title: 'Weekly check-in', body: "This week's totals are ready whenever you want a look." },
-  { title: 'How the week landed', body: "A short look back at this week's spending." },
-  { title: 'One week, summed', body: "This week's numbers are ready — see what tracked as expected." },
-  { title: 'Week closed out', body: 'Take a look at how this week compares to your norm.' },
-  { title: "This week's shape", body: 'A quick summary of the week that just wrapped up.' },
+  { title: 'Your week, wrapped', body: '8 seconds on how last week went. Tap to play.' },
+  { title: 'Week in review', body: 'Last week as a short story. Tap to play.' },
+  { title: 'Monday check-in', body: 'How last week went, in 8 seconds. Tap to play.' },
+  { title: 'How was the week?', body: 'A quick look back at where the money went. Tap to play.' },
+  { title: "Last week's story", body: 'Seven days, one short wrap. Tap to play.' },
+  { title: 'Weekly wrap', body: 'See how last week compared to your usual. Tap to play.' },
+  { title: 'Seven days, summed up', body: 'Last week in 8 seconds, to start this one.' },
+  { title: 'Week closed', body: 'The last seven days, wrapped. Tap to play.' },
+  { title: 'A fresh week', body: 'A short look back at how last week went, money-wise.' },
+  { title: 'Your rhythm last week', body: 'Which day did the most? Tap to see your week.' },
 ];
 
 function fillNotificationTemplate(str: string, vars: Record<string, string>): string {

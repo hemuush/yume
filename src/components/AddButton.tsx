@@ -1,11 +1,12 @@
-import { Animated, Pressable, StyleSheet, PressableProps } from 'react-native';
+import { Animated, Pressable, StyleSheet, PressableProps, StyleProp, ViewStyle } from 'react-native';
 import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
 import { usePressScale } from '@/lib/usePressScale';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-interface Props extends PressableProps {
+interface Props extends Omit<PressableProps, 'style'> {
+  style?: StyleProp<ViewStyle>;
   label?: string;
 }
 
@@ -19,7 +20,7 @@ export function AddButton({ label = '+ Add', disabled, style, ...rest }: Props) 
       disabled={disabled}
       onPressIn={onPressIn}
       onPressOut={onPressOut}
-      style={[styles.btn, disabled && styles.disabled, animatedStyle, style as any]}
+      style={[styles.btn, disabled && styles.disabled, animatedStyle, style]}
       {...rest}
     >
       <Text style={styles.text}>{label}</Text>

@@ -33,6 +33,10 @@ import { router } from 'expo-router';
 import { createSavingsGoal } from '@/db/savingsGoals';
 import { Account, SavingsGoal } from '@/types';
 
+// Bars and rings animate to their values (useGrowFrom, at most the 700ms draw):
+// let the last ones finish before the file ends, so no frame fires after teardown.
+afterAll(() => new Promise((resolve) => setTimeout(resolve, 800)));
+
 const goal: SavingsGoal = {
   id: 'g1',
   name: 'Rainy day',
@@ -105,7 +109,7 @@ describe('the new-goal form', () => {
       (n) => typeof n.props.onChangeText === 'function' && n.props.placeholder
     );
     await act(async () => {
-      inputs.find((i) => i.props.placeholder === 'e.g. Goa Trip')!.props.onChangeText('Rainy day');
+      inputs.find((i) => i.props.placeholder === 'e.g. Goa trip')!.props.onChangeText('Rainy day');
       inputs.find((i) => i.props.placeholder === 'e.g. 40000')!.props.onChangeText('150000');
     });
   };

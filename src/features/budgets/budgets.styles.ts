@@ -6,7 +6,8 @@ export const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
   errorBanner: {
     marginHorizontal: 20,
-    marginTop: 12,
+    marginTop: theme.layout.screenTopGap,
+    marginBottom: 4,
     padding: 14,
     borderRadius: theme.radius.md,
     backgroundColor: theme.colors.expenseTint,
@@ -24,7 +25,7 @@ export const styles = StyleSheet.create({
 
   summaryCard: {
     marginHorizontal: 20,
-    marginTop: 14,
+    marginTop: theme.layout.screenTopGap,
     padding: 16,
     borderRadius: theme.radius.xl2,
     backgroundColor: theme.colors.surfaceAlt,
@@ -46,9 +47,9 @@ export const styles = StyleSheet.create({
 
   lapsedCard: {
     marginHorizontal: 20,
-    marginTop: 14,
+    marginTop: 16,
     padding: 14,
-    borderRadius: theme.radius.xl,
+    borderRadius: theme.radius.xl2,
     backgroundColor: theme.colors.goldTint,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
@@ -93,9 +94,9 @@ export const styles = StyleSheet.create({
   rowDivider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.borderSoft },
   rowTop: { flexDirection: 'row', alignItems: 'center', gap: 11, marginBottom: 8 },
   moreBtn: {
-    width: 30,
-    height: 30,
-    borderRadius: 10,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: StyleSheet.hairlineWidth,
@@ -138,6 +139,6 @@ export const styles = StyleSheet.create({
     color: theme.colors.textMuted,
     marginBottom: 6,
   },
-  toggleRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
+  toggleRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 14 },
   errorText: { fontFamily: theme.font.body, color: theme.colors.expense, fontSize: 13, marginBottom: 12 },
 });

@@ -13,6 +13,7 @@ import { PrimaryButton } from '@/components/PrimaryButton';
 import { ToggleSwitch } from '@/components/ToggleSwitch';
 import { GoalAccountField } from './GoalAccountField';
 import { styles } from './goals.styles';
+import { errorMessage } from '@/lib/errorMessage';
 
 export function AddGoalModal({
   visible,
@@ -79,8 +80,8 @@ export function AddGoalModal({
         noteToSelf,
       });
       onCreated();
-    } catch (e: any) {
-      setError(String(e?.message ?? e));
+    } catch (e) {
+      setError(errorMessage(e));
     } finally {
       setSaving(false);
     }
@@ -97,7 +98,7 @@ export function AddGoalModal({
           <View style={f.footerRow}>
             <PrimaryButton title="Cancel" variant="secondary" onPress={onClose} style={f.footerBtn} />
             <PrimaryButton
-              title={saving ? 'Creating...' : 'Create goal'}
+              title={saving ? 'Creating…' : 'Create goal'}
               onPress={submit}
               disabled={saving}
               style={f.footerBtn}
@@ -106,7 +107,7 @@ export function AddGoalModal({
         </View>
       }
     >
-      <FormInput label="Goal name" value={name} onChangeText={setName} placeholder="e.g. Goa Trip" />
+      <FormInput label="Goal name" value={name} onChangeText={setName} placeholder="e.g. Goa trip" />
       <FormInput
         label="Target amount"
         value={target}
@@ -140,7 +141,7 @@ export function AddGoalModal({
         label="Why this goal? (optional)"
         value={noteToSelf}
         onChangeText={setNoteToSelf}
-        placeholder="For the trip I keep putting off..."
+        placeholder="For the trip I keep putting off…"
         multiline
         numberOfLines={3}
         style={styles.noteInput}

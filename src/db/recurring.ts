@@ -1,3 +1,5 @@
+import { found } from './found';
+import { RecurringRuleRow } from './rows';
 import { getDb } from './client';
 import { newId } from '@/lib/id';
 import {
@@ -12,7 +14,7 @@ import { captureRow, restoreRow, RowSnapshot } from './undoSnapshot';
 import { RecurringRule, RecurrenceFrequency, TransactionType, PaymentMode } from '@/types';
 import { toLocalIsoDate, addDaysToIsoDate, addMonthsToIsoDate, dayOfIsoDate } from '@/lib/date';
 
-function rowToRule(row: any): RecurringRule {
+function rowToRule(row: RecurringRuleRow): RecurringRule {
   return {
     id: row.id,
     type: row.type,
@@ -21,7 +23,8 @@ function rowToRule(row: any): RecurringRule {
     categoryId: row.category_id,
     amountMinor: row.amount_minor,
     note: row.note,
-    paymentMode: row.payment_mode ?? null,
+    // No CHECK on this column: written only from PaymentMode values.
+    paymentMode: (row.payment_mode as PaymentMode | null) ?? null,
     frequency: row.frequency,
     intervalCount: row.interval_count,
     nextRunDate: row.next_run_date,
@@ -96,7 +99,7 @@ async function validate(input: RecurringRuleInput) {
 
 export async function listRecurringRules(): Promise<RecurringRule[]> {
   const db = await getDb();
-  const rows = await db.getAllAsync<any>(
+  const rows = await db.getAllAsync<RecurringRuleRow>(
     'SELECT * FROM recurring_rules ORDER BY active DESC, next_run_date ASC'
   );
   return rows.map(rowToRule);
@@ -127,8 +130,8 @@ export async function createRecurringRule(input: RecurringRuleInput): Promise<Re
       dayOfIsoDate(input.nextRunDate),
     ]
   );
-  const row = await db.getFirstAsync<any>('SELECT * FROM recurring_rules WHERE id = ?', [id]);
-  return rowToRule(row);
+  const row = await db.getFirstAsync<RecurringRuleRow>('SELECT * FROM recurring_rules WHERE id = ?', [id]);
+  return rowToRule(found(row, 'recurring entry'));
 }
 
 export async function updateRecurringRule(id: string, input: RecurringRuleInput): Promise<RecurringRule> {
@@ -167,8 +170,8 @@ export async function updateRecurringRule(id: string, input: RecurringRuleInput)
       id,
     ]
   );
-  const row = await db.getFirstAsync<any>('SELECT * FROM recurring_rules WHERE id = ?', [id]);
-  return rowToRule(row);
+  const row = await db.getFirstAsync<RecurringRuleRow>('SELECT * FROM recurring_rules WHERE id = ?', [id]);
+  return rowToRule(found(row, 'recurring entry'));
 }
 
 export async function setRecurringRuleActive(id: string, active: boolean): Promise<void> {
@@ -229,7 +232,7 @@ export function runDueRecurringRules(referenceDate: string = toLocalIsoDate(new 
 
 async function runDueRecurringRulesOnce(referenceDate: string): Promise<number> {
   const db = await getDb();
-  const dueRules = await db.getAllAsync<any>(
+  const dueRules = await db.getAllAsync<RecurringRuleRow>(
     `SELECT * FROM recurring_rules WHERE active = 1 AND next_run_date <= ?`,
     [referenceDate]
   );

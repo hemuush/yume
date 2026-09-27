@@ -1,5 +1,6 @@
 import { View, StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
+import { GrowFill } from './GrowFill';
 
 export type LimitMeterTone = 'ok' | 'near' | 'over';
 
@@ -19,15 +20,31 @@ const TONE_FILL: Record<LimitMeterTone, string> = {
  * two-tone track rather than moving to this component; this one is only for
  * the "used vs. a limit" shape, wherever that shows up.
  */
-export function LimitMeter({ pct, tone, marker }: { pct: number; tone: LimitMeterTone; marker?: number }) {
+export function LimitMeter({
+  pct,
+  tone,
+  marker,
+  animKey,
+}: {
+  pct: number;
+  tone: LimitMeterTone;
+  marker?: number;
+  /**
+   * Which meter this is (e.g. `budget:<id>`): the fill then grows from the
+   * width it last showed instead of snapping (useGrowFrom). Without it the
+   * fill is drawn plain.
+   */
+  animKey?: string;
+}) {
+  const clamped = Math.min(100, Math.max(0, pct));
+  const fillStyle = [styles.fill, { backgroundColor: TONE_FILL[tone] }];
   return (
     <View style={styles.track}>
-      <View
-        style={[
-          styles.fill,
-          { width: `${Math.min(100, Math.max(0, pct))}%`, backgroundColor: TONE_FILL[tone] },
-        ]}
-      />
+      {animKey ? (
+        <GrowFill animKey={animKey} pct={clamped} style={fillStyle} />
+      ) : (
+        <View style={[fillStyle, { width: `${clamped}%` }]} />
+      )}
       {/* Where the fill would be today if the limit were spent evenly (budget pace). */}
       {marker != null && <View style={[styles.marker, { left: `${Math.min(100, Math.max(0, marker))}%` }]} />}
     </View>

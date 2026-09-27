@@ -8,7 +8,8 @@ export const styles = StyleSheet.create({
   // than a one-off inline style.
   errorBanner: {
     marginHorizontal: 20,
-    marginTop: 8,
+    marginTop: theme.layout.screenTopGap,
+    marginBottom: 4,
     padding: 14,
     borderRadius: theme.radius.md,
     backgroundColor: theme.colors.expenseTint,
@@ -28,7 +29,7 @@ export const styles = StyleSheet.create({
     fontSize: 12,
     color: theme.colors.textSecondary,
     marginHorizontal: 20,
-    marginTop: 4,
+    marginTop: theme.layout.screenTopGap,
     lineHeight: 17,
   },
 
@@ -67,7 +68,7 @@ export const styles = StyleSheet.create({
   soil: { width: 36, height: 11, backgroundColor: theme.colors.inkWash, borderRadius: 6 },
   dayLabel: {
     fontFamily: theme.font.body,
-    fontSize: 9,
+    fontSize: 10,
     color: theme.colors.textMuted,
     textTransform: 'uppercase',
   },
@@ -75,14 +76,14 @@ export const styles = StyleSheet.create({
 
   legend: { flexDirection: 'row', marginHorizontal: 20, marginTop: 14 },
   legendItem: { flex: 1, alignItems: 'center', gap: 4 },
-  legendLabel: { fontFamily: theme.font.body, fontSize: 9, color: theme.colors.textMuted },
+  legendLabel: { fontFamily: theme.font.body, fontSize: 10, color: theme.colors.textMuted },
 
   note: {
     marginHorizontal: 20,
     marginTop: 18,
     backgroundColor: theme.colors.surfaceAlt,
-    borderRadius: theme.radius.lg,
-    padding: 13,
+    borderRadius: theme.radius.xl2,
+    padding: 14,
   },
   noteLabel: {
     fontFamily: theme.font.roundedMedium,

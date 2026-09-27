@@ -667,22 +667,56 @@ export async function setBackupNudgeSnoozedUntil(iso: string): Promise<void> {
   );
 }
 
-/** "YYYY-MM" of the month whose Home "month in review" card was last dismissed with ✕ — the card stays hidden for that month only. */
-const MONTH_REVIEW_DISMISSED_KEY = 'month_review_dismissed';
+/**
+ * The Wraps already played (the Wrap button sign-off): a month's "YYYY-MM",
+ * a week's first day. The Home button's ring goes plain once its Wrap is
+ * here. Only the most recent few are kept, as the button only ever offers
+ * last week and last month.
+ */
+const WRAPS_SEEN_KEY = 'wraps_seen';
+const WRAPS_SEEN_KEEP = 12;
+/** Before the Wrap button, a month's Wrap marked itself seen here (Home's old review row). */
+const LEGACY_MONTH_REVIEW_KEY = 'month_review_dismissed';
 
-export async function getMonthReviewDismissed(): Promise<string | null> {
+export async function getSeenWraps(): Promise<string[]> {
   const db = await getDb();
-  const row = await db.getFirstAsync<{ value: string }>('SELECT value FROM settings WHERE key = ?', [
-    MONTH_REVIEW_DISMISSED_KEY,
-  ]);
-  return row?.value ?? null;
+  const rows = await db.getAllAsync<{ key: string; value: string }>(
+    'SELECT key, value FROM settings WHERE key IN (?, ?)',
+    [WRAPS_SEEN_KEY, LEGACY_MONTH_REVIEW_KEY]
+  );
+  const seen: string[] = [];
+  for (const row of rows) {
+    if (row.key === LEGACY_MONTH_REVIEW_KEY) {
+      seen.push(row.value);
+      continue;
+    }
+    try {
+      const parsed: unknown = JSON.parse(row.value);
+      if (Array.isArray(parsed)) seen.push(...parsed.filter((k): k is string => typeof k === 'string'));
+    } catch {
+      // A damaged value only means a ring shows in colour again.
+    }
+  }
+  return seen;
 }
 
-export async function setMonthReviewDismissed(monthKey: string): Promise<void> {
+export async function markWrapSeen(key: string): Promise<void> {
   const db = await getDb();
+  const row = await db.getFirstAsync<{ value: string }>('SELECT value FROM settings WHERE key = ?', [
+    WRAPS_SEEN_KEY,
+  ]);
+  let seen: string[] = [];
+  try {
+    const parsed: unknown = row ? JSON.parse(row.value) : [];
+    if (Array.isArray(parsed)) seen = parsed.filter((k): k is string => typeof k === 'string');
+  } catch {
+    seen = [];
+  }
+  if (seen.includes(key)) return;
+  const next = [...seen, key].slice(-WRAPS_SEEN_KEEP);
   await db.runAsync(
     `INSERT INTO settings (key, value) VALUES (?, ?)
      ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
-    [MONTH_REVIEW_DISMISSED_KEY, monthKey]
+    [WRAPS_SEEN_KEY, JSON.stringify(next)]
   );
 }

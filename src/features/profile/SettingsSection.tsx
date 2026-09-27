@@ -16,12 +16,18 @@ import {
   NotificationPrefs,
 } from '@/db/settings';
 import { getTidyUpReport, tidyUpCount } from '@/db/tidyUp';
+import { countDeletedEntries } from '@/db/recentlyDeleted';
 import { toMinor, toMajor, getCurrencySymbol, formatMoney } from '@/lib/money';
 import { isDeviceSecured } from '@/lib/appLock';
 import { useAppLock } from '@/lib/AppLockContext';
 import { usePrivacy } from '@/theme/PrivacyContext';
+import ReanimatedAnimated from 'react-native-reanimated';
 import { ToggleSwitch } from '@/components/ToggleSwitch';
+import { SettingsRow } from '@/components/SettingsRow';
+import { MovingRow } from '@/components/MovingRow';
+import { PANEL_ENTER, ROW_EXIT } from '@/lib/animation';
 import { FormInput } from '@/components/FormInput';
+import { PrimaryButton } from '@/components/PrimaryButton';
 import { YumeLogo } from '@/components/YumeLogo';
 import { useAccent, THEMES } from '@/theme/AccentContext';
 import { theme } from '@/constants/theme';
@@ -30,69 +36,11 @@ import { HomeSection } from '@/features/home/HomeSection';
 import { homeStyles as h } from '@/features/home/homeStyles';
 import { haptics } from '@/lib/haptics';
 import { styles } from './profile.styles';
+import { errorMessage } from '@/lib/errorMessage';
+import type { McIconName } from '@/components/iconName';
+import { withPressed } from '@/lib/pressed';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
-
-function Row({
-  icon,
-  iconBg,
-  label,
-  sub,
-  subColor,
-  value,
-  onPress,
-  right,
-  divider,
-  expanded,
-}: {
-  icon: string;
-  iconBg: string;
-  label: string;
-  sub?: string;
-  /** Overrides the sub text colour — used for a "never backed up" nudge, otherwise left at the default muted tone. */
-  subColor?: string;
-  value?: string;
-  onPress?: () => void;
-  right?: React.ReactNode;
-  /** A hairline above this row — every row but a group's first. */
-  divider?: boolean;
-  /** Set on a row that opens in place (currency, daily goal): its chevron points up or down instead of right. */
-  expanded?: boolean;
-}) {
-  const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.99);
-  const chevron = expanded === undefined ? 'chevron-right' : expanded ? 'chevron-up' : 'chevron-down';
-  const content = (
-    <>
-      <View style={[h.iconTile, { backgroundColor: iconBg }]}>
-        <MaterialCommunityIcons name={icon as any} size={17} color={theme.colors.ink} />
-      </View>
-      <View style={h.mid}>
-        <Text style={h.title} numberOfLines={1}>
-          {label}
-        </Text>
-        {sub ? <Text style={[h.sub, subColor && { color: subColor }]}>{sub}</Text> : null}
-      </View>
-      {value ? <Text style={styles.rowValue}>{value}</Text> : null}
-      {right ?? (onPress ? <Feather name={chevron} size={18} color={theme.colors.textMuted} /> : null)}
-    </>
-  );
-
-  if (!onPress) {
-    return <View style={[h.row, divider && h.divider]}>{content}</View>;
-  }
-  return (
-    <AnimatedPressable
-      style={[h.row, divider && h.divider, animatedStyle]}
-      onPress={onPress}
-      onPressIn={onPressIn}
-      onPressOut={onPressOut}
-      accessibilityRole="button"
-      accessibilityState={expanded === undefined ? undefined : { expanded }}
-    >
-      {content}
-    </AnimatedPressable>
-  );
-}
 
 /** One of the three at-a-glance tiles at the top of Settings. */
 function GlanceTile({
@@ -121,7 +69,7 @@ function GlanceTile({
       accessibilityLabel={`${title}, ${sub}`}
     >
       <View style={[styles.glanceIcon, { backgroundColor: tint }]}>
-        <MaterialCommunityIcons name={icon as any} size={14} color={iconColor} />
+        <MaterialCommunityIcons name={icon as McIconName} size={14} color={iconColor} />
       </View>
       <Text style={styles.glanceTitle} numberOfLines={1}>
         {title}
@@ -147,7 +95,7 @@ const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 function AboutFact({ icon, text }: { icon: string; text: string }) {
   return (
     <View style={styles.aboutFactRow}>
-      <MaterialCommunityIcons name={icon as any} size={15} color={theme.colors.textSecondary} />
+      <MaterialCommunityIcons name={icon as McIconName} size={15} color={theme.colors.textSecondary} />
       <Text style={styles.aboutFactText}>{text}</Text>
     </View>
   );
@@ -172,6 +120,8 @@ export function SettingsSection({ onJumpTo }: { onJumpTo?: (y: number) => void }
   const [currencyOpen, setCurrencyOpen] = useState(false);
   // How many things Tidy up has to look at — null until checked.
   const [tidyCount, setTidyCount] = useState<number | null>(null);
+  // How many entries are waiting in Recently deleted — null until counted.
+  const [deletedCount, setDeletedCount] = useState<number | null>(null);
   const [privacyY, setPrivacyY] = useState<number | null>(null);
   const activeTheme = THEMES.find((t) => t.id === themeId) ?? THEMES[0];
 
@@ -199,6 +149,7 @@ export function SettingsSection({ onJumpTo }: { onJumpTo?: (y: number) => void }
     } catch {
       setTidyCount(null);
     }
+    setDeletedCount(await countDeletedEntries().catch(() => null));
     setNotifPrefs(await getNotificationPrefs());
     const lastBackup = await getLastLocalBackupResult();
     setLastBackupAt(lastBackup?.ok ? lastBackup.at : null);
@@ -218,12 +169,12 @@ export function SettingsSection({ onJumpTo }: { onJumpTo?: (y: number) => void }
     setCurrencyOpen(false);
     try {
       await setDefaultCurrency(code);
-    } catch (e: any) {
+    } catch (e) {
       // A failed write would otherwise leave the screen showing the newly
       // picked currency while every formatMoney() call still reads the old
       // cached one — a silent mismatch with no error shown.
       setCurrency(previous);
-      Alert.alert('Could not change currency', String(e?.message ?? e));
+      Alert.alert("Couldn't change currency", errorMessage(e));
     }
   };
 
@@ -245,8 +196,8 @@ export function SettingsSection({ onJumpTo }: { onJumpTo?: (y: number) => void }
       await setDailySpendingGoal(minor);
       setDailyGoalState(minor);
       setDailyGoalOpen(false);
-    } catch (e: any) {
-      setDailyGoalError(String(e?.message ?? e));
+    } catch (e) {
+      setDailyGoalError(errorMessage(e));
     } finally {
       setDailyGoalSaving(false);
     }
@@ -328,7 +279,7 @@ export function SettingsSection({ onJumpTo }: { onJumpTo?: (y: number) => void }
 
       <HomeSection title="Money">
         <View style={h.card}>
-          <Row
+          <SettingsRow
             icon="currency-inr"
             iconBg={theme.colors.goldTint}
             label="Default currency"
@@ -338,7 +289,7 @@ export function SettingsSection({ onJumpTo }: { onJumpTo?: (y: number) => void }
             expanded={currencyOpen}
           />
           {currencyOpen && (
-            <View style={styles.accordionBody}>
+            <ReanimatedAnimated.View entering={PANEL_ENTER} exiting={ROW_EXIT} style={styles.accordionBody}>
               <Text style={styles.pickerHint}>
                 Existing accounts keep whatever currency they were created with. Combined totals only add up
                 accounts in this currency.
@@ -346,7 +297,7 @@ export function SettingsSection({ onJumpTo }: { onJumpTo?: (y: number) => void }
               {SUPPORTED_CURRENCIES.map((c, i) => (
                 <Pressable
                   key={c.code}
-                  style={[styles.pickerRow, i > 0 && h.divider]}
+                  style={withPressed([styles.pickerRow, i > 0 && h.divider])}
                   onPress={() => onSelectCurrency(c.code)}
                   accessibilityRole="button"
                   accessibilityState={{ selected: currency === c.code }}
@@ -358,20 +309,22 @@ export function SettingsSection({ onJumpTo }: { onJumpTo?: (y: number) => void }
                   {currency === c.code && <Feather name="check" size={18} color={theme.colors.ink} />}
                 </Pressable>
               ))}
-            </View>
+            </ReanimatedAnimated.View>
           )}
-          <Row
-            icon="gauge"
-            iconBg={theme.colors.idTeal}
-            label="Daily spending goal"
-            sub="Shown on Home each day"
-            value={dailyGoal != null ? `${formatMoney(dailyGoal, currency)}/day` : 'Not set'}
-            onPress={toggleDailyGoal}
-            expanded={dailyGoalOpen}
-            divider
-          />
+          <MovingRow>
+            <SettingsRow
+              icon="gauge"
+              iconBg={theme.colors.idTeal}
+              label="Daily spending goal"
+              sub="Shown on Home each day"
+              value={dailyGoal != null ? `${formatMoney(dailyGoal, currency)}/day` : 'Not set'}
+              onPress={toggleDailyGoal}
+              expanded={dailyGoalOpen}
+              divider
+            />
+          </MovingRow>
           {dailyGoalOpen && (
-            <View style={styles.accordionBody}>
+            <ReanimatedAnimated.View entering={PANEL_ENTER} exiting={ROW_EXIT} style={styles.accordionBody}>
               <FormInput
                 label={`Amount per day (${getCurrencySymbol(currency)})`}
                 value={dailyGoalInput}
@@ -382,46 +335,47 @@ export function SettingsSection({ onJumpTo }: { onJumpTo?: (y: number) => void }
               {dailyGoalError && <Text style={styles.errorText}>{dailyGoalError}</Text>}
               <View style={styles.dailyGoalBtnRow}>
                 {dailyGoal != null && (
-                  <Pressable
-                    style={[styles.dailyGoalBtn, styles.dailyGoalBtnGhost]}
+                  <PrimaryButton
+                    title="Clear"
+                    variant="secondary"
                     onPress={clearDailyGoal}
                     disabled={dailyGoalSaving}
-                  >
-                    <Text style={styles.dailyGoalBtnGhostText}>Clear</Text>
-                  </Pressable>
+                    style={styles.dailyGoalBtn}
+                  />
                 )}
-                <Pressable
-                  style={[styles.dailyGoalBtn, styles.dailyGoalBtnPrimary]}
+                <PrimaryButton
+                  title={dailyGoalSaving ? 'Saving…' : 'Save'}
                   onPress={saveDailyGoal}
                   disabled={dailyGoalSaving}
-                >
-                  <Text style={styles.dailyGoalBtnPrimaryText}>{dailyGoalSaving ? 'Saving...' : 'Save'}</Text>
-                </Pressable>
+                  style={styles.dailyGoalBtn}
+                />
               </View>
-            </View>
+            </ReanimatedAnimated.View>
           )}
-          <Row
-            icon="tag-outline"
-            iconBg={theme.colors.idCoral}
-            label="Categories"
-            sub="Add, rename, or archive"
-            onPress={() => router.push('/categories')}
-            divider
-          />
+          <MovingRow>
+            <SettingsRow
+              icon="tag-outline"
+              iconBg={theme.colors.idCoral}
+              label="Categories"
+              sub="Add, rename, or archive"
+              onPress={() => router.push('/categories')}
+              divider
+            />
+          </MovingRow>
         </View>
       </HomeSection>
 
       <View onLayout={(e) => setPrivacyY(e.nativeEvent.layout.y)}>
         <HomeSection title="Privacy & security">
           <View style={h.card}>
-            <Row
+            <SettingsRow
               icon="fingerprint"
               iconBg={theme.colors.idSage}
               label="Require unlock"
               sub="Fingerprint, face, or your phone's PIN"
               right={<ToggleSwitch value={lockEnabled} onChange={onToggleLock} />}
             />
-            <Row
+            <SettingsRow
               icon="eye-off-outline"
               iconBg={theme.colors.idGold}
               label="Hide savings & investment amounts"
@@ -435,23 +389,35 @@ export function SettingsSection({ onJumpTo }: { onJumpTo?: (y: number) => void }
 
       <HomeSection title="Alerts & backup">
         <View style={h.card}>
-          <Row
+          <SettingsRow
             icon="bell-outline"
             iconBg={theme.colors.primaryTint}
             label="Notifications"
             sub={alertsOn == null ? 'Reminders, bill alerts, weekly summary' : `${alertsOn} of 5 on`}
             onPress={() => router.push('/notification-settings')}
           />
-          <Row
+          <SettingsRow
             icon="folder-outline"
             iconBg={theme.colors.idTeal}
-            label="Backup & Restore"
+            label="Backup & restore"
             sub={backupSub}
             subColor={backupOk ? undefined : theme.colors.idCoralDeep}
             onPress={() => router.push('/backup')}
             divider
           />
-          <Row
+          <SettingsRow
+            icon="delete-restore"
+            iconBg={theme.colors.idCoral}
+            label="Recently deleted"
+            sub={
+              deletedCount == null || deletedCount === 0
+                ? 'Deleted entries wait here for 30 days'
+                : `${deletedCount} ${deletedCount === 1 ? 'entry' : 'entries'} · kept for 30 days`
+            }
+            onPress={() => router.push('/recently-deleted')}
+            divider
+          />
+          <SettingsRow
             icon="broom"
             iconBg={theme.colors.accentTint}
             label="Tidy up"
@@ -482,7 +448,7 @@ export function SettingsSection({ onJumpTo }: { onJumpTo?: (y: number) => void }
               return (
                 <Pressable
                   key={pack.id}
-                  style={styles.themeOption}
+                  style={withPressed(styles.themeOption)}
                   onPress={() => {
                     if (!active) haptics.tap();
                     setTheme(pack.id);

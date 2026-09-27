@@ -133,8 +133,17 @@ function moneyFmt(symbol: string): string {
   return `"${symbol}"#,##0.00;[Red]-"${symbol}"#,##0.00`;
 }
 
-function setCell(ws: XLSX.WorkSheet, ref: string, value: any, style?: CellStyle, type?: 'n' | 's' | 'd') {
-  const cell: any = { v: value };
+/** What a cell can hold: a number, text, or a date. */
+type CellValue = string | number | Date;
+
+function setCell(
+  ws: XLSX.WorkSheet,
+  ref: string,
+  value: CellValue,
+  style?: CellStyle,
+  type?: 'n' | 's' | 'd'
+) {
+  const cell: XLSX.CellObject & { s?: CellStyle } = { t: 's', v: value };
   if (type) cell.t = type;
   else if (typeof value === 'number') cell.t = 'n';
   else cell.t = 's';
@@ -186,10 +195,17 @@ export function buildExportWorkbook(data: ExportData): XLSX.WorkBook {
   };
 
   const sorted = [...transactions].sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
-  const totalIncome = transactions.filter((t) => t.type === 'income').reduce((s, t) => s + t.amountMinor, 0);
-  const totalExpense = transactions
-    .filter((t) => t.type === 'expense')
+  // Refunds count against spending, never as income — the same rule as everywhere in the app.
+  const totalIncome = transactions
+    .filter((t) => t.type === 'income' && !t.isRefund)
     .reduce((s, t) => s + t.amountMinor, 0);
+  const totalExpense = Math.max(
+    0,
+    transactions.reduce(
+      (s, t) => s + (t.type === 'expense' ? t.amountMinor : t.isRefund ? -t.amountMinor : 0),
+      0
+    )
+  );
   const totalBalance = accounts.reduce((s, a) => s + a.currentBalanceMinor, 0);
   const totalDebt = loans
     .filter((l) => l.direction === 'borrowed' && l.status === 'active')
@@ -207,7 +223,7 @@ export function buildExportWorkbook(data: ExportData): XLSX.WorkBook {
   // app's own stat tiles on Profile → You — six numbers at a glance instead
   // of a list you scroll.
   const summary = XLSX.utils.aoa_to_sheet([['', '']]);
-  const put = (ref: string, v: any, style?: CellStyle, type?: 'n' | 's') => {
+  const put = (ref: string, v: CellValue, style?: CellStyle, type?: 'n' | 's') => {
     setCell(summary, ref, v, style, type);
     extendRef(summary, ref);
   };
@@ -305,7 +321,7 @@ export function buildExportWorkbook(data: ExportData): XLSX.WorkBook {
   const txHeaders = ['Date', 'Type', 'Account', 'To Account', 'Category', 'Amount', 'Note', 'Payment Mode'];
   const txRows = sorted.map((t) => [
     t.date,
-    t.type[0].toUpperCase() + t.type.slice(1),
+    t.isRefund ? 'Refund' : t.type[0].toUpperCase() + t.type.slice(1),
     accountName.get(t.accountId) ?? 'Deleted account',
     t.toAccountId ? (accountName.get(t.toAccountId) ?? 'Deleted account') : '',
     categoryLabel(t.categoryId),

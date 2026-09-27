@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
 import { useFocusEffect } from 'expo-router';
+import { errorMessage } from '@/lib/errorMessage';
 
 /**
  * The "has the first load actually finished" bookkeeping that Profile,
@@ -25,8 +26,8 @@ export function useScreenLoad(loadFn: () => Promise<void>) {
     try {
       await loadFn();
       setLoadError(null);
-    } catch (e: any) {
-      setLoadError(String(e?.message ?? e));
+    } catch (e) {
+      setLoadError(errorMessage(e));
     } finally {
       setLoaded(true);
     }

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Tabs, router } from 'expo-router';
-import { View, StyleSheet, Animated, Pressable } from 'react-native';
+import { View, StyleSheet, Animated, Pressable, PressableProps } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from '@expo/vector-icons/Feather';
 import { theme } from '@/constants/theme';
@@ -10,6 +10,7 @@ import { useReduceMotion } from '@/lib/useReduceMotion';
 import { usePressScale } from '@/lib/usePressScale';
 import { haptics } from '@/lib/haptics';
 import { RepeatEntrySheet } from '@/features/home/RepeatEntrySheet';
+import { DURATIONS } from '@/lib/motionTimings';
 
 /**
  * The library's own default tab button paints a native Android ripple sized
@@ -22,7 +23,7 @@ import { RepeatEntrySheet } from '@/features/home/RepeatEntrySheet';
  * touch-target size (laid out by `style`, which the navigator controls)
  * doesn't change.
  */
-function TabButton({ children, style, onPress, ...rest }: any) {
+function TabButton({ children, style, onPress, ...rest }: PressableProps & { children?: React.ReactNode }) {
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.88);
   return (
     <Pressable
@@ -63,7 +64,7 @@ function TabIcon({ Icon, focused }: { Icon: typeof HomeIcon; focused: boolean })
     }
     Animated.timing(fill, {
       toValue: focused ? 1 : 0,
-      duration: 160,
+      duration: DURATIONS.quick,
       useNativeDriver: true,
     }).start();
   }, [focused, reduce, fill]);

@@ -26,6 +26,8 @@ import { YumeLogo } from '@/components/YumeLogo';
 import { HeaderIconButton, HeaderUserButton } from '@/components/AppHeader';
 import { PeriodCursor } from '@/lib/period';
 import { MonthPill } from './MonthPill';
+import { WrapButton } from './WrapButton';
+import type { ReadyWrap } from '@/features/wrap/wrapWindow';
 import { MOTION } from '@/lib/animation';
 
 function greetingWord(): string {
@@ -48,8 +50,9 @@ const SPARKS: { top: number; left: number; size: number; opacity: number }[] = [
 ];
 
 /**
- * One spark, gently breathing — scale and opacity loop up to a brighter
- * peak and back, staggered by `delay` so the four never pulse in sync (that
+ * One spark, gently breathing — scale and opacity pulse up to a brighter
+ * peak and back twice when Home opens, then rest, staggered by `delay` so
+ * the four never pulse in sync (that
  * read as a single blinking cluster rather than an ambient scatter). Built
  * entirely on `react-native-reanimated`'s own shared values — never mixed
  * with core React Native's `Animated`, which is exactly the import
@@ -59,6 +62,9 @@ const SPARKS: { top: number; left: number; size: number; opacity: number }[] = [
  * the OS setting is on, leaving the spark at its plain static opacity —
  * exactly what every spark already did before this change.
  */
+/** Out and back counts as two: 4 is two pulses, ending where it started. */
+const SPARK_REPEATS = 4;
+
 export function Spark({
   top,
   left,
@@ -87,12 +93,12 @@ export function Spark({
       glow.value = opacity;
       return;
     }
-    scale.value = withDelay(delay, withRepeat(withTiming(1.4, { duration: 1400 }), -1, true));
-    glow.value = withDelay(delay, withRepeat(withTiming(1, { duration: 1400 }), -1, true));
+    // Two pulses (out and back, twice) when Home opens, then still: constant
+    // motion is the opposite of calm (the Quiet motion sign-off).
+    scale.value = withDelay(delay, withRepeat(withTiming(1.4, { duration: 1400 }), SPARK_REPEATS, true));
+    glow.value = withDelay(delay, withRepeat(withTiming(1, { duration: 1400 }), SPARK_REPEATS, true));
     // Runs before every re-run of this effect (a reduce-motion flip) and on
-    // unmount — an infinite (-1) loop otherwise keeps running on the UI
-    // thread regardless: a normal navigate-away-and-back on Home would
-    // silently pile up one more orphaned loop per Spark every time, forever.
+    // unmount, so a pulse still running when Home goes away stops with it.
     return () => {
       cancelAnimation(scale);
       cancelAnimation(glow);
@@ -147,6 +153,8 @@ export function HomeHeader({
   alertCount,
   scrollY,
   onHeight,
+  wraps = [],
+  onPlayWrap,
   children,
 }: {
   cursor: PeriodCursor;
@@ -158,6 +166,9 @@ export function HomeHeader({
   scrollY: SharedValue<number>;
   /** The header's full (expanded) height, for the ScrollView's top padding. */
   onHeight: (height: number) => void;
+  /** The Wraps ready today (wrapWindow.ts); the Wrap button shows only while there's one. */
+  wraps?: ReadyWrap[];
+  onPlayWrap?: (wrap: ReadyWrap) => void;
   children?: React.ReactNode;
 }) {
   const { accent } = useAccent();
@@ -262,6 +273,7 @@ export function HomeHeader({
               count={alertCount}
               soft
             />
+            {onPlayWrap && <WrapButton wraps={wraps} onPlay={onPlayWrap} />}
             <HeaderUserButton soft />
           </View>
         </ReanimatedAnimated.View>

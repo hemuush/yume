@@ -56,9 +56,10 @@ function transaction(overrides: Partial<Transaction>): Transaction {
     amountMinor: 10000,
     date: '2026-03-01',
     note: '',
-    tags: [],
     paymentMode: null,
     loanPaymentId: null,
+    splitId: null,
+    isRefund: false,
     createdAt: '2026-03-01',
     ...overrides,
   };
@@ -136,7 +137,7 @@ describe('buildExportWorkbook', () => {
     people: [
       {
         id: 'p1',
-        name: 'Abhinav',
+        name: 'Kabir',
         notes: '',
         archived: false,
         createdAt: '2026-01-01',

@@ -41,6 +41,7 @@ import { UndoToastProvider } from '@/components/UndoToast';
 import { LockScreen } from '@/components/LockScreen';
 import { Onboarding } from '@/features/onboarding/Onboarding';
 import { theme } from '@/constants/theme';
+import { errorMessage } from '@/lib/errorMessage';
 
 /**
  * Opening a deep link straight into a pushed screen (the Next Due widget's
@@ -121,7 +122,7 @@ export default function RootLayout() {
         if (hasExistingData) await setHasOnboarded(true);
         setNeedsOnboarding(!hasExistingData);
       })
-      .catch((e) => setError(String(e?.message ?? e)));
+      .catch((e) => setError(errorMessage(e)));
   }, []);
 
   if (error) {
@@ -290,10 +291,14 @@ function AppGate({ needsOnboarding, initialLocked }: { needsOnboarding: boolean;
           <Stack.Screen name="notification-settings" />
           <Stack.Screen name="notifications" />
           <Stack.Screen name="add-transaction" />
+          <Stack.Screen name="split" />
           <Stack.Screen name="recurring" />
           <Stack.Screen name="budgets" />
           <Stack.Screen name="savings-goals" />
           <Stack.Screen name="loans" />
+          <Stack.Screen name="recently-deleted" />
+          {/* A Wrap fades in over the screen it was opened from, like a story, rather than sliding. */}
+          <Stack.Screen name="wrap" options={{ animation: 'fade' }} />
         </Stack>
       </UndoToastProvider>
     </ErrorBoundary>

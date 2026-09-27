@@ -10,6 +10,7 @@ import { MAX_LIST_STAGGER_MS, ROW_LAYOUT, ROW_EXIT } from '@/lib/animation';
 import { NeoTile } from '@/components/NeoTile';
 import { personStatus, lastActivityShort, PersonStatus } from './people.helpers';
 import { styles } from './people.styles';
+import { DURATIONS } from '@/lib/motionTimings';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -64,7 +65,7 @@ export function PersonRow({
     // wrapper rather than fighting the press-scale style for the same node.
     <ReanimatedAnimated.View
       entering={FadeIn.delay(Math.min(index * STAGGER_MS, MAX_LIST_STAGGER_MS))
-        .duration(280)
+        .duration(DURATIONS.enter)
         .springify()
         .reduceMotion(ReduceMotion.System)}
       layout={ROW_LAYOUT}

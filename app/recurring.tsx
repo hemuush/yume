@@ -20,6 +20,7 @@ import { RuleModal } from '@/features/recurring/RuleModal';
 import { Skeleton } from '@/components/Skeleton';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { AddAccountModal } from '@/features/profile/AddAccountModal';
+import { errorMessage } from '@/lib/errorMessage';
 
 /**
  * Rent, subscriptions, salary — anything that happens on its own schedule
@@ -90,8 +91,8 @@ export default function RecurringScreen() {
     try {
       await setRecurringRuleActive(rule.id, !rule.active);
       await load();
-    } catch (e: any) {
-      Alert.alert('Could not update', String(e?.message ?? e));
+    } catch (e) {
+      Alert.alert("Couldn't update", errorMessage(e));
     }
   };
 
@@ -112,12 +113,13 @@ export default function RecurringScreen() {
 
       <Text style={styles.introText}>
         Set up something once (rent, a subscription, salary) and Yume logs it automatically on schedule — it
-        shows up in Transactions exactly like any entry you typed in yourself.
+        shows up in Activity exactly like any entry you typed in yourself.
       </Text>
 
       <ScrollView
         contentContainerStyle={{
           paddingHorizontal: 20,
+          paddingTop: theme.layout.screenTopGap,
           paddingBottom: theme.layout.screenScrollPad + insets.bottom,
         }}
       >
@@ -164,7 +166,7 @@ export default function RecurringScreen() {
             ))}
             {pausedRules.length > 0 && (
               <>
-                <Text style={styles.sectionDivider}>PAUSED</Text>
+                <Text style={styles.sectionDivider}>Paused</Text>
                 {pausedRules.map((rule, i) => (
                   <RuleCard
                     key={rule.id}

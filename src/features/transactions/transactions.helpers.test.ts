@@ -6,6 +6,7 @@ import {
   periodHeading,
   filterActivity,
 } from './transactions.helpers';
+import { dayMonth } from '@/lib/dateLabels';
 import type { ActivityFilter } from './FilterModal';
 
 describe('Activity helpers', () => {
@@ -49,7 +50,6 @@ describe('Activity helpers', () => {
 });
 
 describe('periodHeading', () => {
-  const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   const today = new Date(2026, 8, 26);
 
   it('calls the current 7 days "This week" and shows their dates', () => {
@@ -59,9 +59,8 @@ describe('periodHeading', () => {
         days: sevenDaysEndingOn(today),
         anchor: today,
         today,
-        monthNames: MONTHS,
       })
-    ).toEqual({ title: 'This week', sub: '20–26 Sep' });
+    ).toEqual({ title: 'This week', sub: `20–${dayMonth('2026-09-26')}` });
   });
 
   it('leads a past week with its dates, across a month boundary too', () => {
@@ -72,20 +71,15 @@ describe('periodHeading', () => {
         days: sevenDaysEndingOn(anchor),
         anchor,
         today: new Date(2026, 9, 20),
-        monthNames: MONTHS,
       })
-    ).toEqual({ title: '28 Sep – 4 Oct', sub: '' });
+    ).toEqual({ title: `${dayMonth('2026-09-28')} – ${dayMonth('2026-10-04')}`, sub: '' });
   });
 
   it("adds the year only when it isn't this year", () => {
     const anchor = new Date(2025, 11, 31);
-    expect(
-      periodHeading({ scope: 'week', days: sevenDaysEndingOn(anchor), anchor, today, monthNames: MONTHS }).sub
-    ).toBe('2025');
-    expect(periodHeading({ scope: 'month', days: [], anchor, today, monthNames: MONTHS }).sub).toBe('2025');
-    expect(periodHeading({ scope: 'month', days: [], anchor: today, today, monthNames: MONTHS }).sub).toBe(
-      ''
-    );
+    expect(periodHeading({ scope: 'week', days: sevenDaysEndingOn(anchor), anchor, today }).sub).toBe('2025');
+    expect(periodHeading({ scope: 'month', days: [], anchor, today }).sub).toBe('2025');
+    expect(periodHeading({ scope: 'month', days: [], anchor: today, today }).sub).toBe('');
   });
 });
 

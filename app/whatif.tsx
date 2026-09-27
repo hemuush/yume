@@ -94,7 +94,7 @@ export default function WhatIfScreen() {
   if (!loaded && !loadError) {
     return (
       <View style={styles.container}>
-        <AppHeader title="What if...?" showBack />
+        <AppHeader title="What if…?" showBack />
         <View style={styles.card}>
           <Skeleton width={120} height={12} radius={4} />
           <Skeleton width={200} height={10} radius={4} style={{ marginTop: 10 }} />
@@ -105,7 +105,7 @@ export default function WhatIfScreen() {
 
   return (
     <View style={styles.container}>
-      <AppHeader title="What if...?" showBack />
+      <AppHeader title="What if…?" showBack />
       <ScrollView contentContainerStyle={{ paddingBottom: theme.layout.screenScrollPad + insets.bottom }}>
         {loadError && (
           <View style={styles.errorBanner}>

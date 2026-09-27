@@ -21,6 +21,9 @@ export const dayMonthYear = (iso: string) => fmt(iso, { day: 'numeric', month: '
 export const weekdayDayMonth = (iso: string) =>
   fmt(iso, { weekday: 'short', day: 'numeric', month: 'short' });
 
+/** "Thursday" */
+export const longWeekday = (iso: string) => fmt(iso, { weekday: 'long' });
+
 /** "Oct" */
 export const shortMonth = (iso: string) => fmt(iso, { month: 'short' });
 

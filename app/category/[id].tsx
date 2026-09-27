@@ -9,7 +9,7 @@ import { getCategoryOverview, usualMonthly, CategoryOverview } from '@/db/report
 import { listBudgetsForMonth, BudgetProgress } from '@/db/budgets';
 import { Account, Category, Transaction } from '@/types';
 import { formatMoney } from '@/lib/money';
-import { toLocalIsoDate, parseLocalIsoDate } from '@/lib/date';
+import { toLocalIsoDate, parseLocalIsoDate, isIsoDate } from '@/lib/date';
 import { ReportWindow, windowRange, windowLabel } from '@/lib/period';
 import { useScreenLoad } from '@/lib/useScreenLoad';
 import { theme } from '@/constants/theme';
@@ -17,6 +17,7 @@ import { AppHeader } from '@/components/AppHeader';
 import { EmptyState } from '@/components/EmptyState';
 import { CategoryIcon } from '@/components/CategoryIcon';
 import { CardRowsSkeleton } from '@/components/ListSkeleton';
+import { GrowFill } from '@/components/GrowFill';
 import { HomeSection } from '@/features/home/HomeSection';
 import { homeStyles as h } from '@/features/home/homeStyles';
 import { PeriodRow } from '@/features/reports/PeriodRow';
@@ -24,8 +25,10 @@ import { BudgetRow } from '@/features/budgets/BudgetRow';
 import { TransactionRow } from '@/features/transactions/TransactionRow';
 import { TransactionDetailModal } from '@/features/transactions/TransactionDetailModal';
 import { longMonthYear, shortMonth } from '@/lib/dateLabels';
+import { useReturnOrPush } from '@/lib/useReturnOrPush';
+import { timesLabel, visitsLine } from '@/features/reports/visits';
+import { withPressed } from '@/lib/pressed';
 
-const isIsoDate = (v: string | undefined): v is string => !!v && /^\d{4}-\d{2}-\d{2}$/.test(v);
 const isThisMonth = (w: ReportWindow) => w.granularity === 'month' && w.offset === 0;
 
 /** Subcategories shown by name; the smaller rest are grouped into one line. */
@@ -45,6 +48,10 @@ const monthShort = (key: string) => shortMonth(`${key}-01`);
  */
 export default function CategoryScreen() {
   const insets = useSafeAreaInsets();
+  // Budgets and this page link to each other: go back to Budgets when it's
+  // already open below, rather than stacking another copy.
+  const returnOrPush = useReturnOrPush();
+  const openBudgets = () => returnOrPush({ name: 'budgets' }, '/budgets');
   const params = useLocalSearchParams<{ id: string; g?: string; o?: string; from?: string; to?: string }>();
   const [cursor, setCursor] = useState<ReportWindow>(() =>
     params.g === 'custom' && isIsoDate(params.from) && isIsoDate(params.to) && params.from <= params.to
@@ -133,7 +140,7 @@ export default function CategoryScreen() {
         )}
 
         {!overview || !category ? (
-          <View style={{ marginTop: 16 }}>
+          <View style={{ marginTop: theme.layout.screenTopGap }}>
             <CardRowsSkeleton rows={3} />
           </View>
         ) : (
@@ -148,23 +155,32 @@ export default function CategoryScreen() {
               <Text style={styles.heroValue}>{formatMoney(overview.totalMinor)}</Text>
               <Text style={styles.heroSub}>
                 {overview.count} {overview.count === 1 ? 'entry' : 'entries'}
+                {overview.count > 1
+                  ? `, about ${formatMoney(overview.totalMinor / overview.count)} each`
+                  : ''}
                 {overview.totalMinor > 0
                   ? ` · about ${formatMoney(overview.totalMinor / daysSoFar)} a day`
                   : ''}
                 {usual != null ? ` · usually ${formatMoney(usual)} a month` : ''}
               </Text>
+              {overview.refundMinor > 0 && (
+                // What it cost is already net of refunds; this says how much came back.
+                <Text style={styles.heroRefund}>
+                  {formatMoney(overview.spentMinor)} spent, {formatMoney(overview.refundMinor)} came back
+                </Text>
+              )}
             </View>
 
             {spend && isThisMonth(cursor) && (
               <HomeSection title="Budget">
                 {budget ? (
                   <View style={h.card}>
-                    <BudgetRow progress={budget} divider={false} onPress={() => router.push('/budgets')} />
+                    <BudgetRow progress={budget} divider={false} onPress={openBudgets} />
                   </View>
                 ) : (
                   <Pressable
-                    style={[h.card, h.row]}
-                    onPress={() => router.push('/budgets')}
+                    style={withPressed([h.card, h.row])}
+                    onPress={openBudgets}
                     accessibilityRole="button"
                   >
                     <View style={[h.iconTile, { backgroundColor: theme.colors.primaryTint }]}>
@@ -186,7 +202,9 @@ export default function CategoryScreen() {
                   {splitShown.map((s, i) => (
                     <SplitRow
                       key={s.categoryId}
+                      animKey={`split:${s.categoryId}`}
                       name={s.name}
+                      visits={visitsLine(s.count, s.totalMinor)}
                       minor={s.totalMinor}
                       share={overview.totalMinor > 0 ? s.totalMinor / overview.totalMinor : 0}
                       color={category.color}
@@ -195,7 +213,9 @@ export default function CategoryScreen() {
                   ))}
                   {splitRest.length > 1 && (
                     <SplitRow
+                      animKey={`split-rest:${params.id}`}
                       name={splitRest.map((s) => s.name).join(' · ')}
+                      visits={timesLabel(splitRest.reduce((sum, s) => sum + (s.count ?? 0), 0))}
                       minor={splitRest.reduce((sum, s) => sum + s.totalMinor, 0)}
                       share={
                         overview.totalMinor > 0
@@ -295,13 +315,19 @@ export default function CategoryScreen() {
 }
 
 function SplitRow({
+  animKey,
   name,
+  visits,
   minor,
   share,
   color,
   divider,
 }: {
+  /** Remembers the bar's last width across visits (useGrowFrom). */
+  animKey: string;
   name: string;
+  /** How often and the usual amount each time — see visitsLine. */
+  visits?: string;
   minor: number;
   share: number;
   color: string;
@@ -310,13 +336,20 @@ function SplitRow({
   return (
     <View style={[styles.split, divider && h.divider]}>
       <View style={styles.splitTop}>
-        <Text style={styles.splitName} numberOfLines={1}>
-          {name}
-        </Text>
+        <View style={styles.splitNames}>
+          <Text style={styles.splitName} numberOfLines={1}>
+            {name}
+          </Text>
+          {!!visits && <Text style={styles.splitVisits}>{visits}</Text>}
+        </View>
         <Text style={styles.splitValue}>{formatMoney(minor)}</Text>
       </View>
       <View style={styles.splitTrack}>
-        <View style={[styles.splitFill, { width: `${Math.round(share * 100)}%`, backgroundColor: color }]} />
+        <GrowFill
+          animKey={animKey}
+          pct={Math.round(share * 100)}
+          style={[styles.splitFill, { backgroundColor: color }]}
+        />
       </View>
     </View>
   );
@@ -332,7 +365,7 @@ function ActionChip({
   onPress: () => void;
 }) {
   return (
-    <Pressable onPress={onPress} style={styles.actionChip} accessibilityRole="button">
+    <Pressable onPress={onPress} style={withPressed(styles.actionChip)} accessibilityRole="button">
       <Feather name={icon} size={14} color={theme.colors.ink} />
       <Text style={styles.actionChipText}>{label}</Text>
     </Pressable>
@@ -341,7 +374,7 @@ function ActionChip({
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
-  hero: { marginTop: 12, padding: 16, gap: 4 },
+  hero: { marginTop: theme.layout.screenTopGap, padding: 16, gap: 4 },
   heroTop: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   heroLabel: {
     fontFamily: theme.font.bodyBold,
@@ -352,9 +385,12 @@ const styles = StyleSheet.create({
   },
   heroValue: { fontFamily: theme.font.monoBold, fontSize: 27, color: theme.colors.textPrimary, marginTop: 6 },
   heroSub: { fontFamily: theme.font.body, fontSize: 12.5, color: theme.colors.textSecondary },
+  heroRefund: { fontFamily: theme.font.bodyBold, fontSize: 12.5, color: theme.colors.income, marginTop: 2 },
   split: { paddingHorizontal: 14, paddingVertical: 10, gap: 6 },
   splitTop: { flexDirection: 'row', justifyContent: 'space-between', gap: 10 },
-  splitName: { flex: 1, fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textPrimary },
+  splitNames: { flex: 1, minWidth: 0 },
+  splitName: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textPrimary },
+  splitVisits: { fontFamily: theme.font.body, fontSize: 11.5, color: theme.colors.textMuted, marginTop: 1 },
   splitValue: { fontFamily: theme.font.monoBold, fontSize: 12.5, color: theme.colors.textPrimary },
   splitTrack: {
     height: 6,
@@ -384,7 +420,8 @@ const styles = StyleSheet.create({
   empty: { fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textMuted, marginHorizontal: 20 },
   errorBanner: {
     marginHorizontal: 20,
-    marginTop: 12,
+    marginTop: theme.layout.screenTopGap,
+    marginBottom: 4,
     padding: 14,
     borderRadius: theme.radius.md,
     backgroundColor: theme.colors.expenseTint,

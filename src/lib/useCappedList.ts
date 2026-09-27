@@ -9,11 +9,10 @@ import { haptics } from './haptics';
  * of silently dropping it.
  *
  * Not a fit for a spot whose container can unmount and remount the
- * component while the screen is still open — Transactions' `DayCard` looked
- * like a second consumer, but it's rendered inside a virtualized `FlatList`,
- * so local "expanded" state here would reset to collapsed every time a row
- * scrolls off- and back on-screen. That one instead keeps `expanded` up in
- * the parent, keyed by day, and passes it down as a controlled prop.
+ * component while the screen is still open — a row of a virtualized
+ * `FlatList` would reset to collapsed every time it scrolls off- and back
+ * on-screen. Activity's `TimelineDay` keeps its open stacks up in the
+ * parent for that reason.
  */
 export function useCappedList<T>(items: T[], cap: number) {
   const [expanded, setExpanded] = useState(false);

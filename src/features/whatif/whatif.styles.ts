@@ -1,5 +1,6 @@
 import { StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
+import { EYEBROW, FIELD_LABEL } from '@/constants/textStyles';
 
 export const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
@@ -8,7 +9,8 @@ export const styles = StyleSheet.create({
   // than a one-off inline style.
   errorBanner: {
     marginHorizontal: 20,
-    marginTop: 8,
+    marginTop: theme.layout.screenTopGap,
+    marginBottom: 4,
     padding: 14,
     borderRadius: theme.radius.md,
     backgroundColor: theme.colors.expenseTint,
@@ -28,7 +30,7 @@ export const styles = StyleSheet.create({
     fontSize: 12,
     color: theme.colors.textSecondary,
     marginHorizontal: 20,
-    marginTop: 4,
+    marginTop: theme.layout.screenTopGap,
     lineHeight: 17,
   },
 
@@ -42,12 +44,8 @@ export const styles = StyleSheet.create({
     padding: 16,
   },
   fieldLabel: {
-    fontFamily: theme.font.bodyBold,
-    fontSize: 10.5,
-    color: theme.colors.textMuted,
-    textTransform: 'uppercase',
-    letterSpacing: 0.4,
-    marginBottom: 8,
+    ...FIELD_LABEL,
+    marginBottom: 6,
   },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
 
@@ -56,7 +54,7 @@ export const styles = StyleSheet.create({
   avgValue: { fontFamily: theme.font.monoBold, fontSize: 14, color: theme.colors.textPrimary },
 
   resultDivider: {
-    height: 1,
+    height: StyleSheet.hairlineWidth,
     backgroundColor: theme.colors.borderSoft,
     marginTop: 14,
     marginBottom: 12,
@@ -67,20 +65,14 @@ export const styles = StyleSheet.create({
 
   goalCard: {
     marginHorizontal: 20,
-    marginTop: 14,
+    marginTop: 16,
     backgroundColor: theme.colors.secondaryTint,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.secondary,
     borderRadius: theme.radius.xl2,
     padding: 16,
   },
-  extraLabel: {
-    fontFamily: theme.font.bodyBold,
-    fontSize: 10.5,
-    color: theme.colors.income,
-    textTransform: 'uppercase',
-    letterSpacing: 0.3,
-  },
+  extraLabel: { ...EYEBROW, color: theme.colors.income },
 
   paceRow: { marginTop: 14, gap: 5 },
   paceHeadRow: { flexDirection: 'row', justifyContent: 'space-between' },

@@ -156,3 +156,17 @@ describe('periodLabel — always a non-empty string for every reference × offse
     }
   }
 });
+
+describe('periodShortLabel', () => {
+  const ref = new Date(2026, 9, 5);
+  it('shortens the month for the collapsed Home header, adding the year only when it differs', () => {
+    const { periodShortLabel } = jest.requireActual('./period') as typeof import('./period');
+    expect(periodShortLabel({ granularity: 'month', offset: 0 }, ref)).toBe(
+      ref.toLocaleDateString(undefined, { month: 'short' })
+    );
+    expect(periodShortLabel({ granularity: 'month', offset: -12 }, ref)).toBe(
+      new Date(2025, 9, 1).toLocaleDateString(undefined, { month: 'short', year: 'numeric' })
+    );
+    expect(periodShortLabel({ granularity: 'year', offset: 0 }, ref)).toBe('2026');
+  });
+});

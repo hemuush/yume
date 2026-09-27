@@ -21,6 +21,7 @@ import { GoalAccountField } from './GoalAccountField';
 import { useUndoToast } from '@/components/UndoToast';
 import { haptics } from '@/lib/haptics';
 import { styles } from './goals.styles';
+import { errorMessage } from '@/lib/errorMessage';
 
 /**
  * Editing/archiving/deleting a goal, opened by tapping a GoalCard. Same
@@ -89,8 +90,8 @@ export function GoalDetailModal({
         tracksAccount,
       });
       onChanged();
-    } catch (e: any) {
-      setError(String(e?.message ?? e));
+    } catch (e) {
+      setError(errorMessage(e));
     } finally {
       setSaving(false);
     }
@@ -110,8 +111,8 @@ export function GoalDetailModal({
             try {
               await archiveSavingsGoal(goal.id);
               onChanged();
-            } catch (e: any) {
-              Alert.alert('Could not archive', String(e?.message ?? e));
+            } catch (e) {
+              Alert.alert("Couldn't archive", errorMessage(e));
             } finally {
               setBusy(false);
             }
@@ -126,8 +127,8 @@ export function GoalDetailModal({
     try {
       await unarchiveSavingsGoal(goal.id);
       onChanged();
-    } catch (e: any) {
-      Alert.alert('Could not unarchive', String(e?.message ?? e));
+    } catch (e) {
+      Alert.alert("Couldn't unarchive", errorMessage(e));
     } finally {
       setBusy(false);
     }
@@ -143,8 +144,8 @@ export function GoalDetailModal({
         await restoreSavingsGoal(snapshot);
         onChanged();
       });
-    } catch (e: any) {
-      Alert.alert('Could not delete', String(e?.message ?? e));
+    } catch (e) {
+      Alert.alert("Couldn't delete", errorMessage(e));
     } finally {
       setBusy(false);
     }
@@ -167,7 +168,7 @@ export function GoalDetailModal({
               disabled={saving || busy}
             />
             <PrimaryButton
-              title={saving ? 'Saving...' : 'Save'}
+              title={saving ? 'Saving…' : 'Save'}
               onPress={submit}
               disabled={saving || busy}
               style={f.footerBtn}
@@ -176,7 +177,7 @@ export function GoalDetailModal({
         </View>
       }
     >
-      <FormInput label="Goal name" value={name} onChangeText={setName} placeholder="e.g. Goa Trip" />
+      <FormInput label="Goal name" value={name} onChangeText={setName} placeholder="e.g. Goa trip" />
       <FormInput
         label="Target amount"
         value={target}
@@ -210,17 +211,17 @@ export function GoalDetailModal({
         </>
       )}
 
-      <Text style={styles.dangerLabel}>DANGER ZONE</Text>
+      <Text style={styles.dangerLabel}>Danger zone</Text>
       {goal.archived ? (
         <PrimaryButton
-          title={busy ? 'Working...' : 'Unarchive goal'}
+          title={busy ? 'Working…' : 'Unarchive goal'}
           variant="secondary"
           onPress={onUnarchive}
           disabled={busy}
         />
       ) : !goal.tracksAccount && goal.currentAmountMinor > 0 ? (
         <PrimaryButton
-          title={busy ? 'Working...' : 'Archive goal (has progress)'}
+          title={busy ? 'Working…' : 'Archive goal (has progress)'}
           variant="secondary"
           onPress={confirmArchive}
           disabled={busy}
@@ -228,7 +229,7 @@ export function GoalDetailModal({
         />
       ) : (
         <PrimaryButton
-          title={busy ? 'Working...' : 'Delete goal'}
+          title={busy ? 'Working…' : 'Delete goal'}
           variant="secondary"
           onPress={confirmDelete}
           disabled={busy}

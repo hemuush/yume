@@ -126,6 +126,10 @@ jest.mock('@/db/settings', () => ({
 import PlanScreen from '../../../app/(tabs)/plan';
 import { router } from 'expo-router';
 
+// Bars and rings animate to their values (useGrowFrom); fake timers keep those
+// frames inside the test instead of firing after it ends.
+jest.useFakeTimers();
+
 async function render() {
   let tree!: ReactTestRenderer;
   await act(async () => {

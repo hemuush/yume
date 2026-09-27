@@ -102,6 +102,8 @@ CREATE TABLE IF NOT EXISTS transactions (
   amount_minor INTEGER NOT NULL CHECK (amount_minor > 0),
   date TEXT NOT NULL,
   note TEXT NOT NULL DEFAULT '',
+  -- No longer read or written (tags were never given a screen); kept so
+  -- older databases and backups stay valid.
   tags TEXT NOT NULL DEFAULT '[]',
   payment_mode TEXT CHECK (payment_mode IN ('cash','debit','credit','upi','bank_transfer','other')),
   loan_payment_id TEXT REFERENCES loan_payments(id) ON DELETE SET NULL,
@@ -115,6 +117,12 @@ CREATE TABLE IF NOT EXISTS transactions (
   -- 'prepayment' actually reduces the loan's principal. NULL whenever
   -- loan_id is.
   loan_tx_kind TEXT CHECK (loan_tx_kind IN ('disbursement','fee','prepayment','prepayment_charge')),
+  -- The parts of one split payment share this id: one bill, several categories.
+  -- (Its index is created in runMigrations, after the column exists on older installs.)
+  split_id TEXT,
+  -- 1 on money back for a purchase: an income-type row against an expense
+  -- category that lowers its spending instead of counting as income (see db/spendSql.ts).
+  is_refund INTEGER NOT NULL DEFAULT 0,
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   CHECK (type != 'transfer' OR to_account_id IS NOT NULL),
   CHECK (type = 'transfer' OR category_id IS NOT NULL)
@@ -170,6 +178,14 @@ CREATE TABLE IF NOT EXISTS person_ledger_entries (
   date TEXT NOT NULL,
   note TEXT NOT NULL DEFAULT '',
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Recently deleted: an entry the user deleted, kept for 30 days as the exact
+-- row (JSON) so it can be put back as it was. Not part of backups.
+CREATE TABLE IF NOT EXISTS deleted_entries (
+  id TEXT PRIMARY KEY,
+  snapshot TEXT NOT NULL,
+  deleted_at TEXT NOT NULL
 );
 
 -- Free-form key/value app settings (default currency, theme, etc).

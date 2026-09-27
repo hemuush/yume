@@ -2,6 +2,7 @@ import { StorageAccessFramework } from 'expo-file-system/legacy';
 import { buildBackupSnapshot, BackupSnapshot, BackupSummary, summarizeSnapshot } from './backup';
 import { toLocalIsoDate } from './date';
 import { withoutRelock } from './appLock';
+import { readBackupIndex, writeBackupIndex, rememberBackupFile, BackupIndex } from './backupIndex';
 import {
   getLocalBackupFolderUri,
   setLocalBackupFolderUri,
@@ -12,6 +13,7 @@ import {
   BackupFrequency,
   setLastLocalBackupResult,
 } from '@/db/settings';
+import { errorMessage } from '@/lib/errorMessage';
 
 /**
  * Opens Android's folder picker once; the returned URI is a persistent
@@ -99,6 +101,11 @@ export async function writeLocalBackupNow(directoryUri: string): Promise<{ sizeB
     if (uri !== fileUri) await StorageAccessFramework.deleteAsync(uri).catch(() => {});
   }
   await setLastLocalBackupAt(new Date().toISOString());
+  await rememberBackupFile(fileUri, {
+    exportedAt: snapshot.exportedAt,
+    sizeBytes: json.length,
+    summary: summarizeSnapshot(snapshot),
+  });
   await pruneOldLocalBackups(directoryUri);
   return { sizeBytes: json.length };
 }
@@ -153,11 +160,11 @@ async function backUpIfDue(): Promise<void> {
 
     const { sizeBytes } = await writeLocalBackupNow(directoryUri);
     await setLastLocalBackupResult({ at: new Date().toISOString(), ok: true, sizeBytes });
-  } catch (e: any) {
+  } catch (e) {
     await setLastLocalBackupResult({
       at: new Date().toISOString(),
       ok: false,
-      error: String(e?.message ?? e),
+      error: errorMessage(e),
     }).catch(() => {});
   }
 }
@@ -174,8 +181,11 @@ export interface LocalBackupFile {
 
 /**
  * The backup files in the chosen folder, newest first (at most `limit`),
- * each read once on the phone to say what's inside. A file that can't be
- * read is still listed, with no summary, rather than breaking the list.
+ * each saying what's inside. What's inside comes from the phone's backup
+ * index (see backupIndex.ts) when Yume wrote or already read that file;
+ * only a file it hasn't seen is read, once, and then remembered. A file
+ * that can't be read is still listed, with no summary, rather than
+ * breaking the list — and isn't remembered, so it's tried again next time.
  */
 export async function listLocalBackups(
   directoryUri: string,
@@ -188,21 +198,34 @@ export async function listLocalBackups(
     .sort()
     .reverse()
     .slice(0, limit);
+  const index = await readBackupIndex();
+  const kept: BackupIndex = {};
+  let learned = false;
   const files: LocalBackupFile[] = [];
   for (const uri of backups) {
+    const known = index[uri];
+    if (known) {
+      kept[uri] = known;
+      files.push({ uri, ...known });
+      continue;
+    }
     try {
       const content = await StorageAccessFramework.readAsStringAsync(uri);
       const snapshot = JSON.parse(content);
-      files.push({
-        uri,
+      const info = {
         exportedAt: typeof snapshot?.exportedAt === 'string' ? snapshot.exportedAt : null,
         sizeBytes: content.length,
         summary: summarizeSnapshot(snapshot),
-      });
+      };
+      kept[uri] = info;
+      learned = true;
+      files.push({ uri, ...info });
     } catch {
       files.push({ uri, exportedAt: null, sizeBytes: 0, summary: null });
     }
   }
+  // Save what was learned, and drop files that have left the folder.
+  if (learned || Object.keys(index).length !== Object.keys(kept).length) writeBackupIndex(kept);
   return files;
 }
 

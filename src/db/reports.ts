@@ -3,6 +3,7 @@ import { toLocalIsoDate, addDaysToIsoDate, isoDatesInRange, monthsBetweenIsoDate
 import { streakSeries } from '@/lib/gardenGrowth';
 import { getDefaultCurrency } from './settings';
 import type { DateRange } from '@/types';
+import { SPEND_ROWS, SPEND_AMOUNT, INCOME_ROWS, rowsOf, amountOf, countOf } from './spendSql';
 
 export type ReportPeriod = 'day' | 'week' | 'month' | 'year';
 
@@ -80,6 +81,8 @@ export interface CategoryBreakdownItem {
   hasSubcategories: boolean;
   /** True if this row itself, or any subcategory rolled into it, is flagged "hide savings & investment amounts" — the Reports screen masks totalMinor when the global privacy toggle is also on. */
   isSensitive: boolean;
+  /** How many entries make up totalMinor. Filled by getSubcategoryBreakdown (a category page's split). */
+  count?: number;
 }
 
 export interface PeriodSummary {
@@ -112,13 +115,14 @@ export async function getPeriodSummary(range: DateRange): Promise<PeriodSummary>
   const income = await db.getFirstAsync<{ total: number | null }>(
     `SELECT SUM(t.amount_minor) as total FROM transactions t
      JOIN accounts a ON a.id = t.account_id
-     WHERE t.type = 'income' AND a.currency = ? AND t.date >= ? AND t.date <= ?`,
+     WHERE ${INCOME_ROWS} AND a.currency = ? AND t.date >= ? AND t.date <= ?`,
     [currency, range.start, range.end]
   );
   const expense = await db.getFirstAsync<{ total: number | null }>(
-    `SELECT SUM(t.amount_minor) as total FROM transactions t
+    // Spending less whatever came back as refunds.
+    `SELECT SUM(${SPEND_AMOUNT}) as total FROM transactions t
      JOIN accounts a ON a.id = t.account_id
-     WHERE t.type = 'expense' AND a.currency = ? AND t.date >= ? AND t.date <= ?`,
+     WHERE ${SPEND_ROWS} AND a.currency = ? AND t.date >= ? AND t.date <= ?`,
     [currency, range.start, range.end]
   );
 
@@ -140,22 +144,37 @@ export async function getPeriodSummary(range: DateRange): Promise<PeriodSummary>
   // appearing as its own independent slice/bar. `hasSubcategories` tells the
   // caller whether this row can be drilled into via getSubcategoryBreakdown.
   const breakdownOf = (type: 'expense' | 'income') =>
-    db.getAllAsync<any>(
-      `SELECT top.id as categoryId, top.name as name, top.color as color, SUM(t.amount_minor) as total,
+    db.getAllAsync<{
+      categoryId: string;
+      name: string;
+      color: string;
+      total: number;
+      hasSubcategories: number;
+      isSensitive: number;
+    }>(
+      `SELECT top.id as categoryId, top.name as name, top.color as color, SUM(${amountOf(type)}) as total,
          EXISTS(SELECT 1 FROM categories ch WHERE ch.parent_id = top.id AND ch.archived = 0) as hasSubcategories,
          MAX(c.is_sensitive) as isSensitive
        FROM transactions t
        JOIN categories c ON c.id = t.category_id
        JOIN categories top ON top.id = COALESCE(c.parent_id, c.id)
        JOIN accounts a ON a.id = t.account_id
-       WHERE t.type = ? AND a.currency = ? AND t.date >= ? AND t.date <= ?
+       WHERE ${rowsOf(type)} AND a.currency = ? AND t.date >= ? AND t.date <= ?
        GROUP BY top.id
+       HAVING total > 0
        ORDER BY total DESC`,
-      [type, currency, range.start, range.end]
+      [currency, range.start, range.end]
     );
   const breakdown = await breakdownOf('expense');
   const incomeRows = await breakdownOf('income');
-  const toItem = (r: any): CategoryBreakdownItem => ({
+  const toItem = (r: {
+    categoryId: string;
+    name: string;
+    color: string;
+    total: number;
+    hasSubcategories: number;
+    isSensitive: number;
+  }): CategoryBreakdownItem => ({
     categoryId: r.categoryId,
     name: r.name,
     color: r.color,
@@ -165,10 +184,12 @@ export async function getPeriodSummary(range: DateRange): Promise<PeriodSummary>
   });
 
   const savingsContributionMinor = (savingsIn?.total ?? 0) - (savingsOut?.total ?? 0);
+  // Refunds bigger than a period's spending leave it at zero, never below.
+  const expenseMinor = Math.max(0, expense?.total ?? 0);
   return {
     incomeMinor: income?.total ?? 0,
-    expenseMinor: expense?.total ?? 0,
-    netMinor: (income?.total ?? 0) - (expense?.total ?? 0) - savingsContributionMinor,
+    expenseMinor,
+    netMinor: (income?.total ?? 0) - expenseMinor - savingsContributionMinor,
     savingsContributionMinor,
     categoryBreakdown: breakdown.map(toItem),
     incomeBreakdown: incomeRows.map(toItem),
@@ -193,16 +214,25 @@ export async function getSubcategoryBreakdown(
     'SELECT name, color FROM categories WHERE id = ?',
     [parentCategoryId]
   );
-  const rows = await db.getAllAsync<any>(
-    `SELECT c.id as categoryId, c.name as name, c.color as color, SUM(t.amount_minor) as total, c.is_sensitive as isSensitive
+  const rows = await db.getAllAsync<{
+    categoryId: string;
+    name: string;
+    color: string;
+    total: number;
+    count: number;
+    isSensitive: number;
+  }>(
+    `SELECT c.id as categoryId, c.name as name, c.color as color, SUM(${amountOf(kind)}) as total,
+       ${countOf(kind)} as count, c.is_sensitive as isSensitive
      FROM transactions t
      JOIN categories c ON c.id = t.category_id
      JOIN accounts a ON a.id = t.account_id
-     WHERE t.type = ? AND a.currency = ? AND t.date >= ? AND t.date <= ?
+     WHERE ${rowsOf(kind)} AND a.currency = ? AND t.date >= ? AND t.date <= ?
        AND (c.id = ? OR c.parent_id = ?)
      GROUP BY c.id
+     HAVING total > 0
      ORDER BY total DESC`,
-    [kind, currency, range.start, range.end, parentCategoryId, parentCategoryId]
+    [currency, range.start, range.end, parentCategoryId, parentCategoryId]
   );
   return rows.map((r) => ({
     categoryId: r.categoryId,
@@ -211,12 +241,17 @@ export async function getSubcategoryBreakdown(
     totalMinor: r.total,
     hasSubcategories: false,
     isSensitive: !!r.isSensitive,
+    count: r.count,
   }));
 }
 
 export interface CategoryOverview {
-  /** The period's total for the category, its subcategories included. */
+  /** The period's total for the category, its subcategories included (refunds already taken off). */
   totalMinor: number;
+  /** Money that came back to this category as refunds in the period; 0 for an income category. */
+  refundMinor: number;
+  /** What was spent before any refunds (equals `totalMinor` when there were none). */
+  spentMinor: number;
   count: number;
   /** Per subcategory (the parent's own entries as "Other …"), largest first — see getSubcategoryBreakdown. */
   split: CategoryBreakdownItem[];
@@ -240,11 +275,19 @@ export async function getCategoryOverview(
   const currency = await getDefaultCurrency();
   const inCategory = `(t.category_id = ? OR t.category_id IN (SELECT id FROM categories WHERE parent_id = ?))`;
 
-  const totals = await db.getFirstAsync<{ total: number | null; count: number }>(
-    `SELECT SUM(t.amount_minor) AS total, COUNT(*) AS count FROM transactions t
+  const totals = await db.getFirstAsync<{
+    total: number | null;
+    count: number | null;
+    refund: number | null;
+    spent: number | null;
+  }>(
+    `SELECT SUM(${amountOf(kind)}) AS total, ${countOf(kind)} AS count,
+       SUM(CASE WHEN t.type = 'income' AND t.is_refund = 1 THEN t.amount_minor ELSE 0 END) AS refund,
+       SUM(CASE WHEN t.type = 'income' AND t.is_refund = 1 THEN 0 ELSE t.amount_minor END) AS spent
+     FROM transactions t
      JOIN accounts a ON a.id = t.account_id
-     WHERE t.type = ? AND a.currency = ? AND t.date >= ? AND t.date <= ? AND ${inCategory}`,
-    [kind, currency, range.start, range.end, categoryId, categoryId]
+     WHERE ${rowsOf(kind)} AND a.currency = ? AND t.date >= ? AND t.date <= ? AND ${inCategory}`,
+    [currency, range.start, range.end, categoryId, categoryId]
   );
 
   const [y, m] = range.end.split('-').map(Number);
@@ -254,12 +297,11 @@ export async function getCategoryOverview(
   });
   const lastDay = new Date(y, m, 0).getDate();
   const rows = await db.getAllAsync<{ month: string; total: number }>(
-    `SELECT substr(t.date, 1, 7) AS month, SUM(t.amount_minor) AS total FROM transactions t
+    `SELECT substr(t.date, 1, 7) AS month, SUM(${amountOf(kind)}) AS total FROM transactions t
      JOIN accounts a ON a.id = t.account_id
-     WHERE t.type = ? AND a.currency = ? AND t.date >= ? AND t.date <= ? AND ${inCategory}
+     WHERE ${rowsOf(kind)} AND a.currency = ? AND t.date >= ? AND t.date <= ? AND ${inCategory}
      GROUP BY month`,
     [
-      kind,
       currency,
       `${monthKeys[0]}-01`,
       `${monthKeys[months - 1]}-${String(lastDay).padStart(2, '0')}`,
@@ -267,10 +309,13 @@ export async function getCategoryOverview(
       categoryId,
     ]
   );
-  const byMonth = new Map(rows.map((r) => [r.month, r.total]));
+  // A month whose refunds outweighed its spending shows as zero, never below.
+  const byMonth = new Map(rows.map((r) => [r.month, Math.max(0, r.total)]));
 
   return {
-    totalMinor: totals?.total ?? 0,
+    totalMinor: Math.max(0, totals?.total ?? 0),
+    refundMinor: kind === 'expense' ? (totals?.refund ?? 0) : 0,
+    spentMinor: totals?.spent ?? 0,
     count: totals?.count ?? 0,
     split: await getSubcategoryBreakdown(categoryId, range, kind),
     months: monthKeys.map((month) => ({ month, totalMinor: byMonth.get(month) ?? 0 })),
@@ -298,14 +343,17 @@ export async function getDailyExpenseTotals(range: DateRange): Promise<DailyExpe
   const db = await getDb();
   const currency = await getDefaultCurrency();
   const rows = await db.getAllAsync<{ date: string; total: number }>(
-    `SELECT t.date as date, SUM(t.amount_minor) as total
+    `SELECT t.date as date, SUM(${SPEND_AMOUNT}) as total
      FROM transactions t
      JOIN accounts a ON a.id = t.account_id
-     WHERE t.type = 'expense' AND a.currency = ? AND t.date >= ? AND t.date <= ?
+     WHERE ${SPEND_ROWS} AND a.currency = ? AND t.date >= ? AND t.date <= ?
      GROUP BY t.date`,
     [currency, range.start, range.end]
   );
-  return rows.map((r) => ({ date: r.date, totalMinor: r.total }));
+  // A refund lowers its day's spending, but a day never goes below zero.
+  return rows
+    .map((r) => ({ date: r.date, totalMinor: Math.max(0, r.total) }))
+    .filter((r) => r.totalMinor > 0);
 }
 
 /**
@@ -337,10 +385,10 @@ export async function getMonthPaceInputs(
   const monthEnd = `${today.slice(0, 7)}-${String(new Date(y, m, 0).getDate()).padStart(2, '0')}`;
 
   const everyday = await db.getFirstAsync<{ total: number | null }>(
-    `SELECT SUM(t.amount_minor) AS total FROM transactions t
+    `SELECT SUM(${SPEND_AMOUNT}) AS total FROM transactions t
      JOIN accounts a ON a.id = t.account_id
      LEFT JOIN categories c ON c.id = t.category_id
-     WHERE t.type = 'expense' AND a.currency = ? AND IFNULL(c.is_system, 0) = 0
+     WHERE ${SPEND_ROWS} AND a.currency = ? AND IFNULL(c.is_system, 0) = 0
        AND t.date >= ? AND t.date <= ?`,
     [currency, monthStart, today]
   );
@@ -359,7 +407,7 @@ export async function getMonthPaceInputs(
     [currency, today, monthEnd]
   );
   return {
-    everydaySpentMinor: everyday?.total ?? 0,
+    everydaySpentMinor: Math.max(0, everyday?.total ?? 0),
     dueRestOfMonthMinor: (emis?.total ?? 0) + (bills?.total ?? 0),
   };
 }
@@ -532,14 +580,14 @@ export async function getMonthlyExpenseTrend(
   const startIso = toIso(start);
 
   const rows = await db.getAllAsync<{ ym: string; total: number }>(
-    `SELECT strftime('%Y-%m', t.date) as ym, SUM(t.amount_minor) as total
+    `SELECT strftime('%Y-%m', t.date) as ym, SUM(${SPEND_AMOUNT}) as total
      FROM transactions t
      JOIN accounts a ON a.id = t.account_id
-     WHERE t.type = 'expense' AND a.currency = ? AND t.date >= ?
+     WHERE ${SPEND_ROWS} AND a.currency = ? AND t.date >= ?
      GROUP BY ym`,
     [currency, startIso]
   );
-  const byMonth = new Map(rows.map((r) => [r.ym, r.total]));
+  const byMonth = new Map(rows.map((r) => [r.ym, Math.max(0, r.total)]));
 
   const points: TrendPoint[] = [];
   for (let i = months - 1; i >= 0; i--) {

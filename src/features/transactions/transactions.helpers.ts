@@ -1,6 +1,7 @@
 import { Category, Transaction } from '@/types';
 import type { ActivityFilter } from './FilterModal';
 import { toLocalIsoDate, parseLocalIsoDate, addDaysToIsoDate } from '@/lib/date';
+import { dayMonth } from '@/lib/dateLabels';
 
 /** One day of the Activity week, enough for its "Sep 7 – 13" label and range. */
 export interface WeekDay {
@@ -70,19 +71,19 @@ export function periodHeading(input: {
   days: WeekDay[];
   anchor: Date;
   today: Date;
-  monthNames: readonly string[];
 }): { title: string; sub: string } {
-  const { scope, days, anchor, today, monthNames } = input;
+  const { scope, days, anchor, today } = input;
   if (scope === 'month') {
     const title = anchor.toLocaleDateString(undefined, { month: 'long' });
     return { title, sub: anchor.getFullYear() === today.getFullYear() ? '' : String(anchor.getFullYear()) };
   }
   const first = days[0];
   const last = days[days.length - 1];
+  // The same "27 Sept" as each day's heading below it, so the two never disagree ("Sep" vs "Sept").
   const range =
     first.month === last.month
-      ? `${first.day}–${last.day} ${monthNames[last.month]}`
-      : `${first.day} ${monthNames[first.month]} – ${last.day} ${monthNames[last.month]}`;
+      ? `${first.day}–${dayMonth(last.iso)}`
+      : `${dayMonth(first.iso)} – ${dayMonth(last.iso)}`;
   const isCurrent = days.some((d) => d.iso === toLocalIsoDate(today));
   if (isCurrent) return { title: 'This week', sub: range };
   return { title: range, sub: last.year === today.getFullYear() ? '' : String(last.year) };
@@ -101,7 +102,9 @@ export function filterActivity(
 ): Transaction[] {
   const parentOf = new Map(categories.map((c) => [c.id, c.parentId]));
   return transactions.filter((t) => {
-    if (filter.type !== 'all' && t.type !== filter.type) return false;
+    // A refund belongs with spending (it lowers it), so "Spent" shows it and "Income" doesn't.
+    const filterAs = t.isRefund ? 'expense' : t.type;
+    if (filter.type !== 'all' && filterAs !== filter.type) return false;
     if (
       filter.accountIds.length > 0 &&
       !filter.accountIds.includes(t.accountId) &&
@@ -118,4 +121,92 @@ export function filterActivity(
     }
     return true;
   });
+}
+
+/** One line on a timeline day: a single entry, or several of the same category stacked. */
+export type LaneLine =
+  | { kind: 'single'; tx: Transaction }
+  | {
+      kind: 'stack';
+      key: string;
+      categoryId: string | null;
+      type: 'income' | 'expense';
+      items: Transaction[];
+      totalMinor: number;
+    }
+  | {
+      /** The parts of one split payment, shown as the one payment they were. */
+      kind: 'split';
+      key: string;
+      splitId: string;
+      items: Transaction[];
+      totalMinor: number;
+    };
+
+/**
+ * How Activity's timeline draws one day (newest first, as the day's entries
+ * already are): transfers between your own accounts come out as notes on the
+ * thread, and two or more spending (or income) entries in the same category
+ * stack into one line — "Food & Dining ×5" — in the place of the newest of
+ * them. The parts of a split payment come first as one line of their own
+ * ("Split · 2 categories"), and never join a category's stack. Everything
+ * else stays a line of its own.
+ */
+export function buildDayLane(
+  items: Transaction[],
+  date: string
+): { transfers: Transaction[]; lines: LaneLine[] } {
+  const transfers = items.filter((t) => t.type === 'transfer');
+  // A split shows whole only when at least two of its parts are here (a
+  // category filter can leave just one, which then reads as a plain entry).
+  const partsBySplit = new Map<string, Transaction[]>();
+  for (const t of items) {
+    if (t.type === 'transfer' || !t.splitId) continue;
+    partsBySplit.set(t.splitId, [...(partsBySplit.get(t.splitId) ?? []), t]);
+  }
+  const isGroupedPart = (t: Transaction) => !!t.splitId && (partsBySplit.get(t.splitId)?.length ?? 0) >= 2;
+  const rest = items.filter((t) => t.type !== 'transfer' && !isGroupedPart(t));
+  const groupKey = (t: Transaction) => `${date}|${t.type}|${t.categoryId ?? ''}`;
+  const counts = new Map<string, number>();
+  for (const t of rest) counts.set(groupKey(t), (counts.get(groupKey(t)) ?? 0) + 1);
+  const lines: LaneLine[] = [];
+  const stacks = new Map<string, Extract<LaneLine, { kind: 'stack' }>>();
+  // Splits sit where their newest part sits in the day, like stacks do.
+  const splitsPlaced = new Set<string>();
+  for (const t of items) {
+    if (!isGroupedPart(t)) continue;
+    if (splitsPlaced.has(t.splitId!)) continue;
+    splitsPlaced.add(t.splitId!);
+    const parts = [...partsBySplit.get(t.splitId!)!].sort((a, b) => b.amountMinor - a.amountMinor);
+    lines.push({
+      kind: 'split',
+      key: `${date}|split|${t.splitId}`,
+      splitId: t.splitId!,
+      items: parts,
+      totalMinor: parts.reduce((s, p) => s + p.amountMinor, 0),
+    });
+  }
+  for (const t of rest) {
+    const key = groupKey(t);
+    if ((counts.get(key) ?? 0) < 2) {
+      lines.push({ kind: 'single', tx: t });
+      continue;
+    }
+    let stack = stacks.get(key);
+    if (!stack) {
+      stack = {
+        kind: 'stack',
+        key,
+        categoryId: t.categoryId,
+        type: t.type as 'income' | 'expense',
+        items: [],
+        totalMinor: 0,
+      };
+      stacks.set(key, stack);
+      lines.push(stack);
+    }
+    stack.items.push(t);
+    stack.totalMinor += t.amountMinor;
+  }
+  return { transfers, lines };
 }

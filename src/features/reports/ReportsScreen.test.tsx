@@ -18,9 +18,10 @@ jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
 }));
 jest.mock('@/components/AppHeader', () => ({ AppHeader: () => null }));
+const mockSearch = { current: {} as Record<string, string> };
 jest.mock('expo-router', () => ({
   router: { setParams: jest.fn(), push: jest.fn() },
-  useLocalSearchParams: () => ({}),
+  useLocalSearchParams: () => mockSearch.current,
   useFocusEffect: (cb: () => void) => require('react').useEffect(cb, [cb]),
 }));
 // Sheets render their content only while open; the real one needs the keyboard controller's native module.
@@ -108,6 +109,10 @@ jest.mock('@/db/ledger', () => ({
 }));
 
 import ReportsScreen from '../../../app/(tabs)/reports';
+
+// Bars and rings animate to their values (useGrowFrom, at most the 700ms draw):
+// let the last ones finish before the file ends, so no frame fires after teardown.
+afterAll(() => new Promise((resolve) => setTimeout(resolve, 800)));
 
 async function render() {
   let tree!: ReactTestRenderer;
@@ -198,5 +203,29 @@ describe('Reports screen', () => {
     await pressText(tree, 'Food');
     const last = (require('expo-router').router.push as jest.Mock).mock.calls.at(-1)[0];
     expect(last).toMatch(/^\/category\/food\?g=custom&from=\d{4}-\d{2}-\d{2}&to=\d{4}-\d{2}-\d{2}$/);
+  });
+
+  it("opens on a week from a link, as the week Wrap's report button sends", async () => {
+    mockSearch.current = { from: '2026-09-20', to: '2026-09-26' };
+    try {
+      const tree = await render();
+      await pressText(tree, 'Food');
+      const last = (require('expo-router').router.push as jest.Mock).mock.calls.at(-1)[0];
+      expect(last).toBe('/category/food?g=custom&from=2026-09-20&to=2026-09-26');
+    } finally {
+      mockSearch.current = {};
+    }
+  });
+
+  it('ignores a malformed range link', async () => {
+    mockSearch.current = { from: 'yesterday', to: '2026-09-26' };
+    try {
+      const tree = await render();
+      await pressText(tree, 'Food');
+      const last = (require('expo-router').router.push as jest.Mock).mock.calls.at(-1)[0];
+      expect(last).toBe('/category/food?g=month&o=0');
+    } finally {
+      mockSearch.current = {};
+    }
   });
 });

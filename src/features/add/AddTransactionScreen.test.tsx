@@ -11,7 +11,7 @@
  *   - "Your usual" fills category, amount and account; the search finds subcategories
  */
 import { create, act, ReactTestRenderer, ReactTestInstance } from 'react-test-renderer';
-import { Alert, Text } from 'react-native';
+import { Alert, Keyboard, Text } from 'react-native';
 
 jest.setTimeout(30000);
 
@@ -41,9 +41,9 @@ jest.mock('@/features/people/AddPersonModal', () => ({
   },
 }));
 
-const mockParams: { current: { type?: string; id?: string; toAccountId?: string } } = { current: {} };
+const mockParams: { current: Record<string, string | undefined> } = { current: {} };
 jest.mock('expo-router', () => ({
-  router: { back: jest.fn() },
+  router: { back: jest.fn(), push: jest.fn() },
   useLocalSearchParams: () => mockParams.current,
   useFocusEffect: (cb: () => void) => require('react').useEffect(cb, [cb]),
 }));
@@ -88,6 +88,11 @@ jest.mock('@/db/settings', () => ({
   getAddDefaults: jest.fn(async () => ({})),
   setAddDefaults: jest.fn(async () => {}),
 }));
+jest.mock('@/db/splits', () => ({
+  saveSplit: jest.fn(async () => 'split-1'),
+  getSplitParts: jest.fn(async () => []),
+  deleteSplit: jest.fn(),
+}));
 jest.mock('@/db/people', () => ({
   listPeople: jest.fn(async () => [{ id: 'p1', name: 'Aarav', balanceMinor: 0, lastActivityDate: null }]),
   recordMoneyGivenToPerson: jest.fn(async () => {}),
@@ -106,6 +111,8 @@ import {
   getRepeatEntries,
 } from '@/db/ledger';
 import { getAddDefaults, setAddDefaults } from '@/db/settings';
+import { saveSplit } from '@/db/splits';
+import { openSplitSession, finishSplitSession, getSplitSession } from './splitSession';
 import { addLedgerEntry, listPeople } from '@/db/people';
 
 const settle = () => new Promise<void>((resolve) => setTimeout(resolve, 0));
@@ -435,5 +442,114 @@ describe('Add screen', () => {
     await typeAmount(tree, '126');
     await save(tree);
     expect(createTransaction).toHaveBeenLastCalledWith(expect.objectContaining({ categoryId: 'rapido' }));
+  });
+
+  it('brings the number pad back when the keyboard is closed while searching or writing a note', async () => {
+    // Android can close the keyboard (back gesture, its own down key) without
+    // the field ever losing focus — the screen hears it as keyboardDidHide.
+    let hideKeyboard: () => void = () => {};
+    const spy = jest.spyOn(Keyboard, 'addListener').mockImplementation(((event: string, fn: () => void) => {
+      if (event === 'keyboardDidHide') hideKeyboard = fn;
+      return { remove: jest.fn() };
+    }) as any);
+    try {
+      const tree = await render();
+      const padKey = () => tree.root.findAll((n) => n.props.accessibilityLabel === '7' && n.props.onPress);
+      expect(padKey().length).toBeGreaterThan(0);
+
+      const search = tree.root.find(
+        (n) => n.props.accessibilityLabel === 'Find a category' && n.props.onFocus
+      );
+      await act(async () => search.props.onFocus());
+      expect(padKey()).toHaveLength(0);
+
+      await act(async () => hideKeyboard());
+      expect(padKey().length).toBeGreaterThan(0);
+    } finally {
+      spy.mockRestore();
+    }
+  });
+});
+
+describe('Add screen — money back', () => {
+  it('saves a refund as money in, against the spending category, and says so on the card', async () => {
+    (getAddDefaults as jest.Mock).mockResolvedValueOnce({
+      expense: { accountId: 'bank', categoryId: 'food' },
+    });
+    const tree = await render();
+    await typeAmount(tree, '250');
+    await act(async () => {
+      tree.root
+        .find(
+          (n) =>
+            n.props.accessibilityLabel === 'Money back (a refund)' && typeof n.props.onPress === 'function'
+        )
+        .props.onPress();
+    });
+    expect(texts(tree)).toContain('Money back');
+    await save(tree, 'Save refund');
+    expect(createTransaction).toHaveBeenCalledWith(
+      expect.objectContaining({ type: 'income', isRefund: true, categoryId: 'food', amountMinor: 25000 })
+    );
+  });
+
+  it('opens as a refund from "Got money back", with the category and note filled in', async () => {
+    mockParams.current = {
+      type: 'expense',
+      refund: '1',
+      categoryId: 'food',
+      accountId: 'bank',
+      note: 'Amazon return',
+    };
+    const tree = await render();
+    await typeAmount(tree, '100');
+    await save(tree, 'Save refund');
+    expect(createTransaction).toHaveBeenCalledWith(
+      expect.objectContaining({ type: 'income', isRefund: true, categoryId: 'food', note: 'Amazon return' })
+    );
+  });
+  it('opens the split page with this payment, its category holding all of it', async () => {
+    (getAddDefaults as jest.Mock).mockResolvedValueOnce({
+      expense: { accountId: 'cash', categoryId: 'food' },
+    });
+    const tree = await render();
+    await typeAmount(tree, '2400');
+    await act(async () => {
+      tree.root
+        .find(
+          (n) => n.props.accessibilityLabel === 'Split this payment' && typeof n.props.onPress === 'function'
+        )
+        .props.onPress();
+    });
+    expect(router.push).toHaveBeenCalledWith('/split');
+    const session = getSplitSession()!;
+    expect(session.totalMinor).toBe(240000);
+    expect(session.meta).toBe('Cash · Today');
+    expect(session.parts.map((p) => p.categoryId)).toEqual(['food']);
+    expect(session.categories.every((c) => c.kind === 'expense')).toBe(true);
+  });
+
+  it("takes the split page's parts back on Done and saves them as one split", async () => {
+    (getAddDefaults as jest.Mock).mockResolvedValueOnce({
+      expense: { accountId: 'cash', categoryId: 'food' },
+    });
+    mockParams.current = { amount: '240000' };
+    openSplitSession({ totalMinor: 240000, currency: 'INR', meta: '', categories: [], parts: [] });
+    finishSplitSession([
+      { key: 'a', categoryId: 'food', amountText: '' },
+      { key: 'b', categoryId: 'travel', amountText: '500' },
+    ]);
+    const tree = await render();
+    expect(texts(tree)).toContain('Split 2 ways');
+    await save(tree, 'Save split');
+    expect(saveSplit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        accountId: 'cash',
+        parts: [
+          { categoryId: 'food', amountMinor: 190000 },
+          { categoryId: 'travel', amountMinor: 50000 },
+        ],
+      })
+    );
   });
 });

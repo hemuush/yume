@@ -1,4 +1,4 @@
-import { View, Pressable } from 'react-native';
+import { View, Pressable, ScrollView } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import { theme } from '@/constants/theme';
 import { Text } from '@/components/Text';
@@ -12,6 +12,7 @@ import { accountBadgeColor, accountIcon } from '@/lib/account';
 import { haptics } from '@/lib/haptics';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { styles } from './add.styles';
+import { withPressed } from '@/lib/pressed';
 
 export function Chip({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
   return (
@@ -20,7 +21,7 @@ export function Chip({ label, active, onPress }: { label: string; active: boolea
         haptics.tap();
         onPress();
       }}
-      style={[styles.chip, active && styles.chipActive]}
+      style={withPressed([styles.chip, active && styles.chipActive])}
       accessibilityRole="button"
       accessibilityState={{ selected: active }}
     >
@@ -55,7 +56,7 @@ export function AccountTile({
         haptics.tap();
         onPress();
       }}
-      style={styles.accountTile}
+      style={withPressed(styles.accountTile)}
       accessibilityRole="button"
       accessibilityState={{ selected: active }}
       accessibilityLabel={account.name}
@@ -71,20 +72,46 @@ export function AccountTile({
 }
 
 /**
- * One of Add's detail chips — account, date, note — under the category
- * grid. They hold what's usually right already, so each is one quiet tap
- * to change rather than a full section of its own.
+ * The bar on top of Add's number pad (the split redesign sign-off, option 2):
+ * account, date, note, and for a purchase Money back and Split, in one row
+ * that slides sideways when it doesn't fit. Riding on the pad, it's always in
+ * view, however far the category grid is scrolled.
+ */
+export function DetailBar({ children }: { children: React.ReactNode }) {
+  return (
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      keyboardShouldPersistTaps="handled"
+      style={styles.detailBar}
+      contentContainerStyle={styles.detailBarContent}
+    >
+      {children}
+    </ScrollView>
+  );
+}
+
+/**
+ * One item on the detail bar. Account, date and note hold what's usually
+ * right already, so each is one quiet tap to change; Money back and Split
+ * are switches, filled in when on.
  */
 export function DetailChip({
   icon,
   label,
   muted,
+  active,
+  disabled,
   onPress,
   accessibilityLabel,
 }: {
   icon: React.ComponentProps<typeof Feather>['name'];
   label: string;
   muted?: boolean;
+  /** A chip that's a switch: on, it's filled in with a tick instead of a dropdown arrow. */
+  active?: boolean;
+  /** Can't be used with what's already chosen (Split alongside Money back): dimmed, in the same place. */
+  disabled?: boolean;
   onPress: () => void;
   accessibilityLabel: string;
 }) {
@@ -94,15 +121,39 @@ export function DetailChip({
         haptics.tap();
         onPress();
       }}
-      style={styles.detailChip}
-      accessibilityRole="button"
+      disabled={disabled}
+      style={withPressed([
+        styles.detailChip,
+        active && styles.detailChipActive,
+        disabled && styles.detailChipDisabled,
+      ])}
+      accessibilityRole={active === undefined ? 'button' : 'switch'}
+      accessibilityState={
+        active === undefined ? { disabled: !!disabled } : { checked: active, disabled: !!disabled }
+      }
       accessibilityLabel={accessibilityLabel}
     >
-      <Feather name={icon} size={13} color={muted ? theme.colors.textMuted : theme.colors.ink} />
-      <Text style={[styles.detailChipText, muted && styles.detailChipTextMuted]} numberOfLines={1}>
+      <Feather
+        name={icon}
+        size={13}
+        color={active ? theme.colors.surface : muted ? theme.colors.textMuted : theme.colors.ink}
+      />
+      <Text
+        style={[
+          styles.detailChipText,
+          muted && styles.detailChipTextMuted,
+          active && styles.detailChipTextActive,
+        ]}
+        numberOfLines={1}
+      >
         {label}
       </Text>
-      {!muted && <Feather name="chevron-down" size={12} color={theme.colors.textMuted} />}
+      {active ? (
+        <Feather name="check" size={12} color={theme.colors.surface} />
+      ) : (
+        !muted &&
+        active === undefined && <Feather name="chevron-down" size={12} color={theme.colors.textMuted} />
+      )}
     </Pressable>
   );
 }
@@ -190,8 +241,8 @@ export function FriendFields({
         </View>
         <Text style={styles.hint}>
           {friendAccountId
-            ? 'Records a real transaction on that account too, so it shows in Transactions and Reports.'
-            : 'Only updates the balance — no real transaction, so it won’t appear in Transactions or Reports.'}
+            ? 'Records a real transaction on that account too, so it shows in Activity and Reports.'
+            : 'Only updates the balance — no real transaction, so it won’t appear in Activity or Reports.'}
         </Text>
       </View>
     </>

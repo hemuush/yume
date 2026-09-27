@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { listLoans, getLoanProgress } from '@/db/loans';
 import { roundedMinor } from '@/lib/round';
 import { Loan } from '@/types';
+import { MovingRow } from '@/components/MovingRow';
 import { EmptyState } from '@/components/EmptyState';
 import { AddButton } from '@/components/AddButton';
 import { AppHeader } from '@/components/AppHeader';
@@ -87,25 +88,27 @@ export default function LoansScreen() {
         ) : (
           <>
             {activeLoans.map((loan) => (
-              <LoanCard
-                key={loan.id}
-                loan={loan}
-                fadeStyle={listFadeStyle}
-                onPress={() => setSelectedLoan(loan)}
-                lastDueDate={lastDue[loan.id]}
-              />
+              <MovingRow key={loan.id}>
+                <LoanCard
+                  loan={loan}
+                  fadeStyle={listFadeStyle}
+                  onPress={() => setSelectedLoan(loan)}
+                  lastDueDate={lastDue[loan.id]}
+                />
+              </MovingRow>
             ))}
             {closedLoans.length > 0 && (
               <>
-                <Text style={styles.closedDivider}>CLOSED</Text>
+                <Text style={styles.closedDivider}>Closed</Text>
                 {closedLoans.map((loan) => (
-                  <LoanCard
-                    key={loan.id}
-                    loan={loan}
-                    fadeStyle={listFadeStyle}
-                    onPress={() => setSelectedLoan(loan)}
-                    muted
-                  />
+                  <MovingRow key={loan.id}>
+                    <LoanCard
+                      loan={loan}
+                      fadeStyle={listFadeStyle}
+                      onPress={() => setSelectedLoan(loan)}
+                      muted
+                    />
+                  </MovingRow>
                 ))}
               </>
             )}
