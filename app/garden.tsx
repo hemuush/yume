@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react';
 import { View, ScrollView } from 'react-native';
 import { Text } from '@/components/Text';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { getDailySpendingGoal } from '@/db/settings';
+import { getDailySpendingGoal, setDailySpendingGoal } from '@/db/settings';
 import { getDailyGoalStreakSeries, DailyGoalStreakPoint } from '@/db/reports';
 import { listSavingsGoals } from '@/db/savingsGoals';
 import { goalProgress } from '@/lib/savingsGoalProgress';
@@ -16,6 +16,9 @@ import { SuuIllustration } from '@/components/SuuIllustration';
 import { GardenPlant } from '@/features/garden/GardenPlant';
 import { theme } from '@/constants/theme';
 import { useScreenLoad } from '@/lib/useScreenLoad';
+import { FormInput } from '@/components/FormInput';
+import { PrimaryButton } from '@/components/PrimaryButton';
+import { toMinor } from '@/lib/money';
 import { styles } from '@/features/garden/garden.styles';
 
 const POT_COUNT = 5;
@@ -47,6 +50,10 @@ export default function GardenScreen() {
   const [dailyGoalMinor, setDailyGoalMinor] = useState<number | null>(null);
   const [series, setSeries] = useState<DailyGoalStreakPoint[]>([]);
   const [goals, setGoals] = useState<SavingsGoal[]>([]);
+  // The first-run goal form, right in the empty garden rather than directions to Settings.
+  const [goalInput, setGoalInput] = useState('');
+  const [goalError, setGoalError] = useState<string | null>(null);
+  const [goalSaving, setGoalSaving] = useState(false);
 
   const load = useCallback(async () => {
     const goal = await getDailySpendingGoal();
@@ -58,7 +65,26 @@ export default function GardenScreen() {
     setSeries(streakSeries);
     setGoals(goalList.filter((g) => !g.archived));
   }, []);
-  const { loaded, loadError } = useScreenLoad(load);
+  const { loaded, loadError, reload } = useScreenLoad(load);
+
+  // Same rule Settings' daily goal uses: a positive amount, saved as the same setting.
+  const startGoal = async () => {
+    setGoalError(null);
+    const minor = toMinor(parseFloat(goalInput || '0'));
+    if (!Number.isFinite(minor) || minor <= 0) {
+      setGoalError('Enter a valid daily amount');
+      return;
+    }
+    setGoalSaving(true);
+    try {
+      await setDailySpendingGoal(minor);
+      await reload();
+    } catch (e: any) {
+      setGoalError(String(e?.message ?? e));
+    } finally {
+      setGoalSaving(false);
+    }
+  };
 
   const today = toLocalIsoDate(new Date());
   const streakToday = series.length > 0 ? series[series.length - 1].streakDays : 0;
@@ -111,8 +137,22 @@ export default function GardenScreen() {
         {dailyGoalMinor == null ? (
           <EmptyState
             title="Set a daily spending goal to start"
-            subtitle="Profile → Settings → Money → Daily spending goal. Once it's set, every day you keep to it plants something here."
-          />
+            subtitle="Every day you keep under it plants something here. You can change it later in Settings."
+          >
+            <FormInput
+              label="Amount per day"
+              value={goalInput}
+              onChangeText={setGoalInput}
+              keyboardType="decimal-pad"
+              placeholder="e.g. 800"
+            />
+            {goalError && <Text style={styles.goalError}>{goalError}</Text>}
+            <PrimaryButton
+              title={goalSaving ? 'Saving…' : 'Start growing'}
+              onPress={startGoal}
+              disabled={goalSaving}
+            />
+          </EmptyState>
         ) : (
           <>
             <View style={styles.streakPill}>

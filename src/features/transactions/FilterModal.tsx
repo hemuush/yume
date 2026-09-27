@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { View } from 'react-native';
 import { Text } from '@/components/Text';
-import { Category, TransactionType } from '@/types';
+import { Account, Category, TransactionType } from '@/types';
 import { SegmentedControl } from '@/components/SegmentedControl';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { Chip } from '@/components/Chip';
@@ -17,8 +17,16 @@ const FILTER_TYPES: { label: string; value: TransactionType | 'all' }[] = [
   { label: 'Transfer', value: 'transfer' },
 ];
 
+/** What Activity is filtered to — see FilterModal. */
+export interface ActivityFilter {
+  type: TransactionType | 'all';
+  categoryIds: string[];
+  /** A transfer matches either of its accounts. */
+  accountIds: string[];
+}
+
 /**
- * Type + category filters, applied client-side on top of whatever date
+ * Type, category and account filters, applied client-side on top of whatever date
  * range (day/week/month) is already active — the visible range is usually
  * small enough that filtering the already-fetched list is simpler and just
  * as fast as adding more SQL filter parameters.
@@ -26,20 +34,22 @@ const FILTER_TYPES: { label: string; value: TransactionType | 'all' }[] = [
 export function FilterModal({
   visible,
   categories,
-  type,
-  categoryIds,
+  accounts,
+  filter,
   onClose,
   onApply,
 }: {
   visible: boolean;
   categories: Category[];
-  type: TransactionType | 'all';
-  categoryIds: string[];
+  accounts: Account[];
+  filter: ActivityFilter;
   onClose: () => void;
-  onApply: (type: TransactionType | 'all', categoryIds: string[]) => void;
+  onApply: (filter: ActivityFilter) => void;
 }) {
+  const { type, categoryIds, accountIds } = filter;
   const [draftType, setDraftType] = useState(type);
   const [draftCategoryIds, setDraftCategoryIds] = useState<string[]>(categoryIds);
+  const [draftAccountIds, setDraftAccountIds] = useState<string[]>(accountIds);
   // Which top-level category's subcategory row is currently expanded — reset
   // whenever the modal reopens or the type filter changes so a stale
   // expansion from a previous session doesn't linger.
@@ -49,9 +59,10 @@ export function FilterModal({
     if (visible) {
       setDraftType(type);
       setDraftCategoryIds(categoryIds);
+      setDraftAccountIds(accountIds);
       setExpandedParentId(null);
     }
-  }, [visible, type, categoryIds]);
+  }, [visible, type, categoryIds, accountIds]);
 
   // Selecting a specific type narrows which categories make sense to show
   // (an income category checked while "Expense" is picked could never match
@@ -102,12 +113,14 @@ export function FilterModal({
           <PrimaryButton
             title="Clear filters"
             variant="secondary"
-            onPress={() => onApply('all', [])}
+            onPress={() => onApply({ type: 'all', categoryIds: [], accountIds: [] })}
             style={f.footerBtn}
           />
           <PrimaryButton
             title="Apply"
-            onPress={() => onApply(draftType, draftCategoryIds)}
+            onPress={() =>
+              onApply({ type: draftType, categoryIds: draftCategoryIds, accountIds: draftAccountIds })
+            }
             style={f.footerBtn}
           />
         </View>
@@ -115,6 +128,26 @@ export function FilterModal({
     >
       <Text style={styles.fieldLabel}>Type</Text>
       <SegmentedControl options={FILTER_TYPES} value={draftType} onChange={onTypeChange} />
+
+      {accounts.length > 1 && (
+        <>
+          <Text style={styles.fieldLabel}>Account</Text>
+          <View style={styles.chipRow}>
+            {accounts.map((acc) => (
+              <Chip
+                key={acc.id}
+                label={acc.name}
+                active={draftAccountIds.includes(acc.id)}
+                onPress={() =>
+                  setDraftAccountIds((prev) =>
+                    prev.includes(acc.id) ? prev.filter((id) => id !== acc.id) : [...prev, acc.id]
+                  )
+                }
+              />
+            ))}
+          </View>
+        </>
+      )}
 
       {draftType !== 'transfer' && (
         <>

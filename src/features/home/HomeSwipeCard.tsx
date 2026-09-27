@@ -13,6 +13,7 @@ import { useReduceMotion } from '@/lib/useReduceMotion';
 import { MOTION, timing } from '@/lib/animation';
 import { theme } from '@/constants/theme';
 import { HomeSection } from './HomeSection';
+import { haptics } from '@/lib/haptics';
 import { homeStyles } from './homeStyles';
 
 export interface SwipePage {
@@ -78,6 +79,7 @@ export function HomeSwipeCard({ pages }: { pages: SwipePage[] }) {
   }
 
   const goToPage = (index: number) => {
+    if (index !== activeIndex) haptics.tap();
     setActiveIndex(index);
     scrollRef.current?.scrollTo({ x: index * cardWidth, animated: true });
   };
@@ -91,7 +93,10 @@ export function HomeSwipeCard({ pages }: { pages: SwipePage[] }) {
       0,
       Math.min(pages.length - 1, Math.round(e.nativeEvent.contentOffset.x / cardWidth))
     );
-    if (index !== activeIndex) setActiveIndex(index);
+    if (index !== activeIndex) {
+      haptics.tap();
+      setActiveIndex(index);
+    }
   };
 
   // `activeIndex` is state that outlives any single render — if the last

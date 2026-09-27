@@ -1,4 +1,6 @@
 import { View, Pressable } from 'react-native';
+import Feather from '@expo/vector-icons/Feather';
+import { theme } from '@/constants/theme';
 import { Text } from '@/components/Text';
 import { PersonWithBalance } from '@/db/people';
 import { Account } from '@/types';
@@ -7,11 +9,21 @@ import { OdometerAmount } from '@/components/OdometerAmount';
 import { SegmentedControl } from '@/components/SegmentedControl';
 import { useAccent } from '@/theme/AccentContext';
 import { accountBadgeColor, accountIcon } from '@/lib/account';
+import { haptics } from '@/lib/haptics';
+import { PrimaryButton } from '@/components/PrimaryButton';
 import { styles } from './add.styles';
 
 export function Chip({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
   return (
-    <Pressable onPress={onPress} style={[styles.chip, active && styles.chipActive]}>
+    <Pressable
+      onPress={() => {
+        haptics.tap();
+        onPress();
+      }}
+      style={[styles.chip, active && styles.chipActive]}
+      accessibilityRole="button"
+      accessibilityState={{ selected: active }}
+    >
       <Text style={styles.chipText}>{label}</Text>
     </Pressable>
   );
@@ -38,13 +50,59 @@ export function AccountTile({
   const { accent } = useAccent();
   const badgeColor = accountBadgeColor(account.type, accent);
   return (
-    <Pressable onPress={onPress} style={styles.accountTile}>
+    <Pressable
+      onPress={() => {
+        haptics.tap();
+        onPress();
+      }}
+      style={styles.accountTile}
+      accessibilityRole="button"
+      accessibilityState={{ selected: active }}
+      accessibilityLabel={account.name}
+    >
       <View style={[styles.accountRing, active && styles.accountRingActive]}>
         <CategoryIcon name={accountIcon(account.type)} color={badgeColor} size={20} square={48} />
       </View>
       <Text style={styles.accountName} numberOfLines={1}>
         {account.name}
       </Text>
+    </Pressable>
+  );
+}
+
+/**
+ * One of Add's detail chips — account, date, note — under the category
+ * grid. They hold what's usually right already, so each is one quiet tap
+ * to change rather than a full section of its own.
+ */
+export function DetailChip({
+  icon,
+  label,
+  muted,
+  onPress,
+  accessibilityLabel,
+}: {
+  icon: React.ComponentProps<typeof Feather>['name'];
+  label: string;
+  muted?: boolean;
+  onPress: () => void;
+  accessibilityLabel: string;
+}) {
+  return (
+    <Pressable
+      onPress={() => {
+        haptics.tap();
+        onPress();
+      }}
+      style={styles.detailChip}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
+    >
+      <Feather name={icon} size={13} color={muted ? theme.colors.textMuted : theme.colors.ink} />
+      <Text style={[styles.detailChipText, muted && styles.detailChipTextMuted]} numberOfLines={1}>
+        {label}
+      </Text>
+      {!muted && <Feather name="chevron-down" size={12} color={theme.colors.textMuted} />}
     </Pressable>
   );
 }
@@ -67,6 +125,7 @@ export function FriendFields({
   setFriendSign,
   friendAccountId,
   setFriendAccountId,
+  onAddPerson,
 }: {
   people: PersonWithBalance[];
   accounts: Account[];
@@ -76,11 +135,17 @@ export function FriendFields({
   setFriendSign: (s: 1 | -1) => void;
   friendAccountId: string | null;
   setFriendAccountId: (id: string | null) => void;
+  /** Opens the new-person sheet right here, instead of sending you to Plan first. */
+  onAddPerson: () => void;
 }) {
   if (people.length === 0) {
     return (
       <View style={styles.section}>
-        <Text style={styles.hint}>Add a person first: Plan → Friends &amp; Family.</Text>
+        <Text style={styles.label}>Person</Text>
+        <Text style={[styles.hint, { marginTop: 0, marginBottom: 10 }]}>
+          Nobody here yet. Add the friend or family member this is with.
+        </Text>
+        <PrimaryButton title="Add a person" variant="secondary" onPress={onAddPerson} />
       </View>
     );
   }
@@ -92,6 +157,7 @@ export function FriendFields({
           {people.map((p) => (
             <Chip key={p.id} label={p.name} active={personId === p.id} onPress={() => setPersonId(p.id)} />
           ))}
+          <Chip label="+ Person" active={false} onPress={onAddPerson} />
         </View>
       </View>
       <View style={styles.section}>

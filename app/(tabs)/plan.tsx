@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { View, ScrollView, StyleSheet } from 'react-native';
 import { Text } from '@/components/Text';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -6,12 +6,12 @@ import { router } from 'expo-router';
 import { listBudgetsForMonth } from '@/db/budgets';
 import { listSavingsGoals } from '@/db/savingsGoals';
 import { listRecurringRules } from '@/db/recurring';
-import { listLoans, getLoanProgress } from '@/db/loans';
+import { listLoans, getLoanProgress, getLoanPaymentContext, LoanPaymentContext } from '@/db/loans';
 import { listPeople } from '@/db/people';
 import { listAccounts, listCategories } from '@/db/ledger';
 import { getDailyGoalStreakSeries, getCategoryMonthlyAverages } from '@/db/reports';
 import { getDailySpendingGoal } from '@/db/settings';
-import { SavingsGoal } from '@/types';
+import { Account, SavingsGoal } from '@/types';
 import { theme } from '@/constants/theme';
 import { toLocalIsoDate } from '@/lib/date';
 import { AppHeader } from '@/components/AppHeader';
@@ -22,31 +22,39 @@ import {
   buildLoansSummary,
   buildDueItems,
   buildDueSoon,
+  buildDueDays,
+  groupDueItems,
   buildBudgetsSummary,
   buildPeopleState,
   buildHabitState,
   LoansSummary,
-  PlanDueItem,
   DueSoon,
+  DueDay,
+  DueGroup,
   BudgetsSummary,
   PeopleState,
   HabitState,
   PlanRoute,
 } from '@/features/plan/planOverview';
+import { PayInstallmentSheet } from '@/features/loans/PayInstallmentSheet';
 import {
-  LoansSection,
-  DueSoonCard,
+  TileRow,
+  DueTile,
+  EmiTile,
+  BudgetTile,
+  DebtTile,
+  PeopleTile,
+  HabitTile,
+  SavingTile,
   ComingUpSection,
-  BudgetsSection,
-  PeopleSection,
-  SavingSection,
-  HabitSection,
 } from '@/features/plan/PlanSections';
 
 interface PlanData {
   loans: LoansSummary;
-  dueItems: PlanDueItem[];
   dueSoon: DueSoon;
+  dueDays: DueDay[];
+  dueGroups: DueGroup[];
+  savingsAccounts: Account[];
   budgets: BudgetsSummary;
   people: PeopleState;
   goals: SavingsGoal[];
@@ -56,13 +64,13 @@ interface PlanData {
 }
 
 /**
- * Everything you're planning, as a look ahead rather than a menu — every
- * section shows its own real numbers and opens its full screen. Ordered by
- * priority (the Plan sign-off): Loans, what's due in the next two weeks,
- * Coming up, Budgets, Friends & Family, Saving toward (Goals + What-if),
- * then the daily habit (Suu's Garden). All seven of the old tiles' screens
- * stay one tap away — an empty section says what to do next instead of
- * disappearing. What each section says is decided in planOverview.ts.
+ * Everything you're planning, at a glance: a bento of tiles (the Plan
+ * sign-off, direction A), one per topic, then Coming up in full. The next
+ * 14 days leads; then EMIs and Budgets side by side, the road to debt-free,
+ * Friends & Family and the daily habit side by side, and Saving toward with
+ * What-if. Every tile opens its own screen, and an empty one says what to
+ * do next instead of disappearing. What each tile says is decided in
+ * planOverview.ts.
  */
 export default function PlanScreen() {
   const insets = useSafeAreaInsets();
@@ -109,10 +117,13 @@ export default function PlanScreen() {
       (c) => c.totalMinor > 0 && !categories.find((cat) => cat.id === c.categoryId)?.isSystem
     );
 
+    const today = toLocalIsoDate(new Date());
     setData({
       loans: loansSummary,
-      dueItems,
-      dueSoon: buildDueSoon(dueItems, toLocalIsoDate(new Date())),
+      dueSoon: buildDueSoon(dueItems, today),
+      dueDays: buildDueDays(dueItems, today),
+      dueGroups: groupDueItems(dueItems, today),
+      savingsAccounts: accounts.filter((a) => a.type === 'savings' && !a.archived),
       budgets: buildBudgetsSummary(
         budgets.map((b) => ({
           id: b.budget.id,
@@ -131,13 +142,22 @@ export default function PlanScreen() {
       dailyGoalMinor: dailyGoal,
     });
   }, []);
-  const { loaded, loadError } = useScreenLoad(loadPlan);
+  const { loaded, loadError, reload } = useScreenLoad(loadPlan);
+  // The EMI being paid from Coming up, with the account and category it goes on.
+  const [paying, setPaying] = useState<LoanPaymentContext | null>(null);
+  const payEmi = async (loanId: string) => setPaying(await getLoanPaymentContext(loanId));
   const open = (route: PlanRoute) => router.push(route);
+  // The 14-day tile jumps down to Coming up.
+  const scrollRef = useRef<ScrollView>(null);
+  const comingUpY = useRef(0);
 
   return (
     <View style={styles.container}>
       <AppHeader title="Plan" />
-      <ScrollView contentContainerStyle={{ paddingBottom: theme.layout.tabScreenScrollPad + insets.bottom }}>
+      <ScrollView
+        ref={scrollRef}
+        contentContainerStyle={{ paddingBottom: theme.layout.tabScreenScrollPad + insets.bottom }}
+      >
         {loadError && (
           <View style={styles.errorBanner}>
             <Text style={styles.errorTitle}>Couldn&rsquo;t load your plans</Text>
@@ -152,21 +172,50 @@ export default function PlanScreen() {
           </View>
         ) : (
           <>
-            <LoansSection summary={data.loans} onOpen={() => open('/loans')} />
-            <DueSoonCard dueSoon={data.dueSoon} />
-            <ComingUpSection items={data.dueItems} onOpen={open} />
-            <BudgetsSection summary={data.budgets} onOpen={() => open('/budgets')} />
-            <PeopleSection state={data.people} onOpen={() => open('/people')} />
-            <SavingSection
+            <DueTile
+              dueSoon={data.dueSoon}
+              days={data.dueDays}
+              next={data.dueGroups.find((g) => g.outMinor > 0) ?? null}
+              onPress={() =>
+                scrollRef.current?.scrollTo({ y: Math.max(0, comingUpY.current - 8), animated: true })
+              }
+            />
+            <TileRow>
+              <EmiTile
+                dueSoon={data.dueSoon}
+                groups={data.dueGroups}
+                loans={data.loans}
+                onOpen={() => open('/loans')}
+              />
+              <BudgetTile summary={data.budgets} onOpen={() => open('/budgets')} />
+            </TileRow>
+            <DebtTile loans={data.loans} onOpen={() => open('/loans')} />
+            <TileRow>
+              <PeopleTile state={data.people} onOpen={() => open('/people')} />
+              <HabitTile habit={data.habit} goalMinor={data.dailyGoalMinor} onOpen={() => open('/garden')} />
+            </TileRow>
+            <SavingTile
               goals={data.goals}
+              savingsAccounts={data.savingsAccounts}
               whatIf={data.whatIf}
               onOpenGoals={() => open('/savings-goals')}
               onOpenWhatIf={() => open('/whatif')}
             />
-            <HabitSection habit={data.habit} goalMinor={data.dailyGoalMinor} onOpen={() => open('/garden')} />
+            <View onLayout={(e) => (comingUpY.current = e.nativeEvent.layout.y)}>
+              <ComingUpSection groups={data.dueGroups} onOpen={open} onPay={(id) => void payEmi(id)} />
+            </View>
           </>
         )}
       </ScrollView>
+      {paying && (
+        <PayInstallmentSheet
+          installment={paying.installment}
+          account={paying.account}
+          categoryId={paying.categoryId}
+          onClose={() => setPaying(null)}
+          onPaid={reload}
+        />
+      )}
     </View>
   );
 }

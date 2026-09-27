@@ -91,6 +91,61 @@ export function buildHeatGrid(input: {
   return { cells, leadingPad: new Date(y, m, 1).getDay(), columns: 7, weekdayLabels: WEEKDAYS };
 }
 
+/** A custom range up to this many days is drawn day by day; a longer one by month. */
+export const RANGE_DAY_GRID_MAX_DAYS = 62;
+
+/**
+ * The heatmap's grid for a custom range. Up to about two months it's a
+ * calendar of exactly the range's days (blank cells before the first, so
+ * weekdays line up); longer, one cell per month — summed from the range's
+ * own days, so a month the range only partly covers isn't overstated.
+ */
+export function buildRangeHeatGrid(input: {
+  start: string;
+  end: string;
+  daily: DailyExpensePoint[];
+  onDayPress: (iso: string) => void;
+  todayIso?: string;
+}): { cells: HeatCell[]; leadingPad: number; columns: number; weekdayLabels?: string[] } {
+  const byDate = new Map(input.daily.map((d) => [d.date, d.totalMinor]));
+  const days: string[] = [];
+  for (let d = parseLocalIsoDate(input.start); toLocalIsoDate(d) <= input.end; d.setDate(d.getDate() + 1)) {
+    days.push(toLocalIsoDate(d));
+  }
+  if (days.length <= RANGE_DAY_GRID_MAX_DAYS) {
+    const maxDay = Math.max(1, ...input.daily.map((d) => d.totalMinor));
+    const todayIso = input.todayIso ?? toLocalIsoDate(new Date());
+    return {
+      cells: days.map((iso) => {
+        const total = byDate.get(iso) ?? 0;
+        return {
+          key: iso,
+          label: String(Number(iso.slice(8))),
+          level: heatLevel(total, maxDay),
+          isToday: iso === todayIso,
+          onPress: total > 0 ? () => input.onDayPress(iso) : undefined,
+        };
+      }),
+      leadingPad: parseLocalIsoDate(input.start).getDay(),
+      columns: 7,
+      weekdayLabels: WEEKDAYS,
+    };
+  }
+  const months = new Map<string, number>();
+  for (const iso of days)
+    months.set(iso.slice(0, 7), (months.get(iso.slice(0, 7)) ?? 0) + (byDate.get(iso) ?? 0));
+  const maxMonth = Math.max(1, ...months.values());
+  return {
+    cells: [...months].map(([ym, total]) => ({
+      key: `m-${ym}`,
+      label: parseLocalIsoDate(`${ym}-01`).toLocaleDateString(undefined, { month: 'short' }),
+      level: heatLevel(total, maxMonth),
+    })),
+    leadingPad: 0,
+    columns: 4,
+  };
+}
+
 /** Rolling average of the prior months in a monthly trend (excludes the last / current point). */
 export function baselineFromTrend(trend: TrendPoint[]): number | null {
   const prior = trend.slice(0, -1).map((t) => t.totalMinor);
@@ -330,7 +385,7 @@ export interface StoryInput {
   /** True when the period is the one in progress (this month / this year). */
   isCurrentPeriod: boolean;
   /** "month" or "year" — used in the wording. */
-  unit: 'month' | 'year';
+  unit: 'month' | 'year' | 'period';
 }
 
 const PATTERN_TONE: StoryTone[] = ['sky', 'gold'];

@@ -230,6 +230,16 @@ function AppGate({ needsOnboarding, initialLocked }: { needsOnboarding: boolean;
     return () => sub.remove();
   }, []);
 
+  // The daily backup also runs when the app comes back to the foreground, not
+  // only on cold start: Android keeps Yume alive in the background for days,
+  // and a day with no cold start used to get no backup file at all.
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (next: AppStateStatus) => {
+      if (next === 'active') void runLocalBackupIfDue();
+    });
+    return () => sub.remove();
+  }, []);
+
   if (showOnboarding) {
     return (
       <>

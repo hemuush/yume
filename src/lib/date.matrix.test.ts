@@ -11,7 +11,6 @@ import {
   addDaysToIsoDate,
   parseLocalIsoDate,
   monthsBetweenIsoDates,
-  partsToIsoDate,
   daysUntilIsoDate,
 } from './date';
 
@@ -128,31 +127,6 @@ describe('monthsBetweenIsoDates — whole elapsed months, partial final month fl
     for (const months of [1, 5, 12, 50]) {
       expect(monthsBetweenIsoDates('2027-06-15', addMonthsToIsoDate('2027-06-15', -months))).toBe(0);
     }
-  });
-});
-
-describe('partsToIsoDate — accepts every real calendar date, rejects impossible ones', () => {
-  for (const y of [2024, 2025]) {
-    for (const m of MONTHS) {
-      const lastDay = new Date(y, m, 0).getDate();
-      for (let d = 1; d <= 31; d++) {
-        const valid = d <= lastDay;
-        it(`${y}-${pad(m)}-${pad(d)} → ${valid ? 'accepted' : 'rejected'}`, () => {
-          const result = partsToIsoDate(String(y), String(m), String(d));
-          if (valid) expect(result).toBe(iso(y, m, d));
-          else expect(result).toBeNull();
-        });
-      }
-    }
-  }
-
-  it('rejects out-of-range months and years and non-numeric input', () => {
-    expect(partsToIsoDate('2025', '0', '10')).toBeNull();
-    expect(partsToIsoDate('2025', '13', '10')).toBeNull();
-    expect(partsToIsoDate('1899', '1', '1')).toBeNull();
-    expect(partsToIsoDate('2201', '1', '1')).toBeNull();
-    expect(partsToIsoDate('abc', '1', '1')).toBeNull();
-    expect(partsToIsoDate('2025', '', '')).toBeNull();
   });
 });
 

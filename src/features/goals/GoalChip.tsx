@@ -29,7 +29,7 @@ export function GoalChip({ goal, onPress }: { goal: SavingsGoal; onPress: () => 
       <Text style={styles.name} numberOfLines={1}>
         {goal.name}
       </Text>
-      <Text style={styles.amt} numberOfLines={1}>
+      <Text style={styles.amt} numberOfLines={1} adjustsFontSizeToFit>
         {formatMoney(goal.currentAmountMinor)}{' '}
         <Text style={styles.of}>/ {formatMoney(goal.targetAmountMinor)}</Text>
       </Text>

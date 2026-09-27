@@ -7,7 +7,15 @@ import Feather from '@expo/vector-icons/Feather';
 import { File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import * as DocumentPicker from 'expo-document-picker';
-import { buildBackupSnapshot, BackupSnapshot, RestoreResult } from '@/lib/backup';
+import {
+  buildBackupSnapshot,
+  BackupSnapshot,
+  RestoreResult,
+  summarizeSnapshot,
+  getCurrentSummary,
+  countEntriesSavedAfter,
+} from '@/lib/backup';
+import { RestorePreviewSheet, RestorePreview } from '@/features/backup/RestorePreviewSheet';
 import {
   restoreKeepingSafetyCopy,
   undoLastRestore,
@@ -20,7 +28,9 @@ import {
   pickBackupFolder,
   forgetBackupFolder,
   writeLocalBackupNow,
-  readNewestLocalBackup,
+  listLocalBackups,
+  readLocalBackup,
+  LocalBackupFile,
 } from '@/lib/localBackup';
 import {
   getLocalBackupFolderUri,
@@ -31,29 +41,14 @@ import {
   setLastLocalBackupResult,
   BackupFrequency,
   BackupOutcome,
-  getNotificationPrefs,
 } from '@/db/settings';
-import { resyncAllLoanReminders } from '@/db/loans';
-import { syncDailyReminder, syncWeeklySummary } from '@/lib/notifications';
+import { resyncAfterRestore } from '@/lib/restoreSync';
 import { withoutRelock } from '@/lib/appLock';
-import { refreshAllWidgets } from '@/widgets/notifyWidgets';
 import { AppHeader } from '@/components/AppHeader';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { SegmentedControl } from '@/components/SegmentedControl';
 import { Skeleton } from '@/components/Skeleton';
 import { theme } from '@/constants/theme';
-
-async function resyncAfterRestore(): Promise<void> {
-  await resyncAllLoanReminders().catch((err) => console.error('resyncAllLoanReminders failed:', err));
-  try {
-    const prefs = await getNotificationPrefs();
-    await syncDailyReminder(prefs);
-    await syncWeeklySummary(prefs);
-  } catch (err) {
-    console.error('Reminder resync after restore failed:', err);
-  }
-  refreshAllWidgets();
-}
 
 const FREQUENCIES: { label: string; value: BackupFrequency }[] = [
   { label: 'Daily', value: 'daily' },
@@ -117,10 +112,17 @@ export default function BackupScreen() {
   // The copy of the data from just before the last restore, if there is one
   // (see lib/safetyCopy.ts) — shown as the "Undo your last restore" card.
   const [safetyInfo, setSafetyInfo] = useState<SafetyCopyInfo | null>(null);
+  // The backup files in the chosen folder, newest first.
+  const [files, setFiles] = useState<LocalBackupFile[] | null>(null);
+  // A restore waiting on the preview sheet, and whether it's running.
+  const [pending, setPending] = useState<{ snapshot: BackupSnapshot; preview: RestorePreview } | null>(null);
+  const [restoring, setRestoring] = useState(false);
 
   const load = useCallback(async () => {
     setSafetyInfo(await getSafetyCopyInfo());
-    setLocalFolderUri(await getLocalBackupFolderUri());
+    const folder = await getLocalBackupFolderUri();
+    setLocalFolderUri(folder);
+    setFiles(folder ? await listLocalBackups(folder).catch(() => []) : null);
     setLastLocalBackup(await getLastLocalBackupAt());
     setLocalResult(await getLastLocalBackupResult());
     setFrequency(await getBackupFrequency());
@@ -269,54 +271,62 @@ export default function BackupScreen() {
     );
   };
 
-  const confirmAndRestore = (snapshot: BackupSnapshot) =>
-    new Promise<void>((resolve, reject) => {
+  /** Shows the restore preview for a backup; the sheet's Restore does the rest. */
+  const confirmAndRestore = async (snapshot: BackupSnapshot) => {
+    const backup = summarizeSnapshot(snapshot);
+    if (!backup) throw new Error("That file isn't a Yume backup — pick a full backup Yume exported.");
+    const exportedAt = Number.isNaN(Date.parse(snapshot.exportedAt)) ? null : snapshot.exportedAt;
+    const [current, lostCount] = await Promise.all([
+      getCurrentSummary(),
+      exportedAt ? countEntriesSavedAfter(exportedAt) : Promise.resolve(0),
+    ]);
+    setPending({
+      snapshot,
+      preview: { exportedAt: exportedAt ?? new Date().toISOString(), backup, current, lostCount },
+    });
+  };
+
+  const restorePending = async () => {
+    if (!pending) return;
+    const { snapshot } = pending;
+    setRestoring(true);
+    try {
+      const result = await restoreKeepingSafetyCopy(snapshot);
+      setPending(null);
+      finishRestore(result);
+    } catch (e) {
+      setPending(null);
+      if (!(e instanceof SafetyCopyError)) {
+        Alert.alert('Something went wrong', String((e as Error)?.message ?? e));
+        return;
+      }
+      // The copy couldn't be saved (usually a full phone) and nothing has
+      // been replaced. Only go ahead if the user says so, knowing there'd be
+      // no way back — Cancel is the default.
       Alert.alert(
-        'Replace all data?',
-        `This backup was made on ${new Date(snapshot.exportedAt).toLocaleString()}. Restoring will replace everything currently in the app.\n\nA copy of your current data is kept first, so you can undo this.`,
+        "Couldn't keep a copy of your current data",
+        `${e.message}
+
+Restore anyway? Your current data would be replaced with no way back.`,
         [
-          { text: 'Cancel', style: 'cancel', onPress: () => resolve() },
+          { text: 'Cancel', style: 'cancel' },
           {
-            text: 'Restore',
+            text: 'Restore anyway',
             style: 'destructive',
             onPress: async () => {
               try {
-                const result = await restoreKeepingSafetyCopy(snapshot);
-                resolve();
-                finishRestore(result);
-              } catch (e) {
-                if (!(e instanceof SafetyCopyError)) {
-                  reject(e);
-                  return;
-                }
-                // The copy couldn't be saved (usually a full phone) and
-                // nothing has been replaced. Only go ahead if the user says
-                // so, knowing there'd be no way back — Cancel is the default.
-                resolve();
-                Alert.alert(
-                  "Couldn't keep a copy of your current data",
-                  `${e.message}\n\nRestore anyway? Your current data would be replaced with no way back.`,
-                  [
-                    { text: 'Cancel', style: 'cancel' },
-                    {
-                      text: 'Restore anyway',
-                      style: 'destructive',
-                      onPress: async () => {
-                        try {
-                          finishRestore(await restoreKeepingSafetyCopy(snapshot, { withoutCopy: true }));
-                        } catch (err: any) {
-                          Alert.alert('Something went wrong', String(err?.message ?? err));
-                        }
-                      },
-                    },
-                  ]
-                );
+                finishRestore(await restoreKeepingSafetyCopy(snapshot, { withoutCopy: true }));
+              } catch (err: any) {
+                Alert.alert('Something went wrong', String(err?.message ?? err));
               }
             },
           },
         ]
       );
-    });
+    } finally {
+      setRestoring(false);
+    }
+  };
 
   const choosePickFolder = () =>
     run('pick-folder', async () => {
@@ -349,15 +359,9 @@ export default function BackupScreen() {
       await forgetBackupFolder();
     });
 
-  const restoreFromLocal = () =>
+  const restoreFile = (file: LocalBackupFile) =>
     run('restore-local', async () => {
-      if (!localFolderUri) return;
-      const snapshot = await readNewestLocalBackup(localFolderUri);
-      if (!snapshot) {
-        Alert.alert('No backup found', 'There is no backup file in your chosen folder yet.');
-        return;
-      }
-      await confirmAndRestore(snapshot);
+      await confirmAndRestore(await readLocalBackup(file.uri));
     });
 
   return (
@@ -415,14 +419,37 @@ export default function BackupScreen() {
                   </>
                 )}
               </View>
-              {localFolderUri && (
-                <PrimaryButton
-                  title={busy === 'restore-local' ? 'Restoring...' : 'Restore latest from folder'}
-                  variant="secondary"
-                  onPress={restoreFromLocal}
-                  disabled={!!busy}
-                  style={{ marginTop: 10 }}
-                />
+              {localFolderUri && files && files.length > 0 && (
+                <View style={styles.fileList}>
+                  <Text style={styles.fileListTitle}>In your backup folder</Text>
+                  {files.map((file, i) => (
+                    <View key={file.uri} style={[styles.fileRow, i > 0 && styles.fileRowDivider]}>
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.fileWhen}>
+                          {file.exportedAt
+                            ? new Date(file.exportedAt).toLocaleString(undefined, {
+                                day: 'numeric',
+                                month: 'short',
+                                hour: 'numeric',
+                                minute: '2-digit',
+                              })
+                            : 'Backup file'}
+                        </Text>
+                        <Text style={styles.fileSub}>
+                          {file.summary
+                            ? `${file.summary.entries} entries · ${formatBytes(file.sizeBytes)}`
+                            : "Couldn't read this file"}
+                        </Text>
+                      </View>
+                      <PrimaryButton
+                        title="Restore"
+                        variant="secondary"
+                        onPress={() => restoreFile(file)}
+                        disabled={!!busy || !file.summary}
+                      />
+                    </View>
+                  ))}
+                </View>
               )}
             </>
           )}
@@ -491,6 +518,12 @@ export default function BackupScreen() {
           />
         </View>
       </ScrollView>
+      <RestorePreviewSheet
+        preview={pending?.preview ?? null}
+        busy={restoring}
+        onCancel={() => setPending(null)}
+        onRestore={() => void restorePending()}
+      />
     </View>
   );
 }
@@ -546,6 +579,22 @@ const styles = StyleSheet.create({
   errorDetail: { fontFamily: theme.font.body, fontSize: 11.5, color: theme.colors.expense, lineHeight: 15 },
   // The safety-copy card: a teal wash with a mint edge, so it reads as a
   // reassurance above the restore buttons rather than another action card.
+  fileList: {
+    marginTop: 14,
+    paddingTop: 10,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: theme.colors.borderSoft,
+  },
+  fileListTitle: {
+    fontFamily: theme.font.bodyBold,
+    fontSize: 12,
+    color: theme.colors.textMuted,
+    marginBottom: 4,
+  },
+  fileRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 9 },
+  fileRowDivider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.borderSoft },
+  fileWhen: { fontFamily: theme.font.bodyMedium, fontSize: 13.5, color: theme.colors.textPrimary },
+  fileSub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, marginTop: 1 },
   safetyCard: {
     marginHorizontal: 20,
     marginBottom: 12,

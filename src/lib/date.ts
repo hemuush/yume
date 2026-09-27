@@ -45,6 +45,18 @@ export function dayOfIsoDate(isoDate: string): number {
 }
 
 /**
+ * The first date after `today` on the same day of the month as `isoDate`
+ * — where a monthly rule made from a past entry should next run (a 31st
+ * lands on each month's last day, like the rules themselves).
+ */
+export function nextMonthlyDateAfter(isoDate: string, today: string): string {
+  const day = dayOfIsoDate(isoDate);
+  let next = addMonthsToIsoDate(isoDate, 1, day);
+  while (next <= today) next = addMonthsToIsoDate(next, 1, day);
+  return next;
+}
+
+/**
  * Adds whole days to a YYYY-MM-DD date, entirely in local-calendar space —
  * same UTC-round-trip pitfall as addMonthsToIsoDate above, avoided the same way.
  */
@@ -105,22 +117,4 @@ export function isoDatesInRange(from: string, to: string): string[] {
     cursor = addDaysToIsoDate(cursor, 1);
   }
   return dates;
-}
-
-/**
- * Turns free-typed Day/Month/Year text fields into a YYYY-MM-DD date, or
- * null if the combination isn't a real calendar date (e.g. "31/2/2026").
- * Built from plain numbers rather than `new Date(y, m, d)` alone so an
- * out-of-range day (Feb 30) is rejected instead of silently rolling into
- * the next month.
- */
-export function partsToIsoDate(year: string, month: string, day: string): string | null {
-  const y = parseInt(year, 10);
-  const m = parseInt(month, 10);
-  const d = parseInt(day, 10);
-  if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(d)) return null;
-  if (m < 1 || m > 12 || d < 1 || d > 31 || y < 1900 || y > 2200) return null;
-  const dt = new Date(y, m - 1, d);
-  if (dt.getFullYear() !== y || dt.getMonth() !== m - 1 || dt.getDate() !== d) return null;
-  return toLocalIsoDate(dt);
 }

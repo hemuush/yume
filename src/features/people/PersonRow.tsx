@@ -6,7 +6,7 @@ import { formatMoney } from '@/lib/money';
 import { roundedMinor } from '@/lib/round';
 import { theme } from '@/constants/theme';
 import { usePressScale } from '@/lib/usePressScale';
-import { MAX_LIST_STAGGER_MS } from '@/lib/animation';
+import { MAX_LIST_STAGGER_MS, ROW_LAYOUT, ROW_EXIT } from '@/lib/animation';
 import { NeoTile } from '@/components/NeoTile';
 import { personStatus, lastActivityShort, PersonStatus } from './people.helpers';
 import { styles } from './people.styles';
@@ -67,6 +67,8 @@ export function PersonRow({
         .duration(280)
         .springify()
         .reduceMotion(ReduceMotion.System)}
+      layout={ROW_LAYOUT}
+      exiting={ROW_EXIT}
     >
       <NeoTile style={styles.card}>
         <AnimatedPressable

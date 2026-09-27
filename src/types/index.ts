@@ -102,6 +102,12 @@ export interface SavingsGoal {
   currentAmountMinor: number;
   targetDate: string | null;
   linkedAccountId: string | null;
+  /**
+   * True when progress follows the linked account's balance: then
+   * `currentAmountMinor` is that balance (never below zero), not money
+   * added by hand. Only ever true with a linked account.
+   */
+  tracksAccount: boolean;
   /** An optional note written at creation, sealed until the goal first reaches 100% — see contributeToGoal. */
   noteToSelf: string | null;
   /** Flips to true exactly once, the moment the completion reveal is shown — see markGoalLetterRevealed. */

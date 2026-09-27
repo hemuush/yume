@@ -1,32 +1,58 @@
+import { useState } from 'react';
 import { View, Pressable } from 'react-native';
 import { Text, MAX_FONT_SCALE } from '@/components/Text';
 import ReanimatedAnimated, { FadeIn } from 'react-native-reanimated';
 import Feather from '@expo/vector-icons/Feather';
-import { PeriodCursor, periodLabel, stepPeriod, setGranularity, canStepForward } from '@/lib/period';
+import { ReportWindow, windowLabel, windowRange, stepWindow, canStepWindowForward } from '@/lib/period';
 import { theme } from '@/constants/theme';
 import { useSwipeStep } from '@/lib/useSwipeStep';
+import { haptics } from '@/lib/haptics';
 import { styles } from './reports.styles';
+import { RangeSheet } from './RangeSheet';
 
-/** The period switcher: ‹ September 2026 › (tap or swipe), plus Month / Year. */
+const GRANULARITIES = [
+  { key: 'month', label: 'Month' },
+  { key: 'year', label: 'Year' },
+  { key: 'custom', label: 'Custom' },
+] as const;
+
+/**
+ * The period switcher: ‹ September 2026 › (tap or swipe), plus Month / Year
+ * / Custom. Custom opens a range sheet; its arrows then step by the range's
+ * own length. Month and Year go back to the current month or year.
+ */
 export function PeriodRow({
   cursor,
   onChange,
 }: {
-  cursor: PeriodCursor;
-  onChange: (c: PeriodCursor) => void;
+  cursor: ReportWindow;
+  onChange: (c: ReportWindow) => void;
 }) {
-  const fwd = canStepForward(cursor);
+  const [rangeOpen, setRangeOpen] = useState(false);
+  const fwd = canStepWindowForward(cursor);
+  const change = (next: ReportWindow) => {
+    haptics.tap();
+    onChange(next);
+  };
+  const pickGranularity = (g: (typeof GRANULARITIES)[number]['key']) => {
+    if (g === 'custom') {
+      haptics.tap();
+      setRangeOpen(true);
+    } else if (cursor.granularity !== g) {
+      change({ granularity: g, offset: 0 });
+    }
+  };
   // A drag anywhere on the pill steps the period the same as tapping its own
   // chevrons, without needing to land on the small 36px arrow itself.
   const swipe = useSwipeStep(
-    () => onChange(stepPeriod(cursor, -1)),
-    () => fwd && onChange(stepPeriod(cursor, 1))
+    () => change(stepWindow(cursor, -1)),
+    () => fwd && change(stepWindow(cursor, 1))
   );
   return (
     <View style={styles.periodRow}>
       <View style={styles.periodPill} {...swipe.panHandlers}>
         <Pressable
-          onPress={() => onChange(stepPeriod(cursor, -1))}
+          onPress={() => change(stepWindow(cursor, -1))}
           hitSlop={8}
           style={styles.periodArrow}
           accessibilityRole="button"
@@ -36,14 +62,15 @@ export function PeriodRow({
         </Pressable>
         <ReanimatedAnimated.Text
           maxFontSizeMultiplier={MAX_FONT_SCALE}
-          key={periodLabel(cursor)}
+          key={windowLabel(cursor)}
           entering={FadeIn.duration(150)}
+          numberOfLines={2}
           style={styles.periodLabel}
         >
-          {periodLabel(cursor)}
+          {windowLabel(cursor)}
         </ReanimatedAnimated.Text>
         <Pressable
-          onPress={() => onChange(stepPeriod(cursor, 1))}
+          onPress={() => change(stepWindow(cursor, 1))}
           disabled={!fwd}
           hitSlop={8}
           style={[styles.periodArrow, !fwd && { opacity: 0.25 }]}
@@ -55,21 +82,30 @@ export function PeriodRow({
         </Pressable>
       </View>
       <View style={styles.gran}>
-        {(['month', 'year'] as const).map((g) => {
-          const active = cursor.granularity === g;
+        {GRANULARITIES.map((g) => {
+          const active = cursor.granularity === g.key;
           return (
             <Pressable
-              key={g}
-              onPress={() => onChange(setGranularity(cursor, g))}
+              key={g.key}
+              onPress={() => pickGranularity(g.key)}
               style={[styles.granBtn, active && styles.granBtnOn]}
+              accessibilityRole="button"
+              accessibilityState={{ selected: active }}
             >
-              <Text style={[styles.granText, active && styles.granTextOn]}>
-                {g === 'month' ? 'Month' : 'Year'}
-              </Text>
+              <Text style={[styles.granText, active && styles.granTextOn]}>{g.label}</Text>
             </Pressable>
           );
         })}
       </View>
+      <RangeSheet
+        visible={rangeOpen}
+        initial={windowRange(cursor)}
+        onClose={() => setRangeOpen(false)}
+        onApply={(range) => {
+          setRangeOpen(false);
+          onChange({ granularity: 'custom', ...range });
+        }}
+      />
     </View>
   );
 }

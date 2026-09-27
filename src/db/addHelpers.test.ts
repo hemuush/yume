@@ -1,6 +1,6 @@
 /**
  * The data behind Add Transaction's speed-ups, against a real SQLite engine:
- * the "Recent" category row, the remembered per-type defaults, and the
+ * the "Your usual" entries, the remembered per-type defaults, and the
  * transaction count Home's backup reminder waits on.
  */
 import { createRealDataTestDb } from '@/test-support/realDataTestDb';
@@ -17,7 +17,6 @@ import {
   createCategory,
   createTransaction,
   archiveCategory,
-  getRecentCategoryIds,
   countTransactions,
   getRepeatEntries,
 } from '@/db/ledger';
@@ -58,24 +57,6 @@ describe('Add Transaction helpers', () => {
     await log('Salary', '2026-09-01', 'income');
   });
 
-  it('ranks recent expense categories by how often they are used, then how recently', async () => {
-    const ids = await getRecentCategoryIds('expense', 5, '2026-09-25');
-    expect(ids).toEqual([cat['Transport'], cat['Food'], cat['Groceries']]);
-  });
-
-  it('leaves out system, archived, out-of-window and other-kind categories', async () => {
-    const ids = await getRecentCategoryIds('expense', 10, '2026-09-25');
-    expect(ids).not.toContain(cat['Loan EMI']);
-    expect(ids).not.toContain(cat['Old Hobby']);
-    expect(ids).not.toContain(cat['Rent']);
-    expect(ids).not.toContain(cat['Salary']);
-    expect(await getRecentCategoryIds('income', 5, '2026-09-25')).toEqual([cat['Salary']]);
-  });
-
-  it('respects the limit', async () => {
-    expect(await getRecentCategoryIds('expense', 2, '2026-09-25')).toEqual([cat['Transport'], cat['Food']]);
-  });
-
   it('counts every transaction', async () => {
     expect(await countTransactions()).toBe(13);
   });
@@ -103,6 +84,14 @@ describe('Add Transaction helpers', () => {
       ['Food', 2, 1000],
     ]);
     expect(entries[0]).toMatchObject({ type: 'expense', accountId: bank, accountCurrency: 'INR' });
+  });
+
+  it("can be narrowed to one type, for Add's expense or income side", async () => {
+    expect((await getRepeatEntries(3, '2026-09-25', 'expense')).map((e) => e.categoryName)).toEqual([
+      'Transport',
+      'Food',
+    ]);
+    expect(await getRepeatEntries(3, '2026-09-25', 'income')).toEqual([]);
   });
 
   it('leaves out anything an active recurring rule already posts, so a tap never doubles it', async () => {

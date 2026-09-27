@@ -1,5 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { View, ScrollView, LayoutChangeEvent, NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
+import {
+  View,
+  ScrollView,
+  Pressable,
+  LayoutChangeEvent,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
+} from 'react-native';
 import { Text } from '@/components/Text';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -9,7 +16,6 @@ import {
   findTopGrowingCategory,
   getMonthlyExpenseTrend,
   getNetWorthTrend,
-  getSubcategoryBreakdown,
   getDailyExpenseTotals,
   TrendPoint,
   NetWorthPoint,
@@ -22,12 +28,16 @@ import { AppHeader } from '@/components/AppHeader';
 import { roundedMinor } from '@/lib/round';
 import {
   CURRENT_PERIOD,
-  PeriodCursor,
-  periodLabel,
-  periodRange,
-  previousPeriodRange,
+  ReportWindow,
+  isCustomWindow,
+  windowLabel,
+  windowRange,
+  previousWindowRange,
   previousPeriodLabel,
+  rangeDays,
 } from '@/lib/period';
+import { getTidyUpReport } from '@/db/tidyUp';
+import { SegmentedControl } from '@/components/SegmentedControl';
 import { parseLocalIsoDate, toLocalIsoDate } from '@/lib/date';
 import { theme } from '@/constants/theme';
 import { ReportsSkeleton } from '@/features/reports/ReportsSkeleton';
@@ -38,10 +48,12 @@ import { StoryCards } from '@/features/reports/StoryCards';
 import { CategoryMosaic } from '@/features/reports/CategoryMosaic';
 import { CategoryList } from '@/features/reports/CategoryList';
 import { TrendChart } from '@/features/reports/TrendChart';
-import { SubcategorySheet, DaySheet, CategoryTxSheet } from '@/features/reports/ReportSheets';
+import { DaySheet } from '@/features/reports/ReportSheets';
 import { styles } from '@/features/reports/reports.styles';
 import {
   buildHeatGrid,
+  buildRangeHeatGrid,
+  RANGE_DAY_GRID_MAX_DAYS,
   baselineFromTrend,
   recurringVsDiscretionary,
   categoryDeltas,
@@ -52,7 +64,12 @@ import {
 
 export default function ReportsScreen() {
   const insets = useSafeAreaInsets();
-  const [cursor, setCursor] = useState<PeriodCursor>(CURRENT_PERIOD);
+  const [cursor, setCursor] = useState<ReportWindow>(CURRENT_PERIOD);
+  // "Where it went" (spending) or "Where it came from" (income).
+  const [flow, setFlow] = useState<'expense' | 'income'>('expense');
+  // Categories Tidy up reads as starting balances logged as income: the
+  // Income view points at Tidy up when one of them makes up most of it.
+  const [startingBalanceNames, setStartingBalanceNames] = useState<string[]>([]);
   // `/reports?month=-1` opens on a specific month (0 = this month, -1 = last
   // month) — used by Home's month-in-review card. Reports is a tab, so it may
   // already be mounted: this reacts to each new link, then clears the param
@@ -73,8 +90,6 @@ export default function ReportsScreen() {
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
   const [errorText, setErrorText] = useState<string | null>(null);
 
-  const [drill, setDrill] = useState<{ categoryId: string; name: string } | null>(null);
-  const [drillItems, setDrillItems] = useState<CategoryBreakdownItem[] | null>(null);
   const [daySheet, setDaySheet] = useState<string | null>(null);
   const [dayTx, setDayTx] = useState<Transaction[] | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -82,18 +97,6 @@ export default function ReportsScreen() {
   // long list in the app — reset whenever the period changes so switching
   // months never leaves a stale month's list expanded.
   const [catExpanded, setCatExpanded] = useState(false);
-
-  // A category with no subcategories used to be a dead tap — `openDrill`
-  // only ever made sense for one with children to show a split for. This is
-  // that same tap for the flat case: the actual transaction list, reusing
-  // the day-detail sheet's own row rendering just filtered by category
-  // instead of date.
-  const [catTxSheet, setCatTxSheet] = useState<{
-    categoryId: string;
-    name: string;
-    isSensitive: boolean;
-  } | null>(null);
-  const [catTx, setCatTx] = useState<Transaction[] | null>(null);
 
   // The jump bar below (Overview / Categories / Trends) — `sectionY` is
   // filled in by each section's own onLayout, not measured up front, since
@@ -142,20 +145,27 @@ export default function ReportsScreen() {
   // Only the most recent load may write state — stepping periods quickly
   // starts overlapping loads, and an earlier one can finish last.
   const loadSeq = useRef(0);
-  const load = useCallback(async (c: PeriodCursor) => {
+  const load = useCallback(async (c: ReportWindow) => {
     const seq = ++loadSeq.current;
     setCatExpanded(false);
-    const range = periodRange(c);
+    const range = windowRange(c);
     const anchor = parseLocalIsoDate(range.end);
-    const trendMonths = c.granularity === 'year' ? 12 : 7;
+    // A custom range's trend reaches back over the whole range (up to two years).
+    const trendMonths =
+      c.granularity === 'year'
+        ? 12
+        : isCustomWindow(c)
+          ? Math.min(24, Math.max(7, Math.ceil(rangeDays(range) / 30.44)))
+          : 7;
     try {
       setStatus((s) => (s === 'ready' ? s : 'loading'));
-      const [cmp, tr, nw, dy, cats] = await Promise.all([
-        getRangeComparison(range, previousPeriodRange(c), c.granularity),
+      const [cmp, tr, nw, dy, cats, tidy] = await Promise.all([
+        getRangeComparison(range, previousWindowRange(c), isCustomWindow(c) ? 'month' : c.granularity),
         getMonthlyExpenseTrend(trendMonths, anchor),
         getNetWorthTrend(trendMonths, anchor),
         getDailyExpenseTotals(range),
         listCategories(),
+        getTidyUpReport().catch(() => null),
       ]);
       if (seq !== loadSeq.current) return;
       setComparison(cmp);
@@ -163,6 +173,7 @@ export default function ReportsScreen() {
       setNetWorthTrend(nw);
       setDaily(dy);
       setCategories(cats);
+      setStartingBalanceNames(tidy ? tidy.startingBalances.map((g) => g.categoryName) : []);
       setStatus('ready');
       setErrorText(null);
     } catch (e: any) {
@@ -178,41 +189,11 @@ export default function ReportsScreen() {
     }, [load, cursor])
   );
 
-  const openDrill = useCallback(
-    async (cat: { categoryId: string; name: string }) => {
-      setDrill(cat);
-      setDrillItems(null);
-      setDrillItems(await getSubcategoryBreakdown(cat.categoryId, periodRange(cursor)));
-    },
-    [cursor]
-  );
-
   const openDay = useCallback(async (iso: string) => {
     setDaySheet(iso);
     setDayTx(null);
     setDayTx(await listTransactions({ fromDate: iso, toDate: iso }));
   }, []);
-
-  const openCategoryTx = useCallback(
-    async (cat: { categoryId: string; name: string; isSensitive: boolean }) => {
-      setCatTxSheet(cat);
-      setCatTx(null);
-      const r = periodRange(cursor);
-      // Rolled up like the category's total itself — spend under a since-
-      // archived subcategory counts toward the parent's total (and the
-      // drill-down isn't offered once every subcategory is archived), so the
-      // list has to include it too or it wouldn't add up to that total.
-      setCatTx(
-        await listTransactions({
-          categoryId: cat.categoryId,
-          includeSubcategories: true,
-          fromDate: r.start,
-          toDate: r.end,
-        })
-      );
-    },
-    [cursor]
-  );
 
   const catById = useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories]);
 
@@ -251,21 +232,26 @@ export default function ReportsScreen() {
   }
 
   const { current, previous } = comparison;
-  const periodName = periodLabel(cursor);
+  const periodName = windowLabel(cursor);
+  const custom = isCustomWindow(cursor);
   const dispExpense = roundedMinor(current.expenseMinor);
   const hasSpend = current.expenseMinor > 0;
 
-  const range = periodRange(cursor);
+  const range = windowRange(cursor);
   const rangeStart = parseLocalIsoDate(range.start);
   const rangeEnd = parseLocalIsoDate(range.end);
   const daysInPeriod = Math.round((rangeEnd.getTime() - rangeStart.getTime()) / 86400000) + 1;
 
   const baseline = baselineFromTrend(trend);
-  const vsUsualPct = baseline && baseline > 0 ? ((current.expenseMinor - baseline) / baseline) * 100 : null;
+  // "Above usual" compares with a usual month, so a custom range doesn't get it.
+  const vsUsualPct =
+    !custom && baseline && baseline > 0 ? ((current.expenseMinor - baseline) / baseline) * 100 : null;
   const spendDays = daily.filter((d) => d.totalMinor > 0).length;
   const { recurringMinor, discretionaryMinor } = recurringVsDiscretionary(current.categoryBreakdown);
   const topGrowing = findTopGrowingCategory(current.categoryBreakdown, previous.categoryBreakdown);
   const isYear = cursor.granularity === 'year';
+  // A long custom range reads like a year: by month, with no daily patterns.
+  const byMonth = isYear || (custom && daysInPeriod > RANGE_DAY_GRID_MAX_DAYS);
   // Days counted so far — today, for the period in progress.
   const quiet = quietDays(daily, range, toLocalIsoDate(new Date()));
   const perDay = quiet.countedDays > 0 ? Math.round(dispExpense / quiet.countedDays) : 0;
@@ -281,20 +267,34 @@ export default function ReportsScreen() {
             current.categoryBreakdown.find((c) => c.categoryId === topGrowing.categoryId)?.totalMinor ?? 0,
         }
       : null,
-    comparisonLabel: previousPeriodLabel(cursor),
-    patterns: isYear ? [] : patternFacts(daily, daysInPeriod),
+    comparisonLabel: isCustomWindow(cursor) ? 'the period before' : previousPeriodLabel(cursor),
+    patterns: byMonth ? [] : patternFacts(daily, daysInPeriod),
     recurringMinor,
     discretionaryMinor,
     quiet,
     spendDays,
-    isCurrentPeriod: cursor.offset === 0,
-    unit: isYear ? 'year' : 'month',
+    isCurrentPeriod: isCustomWindow(cursor) ? range.end >= toLocalIsoDate(new Date()) : cursor.offset === 0,
+    unit: custom ? 'period' : isYear ? 'year' : 'month',
   });
-  const deltas = categoryDeltas(current.categoryBreakdown, previous.categoryBreakdown);
+  const income = flow === 'income';
+  const shownBreakdown = income ? current.incomeBreakdown : current.categoryBreakdown;
+  const shownTotal = income ? roundedMinor(current.incomeMinor) : dispExpense;
+  const deltas = income
+    ? categoryDeltas(current.incomeBreakdown, previous.incomeBreakdown)
+    : categoryDeltas(current.categoryBreakdown, previous.categoryBreakdown);
+  // A starting balance logged as income, making up over half of it: worth tidying.
+  const startingHeavy = income
+    ? current.incomeBreakdown.find(
+        (c) => startingBalanceNames.includes(c.name) && c.totalMinor * 2 > current.incomeMinor
+      )
+    : undefined;
+  // A category opens its own page (app/category/[id].tsx), on this same period.
   const onPressCategory = (c: CategoryBreakdownItem) =>
-    c.hasSubcategories
-      ? openDrill(c)
-      : openCategoryTx({ categoryId: c.categoryId, name: c.name, isSensitive: c.isSensitive });
+    router.push(
+      isCustomWindow(cursor)
+        ? `/category/${c.categoryId}?g=custom&from=${cursor.start}&to=${cursor.end}`
+        : `/category/${c.categoryId}?g=${cursor.granularity}&o=${cursor.offset}`
+    );
 
   return (
     <View style={styles.container}>
@@ -323,35 +323,72 @@ export default function ReportsScreen() {
                 perDayMinor={perDay}
                 spendDays={spendDays}
                 countedDays={quiet.countedDays}
-                isYear={isYear}
-                grid={buildHeatGrid({
-                  granularity: cursor.granularity,
-                  start: rangeStart,
-                  trend,
-                  daily,
-                  onDayPress: openDay,
-                })}
+                isYear={byMonth}
+                grid={
+                  isCustomWindow(cursor)
+                    ? buildRangeHeatGrid({ start: range.start, end: range.end, daily, onDayPress: openDay })
+                    : buildHeatGrid({
+                        granularity: cursor.granularity,
+                        start: rangeStart,
+                        trend,
+                        daily,
+                        onDayPress: openDay,
+                      })
+                }
               />
               <StoryCards title={`${periodName}, in short`} cards={stories} onJump={jumpTo} />
             </View>
 
             <View onLayout={onSectionLayout('categories')}>
-              <Text style={styles.blockTitle}>Where it went</Text>
-              <CategoryMosaic
-                breakdown={current.categoryBreakdown}
-                spentMinor={dispExpense}
-                deltas={deltas}
-                onPressCategory={onPressCategory}
-                onPressRest={() => setCatExpanded(true)}
-              />
-              <CategoryList
-                breakdown={current.categoryBreakdown}
-                spentMinor={dispExpense}
-                deltas={deltas}
-                expanded={catExpanded}
-                onToggleExpanded={() => setCatExpanded((v) => !v)}
-                onPressCategory={onPressCategory}
-              />
+              <Text style={styles.blockTitle}>{income ? 'Where it came from' : 'Where it went'}</Text>
+              <View style={styles.flowSwitch}>
+                <SegmentedControl
+                  options={[
+                    { value: 'expense', label: 'Spending' },
+                    { value: 'income', label: 'Income' },
+                  ]}
+                  value={flow}
+                  onChange={(f) => {
+                    setFlow(f);
+                    setCatExpanded(false);
+                  }}
+                />
+              </View>
+              {shownBreakdown.length === 0 ? (
+                <Text style={styles.empty}>No income in {periodName}.</Text>
+              ) : (
+                <>
+                  <CategoryMosaic
+                    breakdown={shownBreakdown}
+                    spentMinor={shownTotal}
+                    deltas={deltas}
+                    onPressCategory={onPressCategory}
+                    onPressRest={() => setCatExpanded(true)}
+                    kind={flow}
+                  />
+                  <CategoryList
+                    breakdown={shownBreakdown}
+                    spentMinor={shownTotal}
+                    deltas={deltas}
+                    expanded={catExpanded}
+                    onToggleExpanded={() => setCatExpanded((v) => !v)}
+                    onPressCategory={onPressCategory}
+                    kind={flow}
+                  />
+                </>
+              )}
+              {startingHeavy && (
+                <Pressable
+                  onPress={() => router.push('/tidy-up')}
+                  style={styles.tidyNudge}
+                  accessibilityRole="button"
+                >
+                  <Text style={styles.tidyNudgeText}>
+                    {startingHeavy.name} is over half of this income, and looks like starting balances.{' '}
+                    <Text style={styles.tidyNudgeLink}>Tidy up</Text>
+                  </Text>
+                </Pressable>
+              )}
             </View>
 
             <View onLayout={onSectionLayout('trends')} style={{ marginTop: 22 }}>
@@ -368,9 +405,7 @@ export default function ReportsScreen() {
         )}
       </ScrollView>
 
-      <SubcategorySheet title={drill?.name ?? null} items={drillItems} onClose={() => setDrill(null)} />
       <DaySheet iso={daySheet} txs={dayTx} catById={catById} onClose={() => setDaySheet(null)} />
-      <CategoryTxSheet category={catTxSheet} txs={catTx} onClose={() => setCatTxSheet(null)} />
     </View>
   );
 }

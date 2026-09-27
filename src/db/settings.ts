@@ -385,8 +385,9 @@ export async function setBackupFrequency(value: BackupFrequency): Promise<void> 
   cachedBackupFrequency = value;
 }
 
-export const BACKUP_FREQUENCY_MS: Record<BackupFrequency, number> = {
-  daily: 20 * 60 * 60 * 1000, // ~daily, with slack so app-open timing doesn't skip a day
+// Elapsed-time windows for the weekly and monthly backups. Daily is once per
+// calendar day instead — see isLocalBackupDue in lib/localBackup.ts.
+export const BACKUP_FREQUENCY_MS: Record<Exclude<BackupFrequency, 'daily'>, number> = {
   weekly: 6.5 * 24 * 60 * 60 * 1000,
   monthly: 28 * 24 * 60 * 60 * 1000,
 };
@@ -440,6 +441,7 @@ export function resetSettingsCache(): void {
   cachedLastLocalResult = undefined;
   cachedLastOverspendNotified = undefined;
   cachedHideSensitiveAmounts = undefined;
+  cachedBudgetNudgesSent = undefined;
 }
 
 const LAST_OVERSPEND_NOTIFIED_KEY = 'last_overspend_notified';
@@ -464,6 +466,103 @@ export async function setLastOverspendNotified(key: string): Promise<void> {
     [LAST_OVERSPEND_NOTIFIED_KEY, key]
   );
   cachedLastOverspendNotified = key;
+}
+
+const NEEDS_YOU_DISMISSED_KEY = 'needs_you_dismissed';
+/** Keys carry their own situation (see needsYou.ts), so old ones simply stop matching; keep only recent ones. */
+const NEEDS_YOU_DISMISSED_KEPT = 100;
+
+/** Needs you items dismissed with ✕ — hidden until their situation changes. */
+export async function getNeedsYouDismissed(): Promise<string[]> {
+  const db = await getDb();
+  const row = await db.getFirstAsync<{ value: string }>('SELECT value FROM settings WHERE key = ?', [
+    NEEDS_YOU_DISMISSED_KEY,
+  ]);
+  try {
+    const parsed = row ? JSON.parse(row.value) : [];
+    return Array.isArray(parsed) ? parsed.filter((k): k is string => typeof k === 'string') : [];
+  } catch {
+    return [];
+  }
+}
+
+export async function setNeedsYouDismissed(keys: string[]): Promise<void> {
+  const db = await getDb();
+  await db.runAsync(
+    `INSERT INTO settings (key, value) VALUES (?, ?)
+     ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
+    [NEEDS_YOU_DISMISSED_KEY, JSON.stringify([...new Set(keys)].slice(-NEEDS_YOU_DISMISSED_KEPT))]
+  );
+}
+
+const HIDDEN_SUBSCRIPTION_SUGGESTIONS_KEY = 'hidden_subscription_suggestions';
+
+/** Recurring's "Not set up yet" suggestions hidden with ✕ — `sub-<categoryId>` keys, hidden for good. */
+export async function getHiddenSubscriptionSuggestions(): Promise<string[]> {
+  const db = await getDb();
+  const row = await db.getFirstAsync<{ value: string }>('SELECT value FROM settings WHERE key = ?', [
+    HIDDEN_SUBSCRIPTION_SUGGESTIONS_KEY,
+  ]);
+  try {
+    const parsed = row ? JSON.parse(row.value) : [];
+    return Array.isArray(parsed) ? parsed.filter((k): k is string => typeof k === 'string') : [];
+  } catch {
+    return [];
+  }
+}
+
+async function setHiddenSubscriptionSuggestions(keys: string[]): Promise<void> {
+  const db = await getDb();
+  await db.runAsync(
+    `INSERT INTO settings (key, value) VALUES (?, ?)
+     ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
+    [HIDDEN_SUBSCRIPTION_SUGGESTIONS_KEY, JSON.stringify([...new Set(keys)])]
+  );
+}
+
+export async function hideSubscriptionSuggestion(key: string): Promise<void> {
+  await setHiddenSubscriptionSuggestions([...(await getHiddenSubscriptionSuggestions()), key]);
+}
+
+/** Brings a hidden suggestion back — "Bring back" on it in Needs you. */
+export async function unhideSubscriptionSuggestion(key: string): Promise<void> {
+  await setHiddenSubscriptionSuggestions((await getHiddenSubscriptionSuggestions()).filter((k) => k !== key));
+}
+
+const BUDGET_NUDGES_SENT_KEY = 'budget_nudges_sent';
+/** Only recent ones matter (they're per month); older keys are dropped so the list can't grow forever. */
+const BUDGET_NUDGES_KEPT = 60;
+let cachedBudgetNudgesSent: string[] | undefined;
+
+/** "budgetId:YYYY-MM:level" keys for the budget notifications already sent (see dueBudgetNudge). */
+export async function getBudgetNudgesSent(): Promise<string[]> {
+  if (cachedBudgetNudgesSent !== undefined) return cachedBudgetNudgesSent;
+  const db = await getDb();
+  const row = await db.getFirstAsync<{ value: string }>('SELECT value FROM settings WHERE key = ?', [
+    BUDGET_NUDGES_SENT_KEY,
+  ]);
+  let keys: string[] = [];
+  try {
+    const parsed = row ? JSON.parse(row.value) : [];
+    keys = Array.isArray(parsed) ? parsed.filter((k): k is string => typeof k === 'string') : [];
+  } catch {
+    keys = [];
+  }
+  cachedBudgetNudgesSent = keys;
+  return keys;
+}
+
+export async function addBudgetNudgesSent(keys: string[]): Promise<void> {
+  const next = [...(await getBudgetNudgesSent()).filter((k) => !keys.includes(k)), ...keys].slice(
+    -BUDGET_NUDGES_KEPT
+  );
+  const db = await getDb();
+  await db.runAsync(
+    `INSERT INTO settings (key, value) VALUES (?, ?)
+     ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
+    [BUDGET_NUDGES_SENT_KEY, JSON.stringify(next)]
+  );
+  cachedBudgetNudgesSent = next;
 }
 
 const HIDE_SENSITIVE_AMOUNTS_KEY = 'hide_sensitive_amounts';

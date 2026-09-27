@@ -6,11 +6,17 @@ import {
   getNotificationPrefs,
   getLastOverspendNotified,
   setLastOverspendNotified,
+  getBudgetNudgesSent,
+  addBudgetNudgesSent,
 } from './settings';
 import { Account, Category, Transaction, TransactionType, PaymentMode } from '@/types';
-import { notifyOverspend } from '@/lib/notifications';
+import { notifyOverspend, notifyBudget } from '@/lib/notifications';
+import { budgetNudgeCopy } from '@/lib/notificationCopy';
+import { listBudgetsForMonth, dueBudgetNudge, BudgetNudgeLevel } from './budgets';
+import { formatMoney } from '@/lib/money';
 import { getPeriodComparison, findTopGrowingCategory } from './reports';
 import { toLocalIsoDate, addDaysToIsoDate } from '@/lib/date';
+import { parseSearchQuery } from '@/lib/searchQuery';
 
 /**
  * After an expense is recorded, checks whether that category's spend this
@@ -36,6 +42,8 @@ export async function checkOverspendAndNotify(categoryId: string): Promise<void>
   );
   const topLevelCategoryId = row?.parent_id ?? categoryId;
 
+  await checkBudgetNudge(categoryId, topLevelCategoryId).catch(() => {});
+
   const comparison = await getPeriodComparison('month');
   const top = findTopGrowingCategory(
     comparison.current.categoryBreakdown,
@@ -52,6 +60,39 @@ export async function checkOverspendAndNotify(categoryId: string): Promise<void>
 
   await notifyOverspend(top.name, top.pctChange);
   await setLastOverspendNotified(monthKey);
+}
+
+/**
+ * One notification when this month's budget for the category passes 80% of
+ * its limit, and one when it goes over — each at most once per budget per
+ * month (see dueBudgetNudge). A budget on the category itself wins; otherwise
+ * its parent's, which counts subcategory spending too. Called from
+ * checkOverspendAndNotify, so it follows the same "Overspending alerts" switch.
+ */
+async function checkBudgetNudge(categoryId: string, topLevelCategoryId: string): Promise<void> {
+  const budgets = await listBudgetsForMonth();
+  const budget =
+    budgets.find((b) => b.budget.categoryId === categoryId) ??
+    budgets.find((b) => b.budget.categoryId === topLevelCategoryId);
+  if (!budget) return;
+  const sent = await getBudgetNudgesSent();
+  const key = (level: BudgetNudgeLevel) => `${budget.budget.id}:${budget.budget.periodMonth}:${level}`;
+  const level = dueBudgetNudge(budget, {
+    near: sent.includes(key('near')),
+    over: sent.includes(key('over')),
+  });
+  if (!level) return;
+  await notifyBudget(
+    budgetNudgeCopy(
+      level,
+      budget.categoryName,
+      formatMoney(budget.spentMinor),
+      formatMoney(budget.effectiveLimitMinor),
+      formatMoney(Math.max(0, budget.remainingMinor))
+    )
+  );
+  // Going straight past the limit counts as having had the 80% one too.
+  await addBudgetNudgesSent(level === 'over' ? [key('near'), key('over')] : [key('near')]);
 }
 
 // Account balance is always DERIVED from opening_balance + ledger entries,
@@ -79,6 +120,32 @@ export async function getAccountBalance(accountId: string): Promise<number> {
   );
 
   return account.opening_balance_minor + (inflow?.total ?? 0) - (outflow?.total ?? 0);
+}
+
+/**
+ * How much an account grew per month, on average, over the last `days`
+ * days: money in (income, transfers in) less money out. What-if uses it as
+ * the saving rate of a goal that follows the account. Never below zero —
+ * an account that shrank isn't saving toward anything.
+ */
+export async function getAccountMonthlyGrowth(
+  accountId: string,
+  days = 90,
+  today: string = toLocalIsoDate(new Date())
+): Promise<number> {
+  const db = await getDb();
+  const since = addDaysToIsoDate(today, -days + 1);
+  const row = await db.getFirstAsync<{ net: number | null }>(
+    `SELECT SUM(CASE
+       WHEN (type = 'income' AND account_id = ?) OR (type = 'transfer' AND to_account_id = ?) THEN amount_minor
+       ELSE -amount_minor END) AS net
+     FROM transactions
+     WHERE date >= ? AND date <= ?
+       AND ((type IN ('income', 'expense') AND account_id = ?)
+         OR (type = 'transfer' AND (account_id = ? OR to_account_id = ?)))`,
+    [accountId, accountId, since, today, accountId, accountId, accountId]
+  );
+  return Math.max(0, Math.round((row?.net ?? 0) / (days / 30.44)));
 }
 
 function rowToAccount(row: any): Account {
@@ -217,29 +284,58 @@ export async function updateAccount(id: string, input: UpdateAccountInput): Prom
   return account;
 }
 
+export interface AccountFlow {
+  /** Everything in: income plus transfers in from your other accounts. */
+  inMinor: number;
+  /** Everything out: expenses plus transfers out to your other accounts. */
+  outMinor: number;
+  incomeMinor: number;
+  transferInMinor: number;
+  expenseMinor: number;
+  transferOutMinor: number;
+}
+
 /**
  * Money into and out of one account over a date range (inclusive) — the
- * same four movements getAccountBalance sums, split by direction: income
- * and transfers in, expenses and transfers out. In the account's own
- * currency, so unlike the report totals there's no default-currency filter.
- * Powers Home's account summary sheet.
+ * same four movements getAccountBalance sums, kept apart: income and
+ * transfers in, expenses and transfers out. The split matters: an account
+ * that mostly passes money between your own accounts (salary in, straight
+ * on to savings) otherwise looks the same as one you spend from. In the
+ * account's own currency, so unlike the report totals there's no
+ * default-currency filter. Powers Home's account summary sheet.
  */
 export async function getAccountFlow(
   accountId: string,
   range: { start: string; end: string }
-): Promise<{ inMinor: number; outMinor: number }> {
+): Promise<AccountFlow> {
   const db = await getDb();
-  const row = await db.getFirstAsync<{ in_total: number | null; out_total: number | null }>(
+  const row = await db.getFirstAsync<{
+    income: number | null;
+    transfer_in: number | null;
+    expense: number | null;
+    transfer_out: number | null;
+  }>(
     `SELECT
-       SUM(CASE WHEN (type = 'income' AND account_id = ?) OR (type = 'transfer' AND to_account_id = ?)
-         THEN amount_minor ELSE 0 END) AS in_total,
-       SUM(CASE WHEN (type = 'expense' AND account_id = ?) OR (type = 'transfer' AND account_id = ?)
-         THEN amount_minor ELSE 0 END) AS out_total
+       SUM(CASE WHEN type = 'income' AND account_id = ? THEN amount_minor ELSE 0 END) AS income,
+       SUM(CASE WHEN type = 'transfer' AND to_account_id = ? THEN amount_minor ELSE 0 END) AS transfer_in,
+       SUM(CASE WHEN type = 'expense' AND account_id = ? THEN amount_minor ELSE 0 END) AS expense,
+       SUM(CASE WHEN type = 'transfer' AND account_id = ? THEN amount_minor ELSE 0 END) AS transfer_out
      FROM transactions
      WHERE (account_id = ? OR to_account_id = ?) AND date >= ? AND date <= ?`,
     [accountId, accountId, accountId, accountId, accountId, accountId, range.start, range.end]
   );
-  return { inMinor: row?.in_total ?? 0, outMinor: row?.out_total ?? 0 };
+  const incomeMinor = row?.income ?? 0;
+  const transferInMinor = row?.transfer_in ?? 0;
+  const expenseMinor = row?.expense ?? 0;
+  const transferOutMinor = row?.transfer_out ?? 0;
+  return {
+    inMinor: incomeMinor + transferInMinor,
+    outMinor: expenseMinor + transferOutMinor,
+    incomeMinor,
+    transferInMinor,
+    expenseMinor,
+    transferOutMinor,
+  };
 }
 
 /** How many transactions reference this account, either as the source or (for a transfer) the destination — the basis for offering Delete vs. Archive. */
@@ -312,10 +408,17 @@ function rowToCategory(row: any): Category {
   };
 }
 
+/**
+ * Every category, A to Z by name, ignoring case — the order every picker,
+ * filter and list shows them in (subcategories too, since each screen picks
+ * a parent's children out of this same list). `sort_order` is only the
+ * built-in defaults' seed order, and every category you add gets 0, so
+ * ordering by it put new categories in no useful place.
+ */
 export async function listCategories(includeArchived = false): Promise<Category[]> {
   const db = await getDb();
   const rows = await db.getAllAsync<any>(
-    `SELECT * FROM categories ${includeArchived ? '' : 'WHERE archived = 0'} ORDER BY sort_order ASC`
+    `SELECT * FROM categories ${includeArchived ? '' : 'WHERE archived = 0'} ORDER BY name COLLATE NOCASE ASC, id ASC`
   );
   return rows.map(rowToCategory);
 }
@@ -774,65 +877,118 @@ export async function getFrequentAmountsForCategory(
 }
 
 /**
- * The categories of one kind the user actually logs against most, most
- * used first — powers Add Transaction's "Recent" row, so a habitual
- * expense is one tap instead of a hunt through the full grid. Same 90-day
- * window and frequency-then-recency ranking getFrequentAmountsForCategory
- * uses. Built-in system categories (Loan EMI, Friends & Family, Fees &
- * Charges) are left out: the app files those automatically from the loan
- * and friend flows, so suggesting them for a hand-typed entry would only
- * invite mis-filing. Archived categories are left out too.
+ * The account most recently used with a category, if any — Add picks it as
+ * the default account once a category is chosen (Food usually goes on the
+ * same card). Archived accounts are skipped.
  */
-export async function getRecentCategoryIds(
-  kind: Category['kind'],
-  limit = 5,
-  today: string = toLocalIsoDate(new Date())
-): Promise<string[]> {
+export async function getLastAccountForCategory(categoryId: string): Promise<string | null> {
   const db = await getDb();
-  const since = addDaysToIsoDate(today, -90);
-  const rows = await db.getAllAsync<{ category_id: string }>(
-    `SELECT t.category_id AS category_id, COUNT(*) AS freq, MAX(t.date) AS last_date
+  const row = await db.getFirstAsync<{ account_id: string }>(
+    `SELECT t.account_id AS account_id
      FROM transactions t
-     JOIN categories c ON c.id = t.category_id
-     WHERE c.kind = ? AND c.archived = 0 AND c.is_system = 0
-       AND t.date >= ? AND t.date <= ?
-     GROUP BY t.category_id
-     ORDER BY freq DESC, last_date DESC
-     LIMIT ?`,
-    [kind, since, today, limit]
+     JOIN accounts a ON a.id = t.account_id
+     WHERE t.category_id = ? AND a.archived = 0
+     ORDER BY t.date DESC, t.created_at DESC
+     LIMIT 1`,
+    [categoryId]
   );
-  return rows.map((r) => r.category_id);
+  return row?.account_id ?? null;
+}
+
+/** How long after saving an entry an identical one counts as a possible repeat. */
+export const REPEAT_WINDOW_MINUTES = 30;
+
+/** `created_at`'s own format: UTC, "YYYY-MM-DD HH:MM:SS" (SQLite's datetime('now')). */
+function toSqliteUtc(d: Date): string {
+  return d.toISOString().slice(0, 19).replace('T', ' ');
 }
 
 /**
- * Cross-period text search — matches a transaction's own note, its
- * category's name, or either side of the account it moved through (a
- * transfer matches on either account). Deliberately not scoped by date the
- * way `listTransactions` is: the whole point is finding something outside
- * whatever week/month the Transactions screen currently has in view.
+ * An identical entry saved in the last REPEAT_WINDOW_MINUTES — same type,
+ * account(s), category, amount and date — or null. Add asks "add it
+ * anyway?" before saving a second one, since a double tap or a forgotten
+ * earlier entry is the usual reason for a same-day pair. Returns when that
+ * earlier one was saved, as an ISO timestamp.
  */
-export async function searchTransactions(query: string, limit = 50): Promise<Transaction[]> {
-  const trimmed = query.trim();
-  if (!trimmed) return [];
+export async function findRecentRepeat(
+  input: {
+    type: TransactionType;
+    accountId: string;
+    toAccountId: string | null;
+    categoryId: string | null;
+    amountMinor: number;
+    date: string;
+  },
+  now: Date = new Date()
+): Promise<{ savedAt: string } | null> {
   const db = await getDb();
-  // `%` and `_` are SQL LIKE wildcards — without escaping them, searching
-  // for a literal "50%" (a plausible note, e.g. "50% off coupon") would
-  // instead match "50" followed by anything, silently over-matching.
-  const escaped = trimmed.replace(/[\\%_]/g, (c) => `\\${c}`);
-  const like = `%${escaped}%`;
+  const since = toSqliteUtc(new Date(now.getTime() - REPEAT_WINDOW_MINUTES * 60_000));
+  const row = await db.getFirstAsync<{ created_at: string }>(
+    `SELECT created_at FROM transactions
+     WHERE type = ? AND account_id = ? AND IFNULL(to_account_id, '') = ? AND IFNULL(category_id, '') = ?
+       AND amount_minor = ? AND date = ? AND created_at >= ?
+     ORDER BY created_at DESC
+     LIMIT 1`,
+    [
+      input.type,
+      input.accountId,
+      input.toAccountId ?? '',
+      input.categoryId ?? '',
+      input.amountMinor,
+      input.date,
+      since,
+    ]
+  );
+  return row ? { savedAt: `${row.created_at.replace(' ', 'T')}Z` } : null;
+}
+
+/**
+ * Cross-period search — each word of the query has to match the
+ * transaction's note, its category's name, or either side of the account it
+ * moved through (a transfer matches on either account); a word that's a
+ * number ("184", "₹1,807") also matches that amount, and a day in the query
+ * ("24 sep", "24/9") narrows it to that date (see parseSearchQuery).
+ * Deliberately not scoped by period the way `listTransactions` is: the whole
+ * point is finding something outside whatever week/month Activity has in view.
+ */
+export async function searchTransactions(
+  query: string,
+  limit = 50,
+  today: string = toLocalIsoDate(new Date())
+): Promise<Transaction[]> {
+  const { date, words } = parseSearchQuery(query, today);
+  if (!date && words.length === 0) return [];
+  const db = await getDb();
+  const clauses: string[] = [];
+  const params: (string | number)[] = [];
+  if (date) {
+    clauses.push('t.date = ?');
+    params.push(date);
+  }
+  for (const word of words) {
+    // `%` and `_` are SQL LIKE wildcards — without escaping them, searching
+    // for a literal "50%" (a plausible note, e.g. "50% off coupon") would
+    // instead match "50" followed by anything, silently over-matching.
+    const like = `%${word.text.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
+    const text = `t.note LIKE ? ESCAPE '\\' OR c.name LIKE ? ESCAPE '\\' OR a.name LIKE ? ESCAPE '\\' OR ta.name LIKE ? ESCAPE '\\'`;
+    if (word.amountMinor) {
+      clauses.push(`(${text} OR t.amount_minor BETWEEN ? AND ?)`);
+      params.push(like, like, like, like, word.amountMinor.min, word.amountMinor.max);
+    } else {
+      clauses.push(`(${text})`);
+      params.push(like, like, like, like);
+    }
+  }
   const cappedLimit = Number.isFinite(limit) && limit > 0 ? Math.floor(limit) : 50;
   const rows = await db.getAllAsync<any>(
     `SELECT t.* FROM transactions t
      LEFT JOIN categories c ON c.id = t.category_id
      LEFT JOIN accounts a ON a.id = t.account_id
      LEFT JOIN accounts ta ON ta.id = t.to_account_id
-     WHERE t.note LIKE ? ESCAPE '\\'
-        OR c.name LIKE ? ESCAPE '\\'
-        OR a.name LIKE ? ESCAPE '\\'
-        OR ta.name LIKE ? ESCAPE '\\'
+     WHERE ${clauses.join(' AND ')}
      ORDER BY t.date DESC, t.created_at DESC
      LIMIT ?`,
-    [like, like, like, like, cappedLimit]
+    [...params, cappedLimit]
   );
   return rows.map(rowToTransaction);
 }
@@ -854,7 +1010,8 @@ export interface RepeatEntry {
 /**
  * The exact entries (same type, account, category and amount) the user has
  * logged by hand at least twice in the last 90 days, most repeated first —
- * the + button's long-press "Log again" list. Left out on purpose:
+ * the + button's long-press "Log again" list, and Add's "Your usual" chips
+ * (one `type` at a time). Left out on purpose:
  *   - anything a loan or friend flow wrote (EMIs, disbursements, IOUs) or
  *     filed under a built-in category — logging those by hand mis-files them;
  *   - anything an active recurring rule already posts (rent, salary) — a
@@ -864,7 +1021,8 @@ export interface RepeatEntry {
  */
 export async function getRepeatEntries(
   limit = 3,
-  today: string = toLocalIsoDate(new Date())
+  today: string = toLocalIsoDate(new Date()),
+  type?: 'expense' | 'income'
 ): Promise<RepeatEntry[]> {
   const db = await getDb();
   const since = addDaysToIsoDate(today, -90);
@@ -878,7 +1036,7 @@ export async function getRepeatEntries(
      FROM transactions t
      JOIN categories c ON c.id = t.category_id
      JOIN accounts a ON a.id = t.account_id
-     WHERE t.type IN ('expense', 'income') AND t.loan_id IS NULL
+     WHERE t.type IN ('expense', 'income') AND (? IS NULL OR t.type = ?) AND t.loan_id IS NULL
        AND c.archived = 0 AND c.is_system = 0 AND a.archived = 0 AND a.type != 'savings'
        AND t.date >= ? AND t.date <= ?
        AND NOT EXISTS (SELECT 1 FROM loan_payments lp WHERE lp.transaction_id = t.id)
@@ -892,7 +1050,7 @@ export async function getRepeatEntries(
      HAVING COUNT(*) >= 2
      ORDER BY freq DESC, last_key DESC
      LIMIT ?`,
-    [since, today, limit]
+    [type ?? null, type ?? null, since, today, limit]
   );
   return rows.map((r) => ({
     type: r.type,

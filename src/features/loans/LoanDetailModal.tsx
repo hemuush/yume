@@ -5,7 +5,6 @@ import Feather from '@expo/vector-icons/Feather';
 import { useFocusEffect } from 'expo-router';
 import {
   getLoanSchedule,
-  payInstallment,
   getLoanById,
   deleteLoan,
   restoreLoan,
@@ -19,18 +18,24 @@ import { useUndoToast } from '@/components/UndoToast';
 import { haptics } from '@/lib/haptics';
 import { usePressScale } from '@/lib/usePressScale';
 import { Loan, LoanPayment, Account, Category } from '@/types';
-import { FormInput } from '@/components/FormInput';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { ModalSheet } from '@/components/ModalSheet';
 import { ActionSheet, ActionSheetItem } from '@/components/ActionSheet';
-import { modalFooterStyles as f, theme } from '@/constants/theme';
-import { toLocalIsoDate, partsToIsoDate, parseLocalIsoDate } from '@/lib/date';
+import { theme } from '@/constants/theme';
+import { toLocalIsoDate } from '@/lib/date';
 import { NeoTile } from '@/components/NeoTile';
 import { styles } from './loans.styles';
 import { AssetModal } from './AssetModal';
 import { AccountModal } from './AccountModal';
 import { RateChangeModal } from './RateChangeModal';
 import { PrepayModal } from './PrepayModal';
+import { PayInstallmentSheet } from './PayInstallmentSheet';
+import Svg, { Path } from 'react-native-svg';
+import { loanPayoff, payoffMonth, balanceLinePath } from '@/lib/loanPayoff';
+
+/** The payoff line's drawing box (it stretches to the card's width). */
+const PAYOFF_LINE_WIDTH = 300;
+const PAYOFF_LINE_HEIGHT = 56;
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -55,19 +60,9 @@ export function LoanDetailModal({
   const [assetModalVisible, setAssetModalVisible] = useState(false);
   const [accountModalVisible, setAccountModalVisible] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [paidDone, setPaidDone] = useState(false);
   const [moreActionsVisible, setMoreActionsVisible] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [scheduleExpanded, setScheduleExpanded] = useState(false);
-  // The date actually paid — defaults to the installment's own due date, not
-  // "today", so backfilling an EMI that was really paid months ago (common
-  // when someone starts using Yume partway through an existing loan)
-  // records it on the date it actually happened instead of dating every
-  // catch-up payment "today" and cluttering the transaction list with a pile
-  // of same-day entries that never happened that day.
-  const [payYear, setPayYear] = useState('');
-  const [payMonth, setPayMonth] = useState('');
-  const [payDay, setPayDay] = useState('');
 
   const kebabPress = usePressScale();
   const accountRowPress = usePressScale();
@@ -115,6 +110,8 @@ export function LoanDetailModal({
   );
 
   const nextInstallment = schedule.find((p) => p.status === 'pending');
+  // When it's paid off and what it still costs — from the schedule, so a prepayment or rate change shows at once.
+  const payoff = loanPayoff(schedule, liveLoan.outstandingPrincipalMinor);
   // Distinguishes an on-time/late payment from paying an EMI ahead of its
   // own due date — the "Pay" button otherwise accepted either identically,
   // silently letting an installment be marked paid weeks or months early
@@ -135,47 +132,7 @@ export function LoanDetailModal({
     : accounts[0];
 
   const openPay = () => {
-    if (!nextInstallment) return;
-    const d = parseLocalIsoDate(nextInstallment.dueDate);
-    setPayYear(String(d.getFullYear()));
-    setPayMonth(String(d.getMonth() + 1));
-    setPayDay(String(d.getDate()));
-    setPayVisible(true);
-  };
-
-  const paidDateIso = partsToIsoDate(payYear, payMonth, payDay);
-
-  const markPaid = async () => {
-    if (!nextInstallment || !defaultAccount || !emiCategory || !paidDateIso) return;
-    setBusy(true);
-    try {
-      await payInstallment(nextInstallment.id, {
-        accountId: defaultAccount.id,
-        categoryId: emiCategory.id,
-        paidDate: paidDateIso,
-      });
-      await load();
-      await onChanged();
-      // A brief "done" checkmark (PrimaryButton's own `done` prop) before
-      // the sheet closes, instead of it vanishing the instant the write
-      // finishes — the actual data is already saved by this point, so the
-      // extra ~380ms is purely a felt confirmation, nothing riskier.
-      setPaidDone(true);
-      setTimeout(() => {
-        setPaidDone(false);
-        setBusy(false);
-        setPayVisible(false);
-      }, 380);
-    } catch (e: any) {
-      Alert.alert('Could not record payment', String(e?.message ?? e));
-      setBusy(false);
-      // Always closes on any outcome, same as before the "done" checkmark
-      // delay was added to the success path — an error left the sheet open
-      // afterwards, in a stale not-busy state suggesting Confirm was still
-      // safe to retry immediately, when the accompanying alert already
-      // gives the user the chance to reopen Pay and try again properly.
-      setPayVisible(false);
-    }
+    if (nextInstallment) setPayVisible(true);
   };
 
   // Pay is the one thing you do almost every time you open a loan, so it
@@ -321,6 +278,38 @@ export function LoanDetailModal({
             )}
           </View>
         </NeoTile>
+
+        {payoff.lastDueDate && (
+          <View style={styles.payoffCard}>
+            <Text style={styles.statLabel}>
+              {liveLoan.direction === 'borrowed' ? 'Debt-free in' : 'Paid back in full by'}
+            </Text>
+            <Text style={styles.payoffMonth}>{payoffMonth(payoff.lastDueDate)}</Text>
+            <Text style={styles.rowSub}>
+              {payoff.emisLeft} EMI{payoff.emisLeft === 1 ? '' : 's'} to go ·{' '}
+              <Text style={styles.payoffMoney}>{formatMoney(payoff.interestLeftMinor)}</Text> interest still{' '}
+              {liveLoan.direction === 'borrowed' ? 'to pay' : 'to come'}
+            </Text>
+            <Svg
+              width="100%"
+              height={PAYOFF_LINE_HEIGHT}
+              viewBox={`0 0 ${PAYOFF_LINE_WIDTH} ${PAYOFF_LINE_HEIGHT}`}
+              preserveAspectRatio="none"
+            >
+              <Path
+                d={balanceLinePath(payoff.balances, PAYOFF_LINE_WIDTH, PAYOFF_LINE_HEIGHT - 4)}
+                stroke={theme.colors.income}
+                strokeWidth={2.5}
+                fill="none"
+                strokeLinecap="round"
+              />
+            </Svg>
+            <View style={styles.payoffAxis}>
+              <Text style={styles.rowSub}>Now · {formatMoney(dispOutstanding)} left</Text>
+              <Text style={styles.rowSub}>{payoff.lastDueDate.slice(0, 4)}</Text>
+            </View>
+          </View>
+        )}
 
         <AnimatedPressable
           onPress={() => setAccountModalVisible(true)}
@@ -478,82 +467,16 @@ export function LoanDetailModal({
       </ModalSheet>
 
       {payVisible && nextInstallment && (
-        <ModalSheet
-          visible
+        <PayInstallmentSheet
+          installment={nextInstallment}
+          account={defaultAccount ?? null}
+          categoryId={emiCategory?.id ?? null}
           onClose={() => setPayVisible(false)}
-          variant="center"
-          scrollable={false}
-          title={isPayingEarly ? 'Pay ahead of schedule?' : 'Confirm payment'}
-          footer={
-            <View style={f.footerCol}>
-              {!paidDateIso && <Text style={styles.errorText}>Enter a valid date</Text>}
-              <View style={f.footerRow}>
-                <PrimaryButton
-                  title="Cancel"
-                  variant="secondary"
-                  onPress={() => setPayVisible(false)}
-                  disabled={busy}
-                  style={f.footerBtn}
-                />
-                <PrimaryButton
-                  title={busy ? 'Recording...' : isPayingEarly ? 'Pay Early' : 'Confirm'}
-                  done={paidDone}
-                  onPress={markPaid}
-                  disabled={busy || !paidDateIso}
-                  style={f.footerBtn}
-                />
-              </View>
-            </View>
-          }
-        >
-          <Text style={styles.cardSub}>
-            {formatMoney(nextInstallment.emiAmountMinor)} from {defaultAccount?.name ?? '—'}
-          </Text>
-          {isPayingEarly && (
-            <Text style={styles.hintText}>
-              Installment #{nextInstallment.installmentNumber} isn't due until {nextInstallment.dueDate} —
-              today is {todayIso}. Marking it paid now records it as complete ahead of schedule. To put extra
-              money toward the loan instead, use Prepay.
-            </Text>
-          )}
-          <Text style={styles.fieldLabel}>Actually paid on</Text>
-          <View style={styles.dateFieldsRow}>
-            <View style={{ flex: 1 }}>
-              <FormInput
-                label="Day"
-                value={payDay}
-                onChangeText={setPayDay}
-                keyboardType="numeric"
-                placeholder="DD"
-                style={styles.dateFieldInput}
-              />
-            </View>
-            <View style={{ flex: 1 }}>
-              <FormInput
-                label="Month"
-                value={payMonth}
-                onChangeText={setPayMonth}
-                keyboardType="numeric"
-                placeholder="MM"
-                style={styles.dateFieldInput}
-              />
-            </View>
-            <View style={{ flex: 1.3 }}>
-              <FormInput
-                label="Year"
-                value={payYear}
-                onChangeText={setPayYear}
-                keyboardType="numeric"
-                placeholder="YYYY"
-                style={styles.dateFieldInput}
-              />
-            </View>
-          </View>
-          <Text style={styles.hintText}>
-            Defaults to this installment's due date — change it if you're catching up on a payment that
-            actually happened on a different day.
-          </Text>
-        </ModalSheet>
+          onPaid={async () => {
+            await load();
+            await onChanged();
+          }}
+        />
       )}
 
       {prepayVisible && defaultAccount && emiCategory && (

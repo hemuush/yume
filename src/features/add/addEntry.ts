@@ -60,6 +60,15 @@ interface StagedFriend {
 }
 export type Staged = StagedTx | StagedFriend;
 
+/**
+ * What makes two entries "the same" for the repeat check: type, account(s),
+ * category, amount and date. The note doesn't count — the same coffee is
+ * often logged twice with and without one.
+ */
+export function repeatKey(r: StagedTx): string {
+  return [r.type, r.accountId, r.toAccountId ?? '', r.categoryId ?? '', r.amountMinor, r.date].join('|');
+}
+
 export function isTxType(v: string | undefined): v is TransactionType {
   return v === 'expense' || v === 'income' || v === 'transfer';
 }

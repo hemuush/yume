@@ -1,5 +1,5 @@
 import { StorageAccessFramework } from 'expo-file-system/legacy';
-import { buildBackupSnapshot, BackupSnapshot } from './backup';
+import { buildBackupSnapshot, BackupSnapshot, BackupSummary, summarizeSnapshot } from './backup';
 import { toLocalIsoDate } from './date';
 import { withoutRelock } from './appLock';
 import {
@@ -9,6 +9,7 @@ import {
   setLastLocalBackupAt,
   getBackupFrequency,
   BACKUP_FREQUENCY_MS,
+  BackupFrequency,
   setLastLocalBackupResult,
 } from '@/db/settings';
 
@@ -103,22 +104,52 @@ export async function writeLocalBackupNow(directoryUri: string): Promise<{ sizeB
 }
 
 /**
+ * Whether a periodic backup is due. Daily means once per local calendar day
+ * — not "20 hours since the last one": with a gap, a backup taken in the
+ * afternoon wasn't due again until the next afternoon, so a day where the
+ * app was only opened in the morning got no backup file at all. Weekly and
+ * monthly stay elapsed-time windows. Exported for tests.
+ */
+export function isLocalBackupDue(
+  lastBackupIso: string | null,
+  frequency: BackupFrequency,
+  now: Date
+): boolean {
+  if (!lastBackupIso) return true;
+  const last = new Date(lastBackupIso);
+  if (frequency === 'daily') return toLocalIsoDate(last) !== toLocalIsoDate(now);
+  return now.getTime() - last.getTime() >= BACKUP_FREQUENCY_MS[frequency];
+}
+
+// The run in progress, if any — cold start and the app coming to the
+// foreground can both ask at once, and two runs would write today's file twice.
+let runningBackup: Promise<void> | null = null;
+
+/**
  * Best-effort periodic local backup: only runs if a folder has been chosen
- * and enough time has passed since the last one, per the user's chosen
- * frequency. Never throws — the folder grant can be revoked outside the app
+ * and one is due (isLocalBackupDue). Called on cold start and whenever the
+ * app returns to the foreground — Android keeps Yume alive in the
+ * background for days, so cold start alone could skip days. Never throws — the folder grant can be revoked outside the app
  * (e.g. the user deletes the folder), and a failed local backup should
  * never disrupt app startup — but the outcome is still recorded so the
  * Backup screen can show a failure instead of a silently stale "last
  * backup" timestamp.
  */
-export async function runLocalBackupIfDue(): Promise<void> {
+export function runLocalBackupIfDue(): Promise<void> {
+  runningBackup ??= backUpIfDue().finally(() => {
+    runningBackup = null;
+  });
+  return runningBackup;
+}
+
+async function backUpIfDue(): Promise<void> {
   try {
     const directoryUri = await getLocalBackupFolderUri();
     if (!directoryUri) return;
 
     const lastBackup = await getLastLocalBackupAt();
     const frequency = await getBackupFrequency();
-    if (lastBackup && Date.now() - new Date(lastBackup).getTime() < BACKUP_FREQUENCY_MS[frequency]) return;
+    if (!isLocalBackupDue(lastBackup, frequency, new Date())) return;
 
     const { sizeBytes } = await writeLocalBackupNow(directoryUri);
     await setLastLocalBackupResult({ at: new Date().toISOString(), ok: true, sizeBytes });
@@ -131,22 +162,54 @@ export async function runLocalBackupIfDue(): Promise<void> {
   }
 }
 
+/** One backup file in the chosen folder, for Backup & Restore's list. */
+export interface LocalBackupFile {
+  uri: string;
+  /** The backup's own export time (ISO), or null if the file couldn't be read. */
+  exportedAt: string | null;
+  sizeBytes: number;
+  /** Null when the file couldn't be read as a Yume backup. */
+  summary: BackupSummary | null;
+}
+
 /**
- * Reads (but does not apply) the newest backup file in the chosen folder —
- * the caller is responsible for confirming with the user before calling
- * restoreFromSnapshot, same as every other restore path in the app. Returns
- * null if the folder has no backup file yet.
+ * The backup files in the chosen folder, newest first (at most `limit`),
+ * each read once on the phone to say what's inside. A file that can't be
+ * read is still listed, with no summary, rather than breaking the list.
  */
-export async function readNewestLocalBackup(directoryUri: string): Promise<BackupSnapshot | null> {
+export async function listLocalBackups(
+  directoryUri: string,
+  limit = KEEP_DAILY_BACKUPS
+): Promise<LocalBackupFile[]> {
   const uris = await StorageAccessFramework.readDirectoryAsync(directoryUri);
-  const backupUris = uris.filter((u) => decodeURIComponent(u).includes('yume-backup-'));
-  if (backupUris.length === 0) return null;
+  // The ISO date in each filename (see backupFilename) sorts correctly as a string.
+  const backups = uris
+    .filter((u) => decodeURIComponent(u).includes('yume-backup-'))
+    .sort()
+    .reverse()
+    .slice(0, limit);
+  const files: LocalBackupFile[] = [];
+  for (const uri of backups) {
+    try {
+      const content = await StorageAccessFramework.readAsStringAsync(uri);
+      const snapshot = JSON.parse(content);
+      files.push({
+        uri,
+        exportedAt: typeof snapshot?.exportedAt === 'string' ? snapshot.exportedAt : null,
+        sizeBytes: content.length,
+        summary: summarizeSnapshot(snapshot),
+      });
+    } catch {
+      files.push({ uri, exportedAt: null, sizeBytes: 0, summary: null });
+    }
+  }
+  return files;
+}
 
-  // SAF gives no reliable modified-time; the ISO timestamp embedded in the
-  // filename itself (see backupFilename()) sorts correctly as a string.
-  backupUris.sort();
-  const newestUri = backupUris[backupUris.length - 1];
-
-  const content = await StorageAccessFramework.readAsStringAsync(newestUri);
-  return JSON.parse(content);
+/**
+ * Reads (but does not apply) one backup file — the caller confirms with
+ * the user (the restore preview) before calling restoreFromSnapshot.
+ */
+export async function readLocalBackup(uri: string): Promise<BackupSnapshot> {
+  return JSON.parse(await StorageAccessFramework.readAsStringAsync(uri));
 }

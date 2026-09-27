@@ -19,9 +19,21 @@ export function repeatEntryLabel(entry: RepeatEntry): string {
  * (see getRepeatEntries), each saved for today with one tap — then an Undo
  * toast, the same one every delete in the app uses, in case it was a slip.
  * Always ends with a plain "Open Add" row, so the long-press is never a dead
- * end even before anything repeats.
+ * end even before anything repeats — except when opened from the Add screen
+ * itself (`fromAdd`), where that row would only open Add again; there
+ * `onLogged` runs after an entry is logged, so Add can close.
  */
-export function RepeatEntrySheet({ visible, onClose }: { visible: boolean; onClose: () => void }) {
+export function RepeatEntrySheet({
+  visible,
+  onClose,
+  fromAdd,
+  onLogged,
+}: {
+  visible: boolean;
+  onClose: () => void;
+  fromAdd?: boolean;
+  onLogged?: () => void;
+}) {
   const { show: showUndo } = useUndoToast();
   const [entries, setEntries] = useState<RepeatEntry[]>([]);
   // A second tap before the sheet finishes closing must not log it twice.
@@ -56,6 +68,7 @@ export function RepeatEntrySheet({ visible, onClose }: { visible: boolean; onClo
       });
       haptics.confirm();
       emitTransactionsChanged();
+      onLogged?.();
       showUndo(`Logged ${repeatEntryLabel(entry)}`, async () => {
         try {
           await deleteTransaction(tx.id);
@@ -78,12 +91,16 @@ export function RepeatEntrySheet({ visible, onClose }: { visible: boolean; onClo
       icon: (entry.type === 'income' ? 'arrow-down-right' : 'arrow-up-right') as ActionSheetItem['icon'],
       onPress: () => void logAgain(entry),
     })),
-    {
-      key: 'open-add',
-      label: 'Open Add screen',
-      icon: 'plus',
-      onPress: () => router.push('/add-transaction'),
-    },
+    ...(fromAdd
+      ? []
+      : [
+          {
+            key: 'open-add',
+            label: 'Open Add screen',
+            icon: 'plus' as const,
+            onPress: () => router.push('/add-transaction'),
+          },
+        ]),
   ];
 
   return (

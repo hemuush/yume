@@ -273,6 +273,7 @@ export async function runMigrations(db: AppDb): Promise<void> {
 
   await ensureColumn(db, 'savings_goals', 'note_to_self', `note_to_self TEXT`);
   await ensureColumn(db, 'savings_goals', 'letter_revealed', `letter_revealed INTEGER NOT NULL DEFAULT 0`);
+  await ensureColumn(db, 'savings_goals', 'track_account', `track_account INTEGER NOT NULL DEFAULT 0`);
   // Left null on existing rules rather than backfilled from next_run_date:
   // a rule that already drifted (31st → 3rd under the old overflow math)
   // would just have its drifted day locked in, and null already falls back

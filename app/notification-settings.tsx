@@ -228,8 +228,9 @@ export default function NotificationSettingsScreen() {
 
         <Text style={styles.footNote}>
           All reminders above are scheduled entirely on your device — no server, nothing ever leaves your
-          phone. Bill alerts fire from your loan due dates, overspending alerts check right after you log an
-          expense, and the weekly summary arrives every Sunday.
+          phone. Bill alerts fire from your loan due dates. Overspending alerts check right after you log an
+          expense — including one heads-up when a budget reaches 80% and one if it goes over. The weekly
+          summary arrives every Sunday.
         </Text>
         <View style={{ height: theme.layout.screenScrollPad + insets.bottom }} />
       </ScrollView>

@@ -19,7 +19,7 @@ const TONE_FILL: Record<LimitMeterTone, string> = {
  * two-tone track rather than moving to this component; this one is only for
  * the "used vs. a limit" shape, wherever that shows up.
  */
-export function LimitMeter({ pct, tone }: { pct: number; tone: LimitMeterTone }) {
+export function LimitMeter({ pct, tone, marker }: { pct: number; tone: LimitMeterTone; marker?: number }) {
   return (
     <View style={styles.track}>
       <View
@@ -28,6 +28,8 @@ export function LimitMeter({ pct, tone }: { pct: number; tone: LimitMeterTone })
           { width: `${Math.min(100, Math.max(0, pct))}%`, backgroundColor: TONE_FILL[tone] },
         ]}
       />
+      {/* Where the fill would be today if the limit were spent evenly (budget pace). */}
+      {marker != null && <View style={[styles.marker, { left: `${Math.min(100, Math.max(0, marker))}%` }]} />}
     </View>
   );
 }
@@ -42,4 +44,12 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   fill: { height: '100%' },
+  marker: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    width: 2,
+    marginLeft: -1,
+    backgroundColor: theme.colors.ink,
+  },
 });

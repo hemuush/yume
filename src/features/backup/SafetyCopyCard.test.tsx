@@ -17,6 +17,8 @@ jest.mock('expo-router', () => ({
   useFocusEffect: (cb: () => void) => require('react').useEffect(cb, [cb]),
 }));
 jest.mock('@/components/AppHeader', () => ({ AppHeader: () => null }));
+jest.mock('@/features/backup/RestorePreviewSheet', () => ({ RestorePreviewSheet: () => null }));
+jest.mock('@/lib/restoreSync', () => ({ resyncAfterRestore: jest.fn(async () => {}) }));
 jest.mock('expo-file-system', () => ({ File: jest.fn(), Paths: { document: 'documents' } }));
 jest.mock('expo-sharing', () => ({}));
 jest.mock('expo-document-picker', () => ({}));
@@ -26,7 +28,8 @@ jest.mock('@/lib/localBackup', () => ({
   pickBackupFolder: jest.fn(),
   forgetBackupFolder: jest.fn(),
   writeLocalBackupNow: jest.fn(),
-  readNewestLocalBackup: jest.fn(),
+  listLocalBackups: jest.fn(async () => []),
+  readLocalBackup: jest.fn(),
 }));
 jest.mock('@/db/settings', () => ({
   getLocalBackupFolderUri: async () => null,

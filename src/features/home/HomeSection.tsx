@@ -9,25 +9,28 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 /**
  * A titled block on the Home screen — a rounded-face heading with an optional
- * "See all →" on the right. Replaces the little pill SectionLabel used
- * elsewhere; the softer register wants a plain heading, not a tag.
+ * "See all →" on the right — a plain heading, not a tag, in the softer
+ * register. Profile's sections use it too.
  *
  * `badge` adds a small count after the title (Needs you); `heading`
  * replaces the title text with something else in the same slot — the
  * Plans card puts its Upcoming · Budgets · Goals tabs there, so its tabs
- * line up exactly where every other section's title sits.
+ * line up exactly where every other section's title sits. `right` puts
+ * something else where "See all" goes (Profile's "+ Account").
  */
 export function HomeSection({
   title,
   badge,
   heading,
   onSeeAll,
+  right,
   children,
 }: {
   title: string;
   badge?: number;
   heading?: React.ReactNode;
   onSeeAll?: () => void;
+  right?: React.ReactNode;
   children: React.ReactNode;
 }) {
   const { animatedStyle, onPressIn, onPressOut } = usePressScale();
@@ -44,6 +47,7 @@ export function HomeSection({
             )}
           </View>
         )}
+        {right}
         {onSeeAll && (
           <AnimatedPressable
             onPress={onSeeAll}
@@ -78,7 +82,7 @@ const styles = StyleSheet.create({
   title: { fontFamily: theme.font.roundedBold, fontSize: 17, color: theme.colors.textPrimary },
   badge: {
     minWidth: 20,
-    height: 20,
+    minHeight: 20,
     paddingHorizontal: 6,
     borderRadius: theme.radius.pill,
     backgroundColor: theme.colors.expense,

@@ -100,4 +100,5 @@ export const styles = StyleSheet.create({
     gap: 8,
   },
   goalsSummaryText: { fontFamily: theme.font.body, fontSize: 11.5, color: theme.colors.textMuted, flex: 1 },
+  goalError: { fontFamily: theme.font.body, fontSize: 12.5, color: theme.colors.expense, marginBottom: 10 },
 });

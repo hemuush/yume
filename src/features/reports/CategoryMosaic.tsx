@@ -35,6 +35,7 @@ export function CategoryMosaic({
   deltas,
   onPressCategory,
   onPressRest,
+  kind = 'expense',
 }: {
   breakdown: CategoryBreakdownItem[];
   spentMinor: number;
@@ -42,7 +43,9 @@ export function CategoryMosaic({
   onPressCategory: (c: CategoryBreakdownItem) => void;
   /** Tapping the "N more" tile — Reports expands the full list. */
   onPressRest: () => void;
+  kind?: 'expense' | 'income';
 }) {
+  const of = kind === 'income' ? 'income' : 'spending';
   const { hideAmounts } = usePrivacy();
   const [width, setWidth] = useState(0);
   const grouped = breakdown.length > MAX_TILES;
@@ -73,7 +76,7 @@ export function CategoryMosaic({
                 { left: t.x, top: t.y, width: t.width, height: t.height },
               ]}
               accessibilityRole="button"
-              accessibilityLabel={`${rest.length} more categories, ${pct}% of spending. Show the full list`}
+              accessibilityLabel={`${rest.length} more categories, ${pct}% of ${of}. Show the full list`}
             >
               {roomy && <Text style={styles.tileName}>{rest.length} more</Text>}
               <Text style={[styles.tilePct, !roomy && styles.tilePctSmall]} numberOfLines={1}>
@@ -97,7 +100,7 @@ export function CategoryMosaic({
               { left: t.x, top: t.y, width: t.width, height: t.height, backgroundColor: c.color },
             ]}
             accessibilityRole="button"
-            accessibilityLabel={`${c.name}, ${pct}% of spending, ${amount}${
+            accessibilityLabel={`${c.name}, ${pct}% of ${of}, ${amount}${
               showDelta ? `, ${d! > 0 ? 'up' : 'down'} ${formatPctChange(d!)}` : ''
             }`}
           >
@@ -111,10 +114,10 @@ export function CategoryMosaic({
                 {pct < 1 ? '<1' : pct}%
               </Text>
               {roomy && (
-                <Text style={styles.tileAmt} numberOfLines={1}>
+                <Text style={styles.tileAmt} numberOfLines={1} adjustsFontSizeToFit>
                   {amount}
                   {showDelta && (
-                    <Text style={d! > 0 ? styles.tileUp : styles.tileDown}>
+                    <Text style={d! > 0 === (kind === 'expense') ? styles.tileUp : styles.tileDown}>
                       {'  '}
                       {d! > 0 ? '▲' : '▼'} {formatPctChange(d!)}
                     </Text>

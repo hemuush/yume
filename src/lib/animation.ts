@@ -1,4 +1,4 @@
-import { Easing, FadeIn, ReduceMotion } from 'react-native-reanimated';
+import { Easing, FadeIn, FadeOut, LinearTransition, ReduceMotion } from 'react-native-reanimated';
 
 /**
  * Cap on a list row's FadeIn entrance stagger delay (`Math.min(i * step, MAX_LIST_STAGGER_MS)`)
@@ -70,3 +70,14 @@ export function homeRowEntering(index: number, opening: boolean) {
         .reduceMotion(ReduceMotion.System)
     : FadeIn.duration(MOTION.quick).easing(MOTION.ease).reduceMotion(ReduceMotion.System);
 }
+
+/**
+ * Lists that move: when a row is added, removed or reordered, the rows
+ * around it slide to their new place instead of jumping, and a removed row
+ * fades out. Short enough to never hold anything up, and off entirely when
+ * the phone asks for less motion.
+ */
+export const ROW_LAYOUT = LinearTransition.duration(220)
+  .easing(MOTION.ease)
+  .reduceMotion(ReduceMotion.System);
+export const ROW_EXIT = FadeOut.duration(160).reduceMotion(ReduceMotion.System);

@@ -1,7 +1,7 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { View, Pressable, Alert } from 'react-native';
 import { Text, TextInput } from '@/components/Text';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
+import { KeyboardAwareScrollView, KeyboardAwareScrollViewRef } from 'react-native-keyboard-controller';
 import Feather from '@expo/vector-icons/Feather';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getUserName, setUserName, getMemberSinceYear } from '@/db/settings';
@@ -22,13 +22,13 @@ const TABS: { label: string; value: ProfileTab }[] = [
 ];
 
 /**
- * Identity (avatar, name, member since) plus a "You"/"Settings" segment —
+ * Identity (avatar beside name and member since) plus a "You"/"Settings" segment —
  * the same reachable-from-every-screen destination Profile always was, now
  * standing in for Settings too. `/settings` used to be one tap further in,
  * reached only from the card this segment replaces; nothing else in the
  * app linked to it, so retiring it as its own route was safe. See
- * YouSection (accounts, budgets, goals, recurring, net worth) and
- * SettingsSection (appearance, money, alerts, security, about) for the
+ * YouSection (tracked balance, counts, accounts) and
+ * SettingsSection (money, privacy, alerts & backup, appearance, about) for the
  * actual content — this file is just the shared shell around both.
  */
 export default function ProfileScreen() {
@@ -39,6 +39,7 @@ export default function ProfileScreen() {
   const [draft, setDraft] = useState('');
   const [memberSince, setMemberSince] = useState<number | null>(null);
   const [tab, setTab] = useState<ProfileTab>('you');
+  const scrollRef = useRef<KeyboardAwareScrollViewRef>(null);
 
   const loadIdentity = useCallback(async () => {
     const [userName, since] = await Promise.all([getUserName(), getMemberSinceYear()]);
@@ -61,10 +62,12 @@ export default function ProfileScreen() {
     return (
       <View style={styles.container}>
         <AppHeader title="Profile" showBack hideUser />
-        <View style={[styles.identity, { paddingTop: 20 }]}>
-          <Skeleton width={76} height={76} circle radius={38} />
-          <Skeleton width={130} height={16} radius={5} style={{ marginTop: 14 }} />
-          <Skeleton width={100} height={11} radius={4} style={{ marginTop: 8 }} />
+        <View style={styles.identity}>
+          <Skeleton width={58} height={58} circle radius={29} />
+          <View style={styles.identityText}>
+            <Skeleton width={130} height={16} radius={5} />
+            <Skeleton width={100} height={11} radius={4} style={{ marginTop: 8 }} />
+          </View>
         </View>
       </View>
     );
@@ -75,6 +78,7 @@ export default function ProfileScreen() {
       <AppHeader title="Profile" showBack hideUser right={<HeaderPrivacyToggle />} />
 
       <KeyboardAwareScrollView
+        ref={scrollRef}
         contentContainerStyle={{ paddingBottom: theme.layout.screenScrollPad + insets.bottom }}
         keyboardShouldPersistTaps="handled"
         bottomOffset={20}
@@ -93,53 +97,61 @@ export default function ProfileScreen() {
             </Text>
           </View>
 
-          {editing ? (
-            <View style={styles.nameEditRow}>
-              <TextInput
-                style={styles.nameInput}
-                value={draft}
-                onChangeText={setDraft}
-                placeholder="Your name"
-                placeholderTextColor={theme.colors.textMuted}
-                maxLength={40}
-                autoCapitalize="words"
-                autoFocus
-                returnKeyType="done"
-                onSubmitEditing={saveName}
-              />
+          <View style={styles.identityText}>
+            {editing ? (
+              <View style={styles.nameEditRow}>
+                <TextInput
+                  style={styles.nameInput}
+                  value={draft}
+                  onChangeText={setDraft}
+                  placeholder="Your name"
+                  placeholderTextColor={theme.colors.textMuted}
+                  maxLength={40}
+                  autoCapitalize="words"
+                  autoFocus
+                  returnKeyType="done"
+                  onSubmitEditing={saveName}
+                />
+                <Pressable
+                  onPress={saveName}
+                  hitSlop={10}
+                  style={styles.nameSave}
+                  accessibilityRole="button"
+                  accessibilityLabel="Save name"
+                >
+                  <Feather name="check" size={18} color={theme.colors.ink} />
+                </Pressable>
+              </View>
+            ) : (
               <Pressable
-                onPress={saveName}
-                hitSlop={10}
-                style={styles.nameSave}
+                style={styles.nameRow}
                 accessibilityRole="button"
-                accessibilityLabel="Save name"
+                accessibilityHint="Edit your name"
+                onPress={() => {
+                  setDraft(name ?? '');
+                  setEditing(true);
+                }}
               >
-                <Feather name="check" size={18} color={theme.colors.ink} />
+                <Text style={styles.name} numberOfLines={1}>
+                  {name || 'Add your name'}
+                </Text>
+                <Feather name="edit-2" size={14} color={theme.colors.textMuted} />
               </Pressable>
-            </View>
-          ) : (
-            <Pressable
-              style={styles.nameRow}
-              onPress={() => {
-                setDraft(name ?? '');
-                setEditing(true);
-              }}
-            >
-              <Text style={styles.name} numberOfLines={1}>
-                {name || 'Add your name'}
-              </Text>
-              <Feather name="edit-2" size={14} color={theme.colors.textMuted} />
-            </Pressable>
-          )}
+            )}
 
-          <Text style={styles.memberSince}>Member since {memberSince ?? new Date().getFullYear()}</Text>
+            <Text style={styles.memberSince}>Member since {memberSince ?? new Date().getFullYear()}</Text>
+          </View>
         </View>
 
         <View style={styles.tabWrap}>
           <SegmentedControl options={TABS} value={tab} onChange={setTab} />
         </View>
 
-        {tab === 'you' ? <YouSection /> : <SettingsSection />}
+        {tab === 'you' ? (
+          <YouSection />
+        ) : (
+          <SettingsSection onJumpTo={(y) => scrollRef.current?.scrollTo({ y, animated: true })} />
+        )}
       </KeyboardAwareScrollView>
     </View>
   );

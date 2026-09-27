@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Pressable } from 'react-native';
+import Feather from '@expo/vector-icons/Feather';
 import { Text } from '@/components/Text';
 import ReanimatedAnimated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
-import { getAccountFlow, listTransactions } from '@/db/ledger';
+import { getAccountFlow, listTransactions, AccountFlow } from '@/db/ledger';
 import { Account, Category, Transaction } from '@/types';
 import { theme, modalFooterStyles as f } from '@/constants/theme';
 import { ModalSheet } from '@/components/ModalSheet';
@@ -17,8 +18,9 @@ import { RecentTransactionRow } from './RecentTransactionRow';
 
 /**
  * A quick look at one account, opened by tapping its card on Home: the
- * balance, money in and out over the period Home is showing, and the latest
- * few entries against it. Read-only on purpose — renaming, retyping or
+ * balance, money in and out over the period Home is showing — each bar split
+ * into real income/spending and transfers between your own accounts, with
+ * the net under them — and the latest few entries against it. Read-only on purpose — renaming, retyping or
  * archiving stays in the full edit form (AccountDetailModal), one tap away
  * via "Edit account".
  *
@@ -33,6 +35,7 @@ export function AccountSummarySheet({
   onClose,
   onAdd,
   onEdit,
+  onSeeAll,
 }: {
   account: Account | null;
   cursor: PeriodCursor;
@@ -42,9 +45,11 @@ export function AccountSummarySheet({
   /** "Add expense here" (or "Transfer from here" for a savings account). */
   onAdd: (account: Account) => void;
   onEdit: (account: Account) => void;
+  /** Opens Activity filtered to this account, on the same period. */
+  onSeeAll: (account: Account) => void;
 }) {
   const { hideAmounts } = usePrivacy();
-  const [flow, setFlow] = useState<{ inMinor: number; outMinor: number } | null>(null);
+  const [flow, setFlow] = useState<AccountFlow | null>(null);
   const [latest, setLatest] = useState<Transaction[] | null>(null);
   const loadSeq = useRef(0);
 
@@ -63,7 +68,14 @@ export function AccountSummarySheet({
       })
       .catch(() => {
         if (seq !== loadSeq.current) return;
-        setFlow({ inMinor: 0, outMinor: 0 });
+        setFlow({
+          inMinor: 0,
+          outMinor: 0,
+          incomeMinor: 0,
+          transferInMinor: 0,
+          expenseMinor: 0,
+          transferOutMinor: 0,
+        });
         setLatest([]);
       });
   }, [accountId, start, end]);
@@ -75,6 +87,21 @@ export function AccountSummarySheet({
   const maxFlow = Math.max(flow?.inMinor ?? 0, flow?.outMinor ?? 0);
   const isSavings = account.type === 'savings';
   const nameOf = (id: string | null) => accounts.find((a) => a.id === id)?.name;
+  const unit = cursor.granularity === 'year' ? 'year' : 'month';
+  const parts = (own: number, ownLabel: string, moved: number, movedLabel: string) =>
+    [own > 0 ? `${ownLabel} ${money(own)}` : null, moved > 0 ? `${movedLabel} ${money(moved)}` : null]
+      .filter(Boolean)
+      .join(' · ');
+  const net = flow ? flow.inMinor - flow.outMinor : 0;
+  const netLine = !flow
+    ? ''
+    : flow.inMinor === 0 && flow.outMinor === 0
+      ? `Nothing moved in or out this ${unit}.`
+      : net === 0
+        ? 'Everything that came in went out.'
+        : net > 0
+          ? `${money(net)} more came in than went out.`
+          : `${money(-net)} more went out than came in.`;
 
   return (
     <ModalSheet
@@ -117,6 +144,8 @@ export function AccountSummarySheet({
           label="In"
           value={flow ? `+${money(flow.inMinor)}` : '…'}
           fraction={flow && maxFlow > 0 ? flow.inMinor / maxFlow : 0}
+          ownShare={flow && flow.inMinor > 0 ? flow.incomeMinor / flow.inMinor : 1}
+          detail={flow ? parts(flow.incomeMinor, 'Income', flow.transferInMinor, 'from your accounts') : ''}
           color={theme.colors.income}
           fillColor={theme.colors.secondary}
         />
@@ -124,10 +153,28 @@ export function AccountSummarySheet({
           label="Out"
           value={flow ? `−${money(flow.outMinor)}` : '…'}
           fraction={flow && maxFlow > 0 ? flow.outMinor / maxFlow : 0}
+          ownShare={flow && flow.outMinor > 0 ? flow.expenseMinor / flow.outMinor : 1}
+          detail={flow ? parts(flow.expenseMinor, 'Spent', flow.transferOutMinor, 'to your accounts') : ''}
           color={theme.colors.expense}
           fillColor={theme.colors.idCoralDeep}
         />
       </View>
+      {!!netLine && (
+        <View style={styles.netRow}>
+          <Text style={styles.netLabel}>Net</Text>
+          <Text
+            style={[
+              styles.netValue,
+              net > 0 && { color: theme.colors.income },
+              net < 0 && { color: theme.colors.expense },
+            ]}
+          >
+            {net > 0 ? '+' : net < 0 ? '−' : ''}
+            {money(Math.abs(net))}
+          </Text>
+          <Text style={styles.netText}>{netLine}</Text>
+        </View>
+      )}
 
       <Text style={[styles.label, styles.sectionGap]}>Latest here</Text>
       {latest === null ? null : latest.length === 0 ? (
@@ -146,21 +193,42 @@ export function AccountSummarySheet({
           ))}
         </View>
       )}
+      {latest !== null && latest.length > 0 && (
+        <Pressable
+          onPress={() => onSeeAll(account)}
+          style={styles.seeAll}
+          accessibilityRole="button"
+          accessibilityLabel={`See everything in ${account.name} in Activity`}
+        >
+          <Text style={styles.seeAllText}>See all in Activity</Text>
+          <Feather name="chevron-right" size={14} color={theme.colors.textSecondary} />
+        </Pressable>
+      )}
     </ModalSheet>
   );
 }
 
-/** One in/out line: label, a bar that grows to its share of the larger of the two, the amount. */
+/**
+ * One in/out line: label, a bar that grows to its share of the larger of the
+ * two, the amount — and under it, what that amount was. The bar is split:
+ * real income/spending in full colour, transfers between your own accounts
+ * in a pale shade of it, so money just passing through reads differently.
+ */
 function FlowRow({
   label,
   value,
   fraction,
+  ownShare,
+  detail,
   color,
   fillColor,
 }: {
   label: string;
   value: string;
   fraction: number;
+  /** 0–1: how much of this bar is real income/spending rather than transfers. */
+  ownShare: number;
+  detail: string;
   color: string;
   fillColor: string;
 }) {
@@ -172,14 +240,24 @@ function FlowRow({
   const fillStyle = useAnimatedStyle(() => ({ transform: [{ scaleX: grow.value }] }));
 
   return (
-    <View style={styles.flowRow}>
-      <Text style={styles.flowLabel}>{label}</Text>
-      <View style={styles.track}>
-        <ReanimatedAnimated.View style={[styles.fill, { backgroundColor: fillColor }, fillStyle]} />
+    <View>
+      <View style={styles.flowRow}>
+        <Text style={styles.flowLabel}>{label}</Text>
+        <View style={styles.track}>
+          <ReanimatedAnimated.View style={[styles.fill, fillStyle]}>
+            <View style={{ flex: ownShare, backgroundColor: fillColor }} />
+            <View style={{ flex: 1 - ownShare, backgroundColor: fillColor, opacity: 0.35 }} />
+          </ReanimatedAnimated.View>
+        </View>
+        <Text style={[styles.flowValue, { color }]} numberOfLines={1}>
+          {value}
+        </Text>
       </View>
-      <Text style={[styles.flowValue, { color }]} numberOfLines={1}>
-        {value}
-      </Text>
+      {!!detail && (
+        <Text style={styles.flowDetail} numberOfLines={1}>
+          {detail}
+        </Text>
+      )}
     </View>
   );
 }
@@ -209,7 +287,45 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.inkWash,
     overflow: 'hidden',
   },
-  fill: { position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, transformOrigin: 'left' },
+  fill: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    transformOrigin: 'left',
+  },
+  flowDetail: {
+    fontFamily: theme.font.body,
+    fontSize: 11.5,
+    color: theme.colors.textMuted,
+    marginLeft: 40,
+    marginTop: 3,
+  },
+  netRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'baseline',
+    gap: 8,
+    marginTop: 12,
+    paddingTop: 10,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: theme.colors.borderSoft,
+  },
+  netLabel: {
+    fontFamily: theme.font.bodyMedium,
+    fontSize: 12.5,
+    color: theme.colors.textSecondary,
+    width: 30,
+  },
+  netValue: { fontFamily: theme.font.monoBold, fontSize: 14, color: theme.colors.textPrimary },
+  netText: {
+    flexBasis: '100%',
+    fontFamily: theme.font.body,
+    fontSize: 12,
+    color: theme.colors.textSecondary,
+  },
   flowValue: { fontFamily: theme.font.monoBold, fontSize: 13, minWidth: 92, textAlign: 'right' },
   latest: {
     marginTop: 8,
@@ -221,4 +337,13 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   empty: { fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textMuted, marginTop: 8 },
+  seeAll: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    marginTop: 10,
+    paddingVertical: 8,
+  },
+  seeAllText: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textSecondary },
 });

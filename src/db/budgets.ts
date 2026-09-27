@@ -104,7 +104,7 @@ export async function listBudgetsForMonth(periodMonth: string = periodMonthOf())
     `SELECT b.*, c.name as category_name, c.icon as category_icon, c.color as category_color
      FROM budgets b JOIN categories c ON c.id = b.category_id
      WHERE b.period_month = ?
-     ORDER BY c.name ASC`,
+     ORDER BY c.name COLLATE NOCASE ASC`,
     [periodMonth]
   );
 
@@ -164,7 +164,7 @@ export async function listLapsedBudgets(periodMonth: string = periodMonthOf()): 
      FROM budgets b JOIN categories c ON c.id = b.category_id
      WHERE b.period_month = ? AND c.archived = 0
        AND NOT EXISTS (SELECT 1 FROM budgets b2 WHERE b2.category_id = b.category_id AND b2.period_month = ?)
-     ORDER BY c.name ASC`,
+     ORDER BY c.name COLLATE NOCASE ASC`,
     [prevMonth, periodMonth]
   );
   return rows.map((r) => ({
@@ -235,4 +235,22 @@ export async function deleteBudget(id: string): Promise<RowSnapshot> {
 export async function restoreBudget(snapshot: RowSnapshot): Promise<void> {
   const db = await getDb();
   await restoreRow(db, snapshot);
+}
+
+export type BudgetNudgeLevel = 'near' | 'over';
+/** A budget at or past this share of its limit gets one "getting close" notification. */
+export const BUDGET_NUDGE_PCT = 80;
+
+/**
+ * Which budget notification is due, if any, given the ones already sent
+ * this month: one when it passes BUDGET_NUDGE_PCT, one when it goes over —
+ * each at most once per budget per month.
+ */
+export function dueBudgetNudge(
+  progress: { overBudget: boolean; percentUsed: number },
+  sent: { near: boolean; over: boolean }
+): BudgetNudgeLevel | null {
+  if (progress.overBudget) return sent.over ? null : 'over';
+  if (progress.percentUsed >= BUDGET_NUDGE_PCT) return sent.near ? null : 'near';
+  return null;
 }
