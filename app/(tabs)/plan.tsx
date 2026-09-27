@@ -46,8 +46,9 @@ import {
   PeopleTile,
   HabitTile,
   SavingTile,
-  ComingUpSection,
-} from '@/features/plan/PlanSections';
+} from '@/features/plan/PlanTiles';
+import { ComingUpSection } from '@/features/plan/ComingUpSection';
+import { listCardCycles } from '@/db/cardCycles';
 
 interface PlanData {
   loans: LoansSummary;
@@ -77,19 +78,31 @@ export default function PlanScreen() {
   const [data, setData] = useState<PlanData | null>(null);
 
   const loadPlan = useCallback(async () => {
-    const [budgets, goals, rules, loans, progress, people, categories, accounts, dailyGoal, averages] =
-      await Promise.all([
-        listBudgetsForMonth(),
-        listSavingsGoals(),
-        listRecurringRules(),
-        listLoans(),
-        getLoanProgress(),
-        listPeople(),
-        listCategories(),
-        listAccounts(),
-        getDailySpendingGoal(),
-        getCategoryMonthlyAverages(3),
-      ]);
+    const [
+      budgets,
+      goals,
+      rules,
+      loans,
+      progress,
+      people,
+      categories,
+      accounts,
+      dailyGoal,
+      averages,
+      cardCycles,
+    ] = await Promise.all([
+      listBudgetsForMonth(),
+      listSavingsGoals(),
+      listRecurringRules(),
+      listLoans(),
+      getLoanProgress(),
+      listPeople(),
+      listCategories(),
+      listAccounts(),
+      getDailySpendingGoal(),
+      getCategoryMonthlyAverages(3),
+      listCardCycles().catch(() => []),
+    ]);
     const streak = dailyGoal != null ? await getDailyGoalStreakSeries(dailyGoal, 5) : null;
 
     const accountName = (id: string | null) => accounts.find((a) => a.id === id)?.name ?? '—';
@@ -107,7 +120,8 @@ export default function PlanScreen() {
           r.type === 'transfer'
             ? `${accountName(r.accountId)} → ${accountName(r.toAccountId)}`
             : r.note || categories.find((c) => c.id === r.categoryId)?.name || 'Recurring',
-      }))
+      })),
+      cardCycles
     );
     // The category with the most spend lately (already sorted biggest first)
     // that a spending cut could actually apply to: not a built-in category

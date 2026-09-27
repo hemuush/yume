@@ -21,6 +21,7 @@ import { AddCategoryModal } from '@/features/categories/AddCategoryModal';
 import { useUndoToast } from '@/components/UndoToast';
 import { haptics } from '@/lib/haptics';
 import { Skeleton } from '@/components/Skeleton';
+import { errorMessage } from '@/lib/errorMessage';
 
 export default function CategoriesScreen() {
   const insets = useSafeAreaInsets();
@@ -62,8 +63,8 @@ export default function CategoriesScreen() {
           try {
             await unarchiveCategory(cat.id);
             await load();
-          } catch (e: any) {
-            Alert.alert('Could not restore category', String(e?.message ?? e));
+          } catch (e) {
+            Alert.alert("Couldn't restore category", errorMessage(e));
           } finally {
             setActionBusy(false);
           }
@@ -90,8 +91,8 @@ export default function CategoriesScreen() {
             try {
               await archiveCategory(cat.id);
               await load();
-            } catch (e: any) {
-              Alert.alert('Could not archive category', String(e?.message ?? e));
+            } catch (e) {
+              Alert.alert("Couldn't archive category", errorMessage(e));
             } finally {
               setActionBusy(false);
             }
@@ -112,8 +113,8 @@ export default function CategoriesScreen() {
         await restoreCategory(snapshot);
         await load();
       });
-    } catch (e: any) {
-      Alert.alert('Could not delete category', String(e?.message ?? e));
+    } catch (e) {
+      Alert.alert("Couldn't delete category", errorMessage(e));
     } finally {
       setActionBusy(false);
     }
@@ -236,7 +237,7 @@ export default function CategoriesScreen() {
             <Text style={styles.errorDetail}>{loadError}</Text>
           </View>
         )}
-        <Text style={styles.sectionTitle}>Expense</Text>
+        <Text style={[styles.sectionTitle, styles.firstTitle]}>Expense</Text>
         <CategorySection cats={expenseCats} onEdit={setEditingCategory} onManage={onManage} />
 
         <Text style={styles.sectionTitle}>Income</Text>

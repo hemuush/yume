@@ -29,6 +29,7 @@ import { useUndoToast } from '@/components/UndoToast';
 import { HomeSection } from '@/features/home/HomeSection';
 import { homeStyles as h } from '@/features/home/homeStyles';
 import { dayMonth, longMonth, shortMonthYear } from '@/lib/dateLabels';
+import { errorMessage } from '@/lib/errorMessage';
 
 /** "23 Sep 1:53 pm" from created_at (UTC, "YYYY-MM-DD HH:MM:SS"). */
 const savedLabel = (createdAt: string) => {
@@ -67,8 +68,8 @@ export default function TidyUpScreen() {
       await fix();
       emitTransactionsChanged();
       await reload();
-    } catch (e: any) {
-      Alert.alert(failTitle, String(e?.message ?? e));
+    } catch (e) {
+      Alert.alert(failTitle, errorMessage(e));
     } finally {
       setBusy(false);
     }
@@ -78,18 +79,18 @@ export default function TidyUpScreen() {
     act(async () => {
       const snapshot = await deleteNewestOfGroup(group);
       haptics.warn();
-      showUndo('Deleted the repeat', async () => {
+      showUndo('Repeat moved to Recently deleted', async () => {
         await undoDeleteNewestOfGroup(snapshot);
         emitTransactionsChanged();
         await reload();
       });
-    }, 'Could not delete it');
+    }, "Couldn't delete it");
 
   const keepBoth = (group: RepeatGroup) =>
     act(async () => {
       await keepRepeatGroup(group.key);
       haptics.tap();
-    }, 'Could not save that');
+    }, "Couldn't save that");
 
   const moveBalance = (group: StartingBalanceGroup) =>
     act(async () => {
@@ -100,13 +101,13 @@ export default function TidyUpScreen() {
         emitTransactionsChanged();
         await reload();
       });
-    }, 'Could not move it');
+    }, "Couldn't move it");
 
   const keepIncome = (group: StartingBalanceGroup) =>
     act(async () => {
       await keepAsIncome(group.key);
       haptics.tap();
-    }, 'Could not save that');
+    }, "Couldn't save that");
 
   const roundAmounts = (count: number) =>
     Alert.alert(
@@ -128,7 +129,7 @@ export default function TidyUpScreen() {
                 'Done',
                 `Rounded ${changed.total} amount${changed.total === 1 ? '' : 's'} to whole rupees.`
               );
-            }, 'Could not round amounts'),
+            }, "Couldn't round amounts"),
         },
       ]
     );
@@ -151,7 +152,7 @@ export default function TidyUpScreen() {
         )}
 
         {!loaded || !report ? (
-          <View style={{ marginTop: 20 }}>
+          <View style={{ marginTop: theme.layout.screenTopGap }}>
             <CardRowsSkeleton rows={3} />
           </View>
         ) : allTidy ? (
@@ -307,7 +308,8 @@ const styles = StyleSheet.create({
   action: { flexShrink: 1 },
   errorBanner: {
     marginHorizontal: 20,
-    marginTop: 8,
+    marginTop: theme.layout.screenTopGap,
+    marginBottom: 4,
     padding: 14,
     borderRadius: theme.radius.md,
     backgroundColor: theme.colors.expenseTint,

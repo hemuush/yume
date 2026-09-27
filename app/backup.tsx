@@ -49,6 +49,8 @@ import { PrimaryButton } from '@/components/PrimaryButton';
 import { SegmentedControl } from '@/components/SegmentedControl';
 import { Skeleton } from '@/components/Skeleton';
 import { theme } from '@/constants/theme';
+import { errorMessage } from '@/lib/errorMessage';
+import { SECTION_TITLE, SECTION_GAP } from '@/constants/textStyles';
 
 const FREQUENCIES: { label: string; value: BackupFrequency }[] = [
   { label: 'Daily', value: 'daily' },
@@ -147,8 +149,8 @@ export default function BackupScreen() {
         await new Promise((resolve) => setTimeout(resolve, 380));
         setDoneLabel(null);
       }
-    } catch (e: any) {
-      Alert.alert('Something went wrong', String(e?.message ?? e));
+    } catch (e) {
+      Alert.alert('Something went wrong', errorMessage(e));
     } finally {
       setBusy(null);
       await load();
@@ -230,8 +232,8 @@ export default function BackupScreen() {
               Alert.alert('Data put back', 'Your data is back to how it was before the restore.', [
                 { text: 'OK', onPress: goHome },
               ]);
-            } catch (e: any) {
-              Alert.alert("Couldn't put your data back", String(e?.message ?? e));
+            } catch (e) {
+              Alert.alert("Couldn't put your data back", errorMessage(e));
             } finally {
               setBusy(null);
               await load();
@@ -316,8 +318,8 @@ Restore anyway? Your current data would be replaced with no way back.`,
             onPress: async () => {
               try {
                 finishRestore(await restoreKeepingSafetyCopy(snapshot, { withoutCopy: true }));
-              } catch (err: any) {
-                Alert.alert('Something went wrong', String(err?.message ?? err));
+              } catch (err) {
+                Alert.alert('Something went wrong', errorMessage(err));
               }
             },
           },
@@ -342,11 +344,11 @@ Restore anyway? Your current data would be replaced with no way back.`,
         try {
           const { sizeBytes } = await writeLocalBackupNow(localFolderUri);
           await setLastLocalBackupResult({ at: new Date().toISOString(), ok: true, sizeBytes });
-        } catch (e: any) {
+        } catch (e) {
           await setLastLocalBackupResult({
             at: new Date().toISOString(),
             ok: false,
-            error: String(e?.message ?? e),
+            error: errorMessage(e),
           });
           throw e;
         }
@@ -366,9 +368,9 @@ Restore anyway? Your current data would be replaced with no way back.`,
 
   return (
     <View style={styles.container}>
-      <AppHeader title="Backup & Restore" showBack />
+      <AppHeader title="Backup & restore" showBack />
       <ScrollView contentContainerStyle={{ paddingBottom: theme.layout.screenScrollPad + insets.bottom }}>
-        <Text style={styles.sectionTitle}>Automatic backup frequency</Text>
+        <Text style={[styles.sectionTitle, styles.firstTitle]}>Automatic backup frequency</Text>
         <View style={styles.freqWrap}>
           <SegmentedControl options={FREQUENCIES} value={frequency} onChange={onChangeFrequency} />
         </View>
@@ -376,7 +378,7 @@ Restore anyway? Your current data would be replaced with no way back.`,
           Applies to the local folder backup below. Backups only run while the app is open.
         </Text>
 
-        <Text style={styles.sectionTitle}>Local Folder Backup</Text>
+        <Text style={styles.sectionTitle}>Folder backup</Text>
         <View style={styles.card}>
           {!loaded ? (
             <>
@@ -395,7 +397,7 @@ Restore anyway? Your current data would be replaced with no way back.`,
               <View style={styles.buttonRow}>
                 {!localFolderUri ? (
                   <PrimaryButton
-                    title={busy === 'pick-folder' ? 'Choosing...' : 'Choose folder'}
+                    title={busy === 'pick-folder' ? 'Choosing…' : 'Choose folder'}
                     onPress={choosePickFolder}
                     disabled={!!busy}
                     style={{ flex: 1 }}
@@ -403,7 +405,7 @@ Restore anyway? Your current data would be replaced with no way back.`,
                 ) : (
                   <>
                     <PrimaryButton
-                      title={busy === 'backup-now-local' ? 'Backing up...' : 'Backup now'}
+                      title={busy === 'backup-now-local' ? 'Backing up…' : 'Backup now'}
                       done={doneLabel === 'backup-now-local'}
                       onPress={backupNowLocal}
                       disabled={!!busy}
@@ -455,7 +457,7 @@ Restore anyway? Your current data would be replaced with no way back.`,
           )}
         </View>
 
-        <Text style={styles.sectionTitle}>Local Export</Text>
+        <Text style={styles.sectionTitle}>Export</Text>
         <View style={styles.card}>
           <Text style={styles.cardText}>
             Save a full backup (JSON, for restoring into Yume) or a styled Excel workbook — transactions,
@@ -463,13 +465,13 @@ Restore anyway? Your current data would be replaced with no way back.`,
             or store anywhere you like.
           </Text>
           <PrimaryButton
-            title={busy === 'export-json' ? 'Exporting...' : 'Export full backup (JSON)'}
+            title={busy === 'export-json' ? 'Exporting…' : 'Export full backup (JSON)'}
             onPress={exportJsonLocally}
             disabled={!!busy}
             style={{ marginTop: 10 }}
           />
           <PrimaryButton
-            title={busy === 'export-excel' ? 'Exporting...' : 'Export to Excel (.xlsx)'}
+            title={busy === 'export-excel' ? 'Exporting…' : 'Export to Excel (.xlsx)'}
             variant="secondary"
             onPress={exportExcelLocally}
             disabled={!!busy}
@@ -500,7 +502,7 @@ Restore anyway? Your current data would be replaced with no way back.`,
               {safetyInfo.accounts} {safetyInfo.accounts === 1 ? 'account' : 'accounts'}.
             </Text>
             <PrimaryButton
-              title={busy === 'undo-restore' ? 'Putting back...' : 'Put back that data'}
+              title={busy === 'undo-restore' ? 'Putting back…' : 'Put back that data'}
               onPress={confirmUndo}
               disabled={!!busy}
               style={{ marginTop: 10 }}
@@ -510,7 +512,7 @@ Restore anyway? Your current data would be replaced with no way back.`,
         <View style={styles.card}>
           <Text style={styles.cardText}>Restore from a backup JSON file saved on this device.</Text>
           <PrimaryButton
-            title={busy === 'restore-file' ? 'Restoring...' : 'Restore from file'}
+            title={busy === 'restore-file' ? 'Restoring…' : 'Restore from file'}
             variant="secondary"
             onPress={restoreFromFile}
             disabled={!!busy}
@@ -530,16 +532,14 @@ Restore anyway? Your current data would be replaced with no way back.`,
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
+  // Section titles like Profile's settings and Notification settings.
   sectionTitle: {
-    fontSize: 13,
-    fontFamily: theme.font.bodyBold,
-    color: theme.colors.textMuted,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    ...SECTION_TITLE,
     marginHorizontal: 20,
-    marginTop: 20,
-    marginBottom: 8,
+    marginTop: SECTION_GAP.top,
+    marginBottom: SECTION_GAP.bottom,
   },
+  firstTitle: { marginTop: theme.layout.screenTopGap },
   freqWrap: { marginHorizontal: 20 },
   freqHint: {
     fontFamily: theme.font.body,

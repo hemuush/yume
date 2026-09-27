@@ -144,7 +144,7 @@ function GroupCardHeader({
       onPress={onPress}
       onLongPress={onLongPress}
     >
-      <CategoryIcon name={parent.icon} color={parent.color} square={36} size={17} />
+      <CategoryIcon name={parent.icon} color={parent.color} />
       <Text style={styles.groupCardTitle}>{parent.name}</Text>
       <Text style={styles.groupCardCount}>
         {count} subcategor{count === 1 ? 'y' : 'ies'}

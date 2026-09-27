@@ -1,9 +1,30 @@
+import { useEffect, useRef, useState } from 'react';
+import { Animated, Easing } from 'react-native';
 import Svg, { Circle, Ellipse, Rect, Mask, Defs, G } from 'react-native-svg';
 import { theme } from '@/constants/theme';
+import { DURATIONS } from '@/lib/motionTimings';
+import { useReduceMotion } from '@/lib/useReduceMotion';
 import type { GrowthStage } from '@/lib/gardenGrowth';
 
-const STEM_HEIGHT: Record<GrowthStage, number> = { seed: 0, sprout: 16, sapling: 21, bloom: 25 };
-const LEAF_SCALE: Record<GrowthStage, number> = { seed: 0, sprout: 0.55, sapling: 0.8, bloom: 1 };
+const STAGES: GrowthStage[] = ['seed', 'sprout', 'sapling', 'bloom'];
+const STEM_HEIGHT = [0, 16, 21, 25];
+const LEAF_SCALE = [0, 0.55, 0.8, 1];
+
+/** Each half of the pop when a plant reaches a new stage: up to 1.08, back to 1. */
+const POP_HALF_MS = 160;
+
+/** The stage each animated pot last showed while the app was open. */
+const seenStage = new Map<string, number>();
+
+/** A stage position (0 seed … 3 bloom, fractions in between) as stem height and leaf size. */
+function shapeAt(pos: number): { stemH: number; leafScale: number } {
+  const i = Math.max(0, Math.min(STAGES.length - 2, Math.floor(pos)));
+  const k = Math.max(0, Math.min(1, pos - i));
+  return {
+    stemH: STEM_HEIGHT[i] + (STEM_HEIGHT[i + 1] - STEM_HEIGHT[i]) * k,
+    leafScale: LEAF_SCALE[i] + (LEAF_SCALE[i + 1] - LEAF_SCALE[i]) * k,
+  };
+}
 
 /**
  * One pot's plant, drawn at a fixed 44x56 viewBox and scaled by `size` —
@@ -12,16 +33,89 @@ const LEAF_SCALE: Record<GrowthStage, number> = { seed: 0, sprout: 0.55, sapling
  * reusing that asset directly (it has no in-between growth states). `seed`
  * is deliberately almost nothing to look at — the point is watching it
  * become something, not a placeholder icon.
+ *
+ * With `animKey`, a plant that reached a new stage since you last saw it
+ * (while the app was open) grows into it with one small pop (the Quiet
+ * motion sign-off). It happens once per stage and never when a stage drops.
  */
-export function GardenPlant({ stage, size = 44 }: { stage: GrowthStage; size?: number }) {
-  const stemH = STEM_HEIGHT[stage];
-  const leafScale = LEAF_SCALE[stage];
+export function GardenPlant({
+  stage,
+  size = 44,
+  animKey,
+}: {
+  stage: GrowthStage;
+  size?: number;
+  animKey?: string;
+}) {
+  if (animKey) return <GrowingPlant stage={stage} size={size} animKey={animKey} />;
+  return <PlantSvg pos={STAGES.indexOf(stage)} size={size} />;
+}
+
+function GrowingPlant({ stage, size, animKey }: { stage: GrowthStage; size: number; animKey: string }) {
+  const reduce = useReduceMotion();
+  const idx = STAGES.indexOf(stage);
+  const [start] = useState(() => seenStage.get(animKey) ?? idx);
+  const [pos, setPos] = useState(start);
+  const [grow] = useState(() => new Animated.Value(start));
+  const [pop] = useState(() => new Animated.Value(1));
+  const shownIdx = useRef(start);
+
+  useEffect(() => {
+    const id = grow.addListener(({ value }) => setPos(value));
+    return () => grow.removeListener(id);
+  }, [grow]);
+
+  useEffect(() => {
+    seenStage.set(animKey, idx);
+    const from = shownIdx.current;
+    shownIdx.current = idx;
+    if (reduce || idx <= from) {
+      grow.stopAnimation();
+      grow.setValue(idx);
+      setPos(idx);
+      return;
+    }
+    Animated.timing(grow, {
+      toValue: idx,
+      duration: DURATIONS.standard,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: false,
+    }).start(({ finished }) => {
+      if (!finished) return;
+      Animated.sequence([
+        Animated.timing(pop, {
+          toValue: 1.08,
+          duration: POP_HALF_MS,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        }),
+        Animated.timing(pop, {
+          toValue: 1,
+          duration: POP_HALF_MS,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        }),
+      ]).start();
+    });
+  }, [animKey, idx, reduce, grow, pop]);
+
+  return (
+    <Animated.View style={{ transform: [{ scale: pop }] }}>
+      <PlantSvg pos={pos} size={size} />
+    </Animated.View>
+  );
+}
+
+function PlantSvg({ pos, size }: { pos: number; size: number }) {
+  const { stemH, leafScale } = shapeAt(pos);
+  const bloom = pos >= STAGES.length - 1 - 0.001;
+  const seed = pos <= 0.001;
   const baseY = 56;
   const stemTopY = baseY - stemH;
 
   return (
     <Svg width={size} height={(size * 56) / 44} viewBox="0 0 44 56">
-      {stage === 'bloom' && (
+      {bloom && (
         <Defs>
           <Mask id="crescent" maskUnits="userSpaceOnUse" x="0" y="0" width="44" height="56">
             <Rect x="0" y="0" width="44" height="56" fill="white" />
@@ -29,13 +123,11 @@ export function GardenPlant({ stage, size = 44 }: { stage: GrowthStage; size?: n
           </Mask>
         </Defs>
       )}
-      {stage === 'seed' ? (
+      {seed ? (
         <Circle cx={22} cy={baseY - 3} r={2.6} fill={theme.colors.ink} opacity={0.45} />
       ) : (
         <G>
-          {stage === 'bloom' && (
-            <Circle cx={22} cy={13} r={15} fill={theme.colors.ink} mask="url(#crescent)" />
-          )}
+          {bloom && <Circle cx={22} cy={13} r={15} fill={theme.colors.ink} mask="url(#crescent)" />}
           <Rect x={21} y={stemTopY} width={2} height={stemH} fill={theme.colors.ink} />
           <Ellipse
             cx={22 - 8 * leafScale}

@@ -2,6 +2,7 @@ import { View, Pressable } from 'react-native';
 import { Text } from '@/components/Text';
 import { StoryTarget } from './reportsInsights';
 import { styles } from './reports.styles';
+import { withPressed } from '@/lib/pressed';
 
 export type ReportSection = StoryTarget;
 
@@ -19,7 +20,7 @@ export function JumpBar({ active, onJump }: { active: ReportSection; onJump: (s:
         <Pressable
           key={key}
           onPress={() => onJump(key)}
-          style={[styles.jumpChip, active === key && styles.jumpChipOn]}
+          style={withPressed([styles.jumpChip, active === key && styles.jumpChipOn])}
           accessibilityRole="button"
           accessibilityState={{ selected: active === key }}
         >

@@ -1,3 +1,5 @@
+import { found } from './found';
+import { SavingsGoalRow } from './rows';
 import { getDb } from './client';
 import { newId } from '@/lib/id';
 import { captureRow, restoreRow, RowSnapshot } from './undoSnapshot';
@@ -32,14 +34,14 @@ const GOAL_SELECT = `
   FROM savings_goals g
   LEFT JOIN accounts a ON a.id = g.linked_account_id`;
 
-function rowToGoal(row: any): SavingsGoal {
-  const tracksAccount =
-    !!row.track_account && row.linked_account_id != null && row.account_balance_minor != null;
+function rowToGoal(row: SavingsGoalRow & { account_balance_minor: number | null }): SavingsGoal {
+  const balance = row.account_balance_minor;
+  const tracksAccount = !!row.track_account && row.linked_account_id != null && balance != null;
   return {
     id: row.id,
     name: row.name,
     targetAmountMinor: row.target_amount_minor,
-    currentAmountMinor: tracksAccount ? Math.max(0, row.account_balance_minor) : row.current_amount_minor,
+    currentAmountMinor: tracksAccount && balance != null ? Math.max(0, balance) : row.current_amount_minor,
     targetDate: row.target_date,
     linkedAccountId: row.linked_account_id,
     tracksAccount,
@@ -52,7 +54,7 @@ function rowToGoal(row: any): SavingsGoal {
 
 export async function listSavingsGoals(includeArchived = false): Promise<SavingsGoal[]> {
   const db = await getDb();
-  const rows = await db.getAllAsync<any>(
+  const rows = await db.getAllAsync<SavingsGoalRow & { account_balance_minor: number | null }>(
     `${GOAL_SELECT} ${includeArchived ? '' : 'WHERE g.archived = 0'} ORDER BY g.created_at ASC`
   );
   return rows.map(rowToGoal);
@@ -107,8 +109,11 @@ export async function createSavingsGoal(input: SavingsGoalInput): Promise<Saving
       trackFlag(input),
     ]
   );
-  const row = await db.getFirstAsync<any>(`${GOAL_SELECT} WHERE g.id = ?`, [id]);
-  return rowToGoal(row);
+  const row = await db.getFirstAsync<SavingsGoalRow & { account_balance_minor: number | null }>(
+    `${GOAL_SELECT} WHERE g.id = ?`,
+    [id]
+  );
+  return rowToGoal(found(row, 'goal'));
 }
 
 export async function updateSavingsGoal(id: string, input: SavingsGoalInput): Promise<void> {

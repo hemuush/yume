@@ -596,7 +596,7 @@ describe('transaction-wrapped writes against a real SQLite engine', () => {
   });
 
   it('recordMoneyGivenToPerson creates the expense transaction and the ledger entry together, atomically', async () => {
-    const person = await createPerson({ name: 'Abhinav' });
+    const person = await createPerson({ name: 'Kabir' });
     await recordMoneyGivenToPerson({
       personId: person.id,
       accountId,

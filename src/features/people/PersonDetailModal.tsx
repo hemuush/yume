@@ -28,6 +28,8 @@ import { useUndoToast } from '@/components/UndoToast';
 import { haptics } from '@/lib/haptics';
 import { ActionSheet } from '@/components/ActionSheet';
 import { styles } from './people.styles';
+import { errorMessage } from '@/lib/errorMessage';
+import { withPressed } from '@/lib/pressed';
 
 /** One person: their live balance, linked loans, a form to record money either way, and history. */
 export function PersonDetailModal({
@@ -140,8 +142,8 @@ export function PersonDetailModal({
       setNote('');
       await load();
       await onChanged();
-    } catch (e: any) {
-      setError(String(e?.message ?? e));
+    } catch (e) {
+      setError(errorMessage(e));
     } finally {
       setSaving(false);
     }
@@ -163,8 +165,8 @@ export function PersonDetailModal({
         await load();
         await onChanged();
       });
-    } catch (e: any) {
-      Alert.alert('Could not delete entry', String(e?.message ?? e));
+    } catch (e) {
+      Alert.alert("Couldn't delete entry", errorMessage(e));
     } finally {
       setSaving(false);
     }
@@ -203,14 +205,14 @@ export function PersonDetailModal({
       footer={
         <View style={f.footerRow}>
           <PrimaryButton
-            title={saving ? '...' : 'They owe more'}
+            title={saving ? '…' : 'They owe more'}
             variant="secondary"
             onPress={() => record(1)}
             disabled={saving}
             style={f.footerBtn}
           />
           <PrimaryButton
-            title={saving ? '...' : 'They repaid'}
+            title={saving ? '…' : 'They repaid'}
             onPress={() => record(-1)}
             disabled={saving}
             style={f.footerBtn}
@@ -232,7 +234,7 @@ export function PersonDetailModal({
         <>
           <Text style={styles.sectionTitle}>Linked loans</Text>
           {linkedLoans.map((loan) => (
-            <Pressable key={loan.id} style={styles.row} onPress={openLoans}>
+            <Pressable key={loan.id} style={withPressed(styles.row)} onPress={openLoans}>
               <View style={{ flex: 1 }}>
                 <Text style={styles.rowLabel} numberOfLines={1}>
                   {loan.direction === 'borrowed' ? 'You borrowed' : 'You lent'} ·{' '}
@@ -280,8 +282,8 @@ export function PersonDetailModal({
       </View>
       <Text style={styles.hintText}>
         {accountId
-          ? 'This will also record a real transaction on that account — expense for "They owe more", income for "They repaid" — so it shows up in Transactions and Reports too.'
-          : "This only updates the balance above — no real transaction is created, so it won't appear in Transactions or Reports. Pick an account instead if cash actually moved."}
+          ? 'This will also record a real transaction on that account — expense for "They owe more", income for "They repaid" — so it shows up in Activity and Reports too.'
+          : "This only updates the balance above — no real transaction is created, so it won't appear in Activity or Reports. Pick an account instead if cash actually moved."}
       </Text>
 
       {error && <Text style={styles.errorText}>{error}</Text>}
@@ -294,7 +296,7 @@ export function PersonDetailModal({
           {ledger.map((entry, i) => (
             <Pressable
               key={entry.id}
-              style={styles.row}
+              style={withPressed(styles.row)}
               onLongPress={() => onDeleteEntry(entry)}
               disabled={saving}
             >
@@ -332,7 +334,7 @@ export function PersonDetailModal({
                 onPress={() => setMenuEntry(entry)}
                 hitSlop={10}
                 disabled={saving}
-                style={styles.moreBtn}
+                style={withPressed(styles.moreBtn)}
                 accessibilityRole="button"
                 accessibilityLabel={`More for the ${entry.date} entry`}
               >

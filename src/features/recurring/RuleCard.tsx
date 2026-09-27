@@ -7,7 +7,8 @@ import { NeoTile } from '@/components/NeoTile';
 import { formatMoney } from '@/lib/money';
 import { styles } from './recurring.styles';
 import { ruleCadenceLabel } from './recurring.helpers';
-import { MAX_LIST_STAGGER_MS } from '@/lib/animation';
+import { MAX_LIST_STAGGER_MS, MOTION, ROW_LAYOUT, ROW_EXIT } from '@/lib/animation';
+import { withPressed } from '@/lib/pressed';
 
 export function RuleCard({
   rule,
@@ -37,15 +38,18 @@ export function RuleCard({
     // just by being reordered. Plain neutral card now; the amount already
     // carries the real, meaningful colour (income/expense) below. It also
     // had zero entrance motion at all, unlike every other list in the app —
-    // now settles in staggered, same easing as everywhere else.
+    // now settles in staggered, same easing as everywhere else. Deleting or
+    // pausing one slides the others into place instead of jumping.
     <Animated.View
-      entering={FadeIn.delay(Math.min(index * 60, MAX_LIST_STAGGER_MS))
-        .duration(300)
-        .springify()
+      entering={FadeIn.delay(Math.min(index * MOTION.enterStep, MAX_LIST_STAGGER_MS))
+        .duration(MOTION.enter)
+        .easing(MOTION.ease)
         .reduceMotion(ReduceMotion.System)}
+      layout={ROW_LAYOUT}
+      exiting={ROW_EXIT}
     >
       <NeoTile style={[styles.card, muted && styles.cardMuted]}>
-        <Pressable onPress={onPress}>
+        <Pressable style={withPressed()} onPress={onPress}>
           <View style={styles.cardTop}>
             <View style={{ flex: 1, marginRight: 8 }}>
               <Text style={styles.cardTitle} numberOfLines={1}>

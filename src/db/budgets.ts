@@ -1,8 +1,11 @@
+import { found } from './found';
+import { BudgetRow } from './rows';
 import { getDb, AppDb } from './client';
 import { newId } from '@/lib/id';
 import { getDefaultCurrency } from './settings';
 import { captureRow, restoreRow, RowSnapshot } from './undoSnapshot';
 import { Budget } from '@/types';
+import { SPEND_ROWS, SPEND_AMOUNT } from './spendSql';
 
 /**
  * A monthly spending limit for one category. `budgets` has one row per
@@ -20,7 +23,7 @@ import { Budget } from '@/types';
  * the one-tap continuation from there.
  */
 
-function rowToBudget(row: any): Budget {
+function rowToBudget(row: BudgetRow): Budget {
   return {
     id: row.id,
     categoryId: row.category_id,
@@ -70,16 +73,17 @@ async function categorySpend(
   range: { start: string; end: string }
 ): Promise<number> {
   const row = await db.getFirstAsync<{ total: number }>(
-    `SELECT COALESCE(SUM(t.amount_minor), 0) as total
+    // What the category cost: spending less money that came back as refunds.
+    `SELECT COALESCE(SUM(${SPEND_AMOUNT}), 0) as total
      FROM transactions t
      JOIN accounts a ON a.id = t.account_id
      JOIN categories c ON c.id = t.category_id
-     WHERE t.type = 'expense' AND a.currency = ?
+     WHERE ${SPEND_ROWS} AND a.currency = ?
        AND (t.category_id = ? OR c.parent_id = ?)
        AND t.date >= ? AND t.date <= ?`,
     [currency, categoryId, categoryId, range.start, range.end]
   );
-  return row?.total ?? 0;
+  return Math.max(0, row?.total ?? 0);
 }
 
 export interface BudgetProgress {
@@ -100,7 +104,9 @@ export interface BudgetProgress {
 export async function listBudgetsForMonth(periodMonth: string = periodMonthOf()): Promise<BudgetProgress[]> {
   const db = await getDb();
   const currency = await getDefaultCurrency();
-  const rows = await db.getAllAsync<any>(
+  const rows = await db.getAllAsync<
+    BudgetRow & { category_name: string; category_icon: string; category_color: string }
+  >(
     `SELECT b.*, c.name as category_name, c.icon as category_icon, c.color as category_color
      FROM budgets b JOIN categories c ON c.id = b.category_id
      WHERE b.period_month = ?
@@ -158,7 +164,13 @@ export interface LapsedBudget {
 export async function listLapsedBudgets(periodMonth: string = periodMonthOf()): Promise<LapsedBudget[]> {
   const db = await getDb();
   const prevMonth = previousPeriodMonth(periodMonth);
-  const rows = await db.getAllAsync<any>(
+  const rows = await db.getAllAsync<
+    Pick<BudgetRow, 'category_id' | 'limit_amount_minor' | 'rollover'> & {
+      category_name: string;
+      category_icon: string;
+      category_color: string;
+    }
+  >(
     `SELECT b.category_id, b.limit_amount_minor, b.rollover,
             c.name as category_name, c.icon as category_icon, c.color as category_color
      FROM budgets b JOIN categories c ON c.id = b.category_id
@@ -203,8 +215,8 @@ export async function createBudget(input: BudgetInput): Promise<Budget> {
     'INSERT INTO budgets (id, category_id, period_month, limit_amount_minor, rollover) VALUES (?, ?, ?, ?, ?)',
     [id, input.categoryId, periodMonth, input.limitAmountMinor, input.rollover ? 1 : 0]
   );
-  const row = await db.getFirstAsync<any>('SELECT * FROM budgets WHERE id = ?', [id]);
-  return rowToBudget(row);
+  const row = await db.getFirstAsync<BudgetRow>('SELECT * FROM budgets WHERE id = ?', [id]);
+  return rowToBudget(found(row, 'budget'));
 }
 
 export async function updateBudget(

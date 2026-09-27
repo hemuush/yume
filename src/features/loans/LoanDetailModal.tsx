@@ -32,6 +32,7 @@ import { PrepayModal } from './PrepayModal';
 import { PayInstallmentSheet } from './PayInstallmentSheet';
 import Svg, { Path } from 'react-native-svg';
 import { loanPayoff, payoffMonth, balanceLinePath } from '@/lib/loanPayoff';
+import { errorMessage } from '@/lib/errorMessage';
 
 /** The payoff line's drawing box (it stretches to the card's width). */
 const PAYOFF_LINE_WIDTH = 300;
@@ -94,12 +95,12 @@ export function LoanDetailModal({
       const wantKind = (freshLoan?.direction ?? loan.direction) === 'borrowed' ? 'expense' : 'income';
       setCategories(cats.filter((c) => c.kind === wantKind));
       setLoadError(null);
-    } catch (e: any) {
+    } catch (e) {
       // Previously unguarded — a transient failure here left accounts/
       // categories empty with no explanation, so Pay/Prepay just looked
       // permanently greyed out (disabled={!defaultAccount || !emiCategory})
       // with no hint why.
-      setLoadError(String(e?.message ?? e));
+      setLoadError(errorMessage(e));
     }
   }, [loan.id, loan.direction, loan.rateType]);
 
@@ -183,8 +184,8 @@ export function LoanDetailModal({
         await restoreLoan(snapshot);
         onChanged();
       });
-    } catch (e: any) {
-      Alert.alert('Could not delete loan', String(e?.message ?? e));
+    } catch (e) {
+      Alert.alert("Couldn't delete loan", errorMessage(e));
     } finally {
       setBusy(false);
     }
@@ -361,7 +362,7 @@ export function LoanDetailModal({
           <PrimaryButton
             title={
               busy
-                ? 'Recording...'
+                ? 'Recording…'
                 : isPayingEarly
                   ? `Pay #${nextInstallment.installmentNumber} early`
                   : `Pay #${nextInstallment.installmentNumber} — ${formatMoney(nextInstallment.emiAmountMinor)}`

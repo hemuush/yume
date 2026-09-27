@@ -1,17 +1,11 @@
 import { StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
+import { EYEBROW } from '@/constants/textStyles';
 
 // Shared by the Transactions screen and its modals/rows (MonthPickerModal,
 // FilterModal, TransactionRow, TransactionDetailModal, AddTransactionModal).
 export const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
-  emptyText: {
-    fontFamily: theme.font.body,
-    marginHorizontal: 20,
-    color: theme.colors.textMuted,
-    fontSize: 13,
-    marginBottom: 10,
-  },
   errorBanner: {
     marginHorizontal: 20,
     marginBottom: 12,
@@ -38,6 +32,8 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 10,
     paddingHorizontal: 20,
+    // Starts where the period row it stands in for starts.
+    marginTop: theme.layout.screenTopGap,
     marginBottom: 14,
   },
   searchBar: {
@@ -66,65 +62,117 @@ export const styles = StyleSheet.create({
   weekNavArrow: { fontSize: 18, fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
   weekNavArrowDisabled: { color: theme.colors.textMuted, opacity: 0.35 },
 
-  // One confident figure + a plain-text comparison line — replaces the old
-  // day-strip/spotlight-card approach entirely. See SpendBarChart.tsx.
-  headlineAmt: { fontFamily: theme.font.monoBold, fontSize: 34, color: theme.colors.textPrimary },
-  headlineSub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary, marginTop: 2 },
-  headlineSubUp: { fontFamily: theme.font.bodyBold, color: theme.colors.expense },
-  headlineSubDown: { fontFamily: theme.font.bodyBold, color: theme.colors.income },
-
-  // The Activity redesign's summary card: spent (big), money in and net
-  // beside it, then the chart, its legend and a line saying what the tapped
-  // bar cost — one block instead of a figure floating over a separate chart.
+  // The Spent card (the Activity cleanup sign-off, option A): Spent on its
+  // own with a change pill, Week/Month in the corner, the chart, a one-line
+  // legend (or what the tapped bar cost), and Money in | Net as a strip.
   sumCard: {
     marginHorizontal: 20,
     marginTop: 12,
-    padding: 14,
-    paddingBottom: 12,
+    padding: 16,
     backgroundColor: theme.colors.surface,
     borderRadius: theme.radius.xl2,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
     overflow: 'hidden',
   },
-  sumTop: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
-  sumMain: { flex: 1, minWidth: 0 },
-  sumKicker: {
-    fontFamily: theme.font.bodyBold,
-    fontSize: 11,
-    letterSpacing: 0.8,
-    textTransform: 'uppercase',
-    color: theme.colors.textMuted,
+  sumKicker: EYEBROW,
+  headlineAmt: {
+    fontFamily: theme.font.monoBold,
+    fontSize: 32,
+    color: theme.colors.textPrimary,
+    marginTop: 4,
+    // Clear of the Week/Month switch in the corner.
+    marginRight: 120,
   },
-  sumSide: { alignItems: 'flex-end', gap: 4, paddingTop: 16 },
-  sumSideLabel: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
-  sumSideValue: { fontFamily: theme.font.monoBold, fontSize: 13.5, color: theme.colors.textPrimary },
-  sumChart: { marginTop: 14 },
-  sumHint: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary, marginTop: 10 },
-
-  // One row: ‹ period title › and the Week/Month switch.
-  periodRow: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingLeft: 12, paddingRight: 20 },
-  periodNav: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center' },
-  periodNavOff: { opacity: 0.25 },
-  periodTitleBtn: { flexShrink: 1, flexDirection: 'row', alignItems: 'baseline', gap: 6 },
-  periodTitle: { fontFamily: theme.font.roundedBold, fontSize: 19, color: theme.colors.textPrimary },
-  periodSub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
-  scopeSwitch: {
-    marginLeft: 'auto',
+  changePill: {
+    alignSelf: 'flex-start',
+    marginTop: 6,
+    paddingHorizontal: 9,
+    paddingVertical: 3,
+    borderRadius: theme.radius.pill,
+  },
+  changePillUp: { backgroundColor: theme.colors.expenseTint },
+  changePillDown: { backgroundColor: theme.colors.incomeTint },
+  changeText: { fontFamily: theme.font.bodyBold, fontSize: 11.5 },
+  sumChart: { marginTop: 16 },
+  sumHint: {
+    fontFamily: theme.font.body,
+    fontSize: 12,
+    color: theme.colors.textSecondary,
+    marginTop: 14,
+  },
+  sumHintTitle: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
+  sumStrip: {
     flexDirection: 'row',
+    marginTop: 14,
+    paddingTop: 12,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: theme.colors.borderSoft,
+  },
+  sumStripCell: { flex: 1, gap: 4 },
+  sumStripCellRight: {
+    paddingLeft: 14,
+    borderLeftWidth: StyleSheet.hairlineWidth,
+    borderLeftColor: theme.colors.borderSoft,
+  },
+  sumStripValue: { fontFamily: theme.font.monoBold, fontSize: 14, color: theme.colors.textPrimary },
+  scopeSwitch: {
+    position: 'absolute',
+    top: 14,
+    right: 14,
+    zIndex: 1,
+    flexDirection: 'row',
+    padding: 3,
+    borderRadius: theme.radius.pill,
+    backgroundColor: theme.colors.surfaceAlt,
+  },
+  scopeBtn: { paddingHorizontal: 12, paddingVertical: 5, borderRadius: theme.radius.pill },
+  scopeBtnOn: { backgroundColor: theme.colors.ink },
+  scopeText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textSecondary },
+  scopeTextOn: { fontFamily: theme.font.bodyBold, color: theme.colors.surface },
+
+  // ‹ This week › centred, its dates under it.
+  periodRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingHorizontal: 20,
+    marginTop: theme.layout.screenTopGap,
+  },
+  periodNav: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: theme.colors.surface,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.borderSoft,
+  },
+  periodNavOff: { opacity: 0.3 },
+  periodTitleBtn: { flex: 1, alignItems: 'center' },
+  periodTitle: { fontFamily: theme.font.roundedBold, fontSize: 17, color: theme.colors.textPrimary },
+  periodSub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, marginTop: 1 },
+
+  // The type filter as one segmented bar, then any picked categories and
+  // accounts on their own line, only while there are some. The gap below
+  // matches the gap between days.
+  typeBar: {
+    flexDirection: 'row',
+    marginHorizontal: 20,
+    marginTop: 14,
     padding: 3,
     borderRadius: theme.radius.pill,
     backgroundColor: theme.colors.surface,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
   },
-  scopeBtn: { paddingHorizontal: 11, paddingVertical: 4, borderRadius: theme.radius.pill },
-  scopeBtnOn: { backgroundColor: theme.colors.ink },
-  scopeText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textSecondary },
-  scopeTextOn: { fontFamily: theme.font.bodyBold, color: theme.colors.surface },
-
-  // Type chips and any picked-category chips, above the list.
-  chipsRow: { gap: 6, paddingHorizontal: 20, paddingTop: 14 },
+  typeBtn: { flex: 1, alignItems: 'center', paddingVertical: 7, borderRadius: theme.radius.pill },
+  typeBtnOn: { backgroundColor: theme.colors.ink },
+  typeText: { fontFamily: theme.font.roundedMedium, fontSize: 12.5, color: theme.colors.textSecondary },
+  typeTextOn: { color: theme.colors.surface },
+  chipsRow: { gap: 6, paddingHorizontal: 20, paddingTop: 10 },
+  filterGap: { height: 16 },
   chip: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -136,38 +184,9 @@ export const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
   },
-  chipOn: { backgroundColor: theme.colors.ink, borderColor: theme.colors.ink },
   chipCat: { backgroundColor: theme.colors.primaryTint },
   chipText: { fontFamily: theme.font.bodyBold, fontSize: 12.5, color: theme.colors.textSecondary },
-  chipTextOn: { fontFamily: theme.font.bodyBold, color: theme.colors.surface },
 
-  // A day's heading, above its card.
-  dayHead: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    justifyContent: 'space-between',
-    marginHorizontal: 20,
-    marginTop: 22,
-    marginBottom: 8,
-  },
-  dayTitle: { fontFamily: theme.font.roundedBold, fontSize: 16, color: theme.colors.textPrimary },
-  dayDate: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
-  dayTotal: { fontFamily: theme.font.monoBold, fontSize: 13, color: theme.colors.textPrimary },
-
-  // One card per day — a later pass than the original flat, card-less list
-  // (that design cited Apple Card's own borderless transaction rows). A
-  // single unbroken list read fine at a handful of rows a day, but gave no
-  // shape to scan by; boxing each day gives every day a bounded, evenly-
-  // weighted unit, the way the day itself — not each transaction inside it —
-  // is the thing worth a glance-and-move-on read. Rows inside stay the same
-  // hairline-divided flatRow they always were, just inside the card's own
-  // padding instead of sitting on the page background directly.
-  // The "+N more" row that stands in for whatever's past the 4-row cap — a
-  // day with ten transactions gets a fifth row instead of a fifth-through-
-  // tenth, so every card starts at the same height and only the ones worth a
-  // second look grow when tapped open.
-  dayMoreText: { flex: 1, fontSize: 13, fontFamily: theme.font.bodyBold, color: theme.colors.textSecondary },
-  dayMoreAmt: { fontFamily: theme.font.mono, fontSize: 12, color: theme.colors.textMuted },
   yearRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -206,7 +225,25 @@ export const styles = StyleSheet.create({
     color: theme.colors.textPrimary,
     marginTop: 14,
   },
+  rowRefund: { fontFamily: theme.font.bodyBold, color: theme.colors.income },
+  detailActionWide: { marginTop: 8 },
   detailNote: { fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textSecondary, marginTop: 6 },
+  // A split part's detail: the whole payment, this part in bold.
+  splitCard: {
+    marginTop: 14,
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.radius.xl2,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.borderSoft,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    gap: 8,
+  },
+  splitCardTitle: { ...EYEBROW },
+  splitPart: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
+  splitPartName: { flex: 1, fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textSecondary },
+  splitPartAmount: { fontFamily: theme.font.mono, fontSize: 13, color: theme.colors.textSecondary },
+  splitPartMine: { fontFamily: theme.font.monoBold, color: theme.colors.textPrimary },
   detailLink: {
     flexDirection: 'row',
     alignItems: 'center',

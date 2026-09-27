@@ -1,5 +1,6 @@
 import { File, Paths } from 'expo-file-system';
 import { buildBackupSnapshot, restoreFromSnapshot, BackupSnapshot, RestoreResult } from './backup';
+import { errorMessage } from '@/lib/errorMessage';
 
 /**
  * A way back from every restore. Before a restore replaces the data, the
@@ -80,9 +81,9 @@ export async function restoreKeepingSafetyCopy(
       };
       pending.create();
       pending.write(JSON.stringify(payload));
-    } catch (e: any) {
+    } catch (e) {
       removeIfPresent(pending);
-      throw new SafetyCopyError(String(e?.message ?? e));
+      throw new SafetyCopyError(errorMessage(e));
     }
   }
 

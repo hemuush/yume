@@ -19,6 +19,7 @@ import { CategoryIcon } from '@/components/CategoryIcon';
 import { SuuIllustration } from '@/components/SuuIllustration';
 import { theme } from '@/constants/theme';
 import { useAccent } from '@/theme/AccentContext';
+import { withPressed } from '@/lib/pressed';
 
 interface Slide {
   title: string;
@@ -221,7 +222,7 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
       behavior="padding"
     >
       <Pressable
-        style={[styles.skip, { top: insets.top + 12 }]}
+        style={withPressed([styles.skip, { top: insets.top + 12 }])}
         onPress={finish}
         hitSlop={10}
         accessibilityRole="button"
@@ -266,7 +267,7 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
               <View key={starter.key} style={[styles.accountCard, on && styles.accountCardOn]}>
                 <Pressable
                   onPress={() => setPicked((prev) => ({ ...prev, [starter.key]: !prev[starter.key] }))}
-                  style={styles.accountHead}
+                  style={withPressed(styles.accountHead)}
                   accessibilityRole="checkbox"
                   accessibilityState={{ checked: on }}
                   accessibilityLabel={starter.name}
@@ -306,20 +307,20 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
       </View>
 
       <Pressable
-        style={[styles.cta, index === 0 && styles.ctaWithLink, creating && styles.ctaBusy]}
+        style={withPressed([styles.cta, index === 0 && styles.ctaWithLink, creating && styles.ctaBusy])}
         onPress={next}
         disabled={creating}
         accessibilityRole="button"
         testID="onboarding-cta"
       >
         <Text style={[styles.ctaText, { color: accent }]}>
-          {creating ? 'Setting up…' : isLast ? 'Get Started' : 'Next'}
+          {creating ? 'Setting up…' : isLast ? 'Get started' : 'Next'}
         </Text>
       </Pressable>
 
       {index === 0 && (
         <Pressable
-          style={styles.restoreLink}
+          style={withPressed(styles.restoreLink)}
           onPress={pickBackup}
           hitSlop={8}
           accessibilityRole="button"

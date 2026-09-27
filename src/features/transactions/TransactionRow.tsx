@@ -7,6 +7,7 @@ import { theme } from '@/constants/theme';
 import { usePressScale } from '@/lib/usePressScale';
 import { styles } from './transactions.styles';
 import { homeStyles as h } from '@/features/home/homeStyles';
+import { formatMoney } from '@/lib/money';
 
 const AnimatedRowPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -56,7 +57,9 @@ export function TransactionRow({
           )}
         </Text>
         <Text style={h.sub} numberOfLines={1}>
+          {tx.isRefund && <Text style={styles.rowRefund}>Refund · </Text>}
           {tx.type === 'transfer' ? 'Own accounts' : accountName(tx.accountId)}
+          {tx.splitTotalMinor ? ` · Part of a ${formatMoney(tx.splitTotalMinor)} split` : ''}
         </Text>
       </View>
       <Text style={[h.amount, tx.type === 'income' && h.income, tx.type === 'expense' && h.expense]}>

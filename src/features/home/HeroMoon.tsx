@@ -7,6 +7,7 @@ import { useReduceMotion } from '@/lib/useReduceMotion';
 import { MOTION, timing } from '@/lib/animation';
 import type { HeroMode, HeroSlices } from './heroSlices';
 import { spentRegion, savedRegion, freeRegion } from './moonPaths';
+import { withPressed } from '@/lib/pressed';
 
 const AnimatedPath = ReanimatedAnimated.createAnimatedComponent(Path);
 
@@ -109,7 +110,7 @@ export function HeroMoon({
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
       accessibilityHint="Shows the next slice"
-      style={{ width: size, height: size }}
+      style={withPressed({ width: size, height: size })}
     >
       <Svg width={size} height={size} viewBox="0 0 200 200">
         <Defs>

@@ -7,6 +7,7 @@ import { PrimaryButton } from '@/components/PrimaryButton';
 import { ModalSheet } from '@/components/ModalSheet';
 import { modalFooterStyles as f } from '@/constants/theme';
 import { styles } from './people.styles';
+import { errorMessage } from '@/lib/errorMessage';
 
 export function AddPersonModal({
   visible,
@@ -32,8 +33,8 @@ export function AddPersonModal({
       await createPerson({ name: name.trim() });
       setName('');
       onCreated();
-    } catch (e: any) {
-      setError(String(e?.message ?? e));
+    } catch (e) {
+      setError(errorMessage(e));
     } finally {
       setSaving(false);
     }
@@ -52,7 +53,7 @@ export function AddPersonModal({
           <View style={f.footerRow}>
             <PrimaryButton title="Cancel" variant="secondary" onPress={onClose} style={f.footerBtn} />
             <PrimaryButton
-              title={saving ? 'Saving...' : 'Add'}
+              title={saving ? 'Saving…' : 'Add'}
               onPress={submit}
               disabled={saving}
               style={f.footerBtn}
@@ -61,7 +62,7 @@ export function AddPersonModal({
         </View>
       }
     >
-      <FormInput label="Name" value={name} onChangeText={setName} placeholder="e.g. Abhinav" />
+      <FormInput label="Name" value={name} onChangeText={setName} placeholder="e.g. Roommate" />
     </ModalSheet>
   );
 }

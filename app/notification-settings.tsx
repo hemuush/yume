@@ -1,18 +1,24 @@
 import { useCallback, useEffect, useState } from 'react';
-import { View, ScrollView, StyleSheet, Pressable, Alert, Animated } from 'react-native';
+import { View, ScrollView, StyleSheet, Pressable, Alert, Animated, Easing } from 'react-native';
 import { Text } from '@/components/Text';
 import { useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from '@expo/vector-icons/Feather';
 import { AppHeader } from '@/components/AppHeader';
 import { ToggleSwitch } from '@/components/ToggleSwitch';
-import { SettingsRowIcon } from '@/components/SettingsRowIcon';
+import { SettingsRow } from '@/components/SettingsRow';
+import { HomeSection } from '@/features/home/HomeSection';
+import { homeStyles as h } from '@/features/home/homeStyles';
 import { SuuIllustration } from '@/components/SuuIllustration';
-import { Skeleton } from '@/components/Skeleton';
+import { CardRowsSkeleton } from '@/components/ListSkeleton';
 import { getNotificationPrefs, setNotificationPrefs, NotificationPrefs } from '@/db/settings';
 import { requestNotificationPermission, syncDailyReminder, syncWeeklySummary } from '@/lib/notifications';
 import { resyncAllLoanReminders } from '@/db/loans';
-import { theme, settingsRowStyle } from '@/constants/theme';
+import { theme } from '@/constants/theme';
+import { errorMessage } from '@/lib/errorMessage';
+import { useReduceMotion } from '@/lib/useReduceMotion';
+import { DURATIONS } from '@/lib/motionTimings';
+import { withPressed } from '@/lib/pressed';
 
 function formatTime(hour: number, minute: number): string {
   const h12 = hour % 12 === 0 ? 12 : hour % 12;
@@ -35,18 +41,23 @@ export default function NotificationSettingsScreen() {
     }, [load])
   );
 
+  // The sample notification drops in once and stays: it used to slide in and
+  // out forever, and nothing but loading should loop (the Quiet motion sign-off).
+  const reduce = useReduceMotion();
   useEffect(() => {
-    const loop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(previewAnim, { toValue: 1, duration: 500, useNativeDriver: true }),
-        Animated.delay(2400),
-        Animated.timing(previewAnim, { toValue: 0, duration: 400, useNativeDriver: true }),
-        Animated.delay(600),
-      ])
-    );
-    loop.start();
-    return () => loop.stop();
-  }, [previewAnim]);
+    if (reduce) {
+      previewAnim.setValue(1);
+      return;
+    }
+    const anim = Animated.timing(previewAnim, {
+      toValue: 1,
+      duration: DURATIONS.slideIn,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    });
+    anim.start();
+    return () => anim.stop();
+  }, [previewAnim, reduce]);
 
   // Returns whether the preference itself was actually persisted — callers
   // that also need to resync OS-level scheduling (e.g. loan due reminders)
@@ -56,23 +67,23 @@ export default function NotificationSettingsScreen() {
     setPrefs(next);
     try {
       await setNotificationPrefs(next);
-    } catch (e: any) {
+    } catch (e) {
       // The toggle already flipped optimistically above — on failure it was
       // otherwise left showing "on" while nothing was actually persisted,
       // a silently misleading state rather than an honest error.
       setPrefs(previous);
-      Alert.alert('Could not save', String(e?.message ?? e));
+      Alert.alert("Couldn't save", errorMessage(e));
       return false;
     }
     try {
       await syncDailyReminder(next);
       await syncWeeklySummary(next);
-    } catch (e: any) {
+    } catch (e) {
       // The preference is already persisted at this point — only the local
       // notification scheduling failed, so the toggle correctly keeps
       // reflecting what's actually saved rather than rolling back to a
       // value that no longer matches the database.
-      Alert.alert('Saved, but reminders may not fire', String(e?.message ?? e));
+      Alert.alert('Saved, but reminders may not fire', errorMessage(e));
     }
     return true;
   };
@@ -126,16 +137,8 @@ export default function NotificationSettingsScreen() {
     return (
       <View style={styles.container}>
         <AppHeader title="Notifications" showBack />
-        <View style={{ paddingTop: 16 }}>
-          {[0, 1, 2, 3].map((i) => (
-            <View key={i} style={settingsRowStyle}>
-              <Skeleton width={32} height={32} circle radius={16} />
-              <View style={{ flex: 1 }}>
-                <Skeleton width={140} height={12} radius={4} />
-                <Skeleton width={100} height={9} radius={4} style={{ marginTop: 6 }} />
-              </View>
-            </View>
-          ))}
+        <View style={{ marginTop: theme.layout.screenTopGap }}>
+          <CardRowsSkeleton rows={4} />
         </View>
       </View>
     );
@@ -164,73 +167,96 @@ export default function NotificationSettingsScreen() {
             </View>
           </Animated.View>
         </View>
-        <Text style={styles.previewHint}>↑ live preview — this is what it'll actually look like</Text>
+        <Text style={styles.previewHint}>↑ This is how your reminder will look</Text>
 
-        <Text style={styles.sectionLabel}>Daily Reminder</Text>
-        <View style={styles.row}>
-          <SettingsRowIcon name="clock-outline" backgroundColor={theme.colors.goldTint} />
-          <Text style={styles.rowLabel}>Remind me daily</Text>
-          <ToggleSwitch value={prefs.reminderEnabled} onChange={onToggleReminder} />
-        </View>
-
-        <View style={[styles.timeCard, !prefs.reminderEnabled && styles.disabledCard]}>
-          <Text style={styles.timeLabel}>REMIND ME AT</Text>
-          <View style={styles.timeRow}>
-            <Pressable
-              style={styles.timeBtn}
-              disabled={!prefs.reminderEnabled}
-              onPress={() => adjustTime(-30)}
-              hitSlop={8}
-              accessibilityRole="button"
-              accessibilityLabel="Reminder 30 minutes earlier"
-              accessibilityState={{ disabled: !prefs.reminderEnabled }}
-            >
-              <Feather name="chevron-down" size={18} color={theme.colors.ink} />
-            </Pressable>
-            <Text style={styles.timeValue}>{formatTime(prefs.reminderHour, prefs.reminderMinute)}</Text>
-            <Pressable
-              style={styles.timeBtn}
-              disabled={!prefs.reminderEnabled}
-              onPress={() => adjustTime(30)}
-              hitSlop={8}
-              accessibilityRole="button"
-              accessibilityLabel="Reminder 30 minutes later"
-              accessibilityState={{ disabled: !prefs.reminderEnabled }}
-            >
-              <Feather name="chevron-up" size={18} color={theme.colors.ink} />
-            </Pressable>
+        {/* The same grouped rows as Profile's settings: a section title, one card, hairlines between rows. */}
+        <HomeSection title="Daily reminder">
+          <View style={h.card}>
+            <SettingsRow
+              icon="clock-outline"
+              iconBg={theme.colors.goldTint}
+              label="Remind me daily"
+              right={<ToggleSwitch value={prefs.reminderEnabled} onChange={onToggleReminder} />}
+            />
+            <SettingsRow
+              icon="bell-ring-outline"
+              iconBg={theme.colors.primaryTint}
+              label="Remind me at"
+              divider
+              dimmed={!prefs.reminderEnabled}
+              right={
+                <View style={styles.timeRow}>
+                  <Pressable
+                    style={withPressed(styles.timeBtn)}
+                    disabled={!prefs.reminderEnabled}
+                    onPress={() => adjustTime(-30)}
+                    hitSlop={8}
+                    accessibilityRole="button"
+                    accessibilityLabel="Reminder 30 minutes earlier"
+                    accessibilityState={{ disabled: !prefs.reminderEnabled }}
+                  >
+                    <Feather name="chevron-down" size={16} color={theme.colors.ink} />
+                  </Pressable>
+                  <Text style={styles.timeValue}>{formatTime(prefs.reminderHour, prefs.reminderMinute)}</Text>
+                  <Pressable
+                    style={withPressed(styles.timeBtn)}
+                    disabled={!prefs.reminderEnabled}
+                    onPress={() => adjustTime(30)}
+                    hitSlop={8}
+                    accessibilityRole="button"
+                    accessibilityLabel="Reminder 30 minutes later"
+                    accessibilityState={{ disabled: !prefs.reminderEnabled }}
+                  >
+                    <Feather name="chevron-up" size={16} color={theme.colors.ink} />
+                  </Pressable>
+                </View>
+              }
+            />
           </View>
-        </View>
+        </HomeSection>
 
-        <Text style={styles.sectionLabel}>Smart Alerts</Text>
-        <View style={styles.row}>
-          <SettingsRowIcon name="alert-outline" backgroundColor={theme.colors.idCoral} />
-          <Text style={styles.rowLabel}>Overspending alerts</Text>
-          <ToggleSwitch value={prefs.overspendAlerts} onChange={onToggleOverspend} />
-        </View>
-        <View style={styles.row}>
-          <SettingsRowIcon name="credit-card-outline" backgroundColor={theme.colors.idGold} />
-          <Text style={styles.rowLabel}>Bill & EMI due alerts</Text>
-          <ToggleSwitch value={prefs.billAlerts} onChange={onToggleBillAlerts} />
-        </View>
-        <View style={styles.row}>
-          <SettingsRowIcon name="chart-bar" backgroundColor={theme.colors.accentTint} />
-          <Text style={styles.rowLabel}>Weekly summary</Text>
-          <ToggleSwitch value={prefs.weeklySummary} onChange={onToggleWeeklySummary} />
-        </View>
-        <View style={styles.row}>
-          {/* A vector icon, not an emoji — matches every other row here and
-              the app's own stance against emoji-as-icon elsewhere. */}
-          <SettingsRowIcon name="weather-night" backgroundColor={theme.colors.secondaryTint} />
-          <Text style={styles.rowLabel}>Suu's check-ins</Text>
-          <ToggleSwitch value={prefs.suuCheckins} onChange={(v) => save({ ...prefs, suuCheckins: v })} />
-        </View>
+        <HomeSection title="Smart alerts">
+          <View style={h.card}>
+            <SettingsRow
+              icon="alert-outline"
+              iconBg={theme.colors.idCoral}
+              label="Overspending alerts"
+              right={<ToggleSwitch value={prefs.overspendAlerts} onChange={onToggleOverspend} />}
+            />
+            <SettingsRow
+              icon="credit-card-outline"
+              iconBg={theme.colors.idGold}
+              label="Bill & EMI due alerts"
+              divider
+              right={<ToggleSwitch value={prefs.billAlerts} onChange={onToggleBillAlerts} />}
+            />
+            <SettingsRow
+              icon="chart-bar"
+              iconBg={theme.colors.accentTint}
+              label="Weekly summary"
+              divider
+              right={<ToggleSwitch value={prefs.weeklySummary} onChange={onToggleWeeklySummary} />}
+            />
+            <SettingsRow
+              icon="weather-night"
+              iconBg={theme.colors.secondaryTint}
+              label="Suu's check-ins"
+              divider
+              right={
+                <ToggleSwitch
+                  value={prefs.suuCheckins}
+                  onChange={(v) => save({ ...prefs, suuCheckins: v })}
+                />
+              }
+            />
+          </View>
+        </HomeSection>
 
         <Text style={styles.footNote}>
           All reminders above are scheduled entirely on your device — no server, nothing ever leaves your
           phone. Bill alerts fire from your loan due dates. Overspending alerts check right after you log an
           expense — including one heads-up when a budget reaches 80% and one if it goes over. The weekly
-          summary arrives every Sunday.
+          summary arrives every Monday, with last week's Wrap.
         </Text>
         <View style={{ height: theme.layout.screenScrollPad + insets.bottom }} />
       </ScrollView>
@@ -240,7 +266,7 @@ export default function NotificationSettingsScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
-  previewWrap: { height: 70, paddingHorizontal: 20, paddingTop: 6 },
+  previewWrap: { height: 70, paddingHorizontal: 20, paddingTop: theme.layout.screenTopGap },
   previewCard: {
     backgroundColor: theme.colors.surface,
     borderWidth: StyleSheet.hairlineWidth,
@@ -265,51 +291,23 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
 
-  sectionLabel: {
-    fontSize: 11,
-    fontFamily: theme.font.bodyBold,
-    color: theme.colors.textMuted,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginHorizontal: 20,
-    marginTop: 20,
-    marginBottom: 8,
-  },
-  row: settingsRowStyle,
-  rowLabel: { flex: 1, fontFamily: theme.font.roundedBold, fontSize: 13, color: theme.colors.textPrimary },
-
-  timeCard: {
-    marginHorizontal: 20,
-    marginBottom: 8,
-    backgroundColor: theme.colors.surface,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-    borderRadius: theme.radius.lg,
-    padding: 16,
-  },
-  disabledCard: { opacity: 0.45 },
-  timeLabel: {
-    fontSize: 11,
-    fontFamily: theme.font.bodyBold,
-    color: theme.colors.textMuted,
-    letterSpacing: 0.5,
-  },
-  timeRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 18, marginTop: 8 },
+  timeRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   timeBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: theme.colors.surfaceAlt,
   },
+  // Sized like the other rows' values; wide enough that 9:30 PM and 10:00 PM don't shift the arrows.
   timeValue: {
-    fontFamily: theme.font.roundedBold,
-    fontSize: 22,
+    fontFamily: theme.font.monoBold,
+    fontSize: 13,
     color: theme.colors.textPrimary,
-    minWidth: 110,
+    minWidth: 72,
     textAlign: 'center',
   },
 

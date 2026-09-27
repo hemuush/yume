@@ -11,6 +11,8 @@ import { create, act } from 'react-test-renderer';
 // See src/test-support/reanimatedMock.ts for why this exists at all.
 jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMock').createReanimatedMock());
 import { mockCancelAnimation } from '@/test-support/reanimatedMock';
+// The Wrap button's sheet (a native keyboard-aware Modal) isn't what these tests are about.
+jest.mock('@/components/ModalSheet', () => ({ ModalSheet: () => null }));
 
 import { Spark } from './HomeHeader';
 

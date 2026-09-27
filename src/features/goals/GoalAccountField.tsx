@@ -6,6 +6,7 @@ import { Account } from '@/types';
 import { formatMoney } from '@/lib/money';
 import { goalsFollowingAccount } from '@/db/savingsGoals';
 import { styles } from './goals.styles';
+import { withPressed } from '@/lib/pressed';
 
 /**
  * Where a goal's money sits, and how its progress moves: following that
@@ -108,7 +109,7 @@ function FollowOption({
 }) {
   return (
     <Pressable
-      style={[styles.followOpt, on && styles.followOptOn]}
+      style={withPressed([styles.followOpt, on && styles.followOptOn])}
       onPress={onPress}
       accessibilityRole="radio"
       accessibilityState={{ checked: on }}

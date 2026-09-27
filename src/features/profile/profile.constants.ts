@@ -5,5 +5,5 @@ export const ACCOUNT_TYPES: { label: string; value: AccountType }[] = [
   { label: 'Cash', value: 'cash' },
   { label: 'Wallet', value: 'wallet' },
   { label: 'Savings', value: 'savings' },
-  { label: 'Credit Card', value: 'credit_card' },
+  { label: 'Credit card', value: 'credit_card' },
 ];

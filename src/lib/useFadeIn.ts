@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Animated } from 'react-native';
+import { DURATIONS } from './motionTimings';
 
 /**
  * A short fade + slight rise-in for a screen's content on mount/focus —
@@ -14,7 +15,7 @@ export function useFadeIn(deps: readonly unknown[] = []) {
     value.setValue(0);
     Animated.timing(value, {
       toValue: 1,
-      duration: 280,
+      duration: DURATIONS.enter,
       useNativeDriver: true,
     }).start();
     // eslint-disable-next-line react-hooks/exhaustive-deps

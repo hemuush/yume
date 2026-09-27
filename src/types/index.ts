@@ -11,8 +11,8 @@ export interface Account {
   openingBalanceMinor: number;
   currentBalanceMinor: number; // derived, kept in sync by ledger triggers
   creditLimitMinor: number | null; // credit_card only
-  statementDay: number | null; // credit_card only, 1-28
-  dueDay: number | null; // credit_card only, 1-28
+  statementDay: number | null; // credit_card only, 1-31 (a short month uses its last day)
+  dueDay: number | null; // credit_card only, 1-31 (a short month uses its last day)
   interestRateAnnualBp: number | null; // credit_card only, basis points
   archived: boolean;
   createdAt: string;
@@ -47,9 +47,14 @@ export interface Transaction {
   amountMinor: number; // always positive
   date: string; // ISO date
   note: string;
-  tags: string[];
   paymentMode: PaymentMode | null;
   loanPaymentId: string | null; // set when this tx is a loan repayment/disbursement
+  /** Shared by the parts of one split payment (one bill across several categories); null otherwise. */
+  splitId: string | null;
+  /** Money back for a purchase: stored as money in, it lowers its (expense) category's spending instead of counting as income. */
+  isRefund: boolean;
+  /** The whole split's total, on a part read from a list; undefined when not looked up. */
+  splitTotalMinor?: number | null;
   createdAt: string;
 }
 

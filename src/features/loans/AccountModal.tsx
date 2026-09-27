@@ -8,6 +8,7 @@ import { Chip } from '@/components/Chip';
 import { ModalSheet } from '@/components/ModalSheet';
 import { modalFooterStyles as f } from '@/constants/theme';
 import { styles } from './loans.styles';
+import { errorMessage } from '@/lib/errorMessage';
 
 export function AccountModal({
   accounts,
@@ -33,8 +34,8 @@ export function AccountModal({
     try {
       await updateLoanAccount(loanId, selected);
       onDone();
-    } catch (e: any) {
-      setError(String(e?.message ?? e));
+    } catch (e) {
+      setError(errorMessage(e));
     } finally {
       setSaving(false);
     }
@@ -59,7 +60,7 @@ export function AccountModal({
               style={f.footerBtn}
             />
             <PrimaryButton
-              title={saving ? 'Saving...' : 'Save'}
+              title={saving ? 'Saving…' : 'Save'}
               onPress={submit}
               disabled={saving || !selected}
               style={f.footerBtn}

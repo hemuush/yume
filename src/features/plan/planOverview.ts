@@ -1,5 +1,6 @@
 import { addDaysToIsoDate } from '@/lib/date';
 import { peopleTotals } from '@/features/people/people.helpers';
+import { payCardRoute, PayCardRoute } from '@/lib/payCard';
 
 /**
  * What each section of the Plan tab says, from data the screen has already
@@ -10,7 +11,7 @@ import { peopleTotals } from '@/features/people/people.helpers';
  */
 
 export type PlanRoute =
-  '/budgets' | '/savings-goals' | '/recurring' | '/whatif' | '/loans' | '/people' | '/garden';
+  '/budgets' | '/savings-goals' | '/recurring' | '/whatif' | '/loans' | '/people' | '/garden' | PayCardRoute;
 
 /* ---------- Loans ---------- */
 
@@ -127,17 +128,31 @@ export interface PlanDueItem {
   kind: DueKind;
   dueDate: string;
   amountMinor: number;
-  route: '/loans' | '/recurring';
+  route: '/loans' | '/recurring' | PayCardRoute;
   /** Set on an EMI — Coming up's Paid button records that loan's next installment. */
   loanId?: string;
 }
 
+/** A credit card's bill still to pay (from listCardCycles). */
+export interface PlanCardBillInput {
+  accountId: string;
+  accountName: string;
+  dueDate: string;
+  leftToPayMinor: number;
+}
+
 /**
  * Every dated thing coming up, soonest first: each borrowed loan's next
- * EMI and each active recurring rule's next run. Money you lent isn't here
- * — its "installments" come back to you, they aren't due from you.
+ * EMI, each active recurring rule's next run, and each credit card bill
+ * with something left to pay (a bill like any other, so the strip, the
+ * totals and Coming up treat it the same). Money you lent isn't here — its
+ * "installments" come back to you, they aren't due from you.
  */
-export function buildDueItems(loanRows: PlanLoanRow[], rules: PlanRuleInput[]): PlanDueItem[] {
+export function buildDueItems(
+  loanRows: PlanLoanRow[],
+  rules: PlanRuleInput[],
+  cardBills: PlanCardBillInput[] = []
+): PlanDueItem[] {
   const items: PlanDueItem[] = [];
   for (const l of loanRows) {
     if (l.direction !== 'borrowed' || !l.nextDueDate || l.nextEmiMinor == null) continue;
@@ -160,6 +175,17 @@ export function buildDueItems(loanRows: PlanLoanRow[], rules: PlanRuleInput[]): 
       dueDate: r.nextRunDate,
       amountMinor: r.amountMinor,
       route: '/recurring',
+    });
+  }
+  for (const c of cardBills) {
+    if (c.leftToPayMinor <= 0) continue;
+    items.push({
+      key: `card-${c.accountId}`,
+      title: `${c.accountName} bill`,
+      kind: 'bill',
+      dueDate: c.dueDate,
+      amountMinor: c.leftToPayMinor,
+      route: payCardRoute(c.accountId, c.leftToPayMinor),
     });
   }
   return items.sort((a, b) => (a.dueDate < b.dueDate ? -1 : a.dueDate > b.dueDate ? 1 : 0));

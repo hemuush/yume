@@ -24,6 +24,8 @@ import {
   restoreNeedsYou,
   snoozeBackupReminder,
 } from '@/features/home/needsYouData';
+import { withPressed } from '@/lib/pressed';
+import { payCardRoute } from '@/lib/payCard';
 
 /**
  * The bell's screen: everything that needs you, in full — the same list
@@ -66,6 +68,8 @@ export default function NeedsYouScreen() {
     else if (item.action === 'reports') router.navigate('/reports');
     else if (item.action === 'tidy') router.push('/tidy-up');
     else if (item.action === 'recurring') router.push('/recurring');
+    else if (item.action === 'payCard' && item.payCard)
+      router.push(payCardRoute(item.payCard.accountId, item.payCard.amountMinor));
     else router.push('/backup');
   };
 
@@ -103,7 +107,7 @@ export default function NeedsYouScreen() {
         )}
 
         {shown === null ? (
-          <View style={{ marginTop: 16 }}>
+          <View style={{ marginTop: theme.layout.screenTopGap }}>
             <CardRowsSkeleton rows={3} />
           </View>
         ) : shown.length === 0 ? (
@@ -139,7 +143,7 @@ export default function NeedsYouScreen() {
           <>
             <Pressable
               onPress={() => setShowDismissed((v) => !v)}
-              style={styles.dismissedToggle}
+              style={withPressed(styles.dismissedToggle)}
               accessibilityRole="button"
               accessibilityState={{ expanded: showDismissed }}
             >
@@ -171,10 +175,11 @@ export default function NeedsYouScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
-  list: { marginTop: 16 },
+  list: { marginTop: theme.layout.screenTopGap },
   errorBanner: {
     marginHorizontal: 20,
-    marginTop: 14,
+    marginTop: theme.layout.screenTopGap,
+    marginBottom: 4,
     padding: 14,
     borderRadius: theme.radius.md,
     backgroundColor: theme.colors.expenseTint,

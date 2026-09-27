@@ -30,10 +30,15 @@ import { useScreenLoad } from '@/lib/useScreenLoad';
 import { haptics } from '@/lib/haptics';
 import { BudgetRow } from '@/features/budgets/BudgetRow';
 import { AddBudgetModal } from '@/features/budgets/AddBudgetModal';
-import { router } from 'expo-router';
 import { styles } from '@/features/budgets/budgets.styles';
+import { errorMessage } from '@/lib/errorMessage';
+import { useReturnOrPush } from '@/lib/useReturnOrPush';
+import { withPressed } from '@/lib/pressed';
 
 export default function BudgetsScreen() {
+  // A category's page and Budgets link to each other: return to that page
+  // when it's already open below, rather than stacking another copy.
+  const returnOrPush = useReturnOrPush();
   const insets = useSafeAreaInsets();
   const { show: showUndo } = useUndoToast();
   const [budgets, setBudgets] = useState<BudgetProgress[]>([]);
@@ -102,8 +107,8 @@ export default function BudgetsScreen() {
         await restoreBudget(snapshot);
         await load();
       });
-    } catch (e: any) {
-      Alert.alert('Could not delete budget', String(e?.message ?? e));
+    } catch (e) {
+      Alert.alert("Couldn't delete budget", errorMessage(e));
     } finally {
       setDeleteBusy(false);
     }
@@ -176,13 +181,14 @@ export default function BudgetsScreen() {
               <LimitMeter
                 pct={totalLimit > 0 ? (totalSpent / totalLimit) * 100 : 0}
                 tone={overallOver ? 'over' : 'ok'}
+                animKey="budgets:total"
               />
             </View>
           </View>
         )}
 
         {lapsed.length > 0 && (
-          <View style={styles.lapsedCard}>
+          <View style={[styles.lapsedCard, budgets.length === 0 && { marginTop: theme.layout.screenTopGap }]}>
             <Text style={styles.lapsedTitle}>Continue from last month?</Text>
             {lapsed.map((item) => (
               <View key={item.categoryId} style={styles.lapsedRow}>
@@ -192,7 +198,7 @@ export default function BudgetsScreen() {
                 </Text>
                 <Text style={styles.lapsedAmount}>{formatMoney(item.limitAmountMinor)}/mo</Text>
                 <Pressable
-                  style={styles.continueBtn}
+                  style={withPressed(styles.continueBtn)}
                   onPress={() => onContinue(item)}
                   disabled={continuingId === item.categoryId}
                   accessibilityRole="button"
@@ -220,7 +226,12 @@ export default function BudgetsScreen() {
                     progress={progress}
                     divider={i > 0}
                     // The row opens its category's page; Edit and Delete are in ⋯.
-                    onPress={() => router.push(`/category/${progress.budget.categoryId}`)}
+                    onPress={() =>
+                      returnOrPush(
+                        { name: 'category/[id]', params: { id: progress.budget.categoryId } },
+                        `/category/${progress.budget.categoryId}`
+                      )
+                    }
                     onMore={() => setManageTarget(progress)}
                   />
                 </MovingRow>

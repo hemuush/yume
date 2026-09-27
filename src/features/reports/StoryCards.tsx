@@ -6,6 +6,7 @@ import { useAccent } from '@/theme/AccentContext';
 import { MoonPhase } from './MoonPhase';
 import type { StoryCard, StoryTarget, StoryTone } from './reportsInsights';
 import { styles } from './reports.styles';
+import { withPressed } from '@/lib/pressed';
 
 const TONE_BG: Record<StoryTone, string> = {
   coral: theme.colors.idCoral,
@@ -72,10 +73,10 @@ export function StoryCards({
               <Pressable
                 key={c.key}
                 onPress={() => onJump(c.target)}
-                style={[
+                style={withPressed([
                   styles.story,
                   { width: cards.length === 1 ? rowWidth : cardWidth, backgroundColor: TONE_BG[c.tone] },
-                ]}
+                ])}
                 accessibilityRole="button"
                 accessibilityLabel={`${c.kicker}: ${c.big}. ${c.detail}${c.foot ? ` ${c.foot}.` : ''}`}
               >

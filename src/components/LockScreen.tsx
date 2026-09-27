@@ -171,7 +171,7 @@ export function LockScreen({ onUnlocked }: { onUnlocked: () => void }) {
           </Text>
         )}
         <PrimaryButton
-          title={busy ? 'Checking...' : 'Unlock'}
+          title={busy ? 'Checking…' : 'Unlock'}
           variant="primary"
           onPress={tryUnlock}
           disabled={busy}

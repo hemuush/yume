@@ -72,8 +72,7 @@ export function UpcomingRow({
 /**
  * The row that stands in for whatever's past `useCappedList`'s cap — same
  * shape as a real `UpcomingRow` (icon left, label filling the middle) so it
- * reads as one more row in the list rather than a different kind of thing,
- * the same "+N more" language `DayCard` uses for a busy day.
+ * reads as one more row in the list rather than a different kind of thing.
  */
 export function UpcomingMoreRow({
   count,

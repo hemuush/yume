@@ -9,6 +9,7 @@ import { formatMoney } from '@/lib/money';
 import { theme } from '@/constants/theme';
 import { styles } from './recurring.styles';
 import { dayMonth } from '@/lib/dateLabels';
+import { withPressed } from '@/lib/pressed';
 
 /**
  * The top of Recurring: what the running expense rules cost a month (and a
@@ -34,7 +35,7 @@ export function SubscriptionsSection({
     <>
       {totals.count > 0 && (
         <NeoTile style={styles.subsCard}>
-          <Text style={styles.subsLabel}>SUBSCRIPTIONS & BILLS</Text>
+          <Text style={styles.subsLabel}>Subscriptions & bills</Text>
           <Text style={styles.subsAmount}>
             {formatMoney(totals.monthlyMinor)}
             <Text style={styles.subsPer}> / month</Text>
@@ -47,11 +48,11 @@ export function SubscriptionsSection({
 
       {suggestions.length > 0 && (
         <>
-          <Text style={styles.sectionDivider}>NOT SET UP YET</Text>
+          <Text style={styles.sectionDivider}>Not set up yet</Text>
           <NeoTile style={styles.subsList}>
             {suggestions.map((s, i) => (
               <MovingRow key={s.key} style={[styles.subsRow, i > 0 && styles.subsRowDivider]}>
-                <CategoryIcon name={s.icon} color={s.color} size={16} square={34} />
+                <CategoryIcon name={s.icon} color={s.color} />
                 <View style={{ flex: 1 }}>
                   <Text style={styles.subsRowTitle} numberOfLines={2}>
                     {s.categoryName}
@@ -63,7 +64,7 @@ export function SubscriptionsSection({
                   </Text>
                 </View>
                 <Pressable
-                  style={styles.subsMake}
+                  style={withPressed(styles.subsMake)}
                   onPress={() => onMakeRecurring(s)}
                   accessibilityRole="button"
                   accessibilityLabel={`Make ${s.categoryName} recurring`}
@@ -71,6 +72,7 @@ export function SubscriptionsSection({
                   <Text style={styles.subsMakeText}>Make recurring</Text>
                 </Pressable>
                 <Pressable
+                  style={withPressed()}
                   onPress={() => onHide(s)}
                   hitSlop={10}
                   accessibilityRole="button"
@@ -88,7 +90,7 @@ export function SubscriptionsSection({
         </>
       )}
 
-      {hasRunning && <Text style={styles.sectionDivider}>RUNNING</Text>}
+      {hasRunning && <Text style={styles.sectionDivider}>Running</Text>}
     </>
   );
 }

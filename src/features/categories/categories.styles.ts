@@ -1,5 +1,6 @@
 import { StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
+import { SECTION_TITLE, SECTION_GAP } from '@/constants/textStyles';
 
 // Shared by the Categories screen, its list section (CategorySection /
 // CategoryTile / SubcategoryPill) and AddCategoryModal.
@@ -7,7 +8,8 @@ export const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
   errorBanner: {
     marginHorizontal: 20,
-    marginTop: 12,
+    marginTop: theme.layout.screenTopGap,
+    marginBottom: 4,
     padding: 14,
     borderRadius: theme.radius.md,
     backgroundColor: theme.colors.expenseTint,
@@ -23,19 +25,18 @@ export const styles = StyleSheet.create({
     lineHeight: 16,
   },
   sectionTitle: {
-    fontFamily: theme.font.roundedBold,
-    fontSize: 16,
-    color: theme.colors.textPrimary,
+    ...SECTION_TITLE,
     marginHorizontal: 20,
-    marginTop: 20,
-    marginBottom: 10,
+    marginTop: SECTION_GAP.top,
+    marginBottom: SECTION_GAP.bottom,
   },
+  firstTitle: { marginTop: theme.layout.screenTopGap },
   grid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 20, gap: 12, marginBottom: 4 },
   groupCard: {
     marginHorizontal: 20,
     marginTop: 12,
     padding: 14,
-    borderRadius: theme.radius.xl,
+    borderRadius: theme.radius.xl2,
     backgroundColor: theme.colors.surface,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
@@ -77,7 +78,7 @@ export const styles = StyleSheet.create({
     marginBottom: 14,
     lineHeight: 17,
   },
-  sensitiveRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
+  sensitiveRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 14 },
   errorText: { fontFamily: theme.font.body, color: theme.colors.expense, fontSize: 13, marginBottom: 12 },
   tile: { width: 76, alignItems: 'center' },
   tileSub: { width: 68, opacity: 0.88 },

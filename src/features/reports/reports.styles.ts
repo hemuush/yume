@@ -1,5 +1,6 @@
 import { StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
+import { EYEBROW, SECTION_TITLE, SECTION_GAP } from '@/constants/textStyles';
 
 /** The even gap between Reports' blocks (heatmap card, story cards, "Where it went", trends). */
 export const BLOCK_GAP = 22;
@@ -69,13 +70,7 @@ export const styles = StyleSheet.create({
   jumpChipText: { fontFamily: theme.font.bodyBold, fontSize: 11.5, color: theme.colors.textSecondary },
   jumpChipTextOn: { color: theme.colors.surface },
 
-  eyebrow: {
-    fontFamily: theme.font.mono,
-    fontSize: 9,
-    letterSpacing: 1,
-    textTransform: 'uppercase',
-    color: theme.colors.textMuted,
-  },
+  eyebrow: EYEBROW,
   big: {
     flex: 1,
     fontFamily: theme.font.monoBold,
@@ -210,14 +205,9 @@ export const styles = StyleSheet.create({
     color: theme.colors.textPrimary,
   },
   tidyNudgeLink: { fontFamily: theme.font.bodyBold, textDecorationLine: 'underline' },
-  blockTitle: {
-    fontFamily: theme.font.roundedBold,
-    fontSize: 15,
-    color: theme.colors.textPrimary,
-    marginBottom: 8,
-  },
+  blockTitle: { ...SECTION_TITLE, marginBottom: SECTION_GAP.bottom },
   legend: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  legendText: { fontFamily: theme.font.body, fontSize: 9.5, color: theme.colors.textMuted },
+  legendText: { fontFamily: theme.font.body, fontSize: 10, color: theme.colors.textMuted },
   legendSwatch: { width: 11, height: 11, borderRadius: 3 },
 
   catCard: {
@@ -229,18 +219,18 @@ export const styles = StyleSheet.create({
   },
   catRow: { paddingVertical: 10 },
   catTop: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 },
-  catName: { flex: 1, fontFamily: theme.font.bodyMedium, fontSize: 11.5, color: theme.colors.textPrimary },
+  catName: { flex: 1, fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textPrimary },
   catDot: { width: 8, height: 8, borderRadius: 4 },
   catPct: {
     fontFamily: theme.font.mono,
-    fontSize: 9,
+    fontSize: 10,
     color: theme.colors.textMuted,
-    width: 28,
+    width: 34,
     textAlign: 'right',
   },
   catRight: { flexDirection: 'row', alignItems: 'center', gap: 5, marginLeft: 8 },
-  catAmt: { fontFamily: theme.font.monoBold, fontSize: 10.5, color: theme.colors.textPrimary },
-  catDelta: { fontFamily: theme.font.mono, fontSize: 8 },
+  catAmt: { fontFamily: theme.font.monoBold, fontSize: 12, color: theme.colors.textPrimary },
+  catDelta: { fontFamily: theme.font.mono, fontSize: 10 },
   catTrack: {
     height: 5,
     borderRadius: 3,

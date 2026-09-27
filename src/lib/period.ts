@@ -54,6 +54,17 @@ export function periodLabel(cursor: PeriodCursor, reference: Date = new Date()):
   );
 }
 
+/** "Sept", "Sept 2025", "2026": the collapsed Home header's small month pill, which shares its row with the header's buttons. */
+export function periodShortLabel(cursor: PeriodCursor, reference: Date = new Date()): string {
+  const anchor = anchorDate(cursor, reference);
+  if (cursor.granularity === 'year') return String(anchor.getFullYear());
+  const thisYear = anchor.getFullYear() === reference.getFullYear();
+  return anchor.toLocaleDateString(
+    undefined,
+    thisYear ? { month: 'short' } : { month: 'short', year: 'numeric' }
+  );
+}
+
 /** Short label for the period one step back, used in "vs …" comparison text. */
 export function previousPeriodLabel(cursor: PeriodCursor): string {
   return cursor.granularity === 'year' ? 'last year' : 'the month before';

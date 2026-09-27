@@ -1,6 +1,6 @@
 jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMock').createReanimatedMock());
 
-import { joinDays } from './PlanSections';
+import { joinDays } from './PlanTiles';
 
 describe('joinDays', () => {
   it('names days in one month once, and each month across two', () => {

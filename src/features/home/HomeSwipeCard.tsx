@@ -15,6 +15,7 @@ import { theme } from '@/constants/theme';
 import { HomeSection } from './HomeSection';
 import { haptics } from '@/lib/haptics';
 import { homeStyles } from './homeStyles';
+import { withPressed } from '@/lib/pressed';
 
 export interface SwipePage {
   key: string;
@@ -114,7 +115,7 @@ export function HomeSwipeCard({ pages }: { pages: SwipePage[] }) {
         <Pressable
           key={p.key}
           onPress={() => goToPage(i)}
-          style={[styles.tab, i === safeIndex && styles.tabActive]}
+          style={withPressed([styles.tab, i === safeIndex && styles.tabActive])}
           accessibilityRole="tab"
           accessibilityState={{ selected: i === safeIndex }}
           accessibilityLabel={p.label}

@@ -12,6 +12,8 @@ import { CategoryIcon } from '@/components/CategoryIcon';
 import { CATEGORY_COLOR_PALETTE, modalFooterStyles as f, theme } from '@/constants/theme';
 import { CATEGORY_ICON_CHOICES } from '@/constants/categories';
 import { styles } from './categories.styles';
+import { errorMessage } from '@/lib/errorMessage';
+import { withPressed } from '@/lib/pressed';
 
 const KINDS: { label: string; value: CategoryKind }[] = [
   { label: 'Expense', value: 'expense' },
@@ -94,8 +96,8 @@ export function AddCategoryModal({
         await createCategory({ name: name.trim(), kind, color, icon, parentId, isSensitive });
       }
       onSaved();
-    } catch (e: any) {
-      setError(String(e?.message ?? e));
+    } catch (e) {
+      setError(errorMessage(e));
     } finally {
       setSaving(false);
     }
@@ -107,14 +109,14 @@ export function AddCategoryModal({
     <ModalSheet
       visible={visible}
       onClose={onClose}
-      title={category ? 'Edit Category' : 'New Category'}
+      title={category ? 'Edit category' : 'New category'}
       footer={
         <View style={f.footerCol}>
           {error && <Text style={styles.errorText}>{error}</Text>}
           <View style={f.footerRow}>
             <PrimaryButton title="Cancel" variant="secondary" onPress={onClose} style={f.footerBtn} />
             <PrimaryButton
-              title={saving ? 'Saving...' : category ? 'Save' : 'Create'}
+              title={saving ? 'Saving…' : category ? 'Save' : 'Create'}
               onPress={submit}
               disabled={saving}
               style={f.footerBtn}
@@ -159,7 +161,7 @@ export function AddCategoryModal({
           <View style={styles.colorRow}>
             <Pressable
               onPress={() => setParentId(null)}
-              style={[styles.parentChip, parentId === null && styles.parentChipActive]}
+              style={withPressed([styles.parentChip, parentId === null && styles.parentChipActive])}
             >
               <Text style={[styles.parentChipText, parentId === null && styles.parentChipTextActive]}>
                 None
@@ -169,7 +171,7 @@ export function AddCategoryModal({
               <Pressable
                 key={p.id}
                 onPress={() => setParentId(p.id)}
-                style={[styles.parentChip, parentId === p.id && styles.parentChipActive]}
+                style={withPressed([styles.parentChip, parentId === p.id && styles.parentChipActive])}
               >
                 <Text style={[styles.parentChipText, parentId === p.id && styles.parentChipTextActive]}>
                   {p.name}
@@ -191,7 +193,11 @@ export function AddCategoryModal({
           <Pressable
             key={c}
             onPress={() => setColor(c)}
-            style={[styles.colorSwatch, { backgroundColor: c }, color === c && styles.colorSwatchActive]}
+            style={withPressed([
+              styles.colorSwatch,
+              { backgroundColor: c },
+              color === c && styles.colorSwatchActive,
+            ])}
           />
         ))}
       </View>
@@ -201,7 +207,7 @@ export function AddCategoryModal({
           <Pressable
             key={iconName}
             onPress={() => setIcon(iconName)}
-            style={[styles.iconChoice, icon === iconName && styles.iconChoiceActive]}
+            style={withPressed([styles.iconChoice, icon === iconName && styles.iconChoiceActive])}
           >
             <CategoryIcon
               name={iconName}

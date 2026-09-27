@@ -15,6 +15,10 @@ import { useReduceMotion } from '@/lib/useReduceMotion';
 import { MOTION, timing } from '@/lib/animation';
 import { PeriodCursor, periodLabel, periodRange } from '@/lib/period';
 import { RecentTransactionRow } from './RecentTransactionRow';
+import { withPressed } from '@/lib/pressed';
+import { getCardCycle, AccountCardCycle } from '@/db/cardCycles';
+import { dayMonth } from '@/lib/dateLabels';
+import { EYEBROW } from '@/constants/textStyles';
 
 /**
  * A quick look at one account, opened by tapping its card on Home: the
@@ -36,6 +40,7 @@ export function AccountSummarySheet({
   onAdd,
   onEdit,
   onSeeAll,
+  onPayBill,
 }: {
   account: Account | null;
   cursor: PeriodCursor;
@@ -47,10 +52,14 @@ export function AccountSummarySheet({
   onEdit: (account: Account) => void;
   /** Opens Activity filtered to this account, on the same period. */
   onSeeAll: (account: Account) => void;
+  /** A credit card's "Pay bill": opens Add as a transfer into the card for what's left to pay. */
+  onPayBill?: (account: Account, amountMinor: number) => void;
 }) {
   const { hideAmounts } = usePrivacy();
   const [flow, setFlow] = useState<AccountFlow | null>(null);
   const [latest, setLatest] = useState<Transaction[] | null>(null);
+  // A credit card's bill, when it has a statement day and a due day set.
+  const [cycle, setCycle] = useState<AccountCardCycle | null>(null);
   const loadSeq = useRef(0);
 
   const accountId = account?.id;
@@ -60,11 +69,17 @@ export function AccountSummarySheet({
     const seq = ++loadSeq.current;
     setFlow(null);
     setLatest(null);
-    Promise.all([getAccountFlow(accountId, { start, end }), listTransactions({ accountId, limit: 3 })])
-      .then(([fl, tx]) => {
+    setCycle(null);
+    Promise.all([
+      getAccountFlow(accountId, { start, end }),
+      listTransactions({ accountId, limit: 3 }),
+      account ? getCardCycle(account).catch(() => null) : Promise.resolve(null),
+    ])
+      .then(([fl, tx, cy]) => {
         if (seq !== loadSeq.current) return;
         setFlow(fl);
         setLatest(tx);
+        setCycle(cy);
       })
       .catch(() => {
         if (seq !== loadSeq.current) return;
@@ -78,6 +93,8 @@ export function AccountSummarySheet({
         });
         setLatest([]);
       });
+    // `account` is read for its card days only; `accountId` is what changes which account this is.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accountId, start, end]);
 
   if (!account) return null;
@@ -138,6 +155,52 @@ export function AccountSummarySheet({
         />
       )}
 
+      {cycle && (
+        <>
+          <Text style={[styles.label, styles.sectionGap]}>Bill</Text>
+          <View style={styles.latest}>
+            <BillLine
+              label={`This cycle · ${dayMonth(cycle.cycleStart)} – ${dayMonth(cycle.cycleEnd)}`}
+              value={money(cycle.spentThisCycleMinor)}
+            />
+            <BillLine
+              divider
+              label={`Last statement · ${dayMonth(cycle.statementDate)}`}
+              value={money(cycle.statementMinor)}
+            />
+            <BillLine
+              divider
+              label="Paid since"
+              value={money(cycle.paidSinceMinor)}
+              valueColor={theme.colors.income}
+            />
+            <BillLine
+              divider
+              label={
+                cycle.leftToPayMinor === 0
+                  ? 'Paid in full'
+                  : cycle.daysUntilDue < 0
+                    ? `Left to pay · was due ${dayMonth(cycle.dueDate)}`
+                    : `Left to pay by ${dayMonth(cycle.dueDate)}`
+              }
+              value={money(cycle.leftToPayMinor)}
+              strong
+              valueColor={
+                cycle.daysUntilDue < 0 && cycle.leftToPayMinor > 0 ? theme.colors.expense : undefined
+              }
+            />
+          </View>
+          {cycle.leftToPayMinor > 0 && onPayBill && (
+            <PrimaryButton
+              title={`Pay bill · ${money(cycle.leftToPayMinor)}`}
+              variant="secondary"
+              onPress={() => onPayBill(account, cycle.leftToPayMinor)}
+              style={styles.payBill}
+            />
+          )}
+        </>
+      )}
+
       <Text style={[styles.label, styles.sectionGap]}>In {periodLabel(cursor)}</Text>
       <View style={styles.flows}>
         <FlowRow
@@ -196,7 +259,7 @@ export function AccountSummarySheet({
       {latest !== null && latest.length > 0 && (
         <Pressable
           onPress={() => onSeeAll(account)}
-          style={styles.seeAll}
+          style={withPressed(styles.seeAll)}
           accessibilityRole="button"
           accessibilityLabel={`See everything in ${account.name} in Activity`}
         >
@@ -205,6 +268,31 @@ export function AccountSummarySheet({
         </Pressable>
       )}
     </ModalSheet>
+  );
+}
+
+/** One line of a card's bill: what it is on the left, the amount on the right. */
+function BillLine({
+  label,
+  value,
+  strong,
+  valueColor,
+  divider,
+}: {
+  label: string;
+  value: string;
+  strong?: boolean;
+  valueColor?: string;
+  /** A hairline above — every line but the first. */
+  divider?: boolean;
+}) {
+  return (
+    <View style={[styles.billLine, divider && styles.billDivider]}>
+      <Text style={[styles.billLabel, strong && styles.billLabelStrong]} numberOfLines={1}>
+        {label}
+      </Text>
+      <Text style={[styles.billValue, valueColor ? { color: valueColor } : null]}>{value}</Text>
+    </View>
   );
 }
 
@@ -263,13 +351,20 @@ function FlowRow({
 }
 
 const styles = StyleSheet.create({
-  label: {
-    fontFamily: theme.font.bodyBold,
-    fontSize: 11,
-    letterSpacing: 0.8,
-    textTransform: 'uppercase',
-    color: theme.colors.textMuted,
+  label: EYEBROW,
+  billLine: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 11,
   },
+  billDivider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.borderSoft },
+  billLabel: { flex: 1, fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textSecondary },
+  billLabelStrong: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
+  billValue: { fontFamily: theme.font.monoBold, fontSize: 13, color: theme.colors.textPrimary },
+  payBill: { marginTop: 10 },
   sectionGap: { marginTop: 18 },
   balance: { fontFamily: theme.font.monoBold, fontSize: 26, color: theme.colors.textPrimary, marginTop: 4 },
   flows: { gap: 10, marginTop: 10 },
@@ -331,7 +426,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
     marginHorizontal: -4,
     backgroundColor: theme.colors.surface,
-    borderRadius: theme.radius.lg,
+    borderRadius: theme.radius.xl2,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
     overflow: 'hidden',

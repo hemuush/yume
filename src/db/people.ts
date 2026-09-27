@@ -1,10 +1,12 @@
+import { found } from './found';
+import { PersonLedgerEntryRow, PersonRow } from './rows';
 import { getDb, AppDb } from './client';
 import { newId } from '@/lib/id';
 import { Person, PersonLedgerEntry } from '@/types';
 import { checkOverspendAndNotify } from './ledger';
 import { captureRow, restoreRows, RowSnapshot } from './undoSnapshot';
 
-function rowToPerson(row: any): Person {
+function rowToPerson(row: PersonRow): Person {
   return {
     id: row.id,
     name: row.name,
@@ -14,7 +16,7 @@ function rowToPerson(row: any): Person {
   };
 }
 
-function rowToEntry(row: any): PersonLedgerEntry {
+function rowToEntry(row: PersonLedgerEntryRow): PersonLedgerEntry {
   return {
     id: row.id,
     personId: row.person_id,
@@ -35,7 +37,7 @@ export async function listPeople(includeArchived = false): Promise<PersonWithBal
   const db = await getDb();
   // One grouped query instead of one extra query per person (each a
   // separate trip through the app-wide statement queue).
-  const rows = await db.getAllAsync<any>(
+  const rows = await db.getAllAsync<PersonRow & { balance_total: number | null; last_date: string | null }>(
     `SELECT p.*,
        (SELECT SUM(e.amount_minor) FROM person_ledger_entries e WHERE e.person_id = p.id) AS balance_total,
        (SELECT MAX(e.date) FROM person_ledger_entries e WHERE e.person_id = p.id) AS last_date
@@ -56,13 +58,13 @@ export async function createPerson(input: { name: string; notes?: string }): Pro
     input.name,
     input.notes ?? '',
   ]);
-  const row = await db.getFirstAsync<any>('SELECT * FROM people WHERE id = ?', [id]);
-  return rowToPerson(row);
+  const row = await db.getFirstAsync<PersonRow>('SELECT * FROM people WHERE id = ?', [id]);
+  return rowToPerson(found(row, 'person'));
 }
 
 export async function getPersonLedger(personId: string): Promise<PersonLedgerEntry[]> {
   const db = await getDb();
-  const rows = await db.getAllAsync<any>(
+  const rows = await db.getAllAsync<PersonLedgerEntryRow>(
     'SELECT * FROM person_ledger_entries WHERE person_id = ? ORDER BY date DESC, created_at DESC',
     [personId]
   );
@@ -91,8 +93,11 @@ export async function addLedgerEntry(input: {
      VALUES (?, ?, ?, ?, ?, ?)`,
     [id, input.personId, input.transactionId ?? null, input.amountMinor, input.date, input.note ?? '']
   );
-  const row = await db.getFirstAsync<any>('SELECT * FROM person_ledger_entries WHERE id = ?', [id]);
-  return rowToEntry(row);
+  const row = await db.getFirstAsync<PersonLedgerEntryRow>(
+    'SELECT * FROM person_ledger_entries WHERE id = ?',
+    [id]
+  );
+  return rowToEntry(found(row, 'entry'));
 }
 
 /**
@@ -129,8 +134,8 @@ async function insertPersonMoneyMovement(
   }
   const txId = newId();
   await tx.runAsync(
-    `INSERT INTO transactions (id, type, account_id, category_id, amount_minor, date, note, tags)
-     VALUES (?, ?, ?, ?, ?, ?, ?, '[]')`,
+    `INSERT INTO transactions (id, type, account_id, category_id, amount_minor, date, note)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`,
     [txId, input.type, input.accountId, input.categoryId, input.amountMinor, input.date, input.note ?? '']
   );
   await tx.runAsync(

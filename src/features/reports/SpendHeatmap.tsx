@@ -6,6 +6,8 @@ import { spendHeatScale, hexToHsl } from '@/lib/color';
 import { useAccent } from '@/theme/AccentContext';
 import { MAX_LIST_STAGGER_MS } from '@/lib/animation';
 import { gridRows } from '@/lib/gridRows';
+import { DURATIONS } from '@/lib/motionTimings';
+import { withPressed } from '@/lib/pressed';
 
 export interface HeatCell {
   key: string;
@@ -81,13 +83,12 @@ export function SpendHeatmap({
               <Animated.View
                 key={c.key}
                 entering={FadeIn.delay(Math.min(i * 12, MAX_LIST_STAGGER_MS))
-                  .duration(260)
-                  .springify()
+                  .duration(DURATIONS.standard)
                   .reduceMotion(ReduceMotion.System)}
                 style={[styles.slot, styles.cellWrap]}
               >
                 {c.onPress ? (
-                  <Pressable onPress={c.onPress} accessibilityRole="button">
+                  <Pressable style={withPressed()} onPress={c.onPress} accessibilityRole="button">
                     {inner}
                   </Pressable>
                 ) : (
@@ -110,7 +111,7 @@ const styles = StyleSheet.create({
     marginBottom: 5,
     textAlign: 'center',
     fontFamily: theme.font.mono,
-    fontSize: 9,
+    fontSize: 10,
     color: theme.colors.textMuted,
   },
   cellWrap: { padding: 2 },

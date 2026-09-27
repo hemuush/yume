@@ -27,7 +27,14 @@ jest.mock('@/components/ModalSheet', () => ({
       </>
     ) : null,
 }));
-jest.mock('expo-router', () => ({ router: { push: jest.fn() } }));
+// The stack: Activity only, unless a test puts a category page on it.
+const mockStack = { routes: [{ name: '(tabs)' }] as { name: string; params?: object }[] };
+jest.mock('expo-router', () => ({
+  router: { push: jest.fn(), back: jest.fn(), dismissTo: jest.fn() },
+  useNavigation: () => ({
+    getState: () => ({ routes: mockStack.routes, index: mockStack.routes.length - 1 }),
+  }),
+}));
 const mockShowUndo = jest.fn();
 jest.mock('@/components/UndoToast', () => ({ useUndoToast: () => ({ show: mockShowUndo }) }));
 const mockRule = {
@@ -63,9 +70,10 @@ const lunch = {
   amountMinor: 11000,
   date: '2026-01-15',
   note: 'Lunch',
-  tags: [],
   paymentMode: null,
   loanPaymentId: null,
+  splitId: null,
+  isRefund: false,
   loanId: null,
   createdAt: '',
 };
@@ -127,6 +135,24 @@ describe('entry detail', () => {
     expect(next > toLocalIsoDate(new Date())).toBe(true);
     expect(next.slice(8)).toBe('15');
     expect(mockRule.current?.prefill?.amountMinor).toBe(11000);
+  });
+
+  it("just closes when opened from that category's own page", async () => {
+    mockStack.routes = [{ name: '(tabs)' }, { name: 'category/[id]', params: { id: 'food' } }];
+    try {
+      const tree = await render();
+      const link = tree.root.find(
+        (n) =>
+          typeof n.props.onPress === 'function' &&
+          n.findAllByType(Text).some((t) => t.props.children?.join?.('') === 'See everything in Food')
+      );
+      (router.push as jest.Mock).mockClear();
+      act(() => link.props.onPress());
+      expect(router.push).not.toHaveBeenCalled();
+      expect(router.back).not.toHaveBeenCalled();
+    } finally {
+      mockStack.routes = [{ name: '(tabs)' }];
+    }
   });
 
   it("opens the entry's category page", async () => {

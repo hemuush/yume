@@ -11,6 +11,10 @@ import { create, act } from 'react-test-renderer';
 import { BudgetRow } from './BudgetRow';
 import { BudgetProgress } from '@/db/budgets';
 
+// Bars and rings animate to their values (useGrowFrom); fake timers keep those
+// frames inside the test instead of firing after it ends.
+jest.useFakeTimers();
+
 function makeProgress(overrides: Partial<BudgetProgress> = {}): BudgetProgress {
   return {
     budget: { id: 'b1', categoryId: 'c1', periodMonth: '2026-09', limitAmountMinor: 500000, rollover: false },

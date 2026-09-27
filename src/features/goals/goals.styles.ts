@@ -1,5 +1,6 @@
 import { StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
+import { EYEBROW } from '@/constants/textStyles';
 
 // Shared by the Savings Goals screen and its GoalCard / AddGoalModal /
 // ContributeModal / GoalDetailModal.
@@ -7,7 +8,8 @@ export const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
   errorBanner: {
     marginHorizontal: 20,
-    marginTop: 12,
+    marginTop: theme.layout.screenTopGap,
+    marginBottom: 4,
     padding: 14,
     borderRadius: theme.radius.md,
     backgroundColor: theme.colors.expenseTint,
@@ -25,7 +27,7 @@ export const styles = StyleSheet.create({
 
   card: {
     marginHorizontal: 20,
-    marginBottom: 12,
+    marginBottom: 10,
     padding: 14,
     borderRadius: theme.radius.xl2,
     backgroundColor: theme.colors.surface,
@@ -65,12 +67,12 @@ export const styles = StyleSheet.create({
     color: theme.colors.textMuted,
     marginBottom: 6,
   },
-  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 },
+  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 14 },
   toggleRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 10,
+    marginBottom: 14,
   },
   noteInput: { minHeight: 70, textAlignVertical: 'top', paddingTop: 12 },
   followGroup: { gap: 8, marginTop: -6, marginBottom: 16 },
@@ -133,10 +135,7 @@ export const styles = StyleSheet.create({
   },
 
   dangerLabel: {
-    fontSize: 10.5,
-    fontFamily: theme.font.bodyBold,
-    letterSpacing: 0.6,
-    color: theme.colors.textMuted,
+    ...EYEBROW,
     marginTop: 8,
     marginBottom: 10,
   },

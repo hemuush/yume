@@ -13,6 +13,7 @@ import { DateField } from '@/components/DateField';
 import { useUndoToast } from '@/components/UndoToast';
 import { modalFooterStyles as f } from '@/constants/theme';
 import { styles } from './loans.styles';
+import { errorMessage } from '@/lib/errorMessage';
 
 /**
  * Confirms paying one EMI — from the loan's own screen or from Plan's Coming
@@ -54,16 +55,16 @@ export function PayInstallmentSheet({
           await undoInstallmentPayment(installment.id);
           emitTransactionsChanged();
           await onPaid();
-        } catch (e: any) {
-          Alert.alert('Could not undo', String(e?.message ?? e));
+        } catch (e) {
+          Alert.alert("Couldn't undo", errorMessage(e));
         }
       });
       // A brief "done" tick before the sheet closes — the payment is already
       // saved; this is only the felt confirmation.
       setDone(true);
       setTimeout(onClose, 380);
-    } catch (e: any) {
-      Alert.alert('Could not record payment', String(e?.message ?? e));
+    } catch (e) {
+      Alert.alert("Couldn't record payment", errorMessage(e));
       setBusy(false);
       onClose();
     }
@@ -87,7 +88,7 @@ export function PayInstallmentSheet({
               style={f.footerBtn}
             />
             <PrimaryButton
-              title={busy ? 'Recording...' : early ? 'Pay Early' : 'Confirm'}
+              title={busy ? 'Recording…' : early ? 'Pay early' : 'Confirm'}
               done={done}
               onPress={pay}
               disabled={busy || !account || !categoryId}

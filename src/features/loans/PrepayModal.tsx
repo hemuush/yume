@@ -14,6 +14,8 @@ import { toLocalIsoDate } from '@/lib/date';
 import { useReduceMotion } from '@/lib/useReduceMotion';
 import { styles } from './loans.styles';
 import { shortMonthYear } from '@/lib/dateLabels';
+import { errorMessage } from '@/lib/errorMessage';
+import { DURATIONS } from '@/lib/motionTimings';
 
 /**
  * Jurisdiction-specific tax-on-fee conventions that Yume can offer as a
@@ -106,14 +108,14 @@ function PrepaymentReveal({ summary, onDone }: { summary: PrepaymentSummary; onD
     if (reduce) return;
     Animated.timing(progress, {
       toValue: 1,
-      duration: 420,
-      delay: 140,
+      duration: DURATIONS.draw,
+      delay: DURATIONS.slideOut,
       easing: Easing.out(Easing.cubic),
       useNativeDriver: false,
     }).start();
     Animated.sequence([
-      Animated.timing(glow, { toValue: 1, duration: 260, delay: 60, useNativeDriver: true }),
-      Animated.timing(glow, { toValue: 0, duration: 440, useNativeDriver: true }),
+      Animated.timing(glow, { toValue: 1, duration: DURATIONS.standard, delay: 60, useNativeDriver: true }),
+      Animated.timing(glow, { toValue: 0, duration: DURATIONS.count, useNativeDriver: true }),
     ]).start();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reduce]);
@@ -287,8 +289,8 @@ export function PrepayModal({
         chargeAmountMinor: chargeMinor > 0 ? chargeMinor : undefined,
       });
       setResult(summary);
-    } catch (e: any) {
-      setError(String(e?.message ?? e));
+    } catch (e) {
+      setError(errorMessage(e));
     } finally {
       setSaving(false);
     }
@@ -315,7 +317,7 @@ export function PrepayModal({
           <View style={f.footerRow}>
             <PrimaryButton title="Cancel" variant="secondary" onPress={onClose} style={f.footerBtn} />
             <PrimaryButton
-              title={saving ? 'Saving...' : 'Confirm'}
+              title={saving ? 'Saving…' : 'Confirm'}
               onPress={submit}
               disabled={saving}
               style={f.footerBtn}

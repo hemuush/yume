@@ -13,7 +13,7 @@ import { formatPctChange } from '@/lib/format';
  * "soon" vs "due"), so an item dismissed with ✕ comes back when things change.
  */
 export type NeedsYouTone = 'urgent' | 'warn' | 'info';
-export type NeedsYouAction = 'loans' | 'budgets' | 'backup' | 'reports' | 'tidy' | 'recurring';
+export type NeedsYouAction = 'loans' | 'budgets' | 'backup' | 'reports' | 'tidy' | 'recurring' | 'payCard';
 
 export interface NeedsYouItem {
   key: string;
@@ -24,6 +24,8 @@ export interface NeedsYouItem {
   action: NeedsYouAction;
   /** Only the "no backup yet" reminder can be snoozed; everything else can be dismissed. */
   snoozable?: boolean;
+  /** A credit card bill: which card, and what's left to pay. */
+  payCard?: { accountId: string; amountMinor: number };
 }
 
 export interface NeedsYouInput {
@@ -44,6 +46,8 @@ export interface NeedsYouInput {
   tidyCount?: number;
   /** Charges seen once a month for a while with no rule yet (findMonthlyPatterns), minus hidden ones. */
   monthlyPatterns?: { key: string; categoryName: string; amountMinor: number }[];
+  /** Credit card bills (listCardCycles); only ones with something left to pay matter. */
+  cardBills?: { accountId: string; accountName: string; dueDate: string; leftToPayMinor: number }[];
   /** YYYY-MM-DD, local. */
   today: string;
   now: Date;
@@ -56,6 +60,8 @@ export const BACKUP_NUDGE_MIN_TRANSACTIONS = 10;
 /** An EMI this close is a warning; up to UPCOMING_EMI_DAYS away it's a heads-up. */
 const EMI_SOON_DAYS = 3;
 const UPCOMING_EMI_DAYS = 14;
+/** A card bill shows in the last few days before it's due, and once it's late. */
+export const CARD_BILL_DAYS = 5;
 
 function wholeDaysBetween(fromIso: string, toIso: string): number {
   return Math.round((parseLocalIsoDate(toIso).getTime() - parseLocalIsoDate(fromIso).getTime()) / 86400000);
@@ -90,6 +96,31 @@ export function buildNeedsYouItems(input: NeedsYouInput): NeedsYouItem[] {
         detail: days === 1 ? 'Due tomorrow' : `Due in ${days} days`,
       });
     }
+  }
+
+  // Card bills: a warning in the last few days, urgent once due or late.
+  // The key carries the state, so a bill dismissed while "soon" returns on the day.
+  for (const bill of input.cardBills ?? []) {
+    if (bill.leftToPayMinor <= 0) continue;
+    const days = wholeDaysBetween(input.today, bill.dueDate);
+    if (days > CARD_BILL_DAYS) continue;
+    const late = -days;
+    items.push({
+      key: `card-${bill.accountId}-${bill.dueDate}-${days <= 0 ? 'due' : 'soon'}`,
+      tone: days <= 0 ? 'urgent' : 'warn',
+      title: `${bill.accountName} bill`,
+      detail:
+        days > 1
+          ? `Due in ${days} days`
+          : days === 1
+            ? 'Due tomorrow'
+            : late === 0
+              ? 'Due today'
+              : `Overdue by ${late} day${late === 1 ? '' : 's'}`,
+      amountMinor: bill.leftToPayMinor,
+      action: 'payCard',
+      payCard: { accountId: bill.accountId, amountMinor: bill.leftToPayMinor },
+    });
   }
 
   // A backup that was set up and then failed: the user believes they're

@@ -40,23 +40,26 @@ const TABLES = [
   'settings',
 ] as const;
 
+/** One table row in a backup: column name → its JSON value. */
+export type BackupRow = Record<string, string | number | boolean | null>;
+
 export interface BackupSnapshot {
   formatVersion: number;
   exportedAt: string;
-  tables: Record<string, any[]>;
+  tables: Record<string, BackupRow[]>;
 }
 
 /** Serializes every table to a single JSON-safe object — the full source of truth for restore. */
 export async function buildBackupSnapshot(): Promise<BackupSnapshot> {
   const db = await getDb();
-  const tables: Record<string, any[]> = {};
+  const tables: Record<string, BackupRow[]> = {};
   // One exclusive slot for every table read: as separate queued reads,
   // another screen's write could land between two of them (a loan created
   // after `loans` was read but before `loan_payments` was), producing a
   // snapshot whose rows point at parents it doesn't contain.
   await db.exclusiveAsync(async (xdb) => {
     for (const table of TABLES) {
-      tables[table] = await xdb.getAllAsync<any>(`SELECT * FROM ${table}`);
+      tables[table] = await xdb.getAllAsync<BackupRow>(`SELECT * FROM ${table}`);
     }
   });
   return {
@@ -79,13 +82,14 @@ export async function buildBackupSnapshot(): Promise<BackupSnapshot> {
  * outside an active transaction, so it's set before/after, not inside,
  * `withTransactionAsync`.
  */
-function isValidSnapshotShape(snapshot: any): snapshot is BackupSnapshot {
+function isValidSnapshotShape(snapshot: unknown): snapshot is BackupSnapshot {
+  const s = snapshot as Partial<BackupSnapshot> | null;
   return (
-    !!snapshot &&
-    typeof snapshot === 'object' &&
-    typeof snapshot.formatVersion === 'number' &&
-    typeof snapshot.tables === 'object' &&
-    snapshot.tables !== null
+    !!s &&
+    typeof s === 'object' &&
+    typeof s.formatVersion === 'number' &&
+    typeof s.tables === 'object' &&
+    s.tables !== null
   );
 }
 
@@ -161,6 +165,8 @@ export async function restoreFromSnapshot(snapshot: BackupSnapshot): Promise<Res
         for (const table of deleteOrder) {
           await tx.runAsync(`DELETE FROM ${table}`);
         }
+        // Recently deleted belongs to the data being replaced, not the backup.
+        await tx.runAsync('DELETE FROM deleted_entries');
         for (const table of insertOrder) {
           const rows = snapshot.tables[table] ?? [];
           const validColumns = columnsByTable[table];

@@ -61,7 +61,7 @@ export default function SavingsGoalsScreen() {
   if (!loaded && !loadError) {
     return (
       <View style={styles.container}>
-        <AppHeader title="Savings Goals" showBack />
+        <AppHeader title="Savings goals" showBack />
         <View style={{ paddingTop: 24 }}>
           {[0, 1].map((i) => (
             <View key={i} style={styles.card}>
@@ -83,7 +83,7 @@ export default function SavingsGoalsScreen() {
   return (
     <View style={styles.container}>
       <AppHeader
-        title="Savings Goals"
+        title="Savings goals"
         showBack
         right={
           <>
@@ -106,7 +106,7 @@ export default function SavingsGoalsScreen() {
           </View>
         )}
 
-        <View style={{ height: 12 }} />
+        <View style={{ height: theme.layout.screenTopGap }} />
 
         {visibleGoals.length === 0 ? (
           <EmptyState

@@ -7,7 +7,7 @@ import { usePressScale } from '@/lib/usePressScale';
 import { HomeSection } from './HomeSection';
 import { homeStyles as h, HOME } from './homeStyles';
 import type { NeedsYouItem, NeedsYouTone } from './needsYou';
-import type { MonthReview } from './monthReview';
+import { withPressed } from '@/lib/pressed';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -18,10 +18,8 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
  * nothing, so a calm month leaves Home calmer rather than showing an empty
  * card. Rows are drawn exactly like UpcomingRow (same sizes, same card),
  * so this reads as part of Home's existing language, not a new widget.
- *
- * In the first week of a month, last month's review (see monthReview.ts) is
- * the first row: tap it for that month's report, ✕ to hide it until next
- * month. It used to be a card of its own.
+ * (Last month's Wrap used to be a row here; it's the Wrap button in Home's
+ * header now, see WrapButton.tsx.)
  */
 /** How many items the Home card shows; the rest are one tap away. */
 const NEEDS_YOU_ON_HOME = 3;
@@ -41,6 +39,7 @@ const ACTION_ICON: Partial<Record<NeedsYouItem['action'], React.ComponentProps<t
   reports: 'trending-up',
   tidy: 'check-square',
   recurring: 'repeat',
+  payCard: 'credit-card',
 };
 
 export function NeedsYouCard({
@@ -48,19 +47,13 @@ export function NeedsYouCard({
   onOpen,
   onSnooze,
   onSeeAll,
-  review = null,
-  onOpenReview,
-  onDismissReview,
 }: {
   items: NeedsYouItem[];
   onOpen: (item: NeedsYouItem) => void;
   onSnooze: (item: NeedsYouItem) => void;
   onSeeAll: () => void;
-  review?: MonthReview | null;
-  onOpenReview?: () => void;
-  onDismissReview?: () => void;
 }) {
-  const count = items.length + (review ? 1 : 0);
+  const count = items.length;
   if (count === 0) return null;
   const shown = items.slice(0, NEEDS_YOU_ON_HOME);
   return (
@@ -70,69 +63,17 @@ export function NeedsYouCard({
       onSeeAll={items.length > shown.length ? onSeeAll : undefined}
     >
       <View style={styles.card}>
-        {review && (
-          <ReviewRow review={review} onPress={() => onOpenReview?.()} onDismiss={() => onDismissReview?.()} />
-        )}
         {shown.map((item, i) => (
           <NeedsYouRow
             key={item.key}
             item={item}
-            divider={i > 0 || !!review}
+            divider={i > 0}
             onPress={() => onOpen(item)}
             onSnooze={() => onSnooze(item)}
           />
         ))}
       </View>
     </HomeSection>
-  );
-}
-
-function ReviewRow({
-  review,
-  onPress,
-  onDismiss,
-}: {
-  review: MonthReview;
-  onPress: () => void;
-  onDismiss: () => void;
-}) {
-  const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.98);
-  const detail = [
-    `Spent ${formatMoney(review.spentMinor)}`,
-    review.line ?? (review.keptLabel ? `${review.keptLabel} kept` : null),
-  ]
-    .filter(Boolean)
-    .join(' · ');
-  return (
-    <AnimatedPressable
-      onPress={onPress}
-      onPressIn={onPressIn}
-      onPressOut={onPressOut}
-      accessibilityRole="button"
-      accessibilityLabel={`${review.monthLabel} in review: ${detail}. Opens ${review.monthLabel}'s report`}
-      style={[styles.row, animatedStyle]}
-    >
-      <View style={[styles.iconWrap, { backgroundColor: theme.colors.primaryTint }]}>
-        <Feather name="bar-chart-2" size={HOME.iconGlyph} color={theme.colors.ink} />
-      </View>
-      <View style={styles.mid}>
-        <Text style={styles.title} numberOfLines={1}>
-          {review.monthLabel} in review
-        </Text>
-        <Text style={styles.sub} numberOfLines={1}>
-          {detail}
-        </Text>
-      </View>
-      <Pressable
-        onPress={onDismiss}
-        hitSlop={10}
-        accessibilityRole="button"
-        accessibilityLabel="Hide until next month"
-        style={styles.close}
-      >
-        <Feather name="x" size={13} color={theme.colors.textSecondary} />
-      </Pressable>
-    </AnimatedPressable>
   );
 }
 
@@ -186,7 +127,7 @@ export function NeedsYouRow({
           hitSlop={10}
           accessibilityRole="button"
           accessibilityLabel="Remind me later"
-          style={styles.later}
+          style={withPressed(styles.later)}
         >
           <Text style={styles.laterText}>Later</Text>
         </Pressable>
@@ -196,7 +137,7 @@ export function NeedsYouRow({
           hitSlop={12}
           accessibilityRole="button"
           accessibilityLabel={`${dismissLabel}: ${item.title}`}
-          style={styles.close}
+          style={withPressed(styles.close)}
         >
           <Feather
             name={dismissLabel === 'Dismiss' ? 'x' : 'rotate-ccw'}
