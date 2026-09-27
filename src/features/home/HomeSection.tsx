@@ -4,6 +4,7 @@ import Feather from '@expo/vector-icons/Feather';
 import { theme } from '@/constants/theme';
 import { usePressScale } from '@/lib/usePressScale';
 import { HOME } from './homeStyles';
+import { SECTION_TITLE, SECTION_GAP } from '@/constants/textStyles';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -69,17 +70,17 @@ export function HomeSection({
 }
 
 const styles = StyleSheet.create({
-  wrap: { marginTop: HOME.sectionGap },
+  wrap: { marginTop: SECTION_GAP.top },
   head: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     marginHorizontal: HOME.gutter,
-    marginBottom: 10,
+    marginBottom: SECTION_GAP.bottom,
     minHeight: 24,
   },
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  title: { fontFamily: theme.font.roundedBold, fontSize: 17, color: theme.colors.textPrimary },
+  title: SECTION_TITLE,
   badge: {
     minWidth: 20,
     minHeight: 20,

@@ -11,6 +11,8 @@ import { topLevelOnly, childrenOf, searchCategories } from '@/lib/categoryTree';
 import { usePressScale } from '@/lib/usePressScale';
 import { haptics } from '@/lib/haptics';
 import { MAX_LIST_STAGGER_MS } from '@/lib/animation';
+import { DURATIONS } from '@/lib/motionTimings';
+import { withPressed } from '@/lib/pressed';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -138,6 +140,7 @@ export function CategoryPicker({
       />
       {query !== '' && (
         <Pressable
+          style={withPressed()}
           onPress={() => setQuery('')}
           hitSlop={10}
           accessibilityRole="button"
@@ -202,8 +205,8 @@ export function CategoryPicker({
             {expandedChildren.map((cat, i) => (
               <ReanimatedAnimated.View
                 key={cat.id}
-                entering={FadeIn.delay(Math.min(i * 40, MAX_LIST_STAGGER_MS))
-                  .duration(220)
+                entering={FadeIn.delay(Math.min(i * DURATIONS.enterStep, MAX_LIST_STAGGER_MS))
+                  .duration(DURATIONS.enter)
                   .reduceMotion(ReduceMotion.System)}
               >
                 <MedalTile
@@ -284,7 +287,7 @@ const styles = StyleSheet.create({
   },
   medalHint: {
     fontFamily: theme.font.body,
-    fontSize: 9.5,
+    fontSize: 10.5,
     color: theme.colors.textMuted,
     textAlign: 'center',
   },

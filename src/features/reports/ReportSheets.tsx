@@ -72,7 +72,7 @@ export function DaySheet({
             const sign = tx.type === 'expense' ? '−' : tx.type === 'income' ? '+' : '';
             return (
               <View key={tx.id} style={[styles.dayRow, i === 0 && styles.dayRowFirst]}>
-                <CategoryIcon name={cat?.icon ?? 'swap-horizontal'} color={cat?.color} square={34} />
+                <CategoryIcon name={cat?.icon ?? 'swap-horizontal'} color={cat?.color} />
                 <View style={styles.dayMid}>
                   <Text style={styles.dayName} numberOfLines={1}>
                     {primary}

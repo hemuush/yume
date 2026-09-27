@@ -54,6 +54,9 @@ describe('getCategoryOverview', () => {
       ['Other Food', 10000],
       ['Cafe', 5000],
     ]);
+    // Each row also says how many entries make it up (the category page's "18 times" line).
+    expect(split.reduce((n, s) => n + (s.count ?? 0), 0)).toBe(4);
+    expect(split.every((s) => (s.count ?? 0) >= 1)).toBe(true);
   });
 
   it('runs six months back from the period, with empty months as zero', async () => {

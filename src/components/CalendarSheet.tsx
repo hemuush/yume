@@ -9,6 +9,7 @@ import { usePressScale } from '@/lib/usePressScale';
 import { haptics } from '@/lib/haptics';
 import { gridRows } from '@/lib/gridRows';
 import { parseLocalIsoDate, toLocalIsoDate, addMonthsToIsoDate, addDaysToIsoDate } from '@/lib/date';
+import { withPressed } from '@/lib/pressed';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -125,10 +126,10 @@ export function CalendarSheet({
               <Pressable
                 key={q.label}
                 onPress={() => pick(q.iso)}
-                style={[
+                style={withPressed([
                   styles.quick,
                   value === q.iso && { backgroundColor: accent, borderColor: theme.colors.ink },
-                ]}
+                ])}
                 accessibilityRole="button"
                 accessibilityState={{ selected: value === q.iso }}
               >
@@ -154,7 +155,7 @@ export function CalendarSheet({
             haptics.tap();
             setPickingMonth((v) => !v);
           }}
-          style={styles.titleBtn}
+          style={withPressed(styles.titleBtn)}
           accessibilityRole="button"
           accessibilityLabel={
             pickingMonth ? 'Back to the days' : `${MONTHS[m - 1]} ${y}. Pick a month and year`
@@ -195,10 +196,10 @@ export function CalendarSheet({
               <Pressable
                 key={year}
                 onPress={() => setViewMonth(`${year}-${viewMonth.slice(5)}`)}
-                style={[
+                style={withPressed([
                   styles.yearChip,
                   year === y && { backgroundColor: accent, borderColor: theme.colors.ink },
-                ]}
+                ])}
                 accessibilityRole="button"
                 accessibilityState={{ selected: year === y }}
               >
@@ -222,7 +223,7 @@ export function CalendarSheet({
                       setViewMonth(`${y}-${String(month).padStart(2, '0')}`);
                       setPickingMonth(false);
                     }}
-                    style={[styles.monthCell, month === m && { backgroundColor: accent }]}
+                    style={withPressed([styles.monthCell, month === m && { backgroundColor: accent }])}
                     accessibilityRole="button"
                     accessibilityLabel={`${MONTHS[month - 1]} ${y}`}
                   >

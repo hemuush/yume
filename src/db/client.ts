@@ -6,6 +6,7 @@ import { newId } from '@/lib/id';
 import { primeCurrencyCache } from './settings';
 import { BACKFILL_LOAN_TX_KIND_SQL } from './loanTxKind';
 import { addMonthsToIsoDate } from '@/lib/date';
+import { purgeExpiredDeletedEntries } from './recentlyDeleted';
 
 const DB_NAME = 'yume.db';
 const LEGACY_DB_NAME = 'flynse.db';
@@ -44,10 +45,13 @@ async function migrateDbFilename(): Promise<void> {
  * (src/test-support/realDataTestDb.ts's AsyncDb) mirrors this exact shape
  * so `getDb()` can be mocked identically in both.
  */
+/** One value bound to a `?` in a query — what expo-sqlite accepts. */
+export type SqlParam = SQLite.SQLiteBindValue;
+
 export interface AppDb {
-  getFirstAsync<T>(sql: string, params?: any[]): Promise<T | null>;
-  getAllAsync<T>(sql: string, params?: any[]): Promise<T[]>;
-  runAsync(sql: string, params?: any[]): Promise<void>;
+  getFirstAsync<T>(sql: string, params?: SqlParam[]): Promise<T | null>;
+  getAllAsync<T>(sql: string, params?: SqlParam[]): Promise<T[]>;
+  runAsync(sql: string, params?: SqlParam[]): Promise<void>;
   execAsync(sql: string): Promise<void>;
   withTransactionAsync(task: (tx: AppDb) => Promise<void>): Promise<void>;
   /**
@@ -288,6 +292,13 @@ export async function runMigrations(db: AppDb): Promise<void> {
   );
   await db.runAsync(BACKFILL_LOAN_TX_KIND_SQL);
 
+  // Split payments: parts share a split_id.
+  await ensureColumn(db, 'transactions', 'split_id', 'split_id TEXT');
+  await db.execAsync('CREATE INDEX IF NOT EXISTS idx_transactions_split ON transactions(split_id)');
+
+  // Refunds: money back that lowers a category's spending (db/spendSql.ts).
+  await ensureColumn(db, 'transactions', 'is_refund', 'is_refund INTEGER NOT NULL DEFAULT 0');
+
   loanDueDatesRepaired = await repairLoanDueDates(db);
 }
 
@@ -370,6 +381,8 @@ async function initDb(): Promise<AppDb> {
   // backfill never run, which ensureColumn would then never retry.
   await unqueued.withTransactionAsync((tx) => runMigrations(tx));
   await seedDefaultCategoriesIfEmpty(unqueued);
+  // Recently deleted keeps entries for 30 days; anything older goes as the app opens.
+  await purgeExpiredDeletedEntries(unqueued);
 
   const currencyRow = await unqueued.getFirstAsync<{ value: string }>(
     "SELECT value FROM settings WHERE key = 'default_currency'"

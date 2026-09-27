@@ -3,6 +3,7 @@ import { View, Pressable, Animated, StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
 import { useAccent } from '@/theme/AccentContext';
 import { haptics } from '@/lib/haptics';
+import { DURATIONS } from '@/lib/motionTimings';
 
 interface Props {
   value: boolean;
@@ -15,7 +16,11 @@ export function ToggleSwitch({ value, onChange, disabled }: Props) {
   const [anim] = useState(() => new Animated.Value(value ? 1 : 0));
 
   useEffect(() => {
-    Animated.timing(anim, { toValue: value ? 1 : 0, duration: 180, useNativeDriver: false }).start();
+    Animated.timing(anim, {
+      toValue: value ? 1 : 0,
+      duration: DURATIONS.quick,
+      useNativeDriver: false,
+    }).start();
   }, [value, anim]);
 
   const knobLeft = anim.interpolate({ inputRange: [0, 1], outputRange: [2, 22] });

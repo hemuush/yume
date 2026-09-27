@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { View, Alert, Pressable } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
-import { router } from 'expo-router';
 import { Text } from '@/components/Text';
 import {
   createTransaction,
@@ -24,6 +23,12 @@ import { emitTransactionsChanged } from '@/lib/dataEvents';
 import { toLocalIsoDate, nextMonthlyDateAfter } from '@/lib/date';
 import { RuleModal } from '@/features/recurring/RuleModal';
 import { styles } from './transactions.styles';
+import { errorMessage } from '@/lib/errorMessage';
+import { useReturnOrPush } from '@/lib/useReturnOrPush';
+import { withPressed } from '@/lib/pressed';
+import { getSplitParts, deleteSplit, restoreSplit } from '@/db/splits';
+import { formatMoney } from '@/lib/money';
+import { router } from 'expo-router';
 
 export function TransactionDetailModal({
   tx,
@@ -40,6 +45,7 @@ export function TransactionDetailModal({
   onEdit: (tx: Transaction) => void;
   onChanged: () => void;
 }) {
+  const returnOrPush = useReturnOrPush();
   const { show: showUndo } = useUndoToast();
   const [link, setLink] = useState<TransactionLink | undefined>(undefined);
   const [busy, setBusy] = useState(false);
@@ -72,6 +78,22 @@ export function TransactionDetailModal({
       .catch(() => {});
   }, [tx]);
 
+  // A split part shows the whole payment it belongs to.
+  const [splitParts, setSplitParts] = useState<Transaction[] | null>(null);
+  useEffect(() => {
+    setSplitParts(null);
+    if (!tx?.splitId) return;
+    let alive = true;
+    getSplitParts(tx.splitId)
+      .then((parts) => {
+        if (alive) setSplitParts(parts);
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, [tx]);
+
   if (!tx) return null;
 
   const cat = categories.find((c) => c.id === tx.categoryId);
@@ -94,12 +116,12 @@ export function TransactionDetailModal({
       emitTransactionsChanged();
       onChanged();
       showUndo('Logged again for today', async () => {
-        await deleteTransaction(again.id);
+        await deleteTransaction(again.id, { keep: false });
         emitTransactionsChanged();
         onChanged();
       });
-    } catch (e: any) {
-      Alert.alert('Could not log it', String(e?.message ?? e));
+    } catch (e) {
+      Alert.alert("Couldn't log it", errorMessage(e));
     } finally {
       setBusy(false);
     }
@@ -108,15 +130,26 @@ export function TransactionDetailModal({
   const confirmDelete = async () => {
     setBusy(true);
     try {
+      if (tx.splitId) {
+        // One payment: every part goes together, and comes back together.
+        const snapshots = await deleteSplit(tx.splitId);
+        haptics.warn();
+        onChanged();
+        showUndo('Split moved to Recently deleted', async () => {
+          await restoreSplit(snapshots);
+          onChanged();
+        });
+        return;
+      }
       const snapshot = await deleteTransaction(tx.id);
       haptics.warn();
       onChanged();
-      showUndo('Deleted transaction', async () => {
+      showUndo('Moved to Recently deleted', async () => {
         await restoreTransaction(snapshot);
         onChanged();
       });
-    } catch (e: any) {
-      Alert.alert('Could not delete', String(e?.message ?? e));
+    } catch (e) {
+      Alert.alert("Couldn't delete", errorMessage(e));
     } finally {
       setBusy(false);
     }
@@ -129,15 +162,15 @@ export function TransactionDetailModal({
       [
         { text: 'Cancel', style: 'cancel' },
         {
-          text: 'Undo Payment',
+          text: 'Undo payment',
           style: 'destructive',
           onPress: async () => {
             setBusy(true);
             try {
               await undoInstallmentPayment(loanPaymentId);
               onChanged();
-            } catch (e: any) {
-              Alert.alert('Could not undo', String(e?.message ?? e));
+            } catch (e) {
+              Alert.alert("Couldn't undo", errorMessage(e));
             } finally {
               setBusy(false);
             }
@@ -154,15 +187,15 @@ export function TransactionDetailModal({
       [
         { text: 'Cancel', style: 'cancel' },
         {
-          text: 'Undo Entry',
+          text: 'Undo entry',
           style: 'destructive',
           onPress: async () => {
             setBusy(true);
             try {
               await undoPersonTransaction(tx.id);
               onChanged();
-            } catch (e: any) {
-              Alert.alert('Could not undo', String(e?.message ?? e));
+            } catch (e) {
+              Alert.alert("Couldn't undo", errorMessage(e));
             } finally {
               setBusy(false);
             }
@@ -209,6 +242,7 @@ export function TransactionDetailModal({
               : (cat?.name ?? (tx.note || tx.type))}
           </Text>
           <Text style={styles.rowSub}>
+            {tx.isRefund && <Text style={styles.rowRefund}>Refund · </Text>}
             {tx.date} · {accountName(tx.accountId)}
           </Text>
         </View>
@@ -225,13 +259,38 @@ export function TransactionDetailModal({
       </Text>
       {!!tx.note && <Text style={styles.detailNote}>{tx.note}</Text>}
 
+      {tx.splitId && splitParts && splitParts.length > 0 && (
+        <View style={styles.splitCard}>
+          <Text style={styles.splitCardTitle}>
+            Part of a {formatMoney(splitParts.reduce((s, p) => s + p.amountMinor, 0))} split
+          </Text>
+          {splitParts.map((p) => {
+            const pc = categories.find((c) => c.id === p.categoryId);
+            const mine = p.id === tx.id;
+            return (
+              <View key={p.id} style={styles.splitPart}>
+                <Text style={[styles.splitPartName, mine && styles.splitPartMine]} numberOfLines={1}>
+                  {pc?.name ?? 'Uncategorised'}
+                </Text>
+                <Amount
+                  minor={p.amountMinor}
+                  sensitive={pc?.isSensitive}
+                  style={[styles.splitPartAmount, mine && styles.splitPartMine]}
+                />
+              </View>
+            );
+          })}
+        </View>
+      )}
+
       {cat && tx.type !== 'transfer' && (
         <Pressable
           onPress={() => {
             onClose();
-            router.push(`/category/${cat.id}`);
+            // Opened from that category's own page? Then closing is enough.
+            returnOrPush({ name: 'category/[id]', params: { id: cat.id } }, `/category/${cat.id}`);
           }}
-          style={styles.detailLink}
+          style={withPressed(styles.detailLink)}
           accessibilityRole="button"
         >
           <Text style={styles.detailLinkText}>See everything in {cat.name}</Text>
@@ -239,7 +298,7 @@ export function TransactionDetailModal({
         </Pressable>
       )}
 
-      {link === null && (
+      {link === null && !tx.splitId && (
         <View style={styles.detailActions}>
           <PrimaryButton
             title="Log again today"
@@ -257,14 +316,30 @@ export function TransactionDetailModal({
           />
         </View>
       )}
+      {link === null && tx.type === 'expense' && cat && (
+        <PrimaryButton
+          title="Got money back"
+          variant="secondary"
+          onPress={() => {
+            onClose();
+            // A refund for this purchase: its category, account and note, filled in on Add.
+            router.push(
+              `/add-transaction?type=expense&refund=1&categoryId=${cat.id}&accountId=${tx.accountId}` +
+                (tx.note ? `&note=${encodeURIComponent(tx.note)}` : '')
+            );
+          }}
+          disabled={busy}
+          style={styles.detailActionWide}
+        />
+      )}
 
       {link === undefined ? (
-        <Text style={styles.hintText}>Checking...</Text>
+        <Text style={styles.hintText}>Checking…</Text>
       ) : link === null ? null : link.kind === 'loan' ? (
         <>
           <Text style={styles.hintText}>This is a loan EMI payment — it can't be edited directly.</Text>
           <PrimaryButton
-            title={busy ? 'Undoing...' : 'Undo Payment'}
+            title={busy ? 'Undoing…' : 'Undo payment'}
             variant="secondary"
             onPress={() => confirmUndoLoan(link.loanPaymentId)}
             disabled={busy}
@@ -274,7 +349,7 @@ export function TransactionDetailModal({
         <>
           <Text style={styles.hintText}>This is a Friends & Family entry — it can't be edited directly.</Text>
           <PrimaryButton
-            title={busy ? 'Undoing...' : 'Undo Entry'}
+            title={busy ? 'Undoing…' : 'Undo entry'}
             variant="secondary"
             onPress={confirmUndoPerson}
             disabled={busy}

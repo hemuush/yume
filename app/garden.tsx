@@ -20,6 +20,7 @@ import { FormInput } from '@/components/FormInput';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { toMinor } from '@/lib/money';
 import { styles } from '@/features/garden/garden.styles';
+import { errorMessage } from '@/lib/errorMessage';
 
 const POT_COUNT = 5;
 const LEGEND_STAGES: GrowthStage[] = ['seed', 'sprout', 'sapling', 'bloom'];
@@ -79,8 +80,8 @@ export default function GardenScreen() {
     try {
       await setDailySpendingGoal(minor);
       await reload();
-    } catch (e: any) {
-      setGoalError(String(e?.message ?? e));
+    } catch (e) {
+      setGoalError(errorMessage(e));
     } finally {
       setGoalSaving(false);
     }
@@ -172,7 +173,11 @@ export default function GardenScreen() {
                 return (
                   <View key={point.date} style={[styles.pot, isToday && styles.potToday]}>
                     <View style={styles.plantSlot}>
-                      <GardenPlant stage={stage} size={isToday ? 40 : 32} />
+                      <GardenPlant
+                        stage={stage}
+                        size={isToday ? 40 : 32}
+                        animKey={isToday ? `garden:${point.date}` : undefined}
+                      />
                     </View>
                     <View style={styles.soil} />
                     <Text style={[styles.dayLabel, isToday && styles.dayLabelToday]}>{label}</Text>

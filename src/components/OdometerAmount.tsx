@@ -3,6 +3,7 @@ import { View, StyleSheet, Animated, Easing, TextStyle, StyleProp } from 'react-
 import { Text } from '@/components/Text';
 import { formatMoney } from '@/lib/money';
 import { useReduceMotion } from '@/lib/useReduceMotion';
+import { DURATIONS } from '@/lib/motionTimings';
 
 interface Props {
   /** Amount in minor units, same as formatMoney. */
@@ -73,7 +74,7 @@ function DigitReel({
     v.setValue(0);
     Animated.timing(v, {
       toValue: 1,
-      duration: 260,
+      duration: DURATIONS.standard,
       easing: Easing.out(Easing.cubic),
       useNativeDriver: true,
     }).start();

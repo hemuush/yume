@@ -10,9 +10,11 @@ import {
   PeriodGranularity,
   canStepForward,
   periodLabel,
+  periodShortLabel,
   setGranularity,
   stepPeriod,
 } from '@/lib/period';
+import { withPressed } from '@/lib/pressed';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -57,7 +59,7 @@ export function MonthPill({
       >
         {!compact && <Feather name="calendar" size={13} color={theme.colors.ink} />}
         <Text style={[styles.pillText, compact && styles.pillTextCompact]} numberOfLines={1}>
-          {periodLabel(cursor)}
+          {compact ? periodShortLabel(cursor) : periodLabel(cursor)}
         </Text>
         <Feather name="chevron-down" size={14} color={theme.colors.ink} />
       </AnimatedPressable>
@@ -75,7 +77,7 @@ export function MonthPill({
               <Pressable
                 onPress={() => pick(stepPeriod(cursor, -1))}
                 hitSlop={8}
-                style={styles.stepBtn}
+                style={withPressed(styles.stepBtn)}
                 accessibilityRole="button"
                 accessibilityLabel="Previous period"
               >
@@ -88,7 +90,7 @@ export function MonthPill({
                 onPress={() => pick(stepPeriod(cursor, 1))}
                 disabled={!forward}
                 hitSlop={8}
-                style={[styles.stepBtn, !forward && styles.disabled]}
+                style={withPressed([styles.stepBtn, !forward && styles.disabled])}
                 accessibilityRole="button"
                 accessibilityLabel="Next period"
               >
@@ -103,7 +105,7 @@ export function MonthPill({
                   <Pressable
                     key={g}
                     onPress={() => pick(setGranularity(cursor, g))}
-                    style={[styles.toggleBtn, active && { backgroundColor: accent }]}
+                    style={withPressed([styles.toggleBtn, active && { backgroundColor: accent }])}
                   >
                     <Text style={[styles.toggleText, active && { color: onAccent }]}>
                       {g === 'month' ? 'Month' : 'Year'}
@@ -114,7 +116,7 @@ export function MonthPill({
             </View>
 
             {cursor.offset !== 0 && (
-              <Pressable style={styles.resetBtn} onPress={() => pick({ ...cursor, offset: 0 })}>
+              <Pressable style={withPressed(styles.resetBtn)} onPress={() => pick({ ...cursor, offset: 0 })}>
                 <Text style={styles.resetText}>
                   Jump to {cursor.granularity === 'year' ? 'this year' : 'this month'}
                 </Text>
@@ -174,11 +176,11 @@ const styles = StyleSheet.create({
   toggle: {
     flexDirection: 'row',
     backgroundColor: theme.colors.surfaceAlt,
-    borderRadius: theme.radius.md,
+    borderRadius: theme.radius.pill,
     padding: 3,
     gap: 3,
   },
-  toggleBtn: { flex: 1, paddingVertical: 8, borderRadius: theme.radius.sm, alignItems: 'center' },
+  toggleBtn: { flex: 1, paddingVertical: 8, borderRadius: theme.radius.pill, alignItems: 'center' },
   toggleText: { fontFamily: theme.font.bodyBold, fontSize: 12.5, color: theme.colors.textSecondary },
   resetBtn: { alignItems: 'center', paddingVertical: 8 },
   resetText: { fontFamily: theme.font.bodyBold, fontSize: 12.5, color: theme.colors.textSecondary },

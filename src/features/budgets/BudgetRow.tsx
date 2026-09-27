@@ -10,6 +10,7 @@ import { usePressScale } from '@/lib/usePressScale';
 import Feather from '@expo/vector-icons/Feather';
 import { theme } from '@/constants/theme';
 import { styles } from './budgets.styles';
+import { withPressed } from '@/lib/pressed';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -60,7 +61,7 @@ export function BudgetRow({
           <Pressable
             onPress={onMore}
             hitSlop={10}
-            style={styles.moreBtn}
+            style={withPressed(styles.moreBtn)}
             accessibilityRole="button"
             accessibilityLabel={`More for ${progress.categoryName} budget`}
           >
@@ -68,7 +69,12 @@ export function BudgetRow({
           </Pressable>
         )}
       </View>
-      <LimitMeter pct={barPct} tone={tone} marker={pace ? pace.expectedFraction * 100 : undefined} />
+      <LimitMeter
+        pct={barPct}
+        tone={tone}
+        marker={pace ? pace.expectedFraction * 100 : undefined}
+        animKey={`budget:${progress.budget.id}`}
+      />
       <View style={styles.rowFoot}>
         <Text style={[styles.rowNote, progress.overBudget && styles.rowNoteOver]}>
           {progress.overBudget

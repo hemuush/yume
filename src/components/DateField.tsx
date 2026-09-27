@@ -6,6 +6,7 @@ import { CalendarSheet } from '@/components/CalendarSheet';
 import { theme } from '@/constants/theme';
 import { haptics } from '@/lib/haptics';
 import { parseLocalIsoDate, toLocalIsoDate, addDaysToIsoDate } from '@/lib/date';
+import { withPressed } from '@/lib/pressed';
 
 /** "5 Oct 2026" — the full date, since form dates are often in another year. */
 export function dateFieldLabel(iso: string): string {
@@ -60,7 +61,7 @@ export function DateField({
               if (value !== q.iso) haptics.tap();
               onChange(q.iso);
             }}
-            style={[styles.chip, value === q.iso && styles.chipOn]}
+            style={withPressed([styles.chip, value === q.iso && styles.chipOn])}
             accessibilityRole="button"
             accessibilityState={{ selected: value === q.iso }}
             accessibilityLabel={`${label}: ${q.label}`}
@@ -73,7 +74,7 @@ export function DateField({
             haptics.tap();
             setOpen(true);
           }}
-          style={[styles.chip, !isQuick && pastFacing && styles.chipOn]}
+          style={withPressed([styles.chip, !isQuick && pastFacing && styles.chipOn])}
           accessibilityRole="button"
           accessibilityLabel={`${label}: ${dateFieldLabel(value)}. Change`}
         >

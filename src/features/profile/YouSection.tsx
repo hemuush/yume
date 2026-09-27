@@ -4,6 +4,8 @@ import { Text } from '@/components/Text';
 import Feather from '@expo/vector-icons/Feather';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { router } from 'expo-router';
+import ReanimatedAnimated from 'react-native-reanimated';
+import { PANEL_ENTER, ROW_EXIT } from '@/lib/animation';
 import { listAccounts, countTransactions } from '@/db/ledger';
 import { listLoans } from '@/db/loans';
 import { trackedBalanceParts, TrackedBalanceParts } from '@/db/reports';
@@ -28,6 +30,7 @@ import { styles } from './profile.styles';
 import { trackedSumLines } from './trackedSum';
 import { AddAccountModal } from './AddAccountModal';
 import { AccountDetailModal } from './AccountDetailModal';
+import { withPressed } from '@/lib/pressed';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -153,7 +156,7 @@ export function YouSection() {
         </View>
         {hasUntrackedAssetLoan ? (
           <Pressable
-            style={[styles.balanceHint, styles.balanceHintWarn]}
+            style={withPressed([styles.balanceHint, styles.balanceHintWarn])}
             onPress={() => router.push('/loans')}
             accessibilityRole="button"
           >
@@ -210,7 +213,7 @@ export function YouSection() {
         {archivedAccounts.length > 0 && (
           <View style={[h.card, styles.archivedCard]}>
             <Pressable
-              style={h.row}
+              style={withPressed(h.row)}
               onPress={() => setArchivedOpen((v) => !v)}
               accessibilityRole="button"
               accessibilityState={{ expanded: archivedOpen }}
@@ -231,17 +234,20 @@ export function YouSection() {
                 color={theme.colors.textMuted}
               />
             </Pressable>
-            {archivedOpen &&
-              archivedAccounts.map((acc) => (
-                <AccountRow
-                  key={acc.id}
-                  account={acc}
-                  minor={dispAccountBalance(acc)}
-                  divider
-                  archived
-                  onPress={setDetailAccount}
-                />
-              ))}
+            {archivedOpen && (
+              <ReanimatedAnimated.View entering={PANEL_ENTER} exiting={ROW_EXIT}>
+                {archivedAccounts.map((acc) => (
+                  <AccountRow
+                    key={acc.id}
+                    account={acc}
+                    minor={dispAccountBalance(acc)}
+                    divider
+                    archived
+                    onPress={setDetailAccount}
+                  />
+                ))}
+              </ReanimatedAnimated.View>
+            )}
           </View>
         )}
       </HomeSection>
@@ -251,7 +257,7 @@ export function YouSection() {
           points there for anyone used to finding them on Profile. */}
       <Pressable
         onPress={() => router.navigate('/plan')}
-        style={styles.planLink}
+        style={withPressed(styles.planLink)}
         accessibilityRole="button"
         accessibilityLabel="Budgets, goals and recurring are in Plan"
       >

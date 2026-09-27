@@ -24,7 +24,7 @@ function AnimatedBarStack({
 }: {
   heightPct: number;
   delay: number;
-  style: any;
+  style: React.ComponentProps<typeof Animated.View>['style'];
   children: React.ReactNode;
 }) {
   const reduce = useReduceMotion();
@@ -132,16 +132,30 @@ export function SpendBarChart({
 }
 
 /** The chart's own colour key — only the categories it's actually showing. */
-export function ChartLegend({ items, inset = 22 }: { items: ChartLegendItem[]; inset?: number }) {
+export function ChartLegend({
+  items,
+  inset = 22,
+  max,
+}: {
+  items: ChartLegendItem[];
+  inset?: number;
+  /** Names this many (the chart's biggest), then "+N more", so the legend stays one line. */
+  max?: number;
+}) {
   if (items.length === 0) return null;
+  const shown = max != null && items.length > max ? items.slice(0, max) : items;
+  const more = items.length - shown.length;
   return (
     <View style={[styles.legend, { paddingHorizontal: inset }]}>
-      {items.map((item) => (
+      {shown.map((item) => (
         <View key={item.categoryId} style={styles.legendItem}>
           <View style={[styles.legendDot, { backgroundColor: item.color }]} />
-          <Text style={styles.legendText}>{item.name}</Text>
+          <Text style={styles.legendText} numberOfLines={1}>
+            {item.name}
+          </Text>
         </View>
       ))}
+      {more > 0 && <Text style={[styles.legendText, styles.legendMore]}>+{more} more</Text>}
     </View>
   );
 }
@@ -175,4 +189,5 @@ const styles = StyleSheet.create({
   legendItem: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   legendDot: { width: 8, height: 8, borderRadius: 3 },
   legendText: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textSecondary },
+  legendMore: { color: theme.colors.textMuted },
 });

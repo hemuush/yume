@@ -1,5 +1,6 @@
 import { StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
+import { EYEBROW, SECTION_TITLE, SECTION_GAP } from '@/constants/textStyles';
 
 // Shared by the Loans screen and every loan modal (LoanCard, LoanDetailModal,
 // AssetModal, AccountModal, RateChangeModal, PrepayModal, AddLoanModal) so the
@@ -8,6 +9,7 @@ export const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
   errorBanner: {
     marginHorizontal: 20,
+    marginTop: theme.layout.screenTopGap,
     marginBottom: 12,
     padding: 14,
     borderRadius: theme.radius.md,
@@ -36,10 +38,7 @@ export const styles = StyleSheet.create({
   cardRailLent: { borderLeftWidth: 3, borderLeftColor: theme.colors.income },
   cardMuted: { opacity: 0.6 },
   closedDivider: {
-    fontFamily: theme.font.bodyBold,
-    fontSize: 11,
-    color: theme.colors.textMuted,
-    letterSpacing: 0.6,
+    ...EYEBROW,
     marginHorizontal: 20,
     marginTop: 14,
     marginBottom: 6,
@@ -63,7 +62,7 @@ export const styles = StyleSheet.create({
   payoffFillLent: { backgroundColor: theme.colors.income },
   payoffFillClosed: { backgroundColor: theme.colors.textMuted },
   payoffCaption: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 6 },
-  payoffCaptionText: { fontFamily: theme.font.mono, fontSize: 9.5, color: theme.colors.textMuted },
+  payoffCaptionText: { fontFamily: theme.font.mono, fontSize: 10.5, color: theme.colors.textMuted },
   payoffCaptionBold: { fontFamily: theme.font.monoBold, color: theme.colors.textSecondary },
   cardName: {
     fontFamily: theme.font.bodyMedium,
@@ -104,11 +103,9 @@ export const styles = StyleSheet.create({
     textAlign: 'center',
   },
   sectionTitle: {
-    fontFamily: theme.font.roundedBold,
-    fontSize: 16,
-    color: theme.colors.textPrimary,
-    marginTop: 20,
-    marginBottom: 8,
+    ...SECTION_TITLE,
+    marginTop: SECTION_GAP.top,
+    marginBottom: SECTION_GAP.bottom,
   },
   hintText: {
     fontFamily: theme.font.body,
@@ -124,7 +121,7 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 10,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: theme.colors.border,
+    borderBottomColor: theme.colors.borderSoft,
   },
   rowLabel: { fontFamily: theme.font.bodyMedium, fontSize: 14, color: theme.colors.textPrimary },
   rowSub: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textMuted, marginTop: 2 },

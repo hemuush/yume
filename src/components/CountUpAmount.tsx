@@ -3,12 +3,18 @@ import { Animated, Easing, TextProps } from 'react-native';
 import { Text } from '@/components/Text';
 import { formatMoney } from '@/lib/money';
 import { useReduceMotion } from '@/lib/useReduceMotion';
-import { MOTION } from '@/lib/animation';
+import { DURATIONS } from '@/lib/motionTimings';
 
 interface Props extends TextProps {
   /** Amount in minor units, same as formatMoney. */
   minor: number;
   currency?: string;
+  /**
+   * Count up from 0 when it first appears (the default: a headline figure's
+   * entrance). Off, it shows its value straight away and only rolls when the
+   * value changes afterwards: money added to a goal, an EMI paid.
+   */
+  countFromZero?: boolean;
 }
 
 /**
@@ -20,7 +26,7 @@ interface Props extends TextProps {
  * can't be driven natively — it's one short number, so the per-frame
  * `formatMoney` cost is negligible.
  */
-export function CountUpAmount({ minor, currency, style, ...rest }: Props) {
+export function CountUpAmount({ minor, currency, countFromZero = true, style, ...rest }: Props) {
   const reduce = useReduceMotion();
   const [display, setDisplay] = useState(minor);
   const [t] = useState(() => new Animated.Value(1));
@@ -34,21 +40,27 @@ export function CountUpAmount({ minor, currency, style, ...rest }: Props) {
       mounted.current = true;
       return;
     }
-    const from = mounted.current ? prev.current : 0;
+    const from = mounted.current ? prev.current : countFromZero ? 0 : minor;
     prev.current = minor;
     mounted.current = true;
+    if (from === minor) {
+      setDisplay(minor);
+      return;
+    }
     t.setValue(0);
     const id = t.addListener(({ value }) => setDisplay(Math.round(from + (minor - from) * value)));
     // Core Animated here, so the shared curve is spelled out with core Easing.
     Animated.timing(t, {
       toValue: 1,
-      duration: MOTION.count,
+      duration: DURATIONS.count,
       easing: Easing.out(Easing.cubic),
       useNativeDriver: false,
     }).start(() => {
       setDisplay(minor);
     });
     return () => t.removeListener(id);
+    // countFromZero only matters on the first run.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [minor, reduce, t]);
 
   return (

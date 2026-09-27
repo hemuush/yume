@@ -109,7 +109,8 @@ describe('RepeatEntrySheet', () => {
     await act(async () => {
       await undo();
     });
-    expect(deleteTransaction).toHaveBeenCalledWith('tx-new');
+    // Taking back a "Log again" isn't a delete to find later, so it skips Recently deleted.
+    expect(deleteTransaction).toHaveBeenCalledWith('tx-new', { keep: false });
     expect(emitTransactionsChanged).toHaveBeenCalledTimes(2);
   });
 

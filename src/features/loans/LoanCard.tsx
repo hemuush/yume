@@ -7,6 +7,8 @@ import { roundedMinor } from '@/lib/round';
 import { Loan } from '@/types';
 import { usePressScale } from '@/lib/usePressScale';
 import { NeoTile } from '@/components/NeoTile';
+import { GrowFill } from '@/components/GrowFill';
+import { CountUpAmount } from '@/components/CountUpAmount';
 import { payoffMonth } from '@/lib/loanPayoff';
 import { styles } from './loans.styles';
 
@@ -27,7 +29,7 @@ export function LoanCard({
   lastDueDate,
 }: {
   loan: Loan;
-  fadeStyle: any;
+  fadeStyle: React.ComponentProps<typeof Animated.View>['style'];
   onPress: () => void;
   muted?: boolean;
   /** The loan's last pending EMI (getLoanProgress) — shown as "Debt-free in …". */
@@ -52,9 +54,14 @@ export function LoanCard({
                 {loan.counterparty}
               </Text>
               <View style={styles.loanFigs}>
-                <Text style={styles.loanOutstanding} numberOfLines={1} adjustsFontSizeToFit>
-                  {formatMoney(roundedMinor(loan.outstandingPrincipalMinor))}
-                </Text>
+                {/* Counts down when an EMI is paid, alongside the payoff bar. */}
+                <CountUpAmount
+                  minor={roundedMinor(loan.outstandingPrincipalMinor)}
+                  countFromZero={false}
+                  style={styles.loanOutstanding}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                />
                 <Text style={styles.loanEmi}>
                   {isClosed ? 'Closed' : `${formatMoney(loan.emiAmountMinor)}/mo`}
                 </Text>
@@ -67,7 +74,11 @@ export function LoanCard({
             </Text>
 
             <View style={styles.payoffTrack}>
-              <View style={[styles.payoffFill, fillColor, { width: `${fraction * 100}%` }]} />
+              <GrowFill
+                animKey={`loan:${loan.id}`}
+                pct={fraction * 100}
+                style={[styles.payoffFill, fillColor]}
+              />
             </View>
             <View style={styles.payoffCaption}>
               <Text style={styles.payoffCaptionText}>

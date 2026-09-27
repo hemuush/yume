@@ -1,14 +1,16 @@
 import { useEffect } from 'react';
-import { Animated, Pressable, StyleSheet, PressableProps } from 'react-native';
+import { Animated, Pressable, StyleSheet, PressableProps, StyleProp, ViewStyle } from 'react-native';
 import { MAX_FONT_SCALE } from '@/components/Text';
 import ReanimatedAnimated, { FadeIn } from 'react-native-reanimated';
 import { theme } from '@/constants/theme';
 import { usePressScale } from '@/lib/usePressScale';
 import { haptics } from '@/lib/haptics';
+import { DURATIONS } from '@/lib/motionTimings';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-interface Props extends PressableProps {
+interface Props extends Omit<PressableProps, 'style'> {
+  style?: StyleProp<ViewStyle>;
   title: string;
   variant?: 'primary' | 'secondary';
   /**
@@ -53,7 +55,7 @@ export function PrimaryButton({
       disabled={disabled}
       onPressIn={onPressIn}
       onPressOut={onPressOut}
-      style={[styles.base, variantStyle, disabled && styles.disabled, animatedStyle, style as any]}
+      style={[styles.base, variantStyle, disabled && styles.disabled, animatedStyle, style]}
       {...rest}
     >
       {/* `key` forces a remount on the label/done swap so `entering` — which
@@ -64,7 +66,7 @@ export function PrimaryButton({
       <ReanimatedAnimated.Text
         maxFontSizeMultiplier={MAX_FONT_SCALE}
         key={done ? 'done' : 'label'}
-        entering={FadeIn.duration(140)}
+        entering={FadeIn.duration(DURATIONS.quick)}
         style={[styles.text, textStyle]}
       >
         {done ? `✓ ${doneLabel}` : title}

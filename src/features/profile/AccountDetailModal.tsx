@@ -20,6 +20,9 @@ import { useUndoToast } from '@/components/UndoToast';
 import { haptics } from '@/lib/haptics';
 import { styles } from './profile.styles';
 import { ACCOUNT_TYPES } from './profile.constants';
+import { errorMessage } from '@/lib/errorMessage';
+import { CardCycleFields } from './CardCycleFields';
+import { parseCycleDays } from '@/lib/cardCycle';
 
 /**
  * Editing/archiving/deleting an account, opened by tapping any account card.
@@ -45,6 +48,8 @@ export function AccountDetailModal({
   const [type, setType] = useState<AccountType>('bank');
   const [opening, setOpening] = useState('0');
   const [creditLimit, setCreditLimit] = useState('');
+  const [statementDay, setStatementDay] = useState('');
+  const [dueDay, setDueDay] = useState('');
   const [txCount, setTxCount] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -56,6 +61,8 @@ export function AccountDetailModal({
     setType(account.type);
     setOpening((account.openingBalanceMinor / 100).toString());
     setCreditLimit(account.creditLimitMinor != null ? (account.creditLimitMinor / 100).toString() : '');
+    setStatementDay(account.statementDay != null ? String(account.statementDay) : '');
+    setDueDay(account.dueDay != null ? String(account.dueDay) : '');
     setError(null);
     setTxCount(null);
     // Leaves txCount at null on failure — same as before this fix, which
@@ -85,12 +92,25 @@ export function AccountDetailModal({
       setError('Enter a valid opening balance and credit limit');
       return;
     }
+    const days =
+      type === 'credit_card' ? parseCycleDays(statementDay, dueDay) : { statementDay: null, dueDay: null };
+    if ('error' in days) {
+      setError(days.error);
+      return;
+    }
     setSaving(true);
     try {
-      await updateAccount(account.id, { name: name.trim(), type, openingBalanceMinor, creditLimitMinor });
+      await updateAccount(account.id, {
+        name: name.trim(),
+        type,
+        openingBalanceMinor,
+        creditLimitMinor,
+        statementDay: days.statementDay,
+        dueDay: days.dueDay,
+      });
       onChanged();
-    } catch (e: any) {
-      setError(String(e?.message ?? e));
+    } catch (e) {
+      setError(errorMessage(e));
     } finally {
       setSaving(false);
     }
@@ -110,8 +130,8 @@ export function AccountDetailModal({
             try {
               await archiveAccount(account.id);
               onChanged();
-            } catch (e: any) {
-              Alert.alert('Could not archive', String(e?.message ?? e));
+            } catch (e) {
+              Alert.alert("Couldn't archive", errorMessage(e));
             } finally {
               setBusy(false);
             }
@@ -126,8 +146,8 @@ export function AccountDetailModal({
     try {
       await unarchiveAccount(account.id);
       onChanged();
-    } catch (e: any) {
-      Alert.alert('Could not unarchive', String(e?.message ?? e));
+    } catch (e) {
+      Alert.alert("Couldn't unarchive", errorMessage(e));
     } finally {
       setBusy(false);
     }
@@ -143,8 +163,8 @@ export function AccountDetailModal({
         await restoreAccount(snapshot);
         onChanged();
       });
-    } catch (e: any) {
-      Alert.alert('Could not delete', String(e?.message ?? e));
+    } catch (e) {
+      Alert.alert("Couldn't delete", errorMessage(e));
     } finally {
       setBusy(false);
     }
@@ -167,7 +187,7 @@ export function AccountDetailModal({
               disabled={saving || busy}
             />
             <PrimaryButton
-              title={saving ? 'Saving...' : 'Save'}
+              title={saving ? 'Saving…' : 'Save'}
               onPress={submit}
               disabled={saving || busy}
               style={f.footerBtn}
@@ -191,27 +211,35 @@ export function AccountDetailModal({
         placeholder="0"
       />
       {type === 'credit_card' && (
-        <FormInput
-          label="Credit limit"
-          value={creditLimit}
-          onChangeText={setCreditLimit}
-          keyboardType="numeric"
-          placeholder="e.g. 100000"
-        />
+        <>
+          <FormInput
+            label="Credit limit"
+            value={creditLimit}
+            onChangeText={setCreditLimit}
+            keyboardType="numeric"
+            placeholder="e.g. 100000"
+          />
+          <CardCycleFields
+            statementDay={statementDay}
+            dueDay={dueDay}
+            onChangeStatementDay={setStatementDay}
+            onChangeDueDay={setDueDay}
+          />
+        </>
       )}
-      <Text style={styles.dangerLabel}>DANGER ZONE</Text>
+      <Text style={styles.dangerLabel}>Danger zone</Text>
       {account.archived ? (
         <PrimaryButton
-          title={busy ? 'Working...' : 'Unarchive account'}
+          title={busy ? 'Working…' : 'Unarchive account'}
           variant="secondary"
           onPress={onUnarchive}
           disabled={busy}
         />
       ) : txCount === null ? (
-        <Text style={styles.hintText}>Checking usage...</Text>
+        <Text style={styles.hintText}>Checking usage…</Text>
       ) : txCount > 0 ? (
         <PrimaryButton
-          title={busy ? 'Working...' : `Archive account (${txCount} transaction${txCount === 1 ? '' : 's'})`}
+          title={busy ? 'Working…' : `Archive account (${txCount} transaction${txCount === 1 ? '' : 's'})`}
           variant="secondary"
           onPress={confirmArchive}
           disabled={busy}
@@ -219,7 +247,7 @@ export function AccountDetailModal({
         />
       ) : (
         <PrimaryButton
-          title={busy ? 'Working...' : 'Delete account'}
+          title={busy ? 'Working…' : 'Delete account'}
           variant="secondary"
           onPress={confirmDelete}
           disabled={busy}

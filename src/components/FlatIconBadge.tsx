@@ -1,6 +1,7 @@
 import { View, StyleSheet } from 'react-native';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { theme } from '@/constants/theme';
+import type { McIconName } from '@/components/iconName';
 
 interface Props {
   name: string;
@@ -15,7 +16,7 @@ interface Props {
 export function FlatIconBadge({ name, size = 30, backgroundColor = theme.colors.onFlat }: Props) {
   return (
     <View style={[styles.badge, { width: size, height: size, borderRadius: size / 2, backgroundColor }]}>
-      <MaterialCommunityIcons name={name as any} size={size * 0.55} color={theme.colors.white} />
+      <MaterialCommunityIcons name={name as McIconName} size={size * 0.55} color={theme.colors.white} />
     </View>
   );
 }

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { onTransactionsChanged } from '@/lib/dataEvents';
-import { View, FlatList, Pressable, Animated, ActivityIndicator, ScrollView } from 'react-native';
+import { View, FlatList, Pressable, Animated } from 'react-native';
 import { Text, TextInput } from '@/components/Text';
 import { FadeIn, ReduceMotion } from 'react-native-reanimated';
 import { useFocusEffect, router, useLocalSearchParams } from 'expo-router';
@@ -10,17 +10,17 @@ import { listAccounts, listCategories, listTransactions, searchTransactions } fr
 import { getRangeComparison, PeriodComparison } from '@/db/reports';
 import { Account, Category, Transaction, TransactionType } from '@/types';
 import { AppHeader, HeaderIconButton } from '@/components/AppHeader';
-import { EmptyState } from '@/components/EmptyState';
 import { theme } from '@/constants/theme';
 import { toLocalIsoDate, parseLocalIsoDate, addDaysToIsoDate, isoDatesInRange } from '@/lib/date';
 import { MAX_LIST_STAGGER_MS } from '@/lib/animation';
 import { useSwipeStep } from '@/lib/useSwipeStep';
 import { usePressScale } from '@/lib/usePressScale';
 import { styles } from '@/features/transactions/transactions.styles';
-import { MONTH_NAMES } from '@/features/transactions/transactions.constants';
+import { ActivityFilterChips, SearchStatus } from '@/features/transactions/ActivityFilterChips';
+import { dayMonth, longWeekday } from '@/lib/dateLabels';
 import { MonthPickerModal } from '@/features/transactions/MonthPickerModal';
 import { FilterModal } from '@/features/transactions/FilterModal';
-import { DayCard } from '@/features/transactions/DayCard';
+import { TimelineDay } from '@/features/transactions/TimelineDay';
 import { TransactionDetailModal } from '@/features/transactions/TransactionDetailModal';
 import { TransactionsHeadline } from '@/features/transactions/TransactionsHeadline';
 import { TransactionsSkeleton } from '@/features/transactions/TransactionsSkeleton';
@@ -34,22 +34,12 @@ import {
 } from '@/features/transactions/transactions.helpers';
 import { formatMoney } from '@/lib/money';
 import { haptics } from '@/lib/haptics';
+import { errorMessage } from '@/lib/errorMessage';
+import { DURATIONS } from '@/lib/motionTimings';
+import { withPressed } from '@/lib/pressed';
+import { EmptyState } from '@/components/EmptyState';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
-
-const VIEW_SCOPES: { label: string; value: 'week' | 'month' }[] = [
-  { label: 'Week', value: 'week' },
-  { label: 'Month', value: 'month' },
-];
-
-// The one-tap type chips above the list — the same `filterType` the filter
-// sheet sets, just without opening it.
-const TYPE_CHIPS: { label: string; value: TransactionType | 'all' }[] = [
-  { label: 'All', value: 'all' },
-  { label: 'Spent', value: 'expense' },
-  { label: 'Income', value: 'income' },
-  { label: 'Transfers', value: 'transfer' },
-];
 
 // Fires the actual DB query this long after the last keystroke — typing
 // "zomato" shouldn't run five separate queries for "z", "zo", "zom" ...
@@ -116,16 +106,27 @@ export default function TransactionsScreen() {
   }, []);
   const days = useMemo(() => sevenDaysEndingOn(anchor), [anchor]);
   const today = toLocalIsoDate(todayDate);
+  const yesterday = addDaysToIsoDate(today, -1);
   const isCurrentWeek = days.some((d) => d.iso === today);
   const isCurrentMonth =
     anchor.getFullYear() === todayDate.getFullYear() && anchor.getMonth() === todayDate.getMonth();
   const [loadError, setLoadError] = useState<string | null>(null);
   const scrollRef = useRef<FlatList<{ date: string; items: Transaction[] }>>(null);
-  // Which day-groups the user has tapped "+N more" on, kept here rather than
-  // inside DayCard itself — DayCard is a row in the FlatList below, which
+  // Which stacked lines ("Food & Dining ×5") are open, kept here rather than
+  // inside TimelineDay — each day is a row in the FlatList below, which
   // unmounts/remounts rows as they scroll off- and back on-screen, and local
-  // state there would silently re-collapse a day the user had just expanded.
-  const [expandedDays, setExpandedDays] = useState<Set<string>>(new Set());
+  // state there would silently close a stack the user had just opened.
+  const [openStacks, setOpenStacks] = useState<Set<string>>(new Set());
+  const toggleStack = useCallback(
+    (key: string) =>
+      setOpenStacks((prev) => {
+        const next = new Set(prev);
+        if (next.has(key)) next.delete(key);
+        else next.add(key);
+        return next;
+      }),
+    []
+  );
   // Which way the headline/chart should slide on the next period change —
   // set alongside stepBack/stepForward/onPick/the scope toggle below, read
   // by TransactionsHeadline. 0 (a plain crossfade) for anything that isn't a
@@ -229,25 +230,22 @@ export default function TransactionsScreen() {
     [transactions, categories, viewScope, visibleRange.fromDate, visibleRange.toDate, today]
   );
   const legend = useMemo(() => legendForBars(bars), [bars]);
-  const heading = periodHeading({
-    scope: viewScope,
-    days,
-    anchor,
-    today: todayDate,
-    monthNames: MONTH_NAMES,
-  });
+  const heading = periodHeading({ scope: viewScope, days, anchor, today: todayDate });
   const pickedBar = bars.find((b) => b.key === selectedBar);
+  // What the tapped bar cost; nothing until one is tapped (the bars say they can be tapped by being bars).
   const barHint = pickedBar
-    ? `${
-        viewScope === 'week'
-          ? parseLocalIsoDate(pickedBar.key).toLocaleDateString(undefined, {
-              weekday: 'long',
-              day: 'numeric',
-              month: 'short',
-            })
-          : `${pickedBar.label} ${MONTH_NAMES[parseLocalIsoDate(pickedBar.key).getMonth()]}`
-      } · ${pickedBar.totalMinor > 0 ? `${formatMoney(pickedBar.totalMinor)} spent` : 'nothing spent'}`
-    : `Tap a bar to jump to that ${viewScope === 'week' ? 'day' : 'week'}.`;
+    ? {
+        title:
+          viewScope === 'week'
+            ? parseLocalIsoDate(pickedBar.key).toLocaleDateString(undefined, {
+                weekday: 'long',
+                day: 'numeric',
+                month: 'short',
+              })
+            : `Week of ${dayMonth(pickedBar.key)}`,
+        detail: pickedBar.totalMinor > 0 ? `${formatMoney(pickedBar.totalMinor)} spent` : 'nothing spent',
+      }
+    : null;
   const groupedDays = useMemo(() => groupByDate(filteredTransactions), [filteredTransactions]);
 
   // Only the most recent load may write state — paging week/month quickly
@@ -262,12 +260,12 @@ export default function TransactionsScreen() {
       setAccounts(accs);
       setCategories(cats);
       setLoadError(null);
-    } catch (e: any) {
+    } catch (e) {
       if (seq !== loadSeq.current) return;
       // Previously unguarded — a transient DB failure left the screen
       // silently showing stale/empty data with no indication anything
       // went wrong, the same class of bug already fixed on the other tabs.
-      setLoadError(String(e?.message ?? e));
+      setLoadError(errorMessage(e));
     }
     // Fetched and caught separately from the list/accounts/categories above
     // — this only feeds the secondary "N% more/less than last …" headline
@@ -436,15 +434,15 @@ export default function TransactionsScreen() {
               accessibilityLabel="Search transactions"
             />
           </View>
-          <Pressable onPress={closeSearch} hitSlop={8}>
+          <Pressable style={withPressed()} onPress={closeSearch} hitSlop={8}>
             <Text style={styles.searchCancel}>Cancel</Text>
           </Pressable>
         </View>
       )}
 
       {!searching && (
-        // One row: ‹ period title › and the Week/Month switch. Dragging
-        // anywhere on it steps the period, same as the chevrons.
+        // ‹ This week › centred, its dates under it. Dragging anywhere on the
+        // row steps the period, same as the chevrons.
         <View style={styles.periodRow} {...weekNavSwipe.panHandlers}>
           <AnimatedPressable
             onPress={stepBack}
@@ -455,12 +453,12 @@ export default function TransactionsScreen() {
             accessibilityRole="button"
             accessibilityLabel={viewScope === 'month' ? 'Previous month' : 'Previous week'}
           >
-            <Feather name="chevron-left" size={20} color={theme.colors.textPrimary} />
+            <Feather name="chevron-left" size={18} color={theme.colors.textPrimary} />
           </AnimatedPressable>
           <Pressable
             onPress={() => setMonthPickerVisible(true)}
             hitSlop={6}
-            style={styles.periodTitleBtn}
+            style={withPressed(styles.periodTitleBtn)}
             accessibilityRole="button"
             accessibilityLabel={`${heading.title}${heading.sub ? `, ${heading.sub}` : ''}. Pick a month`}
           >
@@ -484,24 +482,8 @@ export default function TransactionsScreen() {
             accessibilityLabel={viewScope === 'month' ? 'Next month' : 'Next week'}
             accessibilityState={{ disabled: atCurrent }}
           >
-            <Feather name="chevron-right" size={20} color={theme.colors.textPrimary} />
+            <Feather name="chevron-right" size={18} color={theme.colors.textPrimary} />
           </AnimatedPressable>
-          <View style={styles.scopeSwitch} accessibilityRole="radiogroup">
-            {VIEW_SCOPES.map((o) => {
-              const on = viewScope === o.value;
-              return (
-                <Pressable
-                  key={o.value}
-                  onPress={() => onChangeViewScope(o.value)}
-                  style={[styles.scopeBtn, on && styles.scopeBtnOn]}
-                  accessibilityRole="radio"
-                  accessibilityState={{ selected: on }}
-                >
-                  <Text style={[styles.scopeText, on && styles.scopeTextOn]}>{o.label}</Text>
-                </Pressable>
-              );
-            })}
-          </View>
         </View>
       )}
 
@@ -536,9 +518,13 @@ export default function TransactionsScreen() {
         ref={scrollRef}
         data={displayedGroups}
         keyExtractor={(group) => group.date}
-        contentContainerStyle={{ paddingBottom: theme.layout.tabScreenScrollPad + insets.bottom }}
-        // Variable-height cards (a day's row count, and whether it's
-        // expanded) mean there's no fixed `getItemLayout` to give FlatList —
+        contentContainerStyle={{
+          // Search results have no header above them: keep the first day off the search bar.
+          paddingTop: searching ? 14 : 0,
+          paddingBottom: theme.layout.tabScreenScrollPad + insets.bottom,
+        }}
+        // Variable-height days (a day's line count, and which stacks are
+        // open) mean there's no fixed `getItemLayout` to give FlatList —
         // this is the standard fallback: if a jump lands past what's been
         // measured yet, retry once the list has had a moment to lay out.
         onScrollToIndexFailed={(info) => {
@@ -546,23 +532,12 @@ export default function TransactionsScreen() {
         }}
         ListHeaderComponent={
           searching ? (
-            <>
-              {trimmedQuery.length < SEARCH_MIN_CHARS ? (
-                <EmptyState
-                  title="Search your transactions"
-                  subtitle="Matches notes, categories, accounts, amounts (184, ₹1,807) and days (24 sep) — across your whole history, not just this week or month."
-                />
-              ) : searchLoading ? (
-                <View style={styles.searchLoading}>
-                  <ActivityIndicator color={theme.colors.ink} />
-                </View>
-              ) : searchResults.length === 0 ? (
-                <EmptyState
-                  title={`No matches for "${trimmedQuery}"`}
-                  subtitle="Try a shorter word, or check the spelling — search looks at each transaction's note, category, account, amount and day."
-                />
-              ) : null}
-            </>
+            <SearchStatus
+              query={trimmedQuery}
+              minChars={SEARCH_MIN_CHARS}
+              loading={searchLoading}
+              resultCount={searchResults.length}
+            />
           ) : (
             <>
               <TransactionsHeadline
@@ -572,6 +547,7 @@ export default function TransactionsScreen() {
                 incomeMinor={comparison?.current.incomeMinor ?? 0}
                 expenseChangePct={expenseChangePct}
                 viewScope={viewScope}
+                onChangeViewScope={onChangeViewScope}
                 bars={bars}
                 legend={legend}
                 onPressDay={onPressBar}
@@ -579,114 +555,59 @@ export default function TransactionsScreen() {
                 hint={barHint}
               />
 
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.chipsRow}
-                keyboardShouldPersistTaps="handled"
-              >
-                {TYPE_CHIPS.map((c) => {
-                  const on = filterType === c.value;
-                  return (
-                    <Pressable
-                      key={c.value}
-                      onPress={() => setFilterType(c.value)}
-                      style={[styles.chip, on && styles.chipOn]}
-                      accessibilityRole="button"
-                      accessibilityState={{ selected: on }}
-                      accessibilityLabel={`Show ${c.label.toLowerCase()}`}
-                    >
-                      <Text style={[styles.chipText, on && styles.chipTextOn]}>{c.label}</Text>
-                    </Pressable>
-                  );
-                })}
-                {filterCategoryIds.map((id) => (
-                  <Pressable
-                    key={id}
-                    onPress={() => setFilterCategoryIds((ids) => ids.filter((x) => x !== id))}
-                    style={[styles.chip, styles.chipCat]}
-                    accessibilityRole="button"
-                    accessibilityLabel={`Remove the ${categoryName(id)} filter`}
-                  >
-                    <Text style={styles.chipText}>{categoryName(id)}</Text>
-                    <Feather name="x" size={12} color={theme.colors.textSecondary} />
-                  </Pressable>
-                ))}
-                {filterAccountIds.map((id) => (
-                  <Pressable
-                    key={id}
-                    onPress={() => setFilterAccountIds((ids) => ids.filter((x) => x !== id))}
-                    style={[styles.chip, styles.chipCat]}
-                    accessibilityRole="button"
-                    accessibilityLabel={`Remove the ${accountName(id)} filter`}
-                  >
-                    <Feather name="credit-card" size={11} color={theme.colors.textSecondary} />
-                    <Text style={styles.chipText}>{accountName(id)}</Text>
-                    <Feather name="x" size={12} color={theme.colors.textSecondary} />
-                  </Pressable>
-                ))}
-                {filterCount > 1 && (
-                  <Pressable
-                    onPress={() => {
-                      setFilterCategoryIds([]);
-                      setFilterAccountIds([]);
-                    }}
-                    style={styles.chip}
-                    accessibilityRole="button"
-                  >
-                    <Text style={styles.chipText}>Clear all</Text>
-                  </Pressable>
-                )}
-              </ScrollView>
+              <ActivityFilterChips
+                filterType={filterType}
+                onFilterType={setFilterType}
+                categoryIds={filterCategoryIds}
+                accountIds={filterAccountIds}
+                categoryName={categoryName}
+                accountName={accountName}
+                onRemoveCategory={(id) => setFilterCategoryIds((ids) => ids.filter((x) => x !== id))}
+                onRemoveAccount={(id) => setFilterAccountIds((ids) => ids.filter((x) => x !== id))}
+                onClearAll={() => {
+                  setFilterCategoryIds([]);
+                  setFilterAccountIds([]);
+                }}
+              />
 
+              {/* The same Suu empty state as every other screen, not a bare line of grey text. */}
               {accounts.length === 0 && (
-                <Text style={styles.emptyText}>Add an account first before recording transactions.</Text>
+                <EmptyState title="No accounts yet" subtitle="Add an account before recording entries." />
               )}
               {accounts.length > 0 && transactions.length > 0 && filteredTransactions.length === 0 && (
-                <Text style={styles.emptyText}>Nothing matches the current filter.</Text>
+                <EmptyState title="Nothing matches" subtitle="Try removing a filter above." />
               )}
               {accounts.length > 0 && transactions.length === 0 && (
-                <Text style={styles.emptyText}>
-                  {viewScope === 'month' ? 'Nothing logged this month.' : 'Nothing logged this week.'}
-                </Text>
+                <EmptyState
+                  title={viewScope === 'month' ? 'Nothing logged this month' : 'Nothing logged this week'}
+                  subtitle="Tap + to add an entry, or look at another period."
+                />
               )}
             </>
           )
         }
         renderItem={({ item: group, index: gi }) => (
-          <DayCard
+          <TimelineDay
+            date={group.date}
             label={
               group.date === today
                 ? 'Today'
-                : searching
-                  ? parseLocalIsoDate(group.date).toLocaleDateString(undefined, {
-                      month: 'short',
-                      day: 'numeric',
-                    })
-                  : parseLocalIsoDate(group.date).toLocaleDateString(undefined, { weekday: 'long' })
+                : group.date === yesterday
+                  ? 'Yesterday'
+                  : searching
+                    ? dayMonth(group.date)
+                    : longWeekday(group.date)
             }
-            dateLabel={
-              searching && group.date !== today
-                ? String(parseLocalIsoDate(group.date).getFullYear())
-                : parseLocalIsoDate(group.date)
-                    .toLocaleDateString(undefined, { day: 'numeric', month: 'short' })
-                    .toUpperCase()
-            }
+            dateLabel={searching && group.date !== today ? group.date.slice(0, 4) : dayMonth(group.date)}
             items={group.items}
             categories={categories}
             accountName={accountName}
             categoryName={categoryName}
             onPressTx={setDetailTx}
-            expanded={expandedDays.has(group.date)}
-            onExpand={() =>
-              setExpandedDays((prev) => {
-                const next = new Set(prev);
-                next.add(group.date);
-                return next;
-              })
-            }
+            openStacks={openStacks}
+            onToggleStack={toggleStack}
             entering={FadeIn.delay(Math.min(gi * 45, MAX_LIST_STAGGER_MS))
-              .duration(280)
+              .duration(DURATIONS.enter)
               .reduceMotion(ReduceMotion.System)}
           />
         )}

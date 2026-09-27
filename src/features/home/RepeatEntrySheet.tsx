@@ -8,6 +8,7 @@ import { formatMoney } from '@/lib/money';
 import { toLocalIsoDate } from '@/lib/date';
 import { haptics } from '@/lib/haptics';
 import { emitTransactionsChanged } from '@/lib/dataEvents';
+import { errorMessage } from '@/lib/errorMessage';
 
 /** "Metro · ₹150" — the entry's own note if it has one, else its category. */
 export function repeatEntryLabel(entry: RepeatEntry): string {
@@ -71,14 +72,14 @@ export function RepeatEntrySheet({
       onLogged?.();
       showUndo(`Logged ${repeatEntryLabel(entry)}`, async () => {
         try {
-          await deleteTransaction(tx.id);
+          await deleteTransaction(tx.id, { keep: false });
           emitTransactionsChanged();
-        } catch (e: any) {
-          Alert.alert('Could not undo', String(e?.message ?? e));
+        } catch (e) {
+          Alert.alert("Couldn't undo", errorMessage(e));
         }
       });
-    } catch (e: any) {
-      Alert.alert('Could not log it', String(e?.message ?? e));
+    } catch (e) {
+      Alert.alert("Couldn't log it", errorMessage(e));
     } finally {
       saving.current = false;
     }

@@ -14,6 +14,8 @@ import { Skeleton } from '@/components/Skeleton';
 import { styles } from '@/features/profile/profile.styles';
 import { YouSection } from '@/features/profile/YouSection';
 import { SettingsSection } from '@/features/profile/SettingsSection';
+import { errorMessage } from '@/lib/errorMessage';
+import { withPressed } from '@/lib/pressed';
 
 type ProfileTab = 'you' | 'settings';
 const TABS: { label: string; value: ProfileTab }[] = [
@@ -53,8 +55,8 @@ export default function ProfileScreen() {
       await setUserName(draft);
       setName(draft.trim() || null);
       setEditing(false);
-    } catch (e: any) {
-      Alert.alert('Could not save name', String(e?.message ?? e));
+    } catch (e) {
+      Alert.alert("Couldn't save name", errorMessage(e));
     }
   };
 
@@ -115,7 +117,7 @@ export default function ProfileScreen() {
                 <Pressable
                   onPress={saveName}
                   hitSlop={10}
-                  style={styles.nameSave}
+                  style={withPressed(styles.nameSave)}
                   accessibilityRole="button"
                   accessibilityLabel="Save name"
                 >
@@ -124,7 +126,7 @@ export default function ProfileScreen() {
               </View>
             ) : (
               <Pressable
-                style={styles.nameRow}
+                style={withPressed(styles.nameRow)}
                 accessibilityRole="button"
                 accessibilityHint="Edit your name"
                 onPress={() => {

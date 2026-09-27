@@ -85,7 +85,6 @@ export const SPEND_UP_TEMPLATES: readonly string[] = [
   'Spending is running {pct} ahead of last month',
   'This month is {pct} pricier than last month so far',
   'A {pct} jump in spending versus last month',
-  "Last month's pace was beaten by {pct} this time",
   'This month outpaced last month by {pct} in spending',
 ];
 

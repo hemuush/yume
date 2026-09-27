@@ -23,9 +23,10 @@ const tx = (over: Partial<Transaction>): Transaction => ({
   amountMinor: 0,
   date: '2026-09-10',
   note: '',
-  tags: [],
   paymentMode: null,
   loanPaymentId: null,
+  splitId: null,
+  isRefund: false,
   createdAt: '2026-09-10 10:00:00',
   ...over,
 });
@@ -184,6 +185,19 @@ describe('legendForBars', () => {
       { categoryId: 'food', name: 'Food & Dining', color: '#FF9E7D' },
       { categoryId: 'fuel', name: 'Fuel', color: '#A8B8FF' },
     ]);
+  });
+
+  it('puts the biggest spend first', () => {
+    const bars = buildDailySpendBars(
+      [
+        tx({ id: 'a', categoryId: 'food', amountMinor: 300, date: '2026-09-10' }),
+        tx({ id: 'b', categoryId: 'fuel', amountMinor: 700, date: '2026-09-11' }),
+      ],
+      [cat('food', 'Food & Dining', '#FF9E7D'), cat('fuel', 'Fuel', '#A8B8FF')],
+      ['2026-09-10', '2026-09-11'],
+      '2026-09-10'
+    );
+    expect(legendForBars(bars).map((l) => l.categoryId)).toEqual(['fuel', 'food']);
   });
 
   it('is empty when nothing was spent', () => {

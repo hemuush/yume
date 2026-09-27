@@ -45,14 +45,19 @@ function summariseExpenses(
   const byCategory = new Map<string, number>();
   let totalMinor = 0;
   for (const tx of transactions) {
-    if (tx.type !== 'expense') continue;
+    // Spending, less any money that came back on it as a refund.
+    const signed = tx.type === 'expense' ? tx.amountMinor : tx.isRefund ? -tx.amountMinor : null;
+    if (signed == null) continue;
     if (tx.date < fromDate || tx.date > toDate) continue;
-    totalMinor += tx.amountMinor;
+    totalMinor += signed;
     const cat = tx.categoryId ? catById.get(tx.categoryId) : undefined;
     const topId = cat ? (cat.parentId ?? tx.categoryId!) : UNCATEGORIZED_ID;
-    byCategory.set(topId, (byCategory.get(topId) ?? 0) + tx.amountMinor);
+    byCategory.set(topId, (byCategory.get(topId) ?? 0) + signed);
   }
+  // A day (or a category in it) never goes below zero.
+  totalMinor = Math.max(0, totalMinor);
   const segments = [...byCategory.entries()]
+    .filter(([, amountMinor]) => amountMinor > 0)
     .map(([categoryId, amountMinor]) => {
       const cat = catById.get(categoryId);
       return {
@@ -149,15 +154,27 @@ export interface ChartLegendItem {
   color: string;
 }
 
-/** Every category that actually appears in `bars`, in first-seen order — only what the chart is showing, not the full category list. */
+/**
+ * Every category that actually appears in `bars` — only what the chart is
+ * showing, not the full category list — biggest spend first, so a legend
+ * that names only the first few names the ones that matter.
+ */
 export function legendForBars(bars: SpendBar[]): ChartLegendItem[] {
-  const seen = new Map<string, ChartLegendItem>();
+  const seen = new Map<string, ChartLegendItem & { totalMinor: number }>();
   for (const bar of bars) {
     for (const seg of bar.segments) {
-      if (!seen.has(seg.categoryId)) {
-        seen.set(seg.categoryId, { categoryId: seg.categoryId, name: seg.name, color: seg.color });
-      }
+      const item = seen.get(seg.categoryId);
+      if (item) item.totalMinor += seg.amountMinor;
+      else
+        seen.set(seg.categoryId, {
+          categoryId: seg.categoryId,
+          name: seg.name,
+          color: seg.color,
+          totalMinor: seg.amountMinor,
+        });
     }
   }
-  return [...seen.values()];
+  return [...seen.values()]
+    .sort((a, b) => b.totalMinor - a.totalMinor)
+    .map(({ categoryId, name, color }) => ({ categoryId, name, color }));
 }

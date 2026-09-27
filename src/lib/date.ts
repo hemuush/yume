@@ -109,6 +109,11 @@ export function daysUntilIsoDate(isoDate: string): number {
  * needs one entry per calendar day in a range (e.g. one bar per day in a
  * spend chart), rather than each caller re-deriving it with its own loop.
  */
+/** Whether a route param (or any string) is a plain YYYY-MM-DD date. */
+export function isIsoDate(v: string | undefined): v is string {
+  return !!v && /^\d{4}-\d{2}-\d{2}$/.test(v);
+}
+
 export function isoDatesInRange(from: string, to: string): string[] {
   const dates: string[] = [];
   let cursor = from;

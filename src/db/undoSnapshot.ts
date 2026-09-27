@@ -1,4 +1,4 @@
-import type { AppDb } from './client';
+import type { AppDb, SqlParam } from './client';
 
 /**
  * A raw, exact copy of one row — every column SQLite returned for it,
@@ -10,12 +10,12 @@ import type { AppDb } from './client';
  */
 export interface RowSnapshot {
   table: string;
-  row: Record<string, any>;
+  row: Record<string, SqlParam>;
 }
 
 /** Captures a table's row by id, before deleting it — null if it's already gone. */
 export async function captureRow(db: AppDb, table: string, id: string): Promise<RowSnapshot | null> {
-  const row = await db.getFirstAsync<Record<string, any>>(`SELECT * FROM ${table} WHERE id = ?`, [id]);
+  const row = await db.getFirstAsync<Record<string, SqlParam>>(`SELECT * FROM ${table} WHERE id = ?`, [id]);
   return row ? { table, row } : null;
 }
 
@@ -24,9 +24,12 @@ export async function captureRows(
   db: AppDb,
   table: string,
   where: string,
-  params: any[]
+  params: SqlParam[]
 ): Promise<RowSnapshot[]> {
-  const rows = await db.getAllAsync<Record<string, any>>(`SELECT * FROM ${table} WHERE ${where}`, params);
+  const rows = await db.getAllAsync<Record<string, SqlParam>>(
+    `SELECT * FROM ${table} WHERE ${where}`,
+    params
+  );
   return rows.map((row) => ({ table, row }));
 }
 

@@ -1,5 +1,6 @@
 import { StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
+import { EYEBROW } from '@/constants/textStyles';
 
 // Shared by the Add screen (app/add-transaction.tsx) and its fields (AddFields.tsx).
 export const styles = StyleSheet.create({
@@ -23,11 +24,7 @@ export const styles = StyleSheet.create({
   // large, no boxed input, the same "biggest number wins" treatment the
   // This Month card and stat tiles already use elsewhere on Home.
   heroLabel: {
-    fontFamily: theme.font.bodyBold,
-    fontSize: 11.5,
-    letterSpacing: 0.4,
-    textTransform: 'uppercase',
-    color: theme.colors.textMuted,
+    ...EYEBROW,
     textAlign: 'center',
     marginBottom: 6,
   },
@@ -120,6 +117,7 @@ export const styles = StyleSheet.create({
     textAlign: 'center',
   },
   noteInput: {
+    marginBottom: 10,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
     borderRadius: 14,
@@ -172,7 +170,7 @@ export const styles = StyleSheet.create({
     borderTopWidth: 3,
     borderTopColor: theme.colors.idCoralDeep,
     borderStyle: 'dashed',
-    borderRadius: 14,
+    borderRadius: theme.radius.xl2,
     paddingHorizontal: 12,
     paddingTop: 12,
     paddingBottom: 4,
@@ -183,13 +181,7 @@ export const styles = StyleSheet.create({
     alignItems: 'baseline',
     marginBottom: 4,
   },
-  stagedHead: {
-    fontFamily: theme.font.roundedBold,
-    fontSize: 11,
-    letterSpacing: 0.4,
-    textTransform: 'uppercase',
-    color: theme.colors.textSecondary,
-  },
+  stagedHead: { ...EYEBROW, color: theme.colors.textSecondary },
   stagedHeadTotal: { fontFamily: theme.font.monoBold, fontSize: 12.5, color: theme.colors.textPrimary },
   stagedRow: {
     flexDirection: 'row',
@@ -263,35 +255,32 @@ export const styles = StyleSheet.create({
     lineHeight: 17,
     color: theme.colors.textPrimary,
   },
-  detailRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 12 },
+  // Bleeds to the screen's edges so it can slide sideways, while its first chip lines up with the pad.
+  detailBar: { marginHorizontal: -20, marginBottom: 10, flexGrow: 0 },
+  detailBarContent: { paddingHorizontal: 20, gap: 6 },
   detailChip: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    maxWidth: '100%',
+    height: 36,
     paddingHorizontal: 12,
-    paddingVertical: 9,
-    borderRadius: 14,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-    backgroundColor: theme.colors.surface,
+    borderRadius: 12,
+    backgroundColor: theme.colors.surfaceAlt,
   },
   detailChipText: {
     fontFamily: theme.font.bodyMedium,
     fontSize: 12.5,
     color: theme.colors.textPrimary,
-    flexShrink: 1,
+    maxWidth: 150,
   },
+  detailChipDisabled: { opacity: 0.4 },
   detailChipTextMuted: { color: theme.colors.textMuted },
+  // A detail chip that's a switch (Money back), switched on.
+  detailChipActive: { backgroundColor: theme.colors.ink, borderColor: theme.colors.ink },
+  detailChipTextActive: { color: theme.colors.surface },
   totalsRow: { flexDirection: 'row', justifyContent: 'space-around', marginBottom: 10 },
   total: { alignItems: 'center' },
-  totalLabel: {
-    fontFamily: theme.font.mono,
-    fontSize: 8.5,
-    letterSpacing: 0.5,
-    textTransform: 'uppercase',
-    color: theme.colors.textMuted,
-  },
+  totalLabel: EYEBROW,
   totalValue: { fontFamily: theme.font.monoBold, fontSize: 12, marginTop: 2 },
   error: {
     fontFamily: theme.font.bodyBold,

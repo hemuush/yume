@@ -1,5 +1,7 @@
 import { View, Pressable, Animated } from 'react-native';
 import { Text } from '@/components/Text';
+import { GrowFill } from '@/components/GrowFill';
+import { CountUpAmount } from '@/components/CountUpAmount';
 import Feather from '@expo/vector-icons/Feather';
 import { router } from 'expo-router';
 import { SavingsGoal } from '@/types';
@@ -9,6 +11,7 @@ import { goalProgress } from '@/lib/savingsGoalProgress';
 import { usePressScale } from '@/lib/usePressScale';
 import { GoalRing } from './GoalRing';
 import { styles } from './goals.styles';
+import { withPressed } from '@/lib/pressed';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -42,17 +45,22 @@ export function GoalCard({
         onPressIn={onPressIn}
         onPressOut={onPressOut}
       >
-        <GoalRing percent={percent} color={ringColor} done={done} size={46} />
+        <GoalRing percent={percent} color={ringColor} done={done} size={46} animKey={`goal:${goal.id}`} />
         <View style={{ flex: 1 }}>
           <Text style={styles.cardName} numberOfLines={1}>
             {goal.name}
           </Text>
           <Text style={styles.cardTarget}>
-            {done
-              ? `Reached · ${formatMoney(goal.targetAmountMinor)}`
-              : goal.targetDate
-                ? `By ${goal.targetDate} · ${formatMoney(goal.currentAmountMinor)} of ${formatMoney(goal.targetAmountMinor)}`
-                : `${formatMoney(goal.currentAmountMinor)} of ${formatMoney(goal.targetAmountMinor)}`}
+            {done ? (
+              `Reached · ${formatMoney(goal.targetAmountMinor)}`
+            ) : (
+              <>
+                {goal.targetDate ? `By ${goal.targetDate} · ` : ''}
+                {/* Rolls to the new total when money is added, alongside the ring. */}
+                <CountUpAmount minor={goal.currentAmountMinor} countFromZero={false} />
+                {` of ${formatMoney(goal.targetAmountMinor)}`}
+              </>
+            )}
           </Text>
           {following && (
             <View style={styles.followTag}>
@@ -65,11 +73,15 @@ export function GoalCard({
         </View>
       </AnimatedPressable>
       <View style={styles.track}>
-        <View style={[styles.fill, { width: `${percent}%`, backgroundColor: ringColor }]} />
+        <GrowFill
+          animKey={`goal-bar:${goal.id}`}
+          pct={percent}
+          style={[styles.fill, { backgroundColor: ringColor }]}
+        />
       </View>
       {!goal.archived && (
         <Pressable
-          style={styles.contributeBtn}
+          style={withPressed(styles.contributeBtn)}
           onPress={
             following
               ? () => router.push(`/add-transaction?type=transfer&toAccountId=${goal.linkedAccountId}`)

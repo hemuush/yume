@@ -21,6 +21,7 @@ import { MOTION, timing } from '@/lib/animation';
 import { SoftCard } from './SoftCard';
 import { HeroMoon, MOON_COLORS } from './HeroMoon';
 import { LimitMeter, LimitMeterTone } from '@/components/LimitMeter';
+import { CountUpAmount } from '@/components/CountUpAmount';
 import { useAccent } from '@/theme/AccentContext';
 import {
   heroSlices,
@@ -32,6 +33,7 @@ import {
   HERO_MODE_LABEL,
 } from './heroSlices';
 import type { SuuLine } from './suuLine';
+import { withPressed } from '@/lib/pressed';
 
 // Reanimated only in this file, never core RN `Animated` — mixing the two in
 // one tree is the exact bug class that crashed BudgetRow/GoalCard/GoalChip
@@ -49,6 +51,8 @@ interface HeroContent {
   surplusMinor: number;
   outstandingLoansMinor: number;
   suu: SuuLine;
+  /** Which period these figures are for: a new period remounts the rolling figures instead of rolling them. */
+  periodKey: string;
 }
 
 const CHECK_PATH_LENGTH = 22;
@@ -155,6 +159,7 @@ export function ThisMonthHero({
     surplusMinor,
     outstandingLoansMinor,
     suu,
+    periodKey,
   });
   // null = the resting view (Kept, or Spent when nothing was kept) — see
   // heroRestingMode. Reset whenever the period turns.
@@ -174,6 +179,7 @@ export function ThisMonthHero({
       surplusMinor,
       outstandingLoansMinor,
       suu,
+      periodKey,
     };
     const isPeriodTurn = prevPeriodKey.current !== periodKey;
     prevPeriodKey.current = periodKey;
@@ -353,7 +359,7 @@ export function ThisMonthHero({
           <Pressable
             onPress={() => onStep(-1)}
             hitSlop={8}
-            style={styles.navBtn}
+            style={withPressed(styles.navBtn)}
             accessibilityRole="button"
             accessibilityLabel="Previous period"
           >
@@ -366,7 +372,7 @@ export function ThisMonthHero({
             onPress={() => onStep(1)}
             disabled={!canStepForward}
             hitSlop={8}
-            style={[styles.navBtn, !canStepForward && styles.navBtnOff]}
+            style={withPressed([styles.navBtn, !canStepForward && styles.navBtnOff])}
             accessibilityRole="button"
             accessibilityLabel="Next period"
             accessibilityState={{ disabled: !canStepForward }}
@@ -403,19 +409,25 @@ export function ThisMonthHero({
                   key={m}
                   onPress={() => pickMode(m)}
                   disabled={!canPick}
-                  style={[styles.figRow, active && styles.figRowActive, faded && styles.figRowFaded]}
+                  style={withPressed([
+                    styles.figRow,
+                    active && styles.figRowActive,
+                    faded && styles.figRowFaded,
+                  ])}
                   accessibilityRole={canPick ? 'button' : 'text'}
                   accessibilityState={canPick ? { selected: active } : undefined}
                   accessibilityLabel={`${HERO_MODE_LABEL[m]}, ${formatMoney(rowValue[m])}`}
                 >
                   <View style={[styles.figDot, { backgroundColor: MOON_COLORS[m] }]} />
                   <Text style={styles.figName}>{HERO_MODE_LABEL[m]}</Text>
-                  <Text
+                  {/* Rolls to its new value after a save; a new period slides in instead. */}
+                  <CountUpAmount
+                    key={displayed.periodKey}
+                    minor={rowValue[m]}
+                    countFromZero={false}
                     style={[styles.figVal, m === 'free' && rowValue.free < 0 && styles.figValNeg]}
                     numberOfLines={1}
-                  >
-                    {formatMoney(rowValue[m])}
-                  </Text>
+                  />
                 </Pressable>
               );
             })}
@@ -440,9 +452,14 @@ export function ThisMonthHero({
                 />
               </Svg>
             )}
-            <Text style={styles.lineValue} numberOfLines={1} adjustsFontSizeToFit>
-              {formatMoney(displayed.outstandingLoansMinor)}
-            </Text>
+            <CountUpAmount
+              key={displayed.periodKey}
+              minor={displayed.outstandingLoansMinor}
+              countFromZero={false}
+              style={styles.lineValue}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+            />
             {confettiPlaying &&
               confetti.map((piece, i) => <ConfettiDot key={i} progress={confettiProgress} piece={piece} />)}
           </View>
@@ -481,7 +498,7 @@ export function ThisMonthHero({
                 )}
               </Text>
               <View style={styles.todayMeter}>
-                <LimitMeter pct={todayPct} tone={todayTone} />
+                <LimitMeter pct={todayPct} tone={todayTone} animKey="home:today" />
               </View>
             </View>
           )}

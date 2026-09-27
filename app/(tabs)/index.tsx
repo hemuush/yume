@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { View, ScrollView, Pressable, StyleSheet, RefreshControl } from 'react-native';
+import { View, ScrollView, StyleSheet, RefreshControl } from 'react-native';
 import { Text } from '@/components/Text';
 import Animated, { useSharedValue, useAnimatedScrollHandler } from 'react-native-reanimated';
-import Feather from '@expo/vector-icons/Feather';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useFocusEffect } from 'expo-router';
 import { listAccounts, listCategories, listTransactions } from '@/db/ledger';
@@ -16,7 +15,7 @@ import {
   getMonthPaceInputs,
 } from '@/db/reports';
 import { monthPace } from '@/lib/pace';
-import { getUserName, getDailySpendingGoal, setMonthReviewDismissed } from '@/db/settings';
+import { getUserName, getDailySpendingGoal } from '@/db/settings';
 import { listBudgetsForMonth, BudgetProgress } from '@/db/budgets';
 import { listSavingsGoals } from '@/db/savingsGoals';
 import { roundedMinor } from '@/lib/round';
@@ -24,7 +23,6 @@ import { savingsRatePct } from '@/lib/savingsRate';
 import { Account, Category, Transaction, Loan, RecurringRule, SavingsGoal } from '@/types';
 import { theme } from '@/constants/theme';
 import { useAccent } from '@/theme/AccentContext';
-import { hexToRgba } from '@/lib/color';
 import { EmptyState } from '@/components/EmptyState';
 import {
   CURRENT_PERIOD,
@@ -35,7 +33,6 @@ import {
   stepPeriod,
   canStepForward,
 } from '@/lib/period';
-import { dueDateLabel, isDueUrgent } from '@/lib/dueDate';
 import {
   homeRowEntering,
   hasPlayedHomeOpening,
@@ -50,24 +47,22 @@ import { QuickActionsRow } from '@/features/home/QuickActionsRow';
 import { SuuRefreshBadge } from '@/features/home/SuuRefreshBadge';
 import { HomeSection } from '@/features/home/HomeSection';
 import { homeStyles, HOME } from '@/features/home/homeStyles';
-import { HomeSwipeCard, SwipePage } from '@/features/home/HomeSwipeCard';
-import { UpcomingRow, UpcomingMoreRow } from '@/features/home/UpcomingRow';
-import { useCappedList } from '@/lib/useCappedList';
+import { HomeGlance, buildUpcomingItems } from '@/features/home/HomeGlance';
 import { RecentTransactionRow } from '@/features/home/RecentTransactionRow';
 import { AccountChip, ACCOUNT_CHIP_WIDTH, ACCOUNT_STRIP_GAP } from '@/features/home/AccountChip';
 import { AccountSummarySheet } from '@/features/home/AccountSummarySheet';
 import { AccountDetailModal } from '@/features/profile/AccountDetailModal';
 import { suuLine } from '@/features/home/suuLine';
-import { BudgetRow } from '@/features/budgets/BudgetRow';
-import { GoalChip } from '@/features/goals/GoalChip';
 import { NeedsYouCard } from '@/features/home/NeedsYouCard';
-import { loadMonthReview, MonthReview } from '@/features/home/monthReview';
+import { loadReadyWraps, ReadyWrap } from '@/features/wrap/wrapWindow';
 import { NeedsYouItem } from '@/features/home/needsYou';
 import { loadNeedsYou, snoozeBackupReminder } from '@/features/home/needsYouData';
 import { AddAccountModal } from '@/features/profile/AddAccountModal';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { toLocalIsoDate } from '@/lib/date';
 import { onTransactionsChanged } from '@/lib/dataEvents';
+import { errorMessage } from '@/lib/errorMessage';
+import { payCardRoute } from '@/lib/payCard';
 
 export default function DashboardScreen() {
   const insets = useSafeAreaInsets();
@@ -100,8 +95,8 @@ export default function DashboardScreen() {
   // it for the full edit form.
   const [summaryAccount, setSummaryAccount] = useState<Account | null>(null);
   const [editAccount, setEditAccount] = useState<Account | null>(null);
-  // Last month's look-back, first week of each month only (see monthReview.ts).
-  const [monthReview, setMonthReview] = useState<MonthReview | null>(null);
+  // Last week's Wrap on a Monday, last month's on the 1st–7th: the header's Wrap button (wrapWindow.ts).
+  const [readyWraps, setReadyWraps] = useState<ReadyWrap[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [userName, setUserNameState] = useState<string | null>(null);
   const [cursor, setCursor] = useState<PeriodCursor>(CURRENT_PERIOD);
@@ -191,7 +186,7 @@ export default function DashboardScreen() {
         dailyGoal,
         paceIn,
         needs,
-        review,
+        wraps,
       ] = await Promise.all([
         listAccounts(),
         listCategories(),
@@ -214,7 +209,7 @@ export default function DashboardScreen() {
         getDailySpendingGoal(),
         getMonthPaceInputs(),
         loadNeedsYou(),
-        loadMonthReview(),
+        loadReadyWraps(),
       ]);
       if (seq !== loadSeq.current) return;
       setAccounts(accs);
@@ -233,14 +228,14 @@ export default function DashboardScreen() {
       setDailyGoalMinor(dailyGoal);
       setPaceInputs(paceIn);
       setNeedsYou(needs.shown);
-      setMonthReview(review);
+      setReadyWraps(wraps);
       setLoadedCursor(c);
       setLoadError(null);
-    } catch (e: any) {
+    } catch (e) {
       if (seq !== loadSeq.current) return;
       // Guard the throw so a transient DB error shows a banner instead of
       // freezing stale data + a stuck pull-to-refresh spinner.
-      setLoadError(String(e?.message ?? e));
+      setLoadError(errorMessage(e));
     } finally {
       if (seq === loadSeq.current) setLoaded(true);
     }
@@ -316,162 +311,13 @@ export default function DashboardScreen() {
   const savingsPct = savingsRatePct(dispIncome - dispExpense, dispIncome);
   const suu = suuLine(savingsPct, expenseChangePct ?? null, topGrowing?.name ?? null, new Date().getHours());
 
-  // "Upcoming" used to show only the next loan EMI — every recurring rule
-  // (rent, subscriptions, salary) was invisible on Home even though it's
-  // exactly the kind of thing "what's coming up" should answer. Merged into
-  // one list here, soonest first, so a bill isn't a surprise just because
-  // it happens to be a recurring one rather than a loan.
-  interface UpcomingItem {
-    key: string;
-    icon: React.ComponentProps<typeof Feather>['name'];
-    iconBg: string;
-    iconColor?: string;
-    title: string;
-    subtitle: string;
-    amountMinor: number;
-    sign: '+' | '-' | '';
-    sortDate: string;
-    onPress: () => void;
-    urgent: boolean;
-  }
-  const upcomingItems: UpcomingItem[] = [];
-  if (nextDue) {
-    upcomingItems.push({
-      key: 'loan',
-      icon: 'calendar',
-      // Was a fixed gold tint, unrelated to anything the user picked — now a
-      // light wash of their own accent, so the one card that keeps a colour
-      // uses the user's colour rather than an arbitrary one.
-      iconBg: hexToRgba(accent, 0.18),
-      iconColor: accent,
-      title: `${nextDue.counterparty} EMI`,
-      subtitle: dueDateLabel(nextDue.dueDate),
-      amountMinor: nextDue.emiAmountMinor,
-      sign: '-',
-      sortDate: nextDue.dueDate,
-      onPress: () => router.push('/loans'),
-      urgent: isDueUrgent(nextDue.dueDate),
-    });
-  }
-  for (const rule of recurringRules) {
-    if (!rule.active) continue;
-    const isTransfer = rule.type === 'transfer';
-    upcomingItems.push({
-      key: rule.id,
-      icon: isTransfer ? 'repeat' : rule.type === 'income' ? 'arrow-down-right' : 'arrow-up-right',
-      iconBg: theme.colors.secondaryTint,
-      title: isTransfer
-        ? `${accountName(rule.accountId) ?? '—'} → ${accountName(rule.toAccountId) ?? '—'}`
-        : rule.note || categoryFor(rule.categoryId)?.name || 'Recurring',
-      subtitle: dueDateLabel(rule.nextRunDate),
-      amountMinor: rule.amountMinor,
-      sign: rule.type === 'income' ? '+' : rule.type === 'expense' ? '-' : '',
-      sortDate: rule.nextRunDate,
-      onPress: () => router.push('/recurring'),
-      urgent: isDueUrgent(rule.nextRunDate),
-    });
-  }
-  upcomingItems.sort((a, b) => (a.sortDate < b.sortDate ? -1 : a.sortDate > b.sortDate ? 1 : 0));
-  const {
-    shown: visibleUpcoming,
-    hidden: hiddenUpcoming,
-    expand: expandUpcoming,
-  } = useCappedList(upcomingItems, 3);
-
-  // Already sorted most-urgent (closest to or over its limit) first.
-  const topBudgets = budgets.slice(0, 3);
-  const activeGoals = goals.filter((g) => !g.archived);
-  // Capped rather than its own horizontal ScrollView — nesting a
-  // horizontal-scrolling strip inside the swipe card's own horizontal
-  // pager would fight the page-swipe gesture on the same axis, so this
-  // page shows as many chips as comfortably fit and a "+N" tile for the
-  // rest instead, the same cap-and-link pattern Budgets/Upcoming use.
-  const topGoals = activeGoals.slice(0, 2);
-  const hiddenGoalsCount = activeGoals.length - topGoals.length;
-
-  // Upcoming first — it's the time-sensitive one — then Budgets and Goals.
-  const homeSwipePages: SwipePage[] = [
-    ...(visibleUpcoming.length > 0
-      ? [
-          {
-            key: 'upcoming',
-            label: 'Upcoming',
-            // No single "see all" destination — this mixes loan EMIs (Loans
-            // tab) and recurring rules (Recurring screen); each row already
-            // deep-links to where it actually lives.
-            content: (
-              <View style={styles.pageList}>
-                {visibleUpcoming.map((item, i) => (
-                  <Animated.View key={item.key} entering={rowEntering(i)}>
-                    <UpcomingRow
-                      icon={item.icon}
-                      iconBg={item.iconBg}
-                      iconColor={item.iconColor}
-                      title={item.title}
-                      subtitle={item.subtitle}
-                      amountMinor={item.amountMinor}
-                      sign={item.sign}
-                      onPress={item.onPress}
-                      divider={i > 0}
-                      urgent={item.urgent}
-                    />
-                  </Animated.View>
-                ))}
-                {hiddenUpcoming.length > 0 && (
-                  <UpcomingMoreRow count={hiddenUpcoming.length} divider onPress={expandUpcoming} />
-                )}
-              </View>
-            ),
-          },
-        ]
-      : []),
-    ...(topBudgets.length > 0
-      ? [
-          {
-            key: 'budgets',
-            label: 'Budgets',
-            onSeeAll: () => router.push('/budgets'),
-            content: (
-              <View style={styles.pageList}>
-                {topBudgets.map((progress, i) => (
-                  <Animated.View key={progress.budget.id} entering={rowEntering(i)}>
-                    <BudgetRow progress={progress} divider={i > 0} onPress={() => router.push('/budgets')} />
-                  </Animated.View>
-                ))}
-              </View>
-            ),
-          },
-        ]
-      : []),
-    ...(topGoals.length > 0
-      ? [
-          {
-            key: 'goals',
-            label: 'Goals',
-            onSeeAll: () => router.push('/savings-goals'),
-            content: (
-              <View style={styles.goalsPageRow}>
-                {topGoals.map((goal, i) => (
-                  <Animated.View key={goal.id} entering={rowEntering(i)}>
-                    <GoalChip goal={goal} onPress={() => router.push('/savings-goals')} />
-                  </Animated.View>
-                ))}
-                {hiddenGoalsCount > 0 && (
-                  <Pressable
-                    onPress={() => router.push('/savings-goals')}
-                    style={styles.goalsMoreTile}
-                    accessibilityRole="button"
-                    accessibilityLabel={`${hiddenGoalsCount} more goals`}
-                  >
-                    <Text style={styles.goalsMoreText}>+{hiddenGoalsCount} more</Text>
-                  </Pressable>
-                )}
-              </View>
-            ),
-          },
-        ]
-      : []),
-  ];
+  const upcomingItems = buildUpcomingItems({
+    nextDue,
+    rules: recurringRules,
+    accent,
+    accountName,
+    categoryName: (id) => categoryFor(id)?.name,
+  });
 
   const openNeedsYou = (item: NeedsYouItem) => {
     if (item.action === 'loans') router.push('/loans');
@@ -479,6 +325,8 @@ export default function DashboardScreen() {
     else if (item.action === 'reports') router.navigate('/reports');
     else if (item.action === 'tidy') router.push('/tidy-up');
     else if (item.action === 'recurring') router.push('/recurring');
+    else if (item.action === 'payCard' && item.payCard)
+      router.push(payCardRoute(item.payCard.accountId, item.payCard.amountMinor));
     else router.push('/backup');
   };
   // "Later" on the no-backup reminder hides it for a month. Shown as hidden
@@ -561,14 +409,6 @@ export default function DashboardScreen() {
             onOpen={openNeedsYou}
             onSeeAll={() => router.push('/notifications')}
             onSnooze={snoozeNeedsYou}
-            review={monthReview}
-            onOpenReview={() => router.push('/reports?month=-1')}
-            onDismissReview={() => {
-              if (!monthReview) return;
-              const key = monthReview.monthKey;
-              setMonthReview(null);
-              setMonthReviewDismissed(key).catch(() => {});
-            }}
           />
         )}
 
@@ -586,7 +426,9 @@ export default function DashboardScreen() {
           </>
         )}
 
-        {loaded && <HomeSwipeCard pages={homeSwipePages} />}
+        {loaded && (
+          <HomeGlance upcoming={upcomingItems} budgets={budgets} goals={goals} rowEntering={rowEntering} />
+        )}
 
         {loaded && (
           <HomeSection title="Recent activity" onSeeAll={() => router.push('/transactions')}>
@@ -659,6 +501,8 @@ export default function DashboardScreen() {
         alertCount={needsYou.length}
         scrollY={scrollY}
         onHeight={setHeaderHeight}
+        wraps={readyWraps}
+        onPlayWrap={(w) => router.push(`/wrap?period=${w.period}`)}
       >
         <QuickActionsRow />
       </HomeHeader>
@@ -679,6 +523,10 @@ export default function DashboardScreen() {
         onEdit={(acc) => {
           setSummaryAccount(null);
           setEditAccount(acc);
+        }}
+        onPayBill={(acc, amountMinor) => {
+          setSummaryAccount(null);
+          router.push(payCardRoute(acc.id, amountMinor));
         }}
         onSeeAll={(acc) => {
           setSummaryAccount(null);
@@ -715,7 +563,7 @@ const styles = StyleSheet.create({
   heroGap: { marginTop: 18 },
   errorBanner: {
     marginHorizontal: 20,
-    marginBottom: 14,
+    marginTop: 18,
     padding: 14,
     borderRadius: theme.radius.md,
     backgroundColor: theme.colors.expenseTint,
@@ -732,18 +580,4 @@ const styles = StyleSheet.create({
   },
   accountStrip: { paddingHorizontal: 20, gap: ACCOUNT_STRIP_GAP, paddingBottom: 4 },
   emptyCta: { marginHorizontal: 40, marginTop: -8 },
-  // Rows inside a HomeSwipeCard page — no outer border/background of their
-  // own (the card already draws that), BudgetRow/UpcomingRow already carry
-  // their own horizontal padding.
-  pageList: { paddingHorizontal: 2 },
-  goalsPageRow: { flexDirection: 'row', gap: 10, paddingHorizontal: 14 },
-  goalsMoreTile: {
-    width: 90,
-    borderRadius: theme.radius.lg,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  goalsMoreText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textSecondary },
 });

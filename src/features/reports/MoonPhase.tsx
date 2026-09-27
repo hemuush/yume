@@ -2,6 +2,7 @@ import Svg, { Circle, Path } from 'react-native-svg';
 import Animated, { FadeIn, ReduceMotion } from 'react-native-reanimated';
 import { theme } from '@/constants/theme';
 import { shade } from '@/lib/color';
+import { DURATIONS } from '@/lib/motionTimings';
 
 /**
  * The path for a lune (crescent/gibbous) covering exactly `k` of a circle's
@@ -56,7 +57,7 @@ export function MoonPhase({
       // ratio) re-triggers the reveal, while an unrelated re-render with the
       // same fraction doesn't replay it.
       key={litFraction}
-      entering={FadeIn.duration(700).springify().reduceMotion(ReduceMotion.System)}
+      entering={FadeIn.duration(DURATIONS.draw).reduceMotion(ReduceMotion.System)}
     >
       <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
         <Circle cx={c} cy={c} r={r} fill={darkColor} />

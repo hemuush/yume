@@ -56,7 +56,7 @@ async function render(props: Partial<React.ComponentProps<typeof SubscriptionsSe
 describe('SubscriptionsSection', () => {
   it('shows the month, the year and how many are running', async () => {
     const shown = texts(await render());
-    expect(shown).toEqual(expect.arrayContaining(['SUBSCRIPTIONS & BILLS', '₹3,588 a year · 1 running']));
+    expect(shown).toEqual(expect.arrayContaining(['Subscriptions & bills', '₹3,588 a year · 1 running']));
     expect(shown.some((t) => t.startsWith('₹299'))).toBe(true);
   });
 
@@ -82,7 +82,7 @@ describe('SubscriptionsSection', () => {
   });
 
   it('only heads the rule list RUNNING when a rule is running', async () => {
-    expect(texts(await render())).toContain('RUNNING');
-    expect(texts(await render({ hasRunning: false }))).not.toContain('RUNNING');
+    expect(texts(await render())).toContain('Running');
+    expect(texts(await render({ hasRunning: false }))).not.toContain('Running');
   });
 });

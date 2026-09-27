@@ -20,7 +20,7 @@ export function WidgetShell({
   alignItems,
   padding = 16,
 }: {
-  children?: any;
+  children?: React.ReactNode;
   clickAction?: string;
   clickActionData?: Record<string, unknown>;
   flexDirection?: 'row' | 'column';

@@ -97,7 +97,7 @@ describe('Tidy up screen', () => {
     const tree = await render();
     await tap(tree, 'Delete one');
     expect(deleteNewestOfGroup).toHaveBeenCalledWith(pair);
-    expect(mockShowUndo).toHaveBeenCalledWith('Deleted the repeat', expect.any(Function));
+    expect(mockShowUndo).toHaveBeenCalledWith('Repeat moved to Recently deleted', expect.any(Function));
     await tap(tree, 'Keep both');
     expect(keepRepeatGroup).toHaveBeenCalledWith(pair.key);
   });

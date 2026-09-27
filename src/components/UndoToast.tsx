@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme } from '@/constants/theme';
 import { usePressScale } from '@/lib/usePressScale';
 import { haptics } from '@/lib/haptics';
+import { DURATIONS } from '@/lib/motionTimings';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -97,8 +98,8 @@ function ToastView({
 
   return (
     <ReanimatedAnimated.View
-      entering={FadeInDown.duration(220).reduceMotion(ReduceMotion.System)}
-      exiting={FadeOutDown.duration(180).reduceMotion(ReduceMotion.System)}
+      entering={FadeInDown.duration(DURATIONS.slideIn).reduceMotion(ReduceMotion.System)}
+      exiting={FadeOutDown.duration(DURATIONS.rowExit).reduceMotion(ReduceMotion.System)}
       style={[styles.wrap, { bottom: insets.bottom + 16 }]}
       pointerEvents="box-none"
     >

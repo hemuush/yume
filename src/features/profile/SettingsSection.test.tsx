@@ -173,7 +173,7 @@ describe('Profile · Settings section', () => {
         'Hide savings & investment amounts',
         'Notifications',
         '4 of 5 on',
-        'Backup & Restore',
+        'Backup & restore',
         'Last backup yesterday',
         'Tidy up',
         'All tidy',

@@ -9,6 +9,7 @@ import { PrimaryButton } from '@/components/PrimaryButton';
 import { ModalSheet } from '@/components/ModalSheet';
 import { modalFooterStyles as f } from '@/constants/theme';
 import { styles } from './loans.styles';
+import { errorMessage } from '@/lib/errorMessage';
 
 export function AssetModal({
   loan,
@@ -43,8 +44,8 @@ export function AssetModal({
     try {
       await updateLoanAsset(loan.id, { assetLabel: label.trim() || 'Asset', assetValueMinor: valueMinor });
       onDone();
-    } catch (e: any) {
-      setError(String(e?.message ?? e));
+    } catch (e) {
+      setError(errorMessage(e));
     } finally {
       setSaving(false);
     }
@@ -55,8 +56,8 @@ export function AssetModal({
     try {
       await updateLoanAsset(loan.id, { assetLabel: null, assetValueMinor: null });
       onDone();
-    } catch (e: any) {
-      setError(String(e?.message ?? e));
+    } catch (e) {
+      setError(errorMessage(e));
     } finally {
       setSaving(false);
     }
@@ -81,7 +82,7 @@ export function AssetModal({
               style={f.footerBtn}
             />
             <PrimaryButton
-              title={saving ? 'Saving...' : 'Save'}
+              title={saving ? 'Saving…' : 'Save'}
               onPress={submit}
               disabled={saving}
               style={f.footerBtn}

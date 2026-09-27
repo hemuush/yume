@@ -1,3 +1,4 @@
+import { TransactionRow } from './rows';
 import { getDb } from './client';
 import { captureRow, restoreRow, RowSnapshot } from './undoSnapshot';
 import { deleteTransaction, restoreTransaction } from './ledger';
@@ -18,8 +19,8 @@ const KEPT_INCOME_KEY = 'tidy_kept_starting_income';
 /** A category name that says "this is money I already had": Previous, Opening balance, Carry forward… */
 const STARTING_BALANCE_NAME = /\b(previous|opening|balance|carry|carried|starting|brought)\b/i;
 
-// Plain entries only — see the note above.
-const PLAIN = `t.loan_id IS NULL AND t.loan_payment_id IS NULL
+// Plain entries only — see the note above: not tied to a loan or a person, and not part of a split payment.
+const PLAIN = `t.loan_id IS NULL AND t.loan_payment_id IS NULL AND t.split_id IS NULL
   AND NOT EXISTS (SELECT 1 FROM loan_payments lp WHERE lp.transaction_id = t.id)
   AND NOT EXISTS (SELECT 1 FROM person_ledger_entries pe WHERE pe.transaction_id = t.id)`;
 
@@ -97,7 +98,18 @@ const repeatKeyOf = (r: {
 /** Same type, account(s), category, amount and date — the same test Add's repeat check uses. */
 export async function findRepeatGroups(): Promise<RepeatGroup[]> {
   const db = await getDb();
-  const rows = await db.getAllAsync<any>(
+  const rows = await db.getAllAsync<
+    Pick<
+      TransactionRow,
+      'id' | 'type' | 'account_id' | 'to_account_id' | 'category_id' | 'amount_minor' | 'date' | 'created_at'
+    > & {
+      account_name: string;
+      to_account_name: string | null;
+      category_name: string | null;
+      category_icon: string | null;
+      category_color: string | null;
+    }
+  >(
     `SELECT t.id, t.type, t.account_id, t.to_account_id, t.category_id, t.amount_minor, t.date, t.created_at,
        a.name AS account_name, ta.name AS to_account_name, c.name AS category_name, c.icon AS category_icon,
        c.color AS category_color
@@ -152,13 +164,19 @@ export async function findRepeatGroups(): Promise<RepeatGroup[]> {
 /** Income filed under a "this is money I already had" category — a balance, not earnings. */
 export async function findStartingBalances(): Promise<StartingBalanceGroup[]> {
   const db = await getDb();
-  const rows = await db.getAllAsync<any>(
+  const rows = await db.getAllAsync<
+    Pick<TransactionRow, 'id' | 'account_id' | 'amount_minor' | 'date'> & {
+      category_id: string;
+      account_name: string;
+      category_name: string;
+    }
+  >(
     `SELECT t.id, t.account_id, t.category_id, t.amount_minor, t.date, a.name AS account_name,
        c.name AS category_name
      FROM transactions t
      JOIN accounts a ON a.id = t.account_id
      JOIN categories c ON c.id = t.category_id
-     WHERE t.type = 'income' AND c.is_system = 0 AND ${PLAIN}
+     WHERE t.type = 'income' AND t.is_refund = 0 AND c.is_system = 0 AND ${PLAIN}
      ORDER BY t.date ASC`
   );
   const kept = new Set(await getKeptList(KEPT_INCOME_KEY));

@@ -38,7 +38,7 @@ import {
 } from '@/lib/period';
 import { getTidyUpReport } from '@/db/tidyUp';
 import { SegmentedControl } from '@/components/SegmentedControl';
-import { parseLocalIsoDate, toLocalIsoDate } from '@/lib/date';
+import { parseLocalIsoDate, toLocalIsoDate, isIsoDate } from '@/lib/date';
 import { theme } from '@/constants/theme';
 import { ReportsSkeleton } from '@/features/reports/ReportsSkeleton';
 import { PeriodRow } from '@/features/reports/PeriodRow';
@@ -61,10 +61,23 @@ import {
   quietDays,
   buildStoryCards,
 } from '@/features/reports/reportsInsights';
+import { errorMessage } from '@/lib/errorMessage';
+import { withPressed } from '@/lib/pressed';
+import { EmptyState } from '@/components/EmptyState';
 
 export default function ReportsScreen() {
   const insets = useSafeAreaInsets();
   const [cursor, setCursor] = useState<ReportWindow>(CURRENT_PERIOD);
+  // Which way the last arrow or swipe moved, so the headline slides in from that side.
+  const [slideDirection, setSlideDirection] = useState<-1 | 0 | 1>(0);
+  const stepCursor = (next: ReportWindow) => {
+    setSlideDirection(
+      !isCustomWindow(next) && !isCustomWindow(cursor) && next.granularity === cursor.granularity
+        ? (Math.sign(next.offset - cursor.offset) as -1 | 0 | 1)
+        : 0
+    );
+    setCursor(next);
+  };
   // "Where it went" (spending) or "Where it came from" (income).
   const [flow, setFlow] = useState<'expense' | 'income'>('expense');
   // Categories Tidy up reads as starting balances logged as income: the
@@ -74,7 +87,17 @@ export default function ReportsScreen() {
   // month) — used by Home's month-in-review card. Reports is a tab, so it may
   // already be mounted: this reacts to each new link, then clears the param
   // so a later visit to the tab isn't pulled back to that month.
-  const { month: monthParam } = useLocalSearchParams<{ month?: string }>();
+  // `?from=YYYY-MM-DD&to=YYYY-MM-DD` opens on that range — the week Wrap's
+  // "See the full report", for the week it just played.
+  const {
+    month: monthParam,
+    from: fromParam,
+    to: toParam,
+  } = useLocalSearchParams<{
+    month?: string;
+    from?: string;
+    to?: string;
+  }>();
   useEffect(() => {
     if (monthParam == null) return;
     const offset = Number(monthParam);
@@ -83,6 +106,13 @@ export default function ReportsScreen() {
     }
     router.setParams({ month: undefined });
   }, [monthParam]);
+  useEffect(() => {
+    if (fromParam == null && toParam == null) return;
+    if (isIsoDate(fromParam) && isIsoDate(toParam) && fromParam <= toParam) {
+      setCursor({ granularity: 'custom', start: fromParam, end: toParam });
+    }
+    router.setParams({ from: undefined, to: undefined });
+  }, [fromParam, toParam]);
   const [comparison, setComparison] = useState<PeriodComparison | null>(null);
   const [trend, setTrend] = useState<TrendPoint[]>([]);
   const [netWorthTrend, setNetWorthTrend] = useState<NetWorthPoint[]>([]);
@@ -176,9 +206,9 @@ export default function ReportsScreen() {
       setStartingBalanceNames(tidy ? tidy.startingBalances.map((g) => g.categoryName) : []);
       setStatus('ready');
       setErrorText(null);
-    } catch (e: any) {
+    } catch (e) {
       if (seq !== loadSeq.current) return;
-      setErrorText(String(e?.message ?? e));
+      setErrorText(errorMessage(e));
       setStatus('error');
     }
   }, []);
@@ -204,7 +234,7 @@ export default function ReportsScreen() {
   const header = (
     <>
       <AppHeader title="Reports" />
-      <PeriodRow cursor={cursor} onChange={setCursor} />
+      <PeriodRow cursor={cursor} onChange={stepCursor} />
       {comparison && comparison.current.expenseMinor > 0 && (
         <JumpBar active={activeSection} onJump={jumpTo} />
       )}
@@ -309,15 +339,17 @@ export default function ReportsScreen() {
         }}
       >
         {!hasSpend ? (
-          <Text style={styles.empty}>
-            Nothing spent in this period. Use the arrows above to look back at a month with data.
-          </Text>
+          <EmptyState
+            title="Nothing spent in this period"
+            subtitle="Use the arrows above to look back at a month with data."
+          />
         ) : (
           <>
             {/* Overview: the heatmap on top (with the headline in it), then the period in short. */}
             <View onLayout={onSectionLayout('overview')}>
               <HeatmapCard
                 periodName={periodName}
+                slideDirection={slideDirection}
                 spentMinor={dispExpense}
                 vsUsualPct={vsUsualPct}
                 perDayMinor={perDay}
@@ -380,7 +412,7 @@ export default function ReportsScreen() {
               {startingHeavy && (
                 <Pressable
                   onPress={() => router.push('/tidy-up')}
-                  style={styles.tidyNudge}
+                  style={withPressed(styles.tidyNudge)}
                   accessibilityRole="button"
                 >
                   <Text style={styles.tidyNudgeText}>

@@ -1,11 +1,13 @@
 import { StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
+import { SECTION_TITLE, SECTION_GAP } from '@/constants/textStyles';
 
 // Shared by the Friends & Family screen, PersonRow, and the person modals.
 export const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
   errorBanner: {
     marginHorizontal: 20,
+    marginTop: theme.layout.screenTopGap,
     marginBottom: 12,
     padding: 14,
     borderRadius: theme.radius.md,
@@ -49,10 +51,10 @@ export const styles = StyleSheet.create({
     marginLeft: 12,
   },
   statusDot: { width: 5, height: 5, borderRadius: 2.5 },
-  statusPillText: { fontFamily: theme.font.bodyBold, fontSize: 9.5 },
+  statusPillText: { fontFamily: theme.font.bodyBold, fontSize: 10.5 },
   cardRight: { alignItems: 'flex-end', flexShrink: 0 },
   cardBalance: { fontSize: 16, fontFamily: theme.font.monoBold },
-  cardSub: { fontFamily: theme.font.body, fontSize: 9.5, color: theme.colors.textMuted, marginTop: 2 },
+  cardSub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, marginTop: 2 },
   skeletonCard: {
     backgroundColor: theme.colors.surface,
     flexDirection: 'row',
@@ -68,12 +70,12 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: theme.colors.border,
+    borderBottomColor: theme.colors.borderSoft,
   },
   moreBtn: {
-    width: 30,
-    height: 30,
-    borderRadius: 10,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: StyleSheet.hairlineWidth,
@@ -95,11 +97,9 @@ export const styles = StyleSheet.create({
   rowValue: { fontFamily: theme.font.monoBold, fontSize: 13.5 },
   detailBalance: { fontFamily: theme.font.monoBold, fontSize: 20, marginBottom: 16 },
   sectionTitle: {
-    fontFamily: theme.font.roundedBold,
-    fontSize: 16,
-    color: theme.colors.textPrimary,
-    marginTop: 20,
-    marginBottom: 4,
+    ...SECTION_TITLE,
+    marginTop: SECTION_GAP.top,
+    marginBottom: SECTION_GAP.bottom,
   },
   fieldLabel: {
     fontFamily: theme.font.bodyMedium,
@@ -108,7 +108,7 @@ export const styles = StyleSheet.create({
     marginBottom: 6,
     marginTop: 4,
   },
-  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 8 },
+  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 14 },
   hintText: {
     fontFamily: theme.font.body,
     fontSize: 12,
@@ -116,7 +116,7 @@ export const styles = StyleSheet.create({
     marginBottom: 10,
     lineHeight: 17,
   },
-  errorText: { fontFamily: theme.font.bodyBold, color: theme.colors.expense, fontSize: 13, marginBottom: 10 },
+  errorText: { fontFamily: theme.font.bodyBold, color: theme.colors.expense, fontSize: 13, marginBottom: 12 },
   historyIcon: {
     width: 30,
     height: 30,

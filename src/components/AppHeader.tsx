@@ -9,6 +9,7 @@ import { useAccent } from '@/theme/AccentContext';
 import { usePrivacy } from '@/theme/PrivacyContext';
 import { usePressScale } from '@/lib/usePressScale';
 import { getCachedUserName } from '@/db/settings';
+import { useReturnOrPush } from '@/lib/useReturnOrPush';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -99,9 +100,13 @@ export function HeaderUserButton({ soft }: { soft?: boolean } = {}) {
   );
   const initial = name?.trim().charAt(0).toUpperCase();
   const { animatedStyle, onPressIn, onPressOut } = usePressScale();
+  // Profile opens Loans, People, Categories and Backup, whose headers have
+  // this button too: return to Profile when it's already open below rather
+  // than stacking Profile → Loans → Profile → … without end.
+  const returnOrPush = useReturnOrPush();
   return (
     <AnimatedPressable
-      onPress={() => router.push('/profile')}
+      onPress={() => returnOrPush({ name: 'profile' }, '/profile')}
       onPressIn={onPressIn}
       onPressOut={onPressOut}
       hitSlop={8}
@@ -174,9 +179,9 @@ const styles = StyleSheet.create({
   },
   left: { flexDirection: 'row', alignItems: 'center', flex: 1, minWidth: 0 },
   backBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
     backgroundColor: theme.colors.surface,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,

@@ -1,4 +1,5 @@
 import { Easing, FadeIn, FadeOut, LinearTransition, ReduceMotion } from 'react-native-reanimated';
+import { DURATIONS } from './motionTimings';
 
 /**
  * Cap on a list row's FadeIn entrance stagger delay (`Math.min(i * step, MAX_LIST_STAGGER_MS)`)
@@ -18,20 +19,7 @@ export const MAX_LIST_STAGGER_MS = 320;
  */
 export const MOTION = {
   ease: Easing.out(Easing.cubic),
-  /** Fades and highlight changes. */
-  quick: 200,
-  /** Rows opening/closing, a swipe settling back. */
-  standard: 240,
-  /** A page turn (the month changing): out, then in. */
-  slideOut: 140,
-  slideIn: 220,
-  /** Shapes and bars drawing in. */
-  draw: 700,
-  /** Figures counting up. */
-  count: 550,
-  /** The opening fade-in, and the gap between one row's start and the next. */
-  enter: 280,
-  enterStep: 50,
+  ...DURATIONS,
 } as const;
 
 /**
@@ -77,7 +65,16 @@ export function homeRowEntering(index: number, opening: boolean) {
  * fades out. Short enough to never hold anything up, and off entirely when
  * the phone asks for less motion.
  */
-export const ROW_LAYOUT = LinearTransition.duration(220)
+export const ROW_LAYOUT = LinearTransition.duration(DURATIONS.rowMove)
   .easing(MOTION.ease)
   .reduceMotion(ReduceMotion.System);
-export const ROW_EXIT = FadeOut.duration(160).reduceMotion(ReduceMotion.System);
+export const ROW_EXIT = FadeOut.duration(DURATIONS.rowExit).reduceMotion(ReduceMotion.System);
+
+/**
+ * A panel opening in place (a Settings row's accordion, archived accounts):
+ * it fades in while the rows below it slide down (wrap those in MovingRow),
+ * and fades out as they slide back up.
+ */
+export const PANEL_ENTER = FadeIn.duration(DURATIONS.standard)
+  .easing(MOTION.ease)
+  .reduceMotion(ReduceMotion.System);

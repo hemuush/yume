@@ -35,13 +35,13 @@ const LAYOUT_KEYS = [
 
 function splitStyle(style: StyleProp<ViewStyle>): [ViewStyle, ViewStyle] {
   const flat = StyleSheet.flatten(style) ?? {};
-  const outer: any = {};
-  const inner: any = {};
+  const outer: Record<string, unknown> = {};
+  const inner: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(flat)) {
     if ((LAYOUT_KEYS as readonly string[]).includes(key)) outer[key] = value;
     else inner[key] = value;
   }
-  return [outer, inner];
+  return [outer as ViewStyle, inner as ViewStyle];
 }
 
 /**

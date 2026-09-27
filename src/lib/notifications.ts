@@ -88,7 +88,7 @@ const WEEKLY_SUMMARY_ID = 'yume-weekly-summary';
 
 /**
  * Cancels any previously scheduled weekly summary and, if enabled, schedules
- * a fresh one — every Sunday at the same hour/minute as the daily reminder
+ * a fresh one — every Monday at the same hour/minute as the daily reminder
  * preference, so there's only one time-of-day setting to reason about.
  */
 export async function syncWeeklySummary(prefs: NotificationPrefs): Promise<void> {
@@ -98,10 +98,14 @@ export async function syncWeeklySummary(prefs: NotificationPrefs): Promise<void>
   await ensureAndroidChannel();
   await Notifications.scheduleNotificationAsync({
     identifier: WEEKLY_SUMMARY_ID,
-    content: { ...pickRandom(WEEKLY_SUMMARY_COPY), data: { url: '/reports' satisfies NotificationRoute } },
+    // Plays the week's Wrap, which ends on that week's full report.
+    content: {
+      ...pickRandom(WEEKLY_SUMMARY_COPY),
+      data: { url: '/wrap?period=week' satisfies NotificationRoute },
+    },
     trigger: {
       type: Notifications.SchedulableTriggerInputTypes.WEEKLY,
-      weekday: 1, // Sunday
+      weekday: 2, // Monday (expo counts Sunday as 1): the day Home's Wrap button offers last week too
       hour: prefs.reminderHour,
       minute: prefs.reminderMinute,
     },
@@ -186,7 +190,13 @@ export async function notifyBudget(copy: { title: string; body: string }): Promi
  * budget nudge opens Budgets. A fixed list — a notification can only ever
  * route to one of these, whatever its payload says.
  */
-export const NOTIFICATION_ROUTES = ['/add-transaction', '/loans', '/reports', '/budgets'] as const;
+export const NOTIFICATION_ROUTES = [
+  '/add-transaction',
+  '/loans',
+  '/reports',
+  '/budgets',
+  '/wrap?period=week',
+] as const;
 export type NotificationRoute = (typeof NOTIFICATION_ROUTES)[number];
 
 /** The route a tapped notification asks for, or null if it carries none this app knows. */

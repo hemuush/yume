@@ -1,6 +1,7 @@
 import { StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
 import { HOME } from '@/features/home/homeStyles';
+import { EYEBROW } from '@/constants/textStyles';
 
 // Shared by the Profile screen (its shell, YouSection, and SettingsSection)
 // and the account modals (AddAccountModal, AccountDetailModal). Cards, rows
@@ -10,6 +11,7 @@ export const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
   errorBanner: {
     marginHorizontal: HOME.gutter,
+    marginTop: theme.layout.screenTopGap,
     marginBottom: 12,
     padding: 14,
     borderRadius: theme.radius.md,
@@ -72,7 +74,7 @@ export const styles = StyleSheet.create({
   tabWrap: { marginHorizontal: HOME.gutter, marginTop: 16 },
 
   // ---- You: tracked balance as a sum ----
-  balanceCard: { marginTop: 18 },
+  balanceCard: { marginTop: 12 },
   balanceHead: { paddingHorizontal: 16, paddingTop: 16 },
   balanceLabel: {
     fontFamily: theme.font.bodyBold,
@@ -149,7 +151,7 @@ export const styles = StyleSheet.create({
   planLinkText: { flex: 1, fontFamily: theme.font.roundedMedium, fontSize: 13.5, color: theme.colors.ink },
 
   // ---- Settings: at a glance ----
-  glanceRow: { flexDirection: 'row', gap: 8, marginHorizontal: HOME.gutter, marginTop: 18 },
+  glanceRow: { flexDirection: 'row', gap: 8, marginHorizontal: HOME.gutter, marginTop: 12 },
   glanceTile: {
     flex: 1,
     minWidth: 0,
@@ -205,23 +207,7 @@ export const styles = StyleSheet.create({
   // smaller than the full-width PrimaryButton used in modal footers, since
   // this sits inline inside a settings row, not its own screen.
   dailyGoalBtnRow: { flexDirection: 'row', gap: 8, marginTop: 2 },
-  dailyGoalBtn: { flex: 1, borderRadius: theme.radius.pill, paddingVertical: 9, alignItems: 'center' },
-  dailyGoalBtnPrimary: { backgroundColor: theme.colors.ink },
-  dailyGoalBtnPrimaryText: {
-    fontFamily: theme.font.roundedBold,
-    fontSize: 12.5,
-    color: theme.colors.surface,
-  },
-  dailyGoalBtnGhost: {
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-    backgroundColor: theme.colors.surface,
-  },
-  dailyGoalBtnGhostText: {
-    fontFamily: theme.font.roundedMedium,
-    fontSize: 12.5,
-    color: theme.colors.textMuted,
-  },
+  dailyGoalBtn: { flex: 1 },
 
   // ---- Settings: theme swatches ----
   themeCaption: {
@@ -271,7 +257,7 @@ export const styles = StyleSheet.create({
     color: theme.colors.textMuted,
     marginBottom: 6,
   },
-  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 10 },
+  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 14 },
   hintText: {
     fontFamily: theme.font.body,
     fontSize: 12,
@@ -281,10 +267,7 @@ export const styles = StyleSheet.create({
   },
   errorText: { fontFamily: theme.font.body, color: theme.colors.expense, fontSize: 13, marginBottom: 12 },
   dangerLabel: {
-    fontSize: 11,
-    fontFamily: theme.font.bodyBold,
-    color: theme.colors.textMuted,
-    letterSpacing: 0.5,
+    ...EYEBROW,
     marginTop: 20,
     marginBottom: 8,
   },

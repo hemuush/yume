@@ -17,8 +17,13 @@ jest.mock('@/features/reports/RangeSheet', () => ({ RangeSheet: () => null }));
 jest.mock('@/components/AppHeader', () => ({ AppHeader: () => null }));
 jest.mock('@/features/transactions/TransactionDetailModal', () => ({ TransactionDetailModal: () => null }));
 const mockParams: { current: Record<string, string> } = { current: { id: 'food' } };
+// The stack below this page: Budgets, then this category's page.
+const mockStack = { routes: [{ name: 'budgets' }, { name: 'category/[id]', params: { id: 'food' } }] };
 jest.mock('expo-router', () => ({
-  router: { push: jest.fn(), navigate: jest.fn() },
+  router: { push: jest.fn(), navigate: jest.fn(), back: jest.fn(), dismissTo: jest.fn() },
+  useNavigation: () => ({
+    getState: () => ({ routes: mockStack.routes, index: mockStack.routes.length - 1 }),
+  }),
   useLocalSearchParams: () => mockParams.current,
   useFocusEffect: (cb: () => void) => require('react').useEffect(cb, [cb]),
 }));
@@ -53,8 +58,8 @@ jest.mock('@/db/reports', () => ({
     totalMinor: 65000,
     count: 4,
     split: [
-      { categoryId: 'bistro', name: 'Bistro', totalMinor: 50000 },
-      { categoryId: 'food', name: 'Other Food', totalMinor: 15000 },
+      { categoryId: 'bistro', name: 'Bistro', totalMinor: 50000, count: 3 },
+      { categoryId: 'food', name: 'Other Food', totalMinor: 15000, count: 1 },
     ],
     months: ['2026-04', '2026-05', '2026-06', '2026-07', '2026-08', '2026-09'].map((month, i) => ({
       month,
@@ -87,6 +92,10 @@ jest.mock('@/db/budgets', () => ({
 
 import CategoryScreen from '../../../app/category/[id]';
 import { router } from 'expo-router';
+
+// Bars and rings animate to their values (useGrowFrom, at most the 700ms draw):
+// let the last ones finish before the file ends, so no frame fires after teardown.
+afterAll(() => new Promise((resolve) => setTimeout(resolve, 800)));
 
 async function render() {
   let tree!: ReactTestRenderer;
@@ -130,6 +139,9 @@ describe('Category page', () => {
     );
     expect(shown.some((t) => t.startsWith('4 entries'))).toBe(true);
     expect(shown).toContain('₹150 over budget');
+    // How often, and the usual amount each time, under each place in the split.
+    expect(shown).toEqual(expect.arrayContaining(['3 times · ₹167 each', 'once']));
+    expect(shown.some((t) => t.startsWith('4 entries, about ₹163 each'))).toBe(true);
   });
 
   it('opens What-if and Activity on this category', async () => {
@@ -153,5 +165,13 @@ describe('Category page', () => {
     } finally {
       mockParams.current = { id: 'food' };
     }
+  });
+
+  it('goes back to Budgets when it opened this page, instead of stacking another copy', async () => {
+    const tree = await render();
+    const budget = tree.root.findAll((n) => typeof n.props.onPress === 'function' && n.props.progress);
+    act(() => budget[0].props.onPress());
+    expect(router.back).toHaveBeenCalledTimes(1);
+    expect(router.push).not.toHaveBeenCalledWith('/budgets');
   });
 });

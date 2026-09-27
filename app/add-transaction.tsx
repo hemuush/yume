@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { View, Pressable, Alert, Animated } from 'react-native';
-import { MovingRow } from '@/components/MovingRow';
+import { View, Pressable, Alert } from 'react-native';
 import { Text, TextInput } from '@/components/Text';
 import { KeyboardAwareScrollView, KeyboardStickyView } from 'react-native-keyboard-controller';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
@@ -30,15 +29,14 @@ import {
 } from '@/db/people';
 import { Account, Category, Transaction } from '@/types';
 import { theme } from '@/constants/theme';
-import { toMinor, formatMoney, getCurrencySymbol } from '@/lib/money';
+import { toMinor, formatMoney } from '@/lib/money';
 import { toLocalIsoDate, addDaysToIsoDate } from '@/lib/date';
 import { useFadeIn } from '@/lib/useFadeIn';
+import { markJustAdded } from '@/lib/justAdded';
 import { haptics } from '@/lib/haptics';
 import { AppHeader } from '@/components/AppHeader';
-import { SegmentedControl } from '@/components/SegmentedControl';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { CategoryPicker } from '@/components/CategoryPicker';
-import { CategoryIcon } from '@/components/CategoryIcon';
 import { ModalSheet } from '@/components/ModalSheet';
 import { SoftCard } from '@/features/home/SoftCard';
 import { CalendarSheet } from '@/components/CalendarSheet';
@@ -48,17 +46,30 @@ import { RepeatEntrySheet } from '@/features/home/RepeatEntrySheet';
 import { styles } from '@/features/add/add.styles';
 import {
   EntryType,
-  ADD_TYPES,
-  EDIT_TYPES,
-  TYPE_WASH,
   Staged,
   isTxType,
   dateChipLabel,
   repeatKey,
+  formToStaged as formToStagedEntry,
 } from '@/features/add/addEntry';
 import { applyPadKey, evaluateAmount, exprFromMinor, hasOperator, PadKey } from '@/features/add/padMath';
 import { AmountPad } from '@/features/add/AmountPad';
-import { AccountTile, Totals, FriendFields, DetailChip } from '@/features/add/AddFields';
+import { AccountTile, Totals, FriendFields, DetailBar, DetailChip } from '@/features/add/AddFields';
+import { AmountCard, TransferAccounts, UsualChips, StagedList } from '@/features/add/AddSections';
+import { errorMessage } from '@/lib/errorMessage';
+import { useOnKeyboardHide } from '@/lib/useOnKeyboardHide';
+import { withPressed } from '@/lib/pressed';
+import { getSplitParts, saveSplit, deleteSplit } from '@/db/splits';
+import {
+  DraftPart,
+  seedParts,
+  draftFromSaved,
+  splitProblem,
+  splitProblemText,
+  toSplitParts,
+} from '@/features/add/splitDraft';
+import { openSplitSession, takeSplitResult } from '@/features/add/splitSession';
+import { SplitCard } from '@/features/add/SplitCard';
 
 /** How many "Your usual" chips Add shows. */
 const USUAL_COUNT = 4;
@@ -80,12 +91,22 @@ export default function AddTransactionScreen() {
     id?: string;
     accountId?: string;
     toAccountId?: string;
+    /** Prefills the amount, in minor units — a card's "Pay bill". */
+    amount?: string;
+    /** "Got money back" on an entry: opens as a refund for its category, with its note. */
+    refund?: string;
+    categoryId?: string;
+    note?: string;
   }>();
   const editingId = params.id;
   const initialType = params.type;
   const initialAccountId = params.accountId;
   // A transfer's destination, e.g. "Move money here" on a goal that follows an account.
   const initialToAccountId = params.toAccountId;
+  // "Got money back" on an entry: a refund for its category, with its note.
+  const refundParam = params.refund;
+  const categoryParam = params.categoryId;
+  const noteParam = params.note;
 
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -96,7 +117,10 @@ export default function AddTransactionScreen() {
 
   const [type, setType] = useState<EntryType>(isTxType(params.type) ? params.type : 'expense');
   // What's been typed on the number pad — a number, or a sum like "120+45".
-  const [expr, setExpr] = useState('');
+  const [expr, setExpr] = useState(() => {
+    const minor = Number(params.amount);
+    return Number.isInteger(minor) && minor > 0 ? exprFromMinor(minor) : '';
+  });
   const [accountId, setAccountId] = useState<string | null>(null);
   const [toAccountId, setToAccountId] = useState<string | null>(null);
   const [categoryId, setCategoryId] = useState<string | null>(null);
@@ -109,6 +133,11 @@ export default function AddTransactionScreen() {
   const [friendAccountId, setFriendAccountId] = useState<string | null>(null);
 
   const [rows, setRows] = useState<Staged[]>([]);
+  // "Money back" on the Expense tab: this entry is a refund.
+  const [refund, setRefund] = useState(params.refund === '1');
+  // Split mode: this payment spread across categories (null when it isn't split).
+  // The parts are made on the split page (app/split.tsx) and come back here on Done.
+  const [splitParts, setSplitParts] = useState<DraftPart[] | null>(null);
   const [saving, setSaving] = useState(false);
   const [saveDone, setSaveDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -121,6 +150,13 @@ export default function AddTransactionScreen() {
   // category or date changing — tapping the amount brings it up.
   const [padOpen, setPadOpen] = useState(!editingId);
   const [noteEditing, setNoteEditing] = useState(false);
+  // Closing the keyboard (back gesture, or its own down key) ends typing in
+  // the category search or the note, so the number pad comes back — Android
+  // leaves the field focused without this, and the pad stayed hidden.
+  useOnKeyboardHide(() => {
+    setSearchFocused(false);
+    setNoteEditing(false);
+  });
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [accountSheetOpen, setAccountSheetOpen] = useState(false);
   const [addAccountVisible, setAddAccountVisible] = useState(false);
@@ -229,13 +265,23 @@ export default function AddTransactionScreen() {
       if (tx) {
         setEditing(tx);
         setIsLinked(link !== null);
-        setType(tx.type);
+        // A refund is stored as money in, but it's edited where it was made: the Expense tab.
+        setType(tx.isRefund ? 'expense' : tx.type);
+        setRefund(tx.isRefund);
         setExpr(exprFromMinor(tx.amountMinor));
         setAccountId(tx.accountId);
         setToAccountId(tx.toAccountId);
         setCategoryId(tx.categoryId);
         setNote(tx.note);
         setDate(tx.date);
+        // Editing any part of a split edits the whole payment.
+        if (tx.splitId) {
+          const parts = await getSplitParts(tx.splitId);
+          setSplitParts(
+            draftFromSaved(parts.map((p) => ({ categoryId: p.categoryId!, amountMinor: p.amountMinor })))
+          );
+          setExpr(exprFromMinor(parts.reduce((sum, p) => sum + p.amountMinor, 0)));
+        }
       }
     } else if (!editingId && !seeded) {
       addDefaults.current = await getAddDefaults().catch(() => ({}));
@@ -243,6 +289,12 @@ export default function AddTransactionScreen() {
       applyDefaults(startType, accs, cats);
       // Wins over the remembered default — but only if it can actually take
       // this entry (a savings account can only be a transfer's "from").
+      if (refundParam === '1') {
+        if (categoryParam && cats.some((c) => c.id === categoryParam && c.kind === 'expense')) {
+          setCategoryId(categoryParam);
+        }
+        if (noteParam) setNote(noteParam);
+      }
       const asked = initialAccountId ? accs.find((a) => a.id === initialAccountId) : undefined;
       if (asked && (startType === 'transfer' || asked.type !== 'savings')) {
         setAccountId(asked.id);
@@ -260,11 +312,29 @@ export default function AddTransactionScreen() {
       }
     }
     setSeeded(true);
-  }, [editingId, seeded, initialType, initialAccountId, initialToAccountId, applyDefaults]);
+  }, [
+    editingId,
+    seeded,
+    initialType,
+    initialAccountId,
+    initialToAccountId,
+    refundParam,
+    categoryParam,
+    noteParam,
+    applyDefaults,
+  ]);
 
   useFocusEffect(
     useCallback(() => {
       load();
+      // Back from the split page with Done: the entry is split that way now.
+      const split = takeSplitResult();
+      if (split) {
+        setSplitParts(split);
+        setError(null);
+        // The total is set; the split card is what's worth seeing now.
+        setPadOpen(false);
+      }
     }, [load])
   );
 
@@ -303,6 +373,11 @@ export default function AddTransactionScreen() {
   const onTypeChange = (next: EntryType) => {
     setType(next);
     setCategoryId(null);
+    // Only expenses split, or take money back.
+    if (next !== 'expense') {
+      setSplitParts(null);
+      setRefund(false);
+    }
     // A new entry switches to what this type was last saved with; an edit
     // keeps its own values, exactly as before.
     if (!editing) applyDefaults(next, accounts, categories);
@@ -337,62 +412,23 @@ export default function AddTransactionScreen() {
   };
 
   /** Validate the current form into a staged row, or return an error string. */
-  const formToStaged = (): { row: Staged } | { error: string } => {
-    if (amountMinor <= 0) return { error: 'Enter a valid amount' };
-    const id = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
-
-    if (type === 'friend') {
-      if (!personId) return { error: 'Pick a person' };
-      const person = people.find((p) => p.id === personId);
-      const acc = friendAccountId ? accounts.find((a) => a.id === friendAccountId) : null;
-      return {
-        row: {
-          id,
-          kind: 'friend',
-          personId,
-          personName: person?.name ?? '—',
-          sign: friendSign,
-          accountId: friendAccountId,
-          accountName: acc?.name ?? null,
-          amountMinor,
-          date,
-          note,
-        },
-      };
-    }
-
-    if (!effectiveAccountId) return { error: 'Pick an account' };
-    if (type !== 'transfer' && !categoryId) return { error: 'Pick a category' };
-    if (type === 'transfer' && (!toAccountId || toAccountId === effectiveAccountId)) {
-      return { error: 'Pick a different destination account' };
-    }
-    if (type === 'transfer') {
-      // Same rule createTransaction enforces — caught here so it shows as a
-      // form error instead of a half-saved batch.
-      const fromCurrency = accounts.find((a) => a.id === effectiveAccountId)?.currency;
-      const toCurrency = accounts.find((a) => a.id === toAccountId)?.currency;
-      if (fromCurrency && toCurrency && fromCurrency !== toCurrency) {
-        return { error: `These accounts use different currencies (${fromCurrency} and ${toCurrency})` };
-      }
-    }
-    const cat = categories.find((c) => c.id === categoryId);
-    return {
-      row: {
-        id,
-        kind: 'transaction',
+  const formToStaged = () =>
+    formToStagedEntry(
+      {
         type,
-        accountId: effectiveAccountId,
-        toAccountId: type === 'transfer' ? toAccountId : null,
-        categoryId: type === 'transfer' ? null : categoryId,
-        label: type === 'transfer' ? 'Transfer' : (cat?.name ?? '—'),
-        categoryIcon: type === 'transfer' ? 'swap-horizontal' : (cat?.icon ?? 'tag'),
-        categoryColor: type === 'transfer' ? theme.colors.secondary : (cat?.color ?? theme.colors.textMuted),
         amountMinor,
         date,
         note,
+        accountId: effectiveAccountId,
+        toAccountId,
+        categoryId,
+        personId,
+        friendSign,
+        friendAccountId,
+        refund,
       },
-    };
-  };
+      { accounts, categories, people }
+    );
 
   /**
    * True (and shows a note) when `row` looks like one already saved in the
@@ -453,7 +489,8 @@ export default function AddTransactionScreen() {
     { income: 0, expense: 0 }
   );
 
-  const persistRow = async (r: Staged) => {
+  /** Saves one staged row; the new entry's id when it's a plain entry (friend entries don't hand one back). */
+  const persistRow = async (r: Staged): Promise<string | null> => {
     if (r.kind === 'friend') {
       if (r.accountId) {
         const category =
@@ -475,6 +512,7 @@ export default function AddTransactionScreen() {
         };
         if (r.sign === 1) await recordMoneyGivenToPerson(payload);
         else await recordMoneyReceivedFromPerson(payload);
+        return null;
       } else {
         await addLedgerEntry({
           personId: r.personId,
@@ -483,9 +521,9 @@ export default function AddTransactionScreen() {
           note: r.note,
         });
       }
-      return;
+      return null;
     }
-    await createTransaction({
+    const created = await createTransaction({
       type: r.type,
       accountId: r.accountId,
       toAccountId: r.toAccountId,
@@ -493,7 +531,9 @@ export default function AddTransactionScreen() {
       amountMinor: r.amountMinor,
       date: r.date,
       note: r.note,
+      isRefund: !!r.isRefund,
     });
+    return created.id;
   };
 
   // A brief "done" checkmark (PrimaryButton's own `done` prop) before
@@ -503,6 +543,60 @@ export default function AddTransactionScreen() {
   const goBackAfterSave = () => {
     setSaveDone(true);
     setTimeout(() => router.back(), 320);
+  };
+
+  const onSaveSplit = async () => {
+    if (!splitParts) return;
+    setError(null);
+    const problem = splitProblem(amountMinor, splitParts);
+    if (problem) {
+      const nameOf = (key: string) =>
+        categories.find((c) => c.id === splitParts.find((p) => p.key === key)?.categoryId)?.name ??
+        'this part';
+      setError(splitProblemText(problem, splitParts, nameOf, (m) => formatMoney(m, currency)));
+      return;
+    }
+    if (!effectiveAccountId) {
+      setError('Pick an account');
+      return;
+    }
+    setSaving(true);
+    try {
+      const splitId = await saveSplit({
+        splitId: editing?.splitId ?? null,
+        // Splitting an ordinary entry being edited: the parts take its place.
+        replacesEntryId: editing && !editing.splitId ? editing.id : null,
+        accountId: effectiveAccountId,
+        date,
+        note: note.trim(),
+        parts: toSplitParts(amountMinor, splitParts),
+      });
+      // The lists you land back on glow the new parts, like any saved entry.
+      markJustAdded((await getSplitParts(splitId)).map((p) => p.id));
+      goBackAfterSave();
+    } catch (e) {
+      setError(errorMessage(e));
+      setSaving(false);
+    }
+  };
+
+  /** Opens the split page with this payment: its parts so far, or its category holding all of it. */
+  const openSplit = () => {
+    setError(null);
+    if (amountMinor <= 0) {
+      setError('Enter the amount first');
+      setPadOpen(true);
+      return;
+    }
+    const dateLabel = date === today ? 'Today' : date === yesterday ? 'Yesterday' : dateChipLabel(date);
+    openSplitSession({
+      totalMinor: amountMinor,
+      currency,
+      meta: [effectiveAccount?.name, dateLabel, note.trim()].filter(Boolean).join(' · '),
+      categories: filteredCategories,
+      parts: splitParts ?? seedParts(categoryId),
+    });
+    router.push('/split');
   };
 
   const onSaveSingleEdit = async () => {
@@ -524,10 +618,13 @@ export default function AddTransactionScreen() {
         amountMinor: r.amountMinor,
         date: r.date,
         note: r.note,
+        // Turning Money back off makes it an expense again, and on makes it a refund.
+        isRefund: !!r.isRefund,
       });
+      markJustAdded([editing.id]);
       goBackAfterSave();
-    } catch (e: any) {
-      setError(String(e?.message ?? e));
+    } catch (e) {
+      setError(errorMessage(e));
       setSaving(false);
     }
   };
@@ -551,30 +648,58 @@ export default function AddTransactionScreen() {
 
     setSaving(true);
     let saved = 0;
+    const savedIds: string[] = [];
     try {
       for (const r of pending) {
-        await persistRow(r);
+        const id = await persistRow(r);
+        if (id) savedIds.push(id);
         saved += 1;
       }
+      // The lists you land back on glow these rows once (lib/justAdded).
+      markJustAdded(savedIds);
       rememberDefaults(pending);
       goBackAfterSave();
-    } catch (e: any) {
+    } catch (e) {
       // Keep only what didn't make it in, so a retry doesn't double up.
       setRows(pending.slice(saved));
       clearForm();
       setSaving(false);
       Alert.alert(
         'Only some entries saved',
-        `${saved} of ${pending.length} saved before this went wrong: ${String(e?.message ?? e)}`
+        `${saved} of ${pending.length} saved before this went wrong: ${errorMessage(e)}`
       );
     }
   };
 
   const onDelete = () => {
     if (!editing) return;
+    const splitId = editing.splitId;
+    if (splitId) {
+      const count = splitParts?.length ?? 2;
+      Alert.alert(
+        'Delete this split payment?',
+        `All ${count} parts move to Recently deleted for 30 days. Account balances update right away.`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Delete',
+            style: 'destructive',
+            onPress: async () => {
+              try {
+                await deleteSplit(splitId);
+                router.back();
+              } catch (e) {
+                setError(errorMessage(e));
+              }
+            },
+          },
+        ]
+      );
+      return;
+    }
     Alert.alert(
       'Delete this transaction?',
-      'This removes it permanently — account balances update immediately.',
+      'It moves to Recently deleted for 30 days. Account balances update right away.',
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -584,8 +709,8 @@ export default function AddTransactionScreen() {
             try {
               await deleteTransaction(editing.id);
               router.back();
-            } catch (e: any) {
-              setError(String(e?.message ?? e));
+            } catch (e) {
+              setError(errorMessage(e));
             }
           },
         },
@@ -603,17 +728,20 @@ export default function AddTransactionScreen() {
     if (added) setPersonId(added.id);
   };
 
-  const wash = TYPE_WASH[type];
-  const title = editing ? 'Edit Transaction' : 'Add';
+  const title = editing ? 'Edit transaction' : 'Add';
   const saveTitle = saving
     ? 'Saving…'
     : editing
       ? 'Save changes'
-      : repeatWarning
-        ? 'Save anyway'
-        : rows.length > 0
-          ? `Save ${rows.length} ${rows.length === 1 ? 'entry' : 'entries'}`
-          : 'Save';
+      : splitParts
+        ? 'Save split'
+        : refund && rows.length === 0
+          ? 'Save refund'
+          : repeatWarning
+            ? 'Save anyway'
+            : rows.length > 0
+              ? `Save ${rows.length} ${rows.length === 1 ? 'entry' : 'entries'}`
+              : 'Save';
   const sum = hasOperator(expr);
   const shownAmount = sum
     ? amountValue === null
@@ -627,15 +755,15 @@ export default function AddTransactionScreen() {
     <PrimaryButton
       title={saveTitle}
       done={saveDone}
-      onPress={editing ? onSaveSingleEdit : onSaveAll}
+      onPress={splitParts ? onSaveSplit : editing ? onSaveSingleEdit : onSaveAll}
       disabled={saving || isLinked}
       style={styles.saveBtn}
     />
   );
-  const addToListButton = !editing && (
+  const addToListButton = !editing && !splitParts && (
     <Pressable
       onPress={addRow}
-      style={styles.addToList}
+      style={withPressed(styles.addToList)}
       accessibilityRole="button"
       accessibilityHint="Keeps this entry on a list and starts the next one; Save saves them all"
     >
@@ -657,7 +785,7 @@ export default function AddTransactionScreen() {
                 hitSlop={8}
                 accessibilityRole="button"
                 accessibilityLabel="Delete transaction"
-                style={styles.trashBtn}
+                style={withPressed(styles.trashBtn)}
               >
                 <Feather name="trash-2" size={16} color={theme.colors.expense} />
               </Pressable>
@@ -668,7 +796,7 @@ export default function AddTransactionScreen() {
               hitSlop={8}
               accessibilityRole="button"
               accessibilityLabel="Repeat a recent entry"
-              style={styles.repeatBtn}
+              style={withPressed(styles.repeatBtn)}
             >
               <Feather name="rotate-ccw" size={13} color={theme.colors.textPrimary} />
               <Text style={styles.repeatBtnText}>Repeat</Text>
@@ -690,56 +818,22 @@ export default function AddTransactionScreen() {
           </SoftCard>
         )}
 
-        <SoftCard backgroundColor={wash.bg} padding={16} style={styles.heroCard}>
-          <SegmentedControl options={editing ? EDIT_TYPES : ADD_TYPES} value={type} onChange={onTypeChange} />
-
-          <Text style={[styles.heroLabel, { color: wash.accent }]}>
-            {type === 'friend' ? 'Amount' : `${type[0].toUpperCase()}${type.slice(1)} amount`}
-          </Text>
-          <Pressable
-            onPress={() => setPadOpen(true)}
-            disabled={isLinked}
-            style={styles.amountRow}
-            accessibilityRole="button"
-            accessibilityLabel={`Amount, ${expr === '' ? 'empty' : shownAmount}`}
-            accessibilityHint={padVisible ? undefined : 'Opens the number pad'}
-          >
-            <Text style={[styles.amountCurrency, { color: wash.accent }]}>{getCurrencySymbol(currency)}</Text>
-            <Text
-              style={[styles.amountText, expr === '' && styles.amountPlaceholder]}
-              numberOfLines={1}
-              adjustsFontSizeToFit
-            >
-              {shownAmount}
-            </Text>
-            {padVisible && <View style={styles.caret} />}
-          </Pressable>
-          {sum && <Text style={styles.expression}>{expr.replace(/([+−×÷])/g, ' $1 ')}</Text>}
-
-          {frequentAmounts.length > 0 && (
-            <View style={styles.frequentRow}>
-              {frequentAmounts.map((minor) => {
-                const active = amountMinor === minor;
-                return (
-                  <Pressable
-                    key={minor}
-                    onPress={() => {
-                      haptics.tap();
-                      setExpr(exprFromMinor(minor));
-                    }}
-                    style={[styles.frequentChip, active && styles.frequentChipActive]}
-                    accessibilityRole="button"
-                    accessibilityState={{ selected: active }}
-                  >
-                    <Text style={[styles.frequentChipText, active && styles.frequentChipTextActive]}>
-                      {formatMoney(minor, currency)}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </View>
-          )}
-        </SoftCard>
+        <AmountCard
+          type={type}
+          refund={refund}
+          editing={!!editing}
+          onTypeChange={onTypeChange}
+          currency={currency}
+          expr={expr}
+          isSum={sum}
+          shownAmount={shownAmount}
+          padVisible={padVisible}
+          isLinked={isLinked}
+          onOpenPad={() => setPadOpen(true)}
+          frequentAmounts={frequentAmounts}
+          amountMinor={amountMinor}
+          onPickAmount={(minor) => setExpr(exprFromMinor(minor))}
+        />
 
         {repeatWarning && (
           <View style={styles.repeatNote} accessibilityLiveRegion="polite">
@@ -784,78 +878,44 @@ export default function AddTransactionScreen() {
             )}
 
             {type === 'transfer' ? (
-              <>
-                <View style={styles.section}>
-                  <Text style={styles.label}>From</Text>
-                  <View style={styles.accountRow}>
-                    {pickableAccounts.map((acc) => (
-                      <AccountTile
-                        key={acc.id}
-                        account={acc}
-                        active={effectiveAccountId === acc.id}
-                        onPress={() => pickAccount(acc.id)}
-                      />
-                    ))}
-                  </View>
-                </View>
-                <View style={styles.section}>
-                  <Text style={styles.label}>To</Text>
-                  <View style={styles.accountRow}>
-                    {accounts
-                      .filter((a) => a.id !== effectiveAccountId)
-                      .map((acc) => (
-                        <AccountTile
-                          key={acc.id}
-                          account={acc}
-                          active={toAccountId === acc.id}
-                          onPress={() => setToAccountId(acc.id)}
-                        />
-                      ))}
-                  </View>
-                </View>
-              </>
+              <TransferAccounts
+                fromOptions={pickableAccounts}
+                accounts={accounts}
+                fromId={effectiveAccountId}
+                toId={toAccountId}
+                onPickFrom={pickAccount}
+                onPickTo={setToAccountId}
+              />
+            ) : splitParts ? (
+              <SplitCard
+                parts={splitParts}
+                totalMinor={amountMinor}
+                categories={filteredCategories}
+                currency={currency}
+                onEdit={openSplit}
+                onRemove={
+                  editing
+                    ? undefined
+                    : () => {
+                        setSplitParts(null);
+                        setError(null);
+                      }
+                }
+              />
             ) : (
               <View style={styles.section}>
                 {usual.length > 0 && !isLinked && (
-                  <>
-                    <Text style={styles.label}>Your usual</Text>
-                    <View style={styles.recentRow}>
-                      {usual.map((u) => {
-                        const active =
-                          categoryId === u.categoryId &&
-                          amountMinor === u.amountMinor &&
-                          effectiveAccountId === u.accountId;
-                        return (
-                          <Pressable
-                            key={`${u.categoryId}:${u.amountMinor}:${u.accountId}`}
-                            onPress={() => {
-                              haptics.tap();
-                              setCategoryId(u.categoryId);
-                              setExpr(exprFromMinor(u.amountMinor));
-                              pickAccount(u.accountId);
-                            }}
-                            style={[styles.recentChip, active && styles.recentChipActive]}
-                            accessibilityRole="button"
-                            accessibilityState={{ selected: active }}
-                            accessibilityLabel={`${u.categoryName}, ${formatMoney(u.amountMinor, u.accountCurrency)}, logged ${u.timesLogged} times`}
-                          >
-                            <CategoryIcon
-                              name={u.categoryIcon}
-                              color={u.categoryColor}
-                              size={11}
-                              square={20}
-                            />
-                            <Text style={styles.recentChipText} numberOfLines={1}>
-                              {u.categoryName} ·
-                            </Text>
-                            <Text style={styles.recentChipAmount}>
-                              {formatMoney(u.amountMinor, u.accountCurrency)}
-                            </Text>
-                          </Pressable>
-                        );
-                      })}
-                    </View>
-                  </>
+                  <UsualChips
+                    usual={usual}
+                    categoryId={categoryId}
+                    amountMinor={amountMinor}
+                    accountId={effectiveAccountId}
+                    onPick={(u) => {
+                      setCategoryId(u.categoryId);
+                      setExpr(exprFromMinor(u.amountMinor));
+                      pickAccount(u.accountId);
+                    }}
+                  />
                 )}
                 <CategoryPicker
                   categories={filteredCategories}
@@ -870,95 +930,13 @@ export default function AddTransactionScreen() {
           </>
         )}
 
-        <View style={styles.detailRow}>
-          {(type === 'expense' || type === 'income') && effectiveAccount && (
-            <DetailChip
-              icon="credit-card"
-              label={effectiveAccount.name}
-              onPress={() => setAccountSheetOpen(true)}
-              accessibilityLabel={`Account, ${effectiveAccount.name}. Change`}
-            />
-          )}
-          <DetailChip
-            icon="calendar"
-            label={date === today ? 'Today' : date === yesterday ? 'Yesterday' : dateChipLabel(date)}
-            onPress={() => setCalendarOpen(true)}
-            accessibilityLabel={`Date, ${dateChipLabel(date)}. Change`}
-          />
-          <DetailChip
-            icon="edit-3"
-            label={note.trim() || 'Note'}
-            muted={!note.trim()}
-            onPress={() => setNoteEditing(true)}
-            accessibilityLabel={note.trim() ? `Note, ${note}. Edit` : 'Add a note'}
-          />
-        </View>
-        {noteEditing && (
-          <TextInput
-            value={note}
-            onChangeText={setNote}
-            placeholder="e.g. Lunch with team"
-            placeholderTextColor={theme.colors.textMuted}
-            style={styles.noteInput}
-            autoFocus
-            returnKeyType="done"
-            onSubmitEditing={() => setNoteEditing(false)}
-            onBlur={() => setNoteEditing(false)}
-            accessibilityLabel="Note"
-          />
-        )}
-
         {rows.length > 0 && (
-          <Animated.View style={[styles.staged, listFade]}>
-            <View style={styles.stagedHeadRow}>
-              <Text style={styles.stagedHead}>{rows.length} staged</Text>
-              <Text style={styles.stagedHeadTotal}>
-                {totals.income - totals.expense >= 0 ? '+' : '−'}
-                {formatMoney(Math.abs(totals.income - totals.expense))}
-              </Text>
-            </View>
-            {rows.map((r, i) => {
-              const incomeLike = r.kind === 'transaction' ? r.type === 'income' : r.sign === -1;
-              const expenseLike = r.kind === 'transaction' ? r.type === 'expense' : r.sign === 1;
-              return (
-                <MovingRow key={r.id} style={[styles.stagedRow, i > 0 && styles.stagedRowDivider]}>
-                  <CategoryIcon
-                    name={r.kind === 'transaction' ? r.categoryIcon : 'account-multiple'}
-                    color={r.kind === 'transaction' ? r.categoryColor : theme.colors.secondary}
-                    size={15}
-                    square={30}
-                  />
-                  <View style={styles.stagedMid}>
-                    <Text style={styles.stagedLabel} numberOfLines={1}>
-                      {r.kind === 'transaction'
-                        ? r.label
-                        : `${r.personName} ${r.sign === 1 ? 'owes more' : 'repaid'}`}
-                      {!!r.note && <Text style={styles.stagedNote}> · {r.note}</Text>}
-                    </Text>
-                    <Text style={styles.stagedSub}>
-                      {dateChipLabel(r.date)}
-                      {r.kind === 'friend' ? ` · ${r.accountName ?? 'balance only'}` : ''}
-                    </Text>
-                  </View>
-                  <Text
-                    style={[styles.stagedValue, incomeLike && styles.income, expenseLike && styles.expense]}
-                  >
-                    {incomeLike ? '+' : expenseLike ? '−' : ''}
-                    {formatMoney(r.amountMinor)}
-                  </Text>
-                  <Pressable
-                    onPress={() => removeRow(r.id)}
-                    hitSlop={14}
-                    style={styles.removeBtn}
-                    accessibilityRole="button"
-                    accessibilityLabel="Remove this entry from the list"
-                  >
-                    <Feather name="x" size={14} color={theme.colors.textMuted} />
-                  </Pressable>
-                </MovingRow>
-              );
-            })}
-          </Animated.View>
+          <StagedList
+            rows={rows}
+            netMinor={totals.income - totals.expense}
+            fadeStyle={listFade}
+            onRemove={removeRow}
+          />
         )}
       </KeyboardAwareScrollView>
 
@@ -973,6 +951,71 @@ export default function AddTransactionScreen() {
             <Totals label="Out" value={totals.expense} color={theme.colors.expense} />
             <Totals label="Net" value={totals.income - totals.expense} color={theme.colors.textPrimary} />
           </View>
+        )}
+        {noteEditing ? (
+          <TextInput
+            value={note}
+            onChangeText={setNote}
+            placeholder="e.g. Lunch with team"
+            placeholderTextColor={theme.colors.textMuted}
+            style={styles.noteInput}
+            autoFocus
+            returnKeyType="done"
+            onSubmitEditing={() => setNoteEditing(false)}
+            onBlur={() => setNoteEditing(false)}
+            accessibilityLabel="Note"
+          />
+        ) : (
+          <DetailBar>
+            {(type === 'expense' || type === 'income') && effectiveAccount && (
+              <DetailChip
+                icon="credit-card"
+                label={effectiveAccount.name}
+                onPress={() => setAccountSheetOpen(true)}
+                accessibilityLabel={`Account, ${effectiveAccount.name}. Change`}
+              />
+            )}
+            <DetailChip
+              icon="calendar"
+              label={date === today ? 'Today' : date === yesterday ? 'Yesterday' : dateChipLabel(date)}
+              onPress={() => setCalendarOpen(true)}
+              accessibilityLabel={`Date, ${dateChipLabel(date)}. Change`}
+            />
+            <DetailChip
+              icon="edit-3"
+              label={note.trim() || 'Note'}
+              muted={!note.trim()}
+              onPress={() => setNoteEditing(true)}
+              accessibilityLabel={note.trim() ? `Note, ${note}. Edit` : 'Add a note'}
+            />
+            {/* A purchase can be money back, or one payment across several categories, but not both. */}
+            {type === 'expense' && !isLinked && (
+              <DetailChip
+                icon="corner-up-left"
+                label="Money back"
+                active={refund}
+                disabled={!!splitParts}
+                onPress={() => {
+                  setRefund((r) => !r);
+                  setError(null);
+                }}
+                accessibilityLabel="Money back (a refund)"
+              />
+            )}
+            {/* Not alongside a list being built: a split is saved on its own. */}
+            {type === 'expense' && !isLinked && (
+              <DetailChip
+                icon="scissors"
+                label={splitParts ? `Split · ${splitParts.length}` : 'Split'}
+                active={!!splitParts}
+                disabled={refund || rows.length > 0}
+                onPress={openSplit}
+                accessibilityLabel={
+                  splitParts ? `Split into ${splitParts.length} parts. Edit` : 'Split this payment'
+                }
+              />
+            )}
+          </DetailBar>
         )}
         {padVisible ? (
           <AmountPad onKey={onPadKey} onClear={() => setExpr('')}>

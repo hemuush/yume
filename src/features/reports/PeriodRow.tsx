@@ -9,6 +9,8 @@ import { useSwipeStep } from '@/lib/useSwipeStep';
 import { haptics } from '@/lib/haptics';
 import { styles } from './reports.styles';
 import { RangeSheet } from './RangeSheet';
+import { DURATIONS } from '@/lib/motionTimings';
+import { withPressed } from '@/lib/pressed';
 
 const GRANULARITIES = [
   { key: 'month', label: 'Month' },
@@ -54,7 +56,7 @@ export function PeriodRow({
         <Pressable
           onPress={() => change(stepWindow(cursor, -1))}
           hitSlop={8}
-          style={styles.periodArrow}
+          style={withPressed(styles.periodArrow)}
           accessibilityRole="button"
           accessibilityLabel="Previous period"
         >
@@ -63,7 +65,7 @@ export function PeriodRow({
         <ReanimatedAnimated.Text
           maxFontSizeMultiplier={MAX_FONT_SCALE}
           key={windowLabel(cursor)}
-          entering={FadeIn.duration(150)}
+          entering={FadeIn.duration(DURATIONS.quick)}
           numberOfLines={2}
           style={styles.periodLabel}
         >
@@ -73,7 +75,7 @@ export function PeriodRow({
           onPress={() => change(stepWindow(cursor, 1))}
           disabled={!fwd}
           hitSlop={8}
-          style={[styles.periodArrow, !fwd && { opacity: 0.25 }]}
+          style={withPressed([styles.periodArrow, !fwd && { opacity: 0.25 }])}
           accessibilityRole="button"
           accessibilityLabel="Next period"
           accessibilityState={{ disabled: !fwd }}
@@ -88,7 +90,7 @@ export function PeriodRow({
             <Pressable
               key={g.key}
               onPress={() => pickGranularity(g.key)}
-              style={[styles.granBtn, active && styles.granBtnOn]}
+              style={withPressed([styles.granBtn, active && styles.granBtnOn])}
               accessibilityRole="button"
               accessibilityState={{ selected: active }}
             >

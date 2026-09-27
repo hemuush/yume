@@ -1,5 +1,6 @@
 import { StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
+import { EYEBROW } from '@/constants/textStyles';
 
 // Shared by the Recurring screen, RuleCard and RuleModal.
 export const styles = StyleSheet.create({
@@ -9,11 +10,14 @@ export const styles = StyleSheet.create({
     fontSize: 13,
     color: theme.colors.textSecondary,
     marginHorizontal: 20,
-    marginBottom: 16,
+    marginTop: theme.layout.screenTopGap,
+    // The list below adds its own top gap, for 16 in all.
+    marginBottom: 8,
     lineHeight: 18,
   },
   errorBanner: {
     marginHorizontal: 20,
+    marginTop: theme.layout.screenTopGap,
     marginBottom: 12,
     padding: 14,
     borderRadius: theme.radius.md,
@@ -30,21 +34,13 @@ export const styles = StyleSheet.create({
     lineHeight: 16,
   },
   sectionDivider: {
-    fontFamily: theme.font.bodyBold,
-    fontSize: 11,
-    color: theme.colors.textMuted,
-    letterSpacing: 0.6,
+    ...EYEBROW,
     marginTop: 14,
     marginBottom: 6,
   },
   card: { marginBottom: 10, padding: 14 },
   subsCard: { marginBottom: 6, padding: 14, gap: 2 },
-  subsLabel: {
-    fontFamily: theme.font.bodyBold,
-    fontSize: 11,
-    color: theme.colors.textMuted,
-    letterSpacing: 0.6,
-  },
+  subsLabel: EYEBROW,
   subsAmount: {
     fontFamily: theme.font.monoBold,
     fontSize: 24,
@@ -53,7 +49,7 @@ export const styles = StyleSheet.create({
   },
   subsPer: { fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textMuted },
   subsSub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
-  subsList: { paddingVertical: 2, paddingHorizontal: 12 },
+  subsList: { paddingVertical: 2, paddingHorizontal: 14 },
   subsRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10 },
   subsRowDivider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.borderSoft },
   subsRowTitle: { fontFamily: theme.font.bodyBold, fontSize: 13.5, color: theme.colors.textPrimary },
