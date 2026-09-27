@@ -8,6 +8,13 @@ on:
 jobs:
   check:
     runs-on: ubuntu-latest
+    # Run like a phone in India, where Yume is used: lakh grouping (₹3,97,501),
+    # "5 Oct" dates and IST days. The runner otherwise defaults to en-US and
+    # UTC, which formats money and dates differently from every real device.
+    env:
+      LANG: en_IN.UTF-8
+      LC_ALL: en_IN.UTF-8
+      TZ: Asia/Kolkata
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
