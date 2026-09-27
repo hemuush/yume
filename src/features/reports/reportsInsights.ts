@@ -3,6 +3,7 @@ import { formatMoney } from '@/lib/money';
 import { formatPctChange } from '@/lib/format';
 import type { CategoryBreakdownItem, DailyExpensePoint, TrendPoint } from '@/db/reports';
 import type { HeatCell } from './SpendHeatmap';
+import { dayMonth } from '@/lib/dateLabels';
 
 /** Which categories count as a fixed monthly load rather than a choice. */
 const FIXED_CATEGORY_NAMES = ['Loan EMI', 'Rent', 'Insurance', 'Subscriptions'];
@@ -183,18 +184,13 @@ export function categoryDeltas(
 
 const WEEKDAY = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
-/**
- * One notable thing about a period's daily-spend shape: `sentence` is the
- * plain-language read (what describeSpendingPattern returns), `kicker` and
- * `big` are the same finding as a story card's label and headline.
- */
+/** One notable thing about a period's daily-spend shape, as a story card: its label, headline and detail. */
 export interface PatternFact {
   key: 'heaviest' | 'frontLoaded' | 'weekends' | 'noSpend' | 'busiestDay';
   kicker: string;
   big: string;
   /** The rest of the card, under `big`. */
   detail: string;
-  sentence: string;
 }
 
 /**
@@ -213,17 +209,13 @@ export function patternFacts(daily: DailyExpensePoint[], totalDaysInPeriod: numb
   const heaviest = spent.reduce((a, b) => (b.totalMinor > a.totalMinor ? b : a));
   const heaviestShare = heaviest.totalMinor / total;
   if (heaviestShare > 0.2) {
-    const day = parseLocalIsoDate(heaviest.date).toLocaleDateString(undefined, {
-      day: 'numeric',
-      month: 'short',
-    });
+    const day = dayMonth(heaviest.date);
     const pct = Math.round(heaviestShare * 100);
     facts.push({
       key: 'heaviest',
       kicker: 'Heaviest day',
       big: day,
       detail: `${formatMoney(heaviest.totalMinor)} went out — ${pct}% of the month in one day.`,
-      sentence: `Heaviest day was ${day} — ${formatMoney(heaviest.totalMinor)}, ${pct}% of the month.`,
     });
   }
 
@@ -238,7 +230,6 @@ export function patternFacts(daily: DailyExpensePoint[], totalDaysInPeriod: numb
       kicker: 'Front-loaded',
       big: `${pct}% in 8 days`,
       detail: 'Most of the month went out in its first eight days.',
-      sentence: `${pct}% of the month was spent in the first 8 days.`,
     });
   }
 
@@ -264,7 +255,6 @@ export function patternFacts(daily: DailyExpensePoint[], totalDaysInPeriod: numb
         kicker: 'Your rhythm',
         big: `Weekends −${pct}%`,
         detail: 'Saturdays and Sundays ran below your weekday average.',
-        sentence: `Weekends run ${pct}% below your weekday average.`,
       });
     } else if (weAvg > wdAvg * 1.4) {
       const pct = Math.round((weAvg / wdAvg - 1) * 100);
@@ -273,7 +263,6 @@ export function patternFacts(daily: DailyExpensePoint[], totalDaysInPeriod: numb
         kicker: 'Your rhythm',
         big: `Weekends +${pct}%`,
         detail: 'Saturdays and Sundays ran above your weekday average.',
-        sentence: `Weekends run ${pct}% above your weekday average.`,
       });
     }
   }
@@ -287,7 +276,6 @@ export function patternFacts(daily: DailyExpensePoint[], totalDaysInPeriod: numb
         kicker: 'Quiet days',
         big: `${noSpend} no-spend days`,
         detail: 'Days nothing went out at all.',
-        sentence: `${noSpend} no-spend days this period.`,
       });
     }
   }
@@ -303,20 +291,11 @@ export function patternFacts(daily: DailyExpensePoint[], totalDaysInPeriod: numb
         kicker: 'Your rhythm',
         big: `${WEEKDAY[maxDow]}s`,
         detail: 'Your biggest spending day of the week.',
-        sentence: `${WEEKDAY[maxDow]}s are your biggest spending day.`,
       });
     }
   }
 
   return facts.slice(0, 3);
-}
-
-/**
- * One-to-three plain-language reads of a month's daily-spend shape. Only the
- * genuinely notable ones are returned — a flat month gets fewer lines.
- */
-export function describeSpendingPattern(daily: DailyExpensePoint[], totalDaysInPeriod: number): string[] {
-  return patternFacts(daily, totalDaysInPeriod).map((f) => f.sentence);
 }
 
 export interface QuietDays {
@@ -389,10 +368,6 @@ export interface StoryInput {
 }
 
 const PATTERN_TONE: StoryTone[] = ['sky', 'gold'];
-
-function shortDay(iso: string): string {
-  return parseLocalIsoDate(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
-}
 
 /**
  * Reports' story cards: the period told in a few big answers, most telling
@@ -470,7 +445,7 @@ export function buildStoryCards(input: StoryInput): StoryCard[] {
           ? `Something went out on each of the ${q.countedDays} days${input.isCurrentPeriod ? ' so far' : ''}.`
           : `Out of ${q.countedDays}${input.isCurrentPeriod ? ' so far' : ''}.${
               q.longestRun
-                ? ` Your longest run was ${q.longestRun.days} days, ${shortDay(q.longestRun.start)} – ${shortDay(q.longestRun.end)}.`
+                ? ` Your longest run was ${q.longestRun.days} days, ${dayMonth(q.longestRun.start)} – ${dayMonth(q.longestRun.end)}.`
                 : ''
             }`,
       tone: 'mint',

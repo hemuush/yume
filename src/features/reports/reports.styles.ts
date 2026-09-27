@@ -69,7 +69,6 @@ export const styles = StyleSheet.create({
   jumpChipText: { fontFamily: theme.font.bodyBold, fontSize: 11.5, color: theme.colors.textSecondary },
   jumpChipTextOn: { color: theme.colors.surface },
 
-  headlineRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 2 },
   eyebrow: {
     fontFamily: theme.font.mono,
     fontSize: 9,
@@ -220,8 +219,6 @@ export const styles = StyleSheet.create({
   legend: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   legendText: { fontFamily: theme.font.body, fontSize: 9.5, color: theme.colors.textMuted },
   legendSwatch: { width: 11, height: 11, borderRadius: 3 },
-
-  rule: { height: StyleSheet.hairlineWidth, backgroundColor: theme.colors.borderSoft, marginVertical: 22 },
 
   catCard: {
     backgroundColor: theme.colors.surface,

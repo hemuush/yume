@@ -105,14 +105,19 @@ export async function findRepeatGroups(): Promise<RepeatGroup[]> {
      JOIN accounts a ON a.id = t.account_id
      LEFT JOIN accounts ta ON ta.id = t.to_account_id
      LEFT JOIN categories c ON c.id = t.category_id
+     JOIN (
+       -- Every combination entered more than once, found in one pass. (A
+       -- correlated EXISTS here let SQLite probe by account instead of date:
+       -- measured at 80+ seconds for 20,000 entries.)
+       SELECT type, account_id, IFNULL(to_account_id, '') AS to_key, IFNULL(category_id, '') AS cat_key,
+         amount_minor, date
+       FROM transactions
+       GROUP BY type, account_id, to_key, cat_key, amount_minor, date
+       HAVING COUNT(*) > 1
+     ) dup ON dup.type = t.type AND dup.account_id = t.account_id
+       AND dup.to_key = IFNULL(t.to_account_id, '') AND dup.cat_key = IFNULL(t.category_id, '')
+       AND dup.amount_minor = t.amount_minor AND dup.date = t.date
      WHERE ${PLAIN}
-       AND EXISTS (
-         SELECT 1 FROM transactions o
-         WHERE o.id <> t.id AND o.type = t.type AND o.account_id = t.account_id
-           AND IFNULL(o.to_account_id, '') = IFNULL(t.to_account_id, '')
-           AND IFNULL(o.category_id, '') = IFNULL(t.category_id, '')
-           AND o.amount_minor = t.amount_minor AND o.date = t.date
-       )
      ORDER BY t.date DESC, t.created_at ASC`
   );
   const kept = new Set(await getKeptList(KEPT_REPEATS_KEY));

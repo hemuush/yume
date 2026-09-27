@@ -4,8 +4,8 @@ import Feather from '@expo/vector-icons/Feather';
 import { ModalSheet } from '@/components/ModalSheet';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { BackupSummary } from '@/lib/backup';
-import { parseLocalIsoDate } from '@/lib/date';
 import { theme, modalFooterStyles as f } from '@/constants/theme';
+import { dayMonthYear } from '@/lib/dateLabels';
 
 export interface RestorePreview {
   exportedAt: string;
@@ -15,14 +15,7 @@ export interface RestorePreview {
   lostCount: number;
 }
 
-const dayLabel = (iso: string | null) =>
-  iso
-    ? parseLocalIsoDate(iso).toLocaleDateString(undefined, {
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric',
-      })
-    : '—';
+const dayLabel = (iso: string | null) => (iso ? dayMonthYear(iso) : '—');
 
 function describe(s: BackupSummary): string {
   const entries = `${s.entries} ${s.entries === 1 ? 'entry' : 'entries'}`;

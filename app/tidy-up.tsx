@@ -16,7 +16,6 @@ import {
 } from '@/db/tidyUp';
 import { roundLedgerAmountsToWholeRupees } from '@/db/maintenance';
 import { formatMoney } from '@/lib/money';
-import { parseLocalIsoDate } from '@/lib/date';
 import { haptics } from '@/lib/haptics';
 import { emitTransactionsChanged } from '@/lib/dataEvents';
 import { useScreenLoad } from '@/lib/useScreenLoad';
@@ -29,13 +28,7 @@ import { CardRowsSkeleton } from '@/components/ListSkeleton';
 import { useUndoToast } from '@/components/UndoToast';
 import { HomeSection } from '@/features/home/HomeSection';
 import { homeStyles as h } from '@/features/home/homeStyles';
-
-const dayLabel = (iso: string) =>
-  parseLocalIsoDate(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
-
-const monthName = (iso: string) => parseLocalIsoDate(iso).toLocaleDateString(undefined, { month: 'long' });
-const monthYear = (iso: string) =>
-  parseLocalIsoDate(iso).toLocaleDateString(undefined, { month: 'short', year: 'numeric' });
+import { dayMonth, longMonth, shortMonthYear } from '@/lib/dateLabels';
 
 /** "23 Sep 1:53 pm" from created_at (UTC, "YYYY-MM-DD HH:MM:SS"). */
 const savedLabel = (createdAt: string) => {
@@ -192,7 +185,7 @@ export default function TidyUpScreen() {
                               : `${g.categoryName ?? '—'} · ${g.accountName}`}
                           </Text>
                           <Text style={h.sub}>
-                            {dayLabel(g.date)} ·{' '}
+                            {dayMonth(g.date)} ·{' '}
                             {g.ids.length === 2 ? 'saved' : `${g.ids.length} times, saved`}{' '}
                             {g.savedAt.map(savedLabel).join(' and ')}
                           </Text>
@@ -225,8 +218,8 @@ export default function TidyUpScreen() {
                   {report.startingBalances.map((g, i) => {
                     const one = g.ids.length === 1;
                     const when = one
-                      ? dayLabel(g.firstDate)
-                      : `${g.ids.length} entries, ${monthYear(g.firstDate)} – ${monthYear(g.lastDate)}`;
+                      ? dayMonth(g.firstDate)
+                      : `${g.ids.length} entries, ${shortMonthYear(g.firstDate)} – ${shortMonthYear(g.lastDate)}`;
                     return (
                       <View key={g.key} style={[styles.item, i > 0 && h.divider]}>
                         <View style={styles.itemTop}>
@@ -239,7 +232,7 @@ export default function TidyUpScreen() {
                               {when}. If {one ? 'this is' : 'these are'} money {g.accountName} already had,
                               move {one ? 'it' : 'them'} to its opening balance: the balance stays the same,
                               and income drops by {formatMoney(g.totalMinor)}
-                              {one ? ` in ${monthName(g.firstDate)}` : ' across those months'}.
+                              {one ? ` in ${longMonth(g.firstDate)}` : ' across those months'}.
                             </Text>
                           </View>
                         </View>
