@@ -42,7 +42,7 @@ export default function LoansScreen() {
   const [selectedLoan, setSelectedLoan] = useState<Loan | null>(null);
   const [payOnOpen, setPayOnOpen] = useState(false);
   const { pay: payLoanId } = useLocalSearchParams<{ pay?: string }>();
-  const listFadeStyle = useFadeIn([loans]);
+  const listFadeStyle = useFadeIn();
 
   const loadLoans = useCallback(async () => {
     const [list, progress] = await Promise.all([listLoans(), getLoanProgress()]);
