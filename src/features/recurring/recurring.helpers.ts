@@ -14,7 +14,12 @@ export function frequencyNoun(freq: RecurrenceFrequency, count: number): string 
   }
 }
 
+/** "Every month", "Every 2 weeks". */
+export function cadenceLabel(frequency: RecurrenceFrequency, intervalCount: number): string {
+  const every = intervalCount === 1 ? '' : `${intervalCount} `;
+  return `Every ${every}${frequencyNoun(frequency, intervalCount)}`;
+}
+
 export function ruleCadenceLabel(rule: RecurringRule): string {
-  const every = rule.intervalCount === 1 ? '' : `${rule.intervalCount} `;
-  return `Every ${every}${frequencyNoun(rule.frequency, rule.intervalCount)}`;
+  return cadenceLabel(rule.frequency, rule.intervalCount);
 }

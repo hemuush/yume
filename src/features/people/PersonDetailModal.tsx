@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { View, Pressable, Alert } from 'react-native';
+import { View, Pressable } from 'react-native';
 import { Text } from '@/components/Text';
 import Feather from '@expo/vector-icons/Feather';
 import { router, useFocusEffect } from 'expo-router';
@@ -20,6 +20,9 @@ import { Account, Category, Loan, PersonLedgerEntry } from '@/types';
 import { FormInput } from '@/components/FormInput';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { ModalSheet } from '@/components/ModalSheet';
+import { SheetCard } from '@/components/SheetCard';
+import { SegmentedControl } from '@/components/SegmentedControl';
+import { dayMonthYear } from '@/lib/dateLabels';
 import { Chip } from '@/components/Chip';
 import { theme, modalFooterStyles as f } from '@/constants/theme';
 import { toLocalIsoDate } from '@/lib/date';
@@ -30,6 +33,7 @@ import { ActionSheet } from '@/components/ActionSheet';
 import { styles } from './people.styles';
 import { errorMessage } from '@/lib/errorMessage';
 import { withPressed } from '@/lib/pressed';
+import { showAlert } from '@/components/AppDialog';
 
 /** One person: their live balance, linked loans, a form to record money either way, and history. */
 export function PersonDetailModal({
@@ -57,6 +61,7 @@ export function PersonDetailModal({
   const [entryDateIso, setEntryDateIso] = useState(() => toLocalIsoDate(new Date()));
   // The history entry whose ⋯ menu is open.
   const [menuEntry, setMenuEntry] = useState<PersonLedgerEntry | null>(null);
+  const [tab, setTab] = useState<'settle' | 'history'>('settle');
 
   const load = useCallback(async () => {
     const [led, accs, cats, loans] = await Promise.all([
@@ -166,7 +171,7 @@ export function PersonDetailModal({
         await onChanged();
       });
     } catch (e) {
-      Alert.alert("Couldn't delete entry", errorMessage(e));
+      showAlert("Couldn't delete entry", errorMessage(e));
     } finally {
       setSaving(false);
     }
@@ -187,7 +192,7 @@ export function PersonDetailModal({
       runDeleteEntry(entry);
       return;
     }
-    Alert.alert(
+    showAlert(
       'Delete this entry?',
       'Its linked transaction will be removed too, and account balances will update immediately. You can undo right after, if needed.',
       [
@@ -201,7 +206,6 @@ export function PersonDetailModal({
     <ModalSheet
       visible
       onClose={onClose}
-      title={person.name}
       footer={
         <View style={f.footerRow}>
           <PrimaryButton
@@ -220,17 +224,40 @@ export function PersonDetailModal({
         </View>
       }
     >
-      <Text
-        style={[
-          styles.detailBalance,
-          { color: liveBalanceMinor >= 0 ? theme.colors.income : theme.colors.expense },
-        ]}
-      >
-        {liveBalanceMinor >= 0 ? 'Owes you ' : 'You owe '}
-        {formatMoney(Math.abs(dispBalanceMinor))}
-      </Text>
+      {/* The calm-sheets sign-off (Direction C): the balance as a card —
+          mint when they owe you, coral when you owe them — then two pages:
+          record money either way, and the history. */}
+      <SheetCard
+        hue={
+          liveBalanceMinor > 0
+            ? theme.colors.secondary
+            : liveBalanceMinor < 0
+              ? theme.colors.idCoralDeep
+              : theme.colors.primary
+        }
+        icon="account-outline"
+        kicker={liveBalanceMinor > 0 ? 'Owes you' : liveBalanceMinor < 0 ? 'You owe' : 'All square'}
+        amount={formatMoney(Math.abs(dispBalanceMinor))}
+        amountColor={liveBalanceMinor < 0 ? theme.colors.expense : theme.colors.textPrimary}
+        title={person.name}
+        meta={
+          ledger.length === 0
+            ? 'No entries yet'
+            : `${ledger.length} ${ledger.length === 1 ? 'entry' : 'entries'} · last ${dayMonthYear(ledger[0].date)}`
+        }
+      />
+      <View style={styles.sheetTabs}>
+        <SegmentedControl
+          options={[
+            { label: 'Settle', value: 'settle' },
+            { label: 'History', value: 'history' },
+          ]}
+          value={tab}
+          onChange={setTab}
+        />
+      </View>
 
-      {linkedLoans.length > 0 && (
+      {tab === 'history' && linkedLoans.length > 0 && (
         <>
           <Text style={styles.sectionTitle}>Linked loans</Text>
           {linkedLoans.map((loan) => (
@@ -252,104 +279,112 @@ export function PersonDetailModal({
         </>
       )}
 
-      <FormInput
-        label="Amount"
-        value={amount}
-        onChangeText={setAmount}
-        keyboardType="numeric"
-        placeholder="0.00"
-      />
-      <FormInput
-        label="Note (optional)"
-        value={note}
-        onChangeText={setNote}
-        placeholder="e.g. Dinner split"
-      />
-
-      <DateField label="Date" value={entryDateIso} onChange={setEntryDateIso} pastFacing />
-
-      <Text style={styles.fieldLabel}>Did cash actually move?</Text>
-      <View style={styles.chipRow}>
-        <Chip label="Just adjust balance" active={accountId === null} onPress={() => setAccountId(null)} />
-        {accounts.map((acc) => (
-          <Chip
-            key={acc.id}
-            label={acc.name}
-            active={accountId === acc.id}
-            onPress={() => setAccountId(acc.id)}
-          />
-        ))}
-      </View>
-      <Text style={styles.hintText}>
-        {accountId
-          ? 'This will also record a real transaction on that account — expense for "They owe more", income for "They repaid" — so it shows up in Activity and Reports too.'
-          : "This only updates the balance above — no real transaction is created, so it won't appear in Activity or Reports. Pick an account instead if cash actually moved."}
-      </Text>
-
-      {error && <Text style={styles.errorText}>{error}</Text>}
-
-      <Text style={styles.sectionTitle}>History</Text>
-      {ledger.length === 0 ? (
-        <Text style={styles.emptyText}>No entries yet.</Text>
-      ) : (
+      {tab === 'settle' && (
         <>
-          {ledger.map((entry, i) => (
-            <Pressable
-              key={entry.id}
-              style={withPressed(styles.row)}
-              onLongPress={() => onDeleteEntry(entry)}
-              disabled={saving}
-            >
-              <View
-                style={[
-                  styles.historyIcon,
-                  {
-                    backgroundColor:
-                      entry.amountMinor >= 0 ? theme.colors.incomeTint : theme.colors.expenseTint,
-                  },
-                ]}
-              >
-                <Feather
-                  name={entry.amountMinor >= 0 ? 'arrow-up' : 'arrow-down'}
-                  size={13}
-                  color={entry.amountMinor >= 0 ? theme.colors.income : theme.colors.expense}
-                />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.rowLabel}>
-                  {entry.note || (entry.amountMinor >= 0 ? 'Lent' : 'Repaid')}
-                </Text>
-                <Text style={styles.rowSub}>{entry.date}</Text>
-              </View>
-              <Text
-                style={[
-                  styles.rowValue,
-                  { color: entry.amountMinor >= 0 ? theme.colors.income : theme.colors.expense },
-                ]}
-              >
-                {entry.amountMinor >= 0 ? '+' : '-'}
-                {formatMoney(Math.abs(dispEntryAmounts[i]))}
-              </Text>
-              <Pressable
-                onPress={() => setMenuEntry(entry)}
-                hitSlop={10}
-                disabled={saving}
-                style={withPressed(styles.moreBtn)}
-                accessibilityRole="button"
-                accessibilityLabel={`More for the ${entry.date} entry`}
-              >
-                <Feather name="more-horizontal" size={15} color={theme.colors.textSecondary} />
-              </Pressable>
-            </Pressable>
-          ))}
+          <FormInput
+            label="Amount"
+            value={amount}
+            onChangeText={setAmount}
+            keyboardType="numeric"
+            placeholder="0.00"
+          />
+          <FormInput
+            label="Note (optional)"
+            value={note}
+            onChangeText={setNote}
+            placeholder="e.g. Dinner split"
+          />
+
+          <DateField label="Date" value={entryDateIso} onChange={setEntryDateIso} pastFacing />
+
+          <Text style={styles.fieldLabel}>Did cash actually move?</Text>
+          <View style={styles.chipRow}>
+            <Chip
+              label="Just adjust balance"
+              active={accountId === null}
+              onPress={() => setAccountId(null)}
+            />
+            {accounts.map((acc) => (
+              <Chip
+                key={acc.id}
+                label={acc.name}
+                active={accountId === acc.id}
+                onPress={() => setAccountId(acc.id)}
+              />
+            ))}
+          </View>
+          <Text style={styles.hintText}>
+            {accountId
+              ? 'This will also record a real transaction on that account — expense for "They owe more", income for "They repaid" — so it shows up in Activity and Reports too.'
+              : "This only updates the balance above — no real transaction is created, so it won't appear in Activity or Reports. Pick an account instead if cash actually moved."}
+          </Text>
+
+          {error && <Text style={styles.errorText}>{error}</Text>}
         </>
       )}
+
+      {tab === 'history' &&
+        (ledger.length === 0 ? (
+          <Text style={styles.emptyText}>No entries yet.</Text>
+        ) : (
+          <>
+            {ledger.map((entry, i) => (
+              <Pressable
+                key={entry.id}
+                style={withPressed(styles.row)}
+                onLongPress={() => onDeleteEntry(entry)}
+                disabled={saving}
+              >
+                <View
+                  style={[
+                    styles.historyIcon,
+                    {
+                      backgroundColor:
+                        entry.amountMinor >= 0 ? theme.colors.incomeTint : theme.colors.expenseTint,
+                    },
+                  ]}
+                >
+                  <Feather
+                    name={entry.amountMinor >= 0 ? 'arrow-up' : 'arrow-down'}
+                    size={13}
+                    color={entry.amountMinor >= 0 ? theme.colors.income : theme.colors.expense}
+                  />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.rowLabel}>
+                    {entry.note || (entry.amountMinor >= 0 ? 'Lent' : 'Repaid')}
+                  </Text>
+                  <Text style={styles.rowSub}>{dayMonthYear(entry.date)}</Text>
+                </View>
+                <Text
+                  style={[
+                    styles.rowValue,
+                    { color: entry.amountMinor >= 0 ? theme.colors.income : theme.colors.expense },
+                  ]}
+                >
+                  {entry.amountMinor >= 0 ? '+' : '-'}
+                  {formatMoney(Math.abs(dispEntryAmounts[i]))}
+                </Text>
+                <Pressable
+                  onPress={() => setMenuEntry(entry)}
+                  hitSlop={10}
+                  disabled={saving}
+                  style={withPressed(styles.moreBtn)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`More for the ${dayMonthYear(entry.date)} entry`}
+                >
+                  <Feather name="more-horizontal" size={15} color={theme.colors.textSecondary} />
+                </Pressable>
+              </Pressable>
+            ))}
+          </>
+        ))}
       <ActionSheet
         visible={!!menuEntry}
         onClose={() => setMenuEntry(null)}
         title={
           menuEntry
-            ? `${menuEntry.note || (menuEntry.amountMinor >= 0 ? 'Lent' : 'Repaid')} · ${menuEntry.date}`
+            ? `${menuEntry.note || (menuEntry.amountMinor >= 0 ? 'Lent' : 'Repaid')} · ${dayMonthYear(menuEntry.date)}`
             : undefined
         }
         items={

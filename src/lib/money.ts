@@ -15,6 +15,12 @@ export function toMinor(major: number): number {
   return Math.round(major) * 100;
 }
 
+/** What's typed in an amount field, in minor units — 0 while it's empty or not a number yet (a live preview). */
+export function inputMinor(text: string): number {
+  const minor = toMinor(parseFloat(text || '0'));
+  return Number.isFinite(minor) && minor > 0 ? minor : 0;
+}
+
 export function toMajor(minor: number): number {
   return minor / 100;
 }

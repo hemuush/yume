@@ -12,7 +12,7 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 interface Props extends Omit<PressableProps, 'style'> {
   style?: StyleProp<ViewStyle>;
   title: string;
-  variant?: 'primary' | 'secondary';
+  variant?: 'primary' | 'secondary' | 'danger';
   /**
    * Shows a checkmark in place of the title, fading in — the "Confirm
    * Morph" reserved for the handful of buttons that actually finish
@@ -29,7 +29,8 @@ interface Props extends Omit<PressableProps, 'style'> {
 /**
  * The one button in the app. Primary is a solid ink pill (fixed brand
  * colour, not the user's accent — a CTA shouldn't turn blue/pink with the
- * accent setting); secondary is a quiet hairline-outlined pill.
+ * accent setting); secondary is a quiet cream pill with a hairline; danger
+ * is the red one a confirm dialog uses for Delete.
  */
 export function PrimaryButton({
   title,
@@ -48,7 +49,7 @@ export function PrimaryButton({
     if (done) haptics.confirm();
   }, [done]);
   const secondary = variant === 'secondary';
-  const variantStyle = secondary ? styles.secondary : styles.primary;
+  const variantStyle = styles[variant];
   const textStyle = secondary ? styles.textSecondary : styles.textPrimary;
   return (
     <AnimatedPressable
@@ -84,8 +85,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   primary: { backgroundColor: theme.colors.ink },
+  danger: { backgroundColor: theme.colors.expense },
   secondary: {
-    backgroundColor: 'transparent',
+    backgroundColor: theme.colors.surface,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
   },

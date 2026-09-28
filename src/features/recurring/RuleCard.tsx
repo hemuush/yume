@@ -9,6 +9,7 @@ import { styles } from './recurring.styles';
 import { ruleCadenceLabel } from './recurring.helpers';
 import { MAX_LIST_STAGGER_MS, MOTION, ROW_LAYOUT, ROW_EXIT } from '@/lib/animation';
 import { withPressed } from '@/lib/pressed';
+import { weekdayDayMonth } from '@/lib/dateLabels';
 
 export function RuleCard({
   rule,
@@ -56,7 +57,7 @@ export function RuleCard({
                 {title}
               </Text>
               <Text style={styles.cardSub}>
-                {ruleCadenceLabel(rule)} · Next {rule.nextRunDate}
+                {ruleCadenceLabel(rule)} · Next {weekdayDayMonth(rule.nextRunDate)}
                 {rule.note ? ` · ${rule.note}` : ''}
               </Text>
             </View>

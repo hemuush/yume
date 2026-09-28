@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { View, ScrollView, Alert } from 'react-native';
+import { View, ScrollView } from 'react-native';
 import { Text } from '@/components/Text';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useScreenLoad } from '@/lib/useScreenLoad';
@@ -22,6 +22,7 @@ import { useUndoToast } from '@/components/UndoToast';
 import { haptics } from '@/lib/haptics';
 import { Skeleton } from '@/components/Skeleton';
 import { errorMessage } from '@/lib/errorMessage';
+import { showAlert } from '@/components/AppDialog';
 
 export default function CategoriesScreen() {
   const insets = useSafeAreaInsets();
@@ -53,7 +54,7 @@ export default function CategoriesScreen() {
   const incomeCats = categories.filter((c) => c.kind === 'income');
 
   const onUnarchive = (cat: Category) => {
-    Alert.alert('Restore category', `Bring "${cat.name}" back into pickers?`, [
+    showAlert('Restore category', `Bring "${cat.name}" back into pickers?`, [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Restore',
@@ -64,7 +65,7 @@ export default function CategoriesScreen() {
             await unarchiveCategory(cat.id);
             await load();
           } catch (e) {
-            Alert.alert("Couldn't restore category", errorMessage(e));
+            showAlert("Couldn't restore category", errorMessage(e));
           } finally {
             setActionBusy(false);
           }
@@ -75,7 +76,7 @@ export default function CategoriesScreen() {
 
   const onArchive = (cat: Category) => {
     const childCount = allCategories.filter((c) => c.parentId === cat.id).length;
-    Alert.alert(
+    showAlert(
       `Archive "${cat.name}"?`,
       childCount > 0
         ? `Hides it and its ${childCount} subcategor${childCount === 1 ? 'y' : 'ies'} from pickers. Past transactions keep them.`
@@ -92,7 +93,7 @@ export default function CategoriesScreen() {
               await archiveCategory(cat.id);
               await load();
             } catch (e) {
-              Alert.alert("Couldn't archive category", errorMessage(e));
+              showAlert("Couldn't archive category", errorMessage(e));
             } finally {
               setActionBusy(false);
             }
@@ -114,7 +115,7 @@ export default function CategoriesScreen() {
         await load();
       });
     } catch (e) {
-      Alert.alert("Couldn't delete category", errorMessage(e));
+      showAlert("Couldn't delete category", errorMessage(e));
     } finally {
       setActionBusy(false);
     }
@@ -130,7 +131,7 @@ export default function CategoriesScreen() {
       runDelete(cat);
       return;
     }
-    Alert.alert(
+    showAlert(
       `Delete "${cat.name}"?`,
       `This also deletes its ${childCount} subcategor${childCount === 1 ? 'y' : 'ies'}. You can undo right after, if needed.`,
       [
@@ -140,12 +141,11 @@ export default function CategoriesScreen() {
     );
   };
 
-  // A single-button information notice, not a menu — stays a plain
-  // `Alert.alert` (the platform's normal idiom for "here's why not"), unlike
-  // the two functions below.
+  // A single-button information notice, not a menu — a plain showAlert,
+  // unlike the two functions below.
   const onManage = (cat: Category) => {
     if (cat.isSystem) {
-      Alert.alert(
+      showAlert(
         'Built-in category',
         `"${cat.name}" is used by Yume to auto-categorise loan EMIs, fees and Friends & Family entries, so it can't be archived, deleted, or renamed. You can still change its icon and colour.`
       );

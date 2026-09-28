@@ -107,8 +107,8 @@ export const styles = StyleSheet.create({
 
   accountRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 14 },
   accountTile: { width: 64, alignItems: 'center' },
-  accountRing: { borderRadius: 16, borderWidth: 2, borderColor: 'transparent', padding: 2 },
-  accountRingActive: { borderColor: theme.colors.secondary },
+  accountRing: { borderRadius: 28, borderWidth: 2, borderColor: 'transparent', padding: 2 },
+  accountRingActive: { borderColor: theme.colors.ink },
   accountName: {
     fontFamily: theme.font.rounded,
     fontSize: 10.5,

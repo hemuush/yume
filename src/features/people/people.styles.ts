@@ -95,7 +95,8 @@ export const styles = StyleSheet.create({
   },
   avatarInitial: { fontFamily: theme.font.bodyBold, fontSize: 15, color: theme.colors.onFlat },
   rowValue: { fontFamily: theme.font.monoBold, fontSize: 13.5 },
-  detailBalance: { fontFamily: theme.font.monoBold, fontSize: 20, marginBottom: 16 },
+  // The Settle / History switch under a person's card.
+  sheetTabs: { marginBottom: 14 },
   sectionTitle: {
     ...SECTION_TITLE,
     marginTop: SECTION_GAP.top,

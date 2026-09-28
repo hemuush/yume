@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { View, Pressable, Alert, Animated, ScrollView } from 'react-native';
+import { View, Pressable, Animated } from 'react-native';
 import { Text } from '@/components/Text';
 import { useFocusEffect, router } from 'expo-router';
 import Feather from '@expo/vector-icons/Feather';
@@ -30,15 +30,17 @@ import { FormInput } from '@/components/FormInput';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { YumeLogo } from '@/components/YumeLogo';
 import { useAccent, THEMES } from '@/theme/AccentContext';
+import { themeOrigin } from '@/theme/themes';
+import { ThemePreview } from './ThemePreview';
 import { theme } from '@/constants/theme';
 import { usePressScale } from '@/lib/usePressScale';
 import { HomeSection } from '@/features/home/HomeSection';
 import { homeStyles as h } from '@/features/home/homeStyles';
-import { haptics } from '@/lib/haptics';
 import { styles } from './profile.styles';
 import { errorMessage } from '@/lib/errorMessage';
 import type { McIconName } from '@/components/iconName';
 import { withPressed } from '@/lib/pressed';
+import { showAlert } from '@/components/AppDialog';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -111,7 +113,7 @@ function AboutFact({ icon, text }: { icon: string; text: string }) {
  * uses it to bring the Privacy & security group into view.
  */
 export function SettingsSection({ onJumpTo }: { onJumpTo?: (y: number) => void }) {
-  const { themeId, setTheme } = useAccent();
+  const { themeId } = useAccent();
   const { lockEnabled, setLockEnabled } = useAppLock();
   const { hideAmounts, toggleHideAmounts } = usePrivacy();
   const [currency, setCurrency] = useState('INR');
@@ -174,7 +176,7 @@ export function SettingsSection({ onJumpTo }: { onJumpTo?: (y: number) => void }
       // picked currency while every formatMoney() call still reads the old
       // cached one — a silent mismatch with no error shown.
       setCurrency(previous);
-      Alert.alert("Couldn't change currency", errorMessage(e));
+      showAlert("Couldn't change currency", errorMessage(e));
     }
   };
 
@@ -218,7 +220,7 @@ export function SettingsSection({ onJumpTo }: { onJumpTo?: (y: number) => void }
     if (enabled) {
       const secured = await isDeviceSecured();
       if (!secured) {
-        Alert.alert(
+        showAlert(
           'No screen lock found',
           "Set up a fingerprint, face unlock, or PIN/pattern in your phone's own settings first — Yume locks using whatever your phone is already secured with."
         );
@@ -435,42 +437,24 @@ export function SettingsSection({ onJumpTo }: { onJumpTo?: (y: number) => void }
         </View>
       </HomeSection>
 
-      <HomeSection title="Appearance" right={<Text style={styles.rowValue}>{activeTheme.name}</Text>}>
-        <View style={h.card}>
-          <Text style={styles.themeCaption}>Theme · buttons, active tab, highlights, and Suu's dot</Text>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.themeStrip}
-          >
-            {THEMES.map((pack) => {
-              const active = themeId === pack.id;
-              return (
-                <Pressable
-                  key={pack.id}
-                  style={withPressed(styles.themeOption)}
-                  onPress={() => {
-                    if (!active) haptics.tap();
-                    setTheme(pack.id);
-                  }}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Theme ${pack.name}, ${pack.sub}`}
-                  accessibilityState={{ selected: active }}
-                >
-                  <View style={[styles.themeRing, active && styles.themeRingActive]}>
-                    <View style={styles.themeSwatch}>
-                      <View style={[styles.themeSwatchHalf, { backgroundColor: pack.primary }]} />
-                      <View style={[styles.themeSwatchHalf, { backgroundColor: pack.secondary }]} />
-                    </View>
-                  </View>
-                  <Text style={[styles.themeName, active && styles.themeNameActive]} numberOfLines={2}>
-                    {pack.name}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </ScrollView>
-        </View>
+      <HomeSection title="Appearance">
+        <Pressable
+          onPress={() => router.push('/themes')}
+          style={withPressed([h.card, styles.themeCard])}
+          accessibilityRole="button"
+          accessibilityLabel={`Theme: ${activeTheme.name}, ${themeOrigin(activeTheme)}. Change theme`}
+        >
+          <ThemePreview pack={activeTheme} height={104} detailed />
+          <View style={styles.themeRow}>
+            <View style={h.mid}>
+              <Text style={styles.themeName}>{activeTheme.name}</Text>
+              <Text style={styles.themeFrom}>{themeOrigin(activeTheme)}</Text>
+            </View>
+            <View style={styles.themeChange}>
+              <Text style={styles.themeChangeText}>Change</Text>
+            </View>
+          </View>
+        </Pressable>
       </HomeSection>
 
       <HomeSection title="About">

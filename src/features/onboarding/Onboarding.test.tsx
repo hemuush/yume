@@ -55,7 +55,7 @@ import { createAccount } from '@/db/ledger';
 import { setHasOnboarded } from '@/db/settings';
 import { restoreKeepingSafetyCopy } from '@/lib/safetyCopy';
 import { resyncAfterRestore } from '@/lib/restoreSync';
-import { Alert } from 'react-native';
+import { showAlert } from '@/components/AppDialog';
 
 const createAccountMock = createAccount as jest.Mock;
 
@@ -191,7 +191,7 @@ describe('Onboarding restore from a backup', () => {
     const texts = tree.root.findAll((n) => typeof n.props.children === 'string').map((n) => n.props.children);
     expect(texts.some((t: string) => t.startsWith('2 entries'))).toBe(true);
 
-    await press(titled(tree, 'Restore'));
+    await press(titled(tree, 'Restore this backup'));
     expect(restoreKeepingSafetyCopy).toHaveBeenCalledWith(backup);
     expect(resyncAfterRestore).toHaveBeenCalled();
     expect(setHasOnboarded).toHaveBeenCalledWith(true);
@@ -199,18 +199,21 @@ describe('Onboarding restore from a backup', () => {
     expect(createAccountMock).not.toHaveBeenCalled();
   });
 
-  it('Cancel leaves the user on onboarding with nothing restored', async () => {
+  it('closing the preview leaves the user on onboarding with nothing restored', async () => {
     const onDone = jest.fn();
     const tree = await render(onDone);
     await press(byLabel(tree, 'I have a Yume backup'));
-    await press(titled(tree, 'Cancel'));
+    // The sheet's ✕ (or a tap outside it) — there's no Cancel button any more.
+    await act(async () => {
+      tree.root.find((n) => typeof n.props.onCancel === 'function').props.onCancel();
+    });
     expect(restoreKeepingSafetyCopy).not.toHaveBeenCalled();
     expect(onDone).not.toHaveBeenCalled();
-    expect(tree.root.findAll((n) => n.props.title === 'Restore')).toHaveLength(0);
+    expect(tree.root.findAll((n) => n.props.title === 'Restore this backup')).toHaveLength(0);
   });
 
   it("says so when the file isn't a backup, and restores nothing", async () => {
-    const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+    const alert = jest.mocked(showAlert);
     mockBackupFile.current = '{"hello": 1}';
     const tree = await render();
     await press(byLabel(tree, 'I have a Yume backup'));
@@ -218,7 +221,7 @@ describe('Onboarding restore from a backup', () => {
       "Couldn't open that backup",
       expect.stringContaining("isn't a Yume backup")
     );
-    expect(tree.root.findAll((n) => n.props.title === 'Restore')).toHaveLength(0);
+    expect(tree.root.findAll((n) => n.props.title === 'Restore this backup')).toHaveLength(0);
     alert.mockRestore();
   });
 

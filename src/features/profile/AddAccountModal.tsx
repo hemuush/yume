@@ -3,9 +3,13 @@ import { View } from 'react-native';
 import { Text } from '@/components/Text';
 import { createAccount } from '@/db/ledger';
 import { getDefaultCurrency, SUPPORTED_CURRENCIES } from '@/db/settings';
-import { toMinor } from '@/lib/money';
+import { toMinor, formatMoney } from '@/lib/money';
 import { AccountType } from '@/types';
 import { ModalSheet } from '@/components/ModalSheet';
+import { SheetCard } from '@/components/SheetCard';
+import { useAccent } from '@/theme/AccentContext';
+import { accountIcon } from '@/lib/account';
+import { accountHue } from '@/features/home/AccountChip';
 import { modalFooterStyles as f } from '@/constants/theme';
 import { FormInput } from '@/components/FormInput';
 import { PrimaryButton } from '@/components/PrimaryButton';
@@ -25,6 +29,7 @@ export function AddAccountModal({
   onClose: () => void;
   onCreated: () => void;
 }) {
+  const { accent } = useAccent();
   const [name, setName] = useState('');
   const [type, setType] = useState<AccountType>('bank');
   const [opening, setOpening] = useState('0');
@@ -97,26 +102,27 @@ export function AddAccountModal({
     }
   };
 
+  // The calm-sheets sign-off (Direction C): the new account's card, tinted
+  // by the type you pick, with its opening balance.
   return (
     <ModalSheet
       visible={visible}
       onClose={onClose}
-      title="New Account"
       footer={
         <View style={f.footerCol}>
           {error && <Text style={styles.errorText}>{error}</Text>}
-          <View style={f.footerRow}>
-            <PrimaryButton title="Cancel" variant="secondary" onPress={onClose} style={f.footerBtn} />
-            <PrimaryButton
-              title={saving ? 'Saving…' : 'Create'}
-              onPress={submit}
-              disabled={saving}
-              style={f.footerBtn}
-            />
-          </View>
+          <PrimaryButton title={saving ? 'Saving…' : 'Create account'} onPress={submit} disabled={saving} />
         </View>
       }
     >
+      <SheetCard
+        hue={accountHue(type, accent)}
+        icon={accountIcon(type)}
+        kicker={ACCOUNT_TYPES.find((t) => t.value === type)?.label}
+        amount={formatMoney(toMinor(parseFloat(opening || '0')) || 0, currency)}
+        title={name.trim() || 'New account'}
+        meta="Opening balance"
+      />
       <FormInput label="Name" value={name} onChangeText={setName} placeholder="e.g. HDFC Savings" />
       <Text style={styles.fieldLabel}>Type</Text>
       <View style={styles.chipRow}>

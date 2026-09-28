@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { View, Alert, Pressable } from 'react-native';
-import Feather from '@expo/vector-icons/Feather';
+import { View } from 'react-native';
 import { Text } from '@/components/Text';
 import {
   createTransaction,
@@ -13,10 +12,16 @@ import { undoInstallmentPayment } from '@/db/loans';
 import { undoPersonTransaction } from '@/db/people';
 import { Account, Category, Transaction } from '@/types';
 import { PrimaryButton } from '@/components/PrimaryButton';
-import { CategoryIcon } from '@/components/CategoryIcon';
 import { Amount } from '@/components/Amount';
-import { ModalSheet } from '@/components/ModalSheet';
+import { ModalSheet, SheetFooter } from '@/components/ModalSheet';
+import { SheetCard } from '@/components/SheetCard';
+import { SettingsRow } from '@/components/SettingsRow';
+import { SegmentedControl } from '@/components/SegmentedControl';
 import { theme, modalFooterStyles as f } from '@/constants/theme';
+import { homeStyles as h } from '@/features/home/homeStyles';
+import { accountIcon } from '@/lib/account';
+import { hexToRgba } from '@/lib/color';
+import { weekdayDayMonth } from '@/lib/dateLabels';
 import { useUndoToast } from '@/components/UndoToast';
 import { haptics } from '@/lib/haptics';
 import { emitTransactionsChanged } from '@/lib/dataEvents';
@@ -25,10 +30,10 @@ import { RuleModal } from '@/features/recurring/RuleModal';
 import { styles } from './transactions.styles';
 import { errorMessage } from '@/lib/errorMessage';
 import { useReturnOrPush } from '@/lib/useReturnOrPush';
-import { withPressed } from '@/lib/pressed';
 import { getSplitParts, deleteSplit, restoreSplit } from '@/db/splits';
 import { formatMoney } from '@/lib/money';
 import { router } from 'expo-router';
+import { showAlert } from '@/components/AppDialog';
 
 export function TransactionDetailModal({
   tx,
@@ -50,6 +55,7 @@ export function TransactionDetailModal({
   const [link, setLink] = useState<TransactionLink | undefined>(undefined);
   const [busy, setBusy] = useState(false);
   const [ruleOpen, setRuleOpen] = useState(false);
+  const [tab, setTab] = useState<'details' | 'more'>('details');
 
   // "Make it recurring": the same entry, monthly, from its next same day of
   // the month still ahead. Memoised — the rule form resets whenever this changes.
@@ -68,6 +74,7 @@ export function TransactionDetailModal({
   }, [tx]);
 
   useEffect(() => {
+    setTab('details');
     if (!tx) {
       setLink(undefined);
       return;
@@ -97,7 +104,9 @@ export function TransactionDetailModal({
   if (!tx) return null;
 
   const cat = categories.find((c) => c.id === tx.categoryId);
+  const account = accounts.find((a) => a.id === tx.accountId);
   const accountName = (id: string) => accounts.find((a) => a.id === id)?.name ?? '—';
+  const transfer = tx.type === 'transfer';
 
   /** Saves the same entry for today, with an undo — like ↻ Repeat on Add. */
   const logAgainToday = async () => {
@@ -121,7 +130,7 @@ export function TransactionDetailModal({
         onChanged();
       });
     } catch (e) {
-      Alert.alert("Couldn't log it", errorMessage(e));
+      showAlert("Couldn't log it", errorMessage(e));
     } finally {
       setBusy(false);
     }
@@ -149,14 +158,14 @@ export function TransactionDetailModal({
         onChanged();
       });
     } catch (e) {
-      Alert.alert("Couldn't delete", errorMessage(e));
+      showAlert("Couldn't delete", errorMessage(e));
     } finally {
       setBusy(false);
     }
   };
 
   const confirmUndoLoan = (loanPaymentId: string) => {
-    Alert.alert(
+    showAlert(
       'Undo this EMI payment',
       "The installment goes back to pending and the loan's outstanding balance is restored. You can then re-enter it correctly.",
       [
@@ -170,7 +179,7 @@ export function TransactionDetailModal({
               await undoInstallmentPayment(loanPaymentId);
               onChanged();
             } catch (e) {
-              Alert.alert("Couldn't undo", errorMessage(e));
+              showAlert("Couldn't undo", errorMessage(e));
             } finally {
               setBusy(false);
             }
@@ -181,7 +190,7 @@ export function TransactionDetailModal({
   };
 
   const confirmUndoPerson = () => {
-    Alert.alert(
+    showAlert(
       'Undo this entry',
       'This removes both the transaction and the Friends & Family ledger entry it created.',
       [
@@ -195,7 +204,7 @@ export function TransactionDetailModal({
               await undoPersonTransaction(tx.id);
               onChanged();
             } catch (e) {
-              Alert.alert("Couldn't undo", errorMessage(e));
+              showAlert("Couldn't undo", errorMessage(e));
             } finally {
               setBusy(false);
             }
@@ -205,160 +214,201 @@ export function TransactionDetailModal({
     );
   };
 
-  // Every other detail popup in the app (account, loan) is this same bottom
-  // sheet — a grabber + title, then a pinned footer — so this one no longer
-  // stands alone as a small centered dialog with its own floating "Close"
-  // button; swiping down or tapping the backdrop closes it like everywhere
-  // else.
-  const footer =
-    link === null ? (
-      <View style={f.footerRow}>
-        <PrimaryButton
-          title="Delete"
-          variant="secondary"
-          onPress={confirmDelete}
-          disabled={busy}
-          style={f.footerBtn}
-        />
-        <PrimaryButton title="Edit" onPress={() => onEdit(tx)} disabled={busy} style={f.footerBtn} />
-      </View>
-    ) : link !== undefined ? (
-      <PrimaryButton title="Close" variant="secondary" onPress={onClose} disabled={busy} />
-    ) : undefined;
+  // The calm-sheets sign-off (Direction C): the entry as a card in its
+  // category's colour, then two pages — what it is, and what you can do with
+  // it — so neither needs to scroll. Delete is the bin beside Edit.
+  const canEdit = link === null;
+  const moreActions = [
+    canEdit &&
+      !tx.splitId && {
+        icon: 'plus',
+        bg: theme.colors.primaryTint,
+        label: 'Log again today',
+        sub: 'Same amount, account and note',
+        onPress: logAgainToday,
+      },
+    canEdit &&
+      !tx.splitId && {
+        icon: 'repeat',
+        bg: theme.colors.idTeal,
+        label: 'Make it recurring',
+        sub: 'Yume logs it for you on a schedule',
+        onPress: () => setRuleOpen(true),
+      },
+    canEdit &&
+      tx.type === 'expense' &&
+      cat && {
+        icon: 'cash-refund',
+        bg: theme.colors.idSage,
+        label: 'Got money back',
+        sub: 'Add a refund for this',
+        onPress: () => {
+          onClose();
+          // A refund for this purchase: its category, account and note, filled in on Add.
+          router.push(
+            `/add-transaction?type=expense&refund=1&categoryId=${cat.id}&accountId=${tx.accountId}` +
+              (tx.note ? `&note=${encodeURIComponent(tx.note)}` : '')
+          );
+        },
+      },
+  ].filter((a) => !!a);
+  const kind = transfer ? 'Transfer' : tx.isRefund ? 'Refund' : tx.type === 'income' ? 'Income' : 'Expense';
+  const route = transfer ? `${accountName(tx.accountId)} → ${accountName(tx.toAccountId!)}` : null;
 
   return (
-    <ModalSheet visible onClose={onClose} title="Transaction" footer={footer}>
-      <View style={styles.detailHeaderRow}>
-        <CategoryIcon
-          name={tx.type === 'transfer' ? 'swap-horizontal' : (cat?.icon ?? 'tag')}
-          color={tx.type === 'transfer' ? theme.colors.secondary : (cat?.color ?? theme.colors.textMuted)}
-          square={44}
-          size={20}
-        />
-        <View style={{ flex: 1, marginLeft: 12 }}>
-          <Text style={styles.detailTitle} numberOfLines={1}>
-            {tx.type === 'transfer'
-              ? `${accountName(tx.accountId)} → ${accountName(tx.toAccountId!)}`
-              : (cat?.name ?? (tx.note || tx.type))}
-          </Text>
-          <Text style={styles.rowSub}>
-            {tx.isRefund && <Text style={styles.rowRefund}>Refund · </Text>}
-            {tx.date} · {accountName(tx.accountId)}
-          </Text>
-        </View>
-      </View>
-      <Text
-        style={[
-          styles.detailAmount,
-          tx.type === 'income' && styles.income,
-          tx.type === 'expense' && styles.expense,
-        ]}
-      >
-        {tx.type === 'expense' ? '-' : tx.type === 'income' ? '+' : ''}
-        <Amount minor={tx.amountMinor} sensitive={cat?.isSensitive} />
-      </Text>
-      {!!tx.note && <Text style={styles.detailNote}>{tx.note}</Text>}
+    <ModalSheet
+      visible
+      onClose={onClose}
+      footer={
+        canEdit ? (
+          <SheetFooter onDelete={confirmDelete} deleteLabel="Delete entry" disabled={busy}>
+            <PrimaryButton title="Edit" onPress={() => onEdit(tx)} disabled={busy} style={f.footerBtn} />
+          </SheetFooter>
+        ) : undefined
+      }
+    >
+      <SheetCard
+        hue={transfer ? theme.colors.secondary : (cat?.color ?? theme.colors.textMuted)}
+        icon={transfer ? 'swap-horizontal' : (cat?.icon ?? 'tag')}
+        kicker={kind}
+        amount={
+          <>
+            {tx.type === 'expense' ? '−' : tx.type === 'income' ? '+' : ''}
+            <Amount minor={tx.amountMinor} sensitive={cat?.isSensitive} />
+          </>
+        }
+        amountColor={
+          tx.type === 'expense'
+            ? theme.colors.expense
+            : tx.type === 'income'
+              ? theme.colors.income
+              : theme.colors.textPrimary
+        }
+        title={route ?? cat?.name ?? kind}
+        meta={route ? weekdayDayMonth(tx.date) : `${weekdayDayMonth(tx.date)} · ${accountName(tx.accountId)}`}
+      />
 
-      {tx.splitId && splitParts && splitParts.length > 0 && (
-        <View style={styles.splitCard}>
-          <Text style={styles.splitCardTitle}>
-            Part of a {formatMoney(splitParts.reduce((s, p) => s + p.amountMinor, 0))} split
-          </Text>
-          {splitParts.map((p) => {
-            const pc = categories.find((c) => c.id === p.categoryId);
-            const mine = p.id === tx.id;
-            return (
-              <View key={p.id} style={styles.splitPart}>
-                <Text style={[styles.splitPartName, mine && styles.splitPartMine]} numberOfLines={1}>
-                  {pc?.name ?? 'Uncategorised'}
-                </Text>
-                <Amount
-                  minor={p.amountMinor}
-                  sensitive={pc?.isSensitive}
-                  style={[styles.splitPartAmount, mine && styles.splitPartMine]}
-                />
-              </View>
-            );
-          })}
-        </View>
-      )}
-
-      {cat && tx.type !== 'transfer' && (
-        <Pressable
-          onPress={() => {
-            onClose();
-            // Opened from that category's own page? Then closing is enough.
-            returnOrPush({ name: 'category/[id]', params: { id: cat.id } }, `/category/${cat.id}`);
-          }}
-          style={withPressed(styles.detailLink)}
-          accessibilityRole="button"
-        >
-          <Text style={styles.detailLinkText}>See everything in {cat.name}</Text>
-          <Feather name="chevron-right" size={14} color={theme.colors.textSecondary} />
-        </Pressable>
-      )}
-
-      {link === null && !tx.splitId && (
-        <View style={styles.detailActions}>
-          <PrimaryButton
-            title="Log again today"
-            variant="secondary"
-            onPress={logAgainToday}
-            disabled={busy}
-            style={styles.detailAction}
-          />
-          <PrimaryButton
-            title="Make it recurring"
-            variant="secondary"
-            onPress={() => setRuleOpen(true)}
-            disabled={busy}
-            style={styles.detailAction}
+      {moreActions.length > 0 && (
+        <View style={styles.detailTabs}>
+          <SegmentedControl
+            options={[
+              { label: 'Details', value: 'details' },
+              { label: 'Do more', value: 'more' },
+            ]}
+            value={tab}
+            onChange={setTab}
           />
         </View>
       )}
-      {link === null && tx.type === 'expense' && cat && (
-        <PrimaryButton
-          title="Got money back"
-          variant="secondary"
-          onPress={() => {
-            onClose();
-            // A refund for this purchase: its category, account and note, filled in on Add.
-            router.push(
-              `/add-transaction?type=expense&refund=1&categoryId=${cat.id}&accountId=${tx.accountId}` +
-                (tx.note ? `&note=${encodeURIComponent(tx.note)}` : '')
-            );
-          }}
-          disabled={busy}
-          style={styles.detailActionWide}
-        />
-      )}
 
-      {link === undefined ? (
-        <Text style={styles.hintText}>Checking…</Text>
-      ) : link === null ? null : link.kind === 'loan' ? (
-        <>
-          <Text style={styles.hintText}>This is a loan EMI payment — it can't be edited directly.</Text>
-          <PrimaryButton
-            title={busy ? 'Undoing…' : 'Undo payment'}
-            variant="secondary"
-            onPress={() => confirmUndoLoan(link.loanPaymentId)}
-            disabled={busy}
-          />
-        </>
-      ) : link.kind === 'person' ? (
-        <>
-          <Text style={styles.hintText}>This is a Friends & Family entry — it can't be edited directly.</Text>
-          <PrimaryButton
-            title={busy ? 'Undoing…' : 'Undo entry'}
-            variant="secondary"
-            onPress={confirmUndoPerson}
-            disabled={busy}
-          />
-        </>
+      {tab === 'more' && moreActions.length > 0 ? (
+        <View style={[h.card, h.cardInSheet]}>
+          {moreActions.map((a, i) => (
+            <SettingsRow
+              key={a.label}
+              round
+              icon={a.icon}
+              iconBg={a.bg}
+              label={a.label}
+              sub={a.sub}
+              onPress={busy ? undefined : a.onPress}
+              divider={i > 0}
+            />
+          ))}
+        </View>
       ) : (
-        <Text style={styles.hintText}>
-          This is a loan disbursement or prepayment — editing isn't supported yet.
-        </Text>
+        <>
+          <View style={[h.card, h.cardInSheet]}>
+            {cat && !transfer && (
+              <SettingsRow
+                round
+                icon={cat.icon}
+                iconBg={hexToRgba(cat.color, 0.25)}
+                label={cat.name}
+                sub="See everything in it"
+                onPress={() => {
+                  onClose();
+                  // Opened from that category's own page? Then closing is enough.
+                  returnOrPush({ name: 'category/[id]', params: { id: cat.id } }, `/category/${cat.id}`);
+                }}
+              />
+            )}
+            <SettingsRow
+              round
+              icon={transfer ? 'swap-horizontal' : account ? accountIcon(account.type) : 'bank'}
+              iconBg={theme.colors.primaryTint}
+              label={route ?? accountName(tx.accountId)}
+              sub={
+                transfer ? 'Moved between your accounts' : tx.type === 'income' ? 'Received in' : 'Paid from'
+              }
+              divider={!!cat && !transfer}
+            />
+            {!!tx.note && (
+              <SettingsRow
+                round
+                icon="note-text-outline"
+                iconBg={theme.colors.idGold}
+                label="Note"
+                sub={tx.note}
+                divider
+              />
+            )}
+          </View>
+
+          {tx.splitId && splitParts && splitParts.length > 0 && (
+            <View style={styles.splitCard}>
+              <Text style={styles.splitCardTitle}>
+                Part of a {formatMoney(splitParts.reduce((s, p) => s + p.amountMinor, 0))} split
+              </Text>
+              {splitParts.map((p) => {
+                const pc = categories.find((c) => c.id === p.categoryId);
+                const mine = p.id === tx.id;
+                return (
+                  <View key={p.id} style={styles.splitPart}>
+                    <Text style={[styles.splitPartName, mine && styles.splitPartMine]} numberOfLines={1}>
+                      {pc?.name ?? 'Uncategorised'}
+                    </Text>
+                    <Amount
+                      minor={p.amountMinor}
+                      sensitive={pc?.isSensitive}
+                      style={[styles.splitPartAmount, mine && styles.splitPartMine]}
+                    />
+                  </View>
+                );
+              })}
+            </View>
+          )}
+
+          {link === undefined ? (
+            <Text style={styles.hintText}>Checking…</Text>
+          ) : link === null ? null : link.kind === 'loan' ? (
+            <>
+              <Text style={styles.hintText}>This is a loan EMI payment — it can't be edited directly.</Text>
+              <PrimaryButton
+                title={busy ? 'Undoing…' : 'Undo payment'}
+                variant="secondary"
+                onPress={() => confirmUndoLoan(link.loanPaymentId)}
+                disabled={busy}
+              />
+            </>
+          ) : link.kind === 'person' ? (
+            <>
+              <Text style={styles.hintText}>
+                This is a Friends & Family entry — it can't be edited directly.
+              </Text>
+              <PrimaryButton
+                title={busy ? 'Undoing…' : 'Undo entry'}
+                variant="secondary"
+                onPress={confirmUndoPerson}
+                disabled={busy}
+              />
+            </>
+          ) : (
+            <Text style={styles.hintText}>
+              This is a loan disbursement or prepayment — editing isn't supported yet.
+            </Text>
+          )}
+        </>
       )}
       <RuleModal
         visible={ruleOpen}

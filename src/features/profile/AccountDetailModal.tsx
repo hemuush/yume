@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { View, Alert } from 'react-native';
+import { View } from 'react-native';
 import { Text } from '@/components/Text';
 import {
   updateAccount,
@@ -9,10 +9,14 @@ import {
   restoreAccount,
   getAccountTransactionCount,
 } from '@/db/ledger';
-import { toMinor } from '@/lib/money';
+import { toMinor, formatMoney } from '@/lib/money';
 import { Account, AccountType } from '@/types';
-import { ModalSheet } from '@/components/ModalSheet';
+import { ModalSheet, SheetLink } from '@/components/ModalSheet';
+import { SheetCard } from '@/components/SheetCard';
 import { modalFooterStyles as f } from '@/constants/theme';
+import { useAccent } from '@/theme/AccentContext';
+import { accountIcon } from '@/lib/account';
+import { accountHue } from '@/features/home/AccountChip';
 import { FormInput } from '@/components/FormInput';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { Chip } from '@/components/Chip';
@@ -23,6 +27,7 @@ import { ACCOUNT_TYPES } from './profile.constants';
 import { errorMessage } from '@/lib/errorMessage';
 import { CardCycleFields } from './CardCycleFields';
 import { parseCycleDays } from '@/lib/cardCycle';
+import { showAlert } from '@/components/AppDialog';
 
 /**
  * Editing/archiving/deleting an account, opened by tapping any account card.
@@ -44,6 +49,7 @@ export function AccountDetailModal({
   onChanged: () => void;
 }) {
   const { show: showUndo } = useUndoToast();
+  const { accent } = useAccent();
   const [name, setName] = useState('');
   const [type, setType] = useState<AccountType>('bank');
   const [opening, setOpening] = useState('0');
@@ -117,7 +123,7 @@ export function AccountDetailModal({
   };
 
   const confirmArchive = () => {
-    Alert.alert(
+    showAlert(
       'Archive this account?',
       'It disappears from account pickers and totals, but every past transaction against it stays exactly as it is. You can unarchive it later.',
       [
@@ -131,7 +137,7 @@ export function AccountDetailModal({
               await archiveAccount(account.id);
               onChanged();
             } catch (e) {
-              Alert.alert("Couldn't archive", errorMessage(e));
+              showAlert("Couldn't archive", errorMessage(e));
             } finally {
               setBusy(false);
             }
@@ -147,7 +153,7 @@ export function AccountDetailModal({
       await unarchiveAccount(account.id);
       onChanged();
     } catch (e) {
-      Alert.alert("Couldn't unarchive", errorMessage(e));
+      showAlert("Couldn't unarchive", errorMessage(e));
     } finally {
       setBusy(false);
     }
@@ -164,38 +170,38 @@ export function AccountDetailModal({
         onChanged();
       });
     } catch (e) {
-      Alert.alert("Couldn't delete", errorMessage(e));
+      showAlert("Couldn't delete", errorMessage(e));
     } finally {
       setBusy(false);
     }
   };
 
+  // The calm-sheets sign-off (Direction C): the account's own card, which
+  // retints as you change its type, then the form. Archive or delete is a
+  // quiet link at the end, not a second button beside Save.
   return (
     <ModalSheet
       visible
       onClose={onClose}
-      title="Edit Account"
       footer={
         <View style={f.footerCol}>
           {error && <Text style={styles.errorText}>{error}</Text>}
-          <View style={f.footerRow}>
-            <PrimaryButton
-              title="Cancel"
-              variant="secondary"
-              onPress={onClose}
-              style={f.footerBtn}
-              disabled={saving || busy}
-            />
-            <PrimaryButton
-              title={saving ? 'Saving…' : 'Save'}
-              onPress={submit}
-              disabled={saving || busy}
-              style={f.footerBtn}
-            />
-          </View>
+          <PrimaryButton
+            title={saving ? 'Saving…' : 'Save changes'}
+            onPress={submit}
+            disabled={saving || busy}
+          />
         </View>
       }
     >
+      <SheetCard
+        hue={accountHue(type, accent)}
+        icon={accountIcon(type)}
+        kicker={ACCOUNT_TYPES.find((t) => t.value === type)?.label}
+        amount={formatMoney(account.currentBalanceMinor, account.currency)}
+        title={name.trim() || account.name}
+        meta={`Balance now · opened with ${formatMoney(toMinor(parseFloat(opening || '0')) || 0, account.currency)}`}
+      />
       <FormInput label="Name" value={name} onChangeText={setName} placeholder="e.g. HDFC Savings" />
       <Text style={styles.fieldLabel}>Type</Text>
       <View style={styles.chipRow}>
@@ -227,32 +233,23 @@ export function AccountDetailModal({
           />
         </>
       )}
-      <Text style={styles.dangerLabel}>Danger zone</Text>
       {account.archived ? (
-        <PrimaryButton
-          title={busy ? 'Working…' : 'Unarchive account'}
-          variant="secondary"
+        <SheetLink
+          label={busy ? 'Working…' : 'Unarchive account'}
           onPress={onUnarchive}
           disabled={busy}
+          danger={false}
         />
       ) : txCount === null ? (
         <Text style={styles.hintText}>Checking usage…</Text>
       ) : txCount > 0 ? (
-        <PrimaryButton
-          title={busy ? 'Working…' : `Archive account (${txCount} transaction${txCount === 1 ? '' : 's'})`}
-          variant="secondary"
+        <SheetLink
+          label={busy ? 'Working…' : `Archive account · ${txCount} ${txCount === 1 ? 'entry' : 'entries'}`}
           onPress={confirmArchive}
           disabled={busy}
-          style={styles.deleteButton}
         />
       ) : (
-        <PrimaryButton
-          title={busy ? 'Working…' : 'Delete account'}
-          variant="secondary"
-          onPress={confirmDelete}
-          disabled={busy}
-          style={styles.deleteButton}
-        />
+        <SheetLink label={busy ? 'Working…' : 'Delete account'} onPress={confirmDelete} disabled={busy} />
       )}
     </ModalSheet>
   );

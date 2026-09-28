@@ -298,7 +298,7 @@ export function PrepayModal({
 
   if (result) {
     return (
-      <ModalSheet visible onClose={onDone} variant="center" showClose title="Prepayment applied">
+      <ModalSheet visible onClose={onDone} variant="center" title="Prepayment applied">
         <PrepaymentReveal summary={result} onDone={onDone} />
       </ModalSheet>
     );
@@ -309,20 +309,11 @@ export function PrepayModal({
       visible
       onClose={onClose}
       variant="center"
-      showClose
       title="Make a prepayment"
       footer={
         <View style={f.footerCol}>
           {error && <Text style={styles.errorText}>{error}</Text>}
-          <View style={f.footerRow}>
-            <PrimaryButton title="Cancel" variant="secondary" onPress={onClose} style={f.footerBtn} />
-            <PrimaryButton
-              title={saving ? 'Saving…' : 'Confirm'}
-              onPress={submit}
-              disabled={saving}
-              style={f.footerBtn}
-            />
-          </View>
+          <PrimaryButton title={saving ? 'Saving…' : 'Apply prepayment'} onPress={submit} disabled={saving} />
         </View>
       }
     >

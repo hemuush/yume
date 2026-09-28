@@ -1,6 +1,5 @@
 import { StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
-import { EYEBROW } from '@/constants/textStyles';
 
 // Shared by the Savings Goals screen and its GoalCard / AddGoalModal /
 // ContributeModal / GoalDetailModal.
@@ -133,11 +132,4 @@ export const styles = StyleSheet.create({
     lineHeight: 19,
     marginBottom: 16,
   },
-
-  dangerLabel: {
-    ...EYEBROW,
-    marginTop: 8,
-    marginBottom: 10,
-  },
-  deleteButton: { backgroundColor: theme.colors.expenseTint },
 });

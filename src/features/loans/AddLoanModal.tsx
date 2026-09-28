@@ -13,14 +13,15 @@ import { SegmentedControl } from '@/components/SegmentedControl';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { Chip } from '@/components/Chip';
 import { ModalSheet } from '@/components/ModalSheet';
+import { SheetCard } from '@/components/SheetCard';
 import { modalFooterStyles as f, theme } from '@/constants/theme';
-import { useAccent } from '@/theme/AccentContext';
 import { toLocalIsoDate, monthsBetweenIsoDates, addMonthsToIsoDate } from '@/lib/date';
 import { DateField } from '@/components/DateField';
 import { ToggleSwitch } from '@/components/ToggleSwitch';
 import { styles } from './loans.styles';
 import { errorMessage } from '@/lib/errorMessage';
 import { DURATIONS } from '@/lib/motionTimings';
+import { dayMonthYear } from '@/lib/dateLabels';
 
 const RATE_TYPES: { label: string; value: LoanRateType }[] = [
   { label: 'Fixed', value: 'fixed' },
@@ -50,7 +51,6 @@ export function AddLoanModal({
   onClose: () => void;
   onCreated: () => void;
 }) {
-  const { accent } = useAccent();
   // Recomputed whenever the modal opens (below), not frozen at first mount —
   // this modal's parent screen is a tab that stays alive all session, so a
   // `useMemo(..., [])` here would keep defaulting new-loan dates to
@@ -267,7 +267,7 @@ export function AddLoanModal({
       const elapsedMonths = monthsBetweenIsoDates(startDate, toLocalIsoDate(today));
       if (alreadyPaidCount > elapsedMonths) {
         setError(
-          `You said ${alreadyPaidCount} installments are already paid, but only about ${elapsedMonths} month${elapsedMonths === 1 ? '' : 's'} have passed since ${startDate} — double-check the start date or the paid count.`
+          `You said ${alreadyPaidCount} installments are already paid, but only about ${elapsedMonths} month${elapsedMonths === 1 ? '' : 's'} have passed since ${dayMonthYear(startDate)} — double-check the start date or the paid count.`
         );
         return;
       }
@@ -330,16 +330,12 @@ export function AddLoanModal({
     <ModalSheet
       visible={visible}
       onClose={onClose}
-      title="New Loan"
       footer={
         <View style={f.footerCol}>
           {error && <Text style={styles.errorText}>{error}</Text>}
           <View style={f.footerRow}>
             {wizardStep === 1 ? (
-              <>
-                <PrimaryButton title="Cancel" variant="secondary" onPress={onClose} style={f.footerBtn} />
-                <PrimaryButton title="Next" onPress={nextStep} style={f.footerBtn} />
-              </>
+              <PrimaryButton title="Next" onPress={nextStep} style={f.footerBtn} />
             ) : (
               <>
                 <PrimaryButton
@@ -361,6 +357,25 @@ export function AddLoanModal({
         </View>
       }
     >
+      {/* The calm-sheets sign-off (Direction C): the loan as a live card —
+          coral for money you borrow, mint for money you lend — with its EMI
+          worked out as you type, in place of a separate estimate box. */}
+      <SheetCard
+        hue={direction === 'borrowed' ? theme.colors.idCoralDeep : theme.colors.secondary}
+        icon={direction === 'borrowed' ? 'bank-outline' : 'hand-coin-outline'}
+        kicker={[rate ? `${rate}%` : null, tenureMonths > 0 ? tenureLabel(tenureMonths) : null]
+          .filter(Boolean)
+          .join(' · ')}
+        amount={formatMoney(Number.isFinite(principalMinor) && principalMinor > 0 ? principalMinor : 0)}
+        title={counterparty.trim() || (direction === 'borrowed' ? 'New loan' : 'Money you lent')}
+        meta={
+          previewEmi > 0
+            ? `EMI ${formatMoney(previewEmi)}/month · ${formatMoney(
+                Math.max(0, previewEmi * tenureMonths - principalMinor)
+              )} interest`
+            : 'EMI shows once the amount, rate and tenure are in'
+        }
+      />
       <Text style={styles.wizardEyebrow}>
         STEP {wizardStep} OF 2 · {wizardStep === 1 ? "WHAT'S THE LOAN?" : 'HOW DID IT START?'}
       </Text>
@@ -418,21 +433,6 @@ export function AddLoanModal({
             keyboardType="numeric"
             placeholder="e.g. 60"
           />
-
-          {previewEmi > 0 && (
-            <View style={[styles.emiPreview, { backgroundColor: accent + '22', borderColor: accent }]}>
-              <Text style={[styles.emiPreviewLabel, { color: theme.colors.textSecondary }]}>
-                Estimated EMI
-              </Text>
-              <Text style={[styles.emiPreviewValue, { color: theme.colors.textPrimary }]}>
-                {formatMoney(previewEmi)}/month
-              </Text>
-              <Text style={[styles.emiPreviewLabel, { color: theme.colors.textSecondary }]}>
-                {formatMoney(Math.max(0, previewEmi * tenureMonths - principalMinor))} interest over{' '}
-                {tenureLabel(tenureMonths)}
-              </Text>
-            </View>
-          )}
 
           {direction === 'borrowed' && (
             <>

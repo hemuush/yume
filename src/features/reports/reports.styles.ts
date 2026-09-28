@@ -156,6 +156,8 @@ export const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   tileRest: { backgroundColor: theme.colors.surfaceAlt },
+  // A sliver of a tile: its padding would push it past its slot, so none.
+  tileSwatch: { padding: 0, borderRadius: theme.radius.sm },
   tileName: { fontFamily: theme.font.bodyBold, fontSize: 12, lineHeight: 15, color: theme.colors.ink },
   tilePct: { fontFamily: theme.font.roundedBold, fontSize: 18, lineHeight: 20, color: theme.colors.ink },
   tilePctSmall: { fontFamily: theme.font.roundedBold, fontSize: 12, lineHeight: 14 },

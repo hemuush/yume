@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from 'react';
-import { View, Pressable, Alert } from 'react-native';
+import { View, Pressable } from 'react-native';
 import { Text, TextInput } from '@/components/Text';
 import { KeyboardAwareScrollView, KeyboardAwareScrollViewRef } from 'react-native-keyboard-controller';
 import Feather from '@expo/vector-icons/Feather';
@@ -16,6 +16,7 @@ import { YouSection } from '@/features/profile/YouSection';
 import { SettingsSection } from '@/features/profile/SettingsSection';
 import { errorMessage } from '@/lib/errorMessage';
 import { withPressed } from '@/lib/pressed';
+import { showAlert } from '@/components/AppDialog';
 
 type ProfileTab = 'you' | 'settings';
 const TABS: { label: string; value: ProfileTab }[] = [
@@ -56,7 +57,7 @@ export default function ProfileScreen() {
       setName(draft.trim() || null);
       setEditing(false);
     } catch (e) {
-      Alert.alert("Couldn't save name", errorMessage(e));
+      showAlert("Couldn't save name", errorMessage(e));
     }
   };
 

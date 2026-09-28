@@ -72,20 +72,11 @@ export function RateChangeModal({
       visible
       onClose={onClose}
       variant="center"
-      showClose
       title="Update interest rate"
       footer={
         <View style={f.footerCol}>
           {error && <Text style={styles.errorText}>{error}</Text>}
-          <View style={f.footerRow}>
-            <PrimaryButton title="Cancel" variant="secondary" onPress={onClose} style={f.footerBtn} />
-            <PrimaryButton
-              title={saving ? 'Saving…' : 'Confirm'}
-              onPress={submit}
-              disabled={saving}
-              style={f.footerBtn}
-            />
-          </View>
+          <PrimaryButton title={saving ? 'Saving…' : 'Update rate'} onPress={submit} disabled={saving} />
         </View>
       }
     >

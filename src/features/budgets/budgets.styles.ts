@@ -140,5 +140,6 @@ export const styles = StyleSheet.create({
     marginBottom: 6,
   },
   toggleRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 14 },
+  pickerGap: { marginBottom: 16 },
   errorText: { fontFamily: theme.font.body, color: theme.colors.expense, fontSize: 13, marginBottom: 12 },
 });

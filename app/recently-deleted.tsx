@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
-import { View, ScrollView, StyleSheet, Pressable, Alert } from 'react-native';
+import { View, ScrollView, StyleSheet, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text } from '@/components/Text';
 import { AppHeader } from '@/components/AppHeader';
@@ -26,6 +26,7 @@ import { withPressed } from '@/lib/pressed';
 import { dayMonth } from '@/lib/dateLabels';
 import { toLocalIsoDate } from '@/lib/date';
 import { Category, Account } from '@/types';
+import { showAlert } from '@/components/AppDialog';
 
 /**
  * Recently deleted: entries you deleted in the last 30 days, newest first,
@@ -65,14 +66,14 @@ export default function RecentlyDeletedScreen() {
       emitTransactionsChanged();
       await reload();
     } catch (e) {
-      Alert.alert("Couldn't restore it", errorMessage(e));
+      showAlert("Couldn't restore it", errorMessage(e));
     } finally {
       setBusyId(null);
     }
   };
 
   const emptyAll = () => {
-    Alert.alert(
+    showAlert(
       'Delete all for good?',
       `${entries.length} ${entries.length === 1 ? 'entry' : 'entries'} will be gone for good. This can't be undone.`,
       [
@@ -86,7 +87,7 @@ export default function RecentlyDeletedScreen() {
               haptics.warn();
               await reload();
             } catch (e) {
-              Alert.alert("Couldn't empty it", errorMessage(e));
+              showAlert("Couldn't empty it", errorMessage(e));
             }
           },
         },

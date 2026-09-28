@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
-import { View, ScrollView, Alert } from 'react-native';
+import { View, ScrollView } from 'react-native';
 import { Text } from '@/components/Text';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { listRecurringRules, setRecurringRuleActive } from '@/db/recurring';
@@ -21,6 +21,7 @@ import { Skeleton } from '@/components/Skeleton';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { AddAccountModal } from '@/features/profile/AddAccountModal';
 import { errorMessage } from '@/lib/errorMessage';
+import { showAlert } from '@/components/AppDialog';
 
 /**
  * Rent, subscriptions, salary — anything that happens on its own schedule
@@ -92,7 +93,7 @@ export default function RecurringScreen() {
       await setRecurringRuleActive(rule.id, !rule.active);
       await load();
     } catch (e) {
-      Alert.alert("Couldn't update", errorMessage(e));
+      showAlert("Couldn't update", errorMessage(e));
     }
   };
 

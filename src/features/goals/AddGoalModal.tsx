@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { Text } from '@/components/Text';
 import { createSavingsGoal } from '@/db/savingsGoals';
-import { toMinor } from '@/lib/money';
+import { toMinor, inputMinor } from '@/lib/money';
 import { toLocalIsoDate, addMonthsToIsoDate } from '@/lib/date';
 import { DateField } from '@/components/DateField';
 import { Account } from '@/types';
@@ -12,6 +12,7 @@ import { FormInput } from '@/components/FormInput';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { ToggleSwitch } from '@/components/ToggleSwitch';
 import { GoalAccountField } from './GoalAccountField';
+import { GoalSheetCard } from './GoalSheetCard';
 import { styles } from './goals.styles';
 import { errorMessage } from '@/lib/errorMessage';
 
@@ -91,22 +92,19 @@ export function AddGoalModal({
     <ModalSheet
       visible={visible}
       onClose={onClose}
-      title="New Savings Goal"
       footer={
         <View style={f.footerCol}>
           {error && <Text style={styles.errorText}>{error}</Text>}
-          <View style={f.footerRow}>
-            <PrimaryButton title="Cancel" variant="secondary" onPress={onClose} style={f.footerBtn} />
-            <PrimaryButton
-              title={saving ? 'Creating…' : 'Create goal'}
-              onPress={submit}
-              disabled={saving}
-              style={f.footerBtn}
-            />
-          </View>
+          <PrimaryButton title={saving ? 'Creating…' : 'Create goal'} onPress={submit} disabled={saving} />
         </View>
       }
     >
+      <GoalSheetCard
+        name={name.trim() || 'New goal'}
+        savedMinor={0}
+        targetMinor={inputMinor(target)}
+        targetDate={hasTargetDate ? targetDateValue : null}
+      />
       <FormInput label="Goal name" value={name} onChangeText={setName} placeholder="e.g. Goa trip" />
       <FormInput
         label="Target amount"

@@ -1,11 +1,11 @@
 /**
- * An entry's detail sheet: "Log again today" saves the same entry for
- * today with an undo, "Make it recurring" opens the rule form filled in
- * from it (monthly, from its next same day of the month), and the category
- * name opens that category's page. Entries tied to a loan get none of these.
+ * An entry's detail sheet: under "Do more", "Log again today" saves the
+ * same entry for today with an undo and "Make it recurring" opens the rule
+ * form filled in from it (monthly, from its next same day of the month);
+ * under Details, the category row opens that category's page. Entries tied
+ * to a loan get none of these.
  */
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
-import { Text } from 'react-native';
 
 jest.setTimeout(30000);
 
@@ -26,6 +26,7 @@ jest.mock('@/components/ModalSheet', () => ({
         {footer}
       </>
     ) : null,
+  SheetFooter: ({ children }: { children: React.ReactNode }) => children,
 }));
 // The stack: Activity only, unless a test puts a category page on it.
 const mockStack = { routes: [{ name: '(tabs)' }] as { name: string; params?: object }[] };
@@ -97,8 +98,12 @@ async function render() {
   });
   return tree;
 }
-const titled = (tree: ReactTestRenderer, title: string) =>
-  tree.root.findAll((n) => n.props.title === title && typeof n.props.onPress === 'function');
+/** The pressable rows labelled `label` — actions and links in the sheet. */
+const rows = (tree: ReactTestRenderer, label: string) =>
+  tree.root.findAll((n) => n.props.label === label && typeof n.props.onPress === 'function');
+/** Switches the sheet to its "Do more" page. */
+const doMore = (tree: ReactTestRenderer) =>
+  act(() => tree.root.find((n) => n.props.value === 'details' && n.props.onChange).props.onChange('more'));
 
 beforeEach(() => {
   mockLink.current = null;
@@ -111,8 +116,9 @@ beforeAll(async () => {
 describe('entry detail', () => {
   it('logs the same entry again for today, with an undo', async () => {
     const tree = await render();
+    doMore(tree);
     await act(async () => {
-      await titled(tree, 'Log again today')[0].props.onPress();
+      await rows(tree, 'Log again today')[0].props.onPress();
     });
     expect(createTransaction).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -127,8 +133,9 @@ describe('entry detail', () => {
 
   it('opens the rule form filled in, monthly from its next same day still ahead', async () => {
     const tree = await render();
+    doMore(tree);
     await act(async () => {
-      titled(tree, 'Make it recurring')[0].props.onPress();
+      rows(tree, 'Make it recurring')[0].props.onPress();
     });
     expect(mockRule.current?.visible).toBe(true);
     const next = mockRule.current!.prefill!.nextRunDate;
@@ -141,11 +148,7 @@ describe('entry detail', () => {
     mockStack.routes = [{ name: '(tabs)' }, { name: 'category/[id]', params: { id: 'food' } }];
     try {
       const tree = await render();
-      const link = tree.root.find(
-        (n) =>
-          typeof n.props.onPress === 'function' &&
-          n.findAllByType(Text).some((t) => t.props.children?.join?.('') === 'See everything in Food')
-      );
+      const link = rows(tree, 'Food')[0];
       (router.push as jest.Mock).mockClear();
       act(() => link.props.onPress());
       expect(router.push).not.toHaveBeenCalled();
@@ -157,11 +160,7 @@ describe('entry detail', () => {
 
   it("opens the entry's category page", async () => {
     const tree = await render();
-    const link = tree.root.find(
-      (n) =>
-        typeof n.props.onPress === 'function' &&
-        n.findAllByType(Text).some((t) => t.props.children?.join?.('') === 'See everything in Food')
-    );
+    const link = rows(tree, 'Food')[0];
     act(() => link.props.onPress());
     expect(router.push).toHaveBeenCalledWith('/category/food');
   });
@@ -169,7 +168,9 @@ describe('entry detail', () => {
   it('offers none of this for an entry tied to a loan', async () => {
     mockLink.current = { kind: 'loan', loanPaymentId: 'p1' };
     const tree = await render();
-    expect(titled(tree, 'Log again today')).toHaveLength(0);
-    expect(titled(tree, 'Make it recurring')).toHaveLength(0);
+    // No "Do more" page at all, so nothing to switch to.
+    expect(tree.root.findAll((n) => n.props.value === 'details' && n.props.onChange)).toHaveLength(0);
+    expect(rows(tree, 'Log again today')).toHaveLength(0);
+    expect(rows(tree, 'Make it recurring')).toHaveLength(0);
   });
 });

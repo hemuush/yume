@@ -62,7 +62,7 @@ export function AccountTile({
       accessibilityLabel={account.name}
     >
       <View style={[styles.accountRing, active && styles.accountRingActive]}>
-        <CategoryIcon name={accountIcon(account.type)} color={badgeColor} size={20} square={48} />
+        <CategoryIcon name={accountIcon(account.type)} color={badgeColor} size={20} square={48} round />
       </View>
       <Text style={styles.accountName} numberOfLines={1}>
         {account.name}

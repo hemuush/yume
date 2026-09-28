@@ -19,14 +19,14 @@ interface Props {
   variant?: 'sheet' | 'center';
   /** Set false for short dialogs whose content should not scroll. */
   scrollable?: boolean;
-  /** Show an ✕ button top-right that calls `onClose`. */
+  /** The ✕ that closes it, top-right. On by default — it's what replaced every Cancel button. */
   showClose?: boolean;
   /**
    * A pinned action bar. Passing this switches the modal to a three-band
    * layout — fixed grabber + title on top, scrolling content in the middle,
    * `footer` pinned to the bottom (padded past the system nav bar) — so the
-   * Cancel / Save / Close row is always visible and never scrolls away.
-   * Works for both the bottom `sheet` and the centered dialog.
+   * main action is always visible and never scrolls away. Works for both
+   * the bottom `sheet` and the centered dialog. See `SheetFooter`.
    */
   footer?: React.ReactNode;
 }
@@ -34,11 +34,12 @@ interface Props {
 /**
  * Every modal in the app goes through here so a few things that were
  * previously each modal's own problem are solved once:
- *  - tapping the dimmed backdrop (or pressing Android back) closes it;
+ *  - tapping the dimmed backdrop, the ✕ or Android back closes it;
  *  - the keyboard pushes the sheet up instead of covering its inputs;
  *  - the sheet's bottom padding clears the device's gesture/nav bar, so
  *    action buttons are never sitting underneath it;
- *  - an optional ✕ and a pinned footer for list-style dialogs.
+ *  - one surface colour top to bottom, the pinned footer included (the
+ *    calm-sheets sign-off, Direction C), so nothing looks stuck on.
  */
 export function ModalSheet(props: Props) {
   const { visible, onClose } = props;
@@ -87,6 +88,96 @@ function ModalCloseButton({ onClose }: { onClose: () => void }) {
   );
 }
 
+/**
+ * A sheet's pinned action bar: the main button(s), with an optional round
+ * button in front — a red bin for Delete (never a full-width Delete as loud
+ * as Save), or ⋯ for a menu of rarer actions.
+ */
+export function SheetFooter({
+  children,
+  onDelete,
+  deleteLabel = 'Delete',
+  onMore,
+  moreLabel = 'More actions',
+  disabled,
+}: {
+  children?: React.ReactNode;
+  onDelete?: () => void;
+  deleteLabel?: string;
+  onMore?: () => void;
+  moreLabel?: string;
+  disabled?: boolean;
+}) {
+  return (
+    <View style={styles.footerRow}>
+      {onDelete && (
+        <RoundFooterButton icon="trash-2" label={deleteLabel} onPress={onDelete} disabled={disabled} danger />
+      )}
+      {onMore && (
+        <RoundFooterButton icon="more-horizontal" label={moreLabel} onPress={onMore} disabled={disabled} />
+      )}
+      {children}
+    </View>
+  );
+}
+
+/**
+ * A quiet text action at the end of a sheet — "Delete recurring entry",
+ * "Archive goal" — for the rarer, riskier things a form can do, so they
+ * never sit in the footer beside Save.
+ */
+export function SheetLink({
+  label,
+  onPress,
+  danger = true,
+  disabled,
+}: {
+  label: string;
+  onPress: () => void;
+  danger?: boolean;
+  disabled?: boolean;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      disabled={disabled}
+      style={({ pressed }) => [styles.link, (pressed || disabled) && styles.disabled]}
+      accessibilityRole="button"
+    >
+      <Text style={[styles.linkText, danger && styles.linkDanger]}>{label}</Text>
+    </Pressable>
+  );
+}
+
+function RoundFooterButton({
+  icon,
+  label,
+  onPress,
+  disabled,
+  danger,
+}: {
+  icon: 'trash-2' | 'more-horizontal';
+  label: string;
+  onPress: () => void;
+  disabled?: boolean;
+  danger?: boolean;
+}) {
+  const { animatedStyle, onPressIn, onPressOut } = usePressScale();
+  return (
+    <AnimatedPressable
+      style={[styles.roundBtn, danger && styles.roundBtnDanger, disabled && styles.disabled, animatedStyle]}
+      onPress={onPress}
+      onPressIn={onPressIn}
+      onPressOut={onPressOut}
+      disabled={disabled}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+    >
+      <Feather name={icon} size={18} color={danger ? theme.colors.expense : theme.colors.ink} />
+    </AnimatedPressable>
+  );
+}
+
 function ModalSheetBody({
   onClose,
   title,
@@ -94,7 +185,7 @@ function ModalSheetBody({
   children,
   variant = 'sheet',
   scrollable = true,
-  showClose = false,
+  showClose = true,
   footer,
 }: Props) {
   const insets = useSafeAreaInsets();
@@ -102,29 +193,26 @@ function ModalSheetBody({
   // A pinned footer means the three-band layout (fixed header / scrolling
   // body / fixed footer) instead of the single scrolling column.
   const framed = footer !== undefined;
-  const framedCenter = framed && !isSheet;
-  const framedSheet = framed && isSheet;
 
-  const closeBtn = showClose ? <ModalCloseButton onClose={onClose} /> : null;
-
-  const headingTexts =
-    title || subtitle ? (
-      <>
-        {title ? (
-          <Text style={styles.title} numberOfLines={1}>
-            {title}
-          </Text>
-        ) : null}
-        {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
-      </>
+  // Title and subtitle on the left, the ✕ on the right — or just the ✕ for a
+  // sheet that opens on its own card instead of a title.
+  const header =
+    title || subtitle || showClose ? (
+      <View style={styles.header}>
+        <View style={styles.headerText}>
+          {title ? (
+            <Text style={styles.title} numberOfLines={1}>
+              {title}
+            </Text>
+          ) : null}
+          {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
+        </View>
+        {showClose && <ModalCloseButton onClose={onClose} />}
+      </View>
     ) : null;
 
-  const heading = headingTexts ? (
-    <View style={[styles.headingBlock, showClose && styles.headingInsetForClose]}>{headingTexts}</View>
-  ) : null;
-
   // Centered dialog with a pinned footer.
-  if (framedCenter) {
+  if (framed && !isSheet) {
     return (
       <View style={styles.flex}>
         <Pressable style={styles.backdrop} onPress={onClose} accessibilityLabel="Close" />
@@ -133,25 +221,24 @@ function ModalSheetBody({
           pointerEvents="box-none"
         >
           <View style={[styles.dialog, styles.dialogFramed]}>
-            {headingTexts ? <View style={styles.framedHeader}>{headingTexts}</View> : null}
-            {closeBtn}
+            <View style={styles.framedPad}>{header}</View>
             <ScrollView
               style={styles.framedBody}
-              contentContainerStyle={styles.framedBodyContent}
+              contentContainerStyle={styles.framedDialogContent}
               showsVerticalScrollIndicator={false}
             >
               {children}
             </ScrollView>
-            <View style={[styles.framedFooter, { paddingBottom: 12 + insets.bottom }]}>{footer}</View>
+            <View style={[styles.framedDialogFooter, { paddingBottom: 16 }]}>{footer}</View>
           </View>
         </View>
       </View>
     );
   }
 
-  // Bottom sheet with a pinned footer: fixed grabber + title, scrolling
+  // Bottom sheet with a pinned footer: fixed grabber + header, scrolling
   // content, action bar pinned to the bottom above the nav bar.
-  if (framedSheet) {
+  if (framed) {
     return (
       <View style={styles.flex}>
         <Pressable style={styles.backdrop} onPress={onClose} accessibilityLabel="Close" />
@@ -161,24 +248,17 @@ function ModalSheetBody({
         >
           <View style={styles.framedSheet}>
             <View style={styles.grabber} />
-            {headingTexts ? (
-              <View style={styles.framedSheetHeader}>
-                {headingTexts}
-                {closeBtn}
-              </View>
-            ) : (
-              closeBtn
-            )}
+            <View style={styles.framedPad}>{header}</View>
             <KeyboardAwareScrollView
-              style={styles.framedSheetBody}
-              contentContainerStyle={styles.framedSheetBodyContent}
+              style={styles.framedBody}
+              contentContainerStyle={styles.framedSheetContent}
               bottomOffset={24}
               keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator={false}
             >
               {children}
             </KeyboardAwareScrollView>
-            <View style={[styles.framedSheetFooter, { paddingBottom: 14 + insets.bottom }]}>{footer}</View>
+            <View style={[styles.framedSheetFooter, { paddingBottom: 12 + insets.bottom }]}>{footer}</View>
           </View>
         </View>
       </View>
@@ -190,8 +270,7 @@ function ModalSheetBody({
       style={[isSheet ? styles.sheet : styles.dialog, { paddingBottom: (isSheet ? 24 : 20) + insets.bottom }]}
     >
       {isSheet && <View style={styles.grabber} />}
-      {closeBtn}
-      {heading}
+      {header}
       {children}
     </View>
   );
@@ -236,6 +315,14 @@ function ModalSheetBody({
   );
 }
 
+const SHEET_SHADOW = {
+  shadowColor: theme.colors.ink,
+  shadowOffset: { width: 0, height: -6 },
+  shadowOpacity: 0.12,
+  shadowRadius: 22,
+  elevation: 14,
+} as const;
+
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   backdrop: {
@@ -244,8 +331,6 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    // Opaque enough that the bright floating tab bar behind doesn't ghost
-    // through as a muddy band under the sheet.
     backgroundColor: theme.colors.scrim,
   },
   alignBottom: { justifyContent: 'flex-end' },
@@ -254,51 +339,54 @@ const styles = StyleSheet.create({
   scrollDialog: { flexGrow: 0, maxHeight: '85%' },
   scrollDialogContent: { justifyContent: 'center' },
 
-  // --- pinned-footer bottom sheet ---
+  header: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 14, minHeight: 32 },
+  headerText: { flex: 1, minWidth: 0 },
+  title: { fontFamily: theme.font.roundedBold, fontSize: 19, color: theme.colors.textPrimary },
+  subtitle: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, marginTop: 2 },
+
+  // --- pinned-footer layouts ---
+  framedPad: { paddingHorizontal: 16 },
+  framedBody: { flexGrow: 0, flexShrink: 1 },
   framedSheet: {
     backgroundColor: theme.colors.background,
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
-    paddingTop: 10,
     maxHeight: '92%',
     flexShrink: 1,
-    shadowColor: theme.colors.ink,
-    shadowOffset: { width: 0, height: -6 },
-    shadowOpacity: 0.12,
-    shadowRadius: 22,
-    elevation: 14,
+    ...SHEET_SHADOW,
   },
-  framedSheetHeader: {
-    paddingHorizontal: 20,
-    paddingTop: 2,
-    paddingBottom: 12,
-  },
-  framedSheetBody: { flexGrow: 0, flexShrink: 1 },
-  framedSheetBodyContent: { paddingHorizontal: 20, paddingTop: 4, paddingBottom: 16 },
-  framedSheetFooter: {
-    paddingHorizontal: 20,
-    paddingTop: 12,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: theme.colors.borderSoft,
+  framedSheetContent: { paddingHorizontal: 16, paddingBottom: 16 },
+  framedSheetFooter: { paddingHorizontal: 16, paddingTop: 10, backgroundColor: theme.colors.background },
+  framedDialogContent: { paddingHorizontal: 16, paddingBottom: 4 },
+  framedDialogFooter: { paddingHorizontal: 16, paddingTop: 12, backgroundColor: theme.colors.surface },
+  footerRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  roundBtn: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
     backgroundColor: theme.colors.surface,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.borderSoft,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
+  roundBtnDanger: { backgroundColor: theme.colors.expenseTint, borderColor: theme.colors.expenseTint },
+  disabled: { opacity: 0.5 },
+  link: { alignSelf: 'center', paddingVertical: 10, paddingHorizontal: 16 },
+  linkText: { fontFamily: theme.font.roundedBold, fontSize: 13.5, color: theme.colors.textPrimary },
+  linkDanger: { color: theme.colors.expense },
+
   sheet: {
     backgroundColor: theme.colors.background,
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
-    padding: 20,
-    shadowColor: theme.colors.ink,
-    shadowOffset: { width: 0, height: -6 },
-    shadowOpacity: 0.12,
-    shadowRadius: 22,
-    elevation: 14,
+    paddingHorizontal: 16,
+    ...SHEET_SHADOW,
   },
   dialog: {
     backgroundColor: theme.colors.surface,
-    borderRadius: 24,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-    padding: 20,
+    borderRadius: 26,
+    padding: 18,
     marginHorizontal: 24,
     shadowColor: theme.colors.ink,
     shadowOffset: { width: 0, height: 16 },
@@ -307,55 +395,29 @@ const styles = StyleSheet.create({
     elevation: 16,
   },
   dialogFramed: {
-    padding: 0,
+    paddingHorizontal: 0,
+    paddingBottom: 0,
     overflow: 'hidden',
     maxHeight: '78%',
     alignSelf: 'stretch',
-  },
-  framedHeader: {
-    paddingLeft: 18,
-    paddingRight: 46,
-    paddingTop: 16,
-    paddingBottom: 12,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: theme.colors.borderSoft,
-  },
-  framedBody: { flexGrow: 0, flexShrink: 1 },
-  framedBodyContent: { paddingHorizontal: 18, paddingVertical: 4 },
-  framedFooter: {
-    paddingHorizontal: 18,
-    paddingVertical: 12,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: theme.colors.borderSoft,
-    backgroundColor: theme.colors.surface,
   },
   grabber: {
     alignSelf: 'center',
     width: 38,
     height: 4,
     borderRadius: 999,
-    backgroundColor: theme.colors.borderSoft,
-    marginBottom: 16,
-  },
-  headingBlock: { marginBottom: 16 },
-  headingInsetForClose: { paddingRight: 34 },
-  title: { fontFamily: theme.font.roundedBold, fontSize: 18, color: theme.colors.textPrimary },
-  subtitle: {
-    fontFamily: theme.font.mono,
-    fontSize: 11,
-    color: theme.colors.textMuted,
-    marginTop: 3,
+    backgroundColor: theme.colors.inkHairline,
+    marginTop: 10,
+    marginBottom: 10,
   },
   closeBtn: {
-    position: 'absolute',
-    top: 12,
-    right: 12,
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: theme.colors.inkWash,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: theme.colors.surface,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.borderSoft,
     alignItems: 'center',
     justifyContent: 'center',
-    zIndex: 2,
   },
 });

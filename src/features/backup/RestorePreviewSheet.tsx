@@ -4,7 +4,8 @@ import Feather from '@expo/vector-icons/Feather';
 import { ModalSheet } from '@/components/ModalSheet';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { BackupSummary } from '@/lib/backup';
-import { theme, modalFooterStyles as f } from '@/constants/theme';
+import { theme } from '@/constants/theme';
+import { SheetCard } from '@/components/SheetCard';
 import { dayMonthYear } from '@/lib/dateLabels';
 
 export interface RestorePreview {
@@ -53,31 +54,25 @@ export function RestorePreviewSheet({
     <ModalSheet
       visible
       onClose={onCancel}
-      title={`Restore the ${made} backup?`}
       scrollable={false}
       footer={
-        <View style={f.footerRow}>
-          <PrimaryButton
-            title="Cancel"
-            variant="secondary"
-            onPress={onCancel}
-            disabled={busy}
-            style={f.footerBtn}
-          />
-          <PrimaryButton
-            title={busy ? 'Restoring…' : 'Restore'}
-            onPress={onRestore}
-            disabled={busy}
-            style={f.footerBtn}
-          />
-        </View>
+        <PrimaryButton
+          title={busy ? 'Restoring…' : 'Restore this backup'}
+          onPress={onRestore}
+          disabled={busy}
+        />
       }
     >
+      {/* The calm-sheets sign-off (Direction C): the backup as a card — when
+          it was made and what's in it — then what's on the phone now. */}
+      <SheetCard
+        hue={theme.colors.primary}
+        icon="backup-restore"
+        kicker="Restore"
+        title={`Backup from ${made}`}
+        meta={describe(preview.backup)}
+      />
       <View style={styles.row}>
-        <Text style={styles.label}>That backup</Text>
-        <Text style={styles.value}>{describe(preview.backup)}</Text>
-      </View>
-      <View style={[styles.row, styles.divider]}>
         <Text style={styles.label}>On your phone now</Text>
         <Text style={styles.value}>{describe(preview.current)}</Text>
       </View>
@@ -100,7 +95,6 @@ export function RestorePreviewSheet({
 
 const styles = StyleSheet.create({
   row: { paddingVertical: 10, gap: 2 },
-  divider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.borderSoft },
   label: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textPrimary },
   value: { fontFamily: theme.font.body, fontSize: 12.5, color: theme.colors.textSecondary, lineHeight: 18 },
   note: {

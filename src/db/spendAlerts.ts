@@ -86,7 +86,8 @@ async function checkBudgetNudge(categoryId: string, topLevelCategoryId: string):
       formatMoney(budget.spentMinor),
       formatMoney(budget.effectiveLimitMinor),
       formatMoney(Math.max(0, budget.remainingMinor))
-    )
+    ),
+    `${budget.budget.id}:${budget.budget.periodMonth}`
   );
   // Going straight past the limit counts as having had the 80% one too.
   await addBudgetNudgesSent(level === 'over' ? [key('near'), key('over')] : [key('near')]);

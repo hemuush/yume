@@ -16,6 +16,12 @@ const DELTA_MIN_PCT = 10;
 /** Below this size a tile shows only its share — a name and amount wouldn't fit. */
 const LABEL_MIN_W = 72;
 const LABEL_MIN_H = 60;
+/**
+ * Below this on either side a tile is a plain swatch: no padding and no
+ * text. A tile's padding and border (20 across) would otherwise push a
+ * sliver wider than its slot, out past the mosaic's edge.
+ */
+const SWATCH_MAX = 32;
 /** The biggest categories each get a tile; past this many, the rest share one "N more" tile. */
 const MAX_TILES = 7;
 
@@ -67,6 +73,7 @@ export function CategoryMosaic({
         if (t.index >= tiled.length) {
           const pct = spentMinor > 0 ? Math.round((restMinor / spentMinor) * 100) : 0;
           const roomy = t.width >= LABEL_MIN_W && t.height >= LABEL_MIN_H;
+          const swatch = t.width < SWATCH_MAX || t.height < SWATCH_MAX;
           return (
             <Pressable
               key="rest"
@@ -75,14 +82,17 @@ export function CategoryMosaic({
                 styles.tile,
                 styles.tileRest,
                 { left: t.x, top: t.y, width: t.width, height: t.height },
+                swatch && styles.tileSwatch,
               ])}
               accessibilityRole="button"
               accessibilityLabel={`${rest.length} more categories, ${pct}% of ${of}. Show the full list`}
             >
               {roomy && <Text style={styles.tileName}>{rest.length} more</Text>}
-              <Text style={[styles.tilePct, !roomy && styles.tilePctSmall]} numberOfLines={1}>
-                {roomy ? `${pct < 1 ? '<1' : pct}%` : `+${rest.length}`}
-              </Text>
+              {!swatch && (
+                <Text style={[styles.tilePct, !roomy && styles.tilePctSmall]} numberOfLines={1}>
+                  {roomy ? `${pct < 1 ? '<1' : pct}%` : `+${rest.length}`}
+                </Text>
+              )}
             </Pressable>
           );
         }
@@ -91,6 +101,7 @@ export function CategoryMosaic({
         const d = deltas.get(c.categoryId);
         const showDelta = d != null && Math.abs(d) >= DELTA_MIN_PCT;
         const roomy = t.width >= LABEL_MIN_W && t.height >= LABEL_MIN_H;
+        const swatch = t.width < SWATCH_MAX || t.height < SWATCH_MAX;
         const amount = formatMaskableMoney(rounded[t.index], { masked: hideAmounts && c.isSensitive });
         return (
           <Pressable
@@ -99,6 +110,7 @@ export function CategoryMosaic({
             style={withPressed([
               styles.tile,
               { left: t.x, top: t.y, width: t.width, height: t.height, backgroundColor: c.color },
+              swatch && styles.tileSwatch,
             ])}
             accessibilityRole="button"
             accessibilityLabel={`${c.name}, ${pct}% of ${of}, ${amount}${
@@ -111,9 +123,11 @@ export function CategoryMosaic({
               </Text>
             )}
             <View>
-              <Text style={[styles.tilePct, !roomy && styles.tilePctSmall]} numberOfLines={1}>
-                {pct < 1 ? '<1' : pct}%
-              </Text>
+              {!swatch && (
+                <Text style={[styles.tilePct, !roomy && styles.tilePctSmall]} numberOfLines={1}>
+                  {pct < 1 ? '<1' : pct}%
+                </Text>
+              )}
               {roomy && (
                 <Text style={styles.tileAmt} numberOfLines={1} adjustsFontSizeToFit>
                   {amount}

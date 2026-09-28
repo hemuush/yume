@@ -7,7 +7,8 @@ import { FormInput } from '@/components/FormInput';
 import { SegmentedControl } from '@/components/SegmentedControl';
 import { ToggleSwitch } from '@/components/ToggleSwitch';
 import { PrimaryButton } from '@/components/PrimaryButton';
-import { ModalSheet } from '@/components/ModalSheet';
+import { ModalSheet, SheetLink } from '@/components/ModalSheet';
+import { SheetCard } from '@/components/SheetCard';
 import { CategoryIcon } from '@/components/CategoryIcon';
 import { CATEGORY_COLOR_PALETTE, modalFooterStyles as f, theme } from '@/constants/theme';
 import { CATEGORY_ICON_CHOICES } from '@/constants/categories';
@@ -105,34 +106,34 @@ export function AddCategoryModal({
 
   const isSystem = !!category?.isSystem;
 
+  // The calm-sheets sign-off (Direction C): the category as a card that
+  // takes on the colour and icon as you pick them, then the form. Archive or
+  // delete is a quiet link at the end, not a third button in the footer.
+  const parentName = allCategories.find((c) => c.id === parentId)?.name;
   return (
     <ModalSheet
       visible={visible}
       onClose={onClose}
-      title={category ? 'Edit category' : 'New category'}
       footer={
         <View style={f.footerCol}>
           {error && <Text style={styles.errorText}>{error}</Text>}
-          <View style={f.footerRow}>
-            <PrimaryButton title="Cancel" variant="secondary" onPress={onClose} style={f.footerBtn} />
-            <PrimaryButton
-              title={saving ? 'Saving…' : category ? 'Save' : 'Create'}
-              onPress={submit}
-              disabled={saving}
-              style={f.footerBtn}
-            />
-          </View>
-          {category && !category.isSystem && onManage && (
-            <PrimaryButton
-              title="Archive or delete…"
-              variant="secondary"
-              onPress={onManage}
-              disabled={saving}
-            />
-          )}
+          <PrimaryButton
+            title={saving ? 'Saving…' : category ? 'Save changes' : 'Create category'}
+            onPress={submit}
+            disabled={saving}
+          />
         </View>
       }
     >
+      <SheetCard
+        hue={color}
+        icon={icon}
+        kicker={kind === 'income' ? 'Income' : 'Expense'}
+        title={name.trim() || (category ? category.name : 'New category')}
+        meta={
+          parentName ? `Inside ${parentName}` : isSensitive ? 'Sensitive · hidden with amounts' : undefined
+        }
+      />
       <FormInput
         label="Name"
         value={name}
@@ -228,6 +229,9 @@ export function AddCategoryModal({
         </View>
         <ToggleSwitch value={isSensitive} onChange={setIsSensitive} />
       </View>
+      {category && !category.isSystem && onManage && (
+        <SheetLink label="Archive or delete" onPress={onManage} disabled={saving} />
+      )}
     </ModalSheet>
   );
 }
