@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { View, ScrollView, StyleSheet, Alert } from 'react-native';
+import { View, ScrollView, StyleSheet } from 'react-native';
 import { Text } from '@/components/Text';
 import { router, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -51,6 +51,7 @@ import { Skeleton } from '@/components/Skeleton';
 import { theme } from '@/constants/theme';
 import { errorMessage } from '@/lib/errorMessage';
 import { SECTION_TITLE, SECTION_GAP } from '@/constants/textStyles';
+import { showAlert } from '@/components/AppDialog';
 
 const FREQUENCIES: { label: string; value: BackupFrequency }[] = [
   { label: 'Daily', value: 'daily' },
@@ -150,7 +151,7 @@ export default function BackupScreen() {
         setDoneLabel(null);
       }
     } catch (e) {
-      Alert.alert('Something went wrong', errorMessage(e));
+      showAlert('Something went wrong', errorMessage(e));
     } finally {
       setBusy(null);
       await load();
@@ -216,7 +217,7 @@ export default function BackupScreen() {
    * completion message and the "Undo your last restore" card.
    */
   const confirmUndo = () =>
-    Alert.alert(
+    showAlert(
       'Put back your earlier data?',
       'This replaces what is in the app now with your data from just before the restore. What is there now is kept as a copy, so this can be undone too.',
       [
@@ -229,11 +230,11 @@ export default function BackupScreen() {
             try {
               await undoLastRestore();
               void resyncAfterRestore();
-              Alert.alert('Data put back', 'Your data is back to how it was before the restore.', [
+              showAlert('Data put back', 'Your data is back to how it was before the restore.', [
                 { text: 'OK', onPress: goHome },
               ]);
             } catch (e) {
-              Alert.alert("Couldn't put your data back", errorMessage(e));
+              showAlert("Couldn't put your data back", errorMessage(e));
             } finally {
               setBusy(null);
               await load();
@@ -259,7 +260,7 @@ export default function BackupScreen() {
             ', '
           )}). Everything else was restored.`
         : '';
-    Alert.alert(
+    showAlert(
       'Restore complete',
       undoAvailable
         ? `Your data has been restored.${note}\n\nNot what you expected? You can put back your data from before this restore.`
@@ -299,13 +300,13 @@ export default function BackupScreen() {
     } catch (e) {
       setPending(null);
       if (!(e instanceof SafetyCopyError)) {
-        Alert.alert('Something went wrong', String((e as Error)?.message ?? e));
+        showAlert('Something went wrong', String((e as Error)?.message ?? e));
         return;
       }
       // The copy couldn't be saved (usually a full phone) and nothing has
       // been replaced. Only go ahead if the user says so, knowing there'd be
       // no way back — Cancel is the default.
-      Alert.alert(
+      showAlert(
         "Couldn't keep a copy of your current data",
         `${e.message}
 
@@ -319,7 +320,7 @@ Restore anyway? Your current data would be replaced with no way back.`,
               try {
                 finishRestore(await restoreKeepingSafetyCopy(snapshot, { withoutCopy: true }));
               } catch (err) {
-                Alert.alert('Something went wrong', errorMessage(err));
+                showAlert('Something went wrong', errorMessage(err));
               }
             },
           },

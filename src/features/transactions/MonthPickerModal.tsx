@@ -3,6 +3,7 @@ import { View, Pressable, Animated } from 'react-native';
 import { Text } from '@/components/Text';
 import { ModalSheet } from '@/components/ModalSheet';
 import { usePressScale } from '@/lib/usePressScale';
+import { theme } from '@/constants/theme';
 import { styles } from './transactions.styles';
 import { MONTH_NAMES } from './transactions.constants';
 
@@ -50,14 +51,7 @@ export function MonthPickerModal({
   };
 
   return (
-    <ModalSheet
-      visible={visible}
-      onClose={onClose}
-      variant="center"
-      showClose
-      scrollable={false}
-      title="Jump to month"
-    >
+    <ModalSheet visible={visible} onClose={onClose} variant="center" scrollable={false} title="Jump to month">
       <View style={styles.yearRow}>
         <AnimatedPressable
           onPress={() => setYear((y) => y - 1)}
@@ -83,18 +77,42 @@ export function MonthPickerModal({
       <View style={styles.monthGrid}>
         {MONTH_NAMES.map((name, idx) => {
           const isFuture = year === currentYear && idx > currentMonth;
-          return <MonthCell key={name} name={name} disabled={isFuture} onPress={() => pickMonth(idx)} />;
+          return (
+            <MonthCell
+              key={name}
+              name={name}
+              disabled={isFuture}
+              current={year === currentYear && idx === currentMonth}
+              onPress={() => pickMonth(idx)}
+            />
+          );
         })}
       </View>
     </ModalSheet>
   );
 }
 
-function MonthCell({ name, disabled, onPress }: { name: string; disabled: boolean; onPress: () => void }) {
+function MonthCell({
+  name,
+  disabled,
+  current,
+  onPress,
+}: {
+  name: string;
+  disabled: boolean;
+  /** This month — tinted, the way Home marks today. */
+  current: boolean;
+  onPress: () => void;
+}) {
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.94);
   return (
     <AnimatedPressable
-      style={[styles.monthCell, disabled && styles.monthCellDisabled, animatedStyle]}
+      style={[
+        styles.monthCell,
+        current && { backgroundColor: theme.colors.primaryTint },
+        disabled && styles.monthCellDisabled,
+        animatedStyle,
+      ]}
       onPress={onPress}
       onPressIn={onPressIn}
       onPressOut={onPressOut}

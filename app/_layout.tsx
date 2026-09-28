@@ -29,15 +29,18 @@ import {
   syncDailyReminder,
   syncWeeklySummary,
   cancelLegacyScheduledNotifications,
+  registerNotificationCategories,
   subscribeToNotificationTaps,
   NotificationRoute,
 } from '@/lib/notifications';
+import { registerNotificationTask } from '@/lib/notificationTask';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { refreshAllWidgets } from '@/widgets/notifyWidgets';
 import { AccentProvider } from '@/theme/AccentContext';
 import { PrivacyProvider } from '@/theme/PrivacyContext';
 import { AppLockProvider, useAppLock } from '@/lib/AppLockContext';
 import { UndoToastProvider } from '@/components/UndoToast';
+import { AppDialogHost } from '@/components/AppDialog';
 import { LockScreen } from '@/components/LockScreen';
 import { Onboarding } from '@/features/onboarding/Onboarding';
 import { theme } from '@/constants/theme';
@@ -95,6 +98,15 @@ export default function RootLayout() {
         // One-time: drop notifications still scheduled under the pre-rename
         // `flynse-*` identifiers.
         void cancelLegacyScheduledNotifications();
+        // The buttons on each kind of notification, and the task that runs
+        // the ones that don't open Yume. Both are needed before a
+        // notification fires, and both are safe to repeat on every start.
+        void registerNotificationCategories().catch((err) =>
+          console.error('registerNotificationCategories failed:', err)
+        );
+        void registerNotificationTask().catch((err) =>
+          console.error('registerNotificationTask failed:', err)
+        );
         // Re-schedules the daily reminder and weekly summary (if enabled) on
         // every cold start — scheduled notifications already survive a
         // normal restart, but this keeps them self-healing after a
@@ -153,6 +165,8 @@ export default function RootLayout() {
           <AccentProvider>
             <PrivacyProvider>
               <AppGate needsOnboarding={needsOnboarding} initialLocked={initialLocked} />
+              {/* Yume's own confirm/notice dialog, shown by showAlert() anywhere in the app. */}
+              <AppDialogHost />
             </PrivacyProvider>
           </AccentProvider>
         </AppLockProvider>
@@ -297,6 +311,7 @@ function AppGate({ needsOnboarding, initialLocked }: { needsOnboarding: boolean;
           <Stack.Screen name="savings-goals" />
           <Stack.Screen name="loans" />
           <Stack.Screen name="recently-deleted" />
+          <Stack.Screen name="themes" />
           {/* A Wrap fades in over the screen it was opened from, like a story, rather than sliding. */}
           <Stack.Screen name="wrap" options={{ animation: 'fade' }} />
         </Stack>

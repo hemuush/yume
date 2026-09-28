@@ -1,22 +1,27 @@
-import { listAccounts, listCategories } from '@/db/ledger';
-import { getRangeComparison, findTopGrowingCategory } from '@/db/reports';
+import { listAccounts, listCategories, listMostUsedExpenseCategories } from '@/db/ledger';
+import { getRangeComparison, findTopGrowingCategory, getMonthPaceInputs } from '@/db/reports';
 import { getNextDueInstallment } from '@/db/loans';
 import { listRecurringRules } from '@/db/recurring';
 import { getAccentColor, getThemeId, getHideSensitiveAmounts } from '@/db/settings';
-import { formatMaskableMoney } from '@/lib/money';
+import { formatMaskableMoney, formatMoney } from '@/lib/money';
 import { resolveActiveTheme } from '@/theme/themes';
 import { CURRENT_PERIOD, periodRange, previousPeriodRange } from '@/lib/period';
 import { roundedMinor } from '@/lib/round';
 import { savingsRatePct } from '@/lib/savingsRate';
 import { dueDateLabel } from '@/lib/dueDate';
-import { accountBadgeColor } from '@/lib/account';
+import { accountIcon } from '@/lib/account';
+import { toLocalIsoDate, parseLocalIsoDate } from '@/lib/date';
+import { monthPace } from '@/lib/pace';
 import { suuLine, SuuLine } from '@/features/home/suuLine';
+import { heroSlices, HeroSlices } from '@/features/home/heroSlices';
+import type { Account } from '@/types';
+import { widgetColor } from './widgetTheme';
 
 /**
  * Every widget's data source, one function per widget — each is the exact
  * same query/derivation the matching in-app screen already uses (Home's
- * ThisMonthHero, Home's Suu line, Home's Upcoming merge, Home's account
- * strip), just called directly instead of through a React component. These
+ * month card, Home's Suu line, Home's Upcoming merge, Home's account
+ * cards), just called directly instead of through a React component. These
  * run inside `widgetTaskHandler` (a headless JS context with no screen, no
  * hooks) as well as from the app's own foreground code when nudging a
  * widget to refresh immediately — see `notifyWidgets.ts`.
@@ -25,12 +30,12 @@ import { suuLine, SuuLine } from '@/features/home/suuLine';
 /**
  * `refreshAllWidgets()` fires every placed widget's data function back to
  * back in the same tick, and several of them need the exact same query
- * (this month vs last month, the user's accent colour) — without this,
- * having both the This Month and Suu widgets placed doubles the "this
- * month vs last month" DB aggregation, and every widget that reads the
- * accent colour re-queries it separately. Coalescing calls that land within
- * a short window into one shared promise means one real burst of refreshes
- * still only queries each of these once; the window is short enough that a
+ * (this month vs last month, the active theme pack) — without this, having
+ * both the This Month and Suu widgets placed doubles the "this month vs
+ * last month" DB aggregation, and every widget that reads the theme
+ * re-queries it separately. Coalescing calls that land within a short
+ * window into one shared promise means one real burst of refreshes still
+ * only queries each of these once; the window is short enough that a
  * genuinely later refresh (the 30-minute timer, or backgrounding again)
  * always sees fresh data rather than a stale cache.
  */
@@ -54,45 +59,95 @@ function coalesced<T>(fn: () => Promise<T>, windowMs = 2000): () => Promise<T> {
   };
 }
 
-const getAccentColorOnce = coalesced(getAccentColor);
 const getActiveThemeOnce = coalesced(() => resolveActiveTheme(getThemeId, getAccentColor));
 const getMonthComparisonOnce = coalesced(() =>
   getRangeComparison(periodRange(CURRENT_PERIOD), previousPeriodRange(CURRENT_PERIOD), 'month')
 );
 
 export interface ThisMonthWidgetData {
+  /** "September". */
+  monthLabel: string;
+  /** Days after today left in the month; 0 on its last day. */
+  daysLeft: number;
   spentMinor: number;
-  changePct: number | null;
-  spentPct: number;
-  keptPct: number;
-  overspent: boolean;
-  // Home's own ThisMonthHero swaps the bar's caption for "Add income to
-  // track your saving" whenever there's no income yet this month — without
-  // it, spentPct/keptPct default to 0/100, and the widget would otherwise
-  // show real spending next to a fully "kept" bar with nothing to say why.
-  hasIncome: boolean;
-  accent: string;
+  savedMinor: number;
+  /** Income − spent − moved to savings; negative when more went out than came in. */
+  freeMinor: number;
+  slices: HeroSlices;
+  /** Home's "On pace for about … by …" line, from the 5th on. */
+  pace: { projectedMinor: number; byLabel: string } | null;
+  primary: string;
+  secondary: string;
 }
 
-export async function getThisMonthWidgetData(): Promise<ThisMonthWidgetData> {
-  const [cmp, accent] = await Promise.all([getMonthComparisonOnce(), getAccentColorOnce()]);
+/** Home's month card, for today's month: the same figures ThisMonthHero shows. */
+export async function getThisMonthWidgetData(now: Date = new Date()): Promise<ThisMonthWidgetData> {
+  const today = toLocalIsoDate(now);
+  const [cmp, theme, paceIn] = await Promise.all([
+    getMonthComparisonOnce(),
+    getActiveThemeOnce(),
+    getMonthPaceInputs(today),
+  ]);
   const incomeMinor = roundedMinor(cmp.current.incomeMinor);
   const spentMinor = roundedMinor(cmp.current.expenseMinor);
-  const hasIncome = incomeMinor > 0;
-  const overspent = hasIncome && spentMinor > incomeMinor;
-  const spentPct = hasIncome ? Math.min(100, (spentMinor / incomeMinor) * 100) : 0;
-  const keptPct = Math.max(0, 100 - spentPct);
-  return { spentMinor, changePct: cmp.expenseChangePct, spentPct, keptPct, overspent, hasIncome, accent };
+  const savedMinor = roundedMinor(cmp.current.savingsContributionMinor ?? 0);
+  const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+  const paceMinor = monthPace({ spentMinor: cmp.current.expenseMinor, ...paceIn, today });
+  return {
+    monthLabel: now.toLocaleDateString(undefined, { month: 'long' }),
+    daysLeft: monthEnd.getDate() - now.getDate(),
+    spentMinor,
+    savedMinor,
+    freeMinor: incomeMinor - spentMinor - savedMinor,
+    slices: heroSlices(incomeMinor, spentMinor, savedMinor),
+    pace:
+      paceMinor != null
+        ? {
+            projectedMinor: paceMinor,
+            byLabel: monthEnd.toLocaleDateString(undefined, { day: 'numeric', month: 'short' }),
+          }
+        : null,
+    primary: theme.primary,
+    secondary: theme.secondary,
+  };
+}
+
+export interface QuickAddCategory {
+  id: string;
+  name: string;
+  icon: string;
+  color: string;
+}
+
+export interface QuickAddWidgetData {
+  primary: string;
+  categories: QuickAddCategory[];
+}
+
+/** How far back Quick Add looks for the categories you use most. */
+const QUICK_ADD_LOOKBACK_DAYS = 90;
+export const QUICK_ADD_CATEGORY_COUNT = 4;
+
+/** Quick Add's shortcuts: your four most-used expense categories of the last 90 days. */
+export async function getQuickAddWidgetData(now: Date = new Date()): Promise<QuickAddWidgetData> {
+  const since = new Date(now);
+  since.setDate(since.getDate() - QUICK_ADD_LOOKBACK_DAYS);
+  const [cats, theme] = await Promise.all([
+    listMostUsedExpenseCategories(QUICK_ADD_CATEGORY_COUNT, toLocalIsoDate(since)),
+    getActiveThemeOnce(),
+  ]);
+  return {
+    primary: theme.primary,
+    categories: cats.map((c) => ({ id: c.id, name: c.name, icon: c.icon, color: c.color || theme.primary })),
+  };
 }
 
 export interface SuuWidgetData {
   line: SuuLine;
-  // Previously missing entirely — the in-app Suu retints its one dot per
-  // the active theme (see AccentContext's `dot`), but this widget had no
-  // equivalent path to that value at all, so its moon-phase dot stayed
-  // hardcoded to the default pack's colour regardless of which theme was
-  // picked. See `resolveActiveTheme`.
+  /** The active pack's mascot-dot colour — Suu's one dot follows the theme, as in the app. */
   dot: string;
+  /** The pack's second colour, for the footer under the line. */
+  secondary: string;
 }
 
 export async function getSuuWidgetData(): Promise<SuuWidgetData> {
@@ -102,7 +157,7 @@ export async function getSuuWidgetData(): Promise<SuuWidgetData> {
   const savingsPct = savingsRatePct(incomeMinor - expenseMinor, incomeMinor);
   const topGrowing = findTopGrowingCategory(cmp.current.categoryBreakdown, cmp.previous.categoryBreakdown);
   const line = suuLine(savingsPct, cmp.expenseChangePct ?? null, topGrowing?.name ?? null);
-  return { line, dot: theme.dot };
+  return { line, dot: theme.dot, secondary: theme.secondary };
 }
 
 export interface NextDueWidgetData {
@@ -112,24 +167,22 @@ export interface NextDueWidgetData {
   sign: '+' | '-';
   /** Where the click should deep-link to — Loans for an EMI, Recurring for a rule. */
   route: '/loans' | '/recurring';
-  accent: string;
+  /** The due date, for the date tile: "01" over "OCT". */
+  dateIso: string;
+  /** The date tile's colour: the pack's own for an EMI, the category's for a rule. */
+  tint: string;
 }
 
-interface DueCandidate {
-  title: string;
-  subtitle: string;
-  amountMinor: number;
-  sign: '+' | '-';
-  route: '/loans' | '/recurring';
+interface DueCandidate extends NextDueWidgetData {
   sortDate: string;
 }
 
 export async function getNextDueWidgetData(): Promise<NextDueWidgetData | null> {
-  const [nextDue, rules, categories, accent] = await Promise.all([
+  const [nextDue, rules, categories, theme] = await Promise.all([
     getNextDueInstallment(),
     listRecurringRules(),
     listCategories(),
-    getAccentColorOnce(),
+    getActiveThemeOnce(),
   ]);
 
   const candidates: DueCandidate[] = [];
@@ -140,7 +193,9 @@ export async function getNextDueWidgetData(): Promise<NextDueWidgetData | null> 
       amountMinor: nextDue.emiAmountMinor,
       sign: '-',
       route: '/loans',
+      dateIso: nextDue.dueDate,
       sortDate: nextDue.dueDate,
+      tint: theme.primary,
     });
   }
   for (const rule of rules) {
@@ -149,14 +204,16 @@ export async function getNextDueWidgetData(): Promise<NextDueWidgetData | null> 
     // which needs more room than this widget's single title line has, so
     // it's left out here rather than shown half-labelled.
     if (!rule.active || rule.type === 'transfer') continue;
-    const catName = categories.find((c) => c.id === rule.categoryId)?.name;
+    const cat = categories.find((c) => c.id === rule.categoryId);
     candidates.push({
-      title: rule.note || catName || 'Recurring',
+      title: rule.note || cat?.name || 'Recurring',
       subtitle: dueDateLabel(rule.nextRunDate),
       amountMinor: rule.amountMinor,
       sign: rule.type === 'income' ? '+' : '-',
       route: '/recurring',
+      dateIso: rule.nextRunDate,
       sortDate: rule.nextRunDate,
+      tint: cat?.color ?? theme.primary,
     });
   }
   // Soonest date wins, same ordering Home's own merge uses.
@@ -164,40 +221,77 @@ export async function getNextDueWidgetData(): Promise<NextDueWidgetData | null> 
 
   const top = candidates[0];
   if (!top) return null;
+  const { sortDate: _sortDate, ...item } = top;
+  return item;
+}
+
+/** "01" and "OCT" for a date tile, like Home's Upcoming rows. */
+export function dateTileParts(iso: string): { day: string; month: string } {
+  const d = parseLocalIsoDate(iso);
   return {
-    title: top.title,
-    subtitle: top.subtitle,
-    amountMinor: top.amountMinor,
-    sign: top.sign,
-    route: top.route,
-    accent,
+    day: String(d.getDate()).padStart(2, '0'),
+    month: d.toLocaleDateString(undefined, { month: 'short' }).slice(0, 3).toUpperCase(),
   };
 }
 
 export interface AccountWidgetRow {
   name: string;
+  /** "Credit card", "Bank" — the account's type, spelled out. */
+  typeLabel: string;
+  icon: string;
+  /** The colour family, the same as Home's account cards. */
+  hue: string;
   /** Already formatted — in the account's own currency, and masked exactly when the in-app balance would be. */
   balanceText: string;
-  badgeColor: string;
+  negative: boolean;
 }
 
-export async function getAccountsWidgetData(): Promise<{ accounts: AccountWidgetRow[] }> {
-  const [accounts, accent, hideAmounts] = await Promise.all([
+export interface AccountsWidgetData {
+  accounts: AccountWidgetRow[];
+  /** Every account added up — only when they share one currency and nothing is hidden. */
+  totalText: string | null;
+}
+
+/** The colour family an account is tinted in, by type — the same as Home's AccountChip. */
+export function accountWidgetHue(type: Account['type'], primary: string, secondary: string): string {
+  switch (type) {
+    case 'cash':
+      return widgetColor.flatLime;
+    case 'wallet':
+      return secondary;
+    case 'credit_card':
+      return widgetColor.idGoldDeep;
+    case 'savings':
+      return widgetColor.idCoralDeep;
+    default:
+      return primary;
+  }
+}
+
+export async function getAccountsWidgetData(): Promise<AccountsWidgetData> {
+  const [accounts, theme, hideAmounts] = await Promise.all([
     listAccounts(),
-    getAccentColorOnce(),
+    getActiveThemeOnce(),
     getHideSensitiveAmounts(),
   ]);
+  const hidden = (a: Account) => hideAmounts && a.type === 'savings';
   const rows: AccountWidgetRow[] = accounts.slice(0, 3).map((a) => ({
     name: a.name,
-    // Same rule as Home's AccountChip: the account's own currency (this
-    // used to format every balance in the default currency), and a savings
-    // balance masked when "hide savings & investment amounts" is on — the
-    // widget previously showed it in full on the home screen regardless.
-    balanceText: formatMaskableMoney(a.currentBalanceMinor, {
-      currency: a.currency,
-      masked: hideAmounts && a.type === 'savings',
-    }),
-    badgeColor: accountBadgeColor(a.type, accent),
+    typeLabel: a.type.charAt(0).toUpperCase() + a.type.slice(1).replace('_', ' '),
+    icon: accountIcon(a.type),
+    hue: accountWidgetHue(a.type, theme.primary, theme.secondary),
+    // Same rule as Home's AccountChip: the account's own currency, and a
+    // savings balance masked when "hide savings & investment amounts" is on.
+    balanceText: formatMaskableMoney(a.currentBalanceMinor, { currency: a.currency, masked: hidden(a) }),
+    negative: a.currentBalanceMinor < 0,
   }));
-  return { accounts: rows };
+  const currencies = new Set(accounts.map((a) => a.currency));
+  const totalText =
+    accounts.length > 1 && currencies.size === 1 && !accounts.some(hidden)
+      ? formatMoney(
+          accounts.reduce((sum, a) => sum + a.currentBalanceMinor, 0),
+          accounts[0].currency
+        )
+      : null;
+  return { accounts: rows, totalText };
 }

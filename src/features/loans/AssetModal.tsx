@@ -6,7 +6,7 @@ import { toMinor, formatMoney } from '@/lib/money';
 import { Loan } from '@/types';
 import { FormInput } from '@/components/FormInput';
 import { PrimaryButton } from '@/components/PrimaryButton';
-import { ModalSheet } from '@/components/ModalSheet';
+import { ModalSheet, SheetLink } from '@/components/ModalSheet';
 import { modalFooterStyles as f } from '@/constants/theme';
 import { styles } from './loans.styles';
 import { errorMessage } from '@/lib/errorMessage';
@@ -68,34 +68,11 @@ export function AssetModal({
       visible
       onClose={onClose}
       variant="center"
-      showClose
       title="Loan asset"
       footer={
         <View style={f.footerCol}>
           {error && <Text style={styles.errorText}>{error}</Text>}
-          <View style={f.footerRow}>
-            <PrimaryButton
-              title="Cancel"
-              variant="secondary"
-              onPress={onClose}
-              disabled={saving}
-              style={f.footerBtn}
-            />
-            <PrimaryButton
-              title={saving ? 'Saving…' : 'Save'}
-              onPress={submit}
-              disabled={saving}
-              style={f.footerBtn}
-            />
-          </View>
-          {!!loan.assetValueMinor && (
-            <PrimaryButton
-              title="Stop tracking this asset"
-              variant="secondary"
-              onPress={stopTracking}
-              disabled={saving}
-            />
-          )}
+          <PrimaryButton title={saving ? 'Saving…' : 'Save'} onPress={submit} disabled={saving} />
         </View>
       }
     >
@@ -112,6 +89,9 @@ export function AssetModal({
         still owed ({formatMoney(loan.outstandingPrincipalMinor)}) counts toward Tracked Balance/Net Worth.
         Yume doesn't estimate it for you, so update it whenever the real value changes.
       </Text>
+      {!!loan.assetValueMinor && (
+        <SheetLink label="Stop tracking this asset" onPress={stopTracking} disabled={saving} />
+      )}
     </ModalSheet>
   );
 }

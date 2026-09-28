@@ -1,12 +1,11 @@
-import { FlexWidget, TextWidget, type ColorProp } from 'react-native-android-widget';
-import { widgetColor, widgetRgba, WIDGET_GLASS_BG, WIDGET_GLASS_BORDER, WIDGET_RADIUS } from './widgetTheme';
+import { FlexWidget, TextWidget, IconWidget, type ColorProp } from 'react-native-android-widget';
+import glyphs from '@expo/vector-icons/build/vendor/react-native-vector-icons/glyphmaps/MaterialCommunityIcons.json';
+import { widgetColor, WIDGET_FONT, WIDGET_RADIUS } from './widgetTheme';
 
 /**
- * The one shell every widget is built on — same radius, same border, same
- * translucent fill regardless of which widget it is, so the five read as
- * one family sitting on the wallpaper rather than five unrelated cards
- * pasted over it (the "deference" + "consistency" pass — see the Yume
- * Night design artifact this implements).
+ * The one shell every widget is built on: Home's own calm card — cream,
+ * a warm hairline border, the 22 corner — so the five read as pieces of
+ * Home sitting on the wallpaper (the Home A widgets sign-off).
  *
  * Widget components must stay plain sync functions with no hooks (Android
  * renders these into RemoteViews on its own, outside React's render loop) —
@@ -18,13 +17,15 @@ export function WidgetShell({
   clickActionData,
   flexDirection = 'column',
   alignItems,
-  padding = 16,
+  justifyContent,
+  padding = 14,
 }: {
   children?: React.ReactNode;
   clickAction?: string;
   clickActionData?: Record<string, unknown>;
   flexDirection?: 'row' | 'column';
   alignItems?: 'flex-start' | 'center' | 'flex-end';
+  justifyContent?: 'flex-start' | 'center' | 'flex-end' | 'space-between';
   padding?: number;
 }) {
   return (
@@ -36,10 +37,11 @@ export function WidgetShell({
         width: 'match_parent',
         flexDirection,
         alignItems,
-        backgroundColor: WIDGET_GLASS_BG,
+        justifyContent,
+        backgroundColor: widgetColor.cream,
         borderRadius: WIDGET_RADIUS,
         borderWidth: 1,
-        borderColor: WIDGET_GLASS_BORDER,
+        borderColor: widgetColor.borderSoft,
         padding,
       }}
     >
@@ -48,83 +50,71 @@ export function WidgetShell({
   );
 }
 
-/** A small uppercase mono-ish label — "SPENT THIS MONTH", "ACCOUNTS". */
-export function WidgetLabel({ text }: { text: string }) {
+/** A widget's heading, in Home's section-title face: "September", "Your accounts". */
+export function WidgetTitle({ text }: { text: string }) {
   return (
     <TextWidget
       text={text}
-      style={{ fontSize: 9, color: widgetColor.textMuted, letterSpacing: 1, fontWeight: '600' }}
+      maxLines={1}
+      truncate="END"
+      style={{ fontFamily: WIDGET_FONT.rounded, fontSize: 15, color: widgetColor.ink }}
     />
   );
 }
 
-function Dot({ on, color }: { on: boolean; color: ColorProp }) {
+/** A small uppercase label — "18 DAYS LEFT", "SUU SAYS". */
+export function WidgetLabel({ text, color = widgetColor.textMuted }: { text: string; color?: ColorProp }) {
+  return (
+    <TextWidget
+      text={text.toUpperCase()}
+      style={{ fontFamily: WIDGET_FONT.bodyMedium, fontSize: 9, color, letterSpacing: 0.8 }}
+    />
+  );
+}
+
+const GLYPHS = glyphs as Record<string, number>;
+
+/** The character a Material Community Icons name draws, or a plain dot for a name it doesn't know. */
+export function iconGlyph(name: string): string {
+  const code = GLYPHS[name] ?? GLYPHS['circle-small'];
+  return code != null ? String.fromCodePoint(code) : '•';
+}
+
+/** A category or account icon in a round tinted circle, like Home's rows. */
+export function WidgetIcon({
+  name,
+  background,
+  color = widgetColor.ink,
+  size = 30,
+  clickAction,
+  clickActionData,
+}: {
+  name: string;
+  background: ColorProp;
+  color?: ColorProp;
+  size?: number;
+  clickAction?: string;
+  clickActionData?: Record<string, unknown>;
+}) {
   return (
     <FlexWidget
+      clickAction={clickAction}
+      clickActionData={clickActionData}
       style={{
-        width: 4,
-        height: 4,
-        borderRadius: 2,
-        backgroundColor: on ? color : widgetRgba(148, 142, 124, 0.35),
-        marginLeft: 4,
+        width: size,
+        height: size,
+        borderRadius: size / 2,
+        backgroundColor: background,
+        alignItems: 'center',
+        justifyContent: 'center',
       }}
-    />
-  );
-}
-
-/**
- * The quiet night-sky motif in a widget's corner — six dots, two of them lit
- * in the user's own accent. Stands in for Nothing's Glyph Matrix without
- * copying it outright, and doubles as a nod to "Yume" (a dream, a night
- * sky). Purely decorative — never spells out real data.
- */
-export function ConstellationDots({ accent, lit = [0, 4] }: { accent: ColorProp; lit?: number[] }) {
-  const cells = Array.from({ length: 6 }, (_, i) => lit.includes(i));
-  return (
-    <FlexWidget style={{ flexDirection: 'row', width: 'wrap_content', flexGap: 0 }}>
-      <FlexWidget style={{ flexDirection: 'column' }}>
-        <FlexWidget style={{ flexDirection: 'row' }}>
-          {cells.slice(0, 3).map((on, i) => (
-            <Dot key={i} on={on} color={accent} />
-          ))}
-        </FlexWidget>
-        <FlexWidget style={{ flexDirection: 'row', marginTop: 4 }}>
-          {cells.slice(3, 6).map((on, i) => (
-            <Dot key={i} on={on} color={accent} />
-          ))}
-        </FlexWidget>
-      </FlexWidget>
-    </FlexWidget>
-  );
-}
-
-/**
- * Suu, redrawn as a seven-dot row with one highlighted center dot instead of
- * the ring shape RemoteViews can't easily draw — same dot language as
- * ConstellationDots, and now also literally how Suu itself works: one dot
- * carrying the personality. `dot` is the active theme's mascot-dot colour
- * (see `resolveActiveTheme`/`getSuuWidgetData`) — this used to be hardcoded
- * to `widgetColor.sky` regardless of theme, the one place Suu's dot never
- * actually followed a picked pack.
- */
-export function MoonPhaseRow({ dot }: { dot: ColorProp }) {
-  const opacities = [0.15, 0.4, 0.7, 1, 0.7, 0.4, 0.15];
-  return (
-    <FlexWidget style={{ flexDirection: 'row', justifyContent: 'center', width: 'match_parent' }}>
-      {opacities.map((o, i) => (
-        <FlexWidget
-          key={i}
-          style={{
-            width: 5,
-            height: 5,
-            borderRadius: 2.5,
-            marginLeft: i === 0 ? 0 : 3,
-            backgroundColor: i === 3 ? dot : widgetRgba(18, 19, 15, o), // widgetColor.ink, faded
-            borderWidth: i === 3 ? 1 : 0,
-            borderColor: widgetColor.ink,
-          }}
-        />
-      ))}
+    >
+      <IconWidget
+        icon={iconGlyph(name)}
+        font={WIDGET_FONT.icons}
+        size={Math.round(size * 0.5)}
+        style={{ color }}
+      />
     </FlexWidget>
   );
 }

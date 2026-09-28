@@ -52,6 +52,8 @@ it('says so when nothing would be lost, and restores on Restore', async () => {
   const onRestore = jest.fn();
   const tree = await render(preview(0), onRestore);
   expect(texts(tree).some((t) => t.startsWith('Nothing you added since would be lost.'))).toBe(true);
-  act(() => tree.root.find((n) => n.props.title === 'Restore' && n.props.onPress).props.onPress());
+  act(() =>
+    tree.root.find((n) => n.props.title === 'Restore this backup' && n.props.onPress).props.onPress()
+  );
   expect(onRestore).toHaveBeenCalled();
 });

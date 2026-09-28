@@ -69,8 +69,8 @@ export function AccountChip({ account, onPress }: { account: Account; onPress: (
   );
 }
 
-/** The colour family a card is tinted in, by account type. */
-function accountHue(type: Account['type'], accent: string): string {
+/** The colour family a card is tinted in, by account type — its summary sheet's card too. */
+export function accountHue(type: Account['type'], accent: string): string {
   switch (type) {
     case 'cash':
       return theme.colors.flatLime;

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { View, Alert } from 'react-native';
+import { View } from 'react-native';
 import { Text } from '@/components/Text';
 import {
   updateSavingsGoal,
@@ -8,12 +8,13 @@ import {
   deleteSavingsGoal,
   restoreSavingsGoal,
 } from '@/db/savingsGoals';
-import { toMinor } from '@/lib/money';
+import { toMinor, inputMinor } from '@/lib/money';
 import { toLocalIsoDate, addMonthsToIsoDate } from '@/lib/date';
 import { DateField } from '@/components/DateField';
 import { Account, SavingsGoal } from '@/types';
-import { ModalSheet } from '@/components/ModalSheet';
+import { ModalSheet, SheetLink } from '@/components/ModalSheet';
 import { modalFooterStyles as f } from '@/constants/theme';
+import { GoalSheetCard } from './GoalSheetCard';
 import { FormInput } from '@/components/FormInput';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { ToggleSwitch } from '@/components/ToggleSwitch';
@@ -22,6 +23,7 @@ import { useUndoToast } from '@/components/UndoToast';
 import { haptics } from '@/lib/haptics';
 import { styles } from './goals.styles';
 import { errorMessage } from '@/lib/errorMessage';
+import { showAlert } from '@/components/AppDialog';
 
 /**
  * Editing/archiving/deleting a goal, opened by tapping a GoalCard. Same
@@ -98,7 +100,7 @@ export function GoalDetailModal({
   };
 
   const confirmArchive = () => {
-    Alert.alert(
+    showAlert(
       'Archive this goal?',
       'It disappears from the active list, but its saved amount stays exactly as it is. You can unarchive it later.',
       [
@@ -112,7 +114,7 @@ export function GoalDetailModal({
               await archiveSavingsGoal(goal.id);
               onChanged();
             } catch (e) {
-              Alert.alert("Couldn't archive", errorMessage(e));
+              showAlert("Couldn't archive", errorMessage(e));
             } finally {
               setBusy(false);
             }
@@ -128,7 +130,7 @@ export function GoalDetailModal({
       await unarchiveSavingsGoal(goal.id);
       onChanged();
     } catch (e) {
-      Alert.alert("Couldn't unarchive", errorMessage(e));
+      showAlert("Couldn't unarchive", errorMessage(e));
     } finally {
       setBusy(false);
     }
@@ -145,38 +147,37 @@ export function GoalDetailModal({
         onChanged();
       });
     } catch (e) {
-      Alert.alert("Couldn't delete", errorMessage(e));
+      showAlert("Couldn't delete", errorMessage(e));
     } finally {
       setBusy(false);
     }
   };
 
+  // The calm-sheets sign-off (Direction C): a live card of the goal as it
+  // will read — what's saved against the target as you type it — then the
+  // form. Archive or delete is a quiet link at the end, not a second button.
+
   return (
     <ModalSheet
       visible
       onClose={onClose}
-      title="Edit Goal"
       footer={
         <View style={f.footerCol}>
           {error && <Text style={styles.errorText}>{error}</Text>}
-          <View style={f.footerRow}>
-            <PrimaryButton
-              title="Cancel"
-              variant="secondary"
-              onPress={onClose}
-              style={f.footerBtn}
-              disabled={saving || busy}
-            />
-            <PrimaryButton
-              title={saving ? 'Saving…' : 'Save'}
-              onPress={submit}
-              disabled={saving || busy}
-              style={f.footerBtn}
-            />
-          </View>
+          <PrimaryButton
+            title={saving ? 'Saving…' : 'Save changes'}
+            onPress={submit}
+            disabled={saving || busy}
+          />
         </View>
       }
     >
+      <GoalSheetCard
+        name={name.trim() || goal.name}
+        savedMinor={goal.currentAmountMinor}
+        targetMinor={inputMinor(target) || goal.targetAmountMinor}
+        targetDate={hasTargetDate ? targetDateValue : null}
+      />
       <FormInput label="Goal name" value={name} onChangeText={setName} placeholder="e.g. Goa trip" />
       <FormInput
         label="Target amount"
@@ -211,30 +212,17 @@ export function GoalDetailModal({
         </>
       )}
 
-      <Text style={styles.dangerLabel}>Danger zone</Text>
       {goal.archived ? (
-        <PrimaryButton
-          title={busy ? 'Working…' : 'Unarchive goal'}
-          variant="secondary"
+        <SheetLink
+          label={busy ? 'Working…' : 'Unarchive goal'}
           onPress={onUnarchive}
           disabled={busy}
+          danger={false}
         />
       ) : !goal.tracksAccount && goal.currentAmountMinor > 0 ? (
-        <PrimaryButton
-          title={busy ? 'Working…' : 'Archive goal (has progress)'}
-          variant="secondary"
-          onPress={confirmArchive}
-          disabled={busy}
-          style={styles.deleteButton}
-        />
+        <SheetLink label={busy ? 'Working…' : 'Archive goal'} onPress={confirmArchive} disabled={busy} />
       ) : (
-        <PrimaryButton
-          title={busy ? 'Working…' : 'Delete goal'}
-          variant="secondary"
-          onPress={confirmDelete}
-          disabled={busy}
-          style={styles.deleteButton}
-        />
+        <SheetLink label={busy ? 'Working…' : 'Delete goal'} onPress={confirmDelete} disabled={busy} />
       )}
     </ModalSheet>
   );

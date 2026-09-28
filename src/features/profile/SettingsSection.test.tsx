@@ -5,7 +5,7 @@
  * lock) still do exactly what they did.
  */
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
-import { Text, TextInput, Alert } from 'react-native';
+import { Text, TextInput } from 'react-native';
 
 jest.setTimeout(30000);
 
@@ -61,6 +61,7 @@ jest.mock('@/theme/AccentContext', () => ({
 
 import { SettingsSection, daysAgoLabel } from './SettingsSection';
 import { router } from 'expo-router';
+import { showAlert } from '@/components/AppDialog';
 
 const daysAgo = (n: number) => {
   const d = new Date();
@@ -207,16 +208,18 @@ describe('Profile · Settings section', () => {
     expect(texts(tree)).toContain('₹800/day');
   });
 
-  it('applies a theme with one tap on its swatch', async () => {
+  it('shows the current theme and opens the Theme page to change it', async () => {
     const tree = await render();
-    await press(tree, 'Theme Hollow Violet, Indigo & peach');
-    expect(mockSetTheme).toHaveBeenCalledWith('hollowViolet');
+    expect(texts(tree)).toContain('The default');
+    await press(tree, 'Theme: Yume, The default. Change theme');
+    expect(router.push).toHaveBeenCalledWith('/themes');
+    expect(mockSetTheme).not.toHaveBeenCalled();
   });
 
   it("won't turn the lock on when the phone itself has no screen lock", async () => {
     mockLock.lockEnabled = false;
     mockDeviceSecured.mockResolvedValue(false);
-    const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+    const alert = jest.mocked(showAlert);
     const tree = await render();
     expect(texts(tree)).toEqual(expect.arrayContaining(['Lock off', 'Anyone can open']));
     // The first switch is Require unlock; Hide amounts comes after it.

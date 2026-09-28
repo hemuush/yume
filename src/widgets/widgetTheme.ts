@@ -1,3 +1,5 @@
+import { hexToRgba, shade } from '@/lib/color';
+
 /**
  * Colour/font tokens for the home-screen widgets — a small, deliberate
  * subset of `@/constants/theme`, copied rather than imported.
@@ -15,36 +17,39 @@ export const widgetColor = {
   inkSoft: '#5B5748',
   textMuted: '#948E7C',
   cream: '#FFFDF6',
+  surfaceAlt: '#F3ECE0',
   white: '#FFFFFF',
   borderSoft: '#E6DFC9',
   income: '#1C9A5B',
   expense: '#E23F55',
-  mint: '#8FE8C8', // theme.colors.secondary — "kept" share of the spend bar
-  coralDeep: '#F0876A', // theme.colors.idCoralDeep — "spent" share, and the credit/savings account badge
+  // Home's month card: the ring's spent slice and its tile, and the moon-cream face.
+  spentSoft: '#FFC9B3',
+  idCoral: '#FFE3D6',
+  idSage: '#E9F3DA',
+  moonFace: '#FBF3DA',
+  // Account hues, the same as Home's account cards (see accountHue in AccountChip).
+  flatLime: '#E0F0A8',
+  idGoldDeep: '#E0AC3F',
+  idCoralDeep: '#F0876A',
 } as const;
 
 /**
- * A translucent version of the cream surface — the closest RemoteViews gets
- * to the "frosted glass" look from the design pass. Android widgets can't
- * apply a real backdrop blur (no RenderEffect support in RemoteViews), so
- * this is honestly just a see-through fill, not a blurred one; it still
- * reads as "sitting on the wallpaper" rather than a solid card pasted over
- * it, which was the actual goal.
+ * The widget fonts, bundled through the config plugin's `fonts` array in
+ * app.json (the file name minus its extension is the family name): Fredoka
+ * for headings, Archivo for text, Space Mono for amounts — the app's own
+ * three — plus Material Community Icons for category and account icons.
  */
-export const WIDGET_GLASS_BG = 'rgba(255, 253, 246, 0.93)' as const;
-/** The glass card's bright rim. */
-export const WIDGET_GLASS_BORDER = 'rgba(255, 255, 255, 0.6)' as const;
+export const WIDGET_FONT = {
+  rounded: 'Fredoka_600SemiBold',
+  roundedMedium: 'Fredoka_500Medium',
+  body: 'Archivo_400Regular',
+  bodyMedium: 'Archivo_600SemiBold',
+  mono: 'SpaceMono_700Bold',
+  icons: 'MaterialCommunityIcons',
+} as const;
 
-/**
- * Bundled via the config plugin's `fonts` array (app.json) — filename minus
- * extension becomes the family name. Reserved for widget hero numbers; the
- * one in-app exception is LockScreen's clock (loaded separately there via
- * `useFonts` in app/_layout.tsx, as `theme.font.dotMatrix`), since that
- * screen is closer in spirit to a widget's glance than a normal screen.
- */
-export const DOT_FONT = 'DotGothic16';
-
-export const WIDGET_RADIUS = 24;
+/** Home's calm card corner (theme.radius.xl2). */
+export const WIDGET_RADIUS = 22;
 
 /**
  * Builds an rgba colour string typed as the library's own `ColorProp` —
@@ -70,4 +75,14 @@ export function widgetRgba(
  */
 export function asWidgetColor(hex: string): `#${string}` {
   return hex as `#${string}`;
+}
+
+/** A pale tint of a colour, for a tile or icon circle — the shade Home's account cards use. */
+export function widgetTint(hex: string, lightness = 92): `#${string}` {
+  return asWidgetColor(shade(hex, lightness));
+}
+
+/** A colour at partial opacity, the way Home's CategoryIcon tints its circle. */
+export function widgetAlpha(hex: string, alpha: number): `rgba(${number}, ${number}, ${number}, ${number})` {
+  return hexToRgba(hex, alpha) as `rgba(${number}, ${number}, ${number}, ${number})`;
 }

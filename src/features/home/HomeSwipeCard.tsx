@@ -55,6 +55,11 @@ export function HomeSwipeCard({ pages }: { pages: SwipePage[] }) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [cardWidth, setCardWidth] = useState(0);
   const scrollRef = useRef<ScrollView>(null);
+  // The page a tapped tab is scrolling to. Until the strip gets there, the
+  // scroll events it passes through on the way are ignored — otherwise the
+  // first of them (still on the old page) flips the tab back, and the
+  // highlight blinks old → new → old → new.
+  const tapTarget = useRef<number | null>(null);
   const reduce = useReduceMotion();
   // Each page's natural height, by key — measured, since page content
   // (how many budgets, whether "+N more" shows) changes with the data.
@@ -95,6 +100,7 @@ export function HomeSwipeCard({ pages }: { pages: SwipePage[] }) {
   const goToPage = (index: number) => {
     if (index !== activeIndex) haptics.tap();
     setActiveIndex(index);
+    tapTarget.current = index;
     scrollRef.current?.scrollTo({ x: index * cardWidth, animated: true });
   };
 
@@ -107,6 +113,10 @@ export function HomeSwipeCard({ pages }: { pages: SwipePage[] }) {
       0,
       Math.min(pages.length - 1, Math.round(e.nativeEvent.contentOffset.x / cardWidth))
     );
+    if (tapTarget.current != null) {
+      if (index === tapTarget.current) tapTarget.current = null;
+      return;
+    }
     if (index !== activeIndex) {
       haptics.tap();
       setActiveIndex(index);
@@ -159,6 +169,13 @@ export function HomeSwipeCard({ pages }: { pages: SwipePage[] }) {
               pagingEnabled
               showsHorizontalScrollIndicator={false}
               onScroll={onScroll}
+              // A finger on the strip takes over from a tapped tab's scroll.
+              onScrollBeginDrag={() => {
+                tapTarget.current = null;
+              }}
+              onMomentumScrollEnd={() => {
+                tapTarget.current = null;
+              }}
               scrollEventThrottle={16}
               contentContainerStyle={styles.pagesRow}
             >

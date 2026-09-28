@@ -9,6 +9,7 @@ import {
   getSuuWidgetData,
   getNextDueWidgetData,
   getAccountsWidgetData,
+  getQuickAddWidgetData,
 } from './data';
 
 /** Must match `name` for each widget entry in app.json's config-plugin block. */
@@ -30,7 +31,7 @@ export async function renderWidgetByName(name: WidgetName): Promise<React.JSX.El
     case 'ThisMonth':
       return <ThisMonthWidget {...await getThisMonthWidgetData()} />;
     case 'QuickAdd':
-      return <QuickAddWidget />;
+      return <QuickAddWidget {...await getQuickAddWidgetData()} />;
     case 'Suu':
       return <SuuWidget {...await getSuuWidgetData()} />;
     case 'NextDue':

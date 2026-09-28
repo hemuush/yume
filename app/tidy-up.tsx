@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { View, ScrollView, Alert, StyleSheet } from 'react-native';
+import { View, ScrollView, StyleSheet } from 'react-native';
 import { Text } from '@/components/Text';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -30,6 +30,7 @@ import { HomeSection } from '@/features/home/HomeSection';
 import { homeStyles as h } from '@/features/home/homeStyles';
 import { dayMonth, longMonth, shortMonthYear } from '@/lib/dateLabels';
 import { errorMessage } from '@/lib/errorMessage';
+import { showAlert } from '@/components/AppDialog';
 
 /** "23 Sep 1:53 pm" from created_at (UTC, "YYYY-MM-DD HH:MM:SS"). */
 const savedLabel = (createdAt: string) => {
@@ -69,7 +70,7 @@ export default function TidyUpScreen() {
       emitTransactionsChanged();
       await reload();
     } catch (e) {
-      Alert.alert(failTitle, errorMessage(e));
+      showAlert(failTitle, errorMessage(e));
     } finally {
       setBusy(false);
     }
@@ -110,7 +111,7 @@ export default function TidyUpScreen() {
     }, "Couldn't save that");
 
   const roundAmounts = (count: number) =>
-    Alert.alert(
+    showAlert(
       'Round amounts to whole rupees?',
       `${count} stored amount${count === 1 ? '' : 's'} still ` +
         `carr${count === 1 ? 'ies' : 'y'} paise. Rounding them makes on-screen ` +
@@ -125,7 +126,7 @@ export default function TidyUpScreen() {
             act(async () => {
               const changed = await roundLedgerAmountsToWholeRupees();
               haptics.confirm();
-              Alert.alert(
+              showAlert(
                 'Done',
                 `Rounded ${changed.total} amount${changed.total === 1 ? '' : 's'} to whole rupees.`
               );

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { View, ScrollView, StyleSheet, Pressable, Alert, Animated, Easing } from 'react-native';
+import { View, ScrollView, StyleSheet, Pressable, Animated, Easing } from 'react-native';
 import { Text } from '@/components/Text';
 import { useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -19,6 +19,7 @@ import { errorMessage } from '@/lib/errorMessage';
 import { useReduceMotion } from '@/lib/useReduceMotion';
 import { DURATIONS } from '@/lib/motionTimings';
 import { withPressed } from '@/lib/pressed';
+import { showAlert } from '@/components/AppDialog';
 
 function formatTime(hour: number, minute: number): string {
   const h12 = hour % 12 === 0 ? 12 : hour % 12;
@@ -72,7 +73,7 @@ export default function NotificationSettingsScreen() {
       // otherwise left showing "on" while nothing was actually persisted,
       // a silently misleading state rather than an honest error.
       setPrefs(previous);
-      Alert.alert("Couldn't save", errorMessage(e));
+      showAlert("Couldn't save", errorMessage(e));
       return false;
     }
     try {
@@ -83,7 +84,7 @@ export default function NotificationSettingsScreen() {
       // notification scheduling failed, so the toggle correctly keeps
       // reflecting what's actually saved rather than rolling back to a
       // value that no longer matches the database.
-      Alert.alert('Saved, but reminders may not fire', errorMessage(e));
+      showAlert('Saved, but reminders may not fire', errorMessage(e));
     }
     return true;
   };
@@ -91,7 +92,7 @@ export default function NotificationSettingsScreen() {
   const ensurePermission = async (): Promise<boolean> => {
     const granted = await requestNotificationPermission();
     if (!granted) {
-      Alert.alert(
+      showAlert(
         'Notifications disabled',
         'Enable notification permission for Yume in your device settings to use reminders.'
       );

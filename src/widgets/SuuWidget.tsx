@@ -1,48 +1,75 @@
-import { TextWidget } from 'react-native-android-widget';
-import { WidgetShell, MoonPhaseRow } from './WidgetShell';
-import { widgetColor, asWidgetColor } from './widgetTheme';
+import { FlexWidget, ImageWidget, OverlapWidget, TextWidget } from 'react-native-android-widget';
+import { WidgetShell, WidgetLabel } from './WidgetShell';
+import { widgetColor, widgetTint, asWidgetColor, WIDGET_FONT, WIDGET_RADIUS } from './widgetTheme';
 import type { SuuWidgetData } from './data';
 
+const SUU = 40;
+const DOT = Math.round(SUU * 0.33);
+
 /**
- * "Suu Check-in" — the 2×2 widget. The one widget a generic finance app
- * couldn't ship: Suu's own line (`suuLine()`, unchanged — savings nudge,
- * spend-up warning, or a top-growing category, in that priority order) on
- * the home screen. Suu itself redrawn as a seven-dot row with one
- * highlighted center dot, instead of the ring shape RemoteViews can't
- * easily reproduce — which, since the ring-mark rebrand, actually echoes
- * Suu's own design (one moving dot carries the personality) rather than
- * just standing in for it. Taps open the app to Home, where the full hero
- * card lives.
+ * "Suu Check-in" — the 2×2 widget (the Home A widgets sign-off): Suu itself
+ * — the same ring image and one theme-coloured dot the app draws (see
+ * SuuIllustration) — beside Suu's line (`suuLine()`: a savings nudge, a
+ * spend-up warning, or a top-growing category), over a footer in the pack's
+ * second colour, like the Suu strip on Home's month card. Taps open Home.
  */
-export function SuuWidget({ line, dot }: SuuWidgetData) {
+export function SuuWidget({ line, dot, secondary }: SuuWidgetData) {
   return (
-    <WidgetShell clickAction="OPEN_APP">
-      <MoonPhaseRow dot={asWidgetColor(dot)} />
-      <TextWidget
-        text={line.text}
-        maxLines={3}
+    <WidgetShell clickAction="OPEN_APP" padding={0}>
+      <FlexWidget
+        style={{
+          flex: 1,
+          height: 0,
+          width: 'match_parent',
+          flexDirection: 'row',
+          padding: 14,
+          paddingBottom: 8,
+        }}
+      >
+        <OverlapWidget style={{ width: SUU, height: SUU }}>
+          <ImageWidget image={require('../../assets/suu-ring.png')} imageWidth={SUU} imageHeight={SUU} />
+          <FlexWidget
+            style={{
+              width: DOT,
+              height: DOT,
+              borderRadius: DOT / 2,
+              backgroundColor: asWidgetColor(dot),
+              marginLeft: Math.round(SUU * 0.47 - DOT / 2),
+              marginTop: Math.round(SUU * 0.24 - DOT / 2),
+            }}
+          />
+        </OverlapWidget>
+        <FlexWidget style={{ width: 9, height: 1 }} />
+        <FlexWidget style={{ flex: 1, width: 0 }}>
+          <TextWidget
+            text={line.text}
+            maxLines={5}
+            truncate="END"
+            style={{
+              fontFamily: WIDGET_FONT.roundedMedium,
+              fontSize: 12.5,
+              lineHeight: 16,
+              color: widgetColor.ink,
+            }}
+          />
+        </FlexWidget>
+      </FlexWidget>
+      <FlexWidget
         style={{
           width: 'match_parent',
-          fontSize: 12,
-          color: widgetColor.ink,
-          textAlign: 'center',
-          lineHeight: 16,
-          marginTop: 10,
-          fontWeight: '500',
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          paddingHorizontal: 14,
+          paddingVertical: 8,
+          backgroundColor: widgetTint(secondary, 90),
+          borderBottomLeftRadius: WIDGET_RADIUS - 1,
+          borderBottomRightRadius: WIDGET_RADIUS - 1,
         }}
-      />
-      <TextWidget
-        text="SUU SAYS"
-        style={{
-          width: 'match_parent',
-          fontSize: 8.5,
-          color: widgetColor.textMuted,
-          letterSpacing: 1,
-          textAlign: 'center',
-          marginTop: 7,
-          fontWeight: '600',
-        }}
-      />
+      >
+        <WidgetLabel text="Suu says" color={widgetColor.inkSoft} />
+        <WidgetLabel text="Open ›" color={widgetColor.inkSoft} />
+      </FlexWidget>
     </WidgetShell>
   );
 }

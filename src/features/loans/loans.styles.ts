@@ -34,8 +34,6 @@ export const styles = StyleSheet.create({
   // Direction reads as a slim rail, not a full-bleed wash — the same
   // red/green the rest of the app already uses for money out vs in, applied
   // as one accent line rather than tinting the whole card.
-  cardRailBorrowed: { borderLeftWidth: 3, borderLeftColor: theme.colors.expense },
-  cardRailLent: { borderLeftWidth: 3, borderLeftColor: theme.colors.income },
   cardMuted: { opacity: 0.6 },
   closedDivider: {
     ...EYEBROW,
@@ -72,30 +70,10 @@ export const styles = StyleSheet.create({
     marginRight: 8,
   },
   cardSub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, marginTop: 4 },
-  cardStatsRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 12 },
   statLabel: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textMuted },
-  statValue: { fontSize: 14, fontFamily: theme.font.monoBold, color: theme.colors.textPrimary, marginTop: 2 },
-  emiPreview: { borderRadius: 10, padding: 14, marginBottom: 14, borderWidth: theme.border.thin },
-  emiPreviewLabel: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.primary },
-  emiPreviewValue: {
-    fontFamily: theme.font.monoBold,
-    fontSize: 20,
-    color: theme.colors.primary,
-    marginTop: 2,
-  },
   errorText: { fontFamily: theme.font.body, color: theme.colors.expense, fontSize: 13, marginBottom: 12 },
-  detailHero: { padding: 15, marginTop: 4 },
-  detailHeroTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-  kebabBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: theme.colors.surface,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  // The Overview / Schedule switch under a loan's card.
+  sheetTabs: { marginBottom: 14 },
   viewAllText: {
     fontFamily: theme.font.bodyBold,
     fontSize: 13,
@@ -126,17 +104,6 @@ export const styles = StyleSheet.create({
   rowLabel: { fontFamily: theme.font.bodyMedium, fontSize: 14, color: theme.colors.textPrimary },
   rowSub: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textMuted, marginTop: 2 },
   rowValue: { fontFamily: theme.font.monoBold, fontSize: 14, color: theme.colors.textPrimary },
-  assetRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 10,
-    padding: 12,
-    borderRadius: theme.radius.md,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-  },
-  income: { color: theme.colors.income },
-  expense: { color: theme.colors.expense },
   // A soft pill (the app's chip language) rather than grey capitals.
   statusTag: {
     fontFamily: theme.font.bodyBold,

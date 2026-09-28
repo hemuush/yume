@@ -1,7 +1,6 @@
 import { useCallback, useState } from 'react';
-import { View, Pressable, Animated, Alert } from 'react-native';
+import { View, Pressable, Animated } from 'react-native';
 import { Text } from '@/components/Text';
-import Feather from '@expo/vector-icons/Feather';
 import { useFocusEffect } from 'expo-router';
 import {
   getLoanSchedule,
@@ -19,11 +18,15 @@ import { haptics } from '@/lib/haptics';
 import { usePressScale } from '@/lib/usePressScale';
 import { Loan, LoanPayment, Account, Category } from '@/types';
 import { PrimaryButton } from '@/components/PrimaryButton';
-import { ModalSheet } from '@/components/ModalSheet';
+import { ModalSheet, SheetFooter } from '@/components/ModalSheet';
+import { SheetCard } from '@/components/SheetCard';
+import { SettingsRow } from '@/components/SettingsRow';
+import { SegmentedControl } from '@/components/SegmentedControl';
 import { ActionSheet, ActionSheetItem } from '@/components/ActionSheet';
-import { theme } from '@/constants/theme';
+import { theme, modalFooterStyles as f } from '@/constants/theme';
+import { homeStyles as h } from '@/features/home/homeStyles';
 import { toLocalIsoDate } from '@/lib/date';
-import { NeoTile } from '@/components/NeoTile';
+import { dayMonthYear, weekdayDayMonth } from '@/lib/dateLabels';
 import { styles } from './loans.styles';
 import { AssetModal } from './AssetModal';
 import { AccountModal } from './AccountModal';
@@ -33,6 +36,7 @@ import { PayInstallmentSheet } from './PayInstallmentSheet';
 import Svg, { Path } from 'react-native-svg';
 import { loanPayoff, payoffMonth, balanceLinePath } from '@/lib/loanPayoff';
 import { errorMessage } from '@/lib/errorMessage';
+import { showAlert } from '@/components/AppDialog';
 
 /** The payoff line's drawing box (it stretches to the card's width). */
 const PAYOFF_LINE_WIDTH = 300;
@@ -44,10 +48,13 @@ export function LoanDetailModal({
   loan,
   onClose,
   onChanged,
+  startWithPay = false,
 }: {
   loan: Loan;
   onClose: () => void;
   onChanged: () => void;
+  /** Opens straight onto the next EMI's pay sheet (an EMI reminder's "Pay now"). */
+  startWithPay?: boolean;
 }) {
   const { show: showUndo } = useUndoToast();
   const [liveLoan, setLiveLoan] = useState<Loan>(loan);
@@ -55,7 +62,7 @@ export function LoanDetailModal({
   const [rateHistory, setRateHistory] = useState<LoanRateChange[]>([]);
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [payVisible, setPayVisible] = useState(false);
+  const [payVisible, setPayVisible] = useState(startWithPay);
   const [prepayVisible, setPrepayVisible] = useState(false);
   const [rateChangeVisible, setRateChangeVisible] = useState(false);
   const [assetModalVisible, setAssetModalVisible] = useState(false);
@@ -64,10 +71,8 @@ export function LoanDetailModal({
   const [moreActionsVisible, setMoreActionsVisible] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [scheduleExpanded, setScheduleExpanded] = useState(false);
+  const [tab, setTab] = useState<'overview' | 'schedule'>('overview');
 
-  const kebabPress = usePressScale();
-  const accountRowPress = usePressScale();
-  const assetRowPress = usePressScale();
   const expandPress = usePressScale();
   const collapsePress = usePressScale();
 
@@ -185,7 +190,7 @@ export function LoanDetailModal({
         onChanged();
       });
     } catch (e) {
-      Alert.alert("Couldn't delete loan", errorMessage(e));
+      showAlert("Couldn't delete loan", errorMessage(e));
     } finally {
       setBusy(false);
     }
@@ -196,7 +201,7 @@ export function LoanDetailModal({
   // so unlike a single transaction or account, this always gets a confirm
   // step before the instant-delete + undo toast that follows.
   const confirmDelete = () => {
-    Alert.alert(
+    showAlert(
       `Delete "${liveLoan.counterparty}"?`,
       'This also removes its payment schedule and any transactions it recorded. You can undo right after, if needed.',
       [
@@ -218,251 +223,225 @@ export function LoanDetailModal({
   const dispAssetValue = toWholeRupee(liveLoan.assetValueMinor ?? 0);
   const dispEquity = dispAssetValue - dispOutstanding;
 
+  // The calm-sheets sign-off (Direction C): the loan as a card — coral for
+  // money you owe, mint for money you lent — then two pages: where it stands,
+  // and its schedule. Pay is the footer's one button; Prepay, Update rate and
+  // Delete stay behind ⋯, so a 240-month loan looks as simple as a 6-month one.
+  const canPay = liveLoan.status === 'active' && !!nextInstallment;
   return (
     <>
       <ModalSheet
         visible
         onClose={onClose}
-        title={liveLoan.counterparty}
-        footer={<PrimaryButton title="Close" variant="secondary" onPress={onClose} disabled={busy} />}
+        footer={
+          <SheetFooter
+            onMore={() => setMoreActionsVisible(true)}
+            moreLabel="More loan actions"
+            disabled={busy}
+          >
+            {canPay && (
+              <PrimaryButton
+                title={
+                  busy
+                    ? 'Recording…'
+                    : isPayingEarly
+                      ? `Pay #${nextInstallment.installmentNumber} early`
+                      : `Pay #${nextInstallment.installmentNumber} · ${formatMoney(nextInstallment.emiAmountMinor)}`
+                }
+                onPress={openPay}
+                disabled={busy || !defaultAccount || !emiCategory}
+                style={f.footerBtn}
+              />
+            )}
+          </SheetFooter>
+        }
       >
         {loadError && <Text style={styles.errorText}>Couldn't load the latest details: {loadError}</Text>}
 
-        {/* A neutral card with the same red/green direction rail as the
-              loan's card in the list — everything but Pay lives behind "⋯"
-              now, so this reads the same whether it's a 6-month loan or a
-              240-month one. */}
-        <NeoTile
-          style={[
-            styles.detailHero,
-            liveLoan.direction === 'borrowed' ? styles.cardRailBorrowed : styles.cardRailLent,
-          ]}
-        >
-          <View style={styles.detailHeroTop}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.cardSub}>
-                {(liveLoan.interestRateAnnualBp / 100).toFixed(2)}% ·{' '}
-                {liveLoan.rateType === 'floating' ? 'Floating' : 'Fixed'} · {liveLoan.status}
-              </Text>
-            </View>
-            <AnimatedPressable
-              onPress={() => setMoreActionsVisible(true)}
-              onPressIn={kebabPress.onPressIn}
-              onPressOut={kebabPress.onPressOut}
-              hitSlop={10}
-              style={[styles.kebabBtn, kebabPress.animatedStyle]}
-              disabled={busy}
-              accessibilityRole="button"
-              accessibilityLabel="More loan actions"
-            >
-              <Feather name="more-horizontal" size={16} color={theme.colors.ink} />
-            </AnimatedPressable>
-          </View>
-          <View style={styles.cardStatsRow}>
-            <View>
-              <Text style={styles.statLabel}>Outstanding</Text>
-              <Text style={styles.statValue} numberOfLines={1} adjustsFontSizeToFit>
-                {formatMoney(dispOutstanding)}
-              </Text>
-            </View>
-            <View>
-              <Text style={styles.statLabel}>EMI</Text>
-              <Text style={styles.statValue} numberOfLines={1} adjustsFontSizeToFit>
-                {formatMoney(liveLoan.emiAmountMinor)}
-              </Text>
-            </View>
-            {nextInstallment && (
-              <View>
-                <Text style={styles.statLabel}>Next due</Text>
-                <Text style={styles.statValue}>{nextInstallment.dueDate}</Text>
-              </View>
-            )}
-          </View>
-        </NeoTile>
-
-        {payoff.lastDueDate && (
-          <View style={styles.payoffCard}>
-            <Text style={styles.statLabel}>
-              {liveLoan.direction === 'borrowed' ? 'Debt-free in' : 'Paid back in full by'}
-            </Text>
-            <Text style={styles.payoffMonth}>{payoffMonth(payoff.lastDueDate)}</Text>
-            <Text style={styles.rowSub}>
-              {payoff.emisLeft} EMI{payoff.emisLeft === 1 ? '' : 's'} to go ·{' '}
-              <Text style={styles.payoffMoney}>{formatMoney(payoff.interestLeftMinor)}</Text> interest still{' '}
-              {liveLoan.direction === 'borrowed' ? 'to pay' : 'to come'}
-            </Text>
-            <Svg
-              width="100%"
-              height={PAYOFF_LINE_HEIGHT}
-              viewBox={`0 0 ${PAYOFF_LINE_WIDTH} ${PAYOFF_LINE_HEIGHT}`}
-              preserveAspectRatio="none"
-            >
-              <Path
-                d={balanceLinePath(payoff.balances, PAYOFF_LINE_WIDTH, PAYOFF_LINE_HEIGHT - 4)}
-                stroke={theme.colors.income}
-                strokeWidth={2.5}
-                fill="none"
-                strokeLinecap="round"
-              />
-            </Svg>
-            <View style={styles.payoffAxis}>
-              <Text style={styles.rowSub}>Now · {formatMoney(dispOutstanding)} left</Text>
-              <Text style={styles.rowSub}>{payoff.lastDueDate.slice(0, 4)}</Text>
-            </View>
-          </View>
-        )}
-
-        <AnimatedPressable
-          onPress={() => setAccountModalVisible(true)}
-          onPressIn={accountRowPress.onPressIn}
-          onPressOut={accountRowPress.onPressOut}
-          style={[styles.assetRow, accountRowPress.animatedStyle]}
-        >
-          <View style={{ flex: 1 }}>
-            <Text style={styles.rowLabel}>EMI account</Text>
-            <Text style={styles.rowSub}>
-              {defaultAccount ? `${defaultAccount.name} · tap to change` : 'Add an account first'}
-            </Text>
-          </View>
-          <Text style={styles.viewAllText}>Change ›</Text>
-        </AnimatedPressable>
-
-        {liveLoan.direction === 'borrowed' && (
-          <AnimatedPressable
-            onPress={() => setAssetModalVisible(true)}
-            onPressIn={assetRowPress.onPressIn}
-            onPressOut={assetRowPress.onPressOut}
-            style={[styles.assetRow, assetRowPress.animatedStyle]}
-          >
-            {liveLoan.assetValueMinor ? (
-              <>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.rowLabel}>{liveLoan.assetLabel || 'Asset'}</Text>
-                  <Text style={styles.rowSub}>Value {formatMoney(dispAssetValue)} · tap to update</Text>
-                </View>
-                <Text style={[styles.rowValue, dispEquity >= 0 ? styles.income : styles.expense]}>
-                  {formatMoney(dispEquity)} equity
-                </Text>
-              </>
-            ) : liveLoan.assetLabel ? (
-              // A label was saved with no value yet (value is optional) —
-              // shown distinctly from "nothing tracked at all" so it's
-              // clear there's something to finish, not just an unused prompt.
-              <View style={{ flex: 1 }}>
-                <Text style={styles.rowLabel}>{liveLoan.assetLabel}</Text>
-                <Text style={styles.rowSub}>No value set yet · tap to add one</Text>
-              </View>
-            ) : (
-              <Text style={styles.viewAllText}>+ Track what this loan financed (home, car) ›</Text>
-            )}
-          </AnimatedPressable>
-        )}
-
-        {liveLoan.status === 'active' && nextInstallment && (
-          <PrimaryButton
-            title={
-              busy
-                ? 'Recording…'
-                : isPayingEarly
-                  ? `Pay #${nextInstallment.installmentNumber} early`
-                  : `Pay #${nextInstallment.installmentNumber} — ${formatMoney(nextInstallment.emiAmountMinor)}`
-            }
-            onPress={openPay}
-            disabled={busy || !defaultAccount || !emiCategory}
-            style={{ marginTop: 12 }}
+        <SheetCard
+          hue={liveLoan.direction === 'borrowed' ? theme.colors.idCoralDeep : theme.colors.secondary}
+          icon={liveLoan.direction === 'borrowed' ? 'bank-outline' : 'hand-coin-outline'}
+          kicker={`${(liveLoan.interestRateAnnualBp / 100).toFixed(2)}% · ${
+            liveLoan.rateType === 'floating' ? 'floating' : 'fixed'
+          }${liveLoan.status === 'active' ? '' : ` · ${liveLoan.status}`}`}
+          amount={formatMoney(dispOutstanding)}
+          title={liveLoan.counterparty}
+          meta={
+            nextInstallment
+              ? `EMI ${formatMoney(liveLoan.emiAmountMinor)} · next ${weekdayDayMonth(nextInstallment.dueDate)}`
+              : `EMI ${formatMoney(liveLoan.emiAmountMinor)}`
+          }
+        />
+        <View style={styles.sheetTabs}>
+          <SegmentedControl
+            options={[
+              { label: 'Overview', value: 'overview' },
+              { label: 'Schedule', value: 'schedule' },
+            ]}
+            value={tab}
+            onChange={setTab}
           />
-        )}
-        {!defaultAccount && (
-          <Text style={styles.hintText}>Add an account first to record payments against this loan.</Text>
-        )}
-        {!!defaultAccount && !emiCategory && (
-          <Text style={styles.hintText}>
-            Add an {liveLoan.direction === 'borrowed' ? 'expense' : 'income'} category first — payments need
-            one to record against.
-          </Text>
-        )}
-        {linkedAccountMissing && defaultAccount && (
-          <Text style={styles.hintText}>
-            This loan's original account was deleted — payments will go through {defaultAccount.name} instead.
-          </Text>
-        )}
+        </View>
 
-        <Text style={styles.sectionTitle}>{scheduleExpanded ? 'Full schedule' : 'Next up'}</Text>
-        {visibleSchedule.map((p) => {
-          // Show the principal and interest split rounded so it adds up to the
-          // rounded EMI exactly — the stored paise components already sum to
-          // emiAmountMinor, this just keeps that true after rounding for
-          // display (otherwise "₹274 + ₹783" can read next to a "₹1,056" EMI).
-          const [dispPrincipal, dispInterest] = allocateRoundedMinor(
-            [p.principalComponentMinor, p.interestComponentMinor],
-            p.emiAmountMinor
-          );
-          return (
-            <View key={p.id} style={styles.scheduleRow}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.rowLabel}>
-                  #{p.installmentNumber} · {p.dueDate}
-                </Text>
-                <Text style={styles.rowSub}>
-                  Principal {formatMoney(dispPrincipal)} · Interest {formatMoney(dispInterest)}
-                </Text>
-              </View>
-              <View style={{ alignItems: 'flex-end' }}>
-                <Text style={styles.rowValue}>{formatMoney(p.emiAmountMinor)}</Text>
-                <Text style={[styles.statusTag, p.status === 'paid' && styles.statusTagPaid]}>
-                  {p.status}
-                </Text>
-              </View>
-            </View>
-          );
-        })}
-        {!scheduleExpanded && hiddenCount > 0 && (
-          <AnimatedPressable
-            onPress={() => {
-              haptics.tap();
-              setScheduleExpanded(true);
-            }}
-            onPressIn={expandPress.onPressIn}
-            onPressOut={expandPress.onPressOut}
-            style={[{ paddingVertical: 10 }, expandPress.animatedStyle]}
-          >
-            <Text style={styles.viewAllText}>View full schedule ({hiddenCount} more) ›</Text>
-          </AnimatedPressable>
-        )}
-        {scheduleExpanded && (
-          <AnimatedPressable
-            onPress={() => {
-              haptics.tap();
-              setScheduleExpanded(false);
-            }}
-            onPressIn={collapsePress.onPressIn}
-            onPressOut={collapsePress.onPressOut}
-            style={[{ paddingVertical: 10 }, collapsePress.animatedStyle]}
-          >
-            <Text style={styles.viewAllText}>Show less ‹</Text>
-          </AnimatedPressable>
-        )}
-
-        {rateHistory.length > 0 && (
+        {tab === 'overview' ? (
           <>
-            <Text style={styles.sectionTitle}>Rate history</Text>
-            {rateHistory.map((h) => (
-              <View key={h.id} style={styles.scheduleRow}>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.rowLabel}>
-                    {(h.oldRateAnnualBp / 100).toFixed(2)}% → {(h.newRateAnnualBp / 100).toFixed(2)}%
-                  </Text>
-                  <Text style={styles.rowSub}>
-                    From {h.effectiveDate} · {h.mode === 'keepTenure' ? 'EMI changed' : 'tenure changed'}
-                  </Text>
+            {payoff.lastDueDate && (
+              <View style={styles.payoffCard}>
+                <Text style={styles.statLabel}>
+                  {liveLoan.direction === 'borrowed' ? 'Debt-free in' : 'Paid back in full by'}
+                </Text>
+                <Text style={styles.payoffMonth}>{payoffMonth(payoff.lastDueDate)}</Text>
+                <Text style={styles.rowSub}>
+                  {payoff.emisLeft} EMI{payoff.emisLeft === 1 ? '' : 's'} to go ·{' '}
+                  <Text style={styles.payoffMoney}>{formatMoney(payoff.interestLeftMinor)}</Text> interest
+                  still {liveLoan.direction === 'borrowed' ? 'to pay' : 'to come'}
+                </Text>
+                <Svg
+                  width="100%"
+                  height={PAYOFF_LINE_HEIGHT}
+                  viewBox={`0 0 ${PAYOFF_LINE_WIDTH} ${PAYOFF_LINE_HEIGHT}`}
+                  preserveAspectRatio="none"
+                >
+                  <Path
+                    d={balanceLinePath(payoff.balances, PAYOFF_LINE_WIDTH, PAYOFF_LINE_HEIGHT - 4)}
+                    stroke={theme.colors.income}
+                    strokeWidth={2.5}
+                    fill="none"
+                    strokeLinecap="round"
+                  />
+                </Svg>
+                <View style={styles.payoffAxis}>
+                  <Text style={styles.rowSub}>Now · {formatMoney(dispOutstanding)} left</Text>
+                  <Text style={styles.rowSub}>{payoff.lastDueDate.slice(0, 4)}</Text>
                 </View>
-                {h.mode === 'keepTenure' && (
-                  <Text style={styles.rowValue}>
-                    {formatMoney(h.oldEmiAmountMinor)} → {formatMoney(h.newEmiAmountMinor)}
-                  </Text>
-                )}
               </View>
-            ))}
+            )}
+
+            <View style={[h.card, h.cardInSheet]}>
+              <SettingsRow
+                round
+                icon="bank"
+                iconBg={theme.colors.primaryTint}
+                label="EMI account"
+                sub={defaultAccount ? defaultAccount.name : 'Add an account first'}
+                onPress={() => setAccountModalVisible(true)}
+              />
+              {liveLoan.direction === 'borrowed' && (
+                <SettingsRow
+                  round
+                  icon="home-outline"
+                  iconBg={theme.colors.idGold}
+                  label={liveLoan.assetLabel || 'What it paid for'}
+                  sub={
+                    liveLoan.assetValueMinor
+                      ? `Worth ${formatMoney(dispAssetValue)} · ${formatMoney(dispEquity)} equity`
+                      : liveLoan.assetLabel
+                        ? 'No value set yet'
+                        : 'Track a home or car this loan financed'
+                  }
+                  subColor={liveLoan.assetValueMinor && dispEquity < 0 ? theme.colors.expense : undefined}
+                  onPress={() => setAssetModalVisible(true)}
+                  divider
+                />
+              )}
+            </View>
+
+            {!defaultAccount && (
+              <Text style={styles.hintText}>Add an account first to record payments against this loan.</Text>
+            )}
+            {!!defaultAccount && !emiCategory && (
+              <Text style={styles.hintText}>
+                Add an {liveLoan.direction === 'borrowed' ? 'expense' : 'income'} category first — payments
+                need one to record against.
+              </Text>
+            )}
+            {linkedAccountMissing && defaultAccount && (
+              <Text style={styles.hintText}>
+                This loan's original account was deleted — payments will go through {defaultAccount.name}{' '}
+                instead.
+              </Text>
+            )}
+          </>
+        ) : (
+          <>
+            {visibleSchedule.map((p) => {
+              // Show the principal and interest split rounded so it adds up to the
+              // rounded EMI exactly — the stored paise components already sum to
+              // emiAmountMinor, this just keeps that true after rounding for
+              // display (otherwise "₹274 + ₹783" can read next to a "₹1,056" EMI).
+              const [dispPrincipal, dispInterest] = allocateRoundedMinor(
+                [p.principalComponentMinor, p.interestComponentMinor],
+                p.emiAmountMinor
+              );
+              return (
+                <View key={p.id} style={styles.scheduleRow}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.rowLabel}>
+                      #{p.installmentNumber} · {dayMonthYear(p.dueDate)}
+                    </Text>
+                    <Text style={styles.rowSub}>
+                      Principal {formatMoney(dispPrincipal)} · Interest {formatMoney(dispInterest)}
+                    </Text>
+                  </View>
+                  <View style={{ alignItems: 'flex-end' }}>
+                    <Text style={styles.rowValue}>{formatMoney(p.emiAmountMinor)}</Text>
+                    <Text style={[styles.statusTag, p.status === 'paid' && styles.statusTagPaid]}>
+                      {p.status}
+                    </Text>
+                  </View>
+                </View>
+              );
+            })}
+            {!scheduleExpanded && hiddenCount > 0 && (
+              <AnimatedPressable
+                onPress={() => {
+                  haptics.tap();
+                  setScheduleExpanded(true);
+                }}
+                onPressIn={expandPress.onPressIn}
+                onPressOut={expandPress.onPressOut}
+                style={[{ paddingVertical: 10 }, expandPress.animatedStyle]}
+              >
+                <Text style={styles.viewAllText}>View full schedule ({hiddenCount} more) ›</Text>
+              </AnimatedPressable>
+            )}
+            {scheduleExpanded && (
+              <AnimatedPressable
+                onPress={() => {
+                  haptics.tap();
+                  setScheduleExpanded(false);
+                }}
+                onPressIn={collapsePress.onPressIn}
+                onPressOut={collapsePress.onPressOut}
+                style={[{ paddingVertical: 10 }, collapsePress.animatedStyle]}
+              >
+                <Text style={styles.viewAllText}>Show less ‹</Text>
+              </AnimatedPressable>
+            )}
+
+            {rateHistory.length > 0 && (
+              <>
+                <Text style={styles.sectionTitle}>Rate history</Text>
+                {rateHistory.map((r) => (
+                  <View key={r.id} style={styles.scheduleRow}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.rowLabel}>
+                        {(r.oldRateAnnualBp / 100).toFixed(2)}% → {(r.newRateAnnualBp / 100).toFixed(2)}%
+                      </Text>
+                      <Text style={styles.rowSub}>
+                        From {dayMonthYear(r.effectiveDate)} ·{' '}
+                        {r.mode === 'keepTenure' ? 'EMI changed' : 'tenure changed'}
+                      </Text>
+                    </View>
+                    {r.mode === 'keepTenure' && (
+                      <Text style={styles.rowValue}>
+                        {formatMoney(r.oldEmiAmountMinor)} → {formatMoney(r.newEmiAmountMinor)}
+                      </Text>
+                    )}
+                  </View>
+                ))}
+              </>
+            )}
           </>
         )}
       </ModalSheet>

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { View, Pressable, Alert } from 'react-native';
+import { View, Pressable } from 'react-native';
 import { Text, TextInput } from '@/components/Text';
 import { KeyboardAwareScrollView, KeyboardStickyView } from 'react-native-keyboard-controller';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
@@ -70,6 +70,7 @@ import {
 } from '@/features/add/splitDraft';
 import { openSplitSession, takeSplitResult } from '@/features/add/splitSession';
 import { SplitCard } from '@/features/add/SplitCard';
+import { showAlert } from '@/components/AppDialog';
 
 /** How many "Your usual" chips Add shows. */
 const USUAL_COUNT = 4;
@@ -291,7 +292,16 @@ export default function AddTransactionScreen() {
         if (categoryParam && cats.some((c) => c.id === categoryParam && c.kind === 'expense')) {
           setCategoryId(categoryParam);
         }
-        if (noteParam) setNote(noteParam);
+      }
+      // A refund's note, or one typed into the daily reminder's "Type it in".
+      if (noteParam) setNote(noteParam);
+      // A Quick Add widget shortcut opens with its category already picked.
+      if (
+        refundParam !== '1' &&
+        categoryParam &&
+        cats.some((c) => c.id === categoryParam && c.kind === startType && !c.archived)
+      ) {
+        setCategoryId(categoryParam);
       }
       const asked = initialAccountId ? accs.find((a) => a.id === initialAccountId) : undefined;
       if (asked && (startType === 'transfer' || asked.type !== 'savings')) {
@@ -662,7 +672,7 @@ export default function AddTransactionScreen() {
       setRows(pending.slice(saved));
       clearForm();
       setSaving(false);
-      Alert.alert(
+      showAlert(
         'Only some entries saved',
         `${saved} of ${pending.length} saved before this went wrong: ${errorMessage(e)}`
       );
@@ -674,7 +684,7 @@ export default function AddTransactionScreen() {
     const splitId = editing.splitId;
     if (splitId) {
       const count = splitParts?.length ?? 2;
-      Alert.alert(
+      showAlert(
         'Delete this split payment?',
         `All ${count} parts move to Recently deleted for 30 days. Account balances update right away.`,
         [
@@ -695,7 +705,7 @@ export default function AddTransactionScreen() {
       );
       return;
     }
-    Alert.alert(
+    showAlert(
       'Delete this transaction?',
       'It moves to Recently deleted for 30 days. Account balances update right away.',
       [
@@ -1031,7 +1041,7 @@ export default function AddTransactionScreen() {
       <ModalSheet
         visible={accountSheetOpen}
         onClose={() => setAccountSheetOpen(false)}
-        title="Account"
+        title={type === 'income' ? 'Received in' : 'Pay from'}
         scrollable={false}
       >
         <View style={styles.accountRow}>

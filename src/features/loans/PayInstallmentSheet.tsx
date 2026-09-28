@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { View, Alert } from 'react-native';
 import { Text } from '@/components/Text';
 import { payInstallment, undoInstallmentPayment } from '@/db/loans';
 import { LoanPayment } from '@/types';
@@ -11,9 +10,12 @@ import { ModalSheet } from '@/components/ModalSheet';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { DateField } from '@/components/DateField';
 import { useUndoToast } from '@/components/UndoToast';
-import { modalFooterStyles as f } from '@/constants/theme';
+import { theme } from '@/constants/theme';
+import { SheetCard } from '@/components/SheetCard';
+import { dayMonthYear, weekdayDayMonth } from '@/lib/dateLabels';
 import { styles } from './loans.styles';
 import { errorMessage } from '@/lib/errorMessage';
+import { showAlert } from '@/components/AppDialog';
 
 /**
  * Confirms paying one EMI — from the loan's own screen or from Plan's Coming
@@ -56,7 +58,7 @@ export function PayInstallmentSheet({
           emitTransactionsChanged();
           await onPaid();
         } catch (e) {
-          Alert.alert("Couldn't undo", errorMessage(e));
+          showAlert("Couldn't undo", errorMessage(e));
         }
       });
       // A brief "done" tick before the sheet closes — the payment is already
@@ -64,7 +66,7 @@ export function PayInstallmentSheet({
       setDone(true);
       setTimeout(onClose, 380);
     } catch (e) {
-      Alert.alert("Couldn't record payment", errorMessage(e));
+      showAlert("Couldn't record payment", errorMessage(e));
       setBusy(false);
       onClose();
     }
@@ -78,37 +80,29 @@ export function PayInstallmentSheet({
       scrollable={false}
       title={early ? 'Pay ahead of schedule?' : 'Confirm payment'}
       footer={
-        <View style={f.footerCol}>
-          <View style={f.footerRow}>
-            <PrimaryButton
-              title="Cancel"
-              variant="secondary"
-              onPress={onClose}
-              disabled={busy}
-              style={f.footerBtn}
-            />
-            <PrimaryButton
-              title={busy ? 'Recording…' : early ? 'Pay early' : 'Confirm'}
-              done={done}
-              onPress={pay}
-              disabled={busy || !account || !categoryId}
-              style={f.footerBtn}
-            />
-          </View>
-        </View>
+        <PrimaryButton
+          title={busy ? 'Recording…' : early ? 'Pay early' : 'Confirm payment'}
+          done={done}
+          onPress={pay}
+          disabled={busy || !account || !categoryId}
+        />
       }
     >
-      <Text style={styles.cardSub}>
-        EMI #{installment.installmentNumber} · {formatMoney(installment.emiAmountMinor)} from{' '}
-        {account?.name ?? '—'}
-      </Text>
+      <SheetCard
+        hue={theme.colors.idCoralDeep}
+        icon="calendar-check"
+        kicker={`EMI #${installment.installmentNumber}`}
+        amount={formatMoney(installment.emiAmountMinor)}
+        title={`From ${account?.name ?? '—'}`}
+        meta={`Due ${weekdayDayMonth(installment.dueDate)}`}
+      />
       {!account && (
         <Text style={styles.hintText}>Add an account first to record payments against this loan.</Text>
       )}
       {early && (
         <Text style={styles.hintText}>
-          This EMI isn't due until {installment.dueDate}. Marking it paid now records it as complete ahead of
-          schedule. To put extra money toward the loan instead, use Prepay on the loan.
+          This EMI isn't due until {dayMonthYear(installment.dueDate)}. Marking it paid now records it as
+          complete ahead of schedule. To put extra money toward the loan instead, use Prepay on the loan.
         </Text>
       )}
       <DateField label="Actually paid on" value={paidDateIso} onChange={setPaidDateIso} pastFacing />

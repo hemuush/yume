@@ -46,26 +46,15 @@ export function AccountModal({
       visible
       onClose={onClose}
       variant="center"
-      showClose
       title="EMI account"
       footer={
         <View style={f.footerCol}>
           {error && <Text style={styles.errorText}>{error}</Text>}
-          <View style={f.footerRow}>
-            <PrimaryButton
-              title="Cancel"
-              variant="secondary"
-              onPress={onClose}
-              disabled={saving}
-              style={f.footerBtn}
-            />
-            <PrimaryButton
-              title={saving ? 'Saving…' : 'Save'}
-              onPress={submit}
-              disabled={saving || !selected}
-              style={f.footerBtn}
-            />
-          </View>
+          <PrimaryButton
+            title={saving ? 'Saving…' : 'Save'}
+            onPress={submit}
+            disabled={saving || !selected}
+          />
         </View>
       }
     >

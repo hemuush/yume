@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { Text } from '@/components/Text';
 import { contributeToGoal, markGoalLetterRevealed } from '@/db/savingsGoals';
-import { toMinor, formatMoney } from '@/lib/money';
+import { toMinor, inputMinor } from '@/lib/money';
 import { SavingsGoal } from '@/types';
 import { ModalSheet } from '@/components/ModalSheet';
 import { modalFooterStyles as f } from '@/constants/theme';
@@ -10,6 +10,7 @@ import { FormInput } from '@/components/FormInput';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { SegmentedControl } from '@/components/SegmentedControl';
 import { GoalLetterReveal } from './GoalLetterReveal';
+import { GoalSheetCard } from './GoalSheetCard';
 import { haptics } from '@/lib/haptics';
 import { styles } from './goals.styles';
 import { errorMessage } from '@/lib/errorMessage';
@@ -89,22 +90,17 @@ export function ContributeModal({
     <ModalSheet
       visible
       onClose={reveal ? onContributed : onClose}
-      title={reveal ? undefined : goal.name}
       footer={
         reveal ? (
           <PrimaryButton title="Nice, thanks Suu" onPress={onContributed} />
         ) : (
           <View style={f.footerCol}>
             {error && <Text style={styles.errorText}>{error}</Text>}
-            <View style={f.footerRow}>
-              <PrimaryButton title="Cancel" variant="secondary" onPress={onClose} style={f.footerBtn} />
-              <PrimaryButton
-                title={saving ? 'Saving…' : direction === 'add' ? 'Add' : 'Withdraw'}
-                onPress={submit}
-                disabled={saving}
-                style={f.footerBtn}
-              />
-            </View>
+            <PrimaryButton
+              title={saving ? 'Saving…' : direction === 'add' ? 'Add money' : 'Withdraw'}
+              onPress={submit}
+              disabled={saving}
+            />
           </View>
         )
       }
@@ -117,9 +113,17 @@ export function ContributeModal({
         />
       ) : (
         <>
-          <Text style={styles.modalHint}>
-            Currently {formatMoney(goal.currentAmountMinor)} of {formatMoney(goal.targetAmountMinor)} saved.
-          </Text>
+          {/* The goal as it'll stand once this goes in (or comes out). */}
+          <GoalSheetCard
+            name={goal.name}
+            savedMinor={Math.max(
+              0,
+              goal.currentAmountMinor + (direction === 'add' ? 1 : -1) * inputMinor(amount)
+            )}
+            targetMinor={goal.targetAmountMinor}
+            targetDate={goal.targetDate}
+            kicker={inputMinor(amount) > 0 ? 'After this' : undefined}
+          />
           <SegmentedControl options={DIRECTIONS} value={direction} onChange={setDirection} />
           <View style={{ height: 14 }} />
           <FormInput

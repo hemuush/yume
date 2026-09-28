@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { View, ScrollView, Pressable, Alert } from 'react-native';
+import { View, ScrollView, Pressable } from 'react-native';
 import { MovingRow } from '@/components/MovingRow';
 import { Text } from '@/components/Text';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -34,6 +34,7 @@ import { styles } from '@/features/budgets/budgets.styles';
 import { errorMessage } from '@/lib/errorMessage';
 import { useReturnOrPush } from '@/lib/useReturnOrPush';
 import { withPressed } from '@/lib/pressed';
+import { showAlert } from '@/components/AppDialog';
 
 export default function BudgetsScreen() {
   // A category's page and Budgets link to each other: return to that page
@@ -108,7 +109,7 @@ export default function BudgetsScreen() {
         await load();
       });
     } catch (e) {
-      Alert.alert("Couldn't delete budget", errorMessage(e));
+      showAlert("Couldn't delete budget", errorMessage(e));
     } finally {
       setDeleteBusy(false);
     }

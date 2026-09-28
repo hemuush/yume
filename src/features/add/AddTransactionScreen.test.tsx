@@ -11,7 +11,7 @@
  *   - "Your usual" fills category, amount and account; the search finds subcategories
  */
 import { create, act, ReactTestRenderer, ReactTestInstance } from 'react-test-renderer';
-import { Alert, Keyboard, Text } from 'react-native';
+import { Keyboard, Text } from 'react-native';
 
 jest.setTimeout(30000);
 
@@ -114,6 +114,7 @@ import { getAddDefaults, setAddDefaults } from '@/db/settings';
 import { saveSplit } from '@/db/splits';
 import { openSplitSession, finishSplitSession, getSplitSession } from './splitSession';
 import { addLedgerEntry, listPeople } from '@/db/people';
+import { showAlert } from '@/components/AppDialog';
 
 const settle = () => new Promise<void>((resolve) => setTimeout(resolve, 0));
 
@@ -236,6 +237,15 @@ describe('Add screen', () => {
     expect(router.back).toHaveBeenCalledTimes(1);
   });
 
+  it('opens filled in from a notification reply or a Quick Add shortcut', async () => {
+    mockParams.current = { amount: '25000', note: 'lunch', categoryId: 'food' };
+    const tree = await render();
+    await save(tree);
+    expect(createTransaction).toHaveBeenCalledWith(
+      expect.objectContaining({ amountMinor: 25000, note: 'lunch', categoryId: 'food' })
+    );
+  });
+
   it('asks for an amount, then a category, and saves nothing until both are there', async () => {
     const tree = await render();
     await save(tree);
@@ -253,7 +263,7 @@ describe('Add screen', () => {
       expense: { accountId: 'bank', categoryId: 'food' },
     });
     (createTransaction as jest.Mock).mockResolvedValueOnce({}).mockRejectedValueOnce(new Error('disk full'));
-    const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+    const alert = jest.mocked(showAlert);
     const tree = await render();
     // Add opens with no category picked; this entry is Food.
     await press(tree, 'Food');

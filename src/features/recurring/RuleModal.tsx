@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
-import { View, Alert } from 'react-native';
+import { View } from 'react-native';
 import { Text } from '@/components/Text';
 import {
+  advanceDate,
   createRecurringRule,
   updateRecurringRule,
   deleteRecurringRule,
@@ -11,20 +12,27 @@ import {
 import { useUndoToast } from '@/components/UndoToast';
 import { haptics } from '@/lib/haptics';
 import { Account, Category, RecurringRule, RecurrenceFrequency, TransactionType } from '@/types';
-import { ModalSheet } from '@/components/ModalSheet';
-import { modalFooterStyles as f } from '@/constants/theme';
+import { ModalSheet, SheetLink } from '@/components/ModalSheet';
+import { SheetCard } from '@/components/SheetCard';
+import { SettingsRow } from '@/components/SettingsRow';
+import { theme, modalFooterStyles as f } from '@/constants/theme';
+import { homeStyles as h } from '@/features/home/homeStyles';
+import { useAccent } from '@/theme/AccentContext';
+import { hexToRgba } from '@/lib/color';
+import { shortMonth, weekdayDayMonth } from '@/lib/dateLabels';
 import { FormInput } from '@/components/FormInput';
 import { SegmentedControl } from '@/components/SegmentedControl';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { Chip } from '@/components/Chip';
 import { ToggleSwitch } from '@/components/ToggleSwitch';
-import { toMinor } from '@/lib/money';
+import { toMinor, formatMoney, inputMinor } from '@/lib/money';
 import { toLocalIsoDate, addMonthsToIsoDate } from '@/lib/date';
 import { DateField } from '@/components/DateField';
 import { CategoryPicker } from '@/components/CategoryPicker';
 import { styles } from './recurring.styles';
-import { frequencyNoun } from './recurring.helpers';
+import { cadenceLabel, frequencyNoun } from './recurring.helpers';
 import { errorMessage } from '@/lib/errorMessage';
+import { showAlert } from '@/components/AppDialog';
 
 const TX_TYPES: { label: string; value: TransactionType }[] = [
   { label: 'Expense', value: 'expense' },
@@ -68,6 +76,7 @@ export function RuleModal({
   };
 }) {
   const { show: showUndo } = useUndoToast();
+  const { accent } = useAccent();
   const today = useMemo(() => toLocalIsoDate(new Date()), []);
   const [type, setType] = useState<TransactionType>('expense');
   const [accountId, setAccountId] = useState<string | null>(null);
@@ -82,6 +91,9 @@ export function RuleModal({
   const [endDate, setEndDate] = useState(() => addMonthsToIsoDate(today, 12));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [tab, setTab] = useState<'setup' | 'schedule'>('setup');
+  // Which row's picker is open in place — one at a time.
+  const [open, setOpen] = useState<'account' | 'to' | 'category' | null>(null);
 
   useEffect(() => {
     if (!visible) return;
@@ -111,6 +123,9 @@ export function RuleModal({
       setEndDate(addMonthsToIsoDate(today, 12));
     }
     setError(null);
+    setTab('setup');
+    // A new rule opens on the category grid; an existing one on its summary.
+    setOpen(editing || prefill?.categoryId ? null : 'category');
   }, [visible, editing, accounts, today, prefill]);
 
   const filteredCategories = useMemo(
@@ -131,6 +146,7 @@ export function RuleModal({
   const onTypeChange = (next: TransactionType) => {
     setType(next);
     setCategoryId(null);
+    setOpen(next === 'transfer' ? null : 'category');
   };
 
   const submit = async () => {
@@ -198,111 +214,194 @@ export function RuleModal({
         onDeleted();
       });
     } catch (e) {
-      Alert.alert("Couldn't delete", errorMessage(e));
+      showAlert("Couldn't delete", errorMessage(e));
     } finally {
       setSaving(false);
     }
   };
 
+  // The calm-sheets sign-off (Direction C): a live card of the rule as it
+  // will be logged, then two pages — what gets logged, and when.
+  const cat = categories.find((c) => c.id === categoryId);
+  const accountName = (id: string | null) => accounts.find((a) => a.id === id)?.name;
+  const interval = Math.max(1, parseInt(intervalCount || '1', 10) || 1);
+  const upcoming = [startDate];
+  while (upcoming.length < 3) {
+    upcoming.push(
+      advanceDate(upcoming[upcoming.length - 1], frequency, interval, Number(startDate.slice(8)))
+    );
+  }
+  const toggle = (which: 'account' | 'to' | 'category') => setOpen((o) => (o === which ? null : which));
+
   return (
     <ModalSheet
       visible={visible}
       onClose={onClose}
-      title={editing ? 'Edit recurring entry' : 'New recurring entry'}
       footer={
         <View style={f.footerCol}>
           {error && <Text style={styles.errorText}>{error}</Text>}
-          <View style={f.footerRow}>
-            <PrimaryButton
-              title="Cancel"
-              variant="secondary"
-              onPress={onClose}
-              style={f.footerBtn}
-              disabled={saving}
-            />
-            <PrimaryButton
-              title={saving ? 'Saving…' : editing ? 'Save' : 'Create'}
-              onPress={submit}
-              disabled={saving}
-              style={f.footerBtn}
-            />
-          </View>
-          {editing && (
-            <PrimaryButton title="Delete" variant="secondary" onPress={confirmDelete} disabled={saving} />
-          )}
+          <PrimaryButton
+            title={saving ? 'Saving…' : editing ? 'Save changes' : 'Create'}
+            onPress={submit}
+            disabled={saving}
+          />
         </View>
       }
     >
-      <SegmentedControl options={TX_TYPES} value={type} onChange={onTypeChange} />
-
-      <FormInput
-        label="Amount"
-        value={amount}
-        onChangeText={setAmount}
-        keyboardType="numeric"
-        placeholder="0.00"
+      <SheetCard
+        hue={type === 'transfer' ? theme.colors.secondary : (cat?.color ?? accent)}
+        icon={type === 'transfer' ? 'swap-horizontal' : (cat?.icon ?? 'repeat')}
+        kicker={cadenceLabel(frequency, interval)}
+        amount={formatMoney(inputMinor(amount))}
+        title={
+          note ||
+          (type === 'transfer'
+            ? `${accountName(effectiveAccountId) ?? '—'} → ${accountName(toAccountId) ?? '…'}`
+            : (cat?.name ?? (editing ? 'Recurring entry' : 'New recurring entry')))
+        }
+        meta={`${type === 'income' ? 'Into' : 'From'} ${accountName(effectiveAccountId) ?? '—'} · next ${weekdayDayMonth(startDate)}`}
       />
-
-      <Text style={styles.fieldLabel}>{type === 'transfer' ? 'From account' : 'Account'}</Text>
-      <View style={styles.chipRow}>
-        {pickableAccounts.map((acc) => (
-          <Chip
-            key={acc.id}
-            label={acc.name}
-            active={effectiveAccountId === acc.id}
-            onPress={() => setAccountId(acc.id)}
-          />
-        ))}
+      <View style={styles.tabs}>
+        <SegmentedControl
+          options={[
+            { label: 'Set up', value: 'setup' },
+            { label: 'Schedule', value: 'schedule' },
+          ]}
+          value={tab}
+          onChange={setTab}
+        />
       </View>
 
-      {type === 'transfer' ? (
+      {tab === 'setup' ? (
         <>
-          <Text style={styles.fieldLabel}>To account</Text>
-          <View style={styles.chipRow}>
-            {accounts
-              .filter((a) => a.id !== effectiveAccountId)
-              .map((acc) => (
-                <Chip
-                  key={acc.id}
-                  label={acc.name}
-                  active={toAccountId === acc.id}
-                  onPress={() => setToAccountId(acc.id)}
+          <SegmentedControl options={TX_TYPES} value={type} onChange={onTypeChange} />
+          <View style={styles.gap} />
+          <FormInput
+            label="Amount"
+            value={amount}
+            onChangeText={setAmount}
+            keyboardType="numeric"
+            placeholder="0.00"
+          />
+          <View style={[h.card, h.cardInSheet]}>
+            <SettingsRow
+              round
+              icon="bank"
+              iconBg={theme.colors.primaryTint}
+              label={type === 'transfer' ? 'From' : 'Account'}
+              value={accountName(effectiveAccountId)}
+              onPress={() => toggle('account')}
+              expanded={open === 'account'}
+            />
+            {open === 'account' && (
+              <View style={styles.rowPanel}>
+                {pickableAccounts.map((acc) => (
+                  <Chip
+                    key={acc.id}
+                    label={acc.name}
+                    active={effectiveAccountId === acc.id}
+                    onPress={() => {
+                      setAccountId(acc.id);
+                      setOpen(null);
+                    }}
+                  />
+                ))}
+              </View>
+            )}
+            {type === 'transfer' ? (
+              <>
+                <SettingsRow
+                  round
+                  icon="swap-horizontal"
+                  iconBg={theme.colors.secondaryTint}
+                  label="To"
+                  value={accountName(toAccountId) ?? 'Pick one'}
+                  onPress={() => toggle('to')}
+                  expanded={open === 'to'}
+                  divider
                 />
-              ))}
+                {open === 'to' && (
+                  <View style={styles.rowPanel}>
+                    {accounts
+                      .filter((a) => a.id !== effectiveAccountId)
+                      .map((acc) => (
+                        <Chip
+                          key={acc.id}
+                          label={acc.name}
+                          active={toAccountId === acc.id}
+                          onPress={() => {
+                            setToAccountId(acc.id);
+                            setOpen(null);
+                          }}
+                        />
+                      ))}
+                  </View>
+                )}
+              </>
+            ) : (
+              <>
+                <SettingsRow
+                  round
+                  icon={cat?.icon ?? 'shape-outline'}
+                  iconBg={cat ? hexToRgba(cat.color, 0.25) : theme.colors.surfaceAlt}
+                  label="Category"
+                  value={cat?.name ?? 'Pick one'}
+                  onPress={() => toggle('category')}
+                  expanded={open === 'category'}
+                  divider
+                />
+                {open === 'category' && (
+                  <View style={styles.rowPanelGrid}>
+                    <CategoryPicker
+                      categories={filteredCategories}
+                      selectedId={categoryId}
+                      onSelect={(id) => {
+                        setCategoryId(id);
+                        setOpen(null);
+                      }}
+                      variant="medal"
+                    />
+                  </View>
+                )}
+              </>
+            )}
           </View>
+          <FormInput label="Note (optional)" value={note} onChangeText={setNote} placeholder="e.g. Netflix" />
+          {editing && <SheetLink label="Delete recurring entry" onPress={confirmDelete} disabled={saving} />}
         </>
       ) : (
         <>
-          <Text style={styles.fieldLabel}>Category</Text>
-          <CategoryPicker
-            categories={filteredCategories}
-            selectedId={categoryId}
-            onSelect={setCategoryId}
-            variant="chip"
+          <SegmentedControl options={FREQUENCIES} value={frequency} onChange={setFrequency} />
+          <View style={styles.gap} />
+          <FormInput
+            label={`Every how many ${frequencyNoun(frequency, 2)}`}
+            value={intervalCount}
+            onChangeText={setIntervalCount}
+            keyboardType="numeric"
+            placeholder="1"
           />
+          <DateField label="Starts on" value={startDate} onChange={setStartDate} />
+          <View style={styles.endDateRow}>
+            <Text style={styles.fieldLabel}>Ends on a specific date</Text>
+            <ToggleSwitch value={hasEndDate} onChange={setHasEndDate} />
+          </View>
+          {hasEndDate && (
+            <DateField label="Ends on" value={endDate} onChange={setEndDate} minDate={startDate} />
+          )}
+          <Text style={[styles.fieldLabel, styles.upcomingLabel]}>Coming up</Text>
+          <View style={styles.upcoming}>
+            {upcoming.map((d, i) => (
+              <View
+                key={d}
+                style={[styles.dateTile, i === 0 && { backgroundColor: theme.colors.primaryTint }]}
+              >
+                <Text style={styles.dateTileDay}>{d.slice(8)}</Text>
+                <Text style={styles.dateTileMonth}>{shortMonth(d).toUpperCase()}</Text>
+              </View>
+            ))}
+          </View>
         </>
       )}
-
-      <Text style={styles.fieldLabel}>Repeats</Text>
-      <SegmentedControl options={FREQUENCIES} value={frequency} onChange={setFrequency} />
-
-      <FormInput
-        label={`Every N ${frequencyNoun(frequency, parseInt(intervalCount || '1', 10))}`}
-        value={intervalCount}
-        onChangeText={setIntervalCount}
-        keyboardType="numeric"
-        placeholder="1"
-      />
-
-      <DateField label="Starts on" value={startDate} onChange={setStartDate} />
-
-      <View style={styles.endDateRow}>
-        <Text style={styles.fieldLabel}>Ends on a specific date</Text>
-        <ToggleSwitch value={hasEndDate} onChange={setHasEndDate} />
-      </View>
-      {hasEndDate && <DateField label="Ends on" value={endDate} onChange={setEndDate} minDate={startDate} />}
-
-      <FormInput label="Note (optional)" value={note} onChangeText={setNote} placeholder="e.g. Netflix" />
     </ModalSheet>
   );
 }

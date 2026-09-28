@@ -45,20 +45,11 @@ export function AddPersonModal({
       visible={visible}
       onClose={onClose}
       variant="center"
-      showClose
       title="New person"
       footer={
         <View style={f.footerCol}>
           {error && <Text style={styles.errorText}>{error}</Text>}
-          <View style={f.footerRow}>
-            <PrimaryButton title="Cancel" variant="secondary" onPress={onClose} style={f.footerBtn} />
-            <PrimaryButton
-              title={saving ? 'Saving…' : 'Add'}
-              onPress={submit}
-              disabled={saving}
-              style={f.footerBtn}
-            />
-          </View>
+          <PrimaryButton title={saving ? 'Saving…' : 'Add person'} onPress={submit} disabled={saving} />
         </View>
       }
     >

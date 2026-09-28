@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { View, StyleSheet, Pressable, ScrollView, Alert } from 'react-native';
+import { View, StyleSheet, Pressable, ScrollView } from 'react-native';
 import { Text, TextInput } from '@/components/Text';
 import Feather from '@expo/vector-icons/Feather';
 import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
@@ -20,6 +20,7 @@ import { SuuIllustration } from '@/components/SuuIllustration';
 import { theme } from '@/constants/theme';
 import { useAccent } from '@/theme/AccentContext';
 import { withPressed } from '@/lib/pressed';
+import { showAlert } from '@/components/AppDialog';
 
 interface Slide {
   title: string;
@@ -178,7 +179,7 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
       const current = await getCurrentSummary();
       setPendingRestore({ snapshot, preview: { exportedAt, backup, current, lostCount: 0 } });
     } catch (e) {
-      Alert.alert("Couldn't open that backup", String((e as Error)?.message ?? e));
+      showAlert("Couldn't open that backup", String((e as Error)?.message ?? e));
     }
   };
 
@@ -199,7 +200,7 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
     } catch (e) {
       setRestoring(false);
       setPendingRestore(null);
-      Alert.alert("Couldn't restore that backup", String((e as Error)?.message ?? e));
+      showAlert("Couldn't restore that backup", String((e as Error)?.message ?? e));
       return;
     }
     await resyncAfterRestore();

@@ -10,11 +10,19 @@
 // the hood (for backward compatibility with the widget code and any
 // install that picked a swatch before this feature existed), but the
 // picker UI only ever offers the named packs below.
+export type ThemeGroup = 'Yume' | 'Anime' | 'Series' | 'Films';
+/** The Theme page's filter, in order. */
+export const THEME_GROUPS: ThemeGroup[] = ['Anime', 'Series', 'Films'];
+
 export interface ThemePack {
   id: string;
   name: string;
   /** Short "primary & secondary" description shown under the name in the picker. */
   sub: string;
+  /** The story it's drawn from, shown as "Inspired by …" — none for Yume's own pack. */
+  from?: string;
+  /** Which shelf of the Theme page it sits on. */
+  group: ThemeGroup;
   primary: string;
   secondary: string;
   /** Suu's dot colour. Defaults to `secondary` — only the default pack
@@ -24,12 +32,28 @@ export interface ThemePack {
 }
 
 export const THEMES: ThemePack[] = [
-  { id: 'yume', name: 'Yume', sub: 'Sky & mint', primary: '#8FCBFF', secondary: '#8FE8C8', dot: '#F0876A' },
+  {
+    id: 'yume',
+    name: 'Yume',
+    sub: 'Sky & mint',
+    group: 'Yume',
+    primary: '#8FCBFF',
+    secondary: '#8FE8C8',
+    dot: '#F0876A',
+  },
   // Demon Slayer, in Yume's own register: Tanjiro's ichimatsu (市松)
   // black-and-green check and Nezuko's asanoha (麻の葉) hemp-leaf pink,
   // both lifted into the app's pastel band rather than the show's true
   // forest-green-and-near-black.
-  { id: 'corpsGreen', name: 'Corps Green', sub: 'Moss & sakura', primary: '#AEDABB', secondary: '#F6BFD3' },
+  {
+    id: 'corpsGreen',
+    name: 'Corps Green',
+    sub: 'Moss & sakura',
+    from: 'Demon Slayer',
+    group: 'Anime',
+    primary: '#AEDABB',
+    secondary: '#F6BFD3',
+  },
   // Jujutsu Kaisen: Gojo's cobalt-indigo paired with Sukuna's peach — named
   // after Gojo's own "Hollow Purple", which fuses those same two colours
   // into one, the same way this pack pairs them as primary + secondary.
@@ -37,6 +61,8 @@ export const THEMES: ThemePack[] = [
     id: 'hollowViolet',
     name: 'Hollow Violet',
     sub: 'Indigo & peach',
+    from: 'Jujutsu Kaisen',
+    group: 'Anime',
     primary: '#A6B4F2',
     secondary: '#F0B79A',
   },
@@ -47,6 +73,8 @@ export const THEMES: ThemePack[] = [
     id: 'blueCrystal',
     name: 'Blue Crystal',
     sub: 'Cyan & money-green',
+    from: 'Breaking Bad',
+    group: 'Series',
     primary: '#96E6E3',
     secondary: '#E0E696',
   },
@@ -56,6 +84,8 @@ export const THEMES: ThemePack[] = [
     id: 'winterEmber',
     name: 'Winter Ember',
     sub: 'Ice-grey & ember',
+    from: 'Game of Thrones',
+    group: 'Series',
     primary: '#BEC8D4',
     secondary: '#F09E86',
   },
@@ -66,10 +96,83 @@ export const THEMES: ThemePack[] = [
     id: 'neonStatic',
     name: 'Neon Static',
     sub: 'Teal & neon pink',
+    from: 'Stranger Things',
+    group: 'Series',
     primary: '#8CCED6',
     secondary: '#F27E8C',
   },
+  // Attack on Titan: the Survey Corps' olive cloak and the slate blue of
+  // the Wings of Freedom on its back.
+  {
+    id: 'scoutCloak',
+    name: 'Scout Cloak',
+    sub: 'Olive & wing slate',
+    from: 'Attack on Titan',
+    group: 'Anime',
+    primary: '#D2CE9C',
+    secondary: '#9AA9C9',
+  },
+  // Your Name: kataware-doki, the twilight hour when the two meet — an
+  // orchid sky fading into the last gold of sunset. A dream story, like Yume.
+  {
+    id: 'katawareDusk',
+    name: 'Kataware Dusk',
+    sub: 'Twilight orchid & dusk gold',
+    from: 'Your Name',
+    group: 'Anime',
+    primary: '#E2A6D8',
+    secondary: '#FDD9A0',
+  },
+  // Dark: Jonas's yellow raincoat against the wet grey-green of Winden's
+  // forest, where the cave is.
+  {
+    id: 'sicMundus',
+    name: 'Sic Mundus',
+    sub: 'Raincoat & Winden pine',
+    from: 'Dark',
+    group: 'Series',
+    primary: '#F4D67A',
+    secondary: '#9DB3A6',
+  },
+  // Harry Potter: Gryffindor's scarlet softened to a wine, and the worn gold
+  // of the house crest and the Great Hall's candlelight.
+  {
+    id: 'scarletCrest',
+    name: 'Scarlet Crest',
+    sub: 'Gryffindor wine & old gold',
+    from: 'Harry Potter',
+    group: 'Films',
+    primary: '#C78A9E',
+    secondary: '#CFAE78',
+  },
+  // The Marvel Cinematic Universe: two of the six stones — the Time Stone's
+  // green in the Eye of Agamotto, and the Soul Stone's orange from Vormir.
+  {
+    id: 'infinityGlow',
+    name: 'Infinity Glow',
+    sub: 'Time green & soul orange',
+    from: 'Marvel Cinematic Universe',
+    group: 'Films',
+    primary: '#9DDC8E',
+    secondary: '#F7A96F',
+  },
+  // Black Panther: the violet glow of vibranium and the heart-shaped herb,
+  // beside the Dora Milaje's red, softened to a rose.
+  {
+    id: 'vibranium',
+    name: 'Vibranium',
+    sub: 'Vibranium violet & Dora rose',
+    from: 'Black Panther',
+    group: 'Films',
+    primary: '#BCA2F2',
+    secondary: '#E27FA6',
+  },
 ];
+
+/** "Inspired by Attack on Titan", or "The default" for Yume's own pack. */
+export function themeOrigin(pack: ThemePack): string {
+  return pack.from ? `Inspired by ${pack.from}` : 'The default';
+}
 
 export const DEFAULT_THEME_ID = THEMES[0].id;
 
