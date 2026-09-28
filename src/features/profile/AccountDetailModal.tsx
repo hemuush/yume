@@ -32,9 +32,9 @@ import { showAlert } from '@/components/AppDialog';
 /**
  * Editing/archiving/deleting an account, opened by tapping any account card.
  * Name/type/opening balance/credit limit are freely editable (currency is
- * deliberately not — see `updateAccount`'s own comment). The danger-zone
- * action is chosen based on real usage rather than offered as two competing
- * buttons: an account with any transaction history can only be Archived
+ * deliberately not — see `updateAccount`'s own comment). The quiet link at
+ * the end is chosen based on real usage rather than offered as two competing
+ * actions: an account with any transaction history can only be Archived
  * (hides it, keeps every past number intact); a completely unused one
  * (created by mistake, or freshly archived and never touched) can be
  * properly Deleted.

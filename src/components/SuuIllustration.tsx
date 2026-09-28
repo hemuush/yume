@@ -66,8 +66,7 @@ export function SuuIllustration({ size = 90, pose = 'default' }: Props) {
       cancelAnimation(scale);
       cancelAnimation(dotOpacity);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [reduce, dotRestOpacity]);
+  }, [reduce, dotRestOpacity, scale, dotOpacity]);
 
   const ringStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
   const dotStyle = useAnimatedStyle(() => ({ opacity: dotOpacity.value }));

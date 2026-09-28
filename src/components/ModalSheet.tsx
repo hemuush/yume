@@ -191,8 +191,11 @@ function ModalSheetBody({
   const insets = useSafeAreaInsets();
   const isSheet = variant === 'sheet';
   // A pinned footer means the three-band layout (fixed header / scrolling
-  // body / fixed footer) instead of the single scrolling column.
-  const framed = footer !== undefined;
+  // body / fixed footer) instead of the single scrolling column. A scrolling
+  // bottom sheet always uses it, footer or not: the single-column scroll
+  // view could come out taller than its content, leaving the sheet
+  // stranded mid-screen above an empty band.
+  const framed = footer !== undefined || (isSheet && scrollable);
 
   // Title and subtitle on the left, the ✕ on the right — or just the ✕ for a
   // sheet that opens on its own card instead of a title.
@@ -258,7 +261,11 @@ function ModalSheetBody({
             >
               {children}
             </KeyboardAwareScrollView>
-            <View style={[styles.framedSheetFooter, { paddingBottom: 12 + insets.bottom }]}>{footer}</View>
+            {footer !== undefined ? (
+              <View style={[styles.framedSheetFooter, { paddingBottom: 12 + insets.bottom }]}>{footer}</View>
+            ) : (
+              <View style={{ height: insets.bottom }} />
+            )}
           </View>
         </View>
       </View>
@@ -348,7 +355,7 @@ const styles = StyleSheet.create({
   framedPad: { paddingHorizontal: 16 },
   framedBody: { flexGrow: 0, flexShrink: 1 },
   framedSheet: {
-    backgroundColor: theme.colors.background,
+    backgroundColor: theme.colors.surfaceAlt,
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     maxHeight: '92%',
@@ -356,14 +363,14 @@ const styles = StyleSheet.create({
     ...SHEET_SHADOW,
   },
   framedSheetContent: { paddingHorizontal: 16, paddingBottom: 16 },
-  framedSheetFooter: { paddingHorizontal: 16, paddingTop: 10, backgroundColor: theme.colors.background },
+  framedSheetFooter: { paddingHorizontal: 16, paddingTop: 10, backgroundColor: theme.colors.surfaceAlt },
   framedDialogContent: { paddingHorizontal: 16, paddingBottom: 4 },
   framedDialogFooter: { paddingHorizontal: 16, paddingTop: 12, backgroundColor: theme.colors.surface },
   footerRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   roundBtn: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    width: 46,
+    height: 46,
+    borderRadius: 23,
     backgroundColor: theme.colors.surface,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
@@ -377,7 +384,7 @@ const styles = StyleSheet.create({
   linkDanger: { color: theme.colors.expense },
 
   sheet: {
-    backgroundColor: theme.colors.background,
+    backgroundColor: theme.colors.surfaceAlt,
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     paddingHorizontal: 16,

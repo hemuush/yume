@@ -10,19 +10,9 @@
 // the hood (for backward compatibility with the widget code and any
 // install that picked a swatch before this feature existed), but the
 // picker UI only ever offers the named packs below.
-export type ThemeGroup = 'Yume' | 'Anime' | 'Series' | 'Films';
-/** The Theme page's filter, in order. */
-export const THEME_GROUPS: ThemeGroup[] = ['Anime', 'Series', 'Films'];
-
 export interface ThemePack {
   id: string;
   name: string;
-  /** Short "primary & secondary" description shown under the name in the picker. */
-  sub: string;
-  /** The story it's drawn from, shown as "Inspired by …" — none for Yume's own pack. */
-  from?: string;
-  /** Which shelf of the Theme page it sits on. */
-  group: ThemeGroup;
   primary: string;
   secondary: string;
   /** Suu's dot colour. Defaults to `secondary` — only the default pack
@@ -35,8 +25,6 @@ export const THEMES: ThemePack[] = [
   {
     id: 'yume',
     name: 'Yume',
-    sub: 'Sky & mint',
-    group: 'Yume',
     primary: '#8FCBFF',
     secondary: '#8FE8C8',
     dot: '#F0876A',
@@ -48,9 +36,6 @@ export const THEMES: ThemePack[] = [
   {
     id: 'corpsGreen',
     name: 'Corps Green',
-    sub: 'Moss & sakura',
-    from: 'Demon Slayer',
-    group: 'Anime',
     primary: '#AEDABB',
     secondary: '#F6BFD3',
   },
@@ -60,9 +45,6 @@ export const THEMES: ThemePack[] = [
   {
     id: 'hollowViolet',
     name: 'Hollow Violet',
-    sub: 'Indigo & peach',
-    from: 'Jujutsu Kaisen',
-    group: 'Anime',
     primary: '#A6B4F2',
     secondary: '#F0B79A',
   },
@@ -72,9 +54,6 @@ export const THEMES: ThemePack[] = [
   {
     id: 'blueCrystal',
     name: 'Blue Crystal',
-    sub: 'Cyan & money-green',
-    from: 'Breaking Bad',
-    group: 'Series',
     primary: '#96E6E3',
     secondary: '#E0E696',
   },
@@ -83,9 +62,6 @@ export const THEMES: ThemePack[] = [
   {
     id: 'winterEmber',
     name: 'Winter Ember',
-    sub: 'Ice-grey & ember',
-    from: 'Game of Thrones',
-    group: 'Series',
     primary: '#BEC8D4',
     secondary: '#F09E86',
   },
@@ -95,9 +71,6 @@ export const THEMES: ThemePack[] = [
   {
     id: 'neonStatic',
     name: 'Neon Static',
-    sub: 'Teal & neon pink',
-    from: 'Stranger Things',
-    group: 'Series',
     primary: '#8CCED6',
     secondary: '#F27E8C',
   },
@@ -106,9 +79,6 @@ export const THEMES: ThemePack[] = [
   {
     id: 'scoutCloak',
     name: 'Scout Cloak',
-    sub: 'Olive & wing slate',
-    from: 'Attack on Titan',
-    group: 'Anime',
     primary: '#D2CE9C',
     secondary: '#9AA9C9',
   },
@@ -117,9 +87,6 @@ export const THEMES: ThemePack[] = [
   {
     id: 'katawareDusk',
     name: 'Kataware Dusk',
-    sub: 'Twilight orchid & dusk gold',
-    from: 'Your Name',
-    group: 'Anime',
     primary: '#E2A6D8',
     secondary: '#FDD9A0',
   },
@@ -128,9 +95,6 @@ export const THEMES: ThemePack[] = [
   {
     id: 'sicMundus',
     name: 'Sic Mundus',
-    sub: 'Raincoat & Winden pine',
-    from: 'Dark',
-    group: 'Series',
     primary: '#F4D67A',
     secondary: '#9DB3A6',
   },
@@ -139,9 +103,6 @@ export const THEMES: ThemePack[] = [
   {
     id: 'scarletCrest',
     name: 'Scarlet Crest',
-    sub: 'Gryffindor wine & old gold',
-    from: 'Harry Potter',
-    group: 'Films',
     primary: '#C78A9E',
     secondary: '#CFAE78',
   },
@@ -150,9 +111,6 @@ export const THEMES: ThemePack[] = [
   {
     id: 'infinityGlow',
     name: 'Infinity Glow',
-    sub: 'Time green & soul orange',
-    from: 'Marvel Cinematic Universe',
-    group: 'Films',
     primary: '#9DDC8E',
     secondary: '#F7A96F',
   },
@@ -161,18 +119,10 @@ export const THEMES: ThemePack[] = [
   {
     id: 'vibranium',
     name: 'Vibranium',
-    sub: 'Vibranium violet & Dora rose',
-    from: 'Black Panther',
-    group: 'Films',
     primary: '#BCA2F2',
     secondary: '#E27FA6',
   },
 ];
-
-/** "Inspired by Attack on Titan", or "The default" for Yume's own pack. */
-export function themeOrigin(pack: ThemePack): string {
-  return pack.from ? `Inspired by ${pack.from}` : 'The default';
-}
 
 export const DEFAULT_THEME_ID = THEMES[0].id;
 

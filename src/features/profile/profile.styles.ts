@@ -218,7 +218,6 @@ export const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   themeName: { fontFamily: theme.font.roundedBold, fontSize: 15, color: theme.colors.textPrimary },
-  themeFrom: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, marginTop: 1 },
   themeChange: {
     backgroundColor: theme.colors.ink,
     borderRadius: theme.radius.pill,

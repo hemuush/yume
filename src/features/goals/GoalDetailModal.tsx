@@ -26,8 +26,8 @@ import { errorMessage } from '@/lib/errorMessage';
 import { showAlert } from '@/components/AppDialog';
 
 /**
- * Editing/archiving/deleting a goal, opened by tapping a GoalCard. Same
- * danger-zone split as AccountDetailModal: any real progress added by hand
+ * Editing/archiving/deleting a goal, opened by tapping a GoalCard. The same
+ * rule as AccountDetailModal for the quiet link at the end: any real progress added by hand
  * (`currentAmountMinor > 0`) means Archive is the only option (hides it,
  * keeps the number intact); a goal that was never funded can be properly
  * deleted. A goal following an account holds no money of its own, so it

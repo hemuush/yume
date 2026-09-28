@@ -210,8 +210,8 @@ describe('Profile · Settings section', () => {
 
   it('shows the current theme and opens the Theme page to change it', async () => {
     const tree = await render();
-    expect(texts(tree)).toContain('The default');
-    await press(tree, 'Theme: Yume, The default. Change theme');
+    expect(texts(tree)).toContain('Yume');
+    await press(tree, 'Theme: Yume. Change theme');
     expect(router.push).toHaveBeenCalledWith('/themes');
     expect(mockSetTheme).not.toHaveBeenCalled();
   });

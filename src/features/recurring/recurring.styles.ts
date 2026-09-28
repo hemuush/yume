@@ -95,7 +95,7 @@ export const styles = StyleSheet.create({
     marginTop: 4,
   },
   // The recurring sheet (Direction C): its tabs, a row's picker opened in
-  // place, and the next dates as Home's date tiles.
+  // place, and the row of next dates.
   tabs: { marginBottom: 14 },
   gap: { height: 14 },
   rowPanel: {
@@ -108,22 +108,6 @@ export const styles = StyleSheet.create({
   rowPanelGrid: { paddingHorizontal: 8, paddingBottom: 12 },
   upcomingLabel: { marginTop: 6 },
   upcoming: { flexDirection: 'row', gap: 8 },
-  dateTile: {
-    width: 52,
-    height: 52,
-    borderRadius: 14,
-    backgroundColor: theme.colors.surfaceAlt,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  dateTileDay: { fontFamily: theme.font.roundedBold, fontSize: 16, color: theme.colors.textPrimary },
-  dateTileMonth: {
-    fontFamily: theme.font.bodyBold,
-    fontSize: 8.5,
-    letterSpacing: 0.6,
-    color: theme.colors.textSecondary,
-    marginTop: 1,
-  },
   endDateRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',

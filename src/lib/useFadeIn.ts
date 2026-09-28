@@ -18,6 +18,8 @@ export function useFadeIn(deps: readonly unknown[] = []) {
       duration: DURATIONS.enter,
       useNativeDriver: true,
     }).start();
+    // The caller's `deps` are the dependency list itself (they say when to
+    // replay the fade); `value` is a stable Animated.Value.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, deps);
 
