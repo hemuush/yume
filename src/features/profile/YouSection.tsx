@@ -75,7 +75,7 @@ export function YouSection() {
   const [hasLoans, setHasLoans] = useState(false);
   const [hasUntrackedAssetLoan, setHasUntrackedAssetLoan] = useState(false);
   const [addAccountVisible, setAddAccountVisible] = useState(false);
-  const accountsFadeStyle = useFadeIn([accounts]);
+  const accountsFadeStyle = useFadeIn();
 
   const loadYou = useCallback(async () => {
     const [accs, allAccs, txCountNow, loans, people, currency] = await Promise.all([

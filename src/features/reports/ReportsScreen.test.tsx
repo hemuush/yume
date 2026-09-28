@@ -151,9 +151,6 @@ describe('Reports screen', () => {
     const shown = texts(await render());
     expect(shown).toEqual(
       expect.arrayContaining([
-        'Overview',
-        'Categories',
-        'Trends',
         'Tap a day to see what went out',
         'Where it went',
         'Rent',

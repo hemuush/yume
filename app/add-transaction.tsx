@@ -173,7 +173,7 @@ export default function AddTransactionScreen() {
   // Once you pick an account yourself, picking a category stops choosing one for you.
   const accountPickedByHand = useRef(false);
 
-  const listFade = useFadeIn([rows.length]);
+  const listFade = useFadeIn();
 
   const amountValue = evaluateAmount(expr);
   const amountMinor = amountValue === null ? 0 : toMinor(amountValue);

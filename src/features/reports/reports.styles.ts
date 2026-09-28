@@ -57,18 +57,6 @@ export const styles = StyleSheet.create({
   // The Overview/Categories/Trends jump bar — pinned in `header`, outside
   // the ScrollView, so it's reachable and shows the current section no
   // matter how far down the page you've scrolled.
-  jumpBar: { flexDirection: 'row', gap: 8, paddingHorizontal: 20, marginBottom: 14 },
-  jumpChip: {
-    paddingHorizontal: 13,
-    paddingVertical: 7,
-    borderRadius: theme.radius.pill,
-    backgroundColor: theme.colors.surface,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-  },
-  jumpChipOn: { backgroundColor: theme.colors.ink, borderColor: theme.colors.ink },
-  jumpChipText: { fontFamily: theme.font.bodyBold, fontSize: 11.5, color: theme.colors.textSecondary },
-  jumpChipTextOn: { color: theme.colors.surface },
 
   eyebrow: EYEBROW,
   big: {
