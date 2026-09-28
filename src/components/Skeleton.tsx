@@ -42,8 +42,7 @@ export function Skeleton({ width, height, radius = 6, circle = false, style }: P
     }
     sweep.value = withRepeat(withTiming(1, { duration: 1300 }), -1, false);
     return () => cancelAnimation(sweep);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [reduce]);
+  }, [reduce, sweep]);
 
   const bandWidth = Math.max(24, width * 0.6);
   const animatedStyle = useAnimatedStyle(() => ({

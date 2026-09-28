@@ -131,15 +131,6 @@ export const styles = StyleSheet.create({
     color: theme.colors.textMuted,
   },
   dayHeadAmount: { fontFamily: theme.font.monoBold, fontSize: 12, color: theme.colors.textPrimary },
-  date: { backgroundColor: theme.colors.surfaceAlt },
-  dateDay: { fontFamily: theme.font.monoBold, fontSize: 14, lineHeight: 16, color: theme.colors.textPrimary },
-  dateMonth: {
-    fontFamily: theme.font.bodyBold,
-    fontSize: 10,
-    letterSpacing: 0.6,
-    textTransform: 'uppercase',
-    color: theme.colors.textMuted,
-  },
   payWrap: { alignItems: 'flex-end', gap: 5 },
   payBtn: {
     paddingHorizontal: 12,

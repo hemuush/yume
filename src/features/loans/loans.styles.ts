@@ -154,7 +154,7 @@ export const styles = StyleSheet.create({
   },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 14 },
   payoffCard: {
-    marginTop: 12,
+    marginBottom: 12,
     padding: 14,
     gap: 4,
     borderRadius: theme.radius.xl2,

@@ -34,8 +34,7 @@ function BreathingRing() {
     }
     scale.value = withRepeat(withTiming(1.045, { duration: 1050 }), -1, true);
     return () => cancelAnimation(scale);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [reduce]);
+  }, [reduce, scale]);
 
   const animatedStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
 

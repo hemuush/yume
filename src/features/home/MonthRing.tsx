@@ -181,7 +181,7 @@ const styles = StyleSheet.create({
   big: { fontFamily: theme.font.roundedBold, fontSize: 25, lineHeight: 28, color: theme.colors.textPrimary },
   label: {
     fontFamily: theme.font.bodyBold,
-    fontSize: 9,
+    fontSize: 10,
     letterSpacing: 0.7,
     textTransform: 'uppercase',
     color: theme.colors.textSecondary,

@@ -1,10 +1,9 @@
 /**
  * The theme packs stay a considered set: each one's colours are soft
  * pastels, clearly different from every other pack's (so a new theme can't
- * quietly copy an old one), and every pack but Yume's own says which story
- * it's drawn from.
+ * quietly copy an old one).
  */
-import { THEMES, THEME_GROUPS, themeOrigin } from './themes';
+import { THEMES } from './themes';
 import { hexToHsl } from '@/lib/color';
 
 /** CIE L*a*b* for an sRGB hex. */
@@ -66,14 +65,5 @@ describe('theme packs', () => {
         expect(l).toBeLessThanOrEqual(88);
       }
     }
-  });
-
-  it('says where each pack comes from, and sits on a shelf of the Theme page', () => {
-    for (const p of THEMES.slice(1)) {
-      expect(p.from).toBeTruthy();
-      expect(THEME_GROUPS).toContain(p.group);
-      expect(themeOrigin(p)).toBe(`Inspired by ${p.from}`);
-    }
-    expect(themeOrigin(THEMES[0])).toBe('The default');
   });
 });

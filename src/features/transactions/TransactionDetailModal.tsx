@@ -264,6 +264,20 @@ export function TransactionDetailModal({
           <SheetFooter onDelete={confirmDelete} deleteLabel="Delete entry" disabled={busy}>
             <PrimaryButton title="Edit" onPress={() => onEdit(tx)} disabled={busy} style={f.footerBtn} />
           </SheetFooter>
+        ) : link?.kind === 'loan' ? (
+          <PrimaryButton
+            title={busy ? 'Undoing…' : 'Undo payment'}
+            variant="secondary"
+            onPress={() => confirmUndoLoan(link.loanPaymentId)}
+            disabled={busy}
+          />
+        ) : link?.kind === 'person' ? (
+          <PrimaryButton
+            title={busy ? 'Undoing…' : 'Undo entry'}
+            variant="secondary"
+            onPress={confirmUndoPerson}
+            disabled={busy}
+          />
         ) : undefined
       }
     >
@@ -293,7 +307,7 @@ export function TransactionDetailModal({
           <SegmentedControl
             options={[
               { label: 'Details', value: 'details' },
-              { label: 'Do more', value: 'more' },
+              { label: 'Actions', value: 'more' },
             ]}
             value={tab}
             onChange={setTab}
@@ -382,27 +396,15 @@ export function TransactionDetailModal({
           {link === undefined ? (
             <Text style={styles.hintText}>Checking…</Text>
           ) : link === null ? null : link.kind === 'loan' ? (
-            <>
-              <Text style={styles.hintText}>This is a loan EMI payment — it can't be edited directly.</Text>
-              <PrimaryButton
-                title={busy ? 'Undoing…' : 'Undo payment'}
-                variant="secondary"
-                onPress={() => confirmUndoLoan(link.loanPaymentId)}
-                disabled={busy}
-              />
-            </>
+            <Text style={styles.hintText}>
+              A loan EMI payment — it can't be edited directly. Undo it to put the installment back to
+              pending.
+            </Text>
           ) : link.kind === 'person' ? (
-            <>
-              <Text style={styles.hintText}>
-                This is a Friends & Family entry — it can't be edited directly.
-              </Text>
-              <PrimaryButton
-                title={busy ? 'Undoing…' : 'Undo entry'}
-                variant="secondary"
-                onPress={confirmUndoPerson}
-                disabled={busy}
-              />
-            </>
+            <Text style={styles.hintText}>
+              A Friends & Family entry — it can't be edited directly. Undo it to remove it from their balance
+              too.
+            </Text>
           ) : (
             <Text style={styles.hintText}>
               This is a loan disbursement or prepayment — editing isn't supported yet.

@@ -117,8 +117,7 @@ function PrepaymentReveal({ summary, onDone }: { summary: PrepaymentSummary; onD
       Animated.timing(glow, { toValue: 1, duration: DURATIONS.standard, delay: 60, useNativeDriver: true }),
       Animated.timing(glow, { toValue: 0, duration: DURATIONS.count, useNativeDriver: true }),
     ]).start();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [reduce]);
+  }, [reduce, progress, glow]);
 
   const scale = MAX_TICKS / Math.max(summary.oldRemainingCount, 1);
   const oldTicks = Math.max(1, Math.round(summary.oldRemainingCount * Math.min(1, scale)));

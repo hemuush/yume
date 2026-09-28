@@ -217,7 +217,7 @@ export const styles = StyleSheet.create({
   income: { color: theme.colors.income },
   expense: { color: theme.colors.expense },
   rowRefund: { fontFamily: theme.font.bodyBold, color: theme.colors.income },
-  // The Details / Do more switch under a transaction's card.
+  // The Details / Actions switch under a transaction's card.
   detailTabs: { marginBottom: 12 },
   // A split part's detail: the whole payment, this part in bold.
   splitCard: {

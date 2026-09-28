@@ -322,8 +322,7 @@ export function ThisMonthHero({
         if (finished) runOnJS(setConfettiPlaying)(false);
       })
     );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [celebrateDebtCleared, reduce]);
+  }, [celebrateDebtCleared, reduce, checkDraw, confettiProgress]);
 
   const checkAnimatedProps = useAnimatedProps(() => ({
     strokeDashoffset: interpolate(checkDraw.value, [0, 1], [CHECK_PATH_LENGTH, 0]),
@@ -575,7 +574,7 @@ const styles = StyleSheet.create({
   tileLabel: {
     flexShrink: 1,
     fontFamily: theme.font.bodyBold,
-    fontSize: 9.5,
+    fontSize: 10,
     letterSpacing: 0.4,
     textTransform: 'uppercase',
     color: theme.colors.textSecondary,

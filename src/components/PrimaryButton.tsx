@@ -79,7 +79,7 @@ export function PrimaryButton({
 const styles = StyleSheet.create({
   base: {
     borderRadius: theme.radius.pill,
-    paddingVertical: 13,
+    paddingVertical: 12,
     paddingHorizontal: 18,
     alignItems: 'center',
     justifyContent: 'center',

@@ -103,8 +103,7 @@ export function Spark({
       cancelAnimation(scale);
       cancelAnimation(glow);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [reduce]);
+  }, [reduce, delay, opacity, scale, glow]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
