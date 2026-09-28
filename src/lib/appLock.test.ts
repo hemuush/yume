@@ -9,7 +9,14 @@ jest.mock('expo-local-authentication', () => ({
 }));
 
 import * as LocalAuthentication from 'expo-local-authentication';
-import { isDeviceSecured, authenticate, withoutRelock, isReturningFromOwnActivity } from './appLock';
+import {
+  isDeviceSecured,
+  authenticate,
+  withoutRelock,
+  isReturningFromOwnActivity,
+  shouldRelock,
+  RELOCK_AFTER_MS,
+} from './appLock';
 
 const enrolledLevel = LocalAuthentication.getEnrolledLevelAsync as jest.Mock;
 
@@ -62,5 +69,25 @@ describe('withoutRelock', () => {
     (LocalAuthentication.authenticateAsync as jest.Mock).mockResolvedValue({ success: true });
     expect(await authenticate()).toBe(true);
     expect(isReturningFromOwnActivity()).toBe(true);
+  });
+});
+
+describe('shouldRelock', () => {
+  const now = 1_000_000;
+  // Well clear of any picker round-trip an earlier test just simulated.
+  beforeAll(() => jest.useFakeTimers().setSystemTime(Date.now() + 60_000));
+  afterAll(() => jest.useRealTimers());
+
+  it('stays open after a quick hop to another app', () => {
+    expect(shouldRelock(now - 5_000, now)).toBe(false);
+  });
+
+  it('locks again after being away a minute or more', () => {
+    expect(shouldRelock(now - RELOCK_AFTER_MS, now)).toBe(true);
+    expect(shouldRelock(now - 10 * 60_000, now)).toBe(true);
+  });
+
+  it("doesn't lock when the app never really went to the background (notifications, app switcher)", () => {
+    expect(shouldRelock(null, now)).toBe(false);
   });
 });
