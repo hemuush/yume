@@ -324,7 +324,7 @@ const styles = StyleSheet.create({
   restLabel: {
     ...EYEBROW,
     fontFamily: theme.font.bodyBold,
-    fontSize: 9,
+    fontSize: 10,
     color: theme.colors.income,
     marginBottom: 2,
   },

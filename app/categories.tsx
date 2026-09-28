@@ -160,10 +160,7 @@ export default function CategoriesScreen() {
 
   // Feeds the one shared `ActionSheet` below — its two rows are the only
   // thing that differs between an active category's menu (Archive/Delete)
-  // and an archived one's (Restore/Delete). Previously two separate
-  // `Alert.alert` calls (native platform dialogs, styled entirely by the
-  // OS) — see `ActionSheet`'s own comment for why that looked like a
-  // different, unstyled app dropped into the middle of Yume.
+  // and an archived one's (Restore/Delete).
   const manageItems: ActionSheetItem[] = manageTarget
     ? manageTarget.archived
       ? [

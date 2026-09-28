@@ -30,7 +30,6 @@ import { FormInput } from '@/components/FormInput';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { YumeLogo } from '@/components/YumeLogo';
 import { useAccent, THEMES } from '@/theme/AccentContext';
-import { themeOrigin } from '@/theme/themes';
 import { ThemePreview } from './ThemePreview';
 import { theme } from '@/constants/theme';
 import { usePressScale } from '@/lib/usePressScale';
@@ -442,13 +441,12 @@ export function SettingsSection({ onJumpTo }: { onJumpTo?: (y: number) => void }
           onPress={() => router.push('/themes')}
           style={withPressed([h.card, styles.themeCard])}
           accessibilityRole="button"
-          accessibilityLabel={`Theme: ${activeTheme.name}, ${themeOrigin(activeTheme)}. Change theme`}
+          accessibilityLabel={`Theme: ${activeTheme.name}. Change theme`}
         >
           <ThemePreview pack={activeTheme} height={104} detailed />
           <View style={styles.themeRow}>
             <View style={h.mid}>
               <Text style={styles.themeName}>{activeTheme.name}</Text>
-              <Text style={styles.themeFrom}>{themeOrigin(activeTheme)}</Text>
             </View>
             <View style={styles.themeChange}>
               <Text style={styles.themeChangeText}>Change</Text>

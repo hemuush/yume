@@ -139,6 +139,8 @@ export function TransactionsHeadline({
       tx.value = withTiming(0, { duration: DURATIONS.slideIn });
       opacity.value = withTiming(1, { duration: DURATIONS.slideIn });
     });
+    // `direction` is read with the period it came with, and `opacity`/`tx` are
+    // stable shared values; re-running on `direction` alone would replay the slide.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [periodKey, expenseMinor, incomeMinor, expenseChangePct, viewScope, bars, legend, reduce]);
 

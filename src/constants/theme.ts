@@ -91,7 +91,7 @@ export const theme = {
     glass: 'rgba(255,255,255,0.6)',
     // The dimmed backdrop behind every sheet and dialog: warm ink, light
     // enough that you still see where you were (calm sheets).
-    scrim: 'rgba(18,19,15,0.36)',
+    scrim: 'rgba(18,19,15,0.3)',
     // Cream on an ink card (the goal letter): a faint fill, its hairline, and soft text.
     onInkWash: 'rgba(255,253,246,0.06)',
     onInkHairline: 'rgba(255,253,246,0.15)',

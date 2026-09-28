@@ -47,7 +47,7 @@ export function SheetCard({
       <View style={styles.circleSmall} />
       <View style={styles.top}>
         <View style={styles.icon}>
-          <MaterialCommunityIcons name={icon as McIconName} size={20} color={shade(hue, 30, 10)} />
+          <MaterialCommunityIcons name={icon as McIconName} size={18} color={shade(hue, 30, 10)} />
         </View>
         {kicker ? <Text style={styles.kicker}>{kicker}</Text> : null}
       </View>
@@ -76,7 +76,7 @@ export function SheetCard({
 const styles = StyleSheet.create({
   card: {
     borderRadius: theme.radius.xl2,
-    padding: 16,
+    padding: 14,
     overflow: 'hidden',
     marginBottom: 12,
   },
@@ -101,9 +101,9 @@ const styles = StyleSheet.create({
   },
   top: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
   icon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: 'rgba(255,255,255,0.85)',
     alignItems: 'center',
     justifyContent: 'center',
@@ -115,9 +115,9 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     color: theme.colors.textSecondary,
   },
-  amount: { fontFamily: theme.font.monoBold, fontSize: 30, marginTop: 14 },
+  amount: { fontFamily: theme.font.monoBold, fontSize: 28, marginTop: 10 },
   title: { fontFamily: theme.font.roundedBold, fontSize: 16, color: theme.colors.textPrimary, marginTop: 2 },
-  titleBig: { fontFamily: theme.font.roundedBold, fontSize: 22, marginTop: 14 },
+  titleBig: { fontFamily: theme.font.roundedBold, fontSize: 22, marginTop: 10 },
   meta: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary, marginTop: 2 },
   track: {
     height: 6,

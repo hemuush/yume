@@ -4,7 +4,6 @@ import Feather from '@expo/vector-icons/Feather';
 import { theme } from '@/constants/theme';
 import { formatMoney } from '@/lib/money';
 import { dueDateLabel } from '@/lib/dueDate';
-import { parseLocalIsoDate } from '@/lib/date';
 import { usePressScale } from '@/lib/usePressScale';
 import { HomeSection } from '@/features/home/HomeSection';
 import { homeStyles as h, HOME } from '@/features/home/homeStyles';
@@ -13,6 +12,7 @@ import { weekdayDayMonth } from '@/lib/dateLabels';
 
 import { styles } from './plan.styles';
 import { withPressed } from '@/lib/pressed';
+import { DateTile } from '@/components/DateTile';
 
 /**
  * Plan's Coming up: everything due in the next 14 days, grouped under its
@@ -54,7 +54,6 @@ function DueRow({
   onPay?: (loanId: string) => void;
 }) {
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.98);
-  const d = parseLocalIsoDate(item.dueDate);
   const when = dueDateLabel(item.dueDate);
   const sign = item.kind === 'income' ? '+' : item.kind === 'transfer' ? '' : '−';
   const amount = (
@@ -80,10 +79,7 @@ function DueRow({
       accessibilityLabel={`${item.title}, ${KIND_LABEL[item.kind]}, ${when}`}
       style={[h.row, divider && h.divider, animatedStyle]}
     >
-      <View style={[h.iconTile, styles.date]}>
-        <Text style={styles.dateDay}>{String(d.getDate()).padStart(2, '0')}</Text>
-        <Text style={styles.dateMonth}>{d.toLocaleDateString(undefined, { month: 'short' })}</Text>
-      </View>
+      <DateTile iso={item.dueDate} />
       <View style={h.mid}>
         <Text style={h.title} numberOfLines={1}>
           {item.title}

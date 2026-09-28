@@ -65,8 +65,7 @@ export default function BudgetsScreen() {
     setBudgets(list);
     setLapsed(lapsedList);
     setCategories(cats);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [periodMonth]);
   const { loaded, loadError, reload: load } = useScreenLoad(loadBudgets);
 
   const totalLimit = budgets.reduce((sum, b) => sum + b.effectiveLimitMinor, 0);

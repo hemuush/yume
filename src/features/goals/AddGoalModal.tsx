@@ -43,12 +43,12 @@ export function AddGoalModal({
     setName('');
     setTarget('');
     setHasTargetDate(false);
-    setTargetDateValue(addMonthsToIsoDate(today, 12));
+    // Today as of opening, not of the first render: the form resets only when it opens.
+    setTargetDateValue(addMonthsToIsoDate(toLocalIsoDate(new Date()), 12));
     setLinkedAccountId(null);
     setTracksAccount(false);
     setNoteToSelf('');
     setError(null);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible]);
 
   // A savings account is almost always where a goal's money really sits,

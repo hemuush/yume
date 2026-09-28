@@ -19,7 +19,8 @@ import { theme, modalFooterStyles as f } from '@/constants/theme';
 import { homeStyles as h } from '@/features/home/homeStyles';
 import { useAccent } from '@/theme/AccentContext';
 import { hexToRgba } from '@/lib/color';
-import { shortMonth, weekdayDayMonth } from '@/lib/dateLabels';
+import { weekdayDayMonth } from '@/lib/dateLabels';
+import { DateTile } from '@/components/DateTile';
 import { FormInput } from '@/components/FormInput';
 import { SegmentedControl } from '@/components/SegmentedControl';
 import { PrimaryButton } from '@/components/PrimaryButton';
@@ -391,13 +392,7 @@ export function RuleModal({
           <Text style={[styles.fieldLabel, styles.upcomingLabel]}>Coming up</Text>
           <View style={styles.upcoming}>
             {upcoming.map((d, i) => (
-              <View
-                key={d}
-                style={[styles.dateTile, i === 0 && { backgroundColor: theme.colors.primaryTint }]}
-              >
-                <Text style={styles.dateTileDay}>{d.slice(8)}</Text>
-                <Text style={styles.dateTileMonth}>{shortMonth(d).toUpperCase()}</Text>
-              </View>
+              <DateTile key={d} iso={d} background={i === 0 ? theme.colors.primaryTint : undefined} />
             ))}
           </View>
         </>

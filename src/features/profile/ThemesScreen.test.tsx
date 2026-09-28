@@ -1,6 +1,6 @@
 /**
- * The Theme page: every pack as a preview card, filtered by where it comes
- * from, with the one in use ticked; tapping a card switches the app to it.
+ * The Theme page: every pack as a preview card with just its name, the one
+ * in use ticked; tapping a card switches the app to it.
  */
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
 import { Text } from 'react-native';
@@ -34,11 +34,7 @@ const texts = (tree: ReactTestRenderer) =>
 const cards = (tree: ReactTestRenderer) => {
   const seen = new Map<string, boolean>();
   tree.root
-    .findAll(
-      (n) =>
-        typeof n.props.onPress === 'function' &&
-        /\. (Inspired by|The default)/.test(n.props.accessibilityLabel ?? '')
-    )
+    .findAll((n) => typeof n.props.onPress === 'function' && / theme$/.test(n.props.accessibilityLabel ?? ''))
     .forEach((n) => seen.set(n.props.accessibilityLabel, !!n.props.accessibilityState?.selected));
   return [...seen].map(([label, selected]) => ({ label, selected }));
 };
@@ -62,22 +58,19 @@ describe('Theme page', () => {
     const tree = await render();
     expect(cards(tree)).toHaveLength(THEMES.length);
     const selected = cards(tree).filter((c) => c.selected);
-    expect(selected.map((c) => c.label)).toEqual([
-      'Hollow Violet, Indigo & peach. Inspired by Jujutsu Kaisen',
-    ]);
+    expect(selected.map((c) => c.label)).toEqual(['Hollow Violet theme']);
   });
 
-  it('filters to one shelf', async () => {
+  it('shows each theme by its name alone', async () => {
     const tree = await render();
-    await press(tree, 'Films');
-    expect(texts(tree)).toEqual(expect.arrayContaining(['Scarlet Crest', 'Infinity Glow', 'Vibranium']));
-    expect(cards(tree)).toHaveLength(THEMES.filter((p) => p.group === 'Films').length);
-    expect(texts(tree)).not.toContain('Hollow Violet');
+    expect(texts(tree)).toEqual(expect.arrayContaining(['Scout Cloak', 'Vibranium']));
+    expect(texts(tree)).not.toEqual(expect.arrayContaining(['Attack on Titan']));
+    expect(texts(tree)).not.toContain('Anime');
   });
 
   it('switches the app to a pack with one tap', async () => {
     const tree = await render();
-    await press(tree, 'Scout Cloak, Olive & wing slate. Inspired by Attack on Titan');
+    await press(tree, 'Scout Cloak theme');
     expect(mockSetTheme).toHaveBeenCalledWith('scoutCloak');
   });
 });

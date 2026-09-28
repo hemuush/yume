@@ -144,11 +144,8 @@ export function LoanDetailModal({
   // Pay is the one thing you do almost every time you open a loan, so it
   // stays as the single visible action; Prepay/Update rate/Delete are real
   // but rare, moved behind "⋯" so a 240-month home loan's detail screen
-  // looks exactly as simple as a 6-month one. Rendered via the app's own
-  // `ActionSheet` (styled to match the rest of Yume) rather than
-  // `Alert.alert` — see that component's own comment for why, and for how
-  // it also removes the 3-button ceiling this used to work around by
-  // dropping an explicit Cancel row.
+  // looks exactly as simple as a 6-month one. Shown in the shared
+  // `ActionSheet` menu.
   const moreActionItems: ActionSheetItem[] = [];
   if (liveLoan.status === 'active' && nextInstallment) {
     moreActionItems.push({

@@ -4,7 +4,7 @@ import Feather from '@expo/vector-icons/Feather';
 import { theme } from '@/constants/theme';
 import { formatMoney } from '@/lib/money';
 import { usePressScale } from '@/lib/usePressScale';
-import { parseLocalIsoDate } from '@/lib/date';
+import { DateTile } from '@/components/DateTile';
 import { homeStyles as h, HOME } from './homeStyles';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -54,14 +54,7 @@ export function UpcomingRow({
       style={[styles.row, divider && styles.divider, animatedStyle]}
     >
       {date ? (
-        <View style={[styles.dateTile, { backgroundColor: urgent ? theme.colors.expenseTint : iconBg }]}>
-          <Text style={[styles.dateDay, urgent && styles.dateUrgent]}>
-            {String(parseLocalIsoDate(date).getDate()).padStart(2, '0')}
-          </Text>
-          <Text style={[styles.dateMonth, urgent && styles.dateUrgent]}>
-            {parseLocalIsoDate(date).toLocaleDateString(undefined, { month: 'short' }).toUpperCase()}
-          </Text>
-        </View>
+        <DateTile iso={date} background={iconBg} urgent={urgent} />
       ) : (
         <View style={[styles.iconWrap, { backgroundColor: urgent ? theme.colors.expenseTint : iconBg }]}>
           <Feather name={icon} size={HOME.iconGlyph} color={urgent ? theme.colors.expense : iconColor} />
@@ -127,26 +120,5 @@ const styles = StyleSheet.create({
   subUrgent: h.subUrgent,
   amount: h.amount,
   income: h.income,
-  dateTile: {
-    width: HOME.iconTile + 4,
-    height: HOME.iconTile + 6,
-    borderRadius: 13,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  dateDay: {
-    fontFamily: theme.font.roundedBold,
-    fontSize: 15,
-    lineHeight: 17,
-    color: theme.colors.textPrimary,
-  },
-  dateMonth: {
-    fontFamily: theme.font.bodyBold,
-    fontSize: 8.5,
-    letterSpacing: 0.7,
-    color: theme.colors.textSecondary,
-    marginTop: 1,
-  },
-  dateUrgent: { color: theme.colors.expense },
   moreText: { flex: 1, fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textSecondary },
 });
