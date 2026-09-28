@@ -1,6 +1,6 @@
 import { Stack, router, useRootNavigationState } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { View, ActivityIndicator, StyleSheet, AppState, AppStateStatus } from 'react-native';
 import { Text } from '@/components/Text';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -19,7 +19,7 @@ import { Fredoka_500Medium } from '@expo-google-fonts/fredoka/500Medium';
 import { Fredoka_600SemiBold } from '@expo-google-fonts/fredoka/600SemiBold';
 import { getDb, consumeLoanDueDateRepairs } from '@/db/client';
 import { resyncAllLoanReminders } from '@/db/loans';
-import { isReturningFromOwnActivity } from '@/lib/appLock';
+import { shouldRelock } from '@/lib/appLock';
 import { getNotificationPrefs, getHasOnboarded, setHasOnboarded, getAppLockEnabled } from '@/db/settings';
 import { listAccounts, listTransactions } from '@/db/ledger';
 import { runLocalBackupIfDue } from '@/lib/localBackup';
@@ -179,7 +179,6 @@ function AppGate({ needsOnboarding, initialLocked }: { needsOnboarding: boolean;
   const { lockEnabled } = useAppLock();
   const [isLocked, setIsLocked] = useState(initialLocked);
   const [showOnboarding, setShowOnboarding] = useState(needsOnboarding);
-  const appState = useRef(AppState.currentState);
 
   // A tapped notification's screen (see NOTIFICATION_ROUTES) waits here until
   // it can actually be shown: the app unlocked, past onboarding, and the
@@ -205,21 +204,20 @@ function AppGate({ needsOnboarding, initialLocked }: { needsOnboarding: boolean;
     return () => clearTimeout(timer);
   }, [pendingRoute, isLocked, showOnboarding, navReady]);
 
-  // Re-arms the lock whenever the app returns from the background. Reading
+  // Re-arms the lock when the app comes back after being away a while (see
+  // shouldRelock: real backgrounding only, for at least a minute). Reading
   // `lockEnabled` from shared context (rather than a value only set once at
   // cold start) means toggling the Settings switch takes effect on the very
   // next background/foreground cycle, not just after a full app restart.
   useEffect(() => {
     if (!lockEnabled) return;
+    let backgroundedAt: number | null = null;
     const sub = AppState.addEventListener('change', (next: AppStateStatus) => {
-      if (
-        appState.current.match(/inactive|background/) &&
-        next === 'active' &&
-        !isReturningFromOwnActivity()
-      ) {
-        setIsLocked(true);
+      if (next === 'background') backgroundedAt ??= Date.now();
+      if (next === 'active') {
+        if (shouldRelock(backgroundedAt, Date.now())) setIsLocked(true);
+        backgroundedAt = null;
       }
-      appState.current = next;
     });
     return () => sub.remove();
   }, [lockEnabled]);
