@@ -107,14 +107,7 @@ export function CalendarSheet({
   const stepMonth = (by: number) => setViewMonth(addMonthsToIsoDate(`${viewMonth}-01`, by).slice(0, 7));
 
   return (
-    <ModalSheet
-      visible={visible}
-      onClose={onClose}
-      variant="center"
-      showClose
-      scrollable={false}
-      title={title}
-    >
+    <ModalSheet visible={visible} onClose={onClose} variant="center" scrollable={false} title={title}>
       {quickPicks && (
         <View style={styles.quickRow}>
           {[

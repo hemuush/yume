@@ -53,7 +53,6 @@ export function DaySheet({
       visible={iso != null}
       onClose={onClose}
       variant="center"
-      showClose
       scrollable={false}
       title={
         iso ? parseLocalIsoDate(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'long' }) : ''

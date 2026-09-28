@@ -2,10 +2,12 @@ import { useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { Text } from '@/components/Text';
 import { createBudget, updateBudget, BudgetProgress } from '@/db/budgets';
-import { toMinor } from '@/lib/money';
+import { toMinor, formatMoney, inputMinor } from '@/lib/money';
 import { Category } from '@/types';
 import { ModalSheet } from '@/components/ModalSheet';
-import { modalFooterStyles as f } from '@/constants/theme';
+import { SheetCard } from '@/components/SheetCard';
+import { theme, modalFooterStyles as f } from '@/constants/theme';
+import { longMonthYear } from '@/lib/dateLabels';
 import { FormInput } from '@/components/FormInput';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { ToggleSwitch } from '@/components/ToggleSwitch';
@@ -95,46 +97,49 @@ export function AddBudgetModal({
     }
   };
 
+  // The calm-sheets sign-off (Direction C): a live card of the budget in
+  // its category's colour, then the form.
+  const cat = categories.find((c) => c.id === categoryId);
   return (
     <ModalSheet
       visible={visible}
       onClose={onClose}
-      title={editing ? 'Edit budget' : 'New budget'}
       footer={
         <View style={f.footerCol}>
           {error && <Text style={styles.errorText}>{error}</Text>}
-          <View style={f.footerRow}>
-            <PrimaryButton title="Cancel" variant="secondary" onPress={onClose} style={f.footerBtn} />
-            <PrimaryButton
-              title={saving ? 'Saving…' : editing ? 'Save' : 'Create'}
-              onPress={submit}
-              disabled={saving}
-              style={f.footerBtn}
-            />
-          </View>
+          <PrimaryButton
+            title={saving ? 'Saving…' : editing ? 'Save changes' : 'Create budget'}
+            onPress={submit}
+            disabled={saving}
+          />
         </View>
       }
     >
-      {editing ? (
-        <Text style={styles.modalHint}>
-          For {editing.categoryName}, {editing.budget.periodMonth} — the category and month can't be changed
-          once a budget exists.
-        </Text>
-      ) : categories.length === 0 ? (
-        <Text style={styles.modalHint}>Add an expense category before setting a budget.</Text>
-      ) : (
-        <>
-          <Text style={styles.fieldLabel}>Category</Text>
-          <View style={{ marginBottom: 16 }}>
+      <SheetCard
+        hue={cat?.color ?? theme.colors.primary}
+        icon={cat?.icon ?? 'wallet-outline'}
+        kicker={rollover ? 'Monthly · rolls over' : 'Monthly'}
+        amount={formatMoney(inputMinor(limit))}
+        title={editing?.categoryName ?? cat?.name ?? 'Pick a category'}
+        meta={
+          editing
+            ? `${longMonthYear(`${editing.budget.periodMonth}-01`)} · category and month are fixed`
+            : 'A limit for this month'
+        }
+      />
+      {!editing &&
+        (categories.length === 0 ? (
+          <Text style={styles.modalHint}>Add an expense category before setting a budget.</Text>
+        ) : (
+          <View style={styles.pickerGap}>
             <CategoryPicker
               categories={categories}
               selectedId={categoryId}
               onSelect={setCategoryId}
-              variant="chip"
+              variant="medal"
             />
           </View>
-        </>
-      )}
+        ))}
 
       <FormInput
         label="Monthly limit"

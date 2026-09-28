@@ -1,7 +1,6 @@
 import { StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
 import { HOME } from '@/features/home/homeStyles';
-import { EYEBROW } from '@/constants/textStyles';
 
 // Shared by the Profile screen (its shell, YouSection, and SettingsSection)
 // and the account modals (AddAccountModal, AccountDetailModal). Cards, rows
@@ -174,7 +173,6 @@ export const styles = StyleSheet.create({
   glanceSub: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textMuted },
 
   // ---- Settings: rows ----
-  rowValue: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textSecondary },
   // Opens in place under the row that opened it, inside the same card.
   accordionBody: {
     paddingHorizontal: 14,
@@ -210,27 +208,24 @@ export const styles = StyleSheet.create({
   dailyGoalBtn: { flex: 1 },
 
   // ---- Settings: theme swatches ----
-  themeCaption: {
-    fontFamily: theme.font.body,
-    fontSize: 12,
-    color: theme.colors.textMuted,
+  // The current theme, drawn as a little piece of Home; tapping opens the Theme page.
+  themeCard: { overflow: 'hidden' },
+  themeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
     paddingHorizontal: 14,
-    paddingTop: 12,
+    paddingVertical: 12,
   },
-  themeStrip: { gap: 6, paddingHorizontal: 10, paddingTop: 10, paddingBottom: 12 },
-  themeOption: { width: 64, alignItems: 'center', gap: 5 },
-  themeRing: { padding: 3, borderRadius: 28, borderWidth: 2, borderColor: 'transparent' },
-  themeRingActive: { borderColor: theme.colors.ink },
-  themeSwatch: { width: 44, height: 44, borderRadius: 22, overflow: 'hidden', flexDirection: 'row' },
-  themeSwatchHalf: { flex: 1 },
-  themeName: {
-    fontFamily: theme.font.bodyMedium,
-    fontSize: 10.5,
-    lineHeight: 13,
-    color: theme.colors.textSecondary,
-    textAlign: 'center',
+  themeName: { fontFamily: theme.font.roundedBold, fontSize: 15, color: theme.colors.textPrimary },
+  themeFrom: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, marginTop: 1 },
+  themeChange: {
+    backgroundColor: theme.colors.ink,
+    borderRadius: theme.radius.pill,
+    paddingHorizontal: 14,
+    paddingVertical: 7,
   },
-  themeNameActive: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
+  themeChangeText: { fontFamily: theme.font.roundedBold, fontSize: 12.5, color: theme.colors.surface },
 
   // ---- Settings: about ----
   aboutCard: { padding: 14, gap: 12 },
@@ -266,10 +261,4 @@ export const styles = StyleSheet.create({
     lineHeight: 17,
   },
   errorText: { fontFamily: theme.font.body, color: theme.colors.expense, fontSize: 13, marginBottom: 12 },
-  dangerLabel: {
-    ...EYEBROW,
-    marginTop: 20,
-    marginBottom: 8,
-  },
-  deleteButton: { backgroundColor: theme.colors.expenseTint, borderColor: theme.colors.expense },
 });

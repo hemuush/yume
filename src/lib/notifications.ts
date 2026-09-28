@@ -7,6 +7,20 @@ import { formatMoney } from './money';
 import { formatPctChange } from './format';
 import { pickRandom } from './pickRandom';
 import { DAILY_REMINDER_COPY, WEEKLY_SUMMARY_COPY, loanDueCopy, overspendCopy } from './notificationCopy';
+import {
+  NOTIFICATION_KIND,
+  NotificationRoute,
+  isQuietAction,
+  responseRoute,
+  runQuietAction,
+} from './notificationActions';
+
+export {
+  NOTIFICATION_ROUTES,
+  notificationRoute,
+  registerNotificationCategories,
+} from './notificationActions';
+export type { NotificationRoute } from './notificationActions';
 
 // Foreground behavior — without this, a notification fired while the app is
 // open never shows anything at all on some platforms.
@@ -75,6 +89,7 @@ export async function syncDailyReminder(prefs: NotificationPrefs): Promise<void>
     content: {
       ...pickRandom(DAILY_REMINDER_COPY),
       data: { url: '/add-transaction' satisfies NotificationRoute },
+      categoryIdentifier: NOTIFICATION_KIND.daily,
     },
     trigger: {
       type: Notifications.SchedulableTriggerInputTypes.DAILY,
@@ -102,6 +117,7 @@ export async function syncWeeklySummary(prefs: NotificationPrefs): Promise<void>
     content: {
       ...pickRandom(WEEKLY_SUMMARY_COPY),
       data: { url: '/wrap?period=week' satisfies NotificationRoute },
+      categoryIdentifier: NOTIFICATION_KIND.wrap,
     },
     trigger: {
       type: Notifications.SchedulableTriggerInputTypes.WEEKLY,
@@ -142,7 +158,9 @@ export async function scheduleLoanDueReminder(
     identifier: loanDueReminderId(loanId),
     content: {
       ...loanDueCopy(counterparty, formatMoney(emiAmountMinor)),
-      data: { url: '/loans' satisfies NotificationRoute },
+      // "Pay now" opens this loan's pay sheet (see responseRoute).
+      data: { url: '/loans' satisfies NotificationRoute, loanId },
+      categoryIdentifier: NOTIFICATION_KIND.emi,
     },
     trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: dueAt },
   });
@@ -166,68 +184,60 @@ export async function notifyOverspend(categoryName: string, pctChange: number): 
     content: {
       ...overspendCopy(categoryName, formatPctChange(pctChange)),
       data: { url: '/reports' satisfies NotificationRoute },
+      categoryIdentifier: NOTIFICATION_KIND.spike,
     },
     trigger: null,
   });
 }
 
-/** A budget passing 80% of its limit, or going over — see checkBudgetNudge in db/ledger.ts. Opens Budgets. */
-export async function notifyBudget(copy: { title: string; body: string }): Promise<void> {
+/**
+ * A budget passing 80% of its limit, or going over — see checkBudgetNudge in
+ * db/spendAlerts.ts. Opens Budgets. `budgetKey` ("<budget id>:<month>") is
+ * what "Quiet this month" marks as done.
+ */
+export async function notifyBudget(copy: { title: string; body: string }, budgetKey: string): Promise<void> {
   const existing = await Notifications.getPermissionsAsync();
   if (!existing.granted) return;
 
   await ensureAndroidChannel();
   await Notifications.scheduleNotificationAsync({
-    content: { ...copy, data: { url: '/budgets' satisfies NotificationRoute } },
+    content: {
+      ...copy,
+      data: { url: '/budgets' satisfies NotificationRoute, budgetKey },
+      categoryIdentifier: NOTIFICATION_KIND.budget,
+    },
     trigger: null,
   });
 }
 
 /**
- * Where tapping each kind of Yume notification takes you: the daily
- * reminder opens Add (it's asking you to log something), an EMI reminder
- * opens Loans, the weekly summary and overspend alerts open Reports, and a
- * budget nudge opens Budgets. A fixed list — a notification can only ever
- * route to one of these, whatever its payload says.
- */
-export const NOTIFICATION_ROUTES = [
-  '/add-transaction',
-  '/loans',
-  '/reports',
-  '/budgets',
-  '/wrap?period=week',
-] as const;
-export type NotificationRoute = (typeof NOTIFICATION_ROUTES)[number];
-
-/** The route a tapped notification asks for, or null if it carries none this app knows. */
-export function notificationRoute(
-  response: Notifications.NotificationResponse | null
-): NotificationRoute | null {
-  const url = response?.notification.request.content.data?.url;
-  return typeof url === 'string' && (NOTIFICATION_ROUTES as readonly string[]).includes(url)
-    ? (url as NotificationRoute)
-    : null;
-}
-
-/**
- * Calls `onRoute` whenever the user taps a Yume notification — including the
- * one that just cold-started the app. That launch response is cleared once
- * read: the system otherwise keeps returning it on every later launch, which
- * would reopen the same screen each time the app is opened normally.
+ * Calls `onRoute` whenever the user taps a Yume notification or one of its
+ * buttons — including the tap that just cold-started the app. That launch
+ * response is cleared once read: the system otherwise keeps returning it on
+ * every later launch, which would reopen the same screen each time the app
+ * is opened normally.
+ *
+ * A quiet button ("In 1 hour", "Quiet this month") opens nothing. Tapped
+ * while the app is running, it is carried out here; the launch response
+ * never needs it, since the background task already ran it.
  * Returns the unsubscribe function.
  */
 export function subscribeToNotificationTaps(onRoute: (route: NotificationRoute) => void): () => void {
   let active = true;
-  const take = (response: Notifications.NotificationResponse | null) => {
+  const take = (response: Notifications.NotificationResponse | null, live: boolean) => {
     if (!response) return;
     Notifications.clearLastNotificationResponseAsync().catch(() => {});
-    const route = notificationRoute(response);
+    if (isQuietAction(response.actionIdentifier)) {
+      if (live) runQuietAction(response).catch((e) => console.warn('Notification action failed:', e));
+      return;
+    }
+    const route = responseRoute(response);
     if (route && active) onRoute(route);
   };
   Notifications.getLastNotificationResponseAsync()
-    .then(take)
+    .then((response) => take(response, false))
     .catch(() => {});
-  const sub = Notifications.addNotificationResponseReceivedListener(take);
+  const sub = Notifications.addNotificationResponseReceivedListener((response) => take(response, true));
   return () => {
     active = false;
     sub.remove();

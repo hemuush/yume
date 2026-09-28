@@ -11,6 +11,7 @@ import { GrowFill } from '@/components/GrowFill';
 import { CountUpAmount } from '@/components/CountUpAmount';
 import { payoffMonth } from '@/lib/loanPayoff';
 import { styles } from './loans.styles';
+import { weekdayDayMonth } from '@/lib/dateLabels';
 
 /**
  * One loan in the list — payoff-first: a thin progress bar (share of
@@ -90,7 +91,7 @@ export function LoanCard({
                   : lastDueDate
                     ? `${loan.direction === 'borrowed' ? 'Debt-free' : 'Repaid'} in ${payoffMonth(lastDueDate)}`
                     : loan.nextDueDate
-                      ? `Next due ${loan.nextDueDate}`
+                      ? `Next due ${weekdayDayMonth(loan.nextDueDate)}`
                       : ' '}
               </Text>
             </View>

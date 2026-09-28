@@ -4,7 +4,7 @@
  * the empty state when nothing's there. All figures are made up.
  */
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
-import { Text, Alert } from 'react-native';
+import { Text } from 'react-native';
 
 jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMock').createReanimatedMock());
 jest.mock('react-native-safe-area-context', () => ({
@@ -31,6 +31,7 @@ jest.mock('@/db/recentlyDeleted', () => ({
 }));
 
 import RecentlyDeletedScreen from '../../../app/recently-deleted';
+import { showAlert } from '@/components/AppDialog';
 
 const entry = (over: Record<string, unknown>) => ({
   id: 't1',
@@ -90,7 +91,7 @@ describe('Recently deleted screen', () => {
 
   it('asks before deleting everything for good', async () => {
     mockEntries.current = [entry({})];
-    const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+    const alert = jest.mocked(showAlert);
     const r = await render();
     const all = r.root.findAll(
       (n) => n.props.accessibilityRole === 'button' && typeof n.props.onPress === 'function'

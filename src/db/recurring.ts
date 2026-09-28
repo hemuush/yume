@@ -39,7 +39,7 @@ function rowToRule(row: RecurringRuleRow): RecurringRule {
  * from the previous (possibly clamped) date, so without it a rule on the
  * 31st would ride Feb 28 → Mar 28 → … forever.
  */
-function advanceDate(
+export function advanceDate(
   date: string,
   frequency: RecurrenceFrequency,
   intervalCount: number,

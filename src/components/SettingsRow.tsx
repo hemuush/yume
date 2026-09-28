@@ -27,6 +27,7 @@ export function SettingsRow({
   divider,
   expanded,
   dimmed,
+  round,
 }: {
   icon: string;
   iconBg: string;
@@ -43,12 +44,14 @@ export function SettingsRow({
   expanded?: boolean;
   /** Greyed out while something it depends on is off. */
   dimmed?: boolean;
+  /** A round icon, as in Home's rows and every sheet's rows. */
+  round?: boolean;
 }) {
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.99);
   const chevron = expanded === undefined ? 'chevron-right' : expanded ? 'chevron-up' : 'chevron-down';
   const content = (
     <>
-      <View style={[h.iconTile, { backgroundColor: iconBg }]}>
+      <View style={[h.iconTile, round && styles.round, { backgroundColor: iconBg }]}>
         <MaterialCommunityIcons name={icon as McIconName} size={17} color={theme.colors.ink} />
       </View>
       <View style={h.mid}>
@@ -82,4 +85,5 @@ export function SettingsRow({
 const styles = StyleSheet.create({
   value: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textSecondary },
   dimmed: { opacity: 0.45 },
+  round: { borderRadius: 19 },
 });

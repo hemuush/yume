@@ -37,7 +37,7 @@ const STARS: { top: number; left: number; size: number; opacity: number }[] = [
   { top: 520, left: 60, size: 2, opacity: 0.4 },
 ];
 
-/** Suu's dot row, from the widgets' own dot language — the RN-view equivalent of `src/widgets/WidgetShell.tsx`'s `MoonPhaseRow` (that one is built from RemoteViews primitives and can't be reused here). */
+/** Suu's dot row on the lock screen: seven dots, the middle one in the theme's dot colour. */
 const MOON_PHASE_OPACITY = [0.15, 0.4, 0.7, 1, 0.7, 0.4, 0.15];
 // `accent` is the active theme's own colour (see AccentContext) — this used
 // to be the static `theme.colors.primary` token, so the lock screen's

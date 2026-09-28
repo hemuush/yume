@@ -1,4 +1,5 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { useLocalSearchParams } from 'expo-router';
 import { View, ScrollView } from 'react-native';
 import { Text } from '@/components/Text';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -29,7 +30,8 @@ function outstanding(loans: Loan[], direction: Loan['direction']): number {
 /**
  * Formal loans with a schedule. Reached from the Plan tab's Loans tile, and
  * from Home's EMI rows, loan-due notifications and the Next Due widget via
- * /loans. Informal IOUs have their own screen (/people).
+ * /loans. Informal IOUs have their own screen (/people). An EMI reminder's
+ * "Pay now" opens /loans?pay=<loan id>, straight onto that EMI's pay sheet.
  */
 export default function LoansScreen() {
   const insets = useSafeAreaInsets();
@@ -38,6 +40,8 @@ export default function LoansScreen() {
   const [lastDue, setLastDue] = useState<Record<string, string | null>>({});
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedLoan, setSelectedLoan] = useState<Loan | null>(null);
+  const [payOnOpen, setPayOnOpen] = useState(false);
+  const { pay: payLoanId } = useLocalSearchParams<{ pay?: string }>();
   const listFadeStyle = useFadeIn([loans]);
 
   const loadLoans = useCallback(async () => {
@@ -47,6 +51,17 @@ export default function LoansScreen() {
   }, []);
   const { loaded, loadError, reload: load } = useScreenLoad(loadLoans);
   const loading = !loaded && !loadError;
+
+  // Once, when the loans have loaded: open the loan "Pay now" asked for.
+  const [payHandled, setPayHandled] = useState(false);
+  useEffect(() => {
+    if (!loaded || payHandled || !payLoanId) return;
+    setPayHandled(true);
+    const loan = loans.find((l) => l.id === payLoanId && l.status !== 'closed');
+    if (!loan) return;
+    setPayOnOpen(true);
+    setSelectedLoan(loan);
+  }, [loaded, payHandled, payLoanId, loans]);
 
   // A defaulted loan is still money owed (or owed to you), so only closed
   // loans drop out of the totals. Closed ones also sit apart in the list.
@@ -126,7 +141,15 @@ export default function LoansScreen() {
       />
 
       {selectedLoan && (
-        <LoanDetailModal loan={selectedLoan} onClose={() => setSelectedLoan(null)} onChanged={load} />
+        <LoanDetailModal
+          loan={selectedLoan}
+          startWithPay={payOnOpen}
+          onClose={() => {
+            setSelectedLoan(null);
+            setPayOnOpen(false);
+          }}
+          onChanged={load}
+        />
       )}
     </View>
   );

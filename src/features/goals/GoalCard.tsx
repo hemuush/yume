@@ -12,6 +12,7 @@ import { usePressScale } from '@/lib/usePressScale';
 import { GoalRing } from './GoalRing';
 import { styles } from './goals.styles';
 import { withPressed } from '@/lib/pressed';
+import { dayMonthYear } from '@/lib/dateLabels';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -55,7 +56,7 @@ export function GoalCard({
               `Reached · ${formatMoney(goal.targetAmountMinor)}`
             ) : (
               <>
-                {goal.targetDate ? `By ${goal.targetDate} · ` : ''}
+                {goal.targetDate ? `By ${dayMonthYear(goal.targetDate)} · ` : ''}
                 {/* Rolls to the new total when money is added, alongside the ring. */}
                 <CountUpAmount minor={goal.currentAmountMinor} countFromZero={false} />
                 {` of ${formatMoney(goal.targetAmountMinor)}`}

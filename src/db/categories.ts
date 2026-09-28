@@ -38,6 +38,30 @@ export async function listCategories(includeArchived = false): Promise<Category[
 }
 
 /**
+ * The expense categories you log most often since `sinceIso`, most-used
+ * first — for the Quick Add widget's shortcuts. Leaves out archived
+ * categories and the ones the app files itself (Loan EMI, fees). Ties, and
+ * a new install with few entries, fall back to A to Z so the list is always
+ * full when there are enough categories.
+ */
+export async function listMostUsedExpenseCategories(limit: number, sinceIso: string): Promise<Category[]> {
+  const db = await getDb();
+  const rows = await db.getAllAsync<CategoryRow>(
+    `SELECT c.* FROM categories c
+     LEFT JOIN (
+       SELECT category_id, COUNT(*) AS uses FROM transactions
+       WHERE type = 'expense' AND date >= ? AND category_id IS NOT NULL
+       GROUP BY category_id
+     ) u ON u.category_id = c.id
+     WHERE c.kind = 'expense' AND c.archived = 0 AND c.is_system = 0
+     ORDER BY COALESCE(u.uses, 0) DESC, c.parent_id IS NOT NULL, c.name COLLATE NOCASE ASC, c.id ASC
+     LIMIT ?`,
+    [sinceIso, limit]
+  );
+  return rows.map(rowToCategory);
+}
+
+/**
  * Only two levels are allowed — a subcategory can't itself have children.
  * Without this, "Food & Dining > Zomato > Lunch orders" would be possible to
  * create but nothing in the app (pickers, the Reports rollup) knows how to

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Alert } from 'react-native';
+
 import { router } from 'expo-router';
 import { ActionSheet, ActionSheetItem } from '@/components/ActionSheet';
 import { useUndoToast } from '@/components/UndoToast';
@@ -9,6 +9,7 @@ import { toLocalIsoDate } from '@/lib/date';
 import { haptics } from '@/lib/haptics';
 import { emitTransactionsChanged } from '@/lib/dataEvents';
 import { errorMessage } from '@/lib/errorMessage';
+import { showAlert } from '@/components/AppDialog';
 
 /** "Metro · ₹150" — the entry's own note if it has one, else its category. */
 export function repeatEntryLabel(entry: RepeatEntry): string {
@@ -75,11 +76,11 @@ export function RepeatEntrySheet({
           await deleteTransaction(tx.id, { keep: false });
           emitTransactionsChanged();
         } catch (e) {
-          Alert.alert("Couldn't undo", errorMessage(e));
+          showAlert("Couldn't undo", errorMessage(e));
         }
       });
     } catch (e) {
-      Alert.alert("Couldn't log it", errorMessage(e));
+      showAlert("Couldn't log it", errorMessage(e));
     } finally {
       saving.current = false;
     }

@@ -26,6 +26,8 @@ export const homeStyles = StyleSheet.create({
     borderColor: theme.colors.borderSoft,
     overflow: 'hidden',
   },
+  // A card inside a sheet, which already has its own side padding.
+  cardInSheet: { marginHorizontal: 0, marginBottom: 12 },
   row: {
     flexDirection: 'row',
     alignItems: 'center',

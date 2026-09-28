@@ -1,73 +1,138 @@
-import { FlexWidget, TextWidget } from 'react-native-android-widget';
-import { WidgetShell } from './WidgetShell';
-import { widgetColor, widgetRgba } from './widgetTheme';
+import { FlexWidget, TextWidget, IconWidget, type ColorProp } from 'react-native-android-widget';
+import { WidgetShell, WidgetIcon, iconGlyph } from './WidgetShell';
+import { widgetColor, widgetAlpha, asWidgetColor, WIDGET_FONT } from './widgetTheme';
+import type { QuickAddWidgetData } from './data';
 
 /**
- * "Quick Add" — the 2×2 widget. Two rows, each a direct deep link into
- * `add-transaction` pre-set to Expense or Income (see `app/add-transaction.tsx`'s
- * own `type` query param), skipping the app's Home screen entirely. No
- * figure to glance at here, so — deliberately, per the Yume Night design
- * pass — it's the one widget with no DotGothic16 numeral at all: quiet,
- * calm typography instead of a hero number. Colour is spent only on the
- * small plus badge per row, never a filled button.
+ * "Quick Add" — the 2×2 widget (the Home A widgets sign-off). One big "Add
+ * expense" in the theme pack's colour, your four most-used expense
+ * categories below it (each opens Add with that category already picked),
+ * then Income and Move. Every part is a direct deep link into
+ * `add-transaction`, skipping Home.
  */
-export function QuickAddWidget() {
+export function QuickAddWidget({ primary, categories }: QuickAddWidgetData) {
   return (
-    <WidgetShell flexDirection="column">
-      <ActionRow
-        label="Expense"
-        tint={widgetColor.expense}
+    <WidgetShell padding={12}>
+      <FlexWidget
+        clickAction="OPEN_URI"
         clickActionData={{ uri: 'yume://add-transaction?type=expense' }}
-      />
-      <FlexWidget style={{ height: 8, width: 'match_parent' }} />
-      <ActionRow
-        label="Income"
-        tint={widgetColor.income}
-        clickActionData={{ uri: 'yume://add-transaction?type=income' }}
-      />
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'center',
+          width: 'match_parent',
+          height: 36,
+          borderRadius: 14,
+          backgroundColor: asWidgetColor(primary),
+        }}
+      >
+        <FlexWidget
+          style={{
+            width: 20,
+            height: 20,
+            borderRadius: 10,
+            backgroundColor: widgetAlpha(widgetColor.white, 0.75),
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <IconWidget
+            icon={iconGlyph('plus')}
+            font={WIDGET_FONT.icons}
+            size={13}
+            style={{ color: widgetColor.ink }}
+          />
+        </FlexWidget>
+        <TextWidget
+          text="Add expense"
+          style={{ fontFamily: WIDGET_FONT.rounded, fontSize: 13.5, color: widgetColor.ink, marginLeft: 7 }}
+        />
+      </FlexWidget>
+
+      <FlexWidget style={{ flex: 1, height: 0, width: 'match_parent' }} />
+      {categories.length > 0 && (
+        <FlexWidget style={{ flexDirection: 'row', width: 'match_parent' }}>
+          {categories.map((c) => (
+            <FlexWidget
+              key={c.id}
+              clickAction="OPEN_URI"
+              clickActionData={{
+                uri: `yume://add-transaction?type=expense&categoryId=${encodeURIComponent(c.id)}`,
+              }}
+              style={{ flex: 1, width: 0, flexDirection: 'column', alignItems: 'center' }}
+            >
+              <WidgetIcon name={c.icon} background={widgetAlpha(c.color, 0.25)} size={28} />
+              <TextWidget
+                text={c.name}
+                maxLines={1}
+                truncate="END"
+                style={{
+                  fontFamily: WIDGET_FONT.body,
+                  fontSize: 9,
+                  color: widgetColor.inkSoft,
+                  marginTop: 3,
+                }}
+              />
+            </FlexWidget>
+          ))}
+        </FlexWidget>
+      )}
+      <FlexWidget style={{ flex: 1, height: 0, width: 'match_parent' }} />
+
+      <FlexWidget style={{ flexDirection: 'row', width: 'match_parent' }}>
+        <SmallAction
+          label="Income"
+          icon="plus"
+          color={widgetColor.income}
+          background={widgetColor.idSage}
+          uri="yume://add-transaction?type=income"
+        />
+        <FlexWidget style={{ width: 6, height: 1 }} />
+        <SmallAction
+          label="Move"
+          icon="swap-horizontal"
+          color={widgetColor.ink}
+          background={widgetColor.surfaceAlt}
+          uri="yume://add-transaction?type=transfer"
+        />
+      </FlexWidget>
     </WidgetShell>
   );
 }
 
-function ActionRow({
+function SmallAction({
   label,
-  tint,
-  clickActionData,
+  icon,
+  color,
+  background,
+  uri,
 }: {
   label: string;
-  tint: `#${string}`;
-  clickActionData: { uri: string };
+  icon: string;
+  color: ColorProp;
+  background: ColorProp;
+  uri: string;
 }) {
   return (
     <FlexWidget
       clickAction="OPEN_URI"
-      clickActionData={clickActionData}
+      clickActionData={{ uri }}
       style={{
+        flex: 1,
+        width: 0,
+        height: 28,
         flexDirection: 'row',
         alignItems: 'center',
-        width: 'match_parent',
-        height: 0,
-        flex: 1,
-        borderRadius: 16,
-        backgroundColor: widgetRgba(18, 19, 15, 0.04),
-        paddingLeft: 12,
-        paddingRight: 12,
+        justifyContent: 'center',
+        borderRadius: 10,
+        backgroundColor: background,
       }}
     >
-      <FlexWidget
-        style={{
-          width: 20,
-          height: 20,
-          borderRadius: 10,
-          backgroundColor: tint,
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <TextWidget text="+" style={{ fontSize: 13, fontWeight: '700', color: widgetColor.white }} />
-      </FlexWidget>
-      <FlexWidget style={{ width: 9, height: 'match_parent' }} />
-      <TextWidget text={label} style={{ fontSize: 12.5, fontWeight: '600', color: widgetColor.ink }} />
+      <IconWidget icon={iconGlyph(icon)} font={WIDGET_FONT.icons} size={12} style={{ color }} />
+      <TextWidget
+        text={label}
+        style={{ fontFamily: WIDGET_FONT.bodyMedium, fontSize: 11, color, marginLeft: 4 }}
+      />
     </FlexWidget>
   );
 }

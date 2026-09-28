@@ -4,7 +4,7 @@
  * once more before undoing the restore.
  */
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
-import { Alert, Text } from 'react-native';
+import { Text } from 'react-native';
 
 jest.setTimeout(30000);
 
@@ -57,6 +57,7 @@ jest.mock('@/lib/safetyCopy', () => ({
 
 import BackupScreen from '../../../app/backup';
 import { undoLastRestore } from '@/lib/safetyCopy';
+import { showAlert } from '@/components/AppDialog';
 
 async function render() {
   let tree!: ReactTestRenderer;
@@ -88,7 +89,7 @@ describe('Backup & Restore · safety copy card', () => {
 
   it('says what the copy holds, and "Put back that data" asks before undoing', async () => {
     mockInfo.current = { savedAt: '2026-09-26T04:44:00.000Z', transactions: 284, accounts: 4 };
-    const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+    const alert = jest.mocked(showAlert);
     const tree = await render();
     expect(texts(tree)).toContain('Undo your last restore');
     expect(texts(tree).some((t) => t.includes('284 entries') && t.includes('4 accounts'))).toBe(true);
