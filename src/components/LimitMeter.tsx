@@ -52,15 +52,15 @@ export function LimitMeter({
 }
 
 const styles = StyleSheet.create({
+  // A soft filled track with a rounded fill — no outline, which on a cream
+  // card read as an empty box with a square-ended bar inside it.
   track: {
     height: 7,
     borderRadius: theme.radius.pill,
-    backgroundColor: theme.colors.surface,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
+    backgroundColor: theme.colors.surfaceAlt,
     overflow: 'hidden',
   },
-  fill: { height: '100%' },
+  fill: { height: '100%', borderRadius: theme.radius.pill },
   marker: {
     position: 'absolute',
     top: 0,

@@ -150,20 +150,32 @@ export function TimelineDay({
           <Amount type={type} minor={line.totalMinor} />
         </Pressable>
         {open && (
-          <View style={styles.subList}>
+          <View>
             {line.items.map((tx) => {
-              const label = isSplit ? categoryName(tx.categoryId) : tx.note || accountName(tx.accountId);
+              // A split's part is its category; a stack's entry is its note (they
+              // all share the category already named above), with its account under it.
+              const partCat = isSplit ? categoriesById.get(tx.categoryId ?? '') : cat;
+              const label = isSplit ? categoryName(tx.categoryId) : tx.note || 'No note';
               return (
-                <MovingRow key={tx.id}>
+                <MovingRow key={tx.id} style={styles.divider}>
                   <Pressable
                     onPress={() => onPressTx(tx)}
                     style={withPressed(styles.subLine)}
                     accessibilityRole="button"
                     accessibilityLabel={`${isSplit ? label : name}${!isSplit && tx.note ? `, ${tx.note}` : ''}, ${formatMoney(tx.amountMinor)}`}
                   >
-                    <Text style={styles.subName} numberOfLines={1}>
-                      {label}
-                    </Text>
+                    <View
+                      style={[styles.subDot, { backgroundColor: partCat?.color ?? theme.colors.borderSoft }]}
+                    />
+                    <View style={styles.mid}>
+                      <Text style={[styles.name, !isSplit && !tx.note && styles.subNoNote]} numberOfLines={1}>
+                        {label}
+                      </Text>
+                      <Text style={styles.sub} numberOfLines={1}>
+                        {isSplit && tx.note ? `${tx.note} · ` : ''}
+                        {accountName(tx.accountId)}
+                      </Text>
+                    </View>
                     <Amount type={tx.type} minor={tx.amountMinor} />
                   </Pressable>
                 </MovingRow>
@@ -271,16 +283,18 @@ const styles = StyleSheet.create({
   amount: { fontFamily: theme.font.monoBold, fontSize: 12.5, color: theme.colors.textPrimary },
   income: { color: theme.colors.income },
   expense: { color: theme.colors.expense },
-  subList: { backgroundColor: theme.colors.surfaceAlt },
+  // An open stack's entries: the same card, hairlines and text as every other
+  // line, each with a dot in its category's colour under the stack's icon.
   subLine: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    // Lines up with the stack's name: row padding + icon + gap.
-    paddingLeft: 14 + 30 + 10,
+    // The dot centred under the stack's 30px icon: row padding + (30 − 8) / 2.
+    paddingLeft: 14 + 11,
     paddingRight: 14,
     paddingVertical: 8,
-    minHeight: 36,
+    minHeight: 48,
   },
-  subName: { flex: 1, fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
+  subDot: { width: 8, height: 8, borderRadius: 4, marginRight: 11 },
+  subNoNote: { fontFamily: theme.font.body, color: theme.colors.textMuted },
 });

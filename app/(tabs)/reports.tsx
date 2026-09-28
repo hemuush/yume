@@ -1,12 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import {
-  View,
-  ScrollView,
-  Pressable,
-  LayoutChangeEvent,
-  NativeScrollEvent,
-  NativeSyntheticEvent,
-} from 'react-native';
+import { View, ScrollView, Pressable, LayoutChangeEvent } from 'react-native';
 import { Text } from '@/components/Text';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -42,7 +35,6 @@ import { parseLocalIsoDate, toLocalIsoDate, isIsoDate } from '@/lib/date';
 import { theme } from '@/constants/theme';
 import { ReportsSkeleton } from '@/features/reports/ReportsSkeleton';
 import { PeriodRow } from '@/features/reports/PeriodRow';
-import { JumpBar, ReportSection } from '@/features/reports/JumpBar';
 import { HeatmapCard } from '@/features/reports/HeatmapCard';
 import { StoryCards } from '@/features/reports/StoryCards';
 import { CategoryMosaic } from '@/features/reports/CategoryMosaic';
@@ -60,6 +52,7 @@ import {
   patternFacts,
   quietDays,
   buildStoryCards,
+  StoryTarget,
 } from '@/features/reports/reportsInsights';
 import { errorMessage } from '@/lib/errorMessage';
 import { withPressed } from '@/lib/pressed';
@@ -128,13 +121,12 @@ export default function ReportsScreen() {
   // months never leaves a stale month's list expanded.
   const [catExpanded, setCatExpanded] = useState(false);
 
-  // The jump bar below (Overview / Categories / Trends) — `sectionY` is
+  // Where each section starts, for the story cards that jump to one —
   // filled in by each section's own onLayout, not measured up front, since
   // heights here depend on real data (how many categories, whether the
   // moon card even renders this period).
   const scrollRef = useRef<ScrollView>(null);
   const sectionY = useRef<Record<string, number>>({});
-  const [activeSection, setActiveSection] = useState<ReportSection>('overview');
   // react-hooks/refs misreads this: calling onSectionLayout(key) in render
   // only *builds* the onLayout handler — the ref is written inside it, when
   // layout fires, never during render.
@@ -142,34 +134,8 @@ export default function ReportsScreen() {
     // eslint-disable-next-line react-hooks/refs
     sectionY.current[key] = e.nativeEvent.layout.y;
   };
-  // A tap-to-jump animates the scroll over ~300ms, and onScroll keeps firing
-  // throughout that animation with every intermediate position it passes
-  // through on the way — left unguarded, the chip you just tapped would
-  // flicker through whichever section happens to scroll by mid-animation
-  // before landing on the right one. This suppresses onScroll's own
-  // recompute for as long as a jump is in flight, so the tapped chip stays
-  // lit the whole time instead of visibly flickering through the others.
-  const jumpingRef = useRef(false);
-  const jumpTo = (key: ReportSection) => {
-    jumpingRef.current = true;
-    setActiveSection(key);
+  const jumpTo = (key: StoryTarget) => {
     scrollRef.current?.scrollTo({ y: Math.max(0, (sectionY.current[key] ?? 0) - 8), animated: true });
-    setTimeout(() => {
-      jumpingRef.current = false;
-    }, 500);
-  };
-  // Whichever section's top has scrolled past (with a little lead-in so the
-  // switch feels like it happens as that section arrives, not once it's
-  // already filled the screen) is the active one — checked in layout order
-  // so a section further down never wins over one still above it.
-  const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-    if (jumpingRef.current) return;
-    const y = e.nativeEvent.contentOffset.y;
-    let current: ReportSection = 'overview';
-    for (const key of ['overview', 'categories', 'trends'] as const) {
-      if (y >= (sectionY.current[key] ?? Infinity) - 60) current = key;
-    }
-    setActiveSection(current);
   };
 
   // Only the most recent load may write state — stepping periods quickly
@@ -227,17 +193,11 @@ export default function ReportsScreen() {
 
   const catById = useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories]);
 
-  // Pinned (outside the ScrollView, not scrolled away) rather than the
-  // jump bar living inline in the scrolling content — it stays reachable
-  // and keeps showing which section you're in no matter how far down
-  // you've scrolled, not just at the top of the page.
+  // Pinned outside the ScrollView, so the period stays in reach however far down you scroll.
   const header = (
     <>
       <AppHeader title="Reports" />
       <PeriodRow cursor={cursor} onChange={stepCursor} />
-      {comparison && comparison.current.expenseMinor > 0 && (
-        <JumpBar active={activeSection} onJump={jumpTo} />
-      )}
     </>
   );
 
@@ -331,8 +291,6 @@ export default function ReportsScreen() {
       {header}
       <ScrollView
         ref={scrollRef}
-        onScroll={onScroll}
-        scrollEventThrottle={32}
         contentContainerStyle={{
           paddingHorizontal: 20,
           paddingBottom: theme.layout.tabScreenScrollPad + insets.bottom,
