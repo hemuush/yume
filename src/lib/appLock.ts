@@ -43,6 +43,24 @@ export function isReturningFromOwnActivity(): boolean {
 }
 
 /**
+ * How long Yume can be away before it asks to be unlocked again. A quick
+ * hop to another app (copying an amount, answering a message) shouldn't
+ * lock it; being away for longer should.
+ */
+export const RELOCK_AFTER_MS = 60_000;
+
+/**
+ * For AppGate, on coming back to the foreground: lock again? Only when the
+ * app really went to the background (`backgroundedAt`, not the brief
+ * "inactive" of pulling down notifications or opening the app switcher),
+ * stayed there at least RELOCK_AFTER_MS, and wasn't away in one of its own
+ * pickers.
+ */
+export function shouldRelock(backgroundedAt: number | null, now: number): boolean {
+  return backgroundedAt !== null && now - backgroundedAt >= RELOCK_AFTER_MS && !isReturningFromOwnActivity();
+}
+
+/**
  * Shows the phone's own biometric prompt, falling back to its device
  * PIN/pattern/password automatically (disableDeviceFallback: false) — so
  * one call covers both "biometric" and "PIN" without Yume ever handling
