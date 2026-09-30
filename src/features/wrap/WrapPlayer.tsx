@@ -9,20 +9,87 @@ import {
   LayoutChangeEvent,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import Feather from '@expo/vector-icons/Feather';
 import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
 import { useReduceMotion } from '@/lib/useReduceMotion';
 import { haptics } from '@/lib/haptics';
 import { withPressed } from '@/lib/pressed';
+import { shade } from '@/lib/color';
+import { useAccent } from '@/theme/AccentContext';
 import { Wrap, BEAT_MS } from './wrapData';
 import { Beat } from './WrapBeats';
-import { styles, BEAT_BG } from './wrap.styles';
+import { styles, beatGradient } from './wrap.styles';
 
 /** Holding a finger down this long pauses instead of stepping. */
 export const HOLD_MS = 220;
-/** The colour wipe between beats. */
-const WIPE_MS = 420;
+/** How long one beat's colours take to fade into the next's. */
+const FADE_MS = 450;
+
+/**
+ * Two soft shapes drifting slowly behind a beat, in deeper shades of its
+ * own colours — the "colour stories" motion that keeps every beat alive
+ * without competing with it. Still with reduce motion.
+ */
+function Blobs({ colors, still }: { colors: [string, string]; still: boolean }) {
+  const [t] = useState(() => new Animated.Value(0));
+  useEffect(() => {
+    if (still) return;
+    const a = Animated.loop(
+      Animated.sequence([
+        Animated.timing(t, {
+          toValue: 1,
+          duration: 3200,
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: true,
+        }),
+        Animated.timing(t, {
+          toValue: 0,
+          duration: 3200,
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: true,
+        }),
+      ])
+    );
+    a.start();
+    return () => a.stop();
+  }, [t, still]);
+  const up = t.interpolate({ inputRange: [0, 1], outputRange: [0, -14] });
+  const down = t.interpolate({ inputRange: [0, 1], outputRange: [0, 12] });
+  return (
+    <View style={styles.fill} pointerEvents="none">
+      <Animated.View
+        style={[
+          styles.blob,
+          {
+            width: 260,
+            height: 260,
+            right: -90,
+            top: 110,
+            backgroundColor: shade(colors[0], 80),
+            opacity: 0.55,
+          },
+          { transform: [{ translateY: up }] },
+        ]}
+      />
+      <Animated.View
+        style={[
+          styles.blob,
+          {
+            width: 190,
+            height: 190,
+            left: -70,
+            bottom: 90,
+            backgroundColor: shade(colors[1], 80),
+            opacity: 0.5,
+          },
+          { transform: [{ translateY: down }] },
+        ]}
+      />
+    </View>
+  );
+}
 
 /** Whether a screen reader is running: a timer moving the story on would pull the page out from under it. */
 function useScreenReader(): boolean {
@@ -104,38 +171,34 @@ export function WrapPlayer({
     return () => bar.stopAnimation((v) => (from.current = v));
   }, [index, replay, paused, still, progress, wrap.beats, last]);
 
-  // The ground colour, and the wipe that brings the next beat's colour in.
-  const [ground, setGround] = useState(BEAT_BG[wrap.beats[0].kind]);
-  const [wipe, setWipe] = useState<{ color: string; key: number } | null>(null);
-  const [wipeScale] = useState(() => new Animated.Value(0));
-  const [size, setSize] = useState({ w: 0, h: 0 });
-  const prevIndex = useRef(0);
+  // Each beat's colours fade in over the last one's (Direction A: colour stories).
+  const { accent, secondary } = useAccent();
+  const shownColors = useRef(beatGradient(wrap.beats[0].kind, accent, secondary));
+  const [layers, setLayers] = useState(() => {
+    const first = beatGradient(wrap.beats[0].kind, accent, secondary);
+    return { under: first, over: first };
+  });
+  const [fade] = useState(() => new Animated.Value(1));
   useEffect(() => {
-    const color = BEAT_BG[wrap.beats[index].kind];
-    const forward = index > prevIndex.current;
-    prevIndex.current = index;
-    if (!forward || still || size.w === 0 || color === ground) {
-      setWipe(null);
-      setGround(color);
+    const next = beatGradient(wrap.beats[index].kind, accent, secondary);
+    setLayers({ under: shownColors.current, over: next });
+    shownColors.current = next;
+    if (still) {
+      fade.setValue(1);
       return;
     }
-    setWipe({ color, key: index });
-    wipeScale.setValue(0);
-    const a = Animated.timing(wipeScale, {
+    fade.setValue(0);
+    const a = Animated.timing(fade, {
       toValue: 1,
-      duration: WIPE_MS,
+      duration: FADE_MS,
       easing: Easing.out(Easing.cubic),
       useNativeDriver: true,
     });
-    a.start(({ finished }) => {
-      if (!finished) return;
-      setGround(color);
-      setWipe(null);
-    });
+    a.start();
     return () => a.stop();
-    // `ground` is read as it was when this beat began; re-running on it would restart the wipe.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [index]);
+  }, [index, wrap.beats, accent, secondary, still, fade]);
+
+  const [size, setSize] = useState({ w: 0, h: 0 });
 
   const step = (dir: -1 | 1) => {
     setPaused(false);
@@ -181,29 +244,15 @@ export function WrapPlayer({
     const { width, height } = e.nativeEvent.layout;
     setSize({ w: width, h: height });
   };
-  // The wipe is a circle that grows from just below the middle until it covers the screen.
-  const diameter = 2 * Math.hypot(size.w, size.h);
   const beat = wrap.beats[index];
 
   return (
-    <View style={[styles.root, { backgroundColor: ground }]} onLayout={onLayout}>
-      {wipe && (
-        <Animated.View
-          pointerEvents="none"
-          style={[
-            styles.wipe,
-            {
-              width: diameter,
-              height: diameter,
-              borderRadius: diameter / 2,
-              left: size.w / 2 - diameter / 2,
-              top: size.h * 0.6 - diameter / 2,
-              backgroundColor: wipe.color,
-              transform: [{ scale: wipeScale }],
-            },
-          ]}
-        />
-      )}
+    <View style={styles.root} onLayout={onLayout}>
+      <LinearGradient colors={layers.under} style={styles.fill} />
+      <Animated.View style={[styles.fill, { opacity: fade }]} pointerEvents="none">
+        <LinearGradient colors={layers.over} style={styles.fill} />
+      </Animated.View>
+      <Blobs colors={layers.over} still={still} />
 
       <View style={{ paddingTop: insets.top + 10 }}>
         <View style={styles.segs} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
@@ -241,13 +290,7 @@ export function WrapPlayer({
         accessibilityHint={index < last ? 'Tap the left side to go back.' : undefined}
         accessible={index < last}
       >
-        <Beat
-          key={`${index}:${replay}`}
-          beat={beat}
-          still={still}
-          onOpenReport={onOpenReport}
-          onDone={onClose}
-        />
+        <Beat key={`${index}:${replay}`} wrap={wrap} beat={beat} still={still} onOpenReport={onOpenReport} />
       </Pressable>
 
       {paused && (

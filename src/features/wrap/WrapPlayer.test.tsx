@@ -115,7 +115,7 @@ describe('WrapPlayer', () => {
     act(() => r.unmount());
   });
 
-  it('ends on the final frame, whose buttons open the report or close', async () => {
+  it('ends on the final card, which opens the report; ✕ closes', async () => {
     const onClose = jest.fn();
     const onOpenReport = jest.fn();
     const r = await render(onClose, onOpenReport);
@@ -129,8 +129,8 @@ describe('WrapPlayer', () => {
     const report = r.root.find((n) => n.props.title === 'See the full report' && n.props.onPress);
     act(() => report.props.onPress());
     expect(onOpenReport).toHaveBeenCalledTimes(1);
-    const done = r.root.find((n) => n.props.title === 'Done' && n.props.onPress);
-    act(() => done.props.onPress());
+    const close = r.root.find((n) => n.props.accessibilityLabel === 'Close' && n.props.onPress);
+    act(() => close.props.onPress());
     expect(onClose).toHaveBeenCalledTimes(1);
     act(() => r.unmount());
   });
