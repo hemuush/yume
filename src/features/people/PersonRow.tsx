@@ -21,15 +21,15 @@ const STATUS_LOOK: Record<
   owed: {
     bg: theme.colors.secondaryTint,
     dot: theme.colors.income,
-    text: theme.colors.income,
-    amount: theme.colors.income,
+    text: theme.colors.incomeText,
+    amount: theme.colors.incomeText,
     label: 'Owes you',
   },
   owe: {
     bg: theme.colors.expenseTint,
     dot: theme.colors.expense,
-    text: theme.colors.expense,
-    amount: theme.colors.expense,
+    text: theme.colors.expenseText,
+    amount: theme.colors.expenseText,
     label: 'You owe',
   },
   settled: {

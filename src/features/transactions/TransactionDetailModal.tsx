@@ -293,9 +293,9 @@ export function TransactionDetailModal({
         }
         amountColor={
           tx.type === 'expense'
-            ? theme.colors.expense
+            ? theme.colors.expenseText
             : tx.type === 'income'
-              ? theme.colors.income
+              ? theme.colors.incomeText
               : theme.colors.textPrimary
         }
         title={route ?? cat?.name ?? kind}

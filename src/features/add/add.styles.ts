@@ -285,10 +285,10 @@ export const styles = StyleSheet.create({
   error: {
     fontFamily: theme.font.bodyBold,
     fontSize: 12,
-    color: theme.colors.expense,
+    color: theme.colors.expenseText,
     textAlign: 'center',
     marginBottom: 8,
   },
-  income: { color: theme.colors.income },
-  expense: { color: theme.colors.expense },
+  income: { color: theme.colors.incomeText },
+  expense: { color: theme.colors.expenseText },
 });

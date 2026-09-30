@@ -214,7 +214,7 @@ const styles = StyleSheet.create({
   },
   restoreText: { fontFamily: theme.font.roundedBold, fontSize: 12, color: theme.colors.textPrimary },
   emptyAll: { alignSelf: 'center', marginTop: 24, paddingHorizontal: 14, paddingVertical: 8 },
-  emptyAllText: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.expense },
+  emptyAllText: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.expenseText },
   errorBanner: {
     marginHorizontal: 20,
     marginTop: theme.layout.screenTopGap,
@@ -225,7 +225,7 @@ const styles = StyleSheet.create({
     borderWidth: theme.border.thin,
     borderColor: theme.colors.expense,
   },
-  errorTitle: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.expense },
+  errorTitle: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.expenseText },
   errorDetail: {
     fontFamily: theme.font.body,
     fontSize: 11.5,

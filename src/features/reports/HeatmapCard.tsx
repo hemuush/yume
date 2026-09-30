@@ -65,7 +65,9 @@ export function HeatmapCard({
               size={12}
               color={up ? theme.colors.expense : theme.colors.income}
             />
-            <Text style={[styles.vsBadgeText, { color: up ? theme.colors.expense : theme.colors.income }]}>
+            <Text
+              style={[styles.vsBadgeText, { color: up ? theme.colors.expenseText : theme.colors.incomeText }]}
+            >
               {formatPctChange(vsUsualPct)} {up ? 'above' : 'below'} usual
             </Text>
           </View>

@@ -15,13 +15,15 @@ import { hexToRgba, shade } from '@/lib/color';
 export const widgetColor = {
   ink: '#12130F',
   inkSoft: '#5B5748',
-  textMuted: '#948E7C',
+  textMuted: '#6C685B',
   cream: '#FFFDF6',
   surfaceAlt: '#F3ECE0',
   white: '#FFFFFF',
   borderSoft: '#E6DFC9',
   income: '#1C9A5B',
+  incomeText: '#167747',
   expense: '#E23F55',
+  expenseText: '#BD3547',
   // Home's month card: the ring's spent slice and its tile, and the moon-cream face.
   spentSoft: '#FFC9B3',
   idCoral: '#FFE3D6',

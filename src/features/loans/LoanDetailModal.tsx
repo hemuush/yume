@@ -336,7 +336,7 @@ export function LoanDetailModal({
                         ? 'No value set yet'
                         : 'Track a home or car this loan financed'
                   }
-                  subColor={liveLoan.assetValueMinor && dispEquity < 0 ? theme.colors.expense : undefined}
+                  subColor={liveLoan.assetValueMinor && dispEquity < 0 ? theme.colors.expenseText : undefined}
                   onPress={() => setAssetModalVisible(true)}
                   divider
                 />

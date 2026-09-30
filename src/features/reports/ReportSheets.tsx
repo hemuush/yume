@@ -85,8 +85,8 @@ export function DaySheet({
                 <Text
                   style={[
                     styles.dayAmt,
-                    tx.type === 'income' && { color: theme.colors.income },
-                    tx.type === 'expense' && { color: theme.colors.idCoralDeep },
+                    tx.type === 'income' && { color: theme.colors.incomeText },
+                    tx.type === 'expense' && { color: theme.colors.expenseText },
                     tx.type === 'transfer' && { color: theme.colors.textSecondary },
                   ]}
                 >

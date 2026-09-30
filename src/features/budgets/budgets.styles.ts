@@ -14,7 +14,7 @@ export const styles = StyleSheet.create({
     borderWidth: theme.border.thin,
     borderColor: theme.colors.expense,
   },
-  errorTitle: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.expense },
+  errorTitle: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.expenseText },
   errorDetail: {
     fontFamily: theme.font.body,
     fontSize: 11.5,
@@ -110,7 +110,7 @@ export const styles = StyleSheet.create({
     textAlign: 'right',
     color: theme.colors.textPrimary,
   },
-  rowAmountOver: { color: theme.colors.expense, fontFamily: theme.font.monoBold },
+  rowAmountOver: { color: theme.colors.expenseText, fontFamily: theme.font.monoBold },
   rowAmountOf: { color: theme.colors.textMuted, fontFamily: theme.font.mono },
   rowFoot: {
     flexDirection: 'row',
@@ -120,9 +120,9 @@ export const styles = StyleSheet.create({
     marginTop: 6,
   },
   rowNote: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textMuted },
-  rowPace: { fontFamily: theme.font.bodyBold, fontSize: 11, color: theme.colors.income },
+  rowPace: { fontFamily: theme.font.bodyBold, fontSize: 11, color: theme.colors.incomeText },
   rowPaceAhead: { color: theme.colors.idGoldDeep },
-  rowNoteOver: { color: theme.colors.expense, fontFamily: theme.font.bodyBold },
+  rowNoteOver: { color: theme.colors.expenseText, fontFamily: theme.font.bodyBold },
 
   modalHint: {
     fontFamily: theme.font.body,
@@ -141,5 +141,5 @@ export const styles = StyleSheet.create({
   },
   toggleRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 14 },
   pickerGap: { marginBottom: 16 },
-  errorText: { fontFamily: theme.font.body, color: theme.colors.expense, fontSize: 13, marginBottom: 12 },
+  errorText: { fontFamily: theme.font.body, color: theme.colors.expenseText, fontSize: 13, marginBottom: 12 },
 });

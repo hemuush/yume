@@ -17,7 +17,7 @@ export const styles = StyleSheet.create({
     borderWidth: theme.border.thin,
     borderColor: theme.colors.expense,
   },
-  errorTitle: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.expense },
+  errorTitle: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.expenseText },
   errorDetail: {
     fontFamily: theme.font.body,
     fontSize: 11.5,
@@ -71,7 +71,7 @@ export const styles = StyleSheet.create({
   },
   cardSub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, marginTop: 4 },
   statLabel: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textMuted },
-  errorText: { fontFamily: theme.font.body, color: theme.colors.expense, fontSize: 13, marginBottom: 12 },
+  errorText: { fontFamily: theme.font.body, color: theme.colors.expenseText, fontSize: 13, marginBottom: 12 },
   // The Overview / Schedule switch under a loan's card.
   sheetTabs: { marginBottom: 14 },
   viewAllText: {
@@ -117,7 +117,7 @@ export const styles = StyleSheet.create({
     paddingVertical: 2,
     marginTop: 3,
   },
-  statusTagPaid: { color: theme.colors.income, backgroundColor: theme.colors.incomeTint },
+  statusTagPaid: { color: theme.colors.incomeText, backgroundColor: theme.colors.incomeTint },
   fieldLabel: {
     fontSize: 10.5,
     fontFamily: theme.font.roundedMedium,

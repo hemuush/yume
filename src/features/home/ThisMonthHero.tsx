@@ -585,14 +585,14 @@ const styles = StyleSheet.create({
     color: theme.colors.textPrimary,
     marginTop: 5,
   },
-  tileValueNeg: { color: theme.colors.expense },
+  tileValueNeg: { color: theme.colors.expenseText },
 
   // Slim lines under the ring and tiles.
   line: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 12 },
   lineLabel: { flex: 1, fontFamily: theme.font.body, fontSize: 12.5, color: theme.colors.textSecondary },
   lineMoney: { fontFamily: theme.font.monoBold, color: theme.colors.textPrimary },
-  lineWarn: { color: theme.colors.expense },
-  lineMoneyWarn: { fontFamily: theme.font.monoBold, color: theme.colors.expense },
+  lineWarn: { color: theme.colors.expenseText },
+  lineMoneyWarn: { fontFamily: theme.font.monoBold, color: theme.colors.expenseText },
   todayMeter: { width: 72 },
 
   // Suu's line: the card's mint footer (coral when Suu is worried).

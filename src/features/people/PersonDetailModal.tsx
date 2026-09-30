@@ -238,7 +238,7 @@ export function PersonDetailModal({
         icon="account-outline"
         kicker={liveBalanceMinor > 0 ? 'Owes you' : liveBalanceMinor < 0 ? 'You owe' : 'All square'}
         amount={formatMoney(Math.abs(dispBalanceMinor))}
-        amountColor={liveBalanceMinor < 0 ? theme.colors.expense : theme.colors.textPrimary}
+        amountColor={liveBalanceMinor < 0 ? theme.colors.expenseText : theme.colors.textPrimary}
         title={person.name}
         meta={
           ledger.length === 0
@@ -365,7 +365,7 @@ export function PersonDetailModal({
                 <Text
                   style={[
                     styles.rowValue,
-                    { color: entry.amountMinor >= 0 ? theme.colors.income : theme.colors.expense },
+                    { color: entry.amountMinor >= 0 ? theme.colors.incomeText : theme.colors.expenseText },
                   ]}
                 >
                   {entry.amountMinor >= 0 ? '+' : '-'}

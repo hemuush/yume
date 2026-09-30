@@ -381,7 +381,7 @@ const styles = StyleSheet.create({
   disabled: { opacity: 0.5 },
   link: { alignSelf: 'center', paddingVertical: 10, paddingHorizontal: 16 },
   linkText: { fontFamily: theme.font.roundedBold, fontSize: 13.5, color: theme.colors.textPrimary },
-  linkDanger: { color: theme.colors.expense },
+  linkDanger: { color: theme.colors.expenseText },
 
   sheet: {
     backgroundColor: theme.colors.surfaceAlt,
