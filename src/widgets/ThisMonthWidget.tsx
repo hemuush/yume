@@ -22,9 +22,20 @@ const RING = 92;
  * the app — Home is where this card lives.
  */
 export function ThisMonthWidget(data: ThisMonthWidgetData) {
-  const { monthLabel, daysLeft, spentMinor, savedMinor, freeMinor, slices, pace, primary, secondary } = data;
+  const {
+    monthLabel,
+    daysLeft,
+    spentMinor,
+    savedMinor,
+    hideSavings,
+    freeMinor,
+    slices,
+    pace,
+    primary,
+    secondary,
+  } = data;
   const over = slices.overMinor > 0;
-  const mode = heroRestingMode(slices);
+  const mode = heroRestingMode(slices, hideSavings);
   const big = !slices.hasIncome ? '—' : over ? 'Over' : heroPct(heroShare(slices, mode));
   const label = !slices.hasIncome ? 'no income' : over ? `by ${formatMoney(slices.overMinor)}` : mode;
   const svg = ringSvg(
@@ -95,13 +106,15 @@ export function ThisMonthWidget(data: ThisMonthWidgetData) {
             tint={widgetColor.idCoral}
             value={formatMoney(spentMinor)}
           />
-          <Tile
-            label="Saved"
-            dot={asWidgetColor(secondary)}
-            tint={widgetTint(secondary)}
-            value={formatMoney(savedMinor)}
-            gap
-          />
+          {!hideSavings && (
+            <Tile
+              label="Saved"
+              dot={asWidgetColor(secondary)}
+              tint={widgetTint(secondary)}
+              value={formatMoney(savedMinor)}
+              gap
+            />
+          )}
           <Tile
             label="Free"
             dot={asWidgetColor(primary)}

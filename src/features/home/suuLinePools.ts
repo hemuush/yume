@@ -135,3 +135,28 @@ export const THIN_SAVINGS_LINES: readonly string[] = [
   'A modest month for saving — still worth a nod.',
   'A little was saved this month, and that is never nothing.',
 ];
+
+/**
+ * Stand-ins for the two savings-rate pools above while the user hides savings
+ * amounts: a "{pct} kept" line plus the free-to-use figure on the card would
+ * give away what went to savings, so these say nothing about saving at all.
+ */
+export const PRIVATE_HEALTHY_LINES: readonly string[] = [
+  'Most of what came in this month is still unspent.',
+  'Spending is well within what came in this month.',
+  'A calm month so far — plenty of room left.',
+  'Income is comfortably ahead of spending this month.',
+  'Lots of breathing room this month. Nicely done.',
+  'Spending is steady and there is room to spare.',
+  'A comfortable month so far — nicely steady.',
+  'You are well inside your means this month.',
+];
+
+export const PRIVATE_THIN_LINES: readonly string[] = [
+  'Spending is inside what came in this month.',
+  'Still in the black this month.',
+  'A narrower month, but comfortably positive.',
+  'Income is ahead of spending this month.',
+  'Steady so far — a little room left.',
+  'Not much slack this month, but you are in the clear.',
+];

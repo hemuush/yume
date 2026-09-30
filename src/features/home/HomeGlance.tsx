@@ -6,8 +6,9 @@ import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
 import { hexToRgba } from '@/lib/color';
 import { dueDateLabel, isDueUrgent } from '@/lib/dueDate';
-import { useCappedList } from '@/lib/useCappedList';
-import { NextDueInstallment } from '@/db/loans';
+import { addDaysToIsoDate, daysUntilIsoDate, parseLocalIsoDate, toLocalIsoDate } from '@/lib/date';
+import { payCardRoute, PayCardRoute } from '@/lib/payCard';
+import type { PlanCardBillInput } from '@/features/plan/planOverview';
 import { BudgetProgress } from '@/db/budgets';
 import { RecurringRule, SavingsGoal } from '@/types';
 import { BudgetRow } from '@/features/budgets/BudgetRow';
@@ -26,46 +27,81 @@ export interface UpcomingItem {
   amountMinor: number;
   sign: '+' | '-' | '';
   sortDate: string;
-  route: '/loans' | '/recurring';
+  route: '/loans' | '/recurring' | PayCardRoute;
   urgent: boolean;
 }
 
+/** How far ahead Home's Upcoming looks. Overdue items are always included on top of this. */
+export const UPCOMING_DAYS = 7;
+/** Rows shown before "+N more". */
+export const UPCOMING_ROWS = 5;
+
+export interface UpcomingLoanInput {
+  id: string;
+  name: string;
+  nextDueDate: string;
+  nextEmiMinor: number;
+}
+
+export interface Upcoming {
+  /** Overdue, then everything due within UPCOMING_DAYS, soonest first. */
+  items: UpcomingItem[];
+  /** The first thing due after the window, for a week with nothing in it. */
+  next: UpcomingItem | null;
+}
+
 /**
- * Home's Upcoming list: the next loan EMI and every active recurring rule
- * (rent, subscriptions, salary), soonest first — so a bill isn't a surprise
- * just because it's a recurring rule rather than a loan. The EMI's icon is a
- * light wash of the person's own accent colour.
+ * Home's Upcoming list: the next 7 days of everything dated — each borrowed
+ * loan's next EMI, every active recurring rule (rent, subscriptions, salary)
+ * and every credit card bill still to pay — with anything overdue first. The
+ * same sources Plan's Coming up lists, so the two can't disagree. The EMI's
+ * icon is a light wash of the person's own accent colour.
  */
 export function buildUpcomingItems(input: {
-  nextDue: NextDueInstallment | null;
+  loans: UpcomingLoanInput[];
+  cardBills: PlanCardBillInput[];
   rules: RecurringRule[];
   accent: string;
   accountName: (id: string | null | undefined) => string | undefined;
   categoryName: (id: string | null) => string | undefined;
   /** A bill's date tile takes a wash of its category's own colour. */
   categoryColor?: (id: string | null) => string | undefined;
-}): UpcomingItem[] {
-  const items: UpcomingItem[] = [];
-  const { nextDue } = input;
-  if (nextDue) {
-    items.push({
-      key: 'loan',
+}): Upcoming {
+  const all: UpcomingItem[] = [];
+  for (const loan of input.loans) {
+    all.push({
+      key: `loan-${loan.id}`,
       icon: 'calendar',
       iconBg: hexToRgba(input.accent, 0.18),
       iconColor: input.accent,
-      title: `${nextDue.counterparty} EMI`,
-      subtitle: dueDateLabel(nextDue.dueDate),
-      amountMinor: nextDue.emiAmountMinor,
+      title: `${loan.name} EMI`,
+      subtitle: dueDateLabel(loan.nextDueDate),
+      amountMinor: loan.nextEmiMinor,
       sign: '-',
-      sortDate: nextDue.dueDate,
+      sortDate: loan.nextDueDate,
       route: '/loans',
-      urgent: isDueUrgent(nextDue.dueDate),
+      urgent: isDueUrgent(loan.nextDueDate),
+    });
+  }
+  for (const bill of input.cardBills) {
+    if (bill.leftToPayMinor <= 0) continue;
+    all.push({
+      key: `card-${bill.accountId}`,
+      icon: 'credit-card',
+      iconBg: theme.colors.idGold,
+      title: `${bill.accountName} bill`,
+      subtitle: dueDateLabel(bill.dueDate),
+      amountMinor: bill.leftToPayMinor,
+      sign: '-',
+      sortDate: bill.dueDate,
+      route: payCardRoute(bill.accountId, bill.leftToPayMinor),
+      urgent: isDueUrgent(bill.dueDate),
     });
   }
   for (const rule of input.rules) {
     if (!rule.active) continue;
     const isTransfer = rule.type === 'transfer';
-    items.push({
+    all.push({
       key: rule.id,
       icon: isTransfer ? 'repeat' : rule.type === 'income' ? 'arrow-down-right' : 'arrow-up-right',
       iconBg: (() => {
@@ -83,7 +119,17 @@ export function buildUpcomingItems(input: {
       urgent: isDueUrgent(rule.nextRunDate),
     });
   }
-  return items.sort((a, b) => (a.sortDate < b.sortDate ? -1 : a.sortDate > b.sortDate ? 1 : 0));
+  all.sort((a, b) =>
+    a.sortDate !== b.sortDate ? (a.sortDate < b.sortDate ? -1 : 1) : b.amountMinor - a.amountMinor
+  );
+  const items = all.filter((i) => daysUntilIsoDate(i.sortDate) <= UPCOMING_DAYS);
+  return { items, next: all.find((i) => daysUntilIsoDate(i.sortDate) > UPCOMING_DAYS) ?? null };
+}
+
+/** "8 Oct" — the last day Upcoming looks at. */
+function windowEndLabel(): string {
+  const end = addDaysToIsoDate(toLocalIsoDate(new Date()), UPCOMING_DAYS);
+  return parseLocalIsoDate(end).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
 }
 
 /**
@@ -96,18 +142,18 @@ export function HomeGlance({
   budgets,
   goals,
   rowEntering,
+  onSeeMoreUpcoming,
 }: {
-  upcoming: UpcomingItem[];
+  upcoming: Upcoming;
+  /** "+N more" — opens Plan's Coming up, which lists the whole fortnight by day. */
+  onSeeMoreUpcoming: () => void;
   /** Most urgent first, as listBudgetsForMonth returns them. */
   budgets: BudgetProgress[];
   goals: SavingsGoal[];
   rowEntering: (i: number) => React.ComponentProps<typeof Animated.View>['entering'];
 }) {
-  const {
-    shown: visibleUpcoming,
-    hidden: hiddenUpcoming,
-    expand: expandUpcoming,
-  } = useCappedList(upcoming, 3);
+  const visibleUpcoming = upcoming.items.slice(0, UPCOMING_ROWS);
+  const hiddenUpcoming = upcoming.items.length - visibleUpcoming.length;
   const topBudgets = budgets.slice(0, 3);
   const activeGoals = goals.filter((g) => !g.archived);
   // Capped rather than its own horizontal ScrollView — nesting a
@@ -119,16 +165,29 @@ export function HomeGlance({
   const hiddenGoalsCount = activeGoals.length - topGoals.length;
 
   const pages: SwipePage[] = [
-    ...(visibleUpcoming.length > 0
+    ...(upcoming.items.length > 0 || upcoming.next
       ? [
           {
             key: 'upcoming',
             label: 'Upcoming',
-            // No single "see all" destination — this mixes loan EMIs (Loans
-            // tab) and recurring rules (Recurring screen); each row already
-            // deep-links to where it actually lives.
+            // No "See all" footer: "+N more" already leads to Plan, and each
+            // row deep-links to where it lives (Loans, Recurring, pay a card).
             content: (
               <View style={styles.pageList}>
+                <View style={styles.windowCaption}>
+                  <Text style={styles.windowLabel}>
+                    <Text style={styles.windowBold}>Next {UPCOMING_DAYS} days</Text> · till {windowEndLabel()}
+                  </Text>
+                  <Text style={styles.windowCount}>
+                    {upcoming.items.length > 0 ? `${upcoming.items.length} due` : 'none'}
+                  </Text>
+                </View>
+                {upcoming.items.length === 0 && (
+                  <View style={styles.quiet}>
+                    <Text style={styles.quietTitle}>Nothing due this week</Text>
+                    <Text style={styles.quietSub}>Enjoy the quiet.</Text>
+                  </View>
+                )}
                 {visibleUpcoming.map((item, i) => (
                   <Animated.View key={item.key} entering={rowEntering(i)}>
                     <UpcomingRow
@@ -146,8 +205,22 @@ export function HomeGlance({
                     />
                   </Animated.View>
                 ))}
-                {hiddenUpcoming.length > 0 && (
-                  <UpcomingMoreRow count={hiddenUpcoming.length} divider onPress={expandUpcoming} />
+                {upcoming.items.length === 0 && upcoming.next && (
+                  <UpcomingRow
+                    icon={upcoming.next.icon}
+                    iconBg={upcoming.next.iconBg}
+                    iconColor={upcoming.next.iconColor}
+                    title={upcoming.next.title}
+                    subtitle={`Next · ${upcoming.next.subtitle.toLowerCase()}`}
+                    amountMinor={upcoming.next.amountMinor}
+                    sign={upcoming.next.sign}
+                    onPress={() => router.push(upcoming.next!.route)}
+                    divider
+                    date={upcoming.next.sortDate}
+                  />
+                )}
+                {hiddenUpcoming > 0 && (
+                  <UpcomingMoreRow count={hiddenUpcoming} divider onPress={onSeeMoreUpcoming} />
                 )}
               </View>
             ),
@@ -205,6 +278,19 @@ export function HomeGlance({
 }
 
 const styles = StyleSheet.create({
+  windowCaption: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 14,
+    paddingTop: 8,
+    paddingBottom: 2,
+  },
+  windowLabel: { fontFamily: theme.font.bodyMedium, fontSize: 11.5, color: theme.colors.textMuted },
+  windowBold: { fontFamily: theme.font.bodyBold, color: theme.colors.textSecondary },
+  windowCount: { fontFamily: theme.font.bodyMedium, fontSize: 11.5, color: theme.colors.textMuted },
+  quiet: { paddingHorizontal: 14, paddingTop: 12, paddingBottom: 10, gap: 2 },
+  quietTitle: { fontFamily: theme.font.roundedBold, fontSize: 15, color: theme.colors.textPrimary },
+  quietSub: { fontFamily: theme.font.body, fontSize: 12.5, color: theme.colors.textMuted },
   // Rows inside a HomeSwipeCard page — no outer border/background of their
   // own (the card already draws that), BudgetRow/UpcomingRow already carry
   // their own horizontal padding.

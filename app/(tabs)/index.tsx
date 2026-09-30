@@ -5,7 +5,8 @@ import Animated, { useSharedValue, useAnimatedScrollHandler } from 'react-native
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useFocusEffect } from 'expo-router';
 import { listAccounts, listCategories, listTransactions } from '@/db/ledger';
-import { listLoans, getNextDueInstallment, NextDueInstallment } from '@/db/loans';
+import { listLoans, getLoanProgress } from '@/db/loans';
+import { listCardCycles } from '@/db/cardCycles';
 import { listRecurringRules } from '@/db/recurring';
 import {
   getRangeComparison,
@@ -23,6 +24,7 @@ import { savingsRatePct } from '@/lib/savingsRate';
 import { Account, Category, Transaction, Loan, RecurringRule, SavingsGoal } from '@/types';
 import { theme } from '@/constants/theme';
 import { useAccent } from '@/theme/AccentContext';
+import { usePrivacy } from '@/theme/PrivacyContext';
 import { EmptyState } from '@/components/EmptyState';
 import {
   CURRENT_PERIOD,
@@ -48,6 +50,7 @@ import { SuuRefreshBadge } from '@/features/home/SuuRefreshBadge';
 import { HomeSection } from '@/features/home/HomeSection';
 import { homeStyles, HOME } from '@/features/home/homeStyles';
 import { HomeGlance, buildUpcomingItems } from '@/features/home/HomeGlance';
+import { buildLoansSummary } from '@/features/plan/planOverview';
 import { RecentTransactionRow } from '@/features/home/RecentTransactionRow';
 import { AccountChip, ACCOUNT_CHIP_WIDTH, ACCOUNT_STRIP_GAP } from '@/features/home/AccountChip';
 import { AccountSummarySheet } from '@/features/home/AccountSummarySheet';
@@ -66,6 +69,7 @@ import { payCardRoute } from '@/lib/payCard';
 
 export default function DashboardScreen() {
   const insets = useSafeAreaInsets();
+  const { hideAmounts } = usePrivacy();
   const { accent } = useAccent();
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -73,7 +77,8 @@ export default function DashboardScreen() {
   const [loans, setLoans] = useState<Loan[]>([]);
   const [recurringRules, setRecurringRules] = useState<RecurringRule[]>([]);
   const [comparison, setComparison] = useState<PeriodComparison | null>(null);
-  const [nextDue, setNextDue] = useState<NextDueInstallment | null>(null);
+  const [loanProgress, setLoanProgress] = useState<Awaited<ReturnType<typeof getLoanProgress>>>([]);
+  const [cardBills, setCardBills] = useState<Awaited<ReturnType<typeof listCardCycles>>>([]);
   const [budgets, setBudgets] = useState<BudgetProgress[]>([]);
   const [goals, setGoals] = useState<SavingsGoal[]>([]);
   // Both are "always about today", not whatever period the cursor is
@@ -178,7 +183,8 @@ export default function DashboardScreen() {
         ln,
         rules,
         cmp,
-        due,
+        progress,
+        cycles,
         name,
         budgetList,
         goalList,
@@ -197,7 +203,8 @@ export default function DashboardScreen() {
         listLoans(),
         listRecurringRules(),
         getRangeComparison(range, previousPeriodRange(c), c.granularity),
-        getNextDueInstallment(),
+        getLoanProgress(),
+        listCardCycles().catch(() => []),
         getUserName(),
         // Budgets and goals are always about *now*, not whatever period the
         // cursor above is browsing — a budget is inherently this calendar
@@ -220,7 +227,8 @@ export default function DashboardScreen() {
       setLoans(ln.filter((l) => l.status !== 'closed'));
       setRecurringRules(rules);
       setComparison(cmp);
-      setNextDue(due);
+      setLoanProgress(progress);
+      setCardBills(cycles);
       setUserNameState(name);
       setBudgets(budgetList);
       setGoals(goalList);
@@ -309,10 +317,21 @@ export default function DashboardScreen() {
   // repeated this hero's own "N% vs last" figure) is now folded into Suu's
   // line itself — see suuLine's own comment for why that takes priority.
   const savingsPct = savingsRatePct(dispIncome - dispExpense, dispIncome);
-  const suu = suuLine(savingsPct, expenseChangePct ?? null, topGrowing?.name ?? null, new Date().getHours());
+  const suu = suuLine(
+    savingsPct,
+    expenseChangePct ?? null,
+    topGrowing?.name ?? null,
+    new Date().getHours(),
+    hideAmounts
+  );
 
-  const upcomingItems = buildUpcomingItems({
-    nextDue,
+  const upcoming = buildUpcomingItems({
+    loans: buildLoansSummary(loans, loanProgress).rows.flatMap((row) =>
+      row.direction === 'borrowed' && row.nextDueDate && row.nextEmiMinor != null
+        ? [{ id: row.id, name: row.name, nextDueDate: row.nextDueDate, nextEmiMinor: row.nextEmiMinor }]
+        : []
+    ),
+    cardBills,
     rules: recurringRules,
     accent,
     accountName,
@@ -428,7 +447,13 @@ export default function DashboardScreen() {
         )}
 
         {loaded && (
-          <HomeGlance upcoming={upcomingItems} budgets={budgets} goals={goals} rowEntering={rowEntering} />
+          <HomeGlance
+            upcoming={upcoming}
+            budgets={budgets}
+            goals={goals}
+            rowEntering={rowEntering}
+            onSeeMoreUpcoming={() => router.navigate({ pathname: '/plan', params: { section: 'coming-up' } })}
+          />
         )}
 
         {loaded && (

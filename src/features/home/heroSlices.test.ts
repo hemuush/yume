@@ -1,4 +1,4 @@
-import { heroSlices, heroPct, heroModes, heroRestingMode } from './heroSlices';
+import { heroSlices, heroPct, heroModes, heroRestingMode, withoutSavings } from './heroSlices';
 
 const sum = (s: { spent: number; saved: number; free: number }) => s.spent + s.saved + s.free;
 
@@ -83,5 +83,27 @@ describe('heroModes / heroRestingMode', () => {
   it('offers no views when overspent or without income', () => {
     expect(heroModes(heroSlices(100000, 120000, 0))).toEqual([]);
     expect(heroModes(heroSlices(0, 0, 0))).toEqual([]);
+  });
+});
+
+describe('with savings hidden', () => {
+  it('drops the savings arc and leaves free at its real share', () => {
+    const s = withoutSavings(heroSlices(100000, 10000, 60000));
+    expect(s.saved).toBe(0);
+    expect(s.spent).toBeCloseTo(0.1);
+    expect(s.free).toBeCloseTo(0.3);
+  });
+
+  it('offers only spent and free, resting on free', () => {
+    const s = withoutSavings(heroSlices(100000, 10000, 60000));
+    expect(heroModes(s, true)).toEqual(['spent', 'free']);
+    expect(heroRestingMode(s, true)).toBe('free');
+  });
+
+  it('rests on spent when nothing is free, and offers no free view', () => {
+    // Everything unspent went to savings: free is 0 once savings is taken out.
+    const s = withoutSavings(heroSlices(100000, 40000, 60000));
+    expect(heroModes(s, true)).toEqual(['spent']);
+    expect(heroRestingMode(s, true)).toBe('spent');
   });
 });

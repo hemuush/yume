@@ -23,8 +23,10 @@ const mockDay = (n: number) => {
   const { addDaysToIsoDate, toLocalIsoDate } = require('@/lib/date');
   return addDaysToIsoDate(toLocalIsoDate(new Date()), n);
 };
+let mockSection: string | undefined;
 jest.mock('expo-router', () => ({
-  router: { push: jest.fn() },
+  router: { push: jest.fn(), setParams: jest.fn() },
+  useLocalSearchParams: () => ({ section: mockSection }),
   // useScreenLoad's focus effect: run once, like a first focus.
   useFocusEffect: (cb: () => void) => require('react').useEffect(cb, [cb]),
 }));
@@ -242,5 +244,17 @@ describe('Plan tab', () => {
       paid.props.onPress();
     });
     expect(mockPaySheet.current?.installment.id).toBe('p13');
+  });
+  it("lands on Coming up when Home's “+N more” sends you, then forgets it was asked", async () => {
+    mockSection = 'coming-up';
+    try {
+      await render();
+      await act(async () => {
+        jest.advanceTimersByTime(100);
+      });
+      expect(router.setParams).toHaveBeenCalledWith({ section: undefined });
+    } finally {
+      mockSection = undefined;
+    }
   });
 });

@@ -131,6 +131,7 @@ describe('the five widgets', () => {
           daysLeft: 2,
           spentMinor: spent,
           savedMinor: 0,
+          hideSavings: false,
           freeMinor: income - spent,
           slices: heroSlices(income, spent, 0),
           pace: { projectedMinor: 60000, byLabel: '30 Sept' },
