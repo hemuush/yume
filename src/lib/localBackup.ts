@@ -37,6 +37,40 @@ function backupFilename(dateIso: string): string {
   return `yume-backup-${dateIso}`;
 }
 
+// Android may add a ".json" extension to the name, and a " (1)" when a name is taken.
+const BACKUP_NAME = /^yume-backup-(\d{4}-\d{2}-\d{2})(?: \(\d+\))?(?:\.json)?$/;
+
+/**
+ * The day a backup file is for, read from the file's own name — the last part
+ * of its URI — or null for anything that isn't one of ours. The folder's name
+ * is part of a SAF URI too, so looking for "yume-backup-" anywhere in it would
+ * also claim every file inside a folder that happens to be called that.
+ * Exported for tests.
+ */
+export function backupFileDate(uri: string): string | null {
+  let decoded: string;
+  try {
+    decoded = decodeURIComponent(uri);
+  } catch {
+    return null;
+  }
+  const afterSlash = decoded.slice(decoded.lastIndexOf('/') + 1);
+  const name = afterSlash.slice(afterSlash.lastIndexOf(':') + 1);
+  return BACKUP_NAME.exec(name)?.[1] ?? null;
+}
+
+/** Our backup files among `uris`, oldest first: by the day in the name, then by name so a " (1)" copy follows its original. */
+function backupFilesOldestFirst(uris: string[]): string[] {
+  return uris
+    .map((uri) => ({ uri, date: backupFileDate(uri), name: decodeURIComponent(uri) }))
+    .filter((f): f is { uri: string; date: string; name: string } => f.date !== null)
+    .sort((a, b) => (a.date === b.date ? (a.name < b.name ? -1 : 1) : a.date < b.date ? -1 : 1))
+    .map((f) => f.uri);
+}
+
+/** A string's size as stored on disk (UTF-8), not its character count — ₹ and emoji take several bytes. */
+const byteLength = (text: string): number => new TextEncoder().encode(text).length;
+
 // How many days of local backups to keep in the chosen folder. Backups are
 // one-per-calendar-day, so this is roughly two weeks of history; older files
 // are pruned after each successful write so the folder can't grow without
@@ -46,15 +80,14 @@ const KEEP_DAILY_BACKUPS = 14;
 
 /**
  * Deletes all but the newest `KEEP_DAILY_BACKUPS` backup files in the folder.
- * The ISO date in each filename sorts correctly as a string (see
- * backupFilename), so "newest" is just the tail of a lexical sort. Best
- * effort — a failed delete here must never fail the backup that just
+ * "Newest" comes from the day in each filename (see backupFileDate), so
+ * it is just the tail of the sorted list. Best effort — a failed delete here must never fail the backup that just
  * succeeded.
  */
 async function pruneOldLocalBackups(directoryUri: string): Promise<void> {
   try {
     const uris = await StorageAccessFramework.readDirectoryAsync(directoryUri);
-    const backups = uris.filter((u) => decodeURIComponent(u).includes('yume-backup-')).sort();
+    const backups = backupFilesOldestFirst(uris);
     for (const uri of backups.slice(0, Math.max(0, backups.length - KEEP_DAILY_BACKUPS))) {
       await StorageAccessFramework.deleteAsync(uri).catch(() => {});
     }
@@ -85,10 +118,12 @@ async function pruneOldLocalBackups(directoryUri: string): Promise<void> {
 export async function writeLocalBackupNow(directoryUri: string): Promise<{ sizeBytes: number }> {
   const snapshot = await buildBackupSnapshot();
   const json = JSON.stringify(snapshot);
-  const filename = backupFilename(toLocalIsoDate(new Date()));
+  const today = toLocalIsoDate(new Date());
+  const filename = backupFilename(today);
+  const sizeBytes = byteLength(json);
 
   const existing = await StorageAccessFramework.readDirectoryAsync(directoryUri);
-  const sameDay = existing.filter((uri) => decodeURIComponent(uri).includes(filename));
+  const sameDay = existing.filter((uri) => backupFileDate(uri) === today);
 
   const fileUri = await StorageAccessFramework.createFileAsync(directoryUri, filename, 'application/json');
   try {
@@ -103,11 +138,11 @@ export async function writeLocalBackupNow(directoryUri: string): Promise<{ sizeB
   await setLastLocalBackupAt(new Date().toISOString());
   await rememberBackupFile(fileUri, {
     exportedAt: snapshot.exportedAt,
-    sizeBytes: json.length,
+    sizeBytes,
     summary: summarizeSnapshot(snapshot),
   });
   await pruneOldLocalBackups(directoryUri);
-  return { sizeBytes: json.length };
+  return { sizeBytes };
 }
 
 /**
@@ -192,12 +227,7 @@ export async function listLocalBackups(
   limit = KEEP_DAILY_BACKUPS
 ): Promise<LocalBackupFile[]> {
   const uris = await StorageAccessFramework.readDirectoryAsync(directoryUri);
-  // The ISO date in each filename (see backupFilename) sorts correctly as a string.
-  const backups = uris
-    .filter((u) => decodeURIComponent(u).includes('yume-backup-'))
-    .sort()
-    .reverse()
-    .slice(0, limit);
+  const backups = backupFilesOldestFirst(uris).reverse().slice(0, limit);
   const index = await readBackupIndex();
   const kept: BackupIndex = {};
   let learned = false;
@@ -214,7 +244,7 @@ export async function listLocalBackups(
       const snapshot = JSON.parse(content);
       const info = {
         exportedAt: typeof snapshot?.exportedAt === 'string' ? snapshot.exportedAt : null,
-        sizeBytes: content.length,
+        sizeBytes: byteLength(content),
         summary: summarizeSnapshot(snapshot),
       };
       kept[uri] = info;
