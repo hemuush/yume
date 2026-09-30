@@ -19,9 +19,13 @@
       },
       "predictiveBackGestureEnabled": true,
       "versionCode": 6,
+      "allowBackup": false,
       "permissions": [
         "android.permission.USE_BIOMETRIC",
         "android.permission.USE_FINGERPRINT"
+      ],
+      "blockedPermissions": [
+        "android.permission.SYSTEM_ALERT_WINDOW"
       ]
     },
     "plugins": [
