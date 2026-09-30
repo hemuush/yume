@@ -5,9 +5,13 @@ on:
     branches: [main, master]
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   check:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     # Run like a phone in India, where Yume is used: lakh grouping (₹3,97,501),
     # "5 Oct" dates and IST days. The runner otherwise defaults to en-US and
     # UTC, which formats money and dates differently from every real device.
@@ -16,8 +20,9 @@ jobs:
       LC_ALL: en_IN.UTF-8
       TZ: Asia/Kolkata
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      # Actions are pinned to a commit so a moved tag can't change what runs.
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           # better-sqlite3 (the test harness's SQLite engine) requires Node >=22;
           # on Node 20 its native addon segfaults the Jest workers. Local dev is
@@ -29,3 +34,11 @@ jobs:
       - run: npm run lint
       - run: npm run format:check
       - run: npm test
+      # Expo SDK / native-module version mismatches and config problems.
+      - run: npx expo-doctor
+      # A high or critical advisory fails the build; the moderate ones that
+      # remain come from expo-router's own dependencies and have no safe fix yet.
+      - run: npm audit --audit-level=high
+      # Bundles the app's JavaScript for Android, so a broken import or a
+      # missing asset fails here instead of in a release build.
+      - run: npx expo export --platform android
