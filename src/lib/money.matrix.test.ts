@@ -6,6 +6,7 @@
  * regardless of currency or magnitude.
  */
 import { toMinor, toMajor, formatMoney, getCurrencySymbol } from './money';
+import { MAX_AMOUNT_MAJOR, MAX_AMOUNT_MINOR } from './amountLimits';
 import { SUPPORTED_CURRENCIES } from '@/db/settings';
 
 const MAJORS = [
@@ -24,6 +25,25 @@ describe('toMinor — quantizes a major amount to whole-rupee minor units', () =
       expect(minor % 100 === 0).toBe(true);
     });
   }
+});
+
+describe('toMinor — refuses amounts too large to sum exactly', () => {
+  it('accepts the largest amount and its negative', () => {
+    expect(toMinor(MAX_AMOUNT_MAJOR)).toBe(MAX_AMOUNT_MINOR);
+    expect(toMinor(-MAX_AMOUNT_MAJOR)).toBe(-MAX_AMOUNT_MINOR);
+    expect(Number.isSafeInteger(toMinor(MAX_AMOUNT_MAJOR))).toBe(true);
+  });
+
+  it('answers NaN, like unparseable text, beyond it', () => {
+    expect(toMinor(MAX_AMOUNT_MAJOR + 1)).toBeNaN();
+    expect(toMinor(-(MAX_AMOUNT_MAJOR + 1))).toBeNaN();
+    expect(toMinor(parseFloat('1' + '0'.repeat(21)))).toBeNaN();
+    expect(toMinor(Infinity)).toBeNaN();
+  });
+
+  it('keeps the sum of ninety maximum amounts exact', () => {
+    expect(Number.isSafeInteger(toMinor(MAX_AMOUNT_MAJOR) * 90)).toBe(true);
+  });
 });
 
 describe('toMajor ∘ toMinor round-trips to the nearest whole major unit', () => {

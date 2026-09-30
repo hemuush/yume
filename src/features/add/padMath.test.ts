@@ -55,6 +55,12 @@ describe('evaluateAmount', () => {
     expect(evaluateAmount('0.1+0.2')).toBe(0.3);
   });
 
+  it('has no value once the result passes the largest accepted amount', () => {
+    expect(evaluateAmount('999999999×999')).toBe(999999999 * 999);
+    expect(evaluateAmount('999999999×1001')).toBeNull();
+    expect(evaluateAmount('999999999×999999999')).toBeNull();
+  });
+
   it('ignores a trailing operator or decimal point while typing', () => {
     expect(evaluateAmount('120+')).toBe(120);
     expect(evaluateAmount('45.')).toBe(45);
