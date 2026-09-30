@@ -66,12 +66,23 @@ export function heroShare(s: HeroSlices, mode: HeroMode): number {
  * "0% kept", "0% to savings", "0% free to use". Empty with no income or when
  * overspent (the moon then has nothing to split).
  */
-export function heroModes(s: HeroSlices): HeroMode[] {
+export function heroModes(s: HeroSlices, hideSavings = false): HeroMode[] {
   if (!s.hasIncome || s.overMinor > 0) return [];
-  return HERO_MODES.filter((m) => heroShare(s, m) > 0);
+  const modes = hideSavings ? HERO_MODES.filter((m) => m === 'spent' || m === 'free') : HERO_MODES;
+  return modes.filter((m) => heroShare(s, m) > 0);
 }
 
-/** The resting headline: Kept, or Spent when nothing was kept. */
-export function heroRestingMode(s: HeroSlices): HeroMode {
+/** The resting headline: Kept, or Spent when nothing was kept. With savings hidden, Free or Spent. */
+export function heroRestingMode(s: HeroSlices, hideSavings = false): HeroMode {
+  if (hideSavings) return s.free > 0 ? 'free' : 'spent';
   return heroShare(s, 'kept') > 0 ? 'kept' : 'spent';
+}
+
+/**
+ * The same split with the savings arc dropped, for when the user hides
+ * savings amounts: the ring then draws only spent and free, and the share
+ * that went to savings is left as empty track. Free keeps its real share.
+ */
+export function withoutSavings(s: HeroSlices): HeroSlices {
+  return { ...s, saved: 0 };
 }

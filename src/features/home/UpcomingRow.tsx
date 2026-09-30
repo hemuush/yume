@@ -79,7 +79,7 @@ export function UpcomingRow({
 }
 
 /**
- * The row that stands in for whatever's past `useCappedList`'s cap — same
+ * The row that stands in for whatever's past the five shown — same
  * shape as a real `UpcomingRow` (icon left, label filling the middle) so it
  * reads as one more row in the list rather than a different kind of thing.
  */
@@ -99,13 +99,17 @@ export function UpcomingMoreRow({
       onPressIn={onPressIn}
       onPressOut={onPressOut}
       accessibilityRole="button"
-      accessibilityLabel={`${count} more upcoming`}
+      accessibilityLabel={`${count} more due this week, open Plan`}
       style={[styles.row, divider && styles.divider, animatedStyle]}
     >
       <View style={[styles.iconWrap, { backgroundColor: theme.colors.surfaceAlt }]}>
         <Feather name="more-horizontal" size={HOME.iconGlyph} color={theme.colors.textMuted} />
       </View>
-      <Text style={styles.moreText}>+{count} more</Text>
+      <View style={styles.mid}>
+        <Text style={styles.moreText}>+{count} more this week</Text>
+        <Text style={styles.sub}>Opens Plan › Coming up</Text>
+      </View>
+      <Feather name="arrow-right" size={16} color={theme.colors.textMuted} />
     </AnimatedPressable>
   );
 }
@@ -120,5 +124,5 @@ const styles = StyleSheet.create({
   subUrgent: h.subUrgent,
   amount: h.amount,
   income: h.income,
-  moreText: { flex: 1, fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textSecondary },
+  moreText: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textSecondary },
 });

@@ -5,6 +5,8 @@ import {
   SPEND_UP_TEMPLATES,
   GOOD_SAVINGS_TEMPLATES,
   THIN_SAVINGS_LINES,
+  PRIVATE_HEALTHY_LINES,
+  PRIVATE_THIN_LINES,
   fillSuuTemplate,
 } from './suuLinePools';
 import { formatPctChange } from '@/lib/format';
@@ -88,5 +90,24 @@ describe('suuLine', () => {
     const line = suuLine(-12, 5, null, 2);
     expect(OVERSPENT_LINES).toContain(line.text);
     expect(line.pose).toBe('sleepy');
+  });
+  describe('with savings amounts hidden', () => {
+    it('uses neutral lines that never name a saved or kept share', () => {
+      for (let i = 0; i < 50; i++) {
+        const healthy = suuLine(72, -3, null, 12, true);
+        expect(PRIVATE_HEALTHY_LINES).toContain(healthy.text);
+        const thin = suuLine(8, -2, null, 12, true);
+        expect(PRIVATE_THIN_LINES).toContain(thin.text);
+      }
+      for (const text of [...PRIVATE_HEALTHY_LINES, ...PRIVATE_THIN_LINES]) {
+        expect(text).not.toMatch(/sav|kept|keep|%|put aside|tuck|cushion/i);
+      }
+    });
+
+    it('leaves the no-data, overspent and spend-up situations alone', () => {
+      expect(NO_DATA_LINES).toContain(suuLine(0, null, null, 12, true).text);
+      expect(OVERSPENT_LINES).toContain(suuLine(-12, 5, null, 12, true).text);
+      expect(suuLine(40, 9, 'Food', 12, true).text).toContain('mostly Food');
+    });
   });
 });

@@ -13,7 +13,7 @@ import { accountIcon } from '@/lib/account';
 import { toLocalIsoDate, parseLocalIsoDate } from '@/lib/date';
 import { monthPace } from '@/lib/pace';
 import { suuLine, SuuLine } from '@/features/home/suuLine';
-import { heroSlices, HeroSlices } from '@/features/home/heroSlices';
+import { heroSlices, withoutSavings, HeroSlices } from '@/features/home/heroSlices';
 import type { Account } from '@/types';
 import { widgetColor } from './widgetTheme';
 
@@ -70,7 +70,10 @@ export interface ThisMonthWidgetData {
   /** Days after today left in the month; 0 on its last day. */
   daysLeft: number;
   spentMinor: number;
+  /** Moved to savings; 0 and unused while `hideSavings` (the figure never reaches the widget). */
   savedMinor: number;
+  /** "Hide savings & investment amounts" is on: no Saved tile, no savings arc. */
+  hideSavings: boolean;
   /** Income − spent − moved to savings; negative when more went out than came in. */
   freeMinor: number;
   slices: HeroSlices;
@@ -83,10 +86,11 @@ export interface ThisMonthWidgetData {
 /** Home's month card, for today's month: the same figures ThisMonthHero shows. */
 export async function getThisMonthWidgetData(now: Date = new Date()): Promise<ThisMonthWidgetData> {
   const today = toLocalIsoDate(now);
-  const [cmp, theme, paceIn] = await Promise.all([
+  const [cmp, theme, paceIn, hideSavings] = await Promise.all([
     getMonthComparisonOnce(),
     getActiveThemeOnce(),
     getMonthPaceInputs(today),
+    getHideSensitiveAmounts(),
   ]);
   const incomeMinor = roundedMinor(cmp.current.incomeMinor);
   const spentMinor = roundedMinor(cmp.current.expenseMinor);
@@ -97,9 +101,12 @@ export async function getThisMonthWidgetData(now: Date = new Date()): Promise<Th
     monthLabel: now.toLocaleDateString(undefined, { month: 'long' }),
     daysLeft: monthEnd.getDate() - now.getDate(),
     spentMinor,
-    savedMinor,
+    savedMinor: hideSavings ? 0 : savedMinor,
+    hideSavings,
     freeMinor: incomeMinor - spentMinor - savedMinor,
-    slices: heroSlices(incomeMinor, spentMinor, savedMinor),
+    slices: hideSavings
+      ? withoutSavings(heroSlices(incomeMinor, spentMinor, savedMinor))
+      : heroSlices(incomeMinor, spentMinor, savedMinor),
     pace:
       paceMinor != null
         ? {
@@ -151,12 +158,22 @@ export interface SuuWidgetData {
 }
 
 export async function getSuuWidgetData(): Promise<SuuWidgetData> {
-  const [cmp, theme] = await Promise.all([getMonthComparisonOnce(), getActiveThemeOnce()]);
+  const [cmp, theme, hideSavings] = await Promise.all([
+    getMonthComparisonOnce(),
+    getActiveThemeOnce(),
+    getHideSensitiveAmounts(),
+  ]);
   const incomeMinor = roundedMinor(cmp.current.incomeMinor);
   const expenseMinor = roundedMinor(cmp.current.expenseMinor);
   const savingsPct = savingsRatePct(incomeMinor - expenseMinor, incomeMinor);
   const topGrowing = findTopGrowingCategory(cmp.current.categoryBreakdown, cmp.previous.categoryBreakdown);
-  const line = suuLine(savingsPct, cmp.expenseChangePct ?? null, topGrowing?.name ?? null);
+  const line = suuLine(
+    savingsPct,
+    cmp.expenseChangePct ?? null,
+    topGrowing?.name ?? null,
+    undefined,
+    hideSavings
+  );
   return { line, dot: theme.dot, secondary: theme.secondary };
 }
 
