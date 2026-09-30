@@ -2,7 +2,7 @@
  * Activity's timeline day: transfers become notes, repeats of a category
  * stack in the place of the newest of them, and nothing is lost or counted twice.
  */
-import { buildDayLane } from './transactions.helpers';
+import { buildDayLane, dropIndex, laneOrderIds, moveLine } from './transactions.helpers';
 import { Transaction } from '@/types';
 
 const tx = (id: string, over: Partial<Transaction>): Transaction =>
@@ -90,6 +90,52 @@ describe('buildDayLane', () => {
     it('shows a lone part (after a category filter) as a plain line', () => {
       const { lines: l } = buildDayLane([splitDay[0]], '2026-09-27');
       expect(l).toEqual([{ kind: 'single', tx: splitDay[0] }]);
+    });
+  });
+
+  describe('a day arranged by hand', () => {
+    const ranked = [
+      tx('c', { categoryId: 'rapido', dayRank: 0 }),
+      tx('p1', { categoryId: 'groceries', splitId: 's1', dayRank: 1 }),
+      tx('a', { dayRank: 2 }),
+      tx('p2', { categoryId: 'household', splitId: 's1', dayRank: 3 }),
+      tx('f', { categoryId: 'rapido', dayRank: 4 }),
+      tx('t', { type: 'transfer', categoryId: null, toAccountId: 'hdfc', dayRank: 5 }),
+    ];
+    const name = (l: ReturnType<typeof buildDayLane>['lines'][number]) =>
+      l.kind === 'single' ? l.tx.id : l.kind === 'stack' ? l.key.split('|')[2] : l.splitId;
+
+    it('keeps each line where it was dragged, splits and stacks included', () => {
+      const { lines } = buildDayLane(ranked, '2026-09-25');
+      expect(lines.map(name)).toEqual(['rapido', 's1', 'a']);
+    });
+
+    it('lists a moved line as ids top to bottom, with transfers last', () => {
+      const { lines, transfers } = buildDayLane(ranked, '2026-09-25');
+      expect(laneOrderIds(moveLine(lines, 2, 0), transfers)).toEqual(['a', 'c', 'f', 'p1', 'p2', 't']);
+    });
+
+    it('ignores a move that goes nowhere or off the list', () => {
+      const { lines } = buildDayLane(ranked, '2026-09-25');
+      expect(moveLine(lines, 1, 1)).toBe(lines);
+      expect(moveLine(lines, 0, 9)).toBe(lines);
+    });
+  });
+
+  describe('dropIndex', () => {
+    const rows = [52, 52, 104, 52];
+
+    it('stays put for a small drag and follows the finger past the next line', () => {
+      expect(dropIndex(rows, 0, 10)).toBe(0);
+      expect(dropIndex(rows, 0, 60)).toBe(1);
+      expect(dropIndex(rows, 3, -60)).toBe(2);
+    });
+
+    it('measures a tall line by its middle and clamps at either end', () => {
+      expect(dropIndex(rows, 2, -40)).toBe(2);
+      expect(dropIndex(rows, 2, -60)).toBe(1);
+      expect(dropIndex(rows, 0, 900)).toBe(3);
+      expect(dropIndex(rows, 3, -900)).toBe(0);
     });
   });
 });

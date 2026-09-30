@@ -70,7 +70,12 @@ function byLabel(r: ReactTestRenderer, start: string) {
   );
 }
 
-function render(openStacks: Set<string>, onToggleStack = jest.fn(), onPressTx = jest.fn()) {
+function render(
+  openStacks: Set<string>,
+  onToggleStack = jest.fn(),
+  onPressTx = jest.fn(),
+  onReorder?: (date: string, ids: string[]) => Promise<void>
+) {
   let r!: ReactTestRenderer;
   act(() => {
     r = create(
@@ -85,6 +90,7 @@ function render(openStacks: Set<string>, onToggleStack = jest.fn(), onPressTx = 
         onPressTx={onPressTx}
         openStacks={openStacks}
         onToggleStack={onToggleStack}
+        onReorder={onReorder}
       />
     );
   });
@@ -129,5 +135,27 @@ describe('TimelineDay', () => {
     ];
     tappable.forEach((p) => act(() => p.props.onPress()));
     expect(onPress.mock.calls.map(([t]) => t.id).sort()).toEqual(['t1', 't2', 't3', 't4', 't5']);
+  });
+
+  it('moves a line up or down for TalkBack, saving the day with stacks whole and transfers last', async () => {
+    const onReorder = jest.fn().mockResolvedValue(undefined);
+    const r = render(new Set(), jest.fn(), jest.fn(), onReorder);
+    const travel = byLabel(r, 'Travel,')[0];
+    expect(travel.props.accessibilityActions.map((a: { name: string }) => a.name)).toEqual([
+      'moveUp',
+      'moveDown',
+    ]);
+    await act(async () => travel.props.onAccessibilityAction({ nativeEvent: { actionName: 'moveUp' } }));
+    expect(onReorder).toHaveBeenCalledWith(DATE, ['t3', 't1', 't4', 't5', 't2']);
+    // The top line cannot go higher.
+    onReorder.mockClear();
+    const top = byLabel(r, 'Travel,')[0];
+    await act(async () => top.props.onAccessibilityAction({ nativeEvent: { actionName: 'moveUp' } }));
+    expect(onReorder).not.toHaveBeenCalled();
+  });
+
+  it('offers no reordering when the screen does not allow it (search, filters)', () => {
+    const r = render(new Set());
+    expect(byLabel(r, 'Travel,')[0].props.onLongPress).toBeUndefined();
   });
 });

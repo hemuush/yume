@@ -6,12 +6,12 @@ import { FadeIn, ReduceMotion } from 'react-native-reanimated';
 import { useFocusEffect, router, useLocalSearchParams } from 'expo-router';
 import Feather from '@expo/vector-icons/Feather';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { listAccounts, listCategories, listTransactions, searchTransactions } from '@/db/ledger';
+import { listAccounts, listCategories, listTransactions, searchTransactions, setDayOrder } from '@/db/ledger';
 import { getRangeComparison, PeriodComparison } from '@/db/reports';
 import { Account, Category, Transaction, TransactionType } from '@/types';
 import { AppHeader, HeaderIconButton } from '@/components/AppHeader';
 import { theme } from '@/constants/theme';
-import { toLocalIsoDate, parseLocalIsoDate, addDaysToIsoDate, isoDatesInRange } from '@/lib/date';
+import { toLocalIsoDate, parseLocalIsoDate, addDaysToIsoDate } from '@/lib/date';
 import { MAX_LIST_STAGGER_MS } from '@/lib/animation';
 import { useSwipeStep } from '@/lib/useSwipeStep';
 import { usePressScale } from '@/lib/usePressScale';
@@ -24,9 +24,12 @@ import { TimelineDay } from '@/features/transactions/TimelineDay';
 import { TransactionDetailModal } from '@/features/transactions/TransactionDetailModal';
 import { TransactionsHeadline } from '@/features/transactions/TransactionsHeadline';
 import { TransactionsSkeleton } from '@/features/transactions/TransactionsSkeleton';
-import { buildDailySpendBars, buildWeeklySpendBars, legendForBars } from '@/features/transactions/spendChart';
+import { WeekRail } from '@/features/transactions/WeekRail';
+import { buildWeekSpendBars, buildWeeklySpendBars, legendForBars } from '@/features/transactions/spendChart';
 import {
-  sevenDaysEndingOn,
+  weekContaining,
+  stepWeekAnchor,
+  weekCompareLabel,
   previousRangeFor,
   groupByDate,
   periodHeading,
@@ -104,10 +107,11 @@ export default function TransactionsScreen() {
       setSearchLoading(false);
     }
   }, []);
-  const days = useMemo(() => sevenDaysEndingOn(anchor), [anchor]);
+  // A week is the Sunday-to-Saturday row of one calendar month, cut at the month's edges.
+  const week = useMemo(() => weekContaining(anchor), [anchor]);
   const today = toLocalIsoDate(todayDate);
   const yesterday = addDaysToIsoDate(today, -1);
-  const isCurrentWeek = days.some((d) => d.iso === today);
+  const isCurrentWeek = today >= week.start && today <= week.end;
   const isCurrentMonth =
     anchor.getFullYear() === todayDate.getFullYear() && anchor.getMonth() === todayDate.getMonth();
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -160,25 +164,18 @@ export default function TransactionsScreen() {
   const stepBack = () => {
     haptics.tap();
     setDirection(-1);
-    setAnchor((a) => {
-      if (viewScope === 'month') return new Date(a.getFullYear(), a.getMonth() - 1, 1);
-      const d = new Date(a);
-      d.setDate(d.getDate() - 7);
-      return d;
-    });
+    setAnchor((a) =>
+      viewScope === 'month'
+        ? new Date(a.getFullYear(), a.getMonth() - 1, 1)
+        : stepWeekAnchor(a, -1, todayDate)
+    );
   };
   const stepForward = () => {
     haptics.tap();
     setDirection(1);
     setAnchor((a) => {
-      const next =
-        viewScope === 'month'
-          ? new Date(a.getFullYear(), a.getMonth() + 1, 1)
-          : (() => {
-              const d = new Date(a);
-              d.setDate(d.getDate() + 7);
-              return d;
-            })();
+      if (viewScope === 'week') return stepWeekAnchor(a, 1, todayDate);
+      const next = new Date(a.getFullYear(), a.getMonth() + 1, 1);
       return next > todayDate ? todayDate : next;
     });
   };
@@ -196,7 +193,7 @@ export default function TransactionsScreen() {
     const m = anchor.getMonth();
     return { fromDate: toLocalIsoDate(new Date(y, m, 1)), toDate: toLocalIsoDate(new Date(y, m + 1, 0)) };
   }, [anchor]);
-  const visibleRange = viewScope === 'month' ? monthRange : { fromDate: days[0].iso, toDate: days[6].iso };
+  const visibleRange = viewScope === 'month' ? monthRange : { fromDate: week.start, toDate: week.end };
   const filteredTransactions = useMemo(
     () =>
       filterActivity(
@@ -220,17 +217,17 @@ export default function TransactionsScreen() {
   const bars = useMemo(
     () =>
       viewScope === 'week'
-        ? buildDailySpendBars(
+        ? buildWeekSpendBars(
             transactions,
             categories,
-            isoDatesInRange(visibleRange.fromDate, visibleRange.toDate),
+            { start: visibleRange.fromDate, end: visibleRange.toDate },
             today
           )
         : buildWeeklySpendBars(transactions, categories, visibleRange.fromDate, visibleRange.toDate, today),
     [transactions, categories, viewScope, visibleRange.fromDate, visibleRange.toDate, today]
   );
   const legend = useMemo(() => legendForBars(bars), [bars]);
-  const heading = periodHeading({ scope: viewScope, days, anchor, today: todayDate });
+  const heading = periodHeading({ scope: viewScope, week, anchor, today: todayDate });
   const pickedBar = bars.find((b) => b.key === selectedBar);
   // What the tapped bar cost; nothing until one is tapped (the bars say they can be tapped by being bars).
   const barHint = pickedBar
@@ -272,7 +269,7 @@ export default function TransactionsScreen() {
     // figure, so a failure here (or the comparison query being slower than
     // the rest) shouldn't blank the transaction list itself.
     try {
-      const prev = previousRangeFor(range, scope);
+      const prev = previousRangeFor(range, scope, toLocalIsoDate(new Date()));
       const cmp = await getRangeComparison(
         { start: range.fromDate, end: range.toDate },
         { start: prev.fromDate, end: prev.toDate },
@@ -331,11 +328,28 @@ export default function TransactionsScreen() {
 
   const searchGroupedDays = useMemo(() => groupByDate(searchResults), [searchResults]);
   const displayedGroups = searching ? searchGroupedDays : groupedDays;
+
+  // Days can be arranged by hand, but only on the plain list: a search or filter shows
+  // part of a day, and its order would be saved over the whole day.
+  const noFilter = filterType === 'all' && filterCategoryIds.length === 0 && filterAccountIds.length === 0;
+  const canReorder = !searching && noFilter;
+  const [dragging, setDragging] = useState(false);
+  const reorderDay = useCallback(
+    async (date: string, orderedIds: string[]) => {
+      await setDayOrder(date, orderedIds);
+      await load({ fromDate: rangeFromDate, toDate: rangeToDate }, viewScope);
+    },
+    [load, rangeFromDate, rangeToDate, viewScope]
+  );
   const trimmedQuery = searchQuery.trim();
 
   const onChangeViewScope = (scope: 'week' | 'month') => {
     if (scope !== viewScope) haptics.tap();
     setDirection(0);
+    // Month → Week lands on this week when it's the current month, otherwise on the month's first week.
+    if (scope === 'week' && viewScope === 'month') {
+      setAnchor(isCurrentMonth ? todayDate : new Date(anchor.getFullYear(), anchor.getMonth(), 1));
+    }
     setViewScope(scope);
   };
 
@@ -487,6 +501,19 @@ export default function TransactionsScreen() {
         </View>
       )}
 
+      {!searching && viewScope === 'week' && (
+        <WeekRail
+          week={week}
+          monthLabel={`${anchor.toLocaleDateString(undefined, { month: 'short' })} ${anchor.getFullYear()}`}
+          todayIso={today}
+          onPickWeek={(start) => {
+            haptics.tap();
+            setDirection(start < week.start ? -1 : 1);
+            setAnchor(parseLocalIsoDate(start));
+          }}
+        />
+      )}
+
       <MonthPickerModal
         visible={monthPickerVisible}
         anchor={anchor}
@@ -516,6 +543,7 @@ export default function TransactionsScreen() {
 
       <FlatList
         ref={scrollRef}
+        scrollEnabled={!dragging}
         data={displayedGroups}
         keyExtractor={(group) => group.date}
         contentContainerStyle={{
@@ -547,6 +575,7 @@ export default function TransactionsScreen() {
                 incomeMinor={comparison?.current.incomeMinor ?? 0}
                 expenseChangePct={expenseChangePct}
                 viewScope={viewScope}
+                compareLabel={viewScope === 'week' ? weekCompareLabel(week, today) : undefined}
                 onChangeViewScope={onChangeViewScope}
                 bars={bars}
                 legend={legend}
@@ -606,6 +635,8 @@ export default function TransactionsScreen() {
             onPressTx={setDetailTx}
             openStacks={openStacks}
             onToggleStack={toggleStack}
+            onReorder={canReorder ? reorderDay : undefined}
+            onDragActive={setDragging}
             entering={FadeIn.delay(Math.min(gi * 45, MAX_LIST_STAGGER_MS))
               .duration(DURATIONS.enter)
               .reduceMotion(ReduceMotion.System)}

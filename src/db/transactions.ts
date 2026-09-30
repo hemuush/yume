@@ -28,6 +28,7 @@ export function rowToTransaction(row: TransactionRow): Transaction {
     loanPaymentId: row.loan_payment_id,
     splitId: row.split_id ?? null,
     isRefund: !!row.is_refund,
+    dayRank: row.day_rank ?? null,
     splitTotalMinor: row.split_total_minor ?? null,
     createdAt: row.created_at,
   };
@@ -234,7 +235,7 @@ export async function listTransactions(filters?: {
     // A split part carries its whole payment's total, for "Part of a ₹1,850 split".
     `SELECT t.*,
        (SELECT SUM(s.amount_minor) FROM transactions s WHERE s.split_id = t.split_id) AS split_total_minor
-     FROM transactions t ${where} ORDER BY date DESC, created_at DESC ${hasLimit ? 'LIMIT ?' : ''}`,
+     FROM transactions t ${where} ORDER BY date DESC, (day_rank IS NOT NULL) ASC, day_rank ASC, created_at DESC ${hasLimit ? 'LIMIT ?' : ''}`,
     args
   );
   return rows.map(rowToTransaction);
@@ -542,7 +543,7 @@ export async function updateTransaction(id: string, input: UpdateTransactionInpu
   const keepPaymentMode = input.paymentMode === undefined;
   await db.runAsync(
     `UPDATE transactions
-     SET type = ?, account_id = ?, to_account_id = ?, category_id = ?, amount_minor = ?, date = ?, note = ?, is_refund = ?${
+     SET type = ?, account_id = ?, to_account_id = ?, category_id = ?, amount_minor = ?, date = ?, note = ?, is_refund = ?, day_rank = CASE WHEN date = ? THEN day_rank END${
        keepPaymentMode ? '' : ', payment_mode = ?'
      }
      WHERE id = ?`,
@@ -555,12 +556,30 @@ export async function updateTransaction(id: string, input: UpdateTransactionInpu
       input.date,
       input.note ?? '',
       isRefund ? 1 : 0,
+      input.date,
       ...(keepPaymentMode ? [] : [input.paymentMode ?? null]),
       id,
     ]
   );
   const row = await db.getFirstAsync<TransactionRow>('SELECT * FROM transactions WHERE id = ?', [id]);
   return rowToTransaction(found(row, 'entry'));
+}
+
+/**
+ * Saves a hand-arranged day: `orderedIds` are that day's entries top to bottom.
+ * Only rows really dated `date` are touched, so a stale id can't rank another day.
+ */
+export async function setDayOrder(date: string, orderedIds: string[]): Promise<void> {
+  const db = await getDb();
+  await db.withTransactionAsync(async (tx) => {
+    for (let i = 0; i < orderedIds.length; i++) {
+      await tx.runAsync('UPDATE transactions SET day_rank = ? WHERE id = ? AND date = ?', [
+        i,
+        orderedIds[i],
+        date,
+      ]);
+    }
+  });
 }
 
 export type TransactionLink =

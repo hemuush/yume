@@ -30,6 +30,8 @@ interface HeadlineContent {
   incomeMinor: number;
   expenseChangePct: number | null;
   viewScope: 'week' | 'month';
+  /** What the change pill compares with; defaults to "last week"/"last month". */
+  compareLabel?: string;
   bars: SpendBar[];
   legend: ChartLegendItem[];
 }
@@ -57,6 +59,7 @@ export function TransactionsHeadline({
   incomeMinor,
   expenseChangePct,
   viewScope,
+  compareLabel,
   onChangeViewScope,
   bars,
   legend,
@@ -80,6 +83,7 @@ export function TransactionsHeadline({
     incomeMinor,
     expenseChangePct,
     viewScope,
+    compareLabel,
     bars,
     legend,
   });
@@ -101,7 +105,15 @@ export function TransactionsHeadline({
 
   useEffect(() => {
     const myRun = ++runId.current;
-    const next: HeadlineContent = { expenseMinor, incomeMinor, expenseChangePct, viewScope, bars, legend };
+    const next: HeadlineContent = {
+      expenseMinor,
+      incomeMinor,
+      expenseChangePct,
+      viewScope,
+      compareLabel,
+      bars,
+      legend,
+    };
     const isPeriodTurn = prevPeriodKey.current !== periodKey;
     prevPeriodKey.current = periodKey;
 
@@ -142,7 +154,7 @@ export function TransactionsHeadline({
     // `direction` is read with the period it came with, and `opacity`/`tx` are
     // stable shared values; re-running on `direction` alone would replay the slide.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [periodKey, expenseMinor, incomeMinor, expenseChangePct, viewScope, bars, legend, reduce]);
+  }, [periodKey, expenseMinor, incomeMinor, expenseChangePct, viewScope, compareLabel, bars, legend, reduce]);
 
   const slideStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: tx.value }],
@@ -181,7 +193,8 @@ export function TransactionsHeadline({
         {pct != null && pct !== 0 && (
           <View style={[styles.changePill, pct > 0 ? styles.changePillUp : styles.changePillDown]}>
             <Text style={[styles.changeText, pct > 0 ? styles.expense : styles.income]}>
-              {pct > 0 ? '▲' : '▼'} {formatPctChange(pct)} vs last {displayed.viewScope}
+              {pct > 0 ? '▲' : '▼'} {formatPctChange(pct)} vs{' '}
+              {displayed.compareLabel ?? `last ${displayed.viewScope}`}
             </Text>
           </View>
         )}

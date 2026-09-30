@@ -18,6 +18,12 @@ export interface SpendBar {
   segments: SpendBarSegment[];
   /** True for the bar covering today — draws the highlight ring. */
   isCurrent: boolean;
+  /**
+   * A week's seven fixed columns include days that aren't bars: 'outside' is a
+   * day of the neighbouring month (a dashed placeholder), 'future' a day that
+   * hasn't happened yet (a dotted baseline). Neither can be tapped.
+   */
+  state?: 'outside' | 'future';
 }
 
 const WEEKDAY_INITIAL = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
@@ -95,6 +101,31 @@ export function buildDailySpendBars(
       segments,
       isCurrent: date === todayIso,
     };
+  });
+}
+
+/**
+ * The seven Sunday-to-Saturday columns of one week of a month. A short first
+ * or last week keeps its place in the row: days outside the month are
+ * placeholders, days after today are empty, and only real days carry spend.
+ */
+export function buildWeekSpendBars(
+  transactions: Transaction[],
+  categories: Category[],
+  week: { start: string; end: string },
+  todayIso: string
+): SpendBar[] {
+  const catById = new Map(categories.map((c) => [c.id, c]));
+  const sunday = addDaysToIsoDate(week.start, -parseLocalIsoDate(week.start).getDay());
+  return Array.from({ length: 7 }, (_, i) => {
+    const date = addDaysToIsoDate(sunday, i);
+    const base = { key: date, label: WEEKDAY_INITIAL[i], isCurrent: date === todayIso };
+    if (date < week.start || date > week.end) {
+      return { ...base, totalMinor: 0, segments: [], state: 'outside' as const };
+    }
+    if (date > todayIso) return { ...base, totalMinor: 0, segments: [], state: 'future' as const };
+    const { totalMinor, segments } = summariseExpenses(transactions, catById, date, date);
+    return { ...base, totalMinor, segments };
   });
 }
 

@@ -100,6 +100,8 @@ export interface TransactionRow {
   split_id: string | null;
   /** 1 on money back for a purchase (type 'income', expense category). */
   is_refund: number;
+  /** Manual position within its day (0 = top); null when never reordered. */
+  day_rank?: number | null;
   /** Only on list queries: the whole split's total, when this row is a part. */
   split_total_minor?: number | null;
   payment_mode: 'cash' | 'debit' | 'credit' | 'upi' | 'bank_transfer' | 'other' | null;
