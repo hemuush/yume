@@ -2,6 +2,7 @@ import { found } from './found';
 import { TransactionRow } from './rows';
 import { getDb, AppDb, SqlParam } from './client';
 import { newId } from '@/lib/id';
+import { MAX_AMOUNT_MINOR } from '@/lib/amountLimits';
 import { captureRow, restoreRow, RowSnapshot } from './undoSnapshot';
 import { getDefaultCurrency } from './settings';
 import { Transaction, TransactionType, PaymentMode } from '@/types';
@@ -102,6 +103,9 @@ export async function assertSameCurrencyTransfer(
 export async function assertValidTransactionInput(input: CreateTransactionInput): Promise<void> {
   if (!Number.isFinite(input.amountMinor) || input.amountMinor <= 0) {
     throw new Error('Amount must be a positive number');
+  }
+  if (input.amountMinor > MAX_AMOUNT_MINOR) {
+    throw new Error('That amount is too large');
   }
   if (input.type === 'transfer' && !input.toAccountId) {
     throw new Error('Transfer requires a destination account');
@@ -508,6 +512,9 @@ export interface UpdateTransactionInput {
 export async function updateTransaction(id: string, input: UpdateTransactionInput): Promise<Transaction> {
   if (!Number.isFinite(input.amountMinor) || input.amountMinor <= 0) {
     throw new Error('Amount must be a positive number');
+  }
+  if (input.amountMinor > MAX_AMOUNT_MINOR) {
+    throw new Error('That amount is too large');
   }
   if (input.type === 'transfer' && !input.toAccountId) {
     throw new Error('Transfer requires a destination account');

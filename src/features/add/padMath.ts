@@ -1,3 +1,5 @@
+import { MAX_AMOUNT_MAJOR } from '@/lib/amountLimits';
+
 /**
  * The Add screen's number pad: what a key press does to the typed
  * expression, and what that expression is worth. Pure, so every rule below
@@ -87,7 +89,7 @@ export function evaluateAmount(expr: string): number | null {
   const total = terms.reduce((sum, t, i) => sum + signs[i] * t, 0);
   if (!Number.isFinite(total)) return null;
   const rounded = Math.round(total * 100) / 100;
-  return rounded > 0 ? rounded : null;
+  return rounded > 0 && rounded <= MAX_AMOUNT_MAJOR ? rounded : null;
 }
 
 /** True when the expression is a sum rather than a single number — the screen shows it under the amount. */
