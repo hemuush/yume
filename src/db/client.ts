@@ -224,8 +224,47 @@ async function remapLegacyCategoryColors(db: AppDb): Promise<void> {
   }
 }
 
-/** Exported for tests only — the app runs this once, inside initDb. */
-export async function runMigrations(db: AppDb): Promise<void> {
+/**
+ * Steps that must run exactly once, in order — for a change that is NOT safe
+ * to repeat (copying a column's values, dropping or rebuilding a table). Each
+ * step's `version` is one higher than the last; the database remembers the
+ * highest one applied in `PRAGMA user_version`. Anything that IS safe to repeat
+ * belongs in applyIdempotentMigrations instead, which is how every change so
+ * far has been done and which also heals a database restored from an older
+ * backup.
+ */
+export interface VersionedMigration {
+  version: number;
+  run: (db: AppDb) => Promise<void>;
+}
+export const MIGRATIONS: readonly VersionedMigration[] = [];
+
+/** The highest version in MIGRATIONS, or 1 (the pre-versioning baseline) while it is empty. */
+const latestSchemaVersion = (steps: readonly VersionedMigration[]): number =>
+  Math.max(1, ...steps.map((m) => m.version));
+
+/**
+ * Exported for tests only — the app runs this once, inside initDb's
+ * transaction, so a failed step rolls back together with its version stamp.
+ * A database already past this build's version (a file from a newer app) is
+ * left as it is: its version is never lowered and no step re-runs.
+ */
+export async function runMigrations(
+  db: AppDb,
+  steps: readonly VersionedMigration[] = MIGRATIONS
+): Promise<void> {
+  await applyIdempotentMigrations(db);
+
+  const row = await db.getFirstAsync<{ user_version: number }>('PRAGMA user_version');
+  const stored = row?.user_version ?? 0;
+  for (const step of [...steps].sort((a, b) => a.version - b.version)) {
+    if (step.version > stored) await step.run(db);
+  }
+  const latest = latestSchemaVersion(steps);
+  if (latest > stored) await db.execAsync(`PRAGMA user_version = ${latest}`);
+}
+
+async function applyIdempotentMigrations(db: AppDb): Promise<void> {
   await ensureColumn(db, 'loans', 'rate_type', `rate_type TEXT NOT NULL DEFAULT 'fixed'`);
   await ensureColumn(db, 'loans', 'person_id', `person_id TEXT REFERENCES people(id) ON DELETE SET NULL`);
   await ensureColumn(db, 'transactions', 'loan_id', `loan_id TEXT REFERENCES loans(id) ON DELETE CASCADE`);
@@ -374,6 +413,8 @@ async function initDb(): Promise<AppDb> {
   const raw = await SQLite.openDatabaseAsync(DB_NAME);
   const unqueued = toAppDb(raw);
   await unqueued.execAsync('PRAGMA foreign_keys = ON;');
+  // The home-screen widget and the app can both hold this file open; wait a few seconds for the other's write instead of failing at once with "database is locked".
+  await unqueued.execAsync('PRAGMA busy_timeout = 5000;');
   await unqueued.execAsync(CREATE_TABLES_SQL);
   // One transaction for the whole batch: a failure partway through (a
   // crash, a bad statement) rolls every migration back together instead of
