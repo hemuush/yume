@@ -50,7 +50,7 @@ export function RuleCard({
       exiting={ROW_EXIT}
     >
       <NeoTile style={[styles.card, muted && styles.cardMuted]}>
-        <Pressable style={withPressed()} onPress={onPress}>
+        <Pressable style={withPressed()} onPress={onPress} accessibilityRole="button">
           <View style={styles.cardTop}>
             <View style={{ flex: 1, marginRight: 8 }}>
               <Text style={styles.cardTitle} numberOfLines={1}>

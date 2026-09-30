@@ -261,7 +261,12 @@ export function PersonDetailModal({
         <>
           <Text style={styles.sectionTitle}>Linked loans</Text>
           {linkedLoans.map((loan) => (
-            <Pressable key={loan.id} style={withPressed(styles.row)} onPress={openLoans}>
+            <Pressable
+              key={loan.id}
+              style={withPressed(styles.row)}
+              onPress={openLoans}
+              accessibilityRole="button"
+            >
               <View style={{ flex: 1 }}>
                 <Text style={styles.rowLabel} numberOfLines={1}>
                   {loan.direction === 'borrowed' ? 'You borrowed' : 'You lent'} ·{' '}
@@ -333,6 +338,7 @@ export function PersonDetailModal({
                 key={entry.id}
                 style={withPressed(styles.row)}
                 onLongPress={() => onDeleteEntry(entry)}
+                accessibilityHint="Double tap and hold to delete"
                 disabled={saving}
               >
                 <View

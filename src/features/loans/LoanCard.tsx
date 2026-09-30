@@ -49,7 +49,12 @@ export function LoanCard({
     <Animated.View style={fadeStyle}>
       <NeoTile style={[styles.card, muted && styles.cardMuted]}>
         <Animated.View style={animatedStyle}>
-          <Pressable onPress={onPress} onPressIn={onPressIn} onPressOut={onPressOut}>
+          <Pressable
+            onPress={onPress}
+            onPressIn={onPressIn}
+            onPressOut={onPressOut}
+            accessibilityRole="button"
+          >
             <View style={styles.cardHeader}>
               <Text style={styles.cardName} numberOfLines={1}>
                 {loan.counterparty}

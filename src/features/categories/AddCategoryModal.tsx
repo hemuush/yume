@@ -162,6 +162,8 @@ export function AddCategoryModal({
           <View style={styles.colorRow}>
             <Pressable
               onPress={() => setParentId(null)}
+              accessibilityRole="button"
+              accessibilityState={{ selected: parentId === null }}
               style={withPressed([styles.parentChip, parentId === null && styles.parentChipActive])}
             >
               <Text style={[styles.parentChipText, parentId === null && styles.parentChipTextActive]}>
@@ -172,6 +174,8 @@ export function AddCategoryModal({
               <Pressable
                 key={p.id}
                 onPress={() => setParentId(p.id)}
+                accessibilityRole="button"
+                accessibilityState={{ selected: parentId === p.id }}
                 style={withPressed([styles.parentChip, parentId === p.id && styles.parentChipActive])}
               >
                 <Text style={[styles.parentChipText, parentId === p.id && styles.parentChipTextActive]}>
@@ -190,10 +194,13 @@ export function AddCategoryModal({
       )}
       <Text style={styles.fieldLabel}>Color</Text>
       <View style={styles.colorRow}>
-        {CATEGORY_COLOR_PALETTE.map((c) => (
+        {CATEGORY_COLOR_PALETTE.map((c, i) => (
           <Pressable
             key={c}
             onPress={() => setColor(c)}
+            accessibilityRole="button"
+            accessibilityLabel={`Colour ${i + 1} of ${CATEGORY_COLOR_PALETTE.length}`}
+            accessibilityState={{ selected: color === c }}
             style={withPressed([
               styles.colorSwatch,
               { backgroundColor: c },
@@ -208,6 +215,9 @@ export function AddCategoryModal({
           <Pressable
             key={iconName}
             onPress={() => setIcon(iconName)}
+            accessibilityRole="button"
+            accessibilityLabel={`${iconName.replace(/-/g, ' ')} icon`}
+            accessibilityState={{ selected: icon === iconName }}
             style={withPressed([styles.iconChoice, icon === iconName && styles.iconChoiceActive])}
           >
             <CategoryIcon
