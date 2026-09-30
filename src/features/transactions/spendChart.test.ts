@@ -1,4 +1,10 @@
-import { buildDailySpendBars, buildWeeklySpendBars, weekRangesInMonth, legendForBars } from './spendChart';
+import {
+  buildDailySpendBars,
+  buildWeekSpendBars,
+  buildWeeklySpendBars,
+  weekRangesInMonth,
+  legendForBars,
+} from './spendChart';
 import type { Category, Transaction } from '@/types';
 
 const cat = (id: string, name: string, color: string, parentId: string | null = null): Category => ({
@@ -203,5 +209,55 @@ describe('legendForBars', () => {
   it('is empty when nothing was spent', () => {
     const bars = buildDailySpendBars([], [], ['2026-09-10'], '2026-09-10');
     expect(legendForBars(bars)).toEqual([]);
+  });
+});
+
+describe('buildWeekSpendBars', () => {
+  const expense = (date: string, amountMinor: number) =>
+    ({ id: date, type: 'expense', date, amountMinor, categoryId: null, isRefund: false }) as never;
+
+  it('keeps seven Sun–Sat columns for the short first week, with September as placeholders', () => {
+    const bars = buildWeekSpendBars(
+      [expense('2026-10-01', 500)],
+      [],
+      { start: '2026-10-01', end: '2026-10-03' },
+      '2026-10-01'
+    );
+    expect(bars.map((b) => b.label).join('')).toBe('SMTWTFS');
+    expect(bars.map((b) => b.key)).toEqual([
+      '2026-09-27',
+      '2026-09-28',
+      '2026-09-29',
+      '2026-09-30',
+      '2026-10-01',
+      '2026-10-02',
+      '2026-10-03',
+    ]);
+    expect(bars.map((b) => b.state)).toEqual([
+      'outside',
+      'outside',
+      'outside',
+      'outside',
+      undefined,
+      'future',
+      'future',
+    ]);
+    expect(bars[4]).toMatchObject({ totalMinor: 500, isCurrent: true });
+  });
+
+  it('does not count spend from a neighbouring month into the placeholders', () => {
+    const bars = buildWeekSpendBars(
+      [expense('2026-09-30', 900)],
+      [],
+      { start: '2026-10-01', end: '2026-10-03' },
+      '2026-10-03'
+    );
+    expect(bars.every((b) => b.totalMinor === 0)).toBe(true);
+  });
+
+  it('gives a whole past week seven real days', () => {
+    const bars = buildWeekSpendBars([], [], { start: '2026-09-20', end: '2026-09-26' }, '2026-10-01');
+    expect(bars.every((b) => b.state === undefined)).toBe(true);
+    expect(bars[0].key).toBe('2026-09-20');
   });
 });

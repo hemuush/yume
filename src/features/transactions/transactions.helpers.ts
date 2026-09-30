@@ -2,51 +2,80 @@ import { Category, Transaction } from '@/types';
 import type { ActivityFilter } from './FilterModal';
 import { toLocalIsoDate, parseLocalIsoDate, addDaysToIsoDate } from '@/lib/date';
 import { dayMonth } from '@/lib/dateLabels';
+import { weekRangesInMonth } from './spendChart';
 
-/** One day of the Activity week, enough for its "Sep 7 – 13" label and range. */
-export interface WeekDay {
-  iso: string;
-  day: number;
-  /** 0-based, as Date's. */
-  month: number;
-  year: number;
+/** One Sunday-to-Saturday week of a calendar month, cut at the month's own first and last day. */
+export interface ActivityWeek {
+  start: string;
+  end: string;
+  /** 0-based position among the month's weeks. */
+  index: number;
+  /** Every week of the month, in order — the week rail draws one segment for each. */
+  ranges: { start: string; end: string }[];
 }
 
-// A 7-day window ending on `anchor`, oldest first — `anchor` is a plain day
-// step, not a week counter, so jumping straight to a chosen month (via the
-// month picker) works the same way stepping by one day does. Only the
-// metadata (for the "Sep 7 – 13" label) comes from this now — the day pills
-// themselves were replaced by the spend chart, which is the actual way to
-// jump to a day these days (tap a bar).
-export function sevenDaysEndingOn(anchor: Date): WeekDay[] {
-  const days: WeekDay[] = [];
-  for (let i = 6; i >= 0; i--) {
-    const d = new Date(anchor);
-    d.setDate(d.getDate() - i);
-    days.push({
-      iso: toLocalIsoDate(d),
-      day: d.getDate(),
-      month: d.getMonth(),
-      year: d.getFullYear(),
-    });
+/** The week of its month that holds `anchor`. Never reaches into a neighbouring month. */
+export function weekContaining(anchor: Date): ActivityWeek {
+  const iso = toLocalIsoDate(anchor);
+  const monthStart = toLocalIsoDate(new Date(anchor.getFullYear(), anchor.getMonth(), 1));
+  const monthEnd = toLocalIsoDate(new Date(anchor.getFullYear(), anchor.getMonth() + 1, 0));
+  const ranges = weekRangesInMonth(monthStart, monthEnd);
+  const index = Math.max(
+    0,
+    ranges.findIndex((r) => iso >= r.start && iso <= r.end)
+  );
+  return { ...ranges[index], index, ranges };
+}
+
+/**
+ * The day to anchor on after one week back (-1) or forward (+1): the
+ * neighbouring week of the same month, or the last/first week of the
+ * neighbouring month at a month edge. Forward stops at today.
+ */
+export function stepWeekAnchor(anchor: Date, dir: -1 | 1, today: Date): Date {
+  const week = weekContaining(anchor);
+  let iso: string;
+  if (dir < 0) {
+    iso =
+      week.index > 0
+        ? week.ranges[week.index - 1].start
+        : weekContaining(new Date(anchor.getFullYear(), anchor.getMonth(), 0)).start;
+  } else {
+    iso =
+      week.index < week.ranges.length - 1 ? week.ranges[week.index + 1].start : addDaysToIsoDate(week.end, 1);
   }
-  return days;
+  return iso > toLocalIsoDate(today) ? today : parseLocalIsoDate(iso);
 }
 
-/** The equivalent immediately-prior range, for the headline's "N% less/more than last …" line. */
+/**
+ * The equivalent immediately-prior range, for the headline's "N% less/more than last …" line.
+ * A week is compared with the same weekdays of the week before, and — while it is still in
+ * progress — only up to the same day, so a part-week is never set against a whole one.
+ */
 export function previousRangeFor(
   range: { fromDate: string; toDate: string },
-  scope: 'week' | 'month'
+  scope: 'week' | 'month',
+  todayIso?: string
 ): { fromDate: string; toDate: string } {
   if (scope === 'week') {
-    const prevEnd = addDaysToIsoDate(range.fromDate, -1);
-    const prevStart = addDaysToIsoDate(prevEnd, -6);
-    return { fromDate: prevStart, toDate: prevEnd };
+    const toDate = addDaysToIsoDate(range.toDate, -7);
+    const inProgress = todayIso != null && todayIso >= range.fromDate && todayIso < range.toDate;
+    return {
+      fromDate: addDaysToIsoDate(range.fromDate, -7),
+      toDate: inProgress ? addDaysToIsoDate(todayIso, -7) : toDate,
+    };
   }
   const start = parseLocalIsoDate(range.fromDate);
   const prevStart = new Date(start.getFullYear(), start.getMonth() - 1, 1);
   const prevEnd = new Date(start.getFullYear(), start.getMonth(), 0);
   return { fromDate: toLocalIsoDate(prevStart), toDate: toLocalIsoDate(prevEnd) };
+}
+
+/** What the headline's change pill compares against: "last week", or "same days last week" for a part-week. */
+export function weekCompareLabel(week: { start: string; end: string }, todayIso: string): string {
+  const partial =
+    week.start !== addDaysToIsoDate(week.end, -6) || (todayIso >= week.start && todayIso < week.end);
+  return partial ? 'same days last week' : 'last week';
 }
 
 /** Consecutive same-date runs — relies on `txs` already being date-sorted (the query's own ORDER BY), not a separate grouping pass over unsorted data. */
@@ -62,31 +91,34 @@ export function groupByDate(txs: Transaction[]): { date: string; items: Transact
 
 /**
  * The Activity period bar's title and the quieter line beside it. A week is
- * the 7 days ending on the anchor, so "This week" carries its real dates
- * ("20–26 Sep") alongside; a past week leads with its dates. A month is its
- * name, plus the year only when it isn't this year's.
+ * the Sunday-to-Saturday row of its month, so "This week" carries its real
+ * dates ("1–3 Oct") alongside; any other week leads with its dates and says
+ * which week of the month it is. A month is its name, plus the year only when
+ * it isn't this year's.
  */
 export function periodHeading(input: {
   scope: 'week' | 'month';
-  days: WeekDay[];
+  week: ActivityWeek;
   anchor: Date;
   today: Date;
 }): { title: string; sub: string } {
-  const { scope, days, anchor, today } = input;
+  const { scope, week, anchor, today } = input;
   if (scope === 'month') {
     const title = anchor.toLocaleDateString(undefined, { month: 'long' });
     return { title, sub: anchor.getFullYear() === today.getFullYear() ? '' : String(anchor.getFullYear()) };
   }
-  const first = days[0];
-  const last = days[days.length - 1];
   // The same "27 Sept" as each day's heading below it, so the two never disagree ("Sep" vs "Sept").
   const range =
-    first.month === last.month
-      ? `${first.day}–${dayMonth(last.iso)}`
-      : `${dayMonth(first.iso)} – ${dayMonth(last.iso)}`;
-  const isCurrent = days.some((d) => d.iso === toLocalIsoDate(today));
-  if (isCurrent) return { title: 'This week', sub: range };
-  return { title: range, sub: last.year === today.getFullYear() ? '' : String(last.year) };
+    week.start === week.end
+      ? dayMonth(week.end)
+      : `${parseLocalIsoDate(week.start).getDate()}–${dayMonth(week.end)}`;
+  const todayIso = toLocalIsoDate(today);
+  if (todayIso >= week.start && todayIso <= week.end) return { title: 'This week', sub: range };
+  const position = `Week ${week.index + 1} of ${week.ranges.length}`;
+  return {
+    title: range,
+    sub: anchor.getFullYear() === today.getFullYear() ? position : `${position} · ${anchor.getFullYear()}`,
+  };
 }
 
 /**
@@ -208,5 +240,47 @@ export function buildDayLane(
     stack.items.push(t);
     stack.totalMinor += t.amountMinor;
   }
+  // Once the day has been arranged by hand, every line keeps the place it was
+  // dragged to (splits included); until then splits lead, as above.
+  if (items.some((t) => t.dayRank != null)) {
+    const place = new Map(items.map((t, i) => [t.id, i]));
+    const top = (l: LaneLine) =>
+      Math.min(...(l.kind === 'single' ? [l.tx] : l.items).map((t) => place.get(t.id) ?? Infinity));
+    lines.sort((x, y) => top(x) - top(y));
+  }
   return { transfers, lines };
+}
+
+/** The lines with one dragged from `from` to `to` (a new array; out-of-range moves change nothing). */
+export function moveLine(lines: LaneLine[], from: number, to: number): LaneLine[] {
+  if (from === to || from < 0 || to < 0 || from >= lines.length || to >= lines.length) return lines;
+  const next = [...lines];
+  const [moved] = next.splice(from, 1);
+  next.splice(to, 0, moved);
+  return next;
+}
+
+/**
+ * Where a line lifted from `from` and dragged `dy` px lands: the line whose
+ * slot the lifted line's middle is over (`heights` are the lines' own heights, top to bottom).
+ */
+export function dropIndex(heights: number[], from: number, dy: number): number {
+  if (heights.length === 0) return from;
+  let top = 0;
+  let centre = dy;
+  const ends = heights.map((h, i) => {
+    if (i === from) centre += top + h / 2;
+    top += h;
+    return top;
+  });
+  const hit = ends.findIndex((end) => centre < end);
+  return hit === -1 ? heights.length - 1 : hit;
+}
+
+/** A day's entry ids top to bottom, as saved: each line's entries together, transfers after. */
+export function laneOrderIds(lines: LaneLine[], transfers: Transaction[]): string[] {
+  return [
+    ...lines.flatMap((l) => (l.kind === 'single' ? [l.tx.id] : l.items.map((t) => t.id))),
+    ...transfers.map((t) => t.id),
+  ];
 }

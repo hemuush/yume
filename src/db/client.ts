@@ -337,6 +337,7 @@ async function applyIdempotentMigrations(db: AppDb): Promise<void> {
 
   // Refunds: money back that lowers a category's spending (db/spendSql.ts).
   await ensureColumn(db, 'transactions', 'is_refund', 'is_refund INTEGER NOT NULL DEFAULT 0');
+  await ensureColumn(db, 'transactions', 'day_rank', 'day_rank INTEGER');
 
   loanDueDatesRepaired = await repairLoanDueDates(db);
 }

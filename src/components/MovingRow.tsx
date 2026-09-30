@@ -9,9 +9,18 @@ import { ROW_LAYOUT, ROW_EXIT } from '@/lib/animation';
  * Give it the row's stable key — the id, never the index — or the wrong
  * row animates.
  */
-export function MovingRow({ children, style }: { children: ReactNode; style?: StyleProp<ViewStyle> }) {
+export function MovingRow({
+  children,
+  style,
+  moving = true,
+}: {
+  children: ReactNode;
+  style?: StyleProp<ViewStyle>;
+  /** False for a moment after rows were moved by hand, so they land without sliding twice. */
+  moving?: boolean;
+}) {
   return (
-    <Animated.View layout={ROW_LAYOUT} exiting={ROW_EXIT} style={style}>
+    <Animated.View layout={moving ? ROW_LAYOUT : undefined} exiting={ROW_EXIT} style={style}>
       {children}
     </Animated.View>
   );

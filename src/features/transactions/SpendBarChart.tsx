@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { View, Pressable, StyleSheet, Animated } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { View, Pressable, StyleSheet, Animated, Easing } from 'react-native';
 import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
 import { useReduceMotion } from '@/lib/useReduceMotion';
@@ -11,10 +11,10 @@ const MAX_BAR_HEIGHT = 64;
 const MAX_STAGGER_MS = 220;
 
 /**
- * One bar's stack, growing up from 0 on mount and whenever its own height
- * changes (a period switch) — the same `Animated.timing` height-interpolation
- * `AnimatedCategoryFill` already uses for Reports' category rows, just
- * driving height instead of width and staggered per bar via `delay`.
+ * One bar's stack: it grows up from 0 once, when it first appears (staggered
+ * per bar via `delay`), and after that glides from its current height to a
+ * new one. It never drops back to 0 first — that made every bar blink on
+ * each new entry, Week/Month switch and period change.
  */
 function AnimatedBarStack({
   heightPct,
@@ -28,21 +28,27 @@ function AnimatedBarStack({
   children: React.ReactNode;
 }) {
   const reduce = useReduceMotion();
-  const [v] = useState(() => new Animated.Value(reduce ? 1 : 0));
+  // The height itself, in percent.
+  const [v] = useState(() => new Animated.Value(reduce ? heightPct : 0));
+  const grown = useRef(false);
 
   useEffect(() => {
     if (reduce) {
-      v.setValue(1);
+      v.setValue(heightPct);
       return;
     }
-    v.setValue(0);
-    Animated.timing(v, { toValue: 1, duration: 420, delay, useNativeDriver: false }).start();
-    // Re-running only when the target height itself changes, not on every
-    // unrelated re-render of the chart it lives in.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [heightPct, reduce]);
+    const first = !grown.current;
+    grown.current = true;
+    Animated.timing(v, {
+      toValue: heightPct,
+      duration: first ? 420 : 280,
+      delay: first ? delay : 0,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: false,
+    }).start();
+  }, [heightPct, reduce, delay, v]);
 
-  const height = v.interpolate({ inputRange: [0, 1], outputRange: ['0%', `${heightPct}%`] });
+  const height = v.interpolate({ inputRange: [0, 100], outputRange: ['0%', '100%'], extrapolate: 'clamp' });
   return <Animated.View style={[style, { height }]}>{children}</Animated.View>;
 }
 
@@ -81,6 +87,17 @@ export function SpendBarChart({
         const heightPct = bar.totalMinor > 0 ? Math.max(6, (bar.totalMinor / maxTotal) * 100) : 0;
         const selected = selectedKey === bar.key;
         const faded = selectedKey != null && !selected;
+        if (bar.state) {
+          // Not a day of this week's month, or not here yet: a quiet placeholder, never tappable.
+          return (
+            <View key={bar.key} style={styles.col} accessibilityElementsHidden importantForAccessibility="no">
+              <View style={styles.barTrack}>
+                <View style={bar.state === 'outside' ? styles.outsideDay : styles.futureDay} />
+              </View>
+              <Text style={[styles.label, styles.labelAway]}>{bar.label}</Text>
+            </View>
+          );
+        }
         return (
           <Pressable
             key={bar.key}
@@ -183,6 +200,22 @@ const styles = StyleSheet.create({
   },
   segment: { width: '100%' },
   baseline: { width: 20, height: 2, borderRadius: 1, backgroundColor: theme.colors.borderSoft },
+  outsideDay: {
+    width: 20,
+    height: 14,
+    borderRadius: 6,
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
+    borderColor: theme.colors.borderSoft,
+  },
+  futureDay: {
+    width: 20,
+    height: 2,
+    borderRadius: 1,
+    backgroundColor: theme.colors.borderSoft,
+    opacity: 0.5,
+  },
+  labelAway: { opacity: 0.45 },
   label: { fontFamily: theme.font.mono, fontSize: 9, color: theme.colors.textMuted, marginTop: 8 },
   labelCurrent: { color: theme.colors.textPrimary, fontFamily: theme.font.monoBold },
   legend: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 14 },
