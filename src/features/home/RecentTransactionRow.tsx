@@ -70,5 +70,5 @@ const styles = StyleSheet.create({
   sub: h.sub,
   amount: h.amount,
   income: h.income,
-  refund: { fontFamily: theme.font.bodyBold, color: theme.colors.income },
+  refund: { fontFamily: theme.font.bodyBold, color: theme.colors.incomeText },
 });

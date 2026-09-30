@@ -48,8 +48,8 @@ export const homeStyles = StyleSheet.create({
   mid: { flex: 1, minWidth: 0 },
   title: { fontFamily: theme.font.bodyBold, fontSize: 14, color: theme.colors.textPrimary },
   sub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, marginTop: 2 },
-  subUrgent: { fontFamily: theme.font.bodyBold, color: theme.colors.expense },
+  subUrgent: { fontFamily: theme.font.bodyBold, color: theme.colors.expenseText },
   amount: { fontFamily: theme.font.monoBold, fontSize: 13.5, color: theme.colors.textPrimary },
-  income: { color: theme.colors.income },
-  expense: { color: theme.colors.expense },
+  income: { color: theme.colors.incomeText },
+  expense: { color: theme.colors.expenseText },
 });

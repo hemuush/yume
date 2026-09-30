@@ -47,10 +47,15 @@ export const theme = {
     incomeTint: '#DDF2E5',
     expense: '#E23F55',
     expenseTint: '#FBE1E4',
+    // Deeper shades of income/expense for text and numbers under ~18px: the
+    // livelier pair above is for icons, bars and dots only (it is under 4.5:1
+    // on the cream surfaces).
+    incomeText: '#167747',
+    expenseText: '#BD3547',
 
     textPrimary: '#12130F',
     textSecondary: '#5B5748',
-    textMuted: '#948E7C',
+    textMuted: '#6C685B', // 4.5:1+ on card, page and surfaceAlt
 
     white: '#FFFFFF',
     flatLime: '#E0F0A8',

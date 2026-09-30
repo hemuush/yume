@@ -20,8 +20,8 @@ export function OwedSummary({
   loading?: boolean;
 }) {
   const stats = [
-    { label: 'You owe', minor: youOweMinor, color: theme.colors.expense },
-    { label: 'Owed to you', minor: owedToYouMinor, color: theme.colors.income },
+    { label: 'You owe', minor: youOweMinor, color: theme.colors.expenseText },
+    { label: 'Owed to you', minor: owedToYouMinor, color: theme.colors.incomeText },
   ];
   return (
     <View style={styles.row}>

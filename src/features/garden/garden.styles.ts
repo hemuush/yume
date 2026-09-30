@@ -16,7 +16,7 @@ export const styles = StyleSheet.create({
     borderWidth: theme.border.thin,
     borderColor: theme.colors.expense,
   },
-  errorTitle: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.expense },
+  errorTitle: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.expenseText },
   errorDetail: {
     fontFamily: theme.font.body,
     fontSize: 11.5,
@@ -101,5 +101,10 @@ export const styles = StyleSheet.create({
     gap: 8,
   },
   goalsSummaryText: { fontFamily: theme.font.body, fontSize: 11.5, color: theme.colors.textMuted, flex: 1 },
-  goalError: { fontFamily: theme.font.body, fontSize: 12.5, color: theme.colors.expense, marginBottom: 10 },
+  goalError: {
+    fontFamily: theme.font.body,
+    fontSize: 12.5,
+    color: theme.colors.expenseText,
+    marginBottom: 10,
+  },
 });

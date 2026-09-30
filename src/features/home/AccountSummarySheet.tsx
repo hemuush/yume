@@ -184,7 +184,7 @@ export function AccountSummarySheet({
               divider
               label="Paid since"
               value={money(cycle.paidSinceMinor)}
-              valueColor={theme.colors.income}
+              valueColor={theme.colors.incomeText}
             />
             <BillLine
               divider
@@ -198,7 +198,7 @@ export function AccountSummarySheet({
               value={money(cycle.leftToPayMinor)}
               strong
               valueColor={
-                cycle.daysUntilDue < 0 && cycle.leftToPayMinor > 0 ? theme.colors.expense : undefined
+                cycle.daysUntilDue < 0 && cycle.leftToPayMinor > 0 ? theme.colors.expenseText : undefined
               }
             />
           </View>
@@ -225,7 +225,7 @@ export function AccountSummarySheet({
               detail={
                 flow ? parts(flow.incomeMinor, 'Income', flow.transferInMinor, 'from your accounts') : ''
               }
-              color={theme.colors.income}
+              color={theme.colors.incomeText}
               fillColor={theme.colors.secondary}
             />
             <FlowRow
@@ -236,7 +236,7 @@ export function AccountSummarySheet({
               detail={
                 flow ? parts(flow.expenseMinor, 'Spent', flow.transferOutMinor, 'to your accounts') : ''
               }
-              color={theme.colors.expense}
+              color={theme.colors.expenseText}
               fillColor={theme.colors.idCoralDeep}
             />
           </View>
@@ -246,8 +246,8 @@ export function AccountSummarySheet({
               <Text
                 style={[
                   styles.netValue,
-                  net > 0 && { color: theme.colors.income },
-                  net < 0 && { color: theme.colors.expense },
+                  net > 0 && { color: theme.colors.incomeText },
+                  net < 0 && { color: theme.colors.expenseText },
                 ]}
               >
                 {net > 0 ? '+' : net < 0 ? '−' : ''}

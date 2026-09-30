@@ -102,5 +102,5 @@ const styles = StyleSheet.create({
   },
   iconDestructive: { backgroundColor: theme.colors.expenseTint },
   rowLabel: { fontFamily: theme.font.bodyMedium, fontSize: 15, color: theme.colors.textPrimary },
-  rowLabelDestructive: { color: theme.colors.expense },
+  rowLabelDestructive: { color: theme.colors.expenseText },
 });

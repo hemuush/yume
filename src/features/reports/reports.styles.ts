@@ -9,7 +9,7 @@ export const BLOCK_GAP = 22;
 export const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
-  errTitle: { fontFamily: theme.font.bodyBold, fontSize: 14, color: theme.colors.expense },
+  errTitle: { fontFamily: theme.font.bodyBold, fontSize: 14, color: theme.colors.expenseText },
   errDetail: {
     fontFamily: theme.font.body,
     fontSize: 12,
@@ -150,8 +150,8 @@ export const styles = StyleSheet.create({
   tilePct: { fontFamily: theme.font.roundedBold, fontSize: 18, lineHeight: 20, color: theme.colors.ink },
   tilePctSmall: { fontFamily: theme.font.roundedBold, fontSize: 12, lineHeight: 14 },
   tileAmt: { fontFamily: theme.font.mono, fontSize: 10.5, color: theme.colors.ink },
-  tileUp: { fontFamily: theme.font.monoBold, color: theme.colors.expense },
-  tileDown: { fontFamily: theme.font.monoBold, color: theme.colors.income },
+  tileUp: { fontFamily: theme.font.monoBold, color: theme.colors.expenseText },
+  tileDown: { fontFamily: theme.font.monoBold, color: theme.colors.incomeText },
 
   // Trends: one line chart with a Spending / Net worth switch.
   trendCard: {

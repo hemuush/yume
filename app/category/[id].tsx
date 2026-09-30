@@ -385,7 +385,12 @@ const styles = StyleSheet.create({
   },
   heroValue: { fontFamily: theme.font.monoBold, fontSize: 27, color: theme.colors.textPrimary, marginTop: 6 },
   heroSub: { fontFamily: theme.font.body, fontSize: 12.5, color: theme.colors.textSecondary },
-  heroRefund: { fontFamily: theme.font.bodyBold, fontSize: 12.5, color: theme.colors.income, marginTop: 2 },
+  heroRefund: {
+    fontFamily: theme.font.bodyBold,
+    fontSize: 12.5,
+    color: theme.colors.incomeText,
+    marginTop: 2,
+  },
   split: { paddingHorizontal: 14, paddingVertical: 10, gap: 6 },
   splitTop: { flexDirection: 'row', justifyContent: 'space-between', gap: 10 },
   splitNames: { flex: 1, minWidth: 0 },
@@ -428,7 +433,7 @@ const styles = StyleSheet.create({
     borderWidth: theme.border.thin,
     borderColor: theme.colors.expense,
   },
-  errorTitle: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.expense },
+  errorTitle: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.expenseText },
   errorDetail: {
     fontFamily: theme.font.body,
     fontSize: 11.5,
