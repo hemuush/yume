@@ -1,8 +1,8 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { View, ScrollView, StyleSheet } from 'react-native';
 import { Text } from '@/components/Text';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { listBudgetsForMonth } from '@/db/budgets';
 import { listSavingsGoals } from '@/db/savingsGoals';
 import { listRecurringRules } from '@/db/recurring';
@@ -164,6 +164,16 @@ export default function PlanScreen() {
   // The 14-day tile jumps down to Coming up.
   const scrollRef = useRef<ScrollView>(null);
   const comingUpY = useRef(0);
+  // Home's "+N more this week" lands here, already scrolled to Coming up.
+  const { section } = useLocalSearchParams<{ section?: string }>();
+  useEffect(() => {
+    if (section !== 'coming-up' || !loaded || !data) return;
+    const t = setTimeout(() => {
+      scrollRef.current?.scrollTo({ y: Math.max(0, comingUpY.current - 8), animated: true });
+      router.setParams({ section: undefined });
+    }, 60);
+    return () => clearTimeout(t);
+  }, [section, loaded, data]);
 
   return (
     <View style={styles.container}>

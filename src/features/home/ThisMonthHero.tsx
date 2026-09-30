@@ -23,12 +23,14 @@ import { MonthRing, RING_COLORS } from './MonthRing';
 import { LimitMeter, LimitMeterTone } from '@/components/LimitMeter';
 import { CountUpAmount } from '@/components/CountUpAmount';
 import { useAccent } from '@/theme/AccentContext';
+import { usePrivacy } from '@/theme/PrivacyContext';
 import {
   heroSlices,
   heroPct,
   heroShare,
   heroModes,
   heroRestingMode,
+  withoutSavings,
   HeroMode,
   HERO_MODE_LABEL,
 } from './heroSlices';
@@ -152,6 +154,7 @@ export function ThisMonthHero({
 }) {
   const reduce = useReduceMotion();
   const { dot } = useAccent();
+  const { hideAmounts } = usePrivacy();
   const [displayed, setDisplayed] = useState<HeroContent>({
     incomeMinor,
     spentMinor,
@@ -261,9 +264,12 @@ export function ThisMonthHero({
     });
   });
 
-  const slices = heroSlices(displayed.incomeMinor, displayed.spentMinor, displayed.savingsMinor);
-  const modes = heroModes(slices);
-  const resting = heroRestingMode(slices);
+  // With "hide savings" on, nothing on the card may reveal what went to
+  // savings: no tile, no arc (its share stays empty track), no "kept" view.
+  const full = heroSlices(displayed.incomeMinor, displayed.spentMinor, displayed.savingsMinor);
+  const slices = hideAmounts ? withoutSavings(full) : full;
+  const modes = heroModes(slices, hideAmounts);
+  const resting = heroRestingMode(slices, hideAmounts);
   const mode: HeroMode = picked && modes.includes(picked) ? picked : resting;
   const canPick = modes.length > 1;
   const rowValue = {
@@ -285,7 +291,7 @@ export function ThisMonthHero({
     subText = `by ${formatMoney(slices.overMinor)}, more went out than came in`;
   } else {
     big = heroPct(heroShare(slices, mode));
-    subText = `${HERO_MODE_LABEL[mode].toLowerCase()} of ${formatMoney(displayed.incomeMinor)} income`;
+    subText = `${(hideAmounts ? PRIVATE_LABEL[mode] : HERO_MODE_LABEL[mode]).toLowerCase()} of ${formatMoney(displayed.incomeMinor)} income`;
   }
   const nextMode = () => {
     if (!canPick) return;
@@ -332,8 +338,8 @@ export function ThisMonthHero({
     ? 'no income yet'
     : slices.overMinor > 0
       ? 'spent more'
-      : HERO_MODE_LABEL[mode].toLowerCase();
-  const tileModes = ['spent', 'saved', 'free'] as const;
+      : (hideAmounts ? PRIVATE_LABEL[mode] : HERO_MODE_LABEL[mode]).toLowerCase();
+  const tileModes = hideAmounts ? (['spent', 'free'] as const) : (['spent', 'saved', 'free'] as const);
 
   return (
     <SoftCard elevated backgroundColor={theme.colors.surface} padding={0} style={styles.card}>
@@ -516,6 +522,9 @@ export function ThisMonthHero({
     </SoftCard>
   );
 }
+
+/** The ring's word under the headline when savings are hidden: "free", not "free to use". */
+const PRIVATE_LABEL: Record<HeroMode, string> = { ...HERO_MODE_LABEL, free: 'Free', kept: 'Free' };
 
 /** The tiles' pale fills: each slice's own family, and a soft lavender for debt. */
 const TILE_TINT = {

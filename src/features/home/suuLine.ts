@@ -7,6 +7,8 @@ import {
   SPEND_UP_TEMPLATES,
   GOOD_SAVINGS_TEMPLATES,
   THIN_SAVINGS_LINES,
+  PRIVATE_HEALTHY_LINES,
+  PRIVATE_THIN_LINES,
   fillSuuTemplate,
 } from './suuLinePools';
 
@@ -44,12 +46,15 @@ export interface SuuLine {
  *              situation (overspending) always wins over the hour — telling
  *              someone to relax at 2am while they're in deficit would be the
  *              wrong instinct in either direction.
+ * @param hideSavings  the user hides savings amounts: the savings-rate lines
+ *                     (which name a kept/saved share) give way to neutral ones
  */
 export function suuLine(
   savingsPct: number,
   expenseChangePct: number | null,
   topCategoryName?: string | null,
-  hour?: number
+  hour?: number,
+  hideSavings = false
 ): SuuLine {
   const result = ((): SuuLine => {
     if (expenseChangePct == null) {
@@ -62,6 +67,12 @@ export function suuLine(
       const base = fillSuuTemplate(pickRandom(SPEND_UP_TEMPLATES), formatPctChange(expenseChangePct));
       return {
         text: `${base}${topCategoryName ? ` — mostly ${topCategoryName}.` : '.'}`,
+        pose: 'default',
+      };
+    }
+    if (hideSavings) {
+      return {
+        text: pickRandom(savingsPct >= 20 ? PRIVATE_HEALTHY_LINES : PRIVATE_THIN_LINES),
         pose: 'default',
       };
     }
