@@ -104,9 +104,9 @@ describe('Wrap screen', () => {
     act(() => r.unmount());
   });
 
-  it('Done goes back', async () => {
+  it('✕ goes back', async () => {
     const r = await render();
-    press(r, 'Done');
+    act(() => r.root.find((n) => n.props.accessibilityLabel === 'Close' && n.props.onPress).props.onPress());
     expect(router.back).toHaveBeenCalledTimes(1);
     act(() => r.unmount());
   });

@@ -8,12 +8,13 @@ import { create, act, ReactTestRenderer } from 'react-test-renderer';
 import { Text } from 'react-native';
 
 jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMock').createReanimatedMock());
+jest.mock('expo-sharing', () => ({ shareAsync: jest.fn(async () => {}) }));
 jest.mock('@/theme/PrivacyContext', () => ({
   usePrivacy: () => ({ hideAmounts: true, toggleHideAmounts: jest.fn() }),
 }));
 
 import { Beat } from './WrapBeats';
-import { WrapBeat, fillDays } from './wrapData';
+import { Wrap, WrapBeat, fillDays } from './wrapData';
 
 jest.useFakeTimers();
 
@@ -60,6 +61,8 @@ const BEATS: [string, WrapBeat][] = [
   ['final', { kind: 'final', title: 'A quiet week. Nothing went out.' }],
 ];
 
+const WRAP: Wrap = { period: 'month', label: 'September', key: '2026-09', beats: BEATS.map(([, b]) => b) };
+
 function texts(r: ReactTestRenderer): string {
   return r.root
     .findAllByType(Text)
@@ -71,7 +74,7 @@ describe.each([false, true])('beats (still: %s)', (still) => {
   it.each(BEATS)('%s renders', (_name, beat) => {
     let r!: ReactTestRenderer;
     act(() => {
-      r = create(<Beat beat={beat} still={still} onOpenReport={jest.fn()} onDone={jest.fn()} />);
+      r = create(<Beat wrap={WRAP} beat={beat} still={still} onOpenReport={jest.fn()} />);
     });
     act(() => jest.advanceTimersByTime(3000));
     expect(texts(r).length).toBeGreaterThan(0);
@@ -83,7 +86,7 @@ describe('beat wording', () => {
   function render(beat: WrapBeat) {
     let r!: ReactTestRenderer;
     act(() => {
-      r = create(<Beat beat={beat} still onOpenReport={jest.fn()} onDone={jest.fn()} />);
+      r = create(<Beat wrap={WRAP} beat={beat} still onOpenReport={jest.fn()} />);
     });
     return r;
   }
@@ -127,5 +130,21 @@ describe('beat wording', () => {
   it('shows a lighter week in the income colour, a heavier one in the expense colour', () => {
     expect(texts(render({ kind: 'usual', changePct: -12, top: food }))).toContain('less than a usual week.');
     expect(texts(render({ kind: 'usual', changePct: 30, top: food }))).toContain('more than a usual week.');
+  });
+
+  it('closes on a card with the total and the top categories, which Share sends as a picture', async () => {
+    const r = render({ kind: 'final', title: 'That was September.' });
+    expect(texts(r)).toContain('September');
+    expect(texts(r)).toContain('₹38,400');
+    expect(texts(r)).toContain('Food & Dining');
+    const share = r.root.find((n) => n.props.title === 'Share' && n.props.onPress);
+    await act(async () => {
+      await share.props.onPress();
+    });
+    expect(require('react-native-view-shot').captureRef).toHaveBeenCalled();
+    expect(require('expo-sharing').shareAsync).toHaveBeenCalledWith(
+      'file:///wrap.png',
+      expect.objectContaining({ mimeType: 'image/png' })
+    );
   });
 });

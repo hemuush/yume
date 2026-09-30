@@ -1,16 +1,20 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { View, Animated, Easing, StyleProp, ViewStyle, TextStyle } from 'react-native';
+import { captureRef } from 'react-native-view-shot';
+import * as Sharing from 'expo-sharing';
 import Svg, { Circle } from 'react-native-svg';
 import Feather from '@expo/vector-icons/Feather';
 import { Text } from '@/components/Text';
 import { Amount } from '@/components/Amount';
 import { CountUpAmount } from '@/components/CountUpAmount';
 import { PrimaryButton } from '@/components/PrimaryButton';
-import { SuuIllustration } from '@/components/SuuIllustration';
+import { showAlert } from '@/components/AppDialog';
 import { theme } from '@/constants/theme';
 import { formatMoney } from '@/lib/money';
 import { dayMonth, longWeekday } from '@/lib/dateLabels';
-import { WrapBeat } from './wrapData';
+import { withoutRelock } from '@/lib/appLock';
+import { errorMessage } from '@/lib/errorMessage';
+import { Wrap, WrapBeat } from './wrapData';
 import { styles } from './wrap.styles';
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
@@ -122,11 +126,11 @@ export function HookBeat({ beat, still }: { beat: BeatOf<'hook'>; still: boolean
 const RING = 150;
 const RING_STROKE = 18;
 
-export function KeptBeat({ beat, still }: { beat: BeatOf<'kept'>; still: boolean }) {
-  const kept = beat.keptMinor > 0;
+/** A ring that fills to `pct` (0–100) once, when the beat appears. */
+function Ring({ pct, color, still }: { pct: number; color: string; still: boolean }) {
   const r = RING / 2 - RING_STROKE / 2;
   const c = 2 * Math.PI * r;
-  const target = kept ? Math.min(100, beat.keptPct) : 0;
+  const target = Math.min(100, Math.max(0, pct));
   const [v] = useState(() => new Animated.Value(still ? target : 0));
   useEffect(() => {
     if (still) {
@@ -138,37 +142,43 @@ export function KeptBeat({ beat, still }: { beat: BeatOf<'kept'>; still: boolean
     return () => a.stop();
   }, [v, target, still]);
   const offset = v.interpolate({ inputRange: [0, 100], outputRange: [c, 0], extrapolate: 'clamp' });
+  return (
+    <View style={styles.ringWrap}>
+      <Svg width={RING} height={RING} viewBox={`0 0 ${RING} ${RING}`}>
+        <Circle
+          cx={RING / 2}
+          cy={RING / 2}
+          r={r}
+          fill="none"
+          stroke={theme.colors.glass}
+          strokeWidth={RING_STROKE}
+        />
+        <AnimatedCircle
+          cx={RING / 2}
+          cy={RING / 2}
+          r={r}
+          fill="none"
+          stroke={color}
+          strokeWidth={RING_STROKE}
+          strokeDasharray={c}
+          strokeDashoffset={offset}
+          strokeLinecap="round"
+          transform={`rotate(-90 ${RING / 2} ${RING / 2})`}
+        />
+      </Svg>
+    </View>
+  );
+}
 
+export function KeptBeat({ beat, still }: { beat: BeatOf<'kept'>; still: boolean }) {
+  const kept = beat.keptMinor > 0;
   return (
     <View style={styles.beat}>
       <Text style={styles.kicker}>What you kept</Text>
       <View style={styles.middle}>
         {kept ? (
           <>
-            <View style={styles.ringWrap}>
-              <Svg width={RING} height={RING} viewBox={`0 0 ${RING} ${RING}`}>
-                <Circle
-                  cx={RING / 2}
-                  cy={RING / 2}
-                  r={r}
-                  fill="none"
-                  stroke={theme.colors.inkWash}
-                  strokeWidth={RING_STROKE}
-                />
-                <AnimatedCircle
-                  cx={RING / 2}
-                  cy={RING / 2}
-                  r={r}
-                  fill="none"
-                  stroke={theme.colors.income}
-                  strokeWidth={RING_STROKE}
-                  strokeDasharray={c}
-                  strokeDashoffset={offset}
-                  strokeLinecap="round"
-                  transform={`rotate(-90 ${RING / 2} ${RING / 2})`}
-                />
-              </Svg>
-            </View>
+            <Ring pct={beat.keptPct} color={theme.colors.income} still={still} />
             <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'baseline', gap: 8 }}>
               <Text style={styles.display}>You kept</Text>
               <CountUpPct
@@ -507,6 +517,11 @@ export function UsualBeat({ beat, still }: { beat: BeatOf<'usual'>; still: boole
           </Rise>
         ) : (
           <>
+            <Ring
+              pct={Math.abs(beat.changePct)}
+              color={less ? theme.colors.income : theme.colors.ink}
+              still={still}
+            />
             <CountUpPct
               to={Math.round(Math.abs(beat.changePct))}
               still={still}
@@ -535,48 +550,89 @@ export function UsualBeat({ beat, still }: { beat: BeatOf<'usual'>; still: boole
   );
 }
 
+/** How the period compared, in a few words, for the closing card. */
+function cardLine(wrap: Wrap): string | null {
+  for (const b of wrap.beats) {
+    if (b.kind === 'usual') {
+      if (Math.abs(b.changePct) < 5) return 'About a usual week';
+      return `${Math.round(Math.abs(b.changePct))}% ${b.changePct < 0 ? 'less' : 'more'} than usual`;
+    }
+    if (b.kind === 'kept') {
+      return b.keptMinor > 0
+        ? `Kept ${Math.round(b.keptPct)}% of what came in`
+        : 'Everything that came in went out';
+    }
+  }
+  return null;
+}
+
+/**
+ * The closing beat (Direction A): the period in short as a card — what went
+ * out, how it compared, the top three categories — with Share, which sends
+ * the card as a picture through Android's share sheet (nothing leaves the
+ * phone unless you pick somewhere to send it), and the full report.
+ */
 export function FinalBeat({
+  wrap,
   beat,
   still,
   onOpenReport,
-  onDone,
 }: {
+  wrap: Wrap;
   beat: BeatOf<'final'>;
   still: boolean;
   onOpenReport: () => void;
-  onDone: () => void;
 }) {
-  const [v] = useState(() => new Animated.Value(still ? 1 : 0));
-  useEffect(() => {
-    if (still) {
-      v.setValue(1);
-      return;
+  const card = useRef<View>(null);
+  const hook = wrap.beats.find((b): b is BeatOf<'hook'> => b.kind === 'hook');
+  const top = wrap.beats.find((b): b is BeatOf<'bars'> => b.kind === 'bars')?.items.slice(0, 3) ?? [];
+  const line = cardLine(wrap);
+  const share = async () => {
+    try {
+      const uri = await captureRef(card, { format: 'png', quality: 1 });
+      await withoutRelock(() =>
+        Sharing.shareAsync(uri, { mimeType: 'image/png', dialogTitle: 'Share your Wrap' })
+      );
+    } catch (e) {
+      showAlert("Couldn't share it", errorMessage(e));
     }
-    const a = Animated.sequence([
-      Animated.timing(v, { toValue: 1.06, duration: 420, easing: EASE, useNativeDriver: true }),
-      Animated.timing(v, { toValue: 1, duration: 200, easing: EASE, useNativeDriver: true }),
-    ]);
-    a.start();
-    return () => a.stop();
-  }, [v, still]);
-  const opacity = v.interpolate({ inputRange: [0, 1, 1.06], outputRange: [0, 1, 1] });
-  const scale = v.interpolate({ inputRange: [0, 1, 1.06], outputRange: [0.6, 1, 1.06] });
+  };
   return (
     <View style={styles.beat}>
+      <Rise still={still}>
+        <Text style={styles.kicker}>{beat.title}</Text>
+      </Rise>
       <View style={styles.finalMiddle}>
-        <Animated.View style={{ opacity, transform: [{ scale }] }}>
-          <SuuIllustration size={96} />
-        </Animated.View>
-        <Rise delay={250} still={still}>
-          <Text style={[styles.display, styles.center, styles.gapM]}>{beat.title}</Text>
-        </Rise>
-        <Rise delay={400} still={still}>
-          <Text style={[styles.tagline, styles.center]}>Better money. Bigger dreams.</Text>
+        <Rise delay={200} still={still}>
+          <View ref={card} collapsable={false} style={styles.card}>
+            <Text style={styles.cardKicker}>{wrap.label}</Text>
+            {hook && <Text style={styles.cardTotal}>{formatMoney(hook.spentMinor)}</Text>}
+            <Text style={styles.cardLine}>went out{line ? ` · ${line}` : ''}</Text>
+            {top.length > 0 && (
+              <View style={styles.cardRows}>
+                {top.map((c) => (
+                  <View key={c.categoryId} style={styles.cardRow}>
+                    <View style={[styles.cardDot, { backgroundColor: c.color }]} />
+                    <Text style={styles.cardName} numberOfLines={1}>
+                      {c.name}
+                    </Text>
+                    <Amount minor={c.totalMinor} sensitive={c.isSensitive} style={styles.cardAmount} />
+                  </View>
+                ))}
+              </View>
+            )}
+            <Text style={styles.cardBrand}>Yume</Text>
+          </View>
         </Rise>
       </View>
-      <Rise delay={600} still={still} style={styles.actions}>
-        <PrimaryButton title="See the full report" onPress={onOpenReport} />
-        <PrimaryButton title="Done" variant="secondary" onPress={onDone} />
+      <Rise delay={450} still={still} style={styles.actions}>
+        <PrimaryButton
+          title="See the full report"
+          variant="secondary"
+          onPress={onOpenReport}
+          style={styles.action}
+        />
+        <PrimaryButton title="Share" onPress={share} style={styles.action} />
       </Rise>
     </View>
   );
@@ -584,15 +640,15 @@ export function FinalBeat({
 
 /** Renders whichever beat `beat` is. */
 export function Beat({
+  wrap,
   beat,
   still,
   onOpenReport,
-  onDone,
 }: {
+  wrap: Wrap;
   beat: WrapBeat;
   still: boolean;
   onOpenReport: () => void;
-  onDone: () => void;
 }) {
   switch (beat.kind) {
     case 'hook':
@@ -610,6 +666,6 @@ export function Beat({
     case 'usual':
       return <UsualBeat beat={beat} still={still} />;
     case 'final':
-      return <FinalBeat beat={beat} still={still} onOpenReport={onOpenReport} onDone={onDone} />;
+      return <FinalBeat wrap={wrap} beat={beat} still={still} onOpenReport={onOpenReport} />;
   }
 }
