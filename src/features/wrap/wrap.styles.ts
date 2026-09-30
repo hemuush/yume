@@ -1,23 +1,39 @@
 import { StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
 import { EYEBROW } from '@/constants/textStyles';
+import { shade } from '@/lib/color';
 import type { WrapBeat } from './wrapData';
 
-/** Each beat's ground: one of Yume's own pastels, so the Wrap reads as the app, not a video. */
-export const BEAT_BG: Record<WrapBeat['kind'], string> = {
-  hook: theme.colors.surface,
-  kept: theme.colors.secondaryTint,
-  bars: theme.colors.primaryTint,
-  days: theme.colors.idGold,
-  mover: theme.colors.idCoral,
-  weekDays: theme.colors.primaryTint,
-  usual: theme.colors.idSage,
-  final: theme.colors.surface,
-};
+/**
+ * Each beat's ground (the Wrap sign-off, Direction A "colour stories"): a
+ * soft top-to-bottom gradient, the opening and closing beats in the theme
+ * pack's own two colours and the rest in Yume's warm pastels — always light,
+ * so it reads as the app, not a video.
+ */
+export function beatGradient(kind: WrapBeat['kind'], primary: string, secondary: string): [string, string] {
+  switch (kind) {
+    case 'hook':
+      return [shade(primary, 88), shade(secondary, 93)];
+    case 'kept':
+      return [shade(secondary, 88), shade(primary, 94)];
+    case 'bars':
+      return ['#FDE3EE', '#FFE9DC'];
+    case 'days':
+    case 'weekDays':
+      return ['#FFE3D6', '#FBF0CE'];
+    case 'mover':
+      return ['#FFE1D9', '#FDE3EE'];
+    case 'usual':
+      return ['#ECE7FC', shade(secondary, 93)];
+    case 'final':
+      return [shade(primary, 90), '#FDE3EE'];
+  }
+}
 
 export const styles = StyleSheet.create({
   root: { flex: 1, overflow: 'hidden' },
-  wipe: { position: 'absolute' },
+  fill: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
+  blob: { position: 'absolute', borderRadius: 999 },
   segs: { flexDirection: 'row', gap: 4, marginHorizontal: 14 },
   seg: { flex: 1, height: 3, borderRadius: 2, backgroundColor: theme.colors.inkHairline, overflow: 'hidden' },
   segFill: { height: '100%', backgroundColor: theme.colors.ink },
@@ -71,7 +87,7 @@ export const styles = StyleSheet.create({
     lineHeight: 28,
     color: theme.colors.textPrimary,
   },
-  huge: { fontFamily: theme.font.monoBold, fontSize: 40, lineHeight: 48, color: theme.colors.textPrimary },
+  huge: { fontFamily: theme.font.monoBold, fontSize: 48, lineHeight: 56, color: theme.colors.textPrimary },
   body: { fontFamily: theme.font.body, fontSize: 15, lineHeight: 21, color: theme.colors.textSecondary },
   bodyStrong: { fontFamily: theme.font.monoBold, color: theme.colors.textPrimary },
   center: { textAlign: 'center' },
@@ -115,7 +131,39 @@ export const styles = StyleSheet.create({
   weekBar: { width: '100%', borderRadius: 8 },
   weekDay: { fontFamily: theme.font.mono, fontSize: 11, color: theme.colors.textSecondary },
 
-  finalMiddle: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  tagline: { fontFamily: theme.font.rounded, fontSize: 16, color: theme.colors.textSecondary, marginTop: 6 },
-  actions: { gap: 10 },
+  // The closing card: the period in short, made to be shared as an image.
+  finalMiddle: { flex: 1, justifyContent: 'center' },
+  card: {
+    backgroundColor: theme.colors.surface,
+    borderRadius: 24,
+    padding: 18,
+    marginTop: 16,
+    shadowColor: theme.colors.ink,
+    shadowOpacity: 0.12,
+    shadowRadius: 24,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 8,
+  },
+  cardKicker: { ...EYEBROW, color: theme.colors.textMuted },
+  cardTotal: {
+    fontFamily: theme.font.monoBold,
+    fontSize: 32,
+    lineHeight: 40,
+    color: theme.colors.textPrimary,
+    marginTop: 6,
+  },
+  cardLine: { fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textSecondary },
+  cardRows: { gap: 7, marginTop: 14 },
+  cardRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  cardDot: { width: 9, height: 9, borderRadius: 5 },
+  cardName: { flex: 1, fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textPrimary },
+  cardAmount: { fontFamily: theme.font.monoBold, fontSize: 13, color: theme.colors.textPrimary },
+  cardBrand: {
+    fontFamily: theme.font.roundedBold,
+    fontSize: 12,
+    color: theme.colors.textMuted,
+    marginTop: 14,
+  },
+  actions: { flexDirection: 'row', gap: 10 },
+  action: { flex: 1 },
 });
