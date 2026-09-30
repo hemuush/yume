@@ -434,7 +434,7 @@ export default function TransactionsScreen() {
               accessibilityLabel="Search transactions"
             />
           </View>
-          <Pressable style={withPressed()} onPress={closeSearch} hitSlop={8}>
+          <Pressable style={withPressed()} onPress={closeSearch} hitSlop={8} accessibilityRole="button">
             <Text style={styles.searchCancel}>Cancel</Text>
           </Pressable>
         </View>
