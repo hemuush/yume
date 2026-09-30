@@ -38,5 +38,5 @@ const styles = StyleSheet.create({
     color: theme.colors.textSecondary,
     marginTop: 1,
   },
-  urgent: { color: theme.colors.expense },
+  urgent: { color: theme.colors.expenseText },
 });

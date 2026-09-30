@@ -89,7 +89,7 @@ const previewStyles = StyleSheet.create({
   row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: 12 },
   label: { fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textPrimary },
   value: { fontFamily: theme.font.monoBold, fontSize: 13, color: theme.colors.textPrimary },
-  valueStrong: { color: theme.colors.income },
+  valueStrong: { color: theme.colors.incomeText },
   was: { fontFamily: theme.font.mono, color: theme.colors.textMuted, textDecorationLine: 'line-through' },
 });
 
@@ -191,7 +191,7 @@ const revealStyles = StyleSheet.create({
   ticks: { flexDirection: 'row', alignItems: 'center', gap: 3, height: 20 },
   tick: { width: 6, height: 14, borderRadius: 2, backgroundColor: theme.colors.borderSoft },
   tickShaved: { backgroundColor: theme.colors.secondary },
-  saved: { fontFamily: theme.font.monoBold, fontSize: 18, color: theme.colors.income, marginTop: 14 },
+  saved: { fontFamily: theme.font.monoBold, fontSize: 18, color: theme.colors.incomeText, marginTop: 14 },
   sub: {
     fontFamily: theme.font.body,
     fontSize: 11.5,

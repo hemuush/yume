@@ -78,7 +78,7 @@ export function NextDueWidget({ data }: { data: NextDueWidgetData | null }) {
         style={{
           fontFamily: WIDGET_FONT.mono,
           fontSize: 13.5,
-          color: sign === '+' ? widgetColor.income : widgetColor.ink,
+          color: sign === '+' ? widgetColor.incomeText : widgetColor.ink,
         }}
       />
     </WidgetShell>

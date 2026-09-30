@@ -25,7 +25,7 @@ export const styles = StyleSheet.create({
     borderWidth: theme.border.thin,
     borderColor: theme.colors.expense,
   },
-  errorTitle: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.expense },
+  errorTitle: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.expenseText },
   errorDetail: {
     fontFamily: theme.font.body,
     fontSize: 11.5,
@@ -83,8 +83,8 @@ export const styles = StyleSheet.create({
     borderTopColor: theme.colors.borderSoft,
   },
   pauseLabel: { fontSize: 11.5, fontFamily: theme.font.bodyBold, color: theme.colors.textSecondary },
-  income: { color: theme.colors.income },
-  expense: { color: theme.colors.expense },
+  income: { color: theme.colors.incomeText },
+  expense: { color: theme.colors.expenseText },
   fieldLabel: {
     fontSize: 10.5,
     fontFamily: theme.font.roundedMedium,
@@ -117,7 +117,7 @@ export const styles = StyleSheet.create({
   },
   errorText: {
     fontFamily: theme.font.body,
-    color: theme.colors.expense,
+    color: theme.colors.expenseText,
     fontSize: 13,
     marginTop: 4,
     marginBottom: 12,

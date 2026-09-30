@@ -74,7 +74,7 @@ export function CategoryList({
                   <Text
                     style={[
                       styles.catDelta,
-                      { color: d > 0 === upIsBad ? theme.colors.expense : theme.colors.income },
+                      { color: d > 0 === upIsBad ? theme.colors.expenseText : theme.colors.incomeText },
                     ]}
                   >
                     {d > 0 ? '↑' : '↓'}

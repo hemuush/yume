@@ -395,7 +395,7 @@ const styles = StyleSheet.create({
   accountsError: {
     fontFamily: theme.font.bodyBold,
     fontSize: 12,
-    color: theme.colors.expense,
+    color: theme.colors.expenseText,
     textAlign: 'center',
     marginTop: 4,
   },

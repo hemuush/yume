@@ -19,8 +19,8 @@ const ACTIONS: {
   icon: React.ComponentProps<typeof Feather>['name'];
   color: string;
 }[] = [
-  { type: 'expense', label: 'Expense', icon: 'arrow-up-right', color: theme.colors.idCoralDeep },
-  { type: 'income', label: 'Income', icon: 'arrow-down-right', color: theme.colors.income },
+  { type: 'expense', label: 'Expense', icon: 'arrow-up-right', color: theme.colors.expenseText },
+  { type: 'income', label: 'Income', icon: 'arrow-down-right', color: theme.colors.incomeText },
   { type: 'transfer', label: 'Transfer', icon: 'repeat', color: TRANSFER_TEXT },
 ];
 

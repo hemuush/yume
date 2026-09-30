@@ -15,7 +15,7 @@ export function DayTotal({ txs }: { txs: Transaction[] }) {
       <Text
         style={[
           styles.dayTotalValue,
-          { color: sign === '+' ? theme.colors.income : theme.colors.idCoralDeep },
+          { color: sign === '+' ? theme.colors.incomeText : theme.colors.expenseText },
         ]}
       >
         {sign}

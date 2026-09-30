@@ -15,7 +15,7 @@ export const styles = StyleSheet.create({
     borderWidth: theme.border.thin,
     borderColor: theme.colors.expense,
   },
-  errorTitle: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.expense },
+  errorTitle: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.expenseText },
   errorDetail: {
     fontFamily: theme.font.body,
     fontSize: 11.5,
@@ -117,7 +117,12 @@ export const styles = StyleSheet.create({
     marginBottom: 10,
     lineHeight: 17,
   },
-  errorText: { fontFamily: theme.font.bodyBold, color: theme.colors.expense, fontSize: 13, marginBottom: 12 },
+  errorText: {
+    fontFamily: theme.font.bodyBold,
+    color: theme.colors.expenseText,
+    fontSize: 13,
+    marginBottom: 12,
+  },
   historyIcon: {
     width: 30,
     height: 30,

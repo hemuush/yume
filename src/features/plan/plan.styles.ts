@@ -30,8 +30,8 @@ export const styles = StyleSheet.create({
   bigValue: { fontFamily: theme.font.monoBold, fontSize: 26, color: theme.colors.textPrimary },
   value: { fontFamily: theme.font.monoBold, fontSize: 19, color: theme.colors.textPrimary },
   valueNote: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textSecondary },
-  overValue: { color: theme.colors.expense },
-  incomeValue: { color: theme.colors.income },
+  overValue: { color: theme.colors.expenseText },
+  incomeValue: { color: theme.colors.incomeText },
   tileTitle: { fontFamily: theme.font.roundedBold, fontSize: 16, color: theme.colors.textPrimary },
   tileSub: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 16, color: theme.colors.textSecondary },
 

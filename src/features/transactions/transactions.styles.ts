@@ -15,7 +15,7 @@ export const styles = StyleSheet.create({
     borderWidth: theme.border.thin,
     borderColor: theme.colors.expense,
   },
-  errorTitle: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.expense },
+  errorTitle: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.expenseText },
   errorDetail: {
     fontFamily: theme.font.body,
     fontSize: 11.5,
@@ -214,9 +214,9 @@ export const styles = StyleSheet.create({
   monthCellText: { fontSize: 14, fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
   monthCellTextDisabled: { color: theme.colors.textMuted },
   rowNoteInline: { fontSize: 13, color: theme.colors.textSecondary, fontFamily: theme.font.body },
-  income: { color: theme.colors.income },
-  expense: { color: theme.colors.expense },
-  rowRefund: { fontFamily: theme.font.bodyBold, color: theme.colors.income },
+  income: { color: theme.colors.incomeText },
+  expense: { color: theme.colors.expenseText },
+  rowRefund: { fontFamily: theme.font.bodyBold, color: theme.colors.incomeText },
   // The Details / Actions switch under a transaction's card.
   detailTabs: { marginBottom: 12 },
   // A split part's detail: the whole payment, this part in bold.

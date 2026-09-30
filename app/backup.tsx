@@ -83,7 +83,9 @@ function StatusPill({ lastAt, outcome }: { lastAt: string | null; outcome: Backu
           size={11}
           color={failed ? theme.colors.expense : theme.colors.income}
         />
-        <Text style={[styles.pillText, { color: failed ? theme.colors.expense : theme.colors.income }]}>
+        <Text
+          style={[styles.pillText, { color: failed ? theme.colors.expenseText : theme.colors.incomeText }]}
+        >
           {failed ? 'Failed' : 'Backed up'}
         </Text>
       </View>
@@ -577,7 +579,12 @@ const styles = StyleSheet.create({
   pillNeutral: { backgroundColor: theme.colors.surfaceAlt },
   pillText: { fontFamily: theme.font.bodyBold, fontSize: 11, color: theme.colors.textSecondary },
   lastBackupText: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
-  errorDetail: { fontFamily: theme.font.body, fontSize: 11.5, color: theme.colors.expense, lineHeight: 15 },
+  errorDetail: {
+    fontFamily: theme.font.body,
+    fontSize: 11.5,
+    color: theme.colors.expenseText,
+    lineHeight: 15,
+  },
   // The safety-copy card: a teal wash with a mint edge, so it reads as a
   // reassurance above the restore buttons rather than another action card.
   fileList: {

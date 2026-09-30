@@ -955,8 +955,8 @@ export default function AddTransactionScreen() {
         {error && <Text style={styles.error}>{error}</Text>}
         {rows.length > 0 && (
           <View style={styles.totalsRow}>
-            <Totals label="In" value={totals.income} color={theme.colors.income} />
-            <Totals label="Out" value={totals.expense} color={theme.colors.expense} />
+            <Totals label="In" value={totals.income} color={theme.colors.incomeText} />
+            <Totals label="Out" value={totals.expense} color={theme.colors.expenseText} />
             <Totals label="Net" value={totals.income - totals.expense} color={theme.colors.textPrimary} />
           </View>
         )}

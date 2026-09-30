@@ -16,7 +16,7 @@ export const styles = StyleSheet.create({
     borderWidth: theme.border.thin,
     borderColor: theme.colors.expense,
   },
-  errorTitle: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.expense },
+  errorTitle: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.expenseText },
   errorDetail: {
     fontFamily: theme.font.body,
     fontSize: 11.5,
@@ -79,7 +79,7 @@ export const styles = StyleSheet.create({
     lineHeight: 17,
   },
   sensitiveRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 14 },
-  errorText: { fontFamily: theme.font.body, color: theme.colors.expense, fontSize: 13, marginBottom: 12 },
+  errorText: { fontFamily: theme.font.body, color: theme.colors.expenseText, fontSize: 13, marginBottom: 12 },
   tile: { width: 76, alignItems: 'center' },
   tileSub: { width: 68, opacity: 0.88 },
   tileName: {

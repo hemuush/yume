@@ -15,7 +15,7 @@ export const styles = StyleSheet.create({
     borderWidth: theme.border.thin,
     borderColor: theme.colors.expense,
   },
-  errorTitle: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.expense },
+  errorTitle: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.expenseText },
   errorDetail: {
     fontFamily: theme.font.body,
     fontSize: 11.5,
@@ -50,7 +50,7 @@ export const styles = StyleSheet.create({
   },
   contributeBtnText: { fontSize: 12, fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
 
-  errorText: { fontFamily: theme.font.body, color: theme.colors.expense, fontSize: 13, marginBottom: 12 },
+  errorText: { fontFamily: theme.font.body, color: theme.colors.expenseText, fontSize: 13, marginBottom: 12 },
   modalHint: {
     fontFamily: theme.font.body,
     fontSize: 12,

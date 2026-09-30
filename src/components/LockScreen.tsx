@@ -245,7 +245,7 @@ const styles = StyleSheet.create({
   failedText: {
     fontFamily: theme.font.body,
     fontSize: 12,
-    color: theme.colors.expense,
+    color: theme.colors.expenseText,
     marginTop: 14,
     textAlign: 'center',
     lineHeight: 17,

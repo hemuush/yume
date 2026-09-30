@@ -74,7 +74,7 @@ export function AccountsWidget({ accounts, totalText }: AccountsWidgetData) {
               style={{
                 fontFamily: WIDGET_FONT.mono,
                 fontSize: 12.5,
-                color: acc.negative ? widgetColor.expense : widgetColor.ink,
+                color: acc.negative ? widgetColor.expenseText : widgetColor.ink,
               }}
             />
           </FlexWidget>
