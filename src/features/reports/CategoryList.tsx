@@ -55,7 +55,12 @@ export function CategoryList({
         const d = deltas.get(c.categoryId);
         const pct = spentMinor > 0 ? Math.round((c.totalMinor / spentMinor) * 100) : 0;
         return (
-          <Pressable key={c.categoryId} onPress={() => onPressCategory(c)} style={withPressed(styles.catRow)}>
+          <Pressable
+            key={c.categoryId}
+            onPress={() => onPressCategory(c)}
+            style={withPressed(styles.catRow)}
+            accessibilityRole="button"
+          >
             <View style={styles.catTop}>
               <View style={[styles.catDot, { backgroundColor: c.color }]} />
               <Text style={styles.catName} numberOfLines={1}>
@@ -90,7 +95,14 @@ export function CategoryList({
         );
       })}
       {breakdown.length > COLLAPSED_COUNT && (
-        <Pressable onPress={onToggleExpanded} style={withPressed(styles.catMore)}>
+        <Pressable
+          onPress={onToggleExpanded}
+          style={withPressed(styles.catMore)}
+          accessibilityRole="button"
+          accessibilityLabel={
+            expanded ? 'Show fewer categories' : `Show ${breakdown.length - COLLAPSED_COUNT} more categories`
+          }
+        >
           <Text style={styles.catMoreText}>
             {expanded ? 'Show less ︿' : `${breakdown.length - COLLAPSED_COUNT} more ⌄`}
           </Text>
