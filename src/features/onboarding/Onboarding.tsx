@@ -113,12 +113,12 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
   const createPickedAccounts = async (): Promise<boolean> => {
     for (const starter of STARTER_ACCOUNTS) {
       if (!picked[starter.key] || createdKeys.current.has(starter.key)) continue;
-      const typed = parseFloat(openings[starter.key] || '0');
+      const typedMinor = toMinor(parseFloat(openings[starter.key] || '0'));
       try {
         await createAccount({
           name: starter.name,
           type: starter.type,
-          openingBalanceMinor: Number.isFinite(typed) ? toMinor(typed) : 0,
+          openingBalanceMinor: Number.isFinite(typedMinor) ? typedMinor : 0,
         });
         createdKeys.current.add(starter.key);
       } catch {

@@ -1,4 +1,5 @@
 import { getCachedCurrency } from '@/db/settings';
+import { MAX_AMOUNT_MAJOR } from './amountLimits';
 
 // All money is stored/passed as integer minor units (smallest currency unit,
 // e.g. paise/cents) to avoid float rounding errors anywhere in balance or
@@ -10,8 +11,12 @@ import { getCachedCurrency } from '@/db/settings';
 // keeps every ledger amount, balance and loan figure a round rupee (no
 // "205.55") so that on-screen totals reconcile with their parts without any
 // sub-unit drift. Amounts that arrive already in minor units (EMI splits,
-// derived balances) stay exact — this only governs fresh input.
+// derived balances) stay exact — this only governs fresh input. An amount
+// beyond MAX_AMOUNT_MAJOR comes back as NaN, the same "not a usable number"
+// answer as unparseable text, so every screen's existing "enter a valid
+// amount" check rejects it without any new code.
 export function toMinor(major: number): number {
+  if (Math.abs(major) > MAX_AMOUNT_MAJOR) return NaN;
   return Math.round(major) * 100;
 }
 
