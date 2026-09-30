@@ -41,7 +41,7 @@ jest.mock('@/db/settings', () => ({
 }));
 
 import { StorageAccessFramework } from 'expo-file-system/legacy';
-import { writeLocalBackupNow, isLocalBackupDue, listLocalBackups } from './localBackup';
+import { writeLocalBackupNow, isLocalBackupDue, listLocalBackups, backupFileDate } from './localBackup';
 import { toLocalIsoDate } from './date';
 
 describe('isLocalBackupDue', () => {
@@ -235,5 +235,94 @@ describe('writeLocalBackupNow and the index', () => {
     expect(mockIndex.current['content://folder/new']).toEqual(
       expect.objectContaining({ exportedAt: 'x', sizeBytes: expect.any(Number) })
     );
+  });
+});
+
+// What Android's storage provider really hands back for a file in a chosen
+// folder: the folder and the file are both encoded into the URI.
+const safUri = (folderPath: string, fileName: string) =>
+  `content://com.android.externalstorage.documents/tree/primary%3A${encodeURIComponent(folderPath)}/document/primary%3A${encodeURIComponent(`${folderPath}/${fileName}`)}`;
+
+describe('recognising backup files by their own name', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockIndex.current = {};
+    (StorageAccessFramework.deleteAsync as jest.Mock).mockResolvedValue(undefined);
+  });
+
+  it('reads the day from the file name, with or without the .json Android adds or a " (1)" copy', () => {
+    expect(backupFileDate(safUri('Backups', 'yume-backup-2026-09-30'))).toBe('2026-09-30');
+    expect(backupFileDate(safUri('Backups', 'yume-backup-2026-09-30.json'))).toBe('2026-09-30');
+    expect(backupFileDate(safUri('Backups', 'yume-backup-2026-09-30 (1).json'))).toBe('2026-09-30');
+    expect(backupFileDate('content://tree/primary/yume-backup-2026-09-30')).toBe('2026-09-30');
+    expect(backupFileDate('content://tree/primary%3Ayume-backup-2026-09-30.json')).toBe('2026-09-30');
+  });
+
+  it('ignores files that only mention the name, and URIs it cannot decode', () => {
+    expect(backupFileDate(safUri('Backups', 'my-yume-backup-2026-09-30.txt'))).toBeNull();
+    expect(backupFileDate(safUri('Backups', 'yume-backup-2026-09-30-notes.txt'))).toBeNull();
+    expect(backupFileDate(safUri('Backups', 'yume-backup-latest'))).toBeNull();
+    expect(backupFileDate(safUri('Backups', 'holiday.jpg'))).toBeNull();
+    expect(backupFileDate('content://tree/primary/100%/yume-backup-2026-09-30')).toBeNull();
+  });
+
+  it('does not treat a folder named like a backup as a pile of backups', async () => {
+    const folder = 'yume-backup-archive';
+    const unrelated = Array.from({ length: 20 }, (_, i) => safUri(folder, `photo-${i}.jpg`));
+    (StorageAccessFramework.readDirectoryAsync as jest.Mock).mockResolvedValue(unrelated);
+    (StorageAccessFramework.createFileAsync as jest.Mock).mockResolvedValue('content://new-file');
+
+    await writeLocalBackupNow(`content://folder/${folder}`);
+
+    expect(StorageAccessFramework.deleteAsync).not.toHaveBeenCalled();
+    expect(await listLocalBackups(`content://folder/${folder}`)).toEqual([]);
+  });
+
+  it('prunes by the day in the name, even when Android added .json or copies are numbered', async () => {
+    const dated = (n: number, suffix = '.json') =>
+      safUri('Backups', `yume-backup-2025-02-${String(n).padStart(2, '0')}${suffix}`);
+    const uris = [
+      ...Array.from({ length: 16 }, (_, i) => dated(i + 1)),
+      dated(16, ' (1).json'), // a same-day copy sorts after its original
+    ];
+    const shuffled = [...uris].reverse();
+    (StorageAccessFramework.readDirectoryAsync as jest.Mock).mockResolvedValue([
+      ...shuffled,
+      safUri('Backups', 'keep-me.txt'),
+    ]);
+    (StorageAccessFramework.createFileAsync as jest.Mock).mockResolvedValue('content://new-file');
+
+    await writeLocalBackupNow('content://folder/Backups');
+
+    const deleted = (StorageAccessFramework.deleteAsync as jest.Mock).mock.calls.map((c) => c[0]);
+    expect(deleted).toEqual(uris.slice(0, 3));
+    expect(deleted).not.toContain(safUri('Backups', 'keep-me.txt'));
+  });
+
+  it("replaces today's file even when Android named it with .json or a copy number", async () => {
+    const todayIso = toLocalIsoDate(new Date());
+    const today = safUri('Backups', `yume-backup-${todayIso}.json`);
+    const todayCopy = safUri('Backups', `yume-backup-${todayIso} (1).json`);
+    const yesterday = safUri('Backups', 'yume-backup-2020-01-01.json');
+    (StorageAccessFramework.readDirectoryAsync as jest.Mock).mockResolvedValue([today, todayCopy, yesterday]);
+    (StorageAccessFramework.createFileAsync as jest.Mock).mockResolvedValue('content://new-file');
+
+    await writeLocalBackupNow('content://folder/Backups');
+
+    const deleted = (StorageAccessFramework.deleteAsync as jest.Mock).mock.calls.map((c) => c[0]);
+    expect(deleted.sort()).toEqual([today, todayCopy].sort());
+  });
+
+  it('reports the size in bytes, not characters', async () => {
+    const { buildBackupSnapshot } = jest.requireMock('./backup');
+    (buildBackupSnapshot as jest.Mock).mockResolvedValueOnce({ exportedAt: 'x', tables: { note: '₹₹₹₹' } });
+    (StorageAccessFramework.readDirectoryAsync as jest.Mock).mockResolvedValue([]);
+    (StorageAccessFramework.createFileAsync as jest.Mock).mockResolvedValue('content://new-file');
+
+    const { sizeBytes } = await writeLocalBackupNow('content://folder/Backups');
+
+    const written = (StorageAccessFramework.writeAsStringAsync as jest.Mock).mock.calls[0][1] as string;
+    expect(written.length).toBeLessThan(sizeBytes);
+    expect(sizeBytes).toBe(Buffer.byteLength(written, 'utf8'));
   });
 });
