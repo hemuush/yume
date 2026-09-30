@@ -1,27 +1,49 @@
 import { Transaction } from '@/types';
 import {
-  sevenDaysEndingOn,
+  weekContaining,
+  stepWeekAnchor,
+  weekCompareLabel,
   previousRangeFor,
   groupByDate,
   periodHeading,
   filterActivity,
 } from './transactions.helpers';
 import { dayMonth } from '@/lib/dateLabels';
+import { toLocalIsoDate } from '@/lib/date';
 import type { ActivityFilter } from './FilterModal';
 
 describe('Activity helpers', () => {
-  it('builds the 7 days ending on the anchor, oldest first, across a month edge', () => {
-    const days = sevenDaysEndingOn(new Date(2026, 9, 3)); // Sat Oct 3
-    expect(days.map((d) => d.iso)).toEqual([
-      '2026-09-27',
-      '2026-09-28',
-      '2026-09-29',
-      '2026-09-30',
-      '2026-10-01',
-      '2026-10-02',
-      '2026-10-03',
-    ]);
-    expect(days[0]).toEqual({ iso: '2026-09-27', day: 27, month: 8, year: 2026 });
+  it('holds a week inside its month, Sunday to Saturday, cut at both ends', () => {
+    // 1 Oct 2026 is a Thursday: the first week is just Thu–Sat.
+    const first = weekContaining(new Date(2026, 9, 1));
+    expect(first).toMatchObject({ start: '2026-10-01', end: '2026-10-03', index: 0 });
+    expect(first.ranges).toHaveLength(5);
+    expect(weekContaining(new Date(2026, 9, 14))).toMatchObject({
+      start: '2026-10-11',
+      end: '2026-10-17',
+      index: 2,
+    });
+    // September ends on a Wednesday: its last week is Sun–Wed, never running into October.
+    expect(weekContaining(new Date(2026, 8, 30))).toMatchObject({
+      start: '2026-09-27',
+      end: '2026-09-30',
+      index: 4,
+    });
+    expect(weekContaining(new Date(2026, 8, 1))).toMatchObject({
+      start: '2026-09-01',
+      end: '2026-09-05',
+      index: 0,
+    });
+  });
+
+  it('steps a week at a time, hops to the neighbouring month at an edge, and stops at today', () => {
+    const today = new Date(2026, 9, 1);
+    const iso = (d: Date) => toLocalIsoDate(d);
+    expect(iso(stepWeekAnchor(new Date(2026, 8, 14), 1, today))).toBe('2026-09-20');
+    expect(iso(stepWeekAnchor(new Date(2026, 8, 28), 1, today))).toBe('2026-10-01');
+    expect(iso(stepWeekAnchor(new Date(2026, 9, 1), -1, today))).toBe('2026-09-27');
+    expect(iso(stepWeekAnchor(new Date(2026, 8, 1), -1, today))).toBe('2026-08-30');
+    expect(iso(stepWeekAnchor(new Date(2026, 8, 28), 1, new Date(2026, 8, 29)))).toBe('2026-09-29');
   });
 
   it('finds the prior week, and the whole prior month', () => {
@@ -39,6 +61,28 @@ describe('Activity helpers', () => {
     });
   });
 
+  it('compares a part-week with the same weekdays of the week before', () => {
+    expect(previousRangeFor({ fromDate: '2026-10-01', toDate: '2026-10-03' }, 'week')).toEqual({
+      fromDate: '2026-09-24',
+      toDate: '2026-09-26',
+    });
+    // Mid-week: only up to the same day last week, not its whole length.
+    expect(previousRangeFor({ fromDate: '2026-09-20', toDate: '2026-09-26' }, 'week', '2026-09-23')).toEqual({
+      fromDate: '2026-09-13',
+      toDate: '2026-09-16',
+    });
+  });
+
+  it('says "same days" unless the week is whole and over', () => {
+    expect(weekCompareLabel({ start: '2026-10-01', end: '2026-10-03' }, '2026-10-20')).toBe(
+      'same days last week'
+    );
+    expect(weekCompareLabel({ start: '2026-09-20', end: '2026-09-26' }, '2026-09-23')).toBe(
+      'same days last week'
+    );
+    expect(weekCompareLabel({ start: '2026-09-20', end: '2026-09-26' }, '2026-10-01')).toBe('last week');
+  });
+
   it('groups consecutive same-date transactions, keeping order', () => {
     const tx = (id: string, date: string) => ({ id, date }) as Transaction;
     const groups = groupByDate([tx('a', '2026-09-26'), tx('b', '2026-09-26'), tx('c', '2026-09-25')]);
@@ -50,36 +94,30 @@ describe('Activity helpers', () => {
 });
 
 describe('periodHeading', () => {
-  const today = new Date(2026, 8, 26);
+  const today = new Date(2026, 9, 1);
 
-  it('calls the current 7 days "This week" and shows their dates', () => {
-    expect(
-      periodHeading({
-        scope: 'week',
-        days: sevenDaysEndingOn(today),
-        anchor: today,
-        today,
-      })
-    ).toEqual({ title: 'This week', sub: `20–${dayMonth('2026-09-26')}` });
+  it('calls the week holding today "This week" and shows its dates', () => {
+    expect(periodHeading({ scope: 'week', week: weekContaining(today), anchor: today, today })).toEqual({
+      title: 'This week',
+      sub: `1–${dayMonth('2026-10-03')}`,
+    });
   });
 
-  it('leads a past week with its dates, across a month boundary too', () => {
-    const anchor = new Date(2026, 9, 4);
-    expect(
-      periodHeading({
-        scope: 'week',
-        days: sevenDaysEndingOn(anchor),
-        anchor,
-        today: new Date(2026, 9, 20),
-      })
-    ).toEqual({ title: `${dayMonth('2026-09-28')} – ${dayMonth('2026-10-04')}`, sub: '' });
+  it('leads any other week with its dates and its place in the month', () => {
+    const anchor = new Date(2026, 8, 20);
+    expect(periodHeading({ scope: 'week', week: weekContaining(anchor), anchor, today })).toEqual({
+      title: `20–${dayMonth('2026-09-26')}`,
+      sub: 'Week 4 of 5',
+    });
   });
 
   it("adds the year only when it isn't this year", () => {
     const anchor = new Date(2025, 11, 31);
-    expect(periodHeading({ scope: 'week', days: sevenDaysEndingOn(anchor), anchor, today }).sub).toBe('2025');
-    expect(periodHeading({ scope: 'month', days: [], anchor, today }).sub).toBe('2025');
-    expect(periodHeading({ scope: 'month', days: [], anchor: today, today }).sub).toBe('');
+    expect(periodHeading({ scope: 'week', week: weekContaining(anchor), anchor, today }).sub).toBe(
+      'Week 5 of 5 · 2025'
+    );
+    expect(periodHeading({ scope: 'month', week: weekContaining(anchor), anchor, today }).sub).toBe('2025');
+    expect(periodHeading({ scope: 'month', week: weekContaining(today), anchor: today, today }).sub).toBe('');
   });
 });
 

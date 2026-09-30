@@ -123,6 +123,9 @@ CREATE TABLE IF NOT EXISTS transactions (
   -- 1 on money back for a purchase: an income-type row against an expense
   -- category that lowers its spending instead of counting as income (see db/spendSql.ts).
   is_refund INTEGER NOT NULL DEFAULT 0,
+  -- Where the person dragged this entry within its day (0 = top); NULL = never ordered,
+  -- so it sits above ranked rows, newest first.
+  day_rank INTEGER,
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   CHECK (type != 'transfer' OR to_account_id IS NOT NULL),
   CHECK (type = 'transfer' OR category_id IS NOT NULL)

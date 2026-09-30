@@ -53,6 +53,8 @@ export interface Transaction {
   splitId: string | null;
   /** Money back for a purchase: stored as money in, it lowers its (expense) category's spending instead of counting as income. */
   isRefund: boolean;
+  /** Where the person dragged it within its day (0 = top); null/undefined when never reordered. */
+  dayRank?: number | null;
   /** The whole split's total, on a part read from a list; undefined when not looked up. */
   splitTotalMinor?: number | null;
   createdAt: string;

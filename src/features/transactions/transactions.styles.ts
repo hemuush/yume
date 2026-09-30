@@ -154,6 +154,24 @@ export const styles = StyleSheet.create({
   periodTitle: { fontFamily: theme.font.roundedBold, fontSize: 17, color: theme.colors.textPrimary },
   periodSub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, marginTop: 1 },
 
+  // Week scope's rail: one segment per week of the month, sized by its days.
+  weekRail: { paddingHorizontal: 24, marginTop: 10, gap: 5 },
+  weekRailBar: { flexDirection: 'row', gap: 4 },
+  weekRailSeg: { height: 14, justifyContent: 'center' },
+  weekRailFill: { height: 6, borderRadius: 3, backgroundColor: theme.colors.borderSoft },
+  weekRailNow: {
+    position: 'absolute',
+    top: 0,
+    alignSelf: 'center',
+    width: 5,
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: theme.colors.primary,
+  },
+  weekRailCaption: { flexDirection: 'row', justifyContent: 'space-between' },
+  weekRailText: { fontFamily: theme.font.bodyBold, fontSize: 11, color: theme.colors.textMuted },
+  weekRailTextOn: { color: theme.colors.textSecondary },
+
   // The type filter as one segmented bar, then any picked categories and
   // accounts on their own line, only while there are some. The gap below
   // matches the gap between days.
