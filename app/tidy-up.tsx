@@ -116,7 +116,7 @@ export default function TidyUpScreen() {
       `${count} stored amount${count === 1 ? '' : 's'} still ` +
         `carr${count === 1 ? 'ies' : 'y'} paise. Rounding them makes on-screen ` +
         'totals line up with their parts. Loan schedules are left untouched. Some account ' +
-        'balances may shift by a rupee or two. This cannot be undone.',
+        'balances may shift by a rupee or two. You can undo right after, if needed.',
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -126,9 +126,13 @@ export default function TidyUpScreen() {
             act(async () => {
               const changed = await roundLedgerAmountsToWholeRupees();
               haptics.confirm();
-              showAlert(
-                'Done',
-                `Rounded ${changed.total} amount${changed.total === 1 ? '' : 's'} to whole rupees.`
+              showUndo(
+                `Rounded ${changed.total} amount${changed.total === 1 ? '' : 's'} to whole rupees`,
+                async () => {
+                  await changed.undo();
+                  emitTransactionsChanged();
+                  await reload();
+                }
               );
             }, "Couldn't round amounts"),
         },
