@@ -23,7 +23,16 @@ jest.mock('react-native-keyboard-controller', () => ({
   KeyboardAwareScrollView: require('react-native').View,
   KeyboardStickyView: require('react-native').View,
 }));
-jest.mock('@/components/AppHeader', () => ({ AppHeader: () => null }));
+// Keeps the header's right-hand button so a test can press it (the trash on an edit).
+const mockHeaderRight: { current: React.ReactElement<{ onPress: () => void }> | null } = { current: null };
+jest.mock('@/components/AppHeader', () => ({
+  AppHeader: ({ right }: { right?: React.ReactElement<{ onPress: () => void }> }) => {
+    mockHeaderRight.current = right ?? null;
+    return null;
+  },
+}));
+const mockShowUndo = jest.fn();
+jest.mock('@/components/UndoToast', () => ({ useUndoToast: () => ({ show: mockShowUndo }) }));
 jest.mock('@/components/OdometerAmount', () => ({ OdometerAmount: () => null }));
 jest.mock('@/features/profile/AddAccountModal', () => ({ AddAccountModal: () => null }));
 jest.mock('@/components/CalendarSheet', () => ({ CalendarSheet: () => null }));
@@ -76,6 +85,7 @@ jest.mock('@/db/ledger', () => ({
   createTransaction: jest.fn(async () => ({})),
   updateTransaction: jest.fn(async () => ({})),
   deleteTransaction: jest.fn(),
+  restoreTransaction: jest.fn(),
   getTransactionById: jest.fn(async () => null),
   getTransactionLink: jest.fn(async () => null),
   getFrequentAmountsForCategory: jest.fn(async () => []),
@@ -92,6 +102,7 @@ jest.mock('@/db/splits', () => ({
   saveSplit: jest.fn(async () => 'split-1'),
   getSplitParts: jest.fn(async () => []),
   deleteSplit: jest.fn(),
+  restoreSplit: jest.fn(),
 }));
 jest.mock('@/db/people', () => ({
   listPeople: jest.fn(async () => [{ id: 'p1', name: 'Aarav', balanceMinor: 0, lastActivityDate: null }]),
@@ -105,13 +116,15 @@ import { router } from 'expo-router';
 import {
   createTransaction,
   updateTransaction,
+  deleteTransaction,
+  restoreTransaction,
   getTransactionById,
   getLastAccountForCategory,
   findRecentRepeat,
   getRepeatEntries,
 } from '@/db/ledger';
 import { getAddDefaults, setAddDefaults } from '@/db/settings';
-import { saveSplit } from '@/db/splits';
+import { saveSplit, deleteSplit, restoreSplit } from '@/db/splits';
 import { openSplitSession, finishSplitSession, getSplitSession } from './splitSession';
 import { addLedgerEntry, listPeople } from '@/db/people';
 import { showAlert } from '@/components/AppDialog';
@@ -318,6 +331,60 @@ describe('Add screen', () => {
     );
     expect(createTransaction).not.toHaveBeenCalled();
   });
+  it('deleting from the edit screen goes back and offers an undo that puts the entry back', async () => {
+    mockParams.current = { id: 't1' };
+    (getTransactionById as jest.Mock).mockResolvedValueOnce({
+      id: 't1',
+      type: 'expense',
+      amountMinor: 45000,
+      accountId: 'bank',
+      toAccountId: null,
+      categoryId: 'food',
+      note: 'Dinner',
+      date: '2026-09-20',
+    });
+    const snapshot = { table: 'transactions', row: { id: 't1' } };
+    (deleteTransaction as jest.Mock).mockResolvedValueOnce(snapshot);
+    await render();
+    act(() => mockHeaderRight.current!.props.onPress());
+    const buttons = jest.mocked(showAlert).mock.calls[0][2]!;
+    await act(async () => {
+      await buttons.find((b) => b.text === 'Delete')!.onPress!();
+    });
+    expect(deleteTransaction).toHaveBeenCalledWith('t1');
+    expect(router.back).toHaveBeenCalledTimes(1);
+    expect(mockShowUndo).toHaveBeenCalledWith('Moved to Recently deleted', expect.any(Function));
+    await act(async () => mockShowUndo.mock.calls[0][1]());
+    expect(restoreTransaction).toHaveBeenCalledWith(snapshot);
+  });
+
+  it('deleting a split from the edit screen undoes the whole split', async () => {
+    mockParams.current = { id: 't1' };
+    (getTransactionById as jest.Mock).mockResolvedValueOnce({
+      id: 't1',
+      type: 'expense',
+      amountMinor: 45000,
+      accountId: 'bank',
+      toAccountId: null,
+      categoryId: 'food',
+      note: 'Dinner',
+      date: '2026-09-20',
+      splitId: 's1',
+    });
+    const snapshots = [{ table: 'transactions', row: { id: 't1' } }];
+    (deleteSplit as jest.Mock).mockResolvedValueOnce(snapshots);
+    await render();
+    act(() => mockHeaderRight.current!.props.onPress());
+    const buttons = jest.mocked(showAlert).mock.calls[0][2]!;
+    await act(async () => {
+      await buttons.find((b) => b.text === 'Delete')!.onPress!();
+    });
+    expect(deleteSplit).toHaveBeenCalledWith('s1');
+    expect(mockShowUndo).toHaveBeenCalledWith('Split moved to Recently deleted', expect.any(Function));
+    await act(async () => mockShowUndo.mock.calls[0][1]());
+    expect(restoreSplit).toHaveBeenCalledWith(snapshots);
+  });
+
   it('adds up a sum typed on the pad', async () => {
     (getAddDefaults as jest.Mock).mockResolvedValueOnce({
       expense: { accountId: 'bank', categoryId: 'food' },

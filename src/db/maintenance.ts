@@ -33,34 +33,54 @@ export interface RoundAmountsResult {
   total: number;
 }
 
-const FRACTIONAL_COUNT_QUERIES: { key: keyof RoundAmountsResult; sql: string }[] = [
+export interface RoundAmountsOutcome extends RoundAmountsResult {
+  /** Puts every rounded amount back to what it was (rows that have since been deleted are skipped). */
+  undo: () => Promise<void>;
+}
+
+/** Which rows each table's rounding touches, and the columns it rewrites there. */
+const ROUNDED_ROWS: {
+  key: keyof RoundAmountsResult;
+  table: string;
+  columns: string[];
+  where: string;
+}[] = [
   {
     key: 'transactions',
-    sql: `SELECT COUNT(*) AS n FROM transactions
-          WHERE amount_minor % 100 != 0 AND loan_id IS NULL AND loan_payment_id IS NULL`,
+    table: 'transactions',
+    columns: ['amount_minor'],
+    where: 'amount_minor % 100 != 0 AND loan_id IS NULL AND loan_payment_id IS NULL',
   },
   {
     key: 'accounts',
-    sql: `SELECT COUNT(*) AS n FROM accounts
-          WHERE opening_balance_minor % 100 != 0
+    table: 'accounts',
+    columns: ['opening_balance_minor', 'credit_limit_minor'],
+    where: `opening_balance_minor % 100 != 0
              OR (credit_limit_minor IS NOT NULL AND credit_limit_minor % 100 != 0)`,
   },
   {
     key: 'personLedgerEntries',
-    sql: `SELECT COUNT(*) AS n FROM person_ledger_entries WHERE amount_minor % 100 != 0`,
+    table: 'person_ledger_entries',
+    columns: ['amount_minor'],
+    where: 'amount_minor % 100 != 0',
   },
   {
     key: 'recurringRules',
-    sql: `SELECT COUNT(*) AS n FROM recurring_rules WHERE amount_minor % 100 != 0`,
+    table: 'recurring_rules',
+    columns: ['amount_minor'],
+    where: 'amount_minor % 100 != 0',
   },
   {
     key: 'savingsGoals',
-    sql: `SELECT COUNT(*) AS n FROM savings_goals
-          WHERE target_amount_minor % 100 != 0 OR current_amount_minor % 100 != 0`,
+    table: 'savings_goals',
+    columns: ['target_amount_minor', 'current_amount_minor'],
+    where: 'target_amount_minor % 100 != 0 OR current_amount_minor % 100 != 0',
   },
   {
     key: 'budgets',
-    sql: `SELECT COUNT(*) AS n FROM budgets WHERE limit_amount_minor % 100 != 0`,
+    table: 'budgets',
+    columns: ['limit_amount_minor'],
+    where: 'limit_amount_minor % 100 != 0',
   },
 ];
 
@@ -79,8 +99,8 @@ export async function countFractionalLedgerAmounts(): Promise<RoundAmountsResult
     budgets: 0,
     total: 0,
   };
-  for (const { key, sql } of FRACTIONAL_COUNT_QUERIES) {
-    const row = await db.getFirstAsync<{ n: number }>(sql);
+  for (const { key, table, where } of ROUNDED_ROWS) {
+    const row = await db.getFirstAsync<{ n: number }>(`SELECT COUNT(*) AS n FROM ${table} WHERE ${where}`);
     const n = row?.n ?? 0;
     result[key] = n;
     result.total += n;
@@ -97,11 +117,18 @@ export async function countFractionalLedgerAmounts(): Promise<RoundAmountsResult
  * a balance can shift by a few rupees after this runs — that is the point,
  * and the user is warned before triggering it.
  */
-export async function roundLedgerAmountsToWholeRupees(): Promise<RoundAmountsResult> {
+export async function roundLedgerAmountsToWholeRupees(): Promise<RoundAmountsOutcome> {
   const db = await getDb();
   const before = await countFractionalLedgerAmounts();
+  const originals: { table: string; columns: string[]; rows: Record<string, number | null>[] }[] = [];
 
   await db.withTransactionAsync(async (tx) => {
+    for (const { table, columns, where } of ROUNDED_ROWS) {
+      const rows = await tx.getAllAsync<Record<string, number | null>>(
+        `SELECT id, ${columns.join(', ')} FROM ${table} WHERE ${where}`
+      );
+      originals.push({ table, columns, rows });
+    }
     // amount_minor has a CHECK (> 0); MAX(100, …) keeps a sub-rupee amount
     // from rounding down to an illegal zero.
     await tx.runAsync(
@@ -142,5 +169,17 @@ export async function roundLedgerAmountsToWholeRupees(): Promise<RoundAmountsRes
     );
   });
 
-  return before;
+  const undo = async () => {
+    await db.withTransactionAsync(async (tx) => {
+      for (const { table, columns, rows } of originals) {
+        for (const row of rows) {
+          await tx.runAsync(`UPDATE ${table} SET ${columns.map((c) => `${c} = ?`).join(', ')} WHERE id = ?`, [
+            ...columns.map((c) => row[c]),
+            row.id,
+          ]);
+        }
+      }
+    });
+  };
+  return { ...before, undo };
 }
