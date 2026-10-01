@@ -3,9 +3,10 @@ import { budgetPace } from '@/lib/pace';
 import { formatPctChange } from '@/lib/format';
 
 /**
- * The one list of things that want you to do something — Home's "Needs
- * you" shows the top three, and the bell opens all of them (Alerts). Never
- * general information: that's what Upcoming and the month hero are for.
+ * The one list of things that want you to do something — the bell opens it
+ * (Alerts) and counts it. Home itself has no Needs you card: bills show in
+ * Upcoming, flagged "Due soon", and budgets get a dot on the Budgets tab.
+ * Never general information: that's what Upcoming and the month hero are for.
  * Pure — every input is passed in, including today's date — so the rules
  * below are unit-tested without a database or a clock.
  *

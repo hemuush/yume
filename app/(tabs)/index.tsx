@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View, ScrollView, StyleSheet, RefreshControl } from 'react-native';
 import { Text } from '@/components/Text';
 import Animated, { useSharedValue, useAnimatedScrollHandler } from 'react-native-reanimated';
@@ -19,6 +19,8 @@ import { monthPace } from '@/lib/pace';
 import { getUserName, getDailySpendingGoal } from '@/db/settings';
 import { listBudgetsForMonth, BudgetProgress } from '@/db/budgets';
 import { listSavingsGoals } from '@/db/savingsGoals';
+import { savingsAccountIdsOf } from '@/lib/account';
+import { privateComparison, isSavingsEntry } from '@/lib/privateSummary';
 import { roundedMinor } from '@/lib/round';
 import { savingsRatePct } from '@/lib/savingsRate';
 import { Account, Category, Transaction, Loan, RecurringRule, SavingsGoal } from '@/types';
@@ -56,10 +58,9 @@ import { AccountChip, ACCOUNT_CHIP_WIDTH, ACCOUNT_STRIP_GAP } from '@/features/h
 import { AccountSummarySheet } from '@/features/home/AccountSummarySheet';
 import { AccountDetailModal } from '@/features/profile/AccountDetailModal';
 import { suuLine } from '@/features/home/suuLine';
-import { NeedsYouCard } from '@/features/home/NeedsYouCard';
 import { loadReadyWraps, ReadyWrap } from '@/features/wrap/wrapWindow';
 import { NeedsYouItem } from '@/features/home/needsYou';
-import { loadNeedsYou, snoozeBackupReminder } from '@/features/home/needsYouData';
+import { loadNeedsYou } from '@/features/home/needsYouData';
 import { AddAccountModal } from '@/features/profile/AddAccountModal';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { toLocalIsoDate } from '@/lib/date';
@@ -76,7 +77,11 @@ export default function DashboardScreen() {
   const [recent, setRecent] = useState<Transaction[]>([]);
   const [loans, setLoans] = useState<Loan[]>([]);
   const [recurringRules, setRecurringRules] = useState<RecurringRule[]>([]);
-  const [comparison, setComparison] = useState<PeriodComparison | null>(null);
+  const [rawComparison, setComparison] = useState<PeriodComparison | null>(null);
+  const comparison = useMemo(
+    () => privateComparison(rawComparison, hideAmounts),
+    [rawComparison, hideAmounts]
+  );
   const [loanProgress, setLoanProgress] = useState<Awaited<ReturnType<typeof getLoanProgress>>>([]);
   const [cardBills, setCardBills] = useState<Awaited<ReturnType<typeof listCardCycles>>>([]);
   const [budgets, setBudgets] = useState<BudgetProgress[]>([]);
@@ -92,8 +97,8 @@ export default function DashboardScreen() {
     everydaySpentMinor: number;
     dueRestOfMonthMinor: number;
   } | null>(null);
-  // Everything that needs you (see features/home/needsYou.ts) — the card
-  // shows the top three; the bell opens the full list with the same count.
+  // Everything that needs you (see features/home/needsYou.ts). The bell opens
+  // the list and shows the count; Home itself only flags the Budgets tab.
   const [needsYou, setNeedsYou] = useState<NeedsYouItem[]>([]);
   const [addAccountVisible, setAddAccountVisible] = useState(false);
   // Tapping an account card opens its summary; "Edit account" there swaps
@@ -172,82 +177,91 @@ export default function DashboardScreen() {
   // last. Only the most recent load may write state — otherwise last month's
   // data could land under this month's label.
   const loadSeq = useRef(0);
-  const load = useCallback(async (c: PeriodCursor) => {
-    const seq = ++loadSeq.current;
-    const range = periodRange(c);
-    try {
-      const [
-        accs,
-        cats,
-        tx,
-        ln,
-        rules,
-        cmp,
-        progress,
-        cycles,
-        name,
-        budgetList,
-        goalList,
-        todaySpend,
-        dailyGoal,
-        paceIn,
-        needs,
-        wraps,
-      ] = await Promise.all([
-        listAccounts(),
-        listCategories(),
-        // Scoped to the same period as the navigator above it — showing the
-        // single most-recent transactions regardless of period previously
-        // made "Recent Activity" contradict whatever month/year was selected.
-        listTransactions({ fromDate: range.start, toDate: range.end, limit: 30 }),
-        listLoans(),
-        listRecurringRules(),
-        getRangeComparison(range, previousPeriodRange(c), c.granularity),
-        getLoanProgress(),
-        listCardCycles().catch(() => []),
-        getUserName(),
-        // Budgets and goals are always about *now*, not whatever period the
-        // cursor above is browsing — a budget is inherently this calendar
-        // month, and a goal has no period at all. Same for today's spend and
-        // the daily goal.
-        listBudgetsForMonth(),
-        listSavingsGoals(),
-        getTodaySpend(),
-        getDailySpendingGoal(),
-        getMonthPaceInputs(),
-        loadNeedsYou(),
-        loadReadyWraps(),
-      ]);
-      if (seq !== loadSeq.current) return;
-      setAccounts(accs);
-      setCategories(cats);
-      setRecent(tx);
-      // A defaulted loan is still real money owed (or owed to you) — only a
-      // 'closed' loan (fully paid off) should ever drop out of these totals.
-      setLoans(ln.filter((l) => l.status !== 'closed'));
-      setRecurringRules(rules);
-      setComparison(cmp);
-      setLoanProgress(progress);
-      setCardBills(cycles);
-      setUserNameState(name);
-      setBudgets(budgetList);
-      setGoals(goalList);
-      setTodaySpendMinor(todaySpend);
-      setDailyGoalMinor(dailyGoal);
-      setPaceInputs(paceIn);
-      setNeedsYou(needs.shown);
-      setReadyWraps(wraps);
-      setLoadedCursor(c);
-      setLoadError(null);
-    } catch (e) {
-      if (seq !== loadSeq.current) return;
-      // Guard the throw so a transient DB error shows a banner instead of
-      // freezing stale data + a stuck pull-to-refresh spinner.
-      setLoadError(errorMessage(e));
-    } finally {
-      if (seq === loadSeq.current) setLoaded(true);
-    }
-  }, []);
+  const load = useCallback(
+    async (c: PeriodCursor) => {
+      const seq = ++loadSeq.current;
+      const range = periodRange(c);
+      try {
+        const [
+          accs,
+          cats,
+          tx,
+          ln,
+          rules,
+          cmp,
+          progress,
+          cycles,
+          name,
+          budgetList,
+          goalList,
+          todaySpend,
+          dailyGoal,
+          paceIn,
+          needs,
+          wraps,
+        ] = await Promise.all([
+          listAccounts(),
+          listCategories(),
+          // Scoped to the same period as the navigator above it — showing the
+          // single most-recent transactions regardless of period previously
+          // made "Recent Activity" contradict whatever month/year was selected.
+          listTransactions({ fromDate: range.start, toDate: range.end, limit: 30 }),
+          listLoans(),
+          listRecurringRules(),
+          getRangeComparison(range, previousPeriodRange(c), c.granularity),
+          getLoanProgress(),
+          listCardCycles().catch(() => []),
+          getUserName(),
+          // Budgets and goals are always about *now*, not whatever period the
+          // cursor above is browsing — a budget is inherently this calendar
+          // month, and a goal has no period at all. Same for today's spend and
+          // the daily goal.
+          listBudgetsForMonth(undefined, hideAmounts),
+          listSavingsGoals(),
+          getTodaySpend(undefined, hideAmounts),
+          getDailySpendingGoal(),
+          getMonthPaceInputs(),
+          loadNeedsYou(),
+          loadReadyWraps(),
+        ]);
+        if (seq !== loadSeq.current) return;
+        setAccounts(accs);
+        setCategories(cats);
+        setRecent(tx);
+        // A defaulted loan is still real money owed (or owed to you) — only a
+        // 'closed' loan (fully paid off) should ever drop out of these totals.
+        setLoans(ln.filter((l) => l.status !== 'closed'));
+        setRecurringRules(
+          hideAmounts
+            ? rules.filter(
+                (r) => !isSavingsEntry(r, new Map(cats.map((c) => [c.id, c])), savingsAccountIdsOf(accs))
+              )
+            : rules
+        );
+        setComparison(cmp);
+        setLoanProgress(progress);
+        setCardBills(cycles);
+        setUserNameState(name);
+        setBudgets(budgetList);
+        setGoals(goalList);
+        setTodaySpendMinor(todaySpend);
+        setDailyGoalMinor(dailyGoal);
+        setPaceInputs(paceIn);
+        setNeedsYou(needs.shown);
+        setReadyWraps(wraps);
+        setLoadedCursor(c);
+        setLoadError(null);
+      } catch (e) {
+        if (seq !== loadSeq.current) return;
+        // Guard the throw so a transient DB error shows a banner instead of
+        // freezing stale data + a stuck pull-to-refresh spinner.
+        setLoadError(errorMessage(e));
+      } finally {
+        if (seq === loadSeq.current) setLoaded(true);
+      }
+    },
+    [hideAmounts]
+  );
 
   useFocusEffect(
     useCallback(() => {
@@ -265,6 +279,10 @@ export default function DashboardScreen() {
 
   const categoryFor = (id: string | null) => categories.find((c) => c.id === id);
   const accountName = (id: string | null | undefined) => accounts.find((a) => a.id === id)?.name;
+  const savingsIds = savingsAccountIdsOf(accounts);
+  const isSavingsTransfer = (tx: Transaction) =>
+    tx.type === 'transfer' &&
+    (savingsIds.has(tx.accountId) || (!!tx.toAccountId && savingsIds.has(tx.toAccountId)));
 
   const totalOutstandingLoans = loans
     .filter((l) => l.direction === 'borrowed')
@@ -339,23 +357,6 @@ export default function DashboardScreen() {
     categoryColor: (id) => categoryFor(id)?.color,
   });
 
-  const openNeedsYou = (item: NeedsYouItem) => {
-    if (item.action === 'loans') router.push('/loans');
-    else if (item.action === 'budgets') router.push('/budgets');
-    else if (item.action === 'reports') router.navigate('/reports');
-    else if (item.action === 'tidy') router.push('/tidy-up');
-    else if (item.action === 'recurring') router.push('/recurring');
-    else if (item.action === 'payCard' && item.payCard)
-      router.push(payCardRoute(item.payCard.accountId, item.payCard.amountMinor));
-    else router.push('/backup');
-  };
-  // "Later" on the no-backup reminder hides it for a month. Shown as hidden
-  // straight away; a failed write only means it may reappear on the next load.
-  const snoozeNeedsYou = (item: NeedsYouItem) => {
-    setNeedsYou((prev) => prev.filter((i) => i.key !== item.key));
-    snoozeBackupReminder().catch(() => {});
-  };
-
   return (
     <View style={styles.container}>
       {/* Top to bottom, the "arranged Home" sign-off: the header (with the
@@ -423,15 +424,6 @@ export default function DashboardScreen() {
           )}
         </View>
 
-        {loaded && (
-          <NeedsYouCard
-            items={needsYou}
-            onOpen={openNeedsYou}
-            onSeeAll={() => router.push('/notifications')}
-            onSnooze={snoozeNeedsYou}
-          />
-        )}
-
         {!loaded && (
           <>
             <View style={{ marginTop: HOME.sectionGap }}>
@@ -451,6 +443,7 @@ export default function DashboardScreen() {
             upcoming={upcoming}
             budgets={budgets}
             goals={goals}
+            budgetAlert={needsYou.some((i) => i.action === 'budgets')}
             rowEntering={rowEntering}
             onSeeMoreUpcoming={() => router.navigate({ pathname: '/plan', params: { section: 'coming-up' } })}
           />
@@ -472,6 +465,7 @@ export default function DashboardScreen() {
                       category={categoryFor(tx.categoryId) ?? undefined}
                       accountName={accountName(tx.accountId)}
                       toAccountName={accountName(tx.toAccountId)}
+                      savingsTransfer={isSavingsTransfer(tx)}
                       divider={i > 0}
                     />
                   </Animated.View>

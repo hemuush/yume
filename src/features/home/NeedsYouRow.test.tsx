@@ -1,8 +1,9 @@
 /**
- * Render test for Home's "Needs you" card — the same smoke-render guard
- * BudgetRow/GoalRing have (a Reanimated/core-Animated mismatch once crashed
- * release builds silently), plus the card's own contract: nothing at all
- * when there's nothing to do, a row per item, and the right callback per tap.
+ * Render test for the Needs you row on the bell's screen: the same
+ * smoke-render guard BudgetRow/GoalRing have (a Reanimated/core-Animated
+ * mismatch once crashed release builds silently), plus the row's contract:
+ * its title and detail, "Later" only on a snoozable item, a dismiss button
+ * only when it can be dismissed, and the right callback per tap.
  */
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
 
@@ -11,7 +12,8 @@ import { create, act, ReactTestRenderer } from 'react-test-renderer';
 // 5s default — seen failing that way, never on its own. Generous, not slow.
 jest.setTimeout(30000);
 import { Text } from 'react-native';
-import { NeedsYouCard } from './NeedsYouCard';
+import Feather from '@expo/vector-icons/Feather';
+import { NeedsYouRow } from './NeedsYouRow';
 import { NeedsYouItem } from './needsYou';
 
 const emi: NeedsYouItem = {
@@ -33,10 +35,21 @@ const noBackup: NeedsYouItem = {
 
 // Async so the icon font's own load (a state update inside @expo/vector-icons)
 // settles inside act, rather than warning after the test has moved on.
-async function render(items: NeedsYouItem[], onOpen = jest.fn(), onSnooze = jest.fn(), onSeeAll = jest.fn()) {
+async function render(
+  item: NeedsYouItem,
+  opts: { onPress?: jest.Mock; onSnooze?: jest.Mock; onDismiss?: jest.Mock } = {}
+) {
   let tree!: ReactTestRenderer;
   await act(async () => {
-    tree = create(<NeedsYouCard items={items} onOpen={onOpen} onSnooze={onSnooze} onSeeAll={onSeeAll} />);
+    tree = create(
+      <NeedsYouRow
+        item={item}
+        divider={false}
+        onPress={opts.onPress ?? jest.fn()}
+        onSnooze={opts.onSnooze ?? jest.fn()}
+        onDismiss={opts.onDismiss}
+      />
+    );
   });
   return tree;
 }
@@ -45,64 +58,60 @@ const texts = (tree: ReactTestRenderer) =>
   tree.root.findAllByType(Text).map((t) => [].concat(t.props.children).join(''));
 
 // Loads React Native's lazily-required components once, up front, with a
-// generous budget — on a cold, fully parallel run (CI) their first load can
+// generous budget: on a cold, fully parallel run (CI) their first load can
 // outlast a single test's time limit, which failed this file intermittently.
 beforeAll(async () => {
-  await render([emi, noBackup]);
+  await render(emi);
 }, 180000);
 
-describe('NeedsYouCard', () => {
-  it('renders nothing when there is nothing to do', async () => {
-    expect((await render([])).toJSON()).toBeNull();
+describe('NeedsYouRow', () => {
+  it('shows the title and detail', async () => {
+    expect(texts(await render(emi))).toEqual(expect.arrayContaining(['Home loan EMI', 'Due today']));
   });
 
-  it('shows the top three, counts all of them, and links to the rest', async () => {
-    const budget = (n: number): NeedsYouItem => ({
-      key: `budget-${n}-near`,
-      tone: 'warn',
-      title: `Budget ${n}`,
-      detail: '95% used',
-      action: 'budgets',
-    });
-    const onSeeAll = jest.fn();
-    const tree = await render([emi, budget(1), budget(2), noBackup], jest.fn(), jest.fn(), onSeeAll);
-    const shown = texts(tree);
-    expect(shown).toEqual(expect.arrayContaining(['4', 'Home loan EMI', 'Budget 1', 'Budget 2']));
-    expect(shown).not.toContain('No backup yet');
+  it('opens the item when its row is tapped', async () => {
+    const onPress = jest.fn();
+    const tree = await render(emi, { onPress });
     act(() =>
       tree.root
-        .find((n) => n.props.accessibilityLabel === 'See all — Needs you' && n.props.onPress)
+        .find((n) => n.props.accessibilityLabel?.startsWith('Home loan EMI') && n.props.onPress)
         .props.onPress()
     );
-    expect(onSeeAll).toHaveBeenCalled();
+    expect(onPress).toHaveBeenCalledTimes(1);
   });
 
-  it('has no See all when everything fits', async () => {
-    const tree = await render([emi, noBackup]);
-    expect(tree.root.findAll((n) => n.props.accessibilityLabel === 'See all — Needs you')).toHaveLength(0);
-  });
-
-  it('renders a titled row for each item', async () => {
-    const shown = texts(await render([emi, noBackup]));
-    expect(shown).toEqual(
-      expect.arrayContaining(['Needs you', 'Home loan EMI', 'Due today', 'No backup yet', 'Later'])
-    );
-  });
-
-  it('opens an item when its row is tapped, and snoozes only via "Later"', async () => {
-    const onOpen = jest.fn();
+  it('offers "Later" only on a snoozable item, and it does not open the item', async () => {
+    expect(texts(await render(emi))).not.toContain('Later');
+    const onPress = jest.fn();
     const onSnooze = jest.fn();
-    const tree = await render([emi, noBackup], onOpen, onSnooze);
-
-    const row = tree.root.find(
-      (n) => n.props.accessibilityLabel?.startsWith('Home loan EMI') && n.props.onPress
+    const tree = await render(noBackup, { onPress, onSnooze });
+    expect(texts(tree)).toContain('Later');
+    act(() =>
+      tree.root
+        .find((n) => n.props.accessibilityLabel === 'Remind me later' && n.props.onPress)
+        .props.onPress()
     );
-    act(() => row.props.onPress());
-    expect(onOpen).toHaveBeenCalledWith(emi);
+    expect(onSnooze).toHaveBeenCalledTimes(1);
+    expect(onPress).not.toHaveBeenCalled();
+  });
 
-    const later = tree.root.find((n) => n.props.accessibilityLabel === 'Remind me later' && n.props.onPress);
-    act(() => later.props.onPress());
-    expect(onSnooze).toHaveBeenCalledWith(noBackup);
-    expect(onOpen).toHaveBeenCalledTimes(1);
+  it('shows a dismiss button only when it can be dismissed', async () => {
+    const dismissButtons = (tree: ReactTestRenderer) =>
+      tree.root.findAll((n) => n.props.accessibilityLabel === 'Dismiss: Home loan EMI' && n.props.onPress);
+    expect(dismissButtons(await render(emi))).toHaveLength(0);
+    const onDismiss = jest.fn();
+    const tree = await render(emi, { onDismiss });
+    act(() => dismissButtons(tree)[0].props.onPress());
+    expect(onDismiss).toHaveBeenCalledTimes(1);
+  });
+
+  it('draws the icon of what the item is about, whatever its tone', async () => {
+    const iconOf = async (item: NeedsYouItem) =>
+      (await render(item)).root.findAllByType(Feather)[0].props.name;
+    const soon = (over: Partial<NeedsYouItem>): NeedsYouItem => ({ ...emi, tone: 'warn', ...over });
+    expect(await iconOf(soon({ action: 'loans' }))).toBe('calendar');
+    expect(await iconOf(soon({ action: 'payCard' }))).toBe('credit-card');
+    // Budgets have no icon of their own, so they keep the warn tone's pie chart.
+    expect(await iconOf(soon({ action: 'budgets' }))).toBe('pie-chart');
   });
 });

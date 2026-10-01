@@ -5,7 +5,7 @@
 jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMock').createReanimatedMock());
 jest.mock('expo-router', () => ({ router: { push: jest.fn() } }));
 
-import { buildUpcomingItems, UPCOMING_DAYS } from './HomeGlance';
+import { buildUpcomingItems, UPCOMING_DAYS, DUE_SOON_DAYS } from './HomeGlance';
 import { addDaysToIsoDate, toLocalIsoDate } from '@/lib/date';
 import { RecurringRule } from '@/types';
 
@@ -107,6 +107,41 @@ describe('buildUpcomingItems', () => {
       ],
     });
     expect(items.map((i) => i.key)).toEqual(['big', 'small']);
+  });
+
+  it('pins an EMI or card bill due within 3 days, and anything late, above the rest', () => {
+    const { items } = buildUpcomingItems({
+      ...base,
+      loans: [
+        { id: 'car', name: 'Car loan', nextDueDate: inDays(2), nextEmiMinor: 1420000 },
+        { id: 'home', name: 'Home loan', nextDueDate: inDays(6), nextEmiMinor: 1800000 },
+      ],
+      cardBills: [
+        { accountId: 'card', accountName: 'Blue Card', dueDate: inDays(3), leftToPayMinor: 845000 },
+      ],
+      rules: [
+        rule({ id: 'stream', nextRunDate: inDays(1) }),
+        rule({ id: 'late', nextRunDate: inDays(-2) }),
+        rule({ id: 'salary', type: 'income', nextRunDate: inDays(2) }),
+      ],
+    });
+    expect(items.map((i) => [i.key, i.pinned, i.payable])).toEqual([
+      ['late', true, false],
+      ['loan-car', true, true],
+      ['card-card', true, true],
+      ['stream', false, false],
+      ['salary', false, false],
+      ['loan-home', false, true],
+    ]);
+  });
+
+  it('pins nothing when no bill is close', () => {
+    const { items } = buildUpcomingItems({
+      ...base,
+      loans: [{ id: 'car', name: 'Car loan', nextDueDate: inDays(DUE_SOON_DAYS + 1), nextEmiMinor: 100 }],
+      rules: [rule({ id: 'stream', nextRunDate: inDays(1) })],
+    });
+    expect(items.every((i) => !i.pinned)).toBe(true);
   });
 
   it('skips a card bill with nothing left to pay', () => {
