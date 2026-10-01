@@ -80,7 +80,7 @@ export function RestorePreviewSheet({
         <Feather
           name={preview.lostCount > 0 ? 'alert-triangle' : 'check-circle'}
           size={14}
-          color={preview.lostCount > 0 ? theme.colors.idGoldDeep : theme.colors.income}
+          color={preview.lostCount > 0 ? theme.colors.warnInk : theme.colors.income}
         />
         <Text style={styles.noteText}>
           {preview.lostCount > 0

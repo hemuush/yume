@@ -121,7 +121,7 @@ export const styles = StyleSheet.create({
   },
   rowNote: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textMuted },
   rowPace: { fontFamily: theme.font.bodyBold, fontSize: 11, color: theme.colors.incomeText },
-  rowPaceAhead: { color: theme.colors.idGoldDeep },
+  rowPaceAhead: { color: theme.colors.warnInk },
   rowNoteOver: { color: theme.colors.expenseText, fontFamily: theme.font.bodyBold },
 
   modalHint: {
