@@ -52,6 +52,9 @@ export const theme = {
     // on the cream surfaces).
     incomeText: '#167747',
     expenseText: '#BD3547',
+    // Amber for warning text and small icons: idGoldDeep is ~2:1 on the cream
+    // surfaces, so it stays for fills (bars, tints) only.
+    warnInk: '#8A5A00',
 
     textPrimary: '#12130F',
     textSecondary: '#5B5748',
