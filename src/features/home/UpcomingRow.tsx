@@ -28,6 +28,7 @@ export function UpcomingRow({
   divider,
   urgent,
   date,
+  actionLabel,
 }: {
   icon: React.ComponentProps<typeof Feather>['name'];
   iconBg: string;
@@ -42,6 +43,8 @@ export function UpcomingRow({
   urgent?: boolean;
   /** The due date (YYYY-MM-DD): shown as a date tile ("01 OCT") in place of the icon, as Plan does. */
   date?: string;
+  /** A bill to pay: a "Pay" pill stands where the chevron would; tapping anywhere on the row still opens it. */
+  actionLabel?: string;
 }) {
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.98);
   return (
@@ -73,7 +76,13 @@ export function UpcomingRow({
         {sign}
         {formatMoney(amountMinor)}
       </Text>
-      <Feather name="chevron-right" size={16} color={theme.colors.textMuted} />
+      {actionLabel ? (
+        <View style={styles.action}>
+          <Text style={styles.actionText}>{actionLabel}</Text>
+        </View>
+      ) : (
+        <Feather name="chevron-right" size={16} color={theme.colors.textMuted} />
+      )}
     </AnimatedPressable>
   );
 }
@@ -124,5 +133,12 @@ const styles = StyleSheet.create({
   subUrgent: h.subUrgent,
   amount: h.amount,
   income: h.income,
+  action: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: theme.radius.pill,
+    backgroundColor: theme.colors.ink,
+  },
+  actionText: { fontFamily: theme.font.bodyBold, fontSize: 11.5, color: theme.colors.white },
   moreText: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textSecondary },
 });
