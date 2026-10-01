@@ -22,6 +22,8 @@ import { withPressed } from '@/lib/pressed';
 export interface SwipePage {
   key: string;
   label: string;
+  /** Something on this page wants action: its tab gets a red dot. */
+  alert?: boolean;
   onSeeAll?: () => void;
   content: React.ReactNode;
 }
@@ -150,9 +152,10 @@ export function HomeSwipeCard({ pages }: { pages: SwipePage[] }) {
               style={withPressed(styles.tab)}
               accessibilityRole="tab"
               accessibilityState={{ selected: i === safeIndex }}
-              accessibilityLabel={p.label}
+              accessibilityLabel={p.alert ? `${p.label}, needs you` : p.label}
             >
               <Text style={[styles.tabText, i === safeIndex && styles.tabTextActive]}>{p.label}</Text>
+              {p.alert && <View style={styles.alertDot} />}
             </Pressable>
           ))}
         </View>
@@ -238,6 +241,15 @@ const styles = StyleSheet.create({
     elevation: 1,
   },
   tab: { flex: 1, alignItems: 'center', paddingVertical: 7, borderRadius: theme.radius.pill },
+  alertDot: {
+    position: 'absolute',
+    top: 6,
+    right: '18%',
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    backgroundColor: theme.colors.expense,
+  },
   tabText: { fontFamily: theme.font.roundedMedium, fontSize: 13, color: theme.colors.textSecondary },
   tabTextActive: { color: theme.colors.textPrimary },
   seeAll: {

@@ -29,10 +29,16 @@ export interface UpcomingItem {
   sortDate: string;
   route: '/loans' | '/recurring' | PayCardRoute;
   urgent: boolean;
+  /** An EMI or card bill to pay: its row ends in a "Pay" pill when pinned. */
+  payable: boolean;
+  /** Late, or an EMI or card bill due within DUE_SOON_DAYS: listed first, under "Due soon". */
+  pinned: boolean;
 }
 
 /** How far ahead Home's Upcoming looks. Overdue items are always included on top of this. */
 export const UPCOMING_DAYS = 7;
+/** An EMI or card bill this close (or late) is pinned to the top of Upcoming as "Due soon". */
+export const DUE_SOON_DAYS = 3;
 /** Rows shown before "+N more". */
 export const UPCOMING_ROWS = 5;
 
@@ -44,7 +50,7 @@ export interface UpcomingLoanInput {
 }
 
 export interface Upcoming {
-  /** Overdue, then everything due within UPCOMING_DAYS, soonest first. */
+  /** Bills to pay soon (or late) first, then everything else due within UPCOMING_DAYS, each soonest first. */
   items: UpcomingItem[];
   /** The first thing due after the window, for a week with nothing in it. */
   next: UpcomingItem | null;
@@ -81,6 +87,8 @@ export function buildUpcomingItems(input: {
       sortDate: loan.nextDueDate,
       route: '/loans',
       urgent: isDueUrgent(loan.nextDueDate),
+      payable: true,
+      pinned: daysUntilIsoDate(loan.nextDueDate) <= DUE_SOON_DAYS,
     });
   }
   for (const bill of input.cardBills) {
@@ -96,6 +104,8 @@ export function buildUpcomingItems(input: {
       sortDate: bill.dueDate,
       route: payCardRoute(bill.accountId, bill.leftToPayMinor),
       urgent: isDueUrgent(bill.dueDate),
+      payable: true,
+      pinned: daysUntilIsoDate(bill.dueDate) <= DUE_SOON_DAYS,
     });
   }
   for (const rule of input.rules) {
@@ -117,12 +127,16 @@ export function buildUpcomingItems(input: {
       sortDate: rule.nextRunDate,
       route: '/recurring',
       urgent: isDueUrgent(rule.nextRunDate),
+      payable: false,
+      pinned: daysUntilIsoDate(rule.nextRunDate) < 0,
     });
   }
   all.sort((a, b) =>
     a.sortDate !== b.sortDate ? (a.sortDate < b.sortDate ? -1 : 1) : b.amountMinor - a.amountMinor
   );
-  const items = all.filter((i) => daysUntilIsoDate(i.sortDate) <= UPCOMING_DAYS);
+  const inWindow = all.filter((i) => daysUntilIsoDate(i.sortDate) <= UPCOMING_DAYS);
+  // Bills to pay come first, each group still soonest first.
+  const items = [...inWindow.filter((i) => i.pinned), ...inWindow.filter((i) => !i.pinned)];
   return { items, next: all.find((i) => daysUntilIsoDate(i.sortDate) > UPCOMING_DAYS) ?? null };
 }
 
@@ -143,6 +157,7 @@ export function HomeGlance({
   goals,
   rowEntering,
   onSeeMoreUpcoming,
+  budgetAlert,
 }: {
   upcoming: Upcoming;
   /** "+N more" — opens Plan's Coming up, which lists the whole fortnight by day. */
@@ -150,10 +165,14 @@ export function HomeGlance({
   /** Most urgent first, as listBudgetsForMonth returns them. */
   budgets: BudgetProgress[];
   goals: SavingsGoal[];
+  /** A budget is nearly out or over: the Budgets tab gets a red dot. */
+  budgetAlert: boolean;
   rowEntering: (i: number) => React.ComponentProps<typeof Animated.View>['entering'];
 }) {
   const visibleUpcoming = upcoming.items.slice(0, UPCOMING_ROWS);
   const hiddenUpcoming = upcoming.items.length - visibleUpcoming.length;
+  // Labels only help when a bill is pinned: otherwise the list reads as it always did.
+  const hasPinned = visibleUpcoming.some((i) => i.pinned);
   const topBudgets = budgets.slice(0, 3);
   const activeGoals = goals.filter((g) => !g.archived);
   // Capped rather than its own horizontal ScrollView — nesting a
@@ -170,6 +189,7 @@ export function HomeGlance({
           {
             key: 'upcoming',
             label: 'Upcoming',
+            alert: upcoming.items.some((i) => i.pinned),
             // No "See all" footer: "+N more" already leads to Plan, and each
             // row deep-links to where it lives (Loans, Recurring, pay a card).
             content: (
@@ -188,23 +208,32 @@ export function HomeGlance({
                     <Text style={styles.quietSub}>Enjoy the quiet.</Text>
                   </View>
                 )}
-                {visibleUpcoming.map((item, i) => (
-                  <Animated.View key={item.key} entering={rowEntering(i)}>
-                    <UpcomingRow
-                      icon={item.icon}
-                      iconBg={item.iconBg}
-                      iconColor={item.iconColor}
-                      title={item.title}
-                      subtitle={item.subtitle}
-                      amountMinor={item.amountMinor}
-                      sign={item.sign}
-                      onPress={() => router.push(item.route)}
-                      divider={i > 0}
-                      urgent={item.urgent}
-                      date={item.sortDate}
-                    />
-                  </Animated.View>
-                ))}
+                {visibleUpcoming.map((item, i) => {
+                  const startsGroup = hasPinned && (i === 0 || item.pinned !== visibleUpcoming[i - 1].pinned);
+                  return (
+                    <Animated.View key={item.key} entering={rowEntering(i)}>
+                      {startsGroup && (
+                        <Text style={[styles.groupLabel, !item.pinned && i > 0 && styles.groupLabelLater]}>
+                          {item.pinned ? 'Due soon' : 'Later this week'}
+                        </Text>
+                      )}
+                      <UpcomingRow
+                        icon={item.icon}
+                        iconBg={item.iconBg}
+                        iconColor={item.iconColor}
+                        title={item.title}
+                        subtitle={item.subtitle}
+                        amountMinor={item.amountMinor}
+                        sign={item.sign}
+                        onPress={() => router.push(item.route)}
+                        divider={i > 0 && !startsGroup}
+                        urgent={item.urgent}
+                        date={item.sortDate}
+                        actionLabel={item.pinned && item.payable ? 'Pay' : undefined}
+                      />
+                    </Animated.View>
+                  );
+                })}
                 {upcoming.items.length === 0 && upcoming.next && (
                   <UpcomingRow
                     icon={upcoming.next.icon}
@@ -232,6 +261,7 @@ export function HomeGlance({
           {
             key: 'budgets',
             label: 'Budgets',
+            alert: budgetAlert,
             onSeeAll: () => router.push('/budgets'),
             content: (
               <View style={styles.pageList}>
@@ -288,6 +318,21 @@ const styles = StyleSheet.create({
   windowLabel: { fontFamily: theme.font.bodyMedium, fontSize: 11.5, color: theme.colors.textMuted },
   windowBold: { fontFamily: theme.font.bodyBold, color: theme.colors.textSecondary },
   windowCount: { fontFamily: theme.font.bodyMedium, fontSize: 11.5, color: theme.colors.textMuted },
+  groupLabel: {
+    paddingHorizontal: 14,
+    paddingTop: 10,
+    paddingBottom: 2,
+    fontFamily: theme.font.monoBold,
+    fontSize: 10.5,
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
+    color: theme.colors.expenseText,
+  },
+  groupLabelLater: {
+    color: theme.colors.textMuted,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: theme.colors.borderSoft,
+  },
   quiet: { paddingHorizontal: 14, paddingTop: 12, paddingBottom: 10, gap: 2 },
   quietTitle: { fontFamily: theme.font.roundedBold, fontSize: 15, color: theme.colors.textPrimary },
   quietSub: { fontFamily: theme.font.body, fontSize: 12.5, color: theme.colors.textMuted },

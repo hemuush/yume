@@ -16,7 +16,7 @@ import { theme } from '@/constants/theme';
 import { useAccent } from '@/theme/AccentContext';
 import { HomeSection } from '@/features/home/HomeSection';
 import { homeStyles as h } from '@/features/home/homeStyles';
-import { NeedsYouRow } from '@/features/home/NeedsYouCard';
+import { NeedsYouRow } from '@/features/home/NeedsYouRow';
 import { NeedsYouItem } from '@/features/home/needsYou';
 import {
   loadNeedsYou,
