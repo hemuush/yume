@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Animated } from 'react-native';
+import { Animated, View } from 'react-native';
+import Feather from '@expo/vector-icons/Feather';
 import Svg, { Circle, Text as SvgText } from 'react-native-svg';
 import { theme } from '@/constants/theme';
 import { useGrowFrom } from '@/lib/useGrowFrom';
@@ -9,6 +10,25 @@ const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
 function clampPct(percent: number): number {
   return Math.max(0, Math.min(100, percent));
+}
+
+/** Stands in for a goal's ring while savings amounts are hidden: an empty track with an eye-off icon. */
+export function HiddenGoalRing({ size = 44 }: { size?: number }) {
+  return (
+    <View
+      style={{
+        width: size,
+        height: size,
+        borderRadius: size / 2,
+        borderWidth: 4.4,
+        borderColor: theme.colors.borderSoft,
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      <Feather name="eye-off" size={Math.round(size * 0.35)} color={theme.colors.textMuted} />
+    </View>
+  );
 }
 
 /**

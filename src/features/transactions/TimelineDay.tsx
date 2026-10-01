@@ -7,12 +7,16 @@ import { CategoryIcon } from '@/components/CategoryIcon';
 import { MovingRow } from '@/components/MovingRow';
 import { JustAddedGlow } from '@/components/JustAddedGlow';
 import { Category, Transaction } from '@/types';
-import { formatMoney } from '@/lib/money';
+import { formatMaskableMoney, formatMoney } from '@/lib/money';
+import { usePrivacy } from '@/theme/PrivacyContext';
 import { haptics } from '@/lib/haptics';
 import { theme } from '@/constants/theme';
 import { buildDayLane, dropIndex, laneOrderIds, LaneLine, moveLine } from './transactions.helpers';
+import { isSavingsEntry } from '@/lib/privateSummary';
 import { DraggableLine } from './DraggableLine';
 import { withPressed } from '@/lib/pressed';
+
+const NO_ACCOUNTS: ReadonlySet<string> = new Set();
 
 const laneKey = (line: LaneLine) => (line.kind === 'single' ? line.tx.id : line.key);
 
@@ -24,7 +28,7 @@ function netMinorOf(items: Transaction[]): number {
   );
 }
 
-function Amount({ type, minor }: { type: Transaction['type']; minor: number }) {
+function Amount({ type, minor, masked }: { type: Transaction['type']; minor: number; masked: boolean }) {
   return (
     <Text
       style={[styles.amount, type === 'income' && styles.income, type === 'expense' && styles.expense]}
@@ -32,7 +36,7 @@ function Amount({ type, minor }: { type: Transaction['type']; minor: number }) {
       adjustsFontSizeToFit
     >
       {type === 'income' ? '+' : type === 'expense' ? '−' : ''}
-      {formatMoney(minor)}
+      {formatMaskableMoney(minor, { masked })}
     </Text>
   );
 }
@@ -62,6 +66,7 @@ export function TimelineDay({
   entering,
   onReorder,
   onDragActive,
+  savingsAccountIds = NO_ACCOUNTS,
 }: {
   date: string;
   label: string;
@@ -78,10 +83,16 @@ export function TimelineDay({
   onReorder?: (date: string, orderedIds: string[]) => Promise<void>;
   /** True while a line is held and dragged, so the list can stop scrolling under the finger. */
   onDragActive?: (active: boolean) => void;
+  /** Accounts of type savings — transfers into or out of them are hidden with "hide savings & investment amounts". */
+  savingsAccountIds?: ReadonlySet<string>;
 }) {
+  const { hideAmounts } = usePrivacy();
   const categoriesById = useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories]);
   const { transfers, lines } = useMemo(() => buildDayLane(items, date), [items, date]);
-  const net = netMinorOf(items);
+  const hidden = (tx: Transaction) => hideAmounts && isSavingsEntry(tx, categoriesById, savingsAccountIds);
+  const money = (minor: number, masked: boolean) => formatMaskableMoney(minor, { masked });
+  // With savings hidden the day's total leaves those entries out, or a day with one of them would give it away.
+  const net = netMinorOf(hideAmounts ? items.filter((tx) => !hidden(tx)) : items);
 
   // Hand-ordering: hold a line to lift it, drag it, let go. `arranged` shows the
   // new order straight away, until the reloaded entries carry it themselves.
@@ -174,7 +185,7 @@ export function TimelineDay({
             {...reorderProps(i)}
             style={withPressed(styles.line)}
             accessibilityRole="button"
-            accessibilityLabel={`${categoryName(tx.categoryId)}${tx.note ? `, ${tx.note}` : ''}, ${formatMoney(tx.amountMinor)}`}
+            accessibilityLabel={`${categoryName(tx.categoryId)}${tx.note ? `, ${tx.note}` : ''}, ${money(tx.amountMinor, hidden(tx))}`}
           >
             <JustAddedGlow ids={[tx.id]} surface="activity" />
             <CategoryIcon name={cat?.icon ?? 'tag'} color={cat?.color} size={14} square={30} />
@@ -188,7 +199,7 @@ export function TimelineDay({
                 {accountName(tx.accountId)}
               </Text>
             </View>
-            <Amount type={tx.type} minor={tx.amountMinor} />
+            <Amount type={tx.type} minor={tx.amountMinor} masked={hidden(tx)} />
           </Pressable>
         </MovingRow>
       );
@@ -203,6 +214,7 @@ export function TimelineDay({
       ? `Split · ${line.items.length} categories`
       : categoryName(line.kind === 'stack' ? line.categoryId : null);
     const type = isSplit ? 'expense' : line.type;
+    const lineMasked = line.items.some(hidden);
     // A stack from one account names it, like a single entry does; from several, just the count.
     const sameAccount = line.items.every((t) => t.accountId === first.accountId);
     return (
@@ -216,7 +228,7 @@ export function TimelineDay({
           style={withPressed(styles.line)}
           accessibilityRole="button"
           accessibilityState={{ expanded: open }}
-          accessibilityLabel={`${name}, ${isSplit ? 'one payment' : `${line.items.length} entries`}, ${formatMoney(line.totalMinor)}. ${open ? 'Close' : 'Open'}`}
+          accessibilityLabel={`${name}, ${isSplit ? 'one payment' : `${line.items.length} entries`}, ${money(line.totalMinor, lineMasked)}. ${open ? 'Close' : 'Open'}`}
         >
           {/* A new entry folded into this line glows the line. */}
           <JustAddedGlow ids={line.items.map((t) => t.id)} surface="activity" />
@@ -238,7 +250,7 @@ export function TimelineDay({
                 : `${line.items.length} entries${sameAccount ? ` · ${accountName(first.accountId)}` : ''}`}
             </Text>
           </View>
-          <Amount type={type} minor={line.totalMinor} />
+          <Amount type={type} minor={line.totalMinor} masked={lineMasked} />
         </Pressable>
         {open && (
           <View>
@@ -259,7 +271,7 @@ export function TimelineDay({
                     onPress={() => onPressTx(tx)}
                     style={withPressed(styles.subLine)}
                     accessibilityRole="button"
-                    accessibilityLabel={`${isSplit ? label : name}${!isSplit && tx.note ? `, ${tx.note}` : ''}, ${formatMoney(tx.amountMinor)}`}
+                    accessibilityLabel={`${isSplit ? label : name}${!isSplit && tx.note ? `, ${tx.note}` : ''}, ${money(tx.amountMinor, hidden(tx))}`}
                   >
                     <View
                       style={[styles.subDot, { backgroundColor: partCat?.color ?? theme.colors.borderSoft }]}
@@ -274,7 +286,7 @@ export function TimelineDay({
                         </Text>
                       )}
                     </View>
-                    <Amount type={tx.type} minor={tx.amountMinor} />
+                    <Amount type={tx.type} minor={tx.amountMinor} masked={hidden(tx)} />
                   </Pressable>
                 </MovingRow>
               );
@@ -320,7 +332,7 @@ export function TimelineDay({
             onPress={() => onPressTx(tx)}
             style={withPressed([styles.line, (lines.length > 0 || i > 0) && styles.divider])}
             accessibilityRole="button"
-            accessibilityLabel={`${formatMoney(tx.amountMinor)} moved from ${accountName(tx.accountId)} to ${accountName(tx.toAccountId!)}`}
+            accessibilityLabel={`${money(tx.amountMinor, hidden(tx))} moved from ${accountName(tx.accountId)} to ${accountName(tx.toAccountId!)}`}
           >
             <JustAddedGlow ids={[tx.id]} surface="activity" />
             <View style={styles.transferIcon}>
@@ -335,7 +347,7 @@ export function TimelineDay({
               </Text>
             </View>
             <Text style={[styles.amount, styles.transferAmount]} numberOfLines={1}>
-              {formatMoney(tx.amountMinor)}
+              {money(tx.amountMinor, hidden(tx))}
             </Text>
           </Pressable>
         ))}

@@ -13,6 +13,9 @@ export const SPEND_ROWS = `(t.type = 'expense' OR (t.type = 'income' AND t.is_re
 /** A spending row's effect: an expense adds, a refund takes away. */
 export const SPEND_AMOUNT = `(CASE WHEN t.type = 'expense' THEN t.amount_minor ELSE -t.amount_minor END)`;
 
+/** Rows outside the categories flagged "hide savings & investment amounts" (`is_sensitive`). */
+export const NOT_SENSITIVE = `COALESCE((SELECT sc.is_sensitive FROM categories sc WHERE sc.id = t.category_id), 0) = 0`;
+
 /** Rows that count as income: money in that isn't a refund. */
 export const INCOME_ROWS = `(t.type = 'income' AND t.is_refund = 0)`;
 

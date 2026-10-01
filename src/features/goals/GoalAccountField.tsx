@@ -3,7 +3,8 @@ import { View, Pressable } from 'react-native';
 import { Text } from '@/components/Text';
 import { Chip } from '@/components/Chip';
 import { Account } from '@/types';
-import { formatMoney } from '@/lib/money';
+import { formatMaskableMoney } from '@/lib/money';
+import { usePrivacy } from '@/theme/PrivacyContext';
 import { goalsFollowingAccount } from '@/db/savingsGoals';
 import { styles } from './goals.styles';
 import { withPressed } from '@/lib/pressed';
@@ -34,6 +35,7 @@ export function GoalAccountField({
   /** What was added by hand so far — kept, and back if the goal stops following. */
   manualAmountMinor?: number;
 }) {
+  const { hideAmounts } = usePrivacy();
   const [othersFollowing, setOthersFollowing] = useState<string[]>([]);
   const account = accounts.find((a) => a.id === accountId) ?? null;
 
@@ -86,8 +88,8 @@ export function GoalAccountField({
           )}
           {tracks && manualAmountMinor > 0 && (
             <Text style={styles.modalHint}>
-              The {formatMoney(manualAmountMinor)} you added by hand is kept, and comes back if you switch
-              back.
+              The {formatMaskableMoney(manualAmountMinor, { masked: hideAmounts })} you added by hand is kept,
+              and comes back if you switch back.
             </Text>
           )}
         </View>

@@ -7,6 +7,8 @@ import {
   PeriodSummary,
   DailyExpensePoint,
 } from '@/db/reports';
+import { getCachedHideSensitiveAmounts } from '@/db/settings';
+import { privateComparison, privateSummary } from '@/lib/privateSummary';
 import { periodRange, previousPeriodRange } from '@/lib/period';
 import { addDaysToIsoDate, isoDatesInRange, parseLocalIsoDate, toLocalIsoDate } from '@/lib/date';
 import { dayMonth, longMonth } from '@/lib/dateLabels';
@@ -237,10 +239,13 @@ export function usualWeekFrom(start: string, daily: DailyExpensePoint[]): number
 export async function loadMonthWrap(today: Date = new Date()): Promise<Wrap | null> {
   const cursor = { granularity: 'month' as const, offset: -1 };
   const range = periodRange(cursor, today);
-  const [comparison, daily] = await Promise.all([
+  // A Wrap is made to be shown (and shared), so it follows "hide savings & investment amounts".
+  const hide = getCachedHideSensitiveAmounts();
+  const [rawComparison, daily] = await Promise.all([
     getRangeComparison(range, previousPeriodRange(cursor, today), 'month'),
-    getDailyExpenseTotals(range),
+    getDailyExpenseTotals(range, hide),
   ]);
+  const comparison = privateComparison(rawComparison, hide);
   return buildMonthWrap({ monthStart: range.start, monthEnd: range.end, comparison, daily });
 }
 
@@ -248,10 +253,12 @@ export async function loadMonthWrap(today: Date = new Date()): Promise<Wrap | nu
 export async function loadWeekWrap(today: Date = new Date()): Promise<Wrap> {
   const { start, end } = lastFullWeek(today);
   const historyStart = addDaysToIsoDate(start, -7 * USUAL_WEEKS);
-  const [summary, daily] = await Promise.all([
+  const hide = getCachedHideSensitiveAmounts();
+  const [rawSummary, daily] = await Promise.all([
     getPeriodSummary({ start, end }),
-    getDailyExpenseTotals({ start: historyStart, end }),
+    getDailyExpenseTotals({ start: historyStart, end }, hide),
   ]);
+  const summary = privateSummary(rawSummary, hide);
   return buildWeekWrap({
     start,
     end,

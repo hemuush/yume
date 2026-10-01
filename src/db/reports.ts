@@ -3,7 +3,7 @@ import { toLocalIsoDate, addDaysToIsoDate, isoDatesInRange, monthsBetweenIsoDate
 import { streakSeries } from '@/lib/gardenGrowth';
 import { getDefaultCurrency } from './settings';
 import type { DateRange } from '@/types';
-import { SPEND_ROWS, SPEND_AMOUNT, INCOME_ROWS, rowsOf, amountOf, countOf } from './spendSql';
+import { SPEND_ROWS, SPEND_AMOUNT, INCOME_ROWS, NOT_SENSITIVE, rowsOf, amountOf, countOf } from './spendSql';
 
 export type ReportPeriod = 'day' | 'week' | 'month' | 'year';
 
@@ -339,14 +339,17 @@ export interface DailyExpensePoint {
 }
 
 /** Total expense for each day that had spending within `range` — one grouped query. */
-export async function getDailyExpenseTotals(range: DateRange): Promise<DailyExpensePoint[]> {
+export async function getDailyExpenseTotals(
+  range: DateRange,
+  excludeSensitive = false
+): Promise<DailyExpensePoint[]> {
   const db = await getDb();
   const currency = await getDefaultCurrency();
   const rows = await db.getAllAsync<{ date: string; total: number }>(
     `SELECT t.date as date, SUM(${SPEND_AMOUNT}) as total
      FROM transactions t
      JOIN accounts a ON a.id = t.account_id
-     WHERE ${SPEND_ROWS} AND a.currency = ? AND t.date >= ? AND t.date <= ?
+     WHERE ${SPEND_ROWS} AND a.currency = ? AND t.date >= ? AND t.date <= ?${excludeSensitive ? ` AND ${NOT_SENSITIVE}` : ''}
      GROUP BY t.date`,
     [currency, range.start, range.end]
   );
@@ -362,8 +365,11 @@ export async function getDailyExpenseTotals(range: DateRange): Promise<DailyExpe
  * just narrowed to a single day. Powers the "Today" strip on Home; reuses
  * `getDailyExpenseTotals`'s own query shape rather than a separate one.
  */
-export async function getTodaySpend(today: string = toIso(new Date())): Promise<number> {
-  const totals = await getDailyExpenseTotals({ start: today, end: today });
+export async function getTodaySpend(
+  today: string = toIso(new Date()),
+  excludeSensitive = false
+): Promise<number> {
+  const totals = await getDailyExpenseTotals({ start: today, end: today }, excludeSensitive);
   return totals[0]?.totalMinor ?? 0;
 }
 
@@ -572,7 +578,8 @@ export interface TrendPoint {
 /** Total expense per calendar month for the last `months` months (oldest first) — one grouped query, not N. */
 export async function getMonthlyExpenseTrend(
   months = 6,
-  reference: Date = new Date()
+  reference: Date = new Date(),
+  excludeSensitive = false
 ): Promise<TrendPoint[]> {
   const db = await getDb();
   const currency = await getDefaultCurrency();
@@ -583,7 +590,7 @@ export async function getMonthlyExpenseTrend(
     `SELECT strftime('%Y-%m', t.date) as ym, SUM(${SPEND_AMOUNT}) as total
      FROM transactions t
      JOIN accounts a ON a.id = t.account_id
-     WHERE ${SPEND_ROWS} AND a.currency = ? AND t.date >= ?
+     WHERE ${SPEND_ROWS} AND a.currency = ? AND t.date >= ?${excludeSensitive ? ` AND ${NOT_SENSITIVE}` : ''}
      GROUP BY ym`,
     [currency, startIso]
   );

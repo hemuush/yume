@@ -106,6 +106,7 @@ const mockListTransactions = jest.fn(async () => [
 jest.mock('@/db/ledger', () => ({
   listTransactions: (...args: unknown[]) => mockListTransactions(...(args as [])),
   listCategories: async () => [],
+  listAccounts: async () => [],
 }));
 
 import ReportsScreen from '../../../app/(tabs)/reports';

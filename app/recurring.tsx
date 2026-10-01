@@ -22,6 +22,9 @@ import { PrimaryButton } from '@/components/PrimaryButton';
 import { AddAccountModal } from '@/features/profile/AddAccountModal';
 import { errorMessage } from '@/lib/errorMessage';
 import { showAlert } from '@/components/AppDialog';
+import { usePrivacy } from '@/theme/PrivacyContext';
+import { isSavingsEntry } from '@/lib/privateSummary';
+import { savingsAccountIdsOf } from '@/lib/account';
 
 /**
  * Rent, subscriptions, salary — anything that happens on its own schedule
@@ -59,6 +62,10 @@ export default function RecurringScreen() {
   // from flashing on every cold open before the DB has answered.
   const { loaded, loadError, reload: load } = useScreenLoad(loadRules);
 
+  const { hideAmounts } = usePrivacy();
+  const categoriesById = useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories]);
+  const savingsIds = useMemo(() => savingsAccountIdsOf(accounts), [accounts]);
+  const isHidden = (r: RecurringRule) => hideAmounts && isSavingsEntry(r, categoriesById, savingsIds);
   const accountName = (id: string) => accounts.find((a) => a.id === id)?.name ?? '—';
   const categoryName = (id: string | null) => categories.find((c) => c.id === id)?.name ?? '—';
 
@@ -148,7 +155,7 @@ export default function RecurringScreen() {
         ) : (
           <>
             <SubscriptionsSection
-              totals={subscriptionTotals(rules)}
+              totals={subscriptionTotals(rules.filter((r) => !isHidden(r)))}
               suggestions={suggestions}
               onMakeRecurring={setFromSuggestion}
               onHide={hideSuggestion}
@@ -158,6 +165,7 @@ export default function RecurringScreen() {
               <RuleCard
                 key={rule.id}
                 rule={rule}
+                masked={isHidden(rule)}
                 accountName={accountName}
                 categoryName={categoryName}
                 index={i}
@@ -172,6 +180,7 @@ export default function RecurringScreen() {
                   <RuleCard
                     key={rule.id}
                     rule={rule}
+                    masked={isHidden(rule)}
                     accountName={accountName}
                     categoryName={categoryName}
                     index={i}
