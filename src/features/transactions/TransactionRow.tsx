@@ -7,7 +7,8 @@ import { theme } from '@/constants/theme';
 import { usePressScale } from '@/lib/usePressScale';
 import { styles } from './transactions.styles';
 import { homeStyles as h } from '@/features/home/homeStyles';
-import { formatMoney } from '@/lib/money';
+import { formatMaskableMoney } from '@/lib/money';
+import { usePrivacy } from '@/theme/PrivacyContext';
 
 const AnimatedRowPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -25,6 +26,7 @@ export function TransactionRow({
   categoryName,
   divider,
   onPress,
+  savingsTransfer = false,
 }: {
   tx: Transaction;
   cat: Category | undefined;
@@ -32,7 +34,10 @@ export function TransactionRow({
   categoryName: (id: string | null) => string;
   divider: boolean;
   onPress: () => void;
+  /** A transfer into or out of a savings account — masked with "hide savings & investment amounts". */
+  savingsTransfer?: boolean;
 }) {
+  const { hideAmounts } = usePrivacy();
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.98);
   return (
     <AnimatedRowPressable
@@ -59,12 +64,14 @@ export function TransactionRow({
         <Text style={h.sub} numberOfLines={1}>
           {tx.isRefund && <Text style={styles.rowRefund}>Refund · </Text>}
           {tx.type === 'transfer' ? 'Own accounts' : accountName(tx.accountId)}
-          {tx.splitTotalMinor ? ` · Part of a ${formatMoney(tx.splitTotalMinor)} split` : ''}
+          {tx.splitTotalMinor
+            ? ` · Part of a ${formatMaskableMoney(tx.splitTotalMinor, { masked: hideAmounts && !!cat?.isSensitive })} split`
+            : ''}
         </Text>
       </View>
       <Text style={[h.amount, tx.type === 'income' && h.income, tx.type === 'expense' && h.expense]}>
         {tx.type === 'expense' ? '−' : tx.type === 'income' ? '+' : ''}
-        <Amount minor={tx.amountMinor} sensitive={cat?.isSensitive} />
+        <Amount minor={tx.amountMinor} sensitive={cat?.isSensitive || savingsTransfer} />
       </Text>
     </AnimatedRowPressable>
   );

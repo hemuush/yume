@@ -9,6 +9,10 @@ import { create, act, ReactTestRenderer } from 'react-test-renderer';
 import { Text } from 'react-native';
 
 jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMock').createReanimatedMock());
+let mockHideAmounts = false;
+jest.mock('@/theme/PrivacyContext', () => ({
+  usePrivacy: () => ({ hideAmounts: mockHideAmounts, toggleHideAmounts: jest.fn() }),
+}));
 
 import { TimelineDay } from './TimelineDay';
 import { Category, Transaction } from '@/types';
@@ -74,7 +78,8 @@ function render(
   openStacks: Set<string>,
   onToggleStack = jest.fn(),
   onPressTx = jest.fn(),
-  onReorder?: (date: string, ids: string[]) => Promise<void>
+  onReorder?: (date: string, ids: string[]) => Promise<void>,
+  opts: { categories?: Category[]; savingsAccountIds?: Set<string> } = {}
 ) {
   let r!: ReactTestRenderer;
   act(() => {
@@ -84,7 +89,8 @@ function render(
         label="Yesterday"
         dateLabel="25 Sept"
         items={items}
-        categories={categories}
+        categories={opts.categories ?? categories}
+        savingsAccountIds={opts.savingsAccountIds}
         accountName={(id) => accounts[id] ?? id}
         categoryName={(id) => (id ? names[id] : 'Transfer')}
         onPressTx={onPressTx}
@@ -96,6 +102,46 @@ function render(
   });
   return r;
 }
+
+describe('TimelineDay with savings amounts hidden', () => {
+  const sensitiveFood = categories.map((c) =>
+    c.id === 'food' ? { ...c, isSensitive: true } : c
+  ) as Category[];
+
+  afterEach(() => {
+    mockHideAmounts = false;
+  });
+
+  it('shows everything while hiding is off', () => {
+    const r = render(new Set(), jest.fn(), jest.fn(), undefined, {
+      categories: sensitiveFood,
+      savingsAccountIds: new Set(['cash']),
+    });
+    const all = texts(r).join(' | ');
+    expect(all).toContain('+₹250');
+    expect(all).not.toContain('••••');
+  });
+
+  it('masks investment entries and savings transfers, and leaves them out of the day net', () => {
+    mockHideAmounts = true;
+    const r = render(new Set(), jest.fn(), jest.fn(), undefined, {
+      categories: sensitiveFood,
+      savingsAccountIds: new Set(['cash']),
+    });
+    const all = texts(r).join(' | ');
+    // Only salary +500 and travel -50 are left to count.
+    expect(all).toContain('+₹450');
+    expect(all).not.toContain('₹120');
+    expect(all).not.toContain('₹80');
+    expect(all).not.toContain('₹200');
+    expect(all).not.toContain('₹3,000');
+    expect(all).toContain('••••');
+    expect(byLabel(r, 'Food, 2 entries, ₹200')).toHaveLength(0);
+    expect(byLabel(r, '₹3,000 moved')).toHaveLength(0);
+    // Ordinary entries stay readable.
+    expect(byLabel(r, 'Travel, ₹50').length).toBeGreaterThan(0);
+  });
+});
 
 describe('TimelineDay', () => {
   it('shows the day, its date and net, with the transfer as a row in the card', () => {

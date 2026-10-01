@@ -36,6 +36,9 @@ import {
   filterActivity,
 } from '@/features/transactions/transactions.helpers';
 import { formatMoney } from '@/lib/money';
+import { savingsAccountIdsOf } from '@/lib/account';
+import { privateComparison } from '@/lib/privateSummary';
+import { usePrivacy } from '@/theme/PrivacyContext';
 import { haptics } from '@/lib/haptics';
 import { errorMessage } from '@/lib/errorMessage';
 import { DURATIONS } from '@/lib/motionTimings';
@@ -57,6 +60,7 @@ const SEARCH_RESULT_LIMIT = 50;
 
 export default function TransactionsScreen() {
   const insets = useSafeAreaInsets();
+  const { hideAmounts } = usePrivacy();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -214,17 +218,34 @@ export default function TransactionsScreen() {
   // read and, at that many bars squeezed into one row, could visually
   // crowd/overlap (see SpendBarChart's own note on why very large `flex`
   // ratios don't lay out reliably). Week-level bars sidestep both problems.
+  // With "hide savings & investment amounts" on, the sensitive categories stay out of the chart
+  // and the figures above it, so no bar, hint or total gives them away.
+  const chartTransactions = useMemo(
+    () =>
+      hideAmounts
+        ? transactions.filter(
+            (t) => !(t.categoryId && categories.find((c) => c.id === t.categoryId)?.isSensitive)
+          )
+        : transactions,
+    [transactions, categories, hideAmounts]
+  );
   const bars = useMemo(
     () =>
       viewScope === 'week'
         ? buildWeekSpendBars(
-            transactions,
+            chartTransactions,
             categories,
             { start: visibleRange.fromDate, end: visibleRange.toDate },
             today
           )
-        : buildWeeklySpendBars(transactions, categories, visibleRange.fromDate, visibleRange.toDate, today),
-    [transactions, categories, viewScope, visibleRange.fromDate, visibleRange.toDate, today]
+        : buildWeeklySpendBars(
+            chartTransactions,
+            categories,
+            visibleRange.fromDate,
+            visibleRange.toDate,
+            today
+          ),
+    [chartTransactions, categories, viewScope, visibleRange.fromDate, visibleRange.toDate, today]
   );
   const legend = useMemo(() => legendForBars(bars), [bars]);
   const heading = periodHeading({ scope: viewScope, week, anchor, today: todayDate });
@@ -386,7 +407,9 @@ export default function TransactionsScreen() {
   const accountName = (id: string) => accountsById.get(id)?.name ?? '—';
   const categoryName = (id: string | null) => (id ? categoriesById.get(id)?.name : undefined) ?? '—';
 
-  const expenseChangePct = comparison?.expenseChangePct ?? null;
+  const savingsAccountIds = useMemo(() => savingsAccountIdsOf(accounts), [accounts]);
+  const headline = useMemo(() => privateComparison(comparison, hideAmounts), [comparison, hideAmounts]);
+  const expenseChangePct = headline?.expenseChangePct ?? null;
   // Categories and accounts picked in the filter sheet (the type has its own chips).
   const filterCount = filterCategoryIds.length + filterAccountIds.length;
 
@@ -571,8 +594,8 @@ export default function TransactionsScreen() {
               <TransactionsHeadline
                 periodKey={`${viewScope}-${anchor.toDateString()}`}
                 direction={direction}
-                expenseMinor={comparison?.current.expenseMinor ?? 0}
-                incomeMinor={comparison?.current.incomeMinor ?? 0}
+                expenseMinor={headline?.current.expenseMinor ?? 0}
+                incomeMinor={headline?.current.incomeMinor ?? 0}
                 expenseChangePct={expenseChangePct}
                 viewScope={viewScope}
                 compareLabel={viewScope === 'week' ? weekCompareLabel(week, today) : undefined}
@@ -633,6 +656,7 @@ export default function TransactionsScreen() {
             accountName={accountName}
             categoryName={categoryName}
             onPressTx={setDetailTx}
+            savingsAccountIds={savingsAccountIds}
             openStacks={openStacks}
             onToggleStack={toggleStack}
             onReorder={canReorder ? reorderDay : undefined}

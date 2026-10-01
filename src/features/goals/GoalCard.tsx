@@ -5,11 +5,12 @@ import { CountUpAmount } from '@/components/CountUpAmount';
 import Feather from '@expo/vector-icons/Feather';
 import { router } from 'expo-router';
 import { SavingsGoal } from '@/types';
-import { formatMoney } from '@/lib/money';
+import { formatMoney, formatMaskableMoney } from '@/lib/money';
 import { theme } from '@/constants/theme';
 import { goalProgress } from '@/lib/savingsGoalProgress';
 import { usePressScale } from '@/lib/usePressScale';
-import { GoalRing } from './GoalRing';
+import { usePrivacy } from '@/theme/PrivacyContext';
+import { GoalRing, HiddenGoalRing } from './GoalRing';
 import { styles } from './goals.styles';
 import { withPressed } from '@/lib/pressed';
 import { dayMonthYear } from '@/lib/dateLabels';
@@ -33,6 +34,7 @@ export function GoalCard({
   onPress: () => void;
   onContribute: () => void;
 }) {
+  const { hideAmounts } = usePrivacy();
   const following = goal.tracksAccount && !!goal.linkedAccountId;
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.98);
   const { percent, done } = goalProgress(goal.currentAmountMinor, goal.targetAmountMinor);
@@ -46,19 +48,27 @@ export function GoalCard({
         onPressIn={onPressIn}
         onPressOut={onPressOut}
       >
-        <GoalRing percent={percent} color={ringColor} done={done} size={46} animKey={`goal:${goal.id}`} />
+        {hideAmounts ? (
+          <HiddenGoalRing size={46} />
+        ) : (
+          <GoalRing percent={percent} color={ringColor} done={done} size={46} animKey={`goal:${goal.id}`} />
+        )}
         <View style={{ flex: 1 }}>
           <Text style={styles.cardName} numberOfLines={1}>
             {goal.name}
           </Text>
           <Text style={styles.cardTarget}>
-            {done ? (
+            {done && !hideAmounts ? (
               `Reached · ${formatMoney(goal.targetAmountMinor)}`
             ) : (
               <>
                 {goal.targetDate ? `By ${dayMonthYear(goal.targetDate)} · ` : ''}
                 {/* Rolls to the new total when money is added, alongside the ring. */}
-                <CountUpAmount minor={goal.currentAmountMinor} countFromZero={false} />
+                {hideAmounts ? (
+                  formatMaskableMoney(goal.currentAmountMinor, { masked: true })
+                ) : (
+                  <CountUpAmount minor={goal.currentAmountMinor} countFromZero={false} />
+                )}
                 {` of ${formatMoney(goal.targetAmountMinor)}`}
               </>
             )}
@@ -76,7 +86,7 @@ export function GoalCard({
       <View style={styles.track}>
         <GrowFill
           animKey={`goal-bar:${goal.id}`}
-          pct={percent}
+          pct={hideAmounts ? 0 : percent}
           style={[styles.fill, { backgroundColor: ringColor }]}
         />
       </View>

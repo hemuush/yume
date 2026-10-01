@@ -100,8 +100,14 @@ export interface BudgetProgress {
   overBudget: boolean;
 }
 
-/** Every budget for one month, spend computed live, most-urgent (closest to or over its limit) first. */
-export async function listBudgetsForMonth(periodMonth: string = periodMonthOf()): Promise<BudgetProgress[]> {
+/**
+ * Every budget for one month, spend computed live, most-urgent (closest to or over its limit) first.
+ * `excludeSensitive` leaves out budgets on savings/investment categories (privacy mode).
+ */
+export async function listBudgetsForMonth(
+  periodMonth: string = periodMonthOf(),
+  excludeSensitive = false
+): Promise<BudgetProgress[]> {
   const db = await getDb();
   const currency = await getDefaultCurrency();
   const rows = await db.getAllAsync<
@@ -109,7 +115,7 @@ export async function listBudgetsForMonth(periodMonth: string = periodMonthOf())
   >(
     `SELECT b.*, c.name as category_name, c.icon as category_icon, c.color as category_color
      FROM budgets b JOIN categories c ON c.id = b.category_id
-     WHERE b.period_month = ?
+     WHERE b.period_month = ?${excludeSensitive ? ' AND c.is_sensitive = 0' : ''}
      ORDER BY c.name COLLATE NOCASE ASC`,
     [periodMonth]
   );
@@ -161,7 +167,10 @@ export interface LapsedBudget {
 }
 
 /** Categories that had a budget last month but don't have one yet for `periodMonth` — the "continue?" prompt. */
-export async function listLapsedBudgets(periodMonth: string = periodMonthOf()): Promise<LapsedBudget[]> {
+export async function listLapsedBudgets(
+  periodMonth: string = periodMonthOf(),
+  excludeSensitive = false
+): Promise<LapsedBudget[]> {
   const db = await getDb();
   const prevMonth = previousPeriodMonth(periodMonth);
   const rows = await db.getAllAsync<
@@ -174,7 +183,7 @@ export async function listLapsedBudgets(periodMonth: string = periodMonthOf()): 
     `SELECT b.category_id, b.limit_amount_minor, b.rollover,
             c.name as category_name, c.icon as category_icon, c.color as category_color
      FROM budgets b JOIN categories c ON c.id = b.category_id
-     WHERE b.period_month = ? AND c.archived = 0
+     WHERE b.period_month = ? AND c.archived = 0${excludeSensitive ? ' AND c.is_sensitive = 0' : ''}
        AND NOT EXISTS (SELECT 1 FROM budgets b2 WHERE b2.category_id = b.category_id AND b2.period_month = ?)
      ORDER BY c.name COLLATE NOCASE ASC`,
     [prevMonth, periodMonth]

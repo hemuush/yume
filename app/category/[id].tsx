@@ -28,6 +28,7 @@ import { longMonthYear, shortMonth } from '@/lib/dateLabels';
 import { useReturnOrPush } from '@/lib/useReturnOrPush';
 import { timesLabel, visitsLine } from '@/features/reports/visits';
 import { withPressed } from '@/lib/pressed';
+import { usePrivacy } from '@/theme/PrivacyContext';
 
 const isThisMonth = (w: ReportWindow) => w.granularity === 'month' && w.offset === 0;
 
@@ -61,6 +62,7 @@ export default function CategoryScreen() {
           offset: Math.min(0, Math.trunc(Number(params.o) || 0)),
         }
   );
+  const { hideAmounts } = usePrivacy();
   const [category, setCategory] = useState<Category | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [accounts, setAccounts] = useState<Account[]>([]);
@@ -87,12 +89,14 @@ export default function CategoryScreen() {
         toDate: range.end,
         limit: ENTRIES_SHOWN,
       }),
-      cat.kind === 'expense' && isCurrentMonth ? listBudgetsForMonth() : Promise.resolve([]),
+      cat.kind === 'expense' && isCurrentMonth
+        ? listBudgetsForMonth(undefined, hideAmounts)
+        : Promise.resolve([]),
     ]);
     setOverview(ov);
     setEntries(list);
     setBudget(budgets.find((b) => b.budget.categoryId === cat.id) ?? null);
-  }, [cursor, params.id]);
+  }, [cursor, params.id, hideAmounts]);
   const { loaded, loadError, reload } = useScreenLoad(load);
 
   const range = windowRange(cursor);
@@ -123,6 +127,19 @@ export default function CategoryScreen() {
       <View style={styles.container}>
         <AppHeader title="Category" showBack />
         <EmptyState title="This category no longer exists" />
+      </View>
+    );
+  }
+
+  // A savings or investment category has nothing to show while those amounts are hidden.
+  if (hideAmounts && category?.isSensitive) {
+    return (
+      <View style={styles.container}>
+        <AppHeader title={category.name} showBack />
+        <EmptyState
+          title="Hidden for now"
+          subtitle="Savings and investment amounts are hidden. Tap the eye in the header to show them."
+        />
       </View>
     );
   }

@@ -18,12 +18,15 @@ export function RecentTransactionRow({
   accountName,
   toAccountName,
   divider,
+  savingsTransfer = false,
 }: {
   tx: Transaction;
   category: Category | undefined;
   accountName: string | undefined;
   toAccountName: string | undefined;
   divider: boolean;
+  /** A transfer into or out of a savings account — masked with "hide savings & investment amounts". */
+  savingsTransfer?: boolean;
 }) {
   const isTransfer = tx.type === 'transfer';
   const note = tx.note?.trim();
@@ -56,7 +59,7 @@ export function RecentTransactionRow({
       {/* Spending reads in ink with its minus; only money in is coloured (green). */}
       <Text style={[styles.amount, tx.type === 'income' && styles.income]}>
         {tx.type === 'expense' ? '−' : tx.type === 'income' ? '+' : ''}
-        <Amount minor={tx.amountMinor} sensitive={category?.isSensitive} />
+        <Amount minor={tx.amountMinor} sensitive={category?.isSensitive || savingsTransfer} />
       </Text>
     </View>
   );

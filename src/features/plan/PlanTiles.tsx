@@ -6,7 +6,8 @@ import Feather from '@expo/vector-icons/Feather';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import Svg, { Circle } from 'react-native-svg';
 import { theme } from '@/constants/theme';
-import { formatMoney } from '@/lib/money';
+import { formatMoney, formatMaskableMoney } from '@/lib/money';
+import { usePrivacy } from '@/theme/PrivacyContext';
 import { formatRatioPct } from '@/lib/format';
 import { dueDateLabel } from '@/lib/dueDate';
 import { projectedMonthlySpend } from '@/lib/whatIf';
@@ -471,6 +472,7 @@ export function SavingTile({
   onOpenWhatIf: () => void;
 }) {
   const [cut, setCut] = useState<number>(10);
+  const { hideAmounts } = usePrivacy();
   const active = goals.filter((g) => !g.archived);
   return (
     <View style={[styles.tile, styles.tileWide, styles.savingTile]}>
@@ -488,7 +490,10 @@ export function SavingTile({
               {savingsAccounts.length > 0
                 ? `Follow ${savingsAccounts
                     .slice(0, 2)
-                    .map((a) => `${a.name} (${formatMoney(a.currentBalanceMinor)})`)
+                    .map(
+                      (a) =>
+                        `${a.name} (${formatMaskableMoney(a.currentBalanceMinor, { masked: hideAmounts })})`
+                    )
                     .join(' or ')}, or add money yourself`
                 : 'A trip, a fund, a gadget. Track it here.'}
             </Text>

@@ -9,7 +9,8 @@ import {
   restoreAccount,
   getAccountTransactionCount,
 } from '@/db/ledger';
-import { toMinor, formatMoney } from '@/lib/money';
+import { toMinor, formatMoney, formatMaskableMoney } from '@/lib/money';
+import { usePrivacy } from '@/theme/PrivacyContext';
 import { Account, AccountType } from '@/types';
 import { ModalSheet, SheetLink } from '@/components/ModalSheet';
 import { SheetCard } from '@/components/SheetCard';
@@ -50,6 +51,8 @@ export function AccountDetailModal({
 }) {
   const { show: showUndo } = useUndoToast();
   const { accent } = useAccent();
+  const { hideAmounts } = usePrivacy();
+  const hideSavings = hideAmounts && account?.type === 'savings';
   const [name, setName] = useState('');
   const [type, setType] = useState<AccountType>('bank');
   const [opening, setOpening] = useState('0');
@@ -198,9 +201,16 @@ export function AccountDetailModal({
         hue={accountHue(type, accent)}
         icon={accountIcon(type)}
         kicker={ACCOUNT_TYPES.find((t) => t.value === type)?.label}
-        amount={formatMoney(account.currentBalanceMinor, account.currency)}
+        amount={formatMaskableMoney(account.currentBalanceMinor, {
+          currency: account.currency,
+          masked: hideSavings,
+        })}
         title={name.trim() || account.name}
-        meta={`Balance now · opened with ${formatMoney(toMinor(parseFloat(opening || '0')) || 0, account.currency)}`}
+        meta={
+          hideSavings
+            ? 'Balance now'
+            : `Balance now · opened with ${formatMoney(toMinor(parseFloat(opening || '0')) || 0, account.currency)}`
+        }
       />
       <FormInput label="Name" value={name} onChangeText={setName} placeholder="e.g. HDFC Savings" />
       <Text style={styles.fieldLabel}>Type</Text>

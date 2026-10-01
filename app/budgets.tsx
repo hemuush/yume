@@ -16,6 +16,7 @@ import {
 } from '@/db/budgets';
 import { Category } from '@/types';
 import { formatMoney } from '@/lib/money';
+import { usePrivacy } from '@/theme/PrivacyContext';
 import { theme } from '@/constants/theme';
 import { AppHeader } from '@/components/AppHeader';
 import { AddButton } from '@/components/AddButton';
@@ -42,6 +43,7 @@ export default function BudgetsScreen() {
   const returnOrPush = useReturnOrPush();
   const insets = useSafeAreaInsets();
   const { show: showUndo } = useUndoToast();
+  const { hideAmounts } = usePrivacy();
   const [budgets, setBudgets] = useState<BudgetProgress[]>([]);
   const [lapsed, setLapsed] = useState<LapsedBudget[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -58,14 +60,14 @@ export default function BudgetsScreen() {
 
   const loadBudgets = useCallback(async () => {
     const [list, lapsedList, cats] = await Promise.all([
-      listBudgetsForMonth(periodMonth),
-      listLapsedBudgets(periodMonth),
+      listBudgetsForMonth(periodMonth, hideAmounts),
+      listLapsedBudgets(periodMonth, hideAmounts),
       listCategories(),
     ]);
     setBudgets(list);
     setLapsed(lapsedList);
     setCategories(cats);
-  }, [periodMonth]);
+  }, [periodMonth, hideAmounts]);
   const { loaded, loadError, reload: load } = useScreenLoad(loadBudgets);
 
   const totalLimit = budgets.reduce((sum, b) => sum + b.effectiveLimitMinor, 0);
@@ -75,7 +77,7 @@ export default function BudgetsScreen() {
   // Every expense category, parents and subcategories alike, for the
   // AddBudgetModal's picker — see that component's own comment for why this
   // isn't pre-filtered down to "doesn't already have one this month".
-  const expenseCategories = categories.filter((c) => c.kind === 'expense');
+  const expenseCategories = categories.filter((c) => c.kind === 'expense' && !(hideAmounts && c.isSensitive));
 
   const onContinue = async (item: LapsedBudget) => {
     setContinuingId(item.categoryId);

@@ -271,6 +271,12 @@ export function AccountSummarySheet({
                 category={categories.find((c) => c.id === tx.categoryId)}
                 accountName={nameOf(tx.accountId)}
                 toAccountName={nameOf(tx.toAccountId)}
+                savingsTransfer={
+                  tx.type === 'transfer' &&
+                  [tx.accountId, tx.toAccountId].some(
+                    (id) => accounts.find((a) => a.id === id)?.type === 'savings'
+                  )
+                }
                 divider={i > 0}
               />
             ))}

@@ -11,6 +11,9 @@ import { listPeople } from '@/db/people';
 import { listAccounts, listCategories } from '@/db/ledger';
 import { getDailyGoalStreakSeries, getCategoryMonthlyAverages } from '@/db/reports';
 import { getDailySpendingGoal } from '@/db/settings';
+import { usePrivacy } from '@/theme/PrivacyContext';
+import { isSavingsEntry } from '@/lib/privateSummary';
+import { savingsAccountIdsOf } from '@/lib/account';
 import { Account, SavingsGoal } from '@/types';
 import { theme } from '@/constants/theme';
 import { toLocalIsoDate } from '@/lib/date';
@@ -75,6 +78,7 @@ interface PlanData {
  */
 export default function PlanScreen() {
   const insets = useSafeAreaInsets();
+  const { hideAmounts } = usePrivacy();
   const [data, setData] = useState<PlanData | null>(null);
 
   const loadPlan = useCallback(async () => {
@@ -91,7 +95,7 @@ export default function PlanScreen() {
       averages,
       cardCycles,
     ] = await Promise.all([
-      listBudgetsForMonth(),
+      listBudgetsForMonth(undefined, hideAmounts),
       listSavingsGoals(),
       listRecurringRules(),
       listLoans(),
@@ -105,22 +109,26 @@ export default function PlanScreen() {
     ]);
     const streak = dailyGoal != null ? await getDailyGoalStreakSeries(dailyGoal, 5) : null;
 
+    const categoriesById = new Map(categories.map((c) => [c.id, c]));
+    const savingsIds = savingsAccountIdsOf(accounts);
     const accountName = (id: string | null) => accounts.find((a) => a.id === id)?.name ?? '—';
     const loansSummary = buildLoansSummary(loans, progress);
     // Same label Home's Upcoming list uses for a rule.
     const dueItems = buildDueItems(
       loansSummary.rows,
-      rules.map((r) => ({
-        id: r.id,
-        type: r.type,
-        active: r.active,
-        nextRunDate: r.nextRunDate,
-        amountMinor: r.amountMinor,
-        label:
-          r.type === 'transfer'
-            ? `${accountName(r.accountId)} → ${accountName(r.toAccountId)}`
-            : r.note || categories.find((c) => c.id === r.categoryId)?.name || 'Recurring',
-      })),
+      rules
+        .filter((r) => !hideAmounts || !isSavingsEntry(r, categoriesById, savingsIds))
+        .map((r) => ({
+          id: r.id,
+          type: r.type,
+          active: r.active,
+          nextRunDate: r.nextRunDate,
+          amountMinor: r.amountMinor,
+          label:
+            r.type === 'transfer'
+              ? `${accountName(r.accountId)} → ${accountName(r.toAccountId)}`
+              : r.note || categories.find((c) => c.id === r.categoryId)?.name || 'Recurring',
+        })),
       cardCycles
     );
     // The category with the most spend lately (already sorted biggest first)
@@ -128,7 +136,10 @@ export default function PlanScreen() {
     // like Loan EMI, which the app files automatically — "spend 10% less on
     // your EMI" isn't a choice anyone has.
     const top = averages.find(
-      (c) => c.totalMinor > 0 && !categories.find((cat) => cat.id === c.categoryId)?.isSystem
+      (c) =>
+        c.totalMinor > 0 &&
+        !(hideAmounts && c.isSensitive) &&
+        !categories.find((cat) => cat.id === c.categoryId)?.isSystem
     );
 
     const today = toLocalIsoDate(new Date());
@@ -155,7 +166,7 @@ export default function PlanScreen() {
       habit: streak ? buildHabitState(streak) : null,
       dailyGoalMinor: dailyGoal,
     });
-  }, []);
+  }, [hideAmounts]);
   const { loaded, loadError, reload } = useScreenLoad(loadPlan);
   // The EMI being paid from Coming up, with the account and category it goes on.
   const [paying, setPaying] = useState<LoanPaymentContext | null>(null);
