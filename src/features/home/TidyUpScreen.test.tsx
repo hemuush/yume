@@ -59,6 +59,8 @@ jest.mock('@/db/tidyUp', () => ({
 jest.mock('@/db/maintenance', () => ({ roundLedgerAmountsToWholeRupees: jest.fn() }));
 
 import TidyUpScreen from '../../../app/tidy-up';
+import { roundLedgerAmountsToWholeRupees } from '@/db/maintenance';
+import { showAlert } from '@/components/AppDialog';
 import { keepRepeatGroup, deleteNewestOfGroup, moveToOpeningBalance, keepAsIncome } from '@/db/tidyUp';
 
 async function render() {
@@ -109,6 +111,25 @@ describe('Tidy up screen', () => {
     expect(mockShowUndo).toHaveBeenCalledWith("Moved to Bank's opening balance", expect.any(Function));
     await tap(tree, "They're real income");
     expect(keepAsIncome).toHaveBeenCalledWith('bank|prev');
+  });
+
+  it('rounds amounts only after a confirm, then offers an undo that puts them back', async () => {
+    const saved = mockReport.current;
+    mockReport.current = { repeats: [], startingBalances: [], fractionalCount: 3 };
+    const undo = jest.fn(async () => {});
+    (roundLedgerAmountsToWholeRupees as jest.Mock).mockResolvedValueOnce({ total: 3, undo });
+    const tree = await render();
+    await tap(tree, 'Round them');
+    expect(roundLedgerAmountsToWholeRupees).not.toHaveBeenCalled();
+    const [, message, buttons] = jest.mocked(showAlert).mock.calls.at(-1)!;
+    expect(message).not.toContain('cannot be undone');
+    await act(async () => {
+      await buttons!.find((b) => b.text === 'Round them')!.onPress!();
+    });
+    expect(mockShowUndo).toHaveBeenCalledWith('Rounded 3 amounts to whole rupees', expect.any(Function));
+    await act(async () => mockShowUndo.mock.calls.at(-1)![1]());
+    expect(undo).toHaveBeenCalledTimes(1);
+    mockReport.current = saved;
   });
 
   it('says all tidy when there is nothing', async () => {

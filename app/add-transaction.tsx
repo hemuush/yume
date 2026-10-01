@@ -11,6 +11,7 @@ import {
   createTransaction,
   updateTransaction,
   deleteTransaction,
+  restoreTransaction,
   getTransactionById,
   getTransactionLink,
   getFrequentAmountsForCategory,
@@ -59,7 +60,7 @@ import { AmountCard, TransferAccounts, UsualChips, StagedList } from '@/features
 import { errorMessage } from '@/lib/errorMessage';
 import { useOnKeyboardHide } from '@/lib/useOnKeyboardHide';
 import { withPressed } from '@/lib/pressed';
-import { getSplitParts, saveSplit, deleteSplit } from '@/db/splits';
+import { getSplitParts, saveSplit, deleteSplit, restoreSplit } from '@/db/splits';
 import {
   DraftPart,
   seedParts,
@@ -71,6 +72,8 @@ import {
 import { openSplitSession, takeSplitResult } from '@/features/add/splitSession';
 import { SplitCard } from '@/features/add/SplitCard';
 import { showAlert } from '@/components/AppDialog';
+import { useUndoToast } from '@/components/UndoToast';
+import { emitTransactionsChanged } from '@/lib/dataEvents';
 
 /** How many "Your usual" chips Add shows. */
 const USUAL_COUNT = 4;
@@ -85,6 +88,7 @@ function formatTyped(expr: string): string {
 
 export default function AddTransactionScreen() {
   const insets = useSafeAreaInsets();
+  const { show: showUndo } = useUndoToast();
   // `accountId` pre-selects the account (the "from" side of a transfer) —
   // Home's account summary sheet opens Add this way.
   const params = useLocalSearchParams<{
@@ -694,8 +698,13 @@ export default function AddTransactionScreen() {
             style: 'destructive',
             onPress: async () => {
               try {
-                await deleteSplit(splitId);
+                const snapshots = await deleteSplit(splitId);
+                haptics.warn();
                 router.back();
+                showUndo('Split moved to Recently deleted', async () => {
+                  await restoreSplit(snapshots);
+                  emitTransactionsChanged();
+                });
               } catch (e) {
                 setError(errorMessage(e));
               }
@@ -715,8 +724,13 @@ export default function AddTransactionScreen() {
           style: 'destructive',
           onPress: async () => {
             try {
-              await deleteTransaction(editing.id);
+              const snapshot = await deleteTransaction(editing.id);
+              haptics.warn();
               router.back();
+              showUndo('Moved to Recently deleted', async () => {
+                await restoreTransaction(snapshot);
+                emitTransactionsChanged();
+              });
             } catch (e) {
               setError(errorMessage(e));
             }

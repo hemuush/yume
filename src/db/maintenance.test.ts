@@ -68,6 +68,21 @@ it('counts every stored amount that still carries paise (loan tables excluded)',
   expect(counts.total).toBe(6);
 });
 
+it('undo puts every rounded amount back exactly, including an empty credit limit', async () => {
+  const outcome = await roundLedgerAmountsToWholeRupees();
+  expect(await col('transactions', 'amount_minor', 't1')).toBe(20600);
+  await outcome.undo();
+
+  expect(await col('transactions', 'amount_minor', 't1')).toBe(20555);
+  expect(await col('transactions', 'amount_minor', 't2')).toBe(40);
+  expect(await col('accounts', 'opening_balance_minor', 'acc1')).toBe(500055);
+  expect(await col('accounts', 'credit_limit_minor', 'acc1')).toBeNull();
+  expect(await col('accounts', 'credit_limit_minor', 'acc2')).toBe(2500049);
+  expect(await col('person_ledger_entries', 'amount_minor', 'ple1')).toBe(75033);
+  expect(await col('person_ledger_entries', 'amount_minor', 'ple2')).toBe(-25099);
+  expect((await countFractionalLedgerAmounts()).total).toBe(6);
+});
+
 it('rounds ledger amounts to whole rupees and reports the count changed', async () => {
   const changed = await roundLedgerAmountsToWholeRupees();
   expect(changed.total).toBe(6);
