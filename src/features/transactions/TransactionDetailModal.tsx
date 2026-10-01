@@ -31,7 +31,8 @@ import { styles } from './transactions.styles';
 import { errorMessage } from '@/lib/errorMessage';
 import { useReturnOrPush } from '@/lib/useReturnOrPush';
 import { getSplitParts, deleteSplit, restoreSplit } from '@/db/splits';
-import { formatMoney } from '@/lib/money';
+import { formatMaskableMoney } from '@/lib/money';
+import { usePrivacy } from '@/theme/PrivacyContext';
 import { router } from 'expo-router';
 import { showAlert } from '@/components/AppDialog';
 
@@ -51,6 +52,7 @@ export function TransactionDetailModal({
   onChanged: () => void;
 }) {
   const returnOrPush = useReturnOrPush();
+  const { hideAmounts } = usePrivacy();
   const { show: showUndo } = useUndoToast();
   const [link, setLink] = useState<TransactionLink | undefined>(undefined);
   const [busy, setBusy] = useState(false);
@@ -107,6 +109,9 @@ export function TransactionDetailModal({
   const account = accounts.find((a) => a.id === tx.accountId);
   const accountName = (id: string) => accounts.find((a) => a.id === id)?.name ?? '—';
   const transfer = tx.type === 'transfer';
+  const movesSavings =
+    transfer &&
+    [tx.accountId, tx.toAccountId].some((id) => accounts.find((a) => a.id === id)?.type === 'savings');
 
   /** Saves the same entry for today, with an undo — like ↻ Repeat on Add. */
   const logAgainToday = async () => {
@@ -288,7 +293,7 @@ export function TransactionDetailModal({
         amount={
           <>
             {tx.type === 'expense' ? '−' : tx.type === 'income' ? '+' : ''}
-            <Amount minor={tx.amountMinor} sensitive={cat?.isSensitive} />
+            <Amount minor={tx.amountMinor} sensitive={cat?.isSensitive || movesSavings} />
           </>
         }
         amountColor={
@@ -372,7 +377,16 @@ export function TransactionDetailModal({
           {tx.splitId && splitParts && splitParts.length > 0 && (
             <View style={styles.splitCard}>
               <Text style={styles.splitCardTitle}>
-                Part of a {formatMoney(splitParts.reduce((s, p) => s + p.amountMinor, 0))} split
+                Part of a{' '}
+                {formatMaskableMoney(
+                  splitParts.reduce((s, p) => s + p.amountMinor, 0),
+                  {
+                    masked:
+                      hideAmounts &&
+                      splitParts.some((p) => categories.find((c) => c.id === p.categoryId)?.isSensitive),
+                  }
+                )}{' '}
+                split
               </Text>
               {splitParts.map((p) => {
                 const pc = categories.find((c) => c.id === p.categoryId);

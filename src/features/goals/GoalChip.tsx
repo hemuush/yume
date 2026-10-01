@@ -1,5 +1,4 @@
-import { Pressable, StyleSheet, Animated, View } from 'react-native';
-import Feather from '@expo/vector-icons/Feather';
+import { Pressable, StyleSheet, Animated } from 'react-native';
 import { Text } from '@/components/Text';
 import { SavingsGoal } from '@/types';
 import { formatMoney, formatMaskableMoney } from '@/lib/money';
@@ -7,7 +6,7 @@ import { theme } from '@/constants/theme';
 import { goalProgress } from '@/lib/savingsGoalProgress';
 import { usePressScale } from '@/lib/usePressScale';
 import { usePrivacy } from '@/theme/PrivacyContext';
-import { GoalRing } from './GoalRing';
+import { GoalRing, HiddenGoalRing } from './GoalRing';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -34,9 +33,7 @@ export function GoalChip({ goal, onPress }: { goal: SavingsGoal; onPress: () => 
       }
     >
       {hideAmounts ? (
-        <View style={styles.hiddenRing}>
-          <Feather name="eye-off" size={14} color={theme.colors.textMuted} />
-        </View>
+        <HiddenGoalRing size={40} />
       ) : (
         <GoalRing
           percent={percent}
@@ -65,15 +62,6 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.borderSoft,
     borderRadius: theme.radius.xl,
     padding: 12,
-  },
-  hiddenRing: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    borderWidth: 4.4,
-    borderColor: theme.colors.borderSoft,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   name: { fontFamily: theme.font.bodyBold, fontSize: 12.5, color: theme.colors.textPrimary, marginTop: 8 },
   amt: { fontFamily: theme.font.mono, fontSize: 10.5, color: theme.colors.textSecondary, marginTop: 3 },

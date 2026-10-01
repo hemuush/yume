@@ -5,12 +5,14 @@ import {
   setLastOverspendNotified,
   getBudgetNudgesSent,
   addBudgetNudgesSent,
+  getCachedHideSensitiveAmounts,
 } from './settings';
 import { notifyOverspend, notifyBudget } from '@/lib/notifications';
 import { budgetNudgeCopy } from '@/lib/notificationCopy';
 import { listBudgetsForMonth, dueBudgetNudge, BudgetNudgeLevel } from './budgets';
 import { formatMoney } from '@/lib/money';
 import { getPeriodComparison, findTopGrowingCategory } from './reports';
+import { privateComparison } from '@/lib/privateSummary';
 import { toLocalIsoDate } from '@/lib/date';
 
 /** Budget and overspend checks run right after an expense is saved (re-exported from ./ledger). */
@@ -41,7 +43,7 @@ export async function checkOverspendAndNotify(categoryId: string): Promise<void>
 
   await checkBudgetNudge(categoryId, topLevelCategoryId).catch(() => {});
 
-  const comparison = await getPeriodComparison('month');
+  const comparison = privateComparison(await getPeriodComparison('month'), getCachedHideSensitiveAmounts());
   const top = findTopGrowingCategory(
     comparison.current.categoryBreakdown,
     comparison.previous.categoryBreakdown
@@ -67,7 +69,8 @@ export async function checkOverspendAndNotify(categoryId: string): Promise<void>
  * checkOverspendAndNotify, so it follows the same "Overspending alerts" switch.
  */
 async function checkBudgetNudge(categoryId: string, topLevelCategoryId: string): Promise<void> {
-  const budgets = await listBudgetsForMonth();
+  // A notification shows on the lock screen, so with privacy on it never speaks of a savings category.
+  const budgets = await listBudgetsForMonth(undefined, getCachedHideSensitiveAmounts());
   const budget =
     budgets.find((b) => b.budget.categoryId === categoryId) ??
     budgets.find((b) => b.budget.categoryId === topLevelCategoryId);

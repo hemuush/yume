@@ -10,7 +10,10 @@ jest.mock('@/db/reports', () => ({
     expenseMinor: mockSpent[start] ?? 0,
   })),
 }));
-jest.mock('@/db/settings', () => ({ getSeenWraps: jest.fn(async () => mockSeen.current) }));
+jest.mock('@/db/settings', () => ({
+  getSeenWraps: jest.fn(async () => mockSeen.current),
+  getCachedHideSensitiveAmounts: () => false,
+}));
 
 import { getPeriodSummary } from '@/db/reports';
 import { wrapWindow, loadReadyWraps } from './wrapWindow';

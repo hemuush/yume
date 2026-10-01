@@ -1,5 +1,6 @@
 import { getPeriodSummary } from '@/db/reports';
-import { getSeenWraps } from '@/db/settings';
+import { privateSummary } from '@/lib/privateSummary';
+import { getSeenWraps, getCachedHideSensitiveAmounts } from '@/db/settings';
 import { periodRange } from '@/lib/period';
 import { longMonth } from '@/lib/dateLabels';
 import { roundedMinor } from '@/lib/round';
@@ -60,7 +61,9 @@ export async function loadReadyWraps(today: Date = new Date()): Promise<ReadyWra
   ]);
   const ready: ReadyWrap[] = [];
   offered.forEach((w, i) => {
-    const spentMinor = roundedMinor(summaries[i].expenseMinor);
+    const spentMinor = roundedMinor(
+      privateSummary(summaries[i], getCachedHideSensitiveAmounts()).expenseMinor
+    );
     if (spentMinor <= 0) return;
     ready.push({ period: w.period, key: w.key, label: w.label, spentMinor, seen: seen.includes(w.key) });
   });

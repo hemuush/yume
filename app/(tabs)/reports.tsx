@@ -15,7 +15,10 @@ import {
   DailyExpensePoint,
   CategoryBreakdownItem,
 } from '@/db/reports';
-import { listTransactions, listCategories } from '@/db/ledger';
+import { listTransactions, listCategories, listAccounts } from '@/db/ledger';
+import { usePrivacy } from '@/theme/PrivacyContext';
+import { savingsAccountIdsOf } from '@/lib/account';
+import { isSavingsEntry, privateComparison } from '@/lib/privateSummary';
 import { Transaction, Category } from '@/types';
 import { AppHeader } from '@/components/AppHeader';
 import { roundedMinor } from '@/lib/round';
@@ -59,6 +62,7 @@ import { withPressed } from '@/lib/pressed';
 import { EmptyState } from '@/components/EmptyState';
 
 export default function ReportsScreen() {
+  const { hideAmounts } = usePrivacy();
   const insets = useSafeAreaInsets();
   const [cursor, setCursor] = useState<ReportWindow>(CURRENT_PERIOD);
   // Which way the last arrow or swipe moved, so the headline slides in from that side.
@@ -106,7 +110,13 @@ export default function ReportsScreen() {
     }
     router.setParams({ from: undefined, to: undefined });
   }, [fromParam, toParam]);
-  const [comparison, setComparison] = useState<PeriodComparison | null>(null);
+  const [rawComparison, setComparison] = useState<PeriodComparison | null>(null);
+  // With "hide savings & investment amounts" on, the sensitive categories are left out of every total, share and chart.
+  const comparison = useMemo(
+    () => privateComparison(rawComparison, hideAmounts),
+    [rawComparison, hideAmounts]
+  );
+  const [savingsIds, setSavingsIds] = useState<ReadonlySet<string>>(new Set());
   const [trend, setTrend] = useState<TrendPoint[]>([]);
   const [netWorthTrend, setNetWorthTrend] = useState<NetWorthPoint[]>([]);
   const [daily, setDaily] = useState<DailyExpensePoint[]>([]);
@@ -141,43 +151,49 @@ export default function ReportsScreen() {
   // Only the most recent load may write state — stepping periods quickly
   // starts overlapping loads, and an earlier one can finish last.
   const loadSeq = useRef(0);
-  const load = useCallback(async (c: ReportWindow) => {
-    const seq = ++loadSeq.current;
-    setCatExpanded(false);
-    const range = windowRange(c);
-    const anchor = parseLocalIsoDate(range.end);
-    // A custom range's trend reaches back over the whole range (up to two years).
-    const trendMonths =
-      c.granularity === 'year'
-        ? 12
-        : isCustomWindow(c)
-          ? Math.min(24, Math.max(7, Math.ceil(rangeDays(range) / 30.44)))
-          : 7;
-    try {
-      setStatus((s) => (s === 'ready' ? s : 'loading'));
-      const [cmp, tr, nw, dy, cats, tidy] = await Promise.all([
-        getRangeComparison(range, previousWindowRange(c), isCustomWindow(c) ? 'month' : c.granularity),
-        getMonthlyExpenseTrend(trendMonths, anchor),
-        getNetWorthTrend(trendMonths, anchor),
-        getDailyExpenseTotals(range),
-        listCategories(),
-        getTidyUpReport().catch(() => null),
-      ]);
-      if (seq !== loadSeq.current) return;
-      setComparison(cmp);
-      setTrend(tr);
-      setNetWorthTrend(nw);
-      setDaily(dy);
-      setCategories(cats);
-      setStartingBalanceNames(tidy ? tidy.startingBalances.map((g) => g.categoryName) : []);
-      setStatus('ready');
-      setErrorText(null);
-    } catch (e) {
-      if (seq !== loadSeq.current) return;
-      setErrorText(errorMessage(e));
-      setStatus('error');
-    }
-  }, []);
+  const load = useCallback(
+    async (c: ReportWindow) => {
+      const seq = ++loadSeq.current;
+      setCatExpanded(false);
+      const range = windowRange(c);
+      const anchor = parseLocalIsoDate(range.end);
+      // A custom range's trend reaches back over the whole range (up to two years).
+      const trendMonths =
+        c.granularity === 'year'
+          ? 12
+          : isCustomWindow(c)
+            ? Math.min(24, Math.max(7, Math.ceil(rangeDays(range) / 30.44)))
+            : 7;
+      try {
+        setStatus((s) => (s === 'ready' ? s : 'loading'));
+        const [cmp, tr, nw, dy, cats, tidy, accs] = await Promise.all([
+          getRangeComparison(range, previousWindowRange(c), isCustomWindow(c) ? 'month' : c.granularity),
+          getMonthlyExpenseTrend(trendMonths, anchor, hideAmounts),
+          getNetWorthTrend(trendMonths, anchor),
+          getDailyExpenseTotals(range, hideAmounts),
+          listCategories(),
+          getTidyUpReport().catch(() => null),
+          listAccounts(),
+        ]);
+        if (seq !== loadSeq.current) return;
+        setComparison(cmp);
+        setTrend(tr);
+        // Net worth counts every account, savings included, so it goes while savings are hidden.
+        setNetWorthTrend(hideAmounts && accs.some((a) => a.type === 'savings') ? [] : nw);
+        setSavingsIds(savingsAccountIdsOf(accs));
+        setDaily(dy);
+        setCategories(cats);
+        setStartingBalanceNames(tidy ? tidy.startingBalances.map((g) => g.categoryName) : []);
+        setStatus('ready');
+        setErrorText(null);
+      } catch (e) {
+        if (seq !== loadSeq.current) return;
+        setErrorText(errorMessage(e));
+        setStatus('error');
+      }
+    },
+    [hideAmounts]
+  );
 
   useFocusEffect(
     useCallback(() => {
@@ -185,13 +201,18 @@ export default function ReportsScreen() {
     }, [load, cursor])
   );
 
-  const openDay = useCallback(async (iso: string) => {
-    setDaySheet(iso);
-    setDayTx(null);
-    setDayTx(await listTransactions({ fromDate: iso, toDate: iso }));
-  }, []);
-
   const catById = useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories]);
+
+  // The heatmap leaves savings and investments out while they're hidden, so the day it opens does too.
+  const openDay = useCallback(
+    async (iso: string) => {
+      setDaySheet(iso);
+      setDayTx(null);
+      const txs = await listTransactions({ fromDate: iso, toDate: iso });
+      setDayTx(hideAmounts ? txs.filter((tx) => !isSavingsEntry(tx, catById, savingsIds)) : txs);
+    },
+    [hideAmounts, catById, savingsIds]
+  );
 
   // Pinned outside the ScrollView, so the period stays in reach however far down you scroll.
   const header = (

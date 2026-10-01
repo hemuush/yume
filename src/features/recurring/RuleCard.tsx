@@ -4,7 +4,7 @@ import Animated, { FadeIn, ReduceMotion } from 'react-native-reanimated';
 import { RecurringRule } from '@/types';
 import { ToggleSwitch } from '@/components/ToggleSwitch';
 import { NeoTile } from '@/components/NeoTile';
-import { formatMoney } from '@/lib/money';
+import { formatMaskableMoney } from '@/lib/money';
 import { styles } from './recurring.styles';
 import { ruleCadenceLabel } from './recurring.helpers';
 import { MAX_LIST_STAGGER_MS, MOTION, ROW_LAYOUT, ROW_EXIT } from '@/lib/animation';
@@ -19,6 +19,7 @@ export function RuleCard({
   onPress,
   onTogglePause,
   muted,
+  masked,
 }: {
   rule: RecurringRule;
   accountName: (id: string) => string;
@@ -28,6 +29,8 @@ export function RuleCard({
   onPress: () => void;
   onTogglePause: () => void;
   muted?: boolean;
+  /** A savings or investment rule while those amounts are hidden. */
+  masked?: boolean;
 }) {
   const title =
     rule.type === 'transfer'
@@ -69,7 +72,7 @@ export function RuleCard({
               ]}
             >
               {rule.type === 'expense' ? '-' : rule.type === 'income' ? '+' : ''}
-              {formatMoney(rule.amountMinor)}
+              {formatMaskableMoney(rule.amountMinor, { masked })}
             </Text>
           </View>
         </Pressable>

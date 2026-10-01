@@ -25,3 +25,8 @@ const ACCOUNT_ICON: Record<Account['type'], string> = {
 export function accountIcon(type: Account['type']): string {
   return ACCOUNT_ICON[type] ?? 'credit-card';
 }
+
+/** The ids of the savings accounts — what "hide savings & investment amounts" masks transfers by. */
+export function savingsAccountIdsOf(accounts: Account[]): Set<string> {
+  return new Set(accounts.filter((a) => a.type === 'savings').map((a) => a.id));
+}

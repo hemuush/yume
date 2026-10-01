@@ -14,7 +14,9 @@ import {
   getHiddenSubscriptionSuggestions,
   hideSubscriptionSuggestion,
   unhideSubscriptionSuggestion,
+  getCachedHideSensitiveAmounts,
 } from '@/db/settings';
+import { privateComparison } from '@/lib/privateSummary';
 import { toLocalIsoDate } from '@/lib/date';
 import { buildNeedsYouItems, splitDismissed, NeedsYouItem } from './needsYou';
 import { listCardCycles } from '@/db/cardCycles';
@@ -45,12 +47,12 @@ export async function loadNeedsYou(
     cardCycles,
   ] = await Promise.all([
     getNextDueInstallment(),
-    listBudgetsForMonth(),
+    listBudgetsForMonth(undefined, getCachedHideSensitiveAmounts()),
     getLocalBackupFolderUri(),
     getLastLocalBackupResult(),
     getBackupNudgeSnoozedUntil(),
     countTransactions(),
-    getPeriodComparison('month', now),
+    getPeriodComparison('month', now).then((c) => privateComparison(c, getCachedHideSensitiveAmounts())),
     getTidyUpReport().catch(() => null),
     getNeedsYouDismissed(),
     findMonthlyPatterns(toLocalIsoDate(now)).catch(() => []),
