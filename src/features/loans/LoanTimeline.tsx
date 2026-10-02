@@ -3,8 +3,8 @@ import { Text } from '@/components/Text';
 import { GrowFill } from '@/components/GrowFill';
 import { theme } from '@/constants/theme';
 import { SECTION_TITLE, SECTION_GAP } from '@/constants/textStyles';
-import { shade } from '@/lib/color';
 import { payoffMonthShort } from '@/lib/loanPayoff';
+import { loanBarTone } from './loanIdentity';
 import type { Timeline } from './timelineLayout';
 
 /** When each borrowed loan ends, on one shared axis from today to the last of them. */
@@ -25,7 +25,7 @@ export function LoanTimeline({ timeline, hues }: { timeline: Timeline; hues: Rec
               <GrowFill
                 animKey={`loan-timeline:${row.id}`}
                 pct={row.fraction * 100}
-                style={[styles.fill, { backgroundColor: shade(hues[row.id] ?? theme.colors.idGold, 72) }]}
+                style={[styles.fill, { backgroundColor: loanBarTone(hues[row.id] ?? theme.colors.idGold) }]}
               />
             </View>
           </View>
