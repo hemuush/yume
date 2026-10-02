@@ -269,7 +269,7 @@ export interface AccountsWidgetData {
   totalText: string | null;
 }
 
-/** The colour family an account is tinted in, by type — the same as Home's AccountChip. */
+/** The colour family an account is tinted in, by type — the same as Home's account cards. */
 export function accountWidgetHue(type: Account['type'], primary: string, secondary: string): string {
   switch (type) {
     case 'cash':
@@ -297,7 +297,7 @@ export async function getAccountsWidgetData(): Promise<AccountsWidgetData> {
     typeLabel: a.type.charAt(0).toUpperCase() + a.type.slice(1).replace('_', ' '),
     icon: accountIcon(a.type),
     hue: accountWidgetHue(a.type, theme.primary, theme.secondary),
-    // Same rule as Home's AccountChip: the account's own currency, and a
+    // Same rule as Home's account cards: the account's own currency, and a
     // savings balance masked when "hide savings & investment amounts" is on.
     balanceText: formatMaskableMoney(a.currentBalanceMinor, { currency: a.currency, masked: hidden(a) }),
     negative: a.currentBalanceMinor < 0,

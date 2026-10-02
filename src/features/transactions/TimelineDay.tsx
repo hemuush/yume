@@ -47,7 +47,8 @@ function Amount({ type, minor, masked }: { type: Transaction['type']; minor: num
  * of the same two-line height — two or more of the same category stacked
  * into one line ("Food & Dining", "3 entries") that opens in place, and your
  * transfers between your own accounts as quiet rows at the end. No "+N
- * more": a busy day shows all of it.
+ * more": a busy day shows all of it. A day that is one line leaves its total
+ * off the heading, since that line already shows it.
  *
  * Which stacks are open is held by the screen (like the old "+N more"), since
  * this is a row in a virtualized list that unmounts as it scrolls away.
@@ -305,7 +306,7 @@ export function TimelineDay({
           {'  '}
           <Text style={styles.date}>{dateLabel}</Text>
         </Text>
-        {net !== 0 && (
+        {net !== 0 && !(lines.length === 1 && transfers.length === 0) && (
           <Text style={[styles.total, net > 0 ? styles.income : styles.expense]}>
             {net > 0 ? '+' : '−'}
             {formatMoney(Math.abs(net))}
@@ -343,7 +344,7 @@ export function TimelineDay({
                 {accountName(tx.accountId)} → {accountName(tx.toAccountId!)}
               </Text>
               <Text style={styles.sub} numberOfLines={1}>
-                {tx.note ? `${tx.note} · ` : ''}Moved between your accounts
+                {tx.note ? `${tx.note} · ` : ''}Transfer
               </Text>
             </View>
             <Text style={[styles.amount, styles.transferAmount]} numberOfLines={1}>

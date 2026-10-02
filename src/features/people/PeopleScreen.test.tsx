@@ -59,6 +59,28 @@ describe('Friends & Family screen', () => {
     );
   });
 
+  it('puts the biggest open balances first, with a Settle up pill, and settled people in their own list', async () => {
+    mockPeople.current = [
+      { id: 'p3', name: 'Riya', balanceMinor: 0, lastActivityDate: null },
+      { id: 'p2', name: 'Meera', balanceMinor: 30000, lastActivityDate: null },
+      { id: 'p1', name: 'Aarav', balanceMinor: 90000, lastActivityDate: null },
+    ];
+    const tree = await render();
+    const shown = texts(tree);
+    expect(shown.indexOf('Aarav')).toBeLessThan(shown.indexOf('Meera'));
+    expect(shown.indexOf('Meera')).toBeLessThan(shown.indexOf('Riya'));
+    expect(shown.filter((t) => t === 'Settle up')).toHaveLength(2);
+    expect(shown).toContain('Settled · No activity');
+    expect(shown).toContain('Net, in your favour');
+  });
+
+  it('shows no net line and no Settle up pill when everyone is settled', async () => {
+    mockPeople.current = [{ id: 'p1', name: 'Aarav', balanceMinor: 0, lastActivityDate: null }];
+    const shown = texts(await render());
+    expect(shown).not.toContain('Settle up');
+    expect(shown.some((t) => t.startsWith('Net,'))).toBe(false);
+  });
+
   it('invites the first person when no one is added', async () => {
     mockPeople.current = [];
     expect(texts(await render())).toContain('No one here yet');

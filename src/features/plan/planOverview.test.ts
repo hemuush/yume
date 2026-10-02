@@ -1,5 +1,7 @@
+import { addDaysToIsoDate, toLocalIsoDate } from '@/lib/date';
 import {
   buildDueDays,
+  dueTone,
   groupDueItems,
   buildLoansSummary,
   buildDueItems,
@@ -151,17 +153,67 @@ describe('buildDueItems / buildDueSoon', () => {
   it('marks the 14 days of the strip, counting overdue on today', () => {
     const days = buildDueDays(items, '2026-09-26');
     expect(days).toHaveLength(14);
-    expect(days[0]).toEqual({ date: '2026-09-26', emi: false, bill: false });
-    expect(days.find((d) => d.date === '2026-10-01')).toEqual({ date: '2026-10-01', emi: false, bill: true });
-    expect(days.find((d) => d.date === '2026-10-05')).toEqual({ date: '2026-10-05', emi: true, bill: false });
-    // Income and transfers aren't money going out.
+    expect(days[0]).toEqual({ date: '2026-09-26', emi: false, bill: false, amountMinor: 0, titles: [] });
+    expect(days.find((d) => d.date === '2026-10-01')).toEqual({
+      date: '2026-10-01',
+      emi: false,
+      bill: true,
+      amountMinor: 45000,
+      titles: ['youtube'],
+    });
+    expect(days.find((d) => d.date === '2026-10-05')).toEqual({
+      date: '2026-10-05',
+      emi: true,
+      bill: false,
+      amountMinor: 2400000,
+      titles: ['house'],
+    });
+    // Income and transfers aren't money going out, so they add nothing to a day.
     expect(days.find((d) => d.date === '2026-10-03')).toEqual({
       date: '2026-10-03',
       emi: false,
       bill: false,
+      amountMinor: 0,
+      titles: [],
     });
     const overdue = buildDueItems([], [rule({ id: 'rent', nextRunDate: '2026-09-01' })]);
-    expect(buildDueDays(overdue, '2026-09-26')[0].bill).toBe(true);
+    expect(buildDueDays(overdue, '2026-09-26')[0]).toMatchObject({ bill: true, amountMinor: 45000 });
+    // A day with an EMI and a bill adds them up and names both.
+    const both = buildDueItems(
+      buildLoansSummary(
+        [loan({ id: 'car' })],
+        [prog({ loanId: 'car', nextDueDate: '2026-10-02', nextEmiMinor: 1000000 })]
+      ).rows,
+      [rule({ id: 'gym', nextRunDate: '2026-10-02', amountMinor: 50000 })]
+    );
+    expect(buildDueDays(both, '2026-09-26').find((d) => d.date === '2026-10-02')).toMatchObject({
+      emi: true,
+      bill: true,
+      amountMinor: 1050000,
+      titles: ['car', 'gym'],
+    });
+  });
+
+  it('tones a Coming up row like Home: red when late or due today, amber for an EMI or card bill within 3 days', () => {
+    const today = toLocalIsoDate(new Date());
+    const item = (kind: 'emi' | 'bill' | 'income' | 'transfer', inDays: number, key = 'rule-x') => ({
+      key,
+      title: key,
+      kind,
+      dueDate: addDaysToIsoDate(today, inDays),
+      amountMinor: 100,
+      route: '/recurring' as const,
+    });
+    expect(dueTone(item('bill', -2))).toBe('urgent');
+    expect(dueTone(item('emi', 0))).toBe('urgent');
+    expect(dueTone(item('emi', 3, 'loan-a'))).toBe('soon');
+    expect(dueTone(item('bill', 2, 'card-visa'))).toBe('soon');
+    // An ordinary subscription is not amber, and nothing past 3 days is.
+    expect(dueTone(item('bill', 2))).toBeNull();
+    expect(dueTone(item('emi', 4, 'loan-a'))).toBeNull();
+    // Money coming in or moving between your own accounts is never urgent.
+    expect(dueTone(item('income', -1))).toBeNull();
+    expect(dueTone(item('transfer', 0))).toBeNull();
   });
 
   it('groups Coming up by day, totalling only money going out', () => {

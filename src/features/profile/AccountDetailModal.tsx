@@ -16,11 +16,11 @@ import { ModalSheet, SheetLink } from '@/components/ModalSheet';
 import { SheetCard } from '@/components/SheetCard';
 import { modalFooterStyles as f } from '@/constants/theme';
 import { useAccent } from '@/theme/AccentContext';
-import { accountIcon } from '@/lib/account';
-import { accountHue } from '@/features/home/AccountChip';
+import { accountHue, accountIcon } from '@/lib/account';
 import { FormInput } from '@/components/FormInput';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { Chip } from '@/components/Chip';
+import { ToggleSwitch } from '@/components/ToggleSwitch';
 import { useUndoToast } from '@/components/UndoToast';
 import { haptics } from '@/lib/haptics';
 import { styles } from './profile.styles';
@@ -59,6 +59,7 @@ export function AccountDetailModal({
   const [creditLimit, setCreditLimit] = useState('');
   const [statementDay, setStatementDay] = useState('');
   const [dueDay, setDueDay] = useState('');
+  const [tracked, setTracked] = useState(false);
   const [txCount, setTxCount] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -72,6 +73,7 @@ export function AccountDetailModal({
     setCreditLimit(account.creditLimitMinor != null ? (account.creditLimitMinor / 100).toString() : '');
     setStatementDay(account.statementDay != null ? String(account.statementDay) : '');
     setDueDay(account.dueDay != null ? String(account.dueDay) : '');
+    setTracked(!!account.investment);
     setError(null);
     setTxCount(null);
     // Leaves txCount at null on failure — same as before this fix, which
@@ -116,6 +118,7 @@ export function AccountDetailModal({
         creditLimitMinor,
         statementDay: days.statementDay,
         dueDay: days.dueDay,
+        tracked: type === 'savings' && tracked,
       });
       onChanged();
     } catch (e) {
@@ -179,6 +182,8 @@ export function AccountDetailModal({
     }
   };
 
+  const trackingNow = type === 'savings' && tracked;
+
   // The calm-sheets sign-off (Direction C): the account's own card, which
   // retints as you change its type, then the form. Archive or delete is a
   // quiet link at the end, not a second button beside Save.
@@ -208,8 +213,12 @@ export function AccountDetailModal({
         title={name.trim() || account.name}
         meta={
           hideSavings
-            ? 'Balance now'
-            : `Balance now · opened with ${formatMoney(toMinor(parseFloat(opening || '0')) || 0, account.currency)}`
+            ? account.investment
+              ? 'Value now'
+              : 'Balance now'
+            : account.investment
+              ? `Value now · invested ${formatMoney(account.investment.investedMinor, account.currency)}`
+              : `Balance now · opened with ${formatMoney(toMinor(parseFloat(opening || '0')) || 0, account.currency)}`
         }
       />
       <FormInput label="Name" value={name} onChangeText={setName} placeholder="e.g. HDFC Savings" />
@@ -219,8 +228,21 @@ export function AccountDetailModal({
           <Chip key={t.value} label={t.label} active={type === t.value} onPress={() => setType(t.value)} />
         ))}
       </View>
+      {type === 'savings' && (
+        <>
+          <View style={styles.toggleRow}>
+            <Text style={styles.fieldLabel}>Track its value</Text>
+            <ToggleSwitch value={tracked} onChange={setTracked} />
+          </View>
+          <Text style={styles.hintText}>
+            {tracked
+              ? 'Its balance becomes what you say it is worth; update it from the account sheet.'
+              : "For an index fund, stocks or gold: you update what it's worth now and then, and Yume shows the gain."}
+          </Text>
+        </>
+      )}
       <FormInput
-        label="Opening balance"
+        label={trackingNow ? 'Invested so far' : 'Opening balance'}
         value={opening}
         onChangeText={setOpening}
         keyboardType="numeric"

@@ -1,6 +1,6 @@
 /**
  * The top of Activity after the cleanup: the Spent card (a change pill,
- * Week/Month in its corner, a one-line legend or what the tapped bar cost,
+ * Week/Month in its corner, a one-line legend,
  * Money in | Net as a strip) and the type filter as one segmented bar, with
  * picked categories under it only while there are some. All figures are
  * made up.
@@ -38,14 +38,13 @@ function headline(over: Partial<React.ComponentProps<typeof TransactionsHeadline
         direction={0}
         expenseMinor={1_706_900}
         incomeMinor={579_600}
-        expenseChangePct={-16}
+        expenseChangeMinor={-231_000}
         viewScope="week"
         onChangeViewScope={jest.fn()}
         bars={[]}
         legend={legend}
         onPressDay={jest.fn()}
         selectedKey={null}
-        hint={null}
         {...over}
       />
     );
@@ -57,7 +56,26 @@ describe('Spent card', () => {
   it('says the change as a pill, and In and Net as a strip', () => {
     const all = texts(headline());
     expect(all).toEqual(expect.arrayContaining(['Spent', 'Money in', '+₹5,796', 'Net', '−₹11,273']));
-    expect(all.some((t) => t.includes('16% vs last week'))).toBe(true);
+    expect(all.some((t) => t.includes('₹2,310 less than last week'))).toBe(true);
+  });
+
+  it('leaves the strip out when no money came in, since Net would only repeat Spent', () => {
+    const all = texts(headline({ incomeMinor: 0 }));
+    expect(all).not.toContain('Money in');
+    expect(all).not.toContain('Net');
+  });
+
+  it('says how much more, in rupees, and what it is compared with', () => {
+    const all = texts(headline({ expenseChangeMinor: 917_400, compareLabel: 'same days last week' }));
+    expect(all.some((t) => t.includes('▲') && t.includes('₹9,174 more than same days last week'))).toBe(true);
+    expect(all.some((t) => t.includes('%'))).toBe(false);
+  });
+
+  it('has no pill when there is nothing to compare, or no change', () => {
+    expect(texts(headline({ expenseChangeMinor: null })).some((t) => /more than|less than/.test(t))).toBe(
+      false
+    );
+    expect(texts(headline({ expenseChangeMinor: 0 })).some((t) => /more than|less than/.test(t))).toBe(false);
   });
 
   it('names the four biggest categories, then how many more', () => {
@@ -66,11 +84,9 @@ describe('Spent card', () => {
     expect(all).not.toContain('Travel');
   });
 
-  it('shows what a tapped bar cost in the legend’s place, and no instruction before that', () => {
-    expect(texts(headline()).some((t) => t.startsWith('Tap a bar'))).toBe(false);
-    const all = texts(headline({ hint: { title: 'Monday, 22 Sept', detail: '₹2,480 spent' } }));
-    expect(all).toContain('Monday, 22 Sept');
-    expect(all).not.toContain('+2 more');
+  it('keeps the legend when a bar is tapped — the amount shows on the bar', () => {
+    const all = texts(headline({ selectedKey: '2026-10-01' }));
+    expect(all).toContain('+2 more');
   });
 
   it('switches between Week and Month from its corner', () => {

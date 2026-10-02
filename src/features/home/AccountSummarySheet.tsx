@@ -10,9 +10,8 @@ import { ModalSheet } from '@/components/ModalSheet';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { SheetCard } from '@/components/SheetCard';
 import { SegmentedControl } from '@/components/SegmentedControl';
-import { accountIcon } from '@/lib/account';
+import { accountHue, accountIcon } from '@/lib/account';
 import { useAccent } from '@/theme/AccentContext';
-import { accountHue } from './AccountChip';
 import { formatMaskableMoney } from '@/lib/money';
 import { usePrivacy } from '@/theme/PrivacyContext';
 import { useReduceMotion } from '@/lib/useReduceMotion';
@@ -23,6 +22,11 @@ import { withPressed } from '@/lib/pressed';
 import { getCardCycle, AccountCardCycle } from '@/db/cardCycles';
 import { dayMonth } from '@/lib/dateLabels';
 import { EYEBROW } from '@/constants/textStyles';
+import { listValuations, Valuation } from '@/db/valuations';
+import { listRecurringRules } from '@/db/recurring';
+import { InvestmentPanel, NextSip } from '@/features/investments/InvestmentPanel';
+import { UpdateValueSheet } from '@/features/investments/UpdateValueSheet';
+import { toLocalIsoDate } from '@/lib/date';
 
 /**
  * A quick look at one account, opened by tapping its card on Home (the
@@ -37,7 +41,7 @@ import { EYEBROW } from '@/constants/textStyles';
  * on, and so are its in/out figures (they'd give the balance away).
  */
 export function AccountSummarySheet({
-  account,
+  account: accountProp,
   cursor,
   accounts,
   categories,
@@ -46,6 +50,7 @@ export function AccountSummarySheet({
   onEdit,
   onSeeAll,
   onPayBill,
+  onChanged,
 }: {
   account: Account | null;
   cursor: PeriodCursor;
@@ -59,10 +64,18 @@ export function AccountSummarySheet({
   onSeeAll: (account: Account) => void;
   /** A credit card's "Pay bill": opens Add as a transfer into the card for what's left to pay. */
   onPayBill?: (account: Account, amountMinor: number) => void;
+  /** A value update was saved or deleted — the caller reloads its accounts. */
+  onChanged?: () => void;
 }) {
+  // Home reloads `accounts` after a value update; follow it so this sheet shows the new figures.
+  const account = (accountProp && accounts.find((a) => a.id === accountProp.id)) || accountProp;
   const { hideAmounts } = usePrivacy();
   const { accent } = useAccent();
-  const [tab, setTab] = useState<'flow' | 'latest'>('flow');
+  const tracked = !!account?.investment;
+  const [tab, setTab] = useState<'value' | 'flow' | 'latest'>(tracked ? 'value' : 'flow');
+  const [valuations, setValuations] = useState<Valuation[] | null>(null);
+  const [nextSip, setNextSip] = useState<NextSip | null>(null);
+  const [valueSheet, setValueSheet] = useState<{ valuation: Valuation | null } | null>(null);
   const [flow, setFlow] = useState<AccountFlow | null>(null);
   const [latest, setLatest] = useState<Transaction[] | null>(null);
   // A credit card's bill, when it has a statement day and a due day set.
@@ -70,6 +83,7 @@ export function AccountSummarySheet({
   const loadSeq = useRef(0);
 
   const accountId = account?.id;
+  const valueKey = account?.investment ? `${account.investment.valuedAt}|${account.currentBalanceMinor}` : '';
   const { start, end } = periodRange(cursor);
   useEffect(() => {
     if (!accountId) return;
@@ -77,7 +91,7 @@ export function AccountSummarySheet({
     setFlow(null);
     setLatest(null);
     setCycle(null);
-    setTab('flow');
+    setTab(accountProp?.investment ? 'value' : 'flow');
     Promise.all([
       getAccountFlow(accountId, { start, end }),
       listTransactions({ accountId, limit: 3 }),
@@ -105,7 +119,49 @@ export function AccountSummarySheet({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accountId, start, end]);
 
+  useEffect(() => {
+    if (!accountId || !valueKey) {
+      setValuations(null);
+      setNextSip(null);
+      return;
+    }
+    let cancelled = false;
+    const today = toLocalIsoDate(new Date());
+    Promise.all([listValuations(accountId), listRecurringRules()])
+      .then(([vals, rules]) => {
+        if (cancelled) return;
+        setValuations(vals);
+        const next = rules
+          .filter(
+            (r) =>
+              r.active &&
+              r.type === 'transfer' &&
+              r.toAccountId === accountId &&
+              !(r.endDate && r.endDate < today)
+          )
+          .sort((a, b) => a.nextRunDate.localeCompare(b.nextRunDate))[0];
+        setNextSip(
+          next
+            ? {
+                amountMinor: next.amountMinor,
+                date: next.nextRunDate,
+                fromName: accounts.find((a) => a.id === next.accountId)?.name,
+              }
+            : null
+        );
+      })
+      .catch(() => {
+        if (!cancelled) setValuations([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+    // `accounts` only names the source account of the next SIP.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [accountId, valueKey]);
+
   if (!account) return null;
+  const inv = account.investment;
 
   const masked = hideAmounts && account.type === 'savings';
   const money = (minor: number) => formatMaskableMoney(minor, { currency: account.currency, masked });
@@ -129,171 +185,212 @@ export function AccountSummarySheet({
           : `${money(-net)} more went out than came in.`;
 
   return (
-    <ModalSheet
-      visible
-      onClose={onClose}
-      footer={
-        <View style={f.footerRow}>
-          <PrimaryButton
-            title="Edit account"
-            variant="secondary"
-            onPress={() => onEdit(account)}
-            style={f.footerBtn}
-          />
-          <PrimaryButton
-            title={isSavings ? 'Transfer from here' : 'Add expense here'}
-            onPress={() => onAdd(account)}
-            style={f.footerBtn}
+    <>
+      <ModalSheet
+        visible
+        onClose={onClose}
+        footer={
+          <View style={f.footerRow}>
+            <PrimaryButton
+              title="Edit account"
+              variant="secondary"
+              onPress={() => onEdit(account)}
+              style={f.footerBtn}
+            />
+            <PrimaryButton
+              title={isSavings ? 'Transfer from here' : 'Add expense here'}
+              onPress={() => onAdd(account)}
+              style={f.footerBtn}
+            />
+          </View>
+        }
+      >
+        <SheetCard
+          hue={accountHue(account.type, accent)}
+          icon={accountIcon(account.type)}
+          kicker={inv ? 'savings · tracked' : account.type.replace('_', ' ')}
+          amount={money(account.currentBalanceMinor)}
+          title={account.name}
+          meta={
+            inv
+              ? inv.valuedAt
+                ? `Value · updated ${dayMonth(inv.valuedAt)}${
+                    inv.lastValueMinor != null && account.currentBalanceMinor !== inv.lastValueMinor
+                      ? `, ${account.currentBalanceMinor > inv.lastValueMinor ? 'plus' : 'minus'} ${money(Math.abs(account.currentBalanceMinor - inv.lastValueMinor))} since`
+                      : ''
+                  }`
+                : 'Value · not updated yet'
+              : 'Balance'
+          }
+        />
+        <View style={styles.tabs}>
+          <SegmentedControl
+            options={[
+              ...(inv ? [{ label: 'Value', value: 'value' as const }] : []),
+              { label: periodLabel(cursor), value: 'flow' as const },
+              { label: 'Latest', value: 'latest' as const },
+            ]}
+            value={tab}
+            onChange={setTab}
           />
         </View>
-      }
-    >
-      <SheetCard
-        hue={accountHue(account.type, accent)}
-        icon={accountIcon(account.type)}
-        kicker={account.type.replace('_', ' ')}
-        amount={money(account.currentBalanceMinor)}
-        title={account.name}
-        meta="Balance"
-      />
-      <View style={styles.tabs}>
-        <SegmentedControl
-          options={[
-            { label: periodLabel(cursor), value: 'flow' },
-            { label: 'Latest', value: 'latest' },
-          ]}
-          value={tab}
-          onChange={setTab}
-        />
-      </View>
 
-      {tab === 'flow' && cycle && (
-        <>
-          <Text style={styles.label}>Bill</Text>
-          <View style={styles.latest}>
-            <BillLine
-              label={`This cycle · ${dayMonth(cycle.cycleStart)} – ${dayMonth(cycle.cycleEnd)}`}
-              value={money(cycle.spentThisCycleMinor)}
-            />
-            <BillLine
-              divider
-              label={`Last statement · ${dayMonth(cycle.statementDate)}`}
-              value={money(cycle.statementMinor)}
-            />
-            <BillLine
-              divider
-              label="Paid since"
-              value={money(cycle.paidSinceMinor)}
-              valueColor={theme.colors.incomeText}
-            />
-            <BillLine
-              divider
-              label={
-                cycle.leftToPayMinor === 0
-                  ? 'Paid in full'
-                  : cycle.daysUntilDue < 0
-                    ? `Left to pay · was due ${dayMonth(cycle.dueDate)}`
-                    : `Left to pay by ${dayMonth(cycle.dueDate)}`
-              }
-              value={money(cycle.leftToPayMinor)}
-              strong
-              valueColor={
-                cycle.daysUntilDue < 0 && cycle.leftToPayMinor > 0 ? theme.colors.expenseText : undefined
-              }
-            />
-          </View>
-          {cycle.leftToPayMinor > 0 && onPayBill && (
-            <PrimaryButton
-              title={`Pay bill · ${money(cycle.leftToPayMinor)}`}
-              variant="secondary"
-              onPress={() => onPayBill(account, cycle.leftToPayMinor)}
-              style={styles.payBill}
-            />
-          )}
-        </>
-      )}
+        {tab === 'value' && inv && (
+          <InvestmentPanel
+            account={account}
+            valuations={valuations}
+            nextSip={nextSip}
+            masked={masked}
+            onUpdate={() => setValueSheet({ valuation: null })}
+            onEdit={(v) => setValueSheet({ valuation: v })}
+          />
+        )}
 
-      {tab === 'flow' && (
-        <>
-          <Text style={[styles.label, cycle && styles.sectionGap]}>Money in and out</Text>
-          <View style={styles.flows}>
-            <FlowRow
-              label="In"
-              value={flow ? `+${money(flow.inMinor)}` : '…'}
-              fraction={flow && maxFlow > 0 ? flow.inMinor / maxFlow : 0}
-              ownShare={flow && flow.inMinor > 0 ? flow.incomeMinor / flow.inMinor : 1}
-              detail={
-                flow ? parts(flow.incomeMinor, 'Income', flow.transferInMinor, 'from your accounts') : ''
-              }
-              color={theme.colors.incomeText}
-              fillColor={theme.colors.secondary}
-            />
-            <FlowRow
-              label="Out"
-              value={flow ? `−${money(flow.outMinor)}` : '…'}
-              fraction={flow && maxFlow > 0 ? flow.outMinor / maxFlow : 0}
-              ownShare={flow && flow.outMinor > 0 ? flow.expenseMinor / flow.outMinor : 1}
-              detail={
-                flow ? parts(flow.expenseMinor, 'Spent', flow.transferOutMinor, 'to your accounts') : ''
-              }
-              color={theme.colors.expenseText}
-              fillColor={theme.colors.idCoralDeep}
-            />
-          </View>
-          {!!netLine && (
-            <View style={styles.netRow}>
-              <Text style={styles.netLabel}>Net</Text>
-              <Text
-                style={[
-                  styles.netValue,
-                  net > 0 && { color: theme.colors.incomeText },
-                  net < 0 && { color: theme.colors.expenseText },
-                ]}
-              >
-                {net > 0 ? '+' : net < 0 ? '−' : ''}
-                {money(Math.abs(net))}
-              </Text>
-              <Text style={styles.netText}>{netLine}</Text>
-            </View>
-          )}
-        </>
-      )}
-
-      {tab === 'latest' &&
-        (latest === null ? null : latest.length === 0 ? (
-          <Text style={styles.empty}>Nothing recorded against this account yet.</Text>
-        ) : (
-          <View style={styles.latest}>
-            {latest.map((tx, i) => (
-              <RecentTransactionRow
-                key={tx.id}
-                tx={tx}
-                category={categories.find((c) => c.id === tx.categoryId)}
-                accountName={nameOf(tx.accountId)}
-                toAccountName={nameOf(tx.toAccountId)}
-                savingsTransfer={
-                  tx.type === 'transfer' &&
-                  [tx.accountId, tx.toAccountId].some(
-                    (id) => accounts.find((a) => a.id === id)?.type === 'savings'
-                  )
-                }
-                divider={i > 0}
+        {tab === 'flow' && cycle && (
+          <>
+            <Text style={styles.label}>Bill</Text>
+            <View style={styles.latest}>
+              <BillLine
+                label={`This cycle · ${dayMonth(cycle.cycleStart)} – ${dayMonth(cycle.cycleEnd)}`}
+                value={money(cycle.spentThisCycleMinor)}
               />
-            ))}
-          </View>
-        ))}
-      {tab === 'latest' && latest !== null && latest.length > 0 && (
-        <Pressable
-          onPress={() => onSeeAll(account)}
-          style={withPressed(styles.seeAll)}
-          accessibilityRole="button"
-          accessibilityLabel={`See everything in ${account.name} in Activity`}
-        >
-          <Text style={styles.seeAllText}>See all in Activity</Text>
-          <Feather name="chevron-right" size={14} color={theme.colors.textSecondary} />
-        </Pressable>
+              <BillLine
+                divider
+                label={`Last statement · ${dayMonth(cycle.statementDate)}`}
+                value={money(cycle.statementMinor)}
+              />
+              <BillLine
+                divider
+                label="Paid since"
+                value={money(cycle.paidSinceMinor)}
+                valueColor={theme.colors.incomeText}
+              />
+              <BillLine
+                divider
+                label={
+                  cycle.leftToPayMinor === 0
+                    ? 'Paid in full'
+                    : cycle.daysUntilDue < 0
+                      ? `Left to pay · was due ${dayMonth(cycle.dueDate)}`
+                      : `Left to pay by ${dayMonth(cycle.dueDate)}`
+                }
+                value={money(cycle.leftToPayMinor)}
+                strong
+                valueColor={
+                  cycle.daysUntilDue < 0 && cycle.leftToPayMinor > 0 ? theme.colors.expenseText : undefined
+                }
+              />
+            </View>
+            {cycle.leftToPayMinor > 0 && onPayBill && (
+              <PrimaryButton
+                title={`Pay bill · ${money(cycle.leftToPayMinor)}`}
+                variant="secondary"
+                onPress={() => onPayBill(account, cycle.leftToPayMinor)}
+                style={styles.payBill}
+              />
+            )}
+          </>
+        )}
+
+        {tab === 'flow' && (
+          <>
+            <Text style={[styles.label, cycle && styles.sectionGap]}>Money in and out</Text>
+            <View style={styles.flows}>
+              <FlowRow
+                label="In"
+                value={flow ? `+${money(flow.inMinor)}` : '…'}
+                fraction={flow && maxFlow > 0 ? flow.inMinor / maxFlow : 0}
+                ownShare={flow && flow.inMinor > 0 ? flow.incomeMinor / flow.inMinor : 1}
+                detail={
+                  flow ? parts(flow.incomeMinor, 'Income', flow.transferInMinor, 'from your accounts') : ''
+                }
+                color={theme.colors.incomeText}
+                fillColor={theme.colors.secondary}
+              />
+              <FlowRow
+                label="Out"
+                value={flow ? `−${money(flow.outMinor)}` : '…'}
+                fraction={flow && maxFlow > 0 ? flow.outMinor / maxFlow : 0}
+                ownShare={flow && flow.outMinor > 0 ? flow.expenseMinor / flow.outMinor : 1}
+                detail={
+                  flow ? parts(flow.expenseMinor, 'Spent', flow.transferOutMinor, 'to your accounts') : ''
+                }
+                color={theme.colors.expenseText}
+                fillColor={theme.colors.idCoralDeep}
+              />
+            </View>
+            {!!netLine && (
+              <View style={styles.netRow}>
+                <Text style={styles.netLabel}>Net</Text>
+                <Text
+                  style={[
+                    styles.netValue,
+                    net > 0 && { color: theme.colors.incomeText },
+                    net < 0 && { color: theme.colors.expenseText },
+                  ]}
+                >
+                  {net > 0 ? '+' : net < 0 ? '−' : ''}
+                  {money(Math.abs(net))}
+                </Text>
+                <Text style={styles.netText}>{netLine}</Text>
+              </View>
+            )}
+          </>
+        )}
+
+        {tab === 'latest' &&
+          (latest === null ? null : latest.length === 0 ? (
+            <Text style={styles.empty}>Nothing recorded against this account yet.</Text>
+          ) : (
+            <View style={styles.latest}>
+              {latest.map((tx, i) => (
+                <RecentTransactionRow
+                  key={tx.id}
+                  tx={tx}
+                  category={categories.find((c) => c.id === tx.categoryId)}
+                  accountName={nameOf(tx.accountId)}
+                  toAccountName={nameOf(tx.toAccountId)}
+                  savingsTransfer={
+                    tx.type === 'transfer' &&
+                    [tx.accountId, tx.toAccountId].some(
+                      (id) => accounts.find((a) => a.id === id)?.type === 'savings'
+                    )
+                  }
+                  divider={i > 0}
+                />
+              ))}
+            </View>
+          ))}
+        {tab === 'latest' && latest !== null && latest.length > 0 && (
+          <Pressable
+            onPress={() => onSeeAll(account)}
+            style={withPressed(styles.seeAll)}
+            accessibilityRole="button"
+            accessibilityLabel={`See everything in ${account.name} in Activity`}
+          >
+            <Text style={styles.seeAllText}>See all in Activity</Text>
+            <Feather name="chevron-right" size={14} color={theme.colors.textSecondary} />
+          </Pressable>
+        )}
+      </ModalSheet>
+      {valueSheet && inv && (
+        <UpdateValueSheet
+          visible
+          account={account}
+          valuation={valueSheet.valuation}
+          onClose={() => setValueSheet(null)}
+          onSaved={() => {
+            setValueSheet(null);
+            onChanged?.();
+          }}
+          onDeleted={() => {
+            setValueSheet(null);
+            onChanged?.();
+            onClose();
+          }}
+        />
       )}
-    </ModalSheet>
+    </>
   );
 }
 

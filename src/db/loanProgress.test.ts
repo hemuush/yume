@@ -48,6 +48,9 @@ describe('getLoanProgress', () => {
     expect(p.nextDueDate).toBe(schedule[4].dueDate);
     expect(p.nextEmiMinor).toBe(schedule[4].emiAmountMinor);
     expect(p.lastDueDate).toBe(schedule[schedule.length - 1].dueDate);
+    const pendingInterest = schedule.slice(4).reduce((sum, r) => sum + r.interestComponentMinor, 0);
+    expect(p.pendingInterestMinor).toBe(pendingInterest);
+    expect(p.pendingInterestMinor).toBeGreaterThan(0);
   });
 
   it('reports no next EMI once every installment is paid', async () => {
@@ -68,6 +71,7 @@ describe('getLoanProgress', () => {
       nextDueDate: null,
       nextEmiMinor: null,
       lastDueDate: null,
+      pendingInterestMinor: 0,
     });
   });
 });

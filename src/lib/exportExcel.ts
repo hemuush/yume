@@ -403,12 +403,21 @@ export function buildExportWorkbook(data: ExportData): XLSX.WorkBook {
   XLSX.utils.book_append_sheet(wb, txSheet, 'Transactions');
 
   // --------------------------------------------------------------- Accounts
-  const accHeaders = ['Account', 'Type', 'Balance', 'Currency'];
+  // Tracked (investment) accounts add what was put in and the gain; the
+  // balance column is then their value.
+  const hasTracked = accounts.some((a) => a.investment);
+  const accHeaders = ['Account', 'Type', 'Balance', 'Currency', ...(hasTracked ? ['Invested', 'Gain'] : [])];
   const accRows = accounts.map((a) => [
     a.name,
     a.type.replace('_', ' '),
     toMajor(a.currentBalanceMinor),
     a.currency,
+    ...(hasTracked
+      ? [
+          a.investment ? toMajor(a.investment.investedMinor) : '',
+          a.investment?.gainMinor != null ? toMajor(a.investment.gainMinor) : '',
+        ]
+      : []),
   ]);
   const accSheet = XLSX.utils.aoa_to_sheet([accHeaders, ...accRows]);
   for (let c = 0; c < accHeaders.length; c++) accSheet[XLSX.utils.encode_cell({ r: 0, c })].s = headerStyle();
@@ -418,10 +427,10 @@ export function buildExportWorkbook(data: ExportData): XLSX.WorkBook {
     for (let c = 0; c < row.length; c++) {
       const ref = XLSX.utils.encode_cell({ r: i + 1, c });
       accSheet[ref].s =
-        c === 2
+        c === 2 || c >= 4
           ? bodyStyle(shaded, {
               numFmt: moneyStyle,
-              font: { color: { rgb: negative ? C.expense : C.ink }, bold: true },
+              font: { color: { rgb: c === 2 && negative ? C.expense : C.ink }, bold: c === 2 },
               alignment: { horizontal: 'right' },
             })
           : bodyStyle(shaded);
@@ -433,7 +442,13 @@ export function buildExportWorkbook(data: ExportData): XLSX.WorkBook {
       e: { r: Math.max(accRows.length, 1), c: accHeaders.length - 1 },
     }),
   };
-  accSheet['!cols'] = [{ wch: 20 }, { wch: 14 }, { wch: 16 }, { wch: 10 }];
+  accSheet['!cols'] = [
+    { wch: 20 },
+    { wch: 14 },
+    { wch: 16 },
+    { wch: 10 },
+    ...(hasTracked ? [{ wch: 14 }, { wch: 14 }] : []),
+  ];
   XLSX.utils.book_append_sheet(wb, accSheet, 'Accounts');
 
   // ------------------------------------------------------------- Categories

@@ -1,13 +1,13 @@
-import { addDaysToIsoDate } from '@/lib/date';
+import { addDaysToIsoDate, daysUntilIsoDate } from '@/lib/date';
 import { peopleTotals } from '@/features/people/people.helpers';
 import { payCardRoute, PayCardRoute } from '@/lib/payCard';
 
 /**
  * What each section of the Plan tab says, from data the screen has already
  * fetched. Pure — every input is passed in, including today's date — so the
- * rules are unit-tested without a database or a clock. The sections, in
- * priority order (the Plan sign-off): Loans, Due in the next 2 weeks,
- * Coming up, Budgets, Friends & Family, Saving toward, Daily habit.
+ * rules are unit-tested without a database or a clock. The screen's order:
+ * the next 2 weeks, then where you stand (EMIs, Budgets, Debt-free), Saving
+ * toward, Friends & Family with the daily habit, and Coming up.
  */
 
 export type PlanRoute =
@@ -230,6 +230,9 @@ export interface DueDay {
   /** What's due that day: EMIs and bills only (money going out). */
   emi: boolean;
   bill: boolean;
+  /** Their total, and what they are. */
+  amountMinor: number;
+  titles: string[];
 }
 
 /** A day with things due, for Coming up — its items and their total going out. */
@@ -246,9 +249,34 @@ export interface DueGroup {
 export function buildDueDays(items: PlanDueItem[], today: string, days = DUE_SOON_DAYS): DueDay[] {
   return Array.from({ length: days }, (_, i) => {
     const date = addDaysToIsoDate(today, i);
-    const on = items.filter((it) => (i === 0 ? it.dueDate <= date : it.dueDate === date));
-    return { date, emi: on.some((it) => it.kind === 'emi'), bill: on.some((it) => it.kind === 'bill') };
+    const out = items.filter(
+      (it) =>
+        (it.kind === 'emi' || it.kind === 'bill') && (i === 0 ? it.dueDate <= date : it.dueDate === date)
+    );
+    return {
+      date,
+      emi: out.some((it) => it.kind === 'emi'),
+      bill: out.some((it) => it.kind === 'bill'),
+      amountMinor: out.reduce((sum, it) => sum + it.amountMinor, 0),
+      titles: out.map((it) => it.title),
+    };
   });
+}
+
+/** An EMI or card bill this close is flagged amber in Coming up, as on Home. */
+export const PLAN_SOON_DAYS = 3;
+
+/**
+ * How urgent a Coming up row looks, by Home's rules: red when money going out
+ * is late or due today, amber when an EMI or card bill is a few days away,
+ * otherwise nothing, so the colour still means something.
+ */
+export function dueTone(item: PlanDueItem): 'urgent' | 'soon' | null {
+  if (item.kind !== 'emi' && item.kind !== 'bill') return null;
+  const days = daysUntilIsoDate(item.dueDate);
+  if (days <= 0) return 'urgent';
+  const pinned = item.kind === 'emi' || item.key.startsWith('card-');
+  return pinned && days <= PLAN_SOON_DAYS ? 'soon' : null;
 }
 
 /**

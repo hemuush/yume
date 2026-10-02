@@ -152,7 +152,7 @@ describe('TimelineDay', () => {
     // Salary +500, minus food 200 and travel 50; the transfer moves nothing.
     expect(all).toContain('+₹250');
     expect(all).toContain('Bank → Cash');
-    expect(all).toContain('Moved between your accounts');
+    expect(all).toContain('Transfer');
     expect(byLabel(r, '₹3,000 moved from Bank to Cash')).toHaveLength(1);
   });
 

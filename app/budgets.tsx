@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { View, ScrollView, Pressable } from 'react-native';
+import { View, ScrollView } from 'react-native';
 import { MovingRow } from '@/components/MovingRow';
 import { Text } from '@/components/Text';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -15,26 +15,26 @@ import {
   LapsedBudget,
 } from '@/db/budgets';
 import { Category } from '@/types';
-import { formatMoney } from '@/lib/money';
+import { toLocalIsoDate } from '@/lib/date';
 import { usePrivacy } from '@/theme/PrivacyContext';
 import { theme } from '@/constants/theme';
 import { AppHeader } from '@/components/AppHeader';
 import { AddButton } from '@/components/AddButton';
 import { EmptyState } from '@/components/EmptyState';
 import { ActionSheet, ActionSheetItem } from '@/components/ActionSheet';
-import { CategoryIcon } from '@/components/CategoryIcon';
-import { LimitMeter } from '@/components/LimitMeter';
 import { useUndoToast } from '@/components/UndoToast';
 import { Skeleton } from '@/components/Skeleton';
 import { CardRowsSkeleton } from '@/components/ListSkeleton';
 import { useScreenLoad } from '@/lib/useScreenLoad';
 import { haptics } from '@/lib/haptics';
 import { BudgetRow } from '@/features/budgets/BudgetRow';
+import { BudgetsHero } from '@/features/budgets/BudgetsHero';
+import { LapsedBudgetsCard } from '@/features/budgets/LapsedBudgetsCard';
+import { budgetsOverview } from '@/features/budgets/budgetsOverview';
 import { AddBudgetModal } from '@/features/budgets/AddBudgetModal';
 import { styles } from '@/features/budgets/budgets.styles';
 import { errorMessage } from '@/lib/errorMessage';
 import { useReturnOrPush } from '@/lib/useReturnOrPush';
-import { withPressed } from '@/lib/pressed';
 import { showAlert } from '@/components/AppDialog';
 
 export default function BudgetsScreen() {
@@ -51,6 +51,7 @@ export default function BudgetsScreen() {
   const [editingBudget, setEditingBudget] = useState<BudgetProgress | null>(null);
   const [manageTarget, setManageTarget] = useState<BudgetProgress | null>(null);
   const [continuingId, setContinuingId] = useState<string | null>(null);
+  const [continuingAll, setContinuingAll] = useState(false);
   // Guards against a double-tap firing deleteBudget twice for the same row
   // before the ActionSheet finishes closing — same convention Categories'
   // manage sheet uses.
@@ -70,9 +71,7 @@ export default function BudgetsScreen() {
   }, [periodMonth, hideAmounts]);
   const { loaded, loadError, reload: load } = useScreenLoad(loadBudgets);
 
-  const totalLimit = budgets.reduce((sum, b) => sum + b.effectiveLimitMinor, 0);
-  const totalSpent = budgets.reduce((sum, b) => sum + b.spentMinor, 0);
-  const overallOver = totalSpent > totalLimit && totalLimit > 0;
+  const hero = budgetsOverview(budgets, toLocalIsoDate(new Date()));
 
   // Every expense category, parents and subcategories alike, for the
   // AddBudgetModal's picker — see that component's own comment for why this
@@ -95,6 +94,29 @@ export default function BudgetsScreen() {
       // category just stays in the list to try again, same as a retry.
     } finally {
       setContinuingId(null);
+    }
+  };
+
+  const onContinueAll = async () => {
+    setContinuingAll(true);
+    try {
+      // Each in its own try: one that can't be created doesn't stop the rest.
+      for (const item of lapsed) {
+        try {
+          await createBudget({
+            categoryId: item.categoryId,
+            limitAmountMinor: item.limitAmountMinor,
+            rollover: item.rollover,
+            periodMonth,
+          });
+        } catch {
+          // It stays in the list to try again.
+        }
+      }
+      haptics.tap();
+      await load();
+    } finally {
+      setContinuingAll(false);
     }
   };
 
@@ -169,49 +191,17 @@ export default function BudgetsScreen() {
           </View>
         )}
 
-        {budgets.length > 0 && (
-          <View style={styles.summaryCard}>
-            <Text style={styles.summaryLabel}>Budgeted this month</Text>
-            <View style={styles.summaryAmountRow}>
-              <Text style={styles.summaryAmount}>{formatMoney(totalSpent)}</Text>
-              <Text style={styles.summaryOf}>
-                / {formatMoney(totalLimit)} across {budgets.length} categor
-                {budgets.length === 1 ? 'y' : 'ies'}
-              </Text>
-            </View>
-            <View style={styles.summaryTrackWrap}>
-              <LimitMeter
-                pct={totalLimit > 0 ? (totalSpent / totalLimit) * 100 : 0}
-                tone={overallOver ? 'over' : 'ok'}
-                animKey="budgets:total"
-              />
-            </View>
-          </View>
-        )}
+        {budgets.length > 0 && <BudgetsHero figures={hero} />}
 
         {lapsed.length > 0 && (
-          <View style={[styles.lapsedCard, budgets.length === 0 && { marginTop: theme.layout.screenTopGap }]}>
-            <Text style={styles.lapsedTitle}>Continue from last month?</Text>
-            {lapsed.map((item) => (
-              <View key={item.categoryId} style={styles.lapsedRow}>
-                <CategoryIcon name={item.categoryIcon} color={item.categoryColor} square={30} size={14} />
-                <Text style={styles.lapsedName} numberOfLines={1}>
-                  {item.categoryName}
-                </Text>
-                <Text style={styles.lapsedAmount}>{formatMoney(item.limitAmountMinor)}/mo</Text>
-                <Pressable
-                  style={withPressed(styles.continueBtn)}
-                  onPress={() => onContinue(item)}
-                  disabled={continuingId === item.categoryId}
-                  accessibilityRole="button"
-                >
-                  <Text style={styles.continueBtnText}>
-                    {continuingId === item.categoryId ? '…' : 'Continue'}
-                  </Text>
-                </Pressable>
-              </View>
-            ))}
-          </View>
+          <LapsedBudgetsCard
+            items={lapsed}
+            continuingId={continuingId}
+            continuingAll={continuingAll}
+            onContinue={onContinue}
+            onContinueAll={onContinueAll}
+            style={budgets.length === 0 && { marginTop: theme.layout.screenTopGap }}
+          />
         )}
 
         {budgets.length === 0 && lapsed.length === 0 ? (
@@ -227,6 +217,7 @@ export default function BudgetsScreen() {
                   <BudgetRow
                     progress={progress}
                     divider={i > 0}
+                    showPerDay
                     // The row opens its category's page; Edit and Delete are in ⋯.
                     onPress={() =>
                       returnOrPush(

@@ -4,9 +4,12 @@ import { HOME } from '@/features/home/homeStyles';
 
 // Shared by the Plan tiles and Coming up.
 const TILE_GAP = 8;
+export const STRIP_BAR_AREA = 46;
 
 export const styles = StyleSheet.create({
-  tileRow: { flexDirection: 'row', gap: TILE_GAP, marginHorizontal: HOME.gutter, marginTop: TILE_GAP },
+  group: { gap: TILE_GAP, marginHorizontal: HOME.gutter },
+  groupFirst: { marginTop: TILE_GAP },
+  tileRow: { flexDirection: 'row', gap: TILE_GAP },
   tile: {
     borderRadius: theme.radius.xl2,
     borderWidth: StyleSheet.hairlineWidth,
@@ -15,7 +18,7 @@ export const styles = StyleSheet.create({
     gap: 4,
     overflow: 'hidden',
   },
-  tileWide: { marginHorizontal: HOME.gutter, marginTop: TILE_GAP },
+  tileWide: {},
   tileHalf: { flex: 1, minHeight: 116 },
   savingTile: { backgroundColor: theme.colors.primaryTint, gap: 10 },
   kickerRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 2 },
@@ -36,16 +39,9 @@ export const styles = StyleSheet.create({
   tileSub: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 16, color: theme.colors.textSecondary },
 
   strip: { flexDirection: 'row', gap: 3, marginTop: 8 },
-  stripDay: {
-    flex: 1,
-    height: 26,
-    borderRadius: 7,
-    backgroundColor: theme.colors.surfaceAlt,
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    paddingBottom: 3,
-    overflow: 'hidden',
-  },
+  stripDay: { flex: 1, alignItems: 'center', gap: 4 },
+  stripBarArea: { height: STRIP_BAR_AREA, width: '100%', justifyContent: 'flex-end' },
+  stripBar: { width: '100%', borderRadius: 5, backgroundColor: theme.colors.surfaceAlt },
   stripBill: {
     backgroundColor: theme.colors.idGold,
     borderBottomWidth: 3,
@@ -56,9 +52,32 @@ export const styles = StyleSheet.create({
     borderBottomWidth: 3,
     borderBottomColor: theme.colors.idCoralDeep,
   },
-  stripToday: { borderWidth: 1.5, borderColor: theme.colors.ink },
-  stripText: { fontFamily: theme.font.mono, fontSize: 10, color: theme.colors.textMuted },
-  stripTextOn: { fontFamily: theme.font.monoBold, color: theme.colors.textPrimary },
+  stripNum: {
+    minWidth: 18,
+    paddingVertical: 1,
+    borderRadius: theme.radius.pill,
+    textAlign: 'center',
+    fontFamily: theme.font.mono,
+    fontSize: 10,
+    color: theme.colors.textMuted,
+  },
+  stripNumOn: { fontFamily: theme.font.monoBold, color: theme.colors.textPrimary },
+  stripNumSelected: { backgroundColor: theme.colors.ink, color: theme.colors.surface },
+  stripCaption: {
+    fontFamily: theme.font.body,
+    fontSize: 12,
+    lineHeight: 16,
+    color: theme.colors.textSecondary,
+  },
+  stripCaptionBold: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
+  stripJump: {
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    paddingVertical: 2,
+  },
+  stripJumpText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textPrimary },
 
   ring: { position: 'absolute', right: 12, top: 12 },
 

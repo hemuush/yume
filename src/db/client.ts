@@ -265,6 +265,7 @@ export async function runMigrations(
 }
 
 async function applyIdempotentMigrations(db: AppDb): Promise<void> {
+  await ensureColumn(db, 'accounts', 'tracked', 'tracked INTEGER NOT NULL DEFAULT 0');
   await ensureColumn(db, 'loans', 'rate_type', `rate_type TEXT NOT NULL DEFAULT 'fixed'`);
   await ensureColumn(db, 'loans', 'person_id', `person_id TEXT REFERENCES people(id) ON DELETE SET NULL`);
   await ensureColumn(db, 'transactions', 'loan_id', `loan_id TEXT REFERENCES loans(id) ON DELETE CASCADE`);

@@ -30,38 +30,18 @@ export const styles = StyleSheet.create({
     marginBottom: 10,
     padding: 16,
     borderRadius: theme.radius.xl2,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.borderSoft,
   },
-  // Direction reads as a slim rail, not a full-bleed wash — the same
-  // red/green the rest of the app already uses for money out vs in, applied
-  // as one accent line rather than tinting the whole card.
-  cardMuted: { opacity: 0.6 },
-  closedDivider: {
-    ...EYEBROW,
+  closedHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     marginHorizontal: 20,
     marginTop: 14,
     marginBottom: 6,
   },
-  cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-  // Payoff-first list row: outstanding/EMI stay top-right same as before,
-  // but the direction rail and status-dot pill are gone in favour of one
-  // thin progress bar — see LoanCard's own comment and payoffFraction().
-  loanFigs: { alignItems: 'flex-end', flexShrink: 0, marginLeft: 8 },
-  loanOutstanding: { fontSize: 16, fontFamily: theme.font.monoBold, color: theme.colors.textPrimary },
-  loanEmi: { fontFamily: theme.font.body, fontSize: 10.5, color: theme.colors.textMuted, marginTop: 1 },
-  payoffTrack: {
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: theme.colors.surfaceAlt,
-    marginTop: 12,
-    overflow: 'hidden',
-  },
-  payoffFill: { height: '100%', borderRadius: 3 },
-  payoffFillBorrowed: { backgroundColor: theme.colors.expense },
-  payoffFillLent: { backgroundColor: theme.colors.income },
-  payoffFillClosed: { backgroundColor: theme.colors.textMuted },
-  payoffCaption: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 6 },
-  payoffCaptionText: { fontFamily: theme.font.mono, fontSize: 10.5, color: theme.colors.textMuted },
-  payoffCaptionBold: { fontFamily: theme.font.monoBold, color: theme.colors.textSecondary },
+  closedDivider: EYEBROW,
   cardName: {
     fontFamily: theme.font.bodyMedium,
     fontSize: 16,
@@ -163,6 +143,5 @@ export const styles = StyleSheet.create({
     borderColor: theme.colors.borderSoft,
   },
   payoffMonth: { fontFamily: theme.font.roundedBold, fontSize: 22, color: theme.colors.textPrimary },
-  payoffMoney: { fontFamily: theme.font.monoBold, color: theme.colors.textPrimary },
   payoffAxis: { flexDirection: 'row', justifyContent: 'space-between' },
 });

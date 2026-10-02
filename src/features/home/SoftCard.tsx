@@ -42,14 +42,17 @@ export function SoftCard({
   );
 }
 
+/** The one soft lift every main Home card shares. */
+export const SOFT_LIFT = {
+  shadowColor: theme.colors.ink,
+  shadowOpacity: 0.06,
+  shadowRadius: 12,
+  shadowOffset: { width: 0, height: 6 },
+  elevation: 2,
+} as const;
+
 const styles = StyleSheet.create({
   card: { overflow: 'visible' },
   hairline: { borderWidth: StyleSheet.hairlineWidth, borderColor: theme.colors.borderSoft },
-  elevated: {
-    shadowColor: theme.colors.ink,
-    shadowOpacity: 0.06,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 2,
-  },
+  elevated: SOFT_LIFT,
 });

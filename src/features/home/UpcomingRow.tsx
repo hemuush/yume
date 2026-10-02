@@ -27,6 +27,7 @@ export function UpcomingRow({
   onPress,
   divider,
   urgent,
+  soon,
   date,
   actionLabel,
 }: {
@@ -41,6 +42,8 @@ export function UpcomingRow({
   divider?: boolean;
   /** Due today or already overdue — swaps the icon badge and subtitle to the coral "worth a look" tone instead of the neutral default. */
   urgent?: boolean;
+  /** Due within the next few days but not yet today — the amber tone between neutral and urgent. */
+  soon?: boolean;
   /** The due date (YYYY-MM-DD): shown as a date tile ("01 OCT") in place of the icon, as Plan does. */
   date?: string;
   /** A bill to pay: a "Pay" pill stands where the chevron would; tapping anywhere on the row still opens it. */
@@ -57,17 +60,17 @@ export function UpcomingRow({
       style={[styles.row, divider && styles.divider, animatedStyle]}
     >
       {date ? (
-        <DateTile iso={date} background={iconBg} urgent={urgent} />
+        <DateTile iso={date} background={iconBg} urgent={urgent} soon={soon} />
       ) : (
         <View style={[styles.iconWrap, { backgroundColor: urgent ? theme.colors.expenseTint : iconBg }]}>
           <Feather name={icon} size={HOME.iconGlyph} color={urgent ? theme.colors.expense : iconColor} />
         </View>
       )}
       <View style={styles.mid}>
-        <Text style={styles.title} numberOfLines={1}>
+        <Text style={styles.title} numberOfLines={2}>
           {title}
         </Text>
-        <Text style={[styles.sub, urgent && styles.subUrgent]} numberOfLines={1}>
+        <Text style={[styles.sub, urgent ? styles.subUrgent : soon && styles.subSoon]} numberOfLines={1}>
           {subtitle}
         </Text>
       </View>
@@ -131,6 +134,7 @@ const styles = StyleSheet.create({
   title: h.title,
   sub: h.sub,
   subUrgent: h.subUrgent,
+  subSoon: h.subSoon,
   amount: h.amount,
   income: h.income,
   action: {

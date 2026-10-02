@@ -19,6 +19,7 @@ export interface AccountRow {
   interest_rate_annual_bp: number | null;
   archived: number;
   created_at: string;
+  tracked: number;
 }
 
 /** A row of `categories`. */

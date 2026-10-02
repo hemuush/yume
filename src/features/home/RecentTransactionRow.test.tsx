@@ -1,7 +1,8 @@
 /**
  * A Home recent-activity row never says its category twice: with a note,
  * the note leads and the category sits under it; without one, the category
- * leads and only the account sits under it. All figures are made up.
+ * leads and only the account sits under it. Either way the day closes the
+ * line. All figures are made up.
  */
 import { Text } from 'react-native';
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
@@ -10,16 +11,18 @@ jest.mock('@/components/JustAddedGlow', () => ({ JustAddedGlow: () => null }));
 
 import { RecentTransactionRow } from './RecentTransactionRow';
 import { Category, Transaction } from '@/types';
+import { addDaysToIsoDate, toLocalIsoDate } from '@/lib/date';
 
 const food = { id: 'food', name: 'Food & Dining', icon: 'food', color: '#FF9E7D' } as Category;
-const tx = (note: string): Transaction => ({
+const today = toLocalIsoDate(new Date());
+const tx = (note: string, date = today): Transaction => ({
   id: 't1',
   type: 'expense',
   accountId: 'sbi',
   toAccountId: null,
   categoryId: 'food',
   amountMinor: 15000,
-  date: '2026-09-27',
+  date,
   note,
   paymentMode: null,
   loanPaymentId: null,
@@ -28,12 +31,12 @@ const tx = (note: string): Transaction => ({
   createdAt: '2026-09-27T10:00:00.000Z',
 });
 
-function texts(note: string) {
+function texts(note: string, date?: string) {
   let r!: ReactTestRenderer;
   act(() => {
     r = create(
       <RecentTransactionRow
-        tx={tx(note)}
+        tx={tx(note, date)}
         category={food}
         accountName="SBI"
         toAccountName={undefined}
@@ -50,14 +53,18 @@ function texts(note: string) {
 }
 
 describe('RecentTransactionRow', () => {
-  it('shows only the account under the category when there is no note', () => {
+  it('shows only the account and day under the category when there is no note', () => {
     const all = texts('');
     expect(all).toContain('Food & Dining');
-    expect(all).toContain('SBI');
-    expect(all).not.toContain('Food & Dining · SBI');
+    expect(all).toContain('SBI · Today');
+    expect(all).not.toContain('Food & Dining · SBI · Today');
   });
 
   it('puts the category under a note', () => {
-    expect(texts('Lunch')).toEqual(expect.arrayContaining(['Lunch', 'Food & Dining · SBI']));
+    expect(texts('Lunch')).toEqual(expect.arrayContaining(['Lunch', 'Food & Dining · SBI · Today']));
+  });
+
+  it('says Yesterday for the day before', () => {
+    expect(texts('', addDaysToIsoDate(today, -1))).toContain('SBI · Yesterday');
   });
 });

@@ -21,6 +21,8 @@ import { AppHeader } from '@/components/AppHeader';
 import { CardRowsSkeleton } from '@/components/ListSkeleton';
 import { useScreenLoad } from '@/lib/useScreenLoad';
 import { HOME } from '@/features/home/homeStyles';
+import { HomeSection } from '@/features/home/HomeSection';
+import { SECTION_GAP } from '@/constants/textStyles';
 import {
   buildLoansSummary,
   buildDueItems,
@@ -41,6 +43,7 @@ import {
 } from '@/features/plan/planOverview';
 import { PayInstallmentSheet } from '@/features/loans/PayInstallmentSheet';
 import {
+  TileGroup,
   TileRow,
   DueTile,
   EmiTile,
@@ -68,13 +71,12 @@ interface PlanData {
 }
 
 /**
- * Everything you're planning, at a glance: a bento of tiles (the Plan
- * sign-off, direction A), one per topic, then Coming up in full. The next
- * 14 days leads; then EMIs and Budgets side by side, the road to debt-free,
- * Friends & Family and the daily habit side by side, and Saving toward with
- * What-if. Every tile opens its own screen, and an empty one says what to
- * do next instead of disappearing. What each tile says is decided in
- * planOverview.ts.
+ * Everything you're planning, at a glance: tiles, one per topic, in titled
+ * groups like Home and Reports, then Coming up in full. The next 14 days
+ * leads; then "Where you stand" (EMIs and Budgets side by side, the road to
+ * debt-free), "Goals" (Saving toward with What-if) and "People & habit".
+ * Every tile opens its own screen, and an empty one says what to do next
+ * instead of disappearing. What each tile says is decided in planOverview.ts.
  */
 export default function PlanScreen() {
   const insets = useSafeAreaInsets();
@@ -175,16 +177,35 @@ export default function PlanScreen() {
   // The 14-day tile jumps down to Coming up.
   const scrollRef = useRef<ScrollView>(null);
   const comingUpY = useRef(0);
+  // Where Coming up's card and each day's group sit, for the strip's jump.
+  const cardY = useRef(0);
+  const groupYs = useRef<Record<string, number>>({});
+  const scrollToComingUp = useCallback(
+    () => scrollRef.current?.scrollTo({ y: Math.max(0, comingUpY.current - 8), animated: true }),
+    []
+  );
+  // A day on the strip lands on its group; today also covers anything overdue,
+  // which sits under its own earlier date, so fall back to the earliest group.
+  const scrollToDay = (date: string) => {
+    const dates = data?.dueGroups.map((g) => g.date) ?? [];
+    const target = dates.includes(date) ? date : dates[0];
+    const groupY = target == null ? undefined : groupYs.current[target];
+    if (groupY == null) return scrollToComingUp();
+    scrollRef.current?.scrollTo({
+      y: Math.max(0, comingUpY.current + SECTION_GAP.top + cardY.current + groupY - 8),
+      animated: true,
+    });
+  };
   // Home's "+N more this week" lands here, already scrolled to Coming up.
   const { section } = useLocalSearchParams<{ section?: string }>();
   useEffect(() => {
     if (section !== 'coming-up' || !loaded || !data) return;
     const t = setTimeout(() => {
-      scrollRef.current?.scrollTo({ y: Math.max(0, comingUpY.current - 8), animated: true });
+      scrollToComingUp();
       router.setParams({ section: undefined });
     }, 60);
     return () => clearTimeout(t);
-  }, [section, loaded, data]);
+  }, [section, loaded, data, scrollToComingUp]);
 
   return (
     <View style={styles.container}>
@@ -201,43 +222,66 @@ export default function PlanScreen() {
         )}
 
         {!loaded || !data ? (
-          <View style={{ marginTop: HOME.sectionGap / 2, gap: HOME.sectionGap }}>
+          <View style={{ marginTop: theme.layout.screenTopGap, gap: HOME.sectionGap }}>
             <CardRowsSkeleton rows={3} meter />
             <CardRowsSkeleton rows={2} subtitle />
           </View>
         ) : (
           <>
-            <DueTile
-              dueSoon={data.dueSoon}
-              days={data.dueDays}
-              next={data.dueGroups.find((g) => g.outMinor > 0) ?? null}
-              onPress={() =>
-                scrollRef.current?.scrollTo({ y: Math.max(0, comingUpY.current - 8), animated: true })
-              }
-            />
-            <TileRow>
-              <EmiTile
+            <TileGroup first>
+              <DueTile
                 dueSoon={data.dueSoon}
-                groups={data.dueGroups}
-                loans={data.loans}
-                onOpen={() => open('/loans')}
+                days={data.dueDays}
+                next={data.dueGroups.find((g) => g.outMinor > 0) ?? null}
+                onPress={scrollToComingUp}
+                onJumpToDay={scrollToDay}
               />
-              <BudgetTile summary={data.budgets} onOpen={() => open('/budgets')} />
-            </TileRow>
-            <DebtTile loans={data.loans} onOpen={() => open('/loans')} />
-            <TileRow>
-              <PeopleTile state={data.people} onOpen={() => open('/people')} />
-              <HabitTile habit={data.habit} goalMinor={data.dailyGoalMinor} onOpen={() => open('/garden')} />
-            </TileRow>
-            <SavingTile
-              goals={data.goals}
-              savingsAccounts={data.savingsAccounts}
-              whatIf={data.whatIf}
-              onOpenGoals={() => open('/savings-goals')}
-              onOpenWhatIf={() => open('/whatif')}
-            />
+            </TileGroup>
+            <HomeSection title="Where you stand">
+              <TileGroup>
+                <TileRow>
+                  <EmiTile
+                    dueSoon={data.dueSoon}
+                    groups={data.dueGroups}
+                    loans={data.loans}
+                    onOpen={() => open('/loans')}
+                  />
+                  <BudgetTile summary={data.budgets} onOpen={() => open('/budgets')} />
+                </TileRow>
+                <DebtTile loans={data.loans} onOpen={() => open('/loans')} />
+              </TileGroup>
+            </HomeSection>
+            <HomeSection title="Goals">
+              <TileGroup>
+                <SavingTile
+                  goals={data.goals}
+                  savingsAccounts={data.savingsAccounts}
+                  whatIf={data.whatIf}
+                  onOpenGoals={() => open('/savings-goals')}
+                  onOpenWhatIf={() => open('/whatif')}
+                />
+              </TileGroup>
+            </HomeSection>
+            <HomeSection title="People & habit">
+              <TileGroup>
+                <TileRow>
+                  <PeopleTile state={data.people} onOpen={() => open('/people')} />
+                  <HabitTile
+                    habit={data.habit}
+                    goalMinor={data.dailyGoalMinor}
+                    onOpen={() => open('/garden')}
+                  />
+                </TileRow>
+              </TileGroup>
+            </HomeSection>
             <View onLayout={(e) => (comingUpY.current = e.nativeEvent.layout.y)}>
-              <ComingUpSection groups={data.dueGroups} onOpen={open} onPay={(id) => void payEmi(id)} />
+              <ComingUpSection
+                groups={data.dueGroups}
+                onOpen={open}
+                onPay={(id) => void payEmi(id)}
+                onCardLayout={(y) => (cardY.current = y)}
+                onGroupLayout={(date, y) => (groupYs.current[date] = y)}
+              />
             </View>
           </>
         )}
@@ -259,7 +303,8 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
   errorBanner: {
     marginHorizontal: 20,
-    marginBottom: 14,
+    marginTop: theme.layout.screenTopGap,
+    marginBottom: 12,
     padding: 14,
     borderRadius: theme.radius.md,
     backgroundColor: theme.colors.expenseTint,

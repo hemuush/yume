@@ -1,9 +1,10 @@
 /**
  * With "hide savings & investment amounts" on, a goal shows neither what is
- * saved nor how far along it is: the amount is masked, the ring is an empty
- * eye-off track, and "Reached" is not announced. The target stays readable.
+ * saved nor how far along it is: the amount is masked, the bar is empty,
+ * no percent, pace or monthly figure is shown, and "Reached" is not announced. The target stays readable.
  */
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
+import { Text } from 'react-native';
 
 jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMock').createReanimatedMock());
 jest.mock('expo-router', () => ({ router: { push: jest.fn() } }));
@@ -13,7 +14,6 @@ jest.mock('@/theme/PrivacyContext', () => ({
 }));
 
 import { GoalCard } from './GoalCard';
-import { GoalRing } from './GoalRing';
 import { SavingsGoal } from '@/types';
 
 afterAll(() => new Promise((resolve) => setTimeout(resolve, 800)));
@@ -50,13 +50,16 @@ describe('GoalCard while savings amounts are hidden', () => {
     expect(all).toContain('••••');
     expect(all).toContain('₹1,50,000');
     expect(all).not.toContain('Reached');
-    expect(r.root.findAllByType(GoalRing)).toHaveLength(0);
+    const shown = r.root.findAllByType(Text).map((t) => [t.props.children].flat().join(''));
+    expect(shown.join(' | ')).not.toMatch(/[0-9]+%/);
+    expect(all).not.toContain('to go');
   });
 
   it('shows the real figures again once they are not hidden', () => {
     mockHideAmounts = false;
     const r = render();
-    expect(texts(r).join(' | ')).toContain('Reached');
-    expect(r.root.findAllByType(GoalRing)).toHaveLength(1);
+    const all = texts(r).join(' | ');
+    expect(all).toContain('Reached');
+    expect(all).toContain('100%');
   });
 });

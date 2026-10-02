@@ -94,14 +94,8 @@ export const styles = StyleSheet.create({
   changePillUp: { backgroundColor: theme.colors.expenseTint },
   changePillDown: { backgroundColor: theme.colors.incomeTint },
   changeText: { fontFamily: theme.font.bodyBold, fontSize: 11.5 },
-  sumChart: { marginTop: 16 },
-  sumHint: {
-    fontFamily: theme.font.body,
-    fontSize: 12,
-    color: theme.colors.textSecondary,
-    marginTop: 14,
-  },
-  sumHintTitle: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
+  // Room above the tallest bar for the tapped bar's amount bubble.
+  sumChart: { marginTop: 28 },
   sumStrip: {
     flexDirection: 'row',
     marginTop: 14,
@@ -154,8 +148,11 @@ export const styles = StyleSheet.create({
   periodTitle: { fontFamily: theme.font.roundedBold, fontSize: 17, color: theme.colors.textPrimary },
   periodSub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, marginTop: 1 },
 
+  listArea: { flex: 1 },
+  edgeFade: { position: 'absolute', top: 0, left: 0, right: 0, height: 14 },
+
   // Week scope's rail: one segment per week of the month, sized by its days.
-  weekRail: { paddingHorizontal: 24, marginTop: 10, gap: 5 },
+  weekRail: { paddingHorizontal: 24, marginTop: 10 },
   weekRailBar: { flexDirection: 'row', gap: 4 },
   weekRailSeg: { height: 14, justifyContent: 'center' },
   weekRailFill: { height: 6, borderRadius: 3, backgroundColor: theme.colors.borderSoft },
@@ -168,9 +165,6 @@ export const styles = StyleSheet.create({
     borderRadius: 3,
     backgroundColor: theme.colors.primary,
   },
-  weekRailCaption: { flexDirection: 'row', justifyContent: 'space-between' },
-  weekRailText: { fontFamily: theme.font.bodyBold, fontSize: 11, color: theme.colors.textMuted },
-  weekRailTextOn: { color: theme.colors.textSecondary },
 
   // The type filter as one segmented bar, then any picked categories and
   // accounts on their own line, only while there are some. The gap below

@@ -9,6 +9,7 @@ import {
   StoryInput,
   summariseDayTotal,
   buildHeatGrid,
+  vsUsual,
 } from './reportsInsights';
 import type { CategoryBreakdownItem } from '@/db/reports';
 import { parseLocalIsoDate } from '@/lib/date';
@@ -248,6 +249,8 @@ describe('buildStoryCards', () => {
 
   it('says it is too early rather than guessing, for a period in progress with under 3 spending days', () => {
     expect(buildStoryCards({ ...base, spendDays: 2 }).map((c) => c.key)).toEqual(['early']);
+    // It is a slim note, not a full-height card.
+    expect(buildStoryCards({ ...base, spendDays: 2 })[0].compact).toBe(true);
     // A finished period is never "too early".
     expect(buildStoryCards({ ...base, spendDays: 2, isCurrentPeriod: false })[0].key).not.toBe('early');
   });
@@ -279,6 +282,20 @@ describe('buildHeatGrid', () => {
     expect(onDayPress).toHaveBeenCalledWith('2026-09-05');
   });
 
+  it('marks the days after today as future, so they can be faded', () => {
+    const grid = buildHeatGrid({
+      granularity: 'month',
+      start: new Date(2026, 8, 1),
+      trend: [],
+      daily: [],
+      onDayPress: jest.fn(),
+      todayIso: '2026-09-06',
+    });
+    expect(grid.cells[5].isFuture).toBe(false);
+    expect(grid.cells[6].isFuture).toBe(true);
+    expect(grid.cells[0].isFuture).toBe(false);
+  });
+
   it('lays a year out as its months, four to a row, with no weekday header', () => {
     const grid = buildHeatGrid({
       granularity: 'year',
@@ -298,5 +315,43 @@ describe('buildHeatGrid', () => {
       leadingPad: 0,
       columns: 4,
     });
+  });
+});
+
+describe('vsUsual', () => {
+  // A usual month of ₹33,683.00 in a 31-day month.
+  const usual = 33_683_00;
+  const base = {
+    baselineMinor: usual,
+    granularity: 'month' as const,
+    inProgress: false,
+    todayIso: '2026-10-02',
+  };
+
+  it('says nothing before day 5 of the month in progress', () => {
+    expect(vsUsual({ ...base, spentMinor: 13_784_00, inProgress: true, todayIso: '2026-10-02' })).toBeNull();
+    expect(vsUsual({ ...base, spentMinor: 13_784_00, inProgress: true, todayIso: '2026-10-04' })).toBeNull();
+    expect(
+      vsUsual({ ...base, spentMinor: 13_784_00, inProgress: true, todayIso: '2026-10-05' })
+    ).not.toBeNull();
+  });
+
+  it('holds the month in progress against the usual month so far', () => {
+    const r = vsUsual({ ...base, spentMinor: 14_600_00, inProgress: true, todayIso: '2026-10-12' })!;
+    expect(r.soFar).toBe(true);
+    // 33,683 × 12 ÷ 31 = 13,038.57 → 14,600 is about 12% above.
+    expect(Math.round(r.pct)).toBe(12);
+  });
+
+  it('compares a finished month with the whole usual month', () => {
+    const r = vsUsual({ ...base, spentMinor: 13_784_00 })!;
+    expect(r.soFar).toBe(false);
+    expect(Math.round(r.pct)).toBe(-59);
+  });
+
+  it('has no usual month for a year or a custom range, or without a baseline', () => {
+    expect(vsUsual({ ...base, spentMinor: 1, granularity: 'year' })).toBeNull();
+    expect(vsUsual({ ...base, spentMinor: 1, granularity: 'custom' })).toBeNull();
+    expect(vsUsual({ ...base, spentMinor: 1, baselineMinor: null })).toBeNull();
   });
 });

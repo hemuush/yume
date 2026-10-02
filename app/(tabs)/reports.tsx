@@ -55,6 +55,7 @@ import {
   patternFacts,
   quietDays,
   buildStoryCards,
+  vsUsual,
   StoryTarget,
 } from '@/features/reports/reportsInsights';
 import { errorMessage } from '@/lib/errorMessage';
@@ -254,9 +255,15 @@ export default function ReportsScreen() {
   const daysInPeriod = Math.round((rangeEnd.getTime() - rangeStart.getTime()) / 86400000) + 1;
 
   const baseline = baselineFromTrend(trend);
-  // "Above usual" compares with a usual month, so a custom range doesn't get it.
-  const vsUsualPct =
-    !custom && baseline && baseline > 0 ? ((current.expenseMinor - baseline) / baseline) * 100 : null;
+  const todayIso = toLocalIsoDate(new Date());
+  const monthInProgress = cursor.granularity === 'month' && cursor.offset === 0;
+  const usual = vsUsual({
+    spentMinor: current.expenseMinor,
+    baselineMinor: baseline,
+    granularity: custom ? 'custom' : cursor.granularity,
+    inProgress: monthInProgress,
+    todayIso,
+  });
   const spendDays = daily.filter((d) => d.totalMinor > 0).length;
   const { recurringMinor, discretionaryMinor } = recurringVsDiscretionary(current.categoryBreakdown);
   const topGrowing = findTopGrowingCategory(current.categoryBreakdown, previous.categoryBreakdown);
@@ -264,7 +271,7 @@ export default function ReportsScreen() {
   // A long custom range reads like a year: by month, with no daily patterns.
   const byMonth = isYear || (custom && daysInPeriod > RANGE_DAY_GRID_MAX_DAYS);
   // Days counted so far — today, for the period in progress.
-  const quiet = quietDays(daily, range, toLocalIsoDate(new Date()));
+  const quiet = quietDays(daily, range, todayIso);
   const perDay = quiet.countedDays > 0 ? Math.round(dispExpense / quiet.countedDays) : 0;
 
   // The period "in short" as story cards (see buildStoryCards). The daily
@@ -284,7 +291,7 @@ export default function ReportsScreen() {
     discretionaryMinor,
     quiet,
     spendDays,
-    isCurrentPeriod: isCustomWindow(cursor) ? range.end >= toLocalIsoDate(new Date()) : cursor.offset === 0,
+    isCurrentPeriod: isCustomWindow(cursor) ? range.end >= todayIso : cursor.offset === 0,
     unit: custom ? 'period' : isYear ? 'year' : 'month',
   });
   const income = flow === 'income';
@@ -330,7 +337,8 @@ export default function ReportsScreen() {
                 periodName={periodName}
                 slideDirection={slideDirection}
                 spentMinor={dispExpense}
-                vsUsualPct={vsUsualPct}
+                vsUsualPct={usual?.pct ?? null}
+                vsUsualSoFar={usual?.soFar ?? false}
                 perDayMinor={perDay}
                 spendDays={spendDays}
                 countedDays={quiet.countedDays}
@@ -409,6 +417,7 @@ export default function ReportsScreen() {
                 spentMinor={current.expenseMinor}
                 trend={trend}
                 baseline={baseline}
+                inProgress={monthInProgress}
                 netWorthTrend={netWorthTrend}
               />
             </View>

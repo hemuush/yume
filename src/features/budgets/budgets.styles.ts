@@ -23,28 +23,6 @@ export const styles = StyleSheet.create({
     lineHeight: 16,
   },
 
-  summaryCard: {
-    marginHorizontal: 20,
-    marginTop: theme.layout.screenTopGap,
-    padding: 16,
-    borderRadius: theme.radius.xl2,
-    backgroundColor: theme.colors.surfaceAlt,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-  },
-  summaryLabel: {
-    fontFamily: theme.font.body,
-    fontSize: 11,
-    color: theme.colors.textSecondary,
-    marginBottom: 6,
-  },
-  summaryAmountRow: { flexDirection: 'row', alignItems: 'baseline', gap: 6 },
-  summaryAmount: { fontFamily: theme.font.monoBold, fontSize: 18, color: theme.colors.textPrimary },
-  summaryOf: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
-  // LimitMeter (src/components/LimitMeter.tsx) draws the bar itself now —
-  // this only keeps the same spacing the old inline track/fill pair had.
-  summaryTrackWrap: { marginTop: 10 },
-
   lapsedCard: {
     marginHorizontal: 20,
     marginTop: 16,
@@ -54,13 +32,17 @@ export const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
   },
-  lapsedTitle: {
-    fontFamily: theme.font.bodyBold,
-    fontSize: 13,
-    color: theme.colors.textPrimary,
-    marginBottom: 8,
+  lapsedHead: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  lapsedHeadText: { flex: 1, minWidth: 0 },
+  lapsedTitle: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textPrimary },
+  lapsedNames: {
+    fontFamily: theme.font.body,
+    fontSize: 11.5,
+    color: theme.colors.textSecondary,
+    marginTop: 2,
   },
-  lapsedRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 6 },
+  lapsedChevron: { width: 24, height: 32, alignItems: 'center', justifyContent: 'center' },
+  lapsedRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingTop: 10 },
   lapsedName: { flex: 1, fontSize: 13, fontFamily: theme.font.bodyMedium, color: theme.colors.textPrimary },
   lapsedAmount: {
     fontFamily: theme.font.mono,

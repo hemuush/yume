@@ -47,3 +47,31 @@ export function lastActivityShort(dateStr: string | null, now: Date = new Date()
   if (days < DAYS_BEFORE_WEEKS) return `${days}d ago`;
   return `${Math.round(days / 7)}w ago`;
 }
+
+export interface PeopleGroups<T extends { balanceMinor: number }> {
+  /** People who owe you, the biggest balance first. */
+  owed: T[];
+  /** People you owe, the biggest balance first. */
+  owe: T[];
+  /** People at exactly zero (on the whole-rupee figure), in the order given. */
+  settled: T[];
+  owedToYouMinor: number;
+  youOweMinor: number;
+  /** Positive when you are owed more than you owe. */
+  netMinor: number;
+}
+
+/** Splits the list by who owes whom, on the same whole-rupee figures the rows show. */
+export function groupPeople<T extends { balanceMinor: number }>(people: T[]): PeopleGroups<T> {
+  const owed: T[] = [];
+  const owe: T[] = [];
+  const settled: T[] = [];
+  for (const p of people) {
+    const status = personStatus(roundedMinor(p.balanceMinor));
+    (status === 'owed' ? owed : status === 'owe' ? owe : settled).push(p);
+  }
+  owed.sort((a, b) => b.balanceMinor - a.balanceMinor);
+  owe.sort((a, b) => a.balanceMinor - b.balanceMinor);
+  const { owedToYouMinor, youOweMinor } = peopleTotals(people);
+  return { owed, owe, settled, owedToYouMinor, youOweMinor, netMinor: owedToYouMinor - youOweMinor };
+}

@@ -28,7 +28,7 @@ import {
 } from './planOverview';
 import { dayMonth, weekdayDayMonth, longMonthYear, shortMonthYear } from '@/lib/dateLabels';
 
-import { styles } from './plan.styles';
+import { styles, STRIP_BAR_AREA } from './plan.styles';
 import { withPressed } from '@/lib/pressed';
 
 /**
@@ -42,16 +42,6 @@ import { withPressed } from '@/lib/pressed';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 type FeatherName = React.ComponentProps<typeof Feather>['name'];
-
-/** "5 & 7 Oct", or "30 Sep & 5 Oct" across months. */
-export function joinDays(dates: string[]): string {
-  if (dates.length === 0) return '';
-  const sameMonth = dates.every((d) => d.slice(0, 7) === dates[0].slice(0, 7));
-  const parts = sameMonth
-    ? [...dates.slice(0, -1).map((d) => String(Number(d.slice(8)))), dayMonth(dates[dates.length - 1])]
-    : dates.map((d) => dayMonth(d));
-  return parts.length === 1 ? parts[0] : `${parts.slice(0, -1).join(', ')} & ${parts[parts.length - 1]}`;
-}
 
 /* ---------- Tile ---------- */
 
@@ -103,6 +93,11 @@ function Kicker({ icon, children }: { icon: React.ReactNode; children: React.Rea
 }
 const kIcon = (name: FeatherName) => <Feather name={name} size={12} color={theme.colors.textMuted} />;
 
+/** Tiles stacked 8px apart, between a section's title and the next. */
+export function TileGroup({ children, first }: { children: React.ReactNode; first?: boolean }) {
+  return <View style={[styles.group, first && styles.groupFirst]}>{children}</View>;
+}
+
 /** Two tiles side by side. */
 export function TileRow({ children }: { children: React.ReactNode }) {
   return <View style={styles.tileRow}>{children}</View>;
@@ -110,19 +105,30 @@ export function TileRow({ children }: { children: React.ReactNode }) {
 
 /* ---------- Next 14 days ---------- */
 
+/** The tallest bar leaves room above it; a day with nothing due is a short stub. */
+const STRIP_BAR_MIN = 10;
+const STRIP_BAR_SPAN = STRIP_BAR_AREA - STRIP_BAR_MIN - 4;
+const STRIP_STUB = 4;
+
 export function DueTile({
   dueSoon,
   days,
   next,
   onPress,
+  onJumpToDay,
 }: {
   dueSoon: DueSoon;
   days: DueDay[];
   /** The first day with something due, if any. */
   next: DueGroup | null;
   onPress: () => void;
+  /** Scrolls Coming up to a day's group. */
+  onJumpToDay: (date: string) => void;
 }) {
+  const [selected, setSelected] = useState<string | null>(null);
   const none = dueSoon.count === 0;
+  const maxMinor = Math.max(0, ...days.map((d) => d.amountMinor));
+  const picked = days.find((d) => d.date === selected && (d.emi || d.bill)) ?? null;
   return (
     <Tile
       tone={theme.colors.surface}
@@ -144,29 +150,85 @@ export function DueTile({
           {formatMoney(dueSoon.totalMinor)}
         </Text>
       )}
-      {next && next.outMinor > 0 && (
-        <Text style={styles.tileSub} numberOfLines={2}>
-          Next: {describeGroup(next)} on {weekdayDayMonth(next.date)} ({formatMoney(next.outMinor)}),{' '}
-          {dueDateLabel(next.date).replace('Due ', '').toLowerCase()}
-        </Text>
-      )}
-      <View style={styles.strip} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-        {days.map((d, i) => (
-          <View
-            key={d.date}
-            style={[
-              styles.stripDay,
-              d.bill && styles.stripBill,
-              d.emi && styles.stripEmi,
-              i === 0 && styles.stripToday,
-            ]}
-          >
-            <Text style={[styles.stripText, (d.emi || d.bill || i === 0) && styles.stripTextOn]}>
-              {Number(d.date.slice(8))}
-            </Text>
-          </View>
-        ))}
+      <View style={styles.strip}>
+        {days.map((d, i) => {
+          const live = d.emi || d.bill;
+          const isSelected = picked?.date === d.date;
+          const height = live
+            ? STRIP_BAR_MIN + (maxMinor > 0 ? Math.round((d.amountMinor / maxMinor) * STRIP_BAR_SPAN) : 0)
+            : STRIP_STUB;
+          const cell = (
+            <>
+              <View style={styles.stripBarArea}>
+                <View
+                  style={[styles.stripBar, { height }, d.bill && styles.stripBill, d.emi && styles.stripEmi]}
+                />
+              </View>
+              <Text
+                style={[
+                  styles.stripNum,
+                  (live || i === 0) && styles.stripNumOn,
+                  isSelected && styles.stripNumSelected,
+                ]}
+              >
+                {Number(d.date.slice(8))}
+              </Text>
+            </>
+          );
+          return live ? (
+            <Pressable
+              key={d.date}
+              onPress={() => {
+                haptics.tap();
+                setSelected(isSelected ? null : d.date);
+              }}
+              style={withPressed(styles.stripDay)}
+              accessibilityRole="button"
+              accessibilityState={{ selected: isSelected }}
+              accessibilityLabel={`${weekdayDayMonth(d.date)}, ${formatMoney(d.amountMinor)} due. ${
+                isSelected ? 'Hide details' : 'Show details'
+              }`}
+            >
+              {cell}
+            </Pressable>
+          ) : (
+            <View
+              key={d.date}
+              style={styles.stripDay}
+              accessibilityElementsHidden
+              importantForAccessibility="no-hide-descendants"
+            >
+              {cell}
+            </View>
+          );
+        })}
       </View>
+      {picked ? (
+        <>
+          <Text style={styles.stripCaption} numberOfLines={2}>
+            <Text style={styles.stripCaptionBold}>{weekdayDayMonth(picked.date)}</Text> ·{' '}
+            {formatMoney(picked.amountMinor)} · {picked.titles.join(', ')}
+          </Text>
+          <Pressable
+            onPress={() => onJumpToDay(picked.date)}
+            hitSlop={8}
+            style={withPressed(styles.stripJump)}
+            accessibilityRole="button"
+            accessibilityLabel={`See ${weekdayDayMonth(picked.date)} in the list`}
+          >
+            <Text style={styles.stripJumpText}>See in list</Text>
+            <Feather name="arrow-down" size={13} color={theme.colors.textPrimary} />
+          </Pressable>
+        </>
+      ) : (
+        next &&
+        next.outMinor > 0 && (
+          <Text style={styles.stripCaption} numberOfLines={2}>
+            Next: {describeGroup(next)} on {weekdayDayMonth(next.date)} ({formatMoney(next.outMinor)}),{' '}
+            {dueDateLabel(next.date).replace('Due ', '').toLowerCase()}
+          </Text>
+        )
+      )}
     </Tile>
   );
 }
@@ -202,7 +264,7 @@ export function EmiTile({
       </Tile>
     );
   }
-  const emiDates = groups.filter((g) => g.items.some((i) => i.kind === 'emi')).map((g) => g.date);
+  const firstEmi = groups.find((g) => g.items.some((i) => i.kind === 'emi'));
   const inWindow = dueSoon.emiMinor > 0;
   const nextEmi = loans.rows.find((r) => r.direction === 'borrowed' && r.nextDueDate);
   return (
@@ -215,10 +277,15 @@ export function EmiTile({
       {inWindow ? (
         <>
           <Text style={styles.value} numberOfLines={1} adjustsFontSizeToFit>
-            {formatMoney(dueSoon.emiMinor)}
+            {formatMoney(dueSoon.emiMinor)} <Text style={styles.valueNote}>due</Text>
           </Text>
           <Text style={styles.tileSub} numberOfLines={2}>
-            {joinDays(emiDates)} · {loans.borrowedCount} loan{loans.borrowedCount === 1 ? '' : 's'}
+            {firstEmi
+              ? `${weekdayDayMonth(firstEmi.date)}, ${dueDateLabel(firstEmi.date)
+                  .replace('Due ', '')
+                  .toLowerCase()} · `
+              : ''}
+            {loans.borrowedCount} loan{loans.borrowedCount === 1 ? '' : 's'}
           </Text>
         </>
       ) : (
@@ -291,10 +358,9 @@ export function BudgetTile({ summary, onOpen }: { summary: BudgetsSummary; onOpe
       </Text>
       <Text style={styles.tileSub} numberOfLines={2}>
         {worst.categoryName}
-        {'\n'}
         {worst.overBudget
-          ? `${formatMoney(-worst.remainingMinor)} over`
-          : `${formatMoney(worst.remainingMinor)} left`}
+          ? ` is ${formatMoney(-worst.remainingMinor)} over`
+          : ` has ${formatMoney(worst.remainingMinor)} left`}
       </Text>
     </Tile>
   );
@@ -319,7 +385,7 @@ export function DebtTile({ loans, onOpen }: { loans: LoansSummary; onOpen: () =>
       }. Open loans`}
     >
       <Kicker icon={kIcon('flag')}>
-        {loans.debtFreeDate ? `Debt-free · ${longMonthYear(loans.debtFreeDate)}` : 'Debt left'}
+        {loans.debtFreeDate ? `Debt-free by ${longMonthYear(loans.debtFreeDate)}` : 'Debt left'}
       </Kicker>
       <Text style={styles.value} numberOfLines={1} adjustsFontSizeToFit>
         {formatMoney(loans.debtLeftMinor)}{' '}
@@ -379,8 +445,8 @@ export function PeopleTile({ state, onOpen }: { state: PeopleState; onOpen: () =
     );
     sub =
       state.youOweMinor > 0
-        ? `owed to you · you owe ${formatMoney(state.youOweMinor)}`
-        : `owed to you · ${people(state.count)}`;
+        ? `to collect · you owe ${formatMoney(state.youOweMinor)}`
+        : `to collect from ${people(state.count)}`;
   } else {
     tone = theme.colors.idCoral;
     value = (
@@ -390,8 +456,8 @@ export function PeopleTile({ state, onOpen }: { state: PeopleState; onOpen: () =
     );
     sub =
       state.owedToYouMinor > 0
-        ? `you owe · ${formatMoney(state.owedToYouMinor)} owed to you`
-        : `you owe · ${people(state.count)}`;
+        ? `to pay back · ${formatMoney(state.owedToYouMinor)} to collect`
+        : `to pay back to ${people(state.count)}`;
   }
   return (
     <Tile tone={tone} onPress={onOpen} label={`Friends & Family, ${sub}. Open Friends & Family`}>
@@ -420,7 +486,7 @@ export function HabitTile({
   if (!habit || goalMinor == null) {
     return (
       <Tile tone={theme.colors.surface} onPress={onOpen} label="Set a daily goal. Open Suu's Garden">
-        <Kicker icon={sprout}>Habit</Kicker>
+        <Kicker icon={sprout}>Spend streak</Kicker>
         <Text style={styles.tileTitle}>Set a daily goal</Text>
         <Text style={styles.tileSub}>Grow Suu's Garden</Text>
       </Tile>
@@ -432,7 +498,7 @@ export function HabitTile({
       onPress={onOpen}
       label={`${habit.streakDays}-day streak under ${formatMoney(goalMinor)} a day. Open Suu's Garden`}
     >
-      <Kicker icon={sprout}>Habit</Kicker>
+      <Kicker icon={sprout}>Spend streak</Kicker>
       <Text style={styles.value}>
         {habit.streakDays} day{habit.streakDays === 1 ? '' : 's'}
       </Text>

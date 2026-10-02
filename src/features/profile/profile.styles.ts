@@ -1,5 +1,6 @@
 import { StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
+import { EYEBROW } from '@/constants/textStyles';
 import { HOME } from '@/features/home/homeStyles';
 
 // Shared by the Profile screen (its shell, YouSection, and SettingsSection)
@@ -72,65 +73,18 @@ export const styles = StyleSheet.create({
   // SegmentedControl draws its own pill; this only places it.
   tabWrap: { marginHorizontal: HOME.gutter, marginTop: 16 },
 
-  // ---- You: tracked balance as a sum ----
-  balanceCard: { marginTop: 12 },
-  balanceHead: { paddingHorizontal: 16, paddingTop: 16 },
-  balanceLabel: {
-    fontFamily: theme.font.bodyBold,
-    fontSize: 11,
-    color: theme.colors.textMuted,
-    letterSpacing: 0.8,
-    textTransform: 'uppercase',
-  },
-  // Profile's one hero number — the only big mono figure on this screen.
-  balanceValue: {
-    fontFamily: theme.font.monoBold,
-    fontSize: 27,
-    color: theme.colors.textPrimary,
-    marginTop: 2,
-  },
-  sumLines: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 12, gap: 6 },
-  sumLine: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  sumKey: { width: 10, height: 10, borderRadius: 3 },
-  sumLabel: { flex: 1, fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textSecondary },
-  sumValue: { fontFamily: theme.font.monoBold, fontSize: 13, color: theme.colors.textPrimary },
-  balanceHint: {
+  // ---- You: accounts, grouped by type ----
+  groupHead: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: theme.colors.borderSoft,
-  },
-  balanceHintWarn: { backgroundColor: theme.colors.idGold },
-  balanceHintText: {
-    flex: 1,
-    fontFamily: theme.font.body,
-    fontSize: 12,
-    lineHeight: 16,
-    color: theme.colors.textSecondary,
-  },
-  stats: {
-    flexDirection: 'row',
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: theme.colors.borderSoft,
-  },
-  stat: { flex: 1, alignItems: 'center', paddingVertical: 11 },
-  statDivider: { borderLeftWidth: StyleSheet.hairlineWidth, borderLeftColor: theme.colors.borderSoft },
-  statValue: { fontFamily: theme.font.roundedBold, fontSize: 18, color: theme.colors.textPrimary },
-  statLabel: { fontFamily: theme.font.bodyMedium, fontSize: 11, color: theme.colors.textMuted },
-
-  // ---- You: accounts ----
-  cardFoot: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'baseline',
     justifyContent: 'space-between',
     paddingHorizontal: 14,
-    paddingVertical: 11,
+    paddingTop: 10,
+    paddingBottom: 6,
+    backgroundColor: theme.colors.surfaceAlt,
   },
-  cardFootLabel: { fontFamily: theme.font.body, fontSize: 12.5, color: theme.colors.textMuted },
-  cardFootValue: { fontFamily: theme.font.monoBold, fontSize: 13.5, color: theme.colors.textPrimary },
+  groupLabel: { ...EYEBROW },
+  groupTotal: { fontFamily: theme.font.monoBold, fontSize: 12, color: theme.colors.textSecondary },
   archivedCard: { marginTop: 10 },
   archivedDim: { opacity: 0.6 },
   planLink: {
@@ -252,6 +206,7 @@ export const styles = StyleSheet.create({
     marginBottom: 6,
   },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 14 },
+  toggleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 },
   hintText: {
     fontFamily: theme.font.body,
     fontSize: 12,

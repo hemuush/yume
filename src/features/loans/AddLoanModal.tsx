@@ -18,6 +18,7 @@ import { modalFooterStyles as f, theme } from '@/constants/theme';
 import { toLocalIsoDate, monthsBetweenIsoDates, addMonthsToIsoDate } from '@/lib/date';
 import { DateField } from '@/components/DateField';
 import { ToggleSwitch } from '@/components/ToggleSwitch';
+import { OptionCards, CountStepper, Option } from './AddLoanParts';
 import { styles } from './loans.styles';
 import { errorMessage } from '@/lib/errorMessage';
 import { DURATIONS } from '@/lib/motionTimings';
@@ -28,10 +29,18 @@ const RATE_TYPES: { label: string; value: LoanRateType }[] = [
   { label: 'Floating', value: 'floating' },
 ];
 
-const DIRECTIONS: { label: string; value: LoanDirection }[] = [
-  { label: 'I borrowed', value: 'borrowed' },
-  { label: 'I lent', value: 'lent' },
+const DIRECTIONS: Option<LoanDirection>[] = [
+  { value: 'borrowed', title: 'I borrowed', sub: 'From a bank or a person', icon: 'bank-outline' },
+  { value: 'lent', title: 'I lent', sub: 'Money someone owes me', icon: 'hand-coin-outline' },
 ];
+
+const TIMINGS: Option<'new' | 'existing'>[] = [
+  { value: 'new', title: 'Yes, record it', sub: 'The money moved just now', icon: 'swap-horizontal' },
+  { value: 'existing', title: 'No, already done', sub: 'A loan already under way', icon: 'history' },
+];
+
+/** Tenure shortcuts, in years; the loan itself is stored in months. */
+const TENURE_YEARS = [1, 3, 5, 10, 20];
 
 /** "20 years", "1 year 6 months", "9 months" — a loan's length, for its interest line. */
 function tenureLabel(months: number): string {
@@ -63,6 +72,7 @@ export function AddLoanModal({
   const [rate, setRate] = useState('');
   const [rateType, setRateType] = useState<LoanRateType>('fixed');
   const [tenure, setTenure] = useState('');
+  const [tenureCustom, setTenureCustom] = useState(false);
   // Optional — only offered for a borrowed loan. Without this, a home loan
   // permanently reads as pure debt in Tracked Balance/Net Worth with
   // nothing offsetting it, even though it financed something real worth
@@ -202,6 +212,7 @@ export function AddLoanModal({
     setRate('');
     setRateType('fixed');
     setTenure('');
+    setTenureCustom(false);
     setTrackAsset(false);
     setAssetLabel('');
     setAssetValue('');
@@ -390,7 +401,7 @@ export function AddLoanModal({
 
       {wizardStep === 1 && (
         <>
-          <SegmentedControl
+          <OptionCards
             options={DIRECTIONS}
             value={direction}
             onChange={(next) => {
@@ -421,18 +432,34 @@ export function AddLoanModal({
           <Text style={styles.fieldLabel}>Rate type</Text>
           <SegmentedControl options={RATE_TYPES} value={rateType} onChange={setRateType} />
           {rateType === 'floating' && (
-            <Text style={styles.hintText}>
-              When your bank changes the rate, open this loan and use "Update rate" to re-calculate the
-              remaining schedule.
-            </Text>
+            <Text style={styles.hintText}>When the rate changes, update it from the loan's menu.</Text>
           )}
-          <FormInput
-            label="Tenure (months)"
-            value={tenure}
-            onChangeText={setTenure}
-            keyboardType="numeric"
-            placeholder="e.g. 60"
-          />
+          <Text style={styles.fieldLabel}>Tenure</Text>
+          <View style={styles.chipRow}>
+            {TENURE_YEARS.map((y) => (
+              <Chip
+                key={y}
+                label={`${y} ${y === 1 ? 'yr' : 'yrs'}`}
+                active={!tenureCustom && tenure === String(y * 12)}
+                onPress={() => {
+                  setTenureCustom(false);
+                  setTenure(String(y * 12));
+                }}
+              />
+            ))}
+            <Chip label="Custom" active={tenureCustom} onPress={() => setTenureCustom(true)} />
+          </View>
+          {tenureCustom ? (
+            <FormInput
+              label="Tenure (months)"
+              value={tenure}
+              onChangeText={setTenure}
+              keyboardType="numeric"
+              placeholder="e.g. 60"
+            />
+          ) : (
+            tenureMonths > 0 && <Text style={styles.hintText}>{tenureMonths} monthly EMIs</Text>
+          )}
 
           {direction === 'borrowed' && (
             <>
@@ -456,15 +483,13 @@ export function AddLoanModal({
                     placeholder="e.g. 3500000"
                   />
                   <Text style={styles.hintText}>
-                    Leave the value blank if you don't have an estimate yet — add one anytime from the loan's
-                    own screen. Once set, its value minus what's still owed counts toward Tracked Balance/Net
-                    Worth, instead of just the debt with nothing offsetting it.
+                    Its value minus what's still owed counts toward your net worth. Add the value later if you
+                    don't have it yet.
                   </Text>
                 </>
               ) : (
                 <Text style={styles.hintText}>
-                  Leave off for a loan with no real asset behind it (personal loan, credit card) — this loan
-                  will count as pure debt in Tracked Balance, same as before.
+                  Leave off for a personal loan or card: it counts as plain debt.
                 </Text>
               )}
             </>
@@ -474,15 +499,8 @@ export function AddLoanModal({
 
       {wizardStep === 2 && (
         <>
-          <Text style={styles.fieldLabel}>Should Yume record the disbursement?</Text>
-          <SegmentedControl
-            options={[
-              { label: 'Yes — track the cash move', value: 'new' },
-              { label: 'No — already handled', value: 'existing' },
-            ]}
-            value={loanTiming}
-            onChange={setLoanTiming}
-          />
+          <Text style={styles.fieldLabel}>Should Yume record the money moving?</Text>
+          <OptionCards options={TIMINGS} value={loanTiming} onChange={setLoanTiming} />
 
           <DateField
             label={loanTiming === 'new' ? 'Disbursement date' : 'First EMI period started on'}
@@ -490,17 +508,11 @@ export function AddLoanModal({
             onChange={setStartDate}
           />
           <Text style={styles.hintText}>
-            This is when the amortization actually starts — often the day the money was disbursed, not the
-            date on a sanction letter or the day you happen to be entering this. Defaults to today; change it
-            if the loan was disbursed earlier and you're just catching up.
+            The day the money was paid out. Change it if you're catching up.
           </Text>
 
           {loanTiming === 'new' ? (
             <>
-              <Text style={styles.hintText}>
-                Records the {direction === 'borrowed' ? 'cash you receive' : 'cash you hand over'} on the date
-                above, so your account balance and net worth stay accurate.
-              </Text>
               <Text style={styles.fieldLabel}>
                 {direction === 'borrowed' ? 'Deposit into' : 'Pay from'} account
               </Text>
@@ -522,9 +534,7 @@ export function AddLoanModal({
                 placeholder="0"
               />
               <Text style={styles.hintText}>
-                Lenders routinely deduct processing, documentation, or franking charges at disbursement — a
-                real cost that has nothing to do with the loan principal or its schedule. Recorded as its own
-                expense on the same day, separate from the disbursement itself. Leave at 0 if none applied.
+                Saved as its own expense on the same day. Leave at 0 if none.
               </Text>
 
               <DateField
@@ -536,25 +546,16 @@ export function AddLoanModal({
                 }}
                 minDate={startDate}
               />
-              <Text style={styles.hintText}>
-                When the amortization schedule actually starts — often a month after disbursement, not the
-                same day. Defaults to one month after the disbursement date above; check your loan agreement's
-                own schedule if your lender uses a different gap.
-              </Text>
+              <Text style={styles.hintText}>Usually a month after the money is paid out.</Text>
             </>
           ) : (
             <>
-              <Text style={styles.hintText}>
-                For a loan you're already partway through — no fake transaction is created for money that
-                already moved before you started using Yume. 0 already paid is fine if you're only just past
-                disbursement with nothing due yet.
-              </Text>
-              <FormInput
-                label="Installments already paid"
-                value={alreadyPaid}
-                onChangeText={setAlreadyPaid}
-                keyboardType="numeric"
-                placeholder="e.g. 12"
+              <Text style={styles.fieldLabel}>EMIs already paid</Text>
+              <CountStepper
+                label="EMIs paid"
+                value={Number.isFinite(alreadyPaidCount) ? alreadyPaidCount : 0}
+                max={tenureMonths > 0 ? tenureMonths : 600}
+                onChange={(n) => setAlreadyPaid(String(n))}
               />
               <Text style={styles.fieldLabel}>Future EMIs come out of</Text>
               <View style={styles.chipRow}>
@@ -568,8 +569,7 @@ export function AddLoanModal({
                 ))}
               </View>
               <Text style={styles.hintText}>
-                No disbursement is recorded for this loan, but Pay still needs to know which account each EMI
-                should debit — change it any time from the loan's own screen.
+                Nothing is recorded for money that moved before Yume. You can change the account later.
               </Text>
             </>
           )}

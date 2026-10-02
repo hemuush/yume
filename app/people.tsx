@@ -10,9 +10,10 @@ import { AppHeader } from '@/components/AppHeader';
 import { AddButton } from '@/components/AddButton';
 import { EmptyState } from '@/components/EmptyState';
 import { NeoTile } from '@/components/NeoTile';
-import { OwedSummary } from '@/components/OwedSummary';
 import { Skeleton } from '@/components/Skeleton';
-import { peopleTotals } from '@/features/people/people.helpers';
+import { groupPeople } from '@/features/people/people.helpers';
+import { PeopleTiles } from '@/features/people/PeopleTiles';
+import { PersonQuietRow } from '@/features/people/PersonQuietRow';
 import { PersonRow } from '@/features/people/PersonRow';
 import { AddPersonModal } from '@/features/people/AddPersonModal';
 import { PersonDetailModal } from '@/features/people/PersonDetailModal';
@@ -33,7 +34,10 @@ export default function PeopleScreen() {
   }, []);
   const { loaded, loadError, reload } = useScreenLoad(loadPeople);
   const loading = !loaded && !loadError;
-  const { owedToYouMinor, youOweMinor } = peopleTotals(people);
+  const { owed, owe, settled, owedToYouMinor, youOweMinor } = groupPeople(people);
+  // Hashed from the person's own id, not list position, so a rename or a new
+  // person never swaps anyone's colour.
+  const colorOf = (p: PersonWithBalance) => FLAT_PALETTE[stableIndexFromId(p.id, FLAT_PALETTE.length)];
 
   return (
     <View style={styles.container}>
@@ -50,7 +54,13 @@ export default function PeopleScreen() {
         </View>
       )}
 
-      <OwedSummary youOweMinor={youOweMinor} owedToYouMinor={owedToYouMinor} loading={loading} />
+      <PeopleTiles
+        youOweMinor={youOweMinor}
+        owedToYouMinor={owedToYouMinor}
+        oweCount={owe.length}
+        owedCount={owed.length}
+        loading={loading}
+      />
 
       <ScrollView contentContainerStyle={{ paddingBottom: theme.layout.screenScrollPad + insets.bottom }}>
         {loading ? (
@@ -66,17 +76,19 @@ export default function PeopleScreen() {
         ) : people.length === 0 ? (
           <EmptyState title="No one here yet" subtitle="Tap + Person to add a friend or family member." />
         ) : (
-          people.map((p, i) => (
-            <PersonRow
-              key={p.id}
-              person={p}
-              // Hashed from the person's own id, not list position, so a
-              // rename or a new person never swaps anyone's colour.
-              color={FLAT_PALETTE[stableIndexFromId(p.id, FLAT_PALETTE.length)]}
-              index={i}
-              onPress={() => setSelected(p)}
-            />
-          ))
+          <>
+            {[...owed, ...owe].map((p, i) => (
+              <PersonRow key={p.id} person={p} color={colorOf(p)} index={i} onPress={() => setSelected(p)} />
+            ))}
+            {settled.length > 0 && (
+              <>
+                <Text style={styles.settledTitle}>Settled</Text>
+                {settled.map((p) => (
+                  <PersonQuietRow key={p.id} person={p} color={colorOf(p)} onPress={() => setSelected(p)} />
+                ))}
+              </>
+            )}
+          </>
         )}
       </ScrollView>
 

@@ -15,6 +15,8 @@ export interface HeatCell {
   level: 0 | 1 | 2 | 3 | 4;
   /** Ringed, so you can find your place in the month. */
   isToday?: boolean;
+  /** A day that hasn't happened yet: faded, so it doesn't read as a day with no spending. */
+  isFuture?: boolean;
   onPress?: () => void;
 }
 
@@ -65,6 +67,7 @@ export function SpendHeatmap({
                   styles.cell,
                   c.level === 0 && styles.cellEmpty,
                   c.isToday && styles.cellToday,
+                  c.isFuture && styles.cellFuture,
                   { backgroundColor: heatScale[c.level] },
                 ]}
               >
@@ -117,6 +120,7 @@ const styles = StyleSheet.create({
   cellWrap: { padding: 2 },
   cell: { height: 34, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
   cellEmpty: { borderWidth: StyleSheet.hairlineWidth, borderColor: theme.colors.borderSoft },
+  cellFuture: { borderWidth: 0, opacity: 0.4 },
   cellToday: { borderWidth: 1.5, borderColor: theme.colors.ink },
   cellLabel: { fontFamily: theme.font.mono, fontSize: 10 },
   cellLabelTop: { fontFamily: theme.font.monoBold },

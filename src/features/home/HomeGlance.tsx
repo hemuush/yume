@@ -6,6 +6,7 @@ import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
 import { hexToRgba } from '@/lib/color';
 import { dueDateLabel, isDueUrgent } from '@/lib/dueDate';
+import { formatMoney } from '@/lib/money';
 import { addDaysToIsoDate, daysUntilIsoDate, parseLocalIsoDate, toLocalIsoDate } from '@/lib/date';
 import { payCardRoute, PayCardRoute } from '@/lib/payCard';
 import type { PlanCardBillInput } from '@/features/plan/planOverview';
@@ -173,6 +174,10 @@ export function HomeGlance({
   const hiddenUpcoming = upcoming.items.length - visibleUpcoming.length;
   // Labels only help when a bill is pinned: otherwise the list reads as it always did.
   const hasPinned = visibleUpcoming.some((i) => i.pinned);
+  // Red only for what is due today or late; a bill a few days out is amber.
+  const hasUrgent = visibleUpcoming.some((i) => i.urgent);
+  // What leaves your accounts in the window — every bill and expense, not money coming in.
+  const dueMinor = upcoming.items.reduce((sum, i) => (i.sign === '-' ? sum + i.amountMinor : sum), 0);
   const topBudgets = budgets.slice(0, 3);
   const activeGoals = goals.filter((g) => !g.archived);
   // Capped rather than its own horizontal ScrollView — nesting a
@@ -199,7 +204,9 @@ export function HomeGlance({
                     <Text style={styles.windowBold}>Next {UPCOMING_DAYS} days</Text> · till {windowEndLabel()}
                   </Text>
                   <Text style={styles.windowCount}>
-                    {upcoming.items.length > 0 ? `${upcoming.items.length} due` : 'none'}
+                    {upcoming.items.length > 0
+                      ? `${dueMinor > 0 ? `${formatMoney(dueMinor)} · ` : ''}${upcoming.items.length} due`
+                      : 'none'}
                   </Text>
                 </View>
                 {upcoming.items.length === 0 && (
@@ -213,7 +220,13 @@ export function HomeGlance({
                   return (
                     <Animated.View key={item.key} entering={rowEntering(i)}>
                       {startsGroup && (
-                        <Text style={[styles.groupLabel, !item.pinned && i > 0 && styles.groupLabelLater]}>
+                        <Text
+                          style={[
+                            styles.groupLabel,
+                            item.pinned && !hasUrgent && styles.groupLabelSoon,
+                            !item.pinned && i > 0 && styles.groupLabelLater,
+                          ]}
+                        >
                           {item.pinned ? 'Due soon' : 'Later this week'}
                         </Text>
                       )}
@@ -228,6 +241,7 @@ export function HomeGlance({
                         onPress={() => router.push(item.route)}
                         divider={i > 0 && !startsGroup}
                         urgent={item.urgent}
+                        soon={item.pinned && !item.urgent}
                         date={item.sortDate}
                         actionLabel={item.pinned && item.payable ? 'Pay' : undefined}
                       />
@@ -317,7 +331,7 @@ const styles = StyleSheet.create({
   },
   windowLabel: { fontFamily: theme.font.bodyMedium, fontSize: 11.5, color: theme.colors.textMuted },
   windowBold: { fontFamily: theme.font.bodyBold, color: theme.colors.textSecondary },
-  windowCount: { fontFamily: theme.font.bodyMedium, fontSize: 11.5, color: theme.colors.textMuted },
+  windowCount: { fontFamily: theme.font.monoBold, fontSize: 11.5, color: theme.colors.textSecondary },
   groupLabel: {
     paddingHorizontal: 14,
     paddingTop: 10,
@@ -328,6 +342,7 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     color: theme.colors.expenseText,
   },
+  groupLabelSoon: { color: theme.colors.warnInk },
   groupLabelLater: {
     color: theme.colors.textMuted,
     borderTopWidth: StyleSheet.hairlineWidth,

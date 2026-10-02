@@ -10,6 +10,7 @@ import { usePressScale } from '@/lib/usePressScale';
 import Feather from '@expo/vector-icons/Feather';
 import { theme } from '@/constants/theme';
 import { styles } from './budgets.styles';
+import { monthDayInfo } from './budgetsOverview';
 import { withPressed } from '@/lib/pressed';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -18,17 +19,21 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
  * One category's monthly limit and how much of it is gone. What a tap does is up to the screen (Budgets opens the category's page).
  * `onMore` adds a visible ⋯ button for the row's other actions (the same
  * menu a long-press opens), so nothing is only reachable by holding.
+ * `showPerDay` adds what the rest of the month allows each day to the foot
+ * (Budgets only — a category's own page already says it another way).
  */
 export function BudgetRow({
   progress,
   divider,
   onPress,
   onMore,
+  showPerDay,
 }: {
   progress: BudgetProgress;
   divider: boolean;
   onPress: () => void;
   onMore?: () => void;
+  showPerDay?: boolean;
 }) {
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.98);
   const barPct = Math.min(100, progress.percentUsed);
@@ -36,6 +41,11 @@ export function BudgetRow({
   const today = toLocalIsoDate(new Date());
   const pace =
     progress.budget.periodMonth === today.slice(0, 7) ? budgetPace(progress.percentUsed / 100, today) : null;
+  const daysLeft = monthDayInfo(today).daysLeft;
+  const perDayMinor =
+    showPerDay && pace && !progress.overBudget && progress.remainingMinor > 0 && daysLeft > 0
+      ? Math.floor(progress.remainingMinor / daysLeft)
+      : null;
   const tone: LimitMeterTone = progress.overBudget ? 'over' : pace?.state === 'ahead' ? 'near' : 'ok';
 
   return (
@@ -79,7 +89,9 @@ export function BudgetRow({
         <Text style={[styles.rowNote, progress.overBudget && styles.rowNoteOver]}>
           {progress.overBudget
             ? `${formatMoney(Math.abs(progress.remainingMinor))} over budget`
-            : `${formatMoney(progress.remainingMinor)} left this month`}
+            : perDayMinor != null
+              ? `${formatMoney(progress.remainingMinor)} left · ${formatMoney(perDayMinor)} a day`
+              : `${formatMoney(progress.remainingMinor)} left this month`}
         </Text>
         {pace && !progress.overBudget && (
           <Text style={[styles.rowPace, pace.state === 'ahead' && styles.rowPaceAhead]}>

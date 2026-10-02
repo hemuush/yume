@@ -24,6 +24,7 @@ export function HeatmapCard({
   periodName,
   spentMinor,
   vsUsualPct,
+  vsUsualSoFar = false,
   perDayMinor,
   spendDays,
   countedDays,
@@ -36,6 +37,8 @@ export function HeatmapCard({
   slideDirection?: -1 | 0 | 1;
   spentMinor: number;
   vsUsualPct: number | null;
+  /** The month is still going: the comparison is with the usual month so far. */
+  vsUsualSoFar?: boolean;
   perDayMinor: number;
   spendDays: number;
   /** Days so far (the period in progress) or the whole period. */
@@ -68,7 +71,7 @@ export function HeatmapCard({
             <Text
               style={[styles.vsBadgeText, { color: up ? theme.colors.expenseText : theme.colors.incomeText }]}
             >
-              {formatPctChange(vsUsualPct)} {up ? 'above' : 'below'} usual
+              {formatPctChange(vsUsualPct)} {up ? 'above' : 'below'} usual{vsUsualSoFar ? ' so far' : ''}
             </Text>
           </View>
         )}

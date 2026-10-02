@@ -38,6 +38,8 @@ export const theme = {
     primaryTint: '#EAF3FE',
     secondary: '#8FE8C8', // mint
     secondaryTint: '#E4FAF1',
+    // A deeper mint for a thin edge on a small mint dot (Home's Saved tile).
+    secondaryDeep: '#2FB98A',
     accent: '#C9B8FF', // lavender
     accentTint: '#F1ECFF',
     gold: '#F0E1A8',
@@ -131,8 +133,8 @@ export const theme = {
   // tab bar only needs `screenScrollPad`. Every caller adds `insets.bottom`
   // on top of both.
   layout: {
-    tabBar: { height: 58, topRadius: 20 },
-    tabScreenScrollPad: 58 + 24,
+    tabBar: { height: 64, topRadius: 20 },
+    tabScreenScrollPad: 64 + 24,
     screenScrollPad: 40,
     // Between a screen's header (which already leaves 12 below its title) and
     // the screen's first block — the same 20 in total on every screen.

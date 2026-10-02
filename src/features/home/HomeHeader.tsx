@@ -130,7 +130,7 @@ const COLLAPSED_BOTTOM_PAD = 10;
  * Reports moon/heatmap are (`shade()`), so picking a different accent
  * retints the whole thing.
  *
- * Brand row, then the greeting/tagline beside the month pill, then
+ * Brand row, then the greeting beside the month pill, then
  * `children` along the bottom of the band — Home puts its Expense / Income /
  * Transfer shortcuts there, so they sit in the header instead of adding one
  * more row to the page.
@@ -210,6 +210,11 @@ export function HomeHeader({
     const d = distance.value;
     const p = d > 0 ? Math.min(1, Math.max(0, scrollY.value / d)) : 0;
     return { opacity: 1 - Math.min(1, p * 1.6), transform: [{ translateY: -p * 8 }] };
+  });
+  // Under the hills, only once the header has started to collapse: rows slide under a soft edge instead of being cut by the hill line.
+  const edgeStyle = useAnimatedStyle(() => {
+    const d = distance.value;
+    return { opacity: d > 0 ? Math.min(1, Math.max(0, scrollY.value / d)) : 0 };
   });
   const miniStyle = useAnimatedStyle(() => {
     const d = distance.value;
@@ -294,9 +299,6 @@ export function HomeHeader({
                 Good {greetingWord()}
                 {userName ? `, ${userName}` : ''}
               </Text>
-              <Text style={styles.tagline} numberOfLines={1}>
-                Better money. Bigger dreams.
-              </Text>
             </ReanimatedAnimated.View>
             <ReanimatedAnimated.View
               entering={FadeInDown.duration(MOTION.enter)
@@ -311,15 +313,21 @@ export function HomeHeader({
         </ReanimatedAnimated.View>
       </View>
       <HeaderHills sky={gradientBottom} primary={accent} secondary={secondary} />
+      <ReanimatedAnimated.View style={[styles.edgeFade, edgeStyle]} pointerEvents="none">
+        <LinearGradient colors={EDGE_FADE} style={StyleSheet.absoluteFill} />
+      </ReanimatedAnimated.View>
     </ReanimatedAnimated.View>
   );
 }
 
+const EDGE_FADE = [`${theme.colors.background}F2`, `${theme.colors.background}00`] as const;
+
 const styles = StyleSheet.create({
+  edgeFade: { position: 'absolute', top: '100%', left: 0, right: 0, height: 14 },
   root: { position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10 },
-  fading: { gap: 12 },
+  fading: { gap: 8 },
   miniSlot: { flex: 1, minWidth: 0, alignItems: 'flex-end' },
-  band: { paddingHorizontal: 20, paddingBottom: 14, gap: 12, overflow: 'hidden' },
+  band: { paddingHorizontal: 20, paddingBottom: 10, gap: 8, overflow: 'hidden' },
   spark: { position: 'absolute', backgroundColor: theme.colors.surface },
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
   brandRow: { flexDirection: 'row', alignItems: 'center', gap: 7 },
@@ -330,9 +338,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: 12,
-    marginTop: 4,
   },
   greetBlock: { flex: 1, minWidth: 0 },
   greet: { fontFamily: theme.font.roundedMedium, fontSize: 15, color: theme.colors.ink },
-  tagline: { fontFamily: theme.font.body, fontSize: 11.5, color: theme.colors.inkSoft, marginTop: 1 },
 });

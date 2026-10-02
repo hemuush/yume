@@ -7,6 +7,7 @@ import { getDefaultCurrency } from './settings';
 import { Account } from '@/types';
 import { toLocalIsoDate, addDaysToIsoDate } from '@/lib/date';
 import { isCycleDay } from '@/lib/cardCycle';
+import { flowCase, valuationAdjSql, latestValuedAtSql, latestValueSql } from './valuationSql';
 
 /** Accounts: balances (always derived from entries), create, edit, archive and delete (re-exported from ./ledger). */
 
@@ -34,7 +35,13 @@ export async function getAccountBalance(accountId: string): Promise<number> {
     [accountId, accountId]
   );
 
-  return account.opening_balance_minor + (inflow?.total ?? 0) - (outflow?.total ?? 0);
+  const ledger = account.opening_balance_minor + (inflow?.total ?? 0) - (outflow?.total ?? 0);
+  // A tracked account is worth its latest valuation plus what moved since.
+  const adj = await db.getFirstAsync<{ adj: number }>(
+    `SELECT ${valuationAdjSql('a')} AS adj FROM accounts a WHERE a.id = ?`,
+    [accountId]
+  );
+  return ledger + (adj?.adj ?? 0);
 }
 
 /**
@@ -63,14 +70,29 @@ export async function getAccountMonthlyGrowth(
   return Math.max(0, Math.round((row?.net ?? 0) / (days / 30.44)));
 }
 
-function rowToAccount(row: AccountRow & { current_balance_minor?: number | null }): Account {
-  return {
+/** The extra columns listAccounts selects (investment ones are null for an untracked account). */
+interface BalanceColumns {
+  current_balance_minor?: number | null;
+  inv_adj?: number | null;
+  inv_income?: number | null;
+  inv_expense?: number | null;
+  inv_in?: number | null;
+  inv_out?: number | null;
+  inv_valued_at?: string | null;
+  inv_last_value?: number | null;
+}
+
+function rowToAccount(row: AccountRow & BalanceColumns): Account {
+  const ledger = row.current_balance_minor ?? row.opening_balance_minor;
+  const tracked = !!row.tracked;
+  const adj = row.inv_adj ?? 0;
+  const account: Account = {
     id: row.id,
     name: row.name,
     type: row.type,
     currency: row.currency,
     openingBalanceMinor: row.opening_balance_minor,
-    currentBalanceMinor: row.current_balance_minor ?? row.opening_balance_minor,
+    currentBalanceMinor: ledger + (tracked ? adj : 0),
     creditLimitMinor: row.credit_limit_minor,
     statementDay: row.statement_day,
     dueDay: row.due_day,
@@ -78,6 +100,18 @@ function rowToAccount(row: AccountRow & { current_balance_minor?: number | null 
     archived: !!row.archived,
     createdAt: row.created_at,
   };
+  if (tracked) {
+    const valuedAt = row.inv_valued_at ?? null;
+    account.investment = {
+      investedMinor: row.opening_balance_minor + (row.inv_in ?? 0),
+      takenOutMinor: row.inv_out ?? 0,
+      // value + taken out − invested, i.e. the valuation's gap plus income less expenses.
+      gainMinor: valuedAt ? adj + (row.inv_income ?? 0) - (row.inv_expense ?? 0) : null,
+      valuedAt,
+      lastValueMinor: valuedAt ? (row.inv_last_value ?? null) : null,
+    };
+  }
+  return account;
 }
 
 export async function listAccounts(includeArchived = false): Promise<Account[]> {
@@ -87,19 +121,26 @@ export async function listAccounts(includeArchived = false): Promise<Account[]> 
   // just grouped. It used to be two extra queries per account, each a
   // separate trip through the app-wide statement queue that every other
   // screen's loads wait behind.
-  const rows = await db.getAllAsync<AccountRow & { current_balance_minor: number }>(
+  // A tracked account also selects its investment columns (the CASE keeps
+  // every other account from paying for them): the valuation's gap to the
+  // ledger, what went in and out, and the latest update.
+  const flowSum = (when: string) =>
+    `CASE WHEN a.tracked = 1 THEN COALESCE((SELECT SUM(${when}) FROM transactions t
+       WHERE t.account_id = a.id OR t.to_account_id = a.id), 0) END`;
+  const rows = await db.getAllAsync<AccountRow & BalanceColumns>(
     `SELECT a.*,
        a.opening_balance_minor + COALESCE((
-         SELECT SUM(CASE
-             WHEN t.type = 'income' AND t.account_id = a.id THEN t.amount_minor
-             WHEN t.type = 'transfer' AND t.to_account_id = a.id THEN t.amount_minor
-             WHEN t.type = 'expense' AND t.account_id = a.id THEN -t.amount_minor
-             WHEN t.type = 'transfer' AND t.account_id = a.id THEN -t.amount_minor
-             ELSE 0
-           END)
+         SELECT SUM(${flowCase('t', 'a')})
          FROM transactions t
          WHERE t.account_id = a.id OR t.to_account_id = a.id
-       ), 0) AS current_balance_minor
+       ), 0) AS current_balance_minor,
+       ${valuationAdjSql('a')} AS inv_adj,
+       ${flowSum(`CASE WHEN t.type = 'income' AND t.account_id = a.id THEN t.amount_minor ELSE 0 END`)} AS inv_income,
+       ${flowSum(`CASE WHEN t.type = 'expense' AND t.account_id = a.id THEN t.amount_minor ELSE 0 END`)} AS inv_expense,
+       ${flowSum(`CASE WHEN t.type = 'transfer' AND t.to_account_id = a.id THEN t.amount_minor ELSE 0 END`)} AS inv_in,
+       ${flowSum(`CASE WHEN t.type = 'transfer' AND t.account_id = a.id THEN t.amount_minor ELSE 0 END`)} AS inv_out,
+       CASE WHEN a.tracked = 1 THEN ${latestValuedAtSql('a')} END AS inv_valued_at,
+       CASE WHEN a.tracked = 1 THEN ${latestValueSql('a')} END AS inv_last_value
      FROM accounts a ${includeArchived ? '' : 'WHERE a.archived = 0'} ORDER BY a.created_at ASC`
   );
   return rows.map(rowToAccount);
@@ -125,6 +166,8 @@ export async function createAccount(input: {
   statementDay?: number | null;
   dueDay?: number | null;
   interestRateAnnualBp?: number | null;
+  /** A savings account whose value you update by hand. Ignored for any other type. */
+  tracked?: boolean;
 }): Promise<Account> {
   if (!input.name.trim()) {
     throw new Error('Account name is required');
@@ -135,8 +178,8 @@ export async function createAccount(input: {
   const currency = input.currency ?? (await getDefaultCurrency());
   await db.runAsync(
     `INSERT INTO accounts
-      (id, name, type, currency, opening_balance_minor, credit_limit_minor, statement_day, due_day, interest_rate_annual_bp)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      (id, name, type, currency, opening_balance_minor, credit_limit_minor, statement_day, due_day, interest_rate_annual_bp, tracked)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       id,
       input.name.trim(),
@@ -147,6 +190,7 @@ export async function createAccount(input: {
       input.statementDay ?? null,
       input.dueDay ?? null,
       input.interestRateAnnualBp ?? null,
+      input.type === 'savings' && input.tracked ? 1 : 0,
     ]
   );
   const row = await db.getFirstAsync<AccountRow>('SELECT * FROM accounts WHERE id = ?', [id]);
@@ -161,6 +205,8 @@ export interface UpdateAccountInput {
   /** A credit card's statement and bill due days (1–31); both or neither. Cleared for any other type. */
   statementDay?: number | null;
   dueDay?: number | null;
+  /** Track a savings account's value by hand. Omitted keeps the current setting; any other type is never tracked. */
+  tracked?: boolean;
 }
 
 /**
@@ -205,8 +251,19 @@ export async function updateAccount(id: string, input: UpdateAccountInput): Prom
     }
   }
   const isCard = input.type === 'credit_card';
+  const current = await db.getFirstAsync<{ tracked: number }>('SELECT tracked FROM accounts WHERE id = ?', [
+    id,
+  ]);
+  const tracked =
+    input.type !== 'savings'
+      ? 0
+      : input.tracked === undefined
+        ? (current?.tracked ?? 0)
+        : input.tracked
+          ? 1
+          : 0;
   await db.runAsync(
-    `UPDATE accounts SET name = ?, type = ?, opening_balance_minor = ?, credit_limit_minor = ?, statement_day = ?, due_day = ? WHERE id = ?`,
+    `UPDATE accounts SET name = ?, type = ?, opening_balance_minor = ?, credit_limit_minor = ?, statement_day = ?, due_day = ?, tracked = ? WHERE id = ?`,
     [
       input.name.trim(),
       input.type,
@@ -214,13 +271,13 @@ export async function updateAccount(id: string, input: UpdateAccountInput): Prom
       input.creditLimitMinor ?? null,
       isCard ? (input.statementDay ?? null) : null,
       isCard ? (input.dueDay ?? null) : null,
+      tracked,
       id,
     ]
   );
-  const row = await db.getFirstAsync<AccountRow>('SELECT * FROM accounts WHERE id = ?', [id]);
-  if (!row) throw new Error('Account not found');
-  const account = rowToAccount(row);
-  account.currentBalanceMinor = await getAccountBalance(id);
+  // The summary figures need the grouped query, not the bare row.
+  const account = (await listAccounts(true)).find((a) => a.id === id);
+  if (!account) throw new Error('Account not found');
   return account;
 }
 
@@ -314,6 +371,16 @@ export async function unarchiveAccount(id: string): Promise<void> {
  * a clear explanation instead of a raw SQLite constraint error.
  */
 export async function deleteAccount(id: string): Promise<RowSnapshot> {
+  const db0 = await getDb();
+  const valuations = await db0.getFirstAsync<{ total: number }>(
+    'SELECT COUNT(*) AS total FROM account_valuations WHERE account_id = ?',
+    [id]
+  );
+  if ((valuations?.total ?? 0) > 0) {
+    throw new Error(
+      'This account has value updates against it — archive it instead of deleting, so its history stays intact.'
+    );
+  }
   const count = await getAccountTransactionCount(id);
   if (count > 0) {
     throw new Error(
