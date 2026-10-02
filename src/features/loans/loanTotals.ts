@@ -44,3 +44,20 @@ export function summarizeLoans(
     closedCount: loans.length - active.length,
   };
 }
+
+export interface DebtShare {
+  id: string;
+  /** 0–1: this loan's part of everything still owed. */
+  fraction: number;
+}
+
+/** How what you owe splits across the open borrowed loans, largest first, for the hero's share bar. */
+export function debtShares(loans: Loan[]): DebtShare[] {
+  const open = loans
+    .filter((l) => l.status !== 'closed' && l.direction === 'borrowed')
+    .map((l) => ({ id: l.id, minor: roundedMinor(l.outstandingPrincipalMinor) }))
+    .filter((l) => l.minor > 0);
+  const total = open.reduce((acc, l) => acc + l.minor, 0);
+  if (total <= 0) return [];
+  return open.sort((a, b) => b.minor - a.minor).map((l) => ({ id: l.id, fraction: l.minor / total }));
+}

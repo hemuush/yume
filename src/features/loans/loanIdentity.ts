@@ -1,4 +1,5 @@
 import { theme } from '@/constants/theme';
+import { shade } from '@/lib/color';
 import type { Loan } from '@/types';
 
 // A loan's colour only says which one it is; the numbers carry the meaning.
@@ -34,4 +35,25 @@ export function loanIcon(loan: Pick<Loan, 'direction' | 'assetLabel'>): string {
   if (/home|house|flat|apartment|property/.test(asset)) return 'home-outline';
   if (/car|bike|vehicle|scooter/.test(asset)) return 'car-outline';
   return loan.direction === 'borrowed' ? 'bank-outline' : 'hand-coin-outline';
+}
+
+const BAR_TONES: Record<string, string> = {
+  [theme.colors.idGold]: theme.colors.idGoldDeep,
+  [theme.colors.idCoral]: theme.colors.idCoralDeep,
+  [theme.colors.primary]: theme.colors.primary,
+};
+
+/** The mid-tone a loan's thin bars are drawn in: still inside the pastel band, so it never reads as ink. */
+export function loanBarTone(hue: string): string {
+  return BAR_TONES[hue] ?? shade(hue, 70);
+}
+
+/** The pale fill behind a loan's icon tile. */
+export function loanTint(hue: string): string {
+  return shade(hue, 93);
+}
+
+/** The loan's icon colour on that tile. */
+export function loanGlyph(hue: string): string {
+  return shade(hue, 30, 10);
 }

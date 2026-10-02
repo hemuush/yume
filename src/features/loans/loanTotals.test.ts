@@ -1,4 +1,4 @@
-import { summarizeLoans } from './loanTotals';
+import { debtShares, summarizeLoans } from './loanTotals';
 import type { Loan } from '@/types';
 import type { LoanProgress } from '@/db/loans';
 
@@ -54,5 +54,23 @@ describe('summarizeLoans', () => {
     const t = summarizeLoans([loan({ id: 'c', direction: 'lent' })], {});
     expect(t.debtFreeDate).toBeNull();
     expect(t.repaidFraction).toBe(0);
+  });
+});
+
+describe('debtShares', () => {
+  it('splits what you owe across open borrowed loans, largest first, summing to 1', () => {
+    const shares = debtShares([
+      loan({ id: 'a', outstandingPrincipalMinor: 1000000 }),
+      loan({ id: 'b', outstandingPrincipalMinor: 3000000 }),
+      loan({ id: 'c', direction: 'lent', outstandingPrincipalMinor: 9000000 }),
+      loan({ id: 'z', status: 'closed', outstandingPrincipalMinor: 0 }),
+    ]);
+    expect(shares.map((s) => s.id)).toEqual(['b', 'a']);
+    expect(shares[0].fraction).toBeCloseTo(0.75);
+    expect(shares.reduce((acc, s) => acc + s.fraction, 0)).toBeCloseTo(1);
+  });
+
+  it('is empty when nothing is owed', () => {
+    expect(debtShares([loan({ id: 'c', direction: 'lent' })])).toEqual([]);
   });
 });
