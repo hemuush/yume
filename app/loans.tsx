@@ -13,6 +13,7 @@ import { AppHeader } from '@/components/AppHeader';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { Skeleton } from '@/components/Skeleton';
 import { theme } from '@/constants/theme';
+import { SECTION_TITLE, SECTION_GAP } from '@/constants/textStyles';
 import { useFadeIn } from '@/lib/useFadeIn';
 import { useScreenLoad } from '@/lib/useScreenLoad';
 import { styles } from '@/features/loans/loans.styles';
@@ -20,8 +21,9 @@ import { LoanCard } from '@/features/loans/LoanCard';
 import { LoanDetailModal } from '@/features/loans/LoanDetailModal';
 import { LoansHero } from '@/features/loans/LoansHero';
 import { LoanTimeline } from '@/features/loans/LoanTimeline';
+import { DueNextCard, dueNextItems } from '@/features/loans/DueNextCard';
 import { loanHues } from '@/features/loans/loanIdentity';
-import { summarizeLoans } from '@/features/loans/loanTotals';
+import { debtShares, summarizeLoans } from '@/features/loans/loanTotals';
 import { buildTimeline } from '@/features/loans/timelineLayout';
 import { AddLoanModal } from '@/features/loans/AddLoanModal';
 
@@ -31,6 +33,13 @@ import { AddLoanModal } from '@/features/loans/AddLoanModal';
  * /loans. Informal IOUs have their own screen (/people). An EMI reminder's
  * "Pay now" opens /loans?pay=<loan id>, straight onto that EMI's pay sheet.
  */
+const listTitle = {
+  ...SECTION_TITLE,
+  marginHorizontal: 20,
+  marginTop: SECTION_GAP.top - 12,
+  marginBottom: SECTION_GAP.bottom,
+};
+
 export default function LoansScreen() {
   const insets = useSafeAreaInsets();
   const [loans, setLoans] = useState<Loan[]>([]);
@@ -68,6 +77,8 @@ export default function LoansScreen() {
   const closedLoans = loans.filter((l) => l.status === 'closed');
   const hues = loanHues(loans);
   const totals = summarizeLoans(loans, progress);
+  const shares = debtShares(loans);
+  const dueItems = dueNextItems(loans, progress);
   const timeline = buildTimeline(
     activeLoans.flatMap((l) => {
       const end = progress[l.id]?.lastDueDate;
@@ -96,7 +107,7 @@ export default function LoansScreen() {
       )}
 
       <ScrollView contentContainerStyle={{ paddingBottom: theme.layout.screenScrollPad + insets.bottom }}>
-        <LoansHero totals={totals} loading={loading} />
+        <LoansHero totals={totals} shares={shares} hues={hues} loading={loading} />
         {loading ? (
           [0, 1].map((i) => (
             <View key={i} style={[styles.card, { backgroundColor: theme.colors.surface }]}>
@@ -111,6 +122,8 @@ export default function LoansScreen() {
           </EmptyState>
         ) : (
           <>
+            <DueNextCard items={dueItems} onOpen={setSelectedLoan} onPay={payLoan} />
+            {activeLoans.length > 0 && <Text style={listTitle}>Your loans</Text>}
             {activeLoans.map((loan) => (
               <MovingRow key={loan.id}>
                 <LoanCard
@@ -119,7 +132,6 @@ export default function LoansScreen() {
                   progress={progress[loan.id]}
                   fadeStyle={listFadeStyle}
                   onPress={() => setSelectedLoan(loan)}
-                  onPay={() => payLoan(loan)}
                 />
               </MovingRow>
             ))}
@@ -148,7 +160,6 @@ export default function LoansScreen() {
                         progress={progress[loan.id]}
                         fadeStyle={listFadeStyle}
                         onPress={() => setSelectedLoan(loan)}
-                        onPay={() => payLoan(loan)}
                       />
                     </MovingRow>
                   ))}
