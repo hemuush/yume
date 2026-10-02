@@ -40,3 +40,14 @@ This produces an `.aab` (Android App Bundle), the format the Play Store requires
 ## Before shipping
 
 - Update the app icon/splash assets in `assets/` if you want custom branding beyond the defaults.
+
+## Device checks before a release
+
+Automated tests cover the logic and components, but not the `app/` route screens, the Android keyboard, or real performance. Run through these on a physical phone with a build you intend to ship:
+
+- **Number pad:** open Add, a goal contribution, a loan prepayment and a budget. The cream pad should dock under the sheet, the field should stay visible above it, and the system keyboard should not appear. Tap a note field next to it and confirm the pad hides.
+- **Backup and restore:** export a backup, restore it, and confirm balances match. Pick a non-backup file and confirm a clear error appears.
+- **Cold start:** force-stop, open the app, and watch for a stall on the splash or the first screen. Note it if it takes more than about two seconds.
+- **Search:** on Activity, type a query quickly and clear it. Results should never flash from an older query.
+- **Lock:** with app lock on, background the app and return; confirm the lock screen appears and the widgets show what you expect.
+- **Large data:** with a few thousand transactions, scroll Activity and Reports and open Home. Look for dropped frames.

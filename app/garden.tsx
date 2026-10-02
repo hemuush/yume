@@ -16,7 +16,7 @@ import { SuuIllustration } from '@/components/SuuIllustration';
 import { GardenPlant } from '@/features/garden/GardenPlant';
 import { theme } from '@/constants/theme';
 import { useScreenLoad } from '@/lib/useScreenLoad';
-import { FormInput } from '@/components/FormInput';
+import { AmountField, AmountPadDock } from '@/components/AmountField';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { toMinor } from '@/lib/money';
 import { styles } from '@/features/garden/garden.styles';
@@ -124,94 +124,103 @@ export default function GardenScreen() {
 
   return (
     <View style={styles.container}>
-      <AppHeader title="Suu's Garden" showBack />
-      <ScrollView contentContainerStyle={{ paddingBottom: theme.layout.screenScrollPad + insets.bottom }}>
-        {loadError && (
-          <View style={styles.errorBanner}>
-            <Text style={styles.errorTitle}>Couldn't load your garden</Text>
-            <Text style={styles.errorDetail}>{loadError}</Text>
-          </View>
-        )}
-
-        <Text style={styles.intro}>Grows with every day you keep, and every rupee you save.</Text>
-
-        {dailyGoalMinor == null ? (
-          <EmptyState
-            title="Set a daily spending goal to start"
-            subtitle="Every day you keep under it plants something here. You can change it later in Settings."
-          >
-            <FormInput
-              label="Amount per day"
-              value={goalInput}
-              onChangeText={setGoalInput}
-              keyboardType="decimal-pad"
-              placeholder="e.g. 800"
-            />
-            {goalError && <Text style={styles.goalError}>{goalError}</Text>}
-            <PrimaryButton
-              title={goalSaving ? 'Saving…' : 'Start growing'}
-              onPress={startGoal}
-              disabled={goalSaving}
-            />
-          </EmptyState>
-        ) : (
+      <AmountPadDock>
+        {(scrollProps) => (
           <>
-            <View style={styles.streakPill}>
-              <SuuIllustration size={16} pose={streakToday > 0 ? 'default' : 'sleepy'} />
-              <Text style={styles.streakPillText}>
-                {streakToday > 0 ? `${streakToday}-day streak` : 'No streak yet'}
-              </Text>
-            </View>
-
-            <View style={styles.bed}>
-              {series.map((point) => {
-                const isToday = point.date === today;
-                const stage = stageForStreak(point.streakDays);
-                const label = isToday
-                  ? 'Today'
-                  : parseLocalIsoDate(point.date).toLocaleDateString(undefined, { weekday: 'short' });
-                return (
-                  <View key={point.date} style={[styles.pot, isToday && styles.potToday]}>
-                    <View style={styles.plantSlot}>
-                      <GardenPlant
-                        stage={stage}
-                        size={isToday ? 40 : 32}
-                        animKey={isToday ? `garden:${point.date}` : undefined}
-                      />
-                    </View>
-                    <View style={styles.soil} />
-                    <Text style={[styles.dayLabel, isToday && styles.dayLabelToday]}>{label}</Text>
-                  </View>
-                );
-              })}
-            </View>
-
-            <View style={styles.legend}>
-              {LEGEND_STAGES.map((stage) => (
-                <View key={stage} style={styles.legendItem}>
-                  <GardenPlant stage={stage} size={20} />
-                  <Text style={styles.legendLabel}>{stageLabel(stage)}</Text>
+            <AppHeader title="Suu's Garden" showBack />
+            <ScrollView
+              {...scrollProps}
+              keyboardShouldPersistTaps="handled"
+              contentContainerStyle={{ paddingBottom: theme.layout.screenScrollPad + insets.bottom }}
+            >
+              {loadError && (
+                <View style={styles.errorBanner}>
+                  <Text style={styles.errorTitle}>Couldn't load your garden</Text>
+                  <Text style={styles.errorDetail}>{loadError}</Text>
                 </View>
-              ))}
-            </View>
+              )}
 
-            <View style={styles.note}>
-              <Text style={styles.noteLabel}>Suu says</Text>
-              <Text style={styles.noteText}>{noteFor(stageToday, streakToday)}</Text>
-            </View>
+              <Text style={styles.intro}>Grows with every day you keep, and every rupee you save.</Text>
+
+              {dailyGoalMinor == null ? (
+                <EmptyState
+                  title="Set a daily spending goal to start"
+                  subtitle="Every day you keep under it plants something here. You can change it later in Settings."
+                >
+                  <AmountField
+                    label="Amount per day"
+                    value={goalInput}
+                    onChangeText={setGoalInput}
+                    placeholder="e.g. 800"
+                  />
+                  {goalError && <Text style={styles.goalError}>{goalError}</Text>}
+                  <PrimaryButton
+                    title={goalSaving ? 'Saving…' : 'Start growing'}
+                    onPress={startGoal}
+                    disabled={goalSaving}
+                  />
+                </EmptyState>
+              ) : (
+                <>
+                  <View style={styles.streakPill}>
+                    <SuuIllustration size={16} pose={streakToday > 0 ? 'default' : 'sleepy'} />
+                    <Text style={styles.streakPillText}>
+                      {streakToday > 0 ? `${streakToday}-day streak` : 'No streak yet'}
+                    </Text>
+                  </View>
+
+                  <View style={styles.bed}>
+                    {series.map((point) => {
+                      const isToday = point.date === today;
+                      const stage = stageForStreak(point.streakDays);
+                      const label = isToday
+                        ? 'Today'
+                        : parseLocalIsoDate(point.date).toLocaleDateString(undefined, { weekday: 'short' });
+                      return (
+                        <View key={point.date} style={[styles.pot, isToday && styles.potToday]}>
+                          <View style={styles.plantSlot}>
+                            <GardenPlant
+                              stage={stage}
+                              size={isToday ? 40 : 32}
+                              animKey={isToday ? `garden:${point.date}` : undefined}
+                            />
+                          </View>
+                          <View style={styles.soil} />
+                          <Text style={[styles.dayLabel, isToday && styles.dayLabelToday]}>{label}</Text>
+                        </View>
+                      );
+                    })}
+                  </View>
+
+                  <View style={styles.legend}>
+                    {LEGEND_STAGES.map((stage) => (
+                      <View key={stage} style={styles.legendItem}>
+                        <GardenPlant stage={stage} size={20} />
+                        <Text style={styles.legendLabel}>{stageLabel(stage)}</Text>
+                      </View>
+                    ))}
+                  </View>
+
+                  <View style={styles.note}>
+                    <Text style={styles.noteLabel}>Suu says</Text>
+                    <Text style={styles.noteText}>{noteFor(stageToday, streakToday)}</Text>
+                  </View>
+                </>
+              )}
+
+              {fundedGoals.length > 0 && (
+                <View style={styles.goalsSummary}>
+                  <SuuIllustration size={16} />
+                  <Text style={styles.goalsSummaryText}>
+                    {fundedGoals.length} savings goal{fundedGoals.length === 1 ? '' : 's'} with real progress
+                    — {avgFundedPct}% funded on average.
+                  </Text>
+                </View>
+              )}
+            </ScrollView>
           </>
         )}
-
-        {fundedGoals.length > 0 && (
-          <View style={styles.goalsSummary}>
-            <SuuIllustration size={16} />
-            <Text style={styles.goalsSummaryText}>
-              {fundedGoals.length} savings goal{fundedGoals.length === 1 ? '' : 's'} with real progress —{' '}
-              {avgFundedPct}% funded on average.
-            </Text>
-          </View>
-        )}
-      </ScrollView>
+      </AmountPadDock>
     </View>
   );
 }

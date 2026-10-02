@@ -3,7 +3,7 @@ import { View, Pressable, StyleSheet } from 'react-native';
 import { Text } from '@/components/Text';
 import { ModalSheet, SheetFooter } from '@/components/ModalSheet';
 import { SheetCard } from '@/components/SheetCard';
-import { FormInput } from '@/components/FormInput';
+import { AmountField } from '@/components/AmountField';
 import { DateField } from '@/components/DateField';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { useUndoToast } from '@/components/UndoToast';
@@ -152,11 +152,10 @@ export function UpdateValueSheet({
         title={account.name}
         meta={typed > 0 ? 'Worth' : `Invested ${money(inv.investedMinor)}`}
       />
-      <FormInput
+      <AmountField
         label="What is it worth today?"
         value={value}
         onChangeText={setValue}
-        keyboardType="numeric"
         placeholder="e.g. 44560"
         autoFocus
       />

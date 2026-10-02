@@ -6,7 +6,7 @@ import { toMinor, inputMinor } from '@/lib/money';
 import { SavingsGoal } from '@/types';
 import { ModalSheet } from '@/components/ModalSheet';
 import { modalFooterStyles as f } from '@/constants/theme';
-import { FormInput } from '@/components/FormInput';
+import { AmountField } from '@/components/AmountField';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { SegmentedControl } from '@/components/SegmentedControl';
 import { GoalLetterReveal } from './GoalLetterReveal';
@@ -126,11 +126,10 @@ export function ContributeModal({
           />
           <SegmentedControl options={DIRECTIONS} value={direction} onChange={setDirection} />
           <View style={{ height: 14 }} />
-          <FormInput
+          <AmountField
             label="Amount"
             value={amount}
             onChangeText={setAmount}
-            keyboardType="numeric"
             placeholder="e.g. 2000"
             autoFocus
           />

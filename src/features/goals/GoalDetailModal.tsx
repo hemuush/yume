@@ -16,6 +16,7 @@ import { ModalSheet, SheetLink } from '@/components/ModalSheet';
 import { modalFooterStyles as f } from '@/constants/theme';
 import { GoalSheetCard } from './GoalSheetCard';
 import { FormInput } from '@/components/FormInput';
+import { AmountField } from '@/components/AmountField';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { ToggleSwitch } from '@/components/ToggleSwitch';
 import { GoalAccountField } from './GoalAccountField';
@@ -179,13 +180,7 @@ export function GoalDetailModal({
         targetDate={hasTargetDate ? targetDateValue : null}
       />
       <FormInput label="Goal name" value={name} onChangeText={setName} placeholder="e.g. Goa trip" />
-      <FormInput
-        label="Target amount"
-        value={target}
-        onChangeText={setTarget}
-        keyboardType="numeric"
-        placeholder="e.g. 40000"
-      />
+      <AmountField label="Target amount" value={target} onChangeText={setTarget} placeholder="e.g. 40000" />
 
       <View style={styles.toggleRow}>
         <Text style={styles.fieldLabel}>By a specific date</Text>

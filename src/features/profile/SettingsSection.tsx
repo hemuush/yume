@@ -26,7 +26,7 @@ import { ToggleSwitch } from '@/components/ToggleSwitch';
 import { SettingsRow } from '@/components/SettingsRow';
 import { MovingRow } from '@/components/MovingRow';
 import { PANEL_ENTER, ROW_EXIT } from '@/lib/animation';
-import { FormInput } from '@/components/FormInput';
+import { AmountField } from '@/components/AmountField';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { YumeLogo } from '@/components/YumeLogo';
 import { useAccent, THEMES } from '@/theme/AccentContext';
@@ -277,11 +277,10 @@ export function SettingsSection() {
           </MovingRow>
           {dailyGoalOpen && (
             <ReanimatedAnimated.View entering={PANEL_ENTER} exiting={ROW_EXIT} style={styles.accordionBody}>
-              <FormInput
+              <AmountField
                 label={`Amount per day (${getCurrencySymbol(currency)})`}
                 value={dailyGoalInput}
                 onChangeText={setDailyGoalInput}
-                keyboardType="decimal-pad"
                 placeholder="e.g. 800"
               />
               {dailyGoalError && <Text style={styles.errorText}>{dailyGoalError}</Text>}

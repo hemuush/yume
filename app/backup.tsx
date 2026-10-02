@@ -14,6 +14,7 @@ import {
   summarizeSnapshot,
   getCurrentSummary,
   countEntriesSavedAfter,
+  isTooLargeForBackup,
 } from '@/lib/backup';
 import { RestorePreviewSheet, RestorePreview } from '@/features/backup/RestorePreviewSheet';
 import {
@@ -198,7 +199,11 @@ export default function BackupScreen() {
       // very file the user is trying to pick.
       const result = await withoutRelock(() => DocumentPicker.getDocumentAsync({ type: '*/*' }));
       if (result.canceled || !result.assets?.[0]) return;
-      const content = await new File(result.assets[0].uri).text();
+      const picked = new File(result.assets[0].uri);
+      if (isTooLargeForBackup(result.assets[0].size ?? picked.size)) {
+        throw new Error('That file is far too large to be a Yume backup — pick a full backup Yume exported.');
+      }
+      const content = await picked.text();
       let snapshot: BackupSnapshot;
       try {
         snapshot = JSON.parse(content);

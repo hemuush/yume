@@ -152,13 +152,6 @@ export const theme = {
     rounded: 'Fredoka_400Regular',
     roundedMedium: 'Fredoka_500Medium',
     roundedBold: 'Fredoka_600SemiBold',
-    // The dot-matrix face built for the home-screen widgets (see
-    // src/widgets/widgetTheme.ts) — reserved for glanceable numerals only.
-    // Widgets load it through their own config-plugin `fonts` entry in
-    // app.json, not through this token; nothing in the main app currently
-    // uses it (LockScreen's own clock, the one in-app exception, was
-    // removed — see LockScreen.tsx).
-    dotMatrix: 'DotGothic16',
   },
 };
 

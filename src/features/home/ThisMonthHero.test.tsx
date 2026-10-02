@@ -239,3 +239,71 @@ describe('month card with no income', () => {
     expect(all).toEqual(expect.arrayContaining(['Free to use', '—', 'Add income to see what is free']));
   });
 });
+
+describe('month card with money carried over from earlier months', () => {
+  // ₹1,00,000 income, ₹10,000 spent, ₹30,000 set aside, ₹20,000 carried in → ₹80,000 free.
+  const base = {
+    incomeMinor: 10_000_000,
+    spentMinor: 1_000_000,
+    savingsMinor: 3_000_000,
+    surplusMinor: 8_000_000,
+    carryMinor: 2_000_000,
+  };
+
+  it('says what carried over beside the income, without double counting it', () => {
+    const all = texts(render(base));
+    expect(all).toEqual(expect.arrayContaining(['Free to use', '₹80,000']));
+    expect(all.join(' ')).toContain('of ₹1,00,000 income + ₹20,000 carried over');
+  });
+
+  it('shows the carried amount as its own line in the sum', () => {
+    const r = render({ ...base, dueMinor: 2_000_000 });
+    act(() => byLabel(r, '₹20,000 still to pay').props.onPress());
+    expect(texts(r)).toEqual(
+      expect.arrayContaining(['Carried over', '+₹20,000', 'Free to use', '₹80,000', 'After bills', '₹60,000'])
+    );
+  });
+
+  it('carries a shortfall as a minus', () => {
+    const all = texts(render({ ...base, carryMinor: -1_000_000, surplusMinor: 5_000_000 }));
+    expect(all.join(' ')).toContain('− ₹10,000 carried over');
+  });
+
+  it('says nothing about it when nothing carried over', () => {
+    const all = texts(render({ ...base, carryMinor: 0, surplusMinor: 6_000_000 }));
+    expect(all.join(' ')).not.toContain('carried over');
+  });
+});
+
+describe('month card when bills change without the period changing', () => {
+  it('never shows a short state for a month whose figures have not landed yet', () => {
+    // Same period key: Home keeps the old month on screen while the next one
+    // loads, so a change to the bills figure alone must still add up.
+    const props = {
+      incomeMinor: 10_000_000,
+      spentMinor: 1_000_000,
+      savingsMinor: 0,
+      surplusMinor: 9_000_000,
+    };
+    const r = render({ ...props, dueMinor: 0 });
+    expect(texts(r)).toContain('Free to use');
+    act(() => {
+      r.update(
+        <ThisMonthHero
+          periodKey="month:0"
+          direction={0}
+          title="This month"
+          canStepForward={false}
+          onStep={jest.fn()}
+          outstandingLoansMinor={0}
+          suu={{ text: 'x', pose: 'default' }}
+          {...props}
+          dueMinor={2_000_000}
+        />
+      );
+    });
+    const all = texts(r);
+    expect(all).not.toContain('Short after bills');
+    expect(all).toContain('Free after bills');
+  });
+});

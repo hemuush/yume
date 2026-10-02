@@ -5,7 +5,7 @@ import { applyRateChange } from '@/db/loans';
 import { calculateEmi } from '@/lib/loan';
 import { formatMoney } from '@/lib/money';
 import { Loan } from '@/types';
-import { FormInput } from '@/components/FormInput';
+import { AmountField } from '@/components/AmountField';
 import { SegmentedControl } from '@/components/SegmentedControl';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { ModalSheet } from '@/components/ModalSheet';
@@ -81,11 +81,10 @@ export function RateChangeModal({
       }
     >
       <Text style={styles.cardSub}>Current rate: {(loan.interestRateAnnualBp / 100).toFixed(2)}%</Text>
-      <FormInput
+      <AmountField
         label="New annual interest rate (%)"
         value={newRate}
         onChangeText={setNewRate}
-        keyboardType="numeric"
         placeholder="e.g. 9.75"
       />
       <DateField label="Effective from" value={effectiveDate} onChange={setEffectiveDate} pastFacing />

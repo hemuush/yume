@@ -6,8 +6,8 @@ const MONTH = `(${MONTHS.join('|')})[a-z]*`;
 const DAY_MONTH_NAME = new RegExp(`(?:^|\\s)(\\d{1,2})(?:st|nd|rd|th)?\\s+${MONTH}(?=\\s|$)`, 'i');
 const MONTH_NAME_DAY = new RegExp(`(?:^|\\s)${MONTH}\\s+(\\d{1,2})(?:st|nd|rd|th)?(?=\\s|$)`, 'i');
 const DAY_SLASH_MONTH = /(?:^|\s)(\d{1,2})[/.-](\d{1,2})(?=\s|$)/;
-// "184", "1807", "₹1,807", "1,807.50" — an amount as it's shown or typed.
-const AMOUNT = /^₹?(\d{1,3}(?:,\d{2,3})*|\d+)(\.\d{1,2})?$/;
+// "184", "1807", "₹1,807", "$1,807.50" — an amount as it is shown or typed, with any currency sign.
+const AMOUNT = /^\p{Sc}?(\d{1,3}(?:,\d{2,3})*|\d+)(\.\d{1,2})?$/u;
 
 export interface SearchWord {
   /** Matched as text against the note, category and account names. */
