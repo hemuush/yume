@@ -8,6 +8,7 @@ import { formatPctChange } from './format';
 import { pickRandom } from './pickRandom';
 import { DAILY_REMINDER_COPY, WEEKLY_SUMMARY_COPY, loanDueCopy, overspendCopy } from './notificationCopy';
 import {
+  NOTIFICATION_CHANNEL_ID,
   NOTIFICATION_KIND,
   NotificationRoute,
   isQuietAction,
@@ -38,7 +39,7 @@ const DAILY_REMINDER_ID = 'yume-daily-reminder';
 
 export async function ensureAndroidChannel(): Promise<void> {
   if (Platform.OS !== 'android') return;
-  await Notifications.setNotificationChannelAsync('default', {
+  await Notifications.setNotificationChannelAsync(NOTIFICATION_CHANNEL_ID, {
     name: 'Yume reminders',
     importance: Notifications.AndroidImportance.DEFAULT,
     lightColor: theme.colors.primary,
@@ -95,6 +96,7 @@ export async function syncDailyReminder(prefs: NotificationPrefs): Promise<void>
       type: Notifications.SchedulableTriggerInputTypes.DAILY,
       hour: prefs.reminderHour,
       minute: prefs.reminderMinute,
+      channelId: NOTIFICATION_CHANNEL_ID,
     },
   });
 }
@@ -124,6 +126,7 @@ export async function syncWeeklySummary(prefs: NotificationPrefs): Promise<void>
       weekday: 2, // Monday (expo counts Sunday as 1): the day Home's Wrap button offers last week too
       hour: prefs.reminderHour,
       minute: prefs.reminderMinute,
+      channelId: NOTIFICATION_CHANNEL_ID,
     },
   });
 }
@@ -162,7 +165,11 @@ export async function scheduleLoanDueReminder(
       data: { url: '/loans' satisfies NotificationRoute, loanId },
       categoryIdentifier: NOTIFICATION_KIND.emi,
     },
-    trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: dueAt },
+    trigger: {
+      type: Notifications.SchedulableTriggerInputTypes.DATE,
+      date: dueAt,
+      channelId: NOTIFICATION_CHANNEL_ID,
+    },
   });
 }
 
@@ -186,7 +193,7 @@ export async function notifyOverspend(categoryName: string, pctChange: number): 
       data: { url: '/reports' satisfies NotificationRoute },
       categoryIdentifier: NOTIFICATION_KIND.spike,
     },
-    trigger: null,
+    trigger: { channelId: NOTIFICATION_CHANNEL_ID },
   });
 }
 
@@ -206,7 +213,7 @@ export async function notifyBudget(copy: { title: string; body: string }, budget
       data: { url: '/budgets' satisfies NotificationRoute, budgetKey },
       categoryIdentifier: NOTIFICATION_KIND.budget,
     },
-    trigger: null,
+    trigger: { channelId: NOTIFICATION_CHANNEL_ID },
   });
 }
 
@@ -226,7 +233,11 @@ export function subscribeToNotificationTaps(onRoute: (route: NotificationRoute) 
   let active = true;
   const take = (response: Notifications.NotificationResponse | null, live: boolean) => {
     if (!response) return;
-    Notifications.clearLastNotificationResponseAsync().catch(() => {});
+    try {
+      Notifications.clearLastNotificationResponse();
+    } catch {
+      // best effort — worst case the same screen opens again on the next launch
+    }
     if (isQuietAction(response.actionIdentifier)) {
       if (live) runQuietAction(response).catch((e) => console.warn('Notification action failed:', e));
       return;
@@ -234,9 +245,11 @@ export function subscribeToNotificationTaps(onRoute: (route: NotificationRoute) 
     const route = responseRoute(response);
     if (route && active) onRoute(route);
   };
-  Notifications.getLastNotificationResponseAsync()
-    .then((response) => take(response, false))
-    .catch(() => {});
+  try {
+    take(Notifications.getLastNotificationResponse(), false);
+  } catch {
+    // no launch response to read — the live listener below still works
+  }
   const sub = Notifications.addNotificationResponseReceivedListener((response) => take(response, true));
   return () => {
     active = false;
