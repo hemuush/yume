@@ -27,6 +27,7 @@ export const BACKUP_FORMAT_VERSION = 1;
 
 const TABLES = [
   'accounts',
+  'account_valuations',
   'categories',
   'loans',
   'loan_payments',

@@ -104,6 +104,14 @@ export function daysUntilIsoDate(isoDate: string): number {
   return Math.round((target.getTime() - today.getTime()) / 86400000);
 }
 
+/** "Today", "Yesterday", or a short date like "27 Sep" — a past day said the way a person would. */
+export function dayLabel(isoDate: string): string {
+  const days = daysUntilIsoDate(isoDate);
+  if (days === 0) return 'Today';
+  if (days === -1) return 'Yesterday';
+  return parseLocalIsoDate(isoDate).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
+}
+
 /**
  * Every ISO date from `from` to `to` inclusive, in order — used wherever a UI
  * needs one entry per calendar day in a range (e.g. one bar per day in a

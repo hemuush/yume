@@ -41,6 +41,8 @@ export interface LoanProgress {
   nextEmiMinor: number | null;
   /** The last pending installment's due date — when the loan is done. Null once nothing is pending. */
   lastDueDate: string | null;
+  /** Interest still to be paid across the pending installments (0 once nothing is pending). */
+  pendingInterestMinor: number;
 }
 
 /**
@@ -59,6 +61,7 @@ export async function getLoanProgress(): Promise<LoanProgress[]> {
     next_due_date: string | null;
     next_emi_minor: number | null;
     last_due_date: string | null;
+    pending_interest_minor: number;
   }>(
     `SELECT l.id AS loan_id,
        (SELECT COUNT(*) FROM loan_payments p WHERE p.loan_id = l.id AND p.status = 'paid') AS paid_count,
@@ -67,7 +70,9 @@ export async function getLoanProgress(): Promise<LoanProgress[]> {
           ORDER BY p.installment_number ASC LIMIT 1) AS next_due_date,
        (SELECT p.emi_amount_minor FROM loan_payments p WHERE p.loan_id = l.id AND p.status = 'pending'
           ORDER BY p.installment_number ASC LIMIT 1) AS next_emi_minor,
-       (SELECT MAX(p.due_date) FROM loan_payments p WHERE p.loan_id = l.id AND p.status = 'pending') AS last_due_date
+       (SELECT MAX(p.due_date) FROM loan_payments p WHERE p.loan_id = l.id AND p.status = 'pending') AS last_due_date,
+       (SELECT COALESCE(SUM(p.interest_component_minor), 0) FROM loan_payments p
+          WHERE p.loan_id = l.id AND p.status = 'pending') AS pending_interest_minor
      FROM loans l`
   );
   return rows.map((r) => ({
@@ -77,6 +82,7 @@ export async function getLoanProgress(): Promise<LoanProgress[]> {
     nextDueDate: r.next_due_date ?? null,
     nextEmiMinor: r.next_emi_minor ?? null,
     lastDueDate: r.last_due_date ?? null,
+    pendingInterestMinor: r.pending_interest_minor,
   }));
 }
 

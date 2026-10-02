@@ -34,7 +34,7 @@ export function Chip({ label, active, onPress }: { label: string; active: boolea
  * An account, drawn the same way CategoryPicker's 'medal' tiles draw a
  * category — an icon in a soft tinted square, a name underneath, a mint
  * ring when selected — instead of the plain text pill this screen used to
- * reuse `Chip` for. Same icon/colour identity AccountChip.tsx already gives
+ * reuse `Chip` for. Same icon/colour identity Home's account cards already give
  * each account by type, just rendered through CategoryIcon (which never
  * assumed "category" specifically, only "icon + tint + optional colour") so
  * the two pickers on this screen read as one system instead of two.

@@ -49,9 +49,9 @@ export const styles = StyleSheet.create({
     borderRadius: theme.radius.pill,
     padding: 3,
   },
-  granBtn: { paddingHorizontal: 9, paddingVertical: 6, borderRadius: theme.radius.pill },
+  granBtn: { paddingHorizontal: 9, paddingVertical: 8, borderRadius: theme.radius.pill },
   granBtnOn: { backgroundColor: theme.colors.secondaryTint },
-  granText: { fontFamily: theme.font.bodyMedium, fontSize: 11, color: theme.colors.textMuted },
+  granText: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textMuted },
   granTextOn: { color: theme.colors.textPrimary },
 
   // The Overview/Categories/Trends jump bar — pinned in `header`, outside
@@ -106,6 +106,14 @@ export const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: 10,
   },
+  storyCompact: { borderRadius: theme.radius.xl2, paddingHorizontal: 16, paddingVertical: 12, gap: 2 },
+  storyCompactTitle: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textPrimary },
+  storyCompactDetail: {
+    fontFamily: theme.font.body,
+    fontSize: 12.5,
+    lineHeight: 18,
+    color: theme.colors.textSecondary,
+  },
   storyKicker: {
     fontFamily: theme.font.monoBold,
     fontSize: 10.5,
@@ -149,9 +157,6 @@ export const styles = StyleSheet.create({
   tileName: { fontFamily: theme.font.bodyBold, fontSize: 12, lineHeight: 15, color: theme.colors.ink },
   tilePct: { fontFamily: theme.font.roundedBold, fontSize: 18, lineHeight: 20, color: theme.colors.ink },
   tilePctSmall: { fontFamily: theme.font.roundedBold, fontSize: 12, lineHeight: 14 },
-  tileAmt: { fontFamily: theme.font.mono, fontSize: 10.5, color: theme.colors.ink },
-  tileUp: { fontFamily: theme.font.monoBold, color: theme.colors.expenseText },
-  tileDown: { fontFamily: theme.font.monoBold, color: theme.colors.incomeText },
 
   // Trends: one line chart with a Spending / Net worth switch.
   trendCard: {
@@ -227,7 +232,13 @@ export const styles = StyleSheet.create({
     backgroundColor: theme.colors.inkWash,
     overflow: 'hidden',
   },
-  catMore: { paddingVertical: 12, alignItems: 'center' },
+  catMore: {
+    paddingVertical: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+  },
   catMoreText: { fontFamily: theme.font.bodyMedium, fontSize: 11.5, color: theme.colors.textMuted },
 
   // day-detail / drill popup

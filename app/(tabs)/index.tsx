@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { View, ScrollView, StyleSheet, RefreshControl } from 'react-native';
+import { View, StyleSheet, RefreshControl } from 'react-native';
 import { Text } from '@/components/Text';
 import Animated, { useSharedValue, useAnimatedScrollHandler } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -33,7 +33,6 @@ import {
   PeriodCursor,
   periodRange,
   previousPeriodRange,
-  periodLabel,
   stepPeriod,
   canStepForward,
 } from '@/lib/period';
@@ -46,7 +45,7 @@ import {
 } from '@/lib/animation';
 import { HomeHeader } from '@/features/home/HomeHeader';
 import { ThisMonthHero } from '@/features/home/ThisMonthHero';
-import { ThisMonthHeroSkeleton, CardRowsSkeleton, StripSkeleton } from '@/features/home/HomeSkeleton';
+import { ThisMonthHeroSkeleton, CardRowsSkeleton, AccountStackSkeleton } from '@/features/home/HomeSkeleton';
 import { QuickActionsRow } from '@/features/home/QuickActionsRow';
 import { SuuRefreshBadge } from '@/features/home/SuuRefreshBadge';
 import { HomeSection } from '@/features/home/HomeSection';
@@ -54,7 +53,7 @@ import { homeStyles, HOME } from '@/features/home/homeStyles';
 import { HomeGlance, buildUpcomingItems } from '@/features/home/HomeGlance';
 import { buildLoansSummary } from '@/features/plan/planOverview';
 import { RecentTransactionRow } from '@/features/home/RecentTransactionRow';
-import { AccountChip, ACCOUNT_CHIP_WIDTH, ACCOUNT_STRIP_GAP } from '@/features/home/AccountChip';
+import { AccountStack } from '@/features/home/AccountStack';
 import { AccountSummarySheet } from '@/features/home/AccountSummarySheet';
 import { AccountDetailModal } from '@/features/profile/AccountDetailModal';
 import { suuLine } from '@/features/home/suuLine';
@@ -401,7 +400,6 @@ export default function DashboardScreen() {
                     : 'This month'
                   : 'Looking back'
               }
-              periodName={periodLabel(cursor)}
               canStepForward={canStepForward(cursor)}
               onStep={(dir) => handleCursorChange(stepPeriod(cursor, dir))}
               incomeMinor={dispIncome}
@@ -433,7 +431,7 @@ export default function DashboardScreen() {
               <CardRowsSkeleton rows={3} subtitle />
             </HomeSection>
             <HomeSection title="Your accounts">
-              <StripSkeleton count={2} />
+              <AccountStackSkeleton />
             </HomeSection>
           </>
         )}
@@ -457,7 +455,7 @@ export default function DashboardScreen() {
                 subtitle="Use the month pill above to check another period."
               />
             ) : (
-              <View style={homeStyles.card}>
+              <View style={[homeStyles.card, homeStyles.cardLifted]}>
                 {recent.slice(0, 4).map((tx, i) => (
                   <Animated.View key={tx.id} entering={rowEntering(i)} layout={ROW_LAYOUT} exiting={ROW_EXIT}>
                     <RecentTransactionRow
@@ -492,23 +490,7 @@ export default function DashboardScreen() {
                 />
               </View>
             ) : (
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.accountStrip}
-                // One card per flick, landing flush with the page gutter, so
-                // the next card always peeks in at the edge instead of
-                // stopping cut off mid-way.
-                snapToInterval={ACCOUNT_CHIP_WIDTH + ACCOUNT_STRIP_GAP}
-                snapToAlignment="start"
-                decelerationRate="fast"
-              >
-                {accounts.map((acc, i) => (
-                  <Animated.View key={acc.id} entering={rowEntering(i)}>
-                    <AccountChip account={acc} onPress={() => setSummaryAccount(acc)} />
-                  </Animated.View>
-                ))}
-              </ScrollView>
+              <AccountStack accounts={accounts} onOpen={setSummaryAccount} opening={!openingDone} />
             )}
           </HomeSection>
         )}
@@ -544,6 +526,7 @@ export default function DashboardScreen() {
           setSummaryAccount(null);
           setEditAccount(acc);
         }}
+        onChanged={() => load(cursor)}
         onPayBill={(acc, amountMinor) => {
           setSummaryAccount(null);
           router.push(payCardRoute(acc.id, amountMinor));
@@ -598,6 +581,5 @@ const styles = StyleSheet.create({
     marginTop: 3,
     lineHeight: 16,
   },
-  accountStrip: { paddingHorizontal: 20, gap: ACCOUNT_STRIP_GAP, paddingBottom: 4 },
   emptyCta: { marginHorizontal: 40, marginTop: -8 },
 });

@@ -4,6 +4,7 @@ import { formatPctChange } from '@/lib/format';
 import type { CategoryBreakdownItem, DailyExpensePoint, TrendPoint } from '@/db/reports';
 import type { HeatCell } from './SpendHeatmap';
 import { dayMonth } from '@/lib/dateLabels';
+import { PACE_MIN_DAY } from '@/lib/pace';
 
 /** Which categories count as a fixed monthly load rather than a choice. */
 const FIXED_CATEGORY_NAMES = ['Loan EMI', 'Rent', 'Insurance', 'Subscriptions'];
@@ -86,6 +87,7 @@ export function buildHeatGrid(input: {
       label: String(day),
       level: heatLevel(total, maxDay),
       isToday: iso === todayIso,
+      isFuture: iso > todayIso,
       onPress: total > 0 ? () => input.onDayPress(iso) : undefined,
     };
   });
@@ -124,6 +126,7 @@ export function buildRangeHeatGrid(input: {
           label: String(Number(iso.slice(8))),
           level: heatLevel(total, maxDay),
           isToday: iso === todayIso,
+          isFuture: iso > todayIso,
           onPress: total > 0 ? () => input.onDayPress(iso) : undefined,
         };
       }),
@@ -152,6 +155,32 @@ export function baselineFromTrend(trend: TrendPoint[]): number | null {
   const prior = trend.slice(0, -1).map((t) => t.totalMinor);
   if (prior.length < 2) return null;
   return prior.reduce((a, b) => a + b, 0) / prior.length;
+}
+
+/**
+ * How this period's spending sits against a usual month, as a % (+ above). The
+ * month in progress is held against the usual month scaled to the days gone
+ * ("usual so far"), and says nothing before PACE_MIN_DAY, when a few days
+ * can't be compared with a whole month. A year or a custom range has no usual
+ * month to be compared with.
+ */
+export function vsUsual(input: {
+  spentMinor: number;
+  baselineMinor: number | null;
+  granularity: 'month' | 'year' | 'custom';
+  inProgress: boolean;
+  todayIso: string;
+}): { pct: number; soFar: boolean } | null {
+  const { spentMinor, baselineMinor, granularity, inProgress, todayIso } = input;
+  if (granularity !== 'month' || !baselineMinor || baselineMinor <= 0) return null;
+  let usual = baselineMinor;
+  if (inProgress) {
+    const today = parseLocalIsoDate(todayIso);
+    const day = today.getDate();
+    if (day < PACE_MIN_DAY) return null;
+    usual = (baselineMinor * day) / new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
+  }
+  return { pct: ((spentMinor - usual) / usual) * 100, soFar: inProgress };
 }
 
 /** Split this period's category spend into the fixed load vs. everything else. */
@@ -347,6 +376,8 @@ export interface StoryCard {
   target: StoryTarget;
   /** For the "already spoken for" card: the fixed share, drawn as a moon. */
   moonFraction?: number;
+  /** A slim one-line card (the "too early" note) rather than a full-height one. */
+  compact?: boolean;
 }
 
 export interface StoryInput {
@@ -387,6 +418,7 @@ export function buildStoryCards(input: StoryInput): StoryCard[] {
         detail: `A few more days of spending and there'll be a story to tell about this ${input.unit}.`,
         tone: 'mint',
         target: 'overview',
+        compact: true,
       },
     ];
   }

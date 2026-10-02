@@ -1,6 +1,6 @@
 import { StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
-import { SECTION_TITLE, SECTION_GAP } from '@/constants/textStyles';
+import { SECTION_TITLE, SECTION_GAP, EYEBROW } from '@/constants/textStyles';
 
 // Shared by the Friends & Family screen, PersonRow, and the person modals.
 export const styles = StyleSheet.create({
@@ -55,6 +55,60 @@ export const styles = StyleSheet.create({
   cardRight: { alignItems: 'flex-end', flexShrink: 0 },
   cardBalance: { fontSize: 16, fontFamily: theme.font.monoBold },
   cardSub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, marginTop: 2 },
+  // An open balance's foot: a hint on the left, the Settle up pill on the right.
+  cardFoot: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 10,
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: theme.colors.borderSoft,
+  },
+  cardFootText: {
+    flex: 1,
+    minWidth: 0,
+    fontFamily: theme.font.body,
+    fontSize: 12,
+    color: theme.colors.textMuted,
+  },
+  settlePill: {
+    paddingHorizontal: 13,
+    paddingVertical: 6,
+    borderRadius: theme.radius.pill,
+    backgroundColor: theme.colors.primaryTint,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.borderSoft,
+  },
+  settlePillText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textPrimary },
+  settledTitle: { ...EYEBROW, marginHorizontal: 24, marginTop: 8, marginBottom: 2 },
+  quietRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginHorizontal: 20,
+    paddingHorizontal: 4,
+    paddingVertical: 10,
+  },
+  quietAvatar: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.borderSoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  quietInitial: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.onFlat },
+  quietName: {
+    flex: 1,
+    minWidth: 0,
+    fontFamily: theme.font.roundedMedium,
+    fontSize: 14,
+    color: theme.colors.textPrimary,
+  },
+  quietSub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
   skeletonCard: {
     backgroundColor: theme.colors.surface,
     flexDirection: 'row',

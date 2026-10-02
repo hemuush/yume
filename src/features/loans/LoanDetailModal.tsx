@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { View, Pressable, Animated } from 'react-native';
+import { View } from 'react-native';
 import { Text } from '@/components/Text';
 import { useFocusEffect } from 'expo-router';
 import {
@@ -12,10 +12,8 @@ import {
 } from '@/db/loans';
 import { listAccounts, listCategories } from '@/db/ledger';
 import { formatMoney } from '@/lib/money';
-import { allocateRoundedMinor } from '@/lib/round';
 import { useUndoToast } from '@/components/UndoToast';
 import { haptics } from '@/lib/haptics';
-import { usePressScale } from '@/lib/usePressScale';
 import { Loan, LoanPayment, Account, Category } from '@/types';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { ModalSheet, SheetFooter } from '@/components/ModalSheet';
@@ -33,6 +31,8 @@ import { AccountModal } from './AccountModal';
 import { RateChangeModal } from './RateChangeModal';
 import { PrepayModal } from './PrepayModal';
 import { PayInstallmentSheet } from './PayInstallmentSheet';
+import { LoanSchedule } from './LoanSchedule';
+import { LoanStatGrid } from './LoanStatGrid';
 import Svg, { Path } from 'react-native-svg';
 import { loanPayoff, payoffMonth, balanceLinePath } from '@/lib/loanPayoff';
 import { errorMessage } from '@/lib/errorMessage';
@@ -42,19 +42,20 @@ import { showAlert } from '@/components/AppDialog';
 const PAYOFF_LINE_WIDTH = 300;
 const PAYOFF_LINE_HEIGHT = 56;
 
-const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
-
 export function LoanDetailModal({
   loan,
   onClose,
   onChanged,
   startWithPay = false,
+  hue,
 }: {
   loan: Loan;
   onClose: () => void;
   onChanged: () => void;
   /** Opens straight onto the next EMI's pay sheet (an EMI reminder's "Pay now"). */
   startWithPay?: boolean;
+  /** The loan's identity colour from the list (loanHues); the card falls back to coral / mint without it. */
+  hue?: string;
 }) {
   const { show: showUndo } = useUndoToast();
   const [liveLoan, setLiveLoan] = useState<Loan>(loan);
@@ -70,11 +71,7 @@ export function LoanDetailModal({
   const [busy, setBusy] = useState(false);
   const [moreActionsVisible, setMoreActionsVisible] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [scheduleExpanded, setScheduleExpanded] = useState(false);
   const [tab, setTab] = useState<'overview' | 'schedule'>('overview');
-
-  const expandPress = usePressScale();
-  const collapsePress = usePressScale();
 
   // Re-fetches the loan row itself, not just derived props — after a
   // payment or prepayment, outstandingPrincipalMinor and status change on
@@ -209,8 +206,7 @@ export function LoanDetailModal({
   };
 
   const pendingInstallments = schedule.filter((p) => p.status === 'pending');
-  const visibleSchedule = scheduleExpanded ? schedule : pendingInstallments.slice(0, 2);
-  const hiddenCount = schedule.length - visibleSchedule.length;
+  const paidCount = schedule.filter((p) => p.status === 'paid').length;
 
   // Round outstanding and asset value the same way they're displayed, then
   // derive equity from those rounded figures so "equity" always equals the
@@ -256,18 +252,14 @@ export function LoanDetailModal({
         {loadError && <Text style={styles.errorText}>Couldn't load the latest details: {loadError}</Text>}
 
         <SheetCard
-          hue={liveLoan.direction === 'borrowed' ? theme.colors.idCoralDeep : theme.colors.secondary}
+          hue={hue ?? (liveLoan.direction === 'borrowed' ? theme.colors.idCoralDeep : theme.colors.secondary)}
           icon={liveLoan.direction === 'borrowed' ? 'bank-outline' : 'hand-coin-outline'}
           kicker={`${(liveLoan.interestRateAnnualBp / 100).toFixed(2)}% · ${
             liveLoan.rateType === 'floating' ? 'floating' : 'fixed'
           }${liveLoan.status === 'active' ? '' : ` · ${liveLoan.status}`}`}
           amount={formatMoney(dispOutstanding)}
           title={liveLoan.counterparty}
-          meta={
-            nextInstallment
-              ? `EMI ${formatMoney(liveLoan.emiAmountMinor)} · next ${weekdayDayMonth(nextInstallment.dueDate)}`
-              : `EMI ${formatMoney(liveLoan.emiAmountMinor)}`
-          }
+          meta={`EMI ${formatMoney(liveLoan.emiAmountMinor)} a month`}
         />
         <View style={styles.sheetTabs}>
           <SegmentedControl
@@ -282,6 +274,28 @@ export function LoanDetailModal({
 
         {tab === 'overview' ? (
           <>
+            <LoanStatGrid
+              stats={[
+                {
+                  label: 'Next EMI',
+                  value: nextInstallment ? formatMoney(nextInstallment.emiAmountMinor) : 'None left',
+                  sub: nextInstallment ? weekdayDayMonth(nextInstallment.dueDate) : undefined,
+                },
+                {
+                  label: 'EMIs paid',
+                  value: schedule.length > 0 ? `${paidCount} of ${schedule.length}` : '–',
+                },
+                {
+                  label: liveLoan.direction === 'borrowed' ? 'Borrowed' : 'Lent',
+                  value: formatMoney(liveLoan.principalMinor),
+                  sub: `Since ${dayMonthYear(liveLoan.startDate)}`,
+                },
+                {
+                  label: liveLoan.direction === 'borrowed' ? 'Interest to pay' : 'Interest to come',
+                  value: formatMoney(payoff.interestLeftMinor),
+                },
+              ]}
+            />
             {payoff.lastDueDate && (
               <View style={styles.payoffCard}>
                 <Text style={styles.statLabel}>
@@ -289,9 +303,7 @@ export function LoanDetailModal({
                 </Text>
                 <Text style={styles.payoffMonth}>{payoffMonth(payoff.lastDueDate)}</Text>
                 <Text style={styles.rowSub}>
-                  {payoff.emisLeft} EMI{payoff.emisLeft === 1 ? '' : 's'} to go ·{' '}
-                  <Text style={styles.payoffMoney}>{formatMoney(payoff.interestLeftMinor)}</Text> interest
-                  still {liveLoan.direction === 'borrowed' ? 'to pay' : 'to come'}
+                  {payoff.emisLeft} EMI{payoff.emisLeft === 1 ? '' : 's'} to go
                 </Text>
                 <Svg
                   width="100%"
@@ -361,60 +373,7 @@ export function LoanDetailModal({
           </>
         ) : (
           <>
-            {visibleSchedule.map((p) => {
-              // Show the principal and interest split rounded so it adds up to the
-              // rounded EMI exactly — the stored paise components already sum to
-              // emiAmountMinor, this just keeps that true after rounding for
-              // display (otherwise "₹274 + ₹783" can read next to a "₹1,056" EMI).
-              const [dispPrincipal, dispInterest] = allocateRoundedMinor(
-                [p.principalComponentMinor, p.interestComponentMinor],
-                p.emiAmountMinor
-              );
-              return (
-                <View key={p.id} style={styles.scheduleRow}>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.rowLabel}>
-                      #{p.installmentNumber} · {dayMonthYear(p.dueDate)}
-                    </Text>
-                    <Text style={styles.rowSub}>
-                      Principal {formatMoney(dispPrincipal)} · Interest {formatMoney(dispInterest)}
-                    </Text>
-                  </View>
-                  <View style={{ alignItems: 'flex-end' }}>
-                    <Text style={styles.rowValue}>{formatMoney(p.emiAmountMinor)}</Text>
-                    <Text style={[styles.statusTag, p.status === 'paid' && styles.statusTagPaid]}>
-                      {p.status}
-                    </Text>
-                  </View>
-                </View>
-              );
-            })}
-            {!scheduleExpanded && hiddenCount > 0 && (
-              <AnimatedPressable
-                onPress={() => {
-                  haptics.tap();
-                  setScheduleExpanded(true);
-                }}
-                onPressIn={expandPress.onPressIn}
-                onPressOut={expandPress.onPressOut}
-                style={[{ paddingVertical: 10 }, expandPress.animatedStyle]}
-              >
-                <Text style={styles.viewAllText}>View full schedule ({hiddenCount} more) ›</Text>
-              </AnimatedPressable>
-            )}
-            {scheduleExpanded && (
-              <AnimatedPressable
-                onPress={() => {
-                  haptics.tap();
-                  setScheduleExpanded(false);
-                }}
-                onPressIn={collapsePress.onPressIn}
-                onPressOut={collapsePress.onPressOut}
-                style={[{ paddingVertical: 10 }, collapsePress.animatedStyle]}
-              >
-                <Text style={styles.viewAllText}>Show less ‹</Text>
-              </AnimatedPressable>
-            )}
+            <LoanSchedule schedule={schedule} />
 
             {rateHistory.length > 0 && (
               <>

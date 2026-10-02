@@ -1,7 +1,7 @@
 /**
  * Renders the Plan tab (the bento) with fixed data, dated from today: every
  * tile shows its real figures in order, tapping a tile opens its own screen,
- * and Coming up lists the next 14 days grouped by day with Paid on EMIs.
+ * and Coming up lists the next 14 days grouped by day with a Pay button on EMIs.
  * What each tile says is tested in planOverview.test.ts; this checks the
  * screen wires it all up.
  */
@@ -87,6 +87,7 @@ jest.mock('@/db/loans', () => ({
       nextDueDate: mockDay(3),
       nextEmiMinor: 2500000,
       lastDueDate: '2035-06-05',
+      pendingInterestMinor: 0,
     },
   ],
   getLoanPaymentContext: async () => ({
@@ -156,12 +157,16 @@ describe('Plan tab', () => {
     const shown = texts(await render());
     const headings = [
       'Next 14 days · 2 payments',
+      'Where you stand',
       'EMIs',
       'Budgets',
-      'Debt-free · ' + new Date(2035, 5, 5).toLocaleDateString(undefined, { month: 'long', year: 'numeric' }),
-      'Friends',
-      'Habit',
+      'Debt-free by ' +
+        new Date(2035, 5, 5).toLocaleDateString(undefined, { month: 'long', year: 'numeric' }),
+      'Goals',
       'Saving toward',
+      'People & habit',
+      'Friends',
+      'Spend streak',
       'Coming up',
     ];
     const positions = headings.map((h) => shown.indexOf(h));
@@ -204,6 +209,19 @@ describe('Plan tab', () => {
     expect(shown).toContain('₹25,000');
   });
 
+  it('says what each tile means in plain words', async () => {
+    const shown = texts(await render());
+    const ahead = (n: number) =>
+      new Date(`${mockDay(n)}T00:00:00`).toLocaleDateString(undefined, {
+        weekday: 'short',
+        day: 'numeric',
+        month: 'short',
+      });
+    expect(shown).toContain(`${ahead(3)}, in 3 days · 1 loan`);
+    expect(shown).toContain('Food is ₹20,000 over');
+    expect(shown).toContain('to collect from 1 person');
+  });
+
   it('opens each tile’s own screen', async () => {
     const tree = await render();
     const byLabel = (start: string) =>
@@ -235,11 +253,49 @@ describe('Plan tab', () => {
     expect(router.push).not.toHaveBeenCalled();
   });
 
+  it('shows a day’s total and items when you tap its bar, and jumps to it in the list', async () => {
+    const tree = await render();
+    const label = new Date(`${mockDay(3)}T00:00:00`).toLocaleDateString(undefined, {
+      weekday: 'short',
+      day: 'numeric',
+      month: 'short',
+    });
+    const bar = () =>
+      tree.root.find(
+        (n) => n.props.accessibilityLabel === `${label}, ₹25,000 due. Show details` && n.props.onPress
+      );
+    (router.push as jest.Mock).mockClear();
+    act(() => bar().props.onPress());
+    expect(texts(tree)).toContain('See in list');
+    expect(texts(tree).some((t) => t.includes('₹25,000 · Home loan'))).toBe(true);
+    // Tapping the bar again hides the caption.
+    act(() =>
+      tree.root
+        .find((n) => n.props.accessibilityLabel === `${label}, ₹25,000 due. Hide details`)
+        .props.onPress()
+    );
+    expect(texts(tree)).not.toContain('See in list');
+    act(() => bar().props.onPress());
+    act(() =>
+      tree.root.find((n) => n.props.accessibilityLabel === `See ${label} in the list`).props.onPress()
+    );
+    expect(router.push).not.toHaveBeenCalled();
+  });
+
+  it('colours Coming up rows by how soon they are due', async () => {
+    const { DateTile } = require('@/components/DateTile');
+    const tree = await render();
+    // The EMI is 3 days out (amber); the streaming bill tomorrow is not an EMI or card bill.
+    const tones = tree.root.findAllByType(DateTile).map((t) => [t.props.urgent, t.props.soon]);
+    expect(tones).toEqual([
+      [false, false],
+      [false, true],
+    ]);
+  });
+
   it('marks an EMI paid straight from Coming up', async () => {
     const tree = await render();
-    const paid = tree.root.find(
-      (n) => n.props.accessibilityLabel === 'Mark Home loan EMI paid' && n.props.onPress
-    );
+    const paid = tree.root.find((n) => n.props.accessibilityLabel === 'Pay Home loan EMI' && n.props.onPress);
     await act(async () => {
       paid.props.onPress();
     });

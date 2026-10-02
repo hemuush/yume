@@ -32,6 +32,7 @@ export function TrendChart({
   spentMinor,
   trend,
   baseline,
+  inProgress = false,
   netWorthTrend,
 }: {
   periodName: string;
@@ -39,6 +40,8 @@ export function TrendChart({
   spentMinor: number;
   trend: TrendPoint[];
   baseline: number | null;
+  /** The last point is a month still going: drawn dashed and hollow, and read as "so far". */
+  inProgress?: boolean;
   netWorthTrend: NetWorthPoint[];
 }) {
   const hasSpend = trend.length >= MIN_POINTS;
@@ -62,17 +65,27 @@ export function TrendChart({
   const y = (v: number) => PLOT_BOTTOM - ((v - (lo - pad)) / (hi - lo + 2 * pad)) * (PLOT_BOTTOM - PLOT_TOP);
   const x = (i: number) => PAD_X + (i * (width - 2 * PAD_X)) / Math.max(1, points.length - 1);
   const line = points.map((p, i) => `${x(i)},${y(p.value)}`).join(' ');
+  const partial = showing === 'spend' && inProgress && points.length >= 2;
+  const lastI = points.length - 1;
+  const solidLine = partial
+    ? points
+        .slice(0, -1)
+        .map((p, i) => `${x(i)},${y(p.value)}`)
+        .join(' ')
+    : line;
 
   const nwFirst = netWorthTrend[0]?.netWorthMinor ?? 0;
   const nwLast = netWorthTrend[netWorthTrend.length - 1]?.netWorthMinor ?? 0;
   const nwDelta = roundedMinor(nwLast - nwFirst);
   const read =
     showing === 'spend'
-      ? avg != null
-        ? `${periodName} is ${formatMoney(Math.abs(roundedMinor(spentMinor - avg)))} ${
-            spentMinor >= avg ? 'above' : 'below'
-          } your average of ${formatMoney(roundedMinor(avg))}.`
-        : `${periodName}: ${formatMoney(roundedMinor(spentMinor))} spent.`
+      ? avg != null && partial
+        ? `${periodName} so far: ${formatMoney(roundedMinor(spentMinor))}. The dashed line is your usual month, ${formatMoney(roundedMinor(avg))}.`
+        : avg != null
+          ? `${periodName} is ${formatMoney(Math.abs(roundedMinor(spentMinor - avg)))} ${
+              spentMinor >= avg ? 'above' : 'below'
+            } your average of ${formatMoney(roundedMinor(avg))}.`
+          : `${periodName}: ${formatMoney(roundedMinor(spentMinor))} spent.`
       : `${nwDelta >= 0 ? 'Up' : 'Down'} ${formatMoney(Math.abs(nwDelta))} over the last ${netWorthTrend.length} months, now ${formatMoney(roundedMinor(nwLast))}.`;
 
   const pick = (k: Kind) => {
@@ -93,6 +106,7 @@ export function TrendChart({
                 <Pressable
                   key={k}
                   onPress={() => pick(k)}
+                  hitSlop={6}
                   style={withPressed([styles.trendSwitchBtn, on && styles.trendSwitchBtnOn])}
                   accessibilityRole="radio"
                   accessibilityState={{ selected: on }}
@@ -126,20 +140,22 @@ export function TrendChart({
                   strokeDasharray="4 4"
                   strokeWidth={1.2}
                 />
-                <SvgText
-                  x={width - PAD_X}
-                  y={y(avg) - 5}
-                  textAnchor="end"
-                  fontFamily={theme.font.body}
-                  fontSize={10}
-                  fill={theme.colors.textSecondary}
-                >
-                  {`avg ${formatMoney(roundedMinor(avg))}`}
-                </SvgText>
+                {!partial && (
+                  <SvgText
+                    x={width - PAD_X}
+                    y={y(avg) - 5}
+                    textAnchor="end"
+                    fontFamily={theme.font.body}
+                    fontSize={10}
+                    fill={theme.colors.textSecondary}
+                  >
+                    {`avg ${formatMoney(roundedMinor(avg))}`}
+                  </SvgText>
+                )}
               </>
             )}
             <Polyline
-              points={line}
+              points={solidLine}
               fill="none"
               stroke={theme.colors.ink}
               strokeOpacity={0.75}
@@ -147,17 +163,31 @@ export function TrendChart({
               strokeLinejoin="round"
               strokeLinecap="round"
             />
+            {partial && (
+              <Line
+                x1={x(lastI - 1)}
+                y1={y(points[lastI - 1].value)}
+                x2={x(lastI)}
+                y2={y(points[lastI].value)}
+                stroke={theme.colors.ink}
+                strokeOpacity={0.75}
+                strokeWidth={2.2}
+                strokeDasharray="3 5"
+                strokeLinecap="round"
+              />
+            )}
             {points.map((p, i) => {
-              const last = i === points.length - 1;
+              const last = i === lastI;
+              const hollow = last && partial;
               return (
                 <Circle
                   key={`d-${i}`}
                   cx={x(i)}
                   cy={y(p.value)}
                   r={last ? 5 : 3}
-                  fill={last ? theme.colors.ink : theme.colors.surface}
+                  fill={last && !hollow ? theme.colors.ink : theme.colors.surface}
                   stroke={theme.colors.ink}
-                  strokeWidth={last ? 0 : 1.5}
+                  strokeWidth={last && !hollow ? 0 : 1.5}
                 />
               );
             })}

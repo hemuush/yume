@@ -11,7 +11,6 @@ import { listLoans } from '@/db/loans';
 import { trackedBalanceParts, TrackedBalanceParts } from '@/db/reports';
 import { listPeople } from '@/db/people';
 import { getDefaultCurrency } from '@/db/settings';
-import { formatMoney } from '@/lib/money';
 import { roundedMinor } from '@/lib/round';
 import { Account } from '@/types';
 import { EmptyState } from '@/components/EmptyState';
@@ -20,14 +19,19 @@ import { Amount } from '@/components/Amount';
 import { AddButton } from '@/components/AddButton';
 import { theme } from '@/constants/theme';
 import { useAccent } from '@/theme/AccentContext';
+import { usePrivacy } from '@/theme/PrivacyContext';
 import { useFadeIn } from '@/lib/useFadeIn';
 import { useScreenLoad } from '@/lib/useScreenLoad';
 import { usePressScale } from '@/lib/usePressScale';
 import { accountBadgeColor, accountIcon } from '@/lib/account';
+import { GainPill } from '@/features/investments/GainPill';
 import { HomeSection } from '@/features/home/HomeSection';
 import { homeStyles as h } from '@/features/home/homeStyles';
 import { styles } from './profile.styles';
-import { trackedSumLines } from './trackedSum';
+import { trackedSumLines, groupAccountsByType } from './trackedSum';
+import { CashHero } from './CashHero';
+import { TrackedCard } from './TrackedCard';
+import { LinkTiles } from './LinkTiles';
 import { AddAccountModal } from './AddAccountModal';
 import { AccountDetailModal } from './AccountDetailModal';
 import { withPressed } from '@/lib/pressed';
@@ -43,19 +47,11 @@ const ACCOUNT_TYPE_LABEL: Record<Account['type'], string> = {
 };
 
 /**
- * "+₹1,600" / "−₹23,18,958" / "₹0" — a true minus sign (Intl prints a
- * hyphen), and a plus too for the lines of a sum.
- */
-function signedMoney(minor: number, plus = true): string {
-  return `${minor < 0 ? '−' : plus && minor > 0 ? '+' : ''}${formatMoney(Math.abs(minor))}`;
-}
-
-/**
- * "You" — your tracked balance, spelled out as the sum it is (accounts,
- * loans, people), a strip of counts that each open their screen, and your
- * accounts as one card of rows. Budgets, goals, recurring, What-if and Suu's
- * Garden live on Plan; one row here points there. Settings is the other tab
- * of the Profile screen.
+ * "You": what is in your accounts first, the tracked balance as one line that
+ * opens to the sum it is, tiles that open Entries, Loans and Friends, and
+ * your accounts grouped by type. Budgets, goals, recurring, What-if and
+ * Suu's Garden live on Plan; one row here points there. Settings is the
+ * other tab of the Profile screen.
  */
 export function YouSection() {
   const [accounts, setAccounts] = useState<Account[]>([]);
@@ -113,6 +109,23 @@ export function YouSection() {
     .filter((a) => a.currency === defaultCurrency)
     .reduce((sum, a) => sum + dispAccountBalance(a), 0);
   const sum = trackedSumLines(parts, accountsShown);
+  const groups = groupAccountsByType(accounts, defaultCurrency);
+
+  // Every total that includes savings is hidden along with the savings rows,
+  // otherwise subtracting the visible rows gives the savings back.
+  const { hideAmounts } = usePrivacy();
+  const masked = hideAmounts && accounts.some((a) => a.type === 'savings' && a.currency === defaultCurrency);
+  const countedAccounts = accounts.filter((a) => a.currency === defaultCurrency).length;
+  const otherCurrencyAccounts = accounts.length - countedAccounts;
+  const heroSub = [
+    `across ${countedAccounts} ${countedAccounts === 1 ? 'account' : 'accounts'}`,
+    otherCurrencyAccounts > 0 ? `${otherCurrencyAccounts} in another currency` : null,
+    masked ? 'savings hidden' : null,
+  ]
+    .filter(Boolean)
+    .join(' · ');
+  const showLoans = hasLoans || sum.loansMinor !== 0;
+  const showPeople = peopleCount > 0 || sum.peopleMinor !== 0;
 
   if (!loaded && !loadError) {
     // Not a full-screen gate — the shell's header, identity, and tab
@@ -134,55 +147,36 @@ export function YouSection() {
         </View>
       )}
 
-      <View style={[h.card, styles.balanceCard]}>
-        <View style={styles.balanceHead}>
-          <Text style={styles.balanceLabel}>Tracked balance</Text>
-          <Text style={styles.balanceValue} numberOfLines={1} adjustsFontSizeToFit>
-            {signedMoney(sum.totalMinor, false)}
-          </Text>
-        </View>
-        <View style={styles.sumLines}>
-          <SumLine
-            color={theme.colors.secondary}
-            label={hasOtherCurrency ? `Your accounts (${defaultCurrency} only)` : 'Your accounts'}
-            minor={sum.accountsMinor}
-          />
-          {(hasLoans || sum.loansMinor !== 0) && (
-            <SumLine color={theme.colors.idGoldDeep} label="Loans" minor={sum.loansMinor} />
-          )}
-          {(peopleCount > 0 || sum.peopleMinor !== 0) && (
-            <SumLine color={theme.colors.idCoralDeep} label="Friends & Family" minor={sum.peopleMinor} />
-          )}
-        </View>
-        {hasUntrackedAssetLoan ? (
-          <Pressable
-            style={withPressed([styles.balanceHint, styles.balanceHintWarn])}
-            onPress={() => router.push('/loans')}
-            accessibilityRole="button"
-          >
-            <MaterialCommunityIcons name="home-outline" size={16} color={theme.colors.ink} />
-            <Text style={styles.balanceHintText}>
-              A loan's home or vehicle isn't counted until you add its value on the loan, so this can run
-              negative for a completely normal loan.
-            </Text>
-            <Feather name="chevron-right" size={16} color={theme.colors.textMuted} />
-          </Pressable>
-        ) : (
-          hasLoans && (
-            <View style={styles.balanceHint}>
-              <MaterialCommunityIcons name="information-outline" size={16} color={theme.colors.textMuted} />
-              <Text style={styles.balanceHintText}>
-                Loans with a tracked asset value count their real equity here, not just the debt.
-              </Text>
-            </View>
-          )
-        )}
-        <View style={styles.stats}>
-          <Stat value={txCount} label="Entries" onPress={() => router.navigate('/transactions')} />
-          <Stat value={activeLoanCount} label="Active loans" onPress={() => router.push('/loans')} divider />
-          <Stat value={peopleCount} label="People" onPress={() => router.push('/people')} divider />
-        </View>
-      </View>
+      {accounts.length > 0 && (
+        <CashHero
+          minor={sum.accountsMinor}
+          label={hasOtherCurrency ? `In your accounts (${defaultCurrency} only)` : 'In your accounts'}
+          sub={heroSub}
+          masked={masked}
+        />
+      )}
+      {(showLoans || showPeople) && (
+        <TrackedCard
+          totalMinor={sum.totalMinor}
+          accountsMinor={sum.accountsMinor}
+          loansMinor={sum.loansMinor}
+          peopleMinor={sum.peopleMinor}
+          accountsLabel={hasOtherCurrency ? `Your accounts (${defaultCurrency} only)` : 'Your accounts'}
+          showLoans={showLoans}
+          showPeople={showPeople}
+          untrackedAssetLoan={hasUntrackedAssetLoan}
+          hasLoans={hasLoans}
+          masked={masked}
+        />
+      )}
+      <LinkTiles
+        entries={txCount}
+        loans={activeLoanCount}
+        friends={peopleCount}
+        onEntries={() => router.navigate('/transactions')}
+        onLoans={() => router.push('/loans')}
+        onFriends={() => router.push('/people')}
+      />
 
       <HomeSection
         title="Accounts"
@@ -192,21 +186,34 @@ export function YouSection() {
           <EmptyState title="No accounts yet" subtitle="Tap + Account to create one." />
         ) : (
           <Animated.View style={[h.card, accountsFadeStyle]}>
-            {accounts.map((acc, i) => (
-              <AccountRow
-                key={acc.id}
-                account={acc}
-                minor={dispAccountBalance(acc)}
-                divider={i > 0}
-                onPress={setDetailAccount}
-              />
+            {groups.map((group, gi) => (
+              <View key={group.type}>
+                {groups.length > 1 && (
+                  <View style={[styles.groupHead, gi > 0 && h.divider]}>
+                    <Text style={styles.groupLabel}>
+                      {ACCOUNT_TYPE_LABEL[group.type as Account['type']] ?? group.type} ·{' '}
+                      {group.accounts.length}
+                    </Text>
+                    {group.subtotalMinor != null && (
+                      <Amount
+                        minor={group.subtotalMinor}
+                        sensitive={group.type === 'savings'}
+                        style={styles.groupTotal}
+                      />
+                    )}
+                  </View>
+                )}
+                {group.accounts.map((acc, i) => (
+                  <AccountRow
+                    key={acc.id}
+                    account={acc}
+                    minor={dispAccountBalance(acc)}
+                    divider={i > 0}
+                    onPress={setDetailAccount}
+                  />
+                ))}
+              </View>
             ))}
-            <View style={[styles.cardFoot, h.divider]}>
-              <Text style={styles.cardFootLabel}>
-                Account balance · {accounts.length} account{accounts.length === 1 ? '' : 's'}
-              </Text>
-              <Text style={styles.cardFootValue}>{formatMoney(accountsShown)}</Text>
-            </View>
           </Animated.View>
         )}
 
@@ -288,46 +295,6 @@ export function YouSection() {
   );
 }
 
-/** One line of the tracked-balance sum: a colour key, what it is, and its signed amount. */
-function SumLine({ color, label, minor }: { color: string; label: string; minor: number }) {
-  return (
-    <View style={styles.sumLine}>
-      <View style={[styles.sumKey, { backgroundColor: color }]} />
-      <Text style={styles.sumLabel} numberOfLines={1}>
-        {label}
-      </Text>
-      <Text style={styles.sumValue}>{signedMoney(minor)}</Text>
-    </View>
-  );
-}
-
-function Stat({
-  value,
-  label,
-  onPress,
-  divider,
-}: {
-  value: number;
-  label: string;
-  onPress: () => void;
-  divider?: boolean;
-}) {
-  const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.96);
-  return (
-    <AnimatedPressable
-      style={[styles.stat, divider && styles.statDivider, animatedStyle]}
-      onPress={onPress}
-      onPressIn={onPressIn}
-      onPressOut={onPressOut}
-      accessibilityRole="button"
-      accessibilityLabel={`${value} ${label}`}
-    >
-      <Text style={styles.statValue}>{value}</Text>
-      <Text style={styles.statLabel}>{label}</Text>
-    </AnimatedPressable>
-  );
-}
-
 function AccountRow({
   account,
   minor,
@@ -357,10 +324,11 @@ function AccountRow({
           {account.name}
         </Text>
         <Text style={h.sub} numberOfLines={1}>
-          {ACCOUNT_TYPE_LABEL[account.type]}
+          {account.investment ? 'Savings · tracked' : ACCOUNT_TYPE_LABEL[account.type]}
           {archived ? ' · archived' : ''}
         </Text>
       </View>
+      {account.investment && !archived && <GainPill account={account} moneyOnly />}
       <Amount
         minor={minor}
         currency={account.currency}

@@ -58,7 +58,7 @@ interface HeroContent {
 }
 
 const CHECK_PATH_LENGTH = 22;
-const RING_SIZE = 104;
+const RING_SIZE = 72;
 const CONFETTI_COLORS = [theme.colors.secondary, theme.colors.primary, theme.colors.idCoralDeep];
 /** How far a horizontal drag must travel before letting go changes the period. */
 const SWIPE_STEP_PX = 60;
@@ -101,13 +101,13 @@ function ConfettiDot({ progress, piece }: { progress: SharedValue<number>; piece
 }
 
 /**
- * The month at a glance (the Home A sign-off, compact so the whole card and
- * Needs you fit the first screen): a ring of the period's income split into
- * spent, moved to savings and free to use (see MonthRing), with the headline
- * on its face, and four tinted tiles beside it — the three slices' amounts
- * (tap one to pick its slice; tap the ring to step through them) and debt
- * left. Today's spend against the daily goal and the month's pace are two
- * slim lines under them, and Suu's line is the card's mint footer.
+ * The month at a glance, number first: what's free to use is the one big
+ * figure, with the income it came out of underneath. Beside it a small ring
+ * splits that income into spent, moved to savings and free (see MonthRing) —
+ * tap it to step through the slices — and three tinted tiles under them give
+ * spent, saved and debt left (tap spent or saved to pick its slice). Today's
+ * spend against the daily goal and the month's pace are two slim lines under
+ * those, and Suu's line is the card's mint footer.
  *
  * The period bar at the top (title, ‹ month ›) stays put; everything under
  * it is the "page" that turns. Dragging that page sideways turns it too —
@@ -123,7 +123,6 @@ export function ThisMonthHero({
   periodKey,
   direction,
   title,
-  periodName,
   canStepForward,
   onStep,
   incomeMinor,
@@ -140,8 +139,6 @@ export function ThisMonthHero({
   direction: -1 | 0 | 1;
   /** "This month", or "Looking back" for an earlier period. */
   title: string;
-  /** The period's own name for the bar — "September", "2025". */
-  periodName: string;
   canStepForward: boolean;
   /** -1 for the period before, 1 for the one after. */
   onStep: (dir: -1 | 1) => void;
@@ -269,13 +266,13 @@ export function ThisMonthHero({
   const full = heroSlices(displayed.incomeMinor, displayed.spentMinor, displayed.savingsMinor);
   const slices = hideAmounts ? withoutSavings(full) : full;
   const modes = heroModes(slices, hideAmounts);
-  const resting = heroRestingMode(slices, hideAmounts);
+  // The ring rests on the spent share: the free figure is the headline beside it.
+  const resting: HeroMode = heroShare(slices, 'spent') > 0 ? 'spent' : heroRestingMode(slices, hideAmounts);
   const mode: HeroMode = picked && modes.includes(picked) ? picked : resting;
   const canPick = modes.length > 1;
   const rowValue = {
     spent: displayed.spentMinor,
     saved: displayed.savingsMinor,
-    free: displayed.surplusMinor,
   };
   const warn = displayed.suu.pose === 'sleepy';
   const debtCleared = displayed.outstandingLoansMinor === 0;
@@ -334,12 +331,21 @@ export function ThisMonthHero({
     strokeDashoffset: interpolate(checkDraw.value, [0, 1], [CHECK_PATH_LENGTH, 0]),
   }));
 
-  const ringLabel = !slices.hasIncome
-    ? 'no income yet'
-    : slices.overMinor > 0
-      ? 'spent more'
-      : (hideAmounts ? PRIVATE_LABEL[mode] : HERO_MODE_LABEL[mode]).toLowerCase();
-  const tileModes = hideAmounts ? (['spent', 'free'] as const) : (['spent', 'saved', 'free'] as const);
+  const ringLabel = !slices.hasIncome || slices.overMinor > 0 ? '' : RING_LABEL[mode];
+  const tileModes = hideAmounts ? (['spent'] as const) : (['spent', 'saved'] as const);
+
+  // The headline: what's free to use, or by how much the month went over.
+  const over = slices.overMinor > 0;
+  const headLabel = over ? 'Over by' : 'Free to use';
+  const headMinor = over ? slices.overMinor : displayed.surplusMinor;
+  const headNeg = over || displayed.surplusMinor < 0;
+  const headCaption = !slices.hasIncome
+    ? 'Add income to see what is free'
+    : over
+      ? 'more went out than came in'
+      : displayed.surplusMinor < 0
+        ? 'below zero'
+        : `left of ${formatMoney(displayed.incomeMinor)} income`;
 
   return (
     <SoftCard elevated backgroundColor={theme.colors.surface} padding={0} style={styles.card}>
@@ -357,9 +363,6 @@ export function ThisMonthHero({
             >
               <Feather name="chevron-left" size={16} color={theme.colors.textSecondary} />
             </Pressable>
-            <Text style={styles.navLabel} numberOfLines={1}>
-              {periodName}
-            </Text>
             <Pressable
               onPress={() => onStep(1)}
               disabled={!canStepForward}
@@ -376,6 +379,32 @@ export function ThisMonthHero({
 
         <ReanimatedAnimated.View style={[styles.body, slideStyle]} {...pan.panHandlers}>
           <View style={styles.top}>
+            <View
+              style={styles.headline}
+              accessible
+              accessibilityLabel={
+                slices.hasIncome ? `${headLabel}, ${formatMoney(headMinor)}, ${headCaption}` : headCaption
+              }
+            >
+              <Text style={styles.headLabel}>{headLabel}</Text>
+              {slices.hasIncome ? (
+                // Rolls to its new value after a save; a new period slides in instead.
+                <CountUpAmount
+                  key={displayed.periodKey}
+                  minor={headMinor}
+                  countFromZero={false}
+                  style={[styles.headValue, headNeg && styles.headValueNeg]}
+                  symbolStyle={styles.headSymbol}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                />
+              ) : (
+                <Text style={styles.headValue}>—</Text>
+              )}
+              <Text style={styles.headCaption} numberOfLines={2}>
+                {headCaption}
+              </Text>
+            </View>
             <MonthRing
               slices={slices}
               mode={picked && modes.includes(picked) ? picked : 'kept'}
@@ -386,93 +415,83 @@ export function ThisMonthHero({
               onPress={nextMode}
               accessibilityLabel={`${big}, ${subText}`}
             />
-            <View style={styles.tiles}>
-              {tileModes.map((m) => {
-                const active = picked === m;
-                const faded = !!picked && !active;
-                return (
-                  <Pressable
-                    key={m}
-                    onPress={() => pickMode(m)}
-                    disabled={!canPick || !modes.includes(m)}
-                    style={withPressed([
-                      styles.tile,
-                      { backgroundColor: TILE_TINT[m] },
-                      active && styles.tileActive,
-                      faded && styles.tileFaded,
-                    ])}
-                    accessibilityRole={canPick ? 'button' : 'text'}
-                    accessibilityState={canPick ? { selected: active } : undefined}
-                    accessibilityLabel={`${HERO_MODE_LABEL[m]}, ${formatMoney(rowValue[m])}`}
-                  >
-                    <View style={styles.tileHead}>
-                      <View style={[styles.tileDot, { backgroundColor: RING_COLORS[m] }]} />
-                      <Text style={styles.tileLabel} numberOfLines={1}>
-                        {HERO_MODE_LABEL[m]}
-                      </Text>
-                    </View>
-                    {/* Rolls to its new value after a save; a new period slides in instead. */}
-                    <CountUpAmount
-                      key={displayed.periodKey}
-                      minor={rowValue[m]}
-                      countFromZero={false}
-                      style={[styles.tileValue, m === 'free' && rowValue.free < 0 && styles.tileValueNeg]}
-                      numberOfLines={1}
-                      adjustsFontSizeToFit
+          </View>
+          <View style={styles.tiles}>
+            {tileModes.map((m) => {
+              const active = picked === m;
+              const faded = !!picked && !active;
+              return (
+                <Pressable
+                  key={m}
+                  onPress={() => pickMode(m)}
+                  disabled={!canPick || !modes.includes(m)}
+                  style={withPressed([
+                    styles.tile,
+                    { backgroundColor: TILE_TINT[m] },
+                    active && styles.tileActive,
+                    faded && styles.tileFaded,
+                  ])}
+                  accessibilityRole={canPick ? 'button' : 'text'}
+                  accessibilityState={canPick ? { selected: active } : undefined}
+                  accessibilityLabel={`${TILE_LABEL[m]}, ${formatMoney(rowValue[m])}`}
+                >
+                  <View style={styles.tileHead}>
+                    <View
+                      style={[styles.tileDot, { backgroundColor: RING_COLORS[m], borderColor: DOT_EDGE[m] }]}
                     />
-                  </Pressable>
-                );
-              })}
-              <View
-                style={[styles.tile, { backgroundColor: TILE_TINT.debt }]}
-                accessible
-                accessibilityLabel={`Debt left, ${formatMoney(displayed.outstandingLoansMinor)}`}
-              >
-                <View style={styles.tileHead}>
-                  <Feather name="credit-card" size={10} color={theme.colors.textSecondary} />
-                  <Text style={styles.tileLabel} numberOfLines={1}>
-                    Debt left
-                  </Text>
-                  {debtCleared && (
-                    <Svg width={10} height={10} viewBox="0 0 24 24">
-                      <AnimatedPath
-                        d="M5 13l4 4 10-10"
-                        stroke={theme.colors.income}
-                        strokeWidth={3.6}
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        fill="none"
-                        strokeDasharray={CHECK_PATH_LENGTH}
-                        animatedProps={checkAnimatedProps}
-                      />
-                    </Svg>
-                  )}
-                </View>
-                <CountUpAmount
-                  key={displayed.periodKey}
-                  minor={displayed.outstandingLoansMinor}
-                  countFromZero={false}
-                  style={styles.tileValue}
-                  numberOfLines={1}
-                  adjustsFontSizeToFit
-                />
-                {confettiPlaying &&
-                  confetti.map((piece, i) => (
-                    <ConfettiDot key={i} progress={confettiProgress} piece={piece} />
-                  ))}
+                    <Text style={styles.tileLabel} numberOfLines={1}>
+                      {TILE_LABEL[m]}
+                    </Text>
+                  </View>
+                  {/* Rolls to its new value after a save; a new period slides in instead. */}
+                  <CountUpAmount
+                    key={displayed.periodKey}
+                    minor={rowValue[m]}
+                    countFromZero={false}
+                    style={styles.tileValue}
+                    numberOfLines={1}
+                    adjustsFontSizeToFit
+                  />
+                </Pressable>
+              );
+            })}
+            <View
+              style={[styles.tile, { backgroundColor: TILE_TINT.debt }]}
+              accessible
+              accessibilityLabel={`Debt left, ${formatMoney(displayed.outstandingLoansMinor)}`}
+            >
+              <View style={styles.tileHead}>
+                <Feather name="credit-card" size={10} color={theme.colors.textSecondary} />
+                <Text style={styles.tileLabel} numberOfLines={1}>
+                  Debt left
+                </Text>
+                {debtCleared && (
+                  <Svg width={10} height={10} viewBox="0 0 24 24">
+                    <AnimatedPath
+                      d="M5 13l4 4 10-10"
+                      stroke={theme.colors.income}
+                      strokeWidth={3.6}
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      fill="none"
+                      strokeDasharray={CHECK_PATH_LENGTH}
+                      animatedProps={checkAnimatedProps}
+                    />
+                  </Svg>
+                )}
               </View>
+              <CountUpAmount
+                key={displayed.periodKey}
+                minor={displayed.outstandingLoansMinor}
+                countFromZero={false}
+                style={styles.tileValue}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+              />
+              {confettiPlaying &&
+                confetti.map((piece, i) => <ConfettiDot key={i} progress={confettiProgress} piece={piece} />)}
             </View>
           </View>
-
-          {slices.overMinor > 0 && (
-            <View style={styles.line}>
-              <Feather name="alert-circle" size={15} color={theme.colors.expense} />
-              <Text style={[styles.lineLabel, styles.lineWarn]} numberOfLines={2}>
-                <Text style={styles.lineMoneyWarn}>{formatMoney(slices.overMinor)}</Text> more went out than
-                came in
-              </Text>
-            </View>
-          )}
 
           {today && (
             <View style={styles.line}>
@@ -523,28 +542,30 @@ export function ThisMonthHero({
   );
 }
 
-/** The ring's word under the headline when savings are hidden: "free", not "free to use". */
+/** The word under the ring's figure — short, to fit the small face. */
+const RING_LABEL: Record<HeroMode, string> = { kept: 'kept', spent: 'spent', saved: 'saved', free: 'free' };
+
+/** The tiles' labels: "Saved", since the headline already says what is free. */
+const TILE_LABEL = { spent: 'Spent', saved: 'Saved' };
+
+/** What the spoken summary calls each view when savings are hidden: "free", not "free to use". */
 const PRIVATE_LABEL: Record<HeroMode, string> = { ...HERO_MODE_LABEL, free: 'Free', kept: 'Free' };
 
 /** The tiles' pale fills: each slice's own family, and a soft lavender for debt. */
 const TILE_TINT = {
   spent: theme.colors.idCoral,
   saved: theme.colors.secondaryTint,
-  free: theme.colors.primaryTint,
   debt: theme.colors.accentTint,
 };
+
+/** A deeper edge on each tile's legend dot, so the pastel ring colour still reads on the pale tile. */
+const DOT_EDGE = { spent: theme.colors.idCoralDeep, saved: theme.colors.secondaryDeep };
 
 const styles = StyleSheet.create({
   card: { marginHorizontal: 20, marginTop: 4, overflow: 'hidden' },
   inner: { padding: 16, paddingBottom: 14 },
   bar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
-  title: {
-    fontFamily: theme.font.roundedBold,
-    fontSize: 13,
-    letterSpacing: 0.3,
-    color: theme.colors.textSecondary,
-    textTransform: 'uppercase',
-  },
+  title: { fontFamily: theme.font.roundedBold, fontSize: 15, color: theme.colors.textPrimary },
   nav: { flexDirection: 'row', alignItems: 'center', gap: 2, flexShrink: 1 },
   navBtn: {
     width: 28,
@@ -554,22 +575,42 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   navBtnOff: { opacity: 0.25 },
-  navLabel: {
-    fontFamily: theme.font.roundedMedium,
-    fontSize: 12.5,
-    color: theme.colors.textSecondary,
-    minWidth: 64,
-    textAlign: 'center',
-    flexShrink: 1,
-  },
   body: { marginTop: 10 },
 
   top: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  tiles: { flex: 1, minWidth: 0, flexDirection: 'row', flexWrap: 'wrap', gap: 7 },
+  headline: { flex: 1, minWidth: 0 },
+  headLabel: {
+    fontFamily: theme.font.bodyBold,
+    fontSize: 11,
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
+    color: theme.colors.textSecondary,
+  },
+  headValue: {
+    fontFamily: theme.font.monoBold,
+    fontSize: 34,
+    lineHeight: 38,
+    letterSpacing: -1,
+    color: theme.colors.textPrimary,
+    marginTop: 2,
+  },
+  headSymbol: {
+    fontFamily: theme.font.monoBold,
+    fontSize: 21,
+    letterSpacing: 0,
+    color: theme.colors.textMuted,
+  },
+  headValueNeg: { color: theme.colors.expenseText },
+  headCaption: {
+    fontFamily: theme.font.body,
+    fontSize: 12.5,
+    color: theme.colors.textSecondary,
+    marginTop: 2,
+  },
+  tiles: { flexDirection: 'row', gap: 7, marginTop: 12 },
   tile: {
-    // Two to a row: half the width, less half the gap between them.
-    width: '47%',
-    flexGrow: 1,
+    flex: 1,
+    minWidth: 0,
     borderRadius: 16,
     paddingHorizontal: 10,
     paddingVertical: 8,
@@ -579,11 +620,11 @@ const styles = StyleSheet.create({
   tileActive: { borderColor: theme.colors.ink },
   tileFaded: { opacity: 0.4 },
   tileHead: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  tileDot: { width: 7, height: 7, borderRadius: 3.5 },
+  tileDot: { width: 9, height: 9, borderRadius: 4.5, borderWidth: 1.5 },
   tileLabel: {
     flexShrink: 1,
     fontFamily: theme.font.bodyBold,
-    fontSize: 10,
+    fontSize: 11,
     letterSpacing: 0.4,
     textTransform: 'uppercase',
     color: theme.colors.textSecondary,
@@ -594,14 +635,11 @@ const styles = StyleSheet.create({
     color: theme.colors.textPrimary,
     marginTop: 5,
   },
-  tileValueNeg: { color: theme.colors.expenseText },
 
   // Slim lines under the ring and tiles.
   line: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 12 },
   lineLabel: { flex: 1, fontFamily: theme.font.body, fontSize: 12.5, color: theme.colors.textSecondary },
   lineMoney: { fontFamily: theme.font.monoBold, color: theme.colors.textPrimary },
-  lineWarn: { color: theme.colors.expenseText },
-  lineMoneyWarn: { fontFamily: theme.font.monoBold, color: theme.colors.expenseText },
   todayMeter: { width: 72 },
 
   // Suu's line: the card's mint footer (coral when Suu is worried).
@@ -622,7 +660,7 @@ const styles = StyleSheet.create({
     lineHeight: 17,
     color: '#1D5E45',
   },
-  suuTextWarn: { color: theme.colors.idCoralDeep },
+  suuTextWarn: { color: theme.colors.expenseText },
 
   confettiDot: {
     position: 'absolute',

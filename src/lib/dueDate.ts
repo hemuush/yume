@@ -16,6 +16,7 @@ export function dueDateLabel(dateStr: string): string {
   const days = daysUntilIsoDate(dateStr);
   if (days < 0) return `Overdue by ${Math.abs(days)} day${Math.abs(days) === 1 ? '' : 's'}`;
   if (days === 0) return 'Due today';
+  if (days === 1) return 'Due tomorrow';
   if (days <= 90) return `Due in ${days} days`;
   return `Due on ${dateStr}`;
 }

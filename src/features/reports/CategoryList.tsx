@@ -1,4 +1,5 @@
 import { View, Pressable } from 'react-native';
+import Feather from '@expo/vector-icons/Feather';
 import { Text } from '@/components/Text';
 import { Amount } from '@/components/Amount';
 import { CategoryBreakdownItem } from '@/db/reports';
@@ -104,8 +105,9 @@ export function CategoryList({
           }
         >
           <Text style={styles.catMoreText}>
-            {expanded ? 'Show less ︿' : `${breakdown.length - COLLAPSED_COUNT} more ⌄`}
+            {expanded ? 'Show less' : `${breakdown.length - COLLAPSED_COUNT} more`}
           </Text>
+          <Feather name={expanded ? 'chevron-up' : 'chevron-down'} size={14} color={theme.colors.textMuted} />
         </Pressable>
       )}
     </View>

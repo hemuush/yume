@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Animated, Easing, TextProps } from 'react-native';
+import { Animated, Easing, StyleProp, TextProps, TextStyle } from 'react-native';
 import { Text } from '@/components/Text';
 import { formatMoney } from '@/lib/money';
 import { useReduceMotion } from '@/lib/useReduceMotion';
@@ -15,6 +15,14 @@ interface Props extends TextProps {
    * value changes afterwards: money added to a goal, an EMI paid.
    */
   countFromZero?: boolean;
+  /** Styles the leading currency symbol on its own (smaller, muted), digits keep `style`. */
+  symbolStyle?: StyleProp<TextStyle>;
+}
+
+/** "-₹1,200" → ["-", "₹", "1,200"]; null when the symbol trails or is missing. */
+export function splitLeadingSymbol(text: string): [string, string, string] | null {
+  const m = text.match(/^([-−]?)([^\d\-−]+)(\d.*)$/);
+  return m ? [m[1], m[2], m[3]] : null;
 }
 
 /**
@@ -26,7 +34,7 @@ interface Props extends TextProps {
  * can't be driven natively — it's one short number, so the per-frame
  * `formatMoney` cost is negligible.
  */
-export function CountUpAmount({ minor, currency, countFromZero = true, style, ...rest }: Props) {
+export function CountUpAmount({ minor, currency, countFromZero = true, symbolStyle, style, ...rest }: Props) {
   const reduce = useReduceMotion();
   const [display, setDisplay] = useState(minor);
   const [t] = useState(() => new Animated.Value(1));
@@ -63,9 +71,19 @@ export function CountUpAmount({ minor, currency, countFromZero = true, style, ..
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [minor, reduce, t]);
 
+  const text = formatMoney(display, currency);
+  const parts = symbolStyle ? splitLeadingSymbol(text) : null;
   return (
     <Text style={style} {...rest}>
-      {formatMoney(display, currency)}
+      {parts ? (
+        <>
+          {parts[0]}
+          <Text style={symbolStyle}>{parts[1]}</Text>
+          {parts[2]}
+        </>
+      ) : (
+        text
+      )}
     </Text>
   );
 }

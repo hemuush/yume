@@ -8,12 +8,14 @@ import { AccountType } from '@/types';
 import { ModalSheet } from '@/components/ModalSheet';
 import { SheetCard } from '@/components/SheetCard';
 import { useAccent } from '@/theme/AccentContext';
-import { accountIcon } from '@/lib/account';
-import { accountHue } from '@/features/home/AccountChip';
+import { accountHue, accountIcon } from '@/lib/account';
 import { modalFooterStyles as f } from '@/constants/theme';
 import { FormInput } from '@/components/FormInput';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { Chip } from '@/components/Chip';
+import { ToggleSwitch } from '@/components/ToggleSwitch';
+import { addValuation } from '@/db/valuations';
+import { toLocalIsoDate } from '@/lib/date';
 import { styles } from './profile.styles';
 import { ACCOUNT_TYPES } from './profile.constants';
 import { errorMessage } from '@/lib/errorMessage';
@@ -36,6 +38,8 @@ export function AddAccountModal({
   const [creditLimit, setCreditLimit] = useState('');
   const [statementDay, setStatementDay] = useState('');
   const [dueDay, setDueDay] = useState('');
+  const [tracked, setTracked] = useState(false);
+  const [worth, setWorth] = useState('');
   const [currency, setCurrency] = useState('INR');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -59,6 +63,8 @@ export function AddAccountModal({
     setCreditLimit('');
     setStatementDay('');
     setDueDay('');
+    setTracked(false);
+    setWorth('');
   };
 
   const submit = async () => {
@@ -82,9 +88,15 @@ export function AddAccountModal({
       setError(days.error);
       return;
     }
+    const tracking = type === 'savings' && tracked;
+    const worthMinor = tracking && worth.trim() ? toMinor(parseFloat(worth)) : null;
+    if (worthMinor !== null && (!Number.isFinite(worthMinor) || worthMinor < 0)) {
+      setError('Enter what it is worth today');
+      return;
+    }
     setSaving(true);
     try {
-      await createAccount({
+      const created = await createAccount({
         name: name.trim(),
         type,
         currency,
@@ -92,7 +104,11 @@ export function AddAccountModal({
         creditLimitMinor,
         statementDay: days.statementDay,
         dueDay: days.dueDay,
+        tracked: tracking,
       });
+      if (worthMinor !== null) {
+        await addValuation(created.id, { date: toLocalIsoDate(new Date()), valueMinor: worthMinor });
+      }
       reset();
       onCreated();
     } catch (e) {
@@ -101,6 +117,8 @@ export function AddAccountModal({
       setSaving(false);
     }
   };
+
+  const trackingNow = type === 'savings' && tracked;
 
   // The calm-sheets sign-off (Direction C): the new account's card, tinted
   // by the type you pick, with its opening balance.
@@ -119,9 +137,12 @@ export function AddAccountModal({
         hue={accountHue(type, accent)}
         icon={accountIcon(type)}
         kicker={ACCOUNT_TYPES.find((t) => t.value === type)?.label}
-        amount={formatMoney(toMinor(parseFloat(opening || '0')) || 0, currency)}
+        amount={formatMoney(
+          toMinor(parseFloat((trackingNow && worth.trim() ? worth : opening) || '0')) || 0,
+          currency
+        )}
         title={name.trim() || 'New account'}
-        meta="Opening balance"
+        meta={trackingNow ? (worth.trim() ? 'Worth today' : 'Invested so far') : 'Opening balance'}
       />
       <FormInput label="Name" value={name} onChangeText={setName} placeholder="e.g. HDFC Savings" />
       <Text style={styles.fieldLabel}>Type</Text>
@@ -148,13 +169,34 @@ export function AddAccountModal({
         ))}
       </View>
       <Text style={styles.hintText}>Can't be changed once this account has any transactions.</Text>
+      {type === 'savings' && (
+        <>
+          <View style={styles.toggleRow}>
+            <Text style={styles.fieldLabel}>Track its value</Text>
+            <ToggleSwitch value={tracked} onChange={setTracked} />
+          </View>
+          <Text style={styles.hintText}>
+            For an index fund, stocks or gold: you update what it's worth now and then, and Yume shows the
+            gain.
+          </Text>
+        </>
+      )}
       <FormInput
-        label="Opening balance"
+        label={trackingNow ? 'Invested so far' : 'Opening balance'}
         value={opening}
         onChangeText={setOpening}
         keyboardType="numeric"
         placeholder="0"
       />
+      {trackingNow && (
+        <FormInput
+          label="Worth today (optional)"
+          value={worth}
+          onChangeText={setWorth}
+          keyboardType="numeric"
+          placeholder="Leave empty to add it later"
+        />
+      )}
       {type === 'credit_card' && (
         <>
           <FormInput

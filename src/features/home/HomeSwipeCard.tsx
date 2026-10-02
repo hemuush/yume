@@ -136,7 +136,7 @@ export function HomeSwipeCard({ pages }: { pages: SwipePage[] }) {
 
   return (
     <View style={styles.wrap}>
-      <View style={homeStyles.card}>
+      <View style={[homeStyles.card, homeStyles.cardLifted]}>
         <View
           style={styles.track}
           accessibilityRole="tablist"

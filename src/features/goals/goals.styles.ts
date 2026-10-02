@@ -35,20 +35,6 @@ export const styles = StyleSheet.create({
   },
   cardArchived: { opacity: 0.6 },
   cardTop: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 11 },
-  cardName: { fontSize: 14.5, fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
-  cardTarget: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textMuted, marginTop: 2 },
-  track: { height: 6, borderRadius: 3, backgroundColor: theme.colors.borderSoft, overflow: 'hidden' },
-  fill: { height: '100%', borderRadius: 3 },
-  contributeBtn: {
-    marginTop: 11,
-    paddingVertical: 9,
-    borderRadius: 999,
-    backgroundColor: theme.colors.primaryTint,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-    alignItems: 'center',
-  },
-  contributeBtnText: { fontSize: 12, fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
 
   errorText: { fontFamily: theme.font.body, color: theme.colors.expenseText, fontSize: 13, marginBottom: 12 },
   modalHint: {

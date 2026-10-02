@@ -6,6 +6,7 @@ import { formatMoney } from '@/lib/money';
 import { roundedMinor } from '@/lib/round';
 import { theme } from '@/constants/theme';
 import { usePressScale } from '@/lib/usePressScale';
+import { withPressed } from '@/lib/pressed';
 import { MAX_LIST_STAGGER_MS, ROW_LAYOUT, ROW_EXIT } from '@/lib/animation';
 import { NeoTile } from '@/components/NeoTile';
 import { personStatus, lastActivityShort, PersonStatus } from './people.helpers';
@@ -44,7 +45,11 @@ const STATUS_LOOK: Record<
 /** Per-row entrance stagger, capped by MAX_LIST_STAGGER_MS for long lists. */
 const STAGGER_MS = 45;
 
-/** One person on the Friends & Family list: initial, status pill, balance, last activity. */
+/**
+ * One person with an open balance on the Friends & Family list: initial,
+ * status pill, balance, last activity, and a Settle up pill that opens the
+ * same sheet as the card (which opens on its Settle tab).
+ */
 export function PersonRow({
   person,
   color,
@@ -109,6 +114,22 @@ export function PersonRow({
             </View>
           </View>
         </AnimatedPressable>
+        {dispBalanceMinor !== 0 && (
+          <View style={styles.cardFoot}>
+            <Text style={styles.cardFootText} numberOfLines={1}>
+              {dispBalanceMinor > 0 ? 'Collect it when you’re ready' : 'Pay it back when you’re ready'}
+            </Text>
+            <Pressable
+              onPress={onPress}
+              hitSlop={8}
+              style={withPressed(styles.settlePill)}
+              accessibilityRole="button"
+              accessibilityLabel={`Settle up with ${person.name}`}
+            >
+              <Text style={styles.settlePillText}>Settle up</Text>
+            </Pressable>
+          </View>
+        )}
       </NeoTile>
     </ReanimatedAnimated.View>
   );

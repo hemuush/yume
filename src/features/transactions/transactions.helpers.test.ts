@@ -96,10 +96,10 @@ describe('Activity helpers', () => {
 describe('periodHeading', () => {
   const today = new Date(2026, 9, 1);
 
-  it('calls the week holding today "This week" and shows its dates', () => {
+  it('calls the week holding today "This week" and shows its dates and place in the month', () => {
     expect(periodHeading({ scope: 'week', week: weekContaining(today), anchor: today, today })).toEqual({
       title: 'This week',
-      sub: `1–${dayMonth('2026-10-03')}`,
+      sub: `1–${dayMonth('2026-10-03')} · Week 1 of 5`,
     });
   });
 

@@ -90,3 +90,49 @@ describe('BudgetRow', () => {
     expect(onMore).toHaveBeenCalledTimes(2);
   });
 });
+
+describe('BudgetRow per-day figure', () => {
+  const rowText = (showPerDay?: boolean, over?: Partial<BudgetProgress>) => {
+    jest.setSystemTime(new Date(2026, 9, 2, 12));
+    let tree!: ReturnType<typeof create>;
+    act(() => {
+      tree = create(
+        <BudgetRow
+          progress={makeProgress({
+            budget: {
+              id: 'b1',
+              categoryId: 'c1',
+              periodMonth: '2026-10',
+              limitAmountMinor: 500000,
+              rollover: false,
+            },
+            spentMinor: 100000,
+            remainingMinor: 400000,
+            percentUsed: 20,
+            ...over,
+          })}
+          divider={false}
+          onPress={() => {}}
+          showPerDay={showPerDay}
+        />
+      );
+    });
+    return JSON.stringify(tree.toJSON());
+  };
+
+  it('says what is left each day when asked to', () => {
+    expect(rowText(true)).toContain('left · ₹138 a day');
+  });
+
+  it('keeps "left this month" when not asked', () => {
+    const t = rowText(false);
+    expect(t).toContain('left this month');
+    expect(t).not.toContain('a day');
+  });
+
+  it('says nothing per day for an over-budget row', () => {
+    expect(rowText(true, { overBudget: true, remainingMinor: -1000, percentUsed: 101 })).not.toContain(
+      'a day'
+    );
+  });
+});

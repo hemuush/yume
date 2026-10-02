@@ -74,32 +74,41 @@ export function StoryCards({
                 key={c.key}
                 onPress={() => onJump(c.target)}
                 style={withPressed([
-                  styles.story,
+                  c.compact ? styles.storyCompact : styles.story,
                   { width: cards.length === 1 ? rowWidth : cardWidth, backgroundColor: TONE_BG[c.tone] },
                 ])}
                 accessibilityRole="button"
-                accessibilityLabel={`${c.kicker}: ${c.big}. ${c.detail}${c.foot ? ` ${c.foot}.` : ''}`}
+                accessibilityLabel={`${c.kicker}${c.compact ? '' : `: ${c.big}`}. ${c.detail}${c.foot ? ` ${c.foot}.` : ''}`}
               >
-                <Text style={styles.storyKicker}>
-                  {String(i + 1).padStart(2, '0')} · {c.kicker.toUpperCase()}
-                </Text>
-                {c.moonFraction != null ? (
-                  <View style={styles.storyMoonRow}>
-                    <MoonPhase size={64} litFraction={c.moonFraction} accent={accent} />
-                    <View style={styles.storyMoonText}>
-                      <Text style={styles.storyBig} numberOfLines={1} adjustsFontSizeToFit>
-                        {c.big}
-                      </Text>
-                      <Text style={styles.storyDetail}>{c.detail}</Text>
-                    </View>
-                  </View>
+                {c.compact ? (
+                  <>
+                    <Text style={styles.storyCompactTitle}>{c.kicker}</Text>
+                    <Text style={styles.storyCompactDetail}>{c.detail}</Text>
+                  </>
                 ) : (
-                  <View>
-                    <Text style={styles.storyBig} numberOfLines={2} adjustsFontSizeToFit>
-                      {c.big}
+                  <>
+                    <Text style={styles.storyKicker}>
+                      {String(i + 1).padStart(2, '0')} · {c.kicker.toUpperCase()}
                     </Text>
-                    <Text style={styles.storyDetail}>{c.detail}</Text>
-                  </View>
+                    {c.moonFraction != null ? (
+                      <View style={styles.storyMoonRow}>
+                        <MoonPhase size={64} litFraction={c.moonFraction} accent={accent} />
+                        <View style={styles.storyMoonText}>
+                          <Text style={styles.storyBig} numberOfLines={1} adjustsFontSizeToFit>
+                            {c.big}
+                          </Text>
+                          <Text style={styles.storyDetail}>{c.detail}</Text>
+                        </View>
+                      </View>
+                    ) : (
+                      <View>
+                        <Text style={styles.storyBig} numberOfLines={2} adjustsFontSizeToFit>
+                          {c.big}
+                        </Text>
+                        <Text style={styles.storyDetail}>{c.detail}</Text>
+                      </View>
+                    )}
+                  </>
                 )}
                 {!!c.foot && <Text style={styles.storyFoot}>{c.foot}</Text>}
               </Pressable>

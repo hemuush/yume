@@ -13,6 +13,9 @@ import { EmptyState } from '@/components/EmptyState';
 import { useScreenLoad } from '@/lib/useScreenLoad';
 import { Skeleton } from '@/components/Skeleton';
 import { GoalCard } from '@/features/goals/GoalCard';
+import { GoalsHero } from '@/features/goals/GoalsHero';
+import { goalHues, summarizeGoals } from '@/features/goals/goalPlan';
+import { toLocalIsoDate } from '@/lib/date';
 import { AddGoalModal } from '@/features/goals/AddGoalModal';
 import { GoalDetailModal } from '@/features/goals/GoalDetailModal';
 import { ContributeModal } from '@/features/goals/ContributeModal';
@@ -57,6 +60,8 @@ export default function SavingsGoalsScreen() {
   const activeGoals = allGoals.filter((g) => !g.archived);
   const archivedGoals = allGoals.filter((g) => g.archived);
   const visibleGoals = showArchived ? archivedGoals : activeGoals;
+  const totals = summarizeGoals(activeGoals, toLocalIsoDate(new Date()));
+  const hues = goalHues(allGoals);
 
   if (!loaded && !loadError) {
     return (
@@ -118,16 +123,20 @@ export default function SavingsGoalsScreen() {
             }
           />
         ) : (
-          visibleGoals.map((goal) => (
-            <MovingRow key={goal.id}>
-              <GoalCard
-                goal={goal}
-                accountName={accounts.find((a) => a.id === goal.linkedAccountId)?.name}
-                onPress={() => setEditingGoal(goal)}
-                onContribute={() => setContributingGoal(goal)}
-              />
-            </MovingRow>
-          ))
+          <>
+            {!showArchived && <GoalsHero totals={totals} />}
+            {visibleGoals.map((goal) => (
+              <MovingRow key={goal.id}>
+                <GoalCard
+                  goal={goal}
+                  hue={hues[goal.id]}
+                  accountName={accounts.find((a) => a.id === goal.linkedAccountId)?.name}
+                  onPress={() => setEditingGoal(goal)}
+                  onContribute={() => setContributingGoal(goal)}
+                />
+              </MovingRow>
+            ))}
+          </>
         )}
       </ScrollView>
 

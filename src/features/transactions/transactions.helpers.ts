@@ -92,8 +92,8 @@ export function groupByDate(txs: Transaction[]): { date: string; items: Transact
 /**
  * The Activity period bar's title and the quieter line beside it. A week is
  * the Sunday-to-Saturday row of its month, so "This week" carries its real
- * dates ("1–3 Oct") alongside; any other week leads with its dates and says
- * which week of the month it is. A month is its name, plus the year only when
+ * dates and its place in the month ("1–3 Oct · Week 1 of 5") alongside; any
+ * other week leads with its dates and says which week of the month it is. A month is its name, plus the year only when
  * it isn't this year's.
  */
 export function periodHeading(input: {
@@ -113,8 +113,9 @@ export function periodHeading(input: {
       ? dayMonth(week.end)
       : `${parseLocalIsoDate(week.start).getDate()}–${dayMonth(week.end)}`;
   const todayIso = toLocalIsoDate(today);
-  if (todayIso >= week.start && todayIso <= week.end) return { title: 'This week', sub: range };
   const position = `Week ${week.index + 1} of ${week.ranges.length}`;
+  if (todayIso >= week.start && todayIso <= week.end)
+    return { title: 'This week', sub: `${range} · ${position}` };
   return {
     title: range,
     sub: anchor.getFullYear() === today.getFullYear() ? position : `${position} · ${anchor.getFullYear()}`,

@@ -18,9 +18,10 @@ const ACTIONS: {
   label: string;
   icon: React.ComponentProps<typeof Feather>['name'];
   color: string;
+  primary?: boolean;
 }[] = [
-  { type: 'expense', label: 'Expense', icon: 'arrow-up-right', color: theme.colors.expenseText },
-  { type: 'income', label: 'Income', icon: 'arrow-down-right', color: theme.colors.incomeText },
+  { type: 'expense', label: 'Expense', icon: 'plus', color: theme.colors.white, primary: true },
+  { type: 'income', label: 'Income', icon: 'plus', color: theme.colors.incomeText },
   { type: 'transfer', label: 'Transfer', icon: 'repeat', color: TRANSFER_TEXT },
 ];
 
@@ -28,15 +29,14 @@ const ACTIONS: {
  * Three shortcuts to the Add screen, pre-selecting the segment that
  * matters — the nav bar's own + still opens the same screen on the default
  * (Expense) segment, this just skips the extra tap for the other two.
- * Each pill's icon+label carries its type's own colour (matching Income/
- * Spent, Free to use/Debt left, and every other figure on Home) instead of a tinted
- * fill — the pill itself stays a plain neutral surface, so colour lives in
- * the figure, not the card, the one rule the whole screen now follows.
+ * Expense is the one filled (ink) pill, as it is the thing logged most;
+ * Income and Transfer are plain frosted pills whose icon+label carry their
+ * type's own colour, so colour lives in the label, not the card.
  *
  * Lives inside Home's sky header band (HomeHeader's `children`), so the
  * pills are a soft frosted surface there rather than outlined cards.
  */
-function ActionPill({ type, label, icon, color }: (typeof ACTIONS)[number]) {
+function ActionPill({ type, label, icon, color, primary }: (typeof ACTIONS)[number]) {
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.95);
   return (
     <Pressable
@@ -47,7 +47,7 @@ function ActionPill({ type, label, icon, color }: (typeof ACTIONS)[number]) {
       accessibilityRole="button"
       accessibilityLabel={`Add ${label.toLowerCase()}`}
     >
-      <Animated.View style={[styles.pill, animatedStyle]}>
+      <Animated.View style={[styles.pill, primary && styles.pillPrimary, animatedStyle]}>
         <Feather name={icon} size={13} color={color} />
         <Text style={[styles.label, { color }]}>{label}</Text>
       </Animated.View>
@@ -78,5 +78,6 @@ const styles = StyleSheet.create({
     borderRadius: theme.radius.lg,
     backgroundColor: theme.colors.glass,
   },
+  pillPrimary: { backgroundColor: theme.colors.ink },
   label: { fontFamily: theme.font.bodyBold, fontSize: 12.5 },
 });

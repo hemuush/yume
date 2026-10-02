@@ -1,8 +1,9 @@
 /**
- * Profile's "You" section: the tracked balance spelled out as a sum that
- * adds up, counts that open their screens, accounts as one card with a
- * total, archived accounts folded away, and one row pointing to Plan —
- * without repeating the blocks that now live on Plan.
+ * Profile's "You" section: what is in your accounts first, the tracked
+ * balance as one line that opens to a sum that adds up, tiles that open their
+ * screens, accounts grouped by type with subtotals, archived accounts folded
+ * away, and one row pointing to Plan. Totals that include savings are masked
+ * while savings amounts are hidden.
  */
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
 import { Text } from 'react-native';
@@ -49,6 +50,10 @@ jest.mock('@/db/ledger', () => ({
   countTransactions: jest.fn(async () => 284),
 }));
 const mockLoans = jest.fn();
+let mockHideAmounts = false;
+jest.mock('@/theme/PrivacyContext', () => ({
+  usePrivacy: () => ({ hideAmounts: mockHideAmounts, toggleHideAmounts: jest.fn() }),
+}));
 jest.mock('@/db/loans', () => ({ listLoans: () => mockLoans() }));
 jest.mock('@/db/people', () => ({ listPeople: async () => [{ balanceMinor: 250000 }] }));
 jest.mock('@/db/settings', () => ({
@@ -98,6 +103,7 @@ function press(tree: ReactTestRenderer, label: string) {
 
 beforeEach(() => {
   jest.clearAllMocks();
+  mockHideAmounts = false;
   mockLoans.mockResolvedValue([homeLoan(null)]);
 });
 
@@ -108,14 +114,30 @@ beforeAll(async () => {
   await render();
 }, 180000);
 
+/** Opens the tracked-balance line to show the sum behind it. */
+const openTracked = (tree: ReactTestRenderer) => press(tree, 'Tracked balance');
+
 describe('Profile · You section', () => {
-  it('spells the tracked balance out as a sum whose lines add up to it', async () => {
+  it('leads with what is in your accounts, and keeps the tracked balance to one line', async () => {
     const shown = texts(await render());
     // ₹99,999 − ₹5,00,000 + ₹2,500 = −₹3,97,501, built from the lines as shown.
     expect(shown).toEqual(
       expect.arrayContaining([
+        'In your accounts',
+        '₹99,999',
+        'across 2 accounts',
         'Tracked balance',
         '−₹3,97,501',
+      ])
+    );
+    expect(shown).not.toContain('Loans');
+  });
+
+  it('spells the tracked balance out as a sum whose lines add up once opened', async () => {
+    const tree = await render();
+    openTracked(tree);
+    expect(texts(tree)).toEqual(
+      expect.arrayContaining([
         'Your accounts',
         '+₹99,999',
         'Loans',
@@ -126,34 +148,38 @@ describe('Profile · You section', () => {
     );
   });
 
-  it('shows every account in one card with a footer total that matches the rows', async () => {
+  it('groups accounts by type, each group with a subtotal that matches its rows', async () => {
     const shown = texts(await render());
     expect(shown).toEqual(
       expect.arrayContaining([
         'Accounts',
+        'Bank · 1',
         'Salary account',
         '₹84,200',
+        'Savings · 1',
         'Rainy day',
         '₹15,799',
-        'Account balance · 2 accounts',
-        '₹99,999',
       ])
     );
+    // The accounts total is shown once, in the hero, not again as a footer.
+    expect(shown.some((t) => t.startsWith('Account balance'))).toBe(false);
   });
 
-  it('counts entries, loans and people, and each count opens its screen', async () => {
+  it('counts entries, loans and friends, and each tile opens its screen', async () => {
     const tree = await render();
-    expect(texts(tree)).toEqual(expect.arrayContaining(['284', 'Entries', '1', 'Active loans', 'People']));
+    expect(texts(tree)).toEqual(expect.arrayContaining(['284', 'Entries', '1', 'Active loans', 'Friends']));
     press(tree, '284 Entries');
     expect(router.navigate).toHaveBeenCalledWith('/transactions');
     press(tree, '1 Active loans');
     expect(router.push).toHaveBeenCalledWith('/loans');
-    press(tree, '1 People');
+    press(tree, '1 Friends');
     expect(router.push).toHaveBeenCalledWith('/people');
   });
 
   it("says why the balance runs negative when a loan's asset isn't tracked, and links to Loans", async () => {
     const tree = await render();
+    expect(texts(tree).some((t) => t.startsWith("A loan's home or vehicle"))).toBe(false);
+    openTracked(tree);
     const hint = texts(tree).find((t) => t.startsWith("A loan's home or vehicle isn't counted"));
     expect(hint).toBeDefined();
     press(tree, hint!);
@@ -162,7 +188,9 @@ describe('Profile · You section', () => {
 
   it('explains equity instead once every loan has its asset value', async () => {
     mockLoans.mockResolvedValue([homeLoan(80000000)]);
-    const shown = texts(await render());
+    const tree = await render();
+    openTracked(tree);
+    const shown = texts(tree);
     expect(shown).toContain(
       'Loans with a tracked asset value count their real equity here, not just the debt.'
     );
@@ -172,9 +200,24 @@ describe('Profile · You section', () => {
 
   it('leaves the loans line out when there are no loans', async () => {
     mockLoans.mockResolvedValue([]);
-    const shown = texts(await render());
+    const tree = await render();
+    openTracked(tree);
+    const shown = texts(tree);
     expect(shown).not.toContain('Loans');
     expect(shown).toContain('₹1,02,499'); // ₹99,999 + ₹2,500
+  });
+
+  it('masks every total that includes savings while savings amounts are hidden', async () => {
+    mockHideAmounts = true;
+    const tree = await render();
+    openTracked(tree);
+    const shown = texts(tree);
+    // Savings row, Savings subtotal, hero, tracked balance and the accounts line are all masked…
+    expect(shown.filter((t) => t === '₹••••').length).toBeGreaterThanOrEqual(5);
+    expect(shown).toContain('across 2 accounts · savings hidden');
+    for (const leak of ['₹99,999', '+₹99,999', '₹15,799', '−₹3,97,501']) expect(shown).not.toContain(leak);
+    // …while the bank account, the loan and the friend are not.
+    expect(shown).toEqual(expect.arrayContaining(['₹84,200', '−₹5,00,000', '+₹2,500']));
   });
 
   it('folds archived accounts into one row that opens to show them', async () => {

@@ -1,8 +1,8 @@
 /**
- * Home's compact month card (the Home A sign-off): the ring's face says how
- * much was kept, four tiles give spent, to savings, free to use and debt
- * left, tapping a tile picks its slice (and tapping it again goes back),
- * the ring steps through the slices, and an overspent month says so. All
+ * Home's month card, number first: what's free to use is the headline, a
+ * small ring says how much was spent, three tiles give spent, saved and debt
+ * left, tapping a tile picks its slice (and tapping it again goes back), the
+ * ring steps through the slices, and an overspent month says so. All
  * figures are made up.
  */
 import { Text } from 'react-native';
@@ -49,7 +49,6 @@ function render(over: Partial<React.ComponentProps<typeof ThisMonthHero>> = {}) 
         periodKey="month:0"
         direction={0}
         title="This month"
-        periodName="September"
         canStepForward={false}
         onStep={jest.fn()}
         incomeMinor={19_605_600}
@@ -68,36 +67,46 @@ function render(over: Partial<React.ComponentProps<typeof ThisMonthHero>> = {}) 
 }
 
 describe('month card', () => {
-  it('shows what was kept on the ring, and the four figures beside it', () => {
+  it('leads with what is free to use, with the spent share on the ring and three tiles under it', () => {
     const all = texts(render());
     expect(all).toEqual(
-      expect.arrayContaining(['51%', 'kept', 'Spent', 'To savings', 'Free to use', 'Debt left'])
+      expect.arrayContaining([
+        'Free to use',
+        'left of ₹1,96,056 income',
+        '49%',
+        'spent',
+        'Spent',
+        'Saved',
+        'Debt left',
+      ])
     );
-    expect(all).toEqual(expect.arrayContaining(['₹95,762', '₹99,500', '₹794', '₹23,18,958']));
+    expect(all).toEqual(expect.arrayContaining(['₹794', '₹95,762', '₹99,500', '₹23,18,958']));
+    // Free to use is said once, as the headline — it has no tile of its own.
+    expect(all.filter((t) => t === 'Free to use')).toHaveLength(1);
     expect(all.some((t) => t.startsWith('On pace for about'))).toBe(true);
     expect(all).toContain('Half of September stayed with you.');
   });
 
   it('picks a slice from its tile, and lets go on a second tap', () => {
     const r = render();
-    act(() => byLabel(r, 'Spent,').props.onPress());
+    act(() => byLabel(r, 'Saved,').props.onPress());
+    expect(texts(r)).toEqual(expect.arrayContaining(['51%', 'saved']));
+    act(() => byLabel(r, 'Saved,').props.onPress());
     expect(texts(r)).toEqual(expect.arrayContaining(['49%', 'spent']));
-    act(() => byLabel(r, 'Spent,').props.onPress());
-    expect(texts(r)).toEqual(expect.arrayContaining(['51%', 'kept']));
   });
 
   it('steps through the slices from the ring', () => {
     const r = render();
-    act(() => byLabel(r, '51%').props.onPress());
-    expect(texts(r)).toContain('spent');
+    act(() => byLabel(r, '49%').props.onPress());
+    expect(texts(r)).toEqual(expect.arrayContaining(['51%', 'saved']));
   });
 
   it('says when more went out than came in', () => {
     const all = texts(
       render({ incomeMinor: 5_000_000, spentMinor: 6_000_000, savingsMinor: 0, surplusMinor: -1_000_000 })
     );
-    expect(all).toEqual(expect.arrayContaining(['Over', 'spent more']));
-    expect(all.some((t) => t.includes('more went out than came in'))).toBe(true);
+    expect(all).toEqual(expect.arrayContaining(['Over', 'Over by', '₹10,000']));
+    expect(all.filter((t) => t.includes('more went out than came in'))).toHaveLength(1);
   });
 });
 
@@ -121,10 +130,10 @@ describe('month card with savings hidden', () => {
     mockHideAmounts = false;
   });
 
-  it('shows the free share on the ring and only the Spent and Free tiles, with Debt still there', () => {
+  it('keeps the free headline and the Spent tile, drops the Saved tile, and leaves Debt', () => {
     const all = texts(render(hidden));
-    expect(all).toEqual(expect.arrayContaining(['30%', 'free', 'Spent', 'Free to use', 'Debt left']));
-    expect(all).not.toContain('To savings');
+    expect(all).toEqual(expect.arrayContaining(['10%', 'spent', 'Spent', 'Free to use', 'Debt left']));
+    expect(all).not.toContain('Saved');
     expect(all).not.toContain('kept');
     expect(all).toEqual(expect.arrayContaining(['₹10,000', '₹30,000']));
   });
@@ -138,16 +147,23 @@ describe('month card with savings hidden', () => {
 
   it('steps between free and spent only, never through a savings view', () => {
     const r = render(hidden);
-    act(() => byLabel(r, '30%').props.onPress());
-    expect(texts(r)).toEqual(expect.arrayContaining(['10%', 'spent']));
     act(() => byLabel(r, '10%').props.onPress());
     expect(texts(r)).toEqual(expect.arrayContaining(['30%', 'free']));
+    act(() => byLabel(r, '30%').props.onPress());
+    expect(texts(r)).toEqual(expect.arrayContaining(['10%', 'spent']));
   });
 
   it('still says when more went out than came in', () => {
     const all = texts(
       render({ incomeMinor: 5_000_000, spentMinor: 6_000_000, savingsMinor: 0, surplusMinor: -1_000_000 })
     );
-    expect(all).toEqual(expect.arrayContaining(['Over', 'spent more']));
+    expect(all).toEqual(expect.arrayContaining(['Over', 'Over by']));
+  });
+});
+
+describe('month card with no income', () => {
+  it('asks for income instead of showing a figure', () => {
+    const all = texts(render({ incomeMinor: 0, spentMinor: 0, savingsMinor: 0, surplusMinor: 0 }));
+    expect(all).toEqual(expect.arrayContaining(['Free to use', '—', 'Add income to see what is free']));
   });
 });

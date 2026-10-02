@@ -4,6 +4,9 @@ import { Text } from '@/components/Text';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getPeriodComparison } from '@/db/reports';
+import { listAccounts } from '@/db/ledger';
+import { toLocalIsoDate } from '@/lib/date';
+import { valueReminderLine } from '@/lib/investment';
 import { getNotificationPrefs } from '@/db/settings';
 import { formatPctChange } from '@/lib/format';
 import { haptics } from '@/lib/haptics';
@@ -41,24 +44,29 @@ export default function NeedsYouScreen() {
   const [shown, setShown] = useState<NeedsYouItem[] | null>(null);
   const [dismissed, setDismissed] = useState<NeedsYouItem[]>([]);
   const [showDismissed, setShowDismissed] = useState(false);
-  const [suuLine, setSuuLine] = useState<string | null>(null);
+  const [suuLines, setSuuLines] = useState<string[]>([]);
 
   const load = useCallback(async () => {
-    const [needs, prefs, comparison] = await Promise.all([
+    const [needs, prefs, comparison, accounts] = await Promise.all([
       loadNeedsYou(),
       getNotificationPrefs(),
       getPeriodComparison('month'),
+      listAccounts(),
     ]);
     setShown(needs.shown);
     setDismissed(needs.dismissed);
     const pct = comparison.expenseChangePct;
-    setSuuLine(
-      prefs.suuCheckins && pct != null
-        ? pct <= 0
+    const lines: string[] = [];
+    if (prefs.suuCheckins && pct != null) {
+      lines.push(
+        pct <= 0
           ? `You're spending ${formatPctChange(pct)} less than last month — nice pace.`
           : `You're spending ${formatPctChange(pct)} more than last month. A lighter week would even it out.`
-        : null
-    );
+      );
+    }
+    const reminder = prefs.suuCheckins ? valueReminderLine(accounts, toLocalIsoDate(new Date())) : null;
+    if (reminder) lines.push(reminder);
+    setSuuLines(lines);
   }, []);
   const { loadError, reload } = useScreenLoad(load);
 
@@ -130,11 +138,17 @@ export default function NeedsYouScreen() {
           </View>
         )}
 
-        {suuLine && (
+        {suuLines.length > 0 && (
           <HomeSection title="Suu says">
             <View style={[h.card, styles.suu]}>
               <View style={[styles.suuDot, { backgroundColor: dot }]} />
-              <Text style={styles.suuText}>{suuLine}</Text>
+              <View style={styles.suuLines}>
+                {suuLines.map((line) => (
+                  <Text key={line} style={styles.suuText}>
+                    {line}
+                  </Text>
+                ))}
+              </View>
             </View>
           </HomeSection>
         )}
@@ -196,8 +210,8 @@ const styles = StyleSheet.create({
   },
   suu: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, padding: 14 },
   suuDot: { width: 8, height: 8, borderRadius: 4, marginTop: 6 },
+  suuLines: { flex: 1, gap: 8 },
   suuText: {
-    flex: 1,
     fontFamily: theme.font.body,
     fontSize: 13,
     lineHeight: 19,

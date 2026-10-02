@@ -1,5 +1,6 @@
 import { StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
+import { SOFT_LIFT } from './SoftCard';
 
 /**
  * Home's one visual system (the "arranged Home" sign-off): every card,
@@ -26,6 +27,8 @@ export const homeStyles = StyleSheet.create({
     borderColor: theme.colors.borderSoft,
     overflow: 'hidden',
   },
+  // The main Home cards: the same card, lifted like the month card.
+  cardLifted: { ...SOFT_LIFT },
   // A card inside a sheet, which already has its own side padding.
   cardInSheet: { marginHorizontal: 0, marginBottom: 12 },
   row: {
@@ -49,6 +52,7 @@ export const homeStyles = StyleSheet.create({
   title: { fontFamily: theme.font.bodyBold, fontSize: 14, color: theme.colors.textPrimary },
   sub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, marginTop: 2 },
   subUrgent: { fontFamily: theme.font.bodyBold, color: theme.colors.expenseText },
+  subSoon: { fontFamily: theme.font.bodyBold, color: theme.colors.warnInk },
   amount: { fontFamily: theme.font.monoBold, fontSize: 13.5, color: theme.colors.textPrimary },
   income: { color: theme.colors.incomeText },
   expense: { color: theme.colors.expenseText },

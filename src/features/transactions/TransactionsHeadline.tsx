@@ -8,7 +8,6 @@ import ReanimatedAnimated, {
   runOnJS,
 } from 'react-native-reanimated';
 import { CountUpAmount } from '@/components/CountUpAmount';
-import { formatPctChange } from '@/lib/format';
 import { formatMoney } from '@/lib/money';
 import { useReduceMotion } from '@/lib/useReduceMotion';
 import { SpendBarChart, ChartLegend } from './SpendBarChart';
@@ -28,7 +27,8 @@ const LEGEND_MAX = 4;
 interface HeadlineContent {
   expenseMinor: number;
   incomeMinor: number;
-  expenseChangePct: number | null;
+  /** This period's spend less the comparison period's; null when there is nothing to compare. */
+  expenseChangeMinor: number | null;
   viewScope: 'week' | 'month';
   /** What the change pill compares with; defaults to "last week"/"last month". */
   compareLabel?: string;
@@ -57,7 +57,7 @@ export function TransactionsHeadline({
   direction,
   expenseMinor,
   incomeMinor,
-  expenseChangePct,
+  expenseChangeMinor,
   viewScope,
   compareLabel,
   onChangeViewScope,
@@ -65,7 +65,6 @@ export function TransactionsHeadline({
   legend,
   onPressDay,
   selectedKey,
-  hint,
 }: HeadlineContent & {
   periodKey: string;
   direction: -1 | 0 | 1;
@@ -74,14 +73,12 @@ export function TransactionsHeadline({
   onPressDay: (key: string) => void;
   /** The tapped bar, if any — see SpendBarChart's `selectedKey`. */
   selectedKey: string | null;
-  /** What the tapped bar cost, shown in the legend's place; null until a bar is tapped. */
-  hint: { title: string; detail: string } | null;
 }) {
   const reduce = useReduceMotion();
   const [displayed, setDisplayed] = useState<HeadlineContent>({
     expenseMinor,
     incomeMinor,
-    expenseChangePct,
+    expenseChangeMinor,
     viewScope,
     compareLabel,
     bars,
@@ -108,7 +105,7 @@ export function TransactionsHeadline({
     const next: HeadlineContent = {
       expenseMinor,
       incomeMinor,
-      expenseChangePct,
+      expenseChangeMinor,
       viewScope,
       compareLabel,
       bars,
@@ -154,7 +151,17 @@ export function TransactionsHeadline({
     // `direction` is read with the period it came with, and `opacity`/`tx` are
     // stable shared values; re-running on `direction` alone would replay the slide.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [periodKey, expenseMinor, incomeMinor, expenseChangePct, viewScope, compareLabel, bars, legend, reduce]);
+  }, [
+    periodKey,
+    expenseMinor,
+    incomeMinor,
+    expenseChangeMinor,
+    viewScope,
+    compareLabel,
+    bars,
+    legend,
+    reduce,
+  ]);
 
   const slideStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: tx.value }],
@@ -162,7 +169,7 @@ export function TransactionsHeadline({
   }));
 
   const net = displayed.incomeMinor - displayed.expenseMinor;
-  const pct = displayed.expenseChangePct;
+  const change = displayed.expenseChangeMinor;
   return (
     <View style={styles.sumCard}>
       {/* Outside the slide: the switch is a control, and it shouldn't move under your finger. */}
@@ -190,10 +197,10 @@ export function TransactionsHeadline({
           numberOfLines={1}
           adjustsFontSizeToFit
         />
-        {pct != null && pct !== 0 && (
-          <View style={[styles.changePill, pct > 0 ? styles.changePillUp : styles.changePillDown]}>
-            <Text style={[styles.changeText, pct > 0 ? styles.expense : styles.income]}>
-              {pct > 0 ? '▲' : '▼'} {formatPctChange(pct)} vs{' '}
+        {change != null && change !== 0 && (
+          <View style={[styles.changePill, change > 0 ? styles.changePillUp : styles.changePillDown]}>
+            <Text style={[styles.changeText, change > 0 ? styles.expense : styles.income]}>
+              {change > 0 ? '▲' : '▼'} {formatMoney(Math.abs(change))} {change > 0 ? 'more' : 'less'} than{' '}
               {displayed.compareLabel ?? `last ${displayed.viewScope}`}
             </Text>
           </View>
@@ -202,30 +209,26 @@ export function TransactionsHeadline({
         <View style={styles.sumChart}>
           <SpendBarChart bars={displayed.bars} onPressDay={onPressDay} selectedKey={selectedKey} inset={0} />
         </View>
-        {hint ? (
-          <Text style={styles.sumHint} numberOfLines={1}>
-            <Text style={styles.sumHintTitle}>{hint.title}</Text> · {hint.detail}
-          </Text>
-        ) : (
-          <ChartLegend items={displayed.legend} inset={0} max={LEGEND_MAX} />
-        )}
+        <ChartLegend items={displayed.legend} inset={0} max={LEGEND_MAX} />
 
-        <View style={styles.sumStrip}>
-          <View style={styles.sumStripCell}>
-            <Text style={styles.sumKicker}>Money in</Text>
-            <Text style={[styles.sumStripValue, displayed.incomeMinor > 0 && styles.income]}>
-              {displayed.incomeMinor > 0 ? '+' : ''}
-              {formatMoney(displayed.incomeMinor)}
-            </Text>
+        {displayed.incomeMinor > 0 && (
+          <View style={styles.sumStrip}>
+            <View style={styles.sumStripCell}>
+              <Text style={styles.sumKicker}>Money in</Text>
+              <Text style={[styles.sumStripValue, displayed.incomeMinor > 0 && styles.income]}>
+                {displayed.incomeMinor > 0 ? '+' : ''}
+                {formatMoney(displayed.incomeMinor)}
+              </Text>
+            </View>
+            <View style={[styles.sumStripCell, styles.sumStripCellRight]}>
+              <Text style={styles.sumKicker}>Net</Text>
+              <Text style={[styles.sumStripValue, net > 0 && styles.income, net < 0 && styles.expense]}>
+                {net > 0 ? '+' : net < 0 ? '−' : ''}
+                {formatMoney(Math.abs(net))}
+              </Text>
+            </View>
           </View>
-          <View style={[styles.sumStripCell, styles.sumStripCellRight]}>
-            <Text style={styles.sumKicker}>Net</Text>
-            <Text style={[styles.sumStripValue, net > 0 && styles.income, net < 0 && styles.expense]}>
-              {net > 0 ? '+' : net < 0 ? '−' : ''}
-              {formatMoney(Math.abs(net))}
-            </Text>
-          </View>
-        </View>
+        )}
       </ReanimatedAnimated.View>
     </View>
   );
