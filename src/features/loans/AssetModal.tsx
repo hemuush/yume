@@ -5,6 +5,7 @@ import { updateLoanAsset } from '@/db/loans';
 import { toMinor, formatMoney } from '@/lib/money';
 import { Loan } from '@/types';
 import { FormInput } from '@/components/FormInput';
+import { AmountField } from '@/components/AmountField';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { ModalSheet, SheetLink } from '@/components/ModalSheet';
 import { modalFooterStyles as f } from '@/constants/theme';
@@ -77,11 +78,10 @@ export function AssetModal({
       }
     >
       <FormInput label="What is it?" value={label} onChangeText={setLabel} placeholder="e.g. Home, Car" />
-      <FormInput
+      <AmountField
         label="Current estimated value (optional)"
         value={value}
         onChangeText={setValue}
-        keyboardType="numeric"
         placeholder="e.g. 3500000"
       />
       <Text style={styles.hintText}>

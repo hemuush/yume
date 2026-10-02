@@ -49,8 +49,10 @@ interface HeroContent {
   spentMinor: number;
   /** Net moved into savings accounts this period (negative = more came out). */
   savingsMinor: number;
-  /** Income − spent − savings: what's free to use. */
+  /** What's free to use: what carried over from earlier months, plus income − spent − savings. */
   surplusMinor: number;
+  /** Left over from (or, when negative, owed from) all the months before this period — already inside surplusMinor. */
+  carryMinor: number;
   /** EMIs and bills still to pay this month (current month only; 0 = none). The headline is free to use minus this. */
   dueMinor: number;
   outstandingLoansMinor: number;
@@ -136,14 +138,16 @@ export function ThisMonthHero({
   spentMinor,
   savingsMinor,
   surplusMinor,
+  carryMinor = 0,
   dueMinor = 0,
   outstandingLoansMinor,
   suu,
   celebrateDebtCleared = false,
   today = null,
   pace = null,
-}: Omit<HeroContent, 'dueMinor'> & {
+}: Omit<HeroContent, 'dueMinor' | 'carryMinor'> & {
   dueMinor?: number;
+  carryMinor?: number;
   periodKey: string;
   direction: -1 | 0 | 1;
   /** "This month", or "Looking back" for an earlier period. */
@@ -166,6 +170,7 @@ export function ThisMonthHero({
     spentMinor,
     savingsMinor,
     surplusMinor,
+    carryMinor,
     dueMinor,
     outstandingLoansMinor,
     suu,
@@ -189,6 +194,7 @@ export function ThisMonthHero({
       spentMinor,
       savingsMinor,
       surplusMinor,
+      carryMinor,
       dueMinor,
       outstandingLoansMinor,
       suu,
@@ -233,6 +239,7 @@ export function ThisMonthHero({
     spentMinor,
     savingsMinor,
     surplusMinor,
+    carryMinor,
     dueMinor,
     outstandingLoansMinor,
     reduce,
@@ -285,12 +292,11 @@ export function ThisMonthHero({
 
   // With "hide savings" on, nothing on the card may reveal what went to
   // savings: no tile, no arc (its share stays empty track), no "kept" view.
-  const full = heroSlices(
-    displayed.incomeMinor,
-    displayed.spentMinor,
-    displayed.savingsMinor,
-    displayed.dueMinor
-  );
+  // What came over from earlier months is money to spend like income is, so
+  // it joins the pool the ring splits; a shortfall carried over only lowers
+  // the headline, the ring stays about this period's own money.
+  const poolMinor = displayed.incomeMinor + Math.max(0, displayed.carryMinor);
+  const full = heroSlices(poolMinor, displayed.spentMinor, displayed.savingsMinor, displayed.dueMinor);
   const slices = hideAmounts ? withoutSavings(full) : full;
   const modes = heroModes(slices, hideAmounts);
   // The ring rests on the spent share: the free figure is the headline beside it.
@@ -315,7 +321,7 @@ export function ThisMonthHero({
     subText = `by ${formatMoney(slices.overMinor)}, more went out than came in`;
   } else {
     big = heroPct(heroShare(slices, mode));
-    subText = `${(hideAmounts ? PRIVATE_LABEL[mode] : HERO_MODE_LABEL[mode]).toLowerCase()} of ${formatMoney(displayed.incomeMinor)} income`;
+    subText = `${(hideAmounts ? PRIVATE_LABEL[mode] : HERO_MODE_LABEL[mode]).toLowerCase()} of ${formatMoney(poolMinor)} ${displayed.carryMinor > 0 ? 'available' : 'income'}`;
   }
   const nextMode = () => {
     if (!canPick) return;
@@ -375,15 +381,21 @@ export function ThisMonthHero({
       : 'Free to use';
   const headMinor = over ? slices.overMinor : freeMinor;
   const headNeg = over || freeMinor < 0;
+  const carryNote =
+    displayed.carryMinor > 0
+      ? ` + ${formatMoney(displayed.carryMinor)} carried over`
+      : displayed.carryMinor < 0
+        ? ` − ${formatMoney(-displayed.carryMinor)} carried over`
+        : '';
   const headCaption = !slices.hasIncome
     ? 'Add income to see what is free'
     : over
       ? 'more went out than came in'
       : hasDue
-        ? `of ${formatMoney(displayed.incomeMinor)} income`
+        ? `of ${formatMoney(displayed.incomeMinor)} income${carryNote}`
         : displayed.surplusMinor < 0
           ? 'below zero'
-          : `left of ${formatMoney(displayed.incomeMinor)} income`;
+          : `left of ${formatMoney(displayed.incomeMinor)} income${carryNote}`;
 
   return (
     <SoftCard elevated backgroundColor={theme.colors.surface} padding={0} style={styles.card}>
@@ -490,6 +502,12 @@ export function ThisMonthHero({
                     : `${displayed.savingsMinor < 0 ? '+' : '−'}${formatMoney(Math.abs(displayed.savingsMinor))}`
                 }
               />
+              {displayed.carryMinor !== 0 && (
+                <WorkingRow
+                  label="Carried over"
+                  value={`${displayed.carryMinor < 0 ? '−' : '+'}${formatMoney(Math.abs(displayed.carryMinor))}`}
+                />
+              )}
               <WorkingRow label="Free to use" value={formatMoney(displayed.surplusMinor)} total />
               <WorkingRow label="Still to pay" value={`−${formatMoney(displayed.dueMinor)}`} due />
               <WorkingRow label="After bills" value={formatMoney(freeMinor)} total />

@@ -92,7 +92,10 @@ export default function TransactionsScreen() {
   // re-run the same query — otherwise either path would leave the search
   // list showing a row exactly as it was before the edit, or one that no
   // longer exists at all after a delete.
+  // Only the newest query may write results: closing search or clearing the box bumps it too.
+  const searchSeq = useRef(0);
   const runSearch = useCallback(async (trimmed: string) => {
+    const seq = ++searchSeq.current;
     if (trimmed.length < SEARCH_MIN_CHARS) {
       setSearchResults([]);
       setSearchLoading(false);
@@ -101,14 +104,14 @@ export default function TransactionsScreen() {
     setSearchLoading(true);
     try {
       const results = await searchTransactions(trimmed, SEARCH_RESULT_LIMIT);
-      setSearchResults(results);
+      if (seq === searchSeq.current) setSearchResults(results);
     } catch {
       // A failed search just shows "no matches" rather than its own error
       // banner — nothing here is destructive or worth interrupting typing
       // over, and the query can simply be retried by editing it further.
-      setSearchResults([]);
+      if (seq === searchSeq.current) setSearchResults([]);
     } finally {
-      setSearchLoading(false);
+      if (seq === searchSeq.current) setSearchLoading(false);
     }
   }, []);
   // A week is the Sunday-to-Saturday row of one calendar month, cut at the month's edges.
@@ -316,6 +319,8 @@ export default function TransactionsScreen() {
   useEffect(() => {
     if (!searching) return;
     const trimmed = searchQuery.trim();
+    // A new keystroke orphans any query still in flight, so its results can't land under the new text.
+    searchSeq.current++;
     if (trimmed.length < SEARCH_MIN_CHARS) {
       setSearchResults([]);
       setSearchLoading(false);
@@ -328,6 +333,7 @@ export default function TransactionsScreen() {
 
   const openSearch = () => setSearching(true);
   const closeSearch = () => {
+    searchSeq.current++;
     setSearching(false);
     setSearchQuery('');
     setSearchResults([]);

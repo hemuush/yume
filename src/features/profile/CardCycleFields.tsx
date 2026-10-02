@@ -1,6 +1,6 @@
 import { View, StyleSheet } from 'react-native';
 import { Text } from '@/components/Text';
-import { FormInput } from '@/components/FormInput';
+import { AmountField } from '@/components/AmountField';
 import { theme } from '@/constants/theme';
 
 /**
@@ -23,21 +23,21 @@ export function CardCycleFields({
     <View>
       <View style={styles.row}>
         <View style={styles.half}>
-          <FormInput
+          <AmountField
+            decimal={false}
             label="Statement day"
             value={statementDay}
             onChangeText={onChangeStatementDay}
-            keyboardType="number-pad"
             placeholder="e.g. 5"
             maxLength={2}
           />
         </View>
         <View style={styles.half}>
-          <FormInput
+          <AmountField
+            decimal={false}
             label="Bill due day"
             value={dueDay}
             onChangeText={onChangeDueDay}
-            keyboardType="number-pad"
             placeholder="e.g. 25"
             maxLength={2}
           />

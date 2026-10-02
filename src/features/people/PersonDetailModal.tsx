@@ -18,6 +18,7 @@ import { formatMoney, toMinor } from '@/lib/money';
 import { roundedMinor, allocateRoundedMinor } from '@/lib/round';
 import { Account, Category, Loan, PersonLedgerEntry } from '@/types';
 import { FormInput } from '@/components/FormInput';
+import { AmountField } from '@/components/AmountField';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { ModalSheet } from '@/components/ModalSheet';
 import { SheetCard } from '@/components/SheetCard';
@@ -286,13 +287,7 @@ export function PersonDetailModal({
 
       {tab === 'settle' && (
         <>
-          <FormInput
-            label="Amount"
-            value={amount}
-            onChangeText={setAmount}
-            keyboardType="numeric"
-            placeholder="0.00"
-          />
+          <AmountField label="Amount" value={amount} onChangeText={setAmount} placeholder="0.00" />
           <FormInput
             label="Note (optional)"
             value={note}

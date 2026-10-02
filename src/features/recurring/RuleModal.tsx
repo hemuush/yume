@@ -22,6 +22,7 @@ import { hexToRgba } from '@/lib/color';
 import { weekdayDayMonth } from '@/lib/dateLabels';
 import { DateTile } from '@/components/DateTile';
 import { FormInput } from '@/components/FormInput';
+import { AmountField } from '@/components/AmountField';
 import { SegmentedControl } from '@/components/SegmentedControl';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { Chip } from '@/components/Chip';
@@ -277,13 +278,7 @@ export function RuleModal({
         <>
           <SegmentedControl options={TX_TYPES} value={type} onChange={onTypeChange} />
           <View style={styles.gap} />
-          <FormInput
-            label="Amount"
-            value={amount}
-            onChangeText={setAmount}
-            keyboardType="numeric"
-            placeholder="0.00"
-          />
+          <AmountField label="Amount" value={amount} onChangeText={setAmount} placeholder="0.00" />
           <View style={[h.card, h.cardInSheet]}>
             <SettingsRow
               round
@@ -374,11 +369,11 @@ export function RuleModal({
         <>
           <SegmentedControl options={FREQUENCIES} value={frequency} onChange={setFrequency} />
           <View style={styles.gap} />
-          <FormInput
+          <AmountField
+            decimal={false}
             label={`Every how many ${frequencyNoun(frequency, 2)}`}
             value={intervalCount}
             onChangeText={setIntervalCount}
-            keyboardType="numeric"
             placeholder="1"
           />
           <DateField label="Starts on" value={startDate} onChange={setStartDate} />

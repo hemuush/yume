@@ -15,6 +15,7 @@ import {
   getTodaySpend,
   getMonthPaceInputs,
   getStillToPayThisMonth,
+  getCarryInMinor,
 } from '@/db/reports';
 import { monthPace } from '@/lib/pace';
 import { getUserName, getDailySpendingGoal } from '@/db/settings';
@@ -78,6 +79,8 @@ export default function DashboardScreen() {
   const [loans, setLoans] = useState<Loan[]>([]);
   const [recurringRules, setRecurringRules] = useState<RecurringRule[]>([]);
   const [rawComparison, setComparison] = useState<PeriodComparison | null>(null);
+  // What earlier months left over (or, when negative, ran short by) — added to the period's own free-to-use.
+  const [carryInMinor, setCarryInMinor] = useState(0);
   const comparison = useMemo(
     () => privateComparison(rawComparison, hideAmounts),
     [rawComparison, hideAmounts]
@@ -176,21 +179,72 @@ export default function DashboardScreen() {
 
   // Stepping the period quickly starts overlapping loads; each is a long
   // chain through the app-wide statement queue, so an earlier one can finish
-  // last. Only the most recent load may write state — otherwise last month's
-  // data could land under this month's label.
-  const loadSeq = useRef(0);
+  // last. Only the most recent one may write state — otherwise last month's
+  // data could land under this month's label. Two counters: the figures that
+  // belong to a period (periodSeq), and everything else on the page (fullSeq).
+  const periodSeq = useRef(0);
+  const fullSeq = useRef(0);
+  // The cursor the latest period fetch was started for, so the effect below
+  // only fires for a real change and never doubles up a full load.
+  const fetchedCursor = useRef<PeriodCursor>(CURRENT_PERIOD);
+  const cursorRef = useRef(cursor);
+  useEffect(() => {
+    cursorRef.current = cursor;
+  });
+
+  // The three things that change with the period: its entries, its totals
+  // against the one before, and what carried over into it.
+  const fetchPeriod = useCallback(
+    (c: PeriodCursor) => {
+      const range = periodRange(c);
+      return Promise.all([
+        // Scoped to the same period as the navigator above it — showing the
+        // single most-recent transactions regardless of period previously
+        // made "Recent Activity" contradict whatever month/year was selected.
+        listTransactions({ fromDate: range.start, toDate: range.end, limit: 30 }),
+        getRangeComparison(range, previousPeriodRange(c), c.granularity),
+        getCarryInMinor(range.start, hideAmounts),
+      ]);
+    },
+    [hideAmounts]
+  );
+
+  // Stepping to another month only needs those three — accounts, loans,
+  // budgets, bills and the rest don't depend on it, so they stay as they are.
+  const loadPeriod = useCallback(
+    async (c: PeriodCursor) => {
+      fetchedCursor.current = c;
+      const seq = ++periodSeq.current;
+      try {
+        const [tx, cmp, carry] = await fetchPeriod(c);
+        if (seq !== periodSeq.current) return;
+        setRecent(tx);
+        setComparison(cmp);
+        setCarryInMinor(carry);
+        setLoadedCursor(c);
+        setLoadError(null);
+        setLoaded(true);
+      } catch (e) {
+        if (seq === periodSeq.current) setLoadError(errorMessage(e));
+      }
+    },
+    [fetchPeriod]
+  );
+
   const load = useCallback(
     async (c: PeriodCursor) => {
-      const seq = ++loadSeq.current;
-      const range = periodRange(c);
+      fetchedCursor.current = c;
+      const pSeq = ++periodSeq.current;
+      const fSeq = ++fullSeq.current;
+      let periodWritten = false;
+      let failed = false;
       try {
         const [
+          period,
           accs,
           cats,
-          tx,
           ln,
           rules,
-          cmp,
           progress,
           cycles,
           name,
@@ -203,15 +257,11 @@ export default function DashboardScreen() {
           needs,
           wraps,
         ] = await Promise.all([
+          fetchPeriod(c),
           listAccounts(),
           listCategories(),
-          // Scoped to the same period as the navigator above it — showing the
-          // single most-recent transactions regardless of period previously
-          // made "Recent Activity" contradict whatever month/year was selected.
-          listTransactions({ fromDate: range.start, toDate: range.end, limit: 30 }),
           listLoans(),
           listRecurringRules(),
-          getRangeComparison(range, previousPeriodRange(c), c.granularity),
           getLoanProgress(),
           listCardCycles().catch(() => []),
           getUserName(),
@@ -228,10 +278,17 @@ export default function DashboardScreen() {
           loadNeedsYou(),
           loadReadyWraps(),
         ]);
-        if (seq !== loadSeq.current) return;
+        if (pSeq === periodSeq.current) {
+          const [tx, cmp, carry] = period;
+          setRecent(tx);
+          setComparison(cmp);
+          setCarryInMinor(carry);
+          setLoadedCursor(c);
+          periodWritten = true;
+        }
+        if (fSeq !== fullSeq.current) return;
         setAccounts(accs);
         setCategories(cats);
-        setRecent(tx);
         // A defaulted loan is still real money owed (or owed to you) — only a
         // 'closed' loan (fully paid off) should ever drop out of these totals.
         setLoans(ln.filter((l) => l.status !== 'closed'));
@@ -242,7 +299,6 @@ export default function DashboardScreen() {
               )
             : rules
         );
-        setComparison(cmp);
         setLoanProgress(progress);
         setCardBills(cycles);
         setUserNameState(name);
@@ -254,27 +310,33 @@ export default function DashboardScreen() {
         setStillToPayMinor(stillToPay);
         setNeedsYou(needs.shown);
         setReadyWraps(wraps);
-        setLoadedCursor(c);
         setLoadError(null);
       } catch (e) {
-        if (seq !== loadSeq.current) return;
+        if (fSeq !== fullSeq.current) return;
         // Guard the throw so a transient DB error shows a banner instead of
         // freezing stale data + a stuck pull-to-refresh spinner.
+        failed = true;
         setLoadError(errorMessage(e));
       } finally {
-        if (seq === loadSeq.current) setLoaded(true);
+        // Not "loaded" until a period's figures have landed, so the card never
+        // shows an empty month for a moment — a newer period fetch sets it too.
+        if (fSeq === fullSeq.current && (periodWritten || failed)) setLoaded(true);
       }
     },
-    [hideAmounts]
+    [hideAmounts, fetchPeriod]
   );
 
   useFocusEffect(
     useCallback(() => {
-      load(cursor);
-    }, [load, cursor])
+      load(cursorRef.current);
+    }, [load])
   );
   // A save that doesn't leave Home (the + long-press sheet) — reload in place.
-  useEffect(() => onTransactionsChanged(() => void load(cursor)), [load, cursor]);
+  useEffect(() => onTransactionsChanged(() => void load(cursorRef.current)), [load]);
+  // A new month or year: just that period's figures.
+  useEffect(() => {
+    if (fetchedCursor.current !== cursor) void loadPeriod(cursor);
+  }, [cursor, loadPeriod]);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -317,7 +379,7 @@ export default function DashboardScreen() {
   // there's enough of it to go on (monthPace returns null before the 5th).
   const todayIso = toLocalIsoDate(new Date());
   const paceMinor =
-    paceInputs && comparison && cursor.granularity === 'month' && cursor.offset === 0
+    paceInputs && comparison && loadedCursor.granularity === 'month' && loadedCursor.offset === 0
       ? monthPace({ spentMinor: comparison.current.expenseMinor, ...paceInputs, today: todayIso })
       : null;
   const monthEndLabel = (() => {
@@ -326,7 +388,9 @@ export default function DashboardScreen() {
   })();
   const savingsInPeriod = roundedMinor(comparison?.current.savingsContributionMinor ?? 0);
   // Income − expense − whatever was already moved into savings this period.
-  const surplusInPeriod = dispIncome - dispExpense - savingsInPeriod;
+  const carryIn = roundedMinor(carryInMinor);
+  // What's free to use: what earlier months left over, plus this period's own surplus.
+  const surplusInPeriod = carryIn + dispIncome - dispExpense - savingsInPeriod;
 
   const expenseChangePct = comparison?.expenseChangePct;
 
@@ -400,8 +464,8 @@ export default function DashboardScreen() {
               periodKey={`${loadedCursor.granularity}:${loadedCursor.offset}`}
               direction={heroDirection}
               title={
-                cursor.offset === 0
-                  ? cursor.granularity === 'year'
+                loadedCursor.offset === 0
+                  ? loadedCursor.granularity === 'year'
                     ? 'This year'
                     : 'This month'
                   : 'Looking back'
@@ -412,15 +476,18 @@ export default function DashboardScreen() {
               spentMinor={dispExpense}
               savingsMinor={savingsInPeriod}
               surplusMinor={surplusInPeriod}
+              carryMinor={carryIn}
               dueMinor={
-                cursor.granularity === 'month' && cursor.offset === 0 ? roundedMinor(stillToPayMinor) : 0
+                loadedCursor.granularity === 'month' && loadedCursor.offset === 0
+                  ? roundedMinor(stillToPayMinor)
+                  : 0
               }
               outstandingLoansMinor={roundedMinor(totalOutstandingLoans)}
               suu={suu}
               celebrateDebtCleared={justClearedDebt}
               // Today is always about today — only alongside the current period.
               today={
-                dailyGoalMinor != null && cursor.offset === 0
+                dailyGoalMinor != null && loadedCursor.offset === 0
                   ? { spentMinor: todaySpendMinor, goalMinor: dailyGoalMinor }
                   : null
               }

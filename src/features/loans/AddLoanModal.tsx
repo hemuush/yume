@@ -9,6 +9,7 @@ import { calculateEmi } from '@/lib/loan';
 import { formatMoney, toMinor } from '@/lib/money';
 import { LoanDirection, LoanRateType, Account, Category } from '@/types';
 import { FormInput } from '@/components/FormInput';
+import { AmountField } from '@/components/AmountField';
 import { SegmentedControl } from '@/components/SegmentedControl';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { Chip } from '@/components/Chip';
@@ -415,18 +416,16 @@ export function AddLoanModal({
             onChangeText={setCounterparty}
             placeholder="e.g. HDFC Bank"
           />
-          <FormInput
+          <AmountField
             label="Principal amount"
             value={principal}
             onChangeText={setPrincipal}
-            keyboardType="numeric"
             placeholder="e.g. 500000"
           />
-          <FormInput
+          <AmountField
             label="Annual interest rate (%)"
             value={rate}
             onChangeText={setRate}
-            keyboardType="numeric"
             placeholder="e.g. 9.5"
           />
           <Text style={styles.fieldLabel}>Rate type</Text>
@@ -450,11 +449,11 @@ export function AddLoanModal({
             <Chip label="Custom" active={tenureCustom} onPress={() => setTenureCustom(true)} />
           </View>
           {tenureCustom ? (
-            <FormInput
+            <AmountField
+              decimal={false}
               label="Tenure (months)"
               value={tenure}
               onChangeText={setTenure}
-              keyboardType="numeric"
               placeholder="e.g. 60"
             />
           ) : (
@@ -475,11 +474,10 @@ export function AddLoanModal({
                     onChangeText={setAssetLabel}
                     placeholder="e.g. Home, Car"
                   />
-                  <FormInput
+                  <AmountField
                     label="Current estimated value (optional)"
                     value={assetValue}
                     onChangeText={setAssetValue}
-                    keyboardType="numeric"
                     placeholder="e.g. 3500000"
                   />
                   <Text style={styles.hintText}>
@@ -526,11 +524,10 @@ export function AddLoanModal({
                   />
                 ))}
               </View>
-              <FormInput
+              <AmountField
                 label="Processing / documentation fees deducted (optional)"
                 value={disbFee}
                 onChangeText={setDisbFee}
-                keyboardType="numeric"
                 placeholder="0"
               />
               <Text style={styles.hintText}>

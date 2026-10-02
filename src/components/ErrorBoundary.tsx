@@ -37,6 +37,10 @@ export class ErrorBoundary extends Component<Props, State> {
       return (
         <View style={styles.container}>
           <Text style={styles.title}>Something went wrong</Text>
+          <Text style={styles.body}>
+            Your entries are safe on this phone. Try again, and if it keeps happening, close Yume and reopen
+            it.
+          </Text>
           <Text style={styles.detail}>{this.state.error.message}</Text>
           <PrimaryButton title="Try again" onPress={this.reset} style={{ marginTop: 20, minWidth: 160 }} />
         </View>
@@ -60,5 +64,12 @@ const styles = StyleSheet.create({
     color: theme.colors.textPrimary,
     marginBottom: 8,
   },
-  detail: { fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textMuted, textAlign: 'center' },
+  body: {
+    fontFamily: theme.font.body,
+    fontSize: 14,
+    color: theme.colors.textSecondary,
+    textAlign: 'center',
+    marginBottom: 14,
+  },
+  detail: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, textAlign: 'center' },
 });

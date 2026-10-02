@@ -6,7 +6,7 @@ import { toMinor, formatMoney } from '@/lib/money';
 import { roundedMinor } from '@/lib/round';
 import { theme, modalFooterStyles as f } from '@/constants/theme';
 import { Loan, Account } from '@/types';
-import { FormInput } from '@/components/FormInput';
+import { AmountField } from '@/components/AmountField';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { Chip } from '@/components/Chip';
 import { ModalSheet } from '@/components/ModalSheet';
@@ -319,21 +319,14 @@ export function PrepayModal({
       <Text style={styles.cardSub}>
         Outstanding: {formatMoney(roundedMinor(loan.outstandingPrincipalMinor))}
       </Text>
-      <FormInput
-        label="Amount"
-        value={amount}
-        onChangeText={setAmount}
-        keyboardType="numeric"
-        placeholder="0.00"
-      />
+      <AmountField label="Amount" value={amount} onChangeText={setAmount} placeholder="0.00" />
       <Text style={styles.hintText}>EMI stays the same; the remaining tenure shortens.</Text>
       {preview && <PrepaymentPreview preview={preview} />}
 
-      <FormInput
+      <AmountField
         label="Prepayment charge, if any (%)"
         value={chargePercent}
         onChangeText={setChargePercent}
-        keyboardType="numeric"
         placeholder="0"
       />
       <Text style={styles.hintText}>
@@ -342,11 +335,10 @@ export function PrepayModal({
       </Text>
       {parseFloat(chargePercent || '0') > 0 && (
         <>
-          <FormInput
+          <AmountField
             label="Tax on that charge, if any (%)"
             value={taxPercent}
             onChangeText={setTaxPercent}
-            keyboardType="numeric"
             placeholder="0"
           />
           {taxPreset && (

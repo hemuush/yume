@@ -8,7 +8,7 @@ import { ModalSheet } from '@/components/ModalSheet';
 import { SheetCard } from '@/components/SheetCard';
 import { theme, modalFooterStyles as f } from '@/constants/theme';
 import { longMonthYear } from '@/lib/dateLabels';
-import { FormInput } from '@/components/FormInput';
+import { AmountField } from '@/components/AmountField';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { ToggleSwitch } from '@/components/ToggleSwitch';
 import { CategoryPicker } from '@/components/CategoryPicker';
@@ -141,13 +141,7 @@ export function AddBudgetModal({
           </View>
         ))}
 
-      <FormInput
-        label="Monthly limit"
-        value={limit}
-        onChangeText={setLimit}
-        keyboardType="numeric"
-        placeholder="e.g. 5000"
-      />
+      <AmountField label="Monthly limit" value={limit} onChangeText={setLimit} placeholder="e.g. 5000" />
 
       <View style={styles.toggleRow}>
         <View style={{ flex: 1, marginRight: 10 }}>

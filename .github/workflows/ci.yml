@@ -36,9 +36,11 @@ jobs:
       - run: npm test
       # Expo SDK / native-module version mismatches and config problems.
       - run: npx expo-doctor
-      # A high or critical advisory fails the build; the moderate ones that
-      # remain come from expo-router's own dependencies and have no safe fix yet.
-      - run: npm audit --audit-level=high
+      # A high or critical advisory fails the build unless scripts/auditGate.js
+      # allows it with a reason (today: node-forge, build tooling with no patched
+      # release). The moderate ones come from expo-router's own dependencies and
+      # have no safe fix yet.
+      - run: node scripts/auditGate.js
       # Bundles the app's JavaScript for Android, so a broken import or a
       # missing asset fails here instead of in a release build.
       - run: npx expo export --platform android

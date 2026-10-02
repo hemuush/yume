@@ -1,7 +1,14 @@
 import { Stack, router, useRootNavigationState } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
-import { View, ActivityIndicator, StyleSheet, AppState, AppStateStatus } from 'react-native';
+import {
+  View,
+  ActivityIndicator,
+  StyleSheet,
+  AppState,
+  AppStateStatus,
+  InteractionManager,
+} from 'react-native';
 import { Text } from '@/components/Text';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
@@ -77,8 +84,10 @@ export default function RootLayout() {
     getDb()
       .then(async () => {
         setDbReady(true);
-        // fire-and-forget; never blocks startup or shows an error
-        void runLocalBackupIfDue();
+        // fire-and-forget; never blocks startup or shows an error. Waits for the
+        // first screen to settle: reading the whole ledger for the snapshot
+        // holds the database queue, and Home's own queries should go first.
+        InteractionManager.runAfterInteractions(() => void runLocalBackupIfDue());
         // Catches up any missed recurring transactions since last open. Each
         // rule now isolates its own failures internally; this catch only
         // guards the outer query (e.g. getDb()) from an unhandled rejection.
@@ -222,32 +231,19 @@ function AppGate({ needsOnboarding, initialLocked }: { needsOnboarding: boolean;
     return () => sub.remove();
   }, [lockEnabled]);
 
-  // Home-screen widgets refresh on their own every 30 minutes, but that's
-  // too slow right after an edit — this catches every real change at once,
-  // the moment the user actually backgrounds the app to go look at their
-  // home screen, instead of a separate refresh call wired into every
-  // individual transaction/loan/recurring-rule mutation across the app.
-  // Deliberately its own effect (not folded into the lock one above, which
-  // only runs at all when app-lock is enabled) so the widgets stay fresh
-  // regardless of that setting.
+  // Two jobs on the app leaving or returning, kept apart from the lock effect
+  // above (which only runs when app-lock is on) so they happen regardless.
+  //  - Backgrounding refreshes every placed home-screen widget: they refresh on
+  //    their own every 30 minutes, but that's too slow right after an edit, and
+  //    this catches every real change at once instead of a refresh call wired
+  //    into each mutation. 'inactive' alone isn't a real exit (a permission
+  //    dialog, a call, the notification shade), so only 'background' counts.
+  //  - Coming back to the foreground runs the daily backup: Android keeps Yume
+  //    alive in the background for days, and a day with no cold start used to
+  //    get no backup file at all.
   useEffect(() => {
     const sub = AppState.addEventListener('change', (next: AppStateStatus) => {
-      // 'inactive' alone isn't a real exit — it fires on plenty of
-      // transient interruptions too (a permission dialog, an incoming call,
-      // the notification shade, a share sheet), each of which would
-      // otherwise trigger a full widget-data refresh (DB reads for every
-      // placed widget) for no reason. Only 'background' means the user
-      // actually left to go look at their home screen.
       if (next === 'background') refreshAllWidgets();
-    });
-    return () => sub.remove();
-  }, []);
-
-  // The daily backup also runs when the app comes back to the foreground, not
-  // only on cold start: Android keeps Yume alive in the background for days,
-  // and a day with no cold start used to get no backup file at all.
-  useEffect(() => {
-    const sub = AppState.addEventListener('change', (next: AppStateStatus) => {
       if (next === 'active') void runLocalBackupIfDue();
     });
     return () => sub.remove();
