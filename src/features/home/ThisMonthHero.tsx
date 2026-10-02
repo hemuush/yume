@@ -14,7 +14,7 @@ import ReanimatedAnimated, {
   runOnJS,
 } from 'react-native-reanimated';
 import { theme } from '@/constants/theme';
-import { formatMoney } from '@/lib/money';
+import { formatMoney, formatMaskableMoney } from '@/lib/money';
 import { useReduceMotion } from '@/lib/useReduceMotion';
 import { haptics } from '@/lib/haptics';
 import { MOTION, timing } from '@/lib/animation';
@@ -51,6 +51,8 @@ interface HeroContent {
   savingsMinor: number;
   /** Income − spent − savings: what's free to use. */
   surplusMinor: number;
+  /** EMIs and bills still to pay this month (current month only; 0 = none). The headline is free to use minus this. */
+  dueMinor: number;
   outstandingLoansMinor: number;
   suu: SuuLine;
   /** Which period these figures are for: a new period remounts the rolling figures instead of rolling them. */
@@ -109,6 +111,11 @@ function ConfettiDot({ progress, piece }: { progress: SharedValue<number>; piece
  * spend against the daily goal and the month's pace are two slim lines under
  * those, and Suu's line is the card's mint footer.
  *
+ * Bills still to pay this month (unpaid EMIs, recurring bills ahead) are
+ * taken off the headline — "Free after bills" — and shown as a gold chip that
+ * opens the sum; the ring gives them a gold slice. Without any, it is simply
+ * "Free to use".
+ *
  * The period bar at the top (title, ‹ month ›) stays put; everything under
  * it is the "page" that turns. Dragging that page sideways turns it too —
  * right for the period before, left for the one after — rubber-banding with
@@ -129,12 +136,14 @@ export function ThisMonthHero({
   spentMinor,
   savingsMinor,
   surplusMinor,
+  dueMinor = 0,
   outstandingLoansMinor,
   suu,
   celebrateDebtCleared = false,
   today = null,
   pace = null,
-}: HeroContent & {
+}: Omit<HeroContent, 'dueMinor'> & {
+  dueMinor?: number;
   periodKey: string;
   direction: -1 | 0 | 1;
   /** "This month", or "Looking back" for an earlier period. */
@@ -157,6 +166,7 @@ export function ThisMonthHero({
     spentMinor,
     savingsMinor,
     surplusMinor,
+    dueMinor,
     outstandingLoansMinor,
     suu,
     periodKey,
@@ -164,6 +174,8 @@ export function ThisMonthHero({
   // null = the resting view (Kept, or Spent when nothing was kept) — see
   // heroRestingMode. Reset whenever the period turns.
   const [picked, setPicked] = useState<HeroMode | null>(null);
+  // The sum behind "Free after bills", opened from the "still to pay" chip.
+  const [showWorking, setShowWorking] = useState(false);
   const prevPeriodKey = useRef(periodKey);
   const tx = useSharedValue(0);
   const dragX = useSharedValue(0);
@@ -177,6 +189,7 @@ export function ThisMonthHero({
       spentMinor,
       savingsMinor,
       surplusMinor,
+      dueMinor,
       outstandingLoansMinor,
       suu,
       periodKey,
@@ -214,7 +227,16 @@ export function ThisMonthHero({
     // object recreated every render would re-fire this effect every render
     // too; the current values are read fresh via closure regardless.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [periodKey, incomeMinor, spentMinor, savingsMinor, surplusMinor, outstandingLoansMinor, reduce]);
+  }, [
+    periodKey,
+    incomeMinor,
+    spentMinor,
+    savingsMinor,
+    surplusMinor,
+    dueMinor,
+    outstandingLoansMinor,
+    reduce,
+  ]);
 
   const slideStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: tx.value + dragX.value }],
@@ -263,7 +285,12 @@ export function ThisMonthHero({
 
   // With "hide savings" on, nothing on the card may reveal what went to
   // savings: no tile, no arc (its share stays empty track), no "kept" view.
-  const full = heroSlices(displayed.incomeMinor, displayed.spentMinor, displayed.savingsMinor);
+  const full = heroSlices(
+    displayed.incomeMinor,
+    displayed.spentMinor,
+    displayed.savingsMinor,
+    displayed.dueMinor
+  );
   const slices = hideAmounts ? withoutSavings(full) : full;
   const modes = heroModes(slices, hideAmounts);
   // The ring rests on the spent share: the free figure is the headline beside it.
@@ -336,16 +363,27 @@ export function ThisMonthHero({
 
   // The headline: what's free to use, or by how much the month went over.
   const over = slices.overMinor > 0;
-  const headLabel = over ? 'Over by' : 'Free to use';
-  const headMinor = over ? slices.overMinor : displayed.surplusMinor;
-  const headNeg = over || displayed.surplusMinor < 0;
+  // With bills still to come this month, what is free is counted after them.
+  const hasDue = slices.hasIncome && !over && displayed.dueMinor > 0;
+  const freeMinor = displayed.surplusMinor - (hasDue ? displayed.dueMinor : 0);
+  const headLabel = over
+    ? 'Over by'
+    : hasDue
+      ? freeMinor < 0
+        ? 'Short after bills'
+        : 'Free after bills'
+      : 'Free to use';
+  const headMinor = over ? slices.overMinor : freeMinor;
+  const headNeg = over || freeMinor < 0;
   const headCaption = !slices.hasIncome
     ? 'Add income to see what is free'
     : over
       ? 'more went out than came in'
-      : displayed.surplusMinor < 0
-        ? 'below zero'
-        : `left of ${formatMoney(displayed.incomeMinor)} income`;
+      : hasDue
+        ? `of ${formatMoney(displayed.incomeMinor)} income`
+        : displayed.surplusMinor < 0
+          ? 'below zero'
+          : `left of ${formatMoney(displayed.incomeMinor)} income`;
 
   return (
     <SoftCard elevated backgroundColor={theme.colors.surface} padding={0} style={styles.card}>
@@ -379,31 +417,55 @@ export function ThisMonthHero({
 
         <ReanimatedAnimated.View style={[styles.body, slideStyle]} {...pan.panHandlers}>
           <View style={styles.top}>
-            <View
-              style={styles.headline}
-              accessible
-              accessibilityLabel={
-                slices.hasIncome ? `${headLabel}, ${formatMoney(headMinor)}, ${headCaption}` : headCaption
-              }
-            >
-              <Text style={styles.headLabel}>{headLabel}</Text>
-              {slices.hasIncome ? (
-                // Rolls to its new value after a save; a new period slides in instead.
-                <CountUpAmount
-                  key={displayed.periodKey}
-                  minor={headMinor}
-                  countFromZero={false}
-                  style={[styles.headValue, headNeg && styles.headValueNeg]}
-                  symbolStyle={styles.headSymbol}
-                  numberOfLines={1}
-                  adjustsFontSizeToFit
-                />
-              ) : (
-                <Text style={styles.headValue}>—</Text>
+            <View style={styles.headline}>
+              <View
+                accessible
+                accessibilityLabel={
+                  slices.hasIncome ? `${headLabel}, ${formatMoney(headMinor)}, ${headCaption}` : headCaption
+                }
+              >
+                <Text style={styles.headLabel}>{headLabel}</Text>
+                {slices.hasIncome ? (
+                  // Rolls to its new value after a save; a new period slides in instead.
+                  <CountUpAmount
+                    key={displayed.periodKey}
+                    minor={headMinor}
+                    countFromZero={false}
+                    style={[styles.headValue, headNeg && styles.headValueNeg]}
+                    symbolStyle={styles.headSymbol}
+                    numberOfLines={1}
+                    adjustsFontSizeToFit
+                  />
+                ) : (
+                  <Text style={styles.headValue}>—</Text>
+                )}
+                <Text style={styles.headCaption} numberOfLines={2}>
+                  {headCaption}
+                </Text>
+              </View>
+              {hasDue && (
+                <Pressable
+                  onPress={() => {
+                    haptics.tap();
+                    setShowWorking((v) => !v);
+                  }}
+                  style={withPressed(styles.dueChip)}
+                  accessibilityRole="button"
+                  accessibilityState={{ expanded: showWorking }}
+                  accessibilityLabel={`${formatMoney(displayed.dueMinor)} still to pay this month`}
+                  accessibilityHint="Shows how this adds up"
+                >
+                  <View style={styles.dueDot} />
+                  <Text style={styles.dueText} numberOfLines={1}>
+                    <Text style={styles.dueMoney}>{formatMoney(displayed.dueMinor)}</Text> still to pay
+                  </Text>
+                  <Feather
+                    name={showWorking ? 'chevron-up' : 'chevron-down'}
+                    size={12}
+                    color={theme.colors.warnInk}
+                  />
+                </Pressable>
               )}
-              <Text style={styles.headCaption} numberOfLines={2}>
-                {headCaption}
-              </Text>
             </View>
             <MonthRing
               slices={slices}
@@ -416,6 +478,24 @@ export function ThisMonthHero({
               accessibilityLabel={`${big}, ${subText}`}
             />
           </View>
+          {hasDue && showWorking && (
+            <View style={styles.working}>
+              <WorkingRow label="Income" value={formatMoney(displayed.incomeMinor)} />
+              <WorkingRow label="Spent" value={`−${formatMoney(displayed.spentMinor)}`} />
+              <WorkingRow
+                label="Set aside"
+                value={
+                  hideAmounts
+                    ? `−${formatMaskableMoney(0, { masked: true })}`
+                    : `${displayed.savingsMinor < 0 ? '+' : '−'}${formatMoney(Math.abs(displayed.savingsMinor))}`
+                }
+              />
+              <WorkingRow label="Free to use" value={formatMoney(displayed.surplusMinor)} total />
+              <WorkingRow label="Still to pay" value={`−${formatMoney(displayed.dueMinor)}`} due />
+              <WorkingRow label="After bills" value={formatMoney(freeMinor)} total />
+            </View>
+          )}
+
           <View style={styles.tiles}>
             {tileModes.map((m) => {
               const active = picked === m;
@@ -542,6 +622,25 @@ export function ThisMonthHero({
   );
 }
 
+function WorkingRow({
+  label,
+  value,
+  total = false,
+  due = false,
+}: {
+  label: string;
+  value: string;
+  total?: boolean;
+  due?: boolean;
+}) {
+  return (
+    <View style={[styles.workingRow, total && styles.workingTotal]}>
+      <Text style={[styles.workingLabel, total && styles.workingLabelTotal]}>{label}</Text>
+      <Text style={[styles.workingValue, due && styles.workingValueDue]}>{value}</Text>
+    </View>
+  );
+}
+
 /** The word under the ring's figure — short, to fit the small face. */
 const RING_LABEL: Record<HeroMode, string> = { kept: 'kept', spent: 'spent', saved: 'saved', free: 'free' };
 
@@ -607,6 +706,44 @@ const styles = StyleSheet.create({
     color: theme.colors.textSecondary,
     marginTop: 2,
   },
+  dueChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    gap: 6,
+    marginTop: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: theme.radius.pill,
+    backgroundColor: theme.colors.idGold,
+  },
+  dueDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: theme.colors.idGoldDeep },
+  dueText: { flexShrink: 1, fontFamily: theme.font.bodyBold, fontSize: 11.5, color: theme.colors.warnInk },
+  dueMoney: { fontFamily: theme.font.monoBold, fontSize: 11.5 },
+  working: {
+    marginTop: 12,
+    borderRadius: 16,
+    backgroundColor: theme.colors.surfaceAlt,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  workingRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
+    gap: 8,
+    paddingVertical: 4,
+  },
+  workingTotal: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: theme.colors.borderSoft,
+    marginTop: 3,
+    paddingTop: 7,
+  },
+  workingLabel: { flex: 1, fontFamily: theme.font.body, fontSize: 12.5, color: theme.colors.textSecondary },
+  workingLabelTotal: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
+  workingValue: { fontFamily: theme.font.monoBold, fontSize: 12.5, color: theme.colors.textPrimary },
+  workingValueDue: { color: theme.colors.warnInk },
   tiles: { flexDirection: 'row', gap: 7, marginTop: 12 },
   tile: {
     flex: 1,

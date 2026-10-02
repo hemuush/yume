@@ -133,15 +133,15 @@ describe('Category page', () => {
         '₹500',
         'Other Food',
         'Budget',
-        'By month',
+        'Last 6 months',
         'Latest entries',
       ])
     );
-    expect(shown.some((t) => t.startsWith('4 entries'))).toBe(true);
     expect(shown).toContain('₹150 over budget');
-    // How often, and the usual amount each time, under each place in the split.
-    expect(shown).toEqual(expect.arrayContaining(['3 times · ₹167 each', 'once']));
-    expect(shown.some((t) => t.startsWith('4 entries, about ₹163 each'))).toBe(true);
+    // Each place in the split: its share, and how often with the usual amount only when it was more than once.
+    expect(shown).toEqual(expect.arrayContaining(['77%', '23%', '3 times · ₹167 each']));
+    expect(shown).not.toContain('once');
+    expect(shown).toEqual(expect.arrayContaining(['4 entries', '₹163 each']));
   });
 
   it('opens What-if and Activity on this category', async () => {

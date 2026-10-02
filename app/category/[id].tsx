@@ -13,20 +13,22 @@ import { toLocalIsoDate, parseLocalIsoDate, isIsoDate } from '@/lib/date';
 import { ReportWindow, windowRange, windowLabel } from '@/lib/period';
 import { useScreenLoad } from '@/lib/useScreenLoad';
 import { theme } from '@/constants/theme';
+import { EYEBROW } from '@/constants/textStyles';
 import { AppHeader } from '@/components/AppHeader';
 import { EmptyState } from '@/components/EmptyState';
 import { CategoryIcon } from '@/components/CategoryIcon';
 import { CardRowsSkeleton } from '@/components/ListSkeleton';
-import { GrowFill } from '@/components/GrowFill';
 import { HomeSection } from '@/features/home/HomeSection';
 import { homeStyles as h } from '@/features/home/homeStyles';
 import { PeriodRow } from '@/features/reports/PeriodRow';
 import { BudgetRow } from '@/features/budgets/BudgetRow';
 import { TransactionRow } from '@/features/transactions/TransactionRow';
 import { TransactionDetailModal } from '@/features/transactions/TransactionDetailModal';
-import { longMonthYear, shortMonth } from '@/lib/dateLabels';
+import { longMonthYear } from '@/lib/dateLabels';
 import { useReturnOrPush } from '@/lib/useReturnOrPush';
-import { timesLabel, visitsLine } from '@/features/reports/visits';
+import { timesLabel } from '@/features/reports/visits';
+import { MonthBars, compactMoney } from '@/features/reports/MonthBars';
+import { SplitBreakdown } from '@/features/reports/SplitBreakdown';
 import { withPressed } from '@/lib/pressed';
 import { usePrivacy } from '@/theme/PrivacyContext';
 
@@ -38,7 +40,6 @@ const SPLIT_SHOWN = 4;
 const ENTRIES_SHOWN = 8;
 
 const monthLong = (key: string) => longMonthYear(`${key}-01`);
-const monthShort = (key: string) => shortMonth(`${key}-01`);
 
 /**
  * One category's whole story in one place — what it came to this period,
@@ -112,7 +113,6 @@ export default function CategoryScreen() {
     ) + 1
   );
   const usual = overview && cursor.granularity === 'month' ? usualMonthly(overview.months) : null;
-  const peak = overview ? Math.max(1, ...overview.months.map((m) => m.totalMinor)) : 1;
   const split = overview?.split ?? [];
   const splitRest = split.slice(SPLIT_SHOWN);
   const splitShown = split.slice(0, splitRest.length === 1 ? SPLIT_SHOWN + 1 : SPLIT_SHOWN);
@@ -164,27 +164,68 @@ export default function CategoryScreen() {
           <>
             <View style={[h.card, styles.hero]}>
               <View style={styles.heroTop}>
+                <View style={styles.heroText}>
+                  <Text style={styles.heroLabel}>
+                    {spend ? 'Spent' : 'Received'} in {periodName}
+                  </Text>
+                  <Text style={styles.heroValue}>{formatMoney(overview.totalMinor)}</Text>
+                </View>
                 <CategoryIcon name={category.icon} color={category.color} />
-                <Text style={styles.heroLabel}>
-                  {spend ? 'Spent' : 'Received'} in {periodName}
-                </Text>
               </View>
-              <Text style={styles.heroValue}>{formatMoney(overview.totalMinor)}</Text>
-              <Text style={styles.heroSub}>
-                {overview.count} {overview.count === 1 ? 'entry' : 'entries'}
-                {overview.count > 1
-                  ? `, about ${formatMoney(overview.totalMinor / overview.count)} each`
-                  : ''}
-                {overview.totalMinor > 0
-                  ? ` · about ${formatMoney(overview.totalMinor / daysSoFar)} a day`
-                  : ''}
-                {usual != null ? ` · usually ${formatMoney(usual)} a month` : ''}
-              </Text>
+              <View style={styles.chips}>
+                <Chip>
+                  {overview.count} {overview.count === 1 ? 'entry' : 'entries'}
+                </Chip>
+                {overview.count > 1 && <Chip>{formatMoney(overview.totalMinor / overview.count)} each</Chip>}
+                {overview.totalMinor > 0 && <Chip>{formatMoney(overview.totalMinor / daysSoFar)} a day</Chip>}
+                {usual != null && <Chip>usually {formatMoney(usual)} a month</Chip>}
+              </View>
               {overview.refundMinor > 0 && (
                 // What it cost is already net of refunds; this says how much came back.
                 <Text style={styles.heroRefund}>
                   {formatMoney(overview.spentMinor)} spent, {formatMoney(overview.refundMinor)} came back
                 </Text>
+              )}
+
+              <View style={styles.rule} />
+              <View style={styles.cardHead}>
+                <Text style={styles.cardTitle}>Last 6 months</Text>
+                {usual != null && usual > 0 && (
+                  <View style={styles.legend}>
+                    <View style={styles.legendLine} />
+                    <Text style={styles.legendText}>usually {compactMoney(usual)}</Text>
+                  </View>
+                )}
+              </View>
+              <MonthBars months={overview.months} color={category.color} usualMinor={usual} />
+
+              {split.length > 1 && (
+                <>
+                  <View style={styles.rule} />
+                  <Text style={[styles.cardTitle, styles.cardHead]}>Where it went</Text>
+                  <SplitBreakdown
+                    color={category.color}
+                    totalMinor={overview.totalMinor}
+                    items={[
+                      ...splitShown.map((s) => ({
+                        key: s.categoryId,
+                        name: s.name,
+                        minor: s.totalMinor,
+                        count: s.count,
+                      })),
+                      ...(splitRest.length > 1
+                        ? [
+                            {
+                              key: `rest:${params.id}`,
+                              name: splitRest.map((s) => s.name).join(' · '),
+                              minor: splitRest.reduce((sum, s) => sum + s.totalMinor, 0),
+                              visits: timesLabel(splitRest.reduce((sum, s) => sum + (s.count ?? 0), 0)),
+                            },
+                          ]
+                        : []),
+                    ]}
+                  />
+                </>
               )}
             </View>
 
@@ -196,78 +237,17 @@ export default function CategoryScreen() {
                   </View>
                 ) : (
                   <Pressable
-                    style={withPressed([h.card, h.row])}
+                    style={withPressed(styles.noLimit)}
                     onPress={openBudgets}
                     accessibilityRole="button"
                   >
-                    <View style={[h.iconTile, { backgroundColor: theme.colors.primaryTint }]}>
-                      <Feather name="pie-chart" size={17} color={theme.colors.ink} />
-                    </View>
-                    <View style={h.mid}>
-                      <Text style={h.title}>Set a monthly limit</Text>
-                      <Text style={h.sub}>See how close {category.name} gets, as you go</Text>
-                    </View>
+                    <Feather name="pie-chart" size={16} color={theme.colors.textSecondary} />
+                    <Text style={styles.noLimitText}>Set a monthly limit</Text>
                     <Feather name="chevron-right" size={16} color={theme.colors.textMuted} />
                   </Pressable>
                 )}
               </HomeSection>
             )}
-
-            {split.length > 1 && (
-              <HomeSection title="Where it went">
-                <View style={h.card}>
-                  {splitShown.map((s, i) => (
-                    <SplitRow
-                      key={s.categoryId}
-                      animKey={`split:${s.categoryId}`}
-                      name={s.name}
-                      visits={visitsLine(s.count, s.totalMinor)}
-                      minor={s.totalMinor}
-                      share={overview.totalMinor > 0 ? s.totalMinor / overview.totalMinor : 0}
-                      color={category.color}
-                      divider={i > 0}
-                    />
-                  ))}
-                  {splitRest.length > 1 && (
-                    <SplitRow
-                      animKey={`split-rest:${params.id}`}
-                      name={splitRest.map((s) => s.name).join(' · ')}
-                      visits={timesLabel(splitRest.reduce((sum, s) => sum + (s.count ?? 0), 0))}
-                      minor={splitRest.reduce((sum, s) => sum + s.totalMinor, 0)}
-                      share={
-                        overview.totalMinor > 0
-                          ? splitRest.reduce((sum, s) => sum + s.totalMinor, 0) / overview.totalMinor
-                          : 0
-                      }
-                      color={category.color}
-                      divider
-                    />
-                  )}
-                </View>
-              </HomeSection>
-            )}
-
-            <HomeSection title="By month">
-              <View style={[h.card, styles.months]}>
-                {overview.months.map((m) => (
-                  <View
-                    key={m.month}
-                    style={styles.monthCol}
-                    accessibilityLabel={`${monthShort(m.month)}: ${formatMoney(m.totalMinor)}`}
-                  >
-                    <View style={styles.monthTrack}>
-                      <View
-                        style={[
-                          styles.monthBar,
-                          { height: `${(m.totalMinor / peak) * 100}%`, backgroundColor: category.color },
-                        ]}
-                      />
-                    </View>
-                    <Text style={styles.monthLabel}>{monthShort(m.month)}</Text>
-                  </View>
-                ))}
-              </View>
-            </HomeSection>
 
             <View style={styles.actions}>
               {spend && (
@@ -331,43 +311,10 @@ export default function CategoryScreen() {
   );
 }
 
-function SplitRow({
-  animKey,
-  name,
-  visits,
-  minor,
-  share,
-  color,
-  divider,
-}: {
-  /** Remembers the bar's last width across visits (useGrowFrom). */
-  animKey: string;
-  name: string;
-  /** How often and the usual amount each time — see visitsLine. */
-  visits?: string;
-  minor: number;
-  share: number;
-  color: string;
-  divider: boolean;
-}) {
+function Chip({ children }: { children: React.ReactNode }) {
   return (
-    <View style={[styles.split, divider && h.divider]}>
-      <View style={styles.splitTop}>
-        <View style={styles.splitNames}>
-          <Text style={styles.splitName} numberOfLines={1}>
-            {name}
-          </Text>
-          {!!visits && <Text style={styles.splitVisits}>{visits}</Text>}
-        </View>
-        <Text style={styles.splitValue}>{formatMoney(minor)}</Text>
-      </View>
-      <View style={styles.splitTrack}>
-        <GrowFill
-          animKey={animKey}
-          pct={Math.round(share * 100)}
-          style={[styles.splitFill, { backgroundColor: color }]}
-        />
-      </View>
+    <View style={styles.chip}>
+      <Text style={styles.chipText}>{children}</Text>
     </View>
   );
 }
@@ -391,41 +338,48 @@ function ActionChip({
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
-  hero: { marginTop: theme.layout.screenTopGap, padding: 16, gap: 4 },
-  heroTop: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  heroLabel: {
-    fontFamily: theme.font.bodyBold,
-    fontSize: 11,
-    letterSpacing: 0.8,
-    textTransform: 'uppercase',
-    color: theme.colors.textMuted,
+  hero: { marginTop: theme.layout.screenTopGap, padding: 16 },
+  heroTop: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
+  heroText: { flex: 1, minWidth: 0 },
+  heroLabel: { ...EYEBROW },
+  heroValue: { fontFamily: theme.font.monoBold, fontSize: 30, color: theme.colors.textPrimary, marginTop: 6 },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 10 },
+  chip: {
+    backgroundColor: theme.colors.surfaceAlt,
+    borderRadius: theme.radius.pill,
+    paddingHorizontal: 10,
+    paddingVertical: 3,
   },
-  heroValue: { fontFamily: theme.font.monoBold, fontSize: 27, color: theme.colors.textPrimary, marginTop: 6 },
-  heroSub: { fontFamily: theme.font.body, fontSize: 12.5, color: theme.colors.textSecondary },
+  chipText: { fontFamily: theme.font.bodyBold, fontSize: 11, color: theme.colors.textPrimary },
   heroRefund: {
     fontFamily: theme.font.bodyBold,
     fontSize: 12.5,
     color: theme.colors.incomeText,
-    marginTop: 2,
+    marginTop: 8,
   },
-  split: { paddingHorizontal: 14, paddingVertical: 10, gap: 6 },
-  splitTop: { flexDirection: 'row', justifyContent: 'space-between', gap: 10 },
-  splitNames: { flex: 1, minWidth: 0 },
-  splitName: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textPrimary },
-  splitVisits: { fontFamily: theme.font.body, fontSize: 11.5, color: theme.colors.textMuted, marginTop: 1 },
-  splitValue: { fontFamily: theme.font.monoBold, fontSize: 12.5, color: theme.colors.textPrimary },
-  splitTrack: {
-    height: 6,
-    borderRadius: theme.radius.pill,
-    backgroundColor: theme.colors.surfaceAlt,
-    overflow: 'hidden',
+  rule: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: theme.colors.borderSoft,
+    marginTop: 14,
   },
-  splitFill: { height: '100%', borderRadius: theme.radius.pill },
-  months: { flexDirection: 'row', alignItems: 'flex-end', gap: 10, padding: 16, height: 150 },
-  monthCol: { flex: 1, alignItems: 'center', gap: 6, height: '100%' },
-  monthTrack: { flex: 1, width: '70%', justifyContent: 'flex-end' },
-  monthBar: { width: '100%', borderRadius: 6, minHeight: 2 },
-  monthLabel: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textMuted },
+  cardHead: { marginTop: 12, marginBottom: 8 },
+  cardTitle: { ...EYEBROW },
+  legend: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  legendLine: { width: 14, height: 1.5, backgroundColor: theme.colors.ink, opacity: 0.3 },
+  legendText: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textMuted },
+  noLimit: {
+    marginHorizontal: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 11,
+    borderRadius: theme.radius.lg,
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
+    borderColor: theme.colors.textMuted,
+  },
+  noLimitText: { flex: 1, fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textSecondary },
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginHorizontal: 20, marginTop: 18 },
   actionChip: {
     flexDirection: 'row',

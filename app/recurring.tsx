@@ -6,7 +6,11 @@ import { listRecurringRules, setRecurringRuleActive } from '@/db/recurring';
 import { listAccounts, listCategories } from '@/db/ledger';
 import { getHiddenSubscriptionSuggestions, hideSubscriptionSuggestion } from '@/db/settings';
 import { getSubscriptionSuggestions, subscriptionTotals, SubscriptionSuggestion } from '@/db/subscriptions';
-import { SubscriptionsSection } from '@/features/recurring/SubscriptionsSection';
+import { RecurringHero } from '@/features/recurring/RecurringHero';
+import { SuggestionsList } from '@/features/recurring/SuggestionsList';
+import { SectionHead } from '@/features/recurring/SectionHead';
+import { costShares, sortRunning } from '@/features/recurring/recurring.helpers';
+import { NeoTile } from '@/components/NeoTile';
 import { nextMonthlyDateAfter, toLocalIsoDate } from '@/lib/date';
 import { Account, Category, RecurringRule } from '@/types';
 import { AppHeader } from '@/components/AppHeader';
@@ -15,7 +19,7 @@ import { AddButton } from '@/components/AddButton';
 import { EmptyState } from '@/components/EmptyState';
 import { theme } from '@/constants/theme';
 import { styles } from '@/features/recurring/recurring.styles';
-import { RuleCard } from '@/features/recurring/RuleCard';
+import { RuleRow } from '@/features/recurring/RuleRow';
 import { RuleModal } from '@/features/recurring/RuleModal';
 import { Skeleton } from '@/components/Skeleton';
 import { PrimaryButton } from '@/components/PrimaryButton';
@@ -67,10 +71,15 @@ export default function RecurringScreen() {
   const savingsIds = useMemo(() => savingsAccountIdsOf(accounts), [accounts]);
   const isHidden = (r: RecurringRule) => hideAmounts && isSavingsEntry(r, categoriesById, savingsIds);
   const accountName = (id: string) => accounts.find((a) => a.id === id)?.name ?? '—';
-  const categoryName = (id: string | null) => categories.find((c) => c.id === id)?.name ?? '—';
 
-  const activeRules = rules.filter((r) => r.active);
+  const activeRules = useMemo(() => sortRunning(rules.filter((r) => r.active)), [rules]);
   const pausedRules = rules.filter((r) => !r.active);
+  const visibleRules = rules.filter((r) => !isHidden(r));
+  const shares = costShares(visibleRules, categoriesById);
+  const nextDate = activeRules.reduce<string | null>(
+    (min, r) => (min === null || r.nextRunDate < min ? r.nextRunDate : min),
+    null
+  );
 
   // Memoized: the form resets whenever its prefill changes identity, so a
   // fresh object each render would wipe whatever was typed.
@@ -119,11 +128,6 @@ export default function RecurringScreen() {
         </View>
       )}
 
-      <Text style={styles.introText}>
-        Set up something once (rent, a subscription, salary) and Yume logs it automatically on schedule — it
-        shows up in Activity exactly like any entry you typed in yourself.
-      </Text>
-
       <ScrollView
         contentContainerStyle={{
           paddingHorizontal: 20,
@@ -133,6 +137,10 @@ export default function RecurringScreen() {
       >
         {!loaded ? (
           <>
+            <View style={[styles.card, { height: 118 }]}>
+              <Skeleton width={110} height={10} radius={4} />
+              <Skeleton width={150} height={26} radius={6} style={{ marginTop: 10 }} />
+            </View>
             {[0, 1, 2].map((i) => (
               <View key={i} style={styles.card}>
                 <Skeleton width={140} height={13} radius={4} />
@@ -154,41 +162,54 @@ export default function RecurringScreen() {
           />
         ) : (
           <>
-            <SubscriptionsSection
-              totals={subscriptionTotals(rules.filter((r) => !isHidden(r)))}
+            {(activeRules.length > 0 || suggestions.length > 0) && (
+              <RecurringHero totals={subscriptionTotals(visibleRules)} shares={shares} nextDate={nextDate} />
+            )}
+            {activeRules.length > 0 && (
+              <>
+                <SectionHead title="Running" note={activeRules.length > 1 ? 'Biggest first' : undefined} />
+                <NeoTile style={styles.list}>
+                  {activeRules.map((rule, i) => (
+                    <RuleRow
+                      key={rule.id}
+                      rule={rule}
+                      category={rule.categoryId ? categoriesById.get(rule.categoryId) : undefined}
+                      masked={isHidden(rule)}
+                      accountName={accountName}
+                      index={i}
+                      onPress={() => setEditingRule(rule)}
+                      onTogglePause={() => togglePause(rule)}
+                    />
+                  ))}
+                </NeoTile>
+              </>
+            )}
+            <SuggestionsList
               suggestions={suggestions}
               onMakeRecurring={setFromSuggestion}
               onHide={hideSuggestion}
-              hasRunning={activeRules.length > 0}
             />
-            {activeRules.map((rule, i) => (
-              <RuleCard
-                key={rule.id}
-                rule={rule}
-                masked={isHidden(rule)}
-                accountName={accountName}
-                categoryName={categoryName}
-                index={i}
-                onPress={() => setEditingRule(rule)}
-                onTogglePause={() => togglePause(rule)}
-              />
-            ))}
             {pausedRules.length > 0 && (
               <>
-                <Text style={styles.sectionDivider}>Paused</Text>
-                {pausedRules.map((rule, i) => (
-                  <RuleCard
-                    key={rule.id}
-                    rule={rule}
-                    masked={isHidden(rule)}
-                    accountName={accountName}
-                    categoryName={categoryName}
-                    index={i}
-                    onPress={() => setEditingRule(rule)}
-                    onTogglePause={() => togglePause(rule)}
-                    muted
-                  />
-                ))}
+                <SectionHead
+                  title="Paused"
+                  note={`${pausedRules.length} ${pausedRules.length === 1 ? 'rule' : 'rules'}`}
+                />
+                <NeoTile style={styles.list}>
+                  {pausedRules.map((rule, i) => (
+                    <RuleRow
+                      key={rule.id}
+                      rule={rule}
+                      category={rule.categoryId ? categoriesById.get(rule.categoryId) : undefined}
+                      masked={isHidden(rule)}
+                      accountName={accountName}
+                      index={i}
+                      onPress={() => setEditingRule(rule)}
+                      onTogglePause={() => togglePause(rule)}
+                      muted
+                    />
+                  ))}
+                </NeoTile>
               </>
             )}
           </>

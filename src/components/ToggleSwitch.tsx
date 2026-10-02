@@ -9,9 +9,12 @@ interface Props {
   value: boolean;
   onChange: (value: boolean) => void;
   disabled?: boolean;
+  /** A smaller switch for a row of a list. */
+  small?: boolean;
+  accessibilityLabel?: string;
 }
 
-export function ToggleSwitch({ value, onChange, disabled }: Props) {
+export function ToggleSwitch({ value, onChange, disabled, small, accessibilityLabel }: Props) {
   const { accent } = useAccent();
   const [anim] = useState(() => new Animated.Value(value ? 1 : 0));
 
@@ -23,7 +26,7 @@ export function ToggleSwitch({ value, onChange, disabled }: Props) {
     }).start();
   }, [value, anim]);
 
-  const knobLeft = anim.interpolate({ inputRange: [0, 1], outputRange: [2, 22] });
+  const knobLeft = anim.interpolate({ inputRange: [0, 1], outputRange: small ? [2, 19] : [2, 22] });
 
   return (
     <Pressable
@@ -35,6 +38,7 @@ export function ToggleSwitch({ value, onChange, disabled }: Props) {
       disabled={disabled}
       hitSlop={8}
       accessibilityRole="switch"
+      accessibilityLabel={accessibilityLabel}
       accessibilityState={{ checked: value, disabled: !!disabled }}
     >
       {/* Track colour is driven straight off `value`, not the animation, so
@@ -44,11 +48,12 @@ export function ToggleSwitch({ value, onChange, disabled }: Props) {
       <View
         style={[
           styles.track,
+          small && styles.trackSmall,
           { backgroundColor: value ? accent : theme.colors.surface },
           disabled && styles.disabled,
         ]}
       >
-        <Animated.View style={[styles.knob, { left: knobLeft }]} />
+        <Animated.View style={[styles.knob, small && styles.knobSmall, { left: knobLeft }]} />
       </View>
     </Pressable>
   );
@@ -63,6 +68,8 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.borderSoft,
     justifyContent: 'center',
   },
+  trackSmall: { width: 38, height: 22, borderRadius: 11 },
+  knobSmall: { width: 16, height: 16, borderRadius: 8 },
   knob: {
     position: 'absolute',
     top: 2,

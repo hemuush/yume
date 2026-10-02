@@ -16,7 +16,7 @@ jest.mock('@/lib/notifications', () => ({
 
 import { CREATE_TABLES_SQL } from '@/db/schema';
 import { createAccount, createCategory, createTransaction } from '@/db/ledger';
-import { getMonthPaceInputs } from '@/db/reports';
+import { getMonthPaceInputs, getStillToPayThisMonth } from '@/db/reports';
 
 const run = (sql: string, params: any[] = []) => mockTestDb.runAsync(sql, params);
 
@@ -75,4 +75,22 @@ it('adds up everyday spending so far, and what is still due this month', async (
 
 it('counts nothing as still due on the last day of the month', async () => {
   expect((await getMonthPaceInputs('2026-09-30')).dueRestOfMonthMinor).toBe(0);
+});
+
+describe('getStillToPayThisMonth', () => {
+  it('adds pending EMIs this month and recurring bills still ahead', async () => {
+    expect(await getStillToPayThisMonth('2026-09-26')).toBe(90000 + 29900);
+  });
+
+  it('counts an EMI due today', async () => {
+    expect(await getStillToPayThisMonth('2026-09-29')).toBe(90000 + 29900);
+  });
+
+  it('counts an overdue pending EMI from earlier this month, but not a recurring bill due today (already posted)', async () => {
+    expect(await getStillToPayThisMonth('2026-09-30')).toBe(90000);
+  });
+
+  it('only looks at the month it is given', async () => {
+    expect(await getStillToPayThisMonth('2026-10-05')).toBe(90000);
+  });
 });

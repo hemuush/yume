@@ -1,20 +1,9 @@
 import { StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
-import { EYEBROW } from '@/constants/textStyles';
 
-// Shared by the Recurring screen, RuleCard and RuleModal.
+// Shared by the Recurring screen, the rows and RuleModal.
 export const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
-  introText: {
-    fontFamily: theme.font.body,
-    fontSize: 13,
-    color: theme.colors.textSecondary,
-    marginHorizontal: 20,
-    marginTop: theme.layout.screenTopGap,
-    // The list below adds its own top gap, for 16 in all.
-    marginBottom: 8,
-    lineHeight: 18,
-  },
   errorBanner: {
     marginHorizontal: 20,
     marginTop: theme.layout.screenTopGap,
@@ -33,56 +22,32 @@ export const styles = StyleSheet.create({
     marginTop: 3,
     lineHeight: 16,
   },
-  sectionDivider: {
-    ...EYEBROW,
-    marginTop: 14,
-    marginBottom: 6,
-  },
+  // Skeleton rows while the screen loads.
   card: { marginBottom: 10, padding: 14 },
-  subsCard: { marginBottom: 6, padding: 14, gap: 2 },
-  subsLabel: EYEBROW,
-  subsAmount: {
-    fontFamily: theme.font.monoBold,
-    fontSize: 24,
-    color: theme.colors.textPrimary,
-    marginTop: 2,
-  },
-  subsPer: { fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textMuted },
-  subsSub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
-  subsList: { paddingVertical: 2, paddingHorizontal: 14 },
-  subsRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10 },
-  subsRowDivider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.borderSoft },
-  subsRowTitle: { fontFamily: theme.font.bodyBold, fontSize: 13.5, color: theme.colors.textPrimary },
-  subsRowSub: { fontFamily: theme.font.body, fontSize: 11.5, color: theme.colors.textMuted, marginTop: 2 },
-  subsMake: {
+  // The Running, Paused and Not set up yet cards: rows with a hairline between.
+  list: { paddingVertical: 2, paddingHorizontal: 14 },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10 },
+  rowDivider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.borderSoft },
+  rowMuted: { opacity: 0.6 },
+  rowTitle: { fontFamily: theme.font.bodyBold, fontSize: 14, color: theme.colors.textPrimary },
+  rowSub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, marginTop: 2 },
+  ruleMain: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10, minWidth: 0 },
+  ruleSide: { alignItems: 'flex-end', gap: 6 },
+  ruleAmount: { fontFamily: theme.font.monoBold, fontSize: 13.5, color: theme.colors.textPrimary },
+  make: {
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 999,
     backgroundColor: theme.colors.ink,
   },
-  subsMakeText: { fontFamily: theme.font.bodyBold, fontSize: 11.5, color: theme.colors.surface },
-  subsHint: {
+  makeText: { fontFamily: theme.font.bodyBold, fontSize: 11.5, color: theme.colors.surface },
+  hint: {
     fontFamily: theme.font.body,
     fontSize: 11.5,
     color: theme.colors.textMuted,
     marginTop: 6,
     lineHeight: 16,
   },
-  cardMuted: { opacity: 0.6 },
-  cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-  cardTitle: { fontSize: 15, fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
-  cardSub: { fontFamily: theme.font.body, fontSize: 11.5, color: theme.colors.textMuted, marginTop: 3 },
-  cardAmount: { fontSize: 15, fontFamily: theme.font.monoBold, color: theme.colors.textPrimary },
-  cardFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 10,
-    paddingTop: 10,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: theme.colors.borderSoft,
-  },
-  pauseLabel: { fontSize: 11.5, fontFamily: theme.font.bodyBold, color: theme.colors.textSecondary },
   income: { color: theme.colors.incomeText },
   expense: { color: theme.colors.expenseText },
   fieldLabel: {

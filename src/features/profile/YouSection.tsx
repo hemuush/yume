@@ -127,6 +127,32 @@ export function YouSection() {
   const showLoans = hasLoans || sum.loansMinor !== 0;
   const showPeople = peopleCount > 0 || sum.peopleMinor !== 0;
 
+  const showTracked = showLoans || showPeople;
+  const cashHero = (embedded: boolean) => (
+    <CashHero
+      minor={sum.accountsMinor}
+      label={hasOtherCurrency ? `In your accounts (${defaultCurrency} only)` : 'In your accounts'}
+      sub={heroSub}
+      masked={masked}
+      embedded={embedded}
+    />
+  );
+  const trackedCard = (embedded: boolean) => (
+    <TrackedCard
+      totalMinor={sum.totalMinor}
+      accountsMinor={sum.accountsMinor}
+      loansMinor={sum.loansMinor}
+      peopleMinor={sum.peopleMinor}
+      accountsLabel={hasOtherCurrency ? `Your accounts (${defaultCurrency} only)` : 'Your accounts'}
+      showLoans={showLoans}
+      showPeople={showPeople}
+      untrackedAssetLoan={hasUntrackedAssetLoan}
+      hasLoans={hasLoans}
+      masked={masked}
+      embedded={embedded}
+    />
+  );
+
   if (!loaded && !loadError) {
     // Not a full-screen gate — the shell's header, identity, and tab
     // control above this are already visible; this only fills the space
@@ -147,27 +173,16 @@ export function YouSection() {
         </View>
       )}
 
-      {accounts.length > 0 && (
-        <CashHero
-          minor={sum.accountsMinor}
-          label={hasOtherCurrency ? `In your accounts (${defaultCurrency} only)` : 'In your accounts'}
-          sub={heroSub}
-          masked={masked}
-        />
-      )}
-      {(showLoans || showPeople) && (
-        <TrackedCard
-          totalMinor={sum.totalMinor}
-          accountsMinor={sum.accountsMinor}
-          loansMinor={sum.loansMinor}
-          peopleMinor={sum.peopleMinor}
-          accountsLabel={hasOtherCurrency ? `Your accounts (${defaultCurrency} only)` : 'Your accounts'}
-          showLoans={showLoans}
-          showPeople={showPeople}
-          untrackedAssetLoan={hasUntrackedAssetLoan}
-          hasLoans={hasLoans}
-          masked={masked}
-        />
+      {accounts.length > 0 && showTracked ? (
+        <View style={styles.cashCard}>
+          {cashHero(true)}
+          {trackedCard(true)}
+        </View>
+      ) : (
+        <>
+          {accounts.length > 0 && cashHero(false)}
+          {showTracked && trackedCard(false)}
+        </>
       )}
       <LinkTiles
         entries={txCount}
