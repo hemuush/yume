@@ -6,7 +6,7 @@ import { MAX_AMOUNT_MINOR } from '@/lib/amountLimits';
 import { captureRow, restoreRow, RowSnapshot } from './undoSnapshot';
 import { getDefaultCurrency } from './settings';
 import { Transaction, TransactionType, PaymentMode } from '@/types';
-import { toLocalIsoDate, addDaysToIsoDate } from '@/lib/date';
+import { toLocalIsoDate, addDaysToIsoDate, isIsoDate, parseLocalIsoDate } from '@/lib/date';
 import { parseSearchQuery } from '@/lib/searchQuery';
 
 import { checkOverspendAndNotify } from './spendAlerts';
@@ -95,6 +95,13 @@ export async function assertSameCurrencyTransfer(
   }
 }
 
+/** An entry's date must be a real calendar day (not "2026-02-31"): anything else drops out of every month's totals. */
+function assertRealDate(date: string): void {
+  if (!isIsoDate(date) || toLocalIsoDate(parseLocalIsoDate(date)) !== date) {
+    throw new Error('Pick a valid date');
+  }
+}
+
 /**
  * Every check createTransaction applies before writing — shared with
  * runDueRecurringRules, which has to do its own insert inside a
@@ -102,6 +109,7 @@ export async function assertSameCurrencyTransfer(
  * exactly the same rules a hand-typed entry gets.
  */
 export async function assertValidTransactionInput(input: CreateTransactionInput): Promise<void> {
+  assertRealDate(input.date);
   if (!Number.isFinite(input.amountMinor) || input.amountMinor <= 0) {
     throw new Error('Amount must be a positive number');
   }
@@ -511,6 +519,7 @@ export interface UpdateTransactionInput {
  * instead, or their schedule/balance would silently desync from this edit.
  */
 export async function updateTransaction(id: string, input: UpdateTransactionInput): Promise<Transaction> {
+  assertRealDate(input.date);
   if (!Number.isFinite(input.amountMinor) || input.amountMinor <= 0) {
     throw new Error('Amount must be a positive number');
   }

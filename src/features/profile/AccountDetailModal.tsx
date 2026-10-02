@@ -18,6 +18,7 @@ import { modalFooterStyles as f } from '@/constants/theme';
 import { useAccent } from '@/theme/AccentContext';
 import { accountHue, accountIcon } from '@/lib/account';
 import { FormInput } from '@/components/FormInput';
+import { AmountField } from '@/components/AmountField';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { Chip } from '@/components/Chip';
 import { ToggleSwitch } from '@/components/ToggleSwitch';
@@ -241,20 +242,18 @@ export function AccountDetailModal({
           </Text>
         </>
       )}
-      <FormInput
+      <AmountField
         label={trackingNow ? 'Invested so far' : 'Opening balance'}
         value={opening}
         onChangeText={setOpening}
-        keyboardType="numeric"
         placeholder="0"
       />
       {type === 'credit_card' && (
         <>
-          <FormInput
+          <AmountField
             label="Credit limit"
             value={creditLimit}
             onChangeText={setCreditLimit}
-            keyboardType="numeric"
             placeholder="e.g. 100000"
           />
           <CardCycleFields

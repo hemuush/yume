@@ -57,20 +57,23 @@ export function AmountPad({
   );
 }
 
-function PadButton({
+export function PadButton({
   padKey,
   onPress,
   onLongPress,
+  compact,
 }: {
   padKey: PadKey;
   onPress: () => void;
   onLongPress?: () => void;
+  /** A shorter key, for the pad docked under a sheet. */
+  compact?: boolean;
 }) {
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.94);
   const operator = padKey === '÷' || padKey === '×' || padKey === '−' || padKey === '+';
   return (
     <AnimatedPressable
-      style={[styles.key, operator && styles.keyOperator, animatedStyle]}
+      style={[styles.key, compact && styles.keyCompact, operator && styles.keyOperator, animatedStyle]}
       onPress={() => {
         haptics.tap();
         onPress();
@@ -107,6 +110,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: theme.colors.surfaceAlt,
+  },
+  // The docked pad sits on a sheet's own cream, so its keys are the lighter surface with a hairline.
+  keyCompact: {
+    height: 42,
+    backgroundColor: theme.colors.surface,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.borderSoft,
   },
   keyOperator: { backgroundColor: theme.colors.accentTint },
   keyText: { fontFamily: theme.font.monoBold, fontSize: 18, color: theme.colors.textPrimary },

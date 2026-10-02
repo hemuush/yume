@@ -5,6 +5,7 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { SafeAreaProvider, useSafeAreaInsets, initialWindowMetrics } from 'react-native-safe-area-context';
 import { theme } from '@/constants/theme';
 import { usePressScale } from '@/lib/usePressScale';
+import { AmountPadHostProvider, useAmountPadHost } from '@/components/AmountField';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -190,6 +191,9 @@ function ModalSheetBody({
 }: Props) {
   const insets = useSafeAreaInsets();
   const isSheet = variant === 'sheet';
+
+  // The pad an AmountField docks under the sheet, in place of the phone keyboard.
+  const { host, pad, scrollProps: scrollTracking } = useAmountPadHost();
   // A pinned footer means the three-band layout (fixed header / scrolling
   // body / fixed footer) instead of the single scrolling column. A scrolling
   // bottom sheet always uses it, footer or not: the single-column scroll
@@ -217,25 +221,29 @@ function ModalSheetBody({
   // Centered dialog with a pinned footer.
   if (framed && !isSheet) {
     return (
-      <View style={styles.flex}>
-        <Pressable style={styles.backdrop} onPress={onClose} accessibilityLabel="Close" />
-        <View
-          style={[styles.flex, styles.alignCenter, { paddingVertical: insets.top + 12 }]}
-          pointerEvents="box-none"
-        >
-          <View style={[styles.dialog, styles.dialogFramed]}>
-            <View style={styles.framedPad}>{header}</View>
-            <ScrollView
-              style={styles.framedBody}
-              contentContainerStyle={styles.framedDialogContent}
-              showsVerticalScrollIndicator={false}
-            >
-              {children}
-            </ScrollView>
-            <View style={[styles.framedDialogFooter, { paddingBottom: 16 }]}>{footer}</View>
+      <AmountPadHostProvider value={host}>
+        <View style={styles.flex}>
+          <Pressable style={styles.backdrop} onPress={onClose} accessibilityLabel="Close" />
+          <View
+            style={[styles.flex, styles.alignCenter, { paddingVertical: insets.top + 12 }]}
+            pointerEvents="box-none"
+          >
+            <View style={[styles.dialog, styles.dialogFramed]}>
+              <View style={styles.framedPad}>{header}</View>
+              <ScrollView
+                {...scrollTracking}
+                style={styles.framedBody}
+                contentContainerStyle={styles.framedDialogContent}
+                showsVerticalScrollIndicator={false}
+              >
+                {children}
+              </ScrollView>
+              <View style={[styles.framedDialogFooter, { paddingBottom: pad ? 10 : 16 }]}>{footer}</View>
+              {pad && <View style={styles.dialogDock}>{pad}</View>}
+            </View>
           </View>
         </View>
-      </View>
+      </AmountPadHostProvider>
     );
   }
 
@@ -243,32 +251,38 @@ function ModalSheetBody({
   // content, action bar pinned to the bottom above the nav bar.
   if (framed) {
     return (
-      <View style={styles.flex}>
-        <Pressable style={styles.backdrop} onPress={onClose} accessibilityLabel="Close" />
-        <View
-          style={[styles.flex, styles.alignBottom, { paddingTop: insets.top + 8 }]}
-          pointerEvents="box-none"
-        >
-          <View style={styles.framedSheet}>
-            <View style={styles.grabber} />
-            <View style={styles.framedPad}>{header}</View>
-            <KeyboardAwareScrollView
-              style={styles.framedBody}
-              contentContainerStyle={styles.framedSheetContent}
-              bottomOffset={24}
-              keyboardShouldPersistTaps="handled"
-              showsVerticalScrollIndicator={false}
-            >
-              {children}
-            </KeyboardAwareScrollView>
-            {footer !== undefined ? (
-              <View style={[styles.framedSheetFooter, { paddingBottom: 12 + insets.bottom }]}>{footer}</View>
-            ) : (
-              <View style={{ height: insets.bottom }} />
-            )}
+      <AmountPadHostProvider value={host}>
+        <View style={styles.flex}>
+          <Pressable style={styles.backdrop} onPress={onClose} accessibilityLabel="Close" />
+          <View
+            style={[styles.flex, styles.alignBottom, { paddingTop: insets.top + 8 }]}
+            pointerEvents="box-none"
+          >
+            <View style={styles.framedSheet}>
+              <View style={styles.grabber} />
+              <View style={styles.framedPad}>{header}</View>
+              <KeyboardAwareScrollView
+                {...scrollTracking}
+                style={styles.framedBody}
+                contentContainerStyle={styles.framedSheetContent}
+                bottomOffset={24}
+                keyboardShouldPersistTaps="handled"
+                showsVerticalScrollIndicator={false}
+              >
+                {children}
+              </KeyboardAwareScrollView>
+              {footer !== undefined ? (
+                <View style={[styles.framedSheetFooter, { paddingBottom: pad ? 10 : 12 + insets.bottom }]}>
+                  {footer}
+                </View>
+              ) : pad ? null : (
+                <View style={{ height: insets.bottom }} />
+              )}
+              {pad && <View style={[styles.sheetDock, { paddingBottom: 12 + insets.bottom }]}>{pad}</View>}
+            </View>
           </View>
         </View>
-      </View>
+      </AmountPadHostProvider>
     );
   }
 
@@ -279,46 +293,49 @@ function ModalSheetBody({
       {isSheet && <View style={styles.grabber} />}
       {header}
       {children}
+      {pad && <View style={styles.inlineDock}>{pad}</View>}
     </View>
   );
 
   return (
-    <View style={styles.flex}>
-      {/* The backdrop is its own sibling rather than a parent of the sheet:
+    <AmountPadHostProvider value={host}>
+      <View style={styles.flex}>
+        {/* The backdrop is its own sibling rather than a parent of the sheet:
           a parent Pressable would swallow every tap inside the sheet too. */}
-      <Pressable style={styles.backdrop} onPress={onClose} accessibilityLabel="Close" />
-      {/* KeyboardAwareScrollView (react-native-keyboard-controller) scrolls the
+        <Pressable style={styles.backdrop} onPress={onClose} accessibilityLabel="Close" />
+        {/* KeyboardAwareScrollView (react-native-keyboard-controller) scrolls the
           focused input clear of the keyboard and animates in sync with it,
           inside the Modal's own Android Dialog window where the built-in
           KeyboardAvoidingView / manual keyboard-height padding both fell
           short. `bottomOffset` keeps a small gap between the field and the
           keyboard's top edge. */}
-      {/* paddingTop keeps the sheet (grabber + title) clear of the
+        {/* paddingTop keeps the sheet (grabber + title) clear of the
           translucent status bar even when its content is tall enough to
           fill the screen or the keyboard has pushed it up. */}
-      <View
-        style={[
-          styles.flex,
-          isSheet ? styles.alignBottom : styles.alignCenter,
-          isSheet ? { paddingTop: insets.top + 8 } : { paddingVertical: insets.top + 12 },
-        ]}
-        pointerEvents="box-none"
-      >
-        {scrollable ? (
-          <KeyboardAwareScrollView
-            style={isSheet ? styles.scrollSheet : styles.scrollDialog}
-            contentContainerStyle={isSheet ? undefined : styles.scrollDialogContent}
-            bottomOffset={24}
-            keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={false}
-          >
-            {body}
-          </KeyboardAwareScrollView>
-        ) : (
-          body
-        )}
+        <View
+          style={[
+            styles.flex,
+            isSheet ? styles.alignBottom : styles.alignCenter,
+            isSheet ? { paddingTop: insets.top + 8 } : { paddingVertical: insets.top + 12 },
+          ]}
+          pointerEvents="box-none"
+        >
+          {scrollable ? (
+            <KeyboardAwareScrollView
+              style={isSheet ? styles.scrollSheet : styles.scrollDialog}
+              contentContainerStyle={isSheet ? undefined : styles.scrollDialogContent}
+              bottomOffset={24}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+            >
+              {body}
+            </KeyboardAwareScrollView>
+          ) : (
+            body
+          )}
+        </View>
       </View>
-    </View>
+    </AmountPadHostProvider>
   );
 }
 
@@ -365,6 +382,9 @@ const styles = StyleSheet.create({
   framedSheetContent: { paddingHorizontal: 16, paddingBottom: 16 },
   framedSheetFooter: { paddingHorizontal: 16, paddingTop: 10, backgroundColor: theme.colors.surfaceAlt },
   framedDialogContent: { paddingHorizontal: 16, paddingBottom: 4 },
+  sheetDock: { paddingHorizontal: 16, paddingTop: 2, backgroundColor: theme.colors.surfaceAlt },
+  dialogDock: { paddingHorizontal: 16, paddingBottom: 14, backgroundColor: theme.colors.surface },
+  inlineDock: { marginTop: 12 },
   framedDialogFooter: { paddingHorizontal: 16, paddingTop: 12, backgroundColor: theme.colors.surface },
   footerRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   roundBtn: {

@@ -252,6 +252,13 @@ export interface BackupSummary {
   loans: number;
 }
 
+/** Far beyond any real ledger's backup; a bigger picked file is something else, and reading it as text could exhaust memory. */
+export const MAX_BACKUP_FILE_BYTES = 150 * 1024 * 1024;
+
+export function isTooLargeForBackup(bytes: number | null | undefined): boolean {
+  return bytes != null && bytes > MAX_BACKUP_FILE_BYTES;
+}
+
 /** A backup file's summary — or null when the file isn't a Yume backup at all. */
 export function summarizeSnapshot(snapshot: unknown): BackupSummary | null {
   const tables = (snapshot as BackupSnapshot | null)?.tables;

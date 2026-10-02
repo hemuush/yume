@@ -17,6 +17,7 @@ import { RestorePreviewSheet, RestorePreview } from '@/features/backup/RestorePr
 import { AccountType } from '@/types';
 import { CategoryIcon } from '@/components/CategoryIcon';
 import { SuuIllustration } from '@/components/SuuIllustration';
+import { AmountField, AmountPadDock } from '@/components/AmountField';
 import { theme } from '@/constants/theme';
 import { useAccent } from '@/theme/AccentContext';
 import { withPressed } from '@/lib/pressed';
@@ -218,131 +219,138 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={[styles.container, { paddingTop: insets.top + 16, paddingBottom: insets.bottom }]}
-      behavior="padding"
-    >
-      <Pressable
-        style={withPressed([styles.skip, { top: insets.top + 12 }])}
-        onPress={finish}
-        hitSlop={10}
-        accessibilityRole="button"
-        accessibilityLabel="Skip"
-      >
-        <Text style={styles.skipText}>Skip</Text>
-      </Pressable>
+    <View style={styles.root}>
+      <AmountPadDock>
+        {(scrollProps) => (
+          <KeyboardAvoidingView
+            style={[styles.container, { paddingTop: insets.top + 16, paddingBottom: insets.bottom }]}
+            behavior="padding"
+          >
+            <Pressable
+              style={withPressed([styles.skip, { top: insets.top + 12 }])}
+              onPress={finish}
+              hitSlop={10}
+              accessibilityRole="button"
+              accessibilityLabel="Skip"
+            >
+              <Text style={styles.skipText}>Skip</Text>
+            </Pressable>
 
-      <View style={[styles.illustWrap, slide.isAccountsStep && styles.illustWrapSmall]}>
-        <SuuIllustration size={slide.isAccountsStep ? 84 : 140} pose={slide.pose} />
-      </View>
+            <View style={[styles.illustWrap, slide.isAccountsStep && styles.illustWrapSmall]}>
+              <SuuIllustration size={slide.isAccountsStep ? 84 : 140} pose={slide.pose} />
+            </View>
 
-      <Text style={[styles.title, slide.isAccountsStep && styles.titleCompact]}>{slide.title}</Text>
-      <Text style={styles.subtitle}>{slide.subtitle}</Text>
+            <Text style={[styles.title, slide.isAccountsStep && styles.titleCompact]}>{slide.title}</Text>
+            <Text style={styles.subtitle}>{slide.subtitle}</Text>
 
-      {slide.isNameStep && (
-        <TextInput
-          style={[styles.nameInput, nameFocused && styles.nameInputFocused]}
-          placeholder="Your name"
-          placeholderTextColor={theme.colors.textMuted}
-          value={name}
-          onChangeText={setName}
-          onFocus={() => setNameFocused(true)}
-          onBlur={() => setNameFocused(false)}
-          maxLength={40}
-          autoCapitalize="words"
-          returnKeyType="done"
-          onSubmitEditing={next}
-        />
-      )}
+            {slide.isNameStep && (
+              <TextInput
+                style={[styles.nameInput, nameFocused && styles.nameInputFocused]}
+                placeholder="Your name"
+                placeholderTextColor={theme.colors.textMuted}
+                value={name}
+                onChangeText={setName}
+                onFocus={() => setNameFocused(true)}
+                onBlur={() => setNameFocused(false)}
+                maxLength={40}
+                autoCapitalize="words"
+                returnKeyType="done"
+                onSubmitEditing={next}
+              />
+            )}
 
-      {slide.isAccountsStep && (
-        <ScrollView
-          style={styles.accountsScroll}
-          contentContainerStyle={styles.accountsList}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-        >
-          {STARTER_ACCOUNTS.map((starter) => {
-            const on = !!picked[starter.key];
-            return (
-              <View key={starter.key} style={[styles.accountCard, on && styles.accountCardOn]}>
-                <Pressable
-                  onPress={() => setPicked((prev) => ({ ...prev, [starter.key]: !prev[starter.key] }))}
-                  style={withPressed(styles.accountHead)}
-                  accessibilityRole="checkbox"
-                  accessibilityState={{ checked: on }}
-                  accessibilityLabel={starter.name}
-                >
-                  <CategoryIcon name={starter.icon} color={starter.color} size={17} square={36} />
-                  <Text style={styles.accountName}>{starter.name}</Text>
-                  <View style={[styles.check, on && styles.checkOn]}>
-                    {on && <Feather name="check" size={13} color={theme.colors.surface} />}
-                  </View>
-                </Pressable>
-                {on && (
-                  <TextInput
-                    style={styles.openingInput}
-                    placeholder="Current balance (optional)"
-                    placeholderTextColor={theme.colors.textMuted}
-                    value={openings[starter.key] ?? ''}
-                    onChangeText={(v) => setOpenings((prev) => ({ ...prev, [starter.key]: v }))}
-                    keyboardType="numeric"
-                    maxLength={12}
-                    accessibilityLabel={`${starter.name} current balance`}
-                  />
-                )}
-              </View>
-            );
-          })}
-          {accountsError && <Text style={styles.accountsError}>{accountsError}</Text>}
-        </ScrollView>
-      )}
+            {slide.isAccountsStep && (
+              <ScrollView
+                {...scrollProps}
+                style={styles.accountsScroll}
+                contentContainerStyle={styles.accountsList}
+                keyboardShouldPersistTaps="handled"
+                showsVerticalScrollIndicator={false}
+              >
+                {STARTER_ACCOUNTS.map((starter) => {
+                  const on = !!picked[starter.key];
+                  return (
+                    <View key={starter.key} style={[styles.accountCard, on && styles.accountCardOn]}>
+                      <Pressable
+                        onPress={() => setPicked((prev) => ({ ...prev, [starter.key]: !prev[starter.key] }))}
+                        style={withPressed(styles.accountHead)}
+                        accessibilityRole="checkbox"
+                        accessibilityState={{ checked: on }}
+                        accessibilityLabel={starter.name}
+                      >
+                        <CategoryIcon name={starter.icon} color={starter.color} size={17} square={36} />
+                        <Text style={styles.accountName}>{starter.name}</Text>
+                        <View style={[styles.check, on && styles.checkOn]}>
+                          {on && <Feather name="check" size={13} color={theme.colors.surface} />}
+                        </View>
+                      </Pressable>
+                      {on && (
+                        <AmountField
+                          style={styles.openingInput}
+                          placeholder="Current balance (optional)"
+                          placeholderTextColor={theme.colors.textMuted}
+                          value={openings[starter.key] ?? ''}
+                          onChangeText={(v) => setOpenings((prev) => ({ ...prev, [starter.key]: v }))}
+                          maxLength={12}
+                          accessibilityLabel={`${starter.name} current balance`}
+                        />
+                      )}
+                    </View>
+                  );
+                })}
+                {accountsError && <Text style={styles.accountsError}>{accountsError}</Text>}
+              </ScrollView>
+            )}
 
-      <View style={styles.dots}>
-        {SLIDES.map((_, i) => (
-          <View
-            key={i}
-            style={[styles.dot, i === index && { width: 20, backgroundColor: accent, opacity: 1 }]}
-          />
-        ))}
-      </View>
+            <View style={styles.dots}>
+              {SLIDES.map((_, i) => (
+                <View
+                  key={i}
+                  style={[styles.dot, i === index && { width: 20, backgroundColor: accent, opacity: 1 }]}
+                />
+              ))}
+            </View>
 
-      <Pressable
-        style={withPressed([styles.cta, index === 0 && styles.ctaWithLink, creating && styles.ctaBusy])}
-        onPress={next}
-        disabled={creating}
-        accessibilityRole="button"
-        testID="onboarding-cta"
-      >
-        <Text style={[styles.ctaText, { color: accent }]}>
-          {creating ? 'Setting up…' : isLast ? 'Get started' : 'Next'}
-        </Text>
-      </Pressable>
+            <Pressable
+              style={withPressed([styles.cta, index === 0 && styles.ctaWithLink, creating && styles.ctaBusy])}
+              onPress={next}
+              disabled={creating}
+              accessibilityRole="button"
+              testID="onboarding-cta"
+            >
+              <Text style={[styles.ctaText, { color: accent }]}>
+                {creating ? 'Setting up…' : isLast ? 'Get started' : 'Next'}
+              </Text>
+            </Pressable>
 
-      {index === 0 && (
-        <Pressable
-          style={withPressed(styles.restoreLink)}
-          onPress={pickBackup}
-          hitSlop={8}
-          accessibilityRole="button"
-          accessibilityLabel="I have a Yume backup"
-        >
-          <Feather name="download" size={14} color={theme.colors.textSecondary} />
-          <Text style={styles.restoreLinkText}>I have a Yume backup</Text>
-        </Pressable>
-      )}
+            {index === 0 && (
+              <Pressable
+                style={withPressed(styles.restoreLink)}
+                onPress={pickBackup}
+                hitSlop={8}
+                accessibilityRole="button"
+                accessibilityLabel="I have a Yume backup"
+              >
+                <Feather name="download" size={14} color={theme.colors.textSecondary} />
+                <Text style={styles.restoreLinkText}>I have a Yume backup</Text>
+              </Pressable>
+            )}
 
-      <RestorePreviewSheet
-        preview={pendingRestore?.preview ?? null}
-        busy={restoring}
-        onCancel={() => setPendingRestore(null)}
-        onRestore={restorePending}
-      />
-    </KeyboardAvoidingView>
+            <RestorePreviewSheet
+              preview={pendingRestore?.preview ?? null}
+              busy={restoring}
+              onCancel={() => setPendingRestore(null)}
+              onRestore={restorePending}
+            />
+          </KeyboardAvoidingView>
+        )}
+      </AmountPadDock>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  root: { flex: 1, backgroundColor: theme.colors.background },
   container: { flex: 1, backgroundColor: theme.colors.background, paddingHorizontal: 28 },
   skip: { position: 'absolute', right: 24, zIndex: 2 },
   skipText: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textMuted },

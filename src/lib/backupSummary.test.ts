@@ -11,7 +11,13 @@ jest.mock('@/lib/notifications', () => ({ notifyOverspend: async () => {}, notif
 
 import { CREATE_TABLES_SQL } from '@/db/schema';
 import { createAccount, createCategory, createTransaction } from '@/db/ledger';
-import { summarizeSnapshot, getCurrentSummary, countEntriesSavedAfter } from './backup';
+import {
+  summarizeSnapshot,
+  getCurrentSummary,
+  countEntriesSavedAfter,
+  isTooLargeForBackup,
+  MAX_BACKUP_FILE_BYTES,
+} from './backup';
 
 describe('summarizeSnapshot', () => {
   it("counts a backup's entries, accounts and loans, and finds its latest entry", () => {
@@ -80,5 +86,18 @@ describe('the phone right now', () => {
     expect(await countEntriesSavedAfter('2026-09-25T18:28:02Z')).toBe(1);
     expect(await countEntriesSavedAfter('2026-09-01T00:00:00Z')).toBe(2);
     expect(await countEntriesSavedAfter('2026-09-27T00:00:00Z')).toBe(0);
+  });
+});
+
+describe('isTooLargeForBackup', () => {
+  it('lets a normal file through and rejects an oversized one', () => {
+    expect(isTooLargeForBackup(40 * 1024 * 1024)).toBe(false);
+    expect(isTooLargeForBackup(MAX_BACKUP_FILE_BYTES)).toBe(false);
+    expect(isTooLargeForBackup(MAX_BACKUP_FILE_BYTES + 1)).toBe(true);
+  });
+
+  it('does not block a file whose size is unknown', () => {
+    expect(isTooLargeForBackup(undefined)).toBe(false);
+    expect(isTooLargeForBackup(null)).toBe(false);
   });
 });

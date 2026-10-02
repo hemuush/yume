@@ -5,6 +5,7 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getUserName, setUserName, getMemberSinceYear } from '@/db/settings';
 import { AppHeader, HeaderPrivacyToggle } from '@/components/AppHeader';
+import { AmountPadDock } from '@/components/AmountField';
 import { SegmentedControl } from '@/components/SegmentedControl';
 import { theme } from '@/constants/theme';
 import { useScreenLoad } from '@/lib/useScreenLoad';
@@ -74,39 +75,46 @@ export default function ProfileScreen() {
 
   return (
     <View style={styles.container}>
-      <AppHeader title="Profile" showBack hideUser right={<HeaderPrivacyToggle />} />
+      <AmountPadDock>
+        {(scrollProps) => (
+          <>
+            <AppHeader title="Profile" showBack hideUser right={<HeaderPrivacyToggle />} />
 
-      <KeyboardAwareScrollView
-        contentContainerStyle={{ paddingBottom: theme.layout.screenScrollPad + insets.bottom }}
-        keyboardShouldPersistTaps="handled"
-        bottomOffset={20}
-      >
-        {loadError && (
-          <View style={styles.errorBanner}>
-            <Text style={styles.errorTitle}>Couldn't load your data</Text>
-            <Text style={styles.errorDetail}>{loadError}</Text>
-          </View>
+            <KeyboardAwareScrollView
+              {...scrollProps}
+              contentContainerStyle={{ paddingBottom: theme.layout.screenScrollPad + insets.bottom }}
+              keyboardShouldPersistTaps="handled"
+              bottomOffset={20}
+            >
+              {loadError && (
+                <View style={styles.errorBanner}>
+                  <Text style={styles.errorTitle}>Couldn't load your data</Text>
+                  <Text style={styles.errorDetail}>{loadError}</Text>
+                </View>
+              )}
+
+              <ProfileIdentity
+                name={name}
+                memberSince={memberSince}
+                editing={editing}
+                draft={draft}
+                onDraftChange={setDraft}
+                onStartEdit={() => {
+                  setDraft(name ?? '');
+                  setEditing(true);
+                }}
+                onSave={saveName}
+              />
+
+              <View style={styles.tabWrap}>
+                <SegmentedControl options={TABS} value={tab} onChange={setTab} />
+              </View>
+
+              {tab === 'you' ? <YouSection /> : <SettingsSection />}
+            </KeyboardAwareScrollView>
+          </>
         )}
-
-        <ProfileIdentity
-          name={name}
-          memberSince={memberSince}
-          editing={editing}
-          draft={draft}
-          onDraftChange={setDraft}
-          onStartEdit={() => {
-            setDraft(name ?? '');
-            setEditing(true);
-          }}
-          onSave={saveName}
-        />
-
-        <View style={styles.tabWrap}>
-          <SegmentedControl options={TABS} value={tab} onChange={setTab} />
-        </View>
-
-        {tab === 'you' ? <YouSection /> : <SettingsSection />}
-      </KeyboardAwareScrollView>
+      </AmountPadDock>
     </View>
   );
 }

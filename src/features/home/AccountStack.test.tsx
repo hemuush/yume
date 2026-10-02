@@ -13,14 +13,17 @@ import type { Account } from '@/types';
 // queues it and the tests play it out by hand — after the assignment that started the animation, as the real thing does.
 const mockPending: (() => void)[] = [];
 let mockReduce = false;
+let mockFinished = true;
+const mockCancel = jest.fn();
 jest.mock('react-native-reanimated', () => {
   const base = require('@/test-support/reanimatedMock').createReanimatedMock();
   return {
     ...base,
     withTiming: (to: unknown, _cfg: unknown, done?: (finished: boolean) => void) => {
-      if (done) mockPending.push(() => done(true));
+      if (done) mockPending.push(() => done(mockFinished));
       return to;
     },
+    cancelAnimation: (...a: unknown[]) => mockCancel(...a),
   };
 });
 jest.mock('@/lib/useReduceMotion', () => ({ useReduceMotion: () => mockReduce }));
@@ -49,6 +52,8 @@ let config: Config;
 beforeEach(() => {
   mockPending.length = 0;
   mockReduce = false;
+  mockFinished = true;
+  mockCancel.mockClear();
   jest.spyOn(PanResponder, 'create').mockImplementation((c) => {
     config = c;
     return { panHandlers: {} } as ReturnType<typeof PanResponder.create>;
@@ -182,6 +187,28 @@ describe('AccountStack', () => {
       expect(mockPending).toHaveLength(1);
       await flush();
       expect(frontId(tree)).toBe('0');
+    });
+
+    it('lets a touch during a landing swipe pass without cancelling it', async () => {
+      const { tree } = await render(accounts(3));
+      await swipe(120);
+      mockCancel.mockClear();
+      await swipe(120);
+      expect(mockCancel).not.toHaveBeenCalled();
+      await flush();
+      expect(frontId(tree)).toBe('0');
+    });
+
+    it('still lands a swipe the animation reports as cut short, so the stack is never stuck half-turned', async () => {
+      const { tree } = await render(accounts(3));
+      mockFinished = false;
+      await swipe(120);
+      await flush();
+      expect(frontId(tree)).toBe('0');
+      mockFinished = true;
+      await swipe(120);
+      await flush();
+      expect(frontId(tree)).toBe('1');
     });
 
     it('can be swiped with the accessibility action too', async () => {

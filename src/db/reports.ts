@@ -198,6 +198,34 @@ export async function getPeriodSummary(range: DateRange): Promise<PeriodSummary>
 }
 
 /**
+ * What was left over, in total, from everything before `before` (YYYY-MM-DD):
+ * income − spending − what was moved into savings, summed over all earlier
+ * entries — the same arithmetic as a period's own free-to-use figure, so a
+ * month's leftover rolls into the next one instead of vanishing. Negative when
+ * earlier months went over. Default currency only, like every other total;
+ * with `excludeSensitive` the savings & investment categories stay out, as
+ * they do for the period itself.
+ */
+export async function getCarryInMinor(before: string, excludeSensitive = false): Promise<number> {
+  const db = await getDb();
+  const currency = await getDefaultCurrency();
+  const clean = excludeSensitive ? ` AND ${NOT_SENSITIVE}` : '';
+  const row = await db.getFirstAsync<{ income: number | null; expense: number | null; saved: number | null }>(
+    `SELECT
+       (SELECT SUM(t.amount_minor) FROM transactions t JOIN accounts a ON a.id = t.account_id
+         WHERE ${INCOME_ROWS} AND a.currency = ? AND t.date < ?${clean}) AS income,
+       (SELECT SUM(${SPEND_AMOUNT}) FROM transactions t JOIN accounts a ON a.id = t.account_id
+         WHERE ${SPEND_ROWS} AND a.currency = ? AND t.date < ?${clean}) AS expense,
+       (SELECT COALESCE(SUM(t.amount_minor), 0) FROM transactions t JOIN accounts a ON a.id = t.to_account_id
+         WHERE t.type = 'transfer' AND a.type = 'savings' AND a.currency = ? AND t.date < ?)
+       - (SELECT COALESCE(SUM(t.amount_minor), 0) FROM transactions t JOIN accounts a ON a.id = t.account_id
+         WHERE t.type = 'transfer' AND a.type = 'savings' AND a.currency = ? AND t.date < ?) AS saved`,
+    [currency, before, currency, before, currency, before, currency, before]
+  );
+  return (row?.income ?? 0) - (row?.expense ?? 0) - (row?.saved ?? 0);
+}
+
+/**
  * The split behind one rolled-up category row — one entry per subcategory,
  * plus an "Other <name>" entry for spend tagged directly against the parent
  * itself rather than any specific subcategory (a real case: someone picks

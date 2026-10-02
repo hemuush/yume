@@ -95,8 +95,7 @@ function StackBody({ accounts, onOpen, opening = false }: Props) {
     if (reduce) {
       // Config objects are built here on the JS thread: a worklet callback can capture them, but must not call JS helpers.
       const half = { duration: STACK.reduceMs / 2 };
-      fade.value = withTiming(0, half, (finished) => {
-        if (!finished) return;
+      fade.value = withTiming(0, half, () => {
         base.value = base.value + 1;
         p.value = 0;
         fade.value = withTiming(1, half);
@@ -105,8 +104,9 @@ function StackBody({ accounts, onOpen, opening = false }: Props) {
       return;
     }
     const cfg = { duration: STACK.totalMs * (1 - p0) + 60, easing: Easing.linear };
-    p.value = withTiming(1, cfg, (finished) => {
-      if (!finished) return;
+    // Lands even if the animation reports it was cut short: returning early there left `busy` set and `p`
+    // frozen mid-swipe, so the stack stayed half-turned and ignored every later swipe.
+    p.value = withTiming(1, cfg, () => {
       base.value = base.value + 1;
       p.value = 0;
       runOnJS(settle)();
@@ -114,7 +114,10 @@ function StackBody({ accounts, onOpen, opening = false }: Props) {
   };
 
   const gesture: Gesture = {
-    grant: () => cancelAnimation(p),
+    grant: () => {
+      // A swipe already landing must not be cancelled by a new touch.
+      if (!busy.current) cancelAnimation(p);
+    },
     move: (dx) => {
       if (busy.current || reduce) return;
       dir.value = dx >= 0 ? 1 : -1;
@@ -247,7 +250,17 @@ function StackCard({
       return;
     }
     const delay = playOpening ? Math.max(0, vis - 1 - index) * MOTION.enterStep : 0;
-    enter.value = withDelay(delay, withTiming(1, timing(playOpening ? MOTION.enter : MOTION.quick)));
+    const duration = playOpening ? MOTION.enter : MOTION.quick;
+    enter.value = withDelay(delay, withTiming(1, timing(duration)));
+    // A delayed animation that never lands leaves the card at opacity 0 for good (the back cards, whose delay is
+    // longest, went missing on a busy first open), so the end state is set directly once it should have finished.
+    const rescue = setTimeout(
+      () => {
+        enter.value = 1;
+      },
+      delay + duration + 250
+    );
+    return () => clearTimeout(rescue);
   }, [enter, reduce, playOpening, vis, index]);
 
   const style = useAnimatedStyle(() => {

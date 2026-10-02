@@ -19,6 +19,12 @@ describe('parseSearchQuery', () => {
     expect(parse('45.50').words[0].amountMinor).toEqual({ min: 4550, max: 4550 });
   });
 
+  it('reads other currency signs the same way', () => {
+    expect(parse('$1,807').words[0].amountMinor).toEqual({ min: 180650, max: 180749 });
+    expect(parse('€45.50').words[0].amountMinor).toEqual({ min: 4550, max: 4550 });
+    expect(parse('£184').words[0].amountMinor).toEqual({ min: 18350, max: 18449 });
+  });
+
   it('does not treat other number-like words as amounts', () => {
     expect(parse('50%').words).toEqual([{ text: '50%' }]);
     expect(parse('1,2345').words).toEqual([{ text: '1,2345' }]);
