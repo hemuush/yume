@@ -29,7 +29,7 @@ export const widgetColor = {
   idCoral: '#FFE3D6',
   idSage: '#E9F3DA',
   moonFace: '#FBF3DA',
-  // Account hues, the same as Home's account cards (see accountHue in AccountChip).
+  // Account hues, the same as Home's account cards (see accountHue in lib/account).
   flatLime: '#E0F0A8',
   idGoldDeep: '#E0AC3F',
   idCoralDeep: '#F0876A',

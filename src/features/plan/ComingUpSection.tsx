@@ -7,7 +7,7 @@ import { dueDateLabel } from '@/lib/dueDate';
 import { usePressScale } from '@/lib/usePressScale';
 import { HomeSection } from '@/features/home/HomeSection';
 import { homeStyles as h, HOME } from '@/features/home/homeStyles';
-import { DueGroup, PlanDueItem, PlanRoute } from './planOverview';
+import { DueGroup, PlanDueItem, PlanRoute, dueTone } from './planOverview';
 import { weekdayDayMonth } from '@/lib/dateLabels';
 
 import { styles } from './plan.styles';
@@ -16,7 +16,7 @@ import { DateTile } from '@/components/DateTile';
 
 /**
  * Plan's Coming up: everything due in the next 14 days, grouped under its
- * date with the day's total going out. EMIs keep their Paid button.
+ * date with the day's total going out. EMIs keep their Pay button.
  */
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 /* ---------- Coming up ---------- */
@@ -55,6 +55,7 @@ function DueRow({
 }) {
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.98);
   const when = dueDateLabel(item.dueDate);
+  const tone = dueTone(item);
   const sign = item.kind === 'income' ? '+' : item.kind === 'transfer' ? '' : '−';
   const amount = (
     <Text
@@ -79,12 +80,15 @@ function DueRow({
       accessibilityLabel={`${item.title}, ${KIND_LABEL[item.kind]}, ${when}`}
       style={[h.row, divider && h.divider, animatedStyle]}
     >
-      <DateTile iso={item.dueDate} />
+      <DateTile iso={item.dueDate} urgent={tone === 'urgent'} soon={tone === 'soon'} />
       <View style={h.mid}>
         <Text style={h.title} numberOfLines={1}>
           {item.title}
         </Text>
-        <Text style={[h.sub, when.startsWith('Overdue') && h.subUrgent]} numberOfLines={1}>
+        <Text
+          style={[h.sub, tone === 'urgent' ? h.subUrgent : tone === 'soon' && h.subSoon]}
+          numberOfLines={1}
+        >
           {KIND_LABEL[item.kind]} · {when}
         </Text>
       </View>
@@ -96,9 +100,9 @@ function DueRow({
             hitSlop={8}
             style={withPressed(styles.payBtn)}
             accessibilityRole="button"
-            accessibilityLabel={`Mark ${item.title} EMI paid`}
+            accessibilityLabel={`Pay ${item.title} EMI`}
           >
-            <Text style={styles.payBtnText}>Paid</Text>
+            <Text style={styles.payBtnText}>Pay</Text>
           </Pressable>
         </View>
       ) : (
@@ -110,21 +114,26 @@ function DueRow({
 
 /**
  * Everything due in the next 14 days, grouped under its date with the day's
- * total going out — not just the first few. EMIs keep their Paid button.
+ * total going out — not just the first few. EMIs keep their Pay button.
  */
 export function ComingUpSection({
   groups,
   onOpen,
   onPay,
+  onCardLayout,
+  onGroupLayout,
 }: {
   groups: DueGroup[];
   onOpen: (route: PlanRoute) => void;
-  /** Records an EMI as paid — shown as a Paid button on each EMI row. */
+  /** Records an EMI as paid — shown as a Pay button on each EMI row. */
   onPay?: (loanId: string) => void;
+  /** Where the card sits inside the section, and each day's group inside the card, so the strip can scroll to one. */
+  onCardLayout?: (y: number) => void;
+  onGroupLayout?: (date: string, y: number) => void;
 }) {
   return (
     <HomeSection title="Coming up">
-      <View style={h.card}>
+      <View style={h.card} onLayout={(e) => onCardLayout?.(e.nativeEvent.layout.y)}>
         {groups.length === 0 ? (
           <Pressable
             onPress={() => onOpen('/recurring')}
@@ -143,7 +152,7 @@ export function ComingUpSection({
           </Pressable>
         ) : (
           groups.map((g, gi) => (
-            <View key={g.date}>
+            <View key={g.date} onLayout={(e) => onGroupLayout?.(g.date, e.nativeEvent.layout.y)}>
               <View style={[styles.dayHead, gi > 0 && h.divider]}>
                 <Text style={styles.dayHeadText}>{weekdayDayMonth(g.date)}</Text>
                 {g.outMinor > 0 && <Text style={styles.dayHeadAmount}>{formatMoney(g.outMinor)}</Text>}

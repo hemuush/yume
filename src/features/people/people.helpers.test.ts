@@ -1,4 +1,4 @@
-import { personStatus, peopleTotals, lastActivityShort } from './people.helpers';
+import { personStatus, peopleTotals, lastActivityShort, groupPeople } from './people.helpers';
 
 describe('people helpers', () => {
   it('reads a balance as owed, owe or settled by its sign', () => {
@@ -23,5 +23,30 @@ describe('people helpers', () => {
     expect(lastActivityShort('2026-09-25', now)).toBe('Yesterday');
     expect(lastActivityShort('2026-09-13', now)).toBe('13d ago');
     expect(lastActivityShort('2026-09-12', now)).toBe('2w ago');
+  });
+});
+
+describe('groupPeople', () => {
+  const p = (name: string, balanceMinor: number) => ({ name, balanceMinor });
+
+  it('splits by who owes whom, biggest balance first, and totals the two sides', () => {
+    const g = groupPeople([p('a', 85000), p('b', -120000), p('c', 240000), p('d', 0), p('e', -30000)]);
+    expect(g.owed.map((x) => x.name)).toEqual(['c', 'a']);
+    expect(g.owe.map((x) => x.name)).toEqual(['b', 'e']);
+    expect(g.settled.map((x) => x.name)).toEqual(['d']);
+    expect(g.owedToYouMinor).toBe(325000);
+    expect(g.youOweMinor).toBe(150000);
+    expect(g.netMinor).toBe(175000);
+  });
+
+  it('treats a balance that rounds to zero rupees as settled', () => {
+    const g = groupPeople([p('a', 30), p('b', -20)]);
+    expect(g.settled).toHaveLength(2);
+    expect(g.owed).toHaveLength(0);
+    expect(g.netMinor).toBe(0);
+  });
+
+  it('is negative overall when you owe more than you are owed', () => {
+    expect(groupPeople([p('a', 10000), p('b', -50000)]).netMinor).toBe(-40000);
   });
 });

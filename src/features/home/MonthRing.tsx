@@ -24,7 +24,6 @@ export const RING_COLORS = {
 };
 /** The moon-cream face inside the ring. */
 const FACE = '#FBF3DA';
-const STROKE = 9;
 /** The gap left between two slices, along the ring. */
 const GAP = 3.5;
 const DIM = 0.28;
@@ -37,6 +36,9 @@ const LAYERS = ['spent', 'saved', 'free'] as const;
  * inside ("51% kept"). It replaces the full moon drawing so the month card
  * fits the first screen. Tapping it steps through the slices, as the moon
  * did; a picked slice keeps its colour and the other two fade back.
+ *
+ * The stroke and the face's type scale down with `size`, so the same ring
+ * works as the large centrepiece or the small companion beside a headline.
  *
  * The slices draw in around the ring when a period first shows, and redraw
  * when the period changes. Reduce motion shows them straight away.
@@ -56,7 +58,7 @@ export function MonthRing({
   mode: HeroMode;
   /** The figure on the face: "51%", "Over", "—". */
   big: string;
-  /** The word under it: "kept", "spent", … */
+  /** The word under it: "kept", "spent", … — empty for none. */
   label: string;
   size: number;
   /** A new period redraws the slices from nothing. */
@@ -75,6 +77,8 @@ export function MonthRing({
     draw.value = withTiming(1, timing(MOTION.draw));
   }, [periodKey, reduce, draw]);
 
+  const compact = size < 90;
+  const STROKE = compact ? 7 : 9;
   const c = size / 2;
   const r = c - STROKE / 2 - 1;
   const circumference = 2 * Math.PI * r;
@@ -97,7 +101,7 @@ export function MonthRing({
     >
       <Svg width={size} height={size}>
         <Circle cx={c} cy={c} r={r} stroke={theme.colors.surfaceAlt} strokeWidth={STROKE} fill="none" />
-        <Circle cx={c} cy={c} r={r - STROKE / 2 - 5} fill={FACE} />
+        <Circle cx={c} cy={c} r={r - STROKE / 2 - (compact ? 4 : 5)} fill={FACE} />
         <G rotation={-90} origin={`${c}, ${c}`}>
           {arcs.map((a) =>
             a.len > 0 ? (
@@ -105,6 +109,7 @@ export function MonthRing({
                 key={a.key}
                 c={c}
                 r={r}
+                stroke={STROKE}
                 len={a.len}
                 offset={a.offset}
                 circumference={circumference}
@@ -116,13 +121,15 @@ export function MonthRing({
           )}
         </G>
       </Svg>
-      <View style={styles.face} pointerEvents="none">
-        <Text style={styles.big} numberOfLines={1} adjustsFontSizeToFit>
+      <View style={[styles.face, { paddingHorizontal: compact ? 13 : 22 }]} pointerEvents="none">
+        <Text style={compact ? styles.bigCompact : styles.big} numberOfLines={1} adjustsFontSizeToFit>
           {big}
         </Text>
-        <Text style={styles.label} numberOfLines={1}>
-          {label}
-        </Text>
+        {label !== '' && (
+          <Text style={compact ? styles.labelCompact : styles.label} numberOfLines={1}>
+            {label}
+          </Text>
+        )}
       </View>
     </Pressable>
   );
@@ -131,6 +138,7 @@ export function MonthRing({
 function Arc({
   c,
   r,
+  stroke,
   len,
   offset,
   circumference,
@@ -140,6 +148,7 @@ function Arc({
 }: {
   c: number;
   r: number;
+  stroke: number;
   len: number;
   offset: number;
   circumference: number;
@@ -157,7 +166,7 @@ function Arc({
       cy={c}
       r={r}
       stroke={color}
-      strokeWidth={STROKE}
+      strokeWidth={stroke}
       strokeLinecap="round"
       fill="none"
       strokeDashoffset={-offset}
@@ -186,5 +195,19 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     color: theme.colors.textSecondary,
     marginTop: 3,
+  },
+  bigCompact: {
+    fontFamily: theme.font.roundedBold,
+    fontSize: 17,
+    lineHeight: 20,
+    color: theme.colors.textPrimary,
+  },
+  labelCompact: {
+    fontFamily: theme.font.bodyBold,
+    fontSize: 10,
+    letterSpacing: 0.4,
+    textTransform: 'uppercase',
+    color: theme.colors.textSecondary,
+    marginTop: 1,
   },
 });

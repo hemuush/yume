@@ -52,3 +52,8 @@ export function balanceLinePath(balances: number[], width: number, height: numbe
     })
     .join(' ');
 }
+
+/** "Jan 2045" — the short form of payoffMonth, for a tight card caption. */
+export function payoffMonthShort(lastDueDate: string): string {
+  return parseLocalIsoDate(lastDueDate).toLocaleDateString(undefined, { month: 'short', year: 'numeric' });
+}

@@ -3,6 +3,7 @@ import { Tabs, router } from 'expo-router';
 import { View, StyleSheet, Animated, Pressable, PressableProps } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from '@expo/vector-icons/Feather';
+import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
 import { useAccent } from '@/theme/AccentContext';
 import { HomeIcon, ActivityIcon, PlanIcon, ReportsIcon } from '@/components/icons/TabIcons';
@@ -43,15 +44,26 @@ function TabButton({ children, style, onPress, ...rest }: PressableProps & { chi
   );
 }
 
+/** Inactive icons: ink at this strength is 4.8:1 on the cream bar, over the 3:1 an icon needs. */
+const INACTIVE_OPACITY = 0.62;
+
+function TabLabel({ focused, children }: { focused: boolean; children: string }) {
+  return (
+    <Text style={[styles.label, focused && styles.labelOn]} numberOfLines={1} maxFontSizeMultiplier={1.15}>
+      {children}
+    </Text>
+  );
+}
+
 /**
- * A tab's icon in the docked bar. The bar itself is always the app's own
+ * A tab's icon and name in the docked bar. The bar itself is always the app's own
  * cream surface — never the accent (see the redesign note below) — so the
  * accent only ever has to stay legible inside one small pill, not across an
  * entire bar. Inactive icons are plain ink at low opacity; the active tab
  * gets a pill in the accent colour with the icon punched through in the
  * contrast colour. Fades + scales in over 160ms rather than springing.
  */
-function TabIcon({ Icon, focused }: { Icon: typeof HomeIcon; focused: boolean }) {
+function TabIcon({ Icon, focused, label }: { Icon: typeof HomeIcon; focused: boolean; label: string }) {
   const { accent, onAccent } = useAccent();
   const reduce = useReduceMotion();
   // Lazy state init (not useRef.current) so the Animated.Value reads as a
@@ -69,14 +81,17 @@ function TabIcon({ Icon, focused }: { Icon: typeof HomeIcon; focused: boolean })
     }).start();
   }, [focused, reduce, fill]);
   return (
-    <View style={styles.slot}>
-      <Animated.View
-        style={[styles.indicator, { backgroundColor: accent, opacity: fill, transform: [{ scale: fill }] }]}
-        pointerEvents="none"
-      />
-      <View style={{ opacity: focused ? 1 : 0.4 }}>
-        <Icon color={focused ? onAccent : theme.colors.ink} size={20} />
+    <View style={styles.item}>
+      <View style={styles.slot}>
+        <Animated.View
+          style={[styles.indicator, { backgroundColor: accent, opacity: fill, transform: [{ scale: fill }] }]}
+          pointerEvents="none"
+        />
+        <View style={{ opacity: focused ? 1 : INACTIVE_OPACITY }}>
+          <Icon color={focused ? onAccent : theme.colors.ink} size={20} />
+        </View>
       </View>
+      <TabLabel focused={focused}>{label}</TabLabel>
     </View>
   );
 }
@@ -90,9 +105,12 @@ function TabIcon({ Icon, focused }: { Icon: typeof HomeIcon; focused: boolean })
  */
 function CenterAddButton() {
   return (
-    <View style={styles.slot}>
-      <View style={styles.plus} pointerEvents="none" />
-      <Feather name="plus" size={20} color={theme.colors.surface} />
+    <View style={styles.item}>
+      <View style={styles.slot}>
+        <View style={styles.plus} pointerEvents="none" />
+        <Feather name="plus" size={20} color={theme.colors.surface} />
+      </View>
+      <TabLabel focused={false}>Add</TabLabel>
     </View>
   );
 }
@@ -147,14 +165,14 @@ export default function TabsLayout() {
           name="index"
           options={{
             title: 'Home',
-            tabBarIcon: ({ focused }) => <TabIcon Icon={HomeIcon} focused={focused} />,
+            tabBarIcon: ({ focused }) => <TabIcon Icon={HomeIcon} focused={focused} label="Home" />,
           }}
         />
         <Tabs.Screen
           name="transactions"
           options={{
             title: 'Activity',
-            tabBarIcon: ({ focused }) => <TabIcon Icon={ActivityIcon} focused={focused} />,
+            tabBarIcon: ({ focused }) => <TabIcon Icon={ActivityIcon} focused={focused} label="Activity" />,
           }}
         />
         <Tabs.Screen
@@ -186,14 +204,14 @@ export default function TabsLayout() {
           name="plan"
           options={{
             title: 'Plan',
-            tabBarIcon: ({ focused }) => <TabIcon Icon={PlanIcon} focused={focused} />,
+            tabBarIcon: ({ focused }) => <TabIcon Icon={PlanIcon} focused={focused} label="Plan" />,
           }}
         />
         <Tabs.Screen
           name="reports"
           options={{
             title: 'Reports',
-            tabBarIcon: ({ focused }) => <TabIcon Icon={ReportsIcon} focused={focused} />,
+            tabBarIcon: ({ focused }) => <TabIcon Icon={ReportsIcon} focused={focused} label="Reports" />,
           }}
         />
       </Tabs>
@@ -204,27 +222,30 @@ export default function TabsLayout() {
 
 const styles = StyleSheet.create({
   tabButtonInner: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  item: { alignItems: 'center', gap: 2, minWidth: 56 },
   slot: {
     width: 42,
-    height: 38,
+    height: 30,
     alignItems: 'center',
     justifyContent: 'center',
   },
+  label: { fontFamily: theme.font.bodyMedium, fontSize: 10.5, color: theme.colors.textSecondary },
+  labelOn: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
   // The active-tab pill — a soft rounded rectangle behind the icon.
   indicator: {
     position: 'absolute',
-    top: 2,
-    left: 3,
-    right: 3,
-    bottom: 2,
+    top: 0,
+    left: 1,
+    right: 1,
+    bottom: 0,
     borderRadius: 12,
   },
   plus: {
     position: 'absolute',
-    top: 2,
-    left: 6,
-    right: 6,
-    bottom: 2,
+    top: 0,
+    left: 5,
+    right: 5,
+    bottom: 0,
     borderRadius: theme.radius.pill,
     backgroundColor: theme.colors.ink,
   },

@@ -16,22 +16,15 @@ const segments = (r: ReturnType<typeof create>) =>
 function rail(anchor: Date, todayIso: string, onPickWeek = jest.fn()) {
   let r!: ReturnType<typeof create>;
   act(() => {
-    r = create(
-      <WeekRail
-        week={weekContaining(anchor)}
-        monthLabel="Oct 2026"
-        todayIso={todayIso}
-        onPickWeek={onPickWeek}
-      />
-    );
+    r = create(<WeekRail week={weekContaining(anchor)} todayIso={todayIso} onPickWeek={onPickWeek} />);
   });
   return { r, onPickWeek };
 }
 
 describe('WeekRail', () => {
-  it('names the month and the week, with its day count', () => {
+  it('draws only the segments: the period row above already names the week', () => {
     const { r } = rail(new Date(2026, 9, 1), '2026-10-01');
-    expect(texts(r)).toEqual(['Oct 2026', 'Week 1 of 5 · 3 days']);
+    expect(texts(r)).toEqual([]);
   });
 
   it('has one segment per week, and weeks that have not started cannot be picked', () => {

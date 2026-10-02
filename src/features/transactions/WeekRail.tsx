@@ -1,5 +1,4 @@
 import { View, Pressable } from 'react-native';
-import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
 import { addDaysToIsoDate, parseLocalIsoDate } from '@/lib/date';
 import { withPressed } from '@/lib/pressed';
@@ -21,17 +20,13 @@ function dayCount(w: { start: string; end: string }): number {
  */
 export function WeekRail({
   week,
-  monthLabel,
   todayIso,
   onPickWeek,
 }: {
   week: ActivityWeek;
-  monthLabel: string;
   todayIso: string;
   onPickWeek: (start: string) => void;
 }) {
-  const days = dayCount(week);
-  const caption = `Week ${week.index + 1} of ${week.ranges.length} · ${days} ${days === 1 ? 'day' : 'days'}`;
   return (
     <View style={styles.weekRail}>
       <View style={styles.weekRailBar}>
@@ -61,10 +56,6 @@ export function WeekRail({
             </Pressable>
           );
         })}
-      </View>
-      <View style={styles.weekRailCaption}>
-        <Text style={styles.weekRailText}>{monthLabel}</Text>
-        <Text style={[styles.weekRailText, styles.weekRailTextOn]}>{caption}</Text>
       </View>
     </View>
   );

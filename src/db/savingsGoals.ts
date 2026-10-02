@@ -4,6 +4,7 @@ import { getDb } from './client';
 import { newId } from '@/lib/id';
 import { captureRow, restoreRow, RowSnapshot } from './undoSnapshot';
 import { SavingsGoal } from '@/types';
+import { valuationAdjSql } from './valuationSql';
 
 /**
  * A target you're saving toward, tracked one of two ways:
@@ -30,6 +31,7 @@ const GOAL_SELECT = `
       - COALESCE((SELECT SUM(t.amount_minor) FROM transactions t
                   WHERE (t.type = 'expense' AND t.account_id = a.id)
                      OR (t.type = 'transfer' AND t.account_id = a.id)), 0)
+      + ${valuationAdjSql('a')}
     END AS account_balance_minor
   FROM savings_goals g
   LEFT JOIN accounts a ON a.id = g.linked_account_id`;

@@ -11,11 +11,12 @@ import { theme } from '@/constants/theme';
 import { useReduceMotion } from '@/lib/useReduceMotion';
 import { Skeleton } from '@/components/Skeleton';
 import { SoftCard } from './SoftCard';
+import { STACK, stackHeight } from './accountStackMotion';
 
-export { CardRowsSkeleton, StripSkeleton } from '@/components/ListSkeleton';
+export { CardRowsSkeleton } from '@/components/ListSkeleton';
 
 /** The same size as the month card's ring, so nothing moves when the real card replaces this. */
-const RING_SIZE = 104;
+const RING_SIZE = 72;
 
 /**
  * A slow scale pulse on the ring shape itself — the one thing on this
@@ -43,8 +44,8 @@ function BreathingRing() {
 
 /**
  * Stands in for `ThisMonthHero` while Home's first load is still in flight,
- * in the card's own shape (the Home A sign-off: ring, four tiles, two slim
- * lines, a footer) — the ring breathes instead of a static ₹0/0% flashing up
+ * in the card's own shape (a headline figure beside a small ring, three tiles,
+ * two slim lines, a footer) — the ring breathes instead of a static ₹0/0% flashing up
  * and then being overwritten a beat later.
  */
 export function ThisMonthHeroSkeleton() {
@@ -56,15 +57,20 @@ export function ThisMonthHeroSkeleton() {
           <Skeleton width={96} height={11} radius={4} />
         </View>
         <View style={styles.top}>
-          <BreathingRing />
-          <View style={styles.tiles}>
-            {[0, 1, 2, 3].map((i) => (
-              <View key={i} style={styles.tile}>
-                <Skeleton width={46} height={7} radius={3} />
-                <Skeleton width={62} height={12} radius={4} style={{ marginTop: 8 }} />
-              </View>
-            ))}
+          <View style={styles.headline}>
+            <Skeleton width={72} height={8} radius={3} />
+            <Skeleton width={150} height={28} radius={6} style={{ marginTop: 8 }} />
+            <Skeleton width={110} height={9} radius={4} style={{ marginTop: 8 }} />
           </View>
+          <BreathingRing />
+        </View>
+        <View style={styles.tiles}>
+          {[0, 1, 2].map((i) => (
+            <View key={i} style={styles.tile}>
+              <Skeleton width={46} height={7} radius={3} />
+              <Skeleton width={62} height={12} radius={4} style={{ marginTop: 8 }} />
+            </View>
+          ))}
         </View>
         <Skeleton width={200} height={10} radius={4} style={{ marginTop: 16 }} />
         <Skeleton width={170} height={10} radius={4} style={{ marginTop: 12 }} />
@@ -74,7 +80,39 @@ export function ThisMonthHeroSkeleton() {
   );
 }
 
+/** Stands in for the account stack: three overlapping cards, the same shape and height it will have, so nothing jumps when it loads. */
+export function AccountStackSkeleton() {
+  return (
+    <View style={[styles.stack, { height: stackHeight(3) }]}>
+      {[0, 1, 2].map((i) => (
+        <View key={i} style={[styles.stackCard, { top: i * STACK.peek, zIndex: i }]}>
+          <Skeleton width={22} height={22} circle radius={11} />
+          <Skeleton width={90} height={11} radius={4} />
+          <View style={{ flex: 1 }} />
+          <Skeleton width={56} height={11} radius={4} />
+        </View>
+      ))}
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
+  stack: { marginHorizontal: 20 },
+  stackCard: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    height: STACK.cardHeight,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
+    paddingTop: 16,
+    paddingHorizontal: 20,
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.radius.xl2,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.borderSoft,
+  },
   card: { marginHorizontal: 20, marginTop: 4, overflow: 'hidden' },
   inner: { padding: 16, paddingBottom: 14 },
   bar: { flexDirection: 'row', justifyContent: 'space-between' },
@@ -83,13 +121,13 @@ const styles = StyleSheet.create({
     width: RING_SIZE,
     height: RING_SIZE,
     borderRadius: RING_SIZE / 2,
-    borderWidth: 9,
+    borderWidth: 7,
     borderColor: theme.colors.surfaceAlt,
   },
-  tiles: { flex: 1, flexDirection: 'row', flexWrap: 'wrap', gap: 7 },
+  headline: { flex: 1, minWidth: 0 },
+  tiles: { flexDirection: 'row', gap: 7, marginTop: 12 },
   tile: {
-    width: '47%',
-    flexGrow: 1,
+    flex: 1,
     borderRadius: 16,
     paddingHorizontal: 10,
     paddingVertical: 10,

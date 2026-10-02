@@ -1,6 +1,6 @@
 /**
  * Goals that follow an account, on screen: the card says which account it
- * follows and its button moves money there instead of "+ Add money"; the
+ * follows and its button moves money there instead of "Add money"; the
  * new-goal form starts a savings account on Follow, saves the choice, and
  * warns when another goal already follows the same account.
  */
@@ -85,20 +85,20 @@ describe('GoalCard following an account', () => {
       );
     });
     expect(texts(tree)).toContain('Following Pot');
-    expect(texts(tree)).not.toContain('+ Add money');
-    act(() => pressText(tree, 'Move money here'));
+    expect(texts(tree)).not.toContain('Add money');
+    act(() => pressText(tree, 'Move money'));
     expect(router.push).toHaveBeenCalledWith('/add-transaction?type=transfer&toAccountId=pot');
     expect(onContribute).not.toHaveBeenCalled();
   });
 
-  it('keeps + Add money for a goal filled by hand', async () => {
+  it('keeps Add money for a goal filled by hand', async () => {
     let tree!: ReactTestRenderer;
     await act(async () => {
       tree = create(
         <GoalCard goal={{ ...goal, tracksAccount: false }} onPress={jest.fn()} onContribute={jest.fn()} />
       );
     });
-    expect(texts(tree)).toContain('+ Add money');
+    expect(texts(tree)).toContain('Add money');
     expect(texts(tree).some((t) => t.startsWith('Following'))).toBe(false);
   });
 });

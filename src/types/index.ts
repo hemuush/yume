@@ -16,6 +16,20 @@ export interface Account {
   interestRateAnnualBp: number | null; // credit_card only, basis points
   archived: boolean;
   createdAt: string;
+  /** Present only on a tracked account (value updated by hand); its currentBalanceMinor is then the value. */
+  investment?: AccountInvestment;
+}
+
+/** What a tracked account has had put in, taken out and gained — gain is null until the first value update. */
+export interface AccountInvestment {
+  /** Invested so far (the opening figure) plus every transfer in. */
+  investedMinor: number;
+  takenOutMinor: number;
+  gainMinor: number | null;
+  /** ISO date of the latest value update. */
+  valuedAt: string | null;
+  /** What that update said it was worth. */
+  lastValueMinor: number | null;
 }
 
 export type CategoryKind = 'income' | 'expense';

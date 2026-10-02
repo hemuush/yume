@@ -50,21 +50,6 @@ export function CardRowsSkeleton({
   );
 }
 
-/** A horizontal strip of goal/account-card-shaped skeletons. */
-export function StripSkeleton({ count = 2 }: { count?: number }) {
-  return (
-    <View style={styles.strip}>
-      {Array.from({ length: count }, (_, i) => (
-        <View key={i} style={styles.stripCard}>
-          <Skeleton width={26} height={26} circle radius={13} />
-          <Skeleton width={70} height={10} radius={4} style={{ marginTop: 10 }} />
-          <Skeleton width={54} height={8} radius={3} style={{ marginTop: 5 }} />
-        </View>
-      ))}
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   card: {
     marginHorizontal: 20,
@@ -77,14 +62,4 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: 11, paddingVertical: 11, paddingHorizontal: 14 },
   rowDivider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.borderSoft },
   rowMid: { flex: 1 },
-
-  strip: { flexDirection: 'row', gap: 12, paddingHorizontal: 20 },
-  stripCard: {
-    width: 118,
-    padding: 14,
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.radius.xl2,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-  },
 });

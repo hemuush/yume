@@ -159,6 +159,37 @@ describe('buildExportWorkbook', () => {
     ]);
   });
 
+  it('adds Invested and Gain columns to the Accounts sheet only when an account is tracked', () => {
+    const plain = XLSX.utils.sheet_to_json<string[]>(buildExportWorkbook(data).Sheets['Accounts'], {
+      header: 1,
+    });
+    expect(plain[0]).toEqual(['Account', 'Type', 'Balance', 'Currency']);
+
+    const tracked = buildExportWorkbook({
+      ...data,
+      accounts: [
+        ...data.accounts,
+        account({
+          id: 'acc-3',
+          name: 'Index fund',
+          type: 'savings',
+          currentBalanceMinor: 4456000,
+          investment: {
+            investedMinor: 4200000,
+            takenOutMinor: 0,
+            gainMinor: 256000,
+            valuedAt: '2026-09-28',
+            lastValueMinor: 4306000,
+          },
+        }),
+      ],
+    });
+    const rows = XLSX.utils.sheet_to_json<unknown[]>(tracked.Sheets['Accounts'], { header: 1 });
+    expect(rows[0]).toEqual(['Account', 'Type', 'Balance', 'Currency', 'Invested', 'Gain']);
+    const fund = rows.find((r) => r[0] === 'Index fund');
+    expect(fund?.slice(2)).toEqual([44560, 'INR', 42000, 2560]);
+  });
+
   it('omits the Loans/Friends & Family sheets when there is nothing to show, without breaking anything else', () => {
     const wb = buildExportWorkbook({ ...data, loans: [], people: [] });
     expect(wb.SheetNames).toEqual(['Summary', 'Transactions', 'Accounts', 'Categories']);

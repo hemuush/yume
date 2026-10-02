@@ -20,8 +20,9 @@ export interface SpendBar {
   isCurrent: boolean;
   /**
    * A week's seven fixed columns include days that aren't bars: 'outside' is a
-   * day of the neighbouring month (a dashed placeholder), 'future' a day that
-   * hasn't happened yet (a dotted baseline). Neither can be tapped.
+   * day of the neighbouring month (a faint dot, named by a note above them),
+   * 'future' a day that hasn't happened yet (a faint baseline). Neither can be
+   * tapped.
    */
   state?: 'outside' | 'future';
 }

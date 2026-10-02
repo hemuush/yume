@@ -28,8 +28,9 @@ const MAX_TILES = 7;
 /**
  * "Where it went" as a mosaic: every category a tile sized by its share of
  * the period (a squarified treemap, see mosaicLayout.ts), in its own colour,
- * with its % and — room permitting — its name, amount and change against
- * the previous period. Tapping a tile does what tapping its row in the list
+ * with its % and — room permitting — its name. The amount and the change
+ * against the previous period live in the list below (and in the tile's
+ * spoken label). Tapping a tile does what tapping its row in the list
  * below does: its subcategory split, or its transactions.
  *
  * With many categories the six biggest get tiles and the rest share one
@@ -126,17 +127,6 @@ export function CategoryMosaic({
               {!swatch && (
                 <Text style={[styles.tilePct, !roomy && styles.tilePctSmall]} numberOfLines={1}>
                   {pct < 1 ? '<1' : pct}%
-                </Text>
-              )}
-              {roomy && (
-                <Text style={styles.tileAmt} numberOfLines={1} adjustsFontSizeToFit>
-                  {amount}
-                  {showDelta && (
-                    <Text style={d! > 0 === (kind === 'expense') ? styles.tileUp : styles.tileDown}>
-                      {'  '}
-                      {d! > 0 ? '▲' : '▼'} {formatPctChange(d!)}
-                    </Text>
-                  )}
                 </Text>
               )}
             </View>

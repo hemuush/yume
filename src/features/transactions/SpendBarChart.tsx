@@ -3,9 +3,12 @@ import { View, Pressable, StyleSheet, Animated, Easing } from 'react-native';
 import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
 import { useReduceMotion } from '@/lib/useReduceMotion';
+import { formatMoney } from '@/lib/money';
 import { SpendBar, ChartLegendItem } from './spendChart';
 
 const MAX_BAR_HEIGHT = 64;
+// A day with any spend is at least this tall, so a small one still reads as a bar.
+const MIN_BAR_HEIGHT = 6;
 // Only 7 daily bars or ~4-5 weekly ones at a time, so a tighter cap than the
 // heatmap's (which can stagger a whole month of cells) still finishes fast.
 const MAX_STAGGER_MS = 220;
@@ -59,7 +62,9 @@ function AnimatedBarStack({
  * gets a thin baseline tick instead of no bar at all, so it still has a slot
  * in the rhythm rather than a gap. Tapping a bar calls `onPressDay` so the
  * screen can scroll its already-grouped list to that period — the chart
- * never fetches or filters on its own.
+ * never fetches or filters on its own. The tapped bar also shows what it cost
+ * in a bubble above it, and today's label sits in an ink pill so it reads even
+ * when its bar is small.
  *
  * Bar counts stay small either way (7 daily bars for a week, ~4-5 weekly
  * bars for a month — see `buildWeeklySpendBars`), so there's deliberately
@@ -84,7 +89,9 @@ export function SpendBarChart({
   return (
     <View style={[styles.row, { paddingHorizontal: inset }]}>
       {bars.map((bar, i) => {
-        const heightPct = bar.totalMinor > 0 ? Math.max(6, (bar.totalMinor / maxTotal) * 100) : 0;
+        const barPx =
+          bar.totalMinor > 0 ? Math.max(MIN_BAR_HEIGHT, (bar.totalMinor / maxTotal) * MAX_BAR_HEIGHT) : 0;
+        const heightPct = (barPx / MAX_BAR_HEIGHT) * 100;
         const selected = selectedKey === bar.key;
         const faded = selectedKey != null && !selected;
         if (bar.state) {
@@ -112,7 +119,7 @@ export function SpendBarChart({
                 <AnimatedBarStack
                   heightPct={heightPct}
                   delay={Math.min(i * 45, MAX_STAGGER_MS)}
-                  style={[styles.stack, bar.isCurrent && styles.stackCurrent]}
+                  style={styles.stack}
                 >
                   {/* Rendered bottom-up (column-reverse) so the largest
                       segment anchors the base, matching the builder's own
@@ -139,8 +146,24 @@ export function SpendBarChart({
               ) : (
                 <View style={styles.baseline} />
               )}
+              {selected && (
+                <View style={[styles.bubbleWrap, { bottom: Math.max(barPx, 2) + 6 }]} pointerEvents="none">
+                  <View style={styles.bubble}>
+                    <Text style={styles.bubbleText} numberOfLines={1}>
+                      {formatMoney(bar.totalMinor)}
+                    </Text>
+                    <View style={styles.bubbleNub} />
+                  </View>
+                </View>
+              )}
             </View>
-            <Text style={[styles.label, bar.isCurrent && styles.labelCurrent]}>{bar.label}</Text>
+            {bar.isCurrent ? (
+              <View style={styles.todayPill}>
+                <Text style={styles.todayText}>{bar.label}</Text>
+              </View>
+            ) : (
+              <Text style={styles.label}>{bar.label}</Text>
+            )}
           </Pressable>
         );
       })}
@@ -194,19 +217,14 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     flexDirection: 'column-reverse',
   },
-  stackCurrent: {
-    borderWidth: 2,
-    borderColor: theme.colors.ink,
-  },
   segment: { width: '100%' },
   baseline: { width: 20, height: 2, borderRadius: 1, backgroundColor: theme.colors.borderSoft },
   outsideDay: {
-    width: 20,
-    height: 14,
-    borderRadius: 6,
-    borderWidth: 1.5,
-    borderStyle: 'dashed',
-    borderColor: theme.colors.borderSoft,
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: theme.colors.textMuted,
+    opacity: 0.35,
   },
   futureDay: {
     width: 20,
@@ -216,8 +234,36 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   labelAway: { opacity: 0.45 },
-  label: { fontFamily: theme.font.mono, fontSize: 9, color: theme.colors.textMuted, marginTop: 8 },
-  labelCurrent: { color: theme.colors.textPrimary, fontFamily: theme.font.monoBold },
+  label: {
+    fontFamily: theme.font.mono,
+    fontSize: 9,
+    lineHeight: 13,
+    height: 13,
+    color: theme.colors.textMuted,
+    marginTop: 8,
+  },
+  todayPill: {
+    height: 15,
+    marginTop: 6,
+    paddingHorizontal: 6,
+    justifyContent: 'center',
+    borderRadius: 6,
+    backgroundColor: theme.colors.ink,
+  },
+  todayText: { fontFamily: theme.font.monoBold, fontSize: 9, lineHeight: 13, color: theme.colors.surface },
+  bubbleWrap: { position: 'absolute', left: -24, right: -24, alignItems: 'center' },
+  bubble: { paddingHorizontal: 7, paddingVertical: 3, borderRadius: 8, backgroundColor: theme.colors.ink },
+  bubbleText: { fontFamily: theme.font.monoBold, fontSize: 10.5, color: theme.colors.surface },
+  bubbleNub: {
+    position: 'absolute',
+    bottom: -3,
+    alignSelf: 'center',
+    width: 6,
+    height: 6,
+    borderRadius: 1,
+    backgroundColor: theme.colors.ink,
+    transform: [{ rotate: '45deg' }],
+  },
   legend: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 14 },
   legendItem: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   legendDot: { width: 8, height: 8, borderRadius: 3 },

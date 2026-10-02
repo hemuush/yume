@@ -4,6 +4,8 @@ import {
   monthsBetweenIsoDates,
   daysUntilIsoDate,
   isoDatesInRange,
+  addDaysToIsoDate,
+  dayLabel,
 } from './date';
 
 describe('toLocalIsoDate', () => {
@@ -106,5 +108,20 @@ describe('daysUntilIsoDate', () => {
 
   it('measures from local midnight, so the current time of day never changes the count', () => {
     expect(daysUntilIsoDate(shift(1))).toBe(1);
+  });
+});
+
+describe('dayLabel', () => {
+  const today = toLocalIsoDate(new Date());
+
+  it('says Today and Yesterday', () => {
+    expect(dayLabel(today)).toBe('Today');
+    expect(dayLabel(addDaysToIsoDate(today, -1))).toBe('Yesterday');
+  });
+
+  it('gives a short date for anything older or ahead', () => {
+    expect(dayLabel(addDaysToIsoDate(today, -9))).toMatch(/[0-9]/);
+    expect(dayLabel(addDaysToIsoDate(today, -9))).not.toMatch(/Today|Yesterday/);
+    expect(dayLabel(addDaysToIsoDate(today, 3))).not.toMatch(/Today|Yesterday/);
   });
 });

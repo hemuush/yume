@@ -11,7 +11,7 @@ import { GoalRing, HiddenGoalRing } from './GoalRing';
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 /**
- * Home's compact preview of a goal — same shape as AccountChip, for the horizontal "Savings goals" strip.
+ * Home's compact preview of a goal — for the horizontal "Savings goals" strip.
  * With savings amounts hidden, the saved amount and the progress ring are
  * withheld (an empty track with an eye-off icon); only the target shows.
  */

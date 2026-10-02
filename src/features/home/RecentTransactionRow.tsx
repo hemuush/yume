@@ -5,12 +5,13 @@ import { Category, Transaction } from '@/types';
 import { JustAddedGlow } from '@/components/JustAddedGlow';
 import { CategoryIcon } from '@/components/CategoryIcon';
 import { Amount } from '@/components/Amount';
+import { dayLabel } from '@/lib/date';
 import { homeStyles as h } from './homeStyles';
 
 /**
- * One recent-activity row. Merchant/note leads, "category · account" sits
- * beneath, amount on the right. No date or time — the list is just "what
- * happened lately", scoped to the period shown above.
+ * One recent-activity row. Merchant/note leads, "category · account · day"
+ * sits beneath, amount on the right. The day is only "Today", "Yesterday" or
+ * a short date — never a time.
  */
 export function RecentTransactionRow({
   tx,
@@ -35,7 +36,7 @@ export function RecentTransactionRow({
   // title already is the category, the line under it is just the account.
   const sub = isTransfer
     ? `${accountName ?? '—'} → ${toAccountName ?? '—'}`
-    : [note ? category?.name : undefined, accountName].filter(Boolean).join(' · ') || undefined;
+    : [note ? category?.name : undefined, accountName, dayLabel(tx.date)].filter(Boolean).join(' · ');
 
   return (
     <View style={[styles.row, divider && styles.divider]}>
@@ -49,12 +50,10 @@ export function RecentTransactionRow({
         <Text style={styles.title} numberOfLines={1}>
           {title}
         </Text>
-        {(sub || tx.isRefund) && (
-          <Text style={styles.sub} numberOfLines={1}>
-            {tx.isRefund && <Text style={styles.refund}>Refund{sub ? ' · ' : ''}</Text>}
-            {sub}
-          </Text>
-        )}
+        <Text style={styles.sub} numberOfLines={1}>
+          {tx.isRefund && <Text style={styles.refund}>Refund · </Text>}
+          {sub}
+        </Text>
       </View>
       {/* Spending reads in ink with its minus; only money in is coloured (green). */}
       <Text style={[styles.amount, tx.type === 'income' && styles.income]}>

@@ -2,6 +2,7 @@ import { getDb } from './client';
 import { toLocalIsoDate, addDaysToIsoDate, isoDatesInRange, monthsBetweenIsoDates } from '@/lib/date';
 import { streakSeries } from '@/lib/gardenGrowth';
 import { getDefaultCurrency } from './settings';
+import { valuationAdjSql } from './valuationSql';
 import type { DateRange } from '@/types';
 import { SPEND_ROWS, SPEND_AMOUNT, INCOME_ROWS, NOT_SENSITIVE, rowsOf, amountOf, countOf } from './spendSql';
 
@@ -733,9 +734,11 @@ export async function getNetWorthTrend(months = 6, reference: Date = new Date())
          COALESCE((SELECT SUM(t.amount_minor) FROM transactions t JOIN accounts a ON a.id = t.account_id
            WHERE t.type = 'income' AND a.currency = ? AND a.archived = 0 AND t.date <= ?), 0) -
          COALESCE((SELECT SUM(t.amount_minor) FROM transactions t JOIN accounts a ON a.id = t.account_id
-           WHERE t.type = 'expense' AND a.currency = ? AND a.archived = 0 AND t.date <= ?), 0)
+           WHERE t.type = 'expense' AND a.currency = ? AND a.archived = 0 AND t.date <= ?), 0) +
+         COALESCE((SELECT SUM(${valuationAdjSql('a', true)}) FROM accounts a
+           WHERE a.tracked = 1 AND a.currency = ? AND a.archived = 0), 0)
          as total`,
-      [currency, currency, cutoffIso, currency, cutoffIso]
+      [currency, currency, cutoffIso, currency, cutoffIso, cutoffIso, currency]
     );
 
     const loanRows = await db.getAllAsync<{

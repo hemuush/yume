@@ -17,6 +17,19 @@ CREATE TABLE IF NOT EXISTS accounts (
   due_day INTEGER,
   interest_rate_annual_bp INTEGER,
   archived INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  -- A savings account whose value you update by hand (an index fund, a stock
+  -- basket): its balance is the latest valuation plus what moved since.
+  tracked INTEGER NOT NULL DEFAULT 0
+);
+
+-- What a tracked account was worth on a date, as you entered it. The balance
+-- is still derived: value = ledger balance + the latest valuation's gap.
+CREATE TABLE IF NOT EXISTS account_valuations (
+  id TEXT PRIMARY KEY,
+  account_id TEXT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+  date TEXT NOT NULL,
+  value_minor INTEGER NOT NULL,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
@@ -218,6 +231,7 @@ CREATE TABLE IF NOT EXISTS recurring_rules (
   anchor_day INTEGER
 );
 
+CREATE INDEX IF NOT EXISTS idx_account_valuations_account ON account_valuations(account_id, date);
 CREATE INDEX IF NOT EXISTS idx_transactions_date ON transactions(date);
 CREATE INDEX IF NOT EXISTS idx_transactions_account ON transactions(account_id);
 CREATE INDEX IF NOT EXISTS idx_transactions_category ON transactions(category_id);
