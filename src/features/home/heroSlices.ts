@@ -9,6 +9,9 @@
  * - More moved into savings than was left after spending: savings fills the
  *   rest and free-to-use is 0 (the figure below the moon still shows the
  *   real, negative free-to-use amount).
+ * - Bills still to pay this month (the fourth argument) take their own slice out of
+ *   what would have been free, so the fractions still add up to 1 and free is
+ *   what's left after bills.
  * - Money taken *out* of savings (a negative savings contribution): counted
  *   as 0 to savings; what came out is part of free to use — the same
  *   arithmetic as the Free to use figure itself (income − spent − savings).
@@ -17,12 +20,19 @@ export interface HeroSlices {
   spent: number;
   saved: number;
   free: number;
+  /** Still to pay this month; only present when something is due. */
+  due?: number;
   /** Spent beyond income, in minor units; 0 unless overspent. */
   overMinor: number;
   hasIncome: boolean;
 }
 
-export function heroSlices(incomeMinor: number, spentMinor: number, savingsMinor: number): HeroSlices {
+export function heroSlices(
+  incomeMinor: number,
+  spentMinor: number,
+  savingsMinor: number,
+  dueMinor = 0
+): HeroSlices {
   if (!(incomeMinor > 0)) return { spent: 0, saved: 0, free: 0, overMinor: 0, hasIncome: false };
   const spent = Math.max(0, spentMinor);
   if (spent >= incomeMinor) {
@@ -30,10 +40,12 @@ export function heroSlices(incomeMinor: number, spentMinor: number, savingsMinor
   }
   const room = incomeMinor - spent;
   const saved = Math.min(Math.max(0, savingsMinor), room);
+  const due = Math.min(Math.max(0, dueMinor), room - saved);
   return {
     spent: spent / incomeMinor,
     saved: saved / incomeMinor,
-    free: (room - saved) / incomeMinor,
+    free: (room - saved - due) / incomeMinor,
+    ...(due > 0 ? { due: due / incomeMinor } : {}),
     overMinor: 0,
     hasIncome: true,
   };

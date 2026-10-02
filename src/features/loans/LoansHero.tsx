@@ -29,7 +29,7 @@ function Chip({ bold, rest, lent }: { bold: string; rest: string; lent?: boolean
 export function LoansHero({ totals, loading }: { totals: LoanTotals; loading?: boolean }) {
   if (loading) {
     return (
-      <View style={[styles.card, styles.skeleton]}>
+      <View key="loading" style={[styles.card, styles.skeleton]}>
         <Skeleton width={70} height={10} radius={4} />
         <Skeleton width={160} height={28} radius={6} style={{ marginTop: 10 }} />
         <Skeleton width={200} height={14} radius={5} style={{ marginTop: 10 }} />
@@ -43,7 +43,7 @@ export function LoansHero({ totals, loading }: { totals: LoanTotals; loading?: b
   const hue = onlyLent ? theme.colors.secondary : allClear ? theme.colors.idSage : theme.colors.idCoral;
 
   return (
-    <View style={styles.card}>
+    <View key="hero" style={[styles.card, { backgroundColor: shade(hue, 93) }]}>
       <LinearGradient
         colors={[shade(hue, 93), shade(hue, 85)]}
         start={{ x: 0, y: 0 }}

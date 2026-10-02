@@ -17,6 +17,11 @@ const RUNS_PER_MONTH: Record<RecurringRule['frequency'], number> = {
   yearly: 1 / 12,
 };
 
+/** What one rule comes to in an average month, unrounded. */
+export function monthlyCostMinor(rule: RecurringRule): number {
+  return (rule.amountMinor * RUNS_PER_MONTH[rule.frequency]) / Math.max(1, rule.intervalCount);
+}
+
 export interface SubscriptionTotals {
   monthlyMinor: number;
   yearlyMinor: number;
@@ -31,10 +36,7 @@ export interface SubscriptionTotals {
  */
 export function subscriptionTotals(rules: RecurringRule[]): SubscriptionTotals {
   const running = rules.filter((r) => r.active && r.type === 'expense');
-  const monthly = running.reduce(
-    (sum, r) => sum + (r.amountMinor * RUNS_PER_MONTH[r.frequency]) / Math.max(1, r.intervalCount),
-    0
-  );
+  const monthly = running.reduce((sum, r) => sum + monthlyCostMinor(r), 0);
   return { monthlyMinor: Math.round(monthly), yearlyMinor: Math.round(monthly * 12), count: running.length };
 }
 

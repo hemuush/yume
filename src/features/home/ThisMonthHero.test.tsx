@@ -110,6 +110,78 @@ describe('month card', () => {
   });
 });
 
+describe('month card with bills still to pay', () => {
+  // ₹1,00,000 income, ₹10,000 spent, ₹30,000 set aside → ₹60,000 free; ₹20,000 still to pay → ₹40,000 after bills.
+  const base = {
+    incomeMinor: 10_000_000,
+    spentMinor: 1_000_000,
+    savingsMinor: 3_000_000,
+    surplusMinor: 6_000_000,
+    dueMinor: 2_000_000,
+  };
+
+  it('takes the bills off the headline and shows them as a chip', () => {
+    const all = texts(render(base));
+    expect(all).toEqual(
+      expect.arrayContaining([
+        'Free after bills',
+        '₹40,000',
+        'of ₹1,00,000 income',
+        '₹20,000',
+        ' still to pay',
+      ])
+    );
+    expect(all).not.toContain('Free to use');
+  });
+
+  it('opens the sum from the chip, and closes it again', () => {
+    const r = render(base);
+    expect(texts(r)).not.toContain('After bills');
+    act(() => byLabel(r, '₹20,000 still to pay').props.onPress());
+    expect(texts(r)).toEqual(
+      expect.arrayContaining([
+        'Income',
+        '₹1,00,000',
+        '−₹10,000',
+        'Set aside',
+        '−₹30,000',
+        'Free to use',
+        '₹60,000',
+      ])
+    );
+    expect(texts(r)).toEqual(expect.arrayContaining(['Still to pay', '−₹20,000', 'After bills', '₹40,000']));
+    act(() => byLabel(r, '₹20,000 still to pay').props.onPress());
+    expect(texts(r)).not.toContain('After bills');
+  });
+
+  it('says short when the bills are more than what is free', () => {
+    const all = texts(render({ ...base, dueMinor: 7_000_000 }));
+    expect(all).toEqual(
+      expect.arrayContaining(['Short after bills', '-₹10,000', '₹70,000', ' still to pay'])
+    );
+  });
+
+  it('is the plain Free to use card when nothing is due', () => {
+    const all = texts(render({ ...base, dueMinor: 0 }));
+    expect(all).toEqual(expect.arrayContaining(['Free to use', '₹60,000', 'left of ₹1,00,000 income']));
+    expect(all.some((t) => t.includes('still to pay'))).toBe(false);
+  });
+
+  it('hides the set-aside amount in the sum when savings are hidden', () => {
+    mockHideAmounts = true;
+    try {
+      const r = render(base);
+      act(() => byLabel(r, '₹20,000 still to pay').props.onPress());
+      const all = texts(r).join(' | ');
+      expect(all).toContain('Set aside');
+      expect(all).not.toContain('30,000');
+      expect(all).toContain('₹••••');
+    } finally {
+      mockHideAmounts = false;
+    }
+  });
+});
+
 describe('month card with savings hidden', () => {
   // 10% spent, 60% to savings, 30% free — round numbers so the figures are easy to spot.
   const hidden = {

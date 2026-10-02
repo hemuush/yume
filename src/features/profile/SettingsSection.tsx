@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { View, Pressable, Animated } from 'react-native';
+import { View, Pressable } from 'react-native';
 import { Text } from '@/components/Text';
 import { useFocusEffect, router } from 'expo-router';
 import Feather from '@expo/vector-icons/Feather';
@@ -30,9 +30,8 @@ import { FormInput } from '@/components/FormInput';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { YumeLogo } from '@/components/YumeLogo';
 import { useAccent, THEMES } from '@/theme/AccentContext';
-import { ThemePreview } from './ThemePreview';
+import { ThemeThumb } from './ThemePreview';
 import { theme } from '@/constants/theme';
-import { usePressScale } from '@/lib/usePressScale';
 import { HomeSection } from '@/features/home/HomeSection';
 import { homeStyles as h } from '@/features/home/homeStyles';
 import { styles } from './profile.styles';
@@ -40,47 +39,6 @@ import { errorMessage } from '@/lib/errorMessage';
 import type { McIconName } from '@/components/iconName';
 import { withPressed } from '@/lib/pressed';
 import { showAlert } from '@/components/AppDialog';
-
-const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
-
-/** One of the three at-a-glance tiles at the top of Settings. */
-function GlanceTile({
-  icon,
-  tint,
-  iconColor = theme.colors.ink,
-  title,
-  sub,
-  onPress,
-}: {
-  icon: string;
-  tint: string;
-  iconColor?: string;
-  title: string;
-  sub: string;
-  onPress: () => void;
-}) {
-  const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.96);
-  return (
-    <AnimatedPressable
-      style={[styles.glanceTile, animatedStyle]}
-      onPress={onPress}
-      onPressIn={onPressIn}
-      onPressOut={onPressOut}
-      accessibilityRole="button"
-      accessibilityLabel={`${title}, ${sub}`}
-    >
-      <View style={[styles.glanceIcon, { backgroundColor: tint }]}>
-        <MaterialCommunityIcons name={icon as McIconName} size={14} color={iconColor} />
-      </View>
-      <Text style={styles.glanceTitle} numberOfLines={1}>
-        {title}
-      </Text>
-      <Text style={styles.glanceSub} numberOfLines={1}>
-        {sub}
-      </Text>
-    </AnimatedPressable>
-  );
-}
 
 /** "today" / "yesterday" / "N days ago" — deliberately coarse, no hours/minutes. */
 export function daysAgoLabel(iso: string, now: Date = new Date()): string {
@@ -90,8 +48,6 @@ export function daysAgoLabel(iso: string, now: Date = new Date()): string {
   if (days === 1) return 'yesterday';
   return `${days} days ago`;
 }
-
-const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 function AboutFact({ icon, text }: { icon: string; text: string }) {
   return (
@@ -103,15 +59,12 @@ function AboutFact({ icon, text }: { icon: string; text: string }) {
 }
 
 /**
- * Profile's Settings tab. Three at-a-glance tiles on top (backup, lock,
- * alerts) answer "is my data safe?"; then the groups in order of how often
- * they're changed — Money, Privacy & security, Alerts & backup, Appearance —
- * and About. Every group is a Home-style heading over one card of rows.
- *
- * `onJumpTo` scrolls the Profile screen to a content offset — the lock tile
- * uses it to bring the Privacy & security group into view.
+ * Profile's Settings tab, in the order of how often each group is touched:
+ * Money, Privacy & alerts, Your data, Appearance, then an About footer. A
+ * coral note sits on top only while backups need attention; otherwise the
+ * rows' own sub-lines carry every state, so nothing is said twice.
  */
-export function SettingsSection({ onJumpTo }: { onJumpTo?: (y: number) => void }) {
+export function SettingsSection() {
   const { themeId } = useAccent();
   const { lockEnabled, setLockEnabled } = useAppLock();
   const { hideAmounts, toggleHideAmounts } = usePrivacy();
@@ -123,7 +76,7 @@ export function SettingsSection({ onJumpTo }: { onJumpTo?: (y: number) => void }
   const [tidyCount, setTidyCount] = useState<number | null>(null);
   // How many entries are waiting in Recently deleted — null until counted.
   const [deletedCount, setDeletedCount] = useState<number | null>(null);
-  const [privacyY, setPrivacyY] = useState<number | null>(null);
+  const [aboutOpen, setAboutOpen] = useState(false);
   const activeTheme = THEMES.find((t) => t.id === themeId) ?? THEMES[0];
 
   // A single overall daily spending cap (see the "Today" strip on Home) —
@@ -141,6 +94,8 @@ export function SettingsSection({ onJumpTo }: { onJumpTo?: (y: number) => void }
   // A failed last attempt used to fall through to "Never backed up" — wrong
   // either way (there may well be older backups), and it hid the failure.
   const [lastBackupFailed, setLastBackupFailed] = useState(false);
+  // The backup note waits for the first read, so it doesn't flash on every visit.
+  const [backupLoaded, setBackupLoaded] = useState(false);
 
   const load = useCallback(async () => {
     setCurrency(await getDefaultCurrency());
@@ -155,6 +110,7 @@ export function SettingsSection({ onJumpTo }: { onJumpTo?: (y: number) => void }
     const lastBackup = await getLastLocalBackupResult();
     setLastBackupAt(lastBackup?.ok ? lastBackup.at : null);
     setLastBackupFailed(lastBackup?.ok === false);
+    setBackupLoaded(true);
   }, []);
 
   useFocusEffect(
@@ -247,36 +203,31 @@ export function SettingsSection({ onJumpTo }: { onJumpTo?: (y: number) => void }
 
   return (
     <>
-      <View style={styles.glanceRow}>
-        <GlanceTile
-          icon={backupOk ? 'check' : 'alert-outline'}
-          tint={backupOk ? theme.colors.secondaryTint : theme.colors.idCoral}
-          iconColor={backupOk ? theme.colors.income : theme.colors.ink}
-          title={lastBackupFailed ? 'Backup failed' : backupOk ? 'Backed up' : 'No backup'}
-          sub={
-            lastBackupFailed
-              ? 'Tap to check'
-              : lastBackupAt
-                ? capitalize(daysAgoLabel(lastBackupAt))
-                : 'Set one up'
-          }
+      {backupLoaded && !backupOk && (
+        <Pressable
+          style={withPressed(styles.nudge)}
           onPress={() => router.push('/backup')}
-        />
-        <GlanceTile
-          icon={lockEnabled ? 'lock-outline' : 'lock-open-variant-outline'}
-          tint={lockEnabled ? theme.colors.idSage : theme.colors.surfaceAlt}
-          title={lockEnabled ? 'Lock on' : 'Lock off'}
-          sub={lockEnabled ? 'Fingerprint or PIN' : 'Anyone can open'}
-          onPress={() => privacyY != null && onJumpTo?.(privacyY)}
-        />
-        <GlanceTile
-          icon="bell-outline"
-          tint={theme.colors.primaryTint}
-          title={alertsOn == null ? 'Alerts' : `${alertsOn} of 5`}
-          sub="Alerts on"
-          onPress={() => router.push('/notification-settings')}
-        />
-      </View>
+          accessibilityRole="button"
+          accessibilityLabel={`${lastBackupFailed ? 'Backup failed' : 'No backup yet'}. ${
+            lastBackupFailed ? 'Tap to check' : 'Set one up'
+          }`}
+        >
+          <View style={styles.nudgeIcon}>
+            <MaterialCommunityIcons name="alert-outline" size={18} color={theme.colors.ink} />
+          </View>
+          <View style={h.mid}>
+            <Text style={h.title}>{lastBackupFailed ? 'Backup failed' : 'No backup yet'}</Text>
+            <Text style={styles.nudgeSub}>
+              {lastBackupFailed
+                ? "The last attempt didn't finish."
+                : 'Save a copy of your data to a folder on this phone.'}
+            </Text>
+          </View>
+          <View style={styles.nudgePill}>
+            <Text style={styles.nudgePillText}>{lastBackupFailed ? 'Check' : 'Set up'}</Text>
+          </View>
+        </Pressable>
+      )}
 
       <HomeSection title="Money">
         <View style={h.card}>
@@ -366,37 +317,36 @@ export function SettingsSection({ onJumpTo }: { onJumpTo?: (y: number) => void }
         </View>
       </HomeSection>
 
-      <View onLayout={(e) => setPrivacyY(e.nativeEvent.layout.y)}>
-        <HomeSection title="Privacy & security">
-          <View style={h.card}>
-            <SettingsRow
-              icon="fingerprint"
-              iconBg={theme.colors.idSage}
-              label="Require unlock"
-              sub="Fingerprint, face, or your phone's PIN"
-              right={<ToggleSwitch value={lockEnabled} onChange={onToggleLock} />}
-            />
-            <SettingsRow
-              icon="eye-off-outline"
-              iconBg={theme.colors.idGold}
-              label="Hide savings & investment amounts"
-              sub="Also on the eye icon at the top"
-              right={<ToggleSwitch value={hideAmounts} onChange={toggleHideAmounts} />}
-              divider
-            />
-          </View>
-        </HomeSection>
-      </View>
-
-      <HomeSection title="Alerts & backup">
+      <HomeSection title="Privacy & alerts">
         <View style={h.card}>
+          <SettingsRow
+            icon="fingerprint"
+            iconBg={theme.colors.idSage}
+            label="Require unlock"
+            sub="Fingerprint, face, or your phone's PIN"
+            right={<ToggleSwitch value={lockEnabled} onChange={onToggleLock} />}
+          />
+          <SettingsRow
+            icon="eye-off-outline"
+            iconBg={theme.colors.idGold}
+            label="Hide savings & investment amounts"
+            sub="Also on the eye icon at the top"
+            right={<ToggleSwitch value={hideAmounts} onChange={toggleHideAmounts} />}
+            divider
+          />
           <SettingsRow
             icon="bell-outline"
             iconBg={theme.colors.primaryTint}
             label="Notifications"
             sub={alertsOn == null ? 'Reminders, bill alerts, weekly summary' : `${alertsOn} of 5 on`}
             onPress={() => router.push('/notification-settings')}
+            divider
           />
+        </View>
+      </HomeSection>
+
+      <HomeSection title="Your data">
+        <View style={h.card}>
           <SettingsRow
             icon="folder-outline"
             iconBg={theme.colors.idTeal}
@@ -404,7 +354,6 @@ export function SettingsSection({ onJumpTo }: { onJumpTo?: (y: number) => void }
             sub={backupSub}
             subColor={backupOk ? undefined : theme.colors.idCoralDeep}
             onPress={() => router.push('/backup')}
-            divider
           />
           <SettingsRow
             icon="delete-restore"
@@ -439,42 +388,57 @@ export function SettingsSection({ onJumpTo }: { onJumpTo?: (y: number) => void }
       <HomeSection title="Appearance">
         <Pressable
           onPress={() => router.push('/themes')}
-          style={withPressed([h.card, styles.themeCard])}
+          style={withPressed([h.card, h.row])}
           accessibilityRole="button"
           accessibilityLabel={`Theme: ${activeTheme.name}. Change theme`}
         >
-          <ThemePreview pack={activeTheme} height={104} detailed />
-          <View style={styles.themeRow}>
-            <View style={h.mid}>
-              <Text style={styles.themeName}>{activeTheme.name}</Text>
-            </View>
-            <View style={styles.themeChange}>
-              <Text style={styles.themeChangeText}>Change</Text>
-            </View>
+          <ThemeThumb pack={activeTheme} />
+          <View style={h.mid}>
+            <Text style={h.title}>Theme</Text>
+            <Text style={h.sub}>{activeTheme.name}</Text>
           </View>
+          <Feather name="chevron-right" size={18} color={theme.colors.textMuted} />
         </Pressable>
       </HomeSection>
 
-      <HomeSection title="About">
-        <View style={[h.card, styles.aboutCard]}>
-          <View style={styles.aboutTop}>
-            <YumeLogo size={44} />
-            <View style={h.mid}>
-              <Text style={styles.aboutName}>Yume</Text>
-              <Text style={styles.aboutTagline}>Track every rupee, on your terms.</Text>
+      <View style={styles.footer}>
+        <YumeLogo size={30} />
+        <Text style={styles.footerName}>Yume · v{Application.nativeApplicationVersion ?? '1.0.0'}</Text>
+        <Text style={styles.footerSub}>Works fully offline.</Text>
+        <Pressable
+          onPress={() => setAboutOpen((v) => !v)}
+          hitSlop={8}
+          style={withPressed(styles.footerLink)}
+          accessibilityRole="button"
+          accessibilityState={{ expanded: aboutOpen }}
+          accessibilityLabel="About Yume"
+        >
+          <Text style={styles.footerLinkText}>{aboutOpen ? 'Hide' : 'About Yume'}</Text>
+          <Feather
+            name={aboutOpen ? 'chevron-up' : 'chevron-right'}
+            size={14}
+            color={theme.colors.textSecondary}
+          />
+        </Pressable>
+      </View>
+      {aboutOpen && (
+        <ReanimatedAnimated.View entering={PANEL_ENTER} exiting={ROW_EXIT}>
+          <View style={[h.card, styles.aboutCard]}>
+            <Text style={styles.aboutTagline}>Track every rupee, on your terms.</Text>
+            <View style={styles.aboutFacts}>
+              <AboutFact icon="wifi-off" text="Works fully offline — no account, no server, no signup." />
+              <AboutFact
+                icon="lock-outline"
+                text="Your data never leaves this device unless you back it up."
+              />
+              <AboutFact
+                icon="file-document-outline"
+                text="Backups are plain JSON you can open and read yourself."
+              />
             </View>
-            <Text style={styles.aboutVersion}>v{Application.nativeApplicationVersion ?? '1.0.0'}</Text>
           </View>
-          <View style={styles.aboutFacts}>
-            <AboutFact icon="wifi-off" text="Works fully offline — no account, no server, no signup." />
-            <AboutFact icon="lock-outline" text="Your data never leaves this device unless you back it up." />
-            <AboutFact
-              icon="file-document-outline"
-              text="Backups are plain JSON you can open and read yourself."
-            />
-          </View>
-        </View>
-      </HomeSection>
+        </ReanimatedAnimated.View>
+      )}
     </>
   );
 }

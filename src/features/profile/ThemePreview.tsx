@@ -57,6 +57,32 @@ export function ThemePreview({
   );
 }
 
+/** A 56 by 38 swatch of a pack: its sky gradient with two of its hills. Used where a full preview is too tall. */
+export function ThemeThumb({ pack }: { pack: ThemePack }) {
+  return (
+    <View style={thumb.wrap} importantForAccessibility="no-hide-descendants">
+      <LinearGradient
+        colors={[shade(pack.primary, 88, 4), shade(pack.primary, 96, 2)]}
+        style={StyleSheet.absoluteFill}
+      />
+      <View style={[thumb.hill, { left: -6, backgroundColor: pack.primary }]} />
+      <View style={[thumb.hill, { left: 22, backgroundColor: pack.secondary }]} />
+    </View>
+  );
+}
+
+const thumb = StyleSheet.create({
+  wrap: {
+    width: 56,
+    height: 38,
+    borderRadius: 11,
+    overflow: 'hidden',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.borderSoft,
+  },
+  hill: { position: 'absolute', bottom: -6, width: 36, height: 22, borderRadius: 18 },
+});
+
 /** A still month ring — spent, saved, free — with Suu's dot on the cream face. */
 function MiniRing({
   size,

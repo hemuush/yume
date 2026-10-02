@@ -19,15 +19,18 @@ export function CashHero({
   label,
   sub,
   masked,
+  embedded = false,
 }: {
   minor: number;
   label: string;
   sub: string;
   masked: boolean;
+  /** Sits inside a shared card with the tracked balance, which draws the edge and margins. */
+  embedded?: boolean;
 }) {
   const hue = theme.colors.idTeal;
   return (
-    <View style={styles.card}>
+    <View style={embedded ? styles.cardEmbedded : styles.card}>
       <LinearGradient
         colors={[shade(hue, 93), shade(hue, 85)]}
         start={{ x: 0, y: 0 }}
@@ -60,6 +63,7 @@ const styles = StyleSheet.create({
     borderRadius: theme.radius.xl2,
     overflow: 'hidden',
   },
+  cardEmbedded: { padding: 16 },
   circle: {
     position: 'absolute',
     right: -34,
