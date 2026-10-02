@@ -174,6 +174,9 @@ export function snoozeUntil(action: 'later' | 'tomorrow' | 'tonight', now: Date)
  * back later (a snooze), or stops this budget's nudges for the month. A
  * snooze reuses one identifier per kind, so running it twice keeps one.
  */
+/** Kept as 'default' so a phone that already has the channel keeps its sound/importance settings. */
+export const NOTIFICATION_CHANNEL_ID = 'default';
+
 export async function runQuietAction(response: Notifications.NotificationResponse): Promise<void> {
   const action = response.actionIdentifier;
   if (!isQuietAction(action)) return;
@@ -193,6 +196,7 @@ export async function runQuietAction(response: Notifications.NotificationRespons
       trigger: {
         type: Notifications.SchedulableTriggerInputTypes.DATE,
         date: snoozeUntil(action, new Date()),
+        channelId: NOTIFICATION_CHANNEL_ID,
       },
     });
     return;

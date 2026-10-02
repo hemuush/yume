@@ -7,6 +7,7 @@
 import * as Notifications from 'expo-notifications';
 import {
   notificationRoute,
+  notifyOverspend,
   subscribeToNotificationTaps,
   syncDailyReminder,
   NOTIFICATION_ROUTES,
@@ -36,29 +37,29 @@ describe('subscribeToNotificationTaps', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     N.addNotificationResponseReceivedListener.mockReturnValue({ remove: jest.fn() } as any);
-    N.clearLastNotificationResponseAsync.mockResolvedValue(undefined as any);
+    N.clearLastNotificationResponse.mockReturnValue(undefined as any);
   });
 
   it('opens the route of the notification that launched the app, and clears it', async () => {
-    N.getLastNotificationResponseAsync.mockResolvedValue(response({ url: '/add-transaction' }));
+    N.getLastNotificationResponse.mockReturnValue(response({ url: '/add-transaction' }));
     const onRoute = jest.fn();
     subscribeToNotificationTaps(onRoute);
     await new Promise((r) => setImmediate(r));
     expect(onRoute).toHaveBeenCalledWith('/add-transaction');
-    expect(N.clearLastNotificationResponseAsync).toHaveBeenCalled();
+    expect(N.clearLastNotificationResponse).toHaveBeenCalled();
   });
 
   it('does nothing on a normal launch', async () => {
-    N.getLastNotificationResponseAsync.mockResolvedValue(null);
+    N.getLastNotificationResponse.mockReturnValue(null);
     const onRoute = jest.fn();
     subscribeToNotificationTaps(onRoute);
     await new Promise((r) => setImmediate(r));
     expect(onRoute).not.toHaveBeenCalled();
-    expect(N.clearLastNotificationResponseAsync).not.toHaveBeenCalled();
+    expect(N.clearLastNotificationResponse).not.toHaveBeenCalled();
   });
 
   it('routes a tap while the app is running, and stops after unsubscribing', async () => {
-    N.getLastNotificationResponseAsync.mockResolvedValue(null);
+    N.getLastNotificationResponse.mockReturnValue(null);
     const remove = jest.fn();
     N.addNotificationResponseReceivedListener.mockReturnValue({ remove } as any);
     const onRoute = jest.fn();
@@ -84,5 +85,18 @@ describe('scheduled notifications carry their route', () => {
     const content = N.scheduleNotificationAsync.mock.calls[0][0].content;
     expect(content.data).toEqual({ url: '/add-transaction' });
     expect(typeof content.title).toBe('string');
+  });
+
+  it('every notification is posted to the Yume reminders channel', async () => {
+    N.cancelScheduledNotificationAsync.mockResolvedValue(undefined as any);
+    N.setNotificationChannelAsync.mockResolvedValue(null as any);
+    N.scheduleNotificationAsync.mockResolvedValue('id');
+    N.getPermissionsAsync.mockResolvedValue({ granted: true } as any);
+    await syncDailyReminder({ reminderEnabled: true, reminderHour: 21, reminderMinute: 0 } as any);
+    await notifyOverspend('Food', 0.5);
+    for (const call of N.scheduleNotificationAsync.mock.calls) {
+      expect((call[0].trigger as { channelId?: string } | null)?.channelId).toBe('default');
+    }
+    expect(N.scheduleNotificationAsync).toHaveBeenCalledTimes(2);
   });
 });
