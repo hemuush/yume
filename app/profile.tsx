@@ -1,21 +1,19 @@
-import { useCallback, useRef, useState } from 'react';
-import { View, Pressable } from 'react-native';
-import { Text, TextInput } from '@/components/Text';
-import { KeyboardAwareScrollView, KeyboardAwareScrollViewRef } from 'react-native-keyboard-controller';
-import Feather from '@expo/vector-icons/Feather';
+import { useCallback, useState } from 'react';
+import { View } from 'react-native';
+import { Text } from '@/components/Text';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getUserName, setUserName, getMemberSinceYear } from '@/db/settings';
 import { AppHeader, HeaderPrivacyToggle } from '@/components/AppHeader';
 import { SegmentedControl } from '@/components/SegmentedControl';
 import { theme } from '@/constants/theme';
-import { useAccent } from '@/theme/AccentContext';
 import { useScreenLoad } from '@/lib/useScreenLoad';
 import { Skeleton } from '@/components/Skeleton';
 import { styles } from '@/features/profile/profile.styles';
 import { YouSection } from '@/features/profile/YouSection';
 import { SettingsSection } from '@/features/profile/SettingsSection';
+import { ProfileIdentity } from '@/features/profile/ProfileIdentity';
 import { errorMessage } from '@/lib/errorMessage';
-import { withPressed } from '@/lib/pressed';
 import { showAlert } from '@/components/AppDialog';
 
 type ProfileTab = 'you' | 'settings';
@@ -25,7 +23,7 @@ const TABS: { label: string; value: ProfileTab }[] = [
 ];
 
 /**
- * Identity (avatar beside name and member since) plus a "You"/"Settings" segment —
+ * Identity (a theme-tinted card with the avatar, name and member since) plus a "You"/"Settings" segment —
  * the same reachable-from-every-screen destination Profile always was, now
  * standing in for Settings too. `/settings` used to be one tap further in,
  * reached only from the card this segment replaces; nothing else in the
@@ -35,14 +33,12 @@ const TABS: { label: string; value: ProfileTab }[] = [
  * actual content — this file is just the shared shell around both.
  */
 export default function ProfileScreen() {
-  const { accent, onAccent } = useAccent();
   const insets = useSafeAreaInsets();
   const [name, setName] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState('');
   const [memberSince, setMemberSince] = useState<number | null>(null);
   const [tab, setTab] = useState<ProfileTab>('you');
-  const scrollRef = useRef<KeyboardAwareScrollViewRef>(null);
 
   const loadIdentity = useCallback(async () => {
     const [userName, since] = await Promise.all([getUserName(), getMemberSinceYear()]);
@@ -81,7 +77,6 @@ export default function ProfileScreen() {
       <AppHeader title="Profile" showBack hideUser right={<HeaderPrivacyToggle />} />
 
       <KeyboardAwareScrollView
-        ref={scrollRef}
         contentContainerStyle={{ paddingBottom: theme.layout.screenScrollPad + insets.bottom }}
         keyboardShouldPersistTaps="handled"
         bottomOffset={20}
@@ -93,68 +88,24 @@ export default function ProfileScreen() {
           </View>
         )}
 
-        <View style={styles.identity}>
-          <View style={[styles.avatar, { backgroundColor: accent }]}>
-            <Text style={[styles.avatarInitial, { color: onAccent }]}>
-              {(name?.trim().charAt(0) || 'Y').toUpperCase()}
-            </Text>
-          </View>
-
-          <View style={styles.identityText}>
-            {editing ? (
-              <View style={styles.nameEditRow}>
-                <TextInput
-                  style={styles.nameInput}
-                  value={draft}
-                  onChangeText={setDraft}
-                  placeholder="Your name"
-                  placeholderTextColor={theme.colors.textMuted}
-                  maxLength={40}
-                  autoCapitalize="words"
-                  autoFocus
-                  returnKeyType="done"
-                  onSubmitEditing={saveName}
-                />
-                <Pressable
-                  onPress={saveName}
-                  hitSlop={10}
-                  style={withPressed(styles.nameSave)}
-                  accessibilityRole="button"
-                  accessibilityLabel="Save name"
-                >
-                  <Feather name="check" size={18} color={theme.colors.ink} />
-                </Pressable>
-              </View>
-            ) : (
-              <Pressable
-                style={withPressed(styles.nameRow)}
-                accessibilityRole="button"
-                accessibilityHint="Edit your name"
-                onPress={() => {
-                  setDraft(name ?? '');
-                  setEditing(true);
-                }}
-              >
-                <Text style={styles.name} numberOfLines={1}>
-                  {name || 'Add your name'}
-                </Text>
-                <Feather name="edit-2" size={14} color={theme.colors.textMuted} />
-              </Pressable>
-            )}
-
-            <Text style={styles.memberSince}>Member since {memberSince ?? new Date().getFullYear()}</Text>
-          </View>
-        </View>
+        <ProfileIdentity
+          name={name}
+          memberSince={memberSince}
+          editing={editing}
+          draft={draft}
+          onDraftChange={setDraft}
+          onStartEdit={() => {
+            setDraft(name ?? '');
+            setEditing(true);
+          }}
+          onSave={saveName}
+        />
 
         <View style={styles.tabWrap}>
           <SegmentedControl options={TABS} value={tab} onChange={setTab} />
         </View>
 
-        {tab === 'you' ? (
-          <YouSection />
-        ) : (
-          <SettingsSection onJumpTo={(y) => scrollRef.current?.scrollTo({ y, animated: true })} />
-        )}
+        {tab === 'you' ? <YouSection /> : <SettingsSection />}
       </KeyboardAwareScrollView>
     </View>
   );

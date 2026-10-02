@@ -16,10 +16,13 @@ export function HeaderHills({
   sky,
   primary,
   secondary,
+  ground = theme.colors.background,
 }: {
   sky: string;
   primary: string;
   secondary: string;
+  /** The nearest hill; the page colour unless the strip sits inside a card. */
+  ground?: string;
 }) {
   const far = shade(secondary, 86, -8);
   const mid = shade(primary, 84, -6);
@@ -34,7 +37,7 @@ export function HeaderHills({
         <Circle cx={292} cy={7} r={5.5} fill={tree} />
         <Rect x={306} y={11} width={2} height={6} rx={1} fill="#B99A7A" />
         <Circle cx={307} cy={9} r={4.5} fill={tree} />
-        <Path d="M0 21 C80 16 160 19 230 22 C290 25 330 20 360 20 V26 H0Z" fill={theme.colors.background} />
+        <Path d="M0 21 C80 16 160 19 230 22 C290 25 330 20 360 20 V26 H0Z" fill={ground} />
       </Svg>
     </View>
   );

@@ -37,6 +37,7 @@ export const styles = StyleSheet.create({
     paddingTop: 8,
     paddingBottom: 4,
   },
+  identityRow: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   identityText: { flex: 1, minWidth: 0 },
   avatar: {
     width: 58,
@@ -73,6 +74,16 @@ export const styles = StyleSheet.create({
   // SegmentedControl draws its own pill; this only places it.
   tabWrap: { marginHorizontal: HOME.gutter, marginTop: 16 },
 
+  // Cash hero and tracked balance read as one card when both are present.
+  cashCard: {
+    marginHorizontal: HOME.gutter,
+    marginTop: 12,
+    borderRadius: theme.radius.xl2,
+    overflow: 'hidden',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.borderSoft,
+  },
+
   // ---- You: accounts, grouped by type ----
   groupHead: {
     flexDirection: 'row',
@@ -103,28 +114,36 @@ export const styles = StyleSheet.create({
   planLinkIcon: { width: 32, height: 32, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
   planLinkText: { flex: 1, fontFamily: theme.font.roundedMedium, fontSize: 13.5, color: theme.colors.ink },
 
-  // ---- Settings: at a glance ----
-  glanceRow: { flexDirection: 'row', gap: 8, marginHorizontal: HOME.gutter, marginTop: 12 },
-  glanceTile: {
-    flex: 1,
-    minWidth: 0,
-    gap: 3,
-    padding: 10,
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.radius.lg,
+  // ---- Settings: backup needs attention ----
+  nudge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginHorizontal: HOME.gutter,
+    marginTop: 12,
+    paddingVertical: 11,
+    paddingHorizontal: 14,
+    backgroundColor: theme.colors.idCoral,
+    borderRadius: theme.radius.xl2,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
+    borderColor: theme.colors.idCoralDeep,
   },
-  glanceIcon: {
-    width: 24,
-    height: 24,
-    borderRadius: 8,
+  nudgeIcon: {
+    width: 34,
+    height: 34,
+    borderRadius: 11,
+    backgroundColor: theme.colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 2,
   },
-  glanceTitle: { fontFamily: theme.font.bodyBold, fontSize: 12.5, color: theme.colors.textPrimary },
-  glanceSub: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textMuted },
+  nudgeSub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary, marginTop: 2 },
+  nudgePill: {
+    backgroundColor: theme.colors.ink,
+    borderRadius: theme.radius.pill,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  nudgePillText: { fontFamily: theme.font.roundedBold, fontSize: 12, color: theme.colors.surface },
 
   // ---- Settings: rows ----
   // Opens in place under the row that opened it, inside the same card.
@@ -161,31 +180,19 @@ export const styles = StyleSheet.create({
   dailyGoalBtnRow: { flexDirection: 'row', gap: 8, marginTop: 2 },
   dailyGoalBtn: { flex: 1 },
 
-  // ---- Settings: theme swatches ----
-  // The current theme, drawn as a little piece of Home; tapping opens the Theme page.
-  themeCard: { overflow: 'hidden' },
-  themeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+  // ---- Settings: About footer ----
+  footer: { alignItems: 'center', gap: 2, paddingTop: 26, paddingBottom: 4 },
+  footerName: {
+    fontFamily: theme.font.roundedBold,
+    fontSize: 14,
+    color: theme.colors.textPrimary,
+    marginTop: 6,
   },
-  themeName: { fontFamily: theme.font.roundedBold, fontSize: 15, color: theme.colors.textPrimary },
-  themeChange: {
-    backgroundColor: theme.colors.ink,
-    borderRadius: theme.radius.pill,
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-  },
-  themeChangeText: { fontFamily: theme.font.roundedBold, fontSize: 12.5, color: theme.colors.surface },
-
-  // ---- Settings: about ----
-  aboutCard: { padding: 14, gap: 12 },
-  aboutTop: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  aboutName: { fontFamily: theme.font.roundedBold, fontSize: 18, color: theme.colors.textPrimary },
-  aboutTagline: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, marginTop: 1 },
-  aboutVersion: { fontFamily: theme.font.monoBold, fontSize: 11, color: theme.colors.textMuted },
+  footerSub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
+  footerLink: { flexDirection: 'row', alignItems: 'center', gap: 2, paddingVertical: 4 },
+  footerLinkText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textSecondary },
+  aboutCard: { padding: 14, gap: 12, marginTop: 8 },
+  aboutTagline: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textPrimary },
   aboutFacts: { gap: 8 },
   aboutFactRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
   aboutFactText: {

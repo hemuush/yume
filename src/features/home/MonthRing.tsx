@@ -16,10 +16,11 @@ import type { HeroMode, HeroSlices } from './heroSlices';
 
 const AnimatedCircle = ReanimatedAnimated.createAnimatedComponent(Circle);
 
-/** Slice colours — the month card's tiles use the same three. */
+/** Slice colours — the month card's tiles use the same ones; `due` (bills still to pay) has no tile. */
 export const RING_COLORS = {
   spent: theme.colors.spentSoft,
   saved: theme.colors.secondary,
+  due: theme.colors.idGoldDeep,
   free: theme.colors.primary,
 };
 /** The moon-cream face inside the ring. */
@@ -27,7 +28,7 @@ const FACE = '#FBF3DA';
 /** The gap left between two slices, along the ring. */
 const GAP = 3.5;
 const DIM = 0.28;
-const LAYERS = ['spent', 'saved', 'free'] as const;
+const LAYERS = ['spent', 'saved', 'due', 'free'] as const;
 
 /**
  * Home's month as a ring (the Home A sign-off): the period's income, split
@@ -82,11 +83,11 @@ export function MonthRing({
   const c = size / 2;
   const r = c - STROKE / 2 - 1;
   const circumference = 2 * Math.PI * r;
-  const present = LAYERS.filter((k) => slices[k] > 0).length;
+  const present = LAYERS.filter((k) => (slices[k] ?? 0) > 0).length;
   // Each slice starts where the ones before it end.
   const arcs = LAYERS.map((k, i) => {
-    const share = slices[k];
-    const before = LAYERS.slice(0, i).reduce((sum, prev) => sum + slices[prev] * circumference, 0);
+    const share = slices[k] ?? 0;
+    const before = LAYERS.slice(0, i).reduce((sum, prev) => sum + (slices[prev] ?? 0) * circumference, 0);
     const len = share > 0 ? Math.max(0, share * circumference - (present > 1 ? GAP : 0)) : 0;
     return { key: k, len, offset: before, opacity: mode === 'kept' || mode === k ? 1 : DIM };
   });

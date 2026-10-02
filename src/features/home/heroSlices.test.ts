@@ -44,6 +44,21 @@ describe('heroSlices', () => {
     expect(sum(s)).toBeCloseTo(1);
   });
 
+  it('gives bills still to pay their own slice out of what would be free', () => {
+    // ₹1,000 in, ₹100 out, ₹300 to savings, ₹200 still to pay → ₹400 free after bills.
+    const s = heroSlices(100000, 10000, 30000, 20000);
+    expect(s.due).toBeCloseTo(0.2);
+    expect(s.free).toBeCloseTo(0.4);
+    expect(sum(s) + (s.due ?? 0)).toBeCloseTo(1);
+  });
+
+  it('never lets the due slice pass what was left, and omits it when nothing is due', () => {
+    const s = heroSlices(100000, 10000, 30000, 900000);
+    expect(s.due).toBeCloseTo(0.6);
+    expect(s.free).toBe(0);
+    expect(heroSlices(100000, 10000, 30000)).not.toHaveProperty('due');
+  });
+
   it('shows nothing without income, even if there was spending', () => {
     expect(heroSlices(0, 5000, 0)).toEqual({ spent: 0, saved: 0, free: 0, overMinor: 0, hasIncome: false });
   });

@@ -14,6 +14,7 @@ import {
   findTopGrowingCategory,
   getTodaySpend,
   getMonthPaceInputs,
+  getStillToPayThisMonth,
 } from '@/db/reports';
 import { monthPace } from '@/lib/pace';
 import { getUserName, getDailySpendingGoal } from '@/db/settings';
@@ -96,6 +97,8 @@ export default function DashboardScreen() {
     everydaySpentMinor: number;
     dueRestOfMonthMinor: number;
   } | null>(null);
+  // Unpaid EMIs and bills left this month, for the card's "Free after bills".
+  const [stillToPayMinor, setStillToPayMinor] = useState(0);
   // Everything that needs you (see features/home/needsYou.ts). The bell opens
   // the list and shows the count; Home itself only flags the Budgets tab.
   const [needsYou, setNeedsYou] = useState<NeedsYouItem[]>([]);
@@ -196,6 +199,7 @@ export default function DashboardScreen() {
           todaySpend,
           dailyGoal,
           paceIn,
+          stillToPay,
           needs,
           wraps,
         ] = await Promise.all([
@@ -220,6 +224,7 @@ export default function DashboardScreen() {
           getTodaySpend(undefined, hideAmounts),
           getDailySpendingGoal(),
           getMonthPaceInputs(),
+          getStillToPayThisMonth(),
           loadNeedsYou(),
           loadReadyWraps(),
         ]);
@@ -246,6 +251,7 @@ export default function DashboardScreen() {
         setTodaySpendMinor(todaySpend);
         setDailyGoalMinor(dailyGoal);
         setPaceInputs(paceIn);
+        setStillToPayMinor(stillToPay);
         setNeedsYou(needs.shown);
         setReadyWraps(wraps);
         setLoadedCursor(c);
@@ -406,6 +412,9 @@ export default function DashboardScreen() {
               spentMinor={dispExpense}
               savingsMinor={savingsInPeriod}
               surplusMinor={surplusInPeriod}
+              dueMinor={
+                cursor.granularity === 'month' && cursor.offset === 0 ? roundedMinor(stillToPayMinor) : 0
+              }
               outstandingLoansMinor={roundedMinor(totalOutstandingLoans)}
               suu={suu}
               celebrateDebtCleared={justClearedDebt}

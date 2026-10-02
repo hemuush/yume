@@ -46,6 +46,7 @@ export function TrackedCard({
   untrackedAssetLoan,
   hasLoans,
   masked,
+  embedded = false,
 }: {
   totalMinor: number;
   accountsMinor: number;
@@ -57,10 +58,12 @@ export function TrackedCard({
   untrackedAssetLoan: boolean;
   hasLoans: boolean;
   masked: boolean;
+  /** Sits under the cash hero in one shared card, so it draws no edge or margin of its own. */
+  embedded?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   return (
-    <View style={[h.card, styles.card]}>
+    <View style={embedded ? styles.embedded : [h.card, styles.card]}>
       <Pressable
         style={withPressed(styles.head)}
         onPress={() => setOpen((v) => !v)}
@@ -130,6 +133,7 @@ export function TrackedCard({
 
 const styles = StyleSheet.create({
   card: { marginTop: 10 },
+  embedded: { backgroundColor: theme.colors.surface },
   head: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 14, paddingVertical: 12 },
   label: EYEBROW,
   value: { fontFamily: theme.font.monoBold, fontSize: 16, color: theme.colors.textPrimary, flexShrink: 1 },

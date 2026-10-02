@@ -1,14 +1,13 @@
 /**
- * The top of Recurring: the monthly and yearly cost of running expense
- * rules, and "Not set up yet" rows that open a filled-in rule or hide for
- * good. Nothing shows when there's neither.
+ * "Not set up yet" on Recurring: rows that open a filled-in rule or hide for
+ * good. Nothing shows when there are none.
  */
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
 import { Text } from 'react-native';
 
 jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMock').createReanimatedMock());
 
-import { SubscriptionsSection } from './SubscriptionsSection';
+import { SuggestionsList } from './SuggestionsList';
 import { SubscriptionSuggestion } from '@/db/subscriptions';
 
 const streamA: SubscriptionSuggestion = {
@@ -36,16 +35,14 @@ const texts = (tree: ReactTestRenderer) =>
 const byLabel = (tree: ReactTestRenderer, label: string) =>
   tree.root.find((n) => n.props.accessibilityLabel === label && typeof n.props.onPress === 'function');
 
-async function render(props: Partial<React.ComponentProps<typeof SubscriptionsSection>> = {}) {
+async function render(props: Partial<React.ComponentProps<typeof SuggestionsList>> = {}) {
   let tree!: ReactTestRenderer;
   await act(async () => {
     tree = create(
-      <SubscriptionsSection
-        totals={{ monthlyMinor: 29900, yearlyMinor: 358800, count: 1 }}
+      <SuggestionsList
         suggestions={[streamA, wifi]}
         onMakeRecurring={jest.fn()}
         onHide={jest.fn()}
-        hasRunning
         {...props}
       />
     );
@@ -53,15 +50,10 @@ async function render(props: Partial<React.ComponentProps<typeof SubscriptionsSe
   return tree;
 }
 
-describe('SubscriptionsSection', () => {
-  it('shows the month, the year and how many are running', async () => {
-    const shown = texts(await render());
-    expect(shown).toEqual(expect.arrayContaining(['Subscriptions & bills', '₹3,588 a year · 1 running']));
-    expect(shown.some((t) => t.startsWith('₹299'))).toBe(true);
-  });
-
+describe('SuggestionsList', () => {
   it('describes each suggestion by where it came from', async () => {
     const shown = texts(await render());
+    expect(shown).toContain('Not set up yet');
     expect(shown.some((t) => t.startsWith('₹1,999 on 9'))).toBe(true);
     expect(shown).toContain('₹1,999 each month · 3 months in a row');
   });
@@ -76,13 +68,8 @@ describe('SubscriptionsSection', () => {
     expect(onHide).toHaveBeenCalledWith(wifi);
   });
 
-  it('shows nothing with no rules and no suggestions', async () => {
-    const tree = await render({ totals: { monthlyMinor: 0, yearlyMinor: 0, count: 0 }, suggestions: [] });
+  it('shows nothing with no suggestions', async () => {
+    const tree = await render({ suggestions: [] });
     expect(tree.toJSON()).toBeNull();
-  });
-
-  it('only heads the rule list RUNNING when a rule is running', async () => {
-    expect(texts(await render())).toContain('Running');
-    expect(texts(await render({ hasRunning: false }))).not.toContain('Running');
   });
 });

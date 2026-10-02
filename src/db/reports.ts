@@ -419,6 +419,36 @@ export async function getMonthPaceInputs(
   };
 }
 
+/**
+ * What is still owed this month and not yet in anyone's spending: pending EMIs
+ * on active borrowed loans due from the 1st to the month's end (an overdue one
+ * counts, an EMI due today too), and active recurring expenses still ahead of
+ * `today` (one due today or earlier has already been posted as a transaction).
+ * Powers Home's "Free after bills". Default currency only, like every other total.
+ */
+export async function getStillToPayThisMonth(today: string = toIso(new Date())): Promise<number> {
+  const db = await getDb();
+  const currency = await getDefaultCurrency();
+  const monthStart = `${today.slice(0, 7)}-01`;
+  const [y, m] = today.split('-').map(Number);
+  const monthEnd = `${today.slice(0, 7)}-${String(new Date(y, m, 0).getDate()).padStart(2, '0')}`;
+  const emis = await db.getFirstAsync<{ total: number | null }>(
+    `SELECT SUM(p.emi_amount_minor) AS total FROM loan_payments p
+     JOIN loans l ON l.id = p.loan_id
+     WHERE p.status = 'pending' AND l.status = 'active' AND l.direction = 'borrowed'
+       AND p.due_date >= ? AND p.due_date <= ?`,
+    [monthStart, monthEnd]
+  );
+  const bills = await db.getFirstAsync<{ total: number | null }>(
+    `SELECT SUM(r.amount_minor) AS total FROM recurring_rules r
+     JOIN accounts a ON a.id = r.account_id
+     WHERE r.active = 1 AND r.type = 'expense' AND a.currency = ?
+       AND r.next_run_date > ? AND r.next_run_date <= ?`,
+    [currency, today, monthEnd]
+  );
+  return (emis?.total ?? 0) + (bills?.total ?? 0);
+}
+
 export interface DailyGoalStreakPoint {
   date: string;
   streakDays: number;

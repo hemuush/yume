@@ -1,8 +1,9 @@
 /**
- * Profile's Settings tab: the at-a-glance tiles reflect backup, lock and
- * alerts and open the right place; the groups come in their signed-off
- * order; and the rows that change something (currency, daily goal, theme,
- * lock) still do exactly what they did.
+ * Profile's Settings tab: a coral note shows only while backups need
+ * attention; the groups come in their signed-off order (Money, Privacy &
+ * alerts, Your data, Appearance, then an About footer); and the rows that
+ * change something (currency, daily goal, theme, lock) still do exactly what
+ * they did.
  */
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
 import { Text, TextInput } from 'react-native';
@@ -70,10 +71,10 @@ const daysAgo = (n: number) => {
   return d.toISOString();
 };
 
-async function render(onJumpTo?: (y: number) => void) {
+async function render() {
   let tree!: ReactTestRenderer;
   await act(async () => {
-    tree = create(<SettingsSection onJumpTo={onJumpTo} />);
+    tree = create(<SettingsSection />);
   });
   await act(async () => {
     await new Promise((resolve) => setTimeout(resolve, 0)); // let the load settle
@@ -111,54 +112,47 @@ beforeAll(async () => {
 }, 180000);
 
 describe('Profile · Settings section', () => {
-  it('shows backup, lock and alerts at a glance, and the tiles open their screens', async () => {
+  it('stays quiet about backups when the last one worked', async () => {
+    const shown = texts(await render());
+    expect(shown).not.toContain('Backup failed');
+    expect(shown).not.toContain('No backup yet');
+    expect(shown).toContain('Last backup yesterday');
+  });
+
+  it('shows a coral note when the last backup failed, and opens Backup from it', async () => {
+    mockBackupResult.mockResolvedValue({ at: daysAgo(0), ok: false, error: 'folder gone' });
     const tree = await render();
     expect(texts(tree)).toEqual(
-      expect.arrayContaining([
-        'Backed up',
-        'Yesterday',
-        'Lock on',
-        'Fingerprint or PIN',
-        '4 of 5',
-        'Alerts on',
-      ])
+      expect.arrayContaining(['Backup failed', 'Check', 'Last backup failed — tap to check'])
     );
-    await press(tree, 'Backed up, Yesterday');
+    await press(tree, 'Backup failed. Tap to check');
     expect(router.push).toHaveBeenCalledWith('/backup');
-    await press(tree, '4 of 5, Alerts on');
-    expect(router.push).toHaveBeenCalledWith('/notification-settings');
   });
 
-  it('flags a failed backup and a missing one in the tile and in the row', async () => {
-    mockBackupResult.mockResolvedValue({ at: daysAgo(0), ok: false, error: 'folder gone' });
-    let shown = texts(await render());
-    expect(shown).toEqual(
-      expect.arrayContaining(['Backup failed', 'Tap to check', 'Last backup failed — tap to check'])
-    );
-
+  it('nudges to set up a backup when there has never been one', async () => {
     mockBackupResult.mockResolvedValue(null);
-    shown = texts(await render());
-    expect(shown).toEqual(expect.arrayContaining(['No backup', 'Set one up', 'Never backed up']));
-  });
-
-  it('scrolls to Privacy & security from the lock tile', async () => {
-    const onJumpTo = jest.fn();
-    const tree = await render(onJumpTo);
-    const privacyGroup = tree.root.find((n) => typeof n.props.onLayout === 'function');
-    act(() =>
-      privacyGroup.props.onLayout({ nativeEvent: { layout: { x: 0, y: 640, width: 360, height: 200 } } })
-    );
-    await press(tree, 'Lock on, Fingerprint or PIN');
-    expect(onJumpTo).toHaveBeenCalledWith(640);
+    const tree = await render();
+    expect(texts(tree)).toEqual(expect.arrayContaining(['No backup yet', 'Set up', 'Never backed up']));
+    await press(tree, 'No backup yet. Set one up');
+    expect(router.push).toHaveBeenCalledWith('/backup');
   });
 
   it('lists the groups in the signed-off order', async () => {
     const shown = texts(await render());
-    const order = ['Money', 'Privacy & security', 'Alerts & backup', 'Appearance', 'About'].map((g) =>
+    const order = ['Money', 'Privacy & alerts', 'Your data', 'Appearance', 'Yume · v1.4.0'].map((g) =>
       shown.indexOf(g)
     );
     expect(order.every((i) => i >= 0)).toBe(true);
     expect([...order].sort((a, b) => a - b)).toEqual(order);
+  });
+
+  it('keeps About behind the footer link until it is opened', async () => {
+    const tree = await render();
+    expect(texts(tree)).not.toContain('Track every rupee, on your terms.');
+    await press(tree, 'About Yume');
+    expect(texts(tree)).toContain('Track every rupee, on your terms.');
+    await press(tree, 'About Yume');
+    expect(texts(tree)).not.toContain('Track every rupee, on your terms.');
   });
 
   it('keeps every setting row with its current value', async () => {
@@ -178,8 +172,8 @@ describe('Profile · Settings section', () => {
         'Last backup yesterday',
         'Tidy up',
         'All tidy',
-        'Yume',
-        'v1.4.0',
+        'Yume · v1.4.0',
+        'Works fully offline.',
       ])
     );
   });
@@ -221,7 +215,6 @@ describe('Profile · Settings section', () => {
     mockDeviceSecured.mockResolvedValue(false);
     const alert = jest.mocked(showAlert);
     const tree = await render();
-    expect(texts(tree)).toEqual(expect.arrayContaining(['Lock off', 'Anyone can open']));
     // The first switch is Require unlock; Hide amounts comes after it.
     const [toggle] = tree.root.findAll(
       (n) => n.props.value === false && typeof n.props.onChange === 'function'
