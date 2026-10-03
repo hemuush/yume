@@ -1,7 +1,12 @@
 import { parseLocalIsoDate, toLocalIsoDate } from '@/lib/date';
 import { formatMoney } from '@/lib/money';
 import { formatPctChange } from '@/lib/format';
-import type { CategoryBreakdownItem, DailyExpensePoint, TrendPoint } from '@/db/reports';
+import type {
+  AccountBreakdownItem,
+  CategoryBreakdownItem,
+  DailyExpensePoint,
+  TrendPoint,
+} from '@/db/reports';
 import type { HeatCell } from './SpendHeatmap';
 import { dayMonth } from '@/lib/dateLabels';
 import { PACE_MIN_DAY } from '@/lib/pace';
@@ -57,6 +62,8 @@ export function buildHeatGrid(input: {
   trend: TrendPoint[];
   daily: DailyExpensePoint[];
   onDayPress: (iso: string) => void;
+  /** The day whose entries are open below the grid: ringed. */
+  selectedIso?: string | null;
   /** Injectable for tests; defaults to today. */
   todayIso?: string;
 }): { cells: HeatCell[]; leadingPad: number; columns: number; weekdayLabels?: string[] } {
@@ -88,6 +95,7 @@ export function buildHeatGrid(input: {
       level: heatLevel(total, maxDay),
       isToday: iso === todayIso,
       isFuture: iso > todayIso,
+      isSelected: iso === input.selectedIso,
       onPress: total > 0 ? () => input.onDayPress(iso) : undefined,
     };
   });
@@ -108,6 +116,7 @@ export function buildRangeHeatGrid(input: {
   end: string;
   daily: DailyExpensePoint[];
   onDayPress: (iso: string) => void;
+  selectedIso?: string | null;
   todayIso?: string;
 }): { cells: HeatCell[]; leadingPad: number; columns: number; weekdayLabels?: string[] } {
   const byDate = new Map(input.daily.map((d) => [d.date, d.totalMinor]));
@@ -127,6 +136,7 @@ export function buildRangeHeatGrid(input: {
           level: heatLevel(total, maxDay),
           isToday: iso === todayIso,
           isFuture: iso > todayIso,
+          isSelected: iso === input.selectedIso,
           onPress: total > 0 ? () => input.onDayPress(iso) : undefined,
         };
       }),
@@ -220,6 +230,8 @@ export interface PatternFact {
   big: string;
   /** The rest of the card, under `big`. */
   detail: string;
+  /** The day itself, when the fact is about one (the heaviest day). */
+  date?: string;
 }
 
 /**
@@ -245,6 +257,7 @@ export function patternFacts(daily: DailyExpensePoint[], totalDaysInPeriod: numb
       kicker: 'Heaviest day',
       big: day,
       detail: `${formatMoney(heaviest.totalMinor)} went out — ${pct}% of the month in one day.`,
+      date: heaviest.date,
     });
   }
 
@@ -361,7 +374,9 @@ export function quietDays(
   return { countedDays, noSpendDays, longestRun: best && best.days >= 2 ? best : null };
 }
 
-export type StoryTarget = 'overview' | 'categories' | 'trends';
+/** What tapping a story card does on the page: show its day, open its category row, or go to Categories. */
+export type StoryAction =
+  { type: 'day'; iso: string } | { type: 'category'; id: string } | { type: 'categories' };
 export type StoryTone = 'coral' | 'sky' | 'lavender' | 'mint' | 'gold';
 
 export interface StoryCard {
@@ -372,8 +387,9 @@ export interface StoryCard {
   /** A quieter line at the bottom, if any. */
   foot?: string;
   tone: StoryTone;
-  /** Which Reports section tapping the card scrolls to. */
-  target: StoryTarget;
+  /** What tapping the card does, if anything; `cta` is its label at the bottom of the card. */
+  action?: StoryAction;
+  cta?: string;
   /** For the "already spoken for" card: the fixed share, drawn as a moon. */
   moonFraction?: number;
   /** A slim one-line card (the "too early" note) rather than a full-height one. */
@@ -382,7 +398,7 @@ export interface StoryCard {
 
 export interface StoryInput {
   /** The category that grew most vs the comparison period, with this period's total. */
-  mover: { name: string; pctChange: number; totalMinor: number } | null;
+  mover: { categoryId: string; name: string; pctChange: number; totalMinor: number } | null;
   /** "the month before" / "last year" — previousPeriodLabel. */
   comparisonLabel: string;
   /** patternFacts — pass [] for a year view: they describe a month's daily shape. */
@@ -417,7 +433,6 @@ export function buildStoryCards(input: StoryInput): StoryCard[] {
         big: 'Check back soon',
         detail: `A few more days of spending and there'll be a story to tell about this ${input.unit}.`,
         tone: 'mint',
-        target: 'overview',
         compact: true,
       },
     ];
@@ -431,7 +446,8 @@ export function buildStoryCards(input: StoryInput): StoryCard[] {
       big: `${input.mover.name} +${formatPctChange(input.mover.pctChange)}`,
       detail: `The biggest jump on ${input.comparisonLabel}. It took ${formatMoney(input.mover.totalMinor)} this ${input.unit}.`,
       tone: 'coral',
-      target: 'categories',
+      action: { type: 'category', id: input.mover.categoryId },
+      cta: 'Show in categories',
     });
   }
   input.patterns
@@ -444,7 +460,7 @@ export function buildStoryCards(input: StoryInput): StoryCard[] {
         big: p.big,
         detail: p.detail,
         tone: PATTERN_TONE[i % PATTERN_TONE.length],
-        target: 'overview',
+        ...(p.date ? { action: { type: 'day' as const, iso: p.date }, cta: 'Show on the heatmap' } : {}),
       });
     });
 
@@ -458,7 +474,8 @@ export function buildStoryCards(input: StoryInput): StoryCard[] {
       detail: `${formatMoney(input.recurringMinor)} of it was EMI, rent, insurance and subscriptions — fixed before the ${input.unit} began.`,
       foot: `${formatMoney(input.discretionaryMinor)} was flexible`,
       tone: 'lavender',
-      target: 'categories',
+      action: { type: 'categories' },
+      cta: 'See categories',
       moonFraction: share,
     });
   }
@@ -481,8 +498,113 @@ export function buildStoryCards(input: StoryInput): StoryCard[] {
                 : ''
             }`,
       tone: 'mint',
-      target: 'overview',
     });
   }
   return cards;
+}
+
+/** Fewer counted days than this and a weekday has been seen only once or twice — too little to call a pattern. */
+export const WEEKDAY_MIN_DAYS = 14;
+
+export interface WeekdayRhythm {
+  /** The average spend on each weekday (Sunday first), over every such day so far, spend-free days included. */
+  avgMinor: number[];
+  /** How many of each weekday fall in the days counted. */
+  counts: number[];
+  /** The average day across the whole period so far — the dashed line. */
+  usualMinor: number;
+  peak: number;
+  countedDays: number;
+}
+
+/**
+ * Average spend by weekday for the days so far. Days after `today` are not
+ * counted (and spending dated ahead stays out), the same rule as
+ * `daySpendFacts`. Null when there are too few days, or nothing was spent.
+ */
+export function weekdayRhythm(
+  daily: DailyExpensePoint[],
+  range: { start: string; end: string },
+  today: string
+): WeekdayRhythm | null {
+  const last = today < range.end ? today : range.end;
+  const spentOn = new Map(daily.map((d) => [d.date, d.totalMinor]));
+  const totals = new Array<number>(7).fill(0);
+  const counts = new Array<number>(7).fill(0);
+  let countedDays = 0;
+  let sum = 0;
+  for (let d = parseLocalIsoDate(range.start); toLocalIsoDate(d) <= last; d.setDate(d.getDate() + 1)) {
+    const dow = d.getDay();
+    const amount = spentOn.get(toLocalIsoDate(d)) ?? 0;
+    totals[dow] += amount;
+    counts[dow] += 1;
+    sum += amount;
+    countedDays++;
+  }
+  if (countedDays < WEEKDAY_MIN_DAYS || sum <= 0) return null;
+  const avgMinor = totals.map((t, i) => (counts[i] > 0 ? Math.round(t / counts[i]) : 0));
+  const peak = avgMinor.indexOf(Math.max(...avgMinor));
+  return { avgMinor, counts, usualMinor: Math.round(sum / countedDays), peak, countedDays };
+}
+
+/** The sentence under the bars for one weekday: its average against the period's usual day. */
+export function weekdayReadLine(r: WeekdayRhythm, dow: number): string {
+  const name = WEEKDAY[dow];
+  const avg = r.avgMinor[dow];
+  const pct = Math.round((Math.abs(avg - r.usualMinor) / r.usualMinor) * 100);
+  const usual = formatMoney(r.usualMinor);
+  if (dow === r.peak && avg > r.usualMinor) {
+    return `${name}s run highest: ${formatMoney(avg)} on average, ${pct}% above your ${usual} day.`;
+  }
+  const against =
+    pct < 5 ? `about your ${usual}` : `${pct}% ${avg > r.usualMinor ? 'above' : 'below'} your ${usual}`;
+  return `${name}: ${formatMoney(avg)} a day over ${r.counts[dow]} ${name}${r.counts[dow] === 1 ? '' : 's'} · ${against}.`;
+}
+
+/** Accounts have no colour of their own, so each takes the next of these pastel tones by its place in the list. */
+export const ACCOUNT_COLORS = ['#8CB8E8', '#F0876A', '#9CC96B', '#E0AC3F', '#6CCFC0', '#C9B8FF', '#FFA8CE'];
+
+/** An account breakdown as category rows, so the category bar and list can show it unchanged. */
+export function accountRows(items: AccountBreakdownItem[]): CategoryBreakdownItem[] {
+  return items.map((a, i) => ({
+    categoryId: a.accountId,
+    name: a.name,
+    color: ACCOUNT_COLORS[i % ACCOUNT_COLORS.length],
+    totalMinor: a.totalMinor,
+    hasSubcategories: a.topCategories.length > 0,
+    isSensitive: false,
+  }));
+}
+
+export interface DaySpendFacts {
+  /** Days so far that had spending. */
+  spendDays: number;
+  /** Days counted so far: the whole period, or up to today for the one in progress. */
+  countedDays: number;
+  /** Spending dated after today (logged ahead): in the total, but not in the days. */
+  laterMinor: number;
+  /** The total, less what is dated ahead, over the days so far. */
+  perDayMinor: number;
+}
+
+/**
+ * The headline's day figures. Entries dated after today count in the period's
+ * total but not in its days, so they stay out of "spent on X of Y days" and
+ * the per-day average — otherwise it reads "5 of 3 days" and overstates the pace.
+ */
+export function daySpendFacts(
+  daily: DailyExpensePoint[],
+  range: { start: string; end: string },
+  today: string,
+  totalMinor: number
+): DaySpendFacts {
+  const last = today < range.end ? today : range.end;
+  let countedDays = 0;
+  for (let d = parseLocalIsoDate(range.start); toLocalIsoDate(d) <= last; d.setDate(d.getDate() + 1)) {
+    countedDays++;
+  }
+  const spendDays = daily.filter((d) => d.totalMinor > 0 && d.date <= last).length;
+  const laterMinor = daily.filter((d) => d.date > last).reduce((s, d) => s + d.totalMinor, 0);
+  const perDayMinor = countedDays > 0 ? Math.round(Math.max(0, totalMinor - laterMinor) / countedDays) : 0;
+  return { spendDays, countedDays, laterMinor, perDayMinor };
 }

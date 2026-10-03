@@ -35,6 +35,7 @@ import { styles } from './recurring.styles';
 import { cadenceLabel, frequencyNoun } from './recurring.helpers';
 import { errorMessage } from '@/lib/errorMessage';
 import { showAlert } from '@/components/AppDialog';
+import { categorySentence, parentNameOf } from '@/lib/categoryLabel';
 
 const TX_TYPES: { label: string; value: TransactionType }[] = [
   { label: 'Expense', value: 'expense' },
@@ -224,7 +225,8 @@ export function RuleModal({
 
   // The calm-sheets sign-off (Direction C): a live card of the rule as it
   // will be logged, then two pages — what gets logged, and when.
-  const cat = categories.find((c) => c.id === categoryId);
+  const categoriesById = new Map(categories.map((c) => [c.id, c]));
+  const cat = categoriesById.get(categoryId ?? '');
   const accountName = (id: string | null) => accounts.find((a) => a.id === id)?.name;
   const interval = Math.max(1, parseInt(intervalCount || '1', 10) || 1);
   const upcoming = [startDate];
@@ -259,7 +261,11 @@ export function RuleModal({
           note ||
           (type === 'transfer'
             ? `${accountName(effectiveAccountId) ?? '—'} → ${accountName(toAccountId) ?? '…'}`
-            : (cat?.name ?? (editing ? 'Recurring entry' : 'New recurring entry')))
+            : cat
+              ? categorySentence(cat.name, parentNameOf(cat.id, categoriesById))
+              : editing
+                ? 'Recurring entry'
+                : 'New recurring entry')
         }
         meta={`${type === 'income' ? 'Into' : 'From'} ${accountName(effectiveAccountId) ?? '—'} · next ${weekdayDayMonth(startDate)}`}
       />
@@ -341,7 +347,7 @@ export function RuleModal({
                   icon={cat?.icon ?? 'shape-outline'}
                   iconBg={cat ? hexToRgba(cat.color, 0.25) : theme.colors.surfaceAlt}
                   label="Category"
-                  value={cat?.name ?? 'Pick one'}
+                  value={cat ? categorySentence(cat.name, parentNameOf(cat.id, categoriesById)) : 'Pick one'}
                   onPress={() => toggle('category')}
                   expanded={open === 'category'}
                   divider

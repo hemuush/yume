@@ -65,6 +65,7 @@ import { loadNeedsYou } from '@/features/home/needsYouData';
 import { AddAccountModal } from '@/features/profile/AddAccountModal';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { toLocalIsoDate } from '@/lib/date';
+import { categorySentence } from '@/lib/categoryLabel';
 import { onTransactionsChanged } from '@/lib/dataEvents';
 import { errorMessage } from '@/lib/errorMessage';
 import { payCardRoute } from '@/lib/payCard';
@@ -345,6 +346,10 @@ export default function DashboardScreen() {
   };
 
   const categoryFor = (id: string | null) => categories.find((c) => c.id === id);
+  const parentNameFor = (id: string | null) => {
+    const parentId = categoryFor(id)?.parentId;
+    return parentId ? categoryFor(parentId)?.name : undefined;
+  };
   const accountName = (id: string | null | undefined) => accounts.find((a) => a.id === id)?.name;
   const savingsIds = savingsAccountIdsOf(accounts);
   const isSavingsTransfer = (tx: Transaction) =>
@@ -422,7 +427,10 @@ export default function DashboardScreen() {
     rules: recurringRules,
     accent,
     accountName,
-    categoryName: (id) => categoryFor(id)?.name,
+    categoryName: (id) => {
+      const cat = categoryFor(id);
+      return cat && categorySentence(cat.name, parentNameFor(id));
+    },
     categoryColor: (id) => categoryFor(id)?.color,
   });
 
@@ -537,6 +545,7 @@ export default function DashboardScreen() {
                     <RecentTransactionRow
                       tx={tx}
                       category={categoryFor(tx.categoryId) ?? undefined}
+                      parentName={parentNameFor(tx.categoryId)}
                       accountName={accountName(tx.accountId)}
                       toAccountName={accountName(tx.toAccountId)}
                       savingsTransfer={isSavingsTransfer(tx)}
@@ -566,7 +575,7 @@ export default function DashboardScreen() {
                 />
               </View>
             ) : (
-              <AccountStack accounts={accounts} onOpen={setSummaryAccount} opening={!openingDone} />
+              <AccountStack accounts={accounts} onOpen={setSummaryAccount} />
             )}
           </HomeSection>
         )}

@@ -30,6 +30,7 @@ import { HomeSection } from '@/features/home/HomeSection';
 import { homeStyles as h } from '@/features/home/homeStyles';
 import { dayMonth, longMonth, shortMonthYear } from '@/lib/dateLabels';
 import { errorMessage } from '@/lib/errorMessage';
+import { categoryPath } from '@/lib/categoryLabel';
 import { showAlert } from '@/components/AppDialog';
 
 /** "23 Sep 1:53 pm" from created_at (UTC, "YYYY-MM-DD HH:MM:SS"). */
@@ -188,7 +189,7 @@ export default function TidyUpScreen() {
                             {formatMoney(g.amountMinor)} ·{' '}
                             {g.type === 'transfer'
                               ? `${g.accountName} → ${g.toAccountName ?? '—'}`
-                              : `${g.categoryName ?? '—'} · ${g.accountName}`}
+                              : `${g.categoryName ? categoryPath(g.categoryName, g.parentName) : '—'} · ${g.accountName}`}
                           </Text>
                           <Text style={h.sub}>
                             {dayMonth(g.date)} ·{' '}

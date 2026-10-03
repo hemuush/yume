@@ -29,6 +29,7 @@ import { showAlert } from '@/components/AppDialog';
 import { usePrivacy } from '@/theme/PrivacyContext';
 import { isSavingsEntry } from '@/lib/privateSummary';
 import { savingsAccountIdsOf } from '@/lib/account';
+import { parentNameOf } from '@/lib/categoryLabel';
 
 /**
  * Rent, subscriptions, salary — anything that happens on its own schedule
@@ -174,6 +175,7 @@ export default function RecurringScreen() {
                       key={rule.id}
                       rule={rule}
                       category={rule.categoryId ? categoriesById.get(rule.categoryId) : undefined}
+                      parentName={parentNameOf(rule.categoryId, categoriesById)}
                       masked={isHidden(rule)}
                       accountName={accountName}
                       index={i}
@@ -182,6 +184,9 @@ export default function RecurringScreen() {
                     />
                   ))}
                 </NeoTile>
+                <Text style={styles.footnote}>
+                  Yume logs these on schedule. They show up in Activity like any entry you typed.
+                </Text>
               </>
             )}
             <SuggestionsList
@@ -201,6 +206,7 @@ export default function RecurringScreen() {
                       key={rule.id}
                       rule={rule}
                       category={rule.categoryId ? categoriesById.get(rule.categoryId) : undefined}
+                      parentName={parentNameOf(rule.categoryId, categoriesById)}
                       masked={isHidden(rule)}
                       accountName={accountName}
                       index={i}

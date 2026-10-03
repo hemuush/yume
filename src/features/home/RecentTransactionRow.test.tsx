@@ -31,7 +31,7 @@ const tx = (note: string, date = today): Transaction => ({
   createdAt: '2026-09-27T10:00:00.000Z',
 });
 
-function texts(note: string, date?: string) {
+function texts(note: string, date?: string, parentName?: string) {
   let r!: ReactTestRenderer;
   act(() => {
     r = create(
@@ -41,6 +41,7 @@ function texts(note: string, date?: string) {
         accountName="SBI"
         toAccountName={undefined}
         divider={false}
+        parentName={parentName}
       />
     );
   });
@@ -66,5 +67,10 @@ describe('RecentTransactionRow', () => {
 
   it('says Yesterday for the day before', () => {
     expect(texts('', addDaysToIsoDate(today, -1))).toContain('SBI · Yesterday');
+  });
+
+  it('names the parent of a subcategory, as a path under a note and as "in …" without one', () => {
+    expect(texts('', undefined, 'Groceries')).toContain('in Groceries · SBI · Today');
+    expect(texts('Lunch', undefined, 'Groceries')).toContain('Groceries › Food & Dining · SBI · Today');
   });
 });

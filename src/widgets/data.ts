@@ -1,3 +1,4 @@
+import { categorySentence, parentNameOf } from '@/lib/categoryLabel';
 import { listAccounts, listCategories, listMostUsedExpenseCategories } from '@/db/ledger';
 import { getRangeComparison, findTopGrowingCategory, getMonthPaceInputs } from '@/db/reports';
 import { getNextDueInstallment } from '@/db/loans';
@@ -223,7 +224,11 @@ export async function getNextDueWidgetData(): Promise<NextDueWidgetData | null> 
     if (!rule.active || rule.type === 'transfer') continue;
     const cat = categories.find((c) => c.id === rule.categoryId);
     candidates.push({
-      title: rule.note || cat?.name || 'Recurring',
+      title:
+        rule.note ||
+        (cat
+          ? categorySentence(cat.name, parentNameOf(cat.id, new Map(categories.map((c) => [c.id, c]))))
+          : 'Recurring'),
       subtitle: dueDateLabel(rule.nextRunDate),
       amountMinor: rule.amountMinor,
       sign: rule.type === 'income' ? '+' : '-',

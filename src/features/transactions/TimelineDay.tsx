@@ -15,6 +15,7 @@ import { buildDayLane, dropIndex, laneOrderIds, LaneLine, moveLine } from './tra
 import { isSavingsEntry } from '@/lib/privateSummary';
 import { DraggableLine } from './DraggableLine';
 import { withPressed } from '@/lib/pressed';
+import { categorySpoken, inParent, joinSub, parentNameOf } from '@/lib/categoryLabel';
 
 const NO_ACCOUNTS: ReadonlySet<string> = new Set();
 
@@ -89,6 +90,8 @@ export function TimelineDay({
 }) {
   const { hideAmounts } = usePrivacy();
   const categoriesById = useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories]);
+  // "in Food & Dining" for a subcategory, nothing for a top-level category.
+  const parentLine = (categoryId: string | null) => inParent(parentNameOf(categoryId, categoriesById));
   const { transfers, lines } = useMemo(() => buildDayLane(items, date), [items, date]);
   const hidden = (tx: Transaction) => hideAmounts && isSavingsEntry(tx, categoriesById, savingsAccountIds);
   const money = (minor: number, masked: boolean) => formatMaskableMoney(minor, { masked });
@@ -186,7 +189,7 @@ export function TimelineDay({
             {...reorderProps(i)}
             style={withPressed(styles.line)}
             accessibilityRole="button"
-            accessibilityLabel={`${categoryName(tx.categoryId)}${tx.note ? `, ${tx.note}` : ''}, ${money(tx.amountMinor, hidden(tx))}`}
+            accessibilityLabel={`${categorySpoken(categoryName(tx.categoryId), parentNameOf(tx.categoryId, categoriesById))}${tx.note ? `, ${tx.note}` : ''}, ${money(tx.amountMinor, hidden(tx))}`}
           >
             <JustAddedGlow ids={[tx.id]} surface="activity" />
             <CategoryIcon name={cat?.icon ?? 'tag'} color={cat?.color} size={14} square={30} />
@@ -196,6 +199,7 @@ export function TimelineDay({
               </Text>
               <Text style={styles.sub} numberOfLines={1}>
                 {tx.isRefund && <Text style={styles.refund}>Refund · </Text>}
+                {parentLine(tx.categoryId) ? `${parentLine(tx.categoryId)} · ` : ''}
                 {tx.note ? `${tx.note} · ` : ''}
                 {accountName(tx.accountId)}
               </Text>
@@ -214,6 +218,7 @@ export function TimelineDay({
     const name = isSplit
       ? `Split · ${line.items.length} categories`
       : categoryName(line.kind === 'stack' ? line.categoryId : null);
+    const stackParent = line.kind === 'stack' ? parentNameOf(line.categoryId, categoriesById) : undefined;
     const type = isSplit ? 'expense' : line.type;
     const lineMasked = line.items.some(hidden);
     // A stack from one account names it, like a single entry does; from several, just the count.
@@ -229,7 +234,7 @@ export function TimelineDay({
           style={withPressed(styles.line)}
           accessibilityRole="button"
           accessibilityState={{ expanded: open }}
-          accessibilityLabel={`${name}, ${isSplit ? 'one payment' : `${line.items.length} entries`}, ${money(line.totalMinor, lineMasked)}. ${open ? 'Close' : 'Open'}`}
+          accessibilityLabel={`${categorySpoken(name, stackParent)}, ${isSplit ? 'one payment' : `${line.items.length} entries`}, ${money(line.totalMinor, lineMasked)}. ${open ? 'Close' : 'Open'}`}
         >
           {/* A new entry folded into this line glows the line. */}
           <JustAddedGlow ids={line.items.map((t) => t.id)} surface="activity" />
@@ -248,7 +253,11 @@ export function TimelineDay({
             <Text style={styles.sub} numberOfLines={1}>
               {isSplit
                 ? `${first.note ? `${first.note} · ` : ''}${accountName(first.accountId)}`
-                : `${line.items.length} entries${sameAccount ? ` · ${accountName(first.accountId)}` : ''}`}
+                : joinSub([
+                    inParent(stackParent),
+                    `${line.items.length} entries`,
+                    sameAccount && accountName(first.accountId),
+                  ])}
             </Text>
           </View>
           <Amount type={type} minor={line.totalMinor} masked={lineMasked} />
@@ -262,7 +271,7 @@ export function TimelineDay({
               const partCat = isSplit ? categoriesById.get(tx.categoryId ?? '') : cat;
               const label = isSplit ? categoryName(tx.categoryId) : tx.note || accountName(tx.accountId);
               const sub = isSplit
-                ? `${tx.note ? `${tx.note} · ` : ''}${accountName(tx.accountId)}`
+                ? joinSub([parentLine(tx.categoryId), tx.note, accountName(tx.accountId)])
                 : tx.note
                   ? accountName(tx.accountId)
                   : null;
@@ -272,7 +281,7 @@ export function TimelineDay({
                     onPress={() => onPressTx(tx)}
                     style={withPressed(styles.subLine)}
                     accessibilityRole="button"
-                    accessibilityLabel={`${isSplit ? label : name}${!isSplit && tx.note ? `, ${tx.note}` : ''}, ${money(tx.amountMinor, hidden(tx))}`}
+                    accessibilityLabel={`${isSplit ? categorySpoken(label, parentNameOf(tx.categoryId, categoriesById)) : categorySpoken(name, stackParent)}${!isSplit && tx.note ? `, ${tx.note}` : ''}, ${money(tx.amountMinor, hidden(tx))}`}
                   >
                     <View
                       style={[styles.subDot, { backgroundColor: partCat?.color ?? theme.colors.borderSoft }]}

@@ -1,5 +1,6 @@
 import { Category, RecurringRule, RecurrenceFrequency } from '@/types';
 import { monthlyCostMinor } from '@/db/subscriptions';
+import { categorySentence, parentNameOf } from '@/lib/categoryLabel';
 
 export function frequencyNoun(freq: RecurrenceFrequency, count: number): string {
   const plural = count === 1 ? '' : 's';
@@ -54,7 +55,7 @@ export function costShares(rules: RecurringRule[], categoriesById: Map<string, C
       const cat = r.categoryId ? categoriesById.get(r.categoryId) : undefined;
       return {
         key: r.id,
-        name: cat?.name ?? 'Other',
+        name: cat ? categorySentence(cat.name, parentNameOf(cat.id, categoriesById)) : 'Other',
         minor: Math.round(monthlyCostMinor(r)),
         color: cat?.color ?? NO_CATEGORY_COLOR,
       };

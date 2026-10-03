@@ -24,23 +24,19 @@ import { SpaceMono_700Bold } from '@expo-google-fonts/space-mono/700Bold';
 import { Fredoka_400Regular } from '@expo-google-fonts/fredoka/400Regular';
 import { Fredoka_500Medium } from '@expo-google-fonts/fredoka/500Medium';
 import { Fredoka_600SemiBold } from '@expo-google-fonts/fredoka/600SemiBold';
-import { getDb, consumeLoanDueDateRepairs } from '@/db/client';
-import { resyncAllLoanReminders } from '@/db/loans';
+import { getDb } from '@/db/client';
 import { shouldRelock } from '@/lib/appLock';
-import { getNotificationPrefs, getHasOnboarded, setHasOnboarded, getAppLockEnabled } from '@/db/settings';
+import { getHasOnboarded, setHasOnboarded, getAppLockEnabled } from '@/db/settings';
 import { listAccounts, listTransactions } from '@/db/ledger';
 import { runLocalBackupIfDue } from '@/lib/localBackup';
 import { runDueRecurringRules } from '@/db/recurring';
 import {
   ensureAndroidChannel,
-  syncDailyReminder,
-  syncWeeklySummary,
+  rebuildNotifications,
   cancelLegacyScheduledNotifications,
-  registerNotificationCategories,
   subscribeToNotificationTaps,
   NotificationRoute,
 } from '@/lib/notifications';
-import { registerNotificationTask } from '@/lib/notificationTask';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { refreshAllWidgets } from '@/widgets/notifyWidgets';
 import { AccentProvider } from '@/theme/AccentContext';
@@ -92,40 +88,21 @@ export default function RootLayout() {
         // rule now isolates its own failures internally; this catch only
         // guards the outer query (e.g. getDb()) from an unhandled rejection.
         void runDueRecurringRules().catch((err) => console.error('runDueRecurringRules failed:', err));
-        // Setup just moved some pending loan installments off dates the old
-        // month-end math got wrong (see repairLoanDueDates in db/client.ts) —
-        // any due reminder already scheduled was for the old date.
-        if (consumeLoanDueDateRepairs() > 0) {
-          void resyncAllLoanReminders().catch((err) => console.error('resyncAllLoanReminders failed:', err));
-        }
         // Unlike runDueRecurringRules/runLocalBackupIfDue above,
-        // ensureAndroidChannel/syncDailyReminder/syncWeeklySummary have no
-        // internal try/catch — each can genuinely reject (a bad trigger, a
-        // permission the OS revoked), so this fire-and-forget chain needs
-        // its own catch or a real rejection on cold start goes unhandled.
+        // ensureAndroidChannel has no internal try/catch and can genuinely
+        // reject (a bad channel, a permission the OS revoked), so this
+        // fire-and-forget call needs its own catch or a real rejection on cold
+        // start goes unhandled.
         void ensureAndroidChannel().catch((err) => console.error('ensureAndroidChannel failed:', err));
         // One-time: drop notifications still scheduled under the pre-rename
         // `flynse-*` identifiers.
         void cancelLegacyScheduledNotifications();
-        // The buttons on each kind of notification, and the task that runs
-        // the ones that don't open Yume. Both are needed before a
-        // notification fires, and both are safe to repeat on every start.
-        void registerNotificationCategories().catch((err) =>
-          console.error('registerNotificationCategories failed:', err)
-        );
-        void registerNotificationTask().catch((err) =>
-          console.error('registerNotificationTask failed:', err)
-        );
-        // Re-schedules the daily reminder and weekly summary (if enabled) on
-        // every cold start — scheduled notifications already survive a
-        // normal restart, but this keeps them self-healing after a
-        // reinstall or an OS-level clear.
-        void getNotificationPrefs()
-          .then((prefs) => {
-            void syncDailyReminder(prefs).catch((err) => console.error('syncDailyReminder failed:', err));
-            void syncWeeklySummary(prefs).catch((err) => console.error('syncWeeklySummary failed:', err));
-          })
-          .catch((err) => console.error('getNotificationPrefs failed:', err));
+        // Notifications are rebuilt from the current settings and data on every
+        // cold start: it keeps them current as days pass (they are scheduled a
+        // couple of weeks ahead), carries over what an older version had
+        // scheduled, and self-heals after a reinstall or an OS-level clear.
+        // Never rejects.
+        void rebuildNotifications();
 
         setInitialLocked(await getAppLockEnabled());
 

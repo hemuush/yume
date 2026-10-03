@@ -2,6 +2,7 @@ import { Account, Category, TransactionType } from '@/types';
 import { theme } from '@/constants/theme';
 import { shade } from '@/lib/color';
 import { parseLocalIsoDate } from '@/lib/date';
+import { parentNameOf } from '@/lib/categoryLabel';
 
 export type EntryType = TransactionType | 'friend';
 
@@ -40,6 +41,8 @@ interface StagedTx {
   toAccountId: string | null;
   categoryId: string | null;
   label: string;
+  /** The category's parent, when it is a subcategory. */
+  parentName?: string;
   categoryIcon: string;
   categoryColor: string;
   amountMinor: number;
@@ -156,6 +159,10 @@ export function formToStaged(
       toAccountId: type === 'transfer' ? toAccountId : null,
       categoryId: type === 'transfer' ? null : categoryId,
       label: type === 'transfer' ? 'Transfer' : (cat?.name ?? '—'),
+      parentName:
+        type === 'transfer'
+          ? undefined
+          : parentNameOf(categoryId, new Map(lookups.categories.map((c) => [c.id, c]))),
       categoryIcon: type === 'transfer' ? 'swap-horizontal' : (cat?.icon ?? 'tag'),
       categoryColor: type === 'transfer' ? theme.colors.secondary : (cat?.color ?? theme.colors.textMuted),
       amountMinor,

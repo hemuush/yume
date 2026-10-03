@@ -9,7 +9,8 @@ import { Transaction, TransactionType, PaymentMode } from '@/types';
 import { toLocalIsoDate, addDaysToIsoDate, isIsoDate, parseLocalIsoDate } from '@/lib/date';
 import { parseSearchQuery } from '@/lib/searchQuery';
 
-import { checkOverspendAndNotify } from './spendAlerts';
+import { queueSpendAlerts } from './spendAlerts';
+import { rebuildNotifications } from '@/lib/notifications';
 import { keepDeletedEntry, forgetDeletedEntry } from './recentlyDeleted';
 
 /** Entries: create, list, search, repeat checks, links and delete (re-exported from ./ledger). */
@@ -173,15 +174,23 @@ export async function insertTransactionRow(db: AppDb, input: CreateTransactionIn
   return id;
 }
 
-/** The post-write overspend check every new expense gets — see checkOverspendAndNotify. Never throws. */
+/**
+ * The post-write notification work every new entry gets — see queueSpendAlerts.
+ * An expense in the current month may queue a budget or spending alert (which
+ * rebuilds the notifications itself); anything else dated today still rebuilds,
+ * as the evening nudge skips a day something is already logged. Never throws.
+ */
 export async function checkOverspendForNewTransaction(input: CreateTransactionInput): Promise<void> {
-  // The overspend check compares this month's spend to last month's — firing
-  // it for a backdated entry (e.g. logging January while it's September)
-  // would compare the wrong month entirely and could pop a bogus "overspend"
-  // alert that has nothing to do with current spending.
-  const isCurrentMonth = input.date.slice(0, 7) === toLocalIsoDate(new Date()).slice(0, 7);
+  // The spending-jump check compares this month's spend to last month's —
+  // firing it for a backdated entry (e.g. logging January while it's September)
+  // would compare the wrong month entirely and could pop a bogus alert that
+  // has nothing to do with current spending.
+  const today = toLocalIsoDate(new Date());
+  const isCurrentMonth = input.date.slice(0, 7) === today.slice(0, 7);
   if (input.type === 'expense' && input.categoryId && isCurrentMonth) {
-    await checkOverspendAndNotify(input.categoryId).catch(() => {});
+    await queueSpendAlerts(input.categoryId).catch(() => {});
+  } else if (input.date === today) {
+    await rebuildNotifications();
   }
 }
 
@@ -378,19 +387,20 @@ export async function searchTransactions(
     // for a literal "50%" (a plausible note, e.g. "50% off coupon") would
     // instead match "50" followed by anything, silently over-matching.
     const like = `%${word.text.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
-    const text = `t.note LIKE ? ESCAPE '\\' OR c.name LIKE ? ESCAPE '\\' OR a.name LIKE ? ESCAPE '\\' OR ta.name LIKE ? ESCAPE '\\'`;
+    const text = `t.note LIKE ? ESCAPE '\\' OR c.name LIKE ? ESCAPE '\\' OR pc.name LIKE ? ESCAPE '\\' OR a.name LIKE ? ESCAPE '\\' OR ta.name LIKE ? ESCAPE '\\'`;
     if (word.amountMinor) {
       clauses.push(`(${text} OR t.amount_minor BETWEEN ? AND ?)`);
-      params.push(like, like, like, like, word.amountMinor.min, word.amountMinor.max);
+      params.push(like, like, like, like, like, word.amountMinor.min, word.amountMinor.max);
     } else {
       clauses.push(`(${text})`);
-      params.push(like, like, like, like);
+      params.push(like, like, like, like, like);
     }
   }
   const cappedLimit = Number.isFinite(limit) && limit > 0 ? Math.floor(limit) : 50;
   const rows = await db.getAllAsync<TransactionRow>(
     `SELECT t.* FROM transactions t
      LEFT JOIN categories c ON c.id = t.category_id
+     LEFT JOIN categories pc ON pc.id = c.parent_id
      LEFT JOIN accounts a ON a.id = t.account_id
      LEFT JOIN accounts ta ON ta.id = t.to_account_id
      WHERE ${clauses.join(' AND ')}
@@ -407,6 +417,8 @@ export interface RepeatEntry {
   accountCurrency: string;
   categoryId: string;
   categoryName: string;
+  /** The parent's name when the category is a subcategory, so same-named children can be told apart. */
+  parentName: string | null;
   categoryIcon: string;
   categoryColor: string;
   amountMinor: number;
@@ -442,6 +454,7 @@ export async function getRepeatEntries(
     currency: string;
     category_id: string;
     category_name: string;
+    parent_name: string | null;
     category_icon: string;
     category_color: string;
     amount_minor: number;
@@ -450,11 +463,12 @@ export async function getRepeatEntries(
     note: string;
   }>(
     `SELECT t.type AS type, t.account_id AS account_id, a.currency AS currency,
-       t.category_id AS category_id, c.name AS category_name, c.icon AS category_icon, c.color AS category_color,
+       t.category_id AS category_id, c.name AS category_name, pc.name AS parent_name, c.icon AS category_icon, c.color AS category_color,
        t.amount_minor AS amount_minor, COUNT(*) AS freq,
        MAX(t.date || ' ' || t.created_at) AS last_key, t.note AS note
      FROM transactions t
      JOIN categories c ON c.id = t.category_id
+     LEFT JOIN categories pc ON pc.id = c.parent_id
      JOIN accounts a ON a.id = t.account_id
      WHERE t.type IN ('expense', 'income') AND (? IS NULL OR t.type = ?) AND t.loan_id IS NULL AND t.is_refund = 0
        AND c.archived = 0 AND c.is_system = 0 AND a.archived = 0 AND a.type != 'savings'
@@ -478,6 +492,7 @@ export async function getRepeatEntries(
     accountCurrency: r.currency,
     categoryId: r.category_id,
     categoryName: r.category_name,
+    parentName: r.parent_name,
     categoryIcon: r.category_icon,
     categoryColor: r.category_color,
     amountMinor: r.amount_minor,

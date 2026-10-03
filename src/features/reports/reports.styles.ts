@@ -2,10 +2,10 @@ import { StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
 import { EYEBROW, SECTION_TITLE, SECTION_GAP } from '@/constants/textStyles';
 
-/** The even gap between Reports' blocks (heatmap card, story cards, "Where it went", trends). */
+/** The even gap between Reports' blocks (heatmap card, day card, story cards, "Where it went"). */
 export const BLOCK_GAP = 22;
 
-// Shared by the Reports screen and its pieces (PeriodRow, HeatmapCard, StoryCards, CategoryMosaic, TrendChart, DayTotal).
+// Shared by the Reports screen and its pieces (PeriodRow, ReportSummary, HeatmapCard, DayCard, StoryCards, CategoryBar, CategoryList, TrendChart, DayTotal).
 export const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
@@ -54,18 +54,22 @@ export const styles = StyleSheet.create({
   granText: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textMuted },
   granTextOn: { color: theme.colors.textPrimary },
 
-  // The Overview/Categories/Trends jump bar — pinned in `header`, outside
-  // the ScrollView, so it's reachable and shows the current section no
-  // matter how far down the page you've scrolled.
+  // Days / Categories / Trends, pinned under the summary. SegmentedControl
+  // brings its own bottom margin; the negative one trims it to the gap this bar wants.
+  tabs: { paddingHorizontal: 20, marginBottom: -6 },
 
-  eyebrow: EYEBROW,
-  big: {
-    flex: 1,
+  // The pinned summary: the period's total and its day figures, always in view.
+  summary: { paddingHorizontal: 20, paddingBottom: 12, gap: 4 },
+  summaryHead: { flexDirection: 'row', alignItems: 'flex-end', gap: 10 },
+  summaryMain: { flex: 1, minWidth: 0 },
+  summaryBig: {
     fontFamily: theme.font.monoBold,
-    fontSize: 30,
-    letterSpacing: -1.5,
+    fontSize: 24,
+    letterSpacing: -1,
     color: theme.colors.textPrimary,
   },
+
+  eyebrow: EYEBROW,
   // Same red/green + arrow badge language This Month's KPI tiles and the
   // stat cards already use, instead of a small two-line corner label.
   vsBadge: {
@@ -78,7 +82,7 @@ export const styles = StyleSheet.create({
   },
   vsBadgeText: { fontFamily: theme.font.bodyBold, fontSize: 10.5 },
 
-  // The heatmap card at the top: headline + the day-by-day grid in one card.
+  // The Days tab's heatmap card.
   hmCard: {
     backgroundColor: theme.colors.surface,
     borderRadius: theme.radius.xl2,
@@ -88,8 +92,24 @@ export const styles = StyleSheet.create({
     gap: 10,
     marginBottom: BLOCK_GAP,
   },
-  hmHead: { flexDirection: 'row', alignItems: 'flex-end', gap: 10 },
-  hmHeadMain: { flex: 1, minWidth: 0 },
+  filterChip: {
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    maxWidth: '100%',
+    borderRadius: theme.radius.pill,
+    backgroundColor: theme.colors.surfaceAlt,
+    paddingLeft: 10,
+    paddingRight: 8,
+    paddingVertical: 5,
+  },
+  filterChipText: {
+    flexShrink: 1,
+    fontFamily: theme.font.bodyBold,
+    fontSize: 12,
+    color: theme.colors.textPrimary,
+  },
   hmFacts: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
   hmFactStrong: { fontFamily: theme.font.monoBold, color: theme.colors.textPrimary },
   hmFoot: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
@@ -133,6 +153,7 @@ export const styles = StyleSheet.create({
     color: theme.colors.textPrimary,
     marginTop: 4,
   },
+  storyCta: { fontFamily: theme.font.bodyBold, fontSize: 12.5, color: theme.colors.textPrimary },
   storyFoot: { fontFamily: theme.font.bodyBold, fontSize: 12.5, color: theme.colors.textSecondary },
   storyMoonRow: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   storyMoonText: { flex: 1, minWidth: 0 },
@@ -140,23 +161,130 @@ export const styles = StyleSheet.create({
   storyDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: theme.colors.borderSoft },
   storyDotOn: { width: 16, backgroundColor: theme.colors.ink },
 
-  // "Where it went" mosaic.
-  mosaic: { position: 'relative', marginBottom: 12 },
-  tile: {
-    position: 'absolute',
-    borderRadius: theme.radius.md,
-    borderWidth: 2,
-    borderColor: theme.colors.background,
-    padding: 8,
+  // The day open under the heatmap.
+  dayCard: {
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.radius.xl2,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.borderSoft,
+    paddingTop: 12,
+    paddingBottom: 12,
+    marginBottom: BLOCK_GAP,
+  },
+  dayHead: {
+    flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
+    gap: 8,
+    paddingHorizontal: 14,
+    paddingBottom: 8,
+  },
+  dayHeadText: { flex: 1, minWidth: 0 },
+  dayTitle: { fontFamily: theme.font.roundedBold, fontSize: 15, color: theme.colors.textPrimary },
+  dayClose: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: theme.colors.surfaceAlt,
+  },
+  dayFoot: {
+    marginTop: 4,
+    paddingTop: 10,
+    paddingHorizontal: 14,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: theme.colors.borderSoft,
+  },
+
+  // Weekday rhythm: seven bars, a dashed "usual day" line, and a read line.
+  rhythmBlock: { marginBottom: BLOCK_GAP },
+  rhythmCard: {
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.radius.xl2,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.borderSoft,
+    padding: 14,
+    gap: 10,
+  },
+  rhythmChart: { height: 128, flexDirection: 'row', alignItems: 'flex-end', gap: 6, paddingTop: 14 },
+  rhythmBar: { flex: 1, height: '100%', justifyContent: 'flex-end', alignItems: 'center', gap: 4 },
+  rhythmValue: {
+    height: 12,
+    fontFamily: theme.font.mono,
+    fontSize: 9.5,
+    color: theme.colors.textMuted,
+  },
+  rhythmValueOn: { fontFamily: theme.font.monoBold, color: theme.colors.textPrimary },
+  rhythmFill: { width: '100%', borderTopLeftRadius: 8, borderTopRightRadius: 8, borderRadius: 4 },
+  rhythmLabel: { height: 14, fontFamily: theme.font.mono, fontSize: 10, color: theme.colors.textMuted },
+  rhythmLabelOn: { fontFamily: theme.font.monoBold, color: theme.colors.textPrimary },
+  rhythmUsual: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    borderTopWidth: 1.5,
+    borderStyle: 'dashed',
+    borderColor: theme.colors.textSecondary,
+    opacity: 0.55,
+  },
+  rhythmUsualTag: {
+    position: 'absolute',
+    right: 0,
+    bottom: 2,
+    paddingHorizontal: 2,
+    backgroundColor: theme.colors.surface,
+    fontFamily: theme.font.mono,
+    fontSize: 9,
+    color: theme.colors.textSecondary,
+  },
+  rhythmRead: {
+    fontFamily: theme.font.body,
+    fontSize: 13,
+    lineHeight: 18,
+    color: theme.colors.textPrimary,
+  },
+  rhythmEmpty: {
+    paddingVertical: 18,
+    paddingHorizontal: 14,
+    textAlign: 'center',
+    fontFamily: theme.font.body,
+    fontSize: 13,
+    color: theme.colors.textMuted,
+  },
+
+  // Biggest spends: the period's largest single expenses, in the day card's row.
+  bigBlock: { marginBottom: BLOCK_GAP },
+  bigCard: {
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.radius.xl2,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.borderSoft,
+    paddingTop: 4,
+    paddingBottom: 12,
     overflow: 'hidden',
   },
-  tileRest: { backgroundColor: theme.colors.surfaceAlt },
-  // A sliver of a tile: its padding would push it past its slot, so none.
-  tileSwatch: { padding: 0, borderRadius: theme.radius.sm },
-  tileName: { fontFamily: theme.font.bodyBold, fontSize: 12, lineHeight: 15, color: theme.colors.ink },
-  tilePct: { fontFamily: theme.font.roundedBold, fontSize: 18, lineHeight: 20, color: theme.colors.ink },
-  tilePctSmall: { fontFamily: theme.font.roundedBold, fontSize: 12, lineHeight: 14 },
+  bigFoot: {
+    marginTop: 4,
+    paddingTop: 10,
+    paddingHorizontal: 14,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: theme.colors.borderSoft,
+    fontFamily: theme.font.body,
+    fontSize: 12,
+    color: theme.colors.textSecondary,
+  },
+  bigFootStrong: { fontFamily: theme.font.monoBold, color: theme.colors.textPrimary },
+  bigRowOn: { backgroundColor: theme.colors.surfaceAlt },
+
+  // Categories: how the list is grouped (by category or by account).
+  groupPill: { alignSelf: 'flex-start', marginBottom: 12 },
+  catSplitCaption: {
+    fontFamily: theme.font.bodyMedium,
+    fontSize: 11.5,
+    color: theme.colors.textMuted,
+    paddingTop: 8,
+  },
 
   // Trends: one line chart with a Spending / Net worth switch.
   trendCard: {
@@ -186,6 +314,9 @@ export const styles = StyleSheet.create({
     color: theme.colors.textSecondary,
   },
 
+  trendLink: { alignSelf: 'flex-start', paddingVertical: 4 },
+  trendLinkText: { fontFamily: theme.font.bodyBold, fontSize: 12.5, color: theme.colors.textPrimary },
+
   flowSwitch: { marginBottom: 12 },
   tidyNudge: {
     marginTop: 10,
@@ -211,8 +342,35 @@ export const styles = StyleSheet.create({
     borderColor: theme.colors.borderSoft,
     borderRadius: theme.radius.xl2,
     paddingHorizontal: 14,
+    overflow: 'hidden',
   },
+  catBar: {
+    flexDirection: 'row',
+    height: 14,
+    gap: 2,
+    marginBottom: 12,
+    borderRadius: 7,
+    overflow: 'hidden',
+  },
+  catBarSeg: { flexBasis: 0, minWidth: 2 },
   catRow: { paddingVertical: 10 },
+  // The picked row: tinted edge to edge, the others fade.
+  catRowOn: { marginHorizontal: -14, paddingHorizontal: 14, backgroundColor: theme.colors.surfaceAlt },
+  catRowDim: { opacity: 0.45 },
+  catPanel: {
+    marginHorizontal: -14,
+    paddingHorizontal: 14,
+    paddingBottom: 10,
+    gap: 6,
+    backgroundColor: theme.colors.surfaceAlt,
+  },
+  catSplitLoading: { paddingVertical: 8 },
+  catSplitRow: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingLeft: 14 },
+  catSplitName: { flex: 1, fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
+  catSplitAmt: { fontFamily: theme.font.mono, fontSize: 11.5, color: theme.colors.textPrimary },
+  catLinks: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 16, rowGap: 2, paddingTop: 4 },
+  catLink: { paddingVertical: 4 },
+  catLinkText: { fontFamily: theme.font.bodyBold, fontSize: 12.5, color: theme.colors.textPrimary },
   catTop: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 },
   catName: { flex: 1, fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textPrimary },
   catDot: { width: 8, height: 8, borderRadius: 4 },
@@ -241,17 +399,16 @@ export const styles = StyleSheet.create({
   },
   catMoreText: { fontFamily: theme.font.bodyMedium, fontSize: 11.5, color: theme.colors.textMuted },
 
-  // day-detail / drill popup
+  // day rows
   dayRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
     paddingVertical: 9,
-    paddingHorizontal: 18,
+    paddingHorizontal: 14,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: theme.colors.borderSoft,
   },
-  dayRowFirst: { borderTopWidth: 0 },
   dayMid: { flex: 1, minWidth: 0 },
   dayName: {
     fontFamily: theme.font.bodyBold,

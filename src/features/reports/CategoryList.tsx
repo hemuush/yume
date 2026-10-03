@@ -1,10 +1,10 @@
-import { View, Pressable } from 'react-native';
+import { View, Pressable, ActivityIndicator } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import { Text } from '@/components/Text';
 import { Amount } from '@/components/Amount';
 import { CategoryBreakdownItem } from '@/db/reports';
 import { formatPctChange } from '@/lib/format';
-import { allocateRoundedMinor } from '@/lib/round';
+import { allocateRoundedMinor, roundedMinor } from '@/lib/round';
 import { theme } from '@/constants/theme';
 import { AnimatedCategoryFill } from './AnimatedCategoryFill';
 import { styles } from './reports.styles';
@@ -20,8 +20,9 @@ const FILL_STAGGER_MAX_ROWS = 8;
 
 /**
  * "Where it went": each category's share, amount, change against the
- * previous period and a bar. A category with subcategories opens its split;
- * one without opens its transactions.
+ * previous period and a bar. Tapping a row picks it (the others fade) and
+ * opens its subcategory split, a link to its own page and, for spending, a
+ * link to its days on the heatmap; tapping it again puts it away.
  */
 export function CategoryList({
   breakdown,
@@ -29,7 +30,12 @@ export function CategoryList({
   deltas,
   expanded,
   onToggleExpanded,
-  onPressCategory,
+  selectedId,
+  onSelect,
+  split,
+  splitCaption,
+  onOpen,
+  onShowDays,
   kind = 'expense',
 }: {
   breakdown: CategoryBreakdownItem[];
@@ -39,7 +45,16 @@ export function CategoryList({
   deltas: Map<string, number | null>;
   expanded: boolean;
   onToggleExpanded: () => void;
-  onPressCategory: (c: CategoryBreakdownItem) => void;
+  selectedId: string | null;
+  onSelect: (c: CategoryBreakdownItem) => void;
+  /** The picked category's subcategories; null while they load. */
+  split: CategoryBreakdownItem[] | null;
+  /** A small line above the split rows ("Top categories"), when the split isn't subcategories. */
+  splitCaption?: string;
+  /** Opens the row's own page; left out where it has none (an account outside a month view). */
+  onOpen?: (c: CategoryBreakdownItem) => void;
+  /** Shows the category's days on the heatmap; left out where the heatmap has no days (income, by-month views). */
+  onShowDays?: (c: CategoryBreakdownItem) => void;
   /** Income: a rise is good news, so it's green rather than red. */
   kind?: 'expense' | 'income';
 }) {
@@ -55,44 +70,107 @@ export function CategoryList({
       {shown.map((c, i) => {
         const d = deltas.get(c.categoryId);
         const pct = spentMinor > 0 ? Math.round((c.totalMinor / spentMinor) * 100) : 0;
+        const on = selectedId === c.categoryId;
         return (
-          <Pressable
-            key={c.categoryId}
-            onPress={() => onPressCategory(c)}
-            style={withPressed(styles.catRow)}
-            accessibilityRole="button"
-          >
-            <View style={styles.catTop}>
-              <View style={[styles.catDot, { backgroundColor: c.color }]} />
-              <Text style={styles.catName} numberOfLines={1}>
-                {c.name}
-                {c.hasSubcategories ? ' ›' : ''}
-              </Text>
-              <Text style={styles.catPct}>{pct}%</Text>
-              <View style={styles.catRight}>
-                <Amount minor={rounded[i]} sensitive={c.isSensitive} style={styles.catAmt} />
-                {d != null && Math.abs(d) >= DELTA_MIN_PCT && (
-                  <Text
-                    style={[
-                      styles.catDelta,
-                      { color: d > 0 === upIsBad ? theme.colors.expenseText : theme.colors.incomeText },
-                    ]}
-                  >
-                    {d > 0 ? '↑' : '↓'}
-                    {formatPctChange(d)}
-                  </Text>
+          <View key={c.categoryId}>
+            <Pressable
+              onPress={() => onSelect(c)}
+              style={withPressed([
+                styles.catRow,
+                on && styles.catRowOn,
+                selectedId != null && !on && styles.catRowDim,
+              ])}
+              accessibilityRole="button"
+              accessibilityState={{ selected: on, expanded: on }}
+            >
+              <View style={styles.catTop}>
+                <View style={[styles.catDot, { backgroundColor: c.color }]} />
+                <Text style={styles.catName} numberOfLines={1}>
+                  {c.name}
+                </Text>
+                <Text style={styles.catPct}>{pct}%</Text>
+                <View style={styles.catRight}>
+                  <Amount minor={rounded[i]} sensitive={c.isSensitive} style={styles.catAmt} />
+                  {d != null && Math.abs(d) >= DELTA_MIN_PCT && (
+                    <Text
+                      style={[
+                        styles.catDelta,
+                        { color: d > 0 === upIsBad ? theme.colors.expenseText : theme.colors.incomeText },
+                      ]}
+                    >
+                      {d > 0 ? '↑' : '↓'}
+                      {formatPctChange(d)}
+                    </Text>
+                  )}
+                </View>
+              </View>
+              <View style={styles.catTrack}>
+                <AnimatedCategoryFill
+                  animKey={`reports:${c.categoryId}`}
+                  targetPct={Math.max(3, (c.totalMinor / maxCat) * 100)}
+                  color={c.color}
+                  delay={Math.min(i, FILL_STAGGER_MAX_ROWS) * FILL_STAGGER_MS}
+                />
+              </View>
+            </Pressable>
+
+            {on && (
+              <View style={styles.catPanel}>
+                {c.hasSubcategories &&
+                  (split === null ? (
+                    <ActivityIndicator color={theme.colors.ink} style={styles.catSplitLoading} />
+                  ) : (
+                    [
+                      splitCaption ? (
+                        <Text key="caption" style={styles.catSplitCaption}>
+                          {splitCaption}
+                        </Text>
+                      ) : null,
+                      ...split.map((s) => (
+                        <View key={s.categoryId} style={styles.catSplitRow}>
+                          <View style={[styles.catDot, { backgroundColor: s.color }]} />
+                          <Text style={styles.catSplitName} numberOfLines={1}>
+                            {s.name}
+                          </Text>
+                          <Text style={styles.catPct}>
+                            {c.totalMinor > 0 ? Math.round((s.totalMinor / c.totalMinor) * 100) : 0}%
+                          </Text>
+                          <Amount
+                            minor={roundedMinor(s.totalMinor)}
+                            sensitive={s.isSensitive}
+                            style={styles.catSplitAmt}
+                          />
+                        </View>
+                      )),
+                    ]
+                  ))}
+                {(onOpen || onShowDays) && (
+                  <View style={styles.catLinks}>
+                    {onOpen && (
+                      <Pressable
+                        onPress={() => onOpen(c)}
+                        hitSlop={6}
+                        style={withPressed(styles.catLink)}
+                        accessibilityRole="link"
+                      >
+                        <Text style={styles.catLinkText}>Open {c.name} ›</Text>
+                      </Pressable>
+                    )}
+                    {onShowDays && (
+                      <Pressable
+                        onPress={() => onShowDays(c)}
+                        hitSlop={6}
+                        style={withPressed(styles.catLink)}
+                        accessibilityRole="link"
+                      >
+                        <Text style={styles.catLinkText}>See its days on the heatmap →</Text>
+                      </Pressable>
+                    )}
+                  </View>
                 )}
               </View>
-            </View>
-            <View style={styles.catTrack}>
-              <AnimatedCategoryFill
-                animKey={`reports:${c.categoryId}`}
-                targetPct={Math.max(3, (c.totalMinor / maxCat) * 100)}
-                color={c.color}
-                delay={Math.min(i, FILL_STAGGER_MAX_ROWS) * FILL_STAGGER_MS}
-              />
-            </View>
-          </Pressable>
+            )}
+          </View>
         );
       })}
       {breakdown.length > COLLAPSED_COUNT && (

@@ -11,6 +11,7 @@ import { ruleCadenceLabel } from './recurring.helpers';
 import { MAX_LIST_STAGGER_MS, MOTION, ROW_LAYOUT, ROW_EXIT } from '@/lib/animation';
 import { withPressed } from '@/lib/pressed';
 import { weekdayDayMonth } from '@/lib/dateLabels';
+import { inParent, joinSub } from '@/lib/categoryLabel';
 
 /**
  * One rule inside the Running or Paused card: its category's icon, what and
@@ -21,6 +22,7 @@ import { weekdayDayMonth } from '@/lib/dateLabels';
 export function RuleRow({
   rule,
   category,
+  parentName,
   accountName,
   index,
   onPress,
@@ -30,6 +32,8 @@ export function RuleRow({
 }: {
   rule: RecurringRule;
   category: Category | undefined;
+  /** The category's parent, when it is a subcategory. */
+  parentName?: string;
   accountName: (id: string) => string;
   /** Position within its own group (running or paused) — each group's stagger restarts from 0. */
   index: number;
@@ -65,7 +69,7 @@ export function RuleRow({
             {title}
           </Text>
           <Text style={styles.rowSub} numberOfLines={2}>
-            {transfer ? when : `${when} · ${accountName(rule.accountId)}`}
+            {transfer ? when : joinSub([inParent(parentName), when, accountName(rule.accountId)])}
           </Text>
         </View>
       </Pressable>

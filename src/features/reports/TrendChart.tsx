@@ -11,7 +11,7 @@ import { styles } from './reports.styles';
 import { withPressed } from '@/lib/pressed';
 
 /** A trend needs at least this many points to be worth drawing. */
-const MIN_POINTS = 3;
+export const MIN_TREND_POINTS = 3;
 const H = 150;
 const PLOT_TOP = 14;
 const PLOT_BOTTOM = 118;
@@ -26,6 +26,10 @@ type Kind = 'spend' | 'netWorth';
  * average (the baseline Reports' headline compares against), with this
  * period's point marked; net worth plots its path with the latest point
  * marked. The line under the chart says it in words.
+ *
+ * Touch the chart (or drag along it) to pick a month: its point is ringed and
+ * the line under reads that month. A picked month other than the one on screen
+ * can offer a link that moves Reports to it (`monthLink`).
  */
 export function TrendChart({
   periodName,
@@ -34,6 +38,7 @@ export function TrendChart({
   baseline,
   inProgress = false,
   netWorthTrend,
+  monthLink,
 }: {
   periodName: string;
   /** This period's exact spend — compared against the baseline. */
@@ -43,11 +48,14 @@ export function TrendChart({
   /** The last point is a month still going: drawn dashed and hollow, and read as "so far". */
   inProgress?: boolean;
   netWorthTrend: NetWorthPoint[];
+  /** For the picked point (its index and the point count): the month it stands for and how to open it; null if it can't be. */
+  monthLink?: (index: number, count: number) => { name: string; open: () => void } | null;
 }) {
-  const hasSpend = trend.length >= MIN_POINTS;
-  const hasNw = netWorthTrend.length >= MIN_POINTS;
+  const hasSpend = trend.length >= MIN_TREND_POINTS;
+  const hasNw = netWorthTrend.length >= MIN_TREND_POINTS;
   const [kind, setKind] = useState<Kind>(hasSpend ? 'spend' : 'netWorth');
   const [width, setWidth] = useState(0);
+  const [sel, setSel] = useState<number | null>(null);
   if (!hasSpend && !hasNw) return null;
   const showing: Kind =
     kind === 'spend' && !hasSpend ? 'netWorth' : kind === 'netWorth' && !hasNw ? 'spend' : kind;
@@ -67,6 +75,7 @@ export function TrendChart({
   const line = points.map((p, i) => `${x(i)},${y(p.value)}`).join(' ');
   const partial = showing === 'spend' && inProgress && points.length >= 2;
   const lastI = points.length - 1;
+  const selI = sel != null && sel <= lastI ? sel : lastI;
   const solidLine = partial
     ? points
         .slice(0, -1)
@@ -74,19 +83,44 @@ export function TrendChart({
         .join(' ')
     : line;
 
+  const pickAt = (locationX: number) => {
+    if (width <= 2 * PAD_X) return;
+    const i = Math.round(((locationX - PAD_X) / (width - 2 * PAD_X)) * lastI);
+    const next = Math.max(0, Math.min(lastI, i));
+    if (next === selI) return;
+    haptics.tap();
+    setSel(next);
+  };
+
   const nwFirst = netWorthTrend[0]?.netWorthMinor ?? 0;
   const nwLast = netWorthTrend[netWorthTrend.length - 1]?.netWorthMinor ?? 0;
   const nwDelta = roundedMinor(nwLast - nwFirst);
+  const pointRead = (() => {
+    const p = points[selI];
+    const money = formatMoney(roundedMinor(p.value));
+    if (showing === 'spend') {
+      if (avg == null || avg <= 0) return `${p.label}: ${money}`;
+      const pct = Math.round((Math.abs(p.value - avg) / avg) * 100);
+      return `${p.label}: ${money} · ${pct}% ${p.value >= avg ? 'above' : 'below'} your usual`;
+    }
+    const before = selI > 0 ? points[selI - 1] : null;
+    if (!before) return `${p.label}: ${money} net worth`;
+    const diff = roundedMinor(p.value - before.value);
+    return `${p.label}: ${money} net worth · ${diff >= 0 ? 'up' : 'down'} ${formatMoney(Math.abs(diff))} on ${before.label}`;
+  })();
+  const link = monthLink ? monthLink(selI, points.length) : null;
   const read =
-    showing === 'spend'
-      ? avg != null && partial
-        ? `${periodName} so far: ${formatMoney(roundedMinor(spentMinor))}. The dashed line is your usual month, ${formatMoney(roundedMinor(avg))}.`
-        : avg != null
-          ? `${periodName} is ${formatMoney(Math.abs(roundedMinor(spentMinor - avg)))} ${
-              spentMinor >= avg ? 'above' : 'below'
-            } your average of ${formatMoney(roundedMinor(avg))}.`
-          : `${periodName}: ${formatMoney(roundedMinor(spentMinor))} spent.`
-      : `${nwDelta >= 0 ? 'Up' : 'Down'} ${formatMoney(Math.abs(nwDelta))} over the last ${netWorthTrend.length} months, now ${formatMoney(roundedMinor(nwLast))}.`;
+    selI !== lastI
+      ? pointRead
+      : showing === 'spend'
+        ? avg != null && partial
+          ? `${periodName} so far: ${formatMoney(roundedMinor(spentMinor))}. The dashed line is your usual month, ${formatMoney(roundedMinor(avg))}.`
+          : avg != null
+            ? `${periodName} is ${formatMoney(Math.abs(roundedMinor(spentMinor - avg)))} ${
+                spentMinor >= avg ? 'above' : 'below'
+              } your average of ${formatMoney(roundedMinor(avg))}.`
+            : `${periodName}: ${formatMoney(roundedMinor(spentMinor))} spent.`
+        : `${nwDelta >= 0 ? 'Up' : 'Down'} ${formatMoney(Math.abs(nwDelta))} over the last ${netWorthTrend.length} months, now ${formatMoney(roundedMinor(nwLast))}.`;
 
   const pick = (k: Kind) => {
     if (k === showing) return;
@@ -121,9 +155,17 @@ export function TrendChart({
         )}
       </View>
 
-      <View onLayout={(e) => setWidth(e.nativeEvent.layout.width)} style={{ height: H }}>
+      <View
+        testID="trend-touch"
+        onLayout={(e) => setWidth(e.nativeEvent.layout.width)}
+        onStartShouldSetResponder={() => true}
+        onResponderGrant={(e) => pickAt(e.nativeEvent.locationX)}
+        onResponderMove={(e) => pickAt(e.nativeEvent.locationX)}
+        style={{ height: H }}
+        accessibilityHint="Touch or drag along the chart to pick a month"
+      >
         {width > 0 && (
-          <Svg width={width} height={H}>
+          <Svg width={width} height={H} pointerEvents="none">
             <Polygon
               points={`${x(0)},${PLOT_BOTTOM + 4} ${line} ${x(points.length - 1)},${PLOT_BOTTOM + 4}`}
               fill={theme.colors.primary}
@@ -176,23 +218,34 @@ export function TrendChart({
                 strokeLinecap="round"
               />
             )}
+            <Line
+              x1={x(selI)}
+              x2={x(selI)}
+              y1={PLOT_TOP - 6}
+              y2={PLOT_BOTTOM + 4}
+              stroke={theme.colors.textMuted}
+              strokeOpacity={0.5}
+              strokeWidth={1}
+            />
             {points.map((p, i) => {
               const last = i === lastI;
-              const hollow = last && partial;
+              const on = i === selI;
+              const hollow = last && partial && !on;
+              const filled = (last && !hollow) || on;
               return (
                 <Circle
                   key={`d-${i}`}
                   cx={x(i)}
                   cy={y(p.value)}
-                  r={last ? 5 : 3}
-                  fill={last && !hollow ? theme.colors.ink : theme.colors.surface}
-                  stroke={theme.colors.ink}
-                  strokeWidth={last && !hollow ? 0 : 1.5}
+                  r={on ? 6 : last ? 5 : 3}
+                  fill={filled ? theme.colors.ink : theme.colors.surface}
+                  stroke={on ? theme.colors.surface : theme.colors.ink}
+                  strokeWidth={on ? 2 : filled ? 0 : 1.5}
                 />
               );
             })}
             {points.map((p, i) => {
-              const last = i === points.length - 1;
+              const last = i === selI;
               return (
                 <SvgText
                   key={`l-${i}`}
@@ -211,6 +264,16 @@ export function TrendChart({
         )}
       </View>
       <Text style={styles.trendRead}>{read}</Text>
+      {link && (
+        <Pressable
+          onPress={link.open}
+          hitSlop={8}
+          style={withPressed(styles.trendLink)}
+          accessibilityRole="link"
+        >
+          <Text style={styles.trendLinkText}>Open {link.name} in Reports ›</Text>
+        </Pressable>
+      )}
     </View>
   );
 }

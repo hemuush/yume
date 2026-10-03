@@ -1,85 +1,49 @@
-import { View, StyleSheet, Animated } from 'react-native';
+import { View, Pressable, StyleSheet } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import { Text } from '@/components/Text';
-import { CountUpAmount } from '@/components/CountUpAmount';
-import { formatMoney } from '@/lib/money';
-import { formatPctChange } from '@/lib/format';
 import { spendHeatScale } from '@/lib/color';
 import { theme } from '@/constants/theme';
 import { useAccent } from '@/theme/AccentContext';
+import { withPressed } from '@/lib/pressed';
 import { SpendHeatmap, HeatCell } from './SpendHeatmap';
 import { styles } from './reports.styles';
-import { useSlideIn } from '@/lib/useSlideIn';
 
 const LEVELS = [0, 1, 2, 3, 4] as const;
 
 /**
- * The top of Reports (the Reports sign-off: "keep the heatmap on top"): the
- * period's day-by-day heatmap, with the headline built into the same card —
- * what was spent, the "above/below usual" badge, the per-day figure and how
- * many days had spending. Tapping a day opens its list (the cells carry
- * their own onPress, see buildHeatGrid).
+ * The Days tab's heatmap (the Reports sign-off: "keep the heatmap"): the
+ * period's day-by-day grid with its legend and hint. A category picked in
+ * Categories narrows it to that category's days, shown as a chip that clears
+ * it. Tapping a day opens its list below (the cells carry their own onPress,
+ * see buildHeatGrid).
  */
 export function HeatmapCard({
-  periodName,
-  spentMinor,
-  vsUsualPct,
-  vsUsualSoFar = false,
-  perDayMinor,
-  spendDays,
-  countedDays,
   grid,
   isYear,
-  slideDirection = 0,
+  filter,
 }: {
-  periodName: string;
-  /** Which way the period just moved: the headline slides in from that side. */
-  slideDirection?: -1 | 0 | 1;
-  spentMinor: number;
-  vsUsualPct: number | null;
-  /** The month is still going: the comparison is with the usual month so far. */
-  vsUsualSoFar?: boolean;
-  perDayMinor: number;
-  spendDays: number;
-  /** Days so far (the period in progress) or the whole period. */
-  countedDays: number;
   grid: { cells: HeatCell[]; leadingPad: number; columns: number; weekdayLabels?: string[] };
   isYear: boolean;
+  /** The category the grid is narrowed to, if any. */
+  filter?: { name: string; color: string; onClear: () => void } | null;
 }) {
   const heatScale = spendHeatScale(useAccent().accent);
-  const up = vsUsualPct != null && vsUsualPct > 0;
-  const slide = useSlideIn(periodName, slideDirection);
   return (
     <View style={styles.hmCard}>
-      <Animated.View style={[styles.hmHead, slide]}>
-        <View style={styles.hmHeadMain}>
-          <Text style={styles.eyebrow}>Spent in {periodName}</Text>
-          <CountUpAmount minor={spentMinor} style={styles.big} numberOfLines={1} adjustsFontSizeToFit />
-        </View>
-        {vsUsualPct != null && (
-          <View
-            style={[
-              styles.vsBadge,
-              { backgroundColor: up ? theme.colors.expenseTint : theme.colors.incomeTint },
-            ]}
-          >
-            <Feather
-              name={up ? 'arrow-up-right' : 'arrow-down-right'}
-              size={12}
-              color={up ? theme.colors.expense : theme.colors.income}
-            />
-            <Text
-              style={[styles.vsBadgeText, { color: up ? theme.colors.expenseText : theme.colors.incomeText }]}
-            >
-              {formatPctChange(vsUsualPct)} {up ? 'above' : 'below'} usual{vsUsualSoFar ? ' so far' : ''}
-            </Text>
-          </View>
-        )}
-      </Animated.View>
-      <Text style={styles.hmFacts}>
-        <Text style={styles.hmFactStrong}>{formatMoney(perDayMinor)}</Text> a day · spent on{' '}
-        <Text style={styles.hmFactStrong}>{spendDays}</Text> of {countedDays} days
-      </Text>
+      {filter && (
+        <Pressable
+          onPress={filter.onClear}
+          style={withPressed(styles.filterChip)}
+          accessibilityRole="button"
+          accessibilityLabel={`Clear the ${filter.name} filter`}
+        >
+          <View style={[styles.catDot, { backgroundColor: filter.color }]} />
+          <Text style={styles.filterChipText} numberOfLines={1}>
+            {filter.name}
+          </Text>
+          <Feather name="x" size={13} color={theme.colors.textSecondary} />
+        </Pressable>
+      )}
 
       <SpendHeatmap
         cells={grid.cells}

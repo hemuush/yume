@@ -5,15 +5,24 @@ import { ActionSheet, ActionSheetItem } from '@/components/ActionSheet';
 import { useUndoToast } from '@/components/UndoToast';
 import { createTransaction, deleteTransaction, getRepeatEntries, RepeatEntry } from '@/db/ledger';
 import { formatMoney } from '@/lib/money';
+import { categoryPath, categorySentence } from '@/lib/categoryLabel';
 import { toLocalIsoDate } from '@/lib/date';
 import { haptics } from '@/lib/haptics';
 import { emitTransactionsChanged } from '@/lib/dataEvents';
 import { errorMessage } from '@/lib/errorMessage';
 import { showAlert } from '@/components/AppDialog';
 
-/** "Metro · ₹150" — the entry's own note if it has one, else its category. */
+/**
+ * "Metro · ₹150" — the entry's own note if it has one, else its category; a
+ * subcategory names its parent ("Food & Dining › Zomato · ₹150", or
+ * "Dinner (Food & Dining) · ₹150" with a note).
+ */
 export function repeatEntryLabel(entry: RepeatEntry): string {
-  return `${entry.note.trim() || entry.categoryName} · ${formatMoney(entry.amountMinor, entry.accountCurrency)}`;
+  const note = entry.note.trim();
+  const what = note
+    ? categorySentence(note, entry.parentName)
+    : categoryPath(entry.categoryName, entry.parentName);
+  return `${what} · ${formatMoney(entry.amountMinor, entry.accountCurrency)}`;
 }
 
 /**

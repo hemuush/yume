@@ -2,7 +2,7 @@ import { LoanPaymentRow, LoanRateChangeRow, LoanRow } from './rows';
 import { getDb } from './client';
 import { Loan, LoanPayment } from '@/types';
 
-import { syncDueReminder, rowToLoan, LOAN_SELECT, rowToLoanPayment } from './loanRows';
+import { rowToLoan, LOAN_SELECT, rowToLoanPayment } from './loanRows';
 
 /** Reading loans: lists, schedules, progress and what is due next (re-exported from ./loans). */
 
@@ -12,22 +12,6 @@ export async function listLoans(): Promise<Loan[]> {
     `${LOAN_SELECT} ORDER BY l.created_at DESC`
   );
   return rows.map(rowToLoan);
-}
-
-/**
- * Re-schedules due reminders for every active borrowed loan — needed when
- * the "Bill & EMI due alerts" preference is turned on after loans already
- * exist, since reminders otherwise only get (re)scheduled at the moment a
- * loan is created or paid.
- */
-export async function resyncAllLoanReminders(): Promise<void> {
-  const db = await getDb();
-  const rows = await db.getAllAsync<{ id: string }>(
-    `SELECT id FROM loans WHERE direction = 'borrowed' AND status = 'active'`
-  );
-  for (const row of rows) {
-    await syncDueReminder(row.id);
-  }
 }
 
 export interface LoanProgress {

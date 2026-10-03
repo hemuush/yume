@@ -1,37 +1,26 @@
 /**
- * Home's account stack: every account is a card, the front one is the last in
- * the order, and a swipe sends the back card to the front. The animation itself
- * is covered by accountStackMotion.test; this checks the behaviour around it —
- * what a drag does on release, who ends up in front, and what a screen reader
- * and a finger can reach.
+ * Home's account stack: every account is a card, drawn back to front as savings,
+ * banks, cards, wallets, cash. Nothing animates and nothing is hidden behind a
+ * swipe, so this checks what is on screen, the order, and what a tap does.
+ * All names and figures are made up.
  */
 import { create, act, ReactTestRenderer, ReactTestInstance } from 'react-test-renderer';
-import { PanResponder } from 'react-native';
 import type { Account } from '@/types';
 
-// A swipe's end is a completion callback on the UI thread. The stock mock never runs it, so this one
-// queues it and the tests play it out by hand — after the assignment that started the animation, as the real thing does.
-const mockPending: (() => void)[] = [];
-let mockReduce = false;
-let mockFinished = true;
-const mockCancel = jest.fn();
-jest.mock('react-native-reanimated', () => {
-  const base = require('@/test-support/reanimatedMock').createReanimatedMock();
-  return {
-    ...base,
-    withTiming: (to: unknown, _cfg: unknown, done?: (finished: boolean) => void) => {
-      if (done) mockPending.push(() => done(mockFinished));
-      return to;
-    },
-    cancelAnimation: (...a: unknown[]) => mockCancel(...a),
-  };
-});
-jest.mock('@/lib/useReduceMotion', () => ({ useReduceMotion: () => mockReduce }));
-jest.mock('@/lib/haptics', () => ({ haptics: { tap: jest.fn(), confirm: jest.fn(), warn: jest.fn() } }));
+let mockHide = false;
+jest.mock('@/theme/PrivacyContext', () => ({
+  usePrivacy: () => ({ hideAmounts: mockHide, toggleHideAmounts: jest.fn() }),
+}));
 
 import { AccountStack } from './AccountStack';
+import { STACK, stackHeight } from './stackLayout';
 
-const account = (id: string, type: Account['type'] = 'bank'): Account => ({
+afterAll(() => new Promise((resolve) => setTimeout(resolve, 800)));
+beforeEach(() => {
+  mockHide = false;
+});
+
+const account = (id: string, type: Account['type'] = 'bank', over: Partial<Account> = {}): Account => ({
   id,
   name: `Account ${id}`,
   type,
@@ -44,254 +33,129 @@ const account = (id: string, type: Account['type'] = 'bank'): Account => ({
   interestRateAnnualBp: null,
   archived: false,
   createdAt: '2026-01-01T00:00:00.000Z',
+  ...over,
 });
-const accounts = (n: number) => Array.from({ length: n }, (_, i) => account(String(i)));
 
-type Config = Parameters<typeof PanResponder.create>[0];
-let config: Config;
-beforeEach(() => {
-  mockPending.length = 0;
-  mockReduce = false;
-  mockFinished = true;
-  mockCancel.mockClear();
-  jest.spyOn(PanResponder, 'create').mockImplementation((c) => {
-    config = c;
-    return { panHandlers: {} } as ReturnType<typeof PanResponder.create>;
-  });
-});
-afterEach(() => jest.restoreAllMocks());
-
-const WIDTH = 320;
-
-async function render(list: Account[], onOpen = jest.fn(), opening = false) {
+async function render(list: Account[], onOpen = jest.fn()) {
   let tree!: ReactTestRenderer;
   await act(async () => {
-    tree = create(<AccountStack accounts={list} onOpen={onOpen} opening={opening} />);
-  });
-  const container = tree.root.find((n) => typeof n.props.onLayout === 'function');
-  await act(async () => {
-    container.props.onLayout({ nativeEvent: { layout: { width: WIDTH, height: 200 } } });
+    tree = create(<AccountStack accounts={list} onOpen={onOpen} />);
   });
   return { tree, onOpen };
 }
 
-const card = (tree: ReactTestRenderer, id: string): ReactTestInstance =>
-  tree.root.find((n) => n.props.testID === `account-card-${id}`);
-const button = (tree: ReactTestRenderer, id: string): ReactTestInstance =>
-  card(tree, id).find((n) => n.props.accessibilityRole === 'button');
-/** The account the stack currently has in front: the only card offering "Show next account". */
-const frontId = (tree: ReactTestRenderer) => {
-  const fronts = tree.root.findAll(
+const flat = (node: ReactTestInstance | string): string =>
+  typeof node === 'string' ? node : node.children.map((c) => flat(c as ReactTestInstance | string)).join('');
+
+const cards = (tree: ReactTestRenderer) =>
+  tree.root.findAll(
     (n) =>
       typeof n.props.testID === 'string' &&
       n.props.testID.startsWith('account-card-') &&
-      !!n.findAll((m) => Array.isArray(m.props.accessibilityActions)).length
+      typeof n.type === 'string'
   );
-  return fronts[0]?.props.testID.replace('account-card-', '');
-};
-const flush = async () => {
-  await act(async () => {
-    while (mockPending.length) mockPending.shift()!();
-  });
-};
-const swipe = async (dx: number, vx = 0) => {
-  await act(async () => {
-    config.onPanResponderGrant?.({} as never, {} as never);
-    config.onPanResponderMove?.({} as never, { dx } as never);
-    config.onPanResponderRelease?.({} as never, { dx, vx } as never);
-  });
-};
+/** The ids in drawing order: the first is at the back, the last is the front card. */
+const order = (tree: ReactTestRenderer) =>
+  cards(tree).map((n) => n.props.testID.replace('account-card-', ''));
+const card = (tree: ReactTestRenderer, id: string) =>
+  tree.root.find((n) => n.props.testID === `account-card-${id}` && typeof n.type === 'string');
+const button = (tree: ReactTestRenderer, id: string) =>
+  card(tree, id).find((n) => n.props.accessibilityRole === 'button');
 
 describe('AccountStack', () => {
-  it('shows every account with its name, type and balance', async () => {
-    const { tree } = await render([account('0'), account('1', 'savings'), account('2', 'cash')]);
-    const text = JSON.stringify(tree.toJSON());
-    expect(text).toContain('Account 0');
-    expect(text).toContain('Account 1');
-    expect(text).toContain('Account 2');
-    expect(text).toContain('savings');
-    expect(text).toContain('1,234');
-  });
-
-  it('puts the last account in front, and offers the swipe as an accessibility action on it alone', async () => {
-    const { tree } = await render(accounts(3));
-    expect(frontId(tree)).toBe('2');
-    expect(button(tree, '2').props.accessibilityActions).toEqual([
-      { name: 'next', label: 'Show next account' },
+  it('draws savings at the back and cash in front, banks between', async () => {
+    const { tree } = await render([
+      account('cash', 'cash'),
+      account('bank', 'bank'),
+      account('sav', 'savings'),
+      account('upi', 'wallet'),
+      account('card', 'credit_card'),
     ]);
-    expect(button(tree, '0').props.accessibilityActions).toBeUndefined();
+    expect(order(tree)).toEqual(['sav', 'bank', 'card', 'upi', 'cash']);
   });
 
-  it('opens the account whose card was tapped', async () => {
-    const { tree, onOpen } = await render(accounts(3));
-    await act(async () => button(tree, '1').props.onPress());
-    expect(onOpen).toHaveBeenCalledWith(expect.objectContaining({ id: '1' }));
+  it('keeps accounts of one kind in the order they came in', async () => {
+    const { tree } = await render([
+      account('b2', 'bank'),
+      account('s2', 'savings'),
+      account('b1', 'bank'),
+      account('s1', 'savings'),
+    ]);
+    expect(order(tree)).toEqual(['s2', 's1', 'b2', 'b1']);
   });
 
-  it('does not make a single account swipeable', async () => {
-    const { tree } = await render(accounts(1));
-    expect(button(tree, '0').props.accessibilityActions).toBeUndefined();
-    await swipe(200);
-    expect(mockPending).toHaveLength(0);
+  it('shows every account, with no cap and no pager dots', async () => {
+    const list = Array.from({ length: 10 }, (_, i) => account(String(i)));
+    const { tree } = await render(list);
+    expect(cards(tree)).toHaveLength(10);
+    expect(tree.root.findAll((n) => n.props.accessibilityLabel === 'Account 3 of 10')).toHaveLength(0);
+    expect(tree.root.findAll((n) => n.props.testID === 'account-stack-dots')).toHaveLength(0);
   });
 
-  describe('swiping', () => {
-    it('only takes over a mostly-horizontal drag, leaving the page to scroll', async () => {
-      await render(accounts(3));
-      const capture = config.onMoveShouldSetPanResponderCapture!;
-      expect(capture({} as never, { dx: 30, dy: 4 } as never)).toBe(true);
-      expect(capture({} as never, { dx: -30, dy: 4 } as never)).toBe(true);
-      expect(capture({} as never, { dx: 30, dy: 40 } as never)).toBe(false);
-      expect(capture({} as never, { dx: 5, dy: 0 } as never)).toBe(false);
-      expect(config.onPanResponderTerminationRequest?.({} as never, {} as never)).toBe(false);
-    });
-
-    it('sends the back card to the front when a drag is let go far enough', async () => {
-      const { tree } = await render(accounts(3));
-      await swipe(120);
-      expect(mockPending).toHaveLength(1);
-      await flush();
-      expect(frontId(tree)).toBe('0');
-    });
-
-    it('goes round again on the next swipe, in either direction', async () => {
-      const { tree } = await render(accounts(3));
-      await swipe(120);
-      await flush();
-      await swipe(-120);
-      await flush();
-      expect(frontId(tree)).toBe('1');
-      await swipe(120);
-      await flush();
-      expect(frontId(tree)).toBe('2');
-    });
-
-    it('commits a short drag that was a flick', async () => {
-      const { tree } = await render(accounts(3));
-      await swipe(40, 0.9);
-      await flush();
-      expect(frontId(tree)).toBe('0');
-    });
-
-    it('springs back when let go too soon, leaving the order alone', async () => {
-      const { tree } = await render(accounts(3));
-      await swipe(20, 0.05);
-      await flush();
-      expect(frontId(tree)).toBe('2');
-    });
-
-    it('ignores a second swipe while one is still landing', async () => {
-      const { tree } = await render(accounts(3));
-      await swipe(120);
-      await swipe(120);
-      expect(mockPending).toHaveLength(1);
-      await flush();
-      expect(frontId(tree)).toBe('0');
-    });
-
-    it('lets a touch during a landing swipe pass without cancelling it', async () => {
-      const { tree } = await render(accounts(3));
-      await swipe(120);
-      mockCancel.mockClear();
-      await swipe(120);
-      expect(mockCancel).not.toHaveBeenCalled();
-      await flush();
-      expect(frontId(tree)).toBe('0');
-    });
-
-    it('still lands a swipe the animation reports as cut short, so the stack is never stuck half-turned', async () => {
-      const { tree } = await render(accounts(3));
-      mockFinished = false;
-      await swipe(120);
-      await flush();
-      expect(frontId(tree)).toBe('0');
-      mockFinished = true;
-      await swipe(120);
-      await flush();
-      expect(frontId(tree)).toBe('1');
-    });
-
-    it('can be swiped with the accessibility action too', async () => {
-      const { tree } = await render(accounts(3));
-      await act(async () => {
-        button(tree, '2').props.onAccessibilityAction({ nativeEvent: { actionName: 'next' } });
-      });
-      await flush();
-      expect(frontId(tree)).toBe('0');
-    });
-
-    it('does nothing until the stack has been measured', async () => {
-      let tree!: ReactTestRenderer;
-      await act(async () => {
-        tree = create(<AccountStack accounts={accounts(3)} onOpen={jest.fn()} />);
-      });
-      await swipe(120);
-      expect(mockPending).toHaveLength(0);
-      expect(frontId(tree)).toBe('2');
-    });
-
-    it('starts again from the resting order when an account is added', async () => {
-      const { tree } = await render(accounts(3));
-      await swipe(120);
-      await flush();
-      expect(frontId(tree)).toBe('0');
-      await act(async () => {
-        tree.update(<AccountStack accounts={accounts(4)} onOpen={jest.fn()} />);
-      });
-      expect(frontId(tree)).toBe('3');
-    });
+  it('puts each card one strip below the one behind it, in a stack as tall as the strips plus the front card', async () => {
+    const { tree } = await render([account('a', 'savings'), account('b', 'bank'), account('c', 'cash')]);
+    const tops = cards(tree).map((n) => n.props.style.find((s: object) => s && 'top' in s).top);
+    expect(tops).toEqual([0, STACK.peek, STACK.peek * 2]);
+    const stack = tree.root.find((n) => n.props.testID === 'account-stack' && typeof n.type === 'string');
+    const height = (stack.props.style as object[]).find((s) => s && 'height' in s) as { height: number };
+    expect(height.height).toBe(stackHeight(3));
   });
 
-  describe('with reduce motion on', () => {
-    it('does not follow the finger, but still changes the front card on a firm swipe through a fade', async () => {
-      mockReduce = true;
-      const { tree } = await render(accounts(3));
-      await swipe(120);
-      expect(mockPending).toHaveLength(1);
-      await flush();
-      // The fade-out ends by reordering and starting a fade back in.
-      expect(frontId(tree)).toBe('0');
-      await flush();
-      expect(mockPending).toHaveLength(0);
-    });
-
-    it('leaves a short drag alone', async () => {
-      mockReduce = true;
-      const { tree } = await render(accounts(3));
-      await swipe(20);
-      expect(mockPending).toHaveLength(0);
-      expect(frontId(tree)).toBe('2');
-    });
+  it('shows each card with its name, type and balance', async () => {
+    const { tree } = await render([
+      account('w', 'wallet', { name: 'UPI wallet', currentBalanceMinor: 250000 }),
+    ]);
+    const text = flat(card(tree, 'w'));
+    expect(text).toContain('UPI wallet');
+    expect(text).toContain('wallet');
+    expect(text).toContain('2,500');
   });
 
-  describe('with more than four accounts', () => {
-    it('shows four cards and keeps the rest out of reach', async () => {
-      const { tree } = await render(accounts(6));
-      expect(frontId(tree)).toBe('3');
-      for (const id of ['0', '1', '2', '3']) {
-        expect(card(tree, id).props.pointerEvents).toBe('auto');
-      }
-      for (const id of ['4', '5']) {
-        expect(card(tree, id).props.pointerEvents).toBe('none');
-        expect(card(tree, id).props.accessibilityElementsHidden).toBe(true);
-      }
-    });
+  it('opens the account that was tapped, including one behind another', async () => {
+    const { tree, onOpen } = await render([
+      account('s', 'savings'),
+      account('b', 'bank'),
+      account('c', 'cash'),
+    ]);
+    await act(async () => button(tree, 's').props.onPress());
+    expect(onOpen).toHaveBeenLastCalledWith(expect.objectContaining({ id: 's' }));
+    await act(async () => button(tree, 'c').props.onPress());
+    expect(onOpen).toHaveBeenLastCalledWith(expect.objectContaining({ id: 'c' }));
+  });
 
-    it('brings the next account in when swiped, and lets the leaving one go', async () => {
-      const { tree } = await render(accounts(6));
-      await swipe(120);
-      await flush();
-      expect(frontId(tree)).toBe('4');
-      expect(card(tree, '4').props.pointerEvents).toBe('auto');
-      expect(card(tree, '0').props.pointerEvents).toBe('none');
-    });
+  it('labels each card for a screen reader and offers no swipe action', async () => {
+    const { tree } = await render([account('s', 'savings'), account('c', 'cash')]);
+    expect(button(tree, 's').props.accessibilityLabel).toBe('Account s, savings. Open summary');
+    expect(button(tree, 'c').props.accessibilityLabel).toBe('Account c, cash. Open summary');
+    expect(tree.root.findAll((n) => Array.isArray(n.props.accessibilityActions))).toHaveLength(0);
+  });
 
-    it('shows a dot per account, and none when everything fits', async () => {
-      const six = await render(accounts(6));
-      const dots = six.tree.root.find((n) => n.props.testID === 'account-stack-dots');
-      expect(dots.props.children).toHaveLength(6);
-      const four = await render(accounts(4));
-      expect(four.tree.root.findAll((n) => n.props.testID === 'account-stack-dots')).toHaveLength(0);
+  it('masks a savings balance when amounts are hidden, but not a bank balance', async () => {
+    mockHide = true;
+    const { tree } = await render([account('s', 'savings'), account('b', 'bank')]);
+    expect(flat(card(tree, 's'))).toContain('••••');
+    expect(flat(card(tree, 'b'))).toContain('1,234');
+  });
+
+  it('shows the gain pill on a tracked account only', async () => {
+    const tracked = account('t', 'savings', {
+      name: 'Index fund',
+      investment: {
+        investedMinor: 1000000,
+        takenOutMinor: 0,
+        gainMinor: 120000,
+        valuedAt: '2026-09-30',
+        lastValueMinor: 1120000,
+      },
     });
+    const { tree } = await render([tracked, account('b', 'bank')]);
+    expect(flat(card(tree, 't'))).toContain('savings · tracked');
+    expect(flat(card(tree, 't'))).toContain('+');
+    expect(flat(card(tree, 'b'))).not.toContain('+');
+  });
+
+  it('renders an empty stack without crashing', async () => {
+    const { tree } = await render([]);
+    expect(cards(tree)).toHaveLength(0);
   });
 });

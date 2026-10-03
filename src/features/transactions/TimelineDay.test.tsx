@@ -205,3 +205,33 @@ describe('TimelineDay', () => {
     expect(byLabel(r, 'Travel,')[0].props.onLongPress).toBeUndefined();
   });
 });
+
+describe('TimelineDay with subcategories', () => {
+  const withParents = [
+    ...categories,
+    { id: 'groc', name: 'Groceries', icon: 'cart', color: '#8FE8C8', parentId: null },
+    { id: 'flipG', name: 'Flipkart Minutes', icon: 'cart', color: '#8FE8C8', parentId: 'groc' },
+  ] as Category[];
+
+  it('names the parent under a subcategory row, so same-named children can be told apart', () => {
+    let r!: ReactTestRenderer;
+    act(() => {
+      r = create(
+        <TimelineDay
+          date={DATE}
+          label="Yesterday"
+          dateLabel="25 Sept"
+          items={[tx('s1', { categoryId: 'flipG', amountMinor: 21000 })]}
+          categories={withParents}
+          accountName={(id) => accounts[id] ?? id}
+          categoryName={(id) => (id === 'flipG' ? 'Flipkart Minutes' : (names[id ?? ''] ?? ''))}
+          onPressTx={jest.fn()}
+          openStacks={new Set()}
+          onToggleStack={jest.fn()}
+        />
+      );
+    });
+    expect(texts(r).map((t) => t.replace(/^false/, ''))).toContain('in Groceries · Bank');
+    expect(byLabel(r, 'Flipkart Minutes, in Groceries')).toHaveLength(1);
+  });
+});
