@@ -39,7 +39,7 @@ import { AppHeader } from '@/components/AppHeader';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { CategoryPicker } from '@/components/CategoryPicker';
 import { ModalSheet } from '@/components/ModalSheet';
-import { SoftCard } from '@/features/home/SoftCard';
+import { SoftCard } from '@/components/SoftCard';
 import { CalendarSheet } from '@/components/CalendarSheet';
 import { AddAccountModal } from '@/features/profile/AddAccountModal';
 import { AddPersonModal } from '@/features/people/AddPersonModal';
@@ -53,8 +53,8 @@ import {
   repeatKey,
   formToStaged as formToStagedEntry,
 } from '@/features/add/addEntry';
-import { applyPadKey, evaluateAmount, exprFromMinor, hasOperator, PadKey } from '@/features/add/padMath';
-import { AmountPad } from '@/features/add/AmountPad';
+import { applyPadKey, evaluateAmount, exprFromMinor, hasOperator, PadKey } from '@/lib/padMath';
+import { AmountPad } from '@/components/AmountPad';
 import { AccountTile, Totals, FriendFields, DetailBar, DetailChip } from '@/features/add/AddFields';
 import { AmountCard, TransferAccounts, UsualChips, StagedList } from '@/features/add/AddSections';
 import { errorMessage } from '@/lib/errorMessage';
@@ -74,6 +74,7 @@ import { SplitCard } from '@/features/add/SplitCard';
 import { showAlert } from '@/components/AppDialog';
 import { useUndoToast } from '@/components/UndoToast';
 import { emitTransactionsChanged } from '@/lib/dataEvents';
+import { spendableAccountsOf } from '@/lib/account';
 
 /** How many "Your usual" chips Add shows. */
 const USUAL_COUNT = 4;
@@ -349,7 +350,7 @@ export default function AddTransactionScreen() {
 
   // Savings accounts aren't directly spendable: expense/income/friend entries offer only non-savings
   // accounts, transfers all. createTransaction (src/db/ledger.ts) enforces it too.
-  const spendableAccounts = useMemo(() => accounts.filter((a) => a.type !== 'savings'), [accounts]);
+  const spendableAccounts = useMemo(() => spendableAccountsOf(accounts), [accounts]);
   const pickableAccounts = type === 'transfer' ? accounts : spendableAccounts;
   const effectiveAccountId =
     accountId && pickableAccounts.some((a) => a.id === accountId)

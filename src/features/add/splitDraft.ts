@@ -1,7 +1,7 @@
 import { toMinor } from '@/lib/money';
 import type { SplitPart } from '@/db/splits';
 import { MAX_SPLIT_PARTS, MIN_SPLIT_PARTS } from '@/lib/splitLimits';
-import { evaluateAmount, exprFromMinor } from './padMath';
+import { evaluateAmount, exprFromMinor } from '@/lib/padMath';
 
 /**
  * The split page's working copy. The first part is "the rest": never typed, it's what the payment leaves

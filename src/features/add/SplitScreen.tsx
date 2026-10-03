@@ -11,14 +11,14 @@ import { CategoryPicker } from '@/components/CategoryPicker';
 import { ModalSheet } from '@/components/ModalSheet';
 import { theme } from '@/constants/theme';
 import { EYEBROW } from '@/constants/textStyles';
-import { homeStyles as h } from '@/features/home/homeStyles';
+import { homeStyles as h } from '@/components/homeStyles';
 import { childrenOf } from '@/lib/categoryTree';
 import { categorySentence, categorySpoken, inParent, joinSub, parentNameOf } from '@/lib/categoryLabel';
 import { formatMoney } from '@/lib/money';
 import { withPressed } from '@/lib/pressed';
 import { haptics } from '@/lib/haptics';
-import { AmountPad } from './AmountPad';
-import { applyPadKey, PadKey } from './padMath';
+import { AmountPad } from '@/components/AmountPad';
+import { applyPadKey, PadKey } from '@/lib/padMath';
 import { SplitMeter } from './SplitCard';
 import { getSplitSession, finishSplitSession } from './splitSession';
 import {

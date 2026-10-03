@@ -17,8 +17,8 @@ import { CardRowsSkeleton } from '@/components/ListSkeleton';
 import { useUndoToast } from '@/components/UndoToast';
 import { theme } from '@/constants/theme';
 import { useAccent } from '@/theme/AccentContext';
-import { HomeSection } from '@/features/home/HomeSection';
-import { homeStyles as h } from '@/features/home/homeStyles';
+import { HomeSection } from '@/components/HomeSection';
+import { homeStyles as h } from '@/components/homeStyles';
 import { NeedsYouRow } from '@/features/home/NeedsYouRow';
 import { NeedsYouItem } from '@/features/home/needsYou';
 import {

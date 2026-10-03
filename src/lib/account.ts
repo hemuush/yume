@@ -27,6 +27,11 @@ export function savingsAccountIdsOf(accounts: Account[]): Set<string> {
   return new Set(accounts.filter((a) => a.type === 'savings').map((a) => a.id));
 }
 
+/** The accounts day-to-day spending and EMIs can come out of — savings are only reached by a transfer. */
+export function spendableAccountsOf(accounts: Account[]): Account[] {
+  return accounts.filter((a) => a.type !== 'savings');
+}
+
 /** The colour family an account is tinted in, by type — its Home card and its summary sheet alike. */
 export function accountHue(type: Account['type'], accent: string): string {
   switch (type) {

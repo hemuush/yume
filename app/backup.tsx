@@ -54,7 +54,7 @@ import { Skeleton } from '@/components/Skeleton';
 import { theme } from '@/constants/theme';
 import { errorMessage } from '@/lib/errorMessage';
 import { SECTION_TITLE, SECTION_GAP, EYEBROW } from '@/constants/textStyles';
-import { homeStyles as h, HOME } from '@/features/home/homeStyles';
+import { homeStyles as h, HOME } from '@/components/homeStyles';
 import { SettingsRow } from '@/components/SettingsRow';
 import { withPressed } from '@/lib/pressed';
 import { toLocalIsoDate } from '@/lib/date';

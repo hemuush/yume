@@ -5,8 +5,8 @@ import { theme } from '@/constants/theme';
 import { formatMoney } from '@/lib/money';
 import { dueDateLabel } from '@/lib/dueDate';
 import { usePressScale } from '@/lib/usePressScale';
-import { HomeSection } from '@/features/home/HomeSection';
-import { homeStyles as h, HOME } from '@/features/home/homeStyles';
+import { HomeSection } from '@/components/HomeSection';
+import { homeStyles as h, HOME } from '@/components/homeStyles';
 import { DueGroup, PlanDueItem, PlanRoute, dueTone } from './planOverview';
 import { weekdayDayMonth } from '@/lib/dateLabels';
 

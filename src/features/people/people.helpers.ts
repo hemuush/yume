@@ -73,3 +73,17 @@ export function groupPeople<T extends { balanceMinor: number }>(people: T[]): Pe
   const { owedToYouMinor, youOweMinor } = peopleTotals(people);
   return { owed, owe, settled, owedToYouMinor, youOweMinor, netMinor: owedToYouMinor - youOweMinor };
 }
+
+/**
+ * The totals and net line only earn their place with two or more open people; with one, the tile already says it all.
+ */
+export function showPeopleSummary(openCount: number): boolean {
+  return openCount >= 2;
+}
+
+/** Splits a list into rows of `size` (the last may be shorter). */
+export function inRows<T>(items: T[], size: number): T[][] {
+  const rows: T[][] = [];
+  for (let i = 0; i < items.length; i += size) rows.push(items.slice(i, i + size));
+  return rows;
+}

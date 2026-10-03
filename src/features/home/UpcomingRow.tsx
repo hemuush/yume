@@ -5,7 +5,7 @@ import { theme } from '@/constants/theme';
 import { formatMoney } from '@/lib/money';
 import { usePressScale } from '@/lib/usePressScale';
 import { DateTile } from '@/components/DateTile';
-import { homeStyles as h, HOME } from './homeStyles';
+import { homeStyles as h, HOME } from '@/components/homeStyles';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 

@@ -5,7 +5,7 @@ import { Text, TextInput } from '@/components/Text';
 import { theme } from '@/constants/theme';
 import { shade } from '@/lib/color';
 import { withPressed } from '@/lib/pressed';
-import { HOME } from '@/features/home/homeStyles';
+import { HOME } from '@/components/homeStyles';
 import { HeaderHills } from '@/features/home/HeaderHills';
 import { useAccent } from '@/theme/AccentContext';
 import { styles } from './profile.styles';

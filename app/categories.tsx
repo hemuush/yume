@@ -16,7 +16,7 @@ import { AppHeader, HeaderIconButton } from '@/components/AppHeader';
 import { AddButton } from '@/components/AddButton';
 import { ActionSheet, ActionSheetItem } from '@/components/ActionSheet';
 import { styles } from '@/features/categories/categories.styles';
-import { CategorySection, CategoryTile } from '@/features/categories/CategorySection';
+import { CategorySection, CategoryTile, TileRows } from '@/features/categories/CategorySection';
 import { AddCategoryModal } from '@/features/categories/AddCategoryModal';
 import { useUndoToast } from '@/components/UndoToast';
 import { haptics } from '@/lib/haptics';
@@ -171,6 +171,17 @@ export default function CategoriesScreen() {
           },
         ]
       : [
+          // Moving is a parent change in the edit sheet, so a subcategory's menu just opens it there.
+          ...(manageTarget.cat.parentId
+            ? [
+                {
+                  key: 'move',
+                  label: 'Move to another category',
+                  icon: 'corner-up-right' as const,
+                  onPress: () => setEditingCategory(manageTarget.cat),
+                },
+              ]
+            : []),
           { key: 'archive', label: 'Archive', icon: 'archive', onPress: () => onArchive(manageTarget.cat) },
           {
             key: 'delete',
@@ -189,10 +200,14 @@ export default function CategoriesScreen() {
         <View style={{ paddingTop: 20 }}>
           <Skeleton width={100} height={13} radius={4} style={{ marginHorizontal: 20, marginBottom: 14 }} />
           <View style={styles.grid}>
-            {Array.from({ length: 8 }, (_, i) => (
-              <View key={i} style={styles.tile}>
-                <Skeleton width={56} height={56} circle radius={16} />
-                <Skeleton width={48} height={9} radius={4} style={{ marginTop: 6 }} />
+            {[0, 1].map((row) => (
+              <View key={row} style={styles.gridRow}>
+                {Array.from({ length: 4 }, (_, i) => (
+                  <View key={i} style={[styles.cell, styles.tile]}>
+                    <Skeleton width={50} height={50} circle radius={16} />
+                    <Skeleton width={48} height={9} radius={4} style={{ marginTop: 6 }} />
+                  </View>
+                ))}
               </View>
             ))}
           </View>
@@ -238,19 +253,19 @@ export default function CategoriesScreen() {
             {archivedCategories.length === 0 ? (
               <Text style={styles.hintText}>No archived categories.</Text>
             ) : (
-              <View style={styles.grid}>
-                {archivedCategories.map((cat) => (
+              <TileRows
+                items={archivedCategories}
+                // Flat, not grouped by parent: a subcategory can be archived while its parent stays
+                // active, so there isn't always an archived parent tile to nest it under.
+                renderTile={(cat) => (
                   <CategoryTile
-                    key={cat.id}
                     category={cat}
-                    // Flat, not grouped by parent: a subcategory can be archived while its parent stays
-                    // active, so there isn't always an archived parent tile to nest it under.
                     isSubcategory={!!cat.parentId}
                     onPress={() => onManageArchived(cat)}
                     onLongPress={onManageArchived}
                   />
-                ))}
-              </View>
+                )}
+              />
             )}
             <Text style={styles.hintText}>
               Archived categories are hidden from pickers everywhere else, but their past transactions stay
@@ -259,12 +274,7 @@ export default function CategoriesScreen() {
           </>
         )}
 
-        <Text style={styles.hintText}>
-          Tap a category to edit it — Archive and Delete are at the bottom of that sheet (holding a category
-          opens them directly too). A category with subcategories (like "Food & Dining" with "Zomato") gets
-          its own card below the grid, listing them as pills — tap a pill the same way. Add a subcategory from
-          + Add or from its parent's own edit screen.
-        </Text>
+        <Text style={styles.hintText}>Tap to edit or open · hold to move, archive or delete.</Text>
       </ScrollView>
 
       <AddCategoryModal

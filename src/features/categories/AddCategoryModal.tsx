@@ -155,7 +155,9 @@ export function AddCategoryModal({
       )}
       {showParentPicker && (
         <>
-          <Text style={styles.fieldLabel}>Parent category (optional)</Text>
+          <Text style={styles.fieldLabel}>
+            {category?.parentId ? 'Move to another category' : 'Parent category (optional)'}
+          </Text>
           <View style={styles.colorRow}>
             <Pressable
               onPress={() => setParentId(null)}
@@ -164,7 +166,7 @@ export function AddCategoryModal({
               style={withPressed([styles.parentChip, parentId === null && styles.parentChipActive])}
             >
               <Text style={[styles.parentChipText, parentId === null && styles.parentChipTextActive]}>
-                None
+                {category?.parentId ? 'Top level' : 'None'}
               </Text>
             </Pressable>
             {eligibleParents.map((p) => (
@@ -183,8 +185,9 @@ export function AddCategoryModal({
           </View>
           {parentId && (
             <Text style={styles.modalHint}>
-              A subcategory of {allCategories.find((c) => c.id === parentId)?.name} — its spend rolls up into
-              that category's total in Reports, with its own split visible on drill-down.
+              {category?.parentId && parentId !== category.parentId ? 'Will move to' : 'A subcategory of'}{' '}
+              {allCategories.find((c) => c.id === parentId)?.name} — its spend rolls up into that category's
+              total in Reports, with its own split visible on drill-down.
             </Text>
           )}
         </>

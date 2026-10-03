@@ -26,8 +26,8 @@ import { FormInput } from '@/components/FormInput';
 import { TextInput } from '@/components/Text';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { theme } from '@/constants/theme';
-import { PadButton } from '@/features/add/AmountPad';
-import { applyPadKey, type PadKey } from '@/features/add/padMath';
+import { PadButton } from '@/components/AmountPad';
+import { applyPadKey, type PadKey } from '@/lib/padMath';
 
 /** What the docked pad edits: the focused field's current text and how to change it. */
 interface AmountSlot {
