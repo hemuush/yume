@@ -43,11 +43,8 @@ const ENTRIES_SHOWN = 8;
 const monthLong = (key: string) => longMonthYear(`${key}-01`);
 
 /**
- * One category's whole story in one place — what it came to this period,
- * its budget and pace, where within it the money went, six months of
- * totals, its latest entries, and a way into What-if and Activity. Opened
- * from Reports, a budget row, or an entry's detail; it follows the period
- * you came from (`g` month/year, `o` offset) and has its own period bar.
+ * One category's whole story: period total, budget and pace, where the money went, six months of totals,
+ * latest entries, links to What-if and Activity. Follows the incoming period (`g` month/year, `o` offset).
  */
 export default function CategoryScreen() {
   const insets = useSafeAreaInsets();

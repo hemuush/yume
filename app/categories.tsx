@@ -31,21 +31,16 @@ export default function CategoriesScreen() {
   const [modalVisible, setModalVisible] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [showArchived, setShowArchived] = useState(false);
-  // Which category the "manage" sheet is open for, and whether it was
-  // opened from the active or archived section — that's the only thing
-  // that changes which two actions the sheet offers (Archive/Delete vs
-  // Restore/Delete).
+  // Which category the "manage" sheet is open for, and whether from the active or archived section, which
+  // only changes the two actions offered (Archive/Delete vs Restore/Delete).
   const [manageTarget, setManageTarget] = useState<{ cat: Category; archived: boolean } | null>(null);
 
   const loadCategories = useCallback(async () => {
     setAllCategories(await listCategories(true));
   }, []);
   const { loaded, loadError, reload: load } = useScreenLoad(loadCategories);
-  // Guards the manage sheet's Archive/Delete/Restore actions against a
-  // double-tap firing the same mutation twice before the sheet closes —
-  // every other screen's equivalent delete flow (LoanDetailModal,
-  // AccountDetailModal, RuleModal, TransactionDetailModal) already disables
-  // its trigger the same way while its own async call is in flight.
+  // Guards the manage sheet's Archive/Delete/Restore against a double-tap firing the mutation twice before
+  // it closes; other delete flows (LoanDetailModal, RuleModal, etc.) disable their trigger likewise.
   const [actionBusy, setActionBusy] = useState(false);
 
   const categories = allCategories.filter((c) => !c.archived);
@@ -122,10 +117,8 @@ export default function CategoriesScreen() {
   };
 
   const onDelete = (cat: Category) => {
-    // A single category is instant-delete + undo like everywhere else, but
-    // one with subcategories cascades — deleting it takes every subcategory
-    // with it in the same tap, which the undo toast alone doesn't make
-    // obvious up front, so that case gets an extra confirm step first.
+    // A single category is instant-delete + undo, but one with subcategories cascades them all in the same
+    // tap, which the undo toast alone doesn't make obvious, so that case gets an extra confirm step first.
     const childCount = allCategories.filter((c) => c.parentId === cat.id).length;
     if (childCount === 0) {
       runDelete(cat);
@@ -158,9 +151,8 @@ export default function CategoriesScreen() {
     setManageTarget({ cat, archived: true });
   };
 
-  // Feeds the one shared `ActionSheet` below — its two rows are the only
-  // thing that differs between an active category's menu (Archive/Delete)
-  // and an archived one's (Restore/Delete).
+  // Feeds the one shared `ActionSheet`: only its two rows differ between an active category's menu
+  // (Archive/Delete) and an archived one's (Restore/Delete).
   const manageItems: ActionSheetItem[] = manageTarget
     ? manageTarget.archived
       ? [
@@ -251,10 +243,8 @@ export default function CategoriesScreen() {
                   <CategoryTile
                     key={cat.id}
                     category={cat}
-                    // Flat, not grouped-by-parent: a subcategory can be
-                    // archived on its own while its parent stays active, so
-                    // there isn't always an archived parent tile to nest it
-                    // under here.
+                    // Flat, not grouped by parent: a subcategory can be archived while its parent stays
+                    // active, so there isn't always an archived parent tile to nest it under.
                     isSubcategory={!!cat.parentId}
                     onPress={() => onManageArchived(cat)}
                     onLongPress={onManageArchived}

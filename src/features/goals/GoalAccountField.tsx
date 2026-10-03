@@ -10,11 +10,8 @@ import { styles } from './goals.styles';
 import { withPressed } from '@/lib/pressed';
 
 /**
- * Where a goal's money sits, and how its progress moves: following that
- * account's balance, or added by hand as before. Shared by the new-goal
- * form and the goal's detail. Warns when another goal already follows the
- * picked account (both would show the same balance), and when switching a
- * hand-tracked goal over, that the amount added so far is kept aside.
+ * Where a goal's money sits: following an account's balance, or added by hand. Shared by new-goal and detail.
+ * Warns if another goal follows the same account, and that switching from hand-tracked sets the amount aside.
  */
 export function GoalAccountField({
   accounts,

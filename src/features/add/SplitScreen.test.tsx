@@ -1,8 +1,6 @@
 /**
- * The split page: it opens with the payment's category holding all of it,
- * a new category is typed on Yume's own pad while the first one takes the
- * rest, Done only lights up once the split works (and says what to do until
- * then), and Done hands the parts back to Add. All figures are made up.
+ * The split page: opens with the payment's category holding all of it, new parts typed on Yume's pad, Done
+ * lights up only once the split works (saying what to do until then) and hands parts to Add. Made-up figures.
  */
 import { Text } from 'react-native';
 import { create, act, ReactTestRenderer, ReactTestInstance } from 'react-test-renderer';

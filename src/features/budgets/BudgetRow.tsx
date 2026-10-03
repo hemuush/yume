@@ -17,11 +17,8 @@ import { categorySentence, inParent } from '@/lib/categoryLabel';
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 /**
- * One category's monthly limit and how much of it is gone. What a tap does is up to the screen (Budgets opens the category's page).
- * `onMore` adds a visible ⋯ button for the row's other actions (the same
- * menu a long-press opens), so nothing is only reachable by holding.
- * `showPerDay` adds what the rest of the month allows each day to the foot
- * (Budgets only — a category's own page already says it another way).
+ * One category's monthly limit and how much is gone; tap behaviour is up to the screen. `onMore` adds a
+ * visible ⋯ button (same menu as long-press). `showPerDay` adds the daily allowance (Budgets only).
  */
 export function BudgetRow({
   progress,

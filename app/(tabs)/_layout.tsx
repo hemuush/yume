@@ -14,15 +14,8 @@ import { RepeatEntrySheet } from '@/features/home/RepeatEntrySheet';
 import { DURATIONS } from '@/lib/motionTimings';
 
 /**
- * The library's own default tab button paints a native Android ripple sized
- * to the whole tab item's touch target — much bigger than the icon inside
- * it — which showed up as a large grey circle ballooning out past the top
- * of the bar on press. `android_ripple`'s colour is forced transparent to
- * kill that ripple entirely; a small press-down scale (the same
- * `usePressScale` every other button in the app uses) replaces it as the
- * actual feedback, applied to the icon/indicator only so the item's own
- * touch-target size (laid out by `style`, which the navigator controls)
- * doesn't change.
+ * The library's default tab button paints a native ripple over the whole touch target (a big grey circle
+ * past the bar top). It's forced transparent; a `usePressScale` on the icon/indicator replaces it.
  */
 function TabButton({ children, style, onPress, ...rest }: PressableProps & { children?: React.ReactNode }) {
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.88);
@@ -56,12 +49,8 @@ function TabLabel({ focused, children }: { focused: boolean; children: string })
 }
 
 /**
- * A tab's icon and name in the docked bar. The bar itself is always the app's own
- * cream surface — never the accent (see the redesign note below) — so the
- * accent only ever has to stay legible inside one small pill, not across an
- * entire bar. Inactive icons are plain ink at low opacity; the active tab
- * gets a pill in the accent colour with the icon punched through in the
- * contrast colour. Fades + scales in over 160ms rather than springing.
+ * A tab's icon and name in the docked bar, always on the cream surface (never the accent), so the accent
+ * needs legibility only in one small pill. Inactive: low-opacity ink; active: accent pill.
  */
 function TabIcon({ Icon, focused, label }: { Icon: typeof HomeIcon; focused: boolean; label: string }) {
   const { accent, onAccent } = useAccent();
@@ -97,11 +86,8 @@ function TabIcon({ Icon, focused, label }: { Icon: typeof HomeIcon; focused: boo
 }
 
 /**
- * The centre "+". Rendered purely as `tabBarIcon` — the shared `TabButton`
- * above still handles the actual touch and still fires `tabPress`, which
- * the Tabs.Screen below intercepts to open the Add screen. Always a plain
- * ink circle, deliberately independent of the accent — the one thing on the
- * bar that should never change colour with the theme.
+ * The centre "+", rendered only as `tabBarIcon`: the shared `TabButton` handles touch and fires `tabPress`,
+ * which Tabs.Screen intercepts to open Add. Always a plain ink circle, never accent-themed.
  */
 function CenterAddButton() {
   return (
@@ -126,19 +112,8 @@ export default function TabsLayout() {
           headerShown: false,
           tabBarShowLabel: false,
           tabBarHideOnKeyboard: true,
-          // No custom screen-transition animation: `animation: 'fade'` here
-          // raced a tab's first-ever mount (each screen is lazy by default) —
-          // the fade transition could finish before the screen had painted
-          // anything, leaving it blank until the tab was left and revisited.
-          // The platform default switch doesn't carry that race.
-          // Docked flush to the bottom edge in the app's own cream surface —
-          // never the accent colour. An earlier floating, accent-filled pill
-          // broke badly at both ends of the accent picker (nearly invisible
-          // on Cream, a heavy black slab on Ink); a neutral bar can never
-          // break regardless of which accent is picked. The device's own
-          // safe-area inset becomes the bar's bottom padding instead of empty
-          // page below it; tab screens clear it via theme.layout.
-          // tabScreenScrollPad.
+          // No custom transition: `animation: 'fade'` raced a tab's first lazy mount (blank screen). Docked
+          // flush in cream, never the accent (a floating accent pill broke at picker extremes).
           tabBarStyle: {
             position: 'absolute',
             left: 0,
@@ -184,9 +159,8 @@ export default function TabsLayout() {
           }}
           listeners={{
             tabPress: (e) => {
-              // Never navigate to the "add" route itself — it exists only so
-              // this slot has a place in the pill; the real destination is the
-              // Add screen, pushed onto the Stack.
+              // Never navigate to the "add" route itself (it only holds the slot); the real destination is
+              // the Add screen, pushed onto the Stack.
               e.preventDefault();
               router.push('/add-transaction');
             },

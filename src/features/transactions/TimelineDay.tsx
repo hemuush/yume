@@ -43,16 +43,8 @@ function Amount({ type, minor, masked }: { type: Transaction['type']; minor: num
 }
 
 /**
- * One day on Activity (the Activity cleanup sign-off, option A): the day and
- * its net total, then one card with every entry of the day, each on a line
- * of the same two-line height — two or more of the same category stacked
- * into one line ("Food & Dining", "3 entries") that opens in place, and your
- * transfers between your own accounts as quiet rows at the end. No "+N
- * more": a busy day shows all of it. A day that is one line leaves its total
- * off the heading, since that line already shows it.
- *
- * Which stacks are open is held by the screen (like the old "+N more"), since
- * this is a row in a virtualized list that unmounts as it scrolls away.
+ * One Activity day: day + net total (omitted if one line), a card of every entry, transfers as quiet end
+ * rows. 2+ same-category entries stack into an openable line; the screen holds open stacks (rows unmount).
  */
 export function TimelineDay({
   date,
@@ -85,7 +77,10 @@ export function TimelineDay({
   onReorder?: (date: string, orderedIds: string[]) => Promise<void>;
   /** True while a line is held and dragged, so the list can stop scrolling under the finger. */
   onDragActive?: (active: boolean) => void;
-  /** Accounts of type savings — transfers into or out of them are hidden with "hide savings & investment amounts". */
+  /**
+   * Accounts of type savings — transfers into or out of them are hidden with "hide savings & investment
+   * amounts".
+   */
   savingsAccountIds?: ReadonlySet<string>;
 }) {
   const { hideAmounts } = usePrivacy();
@@ -95,7 +90,8 @@ export function TimelineDay({
   const { transfers, lines } = useMemo(() => buildDayLane(items, date), [items, date]);
   const hidden = (tx: Transaction) => hideAmounts && isSavingsEntry(tx, categoriesById, savingsAccountIds);
   const money = (minor: number, masked: boolean) => formatMaskableMoney(minor, { masked });
-  // With savings hidden the day's total leaves those entries out, or a day with one of them would give it away.
+  // With savings hidden the day's total leaves those entries out, or a day with one of them would give it
+  // away.
   const net = netMinorOf(hideAmounts ? items.filter((tx) => !hidden(tx)) : items);
 
   // Hand-ordering: hold a line to lift it, drag it, let go. `arranged` shows the
@@ -265,9 +261,8 @@ export function TimelineDay({
         {open && (
           <View>
             {line.items.map((tx) => {
-              // A split's part is its category, with its account under it. A stack's
-              // entry (they all share the category already named above) is its note
-              // over its account — or just the account, when there's no note.
+              // A split's part: category, account under it. A stack's entry (category already named above):
+              // note over account, or just the account with no note.
               const partCat = isSplit ? categoriesById.get(tx.categoryId ?? '') : cat;
               const label = isSplit ? categoryName(tx.categoryId) : tx.note || accountName(tx.accountId);
               const sub = isSplit

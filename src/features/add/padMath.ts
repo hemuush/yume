@@ -1,12 +1,8 @@
 import { MAX_AMOUNT_MAJOR } from '@/lib/amountLimits';
 
 /**
- * The Add screen's number pad: what a key press does to the typed
- * expression, and what that expression is worth. Pure, so every rule below
- * is unit-tested without rendering anything.
- *
- * The expression is plain text in the pad's own symbols — digits, one `.`
- * per number, and the operators `+ − × ÷` between numbers — e.g. "120+45".
+ * Number-pad logic: what a key press does to the typed expression, and what it is worth. Pure, so unit-tested.
+ * The expression is plain text: digits, one `.` per number, operators `+ − × ÷`, e.g. "120+45".
  */
 export type PadKey = '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | '.' | PadOperator | 'back';
 export type PadOperator = '+' | '−' | '×' | '÷';
@@ -53,10 +49,8 @@ export function applyPadKey(expr: string, key: PadKey): string {
 }
 
 /**
- * The expression's value in major units, rounded to two decimals, or null
- * when it has no usable value: empty, dividing by zero, or zero/negative
- * overall. A trailing operator is ignored, so "120+" is worth 120 while the
- * next number is still being typed. × and ÷ bind tighter than + and −.
+ * Expression value in major units, rounded to 2 dp; null if empty, divide-by-zero or not positive.
+ * A trailing operator is ignored ("120+" is 120 while typing); × and ÷ bind tighter than + and −.
  */
 export function evaluateAmount(expr: string): number | null {
   let s = expr;

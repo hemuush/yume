@@ -1,9 +1,6 @@
 /**
- * One entry larger than a float can hold exactly would quietly corrupt every
- * SUM it is part of (balances, budgets, reports). The screens already refuse
- * such an amount (see toMinor), so this checks the write path refuses it too
- * — on create and on edit — while the largest accepted amount still saves and
- * is stored exactly.
+ * An entry too large for a float to hold exactly would corrupt every SUM it joins. Screens refuse it (see
+ * toMinor); this checks create and edit refuse it too, and the largest accepted amount saves exactly.
  */
 import { createRealDataTestDb } from '@/test-support/realDataTestDb';
 

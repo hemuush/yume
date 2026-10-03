@@ -13,14 +13,8 @@ interface Props {
 }
 
 /**
- * A rupee figure whose digits roll into place — like a mechanical
- * odometer — instead of a plain re-render or `CountUpAmount`'s smooth
- * numeric tween. Reserved for a moment where a total visibly *changing* is
- * the point (a running staged-transaction total right now; a milestone
- * figure later) — most numbers in the app should stay `CountUpAmount` or
- * plain text, this is a deliberately louder effect for a deliberately rare
- * spot. Display-only: never wraps an editable input, and only the digits
- * that actually changed roll — punctuation and unchanged digits stay put.
+ * A rupee figure whose digits roll in like an odometer, unlike CountUpAmount's tween; deliberately loud, for
+ * moments where a total visibly *changing* is the point. Display-only; only changed digits roll.
  */
 export function OdometerAmount({ minor, style, currency }: Props) {
   const reduce = useReduceMotion();
@@ -78,8 +72,7 @@ function DigitReel({
       easing: Easing.out(Easing.cubic),
       useNativeDriver: true,
     }).start();
-    // A fresh Animated.Value per mount (the `key` above remounts this on
-    // every digit change) — nothing else to depend on here.
+    // A fresh Animated.Value per mount (the `key` above remounts on every digit change); nothing to depend on.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const translateY = v.interpolate({ inputRange: [0, 1], outputRange: [-height, 0] });

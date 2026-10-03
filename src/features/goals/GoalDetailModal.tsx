@@ -27,12 +27,8 @@ import { errorMessage } from '@/lib/errorMessage';
 import { showAlert } from '@/components/AppDialog';
 
 /**
- * Editing/archiving/deleting a goal, opened by tapping a GoalCard. The same
- * rule as AccountDetailModal for the quiet link at the end: any real progress added by hand
- * (`currentAmountMinor > 0`) means Archive is the only option (hides it,
- * keeps the number intact); a goal that was never funded can be properly
- * deleted. A goal following an account holds no money of its own, so it
- * can always be deleted — the account and its entries are untouched.
+ * Edit/archive/delete a goal (from a GoalCard). Hand-added progress (`currentAmountMinor > 0`) means Archive
+ * only (keeps the number); a never-funded or account-following goal can be deleted (account untouched).
  */
 export function GoalDetailModal({
   goal,
@@ -154,9 +150,8 @@ export function GoalDetailModal({
     }
   };
 
-  // The calm-sheets sign-off (Direction C): a live card of the goal as it
-  // will read — what's saved against the target as you type it — then the
-  // form. Archive or delete is a quiet link at the end, not a second button.
+  // Calm-sheets layout: a live card of the goal as typed, then the form. Archive/delete is a quiet link at
+  // the end.
 
   return (
     <ModalSheet

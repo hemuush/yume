@@ -1,9 +1,6 @@
 /**
- * A sweep of money conversion across a wide range of magnitudes (zero, a
- * single paisa, typical amounts, and values into the crores) and every
- * currency the app offers — checking the round-trip and formatting
- * invariants that must hold regardless of size or currency, since every
- * screen in the app ultimately renders through formatMoney().
+ * Sweep of money conversion across magnitudes (zero, one paisa, typical, crores) and every offered currency,
+ * checking round-trip and formatting invariants, since every screen renders through formatMoney().
  */
 import { toMinor, toMajor, formatMoney } from './money';
 
@@ -57,9 +54,8 @@ describe('money conversion matrix — every amount × currency combination', () 
   });
 
   it('sub-unit amounts (a few paise) round to whole-unit display, same as zero', () => {
-    // A stray paisa can still exist on legacy data / EMI splits; formatMoney
-    // collapses it to "0" for display just like an exact zero. (New input can
-    // no longer create one — see the toMinor quantization tests above.)
+    // A stray paisa can still exist (legacy data, EMI splits); formatMoney shows it as "0",
+    // like an exact zero. New input can't create one (see the toMinor quantization tests above).
     expect(toMajor(1)).toBe(0.01);
     expect(formatMoney(1, 'INR')).toBe(formatMoney(0, 'INR'));
   });

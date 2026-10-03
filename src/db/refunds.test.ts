@@ -1,8 +1,6 @@
 /**
- * Refunds in a real database: money back on a purchase lowers that
- * category's spending (and the month's) everywhere it's added up, never
- * counts as income, never takes a total below zero, puts the money back in
- * the account, and can only go to a spending category. All figures are made up.
+ * Refunds in a real DB: they lower category and month spending everywhere, never count as income or push a
+ * total below zero, return money to the account, and only apply to spending categories. Figures are made up.
  */
 import { createRealDataTestDb } from '@/test-support/realDataTestDb';
 

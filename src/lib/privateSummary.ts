@@ -29,11 +29,8 @@ function withoutSensitiveCategories(s: PeriodSummary): PeriodSummary {
 }
 
 /**
- * A period comparison as it reads with "hide savings & investment amounts"
- * on: the sensitive categories come out of both periods — their rows, and
- * the spending and income totals they were part of — so no total, share or
- * change figure can be subtracted back into what was saved or invested.
- * Returns the comparison itself when nothing is hidden.
+ * Period comparison with "hide savings & investment amounts" on: sensitive categories leave both periods —
+ * rows and totals, so nothing can be subtracted back to savings. Returns the input if nothing is hidden.
  */
 export function privateComparison(cmp: PeriodComparison, hide: boolean): PeriodComparison;
 export function privateComparison(cmp: PeriodComparison | null, hide: boolean): PeriodComparison | null;
@@ -51,9 +48,8 @@ export function privateComparison(cmp: PeriodComparison | null, hide: boolean): 
 }
 
 /**
- * Whether an entry (or a recurring rule) is part of savings or investments,
- * for "hide savings & investment amounts": spending or income in a sensitive
- * category, or a transfer into or out of a savings account.
+ * Whether an entry or recurring rule counts as savings/investments for "hide savings & investment amounts":
+ * spending or income in a sensitive category, or a transfer into or out of a savings account.
  */
 export function isSavingsEntry(
   tx: { type: TransactionType; accountId: string; toAccountId: string | null; categoryId: string | null },

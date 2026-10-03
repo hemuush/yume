@@ -5,17 +5,8 @@ import { shade } from '@/lib/color';
 import { DURATIONS } from '@/lib/motionTimings';
 
 /**
- * The path for a lune (crescent/gibbous) covering exactly `k` of a circle's
- * area, radius `r` centred at (cx, cy), lit on the right. Standard
- * two-arc construction: the right half of the circle plus an ellipse arc
- * (horizontal radius `a`) back to the top, bulging the same side as the
- * circle for a crescent (k < 0.5, a shrinks the enclosed area toward 0) or
- * the opposite side for a gibbous (k > 0.5, a grows it toward the full
- * circle). Verified at the three checkpoints: k=0 → the two arcs coincide
- * (zero area); k=0.5 → the ellipse degenerates to a straight vertical line
- * (exactly the right half-circle); k=1 → the ellipse becomes the left
- * half-circle too (the full disc). Between those, the enclosed area is k
- * exactly — this is the same construction real moon-phase icons use.
+ * Lune path covering exactly `k` of a circle's area (radius `r` at cx, cy), lit on the right: right half-circle
+ * plus an ellipse arc (radius `a`); crescent for k < 0.5, gibbous for k > 0.5; k=0 empty, k=1 full disc.
  */
 export function lunePath(cx: number, cy: number, r: number, k: number): string {
   const clamped = Math.max(0, Math.min(1, k));
@@ -25,14 +16,8 @@ export function lunePath(cx: number, cy: number, r: number, k: number): string {
 }
 
 /**
- * A disc split by illuminated fraction `litFraction` (0-1) — the lit lune
- * covers exactly that share of the circle's area, not just its width, so it
- * doubles as an actual proportion chart rather than a mood illustration.
- *
- * Both the lit and dark regions are shades of the same accent hue (see
- * `moonPhaseShades`) rather than two unrelated fixed colours — the moon
- * should always sit in the same colour family as whatever accent the user
- * has actually picked, not clash with it.
+ * A disc split by illuminated fraction `litFraction` (0-1): the lit lune covers exactly that share of the
+ * area, so it works as a proportion chart. Lit/dark are shades of the user's accent (`moonPhaseShades`).
  */
 function moonPhaseShades(accent: string): { lit: string; dark: string } {
   return { lit: shade(accent, 45, 6), dark: shade(accent, 78, -4) };
@@ -53,9 +38,8 @@ export function MoonPhase({
   const c = size / 2;
   return (
     <Animated.View
-      // Keyed by litFraction so a genuine month/period change (a different
-      // ratio) re-triggers the reveal, while an unrelated re-render with the
-      // same fraction doesn't replay it.
+      // Keyed by litFraction so a real period change re-triggers the reveal, while an unrelated re-render
+      // with the same fraction doesn't replay it.
       key={litFraction}
       entering={FadeIn.duration(DURATIONS.draw).reduceMotion(ReduceMotion.System)}
     >

@@ -1,7 +1,6 @@
 /**
- * The split page's working copy: the first part holds the rest, so a split
- * always adds up, and every reason it can't be saved yet comes back as
- * something to do. All figures are made up.
+ * The split page's working copy: the first part holds the rest so a split always adds up, and each reason it
+ * can't be saved yet comes back as something to do. All figures are made up.
  */
 import {
   partMinor,

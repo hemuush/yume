@@ -18,10 +18,8 @@ const NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday',
 const barLabel = (minor: number) => Math.round(toMajor(minor)).toLocaleString();
 
 /**
- * Average spend on each weekday so far (Sunday first), against a dashed line
- * for the period's usual day. The busiest weekday is full accent; tap a bar
- * to read its line. With too few days for a pattern, a slim note instead of
- * seven bars built on one or two days.
+ * Average spend per weekday so far (Sunday first) against a dashed usual-day line; the busiest weekday is
+ * full accent, tap a bar to read it. With too few days for a pattern, a slim note replaces the seven bars.
  */
 export function WeekdayRhythm({
   rhythm,

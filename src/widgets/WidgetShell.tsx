@@ -3,13 +3,8 @@ import glyphs from '@expo/vector-icons/build/vendor/react-native-vector-icons/gl
 import { widgetColor, WIDGET_FONT, WIDGET_RADIUS } from './widgetTheme';
 
 /**
- * The one shell every widget is built on: Home's own calm card — cream,
- * a warm hairline border, the 22 corner — so the five read as pieces of
- * Home sitting on the wallpaper (the Home A widgets sign-off).
- *
- * Widget components must stay plain sync functions with no hooks (Android
- * renders these into RemoteViews on its own, outside React's render loop) —
- * this is composition only, no state of its own.
+ * The shell every widget is built on: Home's calm cream card, warm hairline border, 22 corner. Components
+ * must be plain sync functions with no hooks (Android renders them to RemoteViews outside React's loop).
  */
 export function WidgetShell({
   children,

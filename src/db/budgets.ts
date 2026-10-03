@@ -8,19 +8,8 @@ import { Budget } from '@/types';
 import { SPEND_ROWS, SPEND_AMOUNT } from './spendSql';
 
 /**
- * A monthly spending limit for one category. `budgets` has one row per
- * (category, calendar month) — see schema's own `UNIQUE (category_id,
- * period_month)` — rather than a single "recurring" row, so a limit change
- * never rewrites history: last month's ₹5,000 grocery budget stays exactly
- * that even after this month's is raised to ₹6,000.
- *
- * That per-month shape means a category with `rollover` set doesn't
- * automatically grow a new row for the next month on its own — there's no
- * background job here (deliberately; see the app's own stance on keeping
- * background work on the user's device minimal). Instead, `listLapsedBudgets`
- * surfaces "you had a budget for this last month, want to continue it?" the
- * next time the Budgets screen is actually opened, and `createBudget` does
- * the one-tap continuation from there.
+ * One row per (category, month), so changing a limit never rewrites history. No background job rolls over:
+ * `listLapsedBudgets` offers "continue?" when Budgets opens; `createBudget` does the one-tap continuation.
  */
 
 function rowToBudget(row: BudgetRow): Budget {
@@ -51,20 +40,8 @@ function monthRange(periodMonth: string): { start: string; end: string } {
 }
 
 /**
- * Same-currency-only spend, matching how every other report figure in the
- * app is scoped. When `categoryId` is a top-level category, this also rolls
- * up every one of its subcategories' spend — the same grouping
- * `getRangeComparison`'s "Where it went" breakdown already does
- * (`JOIN categories top ON top.id = COALESCE(c.parent_id, c.id)`). Budgeting
- * "Food" and then logging everything under "Food > Groceries" used to leave
- * that budget's spend permanently at ₹0 — the exact-match-only query below
- * never saw a transaction actually tagged with the parent's own id.
- *
- * `c.parent_id = ?` only ever matches something when `categoryId` genuinely
- * is a parent (subcategories don't have their own children in this app's
- * two-level model), so this stays a no-op — exact match only — when
- * `categoryId` is itself a subcategory, which is exactly the scoping a
- * subcategory-specific budget should keep.
+ * Same-currency spend, like every report figure. A top-level `categoryId` also rolls up its subcategories
+ * (as getRangeComparison); for a subcategory `c.parent_id = ?` matches nothing, so it stays exact-match.
  */
 async function categorySpend(
   db: AppDb,
@@ -276,9 +253,8 @@ export type BudgetNudgeLevel = 'near' | 'over';
 export const BUDGET_NUDGE_PCT = 80;
 
 /**
- * Which budget notification is due, if any, given the ones already sent
- * this month: one when it passes BUDGET_NUDGE_PCT, one when it goes over —
- * each at most once per budget per month.
+ * Which budget notification is due, given those already sent this month: one past BUDGET_NUDGE_PCT, one when
+ * over, each at most once per budget per month.
  */
 export function dueBudgetNudge(
   progress: { overBudget: boolean; percentUsed: number },

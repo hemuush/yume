@@ -31,18 +31,8 @@ const DIM = 0.28;
 const LAYERS = ['spent', 'saved', 'due', 'free'] as const;
 
 /**
- * Home's month as a ring (the Home A sign-off): the period's income, split
- * around the circle into spent, moved to savings and free to use — each
- * slice's length is its share — with the headline on the moon-cream face
- * inside ("51% kept"). It replaces the full moon drawing so the month card
- * fits the first screen. Tapping it steps through the slices, as the moon
- * did; a picked slice keeps its colour and the other two fade back.
- *
- * The stroke and the face's type scale down with `size`, so the same ring
- * works as the large centrepiece or the small companion beside a headline.
- *
- * The slices draw in around the ring when a period first shows, and redraw
- * when the period changes. Reduce motion shows them straight away.
+ * Home's month ring: income split into spent/savings/free arcs by share, headline on the cream face. Tap
+ * steps slices (picked keeps colour). Stroke/type scale with `size`; arcs animate in unless reduce motion.
  */
 export function MonthRing({
   slices,

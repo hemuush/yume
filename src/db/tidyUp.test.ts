@@ -1,9 +1,6 @@
 /**
- * Tidy up against a real SQLite engine, with made-up figures:
- *   - repeat pairs are found; "Keep both" hides them for good; deleting the
- *     newer one can be undone; loan- and person-linked entries are left alone
- *   - old balances logged as income are found, and moving one to the
- *     account's opening balance keeps the balance but lowers income — undoably
+ * Tidy up on real SQLite: repeat pairs ("Keep both" hides; deleting the newer is undoable), loan/person entries
+ * skipped; old balances logged as income move to opening balance (balance kept, income lowered, undoable).
  */
 import { createRealDataTestDb } from '@/test-support/realDataTestDb';
 

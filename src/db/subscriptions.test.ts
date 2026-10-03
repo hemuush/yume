@@ -1,7 +1,6 @@
 /**
- * Subscriptions and bills against a real SQLite engine: what running rules
- * cost a month, Subscriptions entries without a rule, charges seen once a
- * month for three months, and hiding one with ✕. All figures are made up.
+ * Subscriptions on real SQLite: monthly cost of running rules, rule-less Subscriptions entries, charges seen
+ * once a month for three months, and hiding one with ✕. Figures are made up.
  */
 import { createRealDataTestDb } from '@/test-support/realDataTestDb';
 

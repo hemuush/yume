@@ -18,36 +18,8 @@ export interface SuuLine {
 }
 
 /**
- * The one encouraging line Suu says in the Home hero. Derived entirely from
- * this period's real figures — never a placeholder — and picked at random
- * from a ~20-line pool for whichever situation applies (see
- * `suuLinePools.ts`), so Suu doesn't repeat the exact same sentence every
- * time this runs (every Home focus). The five *situations* below are
- * unchanged; only the wording within each one now varies.
- *
- * Previously a spending-is-up nudge lived in its own separate
- * `SpendingAlertCard`, which restated the exact "N% vs last" figure the hero
- * card already showed one line above it — a real duplication, removed in
- * favour of folding that one fact in here instead. Whenever spending is up
- * at all, that takes priority over the savings-rate messages below: telling
- * someone "lovely pace" while their spend just rose isn't useful, however
- * healthy their overall savings rate still looks.
- *
- * @param savingsPct  raw savings rate (net ÷ income × 100); may be negative
- * @param expenseChangePct  spend vs the previous period, or null when there's
- *                          no comparison yet (a fresh install / empty month)
- * @param topCategoryName  the category that grew the most, if any grew
- *                         >20% — folded into the sentence as "— mostly X."
- * @param hour  the caller's real local hour (0-23) — required, not defaulted
- *              to `new Date()` in here, so this stays a pure function tests
- *              can call deterministically at any time of day. Only ever
- *              nudges the *pose*, never the wording: what Suu says is still
- *              purely about the numbers, not the clock. A real financial
- *              situation (overspending) always wins over the hour — telling
- *              someone to relax at 2am while they're in deficit would be the
- *              wrong instinct in either direction.
- * @param hideSavings  the user hides savings amounts: the savings-rate lines
- *                     (which name a kept/saved share) give way to neutral ones
+ * Suu's hero line from real figures, random from a pool (suuLinePools.ts); rising spend beats savings lines.
+ * `hour` is required (keeps this pure) and only nudges the pose; `hideSavings` swaps in neutral lines.
  */
 export function suuLine(
   savingsPct: number,

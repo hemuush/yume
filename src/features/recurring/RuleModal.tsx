@@ -135,10 +135,8 @@ export function RuleModal({
     () => categories.filter((c) => c.kind === (type === 'income' ? 'income' : 'expense')),
     [categories, type]
   );
-  // Same rule as the one-off add-transaction screen: a recurring
-  // expense/income can't be set to fire straight out of a savings account —
-  // that money has to be transferred out first. validate() in
-  // src/db/recurring.ts enforces this too.
+  // Same rule as the add-transaction screen: a recurring expense/income can't fire straight out of a savings
+  // account (transfer out first); validate() in src/db/recurring.ts enforces it too.
   const spendableAccounts = useMemo(() => accounts.filter((a) => a.type !== 'savings'), [accounts]);
   const pickableAccounts = type === 'transfer' ? accounts : spendableAccounts;
   const effectiveAccountId =

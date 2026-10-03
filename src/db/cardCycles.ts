@@ -4,10 +4,8 @@ import { toLocalIsoDate } from '@/lib/date';
 import type { Account } from '@/types';
 
 /**
- * The credit card cycle for each card that has both its statement day and
- * bill due day set (the Missing pieces sign-off). Everything is worked out
- * from the card's own entries: what it owed at the end of the statement day,
- * what's been paid into it since, and what's been spent on it since.
+ * Cycle for each card with a statement day and bill due day, derived from its entries: owed at statement-day
+ * end, paid into it since, and spent on it since.
  */
 
 export interface AccountCardCycle extends CardCycle {

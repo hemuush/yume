@@ -32,10 +32,8 @@ interface Slide {
 }
 
 /**
- * The starter accounts the last step offers. Without at least one account a
- * new user's first tap on + can't save anything (the Add screen has nothing
- * to pick), and the only way to make one used to be three taps deep behind
- * the Profile avatar. Names are ordinary and editable later in Profile.
+ * The starter accounts the last step offers: without one, a new user's first tap on + can't save (Add has
+ * nothing to pick). Names are ordinary and editable later in Profile.
  */
 interface StarterAccount {
   key: string;
@@ -84,10 +82,8 @@ const SLIDES: Slide[] = [
 ];
 
 /**
- * Rendered directly by the root layout rather than pushed as a route:
- * expo-router picks the first screen from the launch URL ("/"), so a
- * `initialRouteName="onboarding"` on the Stack was silently ignored and
- * first-run users went straight to an empty dashboard.
+ * Rendered directly by the root layout, not pushed as a route: expo-router picks the first screen from the
+ * launch URL ("/"), so `initialRouteName="onboarding"` on the Stack was ignored.
  */
 export function Onboarding({ onDone }: { onDone: () => void }) {
   const { accent } = useAccent();
@@ -146,20 +142,16 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
       if (name.trim()) await setUserName(name);
       await setHasOnboarded(true);
     } catch {
-      // A failed write here must never trap a first-run user on this screen
-      // forever with no way out — worst case if `setHasOnboarded` itself
-      // failed is onboarding reappears next launch, which is recoverable;
-      // getting stuck here with no error UI and no retry is not.
+      // A failed write must never trap a first-run user here: worst case (setHasOnboarded failing) onboarding
+      // reappears next launch, which is recoverable; being stuck with no error UI or retry is not.
     } finally {
       onDone();
     }
   };
 
   /**
-   * "I have a Yume backup" — someone on a new phone picks their backup file
-   * and lands in the app with everything back, instead of setting up
-   * accounts only to replace them a minute later. Same preview as the
-   * Backup screen; Cancel leaves them on this slide.
+   * "I have a Yume backup": a new-phone user picks their backup file and lands in the app with everything
+   * back. Same preview as the Backup screen; Cancel leaves them on this slide.
    */
   const pickBackup = async () => {
     try {
@@ -192,9 +184,8 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
       try {
         await restoreKeepingSafetyCopy(snapshot);
       } catch (e) {
-        // A first-run phone has nothing to keep a copy of — if saving that
-        // (empty) copy fails, restoring without it loses nothing. With data
-        // already here, stop instead; the Backup screen can do it knowingly.
+        // A first-run phone has nothing worth a safety copy, so if saving that empty copy fails, restoring
+        // loses nothing. With data already here, stop; the Backup screen can do it knowingly.
         if (!(e instanceof SafetyCopyError) || preview.current.entries > 0) throw e;
         await restoreKeepingSafetyCopy(snapshot, { withoutCopy: true });
       }
@@ -438,9 +429,7 @@ const styles = StyleSheet.create({
   },
   nameInputFocused: { backgroundColor: theme.colors.surface, borderColor: theme.colors.secondary },
   dots: { flexDirection: 'row', justifyContent: 'center', gap: 6, marginTop: 28 },
-  // A plain muted fill rather than an outlined dot — a hairline border was
-  // barely visible against the page's own cream anyway, and a solid fill
-  // reads clearly with no border needed.
+  // A plain muted fill, not an outlined dot: a hairline border was barely visible on the cream page.
   dot: {
     width: 7,
     height: 7,

@@ -150,14 +150,12 @@ export default function AddTransactionScreen() {
   const [usual, setUsual] = useState<RepeatEntry[]>([]);
   const [searchFocused, setSearchFocused] = useState(false);
 
-  // The pad is up for a new entry straight away (the amount is what every
-  // entry needs first); an edit opens without it, since it's often only the
-  // category or date changing — tapping the amount brings it up.
+  // The pad is up straight away for a new entry (amount comes first); an edit opens without it since often
+  // only the category/date changes — tapping the amount raises it.
   const [padOpen, setPadOpen] = useState(!editingId);
   const [noteEditing, setNoteEditing] = useState(false);
-  // Closing the keyboard (back gesture, or its own down key) ends typing in
-  // the category search or the note, so the number pad comes back — Android
-  // leaves the field focused without this, and the pad stayed hidden.
+  // Closing the keyboard (back gesture or down key) ends typing in category search/note, so the pad
+  // returns; Android leaves the field focused otherwise and the pad stayed hidden.
   useOnKeyboardHide(() => {
     setSearchFocused(false);
     setNoteEditing(false);
@@ -182,10 +180,8 @@ export default function AddTransactionScreen() {
   const amountValue = evaluateAmount(expr);
   const amountMinor = amountValue === null ? 0 : toMinor(amountValue);
 
-  // Only expense/income have a "usual amount for this category" in the
-  // first place — transfers move whatever the transfer needs to move, and
-  // friend entries are keyed to a person, not a category. Re-fetches on
-  // every categoryId change, which is exactly when it needs to be different.
+  // Only expense/income have a "usual amount for this category"; transfers and friend entries (keyed to a
+  // person) don't. Re-fetches on every categoryId change, which is exactly when it differs.
   useEffect(() => {
     if ((type !== 'expense' && type !== 'income') || !categoryId) {
       setFrequentAmounts([]);
@@ -218,9 +214,8 @@ export default function AddTransactionScreen() {
     };
   }, [type, editingId]);
 
-  // A new entry's account follows its category: the account that category
-  // was last used with (Food usually goes on the same card) — until you pick
-  // an account yourself.
+  // A new entry's account follows its category (the account that category was last used with) until you
+  // pick an account yourself.
   useEffect(() => {
     if (editingId || accountPickedByHand.current || !categoryId) return;
     if (type !== 'expense' && type !== 'income') return;
@@ -237,11 +232,8 @@ export default function AddTransactionScreen() {
   }, [categoryId, type, accounts, editingId]);
 
   /**
-   * Pre-selects the account this entry type was last saved with, skipping one
-   * that no longer fits (gone, or a savings account for an expense/income,
-   * which can't hold one) — that falls back to the first spendable account.
-   * The category always starts empty: you pick what this entry is for, rather
-   * than correcting a guess from the last one.
+   * Pre-selects the account this entry type was last saved with, skipping one that no longer fits (gone, or
+   * savings for expense/income) for the first spendable one. The category always starts empty.
    */
   const applyDefaults = useCallback((t: EntryType, accs: Account[]) => {
     if (t === 'friend') return;
@@ -355,13 +347,8 @@ export default function AddTransactionScreen() {
     [categories, type]
   );
 
-  // Savings accounts aren't spendable directly — money has to be transferred
-  // out to a bank/cash/wallet account first, so expense/income/friend entries
-  // only offer non-savings accounts. Transfers still see every account, since
-  // that's the only way money moves in or out of savings. createTransaction
-  // (src/db/ledger.ts) enforces this too, so a legacy expense/income row
-  // still pointing at a savings account gets reassigned to a spendable one
-  // the moment it's opened for edit rather than being re-savable as-is.
+  // Savings accounts aren't directly spendable: expense/income/friend entries offer only non-savings
+  // accounts, transfers all. createTransaction (src/db/ledger.ts) enforces it too.
   const spendableAccounts = useMemo(() => accounts.filter((a) => a.type !== 'savings'), [accounts]);
   const pickableAccounts = type === 'transfer' ? accounts : spendableAccounts;
   const effectiveAccountId =
@@ -443,10 +430,8 @@ export default function AddTransactionScreen() {
     );
 
   /**
-   * True (and shows a note) when `row` looks like one already saved in the
-   * last 30 minutes or already on the list below — the first Save only
-   * warns. Tapping Save again for the same entry goes ahead. Friend entries
-   * and edits aren't checked.
+   * True (with a note) when `row` looks like one saved in the last 30 minutes or already listed below; the
+   * first Save only warns, a second goes ahead. Friend entries and edits aren't checked.
    */
   const warnIfRepeat = async (row: Staged): Promise<boolean> => {
     if (editing || row.kind !== 'transaction') return false;
@@ -548,10 +533,8 @@ export default function AddTransactionScreen() {
     return created.id;
   };
 
-  // A brief "done" checkmark (PrimaryButton's own `done` prop) before
-  // navigating back, instead of the screen vanishing the instant the write
-  // finishes — the data is already saved by this point, so the short delay
-  // is purely a felt confirmation.
+  // A brief "done" checkmark (PrimaryButton `done`) before navigating back; the data is already saved, so
+  // the delay is purely felt confirmation.
   const goBackAfterSave = () => {
     setSaveDone(true);
     setTimeout(() => router.back(), 320);
@@ -879,9 +862,8 @@ export default function AddTransactionScreen() {
         ) : (
           <>
             {pickableAccounts.length === 0 && (
-              // Nothing to record this against yet — used to surface only as a
-              // "Pick an account" error on Save. Opens the same Add Account form
-              // Profile uses, right here.
+              // Nothing to record this against yet (previously only a "Pick an account" error on Save):
+              // opens the same Add Account form Profile uses, right here.
               <SoftCard backgroundColor={theme.colors.primaryTint} padding={14} style={styles.noAccountCard}>
                 <Text style={styles.noAccountTitle}>
                   {accounts.length === 0 ? 'Add your first account' : 'Add a spendable account'}

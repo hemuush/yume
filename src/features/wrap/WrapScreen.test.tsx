@@ -1,9 +1,6 @@
 /**
- * The Wrap screen's flows: a month Wrap marks that month's review seen as
- * soon as it plays (so Home has dropped the row by the time you're back),
- * "See the full report" goes to the Reports tab on that exact month or week
- * without stacking a second copy of the tabs, and nothing-to-play or a
- * failed load says so with a way out. All figures are made up.
+ * Wrap flows: a month Wrap marks its review seen as soon as it plays; "See the full report" opens Reports on that
+ * month/week without stacking a second tabs copy; nothing-to-play or a failed load says so. Made-up figures.
  */
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
 import { Text } from 'react-native';

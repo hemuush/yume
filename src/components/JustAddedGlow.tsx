@@ -9,10 +9,8 @@ const HOLD_MS = 450;
 const FADE_MS = 900;
 
 /**
- * A soft gold wash behind a row you just saved on Add, fading after a
- * moment, so you see where the entry landed (lib/justAdded). Put it as the
- * row's first child: it fills the row and sits behind the row's content.
- * Reduce motion: the wash shows and then goes, with no fade.
+ * A soft gold wash behind a row just saved on Add, fading after a moment (lib/justAdded). Make it the row's
+ * first child: it fills the row behind the content. Reduce motion: shows then goes, no fade.
  */
 export function JustAddedGlow({ ids, surface }: { ids: string[]; surface: JustAddedSurface }) {
   const reduce = useReduceMotion();

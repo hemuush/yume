@@ -1,7 +1,6 @@
 /**
- * Reports' range sheet: the first tap is the start and the second the end
- * (swapping if tapped backwards), a quick pick fills both, a finished range
- * restarts on the next tap, and days after today can't be picked.
+ * Reports' range sheet: first tap is the start, second the end (swapped if backwards), a quick pick fills
+ * both, a finished range restarts on the next tap, and days after today can't be picked.
  */
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
 import { Text } from 'react-native';

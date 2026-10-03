@@ -1,9 +1,6 @@
 /**
- * A person's money life, step by step, on a real SQLite engine. After every
- * step the same facts are read the way each screen reads them — account
- * balances (Profile / Home), the period summary (Home / Reports), a budget's
- * spend (Budgets), the carry into the next month (Home) — and compared with an
- * independently kept running total, so any two screens that could disagree do.
+ * A person's money life on real SQLite, step by step. After each step the facts each screen reads (balances,
+ * period summary, budget spend, carry) are compared to an independent running total, so disagreement fails.
  */
 import { createRealDataTestDb } from '@/test-support/realDataTestDb';
 

@@ -4,9 +4,8 @@ import { DURATIONS } from './motionTimings';
 import { useReduceMotion } from './useReduceMotion';
 
 /**
- * The last value each bar or ring showed, for as long as the app is open.
- * Module state on purpose: it has to outlive the component, which unmounts
- * when you leave the screen and mounts fresh when you come back.
+ * The last value each bar or ring showed, for as long as the app is open. Module state on purpose: it must
+ * outlive the component, which unmounts when you leave the screen.
  */
 const lastShown = new Map<string, number>();
 
@@ -16,14 +15,8 @@ export function resetGrowMemory(): void {
 }
 
 /**
- * A bar's or ring's value that grows from what it showed last time (the
- * Quiet motion sign-off): the first time a `key` is seen after the app
- * opens it draws in from 0; after that, coming back to the screen moves
- * nothing, and a real change (money added, a new month) glides from the old
- * value to the new one. Reduce motion: always the plain end value.
- *
- * Core `Animated` (not Reanimated), with `useNativeDriver: false`, since it
- * drives widths and SVG props.
+ * A bar/ring value that grows from what it showed last: a new `key` draws in from 0, returning moves nothing,
+ * a real change glides old → new; reduce motion = end value. Core `Animated`, JS driver (widths/SVG props).
  */
 export function useGrowFrom(
   key: string,

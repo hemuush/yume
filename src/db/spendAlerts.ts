@@ -21,26 +21,16 @@ import { toLocalIsoDate } from '@/lib/date';
 /** Budget and spending-jump checks run right after an expense is saved (re-exported from ./ledger). */
 
 /**
- * After an expense is recorded, checks whether its category's budget just
- * passed 80% or went over, and whether the category's spend this month has
- * grown well past last month's. Anything found is queued rather than sent:
- * it goes out at the next notification time, merged with whatever else is due
- * then, so an expense never fires a notification on the spot (see
- * planNotifications). Always ends by rebuilding the notifications, since a
- * new expense also changes what the evening nudge should do.
+ * After an expense, checks its category's budget (80%/over) and month-over-month spend jump. Alerts are queued
+ * for the next notification time, not sent immediately (see planNotifications); always rebuilds notifications.
  */
 export async function queueSpendAlerts(categoryId: string): Promise<void> {
   try {
     const prefs = await getNotificationPrefs();
     if (!prefs.overspendAlerts) return;
 
-    // getPeriodComparison's categoryBreakdown is rolled up to top-level
-    // categories (a subcategory's spend is folded into its parent's row) —
-    // resolving the transaction's own category to its top-level ancestor
-    // here too, otherwise a subcategory-tagged expense (e.g. "Zomato") could
-    // never match `top.categoryId` (always a parent id like "Food & Dining")
-    // and this alert would silently stop firing for anything tagged with a
-    // subcategory.
+    // getPeriodComparison's breakdown is rolled up to top-level categories, so resolve this category to its
+    // top-level ancestor too, or a subcategory expense (e.g. "Zomato") would never match `top.categoryId`.
     const db = await getDb();
     const row = await db.getFirstAsync<{ parent_id: string | null }>(
       'SELECT parent_id FROM categories WHERE id = ?',
@@ -64,9 +54,8 @@ export async function queueSpendAlerts(categoryId: string): Promise<void> {
 }
 
 /**
- * A budget passing 80% of its limit, and one going over — each at most once
- * per budget per month (see dueBudgetNudge). A budget on the category itself
- * wins; otherwise its parent's, which counts subcategory spending too.
+ * A budget passing 80% of its limit, and going over: each once per budget per month (see dueBudgetNudge).
+ * A budget on the category itself wins; otherwise its parent's, which counts subcategory spending too.
  */
 async function budgetAlertFor(
   categoryId: string,
@@ -110,10 +99,8 @@ async function spikeAlertFor(topLevelCategoryId: string, queuedAt: string): Prom
   );
   if (!top || top.categoryId !== topLevelCategoryId) return null;
 
-  // Without this, the same category being "this month's top grower" would
-  // queue a fresh alert after every single transaction logged anywhere that
-  // month. One alert per category per calendar month is enough to be useful
-  // without being noisy.
+  // One alert per category per month: otherwise the same top grower would queue a fresh alert after every
+  // transaction logged that month.
   const monthKey = `${topLevelCategoryId}:${toLocalIsoDate(new Date()).slice(0, 7)}`;
   if ((await getLastOverspendNotified()) === monthKey) return null;
   await setLastOverspendNotified(monthKey);

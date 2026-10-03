@@ -30,11 +30,8 @@ function soonerLabel(days: number): string {
 }
 
 /**
- * A non-destructive sandbox: pick a category, try cutting its spend by a
- * percentage, see how much sooner a savings goal lands. Nothing here is
- * saved — every number is recomputed client-side from data the app
- * already has (src/lib/whatIf.ts), the same way the slider in the design
- * sign-off never touched the database.
+ * Non-destructive sandbox: pick a category, cut its spend by a percentage, see how much sooner a savings
+ * goal lands. Nothing is saved; numbers are recomputed client-side from existing data (src/lib/whatIf.ts).
  */
 export default function WhatIfScreen() {
   const insets = useSafeAreaInsets();
@@ -62,11 +59,8 @@ export default function WhatIfScreen() {
     setGrowth(Object.fromEntries(followed));
     setCategories(spendable);
     setGoals(openGoals);
-    // Falls back to the first item both when nothing's picked yet AND when
-    // the previously-picked one dropped out of this fresh list (its spend
-    // went to 0, or the goal it pointed at was just finished/archived) —
-    // otherwise a stale id survives with nothing in the list to match it,
-    // and every chip below renders with none of them active.
+    // Falls back to the first item when nothing is picked or the picked one left the list (spend went to 0,
+    // goal finished/archived); otherwise a stale id survives and no chip renders active.
     setCategoryId((prev) => {
       if (prev && spendable.some((c) => c.categoryId === prev)) return prev;
       if (askedCategoryId && spendable.some((c) => c.categoryId === askedCategoryId)) return askedCategoryId;

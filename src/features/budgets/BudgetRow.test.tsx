@@ -1,11 +1,6 @@
 /**
- * Smoke-renders BudgetRow across on-track, over-budget, and rollover shapes.
- * Mirrors src/features/goals/GoalRing.test.tsx — the same class of bug
- * (BudgetRow, GoalCard, and GoalChip all mismatched react-native-reanimated's
- * `createAnimatedComponent` with usePressScale's React-Native-core Animated
- * values, a native-level incompatibility that crashed release builds
- * silently) would have shown up here immediately if this render test had
- * existed before it shipped.
+ * Smoke-renders BudgetRow (on-track, over-budget, rollover). Guards the bug where reanimated's
+ * `createAnimatedComponent` was mixed with usePressScale's core Animated values, crashing release builds.
  */
 import { Text } from 'react-native';
 import { create, act, ReactTestRenderer } from 'react-test-renderer';

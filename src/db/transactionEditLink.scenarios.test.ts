@@ -1,12 +1,6 @@
 /**
- * Coverage for the one write path flagged as completely untested:
- * updateTransaction, deleteTransaction, and getTransactionLink — the whole
- * edit/delete-guard system behind every transaction row's tap target.
- * Covers every linkage kind (plain, loan-EMI, person-ledger,
- * loan-disbursement/prepayment) and every type-conversion a plain edit can
- * make (expense↔income↔transfer), since a category left over from before a
- * type switch attaching to the wrong kind of transaction was a real bug
- * fixed earlier in this app's history.
+ * updateTransaction, deleteTransaction, getTransactionLink (the edit/delete guard behind every row): every
+ * linkage kind (plain, EMI, person, disbursement/prepayment) and each expense↔income↔transfer conversion.
  */
 import { createRealDataTestDb } from '@/test-support/realDataTestDb';
 

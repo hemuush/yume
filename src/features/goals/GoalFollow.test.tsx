@@ -1,8 +1,6 @@
 /**
- * Goals that follow an account, on screen: the card says which account it
- * follows and its button moves money there instead of "Add money"; the
- * new-goal form starts a savings account on Follow, saves the choice, and
- * warns when another goal already follows the same account.
+ * Account-following goals: the card names the account and its button moves money there; the new-goal form
+ * starts a savings account on Follow, saves the choice, and warns if another goal follows the same account.
  */
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
 import { Text } from 'react-native';

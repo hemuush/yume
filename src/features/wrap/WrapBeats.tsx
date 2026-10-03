@@ -567,10 +567,8 @@ function cardLine(wrap: Wrap): string | null {
 }
 
 /**
- * The closing beat (Direction A): the period in short as a card — what went
- * out, how it compared, the top three categories — with Share, which sends
- * the card as a picture through Android's share sheet (nothing leaves the
- * phone unless you pick somewhere to send it), and the full report.
+ * The closing beat: the period as a card (what went out, comparison, top three categories) with Share, which
+ * sends the card as a picture via Android's share sheet (nothing leaves the phone unless you choose), and the report.
  */
 export function FinalBeat({
   wrap,

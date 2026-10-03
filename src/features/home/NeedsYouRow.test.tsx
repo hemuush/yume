@@ -1,15 +1,11 @@
 /**
- * Render test for the Needs you row on the bell's screen: the same
- * smoke-render guard BudgetRow/GoalRing have (a Reanimated/core-Animated
- * mismatch once crashed release builds silently), plus the row's contract:
- * its title and detail, "Later" only on a snoozable item, a dismiss button
- * only when it can be dismissed, and the right callback per tap.
+ * Needs you row on the bell screen: smoke-render guard (a Reanimated/core-Animated mismatch once crashed).
+ * Contract: title/detail, "Later" only if snoozable, dismiss only if dismissible, right callback per tap.
  */
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
 
-// The first render loads React Native's component tree, which on a cold, fully
-// parallel run (CI, or the whole suite at once) can take longer than Jest's
-// 5s default — seen failing that way, never on its own. Generous, not slow.
+// First render loads RN's component tree, which can top Jest's 5s default on a cold parallel run (CI).
+// Generous, not slow.
 jest.setTimeout(30000);
 import { Text } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
@@ -57,9 +53,8 @@ async function render(
 const texts = (tree: ReactTestRenderer) =>
   tree.root.findAllByType(Text).map((t) => [].concat(t.props.children).join(''));
 
-// Loads React Native's lazily-required components once, up front, with a
-// generous budget: on a cold, fully parallel run (CI) their first load can
-// outlast a single test's time limit, which failed this file intermittently.
+// Preloads RN's lazily-required components once with a generous budget: on a cold parallel run (CI) their
+// first load can outlast one test's time limit and fail this file intermittently.
 beforeAll(async () => {
   await render(emi);
 }, 180000);

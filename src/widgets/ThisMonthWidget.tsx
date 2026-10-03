@@ -15,11 +15,8 @@ import type { ThisMonthWidgetData } from './data';
 const RING = 92;
 
 /**
- * "This Month" — the 4×2 widget, Home's month card in small (the Home A
- * widgets sign-off): the month ring (spent, moved to savings, free to use,
- * in the theme pack's colours) with the share kept on its cream face, the
- * three figures beside it as tinted tiles, and Home's pace line. Taps open
- * the app — Home is where this card lives.
+ * "This Month" 4×2 widget, Home's month card in small: the month ring with the kept share on its face,
+ * three figures as tinted tiles, and Home's pace line. Taps open the app.
  */
 export function ThisMonthWidget(data: ThisMonthWidgetData) {
   const {

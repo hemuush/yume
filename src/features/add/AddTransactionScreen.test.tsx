@@ -1,14 +1,6 @@
 /**
- * The Add screen's save paths, with the data layer mocked:
- *   - a new expense saves with the remembered account/category, remembers
- *     them again, and goes back
- *   - a missing amount or category shows an error and saves nothing
- *   - staged entries save together; if one fails, only the unsaved ones stay
- *   - a friend entry without an account only adjusts the person's balance
- *   - editing updates the transaction instead of creating one
- *   - the number pad does sums; the repeat check warns once, then saves
- *   - the account follows the category until you pick one yourself
- *   - "Your usual" fills category, amount and account; the search finds subcategories
+ * The Add screen's save paths with the data layer mocked: save/edit, validation errors, staged batches,
+ * friend entries, number-pad sums, repeat-check warning, account-follows-category, "Your usual" and search.
  */
 import { create, act, ReactTestRenderer, ReactTestInstance } from 'react-test-renderer';
 import { Keyboard, Text } from 'react-native';

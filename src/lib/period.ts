@@ -4,11 +4,8 @@ import { toLocalIsoDate, addDaysToIsoDate, addMonthsToIsoDate, parseLocalIsoDate
 export type PeriodGranularity = 'month' | 'year';
 
 /**
- * A browsable point in time: which calendar month/year the user is currently
- * looking at, expressed as an offset from today rather than an absolute date
- * so "step back one" is always correct across year boundaries and month
- * lengths. Shared by Home, Reports and Transactions so all three agree on
- * what "the period you're looking at" means.
+ * A browsable point in time: the month/year being viewed, stored as an offset from today so stepping back is
+ * always correct across years and month lengths. Shared by Home, Reports and Transactions so all three agree.
  */
 export interface PeriodCursor {
   granularity: PeriodGranularity;
@@ -81,9 +78,8 @@ export function stepPeriod(cursor: PeriodCursor, delta: -1 | 1): PeriodCursor {
 }
 
 /**
- * Switching month↔year resets to the current period rather than trying to
- * translate the offset — "3 months back" has no meaningful year equivalent,
- * and silently landing on 2023 would be more surprising than landing on today.
+ * Switching month↔year resets to the current period instead of translating ("3 months back" has no year
+ * equivalent, and silently landing on 2023 would surprise more than today).
  */
 export function setGranularity(cursor: PeriodCursor, granularity: PeriodGranularity): PeriodCursor {
   if (cursor.granularity === granularity) return cursor;
@@ -128,9 +124,8 @@ export function windowRange(w: ReportWindow, reference: Date = new Date()): Date
 }
 
 /**
- * A custom range moved by its own length: whole months step by that many
- * months (so a financial year steps to the next financial year, and
- * "last 3 months" to the 3 before), anything else by its number of days.
+ * A custom range moves by its own length: whole-month ranges step that many months (a financial year → the
+ * next one, "last 3 months" → the 3 before); anything else steps by its number of days.
  */
 export function shiftCustomRange(range: CustomRange, delta: -1 | 1): CustomRange {
   const months = wholeMonths(range.start, range.end);

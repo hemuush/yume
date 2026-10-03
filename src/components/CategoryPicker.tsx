@@ -34,13 +34,8 @@ interface Props {
 }
 
 /**
- * Shows top-level categories only, by default — the same ~24-item grid from
- * before subcategories existed. Selecting a category that has subcategories
- * reveals them in a second, smaller row right beneath, so refining to a
- * specific one ("Zomato" under "Food & Dining") is an extra tap away rather
- * than every subcategory permanently occupying a slot in the main grid
- * alongside every top-level category. Replaces three near-duplicate
- * category pickers (New Transaction, Add Past Data, Recurring).
+ * Shows top-level categories only; selecting one with subcategories reveals them in a smaller row beneath,
+ * so subcategories ("Zomato" under "Food & Dining") don't each take a slot in the main grid.
  */
 export function CategoryPicker({
   categories,
@@ -70,10 +65,8 @@ export function CategoryPicker({
     return selected.parentId ?? (childrenOf(categories, selected.id).length ? selected.id : null);
   });
 
-  // Keeps the right group expanded when `selectedId` changes from outside
-  // this component (editing an existing transaction whose category is a
-  // subcategory, or the host form resetting to null) — not just from taps
-  // handled locally below.
+  // Keeps the right group expanded when `selectedId` changes from outside (editing a subcategory
+  // transaction, or the host form resetting to null), not just on local taps.
   useEffect(() => {
     if (!selectedId) {
       setExpandedParentId(null);
@@ -83,9 +76,7 @@ export function CategoryPicker({
     if (!selected) return;
     if (selected.parentId) setExpandedParentId(selected.parentId);
     else setExpandedParentId(childrenOf(categories, selected.id).length ? selected.id : null);
-    // Only re-derive when the selection itself changes — `categories` is
-    // re-filtered/re-created every render by the caller but its actual
-    // contents don't change while a picker is open.
+    // Re-derive only when the selection changes; the caller re-creates `categories` every render.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedId]);
 

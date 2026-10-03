@@ -1,7 +1,6 @@
 /**
- * The Tidy up screen, with its data mocked: it lists what was found, each
- * fix calls the right thing and offers an undo, "keep" choices are saved,
- * and it says "All tidy" when there's nothing.
+ * Tidy up screen with mocked data: lists what was found, each fix calls the right thing and offers undo,
+ * "keep" choices are saved, and it says "All tidy" when empty.
  */
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
 import { Text } from 'react-native';

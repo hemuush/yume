@@ -18,21 +18,13 @@ interface ToastState {
 
 const UndoToastContext = createContext<{ show: (message: string, onUndo: () => void) => void } | null>(null);
 
-// Long enough to read and react to, short enough that it never feels like it
-// overstayed — the same beat Gmail/Apple Mail's own undo-send window lands
-// in.
+// Long enough to read and react to, short enough not to overstay (about the Gmail/Apple Mail
+// undo-send window).
 const AUTO_DISMISS_MS = 4000;
 
 /**
- * Mounted once near the root (`app/_layout.tsx`), so any screen can call
- * `useUndoToast().show(...)` after a delete without prop-drilling a toast
- * down through every modal that might trigger one. A second delete while one
- * is already showing used to just replace it outright — silently discarding
- * the still-live ability to undo the first delete, even though that row was
- * only ever removed moments ago. Instead, only one toast is ever on screen
- * at a time, but a delete that lands while another is still showing joins a
- * queue and gets its own full `AUTO_DISMISS_MS` window once its turn comes,
- * so no undo is ever dropped without the user having actually seen it.
+ * Mounted once at the root so any screen can call `useUndoToast().show(...)` after a delete. One toast at a
+ * time: a delete landing while one shows is queued and gets its own full `AUTO_DISMISS_MS` (no undo dropped).
  */
 export function UndoToastProvider({ children }: { children: React.ReactNode }) {
   const [toast, setToast] = useState<ToastState | null>(null);
@@ -51,9 +43,8 @@ export function UndoToastProvider({ children }: { children: React.ReactNode }) {
     setQueuedCount(queue.current.length);
     if (next) timer.current = setTimeout(() => showNextRef.current(), AUTO_DISMISS_MS);
   }, []);
-  // A ref is only ever safe to write outside render (`showNext`'s identity
-  // never actually changes — it closes over nothing but stable refs and
-  // setState functions — but this keeps the write out of the render body).
+  // Refs are only safe to write outside render; `showNext` is stable (closes over refs and setState only),
+  // so this keeps the write out of the render body.
   useEffect(() => {
     showNextRef.current = showNext;
   }, [showNext]);

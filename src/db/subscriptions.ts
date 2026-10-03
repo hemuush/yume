@@ -3,10 +3,8 @@ import { RecurringRule } from '@/types';
 import { toLocalIsoDate, addDaysToIsoDate, addMonthsToIsoDate } from '@/lib/date';
 
 /**
- * Subscriptions and bills on the Recurring screen: what the running expense
- * rules add up to, and entries that look like they should have a rule but
- * don't. Entries stay manual — this only ever suggests; "Make recurring"
- * opens the ordinary rule form for the person to check and save.
+ * Subscriptions and bills on the Recurring screen: what running expense rules add up to, and entries that look
+ * like they need a rule but lack one. Only ever suggests; "Make recurring" opens the ordinary rule form.
  */
 
 /** How many times a rule runs in an average month (a month ≈ 30.44 days). */
@@ -30,9 +28,8 @@ export interface SubscriptionTotals {
 }
 
 /**
- * What the running expense rules cost a month and a year. Weekly, daily and
- * yearly rules count at their monthly share; paused rules, income and
- * transfers don't count. Rounded to whole units of the minor amount.
+ * Monthly and yearly cost of running expense rules (weekly/daily/yearly at their monthly share); paused rules,
+ * income and transfers don't count. Rounded to whole minor units.
  */
 export function subscriptionTotals(rules: RecurringRule[]): SubscriptionTotals {
   const running = rules.filter((r) => r.active && r.type === 'expense');
@@ -98,9 +95,8 @@ const suggestionFrom = (e: EntryRow, source: SubscriptionSuggestion['source'], m
 });
 
 /**
- * Anything filed under a Subscriptions subcategory (or under Subscriptions
- * itself, when it has none) in the last `days` days that has no running rule. The
- * newest entry of each stands in for it.
+ * Entries in the last `days` days under a Subscriptions subcategory (or Subscriptions if it has none) with no
+ * running rule; the newest entry of each stands in for it.
  */
 export async function findUnscheduledSubscriptions(
   days = 60,
@@ -141,12 +137,8 @@ const PATTERN_DAY_TOLERANCE = 5;
 export const PATTERN_MIN_MONTHS = 3;
 
 /**
- * The same charge, once a month, for at least three months running: the
- * same category, within 10% of the latest amount and a few days of the same
- * day of the month, with the latest in this month or last month (so a
- * cancelled one stops showing). Loan instalments and categories that
- * already have a rule are left out. Needs history, so on a new install it
- * finds nothing for a while — by design.
+ * Same charge monthly for 3+ months: same category, within 10% of the latest amount, near its day-of-month,
+ * latest this/last month. Skips loan instalments and ruled categories; needs history (empty on new installs).
  */
 export async function findMonthlyPatterns(
   today: string = toLocalIsoDate(new Date())

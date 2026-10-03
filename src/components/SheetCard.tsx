@@ -7,11 +7,8 @@ import { shade } from '@/lib/color';
 import type { McIconName } from '@/components/iconName';
 
 /**
- * The card a sheet opens on (the calm-sheets sign-off, Direction C): the
- * entry drawn like Home's account cards — a soft gradient in its own colour
- * (the category's, the account type's, the loan's), two white circles in the
- * corner, a round white icon, and the amount big. On a form it's a live
- * preview that fills in as you type.
+ * The card a sheet opens on: the entry drawn like Home's account cards (soft gradient in its own colour,
+ * two white corner circles, round white icon, big amount). On a form it's a live preview as you type.
  */
 export function SheetCard({
   hue,

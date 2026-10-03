@@ -14,7 +14,10 @@ export interface TimelineRow extends TimelineInput {
 
 export interface Timeline {
   rows: TimelineRow[];
-  /** Years under the bar axis after "Now": the middle one (null when it would repeat a neighbour) and the last. */
+  /**
+   * Years under the bar axis after "Now": the middle one (null when it would repeat a neighbour) and the
+   * last.
+   */
   midYear: number | null;
   endYear: number;
 }

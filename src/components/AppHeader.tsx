@@ -20,20 +20,15 @@ interface Props {
   /** Screen-specific action (e.g. an AddButton), placed left of the profile button. */
   right?: React.ReactNode;
   /**
-   * Suppresses the profile avatar button — for the Profile screen itself,
-   * which would otherwise show a button whose destination is the screen
-   * already on-screen.
+   * Hides the profile avatar button (for the Profile screen itself, whose button would point at the
+   * screen already shown).
    */
   hideUser?: boolean;
 }
 
 /**
- * The one header every screen uses. The profile button sits in the same
- * place on every screen — a fixed anchor to "you" that the user can reach
- * without first working out which screen they're on — so it's rendered here
- * rather than left to each screen to remember. Settings used to live here
- * too, but it pointed at the same place from every screen including
- * Settings itself; it now only lives inside Profile.
+ * The one header every screen uses. The profile button sits in the same place everywhere as a fixed anchor;
+ * Settings is reachable only from Profile (a header link to it was circular from Settings itself).
  */
 export function AppHeader({ title, showBack, right, hideUser }: Props) {
   const insets = useSafeAreaInsets();
@@ -67,11 +62,8 @@ export function AppHeader({ title, showBack, right, hideUser }: Props) {
 }
 
 /**
- * One-tap "hide savings & investment amounts" toggle. Deliberately not part
- * of the base header on every screen (it crowded the header row and didn't
- * read as core navigation next to profile/settings) — Profile and Settings
- * opt into it explicitly via `right`. Shares state with the same toggle in
- * Settings' own row (both read/write the one global setting).
+ * One-tap "hide savings & investment amounts" toggle, sharing state with Settings' row. Not in the base
+ * header (it crowded the row); Profile and Settings opt in via `right`.
  */
 export function HeaderPrivacyToggle() {
   const { hideAmounts, toggleHideAmounts } = usePrivacy();
@@ -87,11 +79,8 @@ export function HeaderPrivacyToggle() {
 /** The profile button — an avatar bubble showing the user's initial, accent-filled. */
 export function HeaderUserButton({ soft }: { soft?: boolean } = {}) {
   const { accent, onAccent } = useAccent();
-  // getCachedUserName() is a plain module-level cache, not reactive state —
-  // reading it once at mount (as this used to) meant editing your name on
-  // the Profile screen left every already-mounted header (Home, Loans,
-  // Transactions, Reports tabs) showing the old initial until something
-  // else happened to re-render them. Re-read on every focus instead.
+  // getCachedUserName() is a non-reactive module cache, so re-read it on every focus: a name edited in
+  // Profile must update the initial in every already-mounted header (Home, Loans, Transactions, Reports).
   const [name, setName] = useState(() => getCachedUserName());
   useFocusEffect(
     useCallback(() => {
@@ -100,9 +89,8 @@ export function HeaderUserButton({ soft }: { soft?: boolean } = {}) {
   );
   const initial = name?.trim().charAt(0).toUpperCase();
   const { animatedStyle, onPressIn, onPressOut } = usePressScale();
-  // Profile opens Loans, People, Categories and Backup, whose headers have
-  // this button too: return to Profile when it's already open below rather
-  // than stacking Profile → Loans → Profile → … without end.
+  // Profile opens Loans, People, Categories and Backup, whose headers have this button too: return to an
+  // already-open Profile instead of stacking Profile -> Loans -> Profile endlessly.
   const returnOrPush = useReturnOrPush();
   return (
     <AnimatedPressable

@@ -36,12 +36,8 @@ function resolveDate(day: number, month: number, today: string): string | null {
 }
 
 /**
- * Activity search's query, understood: a day ("24 sep", "sep 24", "24/9")
- * becomes a date filter, and each remaining word is matched as text — plus,
- * when it's a number ("184", "₹1,807"), as an amount. A whole number matches
- * every amount that shows as that many rupees (₹183.50 up to ₹184.49, since
- * amounts are shown rounded); one with paise matches exactly. A month on its
- * own ("sep") stays a plain word, as before.
+ * Activity search query: a day ("24 sep", "sep 24", "24/9") becomes a date filter, other words match as text,
+ * and numbers match amounts too: a whole one matches what shows as it (₹183.50-₹184.49); paise are exact.
  */
 export function parseSearchQuery(query: string, today: string = toLocalIsoDate(new Date())): ParsedSearch {
   let rest = ` ${query.trim()} `;

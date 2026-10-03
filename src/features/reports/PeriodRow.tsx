@@ -19,9 +19,8 @@ const GRANULARITIES = [
 ] as const;
 
 /**
- * The period switcher: ‹ September 2026 › (tap or swipe), plus Month / Year
- * / Custom. Custom opens a range sheet; its arrows then step by the range's
- * own length. Month and Year go back to the current month or year.
+ * The period switcher: ‹ September 2026 › (tap or swipe), plus Month / Year / Custom. Custom opens a range
+ * sheet and its arrows step by the range's length; Month and Year return to the current month or year.
  */
 export function PeriodRow({
   cursor,

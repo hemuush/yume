@@ -13,10 +13,8 @@ function dayCount(w: { start: string; end: string }): number {
 }
 
 /**
- * A thin rail under the period arrows: one segment per week of the month,
- * sized by how many days it holds (so a 3-day first week looks short). The
- * week on screen is dark, today's week carries a dot, and weeks that haven't
- * started are faint. Tapping a segment jumps to that week.
+ * Thin rail under the period arrows: a segment per week, sized by its days (a 3-day first week looks short).
+ * Shown week dark, today's week dotted, future weeks faint; tapping a segment jumps to that week.
  */
 export function WeekRail({
   week,

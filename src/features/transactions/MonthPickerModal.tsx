@@ -10,9 +10,8 @@ import { MONTH_NAMES } from './transactions.constants';
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 /**
- * A month grid + year stepper for jumping the day-strip straight to any
- * past month in one tap — the ‹ › arrows alone stepped 7 days at a time,
- * so reaching January from September meant repeatedly tapping ‹ eight times.
+ * Month grid + year stepper to jump the day-strip to any past month in one tap,
+ * since the ‹ › arrows only stepped 7 days at a time.
  */
 export function MonthPickerModal({
   visible,
@@ -43,9 +42,8 @@ export function MonthPickerModal({
   const currentMonth = todayDate.getMonth();
 
   const pickMonth = (monthIndex: number) => {
-    // Lands on the month's last day (or today, if that month is still in
-    // progress) — the 7-day window then reads backward from there, showing
-    // that month's final week rather than an arbitrary mid-month slice.
+    // Lands on the month's last day (or today, if that month is in progress), so the 7-day window reads
+    // backward from there and shows that month's final week rather than an arbitrary mid-month slice.
     const lastDayOfMonth = new Date(year, monthIndex + 1, 0);
     onPick(lastDayOfMonth > todayDate ? todayDate : lastDayOfMonth);
   };

@@ -11,9 +11,8 @@ import { GoalRing, HiddenGoalRing } from './GoalRing';
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 /**
- * Home's compact preview of a goal — for the horizontal "Savings goals" strip.
- * With savings amounts hidden, the saved amount and the progress ring are
- * withheld (an empty track with an eye-off icon); only the target shows.
+ * Home's compact goal preview for the "Savings goals" strip. With savings amounts hidden, the saved amount
+ * and ring are withheld (empty track, eye-off icon); only the target shows.
  */
 export function GoalChip({ goal, onPress }: { goal: SavingsGoal; onPress: () => void }) {
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.96);

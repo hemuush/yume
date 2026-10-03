@@ -7,17 +7,8 @@ import { SavingsGoal } from '@/types';
 import { valuationAdjSql } from './valuationSql';
 
 /**
- * A target you're saving toward, tracked one of two ways:
- *
- * - By hand (the default): its own `current_amount_minor`, moved by "+ Add
- *   money" — deliberately not a ledger of contribution rows (there's no such
- *   table, unlike `loan_payments` or `person_ledger_entries`). Nothing here
- *   creates a transaction, so adding to a goal can never be confused with
- *   actually moving money. A linked account is then only a label.
- * - Following its linked account (`track_account = 1`): progress is that
- *   account's balance, worked out on every read the same way
- *   `getAccountBalance` does, so an entry or transfer moves the goal with no
- *   extra step. `current_amount_minor` is left untouched meanwhile.
+ * Savings target, by hand (`current_amount_minor`, creates no transaction) or, with `track_account = 1`,
+ * following the linked account's live balance (as getAccountBalance); the manual amount is then left alone.
  */
 
 /** Reads SELECTed through GOAL_SELECT: the goal's row plus its account's balance when it follows one. */
@@ -135,10 +126,8 @@ export async function updateSavingsGoal(id: string, input: SavingsGoalInput): Pr
 }
 
 /**
- * Adds (or, with a negative amount, removes — for correcting a mis-entered
- * contribution) money toward a goal. Clamped so it never goes below zero;
- * deliberately allowed to exceed the target, since saving more than planned
- * is a real outcome, not an error — the UI just caps the displayed percent.
+ * Adds (negative removes, to correct a mistake) money toward a goal. Clamped at zero; may exceed the target on
+ * purpose (saving more than planned is valid; the UI caps the displayed percent).
  */
 export async function contributeToGoal(id: string, deltaMinor: number): Promise<void> {
   if (!Number.isFinite(deltaMinor) || deltaMinor === 0) {
@@ -161,13 +150,8 @@ export async function contributeToGoal(id: string, deltaMinor: number): Promise<
 }
 
 /**
- * Flips `letter_revealed` to 1, exactly once — called right after
- * `contributeToGoal` when the caller (`ContributeModal`) detects a
- * contribution just crossed the goal's target for the first time and a
- * `noteToSelf` exists. That crossing check lives client-side, not here:
- * the caller already holds the pre-contribution amount, so there's nothing
- * this function needs to compute or branch on — it only ever marks the
- * letter as shown.
+ * Flips `letter_revealed` to 1, once, after `contributeToGoal` when the caller (ContributeModal) sees the first
+ * target crossing with a `noteToSelf`. That check is client-side (it holds the pre-contribution amount).
  */
 export async function markGoalLetterRevealed(id: string): Promise<void> {
   const db = await getDb();
@@ -185,10 +169,8 @@ export async function unarchiveSavingsGoal(id: string): Promise<void> {
 }
 
 /**
- * Permanently removes a goal — for one added by mistake or never funded, not
- * for one with real progress (archive that instead, same split
- * deleteAccount/deleteLoan/deleteCategory already use). Blocked whenever
- * money has actually been added toward it.
+ * Permanently removes a goal added by mistake or never funded; archive one with real progress instead (as
+ * deleteAccount/deleteLoan/deleteCategory). Blocked once money has been added toward it.
  */
 export async function deleteSavingsGoal(id: string): Promise<RowSnapshot> {
   const db = await getDb();

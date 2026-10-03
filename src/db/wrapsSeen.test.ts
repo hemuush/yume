@@ -1,7 +1,6 @@
 /**
- * Which Wraps have been played, against a real SQLite engine: the Wrap
- * button's ring goes plain for these. Keeps only the latest few, and a
- * month played through Home's old review row still counts.
+ * Which Wraps have been played, on real SQLite: the Wrap button's ring goes plain for these; only the latest
+ * few are kept, and a month played via Home's old review row still counts.
  */
 import { createRealDataTestDb } from '@/test-support/realDataTestDb';
 

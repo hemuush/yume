@@ -1,7 +1,6 @@
 /**
- * The phone's backup index: remembered across reads, one file added at a
- * time, and anything unreadable treated as "nothing remembered" rather than
- * an error, since it's only a speed-up.
+ * The phone's backup index: remembered across reads, one file added at a time, and anything unreadable
+ * counts as "nothing remembered" rather than an error, since it's only a speed-up.
  */
 const mockFs = { files: new Map<string, string>(), failWrite: false };
 jest.mock('expo-file-system', () => {

@@ -10,11 +10,8 @@ import { homeStyles as h, HOME } from './homeStyles';
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 /**
- * One row in the "Upcoming" list — a loan EMI or a recurring rule's next
- * occurrence, both rendered the same way so the list reads as one thing
- * (what's coming up) rather than "the loan, then a separate different-
- * looking thing for bills". Meant to sit inside one shared card with
- * dividers between rows, the same pattern Recent activity already uses.
+ * One Upcoming row (loan EMI or recurring rule's next occurrence), rendered alike so the list reads as one
+ * thing. Sits inside one shared card with dividers between rows, like Recent activity.
  */
 export function UpcomingRow({
   icon,
@@ -40,7 +37,10 @@ export function UpcomingRow({
   sign?: '+' | '-' | '';
   onPress: () => void;
   divider?: boolean;
-  /** Due today or already overdue — swaps the icon badge and subtitle to the coral "worth a look" tone instead of the neutral default. */
+  /**
+   * Due today or already overdue — swaps the icon badge and subtitle to the coral "worth a look" tone
+   * instead of the neutral default.
+   */
   urgent?: boolean;
   /** Due within the next few days but not yet today — the amber tone between neutral and urgent. */
   soon?: boolean;
@@ -91,9 +91,8 @@ export function UpcomingRow({
 }
 
 /**
- * The row that stands in for whatever's past the five shown — same
- * shape as a real `UpcomingRow` (icon left, label filling the middle) so it
- * reads as one more row in the list rather than a different kind of thing.
+ * Stands in for everything past the five shown; same shape as a real `UpcomingRow` (icon left, label fills
+ * middle) so it reads as one more row.
  */
 export function UpcomingMoreRow({
   count,

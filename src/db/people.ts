@@ -72,9 +72,8 @@ export async function getPersonLedger(personId: string): Promise<PersonLedgerEnt
 }
 
 /**
- * Records a plain IOU adjustment with no effect on any account balance —
- * e.g. logging that a friend now owes you for something paid in cash outside
- * the app, or that a debt was verbally settled.
+ * Records a plain IOU adjustment with no effect on any account balance (e.g. a friend owes you for a cash
+ * payment made outside the app, or a debt was settled verbally).
  */
 export async function addLedgerEntry(input: {
   personId: string;
@@ -101,12 +100,8 @@ export async function addLedgerEntry(input: {
 }
 
 /**
- * Inserts the transaction + ledger entry pair directly against `tx` rather
- * than calling the top-level createTransaction()/addLedgerEntry() — those
- * each call getDb() and write through the outer, queued `db` themselves,
- * which would enqueue behind this very transaction and deadlock (the
- * transaction can't finish until they run, and they can't run until the
- * transaction finishes). Validation mirrors createTransaction()'s own.
+ * Inserts the transaction + ledger pair on `tx` directly, not via createTransaction()/addLedgerEntry(): those
+ * write through the outer queued `db` and would deadlock on this transaction. Validation mirrors theirs.
  */
 async function insertPersonMoneyMovement(
   tx: AppDb,
@@ -146,9 +141,8 @@ async function insertPersonMoneyMovement(
 }
 
 /**
- * Money actually left one of your accounts to cover a friend's expense (or
- * you lent them cash): records the expense transaction AND the matching
- * ledger entry (they now owe you more) as one unit.
+ * Money left one of your accounts to cover a friend's expense (or you lent cash): records the expense
+ * transaction and the matching ledger entry (they owe you more) as one unit.
  */
 export async function recordMoneyGivenToPerson(input: {
   personId: string;
@@ -184,10 +178,8 @@ export async function recordMoneyReceivedFromPerson(input: {
 }
 
 /**
- * Reverses recordMoneyGivenToPerson / recordMoneyReceivedFromPerson: deletes
- * the ledger entry and its linked transaction together, so a mistaken entry
- * can be cleanly undone rather than edited (editing would need to keep the
- * transaction amount and the ledger amount/sign in sync by hand).
+ * Reverses recordMoneyGivenToPerson / recordMoneyReceivedFromPerson: deletes the ledger entry and its linked
+ * transaction together (editing would mean keeping amount and sign in sync by hand).
  */
 export async function undoPersonTransaction(transactionId: string): Promise<void> {
   const db = await getDb();
@@ -204,12 +196,8 @@ export async function undoPersonTransaction(transactionId: string): Promise<void
 }
 
 /**
- * The other direction from undoPersonTransaction: deletes a ledger entry
- * starting from the entry itself, which also covers a "just adjust balance"
- * entry that has no linked transaction at all (undoPersonTransaction can't
- * address one of those — there's no transactionId to call it with). Used by
- * the person's own History list, where a mistaken entry previously had no
- * way to be removed at all.
+ * Deletes a ledger entry starting from the entry itself, which also covers "just adjust balance" entries with
+ * no linked transaction (undoPersonTransaction can't address those). Used by the person's History list.
  */
 export async function deleteLedgerEntry(entryId: string): Promise<RowSnapshot[]> {
   const db = await getDb();

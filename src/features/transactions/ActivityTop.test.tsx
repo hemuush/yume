@@ -1,9 +1,6 @@
 /**
- * The top of Activity after the cleanup: the Spent card (a change pill,
- * Week/Month in its corner, a one-line legend,
- * Money in | Net as a strip) and the type filter as one segmented bar, with
- * picked categories under it only while there are some. All figures are
- * made up.
+ * Top of Activity: the Spent card (change pill, Week/Month corner, one-line legend, Money in | Net strip)
+ * and the type filter as one segmented bar, picked categories under it only while any. Figures are made up.
  */
 import { Text } from 'react-native';
 import { create, act, ReactTestRenderer } from 'react-test-renderer';

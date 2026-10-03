@@ -58,11 +58,8 @@ export interface Upcoming {
 }
 
 /**
- * Home's Upcoming list: the next 7 days of everything dated — each borrowed
- * loan's next EMI, every active recurring rule (rent, subscriptions, salary)
- * and every credit card bill still to pay — with anything overdue first. The
- * same sources Plan's Coming up lists, so the two can't disagree. The EMI's
- * icon is a light wash of the person's own accent colour.
+ * Home's Upcoming: next 7 days of EMIs, recurring rules and unpaid card bills, overdue first.
+ * Same sources as Plan's Coming up so they can't disagree; the EMI icon is a wash of the accent.
  */
 export function buildUpcomingItems(input: {
   loans: UpcomingLoanInput[];
@@ -148,9 +145,8 @@ function windowEndLabel(): string {
 }
 
 /**
- * Home's swipe card: Upcoming first (it's the time-sensitive one), then the
- * budgets closest to their limits, then goals. A page with nothing to show
- * isn't drawn.
+ * Home's swipe card pages: Upcoming (time-sensitive), then budgets nearest their limits, then goals;
+ * a page with nothing to show isn't drawn.
  */
 export function HomeGlance({
   upcoming,
@@ -180,11 +176,8 @@ export function HomeGlance({
   const dueMinor = upcoming.items.reduce((sum, i) => (i.sign === '-' ? sum + i.amountMinor : sum), 0);
   const topBudgets = budgets.slice(0, 3);
   const activeGoals = goals.filter((g) => !g.archived);
-  // Capped rather than its own horizontal ScrollView — nesting a
-  // horizontal-scrolling strip inside the swipe card's own horizontal
-  // pager would fight the page-swipe gesture on the same axis, so this
-  // page shows as many chips as comfortably fit and a "+N" tile for the
-  // rest instead, the same cap-and-link pattern Budgets/Upcoming use.
+  // Capped, not a nested horizontal ScrollView: that would fight the swipe card's own page-swipe gesture.
+  // Shows as many chips as fit plus a "+N" tile, the cap-and-link pattern Budgets/Upcoming use.
   const topGoals = activeGoals.slice(0, 2);
   const hiddenGoalsCount = activeGoals.length - topGoals.length;
 
@@ -351,9 +344,8 @@ const styles = StyleSheet.create({
   quiet: { paddingHorizontal: 14, paddingTop: 12, paddingBottom: 10, gap: 2 },
   quietTitle: { fontFamily: theme.font.roundedBold, fontSize: 15, color: theme.colors.textPrimary },
   quietSub: { fontFamily: theme.font.body, fontSize: 12.5, color: theme.colors.textMuted },
-  // Rows inside a HomeSwipeCard page — no outer border/background of their
-  // own (the card already draws that), BudgetRow/UpcomingRow already carry
-  // their own horizontal padding.
+  // Rows inside a HomeSwipeCard page: no outer border/background (the card draws it); BudgetRow/UpcomingRow
+  // already carry their own horizontal padding.
   pageList: { paddingHorizontal: 2 },
   goalsPageRow: { flexDirection: 'row', gap: 10, paddingHorizontal: 14, paddingVertical: 14 },
   goalsMoreTile: {

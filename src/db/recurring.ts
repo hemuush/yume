@@ -34,10 +34,8 @@ function rowToRule(row: RecurringRuleRow): RecurringRule {
 }
 
 /**
- * One step of a rule's own cadence — e.g. every 2 weeks advances 14 days at a
- * time. `anchorDay` is the rule's real day-of-month: each step is chained
- * from the previous (possibly clamped) date, so without it a rule on the
- * 31st would ride Feb 28 → Mar 28 → … forever.
+ * One step of a rule's cadence (every 2 weeks = 14 days). `anchorDay` is the rule's real day-of-month:
+ * steps chain from the previous (clamped) date, so without it a 31st rule would ride Feb 28 → Mar 28 forever.
  */
 export function advanceDate(
   date: string,
@@ -90,9 +88,8 @@ async function validate(input: RecurringRuleInput) {
   if (input.endDate && input.endDate < input.nextRunDate) {
     throw new Error('End date must be on or after the start date');
   }
-  // Same rules createTransaction enforces when a rule actually fires — reject
-  // them at save time too, so a bad rule can't sit there failing silently
-  // every cycle.
+  // Same rules createTransaction enforces when a rule fires, checked at save time so a bad rule can't
+  // fail silently every cycle.
   await assertSpendableAccount(input.type, input.accountId);
   await assertSameCurrencyTransfer(input.type, input.accountId, input.toAccountId);
 }
@@ -137,10 +134,8 @@ export async function createRecurringRule(input: RecurringRuleInput): Promise<Re
 export async function updateRecurringRule(id: string, input: RecurringRuleInput): Promise<RecurringRule> {
   await validate(input);
   const db = await getDb();
-  // Keep the rule's real day unless the user actually moved its date: an
-  // edit to just the amount of a "31st of every month" rule, made while its
-  // next run shows the clamped Feb 28, must not quietly turn it into a
-  // "28th" rule. A genuinely new date re-anchors to that date's own day.
+  // Keep the rule's real day unless its date moved, so an amount-only edit of a "31st" rule that shows the
+  // clamped Feb 28 doesn't turn it into a "28th" rule. A genuinely new date re-anchors to its own day.
   const current = await db.getFirstAsync<{ next_run_date: string; anchor_day: number | null }>(
     'SELECT next_run_date, anchor_day FROM recurring_rules WHERE id = ?',
     [id]
@@ -194,30 +189,8 @@ export async function restoreRecurringRule(snapshot: RowSnapshot): Promise<void>
 }
 
 /**
- * Catches every active rule up to today, creating one real transaction per
- * missed occurrence (not just the most recent) — a rule left un-run for
- * three months while the app sat unused produces the three transactions
- * that genuinely should have happened, rather than silently collapsing them
- * into one or skipping straight to "now". Each occurrence is held to the
- * same checks createTransaction() applies to every manual entry, so it
- * behaves exactly like a transaction the user typed in themselves
- * (balances, reports, overspend alerts all see it identically).
- *
- * Each occurrence's insert and the rule's `next_run_date` advance commit
- * together in one transaction. They used to be separate writes — every
- * occurrence committed on its own and the rule only advanced once the whole
- * loop finished — so the app being killed mid-catch-up (or one occurrence
- * failing) left posted transactions behind with the rule still pointing at
- * the first of them, and the next launch posted them all again.
- *
- * Capped at 500 occurrences per rule as a defensive backstop — a
- * misconfigured daily rule with no end date left completely unattended for
- * years is the only realistic way to approach that, and stopping there
- * (rather than looping unbounded on app startup) is safer than hanging.
- *
- * Concurrent calls share one run: a second caller while a catch-up is still
- * going gets that same run's promise instead of reading the same due rules
- * and posting every occurrence a second time.
+ * Posts one transaction per missed occurrence per active rule (validated like manual entries, max 500/rule).
+ * Insert + `next_run_date` advance commit together so a kill never re-posts; concurrent calls share one run.
  */
 let inFlightRun: Promise<number> | null = null;
 
@@ -254,9 +227,8 @@ async function runDueRecurringRulesOnce(referenceDate: string): Promise<number> 
       paymentMode: rule.paymentMode ?? undefined,
     });
     try {
-      // Nothing checked here varies by date, so once per rule covers every
-      // occurrence — and it has to run out here: these checks read through
-      // the outer db, which would deadlock inside the transaction below.
+      // Nothing checked here varies by date, so once per rule covers every occurrence; it must run outside
+      // the transaction below because these checks read via the outer db and would deadlock.
       await assertValidTransactionInput(occurrence(rule.nextRunDate));
       let cursor = rule.nextRunDate;
       let iterations = 0;
@@ -279,9 +251,8 @@ async function runDueRecurringRulesOnce(referenceDate: string): Promise<number> 
         if (expired) break;
       }
     } catch (err) {
-      // One rule's failure (e.g. its category was deleted out from under it)
-      // must not stop the rest of the batch from running, and must not spin
-      // forever re-attempting the same occurrence — deactivate it and move on.
+      // One rule's failure (e.g. its category was deleted) must not stop the rest of the batch or spin
+      // re-attempting the same occurrence: deactivate it and move on.
       console.error(`Recurring rule ${rule.id} failed and was deactivated:`, err);
       await db.runAsync('UPDATE recurring_rules SET active = 0 WHERE id = ?', [rule.id]);
     }

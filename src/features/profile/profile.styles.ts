@@ -3,10 +3,8 @@ import { theme } from '@/constants/theme';
 import { EYEBROW } from '@/constants/textStyles';
 import { HOME } from '@/features/home/homeStyles';
 
-// Shared by the Profile screen (its shell, YouSection, and SettingsSection)
-// and the account modals (AddAccountModal, AccountDetailModal). Cards, rows
-// and section headings come from Home's one visual system (homeStyles,
-// HomeSection); these are only what Profile adds on top.
+// Shared by Profile (shell, YouSection, SettingsSection) and the account modals. Cards, rows and headings
+// come from Home's visual system (homeStyles, HomeSection); these are only what Profile adds.
 export const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
   errorBanner: {
@@ -45,9 +43,8 @@ export const styles = StyleSheet.create({
     borderRadius: 29,
     alignItems: 'center',
     justifyContent: 'center',
-    // Without this, a circular View's coloured background can render
-    // clipped to a stale layout measurement on Android (the classic
-    // "half-circle avatar" symptom) rather than the declared size.
+    // Without this, a circular View's background can render clipped to a stale layout measurement on Android
+    // (the "half-circle avatar" symptom).
     overflow: 'hidden',
   },
   avatarInitial: { fontFamily: theme.font.roundedBold, fontSize: 24 },
@@ -174,9 +171,8 @@ export const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   codeText: { fontFamily: theme.font.bodyBold, fontSize: 11, color: theme.colors.ink },
-  // Compact Save/Clear pair inside the daily-spending-goal accordion —
-  // smaller than the full-width PrimaryButton used in modal footers, since
-  // this sits inline inside a settings row, not its own screen.
+  // Compact Save/Clear pair inside the daily-spending-goal accordion; smaller than the modal-footer
+  // PrimaryButton because it sits inline in a settings row.
   dailyGoalBtnRow: { flexDirection: 'row', gap: 8, marginTop: 2 },
   dailyGoalBtn: { flex: 1 },
 

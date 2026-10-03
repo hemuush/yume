@@ -1,13 +1,6 @@
 /**
- * Every text style in the app sets one of Yume's fonts. In React Native a
- * text style without a `fontFamily` doesn't fall back to anything of ours —
- * it renders in the phone's default font (Roboto on most Android phones),
- * which is how 61 styles across 14 files ended up in the wrong typeface.
- * This fails as soon as a new style repeats that: a style object that sets a
- * fontSize or fontWeight must also set a fontFamily.
- *
- * Deliberately not covered: src/widgets (home-screen widgets render through
- * the widget library, with their own font setup).
+ * Every text style sets one of Yume's fonts: a React Native style without `fontFamily` renders in the phone's
+ * default font, so one setting fontSize or fontWeight must also set fontFamily. Not covered: src/widgets.
  */
 import * as fs from 'fs';
 import * as path from 'path';

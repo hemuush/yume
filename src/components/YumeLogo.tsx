@@ -9,15 +9,8 @@ interface Props {
 }
 
 /**
- * The Yume mark — the same ring-and-dot asset as the app icon and Suu
- * (assets/yume-mark.png, cropped tight rather than padded for a home-screen
- * icon). Used in the Home header, Settings → About, and the lock screen.
- *
- * Previously its own hand-drawn ink-crescent-and-sprout SVG, left behind
- * when the app icon moved to this mark in the ring-mark rebrand — fixed in
- * a later pass so every rendering of "the logo" is the same shape again.
- * `tone="mono"` reuses the same image with React Native's `tintColor`
- * style rather than a second asset or separate paths.
+ * The Yume mark: the ring-and-dot asset shared with the app icon and Suu (assets/yume-mark.png, cropped
+ * tight). `tone="mono"` reuses the image via `tintColor` rather than a second asset.
  */
 export function YumeLogo({ size = 28, tone = 'color', color }: Props) {
   const mono = tone === 'mono';

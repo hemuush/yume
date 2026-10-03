@@ -1,9 +1,6 @@
 /**
- * Profile's Settings tab: a coral note shows only while backups need
- * attention; the groups come in their signed-off order (Money, Privacy &
- * alerts, Your data, Appearance, then an About footer); and the rows that
- * change something (currency, daily goal, theme, lock) still do exactly what
- * they did.
+ * Profile's Settings tab: a coral note only while backups need attention; groups in signed-off order (Money,
+ * Privacy & alerts, Your data, Appearance, About footer); rows that change something still do.
  */
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
 import { Text, TextInput } from 'react-native';

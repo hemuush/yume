@@ -9,10 +9,8 @@ import { formatMaskableMoney } from '@/lib/money';
 import { HOME } from '@/features/home/homeStyles';
 
 /**
- * The first block on You: what is in your accounts right now. It leads with
- * this rather than the tracked balance because loans can pull that one far
- * below zero for a perfectly normal reason. When savings amounts are hidden
- * the figure is masked, since it includes them.
+ * First block on You: what is in your accounts right now. Leads with this, not the tracked balance, since
+ * loans can pull that far below zero normally. Masked when savings amounts are hidden, as it includes them.
  */
 export function CashHero({
   minor,

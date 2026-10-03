@@ -25,9 +25,8 @@ import { listCardCycles } from '@/db/cardCycles';
 const BACKUP_SNOOZE_DAYS = 30;
 
 /**
- * Loads everything the Needs you list is built from and builds it — one
- * loader for both Home's card and the bell's full list, so the two can never
- * disagree about what needs you or how many things there are.
+ * Loads and builds everything the Needs you list uses; one loader for every consumer so they can't disagree
+ * on what needs you or how many.
  */
 export async function loadNeedsYou(
   now: Date = new Date()

@@ -1,20 +1,6 @@
 /**
- * How Home's moon splits a period's income: what was spent, what was moved
- * into savings accounts, and what's left free to use. The three fractions
- * always add up to 1 (or all 0 with no income), so the moon never
- * double-counts and never shows more than came in.
- *
- * - Overspent (spent ≥ income): the whole moon is spent; `overMinor` says by
- *   how much.
- * - More moved into savings than was left after spending: savings fills the
- *   rest and free-to-use is 0 (the figure below the moon still shows the
- *   real, negative free-to-use amount).
- * - Bills still to pay this month (the fourth argument) take their own slice out of
- *   what would have been free, so the fractions still add up to 1 and free is
- *   what's left after bills.
- * - Money taken *out* of savings (a negative savings contribution): counted
- *   as 0 to savings; what came out is part of free to use — the same
- *   arithmetic as the Free to use figure itself (income − spent − savings).
+ * Home moon split of income into spent/savings/free (+ a bills slice); sums to 1, or all 0 with no income.
+ * Overspent: all spent. Savings caps at what's left (free 0). Money out of savings counts 0, falls into free.
  */
 export interface HeroSlices {
   spent: number;
@@ -73,10 +59,8 @@ export function heroShare(s: HeroSlices, mode: HeroMode): number {
 }
 
 /**
- * The views worth showing for these slices, in tap order: only ones with a
- * real share, so a month where everything went out doesn't step through
- * "0% kept", "0% to savings", "0% free to use". Empty with no income or when
- * overspent (the moon then has nothing to split).
+ * Slice views worth showing in tap order: only those with a real share (no "0% kept" steps).
+ * Empty with no income or when overspent (nothing to split).
  */
 export function heroModes(s: HeroSlices, hideSavings = false): HeroMode[] {
   if (!s.hasIncome || s.overMinor > 0) return [];
@@ -91,9 +75,8 @@ export function heroRestingMode(s: HeroSlices, hideSavings = false): HeroMode {
 }
 
 /**
- * The same split with the savings arc dropped, for when the user hides
- * savings amounts: the ring then draws only spent and free, and the share
- * that went to savings is left as empty track. Free keeps its real share.
+ * Same split with the savings arc dropped for hide-savings: the ring draws spent and free only,
+ * savings share stays empty track, and free keeps its real share.
  */
 export function withoutSavings(s: HeroSlices): HeroSlices {
   return { ...s, saved: 0 };

@@ -13,9 +13,8 @@ import { Text } from '@/components/Text';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { useFonts } from 'expo-font';
-// Scoped per-weight imports (not the package root) so Metro only bundles the
-// exact font files used — importing from the package root pulls in every
-// weight of the family regardless of which named exports are destructured.
+// Scoped per-weight imports (not the package root) so Metro bundles only the font files used; the root
+// import pulls in every weight of the family.
 import { Archivo_400Regular } from '@expo-google-fonts/archivo/400Regular';
 import { Archivo_600SemiBold } from '@expo-google-fonts/archivo/600SemiBold';
 import { Archivo_700Bold } from '@expo-google-fonts/archivo/700Bold';
@@ -50,11 +49,8 @@ import { theme } from '@/constants/theme';
 import { errorMessage } from '@/lib/errorMessage';
 
 /**
- * Opening a deep link straight into a pushed screen (the Next Due widget's
- * yume://loans or yume://recurring, Quick Add's yume://add-transaction) on a
- * cold start used to leave that screen alone in the stack — Back exited the
- * app. Anchoring to the tabs puts Home underneath, so Back lands there.
- * Only affects deep links; in-app navigation is unchanged.
+ * Anchors deep links into pushed screens (Next Due widget, Quick Add) on cold start to the tabs, so Home
+ * sits underneath and Back lands there instead of exiting the app. In-app navigation is unchanged.
  */
 export const unstable_settings = {
   anchor: '(tabs)',
@@ -80,28 +76,20 @@ export default function RootLayout() {
     getDb()
       .then(async () => {
         setDbReady(true);
-        // fire-and-forget; never blocks startup or shows an error. Waits for the
-        // first screen to settle: reading the whole ledger for the snapshot
-        // holds the database queue, and Home's own queries should go first.
+        // Fire-and-forget; never blocks startup or errors. Waits for the first screen to settle: reading
+        // the whole ledger for the snapshot holds the DB queue, and Home's own queries should go first.
         InteractionManager.runAfterInteractions(() => void runLocalBackupIfDue());
-        // Catches up any missed recurring transactions since last open. Each
-        // rule now isolates its own failures internally; this catch only
-        // guards the outer query (e.g. getDb()) from an unhandled rejection.
+        // Catches up missed recurring transactions since last open. Rules isolate their own failures; this
+        // catch only guards the outer query (e.g. getDb()) from an unhandled rejection.
         void runDueRecurringRules().catch((err) => console.error('runDueRecurringRules failed:', err));
-        // Unlike runDueRecurringRules/runLocalBackupIfDue above,
-        // ensureAndroidChannel has no internal try/catch and can genuinely
-        // reject (a bad channel, a permission the OS revoked), so this
-        // fire-and-forget call needs its own catch or a real rejection on cold
-        // start goes unhandled.
+        // Unlike runDueRecurringRules/runLocalBackupIfDue, ensureAndroidChannel has no internal try/catch
+        // and can reject (bad channel, revoked permission), so this call needs its own catch on cold start.
         void ensureAndroidChannel().catch((err) => console.error('ensureAndroidChannel failed:', err));
         // One-time: drop notifications still scheduled under the pre-rename
         // `flynse-*` identifiers.
         void cancelLegacyScheduledNotifications();
-        // Notifications are rebuilt from the current settings and data on every
-        // cold start: it keeps them current as days pass (they are scheduled a
-        // couple of weeks ahead), carries over what an older version had
-        // scheduled, and self-heals after a reinstall or an OS-level clear.
-        // Never rejects.
+        // Notifications are rebuilt from settings/data each cold start: stays current (scheduled ~2 weeks
+        // ahead), carries over old schedules, self-heals after reinstall.
         void rebuildNotifications();
 
         setInitialLocked(await getAppLockEnabled());
@@ -111,10 +99,8 @@ export default function RootLayout() {
           setNeedsOnboarding(false);
           return;
         }
-        // The flag can be unset even on an existing install (added this
-        // version) — real data is a more reliable signal than the flag
-        // alone, so a tester who already has accounts/transactions never
-        // sees onboarding just because the flag was never written before.
+        // The flag can be unset on an existing install (added this version); real data is more reliable, so
+        // a tester with accounts/transactions never sees onboarding just because the flag is unwritten.
         const [accs, tx] = await Promise.all([listAccounts(), listTransactions({ limit: 1 })]);
         const hasExistingData = accs.length > 0 || tx.length > 0;
         if (hasExistingData) await setHasOnboarded(true);
@@ -132,10 +118,8 @@ export default function RootLayout() {
     );
   }
 
-  // A failed font load previously left fontsLoaded permanently false with
-  // no fallback — the app never left this spinner. Proceeding on error uses
-  // whatever font Metro falls back to (visibly different, never blank/stuck)
-  // rather than trapping every screen behind an infinite spinner.
+  // On font-load failure, proceed with Metro's fallback font (visibly different, never blank/stuck) rather
+  // than trapping every screen behind an infinite spinner.
   if (!dbReady || (!fontsLoaded && !fontsError) || needsOnboarding === null) {
     return (
       <View style={styles.center}>
@@ -166,19 +150,16 @@ function AppGate({ needsOnboarding, initialLocked }: { needsOnboarding: boolean;
   const [isLocked, setIsLocked] = useState(initialLocked);
   const [showOnboarding, setShowOnboarding] = useState(needsOnboarding);
 
-  // A tapped notification's screen (see NOTIFICATION_ROUTES) waits here until
-  // it can actually be shown: the app unlocked, past onboarding, and the
-  // navigator mounted (it isn't while the lock screen replaces the tree).
-  // Opening it any earlier would be lost, or land behind the lock screen.
+  // A tapped notification's screen (NOTIFICATION_ROUTES) waits until it can show: unlocked, past
+  // onboarding, navigator mounted (not while the lock screen replaces the tree); earlier is lost or hidden.
   const navState = useRootNavigationState();
   const navReady = !!navState?.key;
   const [pendingRoute, setPendingRoute] = useState<NotificationRoute | null>(null);
   useEffect(() => subscribeToNotificationTaps(setPendingRoute), []);
   useEffect(() => {
     if (!pendingRoute || isLocked || showOnboarding || !navReady) return;
-    // Next tick, not this render: right after unlocking, the navigator is
-    // remounting. If opening it still fails, the app simply stays where it
-    // opened — the same as before notifications carried a route at all.
+    // Next tick, not this render: right after unlocking the navigator is remounting. If opening still
+    // fails, the app simply stays where it opened.
     const timer = setTimeout(() => {
       setPendingRoute(null);
       try {
@@ -190,11 +171,8 @@ function AppGate({ needsOnboarding, initialLocked }: { needsOnboarding: boolean;
     return () => clearTimeout(timer);
   }, [pendingRoute, isLocked, showOnboarding, navReady]);
 
-  // Re-arms the lock when the app comes back after being away a while (see
-  // shouldRelock: real backgrounding only, for at least a minute). Reading
-  // `lockEnabled` from shared context (rather than a value only set once at
-  // cold start) means toggling the Settings switch takes effect on the very
-  // next background/foreground cycle, not just after a full app restart.
+  // Re-arms the lock when the app returns after being away (shouldRelock: real backgrounding, ≥1 minute).
+  // Reads `lockEnabled` from shared context so the Settings toggle applies next cycle.
   useEffect(() => {
     if (!lockEnabled) return;
     let backgroundedAt: number | null = null;
@@ -208,16 +186,8 @@ function AppGate({ needsOnboarding, initialLocked }: { needsOnboarding: boolean;
     return () => sub.remove();
   }, [lockEnabled]);
 
-  // Two jobs on the app leaving or returning, kept apart from the lock effect
-  // above (which only runs when app-lock is on) so they happen regardless.
-  //  - Backgrounding refreshes every placed home-screen widget: they refresh on
-  //    their own every 30 minutes, but that's too slow right after an edit, and
-  //    this catches every real change at once instead of a refresh call wired
-  //    into each mutation. 'inactive' alone isn't a real exit (a permission
-  //    dialog, a call, the notification shade), so only 'background' counts.
-  //  - Coming back to the foreground runs the daily backup: Android keeps Yume
-  //    alive in the background for days, and a day with no cold start used to
-  //    get no backup file at all.
+  // Kept apart from the lock effect (runs only with app-lock on). Real 'background' (not 'inactive')
+  // refreshes home-screen widgets (30-min refresh is too slow); foreground runs the daily backup.
   useEffect(() => {
     const sub = AppState.addEventListener('change', (next: AppStateStatus) => {
       if (next === 'background') refreshAllWidgets();
@@ -261,8 +231,7 @@ function AppGate({ needsOnboarding, initialLocked }: { needsOnboarding: boolean;
             headerShown: false,
             animation: 'slide_from_right',
             animationDuration: 260,
-            // Swipe from anywhere on the screen to go back, not just the left
-            // edge — a pushed screen (Profile, a detail view) should feel as
+            // Swipe from anywhere to go back, not just the left edge: a pushed screen should feel as
             // dismissible as it looks.
             gestureEnabled: true,
             fullScreenGestureEnabled: true,

@@ -1,7 +1,6 @@
 /**
- * Which beats a Wrap gets. A beat with nothing true to say is left out:
- * no income means no "kept" beat, no category that grew means no "mover",
- * a week with no history means no "usual". All figures are made up.
+ * Which beats a Wrap gets; a beat with nothing true to say is left out (no income: no "kept"; no grown
+ * category: no "mover"; no week history: no "usual"). Made-up figures.
  */
 import {
   buildMonthWrap,

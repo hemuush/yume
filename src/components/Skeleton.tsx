@@ -21,15 +21,8 @@ interface Props {
 }
 
 /**
- * One skeleton shape — a soft base tint with a light gradient band sweeping
- * across it on a loop, the shared building block for every screen's
- * loading state (see Home's own `ThisMonthHero`/section skeletons, the
- * first to use this). Built entirely on `react-native-reanimated`'s own
- * shared values, the same pattern `HomeHeader`'s `Spark` already
- * established for a looping animation — never mixed with core React
- * Native's `Animated`, which is exactly the import mismatch that crashed
- * BudgetRow/GoalCard/GoalChip in an earlier session. `useReduceMotion`
- * freezes the sweep at a static half-lit look instead of looping it.
+ * One skeleton shape: a soft tint with a gradient band sweeping in a loop. Reanimated shared values only;
+ * never mix core RN `Animated` (that mismatch crashed BudgetRow/GoalCard/GoalChip). Reduce motion freezes it.
  */
 export function Skeleton({ width, height, radius = 6, circle = false, style }: Props) {
   const reduce = useReduceMotion();

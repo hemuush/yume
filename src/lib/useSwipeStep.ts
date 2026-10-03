@@ -2,17 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import { PanResponder, PanResponderInstance } from 'react-native';
 
 /**
- * A horizontal drag on a nav row steps to the previous/next period — the
- * same thing tapping the row's own chevron buttons already does, just
- * without needing to hit a small 36px target. Built on React Native's core
- * `PanResponder` rather than `react-native-gesture-handler` (not a
- * dependency anywhere else in the app yet, and this doesn't need anything
- * gesture-handler offers beyond a plain drag-and-release).
- *
- * `onPrev`/`onNext` are read through a ref rather than captured directly, so
- * a caller passing a fresh closure every render (the normal case — `() =>
- * onChange(stepPeriod(cursor, -1))`) never leaves the gesture handler stuck
- * on the render it was created on.
+ * A horizontal drag on a nav row steps to the previous/next period, like the chevrons without a 36px target.
+ * Core `PanResponder` (no gesture-handler dep); `onPrev`/`onNext` go via refs so fresh closures aren't stale.
  */
 export function useSwipeStep(onPrev: () => void, onNext: () => void, threshold = 40): PanResponderInstance {
   const onPrevRef = useRef(onPrev);
@@ -22,12 +13,7 @@ export function useSwipeStep(onPrev: () => void, onNext: () => void, threshold =
     onNextRef.current = onNext;
   });
 
-  // react-hooks/refs flags this: it can't tell that `onPrevRef`/`onNextRef`
-  // are only ever read from *inside* `onPanResponderRelease` — a callback
-  // PanResponder invokes later, on an actual gesture release, never
-  // synchronously while this initializer itself runs. That's exactly the
-  // "latest ref" pattern the effect above sets up, so the read is safe;
-  // the lint rule just can't see through the callback boundary.
+  // The refs are only read inside `onPanResponderRelease` (later, on release): the safe "latest ref" pattern.
   // eslint-disable-next-line react-hooks/refs
   const [responder] = useState(() =>
     PanResponder.create({

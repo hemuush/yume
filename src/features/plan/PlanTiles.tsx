@@ -32,12 +32,8 @@ import { styles, STRIP_BAR_AREA } from './plan.styles';
 import { withPressed } from '@/lib/pressed';
 
 /**
- * The Plan tab as a bento (the Plan sign-off, direction A): a grid of
- * tiles, one per topic, so the whole picture fits the first screen, then
- * Coming up as the full list. Each tile opens its own screen. Colours carry
- * meaning, from the app's pale identity tones: coral for EMIs and debt,
- * red when a budget is over, teal for money coming back, sage for the
- * habit, sky for saving.
+ * The Plan tab as a bento, one tile per topic so the picture fits the first screen, then Coming up as the full
+ * list. Pale tones carry meaning: coral EMIs/debt, red budget over, teal money back, sage habit, sky saving.
  */
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);

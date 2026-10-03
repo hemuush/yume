@@ -19,10 +19,8 @@ export { CardRowsSkeleton } from '@/components/ListSkeleton';
 const RING_SIZE = 72;
 
 /**
- * A slow scale pulse on the ring shape itself — the one thing on this
- * screen that's genuinely Yume's own rather than a generic gray bar. Same
- * withRepeat/cancelAnimation shape as `HomeHeader`'s `Spark`, not mixed
- * with core React Native's `Animated`.
+ * Slow scale pulse on the ring shape, the one Yume-specific bit of this screen. Same
+ * withRepeat/cancelAnimation shape as `HomeHeader`'s `Spark`; reanimated only, never core `Animated`.
  */
 function BreathingRing() {
   const reduce = useReduceMotion();
@@ -43,10 +41,8 @@ function BreathingRing() {
 }
 
 /**
- * Stands in for `ThisMonthHero` while Home's first load is still in flight,
- * in the card's own shape (a headline figure beside a small ring, three tiles,
- * two slim lines, a footer) — the ring breathes instead of a static ₹0/0% flashing up
- * and then being overwritten a beat later.
+ * Stands in for `ThisMonthHero` on Home's first load, in the card's own shape (figure, ring, tiles, lines,
+ * footer). The ring breathes so a static ₹0/0% doesn't flash up and get overwritten a beat later.
  */
 export function ThisMonthHeroSkeleton() {
   return (
@@ -80,7 +76,10 @@ export function ThisMonthHeroSkeleton() {
   );
 }
 
-/** Stands in for the account stack: three overlapping cards, the same shape and height it will have, so nothing jumps when it loads. */
+/**
+ * Stands in for the account stack: three overlapping cards, the same shape and height it will have, so
+ * nothing jumps when it loads.
+ */
 export function AccountStackSkeleton() {
   return (
     <View style={[styles.stack, { height: stackHeight(3) }]}>

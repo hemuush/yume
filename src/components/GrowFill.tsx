@@ -2,10 +2,8 @@ import { Animated, StyleProp, ViewStyle } from 'react-native';
 import { useGrowFrom } from '@/lib/useGrowFrom';
 
 /**
- * A bar's fill whose width grows from what it last showed (useGrowFrom):
- * drawn in once after the app opens, still on a revisit, and gliding when
- * the value really changes — a payment, money added to a goal. Style it
- * like the plain fill View it replaces; this only owns the width.
+ * A bar fill whose width grows from what it last showed (useGrowFrom): drawn in once after app open,
+ * still on revisit, gliding on real change. Style it like the plain fill View; this only owns the width.
  */
 export function GrowFill({
   animKey,

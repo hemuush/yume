@@ -1,10 +1,8 @@
 import { PressableStateCallbackType, StyleProp, ViewStyle } from 'react-native';
 
 /**
- * How a plain Pressable answers a finger: it dims while held. Cards, tiles
- * and the big buttons shrink slightly instead (usePressScale); everything
- * else — rows, chips, links, small icon buttons — uses this, so nothing you
- * can tap sits there looking inert.
+ * How a plain Pressable answers a finger: it dims while held. Cards, tiles and big buttons shrink instead
+ * (usePressScale); rows, chips, links and small icon buttons use this so nothing tappable looks inert.
  */
 export const PRESSED: ViewStyle = { opacity: 0.6 };
 

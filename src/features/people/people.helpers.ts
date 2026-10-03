@@ -2,9 +2,8 @@ import { parseLocalIsoDate } from '@/lib/date';
 import { roundedMinor } from '@/lib/round';
 
 /**
- * A balance that rounds to exactly 0 reads as genuinely settled, not as a
- * still-open debt that merely happens to be small — so status is always
- * decided on the whole-rupee figure the row shows.
+ * A balance that rounds to exactly 0 reads as settled, not a small open debt, so status is always decided
+ * on the whole-rupee figure the row shows.
  */
 export type PersonStatus = 'owed' | 'owe' | 'settled';
 
@@ -14,9 +13,8 @@ export function personStatus(dispBalanceMinor: number): PersonStatus {
 }
 
 /**
- * The screen's two totals (and the Plan tile's line): the sums of each
- * person's balance rounded to a whole rupee, so they match the list below.
- * A positive balance means they owe you.
+ * The screen's two totals (and the Plan tile's line): sums of each person's balance rounded to a whole
+ * rupee, matching the list below. A positive balance means they owe you.
  */
 export function peopleTotals(people: { balanceMinor: number }[]): {
   owedToYouMinor: number;

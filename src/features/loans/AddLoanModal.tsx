@@ -61,11 +61,8 @@ export function AddLoanModal({
   onClose: () => void;
   onCreated: () => void;
 }) {
-  // Recomputed whenever the modal opens (below), not frozen at first mount —
-  // this modal's parent screen is a tab that stays alive all session, so a
-  // `useMemo(..., [])` here would keep defaulting new-loan dates to
-  // yesterday for anyone who opens the app before midnight and adds a loan
-  // after.
+  // Recomputed whenever the modal opens, not frozen at mount: the parent tab stays alive all session, so a
+  // `useMemo(..., [])` would default new-loan dates to yesterday for anyone adding a loan after midnight.
   const [today, setToday] = useState(() => new Date());
   const [direction, setDirection] = useState<LoanDirection>('borrowed');
   const [counterparty, setCounterparty] = useState('');
@@ -74,21 +71,16 @@ export function AddLoanModal({
   const [rateType, setRateType] = useState<LoanRateType>('fixed');
   const [tenure, setTenure] = useState('');
   const [tenureCustom, setTenureCustom] = useState(false);
-  // Optional — only offered for a borrowed loan. Without this, a home loan
-  // permanently reads as pure debt in Tracked Balance/Net Worth with
-  // nothing offsetting it, even though it financed something real worth
-  // just as much (or more) than what's still owed.
+  // Optional, borrowed loans only: without it a home loan reads as pure debt in Tracked Balance/Net Worth
+  // with nothing offsetting it, though it financed something worth as much or more.
   const [trackAsset, setTrackAsset] = useState(false);
   const [assetLabel, setAssetLabel] = useState('');
   const [assetValue, setAssetValue] = useState('');
   const [loanTiming, setLoanTiming] = useState<'new' | 'existing'>('new');
   const [alreadyPaid, setAlreadyPaid] = useState('0');
   const [startDate, setStartDate] = useState(() => toLocalIsoDate(today));
-  // First EMI due date, separate from the disbursement date above — real
-  // lenders routinely leave a gap between the two. Defaults to one month
-  // after the disbursement date and re-derives automatically until the user
-  // actually edits it, at which point it stops following the disbursement
-  // date around.
+  // First EMI due date, separate from the disbursement date (lenders often leave a gap). Defaults to one
+  // month after disbursement and follows it until the user edits it.
   const [emiTouched, setEmiTouched] = useState(false);
   const [emiStartDate, setEmiStartDate] = useState(() => addMonthsToIsoDate(toLocalIsoDate(today), 1));
   const [accounts, setAccounts] = useState<Account[]>([]);
@@ -102,15 +94,10 @@ export function AddLoanModal({
   const [feeCategoryId, setFeeCategoryId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  // Two steps instead of one long scrolling form: step 1 is purely "what is
-  // this loan" (amount, rate, tenure), step 2 is purely "how did it start"
-  // (date, then a plain yes/no about recording a transaction). Nobody who
-  // doesn't need a processing fee or already-paid count has to see those
-  // fields before they're relevant.
+  // Two steps, not one long form: step 1 is what the loan is (amount, rate, tenure), step 2 how it started
+  // (date, then a yes/no about recording a transaction), so fee / paid-count fields show only when relevant.
   const [wizardStep, setWizardStep] = useState<1 | 2>(1);
-  // The step-2 progress segment used to just snap between its two colors —
-  // a small cross-fade instead, same reduce-motion guard as every other
-  // hand-rolled Animated value in the app.
+  // Step-2 progress segment cross-fades its colour, with the app's usual reduce-motion guard.
   const reduceMotion = useReduceMotion();
   const [step2Fill] = useState(() => new Animated.Value(0));
   useEffect(() => {
@@ -143,10 +130,8 @@ export function AddLoanModal({
         setDisbAccountId((prev) => prev ?? accs[0]?.id ?? null);
         setRepayAccountId((prev) => prev ?? accs[0]?.id ?? null);
       } catch (e) {
-        // Previously unguarded — a failure here silently left accounts and
-        // categories empty, so submit() would reject with the confusing
-        // "Pick an account and category" validation message instead of the
-        // real underlying error.
+        // Guarded: a failure here would leave accounts/categories empty, so submit() would reject with the
+        // confusing "Pick an account and category" instead of the real error.
         setError(errorMessage(e));
       }
     })();
@@ -167,22 +152,15 @@ export function AddLoanModal({
     () => categories.filter((c) => c.kind === (direction === 'borrowed' ? 'income' : 'expense')),
     [categories, direction]
   );
-  // The processing-fee transaction is always an expense regardless of loan
-  // direction — for a borrowed loan, disbCategoryId is an INCOME category
-  // (matching the disbursement itself), so it can't also tag the fee, or an
-  // expense would end up carrying an income-kind category.
+  // The fee transaction is always an expense, whatever the direction: a borrowed loan's disbCategoryId is
+  // an INCOME category, so it can't tag the fee (an expense would carry an income-kind category).
   const feeCategories = useMemo(() => categories.filter((c) => c.kind === 'expense'), [categories]);
-  // Disbursement and EMI money move as a real income/expense transaction
-  // (see createTransaction / payInstallment in src/db/loans.ts), and those
-  // reject a savings account — so it can't be offered here either.
+  // Disbursement and EMI money move as real income/expense transactions (createTransaction / payInstallment
+  // in src/db/loans.ts), which reject a savings account, so it isn't offered here either.
   const spendableAccounts = useMemo(() => accounts.filter((a) => a.type !== 'savings'), [accounts]);
 
-  // A loan disbursement or its processing fee isn't a real spending/earning
-  // choice the way "Groceries" vs "Entertainment" is — asking the user to
-  // pick from the full category list here just surfaced irrelevant options
-  // (Salary, Groceries, Fuel...) for a transaction that's really always the
-  // same kind of thing. Auto-tagged with the best-matching seeded category
-  // instead, with no picker shown at all.
+  // Loan disbursement and processing fee aren't a real spending/earning choice, so no category picker (it
+  // would list Salary, Groceries, Fuel...); they're auto-tagged with the best-matching seeded category.
   useEffect(() => {
     if (!disbursementCategories.length) return;
     setDisbCategoryId((prev) =>
@@ -261,21 +239,15 @@ export function AddLoanModal({
       setError('Pick which account future EMIs should come out of');
       return;
     }
-    // Both branches now share one date picker — a real disbursement date is
-    // routinely earlier than the day you get around to entering it into
-    // Yume (or even earlier than a sanction letter's own print date), so
-    // "new" can no longer only mean "today."
+    // Both branches share one date picker: a real disbursement date is often earlier than the day you enter
+    // it into Yume (or than a sanction letter's print date), so "new" can't only mean "today".
     if (loanTiming === 'new' && emiStartDate < startDate) {
       setError('The first EMI is before the disbursement date');
       return;
     }
     if (loanTiming === 'existing' && alreadyPaidCount > 0) {
-      // The two numbers must agree with each other: claiming 50 installments
-      // already paid from a start date only 13 months ago is a mismatch no
-      // matter which figure is wrong — this is exactly how a real loan
-      // ended up with its "next due" installment calculated 3 years in the
-      // future while still showing as active. Caught here instead of only
-      // downstream in a confusing due-date display.
+      // The two numbers must agree: 50 installments paid from a start date 13 months ago is a mismatch
+      // either way (a real loan got a next-due date 3 years out while active). Caught here, not downstream.
       const elapsedMonths = monthsBetweenIsoDates(startDate, toLocalIsoDate(today));
       if (alreadyPaidCount > elapsedMonths) {
         setError(

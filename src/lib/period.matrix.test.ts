@@ -1,8 +1,6 @@
 /**
- * Combinatorial coverage of the browsable-period cursor used by Home,
- * Reports and Transactions. The cursor is an offset from "now" rather than an
- * absolute date, so stepping it must stay correct across month lengths and
- * year boundaries for any reference date.
+ * Combinatorial coverage of the browsable-period cursor (Home, Reports, Transactions): an offset from "now",
+ * not an absolute date, so stepping must stay correct across month lengths and year boundaries.
  */
 import {
   CURRENT_PERIOD,

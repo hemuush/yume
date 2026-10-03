@@ -11,9 +11,8 @@ import { usePrivacy } from '@/theme/PrivacyContext';
 import type { GoalsTotals } from './goalPlan';
 
 /**
- * The first block on Savings goals: what is saved across the active goals,
- * and what they need each month to finish on time. With savings amounts
- * hidden, the figures and the progress are withheld, as on each goal card.
+ * First block on Savings goals: total saved across active goals and what they need monthly to finish on
+ * time. With savings amounts hidden, figures and progress are withheld, as on each goal card.
  */
 export function GoalsHero({ totals }: { totals: GoalsTotals }) {
   const { hideAmounts } = usePrivacy();

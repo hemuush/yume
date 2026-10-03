@@ -6,11 +6,8 @@ import { theme } from '@/constants/theme';
 import { shade } from '@/lib/color';
 import { usePressScale } from '@/lib/usePressScale';
 
-// A readable-as-text shade of the app's own sky-blue accent — `primary`
-// itself (#8FCBFF) is too light to read as small bold text on cream, the
-// same problem reports.tsx's own moon card already solved for its accent
-// text by deriving a deeper shade of the same hue instead of picking an
-// unrelated blue.
+// Readable shade of the sky-blue accent: `primary` (#8FCBFF) is too light for small bold text on cream,
+// same fix as reports.tsx's moon card (a deeper shade of the same hue, not an unrelated blue).
 const TRANSFER_TEXT = shade(theme.colors.primary, 45, 8);
 
 const ACTIONS: {
@@ -26,15 +23,8 @@ const ACTIONS: {
 ];
 
 /**
- * Three shortcuts to the Add screen, pre-selecting the segment that
- * matters — the nav bar's own + still opens the same screen on the default
- * (Expense) segment, this just skips the extra tap for the other two.
- * Expense is the one filled (ink) pill, as it is the thing logged most;
- * Income and Transfer are plain frosted pills whose icon+label carry their
- * type's own colour, so colour lives in the label, not the card.
- *
- * Lives inside Home's sky header band (HomeHeader's `children`), so the
- * pills are a soft frosted surface there rather than outlined cards.
+ * Shortcuts to Add with a segment preselected (nav + still opens Expense). Expense is the filled ink pill.
+ * Income/Transfer: frosted pills, type colour only in icon+label. Frosted not outlined: in the header.
  */
 function ActionPill({ type, label, icon, color, primary }: (typeof ACTIONS)[number]) {
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.95);

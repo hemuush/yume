@@ -66,10 +66,8 @@ export function AddCategoryModal({
     setError(null);
   }, [visible, category]);
 
-  // Only a top-level category with no subcategories of its own can be a
-  // parent — one level deep only, and a category that already has children
-  // can't also become a subcategory (mirrors the same guard in
-  // src/db/ledger.ts's createCategory/updateCategory).
+  // Only a top-level category with no subcategories can be a parent: one level deep only, and a category
+  // with children can't become a subcategory (mirrors createCategory/updateCategory in src/db/ledger.ts).
   const thisHasChildren = !!category && allCategories.some((c) => c.parentId === category.id);
   const eligibleParents = allCategories.filter(
     (c) => c.kind === kind && !c.parentId && c.id !== category?.id
@@ -106,9 +104,8 @@ export function AddCategoryModal({
 
   const isSystem = !!category?.isSystem;
 
-  // The calm-sheets sign-off (Direction C): the category as a card that
-  // takes on the colour and icon as you pick them, then the form. Archive or
-  // delete is a quiet link at the end, not a third button in the footer.
+  // Calm-sheets layout: a card that takes on the picked colour and icon, then the form.
+  // Archive/delete is a quiet link at the end, not a third footer button.
   const parentName = allCategories.find((c) => c.id === parentId)?.name;
   return (
     <ModalSheet

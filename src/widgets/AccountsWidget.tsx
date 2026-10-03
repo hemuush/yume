@@ -5,11 +5,8 @@ import { widgetColor, widgetTint, asWidgetColor, WIDGET_FONT } from './widgetThe
 import type { AccountsWidgetData } from './data';
 
 /**
- * "Accounts" — the 4×2 widget (the Home A widgets sign-off): your first three
- * accounts, in the same order as Home's account strip, each with a round
- * icon tinted by what kind of account it is (the same colours as Home's
- * account cards), its type under the name, and the balance in Space Mono.
- * Everything added up sits by the title when that makes sense. Opens the app.
+ * "Accounts" 4×2 widget: your first three accounts in Home's strip order, each with a type-tinted round icon,
+ * type under the name, Space Mono balance; the total sits by the title when sensible. Opens the app.
  */
 export function AccountsWidget({ accounts, totalText }: AccountsWidgetData) {
   return (

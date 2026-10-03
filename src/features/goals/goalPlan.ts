@@ -28,9 +28,8 @@ function monthsBetween(today: string, target: string): number {
 }
 
 /**
- * What is left on a goal and what it takes to finish by its date. `pace`
- * compares the share saved with where an even saving line, from the day the
- * goal was made to its target date, would be today.
+ * What is left on a goal and what finishing by its date takes. `pace` compares the share saved with where an
+ * even saving line, from creation day to target date, would be today.
  */
 export function goalPlan(goal: PlanGoal, today: string): GoalPlan {
   const toGoMinor = Math.max(0, goal.targetAmountMinor - goal.currentAmountMinor);

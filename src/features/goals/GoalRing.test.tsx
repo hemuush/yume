@@ -1,9 +1,6 @@
 /**
- * Smoke-renders GoalRing/GoalChip/GoalCard across the shapes real data can
- * take (freshly created at 0%, mid-progress, exactly done, saved past the
- * target, no target date) — a render-time throw here reproduces a real
- * crash without needing a device, unlike the src/db/*.test.ts suite, which
- * only ever exercises the DB layer, never these components.
+ * Smoke-renders GoalRing/GoalChip/GoalCard across real data shapes (0%, mid, done, over target, no date);
+ * a render-time throw reproduces a crash without a device, which the db tests can't catch.
  */
 import { create, act } from 'react-test-renderer';
 import { GoalRing } from './GoalRing';

@@ -1,7 +1,6 @@
 /**
- * Home's goal chip while "hide savings & investment amounts" is on: the saved
- * amount and the progress ring are withheld (the ring would give the amount
- * away as a percentage), and only the target stays readable. Made-up figures.
+ * Home's goal chip with "hide savings & investment amounts" on: saved amount and progress ring are withheld
+ * (the ring would leak the amount as a percentage); only the target shows. Made-up figures.
  */
 import { Text } from 'react-native';
 import { create, act, ReactTestRenderer } from 'react-test-renderer';

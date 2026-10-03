@@ -1,9 +1,6 @@
 /**
- * Home's month card, number first: what's free to use is the headline, a
- * small ring says how much was spent, three tiles give spent, saved and debt
- * left, tapping a tile picks its slice (and tapping it again goes back), the
- * ring steps through the slices, and an overspent month says so. All
- * figures are made up.
+ * Home's month card: free-to-use headline, spent ring, three tiles (tap picks a slice, again undoes),
+ * the ring steps through slices, and an overspent month says so. All figures are made up.
  */
 import { Text } from 'react-native';
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
@@ -111,7 +108,8 @@ describe('month card', () => {
 });
 
 describe('month card with bills still to pay', () => {
-  // ₹1,00,000 income, ₹10,000 spent, ₹30,000 set aside → ₹60,000 free; ₹20,000 still to pay → ₹40,000 after bills.
+  // ₹1,00,000 income, ₹10,000 spent, ₹30,000 set aside → ₹60,000 free; ₹20,000 still to pay → ₹40,000 after
+  // bills.
   const base = {
     incomeMinor: 10_000_000,
     spentMinor: 1_000_000,

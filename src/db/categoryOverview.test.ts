@@ -1,8 +1,6 @@
 /**
- * getCategoryOverview against a real SQLite engine, with made-up figures:
- * subcategories roll up into the parent's total (matching Reports), the
- * split names the parent's own entries "Other …", the monthly run fills
- * empty months with zero, and other currencies and types are left out.
+ * getCategoryOverview on real SQLite, made-up figures: subcategories roll into the parent total (as Reports),
+ * the split calls the parent's own entries "Other …", empty months are zero, other currencies/types excluded.
  */
 import { createRealDataTestDb } from '@/test-support/realDataTestDb';
 

@@ -26,10 +26,8 @@ export interface ActivityFilter {
 }
 
 /**
- * Type, category and account filters, applied client-side on top of whatever date
- * range (day/week/month) is already active — the visible range is usually
- * small enough that filtering the already-fetched list is simpler and just
- * as fast as adding more SQL filter parameters.
+ * Type, category and account filters applied client-side on top of the active date range: the range is small,
+ * so filtering the fetched list is simpler and as fast as adding SQL filter parameters.
  */
 export function FilterModal({
   visible,
@@ -50,8 +48,7 @@ export function FilterModal({
   const [draftType, setDraftType] = useState(type);
   const [draftCategoryIds, setDraftCategoryIds] = useState<string[]>(categoryIds);
   const [draftAccountIds, setDraftAccountIds] = useState<string[]>(accountIds);
-  // Which top-level category's subcategory row is currently expanded — reset
-  // whenever the modal reopens or the type filter changes so a stale
+  // Which top-level category's subcategory row is expanded; reset on reopen or type change so a stale
   // expansion from a previous session doesn't linger.
   const [expandedParentId, setExpandedParentId] = useState<string | null>(null);
 
@@ -64,10 +61,8 @@ export function FilterModal({
     }
   }, [visible, type, categoryIds, accountIds]);
 
-  // Selecting a specific type narrows which categories make sense to show
-  // (an income category checked while "Expense" is picked could never match
-  // anything); "All" or "Transfer" show every category since transfers have
-  // none of their own to filter by anyway.
+  // A specific type narrows the categories shown (an income one checked under "Expense" could never match);
+  // "All"/"Transfer" show every category, as transfers have none of their own to filter by.
   const visibleCategories = useMemo(() => {
     const scoped =
       draftType === 'income' || draftType === 'expense'
@@ -95,9 +90,8 @@ export function FilterModal({
   const onTypeChange = (next: TransactionType | 'all') => {
     setDraftType(next);
     setExpandedParentId(null);
-    // Dropping any selected category that no longer matches the chosen type
-    // — keeping it selected would silently filter out everything, since a
-    // transaction can never match a category of the wrong kind.
+    // Drop selected categories that no longer match the chosen type: keeping them would silently filter out
+    // everything, since a transaction can never match a category of the wrong kind.
     if (next === 'income' || next === 'expense') {
       setDraftCategoryIds((prev) => prev.filter((id) => categories.find((c) => c.id === id)?.kind === next));
     }

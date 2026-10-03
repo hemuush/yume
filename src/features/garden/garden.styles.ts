@@ -3,9 +3,7 @@ import { theme } from '@/constants/theme';
 
 export const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
-  // Same shape every other screen's load-error banner uses (Notifications,
-  // Transactions, Loans, Recurring, ...) — kept visually consistent rather
-  // than a one-off inline style.
+  // Same load-error banner shape as Notifications, Transactions, Loans and Recurring, kept consistent.
   errorBanner: {
     marginHorizontal: 20,
     marginTop: theme.layout.screenTopGap,

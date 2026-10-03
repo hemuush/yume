@@ -1,7 +1,6 @@
 /**
- * A loan card shows how far along the loan is, its debt-free month, and (when
- * open) the next EMI with a Pay pill. A closed loan says "Paid off" and has
- * no footer. All figures are made up.
+ * A loan card shows progress, its debt-free month and, when open, the next EMI with a Pay pill.
+ * A closed loan says "Paid off" and has no footer. All figures are made up.
  */
 import { Text } from 'react-native';
 import { create, act, ReactTestRenderer } from 'react-test-renderer';

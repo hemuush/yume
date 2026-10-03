@@ -1,10 +1,6 @@
 /**
- * A tiny in-app signal for "transactions just changed" — for the rare write
- * that happens without leaving the current screen (the + long-press "Log
- * again" sheet saves straight from Home). Screens normally reload on focus;
- * a modal closing over them doesn't refocus anything, so without this Home
- * would keep showing the old numbers until you navigated away and back.
- * In-memory only; nothing leaves the app.
+ * In-app signal that "transactions just changed" for writes that don't leave the screen (the + long-press
+ * "Log again" sheet). A closing modal refocuses nothing, so Home would stay stale. In-memory only.
  */
 type Listener = () => void;
 const listeners = new Set<Listener>();

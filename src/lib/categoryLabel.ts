@@ -1,10 +1,8 @@
 import { Category } from '@/types';
 
 /**
- * How a subcategory is worded wherever it appears: two subcategories can share
- * a name under different parents ("Flipkart Minutes" under Food & Dining and
- * under Groceries), so every screen says which parent a subcategory is in.
- * A top-level category has no parent and is never prefixed.
+ * How a subcategory is worded everywhere: names can repeat under different parents ("Flipkart Minutes" under
+ * Food & Dining and Groceries), so each says its parent. A top-level category has no parent, never prefixed.
  */
 
 type CategoryLookup = ReadonlyMap<string, Pick<Category, 'name' | 'parentId'>>;

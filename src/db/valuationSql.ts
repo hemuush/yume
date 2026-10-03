@@ -1,8 +1,6 @@
 /**
- * SQL for a tracked account's value. The balance stays derived: the ledger
- * balance (opening + income + transfers in − expenses − transfers out) plus
- * the gap the latest valuation left against the ledger on its own date.
- * Everything dated after that valuation then moves the value as normal.
+ * SQL for a tracked account's value, derived: ledger balance (opening + income + transfers in − expenses −
+ * transfers out) plus the latest valuation's gap against the ledger on its date; later entries then move it.
  */
 
 /** One transaction row's effect on account `a` (the caller's accounts alias). */
@@ -24,10 +22,8 @@ function latestValuationFrom(a: string, cutoff: boolean): string {
 }
 
 /**
- * How far the latest valuation sat from the ledger on its own date: what to
- * add to the ledger balance to get the value. 0 for an untracked account or
- * one with no valuation yet. With `cutoff`, the SQL holds one `?` (an ISO
- * date, only valuations on or before it count) that the caller must bind.
+ * The latest valuation's gap from the ledger on its own date: add it to the ledger balance for the value. 0 if
+ * untracked/unvalued. With `cutoff` the SQL holds one `?` (ISO date, later valuations ignored) to bind.
  */
 export function valuationAdjSql(a: string, cutoff = false): string {
   return `CASE WHEN ${a}.tracked = 1 THEN COALESCE((

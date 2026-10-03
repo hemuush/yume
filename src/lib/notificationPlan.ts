@@ -3,12 +3,8 @@ import { clampSlotMinutes, TimeSlotKind } from './notificationTimes';
 import { toLocalIsoDate } from './date';
 
 /**
- * What Yume will notify about over the coming days, worked out in one place
- * so that two notifications can never land together. There are at most two
- * times a day (Morning and Evening, see notificationTimes.ts). Everything
- * that is due at a time becomes one notification: the most pressing item
- * leads and the rest are lines under it. A time with nothing due stays
- * silent.
+ * What Yume will notify about in the coming days, planned in one place so two never land together.
+ * At most two times a day (notificationTimes.ts); items due together merge into one, most pressing first.
  */
 
 /** The screens a notification can open; a payload naming anything else is ignored. */
@@ -168,9 +164,8 @@ export function planNotifications(input: {
     }
   }
 
-  // A spending alert goes out at the first time on or after it came up; one
-  // whose time has already passed was delivered, and one with no time to go
-  // out at keeps waiting until it is stale.
+  // A spending alert goes out at the first time on or after it arose; a passed time means delivered,
+  // and one with no time to go out at keeps waiting until it is stale.
   const waitingAlerts: QueuedAlert[] = [];
   if (prefs.overspendAlerts) {
     for (const alert of alerts) {
@@ -195,9 +190,8 @@ export function planNotifications(input: {
 
   const notifications = [...due.entries()]
     .map(([id, { day, slot, entries }]): PlannedNotification => {
-      // The order of `entries` is the order things were added: EMIs, then
-      // Monday's wrap and the log nudge, then spending alerts. Alerts and
-      // EMIs lead, then the wrap, then the log nudge.
+      // `entries` order is: EMIs, Monday's wrap and log nudge, then spending alerts (as added).
+      // Leading order is alerts and EMIs, then the wrap, then the log nudge.
       const lead = [...entries].sort((a, b) => priority(a) - priority(b))[0];
       const rest = entries.filter((e) => e !== lead).sort((a, b) => priority(a) - priority(b));
       return {

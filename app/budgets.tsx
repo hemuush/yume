@@ -53,9 +53,8 @@ export default function BudgetsScreen() {
   const [manageTarget, setManageTarget] = useState<BudgetProgress | null>(null);
   const [continuingId, setContinuingId] = useState<string | null>(null);
   const [continuingAll, setContinuingAll] = useState(false);
-  // Guards against a double-tap firing deleteBudget twice for the same row
-  // before the ActionSheet finishes closing — same convention Categories'
-  // manage sheet uses.
+  // Guards a double-tap firing deleteBudget twice for a row before the ActionSheet closes (same as
+  // Categories' manage sheet).
   const [deleteBusy, setDeleteBusy] = useState(false);
 
   const periodMonth = periodMonthOf();
@@ -74,9 +73,8 @@ export default function BudgetsScreen() {
 
   const hero = budgetsOverview(budgets, toLocalIsoDate(new Date()));
 
-  // Every expense category, parents and subcategories alike, for the
-  // AddBudgetModal's picker — see that component's own comment for why this
-  // isn't pre-filtered down to "doesn't already have one this month".
+  // Every expense category, parents and subcategories alike, for AddBudgetModal's picker; see that
+  // component's comment for why it isn't pre-filtered to "no budget this month".
   const expenseCategories = categories.filter((c) => c.kind === 'expense' && !(hideAmounts && c.isSensitive));
 
   const onContinue = async (item: LapsedBudget) => {

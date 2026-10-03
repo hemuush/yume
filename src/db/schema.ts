@@ -1,7 +1,5 @@
 // SQLite DDL for Yume. Money = integer minor units. IDs = UUID text.
-// Balance integrity: account balances are NEVER stored as free-standing mutable
-// fields updated ad-hoc — they're recomputed from ledger entries by db/ledger.ts
-// so a bug in one screen can never silently desync a balance from its transactions.
+// Balances are never stored; db/ledger.ts recomputes them from ledger entries so no screen can desync one.
 
 export const CREATE_TABLES_SQL = `
 PRAGMA foreign_keys = ON;

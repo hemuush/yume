@@ -34,12 +34,8 @@ const YEAR_CHIP_STEP = 64;
 const YEAR_SPAN = 15;
 
 /**
- * The app's one date picker — Yume has no calendar library. A month grid
- * stepped with ‹ ›; tapping the month title switches to a year and month
- * picker, so a date years away (a loan's start, a goal's deadline) is three
- * taps instead of dozens. Days outside `minDate`…`maxDate` are disabled.
- * `quickPicks` adds Today / Yesterday chips on top, for dates that are
- * usually one of those two. Value in / out is a plain YYYY-MM-DD string.
+ * The app's one date picker (no calendar library): month grid with ‹ ›; the month title opens a year/month
+ * picker. Days outside `minDate`…`maxDate` are disabled; `quickPicks` adds Today/Yesterday. Value: YYYY-MM-DD.
  */
 export function CalendarSheet({
   visible,

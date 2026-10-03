@@ -7,10 +7,8 @@ import { roundedMinor } from '@/lib/round';
 import { WrapPeriod, lastFullWeek, weekLabel } from './wrapData';
 
 /**
- * When Home's Wrap button shows, and what it plays (the Wrap button
- * sign-off): last week's Wrap on a Monday, last month's on the 1st to the
- * 7th. A week or month with no spending has nothing to wrap, so it isn't
- * offered.
+ * When Home's Wrap button shows and what it plays: last week's Wrap on a Monday, last month's on the
+ * 1st-7th. A week or month with no spending has nothing to wrap and isn't offered.
  */
 
 /** Last month's Wrap is offered on days 1 to this of each month. */

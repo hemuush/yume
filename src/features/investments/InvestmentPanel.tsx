@@ -19,9 +19,8 @@ export interface NextSip {
 }
 
 /**
- * The Value page of a tracked account's sheet: invested / gain / return, the
- * list of value updates (tap one to correct it), the next planned
- * contribution, and the button that records what it is worth now.
+ * Value page of a tracked account's sheet: invested / gain / return, value updates (tap to correct),
+ * next planned contribution, and the button that records what it is worth now.
  */
 export function InvestmentPanel({
   account,

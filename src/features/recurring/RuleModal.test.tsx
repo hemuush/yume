@@ -1,7 +1,6 @@
 /**
- * The recurring sheet: its card previews the rule as it will be logged, a
- * new rule opens on the category grid, the Schedule page shows the next
- * three dates, and Delete is a quiet link that still deletes with an undo.
+ * The recurring sheet: its card previews the rule as it will be logged, a new rule opens on the category
+ * grid, Schedule shows the next three dates, and Delete is a quiet link that still deletes with an undo.
  */
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
 import { Text } from 'react-native';

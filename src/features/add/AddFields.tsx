@@ -31,13 +31,8 @@ export function Chip({ label, active, onPress }: { label: string; active: boolea
 }
 
 /**
- * An account, drawn the same way CategoryPicker's 'medal' tiles draw a
- * category — an icon in a soft tinted square, a name underneath, a mint
- * ring when selected — instead of the plain text pill this screen used to
- * reuse `Chip` for. Same icon/colour identity Home's account cards already give
- * each account by type, just rendered through CategoryIcon (which never
- * assumed "category" specifically, only "icon + tint + optional colour") so
- * the two pickers on this screen read as one system instead of two.
+ * An account drawn like CategoryPicker's 'medal' tiles (tinted icon square, name, mint ring when selected).
+ * Reuses CategoryIcon (needs only icon + tint), so both pickers on this screen read as one system.
  */
 export function AccountTile({
   account,
@@ -72,10 +67,8 @@ export function AccountTile({
 }
 
 /**
- * The bar on top of Add's number pad (the split redesign sign-off, option 2):
- * account, date, note, and for a purchase Money back and Split, in one row
- * that slides sideways when it doesn't fit. Riding on the pad, it's always in
- * view, however far the category grid is scrolled.
+ * The bar atop Add's number pad: account, date, note, and for a purchase Money back and Split, in one row
+ * that scrolls sideways; riding on the pad keeps it in view however far the category grid is scrolled.
  */
 export function DetailBar({ children }: { children: React.ReactNode }) {
   return (
@@ -92,9 +85,8 @@ export function DetailBar({ children }: { children: React.ReactNode }) {
 }
 
 /**
- * One item on the detail bar. Account, date and note hold what's usually
- * right already, so each is one quiet tap to change; Money back and Split
- * are switches, filled in when on.
+ * One item on the detail bar. Account, date and note hold usual values (one quiet tap to change);
+ * Money back and Split are switches, filled when on.
  */
 export function DetailChip({
   icon,

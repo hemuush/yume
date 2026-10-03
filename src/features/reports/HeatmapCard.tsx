@@ -11,11 +11,8 @@ import { styles } from './reports.styles';
 const LEVELS = [0, 1, 2, 3, 4] as const;
 
 /**
- * The Days tab's heatmap (the Reports sign-off: "keep the heatmap"): the
- * period's day-by-day grid with its legend and hint. A category picked in
- * Categories narrows it to that category's days, shown as a chip that clears
- * it. Tapping a day opens its list below (the cells carry their own onPress,
- * see buildHeatGrid).
+ * The Days tab's heatmap: the period's day grid with legend and hint. A category picked in Categories narrows
+ * it to that category's days (a chip clears it). Tapping a day opens its list; cells carry their own onPress.
  */
 export function HeatmapCard({
   grid,

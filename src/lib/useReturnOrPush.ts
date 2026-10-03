@@ -12,15 +12,8 @@ interface NavRoute {
 }
 
 /**
- * Goes to a screen without stacking a second copy of one that's already
- * open. Two screens that link to each other (Budgets ⇄ a category's page)
- * used to push a fresh copy on every tap, so you could bounce between them
- * forever and Back then walked through every copy. Now:
- *
- * - already on that screen → nothing (returns 'here', so a sheet can just close);
- * - it's the screen right below → back;
- * - it's further down the stack → back down to it;
- * - otherwise → push, as before.
+ * Goes to a screen without stacking a second copy of one already open (stops Budgets ⇄ category loops).
+ * Already there → nothing (returns 'here'); right below → back; further down → back to it; else push.
  */
 export function useReturnOrPush(): (target: RouteMatch, href: Href) => 'here' | 'back' | 'push' {
   const navigation = useNavigation();
