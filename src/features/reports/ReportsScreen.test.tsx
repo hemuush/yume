@@ -1,12 +1,6 @@
 /**
- * The Reports screen, assembled from its parts: a pinned summary (what was
- * spent, a day figure that ignores entries dated later) over three lenses.
- * Days is the heatmap with an inline day card and story cards that act;
- * Categories is the stacked bar and rows (a row opens its split and links);
- * Trends is the month chart. The Income switch lists where money came from
- * (pointing at Tidy up when starting balances dominate), and a custom range
- * carries through to the category page. (The chart and story cards draw once
- * they've measured their width; the tests hand them one.)
+ * Reports assembled: pinned summary over three lenses (Days heatmap + story cards, Categories, Trends), the
+ * Income switch, and a custom range carried to the category page. Charts draw once measured (tests give a width).
  */
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
 import { Text } from 'react-native';
@@ -133,6 +127,21 @@ const cat = (categoryId: string, name: string, totalMinor: number) => ({
   hasSubcategories: false,
   isSensitive: false,
 });
+const mockCashFlow = jest.fn(async (..._args: unknown[]) =>
+  ['Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct'].map((label, i) => ({
+    label,
+    incomeMinor: 8000000,
+    expenseMinor: i === 6 ? 2500000 : 5000000,
+  }))
+);
+const mockTracks = jest.fn(async (..._args: unknown[]) => [
+  {
+    categoryId: 'food',
+    name: 'Food',
+    color: '#8FE8C8',
+    totalsMinor: [400000, 420000, 410000, 430000, 400000, 410000, 620000],
+  },
+]);
 const summary = (breakdown: ReturnType<typeof cat>[], income: ReturnType<typeof cat>[] = []) => ({
   incomeMinor: income.reduce((s, c) => s + c.totalMinor, 0),
   expenseMinor: breakdown.reduce((s, c) => s + c.totalMinor, 0),
@@ -157,6 +166,8 @@ jest.mock('@/db/reports', () => ({
     ['Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep'].map((label) => ({ label, totalMinor: 2200000 })),
   getNetWorthTrend: async () =>
     ['Jul', 'Aug', 'Sep'].map((label, i) => ({ label, netWorthMinor: 10000000 + i * 500000 })),
+  getMonthlyCashFlow: (...args: unknown[]) => mockCashFlow(...args),
+  getCategoryMonthlyTotals: (...args: unknown[]) => mockTracks(...args),
   getDailyExpenseTotals: (...args: unknown[]) => mockDaily(...args),
   getSubcategoryBreakdown: (...args: unknown[]) => mockSubs(...args),
   getLargestExpenses: (...args: unknown[]) => mockLargest(...args),
@@ -297,9 +308,24 @@ describe('Reports screen', () => {
     await layOut(tree);
     shown = texts(tree);
     expect(shown).toContain('Net worth');
+    expect(shown).toContain('Money in and out');
+    expect(shown).toContain('Against your usual');
     expect(shown).not.toContain('Where it went');
     await pressText(tree, 'Days');
     expect(texts(tree)).toContain('Tap a day to see what went out');
+  });
+
+  it('Trends asks for the in-and-out and category tracks with savings left out while hidden', async () => {
+    mockHide.current = true;
+    try {
+      const tree = await render();
+      await pressText(tree, 'Trends');
+      await layOut(tree);
+      expect(mockCashFlow).toHaveBeenLastCalledWith(7, expect.any(Date), true);
+      expect(mockTracks).toHaveBeenLastCalledWith(7, expect.any(Date), true);
+    } finally {
+      mockHide.current = false;
+    }
   });
 
   it('opens a heatmap day as a card under the grid, and closes it', async () => {

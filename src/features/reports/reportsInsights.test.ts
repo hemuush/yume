@@ -14,6 +14,9 @@ import {
   weekdayRhythm,
   weekdayReadLine,
   WEEKDAY_MIN_DAYS,
+  keptSummary,
+  cashFlowReadLine,
+  categoriesAgainstUsual,
 } from './reportsInsights';
 import type { CategoryBreakdownItem } from '@/db/reports';
 import { parseLocalIsoDate } from '@/lib/date';
@@ -485,5 +488,94 @@ describe('weekdayReadLine', () => {
   it('says "about" when it is within a few percent', () => {
     const r = { ...rhythm, avgMinor: [49000, 0, 0, 0, 0, 0, 100000] };
     expect(weekdayReadLine(r, 0)).toMatch(/· about your /);
+  });
+});
+
+describe('keptSummary', () => {
+  const p = (label: string, incomeMinor: number, expenseMinor: number) => ({
+    label,
+    incomeMinor,
+    expenseMinor,
+  });
+  const months = [
+    p('Jul', 8000000, 5000000),
+    p('Aug', 8000000, 9000000),
+    p('Sep', 8000000, 4000000),
+    p('Oct', 8000000, 1000000),
+  ];
+
+  it('averages the finished months, finds the best one and counts those that kept something', () => {
+    const s = keptSummary(months, true)!;
+    expect(s.months).toBe(3);
+    expect(s.avgKeptMinor).toBe(2000000);
+    expect(s.best).toEqual({ label: 'Sep', keptMinor: 4000000, ratePct: 50 });
+    expect(s.inBlack).toBe(2);
+    expect(s.usualRatePct).toBe(25);
+  });
+
+  it('counts a last month that is finished', () => {
+    expect(keptSummary(months, false)!.months).toBe(4);
+  });
+
+  it('is null with fewer than two finished months', () => {
+    expect(keptSummary(months.slice(2), true)).toBeNull();
+  });
+
+  it('leaves out months with nothing recorded', () => {
+    expect(keptSummary([p('May', 0, 0), p('Jun', 0, 0), ...months.slice(0, 2)], false)!.months).toBe(2);
+  });
+});
+
+describe('cashFlowReadLine', () => {
+  const p = (incomeMinor: number, expenseMinor: number) => ({ label: 'Oct', incomeMinor, expenseMinor });
+
+  it('reads a finished month that kept something', () => {
+    expect(cashFlowReadLine(p(8000000, 5000000), false, 30)).toMatch(
+      /^Oct: .* in, .* out\. Kept .*, 38% of it\.$/
+    );
+  });
+
+  it('reads a month still going against the usual rate', () => {
+    expect(cashFlowReadLine(p(8000000, 5600000), true, 36)).toMatch(
+      /^Oct so far: .* in, .* out\. You have kept 30% of it, your usual is 36%\.$/
+    );
+  });
+
+  it('says when more went out than came in', () => {
+    expect(cashFlowReadLine(p(8000000, 9000000), false, null)).toMatch(/more went out than came in\.$/);
+  });
+
+  it('says when no income was recorded', () => {
+    expect(cashFlowReadLine(p(0, 500000), false, null)).toMatch(/^Oct: no income recorded, .* out\.$/);
+  });
+});
+
+describe('categoriesAgainstUsual', () => {
+  const t = (categoryId: string, name: string, totalsMinor: number[]) => ({
+    categoryId,
+    name,
+    color: '#8FE8C8',
+    totalsMinor,
+  });
+
+  it('compares the latest month with the earlier ones, furthest over first', () => {
+    const rows = categoriesAgainstUsual([
+      t('a', 'Dining', [100, 100, 100, 150]),
+      t('b', 'Food', [400, 400, 400, 800]),
+      t('c', 'Travel', [300, 300, 300, 0]),
+    ]);
+    expect(rows.map((r) => r.name)).toEqual(['Food', 'Dining', 'Travel']);
+    expect(rows[0]).toMatchObject({ usualMinor: 400, nowMinor: 800, pct: 200 });
+    expect(rows[2].pct).toBe(0);
+  });
+
+  it('counts a category from its first month with spending', () => {
+    const rows = categoriesAgainstUsual([t('a', 'Gym', [0, 0, 200, 200, 400])]);
+    expect(rows[0].usualMinor).toBe(200);
+  });
+
+  it('leaves out a category with fewer than two earlier months', () => {
+    expect(categoriesAgainstUsual([t('a', 'New', [0, 0, 0, 200, 400])])).toEqual([]);
+    expect(categoriesAgainstUsual([t('a', 'Quiet', [0, 0, 0, 0, 400])])).toEqual([]);
   });
 });

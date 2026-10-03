@@ -3,10 +3,13 @@ import { formatMoney } from '@/lib/money';
 import { formatPctChange } from '@/lib/format';
 import type {
   AccountBreakdownItem,
+  CashFlowPoint,
   CategoryBreakdownItem,
+  CategoryTrack,
   DailyExpensePoint,
   TrendPoint,
 } from '@/db/reports';
+import { roundedMinor } from '@/lib/round';
 import type { HeatCell } from './SpendHeatmap';
 import { dayMonth } from '@/lib/dateLabels';
 import { PACE_MIN_DAY } from '@/lib/pace';
@@ -15,9 +18,8 @@ import { PACE_MIN_DAY } from '@/lib/pace';
 const FIXED_CATEGORY_NAMES = ['Loan EMI', 'Rent', 'Insurance', 'Subscriptions'];
 
 /**
- * The day-detail popup's footer figure. When the day has any income it shows
- * the net (income − expense, signed); otherwise the plain total spent.
- * Transfers move money between the user's own accounts and never count.
+ * The day-detail popup's footer figure: net (income − expense, signed) when the day has income, else the
+ * total spent. Transfers between your own accounts never count.
  */
 export function summariseDayTotal(txs: { type: 'income' | 'expense' | 'transfer'; amountMinor: number }[]): {
   label: 'Net this day' | 'Total spent';
@@ -51,9 +53,8 @@ export function heatLevel(amountMinor: number, maxMinor: number): 0 | 1 | 2 | 3 
 const WEEKDAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
 /**
- * The heatmap's grid for a period. A month is a calendar (7 columns, blank
- * cells before the 1st, today marked, a spend day tappable via
- * `onDayPress`); a year is its 12 months in 4 columns, from `trend`.
+ * The heatmap grid for a period. A month is a calendar (7 columns, blanks before the 1st, today marked,
+ * spend days tappable via `onDayPress`); a year is its 12 months in 4 columns, from `trend`.
  */
 export function buildHeatGrid(input: {
   granularity: 'month' | 'year';
@@ -106,10 +107,8 @@ export function buildHeatGrid(input: {
 export const RANGE_DAY_GRID_MAX_DAYS = 62;
 
 /**
- * The heatmap's grid for a custom range. Up to about two months it's a
- * calendar of exactly the range's days (blank cells before the first, so
- * weekdays line up); longer, one cell per month — summed from the range's
- * own days, so a month the range only partly covers isn't overstated.
+ * The heatmap grid for a custom range: up to about two months, a calendar of exactly its days (blanks before
+ * the first, so weekdays line up); longer, one cell per month summed from the range's own days.
  */
 export function buildRangeHeatGrid(input: {
   start: string;
@@ -168,11 +167,8 @@ export function baselineFromTrend(trend: TrendPoint[]): number | null {
 }
 
 /**
- * How this period's spending sits against a usual month, as a % (+ above). The
- * month in progress is held against the usual month scaled to the days gone
- * ("usual so far"), and says nothing before PACE_MIN_DAY, when a few days
- * can't be compared with a whole month. A year or a custom range has no usual
- * month to be compared with.
+ * This period's spending vs a usual month, as a % (+ above). The month in progress is held against the usual
+ * month scaled to days gone, and silent before PACE_MIN_DAY. A year or custom range has no usual month.
  */
 export function vsUsual(input: {
   spentMinor: number;
@@ -235,9 +231,8 @@ export interface PatternFact {
 }
 
 /**
- * The notable reads of a month's daily-spend shape, most telling first, at
- * most three. Only the genuinely notable ones are returned — a flat month
- * gets fewer.
+ * The notable reads of a month's daily-spend shape, most telling first, at most three; a flat month gets
+ * fewer.
  */
 export function patternFacts(daily: DailyExpensePoint[], totalDaysInPeriod: number): PatternFact[] {
   const spent = daily.filter((d) => d.totalMinor > 0);
@@ -417,12 +412,8 @@ export interface StoryInput {
 const PATTERN_TONE: StoryTone[] = ['sky', 'gold'];
 
 /**
- * Reports' story cards: the period told in a few big answers, most telling
- * first — what moved, the daily rhythm, how much was already spoken for
- * (the fixed-vs-flexible moon), and the quiet days. Every card is built
- * from something Reports already calculates; nothing here invents a figure.
- * A period in progress with fewer than three spending days gets one "too
- * early" card instead of presenting a two-day pattern as a finding.
+ * Reports' story cards: the period in a few big answers, most telling first (what moved, daily rhythm, fixed-vs-
+ * flexible moon, quiet days), from figures Reports computes. Under three spending days: one "too early" card.
  */
 export function buildStoryCards(input: StoryInput): StoryCard[] {
   if (input.isCurrentPeriod && input.spendDays < 3) {
@@ -518,9 +509,8 @@ export interface WeekdayRhythm {
 }
 
 /**
- * Average spend by weekday for the days so far. Days after `today` are not
- * counted (and spending dated ahead stays out), the same rule as
- * `daySpendFacts`. Null when there are too few days, or nothing was spent.
+ * Average spend by weekday for days so far. Days after `today` (and spending dated ahead) are excluded,
+ * as in `daySpendFacts`. Null when there are too few days or nothing was spent.
  */
 export function weekdayRhythm(
   daily: DailyExpensePoint[],
@@ -588,9 +578,8 @@ export interface DaySpendFacts {
 }
 
 /**
- * The headline's day figures. Entries dated after today count in the period's
- * total but not in its days, so they stay out of "spent on X of Y days" and
- * the per-day average — otherwise it reads "5 of 3 days" and overstates the pace.
+ * The headline's day figures. Entries dated after today count in the period total but not its days, so they
+ * stay out of "spent on X of Y days" and the per-day average (else "5 of 3 days" overstates the pace).
  */
 export function daySpendFacts(
   daily: DailyExpensePoint[],
@@ -607,4 +596,103 @@ export function daySpendFacts(
   const laterMinor = daily.filter((d) => d.date > last).reduce((s, d) => s + d.totalMinor, 0);
   const perDayMinor = countedDays > 0 ? Math.round(Math.max(0, totalMinor - laterMinor) / countedDays) : 0;
   return { spendDays, countedDays, laterMinor, perDayMinor };
+}
+
+export interface KeptSummary {
+  /** Finished months with any activity: the ones the figures below are over. */
+  months: number;
+  avgKeptMinor: number;
+  best: { label: string; keptMinor: number; ratePct: number | null };
+  /** Finished months that kept something. */
+  inBlack: number;
+  /** Kept as a share of income over those months; null when none had income. */
+  usualRatePct: number | null;
+}
+
+/** What was left after spending (income minus spending), which can be negative. */
+export const keptOf = (p: CashFlowPoint) => p.incomeMinor - p.expenseMinor;
+
+/** How much of a month's income was kept, as a %; null when it had no income. */
+export function keptRatePct(p: CashFlowPoint): number | null {
+  return p.incomeMinor > 0 ? Math.round((keptOf(p) / p.incomeMinor) * 100) : null;
+}
+
+/** Fewer finished months than this and an average or a "best month" says nothing. */
+export const KEPT_MIN_MONTHS = 2;
+
+/** Kept, averaged over the finished months (a month still going is left out); null with too few of them. */
+export function keptSummary(points: CashFlowPoint[], inProgress: boolean): KeptSummary | null {
+  const done = (inProgress ? points.slice(0, -1) : points).filter(
+    (p) => p.incomeMinor > 0 || p.expenseMinor > 0
+  );
+  if (done.length < KEPT_MIN_MONTHS) return null;
+  const kept = done.map(keptOf);
+  const income = done.reduce((s, p) => s + p.incomeMinor, 0);
+  let bestAt = 0;
+  kept.forEach((v, i) => {
+    if (v > kept[bestAt]) bestAt = i;
+  });
+  return {
+    months: done.length,
+    avgKeptMinor: Math.round(kept.reduce((a, b) => a + b, 0) / done.length),
+    best: { label: done[bestAt].label, keptMinor: kept[bestAt], ratePct: keptRatePct(done[bestAt]) },
+    inBlack: kept.filter((v) => v > 0).length,
+    usualRatePct: income > 0 ? Math.round((kept.reduce((a, b) => a + b, 0) / income) * 100) : null,
+  };
+}
+
+/** The sentence under the in-and-out bars for one month; `live` is a month still going. */
+export function cashFlowReadLine(p: CashFlowPoint, live: boolean, usualRatePct: number | null): string {
+  const lead = live ? `${p.label} so far` : p.label;
+  const spent = formatMoney(roundedMinor(p.expenseMinor));
+  if (p.incomeMinor <= 0) return `${lead}: no income recorded, ${spent} out.`;
+  const kept = keptOf(p);
+  const rate = keptRatePct(p);
+  const flow = `${lead}: ${formatMoney(roundedMinor(p.incomeMinor))} in, ${spent} out.`;
+  if (kept < 0) return `${flow} ${formatMoney(roundedMinor(-kept))} more went out than came in.`;
+  const share = `${rate}%`;
+  if (live && usualRatePct != null)
+    return `${flow} You have kept ${share} of it, your usual is ${usualRatePct}%.`;
+  return `${flow} Kept ${formatMoney(roundedMinor(kept))}, ${share} of it.`;
+}
+
+export interface CategoryAgainstUsual {
+  categoryId: string;
+  name: string;
+  color: string;
+  totalsMinor: number[];
+  nowMinor: number;
+  /** The average of the category's earlier months, counted from the first one it had spending. */
+  usualMinor: number;
+  /** This month as a % of usual. */
+  pct: number;
+}
+
+/**
+ * Each category's latest month against its own usual, furthest over (in money) first. A category needs two
+ * earlier months of history to have a usual; the rest are left out rather than compared to nothing.
+ */
+export function categoriesAgainstUsual(tracks: CategoryTrack[]): CategoryAgainstUsual[] {
+  const rows: CategoryAgainstUsual[] = [];
+  for (const t of tracks) {
+    const prior = t.totalsMinor.slice(0, -1);
+    const first = prior.findIndex((v) => v > 0);
+    if (first < 0) continue;
+    const span = prior.slice(first);
+    if (span.length < 2) continue;
+    const usualMinor = span.reduce((a, b) => a + b, 0) / span.length;
+    const nowMinor = t.totalsMinor[t.totalsMinor.length - 1];
+    rows.push({
+      categoryId: t.categoryId,
+      name: t.name,
+      color: t.color,
+      totalsMinor: t.totalsMinor,
+      nowMinor,
+      usualMinor,
+      pct: Math.round((nowMinor / usualMinor) * 100),
+    });
+  }
+  return rows.sort(
+    (a, b) => b.nowMinor - b.usualMinor - (a.nowMinor - a.usualMinor) || a.name.localeCompare(b.name)
+  );
 }
