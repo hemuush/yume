@@ -19,6 +19,8 @@ interface Props extends Omit<PressableProps, 'style'> {
    */
   done?: boolean;
   doneLabel?: string;
+  /** A smaller pill for a button that sits inside a row (a Restore beside a backup). */
+  compact?: boolean;
 }
 
 /**
@@ -32,6 +34,7 @@ export function PrimaryButton({
   disabled,
   done,
   doneLabel = 'Done',
+  compact,
   ...rest
 }: Props) {
   const { animatedStyle, onPressIn, onPressOut } = usePressScale();
@@ -48,7 +51,14 @@ export function PrimaryButton({
       disabled={disabled}
       onPressIn={onPressIn}
       onPressOut={onPressOut}
-      style={[styles.base, variantStyle, disabled && styles.disabled, animatedStyle, style]}
+      style={[
+        styles.base,
+        compact && styles.baseCompact,
+        variantStyle,
+        disabled && styles.disabled,
+        animatedStyle,
+        style,
+      ]}
       {...rest}
     >
       {/* `key` forces a remount on the label/done swap so `entering` — which
@@ -60,7 +70,7 @@ export function PrimaryButton({
         maxFontSizeMultiplier={MAX_FONT_SCALE}
         key={done ? 'done' : 'label'}
         entering={FadeIn.duration(DURATIONS.quick)}
-        style={[styles.text, textStyle]}
+        style={[styles.text, compact && styles.textCompact, textStyle]}
       >
         {done ? `✓ ${doneLabel}` : title}
       </ReanimatedAnimated.Text>
@@ -76,6 +86,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  baseCompact: { paddingVertical: 7, paddingHorizontal: 14 },
+  textCompact: { fontFamily: theme.font.roundedBold, fontSize: 13 },
   primary: { backgroundColor: theme.colors.ink },
   danger: { backgroundColor: theme.colors.expense },
   secondary: {

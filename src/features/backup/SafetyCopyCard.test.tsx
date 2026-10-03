@@ -29,6 +29,7 @@ jest.mock('@/lib/localBackup', () => ({
   writeLocalBackupNow: jest.fn(),
   listLocalBackups: jest.fn(async () => []),
   readLocalBackup: jest.fn(),
+  nextLocalBackupLabel: () => null,
 }));
 jest.mock('@/db/settings', () => ({
   getLocalBackupFolderUri: async () => null,
@@ -78,19 +79,19 @@ describe('Backup & Restore · safety copy card', () => {
   it('is not shown when there is no safety copy', async () => {
     mockInfo.current = null;
     const shown = texts(await render());
-    expect(shown).not.toContain('Undo your last restore');
-    expect(shown).toContain('Restore from a backup JSON file saved on this device.');
+    expect(shown).not.toContain('Before your last restore');
+    expect(shown).toContain('Restore from file');
   });
 
   it('says what the copy holds, and "Put back that data" asks before undoing', async () => {
     mockInfo.current = { savedAt: '2026-09-26T04:44:00.000Z', transactions: 284, accounts: 4 };
     const alert = jest.mocked(showAlert);
     const tree = await render();
-    expect(texts(tree)).toContain('Undo your last restore');
+    expect(texts(tree)).toContain('Before your last restore');
     expect(texts(tree).some((t) => t.includes('284 entries') && t.includes('4 accounts'))).toBe(true);
 
     const button = tree.root.find(
-      (n) => n.props.title === 'Put back that data' && typeof n.props.onPress === 'function'
+      (n) => n.props.title === 'Put back' && typeof n.props.onPress === 'function'
     );
     act(() => button.props.onPress());
     expect(undoLastRestore).not.toHaveBeenCalled(); // asks first
