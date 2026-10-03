@@ -3,6 +3,12 @@ import { Text } from 'react-native';
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
 
 jest.mock('@/lib/haptics', () => ({ haptics: { tap: jest.fn() } }));
+jest.mock('@/lib/useReduceMotion', () => ({ useReduceMotion: () => true }));
+// Bars and lines show their settled value, so nothing is still animating when a test ends.
+jest.mock('@/lib/useGrowFrom', () => ({
+  useGrowFrom: (_key: string, target: number) => new (require('react-native').Animated.Value)(target),
+  resetGrowMemory: () => {},
+}));
 
 import { CashFlowCard } from './CashFlowCard';
 import { CategoryTracks } from './CategoryTracks';
@@ -32,6 +38,30 @@ describe('CashFlowCard', () => {
       expect.arrayContaining(['Money in and out', 'Avg kept', 'Best month', 'Months kept'])
     );
     expect(shown).toContain('5 of 6');
+  });
+
+  it('reads the month in full for a screen reader, with what was kept', () => {
+    const r = render(<CashFlowCard points={flow} inProgress />);
+    const labels = r.root
+      .findAll((n) => typeof n.props.onPress === 'function' && n.props.accessibilityState)
+      .map((n) => n.props.accessibilityLabel as string);
+    expect(labels.find((l) => l.startsWith('Oct so far,'))).toBeDefined();
+    expect(labels.find((l) => l.startsWith('Jun,'))).toMatch(/overspent/);
+    expect(labels.find((l) => l.startsWith('Apr,'))).toMatch(/, kept /);
+  });
+
+  it('stacks the summary strip at a large font scale', () => {
+    const RN = require('react-native');
+    const stacked = (scale: number) => {
+      const spy = jest
+        .spyOn(RN, 'useWindowDimensions')
+        .mockReturnValue({ width: 360, height: 800, scale: 2, fontScale: scale });
+      const r = render(<CashFlowCard points={flow} inProgress />);
+      spy.mockRestore();
+      return r.root.findAll((n) => [n.props.style].flat(Infinity).some((x) => x?.flexDirection === 'column'))
+        .length;
+    };
+    expect(stacked(1.3)).toBeGreaterThan(stacked(1));
   });
 
   it('reads another month when its bars are tapped', () => {
@@ -70,8 +100,15 @@ describe('CategoryTracks', () => {
   const rows = ['A', 'B', 'C', 'D', 'E', 'F', 'G'].map((n, i) =>
     row(`id-${n}`, `Cat ${n}`, 900_000 - i * 100_000)
   );
-  const press = (r: ReactTestRenderer, match: (label?: string) => boolean) =>
+  // A row opens through useCardGrow, which waits a beat for the card to be measured.
+  const press = (r: ReactTestRenderer, match: (label?: string) => boolean) => {
     act(() => r.root.findAll((n) => n.props.onPress && match(n.props.accessibilityLabel))[0].props.onPress());
+    act(() => {
+      jest.advanceTimersByTime(200);
+    });
+  };
+  beforeAll(() => jest.useFakeTimers());
+  afterAll(() => jest.useRealTimers());
 
   it('shows five, expands to all, and opens a category', () => {
     const onOpen = jest.fn();

@@ -68,7 +68,8 @@ export function CountUpAmount({ minor, currency, countFromZero = true, symbolSty
   const text = formatMoney(display, currency);
   const parts = symbolStyle ? splitLeadingSymbol(text) : null;
   return (
-    <Text style={style} {...rest}>
+    // TalkBack reads the settled amount, not whatever number the count has reached.
+    <Text style={style} accessibilityLabel={formatMoney(minor, currency)} {...rest}>
       {parts ? (
         <>
           {parts[0]}

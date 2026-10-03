@@ -77,6 +77,7 @@ import {
   StoryAction,
 } from '@/features/reports/reportsInsights';
 import { errorMessage } from '@/lib/errorMessage';
+import { growHref } from '@/lib/cardGrow';
 import { withPressed } from '@/lib/pressed';
 import { EmptyState } from '@/components/EmptyState';
 
@@ -428,12 +429,12 @@ export default function ReportsScreen() {
           router.navigate(`/transactions?account=${a.categoryId}&month=${range.start.slice(0, 7)}`)
       : undefined;
   // A category opens its own page (app/category/[id].tsx), on this same period.
-  const openCategory = (categoryId: string) =>
-    router.push(
-      isCustomWindow(cursor)
-        ? `/category/${categoryId}?g=custom&from=${cursor.start}&to=${cursor.end}`
-        : `/category/${categoryId}?g=${cursor.granularity}&o=${cursor.offset}`
-    );
+  const openCategory = (categoryId: string, grow = false) => {
+    const href = isCustomWindow(cursor)
+      ? `/category/${categoryId}?g=custom&from=${cursor.start}&to=${cursor.end}`
+      : `/category/${categoryId}?g=${cursor.granularity}&o=${cursor.offset}`;
+    router.push(grow ? growHref(href) : href);
+  };
   const onPressCategory = (c: CategoryBreakdownItem) => openCategory(c.categoryId);
 
   // The heatmap is narrowed to a category's days only where it has days at all.
@@ -712,7 +713,7 @@ export default function ReportsScreen() {
               rows={categoriesAgainstUsual(catTracks)}
               catById={catById}
               inProgress={monthInProgress}
-              onOpen={openCategory}
+              onOpen={(id) => openCategory(id, true)}
             />
           </>
         ) : (

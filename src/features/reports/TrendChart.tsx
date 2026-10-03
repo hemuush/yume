@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Pressable } from 'react-native';
+import { Animated, View, Pressable } from 'react-native';
 import Svg, { Circle, Line, Polygon, Polyline, Text as SvgText } from 'react-native-svg';
 import { Text } from '@/components/Text';
 import type { NetWorthPoint, TrendPoint } from '@/db/reports';
@@ -9,6 +9,7 @@ import { theme } from '@/constants/theme';
 import { haptics } from '@/lib/haptics';
 import { styles } from './reports.styles';
 import { withPressed } from '@/lib/pressed';
+import { useGrowFrom } from '@/lib/useGrowFrom';
 
 /** A trend needs at least this many points to be worth drawing. */
 export const MIN_TREND_POINTS = 3;
@@ -19,6 +20,32 @@ const LABEL_Y = 140;
 const PAD_X = 14;
 
 type Kind = 'spend' | 'netWorth';
+
+const AnimatedPolyline = Animated.createAnimatedComponent(Polyline);
+const DRAW_MS = 800;
+
+/** The chart's line, drawn in from its first month once after app open; still when you come back to it. */
+function DrawnLine({ animKey, coords }: { animKey: string; coords: { x: number; y: number }[] }) {
+  const draw = useGrowFrom(animKey, 1, { drawMs: DRAW_MS });
+  let length = 0;
+  for (let i = 1; i < coords.length; i++) {
+    length += Math.hypot(coords[i].x - coords[i - 1].x, coords[i].y - coords[i - 1].y);
+  }
+  length = Math.ceil(length) + 1;
+  return (
+    <AnimatedPolyline
+      points={coords.map((c) => `${c.x},${c.y}`).join(' ')}
+      fill="none"
+      stroke={theme.colors.ink}
+      strokeOpacity={0.75}
+      strokeWidth={2.2}
+      strokeLinejoin="round"
+      strokeLinecap="round"
+      strokeDasharray={length}
+      strokeDashoffset={draw.interpolate({ inputRange: [0, 1], outputRange: [length, 0] })}
+    />
+  );
+}
 
 /**
  * Trends line chart, Spending / Net worth switch: spending vs a dashed average (Reports' headline baseline),
@@ -69,12 +96,7 @@ export function TrendChart({
   const partial = showing === 'spend' && inProgress && points.length >= 2;
   const lastI = points.length - 1;
   const selI = sel != null && sel <= lastI ? sel : lastI;
-  const solidLine = partial
-    ? points
-        .slice(0, -1)
-        .map((p, i) => `${x(i)},${y(p.value)}`)
-        .join(' ')
-    : line;
+  const solidCoords = (partial ? points.slice(0, -1) : points).map((p, i) => ({ x: x(i), y: y(p.value) }));
 
   const pickAt = (locationX: number) => {
     if (width <= 2 * PAD_X) return;
@@ -189,15 +211,7 @@ export function TrendChart({
                 )}
               </>
             )}
-            <Polyline
-              points={solidLine}
-              fill="none"
-              stroke={theme.colors.ink}
-              strokeOpacity={0.75}
-              strokeWidth={2.2}
-              strokeLinejoin="round"
-              strokeLinecap="round"
-            />
+            <DrawnLine animKey={`trend:${showing}:${points.length}`} coords={solidCoords} />
             {partial && (
               <Line
                 x1={x(lastI - 1)}

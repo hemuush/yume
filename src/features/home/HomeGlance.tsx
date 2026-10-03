@@ -17,6 +17,7 @@ import { GoalChip } from '@/features/goals/GoalChip';
 import { HomeSwipeCard, SwipePage } from './HomeSwipeCard';
 import { UpcomingRow, UpcomingMoreRow } from './UpcomingRow';
 import { withPressed } from '@/lib/pressed';
+import { growHref } from '@/lib/cardGrow';
 
 export interface UpcomingItem {
   key: string;
@@ -274,7 +275,12 @@ export function HomeGlance({
               <View style={styles.pageList}>
                 {topBudgets.map((progress, i) => (
                   <Animated.View key={progress.budget.id} entering={rowEntering(i)}>
-                    <BudgetRow progress={progress} divider={i > 0} onPress={() => router.push('/budgets')} />
+                    <BudgetRow
+                      progress={progress}
+                      divider={i > 0}
+                      grow
+                      onPress={() => router.push(growHref('/budgets'))}
+                    />
                   </Animated.View>
                 ))}
               </View>
@@ -292,7 +298,7 @@ export function HomeGlance({
               <View style={styles.goalsPageRow}>
                 {topGoals.map((goal, i) => (
                   <Animated.View key={goal.id} entering={rowEntering(i)}>
-                    <GoalChip goal={goal} onPress={() => router.push('/savings-goals')} />
+                    <GoalChip goal={goal} grow onPress={() => router.push(growHref('/savings-goals'))} />
                   </Animated.View>
                 ))}
                 {hiddenGoalsCount > 0 && (

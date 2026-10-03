@@ -42,6 +42,9 @@ import { AccentProvider } from '@/theme/AccentContext';
 import { PrivacyProvider } from '@/theme/PrivacyContext';
 import { AppLockProvider, useAppLock } from '@/lib/AppLockContext';
 import { UndoToastProvider } from '@/components/UndoToast';
+import { MilestoneNoteProvider, BudgetMonthWatcher } from '@/components/MilestoneNote';
+import { CardGrowHost } from '@/components/CardGrowHost';
+import { isGrowRoute } from '@/lib/cardGrow';
 import { AppDialogHost } from '@/components/AppDialog';
 import { LockScreen } from '@/components/LockScreen';
 import { Onboarding } from '@/features/onboarding/Onboarding';
@@ -55,6 +58,10 @@ import { errorMessage } from '@/lib/errorMessage';
 export const unstable_settings = {
   anchor: '(tabs)',
 };
+
+const growOptions = ({ route }: { route: { params?: object } }) => ({
+  animation: isGrowRoute(route.params) ? ('fade' as const) : ('slide_from_right' as const),
+});
 
 export default function RootLayout() {
   const [dbReady, setDbReady] = useState(false);
@@ -220,41 +227,47 @@ function AppGate({ needsOnboarding, initialLocked }: { needsOnboarding: boolean;
     <ErrorBoundary>
       <StatusBar style="dark" />
       <UndoToastProvider>
-        {/* freezeOnBlur is left OFF: with it on (the navigator default), a
+        <MilestoneNoteProvider>
+          {/* freezeOnBlur is left OFF: with it on (the navigator default), a
             blurred screen's React tree is suspended and can miss context
             updates that happen while it's off-screen — e.g. toggling "hide
             amounts" from the Profile header left the Settings switch showing
             the old state until a full remount. The screens here are light, so
             keeping them live costs little. */}
-        <Stack
-          screenOptions={{
-            headerShown: false,
-            animation: 'slide_from_right',
-            animationDuration: 260,
-            // Swipe from anywhere to go back, not just the left edge: a pushed screen should feel as
-            // dismissible as it looks.
-            gestureEnabled: true,
-            fullScreenGestureEnabled: true,
-            freezeOnBlur: false,
-          }}
-        >
-          <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="categories" />
-          <Stack.Screen name="profile" />
-          <Stack.Screen name="backup" />
-          <Stack.Screen name="notification-settings" />
-          <Stack.Screen name="notifications" />
-          <Stack.Screen name="add-transaction" />
-          <Stack.Screen name="split" />
-          <Stack.Screen name="recurring" />
-          <Stack.Screen name="budgets" />
-          <Stack.Screen name="savings-goals" />
-          <Stack.Screen name="loans" />
-          <Stack.Screen name="recently-deleted" />
-          <Stack.Screen name="themes" />
-          {/* A Wrap fades in over the screen it was opened from, like a story, rather than sliding. */}
-          <Stack.Screen name="wrap" options={{ animation: 'fade' }} />
-        </Stack>
+          <Stack
+            screenOptions={{
+              headerShown: false,
+              animation: 'slide_from_right',
+              animationDuration: 260,
+              // Swipe from anywhere to go back, not just the left edge: a pushed screen should feel as
+              // dismissible as it looks.
+              gestureEnabled: true,
+              fullScreenGestureEnabled: true,
+              freezeOnBlur: false,
+            }}
+          >
+            <Stack.Screen name="(tabs)" />
+            <Stack.Screen name="categories" />
+            <Stack.Screen name="profile" />
+            <Stack.Screen name="backup" />
+            <Stack.Screen name="notification-settings" />
+            <Stack.Screen name="notifications" />
+            <Stack.Screen name="add-transaction" />
+            <Stack.Screen name="split" />
+            <Stack.Screen name="recurring" />
+            {/* A page opened from a card that grows into it (see CardGrowHost) fades in under the growing card. */}
+            <Stack.Screen name="budgets" options={growOptions} />
+            <Stack.Screen name="savings-goals" options={growOptions} />
+            <Stack.Screen name="category/[id]" options={growOptions} />
+            <Stack.Screen name="loans" />
+            <Stack.Screen name="recently-deleted" />
+            <Stack.Screen name="themes" />
+            {/* A Wrap fades in over the screen it was opened from, like a story, rather than sliding. */}
+            <Stack.Screen name="wrap" options={{ animation: 'fade' }} />
+          </Stack>
+          <BudgetMonthWatcher />
+          <CardGrowHost />
+        </MilestoneNoteProvider>
       </UndoToastProvider>
     </ErrorBoundary>
   );
