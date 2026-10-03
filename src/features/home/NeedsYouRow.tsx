@@ -4,7 +4,7 @@ import Feather from '@expo/vector-icons/Feather';
 import { theme } from '@/constants/theme';
 import { formatMoney } from '@/lib/money';
 import { usePressScale } from '@/lib/usePressScale';
-import { homeStyles as h, HOME } from '@/components/homeStyles';
+import { screenStyles as h, SCREEN } from '@/components/screenStyles';
 import type { NeedsYouItem, NeedsYouTone } from './needsYou';
 import { withPressed } from '@/lib/pressed';
 
@@ -61,7 +61,7 @@ export function NeedsYouRow({
       style={[styles.row, divider && styles.divider, animatedStyle]}
     >
       <View style={[styles.iconWrap, { backgroundColor: tone.bg }]}>
-        <Feather name={icon} size={HOME.iconGlyph} color={tone.fg} />
+        <Feather name={icon} size={SCREEN.iconGlyph} color={tone.fg} />
       </View>
       <View style={styles.mid}>
         <Text style={styles.title} numberOfLines={1}>
@@ -107,7 +107,7 @@ const styles = StyleSheet.create({
   row: h.row,
   divider: h.divider,
   // A circle rather than the square tile (the Home A sign-off: round icons on Home).
-  iconWrap: { ...h.iconTile, borderRadius: HOME.iconTile / 2 },
+  iconWrap: { ...h.iconTile, borderRadius: SCREEN.iconTile / 2 },
   mid: h.mid,
   title: h.title,
   sub: h.sub,

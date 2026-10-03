@@ -5,7 +5,7 @@ import { theme } from '@/constants/theme';
 import { formatMoney } from '@/lib/money';
 import { usePressScale } from '@/lib/usePressScale';
 import { DateTile } from '@/components/DateTile';
-import { homeStyles as h, HOME } from '@/components/homeStyles';
+import { screenStyles as h, SCREEN } from '@/components/screenStyles';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -63,7 +63,7 @@ export function UpcomingRow({
         <DateTile iso={date} background={iconBg} urgent={urgent} soon={soon} />
       ) : (
         <View style={[styles.iconWrap, { backgroundColor: urgent ? theme.colors.expenseTint : iconBg }]}>
-          <Feather name={icon} size={HOME.iconGlyph} color={urgent ? theme.colors.expense : iconColor} />
+          <Feather name={icon} size={SCREEN.iconGlyph} color={urgent ? theme.colors.expense : iconColor} />
         </View>
       )}
       <View style={styles.mid}>
@@ -114,7 +114,7 @@ export function UpcomingMoreRow({
       style={[styles.row, divider && styles.divider, animatedStyle]}
     >
       <View style={[styles.iconWrap, { backgroundColor: theme.colors.surfaceAlt }]}>
-        <Feather name="more-horizontal" size={HOME.iconGlyph} color={theme.colors.textMuted} />
+        <Feather name="more-horizontal" size={SCREEN.iconGlyph} color={theme.colors.textMuted} />
       </View>
       <View style={styles.mid}>
         <Text style={styles.moreText}>+{count} more this week</Text>

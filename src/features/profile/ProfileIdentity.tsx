@@ -5,7 +5,7 @@ import { Text, TextInput } from '@/components/Text';
 import { theme } from '@/constants/theme';
 import { shade } from '@/lib/color';
 import { withPressed } from '@/lib/pressed';
-import { HOME } from '@/components/homeStyles';
+import { SCREEN } from '@/components/screenStyles';
 import { HeaderHills } from '@/features/home/HeaderHills';
 import { useAccent } from '@/theme/AccentContext';
 import { styles } from './profile.styles';
@@ -103,7 +103,7 @@ export function ProfileIdentity({
 
 const local = StyleSheet.create({
   card: {
-    marginHorizontal: HOME.gutter,
+    marginHorizontal: SCREEN.gutter,
     marginTop: 8,
     borderRadius: theme.radius.xl2,
     overflow: 'hidden',

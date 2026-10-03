@@ -16,7 +16,7 @@ import { ModalSheet, SheetLink } from '@/components/ModalSheet';
 import { SheetCard } from '@/components/SheetCard';
 import { SettingsRow } from '@/components/SettingsRow';
 import { theme, modalFooterStyles as f } from '@/constants/theme';
-import { homeStyles as h } from '@/components/homeStyles';
+import { screenStyles as h } from '@/components/screenStyles';
 import { useAccent } from '@/theme/AccentContext';
 import { hexToRgba } from '@/lib/color';
 import { weekdayDayMonth } from '@/lib/dateLabels';

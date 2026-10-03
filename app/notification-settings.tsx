@@ -6,8 +6,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppHeader } from '@/components/AppHeader';
 import { ToggleSwitch } from '@/components/ToggleSwitch';
 import { SettingsRow } from '@/components/SettingsRow';
-import { HomeSection } from '@/components/HomeSection';
-import { homeStyles as h } from '@/components/homeStyles';
+import { Section } from '@/components/Section';
+import { screenStyles as h } from '@/components/screenStyles';
 import { SlotTimeStepper } from '@/features/notifications/SlotTimeStepper';
 import { CardRowsSkeleton } from '@/components/ListSkeleton';
 import { getNotificationPrefs, setNotificationPrefs, NotificationPrefs } from '@/db/settings';
@@ -101,7 +101,7 @@ export default function NotificationSettingsScreen() {
       <AppHeader title="Notifications" showBack />
       <ScrollView>
         {/* The same grouped rows as Profile's settings: a section title, one card, hairlines between rows. */}
-        <HomeSection title="Times">
+        <Section title="Times">
           <View style={h.card}>
             <SettingsRow
               icon="white-balance-sunny"
@@ -144,9 +144,9 @@ export default function NotificationSettingsScreen() {
             )}
           </View>
           {noTimes && <Text style={styles.warn}>Switch on a time to get notifications.</Text>}
-        </HomeSection>
+        </Section>
 
-        <HomeSection title="Yume can mention">
+        <Section title="Yume can mention">
           <View style={h.card}>
             <SettingsRow
               icon="credit-card-outline"
@@ -179,9 +179,9 @@ export default function NotificationSettingsScreen() {
               }
             />
           </View>
-        </HomeSection>
+        </Section>
 
-        <HomeSection title="In the app">
+        <Section title="In the app">
           <View style={h.card}>
             <SettingsRow
               icon="weather-night"
@@ -196,7 +196,7 @@ export default function NotificationSettingsScreen() {
               }
             />
           </View>
-        </HomeSection>
+        </Section>
 
         <Text style={styles.footNote}>At most one notification per time. Nothing leaves your phone.</Text>
         <View style={{ height: theme.layout.screenScrollPad + insets.bottom }} />

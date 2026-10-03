@@ -9,7 +9,7 @@ import { useAccent } from '@/theme/AccentContext';
 import { formatMoney } from '@/lib/money';
 import { withPressed } from '@/lib/pressed';
 import { haptics } from '@/lib/haptics';
-import { homeStyles as h } from '@/components/homeStyles';
+import { screenStyles as h } from '@/components/screenStyles';
 import type { ReadyWrap } from '@/features/wrap/wrapWindow';
 
 const SIZE = 34;

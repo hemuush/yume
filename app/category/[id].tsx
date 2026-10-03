@@ -18,8 +18,8 @@ import { AppHeader } from '@/components/AppHeader';
 import { EmptyState } from '@/components/EmptyState';
 import { CategoryIcon } from '@/components/CategoryIcon';
 import { CardRowsSkeleton } from '@/components/ListSkeleton';
-import { HomeSection } from '@/components/HomeSection';
-import { homeStyles as h } from '@/components/homeStyles';
+import { Section } from '@/components/Section';
+import { screenStyles as h } from '@/components/screenStyles';
 import { PeriodRow } from '@/features/reports/PeriodRow';
 import { BudgetRow } from '@/features/budgets/BudgetRow';
 import { TransactionRow } from '@/features/transactions/TransactionRow';
@@ -251,7 +251,7 @@ export default function CategoryScreen() {
             </View>
 
             {spend && isThisMonth(cursor) && (
-              <HomeSection title="Budget">
+              <Section title="Budget">
                 {budget ? (
                   <View style={h.card}>
                     <BudgetRow progress={budget} divider={false} onPress={openBudgets} />
@@ -267,7 +267,7 @@ export default function CategoryScreen() {
                     <Feather name="chevron-right" size={16} color={theme.colors.textMuted} />
                   </Pressable>
                 )}
-              </HomeSection>
+              </Section>
             )}
 
             <View style={styles.actions}>
@@ -291,7 +291,7 @@ export default function CategoryScreen() {
               />
             </View>
 
-            <HomeSection title="Latest entries">
+            <Section title="Latest entries">
               {entries.length === 0 ? (
                 <Text style={styles.empty}>Nothing in {periodName} yet.</Text>
               ) : (
@@ -309,7 +309,7 @@ export default function CategoryScreen() {
                   ))}
                 </View>
               )}
-            </HomeSection>
+            </Section>
           </>
         )}
       </ScrollView>

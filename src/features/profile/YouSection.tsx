@@ -25,8 +25,8 @@ import { useScreenLoad } from '@/lib/useScreenLoad';
 import { usePressScale } from '@/lib/usePressScale';
 import { accountBadgeColor, accountIcon } from '@/lib/account';
 import { GainPill } from '@/features/investments/GainPill';
-import { HomeSection } from '@/components/HomeSection';
-import { homeStyles as h } from '@/components/homeStyles';
+import { Section } from '@/components/Section';
+import { screenStyles as h } from '@/components/screenStyles';
 import { styles } from './profile.styles';
 import { trackedSumLines, groupAccountsByType } from './trackedSum';
 import { CashHero } from './CashHero';
@@ -187,7 +187,7 @@ export function YouSection() {
         onFriends={() => router.push('/people')}
       />
 
-      <HomeSection
+      <Section
         title="Accounts"
         right={<AddButton onPress={() => setAddAccountVisible(true)} label="+ Account" />}
       >
@@ -266,7 +266,7 @@ export function YouSection() {
             )}
           </View>
         )}
-      </HomeSection>
+      </Section>
 
       {/* Budgets, goals, recurring, What-if and Suu's Garden live on Plan,
           each in a fuller screen, so Profile stays about you. This one row

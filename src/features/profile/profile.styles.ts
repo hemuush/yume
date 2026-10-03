@@ -1,14 +1,14 @@
 import { StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
 import { EYEBROW } from '@/constants/textStyles';
-import { HOME } from '@/components/homeStyles';
+import { SCREEN } from '@/components/screenStyles';
 
 // Shared by Profile (shell, YouSection, SettingsSection) and the account modals. Cards, rows and headings
-// come from Home's visual system (homeStyles, HomeSection); these are only what Profile adds.
+// come from Home's visual system (screenStyles, Section); these are only what Profile adds.
 export const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
   errorBanner: {
-    marginHorizontal: HOME.gutter,
+    marginHorizontal: SCREEN.gutter,
     marginTop: theme.layout.screenTopGap,
     marginBottom: 12,
     padding: 14,
@@ -31,7 +31,7 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 14,
-    paddingHorizontal: HOME.gutter,
+    paddingHorizontal: SCREEN.gutter,
     paddingTop: 8,
     paddingBottom: 4,
   },
@@ -69,11 +69,11 @@ export const styles = StyleSheet.create({
   nameSave: { paddingLeft: 10 },
   memberSince: { fontFamily: theme.font.body, fontSize: 12.5, color: theme.colors.textMuted, marginTop: 2 },
   // SegmentedControl draws its own pill; this only places it.
-  tabWrap: { marginHorizontal: HOME.gutter, marginTop: 16 },
+  tabWrap: { marginHorizontal: SCREEN.gutter, marginTop: 16 },
 
   // Cash hero and tracked balance read as one card when both are present.
   cashCard: {
-    marginHorizontal: HOME.gutter,
+    marginHorizontal: SCREEN.gutter,
     marginTop: 12,
     borderRadius: theme.radius.xl2,
     overflow: 'hidden',
@@ -99,7 +99,7 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    marginHorizontal: HOME.gutter,
+    marginHorizontal: SCREEN.gutter,
     marginTop: 14,
     backgroundColor: theme.colors.secondaryTint,
     borderWidth: StyleSheet.hairlineWidth,
@@ -116,7 +116,7 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    marginHorizontal: HOME.gutter,
+    marginHorizontal: SCREEN.gutter,
     marginTop: 12,
     paddingVertical: 11,
     paddingHorizontal: 14,

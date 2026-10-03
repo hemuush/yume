@@ -5,8 +5,8 @@ import { theme } from '@/constants/theme';
 import { formatMoney } from '@/lib/money';
 import { dueDateLabel } from '@/lib/dueDate';
 import { usePressScale } from '@/lib/usePressScale';
-import { HomeSection } from '@/components/HomeSection';
-import { homeStyles as h, HOME } from '@/components/homeStyles';
+import { Section } from '@/components/Section';
+import { screenStyles as h, SCREEN } from '@/components/screenStyles';
 import { DueGroup, PlanDueItem, PlanRoute, dueTone } from './planOverview';
 import { weekdayDayMonth } from '@/lib/dateLabels';
 
@@ -132,7 +132,7 @@ export function ComingUpSection({
   onGroupLayout?: (date: string, y: number) => void;
 }) {
   return (
-    <HomeSection title="Coming up">
+    <Section title="Coming up">
       <View style={h.card} onLayout={(e) => onCardLayout?.(e.nativeEvent.layout.y)}>
         {groups.length === 0 ? (
           <Pressable
@@ -142,7 +142,7 @@ export function ComingUpSection({
             accessibilityLabel="Add a recurring entry"
           >
             <View style={[h.iconTile, { backgroundColor: theme.colors.primaryTint }]}>
-              <Feather name="repeat" size={HOME.iconGlyph} color={theme.colors.ink} />
+              <Feather name="repeat" size={SCREEN.iconGlyph} color={theme.colors.ink} />
             </View>
             <View style={h.mid}>
               <Text style={h.title}>Rent, salary, subscriptions</Text>
@@ -168,6 +168,6 @@ export function ComingUpSection({
           <LinkCell label="Loans" onPress={() => onOpen('/loans')} divider />
         </View>
       </View>
-    </HomeSection>
+    </Section>
   );
 }

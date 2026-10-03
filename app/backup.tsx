@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { View, ScrollView, Pressable, StyleSheet } from 'react-native';
+import { View, ScrollView, Pressable } from 'react-native';
 import { Text } from '@/components/Text';
 import { router, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -32,7 +32,6 @@ import {
   writeLocalBackupNow,
   listLocalBackups,
   readLocalBackup,
-  nextLocalBackupLabel,
   LocalBackupFile,
 } from '@/lib/localBackup';
 import {
@@ -53,25 +52,19 @@ import { SegmentedControl } from '@/components/SegmentedControl';
 import { Skeleton } from '@/components/Skeleton';
 import { theme } from '@/constants/theme';
 import { errorMessage } from '@/lib/errorMessage';
-import { SECTION_TITLE, SECTION_GAP, EYEBROW } from '@/constants/textStyles';
-import { homeStyles as h, HOME } from '@/components/homeStyles';
+import { screenStyles as h, SCREEN } from '@/components/screenStyles';
 import { SettingsRow } from '@/components/SettingsRow';
 import { withPressed } from '@/lib/pressed';
-import { toLocalIsoDate } from '@/lib/date';
-import type { McIconName } from '@/components/iconName';
 import { showAlert } from '@/components/AppDialog';
+import { styles } from '@/features/backup/backup.styles';
+import { TimelineNode } from '@/features/backup/TimelineNode';
+import { backupStatus, formatBytes, formatWhen } from '@/features/backup/backupStatus';
 
 const FREQUENCIES: { label: string; value: BackupFrequency }[] = [
   { label: 'Daily', value: 'daily' },
   { label: 'Weekly', value: 'weekly' },
   { label: 'Monthly', value: 'monthly' },
 ];
-
-function formatBytes(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
 
 const TABS: { label: string; value: 'points' | 'copy' }[] = [
   { label: 'Restore points', value: 'points' },
@@ -80,98 +73,6 @@ const TABS: { label: string; value: 'points' | 'copy' }[] = [
 
 /** How many backups the timeline shows before "See all". */
 const COLLAPSED_FILES = 3;
-
-/** One date format for the whole screen: "3 Oct, 2:05 pm". */
-function formatWhen(iso: string): string {
-  return new Date(iso).toLocaleString(undefined, {
-    day: 'numeric',
-    month: 'short',
-    hour: 'numeric',
-    minute: '2-digit',
-  });
-}
-
-type StatusView = { icon: McIconName; tint: string; title: string; lines: string[]; failed: boolean };
-
-/** What the status card says: whether you are backed up, when, and what is next. */
-function backupStatus({
-  folder,
-  lastAt,
-  outcome,
-  frequency,
-  now,
-}: {
-  folder: string | null;
-  lastAt: string | null;
-  outcome: BackupOutcome | null;
-  frequency: BackupFrequency;
-  now: Date;
-}): StatusView {
-  if (!folder) {
-    return {
-      icon: 'folder-outline',
-      tint: theme.colors.idGold,
-      title: 'No backup folder yet',
-      lines: ['Pick a folder once. Yume writes a backup there on its own.'],
-      failed: false,
-    };
-  }
-  if (outcome && !outcome.ok) {
-    return {
-      icon: 'alert-circle-outline',
-      tint: theme.colors.idCoral,
-      title: 'Last backup failed',
-      lines: [outcome.error || "Couldn't write to the folder. Check that it still exists."],
-      failed: true,
-    };
-  }
-  if (!lastAt) {
-    return {
-      icon: 'clock-outline',
-      tint: theme.colors.idGold,
-      title: 'Not backed up yet',
-      lines: ['Tap Backup now to write the first one.'],
-      failed: false,
-    };
-  }
-  const today = toLocalIsoDate(new Date(lastAt)) === toLocalIsoDate(now);
-  const size = outcome?.ok && outcome.sizeBytes ? ` · ${formatBytes(outcome.sizeBytes)}` : '';
-  const next = nextLocalBackupLabel(lastAt, frequency, now);
-  return {
-    icon: 'shield-check-outline',
-    tint: theme.colors.idSage,
-    title: today
-      ? 'Backed up today'
-      : `Backed up ${new Date(lastAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}`,
-    lines: [`${formatWhen(lastAt)}${size}`, ...(next ? [next] : [])],
-    failed: false,
-  };
-}
-
-/** One stop on the restore-points timeline: a dot and a rail beside a row. */
-function TimelineNode({
-  first,
-  last,
-  latest,
-  copy,
-  children,
-}: {
-  first?: boolean;
-  last?: boolean;
-  latest?: boolean;
-  copy?: boolean;
-  children: React.ReactNode;
-}) {
-  return (
-    <View style={[styles.node, copy && styles.nodeCopy]}>
-      {!(first && last) && (
-        <View style={[styles.rail, { top: first ? '50%' : 0, bottom: last ? '50%' : 0 }]} />
-      )}
-      <View style={[styles.dot, latest && styles.dotLatest, copy && styles.dotCopy]} />
-      <View style={h.row}>{children}</View>
-    </View>
-  );
-}
 
 export default function BackupScreen() {
   const insets = useSafeAreaInsets();
@@ -461,7 +362,11 @@ Restore anyway? Your current data would be replaced with no way back.`,
             <>
               <View style={styles.statusHead}>
                 <View style={[h.iconTile, { backgroundColor: status.tint }]}>
-                  <MaterialCommunityIcons name={status.icon} size={HOME.iconGlyph} color={theme.colors.ink} />
+                  <MaterialCommunityIcons
+                    name={status.icon}
+                    size={SCREEN.iconGlyph}
+                    color={theme.colors.ink}
+                  />
                 </View>
                 <View style={h.mid}>
                   <Text style={styles.statusTitle}>{status.title}</Text>
@@ -653,104 +558,3 @@ Restore anyway? Your current data would be replaced with no way back.`,
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: theme.colors.background },
-  sectionTitle: {
-    ...SECTION_TITLE,
-    marginHorizontal: 20,
-    marginTop: SECTION_GAP.top,
-    marginBottom: SECTION_GAP.bottom,
-  },
-  statusCard: { marginTop: theme.layout.screenTopGap, padding: 16 },
-  statusHead: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  statusTitle: { fontFamily: theme.font.roundedBold, fontSize: 17, color: theme.colors.textPrimary },
-  errorLine: { color: theme.colors.expenseText },
-  mainAction: { marginTop: 14 },
-  scheduleBlock: {
-    marginTop: 16,
-    paddingTop: 14,
-    gap: 8,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: theme.colors.borderSoft,
-  },
-  eyebrow: { ...EYEBROW },
-  scheduleFoot: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
-  scheduleHint: {
-    flex: 1,
-    fontFamily: theme.font.body,
-    fontSize: 12,
-    color: theme.colors.textMuted,
-    lineHeight: 17,
-  },
-  link: {
-    fontFamily: theme.font.bodyMedium,
-    fontSize: 12,
-    color: theme.colors.textSecondary,
-    textDecorationLine: 'underline',
-  },
-  linkDisabled: { opacity: 0.45 },
-  tabs: { marginHorizontal: 20, marginTop: 16 },
-  titleRow: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    justifyContent: 'space-between',
-    paddingRight: 20,
-  },
-  seeAll: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textSecondary },
-  timeline: { overflow: 'hidden' },
-  whenRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  latestChip: {
-    paddingHorizontal: 7,
-    paddingVertical: 1,
-    borderRadius: theme.radius.pill,
-    backgroundColor: theme.colors.primaryTint,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-  },
-  latestText: {
-    fontFamily: theme.font.bodyBold,
-    fontSize: 10,
-    letterSpacing: 0.4,
-    textTransform: 'uppercase',
-    color: theme.colors.textSecondary,
-  },
-  copySub: { color: theme.colors.textSecondary },
-  emptyCard: { padding: 16, alignItems: 'center' },
-  emptyAfter: { marginTop: 12 },
-  emptyTitle: { fontFamily: theme.font.roundedBold, fontSize: 16, color: theme.colors.textPrimary },
-  emptySub: {
-    fontFamily: theme.font.body,
-    fontSize: 13,
-    color: theme.colors.textSecondary,
-    lineHeight: 19,
-    marginTop: 4,
-    textAlign: 'center',
-  },
-  restoreFile: { marginTop: 12 },
-  copyHint: {
-    fontFamily: theme.font.body,
-    fontSize: 12,
-    color: theme.colors.textMuted,
-    lineHeight: 17,
-    marginHorizontal: 20,
-    marginTop: 10,
-  },
-  node: { paddingLeft: 40 },
-  nodeCopy: { backgroundColor: theme.colors.idTeal },
-  rail: { position: 'absolute', left: 22, width: 2, backgroundColor: theme.colors.borderSoft },
-  dot: {
-    position: 'absolute',
-    left: 17,
-    top: '50%',
-    marginTop: -6,
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    borderWidth: 2,
-    borderColor: theme.colors.textMuted,
-    backgroundColor: theme.colors.surface,
-  },
-  dotLatest: { backgroundColor: theme.colors.income, borderColor: theme.colors.income },
-  dotCopy: { backgroundColor: theme.colors.idTeal, borderColor: theme.colors.income },
-});

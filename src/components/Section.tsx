@@ -3,7 +3,7 @@ import { Text } from '@/components/Text';
 import Feather from '@expo/vector-icons/Feather';
 import { theme } from '@/constants/theme';
 import { usePressScale } from '@/lib/usePressScale';
-import { HOME } from './homeStyles';
+import { SCREEN } from './screenStyles';
 import { SECTION_TITLE, SECTION_GAP } from '@/constants/textStyles';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -12,7 +12,7 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
  * Titled Home block with optional "See all →"; `badge` adds a count after the title (Needs you). `heading`
  * replaces the title text (Plans tabs sit there); `right` replaces "See all" (Profile's "+ Account").
  */
-export function HomeSection({
+export function Section({
   title,
   badge,
   heading,
@@ -68,7 +68,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginHorizontal: HOME.gutter,
+    marginHorizontal: SCREEN.gutter,
     marginBottom: SECTION_GAP.bottom,
     minHeight: 24,
   },
