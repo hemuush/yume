@@ -4,6 +4,7 @@ import { theme } from '@/constants/theme';
 import { EYEBROW } from '@/constants/textStyles';
 import { formatMoney } from '@/lib/money';
 import { withPressed } from '@/lib/pressed';
+import { categorySentence, parentNameOf } from '@/lib/categoryLabel';
 import { Category } from '@/types';
 import { DraftPart, partAmounts, splitProblem, splitProblemText } from './splitDraft';
 
@@ -61,8 +62,12 @@ export function SplitCard({
   onRemove?: () => void;
 }) {
   const amounts = partAmounts(totalMinor, parts);
-  const nameOf = (key: string) =>
-    categories.find((c) => c.id === parts.find((p) => p.key === key)?.categoryId)?.name ?? 'this part';
+  const categoriesById = new Map(categories.map((c) => [c.id, c]));
+  const labelOf = (categoryId: string | null | undefined) => {
+    const cat = categoryId ? categoriesById.get(categoryId) : undefined;
+    return cat ? categorySentence(cat.name, parentNameOf(categoryId, categoriesById)) : undefined;
+  };
+  const nameOf = (key: string) => labelOf(parts.find((p) => p.key === key)?.categoryId) ?? 'this part';
   const problem = splitProblem(totalMinor, parts);
   return (
     <View style={styles.wrap}>
@@ -87,7 +92,7 @@ export function SplitCard({
               <View key={p.key} style={styles.line}>
                 <View style={[styles.dot, { backgroundColor: cat?.color ?? theme.colors.inkHairline }]} />
                 <Text style={styles.name} numberOfLines={1}>
-                  {cat?.name ?? 'No category yet'}
+                  {labelOf(p.categoryId) ?? 'No category yet'}
                 </Text>
                 <Text style={styles.amount}>{formatMoney(Math.max(0, amounts[i]), currency)}</Text>
               </View>

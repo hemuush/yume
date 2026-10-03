@@ -1,3 +1,5 @@
+import { clampSlotMinutes } from '../lib/notificationTimes';
+import type { QueuedAlert } from '../lib/notificationPlan';
 import { getDb } from './client';
 
 // Cached in-memory after first load so formatMoney() etc. can read it
@@ -36,10 +38,18 @@ export async function setDefaultCurrency(code: string): Promise<void> {
   cachedCurrency = code;
 }
 
+/**
+ * Two times a day Yume can notify at: Morning and Evening (their allowed
+ * ranges are in lib/notificationTimes.ts and never overlap). The rest are
+ * what Yume may mention at those times.
+ */
 export interface NotificationPrefs {
-  reminderEnabled: boolean;
-  reminderHour: number; // 0-23
-  reminderMinute: number; // 0-59
+  morningEnabled: boolean;
+  morningHour: number;
+  morningMinute: number;
+  eveningEnabled: boolean;
+  eveningHour: number;
+  eveningMinute: number;
   overspendAlerts: boolean;
   billAlerts: boolean;
   weeklySummary: boolean;
@@ -48,14 +58,29 @@ export interface NotificationPrefs {
 
 const NOTIFICATION_PREFS_KEY = 'notification_prefs';
 const DEFAULT_NOTIFICATION_PREFS: NotificationPrefs = {
-  reminderEnabled: false,
-  reminderHour: 20,
-  reminderMinute: 0,
+  morningEnabled: true,
+  morningHour: 9,
+  morningMinute: 0,
+  eveningEnabled: false,
+  eveningHour: 20,
+  eveningMinute: 0,
   overspendAlerts: true,
   billAlerts: true,
   weeklySummary: false,
   suuCheckins: true,
 };
+
+function clampPrefTimes(prefs: NotificationPrefs): NotificationPrefs {
+  const morning = clampSlotMinutes('morning', prefs.morningHour * 60 + prefs.morningMinute);
+  const evening = clampSlotMinutes('evening', prefs.eveningHour * 60 + prefs.eveningMinute);
+  return {
+    ...prefs,
+    morningHour: Math.floor(morning / 60),
+    morningMinute: morning % 60,
+    eveningHour: Math.floor(evening / 60),
+    eveningMinute: evening % 60,
+  };
+}
 
 export async function getNotificationPrefs(): Promise<NotificationPrefs> {
   const db = await getDb();
@@ -73,7 +98,18 @@ export async function getNotificationPrefs(): Promise<NotificationPrefs> {
       stored.suuCheckins = stored.flynnCheckins;
     }
     delete stored.flynnCheckins;
-    return { ...DEFAULT_NOTIFICATION_PREFS, ...stored };
+    // The single daily reminder (`reminder*`) became the Evening time. An
+    // install that had set it keeps that choice, with the Morning time on
+    // its default.
+    if (!('eveningEnabled' in stored) && 'reminderEnabled' in stored) {
+      stored.eveningEnabled = stored.reminderEnabled;
+      if (typeof stored.reminderHour === 'number') stored.eveningHour = stored.reminderHour;
+      if (typeof stored.reminderMinute === 'number') stored.eveningMinute = stored.reminderMinute;
+    }
+    delete stored.reminderEnabled;
+    delete stored.reminderHour;
+    delete stored.reminderMinute;
+    return clampPrefTimes({ ...DEFAULT_NOTIFICATION_PREFS, ...stored });
   } catch {
     return DEFAULT_NOTIFICATION_PREFS;
   }
@@ -563,6 +599,44 @@ export async function addBudgetNudgesSent(keys: string[]): Promise<void> {
     [BUDGET_NUDGES_SENT_KEY, JSON.stringify(next)]
   );
   cachedBudgetNudgesSent = next;
+}
+
+const ALERT_QUEUE_KEY = 'notification_alert_queue';
+/** Alerts only wait for the next time, so a handful is plenty. */
+const ALERT_QUEUE_KEPT = 20;
+
+/** Spending alerts waiting for the next notification time (see planNotifications). */
+export async function getAlertQueue(): Promise<QueuedAlert[]> {
+  const db = await getDb();
+  const row = await db.getFirstAsync<{ value: string }>('SELECT value FROM settings WHERE key = ?', [
+    ALERT_QUEUE_KEY,
+  ]);
+  try {
+    const parsed: unknown = row ? JSON.parse(row.value) : [];
+    return Array.isArray(parsed)
+      ? parsed.filter(
+          (a): a is QueuedAlert => !!a && typeof a.id === 'string' && typeof a.queuedAt === 'string'
+        )
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+export async function setAlertQueue(alerts: QueuedAlert[]): Promise<void> {
+  const db = await getDb();
+  await db.runAsync(
+    `INSERT INTO settings (key, value) VALUES (?, ?)
+     ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
+    [ALERT_QUEUE_KEY, JSON.stringify(alerts.slice(-ALERT_QUEUE_KEPT))]
+  );
+}
+
+/** Adds alerts to the queue; one already queued under the same id is replaced, not doubled. */
+export async function addQueuedAlerts(alerts: QueuedAlert[]): Promise<void> {
+  if (alerts.length === 0) return;
+  const ids = new Set(alerts.map((a) => a.id));
+  await setAlertQueue([...(await getAlertQueue()).filter((a) => !ids.has(a.id)), ...alerts]);
 }
 
 const HIDE_SENSITIVE_AMOUNTS_KEY = 'hide_sensitive_amounts';

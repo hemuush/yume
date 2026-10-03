@@ -11,7 +11,7 @@ const mockTestDb = createRealDataTestDb();
 jest.mock('@/db/client', () => ({
   getDb: async () => mockTestDb,
 }));
-jest.mock('@/lib/notifications', () => ({ notifyOverspend: async () => {} }));
+jest.mock('@/lib/notifications', () => ({ rebuildNotifications: async () => {} }));
 
 import { CREATE_TABLES_SQL } from '@/db/schema';
 import { createAccount, createCategory, listMostUsedExpenseCategories } from '@/db/ledger';

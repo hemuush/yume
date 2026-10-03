@@ -11,7 +11,7 @@ import { theme } from '@/constants/theme';
 import { useReduceMotion } from '@/lib/useReduceMotion';
 import { Skeleton } from '@/components/Skeleton';
 import { SoftCard } from './SoftCard';
-import { STACK, stackHeight } from './accountStackMotion';
+import { STACK, stackHeight } from './stackLayout';
 
 export { CardRowsSkeleton } from '@/components/ListSkeleton';
 

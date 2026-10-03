@@ -7,6 +7,7 @@ import { LapsedBudget } from '@/db/budgets';
 import { formatMoney } from '@/lib/money';
 import { theme } from '@/constants/theme';
 import { withPressed } from '@/lib/pressed';
+import { categorySentence } from '@/lib/categoryLabel';
 import { styles } from './budgets.styles';
 
 /**
@@ -40,7 +41,7 @@ export function LapsedBudgetsCard({
             {items.length} {items.length === 1 ? 'budget' : 'budgets'} ended last month
           </Text>
           <Text style={styles.lapsedNames} numberOfLines={1}>
-            {items.map((i) => i.categoryName).join(' · ')}
+            {items.map((i) => categorySentence(i.categoryName, i.parentName)).join(' · ')}
           </Text>
         </View>
         <Pressable
@@ -76,7 +77,7 @@ export function LapsedBudgetsCard({
           <View key={item.categoryId} style={styles.lapsedRow}>
             <CategoryIcon name={item.categoryIcon} color={item.categoryColor} square={30} size={14} />
             <Text style={styles.lapsedName} numberOfLines={1}>
-              {item.categoryName}
+              {categorySentence(item.categoryName, item.parentName)}
             </Text>
             <Text style={styles.lapsedAmount}>{formatMoney(item.limitAmountMinor)}/mo</Text>
             <Pressable

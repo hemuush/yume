@@ -1,7 +1,9 @@
 import { View, Pressable, Animated, StyleSheet } from 'react-native';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Text } from '@/components/Text';
+import { formatMoney } from '@/lib/money';
 import { formatRatioPct } from '@/lib/format';
+import { weekdayDayMonth } from '@/lib/dateLabels';
 import { payoffFraction } from '@/lib/loan';
 import { roundedMinor } from '@/lib/round';
 import { Loan } from '@/types';
@@ -16,9 +18,9 @@ import { loanBarTone, loanGlyph, loanIcon, loanTint } from './loanIdentity';
 
 /**
  * One loan in the list: a flat card with the loan's own pale tile, how far
- * along it is, and its debt-free month. The next EMI and the Pay pill live in
- * "Due next" above, so they are not repeated here. A closed loan is the same
- * card in grey that says "Paid off".
+ * along it is, and its debt-free month. Open loans end with their next EMI and
+ * a Pay pill that goes straight to that EMI's pay sheet. A closed loan is the
+ * same card in grey that says "Paid off", with no footer.
  */
 export function LoanCard({
   loan,
@@ -26,6 +28,7 @@ export function LoanCard({
   progress,
   fadeStyle,
   onPress,
+  onPay,
 }: {
   loan: Loan;
   /** The loan's identity colour (loanHues). */
@@ -34,12 +37,16 @@ export function LoanCard({
   progress?: LoanProgress;
   fadeStyle: React.ComponentProps<typeof Animated.View>['style'];
   onPress: () => void;
+  /** Opens this loan's pay sheet for its next EMI. */
+  onPay: () => void;
 }) {
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.98);
   const isClosed = loan.status === 'closed';
   const isBorrowed = loan.direction === 'borrowed';
   const fraction = isClosed ? 1 : payoffFraction(loan.principalMinor, loan.outstandingPrincipalMinor);
   const lastDueDate = progress?.lastDueDate;
+  const nextDueDate = progress?.nextDueDate ?? loan.nextDueDate;
+  const nextEmiMinor = progress?.nextEmiMinor ?? loan.emiAmountMinor;
   const repaidLine = progress ? `${progress.paidCount} of ${progress.totalCount} EMIs` : null;
 
   return (
@@ -108,6 +115,27 @@ export function LoanCard({
               </Text>
             ) : null}
           </View>
+
+          {!isClosed && nextDueDate && (
+            <View style={styles.footer}>
+              <View style={styles.footerText}>
+                <Text style={styles.nextLabel}>Next EMI</Text>
+                <Text style={styles.nextLine} numberOfLines={1}>
+                  {weekdayDayMonth(nextDueDate)} ·{' '}
+                  <Text style={styles.nextAmount}>{formatMoney(nextEmiMinor)}</Text>
+                </Text>
+              </View>
+              <Pressable
+                onPress={onPay}
+                accessibilityRole="button"
+                accessibilityLabel={`${isBorrowed ? 'Pay' : 'Mark received'} next EMI for ${loan.counterparty}`}
+                hitSlop={8}
+                style={({ pressed }) => [styles.pill, pressed && styles.pillPressed]}
+              >
+                <Text style={styles.pillText}>{isBorrowed ? 'Pay' : 'Received'}</Text>
+              </Pressable>
+            </View>
+          )}
         </Pressable>
       </Animated.View>
     </Animated.View>
@@ -151,4 +179,30 @@ const styles = StyleSheet.create({
   caption: { flexDirection: 'row', justifyContent: 'space-between', gap: 10, marginTop: 8 },
   captionText: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, flexShrink: 1 },
   captionBold: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
+  footer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: theme.colors.borderSoft,
+  },
+  footerText: { flex: 1, minWidth: 0 },
+  nextLabel: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
+  nextLine: {
+    fontFamily: theme.font.bodyBold,
+    fontSize: 13.5,
+    color: theme.colors.textPrimary,
+    marginTop: 2,
+  },
+  nextAmount: { fontFamily: theme.font.monoBold },
+  pill: {
+    paddingHorizontal: 13,
+    paddingVertical: 6,
+    borderRadius: theme.radius.pill,
+    backgroundColor: theme.colors.ink,
+  },
+  pillPressed: { opacity: 0.8 },
+  pillText: { fontFamily: theme.font.bodyBold, fontSize: 11.5, color: theme.colors.white },
 });

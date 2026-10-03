@@ -27,8 +27,14 @@ export function RecurringHero({
   /** The earliest next run among running rules. */
   nextDate: string | null;
 }) {
-  const caption = topShareLine(shares);
   const running = totals.count > 0;
+  const caption = [
+    topShareLine(shares),
+    `${totals.count} running`,
+    nextDate ? `Next: ${weekdayDayMonth(nextDate)}` : null,
+  ]
+    .filter(Boolean)
+    .join(' · ');
   return (
     // Keyed and given a solid ground like the Loans hero, so it can't lose its children.
     <View key={running ? 'totals' : 'intro'} style={[styles.card, { backgroundColor: shade(HUE, 93) }]}>
@@ -41,15 +47,20 @@ export function RecurringHero({
       <View style={styles.circle} />
       {running ? (
         <>
-          <Text style={styles.kicker}>Subscriptions & bills</Text>
-          <Text style={styles.amount}>
-            {formatMoney(totals.monthlyMinor)}
-            <Text style={styles.per}> / month</Text>
-          </Text>
-          <View style={styles.chips}>
-            <Chip text={`${formatMoney(totals.yearlyMinor)} a year`} />
-            <Chip text={`${totals.count} running`} />
-            {nextDate && <Chip text={`Next: ${weekdayDayMonth(nextDate)}`} />}
+          <View style={styles.head}>
+            <View style={styles.headText}>
+              <Text style={styles.kicker}>Subscriptions & bills</Text>
+              <Text style={styles.amount} numberOfLines={1}>
+                {formatMoney(totals.monthlyMinor)}
+                <Text style={styles.per}> / month</Text>
+              </Text>
+            </View>
+            <View style={styles.side}>
+              <Text style={styles.sideLabel}>A year</Text>
+              <Text style={styles.sideValue} numberOfLines={1}>
+                {formatMoney(totals.yearlyMinor)}
+              </Text>
+            </View>
           </View>
           {shares.length > 1 && (
             <View style={styles.stack}>
@@ -58,10 +69,7 @@ export function RecurringHero({
               ))}
             </View>
           )}
-          {caption && <Text style={styles.caption}>{caption}</Text>}
-          <Text style={styles.intro}>
-            Yume logs these on schedule. They show up in Activity like any entry you typed.
-          </Text>
+          <Text style={styles.caption}>{caption}</Text>
         </>
       ) : (
         <>
@@ -76,20 +84,11 @@ export function RecurringHero({
   );
 }
 
-function Chip({ text }: { text: string }) {
-  return (
-    <View style={styles.chip}>
-      <Text style={styles.chipText} numberOfLines={1}>
-        {text}
-      </Text>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   card: {
     marginBottom: 4,
-    padding: 16,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
     borderRadius: theme.radius.xl2,
     overflow: 'hidden',
   },
@@ -102,31 +101,28 @@ const styles = StyleSheet.create({
     borderRadius: 65,
     backgroundColor: 'rgba(255,255,255,0.35)',
   },
+  head: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
+  headText: { flex: 1, minWidth: 0 },
   kicker: { ...EYEBROW, color: theme.colors.textSecondary },
-  amount: { fontFamily: theme.font.monoBold, fontSize: 30, color: theme.colors.textPrimary, marginTop: 4 },
-  per: { fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textMuted },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 10 },
-  chip: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: theme.radius.pill,
-    backgroundColor: 'rgba(255,255,255,0.6)',
-  },
-  chipText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textPrimary },
+  amount: { fontFamily: theme.font.monoBold, fontSize: 26, color: theme.colors.textPrimary, marginTop: 2 },
+  per: { fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textSecondary },
+  side: { alignItems: 'flex-end', flexShrink: 0, maxWidth: '45%' },
+  sideLabel: { ...EYEBROW, color: theme.colors.textSecondary },
+  sideValue: { fontFamily: theme.font.monoBold, fontSize: 14, color: theme.colors.textPrimary, marginTop: 4 },
   stack: {
     flexDirection: 'row',
-    height: 12,
+    height: 10,
     gap: 2,
-    marginTop: 14,
+    marginTop: 10,
     borderRadius: theme.radius.pill,
     overflow: 'hidden',
   },
-  caption: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary, marginTop: 7 },
+  caption: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary, marginTop: 8 },
   intro: {
     fontFamily: theme.font.body,
     fontSize: 12.5,
     lineHeight: 17,
     color: theme.colors.textSecondary,
-    marginTop: 10,
+    marginTop: 8,
   },
 });

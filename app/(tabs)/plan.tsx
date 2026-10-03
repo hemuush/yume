@@ -20,6 +20,7 @@ import { toLocalIsoDate } from '@/lib/date';
 import { AppHeader } from '@/components/AppHeader';
 import { CardRowsSkeleton } from '@/components/ListSkeleton';
 import { useScreenLoad } from '@/lib/useScreenLoad';
+import { categorySentence, parentNameOf } from '@/lib/categoryLabel';
 import { HOME } from '@/features/home/homeStyles';
 import { HomeSection } from '@/features/home/HomeSection';
 import { SECTION_GAP } from '@/constants/textStyles';
@@ -112,6 +113,10 @@ export default function PlanScreen() {
     const streak = dailyGoal != null ? await getDailyGoalStreakSeries(dailyGoal, 5) : null;
 
     const categoriesById = new Map(categories.map((c) => [c.id, c]));
+    const categoryLabelOf = (id: string | null) => {
+      const cat = id ? categoriesById.get(id) : undefined;
+      return cat ? categorySentence(cat.name, parentNameOf(id, categoriesById)) : undefined;
+    };
     const savingsIds = savingsAccountIdsOf(accounts);
     const accountName = (id: string | null) => accounts.find((a) => a.id === id)?.name ?? '—';
     const loansSummary = buildLoansSummary(loans, progress);
@@ -129,7 +134,7 @@ export default function PlanScreen() {
           label:
             r.type === 'transfer'
               ? `${accountName(r.accountId)} → ${accountName(r.toAccountId)}`
-              : r.note || categories.find((c) => c.id === r.categoryId)?.name || 'Recurring',
+              : r.note || categoryLabelOf(r.categoryId) || 'Recurring',
         })),
       cardCycles
     );
@@ -154,7 +159,7 @@ export default function PlanScreen() {
       budgets: buildBudgetsSummary(
         budgets.map((b) => ({
           id: b.budget.id,
-          categoryName: b.categoryName,
+          categoryName: categorySentence(b.categoryName, b.parentName),
           spentMinor: b.spentMinor,
           effectiveLimitMinor: b.effectiveLimitMinor,
           remainingMinor: b.remainingMinor,

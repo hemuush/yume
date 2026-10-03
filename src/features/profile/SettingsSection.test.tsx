@@ -33,7 +33,8 @@ jest.mock('@/db/settings', () => ({
   getDailySpendingGoal: async () => 50000,
   setDailySpendingGoal: (minor: number | null) => mockSetDailyGoal(minor),
   getNotificationPrefs: async () => ({
-    reminderEnabled: true,
+    morningEnabled: true,
+    eveningEnabled: false,
     overspendAlerts: true,
     billAlerts: false,
     weeklySummary: true,
@@ -167,7 +168,7 @@ describe('Profile · Settings section', () => {
         'Require unlock',
         'Hide savings & investment amounts',
         'Notifications',
-        '4 of 5 on',
+        '4 of 6 on',
         'Backup & restore',
         'Last backup yesterday',
         'Tidy up',

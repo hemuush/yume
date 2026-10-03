@@ -187,7 +187,8 @@ export function SettingsSection() {
 
   const alertsOn = notifPrefs
     ? [
-        notifPrefs.reminderEnabled,
+        notifPrefs.morningEnabled,
+        notifPrefs.eveningEnabled,
         notifPrefs.overspendAlerts,
         notifPrefs.billAlerts,
         notifPrefs.weeklySummary,
@@ -337,7 +338,7 @@ export function SettingsSection() {
             icon="bell-outline"
             iconBg={theme.colors.primaryTint}
             label="Notifications"
-            sub={alertsOn == null ? 'Reminders, bill alerts, weekly summary' : `${alertsOn} of 5 on`}
+            sub={alertsOn == null ? 'Morning and evening notifications' : `${alertsOn} of 6 on`}
             onPress={() => router.push('/notification-settings')}
             divider
           />

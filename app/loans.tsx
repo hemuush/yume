@@ -21,7 +21,6 @@ import { LoanCard } from '@/features/loans/LoanCard';
 import { LoanDetailModal } from '@/features/loans/LoanDetailModal';
 import { LoansHero } from '@/features/loans/LoansHero';
 import { LoanTimeline } from '@/features/loans/LoanTimeline';
-import { DueNextCard, dueNextItems } from '@/features/loans/DueNextCard';
 import { loanHues } from '@/features/loans/loanIdentity';
 import { debtShares, summarizeLoans } from '@/features/loans/loanTotals';
 import { buildTimeline } from '@/features/loans/timelineLayout';
@@ -78,7 +77,6 @@ export default function LoansScreen() {
   const hues = loanHues(loans);
   const totals = summarizeLoans(loans, progress);
   const shares = debtShares(loans);
-  const dueItems = dueNextItems(loans, progress);
   const timeline = buildTimeline(
     activeLoans.flatMap((l) => {
       const end = progress[l.id]?.lastDueDate;
@@ -122,7 +120,6 @@ export default function LoansScreen() {
           </EmptyState>
         ) : (
           <>
-            <DueNextCard items={dueItems} onOpen={setSelectedLoan} onPay={payLoan} />
             {activeLoans.length > 0 && <Text style={listTitle}>Your loans</Text>}
             {activeLoans.map((loan) => (
               <MovingRow key={loan.id}>
@@ -132,6 +129,7 @@ export default function LoansScreen() {
                   progress={progress[loan.id]}
                   fadeStyle={listFadeStyle}
                   onPress={() => setSelectedLoan(loan)}
+                  onPay={() => payLoan(loan)}
                 />
               </MovingRow>
             ))}
@@ -160,6 +158,7 @@ export default function LoansScreen() {
                         progress={progress[loan.id]}
                         fadeStyle={listFadeStyle}
                         onPress={() => setSelectedLoan(loan)}
+                        onPay={() => payLoan(loan)}
                       />
                     </MovingRow>
                   ))}

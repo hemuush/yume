@@ -7,13 +7,19 @@
 import * as Notifications from 'expo-notifications';
 import {
   notificationRoute,
-  notifyOverspend,
+  rebuildNotifications,
   subscribeToNotificationTaps,
-  syncDailyReminder,
   NOTIFICATION_ROUTES,
 } from './notifications';
+import { getAlertQueue, getNotificationPrefs, setAlertQueue } from '@/db/settings';
+import { hasLoggedOn, listLoansDue } from '@/db/notificationData';
 
-jest.mock('@/db/settings', () => ({ getNotificationPrefs: jest.fn() }));
+jest.mock('@/db/settings', () => ({
+  getNotificationPrefs: jest.fn(),
+  getAlertQueue: jest.fn(),
+  setAlertQueue: jest.fn(),
+}));
+jest.mock('@/db/notificationData', () => ({ listLoansDue: jest.fn(), hasLoggedOn: jest.fn() }));
 
 const N = Notifications as jest.Mocked<typeof Notifications>;
 const response = (data: Record<string, unknown> | undefined) =>
@@ -76,27 +82,103 @@ describe('subscribeToNotificationTaps', () => {
   });
 });
 
-describe('scheduled notifications carry their route', () => {
-  it('the daily reminder opens Add', async () => {
-    N.cancelScheduledNotificationAsync.mockResolvedValue(undefined as any);
-    N.setNotificationChannelAsync.mockResolvedValue(null as any);
-    N.scheduleNotificationAsync.mockResolvedValue('id');
-    await syncDailyReminder({ reminderEnabled: true, reminderHour: 21, reminderMinute: 0 } as any);
-    const content = N.scheduleNotificationAsync.mock.calls[0][0].content;
-    expect(content.data).toEqual({ url: '/add-transaction' });
-    expect(typeof content.title).toBe('string');
-  });
+describe('rebuildNotifications', () => {
+  const prefs = {
+    morningEnabled: true,
+    morningHour: 9,
+    morningMinute: 0,
+    eveningEnabled: true,
+    eveningHour: 20,
+    eveningMinute: 0,
+    overspendAlerts: true,
+    billAlerts: true,
+    weeklySummary: false,
+    suuCheckins: true,
+  };
+  const scheduled = (identifier: string) => ({ identifier }) as Notifications.NotificationRequest;
 
-  it('every notification is posted to the Yume reminders channel', async () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    jest.mocked(getNotificationPrefs).mockResolvedValue(prefs);
+    jest.mocked(getAlertQueue).mockResolvedValue([]);
+    jest.mocked(setAlertQueue).mockResolvedValue(undefined);
+    jest.mocked(listLoansDue).mockResolvedValue([]);
+    jest.mocked(hasLoggedOn).mockResolvedValue(false);
+    N.getAllScheduledNotificationsAsync.mockResolvedValue([]);
     N.cancelScheduledNotificationAsync.mockResolvedValue(undefined as any);
     N.setNotificationChannelAsync.mockResolvedValue(null as any);
     N.scheduleNotificationAsync.mockResolvedValue('id');
     N.getPermissionsAsync.mockResolvedValue({ granted: true } as any);
-    await syncDailyReminder({ reminderEnabled: true, reminderHour: 21, reminderMinute: 0 } as any);
-    await notifyOverspend('Food', 0.5);
-    for (const call of N.scheduleNotificationAsync.mock.calls) {
-      expect((call[0].trigger as { channelId?: string } | null)?.channelId).toBe('default');
+  });
+
+  it('schedules the evening nudge on every day ahead, each opening Add on the Yume reminders channel', async () => {
+    expect(await rebuildNotifications()).toBe(true);
+    const calls = N.scheduleNotificationAsync.mock.calls.map((c) => c[0]);
+    expect(calls.length).toBeGreaterThanOrEqual(13);
+    for (const call of calls) {
+      expect(call.identifier).toMatch(/^yume-\d{4}-\d{2}-\d{2}-evening$/);
+      expect(call.content.data).toEqual({ url: '/add-transaction' });
+      expect((call.trigger as { channelId?: string }).channelId).toBe('default');
     }
-    expect(N.scheduleNotificationAsync).toHaveBeenCalledTimes(2);
+  });
+
+  it('never schedules two notifications at the same moment', async () => {
+    jest.mocked(listLoansDue).mockResolvedValue([]);
+    await rebuildNotifications();
+    const times = N.scheduleNotificationAsync.mock.calls.map((c) =>
+      (c[0].trigger as { date: Date }).date.getTime()
+    );
+    expect(new Set(times).size).toBe(times.length);
+  });
+
+  it('replaces only the scheduled notifications Yume owns, old ones included', async () => {
+    N.getAllScheduledNotificationsAsync.mockResolvedValue([
+      scheduled('yume-daily-reminder'),
+      scheduled('yume-loan-due-1'),
+      scheduled('yume-snooze-yume-emi'),
+      scheduled('yume-2020-01-01-evening'),
+      scheduled('somebody-elses'),
+    ]);
+    await rebuildNotifications();
+    const cancelled = N.cancelScheduledNotificationAsync.mock.calls.map((c) => c[0]).sort();
+    expect(cancelled).toEqual([
+      'yume-2020-01-01-evening',
+      'yume-daily-reminder',
+      'yume-loan-due-1',
+      'yume-snooze-yume-emi',
+    ]);
+  });
+
+  it('schedules nothing, and still succeeds, without notification permission', async () => {
+    N.getPermissionsAsync.mockResolvedValue({ granted: false } as any);
+    expect(await rebuildNotifications()).toBe(true);
+    expect(N.scheduleNotificationAsync).not.toHaveBeenCalled();
+  });
+
+  it('schedules nothing when both times are off', async () => {
+    jest
+      .mocked(getNotificationPrefs)
+      .mockResolvedValue({ ...prefs, morningEnabled: false, eveningEnabled: false });
+    await rebuildNotifications();
+    expect(N.scheduleNotificationAsync).not.toHaveBeenCalled();
+  });
+
+  it('reports a failure instead of throwing', async () => {
+    const warn = jest.spyOn(console, 'error').mockImplementation(() => {});
+    N.scheduleNotificationAsync.mockRejectedValue(new Error('boom'));
+    expect(await rebuildNotifications()).toBe(false);
+    warn.mockRestore();
+  });
+
+  it('runs one rebuild at a time', async () => {
+    const order: string[] = [];
+    N.getAllScheduledNotificationsAsync.mockImplementation(async () => {
+      order.push('start');
+      await new Promise((r) => setTimeout(r, 10));
+      order.push('end');
+      return [];
+    });
+    await Promise.all([rebuildNotifications(), rebuildNotifications()]);
+    expect(order).toEqual(['start', 'end', 'start', 'end']);
   });
 });

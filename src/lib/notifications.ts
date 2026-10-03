@@ -1,27 +1,19 @@
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
-import { NotificationPrefs, getNotificationPrefs } from '@/db/settings';
+import { getAlertQueue, getNotificationPrefs, setAlertQueue } from '@/db/settings';
+import { hasLoggedOn, listLoansDue } from '@/db/notificationData';
 import { theme } from '@/constants/theme';
-import { parseLocalIsoDate } from './date';
-import { formatMoney } from './money';
-import { formatPctChange } from './format';
-import { pickRandom } from './pickRandom';
-import { DAILY_REMINDER_COPY, WEEKLY_SUMMARY_COPY, loanDueCopy, overspendCopy } from './notificationCopy';
-import {
-  NOTIFICATION_CHANNEL_ID,
-  NOTIFICATION_KIND,
-  NotificationRoute,
-  isQuietAction,
-  responseRoute,
-  runQuietAction,
-} from './notificationActions';
+import { toLocalIsoDate } from './date';
+import { NOTIFICATION_ROUTES, NotificationRoute, planNotifications } from './notificationPlan';
 
-export {
-  NOTIFICATION_ROUTES,
-  notificationRoute,
-  registerNotificationCategories,
-} from './notificationActions';
-export type { NotificationRoute } from './notificationActions';
+export { NOTIFICATION_ROUTES };
+export type { NotificationRoute };
+
+/** Kept as 'default' so a phone that already has the channel keeps its sound/importance settings. */
+export const NOTIFICATION_CHANNEL_ID = 'default';
+
+/** Every notification Yume schedules has an id starting with this, which is how a rebuild finds them. */
+const ID_PREFIX = 'yume-';
 
 // Foreground behavior — without this, a notification fired while the app is
 // open never shows anything at all on some platforms.
@@ -34,8 +26,6 @@ Notifications.setNotificationHandler({
     shouldSetBadge: false,
   }),
 });
-
-const DAILY_REMINDER_ID = 'yume-daily-reminder';
 
 export async function ensureAndroidChannel(): Promise<void> {
   if (Platform.OS !== 'android') return;
@@ -56,10 +46,12 @@ export async function requestNotificationPermission(): Promise<boolean> {
 /**
  * One-time cleanup: notification identifiers were `flynse-*` before the
  * rename to Yume. Any still scheduled under the old prefix would otherwise
- * linger forever (the new sync functions only ever cancel the new IDs).
+ * linger forever (a rebuild only ever cancels `yume-*` ids).
  * Best-effort, run once on startup.
  */
 export async function cancelLegacyScheduledNotifications(): Promise<void> {
+  // The background task behind the old notification buttons is gone; drop its registration too.
+  await Notifications.unregisterTaskAsync('yume-notification-actions').catch(() => {});
   try {
     const all = await Notifications.getAllScheduledNotificationsAsync();
     await Promise.all(
@@ -72,185 +64,101 @@ export async function cancelLegacyScheduledNotifications(): Promise<void> {
   }
 }
 
+/** The screen a tapped notification asks for, or null if it carries none this app knows. */
+export function notificationRoute(
+  response: Notifications.NotificationResponse | null
+): NotificationRoute | null {
+  const url = response?.notification.request.content.data?.url;
+  return typeof url === 'string' && (NOTIFICATION_ROUTES as readonly string[]).includes(url)
+    ? (url as NotificationRoute)
+    : null;
+}
+
+let rebuildChain: Promise<unknown> = Promise.resolve();
+
 /**
- * Cancels any previously scheduled daily reminder and, if enabled, schedules
- * a fresh one at the chosen time.
+ * Works out everything Yume should notify about (see planNotifications) from
+ * the current settings and data, then replaces whatever is scheduled with
+ * exactly that. Called whenever something it depends on changes — app start,
+ * saving the notification settings, logging a transaction, any loan change,
+ * a restore — so it is always safe to call again. Runs one at a time, never
+ * throws, and resolves false when the notifications could not be set up
+ * (a missing permission is not a failure: there is simply nothing to schedule).
  */
-export async function syncDailyReminder(prefs: NotificationPrefs): Promise<void> {
-  await Notifications.cancelScheduledNotificationAsync(DAILY_REMINDER_ID).catch(() => {});
-  if (!prefs.reminderEnabled) return;
-
-  await ensureAndroidChannel();
-  await Notifications.scheduleNotificationAsync({
-    identifier: DAILY_REMINDER_ID,
-    // A fresh variant each time this (re)schedules — every cold start and
-    // every settings save, not literally once per calendar day; see
-    // notificationCopy.ts's own note on why a repeating OS trigger can't
-    // roll the wording on every single firing.
-    content: {
-      ...pickRandom(DAILY_REMINDER_COPY),
-      data: { url: '/add-transaction' satisfies NotificationRoute },
-      categoryIdentifier: NOTIFICATION_KIND.daily,
-    },
-    trigger: {
-      type: Notifications.SchedulableTriggerInputTypes.DAILY,
-      hour: prefs.reminderHour,
-      minute: prefs.reminderMinute,
-      channelId: NOTIFICATION_CHANNEL_ID,
-    },
-  });
+export function rebuildNotifications(): Promise<boolean> {
+  const run = rebuildChain.then(doRebuild, doRebuild);
+  rebuildChain = run;
+  return run;
 }
 
-const WEEKLY_SUMMARY_ID = 'yume-weekly-summary';
+async function doRebuild(): Promise<boolean> {
+  try {
+    const now = new Date();
+    const [prefs, loans, alerts, loggedToday] = await Promise.all([
+      getNotificationPrefs(),
+      listLoansDue(),
+      getAlertQueue(),
+      hasLoggedOn(toLocalIsoDate(now)),
+    ]);
+    const { notifications, waitingAlerts } = planNotifications({ prefs, loans, alerts, loggedToday, now });
 
-/**
- * Cancels any previously scheduled weekly summary and, if enabled, schedules
- * a fresh one — every Monday at the same hour/minute as the daily reminder
- * preference, so there's only one time-of-day setting to reason about.
- */
-export async function syncWeeklySummary(prefs: NotificationPrefs): Promise<void> {
-  await Notifications.cancelScheduledNotificationAsync(WEEKLY_SUMMARY_ID).catch(() => {});
-  if (!prefs.weeklySummary) return;
+    const scheduled = (await Notifications.getAllScheduledNotificationsAsync()) ?? [];
+    await Promise.all(
+      scheduled
+        .filter((n) => typeof n.identifier === 'string' && n.identifier.startsWith(ID_PREFIX))
+        .map((n) => Notifications.cancelScheduledNotificationAsync(n.identifier).catch(() => {}))
+    );
+    // Alerts already sent (or stale) drop out of the queue here.
+    if (waitingAlerts.length !== alerts.length) await setAlertQueue(waitingAlerts);
 
-  await ensureAndroidChannel();
-  await Notifications.scheduleNotificationAsync({
-    identifier: WEEKLY_SUMMARY_ID,
-    // Plays the week's Wrap, which ends on that week's full report.
-    content: {
-      ...pickRandom(WEEKLY_SUMMARY_COPY),
-      data: { url: '/wrap?period=week' satisfies NotificationRoute },
-      categoryIdentifier: NOTIFICATION_KIND.wrap,
-    },
-    trigger: {
-      type: Notifications.SchedulableTriggerInputTypes.WEEKLY,
-      weekday: 2, // Monday (expo counts Sunday as 1): the day Home's Wrap button offers last week too
-      hour: prefs.reminderHour,
-      minute: prefs.reminderMinute,
-      channelId: NOTIFICATION_CHANNEL_ID,
-    },
-  });
-}
+    if (notifications.length === 0) return true;
+    const permission = await Notifications.getPermissionsAsync();
+    if (!permission?.granted) return true;
 
-function loanDueReminderId(loanId: string): string {
-  return `yume-loan-due-${loanId}`;
+    await ensureAndroidChannel();
+    for (const n of notifications) {
+      await Notifications.scheduleNotificationAsync({
+        identifier: n.id,
+        content: { title: n.title, body: n.body, data: { url: n.route } },
+        trigger: {
+          type: Notifications.SchedulableTriggerInputTypes.DATE,
+          date: n.at,
+          channelId: NOTIFICATION_CHANNEL_ID,
+        },
+      });
+    }
+    return true;
+  } catch (err) {
+    console.error('rebuildNotifications failed:', err);
+    return false;
+  }
 }
 
 /**
- * Schedules a one-off reminder for a loan's next due installment, replacing
- * any reminder already scheduled for this loan. Called proactively whenever
- * a loan is created or an installment is paid (see db/loans.ts), instead of
- * periodically polling for upcoming due dates in the background.
- */
-export async function scheduleLoanDueReminder(
-  loanId: string,
-  dueDateIso: string,
-  counterparty: string,
-  emiAmountMinor: number
-): Promise<void> {
-  await cancelLoanDueReminder(loanId);
-
-  const [existing, prefs] = await Promise.all([Notifications.getPermissionsAsync(), getNotificationPrefs()]);
-  if (!existing.granted || !prefs.billAlerts) return;
-
-  const dueAt = parseLocalIsoDate(dueDateIso);
-  dueAt.setHours(9, 0, 0, 0);
-  if (dueAt.getTime() <= Date.now()) return; // due date already passed — nothing useful to schedule
-
-  await ensureAndroidChannel();
-  await Notifications.scheduleNotificationAsync({
-    identifier: loanDueReminderId(loanId),
-    content: {
-      ...loanDueCopy(counterparty, formatMoney(emiAmountMinor)),
-      // "Pay now" opens this loan's pay sheet (see responseRoute).
-      data: { url: '/loans' satisfies NotificationRoute, loanId },
-      categoryIdentifier: NOTIFICATION_KIND.emi,
-    },
-    trigger: {
-      type: Notifications.SchedulableTriggerInputTypes.DATE,
-      date: dueAt,
-      channelId: NOTIFICATION_CHANNEL_ID,
-    },
-  });
-}
-
-export async function cancelLoanDueReminder(loanId: string): Promise<void> {
-  await Notifications.cancelScheduledNotificationAsync(loanDueReminderId(loanId)).catch(() => {});
-}
-
-/**
- * Fires an immediate local notification if a category's spend this month has
- * grown well past its prior-month total — checked once, right where spend
- * actually changes (after a transaction write), instead of a background poll.
- */
-export async function notifyOverspend(categoryName: string, pctChange: number): Promise<void> {
-  const existing = await Notifications.getPermissionsAsync();
-  if (!existing.granted) return;
-
-  await ensureAndroidChannel();
-  await Notifications.scheduleNotificationAsync({
-    content: {
-      ...overspendCopy(categoryName, formatPctChange(pctChange)),
-      data: { url: '/reports' satisfies NotificationRoute },
-      categoryIdentifier: NOTIFICATION_KIND.spike,
-    },
-    trigger: { channelId: NOTIFICATION_CHANNEL_ID },
-  });
-}
-
-/**
- * A budget passing 80% of its limit, or going over — see checkBudgetNudge in
- * db/spendAlerts.ts. Opens Budgets. `budgetKey` ("<budget id>:<month>") is
- * what "Quiet this month" marks as done.
- */
-export async function notifyBudget(copy: { title: string; body: string }, budgetKey: string): Promise<void> {
-  const existing = await Notifications.getPermissionsAsync();
-  if (!existing.granted) return;
-
-  await ensureAndroidChannel();
-  await Notifications.scheduleNotificationAsync({
-    content: {
-      ...copy,
-      data: { url: '/budgets' satisfies NotificationRoute, budgetKey },
-      categoryIdentifier: NOTIFICATION_KIND.budget,
-    },
-    trigger: { channelId: NOTIFICATION_CHANNEL_ID },
-  });
-}
-
-/**
- * Calls `onRoute` whenever the user taps a Yume notification or one of its
- * buttons — including the tap that just cold-started the app. That launch
- * response is cleared once read: the system otherwise keeps returning it on
- * every later launch, which would reopen the same screen each time the app
- * is opened normally.
- *
- * A quiet button ("In 1 hour", "Quiet this month") opens nothing. Tapped
- * while the app is running, it is carried out here; the launch response
- * never needs it, since the background task already ran it.
+ * Calls `onRoute` whenever the user taps a Yume notification — including the
+ * tap that just cold-started the app. That launch response is cleared once
+ * read: the system otherwise keeps returning it on every later launch, which
+ * would reopen the same screen each time the app is opened normally.
  * Returns the unsubscribe function.
  */
 export function subscribeToNotificationTaps(onRoute: (route: NotificationRoute) => void): () => void {
   let active = true;
-  const take = (response: Notifications.NotificationResponse | null, live: boolean) => {
+  const take = (response: Notifications.NotificationResponse | null) => {
     if (!response) return;
     try {
       Notifications.clearLastNotificationResponse();
     } catch {
       // best effort — worst case the same screen opens again on the next launch
     }
-    if (isQuietAction(response.actionIdentifier)) {
-      if (live) runQuietAction(response).catch((e) => console.warn('Notification action failed:', e));
-      return;
-    }
-    const route = responseRoute(response);
+    const route = notificationRoute(response);
     if (route && active) onRoute(route);
   };
   try {
-    take(Notifications.getLastNotificationResponse(), false);
+    take(Notifications.getLastNotificationResponse());
   } catch {
     // no launch response to read — the live listener below still works
   }
-  const sub = Notifications.addNotificationResponseReceivedListener((response) => take(response, true));
+  const sub = Notifications.addNotificationResponseReceivedListener(take);
   return () => {
     active = false;
     sub.remove();

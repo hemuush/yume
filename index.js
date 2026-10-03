@@ -7,7 +7,5 @@
 import 'expo-router/entry';
 import { registerWidgetTaskHandler } from 'react-native-android-widget';
 import { widgetTaskHandler } from './src/widgets/widgetTaskHandler';
-// Defines the background task behind notification buttons that don't open the app.
-import './src/lib/notificationTask';
 
 registerWidgetTaskHandler(widgetTaskHandler);

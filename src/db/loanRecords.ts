@@ -5,10 +5,10 @@ import { newId } from '@/lib/id';
 import { assertSpendableAccount } from './ledger';
 import { Loan } from '@/types';
 import { calculateEmi, generateAmortizationSchedule } from '@/lib/loan';
-import { cancelLoanDueReminder } from '@/lib/notifications';
+import { rebuildNotifications } from '@/lib/notifications';
 import { captureRow, captureRows, restoreRows, RowSnapshot } from './undoSnapshot';
 
-import { syncDueReminder, rowToLoan } from './loanRows';
+import { rowToLoan } from './loanRows';
 
 /** Creating, editing and deleting loans (re-exported from ./loans). */
 
@@ -247,7 +247,7 @@ export async function createLoan(input: CreateLoanInput): Promise<Loan> {
     }
   });
 
-  await syncDueReminder(id);
+  await rebuildNotifications();
   const row = await db.getFirstAsync<LoanRow>('SELECT * FROM loans WHERE id = ?', [id]);
   return rowToLoan(found(row, 'loan'));
 }
@@ -304,16 +304,16 @@ export async function deleteLoan(loanId: string): Promise<RowSnapshot[]> {
   ]);
   const cascaded = [...payments, ...rateChanges, ...linkedTransactions];
   await db.runAsync('DELETE FROM loans WHERE id = ?', [loanId]);
-  await cancelLoanDueReminder(loanId);
+  await rebuildNotifications();
   return loanSnapshot ? [loanSnapshot, ...cascaded] : cascaded;
 }
 
-/** Undoes `deleteLoan` — re-inserts the loan and everything that cascaded away with it, then re-syncs its due reminder. */
+/** Undoes `deleteLoan` — re-inserts the loan and everything that cascaded away with it, then rebuilds the notifications. */
 export async function restoreLoan(snapshots: RowSnapshot[]): Promise<void> {
   const db = await getDb();
   await restoreRows(db, snapshots);
   const loanId = snapshots.find((s) => s.table === 'loans')?.row.id;
-  if (typeof loanId === 'string' && loanId) await syncDueReminder(loanId);
+  await rebuildNotifications();
 }
 
 /**

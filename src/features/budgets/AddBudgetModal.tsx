@@ -15,6 +15,7 @@ import { CategoryPicker } from '@/components/CategoryPicker';
 import { topLevelOnly } from '@/lib/categoryTree';
 import { styles } from './budgets.styles';
 import { errorMessage } from '@/lib/errorMessage';
+import { categorySentence } from '@/lib/categoryLabel';
 
 /**
  * Creates a new month's budget, or edits an existing one's limit/rollover —
@@ -120,7 +121,11 @@ export function AddBudgetModal({
         icon={cat?.icon ?? 'wallet-outline'}
         kicker={rollover ? 'Monthly · rolls over' : 'Monthly'}
         amount={formatMoney(inputMinor(limit))}
-        title={editing?.categoryName ?? cat?.name ?? 'Pick a category'}
+        title={
+          editing
+            ? categorySentence(editing.categoryName, editing.parentName)
+            : (cat?.name ?? 'Pick a category')
+        }
         meta={
           editing
             ? `${longMonthYear(`${editing.budget.periodMonth}-01`)} · category and month are fixed`

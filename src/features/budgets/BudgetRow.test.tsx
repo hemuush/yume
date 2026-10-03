@@ -7,7 +7,8 @@
  * silently) would have shown up here immediately if this render test had
  * existed before it shipped.
  */
-import { create, act } from 'react-test-renderer';
+import { Text } from 'react-native';
+import { create, act, ReactTestRenderer } from 'react-test-renderer';
 import { BudgetRow } from './BudgetRow';
 import { BudgetProgress } from '@/db/budgets';
 
@@ -134,5 +135,19 @@ describe('BudgetRow per-day figure', () => {
     expect(rowText(true, { overBudget: true, remainingMinor: -1000, percentUsed: 101 })).not.toContain(
       'a day'
     );
+  });
+
+  it('says which parent a subcategory budget belongs to, and nothing for a top-level one', () => {
+    const shown = (progress: BudgetProgress) => {
+      let r!: ReactTestRenderer;
+      act(() => {
+        r = create(<BudgetRow progress={progress} divider={false} onPress={() => {}} />);
+      });
+      return r.root.findAllByType(Text).map((t) => [t.props.children].flat(Infinity).join(''));
+    };
+    expect(shown(makeProgress({ categoryName: 'Flipkart Minutes', parentName: 'Food & Dining' }))).toContain(
+      'in Food & Dining'
+    );
+    expect(shown(makeProgress()).some((t) => t.startsWith('in '))).toBe(false);
   });
 });

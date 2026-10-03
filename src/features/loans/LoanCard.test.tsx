@@ -1,7 +1,7 @@
 /**
- * A loan card shows how far along the loan is and its debt-free month. The
- * next EMI and Pay live in "Due next", so the card has neither. A closed loan
- * says "Paid off". All figures are made up.
+ * A loan card shows how far along the loan is, its debt-free month, and (when
+ * open) the next EMI with a Pay pill. A closed loan says "Paid off" and has
+ * no footer. All figures are made up.
  */
 import { Text } from 'react-native';
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
@@ -49,25 +49,45 @@ const progress: LoanProgress = {
   pendingInterestMinor: 1146800,
 };
 
-function render(l: Loan, p: LoanProgress | undefined, onPress = jest.fn()) {
+function render(l: Loan, p: LoanProgress | undefined, onPress = jest.fn(), onPay = jest.fn()) {
   let r!: ReactTestRenderer;
   act(() => {
-    r = create(<LoanCard loan={l} hue="#FBF0CE" progress={p} fadeStyle={{}} onPress={onPress} />);
+    r = create(
+      <LoanCard loan={l} hue="#FBF0CE" progress={p} fadeStyle={{}} onPress={onPress} onPay={onPay} />
+    );
   });
   const text = r.root
     .findAllByType(Text)
     .map((t) => [t.props.children].flat(Infinity).join(''))
     .join(' | ');
-  return { r, text, onPress };
+  return { r, text, onPress, onPay };
 }
 
 describe('LoanCard', () => {
-  it('shows EMIs paid and the debt-free month, without the next EMI or a Pay pill', () => {
+  it('shows EMIs paid, the debt-free month and the next EMI', () => {
     const { text } = render(loan(), progress);
     expect(text).toContain('5 of 36 EMIs');
     expect(text).toContain('Debt-free');
-    expect(text).not.toContain('Next EMI');
-    expect(text).not.toContain('Pay');
+    expect(text).toContain('Next EMI');
+    expect(text).toContain('5 Oct');
+    expect(text).toContain('1,807');
+    expect(text).toContain('Pay');
+  });
+
+  it('Pay opens the pay sheet and does not open the loan', () => {
+    const { r, onPress, onPay } = render(loan(), progress);
+    const pay = r.root.find((n) => /^Pay next EMI for/.test(n.props.accessibilityLabel ?? ''));
+    act(() => pay.props.onPress());
+    expect(onPay).toHaveBeenCalledTimes(1);
+    expect(onPress).not.toHaveBeenCalled();
+  });
+
+  it('reads Received on a lent loan', () => {
+    const { r, text } = render(loan({ direction: 'lent' }), progress);
+    expect(text).toContain('Received');
+    expect(
+      r.root.findAll((n) => /^Mark received next EMI for/.test(n.props.accessibilityLabel ?? '')).length
+    ).toBeGreaterThan(0);
   });
 
   it('opens the loan when tapped', () => {
@@ -95,5 +115,6 @@ describe('LoanCard', () => {
     });
     expect(text).toContain('Paid off');
     expect(text).not.toContain('Debt-free');
+    expect(text).not.toContain('Next EMI');
   });
 });

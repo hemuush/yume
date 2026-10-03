@@ -6,6 +6,7 @@ import { JustAddedGlow } from '@/components/JustAddedGlow';
 import { CategoryIcon } from '@/components/CategoryIcon';
 import { Amount } from '@/components/Amount';
 import { dayLabel } from '@/lib/date';
+import { categoryPath, inParent, joinSub } from '@/lib/categoryLabel';
 import { homeStyles as h } from './homeStyles';
 
 /**
@@ -16,6 +17,7 @@ import { homeStyles as h } from './homeStyles';
 export function RecentTransactionRow({
   tx,
   category,
+  parentName,
   accountName,
   toAccountName,
   divider,
@@ -23,6 +25,8 @@ export function RecentTransactionRow({
 }: {
   tx: Transaction;
   category: Category | undefined;
+  /** The category's parent when it is a subcategory, so same-named subcategories can be told apart. */
+  parentName?: string;
   accountName: string | undefined;
   toAccountName: string | undefined;
   divider: boolean;
@@ -32,11 +36,15 @@ export function RecentTransactionRow({
   const isTransfer = tx.type === 'transfer';
   const note = tx.note?.trim();
   const title = isTransfer ? 'Transfer' : note || category?.name || tx.type;
-  // The category goes under a note ("Lunch" / "Food & Dining · SBI"); when the
-  // title already is the category, the line under it is just the account.
+  // The category goes under a note ("Lunch" / "Food & Dining › Zomato · SBI");
+  // when the title already is the category, a subcategory says "in Food & Dining" first.
   const sub = isTransfer
     ? `${accountName ?? '—'} → ${toAccountName ?? '—'}`
-    : [note ? category?.name : undefined, accountName, dayLabel(tx.date)].filter(Boolean).join(' · ');
+    : joinSub([
+        note ? category && categoryPath(category.name, parentName) : inParent(parentName),
+        accountName,
+        dayLabel(tx.date),
+      ]);
 
   return (
     <View style={[styles.row, divider && styles.divider]}>

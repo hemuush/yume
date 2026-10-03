@@ -14,6 +14,7 @@ import { styles } from './add.styles';
 import { ADD_TYPES, EDIT_TYPES, TYPE_WASH, EntryType, Staged, dateChipLabel } from './addEntry';
 import { AccountTile } from './AddFields';
 import { withPressed } from '@/lib/pressed';
+import { categorySentence, categorySpoken, inParent } from '@/lib/categoryLabel';
 
 /**
  * The Add screen's display pieces, each drawn from props: the amount card,
@@ -204,11 +205,11 @@ export function UsualChips({
               style={withPressed([styles.recentChip, active && styles.recentChipActive])}
               accessibilityRole="button"
               accessibilityState={{ selected: active }}
-              accessibilityLabel={`${u.categoryName}, ${formatMoney(u.amountMinor, u.accountCurrency)}, logged ${u.timesLogged} times`}
+              accessibilityLabel={`${categorySpoken(u.categoryName, u.parentName)}, ${formatMoney(u.amountMinor, u.accountCurrency)}, logged ${u.timesLogged} times`}
             >
               <CategoryIcon name={u.categoryIcon} color={u.categoryColor} size={11} square={20} />
               <Text style={styles.recentChipText} numberOfLines={1}>
-                {u.categoryName} ·
+                {categorySentence(u.categoryName, u.parentName)} ·
               </Text>
               <Text style={styles.recentChipAmount}>{formatMoney(u.amountMinor, u.accountCurrency)}</Text>
             </Pressable>
@@ -260,6 +261,7 @@ export function StagedList({
                 {!!r.note && <Text style={styles.stagedNote}> · {r.note}</Text>}
               </Text>
               <Text style={styles.stagedSub}>
+                {r.kind === 'transaction' && r.parentName ? `${inParent(r.parentName)} · ` : ''}
                 {dateChipLabel(r.date)}
                 {r.kind === 'friend' ? ` · ${r.accountName ?? 'balance only'}` : ''}
               </Text>

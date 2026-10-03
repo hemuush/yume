@@ -40,11 +40,7 @@ jest.mock('@/db/settings', () => ({
   setLastLocalBackupResult: jest.fn(),
   getNotificationPrefs: async () => ({}),
 }));
-jest.mock('@/db/loans', () => ({ resyncAllLoanReminders: jest.fn(async () => {}) }));
-jest.mock('@/lib/notifications', () => ({
-  syncDailyReminder: jest.fn(async () => {}),
-  syncWeeklySummary: jest.fn(async () => {}),
-}));
+jest.mock('@/lib/notifications', () => ({ rebuildNotifications: async () => {} }));
 jest.mock('@/lib/appLock', () => ({ withoutRelock: (fn: () => unknown) => fn() }));
 jest.mock('@/widgets/notifyWidgets', () => ({ refreshAllWidgets: jest.fn() }));
 const mockInfo = { current: null as null | { savedAt: string; transactions: number; accounts: number } };

@@ -11,7 +11,7 @@ import { createRealDataTestDb } from '@/test-support/realDataTestDb';
 
 const mockTestDb = createRealDataTestDb();
 jest.mock('@/db/client', () => ({ getDb: async () => mockTestDb }));
-jest.mock('@/lib/notifications', () => ({ notifyOverspend: async () => {} }));
+jest.mock('@/lib/notifications', () => ({ rebuildNotifications: async () => {} }));
 
 // In-memory files: name → contents. `mockFs.failWrite` / `failMove` simulate a full disk.
 const mockFs = { files: new Map<string, string>(), failWrite: false, failMove: false };

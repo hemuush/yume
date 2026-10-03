@@ -1,26 +1,8 @@
 import { LoanPaymentRow, LoanRow } from './rows';
 import { getDb } from './client';
 import { Loan, LoanPayment } from '@/types';
-import { scheduleLoanDueReminder, cancelLoanDueReminder } from '@/lib/notifications';
 
-/** Shared by the loan modules: row mappers, the loan query, and the due-reminder sync. Not part of the public loans API. */
-
-/** Schedules a reminder for the loan's next pending installment, or cancels any reminder if none remains. */
-export async function syncDueReminder(loanId: string): Promise<void> {
-  const db = await getDb();
-  const [loan, next] = await Promise.all([
-    db.getFirstAsync<LoanRow>('SELECT * FROM loans WHERE id = ?', [loanId]),
-    db.getFirstAsync<LoanPaymentRow>(
-      `SELECT * FROM loan_payments WHERE loan_id = ? AND status = 'pending' ORDER BY installment_number ASC LIMIT 1`,
-      [loanId]
-    ),
-  ]);
-  if (!loan || !next || loan.direction !== 'borrowed' || loan.status !== 'active') {
-    await cancelLoanDueReminder(loanId);
-    return;
-  }
-  await scheduleLoanDueReminder(loanId, next.due_date, loan.counterparty, next.emi_amount_minor);
-}
+/** Shared by the loan modules: row mappers and the loan query. Not part of the public loans API. */
 
 /**
  * Where a regenerated schedule (prepayment, rate change) counts its due

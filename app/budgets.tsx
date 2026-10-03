@@ -28,6 +28,7 @@ import { CardRowsSkeleton } from '@/components/ListSkeleton';
 import { useScreenLoad } from '@/lib/useScreenLoad';
 import { haptics } from '@/lib/haptics';
 import { BudgetRow } from '@/features/budgets/BudgetRow';
+import { categoryPath, categorySentence } from '@/lib/categoryLabel';
 import { BudgetsHero } from '@/features/budgets/BudgetsHero';
 import { LapsedBudgetsCard } from '@/features/budgets/LapsedBudgetsCard';
 import { budgetsOverview } from '@/features/budgets/budgetsOverview';
@@ -127,7 +128,7 @@ export default function BudgetsScreen() {
       const snapshot = await deleteBudget(progress.budget.id);
       haptics.warn();
       await load();
-      showUndo(`Deleted "${progress.categoryName}" budget`, async () => {
+      showUndo(`Deleted "${categoryPath(progress.categoryName, progress.parentName)}" budget`, async () => {
         await restoreBudget(snapshot);
         await load();
       });
@@ -252,7 +253,9 @@ export default function BudgetsScreen() {
       <ActionSheet
         visible={!!manageTarget}
         onClose={() => setManageTarget(null)}
-        title={manageTarget?.categoryName}
+        title={
+          manageTarget ? categorySentence(manageTarget.categoryName, manageTarget.parentName) : undefined
+        }
         items={manageItems}
       />
     </View>

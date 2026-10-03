@@ -45,6 +45,8 @@ export interface SubscriptionSuggestion {
   key: string;
   categoryId: string;
   categoryName: string;
+  /** The parent category's name, when the charge sits in a subcategory. */
+  parentName?: string | null;
   icon: string;
   color: string;
   accountId: string;
@@ -61,6 +63,7 @@ export interface SubscriptionSuggestion {
 interface EntryRow {
   category_id: string;
   category_name: string;
+  parent_name: string | null;
   icon: string;
   color: string;
   account_id: string;
@@ -83,6 +86,7 @@ const suggestionFrom = (e: EntryRow, source: SubscriptionSuggestion['source'], m
   key: `sub-${e.category_id}`,
   categoryId: e.category_id,
   categoryName: e.category_name,
+  parentName: e.parent_name,
   icon: e.icon,
   color: e.color,
   accountId: e.account_id,
@@ -105,7 +109,7 @@ export async function findUnscheduledSubscriptions(
   const db = await getDb();
   const since = addDaysToIsoDate(today, -days + 1);
   const rows = await db.getAllAsync<EntryRow>(
-    `SELECT t.category_id, c.name AS category_name, c.icon, c.color, t.account_id, t.amount_minor, t.date, t.note
+    `SELECT t.category_id, c.name AS category_name, p.name AS parent_name, c.icon, c.color, t.account_id, t.amount_minor, t.date, t.note
      FROM transactions t
      JOIN categories c ON c.id = t.category_id
      LEFT JOIN categories p ON p.id = c.parent_id
@@ -150,9 +154,10 @@ export async function findMonthlyPatterns(
   const db = await getDb();
   const since = addMonthsToIsoDate(today.slice(0, 7) + '-01', -6);
   const rows = await db.getAllAsync<EntryRow>(
-    `SELECT t.category_id, c.name AS category_name, c.icon, c.color, t.account_id, t.amount_minor, t.date, t.note
+    `SELECT t.category_id, c.name AS category_name, p.name AS parent_name, c.icon, c.color, t.account_id, t.amount_minor, t.date, t.note
      FROM transactions t
      JOIN categories c ON c.id = t.category_id
+     LEFT JOIN categories p ON p.id = c.parent_id
      WHERE t.type = 'expense' AND t.loan_payment_id IS NULL AND t.loan_id IS NULL
        AND t.date >= ? AND t.date <= ?
        AND c.archived = 0 AND c.is_system = 0
