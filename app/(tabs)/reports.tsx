@@ -9,6 +9,10 @@ import {
   findTopGrowingCategory,
   getMonthlyExpenseTrend,
   getNetWorthTrend,
+  getMonthlyCashFlow,
+  getCategoryMonthlyTotals,
+  CashFlowPoint,
+  CategoryTrack,
   getDailyExpenseTotals,
   getSubcategoryBreakdown,
   getLargestExpenses,
@@ -52,6 +56,8 @@ import { CategoryList } from '@/features/reports/CategoryList';
 import { WeekdayRhythm } from '@/features/reports/WeekdayRhythm';
 import { BiggestSpends } from '@/features/reports/BiggestSpends';
 import { TrendChart, MIN_TREND_POINTS } from '@/features/reports/TrendChart';
+import { CashFlowCard } from '@/features/reports/CashFlowCard';
+import { CategoryTracks } from '@/features/reports/CategoryTracks';
 import { styles } from '@/features/reports/reports.styles';
 import {
   buildHeatGrid,
@@ -67,6 +73,7 @@ import {
   daySpendFacts,
   weekdayRhythm,
   accountRows,
+  categoriesAgainstUsual,
   StoryAction,
 } from '@/features/reports/reportsInsights';
 import { errorMessage } from '@/lib/errorMessage';
@@ -110,12 +117,8 @@ export default function ReportsScreen() {
   // Categories Tidy up reads as starting balances logged as income: the
   // Income view points at Tidy up when one of them makes up most of it.
   const [startingBalanceNames, setStartingBalanceNames] = useState<string[]>([]);
-  // `/reports?month=-1` opens on a specific month (0 = this month, -1 = last
-  // month) — used by Home's month-in-review card. Reports is a tab, so it may
-  // already be mounted: this reacts to each new link, then clears the param
-  // so a later visit to the tab isn't pulled back to that month.
-  // `?from=YYYY-MM-DD&to=YYYY-MM-DD` opens on that range — the week Wrap's
-  // "See the full report", for the week it just played.
+  // `?month=-1` opens a month (0 = this, -1 = last); `?from=&to=` (YYYY-MM-DD) opens that range. The tab
+  // may already be mounted, so react to each new link, then clear the param.
   const {
     month: monthParam,
     from: fromParam,
@@ -149,6 +152,8 @@ export default function ReportsScreen() {
   const [savingsIds, setSavingsIds] = useState<ReadonlySet<string>>(new Set());
   const [trend, setTrend] = useState<TrendPoint[]>([]);
   const [netWorthTrend, setNetWorthTrend] = useState<NetWorthPoint[]>([]);
+  const [cashFlow, setCashFlow] = useState<CashFlowPoint[]>([]);
+  const [catTracks, setCatTracks] = useState<CategoryTrack[]>([]);
   const [daily, setDaily] = useState<DailyExpensePoint[]>([]);
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
   const [errorText, setErrorText] = useState<string | null>(null);
@@ -156,9 +161,8 @@ export default function ReportsScreen() {
   // The heatmap day open under the grid, and its entries (null while loading).
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [dayData, setDayData] = useState<{ iso: string; txs: Transaction[] } | null>(null);
-  // A category the heatmap is narrowed to ("See its days on the heatmap"), with
-  // its daily totals; the id says which category they belong to, so a stale
-  // set is never shown for another.
+  // A category the heatmap is narrowed to, with its daily totals; the id says which category they belong
+  // to, so a stale set is never shown for another.
   const [catFilter, setCatFilter] = useState<string | null>(null);
   const [filtered, setFiltered] = useState<{ id: string; daily: DailyExpensePoint[] } | null>(null);
   // The category row opened in Categories, with its subcategory split.
@@ -172,9 +176,8 @@ export default function ReportsScreen() {
   const [accounts, setAccounts] = useState<{ key: string; items: AccountBreakdownItem[] } | null>(null);
   const [largest, setLargest] = useState<{ key: string; items: LargestExpense[] } | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
-  // "Where it went" shows the top 5 categories by default, like every other
-  // long list in the app — reset whenever the period changes so switching
-  // months never leaves a stale month's list expanded.
+  // "Where it went" shows the top 5 categories by default like every long list; reset on period change so a
+  // stale month's expanded list never carries over.
   const [catExpanded, setCatExpanded] = useState(false);
 
   const scrollRef = useRef<ScrollView>(null);
@@ -197,10 +200,12 @@ export default function ReportsScreen() {
             : 7;
       try {
         setStatus((s) => (s === 'ready' ? s : 'loading'));
-        const [cmp, tr, nw, dy, cats, tidy, accs] = await Promise.all([
+        const [cmp, tr, nw, cf, ct, dy, cats, tidy, accs] = await Promise.all([
           getRangeComparison(range, previousWindowRange(c), isCustomWindow(c) ? 'month' : c.granularity),
           getMonthlyExpenseTrend(trendMonths, anchor, hideAmounts),
           getNetWorthTrend(trendMonths, anchor),
+          getMonthlyCashFlow(trendMonths, anchor, hideAmounts),
+          getCategoryMonthlyTotals(trendMonths, anchor, hideAmounts),
           getDailyExpenseTotals(range, hideAmounts),
           listCategories(),
           getTidyUpReport().catch(() => null),
@@ -211,6 +216,8 @@ export default function ReportsScreen() {
         setTrend(tr);
         // Net worth counts every account, savings included, so it goes while savings are hidden.
         setNetWorthTrend(hideAmounts && accs.some((a) => a.type === 'savings') ? [] : nw);
+        setCashFlow(cf);
+        setCatTracks(ct);
         setSavingsIds(savingsAccountIdsOf(accs));
         setDaily(dy);
         setCategories(cats);
@@ -421,12 +428,13 @@ export default function ReportsScreen() {
           router.navigate(`/transactions?account=${a.categoryId}&month=${range.start.slice(0, 7)}`)
       : undefined;
   // A category opens its own page (app/category/[id].tsx), on this same period.
-  const onPressCategory = (c: CategoryBreakdownItem) =>
+  const openCategory = (categoryId: string) =>
     router.push(
       isCustomWindow(cursor)
-        ? `/category/${c.categoryId}?g=custom&from=${cursor.start}&to=${cursor.end}`
-        : `/category/${c.categoryId}?g=${cursor.granularity}&o=${cursor.offset}`
+        ? `/category/${categoryId}?g=custom&from=${cursor.start}&to=${cursor.end}`
+        : `/category/${categoryId}?g=${cursor.granularity}&o=${cursor.offset}`
     );
+  const onPressCategory = (c: CategoryBreakdownItem) => openCategory(c.categoryId);
 
   // The heatmap is narrowed to a category's days only where it has days at all.
   const filterId = byMonth ? null : catFilter;
@@ -683,16 +691,30 @@ export default function ReportsScreen() {
             )}
           </View>
         ) : trend.length >= MIN_TREND_POINTS || netWorthTrend.length >= MIN_TREND_POINTS ? (
-          <TrendChart
-            key={cursorKey}
-            periodName={periodName}
-            spentMinor={current.expenseMinor}
-            trend={trend}
-            baseline={baseline}
-            inProgress={monthInProgress}
-            netWorthTrend={netWorthTrend}
-            monthLink={monthLink}
-          />
+          <>
+            <TrendChart
+              key={cursorKey}
+              periodName={periodName}
+              spentMinor={current.expenseMinor}
+              trend={trend}
+              baseline={baseline}
+              inProgress={monthInProgress}
+              netWorthTrend={netWorthTrend}
+              monthLink={monthLink}
+            />
+            <CashFlowCard
+              key={`flow-${cursorKey}`}
+              points={cashFlow}
+              inProgress={monthInProgress}
+              monthLink={monthLink}
+            />
+            <CategoryTracks
+              rows={categoriesAgainstUsual(catTracks)}
+              catById={catById}
+              inProgress={monthInProgress}
+              onOpen={openCategory}
+            />
+          </>
         ) : (
           <EmptyState
             title="Not enough history yet"

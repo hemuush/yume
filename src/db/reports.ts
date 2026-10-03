@@ -89,10 +89,8 @@ export interface CategoryBreakdownItem {
 export interface PeriodSummary {
   incomeMinor: number;
   expenseMinor: number;
-  // income - expense - savingsContributionMinor: money already moved into
-  // savings this period no longer counts as "surplus" — it's been acted on,
-  // not left sitting free to allocate. Withdrawing from savings does the
-  // reverse (savingsContributionMinor goes negative, adding back to net).
+  // income - expense - savingsContributionMinor: money already moved into savings no longer counts as
+  // "surplus" (it's been acted on); withdrawing from savings goes negative, adding back to net.
   netMinor: number;
   savingsContributionMinor: number; // net money moved into savings-type accounts
   categoryBreakdown: CategoryBreakdownItem[];
@@ -101,13 +99,8 @@ export interface PeriodSummary {
 }
 
 /**
- * Every aggregate query here joins to `accounts` and filters to the
- * default currency — transactions carry no currency of their own (only the
- * account they moved through does), so summing across accounts in
- * different currencies would otherwise add face values together as if
- * 1 unit of one currency equalled 1 unit of another. Accounts in other
- * currencies still work individually; they're just excluded from these
- * combined totals rather than silently corrupting them.
+ * Every aggregate here joins `accounts` and filters to the default currency: transactions carry no currency,
+ * so summing across currencies would add face values; other-currency accounts work individually, just not here.
  */
 export async function getPeriodSummary(range: DateRange): Promise<PeriodSummary> {
   const db = await getDb();
@@ -140,10 +133,8 @@ export async function getPeriodSummary(range: DateRange): Promise<PeriodSummary>
     [currency, range.start, range.end]
   );
 
-  // Rolled up to the top-level category — a subcategory's own spend (e.g.
-  // "Zomato") is folded into its parent's row ("Food & Dining") rather than
-  // appearing as its own independent slice/bar. `hasSubcategories` tells the
-  // caller whether this row can be drilled into via getSubcategoryBreakdown.
+  // Rolled up to the top-level category: subcategory spend folds into its parent's row, not its own slice.
+  // `hasSubcategories` says whether the row can be drilled into via getSubcategoryBreakdown.
   const breakdownOf = (type: 'expense' | 'income') =>
     db.getAllAsync<{
       categoryId: string;
@@ -198,13 +189,8 @@ export async function getPeriodSummary(range: DateRange): Promise<PeriodSummary>
 }
 
 /**
- * What was left over, in total, from everything before `before` (YYYY-MM-DD):
- * income − spending − what was moved into savings, summed over all earlier
- * entries — the same arithmetic as a period's own free-to-use figure, so a
- * month's leftover rolls into the next one instead of vanishing. Negative when
- * earlier months went over. Default currency only, like every other total;
- * with `excludeSensitive` the savings & investment categories stay out, as
- * they do for the period itself.
+ * Leftover from everything before `before` (YYYY-MM-DD): income − spending − savings moved, as in a period's
+ * free-to-use, so it rolls forward. Negative if over. Default currency; `excludeSensitive` omits savings.
  */
 export async function getCarryInMinor(before: string, excludeSensitive = false): Promise<number> {
   const db = await getDb();
@@ -226,11 +212,8 @@ export async function getCarryInMinor(before: string, excludeSensitive = false):
 }
 
 /**
- * The split behind one rolled-up category row — one entry per subcategory,
- * plus an "Other <name>" entry for spend tagged directly against the parent
- * itself rather than any specific subcategory (a real case: someone picks
- * "Food & Dining" itself for a one-off purchase that doesn't fit "Zomato" or
- * "Bistro Central"). Powers the drill-down when `hasSubcategories` is true.
+ * The split behind one rolled-up category row: one entry per subcategory plus "Other <name>" for spend tagged
+ * directly to the parent itself. Powers the drill-down when `hasSubcategories` is true.
  */
 export async function getSubcategoryBreakdown(
   parentCategoryId: string,
@@ -287,11 +270,8 @@ export interface AccountBreakdownItem {
 const ACCOUNT_TOP_CATEGORIES = 3;
 
 /**
- * Where a period's spending went by account (or, for income, where it landed):
- * one row per account, largest first, each with its three biggest categories
- * (subcategories rolled into their parent, as everywhere in Reports). Default
- * currency only, refunds taken off. With `excludeSensitive` the savings &
- * investment categories stay out, so a hidden amount can't be worked back out.
+ * Where a period's spending (or income) went by account: largest first, each with its top 3 categories
+ * (subcategories rolled up). Default currency, refunds off; `excludeSensitive` drops savings/investments.
  */
 export async function getAccountBreakdown(
   range: DateRange,
@@ -369,10 +349,8 @@ export interface LargestExpense {
 }
 
 /**
- * The period's biggest single expenses, largest first (ties: the later date).
- * Gross entry amounts: a refund is its own row and does not shrink the entry
- * it came back against. With `categoryId`, only that category's entries
- * (subcategories included), matching the heatmap's category filter.
+ * The period's biggest single expenses, largest first (ties: later date). Gross amounts: a refund is its own
+ * row and doesn't shrink its entry. `categoryId` narrows to that category and subcategories (heatmap's filter).
  */
 export async function getLargestExpenses(
   range: DateRange,
@@ -429,10 +407,8 @@ export interface CategoryOverview {
 }
 
 /**
- * Everything the category page shows about one category over a period:
- * its total and entry count, where within it the money went, and a run of
- * monthly totals. Subcategories roll up into their parent, the same way
- * Reports totals them, so the page and Reports always agree.
+ * Everything the category page shows for a category over a period: total, entry count, inner breakdown, monthly
+ * totals. Subcategories roll up as Reports does, so the page and Reports always agree.
  */
 export async function getCategoryOverview(
   categoryId: string,
@@ -492,9 +468,8 @@ export async function getCategoryOverview(
 }
 
 /**
- * "Your usual" for a category: the average of the three months before the
- * last one in the series — only once all three had spending, since one or
- * two months say too little. Null otherwise.
+ * "Your usual" for a category: the average of the three months before the last one in the series, only once all
+ * three had spending (fewer say too little). Null otherwise.
  */
 export function usualMonthly(months: { totalMinor: number }[]): number | null {
   const before = months.slice(-4, -1);
@@ -508,9 +483,8 @@ export interface DailyExpensePoint {
 }
 
 /**
- * Total expense for each day that had spending within `range` — one grouped
- * query. With `categoryId`, only that category's spending, its subcategories
- * rolled in (the same grouping Reports' category rows use).
+ * Total expense for each day with spending within `range`, in one grouped query. With `categoryId`, only that
+ * category's spending, subcategories rolled in (same grouping as Reports' category rows).
  */
 export async function getDailyExpenseTotals(
   range: DateRange,
@@ -540,10 +514,8 @@ export async function getDailyExpenseTotals(
 }
 
 /**
- * Today's total spend — the same scoping every other spend figure in the
- * app uses (expense-type transactions, default-currency accounts only),
- * just narrowed to a single day. Powers the "Today" strip on Home; reuses
- * `getDailyExpenseTotals`'s own query shape rather than a separate one.
+ * Today's total spend, scoped like every other spend figure (expense-type, default-currency accounts) but for
+ * one day. Powers Home's "Today" strip; reuses getDailyExpenseTotals's query shape.
  */
 export async function getTodaySpend(
   today: string = toIso(new Date()),
@@ -554,12 +526,8 @@ export async function getTodaySpend(
 }
 
 /**
- * What Home's month forecast (monthPace in lib/pace.ts) needs beyond the
- * month's total spend: everyday spending from the 1st through `today` —
- * leaving out the categories the app files itself (Loan EMI, fees, Friends &
- * Family) — and what's still due after today and before the month ends:
- * pending EMIs on active borrowed loans, and active recurring expenses.
- * Default currency only, like every other total.
+ * Home's forecast inputs (lib/pace.ts): everyday spend 1st→`today` (excl. Loan EMI, fees, Friends & Family)
+ * plus still-due this month: pending borrowed-loan EMIs and active recurring expenses. Default currency only.
  */
 export async function getMonthPaceInputs(
   today: string = toIso(new Date())
@@ -599,11 +567,8 @@ export async function getMonthPaceInputs(
 }
 
 /**
- * What is still owed this month and not yet in anyone's spending: pending EMIs
- * on active borrowed loans due from the 1st to the month's end (an overdue one
- * counts, an EMI due today too), and active recurring expenses still ahead of
- * `today` (one due today or earlier has already been posted as a transaction).
- * Powers Home's "Free after bills". Default currency only, like every other total.
+ * Still owed this month, not yet spent: pending EMIs on active borrowed loans due by month end (overdue and
+ * due today count) and active recurring expenses after `today` (earlier ones already posted). Default currency.
  */
 export async function getStillToPayThisMonth(today: string = toIso(new Date())): Promise<number> {
   const db = await getDb();
@@ -634,12 +599,8 @@ export interface DailyGoalStreakPoint {
 }
 
 /**
- * For each of the last `days` calendar days (oldest to newest, ending
- * `today`), the length of the consecutive under-daily-goal streak ending on
- * that day — powers Suu's Garden. Looks back well beyond the visible window
- * so a streak that started earlier still reads as continuing on day one of
- * the chart, rather than appearing to reset to 1. A day with zero expenses
- * counts as under the goal, same as `getTodaySpend`'s own scoping.
+ * For each of the last `days` days (ending `today`): the under-goal streak length ending that day. Looks back
+ * past the visible window so streaks continue rather than reset to 1; zero-expense days count as under goal.
  */
 export async function getDailyGoalStreakSeries(
   goalMinor: number,
@@ -648,16 +609,8 @@ export async function getDailyGoalStreakSeries(
 ): Promise<DailyGoalStreakPoint[]> {
   const db = await getDb();
   const currency = await getDefaultCurrency();
-  // Without this floor, a day with no transaction rows reads as "spent
-  // nothing, so it's under the goal" all the way back into calendar time
-  // before the install even existed — a brand-new user would open the
-  // Garden and see a decades-long streak on day one. Clamping the lookback
-  // to no earlier than the very first transaction on record means history
-  // that genuinely doesn't exist can never masquerade as days kept. Scoped
-  // to expense/default-currency, matching `getDailyExpenseTotals` right
-  // below — an earlier income or foreign-currency transaction would
-  // otherwise push this floor before the account's real expense-tracking
-  // history actually starts.
+  // Floor the lookback at the first expense/default-currency transaction (as getDailyExpenseTotals below);
+  // otherwise empty pre-install days read as "under goal" and a new user sees a decades-long streak.
   const earliestRow = await db.getFirstAsync<{ earliest: string | null }>(
     `SELECT MIN(t.date) as earliest FROM transactions t
      JOIN accounts a ON a.id = t.account_id
@@ -681,11 +634,8 @@ export async function getDailyGoalStreakSeries(
 }
 
 /**
- * A category's average monthly expense over the last `months` full
- * calendar months (today's own partial month excluded) — powers the
- * what-if sandbox's "currently ₹X/month" figure. Reuses
- * `getPeriodSummary`'s own category-breakdown query rather than a separate
- * one; only the averaging is new.
+ * A category's average monthly expense over the last `months` full months (current partial month excluded),
+ * for the what-if sandbox. Reuses getPeriodSummary's category-breakdown query.
  */
 export async function getCategoryMonthlyAverages(
   months = 3,
@@ -696,12 +646,8 @@ export async function getCategoryMonthlyAverages(
   const end = toIso(new Date(reference.getFullYear(), reference.getMonth(), 0)); // last day of the previous month
   const start = toIso(new Date(reference.getFullYear(), reference.getMonth() - months, 1));
 
-  // Dividing by the requested window size regardless of how much history
-  // actually exists in it silently under-reports a new install's (or a
-  // freshly-added category's) real average — one real month of spend
-  // divided by a 3-month window reads as a third of the true figure.
-  // Floors the divisor to the months that actually have expense history,
-  // same type/currency scoping getPeriodSummary itself already uses.
+  // Divide by months that actually have expense history, not the window size: one real month over a
+  // 3-month window reads as a third of the truth. Same type/currency scoping as getPeriodSummary.
   const earliestRow = await db.getFirstAsync<{ earliest: string | null }>(
     `SELECT MIN(t.date) as earliest FROM transactions t
      JOIN accounts a ON a.id = t.account_id
@@ -728,10 +674,8 @@ function pctChange(current: number, previous: number): number | null {
 }
 
 /**
- * The category whose spend grew the most (>20%) vs the same category's
- * total in the prior period — a pure function over already-fetched
- * breakdowns, no extra query. Categories with no prior-period spend are
- * skipped (nothing to compare growth against).
+ * The category whose spend grew most (>20%) vs its prior-period total. Pure over fetched breakdowns (no query);
+ * categories with no prior-period spend are skipped (nothing to compare).
  */
 export function findTopGrowingCategory(
   current: CategoryBreakdownItem[],
@@ -758,9 +702,8 @@ export async function getPeriodComparison(
 }
 
 /**
- * The same comparison against two explicit ranges — used by the period
- * navigator, where the user can be looking at any past month or year rather
- * than only the one containing today.
+ * The same comparison against two explicit ranges, for the period navigator (any past month or year,
+ * not only the one containing today).
  */
 export async function getRangeComparison(
   current: DateRange,
@@ -818,31 +761,125 @@ export async function getMonthlyExpenseTrend(
   return points;
 }
 
+/** The last `months` calendar months ending at `reference`'s, oldest first, with the `YYYY-MM` key and short label. */
+function monthSlots(months: number, reference: Date): { ym: string; label: string }[] {
+  const slots: { ym: string; label: string }[] = [];
+  for (let i = months - 1; i >= 0; i--) {
+    const d = new Date(reference.getFullYear(), reference.getMonth() - i, 1);
+    slots.push({
+      ym: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`,
+      label: d.toLocaleDateString(undefined, { month: 'short' }),
+    });
+  }
+  return slots;
+}
+
+export interface CashFlowPoint {
+  label: string;
+  incomeMinor: number;
+  expenseMinor: number;
+}
+
+/** Income and spending per calendar month for the last `months` months (oldest first), same rules as getPeriodSummary. */
+export async function getMonthlyCashFlow(
+  months = 7,
+  reference: Date = new Date(),
+  excludeSensitive = false
+): Promise<CashFlowPoint[]> {
+  const db = await getDb();
+  const currency = await getDefaultCurrency();
+  const startIso = toIso(new Date(reference.getFullYear(), reference.getMonth() - (months - 1), 1));
+
+  const rows = await db.getAllAsync<{ ym: string; income: number; expense: number }>(
+    `SELECT strftime('%Y-%m', t.date) as ym,
+       SUM(CASE WHEN ${INCOME_ROWS} THEN t.amount_minor ELSE 0 END) as income,
+       SUM(CASE WHEN ${SPEND_ROWS} THEN ${SPEND_AMOUNT} ELSE 0 END) as expense
+     FROM transactions t
+     JOIN accounts a ON a.id = t.account_id
+     WHERE (${INCOME_ROWS} OR ${SPEND_ROWS}) AND a.currency = ? AND t.date >= ?${excludeSensitive ? ` AND ${NOT_SENSITIVE}` : ''}
+     GROUP BY ym`,
+    [currency, startIso]
+  );
+  const byMonth = new Map(rows.map((r) => [r.ym, r]));
+  return monthSlots(months, reference).map(({ ym, label }) => ({
+    label,
+    incomeMinor: byMonth.get(ym)?.income ?? 0,
+    expenseMinor: Math.max(0, byMonth.get(ym)?.expense ?? 0),
+  }));
+}
+
+export interface CategoryTrack {
+  categoryId: string;
+  name: string;
+  color: string;
+  /** Spending per calendar month, oldest first; one entry for each of the months asked for. */
+  totalsMinor: number[];
+}
+
+/** Spending per top-level category per month for the last `months` months, rolled up like getPeriodSummary's breakdown. */
+export async function getCategoryMonthlyTotals(
+  months = 7,
+  reference: Date = new Date(),
+  excludeSensitive = false
+): Promise<CategoryTrack[]> {
+  const db = await getDb();
+  const currency = await getDefaultCurrency();
+  const startIso = toIso(new Date(reference.getFullYear(), reference.getMonth() - (months - 1), 1));
+
+  const rows = await db.getAllAsync<{
+    categoryId: string;
+    name: string;
+    color: string;
+    ym: string;
+    total: number;
+  }>(
+    `SELECT top.id as categoryId, top.name as name, top.color as color,
+       strftime('%Y-%m', t.date) as ym, SUM(${SPEND_AMOUNT}) as total
+     FROM transactions t
+     JOIN categories c ON c.id = t.category_id
+     JOIN categories top ON top.id = COALESCE(c.parent_id, c.id)
+     JOIN accounts a ON a.id = t.account_id
+     WHERE ${SPEND_ROWS} AND a.currency = ? AND t.date >= ?${excludeSensitive ? ` AND ${NOT_SENSITIVE}` : ''}
+     GROUP BY top.id, ym`,
+    [currency, startIso]
+  );
+  const slots = monthSlots(months, reference);
+  const slotOf = new Map(slots.map((s, i) => [s.ym, i]));
+  const tracks = new Map<string, CategoryTrack>();
+  for (const r of rows) {
+    const at = slotOf.get(r.ym);
+    if (at === undefined) continue;
+    let track = tracks.get(r.categoryId);
+    if (!track) {
+      track = {
+        categoryId: r.categoryId,
+        name: r.name,
+        color: r.color,
+        totalsMinor: new Array<number>(months).fill(0),
+      };
+      tracks.set(r.categoryId, track);
+    }
+    track.totalsMinor[at] = Math.max(0, r.total);
+  }
+  return [...tracks.values()].filter((t) => t.totalsMinor.some((v) => v > 0));
+}
+
 export interface NetWorthPoint {
   label: string;
   netWorthMinor: number;
 }
 
 /**
- * A borrowed loan's outstanding balance is a liability (subtracted from net
- * worth); a lent loan's outstanding balance is an asset owed to you (added).
- * Pulled out as a pure function so the sign logic in getNetWorthTrend has
- * direct test coverage without needing a live database.
+ * A borrowed loan's outstanding balance is a liability (subtracted from net worth); a lent loan's is an asset
+ * (added). Pure so the sign logic in getNetWorthTrend is testable without a database.
  */
 export function loanNetWorthContribution(
   direction: 'borrowed' | 'lent',
   principalMinor: number,
   paidPrincipalMinor: number,
   /**
-   * The tracked current value of whatever a *borrowed* loan financed (a
-   * home, a vehicle) — 0 by default, which reproduces the original
-   * behavior exactly (a borrowed loan always net-worth-negative by its full
-   * outstanding balance) for anyone who hasn't recorded one. Once set, the
-   * loan's own contribution becomes its real net equity (asset value minus
-   * what's still owed) instead of counting the debt with no offsetting
-   * asset — the "why is my net worth deeply negative for a completely
-   * normal home loan" complaint this fixes. Never applied to a `lent` loan:
-   * lending money doesn't leave you holding an asset, just a receivable.
+   * Tracked value of what a *borrowed* loan financed (home, vehicle); 0 = count the full outstanding debt.
+   * When set, the contribution is net equity (asset − owed). Never applied to `lent` loans: just a receivable.
    */
   assetValueMinor = 0
 ): number {
@@ -852,17 +889,8 @@ export function loanNetWorthContribution(
 }
 
 /**
- * "Tracked Balance" — the single headline figure Home and Profile both show:
- * default-currency account balances + every not-yet-closed loan's net-worth
- * contribution (asset-value aware, via loanNetWorthContribution) + the net of
- * every friends-and-family balance.
- *
- * Extracted here so the two screens can never drift: Home previously used a
- * hand-rolled `-outstandingPrincipalMinor` that ignored a loan's tracked
- * asset value, while Profile already routed through loanNetWorthContribution,
- * so the same data could show two different numbers on the two screens.
- * A defaulted loan still counts (money is still owed either way); only a
- * fully 'closed' loan drops out.
+ * "Tracked Balance" (Home and Profile headline), shared so they can't drift: default-currency account balances
+ * + non-closed loans' loanNetWorthContribution + net friends balance. A defaulted loan counts; 'closed' drops.
  */
 export function computeTrackedBalance(input: TrackedBalanceInput): number {
   const parts = trackedBalanceParts(input);
@@ -908,47 +936,48 @@ export function trackedBalanceParts(input: TrackedBalanceInput): TrackedBalanceP
 }
 
 /**
- * Net worth reconstructed as of the end of each of the last `months`
- * months (the most recent point uses `reference` itself, since future
- * transactions obviously can't exist yet) — accounts + receivable loans -
- * outstanding loans + people balances, all filtered to that cutoff date
- * rather than read from current totals. Transfers between your own accounts
- * net to zero across the whole account set, so the account total only needs
- * income/expense effects, not a per-account transfer trace.
- *
- * For a loan's installments paid before it was entered into Yume
- * (`alreadyPaidInstallments`, which have no real `paid_date`), the
- * installment's `due_date` is used as the best available stand-in for when
- * it was actually paid — historical dates for those simply aren't known.
+ * Net worth at each of the last `months` month-ends (latest = `reference`), cut off at that date. Transfers
+ * net to zero so accounts need only income/expense; pre-Yume paid installments use `due_date` as paid date.
  */
 export async function getNetWorthTrend(months = 6, reference: Date = new Date()): Promise<NetWorthPoint[]> {
   const db = await getDb();
   const currency = await getDefaultCurrency();
   const points: NetWorthPoint[] = [];
 
-  for (let i = months - 1; i >= 0; i--) {
-    const isCurrentMonth = i === 0;
-    const cutoff = isCurrentMonth
-      ? reference
-      : new Date(reference.getFullYear(), reference.getMonth() - i + 1, 0); // last day of that month
-    const cutoffIso = toIso(cutoff);
+  const cutoffs = Array.from({ length: months }, (_, k) => {
+    const i = months - 1 - k;
+    return i === 0 ? reference : new Date(reference.getFullYear(), reference.getMonth() - i + 1, 0);
+  });
 
-    // Archived accounts are excluded here to match listAccounts()'s default
-    // (used for every other on-screen balance/total) — without this filter,
-    // an archived account's balance kept counting toward Net Worth even
-    // after it had already disappeared from the Accounts tab's own total.
-    const accountsRow = await db.getFirstAsync<{ total: number | null }>(
-      `SELECT
-         (SELECT COALESCE(SUM(opening_balance_minor), 0) FROM accounts WHERE currency = ? AND archived = 0) +
-         COALESCE((SELECT SUM(t.amount_minor) FROM transactions t JOIN accounts a ON a.id = t.account_id
-           WHERE t.type = 'income' AND a.currency = ? AND a.archived = 0 AND t.date <= ?), 0) -
-         COALESCE((SELECT SUM(t.amount_minor) FROM transactions t JOIN accounts a ON a.id = t.account_id
-           WHERE t.type = 'expense' AND a.currency = ? AND a.archived = 0 AND t.date <= ?), 0) +
-         COALESCE((SELECT SUM(${valuationAdjSql('a', true)}) FROM accounts a
-           WHERE a.tracked = 1 AND a.currency = ? AND a.archived = 0), 0)
-         as total`,
-      [currency, currency, cutoffIso, currency, cutoffIso, cutoffIso, currency]
+  // One grouped pass over the ledger, not one full re-sum per month. Archived accounts are excluded to match
+  // listAccounts()'s default, else they'd count toward Net Worth after vanishing from the Accounts tab's total.
+  const monthlyNet = await db.getAllAsync<{ ym: string; net: number }>(
+    `SELECT substr(t.date, 1, 7) AS ym,
+       SUM(CASE t.type WHEN 'income' THEN t.amount_minor WHEN 'expense' THEN -t.amount_minor ELSE 0 END) AS net
+     FROM transactions t JOIN accounts a ON a.id = t.account_id
+     WHERE a.currency = ? AND a.archived = 0 AND t.date <= ?
+     GROUP BY ym`,
+    [currency, toIso(reference)]
+  );
+  const openingRow = await db.getFirstAsync<{ total: number | null }>(
+    'SELECT COALESCE(SUM(opening_balance_minor), 0) AS total FROM accounts WHERE currency = ? AND archived = 0',
+    [currency]
+  );
+
+  for (let k = 0; k < months; k++) {
+    const isCurrentMonth = k === months - 1;
+    const cutoff = cutoffs[k];
+    const cutoffIso = toIso(cutoff);
+    const cutoffMonth = cutoffIso.slice(0, 7);
+
+    let ledgerNet = 0;
+    for (const row of monthlyNet) if (row.ym <= cutoffMonth) ledgerNet += row.net;
+    const valuationRow = await db.getFirstAsync<{ total: number | null }>(
+      `SELECT COALESCE(SUM(${valuationAdjSql('a', true)}), 0) AS total FROM accounts a
+       WHERE a.tracked = 1 AND a.currency = ? AND a.archived = 0`,
+      [cutoffIso, currency]
     );
+    const accountsMinor = (openingRow?.total ?? 0) + ledgerNet + (valuationRow?.total ?? 0);
 
     const loanRows = await db.getAllAsync<{
       direction: string;
@@ -956,10 +985,8 @@ export async function getNetWorthTrend(months = 6, reference: Date = new Date())
       paid_principal: number | null;
       asset_value_minor: number | null;
     }>(
-      // A prepayment reduces principal too, but isn't a loan_payments row —
-      // without the second SUM its cash left the accounts total above while
-      // the debt never went down, so a prepaid loan showed that amount as
-      // phantom debt forever (even after closing).
+      // A prepayment reduces principal but isn't a loan_payments row; without the second SUM its cash left
+      // the accounts total while the debt never dropped (phantom debt forever).
       `SELECT l.direction as direction, l.principal_minor as principal_minor, l.asset_value_minor as asset_value_minor,
          (SELECT COALESCE(SUM(lp.principal_component_minor), 0) FROM loan_payments lp
            WHERE lp.loan_id = l.id AND lp.status = 'paid' AND COALESCE(lp.paid_date, lp.due_date) <= ?) +
@@ -984,7 +1011,7 @@ export async function getNetWorthTrend(months = 6, reference: Date = new Date())
       [cutoffIso]
     );
 
-    const netWorthMinor = (accountsRow?.total ?? 0) + loansNet + (peopleRow?.total ?? 0);
+    const netWorthMinor = accountsMinor + loansNet + (peopleRow?.total ?? 0);
     points.push({
       label: isCurrentMonth ? 'Now' : cutoff.toLocaleDateString(undefined, { month: 'short' }),
       netWorthMinor,
