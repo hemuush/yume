@@ -55,7 +55,14 @@ describe('Friends & Family screen', () => {
     ];
     const shown = texts(await render());
     expect(shown).toEqual(
-      expect.arrayContaining(['Aarav', 'Owes you', 'Meera', 'You owe', 'Riya', 'Settled'])
+      expect.arrayContaining([
+        'Aarav',
+        'Owes you · No activity',
+        'Meera',
+        'You owe · No activity',
+        'Riya',
+        'Settled',
+      ])
     );
   });
 
@@ -72,6 +79,27 @@ describe('Friends & Family screen', () => {
     expect(shown.filter((t) => t === 'Settle up')).toHaveLength(2);
     expect(shown).toContain('Settled · No activity');
     expect(shown).toContain('Net, in your favour');
+  });
+
+  it('groups the tiles under headings that carry the totals', async () => {
+    mockPeople.current = [
+      { id: 'p1', name: 'Aarav', balanceMinor: 90000, lastActivityDate: null },
+      { id: 'p2', name: 'Meera', balanceMinor: -30000, lastActivityDate: null },
+    ];
+    const shown = texts(await render());
+    expect(shown.indexOf('Owes you')).toBeLessThan(shown.indexOf('Aarav'));
+    expect(shown.indexOf('You owe')).toBeLessThan(shown.indexOf('Meera'));
+    expect(shown.some((t) => t.includes('900'))).toBe(true);
+    expect(shown).toContain('Net, in your favour');
+  });
+
+  it('keeps a lone open person to a single tile, without headings or a net line', async () => {
+    mockPeople.current = [{ id: 'p1', name: 'Aarav', balanceMinor: 240000, lastActivityDate: null }];
+    const shown = texts(await render());
+    expect(shown).toContain('Aarav');
+    expect(shown.filter((t) => t === 'Settle up')).toHaveLength(1);
+    expect(shown).not.toContain('Owes you');
+    expect(shown.some((t) => t.startsWith('Net,'))).toBe(false);
   });
 
   it('shows no net line and no Settle up pill when everyone is settled', async () => {

@@ -6,7 +6,7 @@ import { theme } from '@/constants/theme';
 import { EYEBROW } from '@/constants/textStyles';
 import { shade } from '@/lib/color';
 import { formatMaskableMoney } from '@/lib/money';
-import { HOME } from '@/features/home/homeStyles';
+import { HOME } from '@/components/homeStyles';
 
 /**
  * First block on You: what is in your accounts right now. Leads with this, not the tracked balance, since

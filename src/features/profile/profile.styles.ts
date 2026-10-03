@@ -1,7 +1,7 @@
 import { StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
 import { EYEBROW } from '@/constants/textStyles';
-import { HOME } from '@/features/home/homeStyles';
+import { HOME } from '@/components/homeStyles';
 
 // Shared by Profile (shell, YouSection, SettingsSection) and the account modals. Cards, rows and headings
 // come from Home's visual system (homeStyles, HomeSection); these are only what Profile adds.

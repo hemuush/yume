@@ -22,7 +22,7 @@ import { SettingsRow } from '@/components/SettingsRow';
 import { SegmentedControl } from '@/components/SegmentedControl';
 import { ActionSheet, ActionSheetItem } from '@/components/ActionSheet';
 import { theme, modalFooterStyles as f } from '@/constants/theme';
-import { homeStyles as h } from '@/features/home/homeStyles';
+import { homeStyles as h } from '@/components/homeStyles';
 import { toLocalIsoDate } from '@/lib/date';
 import { dayMonthYear, weekdayDayMonth } from '@/lib/dateLabels';
 import { styles } from './loans.styles';

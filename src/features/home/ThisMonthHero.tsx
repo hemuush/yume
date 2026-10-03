@@ -18,7 +18,7 @@ import { formatMoney, formatMaskableMoney } from '@/lib/money';
 import { useReduceMotion } from '@/lib/useReduceMotion';
 import { haptics } from '@/lib/haptics';
 import { MOTION, timing } from '@/lib/animation';
-import { SoftCard } from './SoftCard';
+import { SoftCard } from '@/components/SoftCard';
 import { MonthRing, RING_COLORS } from './MonthRing';
 import { LimitMeter, LimitMeterTone } from '@/components/LimitMeter';
 import { CountUpAmount } from '@/components/CountUpAmount';

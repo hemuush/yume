@@ -18,7 +18,6 @@ import { haptics } from '@/lib/haptics';
 import { gainLabel } from '@/lib/investment';
 import { addValuation, updateValuation, deleteValuation, restoreValuation, Valuation } from '@/db/valuations';
 import type { Account } from '@/types';
-import { styles as profileStyles } from '@/features/profile/profile.styles';
 
 /**
  * Records what a tracked account is worth now, or edits/deletes an earlier update. The estimate chip is the
@@ -123,7 +122,7 @@ export function UpdateValueSheet({
       onClose={onClose}
       footer={
         <View style={f.footerCol}>
-          {error && <Text style={profileStyles.errorText}>{error}</Text>}
+          {error && <Text style={styles.errorText}>{error}</Text>}
           <SheetFooter
             onDelete={valuation ? remove : undefined}
             deleteLabel="Delete this value"
@@ -190,6 +189,7 @@ export function UpdateValueSheet({
 }
 
 const styles = StyleSheet.create({
+  errorText: { fontFamily: theme.font.body, color: theme.colors.expenseText, fontSize: 13, marginBottom: 12 },
   estimateRow: { gap: 8, marginTop: -4, marginBottom: 14 },
   estimateChip: {
     alignSelf: 'flex-start',

@@ -2,7 +2,7 @@ import { Animated, Pressable, View, StyleSheet } from 'react-native';
 import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
 import { usePressScale } from '@/lib/usePressScale';
-import { HOME } from '@/features/home/homeStyles';
+import { HOME } from '@/components/homeStyles';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 

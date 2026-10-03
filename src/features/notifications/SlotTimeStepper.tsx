@@ -1,7 +1,7 @@
 import { View, Pressable, StyleSheet } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import { Text } from '@/components/Text';
-import { homeStyles as h } from '@/features/home/homeStyles';
+import { homeStyles as h } from '@/components/homeStyles';
 import { theme } from '@/constants/theme';
 import { withPressed } from '@/lib/pressed';
 import {

@@ -16,7 +16,7 @@ import { ModalSheet, SheetLink } from '@/components/ModalSheet';
 import { SheetCard } from '@/components/SheetCard';
 import { SettingsRow } from '@/components/SettingsRow';
 import { theme, modalFooterStyles as f } from '@/constants/theme';
-import { homeStyles as h } from '@/features/home/homeStyles';
+import { homeStyles as h } from '@/components/homeStyles';
 import { useAccent } from '@/theme/AccentContext';
 import { hexToRgba } from '@/lib/color';
 import { weekdayDayMonth } from '@/lib/dateLabels';
@@ -36,6 +36,7 @@ import { cadenceLabel, frequencyNoun } from './recurring.helpers';
 import { errorMessage } from '@/lib/errorMessage';
 import { showAlert } from '@/components/AppDialog';
 import { categorySentence, parentNameOf } from '@/lib/categoryLabel';
+import { spendableAccountsOf } from '@/lib/account';
 
 const TX_TYPES: { label: string; value: TransactionType }[] = [
   { label: 'Expense', value: 'expense' },
@@ -137,7 +138,7 @@ export function RuleModal({
   );
   // Same rule as the add-transaction screen: a recurring expense/income can't fire straight out of a savings
   // account (transfer out first); validate() in src/db/recurring.ts enforces it too.
-  const spendableAccounts = useMemo(() => accounts.filter((a) => a.type !== 'savings'), [accounts]);
+  const spendableAccounts = useMemo(() => spendableAccountsOf(accounts), [accounts]);
   const pickableAccounts = type === 'transfer' ? accounts : spendableAccounts;
   const effectiveAccountId =
     accountId && pickableAccounts.some((a) => a.id === accountId)
