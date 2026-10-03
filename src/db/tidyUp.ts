@@ -36,6 +36,7 @@ export interface RepeatGroup {
   accountName: string;
   toAccountName: string | null;
   categoryName: string | null;
+  parentName?: string | null;
   categoryIcon: string | null;
   categoryColor: string | null;
 }
@@ -106,17 +107,19 @@ export async function findRepeatGroups(): Promise<RepeatGroup[]> {
       account_name: string;
       to_account_name: string | null;
       category_name: string | null;
+      parent_name: string | null;
       category_icon: string | null;
       category_color: string | null;
     }
   >(
     `SELECT t.id, t.type, t.account_id, t.to_account_id, t.category_id, t.amount_minor, t.date, t.created_at,
-       a.name AS account_name, ta.name AS to_account_name, c.name AS category_name, c.icon AS category_icon,
-       c.color AS category_color
+       a.name AS account_name, ta.name AS to_account_name, c.name AS category_name, pc.name AS parent_name,
+       c.icon AS category_icon, c.color AS category_color
      FROM transactions t
      JOIN accounts a ON a.id = t.account_id
      LEFT JOIN accounts ta ON ta.id = t.to_account_id
      LEFT JOIN categories c ON c.id = t.category_id
+     LEFT JOIN categories pc ON pc.id = c.parent_id
      JOIN (
        -- Every combination entered more than once, found in one pass. (A
        -- correlated EXISTS here let SQLite probe by account instead of date:
@@ -152,6 +155,7 @@ export async function findRepeatGroups(): Promise<RepeatGroup[]> {
         accountName: r.account_name,
         toAccountName: r.to_account_name ?? null,
         categoryName: r.category_name ?? null,
+        parentName: r.parent_name ?? null,
         categoryIcon: r.category_icon ?? null,
         categoryColor: r.category_color ?? null,
       });

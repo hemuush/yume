@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { View, StyleSheet, Pressable } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import { Text } from '@/components/Text';
@@ -18,6 +18,7 @@ import { useReduceMotion } from '@/lib/useReduceMotion';
 import { MOTION, timing } from '@/lib/animation';
 import { PeriodCursor, periodLabel, periodRange } from '@/lib/period';
 import { RecentTransactionRow } from './RecentTransactionRow';
+import { parentNameOf } from '@/lib/categoryLabel';
 import { withPressed } from '@/lib/pressed';
 import { getCardCycle, AccountCardCycle } from '@/db/cardCycles';
 import { dayMonth } from '@/lib/dateLabels';
@@ -69,6 +70,7 @@ export function AccountSummarySheet({
 }) {
   // Home reloads `accounts` after a value update; follow it so this sheet shows the new figures.
   const account = (accountProp && accounts.find((a) => a.id === accountProp.id)) || accountProp;
+  const categoriesById = useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories]);
   const { hideAmounts } = usePrivacy();
   const { accent } = useAccent();
   const tracked = !!account?.investment;
@@ -348,6 +350,7 @@ export function AccountSummarySheet({
                   key={tx.id}
                   tx={tx}
                   category={categories.find((c) => c.id === tx.categoryId)}
+                  parentName={parentNameOf(tx.categoryId, categoriesById)}
                   accountName={nameOf(tx.accountId)}
                   toAccountName={nameOf(tx.toAccountId)}
                   savingsTransfer={

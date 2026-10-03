@@ -11,6 +11,7 @@ import { styles } from './recurring.styles';
 import { SectionHead } from './SectionHead';
 import { dayMonth } from '@/lib/dateLabels';
 import { withPressed } from '@/lib/pressed';
+import { categorySentence } from '@/lib/categoryLabel';
 
 /**
  * "Not set up yet": subscriptions and monthly charges that don't have a rule.
@@ -35,7 +36,7 @@ export function SuggestionsList({
             <CategoryIcon name={s.icon} color={s.color} />
             <View style={{ flex: 1 }}>
               <Text style={styles.rowTitle} numberOfLines={2}>
-                {s.categoryName}
+                {categorySentence(s.categoryName, s.parentName)}
               </Text>
               <Text style={styles.rowSub}>
                 {s.source === 'pattern'
@@ -47,7 +48,7 @@ export function SuggestionsList({
               style={withPressed(styles.make)}
               onPress={() => onMakeRecurring(s)}
               accessibilityRole="button"
-              accessibilityLabel={`Make ${s.categoryName} recurring`}
+              accessibilityLabel={`Make ${categorySentence(s.categoryName, s.parentName)} recurring`}
             >
               <Text style={styles.makeText}>Make recurring</Text>
             </Pressable>
@@ -56,7 +57,7 @@ export function SuggestionsList({
               onPress={() => onHide(s)}
               hitSlop={10}
               accessibilityRole="button"
-              accessibilityLabel={`Hide ${s.categoryName}`}
+              accessibilityLabel={`Hide ${categorySentence(s.categoryName, s.parentName)}`}
             >
               <Feather name="x" size={15} color={theme.colors.textMuted} />
             </Pressable>

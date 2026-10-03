@@ -21,6 +21,7 @@ import { theme, modalFooterStyles as f } from '@/constants/theme';
 import { homeStyles as h } from '@/features/home/homeStyles';
 import { accountIcon } from '@/lib/account';
 import { hexToRgba } from '@/lib/color';
+import { categorySentence, inParent, joinSub, parentNameOf } from '@/lib/categoryLabel';
 import { weekdayDayMonth } from '@/lib/dateLabels';
 import { useUndoToast } from '@/components/UndoToast';
 import { haptics } from '@/lib/haptics';
@@ -106,6 +107,8 @@ export function TransactionDetailModal({
   if (!tx) return null;
 
   const cat = categories.find((c) => c.id === tx.categoryId);
+  const categoriesById = new Map(categories.map((c) => [c.id, c]));
+  const parentName = parentNameOf(tx.categoryId, categoriesById);
   const account = accounts.find((a) => a.id === tx.accountId);
   const accountName = (id: string) => accounts.find((a) => a.id === id)?.name ?? '—';
   const transfer = tx.type === 'transfer';
@@ -289,7 +292,7 @@ export function TransactionDetailModal({
       <SheetCard
         hue={transfer ? theme.colors.secondary : (cat?.color ?? theme.colors.textMuted)}
         icon={transfer ? 'swap-horizontal' : (cat?.icon ?? 'tag')}
-        kicker={kind}
+        kicker={transfer || !parentName ? kind : `${kind} · ${parentName}`}
         amount={
           <>
             {tx.type === 'expense' ? '−' : tx.type === 'income' ? '+' : ''}
@@ -344,7 +347,7 @@ export function TransactionDetailModal({
                 icon={cat.icon}
                 iconBg={hexToRgba(cat.color, 0.25)}
                 label={cat.name}
-                sub="See everything in it"
+                sub={joinSub([inParent(parentName), 'See everything in it'])}
                 onPress={() => {
                   onClose();
                   // Opened from that category's own page? Then closing is enough.
@@ -394,7 +397,9 @@ export function TransactionDetailModal({
                 return (
                   <View key={p.id} style={styles.splitPart}>
                     <Text style={[styles.splitPartName, mine && styles.splitPartMine]} numberOfLines={1}>
-                      {pc?.name ?? 'Uncategorised'}
+                      {pc
+                        ? categorySentence(pc.name, parentNameOf(p.categoryId, categoriesById))
+                        : 'Uncategorised'}
                     </Text>
                     <Amount
                       minor={p.amountMinor}

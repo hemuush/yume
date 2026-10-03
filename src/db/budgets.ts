@@ -89,6 +89,8 @@ async function categorySpend(
 export interface BudgetProgress {
   budget: Budget;
   categoryName: string;
+  /** The parent's name when the budget is on a subcategory, so same-named subcategories can be told apart. */
+  parentName?: string | null;
   categoryIcon: string;
   categoryColor: string;
   spentMinor: number;
@@ -111,10 +113,16 @@ export async function listBudgetsForMonth(
   const db = await getDb();
   const currency = await getDefaultCurrency();
   const rows = await db.getAllAsync<
-    BudgetRow & { category_name: string; category_icon: string; category_color: string }
+    BudgetRow & {
+      category_name: string;
+      parent_name: string | null;
+      category_icon: string;
+      category_color: string;
+    }
   >(
-    `SELECT b.*, c.name as category_name, c.icon as category_icon, c.color as category_color
+    `SELECT b.*, c.name as category_name, pc.name as parent_name, c.icon as category_icon, c.color as category_color
      FROM budgets b JOIN categories c ON c.id = b.category_id
+     LEFT JOIN categories pc ON pc.id = c.parent_id
      WHERE b.period_month = ?${excludeSensitive ? ' AND c.is_sensitive = 0' : ''}
      ORDER BY c.name COLLATE NOCASE ASC`,
     [periodMonth]
@@ -143,6 +151,7 @@ export async function listBudgetsForMonth(
       return {
         budget,
         categoryName: row.category_name,
+        parentName: row.parent_name,
         categoryIcon: row.category_icon,
         categoryColor: row.category_color,
         spentMinor,
@@ -160,6 +169,7 @@ export async function listBudgetsForMonth(
 export interface LapsedBudget {
   categoryId: string;
   categoryName: string;
+  parentName?: string | null;
   categoryIcon: string;
   categoryColor: string;
   limitAmountMinor: number;
@@ -176,13 +186,15 @@ export async function listLapsedBudgets(
   const rows = await db.getAllAsync<
     Pick<BudgetRow, 'category_id' | 'limit_amount_minor' | 'rollover'> & {
       category_name: string;
+      parent_name: string | null;
       category_icon: string;
       category_color: string;
     }
   >(
     `SELECT b.category_id, b.limit_amount_minor, b.rollover,
-            c.name as category_name, c.icon as category_icon, c.color as category_color
+            c.name as category_name, pc.name as parent_name, c.icon as category_icon, c.color as category_color
      FROM budgets b JOIN categories c ON c.id = b.category_id
+     LEFT JOIN categories pc ON pc.id = c.parent_id
      WHERE b.period_month = ? AND c.archived = 0${excludeSensitive ? ' AND c.is_sensitive = 0' : ''}
        AND NOT EXISTS (SELECT 1 FROM budgets b2 WHERE b2.category_id = b.category_id AND b2.period_month = ?)
      ORDER BY c.name COLLATE NOCASE ASC`,
@@ -191,6 +203,7 @@ export async function listLapsedBudgets(
   return rows.map((r) => ({
     categoryId: r.category_id,
     categoryName: r.category_name,
+    parentName: r.parent_name,
     categoryIcon: r.category_icon,
     categoryColor: r.category_color,
     limitAmountMinor: r.limit_amount_minor,

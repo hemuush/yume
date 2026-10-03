@@ -31,6 +31,7 @@ import { MonthBars, compactMoney } from '@/features/reports/MonthBars';
 import { SplitBreakdown } from '@/features/reports/SplitBreakdown';
 import { withPressed } from '@/lib/pressed';
 import { usePrivacy } from '@/theme/PrivacyContext';
+import { inParent } from '@/lib/categoryLabel';
 
 const isThisMonth = (w: ReportWindow) => w.granularity === 'month' && w.offset === 0;
 
@@ -121,6 +122,15 @@ export default function CategoryScreen() {
   const activityMonth = (range.end < today ? range.end : today).slice(0, 7);
   const accountName = (id: string) => accounts.find((a) => a.id === id)?.name ?? '—';
   const categoryName = (id: string | null) => categories.find((c) => c.id === id)?.name ?? '—';
+  const parent = category?.parentId ? categories.find((c) => c.id === category.parentId) : undefined;
+  const openParent = () => {
+    if (!parent) return;
+    const period =
+      cursor.granularity === 'custom'
+        ? `g=custom&from=${cursor.start}&to=${cursor.end}`
+        : `g=${cursor.granularity}&o=${cursor.offset}`;
+    router.push(`/category/${parent.id}?${period}`);
+  };
 
   if (loaded && !category) {
     return (
@@ -169,6 +179,20 @@ export default function CategoryScreen() {
                     {spend ? 'Spent' : 'Received'} in {periodName}
                   </Text>
                   <Text style={styles.heroValue}>{formatMoney(overview.totalMinor)}</Text>
+                  {parent && (
+                    <Pressable
+                      onPress={openParent}
+                      hitSlop={8}
+                      style={withPressed(styles.parentPill)}
+                      accessibilityRole="link"
+                      accessibilityLabel={`In ${parent.name}. Open ${parent.name}`}
+                    >
+                      <Text style={styles.parentPillText} numberOfLines={1}>
+                        {inParent(parent.name)}
+                      </Text>
+                      <Feather name="chevron-right" size={13} color={theme.colors.textMuted} />
+                    </Pressable>
+                  )}
                 </View>
                 <CategoryIcon name={category.icon} color={category.color} />
               </View>
@@ -391,6 +415,27 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
     backgroundColor: theme.colors.surface,
+  },
+  parentPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    gap: 2,
+    marginTop: 8,
+    paddingLeft: 10,
+    paddingRight: 6,
+    paddingVertical: 4,
+    borderRadius: theme.radius.pill,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.borderSoft,
+    backgroundColor: theme.colors.surfaceAlt,
+    maxWidth: '100%',
+  },
+  parentPillText: {
+    flexShrink: 1,
+    fontFamily: theme.font.bodyMedium,
+    fontSize: 12,
+    color: theme.colors.textSecondary,
   },
   actionChipText: { fontFamily: theme.font.bodyMedium, fontSize: 12.5, color: theme.colors.textPrimary },
   empty: { fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textMuted, marginHorizontal: 20 },

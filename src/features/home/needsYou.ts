@@ -1,3 +1,4 @@
+import { categorySentence } from '@/lib/categoryLabel';
 import { parseLocalIsoDate } from '@/lib/date';
 import { budgetPace } from '@/lib/pace';
 import { formatPctChange } from '@/lib/format';
@@ -33,7 +34,13 @@ export interface NeedsYouInput {
   /** The nearest pending EMI across active borrowed loans (getNextDueInstallment). */
   nextDue: { counterparty: string; dueDate: string; emiAmountMinor: number } | null;
   /** This month's budgets (listBudgetsForMonth), any order. */
-  budgets: { budget: { id: string }; categoryName: string; percentUsed: number; overBudget: boolean }[];
+  budgets: {
+    budget: { id: string };
+    categoryName: string;
+    parentName?: string | null;
+    percentUsed: number;
+    overBudget: boolean;
+  }[];
   backup: {
     folderUri: string | null;
     lastResult: { ok: boolean } | null;
@@ -46,7 +53,7 @@ export interface NeedsYouInput {
   /** How many things Tidy up has found (tidyUpCount). */
   tidyCount?: number;
   /** Charges seen once a month for a while with no rule yet (findMonthlyPatterns), minus hidden ones. */
-  monthlyPatterns?: { key: string; categoryName: string; amountMinor: number }[];
+  monthlyPatterns?: { key: string; categoryName: string; parentName?: string | null; amountMinor: number }[];
   /** Credit card bills (listCardCycles); only ones with something left to pay matter. */
   cardBills?: { accountId: string; accountName: string; dueDate: string; leftToPayMinor: number }[];
   /** YYYY-MM-DD, local. */
@@ -148,7 +155,7 @@ export function buildNeedsYouItems(input: NeedsYouInput): NeedsYouItem[] {
     items.push({
       key: `budget-${b.budget.id}-${state}`,
       tone: 'warn',
-      title: `${b.categoryName} budget`,
+      title: `${categorySentence(b.categoryName, b.parentName)} budget`,
       detail: b.overBudget
         ? 'Over its limit'
         : `${Math.floor(b.percentUsed)}% used${pace === 'ahead' ? ' · ahead of pace' : ''}`,
@@ -173,7 +180,7 @@ export function buildNeedsYouItems(input: NeedsYouInput): NeedsYouItem[] {
     items.push({
       key: `looks-monthly-${p.key}`,
       tone: 'info',
-      title: `${p.categoryName} looks monthly`,
+      title: `${categorySentence(p.categoryName, p.parentName)} looks monthly`,
       detail: 'Set it up once in Recurring',
       amountMinor: p.amountMinor,
       action: 'recurring',

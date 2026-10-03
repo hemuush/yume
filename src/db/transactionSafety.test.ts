@@ -23,11 +23,7 @@ jest.mock('@/db/client', () => ({
 // reminders); expo-notifications has no device to talk to under Jest, so
 // it's stubbed out here rather than exercised — notification behavior has
 // its own coverage elsewhere, this file is only about transaction safety.
-jest.mock('@/lib/notifications', () => ({
-  scheduleLoanDueReminder: async () => {},
-  cancelLoanDueReminder: async () => {},
-  notifyOverspend: async () => {},
-}));
+jest.mock('@/lib/notifications', () => ({ rebuildNotifications: async () => {} }));
 
 import { CREATE_TABLES_SQL } from '@/db/schema';
 import { createAccount, createCategory, listTransactions } from '@/db/ledger';

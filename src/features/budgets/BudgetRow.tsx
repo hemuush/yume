@@ -12,6 +12,7 @@ import { theme } from '@/constants/theme';
 import { styles } from './budgets.styles';
 import { monthDayInfo } from './budgetsOverview';
 import { withPressed } from '@/lib/pressed';
+import { categorySentence, inParent } from '@/lib/categoryLabel';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -58,9 +59,16 @@ export function BudgetRow({
     >
       <View style={styles.rowTop}>
         <CategoryIcon name={progress.categoryIcon} color={progress.categoryColor} square={38} size={17} />
-        <Text style={styles.rowName} numberOfLines={1}>
-          {progress.categoryName}
-        </Text>
+        <View style={styles.rowNameBlock}>
+          <Text style={styles.rowName} numberOfLines={1}>
+            {progress.categoryName}
+          </Text>
+          {!!progress.parentName && (
+            <Text style={styles.rowParent} numberOfLines={1}>
+              {inParent(progress.parentName)}
+            </Text>
+          )}
+        </View>
         <Text style={styles.rowAmount}>
           <Text style={progress.overBudget ? styles.rowAmountOver : undefined}>
             {formatMoney(progress.spentMinor)}
@@ -73,7 +81,7 @@ export function BudgetRow({
             hitSlop={10}
             style={withPressed(styles.moreBtn)}
             accessibilityRole="button"
-            accessibilityLabel={`More for ${progress.categoryName} budget`}
+            accessibilityLabel={`More for ${categorySentence(progress.categoryName, progress.parentName)} budget`}
           >
             <Feather name="more-horizontal" size={16} color={theme.colors.textSecondary} />
           </Pressable>

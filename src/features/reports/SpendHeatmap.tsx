@@ -17,6 +17,8 @@ export interface HeatCell {
   isToday?: boolean;
   /** A day that hasn't happened yet: faded, so it doesn't read as a day with no spending. */
   isFuture?: boolean;
+  /** The day open below the grid: a heavier ring than today's. */
+  isSelected?: boolean;
   onPress?: () => void;
 }
 
@@ -68,6 +70,7 @@ export function SpendHeatmap({
                   c.level === 0 && styles.cellEmpty,
                   c.isToday && styles.cellToday,
                   c.isFuture && styles.cellFuture,
+                  c.isSelected && styles.cellSelected,
                   { backgroundColor: heatScale[c.level] },
                 ]}
               >
@@ -91,7 +94,12 @@ export function SpendHeatmap({
                 style={[styles.slot, styles.cellWrap]}
               >
                 {c.onPress ? (
-                  <Pressable style={withPressed()} onPress={c.onPress} accessibilityRole="button">
+                  <Pressable
+                    style={withPressed()}
+                    onPress={c.onPress}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: !!c.isSelected }}
+                  >
                     {inner}
                   </Pressable>
                 ) : (
@@ -122,6 +130,7 @@ const styles = StyleSheet.create({
   cellEmpty: { borderWidth: StyleSheet.hairlineWidth, borderColor: theme.colors.borderSoft },
   cellFuture: { borderWidth: 0, opacity: 0.4 },
   cellToday: { borderWidth: 1.5, borderColor: theme.colors.ink },
+  cellSelected: { borderWidth: 2.5, borderColor: theme.colors.ink },
   cellLabel: { fontFamily: theme.font.mono, fontSize: 10 },
   cellLabelTop: { fontFamily: theme.font.monoBold },
 });

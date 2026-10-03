@@ -43,6 +43,7 @@ import { haptics } from '@/lib/haptics';
 import { errorMessage } from '@/lib/errorMessage';
 import { DURATIONS } from '@/lib/motionTimings';
 import { withPressed } from '@/lib/pressed';
+import { categoryPath, parentNameOf } from '@/lib/categoryLabel';
 import { EmptyState } from '@/components/EmptyState';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -399,6 +400,8 @@ export default function TransactionsScreen() {
   const categoriesById = useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories]);
   const accountName = (id: string) => accountsById.get(id)?.name ?? '—';
   const categoryName = (id: string | null) => (id ? categoriesById.get(id)?.name : undefined) ?? '—';
+  // A filter chip is one line, so a subcategory carries its parent: "Food & Dining › Zomato".
+  const categoryPathName = (id: string) => categoryPath(categoryName(id), parentNameOf(id, categoriesById));
 
   const savingsAccountIds = useMemo(() => savingsAccountIdsOf(accounts), [accounts]);
   const headline = useMemo(() => privateComparison(comparison, hideAmounts), [comparison, hideAmounts]);
@@ -610,7 +613,7 @@ export default function TransactionsScreen() {
                   onFilterType={setFilterType}
                   categoryIds={filterCategoryIds}
                   accountIds={filterAccountIds}
-                  categoryName={categoryName}
+                  categoryName={categoryPathName}
                   accountName={accountName}
                   onRemoveCategory={(id) => setFilterCategoryIds((ids) => ids.filter((x) => x !== id))}
                   onRemoveAccount={(id) => setFilterAccountIds((ids) => ids.filter((x) => x !== id))}

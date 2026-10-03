@@ -11,6 +11,7 @@ import { theme } from '@/constants/theme';
 import { HomeSection } from '@/features/home/HomeSection';
 import { homeStyles as h } from '@/features/home/homeStyles';
 import { listCategories } from '@/db/categories';
+import { inParent } from '@/lib/categoryLabel';
 import { listAccounts } from '@/db/accounts';
 import {
   listDeletedEntries,
@@ -96,6 +97,8 @@ export default function RecentlyDeletedScreen() {
   };
 
   const categoryOf = (id: string | null) => (id ? categories.find((c) => c.id === id) : undefined);
+  const parentOf = (cat: Category | undefined) =>
+    cat?.parentId ? categories.find((c) => c.id === cat.parentId)?.name : undefined;
 
   return (
     <View style={styles.container}>
@@ -133,6 +136,7 @@ export default function RecentlyDeletedScreen() {
                     const sub = entry.blockedReason
                       ? entry.blockedReason
                       : [
+                          isTransfer ? undefined : inParent(parentOf(cat)),
                           where,
                           dayMonth(entry.date),
                           `${entry.daysLeft} day${entry.daysLeft === 1 ? '' : 's'} left`,

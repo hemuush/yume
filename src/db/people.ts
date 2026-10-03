@@ -3,7 +3,7 @@ import { PersonLedgerEntryRow, PersonRow } from './rows';
 import { getDb, AppDb } from './client';
 import { newId } from '@/lib/id';
 import { Person, PersonLedgerEntry } from '@/types';
-import { checkOverspendAndNotify } from './ledger';
+import { queueSpendAlerts } from './ledger';
 import { captureRow, restoreRows, RowSnapshot } from './undoSnapshot';
 
 function rowToPerson(row: PersonRow): Person {
@@ -162,7 +162,7 @@ export async function recordMoneyGivenToPerson(input: {
   await db.withTransactionAsync((tx) =>
     insertPersonMoneyMovement(tx, { ...input, type: 'expense', ledgerAmountMinor: input.amountMinor })
   );
-  await checkOverspendAndNotify(input.categoryId).catch(() => {});
+  await queueSpendAlerts(input.categoryId).catch(() => {});
 }
 
 /**

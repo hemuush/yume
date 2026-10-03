@@ -5,7 +5,8 @@ import { assertSpendableAccount } from './ledger';
 import { calculateEmi, recalculateAfterPrepayment } from '@/lib/loan';
 import { formatMoney } from '@/lib/money';
 
-import { syncDueReminder, scheduleAnchor, feeCategoryId } from './loanRows';
+import { scheduleAnchor, feeCategoryId } from './loanRows';
+import { rebuildNotifications } from '@/lib/notifications';
 
 /** Paying EMIs, rate changes and prepayments (re-exported from ./loans). */
 
@@ -59,7 +60,7 @@ export async function payInstallment(
       await tx.runAsync(`UPDATE loans SET status = 'closed' WHERE id = ?`, [payment.loan_id]);
     }
   });
-  await syncDueReminder(payment.loan_id);
+  await rebuildNotifications();
 }
 
 /**
@@ -204,7 +205,7 @@ export async function applyRateChange(
       ]
     );
   });
-  await syncDueReminder(loanId);
+  await rebuildNotifications();
 }
 
 /**
@@ -257,7 +258,7 @@ export async function undoInstallmentPayment(loanPaymentId: string): Promise<voi
       payment.loan_id,
     ]);
   });
-  await syncDueReminder(payment.loan_id);
+  await rebuildNotifications();
 }
 
 /**
@@ -508,7 +509,7 @@ export async function applyPrepayment(
       await tx.runAsync(`UPDATE loans SET status = 'closed' WHERE id = ?`, [loanId]);
     }
   });
-  await syncDueReminder(loanId);
+  await rebuildNotifications();
 
   return summary;
 }

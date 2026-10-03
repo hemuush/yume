@@ -10,6 +10,10 @@ import {
   summariseDayTotal,
   buildHeatGrid,
   vsUsual,
+  daySpendFacts,
+  weekdayRhythm,
+  weekdayReadLine,
+  WEEKDAY_MIN_DAYS,
 } from './reportsInsights';
 import type { CategoryBreakdownItem } from '@/db/reports';
 import { parseLocalIsoDate } from '@/lib/date';
@@ -219,17 +223,23 @@ describe('buildStoryCards', () => {
   it('tells the period in order: what moved, the rhythm, what was spoken for, quiet days', () => {
     const cards = buildStoryCards({
       ...base,
-      mover: { name: 'Food', pctChange: 32.4, totalMinor: 2600000 },
+      mover: { categoryId: 'food', name: 'Food', pctChange: 32.4, totalMinor: 2600000 },
       patterns: facts,
       recurringMinor: 2500000,
       discretionaryMinor: 7500000,
     });
-    expect(cards.map((c) => [c.key, c.target])).toEqual([
-      ['mover', 'categories'],
-      ...facts.slice(0, 2).map((f) => [`pattern-${f.key}`, 'overview']),
-      ['fixed', 'categories'],
-      ['quiet', 'overview'],
+    expect(cards.map((c) => c.key)).toEqual([
+      'mover',
+      ...facts.slice(0, 2).map((f) => `pattern-${f.key}`),
+      'fixed',
+      'quiet',
     ]);
+    // The cards that point somewhere act on the page; the rest are plain.
+    expect(cards[0].action).toEqual({ type: 'category', id: 'food' });
+    expect(cards.find((c) => c.key === 'fixed')!.action).toEqual({ type: 'categories' });
+    expect(cards.find((c) => c.key === 'quiet')!.action).toBeUndefined();
+    const heaviest = cards.find((c) => c.key === 'pattern-heaviest');
+    if (heaviest) expect(heaviest.action).toEqual({ type: 'day', iso: '2026-09-12' });
     expect(cards[0].big).toBe('Food +32%');
     const fixed = cards.find((c) => c.key === 'fixed')!;
     expect(fixed.big).toBe('25%');
@@ -296,6 +306,19 @@ describe('buildHeatGrid', () => {
     expect(grid.cells[0].isFuture).toBe(false);
   });
 
+  it('marks the picked day as selected', () => {
+    const grid = buildHeatGrid({
+      granularity: 'month',
+      start: new Date(2026, 8, 1),
+      trend: [],
+      daily: [{ date: '2026-09-05', totalMinor: 90000 }],
+      onDayPress: jest.fn(),
+      todayIso: '2026-09-06',
+      selectedIso: '2026-09-05',
+    });
+    expect(grid.cells.filter((c) => c.isSelected).map((c) => c.key)).toEqual(['2026-09-05']);
+  });
+
   it('lays a year out as its months, four to a row, with no weekday header', () => {
     const grid = buildHeatGrid({
       granularity: 'year',
@@ -353,5 +376,114 @@ describe('vsUsual', () => {
     expect(vsUsual({ ...base, spentMinor: 1, granularity: 'year' })).toBeNull();
     expect(vsUsual({ ...base, spentMinor: 1, granularity: 'custom' })).toBeNull();
     expect(vsUsual({ ...base, spentMinor: 1, baselineMinor: null })).toBeNull();
+  });
+});
+
+describe('daySpendFacts', () => {
+  const sep = { start: '2026-09-01', end: '2026-09-30' };
+
+  it('counts the days so far for the period in progress', () => {
+    const f = daySpendFacts(
+      [
+        { date: '2026-09-02', totalMinor: 30000 },
+        { date: '2026-09-04', totalMinor: 10000 },
+      ],
+      sep,
+      '2026-09-10',
+      40000
+    );
+    expect(f).toEqual({ spendDays: 2, countedDays: 10, laterMinor: 0, perDayMinor: 4000 });
+  });
+
+  it('keeps entries dated after today out of the spend days and the per-day figure', () => {
+    const f = daySpendFacts(
+      [
+        { date: '2026-09-02', totalMinor: 30000 },
+        { date: '2026-09-20', totalMinor: 70000 },
+      ],
+      sep,
+      '2026-09-10',
+      100000
+    );
+    expect(f.spendDays).toBe(1);
+    expect(f.laterMinor).toBe(70000);
+    expect(f.perDayMinor).toBe(3000);
+  });
+
+  it('counts the whole range for a finished period', () => {
+    const f = daySpendFacts([{ date: '2026-09-02', totalMinor: 30000 }], sep, '2026-10-03', 30000);
+    expect(f).toMatchObject({ spendDays: 1, countedDays: 30, laterMinor: 0, perDayMinor: 1000 });
+  });
+
+  it('is all zeros for a range that has not started', () => {
+    expect(daySpendFacts([], sep, '2026-08-20', 0)).toEqual({
+      spendDays: 0,
+      countedDays: 0,
+      laterMinor: 0,
+      perDayMinor: 0,
+    });
+  });
+});
+
+describe('weekdayRhythm', () => {
+  // October 2026 starts on a Thursday; the 20th is a Tuesday.
+  const range = { start: '2026-10-01', end: '2026-10-31' };
+  const day = (date: string, totalMinor: number) => ({ date, totalMinor });
+
+  it('is null before there are enough days to call a pattern', () => {
+    expect(weekdayRhythm([day('2026-10-03', 5000)], range, '2026-10-10')).toBeNull();
+    expect(WEEKDAY_MIN_DAYS).toBe(14);
+  });
+
+  it('is null when nothing was spent', () => {
+    expect(weekdayRhythm([], range, '2026-10-20')).toBeNull();
+  });
+
+  it('averages each weekday over every such day so far, spend-free days included', () => {
+    // Saturdays so far: 3rd, 10th, 17th (three), two with spending; Wednesday is seen only twice.
+    const r = weekdayRhythm([day('2026-10-03', 6000), day('2026-10-17', 3000)], range, '2026-10-20')!;
+    expect(r.countedDays).toBe(20);
+    expect(r.counts).toEqual([3, 3, 3, 2, 3, 3, 3]);
+    expect(r.avgMinor[6]).toBe(3000);
+    expect(r.peak).toBe(6);
+    expect(r.usualMinor).toBe(450);
+  });
+
+  it('leaves spending dated after today out of the days', () => {
+    const r = weekdayRhythm([day('2026-10-03', 6000), day('2026-10-25', 90000)], range, '2026-10-20')!;
+    expect(r.usualMinor).toBe(300);
+    expect(r.avgMinor.every((a) => a <= 2000)).toBe(true);
+  });
+
+  it('counts a whole past period in full', () => {
+    const r = weekdayRhythm(
+      [day('2026-09-02', 3000)],
+      { start: '2026-09-01', end: '2026-09-30' },
+      '2026-10-20'
+    )!;
+    expect(r.countedDays).toBe(30);
+  });
+});
+
+describe('weekdayReadLine', () => {
+  const rhythm = {
+    avgMinor: [0, 0, 0, 20000, 0, 0, 100000],
+    counts: [3, 3, 3, 1, 3, 3, 3],
+    usualMinor: 50000,
+    peak: 6,
+    countedDays: 20,
+  };
+
+  it('calls the busiest weekday out against the usual day', () => {
+    expect(weekdayReadLine(rhythm, 6)).toMatch(/^Saturdays run highest: .* 100% above your /);
+  });
+
+  it('reads another weekday below the usual and says how many it is over', () => {
+    expect(weekdayReadLine(rhythm, 3)).toMatch(/^Wednesday: .* a day over 1 Wednesday · 60% below your /);
+  });
+
+  it('says "about" when it is within a few percent', () => {
+    const r = { ...rhythm, avgMinor: [49000, 0, 0, 0, 0, 0, 100000] };
+    expect(weekdayReadLine(r, 0)).toMatch(/· about your /);
   });
 });

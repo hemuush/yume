@@ -1,10 +1,18 @@
 import { useState } from 'react';
-import { View, ScrollView, Pressable, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
+import {
+  View,
+  ScrollView,
+  Pressable,
+  StyleProp,
+  ViewStyle,
+  NativeSyntheticEvent,
+  NativeScrollEvent,
+} from 'react-native';
 import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
 import { useAccent } from '@/theme/AccentContext';
 import { MoonPhase } from './MoonPhase';
-import type { StoryCard, StoryTarget, StoryTone } from './reportsInsights';
+import type { StoryAction, StoryCard, StoryTone } from './reportsInsights';
 import { styles } from './reports.styles';
 import { withPressed } from '@/lib/pressed';
 
@@ -22,17 +30,18 @@ const CARD_GAP = 10;
 
 /**
  * The period "in short", as a row of story cards you swipe through — one big
- * answer per card (see buildStoryCards). Each card jumps to the part of
- * Reports it came from; the fixed-vs-flexible moon lives on its own card.
+ * answer per card (see buildStoryCards). A card that has an action does it
+ * when tapped — shows its day on the heatmap, opens its category row; the
+ * fixed-vs-flexible moon lives on its own card.
  */
 export function StoryCards({
   title,
   cards,
-  onJump,
+  onAction,
 }: {
   title: string;
   cards: StoryCard[];
-  onJump: (target: StoryTarget) => void;
+  onAction: (action: StoryAction) => void;
 }) {
   const { accent } = useAccent();
   const [rowWidth, setRowWidth] = useState(0);
@@ -70,15 +79,15 @@ export function StoryCards({
             contentContainerStyle={{ gap: CARD_GAP }}
           >
             {cards.map((c, i) => (
-              <Pressable
+              <StoryFrame
                 key={c.key}
-                onPress={() => onJump(c.target)}
-                style={withPressed([
+                action={c.action}
+                onAction={onAction}
+                style={[
                   c.compact ? styles.storyCompact : styles.story,
                   { width: cards.length === 1 ? rowWidth : cardWidth, backgroundColor: TONE_BG[c.tone] },
-                ])}
-                accessibilityRole="button"
-                accessibilityLabel={`${c.kicker}${c.compact ? '' : `: ${c.big}`}. ${c.detail}${c.foot ? ` ${c.foot}.` : ''}`}
+                ]}
+                accessibilityLabel={`${c.kicker}${c.compact ? '' : `: ${c.big}`}. ${c.detail}${c.foot ? ` ${c.foot}.` : ''}${c.cta ? ` ${c.cta}.` : ''}`}
               >
                 {c.compact ? (
                   <>
@@ -111,7 +120,8 @@ export function StoryCards({
                   </>
                 )}
                 {!!c.foot && <Text style={styles.storyFoot}>{c.foot}</Text>}
-              </Pressable>
+                {!!c.cta && <Text style={styles.storyCta}>{c.cta} →</Text>}
+              </StoryFrame>
             ))}
           </ScrollView>
         )}
@@ -124,5 +134,37 @@ export function StoryCards({
         </View>
       )}
     </View>
+  );
+}
+
+/** A card with an action is a button; one without is plain, so it doesn't promise a tap. */
+function StoryFrame({
+  action,
+  onAction,
+  style,
+  accessibilityLabel,
+  children,
+}: {
+  action?: StoryAction;
+  onAction: (action: StoryAction) => void;
+  style: StyleProp<ViewStyle>;
+  accessibilityLabel: string;
+  children: React.ReactNode;
+}) {
+  if (!action)
+    return (
+      <View style={style} accessible accessibilityLabel={accessibilityLabel}>
+        {children}
+      </View>
+    );
+  return (
+    <Pressable
+      onPress={() => onAction(action)}
+      style={withPressed(style)}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
+    >
+      {children}
+    </Pressable>
   );
 }

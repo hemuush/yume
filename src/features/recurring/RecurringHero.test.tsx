@@ -32,24 +32,26 @@ function render(props: Partial<React.ComponentProps<typeof RecurringHero>> = {})
 describe('RecurringHero', () => {
   it('shows the month, the year, how many are running and the next date', () => {
     const shown = texts(render());
-    expect(shown).toEqual(expect.arrayContaining(['Subscriptions & bills', '₹12,000 a year', '2 running']));
+    expect(shown).toEqual(expect.arrayContaining(['Subscriptions & bills', 'A year', '₹12,000']));
     expect(shown.some((t) => t.startsWith('₹1,000'))).toBe(true);
-    expect(shown.some((t) => t.startsWith('Next: ') && t.includes('1 Nov'))).toBe(true);
+    expect(shown.some((t) => t.includes('2 running') && t.includes('Next: ') && t.includes('1 Nov'))).toBe(
+      true
+    );
   });
 
   it('says which one is the biggest slice', () => {
-    expect(texts(render())).toContain('Rent is 75% of it');
+    expect(texts(render()).some((t) => t.startsWith('Rent is 75% of it'))).toBe(true);
   });
 
-  it('leaves out the split and the caption for a single rule', () => {
+  it('leaves out the split and the share line for a single rule', () => {
     const shown = texts(
       render({
         totals: { monthlyMinor: 25000, yearlyMinor: 300000, count: 1 },
         shares: [{ key: 'w', name: 'Wifi', minor: 25000, color: '#EAF3FE' }],
       })
     );
-    expect(shown.some((t) => t.endsWith('of it'))).toBe(false);
-    expect(shown).toContain('1 running');
+    expect(shown.some((t) => t.includes('of it'))).toBe(false);
+    expect(shown.some((t) => t.startsWith('1 running'))).toBe(true);
   });
 
   it('is only a line about the page with no expense rule running', () => {
@@ -57,6 +59,6 @@ describe('RecurringHero', () => {
       render({ totals: { monthlyMinor: 0, yearlyMinor: 0, count: 0 }, shares: [], nextDate: null })
     );
     expect(shown.some((t) => t.startsWith('Set up rent'))).toBe(true);
-    expect(shown.some((t) => t.includes('a year'))).toBe(false);
+    expect(shown).not.toContain('A year');
   });
 });

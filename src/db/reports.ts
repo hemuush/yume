@@ -3,7 +3,7 @@ import { toLocalIsoDate, addDaysToIsoDate, isoDatesInRange, monthsBetweenIsoDate
 import { streakSeries } from '@/lib/gardenGrowth';
 import { getDefaultCurrency } from './settings';
 import { valuationAdjSql } from './valuationSql';
-import type { DateRange } from '@/types';
+import type { Account, DateRange } from '@/types';
 import { SPEND_ROWS, SPEND_AMOUNT, INCOME_ROWS, NOT_SENSITIVE, rowsOf, amountOf, countOf } from './spendSql';
 
 export type ReportPeriod = 'day' | 'week' | 'month' | 'year';
@@ -274,6 +274,146 @@ export async function getSubcategoryBreakdown(
   }));
 }
 
+/** One account's share of a period's spending (or income): its total and the categories behind it. */
+export interface AccountBreakdownItem {
+  accountId: string;
+  name: string;
+  type: Account['type'];
+  totalMinor: number;
+  /** The account's biggest top-level categories (at most three), largest first. */
+  topCategories: CategoryBreakdownItem[];
+}
+
+const ACCOUNT_TOP_CATEGORIES = 3;
+
+/**
+ * Where a period's spending went by account (or, for income, where it landed):
+ * one row per account, largest first, each with its three biggest categories
+ * (subcategories rolled into their parent, as everywhere in Reports). Default
+ * currency only, refunds taken off. With `excludeSensitive` the savings &
+ * investment categories stay out, so a hidden amount can't be worked back out.
+ */
+export async function getAccountBreakdown(
+  range: DateRange,
+  kind: 'expense' | 'income' = 'expense',
+  excludeSensitive = false
+): Promise<AccountBreakdownItem[]> {
+  const db = await getDb();
+  const currency = await getDefaultCurrency();
+  const clean = excludeSensitive ? ` AND ${NOT_SENSITIVE}` : '';
+  const where = `${rowsOf(kind)} AND a.currency = ? AND t.date >= ? AND t.date <= ?${clean}`;
+  const args = [currency, range.start, range.end];
+
+  const accounts = await db.getAllAsync<{ id: string; name: string; type: Account['type']; total: number }>(
+    `SELECT a.id as id, a.name as name, a.type as type, SUM(${amountOf(kind)}) as total
+     FROM transactions t
+     JOIN accounts a ON a.id = t.account_id
+     WHERE ${where}
+     GROUP BY a.id
+     HAVING total > 0
+     ORDER BY total DESC, a.name`,
+    args
+  );
+  if (accounts.length === 0) return [];
+
+  const cats = await db.getAllAsync<{
+    accountId: string;
+    categoryId: string;
+    name: string;
+    color: string;
+    total: number;
+    isSensitive: number;
+  }>(
+    `SELECT t.account_id as accountId, top.id as categoryId, top.name as name, top.color as color,
+       SUM(${amountOf(kind)}) as total, MAX(c.is_sensitive) as isSensitive
+     FROM transactions t
+     JOIN categories c ON c.id = t.category_id
+     JOIN categories top ON top.id = COALESCE(c.parent_id, c.id)
+     JOIN accounts a ON a.id = t.account_id
+     WHERE ${where}
+     GROUP BY t.account_id, top.id
+     HAVING total > 0
+     ORDER BY total DESC, top.name`,
+    args
+  );
+  const byAccount = new Map<string, CategoryBreakdownItem[]>();
+  for (const r of cats) {
+    const list = byAccount.get(r.accountId) ?? [];
+    if (list.length >= ACCOUNT_TOP_CATEGORIES) continue;
+    list.push({
+      categoryId: r.categoryId,
+      name: r.name,
+      color: r.color,
+      totalMinor: r.total,
+      hasSubcategories: false,
+      isSensitive: !!r.isSensitive,
+    });
+    byAccount.set(r.accountId, list);
+  }
+  return accounts.map((a) => ({
+    accountId: a.id,
+    name: a.name,
+    type: a.type,
+    totalMinor: a.total,
+    topCategories: byAccount.get(a.id) ?? [],
+  }));
+}
+
+/** One single entry among a period's biggest. */
+export interface LargestExpense {
+  id: string;
+  date: string;
+  amountMinor: number;
+  categoryId: string | null;
+  note: string;
+}
+
+/**
+ * The period's biggest single expenses, largest first (ties: the later date).
+ * Gross entry amounts: a refund is its own row and does not shrink the entry
+ * it came back against. With `categoryId`, only that category's entries
+ * (subcategories included), matching the heatmap's category filter.
+ */
+export async function getLargestExpenses(
+  range: DateRange,
+  limit = 5,
+  excludeSensitive = false,
+  categoryId?: string
+): Promise<LargestExpense[]> {
+  const db = await getDb();
+  const currency = await getDefaultCurrency();
+  const rows = await db.getAllAsync<{
+    id: string;
+    date: string;
+    amount: number;
+    categoryId: string | null;
+    note: string;
+  }>(
+    `SELECT t.id as id, t.date as date, t.amount_minor as amount, t.category_id as categoryId, t.note as note
+     FROM transactions t
+     JOIN accounts a ON a.id = t.account_id
+     WHERE t.type = 'expense' AND a.currency = ? AND t.date >= ? AND t.date <= ?${
+       excludeSensitive ? ` AND ${NOT_SENSITIVE}` : ''
+     }${
+       categoryId
+         ? ` AND (t.category_id = ? OR t.category_id IN (SELECT id FROM categories WHERE parent_id = ?))`
+         : ''
+     }
+     ORDER BY t.amount_minor DESC, t.date DESC, t.id
+     LIMIT ?`,
+    categoryId
+      ? [currency, range.start, range.end, categoryId, categoryId, limit]
+      : [currency, range.start, range.end, limit]
+  );
+  return rows.map((r) => ({
+    id: r.id,
+    date: r.date,
+    amountMinor: r.amount,
+    categoryId: r.categoryId,
+    note: r.note,
+  }));
+}
+
 export interface CategoryOverview {
   /** The period's total for the category, its subcategories included (refunds already taken off). */
   totalMinor: number;
@@ -367,10 +507,15 @@ export interface DailyExpensePoint {
   totalMinor: number;
 }
 
-/** Total expense for each day that had spending within `range` — one grouped query. */
+/**
+ * Total expense for each day that had spending within `range` — one grouped
+ * query. With `categoryId`, only that category's spending, its subcategories
+ * rolled in (the same grouping Reports' category rows use).
+ */
 export async function getDailyExpenseTotals(
   range: DateRange,
-  excludeSensitive = false
+  excludeSensitive = false,
+  categoryId?: string
 ): Promise<DailyExpensePoint[]> {
   const db = await getDb();
   const currency = await getDefaultCurrency();
@@ -378,9 +523,15 @@ export async function getDailyExpenseTotals(
     `SELECT t.date as date, SUM(${SPEND_AMOUNT}) as total
      FROM transactions t
      JOIN accounts a ON a.id = t.account_id
-     WHERE ${SPEND_ROWS} AND a.currency = ? AND t.date >= ? AND t.date <= ?${excludeSensitive ? ` AND ${NOT_SENSITIVE}` : ''}
+     WHERE ${SPEND_ROWS} AND a.currency = ? AND t.date >= ? AND t.date <= ?${excludeSensitive ? ` AND ${NOT_SENSITIVE}` : ''}${
+       categoryId
+         ? ` AND (t.category_id = ? OR t.category_id IN (SELECT id FROM categories WHERE parent_id = ?))`
+         : ''
+     }
      GROUP BY t.date`,
-    [currency, range.start, range.end]
+    categoryId
+      ? [currency, range.start, range.end, categoryId, categoryId]
+      : [currency, range.start, range.end]
   );
   // A refund lowers its day's spending, but a day never goes below zero.
   return rows

@@ -19,11 +19,7 @@ jest.mock('@/db/client', () => ({
   ...jest.requireActual('@/db/client'),
   getDb: async () => mockTestDb,
 }));
-jest.mock('@/lib/notifications', () => ({
-  scheduleLoanDueReminder: async () => {},
-  cancelLoanDueReminder: async () => {},
-  notifyOverspend: async () => {},
-}));
+jest.mock('@/lib/notifications', () => ({ rebuildNotifications: async () => {} }));
 
 import { CREATE_TABLES_SQL } from '@/db/schema';
 import { runMigrations, consumeLoanDueDateRepairs } from '@/db/client';

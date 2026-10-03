@@ -13,6 +13,7 @@ import { theme } from '@/constants/theme';
 import { EYEBROW } from '@/constants/textStyles';
 import { homeStyles as h } from '@/features/home/homeStyles';
 import { childrenOf } from '@/lib/categoryTree';
+import { categorySentence, categorySpoken, inParent, joinSub, parentNameOf } from '@/lib/categoryLabel';
 import { formatMoney } from '@/lib/money';
 import { withPressed } from '@/lib/pressed';
 import { haptics } from '@/lib/haptics';
@@ -62,7 +63,13 @@ export function SplitScreen() {
   const rest = amounts[0] ?? totalMinor;
   const problem = splitProblem(totalMinor, parts);
   const catOf = (p: DraftPart | undefined) => categories.find((c) => c.id === p?.categoryId);
-  const nameOf = (key: string) => catOf(parts.find((p) => p.key === key))?.name ?? 'this part';
+  const categoriesById = new Map(categories.map((c) => [c.id, c]));
+  const parentOf = (p: DraftPart | undefined) => parentNameOf(p?.categoryId, categoriesById);
+  const nameOf = (key: string) => {
+    const part = parts.find((p) => p.key === key);
+    const cat = catOf(part);
+    return cat ? categorySentence(cat.name, parentOf(part)) : 'this part';
+  };
   const targetPart =
     parts.findIndex((p) => p.key === target) > 0 ? parts.find((p) => p.key === target) : undefined;
 
@@ -165,7 +172,7 @@ export function SplitScreen() {
                   onPress={() => openPicker({ mode: 'change', key: p.key })}
                   style={withPressed(styles.pickArea)}
                   accessibilityRole="button"
-                  accessibilityLabel={`${cat ? cat.name : 'No category yet'}. Change category`}
+                  accessibilityLabel={`${cat ? categorySpoken(cat.name, parentOf(p)) : 'No category yet'}. Change category`}
                 >
                   <CategoryIcon
                     name={cat?.icon ?? 'tag-outline'}
@@ -175,14 +182,18 @@ export function SplitScreen() {
                     <Text style={[h.title, !cat && styles.placeholder]} numberOfLines={1}>
                       {cat ? cat.name : 'Pick a category'}
                     </Text>
-                    {share && <Text style={h.sub}>{share}</Text>}
+                    {(cat && parentOf(p)) || share ? (
+                      <Text style={h.sub} numberOfLines={1}>
+                        {joinSub([inParent(parentOf(p)), share])}
+                      </Text>
+                    ) : null}
                   </View>
                 </Pressable>
                 {first ? (
                   <View
                     style={[styles.box, styles.restBox, rest <= 0 && parts.length > 1 && styles.restBoxBad]}
                     accessible
-                    accessibilityLabel={`${cat?.name ?? 'This part'} holds the rest, ${money(Math.max(0, rest))}`}
+                    accessibilityLabel={`${nameOf(p.key)} holds the rest, ${money(Math.max(0, rest))}`}
                   >
                     <Text style={[styles.restLabel, rest <= 0 && parts.length > 1 && styles.bad]}>
                       The rest
@@ -202,7 +213,7 @@ export function SplitScreen() {
                     style={[styles.box, live && styles.boxLive]}
                     accessibilityRole="button"
                     accessibilityState={{ selected: live }}
-                    accessibilityLabel={`${cat?.name ?? 'This part'} amount, ${money(amount)}. Type it`}
+                    accessibilityLabel={`${nameOf(p.key)} amount, ${money(amount)}. Type it`}
                   >
                     <View style={styles.boxRow}>
                       <Text style={[styles.boxText, amount <= 0 && styles.placeholder]}>{money(amount)}</Text>
@@ -216,7 +227,7 @@ export function SplitScreen() {
                     hitSlop={8}
                     style={withPressed(styles.remove)}
                     accessibilityRole="button"
-                    accessibilityLabel={`Take ${cat?.name ?? 'this part'} out of the split`}
+                    accessibilityLabel={`Take ${nameOf(p.key)} out of the split`}
                   >
                     <Feather name="x" size={12} color={theme.colors.textSecondary} />
                   </Pressable>
