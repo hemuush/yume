@@ -7,6 +7,7 @@ import { goalProgress } from '@/lib/savingsGoalProgress';
 import { usePressScale } from '@/lib/usePressScale';
 import { usePrivacy } from '@/theme/PrivacyContext';
 import { GoalRing, HiddenGoalRing } from './GoalRing';
+import { useCardGrow } from '@/lib/cardGrow';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -14,14 +15,26 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
  * Home's compact goal preview for the "Savings goals" strip. With savings amounts hidden, the saved amount
  * and ring are withheld (empty track, eye-off icon); only the target shows.
  */
-export function GoalChip({ goal, onPress }: { goal: SavingsGoal; onPress: () => void }) {
+/** `grow`: the page it opens expands out of this chip (the caller marks that push with `growHref`). */
+export function GoalChip({
+  goal,
+  onPress,
+  grow,
+}: {
+  goal: SavingsGoal;
+  onPress: () => void;
+  grow?: boolean;
+}) {
+  const { ref, growFrom } = useCardGrow();
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.96);
   const { hideAmounts } = usePrivacy();
   const { percent, done } = goalProgress(goal.currentAmountMinor, goal.targetAmountMinor);
   return (
     <AnimatedPressable
+      ref={ref}
+      collapsable={false}
       style={[styles.chip, animatedStyle]}
-      onPress={onPress}
+      onPress={grow ? () => growFrom(onPress) : onPress}
       onPressIn={onPressIn}
       onPressOut={onPressOut}
       accessibilityRole="button"

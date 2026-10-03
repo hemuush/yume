@@ -347,7 +347,7 @@ export function SettingsSection() {
             iconBg={theme.colors.idTeal}
             label="Backup & restore"
             sub={backupSub}
-            subColor={backupOk ? undefined : theme.colors.idCoralDeep}
+            subColor={backupOk ? undefined : theme.colors.expenseText}
             onPress={() => router.push('/backup')}
           />
           <SettingsRow
@@ -373,7 +373,7 @@ export function SettingsSection() {
                   ? 'All tidy'
                   : `${tidyCount} thing${tidyCount === 1 ? '' : 's'} to check`
             }
-            subColor={tidyCount ? theme.colors.idCoralDeep : undefined}
+            subColor={tidyCount ? theme.colors.expenseText : undefined}
             onPress={() => router.push('/tidy-up')}
             divider
           />

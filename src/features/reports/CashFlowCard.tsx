@@ -1,11 +1,13 @@
 import { useState } from 'react';
-import { View, Pressable } from 'react-native';
+import { Animated, View, Pressable, useWindowDimensions } from 'react-native';
 import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
 import type { CashFlowPoint } from '@/db/reports';
 import { formatMoney } from '@/lib/money';
 import { roundedMinor } from '@/lib/round';
 import { haptics } from '@/lib/haptics';
+import { CountUpAmount } from '@/components/CountUpAmount';
+import { useGrowFrom } from '@/lib/useGrowFrom';
 import { withPressed } from '@/lib/pressed';
 import { MIN_TREND_POINTS } from './TrendChart';
 import { cashFlowReadLine, keptOf, keptSummary } from './reportsInsights';
@@ -14,6 +16,40 @@ import { styles } from './reports.styles';
 const BAR_MAX = 100;
 /** Past this many months the amount under each bar no longer fits; the sentence still reads the picked one. */
 const KEPT_PILL_MAX_POINTS = 8;
+
+/** From this system font scale the summary strip stacks, so each figure keeps a full row. */
+const STACK_STRIP_AT = 1.3;
+const BAR_STAGGER_MS = 45;
+
+/** One bar: grows from the baseline in turn, once after app open; glides if the figure changes. */
+function FlowBar({
+  animKey,
+  heightPx,
+  index,
+  color,
+  narrow,
+  live,
+}: {
+  animKey: string;
+  heightPx: number;
+  index: number;
+  color: string;
+  narrow: boolean;
+  live: boolean;
+}) {
+  const h = useGrowFrom(animKey, heightPx, { delay: index * BAR_STAGGER_MS });
+  return (
+    <Animated.View
+      style={[
+        styles.flowBar,
+        styles.flowBarEdge,
+        narrow && { width: 5 },
+        { height: h, backgroundColor: color },
+        live && styles.flowBarLive,
+      ]}
+    />
+  );
+}
 
 const compact = (minor: number) => {
   const major = Math.abs(roundedMinor(minor)) / 100;
@@ -37,6 +73,7 @@ export function CashFlowCard({
   monthLink?: (index: number, count: number) => { name: string; open: () => void } | null;
 }) {
   const [sel, setSel] = useState<number | null>(null);
+  const { fontScale } = useWindowDimensions();
   if (points.length < MIN_TREND_POINTS || !points.some((p) => p.incomeMinor > 0)) return null;
 
   const lastI = points.length - 1;
@@ -46,6 +83,8 @@ export function CashFlowCard({
   const showKept = points.length <= KEPT_PILL_MAX_POINTS;
   const narrow = points.length > 12;
   const labelEvery = narrow ? 3 : 1;
+  const stacked = fontScale >= STACK_STRIP_AT;
+  const divided = stacked ? styles.stripCellStacked : styles.stripCellDivided;
   const link = monthLink ? monthLink(selI, points.length) : null;
   const height = (v: number) => (v > 0 ? Math.max(3, (v / max) * BAR_MAX) : 0);
   const pick = (i: number) => {
@@ -75,30 +114,32 @@ export function CashFlowCard({
             const on = i === selI;
             const live = inProgress && i === lastI;
             const kept = keptOf(p);
+            const keptWord = kept < 0 ? 'overspent' : 'kept';
             return (
               <Pressable
                 key={i}
                 onPress={() => pick(i)}
                 style={withPressed([styles.flowCol, on && styles.flowColOn])}
                 accessibilityRole="button"
-                accessibilityLabel={`${p.label}, ${formatMoney(roundedMinor(p.incomeMinor))} in, ${formatMoney(roundedMinor(p.expenseMinor))} out`}
+                accessibilityLabel={`${p.label}${live ? ' so far' : ''}, ${formatMoney(roundedMinor(p.incomeMinor))} in, ${formatMoney(roundedMinor(p.expenseMinor))} out, ${keptWord} ${formatMoney(roundedMinor(Math.abs(kept)))}`}
                 accessibilityState={{ selected: on }}
               >
                 <View style={styles.flowBars}>
-                  <View
-                    style={[
-                      styles.flowBar,
-                      narrow && { width: 5 },
-                      { height: height(p.incomeMinor), backgroundColor: theme.colors.primary },
-                    ]}
+                  <FlowBar
+                    animKey={`flow:${p.label}:${i}:in`}
+                    heightPx={height(p.incomeMinor)}
+                    index={i}
+                    color={theme.colors.primary}
+                    narrow={narrow}
+                    live={false}
                   />
-                  <View
-                    style={[
-                      styles.flowBar,
-                      narrow && { width: 5 },
-                      { height: height(p.expenseMinor), backgroundColor: theme.colors.spentSoft },
-                      live && styles.flowBarLive,
-                    ]}
+                  <FlowBar
+                    animKey={`flow:${p.label}:${i}:out`}
+                    heightPx={height(p.expenseMinor)}
+                    index={i}
+                    color={theme.colors.spentSoft}
+                    narrow={narrow}
+                    live={live}
                   />
                 </View>
                 <Text style={[styles.flowLabel, on && styles.flowLabelOn]} numberOfLines={1}>
@@ -133,36 +174,38 @@ export function CashFlowCard({
         )}
       </View>
       {summary && (
-        <View style={styles.stripCard}>
+        <View style={[styles.stripCard, stacked && styles.stripCardStack]}>
           <View style={styles.stripCell}>
             <Text style={styles.stripLabel} numberOfLines={1}>
               Avg kept
             </Text>
-            <Text
+            <CountUpAmount
+              minor={roundedMinor(summary.avgKeptMinor)}
               style={[
                 styles.stripValue,
                 { color: summary.avgKeptMinor < 0 ? theme.colors.expenseText : theme.colors.incomeText },
               ]}
               numberOfLines={1}
               adjustsFontSizeToFit
-            >
-              {formatMoney(roundedMinor(summary.avgKeptMinor))}
-            </Text>
+            />
             <Text style={styles.stripSub}>a month</Text>
           </View>
-          <View style={[styles.stripCell, styles.stripCellDivided]}>
+          <View style={[styles.stripCell, divided]}>
             <Text style={styles.stripLabel} numberOfLines={1}>
               Best month
             </Text>
-            <Text style={styles.stripValue} numberOfLines={1} adjustsFontSizeToFit>
-              {formatMoney(roundedMinor(summary.best.keptMinor))}
-            </Text>
+            <CountUpAmount
+              minor={roundedMinor(summary.best.keptMinor)}
+              style={styles.stripValue}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+            />
             <Text style={styles.stripSub} numberOfLines={1}>
               {summary.best.label}
               {summary.best.ratePct != null ? `, ${summary.best.ratePct}% kept` : ''}
             </Text>
           </View>
-          <View style={[styles.stripCell, styles.stripCellDivided]}>
+          <View style={[styles.stripCell, divided]}>
             <Text style={styles.stripLabel} numberOfLines={1}>
               Months kept
             </Text>

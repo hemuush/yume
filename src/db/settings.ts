@@ -449,6 +449,7 @@ export function resetSettingsCache(): void {
   cachedLastOverspendNotified = undefined;
   cachedHideSensitiveAmounts = undefined;
   cachedBudgetNudgesSent = undefined;
+  cachedMilestonesSeen = undefined;
 }
 
 const LAST_OVERSPEND_NOTIFIED_KEY = 'last_overspend_notified';
@@ -534,6 +535,41 @@ export async function hideSubscriptionSuggestion(key: string): Promise<void> {
 /** Brings a hidden suggestion back — "Bring back" on it in Needs you. */
 export async function unhideSubscriptionSuggestion(key: string): Promise<void> {
   await setHiddenSubscriptionSuggestions((await getHiddenSubscriptionSuggestions()).filter((k) => k !== key));
+}
+
+const MILESTONES_SEEN_KEY = 'milestones_seen';
+const MILESTONES_KEPT = 200;
+let cachedMilestonesSeen: string[] | undefined;
+
+/** Keys of the goal and budget-month milestone notes already shown (see src/lib/milestones.ts), so each fires once. */
+export async function getMilestonesSeen(): Promise<string[]> {
+  if (cachedMilestonesSeen !== undefined) return cachedMilestonesSeen;
+  const db = await getDb();
+  const row = await db.getFirstAsync<{ value: string }>('SELECT value FROM settings WHERE key = ?', [
+    MILESTONES_SEEN_KEY,
+  ]);
+  let keys: string[] = [];
+  try {
+    const parsed = row ? JSON.parse(row.value) : [];
+    keys = Array.isArray(parsed) ? parsed.filter((k): k is string => typeof k === 'string') : [];
+  } catch {
+    keys = [];
+  }
+  cachedMilestonesSeen = keys;
+  return keys;
+}
+
+export async function markMilestonesSeen(keys: string[]): Promise<void> {
+  const next = [...(await getMilestonesSeen()).filter((k) => !keys.includes(k)), ...keys].slice(
+    -MILESTONES_KEPT
+  );
+  const db = await getDb();
+  await db.runAsync(
+    `INSERT INTO settings (key, value) VALUES (?, ?)
+     ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
+    [MILESTONES_SEEN_KEY, JSON.stringify(next)]
+  );
+  cachedMilestonesSeen = next;
 }
 
 const BUDGET_NUDGES_SENT_KEY = 'budget_nudges_sent';

@@ -13,6 +13,7 @@ import { styles } from './budgets.styles';
 import { monthDayInfo } from './budgetsOverview';
 import { withPressed } from '@/lib/pressed';
 import { categorySentence, inParent } from '@/lib/categoryLabel';
+import { useCardGrow } from '@/lib/cardGrow';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -26,13 +27,17 @@ export function BudgetRow({
   onPress,
   onMore,
   showPerDay,
+  grow,
 }: {
   progress: BudgetProgress;
   divider: boolean;
   onPress: () => void;
   onMore?: () => void;
   showPerDay?: boolean;
+  /** The page it opens expands out of this row (the caller marks that push with `growHref`). */
+  grow?: boolean;
 }) {
+  const { ref, growFrom } = useCardGrow();
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.98);
   const barPct = Math.min(100, progress.percentUsed);
   // Pace only means something for the month still running.
@@ -48,8 +53,10 @@ export function BudgetRow({
 
   return (
     <AnimatedPressable
+      ref={ref}
+      collapsable={false}
       style={[styles.row, divider && styles.rowDivider, animatedStyle]}
-      onPress={onPress}
+      onPress={grow ? () => growFrom(onPress) : onPress}
       onPressIn={onPressIn}
       onPressOut={onPressOut}
       onLongPress={onMore}

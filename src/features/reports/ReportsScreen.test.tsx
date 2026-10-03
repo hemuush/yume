@@ -75,6 +75,11 @@ jest.mock('@/db/tidyUp', () => ({
 // Count-up and bar-fill animations would keep ticking past the test's end.
 jest.mock('@/components/CountUpAmount', () => ({ CountUpAmount: () => null }));
 jest.mock('@/features/reports/AnimatedCategoryFill', () => ({ AnimatedCategoryFill: () => null }));
+// Bars and lines show their settled value: the faked clock never advances, so a running Animated never ends.
+jest.mock('@/lib/useGrowFrom', () => ({
+  useGrowFrom: (_key: string, target: number) => new (require('react-native').Animated.Value)(target),
+  resetGrowMemory: () => {},
+}));
 
 const mockDaily = jest.fn(async (..._args: unknown[]) => [
   { date: '2026-10-02', totalMinor: 100000 },
