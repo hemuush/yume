@@ -8,9 +8,8 @@ function hexToRgb(hex: string): [number, number, number] {
   return [parseInt(clean.slice(0, 2), 16), parseInt(clean.slice(2, 4), 16), parseInt(clean.slice(4, 6), 16)];
 }
 
-// Picks black or white text so it stays readable on whatever accent color
-// the user picks — a light accent (white, mint, sky) needs dark text; a dark
-// one (ink) needs light text.
+// Picks black or white text readable on the user's accent: light accents (white, mint, sky) need dark
+// text, dark ones (ink) need light text.
 function contrastColor(hex: string): string {
   const [r, g, b] = hexToRgb(hex);
   const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
@@ -20,10 +19,8 @@ function contrastColor(hex: string): string {
 interface AccentContextValue {
   /** The active pack's id — drives which card the Theme picker highlights. */
   themeId: string;
-  /** The active pack's primary — unchanged name/shape from before this was
-   *  theme-aware, so every existing `useAccent().accent` reader (buttons,
-   *  the active tab, Reports' moon phase, the home widget, …) keeps working
-   *  with no changes of its own. */
+  /** The active pack's primary; keeps the original name/shape so every `useAccent().accent` reader
+   *  (buttons, active tab, Reports' moon phase, home widget, ...) works unchanged. */
   accent: string;
   /** The active pack's secondary — new. */
   secondary: string;
@@ -50,11 +47,8 @@ export function AccentProvider({ children }: { children: ReactNode }) {
   const [accent, setAccentState] = useState(getCachedAccentColor());
 
   useEffect(() => {
-    // Reads whichever pack was last picked. A pre-theme install (or one
-    // that only ever set a raw accent hex) has no `theme_id` row yet — that
-    // read comes back `null`, so it falls back to the stored accent hex
-    // as-is (never silently overwritten) with the default pack's secondary,
-    // rather than snapping an existing custom-looking accent back to Yume's.
+    // Reads the last-picked pack. A pre-theme install has no `theme_id` row (null), so it keeps the stored
+    // accent hex as-is, with the default pack's secondary, rather than snapping back to Yume's.
     Promise.all([getThemeId(), getAccentColor()])
       .then(([id, hex]) => {
         setAccentState(hex);
@@ -72,9 +66,8 @@ export function AccentProvider({ children }: { children: ReactNode }) {
     void setAccentColor(pack.primary);
   };
 
-  // Anything reading `secondary`/`dot` for a pack this install hasn't
-  // actually selected (the pre-theme fallback above) gets the default
-  // pack's values — the same ones it would already be seeing today.
+  // A pack this install hasn't selected (the pre-theme fallback above) gets the default pack's
+  // `secondary`/`dot`.
   const activePack = themeById(themeId) ?? cachedInitial;
   const secondary = activePack.secondary;
   const dot = activePack.dot ?? activePack.secondary;

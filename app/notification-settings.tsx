@@ -40,9 +40,8 @@ export default function NotificationSettingsScreen() {
     try {
       await setNotificationPrefs(next);
     } catch (e) {
-      // The switch already flipped optimistically above — on failure it was
-      // otherwise left showing "on" while nothing was actually persisted,
-      // a silently misleading state rather than an honest error.
+      // The switch already flipped optimistically; without this, a failure left it showing "on" with
+      // nothing persisted — misleading instead of an honest error.
       setPrefs(previous);
       showAlert("Couldn't save", errorMessage(e));
       return;

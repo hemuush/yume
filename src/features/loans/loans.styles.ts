@@ -2,9 +2,8 @@ import { StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
 import { EYEBROW, SECTION_TITLE, SECTION_GAP } from '@/constants/textStyles';
 
-// Shared by the Loans screen and every loan modal (LoanCard, LoanDetailModal,
-// AssetModal, AccountModal, RateChangeModal, PrepayModal, AddLoanModal) so the
-// styling stays in one place instead of a 2000-line screen file.
+// Shared by the Loans screen and every loan modal (LoanCard, LoanDetailModal, AssetModal, AccountModal,
+// RateChangeModal, PrepayModal, AddLoanModal), so styling stays in one place.
 export const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
   errorBanner: {

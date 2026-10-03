@@ -30,9 +30,8 @@ import { Category, Account } from '@/types';
 import { showAlert } from '@/components/AppDialog';
 
 /**
- * Recently deleted: entries you deleted in the last 30 days, newest first,
- * each with a Restore button that puts it back exactly as it was. Reached
- * from Profile › Settings › Alerts & backup.
+ * Entries deleted in the last 30 days, newest first, each with a Restore button that puts it back exactly
+ * as it was. Reached from Profile › Settings › Alerts & backup.
  */
 export default function RecentlyDeletedScreen() {
   const insets = useSafeAreaInsets();

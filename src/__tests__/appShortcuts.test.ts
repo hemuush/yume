@@ -1,7 +1,6 @@
 /**
- * The app-icon shortcuts (plugins/withAppShortcuts.js) open Add with a type
- * Add actually understands, through the app's own scheme — and the plugin is
- * registered in app.json, so a build really includes them.
+ * The app-icon shortcuts (plugins/withAppShortcuts.js) open Add with a type Add understands, through the
+ * app's own scheme, and the plugin is registered in app.json so a build includes them.
  */
 import { isTxType } from '@/features/add/addEntry';
 

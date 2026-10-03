@@ -26,10 +26,8 @@ const POT_COUNT = 5;
 const LEGEND_STAGES: GrowthStage[] = ['seed', 'sprout', 'sapling', 'bloom'];
 
 function noteFor(stage: GrowthStage, streak: number): string {
-  // `stage === 'seed'` only ever happens when `streak` is exactly 0
-  // (stageForStreak's own threshold) — today's own spend, once logged,
-  // resolves the streak immediately rather than leaving it "pending", so
-  // there's no separate in-between state to word differently here.
+  // `stage === 'seed'` only happens at streak exactly 0 (stageForStreak's threshold); today's logged spend
+  // resolves the streak at once, so there is no separate in-between state to word differently.
   if (stage === 'seed')
     return "No streak going right now — spend under today's goal to plant the first seed.";
   if (stage === 'sprout')
@@ -39,12 +37,8 @@ function noteFor(stage: GrowthStage, streak: number): string {
 }
 
 /**
- * A daily-goal streak and a bit of savings-goal context, drawn as
- * something growing rather than another number — see the "Suu's Garden"
- * design sign-off. Deliberately reuses only data the app already tracks:
- * there's no contribution ledger for savings goals (see DATA_MODEL.md), so
- * this shows their overall funded% as supporting context, not a per-day
- * signal the way the daily-goal streak is.
+ * A daily-goal streak plus savings-goal context drawn as something growing ("Suu's Garden" sign-off). Uses
+ * only tracked data: no contribution ledger for savings goals (DATA_MODEL.md), so it shows overall funded%.
  */
 export default function GardenScreen() {
   const insets = useSafeAreaInsets();

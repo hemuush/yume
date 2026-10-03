@@ -1,9 +1,6 @@
 /**
- * Recurring rules against a real SQLite engine — same realDataTestDb
- * harness as transactionSafety.test.ts, isolated to its own file so this
- * describe block gets a fresh in-memory database (recurring.ts's
- * runDueRecurringRules mutates next_run_date/active as a side effect, which
- * would otherwise interact with loan/person tests sharing one DB).
+ * Recurring rules on real SQLite, in their own file for a fresh in-memory DB: runDueRecurringRules mutates
+ * next_run_date/active, which would interfere with loan/person tests sharing a DB (harness: realDataTestDb).
  */
 import { createRealDataTestDb } from '@/test-support/realDataTestDb';
 
@@ -90,10 +87,8 @@ describe('recurring rules', () => {
       nextRunDate: '2026-01-01',
     });
 
-    // Four occurrences (Jan 1, Feb 1, Mar 1, Apr 1) should have run by the
-    // time "today" is April 1st — the shared DB also has the "Netflix" rule
-    // from the previous test still due, so `created` covers both rather
-    // than being asserted on directly here.
+    // Four occurrences (Jan 1 … Apr 1) should have run by "today" = April 1st; the shared DB also has the
+    // previous test's still-due "Netflix" rule, so `created` covers both and isn't asserted directly.
     const created = await runDueRecurringRules('2026-04-01');
     expect(created).toBeGreaterThanOrEqual(4);
 
@@ -183,11 +178,8 @@ describe('recurring rules', () => {
   });
 
   it('isolates a single rule failure so it does not abort the rest of the batch', async () => {
-    // A rule whose category was removed out from under it via raw SQL,
-    // bypassing deleteCategory's own in-use checks — the FK's ON DELETE SET
-    // NULL leaves the rule with categoryId null, which createTransaction
-    // rejects for a non-transfer type. This is the real scenario the fix
-    // guards against: one rule failing must not abort the whole batch.
+    // A rule whose category was removed via raw SQL: ON DELETE SET NULL leaves categoryId null, which
+    // createTransaction rejects; one failing rule must not abort the whole batch.
     const doomedCategory = await createCategory({ name: 'Doomed Category', kind: 'expense' });
     const poisoned = await createRecurringRule({
       type: 'expense',

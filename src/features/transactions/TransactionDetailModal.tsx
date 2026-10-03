@@ -222,9 +222,8 @@ export function TransactionDetailModal({
     );
   };
 
-  // The calm-sheets sign-off (Direction C): the entry as a card in its
-  // category's colour, then two pages — what it is, and what you can do with
-  // it — so neither needs to scroll. Delete is the bin beside Edit.
+  // The entry as a card in its category's colour, then two pages (what it is, what you can do) so neither
+  // scrolls. Delete is the bin beside Edit.
   const canEdit = link === null;
   const moreActions = [
     canEdit &&

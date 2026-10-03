@@ -24,14 +24,8 @@ const TABS: { label: string; value: ProfileTab }[] = [
 ];
 
 /**
- * Identity (a theme-tinted card with the avatar, name and member since) plus a "You"/"Settings" segment —
- * the same reachable-from-every-screen destination Profile always was, now
- * standing in for Settings too. `/settings` used to be one tap further in,
- * reached only from the card this segment replaces; nothing else in the
- * app linked to it, so retiring it as its own route was safe. See
- * YouSection (tracked balance, counts, accounts) and
- * SettingsSection (money, privacy, alerts & backup, appearance, about) for the
- * actual content — this file is just the shared shell around both.
+ * Identity card (theme-tinted: avatar, name, member since) plus a "You"/"Settings" segment, the shared
+ * shell for YouSection and SettingsSection; Settings has no route of its own (nothing else linked to it).
  */
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();

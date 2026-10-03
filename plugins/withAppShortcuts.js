@@ -1,14 +1,6 @@
 /**
- * Android app shortcuts: long-press Yume's icon for Add expense, Add income
- * or Transfer. Each opens Add with its type already chosen, through the same
- * yume://add-transaction?type=… links the Quick Add widget uses — so there's
- * no new screen or route, only a faster way in. If the app lock is on, the
- * lock screen comes first and then lands on Add, the same as the widget.
- *
- * Static shortcuts need three things the app config can't express on its
- * own: a res/xml/shortcuts.xml, string resources for the labels, and a
- * meta-data entry on the main activity pointing at the XML. The icons are
- * small vector drawables in the app's palette.
+ * Android app shortcuts (long-press icon): Add expense/income/Transfer, opening Add with its type chosen via
+ * the same yume://add-transaction?type=… links as Quick Add (lock screen first if on). Needs shortcuts.xml etc.
  */
 const fs = require('fs');
 const path = require('path');

@@ -1,16 +1,6 @@
 /**
- * Ledger / recurring / restore integrity fixes, against a real SQLite engine:
- *   - transfers between accounts in different currencies are rejected
- *     everywhere a transfer can be written (manual, edit, recurring rule)
- *   - editing a transaction keeps the payment mode the edit screen doesn't show
- *   - listAccounts' single grouped query matches getAccountBalance exactly
- *   - listPeople's single grouped query matches the per-person sums
- *   - a category's transaction list can roll up its subcategories
- *   - recurring catch-up commits each occurrence with the rule's advance, so
- *     a failure part-way never re-posts earlier occurrences, and concurrent
- *     calls share one run
- *   - restore rejects damaged / incomplete files with the data untouched,
- *     and keeps this phone's own settings
+ * Ledger integrity on real SQLite: cross-currency transfers rejected, edits keep payment mode, grouped
+ * balance/person queries match per-row sums, recurring catch-up is atomic, bad restores change nothing.
  */
 import { createRealDataTestDb } from '@/test-support/realDataTestDb';
 

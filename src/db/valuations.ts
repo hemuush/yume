@@ -75,9 +75,8 @@ async function getValuation(id: string): Promise<Valuation> {
 }
 
 /**
- * Records what a tracked account is worth on a date. A second update for the
- * same date replaces the first: two answers to "what was it worth on the 2nd"
- * would leave the later-saved one silently winning anyway.
+ * Records what a tracked account is worth on a date. A second update for the same date replaces the first,
+ * since two answers for the same day would leave the later-saved one winning anyway.
  */
 export async function addValuation(
   accountId: string,

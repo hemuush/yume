@@ -1,9 +1,6 @@
 /**
- * The five built-in categories the app matches by name (Loan EMI, Loan
- * Repayment, Fees & Charges, Friends & Family income + expense) are flagged
- * `is_system` and blocked from delete / archive / rename so that match can't
- * silently break. Everything else about them stays editable, and a user's
- * own category — even one named identically — is never treated as system.
+ * The five name-matched built-ins (Loan EMI/Repayment, Fees & Charges, Friends & Family) are `is_system`:
+ * no delete/archive/rename, otherwise editable; a user's same-named category is never system.
  */
 import { createRealDataTestDb } from '@/test-support/realDataTestDb';
 
@@ -108,15 +105,8 @@ describe('is_system enforcement', () => {
   it('a user-created category named like a built-in is NOT system and can be deleted', async () => {
     const impostor = await createCategory({ name: 'Loan EMI', kind: 'expense' });
     expect(impostor.isSystem).toBe(false);
-    // Returns a snapshot of the deleted row(s) now (for Undo), not void —
-    // this just guards that it resolves to an array rather than throwing.
-    // `Array.isArray`, not `toBeInstanceOf(Array)` — under the full suite,
-    // this value can come back as an array from a different realm than this
-    // file's own `Array` global (a known Jest + native-addon interaction,
-    // here via better-sqlite3), which `instanceof` rejects but
-    // `Array.isArray` correctly accepts. That mismatch, not the app code,
-    // was the entire source of this test's long-standing flakiness under
-    // parallel workers.
+    // Delete returns a snapshot (for Undo); this guards that it resolves to an array. `Array.isArray`, not
+    // `toBeInstanceOf(Array)`: with Jest + better-sqlite3 the array may come from another realm (flaky).
     const result = await deleteCategory(impostor.id);
     expect(Array.isArray(result)).toBe(true);
   });

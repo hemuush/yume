@@ -1,8 +1,6 @@
 /**
- * The category page, with its data mocked: it shows the period's total,
- * where within the category the money went, its budget, six months of bars
- * and the latest entries — and its buttons open What-if and Activity on
- * that category.
+ * The category page with data mocked: period total, where within the category money went, its budget, six
+ * months of bars and latest entries; its buttons open What-if and Activity on that category.
  */
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
 import { Text } from 'react-native';

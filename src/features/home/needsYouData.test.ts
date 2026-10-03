@@ -1,7 +1,6 @@
 /**
- * The shared Needs you loader against a real SQLite engine: it finds what
- * needs you (here, a budget over its limit and a pair of repeated entries
- * for Tidy up), and ✕ hides an item until it's shown again.
+ * Shared Needs you loader on a real SQLite engine: finds a budget over its limit and repeated entries (Tidy
+ * up), and ✕ hides an item until it's shown again.
  */
 import { createRealDataTestDb } from '@/test-support/realDataTestDb';
 

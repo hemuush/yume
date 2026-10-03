@@ -16,11 +16,8 @@ import { roundedMinor } from '@/lib/round';
 import { savingsRatePct } from '@/lib/savingsRate';
 
 /**
- * The month and week Wraps (the Wrap sign-off): a short story told from
- * numbers the app already works out for Reports and the month review, in
- * beats. The pure builders here decide which beats a Wrap gets — a beat
- * with nothing true to say is left out rather than shown empty — and the
- * loaders fetch what they need. Nothing is stored.
+ * Month and week Wraps: a short story in beats from numbers Reports and the month review already compute. Pure
+ * builders decide which beats exist (one with nothing true to say is left out); loaders fetch; nothing stored.
  */
 
 export type WrapPeriod = 'month' | 'week';
@@ -111,9 +108,8 @@ function heaviestOf(days: WrapDay[]): WrapDay {
 }
 
 /**
- * The month Wrap for the month starting `monthStart`, or null when nothing
- * went out that month (Home's Wrap button doesn't offer it either, so
- * there is nothing to play).
+ * The month Wrap for the month starting `monthStart`, or null when nothing went out (Home's Wrap button
+ * doesn't offer it either).
  */
 export function buildMonthWrap(input: {
   monthStart: string;
@@ -176,10 +172,8 @@ export function weekLabel(start: string, end: string): string {
 }
 
 /**
- * The week Wrap. A week with nothing logged still gets a Wrap (the Monday
- * notification was already sent), just a one-frame one that says so.
- * `usualWeekMinor` is the average of the weeks before; null when there's no
- * history to compare against, which leaves that beat out.
+ * The week Wrap. A week with nothing logged still gets a one-frame Wrap saying so (the Monday notification was
+ * sent). `usualWeekMinor` is the average of prior weeks; null without history, which leaves that beat out.
  */
 export function buildWeekWrap(input: {
   start: string;

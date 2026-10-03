@@ -3,21 +3,14 @@ import { resetSettingsCache } from '@/db/settings';
 import { BACKFILL_LOAN_TX_KIND_SQL } from '@/db/loanTxKind';
 
 /**
- * Settings that belong to the phone, never to the data — always the
- * current phone's values, never the backup's. The folder URI is a storage
- * grant only valid on the phone (and install) that made it: Android revokes
- * it on uninstall and it never carries across devices, so restoring a
- * backup's copy just points auto-backup at a folder it can't write to. The
- * last-backup status describes backups made on this phone.
+ * Phone-owned settings: always the current phone's values, never the backup's. The folder URI is a storage
+ * grant valid only on the install that made it, and the last-backup status describes this phone's backups.
  */
 const DEVICE_BOUND_SETTINGS = ['local_backup_folder_uri', 'last_local_backup_at', 'last_local_backup_result'];
 
 /**
- * Preferences where the phone's current value wins if it has one, otherwise
- * the backup's comes back. Restoring an older backup on the same phone
- * must not quietly switch the app lock off (or on) — but restoring onto a
- * fresh install or a new phone, where there's no current value yet, should
- * bring the user's lock preference back with the rest of their data.
+ * Preferences where the phone's value wins if set, else the backup's returns: an older backup must not
+ * flip the app lock, but a fresh install/new phone should get the user's preference back.
  */
 const CURRENT_WINS_SETTINGS = ['app_lock_enabled'];
 
@@ -54,10 +47,8 @@ export interface BackupSnapshot {
 export async function buildBackupSnapshot(): Promise<BackupSnapshot> {
   const db = await getDb();
   const tables: Record<string, BackupRow[]> = {};
-  // One exclusive slot for every table read: as separate queued reads,
-  // another screen's write could land between two of them (a loan created
-  // after `loans` was read but before `loan_payments` was), producing a
-  // snapshot whose rows point at parents it doesn't contain.
+  // One exclusive slot for all table reads: separate reads would let another screen's write land between them
+  // (a loan created after `loans` but before `loan_payments`), leaving rows that point at missing parents.
   await db.exclusiveAsync(async (xdb) => {
     for (const table of TABLES) {
       tables[table] = await xdb.getAllAsync<BackupRow>(`SELECT * FROM ${table}`);
@@ -71,17 +62,8 @@ export async function buildBackupSnapshot(): Promise<BackupSnapshot> {
 }
 
 /**
- * Replaces all local data with the contents of a snapshot. Deletes in
- * child-before-parent order, then inserts in parent-before-child order, all
- * inside one transaction so a failure never leaves a half-restored database.
- *
- * Foreign keys are disabled for the duration: `transactions` and
- * `loan_payments` reference each other (a loan payment links to the
- * transaction that paid it; a transaction links back to the loan payment it
- * settles), so neither table can be fully inserted before the other without
- * a temporary FK violation. SQLite only allows toggling `PRAGMA foreign_keys`
- * outside an active transaction, so it's set before/after, not inside,
- * `withTransactionAsync`.
+ * Replaces all local data with a snapshot in one transaction: delete children first, insert parents first.
+ * FKs off (transactions and loan_payments reference each other); the PRAGMA can't toggle in a transaction.
  */
 function isValidSnapshotShape(snapshot: unknown): snapshot is BackupSnapshot {
   const s = snapshot as Partial<BackupSnapshot> | null;
@@ -96,12 +78,8 @@ function isValidSnapshotShape(snapshot: unknown): snapshot is BackupSnapshot {
 
 export interface RestoreResult {
   /**
-   * `"table.column"` for every key present in the backup that isn't a real
-   * column in this version's schema and was therefore not restored. Usually
-   * empty; non-empty means the file was made by a build whose schema has
-   * since changed (or was hand-edited), and the listed data did not come
-   * back — the Backup screen surfaces this so a silent partial restore
-   * can't pass for a complete one.
+   * `"table.column"` for each backup key that isn't a real column here and wasn't restored. Non-empty means
+   * schema drift or a hand-edited file; surfaced so a partial restore isn't mistaken for a complete one.
    */
   skippedColumns: string[];
 }
@@ -113,20 +91,15 @@ export async function restoreFromSnapshot(snapshot: BackupSnapshot): Promise<Res
   if (snapshot.formatVersion > BACKUP_FORMAT_VERSION) {
     throw new Error('This backup was made with a newer version of Yume. Please update the app first.');
   }
-  // Older formatVersions currently restore as-is (v1 is the only format that
-  // has ever shipped). When the format is first bumped, translate an older
-  // snapshot up to the current shape here, before the insert loop below.
+  // Older formatVersions restore as-is (v1 is the only format shipped). On the first bump, translate older
+  // snapshots up to the current shape here, before the insert loop.
   const db = await getDb();
 
   const deleteOrder = [...TABLES].reverse();
   const insertOrder = TABLES;
 
-  // A backup file is arbitrary JSON picked by the user (or shared to them) —
-  // never trusted to describe its own SQL shape. Column names come only from
-  // the real table schema (via PRAGMA, itself just SQLite identifiers we
-  // already control, not the file), and any key in a row that isn't a real
-  // column is dropped rather than spliced into an INSERT statement — but
-  // every dropped key is recorded and reported back (see RestoreResult).
+  // The backup is untrusted JSON: column names come only from the real table schema (via PRAGMA), and unknown
+  // row keys are dropped rather than spliced into an INSERT, but recorded and reported (see RestoreResult).
   const columnsByTable: Record<string, Set<string>> = {};
   for (const table of TABLES) {
     const info = await db.getAllAsync<{ name: string }>(`PRAGMA table_info(${table})`);
@@ -134,9 +107,8 @@ export async function restoreFromSnapshot(snapshot: BackupSnapshot): Promise<Res
   }
   const skipped = new Set<string>();
 
-  // Every table's rows must be an array of plain objects before anything is
-  // deleted — a malformed file is rejected here with the current data
-  // untouched, rather than failing halfway through the insert loop.
+  // Every table's rows must be an array of plain objects before anything is deleted, so a malformed file is
+  // rejected with current data untouched rather than failing halfway through the inserts.
   for (const table of TABLES) {
     const rows = snapshot.tables[table];
     if (rows === undefined) continue;
@@ -147,11 +119,8 @@ export async function restoreFromSnapshot(snapshot: BackupSnapshot): Promise<Res
     }
   }
 
-  // All in one exclusive slot of the statement queue: `PRAGMA foreign_keys`
-  // can only change outside a transaction, and as separate queued calls
-  // another screen's statement could run between "FKs off" and the restore
-  // transaction — e.g. a loan delete that then skipped its ON DELETE
-  // CASCADE and left orphaned rows behind.
+  // One exclusive statement-queue slot: `PRAGMA foreign_keys` only changes outside a transaction, and another
+  // screen's statement between "FKs off" and the restore could skip an ON DELETE CASCADE and orphan rows.
   await db.exclusiveAsync(async (xdb) => {
     // This phone's own values for the settings that belong to it (see
     // DEVICE_BOUND_SETTINGS / CURRENT_WINS_SETTINGS), read before the wipe.
@@ -199,12 +168,8 @@ export async function restoreFromSnapshot(snapshot: BackupSnapshot): Promise<Res
             [key, value]
           );
         }
-        // Foreign keys were off for the inserts (transactions and
-        // loan_payments point at each other, so neither can go first), which
-        // also meant nothing checked them. A hand-edited or truncated file
-        // could leave a transaction pointing at an account that isn't there;
-        // checking before commit rolls the whole restore back instead, with
-        // the current data untouched.
+        // FKs were off for the inserts, so nothing checked them; a damaged file could leave a transaction
+        // pointing at a missing account. Checking before commit rolls back, leaving current data untouched.
         const broken = await tx.getAllAsync<{ table: string }>('PRAGMA foreign_key_check');
         if (broken.length > 0) {
           throw new Error(
@@ -218,11 +183,8 @@ export async function restoreFromSnapshot(snapshot: BackupSnapshot): Promise<Res
       await xdb.execAsync('PRAGMA foreign_keys = ON;');
     }
   });
-  // A backup taken before the is_system column existed restores the built-in
-  // categories unflagged; re-assert the flag now (restore doesn't run
-  // migrations, and the app isn't relaunched after a restore). Mirrors
-  // flagSystemCategories() in src/db/client.ts — kept inline here to avoid a
-  // circular-ish import back into the db layer.
+  // A pre-is_system backup restores built-in categories unflagged; re-flag them (restore runs no migrations).
+  // Mirrors flagSystemCategories() in src/db/client.ts, inline to avoid a circular-ish db-layer import.
   await db.runAsync(
     `UPDATE categories SET is_system = 1 WHERE is_system = 0 AND parent_id IS NULL AND (
        (name = 'Loan EMI' AND kind = 'expense') OR
@@ -234,10 +196,8 @@ export async function restoreFromSnapshot(snapshot: BackupSnapshot): Promise<Res
   // Same reasoning: a backup from before loan_tx_kind existed restores its
   // loan transactions untagged.
   await db.runAsync(BACKFILL_LOAN_TX_KIND_SQL);
-  // The restore above writes the settings table directly, bypassing every
-  // setter in db/settings.ts — without this, formatMoney() and every other
-  // cached-setting reader would keep showing pre-restore values (wrong
-  // currency symbol, wrong accent, etc.) until the app is fully relaunched.
+  // The restore writes the settings table directly, bypassing db/settings.ts setters; without this,
+  // cached-setting readers (formatMoney, accent) would show pre-restore values until the app is relaunched.
   resetSettingsCache();
 
   return { skippedColumns: [...skipped].sort() };

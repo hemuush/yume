@@ -1,8 +1,6 @@
 /**
- * Notification taps: each Yume notification carries the screen it should
- * open, only routes on the fixed list are ever honoured, and the response
- * that cold-started the app is cleared once read so it can't reopen that
- * screen on every later launch.
+ * Notification taps: each carries the screen to open, and only routes on the fixed list are honoured.
+ * The cold-start response is cleared once read, so it can't reopen that screen on every later launch.
  */
 import * as Notifications from 'expo-notifications';
 import {

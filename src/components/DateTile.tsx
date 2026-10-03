@@ -4,10 +4,8 @@ import { theme } from '@/constants/theme';
 import { parseLocalIsoDate } from '@/lib/date';
 
 /**
- * A date as a small tile — "01" over "OCT" — the one used wherever a row is
- * about a day rather than a category: Home's Upcoming, Plan's Coming up, and
- * the recurring sheet's next dates. `urgent` turns it red for something overdue
- * or due today; `soon` turns it amber for something due in the next few days.
+ * A date as a small tile ("01" over "OCT") for rows about a day (Home's Upcoming, Plan's Coming up, recurring
+ * dates). `urgent` = red for overdue/due today; `soon` = amber for the next few days.
  */
 export function DateTile({
   iso,

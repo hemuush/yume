@@ -1,8 +1,6 @@
 /**
- * Every query that lists a subcategory also hands back its parent's name, so
- * two same-named subcategories (here "Flipkart Minutes" under Food & Dining
- * and under Groceries) can be told apart on screen; and Activity's search
- * finds an entry by its parent's name.
+ * Every subcategory-listing query also returns its parent's name, so same-named subcategories ("Flipkart
+ * Minutes" under Food & Dining vs Groceries) are distinguishable; Activity search matches the parent's name.
  */
 import { createRealDataTestDb } from '@/test-support/realDataTestDb';
 

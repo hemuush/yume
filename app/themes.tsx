@@ -11,10 +11,8 @@ import { haptics } from '@/lib/haptics';
 import { withPressed } from '@/lib/pressed';
 
 /**
- * Theme: every pack as a small preview of Home in its colours, two to a row,
- * each labelled by its name alone (the Theme packs sign-off). Tapping a card
- * switches the whole app to it straight away. Reached from Profile ›
- * Settings › Appearance.
+ * Every theme pack as a small Home preview in its colours, two per row, labelled by name only. Tapping a
+ * card switches the whole app at once. Reached from Profile › Settings › Appearance.
  */
 export default function ThemesScreen() {
   const insets = useSafeAreaInsets();

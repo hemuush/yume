@@ -21,9 +21,8 @@ const KIND_ORDER: Record<Account['type'], number> = {
 };
 
 /**
- * The accounts in the order the stack draws them, back card first and the
- * front card last. Savings sits at the back, cash in front; accounts of one
- * kind keep the order they came in.
+ * Accounts in draw order, back card first and front last: savings at the back, cash in front;
+ * accounts of one kind keep their incoming order.
  */
 export function stackOrder(accounts: Account[]): Account[] {
   return accounts

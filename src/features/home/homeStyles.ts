@@ -3,11 +3,8 @@ import { theme } from '@/constants/theme';
 import { SOFT_LIFT } from './SoftCard';
 
 /**
- * Home's one visual system (the "arranged Home" sign-off): every card,
- * section heading and list row on Home is built from these, so no block
- * gets its own padding, icon size or type scale. The screen used to read as
- * messy mostly because each block had drifted into its own — 30px round
- * icons next to 36px and 38px squircles, rows from 11.5 to 13.5pt text.
+ * Home's one visual system: every card, section heading and list row is built from these so no block gets
+ * its own padding, icon size or type scale (it had drifted: 30/36/38px icons, 11.5-13.5pt row text).
  */
 export const HOME = {
   /** Space above each section heading. */

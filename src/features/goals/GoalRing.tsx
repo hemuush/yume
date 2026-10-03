@@ -32,12 +32,8 @@ export function HiddenGoalRing({ size = 44 }: { size?: number }) {
 }
 
 /**
- * A goal's progress as a ring — 0-100%, or a checkmark once it's reached (or
- * passed) its target. `percent` is expected pre-clamped to [0, 100] by the
- * caller; this component only draws, it doesn't decide what "done" means.
- *
- * With `animKey` the ring fills from the value it last showed (useGrowFrom):
- * adding money makes it grow, and coming back to the screen moves nothing.
+ * A goal's progress ring, 0-100%, or a checkmark once the target is reached. `percent` must be pre-clamped to
+ * [0, 100]; this only draws. With `animKey` it fills from its last shown value (useGrowFrom), not on revisit.
  */
 export function GoalRing({
   percent,

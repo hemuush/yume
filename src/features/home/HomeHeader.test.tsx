@@ -1,10 +1,6 @@
 /**
- * Smoke-renders the Home header's `Spark` — the one new reanimated-driven
- * piece from this session's ambient-motion pass — with the OS reduce-motion
- * setting both off and on. Mirrors GoalRing.test.tsx: the same class of bug
- * (mixing react-native-reanimated's `Animated` with React Native core's, a
- * native-level mismatch invisible to JS) would show up here immediately,
- * rather than only in a release build.
+ * Smoke-renders the header's `Spark` with OS reduce-motion off and on, like GoalRing.test.tsx.
+ * Catches mixing reanimated's `Animated` with core RN's (a native mismatch invisible to JS) before a release.
  */
 import { create, act } from 'react-test-renderer';
 
@@ -39,9 +35,8 @@ describe('HomeHeader Spark', () => {
   });
 
   it('cancels an already-running loop and resets to the static rest state if reduce-motion turns on after mount', () => {
-    // `useReduceMotion` really does start at `false` and only flips once its
-    // async AccessibilityInfo check resolves — this is that exact sequence,
-    // not a synthetic toggle.
+    // `useReduceMotion` starts `false` and flips only when its async AccessibilityInfo check resolves;
+    // this reproduces that exact sequence rather than a synthetic toggle.
     (useReduceMotion as jest.Mock).mockReturnValue(false);
     mockCancelAnimation.mockClear();
     let renderer: ReturnType<typeof create>;
@@ -54,11 +49,8 @@ describe('HomeHeader Spark', () => {
     act(() => {
       renderer.update(<Spark top={4} left={58} size={5} opacity={0.9} delay={0} />);
     });
-    // The reset above happens inside a `useEffect`, which — like the real
-    // reanimated shared values it mocks — mutates `.value` without itself
-    // triggering a re-render; the still-mounted component's *next* render is
-    // what reads the now-reset ref back out via `useAnimatedStyle`. A
-    // second, identical update forces exactly that render.
+    // The effect's reset mutates `.value` without a re-render; the next render reads it via
+    // `useAnimatedStyle`. A second identical update forces exactly that render.
     act(() => {
       renderer.update(<Spark top={4} left={58} size={5} opacity={0.9} delay={0} />);
     });

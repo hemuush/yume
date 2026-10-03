@@ -1,7 +1,6 @@
 /**
- * The top of Recurring: the month, the year, how many are running and when
- * the next is due, with the split between them; or just a line about the
- * page when no expense rule is running. All figures are made up.
+ * The top of Recurring: month and year cost, how many are running, when the next is due and the split
+ * between them; or just a line about the page when no expense rule is running. Made-up figures.
  */
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
 import { Text } from 'react-native';

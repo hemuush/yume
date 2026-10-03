@@ -12,13 +12,8 @@ interface Props extends TextProps {
 }
 
 /**
- * Drop-in replacement for `<Text>{formatMoney(x)}</Text>` wherever an
- * amount is traceable to a specific (possibly sensitive) category —
- * Transactions rows, Reports category breakdown, Home's recent activity.
- * Renders the real formatted amount unless the viewer has turned on "hide
- * savings & investment amounts" in Settings AND this particular amount is
- * tagged sensitive, in which case it shows a masked placeholder that still
- * reads as money (keeps the currency symbol) rather than a blank or a zero.
+ * Drop-in for `<Text>{formatMoney(x)}</Text>` where an amount may be sensitive. Masks it (keeping the
+ * currency symbol) only when "hide savings & investment amounts" is on AND the amount is tagged sensitive.
  */
 export function Amount({ minor, sensitive, currency, style, ...rest }: Props) {
   const { hideAmounts } = usePrivacy();

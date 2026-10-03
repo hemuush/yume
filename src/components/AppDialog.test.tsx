@@ -1,7 +1,6 @@
 /**
- * Yume's own dialog, in place of Android's grey alert: the same call as
- * Alert.alert, Cancel on the left, the risky button in red, and a button
- * closes the dialog before doing its job.
+ * Yume's own dialog in place of Android's grey alert: same call as Alert.alert, Cancel on the left,
+ * risky button in red, and a button closes the dialog before doing its job.
  */
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
 import { Text } from 'react-native';

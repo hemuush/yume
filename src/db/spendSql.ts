@@ -1,10 +1,6 @@
 /**
- * Refunds (the Missing pieces sign-off): money back on a purchase is stored
- * as money in (type 'income') with `is_refund = 1`, against the expense
- * category it came back to. It lowers that category's spending and never
- * counts as income. Every total that adds up spending or income builds its
- * SQL from these, so they all agree. They assume the entries table is
- * aliased `t`.
+ * Refund SQL: a refund is stored as 'income' with `is_refund = 1` against its expense category, lowering that
+ * category's spending and never counting as income. Every spend/income total uses these; alias entries as `t`.
  */
 
 /** Rows that count toward spending: expenses, and refunds against them. */

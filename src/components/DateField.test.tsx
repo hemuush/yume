@@ -1,8 +1,6 @@
 /**
- * The app's one date picker (CalendarSheet) and the form field that opens
- * it (DateField): days outside min/max can't be picked, the month title
- * jumps to any month and year, Today / Yesterday are one tap, and every
- * week lays out Sunday to Saturday.
+ * The app's date picker (CalendarSheet) and its form field (DateField): days outside min/max can't be picked,
+ * the month title jumps to any month/year, Today/Yesterday are one tap, weeks run Sunday to Saturday.
  */
 import { create, act, ReactTestRenderer, ReactTestInstance } from 'react-test-renderer';
 import { Text } from 'react-native';

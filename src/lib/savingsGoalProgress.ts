@@ -1,9 +1,6 @@
 /**
- * A goal's progress, derived once here rather than recomputed slightly
- * differently by GoalCard, GoalDetailModal, and Home's preview chips.
- * `percent` is clamped to 100 even if more than the target has been saved —
- * saving past the goal is a real outcome, not something the ring should
- * try to depict past a full circle.
+ * A goal's progress, derived once so GoalCard, GoalDetailModal and Home chips agree. `percent` is clamped to
+ * 100: saving past the goal is real, but the ring can't depict more than a full circle.
  */
 export interface GoalProgress {
   percent: number;

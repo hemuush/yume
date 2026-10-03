@@ -1,7 +1,6 @@
 /**
- * getLoanPaymentContext against a real SQLite engine: the next pending EMI,
- * the loan's own account (or the first one if it's gone), and the "Loan EMI"
- * category — the same choices the loan's screen makes.
+ * getLoanPaymentContext on real SQLite: next pending EMI, the loan's account (else the first), and the
+ * "Loan EMI" category — the same choices the loan's screen makes.
  */
 import { createRealDataTestDb } from '@/test-support/realDataTestDb';
 

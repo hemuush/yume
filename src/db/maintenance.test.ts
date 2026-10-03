@@ -1,8 +1,6 @@
 /**
- * `roundLedgerAmountsToWholeRupees` (the Settings "Round off amounts" action)
- * against a real SQLite engine: it rounds stored ledger amounts to whole
- * rupees, leaves the loan tables and loan-linked transactions exactly as
- * they were, respects the `amount_minor > 0` CHECK, and runs atomically.
+ * `roundLedgerAmountsToWholeRupees` (Settings "Round off amounts") on real SQLite: rounds stored ledger
+ * amounts to whole rupees, leaves loan tables/loan-linked rows untouched, keeps `amount_minor > 0`, is atomic.
  */
 import { createRealDataTestDb } from '@/test-support/realDataTestDb';
 

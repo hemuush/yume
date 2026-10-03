@@ -14,17 +14,13 @@ export const ADD_TYPES: { label: string; value: EntryType }[] = [
 ];
 export const EDIT_TYPES = ADD_TYPES.slice(0, 3);
 
-// Same technique QuickActionsRow already uses to get readable small-caps
-// text out of the app's pale sky-blue/lavender accents, which are too
-// light at their own lightness to read as text on cream.
+// Same trick as QuickActionsRow: the pale sky-blue/lavender accents are too light as text on cream.
 const TRANSFER_TEXT = shade(theme.colors.primary, 45, 8);
 const FRIEND_TEXT = shade(theme.colors.accent, 45, 8);
 
 /**
- * A wash colour + a readable accent tone per entry type, all four already-
- * existing theme tokens — confirms "this is an expense/income/transfer/
- * friend entry" from the top of the screen down, the same job colour
- * already does for Income/Spent on Home, just moved earlier in this flow.
+ * A wash colour + readable accent per entry type (four existing theme tokens), so the type reads from the
+ * top of the screen, as colour already does for Income/Spent on Home.
  */
 export const TYPE_WASH: Record<EntryType, { bg: string; accent: string }> = {
   expense: { bg: theme.colors.idCoral, accent: theme.colors.idCoralDeep },
@@ -66,9 +62,8 @@ interface StagedFriend {
 export type Staged = StagedTx | StagedFriend;
 
 /**
- * What makes two entries "the same" for the repeat check: type, account(s),
- * category, amount and date. The note doesn't count — the same coffee is
- * often logged twice with and without one.
+ * What makes two entries "the same" for the repeat check: type, account(s), category, amount, date.
+ * The note is ignored: the same coffee is often logged with and without one.
  */
 export function repeatKey(r: StagedTx): string {
   return [r.type, r.accountId, r.toAccountId ?? '', r.categoryId ?? '', r.amountMinor, r.date].join('|');
@@ -100,11 +95,8 @@ export interface AddForm {
 }
 
 /**
- * Checks the Add form and turns it into a staged entry, or says what's
- * missing, in the order the form asks: amount, then person or account,
- * then category, then a valid transfer destination in the same currency
- * (the rule createTransaction enforces, caught here as a form error rather
- * than a half-saved batch). `id` is only used to tell staged rows apart.
+ * Validates the form into a staged entry or returns what's missing, in form order: amount, person/account,
+ * category, same-currency transfer destination (a createTransaction rule). `id` only keys rows.
  */
 export function formToStaged(
   form: AddForm,

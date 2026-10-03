@@ -31,9 +31,8 @@ function SumLine({ color, label, text }: { color: string; label: string; text: s
 }
 
 /**
- * The tracked balance, one line until you open it: accounts + loans + friends
- * as the sum it is, with the note about loans whose home or vehicle isn't
- * counted yet. Amounts that include savings are masked while those are hidden.
+ * The tracked balance, one line until opened: accounts + loans + friends as the sum it is, with a note about
+ * loans whose home or vehicle isn't counted yet. Amounts including savings are masked while those are hidden.
  */
 export function TrackedCard({
   totalMinor,

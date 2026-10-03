@@ -21,9 +21,8 @@ interface Props {
 }
 
 /**
- * The top of Profile, on both tabs: a card tinted with the active theme, the
- * avatar beside the name (tap to edit), and a chip saying the data stays on
- * this phone. The pack's hills run along the bottom edge, as on Home.
+ * Top of Profile on both tabs: a card tinted with the active theme, avatar beside the name (tap to edit),
+ * and a chip saying data stays on this phone. The pack's hills run along the bottom edge, as on Home.
  */
 export function ProfileIdentity({
   name,

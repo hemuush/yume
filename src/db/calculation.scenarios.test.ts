@@ -1,11 +1,6 @@
 /**
- * A broad matrix of realistic combined scenarios — multiple currencies,
- * both loan directions, both people-balance directions, active vs closed
- * loans, and transfers into a savings account — checked against
- * hand-computed expected totals. Requested after two real calculation bugs
- * shipped in a row (an ambiguous SQL column, and a query against a
- * nonexistent column) that neither had test coverage. This exists to make
- * "the numbers are wrong" bugs show up here, not on a user's screen.
+ * Broad matrix of combined scenarios (currencies, both loan and people-balance directions, active vs closed
+ * loans, savings transfers) vs hand-computed totals, so wrong numbers surface here, not on a user's screen.
  */
 import { createRealDataTestDb } from '@/test-support/realDataTestDb';
 
@@ -122,9 +117,8 @@ describe('calculation scenario matrix', () => {
 
     const accounts = await listAccounts();
     const thisAccount = accounts.find((a) => a.id === account.id)!;
-    // This file's tests share one in-memory db and accumulate accounts —
-    // "tracked balance" is only meaningful summed across every account in
-    // that currency, so recompute it from just the ones this test created.
+    // Tests share one in-memory db and accumulate accounts, and tracked balance sums a whole currency,
+    // so recompute from only the accounts this test created.
     const thisTestAccounts = accounts.filter((a) => a.id === account.id);
     const balance = computeTrackedBalance(thisTestAccounts, 'INR', loans, []);
     const expectedLoansNet =
@@ -152,9 +146,8 @@ describe('calculation scenario matrix', () => {
 
     const people = await listPeople();
     const balance = computeTrackedBalance(await listAccounts(), 'INR', [], people);
-    // Only this test's own two people affect the net-of-people check below —
-    // filter to just them since earlier tests in this file may have left
-    // their own accounts/loans (but no people) in the shared in-memory db.
+    // Earlier tests leave accounts/loans (but no people) in the shared db, so filter to this test's own two
+    // people for the net-of-people check below.
     const netOfThesePeople = people
       .filter((p) => p.id === owesYou.id || p.id === youOwe.id)
       .reduce((sum, p) => sum + p.balanceMinor, 0);

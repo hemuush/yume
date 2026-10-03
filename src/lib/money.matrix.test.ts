@@ -1,9 +1,6 @@
 /**
- * Combinatorial coverage of the money helpers. Everything in the app moves
- * through integer minor units; `toMinor` is the only entry point for stored
- * amounts and quantizes user input to whole major units (no sub-unit
- * "205.55" ever lands in the ledger). `formatMoney` must never throw
- * regardless of currency or magnitude.
+ * Combinatorial coverage of the money helpers. `toMinor` is the sole entry for stored amounts (integer minor
+ * units), quantizing to whole major units (no "205.55"). `formatMoney` must never throw.
  */
 import { toMinor, toMajor, formatMoney, getCurrencySymbol } from './money';
 import { MAX_AMOUNT_MAJOR, MAX_AMOUNT_MINOR } from './amountLimits';

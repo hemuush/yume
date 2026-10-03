@@ -87,9 +87,8 @@ describe('generateAmortizationSchedule', () => {
       startDate: '2024-01-31',
     });
     expect(schedule[0].dueDate).toBe('2024-01-31');
-    // One installment in every calendar month — a month without a 31st
-    // clamps to its own last day rather than overflowing into the next
-    // month (which used to skip February and double up March).
+    // One installment per calendar month; a month without a 31st clamps to its last day rather than
+    // overflowing into the next month.
     expect(schedule.map((r) => r.dueDate)).toEqual([
       '2024-01-31',
       '2024-02-29',
@@ -164,9 +163,8 @@ describe('recalculateAfterPrepayment', () => {
   });
 
   it('supports a floating-rate change: same outstanding at the moment of change, future interest reflects the new rate', () => {
-    // applyRateChange() in db/loans.ts reuses this exact function for a rate
-    // change (outstanding balance and EMI held fixed, only the rate moves) —
-    // this test exercises that reuse path directly.
+    // applyRateChange() in db/loans.ts reuses this for a rate change (balance and EMI fixed, only the rate
+    // moves); this test exercises that reuse path directly.
     const outstanding = 400000_00;
     const emi = 9500_00;
     const oldRateSchedule = recalculateAfterPrepayment({

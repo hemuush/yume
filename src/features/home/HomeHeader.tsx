@@ -37,11 +37,8 @@ function greetingWord(): string {
   return 'evening';
 }
 
-// Four small "sparks" scattered through the gradient — a wink at "Yume"
-// (dream) rather than a busy repeating pattern. `top` is a pixel offset from
-// the start of the *content* area (i.e. below the status-bar inset, added
-// separately) so they never land up in the status bar itself regardless of
-// device. `left` is a plain percentage of the band's width.
+// Four small "sparks" in the gradient, a wink at "Yume" (dream) rather than a busy pattern.
+// `top`: px below the status-bar inset (added separately), so none land in it; `left`: % of band width.
 const SPARKS: { top: number; left: number; size: number; opacity: number }[] = [
   { top: 4, left: 58, size: 5, opacity: 0.9 },
   { top: 26, left: 78, size: 3, opacity: 0.75 },
@@ -50,17 +47,8 @@ const SPARKS: { top: number; left: number; size: number; opacity: number }[] = [
 ];
 
 /**
- * One spark, gently breathing — scale and opacity pulse up to a brighter
- * peak and back twice when Home opens, then rest, staggered by `delay` so
- * the four never pulse in sync (that
- * read as a single blinking cluster rather than an ambient scatter). Built
- * entirely on `react-native-reanimated`'s own shared values — never mixed
- * with core React Native's `Animated`, which is exactly the import
- * mismatch that crashed BudgetRow/GoalCard/GoalChip earlier this session.
- * `useReduceMotion` (not reanimated's `entering`-only `ReduceMotion`, which
- * doesn't cover a continuous loop like this) skips the loop entirely when
- * the OS setting is on, leaving the spark at its plain static opacity —
- * exactly what every spark already did before this change.
+ * One spark breathing twice on Home open (scale+opacity), staggered by `delay` so the four never sync.
+ * Reanimated only, never core Animated (that mix crashed BudgetRow/GoalCard); reduce-motion skips the loop.
  */
 /** Out and back counts as two: 4 is two pulses, ending where it started. */
 const SPARK_REPEATS = 4;
@@ -84,11 +72,8 @@ export function Spark({
 
   useEffect(() => {
     if (reduce) {
-      // `useReduceMotion` starts at `false` and only flips to the real OS
-      // value once its async check resolves — if that happened after the
-      // loop below already started, this run's own cleanup (below) already
-      // cancelled it by the time this branch executes; this just snaps the
-      // values back to their plain static rest state.
+      // `useReduceMotion` starts `false` and flips after an async check; if that lands after the loop began,
+      // the cleanup already cancelled it, so this just snaps values back to the static rest state.
       scale.value = 1;
       glow.value = opacity;
       return;
@@ -125,24 +110,8 @@ export function Spark({
 const COLLAPSED_BOTTOM_PAD = 10;
 
 /**
- * The Home screen's own header — a soft gradient from a light wash of the
- * user's accent down into the page's own cream, derived the same way the
- * Reports moon/heatmap are (`shade()`), so picking a different accent
- * retints the whole thing.
- *
- * Brand row, then the greeting beside the month pill, then
- * `children` along the bottom of the band — Home puts its Expense / Income /
- * Transfer shortcuts there, so they sit in the header instead of adding one
- * more row to the page.
- *
- * It sits over Home's ScrollView (absolutely positioned; the screen pads its
- * content by `onHeight`) and collapses as the page scrolls: the whole band
- * slides up by `collapse distance × progress` while the brand row slides
- * back down by the same amount, so the brand row stays put and the greeting
- * and shortcuts scroll away under it, fading as they go. A compact month
- * pill fades into the brand row so the period stays reachable. Transforms
- * only — no layout runs per scroll frame — and progress is the scroll
- * position itself, so there's nothing to reduce for reduce-motion.
+ * Home header over the ScrollView (absolute; content padded by `onHeight`): accent-to-cream via `shade()`.
+ * Scroll collapse = transforms only: band slides up, brand row counter-slides, compact month pill fades in.
  */
 export function HomeHeader({
   cursor,
@@ -175,9 +144,8 @@ export function HomeHeader({
   const gradientBottom = shade(accent, 96, 2);
   const contentTop = insets.top + 10;
 
-  // How far the band can travel: its full height minus the brand row and a
-  // little padding under it. Measured, not hardcoded, so a larger system
-  // font (a taller greeting) still collapses to exactly the brand row.
+  // How far the band can travel: its full height minus the brand row and a little padding. Measured, not
+  // hardcoded, so a larger system font still collapses to exactly the brand row.
   const [bandHeight, setBandHeight] = useState(0);
   const [rowBottom, setRowBottom] = useState(0);
   const distance = useSharedValue(0);
@@ -211,7 +179,8 @@ export function HomeHeader({
     const p = d > 0 ? Math.min(1, Math.max(0, scrollY.value / d)) : 0;
     return { opacity: 1 - Math.min(1, p * 1.6), transform: [{ translateY: -p * 8 }] };
   });
-  // Under the hills, only once the header has started to collapse: rows slide under a soft edge instead of being cut by the hill line.
+  // Under the hills, only once the header has started to collapse: rows slide under a soft edge instead of
+  // being cut by the hill line.
   const edgeStyle = useAnimatedStyle(() => {
     const d = distance.value;
     return { opacity: d > 0 ? Math.min(1, Math.max(0, scrollY.value / d)) : 0 };

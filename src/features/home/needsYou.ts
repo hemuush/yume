@@ -4,15 +4,8 @@ import { budgetPace } from '@/lib/pace';
 import { formatPctChange } from '@/lib/format';
 
 /**
- * The one list of things that want you to do something — the bell opens it
- * (Alerts) and counts it. Home itself has no Needs you card: bills show in
- * Upcoming, flagged "Due soon", and budgets get a dot on the Budgets tab.
- * Never general information: that's what Upcoming and the month hero are for.
- * Pure — every input is passed in, including today's date — so the rules
- * below are unit-tested without a database or a clock.
- *
- * Each item's key carries its situation (a budget "near" vs "over", an EMI
- * "soon" vs "due"), so an item dismissed with ✕ comes back when things change.
+ * The one list of things needing action (bell/Alerts); general info belongs in Upcoming and the month hero.
+ * Pure (date is an input). Keys carry the situation (near/over, soon/due) so a dismissed item can return.
  */
 export type NeedsYouTone = 'urgent' | 'warn' | 'info';
 export type NeedsYouAction = 'loans' | 'budgets' | 'backup' | 'reports' | 'tidy' | 'recurring' | 'payCard';

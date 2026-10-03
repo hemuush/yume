@@ -3,10 +3,8 @@ import { Animated, PanResponder, StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
 
 /**
- * One line of a day that can be dragged once it has been held (TimelineDay
- * lifts it on a long press). While it is lifted this takes over the touch from
- * the row's own press and the list's scroll, and follows the finger; the
- * other lines slide aside by `shift`. The day decides where it lands.
+ * A day's line draggable once held (TimelineDay lifts it on long press); lifted, it takes over touch from the
+ * row press and list scroll and follows the finger; others slide aside by `shift`. The day picks the landing.
  */
 export function DraggableLine({
   lifted,

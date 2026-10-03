@@ -12,19 +12,13 @@ import { shade, hexToRgba } from '@/lib/color';
 import { authenticate, isDeviceSecured } from '@/lib/appLock';
 import { useAppLock } from '@/lib/AppLockContext';
 
-// Sparks scattered through the gradient stay the app's cream surface tone
-// at low opacity — the same subtle-shimmer trick HomeHeader's own sparks
-// use on its light wash. Precomputed once: theme.colors values are static,
-// so there's no reason to re-derive these on every render.
+// Sparks stay the cream surface tone at low opacity, like HomeHeader's own. Precomputed once because
+// theme.colors values are static.
 const SPARK_COLOR = theme.colors.surface;
 
 /**
- * Scattered stars through the gradient — the same idea as HomeHeader's own
- * "sparks" (a wink at "Yume"/dream). Fixed positions, not random, so the
- * screen renders identically every time rather than reshuffling on every
- * mount. Spread across the full height now that the centered content below
- * no longer leaves a big empty stretch above it — previously clustered near
- * the top, where the clock used to sit.
+ * Scattered stars through the gradient, like HomeHeader's "sparks". Fixed positions (not random) so the
+ * screen renders identically every mount; spread over the full height since the content is centered.
  */
 const STARS: { top: number; left: number; size: number; opacity: number }[] = [
   { top: 58, left: 12, size: 2, opacity: 0.5 },
@@ -39,10 +33,8 @@ const STARS: { top: number; left: number; size: number; opacity: number }[] = [
 
 /** Suu's dot row on the lock screen: seven dots, the middle one in the theme's dot colour. */
 const MOON_PHASE_OPACITY = [0.15, 0.4, 0.7, 1, 0.7, 0.4, 0.15];
-// `accent` is the active theme's own colour (see AccentContext) — this used
-// to be the static `theme.colors.primary` token, so the lock screen's
-// gradient retinted with a picked theme but this one highlighted dot never
-// did.
+// `accent` is the active theme pack's colour (see AccentContext), so the highlighted dot retints
+// with the gradient instead of staying the static `theme.colors.primary`.
 function MoonPhaseRow({ accent }: { accent: string }) {
   return (
     <View style={styles.moonRow}>
@@ -58,21 +50,8 @@ function MoonPhaseRow({ accent }: { accent: string }) {
 }
 
 /**
- * Yume's own app-level lock gate (never a password of its own — see
- * `tryUnlock` below). Previously a flat cream background with everything
- * dead-centered, which on a tall screen read as mostly empty space around a
- * small illustration; a later pass then inverted it into a navy "night
- * mood" gradient, which ended up reading as an unrelated dark-mode screen
- * dropped into an app that otherwise never has one. This reuses two things
- * already built and approved elsewhere rather than inventing a new look:
- * the Home header's own "Dreamlight" gradient technique (`shade()` off the
- * user's accent, the exact same daytime values HomeHeader itself uses), and
- * the widgets' dot-matrix/moon-phase language. The clock that used to sit
- * under the wordmark was dropped — the phone's own status bar/system lock
- * screen already shows the time a moment before this screen ever appears,
- * so it was pure duplication — and the rest of the content is centered in
- * the space that frees up rather than staying anchored to the bottom third
- * with empty gradient above it.
+ * Yume's app-level lock gate (never a password of its own, see `tryUnlock`). Reuses Home's "Dreamlight"
+ * gradient and the widgets' moon language; no clock (the system lock screen already shows the time).
  */
 export function LockScreen({ onUnlocked }: { onUnlocked: () => void }) {
   const insets = useSafeAreaInsets();
@@ -108,9 +87,8 @@ export function LockScreen({ onUnlocked }: { onUnlocked: () => void }) {
     }
   };
 
-  // Prompt automatically once when the lock screen first appears — the
-  // "Unlock" button below stays as a manual retry if that prompt is
-  // dismissed or fails.
+  // Prompt automatically once when the lock screen first appears; the "Unlock" button is a manual retry
+  // if the prompt is dismissed or fails.
   useEffect(() => {
     void tryUnlock();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -121,10 +99,8 @@ export function LockScreen({ onUnlocked }: { onUnlocked: () => void }) {
     onUnlocked();
   };
 
-  // The exact same shade() call HomeHeader makes for its own "Dreamlight"
-  // wash — one gradient formula for both screens instead of a separate
-  // night-mode branch. Picking a different accent in Settings retints this
-  // the same way it retints Home.
+  // The same shade() call HomeHeader makes for its "Dreamlight" wash: one gradient formula for both
+  // screens, retinted by the accent picked in Settings.
   const gradientTop = shade(accent, 88, 4);
   const gradientBottom = shade(accent, 96, 2);
 
@@ -209,10 +185,8 @@ const styles = StyleSheet.create({
     color: theme.colors.textSecondary,
     letterSpacing: 0.2,
   },
-  // Fills the space between the wordmark and the bottom safe area, and
-  // centers Suu/the message/the button inside it — replaces the old
-  // bottom-anchored `lower` block now that there's no clock above it
-  // holding that space open on its own.
+  // Fills the space between the wordmark and the bottom safe area and centers Suu, the message and
+  // the button inside it.
   centered: {
     position: 'absolute',
     left: 0,

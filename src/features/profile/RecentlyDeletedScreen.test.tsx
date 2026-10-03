@@ -1,7 +1,6 @@
 /**
- * The Recently deleted screen: shows what was deleted with the days it has
- * left, restores one, hides Restore when an entry can't come back, and shows
- * the empty state when nothing's there. All figures are made up.
+ * The Recently deleted screen: lists deleted items with days left, restores one, hides Restore when an entry
+ * can't come back, and shows the empty state. Made-up figures.
  */
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
 import { Text } from 'react-native';

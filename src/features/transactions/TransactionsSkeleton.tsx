@@ -4,7 +4,10 @@ import { Skeleton } from '@/components/Skeleton';
 
 const BAR_HEIGHTS = [18, 34, 12, 44, 26, 38, 20];
 
-/** Stands in for the headline + spend chart + day list while the first `listTransactions` batch is still loading. */
+/**
+ * Stands in for the headline + spend chart + day list while the first `listTransactions` batch is still
+ * loading.
+ */
 export function TransactionsSkeleton() {
   return (
     <View style={styles.wrap}>

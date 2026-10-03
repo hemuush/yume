@@ -18,11 +18,8 @@ export function dateFieldLabel(iso: string): string {
 }
 
 /**
- * A form's date: a chip showing the date that opens the app's calendar
- * (CalendarSheet), in place of typing a day, month and year into three
- * boxes. `pastFacing` fields ("paid on", "given on") also get Today and
- * Yesterday chips, the way Add does; future-facing ones (a first EMI, a
- * goal's deadline) just show the date. Value in / out is YYYY-MM-DD.
+ * A form's date: a chip that opens CalendarSheet instead of three typed boxes. `pastFacing` fields get
+ * Today/Yesterday chips; future-facing ones (first EMI, goal deadline) don't. Value is YYYY-MM-DD.
  */
 export function DateField({
   label,

@@ -1,9 +1,6 @@
 /**
- * One interface per table, generated from schema.ts, so a row read from
- * SQLite is typed column by column instead of `any` — a misspelt column
- * in a row mapper is a compile error, not a silent `undefined`. SQLite's
- * INTEGER/REAL are `number`, TEXT is `string`; a column without NOT NULL
- * (and without a default) can be `null`. Booleans are stored as 0/1.
+ * One interface per table, generated from schema.ts, so rows are typed per column instead of `any` (a misspelt
+ * column is a compile error). INTEGER/REAL = number, TEXT = string, no NOT NULL/default = nullable; bool 0/1.
  */
 
 /** A row of `accounts`. */
@@ -154,12 +151,6 @@ export interface PersonLedgerEntryRow {
   date: string;
   note: string;
   created_at: string;
-}
-
-/** A row of `settings`. */
-export interface SettingRow {
-  key: string;
-  value: string;
 }
 
 /** A row of `recurring_rules`. */

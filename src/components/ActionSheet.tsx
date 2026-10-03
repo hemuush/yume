@@ -16,12 +16,8 @@ export interface ActionSheetItem {
 }
 
 /**
- * A menu of actions — a loan's Prepay / Update rate / Delete, a category's
- * Archive / Delete — as a sheet of rows with round icons (the calm-sheets
- * sign-off), risky ones in red. A plain yes/no confirm goes through
- * `showAlert` instead (see AppDialog). Built on `ModalSheet`, so the ✕,
- * backdrop tap and Android back all close it; there's no Cancel row, and no
- * ceiling on how many actions it holds.
+ * A sheet of icon rows for a menu of actions (risky ones in red); a plain yes/no confirm uses `showAlert`.
+ * Built on `ModalSheet` (✕, backdrop, Android back close it); no Cancel row, no cap on action count.
  */
 export function ActionSheet({
   visible,

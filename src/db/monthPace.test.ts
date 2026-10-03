@@ -1,8 +1,6 @@
 /**
- * getMonthPaceInputs against a real SQLite engine: everyday spending leaves
- * out system categories, other months and other currencies; "still due"
- * counts pending EMIs and active recurring expenses after today and before
- * the month ends — and nothing else.
+ * getMonthPaceInputs on real SQLite: everyday spending excludes system categories, other months/currencies;
+ * "still due" counts only pending EMIs and active recurring expenses after today, before month end.
  */
 import { createRealDataTestDb } from '@/test-support/realDataTestDb';
 

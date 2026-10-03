@@ -1,6 +1,5 @@
-// Exists only so the tab bar's center "+" slot has a route to point at —
-// app/(tabs)/_layout.tsx intercepts its tabPress and pushes /add-transaction
-// instead, so this screen is never actually reached in normal use.
+// Exists only so the tab bar's center "+" slot has a route; _layout.tsx intercepts its tabPress and pushes
+// /add-transaction, so this screen is never reached in normal use.
 export default function AddTabPlaceholder() {
   return null;
 }

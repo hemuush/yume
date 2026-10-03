@@ -18,12 +18,8 @@ import { errorMessage } from '@/lib/errorMessage';
 import { DURATIONS } from '@/lib/motionTimings';
 
 /**
- * Jurisdiction-specific tax-on-fee conventions that Yume can offer as a
- * one-tap fill-in, purely as a labeled convenience — never a silent
- * default. Nothing in the actual charge math assumes any of these; a user
- * whose account isn't in one of these currencies just sees a plain
- * percentage field with no quick-fill at all, which is the correct default
- * for a jurisdiction Yume knows nothing about.
+ * Jurisdiction-specific tax-on-fee conventions offered as a labelled one-tap fill, never a silent default.
+ * Nothing in the charge math assumes them; other currencies get a plain percentage field, no quick-fill.
  */
 const TAX_ON_FEE_PRESETS: Record<string, { label: string; percent: number }> = {
   INR: { label: '18% GST', percent: 18 },
@@ -93,10 +89,8 @@ const previewStyles = StyleSheet.create({
   was: { fontFamily: theme.font.mono, color: theme.colors.textMuted, textDecorationLine: 'line-through' },
 });
 
-// A decorative tick row, not a literal one-tick-per-installment schedule — a
-// 240-month home loan would overflow a row at that scale. Scaled down
-// proportionally so the "the tail shrinks" read stays clear regardless of
-// the loan's real remaining length.
+// A decorative tick row, not one tick per installment (a 240-month loan would overflow); scaled down
+// proportionally so "the tail shrinks" reads clearly whatever the loan's remaining length.
 const MAX_TICKS = 26;
 
 function PrepaymentReveal({ summary, onDone }: { summary: PrepaymentSummary; onDone: () => void }) {
@@ -216,19 +210,14 @@ export function PrepayModal({
   onDone: () => void;
 }) {
   const [amount, setAmount] = useState('');
-  // No jurisdiction default is assumed here at all — whether a prepayment
-  // charge applies, and how much, depends entirely on the individual loan
-  // agreement and the laws where it was taken out, neither of which Yume
-  // knows. Starts blank for every loan; the hint text below explains what
-  // to go check rather than guessing a number.
+  // No jurisdiction default is assumed: whether a prepayment charge applies, and how much, depends on the
+  // loan agreement and local law, which Yume can't know. Starts blank; the hint below says what to check.
   const [chargePercent, setChargePercent] = useState('');
   const [taxPercent, setTaxPercent] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  // Set once the prepayment actually succeeds — swaps the form for a reveal
-  // of what it bought (interest saved, months shaved) instead of the modal
-  // just closing silently, since `applyPrepayment` already computes that
-  // comparison and previously threw it away.
+  // Set once the prepayment succeeds: swaps the form for a reveal of what it bought (interest saved, months
+  // shaved) instead of silently closing, using the comparison `applyPrepayment` already computes.
   const [result, setResult] = useState<PrepaymentSummary | null>(null);
 
   const amountMinor = toMinor(parseFloat(amount || '0'));
@@ -240,10 +229,8 @@ export function PrepayModal({
   );
   const taxPreset = TAX_ON_FEE_PRESETS[account.currency];
 
-  // What this amount would save, shown before Confirm — the same
-  // calculation Confirm records (previewPrepayment/planPrepayment), so the
-  // reveal afterwards can never disagree with it. Recomputed a beat after
-  // typing stops; a slower earlier result is dropped if the amount changed.
+  // What this amount would save, shown before Confirm; same calculation Confirm records (previewPrepayment/
+  // planPrepayment) so the reveal can't disagree. Debounced after typing; a slower earlier result is dropped.
   const [preview, setPreview] = useState<(PrepaymentSummary & { neverPaysOff: boolean }) | null>(null);
   useEffect(() => {
     if (!Number.isFinite(amountMinor) || amountMinor <= 0) {

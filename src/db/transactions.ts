@@ -52,12 +52,8 @@ export interface CreateTransactionInput {
 }
 
 /**
- * Savings accounts aren't spendable in place — money has to move out via a
- * transfer before it can be logged as income or an expense. Enforced here
- * (not just in the account pickers) so every path that writes a transaction
- * — the add-transaction screen, recurring rules, friend ledger entries,
- * imports — is held to the same rule, regardless of what UI or lack of UI
- * produced the input.
+ * Savings accounts aren't spendable in place: money must transfer out before it's logged as income or
+ * expense. Enforced here, not only in pickers, so every writer (recurring, friend ledger, imports...) obeys.
  */
 export async function assertSpendableAccount(type: TransactionType, accountId: string): Promise<void> {
   if (type === 'transfer') return;
@@ -71,10 +67,8 @@ export async function assertSpendableAccount(type: TransactionType, accountId: s
 }
 
 /**
- * A transfer moves the same stored number out of one account and into the
- * other — there's no exchange rate anywhere in the schema — so between two
- * accounts in different currencies it would silently turn ₹1,000 into
- * $1,000. Rejected until the app has real conversion support.
+ * A transfer moves the same stored number between accounts (the schema has no exchange rate), so across
+ * currencies it would silently turn ₹1,000 into $1,000. Rejected until real conversion exists.
  */
 export async function assertSameCurrencyTransfer(
   type: TransactionType,
@@ -104,10 +98,8 @@ function assertRealDate(date: string): void {
 }
 
 /**
- * Every check createTransaction applies before writing — shared with
- * runDueRecurringRules, which has to do its own insert inside a
- * transaction (see insertTransactionRow) but must hold each occurrence to
- * exactly the same rules a hand-typed entry gets.
+ * Every check createTransaction applies before writing; shared with runDueRecurringRules, which inserts inside
+ * a transaction (see insertTransactionRow) yet must apply the same rules as a hand-typed entry.
  */
 export async function assertValidTransactionInput(input: CreateTransactionInput): Promise<void> {
   assertRealDate(input.date);
@@ -145,10 +137,8 @@ async function assertRefundTarget(
 }
 
 /**
- * The raw INSERT behind createTransaction, against whichever handle it's
- * given — the outer db, or a `tx` inside withTransactionAsync (calling
- * createTransaction there would queue behind the transaction itself and
- * deadlock). Does no validation; run assertValidTransactionInput first.
+ * The raw INSERT behind createTransaction, on the outer db or a `tx` inside withTransactionAsync
+ * (createTransaction would deadlock there). Does no validation: run assertValidTransactionInput first.
  */
 export async function insertTransactionRow(db: AppDb, input: CreateTransactionInput): Promise<string> {
   const id = newId();
@@ -175,16 +165,12 @@ export async function insertTransactionRow(db: AppDb, input: CreateTransactionIn
 }
 
 /**
- * The post-write notification work every new entry gets — see queueSpendAlerts.
- * An expense in the current month may queue a budget or spending alert (which
- * rebuilds the notifications itself); anything else dated today still rebuilds,
- * as the evening nudge skips a day something is already logged. Never throws.
+ * Post-write notifications (queueSpendAlerts): a current-month expense may queue an alert (which rebuilds
+ * notifications); anything else dated today still rebuilds (evening nudge skips a logged day). Never throws.
  */
 export async function checkOverspendForNewTransaction(input: CreateTransactionInput): Promise<void> {
-  // The spending-jump check compares this month's spend to last month's —
-  // firing it for a backdated entry (e.g. logging January while it's September)
-  // would compare the wrong month entirely and could pop a bogus alert that
-  // has nothing to do with current spending.
+  // The spending-jump check compares this month to last month, so a backdated entry (January logged in
+  // September) would compare the wrong month and could pop a bogus alert.
   const today = toLocalIsoDate(new Date());
   const isCurrentMonth = input.date.slice(0, 7) === today.slice(0, 7);
   if (input.type === 'expense' && input.categoryId && isCurrentMonth) {
@@ -210,10 +196,8 @@ export async function listTransactions(filters?: {
   toDate?: string;
   limit?: number;
   /**
-   * With `categoryId`, also match that category's subcategories — the same
-   * rollup Reports' "Where it went" totals use, so tapping a category lists
-   * exactly the transactions its total was built from. A no-op for a
-   * category with no subcategories.
+   * With `categoryId`, also match its subcategories: the same rollup Reports' "Where it went" totals use, so a
+   * category's list is exactly what its total was built from. No-op without subcategories.
    */
   includeSubcategories?: boolean;
 }): Promise<Transaction[]> {
@@ -242,10 +226,8 @@ export async function listTransactions(filters?: {
   }
 
   const where = clauses.length ? `WHERE ${clauses.join(' AND ')}` : '';
-  // A non-numeric/NaN limit (e.g. from a stray parseInt('')) interpolated
-  // straight into the query used to produce literal "LIMIT NaN", which
-  // SQLite rejects with a syntax error — parameterized like every other
-  // value here, and simply omitted if it isn't a valid positive integer.
+  // A NaN limit (e.g. from parseInt('')) interpolated into the query gave "LIMIT NaN", a SQLite syntax error:
+  // parameterized like other values, and omitted unless a valid positive integer.
   const hasLimit = Number.isFinite(filters?.limit) && (filters?.limit as number) > 0;
   if (hasLimit) args.push(Math.floor(filters!.limit as number));
   const rows = await db.getAllAsync<TransactionRow>(
@@ -259,13 +241,8 @@ export async function listTransactions(filters?: {
 }
 
 /**
- * The most-used amounts logged against a category recently — powers Add
- * Transaction's "frequent amounts" quick-pick row. Ranked by how often an
- * exact amount recurs (not by recency alone), so a genuinely repeated
- * figure ("₹150 for the metro card, every time") surfaces even if a
- * one-off bigger purchase happened more recently; ties break toward the
- * most recent. Scoped to the last 90 days so an old, since-abandoned habit
- * doesn't keep crowding out how the category is actually used now.
+ * Most-used amounts for a category in the last 90 days (Add's quick-pick). Ranked by how often an exact amount
+ * recurs, not recency, so repeats beat a recent one-off; ties go to the latest. 90 days sheds old habits.
  */
 export async function getFrequentAmountsForCategory(
   categoryId: string,
@@ -275,11 +252,8 @@ export async function getFrequentAmountsForCategory(
   const db = await getDb();
   const currency = await getDefaultCurrency();
   const since = addDaysToIsoDate(today, -90);
-  // Same currency scoping every other aggregate in the app uses (see
-  // getPeriodSummary's own comment) — without the accounts join, a
-  // transaction logged against a foreign-currency account would rank
-  // alongside default-currency ones and surface as a quick-pick chip
-  // showing that face value mislabeled in the default currency.
+  // Same currency scoping as every other aggregate (see getPeriodSummary): without the accounts join, a
+  // foreign-currency transaction would rank among default-currency ones with its face value mislabeled.
   const rows = await db.getAllAsync<{ amount_minor: number }>(
     `SELECT t.amount_minor as amount_minor, COUNT(*) as freq, MAX(t.date) as lastDate
      FROM transactions t
@@ -294,9 +268,8 @@ export async function getFrequentAmountsForCategory(
 }
 
 /**
- * The account most recently used with a category, if any — Add picks it as
- * the default account once a category is chosen (Food usually goes on the
- * same card). Archived accounts are skipped.
+ * The account most recently used with a category, if any: Add picks it as the default once a category is
+ * chosen. Archived accounts are skipped.
  */
 export async function getLastAccountForCategory(categoryId: string): Promise<string | null> {
   const db = await getDb();
@@ -321,11 +294,8 @@ function toSqliteUtc(d: Date): string {
 }
 
 /**
- * An identical entry saved in the last REPEAT_WINDOW_MINUTES — same type,
- * account(s), category, amount and date — or null. Add asks "add it
- * anyway?" before saving a second one, since a double tap or a forgotten
- * earlier entry is the usual reason for a same-day pair. Returns when that
- * earlier one was saved, as an ISO timestamp.
+ * An identical entry (type, account(s), category, amount, date) saved within REPEAT_WINDOW_MINUTES, or null;
+ * returns its ISO save time. Add asks "add it anyway?": a double tap or forgotten entry is the usual cause.
  */
 export async function findRecentRepeat(
   input: {
@@ -360,13 +330,8 @@ export async function findRecentRepeat(
 }
 
 /**
- * Cross-period search — each word of the query has to match the
- * transaction's note, its category's name, or either side of the account it
- * moved through (a transfer matches on either account); a word that's a
- * number ("184", "₹1,807") also matches that amount, and a day in the query
- * ("24 sep", "24/9") narrows it to that date (see parseSearchQuery).
- * Deliberately not scoped by period the way `listTransactions` is: the whole
- * point is finding something outside whatever week/month Activity has in view.
+ * Cross-period search: each word must match note, category name or account (either transfer side);
+ * numbers also match the amount, a day ("24 sep") the date (parseSearchQuery). Deliberately not period-scoped.
  */
 export async function searchTransactions(
   query: string,
@@ -383,9 +348,8 @@ export async function searchTransactions(
     params.push(date);
   }
   for (const word of words) {
-    // `%` and `_` are SQL LIKE wildcards — without escaping them, searching
-    // for a literal "50%" (a plausible note, e.g. "50% off coupon") would
-    // instead match "50" followed by anything, silently over-matching.
+    // `%` and `_` are SQL LIKE wildcards: unescaped, searching a literal "50%" would match "50" followed by
+    // anything (silent over-matching).
     const like = `%${word.text.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
     const text = `t.note LIKE ? ESCAPE '\\' OR c.name LIKE ? ESCAPE '\\' OR pc.name LIKE ? ESCAPE '\\' OR a.name LIKE ? ESCAPE '\\' OR ta.name LIKE ? ESCAPE '\\'`;
     if (word.amountMinor) {
@@ -428,16 +392,8 @@ export interface RepeatEntry {
 }
 
 /**
- * The exact entries (same type, account, category and amount) the user has
- * logged by hand at least twice in the last 90 days, most repeated first —
- * the + button's long-press "Log again" list, and Add's "Your usual" chips
- * (one `type` at a time). Left out on purpose:
- *   - anything a loan or friend flow wrote (EMIs, disbursements, IOUs) or
- *     filed under a built-in category — logging those by hand mis-files them;
- *   - anything an active recurring rule already posts (rent, salary) — a
- *     one-tap repeat of those would double them;
- *   - archived categories/accounts and savings accounts, which can't take a
- *     new expense or income anyway.
+ * Entries (type, account, category, amount) hand-logged 2+ times in 90 days, most repeated first (Log again).
+ * Skips loan/friend and built-in-category entries (mis-filed), recurring-rule ones (double), archived/savings.
  */
 export async function getRepeatEntries(
   limit = 3,
@@ -528,10 +484,8 @@ export interface UpdateTransactionInput {
 }
 
 /**
- * Edits a plain transaction's own fields. Never call this on a transaction
- * linked to a loan payment or a person ledger entry (check first via
- * isLinkedTransaction) — those must go through the loan/person "undo" flow
- * instead, or their schedule/balance would silently desync from this edit.
+ * Edits a plain transaction's own fields. Never call on one linked to a loan payment or person ledger entry
+ * (check isLinkedTransaction): use the loan/person "undo" flow, or the schedule/balance desyncs.
  */
 export async function updateTransaction(id: string, input: UpdateTransactionInput): Promise<Transaction> {
   assertRealDate(input.date);
@@ -561,9 +515,8 @@ export async function updateTransaction(id: string, input: UpdateTransactionInpu
   // Only money in can be a refund: changing its type clears the flag.
   const isRefund = input.type === 'income' && (input.isRefund ?? !!current?.is_refund);
   if (isRefund) await assertRefundTarget(input.type, input.categoryId);
-  // `paymentMode` omitted means "leave it as-is": the edit screen has no
-  // payment-mode field, so writing `?? null` here used to wipe the mode a
-  // recurring rule had stamped on the transaction every time it was edited.
+  // `paymentMode` omitted = leave as-is: the edit screen has no such field, so `?? null` would wipe the mode
+  // a recurring rule stamped on the transaction.
   const keepPaymentMode = input.paymentMode === undefined;
   await db.runAsync(
     `UPDATE transactions
@@ -613,16 +566,8 @@ export type TransactionLink =
   | null;
 
 /**
- * Whether this transaction is the cash-side of a loan payment or a Friends
- * & Family ledger entry — and if so, which, so the caller can route to the
- * right "undo" flow instead of a raw edit/delete.
- *
- * EMI payments are found via loan_payments.transaction_id (a real FK link).
- * A loan's disbursement, processing fee, and prepayment (plus its charge)
- * transactions are found via transactions.loan_id instead — a real FK,
- * populated by every one of those inserts in db/loans.ts — and are blocked
- * from editing/deleting directly since no undo exists for any of them yet
- * (only whole-loan deletion, which cascades them away together).
+ * Whether this is the cash side of a loan or Friends & Family entry (and which), so callers route to its undo.
+ * EMIs link via loan_payments.transaction_id; disbursement/fee/prepayment rows via loan_id and can't be edited.
  */
 export async function getTransactionLink(id: string): Promise<TransactionLink> {
   const db = await getDb();
@@ -643,16 +588,12 @@ async function isLinkedTransaction(id: string): Promise<boolean> {
 }
 
 /**
- * Deletes a plain transaction. Refuses to delete one linked to a loan
- * payment or person ledger entry — those foreign keys are ON DELETE SET
- * NULL, so a raw delete would silently orphan the loan's "paid" status or
- * leave a person's balance including money that no longer moved. Use
- * undoInstallmentPayment / undoPersonTransaction for those instead.
+ * Deletes a plain transaction; refuses loan-payment/person-linked ones (FKs are ON DELETE SET NULL, so a raw
+ * delete would orphan the "paid" status or skew a balance). Use undoInstallmentPayment / undoPersonTransaction.
  */
 /**
- * Deletes an entry and keeps it in Recently deleted for 30 days. Pass
- * `{ keep: false }` when the delete only takes back an add a moment ago (the
- * Undo on "Log again"), which isn't something to find later.
+ * Deletes an entry and keeps it in Recently deleted for 30 days. `{ keep: false }` is for taking back an add a
+ * moment ago ("Log again" Undo), which isn't worth finding later.
  */
 export async function deleteTransaction(
   id: string,

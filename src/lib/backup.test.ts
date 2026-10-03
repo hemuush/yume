@@ -1,10 +1,6 @@
 /**
- * restoreFromSnapshot against a real SQLite engine: a valid snapshot must
- * round-trip with nothing reported skipped, and a snapshot carrying keys
- * that aren't real columns (an older/newer schema, or a hand-edited file)
- * must still restore every real column while naming the dropped keys in
- * `skippedColumns` — so the Backup screen can tell the user a partial
- * restore happened instead of it passing silently for a complete one.
+ * restoreFromSnapshot on a real SQLite engine: a valid snapshot round-trips with nothing skipped; keys that
+ * aren't real columns are dropped and named in `skippedColumns` so a partial restore is never silent.
  */
 import { createRealDataTestDb } from '@/test-support/realDataTestDb';
 

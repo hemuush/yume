@@ -20,9 +20,7 @@ export const styles = StyleSheet.create({
     marginTop: 8,
   },
 
-  // Amount is the one figure the whole transaction hangs on — centered and
-  // large, no boxed input, the same "biggest number wins" treatment the
-  // This Month card and stat tiles already use elsewhere on Home.
+  // Amount is centred and large with no boxed input: the biggest number wins, as on Home's This Month card.
   heroLabel: {
     ...EYEBROW,
     textAlign: 'center',
@@ -157,11 +155,8 @@ export const styles = StyleSheet.create({
   },
   addToListText: { fontFamily: theme.font.roundedBold, fontSize: 13, color: theme.colors.textPrimary },
 
-  // Redrawn as one continuous "receipt" rather than a stack of bordered
-  // mini-cards — a thicker dashed top edge stands in for a torn paper edge
-  // (React Native has no CSS clip-path for the literal zigzag), and rows
-  // inside share one card with dashed dividers between them instead of
-  // each getting its own border.
+  // One continuous "receipt" card: thick dashed top edge fakes a torn edge (RN has no clip-path); rows share
+  // it with dashed dividers instead of per-row borders.
   staged: {
     marginTop: 18,
     backgroundColor: theme.colors.surface,

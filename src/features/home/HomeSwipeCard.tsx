@@ -29,38 +29,15 @@ export interface SwipePage {
 }
 
 /**
- * Budgets, Upcoming, and Savings goals used to each get their own stacked
- * `HomeSection` — three headers and three cards before Recent activity ever
- * showed up. This merges them into one card: a row of tab pills stands in
- * for the three section titles, and the body is a horizontally paged,
- * swipeable strip instead of three vertically stacked ones. A page that
- * would be empty is never included in `pages` by the caller (same rule the
- * three sections already followed individually), so the card quietly
- * shrinks to however many of the three actually have anything to show —
- * and renders nothing at all if none do.
- *
- * The tabs are one pill track at the top of the card itself, with a white
- * highlight that slides to the page you're on (the Home A sign-off), and a
- * page with its own list elsewhere ends in a "See all" row.
- *
- * The card is as tall as the page you're on, not the tallest page: a
- * horizontally paged ScrollView otherwise stretches every page to the
- * tallest one, which left two Upcoming rows sitting on top of a Budgets-
- * sized empty card. Each page reports its own natural height, and the card
- * eases to the active page's height as you switch.
- *
- * With exactly one page, tabs would have nothing to switch
- * between, so this falls back to a plain `HomeSection` instead — the same
- * shape a single section already had.
+ * One card for Budgets/Upcoming/Goals: tab pills with a sliding highlight over a paged strip; empty pages
+ * omitted. Height tracks the active page, not the tallest; a single page falls back to a plain HomeSection.
  */
 export function HomeSwipeCard({ pages }: { pages: SwipePage[] }) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [cardWidth, setCardWidth] = useState(0);
   const scrollRef = useRef<ScrollView>(null);
-  // The page a tapped tab is scrolling to. Until the strip gets there, the
-  // scroll events it passes through on the way are ignored — otherwise the
-  // first of them (still on the old page) flips the tab back, and the
-  // highlight blinks old → new → old → new.
+  // Target page of a tapped tab: scroll events en route are ignored, else the first (still on the old page)
+  // flips the tab back and the highlight blinks old → new → old → new.
   const tapTarget = useRef<number | null>(null);
   const reduce = useReduceMotion();
   // Each page's natural height, by key — measured, since page content
@@ -106,9 +83,7 @@ export function HomeSwipeCard({ pages }: { pages: SwipePage[] }) {
     scrollRef.current?.scrollTo({ x: index * cardWidth, animated: true });
   };
 
-  // The active page flips as soon as a swipe crosses the halfway point, so
-  // the tab and the card's height follow the finger instead of waiting for
-  // the swipe to settle.
+  // Active page flips at the halfway point of a swipe so the tab and card height follow the finger.
   const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     if (cardWidth <= 0) return;
     const index = Math.max(
@@ -125,12 +100,8 @@ export function HomeSwipeCard({ pages }: { pages: SwipePage[] }) {
     }
   };
 
-  // `activeIndex` is state that outlives any single render — if the last
-  // page the user swiped to (e.g. Goals) loses its own content between
-  // loads (its last goal gets completed/deleted), `pages` shrinks but this
-  // component stays mounted with its old index still pointing past the end.
-  // Clamped here rather than trusted as-is, so `pages[activeIndex]` can
-  // never come back `undefined`.
+  // `activeIndex` outlives renders; if `pages` shrinks (e.g. last goal completed) it can point past the end,
+  // so it's clamped to keep `pages[activeIndex]` from being `undefined`.
   const safeIndex = Math.min(activeIndex, pages.length - 1);
   const active = pages[safeIndex];
 

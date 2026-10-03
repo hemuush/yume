@@ -1,14 +1,11 @@
 /**
- * The first-run account step: picked starter accounts are created with
- * their typed balance, a failure keeps the user on the step to retry without
- * ever creating the same account twice, and Skip always gets them out.
- * "I have a Yume backup" on the first slide restores straight into the app.
+ * First-run account step: picked starter accounts are created with typed balances, a failure keeps the user
+ * there to retry without duplicating, Skip always exits, and "I have a Yume backup" restores into the app.
  */
 import { create, act, ReactTestRenderer, ReactTestInstance } from 'react-test-renderer';
 
-// The first render loads React Native's component tree, which on a cold, fully
-// parallel run (CI, or the whole suite at once) can take longer than Jest's
-// 5s default — seen failing that way, never on its own. Generous, not slow.
+// The first render loads React Native's component tree; on a cold parallel run (CI) that can exceed Jest's
+// 5s default, so the timeout is generous.
 jest.setTimeout(30000);
 
 jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMock').createReanimatedMock());
@@ -73,11 +70,8 @@ const byLabel = (tree: ReactTestRenderer, label: string) =>
   tree.root.find((n) => n.props.accessibilityLabel === label && (n.props.onPress || n.props.onChangeText));
 
 /**
- * The CTA fires its async work without returning it (`void getStarted()`), so
- * awaiting onPress alone doesn't wait for it — the assertions only passed when
- * that chain happened to finish first, and under a loaded parallel run it
- * sometimes didn't. Waiting one macrotask lets every queued promise (all the
- * mocks resolve immediately) settle before the test looks.
+ * The CTA fires its async work without returning it, so awaiting onPress doesn't wait. One macrotask lets
+ * every queued promise (mocks resolve immediately) settle before asserting.
  */
 async function press(node: ReactTestInstance) {
   await act(async () => {
@@ -90,12 +84,8 @@ async function goToAccountStep(tree: ReactTestRenderer) {
   for (let i = 0; i < 4; i++) await press(cta(tree)); // 3 intro slides + the name step
 }
 
-// Loads React Native's lazily-required components once, up front, with a
-// generous budget — on a cold, fully parallel run (CI) their first load can
-// outlast a single test's time limit, which failed this file intermittently.
-// It walks all the way to the account step: that step's inputs and toggles
-// are only drawn there, and loading them inside the first test is what
-// timed it out (its unfinished work then leaked into the next test).
+// Loads RN's lazily-required components once up front with a generous budget: a cold parallel run can outlast
+// a test's limit. Walks to the account step, whose inputs only render there; loading in-test timed out.
 beforeAll(async () => {
   createAccountMock.mockResolvedValue({});
   const tree = await render();

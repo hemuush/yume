@@ -23,11 +23,8 @@ function rowToCategory(row: CategoryRow): Category {
 }
 
 /**
- * Every category, A to Z by name, ignoring case — the order every picker,
- * filter and list shows them in (subcategories too, since each screen picks
- * a parent's children out of this same list). `sort_order` is only the
- * built-in defaults' seed order, and every category you add gets 0, so
- * ordering by it put new categories in no useful place.
+ * Every category A to Z by name, ignoring case: the order all pickers, filters and lists use.
+ * Not `sort_order`: it's only the seed order, and new categories all get 0.
  */
 export async function listCategories(includeArchived = false): Promise<Category[]> {
   const db = await getDb();
@@ -38,11 +35,8 @@ export async function listCategories(includeArchived = false): Promise<Category[
 }
 
 /**
- * The expense categories you log most often since `sinceIso`, most-used
- * first — for the Quick Add widget's shortcuts. Leaves out archived
- * categories and the ones the app files itself (Loan EMI, fees). Ties, and
- * a new install with few entries, fall back to A to Z so the list is always
- * full when there are enough categories.
+ * Most-used expense categories since `sinceIso` for Quick Add shortcuts; excludes archived and system-filed
+ * ones (Loan EMI, fees). Ties and sparse installs fall back to A to Z so the list stays full.
  */
 export async function listMostUsedExpenseCategories(limit: number, sinceIso: string): Promise<Category[]> {
   const db = await getDb();
@@ -62,11 +56,8 @@ export async function listMostUsedExpenseCategories(limit: number, sinceIso: str
 }
 
 /**
- * Only two levels are allowed — a subcategory can't itself have children.
- * Without this, "Food & Dining > Zomato > Lunch orders" would be possible to
- * create but nothing in the app (pickers, the Reports rollup) knows how to
- * render or aggregate a third level, so it would just silently misbehave
- * rather than being visibly rejected here.
+ * Only two levels: a subcategory can't have children. Pickers and the Reports rollup can't handle a third,
+ * so it would silently misbehave rather than be visibly rejected.
  */
 async function assertValidParent(
   db: Awaited<ReturnType<typeof getDb>>,
@@ -122,9 +113,8 @@ export async function createCategory(input: {
 }
 
 /**
- * Archiving a parent cascades to its subcategories — leaving "Zomato" active
- * while its parent "Food & Dining" disappears from every picker would leave
- * an orphaned subcategory nobody can find or pick again on purpose.
+ * Archiving a parent cascades to its subcategories, else an active child would be orphaned: its parent gone
+ * from every picker and nobody able to find it again on purpose.
  */
 export async function archiveCategory(id: string): Promise<void> {
   const db = await getDb();
@@ -136,11 +126,8 @@ export async function archiveCategory(id: string): Promise<void> {
 }
 
 /**
- * The five seeded categories flagged `is_system` (Loan EMI, Loan Repayment,
- * Fees & Charges, Friends & Family income + expense) are looked up by name
- * at runtime to auto-file loan and Friends & Family transactions — deleting,
- * archiving, or renaming one silently breaks that match, so all three are
- * blocked here where every UI path funnels through.
+ * The five seeded `is_system` categories are matched by name to auto-file loan and Friends & Family entries;
+ * deleting, archiving or renaming one breaks that, so all three are blocked here (every UI path funnels in).
  */
 async function assertNotSystemCategory(
   db: Awaited<ReturnType<typeof getDb>>,
@@ -175,10 +162,8 @@ export async function updateCategory(
   if (current.is_system && input.name.trim() !== current.name) {
     throw new Error("The name of a built-in category can't be changed.");
   }
-  // `parentId` omitted entirely means "leave it as-is" — every existing call
-  // site predates re-parenting support and never passes it, so defaulting a
-  // missing field to null here would silently strip the parent off every
-  // plain name/icon/color edit. Same pattern for `isSensitive`.
+  // Omitted `parentId` means "leave as-is": defaulting to null would strip the parent on every plain
+  // edit by callers that never pass it. Same for `isSensitive`.
   const nextParentId = input.parentId !== undefined ? input.parentId : current.parent_id;
   const nextIsSensitive = input.isSensitive !== undefined ? input.isSensitive : !!current.is_sensitive;
   if (nextParentId) {
@@ -200,24 +185,8 @@ export async function updateCategory(
 }
 
 /**
- * Permanently removes a category — for one added by mistake or never used,
- * not for one with real history (archive that instead, same split as
- * `deleteAccount`/`deleteLoan`). Blocked whenever any transaction or
- * recurring rule — this category's own, or any of its subcategories' —
- * still references it:
- *   - `transactions.category_id` is `ON DELETE SET NULL`, but the table also
- *     has `CHECK (type = 'transfer' OR category_id IS NOT NULL)`, so a raw
- *     delete of an in-use category would fail with a bare SQL constraint
- *     error instead of a clear message — checked and blocked here first.
- *   - `recurring_rules.category_id` is also `ON DELETE SET NULL` with no
- *     such CHECK, so a raw delete would silently succeed at the DB level —
- *     but the next `runDueRecurringRules()` pass would then call
- *     `createTransaction` with a null categoryId for that rule and throw,
- *     uncaught, aborting that automatic run. Blocking here instead means
- *     the user reassigns/removes the rule first, on their own terms.
- * Once past both checks, deleting cascades to subcategories (verified
- * unused above) and any budgets (schema's own `ON DELETE CASCADE` —
- * harmless today since nothing creates budgets yet).
+ * Deletes an unused category (else archive); blocked if a transaction or recurring rule uses it or its subs.
+ * Why: transactions' CHECK gives a raw SQL error; a rule left with null category_id throws on its next run.
  */
 export async function deleteCategory(id: string): Promise<RowSnapshot[]> {
   const db = await getDb();

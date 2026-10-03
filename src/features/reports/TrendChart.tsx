@@ -21,15 +21,8 @@ const PAD_X = 14;
 type Kind = 'spend' | 'netWorth';
 
 /**
- * Trends as one line chart with a Spending / Net worth switch (the Reports
- * sign-off). Spending plots the last months against a dashed line for your
- * average (the baseline Reports' headline compares against), with this
- * period's point marked; net worth plots its path with the latest point
- * marked. The line under the chart says it in words.
- *
- * Touch the chart (or drag along it) to pick a month: its point is ringed and
- * the line under reads that month. A picked month other than the one on screen
- * can offer a link that moves Reports to it (`monthLink`).
+ * Trends line chart, Spending / Net worth switch: spending vs a dashed average (Reports' headline baseline),
+ * or net worth's path. Touch/drag picks a month; one off-screen can offer `monthLink` to move Reports to it.
  */
 export function TrendChart({
   periodName,

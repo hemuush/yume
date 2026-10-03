@@ -1,7 +1,6 @@
 /**
- * A long-time user's database: 50,000 transactions must survive a backup →
- * JSON → restore round trip intact, in a reasonable time and size. The
- * snapshot holds the whole database in memory, so this pins how big that gets.
+ * 50,000 transactions must survive a backup → JSON → restore round trip intact, in reasonable time and size.
+ * The snapshot holds the whole database in memory, so this pins how big that gets.
  */
 import { createRealDataTestDb } from '@/test-support/realDataTestDb';
 

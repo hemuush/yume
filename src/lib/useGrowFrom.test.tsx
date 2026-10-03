@@ -1,7 +1,6 @@
 /**
- * Bars and rings remember what they showed: the first sight after launch
- * draws in from 0, coming back starts at the old value (so nothing moves if
- * nothing changed), and a new value glides from the old one.
+ * Bars and rings remember what they showed: first sight after launch draws from 0; coming back starts at the
+ * old value (nothing moves if nothing changed); a new value glides from the old one.
  */
 import { useEffect } from 'react';
 import { create, act } from 'react-test-renderer';

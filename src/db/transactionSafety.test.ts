@@ -1,17 +1,6 @@
 /**
- * Every write in this app that touches more than one table goes through
- * db/client.ts's withTransactionAsync, whose callback receives a `tx`
- * handle that nested calls must use instead of the outer `db` (see
- * client.ts's own comment for why: the queue that makes concurrent screen
- * loads safe would deadlock a transaction against itself otherwise).
- * Getting that `tx` plumbing right in every single call site is exactly
- * the kind of thing that's easy to get wrong silently — recordMoneyGivenToPerson
- * and recordMoneyReceivedFromPerson were, until this fix, calling
- * createTransaction()/addLedgerEntry() from *inside* their own transaction,
- * which would have deadlocked forever the first time both ran under the
- * real serializing queue. This file runs every one of those write paths
- * against a real SQLite engine so a broken `tx` wire-up fails a test
- * instead of hanging a user's app.
+ * Multi-table writes run in withTransactionAsync (client.ts); nested calls must use its `tx`, not the outer `db`
+ * (queue deadlock). Runs each write path on real SQLite so a bad `tx` wire-up fails a test, not hangs the app.
  */
 import { createRealDataTestDb } from '@/test-support/realDataTestDb';
 
@@ -19,10 +8,8 @@ const mockTestDb = createRealDataTestDb();
 jest.mock('@/db/client', () => ({
   getDb: async () => mockTestDb,
 }));
-// loans.ts schedules a real OS notification on every write (due-date
-// reminders); expo-notifications has no device to talk to under Jest, so
-// it's stubbed out here rather than exercised — notification behavior has
-// its own coverage elsewhere, this file is only about transaction safety.
+// loans.ts schedules an OS notification on every write; expo-notifications has no device under Jest, so it's
+// stubbed (notifications are covered elsewhere).
 jest.mock('@/lib/notifications', () => ({ rebuildNotifications: async () => {} }));
 
 import { CREATE_TABLES_SQL } from '@/db/schema';
@@ -118,9 +105,8 @@ describe('transaction-wrapped writes against a real SQLite engine', () => {
 
     await applyRateChange(loan.id, { newAnnualRateBp: 1100, effectiveDate: '2026-01-15' });
     schedule = await getLoanSchedule(loan.id);
-    // A higher rate at a fixed EMI can add a remaining installment or two —
-    // this only checks the regenerated schedule is well-formed (sequential,
-    // resolves to zero), not the exact amortization math (loan.test.ts owns that).
+    // A higher rate at a fixed EMI can add an installment or two: only check the regenerated schedule is
+    // well-formed (sequential, resolves to zero); loan.test.ts owns the amortization math.
     expect(schedule.length).toBeGreaterThanOrEqual(6);
     expect(schedule.map((p) => p.installmentNumber)).toEqual(
       Array.from({ length: schedule.length }, (_, i) => i + 1)
@@ -159,8 +145,7 @@ describe('transaction-wrapped writes against a real SQLite engine', () => {
       paidDate: '2026-03-01',
     });
 
-    // #1 is paid, but #2 (later) is also paid — undoing #1 first would leave
-    // #2's already-recorded interest computed against an outstanding
+    // #1 and the later #2 are both paid: undoing #1 first would leave #2's interest computed against a
     // balance that no longer matches reality.
     await expect(undoInstallmentPayment(schedule[0].id)).rejects.toThrow('out of order');
 
@@ -202,9 +187,8 @@ describe('transaction-wrapped writes against a real SQLite engine', () => {
     });
     const originalEmi = loan.emiAmountMinor;
 
-    // Rate drops — keepTenure should lower the EMI and keep exactly 24
-    // installments; keepEmi (the default, tested elsewhere) would instead
-    // keep the EMI fixed and finish early.
+    // Rate drops: keepTenure should lower the EMI and keep exactly 24 installments; keepEmi (default, tested
+    // elsewhere) would keep the EMI and finish early.
     await applyRateChange(loan.id, { newAnnualRateBp: 700, effectiveDate: '2026-01-15', mode: 'keepTenure' });
     const schedule = await getLoanSchedule(loan.id);
     const fresh = await getLoanById(loan.id);
@@ -557,9 +541,8 @@ describe('transaction-wrapped writes against a real SQLite engine', () => {
         feeCategoryId: expenseCategoryId,
       },
     });
-    // Scoped to this test's own loan by counterparty name — the shared
-    // in-memory DB accumulates disbursement transactions from every other
-    // test's loans across this whole describe block (beforeAll runs once).
+    // Scoped to this test's loan by counterparty name: the shared in-memory DB accumulates disbursement
+    // transactions from every other loan in this describe block (beforeAll runs once).
     const beforeDelete = await listTransactions({ limit: 1000 });
     expect(beforeDelete.some((t) => t.note === 'Loan disbursement — Cascade Test Loan')).toBe(true);
     expect(beforeDelete.some((t) => t.note === 'Loan processing fee — Cascade Test Loan')).toBe(true);

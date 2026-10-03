@@ -32,14 +32,8 @@ import { parseCycleDays } from '@/lib/cardCycle';
 import { showAlert } from '@/components/AppDialog';
 
 /**
- * Editing/archiving/deleting an account, opened by tapping any account card.
- * Name/type/opening balance/credit limit are freely editable (currency is
- * deliberately not — see `updateAccount`'s own comment). The quiet link at
- * the end is chosen based on real usage rather than offered as two competing
- * actions: an account with any transaction history can only be Archived
- * (hides it, keeps every past number intact); a completely unused one
- * (created by mistake, or freshly archived and never touched) can be
- * properly Deleted.
+ * Edit/archive/delete an account. Currency is not editable (see `updateAccount`). Any transaction history
+ * means Archive only (keeps past numbers); an unused account can be deleted.
  */
 export function AccountDetailModal({
   account,
@@ -77,11 +71,8 @@ export function AccountDetailModal({
     setTracked(!!account.investment);
     setError(null);
     setTxCount(null);
-    // Leaves txCount at null on failure — same as before this fix, which
-    // only removes the unhandled rejection. A stuck "Checking usage..."
-    // state on a real DB error is a pre-existing, separate UX gap (it
-    // permanently blocks the delete/archive decision below), not
-    // introduced here.
+    // txCount stays null on failure (this only avoids an unhandled rejection); a stuck "Checking usage..."
+    // on a real DB error is a separate UX gap, since it blocks the delete/archive decision below.
     getAccountTransactionCount(account.id)
       .then(setTxCount)
       .catch(() => {});
@@ -185,9 +176,8 @@ export function AccountDetailModal({
 
   const trackingNow = type === 'savings' && tracked;
 
-  // The calm-sheets sign-off (Direction C): the account's own card, which
-  // retints as you change its type, then the form. Archive or delete is a
-  // quiet link at the end, not a second button beside Save.
+  // Calm-sheets layout: the account's own card, which retints as you change its type, then the form.
+  // Archive/delete is a quiet link at the end, not a second button beside Save.
   return (
     <ModalSheet
       visible

@@ -56,9 +56,8 @@ export function PersonDetailModal({
   const [note, setNote] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  // Defaults to today but stays editable — previously hardcoded to "today"
-  // with no field to change it at all, so catching up on a friend's expense
-  // from last week always misdated it as happening today.
+  // Defaults to today but stays editable, so catching up on a friend's expense from last week isn't
+  // misdated.
   const [entryDateIso, setEntryDateIso] = useState(() => toLocalIsoDate(new Date()));
   // The history entry whose ⋯ menu is open.
   const [menuEntry, setMenuEntry] = useState<PersonLedgerEntry | null>(null);
@@ -83,9 +82,8 @@ export function PersonDetailModal({
     }, [load])
   );
 
-  // Derived from the live ledger rather than the `person` prop, which is a
-  // snapshot taken when the modal opened and goes stale the moment a new
-  // entry is recorded below.
+  // Derived from the live ledger, not the `person` prop, which is a snapshot from when the modal opened and
+  // goes stale once a new entry is recorded.
   const liveBalanceMinor = ledger.reduce((sum, e) => sum + e.amountMinor, 0);
   // Show each history entry rounded so the running list adds up to the
   // rounded balance shown at the top of the sheet.
@@ -95,10 +93,8 @@ export function PersonDetailModal({
   );
   const dispBalanceMinor = dispEntryAmounts.reduce((sum, v) => sum + v, 0);
 
-  // "They owe more" (sign 1) with an account selected means cash actually
-  // left that account to cover them — recorded as a real expense transaction
-  // plus the ledger entry, not just a bookkeeping-only IOU note. Likewise
-  // "They repaid" (sign -1) with an account is real income into it.
+  // "They owe more" (sign 1) with an account means cash left it: recorded as a real expense transaction plus
+  // the ledger entry, not a bookkeeping-only IOU. Likewise "They repaid" (sign -1) is real income into it.
   const record = async (sign: 1 | -1) => {
     setError(null);
     const amountMinor = toMinor(parseFloat(amount || '0'));
@@ -110,9 +106,8 @@ export function PersonDetailModal({
     try {
       const date = entryDateIso;
       if (accountId) {
-        // A dedicated category — not "Miscellaneous"/"Other Income" — so a
-        // friend transaction is identifiable at a glance in Transactions and
-        // doesn't quietly inflate an unrelated catch-all category's total.
+        // A dedicated category, not "Miscellaneous"/"Other Income", so friend transactions stand out in
+        // Transactions and don't inflate an unrelated catch-all total.
         const category =
           sign === 1
             ? (categories.find((c) => c.kind === 'expense' && c.name === 'Friends & Family') ??
@@ -155,10 +150,8 @@ export function PersonDetailModal({
     }
   };
 
-  // Previously there was no way at all to remove a mistaken entry — deleting
-  // FROM the ledger side (rather than from Transactions, which only reaches
-  // entries that have a linked transaction) covers "just adjust balance"
-  // entries too.
+  // Deleting from the ledger side (not Transactions, which only reaches entries with a linked transaction)
+  // also covers "just adjust balance" entries.
   const runDeleteEntry = async (entry: PersonLedgerEntry) => {
     setSaving(true);
     try {
@@ -178,11 +171,8 @@ export function PersonDetailModal({
     }
   };
 
-  // A "just adjust balance" entry is a single row, deleted instantly like
-  // everywhere else — one with a linked transaction cascades (that
-  // transaction goes with it, and account balances update immediately), so
-  // that case gets an extra confirm step first.
-  // A linked loan lives on the Loans screen, with its schedule.
+  // A "just adjust balance" entry is one row, deleted instantly; one with a linked transaction cascades (that
+  // transaction goes, balances update), so it gets an extra confirm. A linked loan lives on the Loans screen.
   const openLoans = () => {
     onClose();
     router.push('/loans');

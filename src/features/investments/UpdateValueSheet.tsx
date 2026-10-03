@@ -21,9 +21,8 @@ import type { Account } from '@/types';
 import { styles as profileStyles } from '@/features/profile/profile.styles';
 
 /**
- * Records what a tracked account is worth now, or edits / deletes an earlier
- * update. The estimate chip is the account's own figure — the last update
- * plus whatever moved since — so a month with no news is one tap.
+ * Records what a tracked account is worth now, or edits/deletes an earlier update. The estimate chip is the
+ * last update plus whatever moved since, so a month with no news is one tap.
  */
 export function UpdateValueSheet({
   account,

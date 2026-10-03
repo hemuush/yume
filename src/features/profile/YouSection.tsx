@@ -47,11 +47,8 @@ const ACCOUNT_TYPE_LABEL: Record<Account['type'], string> = {
 };
 
 /**
- * "You": what is in your accounts first, the tracked balance as one line that
- * opens to the sum it is, tiles that open Entries, Loans and Friends, and
- * your accounts grouped by type. Budgets, goals, recurring, What-if and
- * Suu's Garden live on Plan; one row here points there. Settings is the
- * other tab of the Profile screen.
+ * "You": accounts first, tracked balance as one line opening to its sum, tiles for Entries, Loans and Friends,
+ * accounts grouped by type. Budgets, goals, recurring, What-if and Garden live on Plan (one row points there).
  */
 export function YouSection() {
   const [accounts, setAccounts] = useState<Account[]>([]);
@@ -100,10 +97,8 @@ export function YouSection() {
   }, []);
   const { loaded, loadError, reload: load } = useScreenLoad(loadYou);
 
-  // Every balance on this screen is shown as whole rupees. Each account row
-  // rounds its own balance, and the accounts total (the sum's first line and
-  // the card's footer) is the sum of those rounded rows, default-currency
-  // accounts only, so the list always adds up to the number shown for it.
+  // Balances are whole rupees: each account row rounds its own, and the accounts total (sum's first line and
+  // card footer) sums those rounded rows, default-currency only, so the list always adds up.
   const dispAccountBalance = (a: Account) => roundedMinor(a.currentBalanceMinor);
   const accountsShown = accounts
     .filter((a) => a.currency === defaultCurrency)
@@ -154,9 +149,8 @@ export function YouSection() {
   );
 
   if (!loaded && !loadError) {
-    // Not a full-screen gate — the shell's header, identity, and tab
-    // control above this are already visible; this only fills the space
-    // this section itself would otherwise occupy while it loads.
+    // Not a full-screen gate: the shell's header, identity and tabs are already visible; this only fills
+    // this section's own space while it loads.
     return (
       <View style={{ paddingVertical: 40, alignItems: 'center' }}>
         <ActivityIndicator color={theme.colors.ink} />

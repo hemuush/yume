@@ -6,9 +6,8 @@ import { goalProgress } from '@/lib/savingsGoalProgress';
 import { dayMonthYear } from '@/lib/dateLabels';
 
 /**
- * A goal as the card its sheets open on (the calm-sheets sign-off,
- * Direction C) — saved against the target, with a bar — shared by New goal,
- * Edit goal and Add money, each passing the figures as they'll be once saved.
+ * A goal as the card its sheets open on (saved vs target, with a bar), shared by New goal, Edit goal and
+ * Add money, each passing the figures as they'll be once saved.
  */
 export function GoalSheetCard({
   name,

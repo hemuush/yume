@@ -1,13 +1,6 @@
 /**
- * A sweep of getPeriodSummary/getRangeComparison against a real SQLite
- * engine across many income × expense magnitude combinations, each isolated
- * to its own single day so 100 independent scenarios can share one
- * in-memory database without contaminating each other. None of these
- * scenarios move money into a savings-type account, so netMinor's third
- * term (see calculationScenarios's dedicated test for that case) is always
- * 0 here. Verifies the fundamental accounting identity — Net = Income − Expense — holds exactly
- * at every magnitude, plus the comparison percentage's sign always matches
- * the real direction of change.
+ * getPeriodSummary/getRangeComparison sweep on real SQLite: 100 income × expense scenarios, one day each.
+ * Checks Net = Income − Expense exactly (no savings moves, so netMinor's third term is 0) and the % sign.
  */
 import { createRealDataTestDb } from '@/test-support/realDataTestDb';
 
@@ -24,9 +17,8 @@ import { setDefaultCurrency } from '@/db/settings';
 const AMOUNTS = [0, 1, 100, 2500, 10000, 50000, 100000, 999999, 5000000, 25000000]; // minor units, 0 to ₹2.5L
 
 function dayFromIndex(i: number): string {
-  // 2030-01-01 plus i days — a far-future, never-otherwise-used range so
-  // every combo below gets its own exclusive day with no risk of colliding
-  // with dates used by any other test file sharing this describe block.
+  // 2030-01-01 plus i days: a far-future range no other test file in this describe block uses, so every
+  // combo gets its own exclusive day.
   const d = new Date(2030, 0, 1 + i);
   const mm = String(d.getMonth() + 1).padStart(2, '0');
   const dd = String(d.getDate()).padStart(2, '0');

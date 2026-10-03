@@ -12,18 +12,8 @@ export interface DefaultCategory {
   system?: boolean;
 }
 
-// Seeded once on first launch. Everything here is user-editable/archivable
-// afterward, EXCEPT the five flagged `system: true` — those are matched by
-// name at runtime (src/features/loans/*, src/features/people/*,
-// app/add-transaction.tsx) to auto-categorise loan and Friends & Family
-// transactions, so they're protected from delete/archive/rename.
-//
-// Colours are drawn from CATEGORY_COLOR_PALETTE (src/constants/theme.ts) —
-// the same calm pastel band the category colour picker itself offers —
-// rather than a separate, more saturated palette. A few are deliberately
-// reused across a conceptually matching pair (Loan Repayment/Investments,
-// Salary/Savings Deposit, Gifts Received/Gifts & Donations, and both
-// directions of Friends & Family) the same way the original seed did.
+// Seeded on first launch and user-editable, EXCEPT the five `system: true` ones, matched by name at runtime
+// (src/features/loans, src/features/people, app/add-transaction.tsx), so protected. Colours: theme.ts palette.
 export const DEFAULT_CATEGORIES: DefaultCategory[] = [
   { name: 'Salary', kind: 'income', icon: 'briefcase', color: '#7FE0A8', sortOrder: 0 },
   { name: 'Business', kind: 'income', icon: 'trending-up', color: '#8FE8C8', sortOrder: 1 },
@@ -105,11 +95,8 @@ export const DEFAULT_CATEGORIES: DefaultCategory[] = [
   { name: 'Miscellaneous', kind: 'expense', icon: 'dots-horizontal-circle', color: '#A8D8FF', sortOrder: 30 },
 ];
 
-// A curated MaterialCommunityIcons set for the Add/Edit Category icon picker
-// — every name here is a real MCI glyph, spanning the icons already seeded
-// above plus a wide range of extras (food/drink, fitness, home, tech,
-// health, finance) so a custom or subcategory (Zomato, gym, Netflix, a pet)
-// almost always finds something closer than the generic 'tag' default.
+// Curated MaterialCommunityIcons for the category icon picker (every name a real MCI glyph), wide enough
+// that a custom category or subcategory (Zomato, gym, Netflix, a pet) finds something better than 'tag'.
 export const CATEGORY_ICON_CHOICES: string[] = [
   'tag',
   'silverware-fork-knife',

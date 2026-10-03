@@ -1,8 +1,6 @@
 /**
- * The invariant that matters for `allocateRoundedMinor`: whatever set of
- * exact minor-unit parts goes in, the whole-rupee values that come out
- * (a) are each a multiple of 100, and (b) sum to exactly the rounded total —
- * so a breakdown shown next to its total on screen always reconciles.
+ * Invariant for `allocateRoundedMinor`: whatever exact minor-unit parts go in, the whole-rupee values out
+ * (a) are each a multiple of 100 and (b) sum exactly to the rounded total, so breakdowns reconcile on screen.
  */
 import { allocateRoundedMinor, roundedMinor } from './round';
 

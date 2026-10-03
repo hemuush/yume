@@ -17,10 +17,8 @@ const TYPE_CHIPS: { label: string; value: TransactionType | 'all' }[] = [
 ];
 
 /**
- * Activity's filter: the type as one segmented bar (the same `filterType`
- * the filter sheet sets, without opening it), then one removable chip per
- * category and account being filtered on, and "Clear all" once there's more
- * than one — that second line only while there are some.
+ * Activity's filter: type segmented bar (the sheet's `filterType`), then a chip per filtered
+ * category/account. "Clear all" appears once there's more than one chip.
  */
 export function ActivityFilterChips({
   filterType,

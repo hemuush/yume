@@ -13,11 +13,8 @@ import { usePrivacy } from '@/theme/PrivacyContext';
 const AnimatedRowPressable = Animated.createAnimatedComponent(Pressable);
 
 /**
- * One row in a day's group — sits directly on the page with a hairline
- * bottom border, not inside a card. The date used to live in this row's own
- * subtitle; it's now the day-group header above a whole run of these, so the
- * subtitle here is just the account, the same way Apple Card's own
- * transaction rows carry no per-row date once they're grouped by day.
+ * One row in a day's group: sits directly on the page with a hairline bottom border, not in a card.
+ * Subtitle is just the account, since the date is the day-group header above the run of rows.
  */
 export function TransactionRow({
   tx,

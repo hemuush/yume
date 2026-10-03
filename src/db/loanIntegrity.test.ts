@@ -1,12 +1,6 @@
 /**
- * Loan-state integrity fixes, against a real SQLite engine:
- *   - undoing an EMI paid after a prepayment restores the post-prepayment
- *     balance (it used to put the prepaid amount back on the loan)
- *   - keepTenure rate changes never add a phantom rounding installment
- *   - a lent loan's prepayment charge is filed under an expense category
- *   - loan-linked transactions carry their kind (loan_tx_kind)
- *   - prepayments count as principal repaid in the net-worth trend
- *   - runMigrations backfills loan_tx_kind and repairs month-end due dates
+ * Loan integrity on real SQLite: EMI undo after a prepayment restores the post-prepayment balance, keepTenure
+ * adds no phantom installment, loan_tx_kind is set/backfilled, prepayments count as repaid principal.
  */
 import { createRealDataTestDb } from '@/test-support/realDataTestDb';
 
@@ -22,7 +16,7 @@ jest.mock('@/db/client', () => ({
 jest.mock('@/lib/notifications', () => ({ rebuildNotifications: async () => {} }));
 
 import { CREATE_TABLES_SQL } from '@/db/schema';
-import { runMigrations, consumeLoanDueDateRepairs } from '@/db/client';
+import { runMigrations } from '@/db/client';
 import { createAccount, createCategory } from '@/db/ledger';
 import {
   createLoan,
@@ -245,8 +239,6 @@ describe('loan integrity', () => {
         [legacyDates[n - 1], loan.id, n]
       );
     }
-    consumeLoanDueDateRepairs(); // clear anything earlier tests left behind
-
     await runMigrations(mockTestDb);
 
     const kinds = await mockTestDb.getAllAsync<{ loan_tx_kind: string }>(
@@ -262,11 +254,16 @@ describe('loan integrity', () => {
       '2026-05-31',
       '2026-06-30',
     ]);
-    expect(consumeLoanDueDateRepairs()).toBe(3); // #2, #4, #6 — #3 and #5 were already right
-    expect(consumeLoanDueDateRepairs()).toBe(0); // read once
 
     await runMigrations(mockTestDb);
-    expect(consumeLoanDueDateRepairs()).toBe(0); // nothing left to repair
+    expect((await getLoanSchedule(loan.id)).map((p) => p.dueDate)).toEqual([
+      '2026-01-31',
+      '2026-02-28',
+      '2026-03-31',
+      '2026-04-30',
+      '2026-05-31',
+      '2026-06-30',
+    ]);
   });
 
   it('the due-date repair never touches paid installments', async () => {

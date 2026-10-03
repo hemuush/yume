@@ -1,8 +1,6 @@
 /**
- * The Home A widgets: the month ring's drawing, the date tile, the icons,
- * Quick Add's most-used categories, and that each of the five widgets
- * builds from plain widget pieces (a React fragment, for one, would leave a
- * widget stuck blank on the home screen).
+ * The Home A widgets: the month ring drawing, date tile, icons, Quick Add's most-used categories, and that
+ * each widget builds from plain widget pieces (a React fragment would leave it blank on the home screen).
  */
 import type React from 'react';
 import { createRealDataTestDb } from '@/test-support/realDataTestDb';
@@ -102,9 +100,8 @@ describe('listMostUsedExpenseCategories', () => {
 });
 
 /**
- * Expands a widget the way the widget library does: our own components are
- * called, and everything left must be one of the library's widget pieces —
- * never a fragment or a plain string.
+ * Expands a widget like the widget library does: our components are called and everything left must be a
+ * library widget piece, never a fragment or plain string.
  */
 function expand(node: unknown): string[] {
   if (node == null || node === false) return [];

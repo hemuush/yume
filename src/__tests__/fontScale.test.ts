@@ -1,9 +1,6 @@
 /**
- * Text follows the phone's font-size setting only up to MAX_FONT_SCALE
- * (130%) — past that, fixed-size tiles and cards cut text off. That limit
- * lives in src/components/Text.tsx, so every screen must take Text and
- * TextInput from there, and every animated text (which can't use the
- * wrapper) must pass the limit itself.
+ * Text follows the phone's font size only up to MAX_FONT_SCALE (130%; limit in src/components/Text.tsx), so
+ * screens must take Text and TextInput from there and animated text (no wrapper) must pass the limit itself.
  */
 import fs from 'fs';
 import path from 'path';

@@ -7,14 +7,8 @@ const SUU = 30;
 const DOT = Math.round(SUU * 0.33);
 
 /**
- * "Suu Check-in" — the 2×2 widget (the Home A widgets sign-off): Suu itself
- * — the same ring image and one theme-coloured dot the app draws (see
- * SuuIllustration) — with "Suu says" beside it, then Suu's line
- * (`suuLine()`: a savings nudge, a spend-up warning, or a top-growing
- * category) across the widget's full width, over a footer in the pack's
- * second colour, like the Suu strip on Home's month card. The line gets the
- * whole width because beside Suu, in a 2×2, it only had room for a word or
- * two per line. Taps open Home.
+ * "Suu Check-in" 2×2 widget: the app's ring image with one theme-coloured dot (see SuuIllustration), "Suu says"
+ * beside it, `suuLine()` across the full width (beside Suu it fit a word or two), pack-colour footer.
  */
 export function SuuWidget({ line, dot, secondary }: SuuWidgetData) {
   return (

@@ -1,10 +1,8 @@
 import { Category } from '@/types';
 
 /**
- * Orders a flat category list so each subcategory sits immediately after
- * its own parent — used by every category picker in the app so a
- * subcategory (e.g. "Zomato" under "Food & Dining") reads as grouped with
- * its parent instead of scattered anywhere sort_order happens to place it.
+ * Orders a flat category list so each subcategory sits right after its parent (used by every category
+ * picker), instead of wherever sort_order scatters it.
  */
 export function orderCategoriesForPicker(categories: Category[]): Category[] {
   const topLevel = categories.filter((c) => !c.parentId);
@@ -27,9 +25,8 @@ export function childrenOf(categories: Category[], parentId: string): Category[]
 }
 
 /**
- * Categories whose name matches `query` (case-insensitive), names that start
- * with it first — Add's "Find a category", which reaches a subcategory
- * ("Rapido") without opening its parent ("Travel") first. Empty for a blank query.
+ * Categories whose name matches `query` (case-insensitive), prefix matches first; lets Add's "Find a
+ * category" reach a subcategory without opening its parent. Empty for a blank query.
  */
 export function searchCategories(categories: Category[], query: string): Category[] {
   const q = query.trim().toLowerCase();

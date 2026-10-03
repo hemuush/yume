@@ -28,9 +28,8 @@ export const HOLD_MS = 220;
 const FADE_MS = 450;
 
 /**
- * Two soft shapes drifting slowly behind a beat, in deeper shades of its
- * own colours — the "colour stories" motion that keeps every beat alive
- * without competing with it. Still with reduce motion.
+ * Two soft shapes drifting behind a beat in deeper shades of its colours: the "colour stories" motion that
+ * keeps beats alive without competing. Still with reduce motion.
  */
 function Blobs({ colors, still }: { colors: [string, string]; still: boolean }) {
   const [t] = useState(() => new Animated.Value(0));
@@ -111,12 +110,8 @@ function useScreenReader(): boolean {
 }
 
 /**
- * Plays a Wrap: one beat at a time, each for its own length, with a segment
- * bar across the top like a set of stories. Tap the right two thirds to
- * skip ahead, the left third to go back, hold anywhere to pause. The last
- * beat stays up with its two buttons. With reduce motion (or a screen
- * reader) nothing moves on by itself: every beat shows its finished state
- * and a tap moves on.
+ * Plays a Wrap one beat at a time with a segment bar on top: tap the right two thirds to skip, the left third
+ * to go back, hold to pause. The last beat stays up with its buttons. With reduce motion nothing auto-advances.
  */
 export function WrapPlayer({
   wrap,

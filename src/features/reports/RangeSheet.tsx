@@ -36,10 +36,8 @@ export function rangeQuickPicks(today: string): { label: string; range: DateRang
 }
 
 /**
- * Reports' "Custom": pick any range — a trip, the last 30 days, a financial
- * year at tax time. Quick picks up top; below, a month calendar where the
- * first tap is the start and the second the end (tapped the other way
- * round, they swap). Nothing after today can be picked.
+ * Reports' "Custom": any range (a trip, last 30 days, a tax year). Quick picks on top, then a month calendar:
+ * first tap is the start, second the end (swapped if backwards). Nothing after today can be picked.
  */
 export function RangeSheet({
   visible,

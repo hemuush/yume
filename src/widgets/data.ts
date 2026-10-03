@@ -19,26 +19,13 @@ import type { Account } from '@/types';
 import { widgetColor } from './widgetTheme';
 
 /**
- * Every widget's data source, one function per widget — each is the exact
- * same query/derivation the matching in-app screen already uses (Home's
- * month card, Home's Suu line, Home's Upcoming merge, Home's account
- * cards), just called directly instead of through a React component. These
- * run inside `widgetTaskHandler` (a headless JS context with no screen, no
- * hooks) as well as from the app's own foreground code when nudging a
- * widget to refresh immediately — see `notifyWidgets.ts`.
+ * Every widget's data source, one function per widget, each the same query/derivation as the matching in-app
+ * screen. Runs in `widgetTaskHandler` (headless JS, no hooks) and in the foreground (see `notifyWidgets.ts`).
  */
 
 /**
- * `refreshAllWidgets()` fires every placed widget's data function back to
- * back in the same tick, and several of them need the exact same query
- * (this month vs last month, the active theme pack) — without this, having
- * both the This Month and Suu widgets placed doubles the "this month vs
- * last month" DB aggregation, and every widget that reads the theme
- * re-queries it separately. Coalescing calls that land within a short
- * window into one shared promise means one real burst of refreshes still
- * only queries each of these once; the window is short enough that a
- * genuinely later refresh (the 30-minute timer, or backgrounding again)
- * always sees fresh data rather than a stale cache.
+ * `refreshAllWidgets()` fires every widget's data function in one tick and several need the same query,
+ * so calls within a short window share one promise; a genuinely later refresh still sees fresh data.
  */
 function coalesced<T>(fn: () => Promise<T>, windowMs = 2000): () => Promise<T> {
   let pending: { at: number; promise: Promise<T> } | null = null;
@@ -48,11 +35,8 @@ function coalesced<T>(fn: () => Promise<T>, windowMs = 2000): () => Promise<T> {
     const promise = fn();
     const entry = { at: now, promise };
     pending = entry;
-    // A transient failure (a cold-start DB migration still running, a
-    // one-off query hiccup) shouldn't get replayed as the *same* failure to
-    // every other widget in this refresh burst — clear the cache the moment
-    // it rejects so the next widget's call retries independently instead of
-    // awaiting this same doomed promise.
+    // A transient failure (cold-start migration, one-off query hiccup) must not be replayed to every other
+    // widget in the burst: clear the cache on rejection so the next call retries independently.
     promise.catch(() => {
       if (pending === entry) pending = null;
     });
@@ -217,10 +201,8 @@ export async function getNextDueWidgetData(): Promise<NextDueWidgetData | null> 
     });
   }
   for (const rule of rules) {
-    // A transfer rule has no single counterparty/category to lead with —
-    // Home's own Upcoming list handles that case with two account names,
-    // which needs more room than this widget's single title line has, so
-    // it's left out here rather than shown half-labelled.
+    // A transfer rule has no single counterparty/category to lead with; Home's Upcoming shows two account
+    // names, which don't fit this widget's one title line, so it's left out rather than half-labelled.
     if (!rule.active || rule.type === 'transfer') continue;
     const cat = categories.find((c) => c.id === rule.categoryId);
     candidates.push({

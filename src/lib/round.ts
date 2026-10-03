@@ -1,17 +1,6 @@
 /**
- * Showing a set of amounts next to their total is misleading when each is
- * rounded to whole currency units on its own: 10.40 + 10.40 + 10.40 renders
- * as "10 + 10 + 10 = 31". `allocateRoundedMinor` rounds every part to a whole
- * major unit (a multiple of 100 minor units) such that the parts still sum
- * *exactly* to the rounded total — the classic largest-remainder (Hamilton)
- * apportionment.
- *
- * All money in the app is stored and computed in exact integer minor units;
- * this helper lives purely in the render path, so the internal invariants
- * (a loan's principal components summing to its principal, a period's
- * income − expense − savings equalling its net, …) are untouched. It only
- * decides how the unavoidable sub-unit rounding is distributed on screen so
- * the visible numbers reconcile.
+ * Rounding parts alone misleads beside their total: 3 x 10.40 renders "10 + 10 + 10 = 31". Render-path only.
+ * `allocateRoundedMinor` rounds each part to whole major units summing exactly to the rounded total.
  */
 
 /** Round to the nearest whole unit, half away from zero — matching how
@@ -21,12 +10,8 @@ function roundHalfAwayFromZero(value: number): number {
 }
 
 /**
- * The one canonical way to reduce a single exact minor-unit amount to the
- * whole-rupee minor value it is displayed as. Use it wherever a *derived*
- * on-screen figure (a net, a surplus, an equity, a running total) must be
- * built from the same rounded numbers the user sees for its parts — compute
- * each part with `roundedMinor` and combine those, rather than rounding the
- * exact total separately, so the arithmetic on screen always holds.
+ * Canonical reduction of one exact minor-unit amount to the whole-rupee minor value it is displayed as.
+ * Build derived figures (net, surplus) by combining `roundedMinor` parts, not rounding the exact total.
  */
 export function roundedMinor(minor: number): number {
   // `|| 0` normalises a `-0` result (from rounding a small negative toward
@@ -35,15 +20,8 @@ export function roundedMinor(minor: number): number {
 }
 
 /**
- * Given a list of exact minor-unit amounts (and optionally an explicit exact
- * total they should reconcile to — e.g. a stored EMI that the principal and
- * interest components must add up to), return the same number of values,
- * each a whole-rupee amount (multiple of 100), that sum exactly to the
- * rounded total.
- *
- * Works with negative values and a mix of signs. If every input is already a
- * whole major unit and no separate total is given, the input is returned
- * unchanged.
+ * Rounds a list of exact minor-unit amounts to whole-rupee values (multiples of 100) summing exactly to the
+ * rounded total (or explicit `total`, e.g. a stored EMI). Handles mixed signs; whole input returns unchanged.
  */
 export function allocateRoundedMinor(partsMinor: number[], totalMinor?: number): number[] {
   if (partsMinor.length === 0) return [];
@@ -51,10 +29,8 @@ export function allocateRoundedMinor(partsMinor: number[], totalMinor?: number):
   const exactTotal = totalMinor ?? partsMinor.reduce((sum, p) => sum + p, 0);
   const targetRupees = roundHalfAwayFromZero(exactTotal / 100);
 
-  // Floor each part toward negative infinity so the fractional remainder is
-  // always in [0, 1); the residue is then a non-negative count of whole
-  // rupees to hand back out (or, rarely, a negative count to claw back when
-  // the rounded total lands below the sum of the floors).
+  // Floor toward -infinity so remainders lie in [0, 1); the residue is then a non-negative count of whole
+  // rupees to hand out (rarely negative: claw back when the rounded total is below the sum of the floors).
   const base = partsMinor.map((p) => Math.floor(p / 100));
   const frac = partsMinor.map((p, i) => p / 100 - base[i]);
   let residue = targetRupees - base.reduce((sum, b) => sum + b, 0);

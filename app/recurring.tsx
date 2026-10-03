@@ -32,12 +32,8 @@ import { savingsAccountIdsOf } from '@/lib/account';
 import { parentNameOf } from '@/lib/categoryLabel';
 
 /**
- * Rent, subscriptions, salary — anything that happens on its own schedule
- * without needing a fresh manual entry every time. Each active rule is
- * caught up automatically on app open (src/db/recurring.ts's
- * runDueRecurringRules, wired into app/_layout.tsx) — this screen is purely
- * for defining/editing/pausing rules, not for the transactions they create
- * (those show up as perfectly ordinary entries on the Transactions tab).
+ * Rent, subscriptions, salary: rules caught up on app open (runDueRecurringRules, src/db/recurring.ts, via
+ * app/_layout.tsx). This screen only edits/pauses rules; their entries show in Transactions.
  */
 export default function RecurringScreen() {
   const insets = useSafeAreaInsets();

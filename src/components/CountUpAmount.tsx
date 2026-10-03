@@ -10,9 +10,8 @@ interface Props extends TextProps {
   minor: number;
   currency?: string;
   /**
-   * Count up from 0 when it first appears (the default: a headline figure's
-   * entrance). Off, it shows its value straight away and only rolls when the
-   * value changes afterwards: money added to a goal, an EMI paid.
+   * Count up from 0 on first appearance (default). Off: show the value at once and roll only on later
+   * changes (money added to a goal, an EMI paid).
    */
   countFromZero?: boolean;
   /** Styles the leading currency symbol on its own (smaller, muted), digits keep `style`. */
@@ -26,13 +25,8 @@ export function splitLeadingSymbol(text: string): [string, string, string] | nul
 }
 
 /**
- * A rupee figure that counts up on first mount and eases between values when
- * `minor` changes (a month/period change) — extracted from
- * `ThisMonthHero`'s original local `CountUpMoney` so Reports' own headline
- * figure can share the exact same animation instead of a second copy of it.
- * Uses a JS listener (`useNativeDriver: false`) because text content itself
- * can't be driven natively — it's one short number, so the per-frame
- * `formatMoney` cost is negligible.
+ * A rupee figure that counts up on mount and eases when `minor` changes; shared by ThisMonthHero and Reports.
+ * Uses a JS listener (`useNativeDriver: false`): text can't be driven natively; one short number, so cheap.
  */
 export function CountUpAmount({ minor, currency, countFromZero = true, symbolStyle, style, ...rest }: Props) {
   const reduce = useReduceMotion();

@@ -1,8 +1,6 @@
 /**
- * searchTransactions against a real SQLite engine: matching by note,
- * category name, and either side of a transfer's accounts; case
- * insensitivity; literal (non-wildcard) matching of `%`/`_`; ordering;
- * limit capping; and the empty-query short-circuit.
+ * searchTransactions on real SQLite: matches note, category name, either transfer account; case-insensitive;
+ * literal `%`/`_`; ordering; limit capping; empty-query short-circuit.
  */
 import { createRealDataTestDb } from '@/test-support/realDataTestDb';
 
@@ -96,16 +94,14 @@ describe('searchTransactions', () => {
     expect(literal).toHaveLength(1);
     expect(literal[0].note).toBe('50% off coupon run');
 
-    // A query that's only a wildcard character must not degenerate into
-    // "match everything" — it should behave as a literal search for a
-    // percent sign, matching only the one note that actually has one.
+    // A wildcard-only query must not become "match everything": it's a literal search for a percent sign,
+    // matching only the one note that has one.
     const bareWildcard = await searchTransactions('%');
     expect(bareWildcard).toHaveLength(1);
     expect(bareWildcard[0].note).toBe('50% off coupon run');
 
-    // No note contains a literal underscore, so this — unescaped, "_" would
-    // match any single character and effectively return everything — must
-    // come back empty instead.
+    // No note has a literal underscore; unescaped, "_" would match any single character (everything),
+    // so this must come back empty.
     expect(await searchTransactions('_')).toEqual([]);
   });
 

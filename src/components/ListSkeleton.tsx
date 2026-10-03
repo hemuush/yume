@@ -26,11 +26,8 @@ function RowSkeleton({
 }
 
 /**
- * A list-shaped card, `rows` skeleton rows deep — the same bordered-card
- * shape Home's Budgets/Upcoming/Recent-activity sections and other
- * screens' own list cards (Budgets, Loans, ...) already share, so one
- * skeleton reads as "this exact kind of list is loading" wherever it's
- * used, not a one-off shape per screen.
+ * A list-shaped card, `rows` skeleton rows deep, matching the bordered list cards shared by Home sections and
+ * other screens (Budgets, Loans, ...), so it reads as "this kind of list is loading" everywhere.
  */
 export function CardRowsSkeleton({
   rows = 2,

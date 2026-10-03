@@ -7,10 +7,8 @@ import { useReduceMotion } from './useReduceMotion';
 const SLIDE_PX = 18;
 
 /**
- * Slides a block in from the side when `pageKey` changes (a new period on
- * Reports), from the side you moved toward: back in time comes in from the
- * left, forward from the right. `direction` 0 (a custom range) just fades.
- * Nothing on first mount; reduce motion: nothing at all.
+ * Slides a block in when `pageKey` changes (new Reports period): back in time from left, forward from right.
+ * `direction` 0 (custom range) just fades. Nothing on first mount; reduce motion: nothing at all.
  */
 export function useSlideIn(pageKey: string, direction: -1 | 0 | 1) {
   const reduce = useReduceMotion();

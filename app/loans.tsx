@@ -27,10 +27,8 @@ import { buildTimeline } from '@/features/loans/timelineLayout';
 import { AddLoanModal } from '@/features/loans/AddLoanModal';
 
 /**
- * Formal loans with a schedule. Reached from the Plan tab's Loans tile, and
- * from Home's EMI rows, loan-due notifications and the Next Due widget via
- * /loans. Informal IOUs have their own screen (/people). An EMI reminder's
- * "Pay now" opens /loans?pay=<loan id>, straight onto that EMI's pay sheet.
+ * Formal loans with a schedule (informal IOUs live in /people). Reached from the Plan Loans tile, Home EMI
+ * rows, loan-due notifications and the Next Due widget; /loans?pay=<loan id> opens that EMI's pay sheet.
  */
 const listTitle = {
   ...SECTION_TITLE,

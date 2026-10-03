@@ -1,7 +1,6 @@
 /**
- * The data behind Add Transaction's speed-ups, against a real SQLite engine:
- * the "Your usual" entries, the remembered per-type defaults, and the
- * transaction count Home's backup reminder waits on.
+ * Add Transaction's speed-ups against real SQLite: "Your usual" entries, remembered per-type defaults, and
+ * the transaction count Home's backup reminder waits on.
  */
 import { createRealDataTestDb } from '@/test-support/realDataTestDb';
 

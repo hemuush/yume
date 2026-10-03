@@ -35,11 +35,8 @@ import {
 type Picking = { mode: 'add' } | { mode: 'change'; key: string };
 
 /**
- * The split page (the split redesign sign-off): one payment spread across
- * 2–6 categories. The first part holds whatever the others don't, so the
- * split always adds up; the others are typed on Yume's own pad, one at a
- * time. Done hands the parts back to Add (splitSession.ts), and Add's Save
- * saves them. Back leaves Add as it was.
+ * The split page: one payment spread across 2-6 categories. The first part holds what the others don't, so it
+ * always adds up; Done hands parts to Add (splitSession.ts), whose Save saves them. Back leaves Add as was.
  */
 export function SplitScreen() {
   const insets = useSafeAreaInsets();

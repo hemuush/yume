@@ -16,9 +16,8 @@ import {
 import { errorMessage } from '@/lib/errorMessage';
 
 /**
- * Opens Android's folder picker once; the returned URI is a persistent
- * grant Yume can keep writing into without asking again. Returns null if
- * the user cancels.
+ * Opens Android's folder picker once; the returned URI is a persistent grant Yume can keep writing into.
+ * Returns null if the user cancels.
  */
 export async function pickBackupFolder(): Promise<string | null> {
   const result = await withoutRelock(() => StorageAccessFramework.requestDirectoryPermissionsAsync());
@@ -41,11 +40,8 @@ function backupFilename(dateIso: string): string {
 const BACKUP_NAME = /^yume-backup-(\d{4}-\d{2}-\d{2})(?: \(\d+\))?(?:\.json)?$/;
 
 /**
- * The day a backup file is for, read from the file's own name — the last part
- * of its URI — or null for anything that isn't one of ours. The folder's name
- * is part of a SAF URI too, so looking for "yume-backup-" anywhere in it would
- * also claim every file inside a folder that happens to be called that.
- * Exported for tests.
+ * The day a backup is for, read from the file's own name (last part of its URI), or null if not ours.
+ * Name only: a folder called "yume-backup-…" would otherwise claim every file in it. Exported for tests.
  */
 export function backupFileDate(uri: string): string | null {
   let decoded: string;
@@ -71,18 +67,13 @@ function backupFilesOldestFirst(uris: string[]): string[] {
 /** A string's size as stored on disk (UTF-8), not its character count — ₹ and emoji take several bytes. */
 const byteLength = (text: string): number => new TextEncoder().encode(text).length;
 
-// How many days of local backups to keep in the chosen folder. Backups are
-// one-per-calendar-day, so this is roughly two weeks of history; older files
-// are pruned after each successful write so the folder can't grow without
-// bound over months of use. Yesterday's file always survives, which covers
-// the "today's data got corrupted, restore the last good copy" case.
+// Days of local backups kept (one per calendar day, ~two weeks); older files are pruned after each write
+// so the folder stays bounded. Yesterday's file always survives, covering "today's data got corrupted".
 const KEEP_DAILY_BACKUPS = 14;
 
 /**
- * Deletes all but the newest `KEEP_DAILY_BACKUPS` backup files in the folder.
- * "Newest" comes from the day in each filename (see backupFileDate), so
- * it is just the tail of the sorted list. Best effort — a failed delete here must never fail the backup that just
- * succeeded.
+ * Deletes all but the newest `KEEP_DAILY_BACKUPS` backup files (newest by the day in the filename, see
+ * backupFileDate). Best effort: a failed delete must never fail the backup that just succeeded.
  */
 async function pruneOldLocalBackups(directoryUri: string): Promise<void> {
   try {
@@ -97,23 +88,8 @@ async function pruneOldLocalBackups(directoryUri: string): Promise<void> {
 }
 
 /**
- * Writes a fresh snapshot into the chosen folder right now, replacing
- * today's backup if one already exists rather than adding another one next
- * to it. Throws if no folder has been chosen, or on any write failure —
- * callers are expected to record/report that failure.
- *
- * SAF's createFileAsync always creates a brand-new file — even when one
- * with the same display name already exists, Android just appends "(1)",
- * "(2)", etc. rather than overwriting it. Without deleting today's existing
- * file first, running a backup more than once a day (a manual "Backup now"
- * on top of the automatic one, or just tapping it twice) silently piled up
- * duplicate same-day files forever, and "restore the newest" got less
- * reliable the more of them accumulated.
- *
- * The old same-day file is only deleted AFTER the new one is fully written.
- * Deleting it first meant a failed write (storage full, the folder grant
- * revoked mid-way) left no backup for today at all — and a half-written new
- * file is removed rather than left behind to be picked up as "the newest".
+ * Writes a snapshot to the chosen folder, replacing today's file (SAF would otherwise create "(1)" copies).
+ * Old file deleted only AFTER the new one is fully written; a partial new file is removed. Throws on failure.
  */
 export async function writeLocalBackupNow(directoryUri: string): Promise<{ sizeBytes: number }> {
   const snapshot = await buildBackupSnapshot();
@@ -146,11 +122,8 @@ export async function writeLocalBackupNow(directoryUri: string): Promise<{ sizeB
 }
 
 /**
- * Whether a periodic backup is due. Daily means once per local calendar day
- * — not "20 hours since the last one": with a gap, a backup taken in the
- * afternoon wasn't due again until the next afternoon, so a day where the
- * app was only opened in the morning got no backup file at all. Weekly and
- * monthly stay elapsed-time windows. Exported for tests.
+ * Whether a periodic backup is due. Daily = once per local calendar day, not 20 hours since the last one
+ * (that skipped days opened only in the morning). Weekly/monthly are elapsed windows. Exported for tests.
  */
 export function isLocalBackupDue(
   lastBackupIso: string | null,
@@ -168,14 +141,8 @@ export function isLocalBackupDue(
 let runningBackup: Promise<void> | null = null;
 
 /**
- * Best-effort periodic local backup: only runs if a folder has been chosen
- * and one is due (isLocalBackupDue). Called on cold start and whenever the
- * app returns to the foreground — Android keeps Yume alive in the
- * background for days, so cold start alone could skip days. Never throws — the folder grant can be revoked outside the app
- * (e.g. the user deletes the folder), and a failed local backup should
- * never disrupt app startup — but the outcome is still recorded so the
- * Backup screen can show a failure instead of a silently stale "last
- * backup" timestamp.
+ * Best-effort periodic backup if a folder is chosen and one is due (isLocalBackupDue); run on cold start and
+ * on foreground (Android keeps Yume alive for days). Never throws; outcome is recorded for the Backup screen.
  */
 export function runLocalBackupIfDue(): Promise<void> {
   runningBackup ??= backUpIfDue().finally(() => {
@@ -215,12 +182,8 @@ export interface LocalBackupFile {
 }
 
 /**
- * The backup files in the chosen folder, newest first (at most `limit`),
- * each saying what's inside. What's inside comes from the phone's backup
- * index (see backupIndex.ts) when Yume wrote or already read that file;
- * only a file it hasn't seen is read, once, and then remembered. A file
- * that can't be read is still listed, with no summary, rather than
- * breaking the list — and isn't remembered, so it's tried again next time.
+ * Backup files in the chosen folder, newest first (at most `limit`), each with its contents summary.
+ * From the backup index (backupIndex.ts); unseen files are read once; unreadable ones list bare, retried.
  */
 export async function listLocalBackups(
   directoryUri: string,

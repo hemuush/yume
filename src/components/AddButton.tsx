@@ -10,9 +10,8 @@ interface Props extends Omit<PressableProps, 'style'> {
   label?: string;
 }
 
-// The small "+ Add" header button repeated across Accounts, Loans,
-// Transactions, Categories and People — a compact ink pill matching the
-// app's one PrimaryButton, not a bordered doodle chip.
+// The small "+ Add" header button shared by Accounts, Loans, Transactions, Categories and People:
+// a compact ink pill matching PrimaryButton, not a bordered doodle chip.
 export function AddButton({ label = '+ Add', disabled, style, ...rest }: Props) {
   const { animatedStyle, onPressIn, onPressOut } = usePressScale();
   return (

@@ -7,9 +7,8 @@ import { toMajor } from './money';
 import { Account, Category, Loan, Transaction } from '@/types';
 
 /**
- * Yume's own palette, as plain 6-digit RGB hex (xlsx-js-style's CellStyleColor
- * takes "RRGGBB", no alpha) — mirrors src/constants/theme.ts exactly, so the
- * exported workbook reads as the same app, not a generic spreadsheet.
+ * Yume's palette as plain 6-digit RGB hex (xlsx-js-style takes "RRGGBB", no alpha), mirroring
+ * src/constants/theme.ts so the workbook reads as the same app.
  */
 const C = {
   ink: '12130F',
@@ -29,12 +28,8 @@ const C = {
 
 const FONT_NAME = 'Calibri'; // Archivo (the app's own display font) isn't available to Excel — bold + color carries the identity instead.
 
-// Freeze panes were part of the sign-off design (the Transactions header row
-// staying put on scroll) but there turned out to be no way to do it:
-// xlsx-js-style has no `!freeze`/sheetView API at all, and writing one
-// requires the paid SheetJS Pro tier or hand-patching the zip's sheet XML
-// after the fact — both a lot of fragile surface area for one nice-to-have.
-// Dropped rather than shipped half-working, exactly as flagged going in.
+// No freeze panes: xlsx-js-style has no `!freeze`/sheetView API, and the alternatives (paid SheetJS Pro or
+// hand-patching the sheet XML) are too fragile for a nice-to-have.
 
 /** A thin border on all four sides — every bordered cell in this file uses this, so the grid reads as one table instead of colour patches with no edges (the actual complaint that started this rework). */
 function allBorders(color: string, style: XLSX.BorderType = 'thin') {
@@ -61,9 +56,8 @@ function headerStyle(fill: string = C.ink, fontColor: string = C.white): CellSty
     font: { name: FONT_NAME, bold: true, sz: 11, color: { rgb: fontColor } },
     fill: { fgColor: { rgb: fill }, patternType: 'solid' },
     alignment: { vertical: 'center', horizontal: 'left' },
-    // A full border, not just the bottom edge — the header used to be the
-    // one row with any border at all, so it sat on top of the borderless
-    // body like a lid rather than the first row of the same table.
+    // A full border, not just the bottom edge, so the header reads as the first row of the same table
+    // rather than a lid on a borderless body.
     border: allBorders(C.ink),
   };
 }
@@ -73,10 +67,8 @@ function bodyStyle(shaded: boolean, extra?: CellStyle): CellStyle {
     font: { name: FONT_NAME, sz: 10.5, ...(extra?.font ?? {}) },
     fill: { fgColor: { rgb: shaded ? C.surfaceAlt : C.surface }, patternType: 'solid' },
     alignment: { vertical: 'center', horizontal: extra?.alignment?.horizontal ?? 'left' },
-    // Every body cell gets a hairline border now — this is the actual fix
-    // for the export reading as "unclean": a coloured fill with no border
-    // just floats over Excel's own default gridlines instead of forming a
-    // table with them.
+    // Every body cell gets a hairline border: a coloured fill with no border floats over Excel's default
+    // gridlines instead of forming a table.
     border: allBorders(C.borderSoft),
     numFmt: extra?.numFmt,
   };
@@ -127,9 +119,8 @@ function currencySymbol(currency: string): string {
 }
 
 function moneyFmt(symbol: string): string {
-  // Escaped so Excel treats the symbol as a literal, not a format directive;
-  // negative amounts render in red with a leading minus, matching how the
-  // app itself colors expenses.
+  // Escaped so Excel treats the symbol as a literal, not a format directive; negatives render red with a
+  // leading minus, matching how the app colours expenses.
   return `"${symbol}"#,##0.00;[Red]-"${symbol}"#,##0.00`;
 }
 
@@ -218,10 +209,7 @@ export function buildExportWorkbook(data: ExportData): XLSX.WorkBook {
   const wb = XLSX.utils.book_new();
 
   // ---------------------------------------------------------------- Summary
-  // Redesigned from a label/value list (narrow, mostly empty at the sheet's
-  // actual width) into a 3-across grid of KPI tiles, the same shape as the
-  // app's own stat tiles on Profile → You — six numbers at a glance instead
-  // of a list you scroll.
+  // A 3-across grid of KPI tiles (like the app's stat tiles on Profile -> You): six numbers at a glance.
   const summary = XLSX.utils.aoa_to_sheet([['', '']]);
   const put = (ref: string, v: CellValue, style?: CellStyle, type?: 'n' | 's') => {
     setCell(summary, ref, v, style, type);
@@ -303,9 +291,8 @@ export function buildExportWorkbook(data: ExportData): XLSX.WorkBook {
     { font: { name: FONT_NAME, italic: true, sz: 9.5, color: { rgb: C.textMuted } } }
   );
   summary['!cols'] = Array.from({ length: SUMMARY_COLS }, () => ({ wch: 18 }));
-  // Banner rows tall enough to read as a real header; tile label rows short,
-  // value rows tall — the label/value height contrast is what makes each
-  // pair read as one tile rather than two ordinary rows.
+  // Banner rows tall enough to read as a header; tile label rows short and value rows tall, so each
+  // label/value pair reads as one tile.
   summary['!rows'] = [
     { hpt: 26 },
     { hpt: 20 },
@@ -403,8 +390,7 @@ export function buildExportWorkbook(data: ExportData): XLSX.WorkBook {
   XLSX.utils.book_append_sheet(wb, txSheet, 'Transactions');
 
   // --------------------------------------------------------------- Accounts
-  // Tracked (investment) accounts add what was put in and the gain; the
-  // balance column is then their value.
+  // Tracked (investment) accounts add what was put in and the gain; the balance column is then their value.
   const hasTracked = accounts.some((a) => a.investment);
   const accHeaders = ['Account', 'Type', 'Balance', 'Currency', ...(hasTracked ? ['Invested', 'Gain'] : [])];
   const accRows = accounts.map((a) => [
@@ -475,10 +461,8 @@ export function buildExportWorkbook(data: ExportData): XLSX.WorkBook {
   const catRowsData = [...catTotals.values()].sort((a, b) =>
     a.kind === b.kind ? b.total - a.total : a.kind === 'expense' ? -1 : 1
   );
-  // A leading colour-swatch column, reading each category's own stored
-  // `color` — the same hex every chip and icon badge for that category
-  // already uses in the app, so this sheet ties back to it visually instead
-  // of being names with no link to how the category actually looks in Yume.
+  // A leading colour-swatch column using each category's stored `color`, the same hex as its chips and icon
+  // badges in the app, so the sheet ties back to how the category looks in Yume.
   const catHeaders = ['', 'Category', 'Kind', 'Total', 'Transactions'];
   const catSheet = XLSX.utils.aoa_to_sheet([
     catHeaders,

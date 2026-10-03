@@ -1,8 +1,6 @@
 /**
- * Recently deleted: a deleted entry waits 30 days and can be put back
- * exactly as it was; Undo takes it off the list; taking back a "Log again"
- * never lands here; an entry whose account is gone can't be restored; and
- * restoring a backup clears the list. All figures are made up.
+ * Recently deleted: entries wait 30 days and restore as they were; Undo removes one from the list;
+ * a taken-back "Log again" never lands here; a missing account blocks restore; a backup restore clears all.
  */
 import { createRealDataTestDb } from '@/test-support/realDataTestDb';
 

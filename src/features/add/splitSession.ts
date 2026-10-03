@@ -2,11 +2,8 @@ import { Category } from '@/types';
 import { DraftPart } from './splitDraft';
 
 /**
- * Hands a split between Add and the split page (app/split.tsx), in memory:
- * the parts are too much for a URL, and nothing here needs to outlive the
- * two screens. Add opens a session and pushes the page; the page's Done
- * leaves a result that Add takes when it's back in focus. Leaving the page
- * any other way (back) leaves no result, so Add stays as it was.
+ * In-memory hand-off between Add and the split page (app/split.tsx): parts are too big for a URL. Done
+ * leaves a result Add takes on refocus; leaving any other way (back) leaves none.
  */
 export interface SplitSession {
   totalMinor: number;

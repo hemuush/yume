@@ -33,10 +33,8 @@ function status(h: BudgetsHeroFigures): string {
 }
 
 /**
- * The first block on Budgets: what is left across every limit this month,
- * what that allows each remaining day, and whether spending is keeping to
- * the even line (the ink tick on the bar, as on each row). The tint warms
- * to gold when a budget is ahead of pace and to coral once one is over.
+ * First block on Budgets: what's left across all limits this month, the per-day allowance, and whether
+ * spending keeps to the even line (ink tick). Tint warms to gold when ahead of pace, coral once over.
  */
 export function BudgetsHero({ figures: h }: { figures: BudgetsHeroFigures }) {
   const hue = HUE[h.tone];

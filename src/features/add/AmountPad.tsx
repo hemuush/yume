@@ -24,10 +24,8 @@ const LABELS: Partial<Record<PadKey, string>> = {
 };
 
 /**
- * The Add screen's own number pad, in place of the phone keyboard — it takes
- * the keyboard's space but keeps the category grid above it in view, and it
- * can do sums (see padMath.ts). `children` is the pad's last row: Add to
- * list and Save. Long-pressing ⌫ clears the whole amount.
+ * The Add screen's own number pad instead of the phone keyboard: keeps the category grid in view and does
+ * sums (padMath.ts). `children` is the last row (Add to list, Save). Long-press ⌫ clears the amount.
  */
 export function AmountPad({
   onKey,

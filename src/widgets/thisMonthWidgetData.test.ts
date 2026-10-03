@@ -1,7 +1,6 @@
 /**
- * The This Month widget follows the same rule as Home's month card: while
- * "hide savings & investment amounts" is on, nothing about what went to
- * savings reaches the widget — no figure, no arc, no Saved tile.
+ * The This Month widget follows Home's month card: while "hide savings & investment amounts" is on, nothing
+ * about savings reaches the widget (no figure, no arc, no Saved tile).
  */
 import type React from 'react';
 import { createRealDataTestDb } from '@/test-support/realDataTestDb';

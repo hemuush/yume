@@ -1,7 +1,6 @@
 /**
- * The Quiet motion pieces render as expected: a saved entry's row glows once
- * per list, the pill switch still reports taps, and a Garden plant that
- * grows a stage (or loads for the first time) never throws.
+ * The Quiet motion pieces render as expected: a saved entry's row glows once per list, the pill switch
+ * still reports taps, and a Garden plant that grows a stage (or first loads) never throws.
  */
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
 import { Animated, View } from 'react-native';

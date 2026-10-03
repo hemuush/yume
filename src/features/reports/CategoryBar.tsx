@@ -3,9 +3,8 @@ import { CategoryBreakdownItem } from '@/db/reports';
 import { styles } from './reports.styles';
 
 /**
- * The period's whole split as one bar, each category its share in its own
- * colour — the shape of "Where it went" at a glance, above the rows. With a
- * category picked, the others fade back.
+ * The period's whole split as one bar, each category its share in its own colour: "Where it went" at a
+ * glance, above the rows. With a category picked, the others fade back.
  */
 export function CategoryBar({
   breakdown,

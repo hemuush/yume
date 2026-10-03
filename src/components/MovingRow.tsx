@@ -4,10 +4,8 @@ import Animated from 'react-native-reanimated';
 import { ROW_LAYOUT, ROW_EXIT } from '@/lib/animation';
 
 /**
- * One row in a list that moves (lib/animation.ts `ROW_LAYOUT`): its
- * neighbours slide when it arrives or leaves, and it fades out when removed.
- * Give it the row's stable key — the id, never the index — or the wrong
- * row animates.
+ * One row in a list that moves (lib/animation.ts `ROW_LAYOUT`): neighbours slide when it arrives or leaves,
+ * it fades out when removed. Give it a stable key (the id, never the index) or the wrong row animates.
  */
 export function MovingRow({
   children,

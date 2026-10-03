@@ -1,9 +1,6 @@
 /**
- * One day on Activity: its heading says only the day and the date, every
- * entry sits in the day's one card (transfers too, as quiet rows at the
- * end), two or more entries of one category stack into a line that says
- * how many and opens in place, and every entry of the day can still be
- * tapped — nothing hides behind a "+N more".
+ * One Activity day: heading is only day and date, every entry sits in one card (transfers as quiet end rows),
+ * 2+ entries of a category stack into a line that opens in place; every entry stays tappable (no "+N more").
  */
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
 import { Text } from 'react-native';

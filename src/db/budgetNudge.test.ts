@@ -1,10 +1,6 @@
 /**
- * Budget alerts against a real SQLite engine: one alert is queued when a
- * budget passes 80% of its limit, one when it goes over — never twice for
- * the same budget in the same month, a subcategory's spending counts toward
- * its parent's budget, and the "Overspending alerts" switch turns them off.
- * Alerts wait in the queue for the next notification time rather than
- * firing on the spot.
+ * Budget alerts on real SQLite: one past 80% of the limit, one when over, never twice per budget per month;
+ * subcategory spend counts to the parent, the switch turns them off, and they queue instead of firing.
  */
 import { createRealDataTestDb } from '@/test-support/realDataTestDb';
 

@@ -11,12 +11,8 @@ function dayAndLength(today: string): { day: number; daysInMonth: number } {
 }
 
 /**
- * Where this month's spending is heading: what's spent so far, plus your
- * everyday spending per day so far carried over the days left, plus EMIs and
- * bills still due before the month ends. "Everyday" leaves out the
- * categories the app files itself (Loan EMI, fees, Friends & Family), so an
- * EMI on the 5th doesn't inflate every later day. Null before the 5th, when
- * a few days of spending say too little. Minor units.
+ * Projected month-end spend (minor units): spent so far + everyday spend/day carried over the days left
+ * + EMIs/bills due. "Everyday" skips self-filed categories (EMI, fees, Friends & Family). Null before the 5th.
  */
 export function monthPace(input: {
   spentMinor: number;
@@ -33,11 +29,8 @@ export function monthPace(input: {
 export type BudgetPaceState = 'onTrack' | 'ahead' | 'over';
 
 /**
- * A budget against the even-spending line, from the share of its limit
- * used (1 = all of it): `expectedFraction` is how much would be gone by
- * today if it were spent evenly (26 of 30 days → 0.87). "Ahead" once
- * spending is more than BUDGET_PACE_SLACK of the limit past that line;
- * "over" once it's past the limit itself.
+ * A budget vs the even-spending line, from the share of its limit used (1 = all). `expectedFraction` is the
+ * share gone if spent evenly (26/30 → 0.87). "Ahead": BUDGET_PACE_SLACK past it; "over": past the limit.
  */
 export function budgetPace(
   usedFraction: number,

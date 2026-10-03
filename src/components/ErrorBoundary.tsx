@@ -12,10 +12,8 @@ interface State {
   error: Error | null;
 }
 
-// Without this, an uncaught error anywhere in the tree crashes the whole app
-// with no recovery — release Hermes builds don't show a red box, they just
-// close. Wrapping the app once means a bug in one screen shows a recoverable
-// message instead of forcing an unexplained crash for whoever it's shared with.
+// Without this an uncaught error crashes the whole app (release Hermes builds show no red box, they just
+// close); wrapping the app once turns a bug in one screen into a recoverable message.
 export class ErrorBoundary extends Component<Props, State> {
   state: State = { error: null };
 
@@ -23,9 +21,8 @@ export class ErrorBoundary extends Component<Props, State> {
     return { error };
   }
 
-  // Kept on-device only (logcat) — no crash reporting service, by design.
-  // Without this the error and its component stack vanished entirely once
-  // the fallback rendered, leaving nothing to debug from.
+  // Logged to logcat only: on-device by design, no crash-reporting service. Keeps the error and
+  // component stack available after the fallback renders.
   componentDidCatch(error: Error, info: ErrorInfo) {
     console.error('ErrorBoundary caught:', error, info.componentStack);
   }

@@ -1,7 +1,6 @@
 /**
- * The Accounts home-screen widget follows the same rules as Home's own
- * account chips: each balance in its account's own currency, and a savings
- * balance masked while "hide savings & investment amounts" is on.
+ * The Accounts widget follows Home's account chips: each balance in its own currency, and a savings balance
+ * masked while "hide savings & investment amounts" is on.
  */
 import { createRealDataTestDb } from '@/test-support/realDataTestDb';
 

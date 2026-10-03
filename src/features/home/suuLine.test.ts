@@ -12,10 +12,8 @@ import {
 import { formatPctChange } from '@/lib/format';
 import { savingsRateLabel } from '@/lib/savingsRate';
 
-// suuLine() now picks randomly from a ~20-line pool per situation (see
-// suuLinePools.ts) instead of returning one fixed sentence — these tests
-// check the right *pool* (and the right dynamic figure within it) is used,
-// not one exact line, since the exact line is deliberately no longer fixed.
+// suuLine() picks at random from a pool per situation (see suuLinePools.ts), so tests check the right pool
+// (and the dynamic figure in it), not one exact line.
 
 describe('suuLine', () => {
   it('asks for more data when there is no comparison yet', () => {

@@ -13,11 +13,8 @@ import type { TransactionRow } from './rows';
 import type { Transaction } from '@/types';
 
 /**
- * Split payments (the Missing pieces sign-off): one bill from one account,
- * on one date with one note, spread across 2–6 expense categories. Each
- * part is a real entry in its own category (so budgets, Reports and the
- * Wrap count it there), and every part shares a `split_id` so Activity can
- * show them as the one payment they were.
+ * Split payments: one bill (one account, date, note) spread across 2–6 expense categories. Each part is a real
+ * entry in its category (budgets, Reports, Wrap count it) and shares a `split_id` so Activity groups them.
  */
 
 export { MIN_SPLIT_PARTS, MAX_SPLIT_PARTS };

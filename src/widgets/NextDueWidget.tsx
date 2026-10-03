@@ -5,12 +5,8 @@ import { widgetColor, widgetAlpha, WIDGET_FONT } from './widgetTheme';
 import { dateTileParts, type NextDueWidgetData } from './data';
 
 /**
- * "Next Due" — the 4×1 widget, one of Home's Upcoming rows (the Home A
- * widgets sign-off): a date tile ("01" over "OCT") in the category's colour,
- * or the theme's for an EMI; the name and when it's due; the amount in ink,
- * green only for money coming in. The same loan-EMI-or-recurring-rule merge
- * Home's Upcoming list computes. Tapping opens Loans or Recurring, whichever
- * this item came from.
+ * "Next Due" 4×1 widget: one of Home's Upcoming rows (same loan-EMI-or-recurring merge): date tile in the
+ * category's colour (theme's for an EMI), name, due date, ink amount (green if income). Opens Loans/Recurring.
  */
 export function NextDueWidget({ data }: { data: NextDueWidgetData | null }) {
   if (!data) {

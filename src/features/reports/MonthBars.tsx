@@ -16,9 +16,8 @@ export function compactMoney(minor: number): string {
 }
 
 /**
- * Monthly totals as labelled bars: the value above each, the last month
- * (the period's own) in the full colour and earlier ones paler, "—" for a
- * month with nothing, and a line at the usual month when there is one.
+ * Monthly totals as labelled bars: value above each, the period's own (last) month in full colour and
+ * earlier ones paler, "—" for an empty month, and a line at the usual month when there is one.
  */
 export function MonthBars({
   months,

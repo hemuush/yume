@@ -1,8 +1,6 @@
 /**
- * A credit card's bill, from its own entries in a real database: what it
- * owed at the end of the statement day, what's been paid in since, what's
- * been spent since, and what's left. Plus how that bill reaches Plan's
- * Coming up and Home's Needs you. All figures are made up.
+ * A card's bill from its own entries in a real database: owed at statement day, paid and spent since, left,
+ * and how it reaches Plan's Coming up and Home's Needs you. All figures are made up.
  */
 import { createRealDataTestDb } from '@/test-support/realDataTestDb';
 

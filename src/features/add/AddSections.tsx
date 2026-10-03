@@ -17,10 +17,8 @@ import { withPressed } from '@/lib/pressed';
 import { categorySentence, categorySpoken, inParent } from '@/lib/categoryLabel';
 
 /**
- * The Add screen's display pieces, each drawn from props: the amount card,
- * the From / To pickers for a transfer, the "Your usual" chips and the list
- * of entries waiting to be saved. All state and saving stay in the route
- * (app/add-transaction.tsx); these only show it and report taps.
+ * The Add screen's display pieces: amount card, From/To pickers, "Your usual" chips, staged-entry list.
+ * All state and saving stay in app/add-transaction.tsx; these only show it and report taps.
  */
 
 /** The coloured card on top: entry type, the amount being typed, and this category's usual amounts. */
@@ -171,9 +169,8 @@ export function TransferAccounts({
 }
 
 /**
- * "Your usual": the entries of this type logged most lately, one tap each
- * for category, amount and account together. The name is its own Text, so at
- * large text sizes a long name is what gets cut, never the amount.
+ * "Your usual": recent entries of this type, one tap fills category, amount and account. The name is its own
+ * Text so at large text sizes a long name is cut, never the amount.
  */
 export function UsualChips({
   usual,

@@ -4,11 +4,8 @@ import { widgetColor, widgetAlpha, asWidgetColor, WIDGET_FONT } from './widgetTh
 import type { QuickAddWidgetData } from './data';
 
 /**
- * "Quick Add" — the 2×2 widget (the Home A widgets sign-off). One big "Add
- * expense" in the theme pack's colour, your four most-used expense
- * categories below it (each opens Add with that category already picked),
- * then Income and Move. Every part is a direct deep link into
- * `add-transaction`, skipping Home.
+ * "Quick Add" 2×2 widget: a big "Add expense" in the pack colour, your four most-used expense categories
+ * (each opens Add with it picked), then Income and Move. All are deep links into `add-transaction`.
  */
 export function QuickAddWidget({ primary, categories }: QuickAddWidgetData) {
   return (

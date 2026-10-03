@@ -1,12 +1,8 @@
 import type { AppDb, SqlParam } from './client';
 
 /**
- * A raw, exact copy of one row — every column SQLite returned for it,
- * untouched by any of the app-level `rowToXxx` mappers. Generic and
- * schema-agnostic on purpose: capturing "every column this row has" and
- * restoring it via a plain `INSERT` means a snapshot can never drift out of
- * sync with the schema the way a hand-maintained column list could, and the
- * same two functions work for every table an Undo needs to cover.
+ * An exact raw copy of one row, bypassing the `rowToXxx` mappers. Schema-agnostic on purpose: restoring via plain
+ * `INSERT` can't drift from the schema like a hand-kept column list, and works for every table Undo covers.
  */
 export interface RowSnapshot {
   table: string;

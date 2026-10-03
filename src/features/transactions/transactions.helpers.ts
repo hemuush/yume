@@ -28,9 +28,8 @@ export function weekContaining(anchor: Date): ActivityWeek {
 }
 
 /**
- * The day to anchor on after one week back (-1) or forward (+1): the
- * neighbouring week of the same month, or the last/first week of the
- * neighbouring month at a month edge. Forward stops at today.
+ * Day to anchor on after one week back (-1) or forward (+1): the neighbouring week of the same month, or the
+ * last/first week of the neighbouring month at a month edge. Forward stops at today.
  */
 export function stepWeekAnchor(anchor: Date, dir: -1 | 1, today: Date): Date {
   const week = weekContaining(anchor);
@@ -48,9 +47,8 @@ export function stepWeekAnchor(anchor: Date, dir: -1 | 1, today: Date): Date {
 }
 
 /**
- * The equivalent immediately-prior range, for the headline's "N% less/more than last …" line.
- * A week is compared with the same weekdays of the week before, and — while it is still in
- * progress — only up to the same day, so a part-week is never set against a whole one.
+ * Immediately-prior equivalent range for the headline's "N% less/more than last …" line.
+ * A week compares with the same weekdays of the prior week, only up to the same day while in progress.
  */
 export function previousRangeFor(
   range: { fromDate: string; toDate: string },
@@ -78,7 +76,10 @@ export function weekCompareLabel(week: { start: string; end: string }, todayIso:
   return partial ? 'same days last week' : 'last week';
 }
 
-/** Consecutive same-date runs — relies on `txs` already being date-sorted (the query's own ORDER BY), not a separate grouping pass over unsorted data. */
+/**
+ * Consecutive same-date runs — relies on `txs` already being date-sorted (the query's own ORDER BY), not a
+ * separate grouping pass over unsorted data.
+ */
 export function groupByDate(txs: Transaction[]): { date: string; items: Transaction[] }[] {
   const groups: { date: string; items: Transaction[] }[] = [];
   for (const tx of txs) {
@@ -90,11 +91,8 @@ export function groupByDate(txs: Transaction[]): { date: string; items: Transact
 }
 
 /**
- * The Activity period bar's title and the quieter line beside it. A week is
- * the Sunday-to-Saturday row of its month, so "This week" carries its real
- * dates and its place in the month ("1–3 Oct · Week 1 of 5") alongside; any
- * other week leads with its dates and says which week of the month it is. A month is its name, plus the year only when
- * it isn't this year's.
+ * Period bar title + quieter line. A week is a Sunday-Saturday row of its month: "This week" adds its dates
+ * and place ("1–3 Oct · Week 1 of 5"); other weeks lead with dates. A month: its name, plus year if not now.
  */
 export function periodHeading(input: {
   scope: 'week' | 'month';
@@ -123,10 +121,8 @@ export function periodHeading(input: {
 }
 
 /**
- * Activity's list after its filters: the type, then any accounts (a
- * transfer matches either side), then any categories — where picking a
- * parent ("Food & Dining") also matches its subcategories ("Zomato"), the
- * same rollup Reports uses.
+ * Activity's list after filters: type, then accounts (a transfer matches either side), then categories,
+ * where picking a parent ("Food & Dining") also matches its subcategories ("Zomato"), as Reports rolls up.
  */
 export function filterActivity(
   transactions: Transaction[],
@@ -177,13 +173,8 @@ export type LaneLine =
     };
 
 /**
- * How Activity's timeline draws one day (newest first, as the day's entries
- * already are): transfers between your own accounts come out as notes on the
- * thread, and two or more spending (or income) entries in the same category
- * stack into one line — "Food & Dining ×5" — in the place of the newest of
- * them. The parts of a split payment come first as one line of their own
- * ("Split · 2 categories"), and never join a category's stack. Everything
- * else stays a line of its own.
+ * Day layout (newest first): own-account transfers become notes; 2+ same-category entries stack into one line
+ * ("Food & Dining ×5") in the newest's place. Split parts form their own line first and never join a stack.
  */
 export function buildDayLane(
   items: Transaction[],

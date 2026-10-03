@@ -19,10 +19,8 @@ interface Props {
 }
 
 /**
- * Home's "Your accounts": every account as a card, overlapping like a hand of
- * cards. Each card shows its name and balance in the strip that peeks out; the
- * front one shows in full. Savings sits at the back and cash in front (see
- * stackOrder). Nothing moves: tapping a card opens that account's summary.
+ * Home's "Your accounts": an overlapping card per account, savings at the back, cash in front (stackOrder).
+ * Each card's name and balance show in its peeking strip, the front one in full. Tapping opens the summary.
  */
 export function AccountStack({ accounts, onOpen }: Props) {
   const ordered = stackOrder(accounts);

@@ -1,15 +1,6 @@
 /**
- * A full combinatorial sweep of the EMI / amortization engine — every
- * principal × rate × tenure combination in a realistic consumer-loan range,
- * each asserting the invariants that must hold for ANY loan: exactly `tenure`
- * installments (or fewer if rounding closes it early), the last landing on
- * exactly zero, principal components summing back to the principal, EMI
- * matching the standalone formula, interest never negative, and the
- * outstanding balance never increasing.
- *
- * This complements src/db/calculation.scenarios.test.ts (which drives the
- * same math through the real DB layer) with a pure-function matrix that runs
- * fast and covers far more numeric combinations.
+ * Combinatorial sweep of the EMI/amortization engine (principal x rate x tenure); invariants for ANY loan:
+ * `tenure` installments, last at zero, principals sum to principal, EMI matches formula, balance never rises.
  */
 import {
   calculateEmi,
