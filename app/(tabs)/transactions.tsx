@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { onTransactionsChanged } from '@/lib/dataEvents';
 import { View, FlatList, Pressable, Animated, StyleSheet } from 'react-native';
 import { Text, TextInput } from '@/components/Text';
-import { FadeIn, ReduceMotion } from 'react-native-reanimated';
+import ReanimatedAnimated, { FadeIn, ReduceMotion } from 'react-native-reanimated';
 import { useFocusEffect, router, useLocalSearchParams } from 'expo-router';
 import Feather from '@expo/vector-icons/Feather';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -14,7 +14,7 @@ import { AppHeader, HeaderIconButton } from '@/components/AppHeader';
 import { theme } from '@/constants/theme';
 import { toLocalIsoDate, parseLocalIsoDate, addDaysToIsoDate } from '@/lib/date';
 import { MAX_LIST_STAGGER_MS } from '@/lib/animation';
-import { useSwipeStep } from '@/lib/useSwipeStep';
+import { useSwipeDrag } from '@/lib/useSwipeDrag';
 import { usePressScale } from '@/lib/usePressScale';
 import { styles } from '@/features/transactions/transactions.styles';
 import { ActivityFilterChips, SearchStatus } from '@/features/transactions/ActivityFilterChips';
@@ -171,10 +171,10 @@ export default function TransactionsScreen() {
       return next > todayDate ? todayDate : next;
     });
   };
-  // A drag on the nav row steps the period like its chevrons; `atCurrent` mirrors the forward button's
-  // guard, so swiping past the current week/month is a no-op.
+  // A drag on the nav row, the rail or the Spent card moves them with the finger and steps the period like the
+  // chevrons; `atCurrent` mirrors the forward button's guard, so swiping past the current week/month bounces back.
   const atCurrent = viewScope === 'month' ? isCurrentMonth : isCurrentWeek;
-  const weekNavSwipe = useSwipeStep(stepBack, () => !atCurrent && stepForward());
+  const periodSwipe = useSwipeDrag((dir) => (dir < 0 ? stepBack() : stepForward()), !atCurrent);
   const stepBackPress = usePressScale();
   const stepForwardPress = usePressScale();
 
@@ -437,9 +437,12 @@ export default function TransactionsScreen() {
       )}
 
       {!searching && (
-        // ‹ This week › centred, its dates under it. Dragging anywhere on the
-        // row steps the period, same as the chevrons.
-        <View style={styles.periodRow} {...weekNavSwipe.panHandlers}>
+        // ‹ This week › centred, its dates under it. Dragging the row (or the rail and Spent card below it)
+        // steps the period, same as the chevrons.
+        <ReanimatedAnimated.View
+          style={[styles.periodRow, periodSwipe.dragStyle]}
+          {...periodSwipe.panHandlers}
+        >
           <AnimatedPressable
             onPress={stepBack}
             onPressIn={stepBackPress.onPressIn}
@@ -480,7 +483,7 @@ export default function TransactionsScreen() {
           >
             <Feather name="chevron-right" size={18} color={theme.colors.textPrimary} />
           </AnimatedPressable>
-        </View>
+        </ReanimatedAnimated.View>
       )}
 
       <MonthPickerModal
@@ -538,32 +541,34 @@ export default function TransactionsScreen() {
               />
             ) : (
               <>
-                {viewScope === 'week' && (
-                  <WeekRail
-                    week={week}
-                    todayIso={today}
-                    onPickWeek={(start) => {
-                      haptics.tap();
-                      setDirection(start < week.start ? -1 : 1);
-                      setAnchor(parseLocalIsoDate(start));
-                    }}
-                  />
-                )}
+                <ReanimatedAnimated.View style={periodSwipe.dragStyle} {...periodSwipe.panHandlers}>
+                  {viewScope === 'week' && (
+                    <WeekRail
+                      week={week}
+                      todayIso={today}
+                      onPickWeek={(start) => {
+                        haptics.tap();
+                        setDirection(start < week.start ? -1 : 1);
+                        setAnchor(parseLocalIsoDate(start));
+                      }}
+                    />
+                  )}
 
-                <TransactionsHeadline
-                  periodKey={`${viewScope}-${anchor.toDateString()}`}
-                  direction={direction}
-                  expenseMinor={headline?.current.expenseMinor ?? 0}
-                  incomeMinor={headline?.current.incomeMinor ?? 0}
-                  expenseChangeMinor={expenseChangeMinor}
-                  viewScope={viewScope}
-                  compareLabel={viewScope === 'week' ? weekCompareLabel(week, today) : undefined}
-                  onChangeViewScope={onChangeViewScope}
-                  bars={bars}
-                  legend={legend}
-                  onPressDay={onPressBar}
-                  selectedKey={selectedBar}
-                />
+                  <TransactionsHeadline
+                    periodKey={`${viewScope}-${anchor.toDateString()}`}
+                    direction={direction}
+                    expenseMinor={headline?.current.expenseMinor ?? 0}
+                    incomeMinor={headline?.current.incomeMinor ?? 0}
+                    expenseChangeMinor={expenseChangeMinor}
+                    viewScope={viewScope}
+                    compareLabel={viewScope === 'week' ? weekCompareLabel(week, today) : undefined}
+                    onChangeViewScope={onChangeViewScope}
+                    bars={bars}
+                    legend={legend}
+                    onPressDay={onPressBar}
+                    selectedKey={selectedBar}
+                  />
+                </ReanimatedAnimated.View>
 
                 <ActivityFilterChips
                   filterType={filterType}
