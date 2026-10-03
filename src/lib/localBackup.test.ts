@@ -38,7 +38,13 @@ jest.mock('@/db/settings', () => ({
 }));
 
 import { StorageAccessFramework } from 'expo-file-system/legacy';
-import { writeLocalBackupNow, isLocalBackupDue, listLocalBackups, backupFileDate } from './localBackup';
+import {
+  writeLocalBackupNow,
+  isLocalBackupDue,
+  nextLocalBackupLabel,
+  listLocalBackups,
+  backupFileDate,
+} from './localBackup';
 import { toLocalIsoDate } from './date';
 
 describe('isLocalBackupDue', () => {
@@ -65,6 +71,35 @@ describe('isLocalBackupDue', () => {
     expect(isLocalBackupDue(at(19, 9).toISOString(), 'weekly', at(26, 9))).toBe(true);
     expect(isLocalBackupDue(at(1, 9).toISOString(), 'monthly', at(28, 9))).toBe(false);
     expect(isLocalBackupDue(at(1, 9).toISOString(), 'monthly', at(29, 10))).toBe(true);
+  });
+});
+
+describe('nextLocalBackupLabel', () => {
+  const at = (day: number, hour: number) => new Date(2026, 8, day, hour);
+
+  it('says nothing before the first backup', () => {
+    expect(nextLocalBackupLabel(null, 'daily', at(24, 9))).toBeNull();
+  });
+
+  it('says tomorrow for a daily backup already made today', () => {
+    expect(nextLocalBackupLabel(at(24, 8).toISOString(), 'daily', at(24, 20))).toBe('Next backup tomorrow');
+  });
+
+  it('says the backup runs on the next open once one is due', () => {
+    expect(nextLocalBackupLabel(at(23, 8).toISOString(), 'daily', at(24, 9))).toBe(
+      'Next backup when you open Yume'
+    );
+    expect(nextLocalBackupLabel(at(1, 9).toISOString(), 'weekly', at(20, 9))).toBe(
+      'Next backup when you open Yume'
+    );
+  });
+
+  it('names the date for weekly and monthly, matching the window isLocalBackupDue uses', () => {
+    const last = at(20, 9);
+    const due = new Date(last.getTime() + 6.5 * 24 * 60 * 60 * 1000);
+    const day = due.toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
+    expect(nextLocalBackupLabel(last.toISOString(), 'weekly', at(22, 9))).toBe(`Next backup on ${day}`);
+    expect(isLocalBackupDue(last.toISOString(), 'weekly', due)).toBe(true);
   });
 });
 

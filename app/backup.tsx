@@ -1,9 +1,10 @@
 import { useCallback, useState } from 'react';
-import { View, ScrollView, StyleSheet } from 'react-native';
+import { View, ScrollView, Pressable, StyleSheet } from 'react-native';
 import { Text } from '@/components/Text';
 import { router, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from '@expo/vector-icons/Feather';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import * as DocumentPicker from 'expo-document-picker';
@@ -31,6 +32,7 @@ import {
   writeLocalBackupNow,
   listLocalBackups,
   readLocalBackup,
+  nextLocalBackupLabel,
   LocalBackupFile,
 } from '@/lib/localBackup';
 import {
@@ -51,7 +53,12 @@ import { SegmentedControl } from '@/components/SegmentedControl';
 import { Skeleton } from '@/components/Skeleton';
 import { theme } from '@/constants/theme';
 import { errorMessage } from '@/lib/errorMessage';
-import { SECTION_TITLE, SECTION_GAP } from '@/constants/textStyles';
+import { SECTION_TITLE, SECTION_GAP, EYEBROW } from '@/constants/textStyles';
+import { homeStyles as h, HOME } from '@/features/home/homeStyles';
+import { SettingsRow } from '@/components/SettingsRow';
+import { withPressed } from '@/lib/pressed';
+import { toLocalIsoDate } from '@/lib/date';
+import type { McIconName } from '@/components/iconName';
 import { showAlert } from '@/components/AppDialog';
 
 const FREQUENCIES: { label: string; value: BackupFrequency }[] = [
@@ -66,39 +73,102 @@ function formatBytes(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-/** A small pill showing whether the last attempt succeeded, failed, or never ran, plus its size. */
-function StatusPill({ lastAt, outcome }: { lastAt: string | null; outcome: BackupOutcome | null }) {
-  if (!lastAt) {
-    return (
-      <View style={[styles.pill, styles.pillNeutral]}>
-        <Text style={styles.pillText}>Never run</Text>
-      </View>
-    );
+const TABS: { label: string; value: 'points' | 'copy' }[] = [
+  { label: 'Restore points', value: 'points' },
+  { label: 'Save a copy', value: 'copy' },
+];
+
+/** How many backups the timeline shows before "See all". */
+const COLLAPSED_FILES = 3;
+
+/** One date format for the whole screen: "3 Oct, 2:05 pm". */
+function formatWhen(iso: string): string {
+  return new Date(iso).toLocaleString(undefined, {
+    day: 'numeric',
+    month: 'short',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+}
+
+type StatusView = { icon: McIconName; tint: string; title: string; lines: string[]; failed: boolean };
+
+/** What the status card says: whether you are backed up, when, and what is next. */
+function backupStatus({
+  folder,
+  lastAt,
+  outcome,
+  frequency,
+  now,
+}: {
+  folder: string | null;
+  lastAt: string | null;
+  outcome: BackupOutcome | null;
+  frequency: BackupFrequency;
+  now: Date;
+}): StatusView {
+  if (!folder) {
+    return {
+      icon: 'folder-outline',
+      tint: theme.colors.idGold,
+      title: 'No backup folder yet',
+      lines: ['Pick a folder once. Yume writes a backup there on its own.'],
+      failed: false,
+    };
   }
-  const failed = outcome && !outcome.ok;
+  if (outcome && !outcome.ok) {
+    return {
+      icon: 'alert-circle-outline',
+      tint: theme.colors.idCoral,
+      title: 'Last backup failed',
+      lines: [outcome.error || "Couldn't write to the folder. Check that it still exists."],
+      failed: true,
+    };
+  }
+  if (!lastAt) {
+    return {
+      icon: 'clock-outline',
+      tint: theme.colors.idGold,
+      title: 'Not backed up yet',
+      lines: ['Tap Backup now to write the first one.'],
+      failed: false,
+    };
+  }
+  const today = toLocalIsoDate(new Date(lastAt)) === toLocalIsoDate(now);
+  const size = outcome?.ok && outcome.sizeBytes ? ` · ${formatBytes(outcome.sizeBytes)}` : '';
+  const next = nextLocalBackupLabel(lastAt, frequency, now);
+  return {
+    icon: 'shield-check-outline',
+    tint: theme.colors.idSage,
+    title: today
+      ? 'Backed up today'
+      : `Backed up ${new Date(lastAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}`,
+    lines: [`${formatWhen(lastAt)}${size}`, ...(next ? [next] : [])],
+    failed: false,
+  };
+}
+
+/** One stop on the restore-points timeline: a dot and a rail beside a row. */
+function TimelineNode({
+  first,
+  last,
+  latest,
+  copy,
+  children,
+}: {
+  first?: boolean;
+  last?: boolean;
+  latest?: boolean;
+  copy?: boolean;
+  children: React.ReactNode;
+}) {
   return (
-    <View style={styles.statusRow}>
-      <View style={[styles.pill, failed ? styles.pillError : styles.pillOk]}>
-        <Feather
-          name={failed ? 'alert-circle' : 'check-circle'}
-          size={11}
-          color={failed ? theme.colors.expense : theme.colors.income}
-        />
-        <Text
-          style={[styles.pillText, { color: failed ? theme.colors.expenseText : theme.colors.incomeText }]}
-        >
-          {failed ? 'Failed' : 'Backed up'}
-        </Text>
-      </View>
-      <Text style={styles.lastBackupText}>
-        {new Date(lastAt).toLocaleString()}
-        {outcome?.ok && outcome.sizeBytes ? ` · ${formatBytes(outcome.sizeBytes)}` : ''}
-      </Text>
-      {failed && outcome?.error && (
-        <Text style={styles.errorDetail} numberOfLines={2}>
-          {outcome.error}
-        </Text>
+    <View style={[styles.node, copy && styles.nodeCopy]}>
+      {!(first && last) && (
+        <View style={[styles.rail, { top: first ? '50%' : 0, bottom: last ? '50%' : 0 }]} />
       )}
+      <View style={[styles.dot, latest && styles.dotLatest, copy && styles.dotCopy]} />
+      <View style={h.row}>{children}</View>
     </View>
   );
 }
@@ -122,6 +192,8 @@ export default function BackupScreen() {
   // A restore waiting on the preview sheet, and whether it's running.
   const [pending, setPending] = useState<{ snapshot: BackupSnapshot; preview: RestorePreview } | null>(null);
   const [restoring, setRestoring] = useState(false);
+  const [tab, setTab] = useState<'points' | 'copy'>('points');
+  const [showAll, setShowAll] = useState(false);
 
   const load = useCallback(async () => {
     setSafetyInfo(await getSafetyCopyInfo());
@@ -364,159 +436,213 @@ Restore anyway? Your current data would be replaced with no way back.`,
       await confirmAndRestore(await readLocalBackup(file.uri));
     });
 
+  const status = backupStatus({
+    folder: localFolderUri,
+    lastAt: lastLocalBackup,
+    outcome: localResult,
+    frequency,
+    now: new Date(),
+  });
+  const shownFiles = files ? (showAll ? files : files.slice(0, COLLAPSED_FILES)) : [];
+  const hasFolder = !!localFolderUri;
+
   return (
     <View style={styles.container}>
       <AppHeader title="Backup & restore" showBack />
       <ScrollView contentContainerStyle={{ paddingBottom: theme.layout.screenScrollPad + insets.bottom }}>
-        <Text style={[styles.sectionTitle, styles.firstTitle]}>Automatic backup frequency</Text>
-        <View style={styles.freqWrap}>
-          <SegmentedControl options={FREQUENCIES} value={frequency} onChange={onChangeFrequency} />
-        </View>
-        <Text style={styles.freqHint}>
-          Applies to the local folder backup below. Backups only run while the app is open.
-        </Text>
-
-        <Text style={styles.sectionTitle}>Folder backup</Text>
-        <View style={styles.card}>
+        <View style={[h.card, styles.statusCard]}>
           {!loaded ? (
             <>
-              <Skeleton width={260} height={12} radius={4} />
-              <Skeleton width={180} height={12} radius={4} style={{ marginTop: 6 }} />
-              <Skeleton width={140} height={30} radius={999} style={{ marginTop: 12 }} />
+              <Skeleton width={200} height={16} radius={4} />
+              <Skeleton width={260} height={12} radius={4} style={{ marginTop: 8 }} />
+              <Skeleton width={300} height={44} radius={999} style={{ marginTop: 14 }} />
             </>
           ) : (
             <>
-              <Text style={styles.cardText}>
-                {localFolderUri
-                  ? 'A backup is written to your chosen folder automatically, on the schedule above. Nothing leaves your device.'
-                  : 'Pick a folder on your phone once — Yume writes a backup there automatically, with no share-sheet tap needed.'}
-              </Text>
-              {localFolderUri && <StatusPill lastAt={lastLocalBackup} outcome={localResult} />}
-              <View style={styles.buttonRow}>
-                {!localFolderUri ? (
-                  <PrimaryButton
-                    title={busy === 'pick-folder' ? 'Choosing…' : 'Choose folder'}
-                    onPress={choosePickFolder}
-                    disabled={!!busy}
-                    style={{ flex: 1 }}
-                  />
-                ) : (
-                  <>
-                    <PrimaryButton
-                      title={busy === 'backup-now-local' ? 'Backing up…' : 'Backup now'}
-                      done={doneLabel === 'backup-now-local'}
-                      onPress={backupNowLocal}
-                      disabled={!!busy}
-                      style={{ flex: 1, marginRight: 8 }}
-                    />
-                    <PrimaryButton
-                      title="Forget folder"
-                      variant="secondary"
-                      onPress={forgetFolder}
-                      disabled={!!busy}
-                      style={{ flex: 1 }}
-                    />
-                  </>
-                )}
-              </View>
-              {localFolderUri && files && files.length > 0 && (
-                <View style={styles.fileList}>
-                  <Text style={styles.fileListTitle}>In your backup folder</Text>
-                  {files.map((file, i) => (
-                    <View key={file.uri} style={[styles.fileRow, i > 0 && styles.fileRowDivider]}>
-                      <View style={{ flex: 1 }}>
-                        <Text style={styles.fileWhen}>
-                          {file.exportedAt
-                            ? new Date(file.exportedAt).toLocaleString(undefined, {
-                                day: 'numeric',
-                                month: 'short',
-                                hour: 'numeric',
-                                minute: '2-digit',
-                              })
-                            : 'Backup file'}
-                        </Text>
-                        <Text style={styles.fileSub}>
-                          {file.summary
-                            ? `${file.summary.entries} entries · ${formatBytes(file.sizeBytes)}`
-                            : "Couldn't read this file"}
-                        </Text>
-                      </View>
-                      <PrimaryButton
-                        title="Restore"
-                        variant="secondary"
-                        onPress={() => restoreFile(file)}
-                        disabled={!!busy || !file.summary}
-                      />
-                    </View>
+              <View style={styles.statusHead}>
+                <View style={[h.iconTile, { backgroundColor: status.tint }]}>
+                  <MaterialCommunityIcons name={status.icon} size={HOME.iconGlyph} color={theme.colors.ink} />
+                </View>
+                <View style={h.mid}>
+                  <Text style={styles.statusTitle}>{status.title}</Text>
+                  {status.lines.map((line) => (
+                    <Text key={line} style={[h.sub, status.failed && styles.errorLine]} numberOfLines={2}>
+                      {line}
+                    </Text>
                   ))}
                 </View>
+              </View>
+              {hasFolder ? (
+                <PrimaryButton
+                  title={busy === 'backup-now-local' ? 'Backing up…' : 'Backup now'}
+                  done={doneLabel === 'backup-now-local'}
+                  onPress={backupNowLocal}
+                  disabled={!!busy}
+                  style={styles.mainAction}
+                />
+              ) : (
+                <PrimaryButton
+                  title={busy === 'pick-folder' ? 'Choosing…' : 'Choose folder'}
+                  onPress={choosePickFolder}
+                  disabled={!!busy}
+                  style={styles.mainAction}
+                />
               )}
+              <View style={styles.scheduleBlock}>
+                <Text style={styles.eyebrow}>Back up automatically</Text>
+                <SegmentedControl options={FREQUENCIES} value={frequency} onChange={onChangeFrequency} />
+                <View style={styles.scheduleFoot}>
+                  <Text style={styles.scheduleHint}>Runs while Yume is open. Nothing leaves your phone.</Text>
+                  {hasFolder && (
+                    <Pressable
+                      onPress={forgetFolder}
+                      disabled={!!busy}
+                      hitSlop={8}
+                      accessibilityRole="button"
+                      style={withPressed(busy ? styles.linkDisabled : undefined)}
+                    >
+                      <Text style={styles.link}>Forget folder</Text>
+                    </Pressable>
+                  )}
+                </View>
+              </View>
             </>
           )}
         </View>
 
-        <Text style={styles.sectionTitle}>Export</Text>
-        <View style={styles.card}>
-          <Text style={styles.cardText}>
-            Save a full backup (JSON, for restoring into Yume) or a styled Excel workbook — transactions,
-            accounts, category totals, loans, and Friends & Family, each on its own sheet — to share, print,
-            or store anywhere you like.
-          </Text>
-          <PrimaryButton
-            title={busy === 'export-json' ? 'Exporting…' : 'Export full backup (JSON)'}
-            onPress={exportJsonLocally}
-            disabled={!!busy}
-            style={{ marginTop: 10 }}
-          />
-          <PrimaryButton
-            title={busy === 'export-excel' ? 'Exporting…' : 'Export to Excel (.xlsx)'}
-            variant="secondary"
-            onPress={exportExcelLocally}
-            disabled={!!busy}
-            style={{ marginTop: 10 }}
-          />
+        <View style={styles.tabs}>
+          <SegmentedControl options={TABS} value={tab} onChange={setTab} />
         </View>
 
-        <Text style={styles.sectionTitle}>Restore</Text>
-        {safetyInfo && (
-          <View style={styles.safetyCard}>
-            <View style={styles.safetyHead}>
-              <View style={styles.safetyIcon}>
-                <Feather name="rotate-ccw" size={14} color={theme.colors.ink} />
-              </View>
-              <Text style={styles.safetyTitle}>Undo your last restore</Text>
+        {tab === 'points' ? (
+          <>
+            <View style={styles.titleRow}>
+              <Text style={styles.sectionTitle}>Restore points</Text>
+              {files && files.length > COLLAPSED_FILES && (
+                <Pressable
+                  onPress={() => setShowAll((v) => !v)}
+                  hitSlop={8}
+                  accessibilityRole="button"
+                  accessibilityState={{ expanded: showAll }}
+                  style={withPressed()}
+                >
+                  <Text style={styles.seeAll}>{showAll ? 'Show less' : `See all ${files.length} →`}</Text>
+                </Pressable>
+              )}
             </View>
-            <Text style={styles.cardText}>
-              A copy of your data from just before your restore on{' '}
-              <Text style={styles.safetyStrong}>
-                {new Date(safetyInfo.savedAt).toLocaleString(undefined, {
-                  day: 'numeric',
-                  month: 'short',
-                  hour: 'numeric',
-                  minute: '2-digit',
-                })}
-              </Text>
-              : {safetyInfo.transactions} {safetyInfo.transactions === 1 ? 'entry' : 'entries'},{' '}
-              {safetyInfo.accounts} {safetyInfo.accounts === 1 ? 'account' : 'accounts'}.
+            {(safetyInfo || shownFiles.length > 0) && (
+              <View style={[h.card, styles.timeline]}>
+                {safetyInfo && (
+                  <TimelineNode first last={shownFiles.length === 0} copy>
+                    <View style={h.mid}>
+                      <Text style={h.title}>Before your last restore</Text>
+                      <Text style={[h.sub, styles.copySub]}>
+                        {formatWhen(safetyInfo.savedAt)} · {safetyInfo.transactions}{' '}
+                        {safetyInfo.transactions === 1 ? 'entry' : 'entries'}, {safetyInfo.accounts}{' '}
+                        {safetyInfo.accounts === 1 ? 'account' : 'accounts'}
+                      </Text>
+                    </View>
+                    <PrimaryButton
+                      compact
+                      title={busy === 'undo-restore' ? 'Putting back…' : 'Put back'}
+                      accessibilityLabel="Put back your data from before the last restore"
+                      onPress={confirmUndo}
+                      disabled={!!busy}
+                    />
+                  </TimelineNode>
+                )}
+                {shownFiles.map((file, i) => (
+                  <TimelineNode
+                    key={file.uri}
+                    first={!safetyInfo && i === 0}
+                    last={i === shownFiles.length - 1}
+                    latest={i === 0}
+                  >
+                    <View style={h.mid}>
+                      <View style={styles.whenRow}>
+                        <Text style={h.title} numberOfLines={1}>
+                          {file.exportedAt ? formatWhen(file.exportedAt) : 'Backup file'}
+                        </Text>
+                        {i === 0 && (
+                          <View style={styles.latestChip}>
+                            <Text style={styles.latestText}>Latest</Text>
+                          </View>
+                        )}
+                      </View>
+                      <Text style={h.sub}>
+                        {file.summary
+                          ? `${file.summary.entries} entries · ${formatBytes(file.sizeBytes)}`
+                          : "Couldn't read this file"}
+                      </Text>
+                    </View>
+                    <PrimaryButton
+                      compact
+                      title="Restore"
+                      variant="secondary"
+                      accessibilityLabel={`Restore the backup from ${
+                        file.exportedAt ? formatWhen(file.exportedAt) : 'this file'
+                      }`}
+                      onPress={() => restoreFile(file)}
+                      disabled={!!busy || !file.summary}
+                    />
+                  </TimelineNode>
+                ))}
+              </View>
+            )}
+            {loaded && shownFiles.length === 0 && (
+              <View style={[h.card, styles.emptyCard, safetyInfo && styles.emptyAfter]}>
+                <Text style={styles.emptyTitle}>No backups yet</Text>
+                <Text style={styles.emptySub}>
+                  {hasFolder
+                    ? 'Nothing in this folder yet. Tap Backup now to write the first one.'
+                    : 'Choose a folder above and Yume writes the first one.'}
+                </Text>
+              </View>
+            )}
+            <View style={[h.card, styles.restoreFile]}>
+              <SettingsRow
+                icon="file-restore-outline"
+                iconBg={theme.colors.primaryTint}
+                label="Restore from file"
+                sub={busy === 'restore-file' ? 'Restoring…' : 'A backup JSON saved on this device'}
+                onPress={busy ? undefined : restoreFromFile}
+                dimmed={!!busy && busy !== 'restore-file'}
+              />
+            </View>
+          </>
+        ) : (
+          <>
+            <Text style={styles.sectionTitle}>Save a copy</Text>
+            <View style={h.card}>
+              <SettingsRow
+                icon="code-json"
+                iconBg={theme.colors.idGold}
+                label="Full backup (JSON)"
+                sub={busy === 'export-json' ? 'Exporting…' : 'The complete copy you can restore into Yume'}
+                onPress={busy ? undefined : exportJsonLocally}
+                right={<Feather name="share" size={18} color={theme.colors.textMuted} />}
+                dimmed={!!busy && busy !== 'export-json'}
+              />
+              <SettingsRow
+                divider
+                icon="file-excel-outline"
+                iconBg={theme.colors.idSage}
+                label="Excel workbook"
+                sub={
+                  busy === 'export-excel'
+                    ? 'Exporting…'
+                    : 'Transactions, accounts, category totals, loans and Friends & Family, one sheet each'
+                }
+                onPress={busy ? undefined : exportExcelLocally}
+                right={<Feather name="share" size={18} color={theme.colors.textMuted} />}
+                dimmed={!!busy && busy !== 'export-excel'}
+              />
+            </View>
+            <Text style={styles.copyHint}>
+              Both open the share sheet, so you can save them anywhere or send them to yourself.
             </Text>
-            <PrimaryButton
-              title={busy === 'undo-restore' ? 'Putting back…' : 'Put back that data'}
-              onPress={confirmUndo}
-              disabled={!!busy}
-              style={{ marginTop: 10 }}
-            />
-          </View>
+          </>
         )}
-        <View style={styles.card}>
-          <Text style={styles.cardText}>Restore from a backup JSON file saved on this device.</Text>
-          <PrimaryButton
-            title={busy === 'restore-file' ? 'Restoring…' : 'Restore from file'}
-            variant="secondary"
-            onPress={restoreFromFile}
-            disabled={!!busy}
-            style={{ marginTop: 10 }}
-          />
-        </View>
       </ScrollView>
       <RestorePreviewSheet
         preview={pending?.preview ?? null}
@@ -530,92 +656,101 @@ Restore anyway? Your current data would be replaced with no way back.`,
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
-  // Section titles like Profile's settings and Notification settings.
   sectionTitle: {
     ...SECTION_TITLE,
     marginHorizontal: 20,
     marginTop: SECTION_GAP.top,
     marginBottom: SECTION_GAP.bottom,
   },
-  firstTitle: { marginTop: theme.layout.screenTopGap },
-  freqWrap: { marginHorizontal: 20 },
-  freqHint: {
-    fontFamily: theme.font.body,
-    fontSize: 12,
-    color: theme.colors.textMuted,
-    marginHorizontal: 20,
-    marginTop: -6,
-    lineHeight: 17,
-  },
-  card: {
-    marginHorizontal: 20,
-    padding: 16,
-    borderRadius: theme.radius.xl2,
-    backgroundColor: theme.colors.surface,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-  },
-  cardText: { fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textSecondary, lineHeight: 19 },
-  buttonRow: { flexDirection: 'row', marginTop: 12 },
-  statusRow: { marginTop: 10, gap: 4 },
-  pill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    alignSelf: 'flex-start',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: theme.radius.pill,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-  },
-  pillOk: { backgroundColor: theme.colors.incomeTint },
-  pillError: { backgroundColor: theme.colors.expenseTint },
-  pillNeutral: { backgroundColor: theme.colors.surfaceAlt },
-  pillText: { fontFamily: theme.font.bodyBold, fontSize: 11, color: theme.colors.textSecondary },
-  lastBackupText: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
-  errorDetail: {
-    fontFamily: theme.font.body,
-    fontSize: 11.5,
-    color: theme.colors.expenseText,
-    lineHeight: 15,
-  },
-  // The safety-copy card: a teal wash with a mint edge, so it reads as a
-  // reassurance above the restore buttons rather than another action card.
-  fileList: {
-    marginTop: 14,
-    paddingTop: 10,
+  statusCard: { marginTop: theme.layout.screenTopGap, padding: 16 },
+  statusHead: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  statusTitle: { fontFamily: theme.font.roundedBold, fontSize: 17, color: theme.colors.textPrimary },
+  errorLine: { color: theme.colors.expenseText },
+  mainAction: { marginTop: 14 },
+  scheduleBlock: {
+    marginTop: 16,
+    paddingTop: 14,
+    gap: 8,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: theme.colors.borderSoft,
   },
-  fileListTitle: {
-    fontFamily: theme.font.bodyBold,
+  eyebrow: { ...EYEBROW },
+  scheduleFoot: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
+  scheduleHint: {
+    flex: 1,
+    fontFamily: theme.font.body,
     fontSize: 12,
     color: theme.colors.textMuted,
-    marginBottom: 4,
+    lineHeight: 17,
   },
-  fileRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 9 },
-  fileRowDivider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.borderSoft },
-  fileWhen: { fontFamily: theme.font.bodyMedium, fontSize: 13.5, color: theme.colors.textPrimary },
-  fileSub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, marginTop: 1 },
-  safetyCard: {
+  link: {
+    fontFamily: theme.font.bodyMedium,
+    fontSize: 12,
+    color: theme.colors.textSecondary,
+    textDecorationLine: 'underline',
+  },
+  linkDisabled: { opacity: 0.45 },
+  tabs: { marginHorizontal: 20, marginTop: 16 },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
+    paddingRight: 20,
+  },
+  seeAll: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textSecondary },
+  timeline: { overflow: 'hidden' },
+  whenRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  latestChip: {
+    paddingHorizontal: 7,
+    paddingVertical: 1,
+    borderRadius: theme.radius.pill,
+    backgroundColor: theme.colors.primaryTint,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.borderSoft,
+  },
+  latestText: {
+    fontFamily: theme.font.bodyBold,
+    fontSize: 10,
+    letterSpacing: 0.4,
+    textTransform: 'uppercase',
+    color: theme.colors.textSecondary,
+  },
+  copySub: { color: theme.colors.textSecondary },
+  emptyCard: { padding: 16, alignItems: 'center' },
+  emptyAfter: { marginTop: 12 },
+  emptyTitle: { fontFamily: theme.font.roundedBold, fontSize: 16, color: theme.colors.textPrimary },
+  emptySub: {
+    fontFamily: theme.font.body,
+    fontSize: 13,
+    color: theme.colors.textSecondary,
+    lineHeight: 19,
+    marginTop: 4,
+    textAlign: 'center',
+  },
+  restoreFile: { marginTop: 12 },
+  copyHint: {
+    fontFamily: theme.font.body,
+    fontSize: 12,
+    color: theme.colors.textMuted,
+    lineHeight: 17,
     marginHorizontal: 20,
-    marginBottom: 12,
-    padding: 16,
-    borderRadius: theme.radius.xl2,
-    backgroundColor: theme.colors.idTeal,
-    borderWidth: 1.5,
-    borderColor: theme.colors.secondary,
+    marginTop: 10,
   },
-  safetyHead: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 8 },
-  safetyIcon: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+  node: { paddingLeft: 40 },
+  nodeCopy: { backgroundColor: theme.colors.idTeal },
+  rail: { position: 'absolute', left: 22, width: 2, backgroundColor: theme.colors.borderSoft },
+  dot: {
+    position: 'absolute',
+    left: 17,
+    top: '50%',
+    marginTop: -6,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    borderWidth: 2,
+    borderColor: theme.colors.textMuted,
     backgroundColor: theme.colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
-  safetyTitle: { fontFamily: theme.font.roundedBold, fontSize: 15, color: theme.colors.textPrimary },
-  safetyStrong: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
+  dotLatest: { backgroundColor: theme.colors.income, borderColor: theme.colors.income },
+  dotCopy: { backgroundColor: theme.colors.idTeal, borderColor: theme.colors.income },
 });

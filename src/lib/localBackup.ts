@@ -136,6 +136,22 @@ export function isLocalBackupDue(
   return now.getTime() - last.getTime() >= BACKUP_FREQUENCY_MS[frequency];
 }
 
+/**
+ * When the next automatic backup will run, as a phrase for the Backup screen ("Next backup tomorrow"); null if
+ * there has never been one. Mirrors isLocalBackupDue: daily is the next calendar day, the others an elapsed window.
+ */
+export function nextLocalBackupLabel(
+  lastBackupIso: string | null,
+  frequency: BackupFrequency,
+  now: Date
+): string | null {
+  if (!lastBackupIso) return null;
+  if (isLocalBackupDue(lastBackupIso, frequency, now)) return 'Next backup when you open Yume';
+  if (frequency === 'daily') return 'Next backup tomorrow';
+  const due = new Date(new Date(lastBackupIso).getTime() + BACKUP_FREQUENCY_MS[frequency]);
+  return `Next backup on ${due.toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}`;
+}
+
 // The run in progress, if any — cold start and the app coming to the
 // foreground can both ask at once, and two runs would write today's file twice.
 let runningBackup: Promise<void> | null = null;
