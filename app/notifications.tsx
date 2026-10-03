@@ -17,8 +17,8 @@ import { CardRowsSkeleton } from '@/components/ListSkeleton';
 import { useUndoToast } from '@/components/UndoToast';
 import { theme } from '@/constants/theme';
 import { useAccent } from '@/theme/AccentContext';
-import { HomeSection } from '@/components/HomeSection';
-import { homeStyles as h } from '@/components/homeStyles';
+import { Section } from '@/components/Section';
+import { screenStyles as h } from '@/components/screenStyles';
 import { NeedsYouRow } from '@/features/home/NeedsYouRow';
 import { NeedsYouItem } from '@/features/home/needsYou';
 import {
@@ -136,7 +136,7 @@ export default function NeedsYouScreen() {
         )}
 
         {suuLines.length > 0 && (
-          <HomeSection title="Suu says">
+          <Section title="Suu says">
             <View style={[h.card, styles.suu]}>
               <View style={[styles.suuDot, { backgroundColor: dot }]} />
               <View style={styles.suuLines}>
@@ -147,7 +147,7 @@ export default function NeedsYouScreen() {
                 ))}
               </View>
             </View>
-          </HomeSection>
+          </Section>
         )}
 
         {dismissed.length > 0 && (

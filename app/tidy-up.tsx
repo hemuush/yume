@@ -26,8 +26,8 @@ import { CategoryIcon } from '@/components/CategoryIcon';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { CardRowsSkeleton } from '@/components/ListSkeleton';
 import { useUndoToast } from '@/components/UndoToast';
-import { HomeSection } from '@/components/HomeSection';
-import { homeStyles as h } from '@/components/homeStyles';
+import { Section } from '@/components/Section';
+import { screenStyles as h } from '@/components/screenStyles';
 import { dayMonth, longMonth, shortMonthYear } from '@/lib/dateLabels';
 import { errorMessage } from '@/lib/errorMessage';
 import { categoryPath } from '@/lib/categoryLabel';
@@ -171,7 +171,7 @@ export default function TidyUpScreen() {
             </Text>
 
             {report.repeats.length > 0 && (
-              <HomeSection title="Same entry twice?">
+              <Section title="Same entry twice?">
                 <View style={h.card}>
                   {report.repeats.map((g, i) => (
                     <View key={g.key} style={[styles.item, i > 0 && h.divider]}>
@@ -214,11 +214,11 @@ export default function TidyUpScreen() {
                     </View>
                   ))}
                 </View>
-              </HomeSection>
+              </Section>
             )}
 
             {report.startingBalances.length > 0 && (
-              <HomeSection title="Old balances logged as income">
+              <Section title="Old balances logged as income">
                 <View style={h.card}>
                   {report.startingBalances.map((g, i) => {
                     const one = g.ids.length === 1;
@@ -260,11 +260,11 @@ export default function TidyUpScreen() {
                     );
                   })}
                 </View>
-              </HomeSection>
+              </Section>
             )}
 
             {report.fractionalCount > 0 && (
-              <HomeSection title="Amounts with paise">
+              <Section title="Amounts with paise">
                 <View style={h.card}>
                   <View style={styles.item}>
                     <View style={styles.itemTop}>
@@ -287,7 +287,7 @@ export default function TidyUpScreen() {
                     </View>
                   </View>
                 </View>
-              </HomeSection>
+              </Section>
             )}
           </>
         )}

@@ -18,7 +18,7 @@ import { SheetCard } from '@/components/SheetCard';
 import { SettingsRow } from '@/components/SettingsRow';
 import { SegmentedControl } from '@/components/SegmentedControl';
 import { theme, modalFooterStyles as f } from '@/constants/theme';
-import { homeStyles as h } from '@/components/homeStyles';
+import { screenStyles as h } from '@/components/screenStyles';
 import { accountIcon } from '@/lib/account';
 import { hexToRgba } from '@/lib/color';
 import { categorySentence, inParent, joinSub, parentNameOf } from '@/lib/categoryLabel';
