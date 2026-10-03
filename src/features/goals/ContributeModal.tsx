@@ -14,6 +14,10 @@ import { GoalSheetCard } from './GoalSheetCard';
 import { haptics } from '@/lib/haptics';
 import { styles } from './goals.styles';
 import { errorMessage } from '@/lib/errorMessage';
+import { useMilestoneNote } from '@/components/MilestoneNote';
+import { usePrivacy } from '@/theme/PrivacyContext';
+import { getMilestonesSeen, markMilestonesSeen } from '@/db/settings';
+import { goalMilestoneCopy, goalMilestoneKey, milestonesUpTo, milestoneReached } from '@/lib/milestones';
 
 type Direction = 'add' | 'withdraw';
 const DIRECTIONS: { label: string; value: Direction }[] = [
@@ -38,6 +42,8 @@ export function ContributeModal({
   // Set only when this contribution first pushes the goal to target and a sealed note exists (see submit()).
   // Held locally so the sheet stays open on the reveal instead of the host closing it.
   const [reveal, setReveal] = useState<{ note: string } | null>(null);
+  const showNote = useMilestoneNote();
+  const { hideAmounts } = usePrivacy();
 
   useEffect(() => {
     if (!goal) return;
@@ -48,6 +54,26 @@ export function ContributeModal({
   }, [goal]);
 
   if (!goal) return null;
+
+  // Once per line, ever: crossing 25 and 50 in one save marks both so neither fires later. The sealed-letter
+  // reveal already marks a finished goal, so 100% is remembered but not announced a second time.
+  const announceMilestone = async (deltaMinor: number, letterShown: boolean) => {
+    if (!goal) return;
+    try {
+      const after = goal.currentAmountMinor + deltaMinor;
+      const reached = milestoneReached(goal.currentAmountMinor, after, goal.targetAmountMinor);
+      if (!reached) return;
+      const seen = await getMilestonesSeen();
+      const fresh = milestonesUpTo(reached).filter((m) => !seen.includes(goalMilestoneKey(goal.id, m)));
+      if (fresh.length === 0) return;
+      await markMilestonesSeen(fresh.map((m) => goalMilestoneKey(goal.id, m)));
+      if (!fresh.includes(reached) || (reached === 100 && letterShown)) return;
+      const toGo = Math.max(0, goal.targetAmountMinor - after);
+      showNote(goalMilestoneCopy(reached, goal.name, toGo, hideAmounts));
+    } catch {
+      // A missed note is never worth failing a save that already went through.
+    }
+  };
 
   const submit = async () => {
     setError(null);
@@ -67,11 +93,15 @@ export function ContributeModal({
         direction === 'add' &&
         goal.currentAmountMinor < goal.targetAmountMinor &&
         goal.currentAmountMinor + deltaMinor >= goal.targetAmountMinor;
-      if (justCompleted && goal.noteToSelf && !goal.letterRevealed) {
+      const hasLetter = justCompleted && !!goal.noteToSelf && !goal.letterRevealed;
+      if (hasLetter) {
         await markGoalLetterRevealed(goal.id);
-        setReveal({ note: goal.noteToSelf });
+        setReveal({ note: goal.noteToSelf as string });
       } else {
         onContributed();
+      }
+      if (direction === 'add') {
+        await announceMilestone(deltaMinor, hasLetter);
       }
     } catch (e) {
       setError(errorMessage(e));
