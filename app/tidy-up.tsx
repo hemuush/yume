@@ -46,10 +46,8 @@ const savedLabel = (createdAt: string) => {
 };
 
 /**
- * Tidy up (Settings → Alerts & backup): what looks off in your data, each
- * with its own fix — the same entry saved twice, an old balance logged as
- * income, amounts still carrying paise. Every fix can be undone from the
- * toast, and "keep" choices are remembered so the item doesn't come back.
+ * Tidy up (Settings → Alerts & backup): data that looks off, each with a fix (duplicate entry, old balance
+ * logged as income, amounts with paise). Fixes are undoable from the toast; "keep" choices are remembered.
  */
 export default function TidyUpScreen() {
   const insets = useSafeAreaInsets();

@@ -1,8 +1,6 @@
 /**
- * Home's account stack: every account is a card, drawn back to front as savings,
- * banks, cards, wallets, cash. Nothing animates and nothing is hidden behind a
- * swipe, so this checks what is on screen, the order, and what a tap does.
- * All names and figures are made up.
+ * Home's account stack: one card per account, back to front as savings, banks, cards, wallets, cash.
+ * Checks what is on screen, the order and what a tap does (nothing animates). All figures are made up.
  */
 import { create, act, ReactTestRenderer, ReactTestInstance } from 'react-test-renderer';
 import type { Account } from '@/types';

@@ -1,13 +1,6 @@
 /**
- * A full combinatorial sweep of loan math — every principal × rate × tenure
- * combination below, asserting the invariants that must hold for ANY real
- * loan regardless of its numbers: the schedule has exactly `tenure`
- * installments, the last one lands on exactly zero outstanding, principal
- * components sum back to the original principal, EMI matches the standalone
- * calculateEmi(), and outstanding balance strictly decreases every month.
- * This is what "check all calculation scenarios, minor to big" means for
- * loan math — not a handful of hand-picked examples, but every combination
- * in a real-world range, checked the same way every time.
+ * Sweep of loan math (principal x rate x tenure); invariants for ANY loan: `tenure` installments,
+ * last at zero, principals sum to the original, EMI matches calculateEmi(), balance strictly decreases.
  */
 import { calculateEmi, generateAmortizationSchedule, monthlyRateFromAnnualBp } from './loan';
 
@@ -32,12 +25,8 @@ describe('loan calculation matrix — every principal × rate × tenure combinat
             startDate: '2026-01-01',
           });
 
-          // Sequentially numbered, one row per installment — except that a
-          // tiny principal with a long tenure can hit exactly zero
-          // outstanding a few months early purely from EMI rounding (the
-          // schedule generator deliberately stops there rather than
-          // padding on installments against an already-closed loan), so
-          // the length is capped at `tenure`, not necessarily equal to it.
+          // Rows are one per installment, but EMI rounding can zero a tiny principal a few months early;
+          // the generator stops there, so the length is capped at `tenure`, not always equal to it.
           expect(schedule.length).toBeLessThanOrEqual(tenure);
           expect(schedule.map((p) => p.installmentNumber)).toEqual(
             Array.from({ length: schedule.length }, (_, i) => i + 1)

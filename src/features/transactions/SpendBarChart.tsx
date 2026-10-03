@@ -14,10 +14,8 @@ const MIN_BAR_HEIGHT = 6;
 const MAX_STAGGER_MS = 220;
 
 /**
- * One bar's stack: it grows up from 0 once, when it first appears (staggered
- * per bar via `delay`), and after that glides from its current height to a
- * new one. It never drops back to 0 first — that made every bar blink on
- * each new entry, Week/Month switch and period change.
+ * One bar's stack: grows from 0 once on first appearance (staggered by `delay`), then glides between heights.
+ * It never drops back to 0 first, which made every bar blink on each entry, scope switch and period change.
  */
 function AnimatedBarStack({
   heightPct,
@@ -56,20 +54,8 @@ function AnimatedBarStack({
 }
 
 /**
- * One stacked bar per period (a day in Week scope, a calendar week in Month
- * scope) — the screen's headline visual, replacing the day-strip pill row
- * and every per-day summary card from earlier passes. A zero-spend period
- * gets a thin baseline tick instead of no bar at all, so it still has a slot
- * in the rhythm rather than a gap. Tapping a bar calls `onPressDay` so the
- * screen can scroll its already-grouped list to that period — the chart
- * never fetches or filters on its own. The tapped bar also shows what it cost
- * in a bubble above it, and today's label sits in an ink pill so it reads even
- * when its bar is small.
- *
- * Bar counts stay small either way (7 daily bars for a week, ~4-5 weekly
- * bars for a month — see `buildWeeklySpendBars`), so there's deliberately
- * no separate "dense" mode anymore: a single generous layout reads fine at
- * both counts, and it removes what a dense 30-bar grid needed to lean on.
+ * One stacked bar per period (a day in Week, a calendar week in Month); zero-spend gets a baseline tick.
+ * Tapping calls `onPressDay` (no fetching/filtering here); bar counts stay small (7 / ~5): no dense mode.
  */
 export function SpendBarChart({
   bars,

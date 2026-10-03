@@ -27,16 +27,8 @@ function shapeAt(pos: number): { stemH: number; leafScale: number } {
 }
 
 /**
- * One pot's plant, drawn at a fixed 44x56 viewBox and scaled by `size` —
- * the same crescent-and-two-leaf-sprout language as the app icon
- * (`logo-mark.svg`), just redrawn small and stage-by-stage rather than
- * reusing that asset directly (it has no in-between growth states). `seed`
- * is deliberately almost nothing to look at — the point is watching it
- * become something, not a placeholder icon.
- *
- * With `animKey`, a plant that reached a new stage since you last saw it
- * (while the app was open) grows into it with one small pop (the Quiet
- * motion sign-off). It happens once per stage and never when a stage drops.
+ * One pot's plant in a fixed 44x56 viewBox scaled by `size`: the app icon's sprout redrawn per stage.
+ * `seed` is near-nothing on purpose; with `animKey` a plant reaching a new stage pops once, never on a drop.
  */
 export function GardenPlant({
   stage,

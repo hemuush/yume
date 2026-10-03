@@ -17,10 +17,8 @@ import type { LoanProgress } from '@/db/loans';
 import { loanBarTone, loanGlyph, loanIcon, loanTint } from './loanIdentity';
 
 /**
- * One loan in the list: a flat card with the loan's own pale tile, how far
- * along it is, and its debt-free month. Open loans end with their next EMI and
- * a Pay pill that goes straight to that EMI's pay sheet. A closed loan is the
- * same card in grey that says "Paid off", with no footer.
+ * One loan in the list: flat card with its pale tile, progress and debt-free month; open loans end with the
+ * next EMI and a Pay pill to its pay sheet. A closed loan is the same card in grey, "Paid off", no footer.
  */
 export function LoanCard({
   loan,

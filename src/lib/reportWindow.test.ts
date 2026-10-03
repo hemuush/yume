@@ -1,7 +1,6 @@
 /**
- * Reports' custom ranges: stepping by the range's own length (whole months
- * by months, so a financial year steps to the next one), not stepping into
- * the future, India's financial year, and the labels the period pill shows.
+ * Reports' custom ranges: stepping by the range's own length (whole months by months), never into the future,
+ * India's financial year, and the labels the period pill shows.
  */
 import {
   shiftCustomRange,

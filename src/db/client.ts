@@ -12,11 +12,8 @@ const DB_NAME = 'yume.db';
 const LEGACY_DB_NAME = 'flynse.db';
 
 /**
- * The database file was `flynse.db` before the rename to Yume. Rename it in
- * place on first launch of the new build so an existing install keeps all of
- * its data instead of opening a fresh, empty `yume.db`. Best-effort: if
- * anything goes wrong the app just starts on an empty database, which is
- * recoverable from a backup.
+ * Renames the pre-Yume `flynse.db` in place on first launch so an existing install keeps its data instead of
+ * opening an empty `yume.db`. Best-effort: on failure the app starts empty (recoverable from a backup).
  */
 async function migrateDbFilename(): Promise<void> {
   try {
@@ -37,13 +34,8 @@ async function migrateDbFilename(): Promise<void> {
 }
 
 /**
- * The app-facing db handle — deliberately its own type rather than
- * `SQLite.SQLiteDatabase`, because `withTransactionAsync` here has a
- * different contract: it hands its callback a `tx` argument for nested
- * calls (see serializeDb below for why). Only the methods actually called
- * anywhere in this codebase are included; the test harness
- * (src/test-support/realDataTestDb.ts's AsyncDb) mirrors this exact shape
- * so `getDb()` can be mocked identically in both.
+ * App-facing db handle: its own type, not `SQLite.SQLiteDatabase`, because `withTransactionAsync` passes a
+ * `tx` to its callback (see serializeDb). Only used methods; src/test-support's AsyncDb mirrors this shape.
  */
 /** One value bound to a `?` in a query — what expo-sqlite accepts. */
 export type SqlParam = SQLite.SQLiteBindValue;
@@ -55,13 +47,8 @@ export interface AppDb {
   execAsync(sql: string): Promise<void>;
   withTransactionAsync(task: (tx: AppDb) => Promise<void>): Promise<void>;
   /**
-   * Runs `task` as ONE entry in the queue, handing it the raw connection —
-   * for work that must not interleave with any other screen's statements
-   * but can't be a single transaction: toggling `PRAGMA foreign_keys`
-   * (only allowed outside a transaction) around a restore, or reading every
-   * table for a backup so the snapshot is one consistent point in time.
-   * Same `tx` rule as withTransactionAsync: use the handle passed in, never
-   * the outer db, or the task waits on itself forever.
+   * Runs `task` as ONE queue entry with the raw connection, for work that can't interleave yet can't be one
+   * transaction (restore's PRAGMA foreign_keys, backup read). Use the given handle, not outer db: deadlock.
    */
   exclusiveAsync<T>(task: (db: AppDb) => Promise<T>): Promise<T>;
 }
@@ -86,33 +73,8 @@ function toAppDb(raw: SQLite.SQLiteDatabase): AppDb {
 }
 
 /**
- * expo-sqlite's native module does not reliably serialize concurrent async
- * calls issued from unrelated code paths (e.g. two screens each running
- * their own Promise.all of report queries at once — completely normal
- * here, since every screen loads its data in parallel): overlapping calls
- * can race and fail with a native "NativeDatabase.prepareAsync ... not an
- * error" rejection, or worse, silently return wrong/empty results without
- * throwing at all. Every db method the app calls is routed through this
- * queue so only one statement is ever in flight on the shared connection,
- * regardless of how many screens call getDb() at once.
- *
- * withTransactionAsync is the one exception, and deliberately so: its
- * callback receives the *raw*, unqueued connection as `tx`, and every
- * caller must use `tx` (never the outer `db`) for nested calls inside a
- * transaction. An earlier version of this file used a "call depth" counter
- * to decide whether to bypass the queue instead — that counter was a
- * single global flag, so it couldn't actually tell "a nested call from
- * within this same transaction" apart from "an unrelated call that
- * happens to be in flight at the same moment" (both look identical as
- * "some task is running"). That's not a hypothetical: it let an unrelated
- * query run concurrently with an open transaction on the same connection,
- * corrupting results without ever throwing — which is how Profile's stats
- * silently came back as all zeros despite real data existing. Passing
- * `tx` explicitly removes the ambiguity: nested calls always go straight
- * to the raw connection (safe, since nothing else can run until the
- * transaction's own promise settles and the queue moves on to its next
- * entry), and anything NOT called via `tx` genuinely is unrelated and must
- * wait its turn in the queue.
+ * expo-sqlite races concurrent calls (silent wrong/empty results), so every method is queued, one in flight.
+ * Nested calls in a transaction must use its raw `tx`; a depth counter can't tell them from unrelated calls.
  */
 let queue: Promise<unknown> = Promise.resolve();
 
@@ -138,9 +100,8 @@ function serializeDb(raw: SQLite.SQLiteDatabase): AppDb {
 }
 
 /**
- * CREATE TABLE IF NOT EXISTS only helps fresh installs — an already-created
- * table on an existing install never picks up a newly added column. This
- * adds one if missing, so schema changes reach upgraded installs too.
+ * CREATE TABLE IF NOT EXISTS skips existing tables, so a newly added column never reaches upgraded installs;
+ * this adds the column if missing.
  */
 /** Returns true only when the column was actually just added (fresh installs already have it via CREATE_TABLES_SQL and never hit this branch), so callers can run a one-time backfill exactly once. */
 async function ensureColumn(db: AppDb, table: string, column: string, ddl: string): Promise<boolean> {
@@ -151,17 +112,8 @@ async function ensureColumn(db: AppDb, table: string, column: string, ddl: strin
 }
 
 /**
- * Flags the built-in categories the app matches by name (Loan EMI, Loan
- * Repayment, Fees & Charges, Friends & Family — see src/features/loans/*,
- * src/features/people/*, app/add-transaction.tsx) as `is_system` so
- * they can't be deleted / archived / renamed out from under that match.
- *
- * Idempotent, run on every startup. `restoreFromSnapshot` in src/lib/backup.ts
- * repeats the same UPDATE inline (a backup taken before this column existed
- * brings the built-ins back unflagged, and restore doesn't re-run
- * migrations). Scoped to still-unflagged top-level rows named exactly as
- * seeded, so a user's own same-named category, or one they've since renamed,
- * is never touched.
+ * Flags name-matched built-ins (Loan EMI/Repayment, Fees & Charges, Friends & Family) `is_system`; idempotent.
+ * backup.ts repeats it inline (restore skips migrations). Only unflagged top-level rows with seeded names.
  */
 async function flagSystemCategories(db: AppDb): Promise<void> {
   await db.runAsync(
@@ -174,13 +126,8 @@ async function flagSystemCategories(db: AppDb): Promise<void> {
   );
 }
 
-// DEFAULT_CATEGORIES used to seed with a bolder, more saturated palette
-// (Tailwind-style hues) instead of the app's calm pastel band. An install
-// that seeded before this change keeps those colours forever unless
-// remapped here — scoped to name + kind + still holding the exact original
-// colour, so a category the user has since recoloured (or a same-named one
-// they created themselves after deleting the built-in) is never touched.
-// Idempotent: once remapped, the WHERE no longer matches.
+// Remaps old saturated seed colours (Tailwind-style hues) to the pastel band for earlier installs;
+// matches name + kind + exact old colour, so recoloured or user-made categories stay untouched. Idempotent.
 const LEGACY_CATEGORY_COLOR_REMAP: { name: string; kind: 'income' | 'expense'; from: string; to: string }[] =
   [
     { name: 'Salary', kind: 'income', from: '#22C55E', to: '#7FE0A8' },
@@ -225,13 +172,8 @@ async function remapLegacyCategoryColors(db: AppDb): Promise<void> {
 }
 
 /**
- * Steps that must run exactly once, in order — for a change that is NOT safe
- * to repeat (copying a column's values, dropping or rebuilding a table). Each
- * step's `version` is one higher than the last; the database remembers the
- * highest one applied in `PRAGMA user_version`. Anything that IS safe to repeat
- * belongs in applyIdempotentMigrations instead, which is how every change so
- * far has been done and which also heals a database restored from an older
- * backup.
+ * Run-once ordered steps for changes unsafe to repeat (copying values, dropping/rebuilding tables);
+ * each `version` is +1, kept in PRAGMA user_version. Repeat-safe changes go in applyIdempotentMigrations.
  */
 export interface VersionedMigration {
   version: number;
@@ -244,10 +186,8 @@ const latestSchemaVersion = (steps: readonly VersionedMigration[]): number =>
   Math.max(1, ...steps.map((m) => m.version));
 
 /**
- * Exported for tests only — the app runs this once, inside initDb's
- * transaction, so a failed step rolls back together with its version stamp.
- * A database already past this build's version (a file from a newer app) is
- * left as it is: its version is never lowered and no step re-runs.
+ * Exported for tests; runs once in initDb's transaction so a failed step rolls back with its version stamp.
+ * A database already past this build's version (newer app's file) is left alone: never lowered, no re-runs.
  */
 export async function runMigrations(
   db: AppDb,
@@ -282,22 +222,15 @@ async function applyIdempotentMigrations(db: AppDb): Promise<void> {
   await remapLegacyCategoryColors(db);
 
   if (addedIsSensitive) {
-    // One-time backfill for an upgrading install: the two built-in categories
-    // this feature exists for start flagged, same as a fresh install gets via
-    // src/db/ledger.ts's seedDefaultCategories. Anything else (custom
-    // categories, or these two if the user later renamed them) stays
-    // unflagged until the user opts it in themselves.
+    // One-time backfill: the two built-ins this feature needs start flagged on upgrade, as on a fresh
+    // install (ledger.ts seedDefaultCategories); custom or renamed ones stay unflagged until opted in.
     await db.runAsync(
       `UPDATE categories SET is_sensitive = 1 WHERE name IN ('Savings Deposit', 'Investments')`
     );
   }
 
-  // "Friends & Family" was added to DEFAULT_CATEGORIES so a fresh install
-  // gets it automatically via seedDefaultCategoriesIfEmpty (which runs right
-  // after this function, and only when the table is still empty — never
-  // touch that path here). An already-seeded, upgrading install needs it
-  // added explicitly instead, one kind at a time so a user who already has
-  // a same-named category of only one kind doesn't get a duplicate of it.
+  // Fresh installs get "Friends & Family" from seedDefaultCategoriesIfEmpty (only when empty; leave that).
+  // Upgrades add it here, one kind at a time, so a same-named category of one kind isn't duplicated.
   const categoryCount = await db.getFirstAsync<{ count: number }>('SELECT COUNT(*) as count FROM categories');
   if ((categoryCount?.count ?? 0) > 0) {
     for (const kind of ['income', 'expense'] as const) {
@@ -318,10 +251,8 @@ async function applyIdempotentMigrations(db: AppDb): Promise<void> {
   await ensureColumn(db, 'savings_goals', 'note_to_self', `note_to_self TEXT`);
   await ensureColumn(db, 'savings_goals', 'letter_revealed', `letter_revealed INTEGER NOT NULL DEFAULT 0`);
   await ensureColumn(db, 'savings_goals', 'track_account', `track_account INTEGER NOT NULL DEFAULT 0`);
-  // Left null on existing rules rather than backfilled from next_run_date:
-  // a rule that already drifted (31st → 3rd under the old overflow math)
-  // would just have its drifted day locked in, and null already falls back
-  // to exactly that day at run time — see runDueRecurringRules.
+  // Null on existing rules, not backfilled from next_run_date: a drifted rule (31st → 3rd) would lock in
+  // the drifted day, and null already falls back to that day at run time (see runDueRecurringRules).
   await ensureColumn(db, 'recurring_rules', 'anchor_day', `anchor_day INTEGER`);
 
   await ensureColumn(
@@ -340,35 +271,14 @@ async function applyIdempotentMigrations(db: AppDb): Promise<void> {
   await ensureColumn(db, 'transactions', 'is_refund', 'is_refund INTEGER NOT NULL DEFAULT 0');
   await ensureColumn(db, 'transactions', 'day_rank', 'day_rank INTEGER');
 
-  loanDueDatesRepaired = await repairLoanDueDates(db);
+  await repairLoanDueDates(db);
 }
 
 /**
- * Loans whose pending due dates were just corrected by repairLoanDueDates
- * during this launch's setup — read once by app/_layout.tsx, which then
- * re-schedules due reminders (a reminder already set for the old, wrong
- * date would otherwise still fire on that date). Lives here rather than
- * calling into db/loans.ts directly: loans.ts imports this file, and
- * migrations run before notification setup anyway.
+ * Old month math overflowed missing days (Jan 31 + 1 month = Mar 3), misdating pending installments of loans
+ * due 29–31. Rewrites pending ones to #1 + (n − 1) months, clamped; paid kept. Idempotent; no-op for 1–28.
  */
-let loanDueDatesRepaired = 0;
-export function consumeLoanDueDateRepairs(): number {
-  const n = loanDueDatesRepaired;
-  loanDueDatesRepaired = 0;
-  return n;
-}
-
-/**
- * Month arithmetic used to overflow a missing day into the next month
- * (Jan 31 + 1 month = Mar 3), so a loan due on the 29th–31st could have
- * pending installments stored on the wrong date — no February EMI, two in
- * March. Rewrites every *pending* installment to "installment #1 + (n − 1)
- * months, clamped", exactly what generateAmortizationSchedule produces
- * today. Paid installments are history and left alone. A no-op for every
- * loan due on the 1st–28th (the old and new math agree there), and
- * idempotent: a second run finds nothing to change.
- */
-async function repairLoanDueDates(db: AppDb): Promise<number> {
+async function repairLoanDueDates(db: AppDb): Promise<void> {
   const rows = await db.getAllAsync<{
     id: string;
     installment_number: number;
@@ -380,25 +290,17 @@ async function repairLoanDueDates(db: AppDb): Promise<number> {
      JOIN loan_payments anchor_row ON anchor_row.loan_id = lp.loan_id AND anchor_row.installment_number = 1
      WHERE lp.status = 'pending' AND CAST(substr(anchor_row.due_date, 9, 2) AS INTEGER) > 28`
   );
-  let changed = 0;
   for (const row of rows) {
     const expected = addMonthsToIsoDate(row.anchor, row.installment_number - 1);
     if (expected !== row.due_date) {
       await db.runAsync('UPDATE loan_payments SET due_date = ? WHERE id = ?', [expected, row.id]);
-      changed++;
     }
   }
-  return changed;
 }
 
 /**
- * Resolves to the one shared db handle, running first-launch setup (file
- * migration, CREATE TABLE, column migrations, category seeding) exactly
- * once. The in-flight setup promise is cached, not just its result, so two
- * concurrent first calls can't both run the setup — without that,
- * `seedDefaultCategoriesIfEmpty` could pass its "is the table empty?" check
- * twice and seed the default categories twice. A failed setup clears the
- * cache so a later call can retry a transient error.
+ * Resolves to the one shared db handle, running first-launch setup (file move, tables, columns, seeds) once.
+ * The in-flight promise is cached so concurrent first calls can't double-seed; failure clears it for retry.
  */
 export function getDb(): Promise<AppDb> {
   if (!dbSetup) {
@@ -418,10 +320,8 @@ async function initDb(): Promise<AppDb> {
   // The home-screen widget and the app can both hold this file open; wait a few seconds for the other's write instead of failing at once with "database is locked".
   await unqueued.execAsync('PRAGMA busy_timeout = 5000;');
   await unqueued.execAsync(CREATE_TABLES_SQL);
-  // One transaction for the whole batch: a failure partway through (a
-  // crash, a bad statement) rolls every migration back together instead of
-  // leaving an install half-migrated — e.g. a column added but its one-time
-  // backfill never run, which ensureColumn would then never retry.
+  // One transaction for the whole batch: a failure partway rolls every migration back instead of leaving an
+  // install half-migrated (column added, backfill never run — ensureColumn wouldn't retry).
   await unqueued.withTransactionAsync((tx) => runMigrations(tx));
   await seedDefaultCategoriesIfEmpty(unqueued);
   // Recently deleted keeps entries for 30 days; anything older goes as the app opens.
@@ -432,9 +332,8 @@ async function initDb(): Promise<AppDb> {
   );
   primeCurrencyCache(currencyRow?.value ?? null);
 
-  // Setup above runs once, sequentially, before any screen can call getDb()
-  // — nothing to serialize yet. Every call after this point goes through
-  // the queue, since multiple screens/components can call getDb() at once.
+  // Setup above runs once, before any screen can call getDb(), so nothing needs serializing yet;
+  // every call after this goes through the queue.
   return serializeDb(raw);
 }
 

@@ -1,9 +1,6 @@
 /**
- * A combinatorial sweep of date math across years (leap and non-leap),
- * every month, and a spread of days including month-end edge cases —
- * checking the round-trip and ordering invariants every date helper in the
- * app depends on (loan schedules, report period ranges, "member since",
- * "days until due").
+ * Combinatorial sweep of date math over leap/non-leap years, every month and month-end days, checking the
+ * round-trip and ordering invariants that loan schedules, report ranges and due-day countdowns depend on.
  */
 import { toLocalIsoDate, parseLocalIsoDate, addMonthsToIsoDate, monthsBetweenIsoDates } from './date';
 
@@ -51,10 +48,8 @@ describe('date calculation matrix — every year × month × day combination', (
     expect(addMonthsToIsoDate('2023-01-31', 1)).toBe('2023-02-28'); // 2023 non-leap
   });
 
-  // Every month-end start day × every step, across leap and non-leap years:
-  // the result must always sit in exactly the target calendar month (never
-  // spill into the one after), on the start day or that month's last day,
-  // whichever is smaller.
+  // Every month-end start day x every step, leap and non-leap: the result must sit in exactly the target
+  // month, on the start day or that month's last day, whichever is smaller.
   for (const year of YEARS) {
     for (const month of MONTHS) {
       for (const day of [29, 30, 31]) {

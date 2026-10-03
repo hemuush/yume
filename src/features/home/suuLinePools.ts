@@ -1,16 +1,6 @@
 /**
- * The wording pools behind `suuLine()` — roughly 20 variants per situation
- * so Suu doesn't say the exact same sentence every single time the Home
- * hero re-renders (every focus of the tab). One is picked at random on each
- * call via `pickRandom` — genuinely "each time", since this runs fresh on
- * every Home focus, not on a schedule like the push notifications in
- * `notificationCopy.ts` (see that file's own note on why those rotate on a
- * looser cadence).
- *
- * Templates that need a live number use a `{pct}` token, filled by
- * `fillSuuTemplate` — kept as a plain token substitution rather than baking
- * the figure into all ~20 variants of a given situation, so a wording tweak
- * later doesn't mean re-writing the number-placement logic 20 times over.
+ * Wording pools behind `suuLine()`: ~20 variants per situation, one picked at random per call. `{pct}`
+ * tokens are filled by `fillSuuTemplate` so a wording tweak needn't redo number placement in each variant.
  */
 
 export function fillSuuTemplate(template: string, pct: string): string {
@@ -137,9 +127,8 @@ export const THIN_SAVINGS_LINES: readonly string[] = [
 ];
 
 /**
- * Stand-ins for the two savings-rate pools above while the user hides savings
- * amounts: a "{pct} kept" line plus the free-to-use figure on the card would
- * give away what went to savings, so these say nothing about saving at all.
+ * Stand-ins for the two savings-rate pools while savings amounts are hidden: "{pct} kept" plus the free
+ * figure would reveal what went to savings, so these never mention saving.
  */
 export const PRIVATE_HEALTHY_LINES: readonly string[] = [
   'Most of what came in this month is still unspent.',

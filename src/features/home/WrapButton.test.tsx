@@ -1,7 +1,6 @@
 /**
- * Home's Wrap button: nothing when no Wrap is ready, one tap plays the one
- * that is, a pastel ring until it's watched, and on the day both are ready
- * a 2 that asks which to play. All figures are made up.
+ * Home's Wrap button: nothing when no Wrap is ready, one tap plays the ready one, a pastel ring until
+ * watched, and when both are ready a 2 asking which to play. All figures are made up.
  */
 import { View, Text } from 'react-native';
 import { create, act, ReactTestRenderer } from 'react-test-renderer';

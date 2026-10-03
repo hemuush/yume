@@ -18,10 +18,8 @@ import { errorMessage } from '@/lib/errorMessage';
 import { categorySentence } from '@/lib/categoryLabel';
 
 /**
- * Creates a new month's budget, or edits an existing one's limit/rollover —
- * the category and month themselves are fixed once a budget exists (like an
- * account's currency), so re-categorising means deleting and adding a new
- * one instead.
+ * Creates a month's budget or edits its limit/rollover. Category and month are fixed once a budget exists
+ * (like an account's currency), so re-categorising means delete and add.
  */
 export function AddBudgetModal({
   visible,
@@ -33,16 +31,8 @@ export function AddBudgetModal({
   visible: boolean;
   editing: BudgetProgress | null;
   /**
-   * Every expense category (parents and subcategories alike) — irrelevant,
-   * and hidden, once editing. Deliberately not pre-filtered down to
-   * "doesn't already have a budget this month": excluding an already-
-   * budgeted parent while leaving one of its still-eligible subcategories
-   * in would silently drop that child from the picker too (CategoryPicker
-   * only shows a subcategory once its parent is present to expand it
-   * under). `createBudget` already gives a clear error for the rare case
-   * of picking one that's taken, the same way every other "already exists"
-   * case in the app is handled — by the create call itself, not by hiding
-   * the option beforehand.
+   * Every expense category (parents and subs), hidden when editing. Not filtered by "already budgeted": hiding
+   * a parent would drop its eligible subs (CategoryPicker needs it); createBudget errors on a duplicate.
    */
   categories: Category[];
   onClose: () => void;
@@ -66,9 +56,7 @@ export function AddBudgetModal({
       setRollover(false);
     }
     setError(null);
-    // Only re-derive defaults when the modal actually opens or which budget
-    // it's editing changes — `categories` is a fresh array every render of
-    // the host screen.
+    // Re-derive defaults only when the modal opens or the edited budget changes (`categories` changes every render).
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible, editing]);
 

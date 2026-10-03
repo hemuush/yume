@@ -30,11 +30,8 @@ export interface LoanProgress {
 }
 
 /**
- * Every loan's schedule progress in one grouped query — Plan's Loans card
- * shows "42 of 240 paid" and the next EMI for each loan, which would
- * otherwise be one full schedule read per loan through the shared queue.
- * The next EMI's amount is the pending installment's own (a loan's last
- * installment usually differs from its regular EMI).
+ * Every loan's schedule progress in one grouped query (Plan: paid count + next EMI), not a read per loan.
+ * The next EMI amount is the pending installment's own: a loan's last installment usually differs.
  */
 export async function getLoanProgress(): Promise<LoanProgress[]> {
   const db = await getDb();
@@ -105,11 +102,8 @@ export interface LoanPaymentContext {
 }
 
 /**
- * A loan's next unpaid EMI, the account it's paid from and the category it's
- * filed under — the same choices the loan's own screen makes: its linked
- * account if that still exists (otherwise the first account), and "Loan EMI"
- * (or "Loan Repayment" for money lent) of the matching kind. Null when
- * nothing is left to pay. Lets Plan's Coming up record an EMI in one tap.
+ * A loan's next unpaid EMI plus the account (linked, else first) and category ("Loan EMI"/"Loan Repayment")
+ * the loan's own screen would use. Null when nothing is left to pay.
  */
 export async function getLoanPaymentContext(loanId: string): Promise<LoanPaymentContext | null> {
   const db = await getDb();

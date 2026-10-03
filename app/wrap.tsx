@@ -11,14 +11,8 @@ import { addDaysToIsoDate } from '@/lib/date';
 import { WrapPlayer } from '@/features/wrap/WrapPlayer';
 
 /**
- * `/wrap?period=month` (last month) or `/wrap?period=week` (the last full
- * week), from Home's Wrap button or the Monday notification. Plays the Wrap,
- * then "See the full report" opens Reports on that same period.
- *
- * Playing a Wrap marks it as seen, so the Wrap button's ring goes plain
- * when you come back (by Done, ✕, back or the report). It's marked as the
- * Wrap starts, not as you leave, so the write has long finished by the time
- * Home reloads.
+ * `/wrap?period=month|week` (last month / last full week) from Home's Wrap button or the Monday
+ * notification; "See the full report" opens Reports on it. Marked seen as it starts.
  */
 export default function WrapScreen() {
   const { period } = useLocalSearchParams<{ period?: string }>();

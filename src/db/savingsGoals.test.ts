@@ -1,7 +1,6 @@
 /**
- * Savings goals against a real SQLite engine: validation, contribution
- * clamping, the archive-vs-delete split (mirrors deleteAccount/deleteLoan),
- * and the delete/undo round trip.
+ * Savings goals on real SQLite: validation, contribution clamping, archive-vs-delete split (mirrors
+ * deleteAccount/deleteLoan), and the delete/undo round trip.
  */
 import { createRealDataTestDb } from '@/test-support/realDataTestDb';
 

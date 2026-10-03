@@ -1,7 +1,6 @@
 /**
- * A credit card's cycle: which statement is current, when its bill is due,
- * what's left to pay, and the month-end cases (a 31st in a 30-day month,
- * February). All figures are made up.
+ * A credit card's cycle: current statement, bill due date, what's left to pay, and month-end cases
+ * (a 31st in a 30-day month, February). All figures are made up.
  */
 import {
   lastStatementDate,

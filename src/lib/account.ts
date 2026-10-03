@@ -2,12 +2,8 @@ import { theme } from '@/constants/theme';
 import { Account } from '@/types';
 
 /**
- * The badge colour rule for one account: a warmer, fixed tone for
- * savings/credit accounts, the user's own accent for everything else — so
- * colour means something about the account instead of just marking its
- * position in a list. Shared by Home's account cards and the Accounts
- * home-screen widget so the two can never quietly disagree about which
- * accounts get the warm tone.
+ * Badge colour rule for one account: a fixed warm tone for savings/credit, the user's accent otherwise.
+ * Shared by Home's account cards and the Accounts widget so they never disagree on which get the warm tone.
  */
 export function accountBadgeColor(type: Account['type'], accent: string): string {
   return type === 'savings' || type === 'credit_card' ? theme.colors.idCoralDeep : accent;

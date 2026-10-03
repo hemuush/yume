@@ -37,20 +37,8 @@ interface HeadlineContent {
 }
 
 /**
- * The big "spent this week/month" figure plus the bar chart beneath it —
- * already animates in place (`CountUpAmount` eases between values,
- * `SpendBarChart`'s own bars grow to their new height), but a swipe or a
- * chevron tap just cut straight to those new values with no sense of
- * direction. Since this screen already has a real drag gesture
- * (`useSwipeStep`) for stepping period, this brings the exact same
- * lagged-state slide `ThisMonthHero.tsx` uses for Home's month switch —
- * same technique, same timing — so the content visibly follows the
- * direction of the step instead of only reacting to it afterward.
- *
- * `periodKey` identifies the period showing and `direction` says which way
- * it just moved (+1 forward, -1 back, 0 for a scope toggle or a picked
- * month, where a crossfade reads better than a guessed slide direction) —
- * same contract as ThisMonthHero's own props.
+ * Spent figure + bar chart that slide with the period step, using ThisMonthHero's lagged-state technique.
+ * `periodKey` = period shown; `direction` = step (+1 forward, -1 back, 0 scope toggle/picked month: fade).
  */
 export function TransactionsHeadline({
   periodKey,
@@ -84,20 +72,13 @@ export function TransactionsHeadline({
     bars,
     legend,
   });
-  // See ThisMonthHero.tsx's identical ref/effect for the full story: gating
-  // this solely on `[periodKey]` (skipping the first run) was a real bug —
-  // `displayed` seeded from whatever `expenseMinor` was at first render
-  // (before the real data had loaded) would never update again, since data
-  // finishing its load doesn't change `periodKey`. Comparing against the
-  // periodKey this effect last actually ran for, instead, means a same-period
-  // data update syncs immediately (no slide) while a genuine period change
-  // still turns the page.
+  // As in ThisMonthHero.tsx: compare with the periodKey the effect last ran for, not `[periodKey]` alone (it
+  // would leave `displayed` seeded from pre-load data). Same-period data syncs now; a new period slides.
   const prevPeriodKey = useRef(periodKey);
   const tx = useSharedValue(0);
   const opacity = useSharedValue(1);
-  // Bumped once per effect run below — lets a delayed slide-out callback
-  // recognize it's been superseded (see the race `commit` guards against,
-  // right below) instead of blindly applying a stale snapshot.
+  // Bumped per effect run so a delayed slide-out callback can tell it was superseded (see `commit` below)
+  // instead of applying a stale snapshot.
   const runId = useRef(0);
 
   useEffect(() => {
@@ -120,22 +101,8 @@ export function TransactionsHeadline({
     }
     const outX = direction > 0 ? -18 : direction < 0 ? 18 : 0;
     const inX = direction > 0 ? 18 : direction < 0 ? -18 : 0;
-    // `anchor`/period changing and the new period's transactions finishing
-    // their reload are two separate state updates — the period flips a
-    // render before the reload resolves, so `bars` here can be a
-    // transitional snapshot: built from the *new* period's date range but
-    // the *old* period's still-loaded transactions, so every bucket reads 0
-    // (none of last period's rows fall in the new range). That's fine
-    // normally — the subsequent effect run once real data lands sees
-    // `isPeriodTurn` already false and applies the correct bars immediately
-    // via the branch above. The bug this guards against is that fix racing
-    // a *slower* path: this run's own delayed callback below, still
-    // scheduled from when the period first changed, firing afterward and
-    // clobbering that correct update with the all-zero bars it captured
-    // back then. `commit` only applies `next` if no later effect run has
-    // happened since — otherwise it's dropped instead of overwriting the
-    // real data that already landed, which was this bug's actual symptom:
-    // the bar chart going empty after navigating to a different period.
+    // The period flips a render before its reload resolves, so `bars` can be all-zero (new range, old rows).
+    // `commit` drops this run's delayed `next` if a later run happened, so zeros can't clobber real data.
     const commit = () => {
       if (runId.current !== myRun) return;
       setDisplayed(next);
@@ -148,8 +115,7 @@ export function TransactionsHeadline({
       tx.value = withTiming(0, { duration: DURATIONS.slideIn });
       opacity.value = withTiming(1, { duration: DURATIONS.slideIn });
     });
-    // `direction` is read with the period it came with, and `opacity`/`tx` are
-    // stable shared values; re-running on `direction` alone would replay the slide.
+    // `direction` goes with its period and `opacity`/`tx` are stable; `direction` alone mustn't re-run this.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     periodKey,

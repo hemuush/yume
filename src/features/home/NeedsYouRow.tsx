@@ -29,9 +29,8 @@ const ACTION_ICON: Partial<Record<NeedsYouItem['action'], React.ComponentProps<t
 };
 
 /**
- * One Needs you item on the bell's screen, drawn like UpcomingRow (same
- * sizes, same card). `onDismiss` adds a ✕; without it the row ends in a
- * chevron.
+ * One Needs you item on the bell's screen, drawn like UpcomingRow (same sizes, same card).
+ * `onDismiss` adds a ✕; without it the row ends in a chevron.
  */
 export function NeedsYouRow({
   item,

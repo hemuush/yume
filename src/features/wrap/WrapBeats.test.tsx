@@ -1,8 +1,6 @@
 /**
- * Every kind of beat renders, both moving and still (reduce motion), and
- * with the unusual shapes real months take: more going out than coming in,
- * a steady week, a week with nothing logged, and a sensitive category when
- * "hide savings & investment amounts" is on. All figures are made up.
+ * Every beat kind renders, moving and still (reduce motion), including unusual months: more out than in, a
+ * steady week, an empty week, a sensitive category with savings amounts hidden. Made-up figures.
  */
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
 import { Text } from 'react-native';

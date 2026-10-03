@@ -3,19 +3,8 @@ import { buildBackupSnapshot, restoreFromSnapshot, BackupSnapshot, RestoreResult
 import { errorMessage } from '@/lib/errorMessage';
 
 /**
- * A way back from every restore. Before a restore replaces the data, the
- * current data is saved as a "safety copy" — one file in the app's own
- * private documents folder (never the user's backup folder, never shared,
- * removed with the app). Restoring that copy undoes the restore; since that
- * undo is itself a restore, it keeps a copy too, so the user can go back
- * and forth without ever losing either version.
- *
- * The new copy is written to a *pending* file first and only replaces the
- * previous safety copy once the restore has actually succeeded. A restore
- * that fails (a damaged file, broken references — restoreFromSnapshot
- * rolls those back) therefore leaves both the data and the existing safety
- * copy exactly as they were: trying a bad file can never cost the user
- * their way back.
+ * A way back from every restore: current data is first saved to one app-private file, not the backup folder.
+ * Undo keeps a copy too. The new copy is *pending* and replaces the old one only after the restore succeeds.
  */
 
 const COPY_NAME = 'yume-safety-copy.json';
@@ -56,11 +45,8 @@ function removeIfPresent(file: File): void {
 }
 
 /**
- * Restores `snapshot`, first keeping the current data as the safety copy.
- * Throws SafetyCopyError (with nothing changed) if that copy can't be
- * saved — unless `withoutCopy` is set, which the user can choose after
- * being told. `undoAvailable` is false if the restore succeeded but the new
- * copy couldn't be put in place (then the older copy, if any, remains).
+ * Restores `snapshot` after keeping current data as the safety copy; throws SafetyCopyError (nothing changed)
+ * if it can't be saved, unless `withoutCopy`. `undoAvailable` is false if the new copy couldn't be placed.
  */
 export async function restoreKeepingSafetyCopy(
   snapshot: BackupSnapshot,

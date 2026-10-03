@@ -44,10 +44,8 @@ export async function requestNotificationPermission(): Promise<boolean> {
 }
 
 /**
- * One-time cleanup: notification identifiers were `flynse-*` before the
- * rename to Yume. Any still scheduled under the old prefix would otherwise
- * linger forever (a rebuild only ever cancels `yume-*` ids).
- * Best-effort, run once on startup.
+ * One-time cleanup: identifiers were `flynse-*` before the Yume rename; any still scheduled under that prefix
+ * would linger forever (rebuilds only cancel `yume-*` ids). Best-effort, run once on startup.
  */
 export async function cancelLegacyScheduledNotifications(): Promise<void> {
   // The background task behind the old notification buttons is gone; drop its registration too.
@@ -77,13 +75,8 @@ export function notificationRoute(
 let rebuildChain: Promise<unknown> = Promise.resolve();
 
 /**
- * Works out everything Yume should notify about (see planNotifications) from
- * the current settings and data, then replaces whatever is scheduled with
- * exactly that. Called whenever something it depends on changes — app start,
- * saving the notification settings, logging a transaction, any loan change,
- * a restore — so it is always safe to call again. Runs one at a time, never
- * throws, and resolves false when the notifications could not be set up
- * (a missing permission is not a failure: there is simply nothing to schedule).
+ * Works out everything to notify about (planNotifications) from settings and data, then replaces whatever is
+ * scheduled. Safe to re-call; serialized; never throws; false on failure (a missing permission isn't one).
  */
 export function rebuildNotifications(): Promise<boolean> {
   const run = rebuildChain.then(doRebuild, doRebuild);
@@ -135,11 +128,8 @@ async function doRebuild(): Promise<boolean> {
 }
 
 /**
- * Calls `onRoute` whenever the user taps a Yume notification — including the
- * tap that just cold-started the app. That launch response is cleared once
- * read: the system otherwise keeps returning it on every later launch, which
- * would reopen the same screen each time the app is opened normally.
- * Returns the unsubscribe function.
+ * Calls `onRoute` whenever the user taps a Yume notification, including the tap that cold-started the app.
+ * That launch response is cleared once read (else re-delivered every launch). Returns the unsubscribe function.
  */
 export function subscribeToNotificationTaps(onRoute: (route: NotificationRoute) => void): () => void {
   let active = true;

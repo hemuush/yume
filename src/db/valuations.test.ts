@@ -1,7 +1,6 @@
 /**
- * Tracked (investment) accounts against a real SQLite engine: the value is
- * the latest update plus what moved after it, and gain is what's left once
- * you subtract what you put in and add back what you took out.
+ * Tracked (investment) accounts on real SQLite: value = latest update plus what moved after it; gain = value
+ * minus what you put in plus what you took out.
  */
 import { createRealDataTestDb } from '@/test-support/realDataTestDb';
 

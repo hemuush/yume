@@ -3,12 +3,8 @@ import { restoreRow, RowSnapshot } from './undoSnapshot';
 import type { TransactionRow } from './rows';
 
 /**
- * Recently deleted (the Missing pieces sign-off): an entry you delete waits
- * here for 30 days with the exact row Undo already captures, so it can be
- * put back as it was — same id, date and account. Only ordinary entries
- * come here; ones tied to a loan or a person are undone from those screens.
- * Not part of backups (a backup is a snapshot of your real data), and a
- * restore clears the list.
+ * Entries wait here 30 days holding the exact row Undo captured, so restore keeps id, date and account.
+ * Ordinary entries only (loan/person ones undo from their screens); not in backups, and a restore clears it.
  */
 
 /** How long a deleted entry is kept before it's gone for good. */

@@ -1,15 +1,11 @@
 /**
- * Renders the Plan tab (the bento) with fixed data, dated from today: every
- * tile shows its real figures in order, tapping a tile opens its own screen,
- * and Coming up lists the next 14 days grouped by day with a Pay button on EMIs.
- * What each tile says is tested in planOverview.test.ts; this checks the
- * screen wires it all up.
+ * Renders the Plan tab with fixed data dated from today: tiles show real figures in order and open their
+ * screens, Coming up lists 14 days grouped by day with Pay on EMIs. Tile wording is in planOverview.test.ts.
  */
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
 
-// The first render loads React Native's component tree, which on a cold, fully
-// parallel run (CI, or the whole suite at once) can take longer than Jest's
-// 5s default — seen failing that way, never on its own. Generous, not slow.
+// The first render loads React Native's component tree; on a cold parallel run (CI) that can exceed Jest's
+// 5s default, so the timeout is generous.
 jest.setTimeout(30000);
 import { Text } from 'react-native';
 
@@ -145,9 +141,8 @@ async function render() {
 const texts = (tree: ReactTestRenderer) =>
   tree.root.findAllByType(Text).map((t) => [].concat(t.props.children).join(''));
 
-// Loads React Native's lazily-required components once, up front, with a
-// generous budget — on a cold, fully parallel run (CI) their first load can
-// outlast a single test's time limit, which failed this file intermittently.
+// Loads RN's lazily-required components once up front with a generous budget: on a cold parallel run (CI)
+// their first load can outlast a test's limit and fail this file intermittently.
 beforeAll(async () => {
   await render();
 }, 180000);

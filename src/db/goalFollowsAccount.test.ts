@@ -1,9 +1,6 @@
 /**
- * A goal that follows its account, against a real SQLite engine: progress
- * is the account's balance (opening balance, entries and transfers), money
- * added by hand is kept aside and comes back when it stops following, it
- * can't take "+ Add money", and the What-if rate is the account's recent
- * growth rather than its whole balance.
+ * A goal following its account (real SQLite): progress is the account balance (opening, entries, transfers),
+ * hand-added money is kept aside and returns on unfollow, no "+ Add money", and What-if uses recent growth.
  */
 import { createRealDataTestDb } from '@/test-support/realDataTestDb';
 

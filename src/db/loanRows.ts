@@ -5,17 +5,8 @@ import { Loan, LoanPayment } from '@/types';
 /** Shared by the loan modules: row mappers and the loan query. Not part of the public loans API. */
 
 /**
- * Where a regenerated schedule (prepayment, rate change) counts its due
- * dates from: installment #1's own due date, the same anchor
- * generateAmortizationSchedule used when the loan was created. Anchoring to
- * the next *pending* installment instead would inherit a clamped day (a
- * 31st-of-the-month loan's Feb 28 installment) and every regenerated date
- * after it would stay on the 28th; anchoring to the date the prepayment was
- * made would drag every future due-day to that day. Installment #1 is never
- * clamped (offset 0), and either stays in place (already paid) or is
- * regenerated at offset 0 from itself, so it always carries the loan's real
- * due day. Falls back to the next pending installment only if #1 is somehow
- * missing.
+ * Anchor for regenerated due dates: installment #1's date (never day-clamped; next pending is the fallback).
+ * The next pending one could inherit a clamped day (Feb 28) and the action date would drift every due-day.
  */
 export async function scheduleAnchor(
   db: Awaited<ReturnType<typeof getDb>>,
@@ -36,10 +27,8 @@ export async function scheduleAnchor(
 }
 
 /**
- * The expense category a lent loan's prepayment charge is filed under: the
- * built-in "Fees & Charges" (is_system, so it can't have been renamed,
- * archived or deleted), or — only if that row is somehow missing — the
- * first active expense category.
+ * Expense category for a lent loan's prepayment charge: system "Fees & Charges" (can't be renamed or
+ * deleted), else the first active expense category.
  */
 export async function feeCategoryId(db: Awaited<ReturnType<typeof getDb>>): Promise<string> {
   const row =
@@ -76,9 +65,8 @@ export function rowToLoan(row: LoanRow & { next_due_date?: string | null }): Loa
   };
 }
 
-// Shared by every query that returns full Loan rows — joins in the earliest
-// pending installment's due date so the list screen can show "Next due"
-// without a second round-trip per loan.
+// Shared by every query returning full Loan rows: joins the earliest pending installment's due date
+// so the list screen shows "Next due" without a round-trip per loan.
 export const LOAN_SELECT = `
   SELECT l.*,
     (SELECT due_date FROM loan_payments WHERE loan_id = l.id AND status = 'pending'

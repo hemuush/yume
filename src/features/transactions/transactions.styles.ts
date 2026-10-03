@@ -62,9 +62,8 @@ export const styles = StyleSheet.create({
   weekNavArrow: { fontSize: 18, fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
   weekNavArrowDisabled: { color: theme.colors.textMuted, opacity: 0.35 },
 
-  // The Spent card (the Activity cleanup sign-off, option A): Spent on its
-  // own with a change pill, Week/Month in the corner, the chart, a one-line
-  // legend (or what the tapped bar cost), and Money in | Net as a strip.
+  // The Spent card: Spent with a change pill, Week/Month in the corner, the chart, a one-line legend (or
+  // what the tapped bar cost), and Money in | Net as a strip.
   sumCard: {
     marginHorizontal: 20,
     marginTop: 12,
@@ -166,9 +165,8 @@ export const styles = StyleSheet.create({
     backgroundColor: theme.colors.primary,
   },
 
-  // The type filter as one segmented bar, then any picked categories and
-  // accounts on their own line, only while there are some. The gap below
-  // matches the gap between days.
+  // Type filter as one segmented bar, then picked categories/accounts on their own line (only when some).
+  // The gap below matches the gap between days.
   typeBar: {
     flexDirection: 'row',
     marginHorizontal: 20,

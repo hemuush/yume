@@ -1,7 +1,6 @@
 /**
- * A tracked account's gain pill: green and red, "Add value" before the first
- * update, an amber age pill when stale, and both money and percentage masked
- * while savings amounts are hidden. All figures are made up.
+ * A tracked account's gain pill: green/red, "Add value" before the first update, amber age pill when stale,
+ * and money and percentage both masked while savings amounts are hidden. Made-up figures.
  */
 import { Text } from 'react-native';
 import { create, act } from 'react-test-renderer';

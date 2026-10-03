@@ -1,7 +1,6 @@
 /**
- * What rolls over from earlier months into the one on screen — checked against
- * a real SQLite engine, and against each month's own free-to-use figure so the
- * running total can never drift from what each month shows.
+ * What rolls over from earlier months into the one on screen (real SQLite), checked against each month's own
+ * free-to-use figure so the running total can't drift from what each month shows.
  */
 import { createRealDataTestDb } from '@/test-support/realDataTestDb';
 

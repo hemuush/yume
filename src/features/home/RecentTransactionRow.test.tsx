@@ -1,8 +1,6 @@
 /**
- * A Home recent-activity row never says its category twice: with a note,
- * the note leads and the category sits under it; without one, the category
- * leads and only the account sits under it. Either way the day closes the
- * line. All figures are made up.
+ * A Home recent row never says its category twice: with a note the note leads and the category sits under it;
+ * otherwise the category leads with the account under it. The day always ends the line. Figures are made up.
  */
 import { Text } from 'react-native';
 import { create, act, ReactTestRenderer } from 'react-test-renderer';

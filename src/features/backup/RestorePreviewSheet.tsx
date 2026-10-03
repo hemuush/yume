@@ -27,10 +27,8 @@ function describe(s: BackupSummary): string {
 }
 
 /**
- * What a restore would do, shown before anything is replaced: what's in
- * the backup next to what's on the phone, and how many newer entries would
- * be lost. A copy of today's data is kept first, so it can be undone.
- * Replaces the old plain "Replace all data?" dialog on every restore path.
+ * Shown before any restore replaces data: backup contents vs what's on the phone, and how many newer entries
+ * would be lost. A copy of today's data is kept first, so the restore can be undone.
  */
 export function RestorePreviewSheet({
   preview,

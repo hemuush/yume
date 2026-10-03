@@ -9,15 +9,8 @@ import { SECTION_TITLE, SECTION_GAP } from '@/constants/textStyles';
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 /**
- * A titled block on the Home screen — a rounded-face heading with an optional
- * "See all →" on the right — a plain heading, not a tag, in the softer
- * register. Profile's sections use it too.
- *
- * `badge` adds a small count after the title (Needs you); `heading`
- * replaces the title text with something else in the same slot — the
- * Plans card puts its Upcoming · Budgets · Goals tabs there, so its tabs
- * line up exactly where every other section's title sits. `right` puts
- * something else where "See all" goes (Profile's "+ Account").
+ * Titled Home block with optional "See all →"; `badge` adds a count after the title (Needs you). `heading`
+ * replaces the title text (Plans tabs sit there); `right` replaces "See all" (Profile's "+ Account").
  */
 export function HomeSection({
   title,

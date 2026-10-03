@@ -3,11 +3,8 @@ import { peopleTotals } from '@/features/people/people.helpers';
 import { payCardRoute, PayCardRoute } from '@/lib/payCard';
 
 /**
- * What each section of the Plan tab says, from data the screen has already
- * fetched. Pure — every input is passed in, including today's date — so the
- * rules are unit-tested without a database or a clock. The screen's order:
- * the next 2 weeks, then where you stand (EMIs, Budgets, Debt-free), Saving
- * toward, Friends & Family with the daily habit, and Coming up.
+ * What each Plan tab section says, from data the screen already fetched. Pure (today's date is an input), so
+ * rules are tested without a DB or clock. Order: next 2 weeks, where you stand, Saving, Friends, Coming up.
  */
 
 export type PlanRoute =
@@ -142,11 +139,8 @@ export interface PlanCardBillInput {
 }
 
 /**
- * Every dated thing coming up, soonest first: each borrowed loan's next
- * EMI, each active recurring rule's next run, and each credit card bill
- * with something left to pay (a bill like any other, so the strip, the
- * totals and Coming up treat it the same). Money you lent isn't here — its
- * "installments" come back to you, they aren't due from you.
+ * Every dated thing coming up, soonest first: next EMI per borrowed loan, next run per active recurring
+ * rule, and card bills with something left. Money you lent isn't here: its installments come back to you.
  */
 export function buildDueItems(
   loanRows: PlanLoanRow[],
@@ -204,8 +198,7 @@ export interface DueSoon {
 }
 
 /**
- * EMIs and bills due between now and two weeks out — including anything
- * already overdue, which is due right now. Income and transfers between
+ * EMIs and bills due within two weeks, including anything overdue (due now). Income and transfers between
  * your own accounts aren't money going out, so they don't count.
  */
 export function buildDueSoon(items: PlanDueItem[], today: string, days = DUE_SOON_DAYS): DueSoon {
@@ -267,9 +260,8 @@ export function buildDueDays(items: PlanDueItem[], today: string, days = DUE_SOO
 export const PLAN_SOON_DAYS = 3;
 
 /**
- * How urgent a Coming up row looks, by Home's rules: red when money going out
- * is late or due today, amber when an EMI or card bill is a few days away,
- * otherwise nothing, so the colour still means something.
+ * How urgent a Coming up row looks, by Home's rules: red when outgoing money is late or due today, amber
+ * when an EMI or card bill is a few days away, else nothing so colour still means something.
  */
 export function dueTone(item: PlanDueItem): 'urgent' | 'soon' | null {
   if (item.kind !== 'emi' && item.kind !== 'bill') return null;
@@ -280,10 +272,8 @@ export function dueTone(item: PlanDueItem): 'urgent' | 'soon' | null {
 }
 
 /**
- * Coming up, grouped by day: everything due within `days` (overdue first,
- * on its own date), soonest first. When nothing falls in that window, the
- * next few upcoming items instead, so the list is never blank while rules
- * or loans exist.
+ * Coming up grouped by day: everything due within `days` (overdue first, on its own date), soonest first. If
+ * the window is empty, show the next few upcoming items so the list isn't blank while rules or loans exist.
  */
 export function groupDueItems(
   items: PlanDueItem[],

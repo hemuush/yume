@@ -8,10 +8,8 @@ interface Props {
   style?: StyleProp<ViewStyle>;
 }
 
-// Properties that must land on the outer wrapper for flexbox to size this
-// tile correctly inside its parent (a flex row/column) — anything else in
-// `style` (padding, justifyContent, alignItems...) belongs on the inner
-// card instead, since it needs to inset *content*, not the tile's own slot.
+// Properties that must sit on the outer wrapper for flexbox to size the tile in its parent; everything
+// else in `style` (padding, justifyContent, alignItems...) goes on the inner card to inset *content*.
 const LAYOUT_KEYS = [
   'flex',
   'flexGrow',
@@ -45,17 +43,8 @@ function splitStyle(style: StyleProp<ViewStyle>): [ViewStyle, ViewStyle] {
 }
 
 /**
- * The app's one card shape: a soft hairline border and whitespace, not a
- * thick black outline plus an offset shadow — cards are meant to separate
- * from each other calmly, not compete for attention. (This used to render a
- * hard offset shadow for a louder "neobrutalist" pass; that read as too much
- * once it was applied everywhere at once, so the shadow is gone, but the
- * component and its call sites are unchanged.)
- *
- * `style` is split between the outer wrapper (flex/width/margin — needed on
- * the direct child of a flex row/column for sizing to work at all) and the
- * inner card (padding, alignItems, etc. — needed inside the visible
- * bordered box, not as invisible space around it).
+ * The app's one card shape: a soft hairline border and whitespace, no thick outline or offset shadow.
+ * `style` is split: flex/width/margin go on the outer wrapper (sizing), padding/alignItems on the inner card.
  */
 export function NeoTile({
   children,
@@ -64,10 +53,8 @@ export function NeoTile({
   style,
 }: Props) {
   const [outerStyle, innerStyle] = splitStyle(style);
-  // A colored identity card (a stat tile, an account, a loan card) carries
-  // its own separation from the page via that color and needs no border on
-  // top of it; only the plain white/default card gets the hairline —
-  // matching real cards vs. color blocks rather than outlining everything.
+  // A coloured identity card (stat tile, account, loan) separates from the page by its colour and needs no
+  // border; only the plain default card gets the hairline.
   const isColored = backgroundColor !== theme.colors.surface;
   return (
     <View style={[styles.wrap, outerStyle]}>
@@ -82,10 +69,8 @@ export function NeoTile({
 
 const styles = StyleSheet.create({
   wrap: { position: 'relative' },
-  // flex: 1 so the card always fills its wrap's resolved size in both axes
-  // (a plain block child only auto-stretches on the cross axis, not the
-  // main one) — otherwise the wrap can end up taller than the visible card
-  // when stretched to match a taller sibling (e.g. in the Home bento row).
+  // flex: 1 so the card fills its wrap in both axes (a plain block child only stretches on the cross
+  // axis), else the wrap can be taller than the card when matched to a taller sibling (Home bento row).
   card: { flex: 1, borderWidth: StyleSheet.hairlineWidth, borderColor: theme.colors.borderSoft },
   cardColored: { borderWidth: 0 },
 });

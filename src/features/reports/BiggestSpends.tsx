@@ -14,9 +14,8 @@ import { styles } from './reports.styles';
 export const BIGGEST_MIN_ENTRIES = 3;
 
 /**
- * The period's largest single expenses, in the day card's row. Tapping one
- * opens its day on the heatmap. `shareOfMinor` is what the list's total is
- * measured against ("Together 46% of what you've spent so far").
+ * The period's largest single expenses, in the day card's row; tapping one opens its day on the heatmap.
+ * `shareOfMinor` is what the list's total is measured against ("Together 46% of what you've spent so far").
  */
 export function BiggestSpends({
   items,

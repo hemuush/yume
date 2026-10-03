@@ -31,11 +31,8 @@ import { withPressed } from '@/lib/pressed';
 import { payCardRoute } from '@/lib/payCard';
 
 /**
- * The bell's screen: everything that needs you, in full — the same list
- * Home's card shows the top three of, so the count on the bell and on Home
- * always match. ✕ hides an item until its situation changes (with undo);
- * dismissed items can be shown and brought back. Suu's check-in sits under
- * the list as a line, not an alert.
+ * The bell's screen: the full list that Home's card shows the top three of, so both counts match. ✕ hides
+ * an item until its situation changes (undoable, restorable). Suu's check-in is a line, not an alert.
  */
 export default function NeedsYouScreen() {
   const insets = useSafeAreaInsets();

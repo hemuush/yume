@@ -28,12 +28,8 @@ function Stat({ value, label, lent }: { value: string; label: string; lent?: boo
 }
 
 /**
- * The first block on Loans, tinted by state: coral while you owe, sage once
- * everything is paid off, mint when you only lend. While you owe it shows the
- * debt, the debt-free month and how much is repaid, how the debt splits across
- * your loans (the bar, in each loan's own colour), and the numbers the cards
- * don't add up for you (EMIs a month, interest still to pay, how many loans).
- * Money lent shows as its own figure, only when there is some.
+ * First block on Loans, tinted by state: coral while you owe, sage once paid off, mint when you only lend.
+ * Owing: debt, debt-free month, repaid, debt-share bar, EMIs/month, interest left, loan count; lent if any.
  */
 export function LoansHero({
   totals,

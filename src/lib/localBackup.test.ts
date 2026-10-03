@@ -1,9 +1,6 @@
 /**
- * writeLocalBackupNow's one-file-per-day behavior — SAF's createFileAsync
- * always creates a brand-new file even when one with the same display name
- * already exists (Android appends "(1)", "(2)", ... rather than
- * overwriting), so without an explicit delete-then-create step, repeated
- * backups on the same day silently piled up duplicate files forever.
+ * writeLocalBackupNow keeps one file per day: SAF createFileAsync never overwrites (Android appends "(1)"),
+ * so without an explicit delete-then-create, repeated same-day backups piled up duplicate files.
  */
 jest.mock('expo-file-system/legacy', () => ({
   StorageAccessFramework: {

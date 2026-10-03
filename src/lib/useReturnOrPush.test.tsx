@@ -1,7 +1,6 @@
 /**
- * Going to a screen without stacking a second copy: nothing when already
- * there, back when it's right below, back down to it when it's further down,
- * and a push otherwise.
+ * Going to a screen without stacking a second copy: nothing when already there, back when it's right below,
+ * back down to it when further down, and a push otherwise.
  */
 import { create, act } from 'react-test-renderer';
 

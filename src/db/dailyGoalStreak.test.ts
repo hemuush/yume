@@ -1,7 +1,6 @@
 /**
- * getDailyGoalStreakSeries against a real SQLite engine — same reasoning as
- * reportsLiveQueries.test.ts: the pure streak math (gardenGrowth.test.ts)
- * doesn't touch SQL, so this is what actually catches a broken query.
+ * getDailyGoalStreakSeries on real SQLite: the pure streak math (gardenGrowth.test.ts) never touches SQL, so
+ * this is what catches a broken query (same reasoning as reportsLiveQueries.test.ts).
  */
 import { createRealDataTestDb } from '@/test-support/realDataTestDb';
 
@@ -57,9 +56,8 @@ describe('getDailyGoalStreakSeries', () => {
   });
 
   it('never counts a day before the earliest transaction on record, even asking further back', async () => {
-    // The lookback window (days + 55) reaches well before 2026-01-01, the
-    // earliest transaction seeded above — those pre-history days must not
-    // silently read as "kept" just because no row exists for them.
+    // The lookback window (days + 55) reaches before 2026-01-01, the earliest seeded transaction; those
+    // pre-history days must not read as "kept" just because no row exists.
     const series = await getDailyGoalStreakSeries(500, 6, '2026-01-02');
     expect(series.map((p) => p.streakDays)).toEqual([0, 0, 0, 0, 1, 2]);
   });

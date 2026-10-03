@@ -1,7 +1,6 @@
 /**
- * The Activity chart's week: the tapped day's amount shows in a bubble over
- * its bar, today's label is an ink pill, and days that belong to the
- * neighbouring month are named once above their dots. All figures are made up.
+ * The Activity chart's week: the tapped day's amount shows in a bubble over its bar, today's label is an ink
+ * pill, and days of the neighbouring month are named once above their dots. All figures are made up.
  */
 import { Text } from 'react-native';
 import { create, act, ReactTestRenderer } from 'react-test-renderer';

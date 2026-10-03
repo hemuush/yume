@@ -1,9 +1,6 @@
 /**
- * An entry's detail sheet: under "Do more", "Log again today" saves the
- * same entry for today with an undo and "Make it recurring" opens the rule
- * form filled in from it (monthly, from its next same day of the month);
- * under Details, the category row opens that category's page. Entries tied
- * to a loan get none of these.
+ * Entry detail sheet: "Log again today" saves it for today with undo; "Make it recurring" opens a prefilled
+ * rule form (monthly, from its next same day); the category row opens its page. Loan-tied entries get none.
  */
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
 

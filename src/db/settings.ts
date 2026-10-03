@@ -39,9 +39,8 @@ export async function setDefaultCurrency(code: string): Promise<void> {
 }
 
 /**
- * Two times a day Yume can notify at: Morning and Evening (their allowed
- * ranges are in lib/notificationTimes.ts and never overlap). The rest are
- * what Yume may mention at those times.
+ * The two times Yume can notify at, Morning and Evening (ranges in lib/notificationTimes.ts, never overlapping);
+ * the rest are what it may mention at those times.
  */
 export interface NotificationPrefs {
   morningEnabled: boolean;
@@ -90,17 +89,14 @@ export async function getNotificationPrefs(): Promise<NotificationPrefs> {
   if (!row) return DEFAULT_NOTIFICATION_PREFS;
   try {
     const stored = JSON.parse(row.value);
-    // `flynnCheckins` was renamed to `suuCheckins` with the mascot rename
-    // (Flynn the bird → Suu the moon sprite). Carry an existing install's
-    // choice across so anyone who had turned check-ins off doesn't silently
-    // get them back on.
+    // `flynnCheckins` was renamed to `suuCheckins`; carry an existing install's value across so anyone who
+    // turned check-ins off doesn't get them back on.
     if ('flynnCheckins' in stored && !('suuCheckins' in stored)) {
       stored.suuCheckins = stored.flynnCheckins;
     }
     delete stored.flynnCheckins;
-    // The single daily reminder (`reminder*`) became the Evening time. An
-    // install that had set it keeps that choice, with the Morning time on
-    // its default.
+    // The single daily reminder (`reminder*`) became the Evening time: an install that set it keeps it,
+    // with Morning on its default.
     if (!('eveningEnabled' in stored) && 'reminderEnabled' in stored) {
       stored.eveningEnabled = stored.reminderEnabled;
       if (typeof stored.reminderHour === 'number') stored.eveningHour = stored.reminderHour;
@@ -125,13 +121,8 @@ export async function setNotificationPrefs(prefs: NotificationPrefs): Promise<vo
 }
 
 const ACCENT_COLOR_KEY = 'accent_color';
-// Sky-blue — the signature accent since the ring-mark rebrand (was sage
-// `#E0F0A8`, itself a lightened version of the original mockup's harsher
-// neon lime). This is the value anyone who's never opened the accent
-// picker actually sees; theme.ts's `primary` token carries the same
-// rebrand for the smaller set of screens that read it directly rather
-// than through `useAccent()`. Sage is still a selectable swatch below for
-// anyone who prefers it or already explicitly picked it.
+// Sky-blue signature accent, seen by anyone who never opened the accent picker (theme.ts's `primary` matches it
+// for screens that skip `useAccent()`). Sage `#E0F0A8` (the old default) remains a selectable swatch below.
 const DEFAULT_ACCENT = '#8FCBFF';
 let cachedAccent: string | null = null;
 
@@ -139,16 +130,13 @@ export function getCachedAccentColor(): string {
   return cachedAccent ?? DEFAULT_ACCENT;
 }
 
-// Anyone who already picked (or was defaulted to) a shade no longer offered
-// would otherwise stay stuck on it forever — the stored hex is just a
-// string, so a code-level palette change alone never reaches an existing
-// install. Remapped once here, then persisted so the fix sticks.
+// A stored shade no longer offered would stay stuck forever (the hex is just a string, so a palette change in
+// code never reaches an existing install): remap once here, then persist.
 const LEGACY_ACCENT_REMAP: Record<string, string> = {
   '#D6FF3D': '#E0F0A8', // original neon-lime mockup colour, softened
   '#FFB84D': '#EFD3A8', // original harsher gold/tan
-  // Ink and Cream were dropped from ACCENT_SWATCHES — neither is really an
-  // "accent" (they're the app's own text and page colours), so picking
-  // either one just turned buttons black or switched accents off entirely.
+  // Ink and Cream were dropped from ACCENT_SWATCHES: they're the app's text/page colours, not accents, so
+  // picking either turned buttons black or switched accents off.
   '#12130F': '#E0F0A8',
   '#FFFDF6': '#E0F0A8',
   // Tan was dropped for reading muddy next to the other pastels — remapped
@@ -182,11 +170,8 @@ export async function setAccentColor(hex: string): Promise<void> {
 const THEME_ID_KEY = 'theme_id';
 let cachedThemeId: string | null | undefined; // undefined = not yet read; null = read, nothing stored
 
-// The theme's own `primary` is still written to `accent_color` (below) so
-// every existing reader of `getAccentColor()`/`useAccent().accent` — the
-// home-screen widget included — keeps working unchanged; `theme_id` is
-// purely the picker's own memory of *which* pack that hex came from, so it
-// can re-select the right card and look up the matching `secondary`.
+// The theme's `primary` is still written to `accent_color` so `getAccentColor()`/`useAccent()` readers keep
+// working; `theme_id` only records which pack the hex came from (to re-select its card and `secondary`).
 export async function getThemeId(): Promise<string | null> {
   if (cachedThemeId !== undefined) return cachedThemeId;
   const db = await getDb();
@@ -211,10 +196,8 @@ const DAILY_SPENDING_GOAL_KEY = 'daily_spending_goal_minor';
 let cachedDailySpendingGoal: number | null | undefined; // undefined = not yet read; null = read, nothing stored (feature off)
 
 /**
- * A single overall daily spending cap, in minor units — deliberately just
- * one number with no per-category split and no rollover of an unspent day
- * into the next (unlike category Budgets). `null` means the feature is off;
- * Home's "Today" strip only renders once this is actually set.
+ * A single overall daily spending cap in minor units: one number, no per-category split, no rollover of an
+ * unspent day (unlike Budgets). `null` = off; Home's "Today" strip renders only once it's set.
  */
 export async function getDailySpendingGoal(): Promise<number | null> {
   if (cachedDailySpendingGoal !== undefined) return cachedDailySpendingGoal;
@@ -293,26 +276,17 @@ export async function setUserName(name: string): Promise<void> {
 }
 
 /**
- * The default categories are always seeded exactly once, on first launch —
- * their earliest created_at is a real, always-present proxy for "when this
- * install first started using Yume" without needing a dedicated setting.
+ * The year this install started, taken from the earliest `accounts.created_at` (no dedicated setting needed).
  */
 export async function getMemberSinceYear(): Promise<number> {
   const db = await getDb();
-  // `categories` has no `created_at` column — querying it here always threw
-  // "no such column: created_at", and since this runs inside Profile's
-  // Promise.all with no error handling, that one throw silently failed the
-  // *entire* batch, leaving Profile showing zero accounts, zero loans, zero
-  // everything even though the data was all there. `accounts.created_at`
-  // genuinely exists and is just as reasonable a "when did you start" proxy.
+  // Not `categories`: it has no `created_at` column, and the resulting throw failed Profile's whole
+  // Promise.all (zero accounts/loans shown).
   const row = await db.getFirstAsync<{ earliest: string | null }>(
     'SELECT MIN(created_at) as earliest FROM accounts'
   );
-  // `created_at` is SQLite's own `datetime('now')` format ("YYYY-MM-DD
-  // HH:MM:SS", a space separator, not ISO 8601's "T") — `new Date(...)` on a
-  // non-standard format is engine-dependent and can silently yield Invalid
-  // Date (a "Member since NaN" bug) on some JS engines. The year is always
-  // the first 4 characters regardless, so no Date parsing is needed at all.
+  // `created_at` is SQLite `datetime('now')` format (space, not "T"): `new Date(...)` can yield Invalid Date
+  // ("Member since NaN") on some engines, so just take the first 4 characters.
   const year = row?.earliest ? parseInt(row.earliest.slice(0, 4), 10) : NaN;
   return Number.isFinite(year) ? year : new Date().getFullYear();
 }
@@ -391,11 +365,8 @@ export async function setAppLockEnabled(value: boolean): Promise<void> {
 }
 
 /**
- * Clears every in-memory settings cache so the next read for each hits the
- * database again — needed right after a full-data restore, since restoring
- * writes the `settings` table directly rather than through these files'
- * setters, and every cache above would otherwise keep showing whatever value
- * it held before the restore ran until the app is fully relaunched.
+ * Clears every in-memory settings cache so the next read hits the database. Needed after a full restore, which
+ * writes the `settings` table directly (bypassing these setters) and would leave caches stale until relaunch.
  */
 export type BackupFrequency = 'daily' | 'weekly' | 'monthly';
 const BACKUP_FREQUENCY_KEY = 'backup_frequency';
@@ -681,11 +652,8 @@ export const SUPPORTED_CURRENCIES = [
 ];
 
 /**
- * What Add Transaction pre-selects for each entry type: the account (and,
- * for a transfer, the destination) and category the user last saved one
- * with. Stored as ids only — the Add screen ignores any that no longer
- * resolve (a deleted or archived account/category, or a savings account for
- * an expense), falling back exactly as it did before this existed.
+ * Add Transaction's per-type pre-selection: the account (and transfer destination) and category last saved.
+ * Ids only; Add ignores any that no longer resolve (deleted/archived, or a savings account for an expense).
  */
 export interface AddDefaults {
   expense?: { accountId: string; categoryId: string | null };
@@ -742,10 +710,8 @@ export async function setBackupNudgeSnoozedUntil(iso: string): Promise<void> {
 }
 
 /**
- * The Wraps already played (the Wrap button sign-off): a month's "YYYY-MM",
- * a week's first day. The Home button's ring goes plain once its Wrap is
- * here. Only the most recent few are kept, as the button only ever offers
- * last week and last month.
+ * Wraps already played (a month's "YYYY-MM", a week's first day); Home's Wrap ring goes plain once present.
+ * Only the latest few are kept: the button only ever offers last week and last month.
  */
 const WRAPS_SEEN_KEY = 'wraps_seen';
 const WRAPS_SEEN_KEEP = 12;

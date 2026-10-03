@@ -1,7 +1,6 @@
 /**
- * When Home's Wrap button offers a Wrap: last week's on a Monday, last
- * month's on the 1st–7th, both on a Monday in the first week, and neither
- * when the period had no spending. All figures are made up.
+ * When Home's Wrap button offers a Wrap: last week's on a Monday, last month's on the 1st-7th, both on a
+ * Monday in the first week, neither when the period had no spending. Made-up figures.
  */
 const mockSpent: Record<string, number> = {};
 const mockSeen = { current: [] as string[] };

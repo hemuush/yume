@@ -11,9 +11,8 @@ import { flowCase, valuationAdjSql, latestValuedAtSql, latestValueSql } from './
 
 /** Accounts: balances (always derived from entries), create, edit, archive and delete (re-exported from ./ledger). */
 
-// Account balance is always DERIVED from opening_balance + ledger entries,
-// never stored/mutated directly. This guarantees a balance can never drift
-// out of sync with the transactions that produced it.
+// Balance is always DERIVED from opening_balance + ledger entries, never stored,
+// so it can't drift out of sync with the transactions behind it.
 export async function getAccountBalance(accountId: string): Promise<number> {
   const db = await getDb();
   const account = await db.getFirstAsync<{ opening_balance_minor: number }>(
@@ -45,10 +44,8 @@ export async function getAccountBalance(accountId: string): Promise<number> {
 }
 
 /**
- * How much an account grew per month, on average, over the last `days`
- * days: money in (income, transfers in) less money out. What-if uses it as
- * the saving rate of a goal that follows the account. Never below zero —
- * an account that shrank isn't saving toward anything.
+ * Average monthly growth over the last `days` days (money in less money out); What-if's saving rate
+ * for a goal that follows the account. Never below zero: a shrinking account isn't saving.
  */
 export async function getAccountMonthlyGrowth(
   accountId: string,
@@ -116,14 +113,8 @@ function rowToAccount(row: AccountRow & BalanceColumns): Account {
 
 export async function listAccounts(includeArchived = false): Promise<Account[]> {
   const db = await getDb();
-  // One query for every account's balance — the same derivation as
-  // getAccountBalance (opening + income/transfers-in − expenses/transfers-out),
-  // just grouped. It used to be two extra queries per account, each a
-  // separate trip through the app-wide statement queue that every other
-  // screen's loads wait behind.
-  // A tracked account also selects its investment columns (the CASE keeps
-  // every other account from paying for them): the valuation's gap to the
-  // ledger, what went in and out, and the latest update.
+  // One grouped query for all balances (as getAccountBalance), not per-account queries in the shared queue.
+  // CASE selects investment columns (valuation gap, in/out, latest update) only for tracked accounts.
   const flowSum = (when: string) =>
     `CASE WHEN a.tracked = 1 THEN COALESCE((SELECT SUM(${when}) FROM transactions t
        WHERE t.account_id = a.id OR t.to_account_id = a.id), 0) END`;
@@ -210,13 +201,8 @@ export interface UpdateAccountInput {
 }
 
 /**
- * Edits an account's own fields. Currency is deliberately not editable here
- * — every past transaction's amount is stored in minor units with no
- * currency conversion, so changing it after any transaction exists would
- * silently misrepresent every historical figure. Opening balance IS safe to
- * edit any time: the current balance is always derived (opening + ledger
- * entries), so correcting a wrong starting figure just shifts the derived
- * balance, exactly as intended.
+ * Edits an account. Currency is locked: amounts are minor units with no conversion, so a change would
+ * misstate history. Opening balance is safe to edit: the balance is derived (opening + ledger entries).
  */
 export async function updateAccount(id: string, input: UpdateAccountInput): Promise<Account> {
   if (!input.name.trim()) {
@@ -234,12 +220,8 @@ export async function updateAccount(id: string, input: UpdateAccountInput): Prom
   }
   const db = await getDb();
   if (input.type === 'savings') {
-    // Retyping an account that an active income/expense recurring rule still
-    // points at would otherwise pass silently here and only surface much
-    // later: the next runDueRecurringRules() pass hits assertSpendableAccount
-    // inside createTransaction, throws, and the rule gets deactivated with
-    // just a console.error — no visible reason to the user. Same reasoning
-    // as deleteCategory's block below for recurring_rules.category_id.
+    // Reject retyping an account an active recurring rule points at: the next run would throw in
+    // assertSpendableAccount and silently deactivate the rule. Same as deleteCategory's rule check.
     const blockingRule = await db.getFirstAsync<{ note: string | null }>(
       `SELECT note FROM recurring_rules WHERE account_id = ? AND type != 'transfer' AND active = 1 LIMIT 1`,
       [id]
@@ -293,13 +275,8 @@ export interface AccountFlow {
 }
 
 /**
- * Money into and out of one account over a date range (inclusive) — the
- * same four movements getAccountBalance sums, kept apart: income and
- * transfers in, expenses and transfers out. The split matters: an account
- * that mostly passes money between your own accounts (salary in, straight
- * on to savings) otherwise looks the same as one you spend from. In the
- * account's own currency, so unlike the report totals there's no
- * default-currency filter. Powers Home's account summary sheet.
+ * Money in (income, transfers in) vs out (expenses, transfers out) over an inclusive date range, kept apart
+ * so pass-through accounts differ from spending ones. Own currency: no default-currency filter.
  */
 export async function getAccountFlow(
   accountId: string,
@@ -346,11 +323,8 @@ export async function getAccountTransactionCount(accountId: string): Promise<num
 }
 
 /**
- * Hides an account from pickers and totals without touching its history —
- * for an account you've stopped using but that still has real transactions
- * against it, the same reasoning `archiveCategory` uses. Any loan whose
- * `linked_account_id` points here keeps working (that FK is ON DELETE SET
- * NULL only for a real delete, not affected by archiving at all).
+ * Hides an account from pickers and totals, keeping its history, like `archiveCategory`. Linked loans'
+ * `linked_account_id` keeps working: that FK is SET NULL only on real deletes.
  */
 export async function archiveAccount(id: string): Promise<void> {
   const db = await getDb();
@@ -363,12 +337,8 @@ export async function unarchiveAccount(id: string): Promise<void> {
 }
 
 /**
- * Permanently removes an account — only for one that's never actually been
- * used (e.g. created by mistake, wrong type/currency picked at setup). An
- * account with any real transaction history must be archived instead: the
- * schema's own `ON DELETE RESTRICT` on `transactions.account_id` would
- * reject the raw delete anyway, but checking first here means the user gets
- * a clear explanation instead of a raw SQLite constraint error.
+ * Permanently deletes a never-used account; one with history must be archived. Checked first so the user
+ * gets a clear message, not the raw SQLite error from `ON DELETE RESTRICT` on `transactions.account_id`.
  */
 export async function deleteAccount(id: string): Promise<RowSnapshot> {
   const db0 = await getDb();

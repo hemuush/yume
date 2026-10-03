@@ -111,9 +111,8 @@ export default function BackupScreen() {
   const [frequency, setFrequency] = useState<BackupFrequency>('daily');
   const [busy, setBusy] = useState<string | null>(null);
   const [doneLabel, setDoneLabel] = useState<string | null>(null);
-  // Without this, `!localFolderUri` (its default, unloaded state) briefly
-  // showed the "choose a folder" call-to-action even for someone who
-  // already has one configured, until the real value came back.
+  // Without this, the unloaded default `!localFolderUri` briefly showed the "choose a folder"
+  // call-to-action even for someone with a folder configured.
   const [loaded, setLoaded] = useState(false);
   // The copy of the data from just before the last restore, if there is one
   // (see lib/safetyCopy.ts) — shown as the "Undo your last restore" card.
@@ -145,9 +144,8 @@ export default function BackupScreen() {
     setBusy(label);
     try {
       await fn();
-      // A brief "done" checkmark (PrimaryButton's own `done` prop) — only
-      // for the one action this is actually wired to (`backup-now-local`,
-      // see `opts.confirm` below), not every button this helper runs.
+      // A brief "done" checkmark (PrimaryButton `done`), wired only to `backup-now-local` (see
+      // `opts.confirm` below), not every button this helper runs.
       if (opts?.confirm) {
         setDoneLabel(label);
         await new Promise((resolve) => setTimeout(resolve, 380));
@@ -193,10 +191,8 @@ export default function BackupScreen() {
 
   const restoreFromFile = () =>
     run('restore-file', async () => {
-      // Accepting any file type and validating the JSON afterward is what
-      // actually works across devices — many file managers report a .json
-      // file's MIME type inconsistently, which would otherwise grey out the
-      // very file the user is trying to pick.
+      // Accept any file type and validate the JSON afterward: many file managers report a .json file's MIME
+      // type inconsistently, which would otherwise grey out the very file the user is picking.
       const result = await withoutRelock(() => DocumentPicker.getDocumentAsync({ type: '*/*' }));
       if (result.canceled || !result.assets?.[0]) return;
       const picked = new File(result.assets[0].uri);
@@ -213,15 +209,13 @@ export default function BackupScreen() {
       await confirmAndRestore(snapshot);
     });
 
-  // A restore replaces every table — every screen's loaded state is now
-  // stale. Each screen reloads via useFocusEffect, so bouncing to Home is
-  // enough for the rest of the app to pick up the new data as tabs are visited.
+  // A restore replaces every table, so all loaded screen state is stale; each screen reloads via
+  // useFocusEffect, so bouncing to Home lets the rest pick up new data as tabs are visited.
   const goHome = () => router.replace('/(tabs)');
 
   /**
-   * Puts back the data from before the last restore (lib/safetyCopy.ts),
-   * after one more confirmation. Shared by the "Undo restore" button on the
-   * completion message and the "Undo your last restore" card.
+   * Puts back the pre-restore data (lib/safetyCopy.ts) after one more confirmation; shared by the "Undo
+   * restore" button on the completion message and the "Undo your last restore" card.
    */
   const confirmUndo = () =>
     showAlert(
@@ -253,11 +247,8 @@ export default function BackupScreen() {
 
   /** Everything after a restore succeeds: re-sync, then say so — offering Undo when a safety copy is in place. */
   const finishRestore = ({ skippedColumns, undoAvailable }: RestoreResult & { undoAvailable: boolean }) => {
-    // Everything scheduled outside the database still describes the
-    // pre-restore data: loan due reminders for loans that may no longer
-    // exist (or miss ones that now do), the reminder schedule from the old
-    // notification prefs, and home-screen widgets. Best-effort — the
-    // restore itself already succeeded.
+    // Everything scheduled outside the DB still describes pre-restore data: loan due reminders, the
+    // reminder schedule, and home-screen widgets. Best-effort; the restore already succeeded.
     void resyncAfterRestore();
     const note =
       skippedColumns.length > 0
@@ -310,9 +301,8 @@ export default function BackupScreen() {
         showAlert('Something went wrong', String((e as Error)?.message ?? e));
         return;
       }
-      // The copy couldn't be saved (usually a full phone) and nothing has
-      // been replaced. Only go ahead if the user says so, knowing there'd be
-      // no way back — Cancel is the default.
+      // The copy couldn't be saved (usually a full phone) and nothing is replaced yet; proceed only if the
+      // user accepts having no way back. Cancel is the default.
       showAlert(
         "Couldn't keep a copy of your current data",
         `${e.message}

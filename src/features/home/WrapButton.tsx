@@ -15,12 +15,8 @@ import type { ReadyWrap } from '@/features/wrap/wrapWindow';
 const SIZE = 34;
 
 /**
- * Home's Wrap button, between the bell and your profile picture (the Wrap
- * button sign-off): a play button that's only there while a Wrap is ready,
- * on a Monday for last week and on the 1st–7th for last month (wrapWindow.ts).
- * A pastel ring means there's one you haven't watched; once watched, the ring
- * goes plain, like a seen story. On the day both are ready it shows a 2 and
- * asks which one to play.
+ * Play button between bell and avatar, shown only while a Wrap is ready (wrapWindow.ts: Mondays, 1st-7th).
+ * Pastel ring = unwatched, plain once seen; with both ready it shows a 2 and asks which to play.
  */
 export function WrapButton({ wraps, onPlay }: { wraps: ReadyWrap[]; onPlay: (wrap: ReadyWrap) => void }) {
   const { accent } = useAccent();

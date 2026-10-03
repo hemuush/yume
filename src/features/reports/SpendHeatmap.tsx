@@ -23,11 +23,8 @@ export interface HeatCell {
 }
 
 /**
- * A month calendar tinted by daily spend. Days with no spend are just a
- * hairline; spend days carry the accent at rising strength
- * (spendHeatScale); today has an ink ring.
- *
- * Laid out as explicit rows of equal-share slots (see gridRows for why).
+ * A month calendar tinted by daily spend: no-spend days are a hairline, spend days carry the accent at rising
+ * strength (spendHeatScale), today an ink ring. Explicit rows of equal-share slots (see gridRows for why).
  */
 export function SpendHeatmap({
   cells,

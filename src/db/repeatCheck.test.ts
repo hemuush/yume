@@ -1,7 +1,6 @@
 /**
- * The Add screen's two lookups, against a real SQLite engine:
- *   - findRecentRepeat: an identical entry saved in the last 30 minutes
- *   - getLastAccountForCategory: the account a category was last used with
+ * The Add screen's two lookups on real SQLite: findRecentRepeat (identical entry in the last 30 minutes)
+ * and getLastAccountForCategory (the account a category was last used with).
  */
 import { createRealDataTestDb } from '@/test-support/realDataTestDb';
 

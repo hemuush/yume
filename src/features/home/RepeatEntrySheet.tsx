@@ -13,9 +13,8 @@ import { errorMessage } from '@/lib/errorMessage';
 import { showAlert } from '@/components/AppDialog';
 
 /**
- * "Metro · ₹150" — the entry's own note if it has one, else its category; a
- * subcategory names its parent ("Food & Dining › Zomato · ₹150", or
- * "Dinner (Food & Dining) · ₹150" with a note).
+ * Label like "Metro · ₹150": the note if present, else the category; a subcategory names its parent
+ * ("Food & Dining › Zomato · ₹150", or "Dinner (Food & Dining) · ₹150" with a note).
  */
 export function repeatEntryLabel(entry: RepeatEntry): string {
   const note = entry.note.trim();
@@ -26,13 +25,8 @@ export function repeatEntryLabel(entry: RepeatEntry): string {
 }
 
 /**
- * The + button's long-press: the user's most repeated hand-logged entries
- * (see getRepeatEntries), each saved for today with one tap — then an Undo
- * toast, the same one every delete in the app uses, in case it was a slip.
- * Always ends with a plain "Open Add" row, so the long-press is never a dead
- * end even before anything repeats — except when opened from the Add screen
- * itself (`fromAdd`), where that row would only open Add again; there
- * `onLogged` runs after an entry is logged, so Add can close.
+ * + long-press: most repeated hand-logged entries (getRepeatEntries); one tap saves for today, then Undo.
+ * Ends with "Open Add" unless opened from Add (`fromAdd`); there `onLogged` fires so Add can close.
  */
 export function RepeatEntrySheet({
   visible,

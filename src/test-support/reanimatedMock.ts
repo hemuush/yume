@@ -2,24 +2,8 @@ import { View, Text, ScrollView } from 'react-native';
 import { useRef } from 'react';
 
 /**
- * react-native-reanimated needs the native worklets runtime even for its own
- * official mock.js — this stands in with just enough surface for what the
- * app actually imports from it in tests that smoke-render a component
- * without a real device (Spark's breathing loop, Suu's idle breathing,
- * MoonPhase's entrance fade): `Animated.View`, the `FadeIn`/`FadeInDown`
- * entrance builders (chainable, since call sites chain `.duration()`/
- * `.springify()`/`.reduceMotion()` off them, but never actually invoked
- * outside a real renderer), `ReduceMotion`, and the
- * useSharedValue/useAnimatedStyle/withTiming/withRepeat/withDelay/
- * cancelAnimation primitives — all no-ops that carry a `.value` through
- * rather than running a real worklet.
- *
- * Used via `jest.mock('react-native-reanimated', () =>
- * require('@/test-support/reanimatedMock').createReanimatedMock())` — the
- * `require` inside the factory (not a top-level import) is deliberate:
- * `jest.mock` factories run before Jest finishes hoisting imports, so
- * anything the factory needs must be pulled in lazily, at the point some
- * other module actually requires 'react-native-reanimated'.
+ * Stand-in for react-native-reanimated (its own mock needs the native worklets runtime): Animated.View,
+ * chainable FadeIn builders, ReduceMotion, no-op hooks. Use via jest.mock factory; `require` it lazily inside.
  */
 export const mockCancelAnimation = jest.fn();
 
@@ -36,9 +20,8 @@ export function createReanimatedMock() {
     FadeOutDown: chainableProxy,
     LinearTransition: chainableProxy,
     ReduceMotion: { System: 'system' },
-    // A real useRef, not a fresh object per render — otherwise a rerender
-    // would trivially "reset" a shared value on its own, defeating any test
-    // that checks state survives across renders.
+    // A real useRef, not a fresh object per render: otherwise a rerender would "reset" a shared value and
+    // defeat tests that check state survives across renders.
     useSharedValue: (initial: unknown) => useRef({ value: initial }).current,
     useAnimatedStyle: (fn: () => unknown) => fn(),
     // Home's month ring and the debt tick draw through animated SVG props.

@@ -9,9 +9,8 @@ import { Category } from '@/types';
 import { DraftPart, partAmounts, splitProblem, splitProblemText } from './splitDraft';
 
 /**
- * How a payment divides, as one bar: a segment per part, each as wide as its
- * share and in its category's colour. Shared by the split page and Add's
- * split card.
+ * How a payment divides, as one bar: a segment per part, as wide as its share, in its category's colour.
+ * Shared by the split page and Add's split card.
  */
 export function SplitMeter({
   parts,
@@ -41,9 +40,8 @@ export function SplitMeter({
 }
 
 /**
- * Add's stand-in for the category grid while an entry is split (the split
- * redesign sign-off): the parts as they stand, Edit split to change them on
- * the split page, and for a new entry, a way to stop splitting.
+ * Add's stand-in for the category grid while an entry is split: the parts, Edit split (opens the split
+ * page), and for a new entry a way to stop splitting.
  */
 export function SplitCard({
   parts,

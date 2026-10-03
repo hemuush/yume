@@ -1,7 +1,6 @@
 /**
- * AmountField: every number in a sheet or form is typed on Yume's own pad,
- * docked under the content, instead of the phone's keyboard. Focus opens the
- * pad, its keys edit the field's text, blur or Done closes it.
+ * AmountField: numbers are typed on Yume's own pad docked under the content, not the phone keyboard.
+ * Focus opens the pad, its keys edit the text, blur or Done closes it.
  */
 import { useState } from 'react';
 import { create, act, ReactTestRenderer } from 'react-test-renderer';

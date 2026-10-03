@@ -5,13 +5,8 @@ import { theme } from '@/constants/theme';
 import { formatMoney } from '@/lib/money';
 
 /**
- * The one-time reveal, shown inside ContributeModal's own sheet in place of
- * the normal add/withdraw form — see ContributeModal's own comment for the
- * crossing check that decides when this renders instead of just closing.
- * Deliberately a dark "night sky" card (Suu's ring reads like a moon
- * against it) rather than the app's usual cream surfaces — the one place
- * outside the Lock Screen's own gradient that does this, and for the same
- * reason: this is a distinct, once-only moment, not a normal screen.
+ * One-time reveal inside ContributeModal's sheet, replacing the add/withdraw form (see its crossing check).
+ * Deliberately a dark "night sky" card (Suu's ring reads as a moon), like the Lock Screen: a once-only moment.
  */
 export function GoalLetterReveal({ goalName, note, targetAmountMinor }: GoalLetterRevealProps) {
   return (

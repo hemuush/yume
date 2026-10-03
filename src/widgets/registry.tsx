@@ -21,10 +21,8 @@ export function isWidgetName(name: string): name is WidgetName {
 }
 
 /**
- * Fetches whatever data a given widget needs and returns its rendered JSX —
- * the one place both `widgetTaskHandler` (Android calling into a headless
- * JS context) and `notifyWidgets` (the app itself, nudging a refresh after
- * something changes) build a widget from, so the two never drift apart.
+ * Fetches a widget's data and returns its rendered JSX; the one place `widgetTaskHandler` and `notifyWidgets`
+ * build a widget from, so the two never drift apart.
  */
 export async function renderWidgetByName(name: WidgetName): Promise<React.JSX.Element> {
   switch (name) {

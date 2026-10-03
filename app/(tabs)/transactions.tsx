@@ -51,9 +51,7 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 // Fires the actual DB query this long after the last keystroke — typing
 // "zomato" shouldn't run five separate queries for "z", "zo", "zom" ...
 const SEARCH_DEBOUNCE_MS = 300;
-// Below this, there's rarely enough signal in the query to narrow anything
-// meaningfully, and firing a query on every single keystroke of a short
-// word is wasted work.
+// Below this, a query rarely narrows anything and firing on every keystroke of a short word is wasted work.
 const SEARCH_MIN_CHARS = 2;
 // Search spans the whole ledger, not one week/month — capped so a very
 // common word doesn't dump years of history into one scroll.
@@ -67,10 +65,8 @@ export default function TransactionsScreen() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [comparison, setComparison] = useState<PeriodComparison | null>(null);
   const [detailTx, setDetailTx] = useState<Transaction | null>(null);
-  // Refreshed on every focus (below), not frozen at mount — this screen
-  // stays alive for the whole app session (it's a tab, never unmounted), so
-  // a `useMemo(..., [])` "today" would keep reporting yesterday's date to
-  // anyone who opens the app before midnight and returns to this tab after.
+  // Refreshed on every focus, not frozen at mount: this tab never unmounts, so a `useMemo(..., [])` "today"
+  // would report yesterday's date for anyone returning to it after midnight.
   const [todayDate, setTodayDate] = useState(() => new Date());
   const [anchor, setAnchor] = useState(todayDate);
   const [viewScope, setViewScope] = useState<'week' | 'month'>('week');
@@ -79,21 +75,14 @@ export default function TransactionsScreen() {
   const [filterType, setFilterType] = useState<TransactionType | 'all'>('all');
   const [filterCategoryIds, setFilterCategoryIds] = useState<string[]>([]);
   const [filterAccountIds, setFilterAccountIds] = useState<string[]>([]);
-  // Search is its own mode, not a filter layered on the current week/month —
-  // it queries the whole ledger, so the period nav/chart/Filter (which only
-  // ever apply to what's already loaded for the visible range) step aside
-  // while it's active rather than trying to combine with it.
+  // Search is its own mode, not a filter: it queries the whole ledger, so the period nav/chart/Filter
+  // (which only apply to the loaded range) step aside while it is active.
   const [searching, setSearching] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<Transaction[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
-  // Extracted so both the debounced typing effect below and a transaction
-  // edited/deleted from within a search result (via TransactionDetailModal,
-  // and via the focus effect below for the full add-transaction screen) can
-  // re-run the same query — otherwise either path would leave the search
-  // list showing a row exactly as it was before the edit, or one that no
-  // longer exists at all after a delete.
-  // Only the newest query may write results: closing search or clearing the box bumps it too.
+  // Shared by the typing effect and edits/deletes made from a search result, so the list never shows a
+  // stale or deleted row. Only the newest query may write results: closing/clearing the box bumps it too.
   const searchSeq = useRef(0);
   const runSearch = useCallback(async (trimmed: string) => {
     const seq = ++searchSeq.current;
@@ -107,9 +96,8 @@ export default function TransactionsScreen() {
       const results = await searchTransactions(trimmed, SEARCH_RESULT_LIMIT);
       if (seq === searchSeq.current) setSearchResults(results);
     } catch {
-      // A failed search just shows "no matches" rather than its own error
-      // banner — nothing here is destructive or worth interrupting typing
-      // over, and the query can simply be retried by editing it further.
+      // A failed search just shows "no matches" instead of an error banner: nothing destructive, and the
+      // user can retry by editing the query.
       if (seq === searchSeq.current) setSearchResults([]);
     } finally {
       if (seq === searchSeq.current) setSearchLoading(false);
@@ -126,10 +114,8 @@ export default function TransactionsScreen() {
   const scrollRef = useRef<FlatList<{ date: string; items: Transaction[] }>>(null);
   // 0 at the top, 1 once scrolled: the fade under the fixed header, so rows slide under it instead of being cut flat.
   const [edgeFade] = useState(() => new Animated.Value(0));
-  // Which stacked lines ("Food & Dining ×5") are open, kept here rather than
-  // inside TimelineDay — each day is a row in the FlatList below, which
-  // unmounts/remounts rows as they scroll off- and back on-screen, and local
-  // state there would silently close a stack the user had just opened.
+  // Which stacked lines ("Food & Dining ×5") are open lives here, not in TimelineDay: FlatList unmounts
+  // off-screen rows, and local state there would silently close a stack the user opened.
   const [openStacks, setOpenStacks] = useState<Set<string>>(new Set());
   const toggleStack = useCallback(
     (key: string) =>
@@ -141,11 +127,8 @@ export default function TransactionsScreen() {
       }),
     []
   );
-  // Which way the headline/chart should slide on the next period change —
-  // set alongside stepBack/stepForward/onPick/the scope toggle below, read
-  // by TransactionsHeadline. 0 (a plain crossfade) for anything that isn't a
-  // simple one-step move: picking an arbitrary month, or switching Week↔Month
-  // itself, where a guessed slide direction wouldn't mean anything.
+  // Slide direction of the headline/chart on the next period change (read by TransactionsHeadline): 0
+  // (crossfade) unless it is a one-step move; a picked month or Week↔Month switch has no direction.
   const [direction, setDirection] = useState<-1 | 0 | 1>(0);
   // A link can open Activity already filtered: ?category= (a category page's
   // "See all") or ?account= (Home's account sheet), with ?month=YYYY-MM.
@@ -164,9 +147,8 @@ export default function TransactionsScreen() {
     }
     router.setParams({ category: undefined, account: undefined, month: undefined });
   }, [linkParams]);
-  // The chart bar last tapped — it lifts and the rest fade (see
-  // SpendBarChart). Cleared whenever the period changes, since its key
-  // belongs to the old period's bars.
+  // The last-tapped chart bar lifts while the rest fade (see SpendBarChart); cleared on period change since
+  // its key belongs to the old period's bars.
   const [selectedBar, setSelectedBar] = useState<string | null>(null);
 
   // Shared by the nav row's own chevron buttons and the swipe gesture below,
@@ -189,10 +171,8 @@ export default function TransactionsScreen() {
       return next > todayDate ? todayDate : next;
     });
   };
-  // A drag anywhere on the nav row steps the period the same as tapping its
-  // own chevrons — `atCurrent` mirrors the same guard the forward button
-  // itself uses, so swiping past "This week"/the current month is a no-op
-  // rather than sliding into the future.
+  // A drag on the nav row steps the period like its chevrons; `atCurrent` mirrors the forward button's
+  // guard, so swiping past the current week/month is a no-op.
   const atCurrent = viewScope === 'month' ? isCurrentMonth : isCurrentWeek;
   const weekNavSwipe = useSwipeStep(stepBack, () => !atCurrent && stepForward());
   const stepBackPress = usePressScale();
@@ -214,18 +194,8 @@ export default function TransactionsScreen() {
     [transactions, filterType, filterCategoryIds, filterAccountIds, categories]
   );
 
-  // The chart and headline reflect the real, unfiltered period — same as
-  // Apple Card's own spending chart, which a category filter never changes.
-  // Only the list of rows below responds to the Filter button.
-  //
-  // Week scope charts one bar per day (7, always readable). Month scope
-  // charts one bar per calendar week (~4-5) rather than one per day
-  // (28-31) — a dense day-per-bar grid for a whole month was both hard to
-  // read and, at that many bars squeezed into one row, could visually
-  // crowd/overlap (see SpendBarChart's own note on why very large `flex`
-  // ratios don't lay out reliably). Week-level bars sidestep both problems.
-  // With "hide savings & investment amounts" on, the sensitive categories stay out of the chart
-  // and the figures above it, so no bar, hint or total gives them away.
+  // Chart/headline show the real unfiltered period (only the rows follow Filter; hidden savings &
+  // investment categories stay out). Week = bar per day; month = bar per week, as 28-31 bars crowded.
   const chartTransactions = useMemo(
     () =>
       hideAmounts
@@ -271,15 +241,12 @@ export default function TransactionsScreen() {
       setLoadError(null);
     } catch (e) {
       if (seq !== loadSeq.current) return;
-      // Previously unguarded — a transient DB failure left the screen
-      // silently showing stale/empty data with no indication anything
-      // went wrong, the same class of bug already fixed on the other tabs.
+      // A transient DB failure otherwise left stale/empty data with no hint anything went wrong (as on
+      // other tabs).
       setLoadError(errorMessage(e));
     }
-    // Fetched and caught separately from the list/accounts/categories above
-    // — this only feeds the secondary "N% more/less than last …" headline
-    // figure, so a failure here (or the comparison query being slower than
-    // the rest) shouldn't blank the transaction list itself.
+    // Fetched and caught separately: it only feeds the secondary "N% more/less than last …" figure, so its
+    // failure (or a slower query) must not blank the transaction list.
     try {
       const prev = previousRangeFor(range, scope, toLocalIsoDate(new Date()));
       const cmp = await getRangeComparison(
@@ -293,9 +260,8 @@ export default function TransactionsScreen() {
     }
   }, []);
 
-  // Destructured so the focus effect depends on the primitive dates/scope,
-  // not the fresh `visibleRange` object rebuilt every render (which would
-  // re-run the load on every render).
+  // Destructured so the focus effect depends on primitive dates/scope, not the `visibleRange` object
+  // rebuilt every render (which would re-run the load each time).
   const { fromDate: rangeFromDate, toDate: rangeToDate } = visibleRange;
   useEffect(() => setSelectedBar(null), [rangeFromDate, rangeToDate, viewScope]);
   useFocusEffect(
@@ -303,9 +269,8 @@ export default function TransactionsScreen() {
       const now = new Date();
       setTodayDate((prev) => (toLocalIsoDate(prev) === toLocalIsoDate(now) ? prev : now));
       load({ fromDate: rangeFromDate, toDate: rangeToDate }, viewScope);
-      // Coming back from the full add-transaction screen (edited or deleted
-      // a row reached from a search result) — re-run the same query so the
-      // list doesn't keep showing it exactly as it was before that edit.
+      // Returning from the full add-transaction screen (edit/delete of a row opened from search): re-run
+      // the query so the list doesn't show the row as it was before.
       if (searching) runSearch(searchQuery.trim());
     }, [load, rangeFromDate, rangeToDate, viewScope, searching, searchQuery, runSearch])
   );
@@ -379,10 +344,8 @@ export default function TransactionsScreen() {
   };
 
   const scrollToDay = (key: string) => {
-    // Week scope: the bar's own key is already the exact date a group is
-    // keyed by. Month scope: the key is a week-bucket's start date, so jump
-    // to the first day within that week (up to 6 days later) that actually
-    // has a group — there's no single offset for "a week" itself.
+    // Week scope: the bar key is already the group's date. Month scope: the key is a week bucket's start,
+    // so jump to the first day in that week (up to 6 days on) that has a group.
     const targetDate =
       viewScope === 'week'
         ? key
@@ -392,10 +355,8 @@ export default function TransactionsScreen() {
     if (index >= 0) scrollRef.current?.scrollToIndex({ index, animated: true, viewPosition: 0 });
   };
 
-  // Built once per accounts/categories change rather than `.find()`-ing
-  // through the full list for every transaction row on every render — with
-  // C categories and V visible rows that was an O(V*C) scan (repeated again
-  // on each "expand a day" tap, since that re-renders every mounted row).
+  // Built once per accounts/categories change instead of `.find()` per row per render (an O(V*C) scan,
+  // repeated on every "expand a day" tap since that re-renders all mounted rows).
   const accountsById = useMemo(() => new Map(accounts.map((a) => [a.id, a])), [accounts]);
   const categoriesById = useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories]);
   const accountName = (id: string) => accountsById.get(id)?.name ?? '—';
@@ -413,10 +374,8 @@ export default function TransactionsScreen() {
   // Categories and accounts picked in the filter sheet (the type has its own chips).
   const filterCount = filterCategoryIds.length + filterAccountIds.length;
 
-  // Before the first successful load (and only then — `loadError` set means
-  // fall through to the normal render, which already shows an inline error
-  // banner), a plain spinner beats letting "Nothing logged this month" flash
-  // on screen before the real data has even arrived.
+  // Before the first successful load only (`loadError` set falls through to the inline error banner), show
+  // a spinner so "Nothing logged this month" doesn't flash before the data arrives.
   if (!comparison && !loadError) {
     return (
       <View style={styles.container}>
@@ -564,10 +523,8 @@ export default function TransactionsScreen() {
             paddingTop: searching ? 14 : 0,
             paddingBottom: theme.layout.tabScreenScrollPad + insets.bottom,
           }}
-          // Variable-height days (a day's line count, and which stacks are
-          // open) mean there's no fixed `getItemLayout` to give FlatList —
-          // this is the standard fallback: if a jump lands past what's been
-          // measured yet, retry once the list has had a moment to lay out.
+          // Variable-height days (line count, open stacks) rule out `getItemLayout`; standard fallback: if
+          // a jump lands past what's measured, retry once the list has laid out.
           onScrollToIndexFailed={(info) => {
             setTimeout(() => scrollRef.current?.scrollToIndex({ index: info.index, animated: true }), 250);
           }}

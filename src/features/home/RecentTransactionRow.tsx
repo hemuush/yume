@@ -10,9 +10,8 @@ import { categoryPath, inParent, joinSub } from '@/lib/categoryLabel';
 import { homeStyles as h } from './homeStyles';
 
 /**
- * One recent-activity row. Merchant/note leads, "category · account · day"
- * sits beneath, amount on the right. The day is only "Today", "Yesterday" or
- * a short date — never a time.
+ * One recent-activity row: merchant/note leads, "category · account · day" beneath, amount right.
+ * The day is "Today", "Yesterday" or a short date, never a time.
  */
 export function RecentTransactionRow({
   tx,

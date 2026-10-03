@@ -4,10 +4,8 @@ import { MAX_SPLIT_PARTS, MIN_SPLIT_PARTS } from '@/lib/splitLimits';
 import { evaluateAmount, exprFromMinor } from './padMath';
 
 /**
- * The split page's working copy (the split redesign sign-off). The first
- * part is "the rest": its amount is never typed, it's whatever the payment
- * leaves after the other parts, so a split always adds up to the payment.
- * Pure, so the checks before saving are tested without a screen.
+ * The split page's working copy. The first part is "the rest": never typed, it's what the payment leaves
+ * after the other parts, so a split always adds up. Pure, so pre-save checks are tested without a screen.
  */
 export interface DraftPart {
   /** Stable while the page is open, so typing in one part never jumps to another. */
@@ -82,9 +80,8 @@ export const canAddPart = (parts: DraftPart[]) => parts.length < MAX_SPLIT_PARTS
 export const canRemovePart = (parts: DraftPart[], key: string) => parts.findIndex((p) => p.key === key) > 0;
 
 /**
- * A problem put into words for a button or a line of text: what to do next,
- * never just that something's wrong. `nameOf` names a part by its key (its
- * category, or "this part" before it has one).
+ * A problem worded for a button or line of text: what to do next, never just that something's wrong.
+ * `nameOf` names a part by key (its category, or "this part" before it has one).
  */
 export function splitProblemText(
   problem: SplitProblem,

@@ -6,12 +6,8 @@ const GAP = 3.5;
 const LAYERS = ['spent', 'saved', 'free'] as const;
 
 /**
- * Home's month ring as an SVG string, for the This Month widget: the
- * period's income split around the circle into spent, moved to savings and
- * free to use, on a moon-cream face (the figure on the face is laid over it
- * as text). Drawn the same way as MonthRing — one dashed circle per slice,
- * each starting where the ones before it end — but still, since a widget
- * can't animate.
+ * Home's month ring as an SVG string for the This Month widget: income split into spent, savings and free
+ * to use, on a moon-cream face. Like MonthRing (one dashed circle per slice) but static (widgets can't animate).
  */
 export function ringSvg(
   slices: HeroSlices,

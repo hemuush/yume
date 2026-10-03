@@ -1,8 +1,6 @@
 /**
- * "Hide savings & investment amounts" at the query level, against a real
- * SQLite engine: with `excludeSensitive`, spend in a sensitive category (an
- * SIP, say) is left out of the day, trend and budget figures, so nothing on
- * screen can be subtracted back into what was invested.
+ * "Hide savings & investment amounts" on real SQLite: with `excludeSensitive`, sensitive-category spend (SIP)
+ * is left out of day, trend and budget figures, so it can't be subtracted back out on screen.
  */
 import { createRealDataTestDb } from '@/test-support/realDataTestDb';
 

@@ -90,10 +90,8 @@ export default function DashboardScreen() {
   const [cardBills, setCardBills] = useState<Awaited<ReturnType<typeof listCardCycles>>>([]);
   const [budgets, setBudgets] = useState<BudgetProgress[]>([]);
   const [goals, setGoals] = useState<SavingsGoal[]>([]);
-  // Both are "always about today", not whatever period the cursor is
-  // browsing — same reasoning as Budgets/Goals below. `dailyGoal` stays
-  // `null` (the strip renders nothing) until the user actually sets one in
-  // Settings → Money.
+  // Both are always about today, not the browsed period (like Budgets/Goals below); `dailyGoal` stays
+  // `null` (strip renders nothing) until the user sets one in Settings → Money.
   const [todaySpendMinor, setTodaySpendMinor] = useState(0);
   const [dailyGoalMinor, setDailyGoalMinor] = useState<number | null>(null);
   // Inputs to the month forecast under the moon (see lib/pace.ts).
@@ -116,23 +114,15 @@ export default function DashboardScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [userName, setUserNameState] = useState<string | null>(null);
   const [cursor, setCursor] = useState<PeriodCursor>(CURRENT_PERIOD);
-  // The period the figures on screen actually belong to. `cursor` moves the
-  // moment the month is changed; this only catches up once that month's data
-  // has loaded — the hero turns its page on this, so it never slides in with
-  // the previous month's numbers under the new month's name.
+  // The period the on-screen figures belong to: `cursor` moves at once, this catches up once that month's
+  // data loads. The hero turns its page on it, so a new month name never shows the old month's numbers.
   const [loadedCursor, setLoadedCursor] = useState<PeriodCursor>(CURRENT_PERIOD);
   const [loadError, setLoadError] = useState<string | null>(null);
-  // The data below all starts at its own default ([], 0, null) — genuinely
-  // indistinguishable from "actually loaded and this period really is
-  // empty" — so this is the one flag the skeleton below gates on, set once
-  // the very first `load()` finishes (success or failure) and never reset
-  // afterward: a pull-to-refresh or period change re-fetches in place, it
-  // doesn't send the screen back to a loading state a user already passed.
+  // Defaults ([], 0, null) look like a genuinely empty period, so the skeleton gates on this flag: set once
+  // after the first `load()` (success or failure), never reset; later fetches update in place.
   const [loaded, setLoaded] = useState(false);
-  // The staggered opening fade plays on the first load after the app opens
-  // only; rows that appear after that (a new month, a refresh) get one quick
-  // fade instead. Flipped a moment after the first load, once the opening
-  // rows have mounted with their stagger.
+  // The staggered opening fade plays only on the first load after app open; later rows (new month, refresh)
+  // get one quick fade. Flipped shortly after the first load, once the opening rows have mounted.
   const [openingDone, setOpeningDone] = useState(hasPlayedHomeOpening);
   useEffect(() => {
     if (!loaded || openingDone) return;
@@ -143,19 +133,12 @@ export default function DashboardScreen() {
     return () => clearTimeout(t);
   }, [loaded, openingDone]);
   const rowEntering = (i: number) => homeRowEntering(i, !openingDone);
-  // Which way the hero should slide when the month changes — +1/-1 for a
-  // step within the same granularity, 0 for anything else (a month↔year
-  // toggle, or "jump to this month"), where a plain crossfade reads better
-  // than a slide in an arbitrary direction. State, not a ref: ThisMonthHero
-  // needs "which way did we just move" as a prop, and a ref can't be read
-  // during render. Set in the same event as `setCursor` below, so React
-  // batches both into the one re-render that also carries the new data.
+  // Hero slide direction on month change: +1/-1 for a same-granularity step, else 0 (crossfade). State, not
+  // a ref (ThisMonthHero reads it in render); set with `setCursor` so one re-render carries both.
   const [heroDirection, setHeroDirection] = useState<-1 | 0 | 1>(0);
 
-  // The header sits over the ScrollView and collapses as it scrolls (see
-  // HomeHeader). Its expanded height pads the content so nothing starts
-  // hidden under it; the estimate only covers the first frame before the
-  // header measures itself.
+  // The header overlays the ScrollView and collapses on scroll (see HomeHeader); its expanded height pads
+  // the content so nothing hides under it. The estimate only covers the first frame before it measures.
   const scrollY = useSharedValue(0);
   const onScroll = useAnimatedScrollHandler((e) => {
     scrollY.value = e.contentOffset.y;
@@ -178,11 +161,8 @@ export default function DashboardScreen() {
     [cursor]
   );
 
-  // Stepping the period quickly starts overlapping loads; each is a long
-  // chain through the app-wide statement queue, so an earlier one can finish
-  // last. Only the most recent one may write state — otherwise last month's
-  // data could land under this month's label. Two counters: the figures that
-  // belong to a period (periodSeq), and everything else on the page (fullSeq).
+  // Quick period stepping starts overlapping loads that can finish out of order; only the latest may write
+  // state, or last month's data lands under this month's label (periodSeq/fullSeq).
   const periodSeq = useRef(0);
   const fullSeq = useRef(0);
   // The cursor the latest period fetch was started for, so the effect below
@@ -199,9 +179,7 @@ export default function DashboardScreen() {
     (c: PeriodCursor) => {
       const range = periodRange(c);
       return Promise.all([
-        // Scoped to the same period as the navigator above it — showing the
-        // single most-recent transactions regardless of period previously
-        // made "Recent Activity" contradict whatever month/year was selected.
+        // Scoped to the navigator's period; unscoped most-recent rows contradicted the selected month/year.
         listTransactions({ fromDate: range.start, toDate: range.end, limit: 30 }),
         getRangeComparison(range, previousPeriodRange(c), c.granularity),
         getCarryInMinor(range.start, hideAmounts),
@@ -266,10 +244,8 @@ export default function DashboardScreen() {
           getLoanProgress(),
           listCardCycles().catch(() => []),
           getUserName(),
-          // Budgets and goals are always about *now*, not whatever period the
-          // cursor above is browsing — a budget is inherently this calendar
-          // month, and a goal has no period at all. Same for today's spend and
-          // the daily goal.
+          // Budgets, goals, today's spend and the daily goal are always about *now*, not the browsed period
+          // (a budget is this calendar month; a goal has no period).
           listBudgetsForMonth(undefined, hideAmounts),
           listSavingsGoals(),
           getTodaySpend(undefined, hideAmounts),
@@ -360,12 +336,8 @@ export default function DashboardScreen() {
     .filter((l) => l.direction === 'borrowed')
     .reduce((sum, l) => sum + l.outstandingPrincipalMinor, 0);
 
-  // Fires the Debt tile's celebration only on the real crossing — going
-  // from a real positive balance to zero within this session (e.g. the
-  // final EMI was just marked paid) — never on a plain re-render/refresh
-  // while it's already zero, and never on first load either (`prevDebtRef`
-  // starts at `null`, not 0, so a user who's never carried debt at all
-  // never sees it fire).
+  // Fires the Debt tile's celebration only on a real positive→zero crossing this session, not on re-render
+  // while zero or first load: `prevDebtRef` starts `null`, so users who never had debt never see it.
   const prevDebtRef = useRef<number | null>(null);
   const [justClearedDebt, setJustClearedDebt] = useState(false);
   useEffect(() => {
@@ -403,11 +375,8 @@ export default function DashboardScreen() {
     comparison &&
     findTopGrowingCategory(comparison.current.categoryBreakdown, comparison.previous.categoryBreakdown);
 
-  // "Saved" = income not spent (kept in any account), so the bar reflects
-  // aggressive savers instead of reading 0% when they sweep cash into a pot.
-  // The spend-is-up nudge (previously its own SpendingAlertCard, which just
-  // repeated this hero's own "N% vs last" figure) is now folded into Suu's
-  // line itself — see suuLine's own comment for why that takes priority.
+  // "Saved" = income not spent (in any account), so savers who sweep cash into a pot don't read 0%. The
+  // spend-up nudge is folded into Suu's line (see suuLine's comment for why it takes priority).
   const savingsPct = savingsRatePct(dispIncome - dispExpense, dispIncome);
   const suu = suuLine(
     savingsPct,

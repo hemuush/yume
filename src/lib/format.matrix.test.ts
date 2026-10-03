@@ -1,8 +1,6 @@
 /**
- * formatPctChange caps a period-over-period percentage so a near-empty prior
- * period can't overflow one screen with digits while others stay tidy. It's
- * used in identical form on Home, Reports, Notifications and the overspend
- * alert, so every one of those reads the same way.
+ * formatPctChange caps a period-over-period percentage so a near-empty prior period can't overflow with
+ * digits. Used identically on Home, Reports, Notifications and the overspend alert.
  */
 import { formatPctChange } from './format';
 

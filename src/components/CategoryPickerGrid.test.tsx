@@ -1,7 +1,6 @@
 /**
- * The category grid fills its width evenly — as many equal columns as fit —
- * so a row never ends in a lopsided gap, and a category the host marks as
- * taken (a split's other parts) shows faded.
+ * The category grid fills its width with equal columns (no lopsided last row), and a category the host
+ * marks as taken (a split's other parts) shows faded.
  */
 import { Text, View } from 'react-native';
 import { create, act, ReactTestRenderer } from 'react-test-renderer';

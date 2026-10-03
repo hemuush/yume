@@ -1,7 +1,6 @@
 /**
- * Categories come back A to Z by name, ignoring case, wherever the app lists
- * them — built-in and your own, top-level and subcategories alike — and
- * budgets follow the same order.
+ * Categories come back A to Z by name, ignoring case, wherever listed (built-in and own, top-level and sub),
+ * and budgets follow the same order.
  */
 import { createRealDataTestDb } from '@/test-support/realDataTestDb';
 

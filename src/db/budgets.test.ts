@@ -1,8 +1,6 @@
 /**
- * Category budgets against a real SQLite engine: spend aggregation, the
- * `rollover` carry-forward math, "continue this budget" lapsed detection,
- * and the delete/undo round trip — all against the schema's real
- * `UNIQUE (category_id, period_month)` shape.
+ * Category budgets on real SQLite: spend aggregation, `rollover` carry-forward, lapsed-budget detection, and
+ * the delete/undo round trip, against the real `UNIQUE (category_id, period_month)` schema.
  */
 import { createRealDataTestDb } from '@/test-support/realDataTestDb';
 
@@ -122,11 +120,8 @@ describe('budgets', () => {
       amountMinor: 100000,
       date: '2027-01-05',
     });
-    // ...and against one of its subcategories — both must count toward the
-    // parent's budget. Before the fix, `categorySpend` matched `category_id`
-    // exactly, so this second transaction never showed up at all and a
-    // budget set on "Groceries" while everything was actually logged under
-    // "Groceries > Restaurants" stayed permanently at ₹0 spent.
+    // ...and one of its subcategories: both count toward the parent's budget. `categorySpend` once matched
+    // `category_id` exactly, leaving a "Groceries" budget at ₹0 when all spend sat under a subcategory.
     await createTransaction({
       type: 'expense',
       accountId,

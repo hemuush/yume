@@ -1,8 +1,5 @@
-// A better-sqlite3-backed adapter matching the exact async method surface the
-// app's src/db/*.ts files call on their expo-sqlite handle. This lets the
-// app's REAL, unmodified query/business logic run against a real SQLite
-// engine outside the Expo/RN runtime, so it can be exercised with real user
-// data from a terminal script instead of only on-device.
+// A better-sqlite3 adapter matching the async method surface src/db/*.ts calls on its expo-sqlite handle,
+// so the app's real query logic runs on real SQLite outside the Expo/RN runtime (e.g. on real data).
 import Database from 'better-sqlite3';
 
 export interface AsyncDb {
@@ -10,10 +7,8 @@ export interface AsyncDb {
   getAllAsync<T>(sql: string, params?: any[]): Promise<T[]>;
   runAsync(sql: string, params?: any[]): Promise<void>;
   execAsync(sql: string): Promise<void>;
-  // Matches src/db/client.ts's AppDb contract exactly: the callback
-  // receives `tx` (here, just this same db — better-sqlite3 has no real
-  // concurrency to guard against) so app code written against the real
-  // queued/unqueued split runs unmodified against this test harness.
+  // Matches src/db/client.ts's AppDb contract: the callback gets `tx` (this same db; better-sqlite3 has no
+  // concurrency to guard) so app code written for the queued/unqueued split runs unmodified.
   withTransactionAsync(fn: (tx: AsyncDb) => Promise<void>): Promise<void>;
   exclusiveAsync<T>(fn: (db: AsyncDb) => Promise<T>): Promise<T>;
 }
@@ -37,10 +32,8 @@ export function createRealDataTestDb(): AsyncDb {
       db.exec(sql);
     },
     async withTransactionAsync(fn: (tx: AsyncDb) => Promise<void>): Promise<void> {
-      // better-sqlite3's own db.transaction() wrapper requires a synchronous
-      // function; the app's callbacks are async (they call other *Async
-      // methods against this same db), so BEGIN/COMMIT/ROLLBACK are driven
-      // by hand instead to preserve real async/await semantics.
+      // better-sqlite3's db.transaction() needs a synchronous function but app callbacks are async, so
+      // BEGIN/COMMIT/ROLLBACK are driven by hand to keep real async/await semantics.
       db.exec('BEGIN');
       try {
         await fn(asyncDb);

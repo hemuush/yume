@@ -32,14 +32,11 @@ export function RateChangeModal({
   onDone: () => void;
 }) {
   const [newRate, setNewRate] = useState((loan.interestRateAnnualBp / 100).toString());
-  // Real lenders always offer both — reduce/raise the EMI and keep the same
-  // payoff date, or keep the EMI exactly as-is and let the remaining tenure
-  // shrink/stretch instead. Previously this only ever did the second one.
+  // Lenders offer both: change the EMI and keep the payoff date, or keep the EMI and let the tenure
+  // shrink/stretch.
   const [mode, setMode] = useState<'keepEmi' | 'keepTenure'>('keepEmi');
-  // Previously always "today", with no way to say a rate change actually
-  // took effect earlier — a floating rate reset the bank applied two
-  // statements ago, only now being entered into Yume, had nowhere to
-  // record when it really happened.
+  // The effective date can be earlier than today: a floating-rate reset the bank applied statements ago,
+  // entered now, needs a place to record when it really took effect.
   const [effectiveDate, setEffectiveDate] = useState(() => toLocalIsoDate(new Date()));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);

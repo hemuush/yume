@@ -1,7 +1,6 @@
 /**
- * The theme packs stay a considered set: each one's colours are soft
- * pastels, clearly different from every other pack's (so a new theme can't
- * quietly copy an old one).
+ * The theme packs stay a considered set: each one's colours are soft pastels, clearly different from
+ * every other pack's (so a new theme can't quietly copy an old one).
  */
 import { THEMES } from './themes';
 import { hexToHsl } from '@/lib/color';

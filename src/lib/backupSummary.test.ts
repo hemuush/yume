@@ -1,7 +1,6 @@
 /**
- * Backup summaries, as the restore preview shows them: a backup file's
- * entries, latest date, accounts and loans; the same for the phone; and how
- * many entries were saved after a backup was made.
+ * Backup summaries as the restore preview shows them: a file's entries, latest date, accounts and loans;
+ * the same for the phone; and how many entries were saved after a backup.
  */
 import { createRealDataTestDb } from '@/test-support/realDataTestDb';
 

@@ -1,12 +1,6 @@
 /**
- * Reproduces the exact sequence of actions the user hit on-device (create
- * accounts, add a mis-entered loan, delete it via the new guard, add a
- * second real loan, prepay it heavily) and then calls the exact same
- * Promise.all batches Profile, the Loans tab, and Home each run on focus —
- * checking they agree with each other and with hand-computed totals. Home
- * showed correct account/loan data while Profile and the Loans tab showed
- * empty lists for the same underlying data; if any of those functions
- * throws or disagrees, this fails here instead of shipping again.
+ * Replays a real on-device sequence (accounts, a mis-entered loan deleted via the guard, a second loan
+ * prepaid heavily), then runs the Promise.all batches Profile, Loans and Home run on focus; they must agree.
  */
 import { createRealDataTestDb } from '@/test-support/realDataTestDb';
 
@@ -101,22 +95,16 @@ describe('Profile / Loans tab / Home all agree after a realistic create-delete-p
     expect(loans.some((l) => l.counterparty === 'Mis-entered')).toBe(false);
 
     const nextDue = await getNextDueInstallment();
-    // After a heavy prepayment there may or may not be a next installment
-    // left, but if there is one, it must belong to the same surviving loan —
-    // Home should never point at a loan the Loans tab doesn't know about.
+    // After a heavy prepayment a next installment may or may not remain, but if so it must belong to the
+    // surviving loan: Home must never point at a loan the Loans tab doesn't know about.
     if (nextDue) {
       expect(nextDue.counterparty).toBe('Test 2');
     }
   });
 
   it("every screen's Promise.all batch (Profile's YouSection, and Home's) resolves without throwing and agrees on totals", async () => {
-    // The core subset of YouSection's own load() (now split from the shell's
-    // identity-only load, and since expanded with budgets/goals/recurring —
-    // this covers the accounts/loans/people/currency slice that feeds
-    // computeTrackedBalance below): if any one of these calls throws,
-    // Promise.all rejects and the screen silently keeps every field at its
-    // zero/empty default with no visible error — which is what "accounts
-    // not visible" looked like on-device.
+    // The core subset of YouSection's load() (accounts/loans/people/currency, feeding computeTrackedBalance):
+    // if any call throws, Promise.all rejects and the screen silently keeps zero/empty defaults, no error.
     const [accs, txs, loans, people, userName, since, currency] = await Promise.all([
       listAccounts(),
       listTransactions({ limit: 100000 }),
@@ -145,11 +133,8 @@ describe('Profile / Loans tab / Home all agree after a realistic create-delete-p
     expect(homeAccounts).toHaveLength(2);
     expect(homeLoans).toHaveLength(1);
 
-    // Both screens now funnel their fetched data through the one shared
-    // computeTrackedBalance helper, so the check is that each screen's own
-    // Promise.all output feeds it the same way and lands on the same number
-    // — plus an independent hand-calc so the helper itself can't silently
-    // drift out from under both screens at once.
+    // Both screens feed their fetched data through the shared computeTrackedBalance, so each screen's
+    // Promise.all output must land on the same number; the hand-calc stops the helper drifting under both.
     const homeTrackedBalance = computeTrackedBalance({
       accounts: homeAccounts,
       loans: homeLoans,

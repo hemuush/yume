@@ -1,7 +1,6 @@
 /**
- * The Backup & Restore screen's safety-copy card: it appears only when a
- * safety copy exists, says what it holds, and "Put back that data" asks
- * once more before undoing the restore.
+ * The Backup & Restore safety-copy card: appears only when a safety copy exists, says what it holds, and
+ * "Put back that data" asks once more before undoing the restore.
  */
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
 import { Text } from 'react-native';

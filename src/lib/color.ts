@@ -1,7 +1,5 @@
-// Small colour-space helpers used to derive matching light/dark shades of a
-// single hue (e.g. the user's chosen accent) instead of reaching for
-// unrelated fixed colours — kept pure and dependency-free like every other
-// src/lib module.
+// Small pure colour-space helpers that derive matching light/dark shades of one hue (e.g. the user's accent)
+// instead of unrelated fixed colours; dependency-free like every src/lib module.
 
 /** #RGB/#RRGGBB (with or without '#') to [h 0-360, s 0-100, l 0-100]. */
 export function hexToHsl(hex: string): [number, number, number] {
@@ -61,11 +59,8 @@ export function hslToHex(h: number, s: number, l: number): string {
 }
 
 /**
- * The same hue and (optionally adjusted) saturation as `hex`, at a new
- * lightness — a "lighter/darker version of this exact colour" instead of an
- * unrelated fixed swatch. `saturationDelta` nudges saturation up (positive)
- * or down (negative); deep/low-lightness shades usually read better a touch
- * more saturated so they don't go muddy.
+ * Same hue as `hex` (saturation optionally adjusted) at a new lightness: a lighter/darker version of that
+ * colour. `saturationDelta` nudges saturation; deep shades read better slightly more saturated, not muddy.
  */
 export function shade(hex: string, lightness: number, saturationDelta = 0): string {
   const [h, s] = hexToHsl(hex);
@@ -83,24 +78,16 @@ export function hexToRgba(hex: string, alpha: number): string {
 }
 
 /**
- * The Reports spend-heatmap's 5-step intensity ramp (index 0 is "no spend",
- * drawn as an outline instead), derived from the user's chosen accent so the
- * calendar reads as "this app's colour" whichever accent is picked. It rises
- * from a faint wash to the accent itself and stops there: the busiest day is
- * the full pastel accent, never a darkened, saturated version of it.
+ * Reports spend-heatmap 5-step intensity ramp (index 0 = "no spend", drawn as an outline) derived from the
+ * accent. Rises from a faint wash to the full pastel accent and stops: never a darkened, saturated version.
  */
 export function spendHeatScale(accent: string): readonly [string, string, string, string, string] {
   return ['transparent', hexToRgba(accent, 0.2), hexToRgba(accent, 0.42), hexToRgba(accent, 0.7), accent];
 }
 
 /**
- * A stable index into a palette of length `modulo`, derived from `id` — for
- * picking a person/entity's own colour so it stays the same regardless of
- * where they land in a list (unlike `array[i % array.length]` keyed to
- * position, which reassigns everyone's colour the moment the list is
- * reordered or someone new is added ahead of them). A plain djb2-style
- * string hash — not cryptographic, just needs to spread ids evenly across
- * the palette.
+ * Stable index into a palette of length `modulo` from `id`, so an entity keeps its colour when the list is
+ * reordered or grows (unlike `i % length`). Plain djb2-style hash: not cryptographic, just evenly spread.
  */
 export function stableIndexFromId(id: string, modulo: number): number {
   let hash = 5381;

@@ -1,11 +1,8 @@
 import { parseLocalIsoDate } from './date';
 
 /**
- * The app's date labels, in the phone's own locale (so "5 Oct" in India,
- * "Oct 5" in the US). Every screen formats a YYYY-MM-DD date through one of
- * these rather than its own `toLocaleDateString` call, so the same kind of
- * date always reads the same way. Each takes a local calendar date, never a
- * timestamp, and parses it as local time (see parseLocalIsoDate).
+ * The app's date labels, in the phone's locale ("5 Oct" in India, "Oct 5" in the US).
+ * Each takes a local calendar date (never a timestamp) and parses it as local time (see parseLocalIsoDate).
  */
 
 const fmt = (iso: string, options: Intl.DateTimeFormatOptions) =>

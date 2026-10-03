@@ -1,9 +1,6 @@
 /**
- * Combinatorial coverage of the two pure net-worth primitives shared by Home
- * and Profile: `loanNetWorthContribution` (per-loan sign + asset-value
- * offset) and `computeTrackedBalance` (the whole headline figure). Every
- * generated case is checked against an independent hand formula so the
- * helpers can't silently drift.
+ * Combinatorial coverage of `loanNetWorthContribution` (sign + asset offset) and `computeTrackedBalance`
+ * (headline figure), shared by Home and Profile; each case is checked against an independent hand formula.
  */
 import { loanNetWorthContribution, computeTrackedBalance } from './reports';
 

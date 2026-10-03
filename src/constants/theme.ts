@@ -1,22 +1,5 @@
-// Yume's visual identity, single source of truth. Every screen reads these
-// tokens rather than hardcoding hex values, radii, or font names — change a
-// value here and it changes everywhere.
-//
-// The current register is a calm, minimal one: warm cream surfaces, thin
-// hairline borders (`borderSoft`) and whitespace to separate cards, pill
-// shapes for nav/buttons/chips, and a soft sky-blue (`primary`) plus mint
-// (`secondary`) as the signature accents. All flat/pastel swatches sit in a
-// 74-83% lightness band so they read as gentle pastels, never neon.
-//
-// `primary` was sage-lime until the ring-mark rebrand (sign-off in session);
-// it's sky-blue now, matching the new app icon. It's the same value as
-// `flatBlue` below, just promoted from an account-tag color into the lead
-// accent — nothing else in this file changed for that pass.
-//
-// `border.thin` (2px) is now only for deliberate emphasis — a coloured
-// callout border (an error banner, an EMI preview) — never a plain card or
-// divider outline; those use a hairline (`StyleSheet.hairlineWidth`) with
-// `borderSoft` instead.
+// Yume's visual identity, single source of truth: screens read these tokens, never hardcoded values.
+// Calm register: cream surfaces, `borderSoft` hairlines, sky-blue `primary` + mint `secondary`, 74-83% pastels.
 
 import { StyleSheet } from 'react-native';
 
@@ -30,10 +13,7 @@ export const theme = {
     ink: '#12130F',
     inkSoft: '#5B5748',
 
-    // Sky-blue is the signature accent (was soft sage-lime) — the swap that
-    // came out of the ring-mark rebrand sign-off. It isn't a new color to
-    // the app: it's the same value `flatBlue` already used for account
-    // tags, just promoted into the lead role.
+    // Sky-blue is the signature accent: the same value as `flatBlue` (account tags), promoted to the lead role.
     primary: '#8FCBFF',
     primaryTint: '#EAF3FE',
     secondary: '#8FE8C8', // mint
@@ -49,9 +29,8 @@ export const theme = {
     incomeTint: '#DDF2E5',
     expense: '#E23F55',
     expenseTint: '#FBE1E4',
-    // Deeper shades of income/expense for text and numbers under ~18px: the
-    // livelier pair above is for icons, bars and dots only (it is under 4.5:1
-    // on the cream surfaces).
+    // Deeper income/expense shades for text and numbers under ~18px; the livelier pair above is for icons,
+    // bars and dots only (under 4.5:1 on the cream surfaces).
     incomeText: '#167747',
     expenseText: '#BD3547',
     // Amber for warning text and small icons: idGoldDeep is ~2:1 on the cream
@@ -69,12 +48,8 @@ export const theme = {
     flatBlue: '#8FCBFF',
     onFlat: '#12130F',
 
-    // Identity-card tones (stat tiles, accounts, loan cards): teal/sage read
-    // as "good news" (income, surplus) — closely related greens; coral/gold
-    // read as "worth a look" (spend, debt) — adjacent warm tones. Each is a
-    // pale fill; coral and gold also carry a deeper same-family tone for an
-    // icon circle or an emphasised figure. Never mixed across families on
-    // one card.
+    // Identity-card tones: teal/sage (income, surplus) and coral/gold (spend, debt) are related families, pale
+    // fills; coral and gold also have a deeper tone for icon circles or figures. Never mix families on a card.
     idTeal: '#DAF5F0',
     idSage: '#E9F3DA',
     idCoral: '#FFE3D6',
@@ -85,10 +60,8 @@ export const theme = {
     idGold: '#FBF0CE',
     idGoldDeep: '#E0AC3F',
 
-    // A soft warm hairline for the calm card style — separates cards by a
-    // thin line and whitespace instead of a thick black border plus offset
-    // shadow. `border`/`ink` above stay as they were for buttons, chips,
-    // inputs, and modal sheets, which weren't part of this pass.
+    // A soft warm hairline for the calm card style, separating cards by a thin line and whitespace.
+    // `border`/`ink` above remain for buttons, chips, inputs and modal sheets.
     borderSoft: '#E6DFC9',
 
     // Ink at very low opacity — a faint fill for inactive tracks, weekend
@@ -123,15 +96,8 @@ export const theme = {
     thin: 2,
   },
   spacing: (n: number) => n * 4,
-  // Layout metrics shared between the tab bar and the screens that must
-  // scroll clear of it. The tab bar is docked flush to the bottom edge —
-  // `tabBar.height` tall, `tabBar.topRadius` rounding only its top corners —
-  // with the device's safe-area inset added as its own bottom padding rather
-  // than left as empty page below it. A scrolling tab screen therefore needs
-  // `tabScreenScrollPad` of bottom padding (bar height + a comfortable
-  // margin) so its last row is never hidden; a plain pushed screen with no
-  // tab bar only needs `screenScrollPad`. Every caller adds `insets.bottom`
-  // on top of both.
+  // Tab bar metrics shared with screens that scroll clear of it. A tab screen needs `tabScreenScrollPad`
+  // bottom padding (bar height + margin), a pushed screen `screenScrollPad`; callers add `insets.bottom`.
   layout: {
     tabBar: { height: 64, topRadius: 20 },
     tabScreenScrollPad: 64 + 24,
@@ -146,29 +112,24 @@ export const theme = {
     bodyBold: 'Archivo_700Bold',
     mono: 'SpaceMono_400Regular',
     monoBold: 'SpaceMono_700Bold',
-    // Fredoka — a rounded, friendly face used for the Home screen's warmer
-    // register: the brand wordmark, section titles, and hero headings. Body
-    // copy stays Archivo and amounts stay Space Mono.
+    // Fredoka, a rounded face for Home's warmer register: wordmark, section titles, hero headings.
+    // Body copy stays Archivo and amounts stay Space Mono.
     rounded: 'Fredoka_400Regular',
     roundedMedium: 'Fredoka_500Medium',
     roundedBold: 'Fredoka_600SemiBold',
   },
 };
 
-// The action-button block passed as a ModalSheet `footer` — a column that
-// can hold an optional error line, the Cancel/Save row, and an optional
-// full-width Delete. Shared so every modal's pinned footer lays out the same.
+// The button block passed as a ModalSheet `footer`: optional error line, Cancel/Save row, optional full-width
+// Delete. Shared so every modal's pinned footer lays out the same.
 export const modalFooterStyles = StyleSheet.create({
   footerCol: { gap: 8 },
   footerRow: { flexDirection: 'row', gap: 8 },
   footerBtn: { flex: 1 },
 });
 
-// Every swatch sits in the same 74-83%-lightness pastel band described up
-// top — added colors were picked to fill gaps in hue coverage (rose, teal,
-// sage, tan, mauve, cyan, periwinkle, a paler butter yellow) rather than
-// just brightening/darkening the originals, so a bigger picker still reads
-// as one calm family instead of drifting toward neon or mud.
+// Every swatch sits in the 74-83% pastel band above; added colours fill hue gaps (rose, teal, sage, tan,
+// mauve, cyan, periwinkle, pale butter) instead of brightening the originals, so the picker stays calm.
 export const CATEGORY_COLOR_PALETTE = [
   '#FFA8CE',
   '#8FCBFF',
@@ -197,14 +158,4 @@ export const FLAT_PALETTE = [
   theme.colors.flatMint,
   theme.colors.flatPink,
   theme.colors.flatBlue,
-];
-
-// The calm identity-card palette, pale step only, for cycling across a list
-// of same-kind things (accounts) that have no inherent good/bad meaning —
-// deliberately just these four, not a wider rainbow.
-export const ID_PALETTE = [
-  theme.colors.idGold,
-  theme.colors.idTeal,
-  theme.colors.idCoral,
-  theme.colors.idSage,
 ];

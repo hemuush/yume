@@ -1,10 +1,8 @@
 import { addDaysToIsoDate, parseLocalIsoDate, toLocalIsoDate } from './date';
 
 /**
- * A credit card's billing cycle (the Missing pieces sign-off), as pure date
- * maths: the statement day and the bill due day are days of the month the
- * card's own statement names. A day past a short month's end (29–31) falls
- * on that month's last day.
+ * A credit card's billing cycle as pure date maths: statement day and bill due day are days of the month.
+ * A day past a short month's end (29-31) falls on that month's last day.
  */
 
 /** The day `day` in the month of `year`/`month0`, clamped to that month's last day. */
@@ -94,9 +92,8 @@ export function isCycleDay(n: number): boolean {
 }
 
 /**
- * Reads the two day fields from a form: both empty (no bill tracking), or
- * both whole days from 1 to 31. Anything else comes back as the message to
- * show under the form.
+ * Reads the two day fields from a form: both empty (no bill tracking) or both whole days 1-31.
+ * Anything else returns the message to show under the form.
  */
 export function parseCycleDays(
   statementText: string,

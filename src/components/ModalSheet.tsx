@@ -23,38 +23,23 @@ interface Props {
   /** The ✕ that closes it, top-right. On by default — it's what replaced every Cancel button. */
   showClose?: boolean;
   /**
-   * A pinned action bar. Passing this switches the modal to a three-band
-   * layout — fixed grabber + title on top, scrolling content in the middle,
-   * `footer` pinned to the bottom (padded past the system nav bar) — so the
-   * main action is always visible and never scrolls away. Works for both
-   * the bottom `sheet` and the centered dialog. See `SheetFooter`.
+   * A pinned action bar. Switches the modal to three bands (grabber + title, scrolling content, `footer`
+   * padded past the system nav bar) so the main action never scrolls away. Works for sheet and dialog.
    */
   footer?: React.ReactNode;
 }
 
 /**
- * Every modal in the app goes through here so a few things that were
- * previously each modal's own problem are solved once:
- *  - tapping the dimmed backdrop, the ✕ or Android back closes it;
- *  - the keyboard pushes the sheet up instead of covering its inputs;
- *  - the sheet's bottom padding clears the device's gesture/nav bar, so
- *    action buttons are never sitting underneath it;
- *  - one surface colour top to bottom, the pinned footer included (the
- *    calm-sheets sign-off, Direction C), so nothing looks stuck on.
+ * Every modal goes through here: backdrop tap, ✕ or Android back closes it; the keyboard pushes the sheet
+ * up; bottom padding clears the gesture/nav bar; one surface colour top to bottom, pinned footer included.
  */
 export function ModalSheet(props: Props) {
   const { visible, onClose } = props;
   return (
     <Modal
       visible={visible}
-      // Always 'fade', never 'slide': RN's <Modal> animates its whole
-      // presented tree — backdrop included — as one unit. 'slide' translates
-      // that whole unit up from off-screen, so the backdrop hasn't reached
-      // full-screen coverage for the first stretch of the animation either —
-      // a screenshot caught right as a sheet opens shows the real screen
-      // behind it at full brightness through that gap. 'fade' only ramps
-      // opacity; the backdrop's position never moves, so it covers the full
-      // screen for the whole transition, never just partially.
+      // Always 'fade', never 'slide': RN's <Modal> animates backdrop and sheet as one unit, so 'slide'
+      // leaves the backdrop short of full-screen early on, so the real screen shows through at full brightness.
       animationType="fade"
       transparent
       onRequestClose={onClose}
@@ -90,9 +75,8 @@ function ModalCloseButton({ onClose }: { onClose: () => void }) {
 }
 
 /**
- * A sheet's pinned action bar: the main button(s), with an optional round
- * button in front — a red bin for Delete (never a full-width Delete as loud
- * as Save), or ⋯ for a menu of rarer actions.
+ * A sheet's pinned action bar: the main button(s), with an optional round button in front, a red bin for
+ * Delete (never a full-width Delete as loud as Save) or ⋯ for a menu of rarer actions.
  */
 export function SheetFooter({
   children,
@@ -123,9 +107,8 @@ export function SheetFooter({
 }
 
 /**
- * A quiet text action at the end of a sheet — "Delete recurring entry",
- * "Archive goal" — for the rarer, riskier things a form can do, so they
- * never sit in the footer beside Save.
+ * A quiet text action at the end of a sheet ("Delete recurring entry", "Archive goal") for rarer, riskier
+ * things, so they never sit in the footer beside Save.
  */
 export function SheetLink({
   label,
@@ -194,11 +177,8 @@ function ModalSheetBody({
 
   // The pad an AmountField docks under the sheet, in place of the phone keyboard.
   const { host, pad, scrollProps: scrollTracking } = useAmountPadHost();
-  // A pinned footer means the three-band layout (fixed header / scrolling
-  // body / fixed footer) instead of the single scrolling column. A scrolling
-  // bottom sheet always uses it, footer or not: the single-column scroll
-  // view could come out taller than its content, leaving the sheet
-  // stranded mid-screen above an empty band.
+  // A pinned footer means the three-band layout (fixed header / scrolling body / fixed footer). A scrolling
+  // sheet always uses it: the single-column scroll can be taller than its content and strand the sheet.
   const framed = footer !== undefined || (isSheet && scrollable);
 
   // Title and subtitle on the left, the ✕ on the right — or just the ✕ for a

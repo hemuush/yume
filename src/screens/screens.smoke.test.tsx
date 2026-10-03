@@ -1,11 +1,6 @@
 /**
- * Every route screen, opened the way a real person meets it: a brand-new
- * install with nothing in it, then a lived-in phone (several accounts, a
- * loan, a budget, a goal, a recurring rule, a friend ledger, refunds, a
- * transfer to savings, entries in earlier months), with amounts shown and
- * with amounts hidden. A screen that throws, shows the crash fallback or
- * prints NaN / undefined / [object Object] fails here — on a real SQLite
- * engine running the app's real queries.
+ * Every route screen opened as a person meets it: a fresh install, then a lived-in phone, with amounts shown
+ * and hidden. A screen that throws, shows the crash fallback or prints NaN/undefined/[object Object] fails.
  */
 import { Text } from 'react-native';
 import { create, act, ReactTestRenderer } from 'react-test-renderer';

@@ -72,12 +72,8 @@ interface PlanData {
 }
 
 /**
- * Everything you're planning, at a glance: tiles, one per topic, in titled
- * groups like Home and Reports, then Coming up in full. The next 14 days
- * leads; then "Where you stand" (EMIs and Budgets side by side, the road to
- * debt-free), "Goals" (Saving toward with What-if) and "People & habit".
- * Every tile opens its own screen, and an empty one says what to do next
- * instead of disappearing. What each tile says is decided in planOverview.ts.
+ * Everything you're planning: one tile per topic in titled groups (next 14 days, Where you stand, Goals,
+ * People & habit), then Coming up. Tiles open their screen; empty ones say what to do (planOverview.ts).
  */
 export default function PlanScreen() {
   const insets = useSafeAreaInsets();
@@ -138,10 +134,8 @@ export default function PlanScreen() {
         })),
       cardCycles
     );
-    // The category with the most spend lately (already sorted biggest first)
-    // that a spending cut could actually apply to: not a built-in category
-    // like Loan EMI, which the app files automatically — "spend 10% less on
-    // your EMI" isn't a choice anyone has.
+    // The top-spend category (sorted biggest first) a cut could apply to: not a built-in like Loan EMI,
+    // which the app files automatically — "spend 10% less on your EMI" isn't a real choice.
     const top = averages.find(
       (c) =>
         c.totalMinor > 0 &&

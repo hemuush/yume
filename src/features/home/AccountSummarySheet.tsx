@@ -30,16 +30,8 @@ import { UpdateValueSheet } from '@/features/investments/UpdateValueSheet';
 import { toLocalIsoDate } from '@/lib/date';
 
 /**
- * A quick look at one account, opened by tapping its card on Home (the
- * calm-sheets sign-off, Direction C): its own card with the balance, then
- * two pages — money in and out over the period Home is showing — each bar split
- * into real income/spending and transfers between your own accounts, with
- * the net under them, and a card's bill — and the latest few entries against it. Read-only on purpose — renaming, retyping or
- * archiving stays in the full edit form (AccountDetailModal), one tap away
- * via "Edit account".
- *
- * A savings balance is masked exactly as on its card when "hide amounts" is
- * on, and so are its in/out figures (they'd give the balance away).
+ * Read-only peek at one account: balance, in/out bars (real vs own-account transfers), net, bill, entries.
+ * Editing lives in AccountDetailModal. Hide-amounts masks a savings balance and its in/out too.
  */
 export function AccountSummarySheet({
   account: accountProp,
@@ -423,10 +415,8 @@ function BillLine({
 }
 
 /**
- * One in/out line: label, a bar that grows to its share of the larger of the
- * two, the amount — and under it, what that amount was. The bar is split:
- * real income/spending in full colour, transfers between your own accounts
- * in a pale shade of it, so money just passing through reads differently.
+ * One in/out line: label, bar sized against the larger of the two sides, amount, and what it was made of.
+ * Bar is full colour for real income/spending, pale for transfers between your own accounts (pass-through).
  */
 function FlowRow({
   label,

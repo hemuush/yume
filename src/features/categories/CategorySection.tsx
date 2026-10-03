@@ -69,11 +69,8 @@ function SubcategoryPill({
 }
 
 /**
- * Childless categories sit in one uniform, evenly-wrapping tile grid — a
- * parent with subcategories used to sit in that same grid too, but its
- * child row broke the wrap into ragged, uneven-height lines (the "messy"
- * layout this replaced). Parents with children now get their own full-width
- * card below the grid instead, so the grid always stays a clean rectangle.
+ * Childless categories sit in one evenly-wrapping tile grid; parents with subcategories get their own
+ * full-width card below, since their child row broke the wrap into ragged lines.
  */
 export function CategorySection({
   cats,

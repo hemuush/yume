@@ -21,11 +21,8 @@ interface Dialog {
 let show: ((d: Dialog) => void) | null = null;
 
 /**
- * Yume's own confirm/notice dialog, in place of Android's grey system alert
- * (the calm-sheets sign-off). Same call as `Alert.alert(title, message,
- * buttons)`, so every "Delete this?" and "Couldn't save" moved over as is.
- * Shown by the one `AppDialogHost` mounted at the app's root; one dialog at
- * a time, a newer one replacing any still open.
+ * Yume's confirm/notice dialog replacing the system alert; same call as `Alert.alert(title, msg, buttons)`.
+ * Shown by the one `AppDialogHost` at the app root; one at a time, a newer dialog replaces an open one.
  */
 export function showAlert(title: string, message?: string, buttons?: DialogButton[]): void {
   show?.({ title, message, buttons: buttons?.length ? buttons : [{ text: 'OK' }] });

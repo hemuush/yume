@@ -1,8 +1,6 @@
 /**
- * The notification plan: at most one notification per time, so two can
- * never arrive together; several things due at a time merge into one; and
- * every rule (EMIs, Monday wrap, the evening nudge, waiting spending alerts)
- * lands at the right time.
+ * The notification plan: at most one notification per time; several things due at a time merge into one;
+ * and every rule (EMIs, Monday wrap, evening nudge, waiting spending alerts) lands at the right time.
  */
 import { PLAN_DAYS, PlanLoan, PlanPrefs, QueuedAlert, planNotifications } from './notificationPlan';
 

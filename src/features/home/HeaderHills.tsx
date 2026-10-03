@@ -6,11 +6,8 @@ import { shade } from '@/lib/color';
 export const HILLS_HEIGHT = 26;
 
 /**
- * The Home header's bottom edge (the Home A sign-off): a thin line of rolling
- * hills, with two little trees, in the theme pack's own colours — a small
- * touch of scenery that costs no height, in place of the old scalloped edge.
- * The nearest hill is the page's own cream, so the header rolls straight
- * into the page rather than ending in a band.
+ * Header's bottom edge: thin rolling hills with two little trees in the theme pack's colours, costing no
+ * height. The nearest hill is the page cream so the header rolls into the page instead of ending in a band.
  */
 export function HeaderHills({
   sky,

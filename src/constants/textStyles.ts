@@ -2,9 +2,8 @@ import { TextStyle } from 'react-native';
 import { theme } from './theme';
 
 /**
- * The app's shared text roles, so a heading or a label looks the same on
- * every screen. Spread one into a style and add only placement
- * (margins, alignment, a colour where it carries meaning).
+ * The app's shared text roles, so a heading or label looks the same on every screen. Spread one into a
+ * style and add only placement (margins, alignment, a colour where it carries meaning).
  */
 
 /** A section heading above a card or list: Home's "Recent activity", Categories' groups. */

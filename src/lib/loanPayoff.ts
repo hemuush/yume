@@ -12,9 +12,8 @@ export interface LoanPayoff {
 }
 
 /**
- * When a loan will be paid off and what it still costs, from its own
- * schedule — so a prepayment or a rate change (which rewrite the schedule)
- * show up here straight away.
+ * When a loan will be paid off and what it still costs, from its own schedule, so a prepayment or rate
+ * change (which rewrite the schedule) shows up here straight away.
  */
 export function loanPayoff(schedule: LoanPayment[], outstandingMinor: number): LoanPayoff {
   const pending = schedule
@@ -34,9 +33,8 @@ export function payoffMonth(lastDueDate: string): string {
 }
 
 /**
- * An SVG path for the balance falling over time, fitted to `width` ×
- * `height` — at most `maxPoints` points, so a 20-year loan draws as smoothly
- * (and as cheaply) as a 2-year one. Empty when there's nothing to draw.
+ * An SVG path of the balance falling over time, fitted to `width` x `height`, with at most `maxPoints` points
+ * so a 20-year loan draws as cheaply as a 2-year one. Empty when there's nothing to draw.
  */
 export function balanceLinePath(balances: number[], width: number, height: number, maxPoints = 48): string {
   if (balances.length < 2) return '';

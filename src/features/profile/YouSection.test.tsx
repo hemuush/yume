@@ -1,9 +1,6 @@
 /**
- * Profile's "You" section: what is in your accounts first, the tracked
- * balance as one line that opens to a sum that adds up, tiles that open their
- * screens, accounts grouped by type with subtotals, archived accounts folded
- * away, and one row pointing to Plan. Totals that include savings are masked
- * while savings amounts are hidden.
+ * Profile's "You" section: accounts first, tracked balance opening to a sum that adds up, tiles, accounts by
+ * type with subtotals, archived folded away, a Plan row. Totals including savings are masked while hidden.
  */
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
 import { Text } from 'react-native';

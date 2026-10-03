@@ -19,10 +19,8 @@ interface Props<T extends string> {
 }
 
 /**
- * A pill switch. The white pill glides to the choice you tap (the Quiet
- * motion sign-off) instead of each segment snapping its own background on:
- * one pill, measured from the track, moved with the native driver. Reduce
- * motion: it jumps.
+ * A pill switch: one white pill, measured from the track and moved with the native driver, glides to the
+ * tapped choice instead of each segment snapping its own background. Reduce motion: it jumps.
  */
 export function SegmentedControl<T extends string>({ options, value, onChange }: Props<T>) {
   const reduce = useReduceMotion();

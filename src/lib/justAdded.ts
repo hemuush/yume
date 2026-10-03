@@ -1,8 +1,6 @@
 /**
- * The entries you just saved on Add, so the lists you land back on (Home's
- * recent activity, Activity) can glow that row once and show you where it
- * went (the Quiet motion sign-off). In memory only: a relaunch forgets it,
- * and so does a minute passing.
+ * Entries just saved on Add, so the lists you land on (Home recent activity, Activity) glow that row once.
+ * In memory only: forgotten on relaunch and after a minute.
  */
 
 /** How long after Save a row still counts as "just added". */

@@ -31,21 +31,16 @@ export interface GoalPaceProjection {
 }
 
 /**
- * Projects when a savings goal is reached, from data the goal already
- * carries — there's no contribution ledger (see DATA_MODEL.md), so the
- * "rate" is an average: what's been saved so far, spread over the time
- * since the goal was created. Adding a what-if's extra monthly amount to
- * that rate projects a new, sooner date — purely client-side arithmetic,
- * never written back to the goal.
+ * Projects when a goal is reached with no contribution ledger (DATA_MODEL.md): rate = saved-so-far spread
+ * over time since creation; adding a what-if's extra monthly amount gives a sooner date. Never written back.
  */
 export function projectGoalPace(
   goal: { currentAmountMinor: number; targetAmountMinor: number; createdAt: string },
   extraMonthlyMinor: number,
   today: string = toLocalIsoDate(new Date()),
   /**
-   * The real monthly rate when it's known some other way — a goal following
-   * an account uses that account's recent growth, since its balance includes
-   * money that was there long before the goal existed.
+   * Real monthly rate when known otherwise: a goal following an account uses its recent growth,
+   * since that balance includes money from long before the goal existed.
    */
   knownMonthlyRateMinor?: number
 ): GoalPaceProjection {
@@ -60,9 +55,8 @@ export function projectGoalPace(
     };
   }
 
-  // `created_at` is a SQLite "YYYY-MM-DD HH:MM:SS" datetime; only the date
-  // portion is safe to parse (see getMemberSinceYear's own comment on why
-  // `new Date()` on that raw string is engine-dependent).
+  // `created_at` is a SQLite "YYYY-MM-DD HH:MM:SS" datetime; only the date part is safe to parse (see
+  // getMemberSinceYear's comment: `new Date()` on that raw string is engine-dependent).
   const createdDate = goal.createdAt.slice(0, 10);
   const daysSinceCreated = Math.max(1, daysBetweenIsoDates(createdDate, today));
   const monthsSinceCreated = Math.max(1, daysSinceCreated / 30.44);

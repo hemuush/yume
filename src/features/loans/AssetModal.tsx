@@ -28,11 +28,8 @@ export function AssetModal({
 
   const submit = async () => {
     setError(null);
-    // The value is optional — someone may want to record "this loan financed
-    // my Home" now and fill in a real estimate later, rather than being
-    // blocked on having one on hand right away. Only validated when actually
-    // provided; equity math (in Reports/Profile) simply treats "no value"
-    // the same as "not tracked" until one is set.
+    // Value is optional (record "this loan financed my Home" now, estimate later) and validated only when
+    // provided; equity math in Reports/Profile treats "no value" as "not tracked" until one is set.
     let valueMinor: number | null = null;
     if (value.trim()) {
       valueMinor = toMinor(parseFloat(value));

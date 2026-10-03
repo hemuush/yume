@@ -9,11 +9,8 @@ import { RING_COLORS } from '@/features/home/MonthRing';
 import type { ThemePack } from '@/theme/themes';
 
 /**
- * A theme pack drawn as a little piece of Home, in the pack's own colours:
- * the header's gradient and hills, the month ring with Suu's dot on its
- * face, and — at the larger size — the avatar and an Add button. Used by
- * Settings' current-theme card and every card on the Theme page, so you
- * see what a pack looks like instead of two colour halves.
+ * A theme pack drawn as a mini Home in its own colours: header gradient and hills, month ring with Suu's dot,
+ * and at the larger size the avatar and an Add button. Used by Settings' theme card and the Theme page.
  */
 export function ThemePreview({
   pack,

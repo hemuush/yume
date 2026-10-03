@@ -5,12 +5,8 @@ import { deleteTransaction, restoreTransaction } from './ledger';
 import { countFractionalLedgerAmounts } from './maintenance';
 
 /**
- * Tidy up: things in your data that look off, each with a fix — pairs of
- * identical entries, old balances logged as income, and amounts still
- * carrying paise. (An entry without a category can't exist — the schema
- * requires one for income and spending — so there's nothing to find there.) Only plain entries are
- * looked at: anything tied to a loan or a Friends & Family entry is managed
- * from there, never here.
+ * Tidy up: data that looks off, each fixable: identical-entry pairs, old balances logged as income, paise.
+ * Plain entries only; loan- or Friends & Family-linked ones are managed from there.
  */
 
 const KEPT_REPEATS_KEY = 'tidy_kept_repeats';
@@ -42,9 +38,8 @@ export interface RepeatGroup {
 }
 
 /**
- * Income filed under a "money I already had" category, grouped per account
- * and category — often one entry a month, logged to cover spending from
- * before you started tracking, so it's shown and fixed as one group.
+ * Income under a "money I already had" category, grouped per account and category (often one entry a month,
+ * covering pre-tracking spending), so it's shown and fixed as one group.
  */
 export interface StartingBalanceGroup {
   /** "accountId|categoryId" — what "They're real income" remembers. */
@@ -251,9 +246,8 @@ export interface OpeningBalanceMove {
 }
 
 /**
- * Moves a group of old balances into its account's opening balance: the
- * total is added to the opening balance and the entries deleted, together,
- * so the account's balance doesn't change — only those months' income does.
+ * Moves a group of old balances into its account's opening balance: the total is added to it and the entries
+ * deleted together, so the account's balance is unchanged and only those months' income drops.
  */
 export async function moveToOpeningBalance(group: StartingBalanceGroup): Promise<OpeningBalanceMove> {
   const db = await getDb();

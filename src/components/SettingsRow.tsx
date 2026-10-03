@@ -10,10 +10,8 @@ import type { McIconName } from '@/components/iconName';
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 /**
- * One settings row: a tinted icon tile, a label with an optional line
- * under it, then a value, a switch (`right`) or a chevron. Rows sit inside
- * one card per group (`h.card`) with a hairline between them, on Profile's
- * settings and on Notification settings alike.
+ * One settings row: a tinted icon tile, a label with an optional line under it, then a value, a switch
+ * (`right`) or a chevron. Rows sit in one card per group (`h.card`) with hairlines between them.
  */
 export function SettingsRow({
   icon,

@@ -4,9 +4,8 @@ import { AmountField } from '@/components/AmountField';
 import { theme } from '@/constants/theme';
 
 /**
- * A credit card's statement day and bill due day, side by side, on Add
- * account and Edit account. Both come from the card's own statement; left
- * empty, the card simply has no bill tracking.
+ * A credit card's statement day and bill due day, side by side (Add/Edit account), taken from its statement.
+ * Left empty, the card has no bill tracking.
  */
 export function CardCycleFields({
   statementDay,

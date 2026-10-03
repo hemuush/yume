@@ -20,13 +20,8 @@ import { withPressed } from '@/lib/pressed';
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 /**
- * The compact period control in the Home header — "September 2026 ▾". Tapping
- * opens a small dialog (the shared sheet, like every other popup) with
- * prev/next, the Month/Year switch and a "This month" reset, so browsing history and switching to the yearly view both stay
- * reachable without a full prev/next period bar taking up header space.
- *
- * `compact` is the smaller copy that fades into the collapsed header's brand
- * row: no calendar icon, a shorter max width, same menu.
+ * Home header period control ("September 2026 ▾"): dialog with prev/next, Month/Year switch, "This month".
+ * `compact` is the smaller copy in the collapsed brand row: no calendar icon, shorter max width, same menu.
  */
 export function MonthPill({
   cursor,

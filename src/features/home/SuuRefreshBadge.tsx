@@ -4,15 +4,8 @@ import { SuuIllustration } from '@/components/SuuIllustration';
 import { useReduceMotion } from '@/lib/useReduceMotion';
 
 /**
- * A small branded "welcome back" pop, played once right when a pull-to-
- * refresh finishes — not during the pull itself. `RefreshControl`'s own
- * native spinner and gesture physics are left completely alone here:
- * reliably hiding/replacing those across iOS and Android needs a full
- * custom gesture-driven control, a bigger change than this pass; this is
- * the lower-risk version of the same idea — Suu still shows up to mark the
- * moment, just after the native spinner's own animation, not instead of it.
- * Suu pops in with a small overshoot, gives two side wobbles (reading as
- * "checking in on things"), then settles back out.
+ * Suu's "welcome back" pop, played once after pull-to-refresh ends (overshoot in, two wobbles, settle out).
+ * RefreshControl's native spinner stays untouched: replacing it reliably needs a custom gesture control.
  */
 export function SuuRefreshBadge({ refreshing }: { refreshing: boolean }) {
   const reduce = useReduceMotion();

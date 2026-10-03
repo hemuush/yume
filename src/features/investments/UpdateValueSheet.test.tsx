@@ -1,7 +1,6 @@
 /**
- * Updating what a tracked account is worth: the estimate chip fills in the
- * account's own figure, saving adds (or edits) the update, an empty or bad
- * value is refused, and deleting offers an undo. All figures are made up.
+ * Updating a tracked account's worth: the estimate chip fills the account's figure, saving adds/edits the
+ * update, empty or bad values are refused, delete offers undo. Made-up figures.
  */
 import { Text, TextInput } from 'react-native';
 import { create, act, ReactTestRenderer } from 'react-test-renderer';

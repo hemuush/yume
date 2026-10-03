@@ -1,11 +1,6 @@
 /**
- * The restore safety copy, against a real SQLite engine and an in-memory
- * stand-in for the phone's file system that can be made to fail:
- *   - restore → undo gives back exactly the original data; undo → undo gives
- *     back the restored data
- *   - if the copy can't be saved, nothing is replaced (unless the user
- *     chooses "restore anyway"), and an existing copy is untouched
- *   - a restore that fails (damaged file) keeps the previous safety copy
+ * Restore safety copy (real SQLite, failable in-memory fs): undo round-trips both ways; an unsaved copy
+ * blocks the restore unless "restore anyway", and a failed restore keeps the previous copy untouched.
  */
 import { createRealDataTestDb } from '@/test-support/realDataTestDb';
 

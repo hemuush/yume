@@ -9,9 +9,8 @@ import { useSlideIn } from '@/lib/useSlideIn';
 import { styles } from './reports.styles';
 
 /**
- * The pinned top of Reports (under the period row, outside the scroll): what
- * was spent, the "above/below usual" badge and the day figures. It stays in
- * view whichever of Days, Categories and Trends is open.
+ * The pinned top of Reports (under the period row, outside the scroll): what was spent, the "above/below
+ * usual" badge and day figures. Stays in view whichever of Days, Categories and Trends is open.
  */
 export function ReportSummary({
   periodName,

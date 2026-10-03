@@ -59,10 +59,8 @@ function AboutFact({ icon, text }: { icon: string; text: string }) {
 }
 
 /**
- * Profile's Settings tab, in the order of how often each group is touched:
- * Money, Privacy & alerts, Your data, Appearance, then an About footer. A
- * coral note sits on top only while backups need attention; otherwise the
- * rows' own sub-lines carry every state, so nothing is said twice.
+ * Settings tab, ordered by how often each group is touched: Money, Privacy & alerts, Your data, Appearance,
+ * About. A coral note tops it only while backups need attention; otherwise rows' sub-lines carry every state.
  */
 export function SettingsSection() {
   const { themeId } = useAccent();
@@ -79,10 +77,8 @@ export function SettingsSection() {
   const [aboutOpen, setAboutOpen] = useState(false);
   const activeTheme = THEMES.find((t) => t.id === themeId) ?? THEMES[0];
 
-  // A single overall daily spending cap (see the "Today" strip on Home) —
-  // `null` means it's off. `dailyGoalInput` is only the accordion's own
-  // draft text, reset from the real value each time it opens so a typo
-  // never lingers after closing without saving.
+  // One overall daily spending cap (Home's "Today" strip); `null` is off. `dailyGoalInput` is the
+  // accordion's draft text, reset from the real value on open so a typo never lingers after closing unsaved.
   const [dailyGoal, setDailyGoalState] = useState<number | null>(null);
   const [dailyGoalOpen, setDailyGoalOpen] = useState(false);
   const [dailyGoalInput, setDailyGoalInput] = useState('');
@@ -127,9 +123,8 @@ export function SettingsSection() {
     try {
       await setDefaultCurrency(code);
     } catch (e) {
-      // A failed write would otherwise leave the screen showing the newly
-      // picked currency while every formatMoney() call still reads the old
-      // cached one — a silent mismatch with no error shown.
+      // A failed write would leave the screen showing the new currency while formatMoney() still reads the
+      // old cached one: a silent mismatch.
       setCurrency(previous);
       showAlert("Couldn't change currency", errorMessage(e));
     }

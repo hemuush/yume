@@ -9,12 +9,8 @@ export interface TrackedSumLines {
 }
 
 /**
- * The tracked balance as Profile shows it — three lines and their total —
- * in whole rupees that add up on screen. The accounts line is
- * `accountsShownMinor` (the sum of the account rows as displayed, so it
- * matches the Accounts card), loans and people are each rounded once, and
- * the total is built from those shown lines rather than rounded separately,
- * so the sum on screen always holds (see roundedMinor).
+ * Tracked balance as Profile shows it: whole-rupee lines whose total adds up on screen. Accounts is
+ * `accountsShownMinor` (sum of shown rows); loans/people round once; total sums the shown lines.
  */
 export function trackedSumLines(parts: TrackedBalanceParts, accountsShownMinor: number): TrackedSumLines {
   const loansMinor = roundedMinor(parts.loansMinor);
@@ -37,10 +33,8 @@ export interface AccountGroup<T> {
 const GROUP_ORDER = ['bank', 'cash', 'wallet', 'credit_card', 'savings'];
 
 /**
- * Accounts gathered by type (bank, cash, wallet, credit card, savings) with
- * the whole-rupee subtotal of each, counting only default-currency accounts
- * like the accounts total does, so the subtotals add up to that total.
- * Groups are in a fixed order, savings last; accounts keep their own order.
+ * Accounts grouped by type (bank, cash, wallet, credit card, savings) with a whole-rupee subtotal each,
+ * default-currency only like the accounts total, so subtotals add up. Fixed group order, savings last.
  */
 export function groupAccountsByType<
   T extends { type: string; currency: string; currentBalanceMinor: number },

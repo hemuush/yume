@@ -46,9 +46,8 @@ const STATUS_LOOK: Record<
 const STAGGER_MS = 45;
 
 /**
- * One person with an open balance on the Friends & Family list: initial,
- * status pill, balance, last activity, and a Settle up pill that opens the
- * same sheet as the card (which opens on its Settle tab).
+ * One person with an open balance on Friends & Family: initial, status pill, balance, last activity, and a
+ * Settle up pill opening the same sheet as the card (on its Settle tab).
  */
 export function PersonRow({
   person,
@@ -65,9 +64,8 @@ export function PersonRow({
   const dispBalanceMinor = roundedMinor(person.balanceMinor);
   const look = STATUS_LOOK[personStatus(dispBalanceMinor)];
   return (
-    // Entrance (reanimated) and press feedback (RN Animated) are two
-    // different animation drivers, so the stagger lives on this outer
-    // wrapper rather than fighting the press-scale style for the same node.
+    // Entrance (reanimated) and press feedback (RN Animated) use different drivers, so the stagger lives on
+    // this outer wrapper rather than fighting the press-scale style on the same node.
     <ReanimatedAnimated.View
       entering={FadeIn.delay(Math.min(index * STAGGER_MS, MAX_LIST_STAGGER_MS))
         .duration(DURATIONS.enter)

@@ -73,10 +73,8 @@ export function LoanDetailModal({
   const [loadError, setLoadError] = useState<string | null>(null);
   const [tab, setTab] = useState<'overview' | 'schedule'>('overview');
 
-  // Re-fetches the loan row itself, not just derived props — after a
-  // payment or prepayment, outstandingPrincipalMinor and status change on
-  // the loans table, and the `loan` prop is a snapshot from when the modal
-  // was opened, so trusting it for display would show stale figures.
+  // Re-fetches the loan row, not just derived props: payments/prepayments change outstandingPrincipalMinor
+  // and status, and the `loan` prop is a snapshot from open, so using it would show stale figures.
   const load = useCallback(async () => {
     try {
       const [freshLoan, sched, history, accs, cats] = await Promise.all([
@@ -90,18 +88,14 @@ export function LoanDetailModal({
       setSchedule(sched);
       setRateHistory(history);
       setAccounts(accs);
-      // A borrowed-loan repayment is an expense; a lent-loan repayment received
-      // is income — only categories of the matching kind are valid here, never
-      // a cross-kind fallback (which previously could tag an income transaction
-      // with an expense category or vice versa).
+      // Borrowed-loan repayment is an expense, a lent-loan repayment received is income: only categories of
+      // that kind are valid, never a cross-kind fallback (it could tag income with an expense category).
       const wantKind = (freshLoan?.direction ?? loan.direction) === 'borrowed' ? 'expense' : 'income';
       setCategories(cats.filter((c) => c.kind === wantKind));
       setLoadError(null);
     } catch (e) {
-      // Previously unguarded — a transient failure here left accounts/
-      // categories empty with no explanation, so Pay/Prepay just looked
-      // permanently greyed out (disabled={!defaultAccount || !emiCategory})
-      // with no hint why.
+      // Guarded: a transient failure would leave accounts/categories empty and Pay/Prepay looking permanently
+      // greyed out (disabled={!defaultAccount || !emiCategory}) with no hint why.
       setLoadError(errorMessage(e));
     }
   }, [loan.id, loan.direction, loan.rateType]);
@@ -113,21 +107,17 @@ export function LoanDetailModal({
   );
 
   const nextInstallment = schedule.find((p) => p.status === 'pending');
-  // When it's paid off and what it still costs — from the schedule, so a prepayment or rate change shows at once.
+  // When it's paid off and what it still costs — from the schedule, so a prepayment or rate change shows at
+  // once.
   const payoff = loanPayoff(schedule, liveLoan.outstandingPrincipalMinor);
-  // Distinguishes an on-time/late payment from paying an EMI ahead of its
-  // own due date — the "Pay" button otherwise accepted either identically,
-  // silently letting an installment be marked paid weeks or months early
-  // with no signal that it wasn't actually due, and no path through the
-  // dedicated "Prepay" flow (which is for extra principal, not an early EMI).
+  // Tells an on-time/late payment from paying an EMI before its due date: otherwise "Pay" accepted both,
+  // silently marking an installment paid weeks early; "Prepay" is for extra principal, not an early EMI.
   const todayIso = toLocalIsoDate(new Date());
   const isPayingEarly = !!nextInstallment && nextInstallment.dueDate > todayIso;
   const emiCategory =
     categories.find((c) => c.name === 'Loan EMI' || c.name === 'Loan Repayment') ?? categories[0] ?? null;
-  // If the account this loan was originally linked to was since deleted, this
-  // silently substitutes whatever account happens to be first in the list —
-  // `linkedAccountMissing` below surfaces that instead of debiting the wrong
-  // account with no explanation.
+  // If the loan's linked account was deleted, this falls back to the first account in the list;
+  // `linkedAccountMissing` below surfaces that instead of debiting the wrong account silently.
   const linkedAccountMissing =
     !!liveLoan.linkedAccountId && !accounts.some((a) => a.id === liveLoan.linkedAccountId);
   const defaultAccount = liveLoan.linkedAccountId
@@ -138,11 +128,8 @@ export function LoanDetailModal({
     if (nextInstallment) setPayVisible(true);
   };
 
-  // Pay is the one thing you do almost every time you open a loan, so it
-  // stays as the single visible action; Prepay/Update rate/Delete are real
-  // but rare, moved behind "⋯" so a 240-month home loan's detail screen
-  // looks exactly as simple as a 6-month one. Shown in the shared
-  // `ActionSheet` menu.
+  // Pay is the one frequent action so it stays visible; Prepay/Update rate/Delete are rare, behind "⋯"
+  // (shared `ActionSheet`) so a 240-month loan's detail screen looks as simple as a 6-month one.
   const moreActionItems: ActionSheetItem[] = [];
   if (liveLoan.status === 'active' && nextInstallment) {
     moreActionItems.push({
@@ -165,10 +152,8 @@ export function LoanDetailModal({
     label: 'Delete loan',
     icon: 'trash-2',
     destructive: true,
-    // A wrapped call, not a direct reference — `confirmDelete` is declared
-    // further down this same render, so a direct reference here would be a
-    // temporal-dead-zone error; by the time this item is actually clicked
-    // (long after this render finished), `confirmDelete` is defined either way.
+    // A wrapped call, not a direct reference: `confirmDelete` is declared later in this render, so
+    // referencing it directly would be a temporal-dead-zone error; by click time it is defined either way.
     onPress: () => confirmDelete(),
   });
 
@@ -190,10 +175,8 @@ export function LoanDetailModal({
     }
   };
 
-  // Deleting a loan always cascades — its whole schedule, any rate-change
-  // history, and any disbursement/fee transactions it recorded go with it —
-  // so unlike a single transaction or account, this always gets a confirm
-  // step before the instant-delete + undo toast that follows.
+  // Deleting a loan cascades (schedule, rate-change history, disbursement/fee transactions), so unlike a
+  // single transaction or account it always confirms before the instant-delete + undo toast.
   const confirmDelete = () => {
     showAlert(
       `Delete "${liveLoan.counterparty}"?`,
@@ -208,18 +191,15 @@ export function LoanDetailModal({
   const pendingInstallments = schedule.filter((p) => p.status === 'pending');
   const paidCount = schedule.filter((p) => p.status === 'paid').length;
 
-  // Round outstanding and asset value the same way they're displayed, then
-  // derive equity from those rounded figures so "equity" always equals the
-  // asset value minus the outstanding as they appear on screen.
+  // Round outstanding and asset value as displayed, then derive equity from those rounded figures so equity
+  // always equals the displayed asset value minus the displayed outstanding.
   const toWholeRupee = (minor: number) => Math.round(minor / 100) * 100;
   const dispOutstanding = toWholeRupee(liveLoan.outstandingPrincipalMinor);
   const dispAssetValue = toWholeRupee(liveLoan.assetValueMinor ?? 0);
   const dispEquity = dispAssetValue - dispOutstanding;
 
-  // The calm-sheets sign-off (Direction C): the loan as a card — coral for
-  // money you owe, mint for money you lent — then two pages: where it stands,
-  // and its schedule. Pay is the footer's one button; Prepay, Update rate and
-  // Delete stay behind ⋯, so a 240-month loan looks as simple as a 6-month one.
+  // The loan as a card (coral for money you owe, mint for money lent), then two pages: where it stands, and
+  // its schedule. Pay is the footer's one button; Prepay, Update rate and Delete stay behind ⋯.
   const canPay = liveLoan.status === 'active' && !!nextInstallment;
   return (
     <>

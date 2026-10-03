@@ -67,11 +67,8 @@ export const styles = StyleSheet.create({
     borderColor: theme.colors.borderSoft,
     overflow: 'hidden',
   },
-  // Self-padded, like RecentTransactionRow's row — BudgetRow renders inside
-  // this listCard on Profile's "You" tab, but also directly inside Home's
-  // own (unpadded) card style, so it can't rely on a container for its
-  // horizontal inset or it runs edge-to-edge wherever that container has
-  // none.
+  // Self-padded like RecentTransactionRow: BudgetRow renders in this listCard on Profile's "You" tab but
+  // also in Home's unpadded card, so it can't rely on a container for its horizontal inset.
   row: { paddingVertical: 14, paddingHorizontal: 14 },
   rowDivider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.borderSoft },
   rowTop: { flexDirection: 'row', alignItems: 'center', gap: 11, marginBottom: 8 },

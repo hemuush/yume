@@ -45,11 +45,8 @@ export function AddAccountModal({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Defaults to the app's default currency each time the modal opens, but
-  // stays changeable — an account for money that genuinely isn't in your
-  // usual currency (a foreign bank account, a USD wallet) needs its own
-  // currency set at creation, since it can never be changed afterward once
-  // real transactions exist against it.
+  // Defaults to the app currency each time the modal opens but stays changeable: a foreign account needs its
+  // own currency at creation, since it can't be changed once transactions exist.
   useEffect(() => {
     if (visible)
       getDefaultCurrency()

@@ -8,15 +8,8 @@ export function monthlyRateFromAnnualBp(annualRateBp: number): number {
 }
 
 /**
- * How much of a loan's principal has actually been repaid, as a 0-1
- * fraction — `(principal − outstanding) / principal`, clamped so a rounding
- * edge case or a bad input can never render a negative or over-100% bar.
- * Principal-based rather than installment-count-based on purpose: a
- * reducing-balance loan's early installments are interest-heavy, so
- * "42 of 60 installments paid" (70%) and "42/60ths of the principal repaid"
- * are genuinely different numbers — this is the one that reflects real money
- * moved, and the only one computable from a `Loan` row alone with no extra
- * schedule query.
+ * Fraction (0-1) of principal repaid, `(principal − outstanding) / principal`, clamped against bad inputs.
+ * Principal-based, not installment-based (early installments are interest-heavy); needs only a `Loan` row.
  */
 export function payoffFraction(principalMinor: number, outstandingPrincipalMinor: number): number {
   if (!Number.isFinite(principalMinor) || principalMinor <= 0) return 0;
@@ -25,8 +18,7 @@ export function payoffFraction(principalMinor: number, outstandingPrincipalMinor
 }
 
 /**
- * Standard reducing-balance EMI formula:
- *   EMI = P * r * (1+r)^n / ((1+r)^n - 1)
+ * Reducing-balance EMI: P * r * (1+r)^n / ((1+r)^n - 1).
  * Falls back to a straight-line split when r = 0 (interest-free loan).
  */
 export function calculateEmi(principalMinor: number, annualRateBp: number, tenureMonths: number): number {
@@ -90,18 +82,8 @@ export function generateAmortizationSchedule(params: {
 }
 
 /**
- * Recompute a fresh schedule for the remaining tenure after a prepayment,
- * keeping EMI fixed and reducing tenure. Returns the new schedule starting
- * from the given installment number.
- *
- * `fromDate` is the due date of installment `anchorInstallmentNumber`
- * (defaults to `fromInstallmentNumber`, i.e. the first regenerated one), and
- * every due date is offset from it rather than chained installment to
- * installment. Callers pass installment #1's own due date with
- * `anchorInstallmentNumber: 1` — the same anchor generateAmortizationSchedule
- * uses — so a loan due on the 31st keeps landing on the 31st (or the month's
- * last day) after a prepayment or rate change, instead of inheriting
- * whatever clamped day the next pending installment happened to fall on.
+ * Schedule for the remaining tenure after a prepayment (EMI fixed, tenure shrinks), from a given installment.
+ * `fromDate` is `anchorInstallmentNumber`'s due date; all dates offset from it so a 31st due day never drifts.
  */
 export function recalculateAfterPrepayment(params: {
   loanId: string;
@@ -112,10 +94,8 @@ export function recalculateAfterPrepayment(params: {
   fromDate: string;
   anchorInstallmentNumber?: number;
   /**
-   * If set, this installment closes the loan out exactly (principal = all
-   * that's left), absorbing rounding residue — for a schedule that must end
-   * on a fixed installment (keepTenure). Omitted, the schedule runs until
-   * the balance reaches zero on its own.
+   * If set, this installment closes the loan exactly (principal = all that's left), absorbing rounding
+   * residue (keepTenure). Omitted, the schedule runs until the balance reaches zero.
    */
   lastInstallmentNumber?: number;
 }): Omit<LoanPayment, 'transactionId' | 'paidDate' | 'status'>[] {

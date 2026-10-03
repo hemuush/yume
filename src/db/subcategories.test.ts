@@ -1,8 +1,6 @@
 /**
- * Subcategory support (categories.parent_id) against a real SQLite engine:
- * creation/re-parenting validation in db/ledger.ts, cascade-archive, and the
- * Reports rollup (a subcategory's spend folds into its parent's row, with a
- * drill-down available via getSubcategoryBreakdown).
+ * Subcategories (categories.parent_id) on real SQLite: re-parenting validation (db/ledger.ts), cascade-archive,
+ * and the Reports rollup into the parent's row, with drill-down via getSubcategoryBreakdown.
  */
 import { createRealDataTestDb } from '@/test-support/realDataTestDb';
 
@@ -182,8 +180,7 @@ describe('subcategories', () => {
     expect(fresh.name).toBe('Plain Sensitivity Test (renamed)');
     expect(fresh.isSensitive).toBe(true);
 
-    // Rollup: a parent that is itself unflagged, but has a flagged
-    // subcategory, must still report isSensitive=true — otherwise the
+    // Rollup: an unflagged parent with a flagged subcategory must still report isSensitive=true, or the
     // subcategory's amount would leak through the parent's unmasked total.
     const parent = await createCategory({ name: 'SensitivityRollup Parent', kind: 'expense' });
     const sensitiveChild = await createCategory({

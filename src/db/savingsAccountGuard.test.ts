@@ -1,12 +1,6 @@
 /**
- * Savings accounts aren't spendable in place — money has to be transferred
- * out to a bank/cash/wallet account before it can be logged as income or an
- * expense (see assertSpendableAccount in src/db/ledger.ts). This file checks
- * that rule holds at every write path that can produce an income/expense
- * transaction, not just the add-transaction screen: direct transactions,
- * recurring rules, the friend ledger, and every loan money-movement
- * function. Transfers into/out of savings must keep working everywhere,
- * since that's the only legal way money enters or leaves one.
+ * Savings accounts aren't spendable in place (assertSpendableAccount in ledger.ts): checks every income/expense
+ * write path (transactions, recurring, friend ledger, loans) enforces it, while transfers in/out keep working.
  */
 import { createRealDataTestDb } from '@/test-support/realDataTestDb';
 
@@ -209,9 +203,8 @@ describe('savings accounts are never a valid income/expense account', () => {
   });
 
   it('createLoan rejects a savings account when a processing fee is charged, even though disbursement itself is income', async () => {
-    // Borrowed disbursement is type 'income' (passes the income-only check on
-    // its own) but the processing fee always posts as 'expense' on that same
-    // account — this is the case the two-part check in loans.ts exists for.
+    // A borrowed disbursement is 'income' (passes the check) but its processing fee posts as 'expense' on the
+    // same account: the case the two-part check in loans.ts exists for.
     await expect(
       createLoan({
         direction: 'borrowed',

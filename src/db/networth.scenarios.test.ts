@@ -1,14 +1,6 @@
 /**
- * Every combination of loan direction × loan status, verified against the
- * "tracked balance" formula every screen (Home, Profile, the Loans tab)
- * uses, plus a dedicated historical-cutoff test for getNetWorthTrend — the
- * one function that reconstructs net worth as of a past date, where an
- * off-by-one would leak a later month's transactions into an earlier
- * snapshot. Written after finding that a 'defaulted' loan (a real,
- * schema-supported status) was silently excluded from every current-moment
- * total by an overly narrow `status === 'active'` filter, even though
- * getNetWorthTrend itself already handled it correctly — three different
- * screens disagreed with the one function that got it right.
+ * Every loan direction × status checked against the "tracked balance" formula all screens use, plus a
+ * historical-cutoff test for getNetWorthTrend (off-by-one would leak later months into earlier snapshots).
  */
 import { createRealDataTestDb } from '@/test-support/realDataTestDb';
 
@@ -61,10 +53,8 @@ describe('net worth calculation matrix — every loan direction × status combin
       startDate: '2026-01-01',
       disbursement: { accountId, categoryId: incomeCat },
     });
-    // No UI path sets 'defaulted' today (confirmed: dead schema value), but
-    // the aggregation must not silently drop it the moment it exists —
-    // simulating it directly at the data layer, same as a future feature
-    // (or a restored backup from elsewhere) legitimately could.
+    // No UI path sets 'defaulted' today, but aggregation must not silently drop it once it exists, so
+    // simulate it directly at the data layer (a future feature or restored backup could).
     await mockTestDb.runAsync(`UPDATE loans SET status = 'defaulted' WHERE id = ?`, [loan.id]);
 
     const loans = await listLoans();
@@ -125,9 +115,8 @@ describe('net worth calculation matrix — every loan direction × status combin
 
 describe('getNetWorthTrend historical cutoff correctness', () => {
   it("a transaction dated in a later month never leaks into an earlier month's net worth snapshot", async () => {
-    // Reuses this file's one shared mocked db (dates chosen in a year no
-    // other test in this file touches, so the running totals from earlier
-    // describe blocks can't contaminate this snapshot's own arithmetic).
+    // Reuses the file's shared mocked db; dates are in a year no other test touches so earlier running
+    // totals can't contaminate this snapshot.
     const account = await createAccount({
       name: 'CutoffAccount',
       type: 'bank',
@@ -187,13 +176,8 @@ describe('applyRateChange: negative-amortization guard', () => {
     const { applyRateChange, getLoanSchedule, getLoanById } = require('@/db/loans');
     const scheduleBefore = await getLoanSchedule(loan.id);
 
-    // A jump to 90% p.a. — extreme, but exactly the kind of number a bad
-    // manual entry could produce. The EMI is fixed at the old, much lower
-    // rate, so monthly interest at the new rate would exceed it — this
-    // must be rejected before touching the database, not silently
-    // accepted with an empty/incomplete resulting schedule (which is what
-    // it did before this guard: 0 pending installments, loan stuck
-    // "active" with its full original debt and no way to ever pay it off).
+    // A 90% p.a. rate (bad manual entry): the fixed EMI can't cover the interest, so it must be rejected
+    // before touching the DB, not accepted with an empty schedule that leaves the loan stuck active.
     await expect(
       applyRateChange(loan.id, { newAnnualRateBp: 9000, effectiveDate: '2026-02-01' })
     ).rejects.toThrow('never pay off');

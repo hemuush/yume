@@ -1,9 +1,6 @@
 /**
- * Split payments in a real database: each part lands in its own category,
- * the parts share one id and list with the whole total, editing replaces the
- * parts, a part can't be deleted on its own, deleting takes the whole
- * payment (into Recently deleted) and Undo brings every part back. Tidy up
- * leaves split parts alone. All figures are made up.
+ * Split payments in a real DB: parts get their own categories and share one id, edits replace parts, a part
+ * can't be deleted alone, deleting takes the whole payment (Undo restores every part), Tidy up skips parts.
  */
 import { createRealDataTestDb } from '@/test-support/realDataTestDb';
 

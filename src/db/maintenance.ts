@@ -1,22 +1,8 @@
 import { getDb } from './client';
 
 /**
- * One-off data hygiene the user triggers from Settings.
- *
- * The app now quantizes every newly entered amount to a whole rupee (see
- * `toMinor` in src/lib/money.ts), but a ledger built before that change can
- * still hold sub-rupee paise from `toMinor(parseFloat(...))` — which is what
- * made on-screen totals disagree with their parts by a rupee or two.
- * `roundLedgerAmountsToWholeRupees` rounds those stored values to whole
- * rupees in one pass.
- *
- * Deliberately NOT touched: `loans`, `loan_payments`, `loan_rate_changes`.
- * Their paise are load-bearing — an amortization schedule's principal
- * components sum to the principal exactly and the balance lands on exactly
- * zero only because each row keeps its exact paise. Rounding them would
- * break those invariants. Loan-linked transactions (disbursement, fees,
- * prepayments, EMI transfers) are skipped for the same reason: their amount
- * must keep matching the loan math.
+ * Settings data hygiene: rounds stored ledger amounts to whole rupees (old entries left sub-rupee paise).
+ * Loan tables and loan-linked transactions are skipped: their exact paise make schedules sum to the principal.
  */
 
 // SQLite ROUND is half-away-from-zero, matching how amounts are displayed.
@@ -109,13 +95,8 @@ export async function countFractionalLedgerAmounts(): Promise<RoundAmountsResult
 }
 
 /**
- * Round every stored ledger amount (excluding the loan tables — see the file
- * header) to a whole rupee. Runs in a single transaction so it either fully
- * applies or not at all. Returns the per-table count of rows changed.
- *
- * Note: account balances are derived from opening balance + transactions, so
- * a balance can shift by a few rupees after this runs — that is the point,
- * and the user is warned before triggering it.
+ * Rounds every stored ledger amount (not loan tables; see file header) to whole rupees in one transaction.
+ * Returns per-table changed counts. Derived account balances may shift a few rupees; the user is warned first.
  */
 export async function roundLedgerAmountsToWholeRupees(): Promise<RoundAmountsOutcome> {
   const db = await getDb();

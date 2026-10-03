@@ -3,13 +3,8 @@ import { theme } from '@/constants/theme';
 import { Skeleton } from '@/components/Skeleton';
 
 /**
- * Stands in for the whole Reports body while its first `getRangeComparison`
- * (etc.) batch is still in flight — chart-shaped areas (the heatmap, the
- * two bar charts) are one large skeleton block each rather than dozens of
- * individually-animated cells/bars: each `Skeleton` runs its own looping
- * animation, and a real calendar grid or bar chart would mean 20-30 of them
- * running at once for no real visual gain over a single block the same
- * size.
+ * Stands in for the Reports body while the first `getRangeComparison` batch is in flight. Chart areas are one
+ * large Skeleton block each: every Skeleton loops its own animation, so 20-30 cells/bars would be wasteful.
  */
 export function ReportsSkeleton() {
   return (

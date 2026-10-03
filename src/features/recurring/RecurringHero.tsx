@@ -12,10 +12,8 @@ import { CostShare, topShareLine } from './recurring.helpers';
 const HUE = theme.colors.idTeal;
 
 /**
- * The top of Recurring: what the running expense rules cost a month and a
- * year (₹299 a month reads smaller than ₹3,588 a year), how that splits
- * between them, and when the next one is due. With no expense rule running
- * it is just a line saying what this page does.
+ * The top of Recurring: what running expense rules cost a month and a year (₹299/month reads smaller than
+ * ₹3,588/year), the split, and when the next is due. With none running, just a line on what the page does.
  */
 export function RecurringHero({
   totals,

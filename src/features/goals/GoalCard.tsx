@@ -19,11 +19,8 @@ import { styles as shared } from './goals.styles';
 import { goalPlan, GOAL_PACE_LABEL } from './goalPlan';
 
 /**
- * One goal, full-width, in its own identity colour (the same soft gradient as
- * Home's account cards and Loans): what is left, how far along it is, and
- * what to put in each month to finish by its date. Tap opens edit/archive/
- * delete. The pill opens the contribute sheet, or for a goal following its
- * account, a transfer into that account (the only way its progress moves).
+ * One full-width goal: what's left, progress, monthly amount to finish on time. Tap opens edit/archive/delete;
+ * the pill contributes, or for a followed account transfers into it (the only way its progress moves).
  */
 export function GoalCard({
   goal,

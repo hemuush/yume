@@ -1,16 +1,8 @@
 import { hexToRgba, shade } from '@/lib/color';
 
 /**
- * Colour/font tokens for the home-screen widgets — a small, deliberate
- * subset of `@/constants/theme`, copied rather than imported.
- *
- * Widget components render in Android's own RemoteViews process, not React
- * Native's — `@/constants/theme` itself is plain data (no hooks, no native
- * calls) so importing it would technically work, but keeping widgets on
- * their own copy makes it obvious at a glance that nothing here can quietly
- * start depending on something RemoteViews can't render (a custom font
- * object, a StyleSheet.create() result, etc). Values below are the exact
- * hex the app already uses for each of these, kept in sync by hand.
+ * Colour/font tokens for widgets: a subset of `@/constants/theme` copied, not imported, so nothing can start
+ * depending on what RemoteViews can't render (font objects, StyleSheet.create()). Hex values synced by hand.
  */
 export const widgetColor = {
   ink: '#12130F',
@@ -36,10 +28,8 @@ export const widgetColor = {
 } as const;
 
 /**
- * The widget fonts, bundled through the config plugin's `fonts` array in
- * app.json (the file name minus its extension is the family name): Fredoka
- * for headings, Archivo for text, Space Mono for amounts — the app's own
- * three — plus Material Community Icons for category and account icons.
+ * Widget fonts, bundled via the config plugin's `fonts` array in app.json (file name minus extension is the
+ * family): Fredoka headings, Archivo text, Space Mono amounts, plus Material Community Icons.
  */
 export const WIDGET_FONT = {
   rounded: 'Fredoka_600SemiBold',
@@ -54,26 +44,8 @@ export const WIDGET_FONT = {
 export const WIDGET_RADIUS = 22;
 
 /**
- * Builds an rgba colour string typed as the library's own `ColorProp` —
- * needed anywhere the alpha (or any channel) is computed rather than a
- * fixed literal, since a plain template-literal expression widens to
- * `string` and no longer matches `ColorProp`'s exact-shape type.
- */
-export function widgetRgba(
-  r: number,
-  g: number,
-  b: number,
-  a: number
-): `rgba(${number}, ${number}, ${number}, ${number})` {
-  return `rgba(${r}, ${g}, ${b}, ${a})`;
-}
-
-/**
- * Trusts a colour that came from the database (the user's own accent, or an
- * account/category colour) to already be a valid `#rrggbb` hex — every
- * writer of these values in the app (the accent picker, category/account
- * seeding) only ever stores that shape, so this is a type-level cast, not a
- * runtime check.
+ * Trusts a database colour (accent, account/category colour) to already be a valid `#rrggbb` hex, as every
+ * writer only stores that shape; a type-level cast, not a runtime check.
  */
 export function asWidgetColor(hex: string): `#${string}` {
   return hex as `#${string}`;

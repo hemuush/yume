@@ -1,20 +1,11 @@
 import { getCachedCurrency } from '@/db/settings';
 import { MAX_AMOUNT_MAJOR } from './amountLimits';
 
-// All money is stored/passed as integer minor units (smallest currency unit,
-// e.g. paise/cents) to avoid float rounding errors anywhere in balance or
-// EMI math. The active currency is user-configurable in Settings — nothing
-// in this file assumes INR/USD/any specific currency.
+// Money is stored as integer minor units (e.g. paise/cents) to avoid float rounding in balance and EMI math.
+// The active currency is user-configurable; nothing here assumes INR/USD/any specific currency.
 
-// `toMinor` is the single entry point for turning a user-typed amount into a
-// stored value, and it quantizes to whole major units: the app deliberately
-// keeps every ledger amount, balance and loan figure a round rupee (no
-// "205.55") so that on-screen totals reconcile with their parts without any
-// sub-unit drift. Amounts that arrive already in minor units (EMI splits,
-// derived balances) stay exact — this only governs fresh input. An amount
-// beyond MAX_AMOUNT_MAJOR comes back as NaN, the same "not a usable number"
-// answer as unparseable text, so every screen's existing "enter a valid
-// amount" check rejects it without any new code.
+// `toMinor` is the sole entry for typed amounts; it quantizes to whole major units so totals reconcile.
+// Minor-unit inputs (EMI splits) stay exact. Over MAX_AMOUNT_MAJOR returns NaN, which callers already reject.
 export function toMinor(major: number): number {
   if (Math.abs(major) > MAX_AMOUNT_MAJOR) return NaN;
   return Math.round(major) * 100;
@@ -45,11 +36,8 @@ export function getCurrencySymbol(currency?: string): string {
 }
 
 /**
- * An amount as the "hide savings & investment amounts" privacy toggle shows
- * it: the real formatted figure, or — when `masked` — a placeholder that
- * still reads as money (keeps the currency symbol). The one rendering both
- * the in-app `<Amount>` and the home-screen widgets use, so the two can't
- * disagree about what a hidden amount looks like.
+ * Amount as the "hide savings & investment amounts" toggle shows it: the real figure, or (when `masked`) a
+ * placeholder that still reads as money. Shared by in-app `<Amount>` and the widgets so they can't disagree.
  */
 export function formatMaskableMoney(
   minor: number,
@@ -59,23 +47,15 @@ export function formatMaskableMoney(
 }
 
 /**
- * Formats minor units using the device's locale, so digit grouping and the
- * currency symbol/placement follow the reader's own conventions rather than
- * a hardcoded locale. `currency` defaults to whatever the user picked in
- * Settings (getDefaultCurrency), never a fixed value.
+ * Formats minor units in the device's locale (digit grouping, symbol placement), never a hardcoded locale.
+ * `currency` defaults to the user's Settings choice (getDefaultCurrency).
  */
 export function formatMoney(minor: number, currency?: string): string {
   const major = toMajor(minor);
   const resolvedCurrency = currency ?? getCachedCurrency();
   try {
-    // No fixed maximumFractionDigits here on purpose: Intl already knows the
-    // correct decimal precision per currency (2 for INR/USD, 0 for JPY,
-    // etc.), so hardcoding one would print "¥500.00" for a currency that
-    // has no minor unit at all.
-    // Rounded to whole currency units on display — paise/cents precision
-    // matters for internal math (storage stays exact minor units) but reads
-    // as noise on screen (EMI splits, reports, balances all showing ".84",
-    // ".67" etc.), so every amount is shown rounded regardless of currency.
+    // Intl sets per-currency precision (a fixed maximumFractionDigits would print "¥500.00" for JPY).
+    // Amounts show rounded to whole units: paise/cents matter for stored math but are noise on screen.
     return new Intl.NumberFormat(undefined, {
       style: 'currency',
       currency: resolvedCurrency,

@@ -1,8 +1,7 @@
 import { hexToHsl, hslToHex, shade, hexToRgba, spendHeatScale } from './color';
 
-// Helper: how far apart two hex colours are, channel-by-channel — used
-// instead of exact string equality since HSL<->RGB round-trips through
-// floating point and rounding.
+// Helper: per-channel distance between two hex colours; exact equality would fail because HSL<->RGB
+// round-trips through floating point and rounding.
 function maxChannelDiff(a: string, b: string): number {
   const parse = (hex: string) => {
     const c = hex.replace('#', '');

@@ -1,11 +1,6 @@
 /**
- * Exercises buildExportWorkbook with representative data and round-trips
- * the result through XLSX.write -> XLSX.read, the same pipeline the real
- * export uses (write -> Uint8Array -> file -> share). A broken cell
- * reference, an invalid style object, or a malformed range would throw or
- * produce a workbook Excel can't open — round-tripping through the same
- * library that will eventually parse it in Excel is the closest thing to a
- * real integration check available without a device.
+ * Round-trips buildExportWorkbook output through XLSX.write -> XLSX.read, the real export pipeline.
+ * A broken cell ref, bad style or malformed range would throw: the closest check to Excel without a device.
  */
 import * as XLSX from 'xlsx-js-style';
 import { buildExportWorkbook, ExportData } from './exportExcel';

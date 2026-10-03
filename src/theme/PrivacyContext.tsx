@@ -16,11 +16,8 @@ const PrivacyContext = createContext<PrivacyContextValue>({
 });
 
 /**
- * One global on/off switch for masking amounts tagged `isSensitive`
- * (Savings Deposit/Investments by default, or any category the user opts
- * in via its own edit screen) — a quick way to hand your phone to someone
- * without them seeing exactly how much you have in savings. Amounts
- * unrelated to a sensitive category are never touched by this.
+ * One global switch masking amounts tagged `isSensitive` (Savings Deposit/Investments by default, or any
+ * category the user opts in), so the phone can be handed over unseen. Other amounts are never touched.
  */
 export function PrivacyProvider({ children }: { children: ReactNode }) {
   const [hideAmounts, setHideAmountsState] = useState(getCachedHideSensitiveAmounts());

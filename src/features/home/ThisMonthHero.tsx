@@ -37,11 +37,8 @@ import {
 import type { SuuLine } from './suuLine';
 import { withPressed } from '@/lib/pressed';
 
-// Reanimated only in this file, never core RN `Animated` — mixing the two in
-// one tree is the exact bug class that crashed BudgetRow/GoalCard/GoalChip
-// in an earlier pass (see Skeleton.tsx's own comment on the same rule). The
-// confetti burst and the drawn checkmark below used to be built on core
-// `Animated`, nested inside this component's Reanimated slide wrapper.
+// Reanimated only, never core RN `Animated`: mixing them in one tree crashed BudgetRow/GoalCard/GoalChip
+// (see Skeleton.tsx). That covers the confetti burst and checkmark below too.
 const AnimatedPath = ReanimatedAnimated.createAnimatedComponent(Path);
 
 interface HeroContent {
@@ -51,9 +48,15 @@ interface HeroContent {
   savingsMinor: number;
   /** What's free to use: what carried over from earlier months, plus income − spent − savings. */
   surplusMinor: number;
-  /** Left over from (or, when negative, owed from) all the months before this period — already inside surplusMinor. */
+  /**
+   * Left over from (or, when negative, owed from) all the months before this period — already inside
+   * surplusMinor.
+   */
   carryMinor: number;
-  /** EMIs and bills still to pay this month (current month only; 0 = none). The headline is free to use minus this. */
+  /**
+   * EMIs and bills still to pay this month (current month only; 0 = none). The headline is free to use minus
+   * this.
+   */
   dueMinor: number;
   outstandingLoansMinor: number;
   suu: SuuLine;
@@ -105,28 +108,8 @@ function ConfettiDot({ progress, piece }: { progress: SharedValue<number>; piece
 }
 
 /**
- * The month at a glance, number first: what's free to use is the one big
- * figure, with the income it came out of underneath. Beside it a small ring
- * splits that income into spent, moved to savings and free (see MonthRing) —
- * tap it to step through the slices — and three tinted tiles under them give
- * spent, saved and debt left (tap spent or saved to pick its slice). Today's
- * spend against the daily goal and the month's pace are two slim lines under
- * those, and Suu's line is the card's mint footer.
- *
- * Bills still to pay this month (unpaid EMIs, recurring bills ahead) are
- * taken off the headline — "Free after bills" — and shown as a gold chip that
- * opens the sum; the ring gives them a gold slice. Without any, it is simply
- * "Free to use".
- *
- * The period bar at the top (title, ‹ month ›) stays put; everything under
- * it is the "page" that turns. Dragging that page sideways turns it too —
- * right for the period before, left for the one after — rubber-banding with
- * a haptic tick past the current period, where there's nothing newer.
- *
- * `periodKey`/`direction` and the lagged `displayed` state: a same-period
- * data update syncs immediately, while a genuine period change slides the
- * old content out before the new content is committed. The `commit`/`runId`
- * guard stops a slower, stale slide from overwriting a newer one.
+ * Month card: free-to-use headline, MonthRing, three tiles; unpaid bills give "Free after bills" (gold chip).
+ * `displayed` lags `periodKey` so content slides out first; a `runId` guard stops stale slides overwriting.
  */
 export function ThisMonthHero({
   periodKey,
@@ -215,10 +198,8 @@ export function ThisMonthHero({
       setDisplayed(next);
       setPicked(null);
     };
-    // Built here, on the JS thread: the completion callback below runs on the
-    // UI thread, where calling a plain JS helper like `timing()` crashes the
-    // app (it did — on every month change). A config object is safe to
-    // capture into the worklet; a function call is not.
+    // Built on the JS thread: the completion callback runs on the UI thread, where calling a JS helper like
+    // `timing()` crashes the app. A config object can be captured into the worklet; a function call can't.
     const outCfg = timing(MOTION.slideOut);
     const inCfg = timing(MOTION.slideIn);
     opacity.value = withTiming(0, outCfg);
@@ -229,9 +210,7 @@ export function ThisMonthHero({
       tx.value = withTiming(0, inCfg);
       opacity.value = withTiming(1, inCfg);
     });
-    // `suu` (an object) and `direction` deliberately excluded — including an
-    // object recreated every render would re-fire this effect every render
-    // too; the current values are read fresh via closure regardless.
+    // `suu` and `direction` omitted on purpose: a per-render object would re-fire this effect every render.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     periodKey,
@@ -290,11 +269,8 @@ export function ThisMonthHero({
     });
   });
 
-  // With "hide savings" on, nothing on the card may reveal what went to
-  // savings: no tile, no arc (its share stays empty track), no "kept" view.
-  // What came over from earlier months is money to spend like income is, so
-  // it joins the pool the ring splits; a shortfall carried over only lowers
-  // the headline, the ring stays about this period's own money.
+  // With "hide savings" on nothing may reveal savings: no tile, no arc (share stays empty track), no "kept".
+  // Carry-over joins the ring's pool like income; a carried shortfall only lowers the headline, not the ring.
   const poolMinor = displayed.incomeMinor + Math.max(0, displayed.carryMinor);
   const full = heroSlices(poolMinor, displayed.spentMinor, displayed.savingsMinor, displayed.dueMinor);
   const slices = hideAmounts ? withoutSavings(full) : full;
@@ -337,10 +313,8 @@ export function ThisMonthHero({
   const todayPct = today && today.goalMinor > 0 ? (today.spentMinor / today.goalMinor) * 100 : 0;
   const todayTone: LimitMeterTone = todayPct >= 100 ? 'over' : todayPct >= 80 ? 'near' : 'ok';
 
-  // Debt-cleared celebration — a drawn checkmark plus a small confetti
-  // burst, played once on the real crossing (see Home's own comment on
-  // `justClearedDebt`), not on every render where debt already happens to
-  // be zero.
+  // Debt-cleared celebration (checkmark + confetti) plays once on the real crossing (see Home's
+  // `justClearedDebt`), not on every render where debt is already zero.
   const [confetti, setConfetti] = useState<ConfettiPiece[]>([]);
   const [confettiPlaying, setConfettiPlaying] = useState(false);
   const checkDraw = useSharedValue(1);

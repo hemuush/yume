@@ -1,8 +1,6 @@
 /**
- * Schema versioning on a real SQLite engine: a database with no version is
- * stamped, numbered steps run once and in order, a failing step leaves no
- * half-applied state when run the way initDb runs it (inside one transaction),
- * and a database from a newer app is never lowered or re-run.
+ * Schema versioning on real SQLite: an unversioned DB is stamped, steps run once and in order, a failing step
+ * leaves nothing half-applied (one transaction, as in initDb), and a newer app's DB is never touched.
  */
 import { createRealDataTestDb } from '@/test-support/realDataTestDb';
 

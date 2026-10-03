@@ -1,7 +1,6 @@
 /**
- * The Reports heatmap narrowed to one category: its days, with its
- * subcategories' spending counted in, and nothing from other categories.
- * All figures are made up.
+ * The Reports heatmap narrowed to one category: its days, subcategory spending included, nothing from other
+ * categories. All figures are made up.
  */
 import { createRealDataTestDb } from '@/test-support/realDataTestDb';
 

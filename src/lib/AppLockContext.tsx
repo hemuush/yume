@@ -12,19 +12,15 @@ const AppLockContext = createContext<AppLockContextValue>({
 });
 
 /**
- * Shared reactive app-lock preference — without this, Settings writing the
- * flag straight to the database would have no way to reach the already-mounted
- * root layout's own local state, so toggling it on would silently do nothing
- * until the app was fully killed and relaunched.
+ * Shared reactive app-lock preference: Settings writing the flag straight to the DB can't reach the root
+ * layout's local state, so the toggle would do nothing until the app was killed and relaunched.
  */
 export function AppLockProvider({ children }: { children: ReactNode }) {
   const [lockEnabled, setLockEnabledState] = useState(false);
 
   useEffect(() => {
-    // A rejection here already left state at its initial `false` before
-    // this fix (since `setLockEnabledState` simply never ran) — this only
-    // removes the resulting unhandled-promise-rejection, it doesn't change
-    // that fallback behavior.
+    // A rejection already left state at its initial `false`; this only avoids the unhandled-promise-rejection
+    // and doesn't change that fallback.
     getAppLockEnabled()
       .then(setLockEnabledState)
       .catch(() => {});

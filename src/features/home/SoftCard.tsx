@@ -13,10 +13,8 @@ interface Props {
 }
 
 /**
- * The Home screen's calmer card: rounder corners and more air than the
- * doodle-register `NeoTile`, a hairline only on plain surfaces, and an
- * optional gentle blurred shadow (never the hard offset shadow). Kept
- * separate from `NeoTile` on purpose — every other screen still uses that.
+ * Home's calmer card: rounder, airier than doodle-register `NeoTile`, hairline only on plain surfaces,
+ * optional soft blurred shadow (never hard offset). Separate from `NeoTile` on purpose: other screens use it.
  */
 export function SoftCard({
   children,

@@ -1,8 +1,6 @@
 /**
- * The Wrap player: it moves on by itself beat by beat, a tap on the right
- * skips ahead and on the left goes back, holding pauses, the last beat's
- * buttons do what they say, and with reduce motion nothing moves on by
- * itself. All figures are made up.
+ * The Wrap player: advances by itself beat by beat, right tap skips ahead, left goes back, holding pauses,
+ * the last beat's buttons work, and with reduce motion nothing advances itself. Made-up figures.
  */
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
 import { Text } from 'react-native';

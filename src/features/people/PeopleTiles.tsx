@@ -56,9 +56,8 @@ function Tile({
 }
 
 /**
- * The top of Friends & Family: what you owe and what you're owed, as two pale
- * tiles (the Plan tab's tile shape), with the net underneath once anyone has
- * an open balance.
+ * Top of Friends & Family: what you owe and what you're owed as two pale tiles (the Plan tab's shape),
+ * with the net underneath once anyone has an open balance.
  */
 export function PeopleTiles({
   youOweMinor,

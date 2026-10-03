@@ -1,7 +1,6 @@
 /**
- * The Add form's checks, in the order it asks: amount, person or account,
- * category, a valid transfer destination in the same currency. Then the
- * staged entry it builds.
+ * The Add form's checks in the order it asks (amount, person/account, category, same-currency transfer
+ * destination), then the staged entry it builds.
  */
 import { formToStaged, AddForm } from './addEntry';
 import { Account, Category } from '@/types';

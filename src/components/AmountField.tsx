@@ -53,12 +53,8 @@ const ROWS: PadKey[][] = [
 ];
 
 /**
- * The state behind a docked number pad: a container (a sheet, a screen) calls
- * this, wraps its tree in `AmountPadHostProvider value={host}`, renders `pad`
- * where the phone keyboard would have been, and spreads `scrollProps` onto
- * its scroll view. Any `AmountField` inside opens the pad on focus. The
- * phone's keyboard events never fire for it, so the scroll view is told here
- * to bring the field that opened the pad clear of it.
+ * State behind a docked number pad: wrap the tree in `AmountPadHostProvider value={host}`, render `pad`
+ * where the keyboard would be, spread `scrollProps` on the scroll view (it scrolls the field clear).
  */
 export function useAmountPadHost() {
   const [active, setActive] = useState<{ id: string; slot: MutableRefObject<AmountSlot> } | null>(null);
@@ -165,11 +161,8 @@ interface Props extends Omit<TextInputProps, 'keyboardType' | 'inputMode' | 'sho
 }
 
 /**
- * A number field for everything that isn't text: money, rates, months, days.
- * Looks like a FormInput but never opens the phone's keyboard — focusing it
- * docks Yume's own pad under the sheet (see `useAmountPadHost`), so the
- * sheet's Save stays in view and the keys match the Add screen. Outside a
- * host it falls back to a plain numeric input.
+ * A number field (money, rates, months, days) that never opens the phone keyboard: focus docks Yume's pad
+ * (see `useAmountPadHost`) so Save stays in view. Outside a host it falls back to a plain numeric input.
  */
 export const AmountField = forwardRef<RNTextInput, Props>(function AmountField(
   { label, decimal = true, value, onChangeText, onFocus, onBlur, style, ...rest },

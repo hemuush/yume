@@ -1,8 +1,6 @@
 /**
- * Dragging entries into the order you want, in a real database: the order is
- * saved per day, new entries land on top of a hand-arranged day, other days
- * are untouched, and moving an entry to another date drops its old place.
- * All figures are made up.
+ * Dragging entries into order, in a real database: saved per day, new entries go on top of an arranged day,
+ * other days untouched, and moving an entry to another date drops its old place. All figures are made up.
  */
 import { createRealDataTestDb } from '@/test-support/realDataTestDb';
 

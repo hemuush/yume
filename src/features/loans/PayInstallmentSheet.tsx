@@ -18,10 +18,8 @@ import { errorMessage } from '@/lib/errorMessage';
 import { showAlert } from '@/components/AppDialog';
 
 /**
- * Confirms paying one EMI — from the loan's own screen or from Plan's Coming
- * up. The "paid on" date defaults to the installment's due date, not today,
- * so catching up on an EMI paid weeks ago records the day it really
- * happened. Paying ahead of the due date says so. Ends with an undo toast.
+ * Confirms paying one EMI (from the loan's screen or Plan's Coming up). "Paid on" defaults to the due date,
+ * not today, so catching up on an old EMI records the real day. Paying ahead says so. Ends with undo.
  */
 export function PayInstallmentSheet({
   installment,

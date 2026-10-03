@@ -2,18 +2,8 @@ import { File, Paths } from 'expo-file-system';
 import type { BackupSummary } from './backup';
 
 /**
- * What's inside each backup file in the chosen folder, remembered on the
- * phone so the Backup screen doesn't re-read every file each time it opens.
- * A backup file is ~1 KB per entry: at 20,000 entries, reading and parsing
- * all fourteen kept files would be ~80 MB of work before the list showed.
- *
- * Keyed by the file's SAF URI. Backup files are never edited in place — a
- * new backup is always a new file (a new URI), and the old one is deleted —
- * so a remembered entry can't go stale; entries for files no longer in the
- * folder are dropped whenever the list is read. The index lives in the app's
- * own private storage, never in the backup folder or inside a backup, so a
- * restore never brings another phone's index along. Losing it only costs
- * one slow read: every read here fails soft to "nothing remembered".
+ * Cache of each backup file's contents so the Backup screen needn't re-parse them on open (~1 KB/entry).
+ * Keyed by SAF URI (files are never edited in place, so no stale entries); app-private; fails soft to empty.
  */
 
 export interface BackupFileInfo {

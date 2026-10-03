@@ -1,12 +1,6 @@
 /**
- * Runs every report function that touches SQL directly against a real
- * SQLite engine. The rest of reports.ts's test coverage (src/db/reports.test.ts)
- * only exercises pure functions with no database — that gap once let a real
- * bug (a GROUP BY on an unqualified `type` column, ambiguous once joined
- * against `accounts`, which also has one) ship without any test catching
- * it. These tests
- * seed real data and call the real functions so a broken query fails here,
- * not on a user's device.
+ * Runs every SQL-touching report function against a real SQLite engine; reports.test.ts only covers pure
+ * functions, which once let an ambiguous unqualified `type` in a GROUP BY (joined with `accounts`) ship.
  */
 import { createRealDataTestDb } from '@/test-support/realDataTestDb';
 

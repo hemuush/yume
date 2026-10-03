@@ -1,10 +1,5 @@
-// Savings rate = how much of this period's income you didn't spend, i.e.
-// `(income − expense) ÷ income`. Note this is deliberately NOT `net ÷ income`
-// (net also subtracts money moved into savings accounts, which would make
-// someone who saves aggressively read as "0% saved"). Money kept is money
-// saved, whether it's sitting in checking or was swept into a savings pot.
-//
-// Pure — no behaviour change to any existing stored figure.
+// Savings rate = `(income − expense) ÷ income`, NOT `net ÷ income` (net also subtracts transfers into
+// savings accounts, so heavy savers would read 0%). Money kept is money saved either way.
 
 /** Raw percentage. Can be negative (spent more than earned) or huge. */
 export function savingsRatePct(savedMinor: number, incomeMinor: number): number {

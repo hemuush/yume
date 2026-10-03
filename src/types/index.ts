@@ -124,9 +124,8 @@ export interface SavingsGoal {
   targetDate: string | null;
   linkedAccountId: string | null;
   /**
-   * True when progress follows the linked account's balance: then
-   * `currentAmountMinor` is that balance (never below zero), not money
-   * added by hand. Only ever true with a linked account.
+   * True when progress follows the linked account's balance: `currentAmountMinor` is then that balance
+   * (never below zero), not hand-added money. Only ever true with a linked account.
    */
   tracksAccount: boolean;
   /** An optional note written at creation, sealed until the goal first reaches 100% — see contributeToGoal. */
@@ -153,9 +152,8 @@ export interface Person {
   createdAt: string;
 }
 
-// Informal IOU ledger. Positive amountMinor = this entry increased what the
-// person owes you (you paid for them / lent them cash). Negative = it
-// reduced what they owe (they repaid you, or you're settling a debt to them).
+// Informal IOU ledger. Positive amountMinor = the entry increased what the person owes you (you paid for
+// them / lent cash). Negative = it reduced it (they repaid you, or you're settling a debt to them).
 export interface PersonLedgerEntry {
   id: string;
   personId: string;

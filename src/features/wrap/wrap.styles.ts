@@ -5,10 +5,8 @@ import { shade } from '@/lib/color';
 import type { WrapBeat } from './wrapData';
 
 /**
- * Each beat's ground (the Wrap sign-off, Direction A "colour stories"): a
- * soft top-to-bottom gradient, the opening and closing beats in the theme
- * pack's own two colours and the rest in Yume's warm pastels — always light,
- * so it reads as the app, not a video.
+ * Each beat's ground ("colour stories"): a soft vertical gradient; opening and closing beats use the theme
+ * pack's two colours, the rest Yume's warm pastels. Always light, so it reads as the app, not a video.
  */
 export function beatGradient(kind: WrapBeat['kind'], primary: string, secondary: string): [string, string] {
   switch (kind) {

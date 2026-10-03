@@ -33,9 +33,8 @@ export default function SavingsGoalsScreen() {
   const [editingGoal, setEditingGoal] = useState<SavingsGoal | null>(null);
   const [contributingGoal, setContributingGoal] = useState<SavingsGoal | null>(null);
 
-  // A goal that follows its account can reach its target with no tap here
-  // at all (a transfer in, a salary landing), so its sealed letter opens the
-  // next time this screen loads — once, like a goal filled by hand.
+  // A goal following its account can hit its target with no tap here (transfer in, salary), so its sealed
+  // letter opens the next time this screen loads — once, like a hand-filled goal.
   const [letterGoal, setLetterGoal] = useState<SavingsGoal | null>(null);
 
   const loadGoals = useCallback(async () => {

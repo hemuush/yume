@@ -19,28 +19,16 @@ export interface SpendBar {
   /** True for the bar covering today — draws the highlight ring. */
   isCurrent: boolean;
   /**
-   * A week's seven fixed columns include days that aren't bars: 'outside' is a
-   * day of the neighbouring month (a faint dot, named by a note above them),
-   * 'future' a day that hasn't happened yet (a faint baseline). Neither can be
-   * tapped.
+   * A week's seven fixed columns include non-bar days: 'outside' = a day of the neighbouring month (faint
+   * dot, named by a note above), 'future' = not happened yet (faint baseline). Neither can be tapped.
    */
   state?: 'outside' | 'future';
 }
 
 const WEEKDAY_INITIAL = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
-// A stable bucket for any expense with no (or an unresolvable) category —
-// loan EMI payments and other transactions written directly via a raw SQL
-// insert (see payInstallment) are exactly as real an expense as a normal
-// categorized one, and used to be silently invisible here: this function
-// required a valid categoryId just to count a transaction toward the total
-// at all, not only for the segment breakdown, so an uncategorized expense
-// quietly vanished from both the bar's height and the month's own "spent"
-// figure on this screen — while Home/Reports (which sum straight from the
-// database with no such requirement) kept showing the real total. Now a
-// transaction always counts toward `totalMinor` the moment it's a real
-// expense in range; only which *segment* it lands in depends on whether a
-// category resolves.
+// Bucket for expenses with no (or unresolvable) category, e.g. loan EMIs from raw SQL (payInstallment): they
+// still count toward `totalMinor` (as in Home/Reports); only the *segment* depends on a resolved category.
 const UNCATEGORIZED_ID = '__uncategorized__';
 
 function summariseExpenses(
@@ -81,34 +69,8 @@ function summariseExpenses(
 }
 
 /**
- * One stacked bar per day, expense-only and rolled up to each transaction's
- * top-level category — a subcategory's spend folds into its parent's
- * segment, matching how Reports treats subcategories everywhere else.
- * Used for Week scope, where a handful of daily bars stays readable.
- */
-export function buildDailySpendBars(
-  transactions: Transaction[],
-  categories: Category[],
-  days: string[],
-  todayIso: string
-): SpendBar[] {
-  const catById = new Map(categories.map((c) => [c.id, c]));
-  return days.map((date) => {
-    const { totalMinor, segments } = summariseExpenses(transactions, catById, date, date);
-    return {
-      key: date,
-      label: WEEKDAY_INITIAL[parseLocalIsoDate(date).getDay()],
-      totalMinor,
-      segments,
-      isCurrent: date === todayIso,
-    };
-  });
-}
-
-/**
- * The seven Sunday-to-Saturday columns of one week of a month. A short first
- * or last week keeps its place in the row: days outside the month are
- * placeholders, days after today are empty, and only real days carry spend.
+ * The seven Sunday-to-Saturday columns of one week of a month: days outside the month are placeholders, days
+ * after today are empty, only real days carry spend (a short first/last week keeps its place in the row).
  */
 export function buildWeekSpendBars(
   transactions: Transaction[],
@@ -131,9 +93,8 @@ export function buildWeekSpendBars(
 }
 
 /**
- * Splits a month into calendar weeks (Sunday–Saturday, clipped to the
- * month's own start/end so the first and last bucket can be partial) —
- * shared by `buildWeeklySpendBars` and its own tests.
+ * Splits a month into Sunday-Saturday calendar weeks, clipped to the month's start/end so the first and last
+ * can be partial; shared by `buildWeeklySpendBars` and its tests.
  */
 export function weekRangesInMonth(monthStart: string, monthEnd: string): { start: string; end: string }[] {
   const ranges: { start: string; end: string }[] = [];
@@ -150,13 +111,8 @@ export function weekRangesInMonth(monthStart: string, monthEnd: string): { start
 }
 
 /**
- * One stacked bar per calendar week within a month — Month scope's chart,
- * replacing a dense 28-31-bar-a-month grid that crowded and, worse, could
- * render several of that many bars' segments overlapping (a `flex` value
- * built from a segment's own raw paise amount could reach into the
- * hundreds of thousands, which Yoga doesn't lay out reliably at that
- * scale — see SpendBarChart's own fix). A handful of week bars stays both
- * readable and safely within normal flex-ratio territory.
+ * One stacked bar per calendar week of a month (Month scope); few bars keep segment flex ratios sane.
+ * (A `flex` built from raw paise reached the hundreds of thousands, which Yoga doesn't lay out reliably.)
  */
 export function buildWeeklySpendBars(
   transactions: Transaction[],
@@ -187,9 +143,8 @@ export interface ChartLegendItem {
 }
 
 /**
- * Every category that actually appears in `bars` — only what the chart is
- * showing, not the full category list — biggest spend first, so a legend
- * that names only the first few names the ones that matter.
+ * Categories that appear in `bars` (not the full list), biggest spend first, so a legend of the first few
+ * names the ones that matter.
  */
 export function legendForBars(bars: SpendBar[]): ChartLegendItem[] {
   const seen = new Map<string, ChartLegendItem & { totalMinor: number }>();

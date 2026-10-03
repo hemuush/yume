@@ -29,10 +29,8 @@ const CARD_SHARE = 0.82;
 const CARD_GAP = 10;
 
 /**
- * The period "in short", as a row of story cards you swipe through — one big
- * answer per card (see buildStoryCards). A card that has an action does it
- * when tapped — shows its day on the heatmap, opens its category row; the
- * fixed-vs-flexible moon lives on its own card.
+ * The period "in short": swipeable story cards, one big answer each (see buildStoryCards). A card with an
+ * action does it on tap (its day on the heatmap, its category row); the fixed-vs-flexible moon has its own.
  */
 export function StoryCards({
   title,

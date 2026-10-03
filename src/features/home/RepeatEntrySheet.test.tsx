@@ -1,13 +1,11 @@
 /**
- * The + long-press "Log again" sheet: one tap saves the entry for today and
- * offers Undo; Undo deletes exactly that entry; Home/Activity are told to
- * refresh both times; a double tap can't log it twice.
+ * The + long-press "Log again" sheet: one tap saves for today and offers Undo (deleting exactly that entry);
+ * Home/Activity are told to refresh both times; a double tap can't log twice.
  */
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
 
-// The first render loads React Native's component tree, which on a cold, fully
-// parallel run (CI, or the whole suite at once) can take longer than Jest's
-// 5s default — seen failing that way, never on its own. Generous, not slow.
+// First render loads RN's component tree, which can top Jest's 5s default on a cold parallel run (CI).
+// Generous, not slow.
 jest.setTimeout(30000);
 
 jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMock').createReanimatedMock());
@@ -71,9 +69,8 @@ const settle = () => new Promise((resolve) => setTimeout(resolve, 0));
 const byLabel = (tree: ReactTestRenderer, label: string) =>
   tree.root.find((n) => n.props.accessibilityLabel === label && n.props.onPress);
 
-// Loads React Native's lazily-required components once, up front, with a
-// generous budget — on a cold, fully parallel run (CI) their first load can
-// outlast a single test's time limit, which failed this file intermittently.
+// Preloads RN's lazily-required components once with a generous budget: on a cold parallel run (CI) their
+// first load can outlast one test's time limit and fail this file intermittently.
 beforeAll(async () => {
   await render();
 }, 180000);

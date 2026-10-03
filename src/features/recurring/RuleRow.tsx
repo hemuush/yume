@@ -14,10 +14,8 @@ import { weekdayDayMonth } from '@/lib/dateLabels';
 import { inParent, joinSub } from '@/lib/categoryLabel';
 
 /**
- * One rule inside the Running or Paused card: its category's icon, what and
- * when, the amount, and a small switch to pause it. Tapping the rest opens
- * the edit sheet. Rows settle in staggered like every other list, and the
- * others slide into place when one is paused or deleted.
+ * One rule in the Running or Paused card: category icon, what and when, amount, and a pause switch. Tapping
+ * the rest opens the edit sheet. Rows settle in staggered; others slide into place on pause or delete.
  */
 export function RuleRow({
   rule,

@@ -19,10 +19,8 @@ const FILL_STAGGER_MS = 60;
 const FILL_STAGGER_MAX_ROWS = 8;
 
 /**
- * "Where it went": each category's share, amount, change against the
- * previous period and a bar. Tapping a row picks it (the others fade) and
- * opens its subcategory split, a link to its own page and, for spending, a
- * link to its days on the heatmap; tapping it again puts it away.
+ * "Where it went": each category's share, amount, change vs the previous period, and a bar. Tapping a row
+ * picks it (others fade), opening its subcategory split and links to its page and (spending) its heatmap days.
  */
 export function CategoryList({
   breakdown,

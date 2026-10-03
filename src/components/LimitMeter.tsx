@@ -11,14 +11,8 @@ const TONE_FILL: Record<LimitMeterTone, string> = {
 };
 
 /**
- * The shared "share of a cap used" bar — Today's spending strip and every
- * Budget row both draw this exact same fact (how much of a limit is gone)
- * but used to do it with three different heights/radii/borders between
- * them (and a fourth in ThisMonthHero's own bar). That one drew a genuinely
- * different fact — a composition split between two things that always sum
- * to 100%, not a single fill growing toward a cap — so it keeps its own
- * two-tone track rather than moving to this component; this one is only for
- * the "used vs. a limit" shape, wherever that shows up.
+ * The shared "share of a cap used" bar (Today's spending strip, every Budget row). ThisMonthHero's bar keeps
+ * its own two-tone track: it shows a split summing to 100%, not a fill growing toward a cap.
  */
 export function LimitMeter({
   pct,
@@ -30,9 +24,8 @@ export function LimitMeter({
   tone: LimitMeterTone;
   marker?: number;
   /**
-   * Which meter this is (e.g. `budget:<id>`): the fill then grows from the
-   * width it last showed instead of snapping (useGrowFrom). Without it the
-   * fill is drawn plain.
+   * Meter identity (e.g. `budget:<id>`): the fill grows from its last width instead of snapping (useGrowFrom).
+   * Without it the fill is drawn plain.
    */
   animKey?: string;
 }) {

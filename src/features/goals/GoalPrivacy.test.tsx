@@ -1,7 +1,6 @@
 /**
- * With "hide savings & investment amounts" on, a goal shows neither what is
- * saved nor how far along it is: the amount is masked, the bar is empty,
- * no percent, pace or monthly figure is shown, and "Reached" is not announced. The target stays readable.
+ * With "hide savings & investment amounts" on, a goal shows neither saved amount nor progress: masked
+ * amount, empty bar, no percent, pace, monthly figure or "Reached". The target stays readable.
  */
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
 import { Text } from 'react-native';

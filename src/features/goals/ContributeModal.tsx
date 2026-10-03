@@ -35,11 +35,8 @@ export function ContributeModal({
   const [amount, setAmount] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  // Set only when this contribution is the one that first pushes the goal
-  // to its target and there's a sealed note to hand back — see submit()
-  // below. Holding this locally (rather than calling onContributed right
-  // away) is what keeps the sheet open on the reveal instead of the host
-  // screen closing it out from under this component.
+  // Set only when this contribution first pushes the goal to target and a sealed note exists (see submit()).
+  // Held locally so the sheet stays open on the reveal instead of the host closing it.
   const [reveal, setReveal] = useState<{ note: string } | null>(null);
 
   useEffect(() => {
@@ -64,11 +61,8 @@ export function ContributeModal({
       const deltaMinor = direction === 'add' ? amountMinor : -amountMinor;
       await contributeToGoal(goal.id, deltaMinor);
       haptics.tap();
-      // The crossing check lives here, not in contributeToGoal — this is
-      // the one place that already holds both the pre-contribution amount
-      // and the note, with no extra read needed. `>=` on the *new* total
-      // is deliberate: someone who adds more than needed in one go still
-      // gets the reveal, same as landing exactly on the target.
+      // Crossing check lives here, not in contributeToGoal: this place already holds the prior amount and
+      // the note. `>=` on the new total is deliberate: overshooting in one go still gets the reveal.
       const justCompleted =
         direction === 'add' &&
         goal.currentAmountMinor < goal.targetAmountMinor &&

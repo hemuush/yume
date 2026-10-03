@@ -1,9 +1,6 @@
 /**
- * Combinatorial sweeps of every pure date helper — one assertion per
- * generated case, across ranges wide enough to catch month-length, leap-year
- * and timezone-round-trip bugs regardless of which specific date triggers
- * them. These are all local-calendar functions (see src/lib/date.ts's own
- * comments); none of them may ever route through `toISOString()`.
+ * Combinatorial sweeps of every pure date helper, one assertion per case, over ranges wide enough to catch
+ * month-length, leap-year and timezone bugs. All are local-calendar functions; none may use `toISOString()`.
  */
 import {
   toLocalIsoDate,
