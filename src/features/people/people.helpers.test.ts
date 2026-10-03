@@ -1,4 +1,11 @@
-import { personStatus, peopleTotals, lastActivityShort, groupPeople } from './people.helpers';
+import {
+  personStatus,
+  peopleTotals,
+  lastActivityShort,
+  groupPeople,
+  showPeopleSummary,
+  inRows,
+} from './people.helpers';
 
 describe('people helpers', () => {
   it('reads a balance as owed, owe or settled by its sign', () => {
@@ -48,5 +55,21 @@ describe('groupPeople', () => {
 
   it('is negative overall when you owe more than you are owed', () => {
     expect(groupPeople([p('a', 10000), p('b', -50000)]).netMinor).toBe(-40000);
+  });
+});
+
+describe('showPeopleSummary', () => {
+  it('shows totals and net only for two or more open people', () => {
+    expect(showPeopleSummary(0)).toBe(false);
+    expect(showPeopleSummary(1)).toBe(false);
+    expect(showPeopleSummary(2)).toBe(true);
+    expect(showPeopleSummary(5)).toBe(true);
+  });
+});
+
+describe('inRows', () => {
+  it('chunks a list into rows, the last one shorter', () => {
+    expect(inRows([1, 2, 3, 4, 5], 2)).toEqual([[1, 2], [3, 4], [5]]);
+    expect(inRows([], 2)).toEqual([]);
   });
 });

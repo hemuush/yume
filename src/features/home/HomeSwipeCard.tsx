@@ -12,9 +12,9 @@ import ReanimatedAnimated, { useSharedValue, useAnimatedStyle, withTiming } from
 import { useReduceMotion } from '@/lib/useReduceMotion';
 import { MOTION, timing } from '@/lib/animation';
 import { theme } from '@/constants/theme';
-import { HomeSection } from './HomeSection';
+import { HomeSection } from '@/components/HomeSection';
 import { haptics } from '@/lib/haptics';
-import { homeStyles } from './homeStyles';
+import { homeStyles } from '@/components/homeStyles';
 import { SECTION_GAP } from '@/constants/textStyles';
 import Feather from '@expo/vector-icons/Feather';
 import { withPressed } from '@/lib/pressed';

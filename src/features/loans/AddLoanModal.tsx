@@ -24,6 +24,7 @@ import { styles } from './loans.styles';
 import { errorMessage } from '@/lib/errorMessage';
 import { DURATIONS } from '@/lib/motionTimings';
 import { dayMonthYear } from '@/lib/dateLabels';
+import { spendableAccountsOf } from '@/lib/account';
 
 const RATE_TYPES: { label: string; value: LoanRateType }[] = [
   { label: 'Fixed', value: 'fixed' },
@@ -157,7 +158,7 @@ export function AddLoanModal({
   const feeCategories = useMemo(() => categories.filter((c) => c.kind === 'expense'), [categories]);
   // Disbursement and EMI money move as real income/expense transactions (createTransaction / payInstallment
   // in src/db/loans.ts), which reject a savings account, so it isn't offered here either.
-  const spendableAccounts = useMemo(() => accounts.filter((a) => a.type !== 'savings'), [accounts]);
+  const spendableAccounts = useMemo(() => spendableAccountsOf(accounts), [accounts]);
 
   // Loan disbursement and processing fee aren't a real spending/earning choice, so no category picker (it
   // would list Salary, Groceries, Fuel...); they're auto-tagged with the best-matching seeded category.

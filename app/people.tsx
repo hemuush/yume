@@ -9,12 +9,12 @@ import { useScreenLoad } from '@/lib/useScreenLoad';
 import { AppHeader } from '@/components/AppHeader';
 import { AddButton } from '@/components/AddButton';
 import { EmptyState } from '@/components/EmptyState';
-import { NeoTile } from '@/components/NeoTile';
 import { Skeleton } from '@/components/Skeleton';
-import { groupPeople } from '@/features/people/people.helpers';
-import { PeopleTiles } from '@/features/people/PeopleTiles';
+import { formatMoney } from '@/lib/money';
+import { groupPeople, inRows, showPeopleSummary } from '@/features/people/people.helpers';
+import { PeopleNet } from '@/features/people/PeopleNet';
 import { PersonQuietRow } from '@/features/people/PersonQuietRow';
-import { PersonRow } from '@/features/people/PersonRow';
+import { PersonTile } from '@/features/people/PersonTile';
 import { AddPersonModal } from '@/features/people/AddPersonModal';
 import { PersonDetailModal } from '@/features/people/PersonDetailModal';
 import { styles } from '@/features/people/people.styles';
@@ -34,7 +34,9 @@ export default function PeopleScreen() {
   }, []);
   const { loaded, loadError, reload } = useScreenLoad(loadPeople);
   const loading = !loaded && !loadError;
-  const { owed, owe, settled, owedToYouMinor, youOweMinor } = groupPeople(people);
+  const { owed, owe, settled, owedToYouMinor, youOweMinor, netMinor } = groupPeople(people);
+  const summary = showPeopleSummary(owed.length + owe.length);
+  const columns = summary ? 2 : 1;
   // Hashed from the person's own id, not list position, so a rename or a new
   // person never swaps anyone's colour.
   const colorOf = (p: PersonWithBalance) => FLAT_PALETTE[stableIndexFromId(p.id, FLAT_PALETTE.length)];
@@ -54,32 +56,71 @@ export default function PeopleScreen() {
         </View>
       )}
 
-      <PeopleTiles
-        youOweMinor={youOweMinor}
-        owedToYouMinor={owedToYouMinor}
-        oweCount={owe.length}
-        owedCount={owed.length}
-        loading={loading}
-      />
-
-      <ScrollView contentContainerStyle={{ paddingBottom: theme.layout.screenScrollPad + insets.bottom }}>
+      <ScrollView
+        contentContainerStyle={{
+          paddingTop: theme.layout.screenTopGap,
+          paddingBottom: theme.layout.screenScrollPad + insets.bottom,
+        }}
+      >
         {loading ? (
-          [0, 1].map((i) => (
-            <NeoTile key={i} style={[styles.card, styles.skeletonCard]}>
-              <Skeleton width={38} height={38} circle radius={19} />
-              <View>
-                <Skeleton width={120} height={13} radius={4} />
+          <View style={styles.tileRow}>
+            {[0, 1].map((i) => (
+              <View key={i} style={[styles.tileCell, styles.personTile, styles.skeletonTile]}>
+                <Skeleton width={32} height={32} circle radius={16} />
+                <Skeleton width={80} height={18} radius={5} style={{ marginTop: 12 }} />
                 <Skeleton width={60} height={10} radius={4} style={{ marginTop: 8 }} />
               </View>
-            </NeoTile>
-          ))
+            ))}
+          </View>
         ) : people.length === 0 ? (
           <EmptyState title="No one here yet" subtitle="Tap + Person to add a friend or family member." />
         ) : (
           <>
-            {[...owed, ...owe].map((p, i) => (
-              <PersonRow key={p.id} person={p} color={colorOf(p)} index={i} onPress={() => setSelected(p)} />
-            ))}
+            {summary && <PeopleNet netMinor={netMinor} />}
+            {[
+              {
+                key: 'owed',
+                title: 'Owes you',
+                list: owed,
+                totalMinor: owedToYouMinor,
+                color: theme.colors.incomeText,
+              },
+              {
+                key: 'owe',
+                title: 'You owe',
+                list: owe,
+                totalMinor: youOweMinor,
+                color: theme.colors.expenseText,
+              },
+            ].map(
+              (group) =>
+                group.list.length > 0 && (
+                  <View key={group.key}>
+                    {summary && (
+                      <View style={styles.groupHead}>
+                        <Text style={styles.groupTitle}>{group.title}</Text>
+                        <Text style={[styles.groupTotal, { color: group.color }]}>
+                          {formatMoney(group.totalMinor)}
+                        </Text>
+                      </View>
+                    )}
+                    {inRows(group.list, columns).map((row, r) => (
+                      <View key={row[0].id} style={styles.tileRow}>
+                        {row.map((p, c) => (
+                          <PersonTile
+                            key={p.id}
+                            person={p}
+                            color={colorOf(p)}
+                            index={r * columns + c}
+                            onPress={() => setSelected(p)}
+                          />
+                        ))}
+                        {row.length < columns && <View style={styles.tileCell} />}
+                      </View>
+                    ))}
+                  </View>
+                )
+            )}
             {settled.length > 0 && (
               <>
                 <Text style={styles.settledTitle}>Settled</Text>

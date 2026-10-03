@@ -2,7 +2,7 @@ import { StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
 import { SECTION_TITLE, SECTION_GAP, EYEBROW } from '@/constants/textStyles';
 
-// Shared by the Friends & Family screen, PersonRow, and the person modals.
+// Shared by the Friends & Family screen, PersonTile, and the person modals.
 export const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
   errorBanner: {
@@ -29,57 +29,54 @@ export const styles = StyleSheet.create({
     color: theme.colors.textMuted,
     fontSize: 13,
   },
-  // Each person's own tile — same spacing/radius as a LoanCard.
-  card: { marginHorizontal: 20, marginBottom: 10, padding: 16, borderRadius: theme.radius.xl2 },
-  cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  who: { flexDirection: 'row', alignItems: 'center', flex: 1, minWidth: 0, marginRight: 8 },
-  cardName: {
+  // A row of person tiles (one or two across) and the headings that group them.
+  groupHead: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'baseline',
+    marginHorizontal: 24,
+    marginTop: 14,
+    marginBottom: 8,
+  },
+  groupTitle: EYEBROW,
+  groupTotal: { fontFamily: theme.font.monoBold, fontSize: 12 },
+  tileRow: { flexDirection: 'row', gap: 10, marginHorizontal: 20, marginBottom: 10 },
+  tileCell: { flex: 1, minWidth: 0 },
+  personTile: {
+    padding: 14,
+    borderRadius: theme.radius.xl2,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.borderSoft,
+  },
+  tileWho: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  tileAvatar: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.inkHairline,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tileInitial: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.onFlat },
+  tileName: {
+    flex: 1,
+    minWidth: 0,
     fontFamily: theme.font.roundedMedium,
     fontSize: 15,
     color: theme.colors.textPrimary,
-    marginLeft: 12,
   },
-  statusPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    alignSelf: 'flex-start',
-    borderRadius: theme.radius.pill,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    marginTop: 4,
-    marginLeft: 12,
-  },
-  statusDot: { width: 5, height: 5, borderRadius: 2.5 },
-  statusPillText: { fontFamily: theme.font.bodyBold, fontSize: 10.5 },
-  cardRight: { alignItems: 'flex-end', flexShrink: 0 },
-  cardBalance: { fontSize: 16, fontFamily: theme.font.monoBold },
-  cardSub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, marginTop: 2 },
-  // An open balance's foot: a hint on the left, the Settle up pill on the right.
-  cardFoot: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 10,
-    marginTop: 12,
-    paddingTop: 12,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: theme.colors.borderSoft,
-  },
-  cardFootText: {
-    flex: 1,
-    minWidth: 0,
-    fontFamily: theme.font.body,
-    fontSize: 12,
-    color: theme.colors.textMuted,
-  },
+  tileAmount: { fontFamily: theme.font.monoBold, fontSize: 18, marginTop: 12 },
+  tileMeta: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary, marginTop: 2 },
   settlePill: {
+    alignSelf: 'flex-start',
+    marginTop: 12,
     paddingHorizontal: 13,
     paddingVertical: 6,
     borderRadius: theme.radius.pill,
-    backgroundColor: theme.colors.primaryTint,
+    backgroundColor: theme.colors.glass,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
+    borderColor: theme.colors.inkHairline,
   },
   settlePillText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textPrimary },
   settledTitle: { ...EYEBROW, marginHorizontal: 24, marginTop: 8, marginBottom: 2 },
@@ -109,12 +106,7 @@ export const styles = StyleSheet.create({
     color: theme.colors.textPrimary,
   },
   quietSub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
-  skeletonCard: {
-    backgroundColor: theme.colors.surface,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
+  skeletonTile: { backgroundColor: theme.colors.surface },
   // The detail sheet's linked-loan and history rows: a plain divided list
   // suits a modal's inner list better than more tiles.
   row: {

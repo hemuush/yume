@@ -10,7 +10,7 @@ import ReanimatedAnimated, {
 import { theme } from '@/constants/theme';
 import { useReduceMotion } from '@/lib/useReduceMotion';
 import { Skeleton } from '@/components/Skeleton';
-import { SoftCard } from './SoftCard';
+import { SoftCard } from '@/components/SoftCard';
 import { STACK, stackHeight } from './stackLayout';
 
 export { CardRowsSkeleton } from '@/components/ListSkeleton';

@@ -7,7 +7,7 @@ import { CategoryIcon } from '@/components/CategoryIcon';
 import { Amount } from '@/components/Amount';
 import { dayLabel } from '@/lib/date';
 import { categoryPath, inParent, joinSub } from '@/lib/categoryLabel';
-import { homeStyles as h } from './homeStyles';
+import { homeStyles as h } from '@/components/homeStyles';
 
 /**
  * One recent-activity row: merchant/note leads, "category · account · day" beneath, amount right.

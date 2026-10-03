@@ -21,8 +21,8 @@ import { AppHeader } from '@/components/AppHeader';
 import { CardRowsSkeleton } from '@/components/ListSkeleton';
 import { useScreenLoad } from '@/lib/useScreenLoad';
 import { categorySentence, parentNameOf } from '@/lib/categoryLabel';
-import { HOME } from '@/features/home/homeStyles';
-import { HomeSection } from '@/features/home/HomeSection';
+import { HOME } from '@/components/homeStyles';
+import { HomeSection } from '@/components/HomeSection';
 import { SECTION_GAP } from '@/constants/textStyles';
 import {
   buildLoansSummary,

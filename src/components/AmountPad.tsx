@@ -4,7 +4,7 @@ import Feather from '@expo/vector-icons/Feather';
 import { theme } from '@/constants/theme';
 import { usePressScale } from '@/lib/usePressScale';
 import { haptics } from '@/lib/haptics';
-import { PadKey } from './padMath';
+import { PadKey } from '@/lib/padMath';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 

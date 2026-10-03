@@ -1,6 +1,6 @@
 import { StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
-import { HOME } from '@/features/home/homeStyles';
+import { HOME } from '@/components/homeStyles';
 
 // Shared by the Plan tiles and Coming up.
 const TILE_GAP = 8;

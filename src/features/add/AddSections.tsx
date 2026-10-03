@@ -9,7 +9,7 @@ import { RepeatEntry } from '@/db/ledger';
 import { SegmentedControl } from '@/components/SegmentedControl';
 import { CategoryIcon } from '@/components/CategoryIcon';
 import { MovingRow } from '@/components/MovingRow';
-import { SoftCard } from '@/features/home/SoftCard';
+import { SoftCard } from '@/components/SoftCard';
 import { styles } from './add.styles';
 import { ADD_TYPES, EDIT_TYPES, TYPE_WASH, EntryType, Staged, dateChipLabel } from './addEntry';
 import { AccountTile } from './AddFields';

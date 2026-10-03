@@ -3,7 +3,7 @@ import { theme } from '@/constants/theme';
 import { SOFT_LIFT } from './SoftCard';
 
 /**
- * Home's one visual system: every card, section heading and list row is built from these so no block gets
+ * The app's one visual system: every card, section heading and list row is built from these so no block gets
  * its own padding, icon size or type scale (it had drifted: 30/36/38px icons, 11.5-13.5pt row text).
  */
 export const HOME = {

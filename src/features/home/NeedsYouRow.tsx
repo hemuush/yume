@@ -4,7 +4,7 @@ import Feather from '@expo/vector-icons/Feather';
 import { theme } from '@/constants/theme';
 import { formatMoney } from '@/lib/money';
 import { usePressScale } from '@/lib/usePressScale';
-import { homeStyles as h, HOME } from './homeStyles';
+import { homeStyles as h, HOME } from '@/components/homeStyles';
 import type { NeedsYouItem, NeedsYouTone } from './needsYou';
 import { withPressed } from '@/lib/pressed';
 
