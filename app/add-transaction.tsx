@@ -8,7 +8,6 @@ import Feather from '@expo/vector-icons/Feather';
 import {
   listAccounts,
   listCategories,
-  createTransaction,
   updateTransaction,
   deleteTransaction,
   restoreTransaction,
@@ -21,13 +20,7 @@ import {
   findRecentRepeat,
 } from '@/db/ledger';
 import { getAddDefaults, setAddDefaults, AddDefaults } from '@/db/settings';
-import {
-  listPeople,
-  recordMoneyGivenToPerson,
-  recordMoneyReceivedFromPerson,
-  addLedgerEntry,
-  PersonWithBalance,
-} from '@/db/people';
+import { listPeople, PersonWithBalance } from '@/db/people';
 import { Account, Category, Transaction } from '@/types';
 import { theme } from '@/constants/theme';
 import { toMinor, formatMoney } from '@/lib/money';
@@ -71,6 +64,7 @@ import {
 } from '@/features/add/splitDraft';
 import { openSplitSession, takeSplitResult } from '@/features/add/splitSession';
 import { SplitCard } from '@/features/add/SplitCard';
+import { formatTyped, persistStaged, stagedTotals } from '@/features/add/saveEntry';
 import { showAlert } from '@/components/AppDialog';
 import { useUndoToast } from '@/components/UndoToast';
 import { emitTransactionsChanged } from '@/lib/dataEvents';
@@ -78,14 +72,6 @@ import { spendableAccountsOf } from '@/lib/account';
 
 /** How many "Your usual" chips Add shows. */
 const USUAL_COUNT = 4;
-
-/** "1,500.5" while typing a single number: grouped whole part, decimals exactly as typed. */
-function formatTyped(expr: string): string {
-  if (expr === '') return '0';
-  const [whole, decimals] = expr.split('.');
-  const grouped = new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 }).format(Number(whole || '0'));
-  return decimals === undefined ? grouped : `${grouped}.${decimals}`;
-}
 
 export default function AddTransactionScreen() {
   const insets = useSafeAreaInsets();
@@ -473,66 +459,7 @@ export default function AddTransactionScreen() {
 
   const removeRow = (id: string) => setRows((prev) => prev.filter((r) => r.id !== id));
 
-  const totals = rows.reduce(
-    (acc, r) => {
-      if (r.kind === 'transaction') {
-        if (r.type === 'income') acc.income += r.amountMinor;
-        if (r.type === 'expense') acc.expense += r.amountMinor;
-      } else if (r.accountId) {
-        if (r.sign === -1) acc.income += r.amountMinor;
-        else acc.expense += r.amountMinor;
-      }
-      return acc;
-    },
-    { income: 0, expense: 0 }
-  );
-
-  /** Saves one staged row; the new entry's id when it's a plain entry (friend entries don't hand one back). */
-  const persistRow = async (r: Staged): Promise<string | null> => {
-    if (r.kind === 'friend') {
-      if (r.accountId) {
-        const category =
-          r.sign === 1
-            ? (categories.find((c) => c.kind === 'expense' && c.name === 'Friends & Family') ??
-              categories.find((c) => c.kind === 'expense' && c.name === 'Miscellaneous') ??
-              categories.find((c) => c.kind === 'expense'))
-            : (categories.find((c) => c.kind === 'income' && c.name === 'Friends & Family') ??
-              categories.find((c) => c.kind === 'income' && c.name === 'Other Income') ??
-              categories.find((c) => c.kind === 'income'));
-        if (!category) throw new Error('No category available for this friend entry');
-        const payload = {
-          personId: r.personId,
-          accountId: r.accountId,
-          categoryId: category.id,
-          amountMinor: r.amountMinor,
-          date: r.date,
-          note: r.note,
-        };
-        if (r.sign === 1) await recordMoneyGivenToPerson(payload);
-        else await recordMoneyReceivedFromPerson(payload);
-        return null;
-      } else {
-        await addLedgerEntry({
-          personId: r.personId,
-          amountMinor: r.amountMinor * r.sign,
-          date: r.date,
-          note: r.note,
-        });
-      }
-      return null;
-    }
-    const created = await createTransaction({
-      type: r.type,
-      accountId: r.accountId,
-      toAccountId: r.toAccountId,
-      categoryId: r.categoryId,
-      amountMinor: r.amountMinor,
-      date: r.date,
-      note: r.note,
-      isRefund: !!r.isRefund,
-    });
-    return created.id;
-  };
+  const totals = stagedTotals(rows);
 
   // A brief "done" checkmark (PrimaryButton `done`) before navigating back; the data is already saved, so
   // the delay is purely felt confirmation.
@@ -647,7 +574,7 @@ export default function AddTransactionScreen() {
     const savedIds: string[] = [];
     try {
       for (const r of pending) {
-        const id = await persistRow(r);
+        const id = await persistStaged(r, categories);
         if (id) savedIds.push(id);
         saved += 1;
       }

@@ -12,9 +12,9 @@ import ReanimatedAnimated, { useSharedValue, useAnimatedStyle, withTiming } from
 import { useReduceMotion } from '@/lib/useReduceMotion';
 import { MOTION, timing } from '@/lib/animation';
 import { theme } from '@/constants/theme';
-import { HomeSection } from '@/components/HomeSection';
+import { Section } from '@/components/Section';
 import { haptics } from '@/lib/haptics';
-import { homeStyles } from '@/components/homeStyles';
+import { screenStyles } from '@/components/screenStyles';
 import { SECTION_GAP } from '@/constants/textStyles';
 import Feather from '@expo/vector-icons/Feather';
 import { withPressed } from '@/lib/pressed';
@@ -30,7 +30,7 @@ export interface SwipePage {
 
 /**
  * One card for Budgets/Upcoming/Goals: tab pills with a sliding highlight over a paged strip; empty pages
- * omitted. Height tracks the active page, not the tallest; a single page falls back to a plain HomeSection.
+ * omitted. Height tracks the active page, not the tallest; a single page falls back to a plain Section.
  */
 export function HomeSwipeCard({ pages }: { pages: SwipePage[] }) {
   const [activeIndex, setActiveIndex] = useState(0);
@@ -70,9 +70,9 @@ export function HomeSwipeCard({ pages }: { pages: SwipePage[] }) {
   if (pages.length === 1) {
     const only = pages[0];
     return (
-      <HomeSection title={only.label} onSeeAll={only.onSeeAll}>
+      <Section title={only.label} onSeeAll={only.onSeeAll}>
         {only.content}
-      </HomeSection>
+      </Section>
     );
   }
 
@@ -107,7 +107,7 @@ export function HomeSwipeCard({ pages }: { pages: SwipePage[] }) {
 
   return (
     <View style={styles.wrap}>
-      <View style={[homeStyles.card, homeStyles.cardLifted]}>
+      <View style={[screenStyles.card, screenStyles.cardLifted]}>
         <View
           style={styles.track}
           accessibilityRole="tablist"

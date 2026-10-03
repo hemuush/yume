@@ -2,7 +2,7 @@ import { Animated, Pressable, View, StyleSheet } from 'react-native';
 import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
 import { usePressScale } from '@/lib/usePressScale';
-import { HOME } from '@/components/homeStyles';
+import { SCREEN } from '@/components/screenStyles';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -61,7 +61,7 @@ export function LinkTiles({
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', gap: 8, marginHorizontal: HOME.gutter, marginTop: 10 },
+  row: { flexDirection: 'row', gap: 8, marginHorizontal: SCREEN.gutter, marginTop: 10 },
   tile: {
     flex: 1,
     minWidth: 0,

@@ -21,8 +21,8 @@ import { AppHeader } from '@/components/AppHeader';
 import { CardRowsSkeleton } from '@/components/ListSkeleton';
 import { useScreenLoad } from '@/lib/useScreenLoad';
 import { categorySentence, parentNameOf } from '@/lib/categoryLabel';
-import { HOME } from '@/components/homeStyles';
-import { HomeSection } from '@/components/HomeSection';
+import { SCREEN } from '@/components/screenStyles';
+import { Section } from '@/components/Section';
 import { SECTION_GAP } from '@/constants/textStyles';
 import {
   buildLoansSummary,
@@ -221,7 +221,7 @@ export default function PlanScreen() {
         )}
 
         {!loaded || !data ? (
-          <View style={{ marginTop: theme.layout.screenTopGap, gap: HOME.sectionGap }}>
+          <View style={{ marginTop: theme.layout.screenTopGap, gap: SCREEN.sectionGap }}>
             <CardRowsSkeleton rows={3} meter />
             <CardRowsSkeleton rows={2} subtitle />
           </View>
@@ -236,7 +236,7 @@ export default function PlanScreen() {
                 onJumpToDay={scrollToDay}
               />
             </TileGroup>
-            <HomeSection title="Where you stand">
+            <Section title="Where you stand">
               <TileGroup>
                 <TileRow>
                   <EmiTile
@@ -249,8 +249,8 @@ export default function PlanScreen() {
                 </TileRow>
                 <DebtTile loans={data.loans} onOpen={() => open('/loans')} />
               </TileGroup>
-            </HomeSection>
-            <HomeSection title="Goals">
+            </Section>
+            <Section title="Goals">
               <TileGroup>
                 <SavingTile
                   goals={data.goals}
@@ -260,8 +260,8 @@ export default function PlanScreen() {
                   onOpenWhatIf={() => open('/whatif')}
                 />
               </TileGroup>
-            </HomeSection>
-            <HomeSection title="People & habit">
+            </Section>
+            <Section title="People & habit">
               <TileGroup>
                 <TileRow>
                   <PeopleTile state={data.people} onOpen={() => open('/people')} />
@@ -272,7 +272,7 @@ export default function PlanScreen() {
                   />
                 </TileRow>
               </TileGroup>
-            </HomeSection>
+            </Section>
             <View onLayout={(e) => (comingUpY.current = e.nativeEvent.layout.y)}>
               <ComingUpSection
                 groups={data.dueGroups}

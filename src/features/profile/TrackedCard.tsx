@@ -10,7 +10,7 @@ import { EYEBROW } from '@/constants/textStyles';
 import { PANEL_ENTER, ROW_EXIT } from '@/lib/animation';
 import { formatMaskableMoney, formatMoney } from '@/lib/money';
 import { withPressed } from '@/lib/pressed';
-import { homeStyles as h } from '@/components/homeStyles';
+import { screenStyles as h } from '@/components/screenStyles';
 
 /** "+₹1,600" / "−₹23,18,958" / "₹0": a true minus sign, and a plus for the lines of a sum. */
 function signedMoney(minor: number, plus = true, masked = false): string {

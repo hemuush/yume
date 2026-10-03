@@ -8,8 +8,8 @@ import { CardRowsSkeleton } from '@/components/ListSkeleton';
 import { CategoryIcon } from '@/components/CategoryIcon';
 import { Amount } from '@/components/Amount';
 import { theme } from '@/constants/theme';
-import { HomeSection } from '@/components/HomeSection';
-import { homeStyles as h } from '@/components/homeStyles';
+import { Section } from '@/components/Section';
+import { screenStyles as h } from '@/components/screenStyles';
 import { listCategories } from '@/db/categories';
 import { inParent } from '@/lib/categoryLabel';
 import { listAccounts } from '@/db/accounts';
@@ -124,7 +124,7 @@ export default function RecentlyDeletedScreen() {
               Entries you delete wait here for 30 days, then they&rsquo;re gone for good.
             </Text>
             {groups.map((g) => (
-              <HomeSection key={g.title} title={g.title}>
+              <Section key={g.title} title={g.title}>
                 <View style={h.card}>
                   {g.items.map((entry, i) => {
                     const cat = categoryOf(entry.categoryId);
@@ -182,7 +182,7 @@ export default function RecentlyDeletedScreen() {
                     );
                   })}
                 </View>
-              </HomeSection>
+              </Section>
             ))}
             <Pressable
               onPress={emptyAll}

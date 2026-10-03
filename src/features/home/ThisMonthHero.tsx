@@ -1,10 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
-import { View, Pressable, PanResponder, StyleSheet } from 'react-native';
+import { View, Pressable, PanResponder } from 'react-native';
 import { Text } from '@/components/Text';
 import Feather from '@expo/vector-icons/Feather';
 import Svg, { Path } from 'react-native-svg';
 import ReanimatedAnimated, {
-  SharedValue,
   useSharedValue,
   useAnimatedStyle,
   useAnimatedProps,
@@ -35,6 +34,9 @@ import {
   HERO_MODE_LABEL,
 } from './heroSlices';
 import type { SuuLine } from './suuLine';
+import { styles } from './hero.styles';
+import { ConfettiDot, ConfettiPiece, makeConfetti } from './HeroConfetti';
+import { WorkingRow } from './WorkingRow';
 import { withPressed } from '@/lib/pressed';
 
 // Reanimated only, never core RN `Animated`: mixing them in one tree crashed BudgetRow/GoalCard/GoalChip
@@ -66,46 +68,8 @@ interface HeroContent {
 
 const CHECK_PATH_LENGTH = 22;
 const RING_SIZE = 72;
-const CONFETTI_COLORS = [theme.colors.secondary, theme.colors.primary, theme.colors.idCoralDeep];
 /** How far a horizontal drag must travel before letting go changes the period. */
 const SWIPE_STEP_PX = 60;
-
-interface ConfettiPiece {
-  color: string;
-  angle: number;
-  distance: number;
-}
-
-function makeConfetti(): ConfettiPiece[] {
-  return Array.from({ length: 8 }, (_, i) => ({
-    color: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
-    angle: -Math.PI / 2 + (Math.random() - 0.5) * 2.6,
-    distance: 22 + Math.random() * 18,
-  }));
-}
-
-function ConfettiDot({ progress, piece }: { progress: SharedValue<number>; piece: ConfettiPiece }) {
-  const style = useAnimatedStyle(() => {
-    const tx = interpolate(progress.value, [0, 1], [0, Math.cos(piece.angle) * piece.distance]);
-    const ty = interpolate(
-      progress.value,
-      [0, 0.4, 1],
-      [0, Math.sin(piece.angle) * piece.distance - 6, Math.sin(piece.angle) * piece.distance + 18]
-    );
-    const opacity = interpolate(progress.value, [0, 0.15, 0.7, 1], [0, 1, 1, 0]);
-    const rotate = interpolate(progress.value, [0, 1], [0, 260]);
-    return {
-      opacity,
-      transform: [{ translateX: tx }, { translateY: ty }, { rotate: `${rotate}deg` }],
-    };
-  });
-  return (
-    <ReanimatedAnimated.View
-      pointerEvents="none"
-      style={[styles.confettiDot, { backgroundColor: piece.color }, style]}
-    />
-  );
-}
 
 /**
  * Month card: free-to-use headline, MonthRing, three tiles; unpaid bills give "Free after bills" (gold chip).
@@ -614,25 +578,6 @@ export function ThisMonthHero({
   );
 }
 
-function WorkingRow({
-  label,
-  value,
-  total = false,
-  due = false,
-}: {
-  label: string;
-  value: string;
-  total?: boolean;
-  due?: boolean;
-}) {
-  return (
-    <View style={[styles.workingRow, total && styles.workingTotal]}>
-      <Text style={[styles.workingLabel, total && styles.workingLabelTotal]}>{label}</Text>
-      <Text style={[styles.workingValue, due && styles.workingValueDue]}>{value}</Text>
-    </View>
-  );
-}
-
 /** The word under the ring's figure — short, to fit the small face. */
 const RING_LABEL: Record<HeroMode, string> = { kept: 'kept', spent: 'spent', saved: 'saved', free: 'free' };
 
@@ -651,153 +596,3 @@ const TILE_TINT = {
 
 /** A deeper edge on each tile's legend dot, so the pastel ring colour still reads on the pale tile. */
 const DOT_EDGE = { spent: theme.colors.idCoralDeep, saved: theme.colors.secondaryDeep };
-
-const styles = StyleSheet.create({
-  card: { marginHorizontal: 20, marginTop: 4, overflow: 'hidden' },
-  inner: { padding: 16, paddingBottom: 14 },
-  bar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
-  title: { fontFamily: theme.font.roundedBold, fontSize: 15, color: theme.colors.textPrimary },
-  nav: { flexDirection: 'row', alignItems: 'center', gap: 2, flexShrink: 1 },
-  navBtn: {
-    width: 28,
-    height: 28,
-    borderRadius: theme.radius.pill,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  navBtnOff: { opacity: 0.25 },
-  body: { marginTop: 10 },
-
-  top: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  headline: { flex: 1, minWidth: 0 },
-  headLabel: {
-    fontFamily: theme.font.bodyBold,
-    fontSize: 11,
-    letterSpacing: 0.5,
-    textTransform: 'uppercase',
-    color: theme.colors.textSecondary,
-  },
-  headValue: {
-    fontFamily: theme.font.monoBold,
-    fontSize: 34,
-    lineHeight: 38,
-    letterSpacing: -1,
-    color: theme.colors.textPrimary,
-    marginTop: 2,
-  },
-  headSymbol: {
-    fontFamily: theme.font.monoBold,
-    fontSize: 21,
-    letterSpacing: 0,
-    color: theme.colors.textMuted,
-  },
-  headValueNeg: { color: theme.colors.expenseText },
-  headCaption: {
-    fontFamily: theme.font.body,
-    fontSize: 12.5,
-    color: theme.colors.textSecondary,
-    marginTop: 2,
-  },
-  dueChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'flex-start',
-    gap: 6,
-    marginTop: 6,
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-    borderRadius: theme.radius.pill,
-    backgroundColor: theme.colors.idGold,
-  },
-  dueDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: theme.colors.idGoldDeep },
-  dueText: { flexShrink: 1, fontFamily: theme.font.bodyBold, fontSize: 11.5, color: theme.colors.warnInk },
-  dueMoney: { fontFamily: theme.font.monoBold, fontSize: 11.5 },
-  working: {
-    marginTop: 12,
-    borderRadius: 16,
-    backgroundColor: theme.colors.surfaceAlt,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
-  workingRow: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    justifyContent: 'space-between',
-    gap: 8,
-    paddingVertical: 4,
-  },
-  workingTotal: {
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: theme.colors.borderSoft,
-    marginTop: 3,
-    paddingTop: 7,
-  },
-  workingLabel: { flex: 1, fontFamily: theme.font.body, fontSize: 12.5, color: theme.colors.textSecondary },
-  workingLabelTotal: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
-  workingValue: { fontFamily: theme.font.monoBold, fontSize: 12.5, color: theme.colors.textPrimary },
-  workingValueDue: { color: theme.colors.warnInk },
-  tiles: { flexDirection: 'row', gap: 7, marginTop: 12 },
-  tile: {
-    flex: 1,
-    minWidth: 0,
-    borderRadius: 16,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    borderWidth: 1.5,
-    borderColor: 'transparent',
-  },
-  tileActive: { borderColor: theme.colors.ink },
-  tileFaded: { opacity: 0.4 },
-  tileHead: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  tileDot: { width: 9, height: 9, borderRadius: 4.5, borderWidth: 1.5 },
-  tileLabel: {
-    flexShrink: 1,
-    fontFamily: theme.font.bodyBold,
-    fontSize: 11,
-    letterSpacing: 0.4,
-    textTransform: 'uppercase',
-    color: theme.colors.textSecondary,
-  },
-  tileValue: {
-    fontFamily: theme.font.monoBold,
-    fontSize: 13.5,
-    color: theme.colors.textPrimary,
-    marginTop: 5,
-  },
-
-  // Slim lines under the ring and tiles.
-  line: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 12 },
-  lineLabel: { flex: 1, fontFamily: theme.font.body, fontSize: 12.5, color: theme.colors.textSecondary },
-  lineMoney: { fontFamily: theme.font.monoBold, color: theme.colors.textPrimary },
-  todayMeter: { width: 72 },
-
-  // Suu's line: the card's mint footer (coral when Suu is worried).
-  suu: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 9,
-    paddingHorizontal: 16,
-    paddingVertical: 11,
-    backgroundColor: theme.colors.secondaryTint,
-  },
-  suuWarn: { backgroundColor: theme.colors.idCoral },
-  suuDot: { width: 9, height: 9, borderRadius: 5, marginTop: 4 },
-  suuText: {
-    flex: 1,
-    fontFamily: theme.font.roundedMedium,
-    fontSize: 12.5,
-    lineHeight: 17,
-    color: '#1D5E45',
-  },
-  suuTextWarn: { color: theme.colors.expenseText },
-
-  confettiDot: {
-    position: 'absolute',
-    top: 4,
-    left: '50%',
-    width: 5,
-    height: 5,
-    borderRadius: 1,
-    marginLeft: -2.5,
-  },
-});

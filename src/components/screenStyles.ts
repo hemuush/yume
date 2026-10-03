@@ -6,7 +6,7 @@ import { SOFT_LIFT } from './SoftCard';
  * The app's one visual system: every card, section heading and list row is built from these so no block gets
  * its own padding, icon size or type scale (it had drifted: 30/36/38px icons, 11.5-13.5pt row text).
  */
-export const HOME = {
+export const SCREEN = {
   /** Space above each section heading. */
   sectionGap: 26,
   gutter: 20,
@@ -15,9 +15,9 @@ export const HOME = {
   iconGlyph: 17,
 } as const;
 
-export const homeStyles = StyleSheet.create({
+export const screenStyles = StyleSheet.create({
   card: {
-    marginHorizontal: HOME.gutter,
+    marginHorizontal: SCREEN.gutter,
     backgroundColor: theme.colors.surface,
     borderRadius: theme.radius.xl2,
     borderWidth: StyleSheet.hairlineWidth,
@@ -34,14 +34,14 @@ export const homeStyles = StyleSheet.create({
     gap: 12,
     paddingVertical: 11,
     paddingHorizontal: 14,
-    minHeight: HOME.rowMinHeight,
+    minHeight: SCREEN.rowMinHeight,
   },
   divider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.borderSoft },
   // Same shape and size as CategoryIcon's default (38px, radius 0.32×).
   iconTile: {
-    width: HOME.iconTile,
-    height: HOME.iconTile,
-    borderRadius: HOME.iconTile * 0.32,
+    width: SCREEN.iconTile,
+    height: SCREEN.iconTile,
+    borderRadius: SCREEN.iconTile * 0.32,
     alignItems: 'center',
     justifyContent: 'center',
   },

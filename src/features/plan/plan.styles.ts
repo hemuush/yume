@@ -1,13 +1,13 @@
 import { StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
-import { HOME } from '@/components/homeStyles';
+import { SCREEN } from '@/components/screenStyles';
 
 // Shared by the Plan tiles and Coming up.
 const TILE_GAP = 8;
 export const STRIP_BAR_AREA = 46;
 
 export const styles = StyleSheet.create({
-  group: { gap: TILE_GAP, marginHorizontal: HOME.gutter },
+  group: { gap: TILE_GAP, marginHorizontal: SCREEN.gutter },
   groupFirst: { marginTop: TILE_GAP },
   tileRow: { flexDirection: 'row', gap: TILE_GAP },
   tile: {

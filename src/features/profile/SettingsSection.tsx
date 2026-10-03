@@ -32,8 +32,8 @@ import { YumeLogo } from '@/components/YumeLogo';
 import { useAccent, THEMES } from '@/theme/AccentContext';
 import { ThemeThumb } from './ThemePreview';
 import { theme } from '@/constants/theme';
-import { HomeSection } from '@/components/HomeSection';
-import { homeStyles as h } from '@/components/homeStyles';
+import { Section } from '@/components/Section';
+import { screenStyles as h } from '@/components/screenStyles';
 import { styles } from './profile.styles';
 import { errorMessage } from '@/lib/errorMessage';
 import type { McIconName } from '@/components/iconName';
@@ -225,7 +225,7 @@ export function SettingsSection() {
         </Pressable>
       )}
 
-      <HomeSection title="Money">
+      <Section title="Money">
         <View style={h.card}>
           <SettingsRow
             icon="currency-inr"
@@ -310,9 +310,9 @@ export function SettingsSection() {
             />
           </MovingRow>
         </View>
-      </HomeSection>
+      </Section>
 
-      <HomeSection title="Privacy & alerts">
+      <Section title="Privacy & alerts">
         <View style={h.card}>
           <SettingsRow
             icon="fingerprint"
@@ -338,9 +338,9 @@ export function SettingsSection() {
             divider
           />
         </View>
-      </HomeSection>
+      </Section>
 
-      <HomeSection title="Your data">
+      <Section title="Your data">
         <View style={h.card}>
           <SettingsRow
             icon="folder-outline"
@@ -378,9 +378,9 @@ export function SettingsSection() {
             divider
           />
         </View>
-      </HomeSection>
+      </Section>
 
-      <HomeSection title="Appearance">
+      <Section title="Appearance">
         <Pressable
           onPress={() => router.push('/themes')}
           style={withPressed([h.card, h.row])}
@@ -394,7 +394,7 @@ export function SettingsSection() {
           </View>
           <Feather name="chevron-right" size={18} color={theme.colors.textMuted} />
         </Pressable>
-      </HomeSection>
+      </Section>
 
       <View style={styles.footer}>
         <YumeLogo size={30} />

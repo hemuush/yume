@@ -50,8 +50,8 @@ import { ThisMonthHero } from '@/features/home/ThisMonthHero';
 import { ThisMonthHeroSkeleton, CardRowsSkeleton, AccountStackSkeleton } from '@/features/home/HomeSkeleton';
 import { QuickActionsRow } from '@/features/home/QuickActionsRow';
 import { SuuRefreshBadge } from '@/features/home/SuuRefreshBadge';
-import { HomeSection } from '@/components/HomeSection';
-import { homeStyles, HOME } from '@/components/homeStyles';
+import { Section } from '@/components/Section';
+import { screenStyles, SCREEN } from '@/components/screenStyles';
 import { HomeGlance, buildUpcomingItems } from '@/features/home/HomeGlance';
 import { buildLoansSummary } from '@/features/plan/planOverview';
 import { RecentTransactionRow } from '@/features/home/RecentTransactionRow';
@@ -477,15 +477,15 @@ export default function DashboardScreen() {
 
         {!loaded && (
           <>
-            <View style={{ marginTop: HOME.sectionGap }}>
+            <View style={{ marginTop: SCREEN.sectionGap }}>
               <CardRowsSkeleton rows={2} meter />
             </View>
-            <HomeSection title="Recent activity">
+            <Section title="Recent activity">
               <CardRowsSkeleton rows={3} subtitle />
-            </HomeSection>
-            <HomeSection title="Your accounts">
+            </Section>
+            <Section title="Your accounts">
               <AccountStackSkeleton />
-            </HomeSection>
+            </Section>
           </>
         )}
 
@@ -501,14 +501,14 @@ export default function DashboardScreen() {
         )}
 
         {loaded && (
-          <HomeSection title="Recent activity" onSeeAll={() => router.push('/transactions')}>
+          <Section title="Recent activity" onSeeAll={() => router.push('/transactions')}>
             {recent.length === 0 ? (
               <EmptyState
                 title="Nothing logged in this period"
                 subtitle="Use the month pill above to check another period."
               />
             ) : (
-              <View style={[homeStyles.card, homeStyles.cardLifted]}>
+              <View style={[screenStyles.card, screenStyles.cardLifted]}>
                 {recent.slice(0, 4).map((tx, i) => (
                   <Animated.View key={tx.id} entering={rowEntering(i)} layout={ROW_LAYOUT} exiting={ROW_EXIT}>
                     <RecentTransactionRow
@@ -524,11 +524,11 @@ export default function DashboardScreen() {
                 ))}
               </View>
             )}
-          </HomeSection>
+          </Section>
         )}
 
         {loaded && (
-          <HomeSection title="Your accounts" onSeeAll={() => router.push('/profile')}>
+          <Section title="Your accounts" onSeeAll={() => router.push('/profile')}>
             {accounts.length === 0 ? (
               // Opens the same Add Account form Profile uses, right here — the
               // old hint sent a brand-new user three taps away to find it.
@@ -546,7 +546,7 @@ export default function DashboardScreen() {
             ) : (
               <AccountStack accounts={accounts} onOpen={setSummaryAccount} />
             )}
-          </HomeSection>
+          </Section>
         )}
       </Animated.ScrollView>
 

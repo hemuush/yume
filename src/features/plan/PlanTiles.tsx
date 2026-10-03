@@ -14,7 +14,7 @@ import { projectedMonthlySpend } from '@/lib/whatIf';
 import { usePressScale } from '@/lib/usePressScale';
 import { haptics } from '@/lib/haptics';
 import { Account, SavingsGoal } from '@/types';
-import { homeStyles as h } from '@/components/homeStyles';
+import { screenStyles as h } from '@/components/screenStyles';
 import { GoalChip } from '@/features/goals/GoalChip';
 import {
   BudgetsSummary,

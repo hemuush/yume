@@ -6,7 +6,7 @@ import { Amount } from '@/components/Amount';
 import { theme } from '@/constants/theme';
 import { usePressScale } from '@/lib/usePressScale';
 import { styles } from './transactions.styles';
-import { homeStyles as h } from '@/components/homeStyles';
+import { screenStyles as h } from '@/components/screenStyles';
 import { formatMaskableMoney } from '@/lib/money';
 import { usePrivacy } from '@/theme/PrivacyContext';
 

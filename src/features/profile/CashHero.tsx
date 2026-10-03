@@ -6,7 +6,7 @@ import { theme } from '@/constants/theme';
 import { EYEBROW } from '@/constants/textStyles';
 import { shade } from '@/lib/color';
 import { formatMaskableMoney } from '@/lib/money';
-import { HOME } from '@/components/homeStyles';
+import { SCREEN } from '@/components/screenStyles';
 
 /**
  * First block on You: what is in your accounts right now. Leads with this, not the tracked balance, since
@@ -55,7 +55,7 @@ export function CashHero({
 
 const styles = StyleSheet.create({
   card: {
-    marginHorizontal: HOME.gutter,
+    marginHorizontal: SCREEN.gutter,
     marginTop: 12,
     padding: 16,
     borderRadius: theme.radius.xl2,
