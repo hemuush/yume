@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, ReactNode } from 'react';
 import { getAccentColor, setAccentColor, getCachedAccentColor, getThemeId, setThemeId } from '@/db/settings';
 import { THEMES, DEFAULT_THEME_ID, themeById } from './themes';
 import { theme } from '@/constants/theme';
@@ -57,14 +57,15 @@ export function AccentProvider({ children }: { children: ReactNode }) {
       .catch(() => {});
   }, []);
 
-  const setTheme = (id: string) => {
+  const setTheme = useCallback((id: string) => {
     const pack = themeById(id);
     if (!pack) return;
     setThemeIdState(id);
     setAccentState(pack.primary);
-    void setThemeId(id);
-    void setAccentColor(pack.primary);
-  };
+    // A failed write only costs the choice on the next launch; the theme still applies this session.
+    Promise.resolve(setThemeId(id)).catch(() => {});
+    Promise.resolve(setAccentColor(pack.primary)).catch(() => {});
+  }, []);
 
   // A pack this install hasn't selected (the pre-theme fallback above) gets the default pack's
   // `secondary`/`dot`.
@@ -72,13 +73,12 @@ export function AccentProvider({ children }: { children: ReactNode }) {
   const secondary = activePack.secondary;
   const dot = activePack.dot ?? activePack.secondary;
 
-  return (
-    <AccentContext.Provider
-      value={{ themeId, accent, secondary, dot, onAccent: contrastColor(accent), setTheme }}
-    >
-      {children}
-    </AccentContext.Provider>
+  const value = useMemo(
+    () => ({ themeId, accent, secondary, dot, onAccent: contrastColor(accent), setTheme }),
+    [themeId, accent, secondary, dot, setTheme]
   );
+
+  return <AccentContext.Provider value={value}>{children}</AccentContext.Provider>;
 }
 
 export function useAccent(): AccentContextValue {

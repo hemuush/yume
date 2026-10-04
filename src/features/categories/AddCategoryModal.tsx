@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { View, Pressable } from 'react-native';
 import { Text } from '@/components/Text';
 import { createCategory, updateCategory } from '@/db/ledger';
@@ -46,25 +46,22 @@ export function AddCategoryModal({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!visible) return;
-    if (category) {
-      setName(category.name);
-      setKind(category.kind);
-      setParentId(category.parentId);
-      setColor(category.color);
-      setIcon(category.icon);
-      setIsSensitive(category.isSensitive);
-    } else {
-      setName('');
-      setKind('expense');
-      setParentId(null);
-      setColor(CATEGORY_COLOR_PALETTE[0]);
-      setIcon(CATEGORY_ICON_CHOICES[0]);
-      setIsSensitive(false);
+  // The form starts fresh each time the sheet opens (or switches to another category). Done while rendering
+  // rather than in an effect, so the first painted frame is already the reset form, not last time's.
+  const openKey = visible ? (category ? `edit:${category.id}` : 'new') : null;
+  const [syncedKey, setSyncedKey] = useState<string | null>(null);
+  if (openKey !== syncedKey) {
+    setSyncedKey(openKey);
+    if (openKey) {
+      setName(category?.name ?? '');
+      setKind(category?.kind ?? 'expense');
+      setParentId(category?.parentId ?? null);
+      setColor(category?.color ?? CATEGORY_COLOR_PALETTE[0]);
+      setIcon(category?.icon ?? CATEGORY_ICON_CHOICES[0]);
+      setIsSensitive(category?.isSensitive ?? false);
+      setError(null);
     }
-    setError(null);
-  }, [visible, category]);
+  }
 
   // Only a top-level category with no subcategories can be a parent: one level deep only, and a category
   // with children can't become a subcategory (mirrors createCategory/updateCategory in src/db/ledger.ts).
@@ -161,8 +158,9 @@ export function AddCategoryModal({
           <View style={styles.colorRow}>
             <Pressable
               onPress={() => setParentId(null)}
-              accessibilityRole="button"
-              accessibilityState={{ selected: parentId === null }}
+              accessibilityRole="radio"
+              accessibilityLabel={category?.parentId ? 'Top level, no parent category' : 'No parent category'}
+              accessibilityState={{ selected: parentId === null, checked: parentId === null }}
               style={withPressed([styles.parentChip, parentId === null && styles.parentChipActive])}
             >
               <Text style={[styles.parentChipText, parentId === null && styles.parentChipTextActive]}>
@@ -173,8 +171,9 @@ export function AddCategoryModal({
               <Pressable
                 key={p.id}
                 onPress={() => setParentId(p.id)}
-                accessibilityRole="button"
-                accessibilityState={{ selected: parentId === p.id }}
+                accessibilityRole="radio"
+                accessibilityLabel={`Inside ${p.name}`}
+                accessibilityState={{ selected: parentId === p.id, checked: parentId === p.id }}
                 style={withPressed([styles.parentChip, parentId === p.id && styles.parentChipActive])}
               >
                 <Text style={[styles.parentChipText, parentId === p.id && styles.parentChipTextActive]}>

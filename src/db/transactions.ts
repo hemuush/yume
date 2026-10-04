@@ -169,14 +169,20 @@ export async function insertTransactionRow(db: AppDb, input: CreateTransactionIn
  * notifications); anything else dated today still rebuilds (evening nudge skips a logged day). Never throws.
  */
 export async function checkOverspendForNewTransaction(input: CreateTransactionInput): Promise<void> {
-  // The spending-jump check compares this month to last month, so a backdated entry (January logged in
-  // September) would compare the wrong month and could pop a bogus alert.
-  const today = toLocalIsoDate(new Date());
-  const isCurrentMonth = input.date.slice(0, 7) === today.slice(0, 7);
-  if (input.type === 'expense' && input.categoryId && isCurrentMonth) {
-    await queueSpendAlerts(input.categoryId).catch(() => {});
-  } else if (input.date === today) {
-    await rebuildNotifications();
+  try {
+    // The spending-jump check compares this month to last month, so a backdated entry (January logged in
+    // September) would compare the wrong month and could pop a bogus alert.
+    const today = toLocalIsoDate(new Date());
+    const isCurrentMonth = input.date.slice(0, 7) === today.slice(0, 7);
+    if (input.type === 'expense' && input.categoryId && isCurrentMonth) {
+      await queueSpendAlerts(input.categoryId).catch(() => {});
+    } else if (input.date === today) {
+      await rebuildNotifications();
+    }
+  } catch (e) {
+    // The entry is already committed: a notification hiccup must never be reported as a failed save (or, for a
+    // recurring rule, deactivate it).
+    console.warn('Post-save notification check failed:', e);
   }
 }
 
@@ -485,7 +491,7 @@ export interface UpdateTransactionInput {
 
 /**
  * Edits a plain transaction's own fields. Never call on one linked to a loan payment or person ledger entry
- * (check isLinkedTransaction): use the loan/person "undo" flow, or the schedule/balance desyncs.
+ * (check getTransactionLink): use the loan/person "undo" flow, or the schedule/balance desyncs.
  */
 export async function updateTransaction(id: string, input: UpdateTransactionInput): Promise<Transaction> {
   assertRealDate(input.date);
@@ -570,21 +576,27 @@ export type TransactionLink =
  * EMIs link via loan_payments.transaction_id; disbursement/fee/prepayment rows via loan_id and can't be edited.
  */
 export async function getTransactionLink(id: string): Promise<TransactionLink> {
-  const db = await getDb();
-  const [loanRow, personRow, tx] = await Promise.all([
-    db.getFirstAsync<{ id: string }>('SELECT id FROM loan_payments WHERE transaction_id = ?', [id]),
-    db.getFirstAsync<{ id: string }>('SELECT id FROM person_ledger_entries WHERE transaction_id = ?', [id]),
-    db.getFirstAsync<{ loan_id: string | null }>('SELECT loan_id FROM transactions WHERE id = ?', [id]),
-  ]);
-  if (loanRow) return { kind: 'loan', loanPaymentId: loanRow.id };
-  if (personRow) return { kind: 'person' };
-  if (tx?.loan_id) return { kind: 'loan-unlinked' };
-  return null;
+  return transactionLinkOn(await getDb(), id);
 }
 
-/** True if this transaction is the cash-side of a loan payment or a Friends & Family ledger entry. */
-async function isLinkedTransaction(id: string): Promise<boolean> {
-  return (await getTransactionLink(id)) !== null;
+/** getTransactionLink on a given handle, so deleteTransaction can run it inside its own transaction (reads run one at a time: a transaction handle can't take parallel ones). */
+async function transactionLinkOn(db: AppDb, id: string): Promise<TransactionLink> {
+  const loanRow = await db.getFirstAsync<{ id: string }>(
+    'SELECT id FROM loan_payments WHERE transaction_id = ?',
+    [id]
+  );
+  const personRow = await db.getFirstAsync<{ id: string }>(
+    'SELECT id FROM person_ledger_entries WHERE transaction_id = ?',
+    [id]
+  );
+  const own = await db.getFirstAsync<{ loan_id: string | null }>(
+    'SELECT loan_id FROM transactions WHERE id = ?',
+    [id]
+  );
+  if (loanRow) return { kind: 'loan', loanPaymentId: loanRow.id };
+  if (personRow) return { kind: 'person' };
+  if (own?.loan_id) return { kind: 'loan-unlinked' };
+  return null;
 }
 
 /**
@@ -599,19 +611,23 @@ export async function deleteTransaction(
   id: string,
   { keep = true }: { keep?: boolean } = {}
 ): Promise<RowSnapshot> {
-  if (await isLinkedTransaction(id)) {
-    throw new Error('This transaction is linked to a loan or person entry — undo it from there instead.');
-  }
   const db = await getDb();
-  const snapshot = await captureRow(db, 'transactions', id);
-  if (!snapshot) throw new Error('This transaction is already deleted.');
-  // One part alone would leave half a payment behind; a split is deleted whole (db/splits.ts).
-  if (snapshot.row.split_id) throw new Error('This is part of a split. Delete the whole split instead.');
+  let snapshot: RowSnapshot | null = null;
+  // Link check, capture and delete share one transaction, so the snapshot is exactly the row deleted and a
+  // double-tap can't capture a row the other call is deleting.
   await db.withTransactionAsync(async (tx) => {
+    if ((await transactionLinkOn(tx, id)) !== null) {
+      throw new Error('This transaction is linked to a loan or person entry — undo it from there instead.');
+    }
+    const captured = await captureRow(tx, 'transactions', id);
+    if (!captured) throw new Error('This transaction is already deleted.');
+    // One part alone would leave half a payment behind; a split is deleted whole (db/splits.ts).
+    if (captured.row.split_id) throw new Error('This is part of a split. Delete the whole split instead.');
     await tx.runAsync('DELETE FROM transactions WHERE id = ?', [id]);
-    if (keep) await keepDeletedEntry(tx, snapshot);
+    if (keep) await keepDeletedEntry(tx, captured);
+    snapshot = captured;
   });
-  return snapshot;
+  return snapshot as unknown as RowSnapshot;
 }
 
 /** Undoes `deleteTransaction` — re-inserts the exact row, never a fresh one, and takes it off Recently deleted. */

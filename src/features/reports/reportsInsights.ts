@@ -93,6 +93,7 @@ export function buildHeatGrid(input: {
     return {
       key: iso,
       label: String(day),
+      a11yLabel: heatCellA11y(iso, total),
       level: heatLevel(total, maxDay),
       isToday: iso === todayIso,
       isFuture: iso > todayIso,
@@ -101,6 +102,11 @@ export function buildHeatGrid(input: {
     };
   });
   return { cells, leadingPad: new Date(y, m, 1).getDay(), columns: 7, weekdayLabels: WEEKDAYS };
+}
+
+/** What a screen reader says for a heatmap day: its date and what was spent. */
+function heatCellA11y(iso: string, totalMinor: number): string {
+  return `${dayMonth(iso)}, ${totalMinor > 0 ? `spent ${formatMoney(totalMinor)}` : 'nothing spent'}`;
 }
 
 /** A custom range up to this many days is drawn day by day; a longer one by month. */
@@ -132,6 +138,7 @@ export function buildRangeHeatGrid(input: {
         return {
           key: iso,
           label: String(Number(iso.slice(8))),
+          a11yLabel: heatCellA11y(iso, total),
           level: heatLevel(total, maxDay),
           isToday: iso === todayIso,
           isFuture: iso > todayIso,
@@ -232,9 +239,15 @@ export interface PatternFact {
 
 /**
  * The notable reads of a month's daily-spend shape, most telling first, at most three; a flat month gets
- * fewer.
+ * fewer. The weekend read averages over every day so far (spend-free ones included), the same basis as
+ * `weekdayRhythm`, so the two never disagree.
  */
-export function patternFacts(daily: DailyExpensePoint[], totalDaysInPeriod: number): PatternFact[] {
+export function patternFacts(
+  daily: DailyExpensePoint[],
+  totalDaysInPeriod: number,
+  range: { start: string; end: string },
+  today: string
+): PatternFact[] {
   const spent = daily.filter((d) => d.totalMinor > 0);
   if (spent.length < 3) return [];
 
@@ -272,13 +285,16 @@ export function patternFacts(daily: DailyExpensePoint[], totalDaysInPeriod: numb
 
   // 3 — weekday vs weekend
   const wk = { wdSum: 0, wdN: 0, weSum: 0, weN: 0 };
-  for (const d of daily) {
-    const day = parseLocalIsoDate(d.date).getDay();
+  const spentOn = new Map(daily.map((d) => [d.date, d.totalMinor]));
+  const lastDay = today < range.end ? today : range.end;
+  for (let d = parseLocalIsoDate(range.start); toLocalIsoDate(d) <= lastDay; d.setDate(d.getDate() + 1)) {
+    const day = d.getDay();
+    const amount = spentOn.get(toLocalIsoDate(d)) ?? 0;
     if (day === 0 || day === 6) {
-      wk.weSum += d.totalMinor;
+      wk.weSum += amount;
       wk.weN += 1;
     } else {
-      wk.wdSum += d.totalMinor;
+      wk.wdSum += amount;
       wk.wdN += 1;
     }
   }
@@ -541,7 +557,8 @@ export function weekdayRhythm(
 export function weekdayReadLine(r: WeekdayRhythm, dow: number): string {
   const name = WEEKDAY[dow];
   const avg = r.avgMinor[dow];
-  const pct = Math.round((Math.abs(avg - r.usualMinor) / r.usualMinor) * 100);
+  // usualMinor is never 0 from weekdayRhythm (it returns null then), but guard the divide anyway.
+  const pct = r.usualMinor > 0 ? Math.round((Math.abs(avg - r.usualMinor) / r.usualMinor) * 100) : 0;
   const usual = formatMoney(r.usualMinor);
   if (dow === r.peak && avg > r.usualMinor) {
     return `${name}s run highest: ${formatMoney(avg)} on average, ${pct}% above your ${usual} day.`;

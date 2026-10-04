@@ -70,7 +70,7 @@ export interface RecurringRuleInput {
 }
 
 async function validate(input: RecurringRuleInput) {
-  if (!Number.isFinite(input.amountMinor) || input.amountMinor <= 0) {
+  if (!Number.isSafeInteger(input.amountMinor) || input.amountMinor <= 0) {
     throw new Error('Amount must be a positive number');
   }
   if (input.type === 'transfer' && !input.toAccountId) {
@@ -176,10 +176,16 @@ export async function setRecurringRuleActive(id: string, active: boolean): Promi
 
 export async function deleteRecurringRule(id: string): Promise<RowSnapshot> {
   const db = await getDb();
-  const snapshot = await captureRow(db, 'recurring_rules', id);
-  if (!snapshot) throw new Error('This recurring entry is already deleted.');
-  await db.runAsync('DELETE FROM recurring_rules WHERE id = ?', [id]);
-  return snapshot;
+  let snapshot: RowSnapshot | null = null;
+  // Captured inside the transaction that deletes it, so the snapshot is exactly the row removed even if a
+  // run of due rules advances the rule meanwhile.
+  await db.withTransactionAsync(async (tx) => {
+    const captured = await captureRow(tx, 'recurring_rules', id);
+    if (!captured) throw new Error('This recurring entry is already deleted.');
+    await tx.runAsync('DELETE FROM recurring_rules WHERE id = ?', [id]);
+    snapshot = captured;
+  });
+  return snapshot as unknown as RowSnapshot;
 }
 
 /** Undoes `deleteRecurringRule` — re-inserts the exact row, never a fresh one. */

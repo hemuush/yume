@@ -6,7 +6,8 @@ import { calculateEmi, recalculateAfterPrepayment } from '@/lib/loan';
 import { formatMoney } from '@/lib/money';
 
 import { scheduleAnchor, feeCategoryId } from './loanRows';
-import { rebuildNotifications } from '@/lib/notifications';
+import { rebuildNotificationsAfterCommit } from './afterCommit';
+import { rateProblem } from '@/lib/loanLimits';
 
 /** Paying EMIs, rate changes and prepayments (re-exported from ./loans). */
 
@@ -32,6 +33,14 @@ export async function payInstallment(
   // mid-write failure can't leave an expense recorded against a stale schedule.
   const txId = newId();
   await db.withTransactionAsync(async (tx) => {
+    // The reads above ran before this transaction, so a double-tap queued behind the first call would still
+    // see 'pending'. Re-check on the transaction's own handle (the first call has committed by now) and
+    // write from this fresh row, so the second call fails cleanly instead of paying the EMI twice.
+    const current = await tx.getFirstAsync<LoanPaymentRow>('SELECT * FROM loan_payments WHERE id = ?', [
+      loanPaymentId,
+    ]);
+    if (!current) throw new Error('Loan payment not found');
+    if (current.status === 'paid') throw new Error('This installment has already been paid');
     await tx.runAsync(
       `INSERT INTO transactions (id, type, account_id, category_id, amount_minor, date, note)
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
@@ -40,9 +49,9 @@ export async function payInstallment(
         loan.direction === 'borrowed' ? 'expense' : 'income',
         opts.accountId,
         opts.categoryId,
-        payment.emi_amount_minor,
+        current.emi_amount_minor,
         opts.paidDate,
-        `EMI #${payment.installment_number} — ${loan.counterparty}`,
+        `EMI #${current.installment_number} — ${loan.counterparty}`,
       ]
     );
     await tx.runAsync(
@@ -50,14 +59,14 @@ export async function payInstallment(
       [opts.paidDate, txId, loanPaymentId]
     );
     await tx.runAsync(`UPDATE loans SET outstanding_principal_minor = ? WHERE id = ?`, [
-      payment.outstanding_after_minor,
-      payment.loan_id,
+      current.outstanding_after_minor,
+      current.loan_id,
     ]);
-    if (payment.outstanding_after_minor === 0) {
-      await tx.runAsync(`UPDATE loans SET status = 'closed' WHERE id = ?`, [payment.loan_id]);
+    if (current.outstanding_after_minor === 0) {
+      await tx.runAsync(`UPDATE loans SET status = 'closed' WHERE id = ?`, [current.loan_id]);
     }
   });
-  await rebuildNotifications();
+  await rebuildNotificationsAfterCommit();
 }
 
 /**
@@ -71,68 +80,72 @@ export async function applyRateChange(
   if (!Number.isFinite(opts.newAnnualRateBp) || opts.newAnnualRateBp < 0) {
     throw new Error('New interest rate must be a valid, non-negative number');
   }
+  const limitProblem = rateProblem(opts.newAnnualRateBp);
+  if (limitProblem) throw new Error(limitProblem);
   if (!opts.effectiveDate) {
     throw new Error('Enter the date this rate change actually took effect');
   }
   const mode = opts.mode ?? 'keepEmi';
   const db = await getDb();
-  const loan = await db.getFirstAsync<LoanRow>('SELECT * FROM loans WHERE id = ?', [loanId]);
-  if (!loan) throw new Error('Loan not found');
-  if (loan.rate_type !== 'floating') {
-    throw new Error('Only floating-rate loans can have their rate updated');
-  }
-  if (opts.effectiveDate < loan.start_date) {
-    throw new Error("The effective date can't be before the loan itself started.");
-  }
-
-  const paidInstallments = await db.getAllAsync<LoanPaymentRow>(
-    `SELECT * FROM loan_payments WHERE loan_id = ? AND status = 'paid' ORDER BY installment_number DESC LIMIT 1`,
-    [loanId]
-  );
-  const nextInstallmentNumber = paidInstallments.length ? paidInstallments[0].installment_number + 1 : 1;
-  // Anchored to the loan's original due dates, not the date of this change, so future due-days
-  // don't drift to whatever day the rate was updated. See scheduleAnchor.
-  const anchor = await scheduleAnchor(db, loanId, nextInstallmentNumber, opts.effectiveDate);
-
-  // The EMI to amortize against: the old EMI in keepEmi mode, or one solved to close out in exactly the
-  // remaining installments in keepTenure mode.
-  const remainingMonths = loan.tenure_months - (nextInstallmentNumber - 1);
-  if (mode === 'keepTenure' && remainingMonths <= 0) {
-    throw new Error('This loan has no remaining installments to recalculate a tenure-preserving EMI over.');
-  }
-  const emiForSchedule =
-    mode === 'keepTenure'
-      ? calculateEmi(loan.outstanding_principal_minor, opts.newAnnualRateBp, remainingMonths)
-      : loan.emi_amount_minor;
-
-  const newSchedule =
-    loan.outstanding_principal_minor > 0
-      ? recalculateAfterPrepayment({
-          loanId,
-          outstandingPrincipalMinor: loan.outstanding_principal_minor,
-          annualRateBp: opts.newAnnualRateBp,
-          emiAmountMinor: emiForSchedule,
-          fromInstallmentNumber: nextInstallmentNumber,
-          fromDate: anchor.fromDate,
-          anchorInstallmentNumber: anchor.anchorInstallmentNumber,
-          // keepTenure promises a fixed payoff date: the EMI is paisa-rounded, so the last installment
-          // absorbs the leftover rounding instead of spilling into a phantom extra one.
-          lastInstallmentNumber: mode === 'keepTenure' ? loan.tenure_months : undefined,
-        })
-      : [];
-
-  // An EMI below accruing interest can never amortize; recalculateAfterPrepayment stops silently,
-  // leaving the loan active with no schedule. Only reachable in keepEmi (keepTenure solves for the EMI).
-  const stillOwesAfterSchedule = newSchedule.length
-    ? newSchedule[newSchedule.length - 1].outstandingAfterMinor
-    : loan.outstanding_principal_minor;
-  if (mode === 'keepEmi' && stillOwesAfterSchedule > 0) {
-    throw new Error(
-      `At ${(opts.newAnnualRateBp / 100).toFixed(2)}% p.a., the current EMI of ${formatMoney(loan.emi_amount_minor)} doesn't even cover the monthly interest — this loan would never pay off. Increase the EMI (via a new loan entry) or choose a lower rate.`
-    );
-  }
-
   await db.withTransactionAsync(async (tx) => {
+    // Read, checked and written on one handle: a double-tap's second call (queued behind the first) must
+    // plan from the schedule the first one left, not the one both read before either committed.
+    const loan = await tx.getFirstAsync<LoanRow>('SELECT * FROM loans WHERE id = ?', [loanId]);
+    if (!loan) throw new Error('Loan not found');
+    if (loan.rate_type !== 'floating') {
+      throw new Error('Only floating-rate loans can have their rate updated');
+    }
+    if (opts.effectiveDate < loan.start_date) {
+      throw new Error("The effective date can't be before the loan itself started.");
+    }
+
+    const paidInstallments = await tx.getAllAsync<LoanPaymentRow>(
+      `SELECT * FROM loan_payments WHERE loan_id = ? AND status = 'paid' ORDER BY installment_number DESC LIMIT 1`,
+      [loanId]
+    );
+    const nextInstallmentNumber = paidInstallments.length ? paidInstallments[0].installment_number + 1 : 1;
+    // Anchored to the loan's original due dates, not the date of this change, so future due-days
+    // don't drift to whatever day the rate was updated. See scheduleAnchor.
+    const anchor = await scheduleAnchor(tx, loanId, nextInstallmentNumber, opts.effectiveDate);
+
+    // The EMI to amortize against: the old EMI in keepEmi mode, or one solved to close out in exactly the
+    // remaining installments in keepTenure mode.
+    const remainingMonths = loan.tenure_months - (nextInstallmentNumber - 1);
+    if (mode === 'keepTenure' && remainingMonths <= 0) {
+      throw new Error('This loan has no remaining installments to recalculate a tenure-preserving EMI over.');
+    }
+    const emiForSchedule =
+      mode === 'keepTenure'
+        ? calculateEmi(loan.outstanding_principal_minor, opts.newAnnualRateBp, remainingMonths)
+        : loan.emi_amount_minor;
+
+    const newSchedule =
+      loan.outstanding_principal_minor > 0
+        ? recalculateAfterPrepayment({
+            loanId,
+            outstandingPrincipalMinor: loan.outstanding_principal_minor,
+            annualRateBp: opts.newAnnualRateBp,
+            emiAmountMinor: emiForSchedule,
+            fromInstallmentNumber: nextInstallmentNumber,
+            fromDate: anchor.fromDate,
+            anchorInstallmentNumber: anchor.anchorInstallmentNumber,
+            // keepTenure promises a fixed payoff date: the EMI is paisa-rounded, so the last installment
+            // absorbs the leftover rounding instead of spilling into a phantom extra one.
+            lastInstallmentNumber: mode === 'keepTenure' ? loan.tenure_months : undefined,
+          })
+        : [];
+
+    // An EMI below accruing interest can never amortize; recalculateAfterPrepayment stops silently,
+    // leaving the loan active with no schedule. Only reachable in keepEmi (keepTenure solves for the EMI).
+    const stillOwesAfterSchedule = newSchedule.length
+      ? newSchedule[newSchedule.length - 1].outstandingAfterMinor
+      : loan.outstanding_principal_minor;
+    if (mode === 'keepEmi' && stillOwesAfterSchedule > 0) {
+      throw new Error(
+        `At ${(opts.newAnnualRateBp / 100).toFixed(2)}% p.a., the current EMI of ${formatMoney(loan.emi_amount_minor)} doesn't even cover the monthly interest — this loan would never pay off. Increase the EMI (via a new loan entry) or choose a lower rate.`
+      );
+    }
+
     await tx.runAsync(`DELETE FROM loan_payments WHERE loan_id = ? AND status = 'pending'`, [loanId]);
     for (const inst of newSchedule) {
       await tx.runAsync(
@@ -175,7 +188,7 @@ export async function applyRateChange(
       ]
     );
   });
-  await rebuildNotifications();
+  await rebuildNotificationsAfterCommit();
 }
 
 /**
@@ -202,13 +215,29 @@ export async function undoInstallmentPayment(loanPaymentId: string): Promise<voi
 
   const loan = await db.getFirstAsync<{ id: string }>('SELECT id FROM loans WHERE id = ?', [payment.loan_id]);
   if (!loan) throw new Error('Loan not found');
-  // Restore the balance this installment was amortized against (`outstanding_after = balance − principal`).
-  // The previous row's outstanding_after is wrong once a prepayment sits between: it predates it.
-  const restoredOutstanding = payment.outstanding_after_minor + payment.principal_component_minor;
 
   await db.withTransactionAsync(async (tx) => {
-    if (payment.transaction_id) {
-      await tx.runAsync('DELETE FROM transactions WHERE id = ?', [payment.transaction_id]);
+    // Same guards again on the transaction's own handle: a double-tap's second call, queued behind the
+    // first, must find the installment already pending and stop here, not restore the balance twice.
+    const current = await tx.getFirstAsync<LoanPaymentRow>('SELECT * FROM loan_payments WHERE id = ?', [
+      loanPaymentId,
+    ]);
+    if (!current) throw new Error('Loan payment not found');
+    if (current.status !== 'paid') throw new Error('This installment has not been paid');
+    const stillLaterPaid = await tx.getFirstAsync<{ id: string }>(
+      `SELECT id FROM loan_payments WHERE loan_id = ? AND status = 'paid' AND installment_number > ?`,
+      [current.loan_id, current.installment_number]
+    );
+    if (stillLaterPaid) {
+      throw new Error(
+        "Undo the most recently paid installment first — earlier ones can't be undone out of order."
+      );
+    }
+    // Restore the balance this installment was amortized against (`outstanding_after = balance − principal`).
+    // The previous row's outstanding_after is wrong once a prepayment sits between: it predates it.
+    const restoredOutstanding = current.outstanding_after_minor + current.principal_component_minor;
+    if (current.transaction_id) {
+      await tx.runAsync('DELETE FROM transactions WHERE id = ?', [current.transaction_id]);
     }
     await tx.runAsync(
       `UPDATE loan_payments SET status = 'pending', paid_date = NULL, transaction_id = NULL WHERE id = ?`,
@@ -216,10 +245,10 @@ export async function undoInstallmentPayment(loanPaymentId: string): Promise<voi
     );
     await tx.runAsync(`UPDATE loans SET outstanding_principal_minor = ?, status = 'active' WHERE id = ?`, [
       restoredOutstanding,
-      payment.loan_id,
+      current.loan_id,
     ]);
   });
-  await rebuildNotifications();
+  await rebuildNotificationsAfterCommit();
 }
 
 /**
@@ -319,7 +348,7 @@ export async function previewPrepayment(
   amountMinor: number,
   date: string
 ): Promise<(PrepaymentSummary & { neverPaysOff: boolean }) | null> {
-  if (!Number.isFinite(amountMinor) || amountMinor <= 0) return null;
+  if (!Number.isSafeInteger(amountMinor) || amountMinor <= 0) return null;
   const db = await getDb();
   const loan = await db.getFirstAsync<LoanRow>('SELECT * FROM loans WHERE id = ?', [loanId]);
   if (!loan || amountMinor > loan.outstanding_principal_minor) return null;
@@ -337,12 +366,12 @@ export async function applyPrepayment(
     chargeAmountMinor?: number;
   }
 ): Promise<PrepaymentSummary> {
-  if (!Number.isFinite(opts.amountMinor) || opts.amountMinor <= 0) {
+  if (!Number.isSafeInteger(opts.amountMinor) || opts.amountMinor <= 0) {
     throw new Error('Prepayment amount must be a valid positive number');
   }
   if (
     opts.chargeAmountMinor != null &&
-    (!Number.isFinite(opts.chargeAmountMinor) || opts.chargeAmountMinor < 0)
+    (!Number.isSafeInteger(opts.chargeAmountMinor) || opts.chargeAmountMinor < 0)
   ) {
     throw new Error('Prepayment charge must be a valid, non-negative number');
   }
@@ -365,23 +394,28 @@ export async function applyPrepayment(
     throw new Error('Prepayment cannot exceed the outstanding balance');
   }
 
-  const { newOutstanding, newSchedule, summary, neverPaysOff } = await planPrepayment(
-    db,
-    loan,
-    opts.amountMinor,
-    opts.date
-  );
-  // Same guard as applyRateChange: if the EMI can't cover interest after this prepayment the schedule is
-  // silently truncated, leaving the loan active with no installments to close it.
-  if (neverPaysOff) {
-    throw new Error(
-      `The current EMI of ${formatMoney(loan.emi_amount_minor)} doesn't cover the interest on the remaining balance after this prepayment — this loan would never pay off. Try a larger prepayment amount.`
-    );
-  }
-
   const txId = newId();
   const chargeAmountMinor = opts.chargeAmountMinor ?? 0;
+  let summary!: PrepaymentSummary;
   await db.withTransactionAsync(async (tx) => {
+    // The plan is built from the loan's balance and schedule, so it is read and checked on the transaction's
+    // own handle: a double-tap's second call (queued behind the first) sees the post-prepayment loan and
+    // fails the checks instead of prepaying against a stale balance.
+    const loan = await tx.getFirstAsync<LoanRow>('SELECT * FROM loans WHERE id = ?', [loanId]);
+    if (!loan) throw new Error('Loan not found');
+    if (opts.amountMinor > loan.outstanding_principal_minor) {
+      throw new Error('Prepayment cannot exceed the outstanding balance');
+    }
+    const plan = await planPrepayment(tx, loan, opts.amountMinor, opts.date);
+    const { newOutstanding, newSchedule } = plan;
+    summary = plan.summary;
+    // Same guard as applyRateChange: if the EMI can't cover interest after this prepayment the schedule is
+    // silently truncated, leaving the loan active with no installments to close it.
+    if (plan.neverPaysOff) {
+      throw new Error(
+        `The current EMI of ${formatMoney(loan.emi_amount_minor)} doesn't cover the interest on the remaining balance after this prepayment — this loan would never pay off. Try a larger prepayment amount.`
+      );
+    }
     await tx.runAsync(
       `INSERT INTO transactions (id, type, account_id, category_id, amount_minor, date, note, loan_id, loan_tx_kind)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'prepayment')`,
@@ -440,7 +474,7 @@ export async function applyPrepayment(
       await tx.runAsync(`UPDATE loans SET status = 'closed' WHERE id = ?`, [loanId]);
     }
   });
-  await rebuildNotifications();
+  await rebuildNotificationsAfterCommit();
 
   return summary;
 }

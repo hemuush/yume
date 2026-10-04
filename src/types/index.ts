@@ -9,7 +9,7 @@ export interface Account {
   type: AccountType;
   currency: string; // ISO 4217, e.g. "INR"
   openingBalanceMinor: number;
-  currentBalanceMinor: number; // derived, kept in sync by ledger triggers
+  currentBalanceMinor: number; // derived on every read (opening balance + transactions), never stored; see DATA_MODEL.md
   creditLimitMinor: number | null; // credit_card only
   statementDay: number | null; // credit_card only, 1-31 (a short month uses its last day)
   dueDay: number | null; // credit_card only, 1-31 (a short month uses its last day)

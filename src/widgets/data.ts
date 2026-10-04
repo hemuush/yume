@@ -27,13 +27,18 @@ import { widgetColor } from './widgetTheme';
  * `refreshAllWidgets()` fires every widget's data function in one tick and several need the same query,
  * so calls within a short window share one promise; a genuinely later refresh still sees fresh data.
  */
-function coalesced<T>(fn: () => Promise<T>, windowMs = 2000): () => Promise<T> {
-  let pending: { at: number; promise: Promise<T> } | null = null;
-  return () => {
+function coalesced<A extends unknown[], T>(
+  fn: (...args: A) => Promise<T>,
+  keyOf: (...args: A) => string = () => '',
+  windowMs = 2000
+): (...args: A) => Promise<T> {
+  let pending: { at: number; key: string; promise: Promise<T> } | null = null;
+  return (...args: A) => {
     const now = Date.now();
-    if (pending && now - pending.at < windowMs) return pending.promise;
-    const promise = fn();
-    const entry = { at: now, promise };
+    const key = keyOf(...args);
+    if (pending && pending.key === key && now - pending.at < windowMs) return pending.promise;
+    const promise = fn(...args);
+    const entry = { at: now, key, promise };
     pending = entry;
     // A transient failure (cold-start migration, one-off query hiccup) must not be replayed to every other
     // widget in the burst: clear the cache on rejection so the next call retries independently.
@@ -45,8 +50,11 @@ function coalesced<T>(fn: () => Promise<T>, windowMs = 2000): () => Promise<T> {
 }
 
 const getActiveThemeOnce = coalesced(() => resolveActiveTheme(getThemeId, getAccentColor));
-const getMonthComparisonOnce = coalesced(() =>
-  getRangeComparison(periodRange(CURRENT_PERIOD), previousPeriodRange(CURRENT_PERIOD), 'month')
+// Keyed by the month asked for, so a widget built for a given `now` never reuses another month's comparison.
+const getMonthComparisonOnce = coalesced(
+  (now: Date) =>
+    getRangeComparison(periodRange(CURRENT_PERIOD, now), previousPeriodRange(CURRENT_PERIOD, now), 'month'),
+  (now) => `${now.getFullYear()}-${now.getMonth()}`
 );
 
 export interface ThisMonthWidgetData {
@@ -72,7 +80,7 @@ export interface ThisMonthWidgetData {
 export async function getThisMonthWidgetData(now: Date = new Date()): Promise<ThisMonthWidgetData> {
   const today = toLocalIsoDate(now);
   const [cmp, theme, paceIn, hideSavings] = await Promise.all([
-    getMonthComparisonOnce(),
+    getMonthComparisonOnce(now),
     getActiveThemeOnce(),
     getMonthPaceInputs(today),
     getHideSensitiveAmounts(),
@@ -142,9 +150,9 @@ export interface SuuWidgetData {
   secondary: string;
 }
 
-export async function getSuuWidgetData(): Promise<SuuWidgetData> {
+export async function getSuuWidgetData(now: Date = new Date()): Promise<SuuWidgetData> {
   const [cmp, theme, hideSavings] = await Promise.all([
-    getMonthComparisonOnce(),
+    getMonthComparisonOnce(now),
     getActiveThemeOnce(),
     getHideSensitiveAmounts(),
   ]);
@@ -166,6 +174,7 @@ export interface NextDueWidgetData {
   title: string;
   subtitle: string;
   amountMinor: number;
+  /** '-' for an EMI (only borrowed loans reach here: money you lent comes back to you) or an expense rule. */
   sign: '+' | '-';
   /** Where the click should deep-link to — Loans for an EMI, Recurring for a rule. */
   route: '/loans' | '/recurring';

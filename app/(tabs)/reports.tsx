@@ -358,6 +358,8 @@ export default function ReportsScreen() {
   const custom = isCustomWindow(cursor);
   const dispExpense = roundedMinor(current.expenseMinor);
   const hasSpend = current.expenseMinor > 0;
+  // A period with money in but nothing spent still has an Income breakdown and Trends to show.
+  const hasData = hasSpend || current.incomeMinor > 0;
 
   const range = windowRange(cursor);
   const rangeStart = parseLocalIsoDate(range.start);
@@ -396,7 +398,7 @@ export default function ReportsScreen() {
         }
       : null,
     comparisonLabel: isCustomWindow(cursor) ? 'the period before' : previousPeriodLabel(cursor),
-    patterns: byMonth ? [] : patternFacts(daily, daysInPeriod),
+    patterns: byMonth ? [] : patternFacts(daily, daysInPeriod, range, todayIso),
     recurringMinor,
     discretionaryMinor,
     quiet,
@@ -522,7 +524,7 @@ export default function ReportsScreen() {
   return (
     <View style={styles.container}>
       {header}
-      {hasSpend && (
+      {hasData && (
         <>
           <ReportSummary
             periodName={periodName}
@@ -548,10 +550,15 @@ export default function ReportsScreen() {
           paddingBottom: theme.layout.tabScreenScrollPad + insets.bottom,
         }}
       >
-        {!hasSpend ? (
+        {!hasData ? (
           <EmptyState
             title="Nothing spent in this period"
             subtitle="Use the arrows above to look back at a month with data."
+          />
+        ) : tab === 'days' && !hasSpend ? (
+          <EmptyState
+            title="Nothing spent in this period"
+            subtitle="Money in is under Categories, and Trends shows the bigger picture."
           />
         ) : tab === 'days' ? (
           <>
@@ -659,7 +666,9 @@ export default function ReportsScreen() {
                 </>
               )
             ) : shownBreakdown.length === 0 ? (
-              <Text style={styles.empty}>No income in {periodName}.</Text>
+              <Text style={styles.empty}>
+                No {income ? 'income' : 'spending'} in {periodName}.
+              </Text>
             ) : (
               <>
                 <CategoryBar breakdown={shownBreakdown} selectedId={selectedCat} />

@@ -64,6 +64,8 @@ export default function TransactionsScreen() {
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [comparison, setComparison] = useState<PeriodComparison | null>(null);
+  // The totals query failed: the list still loaded, so show it (with a note) rather than the skeleton forever.
+  const [comparisonFailed, setComparisonFailed] = useState(false);
   const [detailTx, setDetailTx] = useState<Transaction | null>(null);
   // Refreshed on every focus, not frozen at mount: this tab never unmounts, so a `useMemo(..., [])` "today"
   // would report yesterday's date for anyone returning to it after midnight.
@@ -254,9 +256,15 @@ export default function TransactionsScreen() {
         { start: prev.fromDate, end: prev.toDate },
         scope
       );
-      if (seq === loadSeq.current) setComparison(cmp);
+      if (seq === loadSeq.current) {
+        setComparison(cmp);
+        setComparisonFailed(false);
+      }
     } catch {
-      if (seq === loadSeq.current) setComparison(null);
+      if (seq === loadSeq.current) {
+        setComparison(null);
+        setComparisonFailed(true);
+      }
     }
   }, []);
 
@@ -376,7 +384,7 @@ export default function TransactionsScreen() {
 
   // Before the first successful load only (`loadError` set falls through to the inline error banner), show
   // a spinner so "Nothing logged this month" doesn't flash before the data arrives.
-  if (!comparison && !loadError) {
+  if (!comparison && !loadError && !comparisonFailed) {
     return (
       <View style={styles.container}>
         <AppHeader title="Activity" />
@@ -412,6 +420,15 @@ export default function TransactionsScreen() {
         <View style={styles.errorBanner}>
           <Text style={styles.errorTitle}>Couldn't load your transactions</Text>
           <Text style={styles.errorDetail}>{loadError}</Text>
+        </View>
+      )}
+
+      {comparisonFailed && !loadError && (
+        <View style={styles.errorBanner}>
+          <Text style={styles.errorTitle}>Couldn't load this period's totals</Text>
+          <Text style={styles.errorDetail}>
+            Your entries are below. Change the period or reopen this tab to try again.
+          </Text>
         </View>
       )}
 

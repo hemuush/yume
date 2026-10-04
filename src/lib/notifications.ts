@@ -109,18 +109,25 @@ async function doRebuild(): Promise<boolean> {
     if (!permission?.granted) return true;
 
     await ensureAndroidChannel();
+    let allScheduled = true;
     for (const n of notifications) {
-      await Notifications.scheduleNotificationAsync({
-        identifier: n.id,
-        content: { title: n.title, body: n.body, data: { url: n.route } },
-        trigger: {
-          type: Notifications.SchedulableTriggerInputTypes.DATE,
-          date: n.at,
-          channelId: NOTIFICATION_CHANNEL_ID,
-        },
-      });
+      // One that fails to schedule must not stop the ones after it.
+      try {
+        await Notifications.scheduleNotificationAsync({
+          identifier: n.id,
+          content: { title: n.title, body: n.body, data: { url: n.route } },
+          trigger: {
+            type: Notifications.SchedulableTriggerInputTypes.DATE,
+            date: n.at,
+            channelId: NOTIFICATION_CHANNEL_ID,
+          },
+        });
+      } catch (err) {
+        allScheduled = false;
+        console.error(`Scheduling notification ${n.id} failed:`, err);
+      }
     }
-    return true;
+    return allScheduled;
   } catch (err) {
     console.error('rebuildNotifications failed:', err);
     return false;

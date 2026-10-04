@@ -11,7 +11,7 @@ const accounts = [
   { id: 'usd', name: 'US card', currency: 'USD' },
 ] as Account[];
 const categories = [{ id: 'food', name: 'Food', icon: 'food', color: '#FF9E7D' }] as Category[];
-const people = [{ id: 'asha', name: 'Asha' }];
+const people = [{ id: 'asha', name: 'Test Person' }];
 const lookups = { accounts, categories, people };
 
 const form = (over: Partial<AddForm> = {}): AddForm => ({
@@ -67,7 +67,7 @@ describe('formToStaged', () => {
     expect(formToStaged(form({ type: 'friend', personId: 'asha', friendSign: -1 }), lookups, 'id')).toEqual({
       row: expect.objectContaining({
         kind: 'friend',
-        personName: 'Asha',
+        personName: 'Test Person',
         sign: -1,
         accountId: null,
         accountName: null,

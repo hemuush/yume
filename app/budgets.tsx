@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { View, ScrollView } from 'react-native';
 import { MovingRow } from '@/components/MovingRow';
 import { Text } from '@/components/Text';
@@ -77,6 +77,8 @@ export default function BudgetsScreen() {
   // component's comment for why it isn't pre-filtered to "no budget this month".
   const expenseCategories = categories.filter((c) => c.kind === 'expense' && !(hideAmounts && c.isSensitive));
 
+  const budgetedIds = useMemo(() => new Set(budgets.map((b) => b.budget.categoryId)), [budgets]);
+
   const onContinue = async (item: LapsedBudget) => {
     setContinuingId(item.categoryId);
     try {
@@ -88,9 +90,9 @@ export default function BudgetsScreen() {
       });
       haptics.tap();
       await load();
-    } catch {
-      // A lapsed prompt failing to continue isn't worth a modal — the
-      // category just stays in the list to try again, same as a retry.
+    } catch (e) {
+      // The category stays in the list to try again; say why this attempt didn't take.
+      showAlert("Couldn't continue budget", errorMessage(e));
     } finally {
       setContinuingId(null);
     }
@@ -237,6 +239,7 @@ export default function BudgetsScreen() {
         visible={modalVisible}
         editing={editingBudget}
         categories={expenseCategories}
+        budgetedCategoryIds={budgetedIds}
         onClose={() => {
           setModalVisible(false);
           setEditingBudget(null);

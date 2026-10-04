@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Text } from '@/components/Text';
 import { payInstallment, undoInstallmentPayment } from '@/db/loans';
 import { LoanPayment } from '@/types';
@@ -18,8 +18,9 @@ import { errorMessage } from '@/lib/errorMessage';
 import { showAlert } from '@/components/AppDialog';
 
 /**
- * Confirms paying one EMI (from the loan's screen or Plan's Coming up). "Paid on" defaults to the due date,
- * not today, so catching up on an old EMI records the real day. Paying ahead says so. Ends with undo.
+ * Confirms paying one EMI (from the loan's screen or Plan's Coming up). "Paid on" defaults to the due date
+ * for an EMI already due (so catching up records the real day) but to today for one paid ahead, so an early
+ * payment is never dated in the future. Paying ahead says so. Ends with undo.
  */
 export function PayInstallmentSheet({
   installment,
@@ -36,38 +37,55 @@ export function PayInstallmentSheet({
   onPaid: () => void | Promise<void>;
 }) {
   const { show: showUndo } = useUndoToast();
-  const [paidDateIso, setPaidDateIso] = useState(installment.dueDate);
-  const [busy, setBusy] = useState(false);
-  const [done, setDone] = useState(false);
   const todayIso = toLocalIsoDate(new Date());
   const early = installment.dueDate > todayIso;
+  const [paidDateIso, setPaidDateIso] = useState(early ? todayIso : installment.dueDate);
+  const [busy, setBusy] = useState(false);
+  const [done, setDone] = useState(false);
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const submitting = useRef(false);
+
+  useEffect(
+    () => () => {
+      if (closeTimer.current) clearTimeout(closeTimer.current);
+    },
+    []
+  );
 
   const pay = async () => {
-    if (!account || !categoryId) return;
+    if (!account || !categoryId || submitting.current) return;
+    submitting.current = true;
     setBusy(true);
     try {
       await payInstallment(installment.id, { accountId: account.id, categoryId, paidDate: paidDateIso });
-      haptics.confirm();
-      emitTransactionsChanged();
-      await onPaid();
-      showUndo(`Marked EMI #${installment.installmentNumber} paid`, async () => {
-        try {
-          await undoInstallmentPayment(installment.id);
-          emitTransactionsChanged();
-          await onPaid();
-        } catch (e) {
-          showAlert("Couldn't undo", errorMessage(e));
-        }
-      });
-      // A brief "done" tick before the sheet closes — the payment is already
-      // saved; this is only the felt confirmation.
-      setDone(true);
-      setTimeout(onClose, 380);
     } catch (e) {
       showAlert("Couldn't record payment", errorMessage(e));
+      submitting.current = false;
       setBusy(false);
       onClose();
+      return;
     }
+    // The payment is saved from here on: nothing below may report it as failed (that invites paying twice).
+    haptics.confirm();
+    emitTransactionsChanged();
+    try {
+      await onPaid();
+    } catch (e) {
+      showAlert("Payment saved, couldn't refresh", `${errorMessage(e)} Reopen this screen to see it.`);
+    }
+    showUndo(`Marked EMI #${installment.installmentNumber} paid`, async () => {
+      try {
+        await undoInstallmentPayment(installment.id);
+        emitTransactionsChanged();
+        await onPaid();
+      } catch (e) {
+        showAlert("Couldn't undo", errorMessage(e));
+      }
+    });
+    // A brief "done" tick before the sheet closes — the payment is already
+    // saved; this is only the felt confirmation.
+    setDone(true);
+    closeTimer.current = setTimeout(onClose, 380);
   };
 
   return (
@@ -105,8 +123,9 @@ export function PayInstallmentSheet({
       )}
       <DateField label="Actually paid on" value={paidDateIso} onChange={setPaidDateIso} pastFacing />
       <Text style={styles.hintText}>
-        Defaults to this EMI's due date — change it if you're catching up on a payment that actually happened
-        on a different day.
+        {early
+          ? 'Defaults to today — change it if the payment actually happened on a different day.'
+          : "Defaults to this EMI's due date — change it if you're catching up on a payment that actually happened on a different day."}
       </Text>
     </ModalSheet>
   );

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { View } from 'react-native';
 import { Text } from '@/components/Text';
 import { createBudget, updateBudget, BudgetProgress } from '@/db/budgets';
@@ -18,6 +18,18 @@ import { errorMessage } from '@/lib/errorMessage';
 import { categorySentence } from '@/lib/categoryLabel';
 
 /**
+ * The category a new budget starts on: the first top-level one without a budget yet, else any without one,
+ * else none (the user picks). Exported for its test.
+ */
+export function defaultBudgetCategoryId(
+  categories: Category[],
+  budgeted: ReadonlySet<string> = new Set()
+): string | null {
+  const free = (c: Category) => !budgeted.has(c.id);
+  return (topLevelOnly(categories).find(free) ?? categories.find(free))?.id ?? null;
+}
+
+/**
  * Creates a month's budget or edits its limit/rollover. Category and month are fixed once a budget exists
  * (like an account's currency), so re-categorising means delete and add.
  */
@@ -25,6 +37,7 @@ export function AddBudgetModal({
   visible,
   editing,
   categories,
+  budgetedCategoryIds,
   onClose,
   onSaved,
 }: {
@@ -35,6 +48,8 @@ export function AddBudgetModal({
    * a parent would drop its eligible subs (CategoryPicker needs it); createBudget errors on a duplicate.
    */
   categories: Category[];
+  /** Categories that already have a budget this month — skipped when choosing the default category. */
+  budgetedCategoryIds?: ReadonlySet<string>;
   onClose: () => void;
   onSaved: () => void;
 }) {
@@ -44,24 +59,29 @@ export function AddBudgetModal({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!visible) return;
-    if (editing) {
-      setCategoryId(editing.budget.categoryId);
-      setLimit((editing.budget.limitAmountMinor / 100).toString());
-      setRollover(editing.budget.rollover);
-    } else {
-      setCategoryId(topLevelOnly(categories)[0]?.id ?? null);
-      setLimit('');
-      setRollover(false);
+  // The form starts fresh each time the sheet opens (or switches to another budget). Done while rendering
+  // rather than in an effect, so the first painted frame is already the reset form, not last time's.
+  const openKey = visible ? (editing ? `edit:${editing.budget.id}` : 'new') : null;
+  const [syncedKey, setSyncedKey] = useState<string | null>(null);
+  if (openKey !== syncedKey) {
+    setSyncedKey(openKey);
+    if (openKey) {
+      if (editing) {
+        setCategoryId(editing.budget.categoryId);
+        setLimit((editing.budget.limitAmountMinor / 100).toString());
+        setRollover(editing.budget.rollover);
+      } else {
+        setCategoryId(defaultBudgetCategoryId(categories, budgetedCategoryIds));
+        setLimit('');
+        setRollover(false);
+      }
+      setError(null);
     }
-    setError(null);
-    // Re-derive defaults only when the modal opens or the edited budget changes (`categories` changes every render).
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [visible, editing]);
+  }
 
   const submit = async () => {
     setError(null);
+    // Whole units by design: the field takes digits only, so the limit is never fractional.
     const limitAmountMinor = toMinor(parseFloat(limit || '0'));
     if (!Number.isFinite(limitAmountMinor) || limitAmountMinor <= 0) {
       setError('Enter a valid monthly limit');
@@ -134,7 +154,13 @@ export function AddBudgetModal({
           </View>
         ))}
 
-      <AmountField label="Monthly limit" value={limit} onChangeText={setLimit} placeholder="e.g. 5000" />
+      <AmountField
+        label="Monthly limit"
+        value={limit}
+        onChangeText={setLimit}
+        placeholder="e.g. 5000"
+        decimal={false}
+      />
 
       <View style={styles.toggleRow}>
         <View style={{ flex: 1, marginRight: 10 }}>

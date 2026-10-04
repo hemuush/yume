@@ -1,5 +1,5 @@
 /** What a goal needs to finish on time, and whether it is ahead of that. All figures are made up. */
-import { goalPlan, summarizeGoals, goalHues } from './goalPlan';
+import { goalPlan, summarizeGoals, goalHues, createdLocalDate } from './goalPlan';
 
 const TODAY = '2026-10-02';
 
@@ -102,5 +102,18 @@ describe('goalHues', () => {
     const hues = goalHues(Array.from({ length: 7 }, (_, i) => ({ id: `g${i}` })));
     expect(hues.g0).not.toBe(hues.g1);
     expect(hues.g5).toBe(hues.g0);
+  });
+});
+
+describe('createdLocalDate', () => {
+  it("reads SQLite's UTC timestamp as the local calendar day it fell on", () => {
+    const utc = new Date('2026-03-01T23:30:00Z');
+    const local = `${utc.getFullYear()}-${String(utc.getMonth() + 1).padStart(2, '0')}-${String(utc.getDate()).padStart(2, '0')}`;
+    expect(createdLocalDate('2026-03-01 23:30:00')).toBe(local);
+  });
+
+  it('honours an explicit zone and passes a plain date through', () => {
+    expect(createdLocalDate('2026-03-01T12:00:00+05:30')).toBe(createdLocalDate('2026-03-01 06:30:00'));
+    expect(createdLocalDate('2026-03-01')).toBe('2026-03-01');
   });
 });

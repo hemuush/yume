@@ -7,13 +7,23 @@ import { Text } from 'react-native';
 
 jest.setTimeout(30000);
 jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMock').createReanimatedMock());
+const mockSheetProps: { onClose?: () => void; title?: string } = {};
 jest.mock('@/components/ModalSheet', () => ({
-  ModalSheet: ({ children, footer }: { children: React.ReactNode; footer?: React.ReactNode }) => (
-    <>
-      {children}
-      {footer}
-    </>
-  ),
+  ModalSheet: (props: {
+    children: React.ReactNode;
+    footer?: React.ReactNode;
+    onClose: () => void;
+    title?: string;
+  }) => {
+    mockSheetProps.onClose = props.onClose;
+    mockSheetProps.title = props.title;
+    return (
+      <>
+        {props.children}
+        {props.footer}
+      </>
+    );
+  },
 }));
 
 import { RestorePreviewSheet, RestorePreview } from './RestorePreviewSheet';
@@ -25,12 +35,10 @@ const preview = (lostCount: number): RestorePreview => ({
   lostCount,
 });
 
-async function render(p: RestorePreview, onRestore = jest.fn()) {
+async function render(p: RestorePreview, onRestore = jest.fn(), busy = false, onCancel = jest.fn()) {
   let tree!: ReactTestRenderer;
   await act(async () => {
-    tree = create(
-      <RestorePreviewSheet preview={p} busy={false} onCancel={jest.fn()} onRestore={onRestore} />
-    );
+    tree = create(<RestorePreviewSheet preview={p} busy={busy} onCancel={onCancel} onRestore={onRestore} />);
   });
   return tree;
 }
@@ -56,4 +64,24 @@ it('says so when nothing would be lost, and restores on Restore', async () => {
     tree.root.find((n) => n.props.title === 'Restore this backup' && n.props.onPress).props.onPress()
   );
   expect(onRestore).toHaveBeenCalled();
+});
+
+it('ignores a close request while the restore is running', async () => {
+  const onCancel = jest.fn();
+  await render(preview(0), jest.fn(), true, onCancel);
+  mockSheetProps.onClose?.();
+  expect(onCancel).not.toHaveBeenCalled();
+});
+
+it('closes normally when nothing is running', async () => {
+  const onCancel = jest.fn();
+  await render(preview(0), jest.fn(), false, onCancel);
+  mockSheetProps.onClose?.();
+  expect(onCancel).toHaveBeenCalledTimes(1);
+});
+
+it('does not print "Invalid Date" for a backup with an unreadable export time', async () => {
+  const tree = await render({ ...preview(0), exportedAt: 'not a date' });
+  expect(texts(tree).join(' | ')).not.toMatch(/Invalid/i);
+  expect(mockSheetProps.title ?? '').not.toMatch(/Invalid/i);
 });

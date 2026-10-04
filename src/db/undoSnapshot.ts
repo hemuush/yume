@@ -31,7 +31,17 @@ export async function captureRows(
 
 /** Re-inserts one captured row, verbatim — same id, same every other column, never a fresh row. */
 export async function restoreRow(db: AppDb, snapshot: RowSnapshot): Promise<void> {
+  // The table and column names go straight into SQL, so they must be real ones: a snapshot that has been through
+  // JSON storage (Recently deleted) or a damaged row can never inject into, or write to, anything else.
+  if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(snapshot.table))
+    throw new Error('This item can no longer be restored.');
+  const known = new Set(
+    (await db.getAllAsync<{ name: string }>(`PRAGMA table_info(${snapshot.table})`)).map((c) => c.name)
+  );
   const columns = Object.keys(snapshot.row);
+  if (columns.length === 0 || columns.some((c) => !known.has(c))) {
+    throw new Error('This item can no longer be restored.');
+  }
   const placeholders = columns.map(() => '?').join(', ');
   await db.runAsync(
     `INSERT INTO ${snapshot.table} (${columns.join(', ')}) VALUES (${placeholders})`,

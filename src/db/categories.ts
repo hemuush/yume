@@ -89,6 +89,8 @@ export async function createCategory(input: {
   sortOrder?: number;
   isSensitive?: boolean;
 }): Promise<Category> {
+  const name = input.name.trim();
+  if (!name) throw new Error('Give the category a name');
   const db = await getDb();
   if (input.parentId) {
     await assertValidParent(db, input.parentId, input.kind);
@@ -99,7 +101,7 @@ export async function createCategory(input: {
      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       id,
-      input.name,
+      name,
       input.kind,
       input.parentId ?? null,
       input.icon ?? 'tag',
@@ -154,12 +156,14 @@ export async function updateCategory(
   id: string,
   input: { name: string; icon: string; color: string; parentId?: string | null; isSensitive?: boolean }
 ): Promise<void> {
+  const name = input.name.trim();
+  if (!name) throw new Error('Give the category a name');
   const db = await getDb();
   const current = await db.getFirstAsync<CategoryRow>('SELECT * FROM categories WHERE id = ?', [id]);
   if (!current) throw new Error('Category not found');
   // A built-in category is matched by name at runtime — its icon, colour,
   // sensitivity and subcategories stay editable, but the name is fixed.
-  if (current.is_system && input.name.trim() !== current.name) {
+  if (current.is_system && name !== current.name) {
     throw new Error("The name of a built-in category can't be changed.");
   }
   // Omitted `parentId` means "leave as-is": defaulting to null would strip the parent on every plain
@@ -180,7 +184,7 @@ export async function updateCategory(
   }
   await db.runAsync(
     'UPDATE categories SET name = ?, icon = ?, color = ?, parent_id = ?, is_sensitive = ? WHERE id = ?',
-    [input.name, input.icon, input.color, nextParentId, nextIsSensitive ? 1 : 0, id]
+    [name, input.icon, input.color, nextParentId, nextIsSensitive ? 1 : 0, id]
   );
 }
 
@@ -191,45 +195,52 @@ export async function updateCategory(
 export async function deleteCategory(id: string): Promise<RowSnapshot[]> {
   const db = await getDb();
   await assertNotSystemCategory(db, id, 'deleted');
-  const children = await db.getAllAsync<{ id: string }>('SELECT id FROM categories WHERE parent_id = ?', [
-    id,
-  ]);
-  const idsToCheck = [id, ...children.map((c) => c.id)];
-  const placeholders = idsToCheck.map(() => '?').join(', ');
+  let snapshots: RowSnapshot[] = [];
+  // Usage checks, capture and delete share one transaction, so an entry saved in between can't hit the FK.
+  await db.withTransactionAsync(async (tx) => {
+    const children = await tx.getAllAsync<{ id: string }>('SELECT id FROM categories WHERE parent_id = ?', [
+      id,
+    ]);
+    const idsToCheck = [id, ...children.map((c) => c.id)];
+    const placeholders = idsToCheck.map(() => '?').join(', ');
 
-  const txCount = await db.getFirstAsync<{ count: number }>(
-    `SELECT COUNT(*) as count FROM transactions WHERE category_id IN (${placeholders})`,
-    idsToCheck
-  );
-  if ((txCount?.count ?? 0) > 0) {
-    const n = txCount!.count;
-    throw new Error(
-      `This category has ${n} transaction${n === 1 ? '' : 's'} against it${children.length ? ' (including its subcategories)' : ''} — archive it instead, so its history stays intact.`
+    const txCount = await tx.getFirstAsync<{ count: number }>(
+      `SELECT COUNT(*) as count FROM transactions WHERE category_id IN (${placeholders})`,
+      idsToCheck
     );
-  }
+    if ((txCount?.count ?? 0) > 0) {
+      const n = txCount!.count;
+      throw new Error(
+        `This category has ${n} transaction${n === 1 ? '' : 's'} against it${children.length ? ' (including its subcategories)' : ''} — archive it instead, so its history stays intact.`
+      );
+    }
 
-  const ruleCount = await db.getFirstAsync<{ count: number }>(
-    `SELECT COUNT(*) as count FROM recurring_rules WHERE category_id IN (${placeholders})`,
-    idsToCheck
-  );
-  if ((ruleCount?.count ?? 0) > 0) {
-    const n = ruleCount!.count;
-    throw new Error(
-      `This category is used by ${n} recurring rule${n === 1 ? '' : 's'} — remove or reassign ${n === 1 ? 'it' : 'them'} first, so automatic entries don't break.`
+    const ruleCount = await tx.getFirstAsync<{ count: number }>(
+      `SELECT COUNT(*) as count FROM recurring_rules WHERE category_id IN (${placeholders})`,
+      idsToCheck
     );
-  }
+    if ((ruleCount?.count ?? 0) > 0) {
+      const n = ruleCount!.count;
+      throw new Error(
+        `This category is used by ${n} recurring rule${n === 1 ? '' : 's'} — remove or reassign ${n === 1 ? 'it' : 'them'} first, so automatic entries don't break.`
+      );
+    }
 
-  // Sorted parent-first: `restoreCategory` re-inserts in this same order, and
-  // a child row's `parent_id` foreign key needs its parent to already exist.
-  const snapshots = (await captureRows(db, 'categories', 'id = ? OR parent_id = ?', [id, id])).sort((a, b) =>
-    a.row.id === id ? -1 : b.row.id === id ? 1 : 0
-  );
-  await db.runAsync('DELETE FROM categories WHERE id = ? OR parent_id = ?', [id, id]);
+    // Sorted parent-first: `restoreCategory` re-inserts in this same order, and
+    // a child row's `parent_id` foreign key needs its parent to already exist.
+    snapshots = (await captureRows(tx, 'categories', 'id = ? OR parent_id = ?', [id, id])).sort((x, y) =>
+      x.row.id === id ? -1 : y.row.id === id ? 1 : 0
+    );
+    await tx.runAsync('DELETE FROM categories WHERE id = ? OR parent_id = ?', [id, id]);
+  });
   return snapshots;
 }
 
 /** Undoes `deleteCategory` — re-inserts the category (and any subcategories it took with it), in the same parent-first order they were captured. */
 export async function restoreCategory(snapshots: RowSnapshot[]): Promise<void> {
   const db = await getDb();
-  await restoreRows(db, snapshots);
+  // All-or-nothing: a failure part-way can't leave a parent restored without its subcategories.
+  await db.withTransactionAsync(async (tx) => {
+    await restoreRows(tx, snapshots);
+  });
 }

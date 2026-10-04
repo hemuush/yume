@@ -98,7 +98,7 @@ export function SpendBarChart({
             style={[styles.col, faded && styles.colFaded]}
             accessibilityRole="button"
             accessibilityState={{ selected }}
-            accessibilityLabel={`${bar.label}${bar.totalMinor > 0 ? `, spent ${bar.totalMinor / 100}` : ', nothing spent'}`}
+            accessibilityLabel={`${bar.label}${bar.totalMinor > 0 ? `, spent ${formatMoney(bar.totalMinor)}` : ', nothing spent'}`}
           >
             <View style={[styles.barTrack, selected && styles.barLifted]}>
               {bar.totalMinor > 0 ? (

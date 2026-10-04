@@ -1,4 +1,4 @@
-import { addDaysToIsoDate, toLocalIsoDate } from '@/lib/date';
+import { addDaysToIsoDate } from '@/lib/date';
 import {
   buildDueDays,
   dueTone,
@@ -195,7 +195,7 @@ describe('buildDueItems / buildDueSoon', () => {
   });
 
   it('tones a Coming up row like Home: red when late or due today, amber for an EMI or card bill within 3 days', () => {
-    const today = toLocalIsoDate(new Date());
+    const today = '2026-09-26';
     const item = (kind: 'emi' | 'bill' | 'income' | 'transfer', inDays: number, key = 'rule-x') => ({
       key,
       title: key,
@@ -204,16 +204,16 @@ describe('buildDueItems / buildDueSoon', () => {
       amountMinor: 100,
       route: '/recurring' as const,
     });
-    expect(dueTone(item('bill', -2))).toBe('urgent');
-    expect(dueTone(item('emi', 0))).toBe('urgent');
-    expect(dueTone(item('emi', 3, 'loan-a'))).toBe('soon');
-    expect(dueTone(item('bill', 2, 'card-visa'))).toBe('soon');
+    expect(dueTone(item('bill', -2), today)).toBe('urgent');
+    expect(dueTone(item('emi', 0), today)).toBe('urgent');
+    expect(dueTone(item('emi', 3, 'loan-a'), today)).toBe('soon');
+    expect(dueTone(item('bill', 2, 'card-visa'), today)).toBe('soon');
     // An ordinary subscription is not amber, and nothing past 3 days is.
-    expect(dueTone(item('bill', 2))).toBeNull();
-    expect(dueTone(item('emi', 4, 'loan-a'))).toBeNull();
+    expect(dueTone(item('bill', 2), today)).toBeNull();
+    expect(dueTone(item('emi', 4, 'loan-a'), today)).toBeNull();
     // Money coming in or moving between your own accounts is never urgent.
-    expect(dueTone(item('income', -1))).toBeNull();
-    expect(dueTone(item('transfer', 0))).toBeNull();
+    expect(dueTone(item('income', -1), today)).toBeNull();
+    expect(dueTone(item('transfer', 0), today)).toBeNull();
   });
 
   it('groups Coming up by day, totalling only money going out', () => {

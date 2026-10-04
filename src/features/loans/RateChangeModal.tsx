@@ -14,6 +14,7 @@ import { toLocalIsoDate } from '@/lib/date';
 import { DateField } from '@/components/DateField';
 import { styles } from './loans.styles';
 import { errorMessage } from '@/lib/errorMessage';
+import { rateProblem } from '@/lib/loanLimits';
 
 const RATE_CHANGE_MODES: { label: string; value: 'keepEmi' | 'keepTenure' }[] = [
   { label: 'Keep EMI, change tenure', value: 'keepEmi' },
@@ -43,7 +44,11 @@ export function RateChangeModal({
 
   const rateBp = Math.round(parseFloat(newRate || '0') * 100);
   const previewNewEmi =
-    mode === 'keepTenure' && Number.isFinite(rateBp) && rateBp >= 0 && remainingMonths > 0
+    mode === 'keepTenure' &&
+    Number.isFinite(rateBp) &&
+    rateBp >= 0 &&
+    !rateProblem(rateBp) &&
+    remainingMonths > 0
       ? calculateEmi(loan.outstandingPrincipalMinor, rateBp, remainingMonths)
       : null;
 
@@ -51,6 +56,11 @@ export function RateChangeModal({
     setError(null);
     if (!Number.isFinite(rateBp) || rateBp < 0) {
       setError('Enter a valid interest rate');
+      return;
+    }
+    const tooHigh = rateProblem(rateBp);
+    if (tooHigh) {
+      setError(tooHigh);
       return;
     }
     setSaving(true);

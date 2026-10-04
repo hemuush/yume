@@ -251,4 +251,9 @@ CREATE INDEX IF NOT EXISTS idx_person_ledger_person ON person_ledger_entries(per
 -- which otherwise scan both tables once for every transaction.
 CREATE INDEX IF NOT EXISTS idx_loan_payments_transaction ON loan_payments(transaction_id);
 CREATE INDEX IF NOT EXISTS idx_person_ledger_transaction ON person_ledger_entries(transaction_id);
+-- An account's or a category's entries in date order (statements, Reports, the Activity filters) — read
+-- straight off one index instead of fetching every row for the account and sorting it. Only columns that
+-- have existed since the table was created: this runs on every launch, before any column migration.
+CREATE INDEX IF NOT EXISTS idx_transactions_account_date ON transactions(account_id, date);
+CREATE INDEX IF NOT EXISTS idx_transactions_category_date ON transactions(category_id, date);
 `;

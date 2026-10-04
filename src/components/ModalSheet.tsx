@@ -126,6 +126,7 @@ export function SheetLink({
       onPress={onPress}
       disabled={disabled}
       style={({ pressed }) => [styles.link, (pressed || disabled) && styles.disabled]}
+      hitSlop={{ top: 6, bottom: 6 }}
       accessibilityRole="button"
     >
       <Text style={[styles.linkText, danger && styles.linkDanger]}>{label}</Text>
@@ -154,6 +155,7 @@ function RoundFooterButton({
       onPressIn={onPressIn}
       onPressOut={onPressOut}
       disabled={disabled}
+      hitSlop={2}
       accessibilityRole="button"
       accessibilityLabel={label}
     >
@@ -203,7 +205,12 @@ function ModalSheetBody({
     return (
       <AmountPadHostProvider value={host}>
         <View style={styles.flex}>
-          <Pressable style={styles.backdrop} onPress={onClose} accessibilityLabel="Close" />
+          <Pressable
+            style={styles.backdrop}
+            onPress={onClose}
+            accessibilityRole="button"
+            accessibilityLabel="Close"
+          />
           <View
             style={[styles.flex, styles.alignCenter, { paddingVertical: insets.top + 12 }]}
             pointerEvents="box-none"
@@ -233,7 +240,12 @@ function ModalSheetBody({
     return (
       <AmountPadHostProvider value={host}>
         <View style={styles.flex}>
-          <Pressable style={styles.backdrop} onPress={onClose} accessibilityLabel="Close" />
+          <Pressable
+            style={styles.backdrop}
+            onPress={onClose}
+            accessibilityRole="button"
+            accessibilityLabel="Close"
+          />
           <View
             style={[styles.flex, styles.alignBottom, { paddingTop: insets.top + 8 }]}
             pointerEvents="box-none"
@@ -282,7 +294,12 @@ function ModalSheetBody({
       <View style={styles.flex}>
         {/* The backdrop is its own sibling rather than a parent of the sheet:
           a parent Pressable would swallow every tap inside the sheet too. */}
-        <Pressable style={styles.backdrop} onPress={onClose} accessibilityLabel="Close" />
+        <Pressable
+          style={styles.backdrop}
+          onPress={onClose}
+          accessibilityRole="button"
+          accessibilityLabel="Close"
+        />
         {/* KeyboardAwareScrollView (react-native-keyboard-controller) scrolls the
           focused input clear of the keyboard and animates in sync with it,
           inside the Modal's own Android Dialog window where the built-in

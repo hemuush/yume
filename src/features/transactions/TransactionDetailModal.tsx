@@ -56,6 +56,8 @@ export function TransactionDetailModal({
   const { hideAmounts } = usePrivacy();
   const { show: showUndo } = useUndoToast();
   const [link, setLink] = useState<TransactionLink | undefined>(undefined);
+  // The link lookup failed: stop saying "Checking…" and treat the entry as plain, so Edit stays usable.
+  const [linkFailed, setLinkFailed] = useState(false);
   const [busy, setBusy] = useState(false);
   const [ruleOpen, setRuleOpen] = useState(false);
   const [tab, setTab] = useState<'details' | 'more'>('details');
@@ -78,14 +80,22 @@ export function TransactionDetailModal({
 
   useEffect(() => {
     setTab('details');
-    if (!tx) {
-      setLink(undefined);
-      return;
-    }
+    setLinkFailed(false);
     setLink(undefined);
+    if (!tx) return;
+    let alive = true;
     getTransactionLink(tx.id)
-      .then(setLink)
-      .catch(() => {});
+      .then((l) => {
+        if (alive) setLink(l);
+      })
+      .catch(() => {
+        if (!alive) return;
+        setLinkFailed(true);
+        setLink(null);
+      });
+    return () => {
+      alive = false;
+    };
   }, [tx]);
 
   // A split part shows the whole payment it belongs to.
@@ -128,6 +138,8 @@ export function TransactionDetailModal({
         amountMinor: tx.amountMinor,
         date: toLocalIsoDate(new Date()),
         note: tx.note,
+        // A refund logged again is still a refund, not ordinary income.
+        isRefund: tx.isRefund,
       });
       haptics.confirm();
       emitTransactionsChanged();
@@ -413,7 +425,13 @@ export function TransactionDetailModal({
 
           {link === undefined ? (
             <Text style={styles.hintText}>Checking…</Text>
-          ) : link === null ? null : link.kind === 'loan' ? (
+          ) : link === null ? (
+            linkFailed ? (
+              <Text style={styles.hintText}>
+                Couldn't check whether this entry is tied to a loan or a person. You can still edit it.
+              </Text>
+            ) : null
+          ) : link.kind === 'loan' ? (
             <Text style={styles.hintText}>
               A loan EMI payment — it can't be edited directly. Undo it to put the installment back to
               pending.

@@ -1,29 +1,15 @@
 import { StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
+import { listScreenStyles } from '@/features/shared/listScreenStyles';
 import { SECTION_TITLE, SECTION_GAP } from '@/constants/textStyles';
+
+/** Tiles per row on the Categories grid (a cell is one column wide). */
+export const TILE_COLUMNS = 4;
 
 // Shared by the Categories screen, its list section (CategorySection /
 // CategoryTile / SubcategoryPill) and AddCategoryModal.
 export const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: theme.colors.background },
-  errorBanner: {
-    marginHorizontal: 20,
-    marginTop: theme.layout.screenTopGap,
-    marginBottom: 4,
-    padding: 14,
-    borderRadius: theme.radius.md,
-    backgroundColor: theme.colors.expenseTint,
-    borderWidth: theme.border.thin,
-    borderColor: theme.colors.expense,
-  },
-  errorTitle: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.expenseText },
-  errorDetail: {
-    fontFamily: theme.font.body,
-    fontSize: 11.5,
-    color: theme.colors.textSecondary,
-    marginTop: 3,
-    lineHeight: 16,
-  },
+  ...listScreenStyles,
   sectionTitle: {
     ...SECTION_TITLE,
     marginHorizontal: 20,
@@ -33,7 +19,7 @@ export const styles = StyleSheet.create({
   firstTitle: { marginTop: theme.layout.screenTopGap },
   grid: { paddingHorizontal: 14, gap: 12, marginBottom: 4 },
   gridRow: { flexDirection: 'row' },
-  cell: { width: `${100 / 4}%`, paddingHorizontal: 2 },
+  cell: { width: `${100 / TILE_COLUMNS}%`, paddingHorizontal: 2 },
   panelWrap: { marginTop: 10 },
   notch: {
     position: 'absolute',
@@ -80,15 +66,7 @@ export const styles = StyleSheet.create({
     marginTop: 14,
     lineHeight: 17,
   },
-  modalHint: {
-    fontFamily: theme.font.body,
-    fontSize: 12,
-    color: theme.colors.textMuted,
-    marginBottom: 14,
-    lineHeight: 17,
-  },
   sensitiveRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 14 },
-  errorText: { fontFamily: theme.font.body, color: theme.colors.expenseText, fontSize: 13, marginBottom: 12 },
   tile: { alignItems: 'center' },
   tileRing: { padding: 2, borderWidth: 2, borderColor: 'transparent', borderRadius: 20 },
   tileRingOn: { borderColor: theme.colors.ink },
@@ -125,14 +103,6 @@ export const styles = StyleSheet.create({
     borderColor: theme.colors.borderSoft,
   },
   iconChoiceActive: { borderWidth: 2, borderColor: theme.colors.ink },
-  fieldLabel: {
-    fontSize: 10.5,
-    fontFamily: theme.font.roundedMedium,
-    letterSpacing: 0.4,
-    textTransform: 'uppercase',
-    color: theme.colors.textMuted,
-    marginBottom: 6,
-  },
   colorRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 20 },
   colorSwatch: {
     width: 32,

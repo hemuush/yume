@@ -3,12 +3,11 @@ import { recordMoneyGivenToPerson, recordMoneyReceivedFromPerson, addLedgerEntry
 import type { Category } from '@/types';
 import type { Staged } from './addEntry';
 
-/** "1,500.5" while typing a single number: grouped whole part, decimals exactly as typed. */
+/** "1,501" while typing "1500.5": amounts are kept in whole units, so the card shows the figure that will be saved. */
 export function formatTyped(expr: string): string {
   if (expr === '') return '0';
-  const [whole, decimals] = expr.split('.');
-  const grouped = new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 }).format(Number(whole || '0'));
-  return decimals === undefined ? grouped : `${grouped}.${decimals}`;
+  const whole = Math.round(Number(expr.endsWith('.') ? expr.slice(0, -1) : expr) || 0);
+  return new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 }).format(whole);
 }
 
 /** Money in and out across the staged list; a friend entry counts by which way the cash moved. */
@@ -76,4 +75,29 @@ export async function persistStaged(r: Staged, categories: Category[]): Promise<
     isRefund: !!r.isRefund,
   });
   return created.id;
+}
+
+/** What the Save button says: the state it is in, then what it will save. */
+export function saveButtonTitle({
+  saving,
+  editing,
+  split,
+  refund,
+  repeatWarning,
+  rowCount,
+}: {
+  saving: boolean;
+  editing: boolean;
+  split: boolean;
+  refund: boolean;
+  repeatWarning: boolean;
+  rowCount: number;
+}): string {
+  if (saving) return 'Saving…';
+  if (editing) return 'Save changes';
+  if (split) return 'Save split';
+  if (refund && rowCount === 0) return 'Save refund';
+  if (repeatWarning) return 'Save anyway';
+  if (rowCount > 0) return `Save ${rowCount} ${rowCount === 1 ? 'entry' : 'entries'}`;
+  return 'Save';
 }

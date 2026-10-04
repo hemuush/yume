@@ -5,7 +5,6 @@ import { formatMoney } from '@/lib/money';
 import { CategoryIcon } from '@/components/CategoryIcon';
 import { LimitMeter, LimitMeterTone } from '@/components/LimitMeter';
 import { budgetPace, BUDGET_PACE_LABEL } from '@/lib/pace';
-import { toLocalIsoDate } from '@/lib/date';
 import { usePressScale } from '@/lib/usePressScale';
 import Feather from '@expo/vector-icons/Feather';
 import { theme } from '@/constants/theme';
@@ -14,6 +13,7 @@ import { monthDayInfo } from './budgetsOverview';
 import { withPressed } from '@/lib/pressed';
 import { categorySentence, inParent } from '@/lib/categoryLabel';
 import { useCardGrow } from '@/lib/cardGrow';
+import { useToday } from './useToday';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -41,7 +41,7 @@ export function BudgetRow({
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.98);
   const barPct = Math.min(100, progress.percentUsed);
   // Pace only means something for the month still running.
-  const today = toLocalIsoDate(new Date());
+  const today = useToday();
   const pace =
     progress.budget.periodMonth === today.slice(0, 7) ? budgetPace(progress.percentUsed / 100, today) : null;
   const daysLeft = monthDayInfo(today).daysLeft;
@@ -50,6 +50,15 @@ export function BudgetRow({
       ? Math.floor(progress.remainingMinor / daysLeft)
       : null;
   const tone: LimitMeterTone = progress.overBudget ? 'over' : pace?.state === 'ahead' ? 'near' : 'ok';
+
+  // The row read out as one line: what it is, what's spent of the limit, and where that leaves you.
+  const rowLabel = [
+    categorySentence(progress.categoryName, progress.parentName),
+    `${formatMoney(progress.spentMinor)} of ${formatMoney(progress.effectiveLimitMinor)}`,
+    progress.overBudget
+      ? `${formatMoney(Math.abs(progress.remainingMinor))} over budget`
+      : `${formatMoney(progress.remainingMinor)} left`,
+  ].join(', ');
 
   return (
     <AnimatedPressable
@@ -60,6 +69,9 @@ export function BudgetRow({
       onPressIn={onPressIn}
       onPressOut={onPressOut}
       onLongPress={onMore}
+      accessibilityRole="button"
+      accessibilityLabel={rowLabel}
+      accessibilityHint={onMore ? 'Press and hold for more options' : undefined}
     >
       <View style={styles.rowTop}>
         <CategoryIcon name={progress.categoryIcon} color={progress.categoryColor} square={38} size={17} />

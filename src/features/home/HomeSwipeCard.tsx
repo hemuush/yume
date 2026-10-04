@@ -64,6 +64,13 @@ export function HomeSwipeCard({ pages }: { pages: SwipePage[] }) {
     tabX.value = reduce || tabWidth === 0 ? x : withTiming(x, timing(MOTION.standard));
   }, [shownIndex, tabWidth, reduce, tabX]);
   const highlightStyle = useAnimatedStyle(() => ({ transform: [{ translateX: tabX.value }] }));
+  // The card can be re-measured (split-screen, font scale, rotation): keep the strip on the active page
+  // rather than leaving it between two at the old offset.
+  useEffect(() => {
+    if (cardWidth > 0) scrollRef.current?.scrollTo({ x: shownIndex * cardWidth, animated: false });
+    // Only a width change should re-snap; a tab tap scrolls on its own.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cardWidth]);
 
   if (pages.length === 0) return null;
 
@@ -121,6 +128,8 @@ export function HomeSwipeCard({ pages }: { pages: SwipePage[] }) {
               key={p.key}
               onPress={() => goToPage(i)}
               style={withPressed(styles.tab)}
+              // The pill is ~32dp tall; the slop brings the touch target to 48dp without changing the look.
+              hitSlop={{ top: 8, bottom: 8 }}
               accessibilityRole="tab"
               accessibilityState={{ selected: i === safeIndex }}
               accessibilityLabel={p.alert ? `${p.label}, needs you` : p.label}
@@ -133,7 +142,8 @@ export function HomeSwipeCard({ pages }: { pages: SwipePage[] }) {
         <ReanimatedAnimated.View
           style={heightStyle}
           onLayout={(e) => {
-            if (cardWidth === 0) setCardWidth(e.nativeEvent.layout.width);
+            const w = e.nativeEvent.layout.width;
+            setCardWidth((prev) => (Math.abs(prev - w) < 0.5 ? prev : w));
           }}
         >
           {cardWidth > 0 && (
@@ -153,8 +163,14 @@ export function HomeSwipeCard({ pages }: { pages: SwipePage[] }) {
               scrollEventThrottle={16}
               contentContainerStyle={styles.pagesRow}
             >
-              {pages.map((p) => (
-                <View key={p.key} style={{ width: cardWidth }}>
+              {pages.map((p, i) => (
+                <View
+                  key={p.key}
+                  style={{ width: cardWidth }}
+                  // Off-screen pages stay mounted for the swipe; a screen reader shouldn't reach into them.
+                  accessibilityElementsHidden={i !== safeIndex}
+                  importantForAccessibility={i === safeIndex ? 'auto' : 'no-hide-descendants'}
+                >
                   <View
                     onLayout={(e) => {
                       const h = Math.round(e.nativeEvent.layout.height);

@@ -195,8 +195,15 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
       showAlert("Couldn't restore that backup", String((e as Error)?.message ?? e));
       return;
     }
-    await resyncAfterRestore();
-    setPendingRestore(null);
+    try {
+      await resyncAfterRestore();
+    } catch {
+      // The data is already restored; a failed resync (notifications, widgets) only means those catch up on
+      // the next launch. Never let it strand the user on this screen.
+    } finally {
+      setRestoring(false);
+      setPendingRestore(null);
+    }
     await finish();
   };
 

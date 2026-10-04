@@ -19,6 +19,7 @@ import { theme } from '@/constants/theme';
 import { useScreenLoad } from '@/lib/useScreenLoad';
 import { styles } from '@/features/whatif/whatif.styles';
 import { dayMonth } from '@/lib/dateLabels';
+import { daysUntilIsoDate } from '@/lib/date';
 
 const CUT_OPTIONS = [10, 20, 30, 40, 50];
 const DEFAULT_CUT_PCT = 20;
@@ -27,6 +28,25 @@ function soonerLabel(days: number): string {
   if (days >= 14) return `${Math.round(days / 7)} weeks sooner`;
   if (days >= 7) return '1 week sooner';
   return `${days} day${days === 1 ? '' : 's'} sooner`;
+}
+
+/**
+ * How full each pace bar is: the current pace fills the track, and the new date is the same fraction of it as
+ * its days-to-go are of the current ones, so a bigger cut visibly shortens the bar. The floor keeps a tiny
+ * bar visible. With no current date to compare against, the new bar is simply full.
+ */
+function paceBarWidths(pace: {
+  currentEtaDate: string | null;
+  newEtaDate: string | null;
+  daysSooner: number;
+}): { current: `${number}%`; next: `${number}%` } {
+  const currentDays = pace.currentEtaDate ? Math.max(1, daysUntilIsoDate(pace.currentEtaDate)) : 0;
+  const newShare =
+    currentDays > 0 ? Math.min(1, Math.max(0.06, (currentDays - pace.daysSooner) / currentDays)) : 1;
+  return {
+    current: pace.currentEtaDate ? '100%' : '0%',
+    next: pace.newEtaDate ? `${Math.round(newShare * 100)}%` : '0%',
+  };
 }
 
 /**
@@ -204,7 +224,7 @@ export default function WhatIfScreen() {
                           style={[
                             styles.paceFill,
                             {
-                              width: pace.currentEtaDate ? '80%' : '0%',
+                              width: paceBarWidths(pace).current,
                               backgroundColor: theme.colors.textMuted,
                             },
                           ]}
@@ -223,9 +243,7 @@ export default function WhatIfScreen() {
                           style={[
                             styles.paceFill,
                             {
-                              width: pace.newEtaDate
-                                ? `${Math.max(20, 80 - Math.min(60, pace.daysSooner / 3))}%`
-                                : '0%',
+                              width: paceBarWidths(pace).next,
                               backgroundColor: theme.colors.income,
                             },
                           ]}

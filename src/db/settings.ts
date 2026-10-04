@@ -6,6 +6,17 @@ import { getDb } from './client';
 // synchronously without every call touching SQLite.
 let cachedCurrency: string | null = null;
 
+/**
+ * Read-modify-write settings (the "seen"/"sent"/queue lists) run one at a time: two overlapping calls would
+ * otherwise both read the same old list and the second write would drop the first one's additions.
+ */
+let settingsLockChain: Promise<unknown> = Promise.resolve();
+function withSettingsLock<T>(fn: () => Promise<T>): Promise<T> {
+  const run = settingsLockChain.then(fn, fn);
+  settingsLockChain = run.catch(() => {});
+  return run;
+}
+
 const DEFAULT_CURRENCY = 'INR';
 const CURRENCY_KEY = 'default_currency';
 
@@ -205,11 +216,16 @@ export async function getDailySpendingGoal(): Promise<number | null> {
   const row = await db.getFirstAsync<{ value: string }>('SELECT value FROM settings WHERE key = ?', [
     DAILY_SPENDING_GOAL_KEY,
   ]);
-  cachedDailySpendingGoal = row ? Number(row.value) : null;
+  const stored = row ? Number(row.value) : null;
+  // A damaged value ("abc") must read as "off", not NaN, which would show as a goal of "NaN".
+  cachedDailySpendingGoal = stored !== null && Number.isFinite(stored) ? stored : null;
   return cachedDailySpendingGoal;
 }
 
 export async function setDailySpendingGoal(minor: number | null): Promise<void> {
+  if (minor != null && (!Number.isSafeInteger(minor) || minor < 0)) {
+    throw new Error('Enter a valid daily spending goal');
+  }
   const db = await getDb();
   if (minor == null) {
     await db.runAsync('DELETE FROM settings WHERE key = ?', [DAILY_SPENDING_GOAL_KEY]);
@@ -378,7 +394,9 @@ export async function getBackupFrequency(): Promise<BackupFrequency> {
   const row = await db.getFirstAsync<{ value: string }>('SELECT value FROM settings WHERE key = ?', [
     BACKUP_FREQUENCY_KEY,
   ]);
-  cachedBackupFrequency = (row?.value as BackupFrequency) ?? 'daily';
+  const stored = row?.value;
+  cachedBackupFrequency =
+    stored === 'daily' || stored === 'weekly' || stored === 'monthly' ? stored : 'daily';
   return cachedBackupFrequency;
 }
 
@@ -529,12 +547,18 @@ async function setHiddenSubscriptionSuggestions(keys: string[]): Promise<void> {
 }
 
 export async function hideSubscriptionSuggestion(key: string): Promise<void> {
-  await setHiddenSubscriptionSuggestions([...(await getHiddenSubscriptionSuggestions()), key]);
+  await withSettingsLock(async () => {
+    await setHiddenSubscriptionSuggestions([...(await getHiddenSubscriptionSuggestions()), key]);
+  });
 }
 
 /** Brings a hidden suggestion back — "Bring back" on it in Needs you. */
 export async function unhideSubscriptionSuggestion(key: string): Promise<void> {
-  await setHiddenSubscriptionSuggestions((await getHiddenSubscriptionSuggestions()).filter((k) => k !== key));
+  await withSettingsLock(async () => {
+    await setHiddenSubscriptionSuggestions(
+      (await getHiddenSubscriptionSuggestions()).filter((k) => k !== key)
+    );
+  });
 }
 
 const MILESTONES_SEEN_KEY = 'milestones_seen';
@@ -560,16 +584,18 @@ export async function getMilestonesSeen(): Promise<string[]> {
 }
 
 export async function markMilestonesSeen(keys: string[]): Promise<void> {
-  const next = [...(await getMilestonesSeen()).filter((k) => !keys.includes(k)), ...keys].slice(
-    -MILESTONES_KEPT
-  );
-  const db = await getDb();
-  await db.runAsync(
-    `INSERT INTO settings (key, value) VALUES (?, ?)
-     ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
-    [MILESTONES_SEEN_KEY, JSON.stringify(next)]
-  );
-  cachedMilestonesSeen = next;
+  await withSettingsLock(async () => {
+    const next = [...(await getMilestonesSeen()).filter((k) => !keys.includes(k)), ...keys].slice(
+      -MILESTONES_KEPT
+    );
+    const db = await getDb();
+    await db.runAsync(
+      `INSERT INTO settings (key, value) VALUES (?, ?)
+       ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
+      [MILESTONES_SEEN_KEY, JSON.stringify(next)]
+    );
+    cachedMilestonesSeen = next;
+  });
 }
 
 const BUDGET_NUDGES_SENT_KEY = 'budget_nudges_sent';
@@ -596,16 +622,18 @@ export async function getBudgetNudgesSent(): Promise<string[]> {
 }
 
 export async function addBudgetNudgesSent(keys: string[]): Promise<void> {
-  const next = [...(await getBudgetNudgesSent()).filter((k) => !keys.includes(k)), ...keys].slice(
-    -BUDGET_NUDGES_KEPT
-  );
-  const db = await getDb();
-  await db.runAsync(
-    `INSERT INTO settings (key, value) VALUES (?, ?)
-     ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
-    [BUDGET_NUDGES_SENT_KEY, JSON.stringify(next)]
-  );
-  cachedBudgetNudgesSent = next;
+  await withSettingsLock(async () => {
+    const next = [...(await getBudgetNudgesSent()).filter((k) => !keys.includes(k)), ...keys].slice(
+      -BUDGET_NUDGES_KEPT
+    );
+    const db = await getDb();
+    await db.runAsync(
+      `INSERT INTO settings (key, value) VALUES (?, ?)
+       ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
+      [BUDGET_NUDGES_SENT_KEY, JSON.stringify(next)]
+    );
+    cachedBudgetNudgesSent = next;
+  });
 }
 
 const ALERT_QUEUE_KEY = 'notification_alert_queue';
@@ -630,7 +658,7 @@ export async function getAlertQueue(): Promise<QueuedAlert[]> {
   }
 }
 
-export async function setAlertQueue(alerts: QueuedAlert[]): Promise<void> {
+async function writeAlertQueue(alerts: QueuedAlert[]): Promise<void> {
   const db = await getDb();
   await db.runAsync(
     `INSERT INTO settings (key, value) VALUES (?, ?)
@@ -639,11 +667,17 @@ export async function setAlertQueue(alerts: QueuedAlert[]): Promise<void> {
   );
 }
 
+export async function setAlertQueue(alerts: QueuedAlert[]): Promise<void> {
+  await withSettingsLock(() => writeAlertQueue(alerts));
+}
+
 /** Adds alerts to the queue; one already queued under the same id is replaced, not doubled. */
 export async function addQueuedAlerts(alerts: QueuedAlert[]): Promise<void> {
   if (alerts.length === 0) return;
   const ids = new Set(alerts.map((a) => a.id));
-  await setAlertQueue([...(await getAlertQueue()).filter((a) => !ids.has(a.id)), ...alerts]);
+  await withSettingsLock(async () => {
+    await writeAlertQueue([...(await getAlertQueue()).filter((a) => !ids.has(a.id)), ...alerts]);
+  });
 }
 
 const HIDE_SENSITIVE_AMOUNTS_KEY = 'hide_sensitive_amounts';

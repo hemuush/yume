@@ -162,7 +162,7 @@ describe('ledger integrity', () => {
   });
 
   it("listPeople's grouped balances match each person's own ledger", async () => {
-    const asha = await createPerson({ name: 'Asha' });
+    const asha = await createPerson({ name: 'Test Person' });
     const ravi = await createPerson({ name: 'Ravi' });
     await createPerson({ name: 'Nobody Yet' });
     await addLedgerEntry({ personId: asha.id, amountMinor: 30000, date: '2026-01-02' });
@@ -182,7 +182,7 @@ describe('ledger integrity', () => {
           : null
       );
     }
-    expect(people.find((p) => p.name === 'Asha')!.balanceMinor).toBe(20000);
+    expect(people.find((p) => p.name === 'Test Person')!.balanceMinor).toBe(20000);
     expect(people.find((p) => p.name === 'Nobody Yet')!.balanceMinor).toBe(0);
   });
 

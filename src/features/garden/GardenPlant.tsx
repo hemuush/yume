@@ -1,10 +1,10 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { Animated, Easing } from 'react-native';
 import Svg, { Circle, Ellipse, Rect, Mask, Defs, G } from 'react-native-svg';
 import { theme } from '@/constants/theme';
 import { DURATIONS } from '@/lib/motionTimings';
 import { useReduceMotion } from '@/lib/useReduceMotion';
-import type { GrowthStage } from '@/lib/gardenGrowth';
+import { stageLabel, type GrowthStage } from '@/lib/gardenGrowth';
 
 const STAGES: GrowthStage[] = ['seed', 'sprout', 'sapling', 'bloom'];
 const STEM_HEIGHT = [0, 16, 21, 25];
@@ -34,16 +34,30 @@ export function GardenPlant({
   stage,
   size = 44,
   animKey,
+  decorative = false,
 }: {
   stage: GrowthStage;
   size?: number;
   animKey?: string;
+  /** Hide it from screen readers when text beside it already names the stage (the legend). */
+  decorative?: boolean;
 }) {
-  if (animKey) return <GrowingPlant stage={stage} size={size} animKey={animKey} />;
-  return <PlantSvg pos={STAGES.indexOf(stage)} size={size} />;
+  const label = decorative ? undefined : `${stageLabel(stage)} plant`;
+  if (animKey) return <GrowingPlant stage={stage} size={size} animKey={animKey} label={label} />;
+  return <PlantSvg pos={STAGES.indexOf(stage)} size={size} label={label} />;
 }
 
-function GrowingPlant({ stage, size, animKey }: { stage: GrowthStage; size: number; animKey: string }) {
+function GrowingPlant({
+  stage,
+  size,
+  animKey,
+  label,
+}: {
+  stage: GrowthStage;
+  size: number;
+  animKey: string;
+  label?: string;
+}) {
   const reduce = useReduceMotion();
   const idx = STAGES.indexOf(stage);
   const [start] = useState(() => seenStage.get(animKey) ?? idx);
@@ -93,12 +107,15 @@ function GrowingPlant({ stage, size, animKey }: { stage: GrowthStage; size: numb
 
   return (
     <Animated.View style={{ transform: [{ scale: pop }] }}>
-      <PlantSvg pos={pos} size={size} />
+      <PlantSvg pos={pos} size={size} label={label} />
     </Animated.View>
   );
 }
 
-function PlantSvg({ pos, size }: { pos: number; size: number }) {
+function PlantSvg({ pos, size, label }: { pos: number; size: number; label?: string }) {
+  // The crescent mask is referenced by id, and ids are document-wide: every bloom on the screen needs its own,
+  // or they all resolve to the first one. useId yields ":r1:", which isn't safe inside url(#…).
+  const maskId = `crescent-${useId().replace(/[^a-zA-Z0-9_-]/g, '')}`;
   const { stemH, leafScale } = shapeAt(pos);
   const bloom = pos >= STAGES.length - 1 - 0.001;
   const seed = pos <= 0.001;
@@ -106,10 +123,18 @@ function PlantSvg({ pos, size }: { pos: number; size: number }) {
   const stemTopY = baseY - stemH;
 
   return (
-    <Svg width={size} height={(size * 56) / 44} viewBox="0 0 44 56">
+    <Svg
+      width={size}
+      height={(size * 56) / 44}
+      viewBox="0 0 44 56"
+      accessible={label != null}
+      accessibilityRole={label ? 'image' : undefined}
+      accessibilityLabel={label}
+      importantForAccessibility={label ? 'yes' : 'no-hide-descendants'}
+    >
       {bloom && (
         <Defs>
-          <Mask id="crescent" maskUnits="userSpaceOnUse" x="0" y="0" width="44" height="56">
+          <Mask id={maskId} maskUnits="userSpaceOnUse" x="0" y="0" width="44" height="56">
             <Rect x="0" y="0" width="44" height="56" fill="white" />
             <Circle cx={31} cy={13} r={15} fill="black" />
           </Mask>
@@ -119,7 +144,7 @@ function PlantSvg({ pos, size }: { pos: number; size: number }) {
         <Circle cx={22} cy={baseY - 3} r={2.6} fill={theme.colors.ink} opacity={0.45} />
       ) : (
         <G>
-          {bloom && <Circle cx={22} cy={13} r={15} fill={theme.colors.ink} mask="url(#crescent)" />}
+          {bloom && <Circle cx={22} cy={13} r={15} fill={theme.colors.ink} mask={`url(#${maskId})`} />}
           <Rect x={21} y={stemTopY} width={2} height={stemH} fill={theme.colors.ink} />
           <Ellipse
             cx={22 - 8 * leafScale}

@@ -1,4 +1,4 @@
-import { getDb } from '@/db/client';
+import { getDb, type AppDb } from '@/db/client';
 import { resetSettingsCache } from '@/db/settings';
 import { BACKFILL_LOAN_TX_KIND_SQL } from '@/db/loanTxKind';
 
@@ -45,7 +45,14 @@ export interface BackupSnapshot {
 
 /** Serializes every table to a single JSON-safe object — the full source of truth for restore. */
 export async function buildBackupSnapshot(): Promise<BackupSnapshot> {
-  const db = await getDb();
+  return buildBackupSnapshotOn(await getDb());
+}
+
+/**
+ * buildBackupSnapshot on a handle the caller already holds, so it can run inside the caller's own exclusive
+ * section (a nested exclusiveAsync on the exclusive handle runs directly; getDb() there would deadlock).
+ */
+export async function buildBackupSnapshotOn(db: AppDb): Promise<BackupSnapshot> {
   const tables: Record<string, BackupRow[]> = {};
   // One exclusive slot for all table reads: separate reads would let another screen's write land between them
   // (a loan created after `loans` but before `loan_payments`), leaving rows that point at missing parents.
@@ -85,6 +92,11 @@ export interface RestoreResult {
 }
 
 export async function restoreFromSnapshot(snapshot: BackupSnapshot): Promise<RestoreResult> {
+  return restoreFromSnapshotOn(await getDb(), snapshot);
+}
+
+/** restoreFromSnapshot on a handle the caller already holds (see buildBackupSnapshotOn). */
+export async function restoreFromSnapshotOn(db: AppDb, snapshot: BackupSnapshot): Promise<RestoreResult> {
   if (!isValidSnapshotShape(snapshot)) {
     throw new Error("This doesn't look like a Yume backup file.");
   }
@@ -93,7 +105,6 @@ export async function restoreFromSnapshot(snapshot: BackupSnapshot): Promise<Res
   }
   // Older formatVersions restore as-is (v1 is the only format shipped). On the first bump, translate older
   // snapshots up to the current shape here, before the insert loop.
-  const db = await getDb();
 
   const deleteOrder = [...TABLES].reverse();
   const insertOrder = TABLES;
@@ -149,8 +160,11 @@ export async function restoreFromSnapshot(snapshot: BackupSnapshot): Promise<Res
             if (columns.length === 0) continue;
             const placeholders = columns.map(() => '?').join(', ');
             const values = columns.map((c) => row[c]);
+            // A damaged file with two value updates for one account and day keeps the later one rather than
+            // failing the whole restore on the unique index.
+            const verb = table === 'account_valuations' ? 'INSERT OR REPLACE' : 'INSERT';
             await tx.runAsync(
-              `INSERT INTO ${table} (${columns.map((c) => `"${c}"`).join(', ')}) VALUES (${placeholders})`,
+              `${verb} INTO ${table} (${columns.map((c) => `"${c}"`).join(', ')}) VALUES (${placeholders})`,
               values
             );
           }
@@ -168,6 +182,19 @@ export async function restoreFromSnapshot(snapshot: BackupSnapshot): Promise<Res
             [key, value]
           );
         }
+        // A pre-is_system backup restores built-in categories unflagged; re-flag them (restore runs no
+        // migrations). Mirrors flagSystemCategories() in src/db/client.ts, inline to avoid a circular-ish
+        // db-layer import. Inside the transaction so a failure can't leave the restore half-finished.
+        await tx.runAsync(
+          `UPDATE categories SET is_system = 1 WHERE is_system = 0 AND parent_id IS NULL AND (
+             (name = 'Loan EMI' AND kind = 'expense') OR
+             (name = 'Loan Repayment' AND kind = 'income') OR
+             (name = 'Fees & Charges' AND kind = 'expense') OR
+             (name = 'Friends & Family')
+           )`
+        );
+        // Same reasoning: a backup from before loan_tx_kind existed restores its loan transactions untagged.
+        await tx.runAsync(BACKFILL_LOAN_TX_KIND_SQL);
         // FKs were off for the inserts, so nothing checked them; a damaged file could leave a transaction
         // pointing at a missing account. Checking before commit rolls back, leaving current data untouched.
         const broken = await tx.getAllAsync<{ table: string }>('PRAGMA foreign_key_check');
@@ -183,19 +210,6 @@ export async function restoreFromSnapshot(snapshot: BackupSnapshot): Promise<Res
       await xdb.execAsync('PRAGMA foreign_keys = ON;');
     }
   });
-  // A pre-is_system backup restores built-in categories unflagged; re-flag them (restore runs no migrations).
-  // Mirrors flagSystemCategories() in src/db/client.ts, inline to avoid a circular-ish db-layer import.
-  await db.runAsync(
-    `UPDATE categories SET is_system = 1 WHERE is_system = 0 AND parent_id IS NULL AND (
-       (name = 'Loan EMI' AND kind = 'expense') OR
-       (name = 'Loan Repayment' AND kind = 'income') OR
-       (name = 'Fees & Charges' AND kind = 'expense') OR
-       (name = 'Friends & Family')
-     )`
-  );
-  // Same reasoning: a backup from before loan_tx_kind existed restores its
-  // loan transactions untagged.
-  await db.runAsync(BACKFILL_LOAN_TX_KIND_SQL);
   // The restore writes the settings table directly, bypassing db/settings.ts setters; without this,
   // cached-setting readers (formatMoney, accent) would show pre-restore values until the app is relaunched.
   resetSettingsCache();

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { View, Animated, Easing, StyleProp, ViewStyle, TextStyle } from 'react-native';
 import { captureRef } from 'react-native-view-shot';
 import * as Sharing from 'expo-sharing';
+import { File } from 'expo-file-system';
 import Svg, { Circle } from 'react-native-svg';
 import Feather from '@expo/vector-icons/Feather';
 import { Text } from '@/components/Text';
@@ -14,7 +15,7 @@ import { formatMoney } from '@/lib/money';
 import { dayMonth, longWeekday } from '@/lib/dateLabels';
 import { withoutRelock } from '@/lib/appLock';
 import { errorMessage } from '@/lib/errorMessage';
-import { Wrap, WrapBeat } from './wrapData';
+import { Wrap, WrapBeat, USUAL_BAND_PCT } from './wrapData';
 import { styles } from './wrap.styles';
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
@@ -27,21 +28,31 @@ function Rise({
   delay = 0,
   still,
   style,
+  onShown,
   children,
 }: {
   delay?: number;
   still: boolean;
   style?: StyleProp<ViewStyle>;
+  /** Called once it is fully visible (straight away when still). */
+  onShown?: () => void;
   children: React.ReactNode;
 }) {
   const [v] = useState(() => new Animated.Value(still ? 1 : 0));
+  const shown = useRef(onShown);
+  useEffect(() => {
+    shown.current = onShown;
+  });
   useEffect(() => {
     if (still) {
       v.setValue(1);
+      shown.current?.();
       return;
     }
     const a = Animated.timing(v, { toValue: 1, duration: 380, delay, easing: EASE, useNativeDriver: true });
-    a.start();
+    a.start(({ finished }) => {
+      if (finished) shown.current?.();
+    });
     return () => a.stop();
   }, [v, delay, still]);
   const translateY = v.interpolate({ inputRange: [0, 1], outputRange: [14, 0] });
@@ -506,7 +517,7 @@ export function WeekDaysBeat({ beat, still }: { beat: BeatOf<'weekDays'>; still:
 
 export function UsualBeat({ beat, still }: { beat: BeatOf<'usual'>; still: boolean }) {
   const less = beat.changePct < 0;
-  const steady = Math.abs(beat.changePct) < 5;
+  const steady = Math.abs(beat.changePct) < USUAL_BAND_PCT;
   return (
     <View style={styles.beat}>
       <Text style={styles.kicker}>Against your usual</Text>
@@ -554,7 +565,7 @@ export function UsualBeat({ beat, still }: { beat: BeatOf<'usual'>; still: boole
 function cardLine(wrap: Wrap): string | null {
   for (const b of wrap.beats) {
     if (b.kind === 'usual') {
-      if (Math.abs(b.changePct) < 5) return 'About a usual week';
+      if (Math.abs(b.changePct) < USUAL_BAND_PCT) return 'About a usual week';
       return `${Math.round(Math.abs(b.changePct))}% ${b.changePct < 0 ? 'less' : 'more'} than usual`;
     }
     if (b.kind === 'kept') {
@@ -585,14 +596,27 @@ export function FinalBeat({
   const hook = wrap.beats.find((b): b is BeatOf<'hook'> => b.kind === 'hook');
   const top = wrap.beats.find((b): b is BeatOf<'bars'> => b.kind === 'bars')?.items.slice(0, 3) ?? [];
   const line = cardLine(wrap);
+  // Capturing mid fade-in would send a half-transparent card, so Share waits until the card is fully visible.
+  const [cardShown, setCardShown] = useState(still);
   const share = async () => {
+    if (!cardShown) return;
+    let uri: string | null = null;
     try {
-      const uri = await captureRef(card, { format: 'png', quality: 1 });
+      uri = await captureRef(card, { format: 'png', quality: 1 });
       await withoutRelock(() =>
-        Sharing.shareAsync(uri, { mimeType: 'image/png', dialogTitle: 'Share your Wrap' })
+        Sharing.shareAsync(uri!, { mimeType: 'image/png', dialogTitle: 'Share your Wrap' })
       );
     } catch (e) {
       showAlert("Couldn't share it", errorMessage(e));
+    } finally {
+      // The capture is a temp PNG in the cache; once the share sheet is done with it, don't leave it behind.
+      if (uri) {
+        try {
+          new File(uri).delete();
+        } catch {
+          // Already gone, or the cache cleans it up later.
+        }
+      }
     }
   };
   return (
@@ -601,7 +625,7 @@ export function FinalBeat({
         <Text style={styles.kicker}>{beat.title}</Text>
       </Rise>
       <View style={styles.finalMiddle}>
-        <Rise delay={200} still={still}>
+        <Rise delay={200} still={still} onShown={() => setCardShown(true)}>
           <View ref={card} collapsable={false} style={styles.card}>
             <Text style={styles.cardKicker}>{wrap.label}</Text>
             {hook && <Text style={styles.cardTotal}>{formatMoney(hook.spentMinor)}</Text>}
@@ -630,7 +654,7 @@ export function FinalBeat({
           onPress={onOpenReport}
           style={styles.action}
         />
-        <PrimaryButton title="Share" onPress={share} style={styles.action} />
+        <PrimaryButton title="Share" onPress={share} disabled={!cardShown} style={styles.action} />
       </Rise>
     </View>
   );

@@ -85,6 +85,8 @@ export function LapsedBudgetsCard({
               onPress={() => onContinue(item)}
               disabled={busy}
               accessibilityRole="button"
+              accessibilityLabel={`Continue ${categorySentence(item.categoryName, item.parentName)} budget`}
+              accessibilityState={{ disabled: busy, busy: continuingId === item.categoryId }}
             >
               <Text style={styles.continueBtnText}>
                 {continuingId === item.categoryId ? '…' : 'Continue'}

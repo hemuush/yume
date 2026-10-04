@@ -270,6 +270,9 @@ function MedalTile({
       onPress={onPress}
       onPressIn={onPressIn}
       onPressOut={onPressOut}
+      accessibilityRole="button"
+      accessibilityLabel={hint ? `${name}, ${hint}` : name}
+      accessibilityState={{ selected: active }}
     >
       {/* The fade sits on the contents, not the pressable: the press animation drives the pressable's own opacity. */}
       <View style={[styles.medalBody, dimmed && styles.medalDimmed]}>

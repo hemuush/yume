@@ -29,7 +29,7 @@ export function GoalSheetCard({
     <SheetCard
       hue={done && !hideAmounts ? theme.colors.flatLime : theme.colors.secondary}
       icon={done && !hideAmounts ? 'flag-checkered' : 'piggy-bank-outline'}
-      kicker={kicker ?? (hideAmounts ? 'Saved' : done ? 'Reached' : `${percent}%`)}
+      kicker={kicker ?? (hideAmounts ? 'Saved' : done ? 'Reached' : `${Math.round(percent)}%`)}
       amount={formatMaskableMoney(savedMinor, { masked: hideAmounts })}
       title={name}
       meta={`of ${formatMoney(targetMinor)}${targetDate ? ` · by ${dayMonthYear(targetDate)}` : ''}`}

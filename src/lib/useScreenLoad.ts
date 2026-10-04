@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { useFocusEffect } from 'expo-router';
 import { errorMessage } from '@/lib/errorMessage';
 
@@ -10,14 +10,18 @@ export function useScreenLoad(loadFn: () => Promise<void>) {
   const [loaded, setLoaded] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
 
+  const latestCall = useRef(0);
+
+  // Only the newest call may touch `loadError`/`loaded`, so a slow older load can't overwrite a newer result.
   const reload = useCallback(async () => {
+    const call = ++latestCall.current;
     try {
       await loadFn();
-      setLoadError(null);
+      if (call === latestCall.current) setLoadError(null);
     } catch (e) {
-      setLoadError(errorMessage(e));
+      if (call === latestCall.current) setLoadError(errorMessage(e));
     } finally {
-      setLoaded(true);
+      if (call === latestCall.current) setLoaded(true);
     }
   }, [loadFn]);
 

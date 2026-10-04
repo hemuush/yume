@@ -12,6 +12,8 @@ import { withPressed } from '@/lib/pressed';
 export interface HeatCell {
   key: string;
   label: string;
+  /** What a screen reader says for the cell: the day and its spend (the visible label is only a number). */
+  a11yLabel?: string;
   level: 0 | 1 | 2 | 3 | 4;
   /** Ringed, so you can find your place in the month. */
   isToday?: boolean;
@@ -95,12 +97,15 @@ export function SpendHeatmap({
                     style={withPressed()}
                     onPress={c.onPress}
                     accessibilityRole="button"
+                    accessibilityLabel={c.a11yLabel ?? c.label}
                     accessibilityState={{ selected: !!c.isSelected }}
                   >
                     {inner}
                   </Pressable>
                 ) : (
-                  inner
+                  <View accessible={!!c.a11yLabel} accessibilityLabel={c.a11yLabel}>
+                    {inner}
+                  </View>
                 )}
               </Animated.View>
             );

@@ -3,6 +3,7 @@ import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { theme } from '@/constants/theme';
 import { useAccent } from '@/theme/AccentContext';
 import type { McIconName } from '@/components/iconName';
+import { softTint } from '@/components/softTint';
 
 interface Props {
   name: string;
@@ -26,7 +27,7 @@ export function CategoryIcon({ name, color, size = 17, square = 38, round = fals
           width: square,
           height: square,
           borderRadius: round ? square / 2 : square * 0.32,
-          backgroundColor: resolvedColor + '40',
+          backgroundColor: softTint(resolvedColor, 0.25),
         },
       ]}
     >

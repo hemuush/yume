@@ -42,7 +42,12 @@ export function ProfileIdentity({
       <LinearGradient colors={[top, bottom]} style={StyleSheet.absoluteFill} />
       <View style={local.body}>
         <View style={styles.identityRow}>
-          <View style={[styles.avatar, { backgroundColor: accent }]}>
+          <View
+            style={[styles.avatar, { backgroundColor: accent }]}
+            accessible
+            accessibilityRole="image"
+            accessibilityLabel={name?.trim() ? `${name.trim()}'s avatar` : 'Your avatar'}
+          >
             <Text style={[styles.avatarInitial, { color: onAccent }]}>
               {(name?.trim().charAt(0) || 'Y').toUpperCase()}
             </Text>
@@ -77,6 +82,7 @@ export function ProfileIdentity({
               <Pressable
                 style={withPressed(styles.nameRow)}
                 accessibilityRole="button"
+                accessibilityLabel={name ? `${name}, your name` : 'Add your name'}
                 accessibilityHint="Edit your name"
                 onPress={onStartEdit}
               >

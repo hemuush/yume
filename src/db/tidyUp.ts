@@ -60,26 +60,34 @@ export interface TidyUpReport {
   fractionalCount: number;
 }
 
-async function getKeptList(key: string): Promise<string[]> {
-  const db = await getDb();
-  const row = await db.getFirstAsync<{ value: string }>('SELECT value FROM settings WHERE key = ?', [key]);
+function parseKeptList(raw: string | undefined): string[] {
   try {
-    const parsed = row ? JSON.parse(row.value) : [];
+    const parsed = raw !== undefined ? JSON.parse(raw) : [];
     return Array.isArray(parsed) ? parsed.filter((v): v is string => typeof v === 'string') : [];
   } catch {
     return [];
   }
 }
 
-async function addToKeptList(key: string, value: string): Promise<void> {
-  const list = await getKeptList(key);
-  if (list.includes(value)) return;
+async function getKeptList(key: string): Promise<string[]> {
   const db = await getDb();
-  await db.runAsync(
-    `INSERT INTO settings (key, value) VALUES (?, ?)
-     ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
-    [key, JSON.stringify([...list, value])]
-  );
+  const row = await db.getFirstAsync<{ value: string }>('SELECT value FROM settings WHERE key = ?', [key]);
+  return parseKeptList(row?.value);
+}
+
+async function addToKeptList(key: string, value: string): Promise<void> {
+  const db = await getDb();
+  // Read-modify-write in one transaction, so two quick "Keep" taps can't both read the old list and lose one.
+  await db.withTransactionAsync(async (tx) => {
+    const row = await tx.getFirstAsync<{ value: string }>('SELECT value FROM settings WHERE key = ?', [key]);
+    const list = parseKeptList(row?.value);
+    if (list.includes(value)) return;
+    await tx.runAsync(
+      `INSERT INTO settings (key, value) VALUES (?, ?)
+       ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
+      [key, JSON.stringify([...list, value])]
+    );
+  });
 }
 
 const repeatKeyOf = (r: {
@@ -257,12 +265,13 @@ export async function moveToOpeningBalance(group: StartingBalanceGroup): Promise
   );
   if (!account) throw new Error("These entries' account no longer exists.");
   const transactions: RowSnapshot[] = [];
-  for (const id of group.ids) {
-    const snapshot = await captureRow(db, 'transactions', id);
-    if (!snapshot) throw new Error('Some of these entries are already gone — open Tidy up again.');
-    transactions.push(snapshot);
-  }
+  // Captured in the same transaction that deletes them, so the undo snapshot is exactly what was removed.
   await db.withTransactionAsync(async (tx) => {
+    for (const id of group.ids) {
+      const snapshot = await captureRow(tx, 'transactions', id);
+      if (!snapshot) throw new Error('Some of these entries are already gone — open Tidy up again.');
+      transactions.push(snapshot);
+    }
     await tx.runAsync('UPDATE accounts SET opening_balance_minor = opening_balance_minor + ? WHERE id = ?', [
       group.totalMinor,
       group.accountId,

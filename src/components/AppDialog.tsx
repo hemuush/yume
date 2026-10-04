@@ -25,7 +25,14 @@ let show: ((d: Dialog) => void) | null = null;
  * Shown by the one `AppDialogHost` at the app root; one at a time, a newer dialog replaces an open one.
  */
 export function showAlert(title: string, message?: string, buttons?: DialogButton[]): void {
-  show?.({ title, message, buttons: buttons?.length ? buttons : [{ text: 'OK' }] });
+  if (!show) {
+    // No AppDialogHost is mounted (a screen outside the root layout, or a call before it mounts): the
+    // dialog would vanish without a trace, so say so in development.
+    if (__DEV__)
+      console.warn(`showAlert("${title}") was called with no AppDialogHost mounted; nothing was shown.`);
+    return;
+  }
+  show({ title, message, buttons: buttons?.length ? buttons : [{ text: 'OK' }] });
 }
 
 export function AppDialogHost() {

@@ -50,7 +50,11 @@ export function SplitScreen() {
 
   // Reached without Add opening a split (a stale deep link): nothing to show.
   useEffect(() => {
-    if (!session) router.back();
+    if (!session) {
+      // A deep link has nothing below it to go back to.
+      if (router.canGoBack()) router.back();
+      else router.replace('/');
+    }
   }, [session]);
   if (!session) return null;
 
@@ -124,7 +128,7 @@ export function SplitScreen() {
     problem?.kind === 'over'
       ? problem.overMinor > 0
         ? `The other parts come to ${money(problem.overMinor)} more than the whole payment.`
-        : `That leaves nothing for ${nameOf(parts[0].key)}.`
+        : `That leaves nothing for ${nameOf(parts[0]?.key ?? '')}.`
       : null;
 
   const pickingKey = picking?.mode === 'change' ? picking.key : null;

@@ -1,5 +1,6 @@
 import { File, Paths } from 'expo-file-system';
-import { buildBackupSnapshot, restoreFromSnapshot, BackupSnapshot, RestoreResult } from './backup';
+import { getDb } from '@/db/client';
+import { buildBackupSnapshotOn, restoreFromSnapshotOn, BackupSnapshot, RestoreResult } from './backup';
 import { errorMessage } from '@/lib/errorMessage';
 
 /**
@@ -55,29 +56,33 @@ export async function restoreKeepingSafetyCopy(
   const pending = pendingFile();
   removeIfPresent(pending); // a stale one from an interrupted earlier restore
 
-  if (!opts.withoutCopy) {
-    try {
-      const current = await buildBackupSnapshot();
-      const payload: SafetyCopyFile = {
-        version: 1,
-        savedAt: new Date().toISOString(),
-        transactions: current.tables.transactions?.length ?? 0,
-        accounts: current.tables.accounts?.length ?? 0,
-        snapshot: current,
-      };
-      pending.create();
-      pending.write(JSON.stringify(payload));
-    } catch (e) {
-      removeIfPresent(pending);
-      throw new SafetyCopyError(errorMessage(e));
-    }
-  }
-
+  // Taking the copy and restoring are one exclusive section: a write landing between them would be in neither
+  // the safety copy nor the restored data. The helpers take the exclusive handle (getDb() inside would deadlock).
+  const db = await getDb();
   let result: RestoreResult;
   try {
-    result = await restoreFromSnapshot(snapshot);
+    result = await db.exclusiveAsync(async (xdb) => {
+      if (!opts.withoutCopy) {
+        try {
+          const current = await buildBackupSnapshotOn(xdb);
+          const payload: SafetyCopyFile = {
+            version: 1,
+            savedAt: new Date().toISOString(),
+            transactions: current.tables.transactions?.length ?? 0,
+            accounts: current.tables.accounts?.length ?? 0,
+            snapshot: current,
+          };
+          pending.create();
+          pending.write(JSON.stringify(payload));
+        } catch (e) {
+          removeIfPresent(pending);
+          throw new SafetyCopyError(errorMessage(e));
+        }
+      }
+      return restoreFromSnapshotOn(xdb, snapshot);
+    });
   } catch (e) {
-    // Nothing was replaced (the restore rolled back), so the copy we just
+    // Nothing was replaced (the restore rolled back), so any copy we just
     // took is redundant — and the previous safety copy must survive.
     removeIfPresent(pending);
     throw e;

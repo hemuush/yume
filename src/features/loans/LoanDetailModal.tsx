@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { View } from 'react-native';
 import { Text } from '@/components/Text';
 import { useFocusEffect } from 'expo-router';
@@ -12,6 +12,7 @@ import {
 } from '@/db/loans';
 import { listAccounts, listCategories } from '@/db/ledger';
 import { formatMoney } from '@/lib/money';
+import { roundedMinor } from '@/lib/round';
 import { useUndoToast } from '@/components/UndoToast';
 import { haptics } from '@/lib/haptics';
 import { Loan, LoanPayment, Account, Category } from '@/types';
@@ -33,6 +34,7 @@ import { PrepayModal } from './PrepayModal';
 import { PayInstallmentSheet } from './PayInstallmentSheet';
 import { LoanSchedule } from './LoanSchedule';
 import { LoanStatGrid } from './LoanStatGrid';
+import { isOverdueInstallment, isUnpaidInstallment, nextUnpaidInstallment } from './installmentStatus';
 import Svg, { Path } from 'react-native-svg';
 import { loanPayoff, payoffMonth, balanceLinePath } from '@/lib/loanPayoff';
 import { errorMessage } from '@/lib/errorMessage';
@@ -75,7 +77,17 @@ export function LoanDetailModal({
 
   // Re-fetches the loan row, not just derived props: payments/prepayments change outstandingPrincipalMinor
   // and status, and the `loan` prop is a snapshot from open, so using it would show stale figures.
+  // Each load takes a ticket; only the latest one may write state, and unmounting voids every ticket, so a
+  // slow earlier fetch can't overwrite fresher figures (or set state after close).
+  const loadTicket = useRef(0);
+  useEffect(
+    () => () => {
+      loadTicket.current += 1;
+    },
+    []
+  );
   const load = useCallback(async () => {
+    const ticket = ++loadTicket.current;
     try {
       const [freshLoan, sched, history, accs, cats] = await Promise.all([
         getLoanById(loan.id),
@@ -84,6 +96,7 @@ export function LoanDetailModal({
         listAccounts(),
         listCategories(),
       ]);
+      if (ticket !== loadTicket.current) return;
       if (freshLoan) setLiveLoan(freshLoan);
       setSchedule(sched);
       setRateHistory(history);
@@ -94,6 +107,7 @@ export function LoanDetailModal({
       setCategories(cats.filter((c) => c.kind === wantKind));
       setLoadError(null);
     } catch (e) {
+      if (ticket !== loadTicket.current) return;
       // Guarded: a transient failure would leave accounts/categories empty and Pay/Prepay looking permanently
       // greyed out (disabled={!defaultAccount || !emiCategory}) with no hint why.
       setLoadError(errorMessage(e));
@@ -106,16 +120,23 @@ export function LoanDetailModal({
     }, [load])
   );
 
-  const nextInstallment = schedule.find((p) => p.status === 'pending');
+  // The first unpaid EMI, including one already past due (the database keeps those 'pending').
+  const nextInstallment = nextUnpaidInstallment(schedule);
   // When it's paid off and what it still costs — from the schedule, so a prepayment or rate change shows at
   // once.
   const payoff = loanPayoff(schedule, liveLoan.outstandingPrincipalMinor);
   // Tells an on-time/late payment from paying an EMI before its due date: otherwise "Pay" accepted both,
   // silently marking an installment paid weeks early; "Prepay" is for extra principal, not an early EMI.
   const todayIso = toLocalIsoDate(new Date());
+  const nextOverdue = !!nextInstallment && isOverdueInstallment(nextInstallment, todayIso);
   const isPayingEarly = !!nextInstallment && nextInstallment.dueDate > todayIso;
+  // Only the built-in category for this direction (Loan EMI / Loan Repayment): never an arbitrary first one,
+  // which would silently misfile the payment. If it's somehow missing, Pay stays off and the hint says why.
+  const emiCategoryName = liveLoan.direction === 'borrowed' ? 'Loan EMI' : 'Loan Repayment';
   const emiCategory =
-    categories.find((c) => c.name === 'Loan EMI' || c.name === 'Loan Repayment') ?? categories[0] ?? null;
+    categories.find((c) => c.name === emiCategoryName && c.isSystem) ??
+    categories.find((c) => c.name === emiCategoryName) ??
+    null;
   // If the loan's linked account was deleted, this falls back to the first account in the list;
   // `linkedAccountMissing` below surfaces that instead of debiting the wrong account silently.
   const linkedAccountMissing =
@@ -188,14 +209,13 @@ export function LoanDetailModal({
     );
   };
 
-  const pendingInstallments = schedule.filter((p) => p.status === 'pending');
+  const pendingInstallments = schedule.filter(isUnpaidInstallment);
   const paidCount = schedule.filter((p) => p.status === 'paid').length;
 
   // Round outstanding and asset value as displayed, then derive equity from those rounded figures so equity
   // always equals the displayed asset value minus the displayed outstanding.
-  const toWholeRupee = (minor: number) => Math.round(minor / 100) * 100;
-  const dispOutstanding = toWholeRupee(liveLoan.outstandingPrincipalMinor);
-  const dispAssetValue = toWholeRupee(liveLoan.assetValueMinor ?? 0);
+  const dispOutstanding = roundedMinor(liveLoan.outstandingPrincipalMinor);
+  const dispAssetValue = roundedMinor(liveLoan.assetValueMinor ?? 0);
   const dispEquity = dispAssetValue - dispOutstanding;
 
   // The loan as a card (coral for money you owe, mint for money lent), then two pages: where it stands, and
@@ -259,7 +279,9 @@ export function LoanDetailModal({
                 {
                   label: 'Next EMI',
                   value: nextInstallment ? formatMoney(nextInstallment.emiAmountMinor) : 'None left',
-                  sub: nextInstallment ? weekdayDayMonth(nextInstallment.dueDate) : undefined,
+                  sub: nextInstallment
+                    ? `${weekdayDayMonth(nextInstallment.dueDate)}${nextOverdue ? ' · overdue' : ''}`
+                    : undefined,
                 },
                 {
                   label: 'EMIs paid',
@@ -340,8 +362,7 @@ export function LoanDetailModal({
             )}
             {!!defaultAccount && !emiCategory && (
               <Text style={styles.hintText}>
-                Add an {liveLoan.direction === 'borrowed' ? 'expense' : 'income'} category first — payments
-                need one to record against.
+                The built-in "{emiCategoryName}" category is missing — payments need it to record against.
               </Text>
             )}
             {linkedAccountMissing && defaultAccount && (

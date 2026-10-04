@@ -51,7 +51,7 @@ Paying an installment (`payInstallment`) atomically: creates the linked transact
 
 ## Friends & Family ledger (`people`, `person_ledger_entries`)
 
-Distinct from `loans` on purpose: this is for informal, interest-free IOUs — "I paid for dinner, Abhinav owes me ₹500" — not scheduled bank loans. Each entry has a signed `amount_minor`: positive means the person now owes you more, negative means they owe you less (they repaid you, or you're settling a debt to them). A person's balance is just `SUM(amount_minor)` across their entries — no separate stored balance to get out of sync.
+Distinct from `loans` on purpose: this is for informal, interest-free IOUs — "I paid for dinner, a friend owes me ₹500" — not scheduled bank loans. Each entry has a signed `amount_minor`: positive means the person now owes you more, negative means they owe you less (they repaid you, or you're settling a debt to them). A person's balance is just `SUM(amount_minor)` across their entries — no separate stored balance to get out of sync.
 
 `recordMoneyGivenToPerson` / `recordMoneyReceivedFromPerson` create both the real account transaction (money actually moved) and the ledger entry in one step, for the common case of paying cash for a friend. `addLedgerEntry` on its own supports pure IOU bookkeeping with no account impact — e.g. logging a debt that was settled entirely in cash outside the app.
 
