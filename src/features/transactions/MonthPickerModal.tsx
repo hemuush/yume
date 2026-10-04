@@ -5,7 +5,7 @@ import { ModalSheet } from '@/components/ModalSheet';
 import { usePressScale } from '@/lib/usePressScale';
 import { theme } from '@/constants/theme';
 import { styles } from './transactions.styles';
-import { MONTH_NAMES } from './transactions.constants';
+import { longMonth, shortMonth } from '@/lib/dateLabels';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -57,6 +57,8 @@ export function MonthPickerModal({
           onPressOut={prevYearBtn.onPressOut}
           hitSlop={10}
           style={[styles.weekNavBtn, prevYearBtn.animatedStyle]}
+          accessibilityRole="button"
+          accessibilityLabel="Previous year"
         >
           <Text style={styles.weekNavArrow}>‹</Text>
         </AnimatedPressable>
@@ -68,17 +70,23 @@ export function MonthPickerModal({
           hitSlop={10}
           disabled={year >= currentYear}
           style={[styles.weekNavBtn, nextYearBtn.animatedStyle]}
+          accessibilityRole="button"
+          accessibilityLabel="Next year"
+          accessibilityState={{ disabled: year >= currentYear }}
         >
           <Text style={[styles.weekNavArrow, year >= currentYear && styles.weekNavArrowDisabled]}>›</Text>
         </AnimatedPressable>
       </View>
       <View style={styles.monthGrid}>
-        {MONTH_NAMES.map((name, idx) => {
+        {Array.from({ length: 12 }, (_, idx) => {
           const isFuture = year === currentYear && idx > currentMonth;
+          // Named in the phone's language, from a real date of that month.
+          const first = `${year}-${String(idx + 1).padStart(2, '0')}-01`;
           return (
             <MonthCell
-              key={name}
-              name={name}
+              key={idx}
+              name={shortMonth(first)}
+              fullName={`${longMonth(first)} ${year}`}
               disabled={isFuture}
               current={year === currentYear && idx === currentMonth}
               onPress={() => pickMonth(idx)}
@@ -92,11 +100,14 @@ export function MonthPickerModal({
 
 function MonthCell({
   name,
+  fullName,
   disabled,
   current,
   onPress,
 }: {
   name: string;
+  /** The month and year in full, for a screen reader. */
+  fullName: string;
   disabled: boolean;
   /** This month — tinted, the way Home marks today. */
   current: boolean;
@@ -115,6 +126,9 @@ function MonthCell({
       onPressIn={onPressIn}
       onPressOut={onPressOut}
       disabled={disabled}
+      accessibilityRole="button"
+      accessibilityLabel={fullName}
+      accessibilityState={{ disabled, selected: current }}
     >
       <Text style={[styles.monthCellText, disabled && styles.monthCellTextDisabled]}>{name}</Text>
     </AnimatedPressable>

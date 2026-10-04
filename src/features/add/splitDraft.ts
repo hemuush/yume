@@ -40,7 +40,10 @@ export function seedParts(categoryId: string | null): DraftPart[] {
 }
 
 /** A saved split's parts, biggest first, as a draft: the biggest becomes the rest. */
-export function draftFromSaved(parts: SplitPart[]): DraftPart[] {
+export function draftFromSaved(
+  // A part whose category was since deleted has none; it stays in the draft, flagged for the person to pick.
+  parts: { categoryId: string | null; amountMinor: number }[]
+): DraftPart[] {
   return parts.map((p, i) => ({
     key: newPartKey(),
     categoryId: p.categoryId,

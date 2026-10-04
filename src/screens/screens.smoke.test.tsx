@@ -26,6 +26,8 @@ jest.mock('react-native-keyboard-controller', () => ({
   KeyboardProvider: ({ children }: { children: unknown }) => children,
 }));
 
+jest.mock('expo-router/react-navigation', () => ({ usePreventRemove: () => {} }));
+
 let mockParams: Record<string, string> = {};
 jest.mock('expo-router', () => {
   const React = require('react');
@@ -244,14 +246,12 @@ async function livedIn() {
     startDate: monthsAgo(8, 10),
     linkedAccountId: bank,
   });
-  const friend = await createPerson({ name: 'Asha' });
+  const friend = await createPerson({ name: 'Test friend' });
   await addLedgerEntry({
     personId: friend.id,
-    accountId: bank,
-    direction: 'gave',
-    amountMinor: 100_000,
+    amountMinor: 100_000, // positive: they owe the user
     date: daysAgo(6),
-  } as never);
+  });
 }
 
 const LONG = 'Very long name '.repeat(14);

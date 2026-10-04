@@ -36,9 +36,31 @@ export function TransactionRow({
 }) {
   const { hideAmounts } = usePrivacy();
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.98);
+  const isTransfer = tx.type === 'transfer';
+  // Read aloud as one line, with the amount masked exactly as it is on screen.
+  const spokenAmount = formatMaskableMoney(tx.amountMinor, {
+    masked: hideAmounts && !!(cat?.isSensitive || savingsTransfer),
+  });
+  const spoken = [
+    isTransfer
+      ? `Transfer, ${accountName(tx.accountId)} to ${accountName(tx.toAccountId!)}`
+      : categoryName(tx.categoryId),
+    tx.isRefund ? 'refund' : null,
+    tx.type === 'expense'
+      ? `spent ${spokenAmount}`
+      : tx.type === 'income'
+        ? `received ${spokenAmount}`
+        : spokenAmount,
+    isTransfer ? null : accountName(tx.accountId),
+    tx.note || null,
+  ]
+    .filter(Boolean)
+    .join(', ');
   return (
     <AnimatedRowPressable
       style={[h.row, divider && h.divider, animatedStyle]}
+      accessibilityRole="button"
+      accessibilityLabel={spoken}
       onPress={onPress}
       onPressIn={onPressIn}
       onPressOut={onPressOut}

@@ -18,9 +18,13 @@ import {
   resetSettingsCache,
   getHiddenSubscriptionSuggestions,
   hideSubscriptionSuggestion,
+  getNeedsYouDismissed,
+  setNeedsYouDismissed,
+  getBackupNudgeSnoozedUntil,
 } from '@/db/settings';
+import * as budgetsDb from '@/db/budgets';
 import { toLocalIsoDate, addMonthsToIsoDate } from '@/lib/date';
-import { loadNeedsYou, dismissNeedsYou, restoreNeedsYou } from './needsYouData';
+import { loadNeedsYou, dismissNeedsYou, restoreNeedsYou, snoozeBackupReminder } from './needsYouData';
 
 beforeAll(async () => {
   await mockTestDb.execAsync(CREATE_TABLES_SQL);
@@ -95,4 +99,38 @@ it('treats a "looks monthly" charge as one thing with Recurring: hidden and brou
   await hideSubscriptionSuggestion(`sub-${wifi}`);
   result = await loadNeedsYou();
   expect(result.dismissed.map((i) => i.title)).toContain('Wifi looks monthly');
+});
+
+describe('when one source fails', () => {
+  afterEach(() => jest.restoreAllMocks());
+
+  it('drops only that source instead of blanking the list', async () => {
+    jest.spyOn(budgetsDb, 'listBudgetsForMonth').mockRejectedValue(new Error('budgets unavailable'));
+    const { shown } = await loadNeedsYou();
+    expect(shown.map((i) => i.title)).toContain('Tidy up');
+    expect(shown.map((i) => i.title)).not.toContain('Food budget');
+  });
+
+  it('keeps stored dismissals, since the picture is incomplete', async () => {
+    await setNeedsYouDismissed(['stale-key']);
+    jest.spyOn(budgetsDb, 'listBudgetsForMonth').mockRejectedValue(new Error('budgets unavailable'));
+    await loadNeedsYou();
+    expect(await getNeedsYouDismissed()).toEqual(['stale-key']);
+    await setNeedsYouDismissed([]);
+  });
+});
+
+it('prunes dismissals whose item is gone, and keeps the ones still showing', async () => {
+  const [budget] = (await loadNeedsYou()).shown;
+  await setNeedsYouDismissed(['stale-key', budget.key]);
+  const { dismissed } = await loadNeedsYou();
+  // (A hidden subscription suggestion from the test above also lists here; it isn't a stored key.)
+  expect(dismissed.map((i) => i.key)).toContain(budget.key);
+  expect(await getNeedsYouDismissed()).toEqual([budget.key]);
+  await restoreNeedsYou(budget.key);
+});
+
+it('snoozes the backup reminder from the time it is given, not the clock', async () => {
+  await snoozeBackupReminder(new Date('2026-01-01T00:00:00.000Z'));
+  expect(await getBackupNudgeSnoozedUntil()).toBe('2026-01-31T00:00:00.000Z');
 });

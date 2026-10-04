@@ -5,10 +5,11 @@ import { newId } from '@/lib/id';
 import { assertSpendableAccount } from './ledger';
 import { Loan } from '@/types';
 import { calculateEmi, generateAmortizationSchedule } from '@/lib/loan';
-import { rebuildNotifications } from '@/lib/notifications';
+import { rebuildNotificationsAfterCommit } from './afterCommit';
 import { captureRow, captureRows, restoreRows, RowSnapshot } from './undoSnapshot';
 
 import { rowToLoan } from './loanRows';
+import { rateProblem, tenureProblem } from '@/lib/loanLimits';
 
 /** Creating, editing and deleting loans (re-exported from ./loans). */
 
@@ -57,7 +58,7 @@ export interface CreateLoanInput {
  */
 export async function createLoan(input: CreateLoanInput): Promise<Loan> {
   if (
-    !Number.isFinite(input.principalMinor) ||
+    !Number.isSafeInteger(input.principalMinor) ||
     input.principalMinor <= 0 ||
     !Number.isFinite(input.interestRateAnnualBp) ||
     input.interestRateAnnualBp < 0 ||
@@ -66,6 +67,8 @@ export async function createLoan(input: CreateLoanInput): Promise<Loan> {
   ) {
     throw new Error('Loan principal, interest rate, and tenure must be valid numbers');
   }
+  const limitProblem = rateProblem(input.interestRateAnnualBp) ?? tenureProblem(input.tenureMonths);
+  if (limitProblem) throw new Error(limitProblem);
   const db = await getDb();
   const id = newId();
   const emi = calculateEmi(input.principalMinor, input.interestRateAnnualBp, input.tenureMonths);
@@ -91,12 +94,12 @@ export async function createLoan(input: CreateLoanInput): Promise<Loan> {
 
   const disbursementTxId = input.disbursement && alreadyPaid === 0 ? newId() : null;
   const feeAmountMinor = input.disbursement?.feeAmountMinor ?? 0;
-  if (feeAmountMinor < 0 || !Number.isFinite(feeAmountMinor)) {
+  if (feeAmountMinor < 0 || !Number.isSafeInteger(feeAmountMinor)) {
     throw new Error('Disbursement fee must be a valid, non-negative number');
   }
   if (
     input.assetValueMinor != null &&
-    (!Number.isFinite(input.assetValueMinor) || input.assetValueMinor < 0)
+    (!Number.isSafeInteger(input.assetValueMinor) || input.assetValueMinor < 0)
   ) {
     throw new Error('Asset value must be a valid, non-negative number');
   }
@@ -199,7 +202,7 @@ export async function createLoan(input: CreateLoanInput): Promise<Loan> {
     }
   });
 
-  await rebuildNotifications();
+  await rebuildNotificationsAfterCommit();
   const row = await db.getFirstAsync<LoanRow>('SELECT * FROM loans WHERE id = ?', [id]);
   return rowToLoan(found(row, 'loan'));
 }
@@ -210,41 +213,49 @@ export async function createLoan(input: CreateLoanInput): Promise<Loan> {
  */
 export async function deleteLoan(loanId: string): Promise<RowSnapshot[]> {
   const db = await getDb();
-  const linkedPayment = await db.getFirstAsync<{ id: string }>(
-    `SELECT id FROM loan_payments WHERE loan_id = ? AND transaction_id IS NOT NULL LIMIT 1`,
-    [loanId]
-  );
-  if (linkedPayment) {
-    throw new Error('This loan has real recorded payments — undo those first before deleting it.');
-  }
-  const prepayment = await db.getFirstAsync<{ id: string }>(
-    `SELECT id FROM transactions WHERE loan_id = ? AND loan_tx_kind IN ('prepayment', 'prepayment_charge') LIMIT 1`,
-    [loanId]
-  );
-  if (prepayment) {
-    throw new Error(
-      "This loan has a recorded prepayment, which can't be undone yet — it can't be deleted while that exists."
+  let result: RowSnapshot[] = [];
+  // Guards, captures and delete share one transaction: the snapshot is exactly what was deleted (nothing can
+  // slip in between), and a failed delete can't leave the captures describing a loan that still exists.
+  await db.withTransactionAsync(async (tx) => {
+    const linkedPayment = await tx.getFirstAsync<{ id: string }>(
+      `SELECT id FROM loan_payments WHERE loan_id = ? AND transaction_id IS NOT NULL LIMIT 1`,
+      [loanId]
     );
-  }
-  // Loan row first: loan_payments, loan_rate_changes and its transactions FK to it (ON DELETE CASCADE).
-  // The four SELECTs run in parallel; Promise.all keeps their order, so parent-before-children restore holds.
-  const [loanSnapshot, payments, rateChanges, linkedTransactions] = await Promise.all([
-    captureRow(db, 'loans', loanId),
-    captureRows(db, 'loan_payments', 'loan_id = ?', [loanId]),
-    captureRows(db, 'loan_rate_changes', 'loan_id = ?', [loanId]),
-    captureRows(db, 'transactions', 'loan_id = ?', [loanId]),
-  ]);
-  const cascaded = [...payments, ...rateChanges, ...linkedTransactions];
-  await db.runAsync('DELETE FROM loans WHERE id = ?', [loanId]);
-  await rebuildNotifications();
-  return loanSnapshot ? [loanSnapshot, ...cascaded] : cascaded;
+    if (linkedPayment) {
+      throw new Error('This loan has real recorded payments — undo those first before deleting it.');
+    }
+    const prepayment = await tx.getFirstAsync<{ id: string }>(
+      `SELECT id FROM transactions WHERE loan_id = ? AND loan_tx_kind IN ('prepayment', 'prepayment_charge') LIMIT 1`,
+      [loanId]
+    );
+    if (prepayment) {
+      throw new Error(
+        "This loan has a recorded prepayment, which can't be undone yet — it can't be deleted while that exists."
+      );
+    }
+    // Loan row first: loan_payments, loan_rate_changes and its transactions FK to it (ON DELETE CASCADE).
+    // Read one after another (a transaction handle can't take parallel reads); the order keeps
+    // parent-before-children restore.
+    const loanSnapshot = await captureRow(tx, 'loans', loanId);
+    const payments = await captureRows(tx, 'loan_payments', 'loan_id = ?', [loanId]);
+    const rateChanges = await captureRows(tx, 'loan_rate_changes', 'loan_id = ?', [loanId]);
+    const linkedTransactions = await captureRows(tx, 'transactions', 'loan_id = ?', [loanId]);
+    const cascaded = [...payments, ...rateChanges, ...linkedTransactions];
+    await tx.runAsync('DELETE FROM loans WHERE id = ?', [loanId]);
+    result = loanSnapshot ? [loanSnapshot, ...cascaded] : cascaded;
+  });
+  await rebuildNotificationsAfterCommit();
+  return result;
 }
 
 /** Undoes `deleteLoan` — re-inserts the loan and everything that cascaded away with it, then rebuilds the notifications. */
 export async function restoreLoan(snapshots: RowSnapshot[]): Promise<void> {
   const db = await getDb();
-  await restoreRows(db, snapshots);
-  await rebuildNotifications();
+  // One transaction: a failure on any row puts nothing back, not a loan without its schedule.
+  await db.withTransactionAsync(async (tx) => {
+    await restoreRows(tx, snapshots);
+  });
+  await rebuildNotificationsAfterCommit();
 }
 
 /**
@@ -257,7 +268,7 @@ export async function updateLoanAsset(
 ): Promise<void> {
   if (
     input.assetValueMinor != null &&
-    (!Number.isFinite(input.assetValueMinor) || input.assetValueMinor < 0)
+    (!Number.isSafeInteger(input.assetValueMinor) || input.assetValueMinor < 0)
   ) {
     throw new Error('Asset value must be a valid, non-negative number');
   }

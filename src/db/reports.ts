@@ -937,7 +937,9 @@ export function trackedBalanceParts(input: TrackedBalanceInput): TrackedBalanceP
 
 /**
  * Net worth at each of the last `months` month-ends (latest = `reference`), cut off at that date. Transfers
- * net to zero so accounts need only income/expense; pre-Yume paid installments use `due_date` as paid date.
+ * between two counted accounts net to zero, so accounts need only income/expense; a transfer to or from an
+ * archived or other-currency account is an approximation (its counted side isn't offset). A paid installment
+ * with no `paid_date` is dated by its `due_date`.
  */
 export async function getNetWorthTrend(months = 6, reference: Date = new Date()): Promise<NetWorthPoint[]> {
   const db = await getDb();

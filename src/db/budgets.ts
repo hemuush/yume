@@ -197,7 +197,7 @@ export interface BudgetInput {
 }
 
 export async function createBudget(input: BudgetInput): Promise<Budget> {
-  if (!Number.isFinite(input.limitAmountMinor) || input.limitAmountMinor <= 0) {
+  if (!Number.isSafeInteger(input.limitAmountMinor) || input.limitAmountMinor <= 0) {
     throw new Error('Monthly limit must be a positive amount');
   }
   const db = await getDb();
@@ -222,7 +222,7 @@ export async function updateBudget(
   id: string,
   input: { limitAmountMinor: number; rollover: boolean }
 ): Promise<void> {
-  if (!Number.isFinite(input.limitAmountMinor) || input.limitAmountMinor <= 0) {
+  if (!Number.isSafeInteger(input.limitAmountMinor) || input.limitAmountMinor <= 0) {
     throw new Error('Monthly limit must be a positive amount');
   }
   const db = await getDb();

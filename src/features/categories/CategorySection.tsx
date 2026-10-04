@@ -6,12 +6,11 @@ import { Category } from '@/types';
 import { topLevelOnly, childrenOf } from '@/lib/categoryTree';
 import { CategoryIcon } from '@/components/CategoryIcon';
 import { usePressScale } from '@/lib/usePressScale';
-import { styles } from './categories.styles';
+import { styles, TILE_COLUMNS } from './categories.styles';
+
+export { TILE_COLUMNS };
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
-
-/** Tiles per row. */
-export const TILE_COLUMNS = 4;
 
 export function CategoryTile({
   category,
@@ -81,6 +80,9 @@ function SubcategoryPill({
       onPressOut={onPressOut}
       onPress={onPress}
       onLongPress={onLongPress}
+      accessibilityRole="button"
+      accessibilityLabel={`${category.name}, subcategory`}
+      accessibilityHint="Press and hold for more options"
     >
       <View style={[styles.pillDot, { backgroundColor: category.color }]} />
       <Text style={styles.pillText} numberOfLines={1}>

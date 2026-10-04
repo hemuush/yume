@@ -62,6 +62,7 @@ interface PlanData {
   dueSoon: DueSoon;
   dueDays: DueDay[];
   dueGroups: DueGroup[];
+  today: string;
   savingsAccounts: Account[];
   budgets: BudgetsSummary;
   people: PeopleState;
@@ -81,6 +82,7 @@ export default function PlanScreen() {
   const [data, setData] = useState<PlanData | null>(null);
 
   const loadPlan = useCallback(async () => {
+    const dailyGoalRead = getDailySpendingGoal();
     const [
       budgets,
       goals,
@@ -93,6 +95,7 @@ export default function PlanScreen() {
       dailyGoal,
       averages,
       cardCycles,
+      streak,
     ] = await Promise.all([
       listBudgetsForMonth(undefined, hideAmounts),
       listSavingsGoals(),
@@ -102,11 +105,12 @@ export default function PlanScreen() {
       listPeople(),
       listCategories(),
       listAccounts(),
-      getDailySpendingGoal(),
+      dailyGoalRead,
       getCategoryMonthlyAverages(3),
       listCardCycles().catch(() => []),
+      // The streak only needs the goal value, so it chains off the same read instead of waiting for the batch.
+      dailyGoalRead.then((goal) => (goal != null ? getDailyGoalStreakSeries(goal, 5) : null)),
     ]);
-    const streak = dailyGoal != null ? await getDailyGoalStreakSeries(dailyGoal, 5) : null;
 
     const categoriesById = new Map(categories.map((c) => [c.id, c]));
     const categoryLabelOf = (id: string | null) => {
@@ -149,6 +153,7 @@ export default function PlanScreen() {
       dueSoon: buildDueSoon(dueItems, today),
       dueDays: buildDueDays(dueItems, today),
       dueGroups: groupDueItems(dueItems, today),
+      today,
       savingsAccounts: accounts.filter((a) => a.type === 'savings' && !a.archived),
       budgets: buildBudgetsSummary(
         budgets.map((b) => ({
@@ -276,6 +281,7 @@ export default function PlanScreen() {
             <View onLayout={(e) => (comingUpY.current = e.nativeEvent.layout.y)}>
               <ComingUpSection
                 groups={data.dueGroups}
+                today={data.today}
                 onOpen={open}
                 onPay={(id) => void payEmi(id)}
                 onCardLayout={(y) => (cardY.current = y)}

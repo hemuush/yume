@@ -16,6 +16,8 @@ export interface RestorePreview {
   lostCount: number;
 }
 
+const noop = () => {};
+
 const dayLabel = (iso: string | null) => (iso ? dayMonthYear(iso) : '—');
 
 function describe(s: BackupSummary): string {
@@ -42,16 +44,21 @@ export function RestorePreviewSheet({
   onRestore: () => void;
 }) {
   if (!preview) return null;
-  const made = new Date(preview.exportedAt).toLocaleString(undefined, {
-    day: 'numeric',
-    month: 'short',
-    hour: 'numeric',
-    minute: '2-digit',
-  });
+  // A backup file with no (or a garbled) export time still previews — it just doesn't say when it was made.
+  const exported = new Date(preview.exportedAt);
+  const made = Number.isNaN(exported.getTime())
+    ? null
+    : exported.toLocaleString(undefined, {
+        day: 'numeric',
+        month: 'short',
+        hour: 'numeric',
+        minute: '2-digit',
+      });
   return (
     <ModalSheet
       visible
-      onClose={onCancel}
+      // Backdrop, ✕ and Android back do nothing while the restore is running.
+      onClose={busy ? noop : onCancel}
       scrollable={false}
       footer={
         <PrimaryButton
@@ -67,7 +74,7 @@ export function RestorePreviewSheet({
         hue={theme.colors.primary}
         icon="backup-restore"
         kicker="Restore"
-        title={`Backup from ${made}`}
+        title={made ? `Backup from ${made}` : 'Backup'}
         meta={describe(preview.backup)}
       />
       <View style={styles.row}>

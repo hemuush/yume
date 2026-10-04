@@ -13,9 +13,9 @@ import { withPressed } from '@/lib/pressed';
 import { screenStyles as h } from '@/components/screenStyles';
 
 /** "+₹1,600" / "−₹23,18,958" / "₹0": a true minus sign, and a plus for the lines of a sum. */
-function signedMoney(minor: number, plus = true, masked = false): string {
-  if (masked) return formatMaskableMoney(0, { masked: true });
-  return `${minor < 0 ? '−' : plus && minor > 0 ? '+' : ''}${formatMoney(Math.abs(minor))}`;
+function signedMoney(minor: number, plus = true, masked = false, currency?: string): string {
+  if (masked) return formatMaskableMoney(0, { currency, masked: true });
+  return `${minor < 0 ? '−' : plus && minor > 0 ? '+' : ''}${formatMoney(Math.abs(minor), currency)}`;
 }
 
 function SumLine({ color, label, text }: { color: string; label: string; text: string }) {
@@ -45,6 +45,7 @@ export function TrackedCard({
   untrackedAssetLoan,
   hasLoans,
   masked,
+  currency,
   embedded = false,
 }: {
   totalMinor: number;
@@ -57,6 +58,8 @@ export function TrackedCard({
   untrackedAssetLoan: boolean;
   hasLoans: boolean;
   masked: boolean;
+  /** The currency every figure here is in (the app's default); falls back to it when omitted. */
+  currency?: string;
   /** Sits under the cash hero in one shared card, so it draws no edge or margin of its own. */
   embedded?: boolean;
 }) {
@@ -68,7 +71,7 @@ export function TrackedCard({
         onPress={() => setOpen((v) => !v)}
         accessibilityRole="button"
         accessibilityState={{ expanded: open }}
-        accessibilityLabel="Tracked balance"
+        accessibilityLabel={`Tracked balance, ${signedMoney(totalMinor, false, masked, currency)}, after loans and friends`}
       >
         <View style={h.mid}>
           <Text style={styles.label}>Tracked balance</Text>
@@ -78,7 +81,7 @@ export function TrackedCard({
           style={[styles.value, !masked && totalMinor < 0 && { color: theme.colors.expenseText }]}
           numberOfLines={1}
         >
-          {signedMoney(totalMinor, false, masked)}
+          {signedMoney(totalMinor, false, masked, currency)}
         </Text>
         <Feather name={open ? 'chevron-up' : 'chevron-down'} size={18} color={theme.colors.textMuted} />
       </Pressable>
@@ -88,16 +91,20 @@ export function TrackedCard({
             <SumLine
               color={theme.colors.secondary}
               label={accountsLabel}
-              text={signedMoney(accountsMinor, true, masked)}
+              text={signedMoney(accountsMinor, true, masked, currency)}
             />
             {showLoans && (
-              <SumLine color={theme.colors.idGoldDeep} label="Loans" text={signedMoney(loansMinor)} />
+              <SumLine
+                color={theme.colors.idGoldDeep}
+                label="Loans"
+                text={signedMoney(loansMinor, true, false, currency)}
+              />
             )}
             {showPeople && (
               <SumLine
                 color={theme.colors.idCoralDeep}
                 label="Friends & Family"
-                text={signedMoney(peopleMinor)}
+                text={signedMoney(peopleMinor, true, false, currency)}
               />
             )}
           </View>
@@ -106,6 +113,7 @@ export function TrackedCard({
               style={withPressed([styles.hint, styles.hintWarn])}
               onPress={() => router.push('/loans')}
               accessibilityRole="button"
+              accessibilityLabel="A loan's home or vehicle isn't counted yet. Open loans to add its value"
             >
               <MaterialCommunityIcons name="home-outline" size={16} color={theme.colors.ink} />
               <Text style={styles.hintText}>

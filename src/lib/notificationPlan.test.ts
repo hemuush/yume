@@ -29,7 +29,7 @@ const find = (notifications: ReturnType<typeof plan>['notifications'], when: Dat
   notifications.find((n) => n.at.getTime() === when.getTime());
 const loan = (over: Partial<PlanLoan> = {}): PlanLoan => ({
   id: 'l1',
-  counterparty: 'Asha Bank',
+  counterparty: 'Test Person Bank',
   dueDate: '2026-10-05',
   emiMinor: 1250000,
   ...over,
@@ -88,7 +88,7 @@ describe('planNotifications', () => {
       const { notifications } = plan({ loans: [loan()] });
       const emi = find(notifications, at(5, 9));
       expect(emi).toMatchObject({ id: 'yume-2026-10-05-morning', title: 'EMI due today', route: '/loans' });
-      expect(emi?.body).toBe('Asha Bank · ₹12,500');
+      expect(emi?.body).toBe('Test Person Bank · ₹12,500');
     });
 
     it('several due the same day make one notification', () => {
@@ -97,7 +97,7 @@ describe('planNotifications', () => {
       });
       expect(find(notifications, at(5, 9))).toMatchObject({
         title: '2 EMIs due today',
-        body: 'Asha Bank, Ravi · ₹17,500',
+        body: 'Test Person Bank, Ravi · ₹17,500',
       });
     });
 
@@ -131,7 +131,7 @@ describe('planNotifications', () => {
       const { notifications } = plan({ prefs: { ...prefs, morningEnabled: false }, loans: [loan()] });
       expect(find(notifications, at(5, 20))).toMatchObject({
         title: 'EMI due today',
-        body: 'Asha Bank · ₹12,500\nAnything to log today?',
+        body: 'Test Person Bank · ₹12,500\nAnything to log today?',
         route: '/loans',
       });
     });
@@ -164,7 +164,7 @@ describe('planNotifications', () => {
       const { notifications } = plan({ prefs: wrapPrefs, loans: [loan()] });
       expect(find(notifications, at(5, 9))).toMatchObject({
         title: 'EMI due today',
-        body: 'Asha Bank · ₹12,500\nYour week, wrapped',
+        body: 'Test Person Bank · ₹12,500\nYour week, wrapped',
         route: '/loans',
       });
     });

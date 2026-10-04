@@ -15,7 +15,8 @@ import { CREATE_TABLES_SQL } from '@/db/schema';
 import { createAccount, createCategory, createTransaction } from '@/db/ledger';
 import { createBudget } from '@/db/budgets';
 import { getMilestonesSeen, resetSettingsCache } from '@/db/settings';
-import { checkClosedBudgetMonth } from './MilestoneNote';
+import type { MilestoneCopy } from '@/lib/milestones';
+import { checkClosedBudgetMonth, showClosedBudgetMonth } from './MilestoneNote';
 
 describe('checkClosedBudgetMonth', () => {
   const now = new Date(2026, 9, 3);
@@ -85,5 +86,27 @@ describe('checkClosedBudgetMonth', () => {
       periodMonth: '2026-09',
     });
     expect(await checkClosedBudgetMonth(now, false)).toBeNull();
+  });
+  it('marks a month seen only after the note was actually shown', async () => {
+    await createBudget({
+      categoryId: food,
+      limitAmountMinor: 500000,
+      rollover: false,
+      periodMonth: '2026-09',
+    });
+    // The note could not be shown (the watcher was torn down): nothing is recorded, so it is offered again.
+    const dropped = jest.fn((_copy: MilestoneCopy) => false);
+    expect(await showClosedBudgetMonth(now, false, dropped)).toBe(false);
+    expect(dropped).toHaveBeenCalledTimes(1);
+    expect(await getMilestonesSeen()).toEqual([]);
+
+    const shown = jest.fn((_copy: MilestoneCopy) => true);
+    expect(await showClosedBudgetMonth(now, false, shown)).toBe(true);
+    expect(shown.mock.calls[0][0].body).toBe('Your budget held.');
+    expect(await getMilestonesSeen()).toContain('budgets:2026-09');
+
+    const again = jest.fn((_copy: MilestoneCopy) => true);
+    expect(await showClosedBudgetMonth(now, false, again)).toBe(false);
+    expect(again).not.toHaveBeenCalled();
   });
 });

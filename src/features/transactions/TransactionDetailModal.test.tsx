@@ -44,12 +44,15 @@ jest.mock('@/features/recurring/RuleModal', () => ({
     return null;
   },
 }));
-const mockLink = { current: null as null | { kind: string; loanPaymentId?: string } };
+const mockLink = { current: null as null | { kind: string; loanPaymentId?: string }, fail: false };
 jest.mock('@/db/ledger', () => ({
   createTransaction: jest.fn(async () => ({ id: 'again' })),
   deleteTransaction: jest.fn(),
   restoreTransaction: jest.fn(),
-  getTransactionLink: jest.fn(async () => mockLink.current),
+  getTransactionLink: jest.fn(async () => {
+    if (mockLink.fail) throw new Error('db locked');
+    return mockLink.current;
+  }),
 }));
 jest.mock('@/db/loans', () => ({ undoInstallmentPayment: jest.fn() }));
 jest.mock('@/db/people', () => ({ undoPersonTransaction: jest.fn() }));
@@ -76,12 +79,12 @@ const lunch = {
   createdAt: '',
 };
 
-async function render() {
+async function render(entry: object = lunch) {
   let tree!: ReactTestRenderer;
   await act(async () => {
     tree = create(
       <TransactionDetailModal
-        tx={lunch as any}
+        tx={entry as any}
         accounts={[{ id: 'bank', name: 'Bank' } as any]}
         categories={[{ id: 'food', name: 'Food', icon: 'food', color: '#FF9E7D' } as any]}
         onClose={jest.fn()}
@@ -104,6 +107,8 @@ const doMore = (tree: ReactTestRenderer) =>
 
 beforeEach(() => {
   mockLink.current = null;
+  mockLink.fail = false;
+  (createTransaction as jest.Mock).mockClear();
 });
 
 beforeAll(async () => {
@@ -126,6 +131,37 @@ describe('entry detail', () => {
       })
     );
     expect(mockShowUndo).toHaveBeenCalledWith('Logged again for today', expect.any(Function));
+  });
+
+  it('keeps the refund flag when a refund is logged again', async () => {
+    const tree = await render({ ...lunch, type: 'income', isRefund: true });
+    doMore(tree);
+    await act(async () => {
+      await rows(tree, 'Log again today')[0].props.onPress();
+    });
+    expect(createTransaction).toHaveBeenCalledWith(
+      expect.objectContaining({ type: 'income', isRefund: true })
+    );
+  });
+
+  it('does not turn an ordinary entry into a refund', async () => {
+    const tree = await render();
+    doMore(tree);
+    await act(async () => {
+      await rows(tree, 'Log again today')[0].props.onPress();
+    });
+    expect(createTransaction).toHaveBeenCalledWith(expect.objectContaining({ isRefund: false }));
+  });
+
+  it('leaves the checking state and keeps Edit usable when the link lookup fails', async () => {
+    mockLink.fail = true;
+    const tree = await render();
+    const text = JSON.stringify(tree.toJSON());
+    expect(text).not.toContain('Checking…');
+    expect(text).toContain("Couldn't check whether this entry is tied to a loan or a person");
+    expect(
+      tree.root.findAll((n) => n.props.title === 'Edit' && typeof n.props.onPress === 'function').length
+    ).toBeGreaterThan(0);
   });
 
   it('opens the rule form filled in, monthly from its next same day still ahead', async () => {

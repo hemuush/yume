@@ -82,9 +82,14 @@ describe('categoryDeltas', () => {
   });
 });
 
+// September 2026, over by the time "today" comes.
+const SEPTEMBER = { start: '2026-09-01', end: '2026-09-30' };
+// One Monday-to-Sunday week.
+const WEEK = { start: '2026-09-07', end: '2026-09-13' };
+
 describe('patternFacts: the heaviest day', () => {
   it('returns nothing for a near-empty month', () => {
-    expect(patternFacts([{ date: '2026-09-03', totalMinor: 500 }], 30)).toEqual([]);
+    expect(patternFacts([{ date: '2026-09-03', totalMinor: 500 }], 30, SEPTEMBER, '2026-10-20')).toEqual([]);
   });
   it('calls out a dominant single day', () => {
     const daily = [
@@ -98,7 +103,7 @@ describe('patternFacts: the heaviest day', () => {
       day: 'numeric',
       month: 'short',
     });
-    const heaviest = patternFacts(daily, 30).find((f) => f.key === 'heaviest')!;
+    const heaviest = patternFacts(daily, 30, SEPTEMBER, '2026-10-20').find((f) => f.key === 'heaviest')!;
     expect(heaviest.kicker).toBe('Heaviest day');
     expect(heaviest.big).toBe(expectedDate);
     expect(heaviest.detail).toMatch(/94% of the month in one day/);
@@ -162,11 +167,34 @@ describe('patternFacts', () => {
       { date: '2026-09-12', totalMinor: 30000 },
       { date: '2026-09-13', totalMinor: 30000 },
     ];
-    const facts = patternFacts(daily, 30);
+    const facts = patternFacts(daily, 7, WEEK, '2026-10-20');
     const weekend = facts.find((f) => f.key === 'weekends')!;
-    expect(weekend.big).toBe('Weekends +200%');
+    // Weekdays average 8,000 over five days (Friday spent nothing); weekends 30,000.
+    expect(weekend.big).toBe('Weekends +275%');
     expect(weekend.kicker).toBeTruthy();
     expect(weekend.detail).toBeTruthy();
+  });
+
+  it('counts spend-free days in the weekend read, the same basis as the weekday rhythm', () => {
+    // Two weeks (Mon–Sun), spent every weekday and each Saturday, never on a Sunday. Over spend days alone
+    // weekends would match weekdays (10,000 each); counting the quiet Sundays they run well below.
+    const range = { start: '2026-09-07', end: '2026-09-20' };
+    const days = [7, 8, 9, 10, 11, 12, 14, 15, 16, 17, 18, 19];
+    const daily = days.map((d) => ({ date: `2026-09-${String(d).padStart(2, '0')}`, totalMinor: 10000 }));
+    const weekend = patternFacts(daily, 14, range, '2026-10-20').find((f) => f.key === 'weekends')!;
+    expect(weekend.big).toBe('Weekends −50%');
+    // The weekday rhythm agrees: Saturdays 10,000, Sundays nothing — weekends average 5,000 a day.
+    const rhythm = weekdayRhythm(daily, range, '2026-10-20')!;
+    expect((rhythm.avgMinor[6] + rhythm.avgMinor[0]) / 2).toBe(5000);
+  });
+
+  it('leaves out days after today, as the weekday rhythm does', () => {
+    // Today is Friday the 11th: Saturday and Sunday are not here yet, so there is no weekend to compare.
+    const daily = ['2026-09-07', '2026-09-08', '2026-09-09', '2026-09-10'].map((date) => ({
+      date,
+      totalMinor: 10000,
+    }));
+    expect(patternFacts(daily, 7, WEEK, '2026-09-11').some((f) => f.key === 'weekends')).toBe(false);
   });
 });
 
@@ -220,7 +248,9 @@ describe('buildStoryCards', () => {
       { date: '2026-09-12', totalMinor: 30000 },
       { date: '2026-09-13', totalMinor: 30000 },
     ],
-    30
+    7,
+    WEEK,
+    '2026-10-20'
   );
 
   it('tells the period in order: what moved, the rhythm, what was spoken for, quiet days', () => {
@@ -488,6 +518,13 @@ describe('weekdayReadLine', () => {
   it('says "about" when it is within a few percent', () => {
     const r = { ...rhythm, avgMinor: [49000, 0, 0, 0, 0, 0, 100000] };
     expect(weekdayReadLine(r, 0)).toMatch(/· about your /);
+  });
+
+  it('never divides by a zero usual day', () => {
+    const r = { ...rhythm, avgMinor: [0, 0, 0, 0, 0, 0, 0], usualMinor: 0, peak: 0 };
+    const line = weekdayReadLine(r, 3);
+    expect(line).not.toMatch(/NaN|Infinity/);
+    expect(line).toMatch(/· about your /);
   });
 });
 

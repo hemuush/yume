@@ -40,7 +40,7 @@ export function splitProblem(parts: SplitPart[]): string | null {
   if (parts.length < MIN_SPLIT_PARTS) return 'A split needs at least 2 parts';
   if (parts.length > MAX_SPLIT_PARTS) return 'A split can have at most 6 parts';
   if (parts.some((p) => !p.categoryId)) return 'Pick a category for every part';
-  if (parts.some((p) => !Number.isFinite(p.amountMinor) || p.amountMinor <= 0)) {
+  if (parts.some((p) => !Number.isSafeInteger(p.amountMinor) || p.amountMinor <= 0)) {
     return 'Every part needs an amount above zero';
   }
   return null;
@@ -89,9 +89,11 @@ export async function getSplitParts(splitId: string): Promise<Transaction[]> {
  */
 export async function deleteSplit(splitId: string): Promise<RowSnapshot[]> {
   const db = await getDb();
-  const snapshots = await captureRows(db, 'transactions', 'split_id = ?', [splitId]);
-  if (snapshots.length === 0) throw new Error('This split is already deleted.');
+  let snapshots: RowSnapshot[] = [];
+  // Captured in the transaction that deletes the parts, so Undo restores exactly what was removed.
   await db.withTransactionAsync(async (tx) => {
+    snapshots = await captureRows(tx, 'transactions', 'split_id = ?', [splitId]);
+    if (snapshots.length === 0) throw new Error('This split is already deleted.');
     await tx.runAsync('DELETE FROM transactions WHERE split_id = ?', [splitId]);
     for (const s of snapshots) await keepDeletedEntry(tx, s);
   });

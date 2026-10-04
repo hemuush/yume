@@ -24,7 +24,7 @@ export const RING_COLORS = {
   free: theme.colors.primary,
 };
 /** The moon-cream face inside the ring. */
-const FACE = '#FBF3DA';
+const FACE = theme.colors.goldTint; // was #FBF3DA — within 6/255 of the token
 /** The gap left between two slices, along the ring. */
 const GAP = 3.5;
 const DIM = 0.28;

@@ -9,6 +9,9 @@ import { DURATIONS } from '@/lib/motionTimings';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
+const HIT_SLOP = { top: 3, bottom: 3 };
+const HIT_SLOP_COMPACT = { top: 9, bottom: 9, left: 4, right: 4 };
+
 interface Props extends Omit<PressableProps, 'style'> {
   style?: StyleProp<ViewStyle>;
   title: string;
@@ -59,6 +62,9 @@ export function PrimaryButton({
         animatedStyle,
         style,
       ]}
+      accessibilityRole="button"
+      // Regular buttons are ~42dp tall and compact ones ~30dp; the slop lifts both to 48dp unseen.
+      hitSlop={compact ? HIT_SLOP_COMPACT : HIT_SLOP}
       {...rest}
     >
       {/* `key` forces a remount on the label/done swap so `entering` — which

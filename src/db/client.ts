@@ -272,6 +272,18 @@ async function applyIdempotentMigrations(db: AppDb): Promise<void> {
   await ensureColumn(db, 'transactions', 'day_rank', 'day_rank INTEGER');
 
   await repairLoanDueDates(db);
+
+  // One value update per account per day (addValuation already upserts). An install that raced its way to two
+  // keeps the newest; the unique index then makes a second one impossible. Not in CREATE_TABLES_SQL, which
+  // runs first and would fail on an install that still has a duplicate.
+  await db.runAsync(
+    `DELETE FROM account_valuations WHERE rowid NOT IN (
+       SELECT MAX(rowid) FROM account_valuations GROUP BY account_id, date
+     )`
+  );
+  await db.execAsync(
+    'CREATE UNIQUE INDEX IF NOT EXISTS idx_account_valuations_unique_day ON account_valuations(account_id, date)'
+  );
 }
 
 /**

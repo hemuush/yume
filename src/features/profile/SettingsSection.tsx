@@ -49,6 +49,25 @@ export function daysAgoLabel(iso: string, now: Date = new Date()): string {
   return `${days} days ago`;
 }
 
+/** Runs one settings read, resolving null instead of rejecting so a single failure can't blank the screen. */
+async function orNull<T>(read: () => Promise<T>): Promise<T | null> {
+  try {
+    return await read();
+  } catch {
+    return null;
+  }
+}
+
+/** Every on/off notification setting, in one place so the "N of M on" summary can't drift from the real list. */
+const ALERT_KEYS = [
+  'morningEnabled',
+  'eveningEnabled',
+  'overspendAlerts',
+  'billAlerts',
+  'weeklySummary',
+  'suuCheckins',
+] as const satisfies readonly (keyof NotificationPrefs)[];
+
 function AboutFact({ icon, text }: { icon: string; text: string }) {
   return (
     <View style={styles.aboutFactRow}>
@@ -93,17 +112,22 @@ export function SettingsSection() {
   // The backup note waits for the first read, so it doesn't flash on every visit.
   const [backupLoaded, setBackupLoaded] = useState(false);
 
+  // The reads are independent, so run them together, each with its own fallback: one failing read leaves
+  // that row on its default instead of blanking the whole screen.
   const load = useCallback(async () => {
-    setCurrency(await getDefaultCurrency());
-    setDailyGoalState(await getDailySpendingGoal());
-    try {
-      setTidyCount(tidyUpCount(await getTidyUpReport()));
-    } catch {
-      setTidyCount(null);
-    }
-    setDeletedCount(await countDeletedEntries().catch(() => null));
-    setNotifPrefs(await getNotificationPrefs());
-    const lastBackup = await getLastLocalBackupResult();
+    const [cur, goal, tidy, deleted, prefs, lastBackup] = await Promise.all([
+      orNull(() => getDefaultCurrency()),
+      orNull(() => getDailySpendingGoal()),
+      orNull(async () => tidyUpCount(await getTidyUpReport())),
+      orNull(() => countDeletedEntries()),
+      orNull(() => getNotificationPrefs()),
+      orNull(() => getLastLocalBackupResult()),
+    ]);
+    if (cur) setCurrency(cur);
+    setDailyGoalState(goal);
+    setTidyCount(tidy);
+    setDeletedCount(deleted);
+    setNotifPrefs(prefs);
     setLastBackupAt(lastBackup?.ok ? lastBackup.at : null);
     setLastBackupFailed(lastBackup?.ok === false);
     setBackupLoaded(true);
@@ -161,6 +185,8 @@ export function SettingsSection() {
       await setDailySpendingGoal(null);
       setDailyGoalState(null);
       setDailyGoalOpen(false);
+    } catch (e) {
+      setDailyGoalError(errorMessage(e));
     } finally {
       setDailyGoalSaving(false);
     }
@@ -180,16 +206,7 @@ export function SettingsSection() {
     setLockEnabled(enabled);
   };
 
-  const alertsOn = notifPrefs
-    ? [
-        notifPrefs.morningEnabled,
-        notifPrefs.eveningEnabled,
-        notifPrefs.overspendAlerts,
-        notifPrefs.billAlerts,
-        notifPrefs.weeklySummary,
-        notifPrefs.suuCheckins,
-      ].filter(Boolean).length
-    : null;
+  const alertsOn = notifPrefs ? ALERT_KEYS.filter((k) => notifPrefs[k]).length : null;
   const backupOk = !!lastBackupAt && !lastBackupFailed;
   const backupSub = lastBackupFailed
     ? 'Last backup failed — tap to check'
@@ -248,6 +265,7 @@ export function SettingsSection() {
                   style={withPressed([styles.pickerRow, i > 0 && h.divider])}
                   onPress={() => onSelectCurrency(c.code)}
                   accessibilityRole="button"
+                  accessibilityLabel={`${c.label}, ${c.code}`}
                   accessibilityState={{ selected: currency === c.code }}
                 >
                   <View style={styles.codeBubble}>
@@ -333,7 +351,11 @@ export function SettingsSection() {
             icon="bell-outline"
             iconBg={theme.colors.primaryTint}
             label="Notifications"
-            sub={alertsOn == null ? 'Morning and evening notifications' : `${alertsOn} of 6 on`}
+            sub={
+              alertsOn == null
+                ? 'Morning and evening notifications'
+                : `${alertsOn} of ${ALERT_KEYS.length} on`
+            }
             onPress={() => router.push('/notification-settings')}
             divider
           />

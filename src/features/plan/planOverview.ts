@@ -1,4 +1,4 @@
-import { addDaysToIsoDate, daysUntilIsoDate } from '@/lib/date';
+import { addDaysToIsoDate, parseLocalIsoDate } from '@/lib/date';
 import { peopleTotals } from '@/features/people/people.helpers';
 import { payCardRoute, PayCardRoute } from '@/lib/payCard';
 
@@ -263,9 +263,11 @@ export const PLAN_SOON_DAYS = 3;
  * How urgent a Coming up row looks, by Home's rules: red when outgoing money is late or due today, amber
  * when an EMI or card bill is a few days away, else nothing so colour still means something.
  */
-export function dueTone(item: PlanDueItem): 'urgent' | 'soon' | null {
+export function dueTone(item: PlanDueItem, today: string): 'urgent' | 'soon' | null {
   if (item.kind !== 'emi' && item.kind !== 'bill') return null;
-  const days = daysUntilIsoDate(item.dueDate);
+  const days = Math.round(
+    (parseLocalIsoDate(item.dueDate).getTime() - parseLocalIsoDate(today).getTime()) / 86400000
+  );
   if (days <= 0) return 'urgent';
   const pinned = item.kind === 'emi' || item.key.startsWith('card-');
   return pinned && days <= PLAN_SOON_DAYS ? 'soon' : null;

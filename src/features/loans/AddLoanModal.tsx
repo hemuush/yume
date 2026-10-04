@@ -25,6 +25,7 @@ import { errorMessage } from '@/lib/errorMessage';
 import { DURATIONS } from '@/lib/motionTimings';
 import { dayMonthYear } from '@/lib/dateLabels';
 import { spendableAccountsOf } from '@/lib/account';
+import { rateProblem, tenureProblem } from '@/lib/loanLimits';
 
 const RATE_TYPES: { label: string; value: LoanRateType }[] = [
   { label: 'Fixed', value: 'fixed' },
@@ -182,11 +183,14 @@ export function AddLoanModal({
   }, [feeCategories]);
 
   const previewEmi = useMemo(() => {
-    if (principalMinor <= 0 || tenureMonths <= 0) return 0;
+    if (principalMinor <= 0 || tenureMonths <= 0 || rateProblem(rateBp) || tenureProblem(tenureMonths))
+      return 0;
     return calculateEmi(principalMinor, rateBp, tenureMonths);
   }, [principalMinor, rateBp, tenureMonths]);
 
   const reset = () => {
+    setDirection('borrowed');
+    setError(null);
     setCounterparty('');
     setPrincipal('');
     setRate('');
@@ -223,6 +227,11 @@ export function AddLoanModal({
       setError("Fill in who it's with, the amount, the tenure and a valid interest rate");
       return;
     }
+    const limit = rateProblem(rateBp) ?? tenureProblem(tenureMonths);
+    if (limit) {
+      setError(limit);
+      return;
+    }
     setWizardStep(2);
   };
 
@@ -230,6 +239,11 @@ export function AddLoanModal({
     setError(null);
     if (step1Invalid) {
       setError("Fill in who it's with, the amount, the tenure and a valid interest rate");
+      return;
+    }
+    const limit = rateProblem(rateBp) ?? tenureProblem(tenureMonths);
+    if (limit) {
+      setError(limit);
       return;
     }
     if (loanTiming === 'new' && (!disbAccountId || !disbCategoryId)) {
@@ -246,6 +260,14 @@ export function AddLoanModal({
       setError('The first EMI is before the disbursement date');
       return;
     }
+    if (loanTiming === 'existing' && (!Number.isFinite(alreadyPaidCount) || alreadyPaidCount < 0)) {
+      setError('Enter how many EMIs are already paid, or 0');
+      return;
+    }
+    if (loanTiming === 'existing' && alreadyPaidCount > tenureMonths) {
+      setError(`The loan only has ${tenureMonths} EMIs, so ${alreadyPaidCount} can't be paid already`);
+      return;
+    }
     if (loanTiming === 'existing' && alreadyPaidCount > 0) {
       // The two numbers must agree: 50 installments paid from a start date 13 months ago is a mismatch
       // either way (a real loan got a next-due date 3 years out while active). Caught here, not downstream.
@@ -257,7 +279,9 @@ export function AddLoanModal({
         return;
       }
     }
-    const feeAmountMinor = disbFee ? toMinor(parseFloat(disbFee)) : 0;
+    // A processing fee is only asked for on a borrowed loan, so a stale value from before switching to
+    // "I lent" is ignored rather than recorded.
+    const feeAmountMinor = direction === 'borrowed' && disbFee ? toMinor(parseFloat(disbFee)) : 0;
     if (!Number.isFinite(feeAmountMinor) || feeAmountMinor < 0) {
       setError('Enter a valid processing fee, or leave it blank');
       return;
@@ -497,15 +521,19 @@ export function AddLoanModal({
                   />
                 ))}
               </View>
-              <AmountField
-                label="Processing / documentation fees deducted (optional)"
-                value={disbFee}
-                onChangeText={setDisbFee}
-                placeholder="0"
-              />
-              <Text style={styles.hintText}>
-                Saved as its own expense on the same day. Leave at 0 if none.
-              </Text>
+              {direction === 'borrowed' && (
+                <>
+                  <AmountField
+                    label="Processing / documentation fees deducted (optional)"
+                    value={disbFee}
+                    onChangeText={setDisbFee}
+                    placeholder="0"
+                  />
+                  <Text style={styles.hintText}>
+                    Saved as its own expense on the same day. Leave at 0 if none.
+                  </Text>
+                </>
+              )}
 
               <DateField
                 label="First EMI due date"

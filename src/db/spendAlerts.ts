@@ -8,7 +8,7 @@ import {
   addQueuedAlerts,
   getCachedHideSensitiveAmounts,
 } from './settings';
-import { rebuildNotifications } from '@/lib/notifications';
+import { rebuildNotificationsAfterCommit } from './afterCommit';
 import { budgetAlertCopy, spikeCopy } from '@/lib/notificationCopy';
 import type { QueuedAlert } from '@/lib/notificationPlan';
 import { listBudgetsForMonth, dueBudgetNudge, BudgetNudgeLevel } from './budgets';
@@ -42,14 +42,19 @@ export async function queueSpendAlerts(categoryId: string): Promise<void> {
     const alerts: QueuedAlert[] = [];
 
     const budgetAlert = await budgetAlertFor(categoryId, topLevelCategoryId, queuedAt).catch(() => null);
-    if (budgetAlert) alerts.push(budgetAlert);
+    if (budgetAlert) alerts.push(budgetAlert.alert);
 
     const spike = await spikeAlertFor(topLevelCategoryId, queuedAt).catch(() => null);
-    if (spike) alerts.push(spike);
+    if (spike) alerts.push(spike.alert);
 
     await addQueuedAlerts(alerts);
+    // "Already nudged" is recorded only once the alert is safely queued, so a failed queue write retries
+    // next time instead of silently losing the alert for the month.
+    if (budgetAlert) await addBudgetNudgesSent(budgetAlert.nudgeKeys).catch(() => {});
+    if (spike) await setLastOverspendNotified(spike.monthKey).catch(() => {});
   } finally {
-    await rebuildNotifications();
+    // Never lets a notification-scheduler failure replace (or mask) the real outcome of the check.
+    await rebuildNotificationsAfterCommit();
   }
 }
 
@@ -61,7 +66,7 @@ async function budgetAlertFor(
   categoryId: string,
   topLevelCategoryId: string,
   queuedAt: string
-): Promise<QueuedAlert | null> {
+): Promise<{ alert: QueuedAlert; nudgeKeys: string[] } | null> {
   // A notification shows on the lock screen, so with privacy on it never speaks of a savings category.
   const budgets = await listBudgetsForMonth(undefined, getCachedHideSensitiveAmounts());
   const budget =
@@ -76,22 +81,28 @@ async function budgetAlertFor(
   });
   if (!level) return null;
   // Going straight past the limit counts as having had the 80% one too.
-  await addBudgetNudgesSent(level === 'over' ? [key('near'), key('over')] : [key('near')]);
+  const nudgeKeys = level === 'over' ? [key('near'), key('over')] : [key('near')];
   return {
-    id: `budget:${key(level)}`,
-    queuedAt,
-    route: '/budgets',
-    ...budgetAlertCopy(
-      level,
-      budget.categoryName,
-      formatMoney(budget.spentMinor),
-      formatMoney(budget.effectiveLimitMinor),
-      formatMoney(Math.max(0, budget.remainingMinor))
-    ),
+    nudgeKeys,
+    alert: {
+      id: `budget:${key(level)}`,
+      queuedAt,
+      route: '/budgets',
+      ...budgetAlertCopy(
+        level,
+        budget.categoryName,
+        formatMoney(budget.spentMinor),
+        formatMoney(budget.effectiveLimitMinor),
+        formatMoney(Math.max(0, budget.remainingMinor))
+      ),
+    },
   };
 }
 
-async function spikeAlertFor(topLevelCategoryId: string, queuedAt: string): Promise<QueuedAlert | null> {
+async function spikeAlertFor(
+  topLevelCategoryId: string,
+  queuedAt: string
+): Promise<{ alert: QueuedAlert; monthKey: string } | null> {
   const comparison = privateComparison(await getPeriodComparison('month'), getCachedHideSensitiveAmounts());
   const top = findTopGrowingCategory(
     comparison.current.categoryBreakdown,
@@ -103,11 +114,13 @@ async function spikeAlertFor(topLevelCategoryId: string, queuedAt: string): Prom
   // transaction logged that month.
   const monthKey = `${topLevelCategoryId}:${toLocalIsoDate(new Date()).slice(0, 7)}`;
   if ((await getLastOverspendNotified()) === monthKey) return null;
-  await setLastOverspendNotified(monthKey);
   return {
-    id: `spike:${monthKey}`,
-    queuedAt,
-    route: '/reports',
-    ...spikeCopy(top.name, formatPctChange(top.pctChange)),
+    monthKey,
+    alert: {
+      id: `spike:${monthKey}`,
+      queuedAt,
+      route: '/reports',
+      ...spikeCopy(top.name, formatPctChange(top.pctChange)),
+    },
   };
 }

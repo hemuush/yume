@@ -9,7 +9,7 @@ import {
   restoreAccount,
   getAccountTransactionCount,
 } from '@/db/ledger';
-import { toMinor, formatMoney, formatMaskableMoney } from '@/lib/money';
+import { toMinor, toMajor, formatMoney, formatMaskableMoney } from '@/lib/money';
 import { usePrivacy } from '@/theme/PrivacyContext';
 import { Account, AccountType } from '@/types';
 import { ModalSheet, SheetLink } from '@/components/ModalSheet';
@@ -56,6 +56,9 @@ export function AccountDetailModal({
   const [dueDay, setDueDay] = useState('');
   const [tracked, setTracked] = useState(false);
   const [txCount, setTxCount] = useState<number | null>(null);
+  // The usage check failed: we can't tell whether the account has history, so only the safe action
+  // (archive) is offered, never delete.
+  const [txCheckFailed, setTxCheckFailed] = useState(false);
   const [saving, setSaving] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -64,18 +67,25 @@ export function AccountDetailModal({
     if (!account) return;
     setName(account.name);
     setType(account.type);
-    setOpening((account.openingBalanceMinor / 100).toString());
-    setCreditLimit(account.creditLimitMinor != null ? (account.creditLimitMinor / 100).toString() : '');
+    setOpening(toMajor(account.openingBalanceMinor).toString());
+    setCreditLimit(account.creditLimitMinor != null ? toMajor(account.creditLimitMinor).toString() : '');
     setStatementDay(account.statementDay != null ? String(account.statementDay) : '');
     setDueDay(account.dueDay != null ? String(account.dueDay) : '');
     setTracked(!!account.investment);
     setError(null);
     setTxCount(null);
-    // txCount stays null on failure (this only avoids an unhandled rejection); a stuck "Checking usage..."
-    // on a real DB error is a separate UX gap, since it blocks the delete/archive decision below.
+    setTxCheckFailed(false);
+    let cancelled = false;
     getAccountTransactionCount(account.id)
-      .then(setTxCount)
-      .catch(() => {});
+      .then((n) => {
+        if (!cancelled) setTxCount(n);
+      })
+      .catch(() => {
+        if (!cancelled) setTxCheckFailed(true);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [account]);
 
   if (!account) return null;
@@ -261,6 +271,13 @@ export function AccountDetailModal({
           disabled={busy}
           danger={false}
         />
+      ) : txCheckFailed ? (
+        <>
+          <Text style={styles.errorText}>
+            Couldn't check whether this account has entries. You can still archive it.
+          </Text>
+          <SheetLink label={busy ? 'Working…' : 'Archive account'} onPress={confirmArchive} disabled={busy} />
+        </>
       ) : txCount === null ? (
         <Text style={styles.hintText}>Checking usage…</Text>
       ) : txCount > 0 ? (

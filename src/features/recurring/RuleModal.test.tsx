@@ -30,11 +30,13 @@ jest.mock('@/components/UndoToast', () => ({ useUndoToast: () => ({ show: mockSh
 jest.mock('@/db/recurring', () => ({
   ...jest.requireActual('@/db/recurring'),
   deleteRecurringRule: jest.fn(async () => ({ snapshot: true })),
+  updateRecurringRule: jest.fn(async () => {}),
 }));
 
 import { RuleModal } from './RuleModal';
-import { deleteRecurringRule } from '@/db/recurring';
+import { deleteRecurringRule, updateRecurringRule } from '@/db/recurring';
 import { weekdayDayMonth } from '@/lib/dateLabels';
+import { PrimaryButton } from '@/components/PrimaryButton';
 
 const accounts = [{ id: 'sbi', name: 'SBI', type: 'bank' } as any];
 const categories = [
@@ -118,5 +120,53 @@ describe('recurring sheet', () => {
     });
     expect(deleteRecurringRule).toHaveBeenCalledWith('r1');
     expect(mockShowUndo).toHaveBeenCalledWith('Deleted recurring entry', expect.any(Function));
+  });
+
+  const amountField = (tree: ReactTestRenderer) =>
+    tree.root.findAll((n) => n.props.label === 'Amount' && typeof n.props.onChangeText === 'function')[0];
+  const save = async (tree: ReactTestRenderer) => {
+    await act(async () => {
+      await tree.root.findByType(PrimaryButton).props.onPress();
+    });
+  };
+
+  it('keeps what was typed when the accounts list reloads while it is open', async () => {
+    const tree = await render(null);
+    await act(async () => amountField(tree).props.onChangeText('450'));
+    await act(async () => {
+      tree.update(
+        <RuleModal
+          visible
+          editing={null}
+          accounts={[...accounts]}
+          categories={categories}
+          onClose={jest.fn()}
+          onSaved={jest.fn()}
+          onDeleted={jest.fn()}
+        />
+      );
+    });
+    expect(amountField(tree).props.value).toBe('450');
+  });
+
+  it('rejects an interval beyond the cap for its frequency, and saves one inside it', async () => {
+    const tree = await render(rule);
+    act(() =>
+      tree.root.find((n) => n.props.value === 'setup' && n.props.onChange).props.onChange('schedule')
+    );
+    const interval = () =>
+      tree.root.findAll(
+        (n) =>
+          typeof n.props.label === 'string' &&
+          n.props.label.startsWith('Every how many') &&
+          n.props.onChangeText
+      )[0];
+    await act(async () => interval().props.onChangeText('9999'));
+    await save(tree);
+    expect(updateRecurringRule).not.toHaveBeenCalled();
+    expect(texts(tree)).toContain('Repeat interval must be between 1 and 120');
+    await act(async () => interval().props.onChangeText('3'));
+    await save(tree);
+    expect(updateRecurringRule).toHaveBeenCalledWith('r1', expect.objectContaining({ intervalCount: 3 }));
   });
 });

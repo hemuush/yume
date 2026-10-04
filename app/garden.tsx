@@ -189,7 +189,7 @@ export default function GardenScreen() {
                   <View style={styles.legend}>
                     {LEGEND_STAGES.map((stage) => (
                       <View key={stage} style={styles.legendItem}>
-                        <GardenPlant stage={stage} size={20} />
+                        <GardenPlant stage={stage} size={20} decorative />
                         <Text style={styles.legendLabel}>{stageLabel(stage)}</Text>
                       </View>
                     ))}

@@ -49,6 +49,7 @@ import { AppDialogHost } from '@/components/AppDialog';
 import { LockScreen } from '@/components/LockScreen';
 import { Onboarding } from '@/features/onboarding/Onboarding';
 import { theme } from '@/constants/theme';
+import { PrimaryButton } from '@/components/PrimaryButton';
 import { errorMessage } from '@/lib/errorMessage';
 
 /**
@@ -68,6 +69,8 @@ export default function RootLayout() {
   const [needsOnboarding, setNeedsOnboarding] = useState<boolean | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [initialLocked, setInitialLocked] = useState(false);
+  // Bumped by "Try again" so the startup effect runs again after a failed database start.
+  const [startAttempt, setStartAttempt] = useState(0);
   const [fontsLoaded, fontsError] = useFonts({
     Archivo_400Regular,
     Archivo_600SemiBold,
@@ -80,12 +83,16 @@ export default function RootLayout() {
   });
 
   useEffect(() => {
+    let cancelled = false;
     getDb()
       .then(async () => {
+        if (cancelled) return;
         setDbReady(true);
         // Fire-and-forget; never blocks startup or errors. Waits for the first screen to settle: reading
         // the whole ledger for the snapshot holds the DB queue, and Home's own queries should go first.
-        InteractionManager.runAfterInteractions(() => void runLocalBackupIfDue());
+        InteractionManager.runAfterInteractions(
+          () => void runLocalBackupIfDue().catch((err) => console.error('runLocalBackupIfDue failed:', err))
+        );
         // Catches up missed recurring transactions since last open. Rules isolate their own failures; this
         // catch only guards the outer query (e.g. getDb()) from an unhandled rejection.
         void runDueRecurringRules().catch((err) => console.error('runDueRecurringRules failed:', err));
@@ -94,14 +101,19 @@ export default function RootLayout() {
         void ensureAndroidChannel().catch((err) => console.error('ensureAndroidChannel failed:', err));
         // One-time: drop notifications still scheduled under the pre-rename
         // `flynse-*` identifiers.
-        void cancelLegacyScheduledNotifications();
+        void cancelLegacyScheduledNotifications().catch((err) =>
+          console.error('cancelLegacyScheduledNotifications failed:', err)
+        );
         // Notifications are rebuilt from settings/data each cold start: stays current (scheduled ~2 weeks
         // ahead), carries over old schedules, self-heals after reinstall.
-        void rebuildNotifications();
+        void rebuildNotifications().catch((err) => console.error('rebuildNotifications failed:', err));
 
-        setInitialLocked(await getAppLockEnabled());
+        const locked = await getAppLockEnabled();
+        if (cancelled) return;
+        setInitialLocked(locked);
 
         const alreadyOnboarded = await getHasOnboarded();
+        if (cancelled) return;
         if (alreadyOnboarded) {
           setNeedsOnboarding(false);
           return;
@@ -111,16 +123,31 @@ export default function RootLayout() {
         const [accs, tx] = await Promise.all([listAccounts(), listTransactions({ limit: 1 })]);
         const hasExistingData = accs.length > 0 || tx.length > 0;
         if (hasExistingData) await setHasOnboarded(true);
+        if (cancelled) return;
         setNeedsOnboarding(!hasExistingData);
       })
-      .catch((e) => setError(errorMessage(e)));
-  }, []);
+      .catch((e) => {
+        if (!cancelled) setError(errorMessage(e));
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [startAttempt]);
 
   if (error) {
     return (
       <View style={styles.center}>
         <Text style={styles.errorText}>Database failed to start</Text>
         <Text style={styles.errorDetail}>{error}</Text>
+        <PrimaryButton
+          title="Try again"
+          onPress={() => {
+            // getDb() clears its cached failure, so a second call really does retry the setup.
+            setError(null);
+            setStartAttempt((n) => n + 1);
+          }}
+          style={styles.retry}
+        />
       </View>
     );
   }
@@ -255,6 +282,10 @@ function AppGate({ needsOnboarding, initialLocked }: { needsOnboarding: boolean;
             <Stack.Screen name="add-transaction" />
             <Stack.Screen name="split" />
             <Stack.Screen name="recurring" />
+            <Stack.Screen name="people" />
+            <Stack.Screen name="tidy-up" />
+            <Stack.Screen name="whatif" />
+            <Stack.Screen name="garden" />
             {/* A page opened from a card that grows into it (see CardGrowHost) fades in under the growing card. */}
             <Stack.Screen name="budgets" options={growOptions} />
             <Stack.Screen name="savings-goals" options={growOptions} />
@@ -293,4 +324,5 @@ const styles = StyleSheet.create({
     color: theme.colors.textSecondary,
     textAlign: 'center',
   },
+  retry: { marginTop: 20, alignSelf: 'center', minWidth: 160 },
 });

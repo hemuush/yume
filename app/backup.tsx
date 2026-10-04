@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 import { View, ScrollView, Pressable } from 'react-native';
 import { Text } from '@/components/Text';
-import { router, useFocusEffect } from 'expo-router';
+import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from '@expo/vector-icons/Feather';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
@@ -55,6 +55,8 @@ import { errorMessage } from '@/lib/errorMessage';
 import { screenStyles as h, SCREEN } from '@/components/screenStyles';
 import { SettingsRow } from '@/components/SettingsRow';
 import { withPressed } from '@/lib/pressed';
+import { useScreenLoad } from '@/lib/useScreenLoad';
+import { listScreenStyles } from '@/features/shared/listScreenStyles';
 import { showAlert } from '@/components/AppDialog';
 import { styles } from '@/features/backup/backup.styles';
 import { TimelineNode } from '@/features/backup/TimelineNode';
@@ -74,6 +76,31 @@ const TABS: { label: string; value: 'points' | 'copy' }[] = [
 /** How many backups the timeline shows before "See all". */
 const COLLAPSED_FILES = 3;
 
+/**
+ * Writes an export to a temporary file, opens the share sheet on it, and always deletes it afterwards: it is
+ * the whole of someone's finances in plain text, and shouldn't be left in the app's storage once shared.
+ */
+async function shareTempFile(
+  name: string,
+  content: string | Uint8Array,
+  options: { mimeType: string; dialogTitle?: string }
+): Promise<void> {
+  const file = new File(Paths.document, name);
+  try {
+    file.create();
+    file.write(content);
+    if (await Sharing.isAvailableAsync()) {
+      await withoutRelock(() => Sharing.shareAsync(file.uri, options));
+    }
+  } finally {
+    try {
+      if (file.exists) file.delete();
+    } catch {
+      // Nothing more to do; the export itself already succeeded or failed on its own terms.
+    }
+  }
+}
+
 export default function BackupScreen() {
   const insets = useSafeAreaInsets();
   const [localFolderUri, setLocalFolderUri] = useState<string | null>(null);
@@ -82,9 +109,6 @@ export default function BackupScreen() {
   const [frequency, setFrequency] = useState<BackupFrequency>('daily');
   const [busy, setBusy] = useState<string | null>(null);
   const [doneLabel, setDoneLabel] = useState<string | null>(null);
-  // Without this, the unloaded default `!localFolderUri` briefly showed the "choose a folder"
-  // call-to-action even for someone with a folder configured.
-  const [loaded, setLoaded] = useState(false);
   // The copy of the data from just before the last restore, if there is one
   // (see lib/safetyCopy.ts) — shown as the "Undo your last restore" card.
   const [safetyInfo, setSafetyInfo] = useState<SafetyCopyInfo | null>(null);
@@ -96,22 +120,25 @@ export default function BackupScreen() {
   const [tab, setTab] = useState<'points' | 'copy'>('points');
   const [showAll, setShowAll] = useState(false);
 
-  const load = useCallback(async () => {
-    setSafetyInfo(await getSafetyCopyInfo());
-    const folder = await getLocalBackupFolderUri();
+  const loadData = useCallback(async () => {
+    const [safety, folder, lastAt, result, freq] = await Promise.all([
+      getSafetyCopyInfo(),
+      getLocalBackupFolderUri(),
+      getLastLocalBackupAt(),
+      getLastLocalBackupResult(),
+      getBackupFrequency(),
+    ]);
+    const list = folder ? await listLocalBackups(folder).catch(() => []) : null;
+    setSafetyInfo(safety);
     setLocalFolderUri(folder);
-    setFiles(folder ? await listLocalBackups(folder).catch(() => []) : null);
-    setLastLocalBackup(await getLastLocalBackupAt());
-    setLocalResult(await getLastLocalBackupResult());
-    setFrequency(await getBackupFrequency());
-    setLoaded(true);
+    setFiles(list);
+    setLastLocalBackup(lastAt);
+    setLocalResult(result);
+    setFrequency(freq);
   }, []);
-
-  useFocusEffect(
-    useCallback(() => {
-      load();
-    }, [load])
-  );
+  // `loaded` keeps the unloaded default `!localFolderUri` from briefly showing the "choose a folder"
+  // call-to-action to someone with a folder configured; `loadError` says so if the settings can't be read.
+  const { loaded, loadError, reload: load } = useScreenLoad(loadData);
 
   const run = async (label: string, fn: () => Promise<void>, opts?: { confirm?: boolean }) => {
     setBusy(label);
@@ -138,28 +165,18 @@ export default function BackupScreen() {
   const exportJsonLocally = () =>
     run('export-json', async () => {
       const snapshot = await buildBackupSnapshot();
-      const file = new File(Paths.document, `yume-backup-${Date.now()}.json`);
-      file.create();
-      file.write(JSON.stringify(snapshot, null, 2));
-      if (await Sharing.isAvailableAsync()) {
-        await withoutRelock(() => Sharing.shareAsync(file.uri, { mimeType: 'application/json' }));
-      }
+      await shareTempFile(`yume-backup-${Date.now()}.json`, JSON.stringify(snapshot, null, 2), {
+        mimeType: 'application/json',
+      });
     });
 
   const exportExcelLocally = () =>
     run('export-excel', async () => {
       const bytes = await generateExportWorkbookBytes();
-      const file = new File(Paths.document, `yume-export-${Date.now()}.xlsx`);
-      file.create();
-      file.write(bytes);
-      if (await Sharing.isAvailableAsync()) {
-        await withoutRelock(() =>
-          Sharing.shareAsync(file.uri, {
-            mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            dialogTitle: 'Export Yume data',
-          })
-        );
-      }
+      await shareTempFile(`yume-export-${Date.now()}.xlsx`, bytes, {
+        mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        dialogTitle: 'Export Yume data',
+      });
     });
 
   const restoreFromFile = () =>
@@ -249,6 +266,7 @@ export default function BackupScreen() {
   const confirmAndRestore = async (snapshot: BackupSnapshot) => {
     const backup = summarizeSnapshot(snapshot);
     if (!backup) throw new Error("That file isn't a Yume backup — pick a full backup Yume exported.");
+    // A backup without a usable export time still restores; the preview just doesn't say when it was made.
     const exportedAt = Number.isNaN(Date.parse(snapshot.exportedAt)) ? null : snapshot.exportedAt;
     const [current, lostCount] = await Promise.all([
       getCurrentSummary(),
@@ -256,7 +274,7 @@ export default function BackupScreen() {
     ]);
     setPending({
       snapshot,
-      preview: { exportedAt: exportedAt ?? new Date().toISOString(), backup, current, lostCount },
+      preview: { exportedAt: exportedAt ?? '', backup, current, lostCount },
     });
   };
 
@@ -271,7 +289,7 @@ export default function BackupScreen() {
     } catch (e) {
       setPending(null);
       if (!(e instanceof SafetyCopyError)) {
-        showAlert('Something went wrong', String((e as Error)?.message ?? e));
+        showAlert('Something went wrong', errorMessage(e));
         return;
       }
       // The copy couldn't be saved (usually a full phone) and nothing is replaced yet; proceed only if the
@@ -351,6 +369,12 @@ Restore anyway? Your current data would be replaced with no way back.`,
     <View style={styles.container}>
       <AppHeader title="Backup & restore" showBack />
       <ScrollView contentContainerStyle={{ paddingBottom: theme.layout.screenScrollPad + insets.bottom }}>
+        {loadError && (
+          <View style={listScreenStyles.errorBanner}>
+            <Text style={listScreenStyles.errorTitle}>Couldn't load your backup settings</Text>
+            <Text style={listScreenStyles.errorDetail}>{loadError}</Text>
+          </View>
+        )}
         <View style={[h.card, styles.statusCard]}>
           {!loaded ? (
             <>

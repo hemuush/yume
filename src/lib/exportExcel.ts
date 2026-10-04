@@ -353,7 +353,9 @@ export function buildExportWorkbook(data: ExportData): XLSX.WorkBook {
       txSheet,
       XLSX.utils.encode_cell({ r: totalRowIdx, c: 5 }),
       `SUBTOTAL(9,F2:F${lastDataRow + 1})`,
-      toMajor(totalIncome) - toMajor(totalExpense),
+      // The cached value must be what the formula itself yields (the sum of the Amount column), or a viewer that
+      // doesn't recalculate shows a different total than Excel does.
+      txRows.reduce((sum, row) => sum + (row[5] as number), 0),
       totalRowStyle({ numFmt: moneyStyle, alignment: { horizontal: 'right' } })
     );
   } else {
@@ -590,16 +592,25 @@ export function buildExportWorkbook(data: ExportData): XLSX.WorkBook {
   return wb;
 }
 
+/** The most entries one workbook export holds. */
+export const MAX_EXPORT_TRANSACTIONS = 200000;
+
 /** Fetches everything the workbook needs, builds it, and returns the raw bytes ready to write to a file. */
 export async function generateExportWorkbookBytes(): Promise<Uint8Array> {
   const [currency, accounts, categories, transactions, loans, people] = await Promise.all([
     getDefaultCurrency(),
     listAccounts(),
     listCategories(true),
-    listTransactions({ limit: 200000 }),
+    listTransactions({ limit: MAX_EXPORT_TRANSACTIONS + 1 }),
     listLoans(),
     listPeople(),
   ]);
+  // Fetched one past the ceiling so a ledger that exceeds it is refused, not silently cut short.
+  if (transactions.length > MAX_EXPORT_TRANSACTIONS) {
+    throw new Error(
+      `Your ledger has more than ${MAX_EXPORT_TRANSACTIONS.toLocaleString('en-US')} entries, too many for one spreadsheet. Use Backup instead.`
+    );
+  }
   const wb = buildExportWorkbook({ currency, accounts, categories, transactions, loans, people });
   const out = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
   return out instanceof Uint8Array ? out : new Uint8Array(out);

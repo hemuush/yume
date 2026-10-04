@@ -1,5 +1,6 @@
 /** Adding money to a goal and the milestone note it can raise: made-up goals throughout. */
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
+import { Text } from 'react-native';
 
 const mockShow = jest.fn();
 const mockContribute = jest.fn(async () => {});
@@ -67,7 +68,7 @@ async function add(g: SavingsGoal, rupees: string, direction: 'add' | 'withdraw'
   await act(async () => {
     await save.props.onPress();
   });
-  return { onContributed };
+  return { onContributed, tree: r };
 }
 
 beforeEach(() => {
@@ -121,5 +122,23 @@ describe('milestone note on a contribution', () => {
   it('celebrates 100% when there is no letter', async () => {
     await add(goal({ currentAmountMinor: 900_000 }), '1000');
     expect(mockShow.mock.calls[0][0].title).toBe('Goal reached');
+  });
+});
+
+describe('withdrawing more than is saved', () => {
+  const shown = (tree: ReactTestRenderer) =>
+    tree.root.findAllByType(Text).map((t) => [].concat(t.props.children).join(''));
+
+  it('says so inline instead of silently clamping to zero', async () => {
+    const { onContributed, tree } = await add(goal({ currentAmountMinor: 200_000 }), '2500', 'withdraw');
+    expect(mockContribute).not.toHaveBeenCalled();
+    expect(onContributed).not.toHaveBeenCalled();
+    expect(shown(tree).some((t) => t.startsWith('You can withdraw up to'))).toBe(true);
+  });
+
+  it('lets a withdrawal of exactly what is saved through', async () => {
+    const { onContributed } = await add(goal({ currentAmountMinor: 200_000 }), '2000', 'withdraw');
+    expect(mockContribute).toHaveBeenCalledWith('g1', -200_000);
+    expect(onContributed).toHaveBeenCalled();
   });
 });

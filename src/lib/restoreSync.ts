@@ -6,6 +6,14 @@ import { refreshAllWidgets } from '@/widgets/notifyWidgets';
  * Shared by Backup and onboarding. Never throws, so a failed rebuild can't make a finished restore an error.
  */
 export async function resyncAfterRestore(): Promise<void> {
-  await rebuildNotifications();
-  refreshAllWidgets();
+  try {
+    await rebuildNotifications();
+  } catch (e) {
+    console.warn('Notification rebuild after restore failed:', e);
+  }
+  try {
+    refreshAllWidgets();
+  } catch (e) {
+    console.warn('Widget refresh after restore failed:', e);
+  }
 }

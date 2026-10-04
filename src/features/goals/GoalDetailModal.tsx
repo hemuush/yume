@@ -67,6 +67,12 @@ export function GoalDetailModal({
 
   if (!goal) return null;
 
+  // Same rule as AddGoalModal: picking a savings account starts on Follow, any other starts by hand.
+  const pickAccount = (id: string | null) => {
+    setLinkedAccountId(id);
+    setTracksAccount(accounts.find((a) => a.id === id)?.type === 'savings');
+  };
+
   const submit = async () => {
     setError(null);
     if (!name.trim()) {
@@ -189,7 +195,7 @@ export function GoalDetailModal({
         accounts={accounts}
         accountId={linkedAccountId}
         tracks={tracksAccount}
-        onChangeAccount={setLinkedAccountId}
+        onChangeAccount={pickAccount}
         onChangeTracks={setTracksAccount}
         goalId={goal.id}
         manualAmountMinor={goal.tracksAccount ? 0 : goal.currentAmountMinor}

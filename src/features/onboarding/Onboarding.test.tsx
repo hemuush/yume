@@ -189,6 +189,17 @@ describe('Onboarding restore from a backup', () => {
     expect(createAccountMock).not.toHaveBeenCalled();
   });
 
+  it('still finishes onboarding when the post-restore resync throws', async () => {
+    (resyncAfterRestore as jest.Mock).mockRejectedValueOnce(new Error('resync failed'));
+    const onDone = jest.fn();
+    const tree = await render(onDone);
+    await press(byLabel(tree, 'I have a Yume backup'));
+    await press(titled(tree, 'Restore this backup'));
+    expect(restoreKeepingSafetyCopy).toHaveBeenCalledWith(backup);
+    expect(setHasOnboarded).toHaveBeenCalledWith(true);
+    expect(onDone).toHaveBeenCalledTimes(1);
+  });
+
   it('closing the preview leaves the user on onboarding with nothing restored', async () => {
     const onDone = jest.fn();
     const tree = await render(onDone);

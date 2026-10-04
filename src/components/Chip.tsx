@@ -2,8 +2,11 @@ import { Animated, Pressable, StyleSheet } from 'react-native';
 import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
 import { usePressScale } from '@/lib/usePressScale';
+import { softTint } from '@/components/softTint';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+
+const HIT_SLOP = { top: 9, bottom: 9, left: 4, right: 4 };
 
 interface Props {
   label: string;
@@ -23,12 +26,16 @@ export function Chip({ label, active, onPress, activeBorderColor }: Props) {
       style={[
         styles.chip,
         active && !tinted && styles.chipActive,
-        tinted && { backgroundColor: activeBorderColor + '1A', borderColor: activeBorderColor },
+        tinted && { backgroundColor: softTint(activeBorderColor, 0.1), borderColor: activeBorderColor },
         animatedStyle,
       ]}
       onPress={onPress}
       onPressIn={onPressIn}
       onPressOut={onPressOut}
+      accessibilityRole="button"
+      accessibilityState={{ selected: active }}
+      // The pill is ~30dp tall; the slop lifts the touch target to 48dp without changing how it looks.
+      hitSlop={HIT_SLOP}
     >
       <Text style={[styles.text, active && styles.textActive]} numberOfLines={1}>
         {label}

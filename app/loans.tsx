@@ -60,13 +60,15 @@ export default function LoansScreen() {
   // Once, when the loans have loaded: open the loan "Pay now" asked for.
   const [payHandled, setPayHandled] = useState(false);
   useEffect(() => {
-    if (!loaded || payHandled || !payLoanId) return;
+    // `loaded` also flips on a failed load, when `loans` is just empty: wait for a good load (Retry or the
+    // next focus) rather than using up the request against no data.
+    if (!loaded || loadError || payHandled || !payLoanId) return;
     setPayHandled(true);
     const loan = loans.find((l) => l.id === payLoanId && l.status !== 'closed');
     if (!loan) return;
     setPayOnOpen(true);
     setSelectedLoan(loan);
-  }, [loaded, payHandled, payLoanId, loans]);
+  }, [loaded, loadError, payHandled, payLoanId, loans]);
 
   // A defaulted loan is still money owed (or owed to you), so only closed
   // loans drop out of the totals. Closed ones also sit apart in the list.

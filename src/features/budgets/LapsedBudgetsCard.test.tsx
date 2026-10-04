@@ -49,12 +49,9 @@ describe('LapsedBudgetsCard', () => {
     press(r, 'Choose which to continue');
     expect(texts(r)).toContain('₹5,000/mo');
     const second = r.root.findAll(
-      (n) =>
-        typeof n.props.onPress === 'function' &&
-        n.props.accessibilityRole === 'button' &&
-        !n.props.accessibilityLabel
+      (n) => typeof n.props.onPress === 'function' && n.props.accessibilityLabel === 'Continue Fuel budget'
     );
-    act(() => second[1].props.onPress());
+    act(() => second[0].props.onPress());
     expect(props.onContinue).toHaveBeenCalledWith(expect.objectContaining({ categoryId: 'b' }));
   });
 

@@ -82,7 +82,7 @@ export async function addLedgerEntry(input: {
   note?: string;
   transactionId?: string | null;
 }): Promise<PersonLedgerEntry> {
-  if (!Number.isFinite(input.amountMinor) || input.amountMinor === 0) {
+  if (!Number.isSafeInteger(input.amountMinor) || input.amountMinor === 0) {
     throw new Error('Ledger amount must be a non-zero number');
   }
   const db = await getDb();
@@ -116,7 +116,7 @@ async function insertPersonMoneyMovement(
     ledgerAmountMinor: number;
   }
 ): Promise<void> {
-  if (!Number.isFinite(input.amountMinor) || input.amountMinor <= 0) {
+  if (!Number.isSafeInteger(input.amountMinor) || input.amountMinor <= 0) {
     throw new Error('Amount must be a positive number');
   }
   const acc = await tx.getFirstAsync<{ type: string }>('SELECT type FROM accounts WHERE id = ?', [
@@ -183,11 +183,13 @@ export async function recordMoneyReceivedFromPerson(input: {
  */
 export async function undoPersonTransaction(transactionId: string): Promise<void> {
   const db = await getDb();
-  const entry = await db.getFirstAsync<{ id: string }>(
-    'SELECT id FROM person_ledger_entries WHERE transaction_id = ?',
-    [transactionId]
-  );
   await db.withTransactionAsync(async (tx) => {
+    // Looked up inside the transaction that deletes it, so a concurrent undo can't leave this one deleting a
+    // transaction whose ledger entry it never saw.
+    const entry = await tx.getFirstAsync<{ id: string }>(
+      'SELECT id FROM person_ledger_entries WHERE transaction_id = ?',
+      [transactionId]
+    );
     if (entry) {
       await tx.runAsync('DELETE FROM person_ledger_entries WHERE id = ?', [entry.id]);
     }
@@ -201,23 +203,29 @@ export async function undoPersonTransaction(transactionId: string): Promise<void
  */
 export async function deleteLedgerEntry(entryId: string): Promise<RowSnapshot[]> {
   const db = await getDb();
-  const entrySnapshot = await captureRow(db, 'person_ledger_entries', entryId);
-  if (!entrySnapshot) throw new Error('Entry not found');
-  const linkedTxId = entrySnapshot.row.transaction_id as string | null;
-  const txSnapshot = linkedTxId ? await captureRow(db, 'transactions', linkedTxId) : null;
+  let snapshots: RowSnapshot[] = [];
+  // Snapshots are captured in the transaction that deletes the rows, so they are exactly what was removed.
   await db.withTransactionAsync(async (tx) => {
+    const entrySnapshot = await captureRow(tx, 'person_ledger_entries', entryId);
+    if (!entrySnapshot) throw new Error('Entry not found');
+    const linkedTxId = entrySnapshot.row.transaction_id as string | null;
+    const txSnapshot = linkedTxId ? await captureRow(tx, 'transactions', linkedTxId) : null;
     await tx.runAsync('DELETE FROM person_ledger_entries WHERE id = ?', [entryId]);
     if (linkedTxId) {
       await tx.runAsync('DELETE FROM transactions WHERE id = ?', [linkedTxId]);
     }
+    // Transaction first (if any) — the entry's own `transaction_id` foreign
+    // key needs it to already exist.
+    snapshots = txSnapshot ? [txSnapshot, entrySnapshot] : [entrySnapshot];
   });
-  // Transaction first (if any) — the entry's own `transaction_id` foreign
-  // key needs it to already exist.
-  return txSnapshot ? [txSnapshot, entrySnapshot] : [entrySnapshot];
+  return snapshots;
 }
 
 /** Undoes `deleteLedgerEntry` — re-inserts the entry (and its linked transaction, if it had one), in the same order they were captured. */
 export async function restoreLedgerEntry(snapshots: RowSnapshot[]): Promise<void> {
   const db = await getDb();
-  await restoreRows(db, snapshots);
+  // One transaction: a failure on any row puts nothing back, not a ledger entry without its transaction.
+  await db.withTransactionAsync(async (tx) => {
+    await restoreRows(tx, snapshots);
+  });
 }

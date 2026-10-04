@@ -11,7 +11,9 @@ jest.mock('react-native-safe-area-context', () => ({
 }));
 jest.mock('@/components/AppHeader', () => ({ AppHeader: () => null }));
 jest.mock('@/lib/haptics', () => ({ haptics: { tap: jest.fn(), confirm: jest.fn(), warn: jest.fn() } }));
-jest.mock('expo-router', () => ({ router: { back: jest.fn() } }));
+jest.mock('expo-router', () => ({
+  router: { back: jest.fn(), replace: jest.fn(), canGoBack: jest.fn(() => true) },
+}));
 // Sheets render their contents in place while open.
 jest.mock('@/components/ModalSheet', () => ({
   ModalSheet: ({ visible, children }: { visible: boolean; children: React.ReactNode }) =>
@@ -34,7 +36,7 @@ jest.mock('@/components/CategoryPicker', () => ({
 
 import { router } from 'expo-router';
 import { SplitScreen } from './SplitScreen';
-import { openSplitSession, takeSplitResult } from './splitSession';
+import { openSplitSession, takeSplitResult, finishSplitSession } from './splitSession';
 import { Category } from '@/types';
 
 const categories = [
@@ -127,5 +129,36 @@ describe('split page', () => {
     const tree = open();
     tree.unmount();
     expect(takeSplitResult()).toBeNull();
+  });
+});
+
+describe('reached without a split to show', () => {
+  const noSession = () => {
+    finishSplitSession([]);
+    takeSplitResult(); // clears the session
+  };
+
+  it('goes back when there is something to go back to', () => {
+    noSession();
+    act(() => {
+      create(<SplitScreen />);
+    });
+    expect(router.back).toHaveBeenCalled();
+    expect(router.replace).not.toHaveBeenCalled();
+  });
+
+  it('lands on Home from a deep link with nothing below it', () => {
+    noSession();
+    (router.canGoBack as jest.Mock).mockReturnValueOnce(false);
+    act(() => {
+      create(<SplitScreen />);
+    });
+    expect(router.back).not.toHaveBeenCalled();
+    expect(router.replace).toHaveBeenCalledWith('/');
+  });
+
+  it('copes with a session that has no parts', () => {
+    const tree = open([]);
+    expect(texts(tree)).toEqual(expect.arrayContaining(['Add a category']));
   });
 });

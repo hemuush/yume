@@ -44,19 +44,22 @@ const KIND_LABEL: Record<PlanDueItem['kind'], string> = {
 
 function DueRow({
   item,
+  today,
   divider,
   onOpen,
   onPay,
 }: {
   item: PlanDueItem;
+  today: string;
   divider: boolean;
   onOpen: (route: PlanRoute) => void;
   onPay?: (loanId: string) => void;
 }) {
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.98);
   const when = dueDateLabel(item.dueDate);
-  const tone = dueTone(item);
+  const tone = dueTone(item, today);
   const sign = item.kind === 'income' ? '+' : item.kind === 'transfer' ? '' : '−';
+  const direction = item.kind === 'income' ? 'in' : item.kind === 'transfer' ? '' : 'out';
   const amount = (
     <Text
       style={[
@@ -77,7 +80,7 @@ function DueRow({
       onPressIn={onPressIn}
       onPressOut={onPressOut}
       accessibilityRole="button"
-      accessibilityLabel={`${item.title}, ${KIND_LABEL[item.kind]}, ${when}`}
+      accessibilityLabel={`${item.title}, ${KIND_LABEL[item.kind]}, ${when}, ${formatMoney(item.amountMinor)}${direction ? ` ${direction}` : ''}`}
       style={[h.row, divider && h.divider, animatedStyle]}
     >
       <DateTile iso={item.dueDate} urgent={tone === 'urgent'} soon={tone === 'soon'} />
@@ -118,12 +121,15 @@ function DueRow({
  */
 export function ComingUpSection({
   groups,
+  today,
   onOpen,
   onPay,
   onCardLayout,
   onGroupLayout,
 }: {
   groups: DueGroup[];
+  /** YYYY-MM-DD — the day the amber/red tones count from. */
+  today: string;
   onOpen: (route: PlanRoute) => void;
   /** Records an EMI as paid — shown as a Pay button on each EMI row. */
   onPay?: (loanId: string) => void;
@@ -158,7 +164,7 @@ export function ComingUpSection({
                 {g.outMinor > 0 && <Text style={styles.dayHeadAmount}>{formatMoney(g.outMinor)}</Text>}
               </View>
               {g.items.map((it) => (
-                <DueRow key={it.key} item={it} divider onOpen={onOpen} onPay={onPay} />
+                <DueRow key={it.key} item={it} today={today} divider onOpen={onOpen} onPay={onPay} />
               ))}
             </View>
           ))
