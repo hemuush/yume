@@ -16,6 +16,8 @@ import { TimeSlotKind, clampSlotMinutes, formatSlotTime } from '@/lib/notificati
 import { theme } from '@/constants/theme';
 import { errorMessage } from '@/lib/errorMessage';
 import { showAlert } from '@/components/AppDialog';
+import { PrimaryButton } from '@/components/PrimaryButton';
+import { listScreenStyles } from '@/features/shared/listScreenStyles';
 
 type SwitchKey = 'morningEnabled' | 'eveningEnabled' | 'billAlerts' | 'overspendAlerts' | 'weeklySummary';
 
@@ -23,9 +25,16 @@ export default function NotificationSettingsScreen() {
   const insets = useSafeAreaInsets();
   const [prefs, setPrefs] = useState<NotificationPrefs | null>(null);
   const [openSlot, setOpenSlot] = useState<TimeSlotKind | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    setPrefs(await getNotificationPrefs());
+    try {
+      setPrefs(await getNotificationPrefs());
+      setLoadError(null);
+    } catch (e) {
+      // Without this the skeleton below would sit there forever.
+      setLoadError(errorMessage(e));
+    }
   }, []);
 
   useFocusEffect(
@@ -84,9 +93,23 @@ export default function NotificationSettingsScreen() {
     return (
       <View style={styles.container}>
         <AppHeader title="Notifications" showBack />
-        <View style={{ marginTop: theme.layout.screenTopGap }}>
-          <CardRowsSkeleton rows={4} />
-        </View>
+        {loadError ? (
+          <View style={listScreenStyles.errorBanner}>
+            <Text style={listScreenStyles.errorTitle}>Couldn't load your notification settings</Text>
+            <Text style={listScreenStyles.errorDetail}>{loadError}</Text>
+            <PrimaryButton
+              title="Try again"
+              variant="secondary"
+              compact
+              onPress={() => void load()}
+              style={styles.retry}
+            />
+          </View>
+        ) : (
+          <View style={{ marginTop: theme.layout.screenTopGap }}>
+            <CardRowsSkeleton rows={4} />
+          </View>
+        )}
       </View>
     );
   }
@@ -207,6 +230,7 @@ export default function NotificationSettingsScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
+  retry: { alignSelf: 'flex-start', marginTop: 10 },
   warn: {
     fontFamily: theme.font.body,
     fontSize: 12,

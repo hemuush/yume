@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { Text } from '@/components/Text';
 import { contributeToGoal, markGoalLetterRevealed } from '@/db/savingsGoals';
-import { toMinor, inputMinor } from '@/lib/money';
+import { toMinor, inputMinor, formatMoney } from '@/lib/money';
 import { SavingsGoal } from '@/types';
 import { ModalSheet } from '@/components/ModalSheet';
 import { modalFooterStyles as f } from '@/constants/theme';
@@ -80,6 +80,11 @@ export function ContributeModal({
     const amountMinor = toMinor(parseFloat(amount || '0'));
     if (!Number.isFinite(amountMinor) || amountMinor <= 0) {
       setError('Enter a valid amount');
+      return;
+    }
+    // The database would quietly clamp an over-withdrawal to zero; say so instead of recording less than asked.
+    if (direction === 'withdraw' && amountMinor > goal.currentAmountMinor) {
+      setError(`You can withdraw up to ${formatMoney(goal.currentAmountMinor)} — that's what's saved so far`);
       return;
     }
     setSaving(true);

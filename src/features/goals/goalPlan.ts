@@ -1,5 +1,5 @@
 import { theme } from '@/constants/theme';
-import { parseLocalIsoDate } from '@/lib/date';
+import { parseLocalIsoDate, toLocalIsoDate } from '@/lib/date';
 import type { SavingsGoal } from '@/types';
 
 /** How far a goal may sit from the even-saving line, as a share of its target, and still be "on pace". */
@@ -28,6 +28,20 @@ function monthsBetween(today: string, target: string): number {
 }
 
 /**
+ * The local calendar day a goal was created. SQLite's `datetime('now')` is UTC ("YYYY-MM-DD HH:MM:SS", no
+ * zone), so slicing it gives the UTC date, which differs from the local date the rest of the plan uses
+ * around midnight. A date-only or unparseable value falls back to its first ten characters.
+ */
+export function createdLocalDate(createdAt: string): string {
+  const m = /^(\d{4}-\d{2}-\d{2})[ T](\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?)(Z|[+-]\d{2}:?\d{2})?$/.exec(
+    createdAt
+  );
+  if (!m) return createdAt.slice(0, 10);
+  const parsed = new Date(`${m[1]}T${m[2].length === 5 ? `${m[2]}:00` : m[2]}${m[3] ?? 'Z'}`);
+  return Number.isNaN(parsed.getTime()) ? createdAt.slice(0, 10) : toLocalIsoDate(parsed);
+}
+
+/**
  * What is left on a goal and what finishing by its date takes. `pace` compares the share saved with where an
  * even saving line, from creation day to target date, would be today.
  */
@@ -42,7 +56,7 @@ export function goalPlan(goal: PlanGoal, today: string): GoalPlan {
   const monthsLeft = pastDue ? 0 : Math.max(1, monthsBetween(today, target));
   const perMonthMinor = pastDue ? null : Math.ceil(toGoMinor / monthsLeft);
 
-  const created = goal.createdAt.slice(0, 10);
+  const created = createdLocalDate(goal.createdAt);
   const span = parseLocalIsoDate(target).getTime() - parseLocalIsoDate(created).getTime();
   let pace: GoalPace | null = null;
   if (pastDue) {

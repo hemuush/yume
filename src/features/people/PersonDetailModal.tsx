@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { View, Pressable } from 'react-native';
 import { Text } from '@/components/Text';
 import Feather from '@expo/vector-icons/Feather';
@@ -63,17 +63,36 @@ export function PersonDetailModal({
   const [menuEntry, setMenuEntry] = useState<PersonLedgerEntry | null>(null);
   const [tab, setTab] = useState<'settle' | 'history'>('settle');
 
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  // Latest load wins, and closing the sheet voids any in flight, so a slow earlier fetch can't overwrite
+  // fresher figures or set state after unmount.
+  const loadTicket = useRef(0);
+  useEffect(
+    () => () => {
+      loadTicket.current += 1;
+    },
+    []
+  );
   const load = useCallback(async () => {
-    const [led, accs, cats, loans] = await Promise.all([
-      getPersonLedger(person.id),
-      listAccounts(),
-      listCategories(),
-      listLoansForPerson(person.id),
-    ]);
-    setLedger(led);
-    setAccounts(accs);
-    setCategories(cats);
-    setLinkedLoans(loans);
+    const ticket = ++loadTicket.current;
+    try {
+      const [led, accs, cats, loans] = await Promise.all([
+        getPersonLedger(person.id),
+        listAccounts(),
+        listCategories(),
+        listLoansForPerson(person.id),
+      ]);
+      if (ticket !== loadTicket.current) return;
+      setLedger(led);
+      setAccounts(accs);
+      setCategories(cats);
+      setLinkedLoans(loans);
+      setLoadError(null);
+    } catch (e) {
+      if (ticket !== loadTicket.current) return;
+      setLoadError(errorMessage(e));
+    }
   }, [person.id]);
 
   useFocusEffect(
@@ -108,15 +127,19 @@ export function PersonDetailModal({
       if (accountId) {
         // A dedicated category, not "Miscellaneous"/"Other Income", so friend transactions stand out in
         // Transactions and don't inflate an unrelated catch-all total.
+        // Only the built-in Friends & Family category, or the named catch-all: never whichever category
+        // happens to be first, which would misfile the transaction.
         const category =
           sign === 1
             ? (categories.find((c) => c.kind === 'expense' && c.name === 'Friends & Family') ??
-              categories.find((c) => c.kind === 'expense' && c.name === 'Miscellaneous') ??
-              categories.find((c) => c.kind === 'expense'))
+              categories.find((c) => c.kind === 'expense' && c.name === 'Miscellaneous'))
             : (categories.find((c) => c.kind === 'income' && c.name === 'Friends & Family') ??
-              categories.find((c) => c.kind === 'income' && c.name === 'Other Income') ??
-              categories.find((c) => c.kind === 'income'));
-        if (!category) throw new Error('No category available');
+              categories.find((c) => c.kind === 'income' && c.name === 'Other Income'));
+        if (!category) {
+          throw new Error(
+            `The "Friends & Family" ${sign === 1 ? 'expense' : 'income'} category is missing. Choose "Just adjust balance" instead, or add that category.`
+          );
+        }
         if (sign === 1) {
           await recordMoneyGivenToPerson({
             personId: person.id,
@@ -237,6 +260,7 @@ export function PersonDetailModal({
             : `${ledger.length} ${ledger.length === 1 ? 'entry' : 'entries'} · last ${dayMonthYear(ledger[0].date)}`
         }
       />
+      {loadError && <Text style={styles.errorText}>Couldn't load the latest details: {loadError}</Text>}
       <View style={styles.sheetTabs}>
         <SegmentedControl
           options={[
@@ -323,6 +347,8 @@ export function PersonDetailModal({
                 key={entry.id}
                 style={withPressed(styles.row)}
                 onLongPress={() => onDeleteEntry(entry)}
+                accessibilityRole="button"
+                accessibilityLabel={`${entry.note || (entry.amountMinor >= 0 ? 'Lent' : 'Repaid')}, ${formatMoney(Math.abs(dispEntryAmounts[i]))}, ${dayMonthYear(entry.date)}`}
                 accessibilityHint="Double tap and hold to delete"
                 disabled={saving}
               >

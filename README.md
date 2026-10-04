@@ -21,7 +21,7 @@ with fully local backups and nothing sent to any server.
   any custom date range (financial years included), and a page for each category
 - **Home-screen widgets** — live balances, this month's spend, next due bill, and a Suu check-in
   (they show amounts on the home screen even while App Lock is on)
-- **Exclusive themes** — a handful of named colour packs (see `src/theme/themes.ts`) alongside the
+- **Exclusive themes** — eleven named colour packs (see `src/theme/themes.ts`) alongside the
   default, switchable from Settings → Appearance
 - **App lock & privacy** — biometric/PIN lock (via whatever the phone itself is secured with) and a
   one-tap "hide amounts" toggle

@@ -8,7 +8,7 @@ export const theme = {
     background: '#EDE7D6',
     surface: '#FFFDF6',
     surfaceAlt: '#F3ECE0',
-    border: '#12130F', // borders are always the ink color — thickness is what varies
+    border: '#12130F', // ink, for a deliberate emphasis edge only; cards and rows use the `borderSoft` hairline
 
     ink: '#12130F',
     inkSoft: '#5B5748',
@@ -61,7 +61,7 @@ export const theme = {
     idGoldDeep: '#E0AC3F',
 
     // A soft warm hairline for the calm card style, separating cards by a thin line and whitespace.
-    // `border`/`ink` above remain for buttons, chips, inputs and modal sheets.
+    // This is the default edge for cards, chips, inputs and sheets; `border` (ink) is the rare exception.
     borderSoft: '#E6DFC9',
 
     // Ink at very low opacity — a faint fill for inactive tracks, weekend
@@ -91,7 +91,7 @@ export const theme = {
     pill: 999,
   },
   // A deliberate, coloured emphasis border (an error banner, an EMI
-  // preview) — see the note up top. Everything else uses a hairline.
+  // preview). Everything else uses a hairline.
   border: {
     thin: 2,
   },
@@ -128,8 +128,8 @@ export const modalFooterStyles = StyleSheet.create({
   footerBtn: { flex: 1 },
 });
 
-// Every swatch sits in the 74-83% pastel band above; added colours fill hue gaps (rose, teal, sage, tan,
-// mauve, cyan, periwinkle, pale butter) instead of brightening the originals, so the picker stays calm.
+// Every swatch sits in the app's 74-83% lightness pastel band; added colours fill hue gaps (rose, teal, sage,
+// tan, mauve, cyan, periwinkle, pale butter) instead of brightening the originals, so the picker stays calm.
 export const CATEGORY_COLOR_PALETTE = [
   '#FFA8CE',
   '#8FCBFF',
@@ -151,8 +151,8 @@ export const CATEGORY_COLOR_PALETTE = [
   '#FFEA9E',
 ];
 
-// Flat, high-saturation "block" colors — solid card fills with black
-// text/icons directly on them (account cards, summary pills).
+// The four flat pastel fills (lime, mint, pink, sky) with ink text/icons directly on them; People's avatar
+// tiles pick one by a stable hash of the person's id.
 export const FLAT_PALETTE = [
   theme.colors.flatLime,
   theme.colors.flatMint,

@@ -1,5 +1,5 @@
-import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
-import { Animated, Pressable, StyleSheet, View } from 'react-native';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { AccessibilityInfo, Animated, Pressable, StyleSheet, View } from 'react-native';
 import { Text } from '@/components/Text';
 import ReanimatedAnimated, { FadeInDown, FadeOutDown, ReduceMotion } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -67,8 +67,10 @@ export function UndoToastProvider({ children }: { children: React.ReactNode }) {
     showNext();
   }, [showNext]);
 
+  const value = useMemo(() => ({ show }), [show]);
+
   return (
-    <UndoToastContext.Provider value={{ show }}>
+    <UndoToastContext.Provider value={value}>
       {children}
       {toast && <ToastView key={toast.key} toast={toast} onDismiss={dismiss} queued={queuedCount} />}
     </UndoToastContext.Provider>
@@ -86,6 +88,12 @@ function ToastView({
 }) {
   const insets = useSafeAreaInsets();
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.94);
+
+  // A toast is silent to TalkBack otherwise (it never takes focus); MilestoneNote announces the same way.
+  // Each toast mounts its own ToastView (keyed), so this speaks once per toast.
+  useEffect(() => {
+    void AccessibilityInfo.announceForAccessibility(`${toast.message}. Undo available.`);
+  }, [toast.message]);
 
   return (
     <ReanimatedAnimated.View
@@ -109,9 +117,11 @@ function ToastView({
           }}
           onPressIn={onPressIn}
           onPressOut={onPressOut}
-          hitSlop={10}
+          // The word is ~18dp tall; the slop reaches toward 48dp (the pill itself is ~44dp, which caps it).
+          hitSlop={{ top: 15, bottom: 15, left: 14, right: 14 }}
           style={animatedStyle}
           accessibilityRole="button"
+          accessibilityLabel="Undo"
         >
           <Text style={styles.undo}>Undo</Text>
         </AnimatedPressable>

@@ -42,9 +42,23 @@ jest.mock('@/features/people/AddPersonModal', () => ({
   },
 }));
 
+const mockDispatch = jest.fn();
+// The leave guard: its latest "prevent?" flag and the callback that runs when a back is blocked.
+const mockGuard: { prevent: boolean; onBlocked: (o: { data: { action: unknown } }) => void } = {
+  prevent: false,
+  onBlocked: () => {},
+};
+jest.mock('expo-router/react-navigation', () => ({
+  usePreventRemove: (prevent: boolean, onBlocked: typeof mockGuard.onBlocked) => {
+    mockGuard.prevent = prevent;
+    mockGuard.onBlocked = onBlocked;
+  },
+}));
+
 const mockParams: { current: Record<string, string | undefined> } = { current: {} };
 jest.mock('expo-router', () => ({
   router: { back: jest.fn(), push: jest.fn() },
+  useNavigation: () => ({ dispatch: mockDispatch }),
   useLocalSearchParams: () => mockParams.current,
   useFocusEffect: (cb: () => void) => require('react').useEffect(cb, [cb]),
 }));
@@ -565,6 +579,73 @@ describe('Add screen', () => {
     } finally {
       spy.mockRestore();
     }
+  });
+});
+
+describe('Add screen — leaving with an unsaved entry', () => {
+  it('lets a blank new entry go, and asks once something is typed', async () => {
+    const tree = await render();
+    expect(mockGuard.prevent).toBe(false);
+    await typeAmount(tree, '120');
+    expect(mockGuard.prevent).toBe(true);
+  });
+
+  it('stops asking once the amount is cleared again', async () => {
+    const tree = await render();
+    await typeAmount(tree, '5');
+    await act(async () => {
+      tree.root
+        .find((n) => n.props.accessibilityLabel === 'delete' && typeof n.props.onLongPress === 'function')
+        .props.onLongPress();
+    });
+    expect(mockGuard.prevent).toBe(false);
+  });
+
+  it('Keep editing stays; Discard dispatches the blocked action and leaves', async () => {
+    const tree = await render();
+    await typeAmount(tree, '120');
+    const action = { type: 'GO_BACK' };
+    act(() => mockGuard.onBlocked({ data: { action } }));
+    const alert = jest.mocked(showAlert);
+    expect(alert).toHaveBeenCalledWith('Discard this entry?', expect.any(String), expect.any(Array));
+    const buttons = alert.mock.calls[0][2]!;
+    expect(buttons.map((b) => b.text)).toEqual(['Keep editing', 'Discard']);
+
+    await act(async () => buttons.find((b) => b.text === 'Keep editing')!.onPress?.());
+    expect(mockDispatch).not.toHaveBeenCalled();
+
+    await act(async () => buttons.find((b) => b.text === 'Discard')!.onPress!());
+    expect(mockDispatch).toHaveBeenCalledWith(action);
+    expect(mockGuard.prevent).toBe(false);
+  });
+
+  it('does not ask after a save', async () => {
+    (getAddDefaults as jest.Mock).mockResolvedValueOnce({
+      expense: { accountId: 'cash', categoryId: 'food' },
+    });
+    const tree = await render();
+    await press(tree, 'Food');
+    await typeAmount(tree, '120');
+    expect(mockGuard.prevent).toBe(true);
+    await save(tree);
+    expect(createTransaction).toHaveBeenCalledTimes(1);
+    expect(mockGuard.prevent).toBe(false);
+  });
+
+  it('never asks on an edit', async () => {
+    mockParams.current = { id: 't1' };
+    (getTransactionById as jest.Mock).mockResolvedValueOnce({
+      id: 't1',
+      type: 'expense',
+      amountMinor: 45000,
+      accountId: 'bank',
+      toAccountId: null,
+      categoryId: 'food',
+      note: 'Dinner',
+      date: '2026-09-20',
+    });
+    await render();
+    expect(mockGuard.prevent).toBe(false);
   });
 });
 

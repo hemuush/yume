@@ -72,4 +72,29 @@ describe('restoreFromSnapshot', () => {
       /newer version/
     );
   });
+
+  it('restores a file with two value updates for one account and day, keeping the later one', async () => {
+    await mockTestDb.execAsync(
+      'CREATE UNIQUE INDEX IF NOT EXISTS idx_account_valuations_unique_day ON account_valuations(account_id, date)'
+    );
+    const base = await buildBackupSnapshot();
+    const accountId = (base.tables.accounts as any[])[0].id;
+    const row = (id: string, value: number) => ({
+      id,
+      account_id: accountId,
+      date: '2026-03-01',
+      value_minor: value,
+    });
+    const snapshot = {
+      ...base,
+      tables: { ...base.tables, account_valuations: [row('first', 100), row('second', 200)] },
+    };
+
+    await restoreFromSnapshot(snapshot);
+
+    const rows = await mockTestDb.getAllAsync<{ id: string; value_minor: number }>(
+      'SELECT id, value_minor FROM account_valuations'
+    );
+    expect(rows).toEqual([{ id: 'second', value_minor: 200 }]);
+  });
 });

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { View } from 'react-native';
 import { Text } from '@/components/Text';
 import {
@@ -51,6 +51,14 @@ const FREQUENCIES: { label: string; value: RecurrenceFrequency }[] = [
   { label: 'Yearly', value: 'yearly' },
 ];
 
+/** The most "every N …" a rule may skip: far enough for any real bill, short of dates in the next century. */
+const MAX_INTERVAL: Record<RecurrenceFrequency, number> = {
+  daily: 365,
+  weekly: 104,
+  monthly: 120,
+  yearly: 10,
+};
+
 export function RuleModal({
   visible,
   editing,
@@ -81,7 +89,6 @@ export function RuleModal({
 }) {
   const { show: showUndo } = useUndoToast();
   const { accent } = useAccent();
-  const today = useMemo(() => toLocalIsoDate(new Date()), []);
   const [type, setType] = useState<TransactionType>('expense');
   const [accountId, setAccountId] = useState<string | null>(null);
   const [toAccountId, setToAccountId] = useState<string | null>(null);
@@ -90,17 +97,26 @@ export function RuleModal({
   const [note, setNote] = useState('');
   const [frequency, setFrequency] = useState<RecurrenceFrequency>('monthly');
   const [intervalCount, setIntervalCount] = useState('1');
-  const [startDate, setStartDate] = useState(today);
+  const [startDate, setStartDate] = useState(() => toLocalIsoDate(new Date()));
   const [hasEndDate, setHasEndDate] = useState(false);
-  const [endDate, setEndDate] = useState(() => addMonthsToIsoDate(today, 12));
+  const [endDate, setEndDate] = useState(() => addMonthsToIsoDate(toLocalIsoDate(new Date()), 12));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<'setup' | 'schedule'>('setup');
   // Which row's picker is open in place — one at a time.
   const [open, setOpen] = useState<'account' | 'to' | 'category' | null>(null);
 
+  // The form resets when the sheet opens (or what it edits changes), not whenever the accounts list reloads
+  // underneath it, which would wipe what's been typed; so the effect reads the latest accounts from a ref.
+  const accountsRef = useRef(accounts);
+  useEffect(() => {
+    accountsRef.current = accounts;
+  }, [accounts]);
+
   useEffect(() => {
     if (!visible) return;
+    // Taken when it opens, not frozen at mount: the screen stays alive past midnight.
+    const today = toLocalIsoDate(new Date());
     if (editing) {
       setType(editing.type);
       setAccountId(editing.accountId);
@@ -115,7 +131,7 @@ export function RuleModal({
       setEndDate(editing.endDate ?? addMonthsToIsoDate(editing.nextRunDate, 12));
     } else {
       setType(prefill?.type ?? 'expense');
-      setAccountId(prefill?.accountId ?? accounts[0]?.id ?? null);
+      setAccountId(prefill?.accountId ?? accountsRef.current[0]?.id ?? null);
       setToAccountId(prefill?.toAccountId ?? null);
       setCategoryId(prefill?.categoryId ?? null);
       setAmount(prefill ? (prefill.amountMinor / 100).toString() : '');
@@ -130,7 +146,7 @@ export function RuleModal({
     setTab('setup');
     // A new rule opens on the category grid; an existing one on its summary.
     setOpen(editing || prefill?.categoryId ? null : 'category');
-  }, [visible, editing, accounts, today, prefill]);
+  }, [visible, editing, prefill]);
 
   const filteredCategories = useMemo(
     () => categories.filter((c) => c.kind === (type === 'income' ? 'income' : 'expense')),
@@ -171,8 +187,8 @@ export function RuleModal({
       return;
     }
     const interval = parseInt(intervalCount || '0', 10);
-    if (!Number.isInteger(interval) || interval <= 0) {
-      setError('Repeat interval must be 1 or more');
+    if (!Number.isInteger(interval) || interval <= 0 || interval > MAX_INTERVAL[frequency]) {
+      setError(`Repeat interval must be between 1 and ${MAX_INTERVAL[frequency]}`);
       return;
     }
 
@@ -227,7 +243,7 @@ export function RuleModal({
   const categoriesById = new Map(categories.map((c) => [c.id, c]));
   const cat = categoriesById.get(categoryId ?? '');
   const accountName = (id: string | null) => accounts.find((a) => a.id === id)?.name;
-  const interval = Math.max(1, parseInt(intervalCount || '1', 10) || 1);
+  const interval = Math.min(MAX_INTERVAL[frequency], Math.max(1, parseInt(intervalCount || '1', 10) || 1));
   const upcoming = [startDate];
   while (upcoming.length < 3) {
     upcoming.push(

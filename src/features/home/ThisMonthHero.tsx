@@ -134,6 +134,11 @@ export function ThisMonthHero({
   const opacity = useSharedValue(1);
   const runId = useRef(0);
 
+  // Primitives, so a fresh `suu` object each render doesn't re-fire the effect below — but a changed line
+  // (including the hide-savings variant) does.
+  const suuText = suu.text;
+  const suuPose = suu.pose;
+
   useEffect(() => {
     const myRun = ++runId.current;
     const next: HeroContent = {
@@ -144,7 +149,7 @@ export function ThisMonthHero({
       carryMinor,
       dueMinor,
       outstandingLoansMinor,
-      suu,
+      suu: { text: suuText, pose: suuPose },
       periodKey,
     };
     const isPeriodTurn = prevPeriodKey.current !== periodKey;
@@ -174,10 +179,11 @@ export function ThisMonthHero({
       tx.value = withTiming(0, inCfg);
       opacity.value = withTiming(1, inCfg);
     });
-    // `suu` and `direction` omitted on purpose: a per-render object would re-fire this effect every render.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     periodKey,
+    direction,
+    suuText,
+    suuPose,
     incomeMinor,
     spentMinor,
     savingsMinor,
@@ -186,6 +192,8 @@ export function ThisMonthHero({
     dueMinor,
     outstandingLoansMinor,
     reduce,
+    opacity,
+    tx,
   ]);
 
   const slideStyle = useAnimatedStyle(() => ({

@@ -5,6 +5,8 @@ import { usePressScale } from '@/lib/usePressScale';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
+const HIT_SLOP = { top: 8, bottom: 8, left: 4, right: 4 };
+
 interface Props extends Omit<PressableProps, 'style'> {
   style?: StyleProp<ViewStyle>;
   label?: string;
@@ -20,6 +22,9 @@ export function AddButton({ label = '+ Add', disabled, style, ...rest }: Props) 
       onPressIn={onPressIn}
       onPressOut={onPressOut}
       style={[styles.btn, disabled && styles.disabled, animatedStyle, style]}
+      accessibilityRole="button"
+      // The pill is ~33dp tall; the slop lifts the touch target to 48dp without changing how it looks.
+      hitSlop={HIT_SLOP}
       {...rest}
     >
       <Text style={styles.text}>{label}</Text>

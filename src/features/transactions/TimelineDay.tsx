@@ -96,13 +96,26 @@ export function TimelineDay({
 
   // Hand-ordering: hold a line to lift it, drag it, let go. `arranged` shows the
   // new order straight away, until the reloaded entries carry it themselves.
-  const [arranged, setArranged] = useState<LaneLine[] | null>(null);
+  // It remembers the entries it was arranged from: once they reload it no longer applies, with no
+  // reset effect (and its extra render) needed.
+  const [arrangedState, setArrangedState] = useState<{ from: Transaction[]; lines: LaneLine[] } | null>(null);
+  const arranged = arrangedState && arrangedState.from === items ? arrangedState.lines : null;
+  const setArranged = useCallback(
+    (lines: LaneLine[] | null) => setArrangedState(lines ? { from: items, lines } : null),
+    [items]
+  );
   const [drag, setDrag] = useState<{ from: number; to: number; height: number } | null>(null);
   const [settling, setSettling] = useState(false);
   const dragRef = useRef<{ from: number; to: number; height: number } | null>(null);
   const heights = useRef(new Map<string, number>());
   const [dy] = useState(() => new Animated.Value(0));
-  useEffect(() => setArranged(null), [items]);
+  const settleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(
+    () => () => {
+      if (settleTimer.current) clearTimeout(settleTimer.current);
+    },
+    []
+  );
   const shown = arranged ?? lines;
   const canReorder = !!onReorder && shown.length > 1;
 
@@ -127,7 +140,8 @@ export function TimelineDay({
     async (next: LaneLine[]) => {
       setSettling(true);
       setArranged(next);
-      setTimeout(() => setSettling(false), 150);
+      if (settleTimer.current) clearTimeout(settleTimer.current);
+      settleTimer.current = setTimeout(() => setSettling(false), 150);
       try {
         await onReorder?.(date, laneOrderIds(next, transfers));
       } catch {
@@ -135,7 +149,7 @@ export function TimelineDay({
         setArranged(null);
       }
     },
-    [onReorder, date, transfers]
+    [onReorder, date, transfers, setArranged]
   );
   const drop = () => {
     const cur = dragRef.current;

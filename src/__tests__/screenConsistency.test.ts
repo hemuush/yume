@@ -1,6 +1,8 @@
 /**
- * Replays a real on-device sequence (accounts, a mis-entered loan deleted via the guard, a second loan
- * prepaid heavily), then runs the Promise.all batches Profile, Loans and Home run on focus; they must agree.
+ * Replays a typical sequence (two accounts, a mis-entered loan deleted via the guard, a second loan with a
+ * disbursement, one payment and a heavy prepayment), then runs the Promise.all batches Profile, Loans and
+ * Home run on focus. Every figure is checked against an independent hand calculation from the loan's own
+ * schedule, not just against another screen's output. All names and amounts are synthetic.
  */
 import { createRealDataTestDb } from '@/test-support/realDataTestDb';
 
@@ -11,7 +13,7 @@ jest.mock('@/db/client', () => ({
 jest.mock('@/lib/notifications', () => ({ rebuildNotifications: async () => {} }));
 
 import { CREATE_TABLES_SQL } from '@/db/schema';
-import { createAccount, createCategory, listAccounts, listTransactions } from '@/db/ledger';
+import { createAccount, createCategory, listAccounts } from '@/db/ledger';
 import {
   createLoan,
   listLoans,
@@ -24,29 +26,39 @@ import {
 import { listPeople } from '@/db/people';
 import { getUserName, getMemberSinceYear, getDefaultCurrency } from '@/db/settings';
 import { getRangeComparison, computeTrackedBalance } from '@/db/reports';
-import { periodRange, CURRENT_PERIOD } from '@/lib/period';
+
+const PRINCIPAL = 220_000_000; // minor units: a large loan, so a rounding drift would show
+const PREPAYMENT = 215_123_059;
 
 describe('Profile / Loans tab / Home all agree after a realistic create-delete-prepay sequence', () => {
   let accountId: string;
   let savingsAccountId: string;
-  let expenseCategoryId: string;
-  let incomeCategoryId: string;
+  let loanId: string;
+  /** The surviving loan's schedule, read after the prepayment. */
+  let schedule: Awaited<ReturnType<typeof getLoanSchedule>>;
+  let firstEmi: number;
 
   beforeAll(async () => {
     await mockTestDb.execAsync(CREATE_TABLES_SQL);
-    accountId = (await createAccount({ name: 'Hdfc', type: 'bank', currency: 'INR', openingBalanceMinor: 0 }))
-      .id;
-    savingsAccountId = (
-      await createAccount({ name: 'HDFC Bank', type: 'savings', currency: 'INR', openingBalanceMinor: 0 })
+    accountId = (
+      await createAccount({ name: 'Test Bank', type: 'bank', currency: 'INR', openingBalanceMinor: 0 })
     ).id;
-    expenseCategoryId = (await createCategory({ name: 'Loan EMI', kind: 'expense' })).id;
-    incomeCategoryId = (await createCategory({ name: 'Salary', kind: 'income' })).id;
+    savingsAccountId = (
+      await createAccount({
+        name: 'Test Bank Savings',
+        type: 'savings',
+        currency: 'INR',
+        openingBalanceMinor: 0,
+      })
+    ).id;
+    const expenseCategoryId = (await createCategory({ name: 'Loan EMI', kind: 'expense' })).id;
+    const incomeCategoryId = (await createCategory({ name: 'Salary', kind: 'income' })).id;
 
-    // A mis-entered loan (the "Hdfc" scenario) — created, then deleted before it ever had a real payment.
+    // A mis-entered loan, created then deleted before it ever had a real payment.
     const misEntered = await createLoan({
       direction: 'borrowed',
       counterparty: 'Mis-entered',
-      principalMinor: 4000000,
+      principalMinor: 4_000_000,
       interestRateAnnualBp: 760,
       tenureMonths: 240,
       startDate: '2025-09-05',
@@ -54,113 +66,111 @@ describe('Profile / Loans tab / Home all agree after a realistic create-delete-p
     });
     await deleteLoan(misEntered.id);
 
-    // A second, real loan ("Test 2") with a real disbursement and a real payment, then a heavy prepayment.
-    const testTwo = await createLoan({
+    // The real loan: a disbursement, one payment, then a heavy prepayment.
+    const real = await createLoan({
       direction: 'borrowed',
-      counterparty: 'Test 2',
-      principalMinor: 220000000, // ₹22,00,000 in minor units — the on-device Hdfc/Test 2 loan was this scale, not ₹22,000
+      counterparty: 'Test loan B',
+      principalMinor: PRINCIPAL,
       interestRateAnnualBp: 760,
       tenureMonths: 240,
       startDate: '2026-08-05',
       disbursement: { accountId, categoryId: incomeCategoryId },
     });
-    const schedule = await getLoanSchedule(testTwo.id);
-    await payInstallment(schedule[0].id, {
+    loanId = real.id;
+    const initial = await getLoanSchedule(loanId);
+    firstEmi = initial[0].emiAmountMinor;
+    await payInstallment(initial[0].id, {
       accountId,
       categoryId: expenseCategoryId,
       paidDate: '2026-09-05',
     });
-    await applyPrepayment(testTwo.id, {
-      amountMinor: 215123059, // ~₹21,51,230.59 in minor units, matching the on-device scenario
+    await applyPrepayment(loanId, {
+      amountMinor: PREPAYMENT,
       accountId,
       categoryId: expenseCategoryId,
       date: '2026-09-05',
     });
+    schedule = await getLoanSchedule(loanId);
   });
 
-  it('listAccounts (Profile + Home) returns both accounts with correct balances', async () => {
+  it('listAccounts (Profile + Home) returns both accounts with balances worked out from the money that moved', async () => {
     const accounts = await listAccounts();
     expect(accounts).toHaveLength(2);
-    const hdfc = accounts.find((a) => a.id === accountId);
-    const savings = accounts.find((a) => a.id === savingsAccountId);
-    expect(hdfc).toBeDefined();
-    expect(savings).toBeDefined();
-    expect(savings!.currentBalanceMinor).toBe(0);
+    expect(accounts.find((a) => a.id === accountId)?.currentBalanceMinor).toBe(
+      PRINCIPAL - firstEmi - PREPAYMENT
+    );
+    expect(accounts.find((a) => a.id === savingsAccountId)?.currentBalanceMinor).toBe(0);
   });
 
-  it('listLoans (the Loans tab) returns the surviving loan, not the deleted one, and matches getNextDueInstallment (Home)', async () => {
+  it('listLoans (the Loans tab) returns only the surviving loan, and Home points at its next unpaid installment', async () => {
     const loans = await listLoans();
-    expect(loans).toHaveLength(1);
-    expect(loans[0].counterparty).toBe('Test 2');
-    expect(loans.some((l) => l.counterparty === 'Mis-entered')).toBe(false);
+    expect(loans.map((l) => l.counterparty)).toEqual(['Test loan B']);
 
+    // The prepayment shortens the schedule but leaves later installments pending, so Home must have a next
+    // due, and it must be the first pending one of the loan the Loans tab shows.
+    const firstPending = schedule.find((i) => i.status === 'pending');
+    expect(firstPending).toBeDefined();
     const nextDue = await getNextDueInstallment();
-    // After a heavy prepayment a next installment may or may not remain, but if so it must belong to the
-    // surviving loan: Home must never point at a loan the Loans tab doesn't know about.
-    if (nextDue) {
-      expect(nextDue.counterparty).toBe('Test 2');
-    }
+    expect(nextDue).toEqual({
+      loanId,
+      counterparty: 'Test loan B',
+      emiAmountMinor: firstPending!.emiAmountMinor,
+      dueDate: firstPending!.dueDate,
+    });
+
+    // What the Loans tab calls outstanding is exactly the principal still to be repaid in the schedule.
+    const remaining = schedule
+      .filter((i) => i.status === 'pending')
+      .reduce((sum, i) => sum + i.principalComponentMinor, 0);
+    expect(loans[0].outstandingPrincipalMinor).toBe(remaining);
   });
 
-  it("every screen's Promise.all batch (Profile's YouSection, and Home's) resolves without throwing and agrees on totals", async () => {
-    // The core subset of YouSection's load() (accounts/loans/people/currency, feeding computeTrackedBalance):
-    // if any call throws, Promise.all rejects and the screen silently keeps zero/empty defaults, no error.
-    const [accs, txs, loans, people, userName, since, currency] = await Promise.all([
+  it("every screen's Promise.all batch (Profile's YouSection, and Home's) resolves and lands on the hand-calculated total", async () => {
+    // The core of YouSection's load() (accounts/loans/people/currency, feeding computeTrackedBalance): if any
+    // call throws, Promise.all rejects and the screen silently keeps its zero/empty defaults.
+    const [profileAccounts, profileLoans, profilePeople, , , currency] = await Promise.all([
       listAccounts(),
-      listTransactions({ limit: 100000 }),
       listLoans(),
       listPeople(),
       getUserName(),
       getMemberSinceYear(),
       getDefaultCurrency(),
     ]);
-    expect(accs).toHaveLength(2);
-    expect(loans).toHaveLength(1);
     expect(currency).toBe('INR');
-    void txs;
-    void people;
-    void userName;
-    void since;
 
-    // Exactly Home's own load() shape for the current-month batch.
-    const range = periodRange(CURRENT_PERIOD);
+    // Home's own load() shape. September holds the payment and the prepayment; August the disbursement.
+    const september = { start: '2026-09-01', end: '2026-09-30' };
+    const august = { start: '2026-08-01', end: '2026-08-31' };
     const [homeAccounts, homeLoans, homePeople, comparison] = await Promise.all([
       listAccounts(),
       listLoans(),
       listPeople(),
-      getRangeComparison(range, range, 'month'),
+      getRangeComparison(september, august, 'month'),
     ]);
-    expect(homeAccounts).toHaveLength(2);
-    expect(homeLoans).toHaveLength(1);
+    expect(comparison.current.expenseMinor).toBe(firstEmi + PREPAYMENT);
+    expect(comparison.current.incomeMinor).toBe(0);
+    expect(comparison.previous.incomeMinor).toBe(PRINCIPAL);
 
-    // Both screens feed their fetched data through the shared computeTrackedBalance, so each screen's
-    // Promise.all output must land on the same number; the hand-calc stops the helper drifting under both.
-    const homeTrackedBalance = computeTrackedBalance({
+    // Tracked balance by hand: the bank account's cash, less the borrowed loan's remaining principal (no
+    // asset recorded, so the loan counts as pure debt), no one owing anything.
+    const remaining = schedule
+      .filter((i) => i.status === 'pending')
+      .reduce((sum, i) => sum + i.principalComponentMinor, 0);
+    const expected = PRINCIPAL - firstEmi - PREPAYMENT - remaining;
+
+    const home = computeTrackedBalance({
       accounts: homeAccounts,
       loans: homeLoans,
       people: homePeople,
       defaultCurrency: currency,
     });
-    const profileTrackedBalance = computeTrackedBalance({
-      accounts: accs,
-      loans,
-      people,
+    const profile = computeTrackedBalance({
+      accounts: profileAccounts,
+      loans: profileLoans,
+      people: profilePeople,
       defaultCurrency: currency,
     });
-    expect(profileTrackedBalance).toBe(homeTrackedBalance);
-
-    const handAccounts = homeAccounts
-      .filter((a) => a.currency === currency)
-      .reduce((sum, a) => sum + a.currentBalanceMinor, 0);
-    const handLoans = homeLoans
-      .filter((l) => l.status !== 'closed')
-      .reduce((sum, l) => {
-        const outstanding = l.outstandingPrincipalMinor;
-        if (l.direction === 'lent') return sum + outstanding;
-        return sum + ((l.assetValueMinor ?? 0) - outstanding);
-      }, 0);
-    const handPeople = homePeople.reduce((sum, p) => sum + p.balanceMinor, 0);
-    expect(homeTrackedBalance).toBe(handAccounts + handLoans + handPeople);
-    void comparison;
+    expect(home).toBe(expected);
+    expect(profile).toBe(expected);
   });
 });

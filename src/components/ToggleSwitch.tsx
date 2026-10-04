@@ -4,6 +4,7 @@ import { theme } from '@/constants/theme';
 import { useAccent } from '@/theme/AccentContext';
 import { haptics } from '@/lib/haptics';
 import { DURATIONS } from '@/lib/motionTimings';
+import { useReduceMotion } from '@/lib/useReduceMotion';
 
 interface Props {
   value: boolean;
@@ -17,14 +18,22 @@ interface Props {
 export function ToggleSwitch({ value, onChange, disabled, small, accessibilityLabel }: Props) {
   const { accent } = useAccent();
   const [anim] = useState(() => new Animated.Value(value ? 1 : 0));
+  const reduce = useReduceMotion();
 
   useEffect(() => {
-    Animated.timing(anim, {
+    // Reduce motion: the knob jumps to its place instead of sliding.
+    if (reduce) {
+      anim.setValue(value ? 1 : 0);
+      return;
+    }
+    const slide = Animated.timing(anim, {
       toValue: value ? 1 : 0,
       duration: DURATIONS.quick,
       useNativeDriver: false,
-    }).start();
-  }, [value, anim]);
+    });
+    slide.start();
+    return () => slide.stop();
+  }, [value, anim, reduce]);
 
   const knobLeft = anim.interpolate({ inputRange: [0, 1], outputRange: small ? [2, 19] : [2, 22] });
 
@@ -36,7 +45,8 @@ export function ToggleSwitch({ value, onChange, disabled, small, accessibilityLa
         onChange(!value);
       }}
       disabled={disabled}
-      hitSlop={8}
+      // The track is 22-26dp tall; the slop lifts the touch target to 48dp without changing how it looks.
+      hitSlop={{ top: small ? 13 : 11, bottom: small ? 13 : 11, left: 8, right: 8 }}
       accessibilityRole="switch"
       accessibilityLabel={accessibilityLabel}
       accessibilityState={{ checked: value, disabled: !!disabled }}

@@ -74,44 +74,57 @@ export function AccountSummarySheet({
   const [latest, setLatest] = useState<Transaction[] | null>(null);
   // A credit card's bill, when it has a statement day and a due day set.
   const [cycle, setCycle] = useState<AccountCardCycle | null>(null);
+  // The figures (flow / latest / bill) couldn't be read — said as such rather than shown as an empty month.
+  const [loadError, setLoadError] = useState(false);
+  const [cycleError, setCycleError] = useState(false);
   const loadSeq = useRef(0);
+  const cycleSeq = useRef(0);
 
   const accountId = account?.id;
   const valueKey = account?.investment ? `${account.investment.valuedAt}|${account.currentBalanceMinor}` : '';
   const { start, end } = periodRange(cursor);
+
+  // A different account starts on its own first tab; stepping the period keeps the tab you're on.
+  const [tabFor, setTabFor] = useState(accountId);
+  if (tabFor !== accountId) {
+    setTabFor(accountId);
+    setTab(tracked ? 'value' : 'flow');
+    setCycle(null);
+  }
+
   useEffect(() => {
     if (!accountId) return;
     const seq = ++loadSeq.current;
     setFlow(null);
     setLatest(null);
-    setCycle(null);
-    setTab(accountProp?.investment ? 'value' : 'flow');
-    Promise.all([
-      getAccountFlow(accountId, { start, end }),
-      listTransactions({ accountId, limit: 3 }),
-      account ? getCardCycle(account).catch(() => null) : Promise.resolve(null),
-    ])
-      .then(([fl, tx, cy]) => {
+    setLoadError(false);
+    Promise.all([getAccountFlow(accountId, { start, end }), listTransactions({ accountId, limit: 3 })])
+      .then(([fl, tx]) => {
         if (seq !== loadSeq.current) return;
         setFlow(fl);
         setLatest(tx);
-        setCycle(cy);
       })
       .catch(() => {
-        if (seq !== loadSeq.current) return;
-        setFlow({
-          inMinor: 0,
-          outMinor: 0,
-          incomeMinor: 0,
-          transferInMinor: 0,
-          expenseMinor: 0,
-          transferOutMinor: 0,
-        });
-        setLatest([]);
+        if (seq === loadSeq.current) setLoadError(true);
       });
-    // `account` is read for its card days only; `accountId` is what changes which account this is.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accountId, start, end]);
+
+  // The bill depends on the card's own statement and due days (and what was spent or paid since), not on the
+  // period being browsed — so it reloads when those change, e.g. after the days are edited.
+  useEffect(() => {
+    if (!account) return;
+    const seq = ++cycleSeq.current;
+    setCycleError(false);
+    getCardCycle(account)
+      .then((cy) => {
+        if (seq === cycleSeq.current) setCycle(cy);
+      })
+      .catch(() => {
+        if (seq !== cycleSeq.current) return;
+        setCycle(null);
+        setCycleError(true);
+      });
+  }, [account]);
 
   useEffect(() => {
     if (!accountId || !valueKey) {
@@ -240,6 +253,8 @@ export function AccountSummarySheet({
           />
         )}
 
+        {tab === 'flow' && cycleError && <Text style={styles.empty}>Couldn't load this card's bill.</Text>}
+
         {tab === 'flow' && cycle && (
           <>
             <Text style={styles.label}>Bill</Text>
@@ -286,7 +301,11 @@ export function AccountSummarySheet({
           </>
         )}
 
-        {tab === 'flow' && (
+        {tab === 'flow' && loadError && (
+          <Text style={styles.empty}>Couldn't load this account's figures.</Text>
+        )}
+
+        {tab === 'flow' && !loadError && (
           <>
             <Text style={[styles.label, cycle && styles.sectionGap]}>Money in and out</Text>
             <View style={styles.flows}>
@@ -332,7 +351,11 @@ export function AccountSummarySheet({
           </>
         )}
 
+        {tab === 'latest' && loadError && (
+          <Text style={styles.empty}>Couldn't load this account's entries.</Text>
+        )}
         {tab === 'latest' &&
+          !loadError &&
           (latest === null ? null : latest.length === 0 ? (
             <Text style={styles.empty}>Nothing recorded against this account yet.</Text>
           ) : (

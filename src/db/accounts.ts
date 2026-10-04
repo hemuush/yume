@@ -341,27 +341,45 @@ export async function unarchiveAccount(id: string): Promise<void> {
  * gets a clear message, not the raw SQLite error from `ON DELETE RESTRICT` on `transactions.account_id`.
  */
 export async function deleteAccount(id: string): Promise<RowSnapshot> {
-  const db0 = await getDb();
-  const valuations = await db0.getFirstAsync<{ total: number }>(
-    'SELECT COUNT(*) AS total FROM account_valuations WHERE account_id = ?',
-    [id]
-  );
-  if ((valuations?.total ?? 0) > 0) {
-    throw new Error(
-      'This account has value updates against it — archive it instead of deleting, so its history stays intact.'
-    );
-  }
-  const count = await getAccountTransactionCount(id);
-  if (count > 0) {
-    throw new Error(
-      `This account has ${count} transaction${count === 1 ? '' : 's'} against it — archive it instead of deleting, so its history stays intact.`
-    );
-  }
   const db = await getDb();
-  const snapshot = await captureRow(db, 'accounts', id);
-  if (!snapshot) throw new Error('This account is already deleted.');
-  await db.runAsync('DELETE FROM accounts WHERE id = ?', [id]);
-  return snapshot;
+  let snapshot: RowSnapshot | null = null;
+  // Every check, the capture and the DELETE share one transaction: an entry (or value update, or repeating
+  // rule) saved between a separate check and the delete can't slip past it.
+  await db.withTransactionAsync(async (tx) => {
+    const valuations = await tx.getFirstAsync<{ total: number }>(
+      'SELECT COUNT(*) AS total FROM account_valuations WHERE account_id = ?',
+      [id]
+    );
+    if ((valuations?.total ?? 0) > 0) {
+      throw new Error(
+        'This account has value updates against it — archive it instead of deleting, so its history stays intact.'
+      );
+    }
+    const countRow = await tx.getFirstAsync<{ total: number }>(
+      'SELECT COUNT(*) as total FROM transactions WHERE account_id = ? OR to_account_id = ?',
+      [id, id]
+    );
+    const count = countRow?.total ?? 0;
+    if (count > 0) {
+      throw new Error(
+        `This account has ${count} transaction${count === 1 ? '' : 's'} against it — archive it instead of deleting, so its history stays intact.`
+      );
+    }
+    // recurring_rules cascade on delete and Undo only restores the account row, so a rule would be lost for good.
+    const rules = await tx.getFirstAsync<{ total: number }>(
+      'SELECT COUNT(*) AS total FROM recurring_rules WHERE account_id = ? OR to_account_id = ?',
+      [id, id]
+    );
+    if ((rules?.total ?? 0) > 0) {
+      throw new Error(
+        'This account has repeating entries set up against it — delete those first, or archive the account instead.'
+      );
+    }
+    snapshot = await captureRow(tx, 'accounts', id);
+    if (!snapshot) throw new Error('This account is already deleted.');
+    await tx.runAsync('DELETE FROM accounts WHERE id = ?', [id]);
+  });
+  return snapshot as unknown as RowSnapshot;
 }
 
 /** Undoes `deleteAccount` — re-inserts the exact row, never a fresh one. */

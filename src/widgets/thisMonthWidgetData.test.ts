@@ -101,6 +101,18 @@ describe('the This Month widget with savings hidden', () => {
     expect(shown).toContain('FREE');
   });
 
+  it('builds the month it is given, not always the real current one', async () => {
+    await setHideSensitiveAmounts(false);
+    const now = new Date();
+    const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 15);
+    // Warm the cache with the real month first: the shared comparison must not leak into another month.
+    const current = await getThisMonthWidgetData(now);
+    const previous = await getThisMonthWidgetData(lastMonth);
+    expect(current.spentMinor).toBe(1000000);
+    expect(previous.spentMinor).toBe(5000000);
+    expect(previous.monthLabel).toBe(lastMonth.toLocaleDateString(undefined, { month: 'long' }));
+  });
+
   it("Suu's widget line stops naming a saved share while hiding is on", async () => {
     await setHideSensitiveAmounts(true);
     for (let i = 0; i < 30; i++) {

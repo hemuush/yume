@@ -38,27 +38,31 @@ const byLabel = (r: ReactTestRenderer, start: string) =>
       typeof n.props.onPress === 'function'
   );
 
+function hero(over: Partial<React.ComponentProps<typeof ThisMonthHero>> = {}) {
+  return (
+    <ThisMonthHero
+      periodKey="month:0"
+      direction={0}
+      title="This month"
+      canStepForward={false}
+      onStep={jest.fn()}
+      incomeMinor={19_605_600}
+      spentMinor={9_576_200}
+      savingsMinor={9_950_000}
+      surplusMinor={79_400}
+      outstandingLoansMinor={231_895_800}
+      suu={{ text: 'Half of September stayed with you.', pose: 'default' }}
+      today={{ spentMinor: 204_500, goalMinor: 500_000 }}
+      pace={{ projectedMinor: 10_370_000, byLabel: '30 Sept' }}
+      {...over}
+    />
+  );
+}
+
 function render(over: Partial<React.ComponentProps<typeof ThisMonthHero>> = {}) {
   let r!: ReactTestRenderer;
   act(() => {
-    r = create(
-      <ThisMonthHero
-        periodKey="month:0"
-        direction={0}
-        title="This month"
-        canStepForward={false}
-        onStep={jest.fn()}
-        incomeMinor={19_605_600}
-        spentMinor={9_576_200}
-        savingsMinor={9_950_000}
-        surplusMinor={79_400}
-        outstandingLoansMinor={231_895_800}
-        suu={{ text: 'Half of September stayed with you.', pose: 'default' }}
-        today={{ spentMinor: 204_500, goalMinor: 500_000 }}
-        pace={{ projectedMinor: 10_370_000, byLabel: '30 Sept' }}
-        {...over}
-      />
-    );
+    r = create(hero(over));
   });
   return r;
 }
@@ -104,6 +108,16 @@ describe('month card', () => {
     );
     expect(all).toEqual(expect.arrayContaining(['Over', 'Over by', '₹10,000']));
     expect(all.filter((t) => t.includes('more went out than came in'))).toHaveLength(1);
+  });
+});
+
+describe('month card, when Home hands it a new Suu line', () => {
+  it('shows the new line rather than the one it first drew', () => {
+    const r = render();
+    expect(texts(r)).toContain('Half of September stayed with you.');
+    act(() => r.update(hero({ suu: { text: 'A quiet week so far.', pose: 'sleepy' } })));
+    expect(texts(r)).toContain('A quiet week so far.');
+    expect(texts(r)).not.toContain('Half of September stayed with you.');
   });
 });
 

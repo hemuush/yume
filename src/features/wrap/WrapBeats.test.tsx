@@ -7,6 +7,18 @@ import { Text } from 'react-native';
 
 jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMock').createReanimatedMock());
 jest.mock('expo-sharing', () => ({ shareAsync: jest.fn(async () => {}) }));
+const mockDeleted: string[] = [];
+jest.mock('expo-file-system', () => ({
+  File: class {
+    uri: string;
+    constructor(uri: string) {
+      this.uri = uri;
+    }
+    delete() {
+      mockDeleted.push(this.uri);
+    }
+  },
+}));
 jest.mock('@/theme/PrivacyContext', () => ({
   usePrivacy: () => ({ hideAmounts: true, toggleHideAmounts: jest.fn() }),
 }));
@@ -144,5 +156,39 @@ describe('beat wording', () => {
       'file:///wrap.png',
       expect.objectContaining({ mimeType: 'image/png' })
     );
+  });
+
+  it('removes the temp picture once it has been shared', async () => {
+    mockDeleted.length = 0;
+    const r = render({ kind: 'final', title: 'That was September.' });
+    const share = r.root.find((n) => n.props.title === 'Share' && n.props.onPress);
+    await act(async () => {
+      await share.props.onPress();
+    });
+    expect(mockDeleted).toEqual(['file:///wrap.png']);
+  });
+
+  it('keeps Share off until the card has faded in, so it never sends a half-transparent picture', async () => {
+    const captureRef = require('react-native-view-shot').captureRef as jest.Mock;
+    captureRef.mockClear();
+    let r!: ReactTestRenderer;
+    act(() => {
+      r = create(
+        <Beat
+          wrap={WRAP}
+          beat={{ kind: 'final', title: 'That was September.' }}
+          still={false}
+          onOpenReport={jest.fn()}
+        />
+      );
+    });
+    const share = () => r.root.find((n) => n.props.title === 'Share' && n.props.onPress);
+    expect(share().props.disabled).toBe(true);
+    await act(async () => {
+      await share().props.onPress();
+    });
+    expect(captureRef).not.toHaveBeenCalled();
+    act(() => jest.advanceTimersByTime(3000));
+    expect(share().props.disabled).toBe(false);
   });
 });

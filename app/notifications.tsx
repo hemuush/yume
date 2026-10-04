@@ -28,6 +28,8 @@ import {
   snoozeBackupReminder,
 } from '@/features/home/needsYouData';
 import { withPressed } from '@/lib/pressed';
+import { errorMessage } from '@/lib/errorMessage';
+import { showAlert } from '@/components/AppDialog';
 import { payCardRoute } from '@/lib/payCard';
 
 /**
@@ -78,11 +80,29 @@ export default function NeedsYouScreen() {
     else router.push('/backup');
   };
 
+  /** Takes an item off the shown list at once; the returned function puts it back where it was. */
+  const hideOptimistically = (item: NeedsYouItem) => {
+    const at = Math.max(0, shown?.findIndex((i) => i.key === item.key) ?? 0);
+    setShown((prev) => prev?.filter((i) => i.key !== item.key) ?? prev);
+    return () =>
+      setShown((prev) =>
+        !prev || prev.some((i) => i.key === item.key) ? prev : [...prev.slice(0, at), item, ...prev.slice(at)]
+      );
+  };
+
   const dismiss = async (item: NeedsYouItem) => {
     haptics.tap();
-    setShown((prev) => prev?.filter((i) => i.key !== item.key) ?? prev);
+    const putBack = hideOptimistically(item);
     setDismissed((prev) => [...prev, item]);
-    await dismissNeedsYou(item.key);
+    try {
+      await dismissNeedsYou(item.key);
+    } catch (e) {
+      // Nothing was saved, so the list goes back to how it was rather than claiming a dismissal.
+      putBack();
+      setDismissed((prev) => prev.filter((i) => i.key !== item.key));
+      showAlert("Couldn't dismiss", errorMessage(e));
+      return;
+    }
     showUndo(`Dismissed ${item.title}`, async () => {
       await restoreNeedsYou(item.key);
       await reload();
@@ -91,13 +111,23 @@ export default function NeedsYouScreen() {
 
   const bringBack = async (item: NeedsYouItem) => {
     haptics.tap();
-    await restoreNeedsYou(item.key);
+    try {
+      await restoreNeedsYou(item.key);
+    } catch (e) {
+      showAlert("Couldn't show it again", errorMessage(e));
+      return;
+    }
     await reload();
   };
 
   const snooze = async (item: NeedsYouItem) => {
-    setShown((prev) => prev?.filter((i) => i.key !== item.key) ?? prev);
-    await snoozeBackupReminder();
+    const putBack = hideOptimistically(item);
+    try {
+      await snoozeBackupReminder();
+    } catch (e) {
+      putBack();
+      showAlert("Couldn't snooze", errorMessage(e));
+    }
   };
 
   return (

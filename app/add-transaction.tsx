@@ -9,13 +9,8 @@ import {
   listAccounts,
   listCategories,
   updateTransaction,
-  deleteTransaction,
-  restoreTransaction,
   getTransactionById,
   getTransactionLink,
-  getFrequentAmountsForCategory,
-  getRepeatEntries,
-  RepeatEntry,
   getLastAccountForCategory,
   findRecentRepeat,
 } from '@/db/ledger';
@@ -53,7 +48,7 @@ import { AmountCard, TransferAccounts, UsualChips, StagedList } from '@/features
 import { errorMessage } from '@/lib/errorMessage';
 import { useOnKeyboardHide } from '@/lib/useOnKeyboardHide';
 import { withPressed } from '@/lib/pressed';
-import { getSplitParts, saveSplit, deleteSplit, restoreSplit } from '@/db/splits';
+import { getSplitParts, saveSplit } from '@/db/splits';
 import {
   DraftPart,
   seedParts,
@@ -64,14 +59,13 @@ import {
 } from '@/features/add/splitDraft';
 import { openSplitSession, takeSplitResult } from '@/features/add/splitSession';
 import { SplitCard } from '@/features/add/SplitCard';
-import { formatTyped, persistStaged, stagedTotals } from '@/features/add/saveEntry';
+import { formatTyped, persistStaged, saveButtonTitle, stagedTotals } from '@/features/add/saveEntry';
+import { confirmDeleteEntry } from '@/features/add/deleteEntry';
+import { useAddSuggestions } from '@/features/add/useAddSuggestions';
+import { useDiscardGuard } from '@/features/add/useDiscardGuard';
 import { showAlert } from '@/components/AppDialog';
 import { useUndoToast } from '@/components/UndoToast';
-import { emitTransactionsChanged } from '@/lib/dataEvents';
 import { spendableAccountsOf } from '@/lib/account';
-
-/** How many "Your usual" chips Add shows. */
-const USUAL_COUNT = 4;
 
 export default function AddTransactionScreen() {
   const insets = useSafeAreaInsets();
@@ -133,8 +127,6 @@ export default function AddTransactionScreen() {
   const [saving, setSaving] = useState(false);
   const [saveDone, setSaveDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [frequentAmounts, setFrequentAmounts] = useState<number[]>([]);
-  const [usual, setUsual] = useState<RepeatEntry[]>([]);
   const [searchFocused, setSearchFocused] = useState(false);
 
   // The pad is up straight away for a new entry (amount comes first); an edit opens without it since often
@@ -163,43 +155,27 @@ export default function AddTransactionScreen() {
   const accountPickedByHand = useRef(false);
 
   const listFade = useFadeIn();
+  // The pending "done → back"; cleared on unmount so a swipe-back in that window can't pop a second screen.
+  const backTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(
+    () => () => {
+      if (backTimer.current) clearTimeout(backTimer.current);
+    },
+    []
+  );
 
   const amountValue = evaluateAmount(expr);
   const amountMinor = amountValue === null ? 0 : toMinor(amountValue);
 
-  // Only expense/income have a "usual amount for this category"; transfers and friend entries (keyed to a
-  // person) don't. Re-fetches on every categoryId change, which is exactly when it differs.
-  useEffect(() => {
-    if ((type !== 'expense' && type !== 'income') || !categoryId) {
-      setFrequentAmounts([]);
-      return;
-    }
-    let cancelled = false;
-    getFrequentAmountsForCategory(categoryId).then((amounts) => {
-      if (!cancelled) setFrequentAmounts(amounts);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [type, categoryId]);
+  const [initialExpr] = useState(expr);
+  const { leave } = useDiscardGuard(
+    !editingId &&
+      !saveDone &&
+      !saving &&
+      (expr !== initialExpr || note.trim() !== '' || rows.length > 0 || splitParts !== null)
+  );
 
-  // "Your usual": the entries of this type logged most in the last 90 days
-  // (category, amount and account together), one tap each. New entries only.
-  useEffect(() => {
-    if (editingId || (type !== 'expense' && type !== 'income')) {
-      setUsual([]);
-      return;
-    }
-    let cancelled = false;
-    getRepeatEntries(USUAL_COUNT, toLocalIsoDate(new Date()), type)
-      .then((entries) => {
-        if (!cancelled) setUsual(entries);
-      })
-      .catch(() => {});
-    return () => {
-      cancelled = true;
-    };
-  }, [type, editingId]);
+  const { frequentAmounts, usual } = useAddSuggestions({ type, categoryId, editingId });
 
   // A new entry's account follows its category (the account that category was last used with) until you
   // pick an account yourself.
@@ -260,7 +236,7 @@ export default function AddTransactionScreen() {
         if (tx.splitId) {
           const parts = await getSplitParts(tx.splitId);
           setSplitParts(
-            draftFromSaved(parts.map((p) => ({ categoryId: p.categoryId!, amountMinor: p.amountMinor })))
+            draftFromSaved(parts.map((p) => ({ categoryId: p.categoryId, amountMinor: p.amountMinor })))
           );
           setExpr(exprFromMinor(parts.reduce((sum, p) => sum + p.amountMinor, 0)));
         }
@@ -465,7 +441,7 @@ export default function AddTransactionScreen() {
   // the delay is purely felt confirmation.
   const goBackAfterSave = () => {
     setSaveDone(true);
-    setTimeout(() => router.back(), 320);
+    backTimer.current = setTimeout(() => router.back(), 320);
   };
 
   const onSaveSplit = async () => {
@@ -596,59 +572,7 @@ export default function AddTransactionScreen() {
 
   const onDelete = () => {
     if (!editing) return;
-    const splitId = editing.splitId;
-    if (splitId) {
-      const count = splitParts?.length ?? 2;
-      showAlert(
-        'Delete this split payment?',
-        `All ${count} parts move to Recently deleted for 30 days. Account balances update right away.`,
-        [
-          { text: 'Cancel', style: 'cancel' },
-          {
-            text: 'Delete',
-            style: 'destructive',
-            onPress: async () => {
-              try {
-                const snapshots = await deleteSplit(splitId);
-                haptics.warn();
-                router.back();
-                showUndo('Split moved to Recently deleted', async () => {
-                  await restoreSplit(snapshots);
-                  emitTransactionsChanged();
-                });
-              } catch (e) {
-                setError(errorMessage(e));
-              }
-            },
-          },
-        ]
-      );
-      return;
-    }
-    showAlert(
-      'Delete this transaction?',
-      'It moves to Recently deleted for 30 days. Account balances update right away.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              const snapshot = await deleteTransaction(editing.id);
-              haptics.warn();
-              router.back();
-              showUndo('Moved to Recently deleted', async () => {
-                await restoreTransaction(snapshot);
-                emitTransactionsChanged();
-              });
-            } catch (e) {
-              setError(errorMessage(e));
-            }
-          },
-        },
-      ]
-    );
+    confirmDeleteEntry({ editing, splitParts: splitParts?.length ?? 2, showUndo, onError: setError });
   };
 
   /** Picks the person just added in the new-person sheet. */
@@ -662,19 +586,14 @@ export default function AddTransactionScreen() {
   };
 
   const title = editing ? 'Edit transaction' : 'Add';
-  const saveTitle = saving
-    ? 'Saving…'
-    : editing
-      ? 'Save changes'
-      : splitParts
-        ? 'Save split'
-        : refund && rows.length === 0
-          ? 'Save refund'
-          : repeatWarning
-            ? 'Save anyway'
-            : rows.length > 0
-              ? `Save ${rows.length} ${rows.length === 1 ? 'entry' : 'entries'}`
-              : 'Save';
+  const saveTitle = saveButtonTitle({
+    saving,
+    editing: !!editing,
+    split: !!splitParts,
+    refund,
+    repeatWarning: !!repeatWarning,
+    rowCount: rows.length,
+  });
   const sum = hasOperator(expr);
   const shownAmount = sum
     ? amountValue === null
@@ -1011,7 +930,7 @@ export default function AddTransactionScreen() {
         visible={repeatSheetVisible}
         onClose={() => setRepeatSheetVisible(false)}
         fromAdd
-        onLogged={() => router.back()}
+        onLogged={() => leave(() => router.back())}
       />
     </View>
   );

@@ -43,7 +43,7 @@ export function RuleRow({
 }) {
   const transfer = rule.type === 'transfer';
   const name = transfer
-    ? `${accountName(rule.accountId)} → ${accountName(rule.toAccountId!)}`
+    ? `${accountName(rule.accountId)} → ${rule.toAccountId ? accountName(rule.toAccountId) : '—'}`
     : (category?.name ?? '—');
   const title = !transfer && rule.note ? `${name} · ${rule.note}` : name;
   const when = `${ruleCadenceLabel(rule)} · Next ${weekdayDayMonth(rule.nextRunDate)}`;

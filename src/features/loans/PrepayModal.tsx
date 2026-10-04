@@ -228,6 +228,9 @@ export function PrepayModal({
     Math.max(0, chargeBaseMinor + Math.round(chargeBaseMinor * (parseFloat(taxPercent || '0') / 100)))
   );
   const taxPreset = TAX_ON_FEE_PRESETS[account.currency];
+  // The balance is shown rounded to a whole rupee, so typing exactly what's shown may sit a few paise above
+  // the exact balance. That means "pay it all off": send the exact balance so the DB's cap isn't tripped.
+  const payMinor = Math.min(amountMinor, loan.outstandingPrincipalMinor);
 
   // What this amount would save, shown before Confirm; same calculation Confirm records (previewPrepayment/
   // planPrepayment) so the reveal can't disagree. Debounced after typing; a slower earlier result is dropped.
@@ -239,7 +242,7 @@ export function PrepayModal({
     }
     let cancelled = false;
     const timer = setTimeout(() => {
-      previewPrepayment(loan.id, amountMinor, toLocalIsoDate(new Date()))
+      previewPrepayment(loan.id, payMinor, toLocalIsoDate(new Date()))
         .then((p) => {
           if (!cancelled) setPreview(p);
         })
@@ -251,7 +254,7 @@ export function PrepayModal({
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [amountMinor, loan.id]);
+  }, [amountMinor, payMinor, loan.id]);
 
   const submit = async () => {
     setError(null);
@@ -259,7 +262,7 @@ export function PrepayModal({
       setError('Enter a valid amount');
       return;
     }
-    if (amountMinor > loan.outstandingPrincipalMinor) {
+    if (amountMinor > roundedMinor(loan.outstandingPrincipalMinor)) {
       setError(
         `Amount can't exceed the outstanding balance of ${formatMoney(roundedMinor(loan.outstandingPrincipalMinor))}`
       );
@@ -268,7 +271,7 @@ export function PrepayModal({
     setSaving(true);
     try {
       const summary = await applyPrepayment(loan.id, {
-        amountMinor,
+        amountMinor: payMinor,
         accountId: account.id,
         categoryId,
         date: toLocalIsoDate(new Date()),

@@ -1,4 +1,5 @@
 import type { LoanPayment } from '@/types';
+import { isUnpaidInstallment } from './installmentStatus';
 
 export interface ScheduleYear {
   year: number;
@@ -21,6 +22,6 @@ export function groupScheduleByYear(schedule: LoanPayment[]): ScheduleYear[] {
 
 /** The year the schedule opens on: the next EMI's, or the last year once everything is paid. */
 export function currentScheduleYear(years: ScheduleYear[]): number | null {
-  const next = years.find((y) => y.payments.some((p) => p.status === 'pending'));
+  const next = years.find((y) => y.payments.some(isUnpaidInstallment));
   return next ? next.year : years.length > 0 ? years[years.length - 1].year : null;
 }

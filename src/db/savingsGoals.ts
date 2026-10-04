@@ -66,7 +66,7 @@ export interface SavingsGoalInput {
 
 function validateInput(input: SavingsGoalInput): void {
   if (!input.name.trim()) throw new Error('Goal name is required');
-  if (!Number.isFinite(input.targetAmountMinor) || input.targetAmountMinor <= 0) {
+  if (!Number.isSafeInteger(input.targetAmountMinor) || input.targetAmountMinor <= 0) {
     throw new Error('Target amount must be a positive amount');
   }
 }
@@ -130,7 +130,7 @@ export async function updateSavingsGoal(id: string, input: SavingsGoalInput): Pr
  * purpose (saving more than planned is valid; the UI caps the displayed percent).
  */
 export async function contributeToGoal(id: string, deltaMinor: number): Promise<void> {
-  if (!Number.isFinite(deltaMinor) || deltaMinor === 0) {
+  if (!Number.isSafeInteger(deltaMinor) || deltaMinor === 0) {
     throw new Error('Enter an amount to add or remove');
   }
   const db = await getDb();
@@ -174,19 +174,25 @@ export async function unarchiveSavingsGoal(id: string): Promise<void> {
  */
 export async function deleteSavingsGoal(id: string): Promise<RowSnapshot> {
   const db = await getDb();
-  const existing = await db.getFirstAsync<{ current_amount_minor: number }>(
-    'SELECT current_amount_minor FROM savings_goals WHERE id = ?',
-    [id]
-  );
-  if (existing && existing.current_amount_minor > 0) {
-    throw new Error(
-      'This goal already has money saved toward it — archive it instead, so its progress stays intact.'
+  let snapshot: RowSnapshot | null = null;
+  // The "nothing saved yet" check, the capture and the delete share one transaction: a contribution landing
+  // in between can't be deleted along with the goal.
+  await db.withTransactionAsync(async (tx) => {
+    const existing = await tx.getFirstAsync<{ current_amount_minor: number }>(
+      'SELECT current_amount_minor FROM savings_goals WHERE id = ?',
+      [id]
     );
-  }
-  const snapshot = await captureRow(db, 'savings_goals', id);
-  if (!snapshot) throw new Error('This goal is already deleted.');
-  await db.runAsync('DELETE FROM savings_goals WHERE id = ?', [id]);
-  return snapshot;
+    if (existing && existing.current_amount_minor > 0) {
+      throw new Error(
+        'This goal already has money saved toward it — archive it instead, so its progress stays intact.'
+      );
+    }
+    const captured = await captureRow(tx, 'savings_goals', id);
+    if (!captured) throw new Error('This goal is already deleted.');
+    await tx.runAsync('DELETE FROM savings_goals WHERE id = ?', [id]);
+    snapshot = captured;
+  });
+  return snapshot as unknown as RowSnapshot;
 }
 
 /** Undoes `deleteSavingsGoal` — re-inserts the exact row, never a fresh one. */

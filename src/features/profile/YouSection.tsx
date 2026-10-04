@@ -20,6 +20,7 @@ import { AddButton } from '@/components/AddButton';
 import { theme } from '@/constants/theme';
 import { useAccent } from '@/theme/AccentContext';
 import { usePrivacy } from '@/theme/PrivacyContext';
+import { formatMaskableMoney } from '@/lib/money';
 import { useFadeIn } from '@/lib/useFadeIn';
 import { useScreenLoad } from '@/lib/useScreenLoad';
 import { usePressScale } from '@/lib/usePressScale';
@@ -144,6 +145,7 @@ export function YouSection() {
       untrackedAssetLoan={hasUntrackedAssetLoan}
       hasLoans={hasLoans}
       masked={masked}
+      currency={defaultCurrency}
       embedded={embedded}
     />
   );
@@ -233,6 +235,7 @@ export function YouSection() {
               onPress={() => setArchivedOpen((v) => !v)}
               accessibilityRole="button"
               accessibilityState={{ expanded: archivedOpen }}
+              accessibilityLabel={`Archived accounts, ${archivedAccounts.length}. ${archivedOpen ? 'Hide' : 'Show'}`}
             >
               <View style={[h.iconTile, { backgroundColor: theme.colors.surfaceAlt }]}>
                 <MaterialCommunityIcons name="archive-outline" size={17} color={theme.colors.ink} />
@@ -318,7 +321,13 @@ function AccountRow({
   onPress: (account: Account) => void;
 }) {
   const { accent } = useAccent();
+  const { hideAmounts } = usePrivacy();
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.98);
+  const kind = account.investment ? 'Savings, tracked' : ACCOUNT_TYPE_LABEL[account.type];
+  const balance = formatMaskableMoney(minor, {
+    currency: account.currency,
+    masked: hideAmounts && account.type === 'savings',
+  });
   return (
     <AnimatedPressable
       style={[h.row, divider && h.divider, archived && styles.archivedDim, animatedStyle]}
@@ -326,6 +335,8 @@ function AccountRow({
       onPressIn={onPressIn}
       onPressOut={onPressOut}
       accessibilityRole="button"
+      accessibilityLabel={`${account.name}, ${kind}${archived ? ', archived' : ''}, ${balance}`}
+      accessibilityHint="Edit account"
     >
       <CategoryIcon name={accountIcon(account.type)} color={accountBadgeColor(account.type, accent)} />
       <View style={h.mid}>

@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, ReactNode } from 'react';
 import { getAppLockEnabled, setAppLockEnabled } from '@/db/settings';
 
 interface AppLockContextValue {
@@ -26,14 +26,14 @@ export function AppLockProvider({ children }: { children: ReactNode }) {
       .catch(() => {});
   }, []);
 
-  const setLockEnabled = (enabled: boolean) => {
+  const setLockEnabled = useCallback((enabled: boolean) => {
     setLockEnabledState(enabled);
     void setAppLockEnabled(enabled);
-  };
+  }, []);
 
-  return (
-    <AppLockContext.Provider value={{ lockEnabled, setLockEnabled }}>{children}</AppLockContext.Provider>
-  );
+  const value = useMemo(() => ({ lockEnabled, setLockEnabled }), [lockEnabled, setLockEnabled]);
+
+  return <AppLockContext.Provider value={value}>{children}</AppLockContext.Provider>;
 }
 
 export function useAppLock(): AppLockContextValue {

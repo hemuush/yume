@@ -10,6 +10,8 @@ import { haptics } from '@/lib/haptics';
 import type { LoanPayment } from '@/types';
 import { styles as shared } from './loans.styles';
 import { groupScheduleByYear, currentScheduleYear } from './scheduleYears';
+import { isOverdueInstallment, nextUnpaidInstallment } from './installmentStatus';
+import { toLocalIsoDate } from '@/lib/date';
 
 function Marker({ status, isNext }: { status: LoanPayment['status']; isNext: boolean }) {
   if (status === 'paid' || status === 'prepaid') {
@@ -28,9 +30,8 @@ function Marker({ status, isNext }: { status: LoanPayment['status']; isNext: boo
  */
 export function LoanSchedule({ schedule }: { schedule: LoanPayment[] }) {
   const years = groupScheduleByYear(schedule);
-  const nextId = schedule
-    .filter((p) => p.status === 'pending')
-    .sort((a, b) => a.installmentNumber - b.installmentNumber)[0]?.id;
+  const nextId = nextUnpaidInstallment(schedule)?.id;
+  const todayIso = toLocalIsoDate(new Date());
   const [toggled, setToggled] = useState<Record<number, boolean>>({});
   const startYear = currentScheduleYear(years);
 
@@ -69,6 +70,7 @@ export function LoanSchedule({ schedule }: { schedule: LoanPayment[] }) {
                   p.emiAmountMinor
                 );
                 const isNext = p.id === nextId;
+                const overdue = isOverdueInstallment(p, todayIso);
                 return (
                   <View key={p.id} style={[shared.scheduleRow, styles.row, isNext && styles.rowNext]}>
                     <Marker status={p.status} isNext={isNext} />
@@ -82,9 +84,11 @@ export function LoanSchedule({ schedule }: { schedule: LoanPayment[] }) {
                     </View>
                     <View style={{ alignItems: 'flex-end' }}>
                       <Text style={shared.rowValue}>{formatMoney(p.emiAmountMinor)}</Text>
-                      {isNext ? (
+                      {overdue ? (
+                        <Text style={[shared.statusTag, styles.overdueTag]}>Overdue</Text>
+                      ) : isNext ? (
                         <Text style={[shared.statusTag, styles.nextTag]}>Next</Text>
-                      ) : p.status === 'overdue' || p.status === 'prepaid' ? (
+                      ) : p.status === 'prepaid' ? (
                         <Text style={shared.statusTag}>{p.status}</Text>
                       ) : null}
                     </View>
@@ -120,5 +124,6 @@ const styles = StyleSheet.create({
   markerPaid: { backgroundColor: theme.colors.incomeTint },
   markerNext: { borderWidth: 2, borderColor: theme.colors.primary },
   markerFuture: { borderWidth: 1.5, borderColor: theme.colors.borderSoft },
+  overdueTag: { color: theme.colors.expenseText, backgroundColor: theme.colors.expenseTint },
   nextTag: { color: theme.colors.textPrimary, backgroundColor: theme.colors.surface },
 });

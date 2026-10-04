@@ -8,6 +8,13 @@ import { getDb } from './client';
 // SQLite ROUND is half-away-from-zero, matching how amounts are displayed.
 const ROUND_TO_RUPEE = (col: string) => `CAST(ROUND(${col} / 100.0) AS INTEGER) * 100`;
 
+/**
+ * Ledger entries safe to round: not tied to a loan, and not an EMI payment (those are linked from the other side,
+ * via loan_payments.transaction_id, and carry the exact paise that make the schedule sum to the principal).
+ */
+const ROUNDABLE_TRANSACTION = `loan_id IS NULL AND loan_payment_id IS NULL
+  AND NOT EXISTS (SELECT 1 FROM loan_payments lp WHERE lp.transaction_id = transactions.id)`;
+
 export interface RoundAmountsResult {
   transactions: number;
   accounts: number;
@@ -35,7 +42,7 @@ const ROUNDED_ROWS: {
     key: 'transactions',
     table: 'transactions',
     columns: ['amount_minor'],
-    where: 'amount_minor % 100 != 0 AND loan_id IS NULL AND loan_payment_id IS NULL',
+    where: `amount_minor % 100 != 0 AND ${ROUNDABLE_TRANSACTION}`,
   },
   {
     key: 'accounts',
@@ -102,6 +109,9 @@ export async function roundLedgerAmountsToWholeRupees(): Promise<RoundAmountsOut
   const db = await getDb();
   const before = await countFractionalLedgerAmounts();
   const originals: { table: string; columns: string[]; rows: Record<string, number | null>[] }[] = [];
+  // What each rounded row holds right after rounding, by table then id — undo only reverts a value that is
+  // still exactly this, so an amount edited since then is never overwritten by the stale original.
+  const rounded = new Map<string, Map<unknown, Record<string, number | null>>>();
 
   await db.withTransactionAsync(async (tx) => {
     for (const { table, columns, where } of ROUNDED_ROWS) {
@@ -115,7 +125,7 @@ export async function roundLedgerAmountsToWholeRupees(): Promise<RoundAmountsOut
     await tx.runAsync(
       `UPDATE transactions
          SET amount_minor = MAX(100, ${ROUND_TO_RUPEE('amount_minor')})
-       WHERE amount_minor % 100 != 0 AND loan_id IS NULL AND loan_payment_id IS NULL`
+       WHERE amount_minor % 100 != 0 AND ${ROUNDABLE_TRANSACTION}`
     );
     await tx.runAsync(
       `UPDATE accounts
@@ -148,16 +158,36 @@ export async function roundLedgerAmountsToWholeRupees(): Promise<RoundAmountsOut
          SET limit_amount_minor = ${ROUND_TO_RUPEE('limit_amount_minor')}
        WHERE limit_amount_minor % 100 != 0`
     );
+    for (const { table, columns, rows } of originals) {
+      const after = new Map<unknown, Record<string, number | null>>();
+      for (let i = 0; i < rows.length; i += 500) {
+        const ids = rows.slice(i, i + 500).map((r) => r.id);
+        const current = await tx.getAllAsync<Record<string, number | null>>(
+          `SELECT id, ${columns.join(', ')} FROM ${table} WHERE id IN (${ids.map(() => '?').join(', ')})`,
+          ids as any[]
+        );
+        for (const r of current) after.set(r.id, r);
+      }
+      rounded.set(table, after);
+    }
   });
 
   const undo = async () => {
     await db.withTransactionAsync(async (tx) => {
       for (const { table, columns, rows } of originals) {
+        const after = rounded.get(table);
         for (const row of rows) {
-          await tx.runAsync(`UPDATE ${table} SET ${columns.map((c) => `${c} = ?`).join(', ')} WHERE id = ?`, [
-            ...columns.map((c) => row[c]),
-            row.id,
-          ]);
+          const roundedRow = after?.get(row.id);
+          if (!roundedRow) continue;
+          for (const c of columns) {
+            // Only put back a value that is still the rounded one; a later edit wins.
+            if (row[c] === roundedRow[c]) continue;
+            await tx.runAsync(`UPDATE ${table} SET ${c} = ? WHERE id = ? AND ${c} IS ?`, [
+              row[c],
+              row.id,
+              roundedRow[c],
+            ]);
+          }
         }
       }
     });

@@ -155,12 +155,14 @@ const summary = (breakdown: ReturnType<typeof cat>[], income: ReturnType<typeof 
   categoryBreakdown: breakdown,
   incomeBreakdown: income,
 });
+// A period with money in and nothing spent.
+const mockIncomeOnly = { current: false };
 jest.mock('@/db/reports', () => ({
   ...jest.requireActual('@/db/reports'),
   getRangeComparison: async () => ({
     period: 'month',
     current: summary(
-      [cat('rent', 'Rent', 1800000), cat('food', 'Food', 620000)],
+      mockIncomeOnly.current ? [] : [cat('rent', 'Rent', 1800000), cat('food', 'Food', 620000)],
       [cat('prev', 'Previous', 9200000), cat('salary', 'Salary', 7500000)]
     ),
     previous: summary([cat('rent', 'Rent', 1800000), cat('food', 'Food', 410000)]),
@@ -592,6 +594,29 @@ describe('Reports screen', () => {
       await pressText(tree, 'Credit card');
       expect(texts(tree)).toContain('Top categories');
       expect(texts(tree)).not.toContain('Open Credit card ›');
+    });
+  });
+
+  describe('a period with income but no spending', () => {
+    afterEach(() => {
+      mockIncomeOnly.current = false;
+    });
+
+    it('still shows the summary, the lenses and the income breakdown', async () => {
+      mockIncomeOnly.current = true;
+      const tree = await render();
+      expect(texts(tree)).toEqual(expect.arrayContaining(['Days', 'Categories', 'Trends']));
+      expect(texts(tree).some((t) => t.startsWith('Spent in '))).toBe(true);
+      await pressText(tree, 'Categories');
+      await pressText(tree, 'Income');
+      expect(texts(tree)).toEqual(expect.arrayContaining(['Where it came from', 'Salary']));
+    });
+
+    it('says there is no spending, not no income, on the Spending side', async () => {
+      mockIncomeOnly.current = true;
+      const tree = await render();
+      await pressText(tree, 'Categories');
+      expect(texts(tree).some((t) => t.startsWith('No spending in '))).toBe(true);
     });
   });
 

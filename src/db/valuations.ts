@@ -89,23 +89,28 @@ export async function addValuation(
   ]);
   if (!account) throw new Error('Account not found');
   if (!account.tracked) throw new Error('Turn on "Track its value" for this account first.');
-  const existing = await db.getFirstAsync<{ id: string }>(
-    'SELECT id FROM account_valuations WHERE account_id = ? AND date = ?',
-    [accountId, input.date]
-  );
-  if (existing) {
-    await db.runAsync('UPDATE account_valuations SET value_minor = ? WHERE id = ?', [
-      input.valueMinor,
-      existing.id,
-    ]);
-    return getValuation(existing.id);
-  }
-  const id = newId();
-  await db.runAsync(
-    'INSERT INTO account_valuations (id, account_id, date, value_minor) VALUES (?, ?, ?, ?)',
-    [id, accountId, input.date, input.valueMinor]
-  );
-  return getValuation(id);
+  // Check-then-write in one transaction, so two quick saves for the same day can't both insert.
+  let savedId = '';
+  await db.withTransactionAsync(async (tx) => {
+    const existing = await tx.getFirstAsync<{ id: string }>(
+      'SELECT id FROM account_valuations WHERE account_id = ? AND date = ?',
+      [accountId, input.date]
+    );
+    if (existing) {
+      await tx.runAsync('UPDATE account_valuations SET value_minor = ? WHERE id = ?', [
+        input.valueMinor,
+        existing.id,
+      ]);
+      savedId = existing.id;
+      return;
+    }
+    savedId = newId();
+    await tx.runAsync(
+      'INSERT INTO account_valuations (id, account_id, date, value_minor) VALUES (?, ?, ?, ?)',
+      [savedId, accountId, input.date, input.valueMinor]
+    );
+  });
+  return getValuation(savedId);
 }
 
 export async function updateValuation(
@@ -119,25 +124,30 @@ export async function updateValuation(
     [id]
   );
   if (!current) throw new Error('That value update no longer exists.');
-  const clash = await db.getFirstAsync<{ id: string }>(
-    'SELECT id FROM account_valuations WHERE account_id = ? AND date = ? AND id != ?',
-    [current.account_id, input.date, id]
-  );
-  if (clash) throw new Error('You already have a value update for that date — edit that one instead.');
-  await db.runAsync('UPDATE account_valuations SET date = ?, value_minor = ? WHERE id = ?', [
-    input.date,
-    input.valueMinor,
-    id,
-  ]);
+  await db.withTransactionAsync(async (tx) => {
+    const clash = await tx.getFirstAsync<{ id: string }>(
+      'SELECT id FROM account_valuations WHERE account_id = ? AND date = ? AND id != ?',
+      [current.account_id, input.date, id]
+    );
+    if (clash) throw new Error('You already have a value update for that date — edit that one instead.');
+    await tx.runAsync('UPDATE account_valuations SET date = ?, value_minor = ? WHERE id = ?', [
+      input.date,
+      input.valueMinor,
+      id,
+    ]);
+  });
   return getValuation(id);
 }
 
 export async function deleteValuation(id: string): Promise<RowSnapshot> {
   const db = await getDb();
-  const snapshot = await captureRow(db, 'account_valuations', id);
-  if (!snapshot) throw new Error('That value update is already deleted.');
-  await db.runAsync('DELETE FROM account_valuations WHERE id = ?', [id]);
-  return snapshot;
+  let snapshot: RowSnapshot | null = null;
+  await db.withTransactionAsync(async (tx) => {
+    snapshot = await captureRow(tx, 'account_valuations', id);
+    if (!snapshot) throw new Error('That value update is already deleted.');
+    await tx.runAsync('DELETE FROM account_valuations WHERE id = ?', [id]);
+  });
+  return snapshot as unknown as RowSnapshot;
 }
 
 /** Undoes `deleteValuation` — re-inserts the exact row. */

@@ -70,6 +70,9 @@ import { onTransactionsChanged } from '@/lib/dataEvents';
 import { errorMessage } from '@/lib/errorMessage';
 import { payCardRoute } from '@/lib/payCard';
 
+/** Home shows this many of the period's latest entries; fetch no more than that. */
+const RECENT_ROWS = 4;
+
 export default function DashboardScreen() {
   const insets = useSafeAreaInsets();
   const { hideAmounts } = usePrivacy();
@@ -180,7 +183,7 @@ export default function DashboardScreen() {
       const range = periodRange(c);
       return Promise.all([
         // Scoped to the navigator's period; unscoped most-recent rows contradicted the selected month/year.
-        listTransactions({ fromDate: range.start, toDate: range.end, limit: 30 }),
+        listTransactions({ fromDate: range.start, toDate: range.end, limit: RECENT_ROWS }),
         getRangeComparison(range, previousPeriodRange(c), c.granularity),
         getCarryInMinor(range.start, hideAmounts),
       ]);
@@ -269,13 +272,13 @@ export default function DashboardScreen() {
         // A defaulted loan is still real money owed (or owed to you) — only a
         // 'closed' loan (fully paid off) should ever drop out of these totals.
         setLoans(ln.filter((l) => l.status !== 'closed'));
-        setRecurringRules(
-          hideAmounts
-            ? rules.filter(
-                (r) => !isSavingsEntry(r, new Map(cats.map((c) => [c.id, c])), savingsAccountIdsOf(accs))
-              )
-            : rules
-        );
+        if (hideAmounts) {
+          const catById = new Map(cats.map((cat) => [cat.id, cat]));
+          const savingsIds = savingsAccountIdsOf(accs);
+          setRecurringRules(rules.filter((r) => !isSavingsEntry(r, catById, savingsIds)));
+        } else {
+          setRecurringRules(rules);
+        }
         setLoanProgress(progress);
         setCardBills(cycles);
         setUserNameState(name);
@@ -378,12 +381,13 @@ export default function DashboardScreen() {
   // "Saved" = income not spent (in any account), so savers who sweep cash into a pot don't read 0%. The
   // spend-up nudge is folded into Suu's line (see suuLine's comment for why it takes priority).
   const savingsPct = savingsRatePct(dispIncome - dispExpense, dispIncome);
-  const suu = suuLine(
-    savingsPct,
-    expenseChangePct ?? null,
-    topGrowing?.name ?? null,
-    new Date().getHours(),
-    hideAmounts
+  // Memoised: the line is picked at random, so recomputing it every render would reshuffle it on each re-render.
+  const topGrowingName = topGrowing?.name ?? null;
+  const changePct = expenseChangePct ?? null;
+  const hour = new Date().getHours();
+  const suu = useMemo(
+    () => suuLine(savingsPct, changePct, topGrowingName, hour, hideAmounts),
+    [savingsPct, changePct, topGrowingName, hour, hideAmounts]
   );
 
   const upcoming = buildUpcomingItems({
@@ -509,7 +513,7 @@ export default function DashboardScreen() {
               />
             ) : (
               <View style={[screenStyles.card, screenStyles.cardLifted]}>
-                {recent.slice(0, 4).map((tx, i) => (
+                {recent.slice(0, RECENT_ROWS).map((tx, i) => (
                   <Animated.View key={tx.id} entering={rowEntering(i)} layout={ROW_LAYOUT} exiting={ROW_EXIT}>
                     <RecentTransactionRow
                       tx={tx}

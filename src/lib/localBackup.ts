@@ -1,5 +1,11 @@
 import { StorageAccessFramework } from 'expo-file-system/legacy';
-import { buildBackupSnapshot, BackupSnapshot, BackupSummary, summarizeSnapshot } from './backup';
+import {
+  buildBackupSnapshot,
+  BackupSnapshot,
+  BackupSummary,
+  summarizeSnapshot,
+  isTooLargeForBackup,
+} from './backup';
 import { toLocalIsoDate } from './date';
 import { withoutRelock } from './appLock';
 import { readBackupIndex, writeBackupIndex, rememberBackupFile, BackupIndex } from './backupIndex';
@@ -57,9 +63,11 @@ export function backupFileDate(uri: string): string | null {
 
 /** Our backup files among `uris`, oldest first: by the day in the name, then by name so a " (1)" copy follows its original. */
 function backupFilesOldestFirst(uris: string[]): string[] {
+  // backupFileDate is null for a URI that doesn't decode, so those drop out before the name is ever decoded.
   return uris
-    .map((uri) => ({ uri, date: backupFileDate(uri), name: decodeURIComponent(uri) }))
-    .filter((f): f is { uri: string; date: string; name: string } => f.date !== null)
+    .map((uri) => ({ uri, date: backupFileDate(uri) }))
+    .filter((f): f is { uri: string; date: string } => f.date !== null)
+    .map((f) => ({ ...f, name: decodeURIComponent(f.uri) }))
     .sort((a, b) => (a.date === b.date ? (a.name < b.name ? -1 : 1) : a.date < b.date ? -1 : 1))
     .map((f) => f.uri);
 }
@@ -205,7 +213,12 @@ export async function listLocalBackups(
   directoryUri: string,
   limit = KEEP_DAILY_BACKUPS
 ): Promise<LocalBackupFile[]> {
-  const uris = await StorageAccessFramework.readDirectoryAsync(directoryUri);
+  let uris: string[];
+  try {
+    uris = await StorageAccessFramework.readDirectoryAsync(directoryUri);
+  } catch {
+    return []; // the folder is gone or its permission was revoked — no list, not an error
+  }
   const backups = backupFilesOldestFirst(uris).reverse().slice(0, limit);
   const index = await readBackupIndex();
   const kept: BackupIndex = {};
@@ -243,5 +256,8 @@ export async function listLocalBackups(
  * the user (the restore preview) before calling restoreFromSnapshot.
  */
 export async function readLocalBackup(uri: string): Promise<BackupSnapshot> {
-  return JSON.parse(await StorageAccessFramework.readAsStringAsync(uri));
+  const content = await StorageAccessFramework.readAsStringAsync(uri);
+  // Same ceiling the file picker applies: parsing something this large could exhaust memory.
+  if (isTooLargeForBackup(content.length)) throw new Error('This file is too large to be a Yume backup.');
+  return JSON.parse(content);
 }

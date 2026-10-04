@@ -18,8 +18,39 @@ jest.mock('expo-router', () => ({
 jest.mock('@/components/AppHeader', () => ({ AppHeader: () => null }));
 jest.mock('@/features/backup/RestorePreviewSheet', () => ({ RestorePreviewSheet: () => null }));
 jest.mock('@/lib/restoreSync', () => ({ resyncAfterRestore: jest.fn(async () => {}) }));
-jest.mock('expo-file-system', () => ({ File: jest.fn(), Paths: { document: 'documents' } }));
-jest.mock('expo-sharing', () => ({}));
+// A stand-in File that remembers what was written and whether it was deleted, so a test can see that the
+// temporary export never outlives the share.
+const mockCreated: { name: string; deleted: boolean; content?: unknown }[] = [];
+jest.mock('expo-file-system', () => ({
+  Paths: { document: 'documents' },
+  File: class {
+    record: { name: string; deleted: boolean; content?: unknown };
+    uri: string;
+    constructor(_dir: unknown, name?: string) {
+      this.uri = `file://documents/${name}`;
+      this.record = { name: name ?? '', deleted: false };
+    }
+    get exists() {
+      return !this.record.deleted;
+    }
+    create() {
+      mockCreated.push(this.record);
+    }
+    write(content: unknown) {
+      this.record.content = content;
+    }
+    delete() {
+      this.record.deleted = true;
+    }
+  },
+}));
+const mockSharing = { isAvailableAsync: jest.fn(async () => true), shareAsync: jest.fn(async () => {}) };
+// Read lazily: the imports below run before `mockSharing` is initialised.
+jest.mock('expo-sharing', () => ({
+  isAvailableAsync: () => mockSharing.isAvailableAsync(),
+  shareAsync: (...args: unknown[]) => (mockSharing.shareAsync as (...a: unknown[]) => unknown)(...args),
+}));
+jest.mock('@/components/AppDialog', () => ({ showAlert: jest.fn() }));
 jest.mock('expo-document-picker', () => ({}));
 jest.mock('@/lib/backup', () => ({
   buildBackupSnapshot: jest.fn(),
@@ -94,6 +125,9 @@ beforeAll(async () => {
 
 beforeEach(() => {
   jest.clearAllMocks();
+  mockCreated.length = 0;
+  mockSharing.isAvailableAsync.mockResolvedValue(true);
+  mockSharing.shareAsync.mockResolvedValue(undefined);
   mockState.folder = null;
   mockState.files = [];
   mockState.lastAt = null;
@@ -184,5 +218,50 @@ describe('Backup & restore · save a copy', () => {
     expect(shown).toContain('Full backup (JSON)');
     expect(shown).toContain('Excel workbook');
     expect(shown).not.toContain('Restore from file');
+  });
+});
+
+describe('Backup & restore · the temporary export file', () => {
+  const openCopyTab = async () => {
+    const tree = await render();
+    const tabs = tree.root.find(
+      (n) => n.props.options?.[0]?.value === 'points' && typeof n.props.onChange === 'function'
+    );
+    act(() => tabs.props.onChange('copy'));
+    return tree;
+  };
+  const exportJson = async (tree: ReactTestRenderer) => {
+    const row = tree.root.find(
+      (n) => n.props.label === 'Full backup (JSON)' && typeof n.props.onPress === 'function'
+    );
+    await act(async () => {
+      await row.props.onPress();
+    });
+  };
+
+  beforeEach(() => {
+    const { buildBackupSnapshot } = jest.requireMock('@/lib/backup');
+    buildBackupSnapshot.mockResolvedValue({ version: 1 });
+  });
+
+  it('is deleted once the share sheet has closed', async () => {
+    await exportJson(await openCopyTab());
+    expect(mockSharing.shareAsync).toHaveBeenCalledTimes(1);
+    expect(mockCreated).toHaveLength(1);
+    expect(mockCreated[0].deleted).toBe(true);
+  });
+
+  it('is deleted even when sharing fails', async () => {
+    mockSharing.shareAsync.mockRejectedValue(new Error('no share target'));
+    await exportJson(await openCopyTab());
+    expect(mockCreated).toHaveLength(1);
+    expect(mockCreated[0].deleted).toBe(true);
+  });
+
+  it('is deleted when sharing is not available at all', async () => {
+    mockSharing.isAvailableAsync.mockResolvedValue(false);
+    await exportJson(await openCopyTab());
+    expect(mockSharing.shareAsync).not.toHaveBeenCalled();
+    expect(mockCreated[0].deleted).toBe(true);
   });
 });

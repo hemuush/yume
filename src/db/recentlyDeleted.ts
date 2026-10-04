@@ -72,7 +72,9 @@ export async function listDeletedEntries(now: Date = new Date()): Promise<Delete
   for (const r of rows) {
     let row: TransactionRow;
     try {
-      row = JSON.parse(r.snapshot) as TransactionRow;
+      const parsed = JSON.parse(r.snapshot);
+      if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) continue;
+      row = parsed as TransactionRow;
     } catch {
       continue; // A damaged snapshot can't be shown or restored; the 30-day purge clears it.
     }
@@ -114,7 +116,14 @@ export async function restoreDeletedEntry(id: string): Promise<void> {
     [id]
   );
   if (!kept) throw new Error('This entry is no longer in Recently deleted.');
-  const row = JSON.parse(kept.snapshot) as RowSnapshot['row'];
+  let row: RowSnapshot['row'];
+  try {
+    const parsed = JSON.parse(kept.snapshot);
+    if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) throw new Error('not a row');
+    row = parsed as RowSnapshot['row'];
+  } catch {
+    throw new Error('This entry is damaged and can no longer be restored.');
+  }
   await db.withTransactionAsync(async (tx) => {
     const exists = await tx.getFirstAsync<{ id: string }>('SELECT id FROM transactions WHERE id = ?', [id]);
     if (!exists) await restoreRow(tx, { table: 'transactions', row });

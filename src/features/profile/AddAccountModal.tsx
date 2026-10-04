@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { View } from 'react-native';
 import { Text } from '@/components/Text';
 import { createAccount } from '@/db/ledger';
@@ -44,6 +44,9 @@ export function AddAccountModal({
   const [currency, setCurrency] = useState('INR');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Set once createAccount succeeds so a retry after a failed valuation only retries the valuation rather
+  // than creating a duplicate account.
+  const createdId = useRef<string | null>(null);
 
   // Defaults to the app currency each time the modal opens but stays changeable: a foreign account needs its
   // own currency at creation, since it can't be changed once transactions exist.
@@ -63,6 +66,22 @@ export function AddAccountModal({
     setDueDay('');
     setTracked(false);
     setWorth('');
+    setError(null);
+    createdId.current = null;
+    getDefaultCurrency()
+      .then(setCurrency)
+      .catch(() => setCurrency('INR'));
+  };
+
+  // Closing after the account was created but its valuation failed: the account exists, so refresh the list
+  // and start clean instead of leaving a half-done form that would create a duplicate on reopen.
+  const close = () => {
+    const partial = createdId.current !== null;
+    if (partial) {
+      reset();
+      onCreated();
+    }
+    onClose();
   };
 
   const submit = async () => {
@@ -94,18 +113,21 @@ export function AddAccountModal({
     }
     setSaving(true);
     try {
-      const created = await createAccount({
-        name: name.trim(),
-        type,
-        currency,
-        openingBalanceMinor,
-        creditLimitMinor,
-        statementDay: days.statementDay,
-        dueDay: days.dueDay,
-        tracked: tracking,
-      });
+      if (createdId.current === null) {
+        const created = await createAccount({
+          name: name.trim(),
+          type,
+          currency,
+          openingBalanceMinor,
+          creditLimitMinor,
+          statementDay: days.statementDay,
+          dueDay: days.dueDay,
+          tracked: tracking,
+        });
+        createdId.current = created.id;
+      }
       if (worthMinor !== null) {
-        await addValuation(created.id, { date: toLocalIsoDate(new Date()), valueMinor: worthMinor });
+        await addValuation(createdId.current, { date: toLocalIsoDate(new Date()), valueMinor: worthMinor });
       }
       reset();
       onCreated();
@@ -123,7 +145,7 @@ export function AddAccountModal({
   return (
     <ModalSheet
       visible={visible}
-      onClose={onClose}
+      onClose={close}
       footer={
         <View style={f.footerCol}>
           {error && <Text style={styles.errorText}>{error}</Text>}

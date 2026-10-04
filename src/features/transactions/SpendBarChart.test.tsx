@@ -54,6 +54,15 @@ describe('SpendBarChart week', () => {
     expect(note).toHaveLength(0);
   });
 
+  it('reads a bar aloud with its amount formatted as money, not a raw number', () => {
+    const { r } = chart(null);
+    const labels = r.root
+      .findAll((n) => n.props.accessibilityRole === 'button' && !!n.props.onPress)
+      .map((n) => n.props.accessibilityLabel as string);
+    expect(labels[0]).toMatch(/, spent ₹13484$/);
+    expect(labels[1]).toMatch(/, spent ₹175$/);
+  });
+
   it('still reports a tap on a real day, and ignores the placeholder days', () => {
     const { r, onPressDay } = chart(null);
     const buttons = r.root.findAll((n) => n.props.accessibilityRole === 'button' && !!n.props.onPress);
