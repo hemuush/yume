@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View, Pressable } from 'react-native';
-import { Text, TextInput } from '@/components/Text';
+import { Text } from '@/components/Text';
 import { KeyboardAwareScrollView, KeyboardStickyView } from 'react-native-keyboard-controller';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -26,12 +26,7 @@ import { haptics } from '@/lib/haptics';
 import { AppHeader } from '@/components/AppHeader';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { CategoryPicker } from '@/components/CategoryPicker';
-import { ModalSheet } from '@/components/ModalSheet';
 import { SoftCard } from '@/components/SoftCard';
-import { CalendarSheet } from '@/components/CalendarSheet';
-import { AddAccountModal } from '@/features/profile/AddAccountModal';
-import { AddPersonModal } from '@/features/people/AddPersonModal';
-import { RepeatEntrySheet } from '@/features/home/RepeatEntrySheet';
 import { styles } from '@/features/add/add.styles';
 import {
   EntryType,
@@ -43,7 +38,9 @@ import {
 } from '@/features/add/addEntry';
 import { applyPadKey, evaluateAmount, exprFromMinor, hasOperator, PadKey } from '@/lib/padMath';
 import { AmountPad } from '@/components/AmountPad';
-import { AccountTile, Totals, FriendFields, DetailBar, DetailChip } from '@/features/add/AddFields';
+import { Totals, FriendFields } from '@/features/add/AddFields';
+import { AddDetailRow } from '@/features/add/AddDetailRow';
+import { AddSheets } from '@/features/add/AddSheets';
 import { AmountCard, TransferAccounts, UsualChips, StagedList } from '@/features/add/AddSections';
 import { errorMessage } from '@/lib/errorMessage';
 import { useOnKeyboardHide } from '@/lib/useOnKeyboardHide';
@@ -803,71 +800,28 @@ export default function AddTransactionScreen() {
             <Totals label="Net" value={totals.income - totals.expense} color={theme.colors.textPrimary} />
           </View>
         )}
-        {noteEditing ? (
-          <TextInput
-            value={note}
-            onChangeText={setNote}
-            placeholder="e.g. Lunch with team"
-            placeholderTextColor={theme.colors.textMuted}
-            style={styles.noteInput}
-            autoFocus
-            returnKeyType="done"
-            onSubmitEditing={() => setNoteEditing(false)}
-            onBlur={() => setNoteEditing(false)}
-            accessibilityLabel="Note"
-          />
-        ) : (
-          <DetailBar>
-            {(type === 'expense' || type === 'income') && effectiveAccount && (
-              <DetailChip
-                icon="credit-card"
-                label={effectiveAccount.name}
-                onPress={() => setAccountSheetOpen(true)}
-                accessibilityLabel={`Account, ${effectiveAccount.name}. Change`}
-              />
-            )}
-            <DetailChip
-              icon="calendar"
-              label={date === today ? 'Today' : date === yesterday ? 'Yesterday' : dateChipLabel(date)}
-              onPress={() => setCalendarOpen(true)}
-              accessibilityLabel={`Date, ${dateChipLabel(date)}. Change`}
-            />
-            <DetailChip
-              icon="edit-3"
-              label={note.trim() || 'Note'}
-              muted={!note.trim()}
-              onPress={() => setNoteEditing(true)}
-              accessibilityLabel={note.trim() ? `Note, ${note}. Edit` : 'Add a note'}
-            />
-            {/* A purchase can be money back, or one payment across several categories, but not both. */}
-            {type === 'expense' && !isLinked && (
-              <DetailChip
-                icon="corner-up-left"
-                label="Money back"
-                active={refund}
-                disabled={!!splitParts}
-                onPress={() => {
-                  setRefund((r) => !r);
-                  setError(null);
-                }}
-                accessibilityLabel="Money back (a refund)"
-              />
-            )}
-            {/* Not alongside a list being built: a split is saved on its own. */}
-            {type === 'expense' && !isLinked && (
-              <DetailChip
-                icon="scissors"
-                label={splitParts ? `Split · ${splitParts.length}` : 'Split'}
-                active={!!splitParts}
-                disabled={refund || rows.length > 0}
-                onPress={openSplit}
-                accessibilityLabel={
-                  splitParts ? `Split into ${splitParts.length} parts. Edit` : 'Split this payment'
-                }
-              />
-            )}
-          </DetailBar>
-        )}
+        <AddDetailRow
+          type={type}
+          accountName={effectiveAccount?.name}
+          date={date}
+          today={today}
+          yesterday={yesterday}
+          note={note}
+          noteEditing={noteEditing}
+          isLinked={isLinked}
+          refund={refund}
+          splitCount={splitParts ? splitParts.length : null}
+          hasList={rows.length > 0}
+          onNoteChange={setNote}
+          onNoteEditing={setNoteEditing}
+          onPickAccount={() => setAccountSheetOpen(true)}
+          onPickDate={() => setCalendarOpen(true)}
+          onToggleRefund={() => {
+            setRefund((r) => !r);
+            setError(null);
+          }}
+          onSplit={openSplit}
+        />
         {padVisible ? (
           <AmountPad onKey={onPadKey} onClear={() => setExpr('')}>
             {addToListButton}
@@ -881,56 +835,43 @@ export default function AddTransactionScreen() {
         )}
       </KeyboardStickyView>
 
-      <ModalSheet
-        visible={accountSheetOpen}
-        onClose={() => setAccountSheetOpen(false)}
-        title={type === 'income' ? 'Received in' : 'Pay from'}
-        scrollable={false}
-      >
-        <View style={styles.accountRow}>
-          {pickableAccounts.map((acc) => (
-            <AccountTile
-              key={acc.id}
-              account={acc}
-              active={effectiveAccountId === acc.id}
-              onPress={() => {
-                pickAccount(acc.id);
-                setAccountSheetOpen(false);
-              }}
-            />
-          ))}
-        </View>
-      </ModalSheet>
-
-      <AddAccountModal
-        visible={addAccountVisible}
-        onClose={() => setAddAccountVisible(false)}
-        onCreated={async () => {
-          setAddAccountVisible(false);
-          setError(null);
-          await load();
+      <AddSheets
+        accountSheet={{
+          open: accountSheetOpen,
+          title: type === 'income' ? 'Received in' : 'Pay from',
+          accounts: pickableAccounts,
+          activeId: effectiveAccountId,
+          onClose: () => setAccountSheetOpen(false),
+          onPick: (id) => {
+            pickAccount(id);
+            setAccountSheetOpen(false);
+          },
         }}
-      />
-
-      <AddPersonModal
-        visible={addPersonVisible}
-        onClose={() => setAddPersonVisible(false)}
-        onCreated={() => void onPersonAdded()}
-      />
-
-      <CalendarSheet
-        visible={calendarOpen}
-        value={date}
-        quickPicks
-        onClose={() => setCalendarOpen(false)}
-        onPick={setDate}
-      />
-
-      <RepeatEntrySheet
-        visible={repeatSheetVisible}
-        onClose={() => setRepeatSheetVisible(false)}
-        fromAdd
-        onLogged={() => leave(() => router.back())}
+        addAccount={{
+          visible: addAccountVisible,
+          onClose: () => setAddAccountVisible(false),
+          onCreated: async () => {
+            setAddAccountVisible(false);
+            setError(null);
+            await load();
+          },
+        }}
+        addPerson={{
+          visible: addPersonVisible,
+          onClose: () => setAddPersonVisible(false),
+          onCreated: () => void onPersonAdded(),
+        }}
+        calendar={{
+          visible: calendarOpen,
+          value: date,
+          onClose: () => setCalendarOpen(false),
+          onPick: setDate,
+        }}
+        repeat={{
+          visible: repeatSheetVisible,
+          onClose: () => setRepeatSheetVisible(false),
+          onLogged: () => leave(() => router.back()),
+        }}
       />
     </View>
   );
