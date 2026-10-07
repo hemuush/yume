@@ -33,7 +33,8 @@ import { withPressed } from '@/lib/pressed';
 
 /**
  * The Plan tab as a bento, one tile per topic so the picture fits the first screen, then Coming up as the full
- * list. Pale tones carry meaning: coral EMIs/debt, red budget over, teal money back, sage habit, sky saving.
+ * list. Every tile is the same white card; its topic shows in a tinted icon badge, and good or bad news in the
+ * colour of its figure (red over, green money back), never a whole tinted tile.
  */
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -42,15 +43,16 @@ type FeatherName = React.ComponentProps<typeof Feather>['name'];
 /* ---------- Tile ---------- */
 
 function Tile({
-  tone,
   wide,
+  hero,
   onPress,
   label,
   children,
   style,
 }: {
-  tone: string;
   wide?: boolean;
+  /** The 14-day tile: lifted, like Home's month card. */
+  hero?: boolean;
   onPress: () => void;
   label: string;
   children: React.ReactNode;
@@ -67,7 +69,7 @@ function Tile({
       style={[
         styles.tile,
         wide ? styles.tileWide : styles.tileHalf,
-        { backgroundColor: tone },
+        hero && styles.tileHero,
         animatedStyle,
         style,
       ]}
@@ -77,17 +79,26 @@ function Tile({
   );
 }
 
-function Kicker({ icon, children }: { icon: React.ReactNode; children: React.ReactNode }) {
+/** A tile's topic: its icon on a small tinted badge, then the name in sentence case. */
+function Kicker({
+  icon,
+  tint,
+  children,
+}: {
+  icon: React.ReactNode;
+  tint: string;
+  children: React.ReactNode;
+}) {
   return (
     <View style={styles.kickerRow}>
-      {icon}
+      <View style={[styles.kickerBadge, { backgroundColor: tint }]}>{icon}</View>
       <Text style={styles.kicker} numberOfLines={1}>
         {children}
       </Text>
     </View>
   );
 }
-const kIcon = (name: FeatherName) => <Feather name={name} size={12} color={theme.colors.textMuted} />;
+const kIcon = (name: FeatherName) => <Feather name={name} size={15} color={theme.colors.ink} />;
 
 /** Tiles stacked 8px apart, between a section's title and the next. */
 export function TileGroup({ children, first }: { children: React.ReactNode; first?: boolean }) {
@@ -127,8 +138,8 @@ export function DueTile({
   const picked = days.find((d) => d.date === selected && (d.emi || d.bill)) ?? null;
   return (
     <Tile
-      tone={theme.colors.surface}
       wide
+      hero
       onPress={onPress}
       label={
         none
@@ -136,9 +147,18 @@ export function DueTile({
           : `${formatMoney(dueSoon.totalMinor)} due in the next 14 days. Open Coming up`
       }
     >
-      <Kicker icon={kIcon('calendar')}>
-        Next 14 days{none ? '' : ` · ${dueSoon.count} payment${dueSoon.count === 1 ? '' : 's'}`}
-      </Kicker>
+      <View style={styles.heroHead}>
+        <Kicker icon={kIcon('calendar')} tint={theme.colors.primaryTint}>
+          Next 14 days
+        </Kicker>
+        {!none && (
+          <View style={styles.countChip}>
+            <Text style={styles.countChipText}>
+              {dueSoon.count} payment{dueSoon.count === 1 ? '' : 's'}
+            </Text>
+          </View>
+        )}
+      </View>
       {none ? (
         <Text style={styles.tileTitle}>Nothing due</Text>
       ) : (
@@ -199,31 +219,51 @@ export function DueTile({
           );
         })}
       </View>
-      {picked ? (
-        <>
-          <Text style={styles.stripCaption} numberOfLines={2}>
-            <Text style={styles.stripCaptionBold}>{weekdayDayMonth(picked.date)}</Text> ·{' '}
-            {formatMoney(picked.amountMinor)} · {picked.titles.join(', ')}
-          </Text>
-          <Pressable
-            onPress={() => onJumpToDay(picked.date)}
-            hitSlop={8}
-            style={withPressed(styles.stripJump)}
-            accessibilityRole="button"
-            accessibilityLabel={`See ${weekdayDayMonth(picked.date)} in the list`}
-          >
-            <Text style={styles.stripJumpText}>See in list</Text>
-            <Feather name="arrow-down" size={13} color={theme.colors.textPrimary} />
-          </Pressable>
-        </>
-      ) : (
-        next &&
-        next.outMinor > 0 && (
-          <Text style={styles.stripCaption} numberOfLines={2}>
-            Next: {describeGroup(next)} on {weekdayDayMonth(next.date)} ({formatMoney(next.outMinor)}),{' '}
-            {dueDateLabel(next.date).replace('Due ', '').toLowerCase()}
-          </Text>
-        )
+      {!none && (
+        <View
+          style={styles.stripLegend}
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+        >
+          <View style={styles.stripLegendItem}>
+            <View style={[styles.stripLegendDot, styles.stripBill]} />
+            <Text style={styles.stripLegendText}>Bills</Text>
+          </View>
+          <View style={styles.stripLegendItem}>
+            <View style={[styles.stripLegendDot, styles.stripEmi]} />
+            <Text style={styles.stripLegendText}>EMIs</Text>
+          </View>
+        </View>
+      )}
+      {(picked || (next && next.outMinor > 0)) && (
+        <View style={styles.stripFoot}>
+          {picked ? (
+            <>
+              <Text style={styles.stripCaption} numberOfLines={2}>
+                <Text style={styles.stripCaptionBold}>{weekdayDayMonth(picked.date)}</Text> ·{' '}
+                {formatMoney(picked.amountMinor)} · {picked.titles.join(', ')}
+              </Text>
+              <Pressable
+                onPress={() => onJumpToDay(picked.date)}
+                hitSlop={8}
+                style={withPressed(styles.stripJump)}
+                accessibilityRole="button"
+                accessibilityLabel={`See ${weekdayDayMonth(picked.date)} in the list`}
+              >
+                <Text style={styles.stripJumpText}>See in list</Text>
+                <Feather name="arrow-down" size={14} color={theme.colors.link} />
+              </Pressable>
+            </>
+          ) : (
+            next &&
+            next.outMinor > 0 && (
+              <Text style={styles.stripCaption} numberOfLines={2}>
+                Next: {describeGroup(next)} on {weekdayDayMonth(next.date)} ({formatMoney(next.outMinor)}),{' '}
+                {dueDateLabel(next.date).replace('Due ', '').toLowerCase()}
+              </Text>
+            )
+          )}
+        </View>
       )}
     </Tile>
   );
@@ -253,8 +293,10 @@ export function EmiTile({
 }) {
   if (loans.borrowedCount === 0) {
     return (
-      <Tile tone={theme.colors.goldTint} onPress={onOpen} label="Track an EMI. Open loans">
-        <Kicker icon={kIcon('credit-card')}>Loans</Kicker>
+      <Tile onPress={onOpen} label="Track an EMI. Open loans">
+        <Kicker icon={kIcon('credit-card')} tint={theme.colors.idCoral}>
+          Loans
+        </Kicker>
         <Text style={styles.tileTitle}>Track an EMI</Text>
         <Text style={styles.tileSub}>A home or car loan, and what's left</Text>
       </Tile>
@@ -264,12 +306,10 @@ export function EmiTile({
   const inWindow = dueSoon.emiMinor > 0;
   const nextEmi = loans.rows.find((r) => r.direction === 'borrowed' && r.nextDueDate);
   return (
-    <Tile
-      tone={theme.colors.idCoral}
-      onPress={onOpen}
-      label={`EMIs ${inWindow ? formatMoney(dueSoon.emiMinor) : ''}. Open loans`}
-    >
-      <Kicker icon={kIcon('credit-card')}>EMIs</Kicker>
+    <Tile onPress={onOpen} label={`EMIs ${inWindow ? formatMoney(dueSoon.emiMinor) : ''}. Open loans`}>
+      <Kicker icon={kIcon('credit-card')} tint={theme.colors.idCoral}>
+        EMIs
+      </Kicker>
       {inWindow ? (
         <>
           <Text style={styles.value} numberOfLines={1} adjustsFontSizeToFit>
@@ -306,8 +346,10 @@ const RING_STROKE = 5;
 export function BudgetTile({ summary, onOpen }: { summary: BudgetsSummary; onOpen: () => void }) {
   if (summary.rows.length === 0) {
     return (
-      <Tile tone={theme.colors.surface} onPress={onOpen} label="Set a monthly limit. Open budgets">
-        <Kicker icon={kIcon('pie-chart')}>Budgets</Kicker>
+      <Tile onPress={onOpen} label="Set a monthly limit. Open budgets">
+        <Kicker icon={kIcon('pie-chart')} tint={theme.colors.secondaryTint}>
+          Budgets
+        </Kicker>
         <Text style={styles.tileTitle}>Set a limit</Text>
         <Text style={styles.tileSub}>For food, bills, anything you watch</Text>
       </Tile>
@@ -320,7 +362,6 @@ export function BudgetTile({ summary, onOpen }: { summary: BudgetsSummary; onOpe
   const circumference = 2 * Math.PI * r;
   return (
     <Tile
-      tone={over ? theme.colors.expenseTint : theme.colors.idSage}
       onPress={onOpen}
       label={`Budgets, ${over ? `${summary.overCount} over` : 'all within their limits'}. Open budgets`}
     >
@@ -338,7 +379,7 @@ export function BudgetTile({ summary, onOpen }: { summary: BudgetsSummary; onOpe
             cx={RING / 2}
             cy={RING / 2}
             r={r}
-            stroke={over ? theme.colors.expense : theme.colors.secondary}
+            stroke={over ? theme.colors.expense : theme.colors.slice.saved}
             strokeWidth={RING_STROKE}
             fill="none"
             strokeDasharray={`${circumference}`}
@@ -348,7 +389,9 @@ export function BudgetTile({ summary, onOpen }: { summary: BudgetsSummary; onOpe
           />
         </Svg>
       </View>
-      <Kicker icon={kIcon('pie-chart')}>Budgets</Kicker>
+      <Kicker icon={kIcon('pie-chart')} tint={theme.colors.secondaryTint}>
+        Budgets
+      </Kicker>
       <Text style={[styles.value, over && styles.overValue]} numberOfLines={1}>
         {over ? `${summary.overCount} over` : 'On track'}
       </Text>
@@ -373,14 +416,13 @@ export function DebtTile({ loans, onOpen }: { loans: LoansSummary; onOpen: () =>
   const more = borrowed.length - shown.length;
   return (
     <Tile
-      tone={theme.colors.surface}
       wide
       onPress={onOpen}
       label={`${formatMoney(loans.debtLeftMinor)} of debt left${
         loans.debtFreeDate ? `, debt-free in ${longMonthYear(loans.debtFreeDate)}` : ''
       }. Open loans`}
     >
-      <Kicker icon={kIcon('flag')}>
+      <Kicker icon={kIcon('flag')} tint={theme.colors.accentTint}>
         {loans.debtFreeDate ? `Debt-free by ${longMonthYear(loans.debtFreeDate)}` : 'Debt left'}
       </Kicker>
       <Text style={styles.value} numberOfLines={1} adjustsFontSizeToFit>
@@ -425,11 +467,9 @@ export function PeopleTile({ state, onOpen }: { state: PeopleState; onOpen: () =
   const people = (n: number) => `${n} ${n === 1 ? 'person' : 'people'}`;
   let value: React.ReactNode;
   let sub: string;
-  let tone: string = theme.colors.idTeal;
   if (state.kind === 'none') {
     value = <Text style={styles.tileTitle}>Track IOUs</Text>;
     sub = 'Who paid, who owes';
-    tone = theme.colors.surface;
   } else if (state.kind === 'settled') {
     value = <Text style={styles.tileTitle}>All settled</Text>;
     sub = `With ${people(state.count)}`;
@@ -444,7 +484,6 @@ export function PeopleTile({ state, onOpen }: { state: PeopleState; onOpen: () =
         ? `to collect · you owe ${formatMoney(state.youOweMinor)}`
         : `to collect from ${people(state.count)}`;
   } else {
-    tone = theme.colors.idCoral;
     value = (
       <Text style={[styles.value, styles.overValue]} numberOfLines={1} adjustsFontSizeToFit>
         −{formatMoney(state.youOweMinor)}
@@ -456,8 +495,10 @@ export function PeopleTile({ state, onOpen }: { state: PeopleState; onOpen: () =
         : `to pay back to ${people(state.count)}`;
   }
   return (
-    <Tile tone={tone} onPress={onOpen} label={`Friends & Family, ${sub}. Open Friends & Family`}>
-      <Kicker icon={kIcon('users')}>Friends</Kicker>
+    <Tile onPress={onOpen} label={`Friends & Family, ${sub}. Open Friends & Family`}>
+      <Kicker icon={kIcon('users')} tint={theme.colors.idTeal}>
+        Friends
+      </Kicker>
       {value}
       <Text style={styles.tileSub} numberOfLines={2}>
         {sub}
@@ -478,11 +519,13 @@ export function HabitTile({
   goalMinor: number | null;
   onOpen: () => void;
 }) {
-  const sprout = <MaterialCommunityIcons name="sprout" size={12} color={theme.colors.textMuted} />;
+  const sprout = <MaterialCommunityIcons name="sprout" size={15} color={theme.colors.ink} />;
   if (!habit || goalMinor == null) {
     return (
-      <Tile tone={theme.colors.surface} onPress={onOpen} label="Set a daily goal. Open Suu's Garden">
-        <Kicker icon={sprout}>Spend streak</Kicker>
+      <Tile onPress={onOpen} label="Set a daily goal. Open Suu's Garden">
+        <Kicker icon={sprout} tint={theme.colors.idSage}>
+          Spend streak
+        </Kicker>
         <Text style={styles.tileTitle}>Set a daily goal</Text>
         <Text style={styles.tileSub}>Grow Suu's Garden</Text>
       </Tile>
@@ -490,11 +533,12 @@ export function HabitTile({
   }
   return (
     <Tile
-      tone={theme.colors.idSage}
       onPress={onOpen}
       label={`${habit.streakDays}-day streak under ${formatMoney(goalMinor)} a day. Open Suu's Garden`}
     >
-      <Kicker icon={sprout}>Spend streak</Kicker>
+      <Kicker icon={sprout} tint={theme.colors.idSage}>
+        Spend streak
+      </Kicker>
       <Text style={styles.value}>
         {habit.streakDays} day{habit.streakDays === 1 ? '' : 's'}
       </Text>
@@ -503,8 +547,8 @@ export function HabitTile({
           <MaterialCommunityIcons
             key={i}
             name="sprout"
-            size={15}
-            color={kept ? theme.colors.income : theme.colors.textMuted}
+            size={17}
+            color={kept ? theme.colors.incomeText : theme.colors.textMuted}
             style={!kept && styles.sproutMissed}
           />
         ))}
@@ -544,7 +588,9 @@ export function SavingTile({
         accessibilityRole="button"
         accessibilityLabel="Open savings goals"
       >
-        <Kicker icon={kIcon('flag')}>Saving toward</Kicker>
+        <Kicker icon={kIcon('flag')} tint={theme.colors.goldTint}>
+          Saving toward
+        </Kicker>
         {active.length === 0 ? (
           <>
             <Text style={styles.tileTitle}>Start a goal that fills up by itself</Text>

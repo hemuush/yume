@@ -62,11 +62,8 @@ function DueRow({
   const direction = item.kind === 'income' ? 'in' : item.kind === 'transfer' ? '' : 'out';
   const amount = (
     <Text
-      style={[
-        h.amount,
-        item.kind === 'income' && h.income,
-        (item.kind === 'emi' || item.kind === 'bill') && h.expense,
-      ]}
+      // Money going out reads in ink with its minus, as on Home; only money coming in is coloured.
+      style={[h.amount, item.kind === 'income' && h.income]}
       numberOfLines={1}
       adjustsFontSizeToFit
     >
