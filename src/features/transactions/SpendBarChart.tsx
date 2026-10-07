@@ -6,7 +6,7 @@ import { useReduceMotion } from '@/lib/useReduceMotion';
 import { formatMoney } from '@/lib/money';
 import { SpendBar, ChartLegendItem } from './spendChart';
 
-const MAX_BAR_HEIGHT = 64;
+const MAX_BAR_HEIGHT = 76;
 // A day with any spend is at least this tall, so a small one still reads as a bar.
 const MIN_BAR_HEIGHT = 6;
 // Only 7 daily bars or ~4-5 weekly ones at a time, so a tighter cap than the
@@ -191,20 +191,20 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-end',
     justifyContent: 'space-between',
-    height: MAX_BAR_HEIGHT + 22,
+    height: MAX_BAR_HEIGHT + 30,
   },
   col: { width: `${100 / 7.4}%`, alignItems: 'center', height: '100%', justifyContent: 'flex-end' },
   colFaded: { opacity: 0.35 },
   barTrack: { height: MAX_BAR_HEIGHT, justifyContent: 'flex-end', alignItems: 'center' },
   barLifted: { transform: [{ translateY: -3 }] },
   stack: {
-    width: 20,
-    borderRadius: 6,
+    width: 24,
+    borderRadius: 7,
     overflow: 'hidden',
     flexDirection: 'column-reverse',
   },
   segment: { width: '100%' },
-  baseline: { width: 20, height: 2, borderRadius: 1, backgroundColor: theme.colors.borderSoft },
+  baseline: { width: 24, height: 3, borderRadius: 1, backgroundColor: theme.colors.borderSoft },
   outsideDay: {
     width: 4,
     height: 4,
@@ -213,33 +213,35 @@ const styles = StyleSheet.create({
     opacity: 0.35,
   },
   futureDay: {
-    width: 20,
-    height: 2,
+    width: 24,
+    height: 3,
     borderRadius: 1,
     backgroundColor: theme.colors.borderSoft,
     opacity: 0.5,
   },
   labelAway: { opacity: 0.45 },
   label: {
-    fontFamily: theme.font.mono,
-    fontSize: 9,
-    lineHeight: 13,
-    height: 13,
-    color: theme.colors.textMuted,
+    fontFamily: theme.font.bodyMedium,
+    fontSize: 12,
+    lineHeight: 22,
+    height: 22,
+    color: theme.colors.textSecondary,
     marginTop: 8,
   },
   todayPill: {
-    height: 15,
-    marginTop: 6,
+    height: 22,
+    minWidth: 34,
+    marginTop: 8,
     paddingHorizontal: 6,
+    alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 6,
+    borderRadius: 11,
     backgroundColor: theme.colors.ink,
   },
-  todayText: { fontFamily: theme.font.monoBold, fontSize: 9, lineHeight: 13, color: theme.colors.surface },
+  todayText: { fontFamily: theme.font.bodyBold, fontSize: 12, lineHeight: 16, color: theme.colors.surface },
   bubbleWrap: { position: 'absolute', left: -24, right: -24, alignItems: 'center' },
-  bubble: { paddingHorizontal: 7, paddingVertical: 3, borderRadius: 8, backgroundColor: theme.colors.ink },
-  bubbleText: { fontFamily: theme.font.monoBold, fontSize: 10.5, color: theme.colors.surface },
+  bubble: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8, backgroundColor: theme.colors.ink },
+  bubbleText: { fontFamily: theme.font.monoBold, fontSize: 12, color: theme.colors.surface },
   bubbleNub: {
     position: 'absolute',
     bottom: -3,
@@ -250,9 +252,9 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.ink,
     transform: [{ rotate: '45deg' }],
   },
-  legend: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 14 },
+  legend: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 14, rowGap: 6, marginTop: 12 },
   legendItem: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  legendDot: { width: 8, height: 8, borderRadius: 3 },
-  legendText: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textSecondary },
+  legendDot: { width: 10, height: 10, borderRadius: 3 },
+  legendText: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
   legendMore: { color: theme.colors.textMuted },
 });

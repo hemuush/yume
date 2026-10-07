@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { View, Pressable } from 'react-native';
+import Feather from '@expo/vector-icons/Feather';
 import { Text } from '@/components/Text';
 import ReanimatedAnimated, {
   useSharedValue,
@@ -9,6 +10,7 @@ import ReanimatedAnimated, {
 } from 'react-native-reanimated';
 import { CountUpAmount } from '@/components/CountUpAmount';
 import { formatMoney } from '@/lib/money';
+import { theme } from '@/constants/theme';
 import { useReduceMotion } from '@/lib/useReduceMotion';
 import { SpendBarChart, ChartLegend } from './SpendBarChart';
 import { SpendBar, ChartLegendItem } from './spendChart';
@@ -53,6 +55,7 @@ export function TransactionsHeadline({
   legend,
   onPressDay,
   selectedKey,
+  current = false,
 }: HeadlineContent & {
   periodKey: string;
   direction: -1 | 0 | 1;
@@ -61,6 +64,8 @@ export function TransactionsHeadline({
   onPressDay: (key: string) => void;
   /** The tapped bar, if any — see SpendBarChart's `selectedKey`. */
   selectedKey: string | null;
+  /** The period shown is this week or month: the kicker says so ("Spent this week"); otherwise just "Spent". */
+  current?: boolean;
 }) {
   const reduce = useReduceMotion();
   const [displayed, setDisplayed] = useState<HeadlineContent>({
@@ -139,24 +144,33 @@ export function TransactionsHeadline({
   return (
     <View style={styles.sumCard}>
       {/* Outside the slide: the switch is a control, and it shouldn't move under your finger. */}
-      <View style={styles.scopeSwitch} accessibilityRole="radiogroup">
-        {VIEW_SCOPES.map((o) => {
-          const on = viewScope === o.value;
-          return (
-            <Pressable
-              key={o.value}
-              onPress={() => onChangeViewScope(o.value)}
-              style={withPressed([styles.scopeBtn, on && styles.scopeBtnOn])}
-              accessibilityRole="radio"
-              accessibilityState={{ selected: on }}
-            >
-              <Text style={[styles.scopeText, on && styles.scopeTextOn]}>{o.label}</Text>
-            </Pressable>
-          );
-        })}
+      <View style={styles.sumHead}>
+        <View style={styles.sumKickerRow}>
+          <View style={styles.sumBadge}>
+            <Feather name="trending-up" size={15} color={theme.colors.ink} />
+          </View>
+          <Text style={styles.sumKicker} numberOfLines={1}>
+            {current ? `Spent this ${viewScope}` : 'Spent'}
+          </Text>
+        </View>
+        <View style={styles.scopeSwitch} accessibilityRole="radiogroup">
+          {VIEW_SCOPES.map((o) => {
+            const on = viewScope === o.value;
+            return (
+              <Pressable
+                key={o.value}
+                onPress={() => onChangeViewScope(o.value)}
+                style={withPressed([styles.scopeBtn, on && styles.scopeBtnOn])}
+                accessibilityRole="radio"
+                accessibilityState={{ selected: on }}
+              >
+                <Text style={[styles.scopeText, on && styles.scopeTextOn]}>{o.label}</Text>
+              </Pressable>
+            );
+          })}
+        </View>
       </View>
       <ReanimatedAnimated.View style={slideStyle}>
-        <Text style={styles.sumKicker}>Spent</Text>
         <CountUpAmount
           minor={displayed.expenseMinor}
           style={styles.headlineAmt}
@@ -165,8 +179,13 @@ export function TransactionsHeadline({
         />
         {change != null && change !== 0 && (
           <View style={[styles.changePill, change > 0 ? styles.changePillUp : styles.changePillDown]}>
+            <Feather
+              name={change > 0 ? 'arrow-up' : 'arrow-down'}
+              size={13}
+              color={change > 0 ? theme.colors.expenseText : theme.colors.incomeText}
+            />
             <Text style={[styles.changeText, change > 0 ? styles.expense : styles.income]}>
-              {change > 0 ? '▲' : '▼'} {formatMoney(Math.abs(change))} {change > 0 ? 'more' : 'less'} than{' '}
+              {formatMoney(Math.abs(change))} {change > 0 ? 'more' : 'less'} than{' '}
               {displayed.compareLabel ?? `last ${displayed.viewScope}`}
             </Text>
           </View>
@@ -180,14 +199,14 @@ export function TransactionsHeadline({
         {displayed.incomeMinor > 0 && (
           <View style={styles.sumStrip}>
             <View style={styles.sumStripCell}>
-              <Text style={styles.sumKicker}>Money in</Text>
+              <Text style={styles.sumStripLabel}>Money in</Text>
               <Text style={[styles.sumStripValue, displayed.incomeMinor > 0 && styles.income]}>
                 {displayed.incomeMinor > 0 ? '+' : ''}
                 {formatMoney(displayed.incomeMinor)}
               </Text>
             </View>
             <View style={[styles.sumStripCell, styles.sumStripCellRight]}>
-              <Text style={styles.sumKicker}>Net</Text>
+              <Text style={styles.sumStripLabel}>Net</Text>
               <Text style={[styles.sumStripValue, net > 0 && styles.income, net < 0 && styles.expense]}>
                 {net > 0 ? '+' : net < 0 ? '−' : ''}
                 {formatMoney(Math.abs(net))}
