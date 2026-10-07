@@ -35,7 +35,7 @@ jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMoc
 jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
 }));
-jest.mock('@/components/AppHeader', () => ({ AppHeader: () => null }));
+jest.mock('@/components/AppHeader', () => ({ AppHeader: () => null, HeaderUserButton: () => null }));
 const mockSearch = { current: {} as Record<string, string> };
 jest.mock('expo-router', () => ({
   router: { setParams: jest.fn(), push: jest.fn(), navigate: jest.fn() },
@@ -250,6 +250,12 @@ const pressText = async (tree: ReactTestRenderer, label: string) => {
   });
 };
 
+/** Month / Year / Custom sit in the period button's menu: open it, then pick. */
+const pickPeriodType = async (tree: ReactTestRenderer, label: string) => {
+  await pressText(tree, 'Month');
+  await pressText(tree, label);
+};
+
 const lastPush = () => (require('expo-router').router.push as jest.Mock).mock.calls.at(-1)[0];
 // The story cards and chart draw once they have a width; the renderer never lays anything out.
 const layOut = async (tree: ReactTestRenderer) => {
@@ -291,12 +297,13 @@ describe('Reports screen', () => {
   it('counts only the days so far: an entry dated later is "scheduled later", not a spend day', async () => {
     const tree = await render();
     // 4 spend days up to Oct 20, over 20 days; the entry on Oct 28 stays out of the day figure.
-    const plain = (n: ReactTestRenderer['root']): string =>
-      n.children.map((c) => (typeof c === 'string' ? c : plain(c))).join('');
-    const facts = tree.root
-      .findAllByType(Text)
-      .map(plain)
-      .find((t) => t.includes(' a day · spent on '))!;
+    expect(texts(tree)).toEqual(expect.arrayContaining(['Spend days', '4 of 20', 'Scheduled later']));
+    // The three figures are read out as one sentence.
+    const facts = tree.root.find(
+      (n) =>
+        typeof n.props.accessibilityLabel === 'string' &&
+        n.props.accessibilityLabel.includes(' a day, spent on ')
+    ).props.accessibilityLabel as string;
     expect(facts).toContain('spent on 4 of 20 days');
     expect(facts).toContain('scheduled later');
   });
@@ -443,7 +450,7 @@ describe('Reports screen', () => {
 
   it('shows a custom range and carries it to the category page', async () => {
     const tree = await render();
-    await pressText(tree, 'Custom');
+    await pickPeriodType(tree, 'Custom range');
     expect(texts(tree)).toContain('Pick a range');
     await pressText(tree, 'Last 30 days');
     const show = texts(tree).find((t) => t.startsWith('Show '))!;
@@ -549,7 +556,7 @@ describe('Reports screen', () => {
 
     it('is not shown for a year, which has no days to open', async () => {
       const tree = await render();
-      await pressText(tree, 'Year');
+      await pickPeriodType(tree, 'Year');
       expect(texts(tree)).not.toContain('Biggest spends');
       expect(texts(tree)).not.toContain('Weekday rhythm');
     });
@@ -584,7 +591,7 @@ describe('Reports screen', () => {
 
     it('has no Activity link outside a single month', async () => {
       const tree = await render();
-      await pressText(tree, 'Year');
+      await pickPeriodType(tree, 'Year');
       await pressText(tree, 'Categories');
       await pressText(tree, 'By account');
       await pressText(tree, 'Credit card');

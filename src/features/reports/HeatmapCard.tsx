@@ -11,7 +11,7 @@ import { styles } from './reports.styles';
 const LEVELS = [0, 1, 2, 3, 4] as const;
 
 /**
- * The Days tab's heatmap: the period's day grid with legend and hint. A category picked in Categories narrows
+ * The Days tab's heatmap: a titled card with its legend, the period's day grid, and a hint. A category picked in Categories narrows
  * it to that category's days (a chip clears it). Tapping a day opens its list; cells carry their own onPress.
  */
 export function HeatmapCard({
@@ -27,33 +27,9 @@ export function HeatmapCard({
   const heatScale = spendHeatScale(useAccent().accent);
   return (
     <View style={styles.hmCard}>
-      {filter && (
-        <Pressable
-          onPress={filter.onClear}
-          style={withPressed(styles.filterChip)}
-          accessibilityRole="button"
-          accessibilityLabel={`Clear the ${filter.name} filter`}
-        >
-          <View style={[styles.catDot, { backgroundColor: filter.color }]} />
-          <Text style={styles.filterChipText} numberOfLines={1}>
-            {filter.name}
-          </Text>
-          <Feather name="x" size={13} color={theme.colors.textSecondary} />
-        </Pressable>
-      )}
-
-      <SpendHeatmap
-        cells={grid.cells}
-        leadingPad={grid.leadingPad}
-        columns={grid.columns}
-        weekdayLabels={grid.weekdayLabels}
-      />
-
-      <View style={styles.hmFoot}>
-        <Text style={styles.hmHint}>
-          {isYear ? 'Darker months spent more' : 'Tap a day to see what went out'}
-        </Text>
-        <View style={styles.legend}>
+      <View style={styles.hmHead}>
+        <Text style={styles.hmTitle}>{isYear ? 'Spending by month' : 'Spending by day'}</Text>
+        <View style={styles.legend} accessibilityLabel="Lighter means less spent, darker means more">
           <Text style={styles.legendText}>less</Text>
           {LEVELS.map((l) => (
             <View
@@ -69,6 +45,32 @@ export function HeatmapCard({
           <Text style={styles.legendText}>more</Text>
         </View>
       </View>
+
+      {filter && (
+        <Pressable
+          onPress={filter.onClear}
+          style={withPressed(styles.filterChip)}
+          accessibilityRole="button"
+          accessibilityLabel={`Clear the ${filter.name} filter`}
+        >
+          <View style={[styles.catDot, { backgroundColor: filter.color }]} />
+          <Text style={styles.filterChipText} numberOfLines={1}>
+            {filter.name}
+          </Text>
+          <Feather name="x" size={14} color={theme.colors.textSecondary} />
+        </Pressable>
+      )}
+
+      <SpendHeatmap
+        cells={grid.cells}
+        leadingPad={grid.leadingPad}
+        columns={grid.columns}
+        weekdayLabels={grid.weekdayLabels}
+      />
+
+      <Text style={styles.hmHint}>
+        {isYear ? 'Darker months spent more' : 'Tap a day to see what went out'}
+      </Text>
     </View>
   );
 }
