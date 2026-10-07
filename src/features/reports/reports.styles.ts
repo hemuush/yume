@@ -20,8 +20,6 @@ export const styles = StyleSheet.create({
   empty: { fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textMuted, marginVertical: 16 },
 
   periodRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  // The same control on a category page, which has no sky band around it.
-  periodRowPage: { paddingHorizontal: 20, marginBottom: 16 },
   periodPill: {
     flex: 1,
     minWidth: 0,
@@ -67,6 +65,8 @@ export const styles = StyleSheet.create({
   // Days / Categories / Trends, pinned under the summary. SegmentedControl
   // brings its own bottom margin; the negative one trims it to the gap this bar wants.
   tabs: { paddingHorizontal: 20, marginTop: 14, marginBottom: 2 },
+  // The summary and tabs scroll with the report but keep their own 20px inset, so they step out of its padding.
+  bleed: { marginHorizontal: -20 },
 
   // The pinned summary card: the period's total, how it compares, and three day figures.
   summary: {

@@ -4,7 +4,8 @@ import { Text } from '@/components/Text';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getUserName, setUserName, getMemberSinceYear } from '@/db/settings';
-import { AppHeader, HeaderPrivacyToggle } from '@/components/AppHeader';
+import { HeaderPrivacyToggle } from '@/components/AppHeader';
+import { SkyHeader } from '@/features/home/SkyHeader';
 import { AmountPadDock } from '@/components/AmountField';
 import { SegmentedControl } from '@/components/SegmentedControl';
 import { theme } from '@/constants/theme';
@@ -55,7 +56,7 @@ export default function ProfileScreen() {
   if (!loaded && !loadError) {
     return (
       <View style={styles.container}>
-        <AppHeader title="Profile" showBack hideUser />
+        <SkyHeader title="Profile" showBack hideUser />
         <View style={styles.identity}>
           <Skeleton width={58} height={58} circle radius={29} />
           <View style={styles.identityText}>
@@ -72,7 +73,7 @@ export default function ProfileScreen() {
       <AmountPadDock>
         {(scrollProps) => (
           <>
-            <AppHeader title="Profile" showBack hideUser right={<HeaderPrivacyToggle />} />
+            <SkyHeader title="Profile" showBack hideUser actions={<HeaderPrivacyToggle />} />
 
             <KeyboardAwareScrollView
               {...scrollProps}

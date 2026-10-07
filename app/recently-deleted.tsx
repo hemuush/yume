@@ -1,8 +1,10 @@
 import { useCallback, useMemo, useState } from 'react';
-import { View, ScrollView, StyleSheet, Pressable } from 'react-native';
+import { View, StyleSheet, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text } from '@/components/Text';
-import { AppHeader } from '@/components/AppHeader';
+import { SkyHeader, HeaderSummary } from '@/features/home/SkyHeader';
+import ReanimatedAnimated from 'react-native-reanimated';
+import { useCollapsingHeader } from '@/lib/useCollapsingHeader';
 import { EmptyState } from '@/components/EmptyState';
 import { CardRowsSkeleton } from '@/components/ListSkeleton';
 import { CategoryIcon } from '@/components/CategoryIcon';
@@ -37,6 +39,8 @@ import { savingsAccountIdsOf } from '@/lib/account';
  */
 export default function RecentlyDeletedScreen() {
   const insets = useSafeAreaInsets();
+  // The header sits over the page and shrinks as it scrolls.
+  const { collapse, headerHeight, scrollHandler, scrollRef } = useCollapsingHeader();
   const [entries, setEntries] = useState<DeletedEntry[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [accounts, setAccounts] = useState<Account[]>([]);
@@ -117,8 +121,15 @@ export default function RecentlyDeletedScreen() {
 
   return (
     <View style={styles.container}>
-      <AppHeader title="Recently deleted" showBack />
-      <ScrollView contentContainerStyle={{ paddingBottom: theme.layout.screenScrollPad + insets.bottom }}>
+      <ReanimatedAnimated.ScrollView
+        ref={scrollRef}
+        onScroll={scrollHandler}
+        scrollEventThrottle={16}
+        contentContainerStyle={{
+          paddingTop: headerHeight,
+          paddingBottom: theme.layout.screenScrollPad + insets.bottom,
+        }}
+      >
         {loadError && (
           <View style={styles.errorBanner}>
             <Text style={styles.errorTitle}>Couldn&rsquo;t load Recently deleted</Text>
@@ -210,7 +221,22 @@ export default function RecentlyDeletedScreen() {
             </Pressable>
           </>
         )}
-      </ScrollView>
+      </ReanimatedAnimated.ScrollView>
+      <SkyHeader
+        collapse={collapse}
+        summary={
+          entries && entries.length > 0 ? (
+            <HeaderSummary
+              figure={String(entries.length)}
+              rest={entries.length === 1 ? 'entry to restore' : 'entries to restore'}
+              dot={theme.colors.slice.debt}
+            />
+          ) : undefined
+        }
+        title="Recently deleted"
+        showBack
+        hideUser
+      />
     </View>
   );
 }

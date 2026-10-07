@@ -13,7 +13,12 @@ jest.mock('react-native-safe-area-context', () => ({
 
 const mockSetTheme = jest.fn();
 jest.mock('@/theme/AccentContext', () => ({
-  useAccent: () => ({ accent: '#A6B4F2', themeId: 'hollowViolet', setTheme: mockSetTheme }),
+  useAccent: () => ({
+    accent: '#A6B4F2',
+    secondary: '#8FE8C8',
+    themeId: 'hollowViolet',
+    setTheme: mockSetTheme,
+  }),
 }));
 
 import ThemesScreen from '../../../app/themes';

@@ -167,7 +167,16 @@ export const styles = StyleSheet.create({
   periodSub: { fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textSecondary, marginTop: 1 },
 
   listArea: { flex: 1 },
-  edgeFade: { position: 'absolute', top: 0, left: 0, right: 0, height: 14 },
+  // The period, as a small chip in the shrunk header; it opens the month picker.
+  periodChip: {
+    height: 30,
+    maxWidth: 130,
+    paddingHorizontal: 12,
+    borderRadius: theme.radius.pill,
+    justifyContent: 'center',
+    backgroundColor: `${theme.colors.surface}E6`,
+  },
+  periodChipText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textPrimary },
 
   // Week scope's rail, on the sky band under the period pill: one segment per week of the month, sized by
   // its days.

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { View, ScrollView, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { Text } from '@/components/Text';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -17,7 +17,10 @@ import { savingsAccountIdsOf } from '@/lib/account';
 import { Account, SavingsGoal } from '@/types';
 import { theme } from '@/constants/theme';
 import { addDaysToIsoDate, toLocalIsoDate } from '@/lib/date';
-import { SkyHeader } from '@/features/home/SkyHeader';
+import { SkyHeader, HeaderSummary } from '@/features/home/SkyHeader';
+import ReanimatedAnimated from 'react-native-reanimated';
+import { useCollapsingHeader } from '@/lib/useCollapsingHeader';
+import { formatMoney } from '@/lib/money';
 import { CardRowsSkeleton } from '@/components/ListSkeleton';
 import { useScreenLoad } from '@/lib/useScreenLoad';
 import { categorySentence, parentNameOf } from '@/lib/categoryLabel';
@@ -184,15 +187,19 @@ export default function PlanScreen() {
   const [paying, setPaying] = useState<LoanPaymentContext | null>(null);
   const payEmi = async (loanId: string) => setPaying(await getLoanPaymentContext(loanId));
   const open = (route: PlanRoute) => router.push(route);
-  // The 14-day tile jumps down to Coming up.
-  const scrollRef = useRef<ScrollView>(null);
+  // The header shrinks as the page scrolls; the 14-day tile jumps down to Coming up.
+  const { collapse, headerHeight, collapsedHeight, scrollHandler, scrollRef } = useCollapsingHeader();
+  // A jump lands just under the collapsed header, which sits over the page.
+  const underHeader = () => collapsedHeight;
   const comingUpY = useRef(0);
   // Where Coming up's card and each day's group sit, for the strip's jump.
   const cardY = useRef(0);
   const groupYs = useRef<Record<string, number>>({});
   const scrollToComingUp = useCallback(
-    () => scrollRef.current?.scrollTo({ y: Math.max(0, comingUpY.current - 8), animated: true }),
-    []
+    () =>
+      scrollRef.current?.scrollTo({ y: Math.max(0, comingUpY.current - underHeader() - 8), animated: true }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [collapsedHeight]
   );
   // A day on the strip lands on its group; today also covers anything overdue,
   // which sits under its own earlier date, so fall back to the earliest group.
@@ -202,7 +209,7 @@ export default function PlanScreen() {
     const groupY = target == null ? undefined : groupYs.current[target];
     if (groupY == null) return scrollToComingUp();
     scrollRef.current?.scrollTo({
-      y: Math.max(0, comingUpY.current + SECTION_GAP.top + cardY.current + groupY - 8),
+      y: Math.max(0, comingUpY.current + SECTION_GAP.top + cardY.current + groupY - underHeader() - 8),
       animated: true,
     });
   };
@@ -219,10 +226,14 @@ export default function PlanScreen() {
 
   return (
     <View style={styles.container}>
-      <SkyHeader title="Plan" subtitle="What’s ahead, and where you stand" />
-      <ScrollView
+      <ReanimatedAnimated.ScrollView
         ref={scrollRef}
-        contentContainerStyle={{ paddingBottom: theme.layout.tabScreenScrollPad + insets.bottom }}
+        onScroll={scrollHandler}
+        scrollEventThrottle={16}
+        contentContainerStyle={{
+          paddingTop: headerHeight,
+          paddingBottom: theme.layout.tabScreenScrollPad + insets.bottom,
+        }}
       >
         {loadError && (
           <View style={styles.errorBanner}>
@@ -296,7 +307,21 @@ export default function PlanScreen() {
             </View>
           </>
         )}
-      </ScrollView>
+      </ReanimatedAnimated.ScrollView>
+      <SkyHeader
+        title="Plan"
+        subtitle="What’s ahead, and where you stand"
+        collapse={collapse}
+        summary={
+          data && data.dueSoon.count > 0 ? (
+            <HeaderSummary
+              figure={formatMoney(data.dueSoon.totalMinor)}
+              rest="due in 14 days"
+              dot={theme.colors.slice.due}
+            />
+          ) : undefined
+        }
+      />
       {paying && (
         <PayInstallmentSheet
           installment={paying.installment}

@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { View, ScrollView } from 'react-native';
+import { View } from 'react-native';
 import { Text } from '@/components/Text';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useScreenLoad } from '@/lib/useScreenLoad';
@@ -12,7 +12,10 @@ import {
 } from '@/db/ledger';
 import { Category } from '@/types';
 import { theme } from '@/constants/theme';
-import { AppHeader, HeaderIconButton } from '@/components/AppHeader';
+import { HeaderIconButton } from '@/components/AppHeader';
+import { SkyHeader, HeaderSummary } from '@/features/home/SkyHeader';
+import ReanimatedAnimated from 'react-native-reanimated';
+import { useCollapsingHeader } from '@/lib/useCollapsingHeader';
 import { AddButton } from '@/components/AddButton';
 import { ActionSheet, ActionSheetItem } from '@/components/ActionSheet';
 import { styles } from '@/features/categories/categories.styles';
@@ -26,6 +29,8 @@ import { showAlert } from '@/components/AppDialog';
 
 export default function CategoriesScreen() {
   const insets = useSafeAreaInsets();
+  // The header sits over the page and shrinks as it scrolls.
+  const { collapse, headerHeight, scrollHandler, scrollRef } = useCollapsingHeader();
   const { show: showUndo } = useUndoToast();
   const [allCategories, setAllCategories] = useState<Category[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
@@ -196,7 +201,7 @@ export default function CategoriesScreen() {
   if (!loaded && !loadError) {
     return (
       <View style={styles.container}>
-        <AppHeader title="Categories" showBack />
+        <SkyHeader title="Categories" showBack hideUser />
         <View style={{ paddingTop: 20 }}>
           <Skeleton width={100} height={13} radius={4} style={{ marginHorizontal: 20, marginBottom: 14 }} />
           <View style={styles.grid}>
@@ -218,23 +223,15 @@ export default function CategoriesScreen() {
 
   return (
     <View style={styles.container}>
-      <AppHeader
-        title="Categories"
-        showBack
-        right={
-          <>
-            <HeaderIconButton
-              icon={showArchived ? 'eye-off' : 'archive'}
-              onPress={() => setShowArchived((v) => !v)}
-              label={showArchived ? 'Hide archived categories' : 'Show archived categories'}
-              badge={!showArchived && archivedCategories.length > 0}
-            />
-            <AddButton onPress={() => setModalVisible(true)} label="+ Add" />
-          </>
-        }
-      />
-
-      <ScrollView contentContainerStyle={{ paddingBottom: theme.layout.screenScrollPad + insets.bottom }}>
+      <ReanimatedAnimated.ScrollView
+        ref={scrollRef}
+        onScroll={scrollHandler}
+        scrollEventThrottle={16}
+        contentContainerStyle={{
+          paddingTop: headerHeight,
+          paddingBottom: theme.layout.screenScrollPad + insets.bottom,
+        }}
+      >
         {loadError && (
           <View style={styles.errorBanner}>
             <Text style={styles.errorTitle}>Couldn't load your categories</Text>
@@ -275,7 +272,33 @@ export default function CategoriesScreen() {
         )}
 
         <Text style={styles.hintText}>Tap to edit or open · hold to move, archive or delete.</Text>
-      </ScrollView>
+      </ReanimatedAnimated.ScrollView>
+      <SkyHeader
+        collapse={collapse}
+        summary={
+          categories.length > 0 ? (
+            <HeaderSummary
+              figure={String(expenseCats.length + incomeCats.length)}
+              rest="in use"
+              dot={theme.colors.slice.free}
+            />
+          ) : undefined
+        }
+        title="Categories"
+        showBack
+        hideUser
+        actions={
+          <>
+            <HeaderIconButton
+              icon={showArchived ? 'eye-off' : 'archive'}
+              onPress={() => setShowArchived((v) => !v)}
+              label={showArchived ? 'Hide archived categories' : 'Show archived categories'}
+              badge={!showArchived && archivedCategories.length > 0}
+            />
+            <AddButton onPress={() => setModalVisible(true)} label="+ Add" />
+          </>
+        }
+      />
 
       <AddCategoryModal
         visible={modalVisible}
