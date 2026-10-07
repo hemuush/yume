@@ -16,13 +16,15 @@ interface Props<T extends string> {
   options: { label: string; value: T }[];
   value: T;
   onChange: (value: T) => void;
+  /** On a coloured band (Add's sky header): a see-through track and an ink pill. */
+  onBand?: boolean;
 }
 
 /**
  * A pill switch: one white pill, measured from the track and moved with the native driver, glides to the
  * tapped choice instead of each segment snapping its own background. Reduce motion: it jumps.
  */
-export function SegmentedControl<T extends string>({ options, value, onChange }: Props<T>) {
+export function SegmentedControl<T extends string>({ options, value, onChange, onBand }: Props<T>) {
   const reduce = useReduceMotion();
   // The track's inner width; each segment's share is worked out per render, so
   // a switch whose options change (Add in edit mode) still sizes its pill right.
@@ -57,17 +59,22 @@ export function SegmentedControl<T extends string>({ options, value, onChange }:
   };
 
   return (
-    <View style={styles.wrap} onLayout={onLayout}>
+    <View style={[styles.wrap, onBand && styles.wrapBand]} onLayout={onLayout}>
       {segWidth > 0 && (
         <Animated.View
           pointerEvents="none"
-          style={[styles.pill, { width: segWidth, transform: [{ translateX: x }] }]}
+          style={[
+            styles.pill,
+            onBand && styles.pillBand,
+            { width: segWidth, transform: [{ translateX: x }] },
+          ]}
         />
       )}
       {options.map((opt) => (
         <Segment
           key={opt.value}
           active={opt.value === value}
+          onBand={onBand}
           label={opt.label}
           onPress={() => onChange(opt.value)}
         />
@@ -76,7 +83,17 @@ export function SegmentedControl<T extends string>({ options, value, onChange }:
   );
 }
 
-function Segment({ active, label, onPress }: { active: boolean; label: string; onPress: () => void }) {
+function Segment({
+  active,
+  label,
+  onPress,
+  onBand,
+}: {
+  active: boolean;
+  label: string;
+  onPress: () => void;
+  onBand?: boolean;
+}) {
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.95);
   return (
     <AnimatedPressable
@@ -91,7 +108,15 @@ function Segment({ active, label, onPress }: { active: boolean; label: string; o
       onPressIn={onPressIn}
       onPressOut={onPressOut}
     >
-      <Text style={[styles.segmentText, active && styles.segmentTextActive]}>{label}</Text>
+      <Text
+        style={[
+          styles.segmentText,
+          active && styles.segmentTextActive,
+          active && onBand && styles.segmentTextBand,
+        ]}
+      >
+        {label}
+      </Text>
     </AnimatedPressable>
   );
 }
@@ -126,4 +151,7 @@ const styles = StyleSheet.create({
   },
   segmentText: { fontSize: 14, fontFamily: theme.font.roundedMedium, color: theme.colors.textSecondary },
   segmentTextActive: { color: theme.colors.textPrimary, fontFamily: theme.font.roundedBold },
+  wrapBand: { backgroundColor: `${theme.colors.surface}B3`, marginBottom: 0 },
+  pillBand: { backgroundColor: theme.colors.ink, borderColor: theme.colors.ink },
+  segmentTextBand: { color: theme.colors.surface },
 });

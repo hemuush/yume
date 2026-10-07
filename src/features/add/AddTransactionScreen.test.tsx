@@ -15,12 +15,19 @@ jest.mock('react-native-keyboard-controller', () => ({
   KeyboardAwareScrollView: require('react-native').View,
   KeyboardStickyView: require('react-native').View,
 }));
-// Keeps the header's right-hand button so a test can press it (the trash on an edit).
+// Keeps the header's right-hand button so a test can press it (the trash on an edit); what sits in the
+// band (the type switch) still renders.
 const mockHeaderRight: { current: React.ReactElement<{ onPress: () => void }> | null } = { current: null };
-jest.mock('@/components/AppHeader', () => ({
-  AppHeader: ({ right }: { right?: React.ReactElement<{ onPress: () => void }> }) => {
-    mockHeaderRight.current = right ?? null;
-    return null;
+jest.mock('@/features/home/SkyHeader', () => ({
+  SkyHeader: ({
+    actions,
+    children,
+  }: {
+    actions?: React.ReactElement<{ onPress: () => void }>;
+    children?: React.ReactNode;
+  }) => {
+    mockHeaderRight.current = actions ?? null;
+    return children ?? null;
   },
 }));
 const mockShowUndo = jest.fn();
