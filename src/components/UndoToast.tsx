@@ -9,16 +9,20 @@ import { usePressScale } from '@/lib/usePressScale';
 import { haptics } from '@/lib/haptics';
 import { DURATIONS } from '@/lib/motionTimings';
 import { useAccent } from '@/theme/AccentContext';
+import { showAlert } from '@/components/AppDialog';
+import { errorMessage } from '@/lib/errorMessage';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 interface ToastState {
   key: number;
   message: string;
-  onUndo: () => void;
+  onUndo: () => void | Promise<unknown>;
 }
 
-const UndoToastContext = createContext<{ show: (message: string, onUndo: () => void) => void } | null>(null);
+const UndoToastContext = createContext<{
+  show: (message: string, onUndo: () => void | Promise<unknown>) => void;
+} | null>(null);
 
 // Long enough to read and react to, short enough not to overstay (about the Gmail/Apple Mail
 // undo-send window).
@@ -52,7 +56,7 @@ export function UndoToastProvider({ children }: { children: React.ReactNode }) {
   }, [showNext]);
 
   const show = useCallback(
-    (message: string, onUndo: () => void) => {
+    (message: string, onUndo: () => void | Promise<unknown>) => {
       keyRef.current += 1;
       queue.current.push({ key: keyRef.current, message, onUndo });
       if (!timer.current) {
@@ -102,7 +106,8 @@ function ToastView({
     <ReanimatedAnimated.View
       entering={FadeInDown.duration(DURATIONS.slideIn).reduceMotion(ReduceMotion.System)}
       exiting={FadeOutDown.duration(DURATIONS.rowExit).reduceMotion(ReduceMotion.System)}
-      style={[styles.wrap, { bottom: insets.bottom + 16 }]}
+      // Always clear of the tab bar, which most deletes happen above.
+      style={[styles.wrap, { bottom: insets.bottom + theme.layout.tabBar.height + 12 }]}
       pointerEvents="box-none"
     >
       <View style={styles.pill}>
@@ -115,7 +120,13 @@ function ToastView({
         <AnimatedPressable
           onPress={() => {
             haptics.tap();
-            toast.onUndo();
+            // A failed undo must say so: otherwise the entry stays gone while it looks put back.
+            const fail = (e: unknown) => showAlert("Couldn't undo", errorMessage(e));
+            try {
+              void Promise.resolve(toast.onUndo()).catch(fail);
+            } catch (e) {
+              fail(e);
+            }
             onDismiss();
           }}
           onPressIn={onPressIn}

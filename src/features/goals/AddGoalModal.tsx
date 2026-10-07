@@ -16,6 +16,7 @@ import { GoalAccountField } from './GoalAccountField';
 import { GoalSheetCard } from './GoalSheetCard';
 import { styles } from './goals.styles';
 import { errorMessage } from '@/lib/errorMessage';
+import { useSaveOnce } from '@/lib/useSaveOnce';
 
 export function AddGoalModal({
   visible,
@@ -88,6 +89,7 @@ export function AddGoalModal({
       setSaving(false);
     }
   };
+  const submitOnce = useSaveOnce(submit);
 
   return (
     <ModalSheet
@@ -96,7 +98,7 @@ export function AddGoalModal({
       footer={
         <View style={f.footerCol}>
           {error && <Text style={styles.errorText}>{error}</Text>}
-          <PrimaryButton title={saving ? 'Creating…' : 'Create goal'} onPress={submit} disabled={saving} />
+          <PrimaryButton title={saving ? 'Saving…' : 'Create goal'} onPress={submitOnce} disabled={saving} />
         </View>
       }
     >

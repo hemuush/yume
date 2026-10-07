@@ -27,6 +27,7 @@ import { dayMonthYear } from '@/lib/dateLabels';
 import { spendableAccountsOf } from '@/lib/account';
 import { rateProblem, tenureProblem } from '@/lib/loanLimits';
 import { useAccent } from '@/theme/AccentContext';
+import { useSaveOnce } from '@/lib/useSaveOnce';
 
 const RATE_TYPES: { label: string; value: LoanRateType }[] = [
   { label: 'Fixed', value: 'fixed' },
@@ -343,6 +344,7 @@ export function AddLoanModal({
       setSaving(false);
     }
   };
+  const submitOnce = useSaveOnce(submit);
 
   return (
     <ModalSheet
@@ -365,7 +367,7 @@ export function AddLoanModal({
                 />
                 <PrimaryButton
                   title={saving ? 'Saving…' : 'Create loan'}
-                  onPress={submit}
+                  onPress={submitOnce}
                   disabled={saving}
                   style={f.footerBtn}
                 />

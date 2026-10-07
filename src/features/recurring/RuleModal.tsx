@@ -37,6 +37,7 @@ import { errorMessage } from '@/lib/errorMessage';
 import { showAlert } from '@/components/AppDialog';
 import { categorySentence, parentNameOf } from '@/lib/categoryLabel';
 import { spendableAccountsOf } from '@/lib/account';
+import { useSaveOnce } from '@/lib/useSaveOnce';
 
 const TX_TYPES: { label: string; value: TransactionType }[] = [
   { label: 'Expense', value: 'expense' },
@@ -219,6 +220,7 @@ export function RuleModal({
       setSaving(false);
     }
   };
+  const submitOnce = useSaveOnce(submit);
 
   const confirmDelete = async () => {
     if (!editing) return;
@@ -261,7 +263,7 @@ export function RuleModal({
           {error && <Text style={styles.errorText}>{error}</Text>}
           <PrimaryButton
             title={saving ? 'Saving…' : editing ? 'Save changes' : 'Create'}
-            onPress={submit}
+            onPress={submitOnce}
             disabled={saving}
           />
         </View>
