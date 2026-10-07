@@ -1,10 +1,27 @@
 import { getDb } from './client';
-import { toLocalIsoDate, addDaysToIsoDate, isoDatesInRange, monthsBetweenIsoDates } from '@/lib/date';
+import {
+  toLocalIsoDate,
+  addDaysToIsoDate,
+  isoDatesInRange,
+  monthsBetweenIsoDates,
+  dayOfIsoDate,
+} from '@/lib/date';
+import { runsBetween } from '@/lib/recurrence';
+import { cachedRead } from './readCache';
 import { streakSeries } from '@/lib/gardenGrowth';
 import { getDefaultCurrency } from './settings';
 import { valuationAdjSql } from './valuationSql';
-import type { Account, DateRange } from '@/types';
-import { SPEND_ROWS, SPEND_AMOUNT, INCOME_ROWS, NOT_SENSITIVE, rowsOf, amountOf, countOf } from './spendSql';
+import type { Account, DateRange, RecurrenceFrequency } from '@/types';
+import {
+  SPEND_ROWS,
+  SPEND_AMOUNT,
+  INCOME_ROWS,
+  NOT_SENSITIVE,
+  rowsOf,
+  amountOf,
+  countOf,
+  sensitiveOf,
+} from './spendSql';
 
 export type ReportPeriod = 'day' | 'week' | 'month' | 'year';
 
@@ -146,7 +163,7 @@ export async function getPeriodSummary(range: DateRange): Promise<PeriodSummary>
     }>(
       `SELECT top.id as categoryId, top.name as name, top.color as color, SUM(${amountOf(type)}) as total,
          EXISTS(SELECT 1 FROM categories ch WHERE ch.parent_id = top.id AND ch.archived = 0) as hasSubcategories,
-         MAX(c.is_sensitive) as isSensitive
+         MAX(${sensitiveOf('c')}) as isSensitive
        FROM transactions t
        JOIN categories c ON c.id = t.category_id
        JOIN categories top ON top.id = COALESCE(c.parent_id, c.id)
@@ -235,7 +252,7 @@ export async function getSubcategoryBreakdown(
     isSensitive: number;
   }>(
     `SELECT c.id as categoryId, c.name as name, c.color as color, SUM(${amountOf(kind)}) as total,
-       ${countOf(kind)} as count, c.is_sensitive as isSensitive
+       ${countOf(kind)} as count, ${sensitiveOf('c')} as isSensitive
      FROM transactions t
      JOIN categories c ON c.id = t.category_id
      JOIN accounts a ON a.id = t.account_id
@@ -305,7 +322,7 @@ export async function getAccountBreakdown(
     isSensitive: number;
   }>(
     `SELECT t.account_id as accountId, top.id as categoryId, top.name as name, top.color as color,
-       SUM(${amountOf(kind)}) as total, MAX(c.is_sensitive) as isSensitive
+       SUM(${amountOf(kind)}) as total, MAX(${sensitiveOf('c')}) as isSensitive
      FROM transactions t
      JOIN categories c ON c.id = t.category_id
      JOIN categories top ON top.id = COALESCE(c.parent_id, c.id)
@@ -553,17 +570,50 @@ export async function getMonthPaceInputs(
        AND p.due_date > ? AND p.due_date <= ?`,
     [today, monthEnd]
   );
-  const bills = await db.getFirstAsync<{ total: number | null }>(
-    `SELECT SUM(r.amount_minor) AS total FROM recurring_rules r
-     JOIN accounts a ON a.id = r.account_id
-     WHERE r.active = 1 AND r.type = 'expense' AND a.currency = ?
-       AND r.next_run_date > ? AND r.next_run_date <= ?`,
-    [currency, today, monthEnd]
-  );
   return {
     everydaySpentMinor: Math.max(0, everyday?.total ?? 0),
-    dueRestOfMonthMinor: (emis?.total ?? 0) + (bills?.total ?? 0),
+    dueRestOfMonthMinor: (emis?.total ?? 0) + (await recurringExpensesDue(today, monthEnd)),
   };
+}
+
+/**
+ * What active repeating expenses (default currency) will still post after `today` through `monthEnd`, every
+ * run counted: a weekly bill due four more times this month counts four times.
+ */
+async function recurringExpensesDue(today: string, monthEnd: string): Promise<number> {
+  const db = await getDb();
+  const currency = await getDefaultCurrency();
+  const rules = await db.getAllAsync<{
+    amount_minor: number;
+    next_run_date: string;
+    frequency: RecurrenceFrequency;
+    interval_count: number;
+    anchor_day: number | null;
+    end_date: string | null;
+  }>(
+    `SELECT r.amount_minor, r.next_run_date, r.frequency, r.interval_count, r.anchor_day, r.end_date
+     FROM recurring_rules r
+     JOIN accounts a ON a.id = r.account_id
+     WHERE r.active = 1 AND r.type = 'expense' AND a.currency = ? AND r.next_run_date <= ?`,
+    [currency, monthEnd]
+  );
+  return rules.reduce(
+    (sum, r) =>
+      sum +
+      r.amount_minor *
+        runsBetween(
+          {
+            nextRunDate: r.next_run_date,
+            frequency: r.frequency,
+            intervalCount: r.interval_count,
+            anchorDay: r.anchor_day ?? dayOfIsoDate(r.next_run_date),
+            endDate: r.end_date,
+          },
+          today,
+          monthEnd
+        ),
+    0
+  );
 }
 
 /**
@@ -572,7 +622,6 @@ export async function getMonthPaceInputs(
  */
 export async function getStillToPayThisMonth(today: string = toIso(new Date())): Promise<number> {
   const db = await getDb();
-  const currency = await getDefaultCurrency();
   const monthStart = `${today.slice(0, 7)}-01`;
   const [y, m] = today.split('-').map(Number);
   const monthEnd = `${today.slice(0, 7)}-${String(new Date(y, m, 0).getDate()).padStart(2, '0')}`;
@@ -583,14 +632,7 @@ export async function getStillToPayThisMonth(today: string = toIso(new Date())):
        AND p.due_date >= ? AND p.due_date <= ?`,
     [monthStart, monthEnd]
   );
-  const bills = await db.getFirstAsync<{ total: number | null }>(
-    `SELECT SUM(r.amount_minor) AS total FROM recurring_rules r
-     JOIN accounts a ON a.id = r.account_id
-     WHERE r.active = 1 AND r.type = 'expense' AND a.currency = ?
-       AND r.next_run_date > ? AND r.next_run_date <= ?`,
-    [currency, today, monthEnd]
-  );
-  return (emis?.total ?? 0) + (bills?.total ?? 0);
+  return (emis?.total ?? 0) + (await recurringExpensesDue(today, monthEnd));
 }
 
 export interface DailyGoalStreakPoint {
@@ -705,10 +747,22 @@ export async function getPeriodComparison(
  * The same comparison against two explicit ranges, for the period navigator (any past month or year,
  * not only the one containing today).
  */
-export async function getRangeComparison(
+export function getRangeComparison(
   current: DateRange,
   previous: DateRange,
   period: ReportPeriod = 'month'
+): Promise<PeriodComparison> {
+  // Home, its Needs you list, the widgets and Activity all ask for this month's; computed once per change.
+  return cachedRead(
+    `rangeComparison:${current.start}:${current.end}:${previous.start}:${previous.end}:${period}`,
+    () => readRangeComparison(current, previous, period)
+  );
+}
+
+async function readRangeComparison(
+  current: DateRange,
+  previous: DateRange,
+  period: ReportPeriod
 ): Promise<PeriodComparison> {
   const [curSummary, prevSummary] = await Promise.all([
     getPeriodSummary(current),

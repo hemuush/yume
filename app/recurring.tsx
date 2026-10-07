@@ -47,12 +47,16 @@ export default function RecurringScreen() {
   const [fromSuggestion, setFromSuggestion] = useState<SubscriptionSuggestion | null>(null);
   const [addAccountVisible, setAddAccountVisible] = useState(false);
   const loadRules = useCallback(async () => {
-    const [r, accs, cats, hidden] = await Promise.all([
+    const [r, allAccs, cats, hidden] = await Promise.all([
       listRecurringRules(),
-      listAccounts(),
+      listAccounts(true),
       listCategories(),
       getHiddenSubscriptionSuggestions(),
     ]);
+    // Archived accounts stay out, except one a rule still uses: editing that rule must keep it there, not
+    // quietly move it to whichever account comes first.
+    const inUse = new Set(r.flatMap((rule) => [rule.accountId, rule.toAccountId]));
+    const accs = allAccs.filter((a) => !a.archived || inUse.has(a.id));
     setRules(r);
     // A suggestion is a nicety — if it fails, the rules still show.
     setSuggestions(await getSubscriptionSuggestions(hidden).catch(() => []));
@@ -186,7 +190,8 @@ export default function RecurringScreen() {
               </>
             )}
             <SuggestionsList
-              suggestions={suggestions}
+              // A savings or investment charge (an SIP) shows its amount: left out while those are hidden.
+              suggestions={hideAmounts ? suggestions.filter((s) => !s.isSensitive) : suggestions}
               onMakeRecurring={setFromSuggestion}
               onHide={hideSuggestion}
             />

@@ -16,7 +16,7 @@ import { isSavingsEntry } from '@/lib/privateSummary';
 import { savingsAccountIdsOf } from '@/lib/account';
 import { Account, SavingsGoal } from '@/types';
 import { theme } from '@/constants/theme';
-import { toLocalIsoDate } from '@/lib/date';
+import { addDaysToIsoDate, toLocalIsoDate } from '@/lib/date';
 import { AppHeader } from '@/components/AppHeader';
 import { CardRowsSkeleton } from '@/components/ListSkeleton';
 import { useScreenLoad } from '@/lib/useScreenLoad';
@@ -33,6 +33,7 @@ import {
   buildBudgetsSummary,
   buildPeopleState,
   buildHabitState,
+  DUE_SOON_DAYS,
   LoansSummary,
   DueSoon,
   DueDay,
@@ -130,13 +131,18 @@ export default function PlanScreen() {
           type: r.type,
           active: r.active,
           nextRunDate: r.nextRunDate,
+          frequency: r.frequency,
+          intervalCount: r.intervalCount,
+          endDate: r.endDate,
           amountMinor: r.amountMinor,
           label:
             r.type === 'transfer'
               ? `${accountName(r.accountId)} → ${accountName(r.toAccountId)}`
               : r.note || categoryLabelOf(r.categoryId) || 'Recurring',
         })),
-      cardCycles
+      cardCycles,
+      // Every run in the fortnight Plan shows: a weekly bill is due twice in it, not once.
+      addDaysToIsoDate(toLocalIsoDate(new Date()), DUE_SOON_DAYS - 1)
     );
     // The top-spend category (sorted biggest first) a cut could apply to: not a built-in like Loan EMI,
     // which the app files automatically — "spend 10% less on your EMI" isn't a real choice.
@@ -173,7 +179,7 @@ export default function PlanScreen() {
       dailyGoalMinor: dailyGoal,
     });
   }, [hideAmounts]);
-  const { loaded, loadError, reload } = useScreenLoad(loadPlan);
+  const { loaded, loadError, reload } = useScreenLoad(loadPlan, { skipWhenUnchanged: true });
   // The EMI being paid from Coming up, with the account and category it goes on.
   const [paying, setPaying] = useState<LoanPaymentContext | null>(null);
   const payEmi = async (loanId: string) => setPaying(await getLoanPaymentContext(loanId));

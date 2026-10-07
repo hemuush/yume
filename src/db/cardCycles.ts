@@ -2,6 +2,7 @@ import { listAccounts, getAccountFlow } from './accounts';
 import { buildCardCycle, cycleDates, CardCycle } from '@/lib/cardCycle';
 import { toLocalIsoDate } from '@/lib/date';
 import type { Account } from '@/types';
+import { cachedRead } from './readCache';
 
 /**
  * Cycle for each card with a statement day and bill due day, derived from its entries: owed at statement-day
@@ -43,10 +44,11 @@ export async function getCardCycle(
 }
 
 /** Every tracked card's cycle, for Plan's Coming up and Home's Needs you. */
-export async function listCardCycles(
-  today: string = toLocalIsoDate(new Date())
-): Promise<AccountCardCycle[]> {
-  const cards = (await listAccounts()).filter(tracksCardCycle);
-  const cycles = await Promise.all(cards.map((c) => getCardCycle(c, today)));
-  return cycles.filter((c): c is AccountCardCycle => c != null);
+export function listCardCycles(today: string = toLocalIsoDate(new Date())): Promise<AccountCardCycle[]> {
+  // Home, its Needs you list and Plan all ask for today's; computed once per change.
+  return cachedRead(`cardCycles:${today}`, async () => {
+    const cards = (await listAccounts()).filter(tracksCardCycle);
+    const cycles = await Promise.all(cards.map((c) => getCardCycle(c, today)));
+    return cycles.filter((c): c is AccountCardCycle => c != null);
+  });
 }

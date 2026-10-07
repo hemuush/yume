@@ -162,57 +162,28 @@ export type LaneLine =
       type: 'income' | 'expense';
       items: Transaction[];
       totalMinor: number;
-    }
-  | {
-      /** The parts of one split payment, shown as the one payment they were. */
-      kind: 'split';
-      key: string;
-      splitId: string;
-      items: Transaction[];
-      totalMinor: number;
     };
 
 /**
  * Day layout (newest first): own-account transfers become notes; 2+ same-category entries stack into one line
- * ("Food & Dining ×5") in the newest's place. Split parts form their own line first and never join a stack.
+ * ("Food & Dining ×5") in the newest's place. Split parts are plain lines of their own and never join a stack.
  */
 export function buildDayLane(
   items: Transaction[],
   date: string
 ): { transfers: Transaction[]; lines: LaneLine[] } {
   const transfers = items.filter((t) => t.type === 'transfer');
-  // A split shows whole only when at least two of its parts are here (a
-  // category filter can leave just one, which then reads as a plain entry).
-  const partsBySplit = new Map<string, Transaction[]>();
-  for (const t of items) {
-    if (t.type === 'transfer' || !t.splitId) continue;
-    partsBySplit.set(t.splitId, [...(partsBySplit.get(t.splitId) ?? []), t]);
-  }
-  const isGroupedPart = (t: Transaction) => !!t.splitId && (partsBySplit.get(t.splitId)?.length ?? 0) >= 2;
-  const rest = items.filter((t) => t.type !== 'transfer' && !isGroupedPart(t));
+  const rest = items.filter((t) => t.type !== 'transfer');
   const groupKey = (t: Transaction) => `${date}|${t.type}|${t.categoryId ?? ''}`;
   const counts = new Map<string, number>();
-  for (const t of rest) counts.set(groupKey(t), (counts.get(groupKey(t)) ?? 0) + 1);
+  for (const t of rest) {
+    if (!t.splitId) counts.set(groupKey(t), (counts.get(groupKey(t)) ?? 0) + 1);
+  }
   const lines: LaneLine[] = [];
   const stacks = new Map<string, Extract<LaneLine, { kind: 'stack' }>>();
-  // Splits sit where their newest part sits in the day, like stacks do.
-  const splitsPlaced = new Set<string>();
-  for (const t of items) {
-    if (!isGroupedPart(t)) continue;
-    if (splitsPlaced.has(t.splitId!)) continue;
-    splitsPlaced.add(t.splitId!);
-    const parts = [...partsBySplit.get(t.splitId!)!].sort((a, b) => b.amountMinor - a.amountMinor);
-    lines.push({
-      kind: 'split',
-      key: `${date}|split|${t.splitId}`,
-      splitId: t.splitId!,
-      items: parts,
-      totalMinor: parts.reduce((s, p) => s + p.amountMinor, 0),
-    });
-  }
   for (const t of rest) {
     const key = groupKey(t);
-    if ((counts.get(key) ?? 0) < 2) {
+    if (t.splitId || (counts.get(key) ?? 0) < 2) {
       lines.push({ kind: 'single', tx: t });
       continue;
     }
@@ -232,8 +203,7 @@ export function buildDayLane(
     stack.items.push(t);
     stack.totalMinor += t.amountMinor;
   }
-  // Once the day has been arranged by hand, every line keeps the place it was
-  // dragged to (splits included); until then splits lead, as above.
+  // Once the day has been arranged by hand, every line keeps the place it was dragged to.
   if (items.some((t) => t.dayRank != null)) {
     const place = new Map(items.map((t, i) => [t.id, i]));
     const top = (l: LaneLine) =>

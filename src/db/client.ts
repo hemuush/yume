@@ -7,6 +7,7 @@ import { primeCurrencyCache } from './settings';
 import { BACKFILL_LOAN_TX_KIND_SQL } from './loanTxKind';
 import { addMonthsToIsoDate } from '@/lib/date';
 import { purgeExpiredDeletedEntries } from './recentlyDeleted';
+import { bumpDataVersion, trackDataVersion } from './dataVersion';
 
 const DB_NAME = 'yume.db';
 const LEGACY_DB_NAME = 'flynse.db';
@@ -87,15 +88,22 @@ function serialize<T>(task: () => Promise<T>): Promise<T> {
   return result;
 }
 
+/** Runs a write and moves the data version on, whether it succeeded or not (a failed one may still have changed something). */
+function writing<T>(task: () => Promise<T>): Promise<T> {
+  return task().finally(bumpDataVersion);
+}
+
 function serializeDb(raw: SQLite.SQLiteDatabase): AppDb {
   const rawDb = toAppDb(raw);
+  trackDataVersion();
   return {
     getFirstAsync: (sql, params) => serialize(() => rawDb.getFirstAsync(sql, params)),
     getAllAsync: (sql, params) => serialize(() => rawDb.getAllAsync(sql, params)),
-    runAsync: (sql, params) => serialize(() => rawDb.runAsync(sql, params)),
-    execAsync: (sql) => serialize(() => rawDb.execAsync(sql)),
-    withTransactionAsync: (task) => serialize(() => rawDb.withTransactionAsync(task)),
-    exclusiveAsync: (task) => serialize(() => task(rawDb)),
+    runAsync: (sql, params) => serialize(() => writing(() => rawDb.runAsync(sql, params))),
+    execAsync: (sql) => serialize(() => writing(() => rawDb.execAsync(sql))),
+    withTransactionAsync: (task) => serialize(() => writing(() => rawDb.withTransactionAsync(task))),
+    // Used for backup reads as well as restore; counting it as a write only costs one extra reload.
+    exclusiveAsync: (task) => serialize(() => writing(() => task(rawDb))),
   };
 }
 
@@ -270,6 +278,23 @@ async function applyIdempotentMigrations(db: AppDb): Promise<void> {
   // Refunds: money back that lowers a category's spending (db/spendSql.ts).
   await ensureColumn(db, 'transactions', 'is_refund', 'is_refund INTEGER NOT NULL DEFAULT 0');
   await ensureColumn(db, 'transactions', 'day_rank', 'day_rank INTEGER');
+
+  // Covering indexes for the reads every screen makes (here, not in CREATE_TABLES_SQL, since is_refund only
+  // exists on older installs once the line above has run). Each holds every column its queries touch, so
+  // SQLite answers from the index alone instead of looking up each entry's row:
+  // - by date: Tidy up's "same entry twice" grouping (in this column order, so it walks the index instead of
+  //   sorting the whole ledger) and every date-range total (month summaries, carry-in, trends).
+  await db.execAsync(
+    `CREATE INDEX IF NOT EXISTS idx_transactions_repeat
+       ON transactions(date, amount_minor, type, account_id, category_id, to_account_id, is_refund)`
+  );
+  // - by account: every account's balance (listAccounts), from both sides of a transfer.
+  await db.execAsync(
+    'CREATE INDEX IF NOT EXISTS idx_transactions_account_flow ON transactions(account_id, type, amount_minor, date)'
+  );
+  await db.execAsync(
+    'CREATE INDEX IF NOT EXISTS idx_transactions_to_account_flow ON transactions(to_account_id, amount_minor, date)'
+  );
 
   await repairLoanDueDates(db);
 

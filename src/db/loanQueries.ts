@@ -117,8 +117,9 @@ export async function getLoanPaymentContext(loanId: string): Promise<LoanPayment
     [loanId]
   );
   if (!next) return null;
+  // Savings accounts can't pay or receive an EMI directly (assertSpendableAccount), so they're never offered.
   const accounts = await db.getAllAsync<{ id: string; name: string }>(
-    'SELECT id, name FROM accounts WHERE archived = 0 ORDER BY created_at ASC'
+    `SELECT id, name FROM accounts WHERE archived = 0 AND type != 'savings' ORDER BY created_at ASC`
   );
   const account = accounts.find((a) => a.id === loan.linked_account_id) ?? accounts[0] ?? null;
   const kind = loan.direction === 'borrowed' ? 'expense' : 'income';
@@ -126,8 +127,10 @@ export async function getLoanPaymentContext(loanId: string): Promise<LoanPayment
     'SELECT id, name FROM categories WHERE kind = ? AND archived = 0 ORDER BY name COLLATE NOCASE',
     [kind]
   );
+  // Only the built-in category for this direction, as the loan's own screen does: an arbitrary first one would
+  // misfile the payment, so without it Pay stays off.
   const category =
-    categories.find((c) => c.name === 'Loan EMI' || c.name === 'Loan Repayment') ?? categories[0] ?? null;
+    categories.find((c) => c.name === (kind === 'expense' ? 'Loan EMI' : 'Loan Repayment')) ?? null;
   return { installment: rowToLoanPayment(next), account, categoryId: category?.id ?? null };
 }
 

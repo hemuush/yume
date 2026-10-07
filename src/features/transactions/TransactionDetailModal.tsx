@@ -237,23 +237,28 @@ export function TransactionDetailModal({
   // The entry as a card in its category's colour, then two pages (what it is, what you can do) so neither
   // scrolls. Delete is the bin beside Edit.
   const canEdit = link === null;
+  // New entries (again today, or on a schedule) only go on accounts still in use, never an archived one.
+  const isActive = (id: string | null) => {
+    const a = id ? accounts.find((acc) => acc.id === id) : undefined;
+    return !!a && !a.archived;
+  };
+  const canRepeat =
+    canEdit && !tx.splitId && isActive(tx.accountId) && (!transfer || isActive(tx.toAccountId));
   const moreActions = [
-    canEdit &&
-      !tx.splitId && {
-        icon: 'plus',
-        bg: theme.colors.primaryTint,
-        label: 'Log again today',
-        sub: 'Same amount, account and note',
-        onPress: logAgainToday,
-      },
-    canEdit &&
-      !tx.splitId && {
-        icon: 'repeat',
-        bg: theme.colors.idTeal,
-        label: 'Make it recurring',
-        sub: 'Yume logs it for you on a schedule',
-        onPress: () => setRuleOpen(true),
-      },
+    canRepeat && {
+      icon: 'plus',
+      bg: theme.colors.primaryTint,
+      label: 'Log again today',
+      sub: 'Same amount, account and note',
+      onPress: logAgainToday,
+    },
+    canRepeat && {
+      icon: 'repeat',
+      bg: theme.colors.idTeal,
+      label: 'Make it recurring',
+      sub: 'Yume logs it for you on a schedule',
+      onPress: () => setRuleOpen(true),
+    },
     canEdit &&
       tx.type === 'expense' &&
       cat && {

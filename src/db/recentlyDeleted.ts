@@ -44,6 +44,8 @@ export interface DeletedEntry {
   note: string;
   categoryId: string | null;
   accountId: string;
+  /** A transfer's destination; null otherwise. */
+  toAccountId: string | null;
   deletedAt: string;
   /** Whole days left before it's cleared; at least 1 while it's still here. */
   daysLeft: number;
@@ -89,6 +91,7 @@ export async function listDeletedEntries(now: Date = new Date()): Promise<Delete
       note: row.note ?? '',
       categoryId: row.category_id,
       accountId: row.account_id,
+      toAccountId: row.to_account_id ?? null,
       deletedAt: r.deleted_at,
       daysLeft: daysLeftOf(r.deleted_at, now),
       blockedReason: accountGone
@@ -124,10 +127,34 @@ export async function restoreDeletedEntry(id: string): Promise<void> {
   } catch {
     throw new Error('This entry is damaged and can no longer be restored.');
   }
+  // A part of a split payment comes back with the rest of its payment still waiting here: one part alone
+  // would be half a payment that can't be edited (a split needs at least two parts).
+  const together: { id: string; row: RowSnapshot['row'] }[] = [{ id, row }];
+  const splitId = row.split_id;
+  if (splitId) {
+    const others = await db.getAllAsync<{ id: string; snapshot: string }>(
+      'SELECT id, snapshot FROM deleted_entries WHERE id != ?',
+      [id]
+    );
+    for (const o of others) {
+      try {
+        const parsed = JSON.parse(o.snapshot);
+        if (parsed && typeof parsed === 'object' && parsed.split_id === splitId) {
+          together.push({ id: o.id, row: parsed as RowSnapshot['row'] });
+        }
+      } catch {
+        // A damaged snapshot stays where it is; the 30-day purge clears it.
+      }
+    }
+  }
   await db.withTransactionAsync(async (tx) => {
-    const exists = await tx.getFirstAsync<{ id: string }>('SELECT id FROM transactions WHERE id = ?', [id]);
-    if (!exists) await restoreRow(tx, { table: 'transactions', row });
-    await tx.runAsync('DELETE FROM deleted_entries WHERE id = ?', [id]);
+    for (const entry of together) {
+      const exists = await tx.getFirstAsync<{ id: string }>('SELECT id FROM transactions WHERE id = ?', [
+        entry.id,
+      ]);
+      if (!exists) await restoreRow(tx, { table: 'transactions', row: entry.row });
+      await tx.runAsync('DELETE FROM deleted_entries WHERE id = ?', [entry.id]);
+    }
   });
 }
 

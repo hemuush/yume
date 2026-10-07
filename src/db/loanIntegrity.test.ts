@@ -95,6 +95,52 @@ describe('loan integrity', () => {
     expect(pendingSecond.outstandingAfterMinor + pendingSecond.principalComponentMinor).toBe(restored);
   });
 
+  it('undoing an EMI paid BEFORE a prepayment keeps the prepayment off the balance and rebuilds the schedule', async () => {
+    const loan = await borrowed('Undo-Before-Prepay Bank');
+    const [first] = await getLoanSchedule(loan.id);
+    await payInstallment(first.id, { accountId, categoryId: emiCategoryId, paidDate: '2026-01-01' });
+    await applyPrepayment(loan.id, {
+      amountMinor: 100000,
+      accountId,
+      categoryId: emiCategoryId,
+      date: '2026-01-15',
+    });
+    await undoInstallmentPayment(first.id);
+
+    // The ₹1,000 prepayment still stands: the balance is the principal less it, not the full principal.
+    const restored = (await getLoanById(loan.id))!.outstandingPrincipalMinor;
+    expect(restored).toBe(600000 - 100000);
+    // Every installment is pending again and the schedule runs down from that balance to zero.
+    const schedule = await getLoanSchedule(loan.id);
+    expect(schedule.every((p) => p.status === 'pending')).toBe(true);
+    expect(schedule[0].installmentNumber).toBe(1);
+    expect(schedule[0].dueDate).toBe(first.dueDate);
+    expect(schedule[0].outstandingAfterMinor + schedule[0].principalComponentMinor).toBe(restored);
+    expect(schedule.reduce((s, p) => s + p.principalComponentMinor, 0)).toBe(restored);
+    expect(schedule[schedule.length - 1].outstandingAfterMinor).toBe(0);
+  });
+
+  it('a keepTenure rate change after a prepayment keeps the shortened payoff date', async () => {
+    const loan = await borrowed('KeepTenure-After-Prepay Bank', { tenureMonths: 12 });
+    await applyPrepayment(loan.id, {
+      amountMinor: 300000,
+      accountId,
+      categoryId: emiCategoryId,
+      date: '2026-01-15',
+    });
+    const afterPrepay = await getLoanSchedule(loan.id);
+    expect(afterPrepay.length).toBeLessThan(12);
+    await applyRateChange(loan.id, {
+      newAnnualRateBp: 900,
+      effectiveDate: '2026-01-20',
+      mode: 'keepTenure',
+    });
+    const after = await getLoanSchedule(loan.id);
+    expect(after).toHaveLength(afterPrepay.length);
+    expect(after[after.length - 1].dueDate).toBe(afterPrepay[afterPrepay.length - 1].dueDate);
+    expect(after[after.length - 1].outstandingAfterMinor).toBe(0);
+  });
+
   it('undoing the very first EMI of a never-prepaid loan still restores the full principal', async () => {
     const loan = await borrowed('Plain Undo Bank');
     const [first] = await getLoanSchedule(loan.id);
@@ -119,7 +165,7 @@ describe('loan integrity', () => {
     expect(after.every((p) => p.emiAmountMinor > 100)).toBe(true);
   });
 
-  it("a lent loan's prepayment charge is filed as an expense under Fees & Charges, not the income category", async () => {
+  it("a lent loan's prepayment charge is money the borrower pays you: income, under Loan Repayment", async () => {
     const loan = await createLoan({
       direction: 'lent',
       counterparty: 'Lent Charge Friend',
@@ -141,7 +187,7 @@ describe('loan integrity', () => {
     );
     expect(rows).toEqual([
       { type: 'income', category_id: repaymentCategoryId, loan_tx_kind: 'prepayment' },
-      { type: 'expense', category_id: feesCategoryId, loan_tx_kind: 'prepayment_charge' },
+      { type: 'income', category_id: repaymentCategoryId, loan_tx_kind: 'prepayment_charge' },
     ]);
   });
 

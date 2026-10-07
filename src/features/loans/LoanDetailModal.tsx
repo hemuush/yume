@@ -31,6 +31,7 @@ import { AssetModal } from './AssetModal';
 import { AccountModal } from './AccountModal';
 import { RateChangeModal } from './RateChangeModal';
 import { PrepayModal } from './PrepayModal';
+import { spendableAccountsOf } from '@/lib/account';
 import { PayInstallmentSheet } from './PayInstallmentSheet';
 import { LoanSchedule } from './LoanSchedule';
 import { LoanStatGrid } from './LoanStatGrid';
@@ -100,7 +101,8 @@ export function LoanDetailModal({
       if (freshLoan) setLiveLoan(freshLoan);
       setSchedule(sched);
       setRateHistory(history);
-      setAccounts(accs);
+      // EMIs and prepayments are spending or income, which a savings account can't take.
+      setAccounts(spendableAccountsOf(accs));
       // Borrowed-loan repayment is an expense, a lent-loan repayment received is income: only categories of
       // that kind are valid, never a cross-kind fallback (it could tag income with an expense category).
       const wantKind = (freshLoan?.direction ?? loan.direction) === 'borrowed' ? 'expense' : 'income';
@@ -155,7 +157,8 @@ export function LoanDetailModal({
   if (liveLoan.status === 'active' && nextInstallment) {
     moreActionItems.push({
       key: 'prepay',
-      label: 'Make a prepayment',
+      // A loan you lent is prepaid by the borrower: you record it.
+      label: liveLoan.direction === 'lent' ? 'Record a prepayment' : 'Make a prepayment',
       icon: 'trending-up',
       onPress: () => setPrepayVisible(true),
     });

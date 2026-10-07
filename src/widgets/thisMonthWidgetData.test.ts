@@ -93,7 +93,9 @@ describe('the This Month widget with savings hidden', () => {
     expect(data.savedMinor).toBe(0);
     expect(data.slices.saved).toBe(0);
     expect(data.slices.free).toBeCloseTo(0.3);
-    expect(data.freeMinor).toBe(3000000);
+    // As on Home's card: this month leaves ₹30,000, but last month went ₹50,000 over (spending, no income),
+    // and that shortfall carries in.
+    expect(data.freeMinor).toBe(3000000 - 5000000);
     const shown = texts(ThisMonthWidget(data));
     expect(shown).not.toContain('Saved');
     expect(shown).toContain('Free');
@@ -111,6 +113,38 @@ describe('the This Month widget with savings hidden', () => {
     expect(current.spentMinor).toBe(1000000);
     expect(previous.spentMinor).toBe(5000000);
     expect(previous.monthLabel).toBe(lastMonth.toLocaleDateString(undefined, { month: 'long' }));
+  });
+
+  it('leaves spending in savings/investment categories out of Spent while hiding is on, as Home does', async () => {
+    const now = new Date();
+    const month = new Date(now.getFullYear(), now.getMonth() - 2, 15);
+    const date = toLocalIsoDate(month);
+    const bank = (await mockTestDb.getFirstAsync<{ id: string }>(
+      `SELECT id FROM accounts WHERE name = 'Bank'`
+    ))!.id;
+    const food = (await mockTestDb.getFirstAsync<{ id: string }>(
+      `SELECT id FROM categories WHERE name = 'Food'`
+    ))!.id;
+    const invest = (await createCategory({ name: 'Investments', kind: 'expense', isSensitive: true })).id;
+    await createTransaction({
+      type: 'expense',
+      accountId: bank,
+      categoryId: food,
+      amountMinor: 200000,
+      date,
+    });
+    await createTransaction({
+      type: 'expense',
+      accountId: bank,
+      categoryId: invest,
+      amountMinor: 900000,
+      date,
+    });
+
+    await setHideSensitiveAmounts(false);
+    expect((await getThisMonthWidgetData(month)).spentMinor).toBe(1100000);
+    await setHideSensitiveAmounts(true);
+    expect((await getThisMonthWidgetData(month)).spentMinor).toBe(200000);
   });
 
   it("Suu's widget line stops naming a saved share while hiding is on", async () => {

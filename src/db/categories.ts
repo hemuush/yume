@@ -7,7 +7,14 @@ import { Category } from '@/types';
 
 /** Categories and subcategories: list, create, edit, archive and delete (re-exported from ./ledger). */
 
-function rowToCategory(row: CategoryRow): Category {
+/**
+ * Every category query reads through this: the row plus its parent's "hide with amounts" flag, which a
+ * subcategory inherits.
+ */
+const CATEGORY_SELECT = `SELECT c.*, COALESCE(p.is_sensitive, 0) AS parent_is_sensitive
+  FROM categories c LEFT JOIN categories p ON p.id = c.parent_id`;
+
+function rowToCategory(row: CategoryRow & { parent_is_sensitive?: number }): Category {
   return {
     id: row.id,
     name: row.name,
@@ -17,7 +24,8 @@ function rowToCategory(row: CategoryRow): Category {
     color: row.color,
     archived: !!row.archived,
     sortOrder: row.sort_order,
-    isSensitive: !!row.is_sensitive,
+    isSensitive: !!row.is_sensitive || !!row.parent_is_sensitive,
+    ownIsSensitive: !!row.is_sensitive,
     isSystem: !!row.is_system,
   };
 }
@@ -28,8 +36,8 @@ function rowToCategory(row: CategoryRow): Category {
  */
 export async function listCategories(includeArchived = false): Promise<Category[]> {
   const db = await getDb();
-  const rows = await db.getAllAsync<CategoryRow>(
-    `SELECT * FROM categories ${includeArchived ? '' : 'WHERE archived = 0'} ORDER BY name COLLATE NOCASE ASC, id ASC`
+  const rows = await db.getAllAsync<CategoryRow & { parent_is_sensitive: number }>(
+    `${CATEGORY_SELECT} ${includeArchived ? '' : 'WHERE c.archived = 0'} ORDER BY c.name COLLATE NOCASE ASC, c.id ASC`
   );
   return rows.map(rowToCategory);
 }
@@ -41,7 +49,8 @@ export async function listCategories(includeArchived = false): Promise<Category[
 export async function listMostUsedExpenseCategories(limit: number, sinceIso: string): Promise<Category[]> {
   const db = await getDb();
   const rows = await db.getAllAsync<CategoryRow>(
-    `SELECT c.* FROM categories c
+    `SELECT c.*, COALESCE(p.is_sensitive, 0) AS parent_is_sensitive FROM categories c
+     LEFT JOIN categories p ON p.id = c.parent_id
      LEFT JOIN (
        SELECT category_id, COUNT(*) AS uses FROM transactions
        WHERE type = 'expense' AND date >= ? AND category_id IS NOT NULL
@@ -110,7 +119,10 @@ export async function createCategory(input: {
       input.isSensitive ? 1 : 0,
     ]
   );
-  const row = await db.getFirstAsync<CategoryRow>('SELECT * FROM categories WHERE id = ?', [id]);
+  const row = await db.getFirstAsync<CategoryRow & { parent_is_sensitive: number }>(
+    `${CATEGORY_SELECT} WHERE c.id = ?`,
+    [id]
+  );
   return rowToCategory(found(row, 'category'));
 }
 
@@ -147,9 +159,20 @@ async function assertNotSystemCategory(
   }
 }
 
+/**
+ * Brings a category back. A subcategory brings its parent back with it: an active child under an archived
+ * parent would sit in no picker (pickers open a parent to reach its children).
+ */
 export async function unarchiveCategory(id: string): Promise<void> {
   const db = await getDb();
-  await db.runAsync('UPDATE categories SET archived = 0 WHERE id = ?', [id]);
+  await db.withTransactionAsync(async (tx) => {
+    await tx.runAsync('UPDATE categories SET archived = 0 WHERE id = ?', [id]);
+    await tx.runAsync(
+      `UPDATE categories SET archived = 0
+       WHERE id = (SELECT parent_id FROM categories WHERE id = ?) AND archived = 1`,
+      [id]
+    );
+  });
 }
 
 export async function updateCategory(

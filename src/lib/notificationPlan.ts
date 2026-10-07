@@ -1,4 +1,5 @@
-import { emiCopy, logCopy, wrapCopy } from './notificationCopy';
+import { emiCopy, emiOverdueCopy, logCopy, wrapCopy } from './notificationCopy';
+import { dayMonth } from './dateLabels';
 import { clampSlotMinutes, TimeSlotKind } from './notificationTimes';
 import { toLocalIsoDate } from './date';
 
@@ -19,6 +20,8 @@ export type NotificationRoute = (typeof NOTIFICATION_ROUTES)[number];
 
 /** How many days ahead the daily and Monday notifications are scheduled. */
 export const PLAN_DAYS = 14;
+/** An unpaid EMI is reminded of once a day for this many days after its due day, then left to the app. */
+export const OVERDUE_EMI_DAYS = 7;
 /** A spending alert nobody could be notified about (both times off) is dropped after this long. */
 export const ALERT_MAX_AGE_DAYS = 3;
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -148,6 +151,18 @@ export function planNotifications(input: {
       if (daysBetween(today, day) < 0) continue;
       const slot = firstSlotOn(day);
       if (slot) add(day, slot, { ...emiCopy(group), route: '/loans' });
+    }
+    // Missed the day: once a day until it's paid, for up to OVERDUE_EMI_DAYS after it was due. (Paying it
+    // rebuilds the plan, which drops these.)
+    for (let i = 0; i < PLAN_DAYS; i++) {
+      const day = startOfDay(today, i);
+      const overdue = loans.filter((l) => {
+        const late = daysBetween(parseIsoDate(l.dueDate), day);
+        return late > 0 && late <= OVERDUE_EMI_DAYS;
+      });
+      if (overdue.length === 0) continue;
+      const slot = firstSlotOn(day);
+      if (slot) add(day, slot, { ...emiOverdueCopy(overdue, dayMonth), route: '/loans' });
     }
   }
 

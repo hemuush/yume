@@ -29,6 +29,7 @@ import {
   KEEP_DAYS,
 } from './recentlyDeleted';
 import { buildBackupSnapshot, restoreFromSnapshot } from '@/lib/backup';
+import { saveSplit, deleteSplit } from './splits';
 
 let bank: string;
 let food: string;
@@ -121,6 +122,25 @@ describe('Recently deleted', () => {
     await restoreFromSnapshot(snapshot);
     expect(await countDeletedEntries()).toBe(0);
     expect((await listTransactions()).map((t) => t.id)).toEqual([keepMe.id]);
+  });
+
+  it('restoring one part of a deleted split brings the whole payment back', async () => {
+    const travel = (await createCategory({ name: 'Travel', kind: 'expense' })).id;
+    const splitId = await saveSplit({
+      accountId: bank,
+      date: '2026-09-26',
+      parts: [
+        { categoryId: food, amountMinor: 60_000 },
+        { categoryId: travel, amountMinor: 40_000 },
+      ],
+    });
+    await deleteSplit(splitId);
+    const [first] = await listDeletedEntries();
+    await restoreDeletedEntry(first.id);
+    const back = await listTransactions();
+    expect(back).toHaveLength(2);
+    expect(back.every((t) => t.splitId === splitId)).toBe(true);
+    expect(await countDeletedEntries()).toBe(0);
   });
 
   it('counts days left down from 30, never below 1', () => {

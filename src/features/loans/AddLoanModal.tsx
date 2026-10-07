@@ -129,8 +129,10 @@ export function AddLoanModal({
         setAccounts(accs);
         setCategories(cats);
         setPeople(ppl);
-        setDisbAccountId((prev) => prev ?? accs[0]?.id ?? null);
-        setRepayAccountId((prev) => prev ?? accs[0]?.id ?? null);
+        // Never a savings account: the disbursement and EMIs are income and spending, which it can't take.
+        const firstSpendable = spendableAccountsOf(accs)[0]?.id ?? null;
+        setDisbAccountId((prev) => prev ?? firstSpendable);
+        setRepayAccountId((prev) => prev ?? firstSpendable);
       } catch (e) {
         // Guarded: a failure here would leave accounts/categories empty, so submit() would reject with the
         // confusing "Pick an account and category" instead of the real error.
@@ -168,10 +170,15 @@ export function AddLoanModal({
     setDisbCategoryId((prev) =>
       prev && disbursementCategories.some((c) => c.id === prev)
         ? prev
-        : (disbursementCategories.find((c) => c.name === 'Loan Repayment')?.id ??
+        : // The built-in category for each side: money borrowed comes in as Loan Repayment (income); money
+          // lent goes out as Friends & Family (expense), not whichever expense category sorts first.
+          (disbursementCategories.find(
+            (c) => c.isSystem && c.name === (direction === 'borrowed' ? 'Loan Repayment' : 'Friends & Family')
+          )?.id ??
+          disbursementCategories.find((c) => c.name === 'Miscellaneous')?.id ??
           disbursementCategories[0].id)
     );
-  }, [disbursementCategories]);
+  }, [disbursementCategories, direction]);
 
   useEffect(() => {
     if (!feeCategories.length) return;

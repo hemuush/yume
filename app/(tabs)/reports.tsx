@@ -41,7 +41,8 @@ import {
   previousPeriodLabel,
   rangeDays,
 } from '@/lib/period';
-import { getTidyUpReport } from '@/db/tidyUp';
+import { findStartingBalances } from '@/db/tidyUp';
+import { useFreshness } from '@/lib/useFreshness';
 import { SegmentedControl } from '@/components/SegmentedControl';
 import { parseLocalIsoDate, toLocalIsoDate, isIsoDate } from '@/lib/date';
 import { theme } from '@/constants/theme';
@@ -209,10 +210,11 @@ export default function ReportsScreen() {
           getCategoryMonthlyTotals(trendMonths, anchor, hideAmounts),
           getDailyExpenseTotals(range, hideAmounts),
           listCategories(),
-          getTidyUpReport().catch(() => null),
+          // Only the starting-balance names (to word an insight); not Tidy up's whole-ledger repeat scan.
+          findStartingBalances().catch(() => null),
           listAccounts(),
         ]);
-        if (seq !== loadSeq.current) return;
+        if (seq !== loadSeq.current) return false;
         setComparison(cmp);
         setTrend(tr);
         // Net worth counts every account, savings included, so it goes while savings are hidden.
@@ -222,22 +224,30 @@ export default function ReportsScreen() {
         setSavingsIds(savingsAccountIdsOf(accs));
         setDaily(dy);
         setCategories(cats);
-        setStartingBalanceNames(tidy ? tidy.startingBalances.map((g) => g.categoryName) : []);
+        setStartingBalanceNames(tidy ? tidy.map((g) => g.categoryName) : []);
         setStatus('ready');
         setErrorText(null);
+        return true;
       } catch (e) {
-        if (seq !== loadSeq.current) return;
+        if (seq !== loadSeq.current) return false;
         setErrorText(errorMessage(e));
         setStatus('error');
+        return false;
       }
     },
     [hideAmounts]
   );
 
+  // Coming back with nothing written since this period loaded (same day): what's shown is current.
+  const freshness = useFreshness();
   useFocusEffect(
     useCallback(() => {
-      load(cursor);
-    }, [load, cursor])
+      if (freshness.isFresh([load, cursor])) return;
+      const started = freshness.start([load, cursor]);
+      void load(cursor).then((ok) => {
+        if (ok) freshness.commit(started);
+      });
+    }, [load, cursor, freshness])
   );
 
   const catById = useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories]);
@@ -408,7 +418,10 @@ export default function ReportsScreen() {
   });
   const income = flow === 'income';
   const shownBreakdown = income ? current.incomeBreakdown : current.categoryBreakdown;
-  const shownTotal = income ? roundedMinor(current.incomeMinor) : dispExpense;
+  // The rows' own sum, not the period's spending: a category whose refunds outweigh its spending has no row
+  // but still lowers that total, and the rows (whose rounded amounts and shares are made to add up to this)
+  // would each be shaved to fit.
+  const shownTotal = roundedMinor(shownBreakdown.reduce((sum, c) => sum + c.totalMinor, 0));
   const deltas = income
     ? categoryDeltas(current.incomeBreakdown, previous.incomeBreakdown)
     : categoryDeltas(current.categoryBreakdown, previous.categoryBreakdown);

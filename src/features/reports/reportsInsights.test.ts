@@ -156,6 +156,35 @@ describe('summariseDayTotal', () => {
   });
 });
 
+describe('patternFacts on a custom range or a month in progress', () => {
+  // Seven even days spread over the first fortnight (no heavy day, not front-loaded, weekends like
+  // weekdays), so only the fallback reads apply.
+  const even = ['03', '05', '09', '10', '11', '13', '14'].map((d) => ({
+    date: `2026-09-${d}`,
+    totalMinor: 10000,
+  }));
+
+  it('counts no-spend days only up to today in a month still going, not the days to come', () => {
+    const facts = patternFacts(even, 30, { start: '2026-09-01', end: '2026-09-30' }, '2026-09-14');
+    // 14 days so far, 7 with spending; the 16 days still to come aren't counted.
+    expect(facts.find((f) => f.key === 'noSpend')?.big).toBe('7 no-spend days');
+  });
+
+  it('says "the period", and looks at its own first eight days, for a range that is not a whole month', () => {
+    const range = { start: '2026-09-20', end: '2026-10-10' };
+    const daily = [
+      { date: '2026-09-20', totalMinor: 90000 },
+      { date: '2026-09-22', totalMinor: 10000 },
+      { date: '2026-10-05', totalMinor: 5000 },
+    ];
+    const facts = patternFacts(daily, 21, range, '2026-10-20');
+    expect(facts.find((f) => f.key === 'heaviest')?.detail).toMatch(/of the period in one day/);
+    expect(facts.find((f) => f.key === 'frontLoaded')?.detail).toBe(
+      'Most of the period went out in its first eight days.'
+    );
+  });
+});
+
 describe('patternFacts', () => {
   it('gives each read a card label, headline and detail', () => {
     // Four quiet weekdays, then a heavy weekend: weekends run well above weekdays.

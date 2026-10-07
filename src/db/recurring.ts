@@ -12,7 +12,8 @@ import {
 } from './ledger';
 import { captureRow, restoreRow, RowSnapshot } from './undoSnapshot';
 import { RecurringRule, RecurrenceFrequency, TransactionType, PaymentMode } from '@/types';
-import { toLocalIsoDate, addDaysToIsoDate, addMonthsToIsoDate, dayOfIsoDate } from '@/lib/date';
+import { toLocalIsoDate, dayOfIsoDate } from '@/lib/date';
+import { advanceDate } from '@/lib/recurrence';
 
 function rowToRule(row: RecurringRuleRow): RecurringRule {
   return {
@@ -33,27 +34,8 @@ function rowToRule(row: RecurringRuleRow): RecurringRule {
   };
 }
 
-/**
- * One step of a rule's cadence (every 2 weeks = 14 days). `anchorDay` is the rule's real day-of-month:
- * steps chain from the previous (clamped) date, so without it a 31st rule would ride Feb 28 → Mar 28 forever.
- */
-export function advanceDate(
-  date: string,
-  frequency: RecurrenceFrequency,
-  intervalCount: number,
-  anchorDay: number
-): string {
-  switch (frequency) {
-    case 'daily':
-      return addDaysToIsoDate(date, intervalCount);
-    case 'weekly':
-      return addDaysToIsoDate(date, intervalCount * 7);
-    case 'monthly':
-      return addMonthsToIsoDate(date, intervalCount, anchorDay);
-    case 'yearly':
-      return addMonthsToIsoDate(date, intervalCount * 12, anchorDay);
-  }
-}
+// The cadence maths lives in lib (pure, shared with the month forecast); re-exported for existing callers.
+export { advanceDate };
 
 export interface RecurringRuleInput {
   type: TransactionType;
