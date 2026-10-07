@@ -1,10 +1,9 @@
 import { View, StyleSheet } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Text } from '@/components/Text';
 import { CountUpAmount } from '@/components/CountUpAmount';
 import { theme } from '@/constants/theme';
 import { EYEBROW } from '@/constants/textStyles';
-import { shade } from '@/lib/color';
+import { StripCard, KickerDot } from '@/components/StripCard';
 import { formatMaskableMoney } from '@/lib/money';
 import { SCREEN } from '@/components/screenStyles';
 
@@ -26,17 +25,12 @@ export function CashHero({
   /** Sits inside a shared card with the tracked balance, which draws the edge and margins. */
   embedded?: boolean;
 }) {
-  const hue = theme.colors.idTeal;
-  return (
-    <View style={embedded ? styles.cardEmbedded : styles.card}>
-      <LinearGradient
-        colors={[shade(hue, 93), shade(hue, 85)]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={StyleSheet.absoluteFill}
-      />
-      <View style={styles.circle} />
-      <Text style={styles.kicker}>{label}</Text>
+  const body = (
+    <>
+      <View style={styles.kickerRow}>
+        <KickerDot color={theme.colors.secondaryDeep} />
+        <Text style={styles.kicker}>{label}</Text>
+      </View>
       {masked ? (
         <Text style={styles.amount}>{formatMaskableMoney(0, { masked: true })}</Text>
       ) : (
@@ -49,7 +43,19 @@ export function CashHero({
         />
       )}
       <Text style={styles.sub}>{sub}</Text>
+    </>
+  );
+  // A white card with a mint strip, like the heroes on the screens opened from Plan. In the shared card with
+  // the tracked balance, that card draws the edge; the strip still runs along its top.
+  return embedded ? (
+    <View style={styles.cardEmbedded}>
+      <View style={styles.strip} />
+      {body}
     </View>
+  ) : (
+    <StripCard tone={theme.colors.slice.saved} style={styles.card}>
+      {body}
+    </StripCard>
   );
 }
 
@@ -58,19 +64,18 @@ const styles = StyleSheet.create({
     marginHorizontal: SCREEN.gutter,
     marginTop: 12,
     padding: 16,
-    borderRadius: theme.radius.xl2,
-    overflow: 'hidden',
+    paddingTop: 18,
   },
-  cardEmbedded: { padding: 16 },
-  circle: {
+  cardEmbedded: { padding: 16, paddingTop: 18 },
+  strip: {
     position: 'absolute',
-    right: -34,
-    top: -46,
-    width: 130,
-    height: 130,
-    borderRadius: 65,
-    backgroundColor: 'rgba(255,255,255,0.35)',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 4,
+    backgroundColor: theme.colors.slice.saved,
   },
+  kickerRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   kicker: { ...EYEBROW, color: theme.colors.textSecondary },
   amount: { fontFamily: theme.font.monoBold, fontSize: 28, color: theme.colors.textPrimary, marginTop: 4 },
   sub: { fontFamily: theme.font.body, fontSize: 12.5, color: theme.colors.textSecondary, marginTop: 2 },

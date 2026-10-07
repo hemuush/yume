@@ -20,8 +20,6 @@ export const styles = StyleSheet.create({
   empty: { fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textMuted, marginVertical: 16 },
 
   periodRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  // The same control on a category page, which has no sky band around it.
-  periodRowPage: { paddingHorizontal: 20, marginBottom: 16 },
   periodPill: {
     flex: 1,
     minWidth: 0,
