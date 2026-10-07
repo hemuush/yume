@@ -1,6 +1,16 @@
 import { StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
 import { EYEBROW } from '@/constants/textStyles';
+import { SOFT_LIFT } from '@/components/SoftCard';
+
+/** The soft lift under white controls on the sky band (the period pill, the search box). */
+const SKY_PILL_SHADOW = {
+  shadowColor: theme.colors.link,
+  shadowOpacity: 0.1,
+  shadowRadius: 12,
+  shadowOffset: { width: 0, height: 4 },
+  elevation: 2,
+} as const;
 
 // Shared by the Transactions screen and its modals/rows (MonthPickerModal,
 // FilterModal, TransactionRow, TransactionDetailModal, AddTransactionModal).
@@ -23,138 +33,148 @@ export const styles = StyleSheet.create({
     marginTop: 3,
     lineHeight: 16,
   },
-  headerActions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
 
   // Search is its own mode (see the screen's own comment) — this row
-  // replaces the scope pills/week nav while it's active, in the same slot.
-  searchBarRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    paddingHorizontal: 20,
-    // Starts where the period row it stands in for starts.
-    marginTop: theme.layout.screenTopGap,
-    marginBottom: 14,
-  },
+  // replaces the period pill and week rail in the sky band while it's active.
+  searchBarRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 2, marginBottom: 4 },
   searchBar: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    paddingHorizontal: 14,
-    paddingVertical: 9,
+    gap: 10,
+    minHeight: 48,
+    paddingHorizontal: 16,
     borderRadius: theme.radius.pill,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
     backgroundColor: theme.colors.surface,
+    ...SKY_PILL_SHADOW,
   },
   searchInput: {
     flex: 1,
-    fontSize: 14,
+    fontSize: 15,
     fontFamily: theme.font.body,
     color: theme.colors.textPrimary,
     padding: 0,
   },
-  searchCancel: { fontSize: 13, fontFamily: theme.font.roundedMedium, color: theme.colors.textSecondary },
+  searchCancel: { fontSize: 14, fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
   searchLoading: { paddingVertical: 40, alignItems: 'center' },
 
   weekNavBtn: { width: 28, height: 28, alignItems: 'center', justifyContent: 'center' },
   weekNavArrow: { fontSize: 18, fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
   weekNavArrowDisabled: { color: theme.colors.textMuted, opacity: 0.35 },
 
-  // The Spent card: Spent with a change pill, Week/Month in the corner, the chart, a one-line legend (or
-  // what the tapped bar cost), and Money in | Net as a strip.
+  // The Spent card leads the tab, lifted like Home's month card: a kicker with Week/Month beside it, the
+  // figure and its change chip, the chart, a one-line legend, and Money in | Net as a strip.
   sumCard: {
     marginHorizontal: 20,
-    marginTop: 12,
-    padding: 16,
+    marginTop: 6,
+    padding: 18,
+    paddingBottom: 16,
     backgroundColor: theme.colors.surface,
-    borderRadius: theme.radius.xl2,
+    borderRadius: 26,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
-    overflow: 'hidden',
+    ...SOFT_LIFT,
   },
-  sumKicker: EYEBROW,
+  sumHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
+  sumKickerRow: { flexDirection: 'row', alignItems: 'center', gap: 8, flexShrink: 1 },
+  sumBadge: {
+    width: 28,
+    height: 28,
+    borderRadius: 9,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: theme.colors.idCoral,
+  },
+  sumKicker: {
+    flexShrink: 1,
+    fontFamily: theme.font.bodyMedium,
+    fontSize: 13,
+    color: theme.colors.textSecondary,
+  },
   headlineAmt: {
     fontFamily: theme.font.monoBold,
-    fontSize: 32,
+    fontSize: 34,
+    lineHeight: 40,
+    letterSpacing: -1.4,
     color: theme.colors.textPrimary,
-    marginTop: 4,
-    // Clear of the Week/Month switch in the corner.
-    marginRight: 120,
+    marginTop: 10,
   },
   changePill: {
     alignSelf: 'flex-start',
-    marginTop: 6,
-    paddingHorizontal: 9,
-    paddingVertical: 3,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    minHeight: 28,
+    marginTop: 8,
+    paddingHorizontal: 11,
     borderRadius: theme.radius.pill,
   },
   changePillUp: { backgroundColor: theme.colors.expenseTint },
   changePillDown: { backgroundColor: theme.colors.incomeTint },
-  changeText: { fontFamily: theme.font.bodyBold, fontSize: 11.5 },
+  changeText: { fontFamily: theme.font.bodyBold, fontSize: 13 },
   // Room above the tallest bar for the tapped bar's amount bubble.
-  sumChart: { marginTop: 28 },
+  sumChart: { marginTop: 22 },
   sumStrip: {
     flexDirection: 'row',
     marginTop: 14,
-    paddingTop: 12,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: theme.colors.borderSoft,
+    paddingTop: 14,
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.divider,
   },
-  sumStripCell: { flex: 1, gap: 4 },
-  sumStripCellRight: {
-    paddingLeft: 14,
-    borderLeftWidth: StyleSheet.hairlineWidth,
-    borderLeftColor: theme.colors.borderSoft,
-  },
-  sumStripValue: { fontFamily: theme.font.monoBold, fontSize: 14, color: theme.colors.textPrimary },
+  sumStripCell: { flex: 1, gap: 3 },
+  sumStripCellRight: { paddingLeft: 16, borderLeftWidth: 1, borderLeftColor: theme.colors.divider },
+  sumStripLabel: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textSecondary },
+  sumStripValue: { fontFamily: theme.font.monoBold, fontSize: 17, color: theme.colors.textPrimary },
   scopeSwitch: {
-    position: 'absolute',
-    top: 14,
-    right: 14,
-    zIndex: 1,
     flexDirection: 'row',
     padding: 3,
     borderRadius: theme.radius.pill,
     backgroundColor: theme.colors.surfaceAlt,
   },
-  scopeBtn: { paddingHorizontal: 12, paddingVertical: 5, borderRadius: theme.radius.pill },
+  scopeBtn: {
+    minHeight: 30,
+    justifyContent: 'center',
+    paddingHorizontal: 14,
+    borderRadius: theme.radius.pill,
+  },
   scopeBtnOn: { backgroundColor: theme.colors.ink },
-  scopeText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textSecondary },
+  scopeText: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textSecondary },
   scopeTextOn: { fontFamily: theme.font.bodyBold, color: theme.colors.surface },
 
-  // ‹ This week › centred, its dates under it.
+  // ‹ This week › in a white pill on the sky band, its dates under it.
   periodRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    paddingHorizontal: 20,
-    marginTop: theme.layout.screenTopGap,
+    gap: 8,
+    minHeight: 52,
+    marginTop: 2,
+    paddingHorizontal: 6,
+    borderRadius: 26,
+    backgroundColor: theme.colors.surface,
+    ...SKY_PILL_SHADOW,
   },
   periodNav: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: theme.colors.surface,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
+    backgroundColor: theme.colors.primaryTint,
   },
-  periodNavOff: { opacity: 0.3 },
-  periodTitleBtn: { flex: 1, alignItems: 'center' },
+  periodNavOff: { opacity: 0.35 },
+  periodTitleBtn: { flex: 1, alignItems: 'center', paddingVertical: 4 },
   periodTitle: { fontFamily: theme.font.roundedBold, fontSize: 17, color: theme.colors.textPrimary },
-  periodSub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, marginTop: 1 },
+  periodSub: { fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textSecondary, marginTop: 1 },
 
   listArea: { flex: 1 },
   edgeFade: { position: 'absolute', top: 0, left: 0, right: 0, height: 14 },
 
-  // Week scope's rail: one segment per week of the month, sized by its days.
-  weekRail: { paddingHorizontal: 24, marginTop: 10 },
-  weekRailBar: { flexDirection: 'row', gap: 4 },
+  // Week scope's rail, on the sky band under the period pill: one segment per week of the month, sized by
+  // its days.
+  weekRail: { paddingHorizontal: 8, marginTop: 12 },
+  weekRailBar: { flexDirection: 'row', gap: 5 },
   weekRailSeg: { height: 14, justifyContent: 'center' },
-  weekRailFill: { height: 6, borderRadius: 3, backgroundColor: theme.colors.borderSoft },
+  weekRailFill: { height: 6, borderRadius: 3, backgroundColor: theme.colors.surface },
   weekRailNow: {
     position: 'absolute',
     top: 0,
@@ -162,7 +182,7 @@ export const styles = StyleSheet.create({
     width: 5,
     height: 5,
     borderRadius: 3,
-    backgroundColor: theme.colors.primary,
+    backgroundColor: theme.colors.link,
   },
 
   // Type filter as one segmented bar, then picked categories/accounts on their own line (only when some).
@@ -170,32 +190,38 @@ export const styles = StyleSheet.create({
   typeBar: {
     flexDirection: 'row',
     marginHorizontal: 20,
-    marginTop: 14,
+    marginTop: 16,
     padding: 3,
     borderRadius: theme.radius.pill,
     backgroundColor: theme.colors.surface,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
   },
-  typeBtn: { flex: 1, alignItems: 'center', paddingVertical: 7, borderRadius: theme.radius.pill },
+  typeBtn: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 36,
+    borderRadius: theme.radius.pill,
+  },
   typeBtnOn: { backgroundColor: theme.colors.ink },
-  typeText: { fontFamily: theme.font.roundedMedium, fontSize: 12.5, color: theme.colors.textSecondary },
+  typeText: { fontFamily: theme.font.bodyBold, fontSize: 14, color: theme.colors.textSecondary },
   typeTextOn: { color: theme.colors.surface },
-  chipsRow: { gap: 6, paddingHorizontal: 20, paddingTop: 10 },
-  filterGap: { height: 16 },
+  chipsRow: { gap: 8, paddingHorizontal: 20, paddingTop: 10 },
+  filterGap: { height: 22 },
   chip: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    minHeight: 34,
+    paddingHorizontal: 14,
     borderRadius: theme.radius.pill,
     backgroundColor: theme.colors.surface,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
   },
   chipCat: { backgroundColor: theme.colors.primaryTint },
-  chipText: { fontFamily: theme.font.bodyBold, fontSize: 12.5, color: theme.colors.textSecondary },
+  chipText: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textSecondary },
 
   yearRow: {
     flexDirection: 'row',

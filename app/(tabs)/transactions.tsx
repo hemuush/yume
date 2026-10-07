@@ -11,7 +11,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { listAccounts, listCategories, listTransactions, searchTransactions, setDayOrder } from '@/db/ledger';
 import { getRangeComparison, PeriodComparison } from '@/db/reports';
 import { Account, Category, Transaction, TransactionType } from '@/types';
-import { AppHeader, HeaderIconButton } from '@/components/AppHeader';
+import { HeaderIconButton } from '@/components/AppHeader';
+import { SkyHeader } from '@/features/home/SkyHeader';
 import { theme } from '@/constants/theme';
 import { toLocalIsoDate, parseLocalIsoDate, addDaysToIsoDate } from '@/lib/date';
 import { MAX_LIST_STAGGER_MS } from '@/lib/animation';
@@ -400,7 +401,7 @@ export default function TransactionsScreen() {
   if (!comparison && !loadError && !comparisonFailed) {
     return (
       <View style={styles.container}>
-        <AppHeader title="Activity" />
+        <SkyHeader title="Activity" subtitle={SUBTITLE} />
         <TransactionsSkeleton />
       </View>
     );
@@ -408,26 +409,110 @@ export default function TransactionsScreen() {
 
   return (
     <View style={styles.container}>
-      <AppHeader
+      <SkyHeader
         title="Activity"
-        right={
-          <View style={styles.headerActions}>
+        subtitle={SUBTITLE}
+        actions={
+          <>
             <HeaderIconButton
               icon="search"
+              soft
+              size={40}
               onPress={searching ? closeSearch : openSearch}
               label={searching ? 'Close search' : 'Search transactions'}
             />
             {!searching && (
               <HeaderIconButton
                 icon="sliders"
+                soft
+                size={40}
                 onPress={() => setFilterVisible(true)}
                 label={filterCount > 0 ? `Filters, ${filterCount} on` : 'Filters'}
                 count={filterCount}
               />
             )}
-          </View>
+          </>
         }
-      />
+      >
+        {searching ? (
+          <View style={styles.searchBarRow}>
+            <View style={styles.searchBar}>
+              <Feather name="search" size={16} color={theme.colors.textMuted} />
+              <TextInput
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                placeholder="Search notes, categories, amounts, dates…"
+                placeholderTextColor={theme.colors.textMuted}
+                style={styles.searchInput}
+                autoFocus
+                returnKeyType="search"
+                accessibilityLabel="Search transactions"
+              />
+            </View>
+            <Pressable style={withPressed()} onPress={closeSearch} hitSlop={8} accessibilityRole="button">
+              <Text style={styles.searchCancel}>Cancel</Text>
+            </Pressable>
+          </View>
+        ) : (
+          // ‹ This week › in a white pill, the week rail under it. Dragging either (or the Spent card below)
+          // steps the period, same as the chevrons.
+          <ReanimatedAnimated.View style={periodSwipe.dragStyle} {...periodSwipe.panHandlers}>
+            <View style={styles.periodRow}>
+              <AnimatedPressable
+                onPress={stepBack}
+                onPressIn={stepBackPress.onPressIn}
+                onPressOut={stepBackPress.onPressOut}
+                hitSlop={6}
+                style={[styles.periodNav, stepBackPress.animatedStyle]}
+                accessibilityRole="button"
+                accessibilityLabel={viewScope === 'month' ? 'Previous month' : 'Previous week'}
+              >
+                <Feather name="chevron-left" size={18} color={theme.colors.textPrimary} />
+              </AnimatedPressable>
+              <Pressable
+                onPress={() => setMonthPickerVisible(true)}
+                hitSlop={6}
+                style={withPressed(styles.periodTitleBtn)}
+                accessibilityRole="button"
+                accessibilityLabel={`${heading.title}${heading.sub ? `, ${heading.sub}` : ''}. Pick a month`}
+              >
+                <Text style={styles.periodTitle} numberOfLines={1}>
+                  {heading.title}
+                </Text>
+                {!!heading.sub && (
+                  <Text style={styles.periodSub} numberOfLines={1}>
+                    {heading.sub}
+                  </Text>
+                )}
+              </Pressable>
+              <AnimatedPressable
+                onPress={stepForward}
+                onPressIn={stepForwardPress.onPressIn}
+                onPressOut={stepForwardPress.onPressOut}
+                hitSlop={6}
+                disabled={atCurrent}
+                style={[styles.periodNav, atCurrent && styles.periodNavOff, stepForwardPress.animatedStyle]}
+                accessibilityRole="button"
+                accessibilityLabel={viewScope === 'month' ? 'Next month' : 'Next week'}
+                accessibilityState={{ disabled: atCurrent }}
+              >
+                <Feather name="chevron-right" size={18} color={theme.colors.textPrimary} />
+              </AnimatedPressable>
+            </View>
+            {viewScope === 'week' && (
+              <WeekRail
+                week={week}
+                todayIso={today}
+                onPickWeek={(start) => {
+                  haptics.tap();
+                  setDirection(start < week.start ? -1 : 1);
+                  setAnchor(parseLocalIsoDate(start));
+                }}
+              />
+            )}
+          </ReanimatedAnimated.View>
+        )}
+      </SkyHeader>
 
       {loadError && (
         <View style={styles.errorBanner}>
@@ -443,77 +528,6 @@ export default function TransactionsScreen() {
             Your entries are below. Change the period or reopen this tab to try again.
           </Text>
         </View>
-      )}
-
-      {searching && (
-        <View style={styles.searchBarRow}>
-          <View style={styles.searchBar}>
-            <Feather name="search" size={14} color={theme.colors.textMuted} />
-            <TextInput
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              placeholder="Search notes, categories, amounts, dates…"
-              placeholderTextColor={theme.colors.textMuted}
-              style={styles.searchInput}
-              autoFocus
-              returnKeyType="search"
-              accessibilityLabel="Search transactions"
-            />
-          </View>
-          <Pressable style={withPressed()} onPress={closeSearch} hitSlop={8} accessibilityRole="button">
-            <Text style={styles.searchCancel}>Cancel</Text>
-          </Pressable>
-        </View>
-      )}
-
-      {!searching && (
-        // ‹ This week › centred, its dates under it. Dragging the row (or the rail and Spent card below it)
-        // steps the period, same as the chevrons.
-        <ReanimatedAnimated.View
-          style={[styles.periodRow, periodSwipe.dragStyle]}
-          {...periodSwipe.panHandlers}
-        >
-          <AnimatedPressable
-            onPress={stepBack}
-            onPressIn={stepBackPress.onPressIn}
-            onPressOut={stepBackPress.onPressOut}
-            hitSlop={6}
-            style={[styles.periodNav, stepBackPress.animatedStyle]}
-            accessibilityRole="button"
-            accessibilityLabel={viewScope === 'month' ? 'Previous month' : 'Previous week'}
-          >
-            <Feather name="chevron-left" size={18} color={theme.colors.textPrimary} />
-          </AnimatedPressable>
-          <Pressable
-            onPress={() => setMonthPickerVisible(true)}
-            hitSlop={6}
-            style={withPressed(styles.periodTitleBtn)}
-            accessibilityRole="button"
-            accessibilityLabel={`${heading.title}${heading.sub ? `, ${heading.sub}` : ''}. Pick a month`}
-          >
-            <Text style={styles.periodTitle} numberOfLines={1}>
-              {heading.title}
-            </Text>
-            {!!heading.sub && (
-              <Text style={styles.periodSub} numberOfLines={1}>
-                {heading.sub}
-              </Text>
-            )}
-          </Pressable>
-          <AnimatedPressable
-            onPress={stepForward}
-            onPressIn={stepForwardPress.onPressIn}
-            onPressOut={stepForwardPress.onPressOut}
-            hitSlop={6}
-            disabled={atCurrent}
-            style={[styles.periodNav, atCurrent && styles.periodNavOff, stepForwardPress.animatedStyle]}
-            accessibilityRole="button"
-            accessibilityLabel={viewScope === 'month' ? 'Next month' : 'Next week'}
-            accessibilityState={{ disabled: atCurrent }}
-          >
-            <Feather name="chevron-right" size={18} color={theme.colors.textPrimary} />
-          </AnimatedPressable>
-        </ReanimatedAnimated.View>
       )}
 
       <MonthPickerModal
@@ -572,18 +586,6 @@ export default function TransactionsScreen() {
             ) : (
               <>
                 <ReanimatedAnimated.View style={periodSwipe.dragStyle} {...periodSwipe.panHandlers}>
-                  {viewScope === 'week' && (
-                    <WeekRail
-                      week={week}
-                      todayIso={today}
-                      onPickWeek={(start) => {
-                        haptics.tap();
-                        setDirection(start < week.start ? -1 : 1);
-                        setAnchor(parseLocalIsoDate(start));
-                      }}
-                    />
-                  )}
-
                   <TransactionsHeadline
                     periodKey={`${viewScope}-${anchor.toDateString()}`}
                     direction={direction}
@@ -597,6 +599,7 @@ export default function TransactionsScreen() {
                     legend={legend}
                     onPressDay={onPressBar}
                     selectedKey={selectedBar}
+                    current={atCurrent}
                   />
                 </ReanimatedAnimated.View>
 
@@ -684,4 +687,5 @@ export default function TransactionsScreen() {
   );
 }
 
+const SUBTITLE = 'Every entry, day by day';
 const EDGE_FADE = [`${theme.colors.background}F2`, `${theme.colors.background}00`] as const;
