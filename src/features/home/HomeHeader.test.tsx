@@ -10,7 +10,7 @@ import { mockCancelAnimation } from '@/test-support/reanimatedMock';
 // The Wrap button's sheet (a native keyboard-aware Modal) isn't what these tests are about.
 jest.mock('@/components/ModalSheet', () => ({ ModalSheet: () => null }));
 
-import { Spark } from './HomeHeader';
+import { Spark } from './Spark';
 
 jest.mock('@/lib/useReduceMotion');
 import { useReduceMotion } from '@/lib/useReduceMotion';

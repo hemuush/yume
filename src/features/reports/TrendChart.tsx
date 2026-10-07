@@ -13,10 +13,10 @@ import { useGrowFrom } from '@/lib/useGrowFrom';
 
 /** A trend needs at least this many points to be worth drawing. */
 export const MIN_TREND_POINTS = 3;
-const H = 150;
+const H = 162;
 const PLOT_TOP = 14;
 const PLOT_BOTTOM = 118;
-const LABEL_Y = 140;
+const LABEL_Y = 154;
 const PAD_X = 14;
 
 type Kind = 'spend' | 'netWorth';
@@ -203,7 +203,7 @@ export function TrendChart({
                     y={y(avg) - 5}
                     textAnchor="end"
                     fontFamily={theme.font.body}
-                    fontSize={10}
+                    fontSize={11}
                     fill={theme.colors.textSecondary}
                   >
                     {`avg ${formatMoney(roundedMinor(avg))}`}
@@ -260,7 +260,7 @@ export function TrendChart({
                   y={LABEL_Y}
                   textAnchor="middle"
                   fontFamily={last ? theme.font.monoBold : theme.font.mono}
-                  fontSize={10}
+                  fontSize={12}
                   fill={last ? theme.colors.textPrimary : theme.colors.textMuted}
                 >
                   {p.label}

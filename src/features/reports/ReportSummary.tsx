@@ -9,8 +9,8 @@ import { useSlideIn } from '@/lib/useSlideIn';
 import { styles } from './reports.styles';
 
 /**
- * The pinned top of Reports (under the period row, outside the scroll): what was spent, the "above/below
- * usual" badge and day figures. Stays in view whichever of Days, Categories and Trends is open.
+ * The pinned summary card of Reports (under the header, outside the scroll): what was spent, the "above/below
+ * usual" badge and three day figures. Stays in view whichever of Days, Categories and Trends is open.
  */
 export function ReportSummary({
   periodName,
@@ -39,11 +39,15 @@ export function ReportSummary({
 }) {
   const up = vsUsualPct != null && vsUsualPct > 0;
   const slide = useSlideIn(periodName, slideDirection);
+  // The three figures, read out as one sentence (the cells alone would be "A day, ₹1,000" and so on).
+  const factsLabel = `${formatMoney(perDayMinor)} a day, spent on ${spendDays} of ${countedDays} days${
+    laterMinor > 0 ? `, ${formatMoney(laterMinor)} scheduled later` : ''
+  }`;
   return (
     <View style={styles.summary}>
       <Animated.View style={[styles.summaryHead, slide]}>
         <View style={styles.summaryMain}>
-          <Text style={styles.eyebrow}>Spent in {periodName}</Text>
+          <Text style={styles.summaryLabel}>Spent in {periodName}</Text>
           <CountUpAmount
             minor={spentMinor}
             style={styles.summaryBig}
@@ -60,27 +64,46 @@ export function ReportSummary({
           >
             <Feather
               name={up ? 'arrow-up-right' : 'arrow-down-right'}
-              size={12}
-              color={up ? theme.colors.expense : theme.colors.income}
+              size={14}
+              color={up ? theme.colors.expenseText : theme.colors.incomeText}
             />
             <Text
               style={[styles.vsBadgeText, { color: up ? theme.colors.expenseText : theme.colors.incomeText }]}
+              numberOfLines={2}
             >
               {formatPctChange(vsUsualPct)} {up ? 'above' : 'below'} usual{vsUsualSoFar ? ' so far' : ''}
             </Text>
           </View>
         )}
       </Animated.View>
-      <Text style={styles.hmFacts}>
-        <Text style={styles.hmFactStrong}>{formatMoney(perDayMinor)}</Text> a day · spent on{' '}
-        <Text style={styles.hmFactStrong}>{spendDays}</Text> of {countedDays} days
+      <View style={styles.summaryCells} accessible accessibilityLabel={factsLabel}>
+        <View style={styles.summaryCell}>
+          <Text style={styles.summaryCellLabel} numberOfLines={1}>
+            A day
+          </Text>
+          <Text style={styles.summaryCellValue} numberOfLines={1} adjustsFontSizeToFit>
+            {formatMoney(perDayMinor)}
+          </Text>
+        </View>
+        <View style={[styles.summaryCell, styles.summaryCellDivided]}>
+          <Text style={styles.summaryCellLabel} numberOfLines={1}>
+            Spend days
+          </Text>
+          <Text style={styles.summaryCellValue} numberOfLines={1} adjustsFontSizeToFit>
+            {spendDays} of {countedDays}
+          </Text>
+        </View>
         {laterMinor > 0 && (
-          <>
-            {' · '}
-            <Text style={styles.hmFactStrong}>{formatMoney(laterMinor)}</Text> scheduled later
-          </>
+          <View style={[styles.summaryCell, styles.summaryCellDivided]}>
+            <Text style={styles.summaryCellLabel} numberOfLines={1}>
+              Scheduled later
+            </Text>
+            <Text style={styles.summaryCellValue} numberOfLines={1} adjustsFontSizeToFit>
+              {formatMoney(laterMinor)}
+            </Text>
+          </View>
         )}
-      </Text>
+      </View>
     </View>
   );
 }

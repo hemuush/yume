@@ -9,12 +9,23 @@ import { Skeleton } from '@/components/Skeleton';
 export function ReportsSkeleton() {
   return (
     <View style={styles.wrap}>
-      <View style={styles.headlineRow}>
-        <View>
-          <Skeleton width={92} height={9} radius={4} />
-          <Skeleton width={140} height={26} radius={6} style={{ marginTop: 6 }} />
+      {/* The summary card's shape: label, total and badge, then its three day figures. */}
+      <View style={styles.summary}>
+        <View style={styles.headlineRow}>
+          <View>
+            <Skeleton width={110} height={11} radius={4} />
+            <Skeleton width={160} height={30} radius={6} style={{ marginTop: 8 }} />
+          </View>
+          <Skeleton width={120} height={30} radius={999} />
         </View>
-        <Skeleton width={64} height={28} radius={999} />
+        <View style={styles.cells}>
+          {[0, 1, 2].map((i) => (
+            <View key={i} style={styles.cell}>
+              <Skeleton width={56} height={9} radius={3} />
+              <Skeleton width={64} height={13} radius={4} style={{ marginTop: 7 }} />
+            </View>
+          ))}
+        </View>
       </View>
 
       <Skeleton width={60} height={12} radius={4} style={{ marginTop: 28 }} />
@@ -47,12 +58,25 @@ export function ReportsSkeleton() {
 
 const styles = StyleSheet.create({
   wrap: { paddingHorizontal: 20 },
-  headlineRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-end',
+  summary: {
     marginTop: 4,
+    paddingHorizontal: 18,
+    paddingTop: 14,
+    paddingBottom: 12,
+    borderRadius: 26,
+    backgroundColor: theme.colors.surface,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.borderSoft,
   },
+  headlineRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
+  cells: {
+    flexDirection: 'row',
+    marginTop: 12,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.divider,
+  },
+  cell: { flex: 1 },
   centered: { alignSelf: 'center' },
   rule: { height: StyleSheet.hairlineWidth, backgroundColor: theme.colors.borderSoft, marginVertical: 22 },
   catCard: {

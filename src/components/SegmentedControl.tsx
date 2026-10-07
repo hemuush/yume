@@ -10,7 +10,7 @@ import { DURATIONS } from '@/lib/motionTimings';
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 /** The track's inner padding, which the pill sits inside. */
-const PAD = 3;
+const PAD = 4;
 
 interface Props<T extends string> {
   options: { label: string; value: T }[];
@@ -116,7 +116,14 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
   },
-  segment: { flex: 1, paddingVertical: 8, borderRadius: theme.radius.pill, alignItems: 'center' },
-  segmentText: { fontSize: 12.5, fontFamily: theme.font.roundedMedium, color: theme.colors.textSecondary },
+  segment: {
+    flex: 1,
+    minHeight: 38,
+    paddingVertical: 6,
+    borderRadius: theme.radius.pill,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  segmentText: { fontSize: 14, fontFamily: theme.font.roundedMedium, color: theme.colors.textSecondary },
   segmentTextActive: { color: theme.colors.textPrimary, fontFamily: theme.font.roundedBold },
 });
