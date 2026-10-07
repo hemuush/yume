@@ -27,7 +27,7 @@ import { SkyHeader } from '@/features/home/SkyHeader';
 import { SegmentedControl } from '@/components/SegmentedControl';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { CategoryPicker } from '@/components/CategoryPicker';
-import { SoftCard } from '@/components/SoftCard';
+import { StripCard } from '@/components/StripCard';
 import { styles } from '@/features/add/add.styles';
 import {
   ADD_TYPES,
@@ -66,7 +66,6 @@ import { useDiscardGuard } from '@/features/add/useDiscardGuard';
 import { showAlert } from '@/components/AppDialog';
 import { useUndoToast } from '@/components/UndoToast';
 import { spendableAccountsOf } from '@/lib/account';
-import { shade } from '@/lib/color';
 import { useAccent } from '@/theme/AccentContext';
 
 export default function AddTransactionScreen() {
@@ -653,7 +652,6 @@ export default function AddTransactionScreen() {
         title={title}
         showBack
         hideUser
-        compact
         actions={
           editing ? (
             !isLinked ? (
@@ -695,11 +693,15 @@ export default function AddTransactionScreen() {
         bottomOffset={20}
       >
         {isLinked && (
-          <SoftCard backgroundColor={theme.colors.goldTint} padding={12} style={styles.linkedNote}>
+          <StripCard
+            tone={theme.colors.slice.due}
+            lifted={false}
+            style={[styles.linkedNote, styles.noteCard]}
+          >
             <Text style={styles.linkedText}>
               This entry is tied to a loan or a person&rsquo;s ledger — edit it from there.
             </Text>
-          </SoftCard>
+          </StripCard>
         )}
 
         <AmountCard
@@ -741,7 +743,7 @@ export default function AddTransactionScreen() {
             {pickableAccounts.length === 0 && (
               // Nothing to record this against yet (previously only a "Pick an account" error on Save):
               // opens the same Add Account form Profile uses, right here.
-              <SoftCard backgroundColor={shade(accent, 95)} padding={14} style={styles.noAccountCard}>
+              <StripCard tone={accent} style={[styles.noAccountCard, styles.noteCard]}>
                 <Text style={styles.noAccountTitle}>
                   {accounts.length === 0 ? 'Add your first account' : 'Add a spendable account'}
                 </Text>
@@ -755,7 +757,7 @@ export default function AddTransactionScreen() {
                   onPress={() => setAddAccountVisible(true)}
                   style={styles.noAccountBtn}
                 />
-              </SoftCard>
+              </StripCard>
             )}
 
             {type === 'transfer' ? (

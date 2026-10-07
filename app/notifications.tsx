@@ -155,9 +155,12 @@ export default function NeedsYouScreen() {
         )}
 
         {shown === null ? (
-          <View style={{ marginTop: theme.layout.screenTopGap }}>
-            <CardRowsSkeleton rows={3} />
-          </View>
+          // Bones only while loading: a failed load shows just its banner.
+          loadError ? null : (
+            <View style={{ marginTop: theme.layout.screenTopGap }}>
+              <CardRowsSkeleton rows={3} />
+            </View>
+          )
         ) : shown.length === 0 ? (
           <EmptyState
             title="All caught up"
@@ -183,8 +186,8 @@ export default function NeedsYouScreen() {
             <View style={[h.card, styles.suu]}>
               <View style={[styles.suuDot, { backgroundColor: dot }]} />
               <View style={styles.suuLines}>
-                {suuLines.map((line) => (
-                  <Text key={line} style={styles.suuText}>
+                {suuLines.map((line, i) => (
+                  <Text key={`${i}:${line}`} style={styles.suuText}>
                     {line}
                   </Text>
                 ))}

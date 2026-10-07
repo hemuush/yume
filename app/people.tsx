@@ -154,7 +154,6 @@ export default function PeopleScreen() {
         title="Friends & Family"
         showBack
         hideUser
-        compact
         actions={<AddButton onPress={() => setAddVisible(true)} label="+ Person" />}
       >
         {!loading && summary && <PeopleNet netMinor={netMinor} />}

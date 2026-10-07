@@ -5,9 +5,9 @@ import { SECTION_TITLE, SECTION_GAP, EYEBROW } from '@/constants/textStyles';
 // Shared by the Friends & Family screen, PersonTile, and the person modals.
 export const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
+  // The page already pads by the top gap.
   errorBanner: {
     marginHorizontal: 20,
-    marginTop: theme.layout.screenTopGap,
     marginBottom: 12,
     padding: 14,
     borderRadius: theme.radius.md,

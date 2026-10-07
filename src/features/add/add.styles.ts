@@ -215,6 +215,8 @@ export const styles = StyleSheet.create({
   removeBtn: { padding: 2 },
 
   linkedNote: { marginBottom: 16 },
+  // A white note card with a strip; the space at the top clears the strip.
+  noteCard: { paddingHorizontal: 14, paddingTop: 16, paddingBottom: 12 },
   linkedText: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textPrimary, lineHeight: 17 },
 
   // On the sky band: a see-through white, like the back button.

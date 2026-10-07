@@ -17,6 +17,7 @@ export const styles = StyleSheet.create({
     marginTop: 4,
     textAlign: 'center',
   },
+  errRetry: { marginTop: 16, alignSelf: 'stretch' },
   empty: { fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textMuted, marginVertical: 16 },
 
   periodRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
