@@ -6,12 +6,10 @@ import { formatMoney, getCurrencySymbol } from '@/lib/money';
 import { haptics } from '@/lib/haptics';
 import { Account } from '@/types';
 import { RepeatEntry } from '@/db/ledger';
-import { SegmentedControl } from '@/components/SegmentedControl';
 import { CategoryIcon } from '@/components/CategoryIcon';
 import { MovingRow } from '@/components/MovingRow';
-import { SoftCard } from '@/components/SoftCard';
 import { styles } from './add.styles';
-import { ADD_TYPES, EDIT_TYPES, TYPE_WASH, EntryType, Staged, dateChipLabel } from './addEntry';
+import { TYPE_WASH, EntryType, Staged, dateChipLabel } from './addEntry';
 import { AccountTile } from './AddFields';
 import { withPressed } from '@/lib/pressed';
 import { categorySentence, categorySpoken, inParent } from '@/lib/categoryLabel';
@@ -21,11 +19,12 @@ import { categorySentence, categorySpoken, inParent } from '@/lib/categoryLabel'
  * All state and saving stay in app/add-transaction.tsx; these only show it and report taps.
  */
 
-/** The coloured card on top: entry type, the amount being typed, and this category's usual amounts. */
+/**
+ * The white card under the sky header: the amount being typed, and this category's usual amounts. A strip
+ * along its top edge, the kicker and the caret take the entry type's colour (the type switch is in the header).
+ */
 export function AmountCard({
   type,
-  editing,
-  onTypeChange,
   currency,
   expr,
   isSum,
@@ -39,9 +38,6 @@ export function AmountCard({
   refund = false,
 }: {
   type: EntryType;
-  /** Editing an entry offers fewer types (no friend entry). */
-  editing: boolean;
-  onTypeChange: (type: EntryType) => void;
   currency: string | undefined;
   /** Exactly what was typed, e.g. "120+45". */
   expr: string;
@@ -60,16 +56,18 @@ export function AmountCard({
 }) {
   const wash = refund ? TYPE_WASH.income : TYPE_WASH[type];
   return (
-    <SoftCard backgroundColor={wash.bg} padding={16} style={styles.heroCard}>
-      <SegmentedControl options={editing ? EDIT_TYPES : ADD_TYPES} value={type} onChange={onTypeChange} />
-
-      <Text style={[styles.heroLabel, { color: wash.accent }]}>
-        {refund
-          ? 'Money back'
-          : type === 'friend'
-            ? 'Amount'
-            : `${type[0].toUpperCase()}${type.slice(1)} amount`}
-      </Text>
+    <View style={styles.heroCard}>
+      <View style={[styles.heroStrip, { backgroundColor: wash.accent }]} />
+      <View style={styles.heroLabelRow}>
+        <View style={[styles.heroDot, { backgroundColor: wash.accent }]} />
+        <Text style={[styles.heroLabel, { color: wash.accent }]}>
+          {refund
+            ? 'Money back'
+            : type === 'friend'
+              ? 'Amount'
+              : `${type[0].toUpperCase()}${type.slice(1)} amount`}
+        </Text>
+      </View>
       <Pressable
         onPress={onOpenPad}
         disabled={isLinked}
@@ -86,7 +84,7 @@ export function AmountCard({
         >
           {shownAmount}
         </Text>
-        {padVisible && <View style={styles.caret} />}
+        {padVisible && <View style={[styles.caret, { backgroundColor: wash.accent }]} />}
       </Pressable>
       {isSum && <Text style={styles.expression}>{expr.replace(/([+−×÷])/g, ' $1 ')}</Text>}
 
@@ -113,7 +111,7 @@ export function AmountCard({
           })}
         </View>
       )}
-    </SoftCard>
+    </View>
   );
 }
 
