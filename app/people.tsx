@@ -6,7 +6,7 @@ import { listPeople, PersonWithBalance } from '@/db/people';
 import { theme, FLAT_PALETTE } from '@/constants/theme';
 import { stableIndexFromId } from '@/lib/color';
 import { useScreenLoad } from '@/lib/useScreenLoad';
-import { AppHeader } from '@/components/AppHeader';
+import { SkyHeader } from '@/features/home/SkyHeader';
 import { AddButton } from '@/components/AddButton';
 import { EmptyState } from '@/components/EmptyState';
 import { Skeleton } from '@/components/Skeleton';
@@ -43,11 +43,15 @@ export default function PeopleScreen() {
 
   return (
     <View style={styles.container}>
-      <AppHeader
+      <SkyHeader
         title="Friends & Family"
         showBack
-        right={<AddButton onPress={() => setAddVisible(true)} label="+ Person" />}
-      />
+        hideUser
+        compact
+        actions={<AddButton onPress={() => setAddVisible(true)} label="+ Person" />}
+      >
+        {!loading && summary && <PeopleNet netMinor={netMinor} />}
+      </SkyHeader>
 
       {loadError && (
         <View style={styles.errorBanner}>
@@ -76,7 +80,6 @@ export default function PeopleScreen() {
           <EmptyState title="No one here yet" subtitle="Tap + Person to add a friend or family member." />
         ) : (
           <>
-            {summary && <PeopleNet netMinor={netMinor} />}
             {[
               {
                 key: 'owed',
@@ -124,9 +127,17 @@ export default function PeopleScreen() {
             {settled.length > 0 && (
               <>
                 <Text style={styles.settledTitle}>Settled</Text>
-                {settled.map((p) => (
-                  <PersonQuietRow key={p.id} person={p} color={colorOf(p)} onPress={() => setSelected(p)} />
-                ))}
+                <View style={styles.settledCard}>
+                  {settled.map((p, i) => (
+                    <PersonQuietRow
+                      key={p.id}
+                      person={p}
+                      color={colorOf(p)}
+                      divider={i > 0}
+                      onPress={() => setSelected(p)}
+                    />
+                  ))}
+                </View>
               </>
             )}
           </>
