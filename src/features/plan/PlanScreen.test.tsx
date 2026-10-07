@@ -13,7 +13,7 @@ jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMoc
 jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
 }));
-jest.mock('@/components/AppHeader', () => ({ AppHeader: () => null }));
+jest.mock('@/components/AppHeader', () => ({ AppHeader: () => null, HeaderUserButton: () => null }));
 /** YYYY-MM-DD, `n` days from today. */
 const mockDay = (n: number) => {
   const { addDaysToIsoDate, toLocalIsoDate } = require('@/lib/date');
@@ -151,7 +151,8 @@ describe('Plan tab', () => {
   it('shows the tiles in order, then Coming up', async () => {
     const shown = texts(await render());
     const headings = [
-      'Next 14 days · 2 payments',
+      'Next 14 days',
+      '2 payments',
       'Where you stand',
       'EMIs',
       'Budgets',
@@ -164,9 +165,10 @@ describe('Plan tab', () => {
       'Spend streak',
       'Coming up',
     ];
-    const positions = headings.map((h) => shown.indexOf(h));
+    // Each heading is looked for after the one before it: "EMIs" also labels the 14-day strip's key.
+    const positions: number[] = [];
+    for (const h of headings) positions.push(shown.indexOf(h, (positions.at(-1) ?? -1) + 1));
     expect(positions.every((p) => p >= 0)).toBe(true);
-    expect([...positions].sort((a, b) => a - b)).toEqual(positions);
   });
 
   it("shows each tile's own figures", async () => {

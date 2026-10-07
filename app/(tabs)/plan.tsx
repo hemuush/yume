@@ -17,7 +17,7 @@ import { savingsAccountIdsOf } from '@/lib/account';
 import { Account, SavingsGoal } from '@/types';
 import { theme } from '@/constants/theme';
 import { addDaysToIsoDate, toLocalIsoDate } from '@/lib/date';
-import { AppHeader } from '@/components/AppHeader';
+import { SkyHeader } from '@/features/home/SkyHeader';
 import { CardRowsSkeleton } from '@/components/ListSkeleton';
 import { useScreenLoad } from '@/lib/useScreenLoad';
 import { categorySentence, parentNameOf } from '@/lib/categoryLabel';
@@ -219,7 +219,7 @@ export default function PlanScreen() {
 
   return (
     <View style={styles.container}>
-      <AppHeader title="Plan" />
+      <SkyHeader title="Plan" subtitle="What’s ahead, and where you stand" />
       <ScrollView
         ref={scrollRef}
         contentContainerStyle={{ paddingBottom: theme.layout.tabScreenScrollPad + insets.bottom }}
@@ -261,7 +261,7 @@ export default function PlanScreen() {
                 <DebtTile loans={data.loans} onOpen={() => open('/loans')} />
               </TileGroup>
             </Section>
-            <Section title="Goals">
+            <Section title="Goals" onSeeAll={() => open('/savings-goals')}>
               <TileGroup>
                 <SavingTile
                   goals={data.goals}
