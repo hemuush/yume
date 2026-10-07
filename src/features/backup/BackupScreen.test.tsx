@@ -15,6 +15,10 @@ jest.mock('expo-router', () => ({
   router: { replace: jest.fn(), push: jest.fn() },
   useFocusEffect: (cb: () => void) => require('react').useEffect(cb, [cb]),
 }));
+// The sky header reads the theme's colours; this file's settings mock has no cached theme.
+jest.mock('@/theme/AccentContext', () => ({
+  useAccent: () => ({ accent: '#8FCBFF', secondary: '#8FE8C8', onAccent: '#12130F' }),
+}));
 jest.mock('@/components/AppHeader', () => ({ AppHeader: () => null }));
 jest.mock('@/features/backup/RestorePreviewSheet', () => ({ RestorePreviewSheet: () => null }));
 jest.mock('@/lib/restoreSync', () => ({ resyncAfterRestore: jest.fn(async () => {}) }));

@@ -275,14 +275,15 @@ const styles = StyleSheet.create({
 
 /**
  * The line a collapsed SkyHeader shows beside its title: a dot in the screen's colour, the figure in bold
- * mono, then a few words ("₹23,249 due in 14 days").
+ * mono, then a few words ("₹23,249 due in 14 days"). With no figure, just the words ("Backed up today").
  */
-export function HeaderSummary({ figure, rest, dot }: { figure: string; rest: string; dot: string }) {
+export function HeaderSummary({ figure, rest, dot }: { figure?: string; rest: string; dot: string }) {
   return (
     <View style={summaryStyles.row}>
       <View style={[summaryStyles.dot, { backgroundColor: dot }]} />
       <Text style={summaryStyles.text} numberOfLines={1}>
-        <Text style={summaryStyles.figure}>{figure}</Text> {rest}
+        {figure ? <Text style={summaryStyles.figure}>{figure} </Text> : null}
+        {rest}
       </Text>
     </View>
   );

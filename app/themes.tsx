@@ -1,8 +1,10 @@
-import { View, ScrollView, Pressable, StyleSheet } from 'react-native';
+import { View, Pressable, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from '@expo/vector-icons/Feather';
 import { Text } from '@/components/Text';
-import { AppHeader } from '@/components/AppHeader';
+import { SkyHeader } from '@/features/home/SkyHeader';
+import ReanimatedAnimated from 'react-native-reanimated';
+import { useCollapsingHeader } from '@/lib/useCollapsingHeader';
 import { theme } from '@/constants/theme';
 import { useAccent } from '@/theme/AccentContext';
 import { THEMES } from '@/theme/themes';
@@ -16,15 +18,23 @@ import { withPressed } from '@/lib/pressed';
  */
 export default function ThemesScreen() {
   const insets = useSafeAreaInsets();
+  // The header sits over the page and shrinks as it scrolls.
+  const { collapse, headerHeight, scrollHandler, scrollRef } = useCollapsingHeader();
   const { themeId, setTheme } = useAccent();
 
   return (
     <View style={styles.container}>
-      <AppHeader title="Theme" showBack />
-      <ScrollView
+      <ReanimatedAnimated.ScrollView
+        ref={scrollRef}
+        onScroll={scrollHandler}
+        scrollEventThrottle={16}
+
         contentContainerStyle={[
           styles.content,
-          { paddingBottom: theme.layout.screenScrollPad + insets.bottom },
+          {
+            paddingTop: headerHeight + theme.layout.screenTopGap,
+            paddingBottom: theme.layout.screenScrollPad + insets.bottom,
+          },
         ]}
       >
         <Text style={styles.caption}>Buttons, the active tab, highlights, widgets and Suu's dot.</Text>
@@ -58,7 +68,8 @@ export default function ThemesScreen() {
             );
           })}
         </View>
-      </ScrollView>
+      </ReanimatedAnimated.ScrollView>
+      <SkyHeader collapse={collapse} title="Theme" showBack hideUser />
     </View>
   );
 }
