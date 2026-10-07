@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { View, ScrollView, Pressable } from 'react-native';
+import { View, Pressable } from 'react-native';
 import { Text } from '@/components/Text';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -46,7 +46,11 @@ import {
 } from '@/db/settings';
 import { resyncAfterRestore } from '@/lib/restoreSync';
 import { withoutRelock } from '@/lib/appLock';
-import { AppHeader } from '@/components/AppHeader';
+import { SkyHeader, HeaderSummary } from '@/features/home/SkyHeader';
+import { StripCard } from '@/components/StripCard';
+import { shade } from '@/lib/color';
+import ReanimatedAnimated from 'react-native-reanimated';
+import { useCollapsingHeader } from '@/lib/useCollapsingHeader';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { SegmentedControl } from '@/components/SegmentedControl';
 import { Skeleton } from '@/components/Skeleton';
@@ -103,6 +107,8 @@ async function shareTempFile(
 
 export default function BackupScreen() {
   const insets = useSafeAreaInsets();
+  // The header sits over the page and shrinks as it scrolls.
+  const { collapse, headerHeight, scrollHandler, scrollRef } = useCollapsingHeader();
   const [localFolderUri, setLocalFolderUri] = useState<string | null>(null);
   const [lastLocalBackup, setLastLocalBackup] = useState<string | null>(null);
   const [localResult, setLocalResult] = useState<BackupOutcome | null>(null);
@@ -367,15 +373,23 @@ Restore anyway? Your current data would be replaced with no way back.`,
 
   return (
     <View style={styles.container}>
-      <AppHeader title="Backup & restore" showBack />
-      <ScrollView contentContainerStyle={{ paddingBottom: theme.layout.screenScrollPad + insets.bottom }}>
+      <ReanimatedAnimated.ScrollView
+        ref={scrollRef}
+        onScroll={scrollHandler}
+        scrollEventThrottle={16}
+        contentContainerStyle={{
+          paddingTop: headerHeight,
+          paddingBottom: theme.layout.screenScrollPad + insets.bottom,
+        }}
+      >
         {loadError && (
           <View style={listScreenStyles.errorBanner}>
             <Text style={listScreenStyles.errorTitle}>Couldn't load your backup settings</Text>
             <Text style={listScreenStyles.errorDetail}>{loadError}</Text>
           </View>
         )}
-        <View style={[h.card, styles.statusCard]}>
+        {/* White, with a strip in the status's colour (green when safe, gold or coral when it needs you). */}
+        <StripCard tone={shade(status.tint, 72)} style={styles.statusCard}>
           {!loaded ? (
             <>
               <Skeleton width={200} height={16} radius={4} />
@@ -437,7 +451,7 @@ Restore anyway? Your current data would be replaced with no way back.`,
               </View>
             </>
           )}
-        </View>
+        </StripCard>
 
         <View style={styles.tabs}>
           <SegmentedControl options={TABS} value={tab} onChange={setTab} />
@@ -572,7 +586,14 @@ Restore anyway? Your current data would be replaced with no way back.`,
             </Text>
           </>
         )}
-      </ScrollView>
+      </ReanimatedAnimated.ScrollView>
+      <SkyHeader
+        collapse={collapse}
+        summary={<HeaderSummary rest={status.title} dot={status.tint} />}
+        title="Backup & restore"
+        showBack
+        hideUser
+      />
       <RestorePreviewSheet
         preview={pending?.preview ?? null}
         busy={restoring}

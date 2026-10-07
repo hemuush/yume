@@ -4,7 +4,9 @@ import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from '@expo/vector-icons/Feather';
 import { Text } from '@/components/Text';
-import { AppHeader } from '@/components/AppHeader';
+import { SkyHeader, HeaderSummary } from '@/features/home/SkyHeader';
+import ReanimatedAnimated from 'react-native-reanimated';
+import { useCollapsingHeader } from '@/lib/useCollapsingHeader';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { CategoryIcon } from '@/components/CategoryIcon';
 import { CategoryPicker } from '@/components/CategoryPicker';
@@ -40,6 +42,8 @@ type Picking = { mode: 'add' } | { mode: 'change'; key: string };
  */
 export function SplitScreen() {
   const insets = useSafeAreaInsets();
+  // The header sits over the page and shrinks as it scrolls.
+  const { collapse, headerHeight, scrollHandler, scrollRef } = useCollapsingHeader();
   const { height: screenHeight } = useWindowDimensions();
   const [session] = useState(getSplitSession);
   const [parts, setParts] = useState<DraftPart[]>(() => session?.parts ?? []);
@@ -143,9 +147,15 @@ export function SplitScreen() {
 
   return (
     <View style={styles.container}>
-      <AppHeader title="Split payment" showBack />
-      <ScrollView
-        contentContainerStyle={[styles.content, { paddingBottom: 24 }]}
+      <ReanimatedAnimated.ScrollView
+        ref={scrollRef}
+        onScroll={scrollHandler}
+        scrollEventThrottle={16}
+
+        contentContainerStyle={[
+          styles.content,
+          { paddingTop: headerHeight + theme.layout.screenTopGap, paddingBottom: 24 },
+        ]}
         keyboardShouldPersistTaps="handled"
       >
         <View style={[h.card, styles.summary]}>
@@ -259,7 +269,14 @@ export function SplitScreen() {
             The first category always holds whatever the others don&rsquo;t, so the split adds up on its own.
           </Text>
         ) : null}
-      </ScrollView>
+      </ReanimatedAnimated.ScrollView>
+      <SkyHeader
+        collapse={collapse}
+        summary={<HeaderSummary figure={money(totalMinor)} rest="to split" dot={theme.colors.slice.spent} />}
+        title="Split payment"
+        showBack
+        hideUser
+      />
 
       <View style={[styles.footer, { paddingBottom: insets.bottom + 12 }]}>
         {targetPart ? (

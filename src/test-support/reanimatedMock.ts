@@ -1,4 +1,4 @@
-import { View, Text, ScrollView } from 'react-native';
+import { View, Text, ScrollView, FlatList } from 'react-native';
 import { useRef } from 'react';
 
 /**
@@ -13,7 +13,7 @@ export function createReanimatedMock() {
   return {
     __esModule: true,
     // Text too: PrimaryButton renders a ReanimatedAnimated.Text for its label.
-    default: { View, Text, ScrollView, createAnimatedComponent: (Component: unknown) => Component },
+    default: { View, Text, ScrollView, FlatList, createAnimatedComponent: (Component: unknown) => Component },
     FadeIn: chainableProxy,
     FadeInDown: chainableProxy,
     FadeOut: chainableProxy,
@@ -22,7 +22,16 @@ export function createReanimatedMock() {
     ReduceMotion: { System: 'system' },
     // A real useRef, not a fresh object per render: otherwise a rerender would "reset" a shared value and
     // defeat tests that check state survives across renders.
-    useSharedValue: (initial: unknown) => useRef({ value: initial }).current,
+    useSharedValue: (initial: unknown) =>
+      useRef({
+        value: initial,
+        set(v: unknown) {
+          this.value = v;
+        },
+        get() {
+          return this.value;
+        },
+      }).current,
     useAnimatedStyle: (fn: () => unknown) => fn(),
     // Home's month ring and the debt tick draw through animated SVG props.
     useAnimatedProps: (fn: () => unknown) => fn(),
@@ -50,6 +59,9 @@ export function createReanimatedMock() {
     // Home's collapsing header: a scroll handler that never fires, and a
     // reaction that never runs outside a real UI thread.
     useAnimatedScrollHandler: () => () => {},
+    // The shared collapsing header (useCollapsingHeader): a plain ref, and a settle that does nothing.
+    useAnimatedRef: () => useRef(null),
+    scrollTo: () => {},
     useAnimatedReaction: () => {},
     runOnJS: (fn: (...args: unknown[]) => unknown) => fn,
   };

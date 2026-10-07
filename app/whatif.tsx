@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { View, ScrollView } from 'react-native';
+import { View } from 'react-native';
 import { Text } from '@/components/Text';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams } from 'expo-router';
@@ -10,6 +10,8 @@ import { goalProgress } from '@/lib/savingsGoalProgress';
 import { projectedMonthlySpend, projectGoalPace } from '@/lib/whatIf';
 import { SavingsGoal } from '@/types';
 import { SkyHeader } from '@/features/home/SkyHeader';
+import ReanimatedAnimated from 'react-native-reanimated';
+import { useCollapsingHeader } from '@/lib/useCollapsingHeader';
 import { EmptyState } from '@/components/EmptyState';
 import { Skeleton } from '@/components/Skeleton';
 import { Chip } from '@/components/Chip';
@@ -56,6 +58,8 @@ function paceBarWidths(pace: {
  */
 export default function WhatIfScreen() {
   const insets = useSafeAreaInsets();
+  // The header sits over the page and shrinks as it scrolls.
+  const { collapse, headerHeight, scrollHandler, scrollRef } = useCollapsingHeader();
   // `category` opens What-if with that category already chosen (from its category page).
   const { category: askedCategoryId } = useLocalSearchParams<{ category?: string }>();
   const [categories, setCategories] = useState<CategoryBreakdownItem[]>([]);
@@ -120,12 +124,15 @@ export default function WhatIfScreen() {
 
   return (
     <View style={styles.container}>
-      <SkyHeader title="What if…?" showBack hideUser compact>
-        <Text style={styles.intro}>
-          Try a change, see where it lands. Nothing here is saved until you act on it.
-        </Text>
-      </SkyHeader>
-      <ScrollView contentContainerStyle={{ paddingBottom: theme.layout.screenScrollPad + insets.bottom }}>
+      <ReanimatedAnimated.ScrollView
+        ref={scrollRef}
+        onScroll={scrollHandler}
+        scrollEventThrottle={16}
+        contentContainerStyle={{
+          paddingTop: headerHeight,
+          paddingBottom: theme.layout.screenScrollPad + insets.bottom,
+        }}
+      >
         {loadError && (
           <View style={styles.errorBanner}>
             <Text style={styles.errorTitle}>Couldn't load your data</Text>
@@ -274,7 +281,12 @@ export default function WhatIfScreen() {
             </View>
           </>
         )}
-      </ScrollView>
+      </ReanimatedAnimated.ScrollView>
+      <SkyHeader collapse={collapse} summary={undefined} title="What if…?" showBack hideUser compact>
+        <Text style={styles.intro}>
+          Try a change, see where it lands. Nothing here is saved until you act on it.
+        </Text>
+      </SkyHeader>
     </View>
   );
 }

@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { View, ScrollView, StyleSheet, Pressable } from 'react-native';
+import { View, StyleSheet, Pressable } from 'react-native';
 import { Text } from '@/components/Text';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -12,7 +12,9 @@ import { privateComparison } from '@/lib/privateSummary';
 import { formatPctChange } from '@/lib/format';
 import { haptics } from '@/lib/haptics';
 import { useScreenLoad } from '@/lib/useScreenLoad';
-import { AppHeader } from '@/components/AppHeader';
+import { SkyHeader, HeaderSummary } from '@/features/home/SkyHeader';
+import ReanimatedAnimated from 'react-native-reanimated';
+import { useCollapsingHeader } from '@/lib/useCollapsingHeader';
 import { EmptyState } from '@/components/EmptyState';
 import { CardRowsSkeleton } from '@/components/ListSkeleton';
 import { useUndoToast } from '@/components/UndoToast';
@@ -39,6 +41,8 @@ import { payCardRoute } from '@/lib/payCard';
  */
 export default function NeedsYouScreen() {
   const insets = useSafeAreaInsets();
+  // The header sits over the page and shrinks as it scrolls.
+  const { collapse, headerHeight, scrollHandler, scrollRef } = useCollapsingHeader();
   const { dot } = useAccent();
   const { show: showUndo } = useUndoToast();
   const [shown, setShown] = useState<NeedsYouItem[] | null>(null);
@@ -134,8 +138,15 @@ export default function NeedsYouScreen() {
 
   return (
     <View style={styles.container}>
-      <AppHeader title="Needs you" showBack />
-      <ScrollView contentContainerStyle={{ paddingBottom: theme.layout.screenScrollPad + insets.bottom }}>
+      <ReanimatedAnimated.ScrollView
+        ref={scrollRef}
+        onScroll={scrollHandler}
+        scrollEventThrottle={16}
+        contentContainerStyle={{
+          paddingTop: headerHeight,
+          paddingBottom: theme.layout.screenScrollPad + insets.bottom,
+        }}
+      >
         {loadError && (
           <View style={styles.errorBanner}>
             <Text style={styles.errorTitle}>Couldn't load what needs you</Text>
@@ -211,7 +222,22 @@ export default function NeedsYouScreen() {
             )}
           </>
         )}
-      </ScrollView>
+      </ReanimatedAnimated.ScrollView>
+      <SkyHeader
+        collapse={collapse}
+        summary={
+          shown && shown.length > 0 ? (
+            <HeaderSummary
+              figure={String(shown.length)}
+              rest={shown.length === 1 ? 'thing needs you' : 'things need you'}
+              dot={theme.colors.slice.due}
+            />
+          ) : undefined
+        }
+        title="Needs you"
+        showBack
+        hideUser
+      />
     </View>
   );
 }

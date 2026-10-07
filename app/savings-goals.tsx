@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { View, ScrollView } from 'react-native';
+import { View } from 'react-native';
 import { MovingRow } from '@/components/MovingRow';
 import { Text } from '@/components/Text';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -8,7 +8,11 @@ import { listSavingsGoals, markGoalLetterRevealed } from '@/db/savingsGoals';
 import { Account, SavingsGoal } from '@/types';
 import { theme } from '@/constants/theme';
 import { HeaderIconButton } from '@/components/AppHeader';
-import { SkyHeader } from '@/features/home/SkyHeader';
+import { SkyHeader, HeaderSummary } from '@/features/home/SkyHeader';
+import ReanimatedAnimated from 'react-native-reanimated';
+import { usePrivacy } from '@/theme/PrivacyContext';
+import { formatMoney } from '@/lib/money';
+import { useCollapsingHeader } from '@/lib/useCollapsingHeader';
 import { AddButton } from '@/components/AddButton';
 import { EmptyState } from '@/components/EmptyState';
 import { useScreenLoad } from '@/lib/useScreenLoad';
@@ -27,6 +31,9 @@ import { styles } from '@/features/goals/goals.styles';
 
 export default function SavingsGoalsScreen() {
   const insets = useSafeAreaInsets();
+  const { hideAmounts } = usePrivacy();
+  // The header sits over the page and shrinks as it scrolls.
+  const { collapse, headerHeight, scrollHandler, scrollRef } = useCollapsingHeader();
   const [allGoals, setAllGoals] = useState<SavingsGoal[]>([]);
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [showArchived, setShowArchived] = useState(false);
@@ -87,25 +94,15 @@ export default function SavingsGoalsScreen() {
 
   return (
     <View style={styles.container}>
-      <SkyHeader
-        title="Savings goals"
-        showBack
-        hideUser
-        compact
-        actions={
-          <>
-            <HeaderIconButton
-              icon={showArchived ? 'eye-off' : 'archive'}
-              onPress={() => setShowArchived((v) => !v)}
-              label={showArchived ? 'Hide archived goals' : 'Show archived goals'}
-              badge={!showArchived && archivedGoals.length > 0}
-            />
-            <AddButton onPress={() => setAddVisible(true)} label="+ Add" />
-          </>
-        }
-      />
-
-      <ScrollView contentContainerStyle={{ paddingBottom: theme.layout.screenScrollPad + insets.bottom }}>
+      <ReanimatedAnimated.ScrollView
+        ref={scrollRef}
+        onScroll={scrollHandler}
+        scrollEventThrottle={16}
+        contentContainerStyle={{
+          paddingTop: headerHeight,
+          paddingBottom: theme.layout.screenScrollPad + insets.bottom,
+        }}
+      >
         {loadError && (
           <View style={styles.errorBanner}>
             <Text style={styles.errorTitle}>Couldn't load your goals</Text>
@@ -140,7 +137,34 @@ export default function SavingsGoalsScreen() {
             ))}
           </>
         )}
-      </ScrollView>
+      </ReanimatedAnimated.ScrollView>
+      <SkyHeader
+        collapse={collapse}
+        summary={
+          !hideAmounts && activeGoals.length > 0 ? (
+            <HeaderSummary
+              figure={formatMoney(totals.savedMinor)}
+              rest="saved"
+              dot={theme.colors.slice.saved}
+            />
+          ) : undefined
+        }
+        title="Savings goals"
+        showBack
+        hideUser
+        compact
+        actions={
+          <>
+            <HeaderIconButton
+              icon={showArchived ? 'eye-off' : 'archive'}
+              onPress={() => setShowArchived((v) => !v)}
+              label={showArchived ? 'Hide archived goals' : 'Show archived goals'}
+              badge={!showArchived && archivedGoals.length > 0}
+            />
+            <AddButton onPress={() => setAddVisible(true)} label="+ Add" />
+          </>
+        }
+      />
 
       <AddGoalModal
         visible={addVisible}

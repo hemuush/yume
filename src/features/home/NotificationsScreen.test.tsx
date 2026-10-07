@@ -16,7 +16,9 @@ jest.mock('expo-router', () => ({
 }));
 jest.mock('@/lib/haptics', () => ({ haptics: { tap: jest.fn() } }));
 jest.mock('@/components/AppHeader', () => ({ AppHeader: () => null }));
-jest.mock('@/theme/AccentContext', () => ({ useAccent: () => ({ dot: '#F0876A', accent: '#A6B4F2' }) }));
+jest.mock('@/theme/AccentContext', () => ({
+  useAccent: () => ({ dot: '#F0876A', accent: '#A6B4F2', secondary: '#8FE8C8' }),
+}));
 const mockShowUndo = jest.fn();
 jest.mock('@/components/UndoToast', () => ({ useUndoToast: () => ({ show: mockShowUndo }) }));
 const mockShowAlert = jest.fn();

@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
-import { View, ScrollView } from 'react-native';
+import { View } from 'react-native';
 import { Text } from '@/components/Text';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { listRecurringRules, setRecurringRuleActive } from '@/db/recurring';
@@ -13,7 +13,10 @@ import { costShares, sortRunning } from '@/features/recurring/recurring.helpers'
 import { NeoTile } from '@/components/NeoTile';
 import { nextMonthlyDateAfter, toLocalIsoDate } from '@/lib/date';
 import { Account, Category, RecurringRule } from '@/types';
-import { SkyHeader } from '@/features/home/SkyHeader';
+import { SkyHeader, HeaderSummary } from '@/features/home/SkyHeader';
+import ReanimatedAnimated from 'react-native-reanimated';
+import { formatMoney } from '@/lib/money';
+import { useCollapsingHeader } from '@/lib/useCollapsingHeader';
 import { useScreenLoad } from '@/lib/useScreenLoad';
 import { AddButton } from '@/components/AddButton';
 import { EmptyState } from '@/components/EmptyState';
@@ -37,6 +40,8 @@ import { parentNameOf } from '@/lib/categoryLabel';
  */
 export default function RecurringScreen() {
   const insets = useSafeAreaInsets();
+  // The header sits over the page and shrinks as it scrolls.
+  const { collapse, headerHeight, scrollHandler, scrollRef } = useCollapsingHeader();
   const [rules, setRules] = useState<RecurringRule[]>([]);
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -116,28 +121,23 @@ export default function RecurringScreen() {
 
   return (
     <View style={styles.container}>
-      <SkyHeader
-        title="Recurring"
-        showBack
-        hideUser
-        compact
-        actions={<AddButton onPress={() => setModalVisible(true)} disabled={accounts.length === 0} />}
-      />
+      <ReanimatedAnimated.ScrollView
+        ref={scrollRef}
+        onScroll={scrollHandler}
+        scrollEventThrottle={16}
 
-      {loadError && (
-        <View style={styles.errorBanner}>
-          <Text style={styles.errorTitle}>Couldn't load recurring rules</Text>
-          <Text style={styles.errorDetail}>{loadError}</Text>
-        </View>
-      )}
-
-      <ScrollView
         contentContainerStyle={{
           paddingHorizontal: 20,
-          paddingTop: theme.layout.screenTopGap,
+          paddingTop: headerHeight + theme.layout.screenTopGap,
           paddingBottom: theme.layout.screenScrollPad + insets.bottom,
         }}
       >
+        {loadError && (
+          <View style={styles.errorBanner}>
+            <Text style={styles.errorTitle}>Couldn't load recurring rules</Text>
+            <Text style={styles.errorDetail}>{loadError}</Text>
+          </View>
+        )}
         {!loaded ? (
           <>
             <View style={[styles.card, { height: 118 }]}>
@@ -223,7 +223,24 @@ export default function RecurringScreen() {
             )}
           </>
         )}
-      </ScrollView>
+      </ReanimatedAnimated.ScrollView>
+      <SkyHeader
+        collapse={collapse}
+        summary={
+          visibleRules.length > 0 ? (
+            <HeaderSummary
+              figure={formatMoney(subscriptionTotals(visibleRules).monthlyMinor)}
+              rest="a month"
+              dot={theme.colors.slice.free}
+            />
+          ) : undefined
+        }
+        title="Recurring"
+        showBack
+        hideUser
+        compact
+        actions={<AddButton onPress={() => setModalVisible(true)} disabled={accounts.length === 0} />}
+      />
 
       <RuleModal
         visible={modalVisible || !!editingRule || !!fromSuggestion}

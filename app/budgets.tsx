@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
-import { View, ScrollView } from 'react-native';
+import { View } from 'react-native';
 import { MovingRow } from '@/components/MovingRow';
 import { Text } from '@/components/Text';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -18,7 +18,10 @@ import { Category } from '@/types';
 import { toLocalIsoDate } from '@/lib/date';
 import { usePrivacy } from '@/theme/PrivacyContext';
 import { theme } from '@/constants/theme';
-import { SkyHeader } from '@/features/home/SkyHeader';
+import { SkyHeader, HeaderSummary } from '@/features/home/SkyHeader';
+import ReanimatedAnimated from 'react-native-reanimated';
+import { formatMoney } from '@/lib/money';
+import { useCollapsingHeader } from '@/lib/useCollapsingHeader';
 import { AddButton } from '@/components/AddButton';
 import { EmptyState } from '@/components/EmptyState';
 import { ActionSheet, ActionSheetItem } from '@/components/ActionSheet';
@@ -43,6 +46,8 @@ export default function BudgetsScreen() {
   // when it's already open below, rather than stacking another copy.
   const returnOrPush = useReturnOrPush();
   const insets = useSafeAreaInsets();
+  // The header sits over the page and shrinks as it scrolls.
+  const { collapse, headerHeight, scrollHandler, scrollRef } = useCollapsingHeader();
   const { show: showUndo } = useUndoToast();
   const { hideAmounts } = usePrivacy();
   const [budgets, setBudgets] = useState<BudgetProgress[]>([]);
@@ -178,15 +183,15 @@ export default function BudgetsScreen() {
 
   return (
     <View style={styles.container}>
-      <SkyHeader
-        title="Budgets"
-        showBack
-        hideUser
-        compact
-        actions={<AddButton onPress={() => setModalVisible(true)} label="+ Add" />}
-      />
-
-      <ScrollView contentContainerStyle={{ paddingBottom: theme.layout.screenScrollPad + insets.bottom }}>
+      <ReanimatedAnimated.ScrollView
+        ref={scrollRef}
+        onScroll={scrollHandler}
+        scrollEventThrottle={16}
+        contentContainerStyle={{
+          paddingTop: headerHeight,
+          paddingBottom: theme.layout.screenScrollPad + insets.bottom,
+        }}
+      >
         {loadError && (
           <View style={styles.errorBanner}>
             <Text style={styles.errorTitle}>Couldn't load your budgets</Text>
@@ -238,7 +243,24 @@ export default function BudgetsScreen() {
             </>
           )
         )}
-      </ScrollView>
+      </ReanimatedAnimated.ScrollView>
+      <SkyHeader
+        collapse={collapse}
+        summary={
+          budgets.length > 0 ? (
+            <HeaderSummary
+              figure={formatMoney(hero.spentMinor > hero.limitMinor ? hero.overMinor : hero.leftMinor)}
+              rest={hero.spentMinor > hero.limitMinor ? 'over this month' : 'left this month'}
+              dot={hero.spentMinor > hero.limitMinor ? theme.colors.expense : theme.colors.slice.saved}
+            />
+          ) : undefined
+        }
+        title="Budgets"
+        showBack
+        hideUser
+        compact
+        actions={<AddButton onPress={() => setModalVisible(true)} label="+ Add" />}
+      />
 
       <AddBudgetModal
         visible={modalVisible}

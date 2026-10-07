@@ -1,9 +1,11 @@
 import { useCallback, useState } from 'react';
-import { View, ScrollView, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { Text } from '@/components/Text';
 import { useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { AppHeader } from '@/components/AppHeader';
+import { SkyHeader } from '@/features/home/SkyHeader';
+import ReanimatedAnimated from 'react-native-reanimated';
+import { useCollapsingHeader } from '@/lib/useCollapsingHeader';
 import { ToggleSwitch } from '@/components/ToggleSwitch';
 import { SettingsRow } from '@/components/SettingsRow';
 import { Section } from '@/components/Section';
@@ -23,6 +25,8 @@ type SwitchKey = 'morningEnabled' | 'eveningEnabled' | 'billAlerts' | 'overspend
 
 export default function NotificationSettingsScreen() {
   const insets = useSafeAreaInsets();
+  // The header sits over the page and shrinks as it scrolls.
+  const { collapse, headerHeight, scrollHandler, scrollRef } = useCollapsingHeader();
   const [prefs, setPrefs] = useState<NotificationPrefs | null>(null);
   const [openSlot, setOpenSlot] = useState<TimeSlotKind | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -92,7 +96,7 @@ export default function NotificationSettingsScreen() {
   if (!prefs) {
     return (
       <View style={styles.container}>
-        <AppHeader title="Notifications" showBack />
+        <SkyHeader title="Notifications" showBack hideUser />
         {loadError ? (
           <View style={listScreenStyles.errorBanner}>
             <Text style={listScreenStyles.errorTitle}>Couldn't load your notification settings</Text>
@@ -121,8 +125,12 @@ export default function NotificationSettingsScreen() {
 
   return (
     <View style={styles.container}>
-      <AppHeader title="Notifications" showBack />
-      <ScrollView>
+      <ReanimatedAnimated.ScrollView
+        ref={scrollRef}
+        onScroll={scrollHandler}
+        scrollEventThrottle={16}
+        contentContainerStyle={{ paddingTop: headerHeight }}
+      >
         {/* The same grouped rows as Profile's settings: a section title, one card, hairlines between rows. */}
         <Section title="Times">
           <View style={h.card}>
@@ -223,7 +231,8 @@ export default function NotificationSettingsScreen() {
 
         <Text style={styles.footNote}>At most one notification per time. Nothing leaves your phone.</Text>
         <View style={{ height: theme.layout.screenScrollPad + insets.bottom }} />
-      </ScrollView>
+      </ReanimatedAnimated.ScrollView>
+      <SkyHeader collapse={collapse} title="Notifications" showBack hideUser />
     </View>
   );
 }

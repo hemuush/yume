@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { View, ScrollView, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { Text } from '@/components/Text';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -21,7 +21,9 @@ import { haptics } from '@/lib/haptics';
 import { emitTransactionsChanged } from '@/lib/dataEvents';
 import { useScreenLoad } from '@/lib/useScreenLoad';
 import { theme } from '@/constants/theme';
-import { AppHeader } from '@/components/AppHeader';
+import { SkyHeader } from '@/features/home/SkyHeader';
+import ReanimatedAnimated from 'react-native-reanimated';
+import { useCollapsingHeader } from '@/lib/useCollapsingHeader';
 import { EmptyState } from '@/components/EmptyState';
 import { CategoryIcon } from '@/components/CategoryIcon';
 import { PrimaryButton } from '@/components/PrimaryButton';
@@ -52,6 +54,8 @@ const savedLabel = (createdAt: string) => {
  */
 export default function TidyUpScreen() {
   const insets = useSafeAreaInsets();
+  // The header sits over the page and shrinks as it scrolls.
+  const { collapse, headerHeight, scrollHandler, scrollRef } = useCollapsingHeader();
   const { show: showUndo } = useUndoToast();
   const { hideAmounts } = usePrivacy();
   // Savings and investment amounts stay masked here too while hidden.
@@ -151,8 +155,15 @@ export default function TidyUpScreen() {
 
   return (
     <View style={styles.container}>
-      <AppHeader title="Tidy up" showBack />
-      <ScrollView contentContainerStyle={{ paddingBottom: theme.layout.screenScrollPad + insets.bottom }}>
+      <ReanimatedAnimated.ScrollView
+        ref={scrollRef}
+        onScroll={scrollHandler}
+        scrollEventThrottle={16}
+        contentContainerStyle={{
+          paddingTop: headerHeight,
+          paddingBottom: theme.layout.screenScrollPad + insets.bottom,
+        }}
+      >
         {loadError && (
           <View style={styles.errorBanner}>
             <Text style={styles.errorTitle}>Couldn't check your data</Text>
@@ -296,7 +307,8 @@ export default function TidyUpScreen() {
             )}
           </>
         )}
-      </ScrollView>
+      </ReanimatedAnimated.ScrollView>
+      <SkyHeader collapse={collapse} title="Tidy up" showBack hideUser />
     </View>
   );
 }

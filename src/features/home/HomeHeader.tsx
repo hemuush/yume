@@ -83,7 +83,8 @@ export function HomeHeader({
   const insets = useSafeAreaInsets();
   const gradientTop = shade(accent, 90, 4);
   const gradientBottom = shade(accent, 96, 2);
-  const contentTop = insets.top + 10;
+  // The same top spacing as every other screen's SkyHeader.
+  const contentTop = insets.top + 6;
 
   // How far the band can travel: its full height minus the brand row and a little padding. Measured, not
   // hardcoded, so a larger system font still collapses to exactly the brand row.
@@ -226,7 +227,7 @@ export function HomeHeader({
           {children}
         </ReanimatedAnimated.View>
       </View>
-      <HeaderHills sky={gradientBottom} primary={accent} secondary={secondary} />
+      <HeaderHills sky={gradientBottom} primary={accent} secondary={secondary} compact />
       <ReanimatedAnimated.View style={[styles.edgeFade, edgeStyle]} pointerEvents="none">
         <LinearGradient colors={EDGE_FADE} style={StyleSheet.absoluteFill} />
       </ReanimatedAnimated.View>

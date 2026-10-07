@@ -9,7 +9,7 @@ import { goalProgress } from '@/lib/savingsGoalProgress';
 import { stageForStreak, stageLabel, GrowthStage } from '@/lib/gardenGrowth';
 import { parseLocalIsoDate, toLocalIsoDate } from '@/lib/date';
 import { SavingsGoal } from '@/types';
-import { AppHeader } from '@/components/AppHeader';
+import { SkyHeader } from '@/features/home/SkyHeader';
 import { EmptyState } from '@/components/EmptyState';
 import { Skeleton } from '@/components/Skeleton';
 import { SuuIllustration } from '@/components/SuuIllustration';
@@ -99,7 +99,7 @@ export default function GardenScreen() {
   if (!loaded && !loadError) {
     return (
       <View style={styles.container}>
-        <AppHeader title="Suu's Garden" showBack />
+        <SkyHeader title="Suu's Garden" showBack hideUser />
         <View style={{ paddingTop: 20 }}>
           <View style={[styles.bed, { marginTop: 0 }]}>
             {Array.from({ length: POT_COUNT }, (_, i) => (
@@ -121,7 +121,7 @@ export default function GardenScreen() {
       <AmountPadDock>
         {(scrollProps) => (
           <>
-            <AppHeader title="Suu's Garden" showBack />
+            <SkyHeader title="Suu's Garden" showBack hideUser />
             <ScrollView
               {...scrollProps}
               keyboardShouldPersistTaps="handled"

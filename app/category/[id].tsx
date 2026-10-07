@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { View, ScrollView, Pressable, StyleSheet } from 'react-native';
+import { View, Pressable, StyleSheet } from 'react-native';
 import { Text } from '@/components/Text';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -14,7 +14,10 @@ import { ReportWindow, windowRange, windowLabel } from '@/lib/period';
 import { useScreenLoad } from '@/lib/useScreenLoad';
 import { theme } from '@/constants/theme';
 import { EYEBROW } from '@/constants/textStyles';
-import { AppHeader } from '@/components/AppHeader';
+import { SkyHeader, HeaderSummary } from '@/features/home/SkyHeader';
+import { StripCard } from '@/components/StripCard';
+import ReanimatedAnimated from 'react-native-reanimated';
+import { useCollapsingHeader } from '@/lib/useCollapsingHeader';
 import { EmptyState } from '@/components/EmptyState';
 import { CategoryIcon } from '@/components/CategoryIcon';
 import { CardRowsSkeleton } from '@/components/ListSkeleton';
@@ -32,7 +35,6 @@ import { SplitBreakdown } from '@/features/reports/SplitBreakdown';
 import { withPressed } from '@/lib/pressed';
 import { usePrivacy } from '@/theme/PrivacyContext';
 import { inParent } from '@/lib/categoryLabel';
-import { styles as reportStyles } from '@/features/reports/reports.styles';
 
 const isThisMonth = (w: ReportWindow) => w.granularity === 'month' && w.offset === 0;
 
@@ -49,6 +51,8 @@ const monthLong = (key: string) => longMonthYear(`${key}-01`);
  */
 export default function CategoryScreen() {
   const insets = useSafeAreaInsets();
+  // The header sits over the page and shrinks as it scrolls.
+  const { collapse, headerHeight, scrollHandler, scrollRef } = useCollapsingHeader();
   // Budgets and this page link to each other: go back to Budgets when it's
   // already open below, rather than stacking another copy.
   const returnOrPush = useReturnOrPush();
@@ -133,7 +137,7 @@ export default function CategoryScreen() {
   if (loaded && !category) {
     return (
       <View style={styles.container}>
-        <AppHeader title="Category" showBack />
+        <SkyHeader title="Category" showBack hideUser />
         <EmptyState title="This category no longer exists" />
       </View>
     );
@@ -143,7 +147,7 @@ export default function CategoryScreen() {
   if (hideAmounts && category?.isSensitive) {
     return (
       <View style={styles.container}>
-        <AppHeader title={category.name} showBack />
+        <SkyHeader title={category.name} showBack hideUser />
         <EmptyState
           title="Hidden for now"
           subtitle="Savings and investment amounts are hidden. Tap the eye in the header to show them."
@@ -154,9 +158,15 @@ export default function CategoryScreen() {
 
   return (
     <View style={styles.container}>
-      <AppHeader title={category?.name ?? 'Category'} showBack />
-      <PeriodRow cursor={cursor} onChange={setCursor} style={reportStyles.periodRowPage} />
-      <ScrollView contentContainerStyle={{ paddingBottom: theme.layout.screenScrollPad + insets.bottom }}>
+      <ReanimatedAnimated.ScrollView
+        ref={scrollRef}
+        onScroll={scrollHandler}
+        scrollEventThrottle={16}
+        contentContainerStyle={{
+          paddingTop: headerHeight,
+          paddingBottom: theme.layout.screenScrollPad + insets.bottom,
+        }}
+      >
         {loadError && (
           <View style={styles.errorBanner}>
             <Text style={styles.errorTitle}>Couldn't load this category</Text>
@@ -170,7 +180,8 @@ export default function CategoryScreen() {
           </View>
         ) : (
           <>
-            <View style={[h.card, styles.hero]}>
+            {/* White, with a strip in the category's own colour. */}
+            <StripCard tone={category.color} style={styles.hero}>
               <View style={styles.heroTop}>
                 <View style={styles.heroText}>
                   <Text style={styles.heroLabel}>
@@ -249,7 +260,7 @@ export default function CategoryScreen() {
                   />
                 </>
               )}
-            </View>
+            </StripCard>
 
             {spend && isThisMonth(cursor) && (
               <Section title="Budget">
@@ -313,7 +324,25 @@ export default function CategoryScreen() {
             </Section>
           </>
         )}
-      </ScrollView>
+      </ReanimatedAnimated.ScrollView>
+      {/* Over the page, with the period control in its band; it shrinks as the page scrolls. */}
+      <SkyHeader
+        title={category?.name ?? 'Category'}
+        showBack
+        hideUser
+        collapse={collapse}
+        summary={
+          overview ? (
+            <HeaderSummary
+              figure={formatMoney(overview.totalMinor)}
+              rest={category?.kind === 'income' ? 'received' : 'spent'}
+              dot={category?.kind === 'income' ? theme.colors.slice.saved : theme.colors.slice.spent}
+            />
+          ) : undefined
+        }
+      >
+        <PeriodRow cursor={cursor} onChange={setCursor} />
+      </SkyHeader>
 
       <TransactionDetailModal
         tx={detailTx}
@@ -360,7 +389,7 @@ function ActionChip({
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
-  hero: { marginTop: theme.layout.screenTopGap, padding: 16 },
+  hero: { marginHorizontal: 20, marginTop: 6, padding: 16, paddingTop: 18 },
   heroTop: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
   heroText: { flex: 1, minWidth: 0 },
   heroLabel: { ...EYEBROW },
@@ -397,9 +426,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 11,
     borderRadius: theme.radius.lg,
-    borderWidth: 1.5,
-    borderStyle: 'dashed',
-    borderColor: theme.colors.textMuted,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.borderSoft,
+    backgroundColor: theme.colors.surface,
   },
   noLimitText: { flex: 1, fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textSecondary },
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginHorizontal: 20, marginTop: 18 },
