@@ -1,4 +1,6 @@
-import { View, StyleSheet } from 'react-native';
+import { View, Pressable, StyleSheet } from 'react-native';
+import { router } from 'expo-router';
+import Feather from '@expo/vector-icons/Feather';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text } from '@/components/Text';
@@ -6,6 +8,7 @@ import { HeaderUserButton } from '@/components/AppHeader';
 import { theme } from '@/constants/theme';
 import { shade } from '@/lib/color';
 import { useAccent } from '@/theme/AccentContext';
+import { withPressed } from '@/lib/pressed';
 import { HeaderHills } from './HeaderHills';
 import { Spark } from './Spark';
 
@@ -19,18 +22,25 @@ const SPARKS = [
 /**
  * A tab's header in Home's family: the same sky band, sparks and hills, a 25px title with an optional line
  * under it, and the profile button. Anything passed as children (Reports' period control) sits in the band;
- * `actions` (Activity's search and filter) sit beside the profile button.
+ * `actions` (Activity's search and filter) sit beside the profile button. A pushed screen (Add) passes
+ * `showBack` and `hideUser`, and `compact` for the 22px title its plain header had.
  */
 export function SkyHeader({
   title,
   subtitle,
   actions,
   children,
+  showBack,
+  hideUser,
+  compact,
 }: {
   title: string;
   subtitle?: string;
   actions?: React.ReactNode;
   children?: React.ReactNode;
+  showBack?: boolean;
+  hideUser?: boolean;
+  compact?: boolean;
 }) {
   const { accent, secondary } = useAccent();
   const insets = useSafeAreaInsets();
@@ -49,8 +59,23 @@ export function SkyHeader({
           <Spark key={i} top={top + s.top} left={s.left} size={s.size} opacity={s.opacity} delay={i * 700} />
         ))}
         <View style={styles.titleRow}>
+          {showBack && (
+            <Pressable
+              onPress={() => router.back()}
+              hitSlop={12}
+              style={withPressed(styles.backBtn)}
+              accessibilityRole="button"
+              accessibilityLabel="Back"
+            >
+              <Feather name="chevron-left" size={20} color={theme.colors.ink} />
+            </Pressable>
+          )}
           <View style={styles.titleBlock}>
-            <Text style={styles.title} accessibilityRole="header">
+            <Text
+              style={[styles.title, compact && styles.titleCompact]}
+              accessibilityRole="header"
+              numberOfLines={1}
+            >
               {title}
             </Text>
             {subtitle ? (
@@ -61,7 +86,7 @@ export function SkyHeader({
           </View>
           <View style={styles.actions}>
             {actions}
-            <HeaderUserButton soft size={40} />
+            {!hideUser && <HeaderUserButton soft size={40} />}
           </View>
         </View>
         {children}
@@ -77,6 +102,16 @@ const styles = StyleSheet.create({
   titleBlock: { flex: 1, minWidth: 0 },
   actions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   title: { fontFamily: theme.font.roundedBold, fontSize: 25, color: theme.colors.ink },
+  titleCompact: { fontFamily: theme.font.roundedBold, fontSize: 22 },
+  backBtn: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: -2,
+    backgroundColor: `${theme.colors.surface}D9`,
+  },
   subtitle: {
     fontFamily: theme.font.bodyMedium,
     fontSize: 13,

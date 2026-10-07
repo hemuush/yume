@@ -301,9 +301,9 @@ const styles = StyleSheet.create({
   medalItem: { width: 64, alignItems: 'center' },
   medalItemSub: { width: 56, alignItems: 'center' },
   medalRing: { borderRadius: 16, borderWidth: 2, borderColor: 'transparent', padding: 2 },
-  // One consistent "selected" ring across the picker (mint), instead of each
+  // One consistent "selected" ring across the picker (sky), instead of each
   // tile lighting up in its own category colour.
-  medalRingActive: { borderColor: theme.colors.secondary },
+  medalRingActive: { borderColor: theme.colors.slice.free },
   medalRingSub: { opacity: 0.88 },
   medalName: {
     fontFamily: theme.font.rounded,
@@ -326,7 +326,7 @@ const styles = StyleSheet.create({
     gap: 8,
     marginBottom: 12,
     paddingHorizontal: 12,
-    borderRadius: 14,
+    borderRadius: theme.radius.pill,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
     backgroundColor: theme.colors.surface,

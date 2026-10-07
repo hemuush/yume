@@ -21,11 +21,16 @@ export const styles = StyleSheet.create({
   },
 
   // Amount is centred and large with no boxed input: the biggest number wins, as on Home's This Month card.
-  heroLabel: {
-    ...EYEBROW,
-    textAlign: 'center',
+  heroLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 5,
+    marginTop: 2,
     marginBottom: 6,
   },
+  heroDot: { width: 6, height: 6, borderRadius: 3 },
+  heroLabel: { ...EYEBROW, textAlign: 'center' },
   amountRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -51,7 +56,22 @@ export const styles = StyleSheet.create({
     marginTop: -2,
   },
 
-  heroCard: { marginBottom: 18 },
+  // A white card under the sky header; the strip along its top takes the entry type's colour.
+  heroCard: {
+    marginBottom: 18,
+    padding: 16,
+    borderRadius: theme.radius.xl2,
+    backgroundColor: theme.colors.surface,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.borderSoft,
+    overflow: 'hidden',
+    shadowColor: theme.colors.link,
+    shadowOpacity: 0.1,
+    shadowRadius: 13,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 3,
+  },
+  heroStrip: { position: 'absolute', top: 0, left: 0, right: 0, height: 4 },
   recentRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 7, marginBottom: 12 },
   recentChip: {
     flexDirection: 'row',
@@ -95,9 +115,9 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: theme.radius.pill,
-    backgroundColor: theme.colors.glass,
+    backgroundColor: theme.colors.surfaceAlt,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.inkHairline,
+    borderColor: theme.colors.surfaceAlt,
   },
   frequentChipActive: { backgroundColor: theme.colors.ink, borderColor: theme.colors.ink },
   frequentChipText: { fontFamily: theme.font.monoBold, fontSize: 11, color: theme.colors.textPrimary },
@@ -148,8 +168,7 @@ export const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 6,
     borderWidth: 1.5,
-    borderStyle: 'dashed',
-    borderColor: theme.colors.secondary,
+    borderColor: theme.colors.ink,
     borderRadius: theme.radius.pill,
     minHeight: 46,
   },
@@ -199,23 +218,29 @@ export const styles = StyleSheet.create({
   linkedNote: { marginBottom: 16 },
   linkedText: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textPrimary, lineHeight: 17 },
 
+  // On the sky band: a see-through white, like the back button.
   trashBtn: {
     width: 34,
     height: 34,
     borderRadius: 17,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-    backgroundColor: theme.colors.surface,
+    backgroundColor: `${theme.colors.surface}D9`,
   },
 
   footer: {
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: theme.colors.borderSoft,
+    borderTopLeftRadius: 22,
+    borderTopRightRadius: 22,
     backgroundColor: theme.colors.surface,
     paddingHorizontal: 20,
     paddingTop: 12,
+    shadowColor: theme.colors.ink,
+    shadowOpacity: 0.06,
+    shadowRadius: 9,
+    shadowOffset: { width: 0, height: -6 },
+    elevation: 8,
   },
   saveBtn: { flex: 1 },
   actionRow: { flexDirection: 'row', gap: 8 },
@@ -226,9 +251,7 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 11,
     paddingVertical: 7,
     borderRadius: theme.radius.pill,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-    backgroundColor: theme.colors.surface,
+    backgroundColor: `${theme.colors.surface}D9`,
   },
   repeatBtnText: { fontFamily: theme.font.roundedMedium, fontSize: 12.5, color: theme.colors.textPrimary },
   repeatNote: {
@@ -260,7 +283,7 @@ export const styles = StyleSheet.create({
     height: 36,
     paddingHorizontal: 12,
     borderRadius: 12,
-    backgroundColor: theme.colors.surfaceAlt,
+    backgroundColor: theme.colors.primaryTint,
   },
   detailChipText: {
     fontFamily: theme.font.bodyMedium,

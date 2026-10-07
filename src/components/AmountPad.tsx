@@ -116,7 +116,8 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
   },
-  keyOperator: { backgroundColor: theme.colors.accentTint },
+  // Sky, so the sum keys stand apart from the digits.
+  keyOperator: { backgroundColor: theme.colors.primaryTint },
   keyText: { fontFamily: theme.font.monoBold, fontSize: 18, color: theme.colors.textPrimary },
-  keyOperatorText: { fontFamily: theme.font.monoBold, fontSize: 19 },
+  keyOperatorText: { fontFamily: theme.font.monoBold, fontSize: 19, color: theme.colors.link },
 });
