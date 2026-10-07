@@ -47,13 +47,13 @@ export function Section({
             onPress={onSeeAll}
             onPressIn={onPressIn}
             onPressOut={onPressOut}
-            hitSlop={8}
+            hitSlop={12}
             accessibilityRole="button"
             accessibilityLabel={`See all — ${title}`}
             style={[styles.seeAll, animatedStyle]}
           >
             <Text style={styles.seeAllText}>See all</Text>
-            <Feather name="arrow-right" size={13} color={theme.colors.textSecondary} />
+            <Feather name="arrow-right" size={14} color={theme.colors.link} />
           </AnimatedPressable>
         )}
       </View>
@@ -84,6 +84,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   badgeText: { fontFamily: theme.font.monoBold, fontSize: 11, color: theme.colors.white },
-  seeAll: { flexDirection: 'row', alignItems: 'center', gap: 3 },
-  seeAllText: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textSecondary },
+  seeAll: { flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 32 },
+  seeAllText: { fontFamily: theme.font.bodyMedium, fontSize: 14, color: theme.colors.link },
 });

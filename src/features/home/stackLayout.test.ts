@@ -6,9 +6,9 @@ const acc = (id: string, type: Account['type']) => ({ id, type }) as Account;
 describe('stackHeight', () => {
   it('is the front card alone for one account, then one strip more for each other', () => {
     expect(stackHeight(0)).toBe(STACK.cardHeight);
-    expect(stackHeight(1)).toBe(84);
-    expect(stackHeight(2)).toBe(128);
-    expect(stackHeight(10)).toBe(480);
+    expect(stackHeight(1)).toBe(104);
+    expect(stackHeight(2)).toBe(156);
+    expect(stackHeight(10)).toBe(572);
   });
 });
 

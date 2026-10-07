@@ -189,6 +189,7 @@ export function HomeGlance({
             key: 'upcoming',
             label: 'Upcoming',
             alert: upcoming.items.some((i) => i.pinned),
+            count: upcoming.items.length,
             // No "See all" footer: "+N more" already leads to Plan, and each
             // row deep-links to where it lives (Loans, Recurring, pay a card).
             content: (
@@ -238,6 +239,7 @@ export function HomeGlance({
                         soon={item.pinned && !item.urgent}
                         date={item.sortDate}
                         actionLabel={item.pinned && item.payable ? 'Pay' : undefined}
+                        highlight={item.pinned}
                       />
                     </Animated.View>
                   );
@@ -270,6 +272,7 @@ export function HomeGlance({
             key: 'budgets',
             label: 'Budgets',
             alert: budgetAlert,
+            count: budgets.length,
             onSeeAll: () => router.push('/budgets'),
             content: (
               <View style={styles.pageList}>
@@ -293,6 +296,7 @@ export function HomeGlance({
           {
             key: 'goals',
             label: 'Goals',
+            count: activeGoals.length,
             onSeeAll: () => router.push('/savings-goals'),
             content: (
               <View style={styles.goalsPageRow}>
@@ -324,28 +328,26 @@ const styles = StyleSheet.create({
   windowCaption: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingHorizontal: 14,
-    paddingTop: 8,
-    paddingBottom: 2,
-  },
-  windowLabel: { fontFamily: theme.font.bodyMedium, fontSize: 11.5, color: theme.colors.textMuted },
-  windowBold: { fontFamily: theme.font.bodyBold, color: theme.colors.textSecondary },
-  windowCount: { fontFamily: theme.font.monoBold, fontSize: 11.5, color: theme.colors.textSecondary },
-  groupLabel: {
-    paddingHorizontal: 14,
+    paddingHorizontal: 16,
     paddingTop: 10,
-    paddingBottom: 2,
-    fontFamily: theme.font.monoBold,
-    fontSize: 10.5,
-    letterSpacing: 0.8,
-    textTransform: 'uppercase',
+    paddingBottom: 4,
+  },
+  windowLabel: { fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textMuted },
+  windowBold: { fontFamily: theme.font.bodyBold, color: theme.colors.textSecondary },
+  windowCount: { fontFamily: theme.font.monoBold, fontSize: 13, color: theme.colors.textSecondary },
+  groupLabel: {
+    paddingHorizontal: 16,
+    paddingTop: 10,
+    paddingBottom: 4,
+    fontFamily: theme.font.bodyBold,
+    fontSize: 12,
     color: theme.colors.expenseText,
   },
-  groupLabelSoon: { color: theme.colors.warnInk },
+  groupLabelSoon: { color: theme.colors.dueInk },
   groupLabelLater: {
     color: theme.colors.textMuted,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: theme.colors.borderSoft,
+    borderTopColor: theme.colors.divider,
   },
   quiet: { paddingHorizontal: 14, paddingTop: 12, paddingBottom: 10, gap: 2 },
   quietTitle: { fontFamily: theme.font.roundedBold, fontSize: 15, color: theme.colors.textPrimary },

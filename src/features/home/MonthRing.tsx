@@ -18,13 +18,13 @@ const AnimatedCircle = ReanimatedAnimated.createAnimatedComponent(Circle);
 
 /** Slice colours — the month card's tiles use the same ones; `due` (bills still to pay) has no tile. */
 export const RING_COLORS = {
-  spent: theme.colors.spentSoft,
-  saved: theme.colors.secondary,
-  due: theme.colors.idGoldDeep,
-  free: theme.colors.primary,
+  spent: theme.colors.slice.spent,
+  saved: theme.colors.slice.saved,
+  due: theme.colors.slice.due,
+  free: theme.colors.slice.free,
 };
 /** The moon-cream face inside the ring. */
-const FACE = theme.colors.goldTint; // was #FBF3DA — within 6/255 of the token
+const FACE = theme.colors.goldTint;
 /** The gap left between two slices, along the ring. */
 const GAP = 3.5;
 const DIM = 0.28;
@@ -178,14 +178,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 22,
   },
-  big: { fontFamily: theme.font.roundedBold, fontSize: 25, lineHeight: 28, color: theme.colors.textPrimary },
+  big: { fontFamily: theme.font.roundedBold, fontSize: 24, lineHeight: 26, color: theme.colors.textPrimary },
   label: {
-    fontFamily: theme.font.bodyBold,
-    fontSize: 10,
-    letterSpacing: 0.7,
-    textTransform: 'uppercase',
+    fontFamily: theme.font.bodyMedium,
+    fontSize: 11,
     color: theme.colors.textSecondary,
-    marginTop: 3,
+    marginTop: 1,
   },
   bigCompact: {
     fontFamily: theme.font.roundedBold,

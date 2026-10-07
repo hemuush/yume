@@ -21,7 +21,6 @@ import { SoftCard } from '@/components/SoftCard';
 import { MonthRing, RING_COLORS } from './MonthRing';
 import { LimitMeter, LimitMeterTone } from '@/components/LimitMeter';
 import { CountUpAmount } from '@/components/CountUpAmount';
-import { useAccent } from '@/theme/AccentContext';
 import { usePrivacy } from '@/theme/PrivacyContext';
 import {
   heroSlices,
@@ -38,6 +37,7 @@ import { styles } from './hero.styles';
 import { ConfettiDot, ConfettiPiece, makeConfetti } from './HeroConfetti';
 import { WorkingRow } from './WorkingRow';
 import { withPressed } from '@/lib/pressed';
+import { YumeLogo } from '@/components/YumeLogo';
 
 // Reanimated only, never core RN `Animated`: mixing them in one tree crashed BudgetRow/GoalCard/GoalChip
 // (see Skeleton.tsx). That covers the confetti burst and checkmark below too.
@@ -67,7 +67,7 @@ interface HeroContent {
 }
 
 const CHECK_PATH_LENGTH = 22;
-const RING_SIZE = 72;
+const RING_SIZE = 104;
 /** How far a horizontal drag must travel before letting go changes the period. */
 const SWIPE_STEP_PX = 60;
 
@@ -110,7 +110,6 @@ export function ThisMonthHero({
   pace?: { projectedMinor: number; byLabel: string } | null;
 }) {
   const reduce = useReduceMotion();
-  const { dot } = useAccent();
   const { hideAmounts } = usePrivacy();
   const [displayed, setDisplayed] = useState<HeroContent>({
     incomeMinor,
@@ -344,7 +343,13 @@ export function ThisMonthHero({
           : `left of ${formatMoney(displayed.incomeMinor)} income${carryNote}`;
 
   return (
-    <SoftCard elevated backgroundColor={theme.colors.surface} padding={0} style={styles.card}>
+    <SoftCard
+      elevated
+      backgroundColor={theme.colors.surface}
+      borderRadius={26}
+      padding={0}
+      style={styles.card}
+    >
       <View style={styles.inner}>
         {/* The period bar — outside the sliding page, so it never moves or fades. */}
         <View style={styles.bar}>
@@ -357,7 +362,7 @@ export function ThisMonthHero({
               accessibilityRole="button"
               accessibilityLabel="Previous period"
             >
-              <Feather name="chevron-left" size={16} color={theme.colors.textSecondary} />
+              <Feather name="chevron-left" size={18} color={theme.colors.textSecondary} />
             </Pressable>
             <Pressable
               onPress={() => onStep(1)}
@@ -368,7 +373,7 @@ export function ThisMonthHero({
               accessibilityLabel="Next period"
               accessibilityState={{ disabled: !canStepForward }}
             >
-              <Feather name="chevron-right" size={16} color={theme.colors.textSecondary} />
+              <Feather name="chevron-right" size={18} color={theme.colors.textSecondary} />
             </Pressable>
           </View>
         </View>
@@ -420,7 +425,7 @@ export function ThisMonthHero({
                   <Feather
                     name={showWorking ? 'chevron-up' : 'chevron-down'}
                     size={12}
-                    color={theme.colors.warnInk}
+                    color={theme.colors.dueInk}
                   />
                 </Pressable>
               )}
@@ -460,8 +465,9 @@ export function ThisMonthHero({
             </View>
           )}
 
-          <View style={styles.tiles}>
-            {tileModes.map((m) => {
+          {/* Spent | Saved | Debt left: one row on the card, the dot carries each slice's colour. */}
+          <View style={styles.legend}>
+            {tileModes.map((m, i) => {
               const active = picked === m;
               const faded = !!picked && !active;
               return (
@@ -470,20 +476,18 @@ export function ThisMonthHero({
                   onPress={() => pickMode(m)}
                   disabled={!canPick || !modes.includes(m)}
                   style={withPressed([
-                    styles.tile,
-                    { backgroundColor: TILE_TINT[m] },
-                    active && styles.tileActive,
-                    faded && styles.tileFaded,
+                    styles.legendItem,
+                    i > 0 && styles.legendDivider,
+                    active && styles.legendActive,
+                    faded && styles.legendFaded,
                   ])}
                   accessibilityRole={canPick ? 'button' : 'text'}
                   accessibilityState={canPick ? { selected: active } : undefined}
                   accessibilityLabel={`${TILE_LABEL[m]}, ${formatMoney(rowValue[m])}`}
                 >
-                  <View style={styles.tileHead}>
-                    <View
-                      style={[styles.tileDot, { backgroundColor: RING_COLORS[m], borderColor: DOT_EDGE[m] }]}
-                    />
-                    <Text style={styles.tileLabel} numberOfLines={1}>
+                  <View style={styles.legendHead}>
+                    <View style={[styles.legendDot, { backgroundColor: RING_COLORS[m] }]} />
+                    <Text style={styles.legendLabel} numberOfLines={1}>
                       {TILE_LABEL[m]}
                     </Text>
                   </View>
@@ -492,7 +496,7 @@ export function ThisMonthHero({
                     key={displayed.periodKey}
                     minor={rowValue[m]}
                     countFromZero={false}
-                    style={styles.tileValue}
+                    style={styles.legendValue}
                     numberOfLines={1}
                     adjustsFontSizeToFit
                   />
@@ -500,17 +504,17 @@ export function ThisMonthHero({
               );
             })}
             <View
-              style={[styles.tile, { backgroundColor: TILE_TINT.debt }]}
+              style={[styles.legendItem, styles.legendDivider]}
               accessible
               accessibilityLabel={`Debt left, ${formatMoney(displayed.outstandingLoansMinor)}`}
             >
-              <View style={styles.tileHead}>
-                <Feather name="credit-card" size={10} color={theme.colors.textSecondary} />
-                <Text style={styles.tileLabel} numberOfLines={1}>
+              <View style={styles.legendHead}>
+                <View style={[styles.legendDot, { backgroundColor: theme.colors.slice.debt }]} />
+                <Text style={styles.legendLabel} numberOfLines={1}>
                   Debt left
                 </Text>
                 {debtCleared && (
-                  <Svg width={10} height={10} viewBox="0 0 24 24">
+                  <Svg width={12} height={12} viewBox="0 0 24 24">
                     <AnimatedPath
                       d="M5 13l4 4 10-10"
                       stroke={theme.colors.income}
@@ -528,7 +532,7 @@ export function ThisMonthHero({
                 key={displayed.periodKey}
                 minor={displayed.outstandingLoansMinor}
                 countFromZero={false}
-                style={styles.tileValue}
+                style={styles.legendValue}
                 numberOfLines={1}
                 adjustsFontSizeToFit
               />
@@ -537,49 +541,54 @@ export function ThisMonthHero({
             </View>
           </View>
 
-          {today && (
-            <View style={styles.line}>
-              <Feather name="clock" size={15} color={theme.colors.textSecondary} />
-              <Text style={styles.lineLabel} numberOfLines={1}>
-                Today <Text style={styles.lineMoney}>{formatMoney(today.spentMinor)}</Text>
-                {todayTone === 'over' ? (
-                  <>
-                    {' '}
-                    — <Text style={styles.lineMoney}>
-                      {formatMoney(today.spentMinor - today.goalMinor)}
-                    </Text>{' '}
-                    over
-                  </>
-                ) : (
-                  <>
-                    {' '}
-                    of <Text style={styles.lineMoney}>{formatMoney(today.goalMinor)}</Text>
-                  </>
-                )}
-              </Text>
-              <View style={styles.todayMeter}>
-                <LimitMeter pct={todayPct} tone={todayTone} animKey="home:today" />
-              </View>
-            </View>
-          )}
+          {(today || pace) && (
+            <View style={styles.tray}>
+              {today && (
+                <View style={styles.line}>
+                  <Feather name="clock" size={16} color={theme.colors.textSecondary} />
+                  <Text style={styles.lineLabel} numberOfLines={1}>
+                    Today <Text style={styles.lineMoney}>{formatMoney(today.spentMinor)}</Text>
+                    {todayTone === 'over' ? (
+                      <>
+                        {' '}
+                        —{' '}
+                        <Text style={styles.lineMoney}>
+                          {formatMoney(today.spentMinor - today.goalMinor)}
+                        </Text>{' '}
+                        over
+                      </>
+                    ) : (
+                      <>
+                        {' '}
+                        of <Text style={styles.lineMoney}>{formatMoney(today.goalMinor)}</Text>
+                      </>
+                    )}
+                  </Text>
+                  <View style={styles.todayMeter}>
+                    <LimitMeter pct={todayPct} tone={todayTone} animKey="home:today" />
+                  </View>
+                </View>
+              )}
 
-          {pace && (
-            <View style={styles.line}>
-              <Feather name="trending-up" size={15} color={theme.colors.textSecondary} />
-              <Text style={styles.lineLabel} numberOfLines={1}>
-                On pace for about{' '}
-                <Text style={styles.lineMoney}>
-                  {formatMoney(Math.round(pace.projectedMinor / 10000) * 10000)}
-                </Text>{' '}
-                by {pace.byLabel}
-              </Text>
+              {pace && (
+                <View style={styles.line}>
+                  <Feather name="trending-up" size={16} color={theme.colors.textSecondary} />
+                  <Text style={styles.lineLabel} numberOfLines={1}>
+                    On pace for about{' '}
+                    <Text style={styles.lineMoney}>
+                      {formatMoney(Math.round(pace.projectedMinor / 10000) * 10000)}
+                    </Text>{' '}
+                    by {pace.byLabel}
+                  </Text>
+                </View>
+              )}
             </View>
           )}
         </ReanimatedAnimated.View>
       </View>
 
       <View style={[styles.suu, warn && styles.suuWarn]}>
-        <View style={[styles.suuDot, { backgroundColor: dot }]} />
+        <YumeLogo size={24} />
         <Text style={[styles.suuText, warn && styles.suuTextWarn]}>{displayed.suu.text}</Text>
       </View>
     </SoftCard>
@@ -594,13 +603,3 @@ const TILE_LABEL = { spent: 'Spent', saved: 'Saved' };
 
 /** What the spoken summary calls each view when savings are hidden: "free", not "free to use". */
 const PRIVATE_LABEL: Record<HeroMode, string> = { ...HERO_MODE_LABEL, free: 'Free', kept: 'Free' };
-
-/** The tiles' pale fills: each slice's own family, and a soft lavender for debt. */
-const TILE_TINT = {
-  spent: theme.colors.idCoral,
-  saved: theme.colors.secondaryTint,
-  debt: theme.colors.accentTint,
-};
-
-/** A deeper edge on each tile's legend dot, so the pastel ring colour still reads on the pale tile. */
-const DOT_EDGE = { spent: theme.colors.idCoralDeep, saved: theme.colors.secondaryDeep };
