@@ -7,7 +7,8 @@ import { listAccounts } from '@/db/ledger';
 import { listSavingsGoals, markGoalLetterRevealed } from '@/db/savingsGoals';
 import { Account, SavingsGoal } from '@/types';
 import { theme } from '@/constants/theme';
-import { AppHeader, HeaderIconButton } from '@/components/AppHeader';
+import { HeaderIconButton } from '@/components/AppHeader';
+import { SkyHeader } from '@/features/home/SkyHeader';
 import { AddButton } from '@/components/AddButton';
 import { EmptyState } from '@/components/EmptyState';
 import { useScreenLoad } from '@/lib/useScreenLoad';
@@ -65,7 +66,7 @@ export default function SavingsGoalsScreen() {
   if (!loaded && !loadError) {
     return (
       <View style={styles.container}>
-        <AppHeader title="Savings goals" showBack />
+        <SkyHeader title="Savings goals" showBack hideUser compact />
         <View style={{ paddingTop: 24 }}>
           {[0, 1].map((i) => (
             <View key={i} style={styles.card}>
@@ -86,10 +87,12 @@ export default function SavingsGoalsScreen() {
 
   return (
     <View style={styles.container}>
-      <AppHeader
+      <SkyHeader
         title="Savings goals"
         showBack
-        right={
+        hideUser
+        compact
+        actions={
           <>
             <HeaderIconButton
               icon={showArchived ? 'eye-off' : 'archive'}

@@ -1,5 +1,4 @@
 import { View, Pressable, Animated, StyleSheet } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import Feather from '@expo/vector-icons/Feather';
 import { router } from 'expo-router';
@@ -61,15 +60,8 @@ export function GoalCard({
         accessibilityRole="button"
         style={[styles.card, goal.archived && shared.cardArchived]}
       >
-        <LinearGradient
-          colors={[shade(tone, 93), shade(tone, 85)]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={StyleSheet.absoluteFill}
-        />
-        <View style={styles.circle} />
         <View style={styles.head}>
-          <View style={styles.icon}>
+          <View style={[styles.icon, { backgroundColor: shade(tone, 90) }]}>
             {hideAmounts ? (
               <Feather name="eye-off" size={16} color={theme.colors.textMuted} />
             ) : (
@@ -116,7 +108,7 @@ export function GoalCard({
           <GrowFill
             animKey={`goal-bar:${goal.id}`}
             pct={hideAmounts ? 0 : percent}
-            style={[styles.fill, reached && { backgroundColor: theme.colors.income }]}
+            style={[styles.fill, { backgroundColor: reached ? theme.colors.income : shade(tone, 66) }]}
           />
         </View>
         <View style={styles.caption}>
@@ -178,22 +170,19 @@ export function GoalCard({
 
 const styles = StyleSheet.create({
   wrap: { marginHorizontal: 20, marginBottom: 10 },
-  card: { padding: 16, borderRadius: theme.radius.xl2, overflow: 'hidden' },
-  circle: {
-    position: 'absolute',
-    right: -34,
-    bottom: -48,
-    width: 124,
-    height: 124,
-    borderRadius: 62,
-    backgroundColor: 'rgba(255,255,255,0.3)',
+  // A white card like every other on the screen; the goal's own colour is in its icon and its bar.
+  card: {
+    padding: 16,
+    borderRadius: theme.radius.xl2,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.borderSoft,
+    backgroundColor: theme.colors.surface,
   },
   head: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   icon: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: 'rgba(255,255,255,0.85)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -207,11 +196,11 @@ const styles = StyleSheet.create({
   track: {
     height: 6,
     borderRadius: 3,
-    backgroundColor: 'rgba(255,255,255,0.6)',
+    backgroundColor: theme.colors.divider,
     marginTop: 14,
     overflow: 'hidden',
   },
-  fill: { height: '100%', borderRadius: 3, backgroundColor: theme.colors.ink },
+  fill: { height: '100%', borderRadius: 3 },
   caption: { flexDirection: 'row', justifyContent: 'space-between', gap: 8, marginTop: 6 },
   captionText: {
     fontFamily: theme.font.mono,
@@ -228,8 +217,8 @@ const styles = StyleSheet.create({
     gap: 10,
     marginTop: 12,
     paddingTop: 12,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: theme.colors.inkHairline,
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.divider,
   },
   footerText: { flex: 1, minWidth: 0 },
   months: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },

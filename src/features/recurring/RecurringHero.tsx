@@ -1,15 +1,12 @@
 import { View, StyleSheet } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
 import { EYEBROW } from '@/constants/textStyles';
-import { shade } from '@/lib/color';
+import { StripCard, KickerDot } from '@/components/StripCard';
 import { formatMoney } from '@/lib/money';
 import { weekdayDayMonth } from '@/lib/dateLabels';
 import type { SubscriptionTotals } from '@/db/subscriptions';
 import { CostShare, topShareLine } from './recurring.helpers';
-
-const HUE = theme.colors.idTeal;
 
 /**
  * The top of Recurring: what running expense rules cost a month and a year (₹299/month reads smaller than
@@ -34,20 +31,16 @@ export function RecurringHero({
     .filter(Boolean)
     .join(' · ');
   return (
-    // Keyed and given a solid ground like the Loans hero, so it can't lose its children.
-    <View key={running ? 'totals' : 'intro'} style={[styles.card, { backgroundColor: shade(HUE, 93) }]}>
-      <LinearGradient
-        colors={[shade(HUE, 93), shade(HUE, 85)]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={StyleSheet.absoluteFill}
-      />
-      <View style={styles.circle} />
+    // Keyed like the Loans hero, so it can't lose its children.
+    <StripCard key={running ? 'totals' : 'intro'} tone={theme.colors.slice.free} style={styles.card}>
       {running ? (
         <>
           <View style={styles.head}>
             <View style={styles.headText}>
-              <Text style={styles.kicker}>Subscriptions & bills</Text>
+              <View style={styles.kickerRow}>
+                <KickerDot color={theme.colors.link} />
+                <Text style={styles.kicker}>Subscriptions & bills</Text>
+              </View>
               <Text style={styles.amount} numberOfLines={1}>
                 {formatMoney(totals.monthlyMinor)}
                 <Text style={styles.per}> / month</Text>
@@ -71,34 +64,28 @@ export function RecurringHero({
         </>
       ) : (
         <>
-          <Text style={styles.kicker}>Subscriptions & bills</Text>
+          <View style={styles.kickerRow}>
+            <KickerDot color={theme.colors.link} />
+            <Text style={styles.kicker}>Subscriptions & bills</Text>
+          </View>
           <Text style={styles.intro}>
             Set up rent, a subscription or your salary once, and Yume logs it on schedule, like any entry you
             typed yourself.
           </Text>
         </>
       )}
-    </View>
+    </StripCard>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
     marginBottom: 4,
-    paddingVertical: 14,
+    paddingTop: 18,
+    paddingBottom: 14,
     paddingHorizontal: 16,
-    borderRadius: theme.radius.xl2,
-    overflow: 'hidden',
   },
-  circle: {
-    position: 'absolute',
-    right: -34,
-    top: -46,
-    width: 130,
-    height: 130,
-    borderRadius: 65,
-    backgroundColor: 'rgba(255,255,255,0.35)',
-  },
+  kickerRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   head: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
   headText: { flex: 1, minWidth: 0 },
   kicker: { ...EYEBROW, color: theme.colors.textSecondary },

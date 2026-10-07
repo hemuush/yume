@@ -5,20 +5,23 @@ import { withPressed } from '@/lib/pressed';
 import { lastActivityShort } from './people.helpers';
 import { styles } from './people.styles';
 
-/** A person with nothing owed either way: a plain row under "Settled", not a card. */
+/** A person with nothing owed either way: a plain row in the "Settled" card, not a tile of their own. */
 export function PersonQuietRow({
   person,
   color,
+  divider = false,
   onPress,
 }: {
   person: PersonWithBalance;
   color: string;
+  /** Every row after the first has a line above it. */
+  divider?: boolean;
   onPress: () => void;
 }) {
   return (
     <Pressable
       onPress={onPress}
-      style={withPressed(styles.quietRow)}
+      style={withPressed([styles.quietRow, divider && styles.quietDivider])}
       accessibilityRole="button"
       accessibilityLabel={`${person.name}, settled`}
     >

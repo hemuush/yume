@@ -9,7 +9,7 @@ import { Loan } from '@/types';
 import { MovingRow } from '@/components/MovingRow';
 import { EmptyState } from '@/components/EmptyState';
 import { AddButton } from '@/components/AddButton';
-import { AppHeader } from '@/components/AppHeader';
+import { SkyHeader } from '@/features/home/SkyHeader';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { Skeleton } from '@/components/Skeleton';
 import { theme } from '@/constants/theme';
@@ -91,10 +91,12 @@ export default function LoansScreen() {
 
   return (
     <View style={styles.container}>
-      <AppHeader
+      <SkyHeader
         title="Loans"
         showBack
-        right={<AddButton onPress={() => setModalVisible(true)} label="+ Loan" />}
+        hideUser
+        compact
+        actions={<AddButton onPress={() => setModalVisible(true)} label="+ Loan" />}
       />
 
       {loadError && (

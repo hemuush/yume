@@ -3,7 +3,10 @@ import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
 import { formatMoney } from '@/lib/money';
 
-/** The one line that nets what you're owed against what you owe; the group headings below carry the two totals. */
+/**
+ * The one line that nets what you're owed against what you owe, as a white pill in the sky header; the group
+ * headings below carry the two totals.
+ */
 export function PeopleNet({ netMinor }: { netMinor: number }) {
   return (
     <View style={styles.net}>
@@ -29,8 +32,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'baseline',
-    marginHorizontal: 24,
-    marginBottom: 2,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 16,
+    backgroundColor: `${theme.colors.surface}D9`,
   },
   netLabel: { fontFamily: theme.font.body, fontSize: 12.5, color: theme.colors.textSecondary },
   netValue: { fontFamily: theme.font.monoBold, fontSize: 13, color: theme.colors.textMuted },
