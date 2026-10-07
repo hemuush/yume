@@ -7,6 +7,7 @@ import { theme } from '@/constants/theme';
 import { usePressScale } from '@/lib/usePressScale';
 import { haptics } from '@/lib/haptics';
 import { DURATIONS } from '@/lib/motionTimings';
+import { useAccent } from '@/theme/AccentContext';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -88,6 +89,7 @@ function ToastView({
 }) {
   const insets = useSafeAreaInsets();
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.94);
+  const { accent } = useAccent();
 
   // A toast is silent to TalkBack otherwise (it never takes focus); MilestoneNote announces the same way.
   // Each toast mounts its own ToastView (keyed), so this speaks once per toast.
@@ -123,7 +125,7 @@ function ToastView({
           accessibilityRole="button"
           accessibilityLabel="Undo"
         >
-          <Text style={styles.undo}>Undo</Text>
+          <Text style={[styles.undo, { color: accent }]}>Undo</Text>
         </AnimatedPressable>
       </View>
     </ReanimatedAnimated.View>
@@ -154,5 +156,5 @@ const styles = StyleSheet.create({
     elevation: 10,
   },
   message: { flex: 1, fontFamily: theme.font.bodyMedium, fontSize: 13.5, color: theme.colors.surface },
-  undo: { fontFamily: theme.font.bodyBold, fontSize: 13.5, color: theme.colors.primary },
+  undo: { fontFamily: theme.font.bodyBold, fontSize: 13.5 },
 });

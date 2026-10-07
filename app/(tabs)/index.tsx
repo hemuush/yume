@@ -77,7 +77,7 @@ const RECENT_ROWS = 4;
 export default function DashboardScreen() {
   const insets = useSafeAreaInsets();
   const { hideAmounts } = usePrivacy();
-  const { accent } = useAccent();
+  const { accent, secondary } = useAccent();
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [recent, setRecent] = useState<Transaction[]>([]);
@@ -408,6 +408,7 @@ export default function DashboardScreen() {
     cardBills,
     rules: recurringRules,
     accent,
+    secondary,
     accountName,
     categoryName: (id) => {
       const cat = categoryFor(id);

@@ -18,7 +18,7 @@ import { SettingsRow } from '@/components/SettingsRow';
 import { theme, modalFooterStyles as f } from '@/constants/theme';
 import { screenStyles as h } from '@/components/screenStyles';
 import { useAccent } from '@/theme/AccentContext';
-import { hexToRgba } from '@/lib/color';
+import { hexToRgba, shade } from '@/lib/color';
 import { weekdayDayMonth } from '@/lib/dateLabels';
 import { DateTile } from '@/components/DateTile';
 import { FormInput } from '@/components/FormInput';
@@ -88,7 +88,7 @@ export function RuleModal({
   };
 }) {
   const { show: showUndo } = useUndoToast();
-  const { accent } = useAccent();
+  const { accent, secondary } = useAccent();
   const [type, setType] = useState<TransactionType>('expense');
   const [accountId, setAccountId] = useState<string | null>(null);
   const [toAccountId, setToAccountId] = useState<string | null>(null);
@@ -268,7 +268,7 @@ export function RuleModal({
       }
     >
       <SheetCard
-        hue={type === 'transfer' ? theme.colors.secondary : (cat?.color ?? accent)}
+        hue={type === 'transfer' ? secondary : (cat?.color ?? accent)}
         icon={type === 'transfer' ? 'swap-horizontal' : (cat?.icon ?? 'repeat')}
         kicker={cadenceLabel(frequency, interval)}
         amount={formatMoney(inputMinor(amount))}
@@ -304,7 +304,7 @@ export function RuleModal({
             <SettingsRow
               round
               icon="bank"
-              iconBg={theme.colors.primaryTint}
+              iconBg={shade(accent, 95)}
               label={type === 'transfer' ? 'From' : 'Account'}
               value={accountName(effectiveAccountId)}
               onPress={() => toggle('account')}
@@ -330,7 +330,7 @@ export function RuleModal({
                 <SettingsRow
                   round
                   icon="swap-horizontal"
-                  iconBg={theme.colors.secondaryTint}
+                  iconBg={shade(secondary, 94)}
                   label="To"
                   value={accountName(toAccountId) ?? 'Pick one'}
                   onPress={() => toggle('to')}
@@ -408,7 +408,7 @@ export function RuleModal({
           <Text style={[styles.fieldLabel, styles.upcomingLabel]}>Coming up</Text>
           <View style={styles.upcoming}>
             {upcoming.map((d, i) => (
-              <DateTile key={d} iso={d} background={i === 0 ? theme.colors.primaryTint : undefined} />
+              <DateTile key={d} iso={d} background={i === 0 ? shade(accent, 95) : undefined} />
             ))}
           </View>
         </>

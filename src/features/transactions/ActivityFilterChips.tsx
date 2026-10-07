@@ -6,6 +6,8 @@ import { TransactionType } from '@/types';
 import { EmptyState } from '@/components/EmptyState';
 import { styles } from './transactions.styles';
 import { withPressed } from '@/lib/pressed';
+import { shade } from '@/lib/color';
+import { useAccent } from '@/theme/AccentContext';
 
 // The one-tap type choices above the list — the same `filterType` the filter
 // sheet sets, just without opening it.
@@ -42,6 +44,8 @@ export function ActivityFilterChips({
   onClearAll: () => void;
 }) {
   const picked = categoryIds.length + accountIds.length;
+  const { accent } = useAccent();
+  const chipBg = shade(accent, 95);
   return (
     <>
       <View style={styles.typeBar} accessibilityRole="radiogroup">
@@ -72,7 +76,7 @@ export function ActivityFilterChips({
             <Pressable
               key={id}
               onPress={() => onRemoveCategory(id)}
-              style={withPressed([styles.chip, styles.chipCat])}
+              style={withPressed([styles.chip, { backgroundColor: chipBg }])}
               accessibilityRole="button"
               accessibilityLabel={`Remove the ${categoryName(id)} filter`}
             >
@@ -84,7 +88,7 @@ export function ActivityFilterChips({
             <Pressable
               key={id}
               onPress={() => onRemoveAccount(id)}
-              style={withPressed([styles.chip, styles.chipCat])}
+              style={withPressed([styles.chip, { backgroundColor: chipBg }])}
               accessibilityRole="button"
               accessibilityLabel={`Remove the ${accountName(id)} filter`}
             >

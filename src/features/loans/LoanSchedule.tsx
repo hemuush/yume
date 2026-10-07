@@ -12,8 +12,11 @@ import { styles as shared } from './loans.styles';
 import { groupScheduleByYear, currentScheduleYear } from './scheduleYears';
 import { isOverdueInstallment, nextUnpaidInstallment } from './installmentStatus';
 import { toLocalIsoDate } from '@/lib/date';
+import { shade } from '@/lib/color';
+import { useAccent } from '@/theme/AccentContext';
 
 function Marker({ status, isNext }: { status: LoanPayment['status']; isNext: boolean }) {
+  const { accent } = useAccent();
   if (status === 'paid' || status === 'prepaid') {
     return (
       <View style={[styles.marker, styles.markerPaid]}>
@@ -21,7 +24,11 @@ function Marker({ status, isNext }: { status: LoanPayment['status']; isNext: boo
       </View>
     );
   }
-  return <View style={[styles.marker, isNext ? styles.markerNext : styles.markerFuture]} />;
+  return (
+    <View
+      style={[styles.marker, isNext ? [styles.markerNext, { borderColor: accent }] : styles.markerFuture]}
+    />
+  );
 }
 
 /**
@@ -34,6 +41,7 @@ export function LoanSchedule({ schedule }: { schedule: LoanPayment[] }) {
   const todayIso = toLocalIsoDate(new Date());
   const [toggled, setToggled] = useState<Record<number, boolean>>({});
   const startYear = currentScheduleYear(years);
+  const { accent } = useAccent();
 
   return (
     <>
@@ -72,7 +80,14 @@ export function LoanSchedule({ schedule }: { schedule: LoanPayment[] }) {
                 const isNext = p.id === nextId;
                 const overdue = isOverdueInstallment(p, todayIso);
                 return (
-                  <View key={p.id} style={[shared.scheduleRow, styles.row, isNext && styles.rowNext]}>
+                  <View
+                    key={p.id}
+                    style={[
+                      shared.scheduleRow,
+                      styles.row,
+                      isNext && [styles.rowNext, { backgroundColor: shade(accent, 95) }],
+                    ]}
+                  >
                     <Marker status={p.status} isNext={isNext} />
                     <View style={{ flex: 1 }}>
                       <Text style={shared.rowLabel}>
@@ -116,13 +131,12 @@ const styles = StyleSheet.create({
   yearSub: { fontFamily: theme.font.mono, fontSize: 11, color: theme.colors.textMuted },
   row: { gap: 12 },
   rowNext: {
-    backgroundColor: theme.colors.primaryTint,
     borderRadius: theme.radius.md,
     paddingHorizontal: 10,
   },
   marker: { width: 22, height: 22, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
   markerPaid: { backgroundColor: theme.colors.incomeTint },
-  markerNext: { borderWidth: 2, borderColor: theme.colors.primary },
+  markerNext: { borderWidth: 2 },
   markerFuture: { borderWidth: 1.5, borderColor: theme.colors.borderSoft },
   overdueTag: { color: theme.colors.expenseText, backgroundColor: theme.colors.expenseTint },
   nextTag: { color: theme.colors.textPrimary, backgroundColor: theme.colors.surface },

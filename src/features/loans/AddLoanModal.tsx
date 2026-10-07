@@ -26,6 +26,7 @@ import { DURATIONS } from '@/lib/motionTimings';
 import { dayMonthYear } from '@/lib/dateLabels';
 import { spendableAccountsOf } from '@/lib/account';
 import { rateProblem, tenureProblem } from '@/lib/loanLimits';
+import { useAccent } from '@/theme/AccentContext';
 
 const RATE_TYPES: { label: string; value: LoanRateType }[] = [
   { label: 'Fixed', value: 'fixed' },
@@ -63,6 +64,7 @@ export function AddLoanModal({
   onClose: () => void;
   onCreated: () => void;
 }) {
+  const { accent } = useAccent();
   // Recomputed whenever the modal opens, not frozen at mount: the parent tab stays alive all session, so a
   // `useMemo(..., [])` would default new-loan dates to yesterday for anyone adding a loan after midnight.
   const [today, setToday] = useState(() => new Date());
@@ -399,7 +401,7 @@ export function AddLoanModal({
         <View style={styles.progressSeg} />
         <View style={styles.progressSeg}>
           <Animated.View
-            style={[styles.progressSegDone, styles.progressSegOverlay, { opacity: step2Fill }]}
+            style={[styles.progressSegOverlay, { backgroundColor: accent, opacity: step2Fill }]}
           />
         </View>
       </View>

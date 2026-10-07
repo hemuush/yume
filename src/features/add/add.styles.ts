@@ -86,7 +86,7 @@ export const styles = StyleSheet.create({
     borderColor: 'transparent',
     maxWidth: '100%',
   },
-  recentChipActive: { backgroundColor: theme.colors.surface, borderColor: theme.colors.secondary },
+  recentChipActive: { backgroundColor: theme.colors.surface },
   recentChipText: {
     fontFamily: theme.font.bodyMedium,
     fontSize: 11.5,
@@ -158,7 +158,6 @@ export const styles = StyleSheet.create({
     borderColor: theme.colors.borderSoft,
     backgroundColor: theme.colors.surface,
   },
-  chipActive: { borderColor: theme.colors.secondary, backgroundColor: theme.colors.secondaryTint },
   chipText: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textPrimary },
 
   addToList: {
@@ -283,7 +282,6 @@ export const styles = StyleSheet.create({
     height: 36,
     paddingHorizontal: 12,
     borderRadius: 12,
-    backgroundColor: theme.colors.primaryTint,
   },
   detailChipText: {
     fontFamily: theme.font.bodyMedium,

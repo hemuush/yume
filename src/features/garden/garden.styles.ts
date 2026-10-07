@@ -38,9 +38,7 @@ export const styles = StyleSheet.create({
     gap: 6,
     marginHorizontal: 20,
     marginTop: 14,
-    backgroundColor: theme.colors.secondaryTint,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.secondary,
     borderRadius: theme.radius.pill,
     paddingVertical: 6,
     paddingHorizontal: 12,
@@ -61,7 +59,7 @@ export const styles = StyleSheet.create({
     alignItems: 'flex-end',
   },
   pot: { width: 52, alignItems: 'center', gap: 8 },
-  potToday: { backgroundColor: theme.colors.primaryTint, borderRadius: 16, paddingVertical: 6 },
+  potToday: { borderRadius: 16, paddingVertical: 6 },
   plantSlot: { height: 58, justifyContent: 'flex-end', alignItems: 'center' },
   soil: { width: 36, height: 11, backgroundColor: theme.colors.inkWash, borderRadius: 6 },
   dayLabel: {

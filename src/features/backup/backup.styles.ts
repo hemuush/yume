@@ -52,7 +52,6 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 7,
     paddingVertical: 1,
     borderRadius: theme.radius.pill,
-    backgroundColor: theme.colors.primaryTint,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
   },

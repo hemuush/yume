@@ -15,6 +15,7 @@ import { formatMoney } from '@/lib/money';
 import { dayMonth, longWeekday } from '@/lib/dateLabels';
 import { withoutRelock } from '@/lib/appLock';
 import { errorMessage } from '@/lib/errorMessage';
+import { useAccent } from '@/theme/AccentContext';
 import { Wrap, WrapBeat, USUAL_BAND_PCT } from './wrapData';
 import { StripCard, KickerDot } from '@/components/StripCard';
 import { YumeLogo } from '@/components/YumeLogo';
@@ -492,6 +493,7 @@ function WeekBar({
 }
 
 export function WeekDaysBeat({ beat, still }: { beat: BeatOf<'weekDays'>; still: boolean }) {
+  const { accent } = useAccent();
   const max = Math.max(1, beat.heaviest.totalMinor);
   return (
     <View style={styles.beat}>
@@ -512,11 +514,7 @@ export function WeekDaysBeat({ beat, still }: { beat: BeatOf<'weekDays'>; still:
                       <WeekBar
                         pct={d.totalMinor > 0 ? Math.max(4, (d.totalMinor / max) * 100) : 3}
                         color={
-                          heaviest
-                            ? theme.colors.ink
-                            : d.totalMinor > 0
-                              ? theme.colors.primary
-                              : theme.colors.inkHairline
+                          heaviest ? theme.colors.ink : d.totalMinor > 0 ? accent : theme.colors.inkHairline
                         }
                         index={i}
                         still={still}

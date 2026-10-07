@@ -9,6 +9,8 @@ import { JustAddedGlow } from '@/components/JustAddedGlow';
 import { Category, Transaction } from '@/types';
 import { formatMaskableMoney, formatMoney } from '@/lib/money';
 import { usePrivacy } from '@/theme/PrivacyContext';
+import { useAccent } from '@/theme/AccentContext';
+import { shade } from '@/lib/color';
 import { haptics } from '@/lib/haptics';
 import { theme } from '@/constants/theme';
 import { buildDayLane, dropIndex, laneOrderIds, LaneLine, moveLine } from './transactions.helpers';
@@ -80,6 +82,7 @@ export function TimelineDay({
   savingsAccountIds?: ReadonlySet<string>;
 }) {
   const { hideAmounts } = usePrivacy();
+  const { accent } = useAccent();
   const categoriesById = useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories]);
   // "in Food & Dining" for a subcategory, nothing for a top-level category.
   const parentLine = (categoryId: string | null) => inParent(parentNameOf(categoryId, categoriesById));
@@ -339,7 +342,7 @@ export function TimelineDay({
             accessibilityLabel={`${money(tx.amountMinor, hidden(tx))} moved from ${accountName(tx.accountId)} to ${accountName(tx.toAccountId!)}`}
           >
             <JustAddedGlow ids={[tx.id]} surface="activity" />
-            <View style={styles.transferIcon}>
+            <View style={[styles.transferIcon, { backgroundColor: shade(accent, 95) }]}>
               <Feather name="repeat" size={13} color={theme.colors.ink} />
             </View>
             <View style={styles.mid}>
@@ -378,7 +381,6 @@ const styles = StyleSheet.create({
     width: 30,
     height: 30,
     borderRadius: 30 * 0.32,
-    backgroundColor: theme.colors.primaryTint,
     alignItems: 'center',
     justifyContent: 'center',
   },

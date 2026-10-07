@@ -13,6 +13,7 @@ import { usePrivacy } from '@/theme/PrivacyContext';
 import { accountHue, accountIcon } from '@/lib/account';
 import { formatMoney, formatMaskableMoney, inputMinor, toMinor } from '@/lib/money';
 import { toLocalIsoDate } from '@/lib/date';
+import { shade } from '@/lib/color';
 import { errorMessage } from '@/lib/errorMessage';
 import { haptics } from '@/lib/haptics';
 import { gainLabel } from '@/lib/investment';
@@ -161,7 +162,11 @@ export function UpdateValueSheet({
         <View style={styles.estimateRow}>
           <Pressable
             onPress={() => setValue(String(estimate / 100))}
-            style={({ pressed }) => [styles.estimateChip, pressed && styles.pressed]}
+            style={({ pressed }) => [
+              styles.estimateChip,
+              { backgroundColor: shade(accent, 95) },
+              pressed && styles.pressed,
+            ]}
             accessibilityRole="button"
             accessibilityLabel={`Use the estimate ${money(estimate)}`}
           >
@@ -193,7 +198,6 @@ const styles = StyleSheet.create({
   estimateRow: { gap: 8, marginTop: -4, marginBottom: 14 },
   estimateChip: {
     alignSelf: 'flex-start',
-    backgroundColor: theme.colors.primaryTint,
     borderRadius: theme.radius.pill,
     paddingHorizontal: 12,
     paddingVertical: 6,

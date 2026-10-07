@@ -30,6 +30,7 @@ import { AmountField } from '@/components/AmountField';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { YumeLogo } from '@/components/YumeLogo';
 import { useAccent, THEMES } from '@/theme/AccentContext';
+import { shade } from '@/lib/color';
 import { ThemeThumb } from './ThemePreview';
 import { theme } from '@/constants/theme';
 import { Section } from '@/components/Section';
@@ -82,7 +83,7 @@ function AboutFact({ icon, text }: { icon: string; text: string }) {
  * About. A coral note tops it only while backups need attention; otherwise rows' sub-lines carry every state.
  */
 export function SettingsSection() {
-  const { themeId } = useAccent();
+  const { themeId, accent } = useAccent();
   const { lockEnabled, setLockEnabled } = useAppLock();
   const { hideAmounts, toggleHideAmounts } = usePrivacy();
   const [currency, setCurrency] = useState('INR');
@@ -349,7 +350,7 @@ export function SettingsSection() {
           />
           <SettingsRow
             icon="bell-outline"
-            iconBg={theme.colors.primaryTint}
+            iconBg={shade(accent, 95)}
             label="Notifications"
             sub={
               alertsOn == null

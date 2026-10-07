@@ -146,7 +146,6 @@ export const styles = StyleSheet.create({
     gap: 10,
     padding: 14,
     borderRadius: 18,
-    backgroundColor: theme.colors.primaryTint,
   },
   whatIfIcon: {
     width: 28,

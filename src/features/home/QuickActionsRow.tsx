@@ -4,6 +4,8 @@ import Feather from '@expo/vector-icons/Feather';
 import { router } from 'expo-router';
 import { theme } from '@/constants/theme';
 import { usePressScale } from '@/lib/usePressScale';
+import { shade } from '@/lib/color';
+import { useAccent } from '@/theme/AccentContext';
 
 const ACTIONS: {
   type: 'expense' | 'income' | 'transfer';
@@ -12,6 +14,8 @@ const ACTIONS: {
   /** The icon's colour; Income and Transfer also sit it in a tinted circle. */
   color: string;
   tint?: string;
+  /** Tints the circle with a pale wash of the picked theme instead of `tint`. */
+  themeTint?: boolean;
   primary?: boolean;
 }[] = [
   { type: 'expense', label: 'Expense', icon: 'plus', color: theme.colors.surface, primary: true },
@@ -27,7 +31,7 @@ const ACTIONS: {
     label: 'Transfer',
     icon: 'repeat',
     color: theme.colors.link,
-    tint: theme.colors.primaryTint,
+    themeTint: true,
   },
 ];
 
@@ -35,8 +39,10 @@ const ACTIONS: {
  * Shortcuts to Add with a segment preselected (nav + still opens Expense), just under the month card where a
  * thumb reaches. Expense is the one filled ink button; Income and Transfer are cards with a tinted icon.
  */
-function ActionPill({ type, label, icon, color, tint, primary }: (typeof ACTIONS)[number]) {
+function ActionPill({ type, label, icon, color, tint, themeTint, primary }: (typeof ACTIONS)[number]) {
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.96);
+  const { accent } = useAccent();
+  const dotBg = themeTint ? shade(accent, 95) : tint;
   return (
     <Pressable
       onPress={() => router.push(`/add-transaction?type=${type}`)}
@@ -47,8 +53,8 @@ function ActionPill({ type, label, icon, color, tint, primary }: (typeof ACTIONS
       accessibilityLabel={`Add ${label.toLowerCase()}`}
     >
       <Animated.View style={[styles.pill, primary && styles.pillPrimary, animatedStyle]}>
-        {tint ? (
-          <View style={[styles.iconDot, { backgroundColor: tint }]}>
+        {dotBg ? (
+          <View style={[styles.iconDot, { backgroundColor: dotBg }]}>
             <Feather name={icon} size={13} color={color} />
           </View>
         ) : (

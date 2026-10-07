@@ -66,10 +66,13 @@ import { useDiscardGuard } from '@/features/add/useDiscardGuard';
 import { showAlert } from '@/components/AppDialog';
 import { useUndoToast } from '@/components/UndoToast';
 import { spendableAccountsOf } from '@/lib/account';
+import { shade } from '@/lib/color';
+import { useAccent } from '@/theme/AccentContext';
 
 export default function AddTransactionScreen() {
   const insets = useSafeAreaInsets();
   const { show: showUndo } = useUndoToast();
+  const { accent } = useAccent();
   // `accountId` pre-selects the account (the "from" side of a transfer) —
   // Home's account summary sheet opens Add this way.
   const params = useLocalSearchParams<{
@@ -738,7 +741,7 @@ export default function AddTransactionScreen() {
             {pickableAccounts.length === 0 && (
               // Nothing to record this against yet (previously only a "Pick an account" error on Save):
               // opens the same Add Account form Profile uses, right here.
-              <SoftCard backgroundColor={theme.colors.primaryTint} padding={14} style={styles.noAccountCard}>
+              <SoftCard backgroundColor={shade(accent, 95)} padding={14} style={styles.noAccountCard}>
                 <Text style={styles.noAccountTitle}>
                   {accounts.length === 0 ? 'Add your first account' : 'Add a spendable account'}
                 </Text>

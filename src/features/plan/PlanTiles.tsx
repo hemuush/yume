@@ -8,6 +8,8 @@ import Svg, { Circle } from 'react-native-svg';
 import { theme } from '@/constants/theme';
 import { formatMoney, formatMaskableMoney } from '@/lib/money';
 import { usePrivacy } from '@/theme/PrivacyContext';
+import { useAccent } from '@/theme/AccentContext';
+import { shade } from '@/lib/color';
 import { formatRatioPct } from '@/lib/format';
 import { dueDateLabel } from '@/lib/dueDate';
 import { projectedMonthlySpend } from '@/lib/whatIf';
@@ -132,6 +134,7 @@ export function DueTile({
   /** Scrolls Coming up to a day's group. */
   onJumpToDay: (date: string) => void;
 }) {
+  const { accent } = useAccent();
   const [selected, setSelected] = useState<string | null>(null);
   const none = dueSoon.count === 0;
   const maxMinor = Math.max(0, ...days.map((d) => d.amountMinor));
@@ -148,7 +151,7 @@ export function DueTile({
       }
     >
       <View style={styles.heroHead}>
-        <Kicker icon={kIcon('calendar')} tint={theme.colors.primaryTint}>
+        <Kicker icon={kIcon('calendar')} tint={shade(accent, 95)}>
           Next 14 days
         </Kicker>
         {!none && (
@@ -344,10 +347,11 @@ const RING = 44;
 const RING_STROKE = 5;
 
 export function BudgetTile({ summary, onOpen }: { summary: BudgetsSummary; onOpen: () => void }) {
+  const { secondary } = useAccent();
   if (summary.rows.length === 0) {
     return (
       <Tile onPress={onOpen} label="Set a monthly limit. Open budgets">
-        <Kicker icon={kIcon('pie-chart')} tint={theme.colors.secondaryTint}>
+        <Kicker icon={kIcon('pie-chart')} tint={shade(secondary, 94)}>
           Budgets
         </Kicker>
         <Text style={styles.tileTitle}>Set a limit</Text>
@@ -389,7 +393,7 @@ export function BudgetTile({ summary, onOpen }: { summary: BudgetsSummary; onOpe
           />
         </Svg>
       </View>
-      <Kicker icon={kIcon('pie-chart')} tint={theme.colors.secondaryTint}>
+      <Kicker icon={kIcon('pie-chart')} tint={shade(secondary, 94)}>
         Budgets
       </Kicker>
       <Text style={[styles.value, over && styles.overValue]} numberOfLines={1}>
@@ -579,6 +583,7 @@ export function SavingTile({
 }) {
   const [cut, setCut] = useState<number>(10);
   const { hideAmounts } = usePrivacy();
+  const { accent } = useAccent();
   const active = goals.filter((g) => !g.archived);
   return (
     <View style={[styles.tile, styles.tileWide, styles.savingTile]}>
@@ -617,7 +622,7 @@ export function SavingTile({
       )}
       <Pressable
         onPress={onOpenWhatIf}
-        style={withPressed(styles.whatIf)}
+        style={withPressed([styles.whatIf, { backgroundColor: shade(accent, 95) }])}
         accessibilityRole="button"
         accessibilityLabel="Open the what-if sandbox"
       >

@@ -4,7 +4,7 @@ import Feather from '@expo/vector-icons/Feather';
 import { router } from 'expo-router';
 import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
-import { hexToRgba } from '@/lib/color';
+import { hexToRgba, shade } from '@/lib/color';
 import { dueDateLabel, isDueUrgent } from '@/lib/dueDate';
 import { formatMoney } from '@/lib/money';
 import { addDaysToIsoDate, daysUntilIsoDate, parseLocalIsoDate, toLocalIsoDate } from '@/lib/date';
@@ -67,6 +67,8 @@ export function buildUpcomingItems(input: {
   cardBills: PlanCardBillInput[];
   rules: RecurringRule[];
   accent: string;
+  /** The picked theme's secondary: a transfer or uncoloured rule's tile takes a pale wash of it. */
+  secondary?: string;
   accountName: (id: string | null | undefined) => string | undefined;
   categoryName: (id: string | null) => string | undefined;
   /** A bill's date tile takes a wash of its category's own colour. */
@@ -115,7 +117,11 @@ export function buildUpcomingItems(input: {
       icon: isTransfer ? 'repeat' : rule.type === 'income' ? 'arrow-down-right' : 'arrow-up-right',
       iconBg: (() => {
         const c = isTransfer ? undefined : input.categoryColor?.(rule.categoryId);
-        return c ? hexToRgba(c, 0.28) : theme.colors.secondaryTint;
+        return c
+          ? hexToRgba(c, 0.28)
+          : input.secondary
+            ? shade(input.secondary, 94)
+            : theme.colors.secondaryTint;
       })(),
       title: isTransfer
         ? `${input.accountName(rule.accountId) ?? '—'} → ${input.accountName(rule.toAccountId) ?? '—'}`

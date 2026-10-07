@@ -41,6 +41,8 @@ import {
 import { savingsAccountIdsOf } from '@/lib/account';
 import { privateComparison } from '@/lib/privateSummary';
 import { usePrivacy } from '@/theme/PrivacyContext';
+import { useAccent } from '@/theme/AccentContext';
+import { shade } from '@/lib/color';
 import { haptics } from '@/lib/haptics';
 import { errorMessage } from '@/lib/errorMessage';
 import { DURATIONS } from '@/lib/motionTimings';
@@ -62,6 +64,8 @@ const SEARCH_RESULT_LIMIT = 50;
 export default function TransactionsScreen() {
   const insets = useSafeAreaInsets();
   const { hideAmounts } = usePrivacy();
+  const { accent } = useAccent();
+  const navTint = shade(accent, 95);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -647,7 +651,7 @@ export default function TransactionsScreen() {
                 onPressIn={stepBackPress.onPressIn}
                 onPressOut={stepBackPress.onPressOut}
                 hitSlop={6}
-                style={[styles.periodNav, stepBackPress.animatedStyle]}
+                style={[styles.periodNav, { backgroundColor: navTint }, stepBackPress.animatedStyle]}
                 accessibilityRole="button"
                 accessibilityLabel={viewScope === 'month' ? 'Previous month' : 'Previous week'}
               >
@@ -675,7 +679,12 @@ export default function TransactionsScreen() {
                 onPressOut={stepForwardPress.onPressOut}
                 hitSlop={6}
                 disabled={atCurrent}
-                style={[styles.periodNav, atCurrent && styles.periodNavOff, stepForwardPress.animatedStyle]}
+                style={[
+                  styles.periodNav,
+                  { backgroundColor: navTint },
+                  atCurrent && styles.periodNavOff,
+                  stepForwardPress.animatedStyle,
+                ]}
                 accessibilityRole="button"
                 accessibilityLabel={viewScope === 'month' ? 'Next month' : 'Next week'}
                 accessibilityState={{ disabled: atCurrent }}

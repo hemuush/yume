@@ -65,6 +65,7 @@ import { showAlert } from '@/components/AppDialog';
 import { styles } from '@/features/backup/backup.styles';
 import { TimelineNode } from '@/features/backup/TimelineNode';
 import { backupStatus, formatBytes, formatWhen } from '@/features/backup/backupStatus';
+import { useAccent } from '@/theme/AccentContext';
 
 const FREQUENCIES: { label: string; value: BackupFrequency }[] = [
   { label: 'Daily', value: 'daily' },
@@ -107,6 +108,7 @@ async function shareTempFile(
 
 export default function BackupScreen() {
   const insets = useSafeAreaInsets();
+  const { accent } = useAccent();
   // The header sits over the page and shrinks as it scrolls.
   const { collapse, headerHeight, scrollHandler, scrollRef } = useCollapsingHeader();
   const [localFolderUri, setLocalFolderUri] = useState<string | null>(null);
@@ -507,7 +509,7 @@ Restore anyway? Your current data would be replaced with no way back.`,
                           {file.exportedAt ? formatWhen(file.exportedAt) : 'Backup file'}
                         </Text>
                         {i === 0 && (
-                          <View style={styles.latestChip}>
+                          <View style={[styles.latestChip, { backgroundColor: shade(accent, 95) }]}>
                             <Text style={styles.latestText}>Latest</Text>
                           </View>
                         )}
@@ -545,7 +547,7 @@ Restore anyway? Your current data would be replaced with no way back.`,
             <View style={[h.card, styles.restoreFile]}>
               <SettingsRow
                 icon="file-restore-outline"
-                iconBg={theme.colors.primaryTint}
+                iconBg={shade(accent, 95)}
                 label="Restore from file"
                 sub={busy === 'restore-file' ? 'Restoring…' : 'A backup JSON saved on this device'}
                 onPress={busy ? undefined : restoreFromFile}
