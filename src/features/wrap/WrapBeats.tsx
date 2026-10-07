@@ -17,6 +17,7 @@ import { withoutRelock } from '@/lib/appLock';
 import { errorMessage } from '@/lib/errorMessage';
 import { Wrap, WrapBeat, USUAL_BAND_PCT } from './wrapData';
 import { StripCard, KickerDot } from '@/components/StripCard';
+import { YumeLogo } from '@/components/YumeLogo';
 import { styles, kickerTone } from './wrap.styles';
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
@@ -660,7 +661,7 @@ export function FinalBeat({
               <View style={styles.cardBody}>
                 <View style={styles.cardHead}>
                   <View style={styles.cardBrand}>
-                    <View style={styles.cardBrandMark} />
+                    <YumeLogo size={16} />
                     <Text style={styles.cardBrandText}>Yume</Text>
                   </View>
                   <Text style={styles.cardKicker}>{wrap.label}</Text>

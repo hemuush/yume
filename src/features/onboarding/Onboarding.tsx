@@ -20,6 +20,12 @@ import { SuuIllustration } from '@/components/SuuIllustration';
 import { AmountField, AmountPadDock } from '@/components/AmountField';
 import { theme } from '@/constants/theme';
 import { useAccent } from '@/theme/AccentContext';
+import { LinearGradient } from 'expo-linear-gradient';
+import { shade } from '@/lib/color';
+import { EYEBROW } from '@/constants/textStyles';
+import { YumeLogo } from '@/components/YumeLogo';
+import { KickerDot } from '@/components/StripCard';
+import { HeaderHills } from '@/features/home/HeaderHills';
 import { withPressed } from '@/lib/pressed';
 import { showAlert } from '@/components/AppDialog';
 
@@ -86,7 +92,7 @@ const SLIDES: Slide[] = [
  * launch URL ("/"), so `initialRouteName="onboarding"` on the Stack was ignored.
  */
 export function Onboarding({ onDone }: { onDone: () => void }) {
-  const { accent } = useAccent();
+  const { accent, secondary } = useAccent();
   const insets = useSafeAreaInsets();
   const [index, setIndex] = useState(0);
   const [name, setName] = useState('');
@@ -104,6 +110,9 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
   } | null>(null);
   const [restoring, setRestoring] = useState(false);
   const isLast = index === SLIDES.length - 1;
+  // The same sky as every screen's header, in the theme's colour.
+  const gradientTop = shade(accent, 90, 4);
+  const gradientBottom = shade(accent, 96, 2);
   const slide = SLIDES[index];
 
   /** Creates the picked starter accounts. False if any failed (the user stays on this step to retry or skip). */
@@ -221,23 +230,39 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
       <AmountPadDock>
         {(scrollProps) => (
           <KeyboardAvoidingView
-            style={[styles.container, { paddingTop: insets.top + 16, paddingBottom: insets.bottom }]}
+            style={[styles.container, { paddingBottom: insets.bottom }]}
             behavior="padding"
           >
-            <Pressable
-              style={withPressed([styles.skip, { top: insets.top + 12 }])}
-              onPress={finish}
-              hitSlop={10}
-              accessibilityRole="button"
-              accessibilityLabel="Skip"
-            >
-              <Text style={styles.skipText}>Skip</Text>
-            </Pressable>
-
-            <View style={[styles.illustWrap, slide.isAccountsStep && styles.illustWrapSmall]}>
-              <SuuIllustration size={slide.isAccountsStep ? 84 : 140} pose={slide.pose} />
+            {/* The sky: the Yume mark and Skip on top, Suu in the middle, Home's hills along the bottom. */}
+            <View style={[styles.sky, { paddingTop: insets.top + 12 }]}>
+              <LinearGradient colors={[gradientTop, gradientBottom]} style={StyleSheet.absoluteFill} />
+              <View style={styles.skyBar}>
+                <View style={styles.brand}>
+                  <YumeLogo size={18} />
+                  <Text style={styles.brandText}>Yume</Text>
+                </View>
+                <Pressable
+                  style={withPressed(styles.skip)}
+                  onPress={finish}
+                  hitSlop={10}
+                  accessibilityRole="button"
+                  accessibilityLabel="Skip"
+                >
+                  <Text style={styles.skipText}>Skip</Text>
+                </Pressable>
+              </View>
+              <View style={[styles.illustWrap, slide.isAccountsStep && styles.illustWrapSmall]}>
+                <SuuIllustration size={slide.isAccountsStep ? 84 : 140} pose={slide.pose} />
+              </View>
+              <HeaderHills sky="transparent" primary={accent} secondary={secondary} />
             </View>
 
+            <View style={styles.kickerRow}>
+              <KickerDot color={index === 0 ? theme.colors.link : theme.colors.secondaryDeep} />
+              <Text style={styles.kicker}>
+                {index === 0 ? 'Welcome' : `Step ${index + 1} of ${SLIDES.length}`}
+              </Text>
+            </View>
             <Text style={[styles.title, slide.isAccountsStep && styles.titleCompact]}>{slide.title}</Text>
             <Text style={styles.subtitle}>{slide.subtitle}</Text>
 
@@ -268,7 +293,8 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
                 {STARTER_ACCOUNTS.map((starter) => {
                   const on = !!picked[starter.key];
                   return (
-                    <View key={starter.key} style={[styles.accountCard, on && styles.accountCardOn]}>
+                    <View key={starter.key} style={styles.accountCard}>
+                      {on && <View style={[styles.accountStrip, { backgroundColor: starter.color }]} />}
                       <Pressable
                         onPress={() => setPicked((prev) => ({ ...prev, [starter.key]: !prev[starter.key] }))}
                         style={withPressed(styles.accountHead)}
@@ -304,7 +330,10 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
               {SLIDES.map((_, i) => (
                 <View
                   key={i}
-                  style={[styles.dot, i === index && { width: 20, backgroundColor: accent, opacity: 1 }]}
+                  style={[
+                    styles.dot,
+                    i === index && { width: 20, backgroundColor: theme.colors.ink, opacity: 1 },
+                  ]}
                 />
               ))}
             </View>
@@ -316,9 +345,7 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
               accessibilityRole="button"
               testID="onboarding-cta"
             >
-              <Text style={[styles.ctaText, { color: accent }]}>
-                {creating ? 'Setting up…' : isLast ? 'Get started' : 'Next'}
-              </Text>
+              <Text style={styles.ctaText}>{creating ? 'Setting up…' : isLast ? 'Get started' : 'Next'}</Text>
             </Pressable>
 
             {index === 0 && (
@@ -329,7 +356,7 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
                 accessibilityRole="button"
                 accessibilityLabel="I have a Yume backup"
               >
-                <Feather name="download" size={14} color={theme.colors.textSecondary} />
+                <Feather name="download" size={14} color={theme.colors.link} />
                 <Text style={styles.restoreLinkText}>I have a Yume backup</Text>
               </Pressable>
             )}
@@ -350,32 +377,49 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: theme.colors.background },
   container: { flex: 1, backgroundColor: theme.colors.background, paddingHorizontal: 28 },
-  skip: { position: 'absolute', right: 24, zIndex: 2 },
-  skipText: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textMuted },
+  // Full width: undoes the page's side padding.
+  sky: { marginHorizontal: -28, overflow: 'hidden' },
+  skyBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 24,
+  },
+  brand: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  brandText: { fontFamily: theme.font.roundedBold, fontSize: 13, color: theme.colors.textSecondary },
+  skip: {
+    backgroundColor: theme.colors.glass,
+    borderRadius: theme.radius.pill,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  skipText: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textSecondary },
   illustWrap: {
     alignSelf: 'center',
-    marginTop: 70,
+    marginTop: 28,
+    marginBottom: 6,
     width: 200,
-    height: 200,
-    borderRadius: theme.radius.xl2,
-    backgroundColor: theme.colors.primaryTint,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
+    height: 170,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  illustWrapSmall: { marginTop: 36, width: 120, height: 120 },
-  titleCompact: { marginTop: 20 },
+  illustWrapSmall: { marginTop: 8, marginBottom: 0, width: 120, height: 96 },
+  kickerRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 14 },
+  kicker: { ...EYEBROW, color: theme.colors.textSecondary },
+  titleCompact: { marginTop: 6 },
   accountsScroll: { flexGrow: 0, flexShrink: 1, marginTop: 18, alignSelf: 'stretch' },
   accountsList: { gap: 10, paddingBottom: 4 },
+  // A white card; picked, it gets a strip in the account's colour along its top.
   accountCard: {
     backgroundColor: theme.colors.surface,
     borderRadius: theme.radius.xl2,
-    borderWidth: 1.5,
+    borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
     padding: 10,
+    paddingTop: 12,
+    overflow: 'hidden',
   },
-  accountCardOn: { borderColor: theme.colors.secondary },
+  accountStrip: { position: 'absolute', top: 0, left: 0, right: 0, height: 4 },
   accountHead: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   accountName: { flex: 1, fontFamily: theme.font.bodyBold, fontSize: 14, color: theme.colors.textPrimary },
   check: {
@@ -409,15 +453,13 @@ const styles = StyleSheet.create({
     fontFamily: theme.font.roundedBold,
     fontSize: 22,
     color: theme.colors.textPrimary,
-    textAlign: 'center',
-    marginTop: 32,
+    marginTop: 8,
   },
   subtitle: {
     fontFamily: theme.font.body,
     fontSize: 13,
     color: theme.colors.textSecondary,
-    textAlign: 'center',
-    marginTop: 10,
+    marginTop: 8,
     lineHeight: 19,
   },
   nameInput: {
@@ -435,7 +477,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   nameInputFocused: { backgroundColor: theme.colors.surface, borderColor: theme.colors.secondary },
-  dots: { flexDirection: 'row', justifyContent: 'center', gap: 6, marginTop: 28 },
+  dots: { flexDirection: 'row', gap: 6, marginTop: 24 },
   // A plain muted fill, not an outlined dot: a hairline border was barely visible on the cream page.
   dot: {
     width: 7,
@@ -462,6 +504,6 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     marginBottom: 8,
   },
-  restoreLinkText: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textSecondary },
-  ctaText: { fontFamily: theme.font.bodyBold, fontSize: 15 },
+  restoreLinkText: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.link },
+  ctaText: { fontFamily: theme.font.bodyBold, fontSize: 15, color: theme.colors.surface },
 });

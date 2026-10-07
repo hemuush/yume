@@ -2,6 +2,7 @@ import { View, Pressable, StyleSheet } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import { Text } from '@/components/Text';
 import { PrimaryButton } from '@/components/PrimaryButton';
+import { StripCard, KickerDot } from '@/components/StripCard';
 import { theme } from '@/constants/theme';
 import { EYEBROW } from '@/constants/textStyles';
 import { withPressed } from '@/lib/pressed';
@@ -51,33 +52,38 @@ export function InvestmentPanel({
 
   return (
     <>
-      <View style={styles.trio}>
-        <Stat label="Invested" value={money(inv.investedMinor)} />
-        <Stat
-          label="Gain"
-          value={
-            gain == null
-              ? '—'
-              : masked
-                ? money(0)
-                : `${gain < 0 ? '−' : gain > 0 ? '+' : ''}${money(Math.abs(gain))}`
-          }
-          color={masked ? undefined : gainColor}
-          divider
-        />
-        <Stat
-          label="Return"
-          value={pct == null ? '—' : masked ? '••%' : formatReturnPct(pct)}
-          color={masked ? undefined : gainColor}
-          divider
-        />
-      </View>
+      <StripCard tone={theme.colors.slice.saved} lifted={false} style={styles.trioCard}>
+        <View style={styles.trio}>
+          <Stat label="Invested" value={money(inv.investedMinor)} />
+          <Stat
+            label="Gain"
+            value={
+              gain == null
+                ? '—'
+                : masked
+                  ? money(0)
+                  : `${gain < 0 ? '−' : gain > 0 ? '+' : ''}${money(Math.abs(gain))}`
+            }
+            color={masked ? undefined : gainColor}
+            divider
+          />
+          <Stat
+            label="Return"
+            value={pct == null ? '—' : masked ? '••%' : formatReturnPct(pct)}
+            color={masked ? undefined : gainColor}
+            divider
+          />
+        </View>
+      </StripCard>
 
       <View style={styles.pillRow}>
         <StalePill account={account} />
       </View>
 
-      <Text style={styles.label}>Updates</Text>
+      <View style={styles.labelRow}>
+        <KickerDot color={theme.colors.link} />
+        <Text style={styles.label}>Updates</Text>
+      </View>
       {valuations === null ? null : valuations.length === 0 ? (
         <Text style={styles.empty}>
           No updates yet. Tell Yume what it is worth now and the gain appears here.
@@ -158,15 +164,11 @@ function Stat({
 }
 
 const styles = StyleSheet.create({
-  label: { ...EYEBROW, marginTop: 8 },
-  trio: {
-    flexDirection: 'row',
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.radius.xl2,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-    marginHorizontal: -4,
-  },
+  labelRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 8 },
+  label: { ...EYEBROW, marginBottom: 0 },
+  // A white card with a green strip, like the hero cards on Plan's screens.
+  trioCard: { marginHorizontal: -4 },
+  trio: { flexDirection: 'row', paddingTop: 4 },
   stat: { flex: 1, paddingVertical: 12, paddingHorizontal: 12, gap: 4 },
   statDivider: { borderLeftWidth: StyleSheet.hairlineWidth, borderLeftColor: theme.colors.borderSoft },
   statLabel: { ...EYEBROW, marginBottom: 0 },
