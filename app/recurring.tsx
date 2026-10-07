@@ -13,7 +13,7 @@ import { costShares, sortRunning } from '@/features/recurring/recurring.helpers'
 import { NeoTile } from '@/components/NeoTile';
 import { nextMonthlyDateAfter, toLocalIsoDate } from '@/lib/date';
 import { Account, Category, RecurringRule } from '@/types';
-import { AppHeader } from '@/components/AppHeader';
+import { SkyHeader } from '@/features/home/SkyHeader';
 import { useScreenLoad } from '@/lib/useScreenLoad';
 import { AddButton } from '@/components/AddButton';
 import { EmptyState } from '@/components/EmptyState';
@@ -116,10 +116,12 @@ export default function RecurringScreen() {
 
   return (
     <View style={styles.container}>
-      <AppHeader
+      <SkyHeader
         title="Recurring"
         showBack
-        right={<AddButton onPress={() => setModalVisible(true)} disabled={accounts.length === 0} />}
+        hideUser
+        compact
+        actions={<AddButton onPress={() => setModalVisible(true)} disabled={accounts.length === 0} />}
       />
 
       {loadError && (

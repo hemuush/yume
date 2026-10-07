@@ -9,12 +9,13 @@ import { getAccountMonthlyGrowth } from '@/db/ledger';
 import { goalProgress } from '@/lib/savingsGoalProgress';
 import { projectedMonthlySpend, projectGoalPace } from '@/lib/whatIf';
 import { SavingsGoal } from '@/types';
-import { AppHeader } from '@/components/AppHeader';
+import { SkyHeader } from '@/features/home/SkyHeader';
 import { EmptyState } from '@/components/EmptyState';
 import { Skeleton } from '@/components/Skeleton';
 import { Chip } from '@/components/Chip';
 import { Amount } from '@/components/Amount';
 import { PrimaryButton } from '@/components/PrimaryButton';
+import { StripCard } from '@/components/StripCard';
 import { theme } from '@/constants/theme';
 import { useScreenLoad } from '@/lib/useScreenLoad';
 import { styles } from '@/features/whatif/whatif.styles';
@@ -108,7 +109,7 @@ export default function WhatIfScreen() {
   if (!loaded && !loadError) {
     return (
       <View style={styles.container}>
-        <AppHeader title="What if…?" showBack />
+        <SkyHeader title="What if…?" showBack hideUser compact />
         <View style={styles.card}>
           <Skeleton width={120} height={12} radius={4} />
           <Skeleton width={200} height={10} radius={4} style={{ marginTop: 10 }} />
@@ -119,7 +120,11 @@ export default function WhatIfScreen() {
 
   return (
     <View style={styles.container}>
-      <AppHeader title="What if…?" showBack />
+      <SkyHeader title="What if…?" showBack hideUser compact>
+        <Text style={styles.intro}>
+          Try a change, see where it lands. Nothing here is saved until you act on it.
+        </Text>
+      </SkyHeader>
       <ScrollView contentContainerStyle={{ paddingBottom: theme.layout.screenScrollPad + insets.bottom }}>
         {loadError && (
           <View style={styles.errorBanner}>
@@ -128,10 +133,6 @@ export default function WhatIfScreen() {
           </View>
         )}
 
-        <Text style={styles.intro}>
-          Try a change, see where it lands. Nothing here is saved until you act on it.
-        </Text>
-
         {categories.length === 0 ? (
           <EmptyState
             title="Nothing to try yet"
@@ -139,7 +140,7 @@ export default function WhatIfScreen() {
           />
         ) : (
           <>
-            <View style={styles.card}>
+            <StripCard tone={theme.colors.slice.free} style={styles.card}>
               <Text style={styles.fieldLabel}>Cut spending on</Text>
               <View style={styles.chipRow}>
                 {categories.map((c) => (
@@ -174,7 +175,7 @@ export default function WhatIfScreen() {
                 <>
                   <View style={styles.resultDivider} />
                   <View style={styles.resultRow}>
-                    <Text style={styles.resultLabel}>New monthly spend:</Text>
+                    <Text style={styles.resultLabel}>New monthly spend</Text>
                     <Amount
                       minor={cut.newMonthlyMinor}
                       sensitive={selectedCategory.isSensitive}
@@ -183,18 +184,18 @@ export default function WhatIfScreen() {
                   </View>
                 </>
               )}
-            </View>
+            </StripCard>
 
             {goals.length === 0 ? (
-              <View style={styles.goalCard}>
+              <StripCard tone={theme.colors.slice.saved} lifted={false} style={styles.goalCard}>
                 <Text style={styles.extraLabel}>No open savings goals</Text>
                 <Text style={[styles.avgLabel, { marginTop: 6 }]}>
                   Set a savings goal from the Savings goals section to see how much sooner this change could
                   get you there.
                 </Text>
-              </View>
+              </StripCard>
             ) : cut ? (
-              <View style={styles.goalCard}>
+              <StripCard tone={theme.colors.slice.saved} lifted={false} style={styles.goalCard}>
                 <Text style={styles.extraLabel}>
                   Extra <Amount minor={cut.extraMinor} sensitive={selectedCategory?.isSensitive} /> / month
                   toward
@@ -244,7 +245,7 @@ export default function WhatIfScreen() {
                             styles.paceFill,
                             {
                               width: paceBarWidths(pace).next,
-                              backgroundColor: theme.colors.income,
+                              backgroundColor: theme.colors.slice.saved,
                             },
                           ]}
                         />
@@ -265,7 +266,7 @@ export default function WhatIfScreen() {
                   </View>
                 )}
                 {pace?.alreadyDone && <Text style={styles.soonerText}>Already reached — nice work.</Text>}
-              </View>
+              </StripCard>
             ) : null}
 
             <View style={styles.footer}>

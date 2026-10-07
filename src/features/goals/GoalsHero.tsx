@@ -1,11 +1,10 @@
 import { View, StyleSheet } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Text } from '@/components/Text';
 import { CountUpAmount } from '@/components/CountUpAmount';
 import { GrowFill } from '@/components/GrowFill';
 import { theme } from '@/constants/theme';
 import { EYEBROW } from '@/constants/textStyles';
-import { shade } from '@/lib/color';
+import { StripCard, KickerDot } from '@/components/StripCard';
 import { formatMoney, formatMaskableMoney } from '@/lib/money';
 import { usePrivacy } from '@/theme/PrivacyContext';
 import type { GoalsTotals } from './goalPlan';
@@ -16,19 +15,14 @@ import type { GoalsTotals } from './goalPlan';
  */
 export function GoalsHero({ totals }: { totals: GoalsTotals }) {
   const { hideAmounts } = usePrivacy();
-  const hue = theme.colors.secondary;
   return (
-    <View style={styles.card}>
-      <LinearGradient
-        colors={[shade(hue, 93), shade(hue, 85)]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={StyleSheet.absoluteFill}
-      />
-      <View style={styles.circle} />
+    <StripCard tone={theme.colors.slice.saved} style={styles.card}>
       <View style={styles.head}>
         <View style={styles.headText}>
-          <Text style={styles.kicker}>Saved toward goals</Text>
+          <View style={styles.kickerRow}>
+            <KickerDot color={theme.colors.secondaryDeep} />
+            <Text style={styles.kicker}>Saved toward goals</Text>
+          </View>
           {hideAmounts ? (
             <Text style={styles.amount}>{formatMaskableMoney(totals.savedMinor, { masked: true })}</Text>
           ) : (
@@ -62,7 +56,7 @@ export function GoalsHero({ totals }: { totals: GoalsTotals }) {
           </>
         )}
       </Text>
-    </View>
+    </StripCard>
   );
 }
 
@@ -70,20 +64,11 @@ const styles = StyleSheet.create({
   card: {
     marginHorizontal: 20,
     marginBottom: 10,
-    paddingVertical: 14,
+    paddingTop: 18,
+    paddingBottom: 14,
     paddingHorizontal: 16,
-    borderRadius: theme.radius.xl2,
-    overflow: 'hidden',
   },
-  circle: {
-    position: 'absolute',
-    right: -34,
-    top: -46,
-    width: 130,
-    height: 130,
-    borderRadius: 65,
-    backgroundColor: 'rgba(255,255,255,0.35)',
-  },
+  kickerRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   head: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
   headText: { flex: 1, minWidth: 0 },
   kicker: { ...EYEBROW, color: theme.colors.textSecondary },
@@ -99,11 +84,11 @@ const styles = StyleSheet.create({
   track: {
     height: 8,
     borderRadius: 4,
-    backgroundColor: 'rgba(255,255,255,0.6)',
+    backgroundColor: theme.colors.divider,
     marginTop: 10,
     overflow: 'hidden',
   },
-  fill: { height: '100%', borderRadius: 4, backgroundColor: theme.colors.ink },
+  fill: { height: '100%', borderRadius: 4, backgroundColor: theme.colors.slice.saved },
   sub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary, marginTop: 8 },
   subBold: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
 });

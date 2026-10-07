@@ -1,10 +1,10 @@
 import { View, StyleSheet } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Text } from '@/components/Text';
 import type { McIconName } from '@/components/iconName';
 import { CountUpAmount } from '@/components/CountUpAmount';
 import { Skeleton } from '@/components/Skeleton';
+import { StripCard, KickerDot } from '@/components/StripCard';
 import { theme } from '@/constants/theme';
 import { EYEBROW } from '@/constants/textStyles';
 import { shade } from '@/lib/color';
@@ -57,26 +57,28 @@ export function LoansHero({
   const allClear = !owes && !onlyLent;
   const hue = onlyLent ? theme.colors.secondary : allClear ? theme.colors.idSage : theme.colors.idCoral;
   const icon: McIconName = onlyLent ? 'hand-coin-outline' : allClear ? 'check' : 'bank-outline';
+  // The strip says which way the money goes: coral while you owe, mint when you're owed or all clear.
+  const strip = owes ? theme.colors.slice.spent : theme.colors.slice.saved;
+  const dot = owes ? theme.colors.idCoralDeep : theme.colors.secondaryDeep;
+  const kicker = (text: string) => (
+    <View style={styles.kickerRow}>
+      <KickerDot color={dot} />
+      <Text style={styles.kicker}>{text}</Text>
+    </View>
+  );
 
   return (
-    <View key="hero" style={[styles.card, { backgroundColor: shade(hue, 93) }]}>
-      <LinearGradient
-        colors={[shade(hue, 93), shade(hue, 85)]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={StyleSheet.absoluteFill}
-      />
-      <View style={styles.circle} />
+    <StripCard key="hero" tone={strip} style={styles.card}>
       <View style={styles.head}>
         {!owes && (
-          <View style={styles.tile}>
+          <View style={[styles.tile, { backgroundColor: shade(hue, 93) }]}>
             <MaterialCommunityIcons name={icon} size={18} color={loanGlyph(hue)} />
           </View>
         )}
         <View style={styles.headText}>
           {allClear ? (
             <>
-              <Text style={styles.kicker}>Debt-free</Text>
+              {kicker('Debt-free')}
               <Text style={styles.title}>Everything is paid off</Text>
               <Text style={styles.sub}>
                 {totals.closedCount} {totals.closedCount === 1 ? 'loan' : 'loans'} closed
@@ -84,7 +86,7 @@ export function LoansHero({
             </>
           ) : (
             <>
-              <Text style={styles.kicker}>{onlyLent ? 'Owed to you' : 'You owe'}</Text>
+              {kicker(onlyLent ? 'Owed to you' : 'You owe')}
               <CountUpAmount
                 minor={onlyLent ? totals.owedToYouMinor : totals.youOweMinor}
                 style={styles.amount}
@@ -147,7 +149,7 @@ export function LoansHero({
           </View>
         </>
       )}
-    </View>
+    </StripCard>
   );
 }
 
@@ -156,25 +158,15 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
     marginTop: theme.layout.screenTopGap,
     marginBottom: 4,
-    paddingVertical: 14,
+    paddingTop: 18,
+    paddingBottom: 14,
     paddingHorizontal: 16,
-    borderRadius: theme.radius.xl2,
-    overflow: 'hidden',
   },
   skeletonCard: {
     padding: 16,
     backgroundColor: theme.colors.surface,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
-  },
-  circle: {
-    position: 'absolute',
-    right: -34,
-    top: -46,
-    width: 130,
-    height: 130,
-    borderRadius: 65,
-    backgroundColor: 'rgba(255,255,255,0.35)',
   },
   head: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
   headText: { flex: 1, minWidth: 0 },
@@ -184,8 +176,8 @@ const styles = StyleSheet.create({
     borderRadius: 38 * 0.32,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.65)',
   },
+  kickerRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   kicker: { ...EYEBROW, color: theme.colors.textSecondary },
   amount: { fontFamily: theme.font.monoBold, fontSize: 26, color: theme.colors.textPrimary, marginTop: 2 },
   title: { fontFamily: theme.font.roundedBold, fontSize: 15, color: theme.colors.textPrimary, marginTop: 4 },
@@ -202,9 +194,10 @@ const styles = StyleSheet.create({
   sideNoteBold: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
   share: { flexDirection: 'row', gap: 3, height: 8, marginTop: 10 },
   segment: { flexBasis: 0, minWidth: 6, height: 8, borderRadius: 4 },
-  divider: { height: 1, backgroundColor: 'rgba(255,255,255,0.7)', marginVertical: 12 },
+  divider: { height: 1, backgroundColor: theme.colors.divider, marginVertical: 12 },
   stats: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 22, rowGap: 10 },
-  statsOwing: { marginTop: 10 },
+  // Set off from the figures above by a line, as on Home's month card.
+  statsOwing: { marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: theme.colors.divider },
   stat: { gap: 2 },
   statValue: { fontFamily: theme.font.monoBold, fontSize: 13, color: theme.colors.textPrimary },
   statLent: { color: theme.colors.incomeText },

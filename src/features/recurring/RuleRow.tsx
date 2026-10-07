@@ -73,14 +73,9 @@ export function RuleRow({
       </Pressable>
       <View style={styles.ruleSide}>
         <Pressable onPress={onPress} importantForAccessibility="no" accessibilityElementsHidden>
-          <Text
-            style={[
-              styles.ruleAmount,
-              rule.type === 'income' && styles.income,
-              rule.type === 'expense' && styles.expense,
-            ]}
-          >
-            {rule.type === 'expense' ? '-' : rule.type === 'income' ? '+' : ''}
+          <Text style={[styles.ruleAmount, rule.type === 'income' && styles.income]}>
+            {/* Bills read in ink with no sign, as on Plan's Coming up; only money in is green with a "+". */}
+            {rule.type === 'income' ? '+' : ''}
             {formatMaskableMoney(rule.amountMinor, { masked })}
           </Text>
         </Pressable>
