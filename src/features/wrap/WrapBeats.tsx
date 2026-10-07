@@ -16,7 +16,8 @@ import { dayMonth, longWeekday } from '@/lib/dateLabels';
 import { withoutRelock } from '@/lib/appLock';
 import { errorMessage } from '@/lib/errorMessage';
 import { Wrap, WrapBeat, USUAL_BAND_PCT } from './wrapData';
-import { styles } from './wrap.styles';
+import { StripCard, KickerDot } from '@/components/StripCard';
+import { styles, kickerTone } from './wrap.styles';
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 const EASE = Easing.out(Easing.cubic);
@@ -108,11 +109,21 @@ function Letter({ ch, index, still }: { ch: string; index: number; still: boolea
   );
 }
 
+/** A beat's small heading, after a dot in the beat's colour. */
+function Kicker({ kind, children }: { kind: WrapBeat['kind']; children: React.ReactNode }) {
+  return (
+    <View style={styles.kickerRow}>
+      <KickerDot color={kickerTone(kind)} />
+      <Text style={styles.kicker}>{children}</Text>
+    </View>
+  );
+}
+
 export function HookBeat({ beat, still }: { beat: BeatOf<'hook'>; still: boolean }) {
   return (
     <View style={styles.beat}>
       <Rise still={still}>
-        <Text style={styles.kicker}>{beat.kicker}</Text>
+        <Kicker kind="hook">{beat.kicker}</Kicker>
       </Rise>
       <View style={styles.middle}>
         <View style={styles.lettersRow} accessible accessibilityLabel={beat.title}>
@@ -161,7 +172,7 @@ function Ring({ pct, color, still }: { pct: number; color: string; still: boolea
           cy={RING / 2}
           r={r}
           fill="none"
-          stroke={theme.colors.glass}
+          stroke={theme.colors.surface}
           strokeWidth={RING_STROKE}
         />
         <AnimatedCircle
@@ -185,7 +196,7 @@ export function KeptBeat({ beat, still }: { beat: BeatOf<'kept'>; still: boolean
   const kept = beat.keptMinor > 0;
   return (
     <View style={styles.beat}>
-      <Text style={styles.kicker}>What you kept</Text>
+      <Kicker kind="kept">What you kept</Kicker>
       <View style={styles.middle}>
         {kept ? (
           <>
@@ -264,26 +275,28 @@ export function BarsBeat({ beat, still }: { beat: BeatOf<'bars'>; still: boolean
   const lead = beat.items[0];
   return (
     <View style={styles.beat}>
-      <Text style={styles.kicker}>Where it went</Text>
+      <Kicker kind="bars">Where it went</Kicker>
       <Rise still={still}>
         <Text style={[styles.display, styles.gapM]}>
           {beat.items.length === 1 ? `All of it went to ${lead.name}.` : `${lead.name} took the most.`}
         </Text>
       </Rise>
       <View style={styles.middle}>
-        <View style={styles.bars}>
-          {beat.items.map((c, i) => (
-            <Rise key={c.categoryId} delay={i * 160} still={still}>
-              <View style={styles.barHead}>
-                <Text style={styles.barName} numberOfLines={1}>
-                  {c.name}
-                </Text>
-                <Amount minor={c.totalMinor} sensitive={c.isSensitive} style={styles.barAmount} />
-              </View>
-              <Bar pct={Math.max(2, (c.totalMinor / max) * 100)} color={c.color} index={i} still={still} />
-            </Rise>
-          ))}
-        </View>
+        <StripCard tone={theme.colors.slice.spent} style={styles.chartCard}>
+          <View style={[styles.bars, styles.chartBody]}>
+            {beat.items.map((c, i) => (
+              <Rise key={c.categoryId} delay={i * 160} still={still}>
+                <View style={styles.barHead}>
+                  <Text style={styles.barName} numberOfLines={1}>
+                    {c.name}
+                  </Text>
+                  <Amount minor={c.totalMinor} sensitive={c.isSensitive} style={styles.barAmount} />
+                </View>
+                <Bar pct={Math.max(2, (c.totalMinor / max) * 100)} color={c.color} index={i} still={still} />
+              </Rise>
+            ))}
+          </View>
+        </StripCard>
       </View>
     </View>
   );
@@ -355,23 +368,31 @@ export function DaysBeat({ beat, still }: { beat: BeatOf<'days'>; still: boolean
   const max = beat.heaviest.totalMinor;
   return (
     <View style={styles.beat}>
-      <Text style={styles.kicker}>How the days went</Text>
+      <Kicker kind="days">How the days went</Kicker>
       <View style={styles.middle}>
-        <View style={styles.cal} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-          {Array.from({ length: beat.firstWeekday }, (_, i) => (
-            <View key={`pad-${i}`} style={styles.calSlot} />
-          ))}
-          {beat.days.map((d, i) => (
-            <DayCell
-              key={d.date}
-              day={i + 1}
-              level={dayLevel(d.totalMinor, max)}
-              index={i}
-              ring={d.date === beat.heaviest.date}
-              still={still}
-            />
-          ))}
-        </View>
+        <StripCard tone={theme.colors.slice.due} style={styles.chartCard}>
+          <View style={styles.chartBody}>
+            <View
+              style={styles.cal}
+              accessibilityElementsHidden
+              importantForAccessibility="no-hide-descendants"
+            >
+              {Array.from({ length: beat.firstWeekday }, (_, i) => (
+                <View key={`pad-${i}`} style={styles.calSlot} />
+              ))}
+              {beat.days.map((d, i) => (
+                <DayCell
+                  key={d.date}
+                  day={i + 1}
+                  level={dayLevel(d.totalMinor, max)}
+                  index={i}
+                  ring={d.date === beat.heaviest.date}
+                  still={still}
+                />
+              ))}
+            </View>
+          </View>
+        </StripCard>
         <Rise delay={1500} still={still}>
           <Text style={[styles.displaySmall, styles.gapM]}>
             {dayMonth(beat.heaviest.date)} was the heaviest day.
@@ -402,7 +423,7 @@ export function MoverBeat({ beat, still }: { beat: BeatOf<'mover'>; still: boole
   const scale = punch.interpolate({ inputRange: [0, 1], outputRange: [1.35, 1] });
   return (
     <View style={styles.beat}>
-      <Text style={styles.kicker}>What moved</Text>
+      <Kicker kind="mover">What moved</Kicker>
       <View style={styles.middle}>
         <Animated.View style={{ opacity: punch, transform: [{ scale }] }}>
           <Text style={styles.display} numberOfLines={2}>
@@ -473,32 +494,40 @@ export function WeekDaysBeat({ beat, still }: { beat: BeatOf<'weekDays'>; still:
   const max = Math.max(1, beat.heaviest.totalMinor);
   return (
     <View style={styles.beat}>
-      <Text style={styles.kicker}>Day by day</Text>
+      <Kicker kind="weekDays">Day by day</Kicker>
       <View style={styles.middle}>
-        <View style={styles.week} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-          {beat.days.map((d, i) => {
-            const heaviest = d.date === beat.heaviest.date;
-            return (
-              <View key={d.date} style={styles.weekCol}>
-                <View style={{ flex: 1, width: '100%', justifyContent: 'flex-end' }}>
-                  <WeekBar
-                    pct={d.totalMinor > 0 ? Math.max(4, (d.totalMinor / max) * 100) : 3}
-                    color={
-                      heaviest
-                        ? theme.colors.ink
-                        : d.totalMinor > 0
-                          ? theme.colors.primary
-                          : theme.colors.inkHairline
-                    }
-                    index={i}
-                    still={still}
-                  />
-                </View>
-                <Text style={styles.weekDay}>{WEEK_LETTERS[i]}</Text>
-              </View>
-            );
-          })}
-        </View>
+        <StripCard tone={theme.colors.slice.due} style={styles.chartCard}>
+          <View style={styles.chartBody}>
+            <View
+              style={styles.week}
+              accessibilityElementsHidden
+              importantForAccessibility="no-hide-descendants"
+            >
+              {beat.days.map((d, i) => {
+                const heaviest = d.date === beat.heaviest.date;
+                return (
+                  <View key={d.date} style={styles.weekCol}>
+                    <View style={{ flex: 1, width: '100%', justifyContent: 'flex-end' }}>
+                      <WeekBar
+                        pct={d.totalMinor > 0 ? Math.max(4, (d.totalMinor / max) * 100) : 3}
+                        color={
+                          heaviest
+                            ? theme.colors.ink
+                            : d.totalMinor > 0
+                              ? theme.colors.primary
+                              : theme.colors.inkHairline
+                        }
+                        index={i}
+                        still={still}
+                      />
+                    </View>
+                    <Text style={styles.weekDay}>{WEEK_LETTERS[i]}</Text>
+                  </View>
+                );
+              })}
+            </View>
+          </View>
+        </StripCard>
         <Rise delay={900} still={still}>
           <Text style={[styles.displaySmall, styles.gapM]}>
             {longWeekday(beat.heaviest.date)} did the most.
@@ -520,7 +549,7 @@ export function UsualBeat({ beat, still }: { beat: BeatOf<'usual'>; still: boole
   const steady = Math.abs(beat.changePct) < USUAL_BAND_PCT;
   return (
     <View style={styles.beat}>
-      <Text style={styles.kicker}>Against your usual</Text>
+      <Kicker kind="usual">Against your usual</Kicker>
       <View style={styles.middle}>
         {steady ? (
           <Rise still={still}>
@@ -622,28 +651,37 @@ export function FinalBeat({
   return (
     <View style={styles.beat}>
       <Rise still={still}>
-        <Text style={styles.kicker}>{beat.title}</Text>
+        <Kicker kind="final">{beat.title}</Kicker>
       </Rise>
       <View style={styles.finalMiddle}>
         <Rise delay={200} still={still} onShown={() => setCardShown(true)}>
           <View ref={card} collapsable={false} style={styles.card}>
-            <Text style={styles.cardKicker}>{wrap.label}</Text>
-            {hook && <Text style={styles.cardTotal}>{formatMoney(hook.spentMinor)}</Text>}
-            <Text style={styles.cardLine}>went out{line ? ` · ${line}` : ''}</Text>
-            {top.length > 0 && (
-              <View style={styles.cardRows}>
-                {top.map((c) => (
-                  <View key={c.categoryId} style={styles.cardRow}>
-                    <View style={[styles.cardDot, { backgroundColor: c.color }]} />
-                    <Text style={styles.cardName} numberOfLines={1}>
-                      {c.name}
-                    </Text>
-                    <Amount minor={c.totalMinor} sensitive={c.isSensitive} style={styles.cardAmount} />
+            <StripCard tone={theme.colors.slice.free} lifted={false}>
+              <View style={styles.cardBody}>
+                <View style={styles.cardHead}>
+                  <View style={styles.cardBrand}>
+                    <View style={styles.cardBrandMark} />
+                    <Text style={styles.cardBrandText}>Yume</Text>
                   </View>
-                ))}
+                  <Text style={styles.cardKicker}>{wrap.label}</Text>
+                </View>
+                {hook && <Text style={styles.cardTotal}>{formatMoney(hook.spentMinor)}</Text>}
+                <Text style={styles.cardLine}>went out{line ? ` · ${line}` : ''}</Text>
+                {top.length > 0 && (
+                  <View style={styles.cardRows}>
+                    {top.map((c) => (
+                      <View key={c.categoryId} style={styles.cardRow}>
+                        <View style={[styles.cardDot, { backgroundColor: c.color }]} />
+                        <Text style={styles.cardName} numberOfLines={1}>
+                          {c.name}
+                        </Text>
+                        <Amount minor={c.totalMinor} sensitive={c.isSensitive} style={styles.cardAmount} />
+                      </View>
+                    ))}
+                  </View>
+                )}
               </View>
-            )}
-            <Text style={styles.cardBrand}>Yume</Text>
+            </StripCard>
           </View>
         </Rise>
       </View>
