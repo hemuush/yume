@@ -1,5 +1,6 @@
 import { StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
+import { SECTION_TITLE, SECTION_GAP } from '@/constants/textStyles';
 import { listScreenStyles } from '@/features/shared/listScreenStyles';
 
 // Shared by the Budgets screen, BudgetRow, and AddBudgetModal.
@@ -50,6 +51,14 @@ export const styles = StyleSheet.create({
     borderColor: theme.colors.borderSoft,
     overflow: 'hidden',
   },
+  // Budgets' own list sits under a "This month" heading; Profile's use of the card has none.
+  listTitle: {
+    ...SECTION_TITLE,
+    marginHorizontal: 20,
+    marginTop: SECTION_GAP.top,
+    marginBottom: SECTION_GAP.bottom,
+  },
+  listCardTitled: { marginTop: 0 },
   // Self-padded like RecentTransactionRow: BudgetRow renders in this listCard on Profile's "You" tab but
   // also in Home's unpadded card, so it can't rely on a container for its horizontal inset.
   row: { paddingVertical: 14, paddingHorizontal: 14 },

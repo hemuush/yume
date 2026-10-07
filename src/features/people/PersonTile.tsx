@@ -10,21 +10,32 @@ import { withPressed } from '@/lib/pressed';
 import { MAX_LIST_STAGGER_MS, ROW_LAYOUT, ROW_EXIT } from '@/lib/animation';
 import { lastActivityShort } from './people.helpers';
 import { styles } from './people.styles';
+import { StripCard } from '@/components/StripCard';
 import { DURATIONS } from '@/lib/motionTimings';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 const LOOK = {
-  owed: { tone: theme.colors.idSage, amount: theme.colors.incomeText, label: 'Owes you' },
-  owe: { tone: theme.colors.idCoral, amount: theme.colors.expenseText, label: 'You owe' },
+  owed: {
+    strip: theme.colors.slice.saved,
+    pill: theme.colors.secondaryTint,
+    amount: theme.colors.incomeText,
+    label: 'Owes you',
+  },
+  owe: {
+    strip: theme.colors.slice.spent,
+    pill: theme.colors.idCoral,
+    amount: theme.colors.expenseText,
+    label: 'You owe',
+  },
 } as const;
 
 /** Per-tile entrance stagger, capped by MAX_LIST_STAGGER_MS for long lists. */
 const STAGGER_MS = 45;
 
 /**
- * One person with an open balance on Friends & Family, as a pale tile: sage when they owe you, coral when you
- * owe them. Shows initial, name, balance and last activity, plus a Settle up pill that opens the same sheet as
+ * One person with an open balance on Friends & Family, as a white tile with a strip along its top: mint when
+ * they owe you, coral when you owe them. Shows initial, name, balance and last activity, plus a Settle up pill that opens the same sheet as
  * the tile (on its Settle tab).
  */
 export function PersonTile({
@@ -53,7 +64,7 @@ export function PersonTile({
       layout={ROW_LAYOUT}
       exiting={ROW_EXIT}
     >
-      <View style={[styles.personTile, { backgroundColor: look.tone }]}>
+      <StripCard tone={look.strip} lifted={false} style={styles.personTile}>
         <AnimatedPressable
           style={animatedStyle}
           onPress={onPress}
@@ -80,13 +91,13 @@ export function PersonTile({
         <Pressable
           onPress={onPress}
           hitSlop={8}
-          style={withPressed(styles.settlePill)}
+          style={withPressed([styles.settlePill, { backgroundColor: look.pill }])}
           accessibilityRole="button"
           accessibilityLabel={`Settle up with ${person.name}`}
         >
           <Text style={styles.settlePillText}>Settle up</Text>
         </Pressable>
-      </View>
+      </StripCard>
     </ReanimatedAnimated.View>
   );
 }

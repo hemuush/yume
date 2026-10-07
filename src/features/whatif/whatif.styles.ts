@@ -23,23 +23,20 @@ export const styles = StyleSheet.create({
     marginTop: 3,
     lineHeight: 16,
   },
+  // In the sky header, under the title.
   intro: {
     fontFamily: theme.font.body,
     fontSize: 12,
     color: theme.colors.textSecondary,
-    marginHorizontal: 20,
-    marginTop: theme.layout.screenTopGap,
     lineHeight: 17,
   },
 
+  // White StripCards: sky for the change you're trying, mint for where it gets a goal.
   card: {
     marginHorizontal: 20,
-    marginTop: 16,
-    backgroundColor: theme.colors.surface,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-    borderRadius: theme.radius.xl2,
+    marginTop: 6,
     padding: 16,
+    paddingTop: 18,
   },
   fieldLabel: {
     ...FIELD_LABEL,
@@ -47,28 +44,34 @@ export const styles = StyleSheet.create({
   },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
 
-  avgRow: { flexDirection: 'row', alignItems: 'baseline', gap: 6, marginTop: 14 },
+  avgRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 6,
+    marginTop: 14,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: theme.radius.lg,
+    backgroundColor: theme.colors.surfaceAlt,
+  },
   avgLabel: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
   avgValue: { fontFamily: theme.font.monoBold, fontSize: 14, color: theme.colors.textPrimary },
 
   resultDivider: {
-    height: StyleSheet.hairlineWidth,
-    backgroundColor: theme.colors.borderSoft,
+    height: 1,
+    backgroundColor: theme.colors.divider,
     marginTop: 14,
     marginBottom: 12,
   },
-  resultRow: { flexDirection: 'row', alignItems: 'baseline', gap: 6 },
+  resultRow: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: 6 },
   resultLabel: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
   resultValue: { fontFamily: theme.font.monoBold, fontSize: 15, color: theme.colors.textPrimary },
 
   goalCard: {
     marginHorizontal: 20,
     marginTop: 16,
-    backgroundColor: theme.colors.secondaryTint,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.secondary,
-    borderRadius: theme.radius.xl2,
     padding: 16,
+    paddingTop: 18,
   },
   extraLabel: { ...EYEBROW, color: theme.colors.incomeText },
 
@@ -78,11 +81,15 @@ export const styles = StyleSheet.create({
   paceLabelStrong: { fontFamily: theme.font.bodyBold, fontSize: 10.5, color: theme.colors.textPrimary },
   paceDate: { fontFamily: theme.font.monoBold, fontSize: 10.5, color: theme.colors.textSecondary },
   paceDateStrong: { fontFamily: theme.font.monoBold, fontSize: 10.5, color: theme.colors.textPrimary },
-  paceTrack: { height: 6, borderRadius: 3, backgroundColor: theme.colors.inkWash, overflow: 'hidden' },
+  paceTrack: { height: 6, borderRadius: 3, backgroundColor: theme.colors.divider, overflow: 'hidden' },
   paceFill: { height: '100%', borderRadius: 3 },
 
   soonerText: {
     marginTop: 12,
+    paddingVertical: 8,
+    borderRadius: theme.radius.md,
+    overflow: 'hidden',
+    backgroundColor: theme.colors.secondaryTint,
     textAlign: 'center',
     fontFamily: theme.font.bodyBold,
     fontSize: 12.5,

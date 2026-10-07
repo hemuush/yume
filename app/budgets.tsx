@@ -18,7 +18,7 @@ import { Category } from '@/types';
 import { toLocalIsoDate } from '@/lib/date';
 import { usePrivacy } from '@/theme/PrivacyContext';
 import { theme } from '@/constants/theme';
-import { AppHeader } from '@/components/AppHeader';
+import { SkyHeader } from '@/features/home/SkyHeader';
 import { AddButton } from '@/components/AddButton';
 import { EmptyState } from '@/components/EmptyState';
 import { ActionSheet, ActionSheetItem } from '@/components/ActionSheet';
@@ -163,7 +163,7 @@ export default function BudgetsScreen() {
   if (!loaded && !loadError) {
     return (
       <View style={styles.container}>
-        <AppHeader title="Budgets" showBack />
+        <SkyHeader title="Budgets" showBack hideUser compact />
         <View style={{ paddingTop: 14 }}>
           <Skeleton width={110} height={12} radius={4} style={{ marginHorizontal: 20 }} />
           <Skeleton width={220} height={26} radius={6} style={{ marginHorizontal: 20, marginTop: 8 }} />
@@ -178,10 +178,12 @@ export default function BudgetsScreen() {
 
   return (
     <View style={styles.container}>
-      <AppHeader
+      <SkyHeader
         title="Budgets"
         showBack
-        right={<AddButton onPress={() => setModalVisible(true)} label="+ Add" />}
+        hideUser
+        compact
+        actions={<AddButton onPress={() => setModalVisible(true)} label="+ Add" />}
       />
 
       <ScrollView contentContainerStyle={{ paddingBottom: theme.layout.screenScrollPad + insets.bottom }}>
@@ -212,25 +214,28 @@ export default function BudgetsScreen() {
           />
         ) : (
           budgets.length > 0 && (
-            <View style={styles.listCard}>
-              {budgets.map((progress, i) => (
-                <MovingRow key={progress.budget.id}>
-                  <BudgetRow
-                    progress={progress}
-                    divider={i > 0}
-                    showPerDay
-                    // The row opens its category's page; Edit and Delete are in ⋯.
-                    onPress={() =>
-                      returnOrPush(
-                        { name: 'category/[id]', params: { id: progress.budget.categoryId } },
-                        `/category/${progress.budget.categoryId}`
-                      )
-                    }
-                    onMore={() => setManageTarget(progress)}
-                  />
-                </MovingRow>
-              ))}
-            </View>
+            <>
+              <Text style={styles.listTitle}>This month</Text>
+              <View style={[styles.listCard, styles.listCardTitled]}>
+                {budgets.map((progress, i) => (
+                  <MovingRow key={progress.budget.id}>
+                    <BudgetRow
+                      progress={progress}
+                      divider={i > 0}
+                      showPerDay
+                      // The row opens its category's page; Edit and Delete are in ⋯.
+                      onPress={() =>
+                        returnOrPush(
+                          { name: 'category/[id]', params: { id: progress.budget.categoryId } },
+                          `/category/${progress.budget.categoryId}`
+                        )
+                      }
+                      onMore={() => setManageTarget(progress)}
+                    />
+                  </MovingRow>
+                ))}
+              </View>
+            </>
           )
         )}
       </ScrollView>

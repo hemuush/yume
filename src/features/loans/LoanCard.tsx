@@ -169,7 +169,7 @@ const styles = StyleSheet.create({
   track: {
     height: 5,
     borderRadius: 3,
-    backgroundColor: theme.colors.surfaceAlt,
+    backgroundColor: theme.colors.divider,
     marginTop: 12,
     overflow: 'hidden',
   },
@@ -177,17 +177,19 @@ const styles = StyleSheet.create({
   caption: { flexDirection: 'row', justifyContent: 'space-between', gap: 10, marginTop: 8 },
   captionText: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, flexShrink: 1 },
   captionBold: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
+  // The next payment in a soft amber box, so what's due next stands out from the loan's figures.
   footer: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
     marginTop: 12,
-    paddingTop: 12,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: theme.colors.borderSoft,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: theme.radius.lg,
+    backgroundColor: theme.colors.dueRow,
   },
   footerText: { flex: 1, minWidth: 0 },
-  nextLabel: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
+  nextLabel: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.dueInk },
   nextLine: {
     fontFamily: theme.font.bodyBold,
     fontSize: 13.5,
