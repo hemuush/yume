@@ -20,7 +20,7 @@ import { withPressed } from '@/lib/pressed';
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 /**
- * Home header period control ("September 2026 ▾"): dialog with prev/next, Month/Year switch, "This month".
+ * Home header period control ("September ▾"): dialog with prev/next, Month/Year switch, "This month".
  * `compact` is the smaller copy in the collapsed brand row: no calendar icon, shorter max width, same menu.
  */
 export function MonthPill({
@@ -52,7 +52,6 @@ export function MonthPill({
         accessibilityLabel={`Change period, currently ${periodLabel(cursor)}`}
         style={[styles.pill, compact && styles.pillCompact, animatedStyle]}
       >
-        {!compact && <Feather name="calendar" size={13} color={theme.colors.ink} />}
         <Text style={[styles.pillText, compact && styles.pillTextCompact]} numberOfLines={1}>
           {compact ? periodShortLabel(cursor) : periodLabel(cursor)}
         </Text>
@@ -109,16 +108,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    paddingHorizontal: 11,
-    paddingVertical: 6,
+    minHeight: 36,
+    paddingHorizontal: 13,
     borderRadius: theme.radius.pill,
     backgroundColor: theme.colors.surface,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
     maxWidth: 168,
   },
-  pillText: { fontFamily: theme.font.roundedMedium, fontSize: 12.5, color: theme.colors.ink, flexShrink: 1 },
-  pillCompact: { gap: 4, paddingHorizontal: 10, paddingVertical: 5, maxWidth: 140 },
+  pillText: { fontFamily: theme.font.roundedMedium, fontSize: 14, color: theme.colors.ink, flexShrink: 1 },
+  pillCompact: { gap: 4, minHeight: 30, paddingHorizontal: 10, maxWidth: 140 },
   pillTextCompact: { fontFamily: theme.font.roundedMedium, fontSize: 12 },
 
   stepRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 },

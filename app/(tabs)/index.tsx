@@ -64,7 +64,7 @@ import { NeedsYouItem } from '@/features/home/needsYou';
 import { loadNeedsYou } from '@/features/home/needsYouData';
 import { AddAccountModal } from '@/features/profile/AddAccountModal';
 import { PrimaryButton } from '@/components/PrimaryButton';
-import { toLocalIsoDate } from '@/lib/date';
+import { dayLabel, toLocalIsoDate } from '@/lib/date';
 import { categorySentence } from '@/lib/categoryLabel';
 import { onTransactionsChanged } from '@/lib/dataEvents';
 import { useFreshness } from '@/lib/useFreshness';
@@ -488,6 +488,9 @@ export default function DashboardScreen() {
           )}
         </View>
 
+        {/* Add shortcuts sit right under the month card, in thumb reach. */}
+        <QuickActionsRow />
+
         {!loaded && (
           <>
             <View style={{ marginTop: SCREEN.sectionGap }}>
@@ -522,19 +525,34 @@ export default function DashboardScreen() {
               />
             ) : (
               <View style={[screenStyles.card, screenStyles.cardLifted]}>
-                {recent.slice(0, RECENT_ROWS).map((tx, i) => (
-                  <Animated.View key={tx.id} entering={rowEntering(i)} layout={ROW_LAYOUT} exiting={ROW_EXIT}>
-                    <RecentTransactionRow
-                      tx={tx}
-                      category={categoryFor(tx.categoryId) ?? undefined}
-                      parentName={parentNameFor(tx.categoryId)}
-                      accountName={accountName(tx.accountId)}
-                      toAccountName={accountName(tx.toAccountId)}
-                      savingsTransfer={isSavingsTransfer(tx)}
-                      divider={i > 0}
-                    />
-                  </Animated.View>
-                ))}
+                {recent.slice(0, RECENT_ROWS).map((tx, i, rows) => {
+                  // Rows come newest first; a new day gets its own small heading ("Today", "Yesterday", "1 Oct").
+                  const newDay = i === 0 || rows[i - 1].date !== tx.date;
+                  return (
+                    <Animated.View
+                      key={tx.id}
+                      entering={rowEntering(i)}
+                      layout={ROW_LAYOUT}
+                      exiting={ROW_EXIT}
+                    >
+                      {newDay && (
+                        <Text style={[styles.dayHead, i > 0 && styles.dayHeadDivider]}>
+                          {dayLabel(tx.date)}
+                        </Text>
+                      )}
+                      <RecentTransactionRow
+                        tx={tx}
+                        category={categoryFor(tx.categoryId) ?? undefined}
+                        parentName={parentNameFor(tx.categoryId)}
+                        accountName={accountName(tx.accountId)}
+                        toAccountName={accountName(tx.toAccountId)}
+                        savingsTransfer={isSavingsTransfer(tx)}
+                        divider={!newDay}
+                        showDay={false}
+                      />
+                    </Animated.View>
+                  );
+                })}
               </View>
             )}
           </Section>
@@ -572,9 +590,7 @@ export default function DashboardScreen() {
         onHeight={setHeaderHeight}
         wraps={readyWraps}
         onPlayWrap={(w) => router.push(`/wrap?period=${w.period}`)}
-      >
-        <QuickActionsRow />
-      </HomeHeader>
+      />
       <SuuRefreshBadge refreshing={refreshing} />
 
       <AccountSummarySheet
@@ -630,7 +646,7 @@ export default function DashboardScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
   scroll: { flex: 1 },
-  heroGap: { marginTop: 18 },
+  heroGap: { marginTop: 12 },
   errorBanner: {
     marginHorizontal: 20,
     marginTop: 18,
@@ -649,4 +665,13 @@ const styles = StyleSheet.create({
     lineHeight: 16,
   },
   emptyCta: { marginHorizontal: 40, marginTop: -8 },
+  dayHead: {
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 2,
+    fontFamily: theme.font.bodyBold,
+    fontSize: 12,
+    color: theme.colors.textMuted,
+  },
+  dayHeadDivider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.divider },
 });

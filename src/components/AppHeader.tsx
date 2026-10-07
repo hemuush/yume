@@ -77,7 +77,14 @@ export function HeaderPrivacyToggle() {
 }
 
 /** The profile button — an avatar bubble showing the user's initial, accent-filled. */
-export function HeaderUserButton({ soft }: { soft?: boolean } = {}) {
+export function HeaderUserButton({
+  soft,
+  size,
+}: {
+  soft?: boolean;
+  /** A larger round button (Home's header); the default is 34. */
+  size?: number;
+} = {}) {
   const { accent, onAccent } = useAccent();
   // getCachedUserName() is a non-reactive module cache, so re-read it on every focus: a name edited in
   // Profile must update the initial in every already-mounted header (Home, Loans, Transactions, Reports).
@@ -100,10 +107,18 @@ export function HeaderUserButton({ soft }: { soft?: boolean } = {}) {
       hitSlop={8}
       accessibilityRole="button"
       accessibilityLabel="Your profile"
-      style={[styles.iconBtn, soft && styles.iconBtnSoft, { backgroundColor: accent }, animatedStyle]}
+      style={[
+        styles.iconBtn,
+        soft && styles.iconBtnSoft,
+        size != null && { width: size, height: size, borderRadius: size / 2 },
+        { backgroundColor: accent },
+        animatedStyle,
+      ]}
     >
       {initial ? (
-        <Text style={[styles.initial, { color: onAccent }]}>{initial}</Text>
+        <Text style={[styles.initial, size != null && size > 36 && styles.initialLarge, { color: onAccent }]}>
+          {initial}
+        </Text>
       ) : (
         <Feather name="user" size={16} color={onAccent} />
       )}
@@ -118,6 +133,7 @@ export function HeaderIconButton({
   badge,
   count,
   soft,
+  size,
 }: {
   icon: React.ComponentProps<typeof Feather>['name'];
   onPress: () => void;
@@ -127,6 +143,8 @@ export function HeaderIconButton({
   count?: number;
   /** Hairline instead of the 3px ink border — for the softer Home header. */
   soft?: boolean;
+  /** A larger round button (Home's header); the default is 34. */
+  size?: number;
 }) {
   const { animatedStyle, onPressIn, onPressOut } = usePressScale();
   return (
@@ -140,11 +158,12 @@ export function HeaderIconButton({
       style={[
         styles.iconBtn,
         soft && styles.iconBtnSoft,
+        size != null && { width: size, height: size, borderRadius: size / 2 },
         { backgroundColor: theme.colors.surface },
         animatedStyle,
       ]}
     >
-      <Feather name={icon} size={16} color={theme.colors.ink} />
+      <Feather name={icon} size={size != null && size > 36 ? 18 : 16} color={theme.colors.ink} />
       {count != null && count > 0 ? (
         <View style={styles.countBadge}>
           <Text style={styles.countText}>{count}</Text>
@@ -191,6 +210,7 @@ const styles = StyleSheet.create({
   // Kept as an alias — the base button is already soft now.
   iconBtnSoft: { borderWidth: StyleSheet.hairlineWidth, borderColor: theme.colors.borderSoft },
   initial: { fontFamily: theme.font.bodyBold, fontSize: 14 },
+  initialLarge: { fontFamily: theme.font.bodyBold, fontSize: 15 },
   countBadge: {
     position: 'absolute',
     top: -4,

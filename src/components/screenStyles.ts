@@ -10,8 +10,8 @@ export const SCREEN = {
   /** Space above each section heading. */
   sectionGap: 26,
   gutter: 20,
-  rowMinHeight: 62,
-  iconTile: 38,
+  rowMinHeight: 64,
+  iconTile: 40,
   iconGlyph: 17,
 } as const;
 
@@ -33,11 +33,11 @@ export const screenStyles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
     paddingVertical: 11,
-    paddingHorizontal: 14,
+    paddingHorizontal: 16,
     minHeight: SCREEN.rowMinHeight,
   },
   divider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.borderSoft },
-  // Same shape and size as CategoryIcon's default (38px, radius 0.32×).
+  // A touch larger than CategoryIcon's default (38px); same radius ratio (0.32×).
   iconTile: {
     width: SCREEN.iconTile,
     height: SCREEN.iconTile,
@@ -46,11 +46,11 @@ export const screenStyles = StyleSheet.create({
     justifyContent: 'center',
   },
   mid: { flex: 1, minWidth: 0 },
-  title: { fontFamily: theme.font.bodyBold, fontSize: 14, color: theme.colors.textPrimary },
-  sub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, marginTop: 2 },
+  title: { fontFamily: theme.font.bodyBold, fontSize: 15, color: theme.colors.textPrimary },
+  sub: { fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textMuted, marginTop: 2 },
   subUrgent: { fontFamily: theme.font.bodyBold, color: theme.colors.expenseText },
   subSoon: { fontFamily: theme.font.bodyBold, color: theme.colors.warnInk },
-  amount: { fontFamily: theme.font.monoBold, fontSize: 13.5, color: theme.colors.textPrimary },
+  amount: { fontFamily: theme.font.monoBold, fontSize: 15, color: theme.colors.textPrimary },
   income: { color: theme.colors.incomeText },
   expense: { color: theme.colors.expenseText },
 });

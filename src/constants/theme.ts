@@ -5,8 +5,8 @@ import { StyleSheet } from 'react-native';
 
 export const theme = {
   colors: {
-    background: '#EDE7D6',
-    surface: '#FFFDF6',
+    background: '#F4F0E7',
+    surface: '#FFFDF8',
     surfaceAlt: '#F3ECE0',
     border: '#12130F', // ink, for a deliberate emphasis edge only; cards and rows use the `borderSoft` hairline
 
@@ -56,13 +56,34 @@ export const theme = {
     idCoralDeep: '#F0876A',
     // The "spent" side of Home's moon — a step deeper than idCoral so it holds
     // its own next to the mint and sky slices (signed off with the moon hero).
-    spentSoft: '#FFC9B3',
+    spentSoft: '#F6A88E',
     idGold: '#FBF0CE',
     idGoldDeep: '#E0AC3F',
 
     // A soft warm hairline for the calm card style, separating cards by a thin line and whitespace.
     // This is the default edge for cards, chips, inputs and sheets; `border` (ink) is the rare exception.
-    borderSoft: '#E6DFC9',
+    borderSoft: '#E8E1D1',
+    // A fainter line for dividers inside a card (Home's legend, the glance card's rows).
+    divider: '#F0EADD',
+
+    // Home's month slices, one colour per meaning everywhere they appear (ring, legend dots, meters).
+    // Equal-lightness pastels so no slice shouts over another; they are fills only, never text.
+    slice: {
+      spent: '#F6A88E',
+      saved: '#7FDDB9',
+      due: '#F0BC4E',
+      free: '#7DB9F2',
+      debt: '#BBA9F7',
+    },
+    // The "still to pay" family: the chip and date tile, a paler row behind a bill due soon, and its text.
+    dueTint: '#FCEFC9',
+    dueRow: '#FDF7E8',
+    dueInk: '#7A5100',
+    // The soft tray under the month card's figures (Today, pace) and its meter track.
+    tray: '#F8F3EA',
+    trayTrack: '#ECE4D4',
+    // Readable sky for links and the transfer icon: 5.6:1 on the card, 5:1 on the page.
+    link: '#2A69A6',
 
     // Ink at very low opacity — a faint fill for inactive tracks, weekend
     // cells, and other "barely there" surfaces on a cream ground.
