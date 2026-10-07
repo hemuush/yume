@@ -18,15 +18,18 @@ const SPARKS = [
 
 /**
  * A tab's header in Home's family: the same sky band, sparks and hills, a 25px title with an optional line
- * under it, and the profile button. Anything passed as children (Reports' period control) sits in the band.
+ * under it, and the profile button. Anything passed as children (Reports' period control) sits in the band;
+ * `actions` (Activity's search and filter) sit beside the profile button.
  */
 export function SkyHeader({
   title,
   subtitle,
+  actions,
   children,
 }: {
   title: string;
   subtitle?: string;
+  actions?: React.ReactNode;
   children?: React.ReactNode;
 }) {
   const { accent, secondary } = useAccent();
@@ -56,7 +59,10 @@ export function SkyHeader({
               </Text>
             ) : null}
           </View>
-          <HeaderUserButton soft size={40} />
+          <View style={styles.actions}>
+            {actions}
+            <HeaderUserButton soft size={40} />
+          </View>
         </View>
         {children}
       </View>
@@ -69,6 +75,7 @@ const styles = StyleSheet.create({
   band: { paddingHorizontal: 20, paddingBottom: 10, gap: 12, overflow: 'hidden' },
   titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
   titleBlock: { flex: 1, minWidth: 0 },
+  actions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   title: { fontFamily: theme.font.roundedBold, fontSize: 25, color: theme.colors.ink },
   subtitle: {
     fontFamily: theme.font.bodyMedium,
