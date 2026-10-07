@@ -32,6 +32,7 @@ import { SplitBreakdown } from '@/features/reports/SplitBreakdown';
 import { withPressed } from '@/lib/pressed';
 import { usePrivacy } from '@/theme/PrivacyContext';
 import { inParent } from '@/lib/categoryLabel';
+import { styles as reportStyles } from '@/features/reports/reports.styles';
 
 const isThisMonth = (w: ReportWindow) => w.granularity === 'month' && w.offset === 0;
 
@@ -154,7 +155,7 @@ export default function CategoryScreen() {
   return (
     <View style={styles.container}>
       <AppHeader title={category?.name ?? 'Category'} showBack />
-      <PeriodRow cursor={cursor} onChange={setCursor} />
+      <PeriodRow cursor={cursor} onChange={setCursor} style={reportStyles.periodRowPage} />
       <ScrollView contentContainerStyle={{ paddingBottom: theme.layout.screenScrollPad + insets.bottom }}>
         {loadError && (
           <View style={styles.errorBanner}>

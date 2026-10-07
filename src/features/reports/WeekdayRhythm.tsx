@@ -8,10 +8,10 @@ import { withPressed } from '@/lib/pressed';
 import { WeekdayRhythm as Rhythm, weekdayReadLine, WEEKDAY_MIN_DAYS } from './reportsInsights';
 import { styles } from './reports.styles';
 
-const BAR_MAX_HEIGHT = 80;
+const BAR_MAX_HEIGHT = 92;
 const BAR_MIN_HEIGHT = 6;
 /** Distance from the chart's bottom to the bars' baseline: the weekday letter plus the gap above it. */
-const BASELINE = 18;
+const BASELINE = 20;
 const LETTERS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 const NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 

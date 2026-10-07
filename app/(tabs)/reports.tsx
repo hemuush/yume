@@ -29,7 +29,6 @@ import { usePrivacy } from '@/theme/PrivacyContext';
 import { savingsAccountIdsOf } from '@/lib/account';
 import { isSavingsEntry, privateComparison } from '@/lib/privateSummary';
 import { Transaction, Category } from '@/types';
-import { AppHeader } from '@/components/AppHeader';
 import { roundedMinor } from '@/lib/round';
 import {
   CURRENT_PERIOD,
@@ -47,7 +46,7 @@ import { SegmentedControl } from '@/components/SegmentedControl';
 import { parseLocalIsoDate, toLocalIsoDate, isIsoDate } from '@/lib/date';
 import { theme } from '@/constants/theme';
 import { ReportsSkeleton } from '@/features/reports/ReportsSkeleton';
-import { PeriodRow } from '@/features/reports/PeriodRow';
+import { ReportsHeader } from '@/features/reports/ReportsHeader';
 import { ReportSummary } from '@/features/reports/ReportSummary';
 import { HeatmapCard } from '@/features/reports/HeatmapCard';
 import { DayCard } from '@/features/reports/DayCard';
@@ -336,12 +335,7 @@ export default function ReportsScreen() {
   }, [cursor, hideAmounts, catFilter, largestKey, daily]);
 
   // Pinned outside the ScrollView, so the period (and, below it, the summary and tabs) stays in reach however far down you scroll.
-  const header = (
-    <>
-      <AppHeader title="Reports" />
-      <PeriodRow cursor={cursor} onChange={stepCursor} />
-    </>
-  );
+  const header = <ReportsHeader cursor={cursor} onChange={stepCursor} />;
 
   if (status === 'error') {
     return (
@@ -617,42 +611,29 @@ export default function ReportsScreen() {
         ) : tab === 'cats' ? (
           <View>
             <Text style={styles.blockTitle}>{income ? 'Where it came from' : 'Where it went'}</Text>
-            <View style={styles.flowSwitch}>
-              <SegmentedControl
-                options={[
-                  { value: 'expense', label: 'Spending' },
-                  { value: 'income', label: 'Income' },
-                ]}
-                value={flow}
-                onChange={(f) => {
-                  setFlow(f);
-                  setCatExpanded(false);
-                  setSelectedCat(null);
-                  setSelectedAccount(null);
-                }}
-              />
-            </View>
-            <View style={[styles.gran, styles.groupPill]}>
-              {GROUP_OPTIONS.map((o) => {
-                const on = group === o.value;
-                return (
-                  <Pressable
-                    key={o.value}
-                    onPress={() => {
-                      setGroup(o.value);
-                      setCatExpanded(false);
-                      setSelectedCat(null);
-                      setSelectedAccount(null);
-                    }}
-                    style={withPressed([styles.granBtn, on && styles.granBtnOn])}
-                    accessibilityRole="button"
-                    accessibilityState={{ selected: on }}
-                  >
-                    <Text style={[styles.granText, on && styles.granTextOn]}>{o.label}</Text>
-                  </Pressable>
-                );
-              })}
-            </View>
+            <SegmentedControl
+              options={[
+                { value: 'expense', label: 'Spending' },
+                { value: 'income', label: 'Income' },
+              ]}
+              value={flow}
+              onChange={(f) => {
+                setFlow(f);
+                setCatExpanded(false);
+                setSelectedCat(null);
+                setSelectedAccount(null);
+              }}
+            />
+            <SegmentedControl
+              options={GROUP_OPTIONS}
+              value={group}
+              onChange={(g) => {
+                setGroup(g);
+                setCatExpanded(false);
+                setSelectedCat(null);
+                setSelectedAccount(null);
+              }}
+            />
             {byAccount ? (
               accountItems === null ? (
                 <ActivityIndicator color={theme.colors.ink} style={styles.daySpinner} />
