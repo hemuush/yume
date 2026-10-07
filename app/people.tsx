@@ -1,12 +1,14 @@
 import { useCallback, useState } from 'react';
-import { View, ScrollView } from 'react-native';
+import { View } from 'react-native';
 import { Text } from '@/components/Text';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { listPeople, PersonWithBalance } from '@/db/people';
 import { theme, FLAT_PALETTE } from '@/constants/theme';
 import { stableIndexFromId } from '@/lib/color';
 import { useScreenLoad } from '@/lib/useScreenLoad';
-import { SkyHeader } from '@/features/home/SkyHeader';
+import { SkyHeader, HeaderSummary } from '@/features/home/SkyHeader';
+import ReanimatedAnimated from 'react-native-reanimated';
+import { useCollapsingHeader } from '@/lib/useCollapsingHeader';
 import { AddButton } from '@/components/AddButton';
 import { EmptyState } from '@/components/EmptyState';
 import { Skeleton } from '@/components/Skeleton';
@@ -25,6 +27,8 @@ import { styles } from '@/features/people/people.styles';
  */
 export default function PeopleScreen() {
   const insets = useSafeAreaInsets();
+  // The header sits over the page and shrinks as it scrolls.
+  const { collapse, headerHeight, scrollHandler, scrollRef } = useCollapsingHeader();
   const [people, setPeople] = useState<PersonWithBalance[]>([]);
   const [addVisible, setAddVisible] = useState(false);
   const [selected, setSelected] = useState<PersonWithBalance | null>(null);
@@ -43,29 +47,22 @@ export default function PeopleScreen() {
 
   return (
     <View style={styles.container}>
-      <SkyHeader
-        title="Friends & Family"
-        showBack
-        hideUser
-        compact
-        actions={<AddButton onPress={() => setAddVisible(true)} label="+ Person" />}
-      >
-        {!loading && summary && <PeopleNet netMinor={netMinor} />}
-      </SkyHeader>
+      <ReanimatedAnimated.ScrollView
+        ref={scrollRef}
+        onScroll={scrollHandler}
+        scrollEventThrottle={16}
 
-      {loadError && (
-        <View style={styles.errorBanner}>
-          <Text style={styles.errorTitle}>Couldn&rsquo;t load Friends &amp; Family</Text>
-          <Text style={styles.errorDetail}>{loadError}</Text>
-        </View>
-      )}
-
-      <ScrollView
         contentContainerStyle={{
-          paddingTop: theme.layout.screenTopGap,
+          paddingTop: headerHeight + theme.layout.screenTopGap,
           paddingBottom: theme.layout.screenScrollPad + insets.bottom,
         }}
       >
+        {loadError && (
+          <View style={styles.errorBanner}>
+            <Text style={styles.errorTitle}>Couldn&rsquo;t load Friends &amp; Family</Text>
+            <Text style={styles.errorDetail}>{loadError}</Text>
+          </View>
+        )}
         {loading ? (
           <View style={styles.tileRow}>
             {[0, 1].map((i) => (
@@ -142,7 +139,26 @@ export default function PeopleScreen() {
             )}
           </>
         )}
-      </ScrollView>
+      </ReanimatedAnimated.ScrollView>
+      <SkyHeader
+        collapse={collapse}
+        summary={
+          summary ? (
+            <HeaderSummary
+              figure={`${netMinor > 0 ? '+' : netMinor < 0 ? '−' : ''}${formatMoney(Math.abs(netMinor))}`}
+              rest="net"
+              dot={netMinor < 0 ? theme.colors.slice.spent : theme.colors.slice.saved}
+            />
+          ) : undefined
+        }
+        title="Friends & Family"
+        showBack
+        hideUser
+        compact
+        actions={<AddButton onPress={() => setAddVisible(true)} label="+ Person" />}
+      >
+        {!loading && summary && <PeopleNet netMinor={netMinor} />}
+      </SkyHeader>
 
       <AddPersonModal
         visible={addVisible}

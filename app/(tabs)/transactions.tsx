@@ -1,18 +1,18 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { onTransactionsChanged } from '@/lib/dataEvents';
 import { useFreshness } from '@/lib/useFreshness';
-import { View, FlatList, Pressable, Animated, StyleSheet } from 'react-native';
+import { View, FlatList, Pressable, Animated } from 'react-native';
 import { Text, TextInput } from '@/components/Text';
 import ReanimatedAnimated, { FadeIn, ReduceMotion } from 'react-native-reanimated';
 import { useFocusEffect, router, useLocalSearchParams } from 'expo-router';
 import Feather from '@expo/vector-icons/Feather';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
 import { listAccounts, listCategories, listTransactions, searchTransactions, setDayOrder } from '@/db/ledger';
 import { getRangeComparison, PeriodComparison } from '@/db/reports';
 import { Account, Category, Transaction, TransactionType } from '@/types';
 import { HeaderIconButton } from '@/components/AppHeader';
 import { SkyHeader } from '@/features/home/SkyHeader';
+import { useCollapsingHeader } from '@/lib/useCollapsingHeader';
 import { theme } from '@/constants/theme';
 import { toLocalIsoDate, parseLocalIsoDate, addDaysToIsoDate } from '@/lib/date';
 import { MAX_LIST_STAGGER_MS } from '@/lib/animation';
@@ -115,9 +115,9 @@ export default function TransactionsScreen() {
   const isCurrentMonth =
     anchor.getFullYear() === todayDate.getFullYear() && anchor.getMonth() === todayDate.getMonth();
   const [loadError, setLoadError] = useState<string | null>(null);
-  const scrollRef = useRef<FlatList<{ date: string; items: Transaction[] }>>(null);
-  // 0 at the top, 1 once scrolled: the fade under the fixed header, so rows slide under it instead of being cut flat.
-  const [edgeFade] = useState(() => new Animated.Value(0));
+  // The header sits over the list and shrinks as it scrolls.
+  const { collapse, headerHeight, collapsedHeight, scrollHandler, scrollRef } =
+    useCollapsingHeader<FlatList<{ date: string; items: Transaction[] }>>();
   // Which stacked lines ("Food & Dining ×5") are open lives here, not in TimelineDay: FlatList unmounts
   // off-screen rows, and local state there would silently close a stack the user opened.
   const [openStacks, setOpenStacks] = useState<Set<string>>(new Set());
@@ -374,7 +374,14 @@ export default function TransactionsScreen() {
         : groupedDays.find((g) => g.date >= key && g.date <= addDaysToIsoDate(key, 6))?.date;
     if (!targetDate) return;
     const index = groupedDays.findIndex((g) => g.date === targetDate);
-    if (index >= 0) scrollRef.current?.scrollToIndex({ index, animated: true, viewPosition: 0 });
+    // Lands just under the shrunk header.
+    if (index >= 0)
+      scrollRef.current?.scrollToIndex({
+        index,
+        animated: true,
+        viewPosition: 0,
+        viewOffset: collapsedHeight,
+      });
   };
 
   // Built once per accounts/categories change instead of `.find()` per row per render (an O(V*C) scan,
@@ -407,11 +414,188 @@ export default function TransactionsScreen() {
     );
   }
 
+  // Under the header, at the top of the list: a load that failed, or totals that couldn't load.
+  const banners = (
+    <>
+      {loadError && (
+        <View style={styles.errorBanner}>
+          <Text style={styles.errorTitle}>Couldn't load your transactions</Text>
+          <Text style={styles.errorDetail}>{loadError}</Text>
+        </View>
+      )}
+
+      {comparisonFailed && !loadError && (
+        <View style={styles.errorBanner}>
+          <Text style={styles.errorTitle}>Couldn't load this period's totals</Text>
+          <Text style={styles.errorDetail}>
+            Your entries are below. Change the period or reopen this tab to try again.
+          </Text>
+        </View>
+      )}
+    </>
+  );
+
   return (
     <View style={styles.container}>
+      <MonthPickerModal
+        visible={monthPickerVisible}
+        anchor={anchor}
+        todayDate={todayDate}
+        onClose={() => setMonthPickerVisible(false)}
+        onPick={(d) => {
+          setDirection(0);
+          setAnchor(d);
+          setViewScope('month');
+          setMonthPickerVisible(false);
+        }}
+      />
+
+      <FilterModal
+        visible={filterVisible}
+        categories={categories}
+        accounts={accounts}
+        filter={{ type: filterType, categoryIds: filterCategoryIds, accountIds: filterAccountIds }}
+        onClose={() => setFilterVisible(false)}
+        onApply={(next) => {
+          setFilterType(next.type);
+          setFilterCategoryIds(next.categoryIds);
+          setFilterAccountIds(next.accountIds);
+          setFilterVisible(false);
+        }}
+      />
+
+      <View style={styles.listArea}>
+        <ReanimatedAnimated.FlatList
+          ref={scrollRef}
+          onScroll={scrollHandler}
+          scrollEventThrottle={16}
+          scrollEnabled={!dragging}
+          data={displayedGroups}
+          keyExtractor={(group) => group.date}
+          contentContainerStyle={{
+            // Under the header; search results have no headline above them, so keep the first day off the bar.
+            paddingTop: headerHeight + (searching ? 14 : 0),
+            paddingBottom: theme.layout.tabScreenScrollPad + insets.bottom,
+          }}
+          // Variable-height days (line count, open stacks) rule out `getItemLayout`; standard fallback: if
+          // a jump lands past what's measured, retry once the list has laid out.
+          onScrollToIndexFailed={(info) => {
+            setTimeout(() => scrollRef.current?.scrollToIndex({ index: info.index, animated: true }), 250);
+          }}
+          ListHeaderComponent={
+            searching ? (
+              <>
+                {banners}
+                <SearchStatus
+                  query={trimmedQuery}
+                  minChars={SEARCH_MIN_CHARS}
+                  loading={searchLoading}
+                  resultCount={searchResults.length}
+                />
+              </>
+            ) : (
+              <>
+                {banners}
+                <ReanimatedAnimated.View style={periodSwipe.dragStyle} {...periodSwipe.panHandlers}>
+                  <TransactionsHeadline
+                    periodKey={`${viewScope}-${anchor.toDateString()}`}
+                    direction={direction}
+                    expenseMinor={headline?.current.expenseMinor ?? 0}
+                    incomeMinor={headline?.current.incomeMinor ?? 0}
+                    expenseChangeMinor={expenseChangeMinor}
+                    viewScope={viewScope}
+                    compareLabel={viewScope === 'week' ? weekCompareLabel(week, today) : undefined}
+                    onChangeViewScope={onChangeViewScope}
+                    bars={bars}
+                    legend={legend}
+                    onPressDay={onPressBar}
+                    selectedKey={selectedBar}
+                    current={atCurrent}
+                  />
+                </ReanimatedAnimated.View>
+
+                <ActivityFilterChips
+                  filterType={filterType}
+                  onFilterType={setFilterType}
+                  categoryIds={filterCategoryIds}
+                  accountIds={filterAccountIds}
+                  categoryName={categoryPathName}
+                  accountName={accountName}
+                  onRemoveCategory={(id) => setFilterCategoryIds((ids) => ids.filter((x) => x !== id))}
+                  onRemoveAccount={(id) => setFilterAccountIds((ids) => ids.filter((x) => x !== id))}
+                  onClearAll={() => {
+                    setFilterCategoryIds([]);
+                    setFilterAccountIds([]);
+                  }}
+                />
+
+                {/* The same Suu empty state as every other screen, not a bare line of grey text. */}
+                {accounts.length === 0 && (
+                  <EmptyState title="No accounts yet" subtitle="Add an account before recording entries." />
+                )}
+                {accounts.length > 0 && transactions.length > 0 && filteredTransactions.length === 0 && (
+                  <EmptyState title="Nothing matches" subtitle="Try removing a filter above." />
+                )}
+                {accounts.length > 0 && transactions.length === 0 && (
+                  <EmptyState
+                    title={viewScope === 'month' ? 'Nothing logged this month' : 'Nothing logged this week'}
+                    subtitle="Tap + to add an entry, or look at another period."
+                  />
+                )}
+              </>
+            )
+          }
+          renderItem={({ item: group, index: gi }) => (
+            <TimelineDay
+              date={group.date}
+              label={
+                group.date === today
+                  ? 'Today'
+                  : group.date === yesterday
+                    ? 'Yesterday'
+                    : searching
+                      ? dayMonth(group.date)
+                      : longWeekday(group.date)
+              }
+              dateLabel={searching && group.date !== today ? group.date.slice(0, 4) : dayMonth(group.date)}
+              items={group.items}
+              categories={categories}
+              accountName={accountName}
+              categoryName={categoryName}
+              onPressTx={setDetailTx}
+              savingsAccountIds={savingsAccountIds}
+              openStacks={openStacks}
+              onToggleStack={toggleStack}
+              onReorder={canReorder ? reorderDay : undefined}
+              onDragActive={setDragging}
+              entering={FadeIn.delay(Math.min(gi * 45, MAX_LIST_STAGGER_MS))
+                .duration(DURATIONS.enter)
+                .reduceMotion(ReduceMotion.System)}
+            />
+          )}
+        />
+      </View>
+
+      {/* Over the list, which it shrinks with as it scrolls. */}
       <SkyHeader
         title="Activity"
         subtitle={SUBTITLE}
+        collapse={collapse}
+        collapsedAccessory={
+          searching ? undefined : (
+            <Pressable
+              onPress={() => setMonthPickerVisible(true)}
+              hitSlop={8}
+              style={withPressed(styles.periodChip)}
+              accessibilityRole="button"
+              accessibilityLabel={`${heading.title}. Pick a month`}
+            >
+              <Text style={styles.periodChipText} numberOfLines={1}>
+                {heading.title} ▾
+              </Text>
+            </Pressable>
+          )
+        }
         actions={
           <>
             <HeaderIconButton
@@ -514,160 +698,6 @@ export default function TransactionsScreen() {
         )}
       </SkyHeader>
 
-      {loadError && (
-        <View style={styles.errorBanner}>
-          <Text style={styles.errorTitle}>Couldn't load your transactions</Text>
-          <Text style={styles.errorDetail}>{loadError}</Text>
-        </View>
-      )}
-
-      {comparisonFailed && !loadError && (
-        <View style={styles.errorBanner}>
-          <Text style={styles.errorTitle}>Couldn't load this period's totals</Text>
-          <Text style={styles.errorDetail}>
-            Your entries are below. Change the period or reopen this tab to try again.
-          </Text>
-        </View>
-      )}
-
-      <MonthPickerModal
-        visible={monthPickerVisible}
-        anchor={anchor}
-        todayDate={todayDate}
-        onClose={() => setMonthPickerVisible(false)}
-        onPick={(d) => {
-          setDirection(0);
-          setAnchor(d);
-          setViewScope('month');
-          setMonthPickerVisible(false);
-        }}
-      />
-
-      <FilterModal
-        visible={filterVisible}
-        categories={categories}
-        accounts={accounts}
-        filter={{ type: filterType, categoryIds: filterCategoryIds, accountIds: filterAccountIds }}
-        onClose={() => setFilterVisible(false)}
-        onApply={(next) => {
-          setFilterType(next.type);
-          setFilterCategoryIds(next.categoryIds);
-          setFilterAccountIds(next.accountIds);
-          setFilterVisible(false);
-        }}
-      />
-
-      <View style={styles.listArea}>
-        <FlatList
-          ref={scrollRef}
-          onScroll={(e) => edgeFade.setValue(Math.min(1, e.nativeEvent.contentOffset.y / 24))}
-          scrollEventThrottle={16}
-          scrollEnabled={!dragging}
-          data={displayedGroups}
-          keyExtractor={(group) => group.date}
-          contentContainerStyle={{
-            // Search results have no header above them: keep the first day off the search bar.
-            paddingTop: searching ? 14 : 0,
-            paddingBottom: theme.layout.tabScreenScrollPad + insets.bottom,
-          }}
-          // Variable-height days (line count, open stacks) rule out `getItemLayout`; standard fallback: if
-          // a jump lands past what's measured, retry once the list has laid out.
-          onScrollToIndexFailed={(info) => {
-            setTimeout(() => scrollRef.current?.scrollToIndex({ index: info.index, animated: true }), 250);
-          }}
-          ListHeaderComponent={
-            searching ? (
-              <SearchStatus
-                query={trimmedQuery}
-                minChars={SEARCH_MIN_CHARS}
-                loading={searchLoading}
-                resultCount={searchResults.length}
-              />
-            ) : (
-              <>
-                <ReanimatedAnimated.View style={periodSwipe.dragStyle} {...periodSwipe.panHandlers}>
-                  <TransactionsHeadline
-                    periodKey={`${viewScope}-${anchor.toDateString()}`}
-                    direction={direction}
-                    expenseMinor={headline?.current.expenseMinor ?? 0}
-                    incomeMinor={headline?.current.incomeMinor ?? 0}
-                    expenseChangeMinor={expenseChangeMinor}
-                    viewScope={viewScope}
-                    compareLabel={viewScope === 'week' ? weekCompareLabel(week, today) : undefined}
-                    onChangeViewScope={onChangeViewScope}
-                    bars={bars}
-                    legend={legend}
-                    onPressDay={onPressBar}
-                    selectedKey={selectedBar}
-                    current={atCurrent}
-                  />
-                </ReanimatedAnimated.View>
-
-                <ActivityFilterChips
-                  filterType={filterType}
-                  onFilterType={setFilterType}
-                  categoryIds={filterCategoryIds}
-                  accountIds={filterAccountIds}
-                  categoryName={categoryPathName}
-                  accountName={accountName}
-                  onRemoveCategory={(id) => setFilterCategoryIds((ids) => ids.filter((x) => x !== id))}
-                  onRemoveAccount={(id) => setFilterAccountIds((ids) => ids.filter((x) => x !== id))}
-                  onClearAll={() => {
-                    setFilterCategoryIds([]);
-                    setFilterAccountIds([]);
-                  }}
-                />
-
-                {/* The same Suu empty state as every other screen, not a bare line of grey text. */}
-                {accounts.length === 0 && (
-                  <EmptyState title="No accounts yet" subtitle="Add an account before recording entries." />
-                )}
-                {accounts.length > 0 && transactions.length > 0 && filteredTransactions.length === 0 && (
-                  <EmptyState title="Nothing matches" subtitle="Try removing a filter above." />
-                )}
-                {accounts.length > 0 && transactions.length === 0 && (
-                  <EmptyState
-                    title={viewScope === 'month' ? 'Nothing logged this month' : 'Nothing logged this week'}
-                    subtitle="Tap + to add an entry, or look at another period."
-                  />
-                )}
-              </>
-            )
-          }
-          renderItem={({ item: group, index: gi }) => (
-            <TimelineDay
-              date={group.date}
-              label={
-                group.date === today
-                  ? 'Today'
-                  : group.date === yesterday
-                    ? 'Yesterday'
-                    : searching
-                      ? dayMonth(group.date)
-                      : longWeekday(group.date)
-              }
-              dateLabel={searching && group.date !== today ? group.date.slice(0, 4) : dayMonth(group.date)}
-              items={group.items}
-              categories={categories}
-              accountName={accountName}
-              categoryName={categoryName}
-              onPressTx={setDetailTx}
-              savingsAccountIds={savingsAccountIds}
-              openStacks={openStacks}
-              onToggleStack={toggleStack}
-              onReorder={canReorder ? reorderDay : undefined}
-              onDragActive={setDragging}
-              entering={FadeIn.delay(Math.min(gi * 45, MAX_LIST_STAGGER_MS))
-                .duration(DURATIONS.enter)
-                .reduceMotion(ReduceMotion.System)}
-            />
-          )}
-        />
-        <Animated.View style={[styles.edgeFade, { opacity: edgeFade }]} pointerEvents="none">
-          <LinearGradient colors={EDGE_FADE} style={StyleSheet.absoluteFill} />
-        </Animated.View>
-      </View>
-
       <TransactionDetailModal
         tx={detailTx}
         accounts={accounts}
@@ -688,4 +718,3 @@ export default function TransactionsScreen() {
 }
 
 const SUBTITLE = 'Every entry, day by day';
-const EDGE_FADE = [`${theme.colors.background}F2`, `${theme.colors.background}00`] as const;
