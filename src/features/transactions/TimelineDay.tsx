@@ -198,7 +198,7 @@ export function TimelineDay({
             accessibilityLabel={`${categorySpoken(categoryName(tx.categoryId), parentNameOf(tx.categoryId, categoriesById))}${tx.note ? `, ${tx.note}` : ''}, ${money(tx.amountMinor, hidden(tx))}`}
           >
             <JustAddedGlow ids={[tx.id]} surface="activity" />
-            <CategoryIcon name={cat?.icon ?? 'tag'} color={cat?.color} size={18} square={40} />
+            <CategoryIcon name={cat?.icon ?? 'tag'} color={cat?.color} size={14} square={30} />
             <View style={styles.mid}>
               <Text style={styles.name} numberOfLines={1}>
                 {categoryName(tx.categoryId)}
@@ -239,7 +239,7 @@ export function TimelineDay({
         >
           {/* A new entry folded into this line glows the line. */}
           <JustAddedGlow ids={line.items.map((t) => t.id)} surface="activity" />
-          <CategoryIcon name={cat?.icon ?? 'tag'} color={cat?.color} size={18} square={40} />
+          <CategoryIcon name={cat?.icon ?? 'tag'} color={cat?.color} size={14} square={30} />
           <View style={styles.mid}>
             <View style={styles.stackMid}>
               <Text style={[styles.name, styles.stackName]} numberOfLines={1}>
@@ -340,7 +340,7 @@ export function TimelineDay({
           >
             <JustAddedGlow ids={[tx.id]} surface="activity" />
             <View style={styles.transferIcon}>
-              <Feather name="repeat" size={16} color={theme.colors.ink} />
+              <Feather name="repeat" size={13} color={theme.colors.ink} />
             </View>
             <View style={styles.mid}>
               <Text style={[styles.name, styles.transferName]} numberOfLines={1}>
@@ -361,23 +361,23 @@ export function TimelineDay({
 }
 
 const styles = StyleSheet.create({
-  day: { paddingHorizontal: 20, paddingBottom: 20 },
+  day: { paddingHorizontal: 20, paddingBottom: 16 },
   head: {
     flexDirection: 'row',
     alignItems: 'baseline',
     justifyContent: 'space-between',
     gap: 8,
     paddingHorizontal: 4,
-    marginBottom: 10,
+    marginBottom: 8,
   },
-  title: { flex: 1, fontFamily: theme.font.roundedBold, fontSize: 17, color: theme.colors.textPrimary },
-  date: { fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textMuted },
+  title: { flex: 1, fontFamily: theme.font.roundedBold, fontSize: 16, color: theme.colors.textPrimary },
+  date: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
   // Spending reads in ink with its minus sign; only money in is green.
-  total: { fontFamily: theme.font.monoBold, fontSize: 14, color: theme.colors.textPrimary },
+  total: { fontFamily: theme.font.monoBold, fontSize: 13, color: theme.colors.textPrimary },
   transferIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 13,
+    width: 30,
+    height: 30,
+    borderRadius: 30 * 0.32,
     backgroundColor: theme.colors.primaryTint,
     alignItems: 'center',
     justifyContent: 'center',
@@ -400,11 +400,11 @@ const styles = StyleSheet.create({
   line: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
+    gap: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
     // Every line has a name and a second line, so every line is this tall.
-    minHeight: 66,
+    minHeight: 52,
   },
   mid: { flex: 1, minWidth: 0 },
   stackMid: { flexDirection: 'row', alignItems: 'center', gap: 6 },
@@ -415,24 +415,24 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: theme.colors.surfaceAlt,
   },
-  name: { fontFamily: theme.font.bodyBold, fontSize: 15, color: theme.colors.textPrimary },
+  name: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textPrimary },
   stackName: { flexShrink: 1 },
-  sub: { fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textMuted, marginTop: 2 },
+  sub: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textMuted, marginTop: 1 },
   refund: { fontFamily: theme.font.bodyBold, color: theme.colors.incomeText },
-  amount: { fontFamily: theme.font.monoBold, fontSize: 15, color: theme.colors.textPrimary },
+  amount: { fontFamily: theme.font.monoBold, fontSize: 12.5, color: theme.colors.textPrimary },
   income: { color: theme.colors.incomeText },
   // An open stack's entries: the same card, dividers and text as every other
   // line, each with a dot in its category's colour under the stack's icon.
   subLine: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    // The dot centred under the stack's 40px icon: row padding + (40 − 8) / 2.
-    paddingLeft: 16 + 16,
-    paddingRight: 16,
-    paddingVertical: 10,
-    minHeight: 58,
+    gap: 10,
+    // The dot centred under the stack's 30px icon: row padding + (30 − 8) / 2.
+    paddingLeft: 14 + 11,
+    paddingRight: 14,
+    paddingVertical: 8,
+    minHeight: 48,
   },
   // Ends where the icon ends, so the text lines up with the lines above.
-  subDot: { width: 8, height: 8, borderRadius: 4, marginRight: 16 },
+  subDot: { width: 8, height: 8, borderRadius: 4, marginRight: 11 },
 });

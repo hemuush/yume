@@ -186,7 +186,8 @@ export default function ReportsScreen() {
   const [catExpanded, setCatExpanded] = useState(false);
 
   // The header shrinks as the report scrolls; the summary and tabs scroll with it.
-  const { collapse, headerHeight, scrollHandler, scrollRef, resetScroll } = useCollapsingHeader();
+  const { collapse, headerHeight, collapsedHeight, scrollHandler, scrollRef, resetScroll } =
+    useCollapsingHeader();
 
   // Only the most recent load may write state — stepping periods quickly
   // starts overlapping loads, and an earlier one can finish last.
@@ -543,6 +544,8 @@ export default function ReportsScreen() {
         ref={scrollRef}
         onScroll={scrollHandler}
         scrollEventThrottle={16}
+        // The tabs (second child) stick under the shrunk header.
+        stickyHeaderIndices={hasData ? [1] : undefined}
         contentContainerStyle={{
           paddingTop: headerHeight,
           paddingHorizontal: 20,
@@ -562,6 +565,15 @@ export default function ReportsScreen() {
               countedDays={facts.countedDays}
               laterMinor={facts.laterMinor}
             />
+          </View>
+        )}
+        {hasData && (
+          // Stuck at the top of the list, which sits under the header: the padding (as tall as the shrunk header,
+          // and pulled up by as much in place) keeps the tabs just below it.
+          <View
+            style={[styles.stickyTabs, { paddingTop: collapsedHeight, marginTop: -collapsedHeight }]}
+            pointerEvents="box-none"
+          >
             <View style={styles.tabs}>
               <SegmentedControl options={TAB_OPTIONS} value={tab} onChange={setTab} />
             </View>
