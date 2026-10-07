@@ -95,7 +95,7 @@ export function StoryCards({
                 ) : (
                   <>
                     <Text style={styles.storyKicker}>
-                      {String(i + 1).padStart(2, '0')} · {c.kicker.toUpperCase()}
+                      {String(i + 1).padStart(2, '0')} · {c.kicker}
                     </Text>
                     {c.moonFraction != null ? (
                       <View style={styles.storyMoonRow}>

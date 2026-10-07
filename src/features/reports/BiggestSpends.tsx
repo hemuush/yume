@@ -5,7 +5,6 @@ import { CategoryIcon } from '@/components/CategoryIcon';
 import { parseLocalIsoDate } from '@/lib/date';
 import { inParent, joinSub, parentNameOf } from '@/lib/categoryLabel';
 import { withPressed } from '@/lib/pressed';
-import { theme } from '@/constants/theme';
 import type { LargestExpense } from '@/db/reports';
 import type { Category } from '@/types';
 import { styles } from './reports.styles';
@@ -78,7 +77,7 @@ export function BiggestSpends({
                   {sub}
                 </Text>
               </View>
-              <Text style={[styles.dayAmt, { color: theme.colors.expenseText }]}>
+              <Text style={styles.dayAmt}>
                 −<Amount minor={e.amountMinor} sensitive={cat?.isSensitive} />
               </Text>
             </Pressable>
