@@ -37,6 +37,24 @@ export function emiCopy(loans: { counterparty: string; emiMinor: number }[]): No
   };
 }
 
+/** EMIs still unpaid after their due day, as one entry. `dueLabel` words a due date ("3 Oct"). */
+export function emiOverdueCopy(
+  loans: { counterparty: string; emiMinor: number; dueDate: string }[],
+  dueLabel: (iso: string) => string
+): NotificationText {
+  const total = formatMoney(loans.reduce((sum, l) => sum + l.emiMinor, 0));
+  const body =
+    loans.length === 1
+      ? `${loans[0].counterparty} · ${total} · was due ${dueLabel(loans[0].dueDate)}`
+      : `${loans.map((l) => l.counterparty).join(', ')} · ${total}`;
+  return {
+    title: loans.length === 1 ? 'EMI overdue' : `${loans.length} EMIs overdue`,
+    body,
+    extra:
+      loans.length === 1 ? `${loans[0].counterparty} EMI is overdue` : `${loans.length} EMIs are overdue`,
+  };
+}
+
 /** A budget passing 80% of its limit ('near'), or going over it. */
 export function budgetAlertCopy(
   level: 'near' | 'over',

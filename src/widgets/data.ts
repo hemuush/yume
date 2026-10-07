@@ -1,6 +1,12 @@
 import { categorySentence, parentNameOf } from '@/lib/categoryLabel';
 import { listAccounts, listCategories, listMostUsedExpenseCategories } from '@/db/ledger';
-import { getRangeComparison, findTopGrowingCategory, getMonthPaceInputs } from '@/db/reports';
+import {
+  getRangeComparison,
+  findTopGrowingCategory,
+  getMonthPaceInputs,
+  getCarryInMinor,
+  getStillToPayThisMonth,
+} from '@/db/reports';
 import { getNextDueInstallment } from '@/db/loans';
 import { listRecurringRules } from '@/db/recurring';
 import { getAccentColor, getThemeId, getHideSensitiveAmounts } from '@/db/settings';
@@ -8,6 +14,7 @@ import { formatMaskableMoney, formatMoney } from '@/lib/money';
 import { resolveActiveTheme } from '@/theme/themes';
 import { CURRENT_PERIOD, periodRange, previousPeriodRange } from '@/lib/period';
 import { roundedMinor } from '@/lib/round';
+import { privateComparison } from '@/lib/privateSummary';
 import { savingsRatePct } from '@/lib/savingsRate';
 import { dueDateLabel } from '@/lib/dueDate';
 import { accountIcon } from '@/lib/account';
@@ -67,7 +74,7 @@ export interface ThisMonthWidgetData {
   savedMinor: number;
   /** "Hide savings & investment amounts" is on: no Saved tile, no savings arc. */
   hideSavings: boolean;
-  /** Income − spent − moved to savings; negative when more went out than came in. */
+  /** Home's "after bills": carried over + income − spent − moved to savings − bills still due; can be negative. */
   freeMinor: number;
   slices: HeroSlices;
   /** Home's "On pace for about … by …" line, from the 5th on. */
@@ -79,12 +86,22 @@ export interface ThisMonthWidgetData {
 /** Home's month card, for today's month: the same figures ThisMonthHero shows. */
 export async function getThisMonthWidgetData(now: Date = new Date()): Promise<ThisMonthWidgetData> {
   const today = toLocalIsoDate(now);
-  const [cmp, theme, paceIn, hideSavings] = await Promise.all([
+  const [rawCmp, theme, paceIn, hideSavings] = await Promise.all([
     getMonthComparisonOnce(now),
     getActiveThemeOnce(),
     getMonthPaceInputs(today),
     getHideSensitiveAmounts(),
   ]);
+  // What earlier months left over, and bills still due this month: Home's card counts both, so the widget does.
+  const [carryRaw, dueRaw] = await Promise.all([
+    getCarryInMinor(periodRange(CURRENT_PERIOD, now).start, hideSavings),
+    getStillToPayThisMonth(today),
+  ]);
+  const carryMinor = roundedMinor(carryRaw);
+  const dueMinor = roundedMinor(dueRaw);
+  // As on Home: with savings hidden, spending in savings/investment categories leaves the figures, or the
+  // widget's Spent would differ from Home's by exactly the hidden amount.
+  const cmp = privateComparison(rawCmp, hideSavings);
   const incomeMinor = roundedMinor(cmp.current.incomeMinor);
   const spentMinor = roundedMinor(cmp.current.expenseMinor);
   const savedMinor = roundedMinor(cmp.current.savingsContributionMinor ?? 0);
@@ -96,10 +113,11 @@ export async function getThisMonthWidgetData(now: Date = new Date()): Promise<Th
     spentMinor,
     savedMinor: hideSavings ? 0 : savedMinor,
     hideSavings,
-    freeMinor: incomeMinor - spentMinor - savedMinor,
+    // Home's "after bills": what's free to use (carried over + income − spent − saved) less bills still due.
+    freeMinor: carryMinor + incomeMinor - spentMinor - savedMinor - dueMinor,
     slices: hideSavings
-      ? withoutSavings(heroSlices(incomeMinor, spentMinor, savedMinor))
-      : heroSlices(incomeMinor, spentMinor, savedMinor),
+      ? withoutSavings(heroSlices(incomeMinor + Math.max(0, carryMinor), spentMinor, savedMinor, dueMinor))
+      : heroSlices(incomeMinor + Math.max(0, carryMinor), spentMinor, savedMinor, dueMinor),
     pace:
       paceMinor != null
         ? {
@@ -151,11 +169,12 @@ export interface SuuWidgetData {
 }
 
 export async function getSuuWidgetData(now: Date = new Date()): Promise<SuuWidgetData> {
-  const [cmp, theme, hideSavings] = await Promise.all([
+  const [rawCmp, theme, hideSavings] = await Promise.all([
     getMonthComparisonOnce(now),
     getActiveThemeOnce(),
     getHideSensitiveAmounts(),
   ]);
+  const cmp = privateComparison(rawCmp, hideSavings);
   const incomeMinor = roundedMinor(cmp.current.incomeMinor);
   const expenseMinor = roundedMinor(cmp.current.expenseMinor);
   const savingsPct = savingsRatePct(incomeMinor - expenseMinor, incomeMinor);

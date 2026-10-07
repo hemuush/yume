@@ -210,6 +210,42 @@ describe('buildExportWorkbook', () => {
     expect(rows.some((r) => r[1] === 'Zomato')).toBe(false);
   });
 
+  it('takes a refund off its spending category in the Categories sheet, as Reports does', () => {
+    const wb = buildExportWorkbook({
+      ...data,
+      transactions: [
+        ...data.transactions,
+        transaction({ id: 'tx-r', type: 'income', isRefund: true, categoryId: 'cat-2', amountMinor: 15000 }),
+      ],
+    });
+    const rows = XLSX.utils.sheet_to_json<any[]>(wb.Sheets['Categories'], { header: 1 });
+    const foodRow = rows.find((r) => r[1] === 'Food & Dining');
+    // 300 + 450 spent, 150 back: 600 across the two entries (the refund isn't an entry of its own).
+    expect(foodRow!.slice(2)).toEqual(['expense', 600, 2]);
+  });
+
+  it('adds up only the default currency in the totals, while still listing every entry', () => {
+    const wb = buildExportWorkbook({
+      ...data,
+      accounts: [
+        ...data.accounts,
+        account({ id: 'usd', name: 'Chase', currency: 'USD', currentBalanceMinor: 99900 }),
+      ],
+      transactions: [
+        ...data.transactions,
+        transaction({ id: 'tx-usd', accountId: 'usd', categoryId: 'cat-1', amountMinor: 70000 }),
+      ],
+    });
+    const cats = XLSX.utils.sheet_to_json<any[]>(wb.Sheets['Categories'], { header: 1 });
+    expect(cats.find((r) => r[1] === 'Food & Dining')![3]).toBe(750);
+    const summary = XLSX.utils.sheet_to_json<any[]>(wb.Sheets['Summary'], { header: 1 });
+    const flat = summary.flat();
+    expect(flat).toContain(750); // Total expense, INR only
+    expect(flat).toContain(4800); // Combined balance: 5,000 − 200, not counting the USD account
+    const txs = XLSX.utils.sheet_to_json<any[]>(wb.Sheets['Transactions'], { header: 1 });
+    expect(txs.some((r) => r[2] === 'Chase')).toBe(true);
+  });
+
   it('the Transactions total row is a SUBTOTAL formula, not a hardcoded value', () => {
     const wb = buildExportWorkbook(data);
     const ws = wb.Sheets['Transactions'];

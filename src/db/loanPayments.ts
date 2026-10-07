@@ -5,7 +5,7 @@ import { assertSpendableAccount } from './ledger';
 import { calculateEmi, recalculateAfterPrepayment } from '@/lib/loan';
 import { formatMoney } from '@/lib/money';
 
-import { scheduleAnchor, feeCategoryId } from './loanRows';
+import { scheduleAnchor } from './loanRows';
 import { rebuildNotificationsAfterCommit } from './afterCommit';
 import { rateProblem } from '@/lib/loanLimits';
 
@@ -109,8 +109,15 @@ export async function applyRateChange(
     const anchor = await scheduleAnchor(tx, loanId, nextInstallmentNumber, opts.effectiveDate);
 
     // The EMI to amortize against: the old EMI in keepEmi mode, or one solved to close out in exactly the
-    // remaining installments in keepTenure mode.
-    const remainingMonths = loan.tenure_months - (nextInstallmentNumber - 1);
+    // remaining installments in keepTenure mode. "Remaining" is what's on the schedule now, not the original
+    // tenure: a prepayment or earlier change may have moved the payoff, and keepTenure keeps today's.
+    const pendingRows = await tx.getFirstAsync<{ n: number; last: number | null }>(
+      `SELECT COUNT(*) AS n, MAX(installment_number) AS last FROM loan_payments
+       WHERE loan_id = ? AND status = 'pending'`,
+      [loanId]
+    );
+    const remainingMonths = pendingRows?.n ?? 0;
+    const lastPendingInstallment = pendingRows?.last ?? nextInstallmentNumber + remainingMonths - 1;
     if (mode === 'keepTenure' && remainingMonths <= 0) {
       throw new Error('This loan has no remaining installments to recalculate a tenure-preserving EMI over.');
     }
@@ -131,7 +138,7 @@ export async function applyRateChange(
             anchorInstallmentNumber: anchor.anchorInstallmentNumber,
             // keepTenure promises a fixed payoff date: the EMI is paisa-rounded, so the last installment
             // absorbs the leftover rounding instead of spilling into a phantom extra one.
-            lastInstallmentNumber: mode === 'keepTenure' ? loan.tenure_months : undefined,
+            lastInstallmentNumber: mode === 'keepTenure' ? lastPendingInstallment : undefined,
           })
         : [];
 
@@ -233,16 +240,56 @@ export async function undoInstallmentPayment(loanPaymentId: string): Promise<voi
         "Undo the most recently paid installment first — earlier ones can't be undone out of order."
       );
     }
-    // Restore the balance this installment was amortized against (`outstanding_after = balance − principal`).
-    // The previous row's outstanding_after is wrong once a prepayment sits between: it predates it.
-    const restoredOutstanding = current.outstanding_after_minor + current.principal_component_minor;
+    const loanNow = await tx.getFirstAsync<LoanRow>('SELECT * FROM loans WHERE id = ?', [current.loan_id]);
+    if (!loanNow) throw new Error('Loan not found');
+    // Undoing a payment puts its principal back on what's owed now. Not this row's own "balance before": a
+    // prepayment made after this EMI has lowered the balance since, and that prepayment still stands.
+    const restoredOutstanding = loanNow.outstanding_principal_minor + current.principal_component_minor;
+    // The balance moved since this EMI (a prepayment): the pending schedule was rebuilt from the lower
+    // balance, so it's rebuilt again from this installment on, against the restored balance.
+    const balanceMovedSince = loanNow.outstanding_principal_minor !== current.outstanding_after_minor;
     if (current.transaction_id) {
       await tx.runAsync('DELETE FROM transactions WHERE id = ?', [current.transaction_id]);
     }
-    await tx.runAsync(
-      `UPDATE loan_payments SET status = 'pending', paid_date = NULL, transaction_id = NULL WHERE id = ?`,
-      [loanPaymentId]
-    );
+    if (balanceMovedSince) {
+      const anchor = await scheduleAnchor(tx, current.loan_id, current.installment_number, current.due_date);
+      const newSchedule = recalculateAfterPrepayment({
+        loanId: current.loan_id,
+        outstandingPrincipalMinor: restoredOutstanding,
+        annualRateBp: loanNow.interest_rate_annual_bp,
+        emiAmountMinor: loanNow.emi_amount_minor,
+        fromInstallmentNumber: current.installment_number,
+        fromDate: anchor.fromDate,
+        anchorInstallmentNumber: anchor.anchorInstallmentNumber,
+      });
+      await tx.runAsync(`DELETE FROM loan_payments WHERE loan_id = ? AND (status = 'pending' OR id = ?)`, [
+        current.loan_id,
+        loanPaymentId,
+      ]);
+      for (const inst of newSchedule) {
+        await tx.runAsync(
+          `INSERT INTO loan_payments
+            (id, loan_id, installment_number, due_date, emi_amount_minor,
+             principal_component_minor, interest_component_minor, outstanding_after_minor, status)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
+          [
+            inst.id,
+            inst.loanId,
+            inst.installmentNumber,
+            inst.dueDate,
+            inst.emiAmountMinor,
+            inst.principalComponentMinor,
+            inst.interestComponentMinor,
+            inst.outstandingAfterMinor,
+          ]
+        );
+      }
+    } else {
+      await tx.runAsync(
+        `UPDATE loan_payments SET status = 'pending', paid_date = NULL, transaction_id = NULL WHERE id = ?`,
+        [loanPaymentId]
+      );
+    }
     await tx.runAsync(`UPDATE loans SET outstanding_principal_minor = ?, status = 'active' WHERE id = ?`, [
       restoredOutstanding,
       current.loan_id,
@@ -253,7 +300,8 @@ export async function undoInstallmentPayment(loanPaymentId: string): Promise<voi
 
 /**
  * Applies a lump-sum prepayment: cuts principal, regenerates the schedule (EMI fixed, tenure shrinks).
- * `chargeAmountMinor`: caller-supplied fee (RBI bars it on floating loans), a separate expense, not principal.
+ * `chargeAmountMinor`: caller-supplied charge (RBI bars it on floating loans), its own entry, not principal:
+ * an expense when you borrowed, income when you lent.
  */
 export interface PrepaymentSummary {
   interestSavedMinor: number;
@@ -378,16 +426,10 @@ export async function applyPrepayment(
   const db = await getDb();
   const loan = await db.getFirstAsync<LoanRow>('SELECT * FROM loans WHERE id = ?', [loanId]);
   if (!loan) throw new Error('Loan not found');
+  // Money moves the same way for the prepayment and its charge: out of your account when you borrowed, into
+  // it when you lent (the borrower pays you the charge). Both go under the loan's own category, Loan EMI or
+  // Loan Repayment, so one check covers both.
   await assertSpendableAccount(loan.direction === 'borrowed' ? 'expense' : 'income', opts.accountId);
-  if (opts.chargeAmountMinor) {
-    // Always posts as its own 'expense' row regardless of direction — see
-    // the identical note above the insert below.
-    await assertSpendableAccount('expense', opts.accountId);
-  }
-  // The charge is an expense, so it needs an expense category: a borrowed loan's categoryId already is one
-  // (Loan EMI); a lent loan's is INCOME, so it uses the fee category instead.
-  const chargeCategoryId =
-    loan.direction === 'borrowed' || !opts.chargeAmountMinor ? opts.categoryId : await feeCategoryId(db);
   // The UI already blocks this, but nothing else guards it: an over-prepayment would record more cash than
   // the loan needed, with the excess untracked.
   if (opts.amountMinor > loan.outstanding_principal_minor) {
@@ -431,15 +473,17 @@ export async function applyPrepayment(
       ]
     );
     if (chargeAmountMinor > 0) {
-      // A real fee is always a cash outflow from the account whatever the loan direction: always 'expense',
-      // never touches the loan schedule.
+      // Its own entry, apart from the principal, never touching the schedule: what you pay when you borrowed,
+      // what the borrower pays you when you lent. (The note keeps its "Prepayment charge —" prefix, which
+      // BACKFILL_LOAN_TX_KIND_SQL reads.)
       await tx.runAsync(
         `INSERT INTO transactions (id, type, account_id, category_id, amount_minor, date, note, loan_id, loan_tx_kind)
-         VALUES (?, 'expense', ?, ?, ?, ?, ?, ?, 'prepayment_charge')`,
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'prepayment_charge')`,
         [
           newId(),
+          loan.direction === 'borrowed' ? 'expense' : 'income',
           opts.accountId,
-          chargeCategoryId,
+          opts.categoryId,
           chargeAmountMinor,
           opts.date,
           `Prepayment charge — ${loan.counterparty}`,

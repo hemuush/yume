@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, ReactNode } from 'react';
 import { getAppLockEnabled, setAppLockEnabled } from '@/db/settings';
+import { onSettingsRestored } from '@/lib/dataEvents';
 
 interface AppLockContextValue {
   lockEnabled: boolean;
@@ -21,9 +22,13 @@ export function AppLockProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     // A rejection already left state at its initial `false`; this only avoids the unhandled-promise-rejection
     // and doesn't change that fallback.
-    getAppLockEnabled()
-      .then(setLockEnabledState)
-      .catch(() => {});
+    const read = () =>
+      getAppLockEnabled()
+        .then(setLockEnabledState)
+        .catch(() => {});
+    void read();
+    // A restore can bring the lock preference back (a new phone takes the backup's).
+    return onSettingsRestored(() => void read());
   }, []);
 
   const setLockEnabled = useCallback((enabled: boolean) => {

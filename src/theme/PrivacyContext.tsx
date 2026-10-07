@@ -13,6 +13,7 @@ import {
   setHideSensitiveAmounts,
   getCachedHideSensitiveAmounts,
 } from '@/db/settings';
+import { onSettingsRestored } from '@/lib/dataEvents';
 
 interface PrivacyContextValue {
   hideAmounts: boolean;
@@ -42,9 +43,13 @@ export function PrivacyProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     // Same reasoning as AccentContext: falls back to the cached default
     // already seeded above rather than leaving an unhandled rejection.
-    getHideSensitiveAmounts()
-      .then(apply)
-      .catch(() => {});
+    const read = () =>
+      getHideSensitiveAmounts()
+        .then(apply)
+        .catch(() => {});
+    void read();
+    // A restore brings back the backup's setting.
+    return onSettingsRestored(() => void read());
   }, [apply]);
 
   const toggleHideAmounts = useCallback(() => {

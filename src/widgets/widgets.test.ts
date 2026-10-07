@@ -23,7 +23,14 @@ import { SuuWidget } from './SuuWidget';
 import { NextDueWidget } from './NextDueWidget';
 import { AccountsWidget } from './AccountsWidget';
 
-const COLORS = { spent: '#FFC9B3', saved: '#8FE8C8', free: '#8FCBFF', track: '#F3ECE0', face: '#FBF3DA' };
+const COLORS = {
+  spent: '#FFC9B3',
+  saved: '#8FE8C8',
+  due: '#E0AC3F',
+  free: '#8FCBFF',
+  track: '#F3ECE0',
+  face: '#FBF3DA',
+};
 const arcs = (svg: string) => svg.match(/stroke-dasharray="[^"]+"/g) ?? [];
 
 describe('ringSvg', () => {
@@ -34,6 +41,15 @@ describe('ringSvg', () => {
     expect(svg).toContain(`stroke="${COLORS.saved}"`);
     expect(svg).toContain(`stroke="${COLORS.free}"`);
     expect(svg).toContain('stroke-dashoffset="0.00"');
+  });
+
+  it("draws bills still due as their own slice, between saved and free, as Home's ring does", () => {
+    const svg = ringSvg(heroSlices(100000, 50000, 20000, 10000), COLORS, 92);
+    expect(arcs(svg)).toHaveLength(4);
+    const order = [COLORS.spent, COLORS.saved, COLORS.due, COLORS.free].map((c) =>
+      svg.indexOf(`stroke="${c}"`)
+    );
+    expect([...order].sort((a, b) => a - b)).toEqual(order);
   });
 
   it('draws only the track and face with no income', () => {

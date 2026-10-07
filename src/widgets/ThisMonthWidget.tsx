@@ -40,6 +40,7 @@ export function ThisMonthWidget(data: ThisMonthWidgetData) {
     {
       spent: widgetColor.spentSoft,
       saved: secondary,
+      due: widgetColor.idGoldDeep,
       free: primary,
       track: widgetColor.surfaceAlt,
       face: widgetColor.moonFace,

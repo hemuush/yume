@@ -219,17 +219,12 @@ export function TimelineDay({
         </MovingRow>
       );
     }
-    // A stack (one category, several entries) or a split (one payment, several
-    // categories): one line that opens in place to show what's inside.
-    const isSplit = line.kind === 'split';
-    const cat = !isSplit && line.categoryId ? categoriesById.get(line.categoryId) : undefined;
+    // A stack (one category, several entries): one line that opens in place to show what's inside.
+    const cat = line.categoryId ? categoriesById.get(line.categoryId) : undefined;
     const open = openStacks.has(line.key);
     const first = line.items[0];
-    const name = isSplit
-      ? `Split · ${line.items.length} categories`
-      : categoryName(line.kind === 'stack' ? line.categoryId : null);
-    const stackParent = line.kind === 'stack' ? parentNameOf(line.categoryId, categoriesById) : undefined;
-    const type = isSplit ? 'expense' : line.type;
+    const name = categoryName(line.categoryId);
+    const stackParent = parentNameOf(line.categoryId, categoriesById);
     const lineMasked = line.items.some(hidden);
     // A stack from one account names it, like a single entry does; from several, just the count.
     const sameAccount = line.items.every((t) => t.accountId === first.accountId);
@@ -244,15 +239,11 @@ export function TimelineDay({
           style={withPressed(styles.line)}
           accessibilityRole="button"
           accessibilityState={{ expanded: open }}
-          accessibilityLabel={`${categorySpoken(name, stackParent)}, ${isSplit ? 'one payment' : `${line.items.length} entries`}, ${money(line.totalMinor, lineMasked)}. ${open ? 'Close' : 'Open'}`}
+          accessibilityLabel={`${categorySpoken(name, stackParent)}, ${line.items.length} entries, ${money(line.totalMinor, lineMasked)}. ${open ? 'Close' : 'Open'}`}
         >
           {/* A new entry folded into this line glows the line. */}
           <JustAddedGlow ids={line.items.map((t) => t.id)} surface="activity" />
-          {isSplit ? (
-            <CategoryIcon name="call-split" color={theme.colors.secondary} size={14} square={30} />
-          ) : (
-            <CategoryIcon name={cat?.icon ?? 'tag'} color={cat?.color} size={14} square={30} />
-          )}
+          <CategoryIcon name={cat?.icon ?? 'tag'} color={cat?.color} size={14} square={30} />
           <View style={styles.mid}>
             <View style={styles.stackMid}>
               <Text style={[styles.name, styles.stackName]} numberOfLines={1}>
@@ -261,39 +252,31 @@ export function TimelineDay({
               <Feather name={open ? 'chevron-up' : 'chevron-down'} size={13} color={theme.colors.textMuted} />
             </View>
             <Text style={styles.sub} numberOfLines={1}>
-              {isSplit
-                ? `${first.note ? `${first.note} · ` : ''}${accountName(first.accountId)}`
-                : joinSub([
-                    inParent(stackParent),
-                    `${line.items.length} entries`,
-                    sameAccount && accountName(first.accountId),
-                  ])}
+              {joinSub([
+                inParent(stackParent),
+                `${line.items.length} entries`,
+                sameAccount && accountName(first.accountId),
+              ])}
             </Text>
           </View>
-          <Amount type={type} minor={line.totalMinor} masked={lineMasked} />
+          <Amount type={line.type} minor={line.totalMinor} masked={lineMasked} />
         </Pressable>
         {open && (
           <View>
             {line.items.map((tx) => {
-              // A split's part: category, account under it. A stack's entry (category already named above):
-              // note over account, or just the account with no note.
-              const partCat = isSplit ? categoriesById.get(tx.categoryId ?? '') : cat;
-              const label = isSplit ? categoryName(tx.categoryId) : tx.note || accountName(tx.accountId);
-              const sub = isSplit
-                ? joinSub([parentLine(tx.categoryId), tx.note, accountName(tx.accountId)])
-                : tx.note
-                  ? accountName(tx.accountId)
-                  : null;
+              // The category is already named above: note over account, or just the account with no note.
+              const label = tx.note || accountName(tx.accountId);
+              const sub = tx.note ? accountName(tx.accountId) : null;
               return (
                 <MovingRow key={tx.id} style={styles.divider}>
                   <Pressable
                     onPress={() => onPressTx(tx)}
                     style={withPressed(styles.subLine)}
                     accessibilityRole="button"
-                    accessibilityLabel={`${isSplit ? categorySpoken(label, parentNameOf(tx.categoryId, categoriesById)) : categorySpoken(name, stackParent)}${!isSplit && tx.note ? `, ${tx.note}` : ''}, ${money(tx.amountMinor, hidden(tx))}`}
+                    accessibilityLabel={`${categorySpoken(name, stackParent)}${tx.note ? `, ${tx.note}` : ''}, ${money(tx.amountMinor, hidden(tx))}`}
                   >
                     <View
-                      style={[styles.subDot, { backgroundColor: partCat?.color ?? theme.colors.borderSoft }]}
+                      style={[styles.subDot, { backgroundColor: cat?.color ?? theme.colors.borderSoft }]}
                     />
                     <View style={styles.mid}>
                       <Text style={styles.name} numberOfLines={1}>

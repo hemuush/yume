@@ -57,8 +57,9 @@ export function CountUpAmount({ minor, currency, countFromZero = true, symbolSty
       duration: DURATIONS.count,
       easing: Easing.out(Easing.cubic),
       useNativeDriver: false,
-    }).start(() => {
-      setDisplay(minor);
+    }).start(({ finished }) => {
+      // An animation cut short by a newer value (setValue stops it) must not snap back to its own target.
+      if (finished) setDisplay(minor);
     });
     return () => t.removeListener(id);
     // countFromZero only matters on the first run.

@@ -26,7 +26,14 @@ const TAX_ON_FEE_PRESETS: Record<string, { label: string; percent: number }> = {
 };
 
 /** The before-you-confirm version of PrepaymentReveal: the same three numbers, as plain rows. */
-function PrepaymentPreview({ preview }: { preview: PrepaymentSummary & { neverPaysOff: boolean } }) {
+function PrepaymentPreview({
+  preview,
+  lent,
+}: {
+  preview: PrepaymentSummary & { neverPaysOff: boolean };
+  /** A loan you gave: the borrower prepays, and the interest is yours to stop receiving. */
+  lent: boolean;
+}) {
   if (preview.neverPaysOff) {
     return (
       <Text style={styles.errorText}>
@@ -38,8 +45,14 @@ function PrepaymentPreview({ preview }: { preview: PrepaymentSummary & { neverPa
   const closes = preview.newRemainingCount === 0;
   return (
     <View style={previewStyles.card} accessibilityLabel="Prepayment preview">
-      <Text style={previewStyles.head}>If you prepay this today</Text>
-      <PreviewRow label="Interest saved" value={formatMoney(preview.interestSavedMinor)} strong />
+      <Text style={previewStyles.head}>
+        {lent ? 'If they prepay this today' : 'If you prepay this today'}
+      </Text>
+      <PreviewRow
+        label={lent ? "Interest you won't receive" : 'Interest saved'}
+        value={formatMoney(preview.interestSavedMinor)}
+        strong={!lent}
+      />
       <PreviewRow
         label="Loan ends"
         value={closes ? 'Closed today' : shortMonthYear(preview.newPayoffDate)}
@@ -93,7 +106,15 @@ const previewStyles = StyleSheet.create({
 // proportionally so "the tail shrinks" reads clearly whatever the loan's remaining length.
 const MAX_TICKS = 26;
 
-function PrepaymentReveal({ summary, onDone }: { summary: PrepaymentSummary; onDone: () => void }) {
+function PrepaymentReveal({
+  summary,
+  lent,
+  onDone,
+}: {
+  summary: PrepaymentSummary;
+  lent: boolean;
+  onDone: () => void;
+}) {
   const reduce = useReduceMotion();
   const [progress] = useState(() => new Animated.Value(reduce ? 1 : 0));
   const [glow] = useState(() => new Animated.Value(0));
@@ -152,7 +173,9 @@ function PrepaymentReveal({ summary, onDone }: { summary: PrepaymentSummary; onD
       >
         <Text style={revealStyles.saved}>
           {summary.interestSavedMinor > 0
-            ? `${formatMoney(summary.interestSavedMinor)} in interest saved`
+            ? lent
+              ? `${formatMoney(summary.interestSavedMinor)} less interest to come`
+              : `${formatMoney(summary.interestSavedMinor)} in interest saved`
             : closedOutright
               ? 'Loan closed'
               : 'Prepayment applied'}
@@ -209,6 +232,7 @@ export function PrepayModal({
   onClose: () => void;
   onDone: () => void;
 }) {
+  const lent = loan.direction === 'lent';
   const [amount, setAmount] = useState('');
   // No jurisdiction default is assumed: whether a prepayment charge applies, and how much, depends on the
   // loan agreement and local law, which Yume can't know. Starts blank; the hint below says what to check.
@@ -225,7 +249,11 @@ export function PrepayModal({
   // Rounded to a whole rupee like every other stored amount, so the "Charge +
   // amount = total debited" line the user sees actually adds up.
   const chargeMinor = roundedMinor(
-    Math.max(0, chargeBaseMinor + Math.round(chargeBaseMinor * (parseFloat(taxPercent || '0') / 100)))
+    // Tax on the charge is for a lender's fee you pay; a charge paid to you has no field for it.
+    Math.max(
+      0,
+      chargeBaseMinor + (lent ? 0 : Math.round(chargeBaseMinor * (parseFloat(taxPercent || '0') / 100)))
+    )
   );
   const taxPreset = TAX_ON_FEE_PRESETS[account.currency];
   // The balance is shown rounded to a whole rupee, so typing exactly what's shown may sit a few paise above
@@ -288,7 +316,7 @@ export function PrepayModal({
   if (result) {
     return (
       <ModalSheet visible onClose={onDone} variant="center" title="Prepayment applied">
-        <PrepaymentReveal summary={result} onDone={onDone} />
+        <PrepaymentReveal summary={result} lent={lent} onDone={onDone} />
       </ModalSheet>
     );
   }
@@ -298,32 +326,42 @@ export function PrepayModal({
       visible
       onClose={onClose}
       variant="center"
-      title="Make a prepayment"
+      title={lent ? 'Record a prepayment' : 'Make a prepayment'}
       footer={
         <View style={f.footerCol}>
           {error && <Text style={styles.errorText}>{error}</Text>}
-          <PrimaryButton title={saving ? 'Saving…' : 'Apply prepayment'} onPress={submit} disabled={saving} />
+          <PrimaryButton
+            title={saving ? 'Saving…' : lent ? 'Record prepayment' : 'Apply prepayment'}
+            onPress={submit}
+            disabled={saving}
+          />
         </View>
       }
     >
       <Text style={styles.cardSub}>
         Outstanding: {formatMoney(roundedMinor(loan.outstandingPrincipalMinor))}
       </Text>
-      <AmountField label="Amount" value={amount} onChangeText={setAmount} placeholder="0.00" />
+      <AmountField
+        label={lent ? 'Amount they paid' : 'Amount'}
+        value={amount}
+        onChangeText={setAmount}
+        placeholder="0.00"
+      />
       <Text style={styles.hintText}>EMI stays the same; the remaining tenure shortens.</Text>
-      {preview && <PrepaymentPreview preview={preview} />}
+      {preview && <PrepaymentPreview preview={preview} lent={lent} />}
 
       <AmountField
-        label="Prepayment charge, if any (%)"
+        label={lent ? 'Charge they paid you, if any (%)' : 'Prepayment charge, if any (%)'}
         value={chargePercent}
         onChangeText={setChargePercent}
         placeholder="0"
       />
       <Text style={styles.hintText}>
-        Whether this applies — and how much — depends on your loan's own terms and local rules on variable- vs
-        fixed-rate consumer loans; check your agreement or latest statement. Leave at 0% if none applies.
+        {lent
+          ? 'Only if your agreement with them asks for one. Leave at 0% if none applies.'
+          : "Whether this applies — and how much — depends on your loan's own terms and local rules on variable- vs fixed-rate consumer loans; check your agreement or latest statement. Leave at 0% if none applies."}
       </Text>
-      {parseFloat(chargePercent || '0') > 0 && (
+      {!lent && parseFloat(chargePercent || '0') > 0 && (
         <>
           <AmountField
             label="Tax on that charge, if any (%)"
@@ -344,8 +382,9 @@ export function PrepayModal({
       )}
       {chargeMinor > 0 && (
         <Text style={styles.hintText}>
-          Charge: {formatMoney(chargeMinor)} — recorded as its own expense, separate from the{' '}
-          {formatMoney(amountMinor)} going toward the loan itself. Total debited from {account.name}:{' '}
+          {lent
+            ? `Charge: ${formatMoney(chargeMinor)} — recorded as income, separate from the ${formatMoney(amountMinor)} coming back toward the loan itself. Total received in ${account.name}: `
+            : `Charge: ${formatMoney(chargeMinor)} — recorded as its own expense, separate from the ${formatMoney(amountMinor)} going toward the loan itself. Total debited from ${account.name}: `}
           {formatMoney(amountMinor + chargeMinor)}.
         </Text>
       )}

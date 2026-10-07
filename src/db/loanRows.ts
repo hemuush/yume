@@ -26,22 +26,6 @@ export async function scheduleAnchor(
   return { fromDate: nextPending?.due_date ?? fallbackDate, anchorInstallmentNumber: nextInstallmentNumber };
 }
 
-/**
- * Expense category for a lent loan's prepayment charge: system "Fees & Charges" (can't be renamed or
- * deleted), else the first active expense category.
- */
-export async function feeCategoryId(db: Awaited<ReturnType<typeof getDb>>): Promise<string> {
-  const row =
-    (await db.getFirstAsync<{ id: string }>(
-      `SELECT id FROM categories WHERE is_system = 1 AND kind = 'expense' AND name = 'Fees & Charges' LIMIT 1`
-    )) ??
-    (await db.getFirstAsync<{ id: string }>(
-      `SELECT id FROM categories WHERE kind = 'expense' AND archived = 0 ORDER BY sort_order ASC LIMIT 1`
-    ));
-  if (!row) throw new Error('No expense category available to file the prepayment charge under.');
-  return row.id;
-}
-
 export function rowToLoan(row: LoanRow & { next_due_date?: string | null }): Loan {
   return {
     id: row.id,

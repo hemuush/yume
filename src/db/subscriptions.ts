@@ -1,4 +1,5 @@
 import { getDb } from './client';
+import { sensitiveOf } from './spendSql';
 import { RecurringRule } from '@/types';
 import { toLocalIsoDate, addDaysToIsoDate, addMonthsToIsoDate } from '@/lib/date';
 
@@ -55,6 +56,8 @@ export interface SubscriptionSuggestion {
   source: 'subscriptions' | 'pattern';
   /** For a pattern: how many months in a row it's been seen. */
   months?: number;
+  /** Its category is flagged "hide savings & investment amounts" (an SIP, a savings deposit). */
+  isSensitive: boolean;
 }
 
 interface EntryRow {
@@ -67,6 +70,7 @@ interface EntryRow {
   amount_minor: number;
   date: string;
   note: string;
+  is_sensitive: number;
 }
 
 /** Categories that already have a running expense rule — never suggested again. */
@@ -92,6 +96,7 @@ const suggestionFrom = (e: EntryRow, source: SubscriptionSuggestion['source'], m
   note: e.note,
   source,
   ...(months ? { months } : {}),
+  isSensitive: !!e.is_sensitive,
 });
 
 /**
@@ -105,7 +110,8 @@ export async function findUnscheduledSubscriptions(
   const db = await getDb();
   const since = addDaysToIsoDate(today, -days + 1);
   const rows = await db.getAllAsync<EntryRow>(
-    `SELECT t.category_id, c.name AS category_name, p.name AS parent_name, c.icon, c.color, t.account_id, t.amount_minor, t.date, t.note
+    `SELECT t.category_id, c.name AS category_name, p.name AS parent_name, c.icon, c.color, t.account_id, t.amount_minor, t.date, t.note,
+       ${sensitiveOf('c')} AS is_sensitive
      FROM transactions t
      JOIN categories c ON c.id = t.category_id
      LEFT JOIN categories p ON p.id = c.parent_id
@@ -146,7 +152,8 @@ export async function findMonthlyPatterns(
   const db = await getDb();
   const since = addMonthsToIsoDate(today.slice(0, 7) + '-01', -6);
   const rows = await db.getAllAsync<EntryRow>(
-    `SELECT t.category_id, c.name AS category_name, p.name AS parent_name, c.icon, c.color, t.account_id, t.amount_minor, t.date, t.note
+    `SELECT t.category_id, c.name AS category_name, p.name AS parent_name, c.icon, c.color, t.account_id, t.amount_minor, t.date, t.note,
+       ${sensitiveOf('c')} AS is_sensitive
      FROM transactions t
      JOIN categories c ON c.id = t.category_id
      LEFT JOIN categories p ON p.id = c.parent_id

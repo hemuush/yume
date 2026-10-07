@@ -34,9 +34,13 @@ import {
   createCategory,
   createTransaction,
   deleteAccount,
+  restoreAccount,
+  updateAccount,
   deleteCategory,
   restoreCategory,
   updateCategory,
+  archiveCategory,
+  unarchiveCategory,
 } from '@/db/ledger';
 import { createLoan, getLoanSchedule, payInstallment, applyRateChange } from '@/db/loans';
 import { addValuation } from '@/db/valuations';
@@ -167,6 +171,30 @@ describe('Round off amounts', () => {
   });
 });
 
+describe('updateAccount to savings', () => {
+  it('refuses an account with spending on it, which a savings account could not hold', async () => {
+    const acct = (
+      await createAccount({ name: 'Daily', type: 'bank', currency: 'INR', openingBalanceMinor: 0 })
+    ).id;
+    await createTransaction({
+      type: 'expense',
+      accountId: acct,
+      categoryId: food,
+      amountMinor: 5000,
+      date: '2026-09-01',
+    });
+    await expect(
+      updateAccount(acct, { name: 'Daily', type: 'savings', openingBalanceMinor: 0 })
+    ).rejects.toThrow('only takes transfers');
+    // A plain rename keeps working.
+    await expect(
+      updateAccount(acct, { name: 'Daily spend', type: 'bank', openingBalanceMinor: 0 })
+    ).resolves.toMatchObject({
+      name: 'Daily spend',
+    });
+  });
+});
+
 describe('deleteAccount', () => {
   it('refuses an account a repeating rule still points at, instead of silently cascading the rule away', async () => {
     const acct = (
@@ -196,6 +224,47 @@ describe('deleteAccount', () => {
     expect(snapshot.table).toBe('accounts');
     expect(snapshot.row.id).toBe(acct);
     expect(await one('SELECT id FROM accounts WHERE id = ?', [acct])).toBeNull();
+  });
+
+  it('Undo puts back the links a loan and a goal had to the account', async () => {
+    const acct = (
+      await createAccount({ name: 'Linked', type: 'bank', currency: 'INR', openingBalanceMinor: 0 })
+    ).id;
+    const loan = await createLoan({
+      direction: 'borrowed',
+      counterparty: 'Linked Bank',
+      principalMinor: 100000,
+      interestRateAnnualBp: 900,
+      tenureMonths: 6,
+      startDate: '2026-01-01',
+      linkedAccountId: acct,
+    });
+    const goal = await createSavingsGoal({
+      name: 'Trip',
+      targetAmountMinor: 50000,
+      targetDate: null,
+      linkedAccountId: acct,
+    });
+    const snapshot = await deleteAccount(acct);
+    const linkOf = async (table: string, id: string) =>
+      (await one<{ a: string | null }>(`SELECT linked_account_id AS a FROM ${table} WHERE id = ?`, [id]))?.a;
+    expect(await linkOf('loans', loan.id)).toBeNull();
+    await restoreAccount(snapshot);
+    expect(await linkOf('loans', loan.id)).toBe(acct);
+    expect(await linkOf('savings_goals', goal.id)).toBe(acct);
+  });
+});
+
+describe('unarchiveCategory', () => {
+  it('brings a subcategory back with its archived parent, so it is reachable in pickers', async () => {
+    const parent = (await createCategory({ name: 'Hobbies', kind: 'expense' })).id;
+    const child = (await createCategory({ name: 'Guitar', kind: 'expense', parentId: parent })).id;
+    await archiveCategory(parent);
+    await unarchiveCategory(child);
+    const archivedOf = async (id: string) =>
+      (await one<{ archived: number }>('SELECT archived FROM categories WHERE id = ?', [id]))?.archived;
+    expect(await archivedOf(child)).toBe(0);
+    expect(await archivedOf(parent)).toBe(0);
   });
 });
 

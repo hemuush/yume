@@ -122,6 +122,27 @@ describe('planNotifications', () => {
       ).not.toContain('EMI due today');
     });
 
+    it('once missed, are reminded of each morning until a week after the due day', () => {
+      // Due Thursday 1 October; today is Saturday the 3rd.
+      const { notifications } = plan({ loans: [loan({ dueDate: '2026-10-01' })] });
+      const overdue = notifications.filter((n) => n.title === 'EMI overdue');
+      expect(overdue.map((n) => n.at)).toEqual([3, 4, 5, 6, 7, 8].map((d) => at(d, 9)));
+      expect(overdue[0].body).toMatch(/^Test Person Bank · ₹12,500 · was due /);
+      expect(overdue[0].route).toBe('/loans');
+    });
+
+    it('are not reminded of as overdue when bill alerts are off, or long after', () => {
+      expect(
+        plan({
+          prefs: { ...prefs, billAlerts: false },
+          loans: [loan({ dueDate: '2026-10-01' })],
+        }).notifications.map((n) => n.title)
+      ).not.toContain('EMI overdue');
+      expect(
+        plan({ loans: [loan({ dueDate: '2026-09-01' })] }).notifications.map((n) => n.title)
+      ).not.toContain('EMI overdue');
+    });
+
     it('are reminded of even beyond the two-week window', () => {
       const { notifications } = plan({ loans: [loan({ dueDate: '2026-11-20' })] });
       expect(find(notifications, new Date(2026, 10, 20, 9))).toMatchObject({ title: 'EMI due today' });

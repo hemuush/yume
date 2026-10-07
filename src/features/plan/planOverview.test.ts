@@ -138,6 +138,42 @@ describe('buildDueItems / buildDueSoon', () => {
     ]);
   });
 
+  it('lists every run of a weekly bill in the window, not only the next one, and stops at its end date', () => {
+    const weekly = buildDueItems(
+      [],
+      [
+        rule({
+          id: 'milk',
+          nextRunDate: '2026-10-01',
+          amountMinor: 50000,
+          frequency: 'weekly',
+          intervalCount: 1,
+        }),
+        rule({
+          id: 'gym',
+          nextRunDate: '2026-10-02',
+          amountMinor: 10000,
+          frequency: 'daily',
+          intervalCount: 2,
+          endDate: '2026-10-06',
+        }),
+      ],
+      [],
+      '2026-10-14'
+    );
+    expect(weekly.filter((i) => i.key.startsWith('rule-milk')).map((i) => i.dueDate)).toEqual([
+      '2026-10-01',
+      '2026-10-08',
+    ]);
+    expect(weekly.filter((i) => i.key.startsWith('rule-gym')).map((i) => i.dueDate)).toEqual([
+      '2026-10-02',
+      '2026-10-04',
+      '2026-10-06',
+    ]);
+    // A fortnight from the 1st: two milk runs and three gym visits.
+    expect(buildDueSoon(weekly, '2026-10-01').billMinor).toBe(2 * 50000 + 3 * 10000);
+  });
+
   it('counts only EMIs and bills due in the next 14 days (today included)', () => {
     expect(buildDueSoon(items, '2026-09-26')).toEqual({
       totalMinor: 2445000,

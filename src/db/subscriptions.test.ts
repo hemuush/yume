@@ -130,6 +130,18 @@ describe('suggestions', () => {
     expect(found.map((s) => [s.categoryName, s.months, s.amountMinor])).toEqual([['Wifi', 3, 72000]]);
   });
 
+  it('marks a charge in a savings or investment category, so hiding those amounts can leave it out', async () => {
+    const sip = (await createCategory({ name: 'Index SIP', kind: 'expense', isSensitive: true })).id;
+    await spend(sip, 1000000, '2026-07-10');
+    await spend(sip, 1000000, '2026-08-10');
+    await spend(sip, 1000000, '2026-09-10');
+    const found = await findMonthlyPatterns(TODAY);
+    expect(found.find((s) => s.categoryName === 'Index SIP')?.isSensitive).toBe(true);
+    expect(found.find((s) => s.categoryName === 'Wifi')?.isSensitive).toBe(false);
+    // The tests below expect only Wifi to look monthly.
+    await mockTestDb.runAsync('DELETE FROM transactions WHERE category_id = ?', [sip]);
+  });
+
   it('stops spotting a charge once it has a rule', async () => {
     await createRecurringRule({
       type: 'expense',

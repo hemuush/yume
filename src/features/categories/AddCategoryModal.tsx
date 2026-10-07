@@ -58,7 +58,8 @@ export function AddCategoryModal({
       setParentId(category?.parentId ?? null);
       setColor(category?.color ?? CATEGORY_COLOR_PALETTE[0]);
       setIcon(category?.icon ?? CATEGORY_ICON_CHOICES[0]);
-      setIsSensitive(category?.isSensitive ?? false);
+      // Its own flag: one inherited from a hidden parent shows below, but isn't this category's to switch.
+      setIsSensitive(category?.ownIsSensitive ?? category?.isSensitive ?? false);
       setError(null);
     }
   }
@@ -103,7 +104,10 @@ export function AddCategoryModal({
 
   // Calm-sheets layout: a card that takes on the picked colour and icon, then the form.
   // Archive/delete is a quiet link at the end, not a third footer button.
-  const parentName = allCategories.find((c) => c.id === parentId)?.name;
+  const parent = allCategories.find((c) => c.id === parentId);
+  const parentName = parent?.name;
+  // Under a parent marked sensitive, a subcategory is hidden with it (db/spendSql.ts sensitiveOf).
+  const hiddenWithParent = !!parent?.isSensitive;
   return (
     <ModalSheet
       visible={visible}
@@ -232,11 +236,16 @@ export function AddCategoryModal({
         <View style={{ flex: 1, marginRight: 10 }}>
           <Text style={styles.fieldLabel}>Treat as sensitive</Text>
           <Text style={styles.modalHint}>
-            When "Hide savings & investment amounts" is on (Settings, or the eye icon on any screen), this
-            category's amounts show masked wherever they appear.
+            {hiddenWithParent
+              ? `Hidden along with ${parentName}, which is marked sensitive. Change it there.`
+              : `When "Hide savings & investment amounts" is on (Settings, or the eye icon on any screen), this category's amounts show masked wherever they appear.`}
           </Text>
         </View>
-        <ToggleSwitch value={isSensitive} onChange={setIsSensitive} />
+        <ToggleSwitch
+          value={isSensitive || hiddenWithParent}
+          onChange={setIsSensitive}
+          disabled={hiddenWithParent}
+        />
       </View>
       {category && !category.isSystem && onManage && (
         <SheetLink label="Archive or delete" onPress={onManage} disabled={saving} />

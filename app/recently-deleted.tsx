@@ -28,6 +28,8 @@ import { dayMonth } from '@/lib/dateLabels';
 import { toLocalIsoDate } from '@/lib/date';
 import { Category, Account } from '@/types';
 import { showAlert } from '@/components/AppDialog';
+import { isSavingsEntry } from '@/lib/privateSummary';
+import { savingsAccountIdsOf } from '@/lib/account';
 
 /**
  * Entries deleted in the last 30 days, newest first, each with a Restore button that puts it back exactly
@@ -96,6 +98,20 @@ export default function RecentlyDeletedScreen() {
   };
 
   const categoryOf = (id: string | null) => (id ? categories.find((c) => c.id === id) : undefined);
+  // "Hide savings & investment amounts" covers a savings category and a transfer into or out of savings alike.
+  const categoriesById = useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories]);
+  const savingsIds = useMemo(() => savingsAccountIdsOf(accounts), [accounts]);
+  const isSavings = (entry: DeletedEntry) =>
+    isSavingsEntry(
+      {
+        type: entry.type,
+        accountId: entry.accountId,
+        toAccountId: entry.toAccountId,
+        categoryId: entry.categoryId,
+      },
+      categoriesById,
+      savingsIds
+    );
   const parentOf = (cat: Category | undefined) =>
     cat?.parentId ? categories.find((c) => c.id === cat.parentId)?.name : undefined;
 
@@ -164,7 +180,7 @@ export default function RecentlyDeletedScreen() {
                           ]}
                         >
                           {entry.type === 'expense' ? '−' : entry.type === 'income' ? '+' : ''}
-                          <Amount minor={entry.amountMinor} sensitive={cat?.isSensitive} />
+                          <Amount minor={entry.amountMinor} sensitive={isSavings(entry)} />
                         </Text>
                         {!entry.blockedReason && (
                           <Pressable

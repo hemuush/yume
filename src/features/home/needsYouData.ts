@@ -79,7 +79,8 @@ export async function loadNeedsYou(
       ? findTopGrowingCategory(comparison.current.categoryBreakdown, comparison.previous.categoryBreakdown)
       : null,
     tidyCount: tidy ? tidyUpCount(tidy) : 0,
-    monthlyPatterns: patterns,
+    // A savings or investment charge (an SIP) says its amount, so it stays out while those are hidden.
+    monthlyPatterns: hideSensitive ? patterns.filter((p) => !p.isSensitive) : patterns,
     cardBills: cardCycles,
     today: toLocalIsoDate(now),
     now,

@@ -13,6 +13,7 @@ import {
   PersonWithBalance,
 } from '@/db/people';
 import { listAccounts, listCategories } from '@/db/ledger';
+import { spendableAccountsOf } from '@/lib/account';
 import { listLoansForPerson } from '@/db/loans';
 import { formatMoney, toMinor } from '@/lib/money';
 import { roundedMinor, allocateRoundedMinor } from '@/lib/round';
@@ -85,7 +86,8 @@ export function PersonDetailModal({
       ]);
       if (ticket !== loadTicket.current) return;
       setLedger(led);
-      setAccounts(accs);
+      // Cash moving to or from a friend is income or spending, which a savings account can't take (as on Add).
+      setAccounts(spendableAccountsOf(accs));
       setCategories(cats);
       setLinkedLoans(loans);
       setLoadError(null);

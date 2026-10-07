@@ -26,7 +26,10 @@ jest.mock('@/features/home/NeedsYouRow', () => ({
 }));
 jest.mock('@/db/reports', () => ({ getPeriodComparison: async () => ({ expenseChangePct: null }) }));
 jest.mock('@/db/ledger', () => ({ listAccounts: async () => [] }));
-jest.mock('@/db/settings', () => ({ getNotificationPrefs: async () => ({ suuCheckins: false }) }));
+jest.mock('@/db/settings', () => ({
+  getNotificationPrefs: async () => ({ suuCheckins: false }),
+  getCachedHideSensitiveAmounts: () => false,
+}));
 const mockData = {
   loadNeedsYou: jest.fn(),
   dismissNeedsYou: jest.fn(),

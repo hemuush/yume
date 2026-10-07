@@ -1,4 +1,4 @@
-import { parseLocalIsoDate, toLocalIsoDate } from '@/lib/date';
+import { addDaysToIsoDate, parseLocalIsoDate, toLocalIsoDate } from '@/lib/date';
 import { formatMoney } from '@/lib/money';
 import { formatPctChange } from '@/lib/format';
 import type {
@@ -253,6 +253,12 @@ export function patternFacts(
 
   const facts: PatternFact[] = [];
   const total = spent.reduce((s, d) => s + d.totalMinor, 0);
+  // A custom range (a trip, the last 30 days) isn't "the month", and its first days aren't the 1st–8th.
+  const wholeMonth =
+    range.start.endsWith('-01') &&
+    addDaysToIsoDate(range.end, 1).endsWith('-01') &&
+    range.start.slice(0, 7) === range.end.slice(0, 7);
+  const span = wholeMonth ? 'the month' : 'the period';
 
   // 1 — heaviest day
   const heaviest = spent.reduce((a, b) => (b.totalMinor > a.totalMinor ? b : a));
@@ -264,22 +270,21 @@ export function patternFacts(
       key: 'heaviest',
       kicker: 'Heaviest day',
       big: day,
-      detail: `${formatMoney(heaviest.totalMinor)} went out — ${pct}% of the month in one day.`,
+      detail: `${formatMoney(heaviest.totalMinor)} went out — ${pct}% of ${span} in one day.`,
       date: heaviest.date,
     });
   }
 
   // 2 — front-loaded (bills week)
-  const firstWeek = spent
-    .filter((d) => parseLocalIsoDate(d.date).getDate() <= 8)
-    .reduce((s, d) => s + d.totalMinor, 0);
+  const eighthDay = addDaysToIsoDate(range.start, 7);
+  const firstWeek = spent.filter((d) => d.date <= eighthDay).reduce((s, d) => s + d.totalMinor, 0);
   if (total > 0 && firstWeek / total > 0.55) {
     const pct = Math.round((firstWeek / total) * 100);
     facts.push({
       key: 'frontLoaded',
       kicker: 'Front-loaded',
       big: `${pct}% in 8 days`,
-      detail: 'Most of the month went out in its first eight days.',
+      detail: `Most of ${span} went out in its first eight days.`,
     });
   }
 
@@ -320,9 +325,11 @@ export function patternFacts(
     }
   }
 
-  // 4 — quiet stretch (fallback so there's usually at least one read)
+  // 4 — quiet stretch (fallback so there's usually at least one read). Only days so far count: a month in
+  // progress has days still to come, which aren't "no-spend" yet.
   if (facts.length === 0) {
-    const noSpend = totalDaysInPeriod - spent.length;
+    const countedDays = Math.min(totalDaysInPeriod, wk.wdN + wk.weN);
+    const noSpend = countedDays - spent.filter((d) => d.date <= lastDay).length;
     if (noSpend >= 3) {
       facts.push({
         key: 'noSpend',
