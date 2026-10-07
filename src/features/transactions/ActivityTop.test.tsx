@@ -63,8 +63,11 @@ describe('Spent card', () => {
   });
 
   it('says how much more, in rupees, and what it is compared with', () => {
-    const all = texts(headline({ expenseChangeMinor: 917_400, compareLabel: 'same days last week' }));
-    expect(all.some((t) => t.includes('▲') && t.includes('₹9,174 more than same days last week'))).toBe(true);
+    const tree = headline({ expenseChangeMinor: 917_400, compareLabel: 'same days last week' });
+    const all = texts(tree);
+    expect(all).toContain('₹9,174 more than same days last week');
+    // An up arrow beside it: more spent.
+    expect(tree.root.findAll((n) => n.props.name === 'arrow-up').length).toBeGreaterThan(0);
     expect(all.some((t) => t.includes('%'))).toBe(false);
   });
 
