@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useLocalSearchParams } from 'expo-router';
-import { View, ScrollView, Pressable } from 'react-native';
+import { View, Pressable } from 'react-native';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Text } from '@/components/Text';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -9,7 +9,10 @@ import { Loan } from '@/types';
 import { MovingRow } from '@/components/MovingRow';
 import { EmptyState } from '@/components/EmptyState';
 import { AddButton } from '@/components/AddButton';
-import { SkyHeader } from '@/features/home/SkyHeader';
+import { SkyHeader, HeaderSummary } from '@/features/home/SkyHeader';
+import ReanimatedAnimated from 'react-native-reanimated';
+import { formatMoney } from '@/lib/money';
+import { useCollapsingHeader } from '@/lib/useCollapsingHeader';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { Skeleton } from '@/components/Skeleton';
 import { theme } from '@/constants/theme';
@@ -39,6 +42,8 @@ const listTitle = {
 
 export default function LoansScreen() {
   const insets = useSafeAreaInsets();
+  // The header sits over the page and shrinks as it scrolls.
+  const { collapse, headerHeight, scrollHandler, scrollRef } = useCollapsingHeader();
   const [loans, setLoans] = useState<Loan[]>([]);
   // Each loan's EMIs paid, next EMI and last EMI, for its card and the hero.
   const [progress, setProgress] = useState<Record<string, LoanProgress>>({});
@@ -91,22 +96,21 @@ export default function LoansScreen() {
 
   return (
     <View style={styles.container}>
-      <SkyHeader
-        title="Loans"
-        showBack
-        hideUser
-        compact
-        actions={<AddButton onPress={() => setModalVisible(true)} label="+ Loan" />}
-      />
-
-      {loadError && (
-        <View style={styles.errorBanner}>
-          <Text style={styles.errorTitle}>Couldn't load your loans</Text>
-          <Text style={styles.errorDetail}>{loadError}</Text>
-        </View>
-      )}
-
-      <ScrollView contentContainerStyle={{ paddingBottom: theme.layout.screenScrollPad + insets.bottom }}>
+      <ReanimatedAnimated.ScrollView
+        ref={scrollRef}
+        onScroll={scrollHandler}
+        scrollEventThrottle={16}
+        contentContainerStyle={{
+          paddingTop: headerHeight,
+          paddingBottom: theme.layout.screenScrollPad + insets.bottom,
+        }}
+      >
+        {loadError && (
+          <View style={styles.errorBanner}>
+            <Text style={styles.errorTitle}>Couldn't load your loans</Text>
+            <Text style={styles.errorDetail}>{loadError}</Text>
+          </View>
+        )}
         <LoansHero totals={totals} shares={shares} hues={hues} loading={loading} />
         {loading ? (
           [0, 1].map((i) => (
@@ -168,7 +172,24 @@ export default function LoansScreen() {
             )}
           </>
         )}
-      </ScrollView>
+      </ReanimatedAnimated.ScrollView>
+      <SkyHeader
+        collapse={collapse}
+        summary={
+          totals.youOweMinor > 0 ? (
+            <HeaderSummary
+              figure={formatMoney(totals.youOweMinor)}
+              rest="to repay"
+              dot={theme.colors.slice.spent}
+            />
+          ) : undefined
+        }
+        title="Loans"
+        showBack
+        hideUser
+        compact
+        actions={<AddButton onPress={() => setModalVisible(true)} label="+ Loan" />}
+      />
 
       <AddLoanModal
         visible={modalVisible}

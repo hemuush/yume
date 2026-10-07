@@ -1,12 +1,10 @@
 import { View, Pressable, StyleSheet } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import Feather from '@expo/vector-icons/Feather';
 import { Text, TextInput } from '@/components/Text';
 import { theme } from '@/constants/theme';
-import { shade } from '@/lib/color';
+import { StripCard } from '@/components/StripCard';
 import { withPressed } from '@/lib/pressed';
 import { SCREEN } from '@/components/screenStyles';
-import { HeaderHills } from '@/features/home/HeaderHills';
 import { useAccent } from '@/theme/AccentContext';
 import { styles } from './profile.styles';
 
@@ -21,8 +19,8 @@ interface Props {
 }
 
 /**
- * Top of Profile on both tabs: a card tinted with the active theme, avatar beside the name (tap to edit),
- * and a chip saying data stays on this phone. The pack's hills run along the bottom edge, as on Home.
+ * Top of Profile on both tabs: a white card with a strip in the theme's colour, avatar beside the name (tap to
+ * edit), and a chip saying data stays on this phone. The sky and hills are the header's, just above.
  */
 export function ProfileIdentity({
   name,
@@ -33,13 +31,10 @@ export function ProfileIdentity({
   onStartEdit,
   onSave,
 }: Props) {
-  const { accent, onAccent, secondary } = useAccent();
-  const top = shade(accent, 88, 4);
-  const bottom = shade(accent, 95, 3);
+  const { accent, onAccent } = useAccent();
 
   return (
-    <View style={local.card}>
-      <LinearGradient colors={[top, bottom]} style={StyleSheet.absoluteFill} />
+    <StripCard tone={accent} style={local.card}>
       <View style={local.body}>
         <View style={styles.identityRow}>
           <View
@@ -102,27 +97,19 @@ export function ProfileIdentity({
           <Text style={local.chipText}>On this phone only</Text>
         </View>
       </View>
-      <HeaderHills sky={bottom} primary={accent} secondary={secondary} ground={shade(accent, 97, 2)} />
-    </View>
+    </StripCard>
   );
 }
 
 const local = StyleSheet.create({
-  card: {
-    marginHorizontal: SCREEN.gutter,
-    marginTop: 8,
-    borderRadius: theme.radius.xl2,
-    overflow: 'hidden',
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-  },
-  body: { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 10, gap: 12 },
+  card: { marginHorizontal: SCREEN.gutter, marginTop: 6 },
+  body: { paddingHorizontal: 16, paddingTop: 18, paddingBottom: 14, gap: 12 },
   chip: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
     alignSelf: 'flex-start',
-    backgroundColor: theme.colors.surface,
+    backgroundColor: theme.colors.surfaceAlt,
     borderRadius: theme.radius.pill,
     paddingHorizontal: 10,
     paddingVertical: 4,

@@ -1,5 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { View, ScrollView, Pressable, ActivityIndicator } from 'react-native';
+import { View, Pressable, ActivityIndicator } from 'react-native';
+import ReanimatedAnimated from 'react-native-reanimated';
+import { useCollapsingHeader } from '@/lib/useCollapsingHeader';
+import { HeaderSummary } from '@/features/home/SkyHeader';
+import { formatMoney } from '@/lib/money';
 import { Text } from '@/components/Text';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -181,7 +185,8 @@ export default function ReportsScreen() {
   // stale month's expanded list never carries over.
   const [catExpanded, setCatExpanded] = useState(false);
 
-  const scrollRef = useRef<ScrollView>(null);
+  // The header shrinks as the report scrolls; the summary and tabs scroll with it.
+  const { collapse, headerHeight, scrollHandler, scrollRef, resetScroll } = useCollapsingHeader();
 
   // Only the most recent load may write state — stepping periods quickly
   // starts overlapping loads, and an earlier one can finish last.
@@ -334,7 +339,10 @@ export default function ReportsScreen() {
     };
   }, [cursor, hideAmounts, catFilter, largestKey, daily]);
 
-  // Pinned outside the ScrollView, so the period (and, below it, the summary and tabs) stays in reach however far down you scroll.
+  // A tab switch remounts the list at its top, so the header opens again with it.
+  useEffect(() => resetScroll(), [tab, resetScroll]);
+
+  // While loading or on an error, a plain header; the report's own one shrinks as it scrolls.
   const header = <ReportsHeader cursor={cursor} onChange={stepCursor} />;
 
   if (status === 'error') {
@@ -530,33 +538,35 @@ export default function ReportsScreen() {
 
   return (
     <View style={styles.container}>
-      {header}
-      {hasData && (
-        <>
-          <ReportSummary
-            periodName={periodName}
-            slideDirection={slideDirection}
-            spentMinor={dispExpense}
-            vsUsualPct={usual?.pct ?? null}
-            vsUsualSoFar={usual?.soFar ?? false}
-            perDayMinor={facts.perDayMinor}
-            spendDays={facts.spendDays}
-            countedDays={facts.countedDays}
-            laterMinor={facts.laterMinor}
-          />
-          <View style={styles.tabs}>
-            <SegmentedControl options={TAB_OPTIONS} value={tab} onChange={setTab} />
-          </View>
-        </>
-      )}
-      <ScrollView
+      <ReanimatedAnimated.ScrollView
         key={tab}
         ref={scrollRef}
+        onScroll={scrollHandler}
+        scrollEventThrottle={16}
         contentContainerStyle={{
+          paddingTop: headerHeight,
           paddingHorizontal: 20,
           paddingBottom: theme.layout.tabScreenScrollPad + insets.bottom,
         }}
       >
+        {hasData && (
+          <View style={styles.bleed}>
+            <ReportSummary
+              periodName={periodName}
+              slideDirection={slideDirection}
+              spentMinor={dispExpense}
+              vsUsualPct={usual?.pct ?? null}
+              vsUsualSoFar={usual?.soFar ?? false}
+              perDayMinor={facts.perDayMinor}
+              spendDays={facts.spendDays}
+              countedDays={facts.countedDays}
+              laterMinor={facts.laterMinor}
+            />
+            <View style={styles.tabs}>
+              <SegmentedControl options={TAB_OPTIONS} value={tab} onChange={setTab} />
+            </View>
+          </View>
+        )}
         {!hasData ? (
           <EmptyState
             title="Nothing spent in this period"
@@ -725,7 +735,18 @@ export default function ReportsScreen() {
             subtitle="Trends show up once there are a few months of entries."
           />
         )}
-      </ScrollView>
+      </ReanimatedAnimated.ScrollView>
+      <ReportsHeader
+        cursor={cursor}
+        onChange={stepCursor}
+        collapse={collapse}
+        summary={
+          hasData ? (
+            <HeaderSummary figure={formatMoney(dispExpense)} rest="spent" dot={theme.colors.slice.spent} />
+          ) : undefined
+        }
+        onChipPress={() => scrollRef.current?.scrollTo({ y: 0, animated: true })}
+      />
     </View>
   );
 }
