@@ -128,7 +128,7 @@ export function DetailChip({
       <Feather
         name={icon}
         size={13}
-        color={active ? theme.colors.surface : muted ? theme.colors.textMuted : theme.colors.ink}
+        color={active ? theme.colors.surface : muted ? theme.colors.textMuted : theme.colors.link}
       />
       <Text
         style={[

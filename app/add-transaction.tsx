@@ -23,12 +23,15 @@ import { toLocalIsoDate, addDaysToIsoDate } from '@/lib/date';
 import { useFadeIn } from '@/lib/useFadeIn';
 import { markJustAdded } from '@/lib/justAdded';
 import { haptics } from '@/lib/haptics';
-import { AppHeader } from '@/components/AppHeader';
+import { SkyHeader } from '@/features/home/SkyHeader';
+import { SegmentedControl } from '@/components/SegmentedControl';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { CategoryPicker } from '@/components/CategoryPicker';
 import { SoftCard } from '@/components/SoftCard';
 import { styles } from '@/features/add/add.styles';
 import {
+  ADD_TYPES,
+  EDIT_TYPES,
   EntryType,
   Staged,
   isTxType,
@@ -643,10 +646,12 @@ export default function AddTransactionScreen() {
 
   return (
     <View style={styles.container}>
-      <AppHeader
+      <SkyHeader
         title={title}
         showBack
-        right={
+        hideUser
+        compact
+        actions={
           editing ? (
             !isLinked ? (
               <Pressable
@@ -672,10 +677,17 @@ export default function AddTransactionScreen() {
             </Pressable>
           )
         }
-      />
+      >
+        <SegmentedControl
+          options={editing ? EDIT_TYPES : ADD_TYPES}
+          value={type}
+          onChange={onTypeChange}
+          onBand
+        />
+      </SkyHeader>
 
       <KeyboardAwareScrollView
-        contentContainerStyle={{ padding: 20, paddingBottom: 28 }}
+        contentContainerStyle={{ padding: 20, paddingTop: 4, paddingBottom: 28 }}
         keyboardShouldPersistTaps="handled"
         bottomOffset={20}
       >
@@ -690,8 +702,6 @@ export default function AddTransactionScreen() {
         <AmountCard
           type={type}
           refund={refund}
-          editing={!!editing}
-          onTypeChange={onTypeChange}
           currency={currency}
           expr={expr}
           isSum={sum}
