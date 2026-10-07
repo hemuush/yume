@@ -21,6 +21,7 @@ export function RecentTransactionRow({
   toAccountName,
   divider,
   savingsTransfer = false,
+  showDay = true,
 }: {
   tx: Transaction;
   category: Category | undefined;
@@ -31,6 +32,8 @@ export function RecentTransactionRow({
   divider: boolean;
   /** A transfer into or out of a savings account — masked with "hide savings & investment amounts". */
   savingsTransfer?: boolean;
+  /** Off when the rows sit under a day heading (Home), so the day isn't said twice. */
+  showDay?: boolean;
 }) {
   const isTransfer = tx.type === 'transfer';
   const note = tx.note?.trim();
@@ -42,7 +45,7 @@ export function RecentTransactionRow({
     : joinSub([
         note ? category && categoryPath(category.name, parentName) : inParent(parentName),
         accountName,
-        dayLabel(tx.date),
+        showDay && dayLabel(tx.date),
       ]);
 
   return (

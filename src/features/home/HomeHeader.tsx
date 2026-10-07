@@ -30,6 +30,11 @@ import { WrapButton } from './WrapButton';
 import type { ReadyWrap } from '@/features/wrap/wrapWindow';
 import { MOTION } from '@/lib/animation';
 
+/** "Wednesday, 7 October" — above the greeting. */
+function todayLabel(): string {
+  return new Date().toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' });
+}
+
 function greetingWord(): string {
   const h = new Date().getHours();
   if (h < 12) return 'morning';
@@ -140,7 +145,7 @@ export function HomeHeader({
 }) {
   const { accent, secondary } = useAccent();
   const insets = useSafeAreaInsets();
-  const gradientTop = shade(accent, 88, 4);
+  const gradientTop = shade(accent, 90, 4);
   const gradientBottom = shade(accent, 96, 2);
   const contentTop = insets.top + 10;
 
@@ -226,7 +231,7 @@ export function HomeHeader({
           }}
         >
           <View style={styles.brandRow}>
-            <YumeLogo size={22} />
+            <YumeLogo size={26} />
             <Text style={styles.brand}>Yume</Text>
           </View>
           <ReanimatedAnimated.View
@@ -244,9 +249,10 @@ export function HomeHeader({
               label={alertCount > 0 ? `Needs you, ${alertCount}` : 'Needs you'}
               count={alertCount}
               soft
+              size={40}
             />
             {onPlayWrap && <WrapButton wraps={wraps} onPlay={onPlayWrap} />}
-            <HeaderUserButton soft />
+            <HeaderUserButton soft size={40} />
           </View>
         </ReanimatedAnimated.View>
 
@@ -264,7 +270,10 @@ export function HomeHeader({
                 .easing(MOTION.ease)
                 .reduceMotion(ReduceMotion.System)}
             >
-              <Text style={styles.greet} numberOfLines={1}>
+              <Text style={styles.date} numberOfLines={1}>
+                {todayLabel()}
+              </Text>
+              <Text style={styles.greet} numberOfLines={2}>
                 Good {greetingWord()}
                 {userName ? `, ${userName}` : ''}
               </Text>
@@ -294,20 +303,27 @@ const EDGE_FADE = [`${theme.colors.background}F2`, `${theme.colors.background}00
 const styles = StyleSheet.create({
   edgeFade: { position: 'absolute', top: '100%', left: 0, right: 0, height: 14 },
   root: { position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10 },
-  fading: { gap: 8 },
+  fading: { gap: 12, paddingTop: 10 },
   miniSlot: { flex: 1, minWidth: 0, alignItems: 'flex-end' },
-  band: { paddingHorizontal: 20, paddingBottom: 10, gap: 8, overflow: 'hidden' },
+  band: { paddingHorizontal: 20, paddingBottom: 14, gap: 8, overflow: 'hidden' },
   spark: { position: 'absolute', backgroundColor: theme.colors.surface },
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
   brandRow: { flexDirection: 'row', alignItems: 'center', gap: 7 },
-  brand: { fontFamily: theme.font.roundedBold, fontSize: 21, letterSpacing: 0.2, color: theme.colors.ink },
+  brand: { fontFamily: theme.font.roundedBold, fontSize: 22, letterSpacing: 0.2, color: theme.colors.ink },
   actions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   greetRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-end',
     justifyContent: 'space-between',
     gap: 12,
   },
   greetBlock: { flex: 1, minWidth: 0 },
-  greet: { fontFamily: theme.font.roundedMedium, fontSize: 15, color: theme.colors.ink },
+  date: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textSecondary },
+  greet: {
+    fontFamily: theme.font.roundedBold,
+    fontSize: 25,
+    lineHeight: 30,
+    color: theme.colors.ink,
+    marginTop: 2,
+  },
 });

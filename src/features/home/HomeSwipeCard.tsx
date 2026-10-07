@@ -22,8 +22,10 @@ import { withPressed } from '@/lib/pressed';
 export interface SwipePage {
   key: string;
   label: string;
-  /** Something on this page wants action: its tab gets a red dot. */
+  /** Something on this page wants action: its tab's count turns red. */
   alert?: boolean;
+  /** How many things the page holds, shown beside its tab's name. */
+  count?: number;
   onSeeAll?: () => void;
   content: React.ReactNode;
 }
@@ -128,14 +130,22 @@ export function HomeSwipeCard({ pages }: { pages: SwipePage[] }) {
               key={p.key}
               onPress={() => goToPage(i)}
               style={withPressed(styles.tab)}
-              // The pill is ~32dp tall; the slop brings the touch target to 48dp without changing the look.
-              hitSlop={{ top: 8, bottom: 8 }}
+              // The pill is 38dp tall; the slop brings the touch target to 48dp without changing the look.
+              hitSlop={{ top: 5, bottom: 5 }}
               accessibilityRole="tab"
               accessibilityState={{ selected: i === safeIndex }}
               accessibilityLabel={p.alert ? `${p.label}, needs you` : p.label}
             >
-              <Text style={[styles.tabText, i === safeIndex && styles.tabTextActive]}>{p.label}</Text>
-              {p.alert && <View style={styles.alertDot} />}
+              <Text style={[styles.tabText, i === safeIndex && styles.tabTextActive]} numberOfLines={1}>
+                {p.label}
+              </Text>
+              {p.count != null && p.count > 0 ? (
+                <View style={[styles.count, p.alert && styles.countAlert]}>
+                  <Text style={[styles.countText, p.alert && styles.countTextAlert]}>{p.count}</Text>
+                </View>
+              ) : (
+                p.alert && <View style={styles.alertDot} />
+              )}
             </Pressable>
           ))}
         </View>
@@ -192,7 +202,7 @@ export function HomeSwipeCard({ pages }: { pages: SwipePage[] }) {
             accessibilityLabel={`See all ${active.label.toLowerCase()}`}
           >
             <Text style={styles.seeAllText}>See all {active.label.toLowerCase()}</Text>
-            <Feather name="arrow-right" size={13} color={theme.colors.textSecondary} />
+            <Feather name="arrow-right" size={14} color={theme.colors.link} />
           </Pressable>
         )}
       </View>
@@ -201,7 +211,7 @@ export function HomeSwipeCard({ pages }: { pages: SwipePage[] }) {
 }
 
 /** Space between the pill track's edge and its tabs. */
-const TRACK_PAD = 3;
+const TRACK_PAD = 4;
 
 const styles = StyleSheet.create({
   wrap: { marginTop: SECTION_GAP.top, marginHorizontal: 0 },
@@ -227,26 +237,36 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 1 },
     elevation: 1,
   },
-  tab: { flex: 1, alignItems: 'center', paddingVertical: 7, borderRadius: theme.radius.pill },
-  alertDot: {
-    position: 'absolute',
-    top: 6,
-    right: '18%',
-    width: 7,
-    height: 7,
-    borderRadius: 4,
-    backgroundColor: theme.colors.expense,
+  tab: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    minHeight: 38,
+    paddingHorizontal: 4,
+    borderRadius: theme.radius.pill,
   },
-  tabText: { fontFamily: theme.font.roundedMedium, fontSize: 13, color: theme.colors.textSecondary },
-  tabTextActive: { color: theme.colors.textPrimary },
+  alertDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: theme.colors.expense },
+  count: { minWidth: 20, height: 20, paddingHorizontal: 5, alignItems: 'center', justifyContent: 'center' },
+  countAlert: { borderRadius: 10, backgroundColor: theme.colors.expenseTint },
+  countText: { fontFamily: theme.font.monoBold, fontSize: 11, color: theme.colors.textMuted },
+  countTextAlert: { color: theme.colors.expenseText },
+  tabText: {
+    flexShrink: 1,
+    fontFamily: theme.font.roundedMedium,
+    fontSize: 14,
+    color: theme.colors.textSecondary,
+  },
+  tabTextActive: { fontFamily: theme.font.roundedBold, color: theme.colors.textPrimary },
   seeAll: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 4,
-    paddingVertical: 11,
+    gap: 6,
+    minHeight: 48,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: theme.colors.borderSoft,
+    borderTopColor: theme.colors.divider,
   },
-  seeAllText: { fontFamily: theme.font.roundedMedium, fontSize: 12.5, color: theme.colors.textSecondary },
+  seeAllText: { fontFamily: theme.font.bodyMedium, fontSize: 14, color: theme.colors.link },
 });

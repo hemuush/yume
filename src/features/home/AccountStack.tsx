@@ -46,7 +46,6 @@ function StackCard({ account, top, onOpen }: { account: Account; top: number; on
         style={StyleSheet.absoluteFill}
       />
       <View style={styles.circleBig} />
-      <View style={styles.circleSmall} />
       <Pressable
         onPress={onOpen}
         style={withPressed(styles.face)}
@@ -54,14 +53,21 @@ function StackCard({ account, top, onOpen }: { account: Account; top: number; on
         accessibilityLabel={`${account.name}, ${typeLabel}. Open summary`}
       >
         <View style={styles.row}>
-          <MaterialCommunityIcons
-            name={accountIcon(account.type) as McIconName}
-            size={22}
-            color={shade(hue, 38, 10)}
-          />
-          <Text style={styles.name} numberOfLines={1}>
-            {account.name}
-          </Text>
+          <View style={styles.iconBadge}>
+            <MaterialCommunityIcons
+              name={accountIcon(account.type) as McIconName}
+              size={18}
+              color={shade(hue, 38, 10)}
+            />
+          </View>
+          <View style={styles.nameBlock}>
+            <Text style={styles.name} numberOfLines={1}>
+              {account.name}
+            </Text>
+            <Text style={styles.type} numberOfLines={1}>
+              {typeLabel}
+            </Text>
+          </View>
           <View style={styles.figures}>
             <Amount
               minor={account.currentBalanceMinor}
@@ -74,7 +80,6 @@ function StackCard({ account, top, onOpen }: { account: Account; top: number; on
             {account.investment && <GainPill account={account} />}
           </View>
         </View>
-        <Text style={styles.type}>{typeLabel}</Text>
       </Pressable>
     </View>
   );
@@ -87,58 +92,53 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: STACK.cardHeight,
-    borderRadius: theme.radius.xl2,
+    borderRadius: 24,
     borderWidth: 1,
     overflow: 'hidden',
-    boxShadow: '0px -2px 9px rgba(18,19,15,0.08)',
+    boxShadow: '0px -3px 12px rgba(18,19,15,0.07)',
   },
   face: { flex: 1 },
   circleBig: {
     position: 'absolute',
     right: -28,
-    bottom: -52,
-    width: 96,
-    height: 96,
-    borderRadius: 48,
+    bottom: -56,
+    width: 110,
+    height: 110,
+    borderRadius: 55,
     backgroundColor: 'rgba(255,255,255,0.35)',
-  },
-  circleSmall: {
-    position: 'absolute',
-    right: 30,
-    bottom: 10,
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    backgroundColor: 'rgba(255,255,255,0.28)',
   },
   row: {
     height: STACK.peek,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 12,
     paddingTop: 2,
-    paddingHorizontal: 20,
+    paddingHorizontal: 18,
   },
+  iconBadge: {
+    width: 32,
+    height: 32,
+    borderRadius: 11,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.65)',
+  },
+  nameBlock: { flex: 1, minWidth: 0 },
   name: {
-    flex: 1,
-    minWidth: 0,
     fontFamily: theme.font.roundedBold,
-    fontSize: 15.5,
+    fontSize: 16,
     color: theme.colors.textPrimary,
   },
-  figures: { flexShrink: 0, maxWidth: '55%', alignItems: 'flex-end', gap: 1 },
+  type: {
+    fontFamily: theme.font.body,
+    fontSize: 12,
+    color: theme.colors.textSecondary,
+    textTransform: 'capitalize',
+  },
+  figures: { flexShrink: 0, maxWidth: '50%', alignItems: 'flex-end', gap: 1 },
   balance: {
     fontFamily: theme.font.monoBold,
     fontSize: 17,
     color: theme.colors.textPrimary,
-  },
-  type: {
-    position: 'absolute',
-    left: 52,
-    bottom: 11,
-    fontFamily: theme.font.body,
-    fontSize: 11.5,
-    color: theme.colors.textSecondary,
-    textTransform: 'capitalize',
   },
 });

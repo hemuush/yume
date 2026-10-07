@@ -27,6 +27,7 @@ export function UpcomingRow({
   soon,
   date,
   actionLabel,
+  highlight,
 }: {
   icon: React.ComponentProps<typeof Feather>['name'];
   iconBg: string;
@@ -48,6 +49,8 @@ export function UpcomingRow({
   date?: string;
   /** A bill to pay: a "Pay" pill stands where the chevron would; tapping anywhere on the row still opens it. */
   actionLabel?: string;
+  /** Due soon (pinned): the row sits on a pale amber panel so it stands out from the rest of the week. */
+  highlight?: boolean;
 }) {
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.98);
   return (
@@ -57,7 +60,7 @@ export function UpcomingRow({
       onPressOut={onPressOut}
       accessibilityRole="button"
       accessibilityLabel={`${title}, ${subtitle}`}
-      style={[styles.row, divider && styles.divider, animatedStyle]}
+      style={[styles.row, divider && styles.divider, highlight && styles.highlight, animatedStyle]}
     >
       {date ? (
         <DateTile iso={date} background={iconBg} urgent={urgent} soon={soon} />
@@ -136,12 +139,21 @@ const styles = StyleSheet.create({
   subSoon: h.subSoon,
   amount: h.amount,
   income: h.income,
+  highlight: {
+    marginHorizontal: 10,
+    marginVertical: 4,
+    paddingHorizontal: 10,
+    borderRadius: 18,
+    borderTopWidth: 0,
+    backgroundColor: theme.colors.dueRow,
+  },
   action: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    minHeight: 36,
+    justifyContent: 'center',
+    paddingHorizontal: 16,
     borderRadius: theme.radius.pill,
     backgroundColor: theme.colors.ink,
   },
-  actionText: { fontFamily: theme.font.bodyBold, fontSize: 11.5, color: theme.colors.white },
-  moreText: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textSecondary },
+  actionText: { fontFamily: theme.font.bodyBold, fontSize: 14, color: theme.colors.white },
+  moreText: { fontFamily: theme.font.bodyBold, fontSize: 14, color: theme.colors.textSecondary },
 });

@@ -1,9 +1,9 @@
 import type { Account } from '@/types';
 
-/** Sizes of Home's account stack: each card is 84 tall and the one in front of it leaves a 44 strip showing. */
+/** Sizes of Home's account stack: each card is 104 tall and the one in front of it leaves a 52 strip showing. */
 export const STACK = {
-  cardHeight: 84,
-  peek: 44,
+  cardHeight: 104,
+  peek: 52,
 } as const;
 
 /** Height of a stack of `n` cards: a strip for every card but the front one, which shows in full. */
