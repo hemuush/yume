@@ -388,7 +388,7 @@ const styles = StyleSheet.create({
   transferAmount: { color: theme.colors.textSecondary },
   lane: {
     backgroundColor: theme.colors.surface,
-    borderRadius: 24,
+    borderRadius: theme.radius.xl2,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
     overflow: 'hidden',

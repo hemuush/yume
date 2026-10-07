@@ -50,7 +50,16 @@ export function CountUpAmount({ minor, currency, countFromZero = true, symbolSty
       return;
     }
     t.setValue(0);
-    const id = t.addListener(({ value }) => setDisplay(Math.round(from + (minor - from) * value)));
+    // Only re-render when the shown (whole-unit) text changes: a frame that moved a few paise would
+    // otherwise re-measure the auto-fit text for nothing.
+    let shown = '';
+    const id = t.addListener(({ value }) => {
+      const next = Math.round(from + (minor - from) * value);
+      const nextText = formatMoney(next, currency);
+      if (nextText === shown) return;
+      shown = nextText;
+      setDisplay(next);
+    });
     // Core Animated here, so the shared curve is spelled out with core Easing.
     Animated.timing(t, {
       toValue: 1,

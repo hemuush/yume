@@ -149,6 +149,37 @@ describe('recurring rules', () => {
     expect(txs).toHaveLength(0);
   });
 
+  it('resuming a paused rule moves its next run up to today instead of posting every missed occurrence', async () => {
+    const rule = await createRecurringRule({
+      type: 'expense',
+      accountId,
+      categoryId: expenseCategoryId,
+      amountMinor: 3000,
+      note: 'Resumed Rule',
+      frequency: 'monthly',
+      intervalCount: 1,
+      nextRunDate: '2036-01-31',
+    });
+    await setRecurringRuleActive(rule.id, false);
+    await setRecurringRuleActive(rule.id, true, '2036-05-10');
+    let [stored] = (await listRecurringRules()).filter((r) => r.id === rule.id);
+    // The rule's own day survives the jump: the 31st, clamped only where the month is short.
+    expect(stored.nextRunDate).toBe('2036-05-31');
+    expect(stored.active).toBe(true);
+    await runDueRecurringRules('2036-05-31');
+    const dates = (await listTransactions({ limit: 1000 }))
+      .filter((t) => t.note === 'Resumed Rule')
+      .map((t) => t.date);
+    expect(dates).toEqual(['2036-05-31']);
+
+    // A next run already on or after today is left alone.
+    await setRecurringRuleActive(rule.id, false);
+    await setRecurringRuleActive(rule.id, true, '2036-06-01');
+    [stored] = (await listRecurringRules()).filter((r) => r.id === rule.id);
+    expect(stored.nextRunDate).toBe('2036-06-30');
+    await setRecurringRuleActive(rule.id, false);
+  });
+
   it('updateRecurringRule changes the amount/cadence and deleteRecurringRule removes it', async () => {
     const rule = await createRecurringRule({
       type: 'expense',

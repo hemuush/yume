@@ -70,7 +70,7 @@ export const styles = StyleSheet.create({
     padding: 18,
     paddingBottom: 16,
     backgroundColor: theme.colors.surface,
-    borderRadius: 26,
+    borderRadius: theme.radius.xl2,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
     ...SOFT_LIFT,

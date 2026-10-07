@@ -67,7 +67,9 @@ function GrowingPlant({
   const shownIdx = useRef(start);
 
   useEffect(() => {
-    const id = grow.addListener(({ value }) => setPos(value));
+    // Hundredths are finer than the drawing can show; the eased tail's near-identical frames then share a
+    // value and skip the SVG re-render.
+    const id = grow.addListener(({ value }) => setPos(Math.round(value * 100) / 100));
     return () => grow.removeListener(id);
   }, [grow]);
 

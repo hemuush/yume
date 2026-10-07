@@ -73,7 +73,8 @@ function CountUpPct({ to, still, style }: { to: number; still: boolean; style: S
       return;
     }
     const v = new Animated.Value(0);
-    const id = v.addListener(({ value }) => setShown(value));
+    // Whole percents: frames that land on the same number bail out of the re-render.
+    const id = v.addListener(({ value }) => setShown(Math.round(value)));
     const a = Animated.timing(v, { toValue: to, duration: 900, easing: EASE, useNativeDriver: false });
     a.start();
     return () => {
