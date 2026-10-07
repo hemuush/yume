@@ -14,11 +14,32 @@ export function onTransactionsChanged(listener: Listener): () => void {
 }
 
 export function emitTransactionsChanged(): void {
-  for (const listener of [...listeners]) {
+  notify(listeners, 'transactions-changed');
+}
+
+/**
+ * Signal that every setting was just replaced (a restore, or undoing one): app-wide preferences held in React
+ * state (theme, hide amounts, app lock) re-read them instead of keeping the pre-restore values until relaunch.
+ */
+const settingsListeners = new Set<Listener>();
+
+export function onSettingsRestored(listener: Listener): () => void {
+  settingsListeners.add(listener);
+  return () => {
+    settingsListeners.delete(listener);
+  };
+}
+
+export function emitSettingsRestored(): void {
+  notify(settingsListeners, 'settings-restored');
+}
+
+function notify(set: Set<Listener>, name: string): void {
+  for (const listener of [...set]) {
     try {
       listener();
     } catch (e) {
-      console.warn('transactions-changed listener failed:', e);
+      console.warn(`${name} listener failed:`, e);
     }
   }
 }

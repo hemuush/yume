@@ -150,6 +150,8 @@ export default function AddTransactionScreen() {
   const addDefaults = useRef<AddDefaults>({});
   // Once you pick an account yourself, picking a category stops choosing one for you.
   const accountPickedByHand = useRef(false);
+  // The account(s) of the entry being edited, kept on offer even if archived (see load).
+  const editingAccountIds = useRef<string[]>([]);
 
   const listFade = useFadeIn();
   // The pending "done → back"; cleared on unmount so a swipe-back in that window can't pop a second screen.
@@ -210,13 +212,22 @@ export default function AddTransactionScreen() {
   }, []);
 
   const load = useCallback(async () => {
-    const [accs, cats, ppl] = await Promise.all([listAccounts(), listCategories(), listPeople()]);
+    const [allAccs, cats, ppl] = await Promise.all([
+      listAccounts(!!editingId),
+      listCategories(),
+      listPeople(),
+    ]);
+    const tx = editingId && !seeded ? await getTransactionById(editingId) : null;
+    if (tx) editingAccountIds.current = [tx.accountId, tx.toAccountId].filter((id): id is string => !!id);
+    // An edit keeps the entry's own account(s) on offer even if since archived, or saving would quietly
+    // move the entry onto another account. Other archived accounts stay out of the pickers.
+    const accs = allAccs.filter((a) => !a.archived || editingAccountIds.current.includes(a.id));
     setAccounts(accs);
     setCategories(cats);
     setPeople(ppl);
 
     if (editingId && !seeded) {
-      const [tx, link] = await Promise.all([getTransactionById(editingId), getTransactionLink(editingId)]);
+      const link = await getTransactionLink(editingId);
       if (tx) {
         setEditing(tx);
         setIsLinked(link !== null);
@@ -330,6 +341,15 @@ export default function AddTransactionScreen() {
   }, [expr, type, effectiveAccountId, toAccountId, categoryId, date]);
 
   const onTypeChange = (next: EntryType) => {
+    // A saved split is one expense across categories: switching it to income or a transfer would save only
+    // the tapped part, as the whole payment. It stays an expense here.
+    if (editing?.splitId && next !== 'expense') {
+      showAlert(
+        "A split can't change type",
+        'A split payment is always an expense. To record it differently, delete the split and add it again.'
+      );
+      return;
+    }
     setType(next);
     setCategoryId(null);
     // Only expenses split, or take money back.

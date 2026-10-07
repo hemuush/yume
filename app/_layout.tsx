@@ -38,6 +38,7 @@ import {
 } from '@/lib/notifications';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { refreshAllWidgets } from '@/widgets/notifyWidgets';
+import { emitTransactionsChanged } from '@/lib/dataEvents';
 import { AccentProvider } from '@/theme/AccentContext';
 import { PrivacyProvider } from '@/theme/PrivacyContext';
 import { AppLockProvider, useAppLock } from '@/lib/AppLockContext';
@@ -95,7 +96,12 @@ export default function RootLayout() {
         );
         // Catches up missed recurring transactions since last open. Rules isolate their own failures; this
         // catch only guards the outer query (e.g. getDb()) from an unhandled rejection.
-        void runDueRecurringRules().catch((err) => console.error('runDueRecurringRules failed:', err));
+        // Screens that loaded before it finished reload when it posts something.
+        runDueRecurringRules()
+          .then((created) => {
+            if (created > 0) emitTransactionsChanged();
+          })
+          .catch((err) => console.error('runDueRecurringRules failed:', err));
         // Unlike runDueRecurringRules/runLocalBackupIfDue, ensureAndroidChannel has no internal try/catch
         // and can reject (bad channel, revoked permission), so this call needs its own catch on cold start.
         void ensureAndroidChannel().catch((err) => console.error('ensureAndroidChannel failed:', err));
@@ -221,11 +227,19 @@ function AppGate({ needsOnboarding, initialLocked }: { needsOnboarding: boolean;
   }, [lockEnabled]);
 
   // Kept apart from the lock effect (runs only with app-lock on). Real 'background' (not 'inactive')
-  // refreshes home-screen widgets (30-min refresh is too slow); foreground runs the daily backup.
+  // refreshes home-screen widgets (30-min refresh is too slow); foreground runs the daily backup and posts
+  // repeating entries that fell due while away (Android can keep Yume alive for days without a cold start).
   useEffect(() => {
     const sub = AppState.addEventListener('change', (next: AppStateStatus) => {
       if (next === 'background') refreshAllWidgets();
-      if (next === 'active') void runLocalBackupIfDue();
+      if (next === 'active') {
+        void runLocalBackupIfDue();
+        runDueRecurringRules()
+          .then((created) => {
+            if (created > 0) emitTransactionsChanged();
+          })
+          .catch((err) => console.error('runDueRecurringRules failed:', err));
+      }
     });
     return () => sub.remove();
   }, []);

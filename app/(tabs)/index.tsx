@@ -67,6 +67,7 @@ import { PrimaryButton } from '@/components/PrimaryButton';
 import { toLocalIsoDate } from '@/lib/date';
 import { categorySentence } from '@/lib/categoryLabel';
 import { onTransactionsChanged } from '@/lib/dataEvents';
+import { useFreshness } from '@/lib/useFreshness';
 import { errorMessage } from '@/lib/errorMessage';
 import { payCardRoute } from '@/lib/payCard';
 
@@ -266,7 +267,7 @@ export default function DashboardScreen() {
           setLoadedCursor(c);
           periodWritten = true;
         }
-        if (fSeq !== fullSeq.current) return;
+        if (fSeq !== fullSeq.current) return false;
         setAccounts(accs);
         setCategories(cats);
         // A defaulted loan is still real money owed (or owed to you) — only a
@@ -292,7 +293,7 @@ export default function DashboardScreen() {
         setReadyWraps(wraps);
         setLoadError(null);
       } catch (e) {
-        if (fSeq !== fullSeq.current) return;
+        if (fSeq !== fullSeq.current) return false;
         // Guard the throw so a transient DB error shows a banner instead of
         // freezing stale data + a stuck pull-to-refresh spinner.
         failed = true;
@@ -302,14 +303,22 @@ export default function DashboardScreen() {
         // shows an empty month for a moment — a newer period fetch sets it too.
         if (fSeq === fullSeq.current && (periodWritten || failed)) setLoaded(true);
       }
+      return !failed && fSeq === fullSeq.current;
     },
     [hideAmounts, fetchPeriod]
   );
 
+  // Coming back to Home with nothing changed (no write, same day, same settings) shows what's already here
+  // instead of re-running every query.
+  const freshness = useFreshness();
   useFocusEffect(
     useCallback(() => {
-      load(cursorRef.current);
-    }, [load])
+      if (freshness.isFresh([load])) return;
+      const started = freshness.start([load]);
+      void load(cursorRef.current).then((ok) => {
+        if (ok) freshness.commit(started);
+      });
+    }, [load, freshness])
   );
   // A save that doesn't leave Home (the + long-press sheet) — reload in place.
   useEffect(() => onTransactionsChanged(() => void load(cursorRef.current)), [load]);

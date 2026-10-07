@@ -21,6 +21,7 @@ const streamA: SubscriptionSuggestion = {
   date: '2026-09-09',
   note: '',
   source: 'subscriptions',
+  isSensitive: false,
 };
 const wifi: SubscriptionSuggestion = {
   ...streamA,

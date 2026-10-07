@@ -186,18 +186,22 @@ export function buildExportWorkbook(data: ExportData): XLSX.WorkBook {
   };
 
   const sorted = [...transactions].sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
+  // Totals add up the default currency only, as every total in the app does: other currencies' amounts have
+  // no conversion, so adding them would sum face values. (An entry on an account not listed, i.e. archived,
+  // counts as the default currency.) Every entry is still listed on the Transactions sheet.
+  const currencyOf = new Map(accounts.map((a) => [a.id, a.currency]));
+  const counted = transactions.filter((t) => (currencyOf.get(t.accountId) ?? currency) === currency);
   // Refunds count against spending, never as income — the same rule as everywhere in the app.
-  const totalIncome = transactions
+  const totalIncome = counted
     .filter((t) => t.type === 'income' && !t.isRefund)
     .reduce((s, t) => s + t.amountMinor, 0);
   const totalExpense = Math.max(
     0,
-    transactions.reduce(
-      (s, t) => s + (t.type === 'expense' ? t.amountMinor : t.isRefund ? -t.amountMinor : 0),
-      0
-    )
+    counted.reduce((s, t) => s + (t.type === 'expense' ? t.amountMinor : t.isRefund ? -t.amountMinor : 0), 0)
   );
-  const totalBalance = accounts.reduce((s, a) => s + a.currentBalanceMinor, 0);
+  const totalBalance = accounts
+    .filter((a) => a.currency === currency)
+    .reduce((s, a) => s + a.currentBalanceMinor, 0);
   const totalDebt = loans
     .filter((l) => l.direction === 'borrowed' && l.status === 'active')
     .reduce((s, l) => s + l.outstandingPrincipalMinor, 0);
@@ -444,7 +448,7 @@ export function buildExportWorkbook(data: ExportData): XLSX.WorkBook {
     string,
     { name: string; kind: string; total: number; count: number; color: string }
   >();
-  for (const t of transactions) {
+  for (const t of counted) {
     if (t.type === 'transfer' || !t.categoryId) continue;
     const cat = categoryById.get(t.categoryId);
     const topId = cat?.parentId ?? t.categoryId;
@@ -452,17 +456,22 @@ export function buildExportWorkbook(data: ExportData): XLSX.WorkBook {
     const key = topId;
     const name = top?.name ?? cat?.name ?? 'Deleted category';
     const color = top?.color ?? cat?.color ?? C.textMuted;
+    // A refund lowers its spending category's total and isn't an entry of its own (as in Reports).
+    const kind = t.isRefund ? 'expense' : t.type;
+    const amount = t.isRefund ? -t.amountMinor : t.amountMinor;
+    const count = t.isRefund ? 0 : 1;
     const existing = catTotals.get(key);
     if (existing) {
-      existing.total += t.amountMinor;
-      existing.count += 1;
+      existing.total += amount;
+      existing.count += count;
     } else {
-      catTotals.set(key, { name, kind: t.type, total: t.amountMinor, count: 1, color });
+      catTotals.set(key, { name, kind, total: amount, count, color });
     }
   }
-  const catRowsData = [...catTotals.values()].sort((a, b) =>
-    a.kind === b.kind ? b.total - a.total : a.kind === 'expense' ? -1 : 1
-  );
+  // A category whose refunds outweigh its spending shows nothing, never a negative total.
+  const catRowsData = [...catTotals.values()]
+    .filter((c) => c.total > 0)
+    .sort((a, b) => (a.kind === b.kind ? b.total - a.total : a.kind === 'expense' ? -1 : 1));
   // A leading colour-swatch column using each category's stored `color`, the same hex as its chips and icon
   // badges in the app, so the sheet ties back to how the category looks in Yume.
   const catHeaders = ['', 'Category', 'Kind', 'Total', 'Transactions'];

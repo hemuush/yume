@@ -43,8 +43,13 @@ export interface Category {
   color: string;
   archived: boolean;
   sortOrder: number;
-  /** When on and the "hide savings & investment amounts" setting is also on, this category's amounts show masked wherever they appear. */
+  /**
+   * When on and the "hide savings & investment amounts" setting is also on, this category's amounts show masked
+   * wherever they appear. A subcategory takes it from its parent too ("My SIP" under Investments).
+   */
   isSensitive: boolean;
+  /** The category's own flag, apart from its parent's (what its edit form switches). */
+  ownIsSensitive?: boolean;
   /** A built-in category the app matches by name to auto-file loan / Friends & Family transactions — can't be deleted, archived, or renamed. */
   isSystem: boolean;
 }

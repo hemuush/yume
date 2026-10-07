@@ -337,6 +337,65 @@ describe('Add screen', () => {
     );
     expect(createTransaction).not.toHaveBeenCalled();
   });
+
+  it('editing an entry on an archived account keeps it on that account, not the first one', async () => {
+    mockParams.current = { id: 't1' };
+    const listAccounts: jest.Mock = jest.requireMock('@/db/ledger').listAccounts;
+    const usual = listAccounts.getMockImplementation();
+    // The screen reloads on focus, so every load sees the archived accounts.
+    listAccounts.mockImplementation(async () => [
+      account('bank', 'Bank'),
+      account('cash', 'Cash', 'cash'),
+      { ...account('old', 'Old card'), archived: true },
+      { ...account('gone', 'Other archived'), archived: true },
+    ]);
+    try {
+      (getTransactionById as jest.Mock).mockResolvedValueOnce({
+        id: 't1',
+        type: 'expense',
+        amountMinor: 45000,
+        accountId: 'old',
+        toAccountId: null,
+        categoryId: 'food',
+        note: 'Dinner',
+        date: '2026-09-20',
+      });
+      const tree = await render();
+      expect(listAccounts).toHaveBeenCalledWith(true);
+      expect(texts(tree)).toContain('Old card');
+      expect(texts(tree)).not.toContain('Other archived');
+      await save(tree, 'Save changes');
+      expect(updateTransaction).toHaveBeenCalledWith('t1', expect.objectContaining({ accountId: 'old' }));
+    } finally {
+      listAccounts.mockImplementation(usual);
+    }
+  });
+
+  it("a saved split can't be switched to income: it says why and stays an expense", async () => {
+    mockParams.current = { id: 't1' };
+    (getTransactionById as jest.Mock).mockResolvedValueOnce({
+      id: 't1',
+      type: 'expense',
+      amountMinor: 10000,
+      accountId: 'bank',
+      toAccountId: null,
+      categoryId: 'food',
+      note: '',
+      date: '2026-09-20',
+      splitId: 's1',
+    });
+    const { getSplitParts } = jest.requireMock('@/db/splits');
+    (getSplitParts as jest.Mock).mockResolvedValueOnce([
+      { id: 't1', categoryId: 'food', amountMinor: 10000 },
+      { id: 't2', categoryId: 'travel', amountMinor: 10000 },
+    ]);
+    const tree = await render();
+    await press(tree, 'Income');
+    expect(showAlert).toHaveBeenCalledWith("A split can't change type", expect.any(String));
+    expect(texts(tree)).toContain('Split 2 ways');
+    expect(updateTransaction).not.toHaveBeenCalled();
+  });
+
   it('deleting from the edit screen goes back and offers an undo that puts the entry back', async () => {
     mockParams.current = { id: 't1' };
     (getTransactionById as jest.Mock).mockResolvedValueOnce({

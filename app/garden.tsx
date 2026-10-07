@@ -33,7 +33,7 @@ function noteFor(stage: GrowthStage, streak: number): string {
   if (stage === 'sprout')
     return `${streak} day${streak === 1 ? '' : 's'} running. A couple more and it's a sapling.`;
   if (stage === 'sapling') return `${streak} days running — getting there. A full week and it blooms.`;
-  return `${streak} days running. Miss a day and it just pauses — it never wilts back to a seed.`;
+  return `${streak} days running — in full bloom. A day over the goal starts it again from a seed.`;
 }
 
 /**

@@ -3,6 +3,8 @@ import { getDb } from './client';
 import { captureRow, restoreRow, RowSnapshot } from './undoSnapshot';
 import { deleteTransaction, restoreTransaction } from './ledger';
 import { countFractionalLedgerAmounts } from './maintenance';
+import { cachedRead } from './readCache';
+import { sensitiveOf } from './spendSql';
 
 /**
  * Tidy up: data that looks off, each fixable: identical-entry pairs, old balances logged as income, paise.
@@ -35,6 +37,8 @@ export interface RepeatGroup {
   parentName?: string | null;
   categoryIcon: string | null;
   categoryColor: string | null;
+  /** Savings or investments (a hidden category, or a transfer into or out of savings): masked while hidden. */
+  isSavings: boolean;
 }
 
 /**
@@ -51,6 +55,8 @@ export interface StartingBalanceGroup {
   totalMinor: number;
   firstDate: string;
   lastDate: string;
+  /** Its category is hidden with "hide savings & investment amounts": the total shows masked then. */
+  isSavings: boolean;
 }
 
 export interface TidyUpReport {
@@ -113,28 +119,33 @@ export async function findRepeatGroups(): Promise<RepeatGroup[]> {
       parent_name: string | null;
       category_icon: string | null;
       category_color: string | null;
+      is_savings: number;
     }
   >(
     `SELECT t.id, t.type, t.account_id, t.to_account_id, t.category_id, t.amount_minor, t.date, t.created_at,
        a.name AS account_name, ta.name AS to_account_name, c.name AS category_name, pc.name AS parent_name,
-       c.icon AS category_icon, c.color AS category_color
-     FROM transactions t
+       c.icon AS category_icon, c.color AS category_color,
+       CASE WHEN t.type = 'transfer' THEN (a.type = 'savings' OR IFNULL(ta.type, '') = 'savings')
+            ELSE COALESCE(${sensitiveOf('c')}, 0) END AS is_savings
+     FROM (
+       -- Every combination entered more than once, found in one pass. (A correlated EXISTS here let SQLite
+       -- probe by account instead of date: measured at 80+ seconds for 20,000 entries.) Grouped on the plain
+       -- columns in idx_transactions_repeat's order, so SQLite walks that index instead of sorting the whole
+       -- table (GROUP BY treats NULLs as equal, as the old IFNULL keys did).
+       SELECT date, amount_minor, type, account_id, category_id, to_account_id
+       FROM transactions
+       GROUP BY date, amount_minor, type, account_id, category_id, to_account_id
+       HAVING COUNT(*) > 1
+     ) dup
+     -- CROSS JOIN fixes the order: the few repeated combinations first, each entry then found through the
+     -- same index, instead of checking every entry in the ledger against them.
+     CROSS JOIN transactions t ON t.date = dup.date AND t.amount_minor = dup.amount_minor AND t.type = dup.type
+       AND t.account_id = dup.account_id AND t.category_id IS dup.category_id
+       AND t.to_account_id IS dup.to_account_id
      JOIN accounts a ON a.id = t.account_id
      LEFT JOIN accounts ta ON ta.id = t.to_account_id
      LEFT JOIN categories c ON c.id = t.category_id
      LEFT JOIN categories pc ON pc.id = c.parent_id
-     JOIN (
-       -- Every combination entered more than once, found in one pass. (A
-       -- correlated EXISTS here let SQLite probe by account instead of date:
-       -- measured at 80+ seconds for 20,000 entries.)
-       SELECT type, account_id, IFNULL(to_account_id, '') AS to_key, IFNULL(category_id, '') AS cat_key,
-         amount_minor, date
-       FROM transactions
-       GROUP BY type, account_id, to_key, cat_key, amount_minor, date
-       HAVING COUNT(*) > 1
-     ) dup ON dup.type = t.type AND dup.account_id = t.account_id
-       AND dup.to_key = IFNULL(t.to_account_id, '') AND dup.cat_key = IFNULL(t.category_id, '')
-       AND dup.amount_minor = t.amount_minor AND dup.date = t.date
      WHERE ${PLAIN}
      ORDER BY t.date DESC, t.created_at ASC`
   );
@@ -161,6 +172,7 @@ export async function findRepeatGroups(): Promise<RepeatGroup[]> {
         parentName: r.parent_name ?? null,
         categoryIcon: r.category_icon ?? null,
         categoryColor: r.category_color ?? null,
+        isSavings: !!r.is_savings,
       });
     }
   }
@@ -176,10 +188,11 @@ export async function findStartingBalances(): Promise<StartingBalanceGroup[]> {
       category_id: string;
       account_name: string;
       category_name: string;
+      is_savings: number;
     }
   >(
     `SELECT t.id, t.account_id, t.category_id, t.amount_minor, t.date, a.name AS account_name,
-       c.name AS category_name
+       c.name AS category_name, ${sensitiveOf('c')} AS is_savings
      FROM transactions t
      JOIN accounts a ON a.id = t.account_id
      JOIN categories c ON c.id = t.category_id
@@ -207,6 +220,7 @@ export async function findStartingBalances(): Promise<StartingBalanceGroup[]> {
         totalMinor: r.amount_minor,
         firstDate: r.date,
         lastDate: r.date,
+        isSavings: !!r.is_savings,
       });
     }
   }
@@ -214,13 +228,16 @@ export async function findStartingBalances(): Promise<StartingBalanceGroup[]> {
   return [...groups.values()].sort((a, b) => b.totalMinor - a.totalMinor);
 }
 
-export async function getTidyUpReport(): Promise<TidyUpReport> {
-  const [repeats, startingBalances, fractional] = await Promise.all([
-    findRepeatGroups(),
-    findStartingBalances(),
-    countFractionalLedgerAmounts().catch(() => ({ total: 0 })),
-  ]);
-  return { repeats, startingBalances, fractionalCount: fractional.total };
+export function getTidyUpReport(): Promise<TidyUpReport> {
+  // Scans the whole ledger; Home's Needs you and the Tidy up screen share one result until the data changes.
+  return cachedRead('tidyUp', async () => {
+    const [repeats, startingBalances, fractional] = await Promise.all([
+      findRepeatGroups(),
+      findStartingBalances(),
+      countFractionalLedgerAmounts().catch(() => ({ total: 0 })),
+    ]);
+    return { repeats, startingBalances, fractionalCount: fractional.total };
+  });
 }
 
 /** How many things Tidy up has for you — each repeat pair and group of old balances, plus one for paise. */

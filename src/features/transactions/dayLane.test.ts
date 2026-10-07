@@ -48,13 +48,7 @@ describe('buildDayLane', () => {
 
   it('stacks repeats of a category where the newest of them was, and keeps the rest as lines', () => {
     expect(
-      lines.map((l) =>
-        l.kind === 'single'
-          ? l.tx.id
-          : l.kind === 'stack'
-            ? `${l.categoryId}×${l.items.length}=${l.totalMinor}`
-            : l.splitId
-      )
+      lines.map((l) => (l.kind === 'single' ? l.tx.id : `${l.categoryId}×${l.items.length}=${l.totalMinor}`))
     ).toEqual(['food×2=22800', 'rapido×2=7600', 'e', 'g']);
   });
 
@@ -78,18 +72,13 @@ describe('buildDayLane', () => {
       tx('y', { categoryId: 'groceries', amountMinor: 7000 }),
     ];
 
-    it('shows a split as one line, biggest part first, and never stacks its parts by category', () => {
+    it('shows each part as its own plain line, with no split heading, and never stacks a part by category', () => {
       const { lines: l } = buildDayLane(splitDay, '2026-09-27');
-      const split = l.find((x) => x.kind === 'split');
-      expect(split).toMatchObject({ splitId: 's1', totalMinor: 185000 });
-      expect(split && split.kind === 'split' ? split.items.map((t) => t.id) : []).toEqual(['p1', 'p2']);
-      const stack = l.find((x) => x.kind === 'stack');
-      expect(stack && stack.kind === 'stack' ? stack.items.map((t) => t.id) : []).toEqual(['x', 'y']);
-    });
-
-    it('shows a lone part (after a category filter) as a plain line', () => {
-      const { lines: l } = buildDayLane([splitDay[0]], '2026-09-27');
-      expect(l).toEqual([{ kind: 'single', tx: splitDay[0] }]);
+      expect(l.map((x) => (x.kind === 'single' ? x.tx.id : `stack:${x.items.map((t) => t.id)}`))).toEqual([
+        'p1',
+        'stack:x,y',
+        'p2',
+      ]);
     });
   });
 
@@ -103,11 +92,11 @@ describe('buildDayLane', () => {
       tx('t', { type: 'transfer', categoryId: null, toAccountId: 'hdfc', dayRank: 5 }),
     ];
     const name = (l: ReturnType<typeof buildDayLane>['lines'][number]) =>
-      l.kind === 'single' ? l.tx.id : l.kind === 'stack' ? l.key.split('|')[2] : l.splitId;
+      l.kind === 'single' ? l.tx.id : l.key.split('|')[2];
 
-    it('keeps each line where it was dragged, splits and stacks included', () => {
+    it('keeps each line where it was dragged, split parts and stacks included', () => {
       const { lines } = buildDayLane(ranked, '2026-09-25');
-      expect(lines.map(name)).toEqual(['rapido', 's1', 'a']);
+      expect(lines.map(name)).toEqual(['rapido', 'p1', 'a', 'p2']);
     });
 
     it('lists a moved line as ids top to bottom, with transfers last', () => {

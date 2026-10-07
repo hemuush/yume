@@ -1,4 +1,6 @@
-import { addDaysToIsoDate, parseLocalIsoDate } from '@/lib/date';
+import { addDaysToIsoDate, dayOfIsoDate, parseLocalIsoDate } from '@/lib/date';
+import { advanceDate } from '@/lib/recurrence';
+import type { RecurrenceFrequency } from '@/types';
 import { peopleTotals } from '@/features/people/people.helpers';
 import { payCardRoute, PayCardRoute } from '@/lib/payCard';
 
@@ -115,6 +117,10 @@ export interface PlanRuleInput {
   amountMinor: number;
   /** Already resolved by the screen: the rule's note, its category, or "From → To" for a transfer. */
   label: string;
+  /** Its cadence, so a weekly or daily rule shows every run in the window, not only the next. */
+  frequency?: RecurrenceFrequency;
+  intervalCount?: number;
+  endDate?: string | null;
 }
 
 export type DueKind = 'emi' | 'bill' | 'income' | 'transfer';
@@ -145,7 +151,9 @@ export interface PlanCardBillInput {
 export function buildDueItems(
   loanRows: PlanLoanRow[],
   rules: PlanRuleInput[],
-  cardBills: PlanCardBillInput[] = []
+  cardBills: PlanCardBillInput[] = [],
+  /** The last day the screen shows (YYYY-MM-DD): a rule's runs up to it are listed, each on its own day. */
+  untilDate?: string
 ): PlanDueItem[] {
   const items: PlanDueItem[] = [];
   for (const l of loanRows) {
@@ -162,14 +170,22 @@ export function buildDueItems(
   }
   for (const r of rules) {
     if (!r.active) continue;
-    items.push({
-      key: `rule-${r.id}`,
-      title: r.label,
-      kind: r.type === 'expense' ? 'bill' : r.type,
-      dueDate: r.nextRunDate,
-      amountMinor: r.amountMinor,
-      route: '/recurring',
-    });
+    // The next run always; then, with a cadence and a window, each later run up to the window's end.
+    const anchorDay = dayOfIsoDate(r.nextRunDate);
+    let date = r.nextRunDate;
+    for (let n = 0; n < 100; n++) {
+      items.push({
+        key: n === 0 ? `rule-${r.id}` : `rule-${r.id}-${date}`,
+        title: r.label,
+        kind: r.type === 'expense' ? 'bill' : r.type,
+        dueDate: date,
+        amountMinor: r.amountMinor,
+        route: '/recurring',
+      });
+      if (!r.frequency || !untilDate) break;
+      date = advanceDate(date, r.frequency, Math.max(1, r.intervalCount ?? 1), anchorDay);
+      if (date > untilDate || (r.endDate && date > r.endDate)) break;
+    }
   }
   for (const c of cardBills) {
     if (c.leftToPayMinor <= 0) continue;

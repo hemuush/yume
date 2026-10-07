@@ -5,7 +5,8 @@ import { newId } from '@/lib/id';
 import { getDefaultCurrency } from './settings';
 import { captureRow, restoreRow, RowSnapshot } from './undoSnapshot';
 import { Budget } from '@/types';
-import { SPEND_ROWS, SPEND_AMOUNT } from './spendSql';
+import { SPEND_ROWS, SPEND_AMOUNT, sensitiveOf } from './spendSql';
+import { cachedRead } from './readCache';
 
 /**
  * One row per (category, month), so changing a limit never rewrites history. No background job rolls over:
@@ -40,27 +41,30 @@ function monthRange(periodMonth: string): { start: string; end: string } {
 }
 
 /**
- * Same-currency spend, like every report figure. A top-level `categoryId` also rolls up its subcategories
- * (as getRangeComparison); for a subcategory `c.parent_id = ?` matches nothing, so it stays exact-match.
+ * A month's same-currency spending per category, in one query for every budget at once (not one per budget,
+ * each waiting its turn in the database queue). Returns the spend of a category as a budget counts it: a
+ * top-level category also rolls up its subcategories (as getRangeComparison); a subcategory is exact-match.
+ * What a category cost is spending less money that came back as refunds, never below zero.
  */
-async function categorySpend(
+async function spendByCategory(
   db: AppDb,
   currency: string,
-  categoryId: string,
   range: { start: string; end: string }
-): Promise<number> {
-  const row = await db.getFirstAsync<{ total: number }>(
-    // What the category cost: spending less money that came back as refunds.
-    `SELECT COALESCE(SUM(${SPEND_AMOUNT}), 0) as total
+): Promise<(categoryId: string) => number> {
+  const rows = await db.getAllAsync<{ id: string; parent: string | null; total: number }>(
+    `SELECT t.category_id AS id, c.parent_id AS parent, SUM(${SPEND_AMOUNT}) AS total
      FROM transactions t
      JOIN accounts a ON a.id = t.account_id
      JOIN categories c ON c.id = t.category_id
-     WHERE ${SPEND_ROWS} AND a.currency = ?
-       AND (t.category_id = ? OR c.parent_id = ?)
-       AND t.date >= ? AND t.date <= ?`,
-    [currency, categoryId, categoryId, range.start, range.end]
+     WHERE ${SPEND_ROWS} AND a.currency = ? AND t.date >= ? AND t.date <= ?
+     GROUP BY t.category_id`,
+    [currency, range.start, range.end]
   );
-  return Math.max(0, row?.total ?? 0);
+  return (categoryId) =>
+    Math.max(
+      0,
+      rows.reduce((sum, r) => (r.id === categoryId || r.parent === categoryId ? sum + r.total : sum), 0)
+    );
 }
 
 export interface BudgetProgress {
@@ -83,9 +87,19 @@ export interface BudgetProgress {
  * Every budget for one month, spend computed live, most-urgent (closest to or over its limit) first.
  * `excludeSensitive` leaves out budgets on savings/investment categories (privacy mode).
  */
-export async function listBudgetsForMonth(
+export function listBudgetsForMonth(
   periodMonth: string = periodMonthOf(),
   excludeSensitive = false
+): Promise<BudgetProgress[]> {
+  // Home and its Needs you list both ask for this month's; computed once per change.
+  return cachedRead(`budgets:${periodMonth}:${excludeSensitive}`, () =>
+    readBudgetsForMonth(periodMonth, excludeSensitive)
+  );
+}
+
+async function readBudgetsForMonth(
+  periodMonth: string,
+  excludeSensitive: boolean
 ): Promise<BudgetProgress[]> {
   const db = await getDb();
   const currency = await getDefaultCurrency();
@@ -100,45 +114,53 @@ export async function listBudgetsForMonth(
     `SELECT b.*, c.name as category_name, pc.name as parent_name, c.icon as category_icon, c.color as category_color
      FROM budgets b JOIN categories c ON c.id = b.category_id
      LEFT JOIN categories pc ON pc.id = c.parent_id
-     WHERE b.period_month = ?${excludeSensitive ? ' AND c.is_sensitive = 0' : ''}
+     WHERE b.period_month = ?${excludeSensitive ? ` AND ${sensitiveOf('c')} = 0` : ''}
      ORDER BY c.name COLLATE NOCASE ASC`,
     [periodMonth]
   );
 
-  const range = monthRange(periodMonth);
-  const result = await Promise.all(
-    rows.map(async (row): Promise<BudgetProgress> => {
-      const budget = rowToBudget(row);
-      const spentMinor = await categorySpend(db, currency, budget.categoryId, range);
+  if (rows.length === 0) return [];
+  const spentIn = await spendByCategory(db, currency, monthRange(periodMonth));
 
-      let effectiveLimitMinor = budget.limitAmountMinor;
-      if (budget.rollover) {
-        const prevMonth = previousPeriodMonth(periodMonth);
-        const prevBudget = await db.getFirstAsync<{ limit_amount_minor: number }>(
-          'SELECT limit_amount_minor FROM budgets WHERE category_id = ? AND period_month = ?',
-          [budget.categoryId, prevMonth]
-        );
-        if (prevBudget) {
-          const prevSpent = await categorySpend(db, currency, budget.categoryId, monthRange(prevMonth));
-          const carry = prevBudget.limit_amount_minor - prevSpent;
-          if (carry > 0) effectiveLimitMinor += carry;
-        }
-      }
+  // Rollover: last month's budgets and spend, read once for all budgets, and only when one rolls over.
+  const prevMonth = previousPeriodMonth(periodMonth);
+  let prevLimitOf = new Map<string, number>();
+  let prevSpentIn: (categoryId: string) => number = () => 0;
+  if (rows.some((r) => r.rollover)) {
+    const prevRows = await db.getAllAsync<{ category_id: string; limit_amount_minor: number }>(
+      'SELECT category_id, limit_amount_minor FROM budgets WHERE period_month = ?',
+      [prevMonth]
+    );
+    prevLimitOf = new Map(prevRows.map((r) => [r.category_id, r.limit_amount_minor]));
+    if (rows.some((r) => r.rollover && prevLimitOf.has(r.category_id))) {
+      prevSpentIn = await spendByCategory(db, currency, monthRange(prevMonth));
+    }
+  }
 
-      return {
-        budget,
-        categoryName: row.category_name,
-        parentName: row.parent_name,
-        categoryIcon: row.category_icon,
-        categoryColor: row.category_color,
-        spentMinor,
-        effectiveLimitMinor,
-        remainingMinor: effectiveLimitMinor - spentMinor,
-        percentUsed: effectiveLimitMinor > 0 ? (spentMinor / effectiveLimitMinor) * 100 : 0,
-        overBudget: spentMinor > effectiveLimitMinor,
-      };
-    })
-  );
+  const result = rows.map((row): BudgetProgress => {
+    const budget = rowToBudget(row);
+    const spentMinor = spentIn(budget.categoryId);
+
+    let effectiveLimitMinor = budget.limitAmountMinor;
+    const prevLimit = prevLimitOf.get(budget.categoryId);
+    if (budget.rollover && prevLimit !== undefined) {
+      const carry = prevLimit - prevSpentIn(budget.categoryId);
+      if (carry > 0) effectiveLimitMinor += carry;
+    }
+
+    return {
+      budget,
+      categoryName: row.category_name,
+      parentName: row.parent_name,
+      categoryIcon: row.category_icon,
+      categoryColor: row.category_color,
+      spentMinor,
+      effectiveLimitMinor,
+      remainingMinor: effectiveLimitMinor - spentMinor,
+      percentUsed: effectiveLimitMinor > 0 ? (spentMinor / effectiveLimitMinor) * 100 : 0,
+      overBudget: spentMinor > effectiveLimitMinor,
+    };
+  });
 
   return result.sort((a, b) => b.percentUsed - a.percentUsed);
 }
@@ -172,7 +194,7 @@ export async function listLapsedBudgets(
             c.name as category_name, pc.name as parent_name, c.icon as category_icon, c.color as category_color
      FROM budgets b JOIN categories c ON c.id = b.category_id
      LEFT JOIN categories pc ON pc.id = c.parent_id
-     WHERE b.period_month = ? AND c.archived = 0${excludeSensitive ? ' AND c.is_sensitive = 0' : ''}
+     WHERE b.period_month = ? AND c.archived = 0${excludeSensitive ? ` AND ${sensitiveOf('c')} = 0` : ''}
        AND NOT EXISTS (SELECT 1 FROM budgets b2 WHERE b2.category_id = b.category_id AND b2.period_month = ?)
      ORDER BY c.name COLLATE NOCASE ASC`,
     [prevMonth, periodMonth]

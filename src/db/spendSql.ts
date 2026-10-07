@@ -9,8 +9,15 @@ export const SPEND_ROWS = `(t.type = 'expense' OR (t.type = 'income' AND t.is_re
 /** A spending row's effect: an expense adds, a refund takes away. */
 export const SPEND_AMOUNT = `(CASE WHEN t.type = 'expense' THEN t.amount_minor ELSE -t.amount_minor END)`;
 
-/** Rows outside the categories flagged "hide savings & investment amounts" (`is_sensitive`). */
-export const NOT_SENSITIVE = `COALESCE((SELECT sc.is_sensitive FROM categories sc WHERE sc.id = t.category_id), 0) = 0`;
+/**
+ * Whether category alias `c` is hidden with "hide savings & investment amounts": its own flag, or its parent's
+ * (a subcategory such as "My SIP" under Investments is hidden with it). 1 or 0.
+ */
+export const sensitiveOf = (c: string) =>
+  `MAX(${c}.is_sensitive, COALESCE((SELECT ps.is_sensitive FROM categories ps WHERE ps.id = ${c}.parent_id), 0))`;
+
+/** Rows outside the categories flagged "hide savings & investment amounts" (`is_sensitive`, or the parent's). */
+export const NOT_SENSITIVE = `COALESCE((SELECT ${sensitiveOf('sc')} FROM categories sc WHERE sc.id = t.category_id), 0) = 0`;
 
 /** Rows that count as income: money in that isn't a refund. */
 export const INCOME_ROWS = `(t.type = 'income' AND t.is_refund = 0)`;

@@ -7,7 +7,8 @@ import { getPeriodComparison } from '@/db/reports';
 import { listAccounts } from '@/db/ledger';
 import { toLocalIsoDate } from '@/lib/date';
 import { valueReminderLine } from '@/lib/investment';
-import { getNotificationPrefs } from '@/db/settings';
+import { getNotificationPrefs, getCachedHideSensitiveAmounts } from '@/db/settings';
+import { privateComparison } from '@/lib/privateSummary';
 import { formatPctChange } from '@/lib/format';
 import { haptics } from '@/lib/haptics';
 import { useScreenLoad } from '@/lib/useScreenLoad';
@@ -49,7 +50,8 @@ export default function NeedsYouScreen() {
     const [needs, prefs, comparison, accounts] = await Promise.all([
       loadNeedsYou(),
       getNotificationPrefs(),
-      getPeriodComparison('month'),
+      // As Home's Suu line: with savings hidden, savings and investment spending leave the comparison.
+      getPeriodComparison('month').then((c) => privateComparison(c, getCachedHideSensitiveAmounts())),
       listAccounts(),
     ]);
     setShown(needs.shown);

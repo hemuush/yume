@@ -66,11 +66,7 @@ jest.mock('@/components/ModalSheet', () => ({
       : null,
 }));
 jest.mock('@/db/tidyUp', () => ({
-  getTidyUpReport: async () => ({
-    repeats: [],
-    startingBalances: [{ categoryName: 'Previous' }],
-    fractionalCount: 0,
-  }),
+  findStartingBalances: async () => [{ categoryName: 'Previous' }],
 }));
 // Count-up and bar-fill animations would keep ticking past the test's end.
 jest.mock('@/components/CountUpAmount', () => ({ CountUpAmount: () => null }));

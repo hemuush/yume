@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { onTransactionsChanged } from '@/lib/dataEvents';
+import { useFreshness } from '@/lib/useFreshness';
 import { View, FlatList, Pressable, Animated, StyleSheet } from 'react-native';
 import { Text, TextInput } from '@/components/Text';
 import ReanimatedAnimated, { FadeIn, ReduceMotion } from 'react-native-reanimated';
@@ -236,16 +237,17 @@ export default function TransactionsScreen() {
     const seq = ++loadSeq.current;
     try {
       const [tx, accs, cats] = await Promise.all([listTransactions(range), listAccounts(), listCategories()]);
-      if (seq !== loadSeq.current) return;
+      if (seq !== loadSeq.current) return false;
       setTransactions(tx);
       setAccounts(accs);
       setCategories(cats);
       setLoadError(null);
     } catch (e) {
-      if (seq !== loadSeq.current) return;
+      if (seq !== loadSeq.current) return false;
       // A transient DB failure otherwise left stale/empty data with no hint anything went wrong (as on
       // other tabs).
       setLoadError(errorMessage(e));
+      return false;
     }
     // Fetched and caught separately: it only feeds the secondary "N% more/less than last …" figure, so its
     // failure (or a slower query) must not blank the transaction list.
@@ -265,22 +267,33 @@ export default function TransactionsScreen() {
         setComparison(null);
         setComparisonFailed(true);
       }
+      return false;
     }
+    return seq === loadSeq.current;
   }, []);
 
   // Destructured so the focus effect depends on primitive dates/scope, not the `visibleRange` object
   // rebuilt every render (which would re-run the load each time).
   const { fromDate: rangeFromDate, toDate: rangeToDate } = visibleRange;
   useEffect(() => setSelectedBar(null), [rangeFromDate, rangeToDate, viewScope]);
+  const freshness = useFreshness();
   useFocusEffect(
     useCallback(() => {
       const now = new Date();
       setTodayDate((prev) => (toLocalIsoDate(prev) === toLocalIsoDate(now) ? prev : now));
-      load({ fromDate: rangeFromDate, toDate: rangeToDate }, viewScope);
+      // Nothing written since this period last loaded (and it's the same day): what's shown is current.
+      // This also runs on every search keystroke, which no longer reloads the period each time.
+      const deps = [load, rangeFromDate, rangeToDate, viewScope];
+      if (!freshness.isFresh(deps)) {
+        const started = freshness.start(deps);
+        void load({ fromDate: rangeFromDate, toDate: rangeToDate }, viewScope).then((ok) => {
+          if (ok) freshness.commit(started);
+        });
+      }
       // Returning from the full add-transaction screen (edit/delete of a row opened from search): re-run
       // the query so the list doesn't show the row as it was before.
       if (searching) runSearch(searchQuery.trim());
-    }, [load, rangeFromDate, rangeToDate, viewScope, searching, searchQuery, runSearch])
+    }, [load, rangeFromDate, rangeToDate, viewScope, searching, searchQuery, runSearch, freshness])
   );
   // A save that doesn't leave this screen (the + long-press sheet) — reload in place.
   useEffect(

@@ -86,7 +86,19 @@ describe('getStillToPayThisMonth', () => {
     expect(await getStillToPayThisMonth('2026-09-30')).toBe(90000);
   });
 
-  it('only looks at the month it is given', async () => {
-    expect(await getStillToPayThisMonth('2026-10-05')).toBe(90000);
+  it('only looks at the month it is given, counting the runs that fall in it', async () => {
+    // October: EMI #3 (29 Oct), and the monthly ₹299 rule's run on 30 Oct (its 30 Sep run is past). The ₹111
+    // rule's 1 Oct run is before today and its next is in November.
+    expect(await getStillToPayThisMonth('2026-10-05')).toBe(90000 + 29900);
   });
+});
+
+it('counts a weekly bill every time it falls due in the rest of the month, not once', async () => {
+  await run(
+    `INSERT INTO recurring_rules (id, type, account_id, category_id, amount_minor, frequency, next_run_date, active)
+     SELECT 'w1', 'expense', a.id, c.id, 5000, 'weekly', '2026-11-04', 1
+     FROM accounts a, categories c WHERE a.name = 'Bank' AND c.name = 'Food'`
+  );
+  // 4, 11, 18 and 25 Nov are all after the 2nd, plus the ₹299 rule on 30 Nov (the ₹111 rule's 1 Nov run is past).
+  expect((await getMonthPaceInputs('2026-11-02')).dueRestOfMonthMinor).toBe(4 * 5000 + 29900);
 });

@@ -15,7 +15,8 @@ import {
   StartingBalanceGroup,
 } from '@/db/tidyUp';
 import { roundLedgerAmountsToWholeRupees } from '@/db/maintenance';
-import { formatMoney } from '@/lib/money';
+import { formatMaskableMoney } from '@/lib/money';
+import { usePrivacy } from '@/theme/PrivacyContext';
 import { haptics } from '@/lib/haptics';
 import { emitTransactionsChanged } from '@/lib/dataEvents';
 import { useScreenLoad } from '@/lib/useScreenLoad';
@@ -52,6 +53,10 @@ const savedLabel = (createdAt: string) => {
 export default function TidyUpScreen() {
   const insets = useSafeAreaInsets();
   const { show: showUndo } = useUndoToast();
+  const { hideAmounts } = usePrivacy();
+  // Savings and investment amounts stay masked here too while hidden.
+  const money = (minor: number, savings: boolean) =>
+    formatMaskableMoney(minor, { masked: hideAmounts && savings });
   const [report, setReport] = useState<TidyUpReport | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -184,7 +189,7 @@ export default function TidyUpScreen() {
                         />
                         <View style={h.mid}>
                           <Text style={h.title} numberOfLines={2}>
-                            {formatMoney(g.amountMinor)} ·{' '}
+                            {money(g.amountMinor, g.isSavings)} ·{' '}
                             {g.type === 'transfer'
                               ? `${g.accountName} → ${g.toAccountName ?? '—'}`
                               : `${g.categoryName ? categoryPath(g.categoryName, g.parentName) : '—'} · ${g.accountName}`}
@@ -231,12 +236,12 @@ export default function TidyUpScreen() {
                           <CategoryIcon name="arrow-collapse-down" color={theme.colors.idCoralDeep} />
                           <View style={h.mid}>
                             <Text style={h.title} numberOfLines={2}>
-                              {formatMoney(g.totalMinor)} · {g.categoryName} · {g.accountName}
+                              {money(g.totalMinor, g.isSavings)} · {g.categoryName} · {g.accountName}
                             </Text>
                             <Text style={h.sub}>
                               {when}. If {one ? 'this is' : 'these are'} money {g.accountName} already had,
                               move {one ? 'it' : 'them'} to its opening balance: the balance stays the same,
-                              and income drops by {formatMoney(g.totalMinor)}
+                              and income drops by {money(g.totalMinor, g.isSavings)}
                               {one ? ` in ${longMonth(g.firstDate)}` : ' across those months'}.
                             </Text>
                           </View>

@@ -88,7 +88,9 @@ export async function restoreKeepingSafetyCopy(
     throw e;
   }
 
-  if (opts.withoutCopy) return { ...result, undoAvailable: copyFile().exists };
+  // No copy was taken of what this restore replaced: an older safety copy may still exist, but it's from
+  // before an earlier restore, so offering it as "undo this restore" would put back the wrong data.
+  if (opts.withoutCopy) return { ...result, undoAvailable: false };
   try {
     await pending.move(copyFile(), { overwrite: true });
     return { ...result, undoAvailable: true };

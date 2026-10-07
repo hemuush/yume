@@ -127,10 +127,13 @@ describe('restore safety copy', () => {
     expect(mockFs.files.has('yume-safety-copy.pending.json')).toBe(false);
   });
 
-  it('"restore anyway" goes ahead without a new copy, keeping the older one', async () => {
+  it('"restore anyway" goes ahead without a new copy, keeping the older one but not offering it as its undo', async () => {
     const copyBefore = await getSafetyCopyInfo();
+    expect(copyBefore).not.toBeNull();
     mockFs.failWrite = true;
-    await restoreKeepingSafetyCopy(otherPhone, { withoutCopy: true });
+    const result = await restoreKeepingSafetyCopy(otherPhone, { withoutCopy: true });
+    // The older copy is from before an earlier restore, not this one.
+    expect(result.undoAvailable).toBe(false);
     expect(await notes()).toEqual(['Old lunch']);
     expect(await getSafetyCopyInfo()).toEqual(copyBefore);
     mockFs.failWrite = false;
