@@ -9,7 +9,7 @@ import { theme } from './theme';
 /** A section heading above a card or list: Home's "Recent activity", Categories' groups. */
 export const SECTION_TITLE: TextStyle = {
   fontFamily: theme.font.roundedBold,
-  fontSize: 17,
+  fontSize: 19,
   color: theme.colors.textPrimary,
 };
 

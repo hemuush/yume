@@ -3,31 +3,40 @@ import { Text } from '@/components/Text';
 import Feather from '@expo/vector-icons/Feather';
 import { router } from 'expo-router';
 import { theme } from '@/constants/theme';
-import { shade } from '@/lib/color';
 import { usePressScale } from '@/lib/usePressScale';
-
-// Readable shade of the sky-blue accent: `primary` (#8FCBFF) is too light for small bold text on cream,
-// same fix as reports.tsx's moon card (a deeper shade of the same hue, not an unrelated blue).
-const TRANSFER_TEXT = shade(theme.colors.primary, 45, 8);
 
 const ACTIONS: {
   type: 'expense' | 'income' | 'transfer';
   label: string;
   icon: React.ComponentProps<typeof Feather>['name'];
+  /** The icon's colour; Income and Transfer also sit it in a tinted circle. */
   color: string;
+  tint?: string;
   primary?: boolean;
 }[] = [
-  { type: 'expense', label: 'Expense', icon: 'plus', color: theme.colors.white, primary: true },
-  { type: 'income', label: 'Income', icon: 'plus', color: theme.colors.incomeText },
-  { type: 'transfer', label: 'Transfer', icon: 'repeat', color: TRANSFER_TEXT },
+  { type: 'expense', label: 'Expense', icon: 'plus', color: theme.colors.surface, primary: true },
+  {
+    type: 'income',
+    label: 'Income',
+    icon: 'plus',
+    color: theme.colors.incomeText,
+    tint: theme.colors.incomeTint,
+  },
+  {
+    type: 'transfer',
+    label: 'Transfer',
+    icon: 'repeat',
+    color: theme.colors.link,
+    tint: theme.colors.primaryTint,
+  },
 ];
 
 /**
- * Shortcuts to Add with a segment preselected (nav + still opens Expense). Expense is the filled ink pill.
- * Income/Transfer: frosted pills, type colour only in icon+label. Frosted not outlined: in the header.
+ * Shortcuts to Add with a segment preselected (nav + still opens Expense), just under the month card where a
+ * thumb reaches. Expense is the one filled ink button; Income and Transfer are cards with a tinted icon.
  */
-function ActionPill({ type, label, icon, color, primary }: (typeof ACTIONS)[number]) {
-  const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.95);
+function ActionPill({ type, label, icon, color, tint, primary }: (typeof ACTIONS)[number]) {
+  const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.96);
   return (
     <Pressable
       onPress={() => router.push(`/add-transaction?type=${type}`)}
@@ -38,8 +47,16 @@ function ActionPill({ type, label, icon, color, primary }: (typeof ACTIONS)[numb
       accessibilityLabel={`Add ${label.toLowerCase()}`}
     >
       <Animated.View style={[styles.pill, primary && styles.pillPrimary, animatedStyle]}>
-        <Feather name={icon} size={13} color={color} />
-        <Text style={[styles.label, { color }]}>{label}</Text>
+        {tint ? (
+          <View style={[styles.iconDot, { backgroundColor: tint }]}>
+            <Feather name={icon} size={13} color={color} />
+          </View>
+        ) : (
+          <Feather name={icon} size={16} color={color} />
+        )}
+        <Text style={[styles.label, primary && styles.labelPrimary]} numberOfLines={1}>
+          {label}
+        </Text>
       </Animated.View>
     </Pressable>
   );
@@ -56,18 +73,22 @@ export function QuickActionsRow() {
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', gap: 8 },
+  row: { flexDirection: 'row', gap: 10, marginHorizontal: 20, marginTop: 16 },
   pillWrap: { flex: 1 },
   pill: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
-    minHeight: 38,
-    paddingVertical: 6,
-    borderRadius: theme.radius.lg,
-    backgroundColor: theme.colors.glass,
+    gap: 8,
+    minHeight: 52,
+    paddingHorizontal: 6,
+    borderRadius: 18,
+    backgroundColor: theme.colors.surface,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.borderSoft,
   },
-  pillPrimary: { backgroundColor: theme.colors.ink },
-  label: { fontFamily: theme.font.bodyBold, fontSize: 12.5 },
+  pillPrimary: { backgroundColor: theme.colors.ink, borderColor: theme.colors.ink },
+  iconDot: { width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  label: { flexShrink: 1, fontFamily: theme.font.bodyBold, fontSize: 15, color: theme.colors.textPrimary },
+  labelPrimary: { color: theme.colors.surface },
 });

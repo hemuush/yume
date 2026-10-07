@@ -17,7 +17,7 @@ export const widgetColor = {
   expense: '#E23F55',
   expenseText: '#BD3547',
   // Home's month card: the ring's spent slice and its tile, and the moon-cream face.
-  spentSoft: '#FFC9B3',
+  spentSoft: '#F6A88E',
   idCoral: '#FFE3D6',
   idSage: '#E9F3DA',
   moonFace: '#FBF3DA',
