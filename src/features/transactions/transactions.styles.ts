@@ -50,7 +50,7 @@ export const styles = StyleSheet.create({
   },
   searchInput: {
     flex: 1,
-    fontSize: 15,
+    fontSize: 14,
     fontFamily: theme.font.body,
     color: theme.colors.textPrimary,
     padding: 0,
@@ -85,17 +85,10 @@ export const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: theme.colors.idCoral,
   },
-  sumKicker: {
-    flexShrink: 1,
-    fontFamily: theme.font.bodyMedium,
-    fontSize: 13,
-    color: theme.colors.textSecondary,
-  },
+  sumKicker: { ...EYEBROW, flexShrink: 1, color: theme.colors.textSecondary },
   headlineAmt: {
     fontFamily: theme.font.monoBold,
-    fontSize: 34,
-    lineHeight: 40,
-    letterSpacing: -1.4,
+    fontSize: 32,
     color: theme.colors.textPrimary,
     marginTop: 10,
   },
@@ -111,7 +104,7 @@ export const styles = StyleSheet.create({
   },
   changePillUp: { backgroundColor: theme.colors.expenseTint },
   changePillDown: { backgroundColor: theme.colors.incomeTint },
-  changeText: { fontFamily: theme.font.bodyBold, fontSize: 13 },
+  changeText: { fontFamily: theme.font.bodyBold, fontSize: 11.5 },
   // Room above the tallest bar for the tapped bar's amount bubble.
   sumChart: { marginTop: 22 },
   sumStrip: {
@@ -123,8 +116,8 @@ export const styles = StyleSheet.create({
   },
   sumStripCell: { flex: 1, gap: 3 },
   sumStripCellRight: { paddingLeft: 16, borderLeftWidth: 1, borderLeftColor: theme.colors.divider },
-  sumStripLabel: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textSecondary },
-  sumStripValue: { fontFamily: theme.font.monoBold, fontSize: 17, color: theme.colors.textPrimary },
+  sumStripLabel: { fontFamily: theme.font.bodyMedium, fontSize: 11, color: theme.colors.textSecondary },
+  sumStripValue: { fontFamily: theme.font.monoBold, fontSize: 14, color: theme.colors.textPrimary },
   scopeSwitch: {
     flexDirection: 'row',
     padding: 3,
@@ -138,7 +131,7 @@ export const styles = StyleSheet.create({
     borderRadius: theme.radius.pill,
   },
   scopeBtnOn: { backgroundColor: theme.colors.ink },
-  scopeText: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textSecondary },
+  scopeText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textSecondary },
   scopeTextOn: { fontFamily: theme.font.bodyBold, color: theme.colors.surface },
 
   // ‹ This week › in a white pill on the sky band, its dates under it.
@@ -164,7 +157,7 @@ export const styles = StyleSheet.create({
   periodNavOff: { opacity: 0.35 },
   periodTitleBtn: { flex: 1, alignItems: 'center', paddingVertical: 4 },
   periodTitle: { fontFamily: theme.font.roundedBold, fontSize: 17, color: theme.colors.textPrimary },
-  periodSub: { fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textSecondary, marginTop: 1 },
+  periodSub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary, marginTop: 1 },
 
   listArea: { flex: 1 },
   // The period, as a small chip in the shrunk header; it opens the month picker.
@@ -210,11 +203,11 @@ export const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 36,
+    minHeight: 30,
     borderRadius: theme.radius.pill,
   },
   typeBtnOn: { backgroundColor: theme.colors.ink },
-  typeText: { fontFamily: theme.font.bodyBold, fontSize: 14, color: theme.colors.textSecondary },
+  typeText: { fontFamily: theme.font.bodyBold, fontSize: 12.5, color: theme.colors.textSecondary },
   typeTextOn: { color: theme.colors.surface },
   chipsRow: { gap: 8, paddingHorizontal: 20, paddingTop: 10 },
   filterGap: { height: 22 },
@@ -230,7 +223,7 @@ export const styles = StyleSheet.create({
     borderColor: theme.colors.borderSoft,
   },
   chipCat: { backgroundColor: theme.colors.primaryTint },
-  chipText: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textSecondary },
+  chipText: { fontFamily: theme.font.bodyBold, fontSize: 12.5, color: theme.colors.textSecondary },
 
   yearRow: {
     flexDirection: 'row',

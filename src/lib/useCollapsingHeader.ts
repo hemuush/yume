@@ -61,6 +61,17 @@ export function useCollapsingHeader<T extends Component = Animated.ScrollView>()
     },
   });
 
+  // For a scroll view that already tracks its own offset in JS (the amount pad's, on Profile and the Garden):
+  // feed the header from its onScroll, and settle it from its drag and momentum ends.
+  const onJsScroll = useCallback((y: number) => scrollY.set(y), [scrollY]);
+  const settleJs = useCallback(
+    (y: number, scrollToY: (y: number) => void) => {
+      const d = distance.get();
+      if (d > 0 && y > 0 && y < d) scrollToY(y < d / 2 ? 0 : d);
+    },
+    [distance]
+  );
+
   // A list that remounts (a new key) starts at its top without a scroll event: open the header with it.
   const resetScroll = useCallback(() => scrollY.set(0), [scrollY]);
 
@@ -68,5 +79,14 @@ export function useCollapsingHeader<T extends Component = Animated.ScrollView>()
     () => ({ scrollY, distance, onMeasure }),
     [scrollY, distance, onMeasure]
   );
-  return { collapse, headerHeight, collapsedHeight, scrollHandler, scrollRef, resetScroll };
+  return {
+    collapse,
+    headerHeight,
+    collapsedHeight,
+    scrollHandler,
+    scrollRef,
+    resetScroll,
+    onJsScroll,
+    settleJs,
+  };
 }

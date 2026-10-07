@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getUserName, setUserName, getMemberSinceYear } from '@/db/settings';
 import { HeaderPrivacyToggle } from '@/components/AppHeader';
 import { SkyHeader } from '@/features/home/SkyHeader';
+import { useCollapsingHeader } from '@/lib/useCollapsingHeader';
 import { AmountPadDock } from '@/components/AmountField';
 import { SegmentedControl } from '@/components/SegmentedControl';
 import { theme } from '@/constants/theme';
@@ -30,6 +31,8 @@ const TABS: { label: string; value: ProfileTab }[] = [
  */
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
+  // The header sits over the page and shrinks as it scrolls; the amount pad's scroll tracking feeds it.
+  const { collapse, headerHeight, onJsScroll, settleJs } = useCollapsingHeader();
   const [name, setName] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState('');
@@ -73,11 +76,28 @@ export default function ProfileScreen() {
       <AmountPadDock>
         {(scrollProps) => (
           <>
-            <SkyHeader title="Profile" showBack hideUser actions={<HeaderPrivacyToggle />} />
-
             <KeyboardAwareScrollView
               {...scrollProps}
-              contentContainerStyle={{ paddingBottom: theme.layout.screenScrollPad + insets.bottom }}
+              onScroll={(e) => {
+                scrollProps.onScroll(e);
+                onJsScroll(e.nativeEvent.contentOffset.y);
+              }}
+              // A slow release settles the header open or closed; a fling carries on and settles at its end.
+              onScrollEndDrag={(e) => {
+                if (Math.abs(e.nativeEvent.velocity?.y ?? 0) < 0.2)
+                  settleJs(e.nativeEvent.contentOffset.y, (y) =>
+                    scrollProps.ref.current?.scrollTo({ y, animated: true })
+                  );
+              }}
+              onMomentumScrollEnd={(e) =>
+                settleJs(e.nativeEvent.contentOffset.y, (y) =>
+                  scrollProps.ref.current?.scrollTo({ y, animated: true })
+                )
+              }
+              contentContainerStyle={{
+                paddingTop: headerHeight,
+                paddingBottom: theme.layout.screenScrollPad + insets.bottom,
+              }}
               keyboardShouldPersistTaps="handled"
               bottomOffset={20}
             >
@@ -107,6 +127,13 @@ export default function ProfileScreen() {
 
               {tab === 'you' ? <YouSection /> : <SettingsSection />}
             </KeyboardAwareScrollView>
+            <SkyHeader
+              title="Profile"
+              showBack
+              hideUser
+              collapse={collapse}
+              actions={<HeaderPrivacyToggle />}
+            />
           </>
         )}
       </AmountPadDock>
