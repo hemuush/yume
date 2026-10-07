@@ -9,7 +9,8 @@ import { goalProgress } from '@/lib/savingsGoalProgress';
 import { stageForStreak, stageLabel, GrowthStage } from '@/lib/gardenGrowth';
 import { parseLocalIsoDate, toLocalIsoDate } from '@/lib/date';
 import { SavingsGoal } from '@/types';
-import { SkyHeader } from '@/features/home/SkyHeader';
+import { SkyHeader, HeaderSummary } from '@/features/home/SkyHeader';
+import { useCollapsingHeader } from '@/lib/useCollapsingHeader';
 import { EmptyState } from '@/components/EmptyState';
 import { Skeleton } from '@/components/Skeleton';
 import { SuuIllustration } from '@/components/SuuIllustration';
@@ -42,6 +43,8 @@ function noteFor(stage: GrowthStage, streak: number): string {
  */
 export default function GardenScreen() {
   const insets = useSafeAreaInsets();
+  // The header sits over the page and shrinks as it scrolls; the amount pad's scroll tracking feeds it.
+  const { collapse, headerHeight, onJsScroll, settleJs } = useCollapsingHeader();
   const [dailyGoalMinor, setDailyGoalMinor] = useState<number | null>(null);
   const [series, setSeries] = useState<DailyGoalStreakPoint[]>([]);
   const [goals, setGoals] = useState<SavingsGoal[]>([]);
@@ -121,11 +124,29 @@ export default function GardenScreen() {
       <AmountPadDock>
         {(scrollProps) => (
           <>
-            <SkyHeader title="Suu's Garden" showBack hideUser />
             <ScrollView
               {...scrollProps}
+              onScroll={(e) => {
+                scrollProps.onScroll(e);
+                onJsScroll(e.nativeEvent.contentOffset.y);
+              }}
+              // A slow release settles the header open or closed; a fling carries on and settles at its end.
+              onScrollEndDrag={(e) => {
+                if (Math.abs(e.nativeEvent.velocity?.y ?? 0) < 0.2)
+                  settleJs(e.nativeEvent.contentOffset.y, (y) =>
+                    scrollProps.ref.current?.scrollTo({ y, animated: true })
+                  );
+              }}
+              onMomentumScrollEnd={(e) =>
+                settleJs(e.nativeEvent.contentOffset.y, (y) =>
+                  scrollProps.ref.current?.scrollTo({ y, animated: true })
+                )
+              }
               keyboardShouldPersistTaps="handled"
-              contentContainerStyle={{ paddingBottom: theme.layout.screenScrollPad + insets.bottom }}
+              contentContainerStyle={{
+                paddingTop: headerHeight,
+                paddingBottom: theme.layout.screenScrollPad + insets.bottom,
+              }}
             >
               {loadError && (
                 <View style={styles.errorBanner}>
@@ -212,6 +233,21 @@ export default function GardenScreen() {
                 </View>
               )}
             </ScrollView>
+            <SkyHeader
+              title="Suu's Garden"
+              showBack
+              hideUser
+              collapse={collapse}
+              summary={
+                streakToday > 0 ? (
+                  <HeaderSummary
+                    figure={`${streakToday}-day`}
+                    rest="streak"
+                    dot={theme.colors.secondaryDeep}
+                  />
+                ) : undefined
+              }
+            />
           </>
         )}
       </AmountPadDock>
