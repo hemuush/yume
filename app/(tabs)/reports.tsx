@@ -53,7 +53,6 @@ import { theme } from '@/constants/theme';
 import { useTabScrollPad } from '@/lib/uiScale';
 import { ReportsSkeleton } from '@/features/reports/ReportsSkeleton';
 import { ReportsHeader } from '@/features/reports/ReportsHeader';
-import { ReportSummary } from '@/features/reports/ReportSummary';
 import { HeatmapCard } from '@/features/reports/HeatmapCard';
 import { DayCard } from '@/features/reports/DayCard';
 import { StoryCards } from '@/features/reports/StoryCards';
@@ -75,7 +74,6 @@ import {
   patternFacts,
   quietDays,
   buildStoryCards,
-  vsUsual,
   daySpendFacts,
   weekdayRhythm,
   accountRows,
@@ -109,16 +107,7 @@ export default function ReportsScreen() {
   const insets = useSafeAreaInsets();
   const tabScrollPad = useTabScrollPad();
   const [cursor, setCursor] = useState<ReportWindow>(CURRENT_PERIOD);
-  // Which way the last arrow or swipe moved, so the headline slides in from that side.
-  const [slideDirection, setSlideDirection] = useState<-1 | 0 | 1>(0);
-  const stepCursor = (next: ReportWindow) => {
-    setSlideDirection(
-      !isCustomWindow(next) && !isCustomWindow(cursor) && next.granularity === cursor.granularity
-        ? (Math.sign(next.offset - cursor.offset) as -1 | 0 | 1)
-        : 0
-    );
-    setCursor(next);
-  };
+  const stepCursor = (next: ReportWindow) => setCursor(next);
   // "Where it went" (spending) or "Where it came from" (income).
   const [flow, setFlow] = useState<'expense' | 'income'>('expense');
   // Days, Categories or Trends: one lens at a time under the pinned summary.
@@ -398,13 +387,6 @@ export default function ReportsScreen() {
   const baseline = baselineFromTrend(trend);
   const todayIso = toLocalIsoDate(new Date());
   const monthInProgress = cursor.granularity === 'month' && cursor.offset === 0;
-  const usual = vsUsual({
-    spentMinor: current.expenseMinor,
-    baselineMinor: baseline,
-    granularity: custom ? 'custom' : cursor.granularity,
-    inProgress: monthInProgress,
-    todayIso,
-  });
   // Spending dated after today is in the total but not in the days so far.
   const facts = daySpendFacts(daily, range, todayIso, dispExpense);
   const { recurringMinor, discretionaryMinor } = recurringVsDiscretionary(current.categoryBreakdown);
@@ -559,29 +541,14 @@ export default function ReportsScreen() {
         ref={scrollRef}
         onScroll={scrollHandler}
         scrollEventThrottle={16}
-        // The tabs (second child) stick under the shrunk header.
-        stickyHeaderIndices={hasData ? [1] : undefined}
+        // The tabs (first child) stick under the shrunk header.
+        stickyHeaderIndices={hasData ? [0] : undefined}
         contentContainerStyle={{
           paddingTop: headerHeight,
           paddingHorizontal: 20,
           paddingBottom: tabScrollPad + insets.bottom,
         }}
       >
-        {hasData && (
-          <View style={styles.bleed}>
-            <ReportSummary
-              periodName={periodName}
-              slideDirection={slideDirection}
-              spentMinor={dispExpense}
-              vsUsualPct={usual?.pct ?? null}
-              vsUsualSoFar={usual?.soFar ?? false}
-              perDayMinor={facts.perDayMinor}
-              spendDays={facts.spendDays}
-              countedDays={facts.countedDays}
-              laterMinor={facts.laterMinor}
-            />
-          </View>
-        )}
         {hasData && (
           // Stuck at the top of the list, which sits under the header: the padding (as tall as the shrunk header,
           // and pulled up by as much in place) keeps the tabs just below it.

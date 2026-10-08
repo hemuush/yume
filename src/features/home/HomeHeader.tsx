@@ -14,7 +14,6 @@ import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme } from '@/constants/theme';
 import { useAccent } from '@/theme/AccentContext';
-import { HeaderHills } from './HeaderHills';
 import { SkyBackdrop } from './SkyBackdrop';
 import { YumeLogo } from '@/components/YumeLogo';
 import { HeaderIconButton, HeaderUserButton } from '@/components/AppHeader';
@@ -23,7 +22,6 @@ import { MonthPill } from './MonthPill';
 import { WrapButton } from './WrapButton';
 import type { ReadyWrap } from '@/features/wrap/wrapWindow';
 import { MOTION } from '@/lib/animation';
-import { Spark } from './Spark';
 
 /** "Wednesday, 7 October" — above the greeting. */
 function todayLabel(): string {
@@ -37,22 +35,13 @@ function greetingWord(): string {
   return 'evening';
 }
 
-// Four small "sparks" in the gradient, a wink at "Yume" (dream) rather than a busy pattern.
-// `top`: px below the status-bar inset (added separately), so none land in it; `left`: % of band width.
-const SPARKS: { top: number; left: number; size: number; opacity: number }[] = [
-  { top: 4, left: 58, size: 5, opacity: 0.9 },
-  { top: 26, left: 78, size: 3, opacity: 0.75 },
-  { top: 58, left: 50, size: 4, opacity: 0.5 },
-  { top: 12, left: 36, size: 3, opacity: 0.7 },
-];
-
 // The collapsed band keeps just the brand row plus this much padding under it.
 const COLLAPSED_BOTTOM_PAD = 10;
 
 /**
- * Home header over the ScrollView (absolute; content padded by `onHeight`): a sky that fades into the page cream
- * (SkyBackdrop). Scroll collapse = transforms only: band slides up, brand row counter-slides, compact month pill
- * fades in, and a sky cap takes over behind the brand row.
+ * Home header over the ScrollView (absolute; content padded by `onHeight`): the page colour with a faint theme
+ * wash (SkyBackdrop). Scroll collapse = transforms only: band slides up, brand row counter-slides, compact month
+ * pill fades in, and a solid bar takes over behind the brand row.
  */
 export function HomeHeader({
   cursor,
@@ -79,7 +68,7 @@ export function HomeHeader({
   onPlayWrap?: (wrap: ReadyWrap) => void;
   children?: React.ReactNode;
 }) {
-  const { accent, secondary } = useAccent();
+  const { accent } = useAccent();
   const insets = useSafeAreaInsets();
   // The same top spacing as every other screen's SkyHeader.
   const contentTop = insets.top + 6;
@@ -119,12 +108,6 @@ export function HomeHeader({
     const p = d > 0 ? Math.min(1, Math.max(0, scrollY.value / d)) : 0;
     return { opacity: 1 - Math.min(1, p * 1.6), transform: [{ translateY: -p * 8 }] };
   });
-  // The hills let go early, while the sky cap is still coming in.
-  const hillsStyle = useAnimatedStyle(() => {
-    const d = distance.value;
-    const p = d > 0 ? Math.min(1, Math.max(0, scrollY.value / d)) : 0;
-    return { opacity: 1 - Math.min(1, p * 1.6) };
-  });
   const miniStyle = useAnimatedStyle(() => {
     const d = distance.value;
     const p = d > 0 ? Math.min(1, Math.max(0, scrollY.value / d)) : 0;
@@ -147,17 +130,6 @@ export function HomeHeader({
         style={[styles.band, { paddingTop: contentTop }]}
         onLayout={(e) => setBandHeight(e.nativeEvent.layout.height)}
       >
-        {SPARKS.map((s, i) => (
-          <Spark
-            key={i}
-            top={contentTop + s.top}
-            left={s.left}
-            size={s.size}
-            opacity={s.opacity}
-            delay={i * 700}
-          />
-        ))}
-
         <ReanimatedAnimated.View
           style={[styles.row, rowStyle]}
           onLayout={(e: LayoutChangeEvent) => {
@@ -224,9 +196,6 @@ export function HomeHeader({
           {children}
         </ReanimatedAnimated.View>
       </View>
-      <ReanimatedAnimated.View style={hillsStyle}>
-        <HeaderHills sky="transparent" primary={accent} secondary={secondary} compact />
-      </ReanimatedAnimated.View>
     </ReanimatedAnimated.View>
   );
 }
