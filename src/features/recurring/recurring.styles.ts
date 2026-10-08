@@ -54,7 +54,7 @@ export const styles = StyleSheet.create({
     borderRadius: 999,
     backgroundColor: theme.colors.ink,
   },
-  makeText: { fontFamily: theme.font.bodyBold, fontSize: 11.5, color: theme.colors.surface },
+  makeText: { fontFamily: theme.font.roundedBold, fontSize: 13, color: theme.colors.surface },
   hint: {
     fontFamily: theme.font.body,
     fontSize: 11.5,
@@ -63,7 +63,6 @@ export const styles = StyleSheet.create({
     lineHeight: 16,
   },
   income: { color: theme.colors.incomeText },
-  expense: { color: theme.colors.expenseText },
   fieldLabel: {
     fontSize: 10.5,
     fontFamily: theme.font.roundedMedium,

@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Text } from '@/components/Text';
 import { useFocusEffect } from 'expo-router';
@@ -30,7 +30,13 @@ export default function NotificationSettingsScreen() {
   const { accent, secondary } = useAccent();
   // The header sits over the page and shrinks as it scrolls.
   const { collapse, headerHeight, scrollHandler, scrollRef } = useCollapsingHeader();
-  const [prefs, setPrefs] = useState<NotificationPrefs | null>(null);
+  const [prefs, setPrefsState] = useState<NotificationPrefs | null>(null);
+  // The latest prefs, read by every change: two quick toggles each build on the other, not on a stale render.
+  const latest = useRef<NotificationPrefs | null>(null);
+  const setPrefs = useCallback((next: NotificationPrefs | null) => {
+    latest.current = next;
+    setPrefsState(next);
+  }, []);
   const [openSlot, setOpenSlot] = useState<TimeSlotKind | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -42,7 +48,7 @@ export default function NotificationSettingsScreen() {
       // Without this the skeleton below would sit there forever.
       setLoadError(errorMessage(e));
     }
-  }, []);
+  }, [setPrefs]);
 
   useFocusEffect(
     useCallback(() => {
@@ -51,7 +57,7 @@ export default function NotificationSettingsScreen() {
   );
 
   const save = async (next: NotificationPrefs) => {
-    const previous = prefs;
+    const previous = latest.current;
     setPrefs(next);
     try {
       await setNotificationPrefs(next);
@@ -70,7 +76,7 @@ export default function NotificationSettingsScreen() {
   };
 
   const ensurePermission = async (): Promise<boolean> => {
-    const granted = await requestNotificationPermission();
+    const granted = await requestNotificationPermission().catch(() => false);
     if (!granted) {
       showAlert(
         'Notifications disabled',
@@ -81,18 +87,20 @@ export default function NotificationSettingsScreen() {
   };
 
   const toggle = async (key: SwitchKey, enabled: boolean) => {
-    if (!prefs) return;
+    if (!latest.current) return;
     if (enabled && !(await ensurePermission())) return;
-    await save({ ...prefs, [key]: enabled });
+    if (!latest.current) return;
+    await save({ ...latest.current, [key]: enabled });
   };
 
   const setSlotMinutes = async (kind: TimeSlotKind, minutes: number) => {
-    if (!prefs) return;
+    const current = latest.current;
+    if (!current) return;
     const clamped = clampSlotMinutes(kind, minutes);
     await save(
       kind === 'morning'
-        ? { ...prefs, morningHour: Math.floor(clamped / 60), morningMinute: clamped % 60 }
-        : { ...prefs, eveningHour: Math.floor(clamped / 60), eveningMinute: clamped % 60 }
+        ? { ...current, morningHour: Math.floor(clamped / 60), morningMinute: clamped % 60 }
+        : { ...current, eveningHour: Math.floor(clamped / 60), eveningMinute: clamped % 60 }
     );
   };
 

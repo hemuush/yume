@@ -45,7 +45,7 @@ export const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingRight: 20,
   },
-  seeAll: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textSecondary },
+  seeAll: { fontFamily: theme.font.bodyMedium, fontSize: 14, color: theme.colors.link },
   timeline: { overflow: 'hidden' },
   whenRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   latestChip: {

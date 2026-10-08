@@ -15,7 +15,7 @@ import {
 import { listAccounts, listCategories } from '@/db/ledger';
 import { spendableAccountsOf } from '@/lib/account';
 import { listLoansForPerson } from '@/db/loans';
-import { formatMoney, toMinor } from '@/lib/money';
+import { inputMinor, formatMoney, toMinor } from '@/lib/money';
 import { roundedMinor, allocateRoundedMinor } from '@/lib/round';
 import { Account, Category, Loan, PersonLedgerEntry } from '@/types';
 import { FormInput } from '@/components/FormInput';
@@ -135,9 +135,11 @@ export function PersonDetailModal({
         // happens to be first, which would misfile the transaction.
         const category =
           sign === 1
-            ? (categories.find((c) => c.kind === 'expense' && c.name === 'Friends & Family') ??
+            ? (categories.find((c) => c.kind === 'expense' && c.isSystem && c.name === 'Friends & Family') ??
+              categories.find((c) => c.kind === 'expense' && c.name === 'Friends & Family') ??
               categories.find((c) => c.kind === 'expense' && c.name === 'Miscellaneous'))
-            : (categories.find((c) => c.kind === 'income' && c.name === 'Friends & Family') ??
+            : (categories.find((c) => c.kind === 'income' && c.isSystem && c.name === 'Friends & Family') ??
+              categories.find((c) => c.kind === 'income' && c.name === 'Friends & Family') ??
               categories.find((c) => c.kind === 'income' && c.name === 'Other Income'));
         if (!category) {
           throw new Error(
@@ -225,20 +227,41 @@ export function PersonDetailModal({
       visible
       onClose={onClose}
       footer={
+        // Worded from where the balance stands: when you owe them, paying back is the main action.
         <View style={f.footerRow}>
-          <PrimaryButton
-            title={saving ? '…' : 'They owe more'}
-            variant="secondary"
-            onPress={() => record(1)}
-            disabled={saving}
-            style={f.footerBtn}
-          />
-          <PrimaryButton
-            title={saving ? '…' : 'They repaid'}
-            onPress={() => record(-1)}
-            disabled={saving}
-            style={f.footerBtn}
-          />
+          {liveBalanceMinor < 0 ? (
+            <>
+              <PrimaryButton
+                title={saving ? 'Saving…' : 'I owe more'}
+                variant="secondary"
+                onPress={() => record(-1)}
+                disabled={saving}
+                style={f.footerBtn}
+              />
+              <PrimaryButton
+                title={saving ? 'Saving…' : 'I paid them back'}
+                onPress={() => record(1)}
+                disabled={saving}
+                style={f.footerBtn}
+              />
+            </>
+          ) : (
+            <>
+              <PrimaryButton
+                title={saving ? 'Saving…' : 'They owe more'}
+                variant="secondary"
+                onPress={() => record(1)}
+                disabled={saving}
+                style={f.footerBtn}
+              />
+              <PrimaryButton
+                title={saving ? 'Saving…' : 'They repaid'}
+                onPress={() => record(-1)}
+                disabled={saving}
+                style={f.footerBtn}
+              />
+            </>
+          )}
         </View>
       }
     >
@@ -305,7 +328,17 @@ export function PersonDetailModal({
 
       {tab === 'settle' && (
         <>
-          <AmountField label="Amount" value={amount} onChangeText={setAmount} placeholder="0.00" />
+          <AmountField label="Amount" value={amount} onChangeText={setAmount} placeholder="0" />
+          {liveBalanceMinor !== 0 && (
+            // One tap fills the whole balance, the usual way a friend's tab gets settled.
+            <View style={styles.settleRow}>
+              <Chip
+                label={`Settle ${formatMoney(Math.abs(liveBalanceMinor))}`}
+                active={inputMinor(amount) === Math.abs(liveBalanceMinor)}
+                onPress={() => setAmount(String(Math.abs(liveBalanceMinor) / 100))}
+              />
+            </View>
+          )}
           <FormInput
             label="Note (optional)"
             value={note}

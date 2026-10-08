@@ -89,6 +89,27 @@ async function assertValidParent(
   }
 }
 
+/**
+ * Two active categories of the same kind with the same name side by side (same parent, or both top-level)
+ * would be indistinguishable in every picker and report. Case-insensitive; archived ones don't count.
+ */
+async function assertUniqueCategoryName(
+  db: Awaited<ReturnType<typeof getDb>>,
+  name: string,
+  kind: Category['kind'],
+  parentId: string | null,
+  exceptId?: string
+): Promise<void> {
+  const clash = await db.getFirstAsync<{ id: string }>(
+    `SELECT id FROM categories
+     WHERE kind = ? AND archived = 0 AND lower(name) = lower(?) AND COALESCE(parent_id, '') = COALESCE(?, '')
+       AND id != COALESCE(?, '')
+     LIMIT 1`,
+    [kind, name, parentId, exceptId ?? null]
+  );
+  if (clash) throw new Error(`There's already a category called "${name}" here.`);
+}
+
 export async function createCategory(input: {
   name: string;
   kind: Category['kind'];
@@ -104,6 +125,7 @@ export async function createCategory(input: {
   if (input.parentId) {
     await assertValidParent(db, input.parentId, input.kind);
   }
+  await assertUniqueCategoryName(db, name, input.kind, input.parentId ?? null);
   const id = newId();
   await db.runAsync(
     `INSERT INTO categories (id, name, kind, parent_id, icon, color, sort_order, is_sensitive)
@@ -205,6 +227,7 @@ export async function updateCategory(
     }
     await assertValidParent(db, nextParentId, current.kind, id);
   }
+  await assertUniqueCategoryName(db, name, current.kind, nextParentId, id);
   await db.runAsync(
     'UPDATE categories SET name = ?, icon = ?, color = ?, parent_id = ?, is_sensitive = ? WHERE id = ?',
     [name, input.icon, input.color, nextParentId, nextIsSensitive ? 1 : 0, id]

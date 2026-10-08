@@ -99,6 +99,8 @@ export interface LoanPaymentContext {
   installment: LoanPayment;
   account: { id: string; name: string } | null;
   categoryId: string | null;
+  /** The loan names an account that's since archived or gone, so `account` is a stand-in. */
+  linkedAccountMissing: boolean;
 }
 
 /**
@@ -131,7 +133,14 @@ export async function getLoanPaymentContext(loanId: string): Promise<LoanPayment
   // misfile the payment, so without it Pay stays off.
   const category =
     categories.find((c) => c.name === (kind === 'expense' ? 'Loan EMI' : 'Loan Repayment')) ?? null;
-  return { installment: rowToLoanPayment(next), account, categoryId: category?.id ?? null };
+  const linkedAccountMissing =
+    !!loan.linked_account_id && !accounts.some((a) => a.id === loan.linked_account_id);
+  return {
+    installment: rowToLoanPayment(next),
+    account,
+    categoryId: category?.id ?? null,
+    linkedAccountMissing,
+  };
 }
 
 export interface LoanRateChange {

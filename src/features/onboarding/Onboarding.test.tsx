@@ -150,7 +150,7 @@ describe('Onboarding account step', () => {
     const onDone = jest.fn();
     const tree = await render(onDone);
     await goToAccountStep(tree);
-    await press(byLabel(tree, 'Skip'));
+    await press(byLabel(tree, 'Skip accounts'));
     expect(createAccountMock).not.toHaveBeenCalled();
     expect(onDone).toHaveBeenCalledTimes(1);
   });

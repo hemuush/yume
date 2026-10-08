@@ -69,6 +69,8 @@ import { useUndoToast } from '@/components/UndoToast';
 import { spendableAccountsOf } from '@/lib/account';
 import { useAccent } from '@/theme/AccentContext';
 
+/** How far ahead a date can be before saving asks "are you sure?". */
+const FUTURE_DATE_CHECK_DAYS = 7;
 export default function AddTransactionScreen() {
   const insets = useSafeAreaInsets();
   const { show: showUndo } = useUndoToast();
@@ -139,6 +141,7 @@ export default function AddTransactionScreen() {
   const [saveDone, setSaveDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchFocused, setSearchFocused] = useState(false);
+  const [footerHeight, setFooterHeight] = useState(0);
 
   // The pad is up straight away for a new entry (amount comes first); an edit opens without it since often
   // only the category/date changes — tapping the amount raises it.
@@ -623,8 +626,16 @@ export default function AddTransactionScreen() {
 
   // One save at a time: `saving` is only set after the repeat check, so a fast double tap could save twice.
   const saveInFlight = useRef(false);
-  const runSave = async (save: () => Promise<void>) => {
+  const runSave = async (save: () => Promise<void>, dateChecked = false) => {
     if (saveInFlight.current) return;
+    // A date well ahead is usually a typo (the wrong year), and it moves today's balances straight away.
+    if (!dateChecked && date > addDaysToIsoDate(today, FUTURE_DATE_CHECK_DAYS)) {
+      showAlert(`Save it for ${dateChipLabel(date)}?`, "That's more than a week from today.", [
+        { text: 'Change date', style: 'cancel' },
+        { text: 'Save', onPress: () => void runSave(save, true) },
+      ]);
+      return;
+    }
     saveInFlight.current = true;
     try {
       await save();
@@ -735,7 +746,9 @@ export default function AddTransactionScreen() {
       <KeyboardAwareScrollView
         contentContainerStyle={{ padding: 20, paddingTop: 4, paddingBottom: 28 }}
         keyboardShouldPersistTaps="handled"
-        bottomOffset={20}
+        // Clears the sticky footer that rides on the keyboard, not just the keyboard: a focused field (the
+        // category search) would otherwise sit right behind Save.
+        bottomOffset={footerHeight + 12}
       >
         {isLinked && (
           <StripCard
@@ -869,6 +882,7 @@ export default function AddTransactionScreen() {
       </KeyboardAwareScrollView>
 
       <KeyboardStickyView
+        onLayout={(e) => setFooterHeight(e.nativeEvent.layout.height)}
         offset={{ opened: insets.bottom }}
         style={[styles.footer, { paddingBottom: insets.bottom + 12 }]}
       >

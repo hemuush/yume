@@ -415,6 +415,7 @@ export function LoanDetailModal({
           installment={nextInstallment}
           account={defaultAccount ?? null}
           categoryId={emiCategory?.id ?? null}
+          linkedAccountMissing={linkedAccountMissing}
           onClose={() => setPayVisible(false)}
           onPaid={async () => {
             await load();
