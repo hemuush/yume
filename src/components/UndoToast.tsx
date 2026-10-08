@@ -4,11 +4,11 @@ import { Text } from '@/components/Text';
 import ReanimatedAnimated, { FadeInDown, FadeOutDown, ReduceMotion } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme } from '@/constants/theme';
-import { shade } from '@/lib/color';
 import { usePressScale } from '@/lib/usePressScale';
 import { haptics } from '@/lib/haptics';
 import { DURATIONS } from '@/lib/motionTimings';
 import { useAccent } from '@/theme/AccentContext';
+import { homeInk } from '@/features/home/homeInk';
 import { showAlert } from '@/components/AppDialog';
 import { errorMessage } from '@/lib/errorMessage';
 
@@ -95,6 +95,7 @@ function ToastView({
   const insets = useSafeAreaInsets();
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.94);
   const { accent } = useAccent();
+  const ink = homeInk(accent);
 
   // A toast is silent to TalkBack otherwise (it never takes focus); MilestoneNote announces the same way.
   // Each toast mounts its own ToastView (keyed), so this speaks once per toast.
@@ -110,7 +111,7 @@ function ToastView({
       style={[styles.wrap, { bottom: insets.bottom + theme.layout.tabBar.height + 12 }]}
       pointerEvents="box-none"
     >
-      <View style={styles.pill}>
+      <View style={[styles.pill, { backgroundColor: ink }]}>
         <Text style={styles.message} numberOfLines={1}>
           {toast.message}
           {/* Another delete landed while this toast was still showing — say so,
@@ -133,7 +134,7 @@ function ToastView({
           onPressOut={onPressOut}
           // The word is ~18dp tall; the slop reaches toward 48dp (the pill caps it).
           hitSlop={{ top: 15, bottom: 15, left: 8, right: 8 }}
-          style={[styles.undoChip, { backgroundColor: shade(accent, 90) }, animatedStyle]}
+          style={[styles.undoChip, animatedStyle]}
           accessibilityRole="button"
           accessibilityLabel="Undo"
         >
@@ -152,26 +153,29 @@ export function useUndoToast() {
 
 const styles = StyleSheet.create({
   wrap: { position: 'absolute', left: 20, right: 20, alignItems: 'center' },
-  // A white pill lifted like the StripCards, with Undo on a chip in the theme's colour.
+  // A deep-ink pill above the tab bar (the theme's own dark, as on the Add button), Undo on a light chip.
   pill: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    backgroundColor: theme.colors.surface,
+    minHeight: 50,
     borderRadius: theme.radius.pill,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
     paddingVertical: 8,
     paddingLeft: 18,
     paddingRight: 8,
     maxWidth: 420,
-    shadowColor: theme.colors.link,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.16,
-    shadowRadius: 16,
-    elevation: 8,
+    shadowColor: theme.colors.ink,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.24,
+    shadowRadius: 18,
+    elevation: 10,
   },
-  message: { flex: 1, fontFamily: theme.font.bodyMedium, fontSize: 13.5, color: theme.colors.textPrimary },
-  undoChip: { borderRadius: theme.radius.pill, paddingHorizontal: 14, paddingVertical: 7 },
-  undo: { fontFamily: theme.font.bodyBold, fontSize: 13.5, color: theme.colors.ink },
+  message: { flex: 1, fontFamily: theme.font.bodyMedium, fontSize: 13.5, color: theme.colors.white },
+  undoChip: {
+    borderRadius: theme.radius.pill,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    backgroundColor: 'rgba(255,255,255,0.16)',
+  },
+  undo: { fontFamily: theme.font.bodyBold, fontSize: 13.5, color: theme.colors.white },
 });

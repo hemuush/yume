@@ -98,12 +98,13 @@ async function render(entry: object = lunch) {
   });
   return tree;
 }
-/** The pressable rows labelled `label` — actions and links in the sheet. */
+/** The pressable rows and buttons labelled `label` — actions and links in the sheet. */
 const rows = (tree: ReactTestRenderer, label: string) =>
-  tree.root.findAll((n) => n.props.label === label && typeof n.props.onPress === 'function');
-/** Switches the sheet to its "Do more" page. */
-const doMore = (tree: ReactTestRenderer) =>
-  act(() => tree.root.find((n) => n.props.value === 'details' && n.props.onChange).props.onChange('more'));
+  tree.root.findAll(
+    (n) =>
+      (n.props.label === label || n.props.accessibilityLabel === label) &&
+      typeof n.props.onPress === 'function'
+  );
 
 beforeEach(() => {
   mockLink.current = null;
@@ -118,7 +119,6 @@ beforeAll(async () => {
 describe('entry detail', () => {
   it('logs the same entry again for today, with an undo', async () => {
     const tree = await render();
-    doMore(tree);
     await act(async () => {
       await rows(tree, 'Log again today')[0].props.onPress();
     });
@@ -135,7 +135,6 @@ describe('entry detail', () => {
 
   it('keeps the refund flag when a refund is logged again', async () => {
     const tree = await render({ ...lunch, type: 'income', isRefund: true });
-    doMore(tree);
     await act(async () => {
       await rows(tree, 'Log again today')[0].props.onPress();
     });
@@ -146,7 +145,6 @@ describe('entry detail', () => {
 
   it('does not turn an ordinary entry into a refund', async () => {
     const tree = await render();
-    doMore(tree);
     await act(async () => {
       await rows(tree, 'Log again today')[0].props.onPress();
     });
@@ -166,7 +164,6 @@ describe('entry detail', () => {
 
   it('opens the rule form filled in, monthly from its next same day still ahead', async () => {
     const tree = await render();
-    doMore(tree);
     await act(async () => {
       rows(tree, 'Make it recurring')[0].props.onPress();
     });
@@ -205,5 +202,21 @@ describe('entry detail', () => {
     expect(tree.root.findAll((n) => n.props.value === 'details' && n.props.onChange)).toHaveLength(0);
     expect(rows(tree, 'Log again today')).toHaveLength(0);
     expect(rows(tree, 'Make it recurring')).toHaveLength(0);
+  });
+});
+
+describe('deleting from the sheet', () => {
+  it('asks once in place before it deletes', async () => {
+    const tree = await render();
+    const bin = () => rows(tree, 'Delete entry')[0] ?? rows(tree, 'Delete, tap again to confirm')[0];
+    act(() => bin().props.onPress());
+    expect(rows(tree, 'Delete, tap again to confirm').length).toBeGreaterThan(0);
+  });
+
+  it('puts the actions under the card, with no second page', async () => {
+    const tree = await render();
+    expect(tree.root.findAll((n) => n.props.value === 'details' && n.props.onChange)).toHaveLength(0);
+    expect(rows(tree, 'Log again today').length).toBeGreaterThan(0);
+    expect(rows(tree, 'Got money back').length).toBeGreaterThan(0);
   });
 });

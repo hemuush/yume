@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
-import { View } from 'react-native';
+import { View, Pressable } from 'react-native';
+import Feather from '@expo/vector-icons/Feather';
+import { withPressed } from '@/lib/pressed';
 import { Text } from '@/components/Text';
 import {
   createTransaction,
@@ -13,10 +15,9 @@ import { undoPersonTransaction } from '@/db/people';
 import { Account, Category, Transaction } from '@/types';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { Amount } from '@/components/Amount';
-import { ModalSheet, SheetFooter } from '@/components/ModalSheet';
+import { ModalSheet } from '@/components/ModalSheet';
 import { SheetCard } from '@/components/SheetCard';
 import { SettingsRow } from '@/components/SettingsRow';
-import { SegmentedControl } from '@/components/SegmentedControl';
 import { theme, modalFooterStyles as f } from '@/constants/theme';
 import { screenStyles as h } from '@/components/screenStyles';
 import { accountIcon } from '@/lib/account';
@@ -62,7 +63,13 @@ export function TransactionDetailModal({
   const [linkFailed, setLinkFailed] = useState(false);
   const [busy, setBusy] = useState(false);
   const [ruleOpen, setRuleOpen] = useState(false);
-  const [tab, setTab] = useState<'details' | 'more'>('details');
+  // Delete asks once in place before it deletes; it settles back after a moment untouched.
+  const [askDelete, setAskDelete] = useState(false);
+  useEffect(() => {
+    if (!askDelete) return;
+    const t = setTimeout(() => setAskDelete(false), 3000);
+    return () => clearTimeout(t);
+  }, [askDelete]);
 
   // "Make it recurring": the same entry, monthly, from its next same day of
   // the month still ahead. Memoised — the rule form resets whenever this changes.
@@ -81,7 +88,7 @@ export function TransactionDetailModal({
   }, [tx]);
 
   useEffect(() => {
-    setTab('details');
+    setAskDelete(false);
     setLinkFailed(false);
     setLink(undefined);
     if (!tx) return;
@@ -248,15 +255,15 @@ export function TransactionDetailModal({
     canEdit && !tx.splitId && isActive(tx.accountId) && (!transfer || isActive(tx.toAccountId));
   const moreActions = [
     canRepeat && {
-      icon: 'plus',
-      bg: shade(accent, 95),
+      icon: 'rotate-ccw' as const,
+      short: 'Log again',
       label: 'Log again today',
       sub: 'Same amount, account and note',
       onPress: logAgainToday,
     },
     canRepeat && {
-      icon: 'repeat',
-      bg: theme.colors.idTeal,
+      icon: 'repeat' as const,
+      short: 'Repeat',
       label: 'Make it recurring',
       sub: 'Yume logs it for you on a schedule',
       onPress: () => setRuleOpen(true),
@@ -264,8 +271,8 @@ export function TransactionDetailModal({
     canEdit &&
       tx.type === 'expense' &&
       cat && {
-        icon: 'cash-refund',
-        bg: theme.colors.idSage,
+        icon: 'corner-down-left' as const,
+        short: 'Refund',
         label: 'Got money back',
         sub: 'Add a refund for this',
         onPress: () => {
@@ -287,9 +294,34 @@ export function TransactionDetailModal({
       onClose={onClose}
       footer={
         canEdit ? (
-          <SheetFooter onDelete={confirmDelete} deleteLabel="Delete entry" disabled={busy}>
+          <View style={styles.detailFoot}>
             <PrimaryButton title="Edit" onPress={() => onEdit(tx)} disabled={busy} style={f.footerBtn} />
-          </SheetFooter>
+            {/* Asks once in place ("Delete?"), then deletes with an undo. */}
+            <Pressable
+              onPress={() => {
+                if (!askDelete) {
+                  haptics.tap();
+                  setAskDelete(true);
+                  return;
+                }
+                void confirmDelete();
+              }}
+              disabled={busy}
+              hitSlop={4}
+              style={withPressed([styles.deleteBtn, askDelete && styles.deleteBtnAsk])}
+              accessibilityRole="button"
+              accessibilityLabel={askDelete ? 'Delete, tap again to confirm' : 'Delete entry'}
+            >
+              <Feather
+                name="trash-2"
+                size={18}
+                color={askDelete ? theme.colors.white : theme.colors.expense}
+              />
+              {askDelete && (
+                <Text style={styles.deleteAskText}>{tx.splitId ? 'Delete split?' : 'Delete?'}</Text>
+              )}
+            </Pressable>
+          </View>
         ) : link?.kind === 'loan' ? (
           <PrimaryButton
             title={busy ? 'Undoing…' : 'Undo payment'}
@@ -328,133 +360,126 @@ export function TransactionDetailModal({
         meta={route ? weekdayDayMonth(tx.date) : `${weekdayDayMonth(tx.date)} · ${accountName(tx.accountId)}`}
       />
 
+      {/* What you can do with it, right under the amount: no second page to find it on. */}
       {moreActions.length > 0 && (
-        <View style={styles.detailTabs}>
-          <SegmentedControl
-            options={[
-              { label: 'Details', value: 'details' },
-              { label: 'Actions', value: 'more' },
-            ]}
-            value={tab}
-            onChange={setTab}
-          />
-        </View>
-      )}
-
-      {tab === 'more' && moreActions.length > 0 ? (
-        <View style={[h.card, h.cardInSheet]}>
-          {moreActions.map((a, i) => (
-            <SettingsRow
+        <View style={styles.quickRow}>
+          {moreActions.map((a) => (
+            <Pressable
               key={a.label}
-              round
-              icon={a.icon}
-              iconBg={a.bg}
-              label={a.label}
-              sub={a.sub}
               onPress={busy ? undefined : a.onPress}
-              divider={i > 0}
-            />
+              disabled={busy}
+              style={withPressed(styles.quickBtn)}
+              accessibilityRole="button"
+              accessibilityLabel={a.label}
+              accessibilityHint={a.sub}
+            >
+              <View style={styles.quickIcon}>
+                <Feather name={a.icon} size={17} color={theme.colors.ink} />
+              </View>
+              <Text style={styles.quickText} numberOfLines={1}>
+                {a.short}
+              </Text>
+            </Pressable>
           ))}
         </View>
-      ) : (
-        <>
-          <View style={[h.card, h.cardInSheet]}>
-            {cat && !transfer && (
-              <SettingsRow
-                round
-                icon={cat.icon}
-                iconBg={hexToRgba(cat.color, 0.25)}
-                label={cat.name}
-                sub={joinSub([inParent(parentName), 'See everything in it'])}
-                onPress={() => {
-                  onClose();
-                  // Opened from that category's own page? Then closing is enough.
-                  returnOrPush({ name: 'category/[id]', params: { id: cat.id } }, `/category/${cat.id}`);
-                }}
-              />
-            )}
+      )}
+
+      <>
+        <View style={[h.card, h.cardInSheet]}>
+          {cat && !transfer && (
             <SettingsRow
               round
-              icon={transfer ? 'swap-horizontal' : account ? accountIcon(account.type) : 'bank'}
-              iconBg={shade(accent, 95)}
-              label={route ?? accountName(tx.accountId)}
-              sub={
-                transfer ? 'Moved between your accounts' : tx.type === 'income' ? 'Received in' : 'Paid from'
-              }
-              divider={!!cat && !transfer}
+              icon={cat.icon}
+              iconBg={hexToRgba(cat.color, 0.25)}
+              label={cat.name}
+              sub={joinSub([inParent(parentName), 'See everything in it'])}
+              onPress={() => {
+                onClose();
+                // Opened from that category's own page? Then closing is enough.
+                returnOrPush({ name: 'category/[id]', params: { id: cat.id } }, `/category/${cat.id}`);
+              }}
             />
-            {!!tx.note && (
-              <SettingsRow
-                round
-                icon="note-text-outline"
-                iconBg={theme.colors.idGold}
-                label="Note"
-                sub={tx.note}
-                divider
-              />
-            )}
+          )}
+          <SettingsRow
+            round
+            icon={transfer ? 'swap-horizontal' : account ? accountIcon(account.type) : 'bank'}
+            iconBg={shade(accent, 95)}
+            label={route ?? accountName(tx.accountId)}
+            sub={
+              transfer ? 'Moved between your accounts' : tx.type === 'income' ? 'Received in' : 'Paid from'
+            }
+            divider={!!cat && !transfer}
+          />
+          {!!tx.note && (
+            <SettingsRow
+              round
+              icon="note-text-outline"
+              iconBg={theme.colors.idGold}
+              label="Note"
+              sub={tx.note}
+              divider
+            />
+          )}
+        </View>
+
+        {tx.splitId && splitParts && splitParts.length > 0 && (
+          <View style={styles.splitCard}>
+            <Text style={styles.splitCardTitle}>
+              Part of a{' '}
+              {formatMaskableMoney(
+                splitParts.reduce((s, p) => s + p.amountMinor, 0),
+                {
+                  masked:
+                    hideAmounts &&
+                    splitParts.some((p) => categories.find((c) => c.id === p.categoryId)?.isSensitive),
+                }
+              )}{' '}
+              split
+            </Text>
+            {splitParts.map((p) => {
+              const pc = categories.find((c) => c.id === p.categoryId);
+              const mine = p.id === tx.id;
+              return (
+                <View key={p.id} style={styles.splitPart}>
+                  <Text style={[styles.splitPartName, mine && styles.splitPartMine]} numberOfLines={1}>
+                    {pc
+                      ? categorySentence(pc.name, parentNameOf(p.categoryId, categoriesById))
+                      : 'Uncategorised'}
+                  </Text>
+                  <Amount
+                    minor={p.amountMinor}
+                    sensitive={pc?.isSensitive}
+                    style={[styles.splitPartAmount, mine && styles.splitPartMine]}
+                  />
+                </View>
+              );
+            })}
           </View>
+        )}
 
-          {tx.splitId && splitParts && splitParts.length > 0 && (
-            <View style={styles.splitCard}>
-              <Text style={styles.splitCardTitle}>
-                Part of a{' '}
-                {formatMaskableMoney(
-                  splitParts.reduce((s, p) => s + p.amountMinor, 0),
-                  {
-                    masked:
-                      hideAmounts &&
-                      splitParts.some((p) => categories.find((c) => c.id === p.categoryId)?.isSensitive),
-                  }
-                )}{' '}
-                split
-              </Text>
-              {splitParts.map((p) => {
-                const pc = categories.find((c) => c.id === p.categoryId);
-                const mine = p.id === tx.id;
-                return (
-                  <View key={p.id} style={styles.splitPart}>
-                    <Text style={[styles.splitPartName, mine && styles.splitPartMine]} numberOfLines={1}>
-                      {pc
-                        ? categorySentence(pc.name, parentNameOf(p.categoryId, categoriesById))
-                        : 'Uncategorised'}
-                    </Text>
-                    <Amount
-                      minor={p.amountMinor}
-                      sensitive={pc?.isSensitive}
-                      style={[styles.splitPartAmount, mine && styles.splitPartMine]}
-                    />
-                  </View>
-                );
-              })}
-            </View>
-          )}
-
-          {link === undefined ? (
-            <Text style={styles.hintText}>Checking…</Text>
-          ) : link === null ? (
-            linkFailed ? (
-              <Text style={styles.hintText}>
-                Couldn't check whether this entry is tied to a loan or a person. You can still edit it.
-              </Text>
-            ) : null
-          ) : link.kind === 'loan' ? (
+        {link === undefined ? (
+          <Text style={styles.hintText}>Checking…</Text>
+        ) : link === null ? (
+          linkFailed ? (
             <Text style={styles.hintText}>
-              A loan EMI payment — it can't be edited directly. Undo it to put the installment back to
-              pending.
+              Couldn't check whether this entry is tied to a loan or a person. You can still edit it.
             </Text>
-          ) : link.kind === 'person' ? (
-            <Text style={styles.hintText}>
-              A Friends & Family entry — it can't be edited directly. Undo it to remove it from their balance
-              too.
-            </Text>
-          ) : (
-            <Text style={styles.hintText}>
-              This is a loan disbursement or prepayment — editing isn't supported yet.
-            </Text>
-          )}
-        </>
-      )}
+          ) : null
+        ) : link.kind === 'loan' ? (
+          <Text style={styles.hintText}>
+            A loan EMI payment — it can't be edited directly. Undo it to put the installment back to pending.
+          </Text>
+        ) : link.kind === 'person' ? (
+          <Text style={styles.hintText}>
+            A Friends & Family entry — it can't be edited directly. Undo it to remove it from their balance
+            too.
+          </Text>
+        ) : (
+          <Text style={styles.hintText}>
+            This is a loan disbursement or prepayment — editing isn't supported yet.
+          </Text>
+        )}
+      </>
       <RuleModal
         visible={ruleOpen}
         editing={null}
