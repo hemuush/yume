@@ -1,5 +1,4 @@
 import { View, StyleSheet, Pressable } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Text } from '@/components/Text';
 import { Amount } from '@/components/Amount';
@@ -38,14 +37,10 @@ function StackCard({ account, top, onOpen }: { account: Account; top: number; on
   const hue = accountHue(account.type, accent);
   const typeLabel = account.investment ? 'savings · tracked' : account.type.replace('_', ' ');
   return (
-    <View testID={`account-card-${account.id}`} style={[styles.card, { top, borderColor: shade(hue, 82) }]}>
-      <LinearGradient
-        colors={[shade(hue, 94), shade(hue, 88)]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={StyleSheet.absoluteFill}
-      />
-      <View style={styles.circleBig} />
+    <View
+      testID={`account-card-${account.id}`}
+      style={[styles.card, { top, borderColor: shade(hue, 88), backgroundColor: shade(hue, 96) }]}
+    >
       <Pressable
         onPress={onOpen}
         style={withPressed(styles.face)}
@@ -95,18 +90,9 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     borderWidth: 1,
     overflow: 'hidden',
-    boxShadow: '0px -3px 12px rgba(18,19,15,0.07)',
+    boxShadow: '0px -2px 8px rgba(18,19,15,0.05)',
   },
   face: { flex: 1 },
-  circleBig: {
-    position: 'absolute',
-    right: -28,
-    bottom: -56,
-    width: 110,
-    height: 110,
-    borderRadius: 55,
-    backgroundColor: 'rgba(255,255,255,0.35)',
-  },
   row: {
     height: STACK.peek,
     flexDirection: 'row',
@@ -121,7 +107,7 @@ const styles = StyleSheet.create({
     borderRadius: 11,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.65)',
+    backgroundColor: 'rgba(255,255,255,0.8)',
   },
   nameBlock: { flex: 1, minWidth: 0 },
   name: {

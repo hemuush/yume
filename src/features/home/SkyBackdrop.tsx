@@ -48,7 +48,7 @@ export function SkyBackdrop({
   return (
     <>
       <ReanimatedAnimated.View pointerEvents="none" style={[StyleSheet.absoluteFill, washStyle]}>
-        <LinearGradient colors={[hexToRgba(wash, 0.9), hexToRgba(wash, 0)]} style={StyleSheet.absoluteFill} />
+        <LinearGradient colors={[hexToRgba(wash, 0.7), hexToRgba(wash, 0)]} style={StyleSheet.absoluteFill} />
       </ReanimatedAnimated.View>
       {collapsedHeight > 4 && (
         <ReanimatedAnimated.View
