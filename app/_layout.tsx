@@ -108,12 +108,15 @@ export default function RootLayout() {
         void ensureAndroidChannel().catch((err) => console.error('ensureAndroidChannel failed:', err));
         // One-time: drop notifications still scheduled under the pre-rename
         // `flynse-*` identifiers.
-        void cancelLegacyScheduledNotifications().catch((err) =>
-          console.error('cancelLegacyScheduledNotifications failed:', err)
-        );
         // Notifications are rebuilt from settings/data each cold start: stays current (scheduled ~2 weeks
-        // ahead), carries over old schedules, self-heals after reinstall.
-        void rebuildNotifications().catch((err) => console.error('rebuildNotifications failed:', err));
+        // ahead), carries over old schedules, self-heals after reinstall. After the first screen settles, like
+        // the backup: it reads plenty and its bridge calls shouldn't hold up Home's first paint.
+        InteractionManager.runAfterInteractions(() => {
+          void cancelLegacyScheduledNotifications().catch((err) =>
+            console.error('cancelLegacyScheduledNotifications failed:', err)
+          );
+          void rebuildNotifications().catch((err) => console.error('rebuildNotifications failed:', err));
+        });
 
         const locked = await getAppLockEnabled();
         if (cancelled) return;
