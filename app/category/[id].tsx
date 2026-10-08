@@ -401,7 +401,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 3,
   },
-  chipText: { fontFamily: theme.font.bodyBold, fontSize: 11, color: theme.colors.textPrimary },
+  chipText: { fontFamily: theme.font.bodyBold, fontSize: 11.5, color: theme.colors.textPrimary },
   heroRefund: {
     fontFamily: theme.font.bodyBold,
     fontSize: 12.5,

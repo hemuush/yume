@@ -133,6 +133,17 @@ export async function restoreFromSnapshotOn(db: AppDb, snapshot: BackupSnapshot)
       throw new Error(
         `This backup file is damaged (the "${table}" section isn't readable) — nothing was changed.`
       );
+    } // Money is whole minor units everywhere: text or a fraction there would be stored as-is (SQLite accepts
+    // it) and quietly break every total later, so it's rejected now, before anything is touched.
+    const badAmount = rows.some((r) =>
+      Object.entries(r as Record<string, unknown>).some(
+        ([key, value]) => key.endsWith('_minor') && value != null && !Number.isSafeInteger(value)
+      )
+    );
+    if (badAmount) {
+      throw new Error(
+        `This backup file is damaged (an amount in "${table}" isn't a number) — nothing was changed.`
+      );
     }
   }
 
