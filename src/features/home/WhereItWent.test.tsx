@@ -8,9 +8,6 @@ jest.mock('@expo/vector-icons/MaterialCommunityIcons', () => () => null);
 jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMock').createReanimatedMock());
 jest.mock('@/lib/useReduceMotion', () => ({ useReduceMotion: () => true }));
 jest.mock('@/lib/haptics', () => ({ haptics: { tap: jest.fn() } }));
-jest.mock('@/theme/PrivacyContext', () => ({
-  usePrivacy: () => ({ hideAmounts: true, toggleHideAmounts: jest.fn() }),
-}));
 jest.mock('@/theme/AccentContext', () => ({
   useAccent: () => ({ dot: '#F0876A', accent: '#8FCBFF', secondary: '#8FE8C8' }),
 }));
@@ -53,7 +50,8 @@ function render(breakdown: CategoryBreakdownItem[], onOpenReports = jest.fn()) {
 }
 
 describe('Where it went', () => {
-  const breakdown = [cat('Food', 1_600_000), cat('Rent', 2_400_000), cat('Shares', 1_000_000, true)];
+  // Hidden (sensitive) groups are left out before the dial sees them (privateComparison), so none here.
+  const breakdown = [cat('Food', 1_600_000), cat('Rent', 2_400_000), cat('Shares', 1_000_000)];
 
   it('shows the spending, the change from last period, and the biggest category picked', () => {
     const all = texts(render(breakdown));
@@ -68,7 +66,7 @@ describe('Where it went', () => {
     );
   });
 
-  it('moves the pill to a tapped category, masking a hidden one', () => {
+  it('moves the pill to a tapped category', () => {
     const r = render(breakdown);
     act(() =>
       r.root
@@ -76,9 +74,7 @@ describe('Where it went', () => {
         .props.onPress()
     );
     const all = texts(r);
-    expect(all).toContain('Shares');
-    expect(all.join(' ')).not.toContain('10,000');
-    expect(all).toContain('20%');
+    expect(all).toEqual(expect.arrayContaining(['Shares', '₹10,000 · 20% of spending', '20%']));
   });
 
   it('opens Reports from the last bubble', () => {

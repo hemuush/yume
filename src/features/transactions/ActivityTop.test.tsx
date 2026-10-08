@@ -37,7 +37,6 @@ function headline(over: Partial<React.ComponentProps<typeof TransactionsHeadline
         incomeMinor={579_600}
         expenseChangeMinor={-231_000}
         viewScope="week"
-        onChangeViewScope={jest.fn()}
         bars={[]}
         legend={legend}
         onPressDay={jest.fn()}
@@ -50,16 +49,16 @@ function headline(over: Partial<React.ComponentProps<typeof TransactionsHeadline
 }
 
 describe('Spent card', () => {
-  it('says the change as a pill, and In and Net as a strip', () => {
+  it('says the change, money in and the net as chips', () => {
     const all = texts(headline());
-    expect(all).toEqual(expect.arrayContaining(['Spent', 'Money in', '+₹5,796', 'Net', '−₹11,273']));
+    expect(all).toEqual(expect.arrayContaining(['Spent', '₹5,796 in', 'Net −₹11,273']));
     expect(all.some((t) => t.includes('₹2,310 less than last week'))).toBe(true);
   });
 
-  it('leaves the strip out when no money came in, since Net would only repeat Spent', () => {
+  it('leaves money in and net out when nothing came in, since Net would only repeat Spent', () => {
     const all = texts(headline({ incomeMinor: 0 }));
-    expect(all).not.toContain('Money in');
-    expect(all).not.toContain('Net');
+    expect(all.some((t) => t.endsWith(' in'))).toBe(false);
+    expect(all.some((t) => t.startsWith('Net'))).toBe(false);
   });
 
   it('says how much more, in rupees, and what it is compared with', () => {
@@ -67,7 +66,7 @@ describe('Spent card', () => {
     const all = texts(tree);
     expect(all).toContain('₹9,174 more than same days last week');
     // An up arrow beside it: more spent.
-    expect(tree.root.findAll((n) => n.props.name === 'arrow-up').length).toBeGreaterThan(0);
+    expect(tree.root.findAll((n) => n.props.name === 'arrow-up-right').length).toBeGreaterThan(0);
     expect(all.some((t) => t.includes('%'))).toBe(false);
   });
 
@@ -87,19 +86,6 @@ describe('Spent card', () => {
   it('keeps the legend when a bar is tapped — the amount shows on the bar', () => {
     const all = texts(headline({ selectedKey: '2026-10-01' }));
     expect(all).toContain('+2 more');
-  });
-
-  it('switches between Week and Month from its corner', () => {
-    const onChange = jest.fn();
-    const r = headline({ onChangeViewScope: onChange });
-    const month = r.root.find(
-      (n) =>
-        n.props.accessibilityRole === 'radio' &&
-        typeof n.props.onPress === 'function' &&
-        n.findAllByType(Text).some((t) => t.props.children === 'Month')
-    );
-    act(() => month.props.onPress());
-    expect(onChange).toHaveBeenCalledWith('month');
   });
 });
 

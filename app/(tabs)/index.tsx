@@ -19,7 +19,7 @@ import {
   getDailyExpenseTotals,
 } from '@/db/reports';
 import { monthPace } from '@/lib/pace';
-import { getUserName, getDailySpendingGoal } from '@/db/settings';
+import { getUserName, getDailySpendingGoal, getDefaultCurrency } from '@/db/settings';
 import { listBudgetsForMonth, BudgetProgress } from '@/db/budgets';
 import { savingsAccountIdsOf } from '@/lib/account';
 import { privateComparison, isSavingsEntry } from '@/lib/privateSummary';
@@ -102,6 +102,8 @@ export default function DashboardScreen() {
   const [cardBills, setCardBills] = useState<Awaited<ReturnType<typeof listCardCycles>>>([]);
   const [budgets, setBudgets] = useState<BudgetProgress[]>([]);
   // Spending per day, from a week back (or the 1st) to today: the Week/Month bars.
+  // The default currency: Home's in-hand total counts only accounts in it.
+  const [currency, setCurrency] = useState('INR');
   const [dailySpend, setDailySpend] = useState<{ date: string; totalMinor: number }[]>([]);
   // Both are always about today, not the browsed period (like Budgets/Goals below); `dailyGoal` stays
   // `null` (strip renders nothing) until the user sets one in Settings → Money.
@@ -248,6 +250,7 @@ export default function DashboardScreen() {
           stillToPay,
           needs,
           wraps,
+          defaultCurrency,
         ] = await Promise.all([
           fetchPeriod(c),
           listAccounts(),
@@ -266,10 +269,11 @@ export default function DashboardScreen() {
           ),
           getTodaySpend(undefined, hideAmounts),
           getDailySpendingGoal(),
-          getMonthPaceInputs(),
-          getStillToPayThisMonth(),
+          getMonthPaceInputs(undefined, hideAmounts),
+          getStillToPayThisMonth(undefined, hideAmounts),
           loadNeedsYou(),
           loadReadyWraps(),
+          getDefaultCurrency(),
         ]);
         if (pSeq === periodSeq.current) {
           const [tx, cmp, carry] = period;
@@ -303,6 +307,7 @@ export default function DashboardScreen() {
         setStillToPayMinor(stillToPay);
         setNeedsYou(needs.shown);
         setReadyWraps(wraps);
+        setCurrency(defaultCurrency);
         setLoadError(null);
       } catch (e) {
         if (fSeq !== fullSeq.current) return false;
@@ -511,13 +516,18 @@ export default function DashboardScreen() {
           </>
         )}
 
-        {loaded && comparison && comparison.current.categoryBreakdown.length > 0 && (
+        {loaded && comparison && comparison.current.categoryBreakdown.some((c) => c.totalMinor > 0) && (
           <Section title="Where it went" onSeeAll={() => router.navigate('/reports')}>
             <WhereItWent
+              // A new period starts on its own biggest category, not whichever place was picked before.
+              key={`${loadedCursor.granularity}:${loadedCursor.offset}`}
               breakdown={comparison.current.categoryBreakdown}
               iconFor={(id) => categoriesById.get(id)?.icon}
               spentMinor={dispExpense}
-              previousSpentMinor={roundedMinor(comparison.previous.expenseMinor)}
+              // The current period is only part-way through, so it isn't set against a whole one.
+              previousSpentMinor={
+                loadedCursor.offset === 0 ? 0 : roundedMinor(comparison.previous.expenseMinor)
+              }
               periodName={periodLabel(loadedCursor)}
               previousName={periodShortLabel(stepPeriod(loadedCursor, -1))}
               onOpenReports={() => router.navigate('/reports')}
@@ -531,6 +541,7 @@ export default function DashboardScreen() {
               upcoming={upcoming}
               budgets={budgets}
               accounts={accounts}
+              currency={currency}
               onOpenUpcoming={() => router.navigate({ pathname: '/plan', params: { section: 'coming-up' } })}
               onOpenBudgets={() => router.push('/budgets')}
               onOpenAccounts={() => router.push('/profile')}
@@ -540,11 +551,15 @@ export default function DashboardScreen() {
           </View>
         )}
 
-        {loaded && dailySpend.length > 0 && (
-          <View style={styles.bars}>
-            <SpendBars daily={dailySpend} today={todayIso} />
-          </View>
-        )}
+        {/* The bars are always about now (the last 7 days, this month), so only beside the current month. */}
+        {loaded &&
+          dailySpend.length > 0 &&
+          loadedCursor.granularity === 'month' &&
+          loadedCursor.offset === 0 && (
+            <View style={styles.bars}>
+              <SpendBars daily={dailySpend} today={todayIso} />
+            </View>
+          )}
 
         {loaded && (
           <Section title="Recent activity" onSeeAll={() => router.push('/transactions')}>
@@ -555,7 +570,7 @@ export default function DashboardScreen() {
               />
             ) : (
               <Glass radius={24} style={styles.recent}>
-                {recent.slice(0, RECENT_ROWS).map((tx, i, rows) => {
+                {recent.map((tx, i, rows) => {
                   // Rows come newest first; a new day gets its own small heading ("Today", "Yesterday", "1 Oct").
                   const newDay = i === 0 || rows[i - 1].date !== tx.date;
                   return (

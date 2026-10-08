@@ -4,6 +4,7 @@ import { Text } from '@/components/Text';
 import { useFocusEffect } from 'expo-router';
 import Feather from '@expo/vector-icons/Feather';
 import { theme } from '@/constants/theme';
+import { GLASS } from '@/components/Glass';
 import { useAccent } from '@/theme/AccentContext';
 import { usePrivacy } from '@/theme/PrivacyContext';
 import { usePressScale } from '@/lib/usePressScale';
@@ -81,6 +82,7 @@ export function HeaderIconButton({
   badge,
   count,
   size,
+  glass = false,
 }: {
   icon: React.ComponentProps<typeof Feather>['name'];
   onPress: () => void;
@@ -90,6 +92,8 @@ export function HeaderIconButton({
   count?: number;
   /** A larger round button (Home's header); the default is 34. */
   size?: number;
+  /** A frosted disc, for headers on a wallpaper (Home, Activity). */
+  glass?: boolean;
 }) {
   const { animatedStyle, onPressIn, onPressOut } = usePressScale();
   return (
@@ -104,6 +108,7 @@ export function HeaderIconButton({
         styles.iconBtn,
         styles.bare,
         size != null && { width: size, height: size, borderRadius: size / 2 },
+        glass && styles.glass,
         animatedStyle,
       ]}
     >
@@ -131,6 +136,7 @@ const styles = StyleSheet.create({
   },
   // A header action: just the icon on the header, no disc and no border (the quiet bar).
   bare: { width: 40, height: 40, borderRadius: 20, borderWidth: 0, backgroundColor: 'transparent' },
+  glass: { borderWidth: 1, borderColor: GLASS.edge, backgroundColor: GLASS.fillStrong },
   initial: { fontFamily: theme.font.bodyBold, fontSize: 14 },
   initialLarge: { fontFamily: theme.font.bodyBold, fontSize: 15 },
   countBadge: {

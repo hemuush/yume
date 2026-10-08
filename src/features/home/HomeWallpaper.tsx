@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Defs, RadialGradient, Stop, Circle } from 'react-native-svg';
@@ -13,7 +14,13 @@ export function wallpaperTop(accent: string): string {
  * Home's wallpaper: a soft wash of the theme colour at the top fading into the page colour, with two blurred
  * light blobs (radial gradients) for depth behind the glass cards. Static: nothing here re-renders on scroll.
  */
-export function HomeWallpaper({ accent, secondary }: { accent: string; secondary: string }) {
+export const HomeWallpaper = memo(function HomeWallpaper({
+  accent,
+  secondary,
+}: {
+  accent: string;
+  secondary: string;
+}) {
   const top = wallpaperTop(accent);
   const mid = shade(accent, 94);
   const blobA = shade(accent, 80);
@@ -41,4 +48,4 @@ export function HomeWallpaper({ accent, secondary }: { accent: string; secondary
       </Svg>
     </View>
   );
-}
+});

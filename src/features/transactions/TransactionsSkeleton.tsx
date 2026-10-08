@@ -1,8 +1,9 @@
 import { View, StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
 import { Skeleton } from '@/components/Skeleton';
+import { GLASS } from '@/components/Glass';
 
-const BAR_HEIGHTS = [18, 34, 12, 44, 26, 38, 20];
+const BAR_HEIGHTS = [14, 28, 10, 38, 22, 32, 18];
 
 /**
  * Stands in for the headline + spend chart + day list while the first `listTransactions` batch is still
@@ -17,7 +18,7 @@ export function TransactionsSkeleton() {
         <Skeleton width={190} height={22} radius={11} style={{ marginTop: 10 }} />
         <View style={styles.barRow}>
           {BAR_HEIGHTS.map((h, i) => (
-            <Skeleton key={i} width={24} height={h} radius={7} />
+            <Skeleton key={i} width={18} height={h} radius={6} />
           ))}
         </View>
       </View>
@@ -28,7 +29,7 @@ export function TransactionsSkeleton() {
           <View style={styles.dayCard}>
             {[0, 1].map((i) => (
               <View key={i} style={[styles.row, i > 0 && styles.rowDivider]}>
-                <Skeleton width={40} height={40} radius={13} />
+                <Skeleton width={30} height={30} radius={15} />
                 <View style={styles.rowMid}>
                   <Skeleton width={130} height={13} radius={4} />
                   <Skeleton width={90} height={10} radius={3} style={{ marginTop: 6 }} />
@@ -46,26 +47,26 @@ export function TransactionsSkeleton() {
 const styles = StyleSheet.create({
   wrap: { paddingHorizontal: 20, paddingTop: 6 },
   sumCard: {
-    padding: 18,
-    backgroundColor: theme.colors.surface,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-    borderRadius: theme.radius.xl2,
+    padding: 16,
+    backgroundColor: GLASS.fill,
+    borderWidth: 1,
+    borderColor: GLASS.edge,
+    borderRadius: 28,
   },
   barRow: {
     flexDirection: 'row',
     alignItems: 'flex-end',
     justifyContent: 'space-between',
-    height: 76,
+    height: 60,
     marginTop: 24,
   },
   dayGroup: { marginTop: 26 },
   dayCard: {
     marginTop: 10,
-    backgroundColor: theme.colors.surface,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-    borderRadius: theme.radius.xl2,
+    backgroundColor: GLASS.fill,
+    borderWidth: 1,
+    borderColor: GLASS.edge,
+    borderRadius: 24,
     overflow: 'hidden',
   },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 13, paddingHorizontal: 16 },
