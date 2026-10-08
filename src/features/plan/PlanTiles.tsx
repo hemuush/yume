@@ -81,19 +81,11 @@ function Tile({
   );
 }
 
-/** A tile's topic: its icon on a small tinted badge, then the name in sentence case. */
-function Kicker({
-  icon,
-  tint,
-  children,
-}: {
-  icon: React.ReactNode;
-  tint: string;
-  children: React.ReactNode;
-}) {
+/** A tile's topic: its icon on a small neutral badge (colour is kept for figures that carry meaning), then the name. */
+function Kicker({ icon, children }: { icon: React.ReactNode; children: React.ReactNode }) {
   return (
     <View style={styles.kickerRow}>
-      <View style={[styles.kickerBadge, { backgroundColor: tint }]}>{icon}</View>
+      <View style={styles.kickerBadge}>{icon}</View>
       <Text style={styles.kicker} numberOfLines={1}>
         {children}
       </Text>
@@ -134,7 +126,6 @@ export function DueTile({
   /** Scrolls Coming up to a day's group. */
   onJumpToDay: (date: string) => void;
 }) {
-  const { accent } = useAccent();
   const [selected, setSelected] = useState<string | null>(null);
   const none = dueSoon.count === 0;
   const maxMinor = Math.max(0, ...days.map((d) => d.amountMinor));
@@ -151,9 +142,7 @@ export function DueTile({
       }
     >
       <View style={styles.heroHead}>
-        <Kicker icon={kIcon('calendar')} tint={shade(accent, 95)}>
-          Next 14 days
-        </Kicker>
+        <Kicker icon={kIcon('calendar')}>Next 14 days</Kicker>
         {!none && (
           <View style={styles.countChip}>
             <Text style={styles.countChipText}>
@@ -297,9 +286,7 @@ export function EmiTile({
   if (loans.borrowedCount === 0) {
     return (
       <Tile onPress={onOpen} label="Track an EMI. Open loans">
-        <Kicker icon={kIcon('credit-card')} tint={theme.colors.idCoral}>
-          Loans
-        </Kicker>
+        <Kicker icon={kIcon('credit-card')}>Loans</Kicker>
         <Text style={styles.tileTitle}>Track an EMI</Text>
         <Text style={styles.tileSub}>A home or car loan, and what's left</Text>
       </Tile>
@@ -310,9 +297,7 @@ export function EmiTile({
   const nextEmi = loans.rows.find((r) => r.direction === 'borrowed' && r.nextDueDate);
   return (
     <Tile onPress={onOpen} label={`EMIs ${inWindow ? formatMoney(dueSoon.emiMinor) : ''}. Open loans`}>
-      <Kicker icon={kIcon('credit-card')} tint={theme.colors.idCoral}>
-        EMIs
-      </Kicker>
+      <Kicker icon={kIcon('credit-card')}>EMIs</Kicker>
       {inWindow ? (
         <>
           <Text style={styles.value} numberOfLines={1} adjustsFontSizeToFit>
@@ -347,13 +332,10 @@ const RING = 44;
 const RING_STROKE = 5;
 
 export function BudgetTile({ summary, onOpen }: { summary: BudgetsSummary; onOpen: () => void }) {
-  const { secondary } = useAccent();
   if (summary.rows.length === 0) {
     return (
       <Tile onPress={onOpen} label="Set a monthly limit. Open budgets">
-        <Kicker icon={kIcon('pie-chart')} tint={shade(secondary, 94)}>
-          Budgets
-        </Kicker>
+        <Kicker icon={kIcon('pie-chart')}>Budgets</Kicker>
         <Text style={styles.tileTitle}>Set a limit</Text>
         <Text style={styles.tileSub}>For food, bills, anything you watch</Text>
       </Tile>
@@ -393,9 +375,7 @@ export function BudgetTile({ summary, onOpen }: { summary: BudgetsSummary; onOpe
           />
         </Svg>
       </View>
-      <Kicker icon={kIcon('pie-chart')} tint={shade(secondary, 94)}>
-        Budgets
-      </Kicker>
+      <Kicker icon={kIcon('pie-chart')}>Budgets</Kicker>
       <Text style={[styles.value, over && styles.overValue]} numberOfLines={1}>
         {over ? `${summary.overCount} over` : 'On track'}
       </Text>
@@ -426,7 +406,7 @@ export function DebtTile({ loans, onOpen }: { loans: LoansSummary; onOpen: () =>
         loans.debtFreeDate ? `, debt-free in ${longMonthYear(loans.debtFreeDate)}` : ''
       }. Open loans`}
     >
-      <Kicker icon={kIcon('flag')} tint={theme.colors.accentTint}>
+      <Kicker icon={kIcon('flag')}>
         {loans.debtFreeDate ? `Debt-free by ${longMonthYear(loans.debtFreeDate)}` : 'Debt left'}
       </Kicker>
       <Text style={styles.value} numberOfLines={1} adjustsFontSizeToFit>
@@ -500,9 +480,7 @@ export function PeopleTile({ state, onOpen }: { state: PeopleState; onOpen: () =
   }
   return (
     <Tile onPress={onOpen} label={`Friends & Family, ${sub}. Open Friends & Family`}>
-      <Kicker icon={kIcon('users')} tint={theme.colors.idTeal}>
-        Friends
-      </Kicker>
+      <Kicker icon={kIcon('users')}>Friends</Kicker>
       {value}
       <Text style={styles.tileSub} numberOfLines={2}>
         {sub}
@@ -527,9 +505,7 @@ export function HabitTile({
   if (!habit || goalMinor == null) {
     return (
       <Tile onPress={onOpen} label="Set a daily goal. Open Suu's garden">
-        <Kicker icon={sprout} tint={theme.colors.idSage}>
-          Spend streak
-        </Kicker>
+        <Kicker icon={sprout}>Spend streak</Kicker>
         <Text style={styles.tileTitle}>Set a daily goal</Text>
         <Text style={styles.tileSub}>Grow Suu's garden</Text>
       </Tile>
@@ -540,9 +516,7 @@ export function HabitTile({
       onPress={onOpen}
       label={`${habit.streakDays}-day streak under ${formatMoney(goalMinor)} a day. Open Suu's garden`}
     >
-      <Kicker icon={sprout} tint={theme.colors.idSage}>
-        Spend streak
-      </Kicker>
+      <Kicker icon={sprout}>Spend streak</Kicker>
       <Text style={styles.value}>
         {habit.streakDays} day{habit.streakDays === 1 ? '' : 's'}
       </Text>
@@ -593,9 +567,7 @@ export function SavingTile({
         accessibilityRole="button"
         accessibilityLabel="Open savings goals"
       >
-        <Kicker icon={kIcon('flag')} tint={theme.colors.goldTint}>
-          Saving toward
-        </Kicker>
+        <Kicker icon={kIcon('flag')}>Saving toward</Kicker>
         {active.length === 0 ? (
           <>
             <Text style={styles.tileTitle}>Start a goal that fills up by itself</Text>

@@ -340,7 +340,6 @@ export function RuleModal({
             <SettingsRow
               round
               icon="bank"
-              iconBg={shade(accent, 95)}
               label={type === 'transfer' ? 'From' : 'Account'}
               value={accountName(effectiveAccountId)}
               onPress={() => toggle('account')}
@@ -366,7 +365,6 @@ export function RuleModal({
                 <SettingsRow
                   round
                   icon="swap-horizontal"
-                  iconBg={shade(secondary, 94)}
                   label="To"
                   value={accountName(toAccountId) ?? 'Pick one'}
                   onPress={() => toggle('to')}

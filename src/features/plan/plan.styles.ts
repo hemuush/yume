@@ -33,7 +33,14 @@ export const styles = StyleSheet.create({
   tileHalf: { flex: 1, minHeight: 132 },
   savingTile: { gap: 12 },
   kickerRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 2 },
-  kickerBadge: { width: 28, height: 28, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
+  kickerBadge: {
+    width: 28,
+    height: 28,
+    borderRadius: 9,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: theme.colors.surfaceAlt,
+  },
   kicker: {
     flexShrink: 1,
     fontFamily: theme.font.bodyMedium,

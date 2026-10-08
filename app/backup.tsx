@@ -566,7 +566,6 @@ Restore anyway? Your current data would be replaced with no way back.`,
             <View style={[h.card, styles.restoreFile]}>
               <SettingsRow
                 icon="file-restore-outline"
-                iconBg={shade(accent, 95)}
                 label="Restore from file"
                 sub={busy === 'restore-file' ? 'Restoring…' : 'A backup JSON saved on this device'}
                 onPress={busy ? undefined : restoreFromFile}
@@ -580,7 +579,6 @@ Restore anyway? Your current data would be replaced with no way back.`,
             <View style={h.card}>
               <SettingsRow
                 icon="code-json"
-                iconBg={theme.colors.idGold}
                 label="Full backup (JSON)"
                 sub={busy === 'export-json' ? 'Exporting…' : 'The complete copy you can restore into Yume'}
                 onPress={busy ? undefined : exportJsonLocally}
@@ -590,7 +588,6 @@ Restore anyway? Your current data would be replaced with no way back.`,
               <SettingsRow
                 divider
                 icon="file-excel-outline"
-                iconBg={theme.colors.idSage}
                 label="Excel workbook"
                 sub={
                   busy === 'export-excel'

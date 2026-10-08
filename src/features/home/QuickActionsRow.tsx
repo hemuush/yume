@@ -4,18 +4,13 @@ import Feather from '@expo/vector-icons/Feather';
 import { pushOnce } from '@/lib/pushOnce';
 import { theme } from '@/constants/theme';
 import { usePressScale } from '@/lib/usePressScale';
-import { shade } from '@/lib/color';
-import { useAccent } from '@/theme/AccentContext';
 
 const ACTIONS: {
   type: 'expense' | 'income' | 'transfer';
   label: string;
   icon: React.ComponentProps<typeof Feather>['name'];
-  /** The icon's colour; Income and Transfer also sit it in a tinted circle. */
+  /** The icon's colour. */
   color: string;
-  tint?: string;
-  /** Tints the circle with a pale wash of the picked theme instead of `tint`. */
-  themeTint?: boolean;
   primary?: boolean;
 }[] = [
   { type: 'expense', label: 'Expense', icon: 'plus', color: theme.colors.surface, primary: true },
@@ -23,26 +18,22 @@ const ACTIONS: {
     type: 'income',
     label: 'Income',
     icon: 'plus',
-    color: theme.colors.incomeText,
-    tint: theme.colors.incomeTint,
+    color: theme.colors.ink,
   },
   {
     type: 'transfer',
     label: 'Transfer',
     icon: 'repeat',
-    color: theme.colors.link,
-    themeTint: true,
+    color: theme.colors.ink,
   },
 ];
 
 /**
  * Shortcuts to Add with a segment preselected (nav + still opens Expense), just under the month card where a
- * thumb reaches. Expense is the one filled ink button; Income and Transfer are cards with a tinted icon.
+ * thumb reaches. Expense is the one filled ink button; Income and Transfer are quiet outlined cards with a plain icon.
  */
-function ActionPill({ type, label, icon, color, tint, themeTint, primary }: (typeof ACTIONS)[number]) {
+function ActionPill({ type, label, icon, color, primary }: (typeof ACTIONS)[number]) {
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.96);
-  const { accent } = useAccent();
-  const dotBg = themeTint ? shade(accent, 95) : tint;
   return (
     <Pressable
       onPress={() => pushOnce(`/add-transaction?type=${type}`)}
@@ -53,13 +44,7 @@ function ActionPill({ type, label, icon, color, tint, themeTint, primary }: (typ
       accessibilityLabel={`Add ${label.toLowerCase()}`}
     >
       <Animated.View style={[styles.pill, primary && styles.pillPrimary, animatedStyle]}>
-        {dotBg ? (
-          <View style={[styles.iconDot, { backgroundColor: dotBg }]}>
-            <Feather name={icon} size={13} color={color} />
-          </View>
-        ) : (
-          <Feather name={icon} size={16} color={color} />
-        )}
+        <Feather name={icon} size={16} color={color} />
         <Text style={[styles.label, primary && styles.labelPrimary]} numberOfLines={1}>
           {label}
         </Text>
@@ -94,7 +79,6 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.borderSoft,
   },
   pillPrimary: { backgroundColor: theme.colors.ink, borderColor: theme.colors.ink },
-  iconDot: { width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   label: { flexShrink: 1, fontFamily: theme.font.bodyBold, fontSize: 15, color: theme.colors.textPrimary },
   labelPrimary: { color: theme.colors.surface },
 });
