@@ -1,5 +1,6 @@
 import { View, StyleSheet, ViewStyle, StyleProp } from 'react-native';
 import { theme } from '@/constants/theme';
+import { useUiScale } from '@/lib/uiScale';
 
 interface Props {
   children: React.ReactNode;
@@ -20,10 +21,11 @@ export function SoftCard({
   children,
   backgroundColor = theme.colors.surface,
   borderRadius = theme.radius.xl2,
-  padding = 16,
+  padding: basePadding = 16,
   elevated = false,
   style,
 }: Props) {
+  const padding = Math.round(basePadding * useUiScale());
   const isColored = backgroundColor !== theme.colors.surface;
   return (
     <View
