@@ -1,26 +1,17 @@
 import { useState } from 'react';
-import { View, Pressable, Animated, StyleSheet } from 'react-native';
+import { Pressable, Animated, StyleSheet } from 'react-native';
 import { Text } from '@/components/Text';
 import Feather from '@expo/vector-icons/Feather';
 import { theme } from '@/constants/theme';
 import { usePressScale } from '@/lib/usePressScale';
-import { ModalSheet, SheetLink } from '@/components/ModalSheet';
-import { SegmentedControl } from '@/components/SegmentedControl';
-import {
-  PeriodCursor,
-  PeriodGranularity,
-  canStepForward,
-  periodLabel,
-  periodShortLabel,
-  setGranularity,
-  stepPeriod,
-} from '@/lib/period';
-import { withPressed } from '@/lib/pressed';
+import { PeriodPicker } from '@/components/PeriodPicker';
+import { GLASS } from '@/components/Glass';
+import { PeriodCursor, periodLabel, periodRange, periodShortLabel } from '@/lib/period';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 /**
- * Home header period control ("September ▾"): dialog with prev/next, Month/Year switch, "This month".
+ * Home's period control ("September ▾"): opens the period picker (Month | Year, a month grid, "This month").
  * `compact` is the smaller copy in the collapsed brand row: no calendar icon, shorter max width, same menu.
  */
 export function MonthPill({
@@ -33,7 +24,7 @@ export function MonthPill({
   compact?: boolean;
 }) {
   const [open, setOpen] = useState(false);
-  const forward = canStepForward(cursor);
+  const start = periodRange(cursor).start;
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.97);
 
   const pick = (next: PeriodCursor) => {
@@ -58,47 +49,23 @@ export function MonthPill({
         <Feather name="chevron-down" size={14} color={theme.colors.ink} />
       </AnimatedPressable>
 
-      <ModalSheet visible={open} onClose={() => setOpen(false)} variant="center" scrollable={false}>
-        <View style={styles.stepRow}>
-          <Pressable
-            onPress={() => pick(stepPeriod(cursor, -1))}
-            hitSlop={8}
-            style={withPressed(styles.stepBtn)}
-            accessibilityRole="button"
-            accessibilityLabel="Previous period"
-          >
-            <Feather name="chevron-left" size={18} color={theme.colors.ink} />
-          </Pressable>
-          <Text style={styles.stepLabel} numberOfLines={1}>
-            {periodLabel(cursor)}
-          </Text>
-          <Pressable
-            onPress={() => pick(stepPeriod(cursor, 1))}
-            disabled={!forward}
-            hitSlop={8}
-            style={withPressed([styles.stepBtn, !forward && styles.disabled])}
-            accessibilityRole="button"
-            accessibilityLabel="Next period"
-          >
-            <Feather name="chevron-right" size={18} color={theme.colors.ink} />
-          </Pressable>
-        </View>
-        <SegmentedControl<PeriodGranularity>
-          options={[
-            { label: 'Month', value: 'month' },
-            { label: 'Year', value: 'year' },
-          ]}
-          value={cursor.granularity}
-          onChange={(g) => pick(setGranularity(cursor, g))}
-        />
-        {cursor.offset !== 0 && (
-          <SheetLink
-            label={`Jump to ${cursor.granularity === 'year' ? 'this year' : 'this month'}`}
-            onPress={() => pick({ ...cursor, offset: 0 })}
-            danger={false}
-          />
-        )}
-      </ModalSheet>
+      <PeriodPicker
+        visible={open}
+        onClose={() => setOpen(false)}
+        today={new Date()}
+        allowYear
+        selected={{
+          kind: cursor.granularity,
+          year: Number(start.slice(0, 4)),
+          month: Number(start.slice(5, 7)) - 1,
+        }}
+        onPickMonth={(y, m) => {
+          const now = new Date();
+          pick({ granularity: 'month', offset: (y - now.getFullYear()) * 12 + (m - now.getMonth()) });
+        }}
+        onPickYear={(y) => pick({ granularity: 'year', offset: y - new Date().getFullYear() })}
+        onCurrent={(kind) => pick({ granularity: kind, offset: 0 })}
+      />
     </>
   );
 }
@@ -108,26 +75,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    minHeight: 36,
-    paddingHorizontal: 13,
+    minHeight: 32,
+    paddingHorizontal: 12,
     borderRadius: theme.radius.pill,
-    backgroundColor: theme.colors.surface,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
+    backgroundColor: GLASS.fillStrong,
+    borderWidth: 1,
+    borderColor: GLASS.edge,
     maxWidth: 168,
   },
-  pillText: { fontFamily: theme.font.roundedMedium, fontSize: 14, color: theme.colors.ink, flexShrink: 1 },
+  pillText: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.ink, flexShrink: 1 },
   pillCompact: { gap: 4, minHeight: 30, paddingHorizontal: 10, maxWidth: 140 },
-  pillTextCompact: { fontFamily: theme.font.roundedMedium, fontSize: 12 },
-
-  stepRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 },
-  stepBtn: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
-  disabled: { opacity: 0.25 },
-  stepLabel: {
-    flex: 1,
-    textAlign: 'center',
-    fontFamily: theme.font.roundedBold,
-    fontSize: 16,
-    color: theme.colors.textPrimary,
-  },
+  pillTextCompact: { fontFamily: theme.font.bodyBold, fontSize: 12 },
 });
