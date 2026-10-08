@@ -538,7 +538,13 @@ describe('Add screen', () => {
         )
         .props.onPress();
     });
-    await press(tree2, 'Bank');
+    // The row in the Pay from sheet (the account chip on the detail bar can say "Bank" too).
+    await act(async () => {
+      tree2.root
+        .find((n) => n.props.accessibilityLabel === 'Bank' && typeof n.props.onPress === 'function')
+        .props.onPress();
+      await settle();
+    });
     await press(tree2, 'Food');
     await typeAmount(tree2, '60');
     await save(tree2);

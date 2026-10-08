@@ -692,6 +692,7 @@ export default function AddTransactionScreen() {
   const saveButton = (
     <PrimaryButton
       title={saveTitle}
+      icon="check"
       done={saveDone}
       onPress={() => void runSave(splitParts ? onSaveSplit : editing ? onSaveSingleEdit : onSaveAll)}
       disabled={saving || isLinked}
@@ -718,6 +719,7 @@ export default function AddTransactionScreen() {
         showBack
         hideUser
         wallpaper
+        closeIcon
         actions={
           editing ? (
             !isLinked ? (

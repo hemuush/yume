@@ -1,12 +1,10 @@
-import { View } from 'react-native';
 import { Account } from '@/types';
 import { ModalSheet } from '@/components/ModalSheet';
 import { CalendarSheet } from '@/components/CalendarSheet';
 import { AddAccountModal } from '@/features/profile/AddAccountModal';
 import { AddPersonModal } from '@/features/people/AddPersonModal';
 import { RepeatEntrySheet } from '@/features/home/RepeatEntrySheet';
-import { AccountTile } from './AddFields';
-import { styles } from './add.styles';
+import { AccountPickList } from './AddSections';
 
 /** The sheets Add opens over itself: pick an account, add an account or person, pick a date, repeat an entry. */
 export function AddSheets({
@@ -37,16 +35,11 @@ export function AddSheets({
         title={accountSheet.title}
         scrollable={false}
       >
-        <View style={styles.accountRow}>
-          {accountSheet.accounts.map((acc) => (
-            <AccountTile
-              key={acc.id}
-              account={acc}
-              active={accountSheet.activeId === acc.id}
-              onPress={() => accountSheet.onPick(acc.id)}
-            />
-          ))}
-        </View>
+        <AccountPickList
+          accounts={accountSheet.accounts}
+          activeId={accountSheet.activeId}
+          onPick={accountSheet.onPick}
+        />
       </ModalSheet>
 
       <AddAccountModal {...addAccount} />
