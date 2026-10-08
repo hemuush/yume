@@ -158,3 +158,27 @@ describe('FilterModal', () => {
     expect(chip(tree, 'Test Fuel').props.active).toBe(false);
   });
 });
+
+describe('FilterModal count', () => {
+  it('says how many entries the picks would show', () => {
+    let tree!: ReactTestRenderer;
+    const countFor = (f: ActivityFilter) => (f.categoryIds.length ? 3 : 12);
+    act(() => {
+      tree = create(
+        <FilterModal
+          visible
+          categories={categories}
+          accounts={accounts}
+          filter={none}
+          onClose={jest.fn()}
+          onApply={jest.fn()}
+          countFor={countFor}
+        />
+      );
+    });
+    mounted.push(tree);
+    expect(button(tree, 'Show 12 entries')).toBeDefined();
+    act(() => chip(tree, 'Test Fuel').props.onPress());
+    expect(button(tree, 'Show 3 entries')).toBeDefined();
+  });
+});
