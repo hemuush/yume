@@ -350,12 +350,15 @@ export default function DashboardScreen() {
     setRefreshing(false);
   };
 
-  const categoryFor = (id: string | null) => categories.find((c) => c.id === id);
+  // Looked up per row on every render, so by id rather than a scan of the whole list each time.
+  const categoriesById = useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories]);
+  const accountsById = useMemo(() => new Map(accounts.map((a) => [a.id, a])), [accounts]);
+  const categoryFor = (id: string | null) => (id ? categoriesById.get(id) : undefined);
   const parentNameFor = (id: string | null) => {
     const parentId = categoryFor(id)?.parentId;
     return parentId ? categoryFor(parentId)?.name : undefined;
   };
-  const accountName = (id: string | null | undefined) => accounts.find((a) => a.id === id)?.name;
+  const accountName = (id: string | null | undefined) => (id ? accountsById.get(id)?.name : undefined);
   const savingsIds = savingsAccountIdsOf(accounts);
   const isSavingsTransfer = (tx: Transaction) =>
     tx.type === 'transfer' &&
@@ -416,23 +419,28 @@ export default function DashboardScreen() {
     [savingsPct, changePct, topGrowingName, hour, hideAmounts]
   );
 
-  const upcoming = buildUpcomingItems({
-    loans: buildLoansSummary(loans, loanProgress).rows.flatMap((row) =>
-      row.direction === 'borrowed' && row.nextDueDate && row.nextEmiMinor != null
-        ? [{ id: row.id, name: row.name, nextDueDate: row.nextDueDate, nextEmiMinor: row.nextEmiMinor }]
-        : []
-    ),
-    cardBills,
-    rules: recurringRules,
-    accent,
-    secondary,
-    accountName,
-    categoryName: (id) => {
-      const cat = categoryFor(id);
-      return cat && categorySentence(cat.name, parentNameFor(id));
-    },
-    categoryColor: (id) => categoryFor(id)?.color,
-  });
+  // Rebuilt only when its inputs change, not on every swipe or scroll-driven render.
+  const upcoming = useMemo(() => {
+    const cat = (id: string | null) => (id ? categoriesById.get(id) : undefined);
+    return buildUpcomingItems({
+      loans: buildLoansSummary(loans, loanProgress).rows.flatMap((row) =>
+        row.direction === 'borrowed' && row.nextDueDate && row.nextEmiMinor != null
+          ? [{ id: row.id, name: row.name, nextDueDate: row.nextDueDate, nextEmiMinor: row.nextEmiMinor }]
+          : []
+      ),
+      cardBills,
+      rules: recurringRules,
+      accent,
+      secondary,
+      accountName: (id) => (id ? accountsById.get(id)?.name : undefined),
+      categoryName: (id) => {
+        const c = cat(id);
+        const parentId = c?.parentId;
+        return c && categorySentence(c.name, parentId ? cat(parentId)?.name : undefined);
+      },
+      categoryColor: (id) => cat(id)?.color,
+    });
+  }, [loans, loanProgress, cardBills, recurringRules, accent, secondary, categoriesById, accountsById]);
 
   return (
     <View style={styles.container}>

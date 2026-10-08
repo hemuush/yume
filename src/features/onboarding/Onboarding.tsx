@@ -261,9 +261,10 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
                   onPress={finish}
                   hitSlop={10}
                   accessibilityRole="button"
-                  accessibilityLabel="Skip"
+                  accessibilityLabel={slide.isAccountsStep ? 'Skip accounts' : 'Skip'}
                 >
-                  <Text style={styles.skipText}>Skip</Text>
+                  {/* On the accounts step, skipping also skips the ticked accounts: it says so. */}
+                  <Text style={styles.skipText}>{slide.isAccountsStep ? 'Skip accounts' : 'Skip'}</Text>
                 </Pressable>
               </View>
               <View style={[styles.illustWrap, slide.isAccountsStep && styles.illustWrapSmall]}>

@@ -97,4 +97,29 @@ describe('restoreFromSnapshot', () => {
     );
     expect(rows).toEqual([{ id: 'second', value_minor: 200 }]);
   });
+
+  it('names the tables an older backup has no section for, which the restore empties', async () => {
+    await mockTestDb.runAsync("INSERT INTO people (id, name) VALUES ('p1', 'Asha')");
+    const base = await buildBackupSnapshot();
+    const { people: _people, person_ledger_entries: _ledger, ...older } = base.tables;
+
+    const result = await restoreFromSnapshot({ ...base, tables: older });
+
+    expect(result.emptiedTables).toEqual(['people']);
+  });
+
+  it('rejects a file whose amounts are not whole numbers, changing nothing', async () => {
+    const base = await buildBackupSnapshot();
+    const before = await listTransactions({ limit: 100 });
+    const damaged = {
+      ...base,
+      tables: {
+        ...base.tables,
+        transactions: (base.tables.transactions as any[]).map((t) => ({ ...t, amount_minor: 'abc' })),
+      },
+    };
+
+    await expect(restoreFromSnapshot(damaged)).rejects.toThrow(/isn't a number/);
+    expect(await listTransactions({ limit: 100 })).toHaveLength(before.length);
+  });
 });

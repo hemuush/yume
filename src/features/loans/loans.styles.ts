@@ -53,12 +53,6 @@ export const styles = StyleSheet.create({
   errorText: { fontFamily: theme.font.body, color: theme.colors.expenseText, fontSize: 13, marginBottom: 12 },
   // The Overview / Schedule switch under a loan's card.
   sheetTabs: { marginBottom: 14 },
-  viewAllText: {
-    fontFamily: theme.font.bodyBold,
-    fontSize: 13,
-    color: theme.colors.textSecondary,
-    textAlign: 'center',
-  },
   sectionTitle: {
     ...SECTION_TITLE,
     marginTop: SECTION_GAP.top,
@@ -96,7 +90,6 @@ export const styles = StyleSheet.create({
     paddingVertical: 2,
     marginTop: 3,
   },
-  statusTagPaid: { color: theme.colors.incomeText, backgroundColor: theme.colors.incomeTint },
   fieldLabel: {
     fontSize: 10.5,
     fontFamily: theme.font.roundedMedium,

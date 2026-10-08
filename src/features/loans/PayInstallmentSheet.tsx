@@ -26,12 +26,15 @@ export function PayInstallmentSheet({
   installment,
   account,
   categoryId,
+  linkedAccountMissing = false,
   onClose,
   onPaid,
 }: {
   installment: LoanPayment;
   account: { id: string; name: string } | null;
   categoryId: string | null;
+  /** The loan's own account is archived or gone: say which account pays instead. */
+  linkedAccountMissing?: boolean;
   onClose: () => void;
   /** After the payment (or its undo) is saved — refresh whatever shows it. */
   onPaid: () => void | Promise<void>;
@@ -114,6 +117,12 @@ export function PayInstallmentSheet({
       />
       {!account && (
         <Text style={styles.hintText}>Add an account first to record payments against this loan.</Text>
+      )}
+      {account && linkedAccountMissing && (
+        <Text style={styles.hintText}>
+          This loan's own account is archived or deleted, so this pays from {account.name}. Change the loan's
+          account if that's not right.
+        </Text>
       )}
       {early && (
         <Text style={styles.hintText}>

@@ -31,6 +31,7 @@ function rowToRule(row: RecurringRuleRow): RecurringRule {
     nextRunDate: row.next_run_date,
     endDate: row.end_date,
     active: !!row.active,
+    anchorDay: row.anchor_day ?? null,
   };
 }
 

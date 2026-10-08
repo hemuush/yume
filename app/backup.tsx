@@ -45,7 +45,7 @@ import {
   BackupOutcome,
 } from '@/db/settings';
 import { resyncAfterRestore } from '@/lib/restoreSync';
-import { withoutRelock } from '@/lib/appLock';
+import { authenticate, withoutRelock } from '@/lib/appLock';
 import { SkyHeader, HeaderSummary } from '@/features/home/SkyHeader';
 import { StripCard } from '@/components/StripCard';
 import { shade } from '@/lib/color';
@@ -66,6 +66,7 @@ import { styles } from '@/features/backup/backup.styles';
 import { TimelineNode } from '@/features/backup/TimelineNode';
 import { backupStatus, formatBytes, formatWhen } from '@/features/backup/backupStatus';
 import { useAccent } from '@/theme/AccentContext';
+import { useAppLock } from '@/lib/AppLockContext';
 
 const FREQUENCIES: { label: string; value: BackupFrequency }[] = [
   { label: 'Daily', value: 'daily' },
@@ -107,6 +108,7 @@ async function shareTempFile(
 }
 
 export default function BackupScreen() {
+  const { lockEnabled } = useAppLock();
   const insets = useSafeAreaInsets();
   const { accent } = useAccent();
   // The header sits over the page and shrinks as it scrolls.
@@ -170,8 +172,12 @@ export default function BackupScreen() {
   const onChangeFrequency = (f: BackupFrequency) =>
     run('frequency', async () => setBackupFrequency(f).then(() => setFrequency(f)));
 
+  // An export is the whole ledger in plain text: with the app lock on, it takes the phone's own unlock first.
+  const unlockedForExport = async () => !lockEnabled || (await authenticate().catch(() => false));
+
   const exportJsonLocally = () =>
     run('export-json', async () => {
+      if (!(await unlockedForExport())) return;
       const snapshot = await buildBackupSnapshot();
       await shareTempFile(`yume-backup-${Date.now()}.json`, JSON.stringify(snapshot, null, 2), {
         mimeType: 'application/json',
@@ -180,6 +186,7 @@ export default function BackupScreen() {
 
   const exportExcelLocally = () =>
     run('export-excel', async () => {
+      if (!(await unlockedForExport())) return;
       const bytes = await generateExportWorkbookBytes();
       await shareTempFile(`yume-export-${Date.now()}.xlsx`, bytes, {
         mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
@@ -245,7 +252,11 @@ export default function BackupScreen() {
     );
 
   /** Everything after a restore succeeds: re-sync, then say so — offering Undo when a safety copy is in place. */
-  const finishRestore = ({ skippedColumns, undoAvailable }: RestoreResult & { undoAvailable: boolean }) => {
+  const finishRestore = ({
+    skippedColumns,
+    emptiedTables = [],
+    undoAvailable,
+  }: RestoreResult & { undoAvailable: boolean }) => {
     // Everything scheduled outside the DB still describes pre-restore data: loan due reminders, the
     // reminder schedule, and home-screen widgets. Best-effort; the restore already succeeded.
     void resyncAfterRestore();
@@ -257,11 +268,18 @@ export default function BackupScreen() {
             ', '
           )}). Everything else was restored.`
         : '';
+    // An older backup has no section for something added since: what was here is gone, so say what.
+    const emptiedNote =
+      emptiedTables.length > 0
+        ? `\n\nThis backup is from an older version and had nothing for: ${emptiedTables
+            .map((t) => t.replace(/_/g, ' '))
+            .join(', ')}. Those are now empty.`
+        : '';
     showAlert(
       'Restore complete',
       undoAvailable
-        ? `Your data has been restored.${note}\n\nNot what you expected? You can put back your data from before this restore.`
-        : `Your data has been restored.${note}`,
+        ? `Your data has been restored.${note}${emptiedNote}\n\nNot what you expected? You can put back your data from before this restore.`
+        : `Your data has been restored.${note}${emptiedNote}`,
       undoAvailable
         ? [
             { text: 'Undo restore', onPress: confirmUndo },

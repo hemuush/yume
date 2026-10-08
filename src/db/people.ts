@@ -52,6 +52,12 @@ export async function listPeople(includeArchived = false): Promise<PersonWithBal
 
 export async function createPerson(input: { name: string; notes?: string }): Promise<Person> {
   const db = await getDb();
+  // Two people with one name couldn't be told apart in Add's picker or on Friends & family.
+  const clash = await db.getFirstAsync<{ id: string }>(
+    'SELECT id FROM people WHERE archived = 0 AND lower(trim(name)) = lower(trim(?)) LIMIT 1',
+    [input.name]
+  );
+  if (clash) throw new Error(`${input.name.trim()} is already in Friends & family.`);
   const id = newId();
   await db.runAsync('INSERT INTO people (id, name, notes) VALUES (?, ?, ?)', [
     id,

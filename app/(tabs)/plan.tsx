@@ -62,6 +62,7 @@ import { ComingUpSection } from '@/features/plan/ComingUpSection';
 import { listCardCycles } from '@/db/cardCycles';
 import { showAlert } from '@/components/AppDialog';
 import { errorMessage } from '@/lib/errorMessage';
+import { useTabScrollToTop } from '@/lib/useTabScrollToTop';
 
 interface PlanData {
   loans: LoansSummary;
@@ -199,6 +200,7 @@ export default function PlanScreen() {
   const open = (route: PlanRoute) => router.push(route);
   // The header shrinks as the page scrolls; the 14-day tile jumps down to Coming up.
   const { collapse, headerHeight, collapsedHeight, scrollHandler, scrollRef } = useCollapsingHeader();
+  useTabScrollToTop(scrollRef);
   // A jump lands just under the collapsed header, which sits over the page.
   const underHeader = () => collapsedHeight;
   const comingUpY = useRef(0);
@@ -337,6 +339,7 @@ export default function PlanScreen() {
           installment={paying.installment}
           account={paying.account}
           categoryId={paying.categoryId}
+          linkedAccountMissing={paying.linkedAccountMissing}
           onClose={() => setPaying(null)}
           onPaid={reload}
         />

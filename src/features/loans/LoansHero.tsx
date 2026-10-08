@@ -159,7 +159,7 @@ const styles = StyleSheet.create({
     marginTop: theme.layout.screenTopGap,
     marginBottom: 4,
     paddingTop: 18,
-    paddingBottom: 14,
+    paddingBottom: 16,
     paddingHorizontal: 16,
   },
   skeletonCard: {

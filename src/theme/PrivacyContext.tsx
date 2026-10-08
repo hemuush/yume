@@ -14,10 +14,12 @@ import {
   getCachedHideSensitiveAmounts,
 } from '@/db/settings';
 import { onSettingsRestored } from '@/lib/dataEvents';
+import { useAppLock } from '@/lib/AppLockContext';
+import { authenticate } from '@/lib/appLock';
 
 interface PrivacyContextValue {
   hideAmounts: boolean;
-  toggleHideAmounts: () => void;
+  toggleHideAmounts: () => void | Promise<void>;
 }
 
 const PrivacyContext = createContext<PrivacyContextValue>({
@@ -52,12 +54,19 @@ export function PrivacyProvider({ children }: { children: ReactNode }) {
     return onSettingsRestored(() => void read());
   }, [apply]);
 
-  const toggleHideAmounts = useCallback(() => {
+  const { lockEnabled } = useAppLock();
+  const toggleHideAmounts = useCallback(async () => {
     const next = !hideRef.current;
+    // Showing hidden amounts again takes the phone's own unlock when the app lock is on: the point of hiding
+    // them is handing the phone over, and whoever holds it shouldn't be one tap from seeing them.
+    if (!next && lockEnabled) {
+      const ok = await authenticate().catch(() => false);
+      if (!ok) return;
+    }
     apply(next);
     // A failed write only costs the preference on the next launch; the switch still works this session.
     Promise.resolve(setHideSensitiveAmounts(next)).catch(() => {});
-  }, [apply]);
+  }, [apply, lockEnabled]);
 
   const value = useMemo(() => ({ hideAmounts, toggleHideAmounts }), [hideAmounts, toggleHideAmounts]);
 

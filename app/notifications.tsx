@@ -29,6 +29,7 @@ import {
   dismissNeedsYou,
   restoreNeedsYou,
   snoozeBackupReminder,
+  unsnoozeBackupReminder,
 } from '@/features/home/needsYouData';
 import { withPressed } from '@/lib/pressed';
 import { errorMessage } from '@/lib/errorMessage';
@@ -133,7 +134,13 @@ export default function NeedsYouScreen() {
     } catch (e) {
       putBack();
       showAlert("Couldn't snooze", errorMessage(e));
+      return;
     }
+    // Same as dismiss: a mis-tap can be taken back.
+    showUndo(`Snoozed ${item.title}`, async () => {
+      await unsnoozeBackupReminder();
+      await reload();
+    });
   };
 
   return (
