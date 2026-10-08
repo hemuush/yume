@@ -1,10 +1,14 @@
-/** A transfer's From and To: To never offers the From account, and Swap trades the two. */
+/** A transfer's From and To cards: each opens a sheet of accounts (To never offers From), and Swap trades the two. */
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
 
 jest.mock('@expo/vector-icons/Feather', () => () => null);
 jest.mock('@expo/vector-icons/MaterialCommunityIcons', () => () => null);
 jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMock').createReanimatedMock());
 jest.mock('@/lib/haptics', () => ({ haptics: { tap: jest.fn() } }));
+jest.mock('@/components/ModalSheet', () => ({
+  ModalSheet: ({ visible, children }: { visible: boolean; children: React.ReactNode }) =>
+    visible ? children : null,
+}));
 jest.mock('@/theme/AccentContext', () => ({
   useAccent: () => ({ dot: '#F0876A', accent: '#8FCBFF', secondary: '#8FE8C8' }),
 }));
@@ -50,5 +54,25 @@ describe('transfer accounts', () => {
 
   it('offers no swap until both are picked', () => {
     expect(swap(render('SBI', null).r)).toHaveLength(0);
+  });
+});
+
+describe('transfer account cards', () => {
+  const press = (r: ReactTestRenderer, label: string) =>
+    act(() => r.root.find((n) => n.props.accessibilityLabel === label && n.props.onPress).props.onPress());
+
+  it('opens the To sheet without the From account, and picks from it', () => {
+    const { r, onPickTo } = render('SBI', null);
+    press(r, 'To, pick an account. Change');
+    expect(r.root.findAll((n) => n.props.accessibilityLabel === 'SBI' && n.props.onPress)).toHaveLength(0);
+    press(r, 'HDFC');
+    expect(onPickTo).toHaveBeenCalledWith('HDFC');
+  });
+
+  it('changes From from its own sheet', () => {
+    const { r, onPickFrom } = render('SBI', 'HDFC');
+    press(r, 'From, SBI. Change');
+    press(r, 'HDFC');
+    expect(onPickFrom).toHaveBeenCalledWith('HDFC');
   });
 });
