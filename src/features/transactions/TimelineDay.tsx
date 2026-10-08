@@ -4,6 +4,7 @@ import ReanimatedAnimated from 'react-native-reanimated';
 import Feather from '@expo/vector-icons/Feather';
 import { Text } from '@/components/Text';
 import { CategoryIcon } from '@/components/CategoryIcon';
+import { GLASS } from '@/components/Glass';
 import { MovingRow } from '@/components/MovingRow';
 import { JustAddedGlow } from '@/components/JustAddedGlow';
 import { Category, Transaction } from '@/types';
@@ -201,7 +202,7 @@ function TimelineDayView({
             accessibilityLabel={`${categorySpoken(categoryName(tx.categoryId), parentNameOf(tx.categoryId, categoriesById))}${tx.note ? `, ${tx.note}` : ''}, ${money(tx.amountMinor, hidden(tx))}`}
           >
             <JustAddedGlow ids={[tx.id]} surface="activity" />
-            <CategoryIcon name={cat?.icon ?? 'tag'} color={cat?.color} size={14} square={30} />
+            <CategoryIcon name={cat?.icon ?? 'tag'} color={cat?.color} size={14} square={30} round />
             <View style={styles.mid}>
               <Text style={styles.name} numberOfLines={1}>
                 {categoryName(tx.categoryId)}
@@ -242,7 +243,7 @@ function TimelineDayView({
         >
           {/* A new entry folded into this line glows the line. */}
           <JustAddedGlow ids={line.items.map((t) => t.id)} surface="activity" />
-          <CategoryIcon name={cat?.icon ?? 'tag'} color={cat?.color} size={14} square={30} />
+          <CategoryIcon name={cat?.icon ?? 'tag'} color={cat?.color} size={14} square={30} round />
           <View style={styles.mid}>
             <View style={styles.stackMid}>
               <Text style={[styles.name, styles.stackName]} numberOfLines={1}>
@@ -379,17 +380,18 @@ const styles = StyleSheet.create({
   transferIcon: {
     width: 30,
     height: 30,
-    borderRadius: 30 * 0.32,
+    borderRadius: 15,
     alignItems: 'center',
     justifyContent: 'center',
   },
   transferName: { fontFamily: theme.font.bodyMedium, color: theme.colors.textSecondary },
   transferAmount: { color: theme.colors.textSecondary },
+  // Frosted, on the wallpaper like Home's cards.
   lane: {
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.radius.xl2,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
+    backgroundColor: GLASS.fill,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: GLASS.edge,
     // No shadow: at 4% it was invisible, and a shadow on a clipped, rounded row in a scrolling list costs a
     // clipping layer per day on Android.
     overflow: 'hidden',

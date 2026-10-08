@@ -14,11 +14,10 @@ import { GLASS } from '@/components/Glass';
 import type { McIconName } from '@/components/iconName';
 import type { CategoryBreakdownItem } from '@/db/reports';
 import { theme } from '@/constants/theme';
-import { formatMoney, formatMaskableMoney } from '@/lib/money';
+import { formatMoney } from '@/lib/money';
 import { haptics } from '@/lib/haptics';
 import { timing } from '@/lib/animation';
 import { useReduceMotion } from '@/lib/useReduceMotion';
-import { usePrivacy } from '@/theme/PrivacyContext';
 import { useAccent } from '@/theme/AccentContext';
 import { DIAL, dialPill, dialPoint, dialSpans } from './categoryDial';
 import { homeInk } from './homeInk';
@@ -42,7 +41,7 @@ export function WhereItWent({
   previousName,
   onOpenReports,
 }: {
-  /** The period's spending by category, biggest first. */
+  /** The period's spending by category, biggest first, with hidden (sensitive) groups already left out. */
   breakdown: CategoryBreakdownItem[];
   iconFor: (categoryId: string) => string | undefined;
   spentMinor: number;
@@ -53,7 +52,6 @@ export function WhereItWent({
   previousName: string;
   onOpenReports: () => void;
 }) {
-  const { hideAmounts } = usePrivacy();
   const { accent } = useAccent();
   const ink = homeInk(accent);
   const reduce = useReduceMotion();
@@ -90,7 +88,6 @@ export function WhereItWent({
   if (top.length === 0) return null;
   const current = top[index];
   const share = total > 0 ? Math.round((current.totalMinor / total) * 100) : 0;
-  const masked = hideAmounts && current.isSensitive;
   const diff = spentMinor - previousSpentMinor;
 
   return (
@@ -117,7 +114,7 @@ export function WhereItWent({
             {current.name}
           </Text>
           <Text style={styles.selSub} numberOfLines={1}>
-            {formatMaskableMoney(current.totalMinor, { masked })} · {share}% of spending
+            {formatMoney(current.totalMinor)} · {share}% of spending
           </Text>
         </View>
       </View>

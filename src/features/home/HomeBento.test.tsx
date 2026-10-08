@@ -38,6 +38,7 @@ function render(over: Partial<React.ComponentProps<typeof HomeBento>> = {}) {
         upcoming={{ items: [], next: null }}
         budgets={[]}
         accounts={[]}
+        currency="INR"
         onOpenUpcoming={jest.fn()}
         onOpenBudgets={jest.fn()}
         onOpenAccounts={jest.fn()}
@@ -91,6 +92,33 @@ describe('Home bento', () => {
     );
     expect(texts(render({ budgets: [budget('a', 40), budget('c', 85)] }))).toContain('1 close');
     expect(texts(render({ budgets: [budget('a', 40)] }))).toContain('All good');
+  });
+
+  it('counts money in hand in the default currency only, and shows no figure without any', () => {
+    const usd = { ...account('Wise', 'wallet', 5_000), currency: 'USD' } as Account;
+    const all = texts(render({ accounts: [account('SBI', 'bank', 1_000_000), usd] }));
+    expect(all).toContain('₹10,000');
+    expect(texts(render({ accounts: [account('Card', 'credit_card', -400_000)] }))).not.toContain(
+      'In bank, cash and wallets'
+    );
+  });
+
+  it('lets each account chip be reached on its own, and the heading open the list', () => {
+    const onOpenAccount = jest.fn();
+    const onOpenAccounts = jest.fn();
+    const r = render({ accounts: [account('SBI', 'bank', 100)], onOpenAccount, onOpenAccounts });
+    act(() =>
+      r.root
+        .find((n) => n.props.accessibilityLabel === 'SBI. Open summary' && n.props.onPress)
+        .props.onPress()
+    );
+    act(() =>
+      r.root
+        .find((n) => n.props.accessibilityLabel === 'Accounts, 1. See all' && n.props.onPress)
+        .props.onPress()
+    );
+    expect(onOpenAccount).toHaveBeenCalled();
+    expect(onOpenAccounts).toHaveBeenCalled();
   });
 
   it('adds up money in hand without savings or cards, and masks savings when amounts are hidden', () => {

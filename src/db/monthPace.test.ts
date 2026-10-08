@@ -102,3 +102,27 @@ it('counts a weekly bill every time it falls due in the rest of the month, not o
   // 4, 11, 18 and 25 Nov are all after the 2nd, plus the ₹299 rule on 30 Nov (the ₹111 rule's 1 Nov run is past).
   expect((await getMonthPaceInputs('2026-11-02')).dueRestOfMonthMinor).toBe(4 * 5000 + 29900);
 });
+
+describe('with savings & investment amounts hidden', () => {
+  it('leaves a hidden category’s repeating payment and spending out', async () => {
+    await run(
+      `INSERT INTO categories (id, name, kind, is_sensitive) VALUES ('inv', 'Investments', 'expense', 1)`
+    );
+    await run(`INSERT INTO categories (id, name, kind, parent_id) VALUES ('sip', 'SIP', 'expense', 'inv')`);
+    await run(
+      `INSERT INTO recurring_rules (id, type, account_id, category_id, amount_minor, frequency, next_run_date, active)
+       SELECT 's1', 'expense', a.id, 'sip', 1000000, 'monthly', '2026-12-20', 1 FROM accounts a WHERE a.name = 'Bank'`
+    );
+    await run(
+      `INSERT INTO transactions (id, type, account_id, category_id, amount_minor, date)
+       SELECT 'sx', 'expense', a.id, 'sip', 500000, '2026-12-02' FROM accounts a WHERE a.name = 'Bank'`
+    );
+    const shown = await getStillToPayThisMonth('2026-12-05');
+    const hidden = await getStillToPayThisMonth('2026-12-05', true);
+    expect(shown - hidden).toBe(1000000);
+    const paceShown = await getMonthPaceInputs('2026-12-05');
+    const paceHidden = await getMonthPaceInputs('2026-12-05', true);
+    expect(paceShown.everydaySpentMinor - paceHidden.everydaySpentMinor).toBe(500000);
+    expect(paceShown.dueRestOfMonthMinor - paceHidden.dueRestOfMonthMinor).toBe(1000000);
+  });
+});

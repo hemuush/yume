@@ -162,13 +162,14 @@ export function HomeHeader({
               label={alertCount > 0 ? `Needs you, ${alertCount}` : 'Needs you'}
               count={alertCount}
               size={40}
+              glass
             />
             {onPlayWrap && <WrapButton wraps={wraps} onPlay={onPlayWrap} />}
             <HeaderUserButton size={40} />
           </View>
         </ReanimatedAnimated.View>
 
-        {/* The greeting row and the shortcuts scroll away under the brand row together. */}
+        {/* The greeting scrolls away under the brand row. */}
         <ReanimatedAnimated.View
           style={[styles.fading, fadeStyle]}
           pointerEvents={collapsed ? 'none' : 'auto'}
