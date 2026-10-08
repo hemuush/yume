@@ -15,14 +15,14 @@ import { SkyHeader } from '@/features/home/SkyHeader';
 import { useCollapsingHeader } from '@/lib/useCollapsingHeader';
 import { theme } from '@/constants/theme';
 import { useTabScrollPad } from '@/lib/uiScale';
-import { toLocalIsoDate, addDaysToIsoDate } from '@/lib/date';
+import { toLocalIsoDate, addDaysToIsoDate, parseLocalIsoDate } from '@/lib/date';
 import { MAX_LIST_STAGGER_MS } from '@/lib/animation';
 import { useSwipeDrag } from '@/lib/useSwipeDrag';
 import { usePressScale } from '@/lib/usePressScale';
 import { styles } from '@/features/transactions/transactions.styles';
 import { ActivityFilterChips, SearchStatus } from '@/features/transactions/ActivityFilterChips';
-import { dayMonth, longWeekday } from '@/lib/dateLabels';
-import { MonthPickerModal } from '@/features/transactions/MonthPickerModal';
+import { dayMonth, longMonth, longWeekday } from '@/lib/dateLabels';
+import { PeriodPicker } from '@/components/PeriodPicker';
 import { FilterModal } from '@/features/transactions/FilterModal';
 import { TimelineDay } from '@/features/transactions/TimelineDay';
 import { TransactionDetailModal } from '@/features/transactions/TransactionDetailModal';
@@ -479,16 +479,35 @@ export default function TransactionsScreen() {
   return (
     <View style={styles.container}>
       <HomeWallpaper accent={accent} secondary={secondary} />
-      <MonthPickerModal
+      <PeriodPicker
         visible={monthPickerVisible}
-        anchor={anchor}
-        todayDate={todayDate}
         onClose={() => setMonthPickerVisible(false)}
-        onPick={(d) => {
+        today={todayDate}
+        selected={{ kind: 'month', year: anchor.getFullYear(), month: anchor.getMonth() }}
+        onPickMonth={(y, m) => {
+          // Lands on the month's last day (or today, for the month in progress), so the week view would
+          // open on that month's latest week.
+          const last = new Date(y, m + 1, 0);
           setDirection(0);
-          setAnchor(d);
+          setAnchor(last > todayDate ? todayDate : last);
           setViewScope('month');
           setMonthPickerVisible(false);
+        }}
+        onCurrent={() => {
+          setDirection(0);
+          setAnchor(todayDate);
+          setMonthPickerVisible(false);
+        }}
+        weeks={{
+          monthLabel: longMonth(toLocalIsoDate(anchor)),
+          ranges: week.ranges,
+          index: viewScope === 'week' ? week.index : null,
+          onPick: (start) => {
+            setDirection(0);
+            setAnchor(parseLocalIsoDate(start));
+            setViewScope('week');
+            setMonthPickerVisible(false);
+          },
         }}
       />
 

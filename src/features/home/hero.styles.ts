@@ -53,7 +53,27 @@ export const styles = StyleSheet.create({
   dueDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: theme.colors.slice.due },
   dueText: { flexShrink: 1, fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.dueInk },
 
-  pace: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: -4 },
+  stats: {
+    flexDirection: 'row',
+    paddingVertical: 10,
+    paddingHorizontal: 4,
+    borderRadius: 18,
+    backgroundColor: GLASS.fillStrong,
+    borderWidth: 1,
+    borderColor: GLASS.edge,
+  },
+  stat: { flex: 1, minWidth: 0, paddingHorizontal: 10, gap: 3 },
+  statDivider: { borderLeftWidth: StyleSheet.hairlineWidth, borderLeftColor: theme.colors.borderSoft },
+  statHead: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  statDot: { width: 8, height: 8, borderRadius: 4 },
+  statLabel: {
+    flexShrink: 1,
+    fontFamily: theme.font.bodyMedium,
+    fontSize: 11.5,
+    color: theme.colors.textSecondary,
+  },
+  statValue: { fontFamily: theme.font.monoBold, fontSize: 14, color: theme.colors.textPrimary },
+  pace: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   paceText: { flex: 1, fontFamily: theme.font.body, fontSize: 12.5, color: theme.colors.textMuted },
 
   working: {

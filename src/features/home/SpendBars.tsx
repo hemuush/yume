@@ -2,25 +2,44 @@ import { useEffect, useState } from 'react';
 import { View, Pressable, StyleSheet } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withDelay, withTiming } from 'react-native-reanimated';
 import { Text } from '@/components/Text';
-import { Glass, GLASS } from '@/components/Glass';
+import { Glass } from '@/components/Glass';
 import { theme } from '@/constants/theme';
 import { formatMoney } from '@/lib/money';
 import { haptics } from '@/lib/haptics';
 import { timing } from '@/lib/animation';
 import { useReduceMotion } from '@/lib/useReduceMotion';
 import { useAccent } from '@/theme/AccentContext';
+import { hexToRgba } from '@/lib/color';
 import { homeInk } from './homeInk';
 import { monthBars, weekBars, SpendBar } from './spendBars';
 
 /** The tallest bar's height; the amount over today's bar sits above it. */
 const MAX_H = 84;
-const MIN_H = 10;
+const MIN_H = 8;
+/** A day with nothing spent: a thin line, so it doesn't read as a small amount. */
+const EMPTY_H = 4;
 
 type Range = 'week' | 'month';
 
-function Bar({ bar, maxMinor, ink, delay }: { bar: SpendBar; maxMinor: number; ink: string; delay: number }) {
+function Bar({
+  bar,
+  maxMinor,
+  ink,
+  tint,
+  delay,
+}: {
+  bar: SpendBar;
+  maxMinor: number;
+  ink: string;
+  /** The other days' fill: a soft wash of the theme's ink, so the bars read on the white glass. */
+  tint: string;
+  delay: number;
+}) {
   const reduce = useReduceMotion();
-  const target = maxMinor > 0 ? Math.max(MIN_H, Math.round((bar.totalMinor / maxMinor) * MAX_H)) : MIN_H;
+  const target =
+    bar.totalMinor > 0 && maxMinor > 0
+      ? Math.max(MIN_H, Math.round((bar.totalMinor / maxMinor) * MAX_H))
+      : EMPTY_H;
   const h = useSharedValue(reduce ? target : MIN_H);
   useEffect(() => {
     h.value = reduce ? target : withDelay(delay, withTiming(target, timing(520)));
@@ -33,7 +52,14 @@ function Bar({ bar, maxMinor, ink, delay }: { bar: SpendBar; maxMinor: number; i
           {formatMoney(bar.totalMinor)}
         </Text>
       )}
-      <Animated.View style={[styles.bar, bar.current && { backgroundColor: ink, borderColor: ink }, style]} />
+      <Animated.View
+        style={[
+          styles.bar,
+          { backgroundColor: bar.current ? ink : tint },
+          bar.totalMinor === 0 && !bar.current && styles.barEmpty,
+          style,
+        ]}
+      />
       <Text style={[styles.label, bar.current && styles.labelOn]}>{bar.label}</Text>
     </View>
   );
@@ -52,6 +78,7 @@ export function SpendBars({
 }) {
   const { accent } = useAccent();
   const ink = homeInk(accent);
+  const tint = hexToRgba(ink, 0.22);
   const [range, setRange] = useState<Range>('week');
   const bars = range === 'week' ? weekBars(daily, today) : monthBars(daily, today);
   const maxMinor = Math.max(0, ...bars.map((b) => b.totalMinor));
@@ -92,7 +119,7 @@ export function SpendBars({
       </View>
       <View style={styles.bars}>
         {bars.map((b, i) => (
-          <Bar key={`${range}:${b.key}`} bar={b} maxMinor={maxMinor} ink={ink} delay={i * 35} />
+          <Bar key={`${range}:${b.key}`} bar={b} maxMinor={maxMinor} ink={ink} tint={tint} delay={i * 35} />
         ))}
       </View>
     </Glass>
@@ -117,14 +144,8 @@ const styles = StyleSheet.create({
   segTextOn: { color: theme.colors.textPrimary },
   bars: { flexDirection: 'row', alignItems: 'flex-end', gap: 8, height: MAX_H + 44, marginTop: 8 },
   col: { flex: 1, alignItems: 'center', justifyContent: 'flex-end', gap: 6, height: '100%' },
-  bar: {
-    width: '100%',
-    maxWidth: 34,
-    borderRadius: 12,
-    backgroundColor: GLASS.fillStrong,
-    borderWidth: 1,
-    borderColor: GLASS.edge,
-  },
+  bar: { width: '100%', maxWidth: 34, borderRadius: 10 },
+  barEmpty: { opacity: 0.6, borderRadius: 2 },
   value: { fontFamily: theme.font.bodyBold, fontSize: 11, color: theme.colors.textPrimary },
   label: { fontFamily: theme.font.bodyMedium, fontSize: 11, color: theme.colors.textMuted },
   labelOn: { color: theme.colors.textPrimary },
