@@ -89,6 +89,11 @@ export interface RestoreResult {
    * schema drift or a hand-edited file; surfaced so a partial restore isn't mistaken for a complete one.
    */
   skippedColumns: string[];
+  /**
+   * Tables this phone had data in that the backup has no section for (an older backup, from before that
+   * table existed): restoring empties them, so they're named rather than lost without a word.
+   */
+  emptiedTables: string[];
 }
 
 export async function restoreFromSnapshot(snapshot: BackupSnapshot): Promise<RestoreResult> {
@@ -117,6 +122,7 @@ export async function restoreFromSnapshotOn(db: AppDb, snapshot: BackupSnapshot)
     columnsByTable[table] = new Set(info.map((c) => c.name));
   }
   const skipped = new Set<string>();
+  const emptied: string[] = [];
 
   // Every table's rows must be an array of plain objects before anything is deleted, so a malformed file is
   // rejected with current data untouched rather than failing halfway through the inserts.
@@ -143,6 +149,11 @@ export async function restoreFromSnapshotOn(db: AppDb, snapshot: BackupSnapshot)
     await xdb.execAsync('PRAGMA foreign_keys = OFF;');
     try {
       await xdb.withTransactionAsync(async (tx) => {
+        for (const table of TABLES) {
+          if (snapshot.tables[table] !== undefined || table === 'settings') continue;
+          const had = await tx.getFirstAsync<{ n: number }>(`SELECT COUNT(*) AS n FROM ${table}`);
+          if ((had?.n ?? 0) > 0) emptied.push(table);
+        }
         for (const table of deleteOrder) {
           await tx.runAsync(`DELETE FROM ${table}`);
         }
@@ -214,7 +225,7 @@ export async function restoreFromSnapshotOn(db: AppDb, snapshot: BackupSnapshot)
   // cached-setting readers (formatMoney, accent) would show pre-restore values until the app is relaunched.
   resetSettingsCache();
 
-  return { skippedColumns: [...skipped].sort() };
+  return { skippedColumns: [...skipped].sort(), emptiedTables: emptied };
 }
 
 /** What a backup holds, in the terms the restore preview shows. */

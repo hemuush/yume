@@ -184,4 +184,6 @@ export const styles = StyleSheet.create({
     justifyContent: 'center',
     flexShrink: 0,
   },
+  // The "Settle ₹X" chip under the amount.
+  settleRow: { flexDirection: 'row', marginTop: -4, marginBottom: 12 },
 });

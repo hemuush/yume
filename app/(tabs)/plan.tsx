@@ -337,6 +337,7 @@ export default function PlanScreen() {
           installment={paying.installment}
           account={paying.account}
           categoryId={paying.categoryId}
+          linkedAccountMissing={paying.linkedAccountMissing}
           onClose={() => setPaying(null)}
           onPaid={reload}
         />

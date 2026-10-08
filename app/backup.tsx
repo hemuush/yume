@@ -245,7 +245,11 @@ export default function BackupScreen() {
     );
 
   /** Everything after a restore succeeds: re-sync, then say so — offering Undo when a safety copy is in place. */
-  const finishRestore = ({ skippedColumns, undoAvailable }: RestoreResult & { undoAvailable: boolean }) => {
+  const finishRestore = ({
+    skippedColumns,
+    emptiedTables = [],
+    undoAvailable,
+  }: RestoreResult & { undoAvailable: boolean }) => {
     // Everything scheduled outside the DB still describes pre-restore data: loan due reminders, the
     // reminder schedule, and home-screen widgets. Best-effort; the restore already succeeded.
     void resyncAfterRestore();
@@ -257,11 +261,18 @@ export default function BackupScreen() {
             ', '
           )}). Everything else was restored.`
         : '';
+    // An older backup has no section for something added since: what was here is gone, so say what.
+    const emptiedNote =
+      emptiedTables.length > 0
+        ? `\n\nThis backup is from an older version and had nothing for: ${emptiedTables
+            .map((t) => t.replace(/_/g, ' '))
+            .join(', ')}. Those are now empty.`
+        : '';
     showAlert(
       'Restore complete',
       undoAvailable
-        ? `Your data has been restored.${note}\n\nNot what you expected? You can put back your data from before this restore.`
-        : `Your data has been restored.${note}`,
+        ? `Your data has been restored.${note}${emptiedNote}\n\nNot what you expected? You can put back your data from before this restore.`
+        : `Your data has been restored.${note}${emptiedNote}`,
       undoAvailable
         ? [
             { text: 'Undo restore', onPress: confirmUndo },
