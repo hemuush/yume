@@ -408,7 +408,7 @@ const styles = StyleSheet.create({
   dialogDock: { paddingHorizontal: 16, paddingBottom: 14, backgroundColor: theme.colors.surface },
   inlineDock: { marginTop: 12 },
   framedDialogFooter: { paddingHorizontal: 16, paddingTop: 12, backgroundColor: theme.colors.surface },
-  footerRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  footerRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   roundBtn: {
     width: 46,
     height: 46,

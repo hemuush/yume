@@ -1,9 +1,10 @@
 import { StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
 import { SECTION_TITLE, SECTION_GAP } from '@/constants/textStyles';
+import { SCREEN } from '@/components/screenStyles';
 
 /** The even gap between Reports' blocks (heatmap card, day card, story cards, "Where it went"). */
-export const BLOCK_GAP = 22;
+export const BLOCK_GAP = SCREEN.sectionGap;
 
 // Shared by the Reports screen and its pieces (PeriodRow, ReportSummary, HeatmapCard, DayCard, StoryCards, CategoryBar, CategoryList, TrendChart, DayTotal).
 export const styles = StyleSheet.create({
@@ -68,7 +69,7 @@ export const styles = StyleSheet.create({
   // On the page colour, so the report scrolls under the tabs once they stick.
   tabs: {
     paddingHorizontal: 20,
-    paddingTop: 14,
+    paddingTop: 12,
     paddingBottom: 8,
     backgroundColor: theme.colors.background,
   },
@@ -79,7 +80,7 @@ export const styles = StyleSheet.create({
   // The pinned summary card: the period's total, how it compares, and three day figures.
   summary: {
     marginHorizontal: 20,
-    marginTop: 4,
+    marginTop: theme.layout.screenTopGap,
     paddingHorizontal: 18,
     paddingTop: 14,
     paddingBottom: 12,
@@ -270,7 +271,7 @@ export const styles = StyleSheet.create({
   rhythmChart: { height: 140, flexDirection: 'row', alignItems: 'flex-end', gap: 8, paddingTop: 16 },
   rhythmBar: { flex: 1, height: '100%', justifyContent: 'flex-end', alignItems: 'center', gap: 4 },
   rhythmValue: {
-    height: 15,
+    minHeight: 15,
     fontFamily: theme.font.mono,
     fontSize: 11,
     color: theme.colors.textMuted,

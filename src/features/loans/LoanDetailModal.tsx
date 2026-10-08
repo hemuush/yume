@@ -40,8 +40,6 @@ import Svg, { Path } from 'react-native-svg';
 import { loanPayoff, payoffMonth, balanceLinePath } from '@/lib/loanPayoff';
 import { errorMessage } from '@/lib/errorMessage';
 import { showAlert } from '@/components/AppDialog';
-import { shade } from '@/lib/color';
-import { useAccent } from '@/theme/AccentContext';
 
 /** The payoff line's drawing box (it stretches to the card's width). */
 const PAYOFF_LINE_WIDTH = 300;
@@ -63,7 +61,6 @@ export function LoanDetailModal({
   hue?: string;
 }) {
   const { show: showUndo } = useUndoToast();
-  const { accent } = useAccent();
   const [liveLoan, setLiveLoan] = useState<Loan>(loan);
   const [schedule, setSchedule] = useState<LoanPayment[]>([]);
   const [rateHistory, setRateHistory] = useState<LoanRateChange[]>([]);
@@ -339,7 +336,6 @@ export function LoanDetailModal({
               <SettingsRow
                 round
                 icon="bank"
-                iconBg={shade(accent, 95)}
                 label="EMI account"
                 sub={defaultAccount ? defaultAccount.name : 'Add an account first'}
                 onPress={() => setAccountModalVisible(true)}
@@ -348,7 +344,6 @@ export function LoanDetailModal({
                 <SettingsRow
                   round
                   icon="home-outline"
-                  iconBg={theme.colors.idGold}
                   label={liveLoan.assetLabel || 'What it paid for'}
                   sub={
                     liveLoan.assetValueMinor

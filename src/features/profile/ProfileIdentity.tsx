@@ -102,8 +102,8 @@ export function ProfileIdentity({
 }
 
 const local = StyleSheet.create({
-  card: { marginHorizontal: SCREEN.gutter, marginTop: 6 },
-  body: { paddingHorizontal: 16, paddingTop: 18, paddingBottom: 14, gap: 12 },
+  card: { marginHorizontal: SCREEN.gutter, marginTop: theme.layout.screenTopGap },
+  body: { paddingHorizontal: 16, paddingTop: 20, paddingBottom: 16, gap: 12 },
   chip: {
     flexDirection: 'row',
     alignItems: 'center',

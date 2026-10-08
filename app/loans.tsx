@@ -36,7 +36,7 @@ import { AddLoanModal } from '@/features/loans/AddLoanModal';
 const listTitle = {
   ...SECTION_TITLE,
   marginHorizontal: 20,
-  marginTop: SECTION_GAP.top - 12,
+  marginTop: SECTION_GAP.top,
   marginBottom: SECTION_GAP.bottom,
 };
 

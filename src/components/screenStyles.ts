@@ -7,9 +7,14 @@ import { SOFT_LIFT } from './SoftCard';
  * its own padding, icon size or type scale (it had drifted: 30/36/38px icons, 11.5-13.5pt row text).
  */
 export const SCREEN = {
-  /** Space above each section heading. */
-  sectionGap: 26,
+  /** Space above each section heading (and between a hero card and the block under it). */
+  sectionGap: 24,
   gutter: 20,
+  /** Padding inside a standalone card; a hero card with a top strip takes `heroPadTop`. */
+  cardPad: 16,
+  heroPadTop: 20,
+  /** Between cards stacked in a list. */
+  cardStack: 12,
   rowMinHeight: 64,
   iconTile: 40,
   iconGlyph: 17,
@@ -32,7 +37,7 @@ export const screenStyles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    paddingVertical: 11,
+    paddingVertical: 12,
     paddingHorizontal: 16,
     minHeight: SCREEN.rowMinHeight,
   },
@@ -47,7 +52,7 @@ export const screenStyles = StyleSheet.create({
   },
   mid: { flex: 1, minWidth: 0 },
   title: { fontFamily: theme.font.bodyBold, fontSize: 15, color: theme.colors.textPrimary },
-  sub: { fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textMuted, marginTop: 2 },
+  sub: { fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textMuted, marginTop: 4 },
   subUrgent: { fontFamily: theme.font.bodyBold, color: theme.colors.expenseText },
   subSoon: { fontFamily: theme.font.bodyBold, color: theme.colors.warnInk },
   amount: { fontFamily: theme.font.monoBold, fontSize: 15, color: theme.colors.textPrimary },

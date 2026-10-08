@@ -27,6 +27,7 @@ import { roundedMinor } from '@/lib/round';
 import { savingsRatePct } from '@/lib/savingsRate';
 import { Account, Category, Transaction, Loan, RecurringRule, SavingsGoal } from '@/types';
 import { theme } from '@/constants/theme';
+import { useTabScrollPad } from '@/lib/uiScale';
 import { useAccent } from '@/theme/AccentContext';
 import { usePrivacy } from '@/theme/PrivacyContext';
 import { EmptyState } from '@/components/EmptyState';
@@ -76,6 +77,7 @@ const RECENT_ROWS = 4;
 
 export default function DashboardScreen() {
   const insets = useSafeAreaInsets();
+  const tabScrollPad = useTabScrollPad();
   const { hideAmounts } = usePrivacy();
   const { accent, secondary } = useAccent();
   const [accounts, setAccounts] = useState<Account[]>([]);
@@ -453,7 +455,7 @@ export default function DashboardScreen() {
         scrollEventThrottle={16}
         contentContainerStyle={{
           paddingTop: headerHeight,
-          paddingBottom: theme.layout.tabScreenScrollPad + insets.bottom,
+          paddingBottom: tabScrollPad + insets.bottom,
         }}
         refreshControl={
           <RefreshControl
@@ -672,11 +674,11 @@ export default function DashboardScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
   scroll: { flex: 1 },
-  heroGap: { marginTop: 12 },
+  heroGap: { marginTop: 4 },
   errorBanner: {
     marginHorizontal: 20,
-    marginTop: 18,
-    padding: 14,
+    marginTop: 16,
+    padding: 16,
     borderRadius: theme.radius.md,
     backgroundColor: theme.colors.expenseTint,
     borderWidth: theme.border.thin,
@@ -687,14 +689,14 @@ const styles = StyleSheet.create({
     fontFamily: theme.font.body,
     fontSize: 11.5,
     color: theme.colors.textSecondary,
-    marginTop: 3,
+    marginTop: 4,
     lineHeight: 16,
   },
   emptyCta: { marginHorizontal: 40, marginTop: -8 },
   dayHead: {
     paddingHorizontal: 16,
-    paddingTop: 12,
-    paddingBottom: 2,
+    paddingTop: 16,
+    paddingBottom: 4,
     fontFamily: theme.font.bodyBold,
     fontSize: 12,
     color: theme.colors.textMuted,
