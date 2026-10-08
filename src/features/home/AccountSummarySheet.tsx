@@ -579,5 +579,5 @@ const styles = StyleSheet.create({
     marginTop: 10,
     paddingVertical: 8,
   },
-  seeAllText: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textSecondary },
+  seeAllText: { fontFamily: theme.font.bodyMedium, fontSize: 14, color: theme.colors.link },
 });

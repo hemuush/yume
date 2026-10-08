@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react';
 import { View } from 'react-native';
 import { Text } from '@/components/Text';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { getCategoryMonthlyAverages, CategoryBreakdownItem } from '@/db/reports';
 import { listSavingsGoals } from '@/db/savingsGoals';
 import { getAccountMonthlyGrowth } from '@/db/ledger';
@@ -197,9 +197,15 @@ export default function WhatIfScreen() {
               <StripCard tone={theme.colors.slice.saved} lifted={false} style={styles.goalCard}>
                 <Text style={styles.extraLabel}>No open savings goals</Text>
                 <Text style={[styles.avgLabel, { marginTop: 6 }]}>
-                  Set a savings goal from the Savings goals section to see how much sooner this change could
-                  get you there.
+                  Set a savings goal to see how much sooner this change could get you there.
                 </Text>
+                <PrimaryButton
+                  title="Set a savings goal"
+                  variant="secondary"
+                  compact
+                  onPress={() => router.push('/savings-goals')}
+                  style={{ marginTop: 12, alignSelf: 'flex-start' }}
+                />
               </StripCard>
             ) : cut ? (
               <StripCard tone={theme.colors.slice.saved} lifted={false} style={styles.goalCard}>
@@ -283,9 +289,7 @@ export default function WhatIfScreen() {
         )}
       </ReanimatedAnimated.ScrollView>
       <SkyHeader collapse={collapse} summary={undefined} title="What if…?" showBack hideUser>
-        <Text style={styles.intro}>
-          Try a change, see where it lands. Nothing here is saved until you act on it.
-        </Text>
+        <Text style={styles.intro}>Try a change, see where it lands. Nothing here changes your money.</Text>
       </SkyHeader>
     </View>
   );

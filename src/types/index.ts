@@ -173,6 +173,8 @@ export type RecurrenceFrequency = 'daily' | 'weekly' | 'monthly' | 'yearly';
 
 export interface RecurringRule {
   id: string;
+  /** The rule's real day of the month (a 31st rule clamped to the 30th still runs on the 31st when it can). */
+  anchorDay?: number | null;
   type: TransactionType;
   accountId: string;
   toAccountId: string | null;

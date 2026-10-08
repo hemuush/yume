@@ -32,6 +32,8 @@ function friendCategory(categories: Category[], sign: 1 | -1): Category | undefi
   const [kind, fallback] =
     sign === 1 ? (['expense', 'Miscellaneous'] as const) : (['income', 'Other Income'] as const);
   return (
+    // The built-in one first: a user's own category with the same name must not capture friend entries.
+    categories.find((c) => c.kind === kind && c.isSystem && c.name === 'Friends & Family') ??
     categories.find((c) => c.kind === kind && c.name === 'Friends & Family') ??
     categories.find((c) => c.kind === kind && c.name === fallback) ??
     categories.find((c) => c.kind === kind)

@@ -82,7 +82,7 @@ const styles = StyleSheet.create({
   card: {
     marginBottom: 4,
     paddingTop: 18,
-    paddingBottom: 14,
+    paddingBottom: 16,
     paddingHorizontal: 16,
   },
   kickerRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },

@@ -65,7 +65,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
     marginBottom: 10,
     paddingTop: 18,
-    paddingBottom: 14,
+    paddingBottom: 16,
     paddingHorizontal: 16,
   },
   kickerRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },

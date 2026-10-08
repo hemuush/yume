@@ -40,7 +40,7 @@ export const styles = StyleSheet.create({
     borderRadius: 999,
     backgroundColor: theme.colors.ink,
   },
-  continueBtnText: { fontSize: 11.5, fontFamily: theme.font.bodyBold, color: theme.colors.surface },
+  continueBtnText: { fontSize: 13, fontFamily: theme.font.roundedBold, color: theme.colors.surface },
 
   listCard: {
     marginHorizontal: 20,

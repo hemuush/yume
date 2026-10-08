@@ -85,6 +85,7 @@ import { errorMessage } from '@/lib/errorMessage';
 import { growHref } from '@/lib/cardGrow';
 import { withPressed } from '@/lib/pressed';
 import { EmptyState } from '@/components/EmptyState';
+import { useTabScrollToTop } from '@/lib/useTabScrollToTop';
 
 type ReportTab = 'days' | 'cats' | 'trends';
 const TAB_OPTIONS: { value: ReportTab; label: string }[] = [
@@ -189,6 +190,7 @@ export default function ReportsScreen() {
   // The header shrinks as the report scrolls; the summary and tabs scroll with it.
   const { collapse, headerHeight, collapsedHeight, scrollHandler, scrollRef, resetScroll } =
     useCollapsingHeader();
+  useTabScrollToTop(scrollRef);
 
   // Only the most recent load may write state — stepping periods quickly
   // starts overlapping loads, and an earlier one can finish last.

@@ -102,8 +102,14 @@ describe('is_system enforcement', () => {
     await deleteCategory(child.id); // clean up (not system, no history)
   });
 
+  it('a second top-level category with a built-in name is refused', async () => {
+    await expect(createCategory({ name: 'loan emi', kind: 'expense' })).rejects.toThrow('already a category');
+  });
+
   it('a user-created category named like a built-in is NOT system and can be deleted', async () => {
-    const impostor = await createCategory({ name: 'Loan EMI', kind: 'expense' });
+    // As a subcategory: a second top-level one with the built-in name is refused (above).
+    const parent = await createCategory({ name: 'Car', kind: 'expense' });
+    const impostor = await createCategory({ name: 'Loan EMI', kind: 'expense', parentId: parent.id });
     expect(impostor.isSystem).toBe(false);
     // Delete returns a snapshot (for Undo); this guards that it resolves to an array. `Array.isArray`, not
     // `toBeInstanceOf(Array)`: with Jest + better-sqlite3 the array may come from another realm (flaky).
