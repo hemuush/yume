@@ -66,8 +66,8 @@ export const styles = StyleSheet.create({
   // figure and its change chip, the chart, a one-line legend, and Money in | Net as a strip.
   sumCard: {
     marginHorizontal: 20,
-    marginTop: 6,
-    padding: 18,
+    marginTop: 8,
+    padding: 16,
     paddingBottom: 16,
     backgroundColor: theme.colors.surface,
     borderRadius: theme.radius.xl2,
@@ -209,7 +209,7 @@ export const styles = StyleSheet.create({
   typeText: { fontFamily: theme.font.bodyBold, fontSize: 12.5, color: theme.colors.textSecondary },
   typeTextOn: { color: theme.colors.surface },
   chipsRow: { gap: 8, paddingHorizontal: 20, paddingTop: 10 },
-  filterGap: { height: 22 },
+  filterGap: { height: 16 },
   chip: {
     flexDirection: 'row',
     alignItems: 'center',

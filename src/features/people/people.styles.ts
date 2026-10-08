@@ -44,8 +44,8 @@ export const styles = StyleSheet.create({
   tileCell: { flex: 1, minWidth: 0 },
   // A white tile (StripCard) whose top strip says which way the money goes: mint they owe you, coral you owe.
   personTile: {
-    padding: 14,
-    paddingTop: 16,
+    padding: 16,
+    paddingTop: 20,
     borderRadius: theme.radius.xl2,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,

@@ -370,8 +370,7 @@ const styles = StyleSheet.create({
     alignItems: 'baseline',
     justifyContent: 'space-between',
     gap: 8,
-    paddingHorizontal: 4,
-    marginBottom: 8,
+    marginBottom: 12,
   },
   title: { flex: 1, fontFamily: theme.font.roundedBold, fontSize: 16, color: theme.colors.textPrimary },
   date: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
@@ -399,8 +398,8 @@ const styles = StyleSheet.create({
   line: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    paddingHorizontal: 14,
+    gap: 12,
+    paddingHorizontal: 16,
     paddingVertical: 8,
     // Every line has a name and a second line, so every line is this tall.
     minHeight: 52,
@@ -408,7 +407,7 @@ const styles = StyleSheet.create({
   mid: { flex: 1, minWidth: 0 },
   stackMid: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   stackChip: {
-    height: 20,
+    minHeight: 20,
     paddingHorizontal: 6,
     borderRadius: 10,
     justifyContent: 'center',
@@ -416,7 +415,7 @@ const styles = StyleSheet.create({
   },
   name: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textPrimary },
   stackName: { flexShrink: 1 },
-  sub: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textMuted, marginTop: 1 },
+  sub: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textMuted, marginTop: 2 },
   refund: { fontFamily: theme.font.bodyBold, color: theme.colors.incomeText },
   amount: { fontFamily: theme.font.monoBold, fontSize: 12.5, color: theme.colors.textPrimary },
   income: { color: theme.colors.incomeText },

@@ -10,7 +10,7 @@ export const styles = StyleSheet.create({
     marginTop: SECTION_GAP.top,
     marginBottom: SECTION_GAP.bottom,
   },
-  statusCard: { marginHorizontal: 20, marginTop: 6, padding: 16, paddingTop: 18 },
+  statusCard: { marginHorizontal: 20, marginTop: theme.layout.screenTopGap, padding: 16, paddingTop: 20 },
   statusHead: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   statusTitle: { fontFamily: theme.font.roundedBold, fontSize: 17, color: theme.colors.textPrimary },
   errorLine: { color: theme.colors.expenseText },

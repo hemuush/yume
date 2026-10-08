@@ -50,6 +50,7 @@ import { useFreshness } from '@/lib/useFreshness';
 import { SegmentedControl } from '@/components/SegmentedControl';
 import { parseLocalIsoDate, toLocalIsoDate, isIsoDate } from '@/lib/date';
 import { theme } from '@/constants/theme';
+import { useTabScrollPad } from '@/lib/uiScale';
 import { ReportsSkeleton } from '@/features/reports/ReportsSkeleton';
 import { ReportsHeader } from '@/features/reports/ReportsHeader';
 import { ReportSummary } from '@/features/reports/ReportSummary';
@@ -106,6 +107,7 @@ const CATEGORIES_COLLAPSED = 5;
 export default function ReportsScreen() {
   const { hideAmounts } = usePrivacy();
   const insets = useSafeAreaInsets();
+  const tabScrollPad = useTabScrollPad();
   const [cursor, setCursor] = useState<ReportWindow>(CURRENT_PERIOD);
   // Which way the last arrow or swipe moved, so the headline slides in from that side.
   const [slideDirection, setSlideDirection] = useState<-1 | 0 | 1>(0);
@@ -562,7 +564,7 @@ export default function ReportsScreen() {
         contentContainerStyle={{
           paddingTop: headerHeight,
           paddingHorizontal: 20,
-          paddingBottom: theme.layout.tabScreenScrollPad + insets.bottom,
+          paddingBottom: tabScrollPad + insets.bottom,
         }}
       >
         {hasData && (

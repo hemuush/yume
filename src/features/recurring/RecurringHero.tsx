@@ -1,6 +1,7 @@
 import { View, StyleSheet } from 'react-native';
 import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
+import { SCREEN } from '@/components/screenStyles';
 import { EYEBROW } from '@/constants/textStyles';
 import { StripCard, KickerDot } from '@/components/StripCard';
 import { formatMoney } from '@/lib/money';
@@ -80,9 +81,8 @@ export function RecurringHero({
 
 const styles = StyleSheet.create({
   card: {
-    marginBottom: 4,
-    paddingTop: 18,
-    paddingBottom: 16,
+    paddingTop: SCREEN.heroPadTop,
+    paddingBottom: SCREEN.cardPad,
     paddingHorizontal: 16,
   },
   kickerRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },

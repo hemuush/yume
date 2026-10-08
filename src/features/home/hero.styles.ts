@@ -2,7 +2,7 @@ import { StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
 
 export const styles = StyleSheet.create({
-  card: { marginHorizontal: 20, marginTop: 4, overflow: 'hidden' },
+  card: { marginHorizontal: 20, marginTop: 0, overflow: 'hidden' },
   inner: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 16 },
   bar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
   title: { fontFamily: theme.font.roundedBold, fontSize: 16, color: theme.colors.textPrimary },

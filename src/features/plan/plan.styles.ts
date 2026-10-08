@@ -9,7 +9,7 @@ export const STRIP_BAR_AREA = 56;
 
 export const styles = StyleSheet.create({
   group: { gap: TILE_GAP, marginHorizontal: SCREEN.gutter },
-  groupFirst: { marginTop: 6 },
+  groupFirst: { marginTop: theme.layout.screenTopGap },
   tileRow: { flexDirection: 'row', gap: TILE_GAP },
   // Every tile is the same calm white card; what a tile is about shows in its icon badge, and good or bad
   // news in the colour of its figure, not in a tinted fill.

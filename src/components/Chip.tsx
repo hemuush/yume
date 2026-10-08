@@ -49,8 +49,8 @@ export function Chip({ label, active, onPress, activeBorderColor }: Props) {
 
 const styles = StyleSheet.create({
   chip: {
-    paddingHorizontal: 13,
-    paddingVertical: 7,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
     borderRadius: theme.radius.pill,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,

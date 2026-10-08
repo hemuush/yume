@@ -389,7 +389,7 @@ function ActionChip({
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
-  hero: { marginHorizontal: 20, marginTop: 6, padding: 16, paddingTop: 18 },
+  hero: { marginHorizontal: 20, marginTop: theme.layout.screenTopGap, padding: 16, paddingTop: 20 },
   heroTop: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
   heroText: { flex: 1, minWidth: 0 },
   heroLabel: { ...EYEBROW },

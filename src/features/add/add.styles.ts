@@ -176,7 +176,7 @@ export const styles = StyleSheet.create({
   // One continuous "receipt" card: thick dashed top edge fakes a torn edge (RN has no clip-path); rows share
   // it with dashed dividers instead of per-row borders.
   staged: {
-    marginTop: 18,
+    marginTop: 0,
     backgroundColor: theme.colors.surface,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
