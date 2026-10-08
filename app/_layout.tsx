@@ -1,4 +1,5 @@
 import { Stack, router, useRootNavigationState } from 'expo-router';
+import { preventScreenCaptureAsync, allowScreenCaptureAsync } from 'expo-screen-capture';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
 import {
@@ -175,8 +176,6 @@ export default function RootLayout() {
           <AccentProvider>
             <PrivacyProvider>
               <AppGate needsOnboarding={needsOnboarding} initialLocked={initialLocked} />
-              {/* Yume's own confirm/notice dialog, shown by showAlert() anywhere in the app. */}
-              <AppDialogHost />
             </PrivacyProvider>
           </AccentProvider>
         </AppLockProvider>
@@ -203,13 +202,20 @@ function AppGate({ needsOnboarding, initialLocked }: { needsOnboarding: boolean;
     const timer = setTimeout(() => {
       setPendingRoute(null);
       try {
-        router.push(pendingRoute);
+        // navigate, not push: already on that screen (or a tab) it goes there instead of stacking a copy.
+        router.navigate(pendingRoute);
       } catch (e) {
-        console.warn("Could not open the notification's screen:", e);
+        console.warn("Couldn't open the notification's screen:", e);
       }
     }, 0);
     return () => clearTimeout(timer);
   }, [pendingRoute, isLocked, showOnboarding, navReady]);
+
+  // With the lock on, Android hides Yume from screenshots and blanks it in the recent-apps switcher.
+  useEffect(() => {
+    const change = lockEnabled ? preventScreenCaptureAsync('app-lock') : allowScreenCaptureAsync('app-lock');
+    change.catch(() => {});
+  }, [lockEnabled]);
 
   // Re-arms the lock when the app returns after being away (shouldRelock: real backgrounding, ≥1 minute).
   // Reads `lockEnabled` from shared context so the Settings toggle applies next cycle.
@@ -246,10 +252,11 @@ function AppGate({ needsOnboarding, initialLocked }: { needsOnboarding: boolean;
 
   if (showOnboarding) {
     return (
-      <>
+      <ErrorBoundary>
         <StatusBar style="dark" />
         <Onboarding onDone={() => setShowOnboarding(false)} />
-      </>
+        <AppDialogHost />
+      </ErrorBoundary>
     );
   }
 
@@ -257,16 +264,19 @@ function AppGate({ needsOnboarding, initialLocked }: { needsOnboarding: boolean;
     // Replaces the whole tree rather than overlaying it — the real screens
     // stay unmounted while locked, not just visually covered.
     return (
-      <>
+      <ErrorBoundary>
         <StatusBar style="dark" />
         <LockScreen onUnlocked={() => setIsLocked(false)} />
-      </>
+      </ErrorBoundary>
     );
   }
 
   return (
     <ErrorBoundary>
       <StatusBar style="dark" />
+      {/* Yume's own confirm/notice dialog, shown by showAlert() anywhere in the app. Never over the lock
+          screen: a dialog is its own window, so it would sit on top of it with working buttons. */}
+      <AppDialogHost />
       <UndoToastProvider>
         <MilestoneNoteProvider>
           {/* freezeOnBlur is left OFF: with it on (the navigator default), a

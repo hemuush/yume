@@ -85,6 +85,13 @@ export function LockScreen({ onUnlocked }: { onUnlocked: () => void }) {
         setFailed(true);
         setDeviceUnsecured(!secured);
       }
+    } catch {
+      // The prompt itself failed. If the phone can't say it's secured either, offer the way out, so a broken
+      // prompt can never trap the user.
+      if (!mounted.current) return;
+      setFailed(true);
+      const secured = await isDeviceSecured().catch(() => false);
+      if (mounted.current) setDeviceUnsecured(!secured);
     } finally {
       if (mounted.current) setBusy(false);
     }

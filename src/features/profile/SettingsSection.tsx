@@ -18,7 +18,7 @@ import {
 import { getTidyUpReport, tidyUpCount } from '@/db/tidyUp';
 import { countDeletedEntries } from '@/db/recentlyDeleted';
 import { toMinor, toMajor, getCurrencySymbol, formatMoney } from '@/lib/money';
-import { isDeviceSecured } from '@/lib/appLock';
+import { authenticate, isDeviceSecured } from '@/lib/appLock';
 import { useAppLock } from '@/lib/AppLockContext';
 import { usePrivacy } from '@/theme/PrivacyContext';
 import ReanimatedAnimated from 'react-native-reanimated';
@@ -201,6 +201,13 @@ export function SettingsSection() {
           'No screen lock found',
           "Set up a fingerprint, face unlock, or PIN/pattern in your phone's own settings first — Yume locks using whatever your phone is already secured with."
         );
+        return;
+      }
+    } else {
+      // Turning the lock off takes the phone's own unlock, so whoever holds an open phone can't just switch it off.
+      try {
+        if (!(await authenticate())) return;
+      } catch {
         return;
       }
     }

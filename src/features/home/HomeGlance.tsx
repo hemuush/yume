@@ -29,7 +29,7 @@ export interface UpcomingItem {
   amountMinor: number;
   sign: '+' | '-' | '';
   sortDate: string;
-  route: '/loans' | '/recurring' | PayCardRoute;
+  route: '/loans' | `/loans?pay=${string}` | '/recurring' | PayCardRoute;
   urgent: boolean;
   /** An EMI or card bill to pay: its row ends in a "Pay" pill when pinned. */
   payable: boolean;
@@ -86,7 +86,8 @@ export function buildUpcomingItems(input: {
       amountMinor: loan.nextEmiMinor,
       sign: '-',
       sortDate: loan.nextDueDate,
-      route: '/loans',
+      // Straight to this loan's pay sheet: "Pay" shouldn't land on the list.
+      route: `/loans?pay=${loan.id}`,
       urgent: isDueUrgent(loan.nextDueDate),
       payable: true,
       pinned: daysUntilIsoDate(loan.nextDueDate) <= DUE_SOON_DAYS,
