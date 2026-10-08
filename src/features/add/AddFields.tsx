@@ -4,16 +4,23 @@ import { theme } from '@/constants/theme';
 import { Text } from '@/components/Text';
 import { PersonWithBalance } from '@/db/people';
 import { Account } from '@/types';
-import { CategoryIcon } from '@/components/CategoryIcon';
 import { OdometerAmount } from '@/components/OdometerAmount';
 import { SegmentedControl } from '@/components/SegmentedControl';
 import { useAccent } from '@/theme/AccentContext';
-import { accountBadgeColor, accountIcon } from '@/lib/account';
 import { haptics } from '@/lib/haptics';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { styles } from './add.styles';
 import { withPressed } from '@/lib/pressed';
 import { shade } from '@/lib/color';
+import { formatMoney } from '@/lib/money';
+
+/** A person's avatar colour: the same one every time, picked from their id. */
+const AVATAR_COLORS = ['#E2846A', '#7A9BE8', '#5FB58A', '#B08AD8', '#D9A441', '#5AAFC0', '#D97BA6'];
+function personColor(id: string): string {
+  let h = 0;
+  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) | 0;
+  return AVATAR_COLORS[Math.abs(h) % AVATAR_COLORS.length];
+}
 
 export function Chip({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
   const { secondary } = useAccent();
@@ -31,42 +38,6 @@ export function Chip({ label, active, onPress }: { label: string; active: boolea
       accessibilityState={{ selected: active }}
     >
       <Text style={styles.chipText}>{label}</Text>
-    </Pressable>
-  );
-}
-
-/**
- * An account drawn like CategoryPicker's 'medal' tiles (tinted icon square, name, mint ring when selected).
- * Reuses CategoryIcon (needs only icon + tint), so both pickers on this screen read as one system.
- */
-export function AccountTile({
-  account,
-  active,
-  onPress,
-}: {
-  account: Account;
-  active: boolean;
-  onPress: () => void;
-}) {
-  const { accent } = useAccent();
-  const badgeColor = accountBadgeColor(account.type, accent);
-  return (
-    <Pressable
-      onPress={() => {
-        haptics.tap();
-        onPress();
-      }}
-      style={withPressed(styles.accountTile)}
-      accessibilityRole="button"
-      accessibilityState={{ selected: active }}
-      accessibilityLabel={account.name}
-    >
-      <View style={[styles.accountRing, active && styles.accountRingActive]}>
-        <CategoryIcon name={accountIcon(account.type)} color={badgeColor} size={20} square={48} round />
-      </View>
-      <Text style={styles.accountName} numberOfLines={1}>
-        {account.name}
-      </Text>
     </Pressable>
   );
 }
@@ -198,16 +169,60 @@ export function FriendFields({
       </View>
     );
   }
+  const picked = people.find((p) => p.id === personId);
   return (
     <>
       <View style={styles.section}>
         <Text style={styles.label}>Person</Text>
-        <View style={styles.chipRow}>
-          {people.map((p) => (
-            <Chip key={p.id} label={p.name} active={personId === p.id} onPress={() => setPersonId(p.id)} />
-          ))}
-          <Chip label="+ Person" active={false} onPress={onAddPerson} />
-        </View>
+        {/* People as round avatars, in a row that slides; their balance says itself under the row. */}
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.people}>
+          {people.map((p) => {
+            const on = personId === p.id;
+            return (
+              <Pressable
+                key={p.id}
+                onPress={() => {
+                  haptics.tap();
+                  setPersonId(p.id);
+                }}
+                style={withPressed(styles.person)}
+                accessibilityRole="button"
+                accessibilityState={{ selected: on }}
+              >
+                <View style={[styles.avatarRing, on && styles.avatarRingOn]}>
+                  <View style={[styles.avatar, { backgroundColor: personColor(p.id) }]}>
+                    <Text style={styles.avatarText}>{p.name.trim().charAt(0).toUpperCase()}</Text>
+                  </View>
+                </View>
+                <Text style={[styles.personName, on && styles.personNameOn]} numberOfLines={1}>
+                  {p.name}
+                </Text>
+              </Pressable>
+            );
+          })}
+          <Pressable
+            onPress={onAddPerson}
+            style={withPressed(styles.person)}
+            accessibilityRole="button"
+            accessibilityLabel="Add a person"
+          >
+            <View style={styles.avatarRing}>
+              <View style={[styles.avatar, styles.avatarAdd]}>
+                <Feather name="plus" size={20} color={theme.colors.textMuted} />
+              </View>
+            </View>
+            <Text style={styles.personName}>+ Person</Text>
+          </Pressable>
+        </ScrollView>
+        {picked && (
+          <Text style={styles.hint}>
+            {picked.balanceMinor > 0
+              ? `${picked.name} owes you ${formatMoney(picked.balanceMinor)}`
+              : picked.balanceMinor < 0
+                ? `You owe ${picked.name} ${formatMoney(-picked.balanceMinor)}`
+                : `You and ${picked.name} are settled`}
+          </Text>
+        )}
       </View>
       <View style={styles.section}>
         <Text style={styles.label}>What happened?</Text>

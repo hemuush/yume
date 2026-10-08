@@ -1,3 +1,4 @@
+import Feather from '@expo/vector-icons/Feather';
 import { useEffect } from 'react';
 import { Animated, Pressable, StyleSheet, PressableProps, StyleProp, ViewStyle } from 'react-native';
 import { MAX_FONT_SCALE } from '@/components/Text';
@@ -25,6 +26,8 @@ interface Props extends Omit<PressableProps, 'style'> {
   doneLabel?: string;
   /** A smaller pill for a button that sits inside a row (a Restore beside a backup). */
   compact?: boolean;
+  /** A small icon before the title (Add's ✓ on Save). Hidden while `done` shows its own tick. */
+  icon?: React.ComponentProps<typeof Feather>['name'];
 }
 
 /**
@@ -39,6 +42,7 @@ export function PrimaryButton({
   done,
   doneLabel = 'Done',
   compact,
+  icon,
   ...rest
 }: Props) {
   const { animatedStyle, onPressIn, onPressOut } = usePressScale();
@@ -62,6 +66,7 @@ export function PrimaryButton({
         // Padding follows the font size at half rate; the default (1) leaves the designed 12 / 7.
         { paddingVertical: Math.round((compact ? 7 : 12) * uiScale) },
         variantStyle,
+        icon && !done && styles.withIcon,
         disabled && styles.disabled,
         animatedStyle,
         style,
@@ -76,6 +81,13 @@ export function PrimaryButton({
           first. There's no matching `exiting`: the old text disappears the
           instant the new one mounts, which reads fine since it's masked by
           the concurrent press-scale settle. */}
+      {icon && !done && (
+        <Feather
+          name={icon}
+          size={compact ? 14 : 17}
+          color={secondary ? theme.colors.textPrimary : theme.colors.white}
+        />
+      )}
       <ReanimatedAnimated.Text
         maxFontSizeMultiplier={MAX_FONT_SCALE}
         key={done ? 'done' : 'label'}
@@ -97,6 +109,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   baseCompact: { paddingVertical: 7, paddingHorizontal: 14 },
+  withIcon: { flexDirection: 'row', gap: 8 },
   textCompact: { fontFamily: theme.font.roundedBold, fontSize: 13 },
   primary: { backgroundColor: theme.colors.ink },
   danger: { backgroundColor: theme.colors.expense },

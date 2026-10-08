@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { View, Pressable, Animated, Easing, StyleSheet, LayoutChangeEvent } from 'react-native';
 import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
+import { GLASS } from '@/components/Glass';
 import { haptics } from '@/lib/haptics';
 import { usePressScale } from '@/lib/usePressScale';
 import { useReduceMotion } from '@/lib/useReduceMotion';
@@ -151,7 +152,8 @@ const styles = StyleSheet.create({
   },
   segmentText: { fontSize: 14, fontFamily: theme.font.roundedMedium, color: theme.colors.textSecondary },
   segmentTextActive: { color: theme.colors.textPrimary, fontFamily: theme.font.roundedBold },
-  wrapBand: { backgroundColor: `${theme.colors.surface}B3`, marginBottom: 0 },
+  // On a wallpaper (Add's header): a frosted track and an ink pill.
+  wrapBand: { backgroundColor: GLASS.fill, borderWidth: 1, borderColor: GLASS.edge, marginBottom: 0 },
   pillBand: { backgroundColor: theme.colors.ink, borderColor: theme.colors.ink },
   segmentTextBand: { color: theme.colors.surface },
 });

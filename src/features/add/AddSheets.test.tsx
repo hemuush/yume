@@ -15,7 +15,31 @@ jest.mock('@/components/CalendarSheet', () => ({ CalendarSheet: mockStub('calend
 jest.mock('@/features/profile/AddAccountModal', () => ({ AddAccountModal: mockStub('add-account') }));
 jest.mock('@/features/people/AddPersonModal', () => ({ AddPersonModal: mockStub('add-person') }));
 jest.mock('@/features/home/RepeatEntrySheet', () => ({ RepeatEntrySheet: mockStub('repeat') }));
-jest.mock('./AddFields', () => ({ AccountTile: mockStub('tile') }));
+// One stub row per account, with what the real row is given: its account, whether it is the picked one, a tap.
+jest.mock('./AddSections', () => ({
+  AccountPickList: ({
+    accounts,
+    activeId,
+    onPick,
+  }: {
+    accounts: { id: string }[];
+    activeId: string | null;
+    onPick: (id: string) => void;
+  }) =>
+    require('react').createElement(
+      require('react').Fragment,
+      null,
+      accounts.map((a) =>
+        require('react').createElement(require('react-native').View, {
+          key: a.id,
+          testID: 'tile',
+          account: a,
+          active: activeId === a.id,
+          onPress: () => onPick(a.id),
+        })
+      )
+    ),
+}));
 
 import { AddSheets } from './AddSheets';
 import type { Account } from '@/types';

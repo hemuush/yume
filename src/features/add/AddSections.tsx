@@ -1,4 +1,10 @@
+import { useState } from 'react';
 import { View, Pressable, Animated } from 'react-native';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import type { McIconName } from '@/components/iconName';
+import { Amount } from '@/components/Amount';
+import { ModalSheet } from '@/components/ModalSheet';
+import { accountBadgeColor, accountIcon } from '@/lib/account';
 import { Text } from '@/components/Text';
 import Feather from '@expo/vector-icons/Feather';
 import { theme } from '@/constants/theme';
@@ -10,7 +16,6 @@ import { CategoryIcon } from '@/components/CategoryIcon';
 import { MovingRow } from '@/components/MovingRow';
 import { styles } from './add.styles';
 import { TYPE_WASH, typeWash, EntryType, Staged, dateChipLabel } from './addEntry';
-import { AccountTile } from './AddFields';
 import { withPressed } from '@/lib/pressed';
 import { categorySentence, categorySpoken, inParent } from '@/lib/categoryLabel';
 import { useAccent } from '@/theme/AccentContext';
@@ -116,7 +121,10 @@ export function AmountCard({
   );
 }
 
-/** A transfer's From and To account rows; To never offers the From account. */
+/**
+ * A transfer's From and To as two account cards (name, kind, balance); tapping one opens a sheet of the
+ * accounts to pick from, and Swap between them trades the two. To never offers the From account.
+ */
 export function TransferAccounts({
   fromOptions,
   accounts,
@@ -133,56 +141,152 @@ export function TransferAccounts({
   onPickFrom: (id: string) => void;
   onPickTo: (id: string) => void;
 }) {
+  const [picking, setPicking] = useState<'from' | 'to' | null>(null);
+  const from = accounts.find((a) => a.id === fromId);
+  const to = accounts.find((a) => a.id === toId);
+  const canSwap = !!fromId && !!toId && fromOptions.some((a) => a.id === toId);
+  const options = picking === 'from' ? fromOptions : accounts.filter((a) => a.id !== fromId);
   return (
-    <>
-      <View style={styles.section}>
-        <Text style={styles.label}>From</Text>
-        <View style={styles.accountRow}>
-          {fromOptions.map((acc) => (
-            <AccountTile
-              key={acc.id}
-              account={acc}
-              active={fromId === acc.id}
-              onPress={() => onPickFrom(acc.id)}
-            />
-          ))}
-        </View>
+    <View style={styles.transfer}>
+      <TransferCard label="From" account={from} onPress={() => setPicking('from')} />
+      <TransferCard label="To" account={to} onPress={() => setPicking('to')} />
+      {canSwap && (
+        <Pressable
+          onPress={() => {
+            haptics.tap();
+            onPickFrom(toId!);
+            onPickTo(fromId!);
+          }}
+          hitSlop={8}
+          style={withPressed(styles.swapBtn)}
+          accessibilityRole="button"
+          accessibilityLabel="Swap From and To"
+        >
+          <Feather name="repeat" size={15} color={theme.colors.white} />
+        </Pressable>
+      )}
+      <ModalSheet
+        visible={picking !== null}
+        onClose={() => setPicking(null)}
+        title={picking === 'from' ? 'Move from' : 'Move to'}
+        scrollable={false}
+      >
+        <AccountPickList
+          accounts={options}
+          activeId={picking === 'from' ? fromId : toId}
+          onPick={(id) => {
+            if (picking === 'from') onPickFrom(id);
+            else onPickTo(id);
+            setPicking(null);
+          }}
+        />
+      </ModalSheet>
+    </View>
+  );
+}
+
+function TransferCard({
+  label,
+  account,
+  onPress,
+}: {
+  label: string;
+  account?: Account;
+  onPress: () => void;
+}) {
+  const { accent } = useAccent();
+  return (
+    <Pressable
+      onPress={onPress}
+      style={withPressed(styles.transferCard)}
+      accessibilityRole="button"
+      accessibilityLabel={`${label}, ${account ? account.name : 'pick an account'}. Change`}
+    >
+      <View
+        style={[
+          styles.transferIcon,
+          { backgroundColor: account ? accountBadgeColor(account.type, accent) : theme.colors.surfaceAlt },
+        ]}
+      >
+        <MaterialCommunityIcons
+          name={(account ? accountIcon(account.type) : 'bank-outline') as McIconName}
+          size={18}
+          color={theme.colors.ink}
+        />
       </View>
-      <View style={[styles.section, styles.sectionLast]}>
-        <View style={styles.labelRow}>
-          <Text style={styles.label}>To</Text>
-          {/* Swaps the two, when the To account could also be the From. */}
-          {fromId && toId && fromOptions.some((a) => a.id === toId) && (
-            <Pressable
-              onPress={() => {
-                haptics.tap();
-                onPickFrom(toId);
-                onPickTo(fromId);
-              }}
-              hitSlop={10}
-              style={withPressed(styles.swapBtn)}
-              accessibilityRole="button"
-              accessibilityLabel="Swap From and To"
-            >
-              <Feather name="repeat" size={13} color={theme.colors.textPrimary} />
-              <Text style={styles.swapText}>Swap</Text>
-            </Pressable>
-          )}
-        </View>
-        <View style={styles.accountRow}>
-          {accounts
-            .filter((a) => a.id !== fromId)
-            .map((acc) => (
-              <AccountTile
-                key={acc.id}
-                account={acc}
-                active={toId === acc.id}
-                onPress={() => onPickTo(acc.id)}
+      <View style={styles.transferMid}>
+        <Text style={styles.transferLabel}>{label}</Text>
+        <Text style={styles.transferName} numberOfLines={1}>
+          {account ? account.name : 'Pick an account'}
+        </Text>
+        {account && (
+          <Amount
+            minor={account.currentBalanceMinor}
+            currency={account.currency}
+            sensitive={account.type === 'savings'}
+            style={styles.transferBal}
+            numberOfLines={1}
+          />
+        )}
+      </View>
+      <Feather name="chevron-down" size={16} color={theme.colors.textMuted} />
+    </Pressable>
+  );
+}
+
+/** Accounts as rows with their kind and balance, the picked one outlined: Add's account sheets. */
+export function AccountPickList({
+  accounts,
+  activeId,
+  onPick,
+}: {
+  accounts: Account[];
+  activeId: string | null;
+  onPick: (id: string) => void;
+}) {
+  const { accent } = useAccent();
+  return (
+    <View style={styles.pickList}>
+      {accounts.map((a) => {
+        const on = a.id === activeId;
+        return (
+          <Pressable
+            key={a.id}
+            onPress={() => {
+              haptics.tap();
+              onPick(a.id);
+            }}
+            style={withPressed([styles.pickRow, on && styles.pickRowOn])}
+            accessibilityRole="button"
+            accessibilityState={{ selected: on }}
+            accessibilityLabel={a.name}
+          >
+            <View style={[styles.transferIcon, { backgroundColor: accountBadgeColor(a.type, accent) }]}>
+              <MaterialCommunityIcons
+                name={accountIcon(a.type) as McIconName}
+                size={18}
+                color={theme.colors.ink}
               />
-            ))}
-        </View>
-      </View>
-    </>
+            </View>
+            <View style={styles.transferMid}>
+              <Text style={styles.transferName} numberOfLines={1}>
+                {a.name}
+              </Text>
+              <Text style={styles.pickSub} numberOfLines={1}>
+                {a.type.replace('_', ' ')} ·{' '}
+                <Amount
+                  minor={a.currentBalanceMinor}
+                  currency={a.currency}
+                  sensitive={a.type === 'savings'}
+                  style={styles.pickSub}
+                />
+              </Text>
+            </View>
+            {on && <Feather name="check" size={18} color={theme.colors.ink} />}
+          </Pressable>
+        );
+      })}
+    </View>
   );
 }
 
