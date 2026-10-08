@@ -16,16 +16,16 @@ import {
   getMonthPaceInputs,
   getStillToPayThisMonth,
   getCarryInMinor,
+  getDailyExpenseTotals,
 } from '@/db/reports';
 import { monthPace } from '@/lib/pace';
 import { getUserName, getDailySpendingGoal } from '@/db/settings';
 import { listBudgetsForMonth, BudgetProgress } from '@/db/budgets';
-import { listSavingsGoals } from '@/db/savingsGoals';
 import { savingsAccountIdsOf } from '@/lib/account';
 import { privateComparison, isSavingsEntry } from '@/lib/privateSummary';
 import { roundedMinor } from '@/lib/round';
 import { savingsRatePct } from '@/lib/savingsRate';
-import { Account, Category, Transaction, Loan, RecurringRule, SavingsGoal } from '@/types';
+import { Account, Category, Transaction, Loan, RecurringRule } from '@/types';
 import { theme } from '@/constants/theme';
 import { useTabScrollPad } from '@/lib/uiScale';
 import { useAccent } from '@/theme/AccentContext';
@@ -38,6 +38,8 @@ import {
   previousPeriodRange,
   stepPeriod,
   canStepForward,
+  periodLabel,
+  periodShortLabel,
 } from '@/lib/period';
 import {
   homeRowEntering,
@@ -48,15 +50,20 @@ import {
 } from '@/lib/animation';
 import { HomeHeader } from '@/features/home/HomeHeader';
 import { ThisMonthHero } from '@/features/home/ThisMonthHero';
-import { ThisMonthHeroSkeleton, CardRowsSkeleton, AccountStackSkeleton } from '@/features/home/HomeSkeleton';
-import { QuickActionsRow } from '@/features/home/QuickActionsRow';
+import { ThisMonthHeroSkeleton, CardRowsSkeleton } from '@/features/home/HomeSkeleton';
+import { MonthPill } from '@/features/home/MonthPill';
+import { HomeWallpaper } from '@/features/home/HomeWallpaper';
+import { WhereItWent } from '@/features/home/WhereItWent';
+import { HomeBento } from '@/features/home/HomeBento';
+import { SpendBars } from '@/features/home/SpendBars';
+import { spendBarsStart } from '@/features/home/spendBars';
+import { Glass } from '@/components/Glass';
 import { SuuRefreshBadge } from '@/features/home/SuuRefreshBadge';
 import { Section } from '@/components/Section';
-import { screenStyles, SCREEN } from '@/components/screenStyles';
-import { HomeGlance, buildUpcomingItems } from '@/features/home/HomeGlance';
+import { SCREEN } from '@/components/screenStyles';
+import { buildUpcomingItems } from '@/features/home/HomeGlance';
 import { buildLoansSummary } from '@/features/plan/planOverview';
 import { RecentTransactionRow } from '@/features/home/RecentTransactionRow';
-import { AccountStack } from '@/features/home/AccountStack';
 import { AccountSummarySheet } from '@/features/home/AccountSummarySheet';
 import { AccountDetailModal } from '@/features/profile/AccountDetailModal';
 import { suuLine } from '@/features/home/suuLine';
@@ -64,7 +71,6 @@ import { loadReadyWraps, ReadyWrap } from '@/features/wrap/wrapWindow';
 import { NeedsYouItem } from '@/features/home/needsYou';
 import { loadNeedsYou } from '@/features/home/needsYouData';
 import { AddAccountModal } from '@/features/profile/AddAccountModal';
-import { PrimaryButton } from '@/components/PrimaryButton';
 import { dayLabel, toLocalIsoDate } from '@/lib/date';
 import { categorySentence } from '@/lib/categoryLabel';
 import { onTransactionsChanged } from '@/lib/dataEvents';
@@ -95,7 +101,8 @@ export default function DashboardScreen() {
   const [loanProgress, setLoanProgress] = useState<Awaited<ReturnType<typeof getLoanProgress>>>([]);
   const [cardBills, setCardBills] = useState<Awaited<ReturnType<typeof listCardCycles>>>([]);
   const [budgets, setBudgets] = useState<BudgetProgress[]>([]);
-  const [goals, setGoals] = useState<SavingsGoal[]>([]);
+  // Spending per day, from a week back (or the 1st) to today: the Week/Month bars.
+  const [dailySpend, setDailySpend] = useState<{ date: string; totalMinor: number }[]>([]);
   // Both are always about today, not the browsed period (like Budgets/Goals below); `dailyGoal` stays
   // `null` (strip renders nothing) until the user sets one in Settings → Money.
   const [todaySpendMinor, setTodaySpendMinor] = useState(0);
@@ -234,7 +241,7 @@ export default function DashboardScreen() {
           cycles,
           name,
           budgetList,
-          goalList,
+          daily,
           todaySpend,
           dailyGoal,
           paceIn,
@@ -253,7 +260,10 @@ export default function DashboardScreen() {
           // Budgets, goals, today's spend and the daily goal are always about *now*, not the browsed period
           // (a budget is this calendar month; a goal has no period).
           listBudgetsForMonth(undefined, hideAmounts),
-          listSavingsGoals(),
+          getDailyExpenseTotals(
+            { start: spendBarsStart(toLocalIsoDate(new Date())), end: toLocalIsoDate(new Date()) },
+            hideAmounts
+          ),
           getTodaySpend(undefined, hideAmounts),
           getDailySpendingGoal(),
           getMonthPaceInputs(),
@@ -286,7 +296,7 @@ export default function DashboardScreen() {
         setCardBills(cycles);
         setUserNameState(name);
         setBudgets(budgetList);
-        setGoals(goalList);
+        setDailySpend(daily);
         setTodaySpendMinor(todaySpend);
         setDailyGoalMinor(dailyGoal);
         setPaceInputs(paceIn);
@@ -366,24 +376,6 @@ export default function DashboardScreen() {
     tx.type === 'transfer' &&
     (savingsIds.has(tx.accountId) || (!!tx.toAccountId && savingsIds.has(tx.toAccountId)));
 
-  const totalOutstandingLoans = loans
-    .filter((l) => l.direction === 'borrowed')
-    .reduce((sum, l) => sum + l.outstandingPrincipalMinor, 0);
-
-  // Fires the Debt tile's celebration only on a real positive→zero crossing this session, not on re-render
-  // while zero or first load: `prevDebtRef` starts `null`, so users who never had debt never see it.
-  const prevDebtRef = useRef<number | null>(null);
-  const [justClearedDebt, setJustClearedDebt] = useState(false);
-  useEffect(() => {
-    const prev = prevDebtRef.current;
-    prevDebtRef.current = totalOutstandingLoans;
-    if (prev != null && prev > 0 && totalOutstandingLoans === 0) {
-      setJustClearedDebt(true);
-      const t = setTimeout(() => setJustClearedDebt(false), 1500);
-      return () => clearTimeout(t);
-    }
-  }, [totalOutstandingLoans]);
-
   const dispIncome = roundedMinor(comparison?.current.incomeMinor ?? 0);
   const dispExpense = roundedMinor(comparison?.current.expenseMinor ?? 0);
   // Where this month is heading — the current month only, and only once
@@ -446,6 +438,7 @@ export default function DashboardScreen() {
 
   return (
     <View style={styles.container}>
+      <HomeWallpaper accent={accent} secondary={secondary} />
       {/* Top to bottom, the "arranged Home" sign-off: the header (with the
           quick actions in it), your month, what needs you, your plans, then
           history — recent activity and accounts. */}
@@ -481,13 +474,7 @@ export default function DashboardScreen() {
             <ThisMonthHero
               periodKey={`${loadedCursor.granularity}:${loadedCursor.offset}`}
               direction={heroDirection}
-              title={
-                loadedCursor.offset === 0
-                  ? loadedCursor.granularity === 'year'
-                    ? 'This year'
-                    : 'This month'
-                  : 'Looking back'
-              }
+              period={<MonthPill cursor={cursor} onChange={handleCursorChange} />}
               canStepForward={canStepForward(cursor)}
               onStep={(dir) => handleCursorChange(stepPeriod(cursor, dir))}
               incomeMinor={dispIncome}
@@ -500,9 +487,6 @@ export default function DashboardScreen() {
                   ? roundedMinor(stillToPayMinor)
                   : 0
               }
-              outstandingLoansMinor={roundedMinor(totalOutstandingLoans)}
-              suu={suu}
-              celebrateDebtCleared={justClearedDebt}
               // Today is always about today — only alongside the current period.
               today={
                 dailyGoalMinor != null && loadedCursor.offset === 0
@@ -516,9 +500,6 @@ export default function DashboardScreen() {
           )}
         </View>
 
-        {/* Add shortcuts sit right under the month card, in thumb reach. */}
-        <QuickActionsRow />
-
         {!loaded && (
           <>
             <View style={{ marginTop: SCREEN.sectionGap }}>
@@ -527,21 +508,42 @@ export default function DashboardScreen() {
             <Section title="Recent activity">
               <CardRowsSkeleton rows={3} subtitle />
             </Section>
-            <Section title="Your accounts">
-              <AccountStackSkeleton />
-            </Section>
           </>
         )}
 
+        {loaded && comparison && comparison.current.categoryBreakdown.length > 0 && (
+          <Section title="Where it went" onSeeAll={() => router.navigate('/reports')}>
+            <WhereItWent
+              breakdown={comparison.current.categoryBreakdown}
+              iconFor={(id) => categoriesById.get(id)?.icon}
+              spentMinor={dispExpense}
+              previousSpentMinor={roundedMinor(comparison.previous.expenseMinor)}
+              periodName={periodLabel(loadedCursor)}
+              previousName={periodShortLabel(stepPeriod(loadedCursor, -1))}
+              onOpenReports={() => router.navigate('/reports')}
+            />
+          </Section>
+        )}
+
         {loaded && (
-          <HomeGlance
-            upcoming={upcoming}
-            budgets={budgets}
-            goals={goals}
-            budgetAlert={needsYou.some((i) => i.action === 'budgets')}
-            rowEntering={rowEntering}
-            onSeeMoreUpcoming={() => router.navigate({ pathname: '/plan', params: { section: 'coming-up' } })}
-          />
+          <View style={styles.bento}>
+            <HomeBento
+              upcoming={upcoming}
+              budgets={budgets}
+              accounts={accounts}
+              onOpenUpcoming={() => router.navigate({ pathname: '/plan', params: { section: 'coming-up' } })}
+              onOpenBudgets={() => router.push('/budgets')}
+              onOpenAccounts={() => router.push('/profile')}
+              onOpenAccount={setSummaryAccount}
+              onAddAccount={() => setAddAccountVisible(true)}
+            />
+          </View>
+        )}
+
+        {loaded && dailySpend.length > 0 && (
+          <View style={styles.bars}>
+            <SpendBars daily={dailySpend} today={todayIso} />
+          </View>
         )}
 
         {loaded && (
@@ -552,7 +554,7 @@ export default function DashboardScreen() {
                 subtitle="Use the month pill above to check another period."
               />
             ) : (
-              <View style={[screenStyles.card, screenStyles.cardLifted]}>
+              <Glass radius={24} style={styles.recent}>
                 {recent.slice(0, RECENT_ROWS).map((tx, i, rows) => {
                   // Rows come newest first; a new day gets its own small heading ("Today", "Yesterday", "1 Oct").
                   const newDay = i === 0 || rows[i - 1].date !== tx.date;
@@ -581,29 +583,7 @@ export default function DashboardScreen() {
                     </Animated.View>
                   );
                 })}
-              </View>
-            )}
-          </Section>
-        )}
-
-        {loaded && (
-          <Section title="Your accounts" onSeeAll={() => router.push('/profile')}>
-            {accounts.length === 0 ? (
-              // Opens the same Add Account form Profile uses, right here — the
-              // old hint sent a brand-new user three taps away to find it.
-              <View>
-                <EmptyState
-                  title="No accounts yet"
-                  subtitle="Add where your money lives: a bank account, cash, or a UPI wallet."
-                />
-                <PrimaryButton
-                  title="Add an account"
-                  onPress={() => setAddAccountVisible(true)}
-                  style={styles.emptyCta}
-                />
-              </View>
-            ) : (
-              <AccountStack accounts={accounts} onOpen={setSummaryAccount} />
+              </Glass>
             )}
           </Section>
         )}
@@ -618,6 +598,7 @@ export default function DashboardScreen() {
         onHeight={setHeaderHeight}
         wraps={readyWraps}
         onPlayWrap={(w) => router.push(`/wrap?period=${w.period}`)}
+        line={suu.text}
       />
       <SuuRefreshBadge refreshing={refreshing} />
 
@@ -675,6 +656,9 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
   scroll: { flex: 1 },
   heroGap: { marginTop: 4 },
+  bento: { marginTop: SCREEN.sectionGap },
+  bars: { marginTop: 10 },
+  recent: { marginHorizontal: SCREEN.gutter, overflow: 'hidden' },
   errorBanner: {
     marginHorizontal: 20,
     marginTop: 16,
@@ -692,7 +676,6 @@ const styles = StyleSheet.create({
     marginTop: 4,
     lineHeight: 16,
   },
-  emptyCta: { marginHorizontal: 40, marginTop: -8 },
   dayHead: {
     paddingHorizontal: 16,
     paddingTop: 16,

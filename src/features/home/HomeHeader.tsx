@@ -22,6 +22,7 @@ import { MonthPill } from './MonthPill';
 import { WrapButton } from './WrapButton';
 import type { ReadyWrap } from '@/features/wrap/wrapWindow';
 import { MOTION } from '@/lib/animation';
+import { wallpaperTop } from './HomeWallpaper';
 
 /** "Wednesday, 7 October" — above the greeting. */
 function todayLabel(): string {
@@ -52,6 +53,7 @@ export function HomeHeader({
   onHeight,
   wraps = [],
   onPlayWrap,
+  line,
   children,
 }: {
   cursor: PeriodCursor;
@@ -66,6 +68,8 @@ export function HomeHeader({
   /** The Wraps ready today (wrapWindow.ts); the Wrap button shows only while there's one. */
   wraps?: ReadyWrap[];
   onPlayWrap?: (wrap: ReadyWrap) => void;
+  /** Suu's line about the month, said right after the greeting. */
+  line?: string;
   children?: React.ReactNode;
 }) {
   const { accent } = useAccent();
@@ -125,6 +129,8 @@ export function HomeHeader({
         scrollY={scrollY}
         distance={distance}
         collapsedHeight={bandHeight > 0 && rowBottom > 0 ? rowBottom + COLLAPSED_BOTTOM_PAD : 0}
+        wash={false}
+        barColor={wallpaperTop(accent)}
       />
       <View
         style={[styles.band, { paddingTop: contentTop }]}
@@ -169,30 +175,22 @@ export function HomeHeader({
           accessibilityElementsHidden={collapsed}
           importantForAccessibility={collapsed ? 'no-hide-descendants' : 'auto'}
         >
-          <View style={styles.greetRow}>
-            <ReanimatedAnimated.View
-              style={styles.greetBlock}
-              entering={FadeInDown.duration(MOTION.enter)
-                .easing(MOTION.ease)
-                .reduceMotion(ReduceMotion.System)}
-            >
-              <Text style={styles.date} numberOfLines={1}>
-                {todayLabel()}
-              </Text>
-              <Text style={styles.greet} numberOfLines={2}>
-                Good {greetingWord()}
-                {userName ? `, ${userName}` : ''}
-              </Text>
-            </ReanimatedAnimated.View>
-            <ReanimatedAnimated.View
-              entering={FadeInDown.duration(MOTION.enter)
-                .delay(MOTION.enterStep)
-                .easing(MOTION.ease)
-                .reduceMotion(ReduceMotion.System)}
-            >
-              <MonthPill cursor={cursor} onChange={onChange} />
-            </ReanimatedAnimated.View>
-          </View>
+          <ReanimatedAnimated.View
+            entering={FadeInDown.duration(MOTION.enter).easing(MOTION.ease).reduceMotion(ReduceMotion.System)}
+          >
+            <Text style={styles.date} numberOfLines={1}>
+              {todayLabel()}
+            </Text>
+            <Text style={styles.greet}>
+              Good {greetingWord()}
+              {userName ? (
+                <>
+                  , <Text style={styles.greetName}>{userName}</Text>
+                </>
+              ) : null}
+              .{line ? ` ${line}` : ''}
+            </Text>
+          </ReanimatedAnimated.View>
           {children}
         </ReanimatedAnimated.View>
       </View>
@@ -209,19 +207,14 @@ const styles = StyleSheet.create({
   brandRow: { flexDirection: 'row', alignItems: 'center', gap: 7 },
   brand: { fontFamily: theme.font.roundedBold, fontSize: 22, letterSpacing: 0.2, color: theme.colors.ink },
   actions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  greetRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    justifyContent: 'space-between',
-    gap: 12,
-  },
-  greetBlock: { flex: 1, minWidth: 0 },
   date: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textSecondary },
   greet: {
-    fontFamily: theme.font.roundedBold,
-    fontSize: 25,
-    lineHeight: 30,
+    fontFamily: theme.font.body,
+    fontSize: 22,
+    lineHeight: 29,
+    letterSpacing: -0.3,
     color: theme.colors.ink,
     marginTop: 2,
   },
+  greetName: { fontFamily: theme.font.bodyBold },
 });
