@@ -31,14 +31,14 @@ export const styles = StyleSheet.create({
     borderColor: theme.colors.borderSoft,
   },
   // The Running, Paused and Not set up yet cards: rows with a hairline between.
-  list: { paddingVertical: 2, paddingHorizontal: 14 },
+  list: { paddingVertical: 2, paddingHorizontal: 16 },
   footnote: {
     fontFamily: theme.font.body,
     fontSize: 12,
     lineHeight: 17,
     color: theme.colors.textMuted,
-    marginHorizontal: 24,
-    marginTop: 10,
+    marginHorizontal: 4,
+    marginTop: 12,
   },
   row: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10 },
   rowDivider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.borderSoft },

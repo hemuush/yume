@@ -12,11 +12,10 @@ import ReanimatedAnimated, {
 } from 'react-native-reanimated';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
 import { theme } from '@/constants/theme';
 import { useAccent } from '@/theme/AccentContext';
-import { shade } from '@/lib/color';
 import { HeaderHills } from './HeaderHills';
+import { SkyBackdrop } from './SkyBackdrop';
 import { YumeLogo } from '@/components/YumeLogo';
 import { HeaderIconButton, HeaderUserButton } from '@/components/AppHeader';
 import { PeriodCursor } from '@/lib/period';
@@ -51,8 +50,9 @@ const SPARKS: { top: number; left: number; size: number; opacity: number }[] = [
 const COLLAPSED_BOTTOM_PAD = 10;
 
 /**
- * Home header over the ScrollView (absolute; content padded by `onHeight`): accent-to-cream via `shade()`.
- * Scroll collapse = transforms only: band slides up, brand row counter-slides, compact month pill fades in.
+ * Home header over the ScrollView (absolute; content padded by `onHeight`): a sky that fades into the page cream
+ * (SkyBackdrop). Scroll collapse = transforms only: band slides up, brand row counter-slides, compact month pill
+ * fades in, and a sky cap takes over behind the brand row.
  */
 export function HomeHeader({
   cursor,
@@ -81,8 +81,6 @@ export function HomeHeader({
 }) {
   const { accent, secondary } = useAccent();
   const insets = useSafeAreaInsets();
-  const gradientTop = shade(accent, 90, 4);
-  const gradientBottom = shade(accent, 96, 2);
   // The same top spacing as every other screen's SkyHeader.
   const contentTop = insets.top + 6;
 
@@ -121,11 +119,11 @@ export function HomeHeader({
     const p = d > 0 ? Math.min(1, Math.max(0, scrollY.value / d)) : 0;
     return { opacity: 1 - Math.min(1, p * 1.6), transform: [{ translateY: -p * 8 }] };
   });
-  // Under the hills, only once the header has started to collapse: rows slide under a soft edge instead of
-  // being cut by the hill line.
-  const edgeStyle = useAnimatedStyle(() => {
+  // The hills let go early, while the sky cap is still coming in.
+  const hillsStyle = useAnimatedStyle(() => {
     const d = distance.value;
-    return { opacity: d > 0 ? Math.min(1, Math.max(0, scrollY.value / d)) : 0 };
+    const p = d > 0 ? Math.min(1, Math.max(0, scrollY.value / d)) : 0;
+    return { opacity: 1 - Math.min(1, p * 1.6) };
   });
   const miniStyle = useAnimatedStyle(() => {
     const d = distance.value;
@@ -139,16 +137,16 @@ export function HomeHeader({
       style={[styles.root, bandStyle]}
       onLayout={(e: LayoutChangeEvent) => onHeight(e.nativeEvent.layout.height)}
     >
+      <SkyBackdrop
+        accent={accent}
+        scrollY={scrollY}
+        distance={distance}
+        collapsedHeight={bandHeight > 0 && rowBottom > 0 ? rowBottom + COLLAPSED_BOTTOM_PAD : 0}
+      />
       <View
         style={[styles.band, { paddingTop: contentTop }]}
         onLayout={(e) => setBandHeight(e.nativeEvent.layout.height)}
       >
-        <LinearGradient
-          colors={[gradientTop, gradientBottom]}
-          style={StyleSheet.absoluteFill}
-          pointerEvents="none"
-        />
-
         {SPARKS.map((s, i) => (
           <Spark
             key={i}
@@ -226,18 +224,14 @@ export function HomeHeader({
           {children}
         </ReanimatedAnimated.View>
       </View>
-      <HeaderHills sky={gradientBottom} primary={accent} secondary={secondary} compact />
-      <ReanimatedAnimated.View style={[styles.edgeFade, edgeStyle]} pointerEvents="none">
-        <LinearGradient colors={EDGE_FADE} style={StyleSheet.absoluteFill} />
+      <ReanimatedAnimated.View style={hillsStyle}>
+        <HeaderHills sky="transparent" primary={accent} secondary={secondary} compact />
       </ReanimatedAnimated.View>
     </ReanimatedAnimated.View>
   );
 }
 
-const EDGE_FADE = [`${theme.colors.background}F2`, `${theme.colors.background}00`] as const;
-
 const styles = StyleSheet.create({
-  edgeFade: { position: 'absolute', top: '100%', left: 0, right: 0, height: 14 },
   root: { position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10 },
   fading: { gap: 12, paddingTop: 10 },
   miniSlot: { flex: 1, minWidth: 0, alignItems: 'flex-end' },

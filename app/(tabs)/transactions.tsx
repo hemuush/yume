@@ -14,6 +14,7 @@ import { HeaderIconButton } from '@/components/AppHeader';
 import { SkyHeader } from '@/features/home/SkyHeader';
 import { useCollapsingHeader } from '@/lib/useCollapsingHeader';
 import { theme } from '@/constants/theme';
+import { useTabScrollPad } from '@/lib/uiScale';
 import { toLocalIsoDate, parseLocalIsoDate, addDaysToIsoDate } from '@/lib/date';
 import { MAX_LIST_STAGGER_MS } from '@/lib/animation';
 import { useSwipeDrag } from '@/lib/useSwipeDrag';
@@ -64,6 +65,7 @@ const SEARCH_RESULT_LIMIT = 50;
 
 export default function TransactionsScreen() {
   const insets = useSafeAreaInsets();
+  const tabScrollPad = useTabScrollPad();
   const { hideAmounts } = usePrivacy();
   const { accent } = useAccent();
   const navTint = shade(accent, 95);
@@ -501,10 +503,14 @@ export default function TransactionsScreen() {
           scrollEnabled={!dragging}
           data={displayedGroups}
           keyExtractor={(group) => group.date}
+          // Each row is a whole day, so mount only a few at first and keep the window small.
+          initialNumToRender={4}
+          maxToRenderPerBatch={4}
+          windowSize={7}
           contentContainerStyle={{
             // Under the header; search results have no headline above them, so keep the first day off the bar.
             paddingTop: headerHeight + (searching ? 14 : 0),
-            paddingBottom: theme.layout.tabScreenScrollPad + insets.bottom,
+            paddingBottom: tabScrollPad + insets.bottom,
           }}
           // Variable-height days (line count, open stacks) rule out `getItemLayout`; standard fallback: if
           // a jump lands past what's measured, retry once the list has laid out.

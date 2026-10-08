@@ -14,7 +14,7 @@ export const SECTION_TITLE: TextStyle = {
 };
 
 /** The gap above a section heading, and below it before its card. */
-export const SECTION_GAP = { top: 26, bottom: 10 } as const;
+export const SECTION_GAP = { top: 24, bottom: 12 } as const;
 
 /**
  * A small uppercase label: a figure's caption ("SPENT", "YOU OWE"), a

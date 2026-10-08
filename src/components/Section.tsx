@@ -18,6 +18,7 @@ export function Section({
   heading,
   onSeeAll,
   right,
+  first,
   children,
 }: {
   title: string;
@@ -25,11 +26,13 @@ export function Section({
   heading?: React.ReactNode;
   onSeeAll?: () => void;
   right?: React.ReactNode;
+  /** The first section under a screen's header: it sits the usual 8 below it, not a full section gap. */
+  first?: boolean;
   children: React.ReactNode;
 }) {
   const { animatedStyle, onPressIn, onPressOut } = usePressScale();
   return (
-    <View style={styles.wrap}>
+    <View style={[styles.wrap, first && styles.wrapFirst]}>
       <View style={styles.head}>
         {heading ?? (
           <View style={styles.titleRow}>
@@ -64,6 +67,7 @@ export function Section({
 
 const styles = StyleSheet.create({
   wrap: { marginTop: SECTION_GAP.top },
+  wrapFirst: { marginTop: theme.layout.screenTopGap },
   head: {
     flexDirection: 'row',
     alignItems: 'center',

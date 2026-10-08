@@ -26,8 +26,8 @@ export const styles = StyleSheet.create({
 
   card: {
     marginHorizontal: 20,
-    marginBottom: 10,
-    padding: 14,
+    marginBottom: 12,
+    padding: 16,
     borderRadius: theme.radius.xl2,
     backgroundColor: theme.colors.surface,
     borderWidth: StyleSheet.hairlineWidth,

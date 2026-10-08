@@ -9,7 +9,7 @@ export const STRIP_BAR_AREA = 56;
 
 export const styles = StyleSheet.create({
   group: { gap: TILE_GAP, marginHorizontal: SCREEN.gutter },
-  groupFirst: { marginTop: 6 },
+  groupFirst: { marginTop: theme.layout.screenTopGap },
   tileRow: { flexDirection: 'row', gap: TILE_GAP },
   // Every tile is the same calm white card; what a tile is about shows in its icon badge, and good or bad
   // news in the colour of its figure, not in a tinted fill.
@@ -33,7 +33,14 @@ export const styles = StyleSheet.create({
   tileHalf: { flex: 1, minHeight: 132 },
   savingTile: { gap: 12 },
   kickerRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 2 },
-  kickerBadge: { width: 28, height: 28, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
+  kickerBadge: {
+    width: 28,
+    height: 28,
+    borderRadius: 9,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: theme.colors.surfaceAlt,
+  },
   kicker: {
     flexShrink: 1,
     fontFamily: theme.font.bodyMedium,

@@ -66,8 +66,8 @@ export const styles = StyleSheet.create({
   // figure and its change chip, the chart, a one-line legend, and Money in | Net as a strip.
   sumCard: {
     marginHorizontal: 20,
-    marginTop: 6,
-    padding: 18,
+    marginTop: 8,
+    padding: 16,
     paddingBottom: 16,
     backgroundColor: theme.colors.surface,
     borderRadius: theme.radius.xl2,
@@ -125,7 +125,7 @@ export const styles = StyleSheet.create({
     backgroundColor: theme.colors.surfaceAlt,
   },
   scopeBtn: {
-    minHeight: 30,
+    minHeight: 36,
     justifyContent: 'center',
     paddingHorizontal: 14,
     borderRadius: theme.radius.pill,
@@ -202,14 +202,14 @@ export const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 30,
+    minHeight: 36,
     borderRadius: theme.radius.pill,
   },
   typeBtnOn: { backgroundColor: theme.colors.ink },
   typeText: { fontFamily: theme.font.bodyBold, fontSize: 12.5, color: theme.colors.textSecondary },
   typeTextOn: { color: theme.colors.surface },
   chipsRow: { gap: 8, paddingHorizontal: 20, paddingTop: 10 },
-  filterGap: { height: 22 },
+  filterGap: { height: 16 },
   chip: {
     flexDirection: 'row',
     alignItems: 'center',

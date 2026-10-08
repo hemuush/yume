@@ -15,7 +15,7 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
  */
 export function SettingsRow({
   icon,
-  iconBg,
+  iconBg = theme.colors.surfaceAlt,
   label,
   sub,
   subColor,
@@ -28,7 +28,8 @@ export function SettingsRow({
   round,
 }: {
   icon: string;
-  iconBg: string;
+  /** Defaults to the neutral tile; only pass a colour when it says something. */
+  iconBg?: string;
   label: string;
   sub?: string;
   /** Overrides the sub text colour — used for a "never backed up" nudge, otherwise left at the default muted tone. */

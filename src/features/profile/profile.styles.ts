@@ -163,7 +163,7 @@ export const styles = StyleSheet.create({
   pickerRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 11 },
   codeBubble: {
     width: 44,
-    height: 30,
+    minHeight: 30,
     borderRadius: 9,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,

@@ -83,7 +83,7 @@ function ActionSheetRow({
 
 const styles = StyleSheet.create({
   list: { paddingTop: 4 },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 11, paddingHorizontal: 14 },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 16 },
   rowDivider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.borderSoft },
   icon: {
     width: 36,

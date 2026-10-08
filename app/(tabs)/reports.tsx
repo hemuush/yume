@@ -50,6 +50,7 @@ import { useFreshness } from '@/lib/useFreshness';
 import { SegmentedControl } from '@/components/SegmentedControl';
 import { parseLocalIsoDate, toLocalIsoDate, isIsoDate } from '@/lib/date';
 import { theme } from '@/constants/theme';
+import { useTabScrollPad } from '@/lib/uiScale';
 import { ReportsSkeleton } from '@/features/reports/ReportsSkeleton';
 import { ReportsHeader } from '@/features/reports/ReportsHeader';
 import { ReportSummary } from '@/features/reports/ReportSummary';
@@ -106,6 +107,7 @@ const CATEGORIES_COLLAPSED = 5;
 export default function ReportsScreen() {
   const { hideAmounts } = usePrivacy();
   const insets = useSafeAreaInsets();
+  const tabScrollPad = useTabScrollPad();
   const [cursor, setCursor] = useState<ReportWindow>(CURRENT_PERIOD);
   // Which way the last arrow or swipe moved, so the headline slides in from that side.
   const [slideDirection, setSlideDirection] = useState<-1 | 0 | 1>(0);
@@ -344,7 +346,12 @@ export default function ReportsScreen() {
   }, [cursor, hideAmounts, catFilter, largestKey, daily]);
 
   // A tab switch remounts the list at its top, so the header opens again with it.
-  useEffect(() => resetScroll(), [tab, resetScroll]);
+  // A new sub-tab starts at the top. The scroll view itself stays mounted (remounting it on every tap rebuilt the
+  // heatmap, charts and sticky tabs and hitched), so the jump to the top is explicit.
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ y: 0, animated: false });
+    resetScroll();
+  }, [tab, resetScroll, scrollRef]);
 
   // While loading or on an error, a plain header; the report's own one shrinks as it scrolls.
   const header = <ReportsHeader cursor={cursor} onChange={stepCursor} />;
@@ -549,7 +556,6 @@ export default function ReportsScreen() {
   return (
     <View style={styles.container}>
       <ReanimatedAnimated.ScrollView
-        key={tab}
         ref={scrollRef}
         onScroll={scrollHandler}
         scrollEventThrottle={16}
@@ -558,7 +564,7 @@ export default function ReportsScreen() {
         contentContainerStyle={{
           paddingTop: headerHeight,
           paddingHorizontal: 20,
-          paddingBottom: theme.layout.tabScreenScrollPad + insets.bottom,
+          paddingBottom: tabScrollPad + insets.bottom,
         }}
       >
         {hasData && (

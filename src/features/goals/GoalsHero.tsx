@@ -3,6 +3,7 @@ import { Text } from '@/components/Text';
 import { CountUpAmount } from '@/components/CountUpAmount';
 import { GrowFill } from '@/components/GrowFill';
 import { theme } from '@/constants/theme';
+import { SCREEN } from '@/components/screenStyles';
 import { EYEBROW } from '@/constants/textStyles';
 import { StripCard, KickerDot } from '@/components/StripCard';
 import { formatMoney, formatMaskableMoney } from '@/lib/money';
@@ -63,9 +64,9 @@ export function GoalsHero({ totals }: { totals: GoalsTotals }) {
 const styles = StyleSheet.create({
   card: {
     marginHorizontal: 20,
-    marginBottom: 10,
-    paddingTop: 18,
-    paddingBottom: 16,
+    marginBottom: SCREEN.cardStack,
+    paddingTop: SCREEN.heroPadTop,
+    paddingBottom: SCREEN.cardPad,
     paddingHorizontal: 16,
   },
   kickerRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },

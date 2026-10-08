@@ -143,7 +143,7 @@ const styles = StyleSheet.create({
   },
   segment: {
     flex: 1,
-    minHeight: 38,
+    minHeight: 40,
     paddingVertical: 6,
     borderRadius: theme.radius.pill,
     alignItems: 'center',

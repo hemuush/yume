@@ -10,17 +10,16 @@ import ReanimatedAnimated, {
 } from 'react-native-reanimated';
 import { router } from 'expo-router';
 import Feather from '@expo/vector-icons/Feather';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, MAX_FONT_SCALE } from '@/components/Text';
 import { HeaderUserButton } from '@/components/AppHeader';
 import { theme } from '@/constants/theme';
-import { shade } from '@/lib/color';
 import { useAccent } from '@/theme/AccentContext';
 import { withPressed } from '@/lib/pressed';
 import { useReduceMotion } from '@/lib/useReduceMotion';
 import type { CollapsingHeader } from '@/lib/useCollapsingHeader';
 import { HeaderHills } from './HeaderHills';
+import { SkyBackdrop } from './SkyBackdrop';
 import { Spark } from './Spark';
 
 // Two sparks: the band is short. `top` is below the status-bar inset.
@@ -38,11 +37,11 @@ const TITLE_SCALE = 17 / 22;
 /**
  * The header every screen shares: a short sky band with a 22px title row (back button, title, actions,
  * profile), an optional line under it, anything passed as children (a period control, a search box), and a
- * 14px hill edge.
+ * 14px hill edge. The sky fades into the page colour (SkyBackdrop), so it never looks like a separate strip.
  *
  * Given `collapse` (useCollapsingHeader) it sits over the screen's list and shrinks as the list scrolls, 1:1
  * with the finger: the band slides up under the title row, which stays put; the title steps down to 17; the
- * line and children fade and lift; the hills fade and a soft shadow takes their place. `summary` (the screen's
+ * line and children fade and lift; the hills fade and the sky cap takes over. `summary` (the screen's
  * key figure) writes itself in beside the title as the line leaves, and `collapsedAccessory` (Activity's
  * period chip) appears in the row. Without `collapse` it is a plain header in the page's flow (Add).
  */
@@ -73,8 +72,6 @@ export function SkyHeader({
   const insets = useSafeAreaInsets();
   const reduce = useReduceMotion();
   const top = insets.top + 6;
-  const gradientTop = shade(accent, 90, 4);
-  const gradientBottom = shade(accent, 96, 2);
 
   // Measured, not hardcoded, so a larger system font still collapses to exactly the title row.
   const fallbackY = useSharedValue(0);
@@ -128,22 +125,21 @@ export function SkyHeader({
     const t = interpolate(progress(), [0.5, 0.9], [0, 1], Extrapolation.CLAMP);
     return { opacity: t, transform: [{ translateY: reduce ? 0 : (1 - t) * 8 }] };
   });
-  const hillsStyle = useAnimatedStyle(() => ({ opacity: 1 - progress() }));
-  const shadowStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(progress(), [0.4, 1], [0, 1], Extrapolation.CLAMP),
-  }));
+  // The hills let go early, while the sky cap is still coming in.
+  const hillsStyle = useAnimatedStyle(() => ({ opacity: 1 - Math.min(1, progress() * 1.6) }));
 
   return (
     <ReanimatedAnimated.View
       style={[collapse && styles.over, rootStyle]}
       onLayout={collapse ? onRootLayout : undefined}
     >
+      <SkyBackdrop
+        accent={accent}
+        scrollY={scrollY}
+        distance={distance}
+        collapsedHeight={top + ROW + BAR_PAD}
+      />
       <View style={[styles.band, { paddingTop: top }]}>
-        <LinearGradient
-          colors={[gradientTop, gradientBottom]}
-          style={StyleSheet.absoluteFill}
-          pointerEvents="none"
-        />
         {SPARKS.map((s, i) => (
           <Spark key={i} top={top + s.top} left={s.left} size={s.size} opacity={s.opacity} delay={i * 700} />
         ))}
@@ -213,23 +209,13 @@ export function SkyHeader({
           </ReanimatedAnimated.View>
         )}
       </View>
-      {/* The hills fade into plain sky, so the collapsed bar ends in one clean edge. */}
-      <View style={{ backgroundColor: gradientBottom }}>
-        <ReanimatedAnimated.View style={hillsStyle}>
-          <HeaderHills sky={gradientBottom} primary={accent} secondary={secondary} compact />
-        </ReanimatedAnimated.View>
-      </View>
-      {collapse && (
-        <ReanimatedAnimated.View style={[styles.shadow, shadowStyle]} pointerEvents="none">
-          <LinearGradient colors={SHADOW} style={StyleSheet.absoluteFill} />
-        </ReanimatedAnimated.View>
-      )}
+      {/* The hills sit straight on the sky, with none of their own, and are gone once collapsed. */}
+      <ReanimatedAnimated.View style={hillsStyle}>
+        <HeaderHills sky="transparent" primary={accent} secondary={secondary} compact />
+      </ReanimatedAnimated.View>
     </ReanimatedAnimated.View>
   );
 }
-
-// Under the collapsed bar: the sky deepened a little, fading to nothing.
-const SHADOW = [`${theme.colors.link}29`, `${theme.colors.link}00`] as const;
 
 const styles = StyleSheet.create({
   over: { position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10 },
@@ -267,8 +253,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: theme.colors.textSecondary,
   },
-  // Just under the header's bottom edge.
-  shadow: { position: 'absolute', left: 0, right: 0, top: '100%', height: 14 },
 });
 
 /**

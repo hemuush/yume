@@ -30,7 +30,6 @@ import { AmountField } from '@/components/AmountField';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { YumeLogo } from '@/components/YumeLogo';
 import { useAccent, THEMES } from '@/theme/AccentContext';
-import { shade } from '@/lib/color';
 import { ThemeThumb } from './ThemePreview';
 import { theme } from '@/constants/theme';
 import { Section } from '@/components/Section';
@@ -83,7 +82,7 @@ function AboutFact({ icon, text }: { icon: string; text: string }) {
  * About. A coral note tops it only while backups need attention; otherwise rows' sub-lines carry every state.
  */
 export function SettingsSection() {
-  const { themeId, accent } = useAccent();
+  const { themeId } = useAccent();
   const { lockEnabled, setLockEnabled } = useAppLock();
   const { hideAmounts, toggleHideAmounts } = usePrivacy();
   const [currency, setCurrency] = useState('INR');
@@ -254,7 +253,6 @@ export function SettingsSection() {
         <View style={h.card}>
           <SettingsRow
             icon="currency-inr"
-            iconBg={theme.colors.goldTint}
             label="Default currency"
             sub="New accounts and displayed amounts"
             value={currency}
@@ -288,7 +286,6 @@ export function SettingsSection() {
           <MovingRow>
             <SettingsRow
               icon="gauge"
-              iconBg={theme.colors.idTeal}
               label="Daily spending goal"
               sub="Shown on Home each day"
               value={dailyGoal != null ? `${formatMoney(dailyGoal, currency)}/day` : 'Not set'}
@@ -328,7 +325,6 @@ export function SettingsSection() {
           <MovingRow>
             <SettingsRow
               icon="tag-outline"
-              iconBg={theme.colors.idCoral}
               label="Categories"
               sub="Add, rename, or archive"
               onPress={() => router.push('/categories')}
@@ -342,14 +338,12 @@ export function SettingsSection() {
         <View style={h.card}>
           <SettingsRow
             icon="fingerprint"
-            iconBg={theme.colors.idSage}
             label="Require unlock"
             sub="Fingerprint, face, or your phone's PIN"
             right={<ToggleSwitch value={lockEnabled} onChange={onToggleLock} />}
           />
           <SettingsRow
             icon="eye-off-outline"
-            iconBg={theme.colors.idGold}
             label="Hide savings & investment amounts"
             sub="Also on the eye icon at the top"
             right={<ToggleSwitch value={hideAmounts} onChange={toggleHideAmounts} />}
@@ -357,7 +351,6 @@ export function SettingsSection() {
           />
           <SettingsRow
             icon="bell-outline"
-            iconBg={shade(accent, 95)}
             label="Notifications"
             sub={
               alertsOn == null
@@ -374,7 +367,6 @@ export function SettingsSection() {
         <View style={h.card}>
           <SettingsRow
             icon="folder-outline"
-            iconBg={theme.colors.idTeal}
             label="Backup & restore"
             sub={backupSub}
             subColor={backupOk ? undefined : theme.colors.expenseText}
@@ -382,7 +374,6 @@ export function SettingsSection() {
           />
           <SettingsRow
             icon="delete-restore"
-            iconBg={theme.colors.idCoral}
             label="Recently deleted"
             sub={
               deletedCount == null || deletedCount === 0
@@ -394,7 +385,6 @@ export function SettingsSection() {
           />
           <SettingsRow
             icon="broom"
-            iconBg={theme.colors.accentTint}
             label="Tidy up"
             sub={
               tidyCount == null
