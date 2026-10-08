@@ -16,6 +16,7 @@ import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { useFonts } from 'expo-font';
 // Scoped per-weight imports (not the package root) so Metro bundles only the font files used; the root
 // import pulls in every weight of the family.
+import { Archivo_300Light } from '@expo-google-fonts/archivo/300Light';
 import { Archivo_400Regular } from '@expo-google-fonts/archivo/400Regular';
 import { Archivo_600SemiBold } from '@expo-google-fonts/archivo/600SemiBold';
 import { Archivo_700Bold } from '@expo-google-fonts/archivo/700Bold';
@@ -74,6 +75,7 @@ export default function RootLayout() {
   // Bumped by "Try again" so the startup effect runs again after a failed database start.
   const [startAttempt, setStartAttempt] = useState(0);
   const [fontsLoaded, fontsError] = useFonts({
+    Archivo_300Light,
     Archivo_400Regular,
     Archivo_600SemiBold,
     Archivo_700Bold,

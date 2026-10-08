@@ -23,12 +23,18 @@ export function SkyBackdrop({
   scrollY,
   distance,
   collapsedHeight,
+  barColor = theme.colors.background,
+  wash: showWash = true,
 }: {
   accent: string;
   scrollY: SharedValue<number>;
   /** How far the header can collapse; 0 for a header that doesn't. */
   distance: SharedValue<number>;
   collapsedHeight: number;
+  /** The collapsed bar's colour: Home matches its wallpaper's top. */
+  barColor?: string;
+  /** Off where the page already has its own wallpaper behind the header (Home). */
+  wash?: boolean;
 }) {
   const wash = shade(accent, 90, 4);
 
@@ -47,13 +53,18 @@ export function SkyBackdrop({
 
   return (
     <>
-      <ReanimatedAnimated.View pointerEvents="none" style={[StyleSheet.absoluteFill, washStyle]}>
-        <LinearGradient colors={[hexToRgba(wash, 0.7), hexToRgba(wash, 0)]} style={StyleSheet.absoluteFill} />
-      </ReanimatedAnimated.View>
+      {showWash && (
+        <ReanimatedAnimated.View pointerEvents="none" style={[StyleSheet.absoluteFill, washStyle]}>
+          <LinearGradient
+            colors={[hexToRgba(wash, 0.7), hexToRgba(wash, 0)]}
+            style={StyleSheet.absoluteFill}
+          />
+        </ReanimatedAnimated.View>
+      )}
       {collapsedHeight > 4 && (
         <ReanimatedAnimated.View
           pointerEvents="none"
-          style={[styles.bar, { height: collapsedHeight }, barStyle]}
+          style={[styles.bar, { height: collapsedHeight, backgroundColor: barColor }, barStyle]}
         />
       )}
     </>
@@ -66,7 +77,6 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    backgroundColor: theme.colors.background,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: theme.colors.borderSoft,
   },
