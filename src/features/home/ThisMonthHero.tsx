@@ -39,6 +39,8 @@ interface HeroContent {
    * this.
    */
   dueMinor: number;
+  /** Loans you still owe, all of them (not just this period). */
+  outstandingLoansMinor: number;
   /** Which period these figures are for: a new period remounts the rolling figures instead of rolling them. */
   periodKey: string;
 }
@@ -64,6 +66,7 @@ export function ThisMonthHero({
   surplusMinor,
   carryMinor = 0,
   dueMinor = 0,
+  outstandingLoansMinor,
   today = null,
   pace = null,
 }: Omit<HeroContent, 'dueMinor' | 'carryMinor'> & {
@@ -90,6 +93,7 @@ export function ThisMonthHero({
     surplusMinor,
     carryMinor,
     dueMinor,
+    outstandingLoansMinor,
     periodKey,
   });
   // The sum behind "Free after bills", opened from the "still to pay" chip.
@@ -109,6 +113,7 @@ export function ThisMonthHero({
       surplusMinor,
       carryMinor,
       dueMinor,
+      outstandingLoansMinor,
       periodKey,
     };
     const isPeriodTurn = prevPeriodKey.current !== periodKey;
@@ -145,6 +150,7 @@ export function ThisMonthHero({
     surplusMinor,
     carryMinor,
     dueMinor,
+    outstandingLoansMinor,
     reduce,
     opacity,
     tx,
@@ -325,6 +331,33 @@ export function ThisMonthHero({
           </View>
         )}
 
+        {/* Spent | Saved | Debt left, as on the old card; Saved stays out while savings are hidden. */}
+        <View style={styles.stats}>
+          <Stat
+            label="Spent"
+            color={theme.colors.spentSoft}
+            minor={displayed.spentMinor}
+            periodKey={displayed.periodKey}
+          />
+          {!hideAmounts && (
+            <Stat
+              label="Saved"
+              color={theme.colors.secondary}
+              minor={displayed.savingsMinor}
+              periodKey={displayed.periodKey}
+              divider
+            />
+          )}
+          <Stat
+            label="Debt left"
+            color={theme.colors.slice.debt}
+            minor={displayed.outstandingLoansMinor}
+            periodKey={displayed.periodKey}
+            divider
+            cleared={displayed.outstandingLoansMinor === 0}
+          />
+        </View>
+
         {pace && (
           <View style={styles.pace}>
             <Feather name="trending-up" size={14} color={theme.colors.textMuted} />
@@ -362,5 +395,48 @@ export function ThisMonthHero({
 
       <HeroActions />
     </Glass>
+  );
+}
+
+/** One figure in the Spent | Saved | Debt left row: a coloured dot, its name, the amount. */
+function Stat({
+  label,
+  color,
+  minor,
+  periodKey,
+  divider = false,
+  cleared = false,
+}: {
+  label: string;
+  color: string;
+  minor: number;
+  periodKey: string;
+  divider?: boolean;
+  /** Debt paid off: a tick beside the name. */
+  cleared?: boolean;
+}) {
+  return (
+    <View
+      style={[styles.stat, divider && styles.statDivider]}
+      accessible
+      accessibilityLabel={`${label}, ${formatMoney(minor)}${cleared ? ', all paid off' : ''}`}
+    >
+      <View style={styles.statHead}>
+        <View style={[styles.statDot, { backgroundColor: color }]} />
+        <Text style={styles.statLabel} numberOfLines={1}>
+          {label}
+        </Text>
+        {cleared && <Feather name="check" size={12} color={theme.colors.incomeText} />}
+      </View>
+      {/* Rolls to its new value after a save; a new period slides in instead. */}
+      <CountUpAmount
+        key={periodKey}
+        minor={minor}
+        countFromZero={false}
+        style={styles.statValue}
+        numberOfLines={1}
+        adjustsFontSizeToFit
+      />
+    </View>
   );
 }

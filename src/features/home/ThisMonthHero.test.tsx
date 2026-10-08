@@ -51,6 +51,7 @@ function hero(over: Partial<React.ComponentProps<typeof ThisMonthHero>> = {}) {
       spentMinor={9_576_200}
       savingsMinor={9_950_000}
       surplusMinor={79_400}
+      outstandingLoansMinor={231_895_800}
       today={{ spentMinor: 204_500, goalMinor: 500_000 }}
       pace={{ projectedMinor: 10_370_000, byLabel: '30 Sept' }}
       {...over}
@@ -80,6 +81,10 @@ describe('month card', () => {
         'Income',
         'Transfer',
       ])
+    );
+    // Spent | Saved | Debt left, as on the old card.
+    expect(all).toEqual(
+      expect.arrayContaining(['Spent', 'Saved', 'Debt left', '₹95,762', '₹99,500', '₹23,18,958'])
     );
     // Free to use is said once, as the headline.
     expect(all.filter((t) => t === 'Free to use')).toHaveLength(1);
@@ -198,7 +203,9 @@ describe('month card with savings hidden', () => {
 
   it('keeps the free headline and the spent share, and never says what was saved', () => {
     const all = texts(render(hidden));
-    expect(all).toEqual(expect.arrayContaining(['10% spent', 'Free to use', '₹30,000']));
+    expect(all).toEqual(
+      expect.arrayContaining(['10% spent', 'Free to use', '₹30,000', 'Spent', 'Debt left'])
+    );
     expect(all).not.toContain('Saved');
   });
 
@@ -278,6 +285,7 @@ describe('month card when bills change without the period changing', () => {
           direction={0}
           canStepForward={false}
           onStep={jest.fn()}
+          outstandingLoansMinor={0}
           {...props}
           dueMinor={2_000_000}
         />
@@ -286,5 +294,14 @@ describe('month card when bills change without the period changing', () => {
     const all = texts(r);
     expect(all).not.toContain('Short after bills');
     expect(all).toContain('Free after bills');
+  });
+});
+
+describe('month card, debt', () => {
+  it('ticks Debt left once it is all paid off', () => {
+    const r = render({ outstandingLoansMinor: 0 });
+    expect(
+      r.root.findAll((n) => n.props.accessibilityLabel === 'Debt left, ₹0, all paid off').length
+    ).toBeGreaterThan(0);
   });
 });
