@@ -830,3 +830,36 @@ export async function markWrapSeen(key: string): Promise<void> {
     [WRAPS_SEEN_KEY, JSON.stringify(next)]
   );
 }
+
+const RECENT_SEARCHES_KEY = 'recent_searches';
+/** How many past Activity searches are kept, newest first. */
+export const RECENT_SEARCHES_KEPT = 5;
+
+/** Activity's recent searches, newest first. Kept on the phone only, like every other setting. */
+export async function getRecentSearches(): Promise<string[]> {
+  const db = await getDb();
+  const row = await db.getFirstAsync<{ value: string }>('SELECT value FROM settings WHERE key = ?', [
+    RECENT_SEARCHES_KEY,
+  ]);
+  try {
+    const parsed = row ? JSON.parse(row.value) : [];
+    return Array.isArray(parsed) ? parsed.filter((q): q is string => typeof q === 'string') : [];
+  } catch {
+    return [];
+  }
+}
+
+/** Puts `query` first (once, ignoring case) and keeps the newest few; an empty list clears them. */
+export async function setRecentSearches(queries: string[]): Promise<void> {
+  const db = await getDb();
+  const seen = new Set<string>();
+  const kept = queries
+    .map((q) => q.trim())
+    .filter((q) => q && !seen.has(q.toLowerCase()) && seen.add(q.toLowerCase()))
+    .slice(0, RECENT_SEARCHES_KEPT);
+  await db.runAsync(
+    `INSERT INTO settings (key, value) VALUES (?, ?)
+     ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
+    [RECENT_SEARCHES_KEY, JSON.stringify(kept)]
+  );
+}

@@ -9,6 +9,9 @@ import { ModalSheet } from '@/components/ModalSheet';
 import { modalFooterStyles as f } from '@/constants/theme';
 import { orderCategoriesForPicker, topLevelOnly, childrenOf } from '@/lib/categoryTree';
 import { styles } from './transactions.styles';
+import { accountHue, accountIcon } from '@/lib/account';
+import { shade } from '@/lib/color';
+import { useAccent } from '@/theme/AccentContext';
 
 const FILTER_TYPES: { label: string; value: TransactionType | 'all' }[] = [
   { label: 'All', value: 'all' },
@@ -36,6 +39,7 @@ export function FilterModal({
   filter,
   onClose,
   onApply,
+  countFor,
 }: {
   visible: boolean;
   categories: Category[];
@@ -43,7 +47,10 @@ export function FilterModal({
   filter: ActivityFilter;
   onClose: () => void;
   onApply: (filter: ActivityFilter) => void;
+  /** How many entries a filter would show in the period on screen, for the "Show N entries" button. */
+  countFor?: (filter: ActivityFilter) => number;
 }) {
+  const { accent } = useAccent();
   const { type, categoryIds, accountIds } = filter;
   const [draftType, setDraftType] = useState(type);
   const [draftCategoryIds, setDraftCategoryIds] = useState<string[]>(categoryIds);
@@ -97,24 +104,32 @@ export function FilterModal({
     }
   };
 
+  const draft = { type: draftType, categoryIds: draftCategoryIds, accountIds: draftAccountIds };
+  const count = countFor?.(draft);
+  const applyTitle =
+    count == null
+      ? 'Apply'
+      : count === 0
+        ? 'Show nothing'
+        : `Show ${count} ${count === 1 ? 'entry' : 'entries'}`;
+
   return (
     <ModalSheet
       visible={visible}
       onClose={onClose}
-      title="Filter transactions"
+      title="Filter"
       footer={
         <View style={f.footerRow}>
           <PrimaryButton
             title="Clear filters"
             variant="secondary"
             onPress={() => onApply({ type: 'all', categoryIds: [], accountIds: [] })}
-            style={f.footerBtn}
+            style={styles.filterClear}
           />
           <PrimaryButton
-            title="Apply"
-            onPress={() =>
-              onApply({ type: draftType, categoryIds: draftCategoryIds, accountIds: draftAccountIds })
-            }
+            title={applyTitle}
+            accessibilityLabel={`Apply. ${applyTitle}`}
+            onPress={() => onApply(draft)}
             style={f.footerBtn}
           />
         </View>
@@ -131,6 +146,8 @@ export function FilterModal({
               <Chip
                 key={acc.id}
                 label={acc.name}
+                icon={accountIcon(acc.type)}
+                iconColor={shade(accountHue(acc.type, accent), 88)}
                 active={draftAccountIds.includes(acc.id)}
                 onPress={() =>
                   setDraftAccountIds((prev) =>
@@ -151,6 +168,8 @@ export function FilterModal({
               <Chip
                 key={cat.id}
                 label={cat.name}
+                icon={cat.icon}
+                more={childrenOf(visibleCategories, cat.id).length > 0}
                 active={draftCategoryIds.includes(cat.id)}
                 onPress={() => onToggleTopLevel(cat)}
                 activeBorderColor={cat.color}
@@ -159,7 +178,7 @@ export function FilterModal({
           </View>
           {expandedChildren.length > 0 && (
             <View style={styles.subGroup}>
-              <Text style={styles.subGroupLabel}>{expandedParent?.name} —</Text>
+              <Text style={styles.subGroupLabel}>{expandedParent?.name} ›</Text>
               <View style={styles.chipRow}>
                 {expandedChildren.map((cat) => (
                   <Chip

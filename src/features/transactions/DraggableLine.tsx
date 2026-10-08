@@ -1,6 +1,5 @@
 import { ReactNode, useEffect, useRef, useState } from 'react';
 import { Animated, PanResponder, StyleSheet } from 'react-native';
-import { theme } from '@/constants/theme';
 import { shade } from '@/lib/color';
 import { useAccent } from '@/theme/AccentContext';
 
@@ -53,8 +52,8 @@ export function DraggableLine({
       onTouchCancel={() => latest.current.lifted && latest.current.onEnd()}
       onLayout={(e) => onHeight(e.nativeEvent.layout.height)}
       style={[
-        lifted && [styles.lifted, { backgroundColor: shade(accent, 95) }],
-        { transform: lifted ? [{ translateY: dy }] : [{ translateY: shift }] },
+        lifted && [styles.lifted, { backgroundColor: shade(accent, 97) }],
+        { transform: lifted ? [{ translateY: dy }, { scale: 1.02 }] : [{ translateY: shift }] },
       ]}
     >
       {children}
@@ -63,10 +62,10 @@ export function DraggableLine({
 }
 
 const styles = StyleSheet.create({
+  // Lifted out of the card: a white-ish tile with a soft drop, a touch larger than the rest.
   lifted: {
     zIndex: 2,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
+    borderRadius: 16,
+    boxShadow: '0px 10px 24px rgba(16,32,51,0.18)',
   },
 });

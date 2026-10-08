@@ -49,6 +49,52 @@ export const styles = StyleSheet.create({
   },
   searchCancel: { fontSize: 14, fontFamily: theme.font.bodyBold, color: theme.colors.link },
   searchLoading: { paddingVertical: 40, alignItems: 'center' },
+  // Search before anything is typed: what it looks at, things to try, and past searches.
+  searchEmpty: { alignItems: 'center', gap: 10, paddingHorizontal: 20, paddingTop: 24 },
+  searchEmptyIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: GLASS.fillStrong,
+    borderWidth: 1,
+    borderColor: GLASS.edge,
+  },
+  searchEmptyTitle: { fontFamily: theme.font.bodyBold, fontSize: 16, color: theme.colors.textPrimary },
+  searchEmptySub: {
+    fontFamily: theme.font.body,
+    fontSize: 13,
+    lineHeight: 19,
+    textAlign: 'center',
+    color: theme.colors.textMuted,
+    maxWidth: 280,
+  },
+  searchSuggest: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 6 },
+  searchSuggestChip: {
+    minHeight: 32,
+    paddingHorizontal: 12,
+    borderRadius: 16,
+    justifyContent: 'center',
+    backgroundColor: GLASS.fillStrong,
+    borderWidth: 1,
+    borderColor: GLASS.edge,
+  },
+  searchSuggestText: { fontFamily: theme.font.bodyMedium, fontSize: 12.5, color: theme.colors.textSecondary },
+  recentWrap: { alignSelf: 'stretch', marginTop: 8, gap: 6 },
+  recentHead: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 4 },
+  recentLabel: { ...EYEBROW, color: theme.colors.textMuted },
+  recentClear: { fontFamily: theme.font.bodyBold, fontSize: 12.5, color: theme.colors.link },
+  recentCard: {
+    borderRadius: 22,
+    paddingHorizontal: 14,
+    backgroundColor: GLASS.fill,
+    borderWidth: 1,
+    borderColor: GLASS.edge,
+  },
+  recentRow: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 48 },
+  recentDivider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.borderSoft },
+  recentText: { flex: 1, fontFamily: theme.font.body, fontSize: 14, color: theme.colors.textPrimary },
 
   // The Spent card leads the tab, frosted like Home's month card: the kicker, a big light figure, its chips
   // (the change, money in, net), the chart and a one-line legend.
@@ -138,6 +184,19 @@ export const styles = StyleSheet.create({
   periodSub: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textMuted },
 
   listArea: { flex: 1 },
+  // Shown while a line is being moved, above the tab bar like the undo bar.
+  dragHint: {
+    position: 'absolute',
+    left: 20,
+    right: 20,
+    minHeight: 46,
+    borderRadius: 23,
+    paddingHorizontal: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  dragHintText: { flex: 1, fontFamily: theme.font.bodyMedium, fontSize: 13.5, color: theme.colors.white },
   // The period, as a small chip in the shrunk header; it opens the month picker.
   periodChip: {
     height: 32,
@@ -188,8 +247,45 @@ export const styles = StyleSheet.create({
   income: { color: theme.colors.incomeText },
   expense: { color: theme.colors.expenseText },
   rowRefund: { fontFamily: theme.font.bodyBold, color: theme.colors.incomeText },
-  // The Details / Actions switch under a transaction's card.
-  detailTabs: { marginBottom: 12 },
+  // A transaction's actions, as three buttons under its card.
+  quickRow: { flexDirection: 'row', gap: 8, marginBottom: 12 },
+  quickBtn: {
+    flex: 1,
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 10,
+    paddingHorizontal: 4,
+    borderRadius: 18,
+    backgroundColor: theme.colors.surface,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.borderSoft,
+  },
+  quickIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: theme.colors.surfaceAlt,
+  },
+  quickText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textPrimary },
+  // Edit, then the bin, which turns into a red "Delete?" on the first tap.
+  detailFoot: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  deleteBtn: {
+    minWidth: 52,
+    height: 52,
+    borderRadius: 26,
+    paddingHorizontal: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    backgroundColor: theme.colors.surface,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.borderSoft,
+  },
+  deleteBtnAsk: { backgroundColor: theme.colors.expenseText, borderColor: theme.colors.expenseText },
+  deleteAskText: { fontFamily: theme.font.bodyBold, fontSize: 14, color: theme.colors.white },
   // A split part's detail: the whole payment, this part in bold.
   splitCard: {
     marginBottom: 12,
@@ -222,6 +318,8 @@ export const styles = StyleSheet.create({
     marginBottom: 6,
   },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 14 },
+  // The filter sheet's Clear sits small beside its wide Show button.
+  filterClear: { flexGrow: 0, paddingHorizontal: 18 },
   subGroup: {
     marginTop: -6,
     marginBottom: 14,
