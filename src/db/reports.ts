@@ -547,7 +547,8 @@ export async function getTodaySpend(
  * plus still-due this month: pending borrowed-loan EMIs and active recurring expenses. Default currency only.
  */
 export async function getMonthPaceInputs(
-  today: string = toIso(new Date())
+  today: string = toIso(new Date()),
+  excludeSensitive = false
 ): Promise<{ everydaySpentMinor: number; dueRestOfMonthMinor: number }> {
   const db = await getDb();
   const currency = await getDefaultCurrency();
@@ -560,7 +561,7 @@ export async function getMonthPaceInputs(
      JOIN accounts a ON a.id = t.account_id
      LEFT JOIN categories c ON c.id = t.category_id
      WHERE ${SPEND_ROWS} AND a.currency = ? AND IFNULL(c.is_system, 0) = 0
-       AND t.date >= ? AND t.date <= ?`,
+       AND t.date >= ? AND t.date <= ?${excludeSensitive ? ` AND ${NOT_SENSITIVE}` : ''}`,
     [currency, monthStart, today]
   );
   const emis = await db.getFirstAsync<{ total: number | null }>(
@@ -572,7 +573,7 @@ export async function getMonthPaceInputs(
   );
   return {
     everydaySpentMinor: Math.max(0, everyday?.total ?? 0),
-    dueRestOfMonthMinor: (emis?.total ?? 0) + (await recurringExpensesDue(today, monthEnd)),
+    dueRestOfMonthMinor: (emis?.total ?? 0) + (await recurringExpensesDue(today, monthEnd, excludeSensitive)),
   };
 }
 
@@ -580,7 +581,11 @@ export async function getMonthPaceInputs(
  * What active repeating expenses (default currency) will still post after `today` through `monthEnd`, every
  * run counted: a weekly bill due four more times this month counts four times.
  */
-async function recurringExpensesDue(today: string, monthEnd: string): Promise<number> {
+async function recurringExpensesDue(
+  today: string,
+  monthEnd: string,
+  excludeSensitive = false
+): Promise<number> {
   const db = await getDb();
   const currency = await getDefaultCurrency();
   const rules = await db.getAllAsync<{
@@ -594,7 +599,12 @@ async function recurringExpensesDue(today: string, monthEnd: string): Promise<nu
     `SELECT r.amount_minor, r.next_run_date, r.frequency, r.interval_count, r.anchor_day, r.end_date
      FROM recurring_rules r
      JOIN accounts a ON a.id = r.account_id
-     WHERE r.active = 1 AND r.type = 'expense' AND a.currency = ? AND r.next_run_date <= ?`,
+     WHERE r.active = 1 AND r.type = 'expense' AND a.currency = ? AND r.next_run_date <= ?${
+       // A hidden category's repeating payment stays out, like its entries do.
+       excludeSensitive
+         ? ` AND COALESCE((SELECT ${sensitiveOf('sc')} FROM categories sc WHERE sc.id = r.category_id), 0) = 0`
+         : ''
+     }`,
     [currency, monthEnd]
   );
   return rules.reduce(
@@ -620,7 +630,10 @@ async function recurringExpensesDue(today: string, monthEnd: string): Promise<nu
  * Still owed this month, not yet spent: pending EMIs on active borrowed loans due by month end (overdue and
  * due today count) and active recurring expenses after `today` (earlier ones already posted). Default currency.
  */
-export async function getStillToPayThisMonth(today: string = toIso(new Date())): Promise<number> {
+export async function getStillToPayThisMonth(
+  today: string = toIso(new Date()),
+  excludeSensitive = false
+): Promise<number> {
   const db = await getDb();
   const monthStart = `${today.slice(0, 7)}-01`;
   const [y, m] = today.split('-').map(Number);
@@ -632,7 +645,7 @@ export async function getStillToPayThisMonth(today: string = toIso(new Date())):
        AND p.due_date >= ? AND p.due_date <= ?`,
     [monthStart, monthEnd]
   );
-  return (emis?.total ?? 0) + (await recurringExpensesDue(today, monthEnd));
+  return (emis?.total ?? 0) + (await recurringExpensesDue(today, monthEnd, excludeSensitive));
 }
 
 export interface DailyGoalStreakPoint {

@@ -70,13 +70,83 @@ function nextDue(upcoming: Upcoming): UpcomingItem | null {
   return upcoming.items[0] ?? upcoming.next;
 }
 
-/** Most common currency among `accounts`, so the in-hand total never adds two currencies together. */
-function mainCurrency(accounts: Account[]): string | undefined {
-  const counts = new Map<string, number>();
-  for (const a of accounts) counts.set(a.currency, (counts.get(a.currency) ?? 0) + 1);
-  let best: string | undefined;
-  for (const [c, n] of counts) if (!best || n > (counts.get(best) ?? 0)) best = c;
-  return best;
+/**
+ * The Accounts tile: its heading is the button to the full list, and each account chip opens that account,
+ * so a screen reader can reach every chip (a chip inside a pressable tile would be folded into the tile).
+ */
+function AccountsTile({
+  accounts,
+  currency,
+  onOpenAccounts,
+  onOpenAccount,
+}: {
+  accounts: Account[];
+  currency: string;
+  onOpenAccounts: () => void;
+  onOpenAccount: (account: Account) => void;
+}) {
+  const { accent } = useAccent();
+  // Money in hand, in the default currency only, so two currencies are never added together.
+  const inHand = accounts.filter(
+    (a) => (a.type === 'bank' || a.type === 'cash' || a.type === 'wallet') && a.currency === currency
+  );
+  const inHandMinor = inHand.reduce((s, a) => s + a.currentBalanceMinor, 0);
+  return (
+    <View style={styles.wide}>
+      <Glass radius={22} style={styles.tile}>
+        <Pressable
+          onPress={onOpenAccounts}
+          hitSlop={8}
+          style={withPressed(styles.tileHead)}
+          accessibilityRole="button"
+          accessibilityLabel={`Accounts, ${accounts.length}. See all`}
+        >
+          <Text style={styles.tileTitle}>Accounts</Text>
+          <Feather name="arrow-up-right" size={17} color={theme.colors.textSecondary} />
+        </Pressable>
+        {inHand.length > 0 && (
+          <>
+            <Amount minor={inHandMinor} currency={currency} style={styles.big} numberOfLines={1} />
+            <Text style={styles.sub} numberOfLines={1}>
+              In bank, cash and wallets
+            </Text>
+          </>
+        )}
+        <View style={styles.chips}>
+          {accounts.map((a) => {
+            const hue = accountHue(a.type, accent);
+            return (
+              <Pressable
+                key={a.id}
+                onPress={() => onOpenAccount(a)}
+                style={withPressed(styles.chip)}
+                accessibilityRole="button"
+                accessibilityLabel={`${a.name}. Open summary`}
+              >
+                <View style={[styles.chipIcon, { backgroundColor: shade(hue, 88) }]}>
+                  <MaterialCommunityIcons
+                    name={accountIcon(a.type) as McIconName}
+                    size={13}
+                    color={shade(hue, 30, 10)}
+                  />
+                </View>
+                <Text style={styles.chipName} numberOfLines={1}>
+                  {a.name}
+                </Text>
+                <Amount
+                  minor={a.currentBalanceMinor}
+                  currency={a.currency}
+                  sensitive={a.type === 'savings'}
+                  style={styles.chipAmount}
+                  numberOfLines={1}
+                />
+              </Pressable>
+            );
+          })}
+        </View>
+      </Glass>
+    </View>
+  );
 }
 
 /**
@@ -87,6 +157,7 @@ export function HomeBento({
   upcoming,
   budgets,
   accounts,
+  currency,
   onOpenUpcoming,
   onOpenBudgets,
   onOpenAccounts,
@@ -96,25 +167,20 @@ export function HomeBento({
   upcoming: Upcoming;
   budgets: BudgetProgress[];
   accounts: Account[];
+  /** The default currency: the in-hand total counts only accounts in it. */
+  currency: string;
   onOpenUpcoming: () => void;
   onOpenBudgets: () => void;
   onOpenAccounts: () => void;
   onOpenAccount: (account: Account) => void;
   onAddAccount: () => void;
 }) {
-  const { accent } = useAccent();
   const due = nextDue(upcoming);
   const dueTone: Tone = !due ? 'ok' : due.urgent ? 'bad' : due.pinned ? 'warn' : 'plain';
 
   const over = budgets.filter((b) => b.overBudget).length;
   const close = budgets.filter((b) => !b.overBudget && b.percentUsed >= 80).length;
   const onTrack = budgets.length - over;
-
-  const inHand = accounts.filter((a) => a.type === 'bank' || a.type === 'cash' || a.type === 'wallet');
-  const currency = mainCurrency(inHand);
-  const inHandMinor = inHand
-    .filter((a) => a.currency === currency)
-    .reduce((s, a) => s + a.currentBalanceMinor, 0);
 
   return (
     <View style={styles.grid}>
@@ -156,58 +222,19 @@ export function HomeBento({
         )}
       </Tile>
 
-      <Tile
-        title="Accounts"
-        wide
-        onPress={accounts.length > 0 ? onOpenAccounts : onAddAccount}
-        label={accounts.length > 0 ? `Accounts, ${accounts.length}` : 'Add an account'}
-      >
-        {accounts.length > 0 ? (
-          <>
-            <Amount minor={inHandMinor} currency={currency} style={styles.big} numberOfLines={1} />
-            <Text style={styles.sub} numberOfLines={1}>
-              In bank, cash and wallets
-            </Text>
-            <View style={styles.chips}>
-              {accounts.map((a) => {
-                const hue = accountHue(a.type, accent);
-                return (
-                  <Pressable
-                    key={a.id}
-                    onPress={() => onOpenAccount(a)}
-                    style={withPressed(styles.chip)}
-                    accessibilityRole="button"
-                    accessibilityLabel={`${a.name}. Open summary`}
-                  >
-                    <View style={[styles.chipIcon, { backgroundColor: shade(hue, 88) }]}>
-                      <MaterialCommunityIcons
-                        name={accountIcon(a.type) as McIconName}
-                        size={13}
-                        color={shade(hue, 30, 10)}
-                      />
-                    </View>
-                    <Text style={styles.chipName} numberOfLines={1}>
-                      {a.name}
-                    </Text>
-                    <Amount
-                      minor={a.currentBalanceMinor}
-                      currency={a.currency}
-                      sensitive={a.type === 'savings'}
-                      style={styles.chipAmount}
-                      numberOfLines={1}
-                    />
-                  </Pressable>
-                );
-              })}
-            </View>
-          </>
-        ) : (
-          <>
-            <Text style={styles.big}>Add one</Text>
-            <Text style={styles.sub}>A bank account, cash, or a UPI wallet</Text>
-          </>
-        )}
-      </Tile>
+      {accounts.length > 0 ? (
+        <AccountsTile
+          accounts={accounts}
+          currency={currency}
+          onOpenAccounts={onOpenAccounts}
+          onOpenAccount={onOpenAccount}
+        />
+      ) : (
+        <Tile title="Accounts" wide onPress={onAddAccount} label="Add an account">
+          <Text style={styles.big}>Add one</Text>
+          <Text style={styles.sub}>A bank account, cash, or a UPI wallet</Text>
+        </Tile>
+      )}
     </View>
   );
 }

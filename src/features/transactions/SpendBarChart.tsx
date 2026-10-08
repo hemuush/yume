@@ -6,7 +6,7 @@ import { useReduceMotion } from '@/lib/useReduceMotion';
 import { formatMoney } from '@/lib/money';
 import { SpendBar, ChartLegendItem } from './spendChart';
 
-const MAX_BAR_HEIGHT = 64;
+const MAX_BAR_HEIGHT = 60;
 // A day with any spend is at least this tall, so a small one still reads as a bar.
 const MIN_BAR_HEIGHT = 6;
 // Only 7 daily bars or ~4-5 weekly ones at a time, so a tighter cap than the
@@ -40,13 +40,16 @@ function AnimatedBarStack({
     }
     const first = !grown.current;
     grown.current = true;
-    Animated.timing(v, {
+    const anim = Animated.timing(v, {
       toValue: heightPct,
       duration: first ? 420 : 280,
       delay: first ? delay : 0,
       easing: Easing.out(Easing.cubic),
       useNativeDriver: false,
-    }).start();
+    });
+    anim.start();
+    // Stopped when the bar goes or its height changes again, so no frame runs for a bar that has left.
+    return () => anim.stop();
   }, [heightPct, reduce, delay, v]);
 
   const height = v.interpolate({ inputRange: [0, 100], outputRange: ['0%', '100%'], extrapolate: 'clamp' });
@@ -198,13 +201,13 @@ const styles = StyleSheet.create({
   barTrack: { height: MAX_BAR_HEIGHT, justifyContent: 'flex-end', alignItems: 'center' },
   barLifted: { transform: [{ translateY: -3 }] },
   stack: {
-    width: 20,
+    width: 18,
     borderRadius: 6,
     overflow: 'hidden',
     flexDirection: 'column-reverse',
   },
   segment: { width: '100%' },
-  baseline: { width: 20, height: 2, borderRadius: 1, backgroundColor: theme.colors.borderSoft },
+  baseline: { width: 18, height: 2, borderRadius: 1, backgroundColor: theme.colors.borderSoft },
   outsideDay: {
     width: 4,
     height: 4,
@@ -213,7 +216,7 @@ const styles = StyleSheet.create({
     opacity: 0.35,
   },
   futureDay: {
-    width: 20,
+    width: 18,
     height: 2,
     borderRadius: 1,
     backgroundColor: theme.colors.borderSoft,
