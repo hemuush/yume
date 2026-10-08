@@ -18,15 +18,7 @@ import { useAccent } from '@/theme/AccentContext';
 import { withPressed } from '@/lib/pressed';
 import { useReduceMotion } from '@/lib/useReduceMotion';
 import type { CollapsingHeader } from '@/lib/useCollapsingHeader';
-import { HeaderHills } from './HeaderHills';
 import { SkyBackdrop } from './SkyBackdrop';
-import { Spark } from './Spark';
-
-// Two sparks: the band is short. `top` is below the status-bar inset.
-const SPARKS = [
-  { top: 4, left: 52, size: 4, opacity: 0.9 },
-  { top: 24, left: 68, size: 3, opacity: 0.7 },
-];
 
 /** The title row's height; the band keeps just this row (plus BAR_PAD) once collapsed. */
 const ROW = 40;
@@ -35,13 +27,13 @@ const BAR_PAD = 6;
 const TITLE_SCALE = 17 / 22;
 
 /**
- * The header every screen shares: a short sky band with a 22px title row (back button, title, actions,
- * profile), an optional line under it, anything passed as children (a period control, a search box), and a
- * 14px hill edge. The sky fades into the page colour (SkyBackdrop), so it never looks like a separate strip.
+ * The header every screen shares (the "quiet bar"): a 22px title row (back button, title, actions, profile), an
+ * optional line under it, and anything passed as children (a period control, a search box), on the page colour
+ * with a faint theme wash (SkyBackdrop), so it never looks like a separate strip.
  *
  * Given `collapse` (useCollapsingHeader) it sits over the screen's list and shrinks as the list scrolls, 1:1
  * with the finger: the band slides up under the title row, which stays put; the title steps down to 17; the
- * line and children fade and lift; the hills fade and the sky cap takes over. `summary` (the screen's
+ * line and children fade and lift; the wash fades and a solid bar takes over. `summary` (the screen's
  * key figure) writes itself in beside the title as the line leaves, and `collapsedAccessory` (Activity's
  * period chip) appears in the row. Without `collapse` it is a plain header in the page's flow (Add).
  */
@@ -68,7 +60,7 @@ export function SkyHeader({
   /** A control shown in the title row once collapsed (it stands in for `children`). */
   collapsedAccessory?: React.ReactNode;
 }) {
-  const { accent, secondary } = useAccent();
+  const { accent } = useAccent();
   const insets = useSafeAreaInsets();
   const reduce = useReduceMotion();
   const top = insets.top + 6;
@@ -125,8 +117,6 @@ export function SkyHeader({
     const t = interpolate(progress(), [0.5, 0.9], [0, 1], Extrapolation.CLAMP);
     return { opacity: t, transform: [{ translateY: reduce ? 0 : (1 - t) * 8 }] };
   });
-  // The hills let go early, while the sky cap is still coming in.
-  const hillsStyle = useAnimatedStyle(() => ({ opacity: 1 - Math.min(1, progress() * 1.6) }));
 
   return (
     <ReanimatedAnimated.View
@@ -140,9 +130,6 @@ export function SkyHeader({
         collapsedHeight={top + ROW + BAR_PAD}
       />
       <View style={[styles.band, { paddingTop: top }]}>
-        {SPARKS.map((s, i) => (
-          <Spark key={i} top={top + s.top} left={s.left} size={s.size} opacity={s.opacity} delay={i * 700} />
-        ))}
         <ReanimatedAnimated.View style={[styles.titleRow, rowStyle]}>
           {showBack && (
             <Pressable
@@ -152,7 +139,7 @@ export function SkyHeader({
               accessibilityRole="button"
               accessibilityLabel="Back"
             >
-              <Feather name="chevron-left" size={20} color={theme.colors.ink} />
+              <Feather name="chevron-left" size={22} color={theme.colors.ink} />
             </Pressable>
           )}
           <View style={styles.titleBlock}>
@@ -209,17 +196,13 @@ export function SkyHeader({
           </ReanimatedAnimated.View>
         )}
       </View>
-      {/* The hills sit straight on the sky, with none of their own, and are gone once collapsed. */}
-      <ReanimatedAnimated.View style={hillsStyle}>
-        <HeaderHills sky="transparent" primary={accent} secondary={secondary} compact />
-      </ReanimatedAnimated.View>
     </ReanimatedAnimated.View>
   );
 }
 
 const styles = StyleSheet.create({
   over: { position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10 },
-  band: { paddingHorizontal: 20, paddingBottom: 8, overflow: 'hidden' },
+  band: { paddingHorizontal: 20, paddingBottom: 8 },
   titleRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -239,14 +222,15 @@ const styles = StyleSheet.create({
   },
   summary: { marginLeft: 10, flexShrink: 1, minWidth: 0 },
   below: { gap: 10, paddingBottom: 2 },
+  // Just the chevron, nudged so the icon (not its 40dp touch area) sits on the page gutter.
   backBtn: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: -2,
-    backgroundColor: `${theme.colors.surface}D9`,
+    marginLeft: -9,
+    marginRight: -4,
   },
   subtitle: {
     fontFamily: theme.font.bodyMedium,

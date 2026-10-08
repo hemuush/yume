@@ -1,5 +1,5 @@
 /**
- * Reports assembled: pinned summary over three lenses (Days heatmap + story cards, Categories, Trends), the
+ * Reports assembled: three lenses (Days heatmap + story cards, Categories, Trends), the
  * Income switch, and a custom range carried to the category page. Charts draw once measured (tests give a width).
  */
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
@@ -284,28 +284,14 @@ describe('Reports screen', () => {
     (require('expo-router').router.navigate as jest.Mock).mockClear();
   });
 
-  it('pins a summary of the period over the three lenses, starting on Days', async () => {
+  it('shows the three lenses, starting on Days, with no summary card above them', async () => {
     const shown = texts(await render());
     expect(shown).toEqual(
       expect.arrayContaining(['Days', 'Categories', 'Trends', 'Tap a day to see what went out'])
     );
-    expect(shown.some((t) => t.startsWith('Spent in '))).toBe(true);
+    expect(shown.some((t) => t.startsWith('Spent in '))).toBe(false);
     expect(shown.some((t) => t.endsWith(', in short'))).toBe(true);
     expect(shown).not.toContain('Where it went');
-  });
-
-  it('counts only the days so far: an entry dated later is "scheduled later", not a spend day', async () => {
-    const tree = await render();
-    // 4 spend days up to Oct 20, over 20 days; the entry on Oct 28 stays out of the day figure.
-    expect(texts(tree)).toEqual(expect.arrayContaining(['Spend days', '4 of 20', 'Scheduled later']));
-    // The three figures are read out as one sentence.
-    const facts = tree.root.find(
-      (n) =>
-        typeof n.props.accessibilityLabel === 'string' &&
-        n.props.accessibilityLabel.includes(' a day, spent on ')
-    ).props.accessibilityLabel as string;
-    expect(facts).toContain('spent on 4 of 20 days');
-    expect(facts).toContain('scheduled later');
   });
 
   it('switches lens: Categories shows where it went, Trends the chart', async () => {
@@ -605,11 +591,10 @@ describe('Reports screen', () => {
       mockIncomeOnly.current = false;
     });
 
-    it('still shows the summary, the lenses and the income breakdown', async () => {
+    it('still shows the lenses and the income breakdown', async () => {
       mockIncomeOnly.current = true;
       const tree = await render();
       expect(texts(tree)).toEqual(expect.arrayContaining(['Days', 'Categories', 'Trends']));
-      expect(texts(tree).some((t) => t.startsWith('Spent in '))).toBe(true);
       await pressText(tree, 'Categories');
       await pressText(tree, 'Income');
       expect(texts(tree)).toEqual(expect.arrayContaining(['Where it came from', 'Salary']));
