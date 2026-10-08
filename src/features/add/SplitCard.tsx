@@ -1,6 +1,7 @@
 import { View, Pressable, StyleSheet } from 'react-native';
 import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
+import { GLASS } from '@/components/Glass';
 import { EYEBROW } from '@/constants/textStyles';
 import { formatMoney } from '@/lib/money';
 import { withPressed } from '@/lib/pressed';
@@ -128,11 +129,12 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.surfaceAlt,
   },
   wrap: { marginBottom: 18 },
+  // Frosted, like the category card it stands in for.
   card: {
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.radius.xl2,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
+    backgroundColor: GLASS.fill,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: GLASS.edge,
     padding: 16,
     gap: 12,
   },
@@ -146,7 +148,7 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.borderSoft,
     backgroundColor: theme.colors.surface,
   },
-  editText: { fontFamily: theme.font.roundedMedium, fontSize: 12.5, color: theme.colors.textPrimary },
+  editText: { fontFamily: theme.font.bodyBold, fontSize: 12.5, color: theme.colors.textPrimary },
   lines: { gap: 8 },
   line: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   dot: { width: 10, height: 10, borderRadius: 3 },
