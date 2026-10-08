@@ -277,10 +277,15 @@ export function RuleModal({
   const cat = categoriesById.get(categoryId ?? '');
   const accountName = (id: string | null) => accounts.find((a) => a.id === id)?.name;
   const interval = Math.min(MAX_INTERVAL[frequency], Math.max(1, parseInt(intervalCount || '1', 10) || 1));
+  // An unchanged start keeps the rule's real day: a 31st rule now sitting on the 30th still previews the 31st.
+  const previewAnchor =
+    editing && startDate === editing.nextRunDate && editing.anchorDay
+      ? editing.anchorDay
+      : Number(startDate.slice(8));
   const upcoming = [startDate];
   while (upcoming.length < 3) {
     upcoming.push(
-      advanceDate(upcoming[upcoming.length - 1], frequency, interval, Number(startDate.slice(8)))
+      advanceDate(upcoming[upcoming.length - 1], frequency, interval, previewAnchor)
     );
   }
   const toggle = (which: 'account' | 'to' | 'category') => setOpen((o) => (o === which ? null : which));

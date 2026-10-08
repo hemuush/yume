@@ -129,3 +129,8 @@ export async function restoreNeedsYou(key: string): Promise<void> {
 export async function snoozeBackupReminder(now: Date = new Date()): Promise<void> {
   await setBackupNudgeSnoozedUntil(new Date(now.getTime() + BACKUP_SNOOZE_DAYS * 86400000).toISOString());
 }
+
+/** Undoes a snooze: the reminder is due again straight away. */
+export async function unsnoozeBackupReminder(): Promise<void> {
+  await setBackupNudgeSnoozedUntil(new Date(0).toISOString());
+}

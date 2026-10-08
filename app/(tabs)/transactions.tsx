@@ -49,6 +49,7 @@ import { DURATIONS } from '@/lib/motionTimings';
 import { withPressed } from '@/lib/pressed';
 import { categoryPath, parentNameOf } from '@/lib/categoryLabel';
 import { EmptyState } from '@/components/EmptyState';
+import { useTabScrollToTop } from '@/lib/useTabScrollToTop';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -122,6 +123,7 @@ export default function TransactionsScreen() {
   // The header sits over the list and shrinks as it scrolls.
   const { collapse, headerHeight, collapsedHeight, scrollHandler, scrollRef } =
     useCollapsingHeader<FlatList<{ date: string; items: Transaction[] }>>();
+  useTabScrollToTop(scrollRef);
   // Which stacked lines ("Food & Dining ×5") are open lives here, not in TimelineDay: FlatList unmounts
   // off-screen rows, and local state there would silently close a stack the user opened.
   const [openStacks, setOpenStacks] = useState<Set<string>>(new Set());
