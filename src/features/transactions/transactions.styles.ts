@@ -3,8 +3,8 @@ import { theme } from '@/constants/theme';
 import { EYEBROW } from '@/constants/textStyles';
 import { GLASS } from '@/components/Glass';
 
-// Shared by the Transactions screen and its modals/rows (MonthPickerModal,
-// FilterModal, TransactionRow, TransactionDetailModal).
+// Shared by the Transactions screen and its modals/rows (FilterModal, TransactionRow,
+// TransactionDetailModal).
 export const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
   errorBanner: {
@@ -49,10 +49,6 @@ export const styles = StyleSheet.create({
   },
   searchCancel: { fontSize: 14, fontFamily: theme.font.bodyBold, color: theme.colors.link },
   searchLoading: { paddingVertical: 40, alignItems: 'center' },
-
-  weekNavBtn: { width: 28, height: 28, alignItems: 'center', justifyContent: 'center' },
-  weekNavArrow: { fontSize: 18, fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
-  weekNavArrowDisabled: { color: theme.colors.textMuted, opacity: 0.35 },
 
   // The Spent card leads the tab, frosted like Home's month card: the kicker, a big light figure, its chips
   // (the change, money in, net), the chart and a one-line legend.
@@ -188,32 +184,6 @@ export const styles = StyleSheet.create({
   },
   chipText: { fontFamily: theme.font.bodyBold, fontSize: 12.5, color: theme.colors.textSecondary },
 
-  yearRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 24,
-    marginBottom: 16,
-  },
-  yearLabel: {
-    fontSize: 17,
-    fontFamily: theme.font.bodyBold,
-    color: theme.colors.textPrimary,
-    minWidth: 60,
-    textAlign: 'center',
-  },
-  monthGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  monthCell: {
-    width: '30%',
-    paddingVertical: 14,
-    borderRadius: theme.radius.md,
-    borderWidth: theme.border.thin,
-    borderColor: theme.colors.borderSoft,
-    alignItems: 'center',
-  },
-  monthCellDisabled: { opacity: 0.35 },
-  monthCellText: { fontSize: 14, fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
-  monthCellTextDisabled: { color: theme.colors.textMuted },
   rowNoteInline: { fontSize: 13, color: theme.colors.textSecondary, fontFamily: theme.font.body },
   income: { color: theme.colors.incomeText },
   expense: { color: theme.colors.expenseText },

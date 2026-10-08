@@ -93,6 +93,41 @@ export function UpcomingRow({
   );
 }
 
+/**
+ * Stands in for everything past the five shown; same shape as a real `UpcomingRow` (icon left, label fills
+ * middle) so it reads as one more row.
+ */
+export function UpcomingMoreRow({
+  count,
+  divider,
+  onPress,
+}: {
+  count: number;
+  divider?: boolean;
+  onPress: () => void;
+}) {
+  const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.98);
+  return (
+    <AnimatedPressable
+      onPress={onPress}
+      onPressIn={onPressIn}
+      onPressOut={onPressOut}
+      accessibilityRole="button"
+      accessibilityLabel={`${count} more due this week, open Plan`}
+      style={[styles.row, divider && styles.divider, animatedStyle]}
+    >
+      <View style={[styles.iconWrap, { backgroundColor: theme.colors.surfaceAlt }]}>
+        <Feather name="more-horizontal" size={SCREEN.iconGlyph} color={theme.colors.textMuted} />
+      </View>
+      <View style={styles.mid}>
+        <Text style={styles.moreText}>+{count} more this week</Text>
+        <Text style={styles.sub}>Opens Plan › Coming up</Text>
+      </View>
+      <Feather name="arrow-right" size={16} color={theme.colors.textMuted} />
+    </AnimatedPressable>
+  );
+}
+
 const styles = StyleSheet.create({
   row: h.row,
   divider: h.divider,

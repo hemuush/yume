@@ -25,7 +25,8 @@ import { savingsAccountIdsOf } from '@/lib/account';
 import { privateComparison, isSavingsEntry } from '@/lib/privateSummary';
 import { roundedMinor } from '@/lib/round';
 import { savingsRatePct } from '@/lib/savingsRate';
-import { Account, Category, Transaction, Loan, RecurringRule } from '@/types';
+import { Account, Category, Transaction, Loan, RecurringRule, SavingsGoal } from '@/types';
+import { listSavingsGoals } from '@/db/savingsGoals';
 import { theme } from '@/constants/theme';
 import { useTabScrollPad } from '@/lib/uiScale';
 import { useAccent } from '@/theme/AccentContext';
@@ -54,14 +55,14 @@ import { ThisMonthHeroSkeleton, CardRowsSkeleton } from '@/features/home/HomeSke
 import { MonthPill } from '@/features/home/MonthPill';
 import { HomeWallpaper } from '@/features/home/HomeWallpaper';
 import { WhereItWent } from '@/features/home/WhereItWent';
-import { HomeBento } from '@/features/home/HomeBento';
+import { HomeAccounts } from '@/features/home/HomeAccounts';
 import { SpendBars } from '@/features/home/SpendBars';
 import { spendBarsStart } from '@/features/home/spendBars';
 import { Glass } from '@/components/Glass';
 import { SuuRefreshBadge } from '@/features/home/SuuRefreshBadge';
 import { Section } from '@/components/Section';
 import { SCREEN } from '@/components/screenStyles';
-import { buildUpcomingItems } from '@/features/home/HomeGlance';
+import { HomeGlance, buildUpcomingItems } from '@/features/home/HomeGlance';
 import { buildLoansSummary } from '@/features/plan/planOverview';
 import { RecentTransactionRow } from '@/features/home/RecentTransactionRow';
 import { AccountSummarySheet } from '@/features/home/AccountSummarySheet';
@@ -104,6 +105,7 @@ export default function DashboardScreen() {
   // Spending per day, from a week back (or the 1st) to today: the Week/Month bars.
   // The default currency: Home's in-hand total counts only accounts in it.
   const [currency, setCurrency] = useState('INR');
+  const [goals, setGoals] = useState<SavingsGoal[]>([]);
   const [dailySpend, setDailySpend] = useState<{ date: string; totalMinor: number }[]>([]);
   // Both are always about today, not the browsed period (like Budgets/Goals below); `dailyGoal` stays
   // `null` (strip renders nothing) until the user sets one in Settings → Money.
@@ -243,6 +245,7 @@ export default function DashboardScreen() {
           cycles,
           name,
           budgetList,
+          goalList,
           daily,
           todaySpend,
           dailyGoal,
@@ -263,6 +266,7 @@ export default function DashboardScreen() {
           // Budgets, goals, today's spend and the daily goal are always about *now*, not the browsed period
           // (a budget is this calendar month; a goal has no period).
           listBudgetsForMonth(undefined, hideAmounts),
+          listSavingsGoals(),
           getDailyExpenseTotals(
             { start: spendBarsStart(toLocalIsoDate(new Date())), end: toLocalIsoDate(new Date()) },
             hideAmounts
@@ -300,6 +304,7 @@ export default function DashboardScreen() {
         setCardBills(cycles);
         setUserNameState(name);
         setBudgets(budgetList);
+        setGoals(goalList);
         setDailySpend(daily);
         setTodaySpendMinor(todaySpend);
         setDailyGoalMinor(dailyGoal);
@@ -380,6 +385,10 @@ export default function DashboardScreen() {
   const isSavingsTransfer = (tx: Transaction) =>
     tx.type === 'transfer' &&
     (savingsIds.has(tx.accountId) || (!!tx.toAccountId && savingsIds.has(tx.toAccountId)));
+
+  const totalOutstandingLoans = loans
+    .filter((l) => l.direction === 'borrowed')
+    .reduce((sum, l) => sum + l.outstandingPrincipalMinor, 0);
 
   const dispIncome = roundedMinor(comparison?.current.incomeMinor ?? 0);
   const dispExpense = roundedMinor(comparison?.current.expenseMinor ?? 0);
@@ -487,6 +496,7 @@ export default function DashboardScreen() {
               savingsMinor={savingsInPeriod}
               surplusMinor={surplusInPeriod}
               carryMinor={carryIn}
+              outstandingLoansMinor={roundedMinor(totalOutstandingLoans)}
               dueMinor={
                 loadedCursor.granularity === 'month' && loadedCursor.offset === 0
                   ? roundedMinor(stillToPayMinor)
@@ -536,19 +546,28 @@ export default function DashboardScreen() {
         )}
 
         {loaded && (
-          <View style={styles.bento}>
-            <HomeBento
+          <>
+            {/* Upcoming | Budgets | Goals, the old Home's tabbed card. */}
+            <HomeGlance
               upcoming={upcoming}
               budgets={budgets}
-              accounts={accounts}
-              currency={currency}
-              onOpenUpcoming={() => router.navigate({ pathname: '/plan', params: { section: 'coming-up' } })}
-              onOpenBudgets={() => router.push('/budgets')}
-              onOpenAccounts={() => router.push('/profile')}
-              onOpenAccount={setSummaryAccount}
-              onAddAccount={() => setAddAccountVisible(true)}
+              goals={goals}
+              budgetAlert={needsYou.some((i) => i.action === 'budgets')}
+              rowEntering={rowEntering}
+              onSeeMoreUpcoming={() =>
+                router.navigate({ pathname: '/plan', params: { section: 'coming-up' } })
+              }
             />
-          </View>
+            <View style={styles.bento}>
+              <HomeAccounts
+                accounts={accounts}
+                currency={currency}
+                onOpenAccounts={() => router.push('/profile')}
+                onOpenAccount={setSummaryAccount}
+                onAddAccount={() => setAddAccountVisible(true)}
+              />
+            </View>
+          </>
         )}
 
         {/* The bars are always about now (the last 7 days, this month), so only beside the current month. */}
@@ -671,7 +690,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
   scroll: { flex: 1 },
   heroGap: { marginTop: 4 },
-  bento: { marginTop: SCREEN.sectionGap },
+  bento: { marginTop: SCREEN.cardStack },
   bars: { marginTop: 10 },
   recent: { marginHorizontal: SCREEN.gutter, overflow: 'hidden' },
   errorBanner: {

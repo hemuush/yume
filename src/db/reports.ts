@@ -1088,3 +1088,29 @@ export async function getNetWorthTrend(months = 6, reference: Date = new Date())
   }
   return points;
 }
+
+/**
+ * Spending per calendar month ('YYYY-MM' → minor units, default currency), and the first month with any entry.
+ * Feeds the period picker, which shows what each month cost and fades the months before your first entry.
+ */
+export async function getSpendByMonth(
+  excludeSensitive = false
+): Promise<{ byMonth: Map<string, number>; firstMonth: string | null }> {
+  const db = await getDb();
+  const currency = await getDefaultCurrency();
+  const rows = await db.getAllAsync<{ month: string; total: number }>(
+    `SELECT substr(t.date, 1, 7) AS month,
+            SUM(CASE WHEN ${SPEND_ROWS} THEN ${SPEND_AMOUNT} ELSE 0 END) AS total
+     FROM transactions t
+     JOIN accounts a ON a.id = t.account_id
+     WHERE a.currency = ?${excludeSensitive ? ` AND ${NOT_SENSITIVE}` : ''}
+     GROUP BY month
+     ORDER BY month`,
+    [currency]
+  );
+  return {
+    // A month of refunds never shows as negative spending.
+    byMonth: new Map(rows.map((r) => [r.month, Math.max(0, r.total)])),
+    firstMonth: rows[0]?.month ?? null,
+  };
+}
