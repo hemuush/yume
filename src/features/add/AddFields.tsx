@@ -122,7 +122,6 @@ export function DetailChip({
       disabled={disabled}
       style={withPressed([
         styles.detailChip,
-        { backgroundColor: shade(accent, 95) },
         active && styles.detailChipActive,
         disabled && styles.detailChipDisabled,
       ])}
@@ -135,7 +134,7 @@ export function DetailChip({
       <Feather
         name={icon}
         size={13}
-        color={active ? theme.colors.surface : muted ? theme.colors.textMuted : theme.colors.link}
+        color={active ? theme.colors.surface : muted ? theme.colors.textMuted : shade(accent, 40, 8)}
       />
       <Text
         style={[

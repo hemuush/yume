@@ -38,7 +38,11 @@ import {
   dateChipLabel,
   repeatKey,
   formToStaged as formToStagedEntry,
+  TYPE_WASH,
+  typeWash,
 } from '@/features/add/addEntry';
+import { HomeWallpaper } from '@/features/home/HomeWallpaper';
+import { Glass } from '@/components/Glass';
 import { applyPadKey, evaluateAmount, exprFromMinor, hasOperator, PadKey } from '@/lib/padMath';
 import { AmountPad } from '@/components/AmountPad';
 import { Totals, FriendFields } from '@/features/add/AddFields';
@@ -74,7 +78,7 @@ const FUTURE_DATE_CHECK_DAYS = 7;
 export default function AddTransactionScreen() {
   const insets = useSafeAreaInsets();
   const { show: showUndo } = useUndoToast();
-  const { accent } = useAccent();
+  const { accent, secondary } = useAccent();
   // `accountId` pre-selects the account (the "from" side of a transfer) —
   // Home's account summary sheet opens Add this way.
   const params = useLocalSearchParams<{
@@ -681,6 +685,10 @@ export default function AddTransactionScreen() {
   // The pad steps aside whenever the phone keyboard is up (a note, a category search).
   const padVisible = padOpen && !noteEditing && !searchFocused && !isLinked;
 
+  // The pad's sum keys wear the entry's colour (green for money back), like the amount above them.
+  const wash = refund ? TYPE_WASH.income : typeWash(type, accent);
+  const padTone = { bg: wash.bg, ink: wash.accent };
+
   const saveButton = (
     <PrimaryButton
       title={saveTitle}
@@ -704,10 +712,12 @@ export default function AddTransactionScreen() {
 
   return (
     <View style={styles.container}>
+      <HomeWallpaper accent={accent} secondary={secondary} />
       <SkyHeader
         title={title}
         showBack
         hideUser
+        wallpaper
         actions={
           editing ? (
             !isLinked ? (
@@ -785,17 +795,19 @@ export default function AddTransactionScreen() {
         )}
 
         {type === 'friend' ? (
-          <FriendFields
-            people={people}
-            accounts={spendableAccounts}
-            personId={personId}
-            setPersonId={setPersonId}
-            friendSign={friendSign}
-            setFriendSign={setFriendSign}
-            friendAccountId={friendAccountId}
-            setFriendAccountId={setFriendAccountId}
-            onAddPerson={() => setAddPersonVisible(true)}
-          />
+          <Glass radius={24} style={styles.fieldCard}>
+            <FriendFields
+              people={people}
+              accounts={spendableAccounts}
+              personId={personId}
+              setPersonId={setPersonId}
+              friendSign={friendSign}
+              setFriendSign={setFriendSign}
+              friendAccountId={friendAccountId}
+              setFriendAccountId={setFriendAccountId}
+              onAddPerson={() => setAddPersonVisible(true)}
+            />
+          </Glass>
         ) : (
           <>
             {pickableAccounts.length === 0 && (
@@ -819,14 +831,16 @@ export default function AddTransactionScreen() {
             )}
 
             {type === 'transfer' ? (
-              <TransferAccounts
-                fromOptions={pickableAccounts}
-                accounts={accounts}
-                fromId={effectiveAccountId}
-                toId={toAccountId}
-                onPickFrom={pickAccount}
-                onPickTo={setToAccountId}
-              />
+              <Glass radius={24} style={styles.fieldCard}>
+                <TransferAccounts
+                  fromOptions={pickableAccounts}
+                  accounts={accounts}
+                  fromId={effectiveAccountId}
+                  toId={toAccountId}
+                  onPickFrom={pickAccount}
+                  onPickTo={setToAccountId}
+                />
+              </Glass>
             ) : splitParts ? (
               <SplitCard
                 parts={splitParts}
@@ -858,14 +872,16 @@ export default function AddTransactionScreen() {
                     }}
                   />
                 )}
-                <CategoryPicker
-                  categories={filteredCategories}
-                  selectedId={categoryId}
-                  onSelect={setCategoryId}
-                  variant="medal"
-                  searchable
-                  onSearchFocusChange={setSearchFocused}
-                />
+                <Glass radius={24} style={styles.fieldCard}>
+                  <CategoryPicker
+                    categories={filteredCategories}
+                    selectedId={categoryId}
+                    onSelect={setCategoryId}
+                    variant="medal"
+                    searchable
+                    onSearchFocusChange={setSearchFocused}
+                  />
+                </Glass>
               </View>
             )}
           </>
@@ -917,7 +933,7 @@ export default function AddTransactionScreen() {
           onSplit={openSplit}
         />
         {padVisible ? (
-          <AmountPad onKey={onPadKey} onClear={() => setExpr('')}>
+          <AmountPad onKey={onPadKey} onClear={() => setExpr('')} tone={padTone}>
             {addToListButton}
             {saveButton}
           </AmountPad>

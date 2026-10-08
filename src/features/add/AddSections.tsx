@@ -59,7 +59,6 @@ export function AmountCard({
   const wash = refund ? TYPE_WASH.income : typeWash(type, accent);
   return (
     <View style={styles.heroCard}>
-      <View style={[styles.heroStrip, { backgroundColor: wash.accent }]} />
       <View style={styles.heroLabelRow}>
         <View style={[styles.heroDot, { backgroundColor: wash.accent }]} />
         <Text style={[styles.heroLabel, { color: wash.accent }]}>
@@ -149,8 +148,27 @@ export function TransferAccounts({
           ))}
         </View>
       </View>
-      <View style={styles.section}>
-        <Text style={styles.label}>To</Text>
+      <View style={[styles.section, styles.sectionLast]}>
+        <View style={styles.labelRow}>
+          <Text style={styles.label}>To</Text>
+          {/* Swaps the two, when the To account could also be the From. */}
+          {fromId && toId && fromOptions.some((a) => a.id === toId) && (
+            <Pressable
+              onPress={() => {
+                haptics.tap();
+                onPickFrom(toId);
+                onPickTo(fromId);
+              }}
+              hitSlop={10}
+              style={withPressed(styles.swapBtn)}
+              accessibilityRole="button"
+              accessibilityLabel="Swap From and To"
+            >
+              <Feather name="repeat" size={13} color={theme.colors.textPrimary} />
+              <Text style={styles.swapText}>Swap</Text>
+            </Pressable>
+          )}
+        </View>
         <View style={styles.accountRow}>
           {accounts
             .filter((a) => a.id !== fromId)
