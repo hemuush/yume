@@ -134,7 +134,7 @@ export const styles = StyleSheet.create({
   scopeText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textSecondary },
   scopeTextOn: { fontFamily: theme.font.bodyBold, color: theme.colors.surface },
 
-  // ‹ This week › in a white pill on the sky band, its dates under it.
+  // ‹ This week › in a white pill under the title, its dates under it.
   periodRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -144,7 +144,8 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 6,
     borderRadius: 26,
     backgroundColor: theme.colors.surface,
-    ...SKY_PILL_SHADOW,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.borderSoft,
   },
   periodNav: {
     width: 40,
@@ -161,12 +162,13 @@ export const styles = StyleSheet.create({
   listArea: { flex: 1 },
   // The period, as a small chip in the shrunk header; it opens the month picker.
   periodChip: {
-    height: 30,
+    height: 32,
     maxWidth: 130,
     paddingHorizontal: 12,
     borderRadius: theme.radius.pill,
     justifyContent: 'center',
-    backgroundColor: `${theme.colors.surface}E6`,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.borderSoft,
   },
   periodChipText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textPrimary },
 
@@ -175,7 +177,7 @@ export const styles = StyleSheet.create({
   weekRail: { paddingHorizontal: 8, marginTop: 12 },
   weekRailBar: { flexDirection: 'row', gap: 5 },
   weekRailSeg: { height: 14, justifyContent: 'center' },
-  weekRailFill: { height: 6, borderRadius: 3, backgroundColor: theme.colors.surface },
+  weekRailFill: { height: 6, borderRadius: 3, backgroundColor: theme.colors.inkHairline },
   weekRailNow: {
     position: 'absolute',
     top: 0,

@@ -102,12 +102,12 @@ export function HeaderIconButton({
       accessibilityLabel={label}
       style={[
         styles.iconBtn,
+        styles.bare,
         size != null && { width: size, height: size, borderRadius: size / 2 },
-        { backgroundColor: theme.colors.surface },
         animatedStyle,
       ]}
     >
-      <Feather name={icon} size={size != null && size > 36 ? 18 : 16} color={theme.colors.ink} />
+      <Feather name={icon} size={20} color={theme.colors.ink} />
       {count != null && count > 0 ? (
         <View style={styles.countBadge}>
           <Text style={styles.countText}>{count}</Text>
@@ -129,6 +129,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  // A header action: just the icon on the header, no disc and no border (the quiet bar).
+  bare: { width: 40, height: 40, borderRadius: 20, borderWidth: 0, backgroundColor: 'transparent' },
   initial: { fontFamily: theme.font.bodyBold, fontSize: 14 },
   initialLarge: { fontFamily: theme.font.bodyBold, fontSize: 15 },
   countBadge: {
