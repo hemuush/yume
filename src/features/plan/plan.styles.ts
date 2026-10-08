@@ -15,7 +15,7 @@ export const styles = StyleSheet.create({
   // news in the colour of its figure, not in a tinted fill.
   tile: {
     backgroundColor: theme.colors.surface,
-    borderRadius: 24,
+    borderRadius: theme.radius.xl2,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
     padding: 16,
@@ -28,7 +28,7 @@ export const styles = StyleSheet.create({
     elevation: 1,
   },
   // The 14-day tile leads the tab, lifted like Home's month card.
-  tileHero: { borderRadius: 26, paddingTop: 18, ...SOFT_LIFT },
+  tileHero: { borderRadius: theme.radius.xl2, paddingTop: 18, ...SOFT_LIFT },
   tileWide: {},
   tileHalf: { flex: 1, minHeight: 132 },
   savingTile: { gap: 12 },

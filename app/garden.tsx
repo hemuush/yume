@@ -105,7 +105,7 @@ export default function GardenScreen() {
   if (!loaded && !loadError) {
     return (
       <View style={styles.container}>
-        <SkyHeader title="Suu's Garden" showBack hideUser />
+        <SkyHeader title="Suu's garden" showBack hideUser />
         <View style={{ paddingTop: 20 }}>
           <View style={[styles.bed, { marginTop: 0 }]}>
             {Array.from({ length: POT_COUNT }, (_, i) => (
@@ -248,7 +248,7 @@ export default function GardenScreen() {
               )}
             </ScrollView>
             <SkyHeader
-              title="Suu's Garden"
+              title="Suu's garden"
               showBack
               hideUser
               collapse={collapse}

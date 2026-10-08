@@ -1,5 +1,4 @@
 import { useCallback, useState } from 'react';
-// The header's buttons, shared by SkyHeader and HomeHeader (the old AppHeader component they replaced is gone).
 import { View, Pressable, Animated, StyleSheet } from 'react-native';
 import { Text } from '@/components/Text';
 import { useFocusEffect } from 'expo-router';

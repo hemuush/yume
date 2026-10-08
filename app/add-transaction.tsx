@@ -652,7 +652,7 @@ export default function AddTransactionScreen() {
     }
   };
 
-  const title = editing ? 'Edit transaction' : 'Add';
+  const title = editing ? 'Edit entry' : 'Add';
   const saveTitle = saveButtonTitle({
     saving,
     editing: !!editing,
@@ -704,7 +704,7 @@ export default function AddTransactionScreen() {
                 onPress={onDelete}
                 hitSlop={8}
                 accessibilityRole="button"
-                accessibilityLabel="Delete transaction"
+                accessibilityLabel="Delete entry"
                 style={withPressed(styles.trashBtn)}
               >
                 <Feather name="trash-2" size={16} color={theme.colors.expense} />

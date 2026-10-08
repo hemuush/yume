@@ -59,7 +59,7 @@ export function backupStatus({
       icon: 'clock-outline',
       tint: theme.colors.idGold,
       title: 'Not backed up yet',
-      lines: ['Tap Backup now to write the first one.'],
+      lines: ['Tap Back up now to write the first one.'],
       failed: false,
     };
   }

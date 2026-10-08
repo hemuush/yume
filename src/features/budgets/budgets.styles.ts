@@ -75,8 +75,8 @@ export const styles = StyleSheet.create({
     backgroundColor: theme.colors.surface,
   },
   rowNameBlock: { flex: 1, minWidth: 0 },
-  rowName: { fontSize: 14.5, fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
-  rowParent: { fontFamily: theme.font.body, fontSize: 11.5, color: theme.colors.textMuted, marginTop: 1 },
+  rowName: { fontSize: 15, fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
+  rowParent: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, marginTop: 1 },
   rowAmount: {
     fontFamily: theme.font.mono,
     fontSize: 12.5,

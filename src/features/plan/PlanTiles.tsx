@@ -526,19 +526,19 @@ export function HabitTile({
   const sprout = <MaterialCommunityIcons name="sprout" size={15} color={theme.colors.ink} />;
   if (!habit || goalMinor == null) {
     return (
-      <Tile onPress={onOpen} label="Set a daily goal. Open Suu's Garden">
+      <Tile onPress={onOpen} label="Set a daily goal. Open Suu's garden">
         <Kicker icon={sprout} tint={theme.colors.idSage}>
           Spend streak
         </Kicker>
         <Text style={styles.tileTitle}>Set a daily goal</Text>
-        <Text style={styles.tileSub}>Grow Suu's Garden</Text>
+        <Text style={styles.tileSub}>Grow Suu's garden</Text>
       </Tile>
     );
   }
   return (
     <Tile
       onPress={onOpen}
-      label={`${habit.streakDays}-day streak under ${formatMoney(goalMinor)} a day. Open Suu's Garden`}
+      label={`${habit.streakDays}-day streak under ${formatMoney(goalMinor)} a day. Open Suu's garden`}
     >
       <Kicker icon={sprout} tint={theme.colors.idSage}>
         Spend streak

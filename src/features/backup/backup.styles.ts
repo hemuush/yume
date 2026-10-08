@@ -57,7 +57,7 @@ export const styles = StyleSheet.create({
   },
   latestText: {
     fontFamily: theme.font.bodyBold,
-    fontSize: 10,
+    fontSize: 11,
     letterSpacing: 0.4,
     textTransform: 'uppercase',
     color: theme.colors.textSecondary,

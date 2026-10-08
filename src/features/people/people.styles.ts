@@ -135,7 +135,7 @@ export const styles = StyleSheet.create({
     borderColor: theme.colors.borderSoft,
     backgroundColor: theme.colors.surface,
   },
-  rowLabel: { fontFamily: theme.font.bodyMedium, fontSize: 14, color: theme.colors.textPrimary },
+  rowLabel: { fontFamily: theme.font.bodyMedium, fontSize: 15, color: theme.colors.textPrimary },
   rowSub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, marginTop: 2 },
   avatar: {
     width: 38,
@@ -147,7 +147,7 @@ export const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   avatarInitial: { fontFamily: theme.font.bodyBold, fontSize: 15, color: theme.colors.onFlat },
-  rowValue: { fontFamily: theme.font.monoBold, fontSize: 13.5 },
+  rowValue: { fontFamily: theme.font.monoBold, fontSize: 15 },
   // The Settle / History switch under a person's card.
   sheetTabs: { marginBottom: 14 },
   sectionTitle: {

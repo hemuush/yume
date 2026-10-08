@@ -106,12 +106,12 @@ const styles = StyleSheet.create({
   },
   title: {
     fontFamily: theme.font.roundedBold,
-    fontSize: 18,
+    fontSize: 19,
     color: theme.colors.textPrimary,
   },
   message: {
     fontFamily: theme.font.body,
-    fontSize: 13.5,
+    fontSize: 13,
     lineHeight: 19,
     color: theme.colors.textSecondary,
     marginTop: 4,

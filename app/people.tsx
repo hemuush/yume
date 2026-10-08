@@ -59,7 +59,7 @@ export default function PeopleScreen() {
       >
         {loadError && (
           <View style={styles.errorBanner}>
-            <Text style={styles.errorTitle}>Couldn&rsquo;t load Friends &amp; Family</Text>
+            <Text style={styles.errorTitle}>Couldn&rsquo;t load Friends &amp; family</Text>
             <Text style={styles.errorDetail}>{loadError}</Text>
           </View>
         )}
@@ -151,7 +151,7 @@ export default function PeopleScreen() {
             />
           ) : undefined
         }
-        title="Friends & Family"
+        title="Friends & family"
         showBack
         hideUser
         actions={<AddButton onPress={() => setAddVisible(true)} label="+ Person" />}

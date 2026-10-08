@@ -420,7 +420,7 @@ Restore anyway? Your current data would be replaced with no way back.`,
               </View>
               {hasFolder ? (
                 <PrimaryButton
-                  title={busy === 'backup-now-local' ? 'Backing up…' : 'Backup now'}
+                  title={busy === 'backup-now-local' ? 'Backing up…' : 'Back up now'}
                   done={doneLabel === 'backup-now-local'}
                   onPress={backupNowLocal}
                   disabled={!!busy}
@@ -540,7 +540,7 @@ Restore anyway? Your current data would be replaced with no way back.`,
                 <Text style={styles.emptyTitle}>No backups yet</Text>
                 <Text style={styles.emptySub}>
                   {hasFolder
-                    ? 'Nothing in this folder yet. Tap Backup now to write the first one.'
+                    ? 'Nothing in this folder yet. Tap Back up now to write the first one.'
                     : 'Choose a folder above and Yume writes the first one.'}
                 </Text>
               </View>

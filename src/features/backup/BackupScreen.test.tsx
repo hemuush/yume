@@ -144,7 +144,7 @@ describe('Backup & restore · status', () => {
     const shown = texts(tree);
     expect(shown).toContain('No backup folder yet');
     expect(buttons(tree, 'Choose folder')).toHaveLength(1);
-    expect(buttons(tree, 'Backup now')).toHaveLength(0);
+    expect(buttons(tree, 'Back up now')).toHaveLength(0);
     expect(shown).toContain('No backups yet');
     expect(shown).not.toContain('Forget folder');
   });
@@ -158,7 +158,7 @@ describe('Backup & restore · status', () => {
     expect(shown).toContain('Backed up today');
     expect(shown.some((t) => t.includes('278.8 KB'))).toBe(true);
     expect(shown).toContain('Next backup tomorrow');
-    expect(buttons(tree, 'Backup now')).toHaveLength(1);
+    expect(buttons(tree, 'Back up now')).toHaveLength(1);
     expect(shown).toContain('Forget folder');
   });
 

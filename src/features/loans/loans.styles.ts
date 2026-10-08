@@ -80,13 +80,13 @@ export const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: theme.colors.borderSoft,
   },
-  rowLabel: { fontFamily: theme.font.bodyMedium, fontSize: 14, color: theme.colors.textPrimary },
-  rowSub: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textMuted, marginTop: 2 },
-  rowValue: { fontFamily: theme.font.monoBold, fontSize: 14, color: theme.colors.textPrimary },
+  rowLabel: { fontFamily: theme.font.bodyMedium, fontSize: 15, color: theme.colors.textPrimary },
+  rowSub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, marginTop: 2 },
+  rowValue: { fontFamily: theme.font.monoBold, fontSize: 15, color: theme.colors.textPrimary },
   // A soft pill (the app's chip language) rather than grey capitals.
   statusTag: {
     fontFamily: theme.font.bodyBold,
-    fontSize: 10.5,
+    fontSize: 11,
     color: theme.colors.textSecondary,
     textTransform: 'capitalize',
     backgroundColor: theme.colors.surfaceAlt,
@@ -107,7 +107,7 @@ export const styles = StyleSheet.create({
   },
   wizardEyebrow: {
     fontFamily: theme.font.bodyBold,
-    fontSize: 10.5,
+    fontSize: 11,
     letterSpacing: 0.5,
     color: theme.colors.textMuted,
     marginBottom: 8,

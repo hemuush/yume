@@ -179,7 +179,7 @@ const styles = StyleSheet.create({
   },
   kickerRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   kicker: { ...EYEBROW, color: theme.colors.textSecondary },
-  amount: { fontFamily: theme.font.monoBold, fontSize: 26, color: theme.colors.textPrimary, marginTop: 2 },
+  amount: { fontFamily: theme.font.monoBold, fontSize: 28, color: theme.colors.textPrimary, marginTop: 2 },
   title: { fontFamily: theme.font.roundedBold, fontSize: 15, color: theme.colors.textPrimary, marginTop: 4 },
   sub: { fontFamily: theme.font.body, fontSize: 12.5, color: theme.colors.textSecondary, marginTop: 2 },
   side: { alignItems: 'flex-end', flexShrink: 0, maxWidth: '45%' },

@@ -64,7 +64,7 @@ export const styles = StyleSheet.create({
   soil: { width: 36, height: 11, backgroundColor: theme.colors.inkWash, borderRadius: 6 },
   dayLabel: {
     fontFamily: theme.font.body,
-    fontSize: 10,
+    fontSize: 11,
     color: theme.colors.textMuted,
     textTransform: 'uppercase',
   },
