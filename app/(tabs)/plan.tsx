@@ -60,6 +60,8 @@ import {
 } from '@/features/plan/PlanTiles';
 import { ComingUpSection } from '@/features/plan/ComingUpSection';
 import { listCardCycles } from '@/db/cardCycles';
+import { showAlert } from '@/components/AppDialog';
+import { errorMessage } from '@/lib/errorMessage';
 
 interface PlanData {
   loans: LoansSummary;
@@ -185,7 +187,15 @@ export default function PlanScreen() {
   const { loaded, loadError, reload } = useScreenLoad(loadPlan, { skipWhenUnchanged: true });
   // The EMI being paid from Coming up, with the account and category it goes on.
   const [paying, setPaying] = useState<LoanPaymentContext | null>(null);
-  const payEmi = async (loanId: string) => setPaying(await getLoanPaymentContext(loanId));
+  const payEmi = async (loanId: string) => {
+    try {
+      const context = await getLoanPaymentContext(loanId);
+      if (context) setPaying(context);
+      else showAlert('Nothing to pay', 'This loan has no installment due right now.');
+    } catch (e) {
+      showAlert("Couldn't open the payment", errorMessage(e));
+    }
+  };
   const open = (route: PlanRoute) => router.push(route);
   // The header shrinks as the page scrolls; the 14-day tile jumps down to Coming up.
   const { collapse, headerHeight, collapsedHeight, scrollHandler, scrollRef } = useCollapsingHeader();

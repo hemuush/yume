@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, Pressable, View, StyleSheet } from 'react-native';
 import ReanimatedAnimated from 'react-native-reanimated';
 import Feather from '@expo/vector-icons/Feather';
@@ -44,7 +44,7 @@ function Amount({ type, minor, masked }: { type: Transaction['type']; minor: num
  * One Activity day: day + net total (omitted if one line), a card of every entry, transfers as quiet end
  * rows. 2+ same-category entries stack into an openable line; the screen holds open stacks (rows unmount).
  */
-export function TimelineDay({
+function TimelineDayView({
   date,
   label,
   dateLabel,
@@ -437,4 +437,15 @@ const styles = StyleSheet.create({
   },
   // Ends where the icon ends, so the text lines up with the lines above.
   subDot: { width: 8, height: 8, borderRadius: 4, marginRight: 11 },
+});
+
+/**
+ * Memoized: typing in search, opening a sheet or dragging re-renders the screen, and a month holds dozens of
+ * days. `entering` only plays on mount, so a new animation object on each render isn't a reason to redraw.
+ */
+export const TimelineDay = memo(TimelineDayView, (prev, next) => {
+  for (const key of Object.keys(next) as (keyof typeof next)[]) {
+    if (key !== 'entering' && prev[key] !== next[key]) return false;
+  }
+  return Object.keys(prev).length === Object.keys(next).length;
 });

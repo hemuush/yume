@@ -409,8 +409,12 @@ export default function TransactionsScreen() {
   // repeated on every "expand a day" tap since that re-renders all mounted rows).
   const accountsById = useMemo(() => new Map(accounts.map((a) => [a.id, a])), [accounts]);
   const categoriesById = useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories]);
-  const accountName = (id: string) => accountsById.get(id)?.name ?? '—';
-  const categoryName = (id: string | null) => (id ? categoriesById.get(id)?.name : undefined) ?? '—';
+  // Stable, so a day of the list only redraws when its own entries change.
+  const accountName = useCallback((id: string) => accountsById.get(id)?.name ?? '—', [accountsById]);
+  const categoryName = useCallback(
+    (id: string | null) => (id ? categoriesById.get(id)?.name : undefined) ?? '—',
+    [categoriesById]
+  );
   // A filter chip is one line, so a subcategory carries its parent: "Food & Dining › Zomato".
   const categoryPathName = (id: string) => categoryPath(categoryName(id), parentNameOf(id, categoriesById));
 

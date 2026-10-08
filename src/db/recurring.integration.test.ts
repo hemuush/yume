@@ -11,7 +11,7 @@ jest.mock('@/db/client', () => ({
 jest.mock('@/lib/notifications', () => ({ rebuildNotifications: async () => {} }));
 
 import { CREATE_TABLES_SQL } from '@/db/schema';
-import { createAccount, createCategory, listTransactions } from '@/db/ledger';
+import { archiveAccount, createAccount, createCategory, listTransactions } from '@/db/ledger';
 import {
   createRecurringRule,
   listRecurringRules,
@@ -341,5 +341,32 @@ describe('recurring rules', () => {
         nextRunDate: '2026-01-01',
       })
     ).rejects.toThrow('same account');
+  });
+
+  it('archiving an account pauses the rules that post into it', async () => {
+    const spare = await createAccount({ name: 'Old wallet', type: 'wallet', openingBalanceMinor: 0 });
+    const rule = await createRecurringRule({
+      type: 'expense',
+      accountId: spare.id,
+      categoryId: expenseCategoryId,
+      amountMinor: 900,
+      note: 'Archived Account Rule',
+      frequency: 'monthly',
+      intervalCount: 1,
+      nextRunDate: '2034-01-01',
+    });
+
+    await archiveAccount(spare.id);
+    await runDueRecurringRules('2034-03-01');
+
+    const posted = (await listTransactions({ limit: 1000 })).filter(
+      (t) => t.note === 'Archived Account Rule'
+    );
+    expect(posted).toHaveLength(0);
+    const row = await mockTestDb.getFirstAsync<{ active: number }>(
+      'SELECT active FROM recurring_rules WHERE id = ?',
+      [rule.id]
+    );
+    expect(row?.active).toBe(0);
   });
 });

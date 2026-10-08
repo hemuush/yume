@@ -157,7 +157,8 @@ export function LoanDetailModal({
   // Pay is the one frequent action so it stays visible; Prepay/Update rate/Delete are rare, behind "⋯"
   // (shared `ActionSheet`) so a 240-month loan's detail screen looks as simple as a 6-month one.
   const moreActionItems: ActionSheetItem[] = [];
-  if (liveLoan.status === 'active' && nextInstallment) {
+  // Offered only when it can open: it needs an account to pay from and the EMI category, like Pay.
+  if (liveLoan.status === 'active' && nextInstallment && defaultAccount && emiCategory) {
     moreActionItems.push({
       key: 'prepay',
       // A loan you lent is prepaid by the borrower: you record it.
