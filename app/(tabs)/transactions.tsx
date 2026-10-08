@@ -41,6 +41,8 @@ import {
 import { savingsAccountIdsOf } from '@/lib/account';
 import { privateComparison } from '@/lib/privateSummary';
 import { usePrivacy } from '@/theme/PrivacyContext';
+import { useAccent } from '@/theme/AccentContext';
+import { shade } from '@/lib/color';
 import { haptics } from '@/lib/haptics';
 import { errorMessage } from '@/lib/errorMessage';
 import { DURATIONS } from '@/lib/motionTimings';
@@ -62,6 +64,8 @@ const SEARCH_RESULT_LIMIT = 50;
 export default function TransactionsScreen() {
   const insets = useSafeAreaInsets();
   const { hideAmounts } = usePrivacy();
+  const { accent } = useAccent();
+  const navTint = shade(accent, 95);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -140,11 +144,22 @@ export default function TransactionsScreen() {
   useEffect(() => {
     const { category, account, month } = linkParams;
     if (!category && !account) return;
+    // A link shows its filter, not search results left open from before.
+    searchSeq.current++;
+    setSearching(false);
+    setSearchQuery('');
+    setSearchResults([]);
     setFilterType('all');
     setFilterCategoryIds(category ? [category] : []);
     setFilterAccountIds(account ? [account] : []);
-    if (month && /^\d{4}-\d{2}$/.test(month)) {
-      const [y, m] = month.split('-').map(Number);
+    const [y, m] = month && /^\d{4}-\d{2}$/.test(month) ? month.split('-').map(Number) : [0, 0];
+    // A real month that isn't in the future; anything else keeps the current view.
+    const now = new Date();
+    if (
+      m >= 1 &&
+      m <= 12 &&
+      (y < now.getFullYear() || (y === now.getFullYear() && m <= now.getMonth() + 1))
+    ) {
       setDirection(0);
       setAnchor(new Date(y, m - 1, 1));
       setViewScope('month');
@@ -278,6 +293,10 @@ export default function TransactionsScreen() {
   const { fromDate: rangeFromDate, toDate: rangeToDate } = visibleRange;
   useEffect(() => setSelectedBar(null), [rangeFromDate, rangeToDate, viewScope]);
   const freshness = useFreshness();
+  const searchState = useRef({ searching, query: searchQuery });
+  useEffect(() => {
+    searchState.current = { searching, query: searchQuery };
+  }, [searching, searchQuery]);
   useFocusEffect(
     useCallback(() => {
       const now = new Date();
@@ -292,9 +311,11 @@ export default function TransactionsScreen() {
         });
       }
       // Returning from the full add-transaction screen (edit/delete of a row opened from search): re-run
-      // the query so the list doesn't show the row as it was before.
-      if (searching) runSearch(searchQuery.trim());
-    }, [load, rangeFromDate, rangeToDate, viewScope, searching, searchQuery, runSearch, freshness])
+      // the query so the list doesn't show the row as it was before. Read through a ref: typing must go
+      // through the debounced search below, not re-run this on every keystroke.
+      const live = searchState.current;
+      if (live.searching) runSearch(live.query.trim());
+    }, [load, rangeFromDate, rangeToDate, viewScope, runSearch, freshness])
   );
   // A save that doesn't leave this screen (the + long-press sheet) — reload in place.
   useEffect(
@@ -388,8 +409,12 @@ export default function TransactionsScreen() {
   // repeated on every "expand a day" tap since that re-renders all mounted rows).
   const accountsById = useMemo(() => new Map(accounts.map((a) => [a.id, a])), [accounts]);
   const categoriesById = useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories]);
-  const accountName = (id: string) => accountsById.get(id)?.name ?? '—';
-  const categoryName = (id: string | null) => (id ? categoriesById.get(id)?.name : undefined) ?? '—';
+  // Stable, so a day of the list only redraws when its own entries change.
+  const accountName = useCallback((id: string) => accountsById.get(id)?.name ?? '—', [accountsById]);
+  const categoryName = useCallback(
+    (id: string | null) => (id ? categoriesById.get(id)?.name : undefined) ?? '—',
+    [categoriesById]
+  );
   // A filter chip is one line, so a subcategory carries its parent: "Food & Dining › Zomato".
   const categoryPathName = (id: string) => categoryPath(categoryName(id), parentNameOf(id, categoriesById));
 
@@ -466,6 +491,8 @@ export default function TransactionsScreen() {
 
       <View style={styles.listArea}>
         <ReanimatedAnimated.FlatList
+          // A search result opens on the first tap, even with the keyboard up.
+          keyboardShouldPersistTaps="handled"
           ref={scrollRef}
           onScroll={scrollHandler}
           scrollEventThrottle={16}
@@ -600,7 +627,6 @@ export default function TransactionsScreen() {
           <>
             <HeaderIconButton
               icon="search"
-              soft
               size={40}
               onPress={searching ? closeSearch : openSearch}
               label={searching ? 'Close search' : 'Search transactions'}
@@ -608,7 +634,6 @@ export default function TransactionsScreen() {
             {!searching && (
               <HeaderIconButton
                 icon="sliders"
-                soft
                 size={40}
                 onPress={() => setFilterVisible(true)}
                 label={filterCount > 0 ? `Filters, ${filterCount} on` : 'Filters'}
@@ -647,7 +672,7 @@ export default function TransactionsScreen() {
                 onPressIn={stepBackPress.onPressIn}
                 onPressOut={stepBackPress.onPressOut}
                 hitSlop={6}
-                style={[styles.periodNav, stepBackPress.animatedStyle]}
+                style={[styles.periodNav, { backgroundColor: navTint }, stepBackPress.animatedStyle]}
                 accessibilityRole="button"
                 accessibilityLabel={viewScope === 'month' ? 'Previous month' : 'Previous week'}
               >
@@ -675,7 +700,12 @@ export default function TransactionsScreen() {
                 onPressOut={stepForwardPress.onPressOut}
                 hitSlop={6}
                 disabled={atCurrent}
-                style={[styles.periodNav, atCurrent && styles.periodNavOff, stepForwardPress.animatedStyle]}
+                style={[
+                  styles.periodNav,
+                  { backgroundColor: navTint },
+                  atCurrent && styles.periodNavOff,
+                  stepForwardPress.animatedStyle,
+                ]}
                 accessibilityRole="button"
                 accessibilityLabel={viewScope === 'month' ? 'Next month' : 'Next week'}
                 accessibilityState={{ disabled: atCurrent }}

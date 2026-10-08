@@ -185,11 +185,10 @@ export function HomeHeader({
               onPress={() => router.push('/notifications')}
               label={alertCount > 0 ? `Needs you, ${alertCount}` : 'Needs you'}
               count={alertCount}
-              soft
               size={40}
             />
             {onPlayWrap && <WrapButton wraps={wraps} onPlay={onPlayWrap} />}
-            <HeaderUserButton soft size={40} />
+            <HeaderUserButton size={40} />
           </View>
         </ReanimatedAnimated.View>
 

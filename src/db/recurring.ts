@@ -151,9 +151,34 @@ export async function updateRecurringRule(id: string, input: RecurringRuleInput)
   return rowToRule(found(row, 'recurring entry'));
 }
 
-export async function setRecurringRuleActive(id: string, active: boolean): Promise<void> {
+/**
+ * Pauses or resumes a rule. Resuming moves its next run up to the first date on or after `today` (on the
+ * rule's own day), so a rule paused for months doesn't post every occurrence it missed the moment it resumes.
+ */
+export async function setRecurringRuleActive(
+  id: string,
+  active: boolean,
+  today: string = toLocalIsoDate(new Date())
+): Promise<void> {
   const db = await getDb();
-  await db.runAsync('UPDATE recurring_rules SET active = ? WHERE id = ?', [active ? 1 : 0, id]);
+  if (!active) {
+    await db.runAsync('UPDATE recurring_rules SET active = 0 WHERE id = ?', [id]);
+    return;
+  }
+  const row = found(
+    await db.getFirstAsync<RecurringRuleRow>('SELECT * FROM recurring_rules WHERE id = ?', [id]),
+    'recurring entry'
+  );
+  const anchorDay = row.anchor_day ?? dayOfIsoDate(row.next_run_date);
+  let next = row.next_run_date;
+  // Bounded like the runner: a broken interval can't spin forever.
+  for (let i = 0; i < 5000 && next < today; i++) {
+    next = advanceDate(next, row.frequency, Math.max(1, row.interval_count), anchorDay);
+  }
+  if (row.end_date && next > row.end_date) {
+    throw new Error('This recurring entry has already ended. Edit its end date to resume it.');
+  }
+  await db.runAsync('UPDATE recurring_rules SET active = 1, next_run_date = ? WHERE id = ?', [next, id]);
 }
 
 export async function deleteRecurringRule(id: string): Promise<RowSnapshot> {

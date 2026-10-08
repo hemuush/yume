@@ -187,7 +187,6 @@ export default function LoansScreen() {
         title="Loans"
         showBack
         hideUser
-        compact
         actions={<AddButton onPress={() => setModalVisible(true)} label="+ Loan" />}
       />
 

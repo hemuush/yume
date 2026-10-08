@@ -33,6 +33,8 @@ export async function ensureAndroidChannel(): Promise<void> {
     name: 'Yume reminders',
     importance: Notifications.AndroidImportance.DEFAULT,
     lightColor: theme.colors.primary,
+    // Amounts and names stay off the phone's lock screen until it's unlocked.
+    lockscreenVisibility: Notifications.AndroidNotificationVisibility.PRIVATE,
   });
 }
 

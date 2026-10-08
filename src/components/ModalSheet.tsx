@@ -3,7 +3,10 @@ import { Text } from '@/components/Text';
 import Feather from '@expo/vector-icons/Feather';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { SafeAreaProvider, useSafeAreaInsets, initialWindowMetrics } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import { theme } from '@/constants/theme';
+import { shade } from '@/lib/color';
+import { useAccent } from '@/theme/AccentContext';
 import { usePressScale } from '@/lib/usePressScale';
 import { AmountPadHostProvider, useAmountPadHost } from '@/components/AmountField';
 
@@ -27,6 +30,8 @@ interface Props {
    * padded past the system nav bar) so the main action never scrolls away. Works for sheet and dialog.
    */
   footer?: React.ReactNode;
+  /** A dialog's strip along its top edge, like a StripCard's: what it is about (coral for a delete). */
+  strip?: string;
 }
 
 /**
@@ -173,9 +178,20 @@ function ModalSheetBody({
   scrollable = true,
   showClose = true,
   footer,
+  strip,
 }: Props) {
   const insets = useSafeAreaInsets();
   const isSheet = variant === 'sheet';
+  const { accent } = useAccent();
+  // A sheet opens under a light wash of the theme's sky that fades into the cream page below the title.
+  const sky = isSheet ? (
+    <LinearGradient
+      colors={[shade(accent, 93, 3), theme.colors.background]}
+      style={styles.sky}
+      pointerEvents="none"
+    />
+  ) : null;
+  const stripView = !isSheet && strip ? <View style={[styles.strip, { backgroundColor: strip }]} /> : null;
 
   // The pad an AmountField docks under the sheet, in place of the phone keyboard.
   const { host, pad, scrollProps: scrollTracking } = useAmountPadHost();
@@ -216,6 +232,7 @@ function ModalSheetBody({
             pointerEvents="box-none"
           >
             <View style={[styles.dialog, styles.dialogFramed]}>
+              {stripView}
               <View style={styles.framedPad}>{header}</View>
               <ScrollView
                 {...scrollTracking}
@@ -251,6 +268,7 @@ function ModalSheetBody({
             pointerEvents="box-none"
           >
             <View style={styles.framedSheet}>
+              {sky}
               <View style={styles.grabber} />
               <View style={styles.framedPad}>{header}</View>
               <KeyboardAwareScrollView
@@ -280,8 +298,14 @@ function ModalSheetBody({
 
   const body = (
     <View
-      style={[isSheet ? styles.sheet : styles.dialog, { paddingBottom: (isSheet ? 24 : 20) + insets.bottom }]}
+      style={[
+        isSheet ? styles.sheet : styles.dialog,
+        stripView && styles.dialogStriped,
+        { paddingBottom: (isSheet ? 24 : 20) + insets.bottom },
+      ]}
     >
+      {sky}
+      {stripView}
       {isSheet && <View style={styles.grabber} />}
       {header}
       {children}
@@ -369,7 +393,8 @@ const styles = StyleSheet.create({
   framedPad: { paddingHorizontal: 16 },
   framedBody: { flexGrow: 0, flexShrink: 1 },
   framedSheet: {
-    backgroundColor: theme.colors.surfaceAlt,
+    backgroundColor: theme.colors.background,
+    overflow: 'hidden',
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     maxHeight: '92%',
@@ -377,9 +402,9 @@ const styles = StyleSheet.create({
     ...SHEET_SHADOW,
   },
   framedSheetContent: { paddingHorizontal: 16, paddingBottom: 16 },
-  framedSheetFooter: { paddingHorizontal: 16, paddingTop: 10, backgroundColor: theme.colors.surfaceAlt },
+  framedSheetFooter: { paddingHorizontal: 16, paddingTop: 10, backgroundColor: theme.colors.background },
   framedDialogContent: { paddingHorizontal: 16, paddingBottom: 4 },
-  sheetDock: { paddingHorizontal: 16, paddingTop: 2, backgroundColor: theme.colors.surfaceAlt },
+  sheetDock: { paddingHorizontal: 16, paddingTop: 2, backgroundColor: theme.colors.background },
   dialogDock: { paddingHorizontal: 16, paddingBottom: 14, backgroundColor: theme.colors.surface },
   inlineDock: { marginTop: 12 },
   framedDialogFooter: { paddingHorizontal: 16, paddingTop: 12, backgroundColor: theme.colors.surface },
@@ -401,7 +426,8 @@ const styles = StyleSheet.create({
   linkDanger: { color: theme.colors.expenseText },
 
   sheet: {
-    backgroundColor: theme.colors.surfaceAlt,
+    backgroundColor: theme.colors.background,
+    overflow: 'hidden',
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     paddingHorizontal: 16,
@@ -425,6 +451,10 @@ const styles = StyleSheet.create({
     maxHeight: '78%',
     alignSelf: 'stretch',
   },
+  sky: { position: 'absolute', top: 0, left: 0, right: 0, height: 96 },
+  strip: { position: 'absolute', top: 0, left: 0, right: 0, height: 4 },
+  // The strip is clipped to the dialog's corners; the space under it keeps the title off it.
+  dialogStriped: { overflow: 'hidden', paddingTop: 22 },
   grabber: {
     alignSelf: 'center',
     width: 38,
@@ -439,9 +469,12 @@ const styles = StyleSheet.create({
     height: 32,
     borderRadius: 16,
     backgroundColor: theme.colors.surface,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: theme.colors.link,
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
   },
 });

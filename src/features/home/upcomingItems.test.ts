@@ -56,10 +56,10 @@ describe('buildUpcomingItems', () => {
       ],
     });
     expect(items.map((i) => [i.key, i.title, i.sign, i.route])).toEqual([
-      ['loan-car', 'Car loan EMI', '-', '/loans'],
+      ['loan-car', 'Car loan EMI', '-', '/loans?pay=car'],
       ['salary', 'Salary', '+', '/recurring'],
       ['stream', 'Subscriptions', '-', '/recurring'],
-      ['loan-home', 'Home loan EMI', '-', '/loans'],
+      ['loan-home', 'Home loan EMI', '-', '/loans?pay=home'],
       ['card-card', 'Blue Card bill', '-', '/add-transaction?type=transfer&toAccountId=card&amount=642000'],
       ['save', 'Bank → Pot', '', '/recurring'],
     ]);

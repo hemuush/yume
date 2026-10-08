@@ -113,11 +113,11 @@ export default function WhatIfScreen() {
   if (!loaded && !loadError) {
     return (
       <View style={styles.container}>
-        <SkyHeader title="What if…?" showBack hideUser compact />
-        <View style={styles.card}>
+        <SkyHeader title="What if…?" showBack hideUser />
+        <StripCard tone={theme.colors.slice.free} style={styles.card}>
           <Skeleton width={120} height={12} radius={4} />
           <Skeleton width={200} height={10} radius={4} style={{ marginTop: 10 }} />
-        </View>
+        </StripCard>
       </View>
     );
   }
@@ -282,7 +282,7 @@ export default function WhatIfScreen() {
           </>
         )}
       </ReanimatedAnimated.ScrollView>
-      <SkyHeader collapse={collapse} summary={undefined} title="What if…?" showBack hideUser compact>
+      <SkyHeader collapse={collapse} summary={undefined} title="What if…?" showBack hideUser>
         <Text style={styles.intro}>
           Try a change, see where it lands. Nothing here is saved until you act on it.
         </Text>

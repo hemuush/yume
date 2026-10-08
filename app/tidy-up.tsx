@@ -35,6 +35,7 @@ import { dayMonth, longMonth, shortMonthYear } from '@/lib/dateLabels';
 import { errorMessage } from '@/lib/errorMessage';
 import { categoryPath } from '@/lib/categoryLabel';
 import { showAlert } from '@/components/AppDialog';
+import { useAccent } from '@/theme/AccentContext';
 
 /** "23 Sep 1:53 pm" from created_at (UTC, "YYYY-MM-DD HH:MM:SS"). */
 const savedLabel = (createdAt: string) => {
@@ -54,6 +55,7 @@ const savedLabel = (createdAt: string) => {
  */
 export default function TidyUpScreen() {
   const insets = useSafeAreaInsets();
+  const { accent, secondary } = useAccent();
   // The header sits over the page and shrinks as it scrolls.
   const { collapse, headerHeight, scrollHandler, scrollRef } = useCollapsingHeader();
   const { show: showUndo } = useUndoToast();
@@ -194,9 +196,7 @@ export default function TidyUpScreen() {
                       <View style={styles.itemTop}>
                         <CategoryIcon
                           name={g.type === 'transfer' ? 'swap-horizontal' : (g.categoryIcon ?? 'tag')}
-                          color={
-                            g.type === 'transfer' ? theme.colors.secondary : (g.categoryColor ?? undefined)
-                          }
+                          color={g.type === 'transfer' ? secondary : (g.categoryColor ?? undefined)}
                         />
                         <View style={h.mid}>
                           <Text style={h.title} numberOfLines={2}>
@@ -284,7 +284,7 @@ export default function TidyUpScreen() {
                 <View style={h.card}>
                   <View style={styles.item}>
                     <View style={styles.itemTop}>
-                      <CategoryIcon name="calculator-variant-outline" color={theme.colors.primary} />
+                      <CategoryIcon name="calculator-variant-outline" color={accent} />
                       <View style={h.mid}>
                         <Text style={h.title}>
                           {report.fractionalCount} old amount{report.fractionalCount === 1 ? '' : 's'} still

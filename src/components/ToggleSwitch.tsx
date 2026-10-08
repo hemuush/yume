@@ -29,13 +29,14 @@ export function ToggleSwitch({ value, onChange, disabled, small, accessibilityLa
     const slide = Animated.timing(anim, {
       toValue: value ? 1 : 0,
       duration: DURATIONS.quick,
-      useNativeDriver: false,
+      useNativeDriver: true,
     });
     slide.start();
     return () => slide.stop();
   }, [value, anim, reduce]);
 
-  const knobLeft = anim.interpolate({ inputRange: [0, 1], outputRange: small ? [2, 19] : [2, 22] });
+  // Slides by transform from its resting `left: 2` (2→19 / 2→22dp), so it runs on the native driver.
+  const knobX = anim.interpolate({ inputRange: [0, 1], outputRange: small ? [0, 17] : [0, 20] });
 
   return (
     <Pressable
@@ -63,7 +64,9 @@ export function ToggleSwitch({ value, onChange, disabled, small, accessibilityLa
           disabled && styles.disabled,
         ]}
       >
-        <Animated.View style={[styles.knob, small && styles.knobSmall, { left: knobLeft }]} />
+        <Animated.View
+          style={[styles.knob, small && styles.knobSmall, { transform: [{ translateX: knobX }] }]}
+        />
       </View>
     </Pressable>
   );
@@ -83,6 +86,7 @@ const styles = StyleSheet.create({
   knob: {
     position: 'absolute',
     top: 2,
+    left: 2,
     width: 18,
     height: 18,
     borderRadius: 9,

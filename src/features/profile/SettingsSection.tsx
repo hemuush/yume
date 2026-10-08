@@ -18,7 +18,7 @@ import {
 import { getTidyUpReport, tidyUpCount } from '@/db/tidyUp';
 import { countDeletedEntries } from '@/db/recentlyDeleted';
 import { toMinor, toMajor, getCurrencySymbol, formatMoney } from '@/lib/money';
-import { isDeviceSecured } from '@/lib/appLock';
+import { authenticate, isDeviceSecured } from '@/lib/appLock';
 import { useAppLock } from '@/lib/AppLockContext';
 import { usePrivacy } from '@/theme/PrivacyContext';
 import ReanimatedAnimated from 'react-native-reanimated';
@@ -30,6 +30,7 @@ import { AmountField } from '@/components/AmountField';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { YumeLogo } from '@/components/YumeLogo';
 import { useAccent, THEMES } from '@/theme/AccentContext';
+import { shade } from '@/lib/color';
 import { ThemeThumb } from './ThemePreview';
 import { theme } from '@/constants/theme';
 import { Section } from '@/components/Section';
@@ -82,7 +83,7 @@ function AboutFact({ icon, text }: { icon: string; text: string }) {
  * About. A coral note tops it only while backups need attention; otherwise rows' sub-lines carry every state.
  */
 export function SettingsSection() {
-  const { themeId } = useAccent();
+  const { themeId, accent } = useAccent();
   const { lockEnabled, setLockEnabled } = useAppLock();
   const { hideAmounts, toggleHideAmounts } = usePrivacy();
   const [currency, setCurrency] = useState('INR');
@@ -200,6 +201,13 @@ export function SettingsSection() {
           'No screen lock found',
           "Set up a fingerprint, face unlock, or PIN/pattern in your phone's own settings first — Yume locks using whatever your phone is already secured with."
         );
+        return;
+      }
+    } else {
+      // Turning the lock off takes the phone's own unlock, so whoever holds an open phone can't just switch it off.
+      try {
+        if (!(await authenticate())) return;
+      } catch {
         return;
       }
     }
@@ -349,7 +357,7 @@ export function SettingsSection() {
           />
           <SettingsRow
             icon="bell-outline"
-            iconBg={theme.colors.primaryTint}
+            iconBg={shade(accent, 95)}
             label="Notifications"
             sub={
               alertsOn == null

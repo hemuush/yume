@@ -20,11 +20,14 @@ import { errorMessage } from '@/lib/errorMessage';
 import { showAlert } from '@/components/AppDialog';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { listScreenStyles } from '@/features/shared/listScreenStyles';
+import { useAccent } from '@/theme/AccentContext';
+import { shade } from '@/lib/color';
 
 type SwitchKey = 'morningEnabled' | 'eveningEnabled' | 'billAlerts' | 'overspendAlerts' | 'weeklySummary';
 
 export default function NotificationSettingsScreen() {
   const insets = useSafeAreaInsets();
+  const { accent, secondary } = useAccent();
   // The header sits over the page and shrinks as it scrolls.
   const { collapse, headerHeight, scrollHandler, scrollRef } = useCollapsingHeader();
   const [prefs, setPrefs] = useState<NotificationPrefs | null>(null);
@@ -155,7 +158,7 @@ export default function NotificationSettingsScreen() {
             )}
             <SettingsRow
               icon="weather-night"
-              iconBg={theme.colors.primaryTint}
+              iconBg={shade(accent, 95)}
               label="Evening"
               sub="Log today, plus anything waiting"
               value={formatSlotTime(eveningMinutes)}
@@ -216,7 +219,7 @@ export default function NotificationSettingsScreen() {
           <View style={h.card}>
             <SettingsRow
               icon="weather-night"
-              iconBg={theme.colors.secondaryTint}
+              iconBg={shade(secondary, 94)}
               label="Suu's check-ins"
               sub="Two lines on the bell screen"
               right={

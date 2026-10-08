@@ -238,7 +238,6 @@ export default function RecurringScreen() {
         title="Recurring"
         showBack
         hideUser
-        compact
         actions={<AddButton onPress={() => setModalVisible(true)} disabled={accounts.length === 0} />}
       />
 

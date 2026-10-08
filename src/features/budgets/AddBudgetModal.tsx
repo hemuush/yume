@@ -6,7 +6,7 @@ import { toMinor, formatMoney, inputMinor } from '@/lib/money';
 import { Category } from '@/types';
 import { ModalSheet } from '@/components/ModalSheet';
 import { SheetCard } from '@/components/SheetCard';
-import { theme, modalFooterStyles as f } from '@/constants/theme';
+import { modalFooterStyles as f } from '@/constants/theme';
 import { longMonthYear } from '@/lib/dateLabels';
 import { AmountField } from '@/components/AmountField';
 import { PrimaryButton } from '@/components/PrimaryButton';
@@ -16,6 +16,7 @@ import { topLevelOnly } from '@/lib/categoryTree';
 import { styles } from './budgets.styles';
 import { errorMessage } from '@/lib/errorMessage';
 import { categorySentence } from '@/lib/categoryLabel';
+import { useAccent } from '@/theme/AccentContext';
 
 /**
  * The category a new budget starts on: the first top-level one without a budget yet, else any without one,
@@ -53,6 +54,7 @@ export function AddBudgetModal({
   onClose: () => void;
   onSaved: () => void;
 }) {
+  const { accent } = useAccent();
   const [categoryId, setCategoryId] = useState<string | null>(null);
   const [limit, setLimit] = useState('');
   const [rollover, setRollover] = useState(false);
@@ -125,7 +127,7 @@ export function AddBudgetModal({
       }
     >
       <SheetCard
-        hue={cat?.color ?? theme.colors.primary}
+        hue={cat?.color ?? accent}
         icon={cat?.icon ?? 'wallet-outline'}
         kicker={rollover ? 'Monthly · rolls over' : 'Monthly'}
         amount={formatMoney(inputMinor(limit))}

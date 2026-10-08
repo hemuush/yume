@@ -158,7 +158,6 @@ export const styles = StyleSheet.create({
   cardName: { flex: 1, fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textPrimary },
   cardAmount: { fontFamily: theme.font.monoBold, fontSize: 13, color: theme.colors.textPrimary },
   cardBrand: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  cardBrandMark: { width: 14, height: 14, borderRadius: 7, backgroundColor: theme.colors.slice.free },
   cardBrandText: { fontFamily: theme.font.roundedBold, fontSize: 12, color: theme.colors.textPrimary },
   actions: { flexDirection: 'row', gap: 10 },
   action: { flex: 1 },

@@ -51,7 +51,7 @@ export function confirmDeleteEntry({
     return;
   }
   showAlert(
-    'Delete this transaction?',
+    'Delete this entry?',
     'It moves to Recently deleted for 30 days. Account balances update right away.',
     [
       { text: 'Cancel', style: 'cancel' },

@@ -7,16 +7,19 @@ import { usePressScale } from '@/lib/usePressScale';
 import { screenStyles as h, SCREEN } from '@/components/screenStyles';
 import type { NeedsYouItem, NeedsYouTone } from './needsYou';
 import { withPressed } from '@/lib/pressed';
+import { shade } from '@/lib/color';
+import { useAccent } from '@/theme/AccentContext';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 const TONE: Record<
   NeedsYouTone,
-  { bg: string; fg: string; icon: React.ComponentProps<typeof Feather>['name'] }
+  { bg: string | null; fg: string; icon: React.ComponentProps<typeof Feather>['name'] }
 > = {
   urgent: { bg: theme.colors.expenseTint, fg: theme.colors.expense, icon: 'alert-circle' },
   warn: { bg: theme.colors.idGold, fg: theme.colors.warnInk, icon: 'pie-chart' },
-  info: { bg: theme.colors.primaryTint, fg: theme.colors.ink, icon: 'folder' },
+  // null: a pale wash of the picked theme, filled in by the row.
+  info: { bg: null, fg: theme.colors.ink, icon: 'folder' },
 };
 
 const ACTION_ICON: Partial<Record<NeedsYouItem['action'], React.ComponentProps<typeof Feather>['name']>> = {
@@ -49,6 +52,7 @@ export function NeedsYouRow({
   dismissLabel?: string;
 }) {
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.98);
+  const { accent } = useAccent();
   const tone = TONE[item.tone];
   const icon = ACTION_ICON[item.action] ?? tone.icon;
   return (
@@ -60,7 +64,7 @@ export function NeedsYouRow({
       accessibilityLabel={`${item.title}, ${item.detail}${item.amountMinor != null ? `, ${formatMoney(item.amountMinor)}` : ''}`}
       style={[styles.row, divider && styles.divider, animatedStyle]}
     >
-      <View style={[styles.iconWrap, { backgroundColor: tone.bg }]}>
+      <View style={[styles.iconWrap, { backgroundColor: tone.bg ?? shade(accent, 95) }]}>
         <Feather name={icon} size={SCREEN.iconGlyph} color={tone.fg} />
       </View>
       <View style={styles.mid}>

@@ -3,6 +3,7 @@ import { View, StyleSheet, TextInputProps, type TextInput as RNTextInput } from 
 import { Text, TextInput } from '@/components/Text';
 import { theme } from '@/constants/theme';
 import { FIELD_LABEL } from '@/constants/textStyles';
+import { useAccent } from '@/theme/AccentContext';
 
 interface Props extends TextInputProps {
   label: string;
@@ -13,12 +14,13 @@ export const FormInput = forwardRef<RNTextInput, Props>(function FormInput(
   ref
 ) {
   const [focused, setFocused] = useState(false);
+  const { secondary } = useAccent();
   return (
     <View style={styles.wrap}>
       <Text style={styles.label}>{label}</Text>
       <TextInput
         ref={ref}
-        style={[styles.input, focused && styles.inputFocused, style]}
+        style={[styles.input, focused && [styles.inputFocused, { borderColor: secondary }], style]}
         placeholderTextColor={theme.colors.textMuted}
         onFocus={(e) => {
           setFocused(true);
@@ -52,6 +54,5 @@ const styles = StyleSheet.create({
   },
   inputFocused: {
     backgroundColor: theme.colors.surface,
-    borderColor: theme.colors.secondary,
   },
 });

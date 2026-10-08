@@ -6,7 +6,9 @@ import { View, Text } from 'react-native';
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
 
 jest.mock('@/lib/haptics', () => ({ haptics: { tap: jest.fn() } }));
-jest.mock('@/theme/AccentContext', () => ({ useAccent: () => ({ accent: '#8CCED6' }) }));
+jest.mock('@/theme/AccentContext', () => ({
+  useAccent: () => ({ accent: '#8CCED6', secondary: '#8FE8C8' }),
+}));
 jest.mock('expo-linear-gradient', () => ({
   LinearGradient: ({ children }: { children: React.ReactNode }) => {
     const { View: Ring } = require('react-native');

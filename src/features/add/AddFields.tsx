@@ -13,15 +13,20 @@ import { haptics } from '@/lib/haptics';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { styles } from './add.styles';
 import { withPressed } from '@/lib/pressed';
+import { shade } from '@/lib/color';
 
 export function Chip({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
+  const { secondary } = useAccent();
   return (
     <Pressable
       onPress={() => {
         haptics.tap();
         onPress();
       }}
-      style={withPressed([styles.chip, active && styles.chipActive])}
+      style={withPressed([
+        styles.chip,
+        active && { borderColor: secondary, backgroundColor: shade(secondary, 94) },
+      ])}
       accessibilityRole="button"
       accessibilityState={{ selected: active }}
     >
@@ -107,6 +112,7 @@ export function DetailChip({
   onPress: () => void;
   accessibilityLabel: string;
 }) {
+  const { accent } = useAccent();
   return (
     <Pressable
       onPress={() => {
@@ -116,6 +122,7 @@ export function DetailChip({
       disabled={disabled}
       style={withPressed([
         styles.detailChip,
+        { backgroundColor: shade(accent, 95) },
         active && styles.detailChipActive,
         disabled && styles.detailChipDisabled,
       ])}

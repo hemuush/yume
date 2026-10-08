@@ -15,7 +15,7 @@ jest.mock('expo-router', () => ({
   useFocusEffect: (cb: () => void) => require('react').useEffect(cb, [cb]),
 }));
 jest.mock('@/lib/haptics', () => ({ haptics: { tap: jest.fn() } }));
-jest.mock('@/components/AppHeader', () => ({ AppHeader: () => null }));
+jest.mock('@/components/AppHeader', () => ({ HeaderUserButton: () => null }));
 jest.mock('@/theme/AccentContext', () => ({
   useAccent: () => ({ dot: '#F0876A', accent: '#A6B4F2', secondary: '#8FE8C8' }),
 }));

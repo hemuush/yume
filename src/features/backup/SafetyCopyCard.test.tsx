@@ -19,7 +19,7 @@ jest.mock('expo-router', () => ({
 jest.mock('@/theme/AccentContext', () => ({
   useAccent: () => ({ accent: '#8FCBFF', secondary: '#8FE8C8', onAccent: '#12130F' }),
 }));
-jest.mock('@/components/AppHeader', () => ({ AppHeader: () => null }));
+jest.mock('@/components/AppHeader', () => ({ HeaderUserButton: () => null }));
 jest.mock('@/features/backup/RestorePreviewSheet', () => ({ RestorePreviewSheet: () => null }));
 jest.mock('@/lib/restoreSync', () => ({ resyncAfterRestore: jest.fn(async () => {}) }));
 jest.mock('expo-file-system', () => ({ File: jest.fn(), Paths: { document: 'documents' } }));

@@ -6,6 +6,7 @@ import { HeaderSummary } from '@/features/home/SkyHeader';
 import { formatMoney } from '@/lib/money';
 import { Text } from '@/components/Text';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { PrimaryButton } from '@/components/PrimaryButton';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   getRangeComparison,
@@ -353,6 +354,12 @@ export default function ReportsScreen() {
         <View style={styles.center}>
           <Text style={styles.errTitle}>Couldn&rsquo;t build your report</Text>
           <Text style={styles.errDetail}>{errorText}</Text>
+          <PrimaryButton
+            title="Try again"
+            variant="secondary"
+            onPress={() => void load(cursor)}
+            style={styles.errRetry}
+          />
         </View>
       </View>
     );
@@ -610,7 +617,13 @@ export default function ReportsScreen() {
             {!byMonth && selectedDay && (
               <DayCard iso={selectedDay} txs={shownDayTx} catById={catById} onClose={closeDay} />
             )}
-            <StoryCards title={`${periodName}, in short`} cards={stories} onAction={onStoryAction} />
+            <StoryCards
+              // A new period starts the cards over at the first one.
+              key={`${range.start}:${range.end}`}
+              title={`${periodName}, in short`}
+              cards={stories}
+              onAction={onStoryAction}
+            />
             {!byMonth && (
               <>
                 <WeekdayRhythm

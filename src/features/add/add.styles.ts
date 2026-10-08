@@ -86,7 +86,7 @@ export const styles = StyleSheet.create({
     borderColor: 'transparent',
     maxWidth: '100%',
   },
-  recentChipActive: { backgroundColor: theme.colors.surface, borderColor: theme.colors.secondary },
+  recentChipActive: { backgroundColor: theme.colors.surface },
   recentChipText: {
     fontFamily: theme.font.bodyMedium,
     fontSize: 11.5,
@@ -158,7 +158,6 @@ export const styles = StyleSheet.create({
     borderColor: theme.colors.borderSoft,
     backgroundColor: theme.colors.surface,
   },
-  chipActive: { borderColor: theme.colors.secondary, backgroundColor: theme.colors.secondaryTint },
   chipText: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textPrimary },
 
   addToList: {
@@ -216,6 +215,8 @@ export const styles = StyleSheet.create({
   removeBtn: { padding: 2 },
 
   linkedNote: { marginBottom: 16 },
+  // A white note card with a strip; the space at the top clears the strip.
+  noteCard: { paddingHorizontal: 14, paddingTop: 16, paddingBottom: 12 },
   linkedText: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textPrimary, lineHeight: 17 },
 
   // On the sky band: a see-through white, like the back button.
@@ -283,7 +284,6 @@ export const styles = StyleSheet.create({
     height: 36,
     paddingHorizontal: 12,
     borderRadius: 12,
-    backgroundColor: theme.colors.primaryTint,
   },
   detailChipText: {
     fontFamily: theme.font.bodyMedium,

@@ -11,6 +11,7 @@ import { PANEL_ENTER, ROW_EXIT } from '@/lib/animation';
 import { formatMaskableMoney, formatMoney } from '@/lib/money';
 import { withPressed } from '@/lib/pressed';
 import { screenStyles as h } from '@/components/screenStyles';
+import { useAccent } from '@/theme/AccentContext';
 
 /** "+₹1,600" / "−₹23,18,958" / "₹0": a true minus sign, and a plus for the lines of a sum. */
 function signedMoney(minor: number, plus = true, masked = false, currency?: string): string {
@@ -64,6 +65,7 @@ export function TrackedCard({
   embedded?: boolean;
 }) {
   const [open, setOpen] = useState(false);
+  const { secondary } = useAccent();
   return (
     <View style={embedded ? styles.embedded : [h.card, styles.card]}>
       <Pressable
@@ -89,7 +91,7 @@ export function TrackedCard({
         <ReanimatedAnimated.View entering={PANEL_ENTER} exiting={ROW_EXIT}>
           <View style={[styles.sumLines, h.divider]}>
             <SumLine
-              color={theme.colors.secondary}
+              color={secondary}
               label={accountsLabel}
               text={signedMoney(accountsMinor, true, masked, currency)}
             />

@@ -168,7 +168,7 @@ export default function BudgetsScreen() {
   if (!loaded && !loadError) {
     return (
       <View style={styles.container}>
-        <SkyHeader title="Budgets" showBack hideUser compact />
+        <SkyHeader title="Budgets" showBack hideUser />
         <View style={{ paddingTop: 14 }}>
           <Skeleton width={110} height={12} radius={4} style={{ marginHorizontal: 20 }} />
           <Skeleton width={220} height={26} radius={6} style={{ marginHorizontal: 20, marginTop: 8 }} />
@@ -258,7 +258,6 @@ export default function BudgetsScreen() {
         title="Budgets"
         showBack
         hideUser
-        compact
         actions={<AddButton onPress={() => setModalVisible(true)} label="+ Add" />}
       />
 

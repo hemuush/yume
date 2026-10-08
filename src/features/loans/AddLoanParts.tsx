@@ -4,6 +4,8 @@ import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
 import { haptics } from '@/lib/haptics';
 import type { McIconName } from '@/components/iconName';
+import { shade } from '@/lib/color';
+import { useAccent } from '@/theme/AccentContext';
 
 export interface Option<T extends string> {
   value: T;
@@ -22,6 +24,7 @@ export function OptionCards<T extends string>({
   value: T;
   onChange: (next: T) => void;
 }) {
+  const { accent, secondary } = useAccent();
   return (
     <View style={styles.row}>
       {options.map((o) => {
@@ -32,7 +35,11 @@ export function OptionCards<T extends string>({
             onPress={() => onChange(o.value)}
             accessibilityRole="radio"
             accessibilityState={{ selected: active }}
-            style={({ pressed }) => [styles.card, active && styles.cardActive, pressed && styles.pressed]}
+            style={({ pressed }) => [
+              styles.card,
+              active && { backgroundColor: shade(accent, 95), borderColor: secondary },
+              pressed && styles.pressed,
+            ]}
           >
             <MaterialCommunityIcons
               name={o.icon as McIconName}
@@ -103,7 +110,6 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.borderSoft,
     backgroundColor: theme.colors.surface,
   },
-  cardActive: { backgroundColor: theme.colors.primaryTint, borderColor: theme.colors.secondary },
   pressed: { opacity: 0.7 },
   title: {
     fontFamily: theme.font.roundedMedium,

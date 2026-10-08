@@ -6,7 +6,7 @@ import { create, act, ReactTestRenderer } from 'react-test-renderer';
 import { Text } from 'react-native';
 
 jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMock').createReanimatedMock());
-jest.mock('@/components/AppHeader', () => ({ AppHeader: () => null }));
+jest.mock('@/components/AppHeader', () => ({ HeaderUserButton: () => null }));
 jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
 }));

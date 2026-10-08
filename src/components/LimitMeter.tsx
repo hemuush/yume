@@ -1,11 +1,12 @@
 import { View, StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
 import { GrowFill } from './GrowFill';
+import { useAccent } from '@/theme/AccentContext';
 
 export type LimitMeterTone = 'ok' | 'near' | 'over';
 
-const TONE_FILL: Record<LimitMeterTone, string> = {
-  ok: theme.colors.secondary,
+// 'ok' follows the picked theme's secondary (read in the component).
+const TONE_FILL: Record<Exclude<LimitMeterTone, 'ok'>, string> = {
   near: theme.colors.idGoldDeep,
   over: theme.colors.expense,
 };
@@ -29,8 +30,9 @@ export function LimitMeter({
    */
   animKey?: string;
 }) {
+  const { secondary } = useAccent();
   const clamped = Math.min(100, Math.max(0, pct));
-  const fillStyle = [styles.fill, { backgroundColor: TONE_FILL[tone] }];
+  const fillStyle = [styles.fill, { backgroundColor: tone === 'ok' ? secondary : TONE_FILL[tone] }];
   return (
     <View style={styles.track}>
       {animKey ? (

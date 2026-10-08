@@ -2,6 +2,7 @@ import { SheetCard } from '@/components/SheetCard';
 import { theme } from '@/constants/theme';
 import { formatMoney, formatMaskableMoney } from '@/lib/money';
 import { usePrivacy } from '@/theme/PrivacyContext';
+import { useAccent } from '@/theme/AccentContext';
 import { goalProgress } from '@/lib/savingsGoalProgress';
 import { dayMonthYear } from '@/lib/dateLabels';
 
@@ -24,10 +25,11 @@ export function GoalSheetCard({
   kicker?: string;
 }) {
   const { hideAmounts } = usePrivacy();
+  const { secondary } = useAccent();
   const { percent, done } = goalProgress(savedMinor, targetMinor);
   return (
     <SheetCard
-      hue={done && !hideAmounts ? theme.colors.flatLime : theme.colors.secondary}
+      hue={done && !hideAmounts ? theme.colors.flatLime : secondary}
       icon={done && !hideAmounts ? 'flag-checkered' : 'piggy-bank-outline'}
       kicker={kicker ?? (hideAmounts ? 'Saved' : done ? 'Reached' : `${Math.round(percent)}%`)}
       amount={formatMaskableMoney(savedMinor, { masked: hideAmounts })}

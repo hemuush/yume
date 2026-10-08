@@ -14,10 +14,10 @@ import { formatMaskableMoney, formatMoney } from '@/lib/money';
 import { resolveActiveTheme } from '@/theme/themes';
 import { CURRENT_PERIOD, periodRange, previousPeriodRange } from '@/lib/period';
 import { roundedMinor } from '@/lib/round';
-import { privateComparison } from '@/lib/privateSummary';
+import { isSavingsEntry, privateComparison } from '@/lib/privateSummary';
 import { savingsRatePct } from '@/lib/savingsRate';
 import { dueDateLabel } from '@/lib/dueDate';
-import { accountIcon } from '@/lib/account';
+import { accountIcon, savingsAccountIdsOf } from '@/lib/account';
 import { toLocalIsoDate, parseLocalIsoDate } from '@/lib/date';
 import { monthPace } from '@/lib/pace';
 import { suuLine, SuuLine } from '@/features/home/suuLine';
@@ -208,12 +208,16 @@ interface DueCandidate extends NextDueWidgetData {
 }
 
 export async function getNextDueWidgetData(): Promise<NextDueWidgetData | null> {
-  const [nextDue, rules, categories, theme] = await Promise.all([
+  const [nextDue, rules, categories, theme, hideAmounts, accounts] = await Promise.all([
     getNextDueInstallment(),
     listRecurringRules(),
     listCategories(),
     getActiveThemeOnce(),
+    getHideSensitiveAmounts(),
+    listAccounts(),
   ]);
+  const categoriesById = new Map(categories.map((c) => [c.id, c]));
+  const savingsIds = savingsAccountIdsOf(accounts);
 
   const candidates: DueCandidate[] = [];
   if (nextDue) {
@@ -232,13 +236,12 @@ export async function getNextDueWidgetData(): Promise<NextDueWidgetData | null> 
     // A transfer rule has no single counterparty/category to lead with; Home's Upcoming shows two account
     // names, which don't fit this widget's one title line, so it's left out rather than half-labelled.
     if (!rule.active || rule.type === 'transfer') continue;
+    // With savings hidden, the home screen mustn't show a SIP the app itself masks.
+    if (hideAmounts && isSavingsEntry(rule, categoriesById, savingsIds)) continue;
     const cat = categories.find((c) => c.id === rule.categoryId);
     candidates.push({
       title:
-        rule.note ||
-        (cat
-          ? categorySentence(cat.name, parentNameOf(cat.id, new Map(categories.map((c) => [c.id, c]))))
-          : 'Recurring'),
+        rule.note || (cat ? categorySentence(cat.name, parentNameOf(cat.id, categoriesById)) : 'Recurring'),
       subtitle: dueDateLabel(rule.nextRunDate),
       amountMinor: rule.amountMinor,
       sign: rule.type === 'income' ? '+' : '-',

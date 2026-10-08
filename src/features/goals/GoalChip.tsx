@@ -6,6 +6,7 @@ import { theme } from '@/constants/theme';
 import { goalProgress } from '@/lib/savingsGoalProgress';
 import { usePressScale } from '@/lib/usePressScale';
 import { usePrivacy } from '@/theme/PrivacyContext';
+import { useAccent } from '@/theme/AccentContext';
 import { GoalRing, HiddenGoalRing } from './GoalRing';
 import { useCardGrow } from '@/lib/cardGrow';
 
@@ -28,6 +29,7 @@ export function GoalChip({
   const { ref, growFrom } = useCardGrow();
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.96);
   const { hideAmounts } = usePrivacy();
+  const { secondary } = useAccent();
   const { percent, done } = goalProgress(goal.currentAmountMinor, goal.targetAmountMinor);
   return (
     <AnimatedPressable
@@ -49,7 +51,7 @@ export function GoalChip({
       ) : (
         <GoalRing
           percent={percent}
-          color={done ? theme.colors.income : theme.colors.secondary}
+          color={done ? theme.colors.income : secondary}
           done={done}
           size={40}
           animKey={`goal-chip:${goal.id}`}

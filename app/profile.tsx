@@ -12,6 +12,8 @@ import { SegmentedControl } from '@/components/SegmentedControl';
 import { theme } from '@/constants/theme';
 import { useScreenLoad } from '@/lib/useScreenLoad';
 import { Skeleton } from '@/components/Skeleton';
+import { StripCard } from '@/components/StripCard';
+import { useAccent } from '@/theme/AccentContext';
 import { styles } from '@/features/profile/profile.styles';
 import { YouSection } from '@/features/profile/YouSection';
 import { SettingsSection } from '@/features/profile/SettingsSection';
@@ -31,6 +33,7 @@ const TABS: { label: string; value: ProfileTab }[] = [
  */
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
+  const { accent } = useAccent();
   // The header sits over the page and shrinks as it scrolls; the amount pad's scroll tracking feeds it.
   const { collapse, headerHeight, onJsScroll, settleJs } = useCollapsingHeader();
   const [name, setName] = useState<string | null>(null);
@@ -60,13 +63,16 @@ export default function ProfileScreen() {
     return (
       <View style={styles.container}>
         <SkyHeader title="Profile" showBack hideUser />
-        <View style={styles.identity}>
-          <Skeleton width={58} height={58} circle radius={29} />
-          <View style={styles.identityText}>
-            <Skeleton width={130} height={16} radius={5} />
-            <Skeleton width={100} height={11} radius={4} style={{ marginTop: 8 }} />
+        {/* The identity card's shape while it loads. */}
+        <StripCard tone={accent} style={styles.skeletonCard}>
+          <View style={styles.identity}>
+            <Skeleton width={58} height={58} circle radius={29} />
+            <View style={styles.identityText}>
+              <Skeleton width={130} height={16} radius={5} />
+              <Skeleton width={100} height={11} radius={4} style={{ marginTop: 8 }} />
+            </View>
           </View>
-        </View>
+        </StripCard>
       </View>
     );
   }

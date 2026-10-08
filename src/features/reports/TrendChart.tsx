@@ -10,6 +10,7 @@ import { haptics } from '@/lib/haptics';
 import { styles } from './reports.styles';
 import { withPressed } from '@/lib/pressed';
 import { useGrowFrom } from '@/lib/useGrowFrom';
+import { useAccent } from '@/theme/AccentContext';
 
 /** A trend needs at least this many points to be worth drawing. */
 export const MIN_TREND_POINTS = 3;
@@ -76,6 +77,7 @@ export function TrendChart({
   const [kind, setKind] = useState<Kind>(hasSpend ? 'spend' : 'netWorth');
   const [width, setWidth] = useState(0);
   const [sel, setSel] = useState<number | null>(null);
+  const { accent } = useAccent();
   if (!hasSpend && !hasNw) return null;
   const showing: Kind =
     kind === 'spend' && !hasSpend ? 'netWorth' : kind === 'netWorth' && !hasNw ? 'spend' : kind;
@@ -183,7 +185,7 @@ export function TrendChart({
           <Svg width={width} height={H} pointerEvents="none">
             <Polygon
               points={`${x(0)},${PLOT_BOTTOM + 4} ${line} ${x(points.length - 1)},${PLOT_BOTTOM + 4}`}
-              fill={theme.colors.primary}
+              fill={accent}
               fillOpacity={0.18}
             />
             {avg != null && (

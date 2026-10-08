@@ -19,6 +19,8 @@ import { categorySentence, categorySpoken, inParent, joinSub, parentNameOf } fro
 import { formatMoney } from '@/lib/money';
 import { withPressed } from '@/lib/pressed';
 import { haptics } from '@/lib/haptics';
+import { shade } from '@/lib/color';
+import { useAccent } from '@/theme/AccentContext';
 import { AmountPad } from '@/components/AmountPad';
 import { applyPadKey, PadKey } from '@/lib/padMath';
 import { SplitMeter } from './SplitCard';
@@ -45,6 +47,7 @@ export function SplitScreen() {
   // The header sits over the page and shrinks as it scrolls.
   const { collapse, headerHeight, scrollHandler, scrollRef } = useCollapsingHeader();
   const { height: screenHeight } = useWindowDimensions();
+  const { secondary } = useAccent();
   const [session] = useState(getSplitSession);
   const [parts, setParts] = useState<DraftPart[]>(() => session?.parts ?? []);
   // The part the pad types into; never the first, which holds the rest.
@@ -202,7 +205,12 @@ export function SplitScreen() {
                 </Pressable>
                 {first ? (
                   <View
-                    style={[styles.box, styles.restBox, rest <= 0 && parts.length > 1 && styles.restBoxBad]}
+                    style={[
+                      styles.box,
+                      styles.restBox,
+                      { backgroundColor: shade(secondary, 94) },
+                      rest <= 0 && parts.length > 1 && styles.restBoxBad,
+                    ]}
                     accessible
                     accessibilityLabel={`${nameOf(p.key)} holds the rest, ${money(Math.max(0, rest))}`}
                   >
@@ -348,7 +356,7 @@ const styles = StyleSheet.create({
   boxRow: { flexDirection: 'row', alignItems: 'center' },
   boxText: { fontFamily: theme.font.monoBold, fontSize: 13.5, color: theme.colors.textPrimary },
   caret: { width: 1.5, height: 15, backgroundColor: theme.colors.ink, marginLeft: 2 },
-  restBox: { backgroundColor: theme.colors.secondaryTint, paddingVertical: 6 },
+  restBox: { paddingVertical: 6 },
   restBoxBad: { backgroundColor: theme.colors.expenseTint },
   restLabel: {
     ...EYEBROW,

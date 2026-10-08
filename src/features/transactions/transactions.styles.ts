@@ -70,7 +70,7 @@ export const styles = StyleSheet.create({
     padding: 18,
     paddingBottom: 16,
     backgroundColor: theme.colors.surface,
-    borderRadius: 26,
+    borderRadius: theme.radius.xl2,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
     ...SOFT_LIFT,
@@ -152,7 +152,6 @@ export const styles = StyleSheet.create({
     borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: theme.colors.primaryTint,
   },
   periodNavOff: { opacity: 0.35 },
   periodTitleBtn: { flex: 1, alignItems: 'center', paddingVertical: 4 },
@@ -222,7 +221,6 @@ export const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
   },
-  chipCat: { backgroundColor: theme.colors.primaryTint },
   chipText: { fontFamily: theme.font.bodyBold, fontSize: 12.5, color: theme.colors.textSecondary },
 
   yearRow: {

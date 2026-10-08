@@ -7,6 +7,7 @@ import { BackupSummary } from '@/lib/backup';
 import { theme } from '@/constants/theme';
 import { SheetCard } from '@/components/SheetCard';
 import { dayMonthYear } from '@/lib/dateLabels';
+import { useAccent } from '@/theme/AccentContext';
 
 export interface RestorePreview {
   exportedAt: string;
@@ -43,6 +44,7 @@ export function RestorePreviewSheet({
   onCancel: () => void;
   onRestore: () => void;
 }) {
+  const { accent } = useAccent();
   if (!preview) return null;
   // A backup file with no (or a garbled) export time still previews — it just doesn't say when it was made.
   const exported = new Date(preview.exportedAt);
@@ -71,7 +73,7 @@ export function RestorePreviewSheet({
       {/* The calm-sheets sign-off (Direction C): the backup as a card — when
           it was made and what's in it — then what's on the phone now. */}
       <SheetCard
-        hue={theme.colors.primary}
+        hue={accent}
         icon="backup-restore"
         kicker="Restore"
         title={made ? `Backup from ${made}` : 'Backup'}

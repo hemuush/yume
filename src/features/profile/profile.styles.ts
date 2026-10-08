@@ -27,6 +27,7 @@ export const styles = StyleSheet.create({
   },
 
   // ---- identity: avatar beside name and member since ----
+  skeletonCard: { marginHorizontal: SCREEN.gutter, marginTop: 6, paddingTop: 14, paddingBottom: 10 },
   identity: {
     flexDirection: 'row',
     alignItems: 'center',

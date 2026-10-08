@@ -20,7 +20,7 @@ import { SegmentedControl } from '@/components/SegmentedControl';
 import { theme, modalFooterStyles as f } from '@/constants/theme';
 import { screenStyles as h } from '@/components/screenStyles';
 import { accountIcon } from '@/lib/account';
-import { hexToRgba } from '@/lib/color';
+import { hexToRgba, shade } from '@/lib/color';
 import { categorySentence, inParent, joinSub, parentNameOf } from '@/lib/categoryLabel';
 import { weekdayDayMonth } from '@/lib/dateLabels';
 import { useUndoToast } from '@/components/UndoToast';
@@ -34,6 +34,7 @@ import { useReturnOrPush } from '@/lib/useReturnOrPush';
 import { getSplitParts, deleteSplit, restoreSplit } from '@/db/splits';
 import { formatMaskableMoney } from '@/lib/money';
 import { usePrivacy } from '@/theme/PrivacyContext';
+import { useAccent } from '@/theme/AccentContext';
 import { router } from 'expo-router';
 import { showAlert } from '@/components/AppDialog';
 
@@ -55,6 +56,7 @@ export function TransactionDetailModal({
   const returnOrPush = useReturnOrPush();
   const { hideAmounts } = usePrivacy();
   const { show: showUndo } = useUndoToast();
+  const { accent, secondary } = useAccent();
   const [link, setLink] = useState<TransactionLink | undefined>(undefined);
   // The link lookup failed: stop saying "Checking…" and treat the entry as plain, so Edit stays usable.
   const [linkFailed, setLinkFailed] = useState(false);
@@ -247,7 +249,7 @@ export function TransactionDetailModal({
   const moreActions = [
     canRepeat && {
       icon: 'plus',
-      bg: theme.colors.primaryTint,
+      bg: shade(accent, 95),
       label: 'Log again today',
       sub: 'Same amount, account and note',
       onPress: logAgainToday,
@@ -306,7 +308,7 @@ export function TransactionDetailModal({
       }
     >
       <SheetCard
-        hue={transfer ? theme.colors.secondary : (cat?.color ?? theme.colors.textMuted)}
+        hue={transfer ? secondary : (cat?.color ?? theme.colors.textMuted)}
         icon={transfer ? 'swap-horizontal' : (cat?.icon ?? 'tag')}
         kicker={transfer || !parentName ? kind : `${kind} · ${parentName}`}
         amount={
@@ -374,7 +376,7 @@ export function TransactionDetailModal({
             <SettingsRow
               round
               icon={transfer ? 'swap-horizontal' : account ? accountIcon(account.type) : 'bank'}
-              iconBg={theme.colors.primaryTint}
+              iconBg={shade(accent, 95)}
               label={route ?? accountName(tx.accountId)}
               sub={
                 transfer ? 'Moved between your accounts' : tx.type === 'income' ? 'Received in' : 'Paid from'

@@ -3,6 +3,7 @@ import { Text } from '@/components/Text';
 import Feather from '@expo/vector-icons/Feather';
 import { ModalSheet } from './ModalSheet';
 import { theme } from '@/constants/theme';
+import { StripCard } from './StripCard';
 import { usePressScale } from '@/lib/usePressScale';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -34,11 +35,13 @@ export function ActionSheet({
 }) {
   return (
     <ModalSheet visible={visible} onClose={onClose} title={title} subtitle={subtitle} scrollable={false}>
-      <View style={styles.list}>
-        {items.map((item, i) => (
-          <ActionSheetRow key={item.key} item={item} divider={i > 0} onClose={onClose} />
-        ))}
-      </View>
+      <StripCard tone={theme.colors.slice.free}>
+        <View style={styles.list}>
+          {items.map((item, i) => (
+            <ActionSheetRow key={item.key} item={item} divider={i > 0} onClose={onClose} />
+          ))}
+        </View>
+      </StripCard>
     </ModalSheet>
   );
 }
@@ -79,13 +82,7 @@ function ActionSheetRow({
 }
 
 const styles = StyleSheet.create({
-  list: {
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.radius.xl2,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-    overflow: 'hidden',
-  },
+  list: { paddingTop: 4 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 11, paddingHorizontal: 14 },
   rowDivider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.borderSoft },
   icon: {
