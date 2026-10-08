@@ -9,10 +9,11 @@ import { RepeatEntry } from '@/db/ledger';
 import { CategoryIcon } from '@/components/CategoryIcon';
 import { MovingRow } from '@/components/MovingRow';
 import { styles } from './add.styles';
-import { TYPE_WASH, EntryType, Staged, dateChipLabel } from './addEntry';
+import { TYPE_WASH, typeWash, EntryType, Staged, dateChipLabel } from './addEntry';
 import { AccountTile } from './AddFields';
 import { withPressed } from '@/lib/pressed';
 import { categorySentence, categorySpoken, inParent } from '@/lib/categoryLabel';
+import { useAccent } from '@/theme/AccentContext';
 
 /**
  * The Add screen's display pieces: amount card, From/To pickers, "Your usual" chips, staged-entry list.
@@ -54,7 +55,8 @@ export function AmountCard({
   /** "Money back" is on: the card turns the income green and says so. */
   refund?: boolean;
 }) {
-  const wash = refund ? TYPE_WASH.income : TYPE_WASH[type];
+  const { accent } = useAccent();
+  const wash = refund ? TYPE_WASH.income : typeWash(type, accent);
   return (
     <View style={styles.heroCard}>
       <View style={[styles.heroStrip, { backgroundColor: wash.accent }]} />
@@ -183,6 +185,7 @@ export function UsualChips({
   accountId: string | null;
   onPick: (entry: RepeatEntry) => void;
 }) {
+  const { secondary } = useAccent();
   return (
     <>
       <Text style={styles.label}>Your usual</Text>
@@ -197,7 +200,10 @@ export function UsualChips({
                 haptics.tap();
                 onPick(u);
               }}
-              style={withPressed([styles.recentChip, active && styles.recentChipActive])}
+              style={withPressed([
+                styles.recentChip,
+                active && [styles.recentChipActive, { borderColor: secondary }],
+              ])}
               accessibilityRole="button"
               accessibilityState={{ selected: active }}
               accessibilityLabel={`${categorySpoken(u.categoryName, u.parentName)}, ${formatMoney(u.amountMinor, u.accountCurrency)}, logged ${u.timesLogged} times`}
@@ -228,6 +234,7 @@ export function StagedList({
   fadeStyle: React.ComponentProps<typeof Animated.View>['style'];
   onRemove: (id: string) => void;
 }) {
+  const { secondary } = useAccent();
   return (
     <Animated.View style={[styles.staged, fadeStyle]}>
       <View style={styles.stagedHeadRow}>
@@ -244,7 +251,7 @@ export function StagedList({
           <MovingRow key={r.id} style={[styles.stagedRow, i > 0 && styles.stagedRowDivider]}>
             <CategoryIcon
               name={r.kind === 'transaction' ? r.categoryIcon : 'account-multiple'}
-              color={r.kind === 'transaction' ? r.categoryColor : theme.colors.secondary}
+              color={r.kind === 'friend' || r.type === 'transfer' ? secondary : r.categoryColor}
               size={15}
               square={30}
             />

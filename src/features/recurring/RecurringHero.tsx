@@ -89,7 +89,7 @@ const styles = StyleSheet.create({
   head: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
   headText: { flex: 1, minWidth: 0 },
   kicker: { ...EYEBROW, color: theme.colors.textSecondary },
-  amount: { fontFamily: theme.font.monoBold, fontSize: 26, color: theme.colors.textPrimary, marginTop: 2 },
+  amount: { fontFamily: theme.font.monoBold, fontSize: 28, color: theme.colors.textPrimary, marginTop: 2 },
   per: { fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textSecondary },
   side: { alignItems: 'flex-end', flexShrink: 0, maxWidth: '45%' },
   sideLabel: { ...EYEBROW, color: theme.colors.textSecondary },
@@ -102,7 +102,7 @@ const styles = StyleSheet.create({
     borderRadius: theme.radius.pill,
     overflow: 'hidden',
   },
-  caption: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary, marginTop: 8 },
+  caption: { fontFamily: theme.font.body, fontSize: 12.5, color: theme.colors.textSecondary, marginTop: 8 },
   intro: {
     fontFamily: theme.font.body,
     fontSize: 12.5,

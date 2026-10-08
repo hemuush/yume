@@ -27,7 +27,7 @@ import { SkyHeader } from '@/features/home/SkyHeader';
 import { SegmentedControl } from '@/components/SegmentedControl';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { CategoryPicker } from '@/components/CategoryPicker';
-import { SoftCard } from '@/components/SoftCard';
+import { StripCard } from '@/components/StripCard';
 import { styles } from '@/features/add/add.styles';
 import {
   ADD_TYPES,
@@ -46,6 +46,7 @@ import { AddDetailRow } from '@/features/add/AddDetailRow';
 import { AddSheets } from '@/features/add/AddSheets';
 import { AmountCard, TransferAccounts, UsualChips, StagedList } from '@/features/add/AddSections';
 import { errorMessage } from '@/lib/errorMessage';
+import { MAX_AMOUNT_MINOR } from '@/lib/amountLimits';
 import { useOnKeyboardHide } from '@/lib/useOnKeyboardHide';
 import { withPressed } from '@/lib/pressed';
 import { getSplitParts, saveSplit } from '@/db/splits';
@@ -66,10 +67,12 @@ import { useDiscardGuard } from '@/features/add/useDiscardGuard';
 import { showAlert } from '@/components/AppDialog';
 import { useUndoToast } from '@/components/UndoToast';
 import { spendableAccountsOf } from '@/lib/account';
+import { useAccent } from '@/theme/AccentContext';
 
 export default function AddTransactionScreen() {
   const insets = useSafeAreaInsets();
   const { show: showUndo } = useUndoToast();
+  const { accent } = useAccent();
   // `accountId` pre-selects the account (the "from" side of a transfer) —
   // Home's account summary sheet opens Add this way.
   const params = useLocalSearchParams<{
@@ -98,14 +101,22 @@ export default function AddTransactionScreen() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [people, setPeople] = useState<PersonWithBalance[]>([]);
   const [editing, setEditing] = useState<Transaction | null>(null);
+  // What an edit opened with, so leaving with real changes asks first.
+  const [editBaseline, setEditBaseline] = useState<{
+    note: string;
+    date: string;
+    categoryId: string | null;
+    accountId: string;
+  } | null>(null);
   const [isLinked, setIsLinked] = useState(false);
-  const [seeded, setSeeded] = useState(false);
+  // Whether this screen has filled its form once; a ref so the focus reload keeps one identity.
+  const seeded = useRef(false);
 
   const [type, setType] = useState<EntryType>(isTxType(params.type) ? params.type : 'expense');
   // What's been typed on the number pad — a number, or a sum like "120+45".
   const [expr, setExpr] = useState(() => {
     const minor = Number(params.amount);
-    return Number.isInteger(minor) && minor > 0 ? exprFromMinor(minor) : '';
+    return Number.isInteger(minor) && minor > 0 && minor <= MAX_AMOUNT_MINOR ? exprFromMinor(minor) : '';
   });
   const [accountId, setAccountId] = useState<string | null>(null);
   const [toAccountId, setToAccountId] = useState<string | null>(null);
@@ -167,14 +178,26 @@ export default function AddTransactionScreen() {
   );
 
   const amountValue = evaluateAmount(expr);
-  const amountMinor = amountValue === null ? 0 : toMinor(amountValue);
+  // Typed amounts are whole rupees, but an edit left untouched keeps its exact amount (paise and all).
+  const untouchedEdit = editing !== null && !editing.splitId && expr === exprFromMinor(editing.amountMinor);
+  const amountMinor = untouchedEdit ? editing.amountMinor : amountValue === null ? 0 : toMinor(amountValue);
 
   const [initialExpr] = useState(expr);
+  const editChanged =
+    editing !== null &&
+    editBaseline !== null &&
+    (!untouchedEdit && !editing.splitId
+      ? true
+      : note !== editBaseline.note ||
+        date !== editBaseline.date ||
+        categoryId !== editBaseline.categoryId ||
+        accountId !== editBaseline.accountId);
   const { leave } = useDiscardGuard(
-    !editingId &&
-      !saveDone &&
+    !saveDone &&
       !saving &&
-      (expr !== initialExpr || note.trim() !== '' || rows.length > 0 || splitParts !== null)
+      (editingId
+        ? editChanged
+        : expr !== initialExpr || note.trim() !== '' || rows.length > 0 || splitParts !== null)
   );
 
   const { frequentAmounts, usual } = useAddSuggestions({ type, categoryId, editingId });
@@ -220,7 +243,15 @@ export default function AddTransactionScreen() {
       listCategories(),
       listPeople(),
     ]);
-    const tx = editingId && !seeded ? await getTransactionById(editingId) : null;
+    const tx = editingId && !seeded.current ? await getTransactionById(editingId) : null;
+    if (editingId && !seeded.current && !tx) {
+      // Deleted elsewhere since this was opened: saving would quietly make a new entry instead.
+      seeded.current = true;
+      showAlert('This entry no longer exists', 'It may have been deleted.', [
+        { text: 'OK', onPress: () => router.back() },
+      ]);
+      return;
+    }
     if (tx) editingAccountIds.current = [tx.accountId, tx.toAccountId].filter((id): id is string => !!id);
     // An edit keeps the entry's own account(s) on offer even if since archived, or saving would quietly
     // move the entry onto another account. Other archived accounts stay out of the pickers.
@@ -229,7 +260,7 @@ export default function AddTransactionScreen() {
     setCategories(cats);
     setPeople(ppl);
 
-    if (editingId && !seeded) {
+    if (editingId && !seeded.current) {
       const link = await getTransactionLink(editingId);
       if (tx) {
         setEditing(tx);
@@ -238,6 +269,7 @@ export default function AddTransactionScreen() {
         setType(tx.isRefund ? 'expense' : tx.type);
         setRefund(tx.isRefund);
         setExpr(exprFromMinor(tx.amountMinor));
+        setEditBaseline({ note: tx.note, date: tx.date, categoryId: tx.categoryId, accountId: tx.accountId });
         setAccountId(tx.accountId);
         setToAccountId(tx.toAccountId);
         setCategoryId(tx.categoryId);
@@ -252,7 +284,7 @@ export default function AddTransactionScreen() {
           setExpr(exprFromMinor(parts.reduce((sum, p) => sum + p.amountMinor, 0)));
         }
       }
-    } else if (!editingId && !seeded) {
+    } else if (!editingId && !seeded.current) {
       addDefaults.current = await getAddDefaults().catch(() => ({}));
       const startType = isTxType(initialType) ? initialType : 'expense';
       applyDefaults(startType, accs);
@@ -289,10 +321,9 @@ export default function AddTransactionScreen() {
         );
       }
     }
-    setSeeded(true);
+    seeded.current = true;
   }, [
     editingId,
-    seeded,
     initialType,
     initialAccountId,
     initialToAccountId,
@@ -304,7 +335,7 @@ export default function AddTransactionScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      load();
+      load().catch((e) => setError(errorMessage(e)));
       // Back from the split page with Done: the entry is split that way now.
       const split = takeSplitResult();
       if (split) {
@@ -590,6 +621,18 @@ export default function AddTransactionScreen() {
     }
   };
 
+  // One save at a time: `saving` is only set after the repeat check, so a fast double tap could save twice.
+  const saveInFlight = useRef(false);
+  const runSave = async (save: () => Promise<void>) => {
+    if (saveInFlight.current) return;
+    saveInFlight.current = true;
+    try {
+      await save();
+    } finally {
+      saveInFlight.current = false;
+    }
+  };
+
   const onDelete = () => {
     if (!editing) return;
     confirmDeleteEntry({ editing, splitParts: splitParts?.length ?? 2, showUndo, onError: setError });
@@ -599,13 +642,17 @@ export default function AddTransactionScreen() {
   const onPersonAdded = async () => {
     setAddPersonVisible(false);
     const before = new Set(people.map((p) => p.id));
-    const ppl = await listPeople();
-    setPeople(ppl);
-    const added = ppl.find((p) => !before.has(p.id));
-    if (added) setPersonId(added.id);
+    try {
+      const ppl = await listPeople();
+      setPeople(ppl);
+      const added = ppl.find((p) => !before.has(p.id));
+      if (added) setPersonId(added.id);
+    } catch (e) {
+      showAlert("Couldn't load people", errorMessage(e));
+    }
   };
 
-  const title = editing ? 'Edit transaction' : 'Add';
+  const title = editing ? 'Edit entry' : 'Add';
   const saveTitle = saveButtonTitle({
     saving,
     editing: !!editing,
@@ -627,7 +674,7 @@ export default function AddTransactionScreen() {
     <PrimaryButton
       title={saveTitle}
       done={saveDone}
-      onPress={splitParts ? onSaveSplit : editing ? onSaveSingleEdit : onSaveAll}
+      onPress={() => void runSave(splitParts ? onSaveSplit : editing ? onSaveSingleEdit : onSaveAll)}
       disabled={saving || isLinked}
       style={styles.saveBtn}
     />
@@ -650,7 +697,6 @@ export default function AddTransactionScreen() {
         title={title}
         showBack
         hideUser
-        compact
         actions={
           editing ? (
             !isLinked ? (
@@ -658,7 +704,7 @@ export default function AddTransactionScreen() {
                 onPress={onDelete}
                 hitSlop={8}
                 accessibilityRole="button"
-                accessibilityLabel="Delete transaction"
+                accessibilityLabel="Delete entry"
                 style={withPressed(styles.trashBtn)}
               >
                 <Feather name="trash-2" size={16} color={theme.colors.expense} />
@@ -692,11 +738,15 @@ export default function AddTransactionScreen() {
         bottomOffset={20}
       >
         {isLinked && (
-          <SoftCard backgroundColor={theme.colors.goldTint} padding={12} style={styles.linkedNote}>
+          <StripCard
+            tone={theme.colors.slice.due}
+            lifted={false}
+            style={[styles.linkedNote, styles.noteCard]}
+          >
             <Text style={styles.linkedText}>
               This entry is tied to a loan or a person&rsquo;s ledger — edit it from there.
             </Text>
-          </SoftCard>
+          </StripCard>
         )}
 
         <AmountCard
@@ -738,7 +788,7 @@ export default function AddTransactionScreen() {
             {pickableAccounts.length === 0 && (
               // Nothing to record this against yet (previously only a "Pick an account" error on Save):
               // opens the same Add Account form Profile uses, right here.
-              <SoftCard backgroundColor={theme.colors.primaryTint} padding={14} style={styles.noAccountCard}>
+              <StripCard tone={accent} style={[styles.noAccountCard, styles.noteCard]}>
                 <Text style={styles.noAccountTitle}>
                   {accounts.length === 0 ? 'Add your first account' : 'Add a spendable account'}
                 </Text>
@@ -752,7 +802,7 @@ export default function AddTransactionScreen() {
                   onPress={() => setAddAccountVisible(true)}
                   style={styles.noAccountBtn}
                 />
-              </SoftCard>
+              </StripCard>
             )}
 
             {type === 'transfer' ? (

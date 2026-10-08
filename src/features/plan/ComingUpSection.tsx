@@ -13,6 +13,8 @@ import { weekdayDayMonth } from '@/lib/dateLabels';
 import { styles } from './plan.styles';
 import { withPressed } from '@/lib/pressed';
 import { DateTile } from '@/components/DateTile';
+import { shade } from '@/lib/color';
+import { useAccent } from '@/theme/AccentContext';
 
 /**
  * Plan's Coming up: everything due in the next 14 days, grouped under its
@@ -134,6 +136,7 @@ export function ComingUpSection({
   onCardLayout?: (y: number) => void;
   onGroupLayout?: (date: string, y: number) => void;
 }) {
+  const { accent } = useAccent();
   return (
     <Section title="Coming up">
       <View style={h.card} onLayout={(e) => onCardLayout?.(e.nativeEvent.layout.y)}>
@@ -144,7 +147,7 @@ export function ComingUpSection({
             accessibilityRole="button"
             accessibilityLabel="Add a recurring entry"
           >
-            <View style={[h.iconTile, { backgroundColor: theme.colors.primaryTint }]}>
+            <View style={[h.iconTile, { backgroundColor: shade(accent, 95) }]}>
               <Feather name="repeat" size={SCREEN.iconGlyph} color={theme.colors.ink} />
             </View>
             <View style={h.mid}>

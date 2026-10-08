@@ -24,7 +24,9 @@ jest.mock('@/components/ModalSheet', () => ({
 }));
 jest.mock('@/components/DateField', () => ({ DateField: () => null }));
 jest.mock('@/components/ToggleSwitch', () => ({ ToggleSwitch: () => null }));
-jest.mock('@/theme/AccentContext', () => ({ useAccent: () => ({ accent: '#A6B4F2' }) }));
+jest.mock('@/theme/AccentContext', () => ({
+  useAccent: () => ({ accent: '#A6B4F2', secondary: '#8FE8C8' }),
+}));
 const mockShowUndo = jest.fn();
 jest.mock('@/components/UndoToast', () => ({ useUndoToast: () => ({ show: mockShowUndo }) }));
 jest.mock('@/db/recurring', () => ({

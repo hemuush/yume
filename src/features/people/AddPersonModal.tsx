@@ -8,6 +8,7 @@ import { ModalSheet } from '@/components/ModalSheet';
 import { modalFooterStyles as f } from '@/constants/theme';
 import { styles } from './people.styles';
 import { errorMessage } from '@/lib/errorMessage';
+import { useSaveOnce } from '@/lib/useSaveOnce';
 
 export function AddPersonModal({
   visible,
@@ -39,6 +40,7 @@ export function AddPersonModal({
       setSaving(false);
     }
   };
+  const submitOnce = useSaveOnce(submit);
 
   return (
     <ModalSheet
@@ -49,7 +51,7 @@ export function AddPersonModal({
       footer={
         <View style={f.footerCol}>
           {error && <Text style={styles.errorText}>{error}</Text>}
-          <PrimaryButton title={saving ? 'Saving…' : 'Add person'} onPress={submit} disabled={saving} />
+          <PrimaryButton title={saving ? 'Saving…' : 'Add person'} onPress={submitOnce} disabled={saving} />
         </View>
       }
     >

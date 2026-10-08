@@ -71,7 +71,7 @@ export function MonthBars({
 const styles = StyleSheet.create({
   cols: { flexDirection: 'row', gap: 8 },
   col: { flex: 1, alignItems: 'center' },
-  value: { fontFamily: theme.font.monoBold, fontSize: 9.5, height: 14, color: theme.colors.textSecondary },
+  value: { fontFamily: theme.font.monoBold, fontSize: 9.5, minHeight: 14, color: theme.colors.textSecondary },
   track: { height: TRACK, width: '70%', justifyContent: 'flex-end' },
   bar: {
     width: '100%',

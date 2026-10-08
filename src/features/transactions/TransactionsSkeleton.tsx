@@ -50,7 +50,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.surface,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
-    borderRadius: 26,
+    borderRadius: theme.radius.xl2,
   },
   barRow: {
     flexDirection: 'row',
@@ -65,7 +65,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.surface,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
-    borderRadius: 24,
+    borderRadius: theme.radius.xl2,
     overflow: 'hidden',
   },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 13, paddingHorizontal: 16 },

@@ -32,6 +32,7 @@ import { Category, Account } from '@/types';
 import { showAlert } from '@/components/AppDialog';
 import { isSavingsEntry } from '@/lib/privateSummary';
 import { savingsAccountIdsOf } from '@/lib/account';
+import { useAccent } from '@/theme/AccentContext';
 
 /**
  * Entries deleted in the last 30 days, newest first, each with a Restore button that puts it back exactly
@@ -39,6 +40,7 @@ import { savingsAccountIdsOf } from '@/lib/account';
  */
 export default function RecentlyDeletedScreen() {
   const insets = useSafeAreaInsets();
+  const { secondary } = useAccent();
   // The header sits over the page and shrinks as it scrolls.
   const { collapse, headerHeight, scrollHandler, scrollRef } = useCollapsingHeader();
   const [entries, setEntries] = useState<DeletedEntry[]>([]);
@@ -173,7 +175,7 @@ export default function RecentlyDeletedScreen() {
                       <View key={entry.id} style={[h.row, i > 0 && h.divider]}>
                         <CategoryIcon
                           name={isTransfer ? 'swap-horizontal' : (cat?.icon ?? 'tag')}
-                          color={isTransfer ? theme.colors.secondary : (cat?.color ?? theme.colors.textMuted)}
+                          color={isTransfer ? secondary : (cat?.color ?? theme.colors.textMuted)}
                         />
                         <View style={h.mid}>
                           <Text style={h.title} numberOfLines={1}>

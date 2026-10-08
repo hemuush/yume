@@ -5,6 +5,10 @@
 // module — the ones that care already mock '@/lib/notifications' — so a
 // blanket automock here removes the leak without changing any assertion.
 jest.mock('expo-notifications');
+jest.mock('expo-screen-capture', () => ({
+  preventScreenCaptureAsync: jest.fn(async () => {}),
+  allowScreenCaptureAsync: jest.fn(async () => {}),
+}));
 
 // Yume's dialog (showAlert) draws through ModalSheet, which needs a native
 // keyboard module tests don't have; screens' tests assert on the call itself.

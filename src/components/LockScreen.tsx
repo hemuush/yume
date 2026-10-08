@@ -6,7 +6,10 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { SuuIllustration } from './SuuIllustration';
 import { YumeLogo } from './YumeLogo';
 import { PrimaryButton } from './PrimaryButton';
+import { StripCard, KickerDot } from './StripCard';
+import { HeaderHills } from '@/features/home/HeaderHills';
 import { theme } from '@/constants/theme';
+import { EYEBROW } from '@/constants/textStyles';
 import { useAccent } from '@/theme/AccentContext';
 import { shade, hexToRgba } from '@/lib/color';
 import { authenticate, isDeviceSecured } from '@/lib/appLock';
@@ -55,7 +58,7 @@ function MoonPhaseRow({ accent }: { accent: string }) {
  */
 export function LockScreen({ onUnlocked }: { onUnlocked: () => void }) {
   const insets = useSafeAreaInsets();
-  const { accent } = useAccent();
+  const { accent, secondary } = useAccent();
   const { setLockEnabled } = useAppLock();
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -82,6 +85,13 @@ export function LockScreen({ onUnlocked }: { onUnlocked: () => void }) {
         setFailed(true);
         setDeviceUnsecured(!secured);
       }
+    } catch {
+      // The prompt itself failed. If the phone can't say it's secured either, offer the way out, so a broken
+      // prompt can never trap the user.
+      if (!mounted.current) return;
+      setFailed(true);
+      const secured = await isDeviceSecured().catch(() => false);
+      if (mounted.current) setDeviceUnsecured(!secured);
     } finally {
       if (mounted.current) setBusy(false);
     }
@@ -125,11 +135,11 @@ export function LockScreen({ onUnlocked }: { onUnlocked: () => void }) {
       ))}
 
       <View style={[styles.wordmark, { top: insets.top + 24 }]}>
-        <YumeLogo size={15} tone="mono" color={theme.colors.textSecondary} />
+        <YumeLogo size={18} />
         <Text style={styles.wordmarkText}>Yume</Text>
       </View>
 
-      <View style={[styles.centered, { top: insets.top + 64, bottom: insets.bottom + 28 }]}>
+      <View style={[styles.centered, { paddingTop: insets.top + 64 }]}>
         <MoonPhaseRow accent={accent} />
         {/* SuuIllustration now breathes on its own (see its own comment) —
             this used to wrap it in a second, independent scale loop, which
@@ -137,31 +147,46 @@ export function LockScreen({ onUnlocked }: { onUnlocked: () => void }) {
             two unsynchronized loops multiplying together into a wobble
             rather than a single subtle pulse. */}
         <SuuIllustration size={92} pose="sleepy" />
-        <Text style={styles.title}>Yume is locked</Text>
-        <Text style={styles.subtitle}>Unlock with your fingerprint, face, or device PIN.</Text>
-        {failed && !deviceUnsecured && <Text style={styles.failedText}>That didn't work — try again.</Text>}
-        {deviceUnsecured && (
-          <Text style={styles.failedText}>
-            Your device no longer has a screen lock set up, so Yume can't verify you this way. Set one up
-            again in your phone's settings, or turn off Yume's lock below.
-          </Text>
-        )}
-        <PrimaryButton
-          title={busy ? 'Checking…' : 'Unlock'}
-          variant="primary"
-          onPress={tryUnlock}
-          disabled={busy}
-          style={styles.unlockBtn}
-        />
-        {deviceUnsecured && (
-          <PrimaryButton
-            title="Turn off Yume's lock"
-            variant="primary"
-            onPress={turnOffLock}
-            disabled={busy}
-            style={[styles.unlockBtn, styles.turnOffBtn]}
-          />
-        )}
+      </View>
+
+      {/* Suu's hills, rolling into the cream the card stands on. */}
+      <HeaderHills sky="transparent" primary={accent} secondary={secondary} />
+      <View style={[styles.ground, { paddingBottom: insets.bottom + 28 }]}>
+        <StripCard tone={theme.colors.slice.free} style={styles.card}>
+          <View style={styles.cardBody}>
+            <View style={styles.kickerRow}>
+              <KickerDot color={theme.colors.link} />
+              <Text style={styles.kicker}>Locked</Text>
+            </View>
+            <Text style={styles.title}>Yume is locked</Text>
+            <Text style={styles.subtitle}>Unlock with your fingerprint, face, or device PIN.</Text>
+            {failed && !deviceUnsecured && (
+              <Text style={styles.failedText}>That didn't work — try again.</Text>
+            )}
+            {deviceUnsecured && (
+              <Text style={styles.failedText}>
+                Your device no longer has a screen lock set up, so Yume can't verify you this way. Set one up
+                again in your phone's settings, or turn off Yume's lock below.
+              </Text>
+            )}
+            <PrimaryButton
+              title={busy ? 'Checking…' : 'Unlock'}
+              variant="primary"
+              onPress={tryUnlock}
+              disabled={busy}
+              style={styles.unlockBtn}
+            />
+            {deviceUnsecured && (
+              <PrimaryButton
+                title="Turn off Yume's lock"
+                variant="primary"
+                onPress={turnOffLock}
+                disabled={busy}
+                style={[styles.unlockBtn, styles.turnOffBtn]}
+              />
+            )}
+          </View>
+        </StripCard>
       </View>
     </View>
   );
@@ -185,12 +210,9 @@ const styles = StyleSheet.create({
     color: theme.colors.textSecondary,
     letterSpacing: 0.2,
   },
-  // Fills the space between the wordmark and the bottom safe area and centers Suu, the message and
-  // the button inside it.
+  // Fills the sky between the wordmark and the hills, and centres the moon row and Suu in it.
   centered: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 28,
@@ -201,18 +223,24 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: theme.colors.ink,
   },
+  // Suu stands on Home's hills; the message and Unlock sit below in a white card, under the thumb.
+  ground: { backgroundColor: theme.colors.background, paddingHorizontal: 20, paddingTop: 4 },
+  card: { alignSelf: 'stretch' },
+  cardBody: { paddingHorizontal: 18, paddingTop: 20, paddingBottom: 18 },
+  kickerRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  kicker: { ...EYEBROW, color: theme.colors.textSecondary },
   title: {
     fontFamily: theme.font.roundedBold,
     fontSize: 17,
     color: theme.colors.textPrimary,
-    marginTop: 16,
+    marginTop: 8,
   },
   subtitle: {
     fontFamily: theme.font.body,
     fontSize: 12.5,
-    color: theme.colors.textMuted,
+    lineHeight: 17,
+    color: theme.colors.textSecondary,
     marginTop: 6,
-    textAlign: 'center',
   },
   // The same expense red every error/destructive bit of text in the app
   // uses — not a separate colour invented just for this screen.
@@ -220,10 +248,9 @@ const styles = StyleSheet.create({
     fontFamily: theme.font.body,
     fontSize: 12,
     color: theme.colors.expenseText,
-    marginTop: 14,
-    textAlign: 'center',
+    marginTop: 12,
     lineHeight: 17,
   },
-  unlockBtn: { marginTop: 22, width: '100%' },
+  unlockBtn: { marginTop: 18, width: '100%' },
   turnOffBtn: { marginTop: 12, opacity: 0.85 },
 });

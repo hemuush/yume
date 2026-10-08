@@ -65,6 +65,7 @@ import { showAlert } from '@/components/AppDialog';
 import { styles } from '@/features/backup/backup.styles';
 import { TimelineNode } from '@/features/backup/TimelineNode';
 import { backupStatus, formatBytes, formatWhen } from '@/features/backup/backupStatus';
+import { useAccent } from '@/theme/AccentContext';
 
 const FREQUENCIES: { label: string; value: BackupFrequency }[] = [
   { label: 'Daily', value: 'daily' },
@@ -89,13 +90,13 @@ async function shareTempFile(
   content: string | Uint8Array,
   options: { mimeType: string; dialogTitle?: string }
 ): Promise<void> {
-  const file = new File(Paths.document, name);
+  // The cache, not documents: if the app is killed mid-share, Android clears it rather than keeping it forever.
+  const file = new File(Paths.cache, name);
   try {
     file.create();
     file.write(content);
-    if (await Sharing.isAvailableAsync()) {
-      await withoutRelock(() => Sharing.shareAsync(file.uri, options));
-    }
+    if (!(await Sharing.isAvailableAsync())) throw new Error("Sharing isn't available on this phone.");
+    await withoutRelock(() => Sharing.shareAsync(file.uri, options));
   } finally {
     try {
       if (file.exists) file.delete();
@@ -107,6 +108,7 @@ async function shareTempFile(
 
 export default function BackupScreen() {
   const insets = useSafeAreaInsets();
+  const { accent } = useAccent();
   // The header sits over the page and shrinks as it scrolls.
   const { collapse, headerHeight, scrollHandler, scrollRef } = useCollapsingHeader();
   const [localFolderUri, setLocalFolderUri] = useState<string | null>(null);
@@ -207,7 +209,8 @@ export default function BackupScreen() {
 
   // A restore replaces every table, so all loaded screen state is stale; each screen reloads via
   // useFocusEffect, so bouncing to Home lets the rest pick up new data as tabs are visited.
-  const goHome = () => router.replace('/(tabs)');
+  // Back to the Home already underneath, not a second copy of the tabs stacked on Backup.
+  const goHome = () => router.dismissTo('/');
 
   /**
    * Puts back the pre-restore data (lib/safetyCopy.ts) after one more confirmation; shared by the "Undo
@@ -417,7 +420,7 @@ Restore anyway? Your current data would be replaced with no way back.`,
               </View>
               {hasFolder ? (
                 <PrimaryButton
-                  title={busy === 'backup-now-local' ? 'Backing up…' : 'Backup now'}
+                  title={busy === 'backup-now-local' ? 'Backing up…' : 'Back up now'}
                   done={doneLabel === 'backup-now-local'}
                   onPress={backupNowLocal}
                   disabled={!!busy}
@@ -507,7 +510,7 @@ Restore anyway? Your current data would be replaced with no way back.`,
                           {file.exportedAt ? formatWhen(file.exportedAt) : 'Backup file'}
                         </Text>
                         {i === 0 && (
-                          <View style={styles.latestChip}>
+                          <View style={[styles.latestChip, { backgroundColor: shade(accent, 95) }]}>
                             <Text style={styles.latestText}>Latest</Text>
                           </View>
                         )}
@@ -537,7 +540,7 @@ Restore anyway? Your current data would be replaced with no way back.`,
                 <Text style={styles.emptyTitle}>No backups yet</Text>
                 <Text style={styles.emptySub}>
                   {hasFolder
-                    ? 'Nothing in this folder yet. Tap Backup now to write the first one.'
+                    ? 'Nothing in this folder yet. Tap Back up now to write the first one.'
                     : 'Choose a folder above and Yume writes the first one.'}
                 </Text>
               </View>
@@ -545,7 +548,7 @@ Restore anyway? Your current data would be replaced with no way back.`,
             <View style={[h.card, styles.restoreFile]}>
               <SettingsRow
                 icon="file-restore-outline"
-                iconBg={theme.colors.primaryTint}
+                iconBg={shade(accent, 95)}
                 label="Restore from file"
                 sub={busy === 'restore-file' ? 'Restoring…' : 'A backup JSON saved on this device'}
                 onPress={busy ? undefined : restoreFromFile}

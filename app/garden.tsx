@@ -22,6 +22,8 @@ import { PrimaryButton } from '@/components/PrimaryButton';
 import { toMinor } from '@/lib/money';
 import { styles } from '@/features/garden/garden.styles';
 import { errorMessage } from '@/lib/errorMessage';
+import { shade } from '@/lib/color';
+import { useAccent } from '@/theme/AccentContext';
 
 const POT_COUNT = 5;
 const LEGEND_STAGES: GrowthStage[] = ['seed', 'sprout', 'sapling', 'bloom'];
@@ -43,6 +45,7 @@ function noteFor(stage: GrowthStage, streak: number): string {
  */
 export default function GardenScreen() {
   const insets = useSafeAreaInsets();
+  const { accent, secondary } = useAccent();
   // The header sits over the page and shrinks as it scrolls; the amount pad's scroll tracking feeds it.
   const { collapse, headerHeight, onJsScroll, settleJs } = useCollapsingHeader();
   const [dailyGoalMinor, setDailyGoalMinor] = useState<number | null>(null);
@@ -102,7 +105,7 @@ export default function GardenScreen() {
   if (!loaded && !loadError) {
     return (
       <View style={styles.container}>
-        <SkyHeader title="Suu's Garden" showBack hideUser />
+        <SkyHeader title="Suu's garden" showBack hideUser />
         <View style={{ paddingTop: 20 }}>
           <View style={[styles.bed, { marginTop: 0 }]}>
             {Array.from({ length: POT_COUNT }, (_, i) => (
@@ -177,7 +180,12 @@ export default function GardenScreen() {
                 </EmptyState>
               ) : (
                 <>
-                  <View style={styles.streakPill}>
+                  <View
+                    style={[
+                      styles.streakPill,
+                      { backgroundColor: shade(secondary, 94), borderColor: secondary },
+                    ]}
+                  >
                     <SuuIllustration size={16} pose={streakToday > 0 ? 'default' : 'sleepy'} />
                     <Text style={styles.streakPillText}>
                       {streakToday > 0 ? `${streakToday}-day streak` : 'No streak yet'}
@@ -192,7 +200,13 @@ export default function GardenScreen() {
                         ? 'Today'
                         : parseLocalIsoDate(point.date).toLocaleDateString(undefined, { weekday: 'short' });
                       return (
-                        <View key={point.date} style={[styles.pot, isToday && styles.potToday]}>
+                        <View
+                          key={point.date}
+                          style={[
+                            styles.pot,
+                            isToday && [styles.potToday, { backgroundColor: shade(accent, 95) }],
+                          ]}
+                        >
                           <View style={styles.plantSlot}>
                             <GardenPlant
                               stage={stage}
@@ -234,7 +248,7 @@ export default function GardenScreen() {
               )}
             </ScrollView>
             <SkyHeader
-              title="Suu's Garden"
+              title="Suu's garden"
               showBack
               hideUser
               collapse={collapse}

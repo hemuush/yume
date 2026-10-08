@@ -4,9 +4,8 @@ import { theme } from '@/constants/theme';
 // Shared by the Recurring screen, the rows and RuleModal.
 export const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
+  // The page already pads by the top gap and 20px a side.
   errorBanner: {
-    marginHorizontal: 20,
-    marginTop: theme.layout.screenTopGap,
     marginBottom: 12,
     padding: 14,
     borderRadius: theme.radius.md,
@@ -23,7 +22,14 @@ export const styles = StyleSheet.create({
     lineHeight: 16,
   },
   // Skeleton rows while the screen loads.
-  card: { marginBottom: 10, padding: 14 },
+  card: {
+    marginBottom: 10,
+    padding: 14,
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.radius.xl2,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.borderSoft,
+  },
   // The Running, Paused and Not set up yet cards: rows with a hairline between.
   list: { paddingVertical: 2, paddingHorizontal: 14 },
   footnote: {
@@ -37,11 +43,11 @@ export const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10 },
   rowDivider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.borderSoft },
   rowMuted: { opacity: 0.6 },
-  rowTitle: { fontFamily: theme.font.bodyBold, fontSize: 14, color: theme.colors.textPrimary },
+  rowTitle: { fontFamily: theme.font.bodyBold, fontSize: 15, color: theme.colors.textPrimary },
   rowSub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, marginTop: 2 },
   ruleMain: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10, minWidth: 0 },
   ruleSide: { alignItems: 'flex-end', gap: 6 },
-  ruleAmount: { fontFamily: theme.font.monoBold, fontSize: 13.5, color: theme.colors.textPrimary },
+  ruleAmount: { fontFamily: theme.font.monoBold, fontSize: 15, color: theme.colors.textPrimary },
   make: {
     paddingHorizontal: 10,
     paddingVertical: 6,

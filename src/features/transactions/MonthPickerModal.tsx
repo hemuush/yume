@@ -3,9 +3,10 @@ import { View, Pressable, Animated } from 'react-native';
 import { Text } from '@/components/Text';
 import { ModalSheet } from '@/components/ModalSheet';
 import { usePressScale } from '@/lib/usePressScale';
-import { theme } from '@/constants/theme';
 import { styles } from './transactions.styles';
 import { longMonth, shortMonth } from '@/lib/dateLabels';
+import { shade } from '@/lib/color';
+import { useAccent } from '@/theme/AccentContext';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -113,12 +114,13 @@ function MonthCell({
   current: boolean;
   onPress: () => void;
 }) {
+  const { accent } = useAccent();
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.94);
   return (
     <AnimatedPressable
       style={[
         styles.monthCell,
-        current && { backgroundColor: theme.colors.primaryTint },
+        current && { backgroundColor: shade(accent, 95) },
         disabled && styles.monthCellDisabled,
         animatedStyle,
       ]}

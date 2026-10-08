@@ -11,7 +11,7 @@ jest.mock('@/db/client', () => ({
 jest.mock('@/lib/notifications', () => ({ rebuildNotifications: async () => {} }));
 
 import { CREATE_TABLES_SQL } from '@/db/schema';
-import { createAccount, createCategory, listTransactions } from '@/db/ledger';
+import { archiveAccount, createAccount, createCategory, listTransactions } from '@/db/ledger';
 import {
   createRecurringRule,
   listRecurringRules,
@@ -147,6 +147,37 @@ describe('recurring rules', () => {
     await runDueRecurringRules('2026-12-01');
     const txs = (await listTransactions({ limit: 1000 })).filter((t) => t.note === 'Paused Rule');
     expect(txs).toHaveLength(0);
+  });
+
+  it('resuming a paused rule moves its next run up to today instead of posting every missed occurrence', async () => {
+    const rule = await createRecurringRule({
+      type: 'expense',
+      accountId,
+      categoryId: expenseCategoryId,
+      amountMinor: 3000,
+      note: 'Resumed Rule',
+      frequency: 'monthly',
+      intervalCount: 1,
+      nextRunDate: '2036-01-31',
+    });
+    await setRecurringRuleActive(rule.id, false);
+    await setRecurringRuleActive(rule.id, true, '2036-05-10');
+    let [stored] = (await listRecurringRules()).filter((r) => r.id === rule.id);
+    // The rule's own day survives the jump: the 31st, clamped only where the month is short.
+    expect(stored.nextRunDate).toBe('2036-05-31');
+    expect(stored.active).toBe(true);
+    await runDueRecurringRules('2036-05-31');
+    const dates = (await listTransactions({ limit: 1000 }))
+      .filter((t) => t.note === 'Resumed Rule')
+      .map((t) => t.date);
+    expect(dates).toEqual(['2036-05-31']);
+
+    // A next run already on or after today is left alone.
+    await setRecurringRuleActive(rule.id, false);
+    await setRecurringRuleActive(rule.id, true, '2036-06-01');
+    [stored] = (await listRecurringRules()).filter((r) => r.id === rule.id);
+    expect(stored.nextRunDate).toBe('2036-06-30');
+    await setRecurringRuleActive(rule.id, false);
   });
 
   it('updateRecurringRule changes the amount/cadence and deleteRecurringRule removes it', async () => {
@@ -310,5 +341,32 @@ describe('recurring rules', () => {
         nextRunDate: '2026-01-01',
       })
     ).rejects.toThrow('same account');
+  });
+
+  it('archiving an account pauses the rules that post into it', async () => {
+    const spare = await createAccount({ name: 'Old wallet', type: 'wallet', openingBalanceMinor: 0 });
+    const rule = await createRecurringRule({
+      type: 'expense',
+      accountId: spare.id,
+      categoryId: expenseCategoryId,
+      amountMinor: 900,
+      note: 'Archived Account Rule',
+      frequency: 'monthly',
+      intervalCount: 1,
+      nextRunDate: '2034-01-01',
+    });
+
+    await archiveAccount(spare.id);
+    await runDueRecurringRules('2034-03-01');
+
+    const posted = (await listTransactions({ limit: 1000 })).filter(
+      (t) => t.note === 'Archived Account Rule'
+    );
+    expect(posted).toHaveLength(0);
+    const row = await mockTestDb.getFirstAsync<{ active: number }>(
+      'SELECT active FROM recurring_rules WHERE id = ?',
+      [rule.id]
+    );
+    expect(row?.active).toBe(0);
   });
 });
