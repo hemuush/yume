@@ -8,6 +8,7 @@ import { useFocusEffect, router, useLocalSearchParams } from 'expo-router';
 import Feather from '@expo/vector-icons/Feather';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { listAccounts, listCategories, listTransactions, searchTransactions, setDayOrder } from '@/db/ledger';
+import { getRecentSearches, setRecentSearches, RECENT_SEARCHES_KEPT } from '@/db/settings';
 import { getRangeComparison, PeriodComparison } from '@/db/reports';
 import { Account, Category, Transaction, TransactionType } from '@/types';
 import { HeaderIconButton } from '@/components/AppHeader';
@@ -359,7 +360,27 @@ export default function TransactionsScreen() {
     return () => clearTimeout(handle);
   }, [searching, searchQuery, runSearch]);
 
-  const openSearch = () => setSearching(true);
+  // Past searches (kept on the phone), shown before anything is typed; a search counts once it is
+  // submitted or one of its results is opened.
+  const [recentSearches, setRecentSearchesState] = useState<string[]>([]);
+  const rememberSearch = useCallback((q: string) => {
+    const trimmed = q.trim();
+    if (trimmed.length < SEARCH_MIN_CHARS) return;
+    setRecentSearchesState((prev) => {
+      const next = [trimmed, ...prev.filter((p) => p.toLowerCase() !== trimmed.toLowerCase())].slice(
+        0,
+        RECENT_SEARCHES_KEPT
+      );
+      void setRecentSearches(next).catch(() => {});
+      return next;
+    });
+  }, []);
+  const openSearch = () => {
+    setSearching(true);
+    getRecentSearches()
+      .then(setRecentSearchesState)
+      .catch(() => {});
+  };
   const closeSearch = () => {
     searchSeq.current++;
     setSearching(false);
@@ -367,6 +388,29 @@ export default function TransactionsScreen() {
     setSearchResults([]);
     setSearchLoading(false);
   };
+
+  // Things to try, from this period's own entries: a category or two, an amount, a day.
+  const searchSuggestions = useMemo(() => {
+    const out: string[] = [];
+    for (const t of transactions) {
+      const name = t.categoryId ? categoriesById.get(t.categoryId)?.name : undefined;
+      if (name && !out.includes(name)) out.push(name);
+      if (out.length >= 2) break;
+    }
+    const amountOf = transactions.find(
+      (t) => t.type === 'expense' && !(t.categoryId && categoriesById.get(t.categoryId)?.isSensitive)
+    );
+    if (amountOf) out.push(String(Math.round(amountOf.amountMinor / 100)));
+    if (transactions[0]) out.push(dayMonth(transactions[0].date));
+    return out;
+  }, [transactions, categoriesById]);
+  const openFromSearch = useCallback(
+    (tx: Transaction) => {
+      rememberSearch(searchQuery);
+      setDetailTx(tx);
+    },
+    [rememberSearch, searchQuery, setDetailTx]
+  );
 
   const searchGroupedDays = useMemo(() => groupByDate(searchResults), [searchResults]);
   const displayedGroups = searching ? searchGroupedDays : groupedDays;
@@ -517,6 +561,7 @@ export default function TransactionsScreen() {
         accounts={accounts}
         filter={{ type: filterType, categoryIds: filterCategoryIds, accountIds: filterAccountIds }}
         onClose={() => setFilterVisible(false)}
+        countFor={(next) => filterActivity(transactions, next, categories).length}
         onApply={(next) => {
           setFilterType(next.type);
           setFilterCategoryIds(next.categoryIds);
@@ -573,6 +618,13 @@ export default function TransactionsScreen() {
                     minChars={SEARCH_MIN_CHARS}
                     loading={searchLoading}
                     resultCount={searchResults.length}
+                    suggestions={searchSuggestions}
+                    recent={recentSearches}
+                    onPick={setSearchQuery}
+                    onClearRecent={() => {
+                      setRecentSearchesState([]);
+                      void setRecentSearches([]).catch(() => {});
+                    }}
                   />
                 </>
               ) : (
@@ -643,7 +695,7 @@ export default function TransactionsScreen() {
                 categories={categories}
                 accountName={accountName}
                 categoryName={categoryName}
-                onPressTx={setDetailTx}
+                onPressTx={searching ? openFromSearch : setDetailTx}
                 savingsAccountIds={savingsAccountIds}
                 openStacks={openStacks}
                 onToggleStack={toggleStack}
@@ -713,6 +765,7 @@ export default function TransactionsScreen() {
                 style={styles.searchInput}
                 autoFocus
                 returnKeyType="search"
+                onSubmitEditing={() => rememberSearch(searchQuery)}
                 accessibilityLabel="Search transactions"
               />
             </View>
@@ -790,6 +843,21 @@ export default function TransactionsScreen() {
           </View>
         )}
       </SkyHeader>
+
+      {/* While a line is lifted: how to move it. The arrows stay available to screen readers as actions. */}
+      {dragging && (
+        <ReanimatedAnimated.View
+          entering={FadeIn.duration(DURATIONS.quick)}
+          pointerEvents="none"
+          style={[
+            styles.dragHint,
+            { bottom: insets.bottom + theme.layout.tabBar.height + 12, backgroundColor: ink },
+          ]}
+        >
+          <Feather name="move" size={16} color={theme.colors.white} />
+          <Text style={styles.dragHintText}>Drag up or down, let go to drop it</Text>
+        </ReanimatedAnimated.View>
+      )}
 
       <TransactionDetailModal
         tx={detailTx}
