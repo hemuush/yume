@@ -113,7 +113,7 @@ export const styles = StyleSheet.create({
   frequentRow: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 7, marginTop: 4 },
   frequentChip: {
     paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingVertical: 8,
     borderRadius: theme.radius.pill,
     backgroundColor: theme.colors.surfaceAlt,
     borderWidth: StyleSheet.hairlineWidth,
@@ -216,7 +216,7 @@ export const styles = StyleSheet.create({
 
   linkedNote: { marginBottom: 16 },
   // A white note card with a strip; the space at the top clears the strip.
-  noteCard: { paddingHorizontal: 14, paddingTop: 16, paddingBottom: 12 },
+  noteCard: { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 12 },
   linkedText: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textPrimary, lineHeight: 17 },
 
   // On the sky band: a see-through white, like the back button.
@@ -249,8 +249,8 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    paddingHorizontal: 11,
-    paddingVertical: 7,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
     borderRadius: theme.radius.pill,
     backgroundColor: `${theme.colors.surface}D9`,
   },
@@ -281,7 +281,7 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    height: 36,
+    minHeight: 36,
     paddingHorizontal: 12,
     borderRadius: 12,
   },

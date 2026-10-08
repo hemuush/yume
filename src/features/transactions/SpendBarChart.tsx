@@ -224,7 +224,7 @@ const styles = StyleSheet.create({
     fontFamily: theme.font.mono,
     fontSize: 9,
     lineHeight: 13,
-    height: 13,
+    minHeight: 13,
     color: theme.colors.textMuted,
     marginTop: 8,
   },

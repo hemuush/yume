@@ -271,7 +271,7 @@ export const styles = StyleSheet.create({
   rhythmChart: { height: 140, flexDirection: 'row', alignItems: 'flex-end', gap: 8, paddingTop: 16 },
   rhythmBar: { flex: 1, height: '100%', justifyContent: 'flex-end', alignItems: 'center', gap: 4 },
   rhythmValue: {
-    height: 15,
+    minHeight: 15,
     fontFamily: theme.font.mono,
     fontSize: 11,
     color: theme.colors.textMuted,

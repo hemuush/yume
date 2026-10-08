@@ -125,7 +125,7 @@ export const styles = StyleSheet.create({
     backgroundColor: theme.colors.surfaceAlt,
   },
   scopeBtn: {
-    minHeight: 30,
+    minHeight: 36,
     justifyContent: 'center',
     paddingHorizontal: 14,
     borderRadius: theme.radius.pill,
@@ -202,7 +202,7 @@ export const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 30,
+    minHeight: 36,
     borderRadius: theme.radius.pill,
   },
   typeBtnOn: { backgroundColor: theme.colors.ink },
