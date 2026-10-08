@@ -194,7 +194,7 @@ export default function TransactionsScreen() {
       return next > todayDate ? todayDate : next;
     });
   };
-  // A drag on the nav row, the rail or the Spent card moves them with the finger and steps the period like the
+  // A drag on the period pill or the Spent card moves it with the finger and steps the period like the
   // chevrons; `atCurrent` mirrors the forward button's guard, so swiping past the current week/month bounces back.
   const atCurrent = viewScope === 'month' ? isCurrentMonth : isCurrentWeek;
   const periodSwipe = useSwipeDrag((dir) => (dir < 0 ? stepBack() : stepForward()), !atCurrent);
@@ -219,46 +219,42 @@ export default function TransactionsScreen() {
 
   // Chart/headline show the real unfiltered period (only the rows follow Filter; hidden savings &
   // investment categories stay out). Week = bar per day; month = bar per week, as 28-31 bars crowded.
-  const chartTransactions = useMemo(
-    () =>
-      hideAmounts
-        ? transactions.filter(
-            (t) => !(t.categoryId && categories.find((c) => c.id === t.categoryId)?.isSensitive)
-          )
-        : transactions,
-    [transactions, categories, hideAmounts]
-  );
-  const bars = useMemo(
-    () =>
-      viewScope === 'week'
-        ? buildWeekSpendBars(
-            chartTransactions,
-            categories,
-            { start: visibleRange.fromDate, end: visibleRange.toDate },
-            today
-          )
-        : buildWeeklySpendBars(
-            chartTransactions,
-            categories,
-            visibleRange.fromDate,
-            visibleRange.toDate,
-            today
-          ),
-    [chartTransactions, categories, viewScope, visibleRange.fromDate, visibleRange.toDate, today]
-  );
-  const legend = useMemo(() => legendForBars(bars), [bars]);
+  const categoriesById = useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories]);
+  // The chart groups by top-level category like the headline does, and a group is hidden when the parent or
+  // any of its subcategories is flagged, so a hidden group's entries leave the bars too, not just the total.
+  const chartTransactions = useMemo(() => {
+    if (!hideAmounts) return transactions;
+    const hiddenGroups = new Set(categories.filter((c) => c.isSensitive).map((c) => c.parentId ?? c.id));
+    return transactions.filter((t) => {
+      const cat = t.categoryId ? categoriesById.get(t.categoryId) : undefined;
+      return !cat || !hiddenGroups.has(cat.parentId ?? cat.id);
+    });
+  }, [transactions, categories, categoriesById, hideAmounts]);
+
   const heading = periodHeading({ scope: viewScope, week, anchor, today: todayDate });
   const groupedDays = useMemo(() => groupByDate(filteredTransactions), [filteredTransactions]);
 
   // Only the most recent load may write state — paging week/month quickly
   // starts overlapping loads, and an earlier one can finish last.
   const loadSeq = useRef(0);
+  // The period the rows and totals on screen belong to: the pill moves at once, this catches up when the
+  // period's data lands, and the Spent card and its bars follow it (never the pill).
+  const [loadedPeriod, setLoadedPeriod] = useState<{
+    fromDate: string;
+    toDate: string;
+    scope: 'week' | 'month';
+  }>(() => ({ fromDate: '', toDate: '', scope: 'week' }));
   const load = useCallback(async (range: { fromDate: string; toDate: string }, scope: 'week' | 'month') => {
     const seq = ++loadSeq.current;
+    let tx: Transaction[];
     try {
-      const [tx, accs, cats] = await Promise.all([listTransactions(range), listAccounts(), listCategories()]);
+      const [rows, accs, cats] = await Promise.all([
+        listTransactions(range),
+        listAccounts(),
+        listCategories(),
+      ]);
       if (seq !== loadSeq.current) return false;
-      setTransactions(tx);
+      tx = rows;
       setAccounts(accs);
       setCategories(cats);
       setLoadError(null);
@@ -269,28 +265,47 @@ export default function TransactionsScreen() {
       setLoadError(errorMessage(e));
       return false;
     }
-    // Fetched and caught separately: it only feeds the secondary "N% more/less than last …" figure, so its
-    // failure (or a slower query) must not blank the transaction list.
+    // Caught separately: the totals only feed the Spent figure and its change, so their failure must not
+    // blank the list. The rows, the totals and the period they belong to land together, so the Spent card
+    // never shows one period's figure under the next one's bars.
+    let cmp: PeriodComparison | null = null;
     try {
       const prev = previousRangeFor(range, scope, toLocalIsoDate(new Date()));
-      const cmp = await getRangeComparison(
+      cmp = await getRangeComparison(
         { start: range.fromDate, end: range.toDate },
         { start: prev.fromDate, end: prev.toDate },
         scope
       );
-      if (seq === loadSeq.current) {
-        setComparison(cmp);
-        setComparisonFailed(false);
-      }
     } catch {
-      if (seq === loadSeq.current) {
-        setComparison(null);
-        setComparisonFailed(true);
-      }
-      return false;
+      cmp = null;
     }
-    return seq === loadSeq.current;
+    if (seq !== loadSeq.current) return false;
+    setTransactions(tx);
+    setComparison(cmp);
+    setComparisonFailed(cmp == null);
+    setLoadedPeriod({ fromDate: range.fromDate, toDate: range.toDate, scope });
+    return cmp != null;
   }, []);
+
+  const bars = useMemo(
+    () =>
+      loadedPeriod.scope === 'week'
+        ? buildWeekSpendBars(
+            chartTransactions,
+            categories,
+            { start: loadedPeriod.fromDate, end: loadedPeriod.toDate },
+            today
+          )
+        : buildWeeklySpendBars(
+            chartTransactions,
+            categories,
+            loadedPeriod.fromDate,
+            loadedPeriod.toDate,
+            today
+          ),
+    [chartTransactions, categories, loadedPeriod, today]
+  );
+  const legend = useMemo(() => legendForBars(bars), [bars]);
 
   // Destructured so the focus effect depends on primitive dates/scope, not the `visibleRange` object
   // rebuilt every render (which would re-run the load each time).
@@ -386,33 +401,36 @@ export default function TransactionsScreen() {
       setSelectedBar(null);
       return;
     }
-    setSelectedBar(key);
-    scrollToDay(key);
+    // A bar counts every entry, but the list may be filtered: only pick a bar whose day is in the list.
+    if (scrollToDay(key)) setSelectedBar(key);
   };
 
-  const scrollToDay = (key: string) => {
+  // A jump that lands past what the list has measured retries once it has laid out (see onScrollToIndexFailed).
+  const retryTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(
+    () => () => {
+      if (retryTimer.current) clearTimeout(retryTimer.current);
+    },
+    []
+  );
+  const scrollToDay = (key: string): boolean => {
     // Week scope: the bar key is already the group's date. Month scope: the key is a week bucket's start,
     // so jump to the first day in that week (up to 6 days on) that has a group.
     const targetDate =
-      viewScope === 'week'
+      loadedPeriod.scope === 'week'
         ? key
         : groupedDays.find((g) => g.date >= key && g.date <= addDaysToIsoDate(key, 6))?.date;
-    if (!targetDate) return;
+    if (!targetDate) return false;
     const index = groupedDays.findIndex((g) => g.date === targetDate);
+    if (index < 0) return false;
     // Lands just under the shrunk header.
-    if (index >= 0)
-      scrollRef.current?.scrollToIndex({
-        index,
-        animated: true,
-        viewPosition: 0,
-        viewOffset: collapsedHeight,
-      });
+    scrollRef.current?.scrollToIndex({ index, animated: true, viewPosition: 0, viewOffset: collapsedHeight });
+    return true;
   };
 
   // Built once per accounts/categories change instead of `.find()` per row per render (an O(V*C) scan,
   // repeated on every "expand a day" tap since that re-renders all mounted rows).
   const accountsById = useMemo(() => new Map(accounts.map((a) => [a.id, a])), [accounts]);
-  const categoriesById = useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories]);
   // Stable, so a day of the list only redraws when its own entries change.
   const accountName = useCallback((id: string) => accountsById.get(id)?.name ?? '—', [accountsById]);
   const categoryName = useCallback(
@@ -432,17 +450,10 @@ export default function TransactionsScreen() {
   // Categories and accounts picked in the filter sheet (the type has its own chips).
   const filterCount = filterCategoryIds.length + filterAccountIds.length;
 
-  // Before the first successful load only (`loadError` set falls through to the inline error banner), show
-  // a spinner so "Nothing logged this month" doesn't flash before the data arrives.
-  if (!comparison && !loadError && !comparisonFailed) {
-    return (
-      <View style={styles.container}>
-        <HomeWallpaper accent={accent} secondary={secondary} />
-        <SkyHeader title="Activity" subtitle={SUBTITLE} wallpaper />
-        <TransactionsSkeleton />
-      </View>
-    );
-  }
+  // Before the first successful load only (`loadError` set falls through to the inline error banner), the
+  // list area shows the skeleton so "Nothing logged this month" doesn't flash before the data arrives. The
+  // header stays the same one throughout, so nothing jumps when the data lands.
+  const firstLoad = !comparison && !loadError && !comparisonFailed;
 
   // Under the header, at the top of the list: a load that failed, or totals that couldn't load.
   const banners = (
@@ -496,120 +507,136 @@ export default function TransactionsScreen() {
       />
 
       <View style={styles.listArea}>
-        <ReanimatedAnimated.FlatList
-          // A search result opens on the first tap, even with the keyboard up.
-          keyboardShouldPersistTaps="handled"
-          ref={scrollRef}
-          onScroll={scrollHandler}
-          scrollEventThrottle={16}
-          scrollEnabled={!dragging}
-          data={displayedGroups}
-          keyExtractor={(group) => group.date}
-          // Each row is a whole day, so mount only a few at first and keep the window small.
-          initialNumToRender={4}
-          maxToRenderPerBatch={4}
-          windowSize={7}
-          contentContainerStyle={{
-            // Under the header; search results have no headline above them, so keep the first day off the bar.
-            paddingTop: headerHeight + (searching ? 14 : 0),
-            paddingBottom: tabScrollPad + insets.bottom,
-          }}
-          // Variable-height days (line count, open stacks) rule out `getItemLayout`; standard fallback: if
-          // a jump lands past what's measured, retry once the list has laid out.
-          onScrollToIndexFailed={(info) => {
-            setTimeout(() => scrollRef.current?.scrollToIndex({ index: info.index, animated: true }), 250);
-          }}
-          ListHeaderComponent={
-            searching ? (
-              <>
-                {banners}
-                <SearchStatus
-                  query={trimmedQuery}
-                  minChars={SEARCH_MIN_CHARS}
-                  loading={searchLoading}
-                  resultCount={searchResults.length}
-                />
-              </>
-            ) : (
-              <>
-                {banners}
-                <ReanimatedAnimated.View style={periodSwipe.dragStyle} {...periodSwipe.panHandlers}>
-                  <TransactionsHeadline
-                    periodKey={`${viewScope}-${anchor.toDateString()}`}
-                    direction={direction}
-                    expenseMinor={headline?.current.expenseMinor ?? 0}
-                    incomeMinor={headline?.current.incomeMinor ?? 0}
-                    expenseChangeMinor={expenseChangeMinor}
-                    viewScope={viewScope}
-                    compareLabel={viewScope === 'week' ? weekCompareLabel(week, today) : undefined}
-                    bars={bars}
-                    legend={legend}
-                    onPressDay={onPressBar}
-                    selectedKey={selectedBar}
-                    current={atCurrent}
+        {firstLoad ? (
+          <View style={{ paddingTop: headerHeight }}>
+            <TransactionsSkeleton />
+          </View>
+        ) : (
+          <ReanimatedAnimated.FlatList
+            // A search result opens on the first tap, even with the keyboard up.
+            keyboardShouldPersistTaps="handled"
+            ref={scrollRef}
+            onScroll={scrollHandler}
+            scrollEventThrottle={16}
+            scrollEnabled={!dragging}
+            data={displayedGroups}
+            keyExtractor={(group) => group.date}
+            // Each row is a whole day, so mount only a few at first and keep the window small.
+            initialNumToRender={4}
+            maxToRenderPerBatch={4}
+            windowSize={7}
+            contentContainerStyle={{
+              // Under the header; search results have no headline above them, so keep the first day off the bar.
+              paddingTop: headerHeight + (searching ? 14 : 0),
+              paddingBottom: tabScrollPad + insets.bottom,
+            }}
+            // Variable-height days (line count, open stacks) rule out `getItemLayout`; standard fallback: if
+            // a jump lands past what's measured, retry once the list has laid out.
+            onScrollToIndexFailed={(info) => {
+              if (retryTimer.current) clearTimeout(retryTimer.current);
+              retryTimer.current = setTimeout(
+                () =>
+                  scrollRef.current?.scrollToIndex({
+                    index: info.index,
+                    animated: true,
+                    viewPosition: 0,
+                    viewOffset: collapsedHeight,
+                  }),
+                250
+              );
+            }}
+            ListHeaderComponent={
+              searching ? (
+                <>
+                  {banners}
+                  <SearchStatus
+                    query={trimmedQuery}
+                    minChars={SEARCH_MIN_CHARS}
+                    loading={searchLoading}
+                    resultCount={searchResults.length}
                   />
-                </ReanimatedAnimated.View>
+                </>
+              ) : (
+                <>
+                  {banners}
+                  <ReanimatedAnimated.View style={periodSwipe.dragStyle} {...periodSwipe.panHandlers}>
+                    <TransactionsHeadline
+                      periodKey={`${loadedPeriod.scope}-${loadedPeriod.fromDate}`}
+                      direction={direction}
+                      expenseMinor={headline?.current.expenseMinor ?? 0}
+                      incomeMinor={headline?.current.incomeMinor ?? 0}
+                      expenseChangeMinor={expenseChangeMinor}
+                      viewScope={loadedPeriod.scope}
+                      compareLabel={viewScope === 'week' ? weekCompareLabel(week, today) : undefined}
+                      bars={bars}
+                      legend={legend}
+                      onPressDay={onPressBar}
+                      selectedKey={selectedBar}
+                      current={atCurrent}
+                    />
+                  </ReanimatedAnimated.View>
 
-                <ActivityFilterChips
-                  filterType={filterType}
-                  onFilterType={setFilterType}
-                  categoryIds={filterCategoryIds}
-                  accountIds={filterAccountIds}
-                  categoryName={categoryPathName}
-                  accountName={accountName}
-                  onRemoveCategory={(id) => setFilterCategoryIds((ids) => ids.filter((x) => x !== id))}
-                  onRemoveAccount={(id) => setFilterAccountIds((ids) => ids.filter((x) => x !== id))}
-                  onClearAll={() => {
-                    setFilterCategoryIds([]);
-                    setFilterAccountIds([]);
-                  }}
-                />
-
-                {/* The same Suu empty state as every other screen, not a bare line of grey text. */}
-                {accounts.length === 0 && (
-                  <EmptyState title="No accounts yet" subtitle="Add an account before recording entries." />
-                )}
-                {accounts.length > 0 && transactions.length > 0 && filteredTransactions.length === 0 && (
-                  <EmptyState title="Nothing matches" subtitle="Try removing a filter above." />
-                )}
-                {accounts.length > 0 && transactions.length === 0 && (
-                  <EmptyState
-                    title={viewScope === 'month' ? 'Nothing logged this month' : 'Nothing logged this week'}
-                    subtitle="Tap + to add an entry, or look at another period."
+                  <ActivityFilterChips
+                    filterType={filterType}
+                    onFilterType={setFilterType}
+                    categoryIds={filterCategoryIds}
+                    accountIds={filterAccountIds}
+                    categoryName={categoryPathName}
+                    accountName={accountName}
+                    onRemoveCategory={(id) => setFilterCategoryIds((ids) => ids.filter((x) => x !== id))}
+                    onRemoveAccount={(id) => setFilterAccountIds((ids) => ids.filter((x) => x !== id))}
+                    onClearAll={() => {
+                      setFilterCategoryIds([]);
+                      setFilterAccountIds([]);
+                    }}
                   />
-                )}
-              </>
-            )
-          }
-          renderItem={({ item: group, index: gi }) => (
-            <TimelineDay
-              date={group.date}
-              label={
-                group.date === today
-                  ? 'Today'
-                  : group.date === yesterday
-                    ? 'Yesterday'
-                    : searching
-                      ? dayMonth(group.date)
-                      : longWeekday(group.date)
-              }
-              dateLabel={searching && group.date !== today ? group.date.slice(0, 4) : dayMonth(group.date)}
-              items={group.items}
-              categories={categories}
-              accountName={accountName}
-              categoryName={categoryName}
-              onPressTx={setDetailTx}
-              savingsAccountIds={savingsAccountIds}
-              openStacks={openStacks}
-              onToggleStack={toggleStack}
-              onReorder={canReorder ? reorderDay : undefined}
-              onDragActive={setDragging}
-              entering={FadeIn.delay(Math.min(gi * 45, MAX_LIST_STAGGER_MS))
-                .duration(DURATIONS.enter)
-                .reduceMotion(ReduceMotion.System)}
-            />
-          )}
-        />
+
+                  {/* The same Suu empty state as every other screen, not a bare line of grey text. */}
+                  {accounts.length === 0 && (
+                    <EmptyState title="No accounts yet" subtitle="Add an account before recording entries." />
+                  )}
+                  {accounts.length > 0 && transactions.length > 0 && filteredTransactions.length === 0 && (
+                    <EmptyState title="Nothing matches" subtitle="Try removing a filter above." />
+                  )}
+                  {accounts.length > 0 && transactions.length === 0 && (
+                    <EmptyState
+                      title={viewScope === 'month' ? 'Nothing logged this month' : 'Nothing logged this week'}
+                      subtitle="Tap + to add an entry, or look at another period."
+                    />
+                  )}
+                </>
+              )
+            }
+            renderItem={({ item: group, index: gi }) => (
+              <TimelineDay
+                date={group.date}
+                label={
+                  group.date === today
+                    ? 'Today'
+                    : group.date === yesterday
+                      ? 'Yesterday'
+                      : searching
+                        ? dayMonth(group.date)
+                        : longWeekday(group.date)
+                }
+                dateLabel={searching && group.date !== today ? group.date.slice(0, 4) : dayMonth(group.date)}
+                items={group.items}
+                categories={categories}
+                accountName={accountName}
+                categoryName={categoryName}
+                onPressTx={setDetailTx}
+                savingsAccountIds={savingsAccountIds}
+                openStacks={openStacks}
+                onToggleStack={toggleStack}
+                onReorder={canReorder ? reorderDay : undefined}
+                onDragActive={setDragging}
+                entering={FadeIn.delay(Math.min(gi * 45, MAX_LIST_STAGGER_MS))
+                  .duration(DURATIONS.enter)
+                  .reduceMotion(ReduceMotion.System)}
+              />
+            )}
+          />
+        )}
       </View>
 
       {/* Over the list, which it shrinks with as it scrolls. */}
@@ -678,51 +705,52 @@ export default function TransactionsScreen() {
           // ‹ This week › in a frosted pill, Week | Month beside it. Dragging the pill (or the Spent card
           // below) steps the period, same as the chevrons.
           <View style={styles.periodBar}>
-            <ReanimatedAnimated.View
-              style={[styles.periodRow, periodSwipe.dragStyle]}
-              {...periodSwipe.panHandlers}
-            >
-              <AnimatedPressable
-                onPress={stepBack}
-                onPressIn={stepBackPress.onPressIn}
-                onPressOut={stepBackPress.onPressOut}
-                hitSlop={6}
-                style={[styles.periodNav, stepBackPress.animatedStyle]}
-                accessibilityRole="button"
-                accessibilityLabel={viewScope === 'month' ? 'Previous month' : 'Previous week'}
-              >
-                <Feather name="chevron-left" size={16} color={theme.colors.textPrimary} />
-              </AnimatedPressable>
-              <Pressable
-                onPress={() => setMonthPickerVisible(true)}
-                hitSlop={6}
-                style={withPressed(styles.periodTitleBtn)}
-                accessibilityRole="button"
-                accessibilityLabel={`${heading.title}${heading.sub ? `, ${heading.sub}` : ''}. Pick a month`}
-              >
-                <Text style={styles.periodTitle} numberOfLines={1}>
-                  {heading.title}
-                </Text>
-                {!!heading.sub && (
-                  <Text style={styles.periodSub} numberOfLines={1}>
-                    {heading.sub}
+            <View style={styles.periodRow} {...periodSwipe.panHandlers}>
+              {/* Only the contents follow the finger, inside the clipped pill, so a drag never slides the
+                  pill over the Week | Month switch beside it. */}
+              <ReanimatedAnimated.View style={[styles.periodInner, periodSwipe.dragStyle]}>
+                <AnimatedPressable
+                  onPress={stepBack}
+                  onPressIn={stepBackPress.onPressIn}
+                  onPressOut={stepBackPress.onPressOut}
+                  hitSlop={6}
+                  style={[styles.periodNav, stepBackPress.animatedStyle]}
+                  accessibilityRole="button"
+                  accessibilityLabel={viewScope === 'month' ? 'Previous month' : 'Previous week'}
+                >
+                  <Feather name="chevron-left" size={16} color={theme.colors.textPrimary} />
+                </AnimatedPressable>
+                <Pressable
+                  onPress={() => setMonthPickerVisible(true)}
+                  hitSlop={6}
+                  style={withPressed(styles.periodTitleBtn)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${heading.title}${heading.sub ? `, ${heading.sub}` : ''}. Pick a month`}
+                >
+                  <Text style={styles.periodTitle} numberOfLines={1}>
+                    {heading.title}
                   </Text>
-                )}
-              </Pressable>
-              <AnimatedPressable
-                onPress={stepForward}
-                onPressIn={stepForwardPress.onPressIn}
-                onPressOut={stepForwardPress.onPressOut}
-                hitSlop={6}
-                disabled={atCurrent}
-                style={[styles.periodNav, atCurrent && styles.periodNavOff, stepForwardPress.animatedStyle]}
-                accessibilityRole="button"
-                accessibilityLabel={viewScope === 'month' ? 'Next month' : 'Next week'}
-                accessibilityState={{ disabled: atCurrent }}
-              >
-                <Feather name="chevron-right" size={16} color={theme.colors.textPrimary} />
-              </AnimatedPressable>
-            </ReanimatedAnimated.View>
+                  {!!heading.sub && (
+                    <Text style={styles.periodSub} numberOfLines={1}>
+                      {heading.sub}
+                    </Text>
+                  )}
+                </Pressable>
+                <AnimatedPressable
+                  onPress={stepForward}
+                  onPressIn={stepForwardPress.onPressIn}
+                  onPressOut={stepForwardPress.onPressOut}
+                  hitSlop={6}
+                  disabled={atCurrent}
+                  style={[styles.periodNav, atCurrent && styles.periodNavOff, stepForwardPress.animatedStyle]}
+                  accessibilityRole="button"
+                  accessibilityLabel={viewScope === 'month' ? 'Next month' : 'Next week'}
+                  accessibilityState={{ disabled: atCurrent }}
+                >
+                  <Feather name="chevron-right" size={16} color={theme.colors.textPrimary} />
+                </AnimatedPressable>
+              </ReanimatedAnimated.View>
+            </View>
             <View style={styles.scopeSwitch} accessibilityRole="radiogroup">
               {VIEW_SCOPES.map((o) => {
                 const on = viewScope === o.value;

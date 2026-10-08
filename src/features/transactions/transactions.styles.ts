@@ -4,7 +4,7 @@ import { EYEBROW } from '@/constants/textStyles';
 import { GLASS } from '@/components/Glass';
 
 // Shared by the Transactions screen and its modals/rows (MonthPickerModal,
-// FilterModal, TransactionRow, TransactionDetailModal, AddTransactionModal).
+// FilterModal, TransactionRow, TransactionDetailModal).
 export const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
   errorBanner: {
@@ -26,7 +26,7 @@ export const styles = StyleSheet.create({
   },
 
   // Search is its own mode (see the screen's own comment) — this row
-  // replaces the period pill and week rail in the sky band while it's active.
+  // replaces the period pill and the Week / Month switch in the header while it is active.
   searchBarRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 2, marginBottom: 4 },
   searchBar: {
     flex: 1,
@@ -120,10 +120,12 @@ export const styles = StyleSheet.create({
     height: 40,
     paddingHorizontal: 3,
     borderRadius: 20,
+    overflow: 'hidden',
     backgroundColor: GLASS.fill,
     borderWidth: 1,
     borderColor: GLASS.edge,
   },
+  periodInner: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 4 },
   periodNav: {
     width: 32,
     height: 32,

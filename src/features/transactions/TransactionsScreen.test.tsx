@@ -57,11 +57,19 @@ import TransactionsScreen from '../../../app/(tabs)/transactions';
 const texts = (tree: ReactTestRenderer) =>
   tree.root.findAllByType(Text).map((t) => [].concat(t.props.children as never).join(''));
 
+// Unmounted after each test, so the list's own batching timers don't fire once the test is over.
+let mounted: ReactTestRenderer | null = null;
+afterEach(() => {
+  if (mounted) act(() => mounted!.unmount());
+  mounted = null;
+});
+
 async function render() {
   let tree!: ReactTestRenderer;
   await act(async () => {
     tree = create(<TransactionsScreen />);
   });
+  mounted = tree;
   await act(async () => {
     await new Promise((resolve) => setTimeout(resolve, 0));
   });

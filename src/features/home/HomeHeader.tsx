@@ -169,7 +169,7 @@ export function HomeHeader({
           </View>
         </ReanimatedAnimated.View>
 
-        {/* The greeting row and the shortcuts scroll away under the brand row together. */}
+        {/* The greeting scrolls away under the brand row. */}
         <ReanimatedAnimated.View
           style={[styles.fading, fadeStyle]}
           pointerEvents={collapsed ? 'none' : 'auto'}

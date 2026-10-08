@@ -40,13 +40,16 @@ function AnimatedBarStack({
     }
     const first = !grown.current;
     grown.current = true;
-    Animated.timing(v, {
+    const anim = Animated.timing(v, {
       toValue: heightPct,
       duration: first ? 420 : 280,
       delay: first ? delay : 0,
       easing: Easing.out(Easing.cubic),
       useNativeDriver: false,
-    }).start();
+    });
+    anim.start();
+    // Stopped when the bar goes or its height changes again, so no frame runs for a bar that has left.
+    return () => anim.stop();
   }, [heightPct, reduce, delay, v]);
 
   const height = v.interpolate({ inputRange: [0, 100], outputRange: ['0%', '100%'], extrapolate: 'clamp' });
