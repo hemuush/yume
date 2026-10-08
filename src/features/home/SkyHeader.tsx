@@ -19,6 +19,7 @@ import { withPressed } from '@/lib/pressed';
 import { useReduceMotion } from '@/lib/useReduceMotion';
 import type { CollapsingHeader } from '@/lib/useCollapsingHeader';
 import { SkyBackdrop } from './SkyBackdrop';
+import { GLASS } from '@/components/Glass';
 import { wallpaperTop } from './HomeWallpaper';
 
 /** The title row's height; the band keeps just this row (plus BAR_PAD) once collapsed. */
@@ -49,6 +50,7 @@ export function SkyHeader({
   summary,
   collapsedAccessory,
   wallpaper = false,
+  closeIcon = false,
 }: {
   title: string;
   subtitle?: string;
@@ -63,6 +65,8 @@ export function SkyHeader({
   collapsedAccessory?: React.ReactNode;
   /** The screen has Home's wallpaper behind it: no wash, and the collapsed bar takes the wallpaper's top. */
   wallpaper?: boolean;
+  /** The back button as a × in a frosted disc: a screen you close rather than step back from (Add). */
+  closeIcon?: boolean;
 }) {
   const { accent } = useAccent();
   const insets = useSafeAreaInsets();
@@ -141,11 +145,15 @@ export function SkyHeader({
             <Pressable
               onPress={() => router.back()}
               hitSlop={12}
-              style={withPressed(styles.backBtn)}
+              style={withPressed([styles.backBtn, closeIcon && styles.closeBtn])}
               accessibilityRole="button"
-              accessibilityLabel="Back"
+              accessibilityLabel={closeIcon ? 'Close' : 'Back'}
             >
-              <Feather name="chevron-left" size={22} color={theme.colors.ink} />
+              <Feather
+                name={closeIcon ? 'x' : 'chevron-left'}
+                size={closeIcon ? 19 : 22}
+                color={theme.colors.ink}
+              />
             </Pressable>
           )}
           <View style={styles.titleBlock}>
@@ -237,6 +245,18 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginLeft: -9,
     marginRight: -4,
+  },
+  closeBtn: {
+    marginLeft: 0,
+    marginRight: 4,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: GLASS.fillStrong,
+    borderWidth: 1,
+    borderColor: GLASS.edge,
   },
   subtitle: {
     fontFamily: theme.font.bodyMedium,
