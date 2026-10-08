@@ -284,9 +284,7 @@ export function RuleModal({
       : Number(startDate.slice(8));
   const upcoming = [startDate];
   while (upcoming.length < 3) {
-    upcoming.push(
-      advanceDate(upcoming[upcoming.length - 1], frequency, interval, previewAnchor)
-    );
+    upcoming.push(advanceDate(upcoming[upcoming.length - 1], frequency, interval, previewAnchor));
   }
   const toggle = (which: 'account' | 'to' | 'category') => setOpen((o) => (o === which ? null : which));
 
