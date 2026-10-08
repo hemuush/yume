@@ -627,7 +627,6 @@ export default function TransactionsScreen() {
           <>
             <HeaderIconButton
               icon="search"
-              soft
               size={40}
               onPress={searching ? closeSearch : openSearch}
               label={searching ? 'Close search' : 'Search transactions'}
@@ -635,7 +634,6 @@ export default function TransactionsScreen() {
             {!searching && (
               <HeaderIconButton
                 icon="sliders"
-                soft
                 size={40}
                 onPress={() => setFilterVisible(true)}
                 label={filterCount > 0 ? `Filters, ${filterCount} on` : 'Filters'}
