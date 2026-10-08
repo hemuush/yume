@@ -6,7 +6,7 @@ import { SCREEN } from '@/components/screenStyles';
 /** The even gap between Reports' blocks (heatmap card, day card, story cards, "Where it went"). */
 export const BLOCK_GAP = SCREEN.sectionGap;
 
-// Shared by the Reports screen and its pieces (PeriodRow, ReportSummary, HeatmapCard, DayCard, StoryCards, CategoryBar, CategoryList, TrendChart, DayTotal).
+// Shared by the Reports screen and its pieces (PeriodRow, HeatmapCard, DayCard, StoryCards, CategoryBar, CategoryList, TrendChart, DayTotal).
 export const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
@@ -64,7 +64,7 @@ export const styles = StyleSheet.create({
     borderRadius: theme.radius.pill,
   },
   granChipText: { fontFamily: theme.font.roundedMedium, fontSize: 15, color: theme.colors.ink },
-  // Days / Categories / Trends, pinned under the summary. SegmentedControl
+  // Days / Categories / Trends, pinned under the header. SegmentedControl
   // brings its own bottom margin; the negative one trims it to the gap this bar wants.
   // On the page colour, so the report scrolls under the tabs once they stick.
   tabs: {
@@ -74,67 +74,6 @@ export const styles = StyleSheet.create({
     backgroundColor: theme.colors.background,
   },
   stickyTabs: { marginHorizontal: -20, zIndex: 1 },
-  // The summary and tabs scroll with the report but keep their own 20px inset, so they step out of its padding.
-  bleed: { marginHorizontal: -20 },
-
-  // The pinned summary card: the period's total, how it compares, and three day figures.
-  summary: {
-    marginHorizontal: 20,
-    marginTop: theme.layout.screenTopGap,
-    paddingHorizontal: 18,
-    paddingTop: 14,
-    paddingBottom: 12,
-    borderRadius: theme.radius.xl2,
-    backgroundColor: theme.colors.surface,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-    shadowColor: theme.colors.ink,
-    shadowOpacity: 0.06,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 2,
-  },
-  summaryHead: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
-  summaryMain: { flex: 1, minWidth: 0 },
-  summaryLabel: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textSecondary },
-  summaryBig: {
-    fontFamily: theme.font.monoBold,
-    fontSize: 32,
-    lineHeight: 38,
-    letterSpacing: -1.2,
-    color: theme.colors.textPrimary,
-    marginTop: 2,
-  },
-  summaryCells: {
-    flexDirection: 'row',
-    marginTop: 12,
-    paddingTop: 10,
-    borderTopWidth: 1,
-    borderTopColor: theme.colors.divider,
-  },
-  summaryCell: { flex: 1, minWidth: 0 },
-  summaryCellDivided: { paddingLeft: 12, borderLeftWidth: 1, borderLeftColor: theme.colors.divider },
-  summaryCellLabel: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
-  summaryCellValue: {
-    fontFamily: theme.font.monoBold,
-    fontSize: 15,
-    color: theme.colors.textPrimary,
-    marginTop: 2,
-  },
-
-  // Same red/green + arrow badge language This Month's KPI tiles and the
-  // stat cards already use, instead of a small two-line corner label.
-  vsBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flexShrink: 1,
-    gap: 5,
-    marginTop: 2,
-    minHeight: 30,
-    borderRadius: theme.radius.pill,
-    paddingHorizontal: 11,
-  },
-  vsBadgeText: { flexShrink: 1, fontFamily: theme.font.bodyBold, fontSize: 12.5 },
 
   // The Days tab's heatmap card.
   hmCard: {
