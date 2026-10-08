@@ -9,7 +9,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { setHasOnboarded, setUserName } from '@/db/settings';
 import { createAccount } from '@/db/ledger';
 import { toMinor } from '@/lib/money';
-import { BackupSnapshot, summarizeSnapshot, getCurrentSummary } from '@/lib/backup';
+import { BackupSnapshot, summarizeSnapshot, getCurrentSummary, isTooLargeForBackup } from '@/lib/backup';
 import { restoreKeepingSafetyCopy, SafetyCopyError } from '@/lib/safetyCopy';
 import { resyncAfterRestore } from '@/lib/restoreSync';
 import { withoutRelock } from '@/lib/appLock';
@@ -28,6 +28,7 @@ import { KickerDot } from '@/components/StripCard';
 import { HeaderHills } from '@/features/home/HeaderHills';
 import { withPressed } from '@/lib/pressed';
 import { showAlert } from '@/components/AppDialog';
+import { errorMessage } from '@/lib/errorMessage';
 
 interface Slide {
   title: string;
@@ -166,6 +167,9 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
     try {
       const result = await withoutRelock(() => DocumentPicker.getDocumentAsync({ type: '*/*' }));
       if (result.canceled || !result.assets?.[0]) return;
+      if (isTooLargeForBackup(result.assets[0].size)) {
+        throw new Error('That file is too large to be a Yume backup — pick a full backup Yume exported.');
+      }
       const content = await new File(result.assets[0].uri).text();
       let snapshot: BackupSnapshot;
       try {
@@ -181,7 +185,7 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
       const current = await getCurrentSummary();
       setPendingRestore({ snapshot, preview: { exportedAt, backup, current, lostCount: 0 } });
     } catch (e) {
-      showAlert("Couldn't open that backup", String((e as Error)?.message ?? e));
+      showAlert("Couldn't open that backup", errorMessage(e));
     }
   };
 
@@ -201,7 +205,7 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
     } catch (e) {
       setRestoring(false);
       setPendingRestore(null);
-      showAlert("Couldn't restore that backup", String((e as Error)?.message ?? e));
+      showAlert("Couldn't restore that backup", errorMessage(e));
       return;
     }
     try {

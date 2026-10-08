@@ -90,13 +90,13 @@ async function shareTempFile(
   content: string | Uint8Array,
   options: { mimeType: string; dialogTitle?: string }
 ): Promise<void> {
-  const file = new File(Paths.document, name);
+  // The cache, not documents: if the app is killed mid-share, Android clears it rather than keeping it forever.
+  const file = new File(Paths.cache, name);
   try {
     file.create();
     file.write(content);
-    if (await Sharing.isAvailableAsync()) {
-      await withoutRelock(() => Sharing.shareAsync(file.uri, options));
-    }
+    if (!(await Sharing.isAvailableAsync())) throw new Error("Sharing isn't available on this phone.");
+    await withoutRelock(() => Sharing.shareAsync(file.uri, options));
   } finally {
     try {
       if (file.exists) file.delete();
