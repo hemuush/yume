@@ -5,8 +5,8 @@ import { theme } from '@/constants/theme';
 import { shade, hexToRgba } from '@/lib/color';
 import { HILLS_HEIGHT_COMPACT } from './HeaderHills';
 
-/** How far below a collapsed header's title row its sky takes to dissolve into the list. */
-const SKY_FADE = 22;
+/** How far below a collapsed header's title row the cap takes to dissolve into the list: short, so rows don't ghost. */
+const SKY_FADE = 10;
 
 /** The sky's colours: deep at the top, paler by the middle, and the page's own cream where it ends. */
 export function skyColors(accent: string) {
@@ -20,9 +20,10 @@ const clamp01 = (v: number) => {
 
 /**
  * The sky behind a header, drawn so the header has no edge of its own. Fully open, the sky fades from the theme's
- * colour at the top into the page cream at the bottom. While it collapses, a `cap` takes over: opaque behind the
- * status bar and the title row, then fading to nothing over `SKY_FADE` so the list dissolves into it instead of
- * being cut at a line. The band lets go once the cap is in, so there is always sky behind the title row.
+ * colour at the top into the page cream at the bottom. While it collapses, a `cap` takes over: sky behind the
+ * status bar, easing into solid page cream by the bottom of the title row, then a short fade to nothing, so
+ * the list slides under a clean cream edge instead of showing through (ghosted text) or ending at a line. The
+ * band lets go once the cap is in, so there is always sky behind the title row.
  *
  * Render it first inside the sliding header (it sits under the title row) and keep the band over it transparent.
  * `collapsedHeight` is how much of the page the collapsed title row covers; 0 until it is measured.
@@ -63,8 +64,8 @@ export function SkyBackdrop({
       {collapsedHeight > 4 && (
         <ReanimatedAnimated.View pointerEvents="none" style={[styles.cap, { height: total }, capStyle]}>
           <LinearGradient
-            colors={[top, mid, hexToRgba(mid, 0.72), hexToRgba(mid, 0)]}
-            locations={[0, (collapsedHeight - 2) / total, (collapsedHeight + 13) / total, 1]}
+            colors={[top, mid, page, hexToRgba(page, 0)]}
+            locations={[0, (collapsedHeight * 0.45) / total, collapsedHeight / total, 1]}
             style={StyleSheet.absoluteFill}
           />
         </ReanimatedAnimated.View>

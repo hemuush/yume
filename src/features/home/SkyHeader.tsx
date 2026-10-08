@@ -219,7 +219,9 @@ export function SkyHeader({
 
 const styles = StyleSheet.create({
   over: { position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10 },
-  band: { paddingHorizontal: 20, paddingBottom: 8, overflow: 'hidden' },
+  // No clipping: the root also holds the hills, so the band's bottom edge sits above the collapsed bar's, and
+  // clipping there cut the bottom off the title row's buttons.
+  band: { paddingHorizontal: 20, paddingBottom: 8 },
   titleRow: {
     flexDirection: 'row',
     alignItems: 'center',
