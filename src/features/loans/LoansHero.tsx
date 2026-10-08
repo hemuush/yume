@@ -6,6 +6,7 @@ import { CountUpAmount } from '@/components/CountUpAmount';
 import { Skeleton } from '@/components/Skeleton';
 import { StripCard, KickerDot } from '@/components/StripCard';
 import { theme } from '@/constants/theme';
+import { SCREEN } from '@/components/screenStyles';
 import { EYEBROW } from '@/constants/textStyles';
 import { shade } from '@/lib/color';
 import { formatMoney } from '@/lib/money';
@@ -157,9 +158,8 @@ const styles = StyleSheet.create({
   card: {
     marginHorizontal: 20,
     marginTop: theme.layout.screenTopGap,
-    marginBottom: 4,
-    paddingTop: 18,
-    paddingBottom: 16,
+    paddingTop: SCREEN.heroPadTop,
+    paddingBottom: SCREEN.cardPad,
     paddingHorizontal: 16,
   },
   skeletonCard: {

@@ -5,6 +5,7 @@ import ReanimatedAnimated, { FadeIn } from 'react-native-reanimated';
 import { theme } from '@/constants/theme';
 import { usePressScale } from '@/lib/usePressScale';
 import { haptics } from '@/lib/haptics';
+import { useUiScale } from '@/lib/uiScale';
 import { DURATIONS } from '@/lib/motionTimings';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -41,6 +42,7 @@ export function PrimaryButton({
   ...rest
 }: Props) {
   const { animatedStyle, onPressIn, onPressOut } = usePressScale();
+  const uiScale = useUiScale();
   // Fires once as the checkmark comes in; every Pay/Save/Restore confirm funnels through `done`,
   // so none needs its own haptic.
   useEffect(() => {
@@ -57,6 +59,8 @@ export function PrimaryButton({
       style={[
         styles.base,
         compact && styles.baseCompact,
+        // Padding follows the font size at half rate; the default (1) leaves the designed 12 / 7.
+        { paddingVertical: Math.round((compact ? 7 : 12) * uiScale) },
         variantStyle,
         disabled && styles.disabled,
         animatedStyle,

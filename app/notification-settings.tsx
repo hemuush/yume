@@ -143,7 +143,7 @@ export default function NotificationSettingsScreen() {
         contentContainerStyle={{ paddingTop: headerHeight }}
       >
         {/* The same grouped rows as Profile's settings: a section title, one card, hairlines between rows. */}
-        <Section title="Times">
+        <Section title="Times" first>
           <View style={h.card}>
             <SettingsRow
               icon="white-balance-sunny"

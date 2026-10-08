@@ -177,7 +177,7 @@ export function GoalCard({
 }
 
 const styles = StyleSheet.create({
-  wrap: { marginHorizontal: 20, marginBottom: 10 },
+  wrap: { marginHorizontal: 20, marginBottom: 12 },
   // A white card like every other on the screen; the goal's own colour is in its icon and its bar.
   card: {
     padding: 16,

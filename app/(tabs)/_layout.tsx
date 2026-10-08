@@ -4,6 +4,7 @@ import { View, StyleSheet, Animated, Pressable, PressableProps } from 'react-nat
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from '@expo/vector-icons/Feather';
 import { Text } from '@/components/Text';
+import { useUiScale } from '@/lib/uiScale';
 import { theme } from '@/constants/theme';
 import { useAccent } from '@/theme/AccentContext';
 import { HomeIcon, ActivityIcon, PlanIcon, ReportsIcon } from '@/components/icons/TabIcons';
@@ -107,6 +108,7 @@ function CenterAddButton() {
 
 export default function TabsLayout() {
   const insets = useSafeAreaInsets();
+  const uiScale = useUiScale();
   const [repeatSheetVisible, setRepeatSheetVisible] = useState(false);
 
   return (
@@ -123,7 +125,7 @@ export default function TabsLayout() {
             left: 0,
             right: 0,
             bottom: 0,
-            height: theme.layout.tabBar.height + insets.bottom,
+            height: Math.round(theme.layout.tabBar.height * uiScale) + insets.bottom,
             paddingBottom: insets.bottom,
             borderTopLeftRadius: theme.layout.tabBar.topRadius,
             borderTopRightRadius: theme.layout.tabBar.topRadius,
@@ -136,7 +138,11 @@ export default function TabsLayout() {
             shadowRadius: 12,
             elevation: 10,
           },
-          tabBarItemStyle: { height: theme.layout.tabBar.height, paddingTop: 0, paddingBottom: 0 },
+          tabBarItemStyle: {
+            height: Math.round(theme.layout.tabBar.height * uiScale),
+            paddingTop: 0,
+            paddingBottom: 0,
+          },
           tabBarButton: (props) => <TabButton {...props} />,
         }}
       >

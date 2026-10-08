@@ -416,6 +416,7 @@ export function ThisMonthHero({
                     setShowWorking((v) => !v);
                   }}
                   style={withPressed(styles.dueChip)}
+                  hitSlop={5}
                   accessibilityRole="button"
                   accessibilityState={{ expanded: showWorking }}
                   accessibilityLabel={`${formatMoney(displayed.dueMinor)} still to pay this month`}

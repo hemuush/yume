@@ -3,6 +3,7 @@ import { Text } from '@/components/Text';
 import { CountUpAmount } from '@/components/CountUpAmount';
 import { GrowFill } from '@/components/GrowFill';
 import { theme } from '@/constants/theme';
+import { SCREEN } from '@/components/screenStyles';
 import { EYEBROW } from '@/constants/textStyles';
 import { StripCard, KickerDot } from '@/components/StripCard';
 import { formatMoney } from '@/lib/money';
@@ -84,8 +85,8 @@ const styles = StyleSheet.create({
   card: {
     marginHorizontal: 20,
     marginTop: theme.layout.screenTopGap,
-    padding: 16,
-    paddingTop: 18,
+    padding: SCREEN.cardPad,
+    paddingTop: SCREEN.heroPadTop,
   },
   kickerRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   kicker: { ...EYEBROW, color: theme.colors.textSecondary },

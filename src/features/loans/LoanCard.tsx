@@ -143,8 +143,8 @@ export function LoanCard({
 const styles = StyleSheet.create({
   card: {
     marginHorizontal: 20,
-    marginBottom: 10,
-    paddingVertical: 14,
+    marginBottom: 12,
+    paddingVertical: 16,
     paddingHorizontal: 16,
     borderRadius: theme.radius.xl2,
     backgroundColor: theme.colors.surface,

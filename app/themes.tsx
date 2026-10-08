@@ -76,7 +76,7 @@ export default function ThemesScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
-  content: { paddingHorizontal: 20, paddingTop: theme.layout.screenTopGap, gap: 14 },
+  content: { paddingHorizontal: 20, gap: 12 },
   caption: { fontFamily: theme.font.body, fontSize: 12.5, color: theme.colors.textMuted },
   grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: 12 },
   card: {

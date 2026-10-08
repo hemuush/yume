@@ -17,7 +17,7 @@ export const styles = StyleSheet.create({
     marginBottom: SECTION_GAP.bottom,
   },
   firstTitle: { marginTop: theme.layout.screenTopGap },
-  grid: { paddingHorizontal: 14, gap: 12, marginBottom: 4 },
+  grid: { paddingHorizontal: 18, gap: 12, marginBottom: 4 },
   gridRow: { flexDirection: 'row' },
   cell: { width: `${100 / TILE_COLUMNS}%`, paddingHorizontal: 2 },
   panelWrap: { marginTop: 10 },

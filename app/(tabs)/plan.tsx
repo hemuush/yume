@@ -16,6 +16,7 @@ import { isSavingsEntry } from '@/lib/privateSummary';
 import { savingsAccountIdsOf } from '@/lib/account';
 import { Account, SavingsGoal } from '@/types';
 import { theme } from '@/constants/theme';
+import { useTabScrollPad } from '@/lib/uiScale';
 import { addDaysToIsoDate, toLocalIsoDate } from '@/lib/date';
 import { SkyHeader, HeaderSummary } from '@/features/home/SkyHeader';
 import ReanimatedAnimated from 'react-native-reanimated';
@@ -85,6 +86,7 @@ interface PlanData {
  */
 export default function PlanScreen() {
   const insets = useSafeAreaInsets();
+  const tabScrollPad = useTabScrollPad();
   const { hideAmounts } = usePrivacy();
   const [data, setData] = useState<PlanData | null>(null);
 
@@ -244,7 +246,7 @@ export default function PlanScreen() {
         scrollEventThrottle={16}
         contentContainerStyle={{
           paddingTop: headerHeight,
-          paddingBottom: theme.layout.tabScreenScrollPad + insets.bottom,
+          paddingBottom: tabScrollPad + insets.bottom,
         }}
       >
         {loadError && (
