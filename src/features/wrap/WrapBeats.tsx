@@ -15,8 +15,10 @@ import { formatMoney } from '@/lib/money';
 import { dayMonth, longWeekday } from '@/lib/dateLabels';
 import { withoutRelock } from '@/lib/appLock';
 import { errorMessage } from '@/lib/errorMessage';
+import { useAccent } from '@/theme/AccentContext';
 import { Wrap, WrapBeat, USUAL_BAND_PCT } from './wrapData';
 import { StripCard, KickerDot } from '@/components/StripCard';
+import { YumeLogo } from '@/components/YumeLogo';
 import { styles, kickerTone } from './wrap.styles';
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
@@ -71,7 +73,8 @@ function CountUpPct({ to, still, style }: { to: number; still: boolean; style: S
       return;
     }
     const v = new Animated.Value(0);
-    const id = v.addListener(({ value }) => setShown(value));
+    // Whole percents: frames that land on the same number bail out of the re-render.
+    const id = v.addListener(({ value }) => setShown(Math.round(value)));
     const a = Animated.timing(v, { toValue: to, duration: 900, easing: EASE, useNativeDriver: false });
     a.start();
     return () => {
@@ -491,6 +494,7 @@ function WeekBar({
 }
 
 export function WeekDaysBeat({ beat, still }: { beat: BeatOf<'weekDays'>; still: boolean }) {
+  const { accent } = useAccent();
   const max = Math.max(1, beat.heaviest.totalMinor);
   return (
     <View style={styles.beat}>
@@ -511,11 +515,7 @@ export function WeekDaysBeat({ beat, still }: { beat: BeatOf<'weekDays'>; still:
                       <WeekBar
                         pct={d.totalMinor > 0 ? Math.max(4, (d.totalMinor / max) * 100) : 3}
                         color={
-                          heaviest
-                            ? theme.colors.ink
-                            : d.totalMinor > 0
-                              ? theme.colors.primary
-                              : theme.colors.inkHairline
+                          heaviest ? theme.colors.ink : d.totalMinor > 0 ? accent : theme.colors.inkHairline
                         }
                         index={i}
                         still={still}
@@ -660,7 +660,7 @@ export function FinalBeat({
               <View style={styles.cardBody}>
                 <View style={styles.cardHead}>
                   <View style={styles.cardBrand}>
-                    <View style={styles.cardBrandMark} />
+                    <YumeLogo size={16} />
                     <Text style={styles.cardBrandText}>Yume</Text>
                   </View>
                   <Text style={styles.cardKicker}>{wrap.label}</Text>

@@ -9,6 +9,7 @@ import { styles } from './transactions.styles';
 import { screenStyles as h } from '@/components/screenStyles';
 import { formatMaskableMoney } from '@/lib/money';
 import { usePrivacy } from '@/theme/PrivacyContext';
+import { useAccent } from '@/theme/AccentContext';
 
 const AnimatedRowPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -35,6 +36,7 @@ export function TransactionRow({
   savingsTransfer?: boolean;
 }) {
   const { hideAmounts } = usePrivacy();
+  const { secondary } = useAccent();
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.98);
   const isTransfer = tx.type === 'transfer';
   // Read aloud as one line, with the amount masked exactly as it is on screen.
@@ -67,7 +69,7 @@ export function TransactionRow({
     >
       <CategoryIcon
         name={tx.type === 'transfer' ? 'swap-horizontal' : (cat?.icon ?? 'tag')}
-        color={tx.type === 'transfer' ? theme.colors.secondary : (cat?.color ?? theme.colors.textMuted)}
+        color={tx.type === 'transfer' ? secondary : (cat?.color ?? theme.colors.textMuted)}
       />
       <View style={h.mid}>
         <Text style={h.title} numberOfLines={1}>

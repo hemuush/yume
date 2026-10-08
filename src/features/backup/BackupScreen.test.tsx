@@ -19,7 +19,7 @@ jest.mock('expo-router', () => ({
 jest.mock('@/theme/AccentContext', () => ({
   useAccent: () => ({ accent: '#8FCBFF', secondary: '#8FE8C8', onAccent: '#12130F' }),
 }));
-jest.mock('@/components/AppHeader', () => ({ AppHeader: () => null }));
+jest.mock('@/components/AppHeader', () => ({ HeaderUserButton: () => null }));
 jest.mock('@/features/backup/RestorePreviewSheet', () => ({ RestorePreviewSheet: () => null }));
 jest.mock('@/lib/restoreSync', () => ({ resyncAfterRestore: jest.fn(async () => {}) }));
 // A stand-in File that remembers what was written and whether it was deleted, so a test can see that the
@@ -144,7 +144,7 @@ describe('Backup & restore · status', () => {
     const shown = texts(tree);
     expect(shown).toContain('No backup folder yet');
     expect(buttons(tree, 'Choose folder')).toHaveLength(1);
-    expect(buttons(tree, 'Backup now')).toHaveLength(0);
+    expect(buttons(tree, 'Back up now')).toHaveLength(0);
     expect(shown).toContain('No backups yet');
     expect(shown).not.toContain('Forget folder');
   });
@@ -158,7 +158,7 @@ describe('Backup & restore · status', () => {
     expect(shown).toContain('Backed up today');
     expect(shown.some((t) => t.includes('278.8 KB'))).toBe(true);
     expect(shown).toContain('Next backup tomorrow');
-    expect(buttons(tree, 'Backup now')).toHaveLength(1);
+    expect(buttons(tree, 'Back up now')).toHaveLength(1);
     expect(shown).toContain('Forget folder');
   });
 

@@ -64,14 +64,19 @@ export function AppDialogHost() {
       variant="center"
       scrollable={false}
       showClose={false}
+      strip={destructive ? theme.colors.slice.spent : theme.colors.slice.free}
     >
-      {destructive && (
-        <View style={styles.icon}>
-          <Feather name="trash-2" size={20} color={theme.colors.expense} />
+      <View style={styles.head}>
+        {destructive && (
+          <View style={styles.icon}>
+            <Feather name="trash-2" size={20} color={theme.colors.expense} />
+          </View>
+        )}
+        <View style={styles.headText}>
+          <Text style={styles.title}>{dialog.title}</Text>
+          {dialog.message ? <Text style={styles.message}>{dialog.message}</Text> : null}
         </View>
-      )}
-      <Text style={styles.title}>{dialog.title}</Text>
-      {dialog.message ? <Text style={styles.message}>{dialog.message}</Text> : null}
+      </View>
       <View style={[styles.buttons, buttons.length > 2 && styles.buttonsStacked]}>
         {buttons.map((b, i) => (
           <PrimaryButton
@@ -88,29 +93,28 @@ export function AppDialogHost() {
 }
 
 const styles = StyleSheet.create({
+  // The bin sits beside the title, so a delete dialog is no taller than any other.
+  head: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
+  headText: { flex: 1, minWidth: 0 },
   icon: {
-    alignSelf: 'center',
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: theme.colors.expenseTint,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 12,
   },
   title: {
     fontFamily: theme.font.roundedBold,
-    fontSize: 18,
+    fontSize: 19,
     color: theme.colors.textPrimary,
-    textAlign: 'center',
   },
   message: {
     fontFamily: theme.font.body,
-    fontSize: 13.5,
+    fontSize: 13,
     lineHeight: 19,
     color: theme.colors.textSecondary,
-    textAlign: 'center',
-    marginTop: 6,
+    marginTop: 4,
   },
   buttons: { flexDirection: 'row', gap: 8, marginTop: 18 },
   buttonsStacked: { flexDirection: 'column-reverse' },

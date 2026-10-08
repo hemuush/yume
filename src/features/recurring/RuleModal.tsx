@@ -18,8 +18,8 @@ import { SettingsRow } from '@/components/SettingsRow';
 import { theme, modalFooterStyles as f } from '@/constants/theme';
 import { screenStyles as h } from '@/components/screenStyles';
 import { useAccent } from '@/theme/AccentContext';
-import { hexToRgba } from '@/lib/color';
-import { weekdayDayMonth } from '@/lib/dateLabels';
+import { hexToRgba, shade } from '@/lib/color';
+import { weekdayDayMonth, dayMonth } from '@/lib/dateLabels';
 import { DateTile } from '@/components/DateTile';
 import { FormInput } from '@/components/FormInput';
 import { AmountField } from '@/components/AmountField';
@@ -29,6 +29,7 @@ import { Chip } from '@/components/Chip';
 import { ToggleSwitch } from '@/components/ToggleSwitch';
 import { toMinor, formatMoney, inputMinor } from '@/lib/money';
 import { toLocalIsoDate, addMonthsToIsoDate } from '@/lib/date';
+import { runsBetween } from '@/lib/recurrence';
 import { DateField } from '@/components/DateField';
 import { CategoryPicker } from '@/components/CategoryPicker';
 import { styles } from './recurring.styles';
@@ -37,6 +38,7 @@ import { errorMessage } from '@/lib/errorMessage';
 import { showAlert } from '@/components/AppDialog';
 import { categorySentence, parentNameOf } from '@/lib/categoryLabel';
 import { spendableAccountsOf } from '@/lib/account';
+import { useSaveOnce } from '@/lib/useSaveOnce';
 
 const TX_TYPES: { label: string; value: TransactionType }[] = [
   { label: 'Expense', value: 'expense' },
@@ -88,7 +90,7 @@ export function RuleModal({
   };
 }) {
   const { show: showUndo } = useUndoToast();
-  const { accent } = useAccent();
+  const { accent, secondary } = useAccent();
   const [type, setType] = useState<TransactionType>('expense');
   const [accountId, setAccountId] = useState<string | null>(null);
   const [toAccountId, setToAccountId] = useState<string | null>(null);
@@ -205,6 +207,36 @@ export function RuleModal({
       endDate: hasEndDate ? endDate : null,
     };
 
+    // A start in the past posts every missed run the next time the app opens: say how many first.
+    const today = toLocalIsoDate(new Date());
+    if (startDate < today && startDate !== editing?.nextRunDate) {
+      const past = runsBetween(
+        {
+          nextRunDate: startDate,
+          frequency,
+          intervalCount: interval,
+          anchorDay: Number(startDate.slice(8, 10)),
+          endDate: input.endDate ?? null,
+        },
+        '',
+        today
+      );
+      if (past > 0) {
+        showAlert(
+          `Log ${past} past ${past === 1 ? 'entry' : 'entries'}?`,
+          `Starting on ${dayMonth(startDate)} adds every run from then up to today.`,
+          [
+            { text: 'Cancel', style: 'cancel' },
+            { text: past === 1 ? 'Log it' : `Log ${past}`, onPress: () => void save(input) },
+          ]
+        );
+        return;
+      }
+    }
+    await save(input);
+  };
+
+  const save = async (input: RecurringRuleInput) => {
     setSaving(true);
     try {
       if (editing) {
@@ -219,6 +251,7 @@ export function RuleModal({
       setSaving(false);
     }
   };
+  const submitOnce = useSaveOnce(submit);
 
   const confirmDelete = async () => {
     if (!editing) return;
@@ -261,14 +294,14 @@ export function RuleModal({
           {error && <Text style={styles.errorText}>{error}</Text>}
           <PrimaryButton
             title={saving ? 'Saving…' : editing ? 'Save changes' : 'Create'}
-            onPress={submit}
+            onPress={submitOnce}
             disabled={saving}
           />
         </View>
       }
     >
       <SheetCard
-        hue={type === 'transfer' ? theme.colors.secondary : (cat?.color ?? accent)}
+        hue={type === 'transfer' ? secondary : (cat?.color ?? accent)}
         icon={type === 'transfer' ? 'swap-horizontal' : (cat?.icon ?? 'repeat')}
         kicker={cadenceLabel(frequency, interval)}
         amount={formatMoney(inputMinor(amount))}
@@ -304,7 +337,7 @@ export function RuleModal({
             <SettingsRow
               round
               icon="bank"
-              iconBg={theme.colors.primaryTint}
+              iconBg={shade(accent, 95)}
               label={type === 'transfer' ? 'From' : 'Account'}
               value={accountName(effectiveAccountId)}
               onPress={() => toggle('account')}
@@ -330,7 +363,7 @@ export function RuleModal({
                 <SettingsRow
                   round
                   icon="swap-horizontal"
-                  iconBg={theme.colors.secondaryTint}
+                  iconBg={shade(secondary, 94)}
                   label="To"
                   value={accountName(toAccountId) ?? 'Pick one'}
                   onPress={() => toggle('to')}
@@ -408,7 +441,7 @@ export function RuleModal({
           <Text style={[styles.fieldLabel, styles.upcomingLabel]}>Coming up</Text>
           <View style={styles.upcoming}>
             {upcoming.map((d, i) => (
-              <DateTile key={d} iso={d} background={i === 0 ? theme.colors.primaryTint : undefined} />
+              <DateTile key={d} iso={d} background={i === 0 ? shade(accent, 95) : undefined} />
             ))}
           </View>
         </>

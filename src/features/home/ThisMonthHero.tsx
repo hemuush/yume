@@ -22,6 +22,8 @@ import { MonthRing, RING_COLORS } from './MonthRing';
 import { LimitMeter, LimitMeterTone } from '@/components/LimitMeter';
 import { CountUpAmount } from '@/components/CountUpAmount';
 import { usePrivacy } from '@/theme/PrivacyContext';
+import { useAccent } from '@/theme/AccentContext';
+import { shade } from '@/lib/color';
 import {
   heroSlices,
   heroPct,
@@ -111,6 +113,7 @@ export function ThisMonthHero({
 }) {
   const reduce = useReduceMotion();
   const { hideAmounts } = usePrivacy();
+  const { secondary } = useAccent();
   const [displayed, setDisplayed] = useState<HeroContent>({
     incomeMinor,
     spentMinor,
@@ -587,7 +590,7 @@ export function ThisMonthHero({
         </ReanimatedAnimated.View>
       </View>
 
-      <View style={[styles.suu, warn && styles.suuWarn]}>
+      <View style={[styles.suu, { backgroundColor: shade(secondary, 94) }, warn && styles.suuWarn]}>
         <YumeLogo size={24} />
         <Text style={[styles.suuText, warn && styles.suuTextWarn]}>{displayed.suu.text}</Text>
       </View>

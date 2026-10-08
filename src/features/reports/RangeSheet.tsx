@@ -13,6 +13,7 @@ import { customRangeLabel, financialYearOf, financialYearRange } from '@/lib/per
 import type { DateRange } from '@/types';
 import { dayMonthYear } from '@/lib/dateLabels';
 import { withPressed } from '@/lib/pressed';
+import { shade } from '@/lib/color';
 
 const WEEKDAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
@@ -181,7 +182,7 @@ export function RangeSheet({
                 style={withPressed([
                   styles.slot,
                   styles.cell,
-                  inside && { backgroundColor: theme.colors.primaryTint },
+                  inside && { backgroundColor: shade(accent, 95) },
                 ])}
                 disabled={future}
                 onPress={() => tapDay(iso)}

@@ -16,6 +16,7 @@ import { styles } from './loans.styles';
 import { shortMonthYear } from '@/lib/dateLabels';
 import { errorMessage } from '@/lib/errorMessage';
 import { DURATIONS } from '@/lib/motionTimings';
+import { useAccent } from '@/theme/AccentContext';
 
 /**
  * Jurisdiction-specific tax-on-fee conventions offered as a labelled one-tap fill, never a silent default.
@@ -116,6 +117,7 @@ function PrepaymentReveal({
   onDone: () => void;
 }) {
   const reduce = useReduceMotion();
+  const { secondary } = useAccent();
   const [progress] = useState(() => new Animated.Value(reduce ? 1 : 0));
   const [glow] = useState(() => new Animated.Value(0));
 
@@ -145,7 +147,10 @@ function PrepaymentReveal({
 
   return (
     <View>
-      <Animated.View pointerEvents="none" style={[revealStyles.glow, { opacity: glow }]} />
+      <Animated.View
+        pointerEvents="none"
+        style={[revealStyles.glow, { backgroundColor: secondary, opacity: glow }]}
+      />
       <View style={revealStyles.ticks}>
         {Array.from({ length: keptTicks }, (_, i) => (
           <View key={`k${i}`} style={revealStyles.tick} />
@@ -155,8 +160,8 @@ function PrepaymentReveal({
             key={`s${i}`}
             style={[
               revealStyles.tick,
-              revealStyles.tickShaved,
               {
+                backgroundColor: secondary,
                 opacity: progress.interpolate({ inputRange: [0, 1], outputRange: [1, 0] }),
                 transform: [{ scaleY: progress.interpolate({ inputRange: [0, 1], outputRange: [1, 0.2] }) }],
               },
@@ -203,11 +208,9 @@ const revealStyles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: theme.colors.secondary,
   },
   ticks: { flexDirection: 'row', alignItems: 'center', gap: 3, height: 20 },
   tick: { width: 6, height: 14, borderRadius: 2, backgroundColor: theme.colors.borderSoft },
-  tickShaved: { backgroundColor: theme.colors.secondary },
   saved: { fontFamily: theme.font.monoBold, fontSize: 18, color: theme.colors.incomeText, marginTop: 14 },
   sub: {
     fontFamily: theme.font.body,

@@ -12,7 +12,9 @@ let mockHideAmounts = false;
 jest.mock('@/theme/PrivacyContext', () => ({
   usePrivacy: () => ({ hideAmounts: mockHideAmounts, toggleHideAmounts: jest.fn() }),
 }));
-jest.mock('@/theme/AccentContext', () => ({ useAccent: () => ({ dot: '#F0876A', accent: '#A6B4F2' }) }));
+jest.mock('@/theme/AccentContext', () => ({
+  useAccent: () => ({ dot: '#F0876A', accent: '#A6B4F2', secondary: '#8FE8C8' }),
+}));
 // Amounts show their value straight away, without counting up.
 jest.mock('@/components/CountUpAmount', () => {
   const { Text: T } = require('react-native');

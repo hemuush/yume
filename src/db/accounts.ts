@@ -337,9 +337,19 @@ export async function getAccountTransactionCount(accountId: string): Promise<num
  * Hides an account from pickers and totals, keeping its history, like `archiveCategory`. Linked loans'
  * `linked_account_id` keeps working: that FK is SET NULL only on real deletes.
  */
+/**
+ * Archives an account and pauses the recurring entries that post into or out of it: they'd otherwise keep
+ * landing in an account hidden from every total. Unarchiving leaves them paused to resume by hand.
+ */
 export async function archiveAccount(id: string): Promise<void> {
   const db = await getDb();
-  await db.runAsync('UPDATE accounts SET archived = 1 WHERE id = ?', [id]);
+  await db.withTransactionAsync(async (tx) => {
+    await tx.runAsync('UPDATE accounts SET archived = 1 WHERE id = ?', [id]);
+    await tx.runAsync('UPDATE recurring_rules SET active = 0 WHERE account_id = ? OR to_account_id = ?', [
+      id,
+      id,
+    ]);
+  });
 }
 
 export async function unarchiveAccount(id: string): Promise<void> {

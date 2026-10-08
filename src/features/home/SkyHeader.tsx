@@ -63,8 +63,6 @@ export function SkyHeader({
   children?: React.ReactNode;
   showBack?: boolean;
   hideUser?: boolean;
-  /** @deprecated Every title is 22px now; kept so callers needn't change. */
-  compact?: boolean;
   collapse?: CollapsingHeader;
   /** A short line with the screen's key figure, shown beside the title once collapsed. */
   summary?: React.ReactNode;
@@ -196,7 +194,7 @@ export function SkyHeader({
           )}
           <View style={styles.actions}>
             {actions}
-            {!hideUser && <HeaderUserButton soft size={36} />}
+            {!hideUser && <HeaderUserButton size={36} />}
           </View>
         </ReanimatedAnimated.View>
         {(subtitle || children) && (

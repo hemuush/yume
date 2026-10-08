@@ -11,7 +11,7 @@ jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMoc
 jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
 }));
-jest.mock('@/components/AppHeader', () => ({ AppHeader: () => null }));
+jest.mock('@/components/AppHeader', () => ({ HeaderUserButton: () => null }));
 jest.mock('expo-router', () => ({
   router: { push: jest.fn() },
   useFocusEffect: (cb: () => void) => require('react').useEffect(cb, [cb]),

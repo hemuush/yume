@@ -15,14 +15,16 @@ import { MoonPhase } from './MoonPhase';
 import type { StoryAction, StoryCard, StoryTone } from './reportsInsights';
 import { styles } from './reports.styles';
 import { withPressed } from '@/lib/pressed';
+import { shade } from '@/lib/color';
 
-const TONE_BG: Record<StoryTone, string> = {
+// Sky and mint are washes of the picked theme's two colours.
+const toneBg = (accent: string, secondary: string): Record<StoryTone, string> => ({
   coral: theme.colors.idCoral,
-  sky: theme.colors.primaryTint,
+  sky: shade(accent, 95),
   lavender: theme.colors.accentTint,
-  mint: theme.colors.secondaryTint,
+  mint: shade(secondary, 94),
   gold: theme.colors.goldTint,
-};
+});
 
 /** Each card takes this share of the row, so the next one always peeks in. */
 const CARD_SHARE = 0.82;
@@ -41,11 +43,12 @@ export function StoryCards({
   cards: StoryCard[];
   onAction: (action: StoryAction) => void;
 }) {
-  const { accent } = useAccent();
+  const { accent, secondary } = useAccent();
   const [rowWidth, setRowWidth] = useState(0);
   const [active, setActive] = useState(0);
   if (cards.length === 0) return null;
   const cardWidth = Math.round(rowWidth * CARD_SHARE);
+  const tones = toneBg(accent, secondary);
 
   const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     if (cardWidth <= 0) return;
@@ -83,7 +86,7 @@ export function StoryCards({
                 onAction={onAction}
                 style={[
                   c.compact ? styles.storyCompact : styles.story,
-                  { width: cards.length === 1 ? rowWidth : cardWidth, backgroundColor: TONE_BG[c.tone] },
+                  { width: cards.length === 1 ? rowWidth : cardWidth, backgroundColor: tones[c.tone] },
                 ]}
                 accessibilityLabel={`${c.kicker}${c.compact ? '' : `: ${c.big}`}. ${c.detail}${c.foot ? ` ${c.foot}.` : ''}${c.cta ? ` ${c.cta}.` : ''}`}
               >

@@ -13,7 +13,7 @@ jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMoc
 jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
 }));
-jest.mock('@/components/AppHeader', () => ({ AppHeader: () => null, HeaderUserButton: () => null }));
+jest.mock('@/components/AppHeader', () => ({ HeaderUserButton: () => null }));
 /** YYYY-MM-DD, `n` days from today. */
 const mockDay = (n: number) => {
   const { addDaysToIsoDate, toLocalIsoDate } = require('@/lib/date');

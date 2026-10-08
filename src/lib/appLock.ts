@@ -40,8 +40,17 @@ export const RELOCK_AFTER_MS = 60_000;
  * brief "inactive" of notifications), was away >= RELOCK_AFTER_MS, and wasn't in one of its own pickers.
  */
 export function shouldRelock(backgroundedAt: number | null, now: number): boolean {
-  return backgroundedAt !== null && now - backgroundedAt >= RELOCK_AFTER_MS && !isReturningFromOwnActivity();
+  if (backgroundedAt === null) return false;
+  const away = now - backgroundedAt;
+  // A clock moved backwards can't be trusted to measure the gap: lock.
+  if (away < 0) return true;
+  // Even one of its own pickers doesn't keep Yume open forever: a share sheet left open for long still locks.
+  if (away >= OWN_ACTIVITY_MAX_MS) return true;
+  return away >= RELOCK_AFTER_MS && !isReturningFromOwnActivity();
 }
+
+/** The longest a trip through Yume's own picker or share sheet can last before it locks anyway. */
+export const OWN_ACTIVITY_MAX_MS = 5 * 60_000;
 
 /**
  * Shows the phone's biometric prompt, falling back to device PIN/pattern/password (disableDeviceFallback:

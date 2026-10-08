@@ -1,6 +1,8 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, ReactNode } from 'react';
 import { getAppLockEnabled, setAppLockEnabled } from '@/db/settings';
 import { onSettingsRestored } from '@/lib/dataEvents';
+import { showAlert } from '@/components/AppDialog';
+import { errorMessage } from '@/lib/errorMessage';
 
 interface AppLockContextValue {
   lockEnabled: boolean;
@@ -33,7 +35,11 @@ export function AppLockProvider({ children }: { children: ReactNode }) {
 
   const setLockEnabled = useCallback((enabled: boolean) => {
     setLockEnabledState(enabled);
-    void setAppLockEnabled(enabled);
+    // A failed write would leave the switch on while the lock never applies on the next launch: undo and say.
+    Promise.resolve(setAppLockEnabled(enabled)).catch((e) => {
+      setLockEnabledState(!enabled);
+      showAlert("Couldn't change the app lock", errorMessage(e));
+    });
   }, []);
 
   const value = useMemo(() => ({ lockEnabled, setLockEnabled }), [lockEnabled, setLockEnabled]);

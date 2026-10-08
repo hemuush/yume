@@ -12,6 +12,7 @@ import { shade } from '@/lib/color';
 import { goalProgress } from '@/lib/savingsGoalProgress';
 import { usePressScale } from '@/lib/usePressScale';
 import { usePrivacy } from '@/theme/PrivacyContext';
+import { useAccent } from '@/theme/AccentContext';
 import { dayMonthYear } from '@/lib/dateLabels';
 import { toLocalIsoDate } from '@/lib/date';
 import { styles as shared } from './goals.styles';
@@ -37,6 +38,7 @@ export function GoalCard({
   onContribute: () => void;
 }) {
   const { hideAmounts } = usePrivacy();
+  const { secondary } = useAccent();
   const following = goal.tracksAccount && !!goal.linkedAccountId;
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.98);
   const { percent, done } = goalProgress(goal.currentAmountMinor, goal.targetAmountMinor);
@@ -138,7 +140,13 @@ export function GoalCard({
                 </Text>
               )}
               {following && (
-                <View style={[shared.followTag, !monthsLine && styles.followFirst]}>
+                <View
+                  style={[
+                    shared.followTag,
+                    { backgroundColor: shade(secondary, 94) },
+                    !monthsLine && styles.followFirst,
+                  ]}
+                >
                   <Feather name="refresh-cw" size={10} color={theme.colors.textSecondary} />
                   <Text style={shared.followTagText} numberOfLines={1}>
                     Following {accountName ?? 'its account'}

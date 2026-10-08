@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { View } from 'react-native';
 import { Text } from '@/components/Text';
 import { contributeToGoal, markGoalLetterRevealed } from '@/db/savingsGoals';
@@ -42,6 +42,8 @@ export function ContributeModal({
   // Set only when this contribution first pushes the goal to target and a sealed note exists (see submit()).
   // Held locally so the sheet stays open on the reveal instead of the host closing it.
   const [reveal, setReveal] = useState<{ note: string } | null>(null);
+  // One save at a time: two taps can land before `saving` disables the button.
+  const running = useRef(false);
   const showNote = useMilestoneNote();
   const { hideAmounts } = usePrivacy();
 
@@ -76,6 +78,7 @@ export function ContributeModal({
   };
 
   const submit = async () => {
+    if (running.current) return;
     setError(null);
     const amountMinor = toMinor(parseFloat(amount || '0'));
     if (!Number.isFinite(amountMinor) || amountMinor <= 0) {
@@ -87,10 +90,19 @@ export function ContributeModal({
       setError(`You can withdraw up to ${formatMoney(goal.currentAmountMinor)} — that's what's saved so far`);
       return;
     }
+    running.current = true;
     setSaving(true);
+    const deltaMinor = direction === 'add' ? amountMinor : -amountMinor;
     try {
-      const deltaMinor = direction === 'add' ? amountMinor : -amountMinor;
       await contributeToGoal(goal.id, deltaMinor);
+    } catch (e) {
+      setError(errorMessage(e));
+      setSaving(false);
+      running.current = false;
+      return;
+    }
+    // The money is in from here on: a later hiccup must not read as "couldn't save" and invite a second tap.
+    try {
       haptics.tap();
       // Crossing check lives here, not in contributeToGoal: this place already holds the prior amount and
       // the note. `>=` on the new total is deliberate: overshooting in one go still gets the reveal.
@@ -108,10 +120,11 @@ export function ContributeModal({
       if (direction === 'add') {
         await announceMilestone(deltaMinor, hasLetter);
       }
-    } catch (e) {
-      setError(errorMessage(e));
+    } catch {
+      onContributed();
     } finally {
       setSaving(false);
+      running.current = false;
     }
   };
 

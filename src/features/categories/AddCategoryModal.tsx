@@ -15,6 +15,7 @@ import { CATEGORY_ICON_CHOICES } from '@/constants/categories';
 import { styles } from './categories.styles';
 import { errorMessage } from '@/lib/errorMessage';
 import { withPressed } from '@/lib/pressed';
+import { useSaveOnce } from '@/lib/useSaveOnce';
 
 const KINDS: { label: string; value: CategoryKind }[] = [
   { label: 'Expense', value: 'expense' },
@@ -99,6 +100,7 @@ export function AddCategoryModal({
       setSaving(false);
     }
   };
+  const submitOnce = useSaveOnce(submit);
 
   const isSystem = !!category?.isSystem;
 
@@ -117,7 +119,7 @@ export function AddCategoryModal({
           {error && <Text style={styles.errorText}>{error}</Text>}
           <PrimaryButton
             title={saving ? 'Saving…' : category ? 'Save changes' : 'Create category'}
-            onPress={submit}
+            onPress={submitOnce}
             disabled={saving}
           />
         </View>

@@ -107,7 +107,6 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 999,
-    backgroundColor: theme.colors.secondaryTint,
   },
   followTagText: { fontFamily: theme.font.bodyBold, fontSize: 10.5, color: theme.colors.textSecondary },
   letterNote: {

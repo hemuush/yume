@@ -127,14 +127,13 @@ export const styles = StyleSheet.create({
   lineMoney: { fontFamily: theme.font.monoBold, color: theme.colors.textPrimary },
   todayMeter: { width: 84 },
 
-  // Suu's line: the card's mint footer (coral when Suu is worried), with Suu's own mark.
+  // Suu's line: the card's pale-secondary footer, set inline (coral when Suu is worried), with Suu's own mark.
   suu: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
     paddingHorizontal: 20,
     paddingVertical: 12,
-    backgroundColor: theme.colors.secondaryTint,
   },
   suuWarn: { backgroundColor: theme.colors.idCoral },
   suuText: {

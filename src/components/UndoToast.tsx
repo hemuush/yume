@@ -4,19 +4,25 @@ import { Text } from '@/components/Text';
 import ReanimatedAnimated, { FadeInDown, FadeOutDown, ReduceMotion } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme } from '@/constants/theme';
+import { shade } from '@/lib/color';
 import { usePressScale } from '@/lib/usePressScale';
 import { haptics } from '@/lib/haptics';
 import { DURATIONS } from '@/lib/motionTimings';
+import { useAccent } from '@/theme/AccentContext';
+import { showAlert } from '@/components/AppDialog';
+import { errorMessage } from '@/lib/errorMessage';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 interface ToastState {
   key: number;
   message: string;
-  onUndo: () => void;
+  onUndo: () => void | Promise<unknown>;
 }
 
-const UndoToastContext = createContext<{ show: (message: string, onUndo: () => void) => void } | null>(null);
+const UndoToastContext = createContext<{
+  show: (message: string, onUndo: () => void | Promise<unknown>) => void;
+} | null>(null);
 
 // Long enough to read and react to, short enough not to overstay (about the Gmail/Apple Mail
 // undo-send window).
@@ -50,7 +56,7 @@ export function UndoToastProvider({ children }: { children: React.ReactNode }) {
   }, [showNext]);
 
   const show = useCallback(
-    (message: string, onUndo: () => void) => {
+    (message: string, onUndo: () => void | Promise<unknown>) => {
       keyRef.current += 1;
       queue.current.push({ key: keyRef.current, message, onUndo });
       if (!timer.current) {
@@ -88,6 +94,7 @@ function ToastView({
 }) {
   const insets = useSafeAreaInsets();
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.94);
+  const { accent } = useAccent();
 
   // A toast is silent to TalkBack otherwise (it never takes focus); MilestoneNote announces the same way.
   // Each toast mounts its own ToastView (keyed), so this speaks once per toast.
@@ -99,7 +106,8 @@ function ToastView({
     <ReanimatedAnimated.View
       entering={FadeInDown.duration(DURATIONS.slideIn).reduceMotion(ReduceMotion.System)}
       exiting={FadeOutDown.duration(DURATIONS.rowExit).reduceMotion(ReduceMotion.System)}
-      style={[styles.wrap, { bottom: insets.bottom + 16 }]}
+      // Always clear of the tab bar, which most deletes happen above.
+      style={[styles.wrap, { bottom: insets.bottom + theme.layout.tabBar.height + 12 }]}
       pointerEvents="box-none"
     >
       <View style={styles.pill}>
@@ -112,14 +120,20 @@ function ToastView({
         <AnimatedPressable
           onPress={() => {
             haptics.tap();
-            toast.onUndo();
+            // A failed undo must say so: otherwise the entry stays gone while it looks put back.
+            const fail = (e: unknown) => showAlert("Couldn't undo", errorMessage(e));
+            try {
+              void Promise.resolve(toast.onUndo()).catch(fail);
+            } catch (e) {
+              fail(e);
+            }
             onDismiss();
           }}
           onPressIn={onPressIn}
           onPressOut={onPressOut}
-          // The word is ~18dp tall; the slop reaches toward 48dp (the pill itself is ~44dp, which caps it).
-          hitSlop={{ top: 15, bottom: 15, left: 14, right: 14 }}
-          style={animatedStyle}
+          // The word is ~18dp tall; the slop reaches toward 48dp (the pill caps it).
+          hitSlop={{ top: 15, bottom: 15, left: 8, right: 8 }}
+          style={[styles.undoChip, { backgroundColor: shade(accent, 90) }, animatedStyle]}
           accessibilityRole="button"
           accessibilityLabel="Undo"
         >
@@ -138,21 +152,26 @@ export function useUndoToast() {
 
 const styles = StyleSheet.create({
   wrap: { position: 'absolute', left: 20, right: 20, alignItems: 'center' },
+  // A white pill lifted like the StripCards, with Undo on a chip in the theme's colour.
   pill: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 16,
-    backgroundColor: theme.colors.ink,
+    gap: 12,
+    backgroundColor: theme.colors.surface,
     borderRadius: theme.radius.pill,
-    paddingVertical: 13,
-    paddingHorizontal: 18,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.borderSoft,
+    paddingVertical: 8,
+    paddingLeft: 18,
+    paddingRight: 8,
     maxWidth: 420,
-    shadowColor: theme.colors.ink,
+    shadowColor: theme.colors.link,
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.25,
+    shadowOpacity: 0.16,
     shadowRadius: 16,
-    elevation: 10,
+    elevation: 8,
   },
-  message: { flex: 1, fontFamily: theme.font.bodyMedium, fontSize: 13.5, color: theme.colors.surface },
-  undo: { fontFamily: theme.font.bodyBold, fontSize: 13.5, color: theme.colors.primary },
+  message: { flex: 1, fontFamily: theme.font.bodyMedium, fontSize: 13.5, color: theme.colors.textPrimary },
+  undoChip: { borderRadius: theme.radius.pill, paddingHorizontal: 14, paddingVertical: 7 },
+  undo: { fontFamily: theme.font.bodyBold, fontSize: 13.5, color: theme.colors.ink },
 });

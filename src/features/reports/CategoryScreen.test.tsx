@@ -13,7 +13,7 @@ jest.mock('react-native-safe-area-context', () => ({
 }));
 jest.mock('@/features/reports/RangeSheet', () => ({ RangeSheet: () => null }));
 jest.mock('@/components/ActionSheet', () => ({ ActionSheet: () => null }));
-jest.mock('@/components/AppHeader', () => ({ AppHeader: () => null, HeaderUserButton: () => null }));
+jest.mock('@/components/AppHeader', () => ({ HeaderUserButton: () => null }));
 jest.mock('@/features/transactions/TransactionDetailModal', () => ({ TransactionDetailModal: () => null }));
 const mockParams: { current: Record<string, string> } = { current: { id: 'food' } };
 // The stack below this page: Budgets, then this category's page.

@@ -1,6 +1,8 @@
 import { ReactNode, useEffect, useRef, useState } from 'react';
 import { Animated, PanResponder, StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
+import { shade } from '@/lib/color';
+import { useAccent } from '@/theme/AccentContext';
 
 /**
  * A day's line draggable once held (TimelineDay lifts it on long press); lifted, it takes over touch from the
@@ -25,6 +27,7 @@ export function DraggableLine({
   onEnd: () => void;
   children: ReactNode;
 }) {
+  const { accent } = useAccent();
   const latest = useRef({ lifted, dy, onMove, onEnd });
   useEffect(() => {
     latest.current = { lifted, dy, onMove, onEnd };
@@ -50,7 +53,7 @@ export function DraggableLine({
       onTouchCancel={() => latest.current.lifted && latest.current.onEnd()}
       onLayout={(e) => onHeight(e.nativeEvent.layout.height)}
       style={[
-        lifted && styles.lifted,
+        lifted && [styles.lifted, { backgroundColor: shade(accent, 95) }],
         { transform: lifted ? [{ translateY: dy }] : [{ translateY: shift }] },
       ]}
     >
@@ -62,7 +65,6 @@ export function DraggableLine({
 const styles = StyleSheet.create({
   lifted: {
     zIndex: 2,
-    backgroundColor: theme.colors.primaryTint,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,

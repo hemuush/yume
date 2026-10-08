@@ -29,6 +29,12 @@ export const TYPE_WASH: Record<EntryType, { bg: string; accent: string }> = {
   friend: { bg: theme.colors.accentTint, accent: FRIEND_TEXT },
 };
 
+/** TYPE_WASH, with Transfer's sky wash following the picked theme's accent when one is given. */
+export function typeWash(type: EntryType, accent?: string): { bg: string; accent: string } {
+  if (type !== 'transfer' || !accent) return TYPE_WASH[type];
+  return { bg: shade(accent, 95), accent: shade(accent, 45, 8) };
+}
+
 interface StagedTx {
   id: string;
   kind: 'transaction';

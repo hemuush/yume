@@ -19,7 +19,7 @@ const SIZE = 34;
  * Pastel ring = unwatched, plain once seen; with both ready it shows a 2 and asks which to play.
  */
 export function WrapButton({ wraps, onPlay }: { wraps: ReadyWrap[]; onPlay: (wrap: ReadyWrap) => void }) {
-  const { accent } = useAccent();
+  const { accent, secondary } = useAccent();
   const [choosing, setChoosing] = useState(false);
   if (wraps.length === 0) return null;
 
@@ -56,7 +56,7 @@ export function WrapButton({ wraps, onPlay }: { wraps: ReadyWrap[]; onPlay: (wra
       >
         {fresh ? (
           <LinearGradient
-            colors={[accent, theme.colors.secondary, theme.colors.accent, theme.colors.spentSoft]}
+            colors={[accent, secondary, theme.colors.accent, theme.colors.spentSoft]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.ring}

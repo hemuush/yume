@@ -77,7 +77,7 @@ const RECENT_ROWS = 4;
 export default function DashboardScreen() {
   const insets = useSafeAreaInsets();
   const { hideAmounts } = usePrivacy();
-  const { accent } = useAccent();
+  const { accent, secondary } = useAccent();
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [recent, setRecent] = useState<Transaction[]>([]);
@@ -311,6 +311,17 @@ export default function DashboardScreen() {
   // Coming back to Home with nothing changed (no write, same day, same settings) shows what's already here
   // instead of re-running every query.
   const freshness = useFreshness();
+  // Whether Home is on screen: a save made elsewhere is picked up when Home is next focused (the write marks
+  // it stale), so the change event only reloads in place while Home is showing.
+  const focused = useRef(false);
+  useFocusEffect(
+    useCallback(() => {
+      focused.current = true;
+      return () => {
+        focused.current = false;
+      };
+    }, [])
+  );
   useFocusEffect(
     useCallback(() => {
       if (freshness.isFresh([load])) return;
@@ -321,7 +332,13 @@ export default function DashboardScreen() {
     }, [load, freshness])
   );
   // A save that doesn't leave Home (the + long-press sheet) — reload in place.
-  useEffect(() => onTransactionsChanged(() => void load(cursorRef.current)), [load]);
+  useEffect(
+    () =>
+      onTransactionsChanged(() => {
+        if (focused.current) void load(cursorRef.current);
+      }),
+    [load]
+  );
   // A new month or year: just that period's figures.
   useEffect(() => {
     if (fetchedCursor.current !== cursor) void loadPeriod(cursor);
@@ -408,6 +425,7 @@ export default function DashboardScreen() {
     cardBills,
     rules: recurringRules,
     accent,
+    secondary,
     accountName,
     categoryName: (id) => {
       const cat = categoryFor(id);

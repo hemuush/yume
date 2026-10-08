@@ -1,9 +1,8 @@
 import { useCallback, useState } from 'react';
 import { View, Pressable, Animated, StyleSheet } from 'react-native';
 import { Text } from '@/components/Text';
-import { router, useFocusEffect } from 'expo-router';
+import { useFocusEffect } from 'expo-router';
 import Feather from '@expo/vector-icons/Feather';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme } from '@/constants/theme';
 import { useAccent } from '@/theme/AccentContext';
 import { usePrivacy } from '@/theme/PrivacyContext';
@@ -12,54 +11,6 @@ import { getCachedUserName } from '@/db/settings';
 import { useReturnOrPush } from '@/lib/useReturnOrPush';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
-
-interface Props {
-  title: string;
-  /** Shows a back chevron before the title — for pushed screens, not tabs. */
-  showBack?: boolean;
-  /** Screen-specific action (e.g. an AddButton), placed left of the profile button. */
-  right?: React.ReactNode;
-  /**
-   * Hides the profile avatar button (for the Profile screen itself, whose button would point at the
-   * screen already shown).
-   */
-  hideUser?: boolean;
-}
-
-/**
- * The one header every screen uses. The profile button sits in the same place everywhere as a fixed anchor;
- * Settings is reachable only from Profile (a header link to it was circular from Settings itself).
- */
-export function AppHeader({ title, showBack, right, hideUser }: Props) {
-  const insets = useSafeAreaInsets();
-  const { animatedStyle, onPressIn, onPressOut } = usePressScale();
-  return (
-    <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
-      <View style={styles.left}>
-        {showBack && (
-          <AnimatedPressable
-            onPress={() => router.back()}
-            onPressIn={onPressIn}
-            onPressOut={onPressOut}
-            hitSlop={12}
-            style={[styles.backBtn, animatedStyle]}
-            accessibilityRole="button"
-            accessibilityLabel="Back"
-          >
-            <Feather name="chevron-left" size={20} color={theme.colors.ink} />
-          </AnimatedPressable>
-        )}
-        <Text style={styles.title} numberOfLines={1}>
-          {title}
-        </Text>
-      </View>
-      <View style={styles.actions}>
-        {right}
-        {!hideUser && <HeaderUserButton />}
-      </View>
-    </View>
-  );
-}
 
 /**
  * One-tap "hide savings & investment amounts" toggle, sharing state with Settings' row. Not in the base
@@ -78,10 +29,8 @@ export function HeaderPrivacyToggle() {
 
 /** The profile button — an avatar bubble showing the user's initial, accent-filled. */
 export function HeaderUserButton({
-  soft,
   size,
 }: {
-  soft?: boolean;
   /** A larger round button (Home's header); the default is 34. */
   size?: number;
 } = {}) {
@@ -109,7 +58,6 @@ export function HeaderUserButton({
       accessibilityLabel="Your profile"
       style={[
         styles.iconBtn,
-        soft && styles.iconBtnSoft,
         size != null && { width: size, height: size, borderRadius: size / 2 },
         { backgroundColor: accent },
         animatedStyle,
@@ -132,7 +80,6 @@ export function HeaderIconButton({
   label,
   badge,
   count,
-  soft,
   size,
 }: {
   icon: React.ComponentProps<typeof Feather>['name'];
@@ -141,8 +88,6 @@ export function HeaderIconButton({
   badge?: boolean;
   /** A small number in the corner instead of the dot — e.g. how many filters are on. Hidden at 0. */
   count?: number;
-  /** Hairline instead of the 3px ink border — for the softer Home header. */
-  soft?: boolean;
   /** A larger round button (Home's header); the default is 34. */
   size?: number;
 }) {
@@ -157,7 +102,6 @@ export function HeaderIconButton({
       accessibilityLabel={label}
       style={[
         styles.iconBtn,
-        soft && styles.iconBtnSoft,
         size != null && { width: size, height: size, borderRadius: size / 2 },
         { backgroundColor: theme.colors.surface },
         animatedStyle,
@@ -176,28 +120,6 @@ export function HeaderIconButton({
 }
 
 const styles = StyleSheet.create({
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingBottom: 12,
-    gap: 12,
-  },
-  left: { flexDirection: 'row', alignItems: 'center', flex: 1, minWidth: 0 },
-  backBtn: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: theme.colors.surface,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 10,
-  },
-  title: { fontFamily: theme.font.roundedBold, fontSize: 22, color: theme.colors.textPrimary, flexShrink: 1 },
-  actions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   iconBtn: {
     width: 34,
     height: 34,
@@ -207,8 +129,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  // Kept as an alias — the base button is already soft now.
-  iconBtnSoft: { borderWidth: StyleSheet.hairlineWidth, borderColor: theme.colors.borderSoft },
   initial: { fontFamily: theme.font.bodyBold, fontSize: 14 },
   initialLarge: { fontFamily: theme.font.bodyBold, fontSize: 15 },
   countBadge: {

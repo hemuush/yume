@@ -52,6 +52,7 @@ const ACCOUNT_TYPE_LABEL: Record<Account['type'], string> = {
  * accounts grouped by type. Budgets, goals, recurring, What-if and Garden live on Plan (one row points there).
  */
 export function YouSection() {
+  const { secondary } = useAccent();
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [archivedAccounts, setArchivedAccounts] = useState<Account[]>([]);
   const [archivedOpen, setArchivedOpen] = useState(false);
@@ -280,7 +281,7 @@ export function YouSection() {
         accessibilityRole="button"
         accessibilityLabel="Budgets, goals and recurring are in Plan"
       >
-        <View style={[styles.planLinkIcon, { backgroundColor: theme.colors.secondary }]}>
+        <View style={[styles.planLinkIcon, { backgroundColor: secondary }]}>
           <MaterialCommunityIcons name="view-grid-outline" size={16} color={theme.colors.ink} />
         </View>
         <Text style={styles.planLinkText}>Budgets, goals &amp; recurring are in Plan</Text>

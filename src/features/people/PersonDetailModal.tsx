@@ -36,6 +36,7 @@ import { styles } from './people.styles';
 import { errorMessage } from '@/lib/errorMessage';
 import { withPressed } from '@/lib/pressed';
 import { showAlert } from '@/components/AppDialog';
+import { useAccent } from '@/theme/AccentContext';
 
 /** One person: their live balance, linked loans, a form to record money either way, and history. */
 export function PersonDetailModal({
@@ -48,6 +49,7 @@ export function PersonDetailModal({
   onChanged: () => void;
 }) {
   const { show: showUndo } = useUndoToast();
+  const { accent } = useAccent();
   const [ledger, setLedger] = useState<PersonLedgerEntry[]>([]);
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -249,7 +251,7 @@ export function PersonDetailModal({
             ? theme.colors.secondary
             : liveBalanceMinor < 0
               ? theme.colors.idCoralDeep
-              : theme.colors.primary
+              : accent
         }
         icon="account-outline"
         kicker={liveBalanceMinor > 0 ? 'Owes you' : liveBalanceMinor < 0 ? 'You owe' : 'All square'}

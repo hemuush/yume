@@ -5,7 +5,7 @@ import { Category, RecurringRule } from '@/types';
 import { ToggleSwitch } from '@/components/ToggleSwitch';
 import { CategoryIcon } from '@/components/CategoryIcon';
 import { formatMaskableMoney } from '@/lib/money';
-import { theme } from '@/constants/theme';
+import { useAccent } from '@/theme/AccentContext';
 import { styles } from './recurring.styles';
 import { ruleCadenceLabel } from './recurring.helpers';
 import { MAX_LIST_STAGGER_MS, MOTION, ROW_LAYOUT, ROW_EXIT } from '@/lib/animation';
@@ -41,6 +41,7 @@ export function RuleRow({
   /** A savings or investment rule while those amounts are hidden. */
   masked?: boolean;
 }) {
+  const { secondary } = useAccent();
   const transfer = rule.type === 'transfer';
   const name = transfer
     ? `${accountName(rule.accountId)} → ${rule.toAccountId ? accountName(rule.toAccountId) : '—'}`
@@ -60,7 +61,7 @@ export function RuleRow({
       <Pressable style={withPressed(styles.ruleMain)} onPress={onPress} accessibilityRole="button">
         <CategoryIcon
           name={transfer ? 'swap-horizontal' : (category?.icon ?? 'repeat')}
-          color={transfer ? theme.colors.secondary : category?.color}
+          color={transfer ? secondary : category?.color}
         />
         <View style={{ flex: 1 }}>
           <Text style={styles.rowTitle} numberOfLines={1}>

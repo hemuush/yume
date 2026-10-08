@@ -73,7 +73,7 @@ export default function SavingsGoalsScreen() {
   if (!loaded && !loadError) {
     return (
       <View style={styles.container}>
-        <SkyHeader title="Savings goals" showBack hideUser compact />
+        <SkyHeader title="Savings goals" showBack hideUser />
         <View style={{ paddingTop: 24 }}>
           {[0, 1].map((i) => (
             <View key={i} style={styles.card}>
@@ -152,7 +152,6 @@ export default function SavingsGoalsScreen() {
         title="Savings goals"
         showBack
         hideUser
-        compact
         actions={
           <>
             <HeaderIconButton

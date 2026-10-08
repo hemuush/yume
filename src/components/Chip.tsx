@@ -3,6 +3,8 @@ import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
 import { usePressScale } from '@/lib/usePressScale';
 import { softTint } from '@/components/softTint';
+import { useAccent } from '@/theme/AccentContext';
+import { shade } from '@/lib/color';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -21,11 +23,12 @@ interface Props {
 export function Chip({ label, active, onPress, activeBorderColor }: Props) {
   const tinted = active && activeBorderColor;
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.94);
+  const { accent, secondary } = useAccent();
   return (
     <AnimatedPressable
       style={[
         styles.chip,
-        active && !tinted && styles.chipActive,
+        active && !tinted && { backgroundColor: shade(accent, 95), borderColor: secondary },
         tinted && { backgroundColor: softTint(activeBorderColor, 0.1), borderColor: activeBorderColor },
         animatedStyle,
       ]}
@@ -52,10 +55,6 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
     backgroundColor: theme.colors.surface,
-  },
-  chipActive: {
-    backgroundColor: theme.colors.primaryTint,
-    borderColor: theme.colors.secondary,
   },
   text: { fontSize: 12.5, color: theme.colors.textSecondary, fontFamily: theme.font.roundedMedium },
   textActive: { color: theme.colors.textPrimary, fontFamily: theme.font.roundedBold },

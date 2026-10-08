@@ -8,6 +8,7 @@ import { Amount } from '@/components/Amount';
 import { dayLabel } from '@/lib/date';
 import { categoryPath, inParent, joinSub } from '@/lib/categoryLabel';
 import { screenStyles as h } from '@/components/screenStyles';
+import { useAccent } from '@/theme/AccentContext';
 
 /**
  * One recent-activity row: merchant/note leads, "category · account · day" beneath, amount right.
@@ -35,6 +36,7 @@ export function RecentTransactionRow({
   /** Off when the rows sit under a day heading (Home), so the day isn't said twice. */
   showDay?: boolean;
 }) {
+  const { secondary } = useAccent();
   const isTransfer = tx.type === 'transfer';
   const note = tx.note?.trim();
   const title = isTransfer ? 'Transfer' : note || category?.name || tx.type;
@@ -53,7 +55,7 @@ export function RecentTransactionRow({
       <JustAddedGlow ids={[tx.id]} surface="home" />
       <CategoryIcon
         name={isTransfer ? 'swap-horizontal' : (category?.icon ?? 'tag')}
-        color={isTransfer ? theme.colors.secondary : (category?.color ?? theme.colors.textMuted)}
+        color={isTransfer ? secondary : (category?.color ?? theme.colors.textMuted)}
         round
       />
       <View style={styles.mid}>

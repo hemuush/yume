@@ -12,6 +12,7 @@ import { withPressed } from '@/lib/pressed';
 import { MIN_TREND_POINTS } from './TrendChart';
 import { cashFlowReadLine, keptOf, keptSummary } from './reportsInsights';
 import { styles } from './reports.styles';
+import { useAccent } from '@/theme/AccentContext';
 
 const BAR_MAX = 100;
 /** Past this many months the amount under each bar no longer fits; the sentence still reads the picked one. */
@@ -74,6 +75,7 @@ export function CashFlowCard({
 }) {
   const [sel, setSel] = useState<number | null>(null);
   const { fontScale } = useWindowDimensions();
+  const { accent } = useAccent();
   if (points.length < MIN_TREND_POINTS || !points.some((p) => p.incomeMinor > 0)) return null;
 
   const lastI = points.length - 1;
@@ -100,7 +102,7 @@ export function CashFlowCard({
           <Text style={styles.trendTitle}>Money in and out</Text>
           <View style={styles.flowLegend}>
             <View style={styles.flowLegendItem}>
-              <View style={[styles.flowLegendDot, { backgroundColor: theme.colors.primary }]} />
+              <View style={[styles.flowLegendDot, { backgroundColor: accent }]} />
               <Text style={styles.flowLegendText}>In</Text>
             </View>
             <View style={styles.flowLegendItem}>
@@ -129,7 +131,7 @@ export function CashFlowCard({
                     animKey={`flow:${p.label}:${i}:in`}
                     heightPx={height(p.incomeMinor)}
                     index={i}
-                    color={theme.colors.primary}
+                    color={accent}
                     narrow={narrow}
                     live={false}
                   />

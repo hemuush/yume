@@ -5,6 +5,8 @@ import { theme } from '@/constants/theme';
 import { usePressScale } from '@/lib/usePressScale';
 import { haptics } from '@/lib/haptics';
 import { PadKey } from '@/lib/padMath';
+import { shade } from '@/lib/color';
+import { useAccent } from '@/theme/AccentContext';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -69,9 +71,16 @@ export function PadButton({
 }) {
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.94);
   const operator = padKey === '÷' || padKey === '×' || padKey === '−' || padKey === '+';
+  // The sum keys sit on a pale theme tint, so they stand apart from the digits.
+  const { accent } = useAccent();
   return (
     <AnimatedPressable
-      style={[styles.key, compact && styles.keyCompact, operator && styles.keyOperator, animatedStyle]}
+      style={[
+        styles.key,
+        compact && styles.keyCompact,
+        operator && { backgroundColor: shade(accent, 95) },
+        animatedStyle,
+      ]}
       onPress={() => {
         haptics.tap();
         onPress();
@@ -116,8 +125,6 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
   },
-  // Sky, so the sum keys stand apart from the digits.
-  keyOperator: { backgroundColor: theme.colors.primaryTint },
   keyText: { fontFamily: theme.font.monoBold, fontSize: 18, color: theme.colors.textPrimary },
   keyOperatorText: { fontFamily: theme.font.monoBold, fontSize: 19, color: theme.colors.link },
 });
