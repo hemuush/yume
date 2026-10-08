@@ -1,5 +1,15 @@
-import { useEffect, useRef, useState } from 'react';
-import { Animated, Easing, StyleSheet, useWindowDimensions } from 'react-native';
+import { useEffect, useState } from 'react';
+import { StyleSheet, useWindowDimensions } from 'react-native';
+import ReanimatedAnimated, {
+  Easing,
+  interpolate,
+  interpolateColor,
+  runOnJS,
+  useAnimatedStyle,
+  useSharedValue,
+  withDelay,
+  withTiming,
+} from 'react-native-reanimated';
 import { theme } from '@/constants/theme';
 import { GrowRect, subscribeCardGrow } from '@/lib/cardGrow';
 import { useReduceMotion } from '@/lib/useReduceMotion';
@@ -12,64 +22,58 @@ const FADE_MS = 180;
  * Mounted once above the Stack. A card that opens a full page registers its rect (see `useCardGrow`); this
  * paints a page-coloured panel that grows from that rect to the whole screen while the new screen fades in
  * beneath, then fades away. Expo Router has no Android shared-element transition, so this stands in for one.
- * It never takes touches and does nothing with reduce motion on.
+ * It never takes touches and does nothing with reduce motion on. Every value runs on the UI thread, so the
+ * grow stays smooth while the new screen mounts on the JS thread.
  */
 export function CardGrowHost() {
   const { width, height } = useWindowDimensions();
   const reduce = useReduceMotion();
-  const [rect, setRect] = useState<GrowRect | null>(null);
-  const [grow] = useState(() => new Animated.Value(0));
-  const [fade] = useState(() => new Animated.Value(1));
-  const run = useRef<Animated.CompositeAnimation | null>(null);
+  const [active, setActive] = useState(false);
+  const grow = useSharedValue(0);
+  const fade = useSharedValue(1);
+  const fromX = useSharedValue(0);
+  const fromY = useSharedValue(0);
+  const fromW = useSharedValue(0);
+  const fromH = useSharedValue(0);
 
   useEffect(() => {
     if (reduce) return;
-    return subscribeCardGrow((next) => {
-      run.current?.stop();
-      grow.setValue(0);
-      fade.setValue(1);
-      setRect(next);
-      run.current = Animated.sequence([
-        Animated.timing(grow, {
-          toValue: 1,
-          duration: GROW_MS,
-          easing: Easing.out(Easing.cubic),
-          useNativeDriver: false,
-        }),
-        Animated.delay(SETTLE_MS),
-        Animated.timing(fade, { toValue: 0, duration: FADE_MS, useNativeDriver: false }),
-      ]);
-      run.current.start(({ finished }) => {
-        if (finished) setRect(null);
-      });
+    return subscribeCardGrow((next: GrowRect) => {
+      fromX.set(next.x);
+      fromY.set(next.y);
+      fromW.set(next.width);
+      fromH.set(next.height);
+      grow.set(0);
+      fade.set(1);
+      setActive(true);
+      grow.set(withTiming(1, { duration: GROW_MS, easing: Easing.out(Easing.cubic) }));
+      fade.set(
+        withDelay(
+          GROW_MS + SETTLE_MS,
+          withTiming(0, { duration: FADE_MS }, (finished) => {
+            if (finished) runOnJS(setActive)(false);
+          })
+        )
+      );
     });
-  }, [reduce, grow, fade]);
+  }, [reduce, grow, fade, fromX, fromY, fromW, fromH]);
 
-  useEffect(() => () => run.current?.stop(), []);
+  const panelStyle = useAnimatedStyle(() => ({
+    left: interpolate(grow.get(), [0, 1], [fromX.get(), 0]),
+    top: interpolate(grow.get(), [0, 1], [fromY.get(), 0]),
+    width: interpolate(grow.get(), [0, 1], [fromW.get(), width]),
+    height: interpolate(grow.get(), [0, 1], [fromH.get(), height]),
+    borderRadius: interpolate(grow.get(), [0, 1], [theme.radius.xl, 0]),
+    backgroundColor: interpolateColor(grow.get(), [0, 1], [theme.colors.surface, theme.colors.background]),
+    opacity: fade.get(),
+  }));
 
-  if (!rect) return null;
-  const lerp = (from: number, to: number) =>
-    grow.interpolate({ inputRange: [0, 1], outputRange: [from, to] });
-
+  if (!active) return null;
   return (
-    <Animated.View
+    <ReanimatedAnimated.View
       pointerEvents="none"
       importantForAccessibility="no-hide-descendants"
-      style={[
-        styles.panel,
-        {
-          left: lerp(rect.x, 0),
-          top: lerp(rect.y, 0),
-          width: lerp(rect.width, width),
-          height: lerp(rect.height, height),
-          borderRadius: lerp(theme.radius.xl, 0),
-          backgroundColor: grow.interpolate({
-            inputRange: [0, 1],
-            outputRange: [theme.colors.surface, theme.colors.background],
-          }),
-          opacity: fade,
-        },
-      ]}
+      style={[styles.panel, panelStyle]}
     />
   );
 }

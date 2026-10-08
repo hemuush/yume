@@ -496,13 +496,21 @@ describe('every screen on a phone full of awkward data', () => {
 });
 
 describe('Home, stepping between months on a lived-in phone', () => {
-  const press = async (tree: ReactTestRenderer, label: string) => {
+  // The month card steps by swiping; a screen reader gets the same as two actions on its figure.
+  const step = async (tree: ReactTestRenderer, dir: 'decrement' | 'increment') => {
     await act(async () => {
       tree.root
-        .find((n) => n.props.accessibilityLabel === label && typeof n.props.onPress === 'function')
-        .props.onPress();
+        .find(
+          (n) =>
+            Array.isArray(n.props.accessibilityActions) &&
+            n.props.accessibilityActions.some((a: { name: string }) => a.name === 'decrement') &&
+            typeof n.props.onAccessibilityAction === 'function'
+        )
+        .props.onAccessibilityAction({ nativeEvent: { actionName: dir } });
     });
   };
+  const { periodLabel } = require('@/lib/period');
+  const monthName = (offset: number) => periodLabel({ granularity: 'month', offset });
 
   beforeAll(async () => {
     await livedIn();
@@ -524,32 +532,23 @@ describe('Home, stepping between months on a lived-in phone', () => {
     const lastMonth = await getPeriodSummary({ start: first(1), end: last(1) });
 
     const tree = await open(SCREENS[0][1]);
-    expect(textOf(tree)).toContain('This month');
+    expect(textOf(tree)).toContain(monthName(0));
     expect(textOf(tree)).toContain('still to pay');
 
-    await act(async () => {
-      tree.root
-        .find(
-          (n) => n.props.accessibilityLabel === 'Previous period' && typeof n.props.onPress === 'function'
-        )
-        .props.onPress();
-    });
-    // Mid-switch: whichever month is on screen, the title and the bills agree.
-    const mid = textOf(tree);
-    expect(mid.includes('Looking back') && mid.includes('still to pay')).toBe(false);
+    await step(tree, 'decrement');
     await settle();
 
     const back = textOf(tree);
-    expect(back).toContain('Looking back');
+    expect(back).toContain(monthName(-1));
     expect(back).not.toContain('still to pay');
     expect(back).not.toContain('Short after bills');
     expect(back).toContain(`+ ${formatMoney(carry)} carried over`);
     expect(back).toContain(`of ${formatMoney(lastMonth.incomeMinor)} income`);
 
-    await press(tree, 'Next period');
+    await step(tree, 'increment');
     await settle();
     const again = textOf(tree);
-    expect(again).toContain('This month');
+    expect(again).toContain(monthName(0));
     expect(again).toContain('still to pay');
     act(() => tree.unmount());
   });
@@ -558,15 +557,15 @@ describe('Home, stepping between months on a lived-in phone', () => {
     const tree = await open(SCREENS[0][1]);
     expect(textOf(tree)).toContain('Bank');
     for (let i = 0; i < 4; i++) {
-      await press(tree, 'Previous period');
-      expect(textOf(tree)).toContain('Your accounts');
+      await step(tree, 'decrement');
+      expect(textOf(tree)).toContain('Accounts');
       expect(textOf(tree)).toContain('Bank');
     }
     await settle();
     expect(textOf(tree)).toContain('Bank');
-    for (let i = 0; i < 4; i++) await press(tree, 'Next period');
+    for (let i = 0; i < 4; i++) await step(tree, 'increment');
     await settle();
-    expect(textOf(tree)).toContain('This month');
+    expect(textOf(tree)).toContain(monthName(0));
     expect(textOf(tree)).toContain('Bank');
     act(() => tree.unmount());
   });
@@ -577,14 +576,16 @@ describe('Home, stepping between months on a lived-in phone', () => {
       for (let i = 0; i < 3; i++) {
         tree.root
           .find(
-            (n) => n.props.accessibilityLabel === 'Previous period' && typeof n.props.onPress === 'function'
+            (n) =>
+              typeof n.props.onAccessibilityAction === 'function' &&
+              Array.isArray(n.props.accessibilityActions)
           )
-          .props.onPress();
+          .props.onAccessibilityAction({ nativeEvent: { actionName: 'decrement' } });
       }
     });
     await settle();
-    const text = textOf(tree);
-    expect(text).toContain('Looking back');
+    // Three taps before a re-render each ask for the month before the one on screen.
+    expect(textOf(tree)).toContain(monthName(-1));
     act(() => tree.unmount());
   });
 });

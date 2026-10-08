@@ -122,7 +122,8 @@ export const theme = {
   // Tab bar metrics shared with screens that scroll clear of it. A tab screen needs `tabScreenScrollPad`
   // bottom padding (bar height + margin), a pushed screen `screenScrollPad`; callers add `insets.bottom`.
   layout: {
-    tabBar: { height: 64, topRadius: 20 },
+    // The floating pill tab bar (PillTabBar): its 60 height plus the 10 gap under it.
+    tabBar: { height: 70, topRadius: 20 },
     tabScreenScrollPad: 64 + 24,
     screenScrollPad: 40,
     // Between a screen's header (which already leaves 12 below its title) and
@@ -130,6 +131,8 @@ export const theme = {
     screenTopGap: 8,
   },
   font: {
+    // Light, for Home's big glass-card figures only.
+    bodyLight: 'Archivo_300Light',
     body: 'Archivo_400Regular',
     bodyMedium: 'Archivo_600SemiBold',
     bodyBold: 'Archivo_700Bold',
