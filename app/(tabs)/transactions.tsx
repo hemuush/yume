@@ -15,7 +15,7 @@ import { SkyHeader } from '@/features/home/SkyHeader';
 import { useCollapsingHeader } from '@/lib/useCollapsingHeader';
 import { theme } from '@/constants/theme';
 import { useTabScrollPad } from '@/lib/uiScale';
-import { toLocalIsoDate, parseLocalIsoDate, addDaysToIsoDate } from '@/lib/date';
+import { toLocalIsoDate, addDaysToIsoDate } from '@/lib/date';
 import { MAX_LIST_STAGGER_MS } from '@/lib/animation';
 import { useSwipeDrag } from '@/lib/useSwipeDrag';
 import { usePressScale } from '@/lib/usePressScale';
@@ -28,7 +28,7 @@ import { TimelineDay } from '@/features/transactions/TimelineDay';
 import { TransactionDetailModal } from '@/features/transactions/TransactionDetailModal';
 import { TransactionsHeadline } from '@/features/transactions/TransactionsHeadline';
 import { TransactionsSkeleton } from '@/features/transactions/TransactionsSkeleton';
-import { WeekRail } from '@/features/transactions/WeekRail';
+import { HomeWallpaper } from '@/features/home/HomeWallpaper';
 import { buildWeekSpendBars, buildWeeklySpendBars, legendForBars } from '@/features/transactions/spendChart';
 import {
   weekContaining,
@@ -43,7 +43,7 @@ import { savingsAccountIdsOf } from '@/lib/account';
 import { privateComparison } from '@/lib/privateSummary';
 import { usePrivacy } from '@/theme/PrivacyContext';
 import { useAccent } from '@/theme/AccentContext';
-import { shade } from '@/lib/color';
+import { homeInk } from '@/features/home/homeInk';
 import { haptics } from '@/lib/haptics';
 import { errorMessage } from '@/lib/errorMessage';
 import { DURATIONS } from '@/lib/motionTimings';
@@ -67,8 +67,8 @@ export default function TransactionsScreen() {
   const insets = useSafeAreaInsets();
   const tabScrollPad = useTabScrollPad();
   const { hideAmounts } = usePrivacy();
-  const { accent } = useAccent();
-  const navTint = shade(accent, 95);
+  const { accent, secondary } = useAccent();
+  const ink = homeInk(accent);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -437,7 +437,8 @@ export default function TransactionsScreen() {
   if (!comparison && !loadError && !comparisonFailed) {
     return (
       <View style={styles.container}>
-        <SkyHeader title="Activity" subtitle={SUBTITLE} />
+        <HomeWallpaper accent={accent} secondary={secondary} />
+        <SkyHeader title="Activity" subtitle={SUBTITLE} wallpaper />
         <TransactionsSkeleton />
       </View>
     );
@@ -466,6 +467,7 @@ export default function TransactionsScreen() {
 
   return (
     <View style={styles.container}>
+      <HomeWallpaper accent={accent} secondary={secondary} />
       <MonthPickerModal
         visible={monthPickerVisible}
         anchor={anchor}
@@ -540,7 +542,6 @@ export default function TransactionsScreen() {
                     expenseChangeMinor={expenseChangeMinor}
                     viewScope={viewScope}
                     compareLabel={viewScope === 'week' ? weekCompareLabel(week, today) : undefined}
-                    onChangeViewScope={onChangeViewScope}
                     bars={bars}
                     legend={legend}
                     onPressDay={onPressBar}
@@ -616,6 +617,7 @@ export default function TransactionsScreen() {
         title="Activity"
         subtitle={SUBTITLE}
         collapse={collapse}
+        wallpaper
         collapsedAccessory={
           searching ? undefined : (
             <Pressable
@@ -636,6 +638,7 @@ export default function TransactionsScreen() {
             <HeaderIconButton
               icon="search"
               size={40}
+              glass
               onPress={searching ? closeSearch : openSearch}
               label={searching ? 'Close search' : 'Search transactions'}
             />
@@ -643,6 +646,7 @@ export default function TransactionsScreen() {
               <HeaderIconButton
                 icon="sliders"
                 size={40}
+                glass
                 onPress={() => setFilterVisible(true)}
                 label={filterCount > 0 ? `Filters, ${filterCount} on` : 'Filters'}
                 count={filterCount}
@@ -671,20 +675,23 @@ export default function TransactionsScreen() {
             </Pressable>
           </View>
         ) : (
-          // ‹ This week › in a white pill, the week rail under it. Dragging either (or the Spent card below)
-          // steps the period, same as the chevrons.
-          <ReanimatedAnimated.View style={periodSwipe.dragStyle} {...periodSwipe.panHandlers}>
-            <View style={styles.periodRow}>
+          // ‹ This week › in a frosted pill, Week | Month beside it. Dragging the pill (or the Spent card
+          // below) steps the period, same as the chevrons.
+          <View style={styles.periodBar}>
+            <ReanimatedAnimated.View
+              style={[styles.periodRow, periodSwipe.dragStyle]}
+              {...periodSwipe.panHandlers}
+            >
               <AnimatedPressable
                 onPress={stepBack}
                 onPressIn={stepBackPress.onPressIn}
                 onPressOut={stepBackPress.onPressOut}
                 hitSlop={6}
-                style={[styles.periodNav, { backgroundColor: navTint }, stepBackPress.animatedStyle]}
+                style={[styles.periodNav, stepBackPress.animatedStyle]}
                 accessibilityRole="button"
                 accessibilityLabel={viewScope === 'month' ? 'Previous month' : 'Previous week'}
               >
-                <Feather name="chevron-left" size={18} color={theme.colors.textPrimary} />
+                <Feather name="chevron-left" size={16} color={theme.colors.textPrimary} />
               </AnimatedPressable>
               <Pressable
                 onPress={() => setMonthPickerVisible(true)}
@@ -708,31 +715,32 @@ export default function TransactionsScreen() {
                 onPressOut={stepForwardPress.onPressOut}
                 hitSlop={6}
                 disabled={atCurrent}
-                style={[
-                  styles.periodNav,
-                  { backgroundColor: navTint },
-                  atCurrent && styles.periodNavOff,
-                  stepForwardPress.animatedStyle,
-                ]}
+                style={[styles.periodNav, atCurrent && styles.periodNavOff, stepForwardPress.animatedStyle]}
                 accessibilityRole="button"
                 accessibilityLabel={viewScope === 'month' ? 'Next month' : 'Next week'}
                 accessibilityState={{ disabled: atCurrent }}
               >
-                <Feather name="chevron-right" size={18} color={theme.colors.textPrimary} />
+                <Feather name="chevron-right" size={16} color={theme.colors.textPrimary} />
               </AnimatedPressable>
+            </ReanimatedAnimated.View>
+            <View style={styles.scopeSwitch} accessibilityRole="radiogroup">
+              {VIEW_SCOPES.map((o) => {
+                const on = viewScope === o.value;
+                return (
+                  <Pressable
+                    key={o.value}
+                    onPress={() => onChangeViewScope(o.value)}
+                    hitSlop={4}
+                    style={withPressed([styles.scopeBtn, on && { backgroundColor: ink }])}
+                    accessibilityRole="radio"
+                    accessibilityState={{ selected: on }}
+                  >
+                    <Text style={[styles.scopeText, on && styles.scopeTextOn]}>{o.label}</Text>
+                  </Pressable>
+                );
+              })}
             </View>
-            {viewScope === 'week' && (
-              <WeekRail
-                week={week}
-                todayIso={today}
-                onPickWeek={(start) => {
-                  haptics.tap();
-                  setDirection(start < week.start ? -1 : 1);
-                  setAnchor(parseLocalIsoDate(start));
-                }}
-              />
-            )}
-          </ReanimatedAnimated.View>
+          </View>
         )}
       </SkyHeader>
 
@@ -756,3 +764,8 @@ export default function TransactionsScreen() {
 }
 
 const SUBTITLE = 'Every entry, day by day';
+
+const VIEW_SCOPES: { label: string; value: 'week' | 'month' }[] = [
+  { label: 'Week', value: 'week' },
+  { label: 'Month', value: 'month' },
+];

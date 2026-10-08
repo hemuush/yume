@@ -162,6 +162,7 @@ export function HomeHeader({
               label={alertCount > 0 ? `Needs you, ${alertCount}` : 'Needs you'}
               count={alertCount}
               size={40}
+              glass
             />
             {onPlayWrap && <WrapButton wraps={wraps} onPlay={onPlayWrap} />}
             <HeaderUserButton size={40} />

@@ -84,3 +84,34 @@ describe('Activity when the totals query fails', () => {
     expect(shown).not.toContain("Couldn't load this period's totals");
   });
 });
+
+describe('Activity period controls', () => {
+  it('switches Week to Month from beside the period pill', async () => {
+    mockComparison.fail = false;
+    const tree = await render();
+    expect(texts(tree)).toContain('This week');
+    const month = tree.root.find(
+      (n) =>
+        n.props.accessibilityRole === 'radio' &&
+        typeof n.props.onPress === 'function' &&
+        n.findAllByType(Text).some((t) => t.props.children === 'Month')
+    );
+    await act(async () => month.props.onPress());
+    // Let the month's load settle inside the test.
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    const radios = tree.root.findAll(
+      (n) => n.props.accessibilityRole === 'radio' && typeof n.props.onPress === 'function'
+    );
+    // A pressable shows up once per layer it renders through; what matters is which labels are selected.
+    const selected = new Set(
+      radios
+        .filter((n) => n.props.accessibilityState?.selected)
+        .flatMap((n) => n.findAllByType(Text).map((t) => t.props.children))
+    );
+    // The type filter (All · Spent · …) is a radio group too; only the period switch is checked here.
+    expect([...selected].filter((l) => l === 'Week' || l === 'Month')).toEqual(['Month']);
+    expect(texts(tree)).toContain('Nothing logged this month');
+  });
+});

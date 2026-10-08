@@ -19,6 +19,7 @@ import { withPressed } from '@/lib/pressed';
 import { useReduceMotion } from '@/lib/useReduceMotion';
 import type { CollapsingHeader } from '@/lib/useCollapsingHeader';
 import { SkyBackdrop } from './SkyBackdrop';
+import { wallpaperTop } from './HomeWallpaper';
 
 /** The title row's height; the band keeps just this row (plus BAR_PAD) once collapsed. */
 const ROW = 40;
@@ -47,6 +48,7 @@ export function SkyHeader({
   collapse,
   summary,
   collapsedAccessory,
+  wallpaper = false,
 }: {
   title: string;
   subtitle?: string;
@@ -59,6 +61,8 @@ export function SkyHeader({
   summary?: React.ReactNode;
   /** A control shown in the title row once collapsed (it stands in for `children`). */
   collapsedAccessory?: React.ReactNode;
+  /** The screen has Home's wallpaper behind it: no wash, and the collapsed bar takes the wallpaper's top. */
+  wallpaper?: boolean;
 }) {
   const { accent } = useAccent();
   const insets = useSafeAreaInsets();
@@ -128,6 +132,8 @@ export function SkyHeader({
         scrollY={scrollY}
         distance={distance}
         collapsedHeight={top + ROW + BAR_PAD}
+        wash={!wallpaper}
+        barColor={wallpaper ? wallpaperTop(accent) : undefined}
       />
       <View style={[styles.band, { paddingTop: top }]}>
         <ReanimatedAnimated.View style={[styles.titleRow, rowStyle]}>
