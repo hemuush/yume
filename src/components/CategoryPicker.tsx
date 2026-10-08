@@ -111,7 +111,7 @@ export function CategoryPicker({
         </View>
         {expandedChildren.length > 0 && (
           <View style={styles.subGroup}>
-            <Text style={styles.subGroupLabel}>{expandedParent?.name} —</Text>
+            <Text style={styles.subGroupLabel}>{expandedParent?.name} ›</Text>
             <View style={styles.chipRow}>
               {expandedChildren.map((cat) => (
                 <Chip
@@ -277,7 +277,7 @@ function MedalTile({
       {/* The fade sits on the contents, not the pressable: the press animation drives the pressable's own opacity. */}
       <View style={[styles.medalBody, dimmed && styles.medalDimmed]}>
         <View style={[styles.medalRing, sub && styles.medalRingSub, active && styles.medalRingActive]}>
-          <CategoryIcon name={icon} color={color} size={sub ? 16 : 20} square={sub ? 38 : 48} />
+          <CategoryIcon name={icon} color={color} size={sub ? 16 : 20} square={sub ? 38 : 48} round />
         </View>
         <Text style={styles.medalName} numberOfLines={2}>
           {name}
@@ -300,14 +300,14 @@ const styles = StyleSheet.create({
   medalDimmed: { opacity: 0.35 },
   medalItem: { width: 64, alignItems: 'center' },
   medalItemSub: { width: 56, alignItems: 'center' },
-  medalRing: { borderRadius: 16, borderWidth: 2, borderColor: 'transparent', padding: 2 },
-  // One consistent "selected" ring across the picker (sky), instead of each
+  medalRing: { borderRadius: 30, borderWidth: 2, borderColor: 'transparent', padding: 2 },
+  // One consistent "selected" ring across the picker (ink), instead of each
   // tile lighting up in its own category colour.
-  medalRingActive: { borderColor: theme.colors.slice.free },
+  medalRingActive: { borderColor: theme.colors.ink },
   medalRingSub: { opacity: 0.88 },
   medalName: {
-    fontFamily: theme.font.rounded,
-    fontSize: 10.5,
+    fontFamily: theme.font.bodyMedium,
+    fontSize: 11,
     lineHeight: 13,
     color: theme.colors.textSecondary,
     marginTop: 5,
@@ -327,9 +327,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     paddingHorizontal: 12,
     borderRadius: theme.radius.pill,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-    backgroundColor: theme.colors.surface,
+    backgroundColor: 'rgba(18,19,15,0.05)',
   },
   searchInput: {
     flex: 1,
