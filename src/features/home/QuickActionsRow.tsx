@@ -1,7 +1,7 @@
 import { View, Pressable, StyleSheet, Animated } from 'react-native';
 import { Text } from '@/components/Text';
 import Feather from '@expo/vector-icons/Feather';
-import { router } from 'expo-router';
+import { pushOnce } from '@/lib/pushOnce';
 import { theme } from '@/constants/theme';
 import { usePressScale } from '@/lib/usePressScale';
 import { shade } from '@/lib/color';
@@ -45,7 +45,7 @@ function ActionPill({ type, label, icon, color, tint, themeTint, primary }: (typ
   const dotBg = themeTint ? shade(accent, 95) : tint;
   return (
     <Pressable
-      onPress={() => router.push(`/add-transaction?type=${type}`)}
+      onPress={() => pushOnce(`/add-transaction?type=${type}`)}
       onPressIn={onPressIn}
       onPressOut={onPressOut}
       style={styles.pillWrap}

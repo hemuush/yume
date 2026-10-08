@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Tabs, router } from 'expo-router';
+import { Tabs } from 'expo-router';
 import { View, StyleSheet, Animated, Pressable, PressableProps } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from '@expo/vector-icons/Feather';
@@ -12,6 +12,7 @@ import { usePressScale } from '@/lib/usePressScale';
 import { haptics } from '@/lib/haptics';
 import { RepeatEntrySheet } from '@/features/home/RepeatEntrySheet';
 import { DURATIONS } from '@/lib/motionTimings';
+import { pushOnce } from '@/lib/pushOnce';
 
 /**
  * The library's default tab button paints a native ripple over the whole touch target (a big grey circle
@@ -24,7 +25,10 @@ function TabButton({ children, style, onPress, ...rest }: PressableProps & { chi
       {...rest}
       onPress={(e) => {
         // A light tick on every tab switch — only when it's a different tab.
-        if (!rest.accessibilityState?.selected) haptics.tap();
+        // The bar marks the current tab with aria-selected (accessibilityState on older versions).
+        const selected =
+          (rest as { 'aria-selected'?: boolean })['aria-selected'] ?? rest.accessibilityState?.selected;
+        if (!selected) haptics.tap();
         onPress?.(e);
       }}
       onPressIn={onPressIn}
@@ -162,7 +166,7 @@ export default function TabsLayout() {
               // Never navigate to the "add" route itself (it only holds the slot); the real destination is
               // the Add screen, pushed onto the Stack.
               e.preventDefault();
-              router.push('/add-transaction');
+              pushOnce('/add-transaction');
             },
             // Long-press: the "Log again" sheet — the user's most repeated
             // entries, saved for today in one tap (see RepeatEntrySheet).

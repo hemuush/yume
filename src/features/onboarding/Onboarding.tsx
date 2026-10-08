@@ -1,5 +1,5 @@
-import { useRef, useState } from 'react';
-import { View, StyleSheet, Pressable, ScrollView } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { View, StyleSheet, Pressable, ScrollView, BackHandler } from 'react-native';
 import { Text, TextInput } from '@/components/Text';
 import Feather from '@expo/vector-icons/Feather';
 import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
@@ -215,6 +215,17 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
     }
     await finish();
   };
+
+  // Android back steps to the previous slide (onboarding sits outside the navigator, so nothing else would
+  // catch it and the app would close).
+  useEffect(() => {
+    if (index === 0) return;
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      setIndex((i) => Math.max(0, i - 1));
+      return true;
+    });
+    return () => sub.remove();
+  }, [index]);
 
   const next = () => {
     if (creating) return;

@@ -144,11 +144,22 @@ export default function TransactionsScreen() {
   useEffect(() => {
     const { category, account, month } = linkParams;
     if (!category && !account) return;
+    // A link shows its filter, not search results left open from before.
+    searchSeq.current++;
+    setSearching(false);
+    setSearchQuery('');
+    setSearchResults([]);
     setFilterType('all');
     setFilterCategoryIds(category ? [category] : []);
     setFilterAccountIds(account ? [account] : []);
-    if (month && /^\d{4}-\d{2}$/.test(month)) {
-      const [y, m] = month.split('-').map(Number);
+    const [y, m] = month && /^\d{4}-\d{2}$/.test(month) ? month.split('-').map(Number) : [0, 0];
+    // A real month that isn't in the future; anything else keeps the current view.
+    const now = new Date();
+    if (
+      m >= 1 &&
+      m <= 12 &&
+      (y < now.getFullYear() || (y === now.getFullYear() && m <= now.getMonth() + 1))
+    ) {
       setDirection(0);
       setAnchor(new Date(y, m - 1, 1));
       setViewScope('month');
@@ -282,6 +293,10 @@ export default function TransactionsScreen() {
   const { fromDate: rangeFromDate, toDate: rangeToDate } = visibleRange;
   useEffect(() => setSelectedBar(null), [rangeFromDate, rangeToDate, viewScope]);
   const freshness = useFreshness();
+  const searchState = useRef({ searching, query: searchQuery });
+  useEffect(() => {
+    searchState.current = { searching, query: searchQuery };
+  }, [searching, searchQuery]);
   useFocusEffect(
     useCallback(() => {
       const now = new Date();
@@ -296,9 +311,11 @@ export default function TransactionsScreen() {
         });
       }
       // Returning from the full add-transaction screen (edit/delete of a row opened from search): re-run
-      // the query so the list doesn't show the row as it was before.
-      if (searching) runSearch(searchQuery.trim());
-    }, [load, rangeFromDate, rangeToDate, viewScope, searching, searchQuery, runSearch, freshness])
+      // the query so the list doesn't show the row as it was before. Read through a ref: typing must go
+      // through the debounced search below, not re-run this on every keystroke.
+      const live = searchState.current;
+      if (live.searching) runSearch(live.query.trim());
+    }, [load, rangeFromDate, rangeToDate, viewScope, runSearch, freshness])
   );
   // A save that doesn't leave this screen (the + long-press sheet) — reload in place.
   useEffect(
@@ -470,6 +487,8 @@ export default function TransactionsScreen() {
 
       <View style={styles.listArea}>
         <ReanimatedAnimated.FlatList
+          // A search result opens on the first tap, even with the keyboard up.
+          keyboardShouldPersistTaps="handled"
           ref={scrollRef}
           onScroll={scrollHandler}
           scrollEventThrottle={16}

@@ -209,7 +209,8 @@ export default function BackupScreen() {
 
   // A restore replaces every table, so all loaded screen state is stale; each screen reloads via
   // useFocusEffect, so bouncing to Home lets the rest pick up new data as tabs are visited.
-  const goHome = () => router.replace('/(tabs)');
+  // Back to the Home already underneath, not a second copy of the tabs stacked on Backup.
+  const goHome = () => router.dismissTo('/');
 
   /**
    * Puts back the pre-restore data (lib/safetyCopy.ts) after one more confirmation; shared by the "Undo
