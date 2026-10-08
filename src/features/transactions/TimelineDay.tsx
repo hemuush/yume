@@ -391,12 +391,9 @@ const styles = StyleSheet.create({
     borderRadius: theme.radius.xl2,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
+    // No shadow: at 4% it was invisible, and a shadow on a clipped, rounded row in a scrolling list costs a
+    // clipping layer per day on Android.
     overflow: 'hidden',
-    shadowColor: theme.colors.ink,
-    shadowOpacity: 0.04,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 1,
   },
   divider: { borderTopWidth: 1, borderTopColor: theme.colors.divider },
   line: {

@@ -501,6 +501,10 @@ export default function TransactionsScreen() {
           scrollEnabled={!dragging}
           data={displayedGroups}
           keyExtractor={(group) => group.date}
+          // Each row is a whole day, so mount only a few at first and keep the window small.
+          initialNumToRender={4}
+          maxToRenderPerBatch={4}
+          windowSize={7}
           contentContainerStyle={{
             // Under the header; search results have no headline above them, so keep the first day off the bar.
             paddingTop: headerHeight + (searching ? 14 : 0),
