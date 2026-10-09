@@ -1,9 +1,9 @@
 import { View, Pressable, Animated, StyleSheet } from 'react-native';
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import Feather from '@expo/vector-icons/Feather';
 import { router } from 'expo-router';
 import { Text } from '@/components/Text';
-import { GrowFill } from '@/components/GrowFill';
+import { GLASS } from '@/components/Glass';
+import { softTint } from '@/components/softTint';
 import { CountUpAmount } from '@/components/CountUpAmount';
 import { SavingsGoal } from '@/types';
 import { formatMoney, formatMaskableMoney } from '@/lib/money';
@@ -44,7 +44,6 @@ export function GoalCard({
   const { percent, done } = goalProgress(goal.currentAmountMinor, goal.targetAmountMinor);
   const plan = goalPlan(goal, toLocalIsoDate(new Date()));
   const reached = done && !hideAmounts;
-  const tone = reached ? theme.colors.idSage : hue;
   const monthsLine =
     !hideAmounts && plan.perMonthMinor != null && plan.monthsLeft != null
       ? `${formatMoney(plan.perMonthMinor)} a month · ${plan.monthsLeft} ${plan.monthsLeft === 1 ? 'month' : 'months'} left`
@@ -52,6 +51,35 @@ export function GoalCard({
         ? 'Past its target date'
         : null;
   const showPill = !goal.archived;
+
+  const fillPct = hideAmounts ? 0 : Math.min(100, Math.max(0, percent));
+  const fillColor = reached ? theme.colors.slice.saved : hue;
+  const tags = (
+    <>
+      {!hideAmounts && plan.pace && (
+        <View style={[styles.tag, plan.pace === 'behind' ? styles.tagWarn : styles.tagOk]}>
+          <Text style={[styles.tagText, plan.pace === 'behind' ? styles.behind : styles.onPace]}>
+            {GOAL_PACE_LABEL[plan.pace]}
+          </Text>
+        </View>
+      )}
+      {monthsLine && (
+        <View style={styles.tag}>
+          <Text style={styles.tagText} numberOfLines={1}>
+            {monthsLine}
+          </Text>
+        </View>
+      )}
+      {following && (
+        <View style={[styles.tag, { backgroundColor: shade(secondary, 94) }]}>
+          <Feather name="refresh-cw" size={10} color={theme.colors.textSecondary} />
+          <Text style={styles.tagText} numberOfLines={1}>
+            Following {accountName ?? 'its account'}
+          </Text>
+        </View>
+      )}
+    </>
+  );
 
   return (
     <Animated.View style={[styles.wrap, animatedStyle]}>
@@ -62,30 +90,23 @@ export function GoalCard({
         accessibilityRole="button"
         style={[styles.card, goal.archived && shared.cardArchived]}
       >
+        {/* Fills from the bottom to how far along it is, in the goal's colour (as on Plan). */}
+        {fillPct > 0 && (
+          <View style={[styles.fill, { height: `${fillPct}%`, backgroundColor: softTint(fillColor, 0.45) }]}>
+            <View style={[styles.fillEdge, { backgroundColor: shade(fillColor, 60) }]} />
+          </View>
+        )}
         <View style={styles.head}>
-          <View style={[styles.icon, { backgroundColor: shade(tone, 90) }]}>
-            {hideAmounts ? (
-              <Feather name="eye-off" size={16} color={theme.colors.textMuted} />
-            ) : (
-              <MaterialCommunityIcons
-                name={reached ? 'check' : following ? 'bank-outline' : 'piggy-bank-outline'}
-                size={18}
-                color={reached ? theme.colors.incomeText : shade(tone, 30, 10)}
-              />
-            )}
-          </View>
-          <View style={styles.headText}>
-            <Text style={styles.name} numberOfLines={1}>
-              {goal.name}
+          {hideAmounts ? (
+            <Feather name="eye-off" size={20} color={theme.colors.textMuted} />
+          ) : reached ? (
+            <Feather name="check-circle" size={28} color={theme.colors.incomeText} />
+          ) : (
+            <Text style={styles.pct}>
+              {Math.round(percent)}
+              <Text style={styles.pctSign}>%</Text>
             </Text>
-            <Text style={styles.sub} numberOfLines={1}>
-              {reached
-                ? `Reached · ${formatMoney(goal.targetAmountMinor)}`
-                : goal.targetDate
-                  ? `By ${dayMonthYear(goal.targetDate)}`
-                  : 'No target date'}
-            </Text>
-          </View>
+          )}
           <View style={styles.figs}>
             {reached ? (
               <Text style={styles.reached}>Reached</Text>
@@ -106,71 +127,35 @@ export function GoalCard({
           </View>
         </View>
 
-        <View style={styles.track}>
-          <GrowFill
-            animKey={`goal-bar:${goal.id}`}
-            pct={hideAmounts ? 0 : percent}
-            style={[styles.fill, { backgroundColor: reached ? theme.colors.income : shade(tone, 66) }]}
-          />
-        </View>
-        <View style={styles.caption}>
-          <Text style={styles.captionText} numberOfLines={1}>
-            {hideAmounts ? (
-              `${formatMaskableMoney(goal.currentAmountMinor, { masked: true })} of ${formatMoney(goal.targetAmountMinor)}`
-            ) : (
-              <>
-                <Text style={styles.captionBold}>{Math.round(percent)}%</Text>
-                {` · ${formatMoney(goal.currentAmountMinor)} of ${formatMoney(goal.targetAmountMinor)}`}
-              </>
-            )}
-          </Text>
-          {!hideAmounts && plan.pace && (
-            <Text style={[styles.captionText, plan.pace === 'behind' && styles.behind]} numberOfLines={1}>
-              {GOAL_PACE_LABEL[plan.pace]}
-            </Text>
+        <Text style={styles.name} numberOfLines={1}>
+          {goal.name}
+        </Text>
+        <Text style={styles.sub} numberOfLines={2}>
+          {hideAmounts
+            ? formatMaskableMoney(goal.currentAmountMinor, { masked: true })
+            : formatMoney(goal.currentAmountMinor)}{' '}
+          of {formatMoney(goal.targetAmountMinor)} ·{' '}
+          {reached ? 'Reached' : goal.targetDate ? `By ${dayMonthYear(goal.targetDate)}` : 'No target date'}
+        </Text>
+
+        <View style={styles.footer}>
+          <View style={styles.tags}>{tags}</View>
+          {showPill && (
+            <Pressable
+              onPress={
+                following
+                  ? () => router.push(`/add-transaction?type=transfer&toAccountId=${goal.linkedAccountId}`)
+                  : onContribute
+              }
+              accessibilityRole="button"
+              accessibilityLabel={`${following ? 'Move money to' : 'Add money to'} ${goal.name}`}
+              hitSlop={8}
+              style={({ pressed }) => [styles.pill, pressed && styles.pillPressed]}
+            >
+              <Text style={styles.pillText}>{following ? 'Move money' : 'Add money'}</Text>
+            </Pressable>
           )}
         </View>
-
-        {(showPill || monthsLine || following) && (
-          <View style={styles.footer}>
-            <View style={styles.footerText}>
-              {monthsLine && (
-                <Text style={styles.months} numberOfLines={1}>
-                  {monthsLine}
-                </Text>
-              )}
-              {following && (
-                <View
-                  style={[
-                    shared.followTag,
-                    { backgroundColor: shade(secondary, 94) },
-                    !monthsLine && styles.followFirst,
-                  ]}
-                >
-                  <Feather name="refresh-cw" size={10} color={theme.colors.textSecondary} />
-                  <Text style={shared.followTagText} numberOfLines={1}>
-                    Following {accountName ?? 'its account'}
-                  </Text>
-                </View>
-              )}
-            </View>
-            {showPill && (
-              <Pressable
-                onPress={
-                  following
-                    ? () => router.push(`/add-transaction?type=transfer&toAccountId=${goal.linkedAccountId}`)
-                    : onContribute
-                }
-                accessibilityRole="button"
-                accessibilityLabel={`${following ? 'Move money to' : 'Add money to'} ${goal.name}`}
-                hitSlop={8}
-                style={({ pressed }) => [styles.pill, pressed && styles.pillPressed]}
-              >
-                <Text style={styles.pillText}>{following ? 'Move money' : 'Add money'}</Text>
-              </Pressable>
-            )}
-          </View>
-        )}
       </Pressable>
     </Animated.View>
   );
@@ -178,59 +163,70 @@ export function GoalCard({
 
 const styles = StyleSheet.create({
   wrap: { marginHorizontal: 20, marginBottom: 12 },
-  // A white card like every other on the screen; the goal's own colour is in its icon and its bar.
+  // Frosted glass that fills from the bottom; the goal's colour is the liquid.
   card: {
+    minHeight: 156,
     padding: 16,
-    borderRadius: theme.radius.xl2,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-    backgroundColor: theme.colors.surface,
-  },
-  head: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  icon: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headText: { flex: 1, minWidth: 0 },
-  name: { fontFamily: theme.font.roundedBold, fontSize: 16, color: theme.colors.textPrimary },
-  sub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary, marginTop: 1 },
-  figs: { alignItems: 'flex-end', flexShrink: 0, maxWidth: '45%' },
-  toGo: { fontFamily: theme.font.monoBold, fontSize: 16, color: theme.colors.textPrimary },
-  toGoLabel: { fontFamily: theme.font.body, fontSize: 10.5, color: theme.colors.textSecondary, marginTop: 1 },
-  reached: { fontFamily: theme.font.roundedBold, fontSize: 14, color: theme.colors.incomeText },
-  track: {
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: theme.colors.divider,
-    marginTop: 14,
+    gap: 4,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: GLASS.edge,
+    backgroundColor: GLASS.fill,
+    boxShadow: GLASS.shadow,
     overflow: 'hidden',
   },
-  fill: { height: '100%', borderRadius: 3 },
-  caption: { flexDirection: 'row', justifyContent: 'space-between', gap: 8, marginTop: 6 },
-  captionText: {
-    fontFamily: theme.font.mono,
-    fontSize: 10.5,
-    color: theme.colors.textSecondary,
-    flexShrink: 1,
-  },
-  captionBold: { fontFamily: theme.font.monoBold, color: theme.colors.textPrimary },
-  behind: { fontFamily: theme.font.monoBold, color: theme.colors.warnInk },
-  footer: {
+  fill: { position: 'absolute', left: 0, right: 0, bottom: 0 },
+  fillEdge: { position: 'absolute', left: 0, right: 0, top: 0, height: 2, opacity: 0.8 },
+  head: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     justifyContent: 'space-between',
     gap: 10,
-    marginTop: 12,
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: theme.colors.divider,
+    minHeight: 38,
   },
-  footerText: { flex: 1, minWidth: 0 },
-  months: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
-  followFirst: { marginTop: 0 },
+  pct: {
+    fontFamily: theme.font.bodyLight,
+    fontSize: 34,
+    lineHeight: 38,
+    letterSpacing: -1.2,
+    color: theme.colors.textPrimary,
+  },
+  pctSign: { fontFamily: theme.font.body, fontSize: 15, letterSpacing: 0, color: theme.colors.textMuted },
+  figs: { alignItems: 'flex-end', flexShrink: 0, maxWidth: '50%' },
+  toGo: { fontFamily: theme.font.bodyMedium, fontSize: 16, color: theme.colors.textPrimary },
+  toGoLabel: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textMuted, marginTop: 1 },
+  reached: { fontFamily: theme.font.roundedBold, fontSize: 15, color: theme.colors.incomeText },
+  name: {
+    fontFamily: theme.font.roundedBold,
+    fontSize: 17,
+    color: theme.colors.textPrimary,
+    marginTop: 'auto',
+  },
+  sub: { fontFamily: theme.font.body, fontSize: 12.5, color: theme.colors.textSecondary },
+  footer: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 8 },
+  tags: { flex: 1, minWidth: 0, flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  tag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    minHeight: 24,
+    paddingHorizontal: 9,
+    borderRadius: theme.radius.pill,
+    backgroundColor: GLASS.fillStrong,
+    borderWidth: 1,
+    borderColor: GLASS.edge,
+    maxWidth: '100%',
+  },
+  tagOk: { backgroundColor: '#CDEFD9', borderColor: '#CDEFD9' },
+  tagWarn: { backgroundColor: '#FFE6C7', borderColor: '#FFE6C7' },
+  tagText: {
+    flexShrink: 1,
+    fontFamily: theme.font.bodyBold,
+    fontSize: 11.5,
+    color: theme.colors.textSecondary,
+  },
+  onPace: { color: theme.colors.incomeText },
+  behind: { color: theme.colors.warnInk },
   pill: {
     paddingHorizontal: 16,
     paddingVertical: 8,

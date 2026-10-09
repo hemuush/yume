@@ -12,6 +12,7 @@ import { GrowFill } from '@/components/GrowFill';
 import { CountUpAmount } from '@/components/CountUpAmount';
 import type { McIconName } from '@/components/iconName';
 import { theme } from '@/constants/theme';
+import { GLASS } from '@/components/Glass';
 import { payoffMonthShort } from '@/lib/loanPayoff';
 import type { LoanProgress } from '@/db/loans';
 import { loanBarTone, loanGlyph, loanIcon, loanTint } from './loanIdentity';
@@ -141,21 +142,23 @@ export function LoanCard({
 }
 
 const styles = StyleSheet.create({
+  // Frosted glass on the wallpaper, as on Plan and Home.
   card: {
     marginHorizontal: 20,
     marginBottom: 12,
     paddingVertical: 16,
     paddingHorizontal: 16,
-    borderRadius: theme.radius.xl2,
-    backgroundColor: theme.colors.surface,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
+    borderRadius: 24,
+    backgroundColor: GLASS.fill,
+    borderWidth: 1,
+    borderColor: GLASS.edge,
+    boxShadow: GLASS.shadow,
   },
   head: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   icon: {
-    width: 38,
-    height: 38,
-    borderRadius: 38 * 0.32,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -167,13 +170,15 @@ const styles = StyleSheet.create({
   left: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textMuted, marginTop: 2 },
   paidOff: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.incomeText },
   track: {
-    height: 5,
-    borderRadius: 3,
-    backgroundColor: theme.colors.divider,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: 'rgba(255,255,255,0.75)',
+    borderWidth: 1,
+    borderColor: GLASS.edge,
     marginTop: 12,
     overflow: 'hidden',
   },
-  fill: { height: '100%', borderRadius: 3, minWidth: 5 },
+  fill: { height: '100%', borderRadius: 4, minWidth: 5 },
   caption: { flexDirection: 'row', justifyContent: 'space-between', gap: 10, marginTop: 8 },
   captionText: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, flexShrink: 1 },
   captionBold: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
@@ -185,8 +190,8 @@ const styles = StyleSheet.create({
     marginTop: 12,
     paddingVertical: 10,
     paddingHorizontal: 12,
-    borderRadius: theme.radius.lg,
-    backgroundColor: theme.colors.dueRow,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255,239,204,0.85)',
   },
   footerText: { flex: 1, minWidth: 0 },
   nextLabel: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.dueInk },
@@ -198,11 +203,12 @@ const styles = StyleSheet.create({
   },
   nextAmount: { fontFamily: theme.font.monoBold },
   pill: {
-    paddingHorizontal: 13,
-    paddingVertical: 6,
+    minHeight: 32,
+    justifyContent: 'center',
+    paddingHorizontal: 14,
     borderRadius: theme.radius.pill,
     backgroundColor: theme.colors.ink,
   },
   pillPressed: { opacity: 0.8 },
-  pillText: { fontFamily: theme.font.bodyBold, fontSize: 11.5, color: theme.colors.white },
+  pillText: { fontFamily: theme.font.bodyBold, fontSize: 12.5, color: theme.colors.white },
 });

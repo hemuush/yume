@@ -651,6 +651,8 @@ export async function getStillToPayThisMonth(
 export interface DailyGoalStreakPoint {
   date: string;
   streakDays: number;
+  /** False before the first expense: there was nothing to keep under the goal yet. */
+  tracked?: boolean;
 }
 
 /**
@@ -685,7 +687,11 @@ export async function getDailyGoalStreakSeries(
   const streakByDate = new Map(historyDates.map((d, i) => [d, series[i]]));
 
   const visibleDates = isoDatesInRange(addDaysToIsoDate(today, -(days - 1)), today);
-  return visibleDates.map((date) => ({ date, streakDays: streakByDate.get(date) ?? 0 }));
+  return visibleDates.map((date) => ({
+    date,
+    streakDays: streakByDate.get(date) ?? 0,
+    tracked: date >= start,
+  }));
 }
 
 /**

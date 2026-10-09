@@ -91,6 +91,9 @@ describe('Friends & Family screen', () => {
     expect(shown.indexOf('You owe')).toBeLessThan(shown.indexOf('Meera'));
     expect(shown.some((t) => t.includes('900'))).toBe(true);
     expect(shown).toContain('Net, in your favour');
+    // The net card: +₹600, then each side's total under the split bar, signed balances on the tiles.
+    expect(shown).toContain('+₹600');
+    expect(shown).toEqual(expect.arrayContaining(['+₹900', '−₹300']));
   });
 
   it('keeps a lone open person to a single tile, without headings or a net line', async () => {

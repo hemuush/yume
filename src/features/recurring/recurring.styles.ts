@@ -22,14 +22,7 @@ export const styles = StyleSheet.create({
     lineHeight: 16,
   },
   // Skeleton rows while the screen loads.
-  card: {
-    marginBottom: 10,
-    padding: 14,
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.radius.xl2,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-  },
+  card: { marginBottom: 10, padding: 14 },
   // The Running, Paused and Not set up yet cards: rows with a hairline between.
   list: { paddingVertical: 2, paddingHorizontal: 16 },
   footnote: {

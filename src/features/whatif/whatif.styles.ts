@@ -31,12 +31,11 @@ export const styles = StyleSheet.create({
     lineHeight: 17,
   },
 
-  // White StripCards: sky for the change you're trying, mint for where it gets a goal.
+  // Glass cards on the wallpaper: the change you're trying, then where it gets a goal.
   card: {
     marginHorizontal: 20,
-    marginTop: 6,
+    marginTop: theme.layout.screenTopGap,
     padding: 16,
-    paddingTop: 18,
   },
   fieldLabel: {
     ...FIELD_LABEL,
@@ -44,45 +43,63 @@ export const styles = StyleSheet.create({
   },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
 
-  avgRow: {
+  // Now → with the cut, a month: two figures in a frosted panel.
+  compare: {
     flexDirection: 'row',
-    alignItems: 'baseline',
-    gap: 6,
-    marginTop: 14,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    borderRadius: theme.radius.lg,
-    backgroundColor: theme.colors.surfaceAlt,
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 16,
+    padding: 12,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,0.8)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.92)',
   },
+  compareSide: { flex: 1, minWidth: 0, gap: 2 },
+  compareRight: { alignItems: 'flex-end' },
+  compareLabel: { fontFamily: theme.font.bodyMedium, fontSize: 11.5, color: theme.colors.textMuted },
+  compareValue: {
+    fontFamily: theme.font.body,
+    fontSize: 20,
+    letterSpacing: -0.4,
+    color: theme.colors.textPrimary,
+  },
+  compareNew: { color: theme.colors.incomeText },
   avgLabel: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
-  avgValue: { fontFamily: theme.font.monoBold, fontSize: 14, color: theme.colors.textPrimary },
-
-  resultDivider: {
-    height: 1,
-    backgroundColor: theme.colors.divider,
-    marginTop: 14,
-    marginBottom: 12,
-  },
-  resultRow: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: 6 },
-  resultLabel: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
-  resultValue: { fontFamily: theme.font.monoBold, fontSize: 15, color: theme.colors.textPrimary },
 
   goalCard: {
     marginHorizontal: 20,
-    marginTop: 16,
+    marginTop: 12,
     padding: 16,
-    paddingTop: 18,
   },
   extraLabel: { ...EYEBROW, color: theme.colors.incomeText },
 
-  paceRow: { marginTop: 14, gap: 5 },
-  paceHeadRow: { flexDirection: 'row', justifyContent: 'space-between' },
-  paceLabel: { fontFamily: theme.font.body, fontSize: 10.5, color: theme.colors.textSecondary },
-  paceLabelStrong: { fontFamily: theme.font.bodyBold, fontSize: 10.5, color: theme.colors.textPrimary },
-  paceDate: { fontFamily: theme.font.monoBold, fontSize: 10.5, color: theme.colors.textSecondary },
-  paceDateStrong: { fontFamily: theme.font.monoBold, fontSize: 10.5, color: theme.colors.textPrimary },
-  paceTrack: { height: 6, borderRadius: 3, backgroundColor: theme.colors.divider, overflow: 'hidden' },
-  paceFill: { height: '100%', borderRadius: 3 },
+  paceRow: { marginTop: 14, gap: 7 },
+  paceHeadRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 },
+  paceLabel: { fontFamily: theme.font.body, fontSize: 12.5, color: theme.colors.textSecondary },
+  paceLabelStrong: { fontFamily: theme.font.bodyBold, fontSize: 12.5, color: theme.colors.textPrimary },
+  paceDate: { fontFamily: theme.font.bodyMedium, fontSize: 12.5, color: theme.colors.textSecondary },
+  paceDateStrong: { fontFamily: theme.font.bodyBold, fontSize: 12.5, color: theme.colors.textPrimary },
+  // A frosted line with a dot where the date lands; the dot sits on the line's end, so no clipping.
+  paceTrack: {
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: 'rgba(255,255,255,0.7)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.92)',
+    justifyContent: 'center',
+  },
+  paceFill: { position: 'absolute', left: 0, top: 0, bottom: 0, borderRadius: 5 },
+  paceDot: {
+    position: 'absolute',
+    top: -4,
+    width: 16,
+    height: 16,
+    marginLeft: -8,
+    borderRadius: 8,
+    borderWidth: 3,
+    backgroundColor: theme.colors.surface,
+  },
 
   soonerText: {
     marginTop: 12,

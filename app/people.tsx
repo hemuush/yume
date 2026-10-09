@@ -15,6 +15,9 @@ import { Skeleton } from '@/components/Skeleton';
 import { formatMoney } from '@/lib/money';
 import { groupPeople, inRows, showPeopleSummary } from '@/features/people/people.helpers';
 import { PeopleNet } from '@/features/people/PeopleNet';
+import { Glass } from '@/components/Glass';
+import { HomeWallpaper } from '@/features/home/HomeWallpaper';
+import { useAccent } from '@/theme/AccentContext';
 import { PersonQuietRow } from '@/features/people/PersonQuietRow';
 import { PersonTile } from '@/features/people/PersonTile';
 import { AddPersonModal } from '@/features/people/AddPersonModal';
@@ -27,6 +30,7 @@ import { styles } from '@/features/people/people.styles';
  */
 export default function PeopleScreen() {
   const insets = useSafeAreaInsets();
+  const { accent, secondary } = useAccent();
   // The header sits over the page and shrinks as it scrolls.
   const { collapse, headerHeight, scrollHandler, scrollRef } = useCollapsingHeader();
   const [people, setPeople] = useState<PersonWithBalance[]>([]);
@@ -47,6 +51,7 @@ export default function PeopleScreen() {
 
   return (
     <View style={styles.container}>
+      <HomeWallpaper accent={accent} secondary={secondary} />
       <ReanimatedAnimated.ScrollView
         ref={scrollRef}
         onScroll={scrollHandler}
@@ -66,17 +71,26 @@ export default function PeopleScreen() {
         {loading ? (
           <View style={styles.tileRow}>
             {[0, 1].map((i) => (
-              <View key={i} style={[styles.tileCell, styles.personTile, styles.skeletonTile]}>
+              <Glass key={i} radius={22} style={[styles.tileCell, styles.personTile]}>
                 <Skeleton width={32} height={32} circle radius={16} />
                 <Skeleton width={80} height={18} radius={5} style={{ marginTop: 12 }} />
                 <Skeleton width={60} height={10} radius={4} style={{ marginTop: 8 }} />
-              </View>
+              </Glass>
             ))}
           </View>
         ) : people.length === 0 ? (
           <EmptyState title="No one here yet" subtitle="Tap + Person to add a friend or family member." />
         ) : (
           <>
+            {summary && (
+              <PeopleNet
+                netMinor={netMinor}
+                owedToYouMinor={owedToYouMinor}
+                youOweMinor={youOweMinor}
+                owedCount={owed.length}
+                oweCount={owe.length}
+              />
+            )}
             {[
               {
                 key: 'owed',
@@ -124,7 +138,7 @@ export default function PeopleScreen() {
             {settled.length > 0 && (
               <>
                 <Text style={styles.settledTitle}>Settled</Text>
-                <View style={styles.settledCard}>
+                <Glass style={styles.settledCard}>
                   {settled.map((p, i) => (
                     <PersonQuietRow
                       key={p.id}
@@ -134,7 +148,7 @@ export default function PeopleScreen() {
                       onPress={() => setSelected(p)}
                     />
                   ))}
-                </View>
+                </Glass>
               </>
             )}
           </>
@@ -154,10 +168,9 @@ export default function PeopleScreen() {
         title="Friends & family"
         showBack
         hideUser
+        wallpaper
         actions={<AddButton onPress={() => setAddVisible(true)} label="+ Person" />}
-      >
-        {!loading && summary && <PeopleNet netMinor={netMinor} />}
-      </SkyHeader>
+      />
 
       <AddPersonModal
         visible={addVisible}

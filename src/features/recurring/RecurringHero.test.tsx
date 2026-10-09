@@ -3,9 +3,11 @@
  * between them; or just a line about the page when no expense rule is running. Made-up figures.
  */
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
-import { Text } from 'react-native';
+import { Text, StyleSheet } from 'react-native';
 
 import { RecurringHero } from './RecurringHero';
+
+const StyleSheetFlatten = (st: unknown) => StyleSheet.flatten(st as never) as { width?: number };
 
 const texts = (tree: ReactTestRenderer) =>
   tree.root.findAllByType(Text).map((t) => [t.props.children].flat().join(''));
@@ -59,5 +61,40 @@ describe('RecurringHero', () => {
     );
     expect(shown.some((t) => t.startsWith('Set up rent'))).toBe(true);
     expect(shown).not.toContain('A year');
+  });
+
+  it('puts a dot on each day something lands in the next 30 days, bigger for bigger amounts', () => {
+    const tree = render({
+      today: '2026-10-09',
+      marks: [
+        { key: 'rent', date: '2026-10-12', amountMinor: 1800000, incoming: false },
+        { key: 'jio', date: '2026-10-20', amountMinor: 39900, incoming: false },
+        { key: 'pay', date: '2026-11-01', amountMinor: 9500000, incoming: true },
+      ],
+    });
+    act(() =>
+      tree.root
+        .find((n) => n.props.testID === 'landLine')
+        .props.onLayout({ nativeEvent: { layout: { width: 290 } } })
+    );
+    const dots = tree.root.findAll(
+      (n) =>
+        typeof n.type === 'string' &&
+        []
+          .concat(n.props.style ?? [])
+          .flat()
+          .some((x: { borderWidth?: number }) => x?.borderWidth === 3)
+    );
+    expect(dots).toHaveLength(3);
+    const size = (i: number) => StyleSheetFlatten(dots[i].props.style).width as number;
+    // Pay day (the biggest) is the biggest dot; the ₹399 bill the smallest.
+    expect(size(2)).toBeGreaterThan(size(0));
+    expect(size(0)).toBeGreaterThan(size(1));
+    expect(texts(tree)).toEqual(expect.arrayContaining(['When they land, next 30 days', 'Today']));
+  });
+
+  it('leaves the line out when nothing lands', () => {
+    const tree = render({ today: '2026-10-09', marks: [] });
+    expect(tree.root.findAll((n) => n.props.testID === 'landLine')).toHaveLength(0);
   });
 });
