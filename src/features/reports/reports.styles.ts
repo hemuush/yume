@@ -2,6 +2,7 @@ import { StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
 import { SECTION_TITLE, SECTION_GAP } from '@/constants/textStyles';
 import { SCREEN } from '@/components/screenStyles';
+import { GLASS } from '@/components/Glass';
 
 /** The even gap between Reports' blocks (heatmap card, day card, story cards, "Where it went"). */
 export const BLOCK_GAP = SCREEN.sectionGap;
@@ -30,9 +31,9 @@ export const styles = StyleSheet.create({
     justifyContent: 'space-between',
     minHeight: 48,
     paddingHorizontal: 4,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-    backgroundColor: theme.colors.surface,
+    borderWidth: 1,
+    borderColor: GLASS.edge,
+    backgroundColor: GLASS.fillStrong,
     borderRadius: theme.radius.pill,
   },
   periodArrow: {
@@ -41,7 +42,7 @@ export const styles = StyleSheet.create({
     borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: theme.colors.surfaceAlt,
+    backgroundColor: 'rgba(255,255,255,0.7)',
   },
   periodArrowOff: { opacity: 0.35 },
   // Shrinks and wraps rather than clipping a long custom range ("20 Dec 2025 – 4 Jan 2026").
@@ -58,9 +59,9 @@ export const styles = StyleSheet.create({
     gap: 6,
     minHeight: 48,
     paddingHorizontal: 14,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-    backgroundColor: theme.colors.surface,
+    borderWidth: 1,
+    borderColor: GLASS.edge,
+    backgroundColor: GLASS.fillStrong,
     borderRadius: theme.radius.pill,
   },
   granChipText: { fontFamily: theme.font.roundedMedium, fontSize: 15, color: theme.colors.ink },
@@ -71,21 +72,21 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 12,
     paddingBottom: 8,
-    backgroundColor: theme.colors.background,
   },
   stickyTabs: { marginHorizontal: -20, zIndex: 1 },
 
   // The Days tab's heatmap card.
   hmCard: {
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.radius.xl2,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
+    backgroundColor: GLASS.fill,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: GLASS.edge,
     paddingHorizontal: 14,
     paddingTop: 16,
     paddingBottom: 14,
     gap: 12,
     marginBottom: BLOCK_GAP,
+    boxShadow: GLASS.shadow,
   },
   hmHead: {
     flexDirection: 'row',
@@ -102,7 +103,7 @@ export const styles = StyleSheet.create({
     gap: 6,
     maxWidth: '100%',
     borderRadius: theme.radius.pill,
-    backgroundColor: theme.colors.surfaceAlt,
+    backgroundColor: 'rgba(255,255,255,0.7)',
     minHeight: 32,
     paddingLeft: 12,
     paddingRight: 10,
@@ -126,12 +127,22 @@ export const styles = StyleSheet.create({
   storyPos: { fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textMuted },
   story: {
     minHeight: 176,
-    borderRadius: theme.radius.xl2,
+    borderRadius: 26,
+    borderWidth: 1,
+    borderColor: GLASS.edge,
+    boxShadow: GLASS.shadow,
     padding: 18,
     justifyContent: 'space-between',
     gap: 10,
   },
-  storyCompact: { borderRadius: theme.radius.xl2, paddingHorizontal: 18, paddingVertical: 14, gap: 3 },
+  storyCompact: {
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: GLASS.edge,
+    paddingHorizontal: 18,
+    paddingVertical: 14,
+    gap: 3,
+  },
   storyCompactTitle: { fontFamily: theme.font.bodyBold, fontSize: 15, color: theme.colors.textPrimary },
   storyCompactDetail: {
     fontFamily: theme.font.body,
@@ -163,13 +174,14 @@ export const styles = StyleSheet.create({
 
   // The day open under the heatmap.
   dayCard: {
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.radius.xl2,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
+    backgroundColor: GLASS.fill,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: GLASS.edge,
     paddingTop: 14,
     paddingBottom: 12,
     marginBottom: BLOCK_GAP,
+    boxShadow: GLASS.shadow,
   },
   dayHead: {
     flexDirection: 'row',
@@ -187,7 +199,7 @@ export const styles = StyleSheet.create({
     borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: theme.colors.surfaceAlt,
+    backgroundColor: 'rgba(255,255,255,0.7)',
   },
   dayFoot: {
     marginTop: 4,
@@ -200,12 +212,13 @@ export const styles = StyleSheet.create({
   // Weekday rhythm: seven bars, a dashed "usual day" line, and a read line.
   rhythmBlock: { marginBottom: BLOCK_GAP },
   rhythmCard: {
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.radius.xl2,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
+    backgroundColor: GLASS.fill,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: GLASS.edge,
     padding: 16,
     gap: 12,
+    boxShadow: GLASS.shadow,
   },
   rhythmChart: { height: 140, flexDirection: 'row', alignItems: 'flex-end', gap: 8, paddingTop: 16 },
   rhythmBar: { flex: 1, height: '100%', justifyContent: 'flex-end', alignItems: 'center', gap: 4 },
@@ -232,8 +245,10 @@ export const styles = StyleSheet.create({
     position: 'absolute',
     right: 0,
     bottom: 2,
-    paddingHorizontal: 3,
-    backgroundColor: theme.colors.surface,
+    paddingHorizontal: 4,
+    borderRadius: 4,
+    overflow: 'hidden',
+    backgroundColor: 'rgba(255,255,255,0.85)',
     fontFamily: theme.font.mono,
     fontSize: 11,
     color: theme.colors.textSecondary,
@@ -256,13 +271,14 @@ export const styles = StyleSheet.create({
   // Biggest spends: the period's largest single expenses, in the day card's row.
   bigBlock: { marginBottom: BLOCK_GAP },
   bigCard: {
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.radius.xl2,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
+    backgroundColor: GLASS.fill,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: GLASS.edge,
     paddingTop: 4,
     paddingBottom: 12,
     overflow: 'hidden',
+    boxShadow: GLASS.shadow,
   },
   bigFoot: {
     marginTop: 4,
@@ -275,7 +291,7 @@ export const styles = StyleSheet.create({
     color: theme.colors.textSecondary,
   },
   bigFootStrong: { fontFamily: theme.font.monoBold, color: theme.colors.textPrimary },
-  bigRowOn: { backgroundColor: theme.colors.surfaceAlt },
+  bigRowOn: { backgroundColor: 'rgba(18,19,15,0.05)' },
 
   // Categories: how the list is grouped (by category or by account).
   catSplitCaption: {
@@ -287,12 +303,13 @@ export const styles = StyleSheet.create({
 
   // Trends: one line chart with a Spending / Net worth switch.
   trendCard: {
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.radius.xl2,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
+    backgroundColor: GLASS.fill,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: GLASS.edge,
     padding: 16,
     gap: 8,
+    boxShadow: GLASS.shadow,
   },
   trendHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
   trendTitle: { fontFamily: theme.font.roundedBold, fontSize: 17, color: theme.colors.textPrimary },
@@ -300,7 +317,7 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     padding: 3,
     borderRadius: theme.radius.pill,
-    backgroundColor: theme.colors.surfaceAlt,
+    backgroundColor: 'rgba(255,255,255,0.7)',
   },
   trendSwitchBtn: {
     minHeight: 32,
@@ -362,10 +379,11 @@ export const styles = StyleSheet.create({
   },
   stripCard: {
     flexDirection: 'row',
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.radius.xl2,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
+    backgroundColor: GLASS.fill,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: GLASS.edge,
+    boxShadow: GLASS.shadow,
   },
   stripCardStack: { flexDirection: 'column' },
   stripCell: { flex: 1, minWidth: 0, paddingHorizontal: 14, paddingVertical: 14, gap: 3 },
@@ -378,11 +396,12 @@ export const styles = StyleSheet.create({
   // Against your usual: each category's month beside its own earlier months.
   tracksBlock: { marginTop: BLOCK_GAP },
   tracksCard: {
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.radius.xl2,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
+    backgroundColor: GLASS.fill,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: GLASS.edge,
     overflow: 'hidden',
+    boxShadow: GLASS.shadow,
   },
   trackRow: {
     flexDirection: 'row',
@@ -436,12 +455,13 @@ export const styles = StyleSheet.create({
   legendSwatch: { width: 12, height: 12, borderRadius: 4 },
 
   catCard: {
-    backgroundColor: theme.colors.surface,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-    borderRadius: theme.radius.xl2,
+    backgroundColor: GLASS.fill,
+    borderWidth: 1,
+    borderColor: GLASS.edge,
+    borderRadius: 24,
     paddingHorizontal: 16,
     overflow: 'hidden',
+    boxShadow: GLASS.shadow,
   },
   catBar: {
     flexDirection: 'row',
@@ -490,6 +510,8 @@ export const styles = StyleSheet.create({
     backgroundColor: theme.colors.inkWash,
     overflow: 'hidden',
   },
+  // Under the name, past the icon (34 wide, plus the row's gap).
+  catTrackIcon: { marginLeft: 42 },
   catMore: {
     minHeight: 48,
     flexDirection: 'row',
