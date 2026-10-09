@@ -27,6 +27,7 @@ export function PayInstallmentSheet({
   account,
   categoryId,
   linkedAccountMissing = false,
+  balanceMinor,
   onClose,
   onPaid,
 }: {
@@ -35,6 +36,8 @@ export function PayInstallmentSheet({
   categoryId: string | null;
   /** The loan's own account is archived or gone: say which account pays instead. */
   linkedAccountMissing?: boolean;
+  /** What the paying account holds now, to show what it'll hold after (Plan knows it; omitted elsewhere). */
+  balanceMinor?: number;
   onClose: () => void;
   /** After the payment (or its undo) is saved — refresh whatever shows it. */
   onPaid: () => void | Promise<void>;
@@ -44,6 +47,8 @@ export function PayInstallmentSheet({
   const early = installment.dueDate > todayIso;
   const [paidDateIso, setPaidDateIso] = useState(early ? todayIso : installment.dueDate);
   const [busy, setBusy] = useState(false);
+  // Read once: Plan reloads (with the EMI already taken off) before the sheet closes.
+  const [balanceBefore] = useState(balanceMinor);
   const [done, setDone] = useState(false);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const submitting = useRef(false);
@@ -115,6 +120,11 @@ export function PayInstallmentSheet({
         title={`From ${account?.name ?? '—'}`}
         meta={`Due ${weekdayDayMonth(installment.dueDate)}`}
       />
+      {account && balanceBefore != null && (
+        <Text style={styles.hintText}>
+          {account.name} after paying: {formatMoney(balanceBefore - installment.emiAmountMinor)}
+        </Text>
+      )}
       {!account && (
         <Text style={styles.hintText}>Add an account first to record payments against this loan.</Text>
       )}

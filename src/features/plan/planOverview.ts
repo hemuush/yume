@@ -325,6 +325,9 @@ export interface PlanBudgetInput {
   remainingMinor: number;
   percentUsed: number;
   overBudget: boolean;
+  /** The category's icon and colour, for its jar. */
+  categoryIcon?: string;
+  categoryColor?: string;
 }
 
 export interface BudgetsSummary {
