@@ -43,13 +43,7 @@ export const styles = StyleSheet.create({
   tileRow: { flexDirection: 'row', gap: 10, marginHorizontal: 20, marginBottom: 10 },
   tileCell: { flex: 1, minWidth: 0 },
   // A white tile (StripCard) whose top strip says which way the money goes: mint they owe you, coral you owe.
-  personTile: {
-    padding: 16,
-    paddingTop: 20,
-    borderRadius: theme.radius.xl2,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-  },
+  personTile: { padding: 16 },
   tileWho: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   tileAvatar: {
     width: 32,
@@ -68,7 +62,7 @@ export const styles = StyleSheet.create({
     fontSize: 15,
     color: theme.colors.textPrimary,
   },
-  tileAmount: { fontFamily: theme.font.monoBold, fontSize: 18, marginTop: 12 },
+  tileAmount: { fontFamily: theme.font.body, fontSize: 21, letterSpacing: -0.4, marginTop: 12 },
   tileMeta: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary, marginTop: 2 },
   settlePill: {
     alignSelf: 'flex-start',
@@ -79,14 +73,7 @@ export const styles = StyleSheet.create({
   },
   settlePillText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textPrimary },
   settledTitle: { ...EYEBROW, marginHorizontal: 24, marginTop: 12, marginBottom: 8 },
-  settledCard: {
-    marginHorizontal: 20,
-    borderRadius: theme.radius.xl2,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-    backgroundColor: theme.colors.surface,
-    overflow: 'hidden',
-  },
+  settledCard: { marginHorizontal: 20, overflow: 'hidden' },
   quietRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -113,7 +100,6 @@ export const styles = StyleSheet.create({
     color: theme.colors.textPrimary,
   },
   quietSub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
-  skeletonTile: { backgroundColor: theme.colors.surface },
   // The detail sheet's linked-loan and history rows: a plain divided list
   // suits a modal's inner list better than more tiles.
   row: {
