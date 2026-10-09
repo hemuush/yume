@@ -131,10 +131,20 @@ describe('Tidy up screen', () => {
     mockReport.current = saved;
   });
 
-  it('says all tidy when there is nothing', async () => {
+  it('shows the three checks it ran, flagging what each found', async () => {
+    const shown = texts(await render());
+    expect(shown).toEqual(
+      expect.arrayContaining(['Same entry twice', 'Old balances as income', 'Amounts with paise'])
+    );
+    expect(shown.some((t) => /^\d+ (group|groups)$/.test(t))).toBe(true);
+  });
+
+  it('says all tidy when there is nothing, with every check ticked', async () => {
     const saved = mockReport.current;
     mockReport.current = { repeats: [], startingBalances: [], fractionalCount: 0 };
-    expect(texts(await render())).toContain('All tidy');
+    const shown = texts(await render());
+    expect(shown).toContain('All tidy');
+    expect(shown.filter((t) => t === 'None')).toHaveLength(3);
     mockReport.current = saved;
   });
 });

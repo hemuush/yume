@@ -24,7 +24,6 @@ import { theme } from '@/constants/theme';
 import { SkyHeader } from '@/features/home/SkyHeader';
 import ReanimatedAnimated from 'react-native-reanimated';
 import { useCollapsingHeader } from '@/lib/useCollapsingHeader';
-import { EmptyState } from '@/components/EmptyState';
 import { CategoryIcon } from '@/components/CategoryIcon';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { CardRowsSkeleton } from '@/components/ListSkeleton';
@@ -36,6 +35,10 @@ import { errorMessage } from '@/lib/errorMessage';
 import { categoryPath } from '@/lib/categoryLabel';
 import { showAlert } from '@/components/AppDialog';
 import { useAccent } from '@/theme/AccentContext';
+import Feather from '@expo/vector-icons/Feather';
+import { Glass, GLASS, GLASS_CARD } from '@/components/Glass';
+import { Kicker, frost } from '@/components/Frost';
+import { HomeWallpaper } from '@/features/home/HomeWallpaper';
 
 /** "23 Sep 1:53 pm" from created_at (UTC, "YYYY-MM-DD HH:MM:SS"). */
 const savedLabel = (createdAt: string) => {
@@ -53,6 +56,23 @@ const savedLabel = (createdAt: string) => {
  * Tidy up (Settings → Alerts & backup): data that looks off, each with a fix (duplicate entry, old balance
  * logged as income, amounts with paise). Fixes are undoable from the toast; "keep" choices are remembered.
  */
+/** One of the checks Tidy up runs: ticked when it found nothing, flagged with what it found. */
+function Check({ label, found }: { label: string; found: string | null }) {
+  return (
+    <View style={styles.check} accessible accessibilityLabel={`${label}: ${found ?? 'none found'}`}>
+      <View style={[styles.checkMark, found ? styles.checkTodo : styles.checkOk]}>
+        <Feather
+          name={found ? 'alert-circle' : 'check'}
+          size={13}
+          color={found ? theme.colors.expenseText : theme.colors.incomeText}
+        />
+      </View>
+      <Text style={styles.checkLabel}>{label}</Text>
+      <Text style={styles.checkFound}>{found ?? 'None'}</Text>
+    </View>
+  );
+}
+
 export default function TidyUpScreen() {
   const insets = useSafeAreaInsets();
   const { accent, secondary } = useAccent();
@@ -155,8 +175,41 @@ export default function TidyUpScreen() {
     report.startingBalances.length === 0 &&
     report.fractionalCount === 0;
 
+  const checklist = report && (
+    <View style={styles.checks}>
+      <Check
+        label="Same entry twice"
+        found={
+          report.repeats.length
+            ? `${report.repeats.length} ${report.repeats.length === 1 ? 'group' : 'groups'}`
+            : null
+        }
+      />
+      <Check
+        label="Old balances as income"
+        found={
+          report.startingBalances.length
+            ? `${report.startingBalances.length} ${report.startingBalances.length === 1 ? 'group' : 'groups'}`
+            : null
+        }
+      />
+      <Check
+        label="Amounts with paise"
+        found={
+          report.fractionalCount
+            ? `${report.fractionalCount} ${report.fractionalCount === 1 ? 'amount' : 'amounts'}`
+            : null
+        }
+      />
+    </View>
+  );
+  const toLook = report
+    ? report.repeats.length + report.startingBalances.length + (report.fractionalCount > 0 ? 1 : 0)
+    : 0;
+
   return (
     <View style={styles.container}>
+      <HomeWallpaper accent={accent} secondary={secondary} />
       <ReanimatedAnimated.ScrollView
         ref={scrollRef}
         onScroll={scrollHandler}
@@ -178,19 +231,25 @@ export default function TidyUpScreen() {
             <CardRowsSkeleton rows={3} />
           </View>
         ) : allTidy ? (
-          <EmptyState
-            title="All tidy"
-            subtitle="Nothing looks off. Suu checks again whenever you open this."
-          />
+          <Glass radius={28} tone="strong" style={frost.hero}>
+            <Kicker icon="check">All tidy</Kicker>
+            {checklist}
+            <Text style={styles.intro}>Nothing looks off. Suu checks again whenever you open this.</Text>
+          </Glass>
         ) : (
           <>
-            <Text style={styles.intro}>
-              A few things that might not be what you meant. Each fix can be undone straight after.
-            </Text>
+            <Glass radius={28} tone="strong" style={frost.hero}>
+              <Kicker icon="wind">Tidy up</Kicker>
+              <Text style={styles.headline}>
+                {toLook} {toLook === 1 ? 'thing' : 'things'} might not be what you meant
+              </Text>
+              {checklist}
+              <Text style={styles.intro}>Each fix can be undone straight after.</Text>
+            </Glass>
 
             {report.repeats.length > 0 && (
               <Section title="Same entry twice?">
-                <View style={h.card}>
+                <View style={[h.card, GLASS_CARD]}>
                   {report.repeats.map((g, i) => (
                     <View key={g.key} style={[styles.item, i > 0 && h.divider]}>
                       <View style={styles.itemTop}>
@@ -235,7 +294,7 @@ export default function TidyUpScreen() {
 
             {report.startingBalances.length > 0 && (
               <Section title="Old balances logged as income">
-                <View style={h.card}>
+                <View style={[h.card, GLASS_CARD]}>
                   {report.startingBalances.map((g, i) => {
                     const one = g.ids.length === 1;
                     const when = one
@@ -256,6 +315,14 @@ export default function TidyUpScreen() {
                               {one ? ` in ${longMonth(g.firstDate)}` : ' across those months'}.
                             </Text>
                           </View>
+                        </View>
+                        <View style={styles.after}>
+                          <Feather name="bar-chart-2" size={13} color={theme.colors.textMuted} />
+                          <Text style={styles.afterText}>
+                            Income {one ? `in ${longMonth(g.firstDate)}` : 'across those months'}{' '}
+                            <Text style={styles.afterBold}>−{money(g.totalMinor, g.isSavings)}</Text> ·{' '}
+                            {g.accountName}'s balance <Text style={styles.afterBold}>stays the same</Text>
+                          </Text>
                         </View>
                         <View style={styles.actions}>
                           <PrimaryButton
@@ -281,7 +348,7 @@ export default function TidyUpScreen() {
 
             {report.fractionalCount > 0 && (
               <Section title="Amounts with paise">
-                <View style={h.card}>
+                <View style={[h.card, GLASS_CARD]}>
                   <View style={styles.item}>
                     <View style={styles.itemTop}>
                       <CategoryIcon name="calculator-variant-outline" color={accent} />
@@ -292,6 +359,13 @@ export default function TidyUpScreen() {
                         </Text>
                         <Text style={h.sub}>Rounding them makes totals line up with their parts.</Text>
                       </View>
+                    </View>
+                    <View style={styles.after}>
+                      <Feather name="hash" size={13} color={theme.colors.textMuted} />
+                      <Text style={styles.afterText}>
+                        Each goes to the <Text style={styles.afterBold}>nearest rupee</Text> · loan schedules
+                        stay as they are
+                      </Text>
                     </View>
                     <View style={styles.actions}>
                       <PrimaryButton
@@ -308,21 +382,43 @@ export default function TidyUpScreen() {
           </>
         )}
       </ReanimatedAnimated.ScrollView>
-      <SkyHeader collapse={collapse} title="Tidy up" showBack hideUser />
+      <SkyHeader collapse={collapse} title="Tidy up" showBack hideUser wallpaper />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
-  intro: {
-    fontFamily: theme.font.body,
-    fontSize: 13,
-    lineHeight: 19,
-    color: theme.colors.textSecondary,
-    marginHorizontal: 20,
-    marginTop: 8,
+  intro: { fontFamily: theme.font.body, fontSize: 13, lineHeight: 19, color: theme.colors.textSecondary },
+  headline: { fontFamily: theme.font.bodyBold, fontSize: 17, color: theme.colors.textPrimary },
+  checks: { gap: 2 },
+  check: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 36 },
+  checkMark: { width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  checkOk: { backgroundColor: theme.colors.incomeTint },
+  checkTodo: { backgroundColor: theme.colors.expenseTint },
+  checkLabel: { flex: 1, fontFamily: theme.font.bodyMedium, fontSize: 13.5, color: theme.colors.textPrimary },
+  checkFound: { fontFamily: theme.font.bodyMedium, fontSize: 12.5, color: theme.colors.textMuted },
+  // What a fix changes, on a brighter pane under the item.
+  after: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+    marginLeft: 50,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderRadius: 14,
+    backgroundColor: GLASS.fillStrong,
+    borderWidth: 1,
+    borderColor: GLASS.edge,
   },
+  afterText: {
+    flex: 1,
+    fontFamily: theme.font.body,
+    fontSize: 12.5,
+    lineHeight: 17,
+    color: theme.colors.textSecondary,
+  },
+  afterBold: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
   item: { paddingHorizontal: 14, paddingVertical: 12, gap: 10 },
   itemTop: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
   actions: { flexDirection: 'row', justifyContent: 'flex-end', gap: 8 },

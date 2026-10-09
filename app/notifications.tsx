@@ -23,7 +23,12 @@ import { useAccent } from '@/theme/AccentContext';
 import { Section } from '@/components/Section';
 import { screenStyles as h } from '@/components/screenStyles';
 import { NeedsYouRow } from '@/features/home/NeedsYouRow';
-import { NeedsYouItem } from '@/features/home/needsYou';
+import { NEEDS_TONE } from '@/features/home/needsTone';
+import { Glass, GLASS, GLASS_CARD } from '@/components/Glass';
+import { Kicker, frost } from '@/components/Frost';
+import { HomeWallpaper } from '@/features/home/HomeWallpaper';
+import { SuuIllustration } from '@/components/SuuIllustration';
+import { NeedsYouItem, NeedsYouTone } from '@/features/home/needsYou';
 import {
   loadNeedsYou,
   dismissNeedsYou,
@@ -36,15 +41,18 @@ import { errorMessage } from '@/lib/errorMessage';
 import { showAlert } from '@/components/AppDialog';
 import { payCardRoute } from '@/lib/payCard';
 
+const TONES: NeedsYouTone[] = ['urgent', 'warn', 'info'];
+
 /**
- * The bell's screen: the full list that Home's card shows the top three of, so both counts match. ✕ hides
- * an item until its situation changes (undoable, restorable). Suu's check-in is a line, not an alert.
+ * The bell's screen: the full list that Home's card shows the top three of, so both counts match. A glass card
+ * counts them by urgency, then the rows. ✕ hides an item until its situation changes (undoable, restorable).
+ * Suu's check-in is a speech bubble from Suu, not an alert.
  */
 export default function NeedsYouScreen() {
   const insets = useSafeAreaInsets();
   // The header sits over the page and shrinks as it scrolls.
   const { collapse, headerHeight, scrollHandler, scrollRef } = useCollapsingHeader();
-  const { dot } = useAccent();
+  const { accent, secondary } = useAccent();
   const { show: showUndo } = useUndoToast();
   const [shown, setShown] = useState<NeedsYouItem[] | null>(null);
   const [dismissed, setDismissed] = useState<NeedsYouItem[]>([]);
@@ -145,6 +153,7 @@ export default function NeedsYouScreen() {
 
   return (
     <View style={styles.container}>
+      <HomeWallpaper accent={accent} secondary={secondary} />
       <ReanimatedAnimated.ScrollView
         ref={scrollRef}
         onScroll={scrollHandler}
@@ -174,24 +183,48 @@ export default function NeedsYouScreen() {
             subtitle="Nothing needs you right now. Suu will say when something does."
           />
         ) : (
-          <View style={[h.card, styles.list]}>
-            {shown.map((item, i) => (
-              <NeedsYouRow
-                key={item.key}
-                item={item}
-                divider={i > 0}
-                onPress={() => open(item)}
-                onSnooze={() => void snooze(item)}
-                onDismiss={() => void dismiss(item)}
-              />
-            ))}
-          </View>
+          <>
+            <Glass radius={28} tone="strong" style={frost.hero}>
+              <Kicker icon="bell">Needs you</Kicker>
+              <View style={frost.bigRow}>
+                <Text style={frost.bigValue}>{shown.length}</Text>
+                <Text style={frost.bigNote}>{shown.length === 1 ? 'thing' : 'things'}</Text>
+              </View>
+              <View style={styles.tones}>
+                {TONES.map((t) => {
+                  const n = shown.filter((i) => i.tone === t).length;
+                  return n > 0 ? (
+                    <View key={t} style={styles.toneChip}>
+                      <View style={[styles.toneDot, { backgroundColor: NEEDS_TONE[t].color }]} />
+                      <Text style={styles.toneText}>
+                        {n} {NEEDS_TONE[t].label}
+                      </Text>
+                    </View>
+                  ) : null;
+                })}
+              </View>
+            </Glass>
+            <View style={[h.card, GLASS_CARD, styles.list]}>
+              {shown.map((item, i) => (
+                <NeedsYouRow
+                  key={item.key}
+                  item={item}
+                  divider={i > 0}
+                  onPress={() => open(item)}
+                  onSnooze={() => void snooze(item)}
+                  onDismiss={() => void dismiss(item)}
+                />
+              ))}
+            </View>
+          </>
         )}
 
         {suuLines.length > 0 && (
           <Section title="Suu says">
-            <View style={[h.card, styles.suu]}>
-              <View style={[styles.suuDot, { backgroundColor: dot }]} />
+            <View style={styles.suu}>
+              <View style={styles.suuFace}>
+                <SuuIllustration size={38} />
+              </View>
               <View style={styles.suuLines}>
                 {suuLines.map((line, i) => (
                   <Text key={`${i}:${line}`} style={styles.suuText}>
@@ -216,7 +249,7 @@ export default function NeedsYouScreen() {
               </Text>
             </Pressable>
             {showDismissed && (
-              <View style={[h.card, styles.dismissedList]}>
+              <View style={[h.card, GLASS_CARD, styles.dismissedList]}>
                 {dismissed.map((item, i) => (
                   <NeedsYouRow
                     key={item.key}
@@ -247,6 +280,7 @@ export default function NeedsYouScreen() {
         title="Needs you"
         showBack
         hideUser
+        wallpaper
       />
     </View>
   );
@@ -254,7 +288,7 @@ export default function NeedsYouScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
-  list: { marginTop: theme.layout.screenTopGap },
+  list: { marginTop: 12 },
   errorBanner: {
     marginHorizontal: 20,
     marginTop: theme.layout.screenTopGap,
@@ -273,16 +307,51 @@ const styles = StyleSheet.create({
     marginTop: 3,
     lineHeight: 16,
   },
-  suu: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, padding: 14 },
-  suuDot: { width: 8, height: 8, borderRadius: 4, marginTop: 6 },
-  suuLines: { flex: 1, gap: 8 },
+  tones: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  toneChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    height: 28,
+    paddingHorizontal: 11,
+    borderRadius: theme.radius.pill,
+    backgroundColor: GLASS.fillStrong,
+    borderWidth: 1,
+    borderColor: GLASS.edge,
+  },
+  toneDot: { width: 8, height: 8, borderRadius: 4 },
+  toneText: { fontFamily: theme.font.bodyBold, fontSize: 12.5, color: theme.colors.textPrimary },
+  // Suu, then its lines in a bubble whose corner points back at it.
+  suu: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, marginHorizontal: 20 },
+  suuFace: { width: 38, height: 38 },
+  suuLines: {
+    flex: 1,
+    gap: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderRadius: 20,
+    borderTopLeftRadius: 4,
+    backgroundColor: GLASS.fillStrong,
+    borderWidth: 1,
+    borderColor: GLASS.edge,
+    boxShadow: GLASS.shadow,
+  },
   suuText: {
     fontFamily: theme.font.body,
     fontSize: 13,
     lineHeight: 19,
     color: theme.colors.textSecondary,
   },
-  dismissedToggle: { alignSelf: 'center', marginTop: 20, paddingHorizontal: 14, paddingVertical: 8 },
+  dismissedToggle: {
+    alignSelf: 'center',
+    marginTop: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 9,
+    borderRadius: theme.radius.pill,
+    backgroundColor: GLASS.fill,
+    borderWidth: 1,
+    borderColor: GLASS.edge,
+  },
   dismissedToggleText: {
     fontFamily: theme.font.bodyMedium,
     fontSize: 12.5,
