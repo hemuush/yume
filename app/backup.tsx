@@ -4,7 +4,6 @@ import { Text } from '@/components/Text';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from '@expo/vector-icons/Feather';
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import * as DocumentPicker from 'expo-document-picker';
@@ -47,7 +46,9 @@ import {
 import { resyncAfterRestore } from '@/lib/restoreSync';
 import { authenticate, withoutRelock } from '@/lib/appLock';
 import { SkyHeader, HeaderSummary } from '@/features/home/SkyHeader';
-import { StripCard } from '@/components/StripCard';
+import { Glass, GLASS_CARD } from '@/components/Glass';
+import { HomeWallpaper } from '@/features/home/HomeWallpaper';
+import { BackupShield } from '@/features/backup/BackupShield';
 import { shade } from '@/lib/color';
 import ReanimatedAnimated from 'react-native-reanimated';
 import { useCollapsingHeader } from '@/lib/useCollapsingHeader';
@@ -56,7 +57,7 @@ import { SegmentedControl } from '@/components/SegmentedControl';
 import { Skeleton } from '@/components/Skeleton';
 import { theme } from '@/constants/theme';
 import { errorMessage } from '@/lib/errorMessage';
-import { screenStyles as h, SCREEN } from '@/components/screenStyles';
+import { screenStyles as h } from '@/components/screenStyles';
 import { SettingsRow } from '@/components/SettingsRow';
 import { withPressed } from '@/lib/pressed';
 import { useScreenLoad } from '@/lib/useScreenLoad';
@@ -110,7 +111,7 @@ async function shareTempFile(
 export default function BackupScreen() {
   const { lockEnabled } = useAppLock();
   const insets = useSafeAreaInsets();
-  const { accent } = useAccent();
+  const { accent, secondary } = useAccent();
   // The header sits over the page and shrinks as it scrolls.
   const { collapse, headerHeight, scrollHandler, scrollRef } = useCollapsingHeader();
   const [localFolderUri, setLocalFolderUri] = useState<string | null>(null);
@@ -394,6 +395,7 @@ Restore anyway? Your current data would be replaced with no way back.`,
 
   return (
     <View style={styles.container}>
+      <HomeWallpaper accent={accent} secondary={secondary} />
       <ReanimatedAnimated.ScrollView
         ref={scrollRef}
         onScroll={scrollHandler}
@@ -409,8 +411,8 @@ Restore anyway? Your current data would be replaced with no way back.`,
             <Text style={listScreenStyles.errorDetail}>{loadError}</Text>
           </View>
         )}
-        {/* White, with a strip in the status's colour (green when safe, gold or coral when it needs you). */}
-        <StripCard tone={shade(status.tint, 72)} style={styles.statusCard}>
+        {/* Glass, with a shield in the status's colour (green when safe, amber or red when it needs you). */}
+        <Glass radius={28} tone="strong" style={styles.statusCard}>
           {!loaded ? (
             <>
               <Skeleton width={200} height={16} radius={4} />
@@ -420,13 +422,7 @@ Restore anyway? Your current data would be replaced with no way back.`,
           ) : (
             <>
               <View style={styles.statusHead}>
-                <View style={[h.iconTile, { backgroundColor: status.tint }]}>
-                  <MaterialCommunityIcons
-                    name={status.icon}
-                    size={SCREEN.iconGlyph}
-                    color={theme.colors.ink}
-                  />
-                </View>
+                <BackupShield icon={status.icon} tone={status.tone} />
                 <View style={h.mid}>
                   <Text style={styles.statusTitle}>{status.title}</Text>
                   {status.lines.map((line) => (
@@ -472,10 +468,10 @@ Restore anyway? Your current data would be replaced with no way back.`,
               </View>
             </>
           )}
-        </StripCard>
+        </Glass>
 
         <View style={styles.tabs}>
-          <SegmentedControl options={TABS} value={tab} onChange={setTab} />
+          <SegmentedControl options={TABS} value={tab} onChange={setTab} onBand />
         </View>
 
         {tab === 'points' ? (
@@ -495,7 +491,7 @@ Restore anyway? Your current data would be replaced with no way back.`,
               )}
             </View>
             {(safetyInfo || shownFiles.length > 0) && (
-              <View style={[h.card, styles.timeline]}>
+              <View style={[h.card, GLASS_CARD, styles.timeline]}>
                 {safetyInfo && (
                   <TimelineNode first last={shownFiles.length === 0} copy>
                     <View style={h.mid}>
@@ -554,7 +550,7 @@ Restore anyway? Your current data would be replaced with no way back.`,
               </View>
             )}
             {loaded && shownFiles.length === 0 && (
-              <View style={[h.card, styles.emptyCard, safetyInfo && styles.emptyAfter]}>
+              <View style={[h.card, GLASS_CARD, styles.emptyCard, safetyInfo && styles.emptyAfter]}>
                 <Text style={styles.emptyTitle}>No backups yet</Text>
                 <Text style={styles.emptySub}>
                   {hasFolder
@@ -563,7 +559,7 @@ Restore anyway? Your current data would be replaced with no way back.`,
                 </Text>
               </View>
             )}
-            <View style={[h.card, styles.restoreFile]}>
+            <View style={[h.card, GLASS_CARD, styles.restoreFile]}>
               <SettingsRow
                 icon="file-restore-outline"
                 label="Restore from file"
@@ -576,7 +572,7 @@ Restore anyway? Your current data would be replaced with no way back.`,
         ) : (
           <>
             <Text style={styles.sectionTitle}>Save a copy</Text>
-            <View style={h.card}>
+            <View style={[h.card, GLASS_CARD]}>
               <SettingsRow
                 icon="code-json"
                 label="Full backup (JSON)"
@@ -611,6 +607,7 @@ Restore anyway? Your current data would be replaced with no way back.`,
         title="Backup & restore"
         showBack
         hideUser
+        wallpaper
       />
       <RestorePreviewSheet
         preview={pending?.preview ?? null}

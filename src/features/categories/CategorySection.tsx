@@ -49,6 +49,7 @@ export function CategoryTile({
           color={category.color}
           square={isSubcategory ? 42 : 50}
           size={isSubcategory ? 18 : 22}
+          round
         />
         {!!count && (
           <View style={styles.tileBadge}>

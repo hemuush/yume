@@ -20,7 +20,15 @@ export function formatWhen(iso: string): string {
   });
 }
 
-export type StatusView = { icon: McIconName; tint: string; title: string; lines: string[]; failed: boolean };
+export type StatusView = {
+  icon: McIconName;
+  tint: string;
+  /** The shield's colour: backed up, failed, or waiting on a folder or a first backup. */
+  tone: 'ok' | 'failed' | 'waiting';
+  title: string;
+  lines: string[];
+  failed: boolean;
+};
 
 /** What the status card says: whether you are backed up, when, and what is next. */
 export function backupStatus({
@@ -40,6 +48,7 @@ export function backupStatus({
     return {
       icon: 'folder-outline',
       tint: theme.colors.idGold,
+      tone: 'waiting',
       title: 'No backup folder yet',
       lines: ['Pick a folder once. Yume writes a backup there on its own.'],
       failed: false,
@@ -49,6 +58,7 @@ export function backupStatus({
     return {
       icon: 'alert-circle-outline',
       tint: theme.colors.idCoral,
+      tone: 'failed',
       title: 'Last backup failed',
       lines: [outcome.error || "Couldn't write to the folder. Check that it still exists."],
       failed: true,
@@ -58,6 +68,7 @@ export function backupStatus({
     return {
       icon: 'clock-outline',
       tint: theme.colors.idGold,
+      tone: 'waiting',
       title: 'Not backed up yet',
       lines: ['Tap Back up now to write the first one.'],
       failed: false,
@@ -69,6 +80,7 @@ export function backupStatus({
   return {
     icon: 'shield-check-outline',
     tint: theme.colors.idSage,
+    tone: 'ok',
     title: today
       ? 'Backed up today'
       : `Backed up ${new Date(lastAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}`,

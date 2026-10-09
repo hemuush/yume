@@ -35,6 +35,9 @@ import { theme } from '@/constants/theme';
 import { Section } from '@/components/Section';
 import { screenStyles as h } from '@/components/screenStyles';
 import { styles } from './profile.styles';
+import { SafetyCheck } from './SafetyCheck';
+import { GLASS_CARD } from '@/components/Glass';
+import { softTint } from '@/components/softTint';
 import { errorMessage } from '@/lib/errorMessage';
 import type { McIconName } from '@/components/iconName';
 import { withPressed } from '@/lib/pressed';
@@ -48,6 +51,8 @@ export function daysAgoLabel(iso: string, now: Date = new Date()): string {
   if (days === 1) return 'yesterday';
   return `${days} days ago`;
 }
+
+const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 /** Runs one settings read, resolving null instead of rejecting so a single failure can't blank the screen. */
 async function orNull<T>(read: () => Promise<T>): Promise<T | null> {
@@ -78,8 +83,9 @@ function AboutFact({ icon, text }: { icon: string; text: string }) {
 }
 
 /**
- * Settings tab, ordered by how often each group is touched: Money, Privacy & alerts, Your data, Appearance,
- * About. A coral note tops it only while backups need attention; otherwise rows' sub-lines carry every state.
+ * Settings tab: the safety check (backup, unlock, notifications at a glance), then the groups in order of how
+ * often each is touched: Money, Privacy & alerts, Your data, Appearance, About. Glass cards on the wallpaper,
+ * each row with its icon on a soft tint.
  */
 export function SettingsSection() {
   const { themeId } = useAccent();
@@ -223,36 +229,31 @@ export function SettingsSection() {
 
   return (
     <>
-      {backupLoaded && !backupOk && (
-        <Pressable
-          style={withPressed(styles.nudge)}
-          onPress={() => router.push('/backup')}
-          accessibilityRole="button"
-          accessibilityLabel={`${lastBackupFailed ? 'Backup failed' : 'No backup yet'}. ${
-            lastBackupFailed ? 'Tap to check' : 'Set one up'
-          }`}
-        >
-          <View style={styles.nudgeIcon}>
-            <MaterialCommunityIcons name="alert-outline" size={18} color={theme.colors.ink} />
-          </View>
-          <View style={h.mid}>
-            <Text style={h.title}>{lastBackupFailed ? 'Backup failed' : 'No backup yet'}</Text>
-            <Text style={styles.nudgeSub}>
-              {lastBackupFailed
-                ? "The last attempt didn't finish."
-                : 'Save a copy of your data to a folder on this phone.'}
-            </Text>
-          </View>
-          <View style={styles.nudgePill}>
-            <Text style={styles.nudgePillText}>{lastBackupFailed ? 'Check' : 'Set up'}</Text>
-          </View>
-        </Pressable>
+      {backupLoaded && (
+        <SafetyCheck
+          backup={backupOk ? 'ok' : lastBackupFailed ? 'failed' : 'never'}
+          backupSub={
+            lastBackupFailed
+              ? 'Failed · tap to check'
+              : lastBackupAt
+                ? capitalize(daysAgoLabel(lastBackupAt))
+                : 'Never backed up'
+          }
+          lockOn={lockEnabled}
+          alertsOn={alertsOn}
+          alertsTotal={ALERT_KEYS.length}
+          onBackup={() => router.push('/backup')}
+          onToggleLock={() => onToggleLock(!lockEnabled)}
+          onNotifications={() => router.push('/notification-settings')}
+        />
       )}
 
       <Section title="Money">
-        <View style={h.card}>
+        <View style={[h.card, GLASS_CARD]}>
           <SettingsRow
             icon="currency-inr"
+            iconBg={softTint(theme.colors.slice.free, 0.35)}
+            round
             label="Default currency"
             sub="New accounts and displayed amounts"
             value={currency}
@@ -286,6 +287,8 @@ export function SettingsSection() {
           <MovingRow>
             <SettingsRow
               icon="gauge"
+              iconBg={softTint(theme.colors.slice.due, 0.35)}
+              round
               label="Daily spending goal"
               sub="Shown on Home each day"
               value={dailyGoal != null ? `${formatMoney(dailyGoal, currency)}/day` : 'Not set'}
@@ -325,6 +328,8 @@ export function SettingsSection() {
           <MovingRow>
             <SettingsRow
               icon="tag-outline"
+              iconBg={softTint(theme.colors.slice.spent, 0.35)}
+              round
               label="Categories"
               sub="Add, rename, or archive"
               onPress={() => router.push('/categories')}
@@ -335,15 +340,19 @@ export function SettingsSection() {
       </Section>
 
       <Section title="Privacy & alerts">
-        <View style={h.card}>
+        <View style={[h.card, GLASS_CARD]}>
           <SettingsRow
             icon="fingerprint"
+            iconBg={softTint(theme.colors.slice.saved, 0.35)}
+            round
             label="Require unlock"
             sub="Fingerprint, face, or your phone's PIN"
             right={<ToggleSwitch value={lockEnabled} onChange={onToggleLock} />}
           />
           <SettingsRow
             icon="eye-off-outline"
+            iconBg={softTint(theme.colors.slice.debt, 0.35)}
+            round
             label="Hide savings & investment amounts"
             sub="Also on the eye icon at the top"
             right={<ToggleSwitch value={hideAmounts} onChange={toggleHideAmounts} />}
@@ -351,6 +360,8 @@ export function SettingsSection() {
           />
           <SettingsRow
             icon="bell-outline"
+            iconBg={softTint(theme.colors.slice.free, 0.35)}
+            round
             label="Notifications"
             sub={
               alertsOn == null
@@ -364,9 +375,11 @@ export function SettingsSection() {
       </Section>
 
       <Section title="Your data">
-        <View style={h.card}>
+        <View style={[h.card, GLASS_CARD]}>
           <SettingsRow
             icon="folder-outline"
+            iconBg={softTint(theme.colors.slice.free, 0.35)}
+            round
             label="Backup & restore"
             sub={backupSub}
             subColor={backupOk ? undefined : theme.colors.expenseText}
@@ -374,6 +387,8 @@ export function SettingsSection() {
           />
           <SettingsRow
             icon="delete-restore"
+            iconBg={softTint(theme.colors.slice.spent, 0.35)}
+            round
             label="Recently deleted"
             sub={
               deletedCount == null || deletedCount === 0
@@ -385,6 +400,8 @@ export function SettingsSection() {
           />
           <SettingsRow
             icon="broom"
+            iconBg={softTint(theme.colors.slice.due, 0.35)}
+            round
             label="Tidy up"
             sub={
               tidyCount == null
@@ -403,7 +420,7 @@ export function SettingsSection() {
       <Section title="Appearance">
         <Pressable
           onPress={() => router.push('/themes')}
-          style={withPressed([h.card, h.row])}
+          style={withPressed([h.card, GLASS_CARD, h.row])}
           accessibilityRole="button"
           accessibilityLabel={`Theme: ${activeTheme.name}. Change theme`}
         >
@@ -438,7 +455,7 @@ export function SettingsSection() {
       </View>
       {aboutOpen && (
         <ReanimatedAnimated.View entering={PANEL_ENTER} exiting={ROW_EXIT}>
-          <View style={[h.card, styles.aboutCard]}>
+          <View style={[h.card, GLASS_CARD, styles.aboutCard]}>
             <Text style={styles.aboutTagline}>Track every rupee, on your terms.</Text>
             <View style={styles.aboutFacts}>
               <AboutFact icon="wifi-off" text="Works fully offline — no account, no server, no signup." />

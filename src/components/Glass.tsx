@@ -33,3 +33,14 @@ export function Glass({
 const styles = StyleSheet.create({
   glass: { borderWidth: 1, borderColor: GLASS.edge, boxShadow: GLASS.shadow },
 });
+
+/** A screen card (`screenStyles.card`) turned to glass: put it after the card style. */
+export const GLASS_CARD = StyleSheet.create({
+  card: {
+    backgroundColor: GLASS.fill,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: GLASS.edge,
+    boxShadow: GLASS.shadow,
+  },
+}).card;
