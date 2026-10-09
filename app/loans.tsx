@@ -22,8 +22,10 @@ import { useScreenLoad } from '@/lib/useScreenLoad';
 import { styles } from '@/features/loans/loans.styles';
 import { LoanCard } from '@/features/loans/LoanCard';
 import { LoanDetailModal } from '@/features/loans/LoanDetailModal';
+import { HomeWallpaper } from '@/features/home/HomeWallpaper';
+import { useAccent } from '@/theme/AccentContext';
+import { Glass } from '@/components/Glass';
 import { LoansHero } from '@/features/loans/LoansHero';
-import { LoanTimeline } from '@/features/loans/LoanTimeline';
 import { loanHues } from '@/features/loans/loanIdentity';
 import { debtShares, summarizeLoans } from '@/features/loans/loanTotals';
 import { buildTimeline } from '@/features/loans/timelineLayout';
@@ -42,6 +44,7 @@ const listTitle = {
 
 export default function LoansScreen() {
   const insets = useSafeAreaInsets();
+  const { accent, secondary } = useAccent();
   // The header sits over the page and shrinks as it scrolls.
   const { collapse, headerHeight, scrollHandler, scrollRef } = useCollapsingHeader();
   const [loans, setLoans] = useState<Loan[]>([]);
@@ -96,6 +99,7 @@ export default function LoansScreen() {
 
   return (
     <View style={styles.container}>
+      <HomeWallpaper accent={accent} secondary={secondary} />
       <ReanimatedAnimated.ScrollView
         ref={scrollRef}
         onScroll={scrollHandler}
@@ -111,14 +115,14 @@ export default function LoansScreen() {
             <Text style={styles.errorDetail}>{loadError}</Text>
           </View>
         )}
-        <LoansHero totals={totals} shares={shares} hues={hues} loading={loading} />
+        <LoansHero totals={totals} shares={shares} hues={hues} timeline={timeline} loading={loading} />
         {loading ? (
           [0, 1].map((i) => (
-            <View key={i} style={[styles.card, { backgroundColor: theme.colors.surface }]}>
+            <Glass key={i} style={styles.card}>
               <Skeleton width={140} height={14} radius={4} />
               <Skeleton width={100} height={10} radius={4} style={{ marginTop: 8 }} />
               <Skeleton width={220} height={6} radius={3} style={{ marginTop: 12 }} />
-            </View>
+            </Glass>
           ))
         ) : loans.length === 0 ? (
           <EmptyState title="No loans yet" subtitle="Add one and Yume works out the EMI schedule for you.">
@@ -139,7 +143,6 @@ export default function LoansScreen() {
                 />
               </MovingRow>
             ))}
-            {timeline && timeline.rows.length > 1 && <LoanTimeline timeline={timeline} hues={hues} />}
             {closedLoans.length > 0 && (
               <>
                 <Pressable
@@ -187,6 +190,7 @@ export default function LoansScreen() {
         title="Loans"
         showBack
         hideUser
+        wallpaper
         actions={<AddButton onPress={() => setModalVisible(true)} label="+ Loan" />}
       />
 

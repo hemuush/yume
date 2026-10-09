@@ -1,95 +1,56 @@
-import { View, StyleSheet } from 'react-native';
+import { View } from 'react-native';
 import { Text } from '@/components/Text';
 import { CountUpAmount } from '@/components/CountUpAmount';
-import { GrowFill } from '@/components/GrowFill';
+import { Glass } from '@/components/Glass';
+import { Kicker, PaceBar, frost } from '@/components/Frost';
 import { theme } from '@/constants/theme';
-import { SCREEN } from '@/components/screenStyles';
-import { EYEBROW } from '@/constants/textStyles';
-import { StripCard, KickerDot } from '@/components/StripCard';
 import { formatMoney, formatMaskableMoney } from '@/lib/money';
 import { usePrivacy } from '@/theme/PrivacyContext';
 import type { GoalsTotals } from './goalPlan';
 
 /**
- * First block on Savings goals: total saved across active goals and what they need monthly to finish on
- * time. With savings amounts hidden, figures and progress are withheld, as on each goal card.
+ * First card on Savings goals: total saved across active goals, the share of their targets, and what they
+ * need monthly to finish on time. With savings amounts hidden, figures and progress are withheld, as on
+ * each goal card.
  */
 export function GoalsHero({ totals }: { totals: GoalsTotals }) {
   const { hideAmounts } = usePrivacy();
   return (
-    <StripCard tone={theme.colors.slice.saved} style={styles.card}>
-      <View style={styles.head}>
-        <View style={styles.headText}>
-          <View style={styles.kickerRow}>
-            <KickerDot color={theme.colors.secondaryDeep} />
-            <Text style={styles.kicker}>Saved toward goals</Text>
-          </View>
+    <Glass radius={28} tone="strong" style={[frost.hero, { marginTop: 0, marginBottom: 12 }]}>
+      <View style={frost.heroRow}>
+        <View style={frost.heroMain}>
+          <Kicker icon="flag">Saved toward goals</Kicker>
           {hideAmounts ? (
-            <Text style={styles.amount}>{formatMaskableMoney(totals.savedMinor, { masked: true })}</Text>
+            <Text style={frost.bigValue}>{formatMaskableMoney(totals.savedMinor, { masked: true })}</Text>
           ) : (
             <CountUpAmount
               minor={totals.savedMinor}
               countFromZero={false}
-              style={styles.amount}
+              symbolStyle={frost.bigSymbol}
+              style={frost.bigValue}
               numberOfLines={1}
               adjustsFontSizeToFit
             />
           )}
         </View>
         {!hideAmounts && (
-          <View style={styles.side}>
-            <Text style={styles.sideLabel}>Saved</Text>
-            <Text style={styles.sideValue}>{Math.round(totals.percent)}%</Text>
+          <View style={frost.side}>
+            <Text style={frost.sideLabel}>Saved</Text>
+            <Text style={frost.sideValue}>{Math.round(totals.percent)}%</Text>
           </View>
         )}
       </View>
-      {!hideAmounts && (
-        <View style={styles.track}>
-          <GrowFill animKey="goals:hero" pct={totals.percent} style={styles.fill} />
-        </View>
-      )}
-      <Text style={styles.sub}>
-        of {formatMoney(totals.targetMinor)} · {totals.goalCount} {totals.goalCount === 1 ? 'goal' : 'goals'}
+      {!hideAmounts && <PaceBar animKey="goals:hero" pct={totals.percent} color={theme.colors.slice.saved} />}
+      <Text style={frost.sub}>
+        of <Text style={frost.subBold}>{formatMoney(totals.targetMinor)}</Text> · {totals.goalCount}{' '}
+        {totals.goalCount === 1 ? 'goal' : 'goals'}
         {!hideAmounts && totals.perMonthMinor > 0 && (
           <>
             {' · '}
-            <Text style={styles.subBold}>{formatMoney(totals.perMonthMinor)}</Text> a month to stay on pace
+            <Text style={frost.subBold}>{formatMoney(totals.perMonthMinor)}</Text> a month to stay on pace
           </>
         )}
       </Text>
-    </StripCard>
+    </Glass>
   );
 }
-
-const styles = StyleSheet.create({
-  card: {
-    marginHorizontal: 20,
-    marginBottom: SCREEN.cardStack,
-    paddingTop: SCREEN.heroPadTop,
-    paddingBottom: SCREEN.cardPad,
-    paddingHorizontal: 16,
-  },
-  kickerRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  head: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
-  headText: { flex: 1, minWidth: 0 },
-  kicker: { ...EYEBROW, color: theme.colors.textSecondary },
-  amount: { fontFamily: theme.font.monoBold, fontSize: 28, color: theme.colors.textPrimary, marginTop: 2 },
-  side: { alignItems: 'flex-end', flexShrink: 0 },
-  sideLabel: { ...EYEBROW, color: theme.colors.textSecondary },
-  sideValue: {
-    fontFamily: theme.font.roundedBold,
-    fontSize: 17,
-    color: theme.colors.textPrimary,
-    marginTop: 2,
-  },
-  track: {
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: theme.colors.divider,
-    marginTop: 10,
-    overflow: 'hidden',
-  },
-  fill: { height: '100%', borderRadius: 4, backgroundColor: theme.colors.slice.saved },
-  sub: { fontFamily: theme.font.body, fontSize: 12.5, color: theme.colors.textSecondary, marginTop: 8 },
-  subBold: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
-});

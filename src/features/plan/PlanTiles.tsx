@@ -10,66 +10,16 @@ import { hueFor } from '@/lib/hueFor';
 import { compactMoney } from '@/lib/compactMoney';
 import { HabitState, PeopleState } from './planOverview';
 import { styles } from './plan.styles';
+import { Kicker } from '@/components/Frost';
+
+export { Kicker, FrostChip as PlanChip } from '@/components/Frost';
 
 /**
  * Plan's small pieces: a card's topic (icon disc + name), the chips under a figure, and the Friends and
  * Spend streak tiles. Colour is kept for figures that mean something (green money back, red over).
  */
 
-type FeatherName = React.ComponentProps<typeof Feather>['name'];
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
-
-/** A card's topic: its icon on a small frosted disc, then the name. */
-export function Kicker({
-  icon,
-  inTile,
-  children,
-}: {
-  icon: FeatherName | React.ReactElement;
-  /** In a tile: leaves room for the ↗ in its corner. */
-  inTile?: boolean;
-  children: React.ReactNode;
-}) {
-  return (
-    <View style={[styles.kickerRow, inTile && styles.kickerInTile]}>
-      <View style={styles.kickerBadge}>
-        {typeof icon === 'string' ? <Feather name={icon} size={14} color={theme.colors.ink} /> : icon}
-      </View>
-      <Text style={styles.kicker} numberOfLines={1}>
-        {children}
-      </Text>
-    </View>
-  );
-}
-
-/** A small outlined chip: neutral, or green / red when it carries good or bad news. */
-export function PlanChip({
-  icon,
-  tone,
-  children,
-}: {
-  icon?: FeatherName;
-  tone?: 'ok' | 'bad';
-  children: React.ReactNode;
-}) {
-  const color =
-    tone === 'ok'
-      ? theme.colors.incomeText
-      : tone === 'bad'
-        ? theme.colors.expenseText
-        : theme.colors.textSecondary;
-  return (
-    <View style={[styles.chip, tone === 'ok' && styles.chipOk, tone === 'bad' && styles.chipBad]}>
-      {icon && <Feather name={icon} size={13} color={color} />}
-      <Text
-        style={[styles.chipText, tone === 'ok' && styles.chipOkText, tone === 'bad' && styles.chipBadText]}
-        numberOfLines={1}
-      >
-        {children}
-      </Text>
-    </View>
-  );
-}
 
 /** A tappable glass tile that shrinks a touch when pressed. */
 export function PlanTile({

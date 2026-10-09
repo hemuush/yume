@@ -43,7 +43,9 @@ describe('GoalCard', () => {
   it('shows what is left and the saved share', () => {
     const t = texts(render(goal())).join(' | ');
     expect(t).toContain('to go');
-    expect(t).toContain('81%');
+    // The share is a big figure with a smaller % beside it.
+    expect(t).toMatch(/(^| )81[^0-9]/);
+    expect(t).toContain(' % ');
     expect(t).toContain('Add money');
   });
 
@@ -57,6 +59,16 @@ describe('GoalCard', () => {
     const t = texts(render(goal({ targetDate: '2026-01-31' }))).join(' | ');
     expect(t).toContain('Past its target date');
     expect(t).toContain('Behind');
+  });
+
+  it('fills the card to the saved share', () => {
+    const fills = (tree: ReturnType<typeof render>) =>
+      tree.root.findAll(
+        (n) =>
+          typeof n.type === 'string' &&
+          [].concat(n.props.style ?? []).some((x: { height?: string }) => x?.height === '81%')
+      );
+    expect(fills(render(goal())).length).toBeGreaterThan(0);
   });
 
   it('offers no way to add money to an archived goal', () => {

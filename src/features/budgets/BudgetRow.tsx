@@ -14,6 +14,29 @@ import { withPressed } from '@/lib/pressed';
 import { categorySentence, inParent } from '@/lib/categoryLabel';
 import { useCardGrow } from '@/lib/cardGrow';
 import { useToday } from './useToday';
+import { softTint } from '@/components/softTint';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import type { McIconName } from '@/components/iconName';
+
+/** A small glass jar filled to `pct` (0–100) in `color`, the category's icon near the top: Plan's jars, up close. */
+function MiniJar({ icon, pct, color }: { icon: string; pct: number; color: string }) {
+  return (
+    <View style={styles.jar} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+      <View style={styles.jarIcon}>
+        <MaterialCommunityIcons name={icon as McIconName} size={13} color={theme.colors.textSecondary} />
+      </View>
+      {pct > 0 && (
+        <View
+          style={[
+            styles.jarLiquid,
+            pct >= 98 && styles.jarLiquidFull,
+            { height: `${pct}%`, backgroundColor: color },
+          ]}
+        />
+      )}
+    </View>
+  );
+}
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -28,6 +51,7 @@ export function BudgetRow({
   onMore,
   showPerDay,
   grow,
+  jar,
 }: {
   progress: BudgetProgress;
   divider: boolean;
@@ -36,6 +60,8 @@ export function BudgetRow({
   showPerDay?: boolean;
   /** The page it opens expands out of this row (the caller marks that push with `growHref`). */
   grow?: boolean;
+  /** Budgets' own list: the category as a small jar filled to what's used, in place of the icon and bar. */
+  jar?: boolean;
 }) {
   const { ref, growFrom } = useCardGrow();
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.98);
@@ -60,6 +86,54 @@ export function BudgetRow({
       : `${formatMoney(progress.remainingMinor)} left`,
   ].join(', ');
 
+  const name = (
+    <View style={styles.rowNameBlock}>
+      <Text style={styles.rowName} numberOfLines={1}>
+        {progress.categoryName}
+      </Text>
+      {!!progress.parentName && (
+        <Text style={styles.rowParent} numberOfLines={1}>
+          {inParent(progress.parentName)}
+        </Text>
+      )}
+    </View>
+  );
+  const amount = (
+    <Text style={styles.rowAmount}>
+      <Text style={progress.overBudget ? styles.rowAmountOver : undefined}>
+        {formatMoney(progress.spentMinor)}
+      </Text>
+      <Text style={styles.rowAmountOf}> / {formatMoney(progress.effectiveLimitMinor)}</Text>
+    </Text>
+  );
+  const more = onMore && (
+    <Pressable
+      onPress={onMore}
+      hitSlop={10}
+      style={withPressed(styles.moreBtn)}
+      accessibilityRole="button"
+      accessibilityLabel={`More for ${categorySentence(progress.categoryName, progress.parentName)} budget`}
+    >
+      <Feather name="more-horizontal" size={16} color={theme.colors.textSecondary} />
+    </Pressable>
+  );
+  const foot = (
+    <View style={styles.rowFoot}>
+      <Text style={[styles.rowNote, progress.overBudget && styles.rowNoteOver]}>
+        {progress.overBudget
+          ? `${formatMoney(Math.abs(progress.remainingMinor))} over budget`
+          : perDayMinor != null
+            ? `${formatMoney(progress.remainingMinor)} left · ${formatMoney(perDayMinor)} a day`
+            : `${formatMoney(progress.remainingMinor)} left this month`}
+      </Text>
+      {pace && !progress.overBudget && (
+        <Text style={[styles.rowPace, pace.state === 'ahead' && styles.rowPaceAhead]}>
+          {BUDGET_PACE_LABEL[pace.state]}
+        </Text>
+      )}
+    </View>
+  );
+
   return (
     <AnimatedPressable
       ref={ref}
@@ -73,56 +147,46 @@ export function BudgetRow({
       accessibilityLabel={rowLabel}
       accessibilityHint={onMore ? 'Press and hold for more options' : undefined}
     >
-      <View style={styles.rowTop}>
-        <CategoryIcon name={progress.categoryIcon} color={progress.categoryColor} square={38} size={17} />
-        <View style={styles.rowNameBlock}>
-          <Text style={styles.rowName} numberOfLines={1}>
-            {progress.categoryName}
-          </Text>
-          {!!progress.parentName && (
-            <Text style={styles.rowParent} numberOfLines={1}>
-              {inParent(progress.parentName)}
-            </Text>
-          )}
+      {jar ? (
+        // Budgets' list: the jar on the left, name and figures beside it, the note under the name.
+        <View style={styles.jarRow}>
+          <MiniJar
+            icon={progress.categoryIcon}
+            pct={barPct}
+            color={
+              tone === 'over'
+                ? theme.colors.slice.spent
+                : tone === 'near'
+                  ? theme.colors.slice.due
+                  : softTint(progress.categoryColor, 0.75)
+            }
+          />
+          <View style={styles.rowNameBlock}>
+            <View style={styles.rowTopJar}>
+              {name}
+              {amount}
+              {more}
+            </View>
+            {foot}
+          </View>
         </View>
-        <Text style={styles.rowAmount}>
-          <Text style={progress.overBudget ? styles.rowAmountOver : undefined}>
-            {formatMoney(progress.spentMinor)}
-          </Text>
-          <Text style={styles.rowAmountOf}> / {formatMoney(progress.effectiveLimitMinor)}</Text>
-        </Text>
-        {onMore && (
-          <Pressable
-            onPress={onMore}
-            hitSlop={10}
-            style={withPressed(styles.moreBtn)}
-            accessibilityRole="button"
-            accessibilityLabel={`More for ${categorySentence(progress.categoryName, progress.parentName)} budget`}
-          >
-            <Feather name="more-horizontal" size={16} color={theme.colors.textSecondary} />
-          </Pressable>
-        )}
-      </View>
-      <LimitMeter
-        pct={barPct}
-        tone={tone}
-        marker={pace ? pace.expectedFraction * 100 : undefined}
-        animKey={`budget:${progress.budget.id}`}
-      />
-      <View style={styles.rowFoot}>
-        <Text style={[styles.rowNote, progress.overBudget && styles.rowNoteOver]}>
-          {progress.overBudget
-            ? `${formatMoney(Math.abs(progress.remainingMinor))} over budget`
-            : perDayMinor != null
-              ? `${formatMoney(progress.remainingMinor)} left · ${formatMoney(perDayMinor)} a day`
-              : `${formatMoney(progress.remainingMinor)} left this month`}
-        </Text>
-        {pace && !progress.overBudget && (
-          <Text style={[styles.rowPace, pace.state === 'ahead' && styles.rowPaceAhead]}>
-            {BUDGET_PACE_LABEL[pace.state]}
-          </Text>
-        )}
-      </View>
+      ) : (
+        <>
+          <View style={styles.rowTop}>
+            <CategoryIcon name={progress.categoryIcon} color={progress.categoryColor} square={38} size={17} />
+            {name}
+            {amount}
+            {more}
+          </View>
+          <LimitMeter
+            pct={barPct}
+            tone={tone}
+            marker={pace ? pace.expectedFraction * 100 : undefined}
+            animKey={`budget:${progress.budget.id}`}
+          />
+          {foot}
+        </>
+      )}
     </AnimatedPressable>
   );
 }

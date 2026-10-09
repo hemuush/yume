@@ -52,7 +52,7 @@ describe('getDailyGoalStreakSeries', () => {
 
   it('a day with no spending at all counts as under the goal', async () => {
     const series = await getDailyGoalStreakSeries(500, 1, '2026-01-06');
-    expect(series).toEqual([{ date: '2026-01-06', streakDays: 3 }]);
+    expect(series).toEqual([{ date: '2026-01-06', streakDays: 3, tracked: true }]);
   });
 
   it('never counts a day before the earliest transaction on record, even asking further back', async () => {
@@ -60,6 +60,8 @@ describe('getDailyGoalStreakSeries', () => {
     // pre-history days must not read as "kept" just because no row exists.
     const series = await getDailyGoalStreakSeries(500, 6, '2026-01-02');
     expect(series.map((p) => p.streakDays)).toEqual([0, 0, 0, 0, 1, 2]);
+    // Those days are marked untracked, so the garden's calendar doesn't show them as missed.
+    expect(series.map((p) => p.tracked)).toEqual([false, false, false, false, true, true]);
   });
 
   it('a window asked for entirely before the earliest transaction shows no streak at all', async () => {

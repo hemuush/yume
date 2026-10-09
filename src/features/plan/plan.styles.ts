@@ -24,43 +24,9 @@ export const styles = StyleSheet.create({
   row: { flexDirection: 'row', gap: GAP, marginHorizontal: SCREEN.gutter },
   rowGap: { gap: GAP },
 
-  kickerRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  kickerInTile: { paddingRight: 20 },
-  kickerBadge: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: GLASS.fillStrong,
-    borderWidth: 1,
-    borderColor: GLASS.edge,
-  },
-  kicker: { flexShrink: 1, fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textSecondary },
   head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
 
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-  chip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    minHeight: 28,
-    paddingHorizontal: 10,
-    borderRadius: theme.radius.pill,
-    borderWidth: 1,
-    borderColor: 'rgba(18,19,15,0.1)',
-    maxWidth: '100%',
-  },
-  chipText: {
-    flexShrink: 1,
-    fontFamily: theme.font.bodyMedium,
-    fontSize: 12,
-    color: theme.colors.textSecondary,
-  },
-  chipOk: { borderColor: 'rgba(28,154,91,0.32)', backgroundColor: 'rgba(28,154,91,0.08)' },
-  chipOkText: { color: theme.colors.incomeText },
-  chipBad: { borderColor: 'rgba(189,53,71,0.28)', backgroundColor: 'rgba(226,63,85,0.06)' },
-  chipBadText: { color: theme.colors.expenseText },
 
   bigRow: { flexDirection: 'row', alignItems: 'baseline', gap: 6, flexWrap: 'wrap' },
   bigValue: {

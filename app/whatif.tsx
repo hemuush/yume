@@ -17,7 +17,10 @@ import { Skeleton } from '@/components/Skeleton';
 import { Chip } from '@/components/Chip';
 import { Amount } from '@/components/Amount';
 import { PrimaryButton } from '@/components/PrimaryButton';
-import { StripCard } from '@/components/StripCard';
+import { Glass } from '@/components/Glass';
+import { HomeWallpaper } from '@/features/home/HomeWallpaper';
+import { useAccent } from '@/theme/AccentContext';
+import Feather from '@expo/vector-icons/Feather';
 import { theme } from '@/constants/theme';
 import { useScreenLoad } from '@/lib/useScreenLoad';
 import { styles } from '@/features/whatif/whatif.styles';
@@ -52,12 +55,27 @@ function paceBarWidths(pace: {
   };
 }
 
+/** One goal date as a line from today, with a dot where it lands (like Plan's debt-free timeline). */
+function PaceLane({ width, color, faded }: { width: `${number}%`; color: string; faded?: boolean }) {
+  return (
+    <View style={styles.paceTrack}>
+      {width !== '0%' && (
+        <>
+          <View style={[styles.paceFill, { width, backgroundColor: color }, faded && { opacity: 0.35 }]} />
+          <View style={[styles.paceDot, { left: width, borderColor: color }]} />
+        </>
+      )}
+    </View>
+  );
+}
+
 /**
  * Non-destructive sandbox: pick a category, cut its spend by a percentage, see how much sooner a savings
  * goal lands. Nothing is saved; numbers are recomputed client-side from existing data (src/lib/whatIf.ts).
  */
 export default function WhatIfScreen() {
   const insets = useSafeAreaInsets();
+  const { accent, secondary } = useAccent();
   // The header sits over the page and shrinks as it scrolls.
   const { collapse, headerHeight, scrollHandler, scrollRef } = useCollapsingHeader();
   // `category` opens What-if with that category already chosen (from its category page).
@@ -113,17 +131,19 @@ export default function WhatIfScreen() {
   if (!loaded && !loadError) {
     return (
       <View style={styles.container}>
-        <SkyHeader title="What if…?" showBack hideUser />
-        <StripCard tone={theme.colors.slice.free} style={styles.card}>
+        <HomeWallpaper accent={accent} secondary={secondary} />
+        <SkyHeader title="What if…?" showBack hideUser wallpaper />
+        <Glass radius={28} tone="strong" style={styles.card}>
           <Skeleton width={120} height={12} radius={4} />
           <Skeleton width={200} height={10} radius={4} style={{ marginTop: 10 }} />
-        </StripCard>
+        </Glass>
       </View>
     );
   }
 
   return (
     <View style={styles.container}>
+      <HomeWallpaper accent={accent} secondary={secondary} />
       <ReanimatedAnimated.ScrollView
         ref={scrollRef}
         onScroll={scrollHandler}
@@ -147,7 +167,7 @@ export default function WhatIfScreen() {
           />
         ) : (
           <>
-            <StripCard tone={theme.colors.slice.free} style={styles.card}>
+            <Glass radius={28} tone="strong" style={styles.card}>
               <Text style={styles.fieldLabel}>Cut spending on</Text>
               <View style={styles.chipRow}>
                 {categories.map((c) => (
@@ -161,16 +181,6 @@ export default function WhatIfScreen() {
                 ))}
               </View>
 
-              {selectedCategory && (
-                <View style={styles.avgRow}>
-                  <Text style={styles.avgLabel}>currently</Text>
-                  <Text style={styles.avgValue}>
-                    <Amount minor={selectedCategory.totalMinor} sensitive={selectedCategory.isSensitive} /> /
-                    month
-                  </Text>
-                </View>
-              )}
-
               <Text style={[styles.fieldLabel, { marginTop: 16 }]}>By how much</Text>
               <View style={styles.chipRow}>
                 {CUT_OPTIONS.map((pct) => (
@@ -179,22 +189,31 @@ export default function WhatIfScreen() {
               </View>
 
               {cut && selectedCategory && (
-                <>
-                  <View style={styles.resultDivider} />
-                  <View style={styles.resultRow}>
-                    <Text style={styles.resultLabel}>New monthly spend</Text>
+                // Where it stands now, and where the cut takes it, a month.
+                <View style={styles.compare}>
+                  <View style={styles.compareSide}>
+                    <Text style={styles.compareLabel}>Now, a month</Text>
+                    <Amount
+                      minor={selectedCategory.totalMinor}
+                      sensitive={selectedCategory.isSensitive}
+                      style={styles.compareValue}
+                    />
+                  </View>
+                  <Feather name="arrow-right" size={18} color={theme.colors.textMuted} />
+                  <View style={[styles.compareSide, styles.compareRight]}>
+                    <Text style={styles.compareLabel}>New monthly spend</Text>
                     <Amount
                       minor={cut.newMonthlyMinor}
                       sensitive={selectedCategory.isSensitive}
-                      style={styles.resultValue}
+                      style={[styles.compareValue, styles.compareNew]}
                     />
                   </View>
-                </>
+                </View>
               )}
-            </StripCard>
+            </Glass>
 
             {goals.length === 0 ? (
-              <StripCard tone={theme.colors.slice.saved} lifted={false} style={styles.goalCard}>
+              <Glass radius={28} tone="strong" style={styles.goalCard}>
                 <Text style={styles.extraLabel}>No open savings goals</Text>
                 <Text style={[styles.avgLabel, { marginTop: 6 }]}>
                   Set a savings goal to see how much sooner this change could get you there.
@@ -206,9 +225,9 @@ export default function WhatIfScreen() {
                   onPress={() => router.push('/savings-goals')}
                   style={{ marginTop: 12, alignSelf: 'flex-start' }}
                 />
-              </StripCard>
+              </Glass>
             ) : cut ? (
-              <StripCard tone={theme.colors.slice.saved} lifted={false} style={styles.goalCard}>
+              <Glass radius={28} tone="strong" style={styles.goalCard}>
                 <Text style={styles.extraLabel}>
                   Extra <Amount minor={cut.extraMinor} sensitive={selectedCategory?.isSensitive} /> / month
                   toward
@@ -233,17 +252,7 @@ export default function WhatIfScreen() {
                           {pace.currentEtaDate ? dayMonth(pace.currentEtaDate) : '—'}
                         </Text>
                       </View>
-                      <View style={styles.paceTrack}>
-                        <View
-                          style={[
-                            styles.paceFill,
-                            {
-                              width: paceBarWidths(pace).current,
-                              backgroundColor: theme.colors.textMuted,
-                            },
-                          ]}
-                        />
-                      </View>
+                      <PaceLane width={paceBarWidths(pace).current} color={theme.colors.textMuted} faded />
                     </View>
                     <View style={{ marginTop: 10 }}>
                       <View style={styles.paceHeadRow}>
@@ -252,17 +261,7 @@ export default function WhatIfScreen() {
                           {pace.newEtaDate ? dayMonth(pace.newEtaDate) : '—'}
                         </Text>
                       </View>
-                      <View style={styles.paceTrack}>
-                        <View
-                          style={[
-                            styles.paceFill,
-                            {
-                              width: paceBarWidths(pace).next,
-                              backgroundColor: theme.colors.slice.saved,
-                            },
-                          ]}
-                        />
-                      </View>
+                      <PaceLane width={paceBarWidths(pace).next} color={theme.colors.income} />
                     </View>
 
                     {pace.daysSooner > 0 ? (
@@ -279,7 +278,7 @@ export default function WhatIfScreen() {
                   </View>
                 )}
                 {pace?.alreadyDone && <Text style={styles.soonerText}>Already reached — nice work.</Text>}
-              </StripCard>
+              </Glass>
             ) : null}
 
             <View style={styles.footer}>
@@ -288,7 +287,7 @@ export default function WhatIfScreen() {
           </>
         )}
       </ReanimatedAnimated.ScrollView>
-      <SkyHeader collapse={collapse} summary={undefined} title="What if…?" showBack hideUser>
+      <SkyHeader collapse={collapse} summary={undefined} title="What if…?" showBack hideUser wallpaper>
         <Text style={styles.intro}>Try a change, see where it lands. Nothing here changes your money.</Text>
       </SkyHeader>
     </View>

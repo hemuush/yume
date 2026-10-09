@@ -1,7 +1,7 @@
 import { View, Pressable } from 'react-native';
 import { Text } from '@/components/Text';
 import Feather from '@expo/vector-icons/Feather';
-import { NeoTile } from '@/components/NeoTile';
+import { Glass } from '@/components/Glass';
 import { CategoryIcon } from '@/components/CategoryIcon';
 import { MovingRow } from '@/components/MovingRow';
 import { SubscriptionSuggestion } from '@/db/subscriptions';
@@ -30,7 +30,7 @@ export function SuggestionsList({
   return (
     <>
       <SectionHead title="Not set up yet" />
-      <NeoTile style={styles.list}>
+      <Glass style={styles.list}>
         {suggestions.map((s, i) => (
           <MovingRow key={s.key} style={[styles.row, i > 0 && styles.rowDivider]}>
             <CategoryIcon name={s.icon} color={s.color} />
@@ -63,7 +63,7 @@ export function SuggestionsList({
             </Pressable>
           </MovingRow>
         ))}
-      </NeoTile>
+      </Glass>
       <Text style={styles.hint}>
         From your Subscriptions category, and charges seen once a month for 3 months. ✕ hides one; a monthly
         charge can be brought back from Needs you.

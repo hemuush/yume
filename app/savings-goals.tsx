@@ -18,6 +18,9 @@ import { EmptyState } from '@/components/EmptyState';
 import { useScreenLoad } from '@/lib/useScreenLoad';
 import { Skeleton } from '@/components/Skeleton';
 import { GoalCard } from '@/features/goals/GoalCard';
+import { HomeWallpaper } from '@/features/home/HomeWallpaper';
+import { useAccent } from '@/theme/AccentContext';
+import { Glass } from '@/components/Glass';
 import { GoalsHero } from '@/features/goals/GoalsHero';
 import { goalHues, summarizeGoals } from '@/features/goals/goalPlan';
 import { toLocalIsoDate } from '@/lib/date';
@@ -32,6 +35,7 @@ import { styles } from '@/features/goals/goals.styles';
 export default function SavingsGoalsScreen() {
   const insets = useSafeAreaInsets();
   const { hideAmounts } = usePrivacy();
+  const { accent, secondary } = useAccent();
   // The header sits over the page and shrinks as it scrolls.
   const { collapse, headerHeight, scrollHandler, scrollRef } = useCollapsingHeader();
   const [allGoals, setAllGoals] = useState<SavingsGoal[]>([]);
@@ -73,10 +77,11 @@ export default function SavingsGoalsScreen() {
   if (!loaded && !loadError) {
     return (
       <View style={styles.container}>
-        <SkyHeader title="Savings goals" showBack hideUser />
+        <HomeWallpaper accent={accent} secondary={secondary} />
+        <SkyHeader title="Savings goals" showBack hideUser wallpaper />
         <View style={{ paddingTop: 24 }}>
           {[0, 1].map((i) => (
-            <View key={i} style={styles.card}>
+            <Glass key={i} style={styles.card}>
               <View style={styles.cardTop}>
                 <Skeleton width={46} height={46} circle radius={23} />
                 <View>
@@ -85,7 +90,7 @@ export default function SavingsGoalsScreen() {
                 </View>
               </View>
               <Skeleton width={280} height={6} radius={3} />
-            </View>
+            </Glass>
           ))}
         </View>
       </View>
@@ -94,6 +99,7 @@ export default function SavingsGoalsScreen() {
 
   return (
     <View style={styles.container}>
+      <HomeWallpaper accent={accent} secondary={secondary} />
       <ReanimatedAnimated.ScrollView
         ref={scrollRef}
         onScroll={scrollHandler}
@@ -152,10 +158,13 @@ export default function SavingsGoalsScreen() {
         title="Savings goals"
         showBack
         hideUser
+        wallpaper
         actions={
           <>
             <HeaderIconButton
               icon={showArchived ? 'eye-off' : 'archive'}
+              glass
+              size={40}
               onPress={() => setShowArchived((v) => !v)}
               label={showArchived ? 'Hide archived goals' : 'Show archived goals'}
               badge={!showArchived && archivedGoals.length > 0}

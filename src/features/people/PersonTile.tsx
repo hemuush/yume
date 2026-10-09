@@ -10,20 +10,18 @@ import { withPressed } from '@/lib/pressed';
 import { MAX_LIST_STAGGER_MS, ROW_LAYOUT, ROW_EXIT } from '@/lib/animation';
 import { lastActivityShort } from './people.helpers';
 import { styles } from './people.styles';
-import { StripCard } from '@/components/StripCard';
+import { Glass } from '@/components/Glass';
 import { DURATIONS } from '@/lib/motionTimings';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 const LOOK = {
   owed: {
-    strip: theme.colors.slice.saved,
     pill: theme.colors.secondaryTint,
     amount: theme.colors.incomeText,
     label: 'Owes you',
   },
   owe: {
-    strip: theme.colors.slice.spent,
     pill: theme.colors.idCoral,
     amount: theme.colors.expenseText,
     label: 'You owe',
@@ -34,8 +32,8 @@ const LOOK = {
 const STAGGER_MS = 45;
 
 /**
- * One person with an open balance on Friends & Family, as a white tile with a strip along its top: mint when
- * they owe you, coral when you owe them. Shows initial, name, balance and last activity, plus a Settle up pill that opens the same sheet as
+ * One person with an open balance on Friends & Family, as a glass tile, its balance green when they owe you and red when you
+ * owe them. Shows initial, name, balance and last activity, plus a Settle up pill that opens the same sheet as
  * the tile (on its Settle tab).
  */
 export function PersonTile({
@@ -64,7 +62,7 @@ export function PersonTile({
       layout={ROW_LAYOUT}
       exiting={ROW_EXIT}
     >
-      <StripCard tone={look.strip} lifted={false} style={styles.personTile}>
+      <Glass radius={22} style={styles.personTile}>
         <AnimatedPressable
           style={animatedStyle}
           onPress={onPress}
@@ -82,6 +80,7 @@ export function PersonTile({
             </Text>
           </View>
           <Text style={[styles.tileAmount, { color: look.amount }]} numberOfLines={1} adjustsFontSizeToFit>
+            {dispBalanceMinor > 0 ? '+' : '−'}
             {formatMoney(Math.abs(dispBalanceMinor))}
           </Text>
           <Text style={styles.tileMeta} numberOfLines={1}>
@@ -97,7 +96,7 @@ export function PersonTile({
         >
           <Text style={styles.settlePillText}>Settle up</Text>
         </Pressable>
-      </StripCard>
+      </Glass>
     </ReanimatedAnimated.View>
   );
 }
