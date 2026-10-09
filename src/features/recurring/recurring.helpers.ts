@@ -1,6 +1,8 @@
 import { Category, RecurringRule, RecurrenceFrequency } from '@/types';
 import { monthlyCostMinor } from '@/db/subscriptions';
 import { categorySentence, parentNameOf } from '@/lib/categoryLabel';
+import { addDaysToIsoDate, dayOfIsoDate } from '@/lib/date';
+import { advanceDate } from '@/lib/recurrence';
 
 export function frequencyNoun(freq: RecurrenceFrequency, count: number): string {
   const plural = count === 1 ? '' : 's';
@@ -69,4 +71,48 @@ export function topShareLine(shares: CostShare[]): string | null {
   if (shares.length < 2) return null;
   const total = shares.reduce((sum, s) => sum + s.minor, 0);
   return `${shares[0].name} is ${Math.round((shares[0].minor / total) * 100)}% of it`;
+}
+
+/** One run of a rule on Recurring's "when they land" line. */
+export interface RunMark {
+  key: string;
+  date: string;
+  amountMinor: number;
+  /** Money in (income) or out (expenses and transfers). */
+  incoming: boolean;
+}
+
+/** How far ahead the line looks, today included. */
+export const RUN_WINDOW_DAYS = 30;
+
+/**
+ * Every run of these rules from today through the next `days - 1` days, each on its own day: a weekly bill
+ * shows four or five times, a monthly one once. A run already due (catching up) counts on today. Stops at a
+ * rule's end date.
+ */
+export function runMarks(
+  rules: Pick<
+    RecurringRule,
+    'id' | 'type' | 'nextRunDate' | 'frequency' | 'intervalCount' | 'endDate' | 'amountMinor'
+  >[],
+  today: string,
+  days = RUN_WINDOW_DAYS
+): RunMark[] {
+  const until = addDaysToIsoDate(today, days - 1);
+  const marks: RunMark[] = [];
+  for (const r of rules) {
+    const anchor = dayOfIsoDate(r.nextRunDate);
+    let date = r.nextRunDate;
+    for (let n = 0; n < 400 && date <= until; n++) {
+      if (r.endDate && date > r.endDate) break;
+      marks.push({
+        key: `${r.id}-${date}`,
+        date: date < today ? today : date,
+        amountMinor: r.amountMinor,
+        incoming: r.type === 'income',
+      });
+      date = advanceDate(date, r.frequency, Math.max(1, r.intervalCount), anchor);
+    }
+  }
+  return marks.sort((a, b) => a.date.localeCompare(b.date));
 }
