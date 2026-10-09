@@ -15,14 +15,16 @@ import { useScreenLoad } from '@/lib/useScreenLoad';
 import { theme } from '@/constants/theme';
 import { EYEBROW } from '@/constants/textStyles';
 import { SkyHeader, HeaderSummary } from '@/features/home/SkyHeader';
-import { StripCard } from '@/components/StripCard';
+import { Glass, GLASS } from '@/components/Glass';
+import { frost } from '@/components/Frost';
+import { HomeWallpaper } from '@/features/home/HomeWallpaper';
+import { useAccent } from '@/theme/AccentContext';
 import ReanimatedAnimated from 'react-native-reanimated';
 import { useCollapsingHeader } from '@/lib/useCollapsingHeader';
 import { EmptyState } from '@/components/EmptyState';
 import { CategoryIcon } from '@/components/CategoryIcon';
 import { CardRowsSkeleton } from '@/components/ListSkeleton';
 import { Section } from '@/components/Section';
-import { screenStyles as h } from '@/components/screenStyles';
 import { PeriodRow } from '@/features/reports/PeriodRow';
 import { BudgetRow } from '@/features/budgets/BudgetRow';
 import { TransactionRow } from '@/features/transactions/TransactionRow';
@@ -51,6 +53,7 @@ const monthLong = (key: string) => longMonthYear(`${key}-01`);
  */
 export default function CategoryScreen() {
   const insets = useSafeAreaInsets();
+  const { accent, secondary } = useAccent();
   // The header sits over the page and shrinks as it scrolls.
   const { collapse, headerHeight, scrollHandler, scrollRef } = useCollapsingHeader();
   // Budgets and this page link to each other: go back to Budgets when it's
@@ -137,7 +140,8 @@ export default function CategoryScreen() {
   if (loaded && !category) {
     return (
       <View style={styles.container}>
-        <SkyHeader title="Category" showBack hideUser />
+        <HomeWallpaper accent={accent} secondary={secondary} />
+        <SkyHeader title="Category" showBack hideUser wallpaper />
         <EmptyState title="This category no longer exists" />
       </View>
     );
@@ -147,10 +151,11 @@ export default function CategoryScreen() {
   if (hideAmounts && category?.isSensitive) {
     return (
       <View style={styles.container}>
-        <SkyHeader title={category.name} showBack hideUser />
+        <HomeWallpaper accent={accent} secondary={secondary} />
+        <SkyHeader title={category.name} showBack hideUser wallpaper />
         <EmptyState
           title="Hidden for now"
-          subtitle="Savings and investment amounts are hidden. Tap the eye in the header to show them."
+          subtitle="Savings and investment amounts are hidden. You can show them again from Profile."
         />
       </View>
     );
@@ -158,6 +163,7 @@ export default function CategoryScreen() {
 
   return (
     <View style={styles.container}>
+      <HomeWallpaper accent={accent} secondary={secondary} />
       <ReanimatedAnimated.ScrollView
         ref={scrollRef}
         onScroll={scrollHandler}
@@ -180,14 +186,16 @@ export default function CategoryScreen() {
           </View>
         ) : (
           <>
-            {/* White, with a strip in the category's own colour. */}
-            <StripCard tone={category.color} style={styles.hero}>
+            {/* Frosted glass, as on Home and Plan; the category's colour is in its icon, bars and split. */}
+            <Glass radius={28} tone="strong" style={styles.hero}>
               <View style={styles.heroTop}>
                 <View style={styles.heroText}>
                   <Text style={styles.heroLabel}>
                     {spend ? 'Spent' : 'Received'} in {periodName}
                   </Text>
-                  <Text style={styles.heroValue}>{formatMoney(overview.totalMinor)}</Text>
+                  <Text style={frost.bigValue} numberOfLines={1} adjustsFontSizeToFit>
+                    {formatMoney(overview.totalMinor)}
+                  </Text>
                   {parent && (
                     <Pressable
                       onPress={openParent}
@@ -260,14 +268,14 @@ export default function CategoryScreen() {
                   />
                 </>
               )}
-            </StripCard>
+            </Glass>
 
             {spend && isThisMonth(cursor) && (
               <Section title="Budget">
                 {budget ? (
-                  <View style={h.card}>
-                    <BudgetRow progress={budget} divider={false} onPress={openBudgets} />
-                  </View>
+                  <Glass style={styles.glassList}>
+                    <BudgetRow progress={budget} divider={false} onPress={openBudgets} jar />
+                  </Glass>
                 ) : (
                   <Pressable
                     style={withPressed(styles.noLimit)}
@@ -307,7 +315,7 @@ export default function CategoryScreen() {
               {entries.length === 0 ? (
                 <Text style={styles.empty}>Nothing in {periodName} yet.</Text>
               ) : (
-                <View style={h.card}>
+                <Glass style={styles.glassList}>
                   {entries.map((tx, i) => (
                     <TransactionRow
                       key={tx.id}
@@ -319,7 +327,7 @@ export default function CategoryScreen() {
                       onPress={() => setDetailTx(tx)}
                     />
                   ))}
-                </View>
+                </Glass>
               )}
             </Section>
           </>
@@ -330,6 +338,7 @@ export default function CategoryScreen() {
         title={category?.name ?? 'Category'}
         showBack
         hideUser
+        wallpaper
         collapse={collapse}
         summary={
           overview ? (
@@ -389,19 +398,21 @@ function ActionChip({
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
-  hero: { marginHorizontal: 20, marginTop: theme.layout.screenTopGap, padding: 16, paddingTop: 20 },
+  hero: { marginHorizontal: 20, marginTop: theme.layout.screenTopGap, padding: 16 },
+  glassList: { marginHorizontal: 20, overflow: 'hidden' },
   heroTop: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
   heroText: { flex: 1, minWidth: 0 },
   heroLabel: { ...EYEBROW },
-  heroValue: { fontFamily: theme.font.monoBold, fontSize: 30, color: theme.colors.textPrimary, marginTop: 6 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 10 },
   chip: {
-    backgroundColor: theme.colors.surfaceAlt,
+    backgroundColor: GLASS.fillStrong,
+    borderWidth: 1,
+    borderColor: GLASS.edge,
     borderRadius: theme.radius.pill,
     paddingHorizontal: 10,
-    paddingVertical: 3,
+    paddingVertical: 4,
   },
-  chipText: { fontFamily: theme.font.bodyBold, fontSize: 11.5, color: theme.colors.textPrimary },
+  chipText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textPrimary },
   heroRefund: {
     fontFamily: theme.font.bodyBold,
     fontSize: 12.5,
@@ -425,10 +436,10 @@ const styles = StyleSheet.create({
     gap: 10,
     paddingHorizontal: 14,
     paddingVertical: 11,
-    borderRadius: theme.radius.lg,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-    backgroundColor: theme.colors.surface,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: GLASS.edge,
+    backgroundColor: GLASS.fill,
   },
   noLimitText: { flex: 1, fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textSecondary },
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginHorizontal: 20, marginTop: 18 },
@@ -436,12 +447,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 9,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
     borderRadius: theme.radius.pill,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-    backgroundColor: theme.colors.surface,
+    borderWidth: 1,
+    borderColor: GLASS.edge,
+    backgroundColor: GLASS.fillStrong,
   },
   parentPill: {
     flexDirection: 'row',
@@ -453,9 +464,9 @@ const styles = StyleSheet.create({
     paddingRight: 6,
     paddingVertical: 4,
     borderRadius: theme.radius.pill,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-    backgroundColor: theme.colors.surfaceAlt,
+    borderWidth: 1,
+    borderColor: GLASS.edge,
+    backgroundColor: GLASS.fillStrong,
     maxWidth: '100%',
   },
   parentPillText: {

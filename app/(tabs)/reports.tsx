@@ -51,6 +51,9 @@ import { SegmentedControl } from '@/components/SegmentedControl';
 import { parseLocalIsoDate, toLocalIsoDate, isIsoDate } from '@/lib/date';
 import { theme } from '@/constants/theme';
 import { useTabScrollPad } from '@/lib/uiScale';
+import { HomeWallpaper } from '@/features/home/HomeWallpaper';
+import { useAccent } from '@/theme/AccentContext';
+import { ReportsHero } from '@/features/reports/ReportsHero';
 import { ReportsSkeleton } from '@/features/reports/ReportsSkeleton';
 import { ReportsHeader } from '@/features/reports/ReportsHeader';
 import { HeatmapCard } from '@/features/reports/HeatmapCard';
@@ -70,6 +73,7 @@ import {
   RANGE_DAY_GRID_MAX_DAYS,
   baselineFromTrend,
   recurringVsDiscretionary,
+  vsUsual,
   categoryDeltas,
   patternFacts,
   quietDays,
@@ -104,6 +108,7 @@ const CATEGORIES_COLLAPSED = 5;
 
 export default function ReportsScreen() {
   const { hideAmounts } = usePrivacy();
+  const { accent, secondary } = useAccent();
   const insets = useSafeAreaInsets();
   const tabScrollPad = useTabScrollPad();
   const [cursor, setCursor] = useState<ReportWindow>(CURRENT_PERIOD);
@@ -348,6 +353,7 @@ export default function ReportsScreen() {
   if (status === 'error') {
     return (
       <View style={styles.container}>
+        <HomeWallpaper accent={accent} secondary={secondary} />
         {header}
         <View style={styles.center}>
           <Text style={styles.errTitle}>Couldn&rsquo;t build your report</Text>
@@ -365,6 +371,7 @@ export default function ReportsScreen() {
   if (!comparison) {
     return (
       <View style={styles.container}>
+        <HomeWallpaper accent={accent} secondary={secondary} />
         {header}
         <ReportsSkeleton />
       </View>
@@ -537,18 +544,42 @@ export default function ReportsScreen() {
 
   return (
     <View style={styles.container}>
+      <HomeWallpaper accent={accent} secondary={secondary} />
       <ReanimatedAnimated.ScrollView
         ref={scrollRef}
         onScroll={scrollHandler}
         scrollEventThrottle={16}
-        // The tabs (first child) stick under the shrunk header.
-        stickyHeaderIndices={hasData ? [0] : undefined}
+        // The tabs (after the summary card) stick under the shrunk header.
+        stickyHeaderIndices={hasData ? [1] : undefined}
         contentContainerStyle={{
           paddingTop: headerHeight,
           paddingHorizontal: 20,
           paddingBottom: tabScrollPad + insets.bottom,
         }}
       >
+        {hasData && (
+          <ReportsHero
+            periodLabel={periodName}
+            spentMinor={dispExpense}
+            incomeMinor={roundedMinor(current.incomeMinor)}
+            baselineMinor={cursor.granularity === 'month' ? baseline : null}
+            vsUsual={vsUsual({
+              spentMinor: current.expenseMinor,
+              baselineMinor: baseline,
+              granularity: cursor.granularity,
+              inProgress: monthInProgress,
+              todayIso,
+            })}
+            previousMinor={previous.expenseMinor > 0 ? previous.expenseMinor : null}
+            previousLabel={isCustomWindow(cursor) ? 'the period before' : previousPeriodLabel(cursor)}
+            monthProgress={
+              monthInProgress
+                ? new Date().getDate() /
+                  new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate()
+                : null
+            }
+          />
+        )}
         {hasData && (
           // Stuck at the top of the list, which sits under the header: the padding (as tall as the shrunk header,
           // and pulled up by as much in place) keeps the tabs just below it.
@@ -557,7 +588,7 @@ export default function ReportsScreen() {
             pointerEvents="box-none"
           >
             <View style={styles.tabs}>
-              <SegmentedControl options={TAB_OPTIONS} value={tab} onChange={setTab} />
+              <SegmentedControl options={TAB_OPTIONS} value={tab} onChange={setTab} onBand />
             </View>
           </View>
         )}
@@ -688,6 +719,7 @@ export default function ReportsScreen() {
                   onOpen={onPressCategory}
                   onShowDays={income || byMonth ? undefined : showCategoryDays}
                   kind={flow}
+                  iconOf={(id) => catById.get(id)?.icon}
                 />
               </>
             )}
