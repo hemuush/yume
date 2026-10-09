@@ -18,6 +18,15 @@ describe('formatBytes', () => {
 });
 
 describe('backupStatus', () => {
+  it('colours the shield by state: waiting, failed, then ok', () => {
+    expect(backupStatus({ ...base, folder: null }).tone).toBe('waiting');
+    expect(backupStatus(base).tone).toBe('waiting');
+    expect(
+      backupStatus({ ...base, outcome: { ok: false, error: 'x', at: '2026-10-03T08:00:00' } as never }).tone
+    ).toBe('failed');
+    expect(backupStatus({ ...base, lastAt: '2026-10-03T08:00:00' }).tone).toBe('ok');
+  });
+
   it('asks for a folder first', () => {
     expect(backupStatus({ ...base, folder: null }).title).toBe('No backup folder yet');
   });

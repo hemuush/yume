@@ -1,82 +1,101 @@
 import { View, StyleSheet } from 'react-native';
 import { Text } from '@/components/Text';
 import { CountUpAmount } from '@/components/CountUpAmount';
+import { Amount } from '@/components/Amount';
+import { Glass } from '@/components/Glass';
+import { Kicker, frost } from '@/components/Frost';
 import { theme } from '@/constants/theme';
-import { EYEBROW } from '@/constants/textStyles';
-import { StripCard, KickerDot } from '@/components/StripCard';
 import { formatMaskableMoney } from '@/lib/money';
-import { SCREEN } from '@/components/screenStyles';
+
+/** One account type's slice of the money map. */
+export interface MoneyShare {
+  key: string;
+  label: string;
+  color: string;
+  minor: number;
+  /** Savings: masked, and left out of the bar, while those amounts are hidden. */
+  sensitive: boolean;
+}
 
 /**
- * First block on You: what is in your accounts right now. Leads with this, not the tracked balance, since
- * loans can pull that far below zero normally. Masked when savings amounts are hidden, as it includes them.
+ * First card on You, the money map: what is in your accounts right now in the big thin figure, then one bar
+ * split by account type so you see where it sits, with each type's total under it. Leads with this, not the
+ * tracked balance, since loans can pull that far below zero normally; the tracked balance (`children`) sits at
+ * its foot. Masked when savings amounts are hidden, as it includes them.
  */
 export function CashHero({
   minor,
   label,
   sub,
   masked,
-  embedded = false,
+  shares = [],
+  children,
 }: {
   minor: number;
   label: string;
   sub: string;
   masked: boolean;
-  /** Sits inside a shared card with the tracked balance, which draws the edge and margins. */
-  embedded?: boolean;
+  /** Each account type's total, in the default currency. */
+  shares?: MoneyShare[];
+  children?: React.ReactNode;
 }) {
-  const body = (
-    <>
-      <View style={styles.kickerRow}>
-        <KickerDot color={theme.colors.secondaryDeep} />
-        <Text style={styles.kicker}>{label}</Text>
-      </View>
+  // Only money that's there makes the bar; a card in debt shows in the legend instead.
+  const bar = shares.filter((s) => s.minor > 0 && !(masked && s.sensitive));
+  return (
+    <Glass radius={28} tone="strong" style={frost.hero}>
+      <Kicker icon="layers">{label}</Kicker>
       {masked ? (
-        <Text style={styles.amount}>{formatMaskableMoney(0, { masked: true })}</Text>
+        <Text style={frost.bigValue}>{formatMaskableMoney(0, { masked: true })}</Text>
       ) : (
         <CountUpAmount
           minor={minor}
           countFromZero={false}
-          style={styles.amount}
+          symbolStyle={frost.bigSymbol}
+          style={frost.bigValue}
           numberOfLines={1}
           adjustsFontSizeToFit
         />
       )}
       <Text style={styles.sub}>{sub}</Text>
-    </>
-  );
-  // A white card with a mint strip, like the heroes on the screens opened from Plan. In the shared card with
-  // the tracked balance, that card draws the edge; the strip still runs along its top.
-  return embedded ? (
-    <View style={styles.cardEmbedded}>
-      <View style={styles.strip} />
-      {body}
-    </View>
-  ) : (
-    <StripCard tone={theme.colors.slice.saved} style={styles.card}>
-      {body}
-    </StripCard>
+
+      {bar.length > 1 && (
+        <View
+          style={styles.shelf}
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+        >
+          {bar.map((s) => (
+            <View key={s.key} style={[styles.slice, { flexGrow: s.minor, backgroundColor: s.color }]} />
+          ))}
+        </View>
+      )}
+      {shares.length > 1 && (
+        <View style={styles.legend}>
+          {shares.map((s) => (
+            <View key={s.key} style={styles.legendItem}>
+              <View style={[styles.key, { backgroundColor: s.color }]} />
+              <Text style={styles.legendLabel}>{s.label} </Text>
+              <Amount
+                minor={s.minor}
+                sensitive={s.sensitive}
+                style={[styles.legendValue, s.minor < 0 && { color: theme.colors.expenseText }]}
+              />
+            </View>
+          ))}
+        </View>
+      )}
+      {children}
+    </Glass>
   );
 }
 
 const styles = StyleSheet.create({
-  card: {
-    marginHorizontal: SCREEN.gutter,
-    marginTop: 12,
-    padding: 16,
-    paddingTop: 18,
-  },
-  cardEmbedded: { padding: 16, paddingTop: 18 },
-  strip: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 4,
-    backgroundColor: theme.colors.slice.saved,
-  },
-  kickerRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  kicker: { ...EYEBROW, color: theme.colors.textSecondary },
-  amount: { fontFamily: theme.font.monoBold, fontSize: 28, color: theme.colors.textPrimary, marginTop: 4 },
-  sub: { fontFamily: theme.font.body, fontSize: 12.5, color: theme.colors.textSecondary, marginTop: 2 },
+  sub: { fontFamily: theme.font.body, fontSize: 12.5, color: theme.colors.textSecondary, marginTop: -6 },
+  shelf: { flexDirection: 'row', gap: 3, height: 12 },
+  slice: { flexBasis: 0, minWidth: 8, height: 12, borderRadius: 6 },
+  legend: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 12, rowGap: 6 },
+  legendItem: { flexDirection: 'row', alignItems: 'center' },
+  key: { width: 9, height: 9, borderRadius: 5, marginRight: 5 },
+  legendLabel: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textSecondary },
+  legendValue: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textPrimary },
 });
