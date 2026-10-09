@@ -9,6 +9,8 @@ import { errorMessage } from '@/lib/errorMessage';
 import { loadMonthWrap, loadWeekWrap, Wrap } from '@/features/wrap/wrapData';
 import { addDaysToIsoDate } from '@/lib/date';
 import { WrapPlayer } from '@/features/wrap/WrapPlayer';
+import { HomeWallpaper } from '@/features/home/HomeWallpaper';
+import { useAccent } from '@/theme/AccentContext';
 
 /**
  * `/wrap?period=month|week` (last month / last full week) from Home's Wrap button or the Monday
@@ -17,6 +19,7 @@ import { WrapPlayer } from '@/features/wrap/WrapPlayer';
 export default function WrapScreen() {
   const { period } = useLocalSearchParams<{ period?: string }>();
   const kind = period === 'week' ? 'week' : 'month';
+  const { accent, secondary } = useAccent();
   // undefined while loading; null when there's nothing to play.
   const [wrap, setWrap] = useState<Wrap | null | undefined>(undefined);
   const [error, setError] = useState<string | null>(null);
@@ -55,6 +58,7 @@ export default function WrapScreen() {
 
   return (
     <View style={styles.center}>
+      <HomeWallpaper accent={accent} secondary={secondary} />
       {error || wrap === null ? (
         <>
           <Text style={styles.title}>{error ? "Couldn't make your Wrap" : 'Nothing to wrap yet'}</Text>
@@ -71,7 +75,7 @@ export default function WrapScreen() {
 const styles = StyleSheet.create({
   center: {
     flex: 1,
-    backgroundColor: theme.colors.surface,
+    backgroundColor: theme.colors.background,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 32,

@@ -23,7 +23,10 @@ import { shade } from '@/lib/color';
 import { useAccent } from '@/theme/AccentContext';
 import { AmountPad } from '@/components/AmountPad';
 import { applyPadKey, PadKey } from '@/lib/padMath';
-import { SplitMeter } from './SplitCard';
+import { SplitDonut } from './SplitDonut';
+import { Glass, GLASS, GLASS_CARD } from '@/components/Glass';
+import { Kicker } from '@/components/Frost';
+import { HomeWallpaper } from '@/features/home/HomeWallpaper';
 import { getSplitSession, finishSplitSession } from './splitSession';
 import {
   DraftPart,
@@ -47,7 +50,7 @@ export function SplitScreen() {
   // The header sits over the page and shrinks as it scrolls.
   const { collapse, headerHeight, scrollHandler, scrollRef } = useCollapsingHeader();
   const { height: screenHeight } = useWindowDimensions();
-  const { secondary } = useAccent();
+  const { accent, secondary } = useAccent();
   const [session] = useState(getSplitSession);
   const [parts, setParts] = useState<DraftPart[]>(() => session?.parts ?? []);
   // The part the pad types into; never the first, which holds the rest.
@@ -148,8 +151,22 @@ export function SplitScreen() {
     />
   );
 
+  // The ring's legend: each part with a category and money in it, as a share of what's split so far (the
+  // ring's own measure, so the two agree even while the parts run over the payment).
+  const splitSoFar = amounts.reduce((a, m) => a + Math.max(0, m), 0);
+  const legend = parts
+    .map((p, i) => {
+      const cat = categories.find((c) => c.id === p.categoryId);
+      const pct = splitSoFar > 0 ? (amounts[i] / splitSoFar) * 100 : 0;
+      return cat && amounts[i] > 0
+        ? { key: p.key, name: cat.name, color: cat.color, pct: pct < 1 ? '<1' : String(Math.round(pct)) }
+        : null;
+    })
+    .filter((l): l is NonNullable<typeof l> => l !== null);
+
   return (
     <View style={styles.container}>
+      <HomeWallpaper accent={accent} secondary={secondary} />
       <ReanimatedAnimated.ScrollView
         ref={scrollRef}
         onScroll={scrollHandler}
@@ -161,19 +178,36 @@ export function SplitScreen() {
         ]}
         keyboardShouldPersistTaps="handled"
       >
-        <View style={[h.card, styles.summary]}>
-          <Text style={styles.total}>{money(totalMinor)}</Text>
-          {session.meta ? (
-            <Text style={styles.meta} numberOfLines={1}>
-              {session.meta}
-            </Text>
-          ) : null}
-          <View style={styles.meterGap}>
-            <SplitMeter parts={parts} amounts={amounts} categories={categories} />
+        <Glass radius={28} tone="strong" style={styles.summary}>
+          <View style={styles.summaryTop}>
+            <SplitDonut parts={parts} amounts={amounts} categories={categories} />
+            <View style={styles.summaryText}>
+              <Kicker icon="scissors">To split</Kicker>
+              <Text style={styles.total} numberOfLines={1} adjustsFontSizeToFit>
+                {money(totalMinor)}
+              </Text>
+              {session.meta ? (
+                <Text style={styles.meta} numberOfLines={2}>
+                  {session.meta}
+                </Text>
+              ) : null}
+            </View>
           </View>
-        </View>
+          {legend.length > 1 && (
+            <View style={styles.legend}>
+              {legend.map((l) => (
+                <View key={l.key} style={styles.legendItem}>
+                  <View style={[styles.legendKey, { backgroundColor: l.color }]} />
+                  <Text style={styles.legendText} numberOfLines={1}>
+                    {l.name} {l.pct}%
+                  </Text>
+                </View>
+              ))}
+            </View>
+          )}
+        </Glass>
 
-        <View style={[h.card, styles.parts]}>
+        <View style={[h.card, GLASS_CARD, styles.parts]}>
           {parts.map((p, i) => {
             const cat = catOf(p);
             const amount = amounts[i];
@@ -284,6 +318,7 @@ export function SplitScreen() {
         title="Split payment"
         showBack
         hideUser
+        wallpaper
       />
 
       <View style={[styles.footer, { paddingBottom: insets.bottom + 12 }]}>
@@ -335,10 +370,15 @@ export function SplitScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
   content: { paddingTop: theme.layout.screenTopGap },
-  summary: { padding: 16 },
+  summary: { marginHorizontal: 20, padding: 16, gap: 12 },
+  summaryTop: { flexDirection: 'row', alignItems: 'center', gap: 16 },
+  summaryText: { flex: 1, minWidth: 0, gap: 4 },
+  legend: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 12, rowGap: 6 },
+  legendItem: { flexDirection: 'row', alignItems: 'center', gap: 5, maxWidth: '100%' },
+  legendKey: { width: 9, height: 9, borderRadius: 5 },
+  legendText: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textSecondary },
   total: { fontFamily: theme.font.monoBold, fontSize: 28, color: theme.colors.textPrimary },
   meta: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, marginTop: 4 },
-  meterGap: { marginTop: 14 },
   parts: { marginTop: 14 },
   pickArea: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12, minWidth: 0 },
   placeholder: { color: theme.colors.textMuted, fontFamily: theme.font.body },
@@ -348,15 +388,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 8,
     borderRadius: theme.radius.md,
-    backgroundColor: theme.colors.surfaceAlt,
+    backgroundColor: GLASS.fillStrong,
     borderWidth: 1.5,
-    borderColor: 'transparent',
+    borderColor: GLASS.edge,
   },
   boxLive: { borderColor: theme.colors.ink, backgroundColor: theme.colors.surface },
   boxRow: { flexDirection: 'row', alignItems: 'center' },
   boxText: { fontFamily: theme.font.monoBold, fontSize: 13.5, color: theme.colors.textPrimary },
   caret: { width: 1.5, height: 15, backgroundColor: theme.colors.ink, marginLeft: 2 },
-  restBox: { paddingVertical: 6 },
+  restBox: { paddingVertical: 6, backgroundColor: theme.colors.incomeTint },
   restBoxBad: { backgroundColor: theme.colors.expenseTint },
   restLabel: {
     ...EYEBROW,
@@ -386,10 +426,15 @@ const styles = StyleSheet.create({
     marginTop: 10,
     marginHorizontal: 24,
   },
+  // A glass dock over the wallpaper.
   footer: {
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: theme.colors.borderSoft,
-    backgroundColor: theme.colors.surface,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    borderWidth: 1,
+    borderBottomWidth: 0,
+    borderColor: GLASS.edge,
+    backgroundColor: 'rgba(255,255,255,0.86)',
+    boxShadow: '0px -8px 24px rgba(16,32,51,0.06)',
     paddingHorizontal: 20,
     paddingTop: 12,
   },
