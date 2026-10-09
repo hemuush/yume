@@ -1,5 +1,6 @@
 import { View, StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
+import { GLASS } from '@/components/Glass';
 import { Skeleton } from '@/components/Skeleton';
 
 /**
@@ -63,10 +64,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
     paddingTop: 14,
     paddingBottom: 12,
-    borderRadius: theme.radius.xl2,
-    backgroundColor: theme.colors.surface,
+    borderRadius: 24,
+    backgroundColor: GLASS.fill,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
+    borderColor: GLASS.edge,
   },
   headlineRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
   cells: {
@@ -81,10 +82,10 @@ const styles = StyleSheet.create({
   rule: { height: StyleSheet.hairlineWidth, backgroundColor: theme.colors.borderSoft, marginVertical: 22 },
   catCard: {
     marginTop: 10,
-    backgroundColor: theme.colors.surface,
+    backgroundColor: GLASS.fill,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-    borderRadius: theme.radius.xl2,
+    borderColor: GLASS.edge,
+    borderRadius: 24,
     paddingHorizontal: 14,
   },
   catRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12 },

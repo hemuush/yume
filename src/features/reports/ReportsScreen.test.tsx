@@ -284,12 +284,19 @@ describe('Reports screen', () => {
     (require('expo-router').router.navigate as jest.Mock).mockClear();
   });
 
-  it('shows the three lenses, starting on Days, with no summary card above them', async () => {
+  it('opens on the period at a glance, then the three lenses, starting on Days', async () => {
     const shown = texts(await render());
     expect(shown).toEqual(
       expect.arrayContaining(['Days', 'Categories', 'Trends', 'Tap a day to see what went out'])
     );
-    expect(shown.some((t) => t.startsWith('Spent in '))).toBe(false);
+    // The summary card: spent, the usual month (₹22,000 from the trend), the change on the month before
+    // (₹22,100 then), and money in · spent · kept.
+    expect(shown.some((t) => t.startsWith('Spent in '))).toBe(true);
+    expect(shown).toEqual(
+      expect.arrayContaining(['Usual month', '₹22,000', 'Money in', '₹1,67,000', 'Kept', '₹1,42,800'])
+    );
+    expect(shown.some((t) => t.startsWith('₹2,100 more than'))).toBe(true);
+    expect(shown.indexOf('Kept')).toBeLessThan(shown.indexOf('Days'));
     expect(shown.some((t) => t.endsWith(', in short'))).toBe(true);
     expect(shown).not.toContain('Where it went');
   });

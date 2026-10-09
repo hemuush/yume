@@ -16,8 +16,9 @@ import type { StoryAction, StoryCard, StoryTone } from './reportsInsights';
 import { styles } from './reports.styles';
 import { withPressed } from '@/lib/pressed';
 import { shade } from '@/lib/color';
+import { softTint } from '@/components/softTint';
 
-// Sky and mint are washes of the picked theme's two colours.
+// Sky and mint are washes of the picked theme's two colours; each card shows its tone as a frosted wash.
 const toneBg = (accent: string, secondary: string): Record<StoryTone, string> => ({
   coral: theme.colors.idCoral,
   sky: shade(accent, 95),
@@ -86,7 +87,10 @@ export function StoryCards({
                 onAction={onAction}
                 style={[
                   c.compact ? styles.storyCompact : styles.story,
-                  { width: cards.length === 1 ? rowWidth : cardWidth, backgroundColor: tones[c.tone] },
+                  {
+                    width: cards.length === 1 ? rowWidth : cardWidth,
+                    backgroundColor: softTint(tones[c.tone], 0.8),
+                  },
                 ]}
                 accessibilityLabel={`${c.kicker}${c.compact ? '' : `: ${c.big}`}. ${c.detail}${c.foot ? ` ${c.foot}.` : ''}${c.cta ? ` ${c.cta}.` : ''}`}
               >
