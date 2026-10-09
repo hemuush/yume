@@ -1,5 +1,6 @@
 import { View, Pressable, ActivityIndicator } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
+import { CategoryIcon } from '@/components/CategoryIcon';
 import { Text } from '@/components/Text';
 import { Amount } from '@/components/Amount';
 import { CategoryBreakdownItem } from '@/db/reports';
@@ -35,6 +36,7 @@ export function CategoryList({
   onOpen,
   onShowDays,
   kind = 'expense',
+  iconOf,
 }: {
   breakdown: CategoryBreakdownItem[];
   /** The period's rounded total — the rows' rounded amounts add up to it. */
@@ -55,6 +57,8 @@ export function CategoryList({
   onShowDays?: (c: CategoryBreakdownItem) => void;
   /** Income: a rise is good news, so it's green rather than red. */
   kind?: 'expense' | 'income';
+  /** A row's icon (categories); rows without one (accounts) keep their colour dot. */
+  iconOf?: (id: string) => string | undefined;
 }) {
   const upIsBad = kind === 'expense';
   const shown = expanded ? breakdown : breakdown.slice(0, COLLAPSED_COUNT);
@@ -82,7 +86,11 @@ export function CategoryList({
               accessibilityState={{ selected: on, expanded: on }}
             >
               <View style={styles.catTop}>
-                <View style={[styles.catDot, { backgroundColor: c.color }]} />
+                {iconOf?.(c.categoryId) ? (
+                  <CategoryIcon name={iconOf(c.categoryId)!} color={c.color} size={15} square={34} round />
+                ) : (
+                  <View style={[styles.catDot, { backgroundColor: c.color }]} />
+                )}
                 <Text style={styles.catName} numberOfLines={1}>
                   {c.name}
                 </Text>
@@ -102,7 +110,7 @@ export function CategoryList({
                   )}
                 </View>
               </View>
-              <View style={styles.catTrack}>
+              <View style={[styles.catTrack, !!iconOf?.(c.categoryId) && styles.catTrackIcon]}>
                 <AnimatedCategoryFill
                   animKey={`reports:${c.categoryId}`}
                   targetPct={Math.max(3, (c.totalMinor / maxCat) * 100)}
