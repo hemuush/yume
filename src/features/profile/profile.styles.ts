@@ -2,6 +2,7 @@ import { StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
 import { EYEBROW } from '@/constants/textStyles';
 import { SCREEN } from '@/components/screenStyles';
+import { GLASS } from '@/components/Glass';
 
 // Shared by Profile (shell, YouSection, SettingsSection) and the account modals. Cards, rows and headings
 // come from Home's visual system (screenStyles, Section); these are only what Profile adds.
@@ -72,16 +73,6 @@ export const styles = StyleSheet.create({
   // SegmentedControl draws its own pill; this only places it.
   tabWrap: { marginHorizontal: SCREEN.gutter, marginTop: 16 },
 
-  // Cash hero and tracked balance read as one card when both are present.
-  cashCard: {
-    marginHorizontal: SCREEN.gutter,
-    marginTop: 12,
-    borderRadius: theme.radius.xl2,
-    overflow: 'hidden',
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-  },
-
   // ---- You: accounts, grouped by type ----
   groupHead: {
     flexDirection: 'row',
@@ -90,11 +81,11 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingTop: 10,
     paddingBottom: 6,
-    backgroundColor: theme.colors.surfaceAlt,
   },
   groupLabel: { ...EYEBROW },
   groupTotal: { fontFamily: theme.font.monoBold, fontSize: 12, color: theme.colors.textSecondary },
   archivedCard: { marginTop: 10 },
+  archivedIcon: { backgroundColor: GLASS.fillStrong, borderWidth: 1, borderColor: GLASS.edge },
   archivedDim: { opacity: 0.6 },
   planLink: {
     flexDirection: 'row',
@@ -102,10 +93,11 @@ export const styles = StyleSheet.create({
     gap: 12,
     marginHorizontal: SCREEN.gutter,
     marginTop: 14,
-    backgroundColor: theme.colors.surface,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-    borderRadius: theme.radius.xl2,
+    backgroundColor: GLASS.fill,
+    borderWidth: 1,
+    borderColor: GLASS.edge,
+    borderRadius: 20,
+    boxShadow: GLASS.shadow,
     paddingHorizontal: 14,
     paddingVertical: 12,
   },

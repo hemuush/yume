@@ -3,6 +3,7 @@ import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
 import { usePressScale } from '@/lib/usePressScale';
 import { SCREEN } from '@/components/screenStyles';
+import { GLASS } from '@/components/Glass';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -27,7 +28,7 @@ function Tile({
       accessibilityRole="button"
       accessibilityLabel={`${value} ${label}`}
     >
-      <View style={[styles.strip, { backgroundColor: tone }]} />
+      <View style={[styles.dot, { backgroundColor: tone }]} />
       <Text style={styles.value}>{value}</Text>
       <Text style={styles.label} numberOfLines={1}>
         {label}
@@ -36,7 +37,7 @@ function Tile({
   );
 }
 
-/** Entries, active loans and friends as three white tiles with a coloured top edge, each opening its screen. */
+/** Entries, active loans and friends as three glass tiles, each with a dot of its colour, opening its screen. */
 export function LinkTiles({
   entries,
   loans,
@@ -69,13 +70,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingTop: 13,
     paddingBottom: 10,
-    borderRadius: theme.radius.xl2,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-    backgroundColor: theme.colors.surface,
-    overflow: 'hidden',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: GLASS.edge,
+    backgroundColor: GLASS.fill,
+    boxShadow: GLASS.shadow,
   },
-  strip: { position: 'absolute', top: 0, left: 0, right: 0, height: 3 },
+  dot: { position: 'absolute', top: 12, right: 12, width: 8, height: 8, borderRadius: 4 },
   value: { fontFamily: theme.font.roundedBold, fontSize: 18, color: theme.colors.textPrimary },
   label: { fontFamily: theme.font.bodyMedium, fontSize: 11, color: theme.colors.textSecondary },
 });

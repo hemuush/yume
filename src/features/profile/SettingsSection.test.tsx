@@ -117,22 +117,41 @@ describe('Profile · Settings section', () => {
     expect(shown).toContain('Last backup yesterday');
   });
 
-  it('shows a coral note when the last backup failed, and opens Backup from it', async () => {
+  it('says so in the safety check when the last backup failed, and opens Backup from it', async () => {
     mockBackupResult.mockResolvedValue({ at: daysAgo(0), ok: false, error: 'folder gone' });
     const tree = await render();
     expect(texts(tree)).toEqual(
-      expect.arrayContaining(['Backup failed', 'Check', 'Last backup failed — tap to check'])
+      expect.arrayContaining([
+        'Your last backup didn’t finish',
+        'Failed · tap to check',
+        'Last backup failed — tap to check',
+      ])
     );
-    await press(tree, 'Backup failed. Tap to check');
+    await press(tree, 'Backup: Failed · tap to check. Open Backup & restore');
     expect(router.push).toHaveBeenCalledWith('/backup');
   });
 
-  it('nudges to set up a backup when there has never been one', async () => {
+  it('counts a missing backup as a thing to look at when there has never been one', async () => {
     mockBackupResult.mockResolvedValue(null);
     const tree = await render();
-    expect(texts(tree)).toEqual(expect.arrayContaining(['No backup yet', 'Set up', 'Never backed up']));
-    await press(tree, 'No backup yet. Set one up');
+    expect(texts(tree)).toEqual(expect.arrayContaining(['1 thing to look at', 'Never backed up']));
+    await press(tree, 'Backup: Never backed up. Open Backup & restore');
     expect(router.push).toHaveBeenCalledWith('/backup');
+  });
+
+  it('reads all clear when backed up with unlock on', async () => {
+    const shown = texts(await render());
+    expect(shown).toEqual(
+      expect.arrayContaining(['Your data is looked after', 'Yesterday', 'Needed to open'])
+    );
+  });
+
+  it('turns unlock on from the safety check, through the same screen-lock check as its row', async () => {
+    mockLock.lockEnabled = false;
+    mockDeviceSecured.mockResolvedValue(true);
+    const tree = await render();
+    await press(tree, 'Require unlock, off. Tap to turn it on');
+    expect(mockLock.setLockEnabled).toHaveBeenCalledWith(true);
   });
 
   it('lists the groups in the signed-off order', async () => {

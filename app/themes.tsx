@@ -11,19 +11,24 @@ import { THEMES } from '@/theme/themes';
 import { ThemePreview } from '@/features/profile/ThemePreview';
 import { haptics } from '@/lib/haptics';
 import { withPressed } from '@/lib/pressed';
+import { Glass, GLASS } from '@/components/Glass';
+import { HomeWallpaper } from '@/features/home/HomeWallpaper';
 
 /**
- * Every theme pack as a small Home preview in its colours, two per row, labelled by name only. Tapping a
- * card switches the whole app at once. Reached from Profile › Settings › Appearance.
+ * The pack you're on as a live phone at the top, then every pack as a small Home preview in its colours, two
+ * per row. Tapping a card switches the whole app at once, wallpaper included. Reached from Profile › Settings ›
+ * Appearance.
  */
 export default function ThemesScreen() {
   const insets = useSafeAreaInsets();
   // The header sits over the page and shrinks as it scrolls.
   const { collapse, headerHeight, scrollHandler, scrollRef } = useCollapsingHeader();
-  const { themeId, setTheme } = useAccent();
+  const { themeId, setTheme, accent, secondary } = useAccent();
+  const current = THEMES.find((t) => t.id === themeId) ?? THEMES[0];
 
   return (
     <View style={styles.container}>
+      <HomeWallpaper accent={accent} secondary={secondary} />
       <ReanimatedAnimated.ScrollView
         ref={scrollRef}
         onScroll={scrollHandler}
@@ -37,7 +42,28 @@ export default function ThemesScreen() {
           },
         ]}
       >
-        <Text style={styles.caption}>Buttons, the active tab, highlights, widgets and Suu's dot.</Text>
+        <Glass radius={28} tone="strong" style={styles.live}>
+          <View style={styles.phone}>
+            <ThemePreview pack={current} height={200} detailed />
+          </View>
+          <View style={styles.liveText}>
+            <Text style={styles.liveKicker}>Now on</Text>
+            <Text style={styles.liveName}>{current.name}</Text>
+            <Text style={styles.caption}>
+              Tints the wallpaper, buttons, the active tab, highlights, widgets and Suu's dot.
+            </Text>
+            <View style={styles.pair}>
+              <View style={styles.pairItem}>
+                <View style={[styles.pairDot, { backgroundColor: current.primary }]} />
+                <Text style={styles.pairText}>Main</Text>
+              </View>
+              <View style={styles.pairItem}>
+                <View style={[styles.pairDot, { backgroundColor: current.secondary }]} />
+                <Text style={styles.pairText}>Second</Text>
+              </View>
+            </View>
+          </View>
+        </Glass>
         <View style={styles.grid}>
           {THEMES.map((pack) => {
             const active = pack.id === themeId;
@@ -53,7 +79,9 @@ export default function ThemesScreen() {
                 accessibilityLabel={`${pack.name} theme`}
                 accessibilityState={{ selected: active }}
               >
-                <ThemePreview pack={pack} height={64} />
+                <View style={styles.swatch}>
+                  <ThemePreview pack={pack} height={74} />
+                </View>
                 <View style={styles.nameRow}>
                   <Text style={styles.name} numberOfLines={1}>
                     {pack.name}
@@ -69,7 +97,7 @@ export default function ThemesScreen() {
           })}
         </View>
       </ReanimatedAnimated.ScrollView>
-      <SkyHeader collapse={collapse} title="Theme" showBack hideUser />
+      <SkyHeader collapse={collapse} title="Theme" showBack hideUser wallpaper />
     </View>
   );
 }
@@ -77,24 +105,43 @@ export default function ThemesScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
   content: { paddingHorizontal: 20, gap: 12 },
-  caption: { fontFamily: theme.font.body, fontSize: 12.5, color: theme.colors.textMuted },
+  caption: { fontFamily: theme.font.body, fontSize: 12.5, lineHeight: 17, color: theme.colors.textMuted },
+  live: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 12 },
+  phone: {
+    width: 120,
+    height: 200,
+    borderRadius: 22,
+    overflow: 'hidden',
+    borderWidth: 2,
+    borderColor: theme.colors.white,
+  },
+  liveText: { flex: 1, minWidth: 0, gap: 6 },
+  liveKicker: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textSecondary },
+  liveName: { fontFamily: theme.font.roundedBold, fontSize: 20, color: theme.colors.textPrimary },
+  pair: { flexDirection: 'row', gap: 12, marginTop: 2 },
+  pairItem: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  pairDot: { width: 14, height: 14, borderRadius: 7, borderWidth: 1.5, borderColor: theme.colors.white },
+  pairText: { fontFamily: theme.font.bodyMedium, fontSize: 11.5, color: theme.colors.textSecondary },
   grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: 12 },
   card: {
     width: '48.5%',
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.radius.xl,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-    overflow: 'hidden',
+    padding: 7,
+    backgroundColor: GLASS.fill,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: GLASS.edge,
+    boxShadow: GLASS.shadow,
   },
+  swatch: { borderRadius: 14, overflow: 'hidden' },
   cardActive: { borderWidth: 2, borderColor: theme.colors.ink },
   nameRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: 6,
-    paddingHorizontal: 11,
-    paddingVertical: 11,
+    paddingHorizontal: 4,
+    paddingTop: 9,
+    paddingBottom: 4,
   },
   name: { flex: 1, fontFamily: theme.font.roundedBold, fontSize: 14, color: theme.colors.textPrimary },
   tick: {

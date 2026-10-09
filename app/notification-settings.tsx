@@ -22,6 +22,9 @@ import { PrimaryButton } from '@/components/PrimaryButton';
 import { listScreenStyles } from '@/features/shared/listScreenStyles';
 import { useAccent } from '@/theme/AccentContext';
 import { shade } from '@/lib/color';
+import { GLASS_CARD } from '@/components/Glass';
+import { HomeWallpaper } from '@/features/home/HomeWallpaper';
+import { DayArc } from '@/features/notifications/DayArc';
 
 type SwitchKey = 'morningEnabled' | 'eveningEnabled' | 'billAlerts' | 'overspendAlerts' | 'weeklySummary';
 
@@ -107,7 +110,8 @@ export default function NotificationSettingsScreen() {
   if (!prefs) {
     return (
       <View style={styles.container}>
-        <SkyHeader title="Notifications" showBack hideUser />
+        <HomeWallpaper accent={accent} secondary={secondary} />
+        <SkyHeader title="Notifications" showBack hideUser wallpaper />
         {loadError ? (
           <View style={listScreenStyles.errorBanner}>
             <Text style={listScreenStyles.errorTitle}>Couldn't load your notification settings</Text>
@@ -136,15 +140,20 @@ export default function NotificationSettingsScreen() {
 
   return (
     <View style={styles.container}>
+      <HomeWallpaper accent={accent} secondary={secondary} />
       <ReanimatedAnimated.ScrollView
         ref={scrollRef}
         onScroll={scrollHandler}
         scrollEventThrottle={16}
         contentContainerStyle={{ paddingTop: headerHeight }}
       >
-        {/* The same grouped rows as Profile's settings: a section title, one card, hairlines between rows. */}
-        <Section title="Times" first>
-          <View style={h.card}>
+        <DayArc
+          morning={{ on: prefs.morningEnabled, minutes: morningMinutes }}
+          evening={{ on: prefs.eveningEnabled, minutes: eveningMinutes }}
+        />
+        {/* The same grouped rows as Profile's settings: a section title, one glass card, hairlines between rows. */}
+        <Section title="Times">
+          <View style={[h.card, GLASS_CARD]}>
             <SettingsRow
               icon="white-balance-sunny"
               iconBg={theme.colors.goldTint}
@@ -189,7 +198,7 @@ export default function NotificationSettingsScreen() {
         </Section>
 
         <Section title="Yume can mention">
-          <View style={h.card}>
+          <View style={[h.card, GLASS_CARD]}>
             <SettingsRow
               icon="credit-card-outline"
               iconBg={theme.colors.idGold}
@@ -224,7 +233,7 @@ export default function NotificationSettingsScreen() {
         </Section>
 
         <Section title="In the app">
-          <View style={h.card}>
+          <View style={[h.card, GLASS_CARD]}>
             <SettingsRow
               icon="weather-night"
               iconBg={shade(secondary, 94)}
@@ -243,7 +252,7 @@ export default function NotificationSettingsScreen() {
         <Text style={styles.footNote}>At most one notification per time. Nothing leaves your phone.</Text>
         <View style={{ height: theme.layout.screenScrollPad + insets.bottom }} />
       </ReanimatedAnimated.ScrollView>
-      <SkyHeader collapse={collapse} title="Notifications" showBack hideUser />
+      <SkyHeader collapse={collapse} title="Notifications" showBack hideUser wallpaper />
     </View>
   );
 }
