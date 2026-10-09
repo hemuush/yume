@@ -5,22 +5,13 @@ import { theme } from '@/constants/theme';
 import { formatMoney } from '@/lib/money';
 import { usePressScale } from '@/lib/usePressScale';
 import { screenStyles as h, SCREEN } from '@/components/screenStyles';
-import type { NeedsYouItem, NeedsYouTone } from './needsYou';
+import type { NeedsYouItem } from './needsYou';
+import { NEEDS_TONE } from './needsTone';
 import { withPressed } from '@/lib/pressed';
-import { shade } from '@/lib/color';
-import { useAccent } from '@/theme/AccentContext';
+import { GLASS } from '@/components/Glass';
+import { softTint } from '@/components/softTint';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
-
-const TONE: Record<
-  NeedsYouTone,
-  { bg: string | null; fg: string; icon: React.ComponentProps<typeof Feather>['name'] }
-> = {
-  urgent: { bg: theme.colors.expenseTint, fg: theme.colors.expense, icon: 'alert-circle' },
-  warn: { bg: theme.colors.idGold, fg: theme.colors.warnInk, icon: 'pie-chart' },
-  // null: a pale wash of the picked theme, filled in by the row.
-  info: { bg: null, fg: theme.colors.ink, icon: 'folder' },
-};
 
 const ACTION_ICON: Partial<Record<NeedsYouItem['action'], React.ComponentProps<typeof Feather>['name']>> = {
   loans: 'calendar',
@@ -32,8 +23,9 @@ const ACTION_ICON: Partial<Record<NeedsYouItem['action'], React.ComponentProps<t
 };
 
 /**
- * One Needs you item on the bell's screen, drawn like UpcomingRow (same sizes, same card).
- * `onDismiss` adds a ✕; without it the row ends in a chevron.
+ * One Needs you item on the bell's screen, in a glass list: a rail on its left edge and its icon in the colour
+ * of how urgent it is, title and line, amount, then Later or ✕. `onDismiss` adds the ✕; without it the row
+ * ends in a chevron.
  */
 export function NeedsYouRow({
   item,
@@ -52,8 +44,7 @@ export function NeedsYouRow({
   dismissLabel?: string;
 }) {
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.98);
-  const { accent } = useAccent();
-  const tone = TONE[item.tone];
+  const tone = NEEDS_TONE[item.tone];
   const icon = ACTION_ICON[item.action] ?? tone.icon;
   return (
     <AnimatedPressable
@@ -64,8 +55,9 @@ export function NeedsYouRow({
       accessibilityLabel={`${item.title}, ${item.detail}${item.amountMinor != null ? `, ${formatMoney(item.amountMinor)}` : ''}`}
       style={[styles.row, divider && styles.divider, animatedStyle]}
     >
-      <View style={[styles.iconWrap, { backgroundColor: tone.bg ?? shade(accent, 95) }]}>
-        <Feather name={icon} size={SCREEN.iconGlyph} color={tone.fg} />
+      <View style={[styles.rail, { backgroundColor: tone.color }]} />
+      <View style={[styles.iconWrap, { backgroundColor: softTint(tone.color, 0.14) }]}>
+        <Feather name={icon} size={SCREEN.iconGlyph} color={tone.color} />
       </View>
       <View style={styles.mid}>
         <Text style={styles.title} numberOfLines={1}>
@@ -108,7 +100,9 @@ export function NeedsYouRow({
 }
 
 const styles = StyleSheet.create({
-  row: h.row,
+  row: { ...h.row, paddingLeft: 20 },
+  // How urgent, at a glance down the list's left edge.
+  rail: { position: 'absolute', left: 8, top: 14, bottom: 14, width: 4, borderRadius: 2 },
   divider: h.divider,
   // A circle rather than the square tile (the Home A sign-off: round icons on Home).
   iconWrap: { ...h.iconTile, borderRadius: SCREEN.iconTile / 2 },
@@ -123,13 +117,15 @@ const styles = StyleSheet.create({
     borderRadius: 13,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: theme.colors.surfaceAlt,
+    backgroundColor: 'rgba(16,32,51,0.06)',
   },
   later: {
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: theme.radius.pill,
-    backgroundColor: theme.colors.surfaceAlt,
+    backgroundColor: GLASS.fillStrong,
+    borderWidth: 1,
+    borderColor: GLASS.edge,
   },
   laterText: { fontFamily: theme.font.bodyBold, fontSize: 11.5, color: theme.colors.textSecondary },
 });

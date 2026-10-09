@@ -3,6 +3,7 @@
  * the write fails, instead of leaving a dismissal on screen that was never saved.
  */
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
+import { Text } from 'react-native';
 
 jest.setTimeout(120000);
 
@@ -123,4 +124,14 @@ it('snoozes a row away, and brings it back if the snooze cannot be saved', async
   });
   expect(keys(again)).toEqual(['a', 'b', 'c']);
   expect(mockShowAlert).toHaveBeenCalledWith("Couldn't snooze", expect.stringContaining('locked'));
+});
+
+it('counts what needs you by urgency at the top', async () => {
+  mockData.loadNeedsYou.mockResolvedValue({
+    shown: [item('a', { tone: 'urgent' }), item('b'), item('c'), item('d', { tone: 'info' })],
+    dismissed: [],
+  });
+  const tree = await render();
+  const shown = tree.root.findAllByType(Text).map((t) => [].concat(t.props.children).join(''));
+  expect(shown).toEqual(expect.arrayContaining(['4', 'things', '1 urgent', '2 soon', '1 when you can']));
 });

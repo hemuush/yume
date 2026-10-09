@@ -17,7 +17,9 @@ import { withoutRelock } from '@/lib/appLock';
 import { errorMessage } from '@/lib/errorMessage';
 import { useAccent } from '@/theme/AccentContext';
 import { Wrap, WrapBeat, USUAL_BAND_PCT } from './wrapData';
-import { StripCard, KickerDot } from '@/components/StripCard';
+import { KickerDot } from '@/components/StripCard';
+import { Glass } from '@/components/Glass';
+import { HomeWallpaper } from '@/features/home/HomeWallpaper';
 import { YumeLogo } from '@/components/YumeLogo';
 import { styles, kickerTone } from './wrap.styles';
 
@@ -285,7 +287,7 @@ export function BarsBeat({ beat, still }: { beat: BeatOf<'bars'>; still: boolean
         </Text>
       </Rise>
       <View style={styles.middle}>
-        <StripCard tone={theme.colors.slice.spent} style={styles.chartCard}>
+        <Glass radius={24} tone="strong" style={styles.chartCard}>
           <View style={[styles.bars, styles.chartBody]}>
             {beat.items.map((c, i) => (
               <Rise key={c.categoryId} delay={i * 160} still={still}>
@@ -299,7 +301,7 @@ export function BarsBeat({ beat, still }: { beat: BeatOf<'bars'>; still: boolean
               </Rise>
             ))}
           </View>
-        </StripCard>
+        </Glass>
       </View>
     </View>
   );
@@ -373,7 +375,7 @@ export function DaysBeat({ beat, still }: { beat: BeatOf<'days'>; still: boolean
     <View style={styles.beat}>
       <Kicker kind="days">How the days went</Kicker>
       <View style={styles.middle}>
-        <StripCard tone={theme.colors.slice.due} style={styles.chartCard}>
+        <Glass radius={24} tone="strong" style={styles.chartCard}>
           <View style={styles.chartBody}>
             <View
               style={styles.cal}
@@ -395,7 +397,7 @@ export function DaysBeat({ beat, still }: { beat: BeatOf<'days'>; still: boolean
               ))}
             </View>
           </View>
-        </StripCard>
+        </Glass>
         <Rise delay={1500} still={still}>
           <Text style={[styles.displaySmall, styles.gapM]}>
             {dayMonth(beat.heaviest.date)} was the heaviest day.
@@ -500,7 +502,7 @@ export function WeekDaysBeat({ beat, still }: { beat: BeatOf<'weekDays'>; still:
     <View style={styles.beat}>
       <Kicker kind="weekDays">Day by day</Kicker>
       <View style={styles.middle}>
-        <StripCard tone={theme.colors.slice.due} style={styles.chartCard}>
+        <Glass radius={24} tone="strong" style={styles.chartCard}>
           <View style={styles.chartBody}>
             <View
               style={styles.week}
@@ -527,7 +529,7 @@ export function WeekDaysBeat({ beat, still }: { beat: BeatOf<'weekDays'>; still:
               })}
             </View>
           </View>
-        </StripCard>
+        </Glass>
         <Rise delay={900} still={still}>
           <Text style={[styles.displaySmall, styles.gapM]}>
             {longWeekday(beat.heaviest.date)} did the most.
@@ -622,6 +624,7 @@ export function FinalBeat({
   onOpenReport: () => void;
 }) {
   const card = useRef<View>(null);
+  const { accent, secondary } = useAccent();
   const hook = wrap.beats.find((b): b is BeatOf<'hook'> => b.kind === 'hook');
   const top = wrap.beats.find((b): b is BeatOf<'bars'> => b.kind === 'bars')?.items.slice(0, 3) ?? [];
   const line = cardLine(wrap);
@@ -655,8 +658,10 @@ export function FinalBeat({
       </Rise>
       <View style={styles.finalMiddle}>
         <Rise delay={200} still={still} onShown={() => setCardShown(true)}>
+          {/* The shared image: the card on its own bit of wallpaper, so it's opaque and looks like the app. */}
           <View ref={card} collapsable={false} style={styles.card}>
-            <StripCard tone={theme.colors.slice.free} lifted={false}>
+            <HomeWallpaper accent={accent} secondary={secondary} />
+            <Glass radius={24} tone="strong">
               <View style={styles.cardBody}>
                 <View style={styles.cardHead}>
                   <View style={styles.cardBrand}>
@@ -681,7 +686,7 @@ export function FinalBeat({
                   </View>
                 )}
               </View>
-            </StripCard>
+            </Glass>
           </View>
         </Rise>
       </View>
