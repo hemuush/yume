@@ -66,3 +66,48 @@ describe('costShares', () => {
     expect(topShareLine(two.slice(0, 1))).toBeNull();
   });
 });
+
+describe('runMarks', () => {
+  const { runMarks } = require('./recurring.helpers');
+  const rule = (over: Record<string, unknown>) => ({
+    id: 'r',
+    type: 'expense',
+    nextRunDate: '2026-10-12',
+    frequency: 'monthly',
+    intervalCount: 1,
+    endDate: null,
+    amountMinor: 50000,
+    ...over,
+  });
+
+  it('puts each run in the next 30 days on its own day', () => {
+    const marks = runMarks(
+      [rule({}), rule({ id: 'w', frequency: 'weekly', nextRunDate: '2026-10-10', amountMinor: 1000 })],
+      '2026-10-09'
+    );
+    expect(
+      marks.filter((m: { key: string }) => m.key.startsWith('r-')).map((m: { date: string }) => m.date)
+    ).toEqual(['2026-10-12']);
+    // The window runs 9 Oct – 7 Nov, both included.
+    expect(
+      marks.filter((m: { key: string }) => m.key.startsWith('w-')).map((m: { date: string }) => m.date)
+    ).toEqual(['2026-10-10', '2026-10-17', '2026-10-24', '2026-10-31', '2026-11-07']);
+  });
+
+  it('counts a run already due on today, marks income as coming in, and stops at the end date', () => {
+    const marks = runMarks(
+      [
+        rule({ nextRunDate: '2026-10-01', type: 'income' }),
+        rule({ id: 'e', frequency: 'weekly', nextRunDate: '2026-10-10', endDate: '2026-10-18' }),
+      ],
+      '2026-10-09'
+    );
+    expect(marks[0]).toMatchObject({ date: '2026-10-09', incoming: true });
+    expect(marks.filter((m: { key: string }) => m.key.startsWith('e-'))).toHaveLength(2);
+  });
+
+  it("follows a rule's real day: a 31st rule clamped to the 28th lands on the 31st next", () => {
+    const marks = runMarks([rule({ nextRunDate: '2027-02-28', anchorDay: 31 })], '2027-02-27');
+    expect(marks.map((m: { date: string }) => m.date)).toEqual(['2027-02-28']);
+  });
+});

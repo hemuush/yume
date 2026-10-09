@@ -48,10 +48,6 @@ export const styles = StyleSheet.create({
   bed: {
     marginHorizontal: 20,
     marginTop: 16,
-    backgroundColor: theme.colors.surface,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-    borderRadius: theme.radius.xl2,
     paddingHorizontal: 12,
     paddingVertical: 18,
     flexDirection: 'row',
@@ -59,7 +55,13 @@ export const styles = StyleSheet.create({
     alignItems: 'flex-end',
   },
   pot: { width: 52, alignItems: 'center', gap: 8 },
-  potToday: { borderRadius: 16, paddingVertical: 6 },
+  potToday: {
+    borderRadius: 18,
+    paddingVertical: 6,
+    backgroundColor: 'rgba(255,255,255,0.85)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.95)',
+  },
   plantSlot: { height: 58, justifyContent: 'flex-end', alignItems: 'center' },
   soil: { width: 36, height: 11, backgroundColor: theme.colors.inkWash, borderRadius: 6 },
   dayLabel: {
@@ -74,13 +76,7 @@ export const styles = StyleSheet.create({
   legendItem: { flex: 1, alignItems: 'center', gap: 4 },
   legendLabel: { fontFamily: theme.font.body, fontSize: 10, color: theme.colors.textMuted },
 
-  note: {
-    marginHorizontal: 20,
-    marginTop: 18,
-    backgroundColor: theme.colors.surfaceAlt,
-    borderRadius: theme.radius.xl2,
-    padding: 14,
-  },
+  note: { marginHorizontal: 20, marginTop: 18, padding: 14 },
   noteLabel: {
     fontFamily: theme.font.roundedMedium,
     fontSize: 12,

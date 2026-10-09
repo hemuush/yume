@@ -73,4 +73,51 @@ describe('LoansHero', () => {
     const shown = texts(render(totals(), true));
     expect(shown).not.toContain('You owe');
   });
+
+  it('draws the road to debt-free: a line per loan ending the month it finishes', () => {
+    let tree!: ReactTestRenderer;
+    act(() => {
+      tree = create(
+        <LoansHero
+          totals={totals()}
+          shares={[{ id: 'a', fraction: 1 }]}
+          hues={{ a: '#FFE3D6' }}
+          timeline={{
+            rows: [
+              { id: 'b', name: 'Car loan', endDate: '2028-06-05', fraction: 0.15 },
+              { id: 'a', name: 'Home loan', endDate: '2045-01-05', fraction: 1 },
+            ],
+            midYear: 2035,
+            endYear: 2045,
+          }}
+        />
+      );
+    });
+    const shown = texts(tree);
+    expect(shown).toEqual(
+      expect.arrayContaining(['Car loan', 'Jun 2028', 'Home loan', 'Now', '2035', 'Debt-free 2045'])
+    );
+  });
+
+  it('keeps the split bar when a loan you owe on has no end date to put on the timeline', () => {
+    let tree!: ReactTestRenderer;
+    act(() => {
+      tree = create(
+        <LoansHero
+          totals={totals()}
+          shares={[
+            { id: 'a', fraction: 0.8 },
+            { id: 'p', fraction: 0.2 },
+          ]}
+          hues={{ a: '#FFE3D6', p: '#FBF0CE' }}
+          timeline={{
+            rows: [{ id: 'a', name: 'Home loan', endDate: '2045-01-05', fraction: 1 }],
+            midYear: 2035,
+            endYear: 2045,
+          }}
+        />
+      );
+    });
+    expect(texts(tree)).not.toContain('Debt-free 2045');
+  });
 });
