@@ -98,4 +98,26 @@ describe('LoansHero', () => {
       expect.arrayContaining(['Car loan', 'Jun 2028', 'Home loan', 'Now', '2035', 'Debt-free 2045'])
     );
   });
+
+  it('keeps the split bar when a loan you owe on has no end date to put on the timeline', () => {
+    let tree!: ReactTestRenderer;
+    act(() => {
+      tree = create(
+        <LoansHero
+          totals={totals()}
+          shares={[
+            { id: 'a', fraction: 0.8 },
+            { id: 'p', fraction: 0.2 },
+          ]}
+          hues={{ a: '#FFE3D6', p: '#FBF0CE' }}
+          timeline={{
+            rows: [{ id: 'a', name: 'Home loan', endDate: '2045-01-05', fraction: 1 }],
+            midYear: 2035,
+            endYear: 2045,
+          }}
+        />
+      );
+    });
+    expect(texts(tree)).not.toContain('Debt-free 2045');
+  });
 });

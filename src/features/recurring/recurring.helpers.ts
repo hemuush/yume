@@ -93,7 +93,7 @@ export const RUN_WINDOW_DAYS = 30;
 export function runMarks(
   rules: Pick<
     RecurringRule,
-    'id' | 'type' | 'nextRunDate' | 'frequency' | 'intervalCount' | 'endDate' | 'amountMinor'
+    'id' | 'type' | 'nextRunDate' | 'frequency' | 'intervalCount' | 'endDate' | 'amountMinor' | 'anchorDay'
   >[],
   today: string,
   days = RUN_WINDOW_DAYS
@@ -101,7 +101,8 @@ export function runMarks(
   const until = addDaysToIsoDate(today, days - 1);
   const marks: RunMark[] = [];
   for (const r of rules) {
-    const anchor = dayOfIsoDate(r.nextRunDate);
+    // The rule's real day of the month (a 31st rule clamped to the 28th still lands on the 31st next).
+    const anchor = r.anchorDay ?? dayOfIsoDate(r.nextRunDate);
     let date = r.nextRunDate;
     for (let n = 0; n < 400 && date <= until; n++) {
       if (r.endDate && date > r.endDate) break;

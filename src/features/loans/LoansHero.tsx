@@ -60,6 +60,10 @@ export function LoansHero({
   const onlyLent = !owes && totals.owedToYouMinor > 0;
   const allClear = !owes && !onlyLent;
   const tone = (id: string) => loanBarTone(hues[id] ?? theme.colors.idGold);
+  // The timeline only when it covers every loan you owe on; a loan with no end date left (say, only overdue
+  // EMIs) would drop out of it, so the split bar, which shows them all, stays instead.
+  const showLanes =
+    !!timeline && timeline.rows.length > 0 && shares.every((s) => timeline.rows.some((r) => r.id === s.id));
 
   return (
     <Glass key="hero" radius={28} tone="strong" style={frost.hero}>
@@ -101,9 +105,9 @@ export function LoansHero({
             )}
           </View>
 
-          {owes && timeline && timeline.rows.length > 0 ? (
+          {owes && showLanes ? (
             <View style={styles.lanes}>
-              {timeline.rows.map((row) => (
+              {timeline!.rows.map((row) => (
                 <View key={row.id} style={styles.lane}>
                   <View style={styles.laneHead}>
                     <Text style={styles.laneName} numberOfLines={1}>
@@ -126,8 +130,8 @@ export function LoansHero({
                 importantForAccessibility="no-hide-descendants"
               >
                 <Text style={styles.axisText}>Now</Text>
-                {timeline.midYear !== null && <Text style={styles.axisText}>{timeline.midYear}</Text>}
-                <Text style={[styles.axisText, styles.axisEnd]}>Debt-free {timeline.endYear}</Text>
+                {timeline!.midYear !== null && <Text style={styles.axisText}>{timeline!.midYear}</Text>}
+                <Text style={[styles.axisText, styles.axisEnd]}>Debt-free {timeline!.endYear}</Text>
               </View>
             </View>
           ) : (
