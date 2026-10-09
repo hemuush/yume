@@ -27,6 +27,7 @@ export function PayInstallmentSheet({
   account,
   categoryId,
   linkedAccountMissing = false,
+  balanceMinor,
   onClose,
   onPaid,
 }: {
@@ -35,6 +36,8 @@ export function PayInstallmentSheet({
   categoryId: string | null;
   /** The loan's own account is archived or gone: say which account pays instead. */
   linkedAccountMissing?: boolean;
+  /** What the paying account holds now, to show what it'll hold after (Plan knows it; omitted elsewhere). */
+  balanceMinor?: number;
   onClose: () => void;
   /** After the payment (or its undo) is saved — refresh whatever shows it. */
   onPaid: () => void | Promise<void>;
@@ -115,6 +118,11 @@ export function PayInstallmentSheet({
         title={`From ${account?.name ?? '—'}`}
         meta={`Due ${weekdayDayMonth(installment.dueDate)}`}
       />
+      {account && balanceMinor != null && (
+        <Text style={styles.hintText}>
+          {account.name} after paying: {formatMoney(balanceMinor - installment.emiAmountMinor)}
+        </Text>
+      )}
       {!account && (
         <Text style={styles.hintText}>Add an account first to record payments against this loan.</Text>
       )}

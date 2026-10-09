@@ -1,6 +1,7 @@
 /**
- * Renders the Plan tab with fixed data dated from today: tiles show real figures in order and open their
- * screens, Coming up lists 14 days grouped by day with Pay on EMIs. Tile wording is in planOverview.test.ts.
+ * Renders the Plan tab with fixed data dated from today: the runway, jars, debt path, goals and tiles show
+ * real figures in order and open their screens, Coming up lists 14 days grouped by day with Pay on EMIs.
+ * Wording rules are in planOverview.test.ts and runway.test.ts.
  */
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
 
@@ -99,10 +100,29 @@ jest.mock('@/features/loans/PayInstallmentSheet', () => ({
     return null;
   },
 }));
-jest.mock('@/db/people', () => ({ listPeople: async () => [{ balanceMinor: 50000 }] }));
+jest.mock('@/db/people', () => ({
+  listPeople: async () => [{ id: 'p1', name: 'Ravi', balanceMinor: 50000 }],
+}));
+/** What the bank account holds — a test lowers it to run the runway short. */
+let mockBank = 3000000;
 jest.mock('@/db/ledger', () => ({
   listAccounts: async () => [
-    { id: 'pot', name: 'Pot', type: 'savings', archived: false, currentBalanceMinor: 5400000 },
+    {
+      id: 'pot',
+      name: 'Pot',
+      type: 'savings',
+      currency: 'INR',
+      archived: false,
+      currentBalanceMinor: 5400000,
+    },
+    {
+      id: 'bank',
+      name: 'Bank',
+      type: 'bank',
+      currency: 'INR',
+      archived: false,
+      currentBalanceMinor: mockBank,
+    },
   ],
   listCategories: async () => [
     { id: 'emi', name: 'Loan EMI', isSystem: true },
@@ -120,6 +140,7 @@ jest.mock('@/db/reports', () => ({
 jest.mock('@/db/settings', () => ({
   ...jest.requireActual('@/db/settings'),
   getDailySpendingGoal: async () => 500000,
+  getDefaultCurrency: async () => 'INR',
 }));
 
 import PlanScreen from '../../../app/(tabs)/plan';
@@ -148,30 +169,34 @@ beforeAll(async () => {
 }, 180000);
 
 describe('Plan tab', () => {
-  it('shows the tiles in order, then Coming up', async () => {
+  const dayLabel = (n: number) =>
+    new Date(`${mockDay(n)}T00:00:00`).toLocaleDateString(undefined, {
+      weekday: 'short',
+      day: 'numeric',
+      month: 'short',
+    });
+
+  it('shows the sections in order, then Coming up', async () => {
     const shown = texts(await render());
     const headings = [
       'Next 14 days',
       '2 payments',
-      'Where you stand',
-      'EMIs',
-      'Budgets',
+      'This month’s budgets',
+      'The way to debt-free',
       'Debt-free by ' +
         new Date(2035, 5, 5).toLocaleDateString(undefined, { month: 'long', year: 'numeric' }),
-      'Goals',
       'Saving toward',
       'People & habit',
       'Friends',
       'Spend streak',
       'Coming up',
     ];
-    // Each heading is looked for after the one before it: "EMIs" also labels the 14-day strip's key.
     const positions: number[] = [];
     for (const h of headings) positions.push(shown.indexOf(h, (positions.at(-1) ?? -1) + 1));
     expect(positions.every((p) => p >= 0)).toBe(true);
   });
 
-  it("shows each tile's own figures", async () => {
+  it("shows each section's own figures", async () => {
     const shown = texts(await render());
     expect(shown).toEqual(
       expect.arrayContaining([
@@ -182,44 +207,51 @@ describe('Plan tab', () => {
         'Start a goal that fills up by itself',
         'Home loan',
         'Streaming',
+        '₹25,000 in EMIs over 14 days',
       ])
     );
     // A savings account a new goal could follow.
     expect(shown.some((t) => t.startsWith('Follow Pot (₹54,000)'))).toBe(true);
-    // What-if picks the biggest category a cut could apply to, not the EMI.
-    expect(shown.some((t) => t.includes('less on Food?'))).toBe(true);
-    expect(shown.some((t) => t.includes('less on Loan EMI'))).toBe(false);
+    // What-if cuts the biggest category it can, not the EMI: 10% of Food's ₹20,000.
+    expect(shown).toContain('Food');
+    expect(shown).toContain('+₹2,000');
+    expect(shown.some((t) => t.includes('Loan EMI'))).toBe(false);
     // 25% of the home loan's principal repaid.
     expect(shown.some((t) => t.includes('25% paid'))).toBe(true);
   });
 
-  it('groups Coming up by day, with each day’s total', async () => {
-    const shown = texts(await render());
-    const dayLabel = (n: number) =>
-      new Date(`${mockDay(n)}T00:00:00`).toLocaleDateString(undefined, {
-        weekday: 'short',
+  it('says whether your accounts cover what’s due, and when they run short', async () => {
+    expect(texts(await render())).toContain('Your accounts cover it');
+    mockBank = 1000000;
+    try {
+      const shown = texts(await render());
+      expect(shown).not.toContain('Your accounts cover it');
+      const short = new Date(`${mockDay(3)}T00:00:00`).toLocaleDateString(undefined, {
         day: 'numeric',
         month: 'short',
       });
-    expect(shown.indexOf(dayLabel(1))).toBeGreaterThan(shown.indexOf('Coming up'));
-    expect(shown.indexOf(dayLabel(3))).toBeGreaterThan(shown.indexOf(dayLabel(1)));
+      expect(shown.some((t) => t.startsWith('Short ₹15,450 on') && t.includes(short))).toBe(true);
+    } finally {
+      mockBank = 3000000;
+    }
+  });
+
+  it('groups Coming up by day, with each day’s total', async () => {
+    const shown = texts(await render());
+    expect(shown.indexOf(dayLabel(1), shown.indexOf('Coming up'))).toBeGreaterThan(
+      shown.indexOf('Coming up')
+    );
+    expect(shown.lastIndexOf(dayLabel(3))).toBeGreaterThan(shown.lastIndexOf(dayLabel(1)));
     expect(shown).toContain('₹25,000');
   });
 
-  it('says what each tile means in plain words', async () => {
+  it('says what each section means in plain words', async () => {
     const shown = texts(await render());
-    const ahead = (n: number) =>
-      new Date(`${mockDay(n)}T00:00:00`).toLocaleDateString(undefined, {
-        weekday: 'short',
-        day: 'numeric',
-        month: 'short',
-      });
-    expect(shown).toContain(`${ahead(3)}, in 3 days · 1 loan`);
-    expect(shown).toContain('Food is ₹20,000 over');
+    expect(shown.some((t) => t.includes('Food is ₹20,000 over'))).toBe(true);
     expect(shown).toContain('to collect from 1 person');
   });
 
-  it('opens each tile’s own screen', async () => {
+  it('opens each section’s own screen', async () => {
     const tree = await render();
     const byLabel = (start: string) =>
       tree.root.findAll(
@@ -228,9 +260,9 @@ describe('Plan tab', () => {
           n.props.accessibilityLabel.startsWith(start) &&
           n.props.onPress
       )[0];
-    act(() => byLabel('EMIs').props.onPress());
-    expect(router.push).toHaveBeenLastCalledWith('/loans');
     act(() => byLabel('Budgets,').props.onPress());
+    expect(router.push).toHaveBeenLastCalledWith('/budgets');
+    act(() => byLabel('Fuel, 25% used').props.onPress());
     expect(router.push).toHaveBeenLastCalledWith('/budgets');
     act(() => byLabel('₹30,00,000 of debt left').props.onPress());
     expect(router.push).toHaveBeenLastCalledWith('/loans');
@@ -244,35 +276,37 @@ describe('Plan tab', () => {
     expect(router.push).toHaveBeenLastCalledWith('/recurring');
     act(() => byLabel('4-day streak').props.onPress());
     expect(router.push).toHaveBeenLastCalledWith('/garden');
-    // The 14-day tile scrolls down to Coming up instead of leaving the tab.
+    // The runway card scrolls down to Coming up instead of leaving the tab.
     (router.push as jest.Mock).mockClear();
     act(() => byLabel('₹25,450 due in the next 14 days').props.onPress());
     expect(router.push).not.toHaveBeenCalled();
   });
 
-  it('shows a day’s total and items when you tap its bar, and jumps to it in the list', async () => {
+  it('shows a day’s items when you tap its pin on the runway, and jumps to it in the list', async () => {
     const tree = await render();
-    const label = new Date(`${mockDay(3)}T00:00:00`).toLocaleDateString(undefined, {
-      weekday: 'short',
-      day: 'numeric',
-      month: 'short',
-    });
-    const bar = () =>
+    // The pins are placed once the line knows its width.
+    act(() =>
+      tree.root
+        .find((n) => n.props.testID === 'runway')
+        .props.onLayout({ nativeEvent: { layout: { width: 300, height: 112 } } })
+    );
+    const label = dayLabel(3);
+    const pin = () =>
       tree.root.find(
         (n) => n.props.accessibilityLabel === `${label}, ₹25,000 due. Show details` && n.props.onPress
       );
     (router.push as jest.Mock).mockClear();
-    act(() => bar().props.onPress());
+    act(() => pin().props.onPress());
     expect(texts(tree)).toContain('See in list');
     expect(texts(tree).some((t) => t.includes('₹25,000 · Home loan'))).toBe(true);
-    // Tapping the bar again hides the caption.
+    // Tapping it again hides the caption.
     act(() =>
       tree.root
         .find((n) => n.props.accessibilityLabel === `${label}, ₹25,000 due. Hide details`)
         .props.onPress()
     );
     expect(texts(tree)).not.toContain('See in list');
-    act(() => bar().props.onPress());
+    act(() => pin().props.onPress());
     act(() =>
       tree.root.find((n) => n.props.accessibilityLabel === `See ${label} in the list`).props.onPress()
     );
@@ -280,24 +314,29 @@ describe('Plan tab', () => {
   });
 
   it('colours Coming up rows by how soon they are due', async () => {
-    const { DateTile } = require('@/components/DateTile');
+    const { StyleSheet } = require('react-native');
+    const { theme } = require('@/constants/theme');
     const tree = await render();
+    const subColor = (start: string) =>
+      StyleSheet.flatten(
+        tree.root.findAllByType(Text).find((t) => [].concat(t.props.children).join('').startsWith(start))!
+          .props.style
+      ).color;
     // The EMI is 3 days out (amber); the streaming bill tomorrow is not an EMI or card bill.
-    const tones = tree.root.findAllByType(DateTile).map((t) => [t.props.urgent, t.props.soon]);
-    expect(tones).toEqual([
-      [false, false],
-      [false, true],
-    ]);
+    expect(subColor('EMI · ')).toBe(theme.colors.dueInk);
+    expect(subColor('Bill · ')).toBe(theme.colors.textMuted);
   });
 
-  it('marks an EMI paid straight from Coming up', async () => {
+  it('marks an EMI paid straight from Coming up, showing what the account holds after', async () => {
     const tree = await render();
     const paid = tree.root.find((n) => n.props.accessibilityLabel === 'Pay Home loan EMI' && n.props.onPress);
     await act(async () => {
       paid.props.onPress();
     });
     expect(mockPaySheet.current?.installment.id).toBe('p13');
+    expect((mockPaySheet.current as unknown as { balanceMinor: number }).balanceMinor).toBe(3000000);
   });
+
   it("lands on Coming up when Home's “+N more” sends you, then forgets it was asked", async () => {
     mockSection = 'coming-up';
     try {
