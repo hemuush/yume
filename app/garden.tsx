@@ -14,12 +14,16 @@ import { useCollapsingHeader } from '@/lib/useCollapsingHeader';
 import { EmptyState } from '@/components/EmptyState';
 import { Skeleton } from '@/components/Skeleton';
 import { SuuIllustration } from '@/components/SuuIllustration';
+import { Glass } from '@/components/Glass';
+import { HomeWallpaper } from '@/features/home/HomeWallpaper';
+import { GardenMonthCard } from '@/features/garden/GardenMonthCard';
+import { buildGardenMonth } from '@/features/garden/gardenMonth';
 import { GardenPlant } from '@/features/garden/GardenPlant';
 import { theme } from '@/constants/theme';
 import { useScreenLoad } from '@/lib/useScreenLoad';
 import { AmountField, AmountPadDock } from '@/components/AmountField';
 import { PrimaryButton } from '@/components/PrimaryButton';
-import { toMinor } from '@/lib/money';
+import { toMinor, formatMoney } from '@/lib/money';
 import { styles } from '@/features/garden/garden.styles';
 import { errorMessage } from '@/lib/errorMessage';
 import { shade } from '@/lib/color';
@@ -60,7 +64,10 @@ export default function GardenScreen() {
     const goal = await getDailySpendingGoal();
     setDailyGoalMinor(goal);
     const [streakSeries, goalList] = await Promise.all([
-      goal != null ? getDailyGoalStreakSeries(goal, POT_COUNT) : Promise.resolve([]),
+      // Back to the 1st (or the last five days, early in a month) for the bed and the month calendar.
+      goal != null
+        ? getDailyGoalStreakSeries(goal, Math.max(POT_COUNT, new Date().getDate()))
+        : Promise.resolve([]),
       listSavingsGoals(),
     ]);
     setSeries(streakSeries);
@@ -89,6 +96,9 @@ export default function GardenScreen() {
 
   const today = toLocalIsoDate(new Date());
   const streakToday = series.length > 0 ? series[series.length - 1].streakDays : 0;
+  // The bed shows the last five days; the calendar the whole month so far.
+  const potDays = series.slice(-POT_COUNT);
+  const month = buildGardenMonth(series, today);
   const stageToday = stageForStreak(streakToday);
 
   const fundedGoals = goals.filter((g) => g.currentAmountMinor > 0);
@@ -105,9 +115,10 @@ export default function GardenScreen() {
   if (!loaded && !loadError) {
     return (
       <View style={styles.container}>
-        <SkyHeader title="Suu's garden" showBack hideUser />
+        <HomeWallpaper accent={accent} secondary={secondary} />
+        <SkyHeader title="Suu's garden" showBack hideUser wallpaper />
         <View style={{ paddingTop: 20 }}>
-          <View style={[styles.bed, { marginTop: 0 }]}>
+          <Glass radius={28} style={[styles.bed, { marginTop: 0 }]}>
             {Array.from({ length: POT_COUNT }, (_, i) => (
               <View key={i} style={styles.pot}>
                 <View style={styles.plantSlot}>
@@ -116,7 +127,7 @@ export default function GardenScreen() {
                 <Skeleton width={36} height={11} radius={6} />
               </View>
             ))}
-          </View>
+          </Glass>
         </View>
       </View>
     );
@@ -124,6 +135,7 @@ export default function GardenScreen() {
 
   return (
     <View style={styles.container}>
+      <HomeWallpaper accent={accent} secondary={secondary} />
       <AmountPadDock>
         {(scrollProps) => (
           <>
@@ -188,25 +200,20 @@ export default function GardenScreen() {
                   >
                     <SuuIllustration size={16} pose={streakToday > 0 ? 'default' : 'sleepy'} />
                     <Text style={styles.streakPillText}>
-                      {streakToday > 0 ? `${streakToday}-day streak` : 'No streak yet'}
+                      {streakToday > 0 ? `${streakToday}-day streak` : 'No streak yet'} · under{' '}
+                      {formatMoney(dailyGoalMinor)} a day
                     </Text>
                   </View>
 
-                  <View style={styles.bed}>
-                    {series.map((point) => {
+                  <Glass radius={28} tone="strong" style={styles.bed}>
+                    {potDays.map((point) => {
                       const isToday = point.date === today;
                       const stage = stageForStreak(point.streakDays);
                       const label = isToday
                         ? 'Today'
                         : parseLocalIsoDate(point.date).toLocaleDateString(undefined, { weekday: 'short' });
                       return (
-                        <View
-                          key={point.date}
-                          style={[
-                            styles.pot,
-                            isToday && [styles.potToday, { backgroundColor: shade(accent, 95) }],
-                          ]}
-                        >
+                        <View key={point.date} style={[styles.pot, isToday && styles.potToday]}>
                           <View style={styles.plantSlot}>
                             <GardenPlant
                               stage={stage}
@@ -219,7 +226,7 @@ export default function GardenScreen() {
                         </View>
                       );
                     })}
-                  </View>
+                  </Glass>
 
                   <View style={styles.legend}>
                     {LEGEND_STAGES.map((stage) => (
@@ -230,10 +237,12 @@ export default function GardenScreen() {
                     ))}
                   </View>
 
-                  <View style={styles.note}>
+                  <Glass radius={22} style={styles.note}>
                     <Text style={styles.noteLabel}>Suu says</Text>
                     <Text style={styles.noteText}>{noteFor(stageToday, streakToday)}</Text>
-                  </View>
+                  </Glass>
+
+                  <GardenMonthCard month={month} today={today} />
                 </>
               )}
 
@@ -251,6 +260,7 @@ export default function GardenScreen() {
               title="Suu's garden"
               showBack
               hideUser
+              wallpaper
               collapse={collapse}
               summary={
                 streakToday > 0 ? (
