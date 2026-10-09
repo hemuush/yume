@@ -3,10 +3,9 @@
  * between them; or just a line about the page when no expense rule is running. Made-up figures.
  */
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
-import { Text } from 'react-native';
+import { Text, StyleSheet } from 'react-native';
 
 import { RecurringHero } from './RecurringHero';
-import { StyleSheet } from 'react-native';
 
 const StyleSheetFlatten = (st: unknown) => StyleSheet.flatten(st as never) as { width?: number };
 
