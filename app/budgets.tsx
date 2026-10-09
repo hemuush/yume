@@ -37,6 +37,10 @@ import { LapsedBudgetsCard } from '@/features/budgets/LapsedBudgetsCard';
 import { budgetsOverview } from '@/features/budgets/budgetsOverview';
 import { AddBudgetModal } from '@/features/budgets/AddBudgetModal';
 import { styles } from '@/features/budgets/budgets.styles';
+import { HomeWallpaper } from '@/features/home/HomeWallpaper';
+import { useAccent } from '@/theme/AccentContext';
+import { Glass } from '@/components/Glass';
+import { frost } from '@/components/Frost';
 import { errorMessage } from '@/lib/errorMessage';
 import { useReturnOrPush } from '@/lib/useReturnOrPush';
 import { showAlert } from '@/components/AppDialog';
@@ -50,6 +54,7 @@ export default function BudgetsScreen() {
   const { collapse, headerHeight, scrollHandler, scrollRef } = useCollapsingHeader();
   const { show: showUndo } = useUndoToast();
   const { hideAmounts } = usePrivacy();
+  const { accent, secondary } = useAccent();
   const [budgets, setBudgets] = useState<BudgetProgress[]>([]);
   const [lapsed, setLapsed] = useState<LapsedBudget[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -168,7 +173,8 @@ export default function BudgetsScreen() {
   if (!loaded && !loadError) {
     return (
       <View style={styles.container}>
-        <SkyHeader title="Budgets" showBack hideUser />
+        <HomeWallpaper accent={accent} secondary={secondary} />
+        <SkyHeader title="Budgets" showBack hideUser wallpaper />
         <View style={{ paddingTop: 14 }}>
           <Skeleton width={110} height={12} radius={4} style={{ marginHorizontal: 20 }} />
           <Skeleton width={220} height={26} radius={6} style={{ marginHorizontal: 20, marginTop: 8 }} />
@@ -183,6 +189,7 @@ export default function BudgetsScreen() {
 
   return (
     <View style={styles.container}>
+      <HomeWallpaper accent={accent} secondary={secondary} />
       <ReanimatedAnimated.ScrollView
         ref={scrollRef}
         onScroll={scrollHandler}
@@ -221,13 +228,14 @@ export default function BudgetsScreen() {
           budgets.length > 0 && (
             <>
               <Text style={styles.listTitle}>This month</Text>
-              <View style={[styles.listCard, styles.listCardTitled]}>
+              <Glass style={frost.list}>
                 {budgets.map((progress, i) => (
                   <MovingRow key={progress.budget.id}>
                     <BudgetRow
                       progress={progress}
                       divider={i > 0}
                       showPerDay
+                      jar
                       // The row opens its category's page; Edit and Delete are in ⋯.
                       onPress={() =>
                         returnOrPush(
@@ -239,7 +247,7 @@ export default function BudgetsScreen() {
                     />
                   </MovingRow>
                 ))}
-              </View>
+              </Glass>
             </>
           )
         )}
@@ -258,6 +266,7 @@ export default function BudgetsScreen() {
         title="Budgets"
         showBack
         hideUser
+        wallpaper
         actions={<AddButton onPress={() => setModalVisible(true)} label="+ Add" />}
       />
 
