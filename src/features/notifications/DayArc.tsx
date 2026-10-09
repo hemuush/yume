@@ -16,6 +16,8 @@ const BASE = 92;
 const RISE = 54;
 const MARK = 15;
 const SUN = '#E0A23A';
+/** Half the Noon label's box, so it centres on noon's place on the arc (not the middle of the row). */
+const NOON_HALF = 30;
 
 type Slot = { on: boolean; minutes: number };
 
@@ -26,7 +28,7 @@ type Slot = { on: boolean; minutes: number };
  */
 export function DayArc({ morning, evening }: { morning: Slot; evening: Slot }) {
   const [width, setWidth] = useState(0);
-  const pad = 14;
+  const pad = 16;
   const x = (m: number) => pad + ((m - START) / (END - START)) * (width - pad * 2);
   const y = (m: number) => BASE - Math.sin(((m - START) / (END - START)) * Math.PI) * RISE;
   let arc = '';
@@ -107,7 +109,9 @@ export function DayArc({ morning, evening }: { morning: Slot; evening: Slot }) {
       </View>
       <View style={styles.axis} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
         <Text style={styles.axisText}>5 AM</Text>
-        <Text style={styles.axisText}>Noon</Text>
+        {width > 0 && (
+          <Text style={[styles.axisText, styles.noon, { left: x(12 * 60) - NOON_HALF }]}>Noon</Text>
+        )}
         <Text style={styles.axisText}>Midnight</Text>
       </View>
     </Glass>
@@ -132,5 +136,6 @@ const styles = StyleSheet.create({
     color: theme.colors.textPrimary,
   },
   axis: { flexDirection: 'row', justifyContent: 'space-between', marginTop: -10 },
+  noon: { position: 'absolute', top: 0, width: NOON_HALF * 2, textAlign: 'center' },
   axisText: { fontFamily: theme.font.bodyMedium, fontSize: 11, color: theme.colors.textMuted },
 });

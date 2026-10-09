@@ -58,6 +58,7 @@ function Guard({
   bad,
   onPress,
   label,
+  checked,
 }: {
   title: string;
   sub: string;
@@ -67,16 +68,19 @@ function Guard({
   bad?: boolean;
   onPress: () => void;
   label: string;
+  /** Set on a card that switches something in place: it reads as a switch, on or off. */
+  checked?: boolean;
 }) {
   return (
     <Pressable
       style={withPressed([styles.guard, bad && styles.guardBad])}
       onPress={onPress}
-      accessibilityRole="button"
+      accessibilityRole={checked === undefined ? 'button' : 'switch'}
+      accessibilityState={checked === undefined ? undefined : { checked }}
       accessibilityLabel={label}
     >
       <Ring fraction={fraction} color={color} icon={icon} />
-      <Text style={styles.guardTitle} numberOfLines={1}>
+      <Text style={styles.guardTitle} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>
         {title}
       </Text>
       <Text style={[styles.guardSub, bad && styles.guardSubBad]} numberOfLines={2}>
@@ -145,6 +149,7 @@ export function SafetyCheck({
           color={lockOn ? good : muted}
           icon={lockOn ? 'lock' : 'unlock'}
           onPress={onToggleLock}
+          checked={lockOn}
           label={`Require unlock, ${lockOn ? 'on' : 'off'}. Tap to turn it ${lockOn ? 'off' : 'on'}`}
         />
         <Guard
