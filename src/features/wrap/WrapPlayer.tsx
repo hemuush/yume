@@ -194,7 +194,7 @@ export function WrapPlayer({
       </Pressable>
 
       {paused && (
-        <View style={styles.paused} pointerEvents="none">
+        <View style={[styles.paused, { bottom: insets.bottom + 16 }]} pointerEvents="none">
           <Text style={styles.pausedText}>Paused</Text>
         </View>
       )}

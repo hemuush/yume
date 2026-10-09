@@ -44,7 +44,6 @@ export const styles = StyleSheet.create({
   paused: {
     position: 'absolute',
     alignSelf: 'center',
-    bottom: 28,
     backgroundColor: theme.colors.ink,
     borderRadius: theme.radius.pill,
     paddingHorizontal: 12,

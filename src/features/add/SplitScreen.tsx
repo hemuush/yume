@@ -151,12 +151,15 @@ export function SplitScreen() {
     />
   );
 
-  // The ring's legend: each part with a category and money in it, as a share of the payment.
+  // The ring's legend: each part with a category and money in it, as a share of what's split so far (the
+  // ring's own measure, so the two agree even while the parts run over the payment).
+  const splitSoFar = amounts.reduce((a, m) => a + Math.max(0, m), 0);
   const legend = parts
     .map((p, i) => {
       const cat = categories.find((c) => c.id === p.categoryId);
-      return cat && amounts[i] > 0 && totalMinor > 0
-        ? { key: p.key, name: cat.name, color: cat.color, pct: Math.round((amounts[i] / totalMinor) * 100) }
+      const pct = splitSoFar > 0 ? (amounts[i] / splitSoFar) * 100 : 0;
+      return cat && amounts[i] > 0
+        ? { key: p.key, name: cat.name, color: cat.color, pct: pct < 1 ? '<1' : String(Math.round(pct)) }
         : null;
     })
     .filter((l): l is NonNullable<typeof l> => l !== null);
