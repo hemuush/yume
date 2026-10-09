@@ -1,27 +1,40 @@
 import { View, Pressable, Animated } from 'react-native';
-import { Text } from '@/components/Text';
 import Feather from '@expo/vector-icons/Feather';
+import { Text } from '@/components/Text';
+import { Glass } from '@/components/Glass';
+import { Section } from '@/components/Section';
 import { theme } from '@/constants/theme';
 import { formatMoney } from '@/lib/money';
 import { dueDateLabel } from '@/lib/dueDate';
 import { usePressScale } from '@/lib/usePressScale';
-import { Section } from '@/components/Section';
-import { screenStyles as h, SCREEN } from '@/components/screenStyles';
-import { DueGroup, PlanDueItem, PlanRoute, dueTone } from './planOverview';
-import { weekdayDayMonth } from '@/lib/dateLabels';
-
-import { styles } from './plan.styles';
 import { withPressed } from '@/lib/pressed';
-import { DateTile } from '@/components/DateTile';
-import { shade } from '@/lib/color';
+import { weekdayDayMonth } from '@/lib/dateLabels';
 import { useAccent } from '@/theme/AccentContext';
+import { homeInk } from '@/features/home/homeInk';
+import { DueGroup, PlanDueItem, PlanRoute, dueTone } from './planOverview';
+import { styles } from './plan.styles';
 
 /**
- * Plan's Coming up: everything due in the next 14 days, grouped under its
- * date with the day's total going out. EMIs keep their Pay button.
+ * Plan's Coming up as a timeline: one line runs down the card with a dot per day (amber when something is
+ * close, red when it's due), the day's total going out beside its date, and its items under it. EMIs keep
+ * their Pay button. Ends with links to Recurring and Loans.
  */
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
-/* ---------- Coming up ---------- */
+type FeatherName = React.ComponentProps<typeof Feather>['name'];
+
+const KIND_LABEL: Record<PlanDueItem['kind'], string> = {
+  emi: 'EMI',
+  bill: 'Bill',
+  income: 'Income',
+  transfer: 'Transfer',
+};
+
+function kindIcon(item: PlanDueItem): FeatherName {
+  if (item.kind === 'emi' || item.key.startsWith('card-')) return 'credit-card';
+  if (item.kind === 'income') return 'arrow-down-left';
+  if (item.kind === 'transfer') return 'repeat';
+  return 'file-text';
+}
 
 function LinkCell({ label, onPress, divider }: { label: string; onPress: () => void; divider?: boolean }) {
   return (
@@ -37,26 +50,18 @@ function LinkCell({ label, onPress, divider }: { label: string; onPress: () => v
   );
 }
 
-const KIND_LABEL: Record<PlanDueItem['kind'], string> = {
-  emi: 'EMI',
-  bill: 'Bill',
-  income: 'Income',
-  transfer: 'Transfer',
-};
-
 function DueRow({
   item,
   today,
-  divider,
   onOpen,
   onPay,
 }: {
   item: PlanDueItem;
   today: string;
-  divider: boolean;
   onOpen: (route: PlanRoute) => void;
   onPay?: (loanId: string) => void;
 }) {
+  const { accent } = useAccent();
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.98);
   const when = dueDateLabel(item.dueDate);
   const tone = dueTone(item, today);
@@ -64,8 +69,7 @@ function DueRow({
   const direction = item.kind === 'income' ? 'in' : item.kind === 'transfer' ? '' : 'out';
   const amount = (
     <Text
-      // Money going out reads in ink with its minus, as on Home; only money coming in is coloured.
-      style={[h.amount, item.kind === 'income' && h.income]}
+      style={[styles.dueAmount, item.kind === 'income' && styles.income]}
       numberOfLines={1}
       adjustsFontSizeToFit
     >
@@ -80,15 +84,17 @@ function DueRow({
       onPressOut={onPressOut}
       accessibilityRole="button"
       accessibilityLabel={`${item.title}, ${KIND_LABEL[item.kind]}, ${when}, ${formatMoney(item.amountMinor)}${direction ? ` ${direction}` : ''}`}
-      style={[h.row, divider && h.divider, animatedStyle]}
+      style={[styles.dueRow, animatedStyle]}
     >
-      <DateTile iso={item.dueDate} urgent={tone === 'urgent'} soon={tone === 'soon'} />
-      <View style={h.mid}>
-        <Text style={h.title} numberOfLines={1}>
+      <View style={styles.dueIcon}>
+        <Feather name={kindIcon(item)} size={16} color={theme.colors.ink} />
+      </View>
+      <View style={styles.dueMid}>
+        <Text style={styles.dueTitle} numberOfLines={1}>
           {item.title}
         </Text>
         <Text
-          style={[h.sub, tone === 'urgent' ? h.subUrgent : tone === 'soon' && h.subSoon]}
+          style={[styles.dueSub, tone === 'urgent' ? styles.dueUrgent : tone === 'soon' && styles.dueSoon]}
           numberOfLines={1}
         >
           {KIND_LABEL[item.kind]} · {when}
@@ -100,7 +106,7 @@ function DueRow({
           <Pressable
             onPress={() => onPay(item.loanId!)}
             hitSlop={8}
-            style={withPressed(styles.payBtn)}
+            style={withPressed([styles.payBtn, { backgroundColor: homeInk(accent) }])}
             accessibilityRole="button"
             accessibilityLabel={`Pay ${item.title} EMI`}
           >
@@ -114,10 +120,14 @@ function DueRow({
   );
 }
 
-/**
- * Everything due in the next 14 days, grouped under its date with the day's
- * total going out — not just the first few. EMIs keep their Pay button.
- */
+/** A day's dot: red if anything that day is due now, amber if close, else the page's ink. */
+function nodeColor(group: DueGroup, today: string, ink: string): string {
+  const tones = group.items.map((it) => dueTone(it, today));
+  if (tones.includes('urgent')) return theme.colors.expense;
+  if (tones.includes('soon')) return theme.colors.slice.due;
+  return ink;
+}
+
 export function ComingUpSection({
   groups,
   today,
@@ -132,47 +142,67 @@ export function ComingUpSection({
   onOpen: (route: PlanRoute) => void;
   /** Records an EMI as paid — shown as a Pay button on each EMI row. */
   onPay?: (loanId: string) => void;
-  /** Where the card sits inside the section, and each day's group inside the card, so the strip can scroll to one. */
+  /** Where the card sits inside the section, and each day's group inside the card, so the runway can scroll to one. */
   onCardLayout?: (y: number) => void;
   onGroupLayout?: (date: string, y: number) => void;
 }) {
   const { accent } = useAccent();
+  const ink = homeInk(accent);
   return (
     <Section title="Coming up">
-      <View style={h.card} onLayout={(e) => onCardLayout?.(e.nativeEvent.layout.y)}>
-        {groups.length === 0 ? (
-          <Pressable
-            onPress={() => onOpen('/recurring')}
-            style={withPressed(h.row)}
-            accessibilityRole="button"
-            accessibilityLabel="Add a recurring entry"
-          >
-            <View style={[h.iconTile, { backgroundColor: shade(accent, 95) }]}>
-              <Feather name="repeat" size={SCREEN.iconGlyph} color={theme.colors.ink} />
-            </View>
-            <View style={h.mid}>
-              <Text style={h.title}>Rent, salary, subscriptions</Text>
-              <Text style={h.sub}>Add a recurring entry to see it here</Text>
-            </View>
-            <Feather name="chevron-right" size={16} color={theme.colors.textMuted} />
-          </Pressable>
-        ) : (
-          groups.map((g, gi) => (
-            <View key={g.date} onLayout={(e) => onGroupLayout?.(g.date, e.nativeEvent.layout.y)}>
-              <View style={[styles.dayHead, gi > 0 && h.divider]}>
-                <Text style={styles.dayHeadText}>{weekdayDayMonth(g.date)}</Text>
-                {g.outMinor > 0 && <Text style={styles.dayHeadAmount}>{formatMoney(g.outMinor)}</Text>}
+      <View onLayout={(e) => onCardLayout?.(e.nativeEvent.layout.y)}>
+        <Glass style={styles.list}>
+          {groups.length === 0 ? (
+            <Pressable
+              onPress={() => onOpen('/recurring')}
+              style={withPressed(styles.emptyRow)}
+              accessibilityRole="button"
+              accessibilityLabel="Add a recurring entry"
+            >
+              <View style={styles.dueIcon}>
+                <Feather name="repeat" size={16} color={theme.colors.ink} />
               </View>
-              {g.items.map((it) => (
-                <DueRow key={it.key} item={it} today={today} divider onOpen={onOpen} onPay={onPay} />
-              ))}
-            </View>
-          ))
-        )}
-        <View style={styles.links}>
-          <LinkCell label="Recurring" onPress={() => onOpen('/recurring')} />
-          <LinkCell label="Loans" onPress={() => onOpen('/loans')} divider />
-        </View>
+              <View style={styles.dueMid}>
+                <Text style={styles.dueTitle}>Rent, salary, subscriptions</Text>
+                <Text style={styles.dueSub}>Add a recurring entry to see it here</Text>
+              </View>
+              <Feather name="chevron-right" size={16} color={theme.colors.textMuted} />
+            </Pressable>
+          ) : (
+            groups.map((g, gi) => (
+              <View
+                key={g.date}
+                style={styles.group}
+                onLayout={(e) => onGroupLayout?.(g.date, e.nativeEvent.layout.y)}
+              >
+                {groups.length > 1 && (
+                  <View
+                    style={[
+                      styles.rail,
+                      gi === 0
+                        ? { top: 20, bottom: 0 }
+                        : gi === groups.length - 1
+                          ? { top: 0, height: 20 }
+                          : { top: 0, bottom: 0 },
+                    ]}
+                  />
+                )}
+                <View style={[styles.node, { borderColor: nodeColor(g, today, ink) }]} />
+                <View style={styles.dayHead}>
+                  <Text style={styles.dayHeadText}>{weekdayDayMonth(g.date)}</Text>
+                  {g.outMinor > 0 && <Text style={styles.dayHeadAmount}>{formatMoney(g.outMinor)}</Text>}
+                </View>
+                {g.items.map((it) => (
+                  <DueRow key={it.key} item={it} today={today} onOpen={onOpen} onPay={onPay} />
+                ))}
+              </View>
+            ))
+          )}
+          <View style={styles.links}>
+            <LinkCell label="Recurring" onPress={() => onOpen('/recurring')} />
+            <LinkCell label="Loans" onPress={() => onOpen('/loans')} divider />
+          </View>
+        </Glass>
       </View>
     </Section>
   );

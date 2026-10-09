@@ -4,7 +4,7 @@ import { Text } from '@/components/Text';
 import { ModalSheet } from '@/components/ModalSheet';
 import { theme } from '@/constants/theme';
 import { getSpendByMonth } from '@/db/reports';
-import { getCurrencySymbol } from '@/lib/money';
+import { compactMoney } from '@/lib/compactMoney';
 import { longMonth, shortMonth } from '@/lib/dateLabels';
 import { haptics } from '@/lib/haptics';
 import { withPressed } from '@/lib/pressed';
@@ -23,17 +23,7 @@ const iso = (year: number, month: number, day = 1) =>
   `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 const monthKey = (year: number, month: number) => iso(year, month).slice(0, 7);
 
-/** "₹850", "₹61k", "₹1.2L": a month's spend small enough to sit under its name. */
-export function compactMoney(minor: number): string {
-  const sym = getCurrencySymbol();
-  const major = Math.round(minor / 100);
-  if (major < 1000) return `${sym}${major}`;
-  if (major < 100000) {
-    const k = major / 1000;
-    return `${sym}${k < 10 ? k.toFixed(1).replace(/\.0$/, '') : Math.round(k)}k`;
-  }
-  return `${sym}${(major / 100000).toFixed(1).replace(/\.0$/, '')}L`;
-}
+export { compactMoney };
 
 /**
  * The period picker, one sheet for Home and Activity: Month | Year (Year only where the screen has a year
