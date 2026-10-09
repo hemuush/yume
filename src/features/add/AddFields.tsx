@@ -13,14 +13,7 @@ import { styles } from './add.styles';
 import { withPressed } from '@/lib/pressed';
 import { shade } from '@/lib/color';
 import { formatMoney } from '@/lib/money';
-
-/** A person's avatar colour: the same one every time, picked from their id. */
-const AVATAR_COLORS = ['#E2846A', '#7A9BE8', '#5FB58A', '#B08AD8', '#D9A441', '#5AAFC0', '#D97BA6'];
-function personColor(id: string): string {
-  let h = 0;
-  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) | 0;
-  return AVATAR_COLORS[Math.abs(h) % AVATAR_COLORS.length];
-}
+import { hueFor } from '@/lib/hueFor';
 
 export function Chip({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
   const { secondary } = useAccent();
@@ -190,7 +183,7 @@ export function FriendFields({
                 accessibilityState={{ selected: on }}
               >
                 <View style={[styles.avatarRing, on && styles.avatarRingOn]}>
-                  <View style={[styles.avatar, { backgroundColor: personColor(p.id) }]}>
+                  <View style={[styles.avatar, { backgroundColor: hueFor(p.id) }]}>
                     <Text style={styles.avatarText}>{p.name.trim().charAt(0).toUpperCase()}</Text>
                   </View>
                 </View>
