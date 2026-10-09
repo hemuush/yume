@@ -9,100 +9,20 @@ import {
   LayoutChangeEvent,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
-import Svg, { Path, Rect, Circle } from 'react-native-svg';
 import Feather from '@expo/vector-icons/Feather';
 import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
 import { useReduceMotion } from '@/lib/useReduceMotion';
 import { haptics } from '@/lib/haptics';
 import { withPressed } from '@/lib/pressed';
-import { shade } from '@/lib/color';
 import { useAccent } from '@/theme/AccentContext';
 import { Wrap, BEAT_MS } from './wrapData';
 import { Beat } from './WrapBeats';
-import { styles, wrapSky, WRAP_HILLS } from './wrap.styles';
+import { styles } from './wrap.styles';
+import { HomeWallpaper } from '@/features/home/HomeWallpaper';
 
 /** Holding a finger down this long pauses instead of stepping. */
 export const HOLD_MS = 220;
-
-/** Where the sparks sit in the sky, as fractions of the screen, with their size and how bright they get. */
-const SPARKS = [
-  { x: 0.77, y: 0.16, size: 6, peak: 0.95, delay: 0 },
-  { x: 0.16, y: 0.22, size: 4, peak: 0.8, delay: 900 },
-  { x: 0.6, y: 0.3, size: 3, peak: 0.7, delay: 1700 },
-  { x: 0.38, y: 0.11, size: 3, peak: 0.6, delay: 600 },
-];
-
-/** One white spark that slowly brightens and dims. Steady with reduce motion. */
-function Spark({
-  spark,
-  w,
-  h,
-  still,
-}: {
-  spark: (typeof SPARKS)[number];
-  w: number;
-  h: number;
-  still: boolean;
-}) {
-  const [t] = useState(() => new Animated.Value(1));
-  useEffect(() => {
-    if (still) {
-      t.setValue(1);
-      return;
-    }
-    const a = Animated.loop(
-      Animated.sequence([
-        Animated.delay(spark.delay),
-        Animated.timing(t, {
-          toValue: 0.35,
-          duration: 1600,
-          easing: Easing.inOut(Easing.sin),
-          useNativeDriver: true,
-        }),
-        Animated.timing(t, {
-          toValue: 1,
-          duration: 1600,
-          easing: Easing.inOut(Easing.sin),
-          useNativeDriver: true,
-        }),
-      ])
-    );
-    a.start();
-    return () => a.stop();
-  }, [t, still, spark.delay]);
-  return (
-    <Animated.View
-      style={[
-        styles.spark,
-        {
-          left: spark.x * w,
-          top: spark.y * h,
-          width: spark.size,
-          height: spark.size,
-          opacity: Animated.multiply(t, spark.peak),
-        },
-      ]}
-    />
-  );
-}
-
-/** Home's hills along the bottom of the story, with one small tree, rolling into the page cream. */
-function Hills({ primary, secondary }: { primary: string; secondary: string }) {
-  const h = WRAP_HILLS;
-  return (
-    <View style={[styles.hills, { height: h }]} pointerEvents="none">
-      <Svg width="100%" height={h} viewBox={`0 0 360 ${h}`} preserveAspectRatio="none">
-        <Path d="M0 18 C60 0 120 8 180 20 C240 32 300 6 360 16 V56 H0Z" fill={shade(secondary, 86, -8)} />
-        <Path d="M0 30 C70 18 140 26 210 34 C270 40 320 26 360 29 V56 H0Z" fill={shade(primary, 84, -6)} />
-        <Rect x={288} y={12} width={3} height={11} rx={1.5} fill="#B99A7A" />
-        <Circle cx={289.5} cy={10} r={8} fill={shade(secondary, 72, -6)} />
-        <Path d="M0 42 C90 36 180 40 260 44 C310 46 340 42 360 42 V56 H0Z" fill={theme.colors.background} />
-      </Svg>
-    </View>
-  );
-}
 
 /** Whether a screen reader is running: a timer moving the story on would pull the page out from under it. */
 function useScreenReader(): boolean {
@@ -232,12 +152,7 @@ export function WrapPlayer({
 
   return (
     <View style={styles.root} onLayout={onLayout}>
-      <LinearGradient colors={wrapSky(accent)} locations={[0, 0.46, 1]} style={styles.fill} />
-      <View style={styles.fill} pointerEvents="none">
-        {size.w > 0 &&
-          SPARKS.map((sp, k) => <Spark key={k} spark={sp} w={size.w} h={size.h} still={still} />)}
-      </View>
-      <Hills primary={accent} secondary={secondary} />
+      <HomeWallpaper accent={accent} secondary={secondary} />
 
       <View style={{ paddingTop: insets.top + 10 }}>
         <View style={styles.segs} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">

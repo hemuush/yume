@@ -1,16 +1,7 @@
 import { StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
 import { EYEBROW } from '@/constants/textStyles';
-import { shade } from '@/lib/color';
 import type { WrapBeat } from './wrapData';
-
-/**
- * The ground every beat stands on: the app's sky, from the theme's colour at the top fading through a paler sky
- * into the page cream, so the story reads as Yume rather than a video. Always light.
- */
-export function wrapSky(accent: string): [string, string, string] {
-  return [shade(accent, 90, 4), shade(accent, 96, 2), theme.colors.background];
-}
 
 /** The dot before each beat's kicker: what the beat is about, in the slice colours' deep shades. */
 export function kickerTone(kind: WrapBeat['kind']): string {
@@ -28,16 +19,10 @@ export function kickerTone(kind: WrapBeat['kind']): string {
   }
 }
 
-/** How tall the hills along the bottom of every beat are; beats keep their content above them. */
-export const WRAP_HILLS = 56;
-
 export const styles = StyleSheet.create({
   root: { flex: 1, overflow: 'hidden' },
-  fill: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
-  spark: { position: 'absolute', borderRadius: 999, backgroundColor: theme.colors.surface },
-  hills: { position: 'absolute', left: 0, right: 0, bottom: 0 },
   segs: { flexDirection: 'row', gap: 4, marginHorizontal: 14 },
-  seg: { flex: 1, height: 4, borderRadius: 2, backgroundColor: 'rgba(255,253,248,0.75)', overflow: 'hidden' },
+  seg: { flex: 1, height: 4, borderRadius: 2, backgroundColor: 'rgba(16,32,51,0.12)', overflow: 'hidden' },
   segFill: { height: '100%', backgroundColor: theme.colors.ink },
   topBar: {
     flexDirection: 'row',
@@ -68,11 +53,10 @@ export const styles = StyleSheet.create({
   pausedText: { fontFamily: theme.font.bodyBold, fontSize: 11, color: theme.colors.surface },
 
   // A beat fills the space under the bar: kicker at the top, the story centred below it.
-  // The bottom padding keeps the story clear of the hills.
-  beat: { flex: 1, paddingHorizontal: 24, paddingTop: 28, paddingBottom: WRAP_HILLS + 16 },
+  beat: { flex: 1, paddingHorizontal: 24, paddingTop: 28, paddingBottom: 32 },
   kickerRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   kicker: { ...EYEBROW, flexShrink: 1, color: theme.colors.textSecondary, letterSpacing: 1.2 },
-  // The white card that holds a beat's chart, its strip in the beat's colour.
+  // The glass card that holds a beat's chart.
   chartCard: { marginHorizontal: -4 },
   chartBody: { paddingHorizontal: 16, paddingTop: 20, paddingBottom: 16 },
   middle: { flex: 1, justifyContent: 'center' },
@@ -140,7 +124,7 @@ export const styles = StyleSheet.create({
 
   // The closing card: the period in short, made to be shared as an image.
   finalMiddle: { flex: 1, justifyContent: 'center' },
-  card: { marginTop: 16 },
+  card: { marginTop: 16, padding: 12, borderRadius: 30, overflow: 'hidden' },
   cardBody: { padding: 18, paddingTop: 22 },
   cardHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
   cardKicker: { ...EYEBROW, color: theme.colors.textMuted },
