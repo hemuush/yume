@@ -2,6 +2,7 @@ import { StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
 import { listScreenStyles } from '@/features/shared/listScreenStyles';
 import { SECTION_TITLE, SECTION_GAP } from '@/constants/textStyles';
+import { GLASS } from '@/components/Glass';
 
 /** Tiles per row on the Categories grid (a cell is one column wide). */
 export const TILE_COLUMNS = 4;
@@ -17,7 +18,19 @@ export const styles = StyleSheet.create({
     marginBottom: SECTION_GAP.bottom,
   },
   firstTitle: { marginTop: theme.layout.screenTopGap },
-  grid: { paddingHorizontal: 18, gap: 12, marginBottom: 4 },
+  // Each grid sits in a glass card on the wallpaper.
+  grid: {
+    marginHorizontal: 20,
+    paddingHorizontal: 4,
+    paddingVertical: 14,
+    gap: 12,
+    marginBottom: 4,
+    backgroundColor: GLASS.fill,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: GLASS.edge,
+    boxShadow: GLASS.shadow,
+  },
   gridRow: { flexDirection: 'row' },
   cell: { width: `${100 / TILE_COLUMNS}%`, paddingHorizontal: 2 },
   panelWrap: { marginTop: 10 },
@@ -36,7 +49,7 @@ export const styles = StyleSheet.create({
   panel: {
     marginHorizontal: 6,
     padding: 14,
-    borderRadius: theme.radius.xl2,
+    borderRadius: 20,
     backgroundColor: theme.colors.surface,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
@@ -68,7 +81,7 @@ export const styles = StyleSheet.create({
   },
   sensitiveRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 14 },
   tile: { alignItems: 'center' },
-  tileRing: { padding: 2, borderWidth: 2, borderColor: 'transparent', borderRadius: 20 },
+  tileRing: { padding: 2, borderWidth: 2, borderColor: 'transparent', borderRadius: 999 },
   tileRingOn: { borderColor: theme.colors.ink },
   tileBadge: {
     position: 'absolute',

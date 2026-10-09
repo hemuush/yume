@@ -26,12 +26,15 @@ import { haptics } from '@/lib/haptics';
 import { Skeleton } from '@/components/Skeleton';
 import { errorMessage } from '@/lib/errorMessage';
 import { showAlert } from '@/components/AppDialog';
+import { HomeWallpaper } from '@/features/home/HomeWallpaper';
+import { useAccent } from '@/theme/AccentContext';
 
 export default function CategoriesScreen() {
   const insets = useSafeAreaInsets();
   // The header sits over the page and shrinks as it scrolls.
   const { collapse, headerHeight, scrollHandler, scrollRef } = useCollapsingHeader();
   const { show: showUndo } = useUndoToast();
+  const { accent, secondary } = useAccent();
   const [allCategories, setAllCategories] = useState<Category[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
@@ -201,7 +204,8 @@ export default function CategoriesScreen() {
   if (!loaded && !loadError) {
     return (
       <View style={styles.container}>
-        <SkyHeader title="Categories" showBack hideUser />
+        <HomeWallpaper accent={accent} secondary={secondary} />
+        <SkyHeader title="Categories" showBack hideUser wallpaper />
         <View style={{ paddingTop: 20 }}>
           <Skeleton width={100} height={13} radius={4} style={{ marginHorizontal: 20, marginBottom: 14 }} />
           <View style={styles.grid}>
@@ -223,6 +227,7 @@ export default function CategoriesScreen() {
 
   return (
     <View style={styles.container}>
+      <HomeWallpaper accent={accent} secondary={secondary} />
       <ReanimatedAnimated.ScrollView
         ref={scrollRef}
         onScroll={scrollHandler}
@@ -287,6 +292,7 @@ export default function CategoriesScreen() {
         title="Categories"
         showBack
         hideUser
+        wallpaper
         actions={
           <>
             <HeaderIconButton

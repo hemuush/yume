@@ -12,6 +12,7 @@ import { formatMaskableMoney, formatMoney } from '@/lib/money';
 import { withPressed } from '@/lib/pressed';
 import { screenStyles as h } from '@/components/screenStyles';
 import { useAccent } from '@/theme/AccentContext';
+import { GLASS, GLASS_CARD } from '@/components/Glass';
 
 /** "+₹1,600" / "−₹23,18,958" / "₹0": a true minus sign, and a plus for the lines of a sum. */
 function signedMoney(minor: number, plus = true, masked = false, currency?: string): string {
@@ -67,9 +68,9 @@ export function TrackedCard({
   const [open, setOpen] = useState(false);
   const { secondary } = useAccent();
   return (
-    <View style={embedded ? styles.embedded : [h.card, styles.card]}>
+    <View style={embedded ? styles.embedded : [h.card, GLASS_CARD, styles.card]}>
       <Pressable
-        style={withPressed(styles.head)}
+        style={withPressed([styles.head, embedded && styles.headEmbedded])}
         onPress={() => setOpen((v) => !v)}
         accessibilityRole="button"
         accessibilityState={{ expanded: open }}
@@ -89,7 +90,7 @@ export function TrackedCard({
       </Pressable>
       {open && (
         <ReanimatedAnimated.View entering={PANEL_ENTER} exiting={ROW_EXIT}>
-          <View style={[styles.sumLines, h.divider]}>
+          <View style={[styles.sumLines, !embedded && styles.inset]}>
             <SumLine
               color={secondary}
               label={accountsLabel}
@@ -109,10 +110,14 @@ export function TrackedCard({
                 text={signedMoney(peopleMinor, true, false, currency)}
               />
             )}
+            <View style={styles.sumTotal}>
+              <Text style={styles.sumTotalLabel}>Tracked balance</Text>
+              <Text style={styles.sumValue}>{signedMoney(totalMinor, false, masked, currency)}</Text>
+            </View>
           </View>
           {untrackedAssetLoan ? (
             <Pressable
-              style={withPressed([styles.hint, styles.hintWarn])}
+              style={withPressed([styles.hint, styles.hintWarn, !embedded && styles.inset])}
               onPress={() => router.push('/loans')}
               accessibilityRole="button"
               accessibilityLabel="A loan's home or vehicle isn't counted yet. Open loans to add its value"
@@ -126,7 +131,7 @@ export function TrackedCard({
             </Pressable>
           ) : (
             hasLoans && (
-              <View style={styles.hint}>
+              <View style={[styles.hint, !embedded && styles.inset]}>
                 <MaterialCommunityIcons name="information-outline" size={16} color={theme.colors.textMuted} />
                 <Text style={styles.hintText}>
                   Loans with a tracked asset value count their real equity here, not just the debt.
@@ -141,24 +146,49 @@ export function TrackedCard({
 }
 
 const styles = StyleSheet.create({
-  card: { marginTop: 10 },
-  embedded: { backgroundColor: theme.colors.surface },
+  card: { marginTop: 10, paddingBottom: 4 },
+  // At the foot of the money map, which draws the glass and the padding.
+  embedded: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: 'rgba(18,19,15,0.14)' },
   head: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 14, paddingVertical: 12 },
+  headEmbedded: { paddingHorizontal: 0, paddingBottom: 0 },
   label: EYEBROW,
   value: { fontFamily: theme.font.monoBold, fontSize: 16, color: theme.colors.textPrimary, flexShrink: 1 },
-  sumLines: { paddingHorizontal: 14, paddingVertical: 10, gap: 8 },
+  // The sum, on a brighter pane: each part, then a rule and the total.
+  sumLines: {
+    marginTop: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    gap: 8,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: GLASS.edge,
+    backgroundColor: GLASS.fillStrong,
+  },
+  inset: { marginHorizontal: 14, marginBottom: 10 },
   sumLine: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   sumKey: { width: 10, height: 10, borderRadius: 3 },
   sumLabel: { flex: 1, fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textSecondary },
   sumValue: { fontFamily: theme.font.monoBold, fontSize: 13, color: theme.colors.textPrimary },
+  sumTotal: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingTop: 7,
+    borderTopWidth: 1.5,
+    borderTopColor: theme.colors.ink,
+  },
+  sumTotalLabel: { flex: 1, fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textPrimary },
   hint: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    paddingHorizontal: 14,
+    marginTop: 8,
+    paddingHorizontal: 12,
     paddingVertical: 10,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: theme.colors.borderSoft,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: GLASS.edge,
+    backgroundColor: GLASS.fill,
   },
   hintWarn: { backgroundColor: theme.colors.idGold },
   hintText: {

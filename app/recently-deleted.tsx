@@ -33,6 +33,10 @@ import { showAlert } from '@/components/AppDialog';
 import { isSavingsEntry } from '@/lib/privateSummary';
 import { savingsAccountIdsOf } from '@/lib/account';
 import { useAccent } from '@/theme/AccentContext';
+import { Glass, GLASS, GLASS_CARD } from '@/components/Glass';
+import { Kicker, frost } from '@/components/Frost';
+import { HomeWallpaper } from '@/features/home/HomeWallpaper';
+import { DaysLeftRing } from '@/features/profile/DaysLeftRing';
 
 /**
  * Entries deleted in the last 30 days, newest first, each with a Restore button that puts it back exactly
@@ -40,7 +44,7 @@ import { useAccent } from '@/theme/AccentContext';
  */
 export default function RecentlyDeletedScreen() {
   const insets = useSafeAreaInsets();
-  const { secondary } = useAccent();
+  const { accent, secondary } = useAccent();
   // The header sits over the page and shrinks as it scrolls.
   const { collapse, headerHeight, scrollHandler, scrollRef } = useCollapsingHeader();
   const [entries, setEntries] = useState<DeletedEntry[]>([]);
@@ -123,6 +127,7 @@ export default function RecentlyDeletedScreen() {
 
   return (
     <View style={styles.container}>
+      <HomeWallpaper accent={accent} secondary={secondary} />
       <ReanimatedAnimated.ScrollView
         ref={scrollRef}
         onScroll={scrollHandler}
@@ -149,12 +154,20 @@ export default function RecentlyDeletedScreen() {
           />
         ) : (
           <>
-            <Text style={styles.hint}>
-              Entries you delete wait here for 30 days, then they&rsquo;re gone for good.
-            </Text>
+            <Glass radius={28} tone="strong" style={frost.hero}>
+              <Kicker icon="trash-2">Waiting to be restored</Kicker>
+              <View style={frost.bigRow}>
+                <Text style={frost.bigValue}>{entries.length}</Text>
+                <Text style={frost.bigNote}>{entries.length === 1 ? 'entry' : 'entries'}</Text>
+              </View>
+              <Text style={styles.hint}>
+                Entries you delete wait here for 30 days, then they&rsquo;re gone for good. Each ring is the
+                time left.
+              </Text>
+            </Glass>
             {groups.map((g) => (
               <Section key={g.title} title={g.title}>
-                <View style={h.card}>
+                <View style={[h.card, GLASS_CARD]}>
                   {g.items.map((entry, i) => {
                     const cat = categoryOf(entry.categoryId);
                     const isTransfer = entry.type === 'transfer';
@@ -173,10 +186,14 @@ export default function RecentlyDeletedScreen() {
                           .join(' · ');
                     return (
                       <View key={entry.id} style={[h.row, i > 0 && h.divider]}>
-                        <CategoryIcon
-                          name={isTransfer ? 'swap-horizontal' : (cat?.icon ?? 'tag')}
-                          color={isTransfer ? secondary : (cat?.color ?? theme.colors.textMuted)}
-                        />
+                        <DaysLeftRing daysLeft={entry.daysLeft}>
+                          <CategoryIcon
+                            name={isTransfer ? 'swap-horizontal' : (cat?.icon ?? 'tag')}
+                            color={isTransfer ? secondary : (cat?.color ?? theme.colors.textMuted)}
+                            square={38}
+                            round
+                          />
+                        </DaysLeftRing>
                         <View style={h.mid}>
                           <Text style={h.title} numberOfLines={1}>
                             {title}
@@ -238,6 +255,7 @@ export default function RecentlyDeletedScreen() {
         title="Recently deleted"
         showBack
         hideUser
+        wallpaper
       />
     </View>
   );
@@ -245,22 +263,25 @@ export default function RecentlyDeletedScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
-  hint: {
-    fontFamily: theme.font.body,
-    fontSize: 13,
-    lineHeight: 18,
-    color: theme.colors.textSecondary,
-    marginHorizontal: 20,
-    marginTop: theme.layout.screenTopGap,
-  },
+  hint: { fontFamily: theme.font.body, fontSize: 13, lineHeight: 18, color: theme.colors.textSecondary },
   restore: {
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: theme.radius.pill,
-    backgroundColor: theme.colors.surfaceAlt,
+    backgroundColor: theme.colors.ink,
   },
-  restoreText: { fontFamily: theme.font.roundedBold, fontSize: 12, color: theme.colors.textPrimary },
-  emptyAll: { alignSelf: 'center', marginTop: 24, paddingHorizontal: 14, paddingVertical: 8 },
+  restoreText: { fontFamily: theme.font.roundedBold, fontSize: 12, color: theme.colors.white },
+  emptyAll: {
+    alignSelf: 'stretch',
+    alignItems: 'center',
+    marginHorizontal: 20,
+    marginTop: 24,
+    paddingVertical: 13,
+    borderRadius: theme.radius.pill,
+    borderWidth: 1,
+    borderColor: GLASS.edge,
+    backgroundColor: GLASS.fill,
+  },
   emptyAllText: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.expenseText },
   errorBanner: {
     marginHorizontal: 20,

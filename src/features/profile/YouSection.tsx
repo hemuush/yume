@@ -30,12 +30,13 @@ import { Section } from '@/components/Section';
 import { screenStyles as h } from '@/components/screenStyles';
 import { styles } from './profile.styles';
 import { trackedSumLines, groupAccountsByType } from './trackedSum';
-import { CashHero } from './CashHero';
+import { CashHero, MoneyShare } from './CashHero';
 import { TrackedCard } from './TrackedCard';
 import { LinkTiles } from './LinkTiles';
 import { AddAccountModal } from './AddAccountModal';
 import { AccountDetailModal } from './AccountDetailModal';
 import { withPressed } from '@/lib/pressed';
+import { GLASS_CARD } from '@/components/Glass';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -52,7 +53,7 @@ const ACCOUNT_TYPE_LABEL: Record<Account['type'], string> = {
  * accounts grouped by type. Budgets, goals, recurring, What-if and Garden live on Plan (one row points there).
  */
 export function YouSection() {
-  const { secondary } = useAccent();
+  const { accent, secondary } = useAccent();
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [archivedAccounts, setArchivedAccounts] = useState<Account[]>([]);
   const [archivedOpen, setArchivedOpen] = useState(false);
@@ -125,15 +126,23 @@ export function YouSection() {
   const showPeople = peopleCount > 0 || sum.peopleMinor !== 0;
 
   const showTracked = showLoans || showPeople;
-  const cashHero = (embedded: boolean) => (
-    <CashHero
-      minor={sum.accountsMinor}
-      label={hasOtherCurrency ? `In your accounts (${defaultCurrency} only)` : 'In your accounts'}
-      sub={heroSub}
-      masked={masked}
-      embedded={embedded}
-    />
-  );
+  // The money map's bar: each type's default-currency total, in the type's own colour.
+  const shareColor: Record<string, string> = {
+    bank: accent,
+    cash: secondary,
+    wallet: theme.colors.slice.due,
+    credit_card: theme.colors.slice.spent,
+    savings: theme.colors.slice.debt,
+  };
+  const shares: MoneyShare[] = groups
+    .filter((g) => g.subtotalMinor != null)
+    .map((g) => ({
+      key: g.type,
+      label: ACCOUNT_TYPE_LABEL[g.type as Account['type']] ?? g.type,
+      color: shareColor[g.type] ?? theme.colors.textMuted,
+      minor: g.subtotalMinor ?? 0,
+      sensitive: g.type === 'savings',
+    }));
   const trackedCard = (embedded: boolean) => (
     <TrackedCard
       totalMinor={sum.totalMinor}
@@ -170,16 +179,18 @@ export function YouSection() {
         </View>
       )}
 
-      {accounts.length > 0 && showTracked ? (
-        <View style={styles.cashCard}>
-          {cashHero(true)}
-          {trackedCard(true)}
-        </View>
+      {accounts.length > 0 ? (
+        <CashHero
+          minor={sum.accountsMinor}
+          label={hasOtherCurrency ? `In your accounts (${defaultCurrency} only)` : 'In your accounts'}
+          sub={heroSub}
+          masked={masked}
+          shares={shares}
+        >
+          {showTracked && trackedCard(true)}
+        </CashHero>
       ) : (
-        <>
-          {accounts.length > 0 && cashHero(false)}
-          {showTracked && trackedCard(false)}
-        </>
+        showTracked && trackedCard(false)
       )}
       <LinkTiles
         entries={txCount}
@@ -197,7 +208,7 @@ export function YouSection() {
         {accounts.length === 0 ? (
           <EmptyState title="No accounts yet" subtitle="Tap + Account to create one." />
         ) : (
-          <Animated.View style={[h.card, accountsFadeStyle]}>
+          <Animated.View style={[h.card, GLASS_CARD, accountsFadeStyle]}>
             {groups.map((group, gi) => (
               <View key={group.type}>
                 {groups.length > 1 && (
@@ -230,7 +241,7 @@ export function YouSection() {
         )}
 
         {archivedAccounts.length > 0 && (
-          <View style={[h.card, styles.archivedCard]}>
+          <View style={[h.card, GLASS_CARD, styles.archivedCard]}>
             <Pressable
               style={withPressed(h.row)}
               onPress={() => setArchivedOpen((v) => !v)}
@@ -238,7 +249,7 @@ export function YouSection() {
               accessibilityState={{ expanded: archivedOpen }}
               accessibilityLabel={`Archived accounts, ${archivedAccounts.length}. ${archivedOpen ? 'Hide' : 'Show'}`}
             >
-              <View style={[h.iconTile, { backgroundColor: theme.colors.surfaceAlt }]}>
+              <View style={[h.iconTile, styles.archivedIcon]}>
                 <MaterialCommunityIcons name="archive-outline" size={17} color={theme.colors.ink} />
               </View>
               <View style={h.mid}>

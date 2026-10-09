@@ -84,8 +84,16 @@ async function render() {
   return tree;
 }
 
-const texts = (tree: ReactTestRenderer) =>
-  tree.root.findAllByType(Text).map((t) => [].concat(t.props.children).join(''));
+/** A node's text, nested Text (the big figure's ₹ in its own style) included. */
+const flat = (c: unknown): string =>
+  Array.isArray(c)
+    ? c.map(flat).join('')
+    : c && typeof c === 'object' && 'props' in c
+      ? flat((c as { props: { children?: unknown } }).props.children)
+      : c == null || typeof c === 'boolean'
+        ? ''
+        : String(c);
+const texts = (tree: ReactTestRenderer) => tree.root.findAllByType(Text).map((t) => flat(t.props.children));
 
 /** Presses the first pressable whose own text (or accessibility label) is `label`. */
 function press(tree: ReactTestRenderer, label: string) {
@@ -202,6 +210,11 @@ describe('Profile · You section', () => {
     const shown = texts(tree);
     expect(shown).not.toContain('Loans');
     expect(shown).toContain('₹1,02,499'); // ₹99,999 + ₹2,500
+  });
+
+  it('splits what is in your accounts by type under the big figure', async () => {
+    const shown = texts(await render());
+    expect(shown).toEqual(expect.arrayContaining(['Bank ', '₹84,200', 'Savings ', '₹15,799']));
   });
 
   it('masks every total that includes savings while savings amounts are hidden', async () => {
