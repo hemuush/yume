@@ -134,28 +134,42 @@ export default function PlanScreen() {
     const accountName = (id: string | null) => accounts.find((a) => a.id === id)?.name ?? '—';
     const loansSummary = buildLoansSummary(loans, progress);
     // Same label Home's Upcoming list uses for a rule.
+    const toRuleInput = (r: (typeof rules)[number], type: 'income' | 'expense' | 'transfer' = r.type) => ({
+      id: r.id,
+      type,
+      active: r.active,
+      nextRunDate: r.nextRunDate,
+      frequency: r.frequency,
+      intervalCount: r.intervalCount,
+      endDate: r.endDate,
+      amountMinor: r.amountMinor,
+      label:
+        r.type === 'transfer'
+          ? `${accountName(r.accountId)} → ${accountName(r.toAccountId)}`
+          : r.note || categoryLabelOf(r.categoryId) || 'Recurring',
+    });
+    const visibleRules = rules.filter((r) => !hideAmounts || !isSavingsEntry(r, categoriesById, savingsIds));
+    const until = addDaysToIsoDate(toLocalIsoDate(new Date()), DUE_SOON_DAYS - 1);
+    // Every run in the fortnight Plan shows: a weekly bill is due twice in it, not once.
     const dueItems = buildDueItems(
       loansSummary.rows,
-      rules
-        .filter((r) => !hideAmounts || !isSavingsEntry(r, categoriesById, savingsIds))
-        .map((r) => ({
-          id: r.id,
-          type: r.type,
-          active: r.active,
-          nextRunDate: r.nextRunDate,
-          frequency: r.frequency,
-          intervalCount: r.intervalCount,
-          endDate: r.endDate,
-          amountMinor: r.amountMinor,
-          label:
-            r.type === 'transfer'
-              ? `${accountName(r.accountId)} → ${accountName(r.toAccountId)}`
-              : r.note || categoryLabelOf(r.categoryId) || 'Recurring',
-        })),
+      visibleRules.map((r) => toRuleInput(r)),
       cardCycles,
-      // Every run in the fortnight Plan shows: a weekly bill is due twice in it, not once.
-      addDaysToIsoDate(toLocalIsoDate(new Date()), DUE_SOON_DAYS - 1)
+      until
     );
+    // The runway only moves with money in and out of bank, cash and wallets: a bill charged to a card waits for
+    // the card's own bill, and a transfer counts when it crosses in or out of those accounts (a SIP to an
+    // investment account goes out; a sweep from savings comes in).
+    const runwayIds = new Set(accounts.filter((a) => isRunwayAccount(a, currency)).map((a) => a.id));
+    const runwayRules = visibleRules.flatMap((r) => {
+      const from = runwayIds.has(r.accountId);
+      if (r.type !== 'transfer') return from ? [toRuleInput(r)] : [];
+      const to = r.toAccountId != null && runwayIds.has(r.toAccountId);
+      if (from && !to) return [toRuleInput(r, 'expense')];
+      if (!from && to) return [toRuleInput(r, 'income')];
+      return [];
+    });
+    const runwayItems = buildDueItems(loansSummary.rows, runwayRules, cardCycles, until);
     // The top-spend category (sorted biggest first) a cut could apply to: not a built-in like Loan EMI,
     // which the app files automatically — "spend 10% less on your EMI" isn't a real choice.
     const top = averages.find(
@@ -170,7 +184,7 @@ export default function PlanScreen() {
       loans: loansSummary,
       dueSoon: buildDueSoon(dueItems, today),
       dueGroups: groupDueItems(dueItems, today),
-      runway: buildRunway(runwayStartMinor(accounts, currency), dueItems, today, DUE_SOON_DAYS),
+      runway: buildRunway(runwayStartMinor(accounts, currency), runwayItems, today, DUE_SOON_DAYS),
       hasAccounts: accounts.some((a) => isRunwayAccount(a, currency)),
       // A savings balance stays hidden in privacy mode, so the pay sheet doesn't show it either.
       balances: Object.fromEntries(

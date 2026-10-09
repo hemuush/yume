@@ -22,13 +22,16 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 /** A card's topic: its icon on a small frosted disc, then the name. */
 export function Kicker({
   icon,
+  inTile,
   children,
 }: {
   icon: FeatherName | React.ReactElement;
+  /** In a tile: leaves room for the ↗ in its corner. */
+  inTile?: boolean;
   children: React.ReactNode;
 }) {
   return (
-    <View style={styles.kickerRow}>
+    <View style={[styles.kickerRow, inTile && styles.kickerInTile]}>
       <View style={styles.kickerBadge}>
         {typeof icon === 'string' ? <Feather name={icon} size={14} color={theme.colors.ink} /> : icon}
       </View>
@@ -109,7 +112,7 @@ export interface PlanPerson {
 }
 
 /** How many people's balances show under the total. */
-export const PEOPLE_SHOWN = 4;
+export const PEOPLE_SHOWN = 3;
 
 export function PeopleTile({
   state,
@@ -155,7 +158,9 @@ export function PeopleTile({
     state.kind === 'balances' ? people.filter((p) => p.balanceMinor !== 0).slice(0, PEOPLE_SHOWN) : [];
   return (
     <PlanTile wide label={`Friends & Family, ${sub}. Open Friends & Family`} onPress={onOpen}>
-      <Kicker icon="users">Friends</Kicker>
+      <Kicker icon="users" inTile>
+        Friends
+      </Kicker>
       {value}
       <Text style={styles.tileSub} numberOfLines={2}>
         {sub}
@@ -203,7 +208,9 @@ export function HabitTile({
   if (!habit || goalMinor == null) {
     return (
       <PlanTile label="Set a daily goal. Open Suu's garden" onPress={onOpen}>
-        <Kicker icon={sprout}>Spend streak</Kicker>
+        <Kicker icon={sprout} inTile>
+          Spend streak
+        </Kicker>
         <Text style={styles.title}>Set a daily goal</Text>
         <Text style={styles.tileSub}>Grow Suu&rsquo;s garden</Text>
       </PlanTile>
@@ -214,7 +221,9 @@ export function HabitTile({
       label={`${habit.streakDays}-day streak under ${formatMoney(goalMinor)} a day. Open Suu's garden`}
       onPress={onOpen}
     >
-      <Kicker icon={sprout}>Spend streak</Kicker>
+      <Kicker icon={sprout} inTile>
+        Spend streak
+      </Kicker>
       <Text style={styles.value}>
         {habit.streakDays} day{habit.streakDays === 1 ? '' : 's'}
       </Text>

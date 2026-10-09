@@ -25,6 +25,7 @@ export const styles = StyleSheet.create({
   rowGap: { gap: GAP },
 
   kickerRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  kickerInTile: { paddingRight: 20 },
   kickerBadge: {
     width: 28,
     height: 28,
@@ -296,7 +297,7 @@ export const styles = StyleSheet.create({
   income: { color: theme.colors.incomeText },
   over: { color: theme.colors.expenseText },
   tileSub: { fontFamily: theme.font.body, fontSize: 12.5, lineHeight: 17, color: theme.colors.textMuted },
-  people: { flexDirection: 'row', gap: 6, marginTop: 'auto' },
+  people: { flexDirection: 'row', gap: 6, marginTop: 'auto', overflow: 'hidden' },
   person: { alignItems: 'center', gap: 3 },
   avatar: { width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
   avatarText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.surface },

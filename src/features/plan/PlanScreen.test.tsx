@@ -60,7 +60,7 @@ jest.mock('@/db/recurring', () => ({
       amountMinor: 45000,
       note: 'Streaming',
       categoryId: null,
-      accountId: 'a1',
+      accountId: 'bank',
       toAccountId: null,
     },
   ],

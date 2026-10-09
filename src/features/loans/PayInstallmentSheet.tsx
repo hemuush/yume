@@ -47,6 +47,8 @@ export function PayInstallmentSheet({
   const early = installment.dueDate > todayIso;
   const [paidDateIso, setPaidDateIso] = useState(early ? todayIso : installment.dueDate);
   const [busy, setBusy] = useState(false);
+  // Read once: Plan reloads (with the EMI already taken off) before the sheet closes.
+  const [balanceBefore] = useState(balanceMinor);
   const [done, setDone] = useState(false);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const submitting = useRef(false);
@@ -118,9 +120,9 @@ export function PayInstallmentSheet({
         title={`From ${account?.name ?? '—'}`}
         meta={`Due ${weekdayDayMonth(installment.dueDate)}`}
       />
-      {account && balanceMinor != null && (
+      {account && balanceBefore != null && (
         <Text style={styles.hintText}>
-          {account.name} after paying: {formatMoney(balanceMinor - installment.emiAmountMinor)}
+          {account.name} after paying: {formatMoney(balanceBefore - installment.emiAmountMinor)}
         </Text>
       )}
       {!account && (

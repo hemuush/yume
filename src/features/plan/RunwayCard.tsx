@@ -58,7 +58,7 @@ export function RunwayCard({
 
   const onLayout = (e: LayoutChangeEvent) => setWidth(Math.round(e.nativeEvent.layout.width));
   const values = [runway.startMinor, ...runway.days.map((d) => d.afterMinor)];
-  const max = Math.max(...values);
+  const max = Math.max(0, ...values);
   const min = Math.min(0, ...values);
   const span = max - min || 1;
   const count = runway.days.length;
@@ -79,8 +79,7 @@ export function RunwayCard({
       : d.outMinor > 0
         ? theme.colors.slice.due
         : theme.colors.income;
-  const dayLabel = (d: RunwayDay) =>
-    d.outMinor > 0 ? `${formatMoney(d.outMinor)} due` : `${formatMoney(d.inMinor)} coming in`;
+  const dayLabel = (d: RunwayDay) => moneyOf(d, 'label');
 
   return (
     <Pressable
@@ -225,6 +224,20 @@ export function RunwayCard({
   );
 }
 
+/**
+ * A day's money. For a screen reader: "₹20,000 due", "₹50,000 coming in", or both. For the caption: "₹20,000",
+ * "+₹50,000", or "₹20,000 out, +₹50,000 in" on a day with both.
+ */
+function moneyOf(d: RunwayDay, mode: 'label' | 'caption'): string {
+  const out = d.outMinor > 0 ? formatMoney(d.outMinor) : '';
+  const inn = d.inMinor > 0 ? formatMoney(d.inMinor) : '';
+  if (mode === 'label') {
+    return [out && `${out} due`, inn && `${inn} coming in`].filter(Boolean).join(', ');
+  }
+  if (out && inn) return `${out} out, +${inn} in`;
+  return out || `+${inn}`;
+}
+
 function Foot({
   picked,
   runway,
@@ -241,11 +254,10 @@ function Foot({
   onJumpToDay: (date: string) => void;
 }) {
   if (picked) {
-    const amount = picked.outMinor > 0 ? picked.outMinor : picked.inMinor;
     return (
       <View style={styles.foot}>
         <Text style={styles.footText} numberOfLines={2}>
-          <Text style={styles.footBold}>{weekdayDayMonth(picked.date)}</Text> · {formatMoney(amount)} ·{' '}
+          <Text style={styles.footBold}>{weekdayDayMonth(picked.date)}</Text> · {moneyOf(picked, 'caption')} ·{' '}
           {picked.items.map((i) => i.title).join(', ')}
         </Text>
         <Pressable

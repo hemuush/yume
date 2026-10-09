@@ -64,7 +64,12 @@ export function DebtPath({
   const shown = borrowed.slice(0, LANES_SHOWN);
   const more = borrowed.length - shown.length;
   const start = parseLocalIsoDate(today).getTime();
-  const end = loans.debtFreeDate ? parseLocalIsoDate(loans.debtFreeDate).getTime() : null;
+  // A debt-free month is only claimed when every loan has an end date and it's still ahead.
+  const knownEnd =
+    loans.debtFreeDate != null && loans.debtFreeDate > today && borrowed.every((r) => r.endDate != null)
+      ? loans.debtFreeDate
+      : null;
+  const end = knownEnd ? parseLocalIsoDate(knownEnd).getTime() : null;
   const share = (row: PlanLoanRow) =>
     end && row.endDate && end > start
       ? Math.min(1, Math.max(0.04, (parseLocalIsoDate(row.endDate).getTime() - start) / (end - start)))
@@ -81,13 +86,11 @@ export function DebtPath({
       style={withPressed()}
       accessibilityRole="button"
       accessibilityLabel={`${formatMoney(loans.debtLeftMinor)} of debt left${
-        loans.debtFreeDate ? `, debt-free in ${longMonthYear(loans.debtFreeDate)}` : ''
+        knownEnd ? `, debt-free in ${longMonthYear(knownEnd)}` : ''
       }. Open loans`}
     >
       <Glass style={styles.card}>
-        <Kicker icon="flag">
-          {loans.debtFreeDate ? `Debt-free by ${longMonthYear(loans.debtFreeDate)}` : 'Debt left'}
-        </Kicker>
+        <Kicker icon="flag">{knownEnd ? `Debt-free by ${longMonthYear(knownEnd)}` : 'Debt left'}</Kicker>
         <Text style={styles.pathValue} numberOfLines={1} adjustsFontSizeToFit>
           {formatMoney(loans.debtLeftMinor)}{' '}
           <Text style={styles.pathNote}>left · {formatRatioPct(loans.paidFraction)} paid</Text>
