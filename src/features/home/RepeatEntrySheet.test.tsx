@@ -15,6 +15,8 @@ jest.mock('react-native-safe-area-context', () => ({
 jest.mock('expo-router', () => ({ router: { push: jest.fn() } }));
 jest.mock('@/lib/haptics', () => ({ haptics: { confirm: jest.fn(), tap: jest.fn(), warn: jest.fn() } }));
 const mockShowUndo = jest.fn();
+let mockHideAmounts = false;
+jest.mock('@/theme/PrivacyContext', () => ({ usePrivacy: () => ({ hideAmounts: mockHideAmounts }) }));
 jest.mock('@/components/UndoToast', () => ({ useUndoToast: () => ({ show: mockShowUndo }) }));
 jest.mock('@/components/ActionSheet', () => ({
   // Render each item as a plain pressable stub the test can find by label.
@@ -50,7 +52,7 @@ jest.mock('@/db/ledger', () => ({
 jest.mock('@/lib/dataEvents', () => ({ emitTransactionsChanged: jest.fn() }));
 
 import { RepeatEntrySheet, repeatEntryLabel } from './RepeatEntrySheet';
-import { createTransaction, deleteTransaction } from '@/db/ledger';
+import { createTransaction, deleteTransaction, getRepeatEntries } from '@/db/ledger';
 import { emitTransactionsChanged } from '@/lib/dataEvents';
 import { router } from 'expo-router';
 import { formatMoney } from '@/lib/money';
@@ -76,7 +78,23 @@ beforeAll(async () => {
 }, 180000);
 
 describe('RepeatEntrySheet', () => {
-  beforeEach(() => jest.clearAllMocks());
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockHideAmounts = false;
+  });
+
+  it('keeps sensitive repeat amounts out of visible and accessible shortcuts while hidden', async () => {
+    mockHideAmounts = true;
+    const entry = { ...metro, isSensitive: true };
+    (getRepeatEntries as jest.Mock).mockResolvedValueOnce([entry]);
+    const tree = await render();
+    expect(
+      tree.root.findAll((n) => n.props.accessibilityLabel === repeatEntryLabel(entry as any))
+    ).toHaveLength(0);
+    expect(repeatEntryLabel(entry as any, true)).toContain('••••');
+    expect(repeatEntryLabel(entry as any, true)).not.toContain(formatMoney(entry.amountMinor));
+    act(() => tree.unmount());
+  });
 
   it("labels an entry with its note (or category) and amount in the account's currency", () => {
     expect(repeatEntryLabel(metro as any)).toBe(`Metro · ${formatMoney(15000, 'INR')}`);

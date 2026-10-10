@@ -49,8 +49,8 @@ const goal: SavingsGoal = {
   createdAt: '2026-09-01 00:00:00',
 };
 const accounts = [
-  { id: 'bank', name: 'Bank', type: 'bank' },
-  { id: 'pot', name: 'Pot', type: 'savings' },
+  { id: 'bank', name: 'Bank', type: 'bank', currency: 'INR' },
+  { id: 'pot', name: 'Pot', type: 'savings', currency: 'INR' },
 ] as Account[];
 
 const texts = (tree: ReactTestRenderer) =>

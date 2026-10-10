@@ -18,6 +18,45 @@ import { toLocalIsoDate } from '@/lib/date';
 import { getThisMonthWidgetData, getSuuWidgetData } from './data';
 import { ThisMonthWidget } from './ThisMonthWidget';
 import { PRIVATE_HEALTHY_LINES } from '@/features/home/suuLinePools';
+import { createRecurringRule } from '@/db/recurring';
+
+it('excludes sensitive spending and future repeating bills from hidden widget projections', async () => {
+  await mockTestDb.execAsync(CREATE_TABLES_SQL);
+  const now = new Date(2027, 0, 15);
+  const bank = await createAccount({
+    name: 'Privacy test',
+    type: 'bank',
+    currency: 'INR',
+    openingBalanceMinor: 0,
+  });
+  const sensitive = await createCategory({ name: 'Private investments', kind: 'expense', isSensitive: true });
+  await createTransaction({
+    type: 'expense',
+    accountId: bank.id,
+    categoryId: sensitive.id,
+    amountMinor: 999900,
+    date: '2027-01-10',
+  });
+  await createRecurringRule({
+    type: 'expense',
+    accountId: bank.id,
+    categoryId: sensitive.id,
+    amountMinor: 123400,
+    frequency: 'monthly',
+    intervalCount: 1,
+    nextRunDate: '2027-01-20',
+  });
+  await setHideSensitiveAmounts(true);
+  const hidden = await getThisMonthWidgetData(now);
+  expect(hidden.spentMinor).toBe(0);
+  expect(hidden.slices.due ?? 0).toBe(0);
+  expect(hidden.pace?.projectedMinor ?? 0).toBe(0);
+  await setHideSensitiveAmounts(false);
+  const visible = await getThisMonthWidgetData(now);
+  expect(visible.spentMinor).toBe(999900);
+  expect(visible.freeMinor).toBeLessThan(hidden.freeMinor);
+  expect(visible.pace?.projectedMinor ?? 0).toBeGreaterThan(0);
+});
 
 function texts(node: unknown): string[] {
   if (node == null || node === false) return [];

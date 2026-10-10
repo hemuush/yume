@@ -1,4 +1,4 @@
-import { monthBars, spendBarsStart, weekBars } from './spendBars';
+import { monthBars, spendBarsStart, weekBars } from './spendBarData';
 
 const daily = [
   { date: '2026-10-01', totalMinor: 1000 },

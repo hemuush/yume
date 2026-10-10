@@ -63,7 +63,7 @@
   "scripts": {
     "start": "expo start",
     "android": "expo start --android",
-    "test": "LANG=en_IN.UTF-8 LC_ALL=en_IN.UTF-8 TZ=Asia/Kolkata jest",
+    "test": "node scripts/test.cjs",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "format": "prettier --write .",

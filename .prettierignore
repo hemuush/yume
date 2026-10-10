@@ -2,6 +2,8 @@ node_modules/
 .expo/
 dist/
 web-build/
+sites/
+design-preview/
 package-lock.json
 android/
 ios/

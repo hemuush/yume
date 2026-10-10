@@ -9,6 +9,7 @@ import { MovingRow } from '@/components/MovingRow';
 import { JustAddedGlow } from '@/components/JustAddedGlow';
 import { Category, Transaction } from '@/types';
 import { formatMaskableMoney, formatMoney } from '@/lib/money';
+import { getCachedCurrency } from '@/db/settings';
 import { usePrivacy } from '@/theme/PrivacyContext';
 import { useAccent } from '@/theme/AccentContext';
 import { shade } from '@/lib/color';
@@ -32,11 +33,21 @@ function netMinorOf(items: Transaction[]): number {
   );
 }
 
-function Amount({ type, minor, masked }: { type: Transaction['type']; minor: number; masked: boolean }) {
+function Amount({
+  type,
+  minor,
+  masked,
+  currency,
+}: {
+  type: Transaction['type'];
+  minor: number;
+  masked: boolean;
+  currency: string;
+}) {
   return (
     <Text style={[styles.amount, type === 'income' && styles.income]} numberOfLines={1} adjustsFontSizeToFit>
       {type === 'income' ? '+' : type === 'expense' ? '−' : ''}
-      {formatMaskableMoney(minor, { masked })}
+      {formatMaskableMoney(minor, { masked, currency })}
     </Text>
   );
 }
@@ -60,6 +71,7 @@ function TimelineDayView({
   onReorder,
   onDragActive,
   savingsAccountIds = NO_ACCOUNTS,
+  accountCurrency = () => getCachedCurrency(),
 }: {
   date: string;
   label: string;
@@ -81,18 +93,27 @@ function TimelineDayView({
    * amounts".
    */
   savingsAccountIds?: ReadonlySet<string>;
+  accountCurrency?: (id: string) => string;
 }) {
   const { hideAmounts } = usePrivacy();
   const { accent } = useAccent();
   const categoriesById = useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories]);
   // "in Food & Dining" for a subcategory, nothing for a top-level category.
   const parentLine = (categoryId: string | null) => inParent(parentNameOf(categoryId, categoriesById));
-  const { transfers, lines } = useMemo(() => buildDayLane(items, date), [items, date]);
+  const { transfers, lines } = useMemo(
+    () => buildDayLane(items, date, accountCurrency),
+    [items, date, accountCurrency]
+  );
   const hidden = (tx: Transaction) => hideAmounts && isSavingsEntry(tx, categoriesById, savingsAccountIds);
-  const money = (minor: number, masked: boolean) => formatMaskableMoney(minor, { masked });
+  const money = (minor: number, masked: boolean, accountId: string) =>
+    formatMaskableMoney(minor, { masked, currency: accountCurrency(accountId) });
   // With savings hidden the day's total leaves those entries out, or a day with one of them would give it
   // away.
-  const net = netMinorOf(hideAmounts ? items.filter((tx) => !hidden(tx)) : items);
+  const net = netMinorOf(
+    items.filter(
+      (tx) => accountCurrency(tx.accountId) === getCachedCurrency() && (!hideAmounts || !hidden(tx))
+    )
+  );
 
   // Hand-ordering: hold a line to lift it, drag it, let go. `arranged` shows the
   // new order straight away, until the reloaded entries carry it themselves.
@@ -199,7 +220,7 @@ function TimelineDayView({
             {...reorderProps(i)}
             style={withPressed(styles.line)}
             accessibilityRole="button"
-            accessibilityLabel={`${categorySpoken(categoryName(tx.categoryId), parentNameOf(tx.categoryId, categoriesById))}${tx.note ? `, ${tx.note}` : ''}, ${money(tx.amountMinor, hidden(tx))}`}
+            accessibilityLabel={`${categorySpoken(categoryName(tx.categoryId), parentNameOf(tx.categoryId, categoriesById))}${tx.note ? `, ${tx.note}` : ''}, ${money(tx.amountMinor, hidden(tx), tx.accountId)}`}
           >
             <JustAddedGlow ids={[tx.id]} surface="activity" />
             <CategoryIcon name={cat?.icon ?? 'tag'} color={cat?.color} size={14} square={30} round />
@@ -214,7 +235,12 @@ function TimelineDayView({
                 {accountName(tx.accountId)}
               </Text>
             </View>
-            <Amount type={tx.type} minor={tx.amountMinor} masked={hidden(tx)} />
+            <Amount
+              type={tx.type}
+              minor={tx.amountMinor}
+              masked={hidden(tx)}
+              currency={accountCurrency(tx.accountId)}
+            />
           </Pressable>
         </MovingRow>
       );
@@ -239,7 +265,7 @@ function TimelineDayView({
           style={withPressed(styles.line)}
           accessibilityRole="button"
           accessibilityState={{ expanded: open }}
-          accessibilityLabel={`${categorySpoken(name, stackParent)}, ${line.items.length} entries, ${money(line.totalMinor, lineMasked)}. ${open ? 'Close' : 'Open'}`}
+          accessibilityLabel={`${categorySpoken(name, stackParent)}, ${line.items.length} entries, ${money(line.totalMinor, lineMasked, first.accountId)}. ${open ? 'Close' : 'Open'}`}
         >
           {/* A new entry folded into this line glows the line. */}
           <JustAddedGlow ids={line.items.map((t) => t.id)} surface="activity" />
@@ -265,7 +291,12 @@ function TimelineDayView({
               ])}
             </Text>
           </View>
-          <Amount type={line.type} minor={line.totalMinor} masked={lineMasked} />
+          <Amount
+            type={line.type}
+            minor={line.totalMinor}
+            masked={lineMasked}
+            currency={accountCurrency(first.accountId)}
+          />
         </Pressable>
         {open && (
           <View>
@@ -279,7 +310,7 @@ function TimelineDayView({
                     onPress={() => onPressTx(tx)}
                     style={withPressed(styles.subLine)}
                     accessibilityRole="button"
-                    accessibilityLabel={`${categorySpoken(name, stackParent)}${tx.note ? `, ${tx.note}` : ''}, ${money(tx.amountMinor, hidden(tx))}`}
+                    accessibilityLabel={`${categorySpoken(name, stackParent)}${tx.note ? `, ${tx.note}` : ''}, ${money(tx.amountMinor, hidden(tx), tx.accountId)}`}
                   >
                     <View
                       style={[styles.subDot, { backgroundColor: cat?.color ?? theme.colors.borderSoft }]}
@@ -294,7 +325,12 @@ function TimelineDayView({
                         </Text>
                       )}
                     </View>
-                    <Amount type={tx.type} minor={tx.amountMinor} masked={hidden(tx)} />
+                    <Amount
+                      type={tx.type}
+                      minor={tx.amountMinor}
+                      masked={hidden(tx)}
+                      currency={accountCurrency(tx.accountId)}
+                    />
                   </Pressable>
                 </MovingRow>
               );
@@ -340,7 +376,7 @@ function TimelineDayView({
             onPress={() => onPressTx(tx)}
             style={withPressed([styles.line, (lines.length > 0 || i > 0) && styles.divider])}
             accessibilityRole="button"
-            accessibilityLabel={`${money(tx.amountMinor, hidden(tx))} moved from ${accountName(tx.accountId)} to ${accountName(tx.toAccountId!)}`}
+            accessibilityLabel={`${money(tx.amountMinor, hidden(tx), tx.accountId)} moved from ${accountName(tx.accountId)} to ${accountName(tx.toAccountId!)}`}
           >
             <JustAddedGlow ids={[tx.id]} surface="activity" />
             <View style={[styles.transferIcon, { backgroundColor: shade(accent, 95) }]}>
@@ -355,7 +391,7 @@ function TimelineDayView({
               </Text>
             </View>
             <Text style={[styles.amount, styles.transferAmount]} numberOfLines={1}>
-              {money(tx.amountMinor, hidden(tx))}
+              {money(tx.amountMinor, hidden(tx), tx.accountId)}
             </Text>
           </Pressable>
         ))}
@@ -365,7 +401,7 @@ function TimelineDayView({
 }
 
 const styles = StyleSheet.create({
-  day: { paddingHorizontal: 20, paddingBottom: 16 },
+  day: { paddingHorizontal: 16, paddingBottom: 16 },
   head: {
     flexDirection: 'row',
     alignItems: 'baseline',

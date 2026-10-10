@@ -1,4 +1,5 @@
 import { found } from './found';
+import { assertDefaultCurrencyAccount } from './currencyInvariant';
 import { SavingsGoalRow } from './rows';
 import { getDb } from './client';
 import { newId } from '@/lib/id';
@@ -25,7 +26,8 @@ const GOAL_SELECT = `
       + ${valuationAdjSql('a')}
     END AS account_balance_minor
   FROM savings_goals g
-  LEFT JOIN accounts a ON a.id = g.linked_account_id`;
+  LEFT JOIN accounts a ON a.id = g.linked_account_id
+    AND a.currency = COALESCE((SELECT value FROM settings WHERE key = 'default_currency'), 'INR')`;
 
 function rowToGoal(row: SavingsGoalRow & { account_balance_minor: number | null }): SavingsGoal {
   const balance = row.account_balance_minor;
@@ -89,19 +91,22 @@ export async function createSavingsGoal(input: SavingsGoalInput): Promise<Saving
   validateInput(input);
   const db = await getDb();
   const id = newId();
-  await db.runAsync(
-    `INSERT INTO savings_goals (id, name, target_amount_minor, current_amount_minor, target_date, linked_account_id, note_to_self, letter_revealed, archived, track_account)
+  await db.withTransactionAsync(async (tx) => {
+    if (input.linkedAccountId) await assertDefaultCurrencyAccount(tx, input.linkedAccountId, 'Goals');
+    await tx.runAsync(
+      `INSERT INTO savings_goals (id, name, target_amount_minor, current_amount_minor, target_date, linked_account_id, note_to_self, letter_revealed, archived, track_account)
      VALUES (?, ?, ?, 0, ?, ?, ?, 0, 0, ?)`,
-    [
-      id,
-      input.name.trim(),
-      input.targetAmountMinor,
-      input.targetDate,
-      input.linkedAccountId,
-      input.noteToSelf?.trim() || null,
-      trackFlag(input),
-    ]
-  );
+      [
+        id,
+        input.name.trim(),
+        input.targetAmountMinor,
+        input.targetDate,
+        input.linkedAccountId,
+        input.noteToSelf?.trim() || null,
+        trackFlag(input),
+      ]
+    );
+  });
   const row = await db.getFirstAsync<SavingsGoalRow & { account_balance_minor: number | null }>(
     `${GOAL_SELECT} WHERE g.id = ?`,
     [id]
@@ -112,17 +117,20 @@ export async function createSavingsGoal(input: SavingsGoalInput): Promise<Saving
 export async function updateSavingsGoal(id: string, input: SavingsGoalInput): Promise<void> {
   validateInput(input);
   const db = await getDb();
-  await db.runAsync(
-    `UPDATE savings_goals SET name = ?, target_amount_minor = ?, target_date = ?, linked_account_id = ?, track_account = ? WHERE id = ?`,
-    [
-      input.name.trim(),
-      input.targetAmountMinor,
-      input.targetDate,
-      input.linkedAccountId,
-      trackFlag(input),
-      id,
-    ]
-  );
+  await db.withTransactionAsync(async (tx) => {
+    if (input.linkedAccountId) await assertDefaultCurrencyAccount(tx, input.linkedAccountId, 'Goals');
+    await tx.runAsync(
+      `UPDATE savings_goals SET name = ?, target_amount_minor = ?, target_date = ?, linked_account_id = ?, track_account = ? WHERE id = ?`,
+      [
+        input.name.trim(),
+        input.targetAmountMinor,
+        input.targetDate,
+        input.linkedAccountId,
+        trackFlag(input),
+        id,
+      ]
+    );
+  });
 }
 
 /**

@@ -41,11 +41,25 @@ export function primeCurrencyCache(value: string | null): void {
 
 export async function setDefaultCurrency(code: string): Promise<void> {
   const db = await getDb();
-  await db.runAsync(
-    `INSERT INTO settings (key, value) VALUES (?, ?)
+  await db.withTransactionAsync(async (tx) => {
+    const current = await tx.getFirstAsync<{ value: string }>('SELECT value FROM settings WHERE key = ?', [
+      CURRENCY_KEY,
+    ]);
+    if (code !== (current?.value ?? DEFAULT_CURRENCY)) {
+      const owned = await tx.getFirstAsync<{ count: number }>(`SELECT
+        (SELECT COUNT(*) FROM loans) + (SELECT COUNT(*) FROM savings_goals) +
+        (SELECT COUNT(*) FROM person_ledger_entries) + (SELECT COUNT(*) FROM budgets) AS count`);
+      if (owned && owned.count > 0)
+        throw new Error(
+          'The default currency cannot change while loans, goals, IOUs or budgets use it. Their amounts cannot be converted automatically.'
+        );
+    }
+    await tx.runAsync(
+      `INSERT INTO settings (key, value) VALUES (?, ?)
      ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
-    [CURRENCY_KEY, code]
-  );
+      [CURRENCY_KEY, code]
+    );
+  });
   cachedCurrency = code;
 }
 

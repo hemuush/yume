@@ -8,16 +8,16 @@ import { SOFT_LIFT } from './SoftCard';
  */
 export const SCREEN = {
   /** Space above each section heading (and between a hero card and the block under it). */
-  sectionGap: 24,
-  gutter: 20,
+  sectionGap: 20,
+  gutter: 16,
   /** Padding inside a standalone card; a hero card with a top strip takes `heroPadTop`. */
-  cardPad: 16,
-  heroPadTop: 20,
+  cardPad: 14,
+  heroPadTop: 16,
   /** Between cards stacked in a list. */
-  cardStack: 12,
-  rowMinHeight: 64,
-  iconTile: 40,
-  iconGlyph: 17,
+  cardStack: 10,
+  rowMinHeight: 56,
+  iconTile: 34,
+  iconGlyph: 16,
 } as const;
 
 export const screenStyles = StyleSheet.create({
@@ -36,13 +36,13 @@ export const screenStyles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
+    gap: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
     minHeight: SCREEN.rowMinHeight,
   },
   divider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.borderSoft },
-  // A touch larger than CategoryIcon's default (38px); same radius ratio (0.32×).
+  // Same compact footprint as CategoryIcon; same radius ratio (0.32×).
   iconTile: {
     width: SCREEN.iconTile,
     height: SCREEN.iconTile,
@@ -51,11 +51,11 @@ export const screenStyles = StyleSheet.create({
     justifyContent: 'center',
   },
   mid: { flex: 1, minWidth: 0 },
-  title: { fontFamily: theme.font.bodyBold, fontSize: 15, color: theme.colors.textPrimary },
+  title: { fontFamily: theme.font.bodyBold, fontSize: theme.typeSize.row, color: theme.colors.textPrimary },
   sub: { fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textMuted, marginTop: 4 },
   subUrgent: { fontFamily: theme.font.bodyBold, color: theme.colors.expenseText },
   subSoon: { fontFamily: theme.font.bodyBold, color: theme.colors.warnInk },
-  amount: { fontFamily: theme.font.monoBold, fontSize: 15, color: theme.colors.textPrimary },
+  amount: { fontFamily: theme.font.monoBold, fontSize: theme.typeSize.row, color: theme.colors.textPrimary },
   income: { color: theme.colors.incomeText },
   expense: { color: theme.colors.expenseText },
 });

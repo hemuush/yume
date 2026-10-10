@@ -4,7 +4,8 @@ import { router } from 'expo-router';
 import { ActionSheet, ActionSheetItem } from '@/components/ActionSheet';
 import { useUndoToast } from '@/components/UndoToast';
 import { createTransaction, deleteTransaction, getRepeatEntries, RepeatEntry } from '@/db/ledger';
-import { formatMoney } from '@/lib/money';
+import { formatMaskableMoney } from '@/lib/money';
+import { usePrivacy } from '@/theme/PrivacyContext';
 import { categoryPath, categorySentence } from '@/lib/categoryLabel';
 import { toLocalIsoDate } from '@/lib/date';
 import { haptics } from '@/lib/haptics';
@@ -16,12 +17,12 @@ import { showAlert } from '@/components/AppDialog';
  * Label like "Metro · ₹150": the note if present, else the category; a subcategory names its parent
  * ("Food & Dining › Zomato · ₹150", or "Dinner (Food & Dining) · ₹150" with a note).
  */
-export function repeatEntryLabel(entry: RepeatEntry): string {
+export function repeatEntryLabel(entry: RepeatEntry, hideAmounts = false): string {
   const note = entry.note.trim();
   const what = note
     ? categorySentence(note, entry.parentName)
     : categoryPath(entry.categoryName, entry.parentName);
-  return `${what} · ${formatMoney(entry.amountMinor, entry.accountCurrency)}`;
+  return `${what} · ${formatMaskableMoney(entry.amountMinor, { currency: entry.accountCurrency, masked: hideAmounts && entry.isSensitive })}`;
 }
 
 /**
@@ -40,6 +41,7 @@ export function RepeatEntrySheet({
   onLogged?: () => void;
 }) {
   const { show: showUndo } = useUndoToast();
+  const { hideAmounts } = usePrivacy();
   const [entries, setEntries] = useState<RepeatEntry[]>([]);
   // A second tap before the sheet finishes closing must not log it twice.
   const saving = useRef(false);
@@ -74,7 +76,7 @@ export function RepeatEntrySheet({
       haptics.confirm();
       emitTransactionsChanged();
       onLogged?.();
-      showUndo(`Logged ${repeatEntryLabel(entry)}`, async () => {
+      showUndo(`Logged ${repeatEntryLabel(entry, hideAmounts)}`, async () => {
         try {
           await deleteTransaction(tx.id, { keep: false });
           emitTransactionsChanged();
@@ -90,12 +92,14 @@ export function RepeatEntrySheet({
   };
 
   const items: ActionSheetItem[] = [
-    ...entries.map((entry) => ({
-      key: `${entry.type}:${entry.accountId}:${entry.categoryId}:${entry.amountMinor}`,
-      label: repeatEntryLabel(entry),
-      icon: (entry.type === 'income' ? 'arrow-down-right' : 'arrow-up-right') as ActionSheetItem['icon'],
-      onPress: () => void logAgain(entry),
-    })),
+    ...entries
+      .filter((entry) => !hideAmounts || !entry.isSensitive)
+      .map((entry) => ({
+        key: `${entry.type}:${entry.accountId}:${entry.categoryId}:${entry.amountMinor}`,
+        label: repeatEntryLabel(entry),
+        icon: (entry.type === 'income' ? 'arrow-down-right' : 'arrow-up-right') as ActionSheetItem['icon'],
+        onPress: () => void logAgain(entry),
+      })),
     ...(fromAdd
       ? []
       : [

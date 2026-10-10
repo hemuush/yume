@@ -45,6 +45,8 @@ yarn-error.*
 /ios
 /android
 
-# Separate design review site repository and generated previews
+# Separate private design review site and review documents
 /sites/
 /design-preview/
+/APP_AUDIT.md
+/FIX_REPORT.md

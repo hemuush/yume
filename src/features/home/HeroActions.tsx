@@ -62,7 +62,7 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', gap: 8 },
   wrap: { flex: 1 },
   action: {
-    minHeight: 64,
+    minHeight: 52,
     paddingVertical: 10,
     borderRadius: 18,
     alignItems: 'center',

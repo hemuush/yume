@@ -1,4 +1,5 @@
 import { Category, Transaction } from '@/types';
+import { getCachedCurrency } from '@/db/settings';
 import type { ActivityFilter } from './FilterModal';
 import { toLocalIsoDate, parseLocalIsoDate, addDaysToIsoDate } from '@/lib/date';
 import { dayMonth } from '@/lib/dateLabels';
@@ -170,11 +171,15 @@ export type LaneLine =
  */
 export function buildDayLane(
   items: Transaction[],
-  date: string
+  date: string,
+  accountCurrency: (id: string) => string = () => ''
 ): { transfers: Transaction[]; lines: LaneLine[] } {
   const transfers = items.filter((t) => t.type === 'transfer');
   const rest = items.filter((t) => t.type !== 'transfer');
-  const groupKey = (t: Transaction) => `${date}|${t.type}|${t.categoryId ?? ''}`;
+  const groupKey = (t: Transaction) => {
+    const currency = accountCurrency(t.accountId);
+    return `${date}|${t.type}|${t.categoryId ?? ''}${currency && currency !== getCachedCurrency() ? `|${currency}` : ''}`;
+  };
   const counts = new Map<string, number>();
   for (const t of rest) {
     if (!t.splitId) counts.set(groupKey(t), (counts.get(groupKey(t)) ?? 0) + 1);

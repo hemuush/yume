@@ -3,21 +3,21 @@ import { theme } from '@/constants/theme';
 import { GLASS } from '@/components/Glass';
 
 export const styles = StyleSheet.create({
-  card: { marginHorizontal: 20, padding: 16, gap: 12 },
+  card: { marginHorizontal: 16, padding: 14, gap: 10 },
   bar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8, minHeight: 32 },
-  body: { gap: 12 },
+  body: { gap: 10 },
 
   headLabel: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textSecondary },
   headValue: {
     fontFamily: theme.font.bodyLight,
-    fontSize: 46,
-    lineHeight: 52,
-    letterSpacing: -1.6,
+    fontSize: theme.typeSize.hero,
+    lineHeight: 42,
+    letterSpacing: -1.2,
     color: theme.colors.textPrimary,
   },
   headSymbol: {
     fontFamily: theme.font.body,
-    fontSize: 28,
+    fontSize: 24,
     letterSpacing: 0,
     color: theme.colors.textMuted,
   },
@@ -62,7 +62,7 @@ export const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: GLASS.edge,
   },
-  stat: { flex: 1, minWidth: 0, paddingHorizontal: 10, gap: 3 },
+  stat: { flex: 1, minWidth: 0, paddingHorizontal: 8, gap: 3 },
   statDivider: { borderLeftWidth: StyleSheet.hairlineWidth, borderLeftColor: theme.colors.borderSoft },
   statHead: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   statDot: { width: 8, height: 8, borderRadius: 4 },

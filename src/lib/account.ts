@@ -1,5 +1,11 @@
 import { theme } from '@/constants/theme';
 import { Account } from '@/types';
+import { getCachedCurrency } from '@/db/settings';
+
+/** Account choices for workflows whose amounts are denominated in the default currency. */
+export function defaultCurrencyAccountsOf(accounts: Account[]): Account[] {
+  return accounts.filter((a) => a.currency === getCachedCurrency());
+}
 
 /**
  * Badge colour rule for one account: a fixed warm tone for savings/credit, the user's accent otherwise.

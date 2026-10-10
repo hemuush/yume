@@ -57,7 +57,7 @@ import { HomeWallpaper } from '@/features/home/HomeWallpaper';
 import { WhereItWent } from '@/features/home/WhereItWent';
 import { HomeAccounts } from '@/features/home/HomeAccounts';
 import { SpendBars } from '@/features/home/SpendBars';
-import { spendBarsStart } from '@/features/home/spendBars';
+import { spendBarsStart } from '@/features/home/spendBarData';
 import { Glass } from '@/components/Glass';
 import { SuuRefreshBadge } from '@/features/home/SuuRefreshBadge';
 import { Section } from '@/components/Section';
@@ -88,6 +88,7 @@ export default function DashboardScreen() {
   const { hideAmounts } = usePrivacy();
   const { accent, secondary } = useAccent();
   const [accounts, setAccounts] = useState<Account[]>([]);
+  const [historyAccounts, setHistoryAccounts] = useState<Account[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [recent, setRecent] = useState<Transaction[]>([]);
   const [loans, setLoans] = useState<Loan[]>([]);
@@ -256,8 +257,8 @@ export default function DashboardScreen() {
           defaultCurrency,
         ] = await Promise.all([
           fetchPeriod(c),
-          listAccounts(),
-          listCategories(),
+          listAccounts(true),
+          listCategories(true),
           listLoans(),
           listRecurringRules(),
           getLoanProgress(),
@@ -288,7 +289,8 @@ export default function DashboardScreen() {
           periodWritten = true;
         }
         if (fSeq !== fullSeq.current) return false;
-        setAccounts(accs);
+        setHistoryAccounts(accs);
+        setAccounts(accs.filter((account) => !account.archived));
         setCategories(cats);
         // A defaulted loan is still real money owed (or owed to you) — only a
         // 'closed' loan (fully paid off) should ever drop out of these totals.
@@ -374,14 +376,14 @@ export default function DashboardScreen() {
 
   // Looked up per row on every render, so by id rather than a scan of the whole list each time.
   const categoriesById = useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories]);
-  const accountsById = useMemo(() => new Map(accounts.map((a) => [a.id, a])), [accounts]);
+  const accountsById = useMemo(() => new Map(historyAccounts.map((a) => [a.id, a])), [historyAccounts]);
   const categoryFor = (id: string | null) => (id ? categoriesById.get(id) : undefined);
   const parentNameFor = (id: string | null) => {
     const parentId = categoryFor(id)?.parentId;
     return parentId ? categoryFor(parentId)?.name : undefined;
   };
   const accountName = (id: string | null | undefined) => (id ? accountsById.get(id)?.name : undefined);
-  const savingsIds = savingsAccountIdsOf(accounts);
+  const savingsIds = savingsAccountIdsOf(historyAccounts);
   const isSavingsTransfer = (tx: Transaction) =>
     tx.type === 'transfer' &&
     (savingsIds.has(tx.accountId) || (!!tx.toAccountId && savingsIds.has(tx.toAccountId)));
@@ -605,6 +607,7 @@ export default function DashboardScreen() {
                         </Text>
                       )}
                       <RecentTransactionRow
+                        currency={accountsById.get(tx.accountId)?.currency}
                         tx={tx}
                         category={categoryFor(tx.categoryId) ?? undefined}
                         parentName={parentNameFor(tx.categoryId)}

@@ -107,18 +107,18 @@ export const styles = StyleSheet.create({
     gap: 4,
     paddingVertical: 6,
   },
-  amountCurrency: { fontFamily: theme.font.body, fontSize: 30, color: theme.colors.textMuted },
+  amountCurrency: { fontFamily: theme.font.body, fontSize: 24, color: theme.colors.textMuted },
   amountText: {
     fontFamily: theme.font.bodyLight,
-    fontSize: 56,
-    lineHeight: 64,
-    letterSpacing: -2,
+    fontSize: theme.typeSize.inputAmount,
+    lineHeight: 52,
+    letterSpacing: -1.5,
     color: theme.colors.textPrimary,
     flexShrink: 1,
   },
   amountPlaceholder: { color: theme.colors.textMuted },
   // A blinking-free caret: shows the pad is typing into this amount.
-  caret: { width: 2, height: 44, borderRadius: 1, backgroundColor: theme.colors.ink, marginLeft: 2 },
+  caret: { width: 2, height: 36, borderRadius: 1, backgroundColor: theme.colors.ink, marginLeft: 2 },
   expression: {
     fontFamily: theme.font.body,
     fontSize: 13,

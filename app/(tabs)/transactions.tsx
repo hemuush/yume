@@ -8,7 +8,7 @@ import { useFocusEffect, router, useLocalSearchParams } from 'expo-router';
 import Feather from '@expo/vector-icons/Feather';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { listAccounts, listCategories, listTransactions, searchTransactions, setDayOrder } from '@/db/ledger';
-import { getRecentSearches, setRecentSearches, RECENT_SEARCHES_KEPT } from '@/db/settings';
+import { getRecentSearches, setRecentSearches, RECENT_SEARCHES_KEPT, getCachedCurrency } from '@/db/settings';
 import { getRangeComparison, PeriodComparison } from '@/db/reports';
 import { Account, Category, Transaction, TransactionType } from '@/types';
 import { HeaderIconButton } from '@/components/AppHeader';
@@ -224,13 +224,16 @@ export default function TransactionsScreen() {
   // The chart groups by top-level category like the headline does, and a group is hidden when the parent or
   // any of its subcategories is flagged, so a hidden group's entries leave the bars too, not just the total.
   const chartTransactions = useMemo(() => {
-    if (!hideAmounts) return transactions;
+    const defaultRows = transactions.filter(
+      (t) => accounts.find((a) => a.id === t.accountId)?.currency === getCachedCurrency()
+    );
+    if (!hideAmounts) return defaultRows;
     const hiddenGroups = new Set(categories.filter((c) => c.isSensitive).map((c) => c.parentId ?? c.id));
-    return transactions.filter((t) => {
+    return defaultRows.filter((t) => {
       const cat = t.categoryId ? categoriesById.get(t.categoryId) : undefined;
       return !cat || !hiddenGroups.has(cat.parentId ?? cat.id);
     });
-  }, [transactions, categories, categoriesById, hideAmounts]);
+  }, [transactions, categories, categoriesById, hideAmounts, accounts]);
 
   const heading = periodHeading({ scope: viewScope, week, anchor, today: todayDate });
   const groupedDays = useMemo(() => groupByDate(filteredTransactions), [filteredTransactions]);
@@ -251,8 +254,8 @@ export default function TransactionsScreen() {
     try {
       const [rows, accs, cats] = await Promise.all([
         listTransactions(range),
-        listAccounts(),
-        listCategories(),
+        listAccounts(true),
+        listCategories(true),
       ]);
       if (seq !== loadSeq.current) return false;
       tx = rows;
@@ -477,6 +480,10 @@ export default function TransactionsScreen() {
   const accountsById = useMemo(() => new Map(accounts.map((a) => [a.id, a])), [accounts]);
   // Stable, so a day of the list only redraws when its own entries change.
   const accountName = useCallback((id: string) => accountsById.get(id)?.name ?? '—', [accountsById]);
+  const accountCurrency = useCallback(
+    (id: string) => accountsById.get(id)?.currency ?? getCachedCurrency(),
+    [accountsById]
+  );
   const categoryName = useCallback(
     (id: string | null) => (id ? categoriesById.get(id)?.name : undefined) ?? '—',
     [categoriesById]
@@ -680,6 +687,7 @@ export default function TransactionsScreen() {
             }
             renderItem={({ item: group, index: gi }) => (
               <TimelineDay
+                accountCurrency={accountCurrency}
                 date={group.date}
                 label={
                   group.date === today
