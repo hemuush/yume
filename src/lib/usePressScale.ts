@@ -6,7 +6,7 @@ import { useReduceMotion } from './useReduceMotion';
  * A quiet press-down for tappable things: they ease in a touch and dim slightly, then settle back with no
  * bounce. One shared Animated.Value drives the scale and the dim, so they always move together.
  */
-export function usePressScale(pressedScale = 0.97) {
+export function usePressScale(pressedScale = 0.99) {
   // Lazy state init (not useRef.current) so the Animated.Value is created once
   // and read as a plain value in render — the shape the hooks lint rules want.
   const [scale] = useState(() => new Animated.Value(1));

@@ -57,7 +57,6 @@ export function PersonTile({
       style={styles.tileCell}
       entering={FadeIn.delay(Math.min(index * STAGGER_MS, MAX_LIST_STAGGER_MS))
         .duration(DURATIONS.enter)
-        .springify()
         .reduceMotion(ReduceMotion.System)}
       layout={ROW_LAYOUT}
       exiting={ROW_EXIT}
@@ -75,7 +74,7 @@ export function PersonTile({
             <View style={[styles.tileAvatar, { backgroundColor: color }]}>
               <Text style={styles.tileInitial}>{person.name.trim().charAt(0).toUpperCase() || '?'}</Text>
             </View>
-            <Text style={styles.tileName} numberOfLines={1}>
+            <Text style={styles.tileName} numberOfLines={2}>
               {person.name}
             </Text>
           </View>
@@ -83,7 +82,7 @@ export function PersonTile({
             {dispBalanceMinor > 0 ? '+' : '−'}
             {formatMoney(Math.abs(dispBalanceMinor))}
           </Text>
-          <Text style={styles.tileMeta} numberOfLines={1}>
+          <Text style={styles.tileMeta}>
             {`${look.label} · ${lastActivityShort(person.lastActivityDate)}`}
           </Text>
         </AnimatedPressable>

@@ -45,10 +45,8 @@ export const styles = StyleSheet.create({
     lineHeight: 17,
   },
   fieldLabel: {
-    fontSize: 10.5,
+    fontSize: 12,
     fontFamily: theme.font.roundedMedium,
-    letterSpacing: 0.4,
-    textTransform: 'uppercase',
     color: theme.colors.textMuted,
     marginBottom: 6,
   },

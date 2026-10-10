@@ -1,3 +1,5 @@
+import { ScreenLoadError } from '@/components/ScreenLoadError';
+import { PrimaryButton } from '@/components/PrimaryButton';
 import { useCallback, useState } from 'react';
 import { View } from 'react-native';
 import { Text } from '@/components/Text';
@@ -40,7 +42,7 @@ export default function PeopleScreen() {
   const loadPeople = useCallback(async () => {
     setPeople(await listPeople());
   }, []);
-  const { loaded, loadError, reload } = useScreenLoad(loadPeople);
+  const { loaded, hasData, loadError, reload } = useScreenLoad(loadPeople);
   const loading = !loaded && !loadError;
   const { owed, owe, settled, owedToYouMinor, youOweMinor, netMinor } = groupPeople(people);
   const summary = showPeopleSummary(owed.length + owe.length);
@@ -48,6 +50,9 @@ export default function PeopleScreen() {
   // Hashed from the person's own id, not list position, so a rename or a new
   // person never swaps anyone's colour.
   const colorOf = (p: PersonWithBalance) => FLAT_PALETTE[stableIndexFromId(p.id, FLAT_PALETTE.length)];
+
+  if (!hasData && loadError)
+    return <ScreenLoadError title="Friends & family" message={loadError} onRetry={() => void reload()} />;
 
   return (
     <View style={styles.container}>
@@ -66,6 +71,7 @@ export default function PeopleScreen() {
           <View style={styles.errorBanner}>
             <Text style={styles.errorTitle}>Couldn&rsquo;t load Friends &amp; family</Text>
             <Text style={styles.errorDetail}>{loadError}</Text>
+            <PrimaryButton title="Retry" compact variant="secondary" onPress={() => void reload()} />
           </View>
         )}
         {loading ? (

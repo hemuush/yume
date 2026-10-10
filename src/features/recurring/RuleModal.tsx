@@ -282,9 +282,12 @@ export function RuleModal({
     editing && startDate === editing.nextRunDate && editing.anchorDay
       ? editing.anchorDay
       : Number(startDate.slice(8));
-  const upcoming = [startDate];
+  const upcoming = !hasEndDate || startDate <= endDate ? [startDate] : [];
+  let previewDate = startDate;
   while (upcoming.length < 3) {
-    upcoming.push(advanceDate(upcoming[upcoming.length - 1], frequency, interval, previewAnchor));
+    previewDate = advanceDate(previewDate, frequency, interval, previewAnchor);
+    if (hasEndDate && previewDate > endDate) break;
+    upcoming.push(previewDate);
   }
   const toggle = (which: 'account' | 'to' | 'category') => setOpen((o) => (o === which ? null : which));
 

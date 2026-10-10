@@ -20,6 +20,7 @@ export const FormInput = forwardRef<RNTextInput, Props>(function FormInput(
       <Text style={styles.label}>{label}</Text>
       <TextInput
         ref={ref}
+        accessibilityLabel={label}
         style={[styles.input, focused && [styles.inputFocused, { borderColor: secondary }], style]}
         placeholderTextColor={theme.colors.textMuted}
         onFocus={(e) => {

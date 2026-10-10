@@ -289,6 +289,7 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
                   nameFocused && [styles.nameInputFocused, { borderColor: secondary }],
                 ]}
                 placeholder="Your name"
+                accessibilityLabel="Your name"
                 placeholderTextColor={theme.colors.textMuted}
                 value={name}
                 onChangeText={setName}
@@ -407,6 +408,8 @@ const styles = StyleSheet.create({
   brand: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   brandText: { fontFamily: theme.font.roundedBold, fontSize: 13, color: theme.colors.textSecondary },
   skip: {
+    minHeight: 44,
+    justifyContent: 'center',
     backgroundColor: theme.colors.glass,
     borderRadius: theme.radius.pill,
     paddingHorizontal: 12,
@@ -439,7 +442,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   accountStrip: { position: 'absolute', top: 0, left: 0, right: 0, height: 4 },
-  accountHead: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  accountHead: { minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 12 },
   accountName: { flex: 1, fontFamily: theme.font.bodyBold, fontSize: 14, color: theme.colors.textPrimary },
   check: {
     width: 22,

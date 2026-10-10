@@ -127,7 +127,7 @@ export function GoalCard({
           </View>
         </View>
 
-        <Text style={styles.name} numberOfLines={1}>
+        <Text style={styles.name} numberOfLines={2}>
           {goal.name}
         </Text>
         <Text style={styles.sub} numberOfLines={2}>

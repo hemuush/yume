@@ -1,3 +1,4 @@
+import { ScreenLoadError } from '@/components/ScreenLoadError';
 import { useCallback, useEffect, useState } from 'react';
 import { router, useLocalSearchParams } from 'expo-router';
 import { View, Pressable } from 'react-native';
@@ -62,7 +63,7 @@ export default function LoansScreen() {
     setLoans(list);
     setProgress(Object.fromEntries(rows.map((p) => [p.loanId, p])));
   }, []);
-  const { loaded, loadError, reload: load } = useScreenLoad(loadLoans);
+  const { loaded, hasData, loadError, reload: load } = useScreenLoad(loadLoans);
   const loading = !loaded && !loadError;
   useEffect(() => {
     if (!loaded || loadError || !detailLoanId || payLoanId) return;
@@ -103,6 +104,9 @@ export default function LoansScreen() {
     setSelectedLoan(loan);
   };
 
+  if (!hasData && loadError)
+    return <ScreenLoadError title="Loans" message={loadError} onRetry={() => void load()} />;
+
   return (
     <View style={styles.container}>
       <HomeWallpaper accent={accent} secondary={secondary} />
@@ -119,6 +123,7 @@ export default function LoansScreen() {
           <View style={styles.errorBanner}>
             <Text style={styles.errorTitle}>Couldn't load your loans</Text>
             <Text style={styles.errorDetail}>{loadError}</Text>
+            <PrimaryButton title="Retry" compact variant="secondary" onPress={() => void load()} />
           </View>
         )}
         <LoansHero totals={totals} shares={shares} hues={hues} timeline={timeline} loading={loading} />

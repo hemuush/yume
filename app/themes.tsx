@@ -83,7 +83,7 @@ export default function ThemesScreen() {
                   <ThemePreview pack={pack} height={74} />
                 </View>
                 <View style={styles.nameRow}>
-                  <Text style={styles.name} numberOfLines={1}>
+                  <Text style={styles.name} numberOfLines={2}>
                     {pack.name}
                   </Text>
                   {active && (
@@ -118,7 +118,7 @@ const styles = StyleSheet.create({
   liveText: { flex: 1, minWidth: 0, gap: 6 },
   liveKicker: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textSecondary },
   liveName: { fontFamily: theme.font.roundedBold, fontSize: 20, color: theme.colors.textPrimary },
-  pair: { flexDirection: 'row', gap: 12, marginTop: 2 },
+  pair: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginTop: 2 },
   pairItem: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   pairDot: { width: 14, height: 14, borderRadius: 7, borderWidth: 1.5, borderColor: theme.colors.white },
   pairText: { fontFamily: theme.font.bodyMedium, fontSize: 11.5, color: theme.colors.textSecondary },

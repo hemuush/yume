@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, StyleSheet, LayoutChangeEvent } from 'react-native';
+import { View, Pressable, StyleSheet, LayoutChangeEvent } from 'react-native';
 import { Text } from '@/components/Text';
 import { Glass } from '@/components/Glass';
 import { Kicker, frost } from '@/components/Frost';
@@ -10,7 +10,7 @@ import { addDaysToIsoDate, parseLocalIsoDate } from '@/lib/date';
 import { useAccent } from '@/theme/AccentContext';
 import { homeInk } from '@/features/home/homeInk';
 import type { SubscriptionTotals } from '@/db/subscriptions';
-import { CostShare, RunMark, RUN_WINDOW_DAYS, topShareLine } from './recurring.helpers';
+import { CostShare, RunMark, RUN_WINDOW_DAYS, topShareLine, groupRunMarks } from './recurring.helpers';
 
 const DAY_MS = 86400000;
 /** A run's dot grows with its amount, between these sizes. */
@@ -29,6 +29,7 @@ export function RecurringHero({
   nextDate,
   marks = [],
   today,
+  onDatePress,
 }: {
   totals: SubscriptionTotals;
   shares: CostShare[];
@@ -38,6 +39,7 @@ export function RecurringHero({
   marks?: RunMark[];
   /** YYYY-MM-DD the line starts from. */
   today?: string;
+  onDatePress?: (date: string) => void;
 }) {
   const { accent } = useAccent();
   const ink = homeInk(accent);
@@ -45,19 +47,81 @@ export function RecurringHero({
   const running = totals.count > 0;
   const caption = [
     topShareLine(shares),
-    `${totals.count} running`,
+    `${totals.count} running expense ${totals.count === 1 ? 'rule' : 'rules'}`,
     nextDate ? `Next: ${weekdayDayMonth(nextDate)}` : null,
   ]
     .filter(Boolean)
     .join(' · ');
 
   const start = today ? parseLocalIsoDate(today).getTime() : 0;
-  const max = Math.max(1, ...marks.map((m) => m.amountMinor));
+  const grouped = groupRunMarks(marks);
+  const max = Math.max(1, ...grouped.map((m) => m.amountMinor));
   // Days from today along the line, 0 (today) to 1 (the window's last day).
   const xOf = (date: string) =>
     Math.round((parseLocalIsoDate(date).getTime() - start) / DAY_MS) / (RUN_WINDOW_DAYS - 1);
   const midDate = today ? addDaysToIsoDate(today, Math.round((RUN_WINDOW_DAYS - 1) / 2)) : null;
   const endDate = today ? addDaysToIsoDate(today, RUN_WINDOW_DAYS - 1) : null;
+
+  const schedule = (
+    <>
+      {today && marks.length > 0 && (
+        <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+          <Text style={styles.lineLabel}>When they land, next 30 days</Text>
+          <View
+            testID="landLine"
+            style={styles.line}
+            onLayout={(e: LayoutChangeEvent) => setWidth(e.nativeEvent.layout.width)}
+          >
+            <View style={styles.rail} />
+            {width > 0 &&
+              grouped.map((m) => {
+                const size = Math.round(DOT_MIN + Math.sqrt(m.amountMinor / max) * (DOT_MAX - DOT_MIN));
+                const x = Math.min(1, Math.max(0, xOf(m.date))) * width;
+                return (
+                  <View
+                    key={m.key}
+                    style={[
+                      styles.dot,
+                      {
+                        width: size,
+                        height: size,
+                        borderRadius: size / 2,
+                        left: Math.min(width - size, Math.max(0, x - size / 2)),
+                        top: (LINE_HEIGHT - size) / 2,
+                        borderColor: m.incoming ? theme.colors.income : ink,
+                      },
+                    ]}
+                  />
+                );
+              })}
+          </View>
+          <View style={styles.axis}>
+            <Text style={styles.axisText}>Today</Text>
+            {midDate && <Text style={styles.axisText}>{dayMonth(midDate)}</Text>}
+            {endDate && <Text style={styles.axisText}>{dayMonth(endDate)}</Text>}
+          </View>
+        </View>
+      )}
+      {grouped.length > 0 && (
+        <View style={styles.dateGroups}>
+          {grouped.map((m) => (
+            <Pressable
+              key={m.date}
+              style={styles.dateGroup}
+              onPress={() => onDatePress?.(m.date)}
+              disabled={!onDatePress}
+              accessibilityRole="button"
+              accessibilityLabel={`${weekdayDayMonth(m.date)}, ${m.count} ${m.count === 1 ? 'entry' : 'entries'}`}
+            >
+              <Text style={styles.dateText}>
+                {dayMonth(m.date)} · {m.count} {m.count === 1 ? 'entry' : 'entries'}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+      )}
+    </>
+  );
 
   return (
     // Keyed so it can't lose its children when it switches between the two states.
@@ -82,44 +146,7 @@ export function RecurringHero({
             </View>
           </View>
 
-          {today && marks.length > 0 && (
-            <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-              <Text style={styles.lineLabel}>When they land, next 30 days</Text>
-              <View
-                testID="landLine"
-                style={styles.line}
-                onLayout={(e: LayoutChangeEvent) => setWidth(e.nativeEvent.layout.width)}
-              >
-                <View style={styles.rail} />
-                {width > 0 &&
-                  marks.map((m) => {
-                    const size = Math.round(DOT_MIN + Math.sqrt(m.amountMinor / max) * (DOT_MAX - DOT_MIN));
-                    const x = Math.min(1, Math.max(0, xOf(m.date))) * width;
-                    return (
-                      <View
-                        key={m.key}
-                        style={[
-                          styles.dot,
-                          {
-                            width: size,
-                            height: size,
-                            borderRadius: size / 2,
-                            left: Math.min(width - size, Math.max(0, x - size / 2)),
-                            top: (LINE_HEIGHT - size) / 2,
-                            borderColor: m.incoming ? theme.colors.income : ink,
-                          },
-                        ]}
-                      />
-                    );
-                  })}
-              </View>
-              <View style={styles.axis}>
-                <Text style={styles.axisText}>Today</Text>
-                {midDate && <Text style={styles.axisText}>{dayMonth(midDate)}</Text>}
-                {endDate && <Text style={styles.axisText}>{dayMonth(endDate)}</Text>}
-              </View>
-            </View>
-          )}
+          {schedule}
 
           {shares.length > 1 && (
             <View style={styles.stack}>
@@ -134,9 +161,9 @@ export function RecurringHero({
         <>
           <Kicker icon="repeat">Subscriptions & bills</Kicker>
           <Text style={frost.sub}>
-            Set up rent, a subscription or your salary once, and Yume logs it on schedule, like any entry you
-            typed yourself.
+            Set up rent, a subscription or your salary once. Due entries are added when you open Yume.
           </Text>
+          {schedule}
         </>
       )}
     </Glass>
@@ -145,6 +172,15 @@ export function RecurringHero({
 
 const styles = StyleSheet.create({
   card: { padding: 16, gap: 10 },
+  dateGroups: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  dateGroup: {
+    minHeight: 44,
+    justifyContent: 'center',
+    paddingHorizontal: 12,
+    borderRadius: 22,
+    backgroundColor: theme.colors.surfaceAlt,
+  },
+  dateText: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textPrimary },
   lineLabel: {
     fontFamily: theme.font.bodyMedium,
     fontSize: 12,

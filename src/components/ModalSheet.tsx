@@ -8,6 +8,7 @@ import { theme } from '@/constants/theme';
 import { shade } from '@/lib/color';
 import { useAccent } from '@/theme/AccentContext';
 import { usePressScale } from '@/lib/usePressScale';
+import { useReduceMotion } from '@/lib/useReduceMotion';
 import { AmountPadHostProvider, useAmountPadHost } from '@/components/AmountField';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -40,12 +41,13 @@ interface Props {
  */
 export function ModalSheet(props: Props) {
   const { visible, onClose } = props;
+  const reduceMotion = useReduceMotion();
   return (
     <Modal
       visible={visible}
       // Always 'fade', never 'slide': RN's <Modal> animates backdrop and sheet as one unit, so 'slide'
       // leaves the backdrop short of full-screen early on, so the real screen shows through at full brightness.
-      animationType="fade"
+      animationType={reduceMotion ? 'none' : 'fade'}
       transparent
       onRequestClose={onClose}
       statusBarTranslucent
@@ -206,7 +208,7 @@ function ModalSheetBody({
       <View style={styles.header}>
         <View style={styles.headerText}>
           {title ? (
-            <Text style={styles.title} numberOfLines={1}>
+            <Text style={styles.title} numberOfLines={2}>
               {title}
             </Text>
           ) : null}
@@ -465,9 +467,9 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   closeBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: theme.colors.surface,
     alignItems: 'center',
     justifyContent: 'center',

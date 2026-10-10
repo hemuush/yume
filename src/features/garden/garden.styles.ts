@@ -54,7 +54,7 @@ export const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'flex-end',
   },
-  pot: { width: 52, alignItems: 'center', gap: 8 },
+  pot: { flex: 1, minWidth: 0, alignItems: 'center', gap: 8 },
   potToday: {
     borderRadius: 18,
     paddingVertical: 6,
@@ -74,7 +74,7 @@ export const styles = StyleSheet.create({
 
   legend: { flexDirection: 'row', marginHorizontal: 20, marginTop: 14 },
   legendItem: { flex: 1, alignItems: 'center', gap: 4 },
-  legendLabel: { fontFamily: theme.font.body, fontSize: 10, color: theme.colors.textMuted },
+  legendLabel: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
 
   note: { marginHorizontal: 20, marginTop: 18, padding: 14 },
   noteLabel: {

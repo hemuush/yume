@@ -54,9 +54,7 @@ export function SettingsRow({
         <MaterialCommunityIcons name={icon as McIconName} size={17} color={theme.colors.ink} />
       </View>
       <View style={h.mid}>
-        <Text style={h.title} numberOfLines={1}>
-          {label}
-        </Text>
+        <Text style={h.title}>{label}</Text>
         {sub ? <Text style={[h.sub, subColor && { color: subColor }]}>{sub}</Text> : null}
       </View>
       {value ? <Text style={styles.value}>{value}</Text> : null}
@@ -82,7 +80,14 @@ export function SettingsRow({
 }
 
 const styles = StyleSheet.create({
-  value: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textSecondary },
+  value: {
+    fontFamily: theme.font.bodyBold,
+    fontSize: 13,
+    color: theme.colors.textSecondary,
+    flexShrink: 1,
+    maxWidth: '40%',
+    textAlign: 'right',
+  },
   dimmed: { opacity: 0.45 },
   round: { borderRadius: 19 },
 });

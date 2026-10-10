@@ -30,9 +30,8 @@ export const EYEBROW: TextStyle = {
 
 /** A form field's label, above its input (FormInput, DateField, pickers). */
 export const FIELD_LABEL: TextStyle = {
-  fontSize: 10.5,
+  fontSize: 12,
   fontFamily: theme.font.roundedMedium,
-  letterSpacing: 0.4,
-  textTransform: 'uppercase',
+  letterSpacing: 0,
   color: theme.colors.textMuted,
 };

@@ -57,10 +57,9 @@ export const styles = StyleSheet.create({
   },
   income: { color: theme.colors.incomeText },
   fieldLabel: {
-    fontSize: 10.5,
+    fontSize: 12,
     fontFamily: theme.font.roundedMedium,
-    letterSpacing: 0.4,
-    textTransform: 'uppercase',
+    letterSpacing: 0,
     color: theme.colors.textMuted,
     marginBottom: 6,
     marginTop: 4,
@@ -78,7 +77,7 @@ export const styles = StyleSheet.create({
   },
   rowPanelGrid: { paddingHorizontal: 8, paddingBottom: 12 },
   upcomingLabel: { marginTop: 6 },
-  upcoming: { flexDirection: 'row', gap: 8 },
+  upcoming: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   endDateRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',

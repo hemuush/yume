@@ -1,3 +1,5 @@
+import { ScreenLoadError } from '@/components/ScreenLoadError';
+import { PrimaryButton } from '@/components/PrimaryButton';
 import { useCallback, useMemo, useState } from 'react';
 import { View, StyleSheet, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -58,7 +60,7 @@ export default function RecentlyDeletedScreen() {
     setCategories(c);
     setAccounts(a);
   }, []);
-  const { loaded, loadError, reload } = useScreenLoad(load);
+  const { loaded, hasData, loadError, reload } = useScreenLoad(load);
 
   const today = toLocalIsoDate(new Date());
   const groups = useMemo(() => {
@@ -125,6 +127,9 @@ export default function RecentlyDeletedScreen() {
   const parentOf = (cat: Category | undefined) =>
     cat?.parentId ? categories.find((c) => c.id === cat.parentId)?.name : undefined;
 
+  if (!hasData && loadError)
+    return <ScreenLoadError title="Recently deleted" message={loadError} onRetry={() => void reload()} />;
+
   return (
     <View style={styles.container}>
       <HomeWallpaper accent={accent} secondary={secondary} />
@@ -141,6 +146,7 @@ export default function RecentlyDeletedScreen() {
           <View style={styles.errorBanner}>
             <Text style={styles.errorTitle}>Couldn&rsquo;t load Recently deleted</Text>
             <Text style={styles.errorDetail}>{loadError}</Text>
+            <PrimaryButton title="Retry" compact variant="secondary" onPress={() => void reload()} />
           </View>
         )}
         {!loaded ? (

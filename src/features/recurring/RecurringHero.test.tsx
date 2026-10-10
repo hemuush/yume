@@ -31,6 +31,28 @@ function render(props: Partial<React.ComponentProps<typeof RecurringHero>> = {})
 }
 
 describe('RecurringHero', () => {
+  it('keeps income-only schedules visible and opens a grouped date containing every entry', () => {
+    const onDatePress = jest.fn();
+    const tree = render({
+      totals: { monthlyMinor: 0, yearlyMinor: 0, count: 0 },
+      shares: [],
+      today: '2026-10-09',
+      onDatePress,
+      marks: [
+        { key: 'salary-a', date: '2026-11-01', amountMinor: 100000, incoming: true },
+        { key: 'salary-b', date: '2026-11-01', amountMinor: 200000, incoming: true },
+      ],
+    });
+    expect(texts(tree)).toContain('1 Nov · 2 entries');
+    const date = tree.root.findAll(
+      (node) =>
+        node.props.accessibilityLabel?.includes('2 entries') && typeof node.props.onPress === 'function'
+    )[0];
+    act(() => date.props.onPress());
+    expect(onDatePress).toHaveBeenCalledWith('2026-11-01');
+    expect(texts(tree)).not.toContain('A year');
+    act(() => tree.unmount());
+  });
   it('shows the month, the year, how many are running and the next date', () => {
     const shown = texts(render());
     expect(shown).toEqual(expect.arrayContaining(['Subscriptions & bills', 'A year', '₹12,000']));

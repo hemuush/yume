@@ -1,4 +1,5 @@
-import { useCallback, useMemo, useState } from 'react';
+import { ScreenLoadError } from '@/components/ScreenLoadError';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { View } from 'react-native';
 import { Text } from '@/components/Text';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -35,6 +36,8 @@ import { usePrivacy } from '@/theme/PrivacyContext';
 import { isSavingsEntry } from '@/lib/privateSummary';
 import { savingsAccountIdsOf } from '@/lib/account';
 import { parentNameOf } from '@/lib/categoryLabel';
+import { ModalSheet } from '@/components/ModalSheet';
+import { weekdayDayMonth } from '@/lib/dateLabels';
 
 /**
  * Rent, subscriptions, salary: rules caught up on app open (runDueRecurringRules, src/db/recurring.ts, via
@@ -55,6 +58,9 @@ export default function RecurringScreen() {
   // "Make recurring" on a suggestion: the rule form, filled in from it.
   const [fromSuggestion, setFromSuggestion] = useState<SubscriptionSuggestion | null>(null);
   const [addAccountVisible, setAddAccountVisible] = useState(false);
+  const [selectedRunDate, setSelectedRunDate] = useState<string | null>(null);
+  const pendingPause = useRef(new Set<string>());
+  const [busyRuleIds, setBusyRuleIds] = useState<Set<string>>(new Set());
   const loadRules = useCallback(async () => {
     const [r, allAccs, cats, hidden] = await Promise.all([
       listRecurringRules(),
@@ -74,7 +80,7 @@ export default function RecurringScreen() {
   }, []);
   // `loaded` keeps "Add an account first" (an `accounts.length === 0` check)
   // from flashing on every cold open before the DB has answered.
-  const { loaded, loadError, reload: load } = useScreenLoad(loadRules);
+  const { loaded, hasData, loadError, reload: load } = useScreenLoad(loadRules);
 
   const { hideAmounts } = usePrivacy();
   const categoriesById = useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories]);
@@ -115,13 +121,22 @@ export default function RecurringScreen() {
   };
 
   const togglePause = async (rule: RecurringRule) => {
+    if (pendingPause.current.has(rule.id)) return;
+    pendingPause.current.add(rule.id);
+    setBusyRuleIds(new Set(pendingPause.current));
     try {
       await setRecurringRuleActive(rule.id, !rule.active);
       await load();
     } catch (e) {
       showAlert("Couldn't update", errorMessage(e));
+    } finally {
+      pendingPause.current.delete(rule.id);
+      setBusyRuleIds(new Set(pendingPause.current));
     }
   };
+
+  if (!hasData && loadError)
+    return <ScreenLoadError title="Recurring" message={loadError} onRetry={() => void load()} />;
 
   return (
     <View style={styles.container}>
@@ -141,6 +156,7 @@ export default function RecurringScreen() {
           <View style={styles.errorBanner}>
             <Text style={styles.errorTitle}>Couldn't load recurring rules</Text>
             <Text style={styles.errorDetail}>{loadError}</Text>
+            <PrimaryButton title="Retry" compact variant="secondary" onPress={() => void load()} />
           </View>
         )}
         {!loaded ? (
@@ -180,6 +196,7 @@ export default function RecurringScreen() {
                   todayIso
                 )}
                 today={todayIso}
+                onDatePress={setSelectedRunDate}
               />
             )}
             {activeRules.length > 0 && (
@@ -197,11 +214,12 @@ export default function RecurringScreen() {
                       index={i}
                       onPress={() => setEditingRule(rule)}
                       onTogglePause={() => togglePause(rule)}
+                      busy={busyRuleIds.has(rule.id)}
                     />
                   ))}
                 </Glass>
                 <Text style={styles.footnote}>
-                  Yume logs these on schedule. They show up in Activity like any entry you typed.
+                  Due entries are added when you open Yume. Paused rules don’t create entries.
                 </Text>
               </>
             )}
@@ -229,6 +247,7 @@ export default function RecurringScreen() {
                       index={i}
                       onPress={() => setEditingRule(rule)}
                       onTogglePause={() => togglePause(rule)}
+                      busy={busyRuleIds.has(rule.id)}
                       muted
                     />
                   ))}
@@ -278,6 +297,36 @@ export default function RecurringScreen() {
           await load();
         }}
       />
+      <ModalSheet
+        visible={!!selectedRunDate}
+        onClose={() => setSelectedRunDate(null)}
+        title={selectedRunDate ? weekdayDayMonth(selectedRunDate) : 'Upcoming entries'}
+      >
+        {selectedRunDate &&
+          activeRules
+            .filter((rule) => !isHidden(rule))
+            .flatMap((rule) =>
+              runMarks([rule], todayIso)
+                .filter((mark) => mark.date === selectedRunDate)
+                .map((mark) => ({ rule, mark }))
+            )
+            .map(({ rule, mark }, index) => (
+              <RuleRow
+                key={mark.key}
+                rule={{ ...rule, nextRunDate: mark.key.slice(rule.id.length + 1) }}
+                category={rule.categoryId ? categoriesById.get(rule.categoryId) : undefined}
+                parentName={parentNameOf(rule.categoryId, categoriesById)}
+                accountName={accountName}
+                index={index}
+                busy={busyRuleIds.has(rule.id)}
+                onPress={() => {
+                  setSelectedRunDate(null);
+                  setEditingRule(rule);
+                }}
+                onTogglePause={() => togglePause(rule)}
+              />
+            ))}
+      </ModalSheet>
       <AddAccountModal
         visible={addAccountVisible}
         onClose={() => setAddAccountVisible(false)}

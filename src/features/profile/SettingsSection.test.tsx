@@ -110,6 +110,15 @@ beforeAll(async () => {
 }, 180000);
 
 describe('Profile · Settings section', () => {
+  it('does not report Never backed up when the backup status read fails, and offers Retry', async () => {
+    mockBackupResult.mockRejectedValueOnce(new Error('offline'));
+    const tree = await render();
+    expect(texts(tree)).not.toContain('Never backed up');
+    expect(texts(tree)).toContain("Some settings couldn't be read");
+    await press(tree, 'Retry');
+    expect(texts(tree)).toContain('Last backup yesterday');
+    act(() => tree.unmount());
+  });
   it('stays quiet about backups when the last one worked', async () => {
     const shown = texts(await render());
     expect(shown).not.toContain('Backup failed');

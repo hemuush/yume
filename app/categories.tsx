@@ -1,3 +1,5 @@
+import { ScreenLoadError } from '@/components/ScreenLoadError';
+import { PrimaryButton } from '@/components/PrimaryButton';
 import { useCallback, useState } from 'react';
 import { View } from 'react-native';
 import { Text } from '@/components/Text';
@@ -46,7 +48,7 @@ export default function CategoriesScreen() {
   const loadCategories = useCallback(async () => {
     setAllCategories(await listCategories(true));
   }, []);
-  const { loaded, loadError, reload: load } = useScreenLoad(loadCategories);
+  const { loaded, hasData, loadError, reload: load } = useScreenLoad(loadCategories);
   // Guards the manage sheet's Archive/Delete/Restore against a double-tap firing the mutation twice before
   // it closes; other delete flows (LoanDetailModal, RuleModal, etc.) disable their trigger likewise.
   const [actionBusy, setActionBusy] = useState(false);
@@ -201,6 +203,9 @@ export default function CategoriesScreen() {
         ]
     : [];
 
+  if (!hasData && loadError)
+    return <ScreenLoadError title="Categories" message={loadError} onRetry={() => void load()} />;
+
   if (!loaded && !loadError) {
     return (
       <View style={styles.container}>
@@ -241,6 +246,7 @@ export default function CategoriesScreen() {
           <View style={styles.errorBanner}>
             <Text style={styles.errorTitle}>Couldn't load your categories</Text>
             <Text style={styles.errorDetail}>{loadError}</Text>
+            <PrimaryButton title="Retry" compact variant="secondary" onPress={() => void load()} />
           </View>
         )}
         <Text style={[styles.sectionTitle, styles.firstTitle]}>Expense</Text>

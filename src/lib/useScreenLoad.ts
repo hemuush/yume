@@ -11,6 +11,9 @@ import { useFreshness } from '@/lib/useFreshness';
  */
 export function useScreenLoad(loadFn: () => Promise<void>, opts: { skipWhenUnchanged?: boolean } = {}) {
   const [loaded, setLoaded] = useState(false);
+  // A completed attempt can fail. Keep that separate from having usable data,
+  // so a first-load error doesn't look like an empty account or a zero balance.
+  const [hasData, setHasData] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const skipWhenUnchanged = !!opts.skipWhenUnchanged;
   const freshness = useFreshness();
@@ -25,7 +28,10 @@ export function useScreenLoad(loadFn: () => Promise<void>, opts: { skipWhenUncha
     try {
       await loadFn();
       ok = true;
-      if (call === latestCall.current) setLoadError(null);
+      if (call === latestCall.current) {
+        setLoadError(null);
+        setHasData(true);
+      }
     } catch (e) {
       if (call === latestCall.current) setLoadError(errorMessage(e));
     } finally {
@@ -47,5 +53,5 @@ export function useScreenLoad(loadFn: () => Promise<void>, opts: { skipWhenUncha
     }, [run, skipWhenUnchanged, freshness])
   );
 
-  return { loaded, loadError, reload };
+  return { loaded, hasData, loadError, reload };
 }

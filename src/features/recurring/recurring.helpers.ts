@@ -82,6 +82,20 @@ export interface RunMark {
   incoming: boolean;
 }
 
+/** A single visible date marker, retaining every entry rather than overpainting same-day dots. */
+export function groupRunMarks(marks: RunMark[]): (RunMark & { count: number })[] {
+  const groups = new Map<string, RunMark & { count: number }>();
+  for (const mark of marks) {
+    const group = groups.get(mark.date);
+    if (group) {
+      group.amountMinor += mark.amountMinor;
+      group.count += 1;
+      group.incoming = group.incoming && mark.incoming;
+    } else groups.set(mark.date, { ...mark, key: mark.date, count: 1 });
+  }
+  return [...groups.values()].sort((a, b) => a.date.localeCompare(b.date));
+}
+
 /** How far ahead the line looks, today included. */
 export const RUN_WINDOW_DAYS = 30;
 

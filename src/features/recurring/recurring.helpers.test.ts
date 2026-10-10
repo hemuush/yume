@@ -1,5 +1,19 @@
 import { Category, RecurringRule } from '@/types';
-import { costShares, sortRunning, topShareLine } from './recurring.helpers';
+import { costShares, sortRunning, topShareLine, groupRunMarks } from './recurring.helpers';
+
+it('groups same-day runs without losing entries or mutating the source', () => {
+  const marks = [
+    { key: 'a', date: '2026-11-02', amountMinor: 100, incoming: true },
+    { key: 'b', date: '2026-11-01', amountMinor: 200, incoming: true },
+    { key: 'c', date: '2026-11-01', amountMinor: 300, incoming: false },
+  ];
+  expect(groupRunMarks(marks)).toEqual([
+    { key: '2026-11-01', date: '2026-11-01', amountMinor: 500, incoming: false, count: 2 },
+    { key: '2026-11-02', date: '2026-11-02', amountMinor: 100, incoming: true, count: 1 },
+  ]);
+  expect(marks[1].amountMinor).toBe(200);
+  expect(groupRunMarks([])).toEqual([]);
+});
 
 const rule = (over: Partial<RecurringRule>): RecurringRule =>
   ({
