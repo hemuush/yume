@@ -1,3 +1,4 @@
+import { ScreenLoadError } from '@/components/ScreenLoadError';
 import { useCallback, useState } from 'react';
 import { View, Pressable } from 'react-native';
 import { Text } from '@/components/Text';
@@ -149,7 +150,7 @@ export default function BackupScreen() {
   }, []);
   // `loaded` keeps the unloaded default `!localFolderUri` from briefly showing the "choose a folder"
   // call-to-action to someone with a folder configured; `loadError` says so if the settings can't be read.
-  const { loaded, loadError, reload: load } = useScreenLoad(loadData);
+  const { loaded, hasData, loadError, reload: load } = useScreenLoad(loadData);
 
   const run = async (label: string, fn: () => Promise<void>, opts?: { confirm?: boolean }) => {
     setBusy(label);
@@ -393,6 +394,9 @@ Restore anyway? Your current data would be replaced with no way back.`,
   const shownFiles = files ? (showAll ? files : files.slice(0, COLLAPSED_FILES)) : [];
   const hasFolder = !!localFolderUri;
 
+  if (!hasData && loadError)
+    return <ScreenLoadError title="Backup" message={loadError} onRetry={() => void load()} />;
+
   return (
     <View style={styles.container}>
       <HomeWallpaper accent={accent} secondary={secondary} />
@@ -409,6 +413,7 @@ Restore anyway? Your current data would be replaced with no way back.`,
           <View style={listScreenStyles.errorBanner}>
             <Text style={listScreenStyles.errorTitle}>Couldn't load your backup settings</Text>
             <Text style={listScreenStyles.errorDetail}>{loadError}</Text>
+            <PrimaryButton title="Retry" compact variant="secondary" onPress={() => void load()} />
           </View>
         )}
         {/* Glass, with a shield in the status's colour (green when safe, amber or red when it needs you). */}

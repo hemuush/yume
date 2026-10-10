@@ -68,6 +68,9 @@ export function PersonDetailModal({
   const [tab, setTab] = useState<'settle' | 'history'>('settle');
 
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [loadedPersonId, setLoadedPersonId] = useState<string | null>(null);
+  const running = useRef(false);
+  const detailsLoaded = loadedPersonId === person.id;
 
   // Latest load wins, and closing the sheet voids any in flight, so a slow earlier fetch can't overwrite
   // fresher figures or set state after unmount.
@@ -93,6 +96,7 @@ export function PersonDetailModal({
       setAccounts(defaultCurrencyAccountsOf(spendableAccountsOf(accs)));
       setCategories(cats);
       setLinkedLoans(loans);
+      setLoadedPersonId(person.id);
       setLoadError(null);
     } catch (e) {
       if (ticket !== loadTicket.current) return;
@@ -109,10 +113,9 @@ export function PersonDetailModal({
   // Derived from the live ledger, not the `person` prop, which is a snapshot from when the modal opened and
   // goes stale once a new entry is recorded.
   const currency = getCachedCurrency();
-  const liveBalanceMinor = ledger.reduce(
-    (sum, e) => ((e.currency ?? currency) === currency ? sum + e.amountMinor : sum),
-    0
-  );
+  const liveBalanceMinor = detailsLoaded
+    ? ledger.reduce((sum, e) => ((e.currency ?? currency) === currency ? sum + e.amountMinor : sum), 0)
+    : person.balanceMinor;
   // Show each history entry rounded so the running list adds up to the
   // rounded balance shown at the top of the sheet.
   const dispEntryAmounts = new Array<number>(ledger.length);
@@ -123,20 +126,24 @@ export function PersonDetailModal({
       dispEntryAmounts[index] = rounded[i];
     });
   }
-  const dispBalanceMinor = dispEntryAmounts.reduce(
-    (sum, v, i) => ((ledger[i].currency ?? currency) === currency ? sum + v : sum),
-    0
-  );
+  const dispBalanceMinor = detailsLoaded
+    ? dispEntryAmounts.reduce(
+        (sum, v, i) => ((ledger[i].currency ?? currency) === currency ? sum + v : sum),
+        0
+      )
+    : roundedMinor(person.balanceMinor);
 
   // "They owe more" (sign 1) with an account means cash left it: recorded as a real expense transaction plus
   // the ledger entry, not a bookkeeping-only IOU. Likewise "They repaid" (sign -1) is real income into it.
   const record = async (sign: 1 | -1) => {
+    if (running.current || !detailsLoaded || loadError) return;
     setError(null);
     const amountMinor = toMinor(parseFloat(amount || '0'));
     if (!Number.isFinite(amountMinor) || amountMinor <= 0) {
       setError('Enter a valid amount');
       return;
     }
+    running.current = true;
     setSaving(true);
     try {
       const date = entryDateIso;
@@ -188,12 +195,15 @@ export function PersonDetailModal({
       setError(errorMessage(e));
     } finally {
       setSaving(false);
+      running.current = false;
     }
   };
 
   // Deleting from the ledger side (not Transactions, which only reaches entries with a linked transaction)
   // also covers "just adjust balance" entries.
   const runDeleteEntry = async (entry: PersonLedgerEntry) => {
+    if (running.current || !detailsLoaded || loadError) return;
+    running.current = true;
     setSaving(true);
     try {
       const snapshot = await deleteLedgerEntry(entry.id);
@@ -209,6 +219,7 @@ export function PersonDetailModal({
       showAlert("Couldn't delete entry", errorMessage(e));
     } finally {
       setSaving(false);
+      running.current = false;
     }
   };
 
@@ -237,44 +248,48 @@ export function PersonDetailModal({
   return (
     <ModalSheet
       visible
-      onClose={onClose}
+      onClose={saving ? () => {} : onClose}
       footer={
-        // Worded from where the balance stands: when you owe them, paying back is the main action.
-        <View style={f.footerRow}>
-          {liveBalanceMinor < 0 ? (
-            <>
-              <PrimaryButton
-                title={saving ? 'Saving…' : 'I owe more'}
-                variant="secondary"
-                onPress={() => record(-1)}
-                disabled={saving}
-                style={f.footerBtn}
-              />
-              <PrimaryButton
-                title={saving ? 'Saving…' : 'I paid them back'}
-                onPress={() => record(1)}
-                disabled={saving}
-                style={f.footerBtn}
-              />
-            </>
-          ) : (
-            <>
-              <PrimaryButton
-                title={saving ? 'Saving…' : 'They owe more'}
-                variant="secondary"
-                onPress={() => record(1)}
-                disabled={saving}
-                style={f.footerBtn}
-              />
-              <PrimaryButton
-                title={saving ? 'Saving…' : 'They repaid'}
-                onPress={() => record(-1)}
-                disabled={saving}
-                style={f.footerBtn}
-              />
-            </>
-          )}
-        </View>
+        tab === 'history' ? (
+          <PrimaryButton title="Done" onPress={onClose} disabled={saving} />
+        ) : (
+          // Worded from where the balance stands: when you owe them, paying back is the main action.
+          <View style={f.footerRow}>
+            {liveBalanceMinor < 0 ? (
+              <>
+                <PrimaryButton
+                  title={saving ? 'Saving…' : 'I owe more'}
+                  variant="secondary"
+                  onPress={() => record(-1)}
+                  disabled={saving || !detailsLoaded || !!loadError}
+                  style={f.footerBtn}
+                />
+                <PrimaryButton
+                  title={saving ? 'Saving…' : 'I paid them back'}
+                  onPress={() => record(1)}
+                  disabled={saving || !detailsLoaded || !!loadError}
+                  style={f.footerBtn}
+                />
+              </>
+            ) : (
+              <>
+                <PrimaryButton
+                  title={saving ? 'Saving…' : 'They owe more'}
+                  variant="secondary"
+                  onPress={() => record(1)}
+                  disabled={saving || !detailsLoaded || !!loadError}
+                  style={f.footerBtn}
+                />
+                <PrimaryButton
+                  title={saving ? 'Saving…' : 'They repaid'}
+                  onPress={() => record(-1)}
+                  disabled={saving || !detailsLoaded || !!loadError}
+                  style={f.footerBtn}
+                />
+              </>
+            )}
+          </View>
+        )
       }
     >
       {/* The calm-sheets sign-off (Direction C): the balance as a card —
@@ -294,12 +309,21 @@ export function PersonDetailModal({
         amountColor={liveBalanceMinor < 0 ? theme.colors.expenseText : theme.colors.textPrimary}
         title={person.name}
         meta={
-          ledger.length === 0
-            ? 'No entries yet'
-            : `${ledger.length} ${ledger.length === 1 ? 'entry' : 'entries'} · last ${dayMonthYear(ledger[0].date)}`
+          !detailsLoaded
+            ? loadError
+              ? 'Latest details unavailable'
+              : 'Loading latest details…'
+            : ledger.length === 0
+              ? 'No entries yet'
+              : `${ledger.length} ${ledger.length === 1 ? 'entry' : 'entries'} · last ${dayMonthYear(ledger[0].date)}`
         }
       />
-      {loadError && <Text style={styles.errorText}>Couldn't load the latest details: {loadError}</Text>}
+      {loadError && (
+        <>
+          <Text style={styles.errorText}>Couldn't load the latest details: {loadError}</Text>
+          <PrimaryButton title="Retry" variant="secondary" compact onPress={load} />
+        </>
+      )}
       <View style={styles.sheetTabs}>
         <SegmentedControl
           options={[
@@ -378,8 +402,10 @@ export function PersonDetailModal({
           </View>
           <Text style={styles.hintText}>
             {accountId
-              ? 'This will also record a real transaction on that account — expense for "They owe more", income for "They repaid" — so it shows up in Activity and Reports too.'
-              : "This only updates the balance above — no real transaction is created, so it won't appear in Activity or Reports. Pick an account instead if cash actually moved."}
+              ? liveBalanceMinor < 0
+                ? '“I owe more” records money in. “I paid them back” records money out of the selected account.'
+                : '“They owe more” records money out. “They repaid” records money into the selected account.'
+              : 'Balance only adjusts what’s owed. Choose an account if money actually moved.'}
           </Text>
 
           {error && <Text style={styles.errorText}>{error}</Text>}
@@ -387,7 +413,11 @@ export function PersonDetailModal({
       )}
 
       {tab === 'history' &&
-        (ledger.length === 0 ? (
+        (!detailsLoaded ? (
+          <Text style={styles.emptyText}>
+            {loadError ? 'History unavailable. Tap Retry above.' : 'Loading history…'}
+          </Text>
+        ) : ledger.length === 0 ? (
           <Text style={styles.emptyText}>No entries yet.</Text>
         ) : (
           <>

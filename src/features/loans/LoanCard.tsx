@@ -104,12 +104,12 @@ export function LoanCard({
             />
           </View>
           <View style={styles.caption}>
-            <Text style={styles.captionText} numberOfLines={1}>
+            <Text style={styles.captionText}>
               <Text style={styles.captionBold}>{formatRatioPct(fraction)}</Text> repaid
               {repaidLine ? ` · ${repaidLine}` : ''}
             </Text>
             {!isClosed && lastDueDate ? (
-              <Text style={styles.captionText} numberOfLines={1}>
+              <Text style={styles.captionText}>
                 {isBorrowed ? 'Debt-free' : 'Repaid'} {payoffMonthShort(lastDueDate)}
               </Text>
             ) : null}
@@ -119,7 +119,7 @@ export function LoanCard({
             <View style={styles.footer}>
               <View style={styles.footerText}>
                 <Text style={styles.nextLabel}>Next EMI</Text>
-                <Text style={styles.nextLine} numberOfLines={1}>
+                <Text style={styles.nextLine}>
                   {weekdayDayMonth(nextDueDate)} ·{' '}
                   <Text style={styles.nextAmount}>{formatMoney(nextEmiMinor)}</Text>
                 </Text>
@@ -203,7 +203,7 @@ const styles = StyleSheet.create({
   },
   nextAmount: { fontFamily: theme.font.monoBold },
   pill: {
-    minHeight: 32,
+    minHeight: 44,
     justifyContent: 'center',
     paddingHorizontal: 14,
     borderRadius: theme.radius.pill,

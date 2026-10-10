@@ -17,6 +17,28 @@ function setup(loadFn: () => Promise<void>) {
 }
 
 describe('useScreenLoad', () => {
+  it('distinguishes an initial failure from usable data and retains data after a refresh fails', async () => {
+    const load = jest
+      .fn()
+      .mockRejectedValueOnce(new Error('offline'))
+      .mockResolvedValueOnce(undefined)
+      .mockRejectedValueOnce(new Error('refresh failed'));
+    const get = setup(load);
+    await act(async () => {
+      await get().reload();
+    });
+    expect(get().loaded).toBe(true);
+    expect(get().hasData).toBe(false);
+    await act(async () => {
+      await get().reload();
+    });
+    expect(get().hasData).toBe(true);
+    await act(async () => {
+      await get().reload();
+    });
+    expect(get().hasData).toBe(true);
+    expect(get().loadError).toBe('refresh failed');
+  });
   it('lets a newer load win over a slower, older one that fails', async () => {
     let rejectFirst!: (e: Error) => void;
     const calls = [() => new Promise<void>((_, reject) => (rejectFirst = reject)), () => Promise.resolve()];

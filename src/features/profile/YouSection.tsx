@@ -1,3 +1,5 @@
+import { ScreenLoadError } from '@/components/ScreenLoadError';
+import { PrimaryButton } from '@/components/PrimaryButton';
 import { useCallback, useState } from 'react';
 import { View, Pressable, Animated, ActivityIndicator } from 'react-native';
 import { Text } from '@/components/Text';
@@ -98,7 +100,7 @@ export function YouSection() {
     setHasLoans(openLoans.length > 0);
     setHasUntrackedAssetLoan(openLoans.some((l) => l.direction === 'borrowed' && !l.assetValueMinor));
   }, []);
-  const { loaded, loadError, reload: load } = useScreenLoad(loadYou);
+  const { loaded, hasData, loadError, reload: load } = useScreenLoad(loadYou);
 
   // Balances are whole rupees: each account row rounds its own, and the accounts total (sum's first line and
   // card footer) sums those rounded rows, default-currency only, so the list always adds up.
@@ -160,6 +162,9 @@ export function YouSection() {
     />
   );
 
+  if (!hasData && loadError)
+    return <ScreenLoadError title="Profile" message={loadError} onRetry={() => void load()} embedded />;
+
   if (!loaded && !loadError) {
     // Not a full-screen gate: the shell's header, identity and tabs are already visible; this only fills
     // this section's own space while it loads.
@@ -176,6 +181,7 @@ export function YouSection() {
         <View style={styles.errorBanner}>
           <Text style={styles.errorTitle}>Couldn't load your data</Text>
           <Text style={styles.errorDetail}>{loadError}</Text>
+          <PrimaryButton title="Retry" compact variant="secondary" onPress={() => void load()} />
         </View>
       )}
 
@@ -352,7 +358,7 @@ function AccountRow({
     >
       <CategoryIcon name={accountIcon(account.type)} color={accountBadgeColor(account.type, accent)} />
       <View style={h.mid}>
-        <Text style={h.title} numberOfLines={1}>
+        <Text style={h.title} numberOfLines={2}>
           {account.name}
         </Text>
         <Text style={h.sub} numberOfLines={1}>

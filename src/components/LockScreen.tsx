@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, ScrollView, StyleSheet } from 'react-native';
 import { Text } from '@/components/Text';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -115,7 +115,7 @@ export function LockScreen({ onUnlocked }: { onUnlocked: () => void }) {
   const gradientBottom = shade(accent, 96, 2);
 
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.container} contentContainerStyle={{ flexGrow: 1 }}>
       <LinearGradient colors={[gradientTop, gradientBottom]} style={StyleSheet.absoluteFill} />
       {STARS.map((s, i) => (
         <View
@@ -188,7 +188,7 @@ export function LockScreen({ onUnlocked }: { onUnlocked: () => void }) {
           </View>
         </StripCard>
       </View>
-    </View>
+    </ScrollView>
   );
 }
 

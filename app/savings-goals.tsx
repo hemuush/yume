@@ -1,3 +1,4 @@
+import { ScreenLoadError } from '@/components/ScreenLoadError';
 import { useCallback, useEffect, useState } from 'react';
 import { router, useLocalSearchParams } from 'expo-router';
 import { View } from 'react-native';
@@ -67,7 +68,7 @@ export default function SavingsGoalsScreen() {
       setLetterGoal(reached);
     }
   }, []);
-  const { loaded, loadError, reload: load } = useScreenLoad(loadGoals);
+  const { loaded, hasData, loadError, reload: load } = useScreenLoad(loadGoals);
   const { goal: goalId, add } = useLocalSearchParams<{ goal?: string; add?: string }>();
   useEffect(() => {
     if (!loaded || loadError || (!goalId && add !== '1')) return;
@@ -81,6 +82,9 @@ export default function SavingsGoalsScreen() {
   const visibleGoals = showArchived ? archivedGoals : activeGoals;
   const totals = summarizeGoals(activeGoals, toLocalIsoDate(new Date()));
   const hues = goalHues(allGoals);
+
+  if (!hasData && loadError)
+    return <ScreenLoadError title="Savings goals" message={loadError} onRetry={() => void load()} />;
 
   if (!loaded && !loadError) {
     return (
@@ -121,6 +125,7 @@ export default function SavingsGoalsScreen() {
           <View style={styles.errorBanner}>
             <Text style={styles.errorTitle}>Couldn't load your goals</Text>
             <Text style={styles.errorDetail}>{loadError}</Text>
+            <PrimaryButton title="Retry" compact variant="secondary" onPress={() => void load()} />
           </View>
         )}
 

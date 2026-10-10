@@ -198,7 +198,7 @@ export function SplitScreen() {
               {legend.map((l) => (
                 <View key={l.key} style={styles.legendItem}>
                   <View style={[styles.legendKey, { backgroundColor: l.color }]} />
-                  <Text style={styles.legendText} numberOfLines={1}>
+                  <Text style={styles.legendText} numberOfLines={2}>
                     {l.name} {l.pct}%
                   </Text>
                 </View>
@@ -227,7 +227,7 @@ export function SplitScreen() {
                     color={cat?.color ?? theme.colors.inkHairline}
                   />
                   <View style={h.mid}>
-                    <Text style={[h.title, !cat && styles.placeholder]} numberOfLines={1}>
+                    <Text style={[h.title, !cat && styles.placeholder]} numberOfLines={2}>
                       {cat ? cat.name : 'Pick a category'}
                     </Text>
                     {(cat && parentOf(p)) || share ? (
@@ -324,7 +324,7 @@ export function SplitScreen() {
       <View style={[styles.footer, { paddingBottom: insets.bottom + 12 }]}>
         {targetPart ? (
           <>
-            <Text style={styles.typing} numberOfLines={1}>
+            <Text style={styles.typing} numberOfLines={2}>
               Typing into <Text style={styles.typingName}>{nameOf(targetPart.key)}</Text>
             </Text>
             <AmountPad onKey={onPadKey} onClear={() => update(targetPart.key, { amountText: '' })}>
@@ -408,9 +408,9 @@ const styles = StyleSheet.create({
   restText: { color: theme.colors.incomeText },
   bad: { color: theme.colors.expenseText },
   remove: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: theme.colors.surfaceAlt,

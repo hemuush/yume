@@ -53,7 +53,7 @@ export function SheetCard({
           {amount}
         </Text>
       ) : null}
-      <Text style={[styles.title, amount === undefined && styles.titleBig]} numberOfLines={1}>
+      <Text style={[styles.title, amount === undefined && styles.titleBig]} numberOfLines={2}>
         {title}
       </Text>
       {meta ? (

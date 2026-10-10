@@ -1,3 +1,4 @@
+import { ScreenLoadError } from '@/components/ScreenLoadError';
 import { useCallback, useState } from 'react';
 import { View, ScrollView } from 'react-native';
 import { Text } from '@/components/Text';
@@ -28,6 +29,7 @@ import { styles } from '@/features/garden/garden.styles';
 import { errorMessage } from '@/lib/errorMessage';
 import { shade } from '@/lib/color';
 import { useAccent } from '@/theme/AccentContext';
+import { router } from 'expo-router';
 
 const POT_COUNT = 5;
 const LEGEND_STAGES: GrowthStage[] = ['seed', 'sprout', 'sapling', 'bloom'];
@@ -73,7 +75,7 @@ export default function GardenScreen() {
     setSeries(streakSeries);
     setGoals(goalList.filter((g) => !g.archived));
   }, []);
-  const { loaded, loadError, reload } = useScreenLoad(load);
+  const { loaded, hasData, loadError, reload } = useScreenLoad(load);
 
   // Same rule Settings' daily goal uses: a positive amount, saved as the same setting.
   const startGoal = async () => {
@@ -111,6 +113,9 @@ export default function GardenScreen() {
           ) / fundedGoals.length
         )
       : 0;
+
+  if (!hasData && loadError)
+    return <ScreenLoadError title="Suu’s garden" message={loadError} onRetry={() => void reload()} />;
 
   if (!loaded && !loadError) {
     return (
@@ -167,10 +172,11 @@ export default function GardenScreen() {
                 <View style={styles.errorBanner}>
                   <Text style={styles.errorTitle}>Couldn't load your garden</Text>
                   <Text style={styles.errorDetail}>{loadError}</Text>
+                  <PrimaryButton title="Retry" compact variant="secondary" onPress={() => void reload()} />
                 </View>
               )}
 
-              <Text style={styles.intro}>Grows with every day you keep, and every rupee you save.</Text>
+              <Text style={styles.intro}>Keep spending under your daily goal to grow your streak.</Text>
 
               {dailyGoalMinor == null ? (
                 <EmptyState
@@ -205,6 +211,14 @@ export default function GardenScreen() {
                     </Text>
                   </View>
 
+                  <View style={{ marginHorizontal: 20, marginTop: 8 }}>
+                    <PrimaryButton
+                      title="Change daily goal"
+                      compact
+                      variant="secondary"
+                      onPress={() => router.push({ pathname: '/profile', params: { tab: 'settings' } })}
+                    />
+                  </View>
                   <Glass radius={28} tone="strong" style={styles.bed}>
                     {potDays.map((point) => {
                       const isToday = point.date === today;
@@ -217,7 +231,7 @@ export default function GardenScreen() {
                           <View style={styles.plantSlot}>
                             <GardenPlant
                               stage={stage}
-                              size={isToday ? 40 : 32}
+                              size={isToday ? 48 : 40}
                               animKey={isToday ? `garden:${point.date}` : undefined}
                             />
                           </View>
@@ -231,7 +245,7 @@ export default function GardenScreen() {
                   <View style={styles.legend}>
                     {LEGEND_STAGES.map((stage) => (
                       <View key={stage} style={styles.legendItem}>
-                        <GardenPlant stage={stage} size={20} decorative />
+                        <GardenPlant stage={stage} size={30} decorative />
                         <Text style={styles.legendLabel}>{stageLabel(stage)}</Text>
                       </View>
                     ))}

@@ -88,6 +88,17 @@ async function render(editing: typeof rule | null) {
 }
 
 describe('recurring sheet', () => {
+  it('includes the end date but never previews a run after it', async () => {
+    const tree = await render({ ...rule, endDate: '2026-11-01' });
+    act(() =>
+      tree.root.find((n) => n.props.value === 'setup' && n.props.onChange).props.onChange('schedule')
+    );
+    const t = texts(tree);
+    const i = t.indexOf('Coming up');
+    expect(t.slice(i + 1, i + 5)).toEqual(['01', 'OCT', '01', 'NOV']);
+    expect(t.slice(i + 1)).not.toContain('DEC');
+    act(() => tree.unmount());
+  });
   it('previews the rule on its card', async () => {
     const tree = await render(rule);
     expect(texts(tree)).toEqual(expect.arrayContaining(['Every month', 'YouTube Premium']));

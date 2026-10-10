@@ -1,4 +1,7 @@
-import { useCallback, useState } from 'react';
+import { ScreenLoadError } from '@/components/ScreenLoadError';
+import { PrimaryButton } from '@/components/PrimaryButton';
+import { useCallback, useEffect, useState } from 'react';
+import { useLocalSearchParams } from 'expo-router';
 import { View } from 'react-native';
 import { Text } from '@/components/Text';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
@@ -42,13 +45,17 @@ export default function ProfileScreen() {
   const [draft, setDraft] = useState('');
   const [memberSince, setMemberSince] = useState<number | null>(null);
   const [tab, setTab] = useState<ProfileTab>('you');
+  const { tab: requestedTab } = useLocalSearchParams<{ tab?: string }>();
+  useEffect(() => {
+    if (requestedTab === 'settings' || requestedTab === 'you') setTab(requestedTab);
+  }, [requestedTab]);
 
   const loadIdentity = useCallback(async () => {
     const [userName, since] = await Promise.all([getUserName(), getMemberSinceYear()]);
     setName(userName);
     setMemberSince(since);
   }, []);
-  const { loaded, loadError } = useScreenLoad(loadIdentity);
+  const { loaded, hasData, loadError, reload } = useScreenLoad(loadIdentity);
 
   const saveName = async () => {
     try {
@@ -59,6 +66,9 @@ export default function ProfileScreen() {
       showAlert("Couldn't save name", errorMessage(e));
     }
   };
+
+  if (!hasData && loadError)
+    return <ScreenLoadError title="Profile" message={loadError} onRetry={() => void reload()} />;
 
   if (!loaded && !loadError) {
     return (
@@ -114,6 +124,7 @@ export default function ProfileScreen() {
                 <View style={styles.errorBanner}>
                   <Text style={styles.errorTitle}>Couldn't load your data</Text>
                   <Text style={styles.errorDetail}>{loadError}</Text>
+                  <PrimaryButton title="Retry" compact variant="secondary" onPress={() => void reload()} />
                 </View>
               )}
 
