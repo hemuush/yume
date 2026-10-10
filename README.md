@@ -72,7 +72,7 @@ src/
   components/           Shared UI primitives
   features/             Per-screen sub-modules — each big screen's modals,
                         rows, styles and helpers live in features/<screen>/,
-                        so the app/ route file stays a thin orchestrator
+                        while app/ owns navigation and screen orchestration
   constants/            Theme tokens and default categories
   theme/                Exclusive theme packs, plus the accent + privacy React contexts
   widgets/              Home-screen widgets (react-native-android-widget) and their data sources
@@ -102,6 +102,16 @@ npm run lint         # eslint
 npm run format       # prettier --write .
 npm test             # jest
 ```
+
+Type checking also rejects unused imports, local variables, and parameters. Intentional unused
+parameters should start with `_`. Keep screen-specific code in `src/features/<screen>/`, reusable
+UI in `src/components/`, data access in `src/db/`, and independent logic in `src/lib/`.
+Tests stay next to the code they exercise; cross-screen tests belong in `src/__tests__/`.
+
+When checking unused files, include Expo Router's file-based routes, the widget handler registered
+in `index.js`, config plugins, and performance-test fixtures as entry points. Dependencies used
+by Expo/native integration may have no direct application import; check their integration before
+removing them.
 
 ## Building an APK
 
