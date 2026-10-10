@@ -1,6 +1,12 @@
 import { useEffect, useState } from 'react';
 import { View, Pressable, StyleSheet } from 'react-native';
-import Animated, { useSharedValue, useAnimatedStyle, withDelay, withTiming } from 'react-native-reanimated';
+import Animated, {
+  cancelAnimation,
+  useSharedValue,
+  useAnimatedStyle,
+  withDelay,
+  withTiming,
+} from 'react-native-reanimated';
 import { Text } from '@/components/Text';
 import { Glass } from '@/components/Glass';
 import { theme } from '@/constants/theme';
@@ -12,6 +18,7 @@ import { useAccent } from '@/theme/AccentContext';
 import { hexToRgba } from '@/lib/color';
 import { homeInk } from './homeInk';
 import { monthBars, weekBars, SpendBar } from './spendBarData';
+import { parseLocalIsoDate } from '@/lib/date';
 
 /** The tallest bar's height; the amount over today's bar sits above it. */
 const MAX_H = 84;
@@ -27,6 +34,8 @@ function Bar({
   ink,
   tint,
   delay,
+  animateEntry,
+  dateLabel,
 }: {
   bar: SpendBar;
   maxMinor: number;
@@ -34,19 +43,22 @@ function Bar({
   /** The other days' fill: a soft wash of the theme's ink, so the bars read on the white glass. */
   tint: string;
   delay: number;
+  animateEntry: boolean;
+  dateLabel: string;
 }) {
   const reduce = useReduceMotion();
   const target =
     bar.totalMinor > 0 && maxMinor > 0
       ? Math.max(MIN_H, Math.round((bar.totalMinor / maxMinor) * MAX_H))
       : EMPTY_H;
-  const h = useSharedValue(reduce ? target : MIN_H);
+  const growth = useSharedValue(reduce || !animateEntry ? 1 : 0);
   useEffect(() => {
-    h.value = reduce ? target : withDelay(delay, withTiming(target, timing(520)));
-  }, [target, reduce, delay, h]);
-  const style = useAnimatedStyle(() => ({ height: h.value }));
+    growth.value = reduce || !animateEntry ? 1 : withDelay(delay, withTiming(1, timing(240)));
+    return () => cancelAnimation(growth);
+  }, [reduce, animateEntry, delay, growth]);
+  const style = useAnimatedStyle(() => ({ transform: [{ scaleY: growth.value }] }));
   return (
-    <View style={styles.col}>
+    <View style={styles.col} accessible accessibilityLabel={`${dateLabel}, ${formatMoney(bar.totalMinor)}`}>
       {bar.current && (
         <Text style={styles.value} numberOfLines={1}>
           {formatMoney(bar.totalMinor)}
@@ -55,7 +67,7 @@ function Bar({
       <Animated.View
         style={[
           styles.bar,
-          { backgroundColor: bar.current ? ink : tint },
+          { height: target, transformOrigin: 'bottom', backgroundColor: bar.current ? ink : tint },
           bar.totalMinor === 0 && !bar.current && styles.barEmpty,
           style,
         ]}
@@ -80,20 +92,26 @@ export function SpendBars({
   const ink = homeInk(accent);
   const tint = hexToRgba(ink, 0.22);
   const [range, setRange] = useState<Range>('week');
+  const [switched, setSwitched] = useState(false);
   const bars = range === 'week' ? weekBars(daily, today) : monthBars(daily, today);
   const maxMinor = Math.max(0, ...bars.map((b) => b.totalMinor));
   const total = bars.reduce((s, b) => s + b.totalMinor, 0);
+  const rangeDates =
+    range === 'week'
+      ? `${parseLocalIsoDate(bars[0].key).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}–${parseLocalIsoDate(today).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}`
+      : `1–${Number(today.slice(8))} ${parseLocalIsoDate(today).toLocaleDateString(undefined, { month: 'short' })}`;
 
   return (
     <Glass radius={24} style={styles.card}>
       <View style={styles.head}>
         <View
+          style={{ flex: 1, minWidth: 0 }}
           accessible
           accessibilityLabel={`Spending ${range === 'week' ? 'in the last 7 days' : 'this month'}, ${formatMoney(total)}`}
         >
           <Text style={styles.title}>Spending</Text>
           <Text style={styles.total}>
-            {formatMoney(total)} {range === 'week' ? 'in 7 days' : 'this month'}
+            {formatMoney(total)} {range === 'week' ? 'in 7 days' : 'this month'} · {rangeDates}
           </Text>
         </View>
         <View style={styles.switch} accessibilityRole="tablist">
@@ -103,9 +121,10 @@ export function SpendBars({
               onPress={() => {
                 if (r === range) return;
                 haptics.tap();
+                setSwitched(true);
                 setRange(r);
               }}
-              hitSlop={4}
+              hitSlop={{ top: 9, bottom: 9, left: 0, right: 0 }}
               style={[styles.seg, r === range && styles.segOn]}
               accessibilityRole="tab"
               accessibilityState={{ selected: r === range }}
@@ -119,7 +138,24 @@ export function SpendBars({
       </View>
       <View style={styles.bars}>
         {bars.map((b, i) => (
-          <Bar key={`${range}:${b.key}`} bar={b} maxMinor={maxMinor} ink={ink} tint={tint} delay={i * 35} />
+          <Bar
+            key={`${range}:${b.key}`}
+            bar={b}
+            maxMinor={maxMinor}
+            ink={ink}
+            tint={tint}
+            delay={i * 20}
+            animateEntry={!switched}
+            dateLabel={
+              range === 'week'
+                ? parseLocalIsoDate(b.key).toLocaleDateString(undefined, {
+                    weekday: 'long',
+                    day: 'numeric',
+                    month: 'long',
+                  })
+                : `Week ${i + 1} of ${parseLocalIsoDate(today).toLocaleDateString(undefined, { month: 'long' })}`
+            }
+          />
         ))}
       </View>
     </Glass>
@@ -132,6 +168,7 @@ const styles = StyleSheet.create({
   title: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textSecondary },
   total: { fontFamily: theme.font.body, fontSize: 12.5, color: theme.colors.textMuted, marginTop: 2 },
   switch: {
+    flexShrink: 0,
     flexDirection: 'row',
     gap: 2,
     padding: 3,

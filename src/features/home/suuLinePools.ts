@@ -80,50 +80,16 @@ export const SPEND_UP_TEMPLATES: readonly string[] = [
 
 /** Savings rate is healthy (≥20%) and spending did not also rise. */
 export const GOOD_SAVINGS_TEMPLATES: readonly string[] = [
-  'You kept {pct} of your income this month — lovely pace.',
-  '{pct} of what came in stayed put this month. Lovely pace.',
-  '{pct} of your income stayed with you this month — that adds up fast.',
-  'You held onto {pct} of your income this month. Nicely done.',
-  "{pct} kept this month — that's a rate worth keeping up.",
-  'This month you kept {pct} of your income. Solid work.',
-  'A tidy {pct} kept aside this month — steady progress.',
-  "You're keeping {pct} of what comes in this month. Great habit.",
-  '{pct} kept this month — every bit like that compounds.',
-  'This month you held onto {pct} of your income. That pace pays off.',
-  'You tucked away {pct} of your income this month. Well kept.',
-  "{pct} of this month's income is still yours — good pace.",
-  'A strong month: {pct} kept and spending steady.',
-  'You kept {pct} back this month — a rate worth being proud of.',
-  'This month you kept {pct} of what came in. Keep that up.',
-  '{pct} kept this month, quietly. That is how it adds up.',
-  'You held on to {pct} of your income this month — lovely rhythm.',
-  'You kept {pct} of your income this month. Nicely paced.',
-  '{pct} kept this month — a genuinely healthy rate.',
-  'A calm month: {pct} of your income kept. Good, steady work.',
+  '{pct} of your income is unspent this month.',
+  'Income left after spending: {pct} this month.',
+  'This month, {pct} of income is unspent.',
 ];
 
-/** A thin but positive month — some savings, spending flat or down. */
+/** Income covers spending with less than 20% unspent, including a zero margin. */
 export const THIN_SAVINGS_LINES: readonly string[] = [
-  'A little put aside this month. Every bit counts.',
-  'Not much saved this month, but something is. That still counts.',
-  'A modest amount kept back this month — small steps add up.',
-  'This month saved a little. Small, but real progress.',
-  "It's a thin margin this month, but a positive one.",
-  'A quiet, small saving this month — still moving the right way.',
-  'This month kept a little aside. Slow and steady still works.',
-  'Not a big month for saving, but a real one.',
-  'A small cushion built this month. It adds up over time.',
-  'This month is light on savings, but still in the black.',
-  'A little extra tucked away this month. Worth noticing.',
-  'This month saved modestly — still a step in the right direction.',
-  'A thin but positive month. That still beats the alternative.',
-  'Small savings this month, but savings all the same.',
-  'This month kept just a bit back — every bit matters.',
-  'Not much room this month, but something got saved.',
-  'A gentle, small saving this month. Steady wins this race.',
-  'This month put a little by. Small wins still count.',
-  'A modest month for saving — still worth a nod.',
-  'A little was saved this month, and that is never nothing.',
+  "Spending is within this month's income.",
+  "Income covers this month's spending.",
+  "This month's spending stays within income.",
 ];
 
 /**
@@ -131,21 +97,13 @@ export const THIN_SAVINGS_LINES: readonly string[] = [
  * figure would reveal what went to savings, so these never mention saving.
  */
 export const PRIVATE_HEALTHY_LINES: readonly string[] = [
-  'Most of what came in this month is still unspent.',
-  'Spending is well within what came in this month.',
-  'A calm month so far — plenty of room left.',
-  'Income is comfortably ahead of spending this month.',
-  'Lots of breathing room this month. Nicely done.',
-  'Spending is steady and there is room to spare.',
-  'A comfortable month so far — nicely steady.',
-  'You are well inside your means this month.',
+  'Spending is below income this month.',
+  "Income exceeds this month's spending.",
+  "This month's income is ahead of spending.",
 ];
 
 export const PRIVATE_THIN_LINES: readonly string[] = [
-  'Spending is inside what came in this month.',
-  'Still in the black this month.',
-  'A narrower month, but comfortably positive.',
-  'Income is ahead of spending this month.',
-  'Steady so far — a little room left.',
-  'Not much slack this month, but you are in the clear.',
+  "Spending is within this month's income.",
+  "Income covers this month's spending.",
+  "This month's spending stays within income.",
 ];

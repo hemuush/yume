@@ -79,7 +79,7 @@ export function HomeAccounts({
           <>
             <Amount minor={inHandMinor} currency={currency} style={styles.big} numberOfLines={1} />
             <Text style={styles.sub} numberOfLines={1}>
-              In bank, cash and wallets
+              Bank, cash & wallets only
             </Text>
           </>
         )}

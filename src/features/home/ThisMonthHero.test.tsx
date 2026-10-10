@@ -4,6 +4,7 @@
  */
 import { Text } from 'react-native';
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
+jest.mock('@expo/vector-icons/Feather', () => () => null);
 
 jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMock').createReanimatedMock());
 jest.mock('@/lib/useReduceMotion', () => ({ useReduceMotion: () => true }));
@@ -74,7 +75,7 @@ describe('month card', () => {
       expect.arrayContaining([
         'Free to use',
         '₹794',
-        'left of ₹1,96,056 income',
+        'Income ₹1,96,056, less spending and savings',
         '49% spent',
         '₹2,045 of ₹5,000 today',
         'Expense',
@@ -130,7 +131,12 @@ describe('month card with bills still to pay', () => {
   it('takes the bills off the headline and shows them as a chip', () => {
     const all = texts(render(base));
     expect(all).toEqual(
-      expect.arrayContaining(['Free after bills', '₹40,000', 'of ₹1,00,000 income', '₹20,000 still to pay'])
+      expect.arrayContaining([
+        'Free after bills',
+        '₹40,000',
+        'Income ₹1,00,000, less spending, savings and bills',
+        '₹20,000 still to pay',
+      ])
     );
     expect(all).not.toContain('Free to use');
   });
@@ -162,7 +168,9 @@ describe('month card with bills still to pay', () => {
 
   it('is the plain Free to use card when nothing is due', () => {
     const all = texts(render({ ...base, dueMinor: 0 }));
-    expect(all).toEqual(expect.arrayContaining(['Free to use', '₹60,000', 'left of ₹1,00,000 income']));
+    expect(all).toEqual(
+      expect.arrayContaining(['Free to use', '₹60,000', 'Income ₹1,00,000, less spending and savings'])
+    );
     expect(all.some((t) => t.includes('still to pay'))).toBe(false);
   });
 
@@ -244,7 +252,7 @@ describe('month card with money carried over from earlier months', () => {
   it('says what carried over beside the income, without double counting it', () => {
     const all = texts(render(base));
     expect(all).toEqual(expect.arrayContaining(['Free to use', '₹80,000']));
-    expect(all.join(' ')).toContain('of ₹1,00,000 income + ₹20,000 carried over');
+    expect(all.join(' ')).toContain('Income ₹1,00,000 + ₹20,000 carried over');
   });
 
   it('shows the carried amount as its own line in the sum', () => {

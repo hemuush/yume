@@ -8,7 +8,12 @@ import {
   StyleSheet,
 } from 'react-native';
 import { Text } from '@/components/Text';
-import ReanimatedAnimated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
+import ReanimatedAnimated, {
+  cancelAnimation,
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+} from 'react-native-reanimated';
 import { useReduceMotion } from '@/lib/useReduceMotion';
 import { MOTION, timing } from '@/lib/animation';
 import { theme } from '@/constants/theme';
@@ -35,25 +40,32 @@ export interface SwipePage {
  * omitted. Height tracks the active page, not the tallest; a single page falls back to a plain Section.
  */
 export function HomeSwipeCard({ pages }: { pages: SwipePage[] }) {
-  const [activeIndex, setActiveIndex] = useState(0);
+  const [selectedKey, setSelectedKey] = useState<string | undefined>(pages[0]?.key);
+  const [settledKey, setSettledKey] = useState<string | undefined>(pages[0]?.key);
+  const [moving, setMoving] = useState(false);
+  const activeIndex = Math.max(
+    0,
+    pages.findIndex((p) => p.key === selectedKey)
+  );
   const [cardWidth, setCardWidth] = useState(0);
   const scrollRef = useRef<ScrollView>(null);
   // Target page of a tapped tab: scroll events en route are ignored, else the first (still on the old page)
   // flips the tab back and the highlight blinks old → new → old → new.
-  const tapTarget = useRef<number | null>(null);
+  const tapTarget = useRef<string | null>(null);
   const reduce = useReduceMotion();
   // Each page's natural height, by key — measured, since page content
   // (how many budgets, whether "+N more" shows) changes with the data.
   const [pageHeights, setPageHeights] = useState<Record<string, number>>({});
   const height = useSharedValue(0);
-  const activeKey = pages[Math.min(activeIndex, Math.max(0, pages.length - 1))]?.key;
-  const targetHeight = activeKey ? (pageHeights[activeKey] ?? 0) : 0;
+  const heightKey = pages.some((p) => p.key === settledKey) ? settledKey : pages[0]?.key;
+  const targetHeight = heightKey ? (pageHeights[heightKey] ?? 0) : 0;
   useEffect(() => {
-    if (targetHeight <= 0) return;
+    if (targetHeight <= 0 || moving) return;
     // The first measurement lands instantly — nothing to animate from yet.
     height.value =
       reduce || height.value === 0 ? targetHeight : withTiming(targetHeight, timing(MOTION.standard));
-  }, [targetHeight, reduce, height]);
+    return () => cancelAnimation(height);
+  }, [targetHeight, reduce, moving, height]);
   const heightStyle = useAnimatedStyle(() => (height.value > 0 ? { height: height.value } : {}));
   // The tab highlight slides to the active tab.
   const [trackWidth, setTrackWidth] = useState(0);
@@ -64,15 +76,21 @@ export function HomeSwipeCard({ pages }: { pages: SwipePage[] }) {
   useEffect(() => {
     const x = shownIndex * tabWidth;
     tabX.value = reduce || tabWidth === 0 ? x : withTiming(x, timing(MOTION.standard));
+    return () => cancelAnimation(tabX);
   }, [shownIndex, tabWidth, reduce, tabX]);
   const highlightStyle = useAnimatedStyle(() => ({ transform: [{ translateX: tabX.value }] }));
   // The card can be re-measured (split-screen, font scale, rotation): keep the strip on the active page
   // rather than leaving it between two at the old offset.
+  const pageKeys = pages.map((p) => p.key).join('\u0000');
   useEffect(() => {
+    tapTarget.current = null;
+    setMoving(false);
+    setSelectedKey(pages[shownIndex]?.key);
+    setSettledKey(pages[shownIndex]?.key);
     if (cardWidth > 0) scrollRef.current?.scrollTo({ x: shownIndex * cardWidth, animated: false });
-    // Only a width change should re-snap; a tab tap scrolls on its own.
+    // Reconcile structure/width changes without interrupting an ordinary tab tap.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cardWidth]);
+  }, [cardWidth, pageKeys, reduce]);
 
   if (pages.length === 0) return null;
 
@@ -87,26 +105,32 @@ export function HomeSwipeCard({ pages }: { pages: SwipePage[] }) {
 
   const goToPage = (index: number) => {
     if (index !== activeIndex) haptics.tap();
-    setActiveIndex(index);
-    tapTarget.current = index;
-    scrollRef.current?.scrollTo({ x: index * cardWidth, animated: true });
+    const key = pages[index].key;
+    setSelectedKey(key);
+    setMoving(!reduce && cardWidth > 0);
+    tapTarget.current = reduce || cardWidth <= 0 ? null : key;
+    if (reduce || cardWidth <= 0) setSettledKey(key);
+    scrollRef.current?.scrollTo({ x: index * cardWidth, animated: !reduce });
   };
 
-  // Active page flips at the halfway point of a swipe so the tab and card height follow the finger.
-  const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+  // Keep the outgoing height until paging settles; changing it halfway through a drag clips content.
+  const settlePage = (e: NativeSyntheticEvent<NativeScrollEvent>, final: boolean) => {
     if (cardWidth <= 0) return;
     const index = Math.max(
       0,
       Math.min(pages.length - 1, Math.round(e.nativeEvent.contentOffset.x / cardWidth))
     );
-    if (tapTarget.current != null) {
-      if (index === tapTarget.current) tapTarget.current = null;
-      return;
-    }
+    const key = pages[index]?.key;
+    if (!key || (!final && Math.abs(e.nativeEvent.contentOffset.x - index * cardWidth) > 1)) return;
+    if (tapTarget.current != null && key !== tapTarget.current) return;
+    if (!final && tapTarget.current == null) return;
+    tapTarget.current = null;
+    setMoving(false);
     if (index !== activeIndex) {
       haptics.tap();
-      setActiveIndex(index);
+      setSelectedKey(key);
     }
+    setSettledKey(key);
   };
 
   // `activeIndex` outlives renders; if `pages` shrinks (e.g. last goal completed) it can point past the end,
@@ -150,6 +174,7 @@ export function HomeSwipeCard({ pages }: { pages: SwipePage[] }) {
           ))}
         </View>
         <ReanimatedAnimated.View
+          testID="home-swipe-pages"
           style={heightStyle}
           onLayout={(e) => {
             const w = e.nativeEvent.layout.width;
@@ -162,13 +187,21 @@ export function HomeSwipeCard({ pages }: { pages: SwipePage[] }) {
               horizontal
               pagingEnabled
               showsHorizontalScrollIndicator={false}
-              onScroll={onScroll}
+              onScroll={(e) => settlePage(e, false)}
               // A finger on the strip takes over from a tapped tab's scroll.
               onScrollBeginDrag={() => {
                 tapTarget.current = null;
+                setMoving(true);
               }}
-              onMomentumScrollEnd={() => {
-                tapTarget.current = null;
+              onMomentumScrollEnd={(e) => settlePage(e, true)}
+              onScrollEndDrag={(e) => {
+                if (
+                  Math.abs(
+                    e.nativeEvent.contentOffset.x / cardWidth -
+                      Math.round(e.nativeEvent.contentOffset.x / cardWidth)
+                  ) < 0.003
+                )
+                  settlePage(e, true);
               }}
               scrollEventThrottle={16}
               contentContainerStyle={styles.pagesRow}
@@ -182,6 +215,7 @@ export function HomeSwipeCard({ pages }: { pages: SwipePage[] }) {
                   importantForAccessibility={i === safeIndex ? 'auto' : 'no-hide-descendants'}
                 >
                   <View
+                    testID={`home-page-${p.key}`}
                     onLayout={(e) => {
                       const h = Math.round(e.nativeEvent.layout.height);
                       setPageHeights((prev) => (prev[p.key] === h ? prev : { ...prev, [p.key]: h }));
