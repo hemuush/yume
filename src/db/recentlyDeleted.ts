@@ -10,6 +10,7 @@ import type { TransactionRow } from './rows';
 /** How long a deleted entry is kept before it's gone for good. */
 export const KEEP_DAYS = 30;
 const DAY_MS = 24 * 60 * 60 * 1000;
+const retentionCutoff = (now: Date) => new Date(now.getTime() - KEEP_DAYS * DAY_MS).toISOString();
 
 /** Keeps a just-deleted entry. Runs on the handle it's given, so it can join the delete's own transaction. */
 export async function keepDeletedEntry(
@@ -62,7 +63,8 @@ export function daysLeftOf(deletedAt: string, now: Date = new Date()): number {
 export async function listDeletedEntries(now: Date = new Date()): Promise<DeletedEntry[]> {
   const db = await getDb();
   const rows = await db.getAllAsync<{ id: string; snapshot: string; deleted_at: string }>(
-    'SELECT id, snapshot, deleted_at FROM deleted_entries ORDER BY deleted_at DESC'
+    'SELECT id, snapshot, deleted_at FROM deleted_entries WHERE deleted_at >= ? ORDER BY deleted_at DESC',
+    [retentionCutoff(now)]
   );
   const accountIds = new Set(
     (await db.getAllAsync<{ id: string }>('SELECT id FROM accounts')).map((r) => r.id)
@@ -105,49 +107,53 @@ export async function listDeletedEntries(now: Date = new Date()): Promise<Delete
 }
 
 /** How many entries are waiting — for the Settings row. */
-export async function countDeletedEntries(): Promise<number> {
+export async function countDeletedEntries(now: Date = new Date()): Promise<number> {
   const db = await getDb();
-  const row = await db.getFirstAsync<{ n: number }>('SELECT COUNT(*) as n FROM deleted_entries');
+  const row = await db.getFirstAsync<{ n: number }>(
+    'SELECT COUNT(*) as n FROM deleted_entries WHERE deleted_at >= ?',
+    [retentionCutoff(now)]
+  );
   return row?.n ?? 0;
 }
 
 /** Puts one back exactly as it was, and takes it off the list. */
-export async function restoreDeletedEntry(id: string): Promise<void> {
+export async function restoreDeletedEntry(id: string, now: Date = new Date()): Promise<void> {
   const db = await getDb();
-  const kept = await db.getFirstAsync<{ snapshot: string }>(
-    'SELECT snapshot FROM deleted_entries WHERE id = ?',
-    [id]
-  );
-  if (!kept) throw new Error('This entry is no longer in Recently deleted.');
-  let row: RowSnapshot['row'];
-  try {
-    const parsed = JSON.parse(kept.snapshot);
-    if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) throw new Error('not a row');
-    row = parsed as RowSnapshot['row'];
-  } catch {
-    throw new Error('This entry is damaged and can no longer be restored.');
-  }
-  // A part of a split payment comes back with the rest of its payment still waiting here: one part alone
-  // would be half a payment that can't be edited (a split needs at least two parts).
-  const together: { id: string; row: RowSnapshot['row'] }[] = [{ id, row }];
-  const splitId = row.split_id;
-  if (splitId) {
-    const others = await db.getAllAsync<{ id: string; snapshot: string }>(
-      'SELECT id, snapshot FROM deleted_entries WHERE id != ?',
-      [id]
+  await db.withTransactionAsync(async (tx) => {
+    const kept = await tx.getFirstAsync<{ snapshot: string }>(
+      'SELECT snapshot FROM deleted_entries WHERE id = ? AND deleted_at >= ?',
+      [id, retentionCutoff(now)]
     );
-    for (const o of others) {
-      try {
-        const parsed = JSON.parse(o.snapshot);
-        if (parsed && typeof parsed === 'object' && parsed.split_id === splitId) {
-          together.push({ id: o.id, row: parsed as RowSnapshot['row'] });
+    if (!kept) throw new Error('This entry is no longer in Recently deleted.');
+    let row: RowSnapshot['row'];
+    try {
+      const parsed = JSON.parse(kept.snapshot);
+      if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed))
+        throw new Error('not a row');
+      row = parsed as RowSnapshot['row'];
+    } catch {
+      throw new Error('This entry is damaged and can no longer be restored.');
+    }
+    // A part of a split payment comes back with the rest of its payment still waiting here: one part alone
+    // would be half a payment that can't be edited (a split needs at least two parts).
+    const together: { id: string; row: RowSnapshot['row'] }[] = [{ id, row }];
+    const splitId = row.split_id;
+    if (splitId) {
+      const others = await tx.getAllAsync<{ id: string; snapshot: string }>(
+        'SELECT id, snapshot FROM deleted_entries WHERE id != ? AND deleted_at >= ?',
+        [id, retentionCutoff(now)]
+      );
+      for (const o of others) {
+        try {
+          const parsed = JSON.parse(o.snapshot);
+          if (parsed && typeof parsed === 'object' && parsed.split_id === splitId) {
+            together.push({ id: o.id, row: parsed as RowSnapshot['row'] });
+          }
+        } catch {
+          // A damaged snapshot stays where it is; the 30-day purge clears it.
         }
-      } catch {
-        // A damaged snapshot stays where it is; the 30-day purge clears it.
       }
     }
-  }
-  await db.withTransactionAsync(async (tx) => {
     for (const entry of together) {
       const exists = await tx.getFirstAsync<{ id: string }>('SELECT id FROM transactions WHERE id = ?', [
         entry.id,
