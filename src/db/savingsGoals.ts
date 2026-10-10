@@ -134,7 +134,7 @@ export async function updateSavingsGoal(id: string, input: SavingsGoalInput): Pr
 }
 
 /**
- * Adds (negative removes, to correct a mistake) money toward a goal. Clamped at zero; may exceed the target on
+ * Adds (negative removes, to correct a mistake) money toward a goal. Cannot withdraw beyond the current balance; may exceed the target on
  * purpose (saving more than planned is valid; the UI caps the displayed percent).
  */
 export async function contributeToGoal(id: string, deltaMinor: number): Promise<void> {
@@ -142,19 +142,28 @@ export async function contributeToGoal(id: string, deltaMinor: number): Promise<
     throw new Error('Enter an amount to add or remove');
   }
   const db = await getDb();
-  const existing = await db.getFirstAsync<{
-    id: string;
-    track_account: number;
-    linked_account_id: string | null;
-  }>('SELECT id, track_account, linked_account_id FROM savings_goals WHERE id = ?', [id]);
-  if (!existing) throw new Error('This goal no longer exists');
-  if (existing.track_account && existing.linked_account_id) {
-    throw new Error("This goal follows its account's balance — move money into the account instead.");
-  }
-  await db.runAsync(
-    'UPDATE savings_goals SET current_amount_minor = MAX(0, current_amount_minor + ?) WHERE id = ?',
-    [deltaMinor, id]
-  );
+  await db.withTransactionAsync(async (tx) => {
+    const existing = await tx.getFirstAsync<{
+      id: string;
+      track_account: number;
+      linked_account_id: string | null;
+      current_amount_minor: number;
+    }>('SELECT id, track_account, linked_account_id, current_amount_minor FROM savings_goals WHERE id = ?', [
+      id,
+    ]);
+    if (!existing) throw new Error('This goal no longer exists');
+    if (existing.track_account && existing.linked_account_id) {
+      throw new Error("This goal follows its account's balance — move money into the account instead.");
+    }
+    const next = existing.current_amount_minor + deltaMinor;
+    if (next < 0)
+      throw new Error('The saved balance has changed. Withdraw no more than what is currently saved.');
+    if (!Number.isSafeInteger(next)) throw new Error('The saved amount is too large to record accurately.');
+    await tx.runAsync(
+      'UPDATE savings_goals SET current_amount_minor = current_amount_minor + ? WHERE id = ?',
+      [deltaMinor, id]
+    );
+  });
 }
 
 /**

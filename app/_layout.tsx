@@ -177,7 +177,7 @@ export default function RootLayout() {
   return (
     <KeyboardProvider>
       <SafeAreaProvider>
-        <AppLockProvider>
+        <AppLockProvider initialLockEnabled={initialLocked}>
           <AccentProvider>
             <PrivacyProvider>
               <AppGate needsOnboarding={needsOnboarding} initialLocked={initialLocked} />

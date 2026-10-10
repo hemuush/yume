@@ -85,7 +85,7 @@ export function ContributeModal({
       setError('Enter a valid amount');
       return;
     }
-    // The database would quietly clamp an over-withdrawal to zero; say so instead of recording less than asked.
+    // Reject an over-withdrawal before writing; the database also checks the live balance atomically.
     if (direction === 'withdraw' && amountMinor > goal.currentAmountMinor) {
       setError(`You can withdraw up to ${formatMoney(goal.currentAmountMinor)} — that's what's saved so far`);
       return;

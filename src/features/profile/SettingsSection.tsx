@@ -211,24 +211,28 @@ export function SettingsSection() {
   };
 
   const onToggleLock = async (enabled: boolean) => {
-    if (enabled) {
-      const secured = await isDeviceSecured();
-      if (!secured) {
-        showAlert(
-          'No screen lock found',
-          "Set up a fingerprint, face unlock, or PIN/pattern in your phone's own settings first — Yume locks using whatever your phone is already secured with."
-        );
-        return;
+    try {
+      if (enabled) {
+        const secured = await isDeviceSecured();
+        if (!secured) {
+          showAlert(
+            'No screen lock found',
+            "Set up a fingerprint, face unlock, or PIN/pattern in your phone's own settings first — Yume locks using whatever your phone is already secured with."
+          );
+          return;
+        }
+      } else {
+        // Turning the lock off takes the phone's own unlock, so whoever holds an open phone can't just switch it off.
+        try {
+          if (!(await authenticate())) return;
+        } catch {
+          return;
+        }
       }
-    } else {
-      // Turning the lock off takes the phone's own unlock, so whoever holds an open phone can't just switch it off.
-      try {
-        if (!(await authenticate())) return;
-      } catch {
-        return;
-      }
+      setLockEnabled(enabled);
+    } catch (e) {
+      showAlert("Couldn't check the device lock", errorMessage(e));
     }
-    setLockEnabled(enabled);
   };
 
   const alertsOn = notifPrefs ? ALERT_KEYS.filter((k) => notifPrefs[k]).length : null;

@@ -66,6 +66,7 @@ export function LockScreen({ onUnlocked }: { onUnlocked: () => void }) {
   // hatch for when the phone itself no longer has any lock method at all.
   const [deviceUnsecured, setDeviceUnsecured] = useState(false);
   const mounted = useRef(true);
+  const running = useRef(false);
   useEffect(
     () => () => {
       mounted.current = false;
@@ -74,6 +75,8 @@ export function LockScreen({ onUnlocked }: { onUnlocked: () => void }) {
   );
 
   const tryUnlock = async () => {
+    if (running.current) return;
+    running.current = true;
     setBusy(true);
     setFailed(false);
     try {
@@ -86,13 +89,14 @@ export function LockScreen({ onUnlocked }: { onUnlocked: () => void }) {
         setDeviceUnsecured(!secured);
       }
     } catch {
-      // The prompt itself failed. If the phone can't say it's secured either, offer the way out, so a broken
-      // prompt can never trap the user.
+      // Only an explicit absence of device security permits the recovery action.
+      // A native API failure is unknown, not evidence that authentication can be bypassed.
       if (!mounted.current) return;
       setFailed(true);
-      const secured = await isDeviceSecured().catch(() => false);
-      if (mounted.current) setDeviceUnsecured(!secured);
+      const secured = await isDeviceSecured().catch(() => null);
+      if (mounted.current) setDeviceUnsecured(secured === false);
     } finally {
+      running.current = false;
       if (mounted.current) setBusy(false);
     }
   };

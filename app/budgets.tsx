@@ -1,6 +1,7 @@
 import { ScreenLoadError } from '@/components/ScreenLoadError';
 import { PrimaryButton } from '@/components/PrimaryButton';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { continueBudgets } from '@/features/budgets/continueBudgets';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { router, useLocalSearchParams } from 'expo-router';
 import { View } from 'react-native';
 import { MovingRow } from '@/components/MovingRow';
@@ -69,6 +70,7 @@ export default function BudgetsScreen() {
   // Guards a double-tap firing deleteBudget twice for a row before the ActionSheet closes (same as
   // Categories' manage sheet).
   const [deleteBusy, setDeleteBusy] = useState(false);
+  const continuing = useRef(false);
 
   const periodMonth = periodMonthOf();
 
@@ -103,6 +105,8 @@ export default function BudgetsScreen() {
   const budgetedIds = useMemo(() => new Set(budgets.map((b) => b.budget.categoryId)), [budgets]);
 
   const onContinue = async (item: LapsedBudget) => {
+    if (continuing.current) return;
+    continuing.current = true;
     setContinuingId(item.categoryId);
     try {
       await createBudget({
@@ -117,29 +121,22 @@ export default function BudgetsScreen() {
       // The category stays in the list to try again; say why this attempt didn't take.
       showAlert("Couldn't continue budget", errorMessage(e));
     } finally {
+      continuing.current = false;
       setContinuingId(null);
     }
   };
 
   const onContinueAll = async () => {
+    if (continuing.current) return;
+    continuing.current = true;
     setContinuingAll(true);
     try {
-      // Each in its own try: one that can't be created doesn't stop the rest.
-      for (const item of lapsed) {
-        try {
-          await createBudget({
-            categoryId: item.categoryId,
-            limitAmountMinor: item.limitAmountMinor,
-            rollover: item.rollover,
-            periodMonth,
-          });
-        } catch {
-          // It stays in the list to try again.
-        }
-      }
+      const failures = await continueBudgets(lapsed, periodMonth);
       haptics.tap();
       await load();
+      if (failures.length) showAlert("Some budgets couldn't continue", failures.join('\n'));
     } finally {
+      continuing.current = false;
       setContinuingAll(false);
     }
   };

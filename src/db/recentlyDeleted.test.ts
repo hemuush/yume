@@ -58,6 +58,15 @@ async function lunch() {
 }
 
 describe('Recently deleted', () => {
+  it('expires entries while the app stays running, without requiring a startup purge', async () => {
+    const transaction = await lunch();
+    await deleteTransaction(transaction.id);
+    const later = new Date(Date.now() + (KEEP_DAYS + 1) * 86_400_000);
+    expect(await listDeletedEntries(later)).toEqual([]);
+    expect(await countDeletedEntries(later)).toBe(0);
+    await expect(restoreDeletedEntry(transaction.id, later)).rejects.toThrow('no longer');
+    expect(await listTransactions()).toHaveLength(0);
+  });
   it('keeps a deleted entry, and restores it exactly as it was', async () => {
     const tx = await lunch();
     await deleteTransaction(tx.id);

@@ -388,7 +388,9 @@ describe('a user journey, checked on every screen’s numbers after each step', 
       linkedAccountId: null,
     });
     await contributeToGoal(g.id, 4000);
-    await contributeToGoal(g.id, -9000);
+    await expect(contributeToGoal(g.id, -9000)).rejects.toThrow('currently saved');
+    expect((await listSavingsGoals()).find((x) => x.id === g.id)!.currentAmountMinor).toBe(4000);
+    await contributeToGoal(g.id, -4000);
     let goal = (await listSavingsGoals()).find((x) => x.id === g.id)!;
     expect(goal.currentAmountMinor).toBe(0);
     await contributeToGoal(g.id, 25000);
