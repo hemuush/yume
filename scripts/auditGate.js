@@ -6,7 +6,7 @@ const ALLOWED = {
   'GHSA-86w9-cpqp-85rv':
     'node-forge <=1.4.0 (latest release). Reached only through @expo/cli build tooling, never bundled into the app, and no patched version exists yet.',
   'GHSA-vfj7-8cjw-p6xm':
-    'braces <=3.0.3 (latest release). Reached only through jest and micromatch glob matching in test tooling, never bundled into the app, and no patched version exists yet.',
+    'braces <=3.0.3 (latest release). Reached through Jest and Metro micromatch glob matching in test/build tooling, never bundled into the app, and no patched version exists yet.',
 };
 
 function advisoriesOf(report) {
