@@ -47,6 +47,32 @@ function chart(inProgress: boolean) {
 }
 
 describe('TrendChart sentence', () => {
+  it('reads the selected monthly amount rather than a whole-year total and disables missing slots', () => {
+    let r!: ReactTestRenderer;
+    act(() => {
+      r = create(
+        <TrendChart
+          periodName="2026"
+          spentMinor={99999999}
+          trend={[
+            { label: 'Aug', month: '2026-08', totalMinor: 0, recorded: false },
+            { label: 'Sep', month: '2026-09', totalMinor: 10000, recorded: true },
+            { label: 'Oct', month: '2026-10', totalMinor: 25000, recorded: true },
+            { label: 'Nov', month: '2026-11', totalMinor: 0, recorded: false },
+          ]}
+          baseline={null}
+          netWorthTrend={[]}
+        />
+      );
+    });
+    mounted.push(r);
+    expect(texts(r).some((t) => t.startsWith('Oct: ₹250'))).toBe(true);
+    const missing = r.root.findAll(
+      (n) => typeof n.props.onPress === 'function' && n.props.accessibilityLabel === 'Select Aug'
+    )[0];
+    expect(missing.props.disabled).toBe(true);
+    expect(texts(r).join(' ')).not.toContain('999999');
+  });
   it('reads a finished month against the average', () => {
     expect(texts(chart(false))).toContain('October is ₹19899 below your average of ₹33683.');
   });

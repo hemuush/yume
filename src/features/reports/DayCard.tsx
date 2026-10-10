@@ -24,11 +24,15 @@ export function DayCard({
   txs,
   catById,
   onClose,
+  error,
+  onRetry,
 }: {
   iso: string;
   txs: Transaction[] | null;
   catById: Map<string, Category>;
   onClose: () => void;
+  error?: string | null;
+  onRetry?: () => void;
 }) {
   const title = parseLocalIsoDate(iso).toLocaleDateString(undefined, {
     weekday: 'short',
@@ -54,7 +58,15 @@ export function DayCard({
         </Pressable>
       </View>
 
-      {txs === null ? (
+      {error ? (
+        <View style={styles.dayEmpty}>
+          <Text style={styles.errTitle}>Couldn’t load this day</Text>
+          <Text style={styles.errDetail}>{error}</Text>
+          <Pressable onPress={onRetry} accessibilityRole="button" style={withPressed(styles.catLink)}>
+            <Text style={styles.catLinkText}>Retry day</Text>
+          </Pressable>
+        </View>
+      ) : txs === null ? (
         <ActivityIndicator color={theme.colors.ink} style={styles.daySpinner} />
       ) : txs.length === 0 ? (
         <View style={styles.dayEmpty}>
@@ -73,7 +85,7 @@ export function DayCard({
             <View key={tx.id} style={styles.dayRow}>
               <CategoryIcon name={cat?.icon ?? 'swap-horizontal'} color={cat?.color} />
               <View style={styles.dayMid}>
-                <Text style={styles.dayName} numberOfLines={1}>
+                <Text style={styles.dayName} numberOfLines={2}>
                   {primary}
                 </Text>
                 {sub ? (

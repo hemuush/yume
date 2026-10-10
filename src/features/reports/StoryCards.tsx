@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import {
   View,
   ScrollView,
@@ -17,6 +17,7 @@ import { styles } from './reports.styles';
 import { withPressed } from '@/lib/pressed';
 import { shade } from '@/lib/color';
 import { softTint } from '@/components/softTint';
+import { useReduceMotion } from '@/lib/useReduceMotion';
 
 // Sky and mint are washes of the picked theme's two colours; each card shows its tone as a frosted wash.
 const toneBg = (accent: string, secondary: string): Record<StoryTone, string> => ({
@@ -47,6 +48,15 @@ export function StoryCards({
   const { accent, secondary } = useAccent();
   const [rowWidth, setRowWidth] = useState(0);
   const [active, setActive] = useState(0);
+  const scroll = useRef<ScrollView>(null);
+  const reduceMotion = useReduceMotion();
+  const move = (next: number) => {
+    setActive(next);
+    scroll.current?.scrollTo({
+      x: next * (Math.round(rowWidth * CARD_SHARE) + CARD_GAP),
+      animated: !reduceMotion,
+    });
+  };
   if (cards.length === 0) return null;
   const cardWidth = Math.round(rowWidth * CARD_SHARE);
   const tones = toneBg(accent, secondary);
@@ -71,6 +81,7 @@ export function StoryCards({
       <View onLayout={(e) => setRowWidth(e.nativeEvent.layout.width)}>
         {rowWidth > 0 && (
           <ScrollView
+            ref={scroll}
             horizontal
             showsHorizontalScrollIndicator={false}
             snapToInterval={cardWidth + CARD_GAP}
@@ -108,17 +119,13 @@ export function StoryCards({
                       <View style={styles.storyMoonRow}>
                         <MoonPhase size={64} litFraction={c.moonFraction} accent={accent} />
                         <View style={styles.storyMoonText}>
-                          <Text style={styles.storyBig} numberOfLines={1} adjustsFontSizeToFit>
-                            {c.big}
-                          </Text>
+                          <Text style={styles.storyBig}>{c.big}</Text>
                           <Text style={styles.storyDetail}>{c.detail}</Text>
                         </View>
                       </View>
                     ) : (
                       <View>
-                        <Text style={styles.storyBig} numberOfLines={2} adjustsFontSizeToFit>
-                          {c.big}
-                        </Text>
+                        <Text style={styles.storyBig}>{c.big}</Text>
                         <Text style={styles.storyDetail}>{c.detail}</Text>
                       </View>
                     )}
@@ -133,9 +140,41 @@ export function StoryCards({
       </View>
       {cards.length > 1 && (
         <View style={styles.storyDots}>
+          <Pressable
+            onPress={() => move(active - 1)}
+            disabled={active === 0}
+            accessibilityRole="button"
+            accessibilityLabel="Previous insight"
+            accessibilityState={{ disabled: active === 0 }}
+            style={withPressed({
+              minWidth: 44,
+              minHeight: 44,
+              alignItems: 'center',
+              justifyContent: 'center',
+              opacity: active === 0 ? 0.35 : 1,
+            })}
+          >
+            <Text>‹</Text>
+          </Pressable>
           {cards.map((c, i) => (
             <View key={c.key} style={[styles.storyDot, i === active && styles.storyDotOn]} />
           ))}
+          <Pressable
+            onPress={() => move(active + 1)}
+            disabled={active === cards.length - 1}
+            accessibilityRole="button"
+            accessibilityLabel="Next insight"
+            accessibilityState={{ disabled: active === cards.length - 1 }}
+            style={withPressed({
+              minWidth: 44,
+              minHeight: 44,
+              alignItems: 'center',
+              justifyContent: 'center',
+              opacity: active === cards.length - 1 ? 0.35 : 1,
+            })}
+          >
+            <Text>›</Text>
+          </Pressable>
         </View>
       )}
     </View>

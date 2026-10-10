@@ -117,10 +117,10 @@ function TrackRow({
     >
       <CategoryIcon name={cat?.icon ?? 'shape-outline'} color={cat?.color ?? r.color} />
       <View style={styles.trackMid}>
-        <Text style={styles.trackName} numberOfLines={1}>
+        <Text style={styles.trackName} numberOfLines={2}>
           {r.name}
         </Text>
-        <Text style={styles.trackSub} numberOfLines={1}>
+        <Text style={styles.trackSub}>
           {now}
           {inProgress ? ' so far' : ''} · usual {usual}
         </Text>
@@ -197,6 +197,11 @@ export function CategoryTracks({
         )}
       </View>
       <Text style={styles.tracksNote}>The dashed line in each is that category's usual month.</Text>
+      {inProgress && (
+        <Text style={styles.tracksNote}>
+          This month so far is compared with full earlier recorded months.
+        </Text>
+      )}
     </View>
   );
 }

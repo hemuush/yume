@@ -70,7 +70,7 @@ export function BiggestSpends({
             >
               <CategoryIcon name={cat?.icon ?? 'swap-horizontal'} color={cat?.color} />
               <View style={styles.dayMid}>
-                <Text style={styles.dayName} numberOfLines={1}>
+                <Text style={styles.dayName} numberOfLines={2}>
                   {note ?? catName}
                 </Text>
                 <Text style={styles.daySub} numberOfLines={1}>
