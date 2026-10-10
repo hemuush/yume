@@ -18,7 +18,7 @@ import { MovingRow } from '@/components/MovingRow';
 import { styles } from './add.styles';
 import { TYPE_WASH, typeWash, EntryType, Staged, dateChipLabel } from './addEntry';
 import { withPressed } from '@/lib/pressed';
-import { categorySentence, categorySpoken, inParent } from '@/lib/categoryLabel';
+import { categorySpoken, inParent } from '@/lib/categoryLabel';
 import { useAccent } from '@/theme/AccentContext';
 
 /**
@@ -39,6 +39,9 @@ export function AmountCard({
   padVisible,
   isLinked,
   onOpenPad,
+  onTogglePad,
+  selectionSummary,
+  amountIssue,
   frequentAmounts,
   amountMinor,
   onPickAmount,
@@ -55,6 +58,9 @@ export function AmountCard({
   padVisible: boolean;
   isLinked: boolean;
   onOpenPad: () => void;
+  onTogglePad?: () => void;
+  selectionSummary?: string;
+  amountIssue?: string;
   frequentAmounts: number[];
   amountMinor: number;
   onPickAmount: (minor: number) => void;
@@ -74,6 +80,21 @@ export function AmountCard({
               ? 'Amount'
               : `${type[0].toUpperCase()}${type.slice(1)} amount`}
         </Text>
+        {onTogglePad && !isLinked && (
+          <Pressable
+            onPress={onTogglePad}
+            style={withPressed(styles.padToggle)}
+            accessibilityRole="button"
+            accessibilityLabel={padVisible ? 'Hide number pad' : 'Show number pad'}
+          >
+            <Text style={styles.padToggleText}>{padVisible ? 'Hide pad' : 'Show pad'}</Text>
+            <Feather
+              name={padVisible ? 'chevron-down' : 'chevron-up'}
+              size={13}
+              color={theme.colors.textMuted}
+            />
+          </Pressable>
+        )}
       </View>
       <Pressable
         onPress={onOpenPad}
@@ -94,6 +115,12 @@ export function AmountCard({
         {padVisible && <View style={[styles.caret, { backgroundColor: wash.accent }]} />}
       </Pressable>
       {isSum && <Text style={styles.expression}>{expr.replace(/([+−×÷])/g, ' $1 ')}</Text>}
+      {amountIssue && (
+        <Text style={styles.hint} accessibilityLiveRegion="polite">
+          {amountIssue}
+        </Text>
+      )}
+      {selectionSummary && <Text style={styles.selectionSummary}>{selectionSummary}</Text>}
 
       {frequentAmounts.length > 0 && (
         <View style={styles.frequentRow}>
@@ -335,10 +362,19 @@ export function UsualChips({
               accessibilityLabel={`${categorySpoken(u.categoryName, u.parentName)}, ${usualMoney(u)}, logged ${u.timesLogged} times`}
             >
               <CategoryIcon name={u.categoryIcon} color={u.categoryColor} size={11} square={20} />
-              <Text style={styles.recentChipText} numberOfLines={1}>
-                {categorySentence(u.categoryName, u.parentName)} ·
-              </Text>
-              <Text style={styles.recentChipAmount}>{usualMoney(u)}</Text>
+              <View style={styles.recentChipMid}>
+                <Text style={styles.recentChipText} numberOfLines={2}>
+                  {u.categoryName}
+                </Text>
+                <View style={styles.recentChipSubRow}>
+                  {u.parentName && (
+                    <Text style={[styles.recentChipSub, { flex: 1 }]} numberOfLines={1}>
+                      {u.parentName}
+                    </Text>
+                  )}
+                  <Text style={styles.recentChipAmount}>{usualMoney(u)}</Text>
+                </View>
+              </View>
             </Pressable>
           );
         })}

@@ -87,6 +87,7 @@ export function saveButtonTitle({
   refund,
   repeatWarning,
   rowCount,
+  hasCurrent = false,
 }: {
   saving: boolean;
   editing: boolean;
@@ -94,12 +95,14 @@ export function saveButtonTitle({
   refund: boolean;
   repeatWarning: boolean;
   rowCount: number;
+  hasCurrent?: boolean;
 }): string {
   if (saving) return 'Saving…';
   if (editing) return 'Save changes';
   if (split) return 'Save split';
   if (refund && rowCount === 0) return 'Save refund';
   if (repeatWarning) return 'Save anyway';
-  if (rowCount > 0) return `Save ${rowCount} ${rowCount === 1 ? 'entry' : 'entries'}`;
+  const count = rowCount + (hasCurrent ? 1 : 0);
+  if (rowCount > 0) return `Save ${count} ${count === 1 ? 'entry' : 'entries'}`;
   return 'Save';
 }

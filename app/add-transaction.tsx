@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { View, Pressable } from 'react-native';
+import { View, Pressable, Keyboard } from 'react-native';
 import { Text } from '@/components/Text';
 import { KeyboardAwareScrollView, KeyboardStickyView } from 'react-native-keyboard-controller';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
@@ -142,6 +142,7 @@ export default function AddTransactionScreen() {
   // The parts are made on the split page (app/split.tsx) and come back here on Done.
   const [splitParts, setSplitParts] = useState<DraftPart[] | null>(null);
   const [saving, setSaving] = useState(false);
+  const [addingRow, setAddingRow] = useState(false);
   const [saveDone, setSaveDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchFocused, setSearchFocused] = useState(false);
@@ -222,7 +223,7 @@ export default function AddTransactionScreen() {
     let cancelled = false;
     getLastAccountForCategory(categoryId)
       .then((id) => {
-        if (cancelled || !id) return;
+        if (cancelled || accountPickedByHand.current || !id) return;
         if (accounts.some((a) => a.id === id && a.type !== 'savings')) setAccountId(id);
       })
       .catch(() => {});
@@ -487,15 +488,23 @@ export default function AddTransactionScreen() {
   };
 
   const addRow = async () => {
-    setError(null);
-    const res = formToStaged();
-    if ('error' in res) {
-      setError(res.error);
-      return;
+    if (saveInFlight.current || saving || saveDone) return;
+    saveInFlight.current = true;
+    setAddingRow(true);
+    try {
+      setError(null);
+      const res = formToStaged();
+      if ('error' in res) {
+        setError(res.error);
+        return;
+      }
+      if (await warnIfRepeat(res.row)) return;
+      setRows((prev) => [...prev, res.row]);
+      clearForm();
+    } finally {
+      saveInFlight.current = false;
+      setAddingRow(false);
     }
-    if (await warnIfRepeat(res.row)) return;
-    setRows((prev) => [...prev, res.row]);
-    clearForm();
   };
 
   const removeRow = (id: string) => setRows((prev) => prev.filter((r) => r.id !== id));
@@ -682,13 +691,33 @@ export default function AddTransactionScreen() {
     refund,
     repeatWarning: !!repeatWarning,
     rowCount: rows.length,
+    hasCurrent: expr !== '',
   });
   const sum = hasOperator(expr);
   const shownAmount = sum
     ? amountValue === null
-      ? '0'
+      ? '—'
       : formatTyped(String(amountValue))
-    : formatTyped(expr);
+    : expr !== '' && amountValue === null
+      ? '—'
+      : formatTyped(expr);
+  const invalidAmount = expr !== '' && amountMinor <= 0;
+  const roundingNote =
+    !untouchedEdit && amountValue !== null && amountValue !== amountMinor / 100
+      ? `Saved in whole units: ${formatMoney(amountMinor, currency)}`
+      : undefined;
+  const currentValidation = formToStaged();
+  const currentProblem = 'error' in currentValidation ? currentValidation.error : undefined;
+  const cannotSave = splitParts
+    ? !!splitProblem(amountMinor, splitParts) || !effectiveAccountId
+    : (expr !== '' || rows.length === 0) && !!currentProblem;
+  const category = categories.find((c) => c.id === categoryId);
+  const selectionSummary =
+    type === 'transfer'
+      ? `${effectiveAccount?.name ?? 'Choose account'} → ${accounts.find((a) => a.id === toAccountId)?.name ?? 'Choose destination'}`
+      : type === 'friend'
+        ? `${people.find((p) => p.id === personId)?.name ?? 'Choose a person'} · ${accounts.find((a) => a.id === friendAccountId)?.name ?? 'Balance only'}`
+        : `${splitParts ? `Split · ${splitParts.length} categories` : (category?.name ?? 'Choose a category')} · ${effectiveAccount?.name ?? 'Choose account'}`;
   // The pad steps aside whenever the phone keyboard is up (a note, a category search).
   const padVisible = padOpen && !noteEditing && !searchFocused && !isLinked;
 
@@ -702,19 +731,20 @@ export default function AddTransactionScreen() {
       icon="check"
       done={saveDone}
       onPress={() => void runSave(splitParts ? onSaveSplit : editing ? onSaveSingleEdit : onSaveAll)}
-      disabled={saving || isLinked}
+      disabled={saving || addingRow || saveDone || isLinked || cannotSave}
       style={styles.saveBtn}
     />
   );
   const addToListButton = !editing && !splitParts && (
     <Pressable
       onPress={addRow}
+      disabled={saving || addingRow || saveDone || !!currentProblem}
       style={withPressed(styles.addToList)}
       accessibilityRole="button"
       accessibilityHint="Keeps this entry on a list and starts the next one; Save saves them all"
     >
       <Feather name="plus" size={14} color={theme.colors.textPrimary} />
-      <Text style={styles.addToListText}>Add to list</Text>
+      <Text style={styles.addToListText}>{addingRow ? 'Adding…' : 'Add to list'}</Text>
     </Pressable>
   );
 
@@ -790,7 +820,21 @@ export default function AddTransactionScreen() {
           shownAmount={shownAmount}
           padVisible={padVisible}
           isLinked={isLinked}
-          onOpenPad={() => setPadOpen(true)}
+          onOpenPad={() => {
+            Keyboard.dismiss();
+            setSearchFocused(false);
+            setNoteEditing(false);
+            setPadOpen(true);
+          }}
+          onTogglePad={() => {
+            Keyboard.dismiss();
+            setSearchFocused(false);
+            setNoteEditing(false);
+            setPadOpen(!padVisible);
+            setError(null);
+          }}
+          selectionSummary={selectionSummary}
+          amountIssue={invalidAmount ? 'Enter a positive amount. Check the calculation.' : roundingNote}
           frequentAmounts={frequentAmounts}
           amountMinor={amountMinor}
           onPickAmount={(minor) => setExpr(exprFromMinor(minor))}
@@ -888,6 +932,7 @@ export default function AddTransactionScreen() {
                     onSelect={setCategoryId}
                     variant="medal"
                     searchable
+                    minColumnWidth={80}
                     onSearchFocusChange={setSearchFocused}
                   />
                 </Glass>
@@ -911,6 +956,15 @@ export default function AddTransactionScreen() {
         offset={{ opened: insets.bottom }}
         style={[styles.footer, { paddingBottom: insets.bottom + 12 }]}
       >
+        <Text style={styles.footerSummary} accessibilityLiveRegion="polite">
+          {selectionSummary}
+        </Text>
+        {rows.length > 0 && <Text style={styles.queueHint}>{rows.length} on your list · not saved yet</Text>}
+        {!error && !repeatWarning && !splitParts && currentProblem && (
+          <Text style={styles.formHint}>
+            {invalidAmount ? 'Enter a positive amount. Check the calculation.' : currentProblem}
+          </Text>
+        )}
         {error && <Text style={styles.error}>{error}</Text>}
         {rows.length > 0 && (
           <View style={styles.totalsRow}>
