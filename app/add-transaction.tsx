@@ -793,7 +793,7 @@ export default function AddTransactionScreen() {
       </SkyHeader>
 
       <KeyboardAwareScrollView
-        contentContainerStyle={{ padding: 20, paddingTop: 4, paddingBottom: 28 }}
+        contentContainerStyle={{ padding: 16, paddingTop: 4, paddingBottom: 28 }}
         keyboardShouldPersistTaps="handled"
         // Clears the sticky footer that rides on the keyboard, not just the keyboard: a focused field (the
         // category search) would otherwise sit right behind Save.

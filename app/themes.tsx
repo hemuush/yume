@@ -104,7 +104,7 @@ export default function ThemesScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
-  content: { paddingHorizontal: 20, gap: 12 },
+  content: { paddingHorizontal: 16, gap: 12 },
   caption: { fontFamily: theme.font.body, fontSize: 12.5, lineHeight: 17, color: theme.colors.textMuted },
   live: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 12 },
   phone: {

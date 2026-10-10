@@ -28,10 +28,12 @@ export function PersonQuietRow({
       <View style={[styles.quietAvatar, { backgroundColor: color }]}>
         <Text style={styles.quietInitial}>{person.name.trim().charAt(0).toUpperCase() || '?'}</Text>
       </View>
-      <Text style={styles.quietName} numberOfLines={1}>
-        {person.name}
-      </Text>
-      <Text style={styles.quietSub}>Settled · {lastActivityShort(person.lastActivityDate)}</Text>
+      <View style={{ flex: 1, minWidth: 0, gap: 4 }}>
+        <Text style={styles.quietName} numberOfLines={2}>
+          {person.name}
+        </Text>
+        <Text style={styles.quietSub}>Settled · {lastActivityShort(person.lastActivityDate)}</Text>
+      </View>
     </Pressable>
   );
 }

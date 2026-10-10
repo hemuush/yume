@@ -361,7 +361,7 @@ function AccountRow({
         <Text style={h.title} numberOfLines={2}>
           {account.name}
         </Text>
-        <Text style={h.sub} numberOfLines={1}>
+        <Text style={h.sub} numberOfLines={2}>
           {account.investment ? 'Savings · tracked' : ACCOUNT_TYPE_LABEL[account.type]}
           {archived ? ' · archived' : ''}
         </Text>

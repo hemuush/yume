@@ -201,10 +201,10 @@ export default function RecentlyDeletedScreen() {
                           />
                         </DaysLeftRing>
                         <View style={h.mid}>
-                          <Text style={h.title} numberOfLines={1}>
+                          <Text style={h.title} numberOfLines={2}>
                             {title}
                           </Text>
-                          <Text style={h.sub} numberOfLines={1}>
+                          <Text style={h.sub} numberOfLines={2}>
                             {sub}
                           </Text>
                         </View>
