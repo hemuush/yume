@@ -108,7 +108,8 @@ describe('buildRangeHeatGrid', () => {
     expect(grid.cells.find((c) => c.key === '2026-09-03')?.isToday).toBe(true);
     grid.cells.find((c) => c.key === '2026-08-30')?.onPress?.();
     expect(onDayPress).toHaveBeenCalledWith('2026-08-30');
-    expect(grid.cells.find((c) => c.key === '2026-08-31')?.onPress).toBeUndefined();
+    grid.cells.find((c) => c.key === '2026-08-31')?.onPress?.();
+    expect(onDayPress).toHaveBeenCalledWith('2026-08-31');
   });
 
   it('draws a long range one cell per month, from its own days only', () => {

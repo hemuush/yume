@@ -37,6 +37,7 @@ export function CategoryList({
   onShowDays,
   kind = 'expense',
   iconOf,
+  comparisonLabel,
 }: {
   breakdown: CategoryBreakdownItem[];
   /** The period's rounded total — the rows' rounded amounts add up to it. */
@@ -59,6 +60,7 @@ export function CategoryList({
   kind?: 'expense' | 'income';
   /** A row's icon (categories); rows without one (accounts) keep their colour dot. */
   iconOf?: (id: string) => string | undefined;
+  comparisonLabel?: string;
 }) {
   const upIsBad = kind === 'expense';
   const shown = expanded ? breakdown : breakdown.slice(0, COLLAPSED_COUNT);
@@ -66,7 +68,6 @@ export function CategoryList({
     breakdown.map((c) => c.totalMinor),
     spentMinor
   );
-  const maxCat = Math.max(1, ...breakdown.map((c) => c.totalMinor));
   return (
     <View style={styles.catCard}>
       {shown.map((c, i) => {
@@ -91,29 +92,34 @@ export function CategoryList({
                 ) : (
                   <View style={[styles.catDot, { backgroundColor: c.color }]} />
                 )}
-                <Text style={styles.catName} numberOfLines={1}>
+                <Text style={styles.catName} numberOfLines={2}>
                   {c.name}
                 </Text>
-                <Text style={styles.catPct}>{pct}%</Text>
                 <View style={styles.catRight}>
                   <Amount minor={rounded[i]} sensitive={c.isSensitive} style={styles.catAmt} />
-                  {d != null && Math.abs(d) >= DELTA_MIN_PCT && (
-                    <Text
-                      style={[
-                        styles.catDelta,
-                        { color: d > 0 === upIsBad ? theme.colors.expenseText : theme.colors.incomeText },
-                      ]}
-                    >
-                      {d > 0 ? '↑' : '↓'}
-                      {formatPctChange(d)}
-                    </Text>
-                  )}
                 </View>
+              </View>
+              <View style={styles.catMeta}>
+                <Text style={styles.stripSub}>{pct}% of total</Text>
+                {d != null && Math.abs(d) >= DELTA_MIN_PCT && (
+                  <Text
+                    style={[
+                      styles.catDelta,
+                      { color: d > 0 === upIsBad ? theme.colors.expenseText : theme.colors.incomeText },
+                    ]}
+                  >
+                    {d > 0 ? '↑' : '↓'}
+                    {formatPctChange(d)}
+                    {comparisonLabel ? ` · ${comparisonLabel}` : ''}
+                  </Text>
+                )}
               </View>
               <View style={[styles.catTrack, !!iconOf?.(c.categoryId) && styles.catTrackIcon]}>
                 <AnimatedCategoryFill
                   animKey={`reports:${c.categoryId}`}
-                  targetPct={Math.max(3, (c.totalMinor / maxCat) * 100)}
+                  targetPct={
+                    spentMinor > 0 ? Math.max(0, Math.min(100, (c.totalMinor / spentMinor) * 100)) : 0
+                  }
                   color={c.color}
                   delay={Math.min(i, FILL_STAGGER_MAX_ROWS) * FILL_STAGGER_MS}
                 />
@@ -135,9 +141,7 @@ export function CategoryList({
                       ...split.map((s) => (
                         <View key={s.categoryId} style={styles.catSplitRow}>
                           <View style={[styles.catDot, { backgroundColor: s.color }]} />
-                          <Text style={styles.catSplitName} numberOfLines={1}>
-                            {s.name}
-                          </Text>
+                          <Text style={styles.catSplitName}>{s.name}</Text>
                           <Text style={styles.catPct}>
                             {c.totalMinor > 0 ? Math.round((s.totalMinor / c.totalMinor) * 100) : 0}%
                           </Text>

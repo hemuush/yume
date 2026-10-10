@@ -30,6 +30,25 @@ const cat = (id: string, name: string, totalMinor: number): CategoryBreakdownIte
   isSensitive: false,
 });
 
+it('excludes unavailable history from an average but counts recorded zero months', () => {
+  expect(
+    baselineFromTrend([
+      { label: 'Jul', totalMinor: 0, recorded: false },
+      { label: 'Aug', totalMinor: 10000, recorded: true },
+      { label: 'Sep', totalMinor: 0, recorded: true },
+      { label: 'Oct', totalMinor: 20000, recorded: true },
+      { label: 'Nov', totalMinor: 0, recorded: false },
+    ])
+  ).toBe(5000);
+  expect(
+    baselineFromTrend([
+      { label: 'Aug', totalMinor: 0, recorded: false },
+      { label: 'Sep', totalMinor: 10000, recorded: true },
+      { label: 'Oct', totalMinor: 20000, recorded: true },
+    ])
+  ).toBeNull();
+});
+
 describe('heatLevel', () => {
   it('is 0 for no spend', () => {
     expect(heatLevel(0, 10000)).toBe(0);
@@ -349,7 +368,10 @@ describe('buildHeatGrid', () => {
     const sat = grid.cells[4];
     expect(sat).toMatchObject({ key: '2026-09-05', label: '5', level: 4, isToday: false });
     expect(grid.cells[5]).toMatchObject({ key: '2026-09-06', level: 1, isToday: true });
-    expect(grid.cells[0]).toMatchObject({ level: 0, isToday: false, onPress: undefined });
+    expect(grid.cells[0]).toMatchObject({ level: 0, isToday: false, onPress: expect.any(Function) });
+    grid.cells[0].onPress!();
+    expect(onDayPress).toHaveBeenCalledWith('2026-09-01');
+    expect(grid.cells[6].onPress).toBeUndefined();
     sat.onPress!();
     expect(onDayPress).toHaveBeenCalledWith('2026-09-05');
   });

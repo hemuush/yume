@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { View, Pressable, StyleProp, ViewStyle } from 'react-native';
 import { Text, MAX_FONT_SCALE } from '@/components/Text';
 import { ActionSheet } from '@/components/ActionSheet';
-import ReanimatedAnimated, { FadeIn } from 'react-native-reanimated';
+import ReanimatedAnimated, { FadeIn, ReduceMotion } from 'react-native-reanimated';
 import Feather from '@expo/vector-icons/Feather';
 import { ReportWindow, windowLabel, windowRange, stepWindow, canStepWindowForward } from '@/lib/period';
 import { theme } from '@/constants/theme';
@@ -70,7 +70,7 @@ export function PeriodRow({
         <ReanimatedAnimated.Text
           maxFontSizeMultiplier={MAX_FONT_SCALE}
           key={windowLabel(cursor)}
-          entering={FadeIn.duration(DURATIONS.quick)}
+          entering={FadeIn.duration(DURATIONS.quick).reduceMotion(ReduceMotion.System)}
           numberOfLines={2}
           style={styles.periodLabel}
         >

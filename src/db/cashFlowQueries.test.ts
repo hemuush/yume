@@ -12,8 +12,8 @@ jest.mock('@/db/client', () => ({
 jest.mock('@/lib/notifications', () => ({ rebuildNotifications: async () => {} }));
 
 import { CREATE_TABLES_SQL } from '@/db/schema';
-import { createAccount, createCategory, createTransaction } from '@/db/ledger';
-import { getMonthlyCashFlow, getCategoryMonthlyTotals } from '@/db/reports';
+import { createAccount, createCategory, createTransaction, listAccounts, listCategories } from '@/db/ledger';
+import { getMonthlyCashFlow, getCategoryMonthlyTotals, getMonthlyExpenseTrend } from '@/db/reports';
 
 describe('monthly cash flow and category tracks', () => {
   const reference = new Date(2026, 9, 3);
@@ -62,6 +62,26 @@ describe('monthly cash flow and category tracks', () => {
     expect(flow[0].expenseMinor).toBe(400000 + 2000000 - 50000);
   });
 
+  it('marks pre-tracking and future months unavailable, preserving zero months within history', async () => {
+    const flow = await getMonthlyCashFlow(4, reference);
+    expect(flow.map((p) => p.month)).toEqual(['2026-07', '2026-08', '2026-09', '2026-10']);
+    expect(flow[0].recorded).toBe(false);
+    expect(flow[1].recorded).toBe(true);
+    const account = (await listAccounts())[0];
+    const salary = (await listCategories()).find((c) => c.name === 'Salary')!;
+    await createTransaction({
+      type: 'income',
+      accountId: account.id,
+      categoryId: salary.id,
+      amountMinor: 10000,
+      date: '2026-06-01',
+    });
+    const recordedZero = (await getMonthlyCashFlow(4, reference))[0];
+    expect(recordedZero).toMatchObject({ month: '2026-07', recorded: true, incomeMinor: 0, expenseMinor: 0 });
+    const future = await getMonthlyCashFlow(12, new Date(2027, 9, 1));
+    expect(future.at(-1)?.recorded).toBe(false);
+  });
+
   it('leaves a sensitive category out when amounts are hidden', async () => {
     const flow = await getMonthlyCashFlow(2, reference, true);
     expect(flow[0].expenseMinor).toBe(400000 - 50000);
@@ -77,5 +97,21 @@ describe('monthly cash flow and category tracks', () => {
   it('leaves a sensitive category out of the tracks when amounts are hidden', async () => {
     expect((await getCategoryMonthlyTotals(3, reference)).some((t) => t.name === 'SIP')).toBe(true);
     expect((await getCategoryMonthlyTotals(3, reference, true)).some((t) => t.name === 'SIP')).toBe(false);
+  });
+
+  it('does not turn future-dated entries into actual spending in Trends', async () => {
+    const account = (await listAccounts())[0];
+    const food = (await listCategories()).find((c) => c.name === 'Food')!;
+    await createTransaction({
+      type: 'expense',
+      accountId: account.id,
+      categoryId: food.id,
+      amountMinor: 123456,
+      date: '2100-01-15',
+    });
+    const future = new Date(2100, 0, 31);
+    expect((await getMonthlyExpenseTrend(1, future))[0].totalMinor).toBe(0);
+    expect((await getMonthlyCashFlow(1, future))[0]).toMatchObject({ expenseMinor: 0, recorded: false });
+    expect(await getCategoryMonthlyTotals(1, future)).toEqual([]);
   });
 });

@@ -799,6 +799,9 @@ async function readRangeComparison(
 export interface TrendPoint {
   label: string;
   totalMinor: number;
+  /** Before tracking started and future slots are unavailable, rather than zero spending. */
+  recorded?: boolean;
+  month?: string;
 }
 
 /** Total expense per calendar month for the last `months` months (oldest first) — one grouped query, not N. */
@@ -816,9 +819,9 @@ export async function getMonthlyExpenseTrend(
     `SELECT strftime('%Y-%m', t.date) as ym, SUM(${SPEND_AMOUNT}) as total
      FROM transactions t
      JOIN accounts a ON a.id = t.account_id
-     WHERE ${SPEND_ROWS} AND a.currency = ? AND t.date >= ?${excludeSensitive ? ` AND ${NOT_SENSITIVE}` : ''}
+     WHERE ${SPEND_ROWS} AND a.currency = ? AND t.date >= ? AND t.date <= ?${excludeSensitive ? ` AND ${NOT_SENSITIVE}` : ''}
      GROUP BY ym`,
-    [currency, startIso]
+    [currency, startIso, toIso(new Date())]
   );
   const byMonth = new Map(rows.map((r) => [r.ym, Math.max(0, r.total)]));
 
@@ -851,6 +854,8 @@ export interface CashFlowPoint {
   label: string;
   incomeMinor: number;
   expenseMinor: number;
+  recorded?: boolean;
+  month?: string;
 }
 
 /** Income and spending per calendar month for the last `months` months (oldest first), same rules as getPeriodSummary. */
@@ -861,7 +866,7 @@ export async function getMonthlyCashFlow(
 ): Promise<CashFlowPoint[]> {
   const db = await getDb();
   const currency = await getDefaultCurrency();
-  const startIso = toIso(new Date(reference.getFullYear(), reference.getMonth() - (months - 1), 1));
+  const todayIso = toIso(new Date());
 
   const rows = await db.getAllAsync<{ ym: string; income: number; expense: number }>(
     `SELECT strftime('%Y-%m', t.date) as ym,
@@ -869,13 +874,16 @@ export async function getMonthlyCashFlow(
        SUM(CASE WHEN ${SPEND_ROWS} THEN ${SPEND_AMOUNT} ELSE 0 END) as expense
      FROM transactions t
      JOIN accounts a ON a.id = t.account_id
-     WHERE (${INCOME_ROWS} OR ${SPEND_ROWS}) AND a.currency = ? AND t.date >= ?${excludeSensitive ? ` AND ${NOT_SENSITIVE}` : ''}
+     WHERE (${INCOME_ROWS} OR ${SPEND_ROWS}) AND a.currency = ? AND t.date <= ?${excludeSensitive ? ` AND ${NOT_SENSITIVE}` : ''}
      GROUP BY ym`,
-    [currency, startIso]
+    [currency, todayIso]
   );
   const byMonth = new Map(rows.map((r) => [r.ym, r]));
+  const firstMonth = rows.map((r) => r.ym).sort()[0];
   return monthSlots(months, reference).map(({ ym, label }) => ({
     label,
+    month: ym,
+    recorded: firstMonth != null && ym >= firstMonth && ym <= todayIso.slice(0, 7),
     incomeMinor: byMonth.get(ym)?.income ?? 0,
     expenseMinor: Math.max(0, byMonth.get(ym)?.expense ?? 0),
   }));
@@ -912,9 +920,9 @@ export async function getCategoryMonthlyTotals(
      JOIN categories c ON c.id = t.category_id
      JOIN categories top ON top.id = COALESCE(c.parent_id, c.id)
      JOIN accounts a ON a.id = t.account_id
-     WHERE ${SPEND_ROWS} AND a.currency = ? AND t.date >= ?${excludeSensitive ? ` AND ${NOT_SENSITIVE}` : ''}
+     WHERE ${SPEND_ROWS} AND a.currency = ? AND t.date >= ? AND t.date <= ?${excludeSensitive ? ` AND ${NOT_SENSITIVE}` : ''}
      GROUP BY top.id, ym`,
-    [currency, startIso]
+    [currency, startIso, toIso(new Date())]
   );
   const slots = monthSlots(months, reference);
   const slotOf = new Map(slots.map((s, i) => [s.ym, i]));
@@ -940,6 +948,8 @@ export async function getCategoryMonthlyTotals(
 export interface NetWorthPoint {
   label: string;
   netWorthMinor: number;
+  month?: string;
+  recorded?: boolean;
 }
 
 /**
