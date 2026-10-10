@@ -35,6 +35,7 @@ function AnimatedBarStack({
 
   useEffect(() => {
     if (reduce) {
+      grown.current = true;
       v.setValue(heightPct);
       return;
     }
@@ -45,15 +46,21 @@ function AnimatedBarStack({
       duration: first ? 420 : 280,
       delay: first ? delay : 0,
       easing: Easing.out(Easing.cubic),
-      useNativeDriver: false,
+      useNativeDriver: true,
     });
     anim.start();
     // Stopped when the bar goes or its height changes again, so no frame runs for a bar that has left.
     return () => anim.stop();
   }, [heightPct, reduce, delay, v]);
 
-  const height = v.interpolate({ inputRange: [0, 100], outputRange: ['0%', '100%'], extrapolate: 'clamp' });
-  return <Animated.View style={[style, { height }]}>{children}</Animated.View>;
+  const scaleY = v.interpolate({ inputRange: [0, 100], outputRange: [0, 1], extrapolate: 'clamp' });
+  return (
+    <Animated.View
+      style={[style, { height: MAX_BAR_HEIGHT, transformOrigin: 'bottom', transform: [{ scaleY }] }]}
+    >
+      {children}
+    </Animated.View>
+  );
 }
 
 /**
@@ -81,6 +88,7 @@ export function SpendBarChart({
         const barPx =
           bar.totalMinor > 0 ? Math.max(MIN_BAR_HEIGHT, (bar.totalMinor / maxTotal) * MAX_BAR_HEIGHT) : 0;
         const heightPct = (barPx / MAX_BAR_HEIGHT) * 100;
+        const segmentTotal = bar.segments.reduce((sum, seg) => sum + Math.max(0, seg.amountMinor), 0);
         const selected = selectedKey === bar.key;
         const faded = selectedKey != null && !selected;
         if (bar.state) {
@@ -101,7 +109,7 @@ export function SpendBarChart({
             style={[styles.col, faded && styles.colFaded]}
             accessibilityRole="button"
             accessibilityState={{ selected }}
-            accessibilityLabel={`${bar.label}${bar.totalMinor > 0 ? `, spent ${formatMoney(bar.totalMinor)}` : ', nothing spent'}`}
+            accessibilityLabel={`${bar.key} (${bar.label})${bar.totalMinor > 0 ? `, spent ${formatMoney(bar.totalMinor)}` : ', nothing spent'}`}
           >
             <View style={[styles.barTrack, selected && styles.barLifted]}>
               {bar.totalMinor > 0 ? (
@@ -110,15 +118,8 @@ export function SpendBarChart({
                   delay={Math.min(i * 45, MAX_STAGGER_MS)}
                   style={styles.stack}
                 >
-                  {/* Rendered bottom-up (column-reverse) so the largest
-                      segment anchors the base, matching the builder's own
-                      largest-first sort. Each segment's height is an
-                      explicit percentage of the bar's own total, not a
-                      `flex` ratio built from the segment's raw paise amount
-                      — that number can run into the hundreds of thousands
-                      for a single transaction, and Yoga doesn't lay out
-                      `flex` reliably at that scale, which is what let
-                      segments render overlapping instead of stacked. */}
+                  {/* Positive category weights fill the stack; a refund in another category can
+                      make their sum exceed net spending. Keep net height and category amounts intact. */}
                   {bar.segments.map((seg) => (
                     <View
                       key={seg.categoryId}
@@ -126,7 +127,7 @@ export function SpendBarChart({
                         styles.segment,
                         {
                           backgroundColor: seg.color,
-                          height: `${(seg.amountMinor / bar.totalMinor) * 100}%`,
+                          height: `${(Math.max(0, seg.amountMinor) / Math.max(1, segmentTotal)) * 100}%`,
                         },
                       ]}
                     />
@@ -254,8 +255,8 @@ const styles = StyleSheet.create({
     transform: [{ rotate: '45deg' }],
   },
   legend: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 14 },
-  legendItem: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  legendDot: { width: 8, height: 8, borderRadius: 3 },
-  legendText: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textSecondary },
+  legendItem: { flexDirection: 'row', alignItems: 'center', gap: 5, maxWidth: '100%', flexShrink: 1 },
+  legendDot: { width: 8, height: 8, borderRadius: 3, flexShrink: 0 },
+  legendText: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textSecondary, flexShrink: 1 },
   legendMore: { color: theme.colors.textMuted },
 });

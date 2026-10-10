@@ -7,6 +7,7 @@ import {
   SharedValue,
 } from 'react-native-reanimated';
 import type Animated from 'react-native-reanimated';
+import { useReduceMotion } from './useReduceMotion';
 
 /** How fast a release must be (px/ms) to count as a fling, which carries on and settles by itself. */
 const FLING = 0.2;
@@ -29,6 +30,7 @@ export interface CollapsingHeader {
  * rests half-shrunk.
  */
 export function useCollapsingHeader<T extends Component = Animated.ScrollView>() {
+  const reduce = useReduceMotion();
   const scrollY = useSharedValue(0);
   const distance = useSharedValue(0);
   // A ScrollView's by default; a FlatList screen names its own list type.
@@ -52,12 +54,12 @@ export function useCollapsingHeader<T extends Component = Animated.ScrollView>()
       const v = Math.abs(e.velocity?.y ?? 0);
       const y = e.contentOffset.y;
       const d = distance.value;
-      if (v < FLING && d > 0 && y > 0 && y < d) scrollTo(scrollRef, 0, y < d / 2 ? 0 : d, true);
+      if (v < FLING && d > 0 && y > 0 && y < d) scrollTo(scrollRef, 0, y < d / 2 ? 0 : d, !reduce);
     },
     onMomentumEnd: (e) => {
       const y = e.contentOffset.y;
       const d = distance.value;
-      if (d > 0 && y > 0 && y < d) scrollTo(scrollRef, 0, y < d / 2 ? 0 : d, true);
+      if (d > 0 && y > 0 && y < d) scrollTo(scrollRef, 0, y < d / 2 ? 0 : d, !reduce);
     },
   });
 

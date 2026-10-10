@@ -59,5 +59,9 @@ export function isSavingsEntry(
   if (tx.type === 'transfer') {
     return savingsAccountIds.has(tx.accountId) || (!!tx.toAccountId && savingsAccountIds.has(tx.toAccountId));
   }
-  return !!tx.categoryId && !!categoriesById.get(tx.categoryId)?.isSensitive;
+  const category = tx.categoryId ? categoriesById.get(tx.categoryId) : undefined;
+  return (
+    !!category &&
+    !!(category.isSensitive || (category.parentId && categoriesById.get(category.parentId)?.isSensitive))
+  );
 }

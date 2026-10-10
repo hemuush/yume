@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { View } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import { Text } from '@/components/Text';
@@ -6,7 +6,7 @@ import ReanimatedAnimated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
-  runOnJS,
+  cancelAnimation,
 } from 'react-native-reanimated';
 import { CountUpAmount } from '@/components/CountUpAmount';
 import { formatMoney } from '@/lib/money';
@@ -34,7 +34,7 @@ interface HeadlineContent {
 }
 
 /**
- * Frosted Spent card: the figure, its chips and the bar chart slide with the period step, using ThisMonthHero's lagged-state technique.
+ * Frosted Spent card: committed figures, chips and bars enter together on a period step.
  * `periodKey` = period shown; `direction` = step (+1 forward, -1 back, 0 scope toggle/picked month: fade).
  */
 export function TransactionsHeadline({
@@ -60,7 +60,8 @@ export function TransactionsHeadline({
   current?: boolean;
 }) {
   const reduce = useReduceMotion();
-  const [displayed, setDisplayed] = useState<HeadlineContent>({
+  // Render the committed period immediately so chart taps and timeline rows share one snapshot.
+  const displayed: HeadlineContent = {
     expenseMinor,
     incomeMinor,
     expenseChangeMinor,
@@ -68,63 +69,33 @@ export function TransactionsHeadline({
     compareLabel,
     bars,
     legend,
-  });
-  // As in ThisMonthHero.tsx: compare with the periodKey the effect last ran for, not `[periodKey]` alone (it
-  // would leave `displayed` seeded from pre-load data). Same-period data syncs now; a new period slides.
+  };
   const prevPeriodKey = useRef(periodKey);
   const tx = useSharedValue(0);
   const opacity = useSharedValue(1);
-  // Bumped per effect run so a delayed slide-out callback can tell it was superseded (see `commit` below)
-  // instead of applying a stale snapshot.
-  const runId = useRef(0);
+  const directionRef = useRef(direction);
+  useEffect(() => {
+    directionRef.current = direction;
+  }, [direction]);
 
   useEffect(() => {
-    const myRun = ++runId.current;
-    const next: HeadlineContent = {
-      expenseMinor,
-      incomeMinor,
-      expenseChangeMinor,
-      viewScope,
-      compareLabel,
-      bars,
-      legend,
-    };
-    const isPeriodTurn = prevPeriodKey.current !== periodKey;
+    cancelAnimation(tx);
+    cancelAnimation(opacity);
+    const changed = prevPeriodKey.current !== periodKey;
     prevPeriodKey.current = periodKey;
-
-    if (!isPeriodTurn || reduce) {
-      setDisplayed(next);
-      return;
-    }
-    const outX = direction > 0 ? -18 : direction < 0 ? 18 : 0;
-    const inX = direction > 0 ? 18 : direction < 0 ? -18 : 0;
-    // The period flips a render before its reload resolves, so `bars` can be all-zero (new range, old rows).
-    // `commit` drops this run's delayed `next` if a later run happened, so zeros can't clobber real data.
-    const commit = () => {
-      if (runId.current !== myRun) return;
-      setDisplayed(next);
-    };
-    opacity.value = withTiming(0, { duration: DURATIONS.slideOut });
-    tx.value = withTiming(outX, { duration: DURATIONS.slideOut }, (finished) => {
-      if (!finished) return;
-      runOnJS(commit)();
-      tx.value = inX;
+    tx.value = 0;
+    opacity.value = 1;
+    if (changed && !reduce) {
+      tx.value = directionRef.current * 18;
+      opacity.value = 0;
       tx.value = withTiming(0, { duration: DURATIONS.slideIn });
       opacity.value = withTiming(1, { duration: DURATIONS.slideIn });
-    });
-    // `direction` goes with its period and `opacity`/`tx` are stable; `direction` alone mustn't re-run this.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    periodKey,
-    expenseMinor,
-    incomeMinor,
-    expenseChangeMinor,
-    viewScope,
-    compareLabel,
-    bars,
-    legend,
-    reduce,
-  ]);
+    }
+    return () => {
+      cancelAnimation(tx);
+      cancelAnimation(opacity);
+    };
+  }, [periodKey, reduce, tx, opacity]);
 
   const slideStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: tx.value }],
@@ -140,6 +111,8 @@ export function TransactionsHeadline({
       </Text>
       <ReanimatedAnimated.View style={slideStyle}>
         <CountUpAmount
+          key={periodKey}
+          countFromZero={false}
           minor={displayed.expenseMinor}
           style={styles.headlineAmt}
           symbolStyle={styles.headlineSymbol}

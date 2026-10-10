@@ -125,18 +125,31 @@ function TimelineDayView({
     (lines: LaneLine[] | null) => setArrangedState(lines ? { from: items, lines } : null),
     [items]
   );
-  const [drag, setDrag] = useState<{ from: number; to: number; height: number } | null>(null);
-  const [settling, setSettling] = useState(false);
+  const [dragState, setDrag] = useState<{
+    from: number;
+    to: number;
+    height: number;
+    items: Transaction[];
+  } | null>(null);
+  const drag = dragState?.items === items && onReorder ? dragState : null;
+  const [settlingItems, setSettlingItems] = useState<Transaction[] | null>(null);
+  const settling = settlingItems === items;
+  const reorderSeq = useRef({ value: 0 });
   const dragRef = useRef<{ from: number; to: number; height: number } | null>(null);
   const heights = useRef(new Map<string, number>());
   const [dy] = useState(() => new Animated.Value(0));
   const settleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(
-    () => () => {
+  useEffect(() => {
+    const generation = reorderSeq.current;
+    // Reloading/filtering a held day must release the screen's scroll lock as well.
+    return () => {
+      generation.value++;
       if (settleTimer.current) clearTimeout(settleTimer.current);
-    },
-    []
-  );
+      if (dragRef.current) onDragActive?.(false);
+      dragRef.current = null;
+      dy.stopAnimation();
+    };
+  }, [items, onReorder, onDragActive, dy]);
   const shown = arranged ?? lines;
   const canReorder = !!onReorder && shown.length > 1;
 
@@ -145,7 +158,7 @@ function TimelineDayView({
     haptics.tap();
     dy.setValue(0);
     dragRef.current = { from: index, to: index, height: heights.current.get(laneKey(shown[index])) ?? 52 };
-    setDrag(dragRef.current);
+    setDrag({ ...dragRef.current, items });
     onDragActive?.(true);
   };
   const moveTo = (offset: number) => {
@@ -155,22 +168,26 @@ function TimelineDayView({
     if (to === cur.to) return;
     haptics.tap();
     dragRef.current = { ...cur, to };
-    setDrag(dragRef.current);
+    setDrag({ ...dragRef.current, items });
   };
   const reorder = useCallback(
     async (next: LaneLine[]) => {
-      setSettling(true);
+      const seq = ++reorderSeq.current.value;
+      setSettlingItems(items);
       setArranged(next);
       if (settleTimer.current) clearTimeout(settleTimer.current);
-      settleTimer.current = setTimeout(() => setSettling(false), 150);
+      settleTimer.current = setTimeout(() => {
+        if (seq === reorderSeq.current.value) setSettlingItems(null);
+      }, 150);
       try {
         await onReorder?.(date, laneOrderIds(next, transfers));
       } catch {
+        if (seq !== reorderSeq.current.value) return;
         haptics.warn();
         setArranged(null);
       }
     },
-    [onReorder, date, transfers, setArranged]
+    [onReorder, date, transfers, setArranged, items]
   );
   const drop = () => {
     const cur = dragRef.current;

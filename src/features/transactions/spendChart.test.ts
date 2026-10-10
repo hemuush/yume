@@ -32,6 +32,22 @@ const tx = (over: Partial<Transaction>): Transaction => ({
 });
 
 describe('weekRangesInMonth', () => {
+  it('omits legend categories whose net-spending bar is empty or outside the visible period', () => {
+    const segment = { categoryId: 'food', name: 'Food', color: '#123456', amountMinor: 100 };
+    expect(
+      legendForBars([
+        { key: '2026-10-01', label: 'T', totalMinor: 0, segments: [segment], isCurrent: false },
+        {
+          key: '2026-10-02',
+          label: 'F',
+          totalMinor: 100,
+          segments: [segment],
+          isCurrent: false,
+          state: 'future',
+        },
+      ])
+    ).toEqual([]);
+  });
   it('splits September 2026 (starts on a Tuesday) into 5 Sunday–Saturday buckets, first and last partial', () => {
     const ranges = weekRangesInMonth('2026-09-01', '2026-09-30');
     expect(ranges).toEqual([
