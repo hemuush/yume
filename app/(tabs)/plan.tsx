@@ -340,7 +340,6 @@ export default function PlanScreen() {
                 dueSoon={data.dueSoon}
                 today={data.today}
                 onOpen={() => open('/loans')}
-                onLoan={(id) => router.push({ pathname: '/loans', params: { loan: id } })}
               />
             </Section>
             <Section title="Saving toward" onSeeAll={() => open('/savings-goals')}>

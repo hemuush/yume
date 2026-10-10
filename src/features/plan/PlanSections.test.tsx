@@ -32,6 +32,41 @@ const texts = (tree: ReactTestRenderer) =>
 const dueSoon = { totalMinor: 0, emiMinor: 0, billMinor: 0, count: 0, untilDate: '2026-10-22' };
 
 describe('Plan sections with nothing in them yet', () => {
+  it('shows only the debt summary and opens Loans without selecting a loan detail', () => {
+    const open = jest.fn();
+    const loans = {
+      debtLeftMinor: 90000,
+      paidOffMinor: 10000,
+      borrowedPrincipalMinor: 100000,
+      paidFraction: 0.1,
+      borrowedCount: 1,
+      debtFreeDate: '2028-10-09',
+      lentLeftMinor: 0,
+      rows: [
+        {
+          id: 'private-loan',
+          name: 'House loan',
+          direction: 'borrowed' as const,
+          leftMinor: 90000,
+          nextDueDate: '2026-11-01',
+          nextEmiMinor: 10000,
+          paidCount: 1,
+          totalCount: 24,
+          endDate: '2028-10-09',
+        },
+      ],
+    };
+    const tree = render(<DebtPath loans={loans} dueSoon={dueSoon} today="2026-10-09" onOpen={open} />);
+    expect(texts(tree)).toContain('₹900');
+    expect(texts(tree)).not.toContain('House loan');
+    const actions = tree.root.findAll(
+      (node) => node.props.onPress && node.props.accessibilityRole === 'button'
+    );
+    expect(actions.every((node) => node.props.accessibilityLabel === 'Open loans')).toBe(true);
+    act(() => actions[0].props.onPress());
+    expect(open).toHaveBeenCalledTimes(1);
+    expect(open.mock.calls[0]).toEqual([]);
+  });
   it('asks for a first budget, and a first EMI (saying what you lent)', () => {
     expect(texts(render(<BudgetJars summary={buildBudgetsSummary([])} onOpen={jest.fn()} />))).toContain(
       'Set a monthly limit'

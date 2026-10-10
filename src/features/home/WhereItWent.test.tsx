@@ -66,7 +66,7 @@ describe('Where it went', () => {
     );
   });
 
-  it('moves the pill to a tapped category', () => {
+  it('selects a category without hiding the other category amounts', () => {
     const r = render(breakdown);
     act(() =>
       r.root
@@ -75,6 +75,11 @@ describe('Where it went', () => {
     );
     const all = texts(r);
     expect(all).toEqual(expect.arrayContaining(['Shares', '₹10,000 · 20% of spending', '20%']));
+    expect(all).toContain('₹16,000 · 32% of spending');
+    expect(
+      r.root.findAll((n) => n.props.accessibilityLabel === 'Shares, 20% of spending')[0].props
+        .accessibilityState.selected
+    ).toBe(true);
   });
 
   it('opens Reports from the last bubble', () => {
@@ -90,5 +95,13 @@ describe('Where it went', () => {
 
   it('draws nothing for a period with no spending', () => {
     expect(render([]).toJSON()).toBeNull();
+  });
+
+  it('keeps shares based on all categories and offers the remaining categories in Reports', () => {
+    const tree = render(['A', 'B', 'C', 'D', 'E'].map((name) => cat(name, 10000)));
+    const shown = texts(tree);
+    expect(shown).toContain('₹100 · 20% of spending');
+    expect(shown).toContain('View all 5 categories');
+    expect(shown).not.toContain('E');
   });
 });

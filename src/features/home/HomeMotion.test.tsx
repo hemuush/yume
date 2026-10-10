@@ -103,7 +103,7 @@ it('continues a changed amount from the visible value and ignores an obsolete co
   expect(text(r)).toContain('₹5,000');
 });
 
-it('settles dial details only for the latest tap, preserving category selection across data reordering', () => {
+it('updates category selection immediately and preserves it across data reordering', () => {
   const categories = ['Food', 'Rent', 'Travel', 'Shopping'].map((name, i) => ({
     categoryId: name,
     name,
@@ -125,17 +125,15 @@ it('settles dial details only for the latest tap, preserving category selection 
   );
   const r = render(dial());
   press(r, 'Shopping, 10% of spending');
-  const stale = mockCompletions.at(-1)!;
-  expect(text(r)).toContain('₹400 · 40% of spending');
   press(r, 'Rent, 30% of spending');
-  const latest = mockCompletions.at(-1)!;
-  act(() => stale.finish(true));
-  expect(text(r)).toContain('₹400 · 40% of spending');
-  act(() => latest.finish(true));
-  expect(text(r)).toContain('₹300 · 30% of spending');
+  const selected = () =>
+    r.root.findAll((n) => n.props.accessibilityLabel === 'Rent, 30% of spending')[0].props.accessibilityState
+      .selected;
+  expect(selected()).toBe(true);
   mockReduce = true;
   act(() => r.update(dial([...categories].reverse())));
   expect(text(r)).toContain('₹300 · 30% of spending');
+  expect(selected()).toBe(true);
 });
 
 it('keeps the month label, figures and current-month chips together through interrupted transitions', () => {
