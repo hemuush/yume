@@ -67,13 +67,13 @@ export const styles = StyleSheet.create({
   granChipText: { fontFamily: theme.font.roundedMedium, fontSize: 15, color: theme.colors.ink },
   // Days / Categories / Trends, pinned under the header. SegmentedControl
   // brings its own bottom margin; the negative one trims it to the gap this bar wants.
-  // On the page colour, so the report scrolls under the tabs once they stick.
+  // The backdrop fades in only while collapsing, so the expanded header keeps its wallpaper.
   tabs: {
     paddingHorizontal: 16,
     paddingTop: 12,
     paddingBottom: 8,
   },
-  stickyTabs: { marginHorizontal: -20, zIndex: 1, backgroundColor: '#DFE3F8' },
+  stickyTabs: { marginHorizontal: -16, zIndex: 1 },
 
   // The Days tab's heatmap card.
   hmCard: {
