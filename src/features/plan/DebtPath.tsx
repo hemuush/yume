@@ -15,8 +15,6 @@ import { Kicker, PlanChip } from './PlanTiles';
 import { styles } from './plan.styles';
 
 const LANES_SHOWN = 3;
-/** Past this share of the line, a loan's end date would run off the card, so the axis carries it instead. */
-const LABEL_ROOM = 0.72;
 
 /**
  * The way to debt-free: a timeline from today to the last EMI. Each borrowed loan is a line that stops at the
@@ -28,11 +26,13 @@ export function DebtPath({
   dueSoon,
   today,
   onOpen,
+  onLoan,
 }: {
   loans: LoansSummary;
   dueSoon: DueSoon;
   today: string;
   onOpen: () => void;
+  onLoan?: (id: string) => void;
 }) {
   const { accent } = useAccent();
   const [width, setWidth] = useState(0);
@@ -81,20 +81,25 @@ export function DebtPath({
   const nextEmi = borrowed.find((r) => r.nextDueDate && r.nextEmiMinor != null);
 
   return (
-    <Pressable
-      onPress={onOpen}
-      style={withPressed()}
-      accessibilityRole="button"
-      accessibilityLabel={`${formatMoney(loans.debtLeftMinor)} of debt left${
-        knownEnd ? `, debt-free in ${longMonthYear(knownEnd)}` : ''
-      }. Open loans`}
-    >
+    <View>
       <Glass style={styles.card}>
-        <Kicker icon="flag">{knownEnd ? `Debt-free by ${longMonthYear(knownEnd)}` : 'Debt left'}</Kicker>
+        <Pressable
+          onPress={onOpen}
+          style={withPressed()}
+          accessibilityRole="button"
+          accessibilityLabel="Open loans"
+        >
+          <Kicker icon="flag">
+            {knownEnd
+              ? `Estimated debt-free · ${longMonthYear(knownEnd)}`
+              : 'Debt left · schedule incomplete'}
+          </Kicker>
+        </Pressable>
         <Text style={styles.pathValue} numberOfLines={1} adjustsFontSizeToFit>
-          {formatMoney(loans.debtLeftMinor)}{' '}
-          <Text style={styles.pathNote}>left · {formatRatioPct(loans.paidFraction)} paid</Text>
+          {formatMoney(loans.debtLeftMinor)}
         </Text>
+        <Text style={styles.pathNote}>Principal left · {formatRatioPct(loans.paidFraction)} repaid</Text>
+        <Text style={styles.tileSub}>Lanes show time to scheduled payoff</Text>
         <View
           style={styles.lanes}
           onLayout={(e: LayoutChangeEvent) => setWidth(Math.round(e.nativeEvent.layout.width))}
@@ -104,16 +109,24 @@ export function DebtPath({
             const color = colors[i % colors.length];
             const barWidth = s != null ? s * width : width;
             return (
-              <View key={row.id} style={styles.lane}>
+              <Pressable
+                key={row.id}
+                onPress={() => (onLoan ? onLoan(row.id) : onOpen())}
+                style={withPressed(styles.lane)}
+                accessibilityRole="button"
+                accessibilityLabel={`${row.name}, ${row.paidCount} of ${row.totalCount} installments paid. ${row.endDate ? `Scheduled end ${longMonthYear(row.endDate)}` : 'End date unknown'}. Open loan`}
+              >
                 <View style={styles.laneTop}>
-                  <Text style={styles.laneName} numberOfLines={1}>
+                  <Text style={styles.laneName} numberOfLines={2}>
                     {row.name}
                   </Text>
                   <Text style={styles.laneSub} numberOfLines={1}>
-                    {row.paidCount} of {row.totalCount} paid
+                    {row.totalCount > 0
+                      ? `${row.paidCount} of ${row.totalCount} installments paid`
+                      : 'Installment schedule unavailable'}
                   </Text>
                 </View>
-                {width > 0 && (
+                {width > 0 && s != null && (
                   <View style={styles.laneTrack}>
                     <View
                       style={[
@@ -127,14 +140,12 @@ export function DebtPath({
                         style={[styles.laneEnd, { left: Math.max(0, barWidth - 16), borderColor: color }]}
                       />
                     )}
-                    {s != null && s < LABEL_ROOM && row.endDate && (
-                      <Text style={[styles.laneEndLabel, { left: barWidth + 6 }]}>
-                        {shortMonthYear(row.endDate)}
-                      </Text>
-                    )}
                   </View>
                 )}
-              </View>
+                <Text style={styles.laneSub}>
+                  {row.endDate ? `Scheduled end · ${shortMonthYear(row.endDate)}` : 'End date unknown'}
+                </Text>
+              </Pressable>
             );
           })}
         </View>
@@ -166,7 +177,10 @@ export function DebtPath({
             <PlanChip icon="arrow-up-right">{formatMoney(loans.lentLeftMinor)} you lent out</PlanChip>
           )}
         </View>
+        <Text style={styles.tileSub}>
+          Based on recorded schedules. Rate changes and extra payments can change these dates.
+        </Text>
       </Glass>
-    </Pressable>
+    </View>
   );
 }

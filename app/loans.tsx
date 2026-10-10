@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { View, Pressable } from 'react-native';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Text } from '@/components/Text';
@@ -54,7 +54,7 @@ export default function LoansScreen() {
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedLoan, setSelectedLoan] = useState<Loan | null>(null);
   const [payOnOpen, setPayOnOpen] = useState(false);
-  const { pay: payLoanId } = useLocalSearchParams<{ pay?: string }>();
+  const { pay: payLoanId, loan: detailLoanId } = useLocalSearchParams<{ pay?: string; loan?: string }>();
   const listFadeStyle = useFadeIn();
 
   const loadLoans = useCallback(async () => {
@@ -64,6 +64,12 @@ export default function LoansScreen() {
   }, []);
   const { loaded, loadError, reload: load } = useScreenLoad(loadLoans);
   const loading = !loaded && !loadError;
+  useEffect(() => {
+    if (!loaded || loadError || !detailLoanId || payLoanId) return;
+    setPayOnOpen(false);
+    setSelectedLoan(loans.find((loan) => loan.id === detailLoanId && loan.status !== 'closed') ?? null);
+    router.setParams({ loan: undefined });
+  }, [loaded, loadError, detailLoanId, payLoanId, loans]);
 
   // Once, when the loans have loaded: open the loan "Pay now" asked for.
   const [payHandled, setPayHandled] = useState(false);

@@ -14,6 +14,8 @@ jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMoc
 jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
 }));
+let mockHideAmounts = false;
+jest.mock('@/theme/PrivacyContext', () => ({ usePrivacy: () => ({ hideAmounts: mockHideAmounts }) }));
 jest.mock('@/components/AppHeader', () => ({ HeaderUserButton: () => null }));
 /** YYYY-MM-DD, `n` days from today. */
 const mockDay = (n: number) => {
@@ -100,6 +102,8 @@ jest.mock('@/features/loans/PayInstallmentSheet', () => ({
     return null;
   },
 }));
+const mockCards = jest.fn(async () => []);
+jest.mock('@/db/cardCycles', () => ({ listCardCycles: () => mockCards() }));
 jest.mock('@/db/people', () => ({
   listPeople: async () => [{ id: 'p1', name: 'Ravi', balanceMinor: 50000 }],
 }));
@@ -183,7 +187,7 @@ describe('Plan tab', () => {
       '2 payments',
       'This month’s budgets',
       'The way to debt-free',
-      'Debt-free by ' +
+      'Estimated debt-free · ' +
         new Date(2035, 5, 5).toLocaleDateString(undefined, { month: 'long', year: 'numeric' }),
       'Saving toward',
       'People & habit',
@@ -202,7 +206,7 @@ describe('Plan tab', () => {
       expect.arrayContaining([
         '₹25,450', // ₹25,000 EMI + ₹450 bill in the next 14 days
         '1 over',
-        '+₹500',
+        '₹500',
         '4 days',
         'Start a goal that fills up by itself',
         'Home loan',
@@ -214,10 +218,10 @@ describe('Plan tab', () => {
     expect(shown.some((t) => t.startsWith('Follow Pot (₹54,000)'))).toBe(true);
     // What-if cuts the biggest category it can, not the EMI: 10% of Food's ₹20,000.
     expect(shown).toContain('Food');
-    expect(shown).toContain('+₹2,000');
+    expect(shown).toContain('₹2,000');
     expect(shown.some((t) => t.includes('Loan EMI'))).toBe(false);
     // 25% of the home loan's principal repaid.
-    expect(shown.some((t) => t.includes('25% paid'))).toBe(true);
+    expect(shown.some((t) => t.includes('25% repaid'))).toBe(true);
   });
 
   it('says whether your accounts cover what’s due, and when they run short', async () => {
@@ -242,13 +246,13 @@ describe('Plan tab', () => {
       shown.indexOf('Coming up')
     );
     expect(shown.lastIndexOf(dayLabel(3))).toBeGreaterThan(shown.lastIndexOf(dayLabel(1)));
-    expect(shown).toContain('₹25,000');
+    expect(shown).toContain('Total out ₹25,000');
   });
 
   it('says what each section means in plain words', async () => {
     const shown = texts(await render());
     expect(shown.some((t) => t.includes('Food is ₹20,000 over'))).toBe(true);
-    expect(shown).toContain('to collect from 1 person');
+    expect(shown).toContain('To collect');
   });
 
   it('opens each section’s own screen', async () => {
@@ -263,8 +267,8 @@ describe('Plan tab', () => {
     act(() => byLabel('Budgets,').props.onPress());
     expect(router.push).toHaveBeenLastCalledWith('/budgets');
     act(() => byLabel('Fuel, 25% used').props.onPress());
-    expect(router.push).toHaveBeenLastCalledWith('/budgets');
-    act(() => byLabel('₹30,00,000 of debt left').props.onPress());
+    expect(router.push).toHaveBeenLastCalledWith({ pathname: '/budgets', params: { budget: 'b2' } });
+    act(() => byLabel('Open loans').props.onPress());
     expect(router.push).toHaveBeenLastCalledWith('/loans');
     act(() => byLabel('Friends & Family').props.onPress());
     expect(router.push).toHaveBeenLastCalledWith('/people');
@@ -278,7 +282,7 @@ describe('Plan tab', () => {
     expect(router.push).toHaveBeenLastCalledWith('/garden');
     // The runway card scrolls down to Coming up instead of leaving the tab.
     (router.push as jest.Mock).mockClear();
-    act(() => byLabel('₹25,450 due in the next 14 days').props.onPress());
+    act(() => byLabel('Open Coming up').props.onPress());
     expect(router.push).not.toHaveBeenCalled();
   });
 
@@ -331,7 +335,7 @@ describe('Plan tab', () => {
     const tree = await render();
     const paid = tree.root.find((n) => n.props.accessibilityLabel === 'Pay Home loan EMI' && n.props.onPress);
     await act(async () => {
-      paid.props.onPress();
+      paid.props.onPress({ stopPropagation: jest.fn() });
     });
     expect(mockPaySheet.current?.installment.id).toBe('p13');
     expect((mockPaySheet.current as unknown as { balanceMinor: number }).balanceMinor).toBe(3000000);
@@ -349,4 +353,51 @@ describe('Plan tab', () => {
       mockSection = undefined;
     }
   });
+});
+
+describe('Plan load recovery', () => {
+  it('reports a failed card-bill read, offers retry, and replaces the error after a complete load', async () => {
+    mockCards.mockRejectedValueOnce(new Error('Card bills unavailable'));
+    const tree = await render();
+    expect(texts(tree)).toContain('Card bills unavailable');
+    expect(texts(tree)).not.toContain('Your accounts cover it');
+    const retry = tree.root.findAll((n) => n.props.title === 'Try again' && n.props.onPress)[0];
+    await act(async () => {
+      await retry.props.onPress();
+    });
+    expect(texts(tree)).not.toContain('Card bills unavailable');
+    expect(texts(tree)).toContain('Your accounts cover it');
+    act(() => tree.unmount());
+  });
+});
+
+it('keeps the latest Plan result when a previous privacy load resolves later', async () => {
+  let release!: (value: never[]) => void;
+  mockCards.mockImplementationOnce(
+    () =>
+      new Promise<never[]>((resolve) => {
+        release = resolve;
+      })
+  );
+  let tree!: ReactTestRenderer;
+  await act(async () => {
+    tree = create(<PlanScreen />);
+  });
+  mockHideAmounts = true;
+  mockBank = 1000000;
+  try {
+    await act(async () => {
+      tree.update(<PlanScreen />);
+    });
+    expect(texts(tree)).toContain('₹10,000');
+    await act(async () => {
+      release([]);
+    });
+    expect(texts(tree)).toContain('₹10,000');
+    expect(texts(tree)).not.toContain('₹30,000');
+  } finally {
+    act(() => tree.unmount());
+    mockHideAmounts = false;
+    mockBank = 3000000;
+  }
 });

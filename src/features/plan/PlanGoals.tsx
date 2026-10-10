@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Pressable, ScrollView, Animated } from 'react-native';
+import { View, Pressable, ScrollView, Animated, useWindowDimensions } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import { Text } from '@/components/Text';
 import { Glass } from '@/components/Glass';
@@ -29,13 +29,20 @@ export function GoalsStrip({
   goals,
   savingsAccounts,
   onOpen,
+  onGoal,
+  onAdd,
 }: {
   goals: SavingsGoal[];
   /** Savings accounts a new goal could follow, with their balances. */
   savingsAccounts: Account[];
   onOpen: () => void;
+  onGoal?: (id: string) => void;
+  onAdd?: () => void;
 }) {
   const { hideAmounts } = usePrivacy();
+  const { width, fontScale } = useWindowDimensions();
+  const cardWidth = Math.max(112 * Math.min(fontScale, 1.3), Math.min(160, (width - 60) / 3));
+  const cardHeight = 184 * Math.min(Math.max(fontScale, 1), 1.3);
   const active = goals.filter((g) => !g.archived);
   if (active.length === 0) {
     return (
@@ -65,11 +72,18 @@ export function GoalsStrip({
   return (
     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.goals}>
       {active.map((g) => (
-        <GoalCard key={g.id} goal={g} masked={hideAmounts} onPress={onOpen} />
+        <GoalCard
+          key={g.id}
+          goal={g}
+          masked={hideAmounts}
+          width={cardWidth}
+          height={cardHeight}
+          onPress={() => (onGoal ? onGoal(g.id) : onOpen())}
+        />
       ))}
       <Pressable
-        onPress={onOpen}
-        style={withPressed([styles.goal, styles.goalNew])}
+        onPress={onAdd ?? onOpen}
+        style={withPressed([styles.goal, styles.goalNew, { width: cardWidth, height: cardHeight }])}
         accessibilityRole="button"
         accessibilityLabel="Open savings goals to start a new one"
       >
@@ -82,8 +96,20 @@ export function GoalsStrip({
   );
 }
 
-function GoalCard({ goal, masked, onPress }: { goal: SavingsGoal; masked: boolean; onPress: () => void }) {
-  const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.96);
+function GoalCard({
+  goal,
+  masked,
+  onPress,
+  width,
+  height,
+}: {
+  goal: SavingsGoal;
+  masked: boolean;
+  onPress: () => void;
+  width: number;
+  height: number;
+}) {
+  const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.98);
   const { percent, done } = goalProgress(goal.currentAmountMinor, goal.targetAmountMinor);
   const hue = done ? theme.colors.income : hueFor(goal.id);
   const pct = Math.round(Math.min(100, percent));
@@ -102,10 +128,12 @@ function GoalCard({ goal, masked, onPress }: { goal: SavingsGoal; masked: boolea
             }. Open savings goals`
       }
     >
-      <Glass radius={24} style={styles.goal}>
+      <Glass radius={24} style={[styles.goal, { width, height }]}>
         {!masked && pct > 0 && (
-          <View style={[styles.goalFill, { height: `${pct}%`, backgroundColor: hue }]}>
-            <View style={[styles.goalFillEdge, { backgroundColor: hue }]} />
+          <View style={styles.goalReservoir} pointerEvents="none">
+            <View style={[styles.goalFill, { height: `${pct}%`, backgroundColor: hue }]}>
+              <View style={[styles.goalFillEdge, { backgroundColor: hue }]} />
+            </View>
           </View>
         )}
         {masked ? (
@@ -118,12 +146,19 @@ function GoalCard({ goal, masked, onPress }: { goal: SavingsGoal; masked: boolea
             <Text style={styles.goalPctSign}>%</Text>
           </Text>
         )}
-        <Text style={styles.goalName} numberOfLines={1}>
+        {!masked && (
+          <Text style={styles.goalRemaining}>
+            {formatMoney(Math.max(0, goal.targetAmountMinor - goal.currentAmountMinor))} left
+          </Text>
+        )}
+        <Text style={styles.goalName} numberOfLines={2}>
           {goal.name}
         </Text>
         <Text style={styles.goalAmt} numberOfLines={1} adjustsFontSizeToFit>
-          {formatMaskableMoney(goal.currentAmountMinor, { masked })}{' '}
-          <Text style={styles.goalOf}>of {formatMoney(goal.targetAmountMinor)}</Text>
+          {formatMaskableMoney(goal.currentAmountMinor, { masked })} saved
+        </Text>
+        <Text style={[styles.goalAmt, styles.goalOf]} numberOfLines={1} adjustsFontSizeToFit>
+          of {formatMoney(goal.targetAmountMinor)}
         </Text>
       </Glass>
     </AnimatedPressable>
@@ -149,10 +184,9 @@ export function WhatIfCard({
     <Glass style={styles.card}>
       {whatIf ? (
         <>
-          <Text style={styles.whatIfQ}>
-            Spend less on <Text style={styles.whatIfBold}>{whatIf.categoryName}</Text> (about{' '}
-            {formatMoney(whatIf.avgMonthlyMinor)} a month)
-          </Text>
+          <Text style={styles.gainNote}>Spend a little less</Text>
+          <Text style={styles.whatIfBold}>{whatIf.categoryName}</Text>
+          <Text style={styles.gainNote}>{formatMoney(whatIf.avgMonthlyMinor)} average / month</Text>
           <View style={styles.lever}>
             <View style={styles.cuts}>
               {WHAT_IF_CUTS.map((c) => (
@@ -173,8 +207,9 @@ export function WhatIfCard({
               ))}
             </View>
             <View style={styles.gain} accessibilityLiveRegion="polite">
+              <Text style={styles.gainNote}>Could free up</Text>
               <Text style={styles.gainValue} numberOfLines={1} adjustsFontSizeToFit>
-                +{formatMoney(extra)}
+                {formatMoney(extra)}
               </Text>
               <Text style={styles.gainNote}>a month</Text>
               <Text style={styles.gainNote}>{formatMoney(extra * 12)} a year</Text>
@@ -192,7 +227,7 @@ export function WhatIfCard({
         accessibilityRole="button"
         accessibilityLabel="Open the what-if sandbox"
       >
-        <Text style={styles.openText}>Open the what-if sandbox</Text>
+        <Text style={styles.openText}>Explore this scenario</Text>
         <Feather name="chevron-right" size={16} color={theme.colors.textMuted} />
       </Pressable>
     </Glass>

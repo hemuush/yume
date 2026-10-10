@@ -370,12 +370,20 @@ export function buildPeopleState(people: { balanceMinor: number }[]): PeopleStat
 export interface HabitState {
   /** Oldest first: whether each of the last days stayed under the daily goal. */
   days: boolean[];
+  tracked?: boolean[];
+  dates?: string[];
   streakDays: number;
 }
 
-export function buildHabitState(series: { streakDays: number }[]): HabitState {
+export function buildHabitState(
+  series: { streakDays: number; tracked?: boolean; date?: string }[]
+): HabitState {
   return {
     days: series.map((d) => d.streakDays > 0),
+    ...(series.some((d) => d.tracked != null) ? { tracked: series.map((d) => d.tracked !== false) } : {}),
+    ...(series.every((d) => d.date != null) && series.length > 0
+      ? { dates: series.map((d) => d.date!) }
+      : {}),
     streakDays: series.length ? series[series.length - 1].streakDays : 0,
   };
 }
