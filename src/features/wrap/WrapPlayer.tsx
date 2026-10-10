@@ -179,6 +179,39 @@ export function WrapPlayer({
             <Feather name="x" size={16} color={theme.colors.ink} />
           </Pressable>
         </View>
+        <View style={styles.controls}>
+          <Pressable
+            style={withPressed(styles.control)}
+            onPress={() => step(-1)}
+            accessibilityRole="button"
+            accessibilityLabel="Previous part"
+          >
+            <Feather name="chevron-left" size={18} color={theme.colors.ink} />
+            <Text style={styles.controlText}>Previous</Text>
+          </Pressable>
+          {!still && (
+            <Pressable
+              style={withPressed(styles.control)}
+              onPress={() => setPaused((value) => !value)}
+              accessibilityRole="button"
+              accessibilityLabel={paused ? 'Resume wrap' : 'Pause wrap'}
+            >
+              <Feather name={paused ? 'play' : 'pause'} size={16} color={theme.colors.ink} />
+              <Text style={styles.controlText}>{paused ? 'Resume' : 'Pause'}</Text>
+            </Pressable>
+          )}
+          <Pressable
+            style={withPressed(styles.control)}
+            onPress={() => step(1)}
+            disabled={index === last}
+            accessibilityRole="button"
+            accessibilityLabel="Next part"
+            accessibilityState={{ disabled: index === last }}
+          >
+            <Text style={[styles.controlText, index === last && { opacity: 0.4 }]}>Next</Text>
+            <Feather name="chevron-right" size={18} color={theme.colors.ink} />
+          </Pressable>
+        </View>
       </View>
 
       <Pressable

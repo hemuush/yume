@@ -1,3 +1,5 @@
+import { ScreenLoadError } from '@/components/ScreenLoadError';
+import { PrimaryButton } from '@/components/PrimaryButton';
 import { useCallback, useState } from 'react';
 import { View, Pressable, StyleSheet } from 'react-native';
 import { Text } from '@/components/Text';
@@ -104,7 +106,7 @@ export default function CategoryScreen() {
     setEntries(list);
     setBudget(budgets.find((b) => b.budget.categoryId === cat.id) ?? null);
   }, [cursor, params.id, hideAmounts]);
-  const { loaded, loadError, reload } = useScreenLoad(load);
+  const { loaded, hasData, loadError, reload } = useScreenLoad(load);
 
   const range = windowRange(cursor);
   const periodName = windowLabel(cursor);
@@ -136,6 +138,9 @@ export default function CategoryScreen() {
         : `g=${cursor.granularity}&o=${cursor.offset}`;
     router.push(`/category/${parent.id}?${period}`);
   };
+
+  if (!hasData && loadError)
+    return <ScreenLoadError title="Category" message={loadError} onRetry={() => void reload()} />;
 
   if (loaded && !category) {
     return (
@@ -177,6 +182,7 @@ export default function CategoryScreen() {
           <View style={styles.errorBanner}>
             <Text style={styles.errorTitle}>Couldn't load this category</Text>
             <Text style={styles.errorDetail}>{loadError}</Text>
+            <PrimaryButton title="Retry" compact variant="secondary" onPress={() => void reload()} />
           </View>
         )}
 

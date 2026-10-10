@@ -1,3 +1,4 @@
+import { ScreenLoadError } from '@/components/ScreenLoadError';
 import { useCallback, useState } from 'react';
 import { View } from 'react-native';
 import { Text } from '@/components/Text';
@@ -111,7 +112,7 @@ export default function WhatIfScreen() {
     });
     setGoalId((prev) => (prev && openGoals.some((g) => g.id === prev) ? prev : (openGoals[0]?.id ?? null)));
   }, [askedCategoryId]);
-  const { loaded, loadError } = useScreenLoad(load);
+  const { loaded, hasData, loadError, reload } = useScreenLoad(load);
 
   const selectedCategory = categories.find((c) => c.categoryId === categoryId) ?? null;
   const selectedGoal = goals.find((g) => g.id === goalId) ?? null;
@@ -127,6 +128,9 @@ export default function WhatIfScreen() {
       : null;
 
   const reset = () => setCutPct(DEFAULT_CUT_PCT);
+
+  if (!hasData && loadError)
+    return <ScreenLoadError title="What if…?" message={loadError} onRetry={() => void reload()} />;
 
   if (!loaded && !loadError) {
     return (
@@ -157,6 +161,7 @@ export default function WhatIfScreen() {
           <View style={styles.errorBanner}>
             <Text style={styles.errorTitle}>Couldn't load your data</Text>
             <Text style={styles.errorDetail}>{loadError}</Text>
+            <PrimaryButton title="Retry" compact variant="secondary" onPress={() => void reload()} />
           </View>
         )}
 

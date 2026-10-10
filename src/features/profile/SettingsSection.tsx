@@ -54,12 +54,12 @@ export function daysAgoLabel(iso: string, now: Date = new Date()): string {
 
 const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
-/** Runs one settings read, resolving null instead of rejecting so a single failure can't blank the screen. */
-async function orNull<T>(read: () => Promise<T>): Promise<T | null> {
+/** Undefined means a failed read; null remains a legitimate saved setting (for example, no daily goal). */
+async function orUnavailable<T>(read: () => Promise<T>): Promise<T | undefined> {
   try {
     return await read();
   } catch {
-    return null;
+    return undefined;
   }
 }
 
@@ -117,26 +117,38 @@ export function SettingsSection() {
   const [lastBackupFailed, setLastBackupFailed] = useState(false);
   // The backup note waits for the first read, so it doesn't flash on every visit.
   const [backupLoaded, setBackupLoaded] = useState(false);
+  const [currencyLoaded, setCurrencyLoaded] = useState(false);
+  const [goalLoaded, setGoalLoaded] = useState(false);
+  const [readFailed, setReadFailed] = useState(false);
 
   // The reads are independent, so run them together, each with its own fallback: one failing read leaves
-  // that row on its default instead of blanking the whole screen.
+  // that row on its last known value instead of blanking the whole screen.
   const load = useCallback(async () => {
     const [cur, goal, tidy, deleted, prefs, lastBackup] = await Promise.all([
-      orNull(() => getDefaultCurrency()),
-      orNull(() => getDailySpendingGoal()),
-      orNull(async () => tidyUpCount(await getTidyUpReport())),
-      orNull(() => countDeletedEntries()),
-      orNull(() => getNotificationPrefs()),
-      orNull(() => getLastLocalBackupResult()),
+      orUnavailable(() => getDefaultCurrency()),
+      orUnavailable(() => getDailySpendingGoal()),
+      orUnavailable(async () => tidyUpCount(await getTidyUpReport())),
+      orUnavailable(() => countDeletedEntries()),
+      orUnavailable(() => getNotificationPrefs()),
+      orUnavailable(() => getLastLocalBackupResult()),
     ]);
-    if (cur) setCurrency(cur);
-    setDailyGoalState(goal);
-    setTidyCount(tidy);
-    setDeletedCount(deleted);
-    setNotifPrefs(prefs);
-    setLastBackupAt(lastBackup?.ok ? lastBackup.at : null);
-    setLastBackupFailed(lastBackup?.ok === false);
-    setBackupLoaded(true);
+    setReadFailed([cur, goal, tidy, deleted, prefs, lastBackup].some((value) => value === undefined));
+    if (cur !== undefined) {
+      setCurrency(cur);
+      setCurrencyLoaded(true);
+    }
+    if (goal !== undefined) {
+      setDailyGoalState(goal);
+      setGoalLoaded(true);
+    }
+    if (tidy !== undefined) setTidyCount(tidy);
+    if (deleted !== undefined) setDeletedCount(deleted);
+    if (prefs !== undefined) setNotifPrefs(prefs);
+    if (lastBackup !== undefined) {
+      setLastBackupAt(lastBackup?.ok ? lastBackup.at : null);
+      setLastBackupFailed(lastBackup?.ok === false);
+      setBackupLoaded(true);
+    }
   }, []);
 
   useFocusEffect(
@@ -221,14 +233,27 @@ export function SettingsSection() {
 
   const alertsOn = notifPrefs ? ALERT_KEYS.filter((k) => notifPrefs[k]).length : null;
   const backupOk = !!lastBackupAt && !lastBackupFailed;
-  const backupSub = lastBackupFailed
-    ? 'Last backup failed — tap to check'
-    : lastBackupAt
-      ? `Last backup ${daysAgoLabel(lastBackupAt)}`
-      : 'Never backed up';
+  const backupSub = !backupLoaded
+    ? readFailed
+      ? 'Backup status unavailable'
+      : 'Checking backup status…'
+    : lastBackupFailed
+      ? 'Last backup failed — tap to check'
+      : lastBackupAt
+        ? `Last backup ${daysAgoLabel(lastBackupAt)}`
+        : 'Never backed up';
 
   return (
     <>
+      {readFailed && (
+        <View style={styles.errorBanner}>
+          <Text style={styles.errorTitle}>Some settings couldn't be read</Text>
+          <Text style={styles.errorDetail}>
+            Previously loaded values are kept. Retry to check the latest settings.
+          </Text>
+          <PrimaryButton title="Retry" variant="secondary" compact onPress={() => void load()} />
+        </View>
+      )}
       {backupLoaded && (
         <SafetyCheck
           backup={backupOk ? 'ok' : lastBackupFailed ? 'failed' : 'never'}
@@ -256,7 +281,7 @@ export function SettingsSection() {
             round
             label="Default currency"
             sub="New accounts and displayed amounts"
-            value={currency}
+            value={currencyLoaded ? currency : 'Unavailable'}
             onPress={() => setCurrencyOpen((v) => !v)}
             expanded={currencyOpen}
           />
@@ -291,7 +316,13 @@ export function SettingsSection() {
               round
               label="Daily spending goal"
               sub="Shown on Home each day"
-              value={dailyGoal != null ? `${formatMoney(dailyGoal, currency)}/day` : 'Not set'}
+              value={
+                !goalLoaded || !currencyLoaded
+                  ? 'Unavailable'
+                  : dailyGoal != null
+                    ? `${formatMoney(dailyGoal, currency)}/day`
+                    : 'Not set'
+              }
               onPress={toggleDailyGoal}
               expanded={dailyGoalOpen}
               divider
@@ -382,7 +413,7 @@ export function SettingsSection() {
             round
             label="Backup & restore"
             sub={backupSub}
-            subColor={backupOk ? undefined : theme.colors.expenseText}
+            subColor={!backupLoaded || backupOk ? undefined : theme.colors.expenseText}
             onPress={() => router.push('/backup')}
           />
           <SettingsRow

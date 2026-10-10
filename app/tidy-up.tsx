@@ -1,3 +1,4 @@
+import { ScreenLoadError } from '@/components/ScreenLoadError';
 import { useCallback, useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Text } from '@/components/Text';
@@ -89,7 +90,7 @@ export default function TidyUpScreen() {
   const load = useCallback(async () => {
     setReport(await getTidyUpReport());
   }, []);
-  const { loaded, loadError, reload } = useScreenLoad(load);
+  const { loaded, hasData, loadError, reload } = useScreenLoad(load);
 
   /** Runs one fix, refreshes, and tells the rest of the app the ledger changed. */
   const act = async (fix: () => Promise<void>, failTitle: string) => {
@@ -207,6 +208,9 @@ export default function TidyUpScreen() {
     ? report.repeats.length + report.startingBalances.length + (report.fractionalCount > 0 ? 1 : 0)
     : 0;
 
+  if (!hasData && loadError)
+    return <ScreenLoadError title="Tidy up" message={loadError} onRetry={() => void reload()} />;
+
   return (
     <View style={styles.container}>
       <HomeWallpaper accent={accent} secondary={secondary} />
@@ -223,6 +227,7 @@ export default function TidyUpScreen() {
           <View style={styles.errorBanner}>
             <Text style={styles.errorTitle}>Couldn't check your data</Text>
             <Text style={styles.errorDetail}>{loadError}</Text>
+            <PrimaryButton title="Retry" compact variant="secondary" onPress={() => void reload()} />
           </View>
         )}
 

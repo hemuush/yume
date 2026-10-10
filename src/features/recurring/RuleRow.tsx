@@ -27,6 +27,7 @@ export function RuleRow({
   onTogglePause,
   muted,
   masked,
+  busy,
 }: {
   rule: RecurringRule;
   category: Category | undefined;
@@ -40,6 +41,7 @@ export function RuleRow({
   muted?: boolean;
   /** A savings or investment rule while those amounts are hidden. */
   masked?: boolean;
+  busy?: boolean;
 }) {
   const { secondary } = useAccent();
   const transfer = rule.type === 'transfer';
@@ -64,7 +66,7 @@ export function RuleRow({
           color={transfer ? secondary : category?.color}
         />
         <View style={{ flex: 1 }}>
-          <Text style={styles.rowTitle} numberOfLines={1}>
+          <Text style={styles.rowTitle} numberOfLines={2}>
             {title}
           </Text>
           <Text style={styles.rowSub} numberOfLines={2}>
@@ -85,6 +87,7 @@ export function RuleRow({
           value={rule.active}
           onChange={onTogglePause}
           accessibilityLabel={`${title}, ${rule.active ? 'running' : 'paused'}`}
+          disabled={busy}
         />
       </View>
     </Animated.View>

@@ -1,10 +1,11 @@
-import { View, StyleSheet } from 'react-native';
+import { View, Pressable, StyleSheet } from 'react-native';
 import { Text } from '@/components/Text';
 import { Glass, GLASS } from '@/components/Glass';
 import { Kicker, FrostChip } from '@/components/Frost';
 import { theme } from '@/constants/theme';
 import { longMonthYear } from '@/lib/dateLabels';
 import { DEEP_STREAK, GardenMonth } from './gardenMonth';
+import { showAlert } from '@/components/AppDialog';
 
 const WEEKDAYS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
@@ -37,15 +38,25 @@ export function GardenMonthCard({ month, today }: { month: GardenMonth; today: s
         <View key={w} style={styles.row}>
           {week.map((d, i) =>
             d ? (
-              <View
+              <Pressable
                 key={d.date}
                 style={[
                   styles.cell,
                   d.state === 'kept' && (d.streakDays >= DEEP_STREAK ? styles.keptDeep : styles.kept),
-                  (d.state === 'future' || d.state === 'untracked') && styles.faint,
+                  d.state === 'missed' && styles.missed,
+                  d.state === 'untracked' && styles.untracked,
+                  d.state === 'future' && styles.faint,
                   d.today && styles.today,
                 ]}
                 accessible
+                accessibilityRole="button"
+                disabled={d.state === 'future'}
+                onPress={() =>
+                  showAlert(
+                    `${d.day} ${longMonthYear(today)}`,
+                    `${d.state === 'kept' ? 'Kept under the daily goal.' : d.state === 'missed' ? 'Over the daily goal.' : 'No tracked spending yet.'}${d.today ? ' Today is still in progress; its result can change.' : ''}`
+                  )
+                }
                 accessibilityLabel={`${d.day}${d.today ? ', today' : ''}: ${
                   d.state === 'kept'
                     ? 'kept under the goal'
@@ -56,14 +67,28 @@ export function GardenMonthCard({ month, today }: { month: GardenMonth; today: s
                         : 'not tracked yet'
                 }`}
               >
-                <Text style={[styles.day, d.state === 'kept' && styles.dayKept]}>{d.day}</Text>
-              </View>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
+                  <Text style={[styles.day, d.state === 'kept' && styles.dayKept]}>{d.day}</Text>
+                  {d.state !== 'future' && (
+                    <Text style={styles.stateMark} accessible={false}>
+                      {d.state === 'kept' ? '✓' : d.state === 'missed' ? '●' : '◌'}
+                    </Text>
+                  )}
+                </View>
+              </Pressable>
             ) : (
               <View key={`blank-${i}`} style={[styles.cell, styles.blank]} />
             )
           )}
         </View>
       ))}
+      <View style={styles.legend}>
+        <Text style={styles.legendText}>✓ Kept</Text>
+        <Text style={styles.legendText}>● Over goal</Text>
+        <Text style={styles.legendText}>◌ Untracked</Text>
+        <Text style={styles.legendText}>Faded · Future</Text>
+      </View>
+      <Text style={styles.legendText}>Today’s result can change until the day ends.</Text>
     </Glass>
   );
 }
@@ -75,6 +100,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: 8,
+    flexWrap: 'wrap',
     marginBottom: 4,
   },
   row: { flexDirection: 'row', gap: 4 },
@@ -98,8 +124,13 @@ const styles = StyleSheet.create({
   blank: { backgroundColor: 'transparent', borderColor: 'transparent' },
   kept: { backgroundColor: '#B6E3C6', borderColor: '#B6E3C6' },
   keptDeep: { backgroundColor: '#6FC290', borderColor: '#6FC290' },
+  missed: { backgroundColor: theme.colors.expenseTint, borderColor: theme.colors.idCoral },
+  untracked: { backgroundColor: 'transparent', borderStyle: 'dashed', borderColor: theme.colors.textMuted },
+  legend: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 8 },
+  legendText: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
   faint: { opacity: 0.45 },
   today: { borderWidth: 2, borderColor: theme.colors.ink },
-  day: { fontFamily: theme.font.bodyMedium, fontSize: 11, color: theme.colors.textSecondary },
+  day: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textSecondary },
+  stateMark: { fontFamily: theme.font.body, fontSize: 10, color: theme.colors.textPrimary },
   dayKept: { color: theme.colors.ink },
 });

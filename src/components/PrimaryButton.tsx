@@ -8,6 +8,7 @@ import { usePressScale } from '@/lib/usePressScale';
 import { haptics } from '@/lib/haptics';
 import { useUiScale } from '@/lib/uiScale';
 import { DURATIONS } from '@/lib/motionTimings';
+import { useReduceMotion } from '@/lib/useReduceMotion';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -47,6 +48,7 @@ export function PrimaryButton({
 }: Props) {
   const { animatedStyle, onPressIn, onPressOut } = usePressScale();
   const uiScale = useUiScale();
+  const reduceMotion = useReduceMotion();
   // Fires once as the checkmark comes in; every Pay/Save/Restore confirm funnels through `done`,
   // so none needs its own haptic.
   useEffect(() => {
@@ -72,7 +74,7 @@ export function PrimaryButton({
         style,
       ]}
       accessibilityRole="button"
-      // Regular buttons are ~42dp tall and compact ones ~30dp; the slop lifts both to 48dp unseen.
+      // Both variants have a 44dp minimum height; slop gives tightly spaced controls extra reach.
       hitSlop={compact ? HIT_SLOP_COMPACT : HIT_SLOP}
       {...rest}
     >
@@ -91,7 +93,7 @@ export function PrimaryButton({
       <ReanimatedAnimated.Text
         maxFontSizeMultiplier={MAX_FONT_SCALE}
         key={done ? 'done' : 'label'}
-        entering={FadeIn.duration(DURATIONS.quick)}
+        entering={reduceMotion ? undefined : FadeIn.duration(DURATIONS.quick)}
         style={[styles.text, compact && styles.textCompact, textStyle]}
       >
         {done ? `✓ ${doneLabel}` : title}
@@ -107,6 +109,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
     alignItems: 'center',
     justifyContent: 'center',
+    minHeight: 44,
   },
   baseCompact: { paddingVertical: 7, paddingHorizontal: 14 },
   withIcon: { flexDirection: 'row', gap: 8 },
@@ -118,7 +121,7 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
   },
-  text: { fontFamily: theme.font.roundedBold, fontSize: 15 },
+  text: { fontFamily: theme.font.roundedBold, fontSize: 15, textAlign: 'center', flexShrink: 1 },
   textPrimary: { color: theme.colors.surface },
   textSecondary: { color: theme.colors.textPrimary },
   disabled: { opacity: 0.45 },

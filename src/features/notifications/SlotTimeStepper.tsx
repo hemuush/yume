@@ -67,12 +67,12 @@ export function SlotTimeStepper({
 }
 
 const styles = StyleSheet.create({
-  row: { backgroundColor: theme.colors.surfaceAlt },
+  row: { backgroundColor: theme.colors.surfaceAlt, flexWrap: 'wrap', rowGap: 8 },
   timeRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   timeBtn: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
     alignItems: 'center',

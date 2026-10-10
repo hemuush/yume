@@ -65,6 +65,8 @@ export const styles = StyleSheet.create({
   tileAmount: { fontFamily: theme.font.body, fontSize: 21, letterSpacing: -0.4, marginTop: 12 },
   tileMeta: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary, marginTop: 2 },
   settlePill: {
+    minHeight: 44,
+    justifyContent: 'center',
     alignSelf: 'flex-start',
     marginTop: 12,
     paddingHorizontal: 13,
@@ -112,9 +114,9 @@ export const styles = StyleSheet.create({
     borderBottomColor: theme.colors.borderSoft,
   },
   moreBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: StyleSheet.hairlineWidth,

@@ -1,3 +1,4 @@
+import { PrimaryButton } from '@/components/PrimaryButton';
 import { useCallback, useState } from 'react';
 import { View, StyleSheet, Pressable } from 'react-native';
 import { Text } from '@/components/Text';
@@ -167,6 +168,7 @@ export default function NeedsYouScreen() {
           <View style={styles.errorBanner}>
             <Text style={styles.errorTitle}>Couldn't load what needs you</Text>
             <Text style={styles.errorDetail}>{loadError}</Text>
+            <PrimaryButton title="Retry" compact variant="secondary" onPress={() => void reload()} />
           </View>
         )}
 

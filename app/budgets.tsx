@@ -1,3 +1,5 @@
+import { ScreenLoadError } from '@/components/ScreenLoadError';
+import { PrimaryButton } from '@/components/PrimaryButton';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { router, useLocalSearchParams } from 'expo-router';
 import { View } from 'react-native';
@@ -80,7 +82,7 @@ export default function BudgetsScreen() {
     setLapsed(lapsedList);
     setCategories(cats);
   }, [periodMonth, hideAmounts]);
-  const { loaded, loadError, reload: load } = useScreenLoad(loadBudgets);
+  const { loaded, hasData, loadError, reload: load } = useScreenLoad(loadBudgets);
   const { budget: budgetId, add } = useLocalSearchParams<{ budget?: string; add?: string }>();
   useEffect(() => {
     if (!loaded || loadError || (!budgetId && add !== '1')) return;
@@ -181,6 +183,9 @@ export default function BudgetsScreen() {
       ]
     : [];
 
+  if (!hasData && loadError)
+    return <ScreenLoadError title="Budgets" message={loadError} onRetry={() => void load()} />;
+
   if (!loaded && !loadError) {
     return (
       <View style={styles.container}>
@@ -214,6 +219,7 @@ export default function BudgetsScreen() {
           <View style={styles.errorBanner}>
             <Text style={styles.errorTitle}>Couldn't load your budgets</Text>
             <Text style={styles.errorDetail}>{loadError}</Text>
+            <PrimaryButton title="Retry" compact variant="secondary" onPress={() => void load()} />
           </View>
         )}
 

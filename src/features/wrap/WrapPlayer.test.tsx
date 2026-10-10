@@ -74,6 +74,22 @@ afterEach(() => {
 });
 
 describe('WrapPlayer', () => {
+  it('offers visible navigation and a pause control without losing gesture navigation', async () => {
+    const r = await render();
+    const control = (label: string) =>
+      r.root.findAll(
+        (node) => node.props.accessibilityLabel === label && typeof node.props.onPress === 'function'
+      )[0];
+    act(() => control('Pause wrap').props.onPress());
+    act(() => jest.advanceTimersByTime(BEAT_MS.hook + 50));
+    expect(has(r, 'Your month, wrapped')).toBe(true);
+    expect(control('Resume wrap')).toBeDefined();
+    act(() => control('Next part').props.onPress());
+    expect(has(r, 'What you kept')).toBe(true);
+    act(() => control('Previous part').props.onPress());
+    expect(has(r, 'Your month, wrapped')).toBe(true);
+    act(() => r.unmount());
+  });
   it('opens on the hook', async () => {
     const r = await render();
     expect(has(r, 'Your month, wrapped')).toBe(true);
