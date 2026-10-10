@@ -174,6 +174,7 @@ export function LockScreen({ onUnlocked }: { onUnlocked: () => void }) {
               variant="primary"
               onPress={tryUnlock}
               disabled={busy}
+              accessibilityState={{ busy }}
               style={styles.unlockBtn}
             />
             {deviceUnsecured && (
@@ -237,8 +238,8 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontFamily: theme.font.body,
-    fontSize: 12.5,
-    lineHeight: 17,
+    fontSize: 13,
+    lineHeight: 19,
     color: theme.colors.textSecondary,
     marginTop: 6,
   },

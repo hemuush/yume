@@ -28,7 +28,15 @@ describe('PrimaryButton', () => {
   it('is disabled when asked, so TalkBack and the press handler both know', () => {
     const tree = render({ disabled: true });
     expect(pressable(tree).props.disabled).toBe(true);
+    expect(pressable(tree).props.accessibilityState.disabled).toBe(true);
     expect(pressable(tree).props.accessibilityRole).toBe('button');
+  });
+
+  it('preserves the caller busy state while announcing disabled accurately', () => {
+    const tree = render({ disabled: true, accessibilityState: { busy: true } });
+    expect(pressable(tree).props.accessibilityState).toEqual({ busy: true, disabled: true });
+    act(() => tree.update(<PrimaryButton title="Save" accessibilityState={{ busy: false }} />));
+    expect(pressable(tree).props.accessibilityState).toEqual({ busy: false, disabled: false });
   });
 
   it('keeps every size at a 48dp touch target without changing its look', () => {

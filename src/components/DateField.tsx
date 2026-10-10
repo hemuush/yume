@@ -4,6 +4,7 @@ import { Text } from '@/components/Text';
 import Feather from '@expo/vector-icons/Feather';
 import { CalendarSheet } from '@/components/CalendarSheet';
 import { theme } from '@/constants/theme';
+import { FIELD_LABEL } from '@/constants/textStyles';
 import { haptics } from '@/lib/haptics';
 import { parseLocalIsoDate, toLocalIsoDate, addDaysToIsoDate } from '@/lib/date';
 import { withPressed } from '@/lib/pressed';
@@ -106,15 +107,14 @@ export function DateField({
 const styles = StyleSheet.create({
   wrap: { marginBottom: 14 },
   label: {
-    fontSize: 10.5,
-    fontFamily: theme.font.roundedMedium,
-    letterSpacing: 0.4,
-    textTransform: 'uppercase',
+    ...FIELD_LABEL,
     color: theme.colors.textMuted,
     marginBottom: 6,
   },
   row: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   chip: {
+    minHeight: 44,
+    justifyContent: 'center',
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,

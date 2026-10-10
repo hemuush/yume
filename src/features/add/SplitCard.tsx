@@ -90,7 +90,7 @@ export function SplitCard({
             return (
               <View key={p.key} style={styles.line}>
                 <View style={[styles.dot, { backgroundColor: cat?.color ?? theme.colors.inkHairline }]} />
-                <Text style={styles.name} numberOfLines={1}>
+                <Text style={styles.name} numberOfLines={2}>
                   {labelOf(p.categoryId) ?? 'No category yet'}
                 </Text>
                 <Text style={styles.amount}>{formatMoney(Math.max(0, amounts[i]), currency)}</Text>
@@ -141,6 +141,8 @@ const styles = StyleSheet.create({
   head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   eyebrow: EYEBROW,
   edit: {
+    minHeight: 44,
+    justifyContent: 'center',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: theme.radius.pill,
@@ -155,6 +157,6 @@ const styles = StyleSheet.create({
   name: { flex: 1, fontFamily: theme.font.bodyMedium, fontSize: 13.5, color: theme.colors.textPrimary },
   amount: { fontFamily: theme.font.monoBold, fontSize: 13, color: theme.colors.textPrimary },
   problem: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.expenseText },
-  remove: { alignSelf: 'center', marginTop: 12, paddingVertical: 4 },
+  remove: { alignSelf: 'center', minHeight: 44, justifyContent: 'center', marginTop: 12, paddingVertical: 4 },
   removeText: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textMuted },
 });

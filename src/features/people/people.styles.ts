@@ -95,7 +95,6 @@ export const styles = StyleSheet.create({
   },
   quietInitial: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.onFlat },
   quietName: {
-    flex: 1,
     minWidth: 0,
     fontFamily: theme.font.roundedMedium,
     fontSize: 14,

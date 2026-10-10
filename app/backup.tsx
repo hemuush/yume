@@ -525,7 +525,7 @@ Restore anyway? Your current data would be replaced with no way back.`,
                   >
                     <View style={h.mid}>
                       <View style={styles.whenRow}>
-                        <Text style={h.title} numberOfLines={1}>
+                        <Text style={h.title} numberOfLines={2}>
                           {file.exportedAt ? formatWhen(file.exportedAt) : 'Backup file'}
                         </Text>
                         {i === 0 && (

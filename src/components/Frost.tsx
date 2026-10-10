@@ -30,7 +30,7 @@ export function Kicker({
       <View style={frost.kickerBadge}>
         {typeof icon === 'string' ? <Feather name={icon} size={14} color={theme.colors.ink} /> : icon}
       </View>
-      <Text style={frost.kicker} numberOfLines={1}>
+      <Text style={frost.kicker} numberOfLines={2}>
         {children}
       </Text>
     </View>
@@ -67,7 +67,7 @@ export function FrostChip({
       ]}
     >
       {icon && <Feather name={icon} size={13} color={color} />}
-      <Text style={[frost.chipText, tone && { color }]} numberOfLines={1}>
+      <Text style={[frost.chipText, tone && { color }]} numberOfLines={2}>
         {children}
       </Text>
     </View>
@@ -153,6 +153,7 @@ export const frost = StyleSheet.create({
     alignItems: 'center',
     gap: 5,
     minHeight: 28,
+    paddingVertical: 4,
     paddingHorizontal: 10,
     borderRadius: theme.radius.pill,
     borderWidth: 1,

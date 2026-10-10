@@ -30,7 +30,7 @@ function Tile({
     >
       <View style={[styles.dot, { backgroundColor: tone }]} />
       <Text style={styles.value}>{value}</Text>
-      <Text style={styles.label} numberOfLines={1}>
+      <Text style={styles.label} numberOfLines={2}>
         {label}
       </Text>
     </AnimatedPressable>
@@ -78,5 +78,11 @@ const styles = StyleSheet.create({
   },
   dot: { position: 'absolute', top: 12, right: 12, width: 8, height: 8, borderRadius: 4 },
   value: { fontFamily: theme.font.roundedBold, fontSize: 18, color: theme.colors.textPrimary },
-  label: { fontFamily: theme.font.bodyMedium, fontSize: 11, color: theme.colors.textSecondary },
+  label: {
+    fontFamily: theme.font.bodyMedium,
+    fontSize: 12,
+    lineHeight: 17,
+    minHeight: 34,
+    color: theme.colors.textSecondary,
+  },
 });

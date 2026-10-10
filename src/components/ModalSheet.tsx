@@ -389,7 +389,13 @@ const styles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 14, minHeight: 32 },
   headerText: { flex: 1, minWidth: 0 },
   title: { fontFamily: theme.font.roundedBold, fontSize: 19, color: theme.colors.textPrimary },
-  subtitle: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, marginTop: 2 },
+  subtitle: {
+    fontFamily: theme.font.body,
+    fontSize: 12,
+    lineHeight: 18,
+    color: theme.colors.textMuted,
+    marginTop: 4,
+  },
 
   // --- pinned-footer layouts ---
   framedPad: { paddingHorizontal: 16 },
@@ -423,7 +429,13 @@ const styles = StyleSheet.create({
   },
   roundBtnDanger: { backgroundColor: theme.colors.expenseTint, borderColor: theme.colors.expenseTint },
   disabled: { opacity: 0.5 },
-  link: { alignSelf: 'center', paddingVertical: 10, paddingHorizontal: 16 },
+  link: {
+    alignSelf: 'center',
+    minHeight: 44,
+    justifyContent: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+  },
   linkText: { fontFamily: theme.font.roundedBold, fontSize: 13.5, color: theme.colors.textPrimary },
   linkDanger: { color: theme.colors.expenseText },
 
