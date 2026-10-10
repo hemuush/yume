@@ -107,7 +107,11 @@ function render(
   onToggleStack = jest.fn(),
   onPressTx = jest.fn(),
   onReorder?: (date: string, ids: string[]) => Promise<void>,
-  opts: { categories?: Category[]; savingsAccountIds?: Set<string> } = {}
+  opts: {
+    categories?: Category[];
+    savingsAccountIds?: Set<string>;
+    onDragActive?: (active: boolean) => void;
+  } = {}
 ) {
   let r!: ReactTestRenderer;
   act(() => {
@@ -125,6 +129,7 @@ function render(
         openStacks={openStacks}
         onToggleStack={onToggleStack}
         onReorder={onReorder}
+        onDragActive={opts.onDragActive}
       />
     );
   });
@@ -262,4 +267,14 @@ describe('TimelineDay with subcategories', () => {
     expect(texts(r).map((t) => t.replace(/^false/, ''))).toContain('in Groceries · Bank');
     expect(byLabel(r, 'Flipkart Minutes, in Groceries')).toHaveLength(1);
   });
+});
+
+it('releases the parent scroll lock when a held day unmounts', () => {
+  const onDragActive = jest.fn();
+  const r = render(new Set(), jest.fn(), jest.fn(), async () => {}, { onDragActive });
+  const row = r.root.findAll((n) => typeof n.props.onLongPress === 'function')[0];
+  act(() => row.props.onLongPress());
+  expect(onDragActive).toHaveBeenLastCalledWith(true);
+  act(() => r.unmount());
+  expect(onDragActive).toHaveBeenLastCalledWith(false);
 });

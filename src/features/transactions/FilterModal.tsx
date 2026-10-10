@@ -99,6 +99,7 @@ export function FilterModal({
     setExpandedParentId(null);
     // Drop selected categories that no longer match the chosen type: keeping them would silently filter out
     // everything, since a transaction can never match a category of the wrong kind.
+    if (next === 'transfer') setDraftCategoryIds([]);
     if (next === 'income' || next === 'expense') {
       setDraftCategoryIds((prev) => prev.filter((id) => categories.find((c) => c.id === id)?.kind === next));
     }

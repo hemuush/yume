@@ -182,3 +182,10 @@ describe('FilterModal count', () => {
     expect(button(tree, 'Show 3 entries')).toBeDefined();
   });
 });
+
+it('drops hidden category picks when switching to transfers, preserving the account filter', () => {
+  const { tree, onApply } = render({ type: 'expense', categoryIds: ['food'], accountIds: ['a2'] });
+  act(() => typeControl(tree).props.onChange('transfer'));
+  act(() => button(tree, 'Apply').props.onPress());
+  expect(onApply).toHaveBeenCalledWith({ type: 'transfer', categoryIds: [], accountIds: ['a2'] });
+});

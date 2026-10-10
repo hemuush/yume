@@ -79,6 +79,19 @@ describe('privateSummary', () => {
 });
 
 describe('isSavingsEntry', () => {
+  it('inherits sensitivity from the parent even when the child flag is false', () => {
+    const categories = new Map<string, Category>([
+      ['parent', { id: 'parent', isSensitive: true } as Category],
+      ['child', { id: 'child', parentId: 'parent', isSensitive: false } as Category],
+    ]);
+    expect(
+      isSavingsEntry(
+        { type: 'expense', accountId: 'bank', toAccountId: null, categoryId: 'child' },
+        categories,
+        new Set()
+      )
+    ).toBe(true);
+  });
   const cats = new Map<string, Category>([
     ['sip', { id: 'sip', isSensitive: true } as Category],
     ['food', { id: 'food', isSensitive: false } as Category],

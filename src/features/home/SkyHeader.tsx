@@ -21,6 +21,7 @@ import type { CollapsingHeader } from '@/lib/useCollapsingHeader';
 import { SkyBackdrop } from './SkyBackdrop';
 import { GLASS } from '@/components/Glass';
 import { wallpaperTop } from './HomeWallpaper';
+import { headerIsCollapsed } from './headerMotion';
 
 /** The title row's height; the band keeps just this row (plus BAR_PAD) once collapsed. */
 const ROW = 40;
@@ -84,12 +85,19 @@ export function SkyHeader({
     collapse?.onMeasure(h, Math.max(0, h - (top + ROW + BAR_PAD)));
   };
 
-  // Which of the two states takes touches and screen-reader focus.
+  // Touch/focus follows visibility: the compact chip must not activate while still transparent.
   const [collapsed, setCollapsed] = useState(false);
+  const [expandedInteractive, setExpandedInteractive] = useState(true);
+  const compactActive = useSharedValue(false);
   useAnimatedReaction(
-    () => distance.value > 0 && scrollY.value > distance.value / 2,
+    () => (distance.value > 0 ? Math.min(1, Math.max(0, scrollY.value / distance.value)) : 0),
     (now, prev) => {
-      if (now !== prev) runOnJS(setCollapsed)(now);
+      const compact = headerIsCollapsed(now, compactActive.value);
+      if (compact !== compactActive.value) {
+        compactActive.value = compact;
+        runOnJS(setCollapsed)(compact);
+      }
+      if (now < 0.5 !== (prev == null || prev < 0.5)) runOnJS(setExpandedInteractive)(now < 0.5);
     }
   );
 
@@ -197,9 +205,9 @@ export function SkyHeader({
         {(subtitle || children) && (
           <ReanimatedAnimated.View
             style={[styles.below, fadeStyle]}
-            pointerEvents={collapsed ? 'none' : 'auto'}
-            accessibilityElementsHidden={collapsed}
-            importantForAccessibility={collapsed ? 'no-hide-descendants' : 'auto'}
+            pointerEvents={expandedInteractive ? 'auto' : 'none'}
+            accessibilityElementsHidden={!expandedInteractive}
+            importantForAccessibility={expandedInteractive ? 'auto' : 'no-hide-descendants'}
           >
             {subtitle ? (
               <Text style={styles.subtitle} numberOfLines={1}>

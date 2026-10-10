@@ -29,9 +29,10 @@ jest.mock('@/features/transactions/TransactionsSkeleton', () => ({
   TransactionsSkeleton: () => require('react').createElement(require('react-native').Text, null, 'SKELETON'),
 }));
 jest.mock('@/components/UndoToast', () => ({ useUndoToast: () => ({ show: jest.fn() }) }));
-const mockComparison = { fail: true };
+const mockComparison: { fail: boolean; wait?: Promise<void> } = { fail: true };
 jest.mock('@/db/reports', () => ({
   getRangeComparison: async () => {
+    await mockComparison.wait;
     if (mockComparison.fail) throw new Error('db locked');
     const empty = {
       incomeMinor: 0,
@@ -122,4 +123,35 @@ describe('Activity period controls', () => {
     expect([...selected].filter((l) => l === 'Week' || l === 'Month')).toEqual(['Month']);
     expect(texts(tree)).toContain('Nothing logged this month');
   });
+});
+
+it('keeps the committed week caption while month data is still loading', async () => {
+  mockComparison.fail = false;
+  const tree = await render();
+  let resolve!: () => void;
+  mockComparison.wait = new Promise<void>((done) => {
+    resolve = done;
+  });
+  const month = tree.root.find(
+    (n) =>
+      n.props.accessibilityRole === 'radio' &&
+      typeof n.props.onPress === 'function' &&
+      n.findAllByType(Text).some((t) => t.props.children === 'Month')
+  );
+  try {
+    await act(async () => month.props.onPress());
+    expect(texts(tree)).toContain('This week');
+    expect(texts(tree)).toContain('Updating…');
+    expect(texts(tree)).toContain('Nothing logged this week');
+    expect(texts(tree)).not.toContain('Nothing logged this month');
+    await act(async () => {
+      resolve();
+      await mockComparison.wait;
+    });
+    expect(texts(tree)).toContain('Nothing logged this month');
+    expect(texts(tree)).not.toContain('Updating…');
+  } finally {
+    resolve();
+    mockComparison.wait = undefined;
+  }
 });

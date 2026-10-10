@@ -20,7 +20,8 @@ import { SheetCard } from '@/components/SheetCard';
 import { SettingsRow } from '@/components/SettingsRow';
 import { theme, modalFooterStyles as f } from '@/constants/theme';
 import { screenStyles as h } from '@/components/screenStyles';
-import { accountIcon } from '@/lib/account';
+import { accountIcon, savingsAccountIdsOf } from '@/lib/account';
+import { isSavingsEntry } from '@/lib/privateSummary';
 import { hexToRgba, shade } from '@/lib/color';
 import { categorySentence, inParent, joinSub, parentNameOf } from '@/lib/categoryLabel';
 import { weekdayDayMonth } from '@/lib/dateLabels';
@@ -89,6 +90,7 @@ export function TransactionDetailModal({
 
   useEffect(() => {
     setAskDelete(false);
+    setRuleOpen(false);
     setLinkFailed(false);
     setLink(undefined);
     if (!tx) return;
@@ -131,9 +133,8 @@ export function TransactionDetailModal({
   const account = accounts.find((a) => a.id === tx.accountId);
   const accountName = (id: string) => accounts.find((a) => a.id === id)?.name ?? '—';
   const transfer = tx.type === 'transfer';
-  const movesSavings =
-    transfer &&
-    [tx.accountId, tx.toAccountId].some((id) => accounts.find((a) => a.id === id)?.type === 'savings');
+  const savingsAccountIds = savingsAccountIdsOf(accounts);
+  const sensitiveEntry = (entry: Transaction) => isSavingsEntry(entry, categoriesById, savingsAccountIds);
 
   /** Saves the same entry for today, with an undo — like ↻ Repeat on Add. */
   const logAgainToday = async () => {
@@ -346,11 +347,7 @@ export function TransactionDetailModal({
         amount={
           <>
             {tx.type === 'expense' ? '−' : tx.type === 'income' ? '+' : ''}
-            <Amount
-              minor={tx.amountMinor}
-              sensitive={cat?.isSensitive || movesSavings}
-              currency={account?.currency}
-            />
+            <Amount minor={tx.amountMinor} sensitive={sensitiveEntry(tx)} currency={account?.currency} />
           </>
         }
         amountColor={
@@ -434,9 +431,7 @@ export function TransactionDetailModal({
                 splitParts.reduce((s, p) => s + p.amountMinor, 0),
                 {
                   currency: account?.currency,
-                  masked:
-                    hideAmounts &&
-                    splitParts.some((p) => categories.find((c) => c.id === p.categoryId)?.isSensitive),
+                  masked: hideAmounts && splitParts.some(sensitiveEntry),
                 }
               )}{' '}
               split
@@ -454,7 +449,7 @@ export function TransactionDetailModal({
                   <Amount
                     currency={accounts.find((a) => a.id === p.accountId)?.currency}
                     minor={p.amountMinor}
-                    sensitive={pc?.isSensitive}
+                    sensitive={sensitiveEntry(p)}
                     style={[styles.splitPartAmount, mine && styles.splitPartMine]}
                   />
                 </View>

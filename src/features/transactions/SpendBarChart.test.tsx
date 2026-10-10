@@ -2,7 +2,7 @@
  * The Activity chart's week: the tapped day's amount shows in a bubble over its bar, today's label is an ink
  * pill, and days of the neighbouring month are named once above their dots. All figures are made up.
  */
-import { Text } from 'react-native';
+import { Text, View, StyleSheet } from 'react-native';
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
 
 jest.mock('@/lib/useReduceMotion', () => ({ useReduceMotion: () => true }));
@@ -38,6 +38,35 @@ function chart(selectedKey: string | null, onPressDay = jest.fn()) {
 }
 
 describe('SpendBarChart week', () => {
+  it('fills a net-spending bar without overflow when another category has a refund', () => {
+    let tree!: ReactTestRenderer;
+    act(() => {
+      tree = create(
+        <SpendBarChart
+          bars={[
+            {
+              key: '2026-10-01',
+              label: 'T',
+              totalMinor: 8000,
+              isCurrent: false,
+              segments: [
+                { categoryId: 'food', name: 'Food', color: '#123456', amountMinor: 6000 },
+                { categoryId: 'travel', name: 'Travel', color: '#654321', amountMinor: 4000 },
+              ],
+            },
+          ]}
+          onPressDay={jest.fn()}
+        />
+      );
+    });
+    const heights = tree.root
+      .findAllByType(View)
+      .map((n) => StyleSheet.flatten(n.props.style))
+      .filter((s) => s?.backgroundColor === '#123456' || s?.backgroundColor === '#654321')
+      .map((s) => s.height);
+    expect(heights).toEqual(['60%', '40%']);
+    act(() => tree.unmount());
+  });
   it('shows no amount until a day is tapped, then the tapped day’s amount', () => {
     expect(texts(chart(null).r)).not.toContain('₹13484');
     expect(texts(chart('2026-10-01').r)).toContain('₹13484');

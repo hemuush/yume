@@ -3,6 +3,10 @@
  * rule form (monthly, from its next same day); the category row opens its page. Loan-tied entries get none.
  */
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
+import { Text } from 'react-native';
+
+let mockHideAmounts = false;
+jest.mock('@/theme/PrivacyContext', () => ({ usePrivacy: () => ({ hideAmounts: mockHideAmounts }) }));
 
 jest.setTimeout(30000);
 
@@ -86,14 +90,17 @@ afterEach(() => {
   });
   mounted.length = 0;
 });
-async function render(entry: object = lunch) {
+async function render(
+  entry: object = lunch,
+  categories = [{ id: 'food', name: 'Food', icon: 'food', color: '#FF9E7D' } as any]
+) {
   let tree!: ReactTestRenderer;
   await act(async () => {
     tree = create(
       <TransactionDetailModal
         tx={entry as any}
         accounts={[{ id: 'bank', name: 'Bank' } as any]}
-        categories={[{ id: 'food', name: 'Food', icon: 'food', color: '#FF9E7D' } as any]}
+        categories={categories}
         onClose={jest.fn()}
         onEdit={jest.fn()}
         onChanged={jest.fn()}
@@ -115,6 +122,7 @@ const rows = (tree: ReactTestRenderer, label: string) =>
   );
 
 beforeEach(() => {
+  mockHideAmounts = false;
   mockLink.current = null;
   mockLink.fail = false;
   (createTransaction as jest.Mock).mockClear();
@@ -227,4 +235,18 @@ describe('deleting from the sheet', () => {
     expect(rows(tree, 'Log again today').length).toBeGreaterThan(0);
     expect(rows(tree, 'Got money back').length).toBeGreaterThan(0);
   });
+});
+
+it('keeps a sensitive parent category masked when opening a child entry detail', async () => {
+  mockHideAmounts = true;
+  const tree = await render(lunch, [
+    { id: 'parent', name: 'Investments', icon: 'tag', color: '#999999', isSensitive: true },
+    { id: 'food', name: 'Child', icon: 'tag', color: '#999999', parentId: 'parent', isSensitive: false },
+  ]);
+  const shown = tree.root
+    .findAllByType(Text)
+    .map((t) => [t.props.children].flat(Infinity).join(''))
+    .join(' ');
+  expect(shown).toContain('••••');
+  expect(shown).not.toContain('₹110');
 });
