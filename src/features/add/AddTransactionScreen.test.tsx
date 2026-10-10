@@ -227,6 +227,124 @@ beforeEach(() => {
 });
 
 describe('Add screen', () => {
+  it('hides shortcuts from the previous entry type while the next query loads', async () => {
+    (getRepeatEntries as jest.Mock).mockResolvedValueOnce([
+      {
+        type: 'expense',
+        accountId: 'bank',
+        accountCurrency: 'INR',
+        categoryId: 'food',
+        categoryName: 'Old shortcut',
+        categoryIcon: 'tag',
+        categoryColor: '#8FCBFF',
+        amountMinor: 12000,
+        note: '',
+        timesLogged: 3,
+      },
+    ]);
+    let finish!: (entries: never[]) => void;
+    (getRepeatEntries as jest.Mock).mockImplementationOnce(
+      () =>
+        new Promise<never[]>((resolve) => {
+          finish = resolve;
+        })
+    );
+    const tree = await render();
+    expect(texts(tree)).toContain('Old shortcut');
+    await press(tree, 'Income');
+    expect(texts(tree)).not.toContain('Old shortcut');
+    await act(async () => {
+      finish([]);
+      await settle();
+    });
+  });
+
+  it('explains whole-unit rounding and saves the displayed value', async () => {
+    const tree = await render();
+    await press(tree, 'Food');
+    await typeAmount(tree, '120.50');
+    expect(texts(tree)).toContain('Saved in whole units: ₹121');
+    await save(tree);
+    expect(createTransaction).toHaveBeenLastCalledWith(expect.objectContaining({ amountMinor: 12100 }));
+  });
+  it('does not let an account lookup override a later manual choice', async () => {
+    let finish!: (id: string) => void;
+    (getLastAccountForCategory as jest.Mock).mockImplementationOnce(
+      () =>
+        new Promise<string>((resolve) => {
+          finish = resolve;
+        })
+    );
+    const tree = await render();
+    await press(tree, 'Food');
+    await act(async () => {
+      tree.root
+        .find((n) => n.props.accessibilityLabel?.startsWith('Account,') && n.props.onPress)
+        .props.onPress();
+    });
+    await act(async () => {
+      tree.root.find((n) => n.props.accessibilityLabel === 'Cash' && n.props.onPress).props.onPress();
+    });
+    await act(async () => {
+      finish('bank');
+      await settle();
+    });
+    await typeAmount(tree, '120');
+    await save(tree);
+    expect(createTransaction).toHaveBeenLastCalledWith(expect.objectContaining({ accountId: 'cash' }));
+  });
+
+  it('queues only once when Add to list is tapped during repeat detection', async () => {
+    let finish!: (result: null) => void;
+    (findRecentRepeat as jest.Mock).mockImplementationOnce(
+      () =>
+        new Promise<null>((resolve) => {
+          finish = resolve;
+        })
+    );
+    const tree = await render();
+    await press(tree, 'Food');
+    await typeAmount(tree, '120');
+    const button = pressable(tree, 'Add to list');
+    await act(async () => {
+      button.props.onPress();
+      button.props.onPress();
+    });
+    await act(async () => {
+      finish(null);
+      await settle();
+    });
+    await save(tree, 'Save 1 entry');
+    expect(createTransaction).toHaveBeenCalledTimes(1);
+  });
+
+  it('counts both the queued entry and populated current form', async () => {
+    const tree = await render();
+    await press(tree, 'Food');
+    await typeAmount(tree, '120');
+    await press(tree, 'Add to list');
+    await typeAmount(tree, '40');
+    await save(tree, 'Save 2 entries');
+    expect(createTransaction).toHaveBeenCalledTimes(2);
+  });
+
+  it('hides and reopens the number pad without losing the amount', async () => {
+    const tree = await render();
+    await typeAmount(tree, '120');
+    await press(tree, 'Hide pad');
+    expect(tree.root.findAll((n) => n.props.accessibilityLabel === 'delete')).toHaveLength(0);
+    await press(tree, 'Show pad');
+    expect(texts(tree)).toContain('120');
+  });
+
+  it('explains invalid calculations and disables Save', async () => {
+    const tree = await render();
+    await press(tree, 'Food');
+    await typeAmount(tree, '1÷0');
+    expect(texts(tree)).toContain('Enter a positive amount. Check the calculation.');
+    expect(tree.root.find((n) => n.props.title === 'Save').props.disabled).toBe(true);
+    expect(texts(tree)).toContain('—');
+  });
   it('opens with no category picked, even one saved before, but keeps the account', async () => {
     (getAddDefaults as jest.Mock).mockResolvedValueOnce({
       expense: { accountId: 'cash', categoryId: 'food' },
@@ -584,7 +702,7 @@ describe('Add screen', () => {
     const tree = await render();
     expect(texts(tree)).toContain('Your usual');
     // The chip's name and amount are separate texts, so the amount is never the part cut short.
-    expect(texts(tree)).toEqual(expect.arrayContaining(['Rapido ·', '₹126']));
+    expect(texts(tree)).toEqual(expect.arrayContaining(['Rapido', '₹126']));
     await act(async () => {
       tree.root
         .find((n) => n.props.accessibilityLabel === 'Rapido, ₹126, logged 3 times' && n.props.onPress)

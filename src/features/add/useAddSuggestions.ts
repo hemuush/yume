@@ -27,6 +27,8 @@ export function useAddSuggestions({
   const [frequentKey, setFrequentKey] = useState('');
   const currentKey = `${type}:${categoryId}:${hideAmounts}:${accountCurrency}`;
   const [usual, setUsual] = useState<RepeatEntry[]>([]);
+  const [usualKey, setUsualKey] = useState('');
+  const currentUsualKey = `${type}:${editingId ?? ''}`;
 
   // Only expense/income have a "usual amount for this category"; transfers and friend entries (keyed to a
   // person) don't. Re-fetches on every categoryId change, which is exactly when it differs.
@@ -61,17 +63,22 @@ export function useAddSuggestions({
     let cancelled = false;
     getRepeatEntries(USUAL_COUNT, toLocalIsoDate(new Date()), type)
       .then((entries) => {
-        if (!cancelled) setUsual(entries);
+        if (!cancelled) {
+          setUsual(entries);
+          setUsualKey(currentUsualKey);
+        }
       })
-      .catch(() => {});
+      .catch(() => {
+        if (!cancelled) setUsual([]);
+      });
     return () => {
       cancelled = true;
     };
-  }, [type, editingId]);
+  }, [type, editingId, currentUsualKey]);
 
   // Hide stale suggestions immediately while a privacy-aware reload is pending.
   return {
     frequentAmounts: frequentKey === currentKey ? frequentAmounts : [],
-    usual: hideAmounts ? usual.filter((e) => !e.isSensitive) : usual,
+    usual: usualKey !== currentUsualKey ? [] : hideAmounts ? usual.filter((e) => !e.isSensitive) : usual,
   };
 }

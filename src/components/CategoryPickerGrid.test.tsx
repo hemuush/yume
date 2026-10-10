@@ -23,7 +23,7 @@ const cats = ['Food', 'Groceries', 'Transport', 'Shopping', 'Health', 'Fun', 'Re
 
 const flat = (style: unknown) => Object.assign({}, ...[style].flat(Infinity).filter(Boolean));
 
-function render(dimmedIds?: string[]) {
+function render(dimmedIds?: string[], minColumnWidth?: number) {
   let r!: ReactTestRenderer;
   act(() => {
     r = create(
@@ -33,6 +33,7 @@ function render(dimmedIds?: string[]) {
         onSelect={jest.fn()}
         variant="medal"
         dimmedIds={dimmedIds}
+        minColumnWidth={minColumnWidth}
       />
     );
   });
@@ -50,6 +51,13 @@ const tileOf = (r: ReactTestRenderer, name: string) =>
   );
 
 describe('category grid', () => {
+  it('gives transaction category names wider columns when requested', () => {
+    const r = render(undefined, 80);
+    expect(flat(tileOf(r, 'Food').props.style).width).toBe(92);
+    const grid = r.root.find((n) => n.type === View && typeof n.props.onLayout === 'function');
+    act(() => grid.props.onLayout({ nativeEvent: { layout: { width: 284, height: 0, x: 0, y: 0 } } }));
+    expect(flat(tileOf(r, 'Food').props.style).width).toBe(94);
+  });
   it('splits the width into equal columns', () => {
     const r = render();
     // 371 / 70 → 5 columns of 74 px.
