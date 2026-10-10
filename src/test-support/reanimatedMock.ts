@@ -33,6 +33,12 @@ export function createReanimatedMock() {
         },
       }).current,
     useAnimatedStyle: (fn: () => unknown) => fn(),
+    useDerivedValue: (fn: () => unknown) => ({
+      get value() {
+        return fn();
+      },
+      get: fn,
+    }),
     // Home's month ring and the debt tick draw through animated SVG props.
     useAnimatedProps: (fn: () => unknown) => fn(),
     interpolate: (value: number, input: number[], output: number[]) => {

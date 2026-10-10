@@ -19,11 +19,13 @@ export function useFadeIn() {
       value.setValue(1);
       return;
     }
-    Animated.timing(value, {
+    const animation = Animated.timing(value, {
       toValue: 1,
       duration: DURATIONS.enter,
       useNativeDriver: true,
-    }).start();
+    });
+    animation.start();
+    return () => animation.stop();
   }, [value, reduce]);
 
   return {

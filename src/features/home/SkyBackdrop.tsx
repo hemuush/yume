@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native';
-import ReanimatedAnimated, { useAnimatedStyle, SharedValue } from 'react-native-reanimated';
+import ReanimatedAnimated, { useAnimatedStyle, useDerivedValue, SharedValue } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { theme } from '@/constants/theme';
 import { shade, hexToRgba } from '@/lib/color';
@@ -37,18 +37,17 @@ export function SkyBackdrop({
   wash?: boolean;
 }) {
   const wash = shade(accent, 90, 4);
+  const shift = useDerivedValue(() => Math.min(Math.max(0, distance.value), Math.max(0, scrollY.value)));
+  const progress = useDerivedValue(() => (distance.value > 0 ? shift.value / distance.value : 0));
 
   const washStyle = useAnimatedStyle(() => {
-    const d = distance.value;
-    const p = d > 0 ? clamp01(scrollY.value / d) : 0;
+    const p = progress.value;
     return { opacity: 1 - clamp01(p * 1.4) };
   });
   // The header slides up by `shift`; the bar slides back down by the same amount, so it stays at the top.
   const barStyle = useAnimatedStyle(() => {
-    const d = distance.value;
-    const p = d > 0 ? clamp01(scrollY.value / d) : 0;
-    const shift = d > 0 ? Math.min(d, Math.max(0, scrollY.value)) : 0;
-    return { opacity: clamp01((p - 0.55) / 0.45), transform: [{ translateY: shift }] };
+    const p = progress.value;
+    return { opacity: clamp01((p - 0.55) / 0.45), transform: [{ translateY: shift.value }] };
   });
 
   return (

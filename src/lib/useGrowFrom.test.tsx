@@ -45,16 +45,20 @@ describe('useGrowFrom', () => {
   });
 
   it('starts at the old value when you come back', () => {
+    const timing = jest.spyOn(Animated, 'timing');
     let r!: ReturnType<typeof create>;
     act(() => {
       r = create(<Probe k="bar" value={60} />);
     });
     act(() => jest.advanceTimersByTime(2000));
     act(() => r.unmount());
+    timing.mockClear();
     act(() => {
       create(<Probe k="bar" value={60} />);
     });
     expect(valueOf(box.seen)).toBe(60);
+    expect(timing).not.toHaveBeenCalled();
+    timing.mockRestore();
   });
 
   it('glides from the old value to a new one', () => {

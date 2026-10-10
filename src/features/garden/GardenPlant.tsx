@@ -83,13 +83,15 @@ function GrowingPlant({
       setPos(idx);
       return;
     }
-    Animated.timing(grow, {
+    let active = true;
+    const animation = Animated.timing(grow, {
       toValue: idx,
       duration: DURATIONS.standard,
       easing: Easing.out(Easing.cubic),
       useNativeDriver: false,
-    }).start(({ finished }) => {
-      if (!finished) return;
+    });
+    animation.start(({ finished }) => {
+      if (!finished || !active) return;
       Animated.sequence([
         Animated.timing(pop, {
           toValue: 1.08,
@@ -105,6 +107,11 @@ function GrowingPlant({
         }),
       ]).start();
     });
+    return () => {
+      active = false;
+      animation.stop();
+      pop.stopAnimation();
+    };
   }, [animKey, idx, reduce, grow, pop]);
 
   return (

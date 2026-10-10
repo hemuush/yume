@@ -414,12 +414,12 @@ export default function ReportsScreen() {
   useEffect(() => {
     scrollRef.current?.scrollTo({ y: 0, animated: false });
     resetScroll();
-  }, [tab, resetScroll, scrollRef]);
+  }, [tab, cursor, resetScroll, scrollRef]);
 
   // While loading or on an error, a plain header; the report's own one shrinks as it scrolls.
   const header = <ReportsHeader cursor={cursor} onChange={stepCursor} />;
 
-  if (status === 'error') {
+  if (status === 'error' && (loadedKey !== requestKey || !comparison)) {
     return (
       <View style={styles.container}>
         <HomeWallpaper accent={accent} secondary={secondary} />
@@ -437,12 +437,13 @@ export default function ReportsScreen() {
       </View>
     );
   }
-  if (status === 'loading' || loadedKey !== requestKey || !comparison) {
+  if (loadedKey !== requestKey || !comparison) {
     return (
       <View style={styles.container}>
         <HomeWallpaper accent={accent} secondary={secondary} />
         {header}
-        <View style={{ paddingTop: headerHeight }}>
+        {/* The loading header is in normal flow and already reserves its height. */}
+        <View>
           <ReportsSkeleton />
         </View>
       </View>
@@ -644,6 +645,13 @@ export default function ReportsScreen() {
             </View>
           </View>
         }
+        {status === 'error' && (
+          <View style={styles.tidyNudge}>
+            <Text style={styles.errTitle}>Couldn’t refresh your report</Text>
+            <Text style={styles.errDetail}>{errorText}</Text>
+            <PrimaryButton title="Retry" variant="secondary" onPress={() => void load(cursor)} />
+          </View>
+        )}
         {Object.keys(detailErrors).length > 0 && (
           <View style={styles.tidyNudge}>
             <Text style={styles.errTitle}>Some report details couldn’t load</Text>
