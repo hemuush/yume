@@ -616,3 +616,73 @@ describe('Home, stepping between months on a lived-in phone', () => {
     act(() => tree.unmount());
   });
 });
+
+describe('Plan links open the selected existing flow', () => {
+  beforeAll(async () => {
+    await livedIn();
+  });
+  beforeEach(() => {
+    mockHide = false;
+    mockParams = {};
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+  });
+  afterEach(() => jest.restoreAllMocks());
+
+  it('opens the selected savings goal and can close it without changing the ledger', async () => {
+    const { listSavingsGoals } = require('@/db/savingsGoals');
+    const goal = (await listSavingsGoals())[0];
+    mockParams = { goal: goal.id };
+    const tree = await open(() => require('../../app/savings-goals'));
+    const { GoalDetailModal } = require('@/features/goals/GoalDetailModal');
+    const detail = tree.root.findByType(GoalDetailModal);
+    expect(detail.props.goal.id).toBe(goal.id);
+    await act(async () => {
+      detail.props.onClose();
+    });
+    expect(tree.root.findByType(GoalDetailModal).props.goal).toBeNull();
+    expect((await listSavingsGoals()).find((g: { id: string }) => g.id === goal.id)).toEqual(goal);
+    act(() => tree.unmount());
+  });
+
+  it('opens goal creation directly without creating a goal', async () => {
+    mockParams = { add: '1' };
+    const { listSavingsGoals } = require('@/db/savingsGoals');
+    const before = await listSavingsGoals();
+    const tree = await open(() => require('../../app/savings-goals'));
+    const { AddGoalModal } = require('@/features/goals/AddGoalModal');
+    expect(tree.root.findByType(AddGoalModal).props.visible).toBe(true);
+    expect(await listSavingsGoals()).toEqual(before);
+    act(() => tree.unmount());
+  });
+
+  it('opens the selected budget in the existing edit sheet', async () => {
+    const { listBudgetsForMonth } = require('@/db/budgets');
+    const budget = (await listBudgetsForMonth())[0];
+    mockParams = { budget: budget.budget.id };
+    const tree = await open(() => require('../../app/budgets'));
+    const { AddBudgetModal } = require('@/features/budgets/AddBudgetModal');
+    expect(tree.root.findByType(AddBudgetModal).props.visible).toBe(true);
+    expect(tree.root.findByType(AddBudgetModal).props.editing.budget.id).toBe(budget.budget.id);
+    act(() => tree.unmount());
+  });
+
+  it('opens budget creation directly', async () => {
+    mockParams = { add: '1' };
+    const tree = await open(() => require('../../app/budgets'));
+    const { AddBudgetModal } = require('@/features/budgets/AddBudgetModal');
+    expect(tree.root.findByType(AddBudgetModal).props.visible).toBe(true);
+    expect(tree.root.findByType(AddBudgetModal).props.editing).toBeNull();
+    act(() => tree.unmount());
+  });
+
+  it('opens a loan overview without starting its payment flow', async () => {
+    const { listLoans } = require('@/db/loans');
+    const loan = (await listLoans())[0];
+    mockParams = { loan: loan.id };
+    const tree = await open(() => require('../../app/loans'));
+    const { LoanDetailModal } = require('@/features/loans/LoanDetailModal');
+    expect(tree.root.findByType(LoanDetailModal).props.loan.id).toBe(loan.id);
+    expect(tree.root.findByType(LoanDetailModal).props.startWithPay).toBe(false);
+    act(() => tree.unmount());
+  });
+});

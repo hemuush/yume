@@ -11,8 +11,9 @@ import { withPressed } from '@/lib/pressed';
 import { weekdayDayMonth } from '@/lib/dateLabels';
 import { useAccent } from '@/theme/AccentContext';
 import { homeInk } from '@/features/home/homeInk';
-import { DueGroup, PlanDueItem, PlanRoute, dueTone } from './planOverview';
+import { DueGroup, PlanDueItem, PlanRoute, dueTone, DUE_SOON_DAYS } from './planOverview';
 import { styles } from './plan.styles';
+import { addDaysToIsoDate } from '@/lib/date';
 
 /**
  * Plan's Coming up as a timeline: one line runs down the card with a dot per day (amber when something is
@@ -90,12 +91,12 @@ function DueRow({
         <Feather name={kindIcon(item)} size={16} color={theme.colors.ink} />
       </View>
       <View style={styles.dueMid}>
-        <Text style={styles.dueTitle} numberOfLines={1}>
+        <Text style={styles.dueTitle} numberOfLines={2}>
           {item.title}
         </Text>
         <Text
           style={[styles.dueSub, tone === 'urgent' ? styles.dueUrgent : tone === 'soon' && styles.dueSoon]}
-          numberOfLines={1}
+          numberOfLines={2}
         >
           {KIND_LABEL[item.kind]} · {when}
         </Text>
@@ -104,8 +105,10 @@ function DueRow({
         <View style={styles.payWrap}>
           {amount}
           <Pressable
-            onPress={() => onPay(item.loanId!)}
-            hitSlop={8}
+            onPress={(event) => {
+              event.stopPropagation();
+              onPay(item.loanId!);
+            }}
             style={withPressed([styles.payBtn, { backgroundColor: homeInk(accent) }])}
             accessibilityRole="button"
             accessibilityLabel={`Pay ${item.title} EMI`}
@@ -190,8 +193,14 @@ export function ComingUpSection({
                 <View style={[styles.node, { borderColor: nodeColor(g, today, ink) }]} />
                 <View style={styles.dayHead}>
                   <Text style={styles.dayHeadText}>{weekdayDayMonth(g.date)}</Text>
-                  {g.outMinor > 0 && <Text style={styles.dayHeadAmount}>{formatMoney(g.outMinor)}</Text>}
+                  {g.outMinor > 0 && (
+                    <Text style={styles.dayHeadAmount}>Total out {formatMoney(g.outMinor)}</Text>
+                  )}
                 </View>
+                <Text style={styles.dueSub}>
+                  {g.date > addDaysToIsoDate(today, DUE_SOON_DAYS - 1) ? 'Next scheduled · ' : ''}
+                  {g.items.length} {g.items.length === 1 ? 'entry' : 'entries'} · {dueDateLabel(g.date)}
+                </Text>
                 {g.items.map((it) => (
                   <DueRow key={it.key} item={it} today={today} onOpen={onOpen} onPay={onPay} />
                 ))}

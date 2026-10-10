@@ -60,8 +60,11 @@ import { listCardCycles } from '@/db/cardCycles';
 import { showAlert } from '@/components/AppDialog';
 import { errorMessage } from '@/lib/errorMessage';
 import { useTabScrollToTop } from '@/lib/useTabScrollToTop';
+import { useReduceMotion } from '@/lib/useReduceMotion';
+import { PrimaryButton } from '@/components/PrimaryButton';
 
 interface PlanData {
+  hideAmounts: boolean;
   loans: LoansSummary;
   dueSoon: DueSoon;
   dueGroups: DueGroup[];
@@ -91,8 +94,12 @@ export default function PlanScreen() {
   const { hideAmounts } = usePrivacy();
   const { accent, secondary } = useAccent();
   const [data, setData] = useState<PlanData | null>(null);
+  const request = useRef(0);
+  const reduceMotion = useReduceMotion();
 
   const loadPlan = useCallback(async () => {
+    const call = ++request.current;
+    const today = toLocalIsoDate(new Date());
     const dailyGoalRead = getDailySpendingGoal();
     const [
       budgets,
@@ -119,12 +126,13 @@ export default function PlanScreen() {
       listAccounts(),
       dailyGoalRead,
       getCategoryMonthlyAverages(3),
-      listCardCycles().catch(() => []),
+      listCardCycles(),
       // The streak only needs the goal value, so it chains off the same read instead of waiting for the batch.
       dailyGoalRead.then((goal) => (goal != null ? getDailyGoalStreakSeries(goal, 5) : null)),
       getDefaultCurrency(),
     ]);
 
+    if (call !== request.current) return;
     const categoriesById = new Map(categories.map((c) => [c.id, c]));
     const categoryLabelOf = (id: string | null) => {
       const cat = id ? categoriesById.get(id) : undefined;
@@ -149,7 +157,7 @@ export default function PlanScreen() {
           : r.note || categoryLabelOf(r.categoryId) || 'Recurring',
     });
     const visibleRules = rules.filter((r) => !hideAmounts || !isSavingsEntry(r, categoriesById, savingsIds));
-    const until = addDaysToIsoDate(toLocalIsoDate(new Date()), DUE_SOON_DAYS - 1);
+    const until = addDaysToIsoDate(today, DUE_SOON_DAYS - 1);
     // Every run in the fortnight Plan shows: a weekly bill is due twice in it, not once.
     const dueItems = buildDueItems(
       loansSummary.rows,
@@ -179,8 +187,8 @@ export default function PlanScreen() {
         !categories.find((cat) => cat.id === c.categoryId)?.isSystem
     );
 
-    const today = toLocalIsoDate(new Date());
     setData({
+      hideAmounts,
       loans: loansSummary,
       dueSoon: buildDueSoon(dueItems, today),
       dueGroups: groupDueItems(dueItems, today),
@@ -219,7 +227,14 @@ export default function PlanScreen() {
       dailyGoalMinor: dailyGoal,
     });
   }, [hideAmounts]);
-  const { loaded, loadError, reload } = useScreenLoad(loadPlan, { skipWhenUnchanged: true });
+  // Time changes the 14-day window even when nobody writes to the ledger.
+  const { loaded, loadError, reload } = useScreenLoad(loadPlan);
+  useEffect(
+    () => () => {
+      request.current++;
+    },
+    []
+  );
   // The EMI being paid from Coming up, with the account and category it goes on.
   const [paying, setPaying] = useState<LoanPaymentContext | null>(null);
   const payEmi = async (loanId: string) => {
@@ -243,9 +258,12 @@ export default function PlanScreen() {
   const groupYs = useRef<Record<string, number>>({});
   const scrollToComingUp = useCallback(
     () =>
-      scrollRef.current?.scrollTo({ y: Math.max(0, comingUpY.current - underHeader() - 8), animated: true }),
+      scrollRef.current?.scrollTo({
+        y: Math.max(0, comingUpY.current - underHeader() - 8),
+        animated: !reduceMotion,
+      }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [collapsedHeight]
+    [collapsedHeight, reduceMotion]
   );
   // A day on the strip lands on its group; today also covers anything overdue,
   // which sits under its own earlier date, so fall back to the earliest group.
@@ -256,7 +274,7 @@ export default function PlanScreen() {
     if (groupY == null) return scrollToComingUp();
     scrollRef.current?.scrollTo({
       y: Math.max(0, comingUpY.current + SECTION_GAP.top + cardY.current + groupY - underHeader() - 8),
-      animated: true,
+      animated: !reduceMotion,
     });
   };
   // Home's "+N more this week" lands here, already scrolled to Coming up.
@@ -286,14 +304,18 @@ export default function PlanScreen() {
           <View style={styles.errorBanner}>
             <Text style={styles.errorTitle}>Couldn&rsquo;t load your plans</Text>
             <Text style={styles.errorDetail}>{loadError}</Text>
+            <Text style={styles.errorDetail}>The forecast may be incomplete until this is resolved.</Text>
+            <PrimaryButton title="Try again" onPress={() => void reload()} />
           </View>
         )}
 
-        {!loaded || !data ? (
-          <View style={{ marginTop: theme.layout.screenTopGap, gap: SCREEN.sectionGap }}>
-            <CardRowsSkeleton rows={3} meter />
-            <CardRowsSkeleton rows={2} subtitle />
-          </View>
+        {!loaded || !data || data.hideAmounts !== hideAmounts ? (
+          loadError ? null : (
+            <View style={{ marginTop: theme.layout.screenTopGap, gap: SCREEN.sectionGap }}>
+              <CardRowsSkeleton rows={3} meter />
+              <CardRowsSkeleton rows={2} subtitle />
+            </View>
+          )
         ) : (
           <>
             <RunwayCard
@@ -305,7 +327,12 @@ export default function PlanScreen() {
               onJumpToDay={scrollToDay}
             />
             <Section title="This month’s budgets" onSeeAll={() => open('/budgets')}>
-              <BudgetJars summary={data.budgets} onOpen={() => open('/budgets')} />
+              <BudgetJars
+                summary={data.budgets}
+                onOpen={() => open('/budgets')}
+                onBudget={(id) => router.push({ pathname: '/budgets', params: { budget: id } })}
+                onAdd={() => router.push({ pathname: '/budgets', params: { add: '1' } })}
+              />
             </Section>
             <Section title="The way to debt-free">
               <DebtPath
@@ -313,6 +340,7 @@ export default function PlanScreen() {
                 dueSoon={data.dueSoon}
                 today={data.today}
                 onOpen={() => open('/loans')}
+                onLoan={(id) => router.push({ pathname: '/loans', params: { loan: id } })}
               />
             </Section>
             <Section title="Saving toward" onSeeAll={() => open('/savings-goals')}>
@@ -321,6 +349,8 @@ export default function PlanScreen() {
                   goals={data.goals}
                   savingsAccounts={data.savingsAccounts}
                   onOpen={() => open('/savings-goals')}
+                  onGoal={(id) => router.push({ pathname: '/savings-goals', params: { goal: id } })}
+                  onAdd={() => router.push({ pathname: '/savings-goals', params: { add: '1' } })}
                 />
                 <WhatIfCard whatIf={data.whatIf} onOpen={() => open('/whatif')} />
               </View>
@@ -331,6 +361,7 @@ export default function PlanScreen() {
                 <HabitTile
                   habit={data.habit}
                   goalMinor={data.dailyGoalMinor}
+                  today={data.today}
                   onOpen={() => open('/garden')}
                 />
               </View>
@@ -354,7 +385,7 @@ export default function PlanScreen() {
         collapse={collapse}
         wallpaper
         summary={
-          data && data.dueSoon.count > 0 ? (
+          data && data.hideAmounts === hideAmounts && data.dueSoon.count > 0 ? (
             <HeaderSummary
               figure={formatMoney(data.dueSoon.totalMinor)}
               rest="due in 14 days"
@@ -369,7 +400,13 @@ export default function PlanScreen() {
           account={paying.account}
           categoryId={paying.categoryId}
           linkedAccountMissing={paying.linkedAccountMissing}
-          balanceMinor={paying.account ? data?.balances[paying.account.id] : undefined}
+          balanceMinor={
+            paying.account
+              ? data?.hideAmounts === hideAmounts
+                ? data.balances[paying.account.id]
+                : undefined
+              : undefined
+          }
           onClose={() => setPaying(null)}
           onPaid={reload}
         />

@@ -1,4 +1,5 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { router, useLocalSearchParams } from 'expo-router';
 import { View } from 'react-native';
 import { MovingRow } from '@/components/MovingRow';
 import { Text } from '@/components/Text';
@@ -80,6 +81,16 @@ export default function BudgetsScreen() {
     setCategories(cats);
   }, [periodMonth, hideAmounts]);
   const { loaded, loadError, reload: load } = useScreenLoad(loadBudgets);
+  const { budget: budgetId, add } = useLocalSearchParams<{ budget?: string; add?: string }>();
+  useEffect(() => {
+    if (!loaded || loadError || (!budgetId && add !== '1')) return;
+    const selected = budgets.find((item) => item.budget.id === budgetId);
+    if (add === '1' || selected) {
+      setEditingBudget(add === '1' ? null : (selected ?? null));
+      setModalVisible(true);
+    }
+    router.setParams({ budget: undefined, add: undefined });
+  }, [loaded, loadError, budgetId, add, budgets]);
 
   const hero = budgetsOverview(budgets, toLocalIsoDate(new Date()));
 

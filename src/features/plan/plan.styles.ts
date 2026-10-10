@@ -27,6 +27,7 @@ export const styles = StyleSheet.create({
   head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
 
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  dayButtons: { flexDirection: 'row', gap: 6 },
 
   bigRow: { flexDirection: 'row', alignItems: 'baseline', gap: 6, flexWrap: 'wrap' },
   bigValue: {
@@ -39,7 +40,7 @@ export const styles = StyleSheet.create({
   bigNote: { fontFamily: theme.font.bodyMedium, fontSize: 14, color: theme.colors.textMuted },
   bigNothing: {
     fontFamily: theme.font.body,
-    fontSize: 28,
+    fontSize: 24,
     letterSpacing: -0.5,
     color: theme.colors.textPrimary,
   },
@@ -62,7 +63,17 @@ export const styles = StyleSheet.create({
     fontSize: 11,
     color: theme.colors.textSecondary,
   },
-  pin: { position: 'absolute', width: 32, height: 32, alignItems: 'center', justifyContent: 'center' },
+  pin: { position: 'absolute', width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
+  dayButton: {
+    minHeight: 44,
+    minWidth: 72,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 14,
+    backgroundColor: GLASS.fillStrong,
+  },
+  dayButtonOn: { borderWidth: 1, borderColor: theme.colors.incomeText },
+  dayButtonText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textPrimary },
   pinDot: { width: 13, height: 13, borderRadius: 7, borderWidth: 3, backgroundColor: theme.colors.surface },
   pinDotOn: { width: 18, height: 18, borderRadius: 9, borderWidth: 4 },
   foot: {
@@ -73,7 +84,7 @@ export const styles = StyleSheet.create({
   },
   footText: { fontFamily: theme.font.body, fontSize: 14, lineHeight: 20, color: theme.colors.textSecondary },
   footBold: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
-  jump: { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: 4 },
+  jump: { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 44 },
   jumpText: { fontFamily: theme.font.bodyBold, fontSize: 14, color: theme.colors.link },
 
   /* ---------- Budget jars ---------- */
@@ -82,7 +93,7 @@ export const styles = StyleSheet.create({
   captionOk: { fontFamily: theme.font.bodyBold, color: theme.colors.incomeText },
   jars: { gap: 10, paddingTop: 16, paddingHorizontal: 16 },
   jarsScroll: { marginHorizontal: -16 },
-  jar: { width: 64, alignItems: 'center', gap: 5 },
+  jar: { width: 90, alignItems: 'center', gap: 5 },
   jarBody: {
     width: 52,
     height: JAR_HEIGHT,
@@ -122,6 +133,8 @@ export const styles = StyleSheet.create({
   spillText: { fontFamily: theme.font.bodyBold, fontSize: 10.5, color: theme.colors.surface },
   jarName: {
     maxWidth: '100%',
+    minHeight: 32,
+    textAlign: 'center',
     fontFamily: theme.font.bodyBold,
     fontSize: 12,
     color: theme.colors.textPrimary,
@@ -139,7 +152,7 @@ export const styles = StyleSheet.create({
   },
   lanes: { gap: 12, marginTop: 4 },
   lane: { gap: 7 },
-  laneTop: { flexDirection: 'row', alignItems: 'baseline', gap: 6 },
+  laneTop: { gap: 4 },
   laneName: {
     flexShrink: 1,
     fontFamily: theme.font.bodyBold,
@@ -180,7 +193,14 @@ export const styles = StyleSheet.create({
 
   /* ---------- Goals ---------- */
   goals: { gap: 10, paddingHorizontal: SCREEN.gutter },
-  goal: { width: 136, height: 156, padding: 14, overflow: 'hidden' },
+  goal: { width: 136, height: 184, padding: 12, overflow: 'hidden' },
+  goalReservoir: { position: 'absolute', top: 52, left: 0, right: 0, bottom: 0 },
+  goalRemaining: {
+    fontFamily: theme.font.body,
+    fontSize: 10,
+    color: theme.colors.textSecondary,
+    marginTop: 4,
+  },
   goalFill: { position: 'absolute', left: 0, right: 0, bottom: 0, opacity: 0.5 },
   goalFillEdge: { position: 'absolute', left: 0, right: 0, top: 0, height: 2, opacity: 0.8 },
   goalPct: {
@@ -194,10 +214,10 @@ export const styles = StyleSheet.create({
   goalName: {
     marginTop: 'auto',
     fontFamily: theme.font.bodyBold,
-    fontSize: 14,
+    fontSize: 13,
     color: theme.colors.textPrimary,
   },
-  goalAmt: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
+  goalAmt: { fontFamily: theme.font.body, fontSize: 11, marginTop: 3, color: theme.colors.textSecondary },
   goalOf: { color: theme.colors.textMuted },
   goalNew: {
     alignItems: 'center',
@@ -221,11 +241,11 @@ export const styles = StyleSheet.create({
   sub: { fontFamily: theme.font.body, fontSize: 13, lineHeight: 18, color: theme.colors.textSecondary },
 
   whatIfQ: { fontFamily: theme.font.body, fontSize: 14, lineHeight: 20, color: theme.colors.textSecondary },
-  whatIfBold: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
-  lever: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  whatIfBold: { fontSize: 14, fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
+  lever: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 12 },
   cuts: { flexDirection: 'row', gap: 6 },
   cut: {
-    minHeight: 36,
+    minHeight: 44,
     minWidth: 54,
     justifyContent: 'center',
     alignItems: 'center',
@@ -237,7 +257,7 @@ export const styles = StyleSheet.create({
   },
   cutText: { fontFamily: theme.font.bodyBold, fontSize: 13.5, color: theme.colors.textPrimary },
   cutTextOn: { color: theme.colors.surface },
-  gain: { flex: 1, alignItems: 'flex-end' },
+  gain: { flexGrow: 1, alignItems: 'flex-end', minWidth: 100 },
   gainValue: {
     fontFamily: theme.font.body,
     fontSize: 20,
@@ -246,6 +266,7 @@ export const styles = StyleSheet.create({
   },
   gainNote: { fontFamily: theme.font.body, fontSize: 11.5, color: theme.colors.textMuted },
   openRow: {
+    minHeight: 44,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -256,7 +277,7 @@ export const styles = StyleSheet.create({
   openText: { fontFamily: theme.font.bodyMedium, fontSize: 13.5, color: theme.colors.link },
 
   /* ---------- Friends & streak ---------- */
-  tile: { flex: 1, minWidth: 0, minHeight: 150, padding: 14, gap: 6 },
+  tile: { flex: 1, minWidth: 0, minHeight: 180, padding: 14, gap: 6 },
   tileWide: { flex: 1.25 },
   go: { position: 'absolute', top: 14, right: 14 },
   value: { ...figure },
@@ -264,11 +285,14 @@ export const styles = StyleSheet.create({
   over: { color: theme.colors.expenseText },
   tileSub: { fontFamily: theme.font.body, fontSize: 12.5, lineHeight: 17, color: theme.colors.textMuted },
   people: { flexDirection: 'row', gap: 6, marginTop: 'auto', overflow: 'hidden' },
-  person: { alignItems: 'center', gap: 3 },
+  person: { maxWidth: 50, alignItems: 'center', gap: 3 },
   avatar: { width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
   avatarText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.surface },
+  personName: { fontFamily: theme.font.body, fontSize: 10, color: theme.colors.textMuted },
+  sproutDay: { alignItems: 'center', gap: 3 },
+  dayLabel: { fontFamily: theme.font.body, fontSize: 9, color: theme.colors.textMuted },
   personAmt: { fontFamily: theme.font.bodyBold, fontSize: 10, color: theme.colors.textSecondary },
-  sprouts: { flexDirection: 'row', alignItems: 'flex-end', gap: 4, height: 34, marginTop: 'auto' },
+  sprouts: { flexDirection: 'row', alignItems: 'flex-end', gap: 6, minHeight: 48, marginTop: 'auto' },
 
   /* ---------- Coming up ---------- */
   list: { marginHorizontal: SCREEN.gutter, paddingTop: 4, overflow: 'hidden' },
@@ -284,10 +308,17 @@ export const styles = StyleSheet.create({
     borderWidth: 2.5,
     backgroundColor: theme.colors.surface,
   },
-  dayHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: 11 },
+  dayHead: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingTop: 11,
+  },
   dayHeadText: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textSecondary },
   dayHeadAmount: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textMuted },
-  dueRow: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 60 },
+  dueRow: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 10, minHeight: 65 },
   dueIcon: {
     width: 38,
     height: 38,
@@ -304,8 +335,15 @@ export const styles = StyleSheet.create({
   dueSoon: { color: theme.colors.dueInk },
   dueUrgent: { color: theme.colors.expenseText },
   dueAmount: { fontFamily: theme.font.bodyMedium, fontSize: 15, color: theme.colors.textPrimary },
-  payWrap: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  payBtn: { minHeight: 32, justifyContent: 'center', paddingHorizontal: 14, borderRadius: theme.radius.pill },
+  payWrap: {
+    flexWrap: 'wrap',
+    maxWidth: 112,
+    justifyContent: 'flex-end',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  payBtn: { minHeight: 44, justifyContent: 'center', paddingHorizontal: 14, borderRadius: theme.radius.pill },
   payBtnText: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.surface },
   emptyRow: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 64, paddingHorizontal: 14 },
   links: {
