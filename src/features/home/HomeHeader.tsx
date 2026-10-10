@@ -23,6 +23,8 @@ import { WrapButton } from './WrapButton';
 import type { ReadyWrap } from '@/features/wrap/wrapWindow';
 import { MOTION } from '@/lib/animation';
 import { wallpaperTop } from './HomeWallpaper';
+import { headerIsCollapsed } from './headerMotion';
+import { useReduceMotion } from '@/lib/useReduceMotion';
 
 /** "Wednesday, 7 October" — above the greeting. */
 function todayLabel(): string {
@@ -73,6 +75,7 @@ export function HomeHeader({
   children?: React.ReactNode;
 }) {
   const { accent } = useAccent();
+  const reduce = useReduceMotion();
   const insets = useSafeAreaInsets();
   // The same top spacing as every other screen's SkyHeader.
   const contentTop = insets.top + 6;
@@ -90,10 +93,17 @@ export function HomeHeader({
   // Which month pill takes touches and screen-reader focus — the full one in
   // the greeting row, or the compact one in the brand row once collapsed.
   const [collapsed, setCollapsed] = useState(false);
+  const collapsedMotion = useSharedValue(false);
   useAnimatedReaction(
-    () => distance.value > 0 && scrollY.value > distance.value / 2,
+    () => {
+      const p = distance.value > 0 ? scrollY.value / distance.value : 0;
+      return headerIsCollapsed(p, collapsedMotion.value);
+    },
     (now, prev) => {
-      if (now !== prev) runOnJS(setCollapsed)(now);
+      if (now !== prev) {
+        collapsedMotion.value = now;
+        runOnJS(setCollapsed)(now);
+      }
     }
   );
 
@@ -116,7 +126,7 @@ export function HomeHeader({
     const d = distance.value;
     const p = d > 0 ? Math.min(1, Math.max(0, scrollY.value / d)) : 0;
     const t = Math.min(1, Math.max(0, (p - 0.4) / 0.6));
-    return { opacity: t, transform: [{ scale: 0.92 + 0.08 * t }] };
+    return { opacity: t, transform: [{ scale: reduce ? 1 : 0.92 + 0.08 * t }] };
   });
 
   return (
@@ -189,8 +199,9 @@ export function HomeHeader({
                   , <Text style={styles.greetName}>{userName}</Text>
                 </>
               ) : null}
-              .{line ? ` ${line}` : ''}
+              .
             </Text>
+            {line ? <Text style={styles.insight}>{line}</Text> : null}
           </ReanimatedAnimated.View>
           {children}
         </ReanimatedAnimated.View>
@@ -218,4 +229,11 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   greetName: { fontFamily: theme.font.bodyBold },
+  insight: {
+    fontFamily: theme.font.body,
+    fontSize: 13,
+    lineHeight: 19,
+    color: theme.colors.textSecondary,
+    marginTop: 4,
+  },
 });

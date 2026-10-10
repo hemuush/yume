@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Animated } from 'react-native';
+import { useReduceMotion } from './useReduceMotion';
 
 /**
  * A quiet press-down for tappable things: they ease in a touch and dim slightly, then settle back with no
@@ -9,8 +10,19 @@ export function usePressScale(pressedScale = 0.97) {
   // Lazy state init (not useRef.current) so the Animated.Value is created once
   // and read as a plain value in render — the shape the hooks lint rules want.
   const [scale] = useState(() => new Animated.Value(1));
+  const reduce = useReduceMotion();
+  useEffect(() => {
+    scale.stopAnimation();
+    scale.setValue(1);
+    return () => scale.stopAnimation();
+  }, [reduce, scale]);
 
   const onPressIn = () => {
+    scale.stopAnimation();
+    if (reduce) {
+      scale.setValue(1);
+      return;
+    }
     Animated.spring(scale, {
       toValue: pressedScale,
       useNativeDriver: true,
@@ -19,6 +31,11 @@ export function usePressScale(pressedScale = 0.97) {
     }).start();
   };
   const onPressOut = () => {
+    scale.stopAnimation();
+    if (reduce) {
+      scale.setValue(1);
+      return;
+    }
     Animated.spring(scale, { toValue: 1, useNativeDriver: true, speed: 24, bounciness: 0 }).start();
   };
 

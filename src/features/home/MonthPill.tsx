@@ -38,7 +38,7 @@ export function MonthPill({
         onPress={() => setOpen(true)}
         onPressIn={onPressIn}
         onPressOut={onPressOut}
-        hitSlop={6}
+        hitSlop={{ top: compact ? 7 : 6, bottom: compact ? 7 : 6, left: 6, right: 6 }}
         accessibilityRole="button"
         accessibilityLabel={`Change period, currently ${periodLabel(cursor)}`}
         style={[styles.pill, compact && styles.pillCompact, animatedStyle]}

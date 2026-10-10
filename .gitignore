@@ -48,3 +48,4 @@ yarn-error.*
 # Separate design review site repository and generated previews
 /sites/
 /design-preview/
+/.codex-remote-attachments/

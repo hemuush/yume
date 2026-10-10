@@ -67,13 +67,14 @@ describe('Home accounts', () => {
       })
     );
     expect(all).toContain('₹10,500');
+    expect(all).toContain('Bank, cash & wallets only');
     expect(all.join(' ')).not.toContain('99,000');
   });
 
   it('says what kind each account is', () => {
     const all = texts(render({ accounts: [account('HDFC', 'credit_card', -400_000)] }));
     expect(all.some((t) => t.startsWith('credit card · '))).toBe(true);
-    expect(all).not.toContain('In bank, cash and wallets');
+    expect(all).not.toContain('Bank, cash & wallets only');
   });
 
   it('lets each chip be reached on its own, and the heading open the list', () => {

@@ -30,50 +30,63 @@ export function splitLeadingSymbol(text: string): [string, string, string] | nul
  */
 export function CountUpAmount({ minor, currency, countFromZero = true, symbolStyle, style, ...rest }: Props) {
   const reduce = useReduceMotion();
-  const [display, setDisplay] = useState(minor);
+  const [display, setDisplay] = useState(countFromZero && !reduce ? 0 : minor);
   const [t] = useState(() => new Animated.Value(1));
-  const prev = useRef(minor);
+  const current = useRef(minor);
   const mounted = useRef(false);
 
   useEffect(() => {
     if (reduce) {
       setDisplay(minor);
-      prev.current = minor;
+      current.current = minor;
       mounted.current = true;
       return;
     }
-    const from = mounted.current ? prev.current : countFromZero ? 0 : minor;
-    prev.current = minor;
+    const from = mounted.current ? current.current : countFromZero ? 0 : minor;
     mounted.current = true;
     if (from === minor) {
+      current.current = minor;
       setDisplay(minor);
       return;
     }
     t.setValue(0);
+    current.current = from;
+    setDisplay(from);
+    let active = true;
     // Only re-render when the shown (whole-unit) text changes: a frame that moved a few paise would
     // otherwise re-measure the auto-fit text for nothing.
     let shown = '';
     const id = t.addListener(({ value }) => {
+      if (!active) return;
       const next = Math.round(from + (minor - from) * value);
+      current.current = next;
       const nextText = formatMoney(next, currency);
       if (nextText === shown) return;
       shown = nextText;
       setDisplay(next);
     });
     // Core Animated here, so the shared curve is spelled out with core Easing.
-    Animated.timing(t, {
+    const animation = Animated.timing(t, {
       toValue: 1,
       duration: DURATIONS.count,
       easing: Easing.out(Easing.cubic),
       useNativeDriver: false,
-    }).start(({ finished }) => {
-      // An animation cut short by a newer value (setValue stops it) must not snap back to its own target.
-      if (finished) setDisplay(minor);
     });
-    return () => t.removeListener(id);
+    animation.start(({ finished }) => {
+      // An animation cut short by a newer value (setValue stops it) must not snap back to its own target.
+      if (finished && active) {
+        current.current = minor;
+        setDisplay(minor);
+      }
+    });
+    return () => {
+      active = false;
+      t.removeListener(id);
+      animation.stop();
+    };
     // countFromZero only matters on the first run.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [minor, reduce, t]);
+  }, [minor, currency, reduce, t]);
 
   const text = formatMoney(display, currency);
   const parts = symbolStyle ? splitLeadingSymbol(text) : null;
