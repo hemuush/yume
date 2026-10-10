@@ -34,12 +34,13 @@ jobs:
       - run: npm run lint
       - run: npm run format:check
       - run: npm test
+      - run: npm run test:security
       # Expo SDK / native-module version mismatches and config problems.
       - run: npx expo-doctor
       # A high or critical advisory fails the build unless scripts/auditGate.js
       # allows it with a reason (today: node-forge, build tooling with no patched
-      # release). The moderate ones come from expo-router's own dependencies and
-      # have no safe fix yet.
+      # release, and braces in build/test tooling). Router decoding is patched
+      # separately and covered by test:security.
       - run: node scripts/auditGate.js
       # Bundles the app's JavaScript for Android, so a broken import or a
       # missing asset fails here instead of in a release build.

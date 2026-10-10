@@ -6,6 +6,8 @@ import Feather from '@expo/vector-icons/Feather';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import * as Application from 'expo-application';
 import {
+  getHideWidgetValues,
+  setHideWidgetValues,
   getDefaultCurrency,
   setDefaultCurrency,
   SUPPORTED_CURRENCIES,
@@ -41,6 +43,7 @@ import { softTint } from '@/components/softTint';
 import { errorMessage } from '@/lib/errorMessage';
 import type { McIconName } from '@/components/iconName';
 import { withPressed } from '@/lib/pressed';
+import { refreshAllWidgets } from '@/widgets/notifyWidgets';
 import { showAlert } from '@/components/AppDialog';
 
 /** "today" / "yesterday" / "N days ago" — deliberately coarse, no hours/minutes. */
@@ -91,6 +94,8 @@ export function SettingsSection() {
   const { themeId } = useAccent();
   const { lockEnabled, setLockEnabled } = useAppLock();
   const { hideAmounts, toggleHideAmounts } = usePrivacy();
+  const [hideWidgets, setHideWidgets] = useState<boolean | null>(null);
+  const [widgetSaving, setWidgetSaving] = useState(false);
   const [currency, setCurrency] = useState('INR');
   // Currency is a long pick-one list, so its row expands in place to show it
   // rather than always taking up the screen.
@@ -124,15 +129,19 @@ export function SettingsSection() {
   // The reads are independent, so run them together, each with its own fallback: one failing read leaves
   // that row on its last known value instead of blanking the whole screen.
   const load = useCallback(async () => {
-    const [cur, goal, tidy, deleted, prefs, lastBackup] = await Promise.all([
+    const [cur, goal, tidy, deleted, prefs, lastBackup, widgets] = await Promise.all([
       orUnavailable(() => getDefaultCurrency()),
       orUnavailable(() => getDailySpendingGoal()),
       orUnavailable(async () => tidyUpCount(await getTidyUpReport())),
       orUnavailable(() => countDeletedEntries()),
       orUnavailable(() => getNotificationPrefs()),
       orUnavailable(() => getLastLocalBackupResult()),
+      orUnavailable(() => getHideWidgetValues()),
     ]);
-    setReadFailed([cur, goal, tidy, deleted, prefs, lastBackup].some((value) => value === undefined));
+    setReadFailed(
+      [cur, goal, tidy, deleted, prefs, lastBackup, widgets].some((value) => value === undefined)
+    );
+    if (widgets !== undefined) setHideWidgets(widgets);
     if (cur !== undefined) {
       setCurrency(cur);
       setCurrencyLoaded(true);
@@ -232,6 +241,20 @@ export function SettingsSection() {
       setLockEnabled(enabled);
     } catch (e) {
       showAlert("Couldn't check the device lock", errorMessage(e));
+    }
+  };
+
+  const toggleWidgetPrivacy = async (enabled: boolean) => {
+    if (widgetSaving) return;
+    setWidgetSaving(true);
+    try {
+      await setHideWidgetValues(enabled);
+      setHideWidgets(enabled);
+      refreshAllWidgets();
+    } catch (e) {
+      showAlert("Couldn't change widget privacy", errorMessage(e));
+    } finally {
+      setWidgetSaving(false);
     }
   };
 
@@ -391,6 +414,21 @@ export function SettingsSection() {
             label="Hide savings & investment amounts"
             sub="Also on the eye icon at the top"
             right={<ToggleSwitch value={hideAmounts} onChange={toggleHideAmounts} />}
+            divider
+          />
+          <SettingsRow
+            icon="widgets-outline"
+            round
+            label="Hide widget details"
+            sub="Hide financial details on your home screen. Quick Add stays available."
+            right={
+              <ToggleSwitch
+                accessibilityLabel="Hide widget details"
+                value={hideWidgets ?? false}
+                disabled={hideWidgets === null || widgetSaving}
+                onChange={toggleWidgetPrivacy}
+              />
+            }
             divider
           />
           <SettingsRow

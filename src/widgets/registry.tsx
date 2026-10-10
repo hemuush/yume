@@ -1,4 +1,8 @@
 import type React from 'react';
+import { TextWidget } from 'react-native-android-widget';
+import { getHideWidgetValues } from '@/db/settings';
+import { WidgetShell, WidgetTitle } from './WidgetShell';
+import { WIDGET_FONT, widgetColor } from './widgetTheme';
 import { ThisMonthWidget } from './ThisMonthWidget';
 import { QuickAddWidget } from './QuickAddWidget';
 import { SuuWidget } from './SuuWidget';
@@ -25,6 +29,22 @@ export function isWidgetName(name: string): name is WidgetName {
  * build a widget from, so the two never drift apart.
  */
 export async function renderWidgetByName(name: WidgetName): Promise<React.JSX.Element> {
+  // Failure to read privacy must not reveal previously protected values.
+  if (name !== 'QuickAdd' && (await getHideWidgetValues().catch(() => true))) {
+    return (
+      <WidgetShell clickAction="OPEN_APP" justifyContent="center">
+        <WidgetTitle text="Yume" />
+        <TextWidget
+          text="Widget details hidden"
+          style={{ fontFamily: WIDGET_FONT.bodyMedium, fontSize: 12, color: widgetColor.textMuted }}
+        />
+        <TextWidget
+          text="Open Yume to view your finances"
+          style={{ fontFamily: WIDGET_FONT.bodyMedium, fontSize: 11, color: widgetColor.textMuted }}
+        />
+      </WidgetShell>
+    );
+  }
   switch (name) {
     case 'ThisMonth':
       return <ThisMonthWidget {...await getThisMonthWidgetData()} />;
