@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Animated, View, Pressable, useWindowDimensions } from 'react-native';
+import { useRef, useState } from 'react';
+import { Animated, View, Pressable, ScrollView, useWindowDimensions } from 'react-native';
 import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
 import type { CashFlowPoint } from '@/db/reports';
@@ -13,10 +13,10 @@ import { MIN_TREND_POINTS } from './TrendChart';
 import { cashFlowReadLine, keptOf, keptSummary } from './reportsInsights';
 import { styles } from './reports.styles';
 import { useAccent } from '@/theme/AccentContext';
+import { toLocalIsoDate } from '@/lib/date';
 
 const BAR_MAX = 100;
 /** Past this many months the amount under each bar no longer fits; the sentence still reads the picked one. */
-const KEPT_PILL_MAX_POINTS = 8;
 
 /** From this system font scale the summary strip stacks, so each figure keeps a full row. */
 const STACK_STRIP_AT = 1.3;
@@ -52,12 +52,6 @@ function FlowBar({
   );
 }
 
-const compact = (minor: number) => {
-  const major = Math.abs(roundedMinor(minor)) / 100;
-  const text = major >= 1000 ? `${(major / 1000).toFixed(1)}k` : `${Math.round(major)}`;
-  return minor < 0 && major > 0 ? `−${text}` : text;
-};
-
 /**
  * Trends: income beside spending for each month, what was kept under each bar (tap one to read it) and a
  * summary of the finished months. Left out when there is no income to compare against.
@@ -74,15 +68,16 @@ export function CashFlowCard({
   monthLink?: (index: number, count: number) => { name: string; open: () => void } | null;
 }) {
   const [sel, setSel] = useState<number | null>(null);
+  const chartScroll = useRef<ScrollView>(null);
   const { fontScale } = useWindowDimensions();
   const { accent } = useAccent();
-  if (points.length < MIN_TREND_POINTS || !points.some((p) => p.incomeMinor > 0)) return null;
+  if (points.length < MIN_TREND_POINTS || !points.some((p) => p.recorded !== false && p.incomeMinor > 0))
+    return null;
 
-  const lastI = points.length - 1;
-  const selI = sel != null && sel <= lastI ? sel : lastI;
+  const lastI = points.findLastIndex((p) => p.recorded !== false);
+  const selI = sel != null && points[sel]?.recorded !== false ? sel : lastI;
   const max = Math.max(1, ...points.map((p) => Math.max(p.incomeMinor, p.expenseMinor)));
   const summary = keptSummary(points, inProgress);
-  const showKept = points.length <= KEPT_PILL_MAX_POINTS;
   const narrow = points.length > 12;
   const labelEvery = narrow ? 3 : 1;
   const stacked = fontScale >= STACK_STRIP_AT;
@@ -111,20 +106,39 @@ export function CashFlowCard({
             </View>
           </View>
         </View>
-        <View style={styles.flowChart}>
+        <ScrollView
+          ref={chartScroll}
+          onContentSizeChange={() => {
+            if (sel === null) chartScroll.current?.scrollToEnd({ animated: false });
+          }}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.flowChart}
+        >
           {points.map((p, i) => {
             const on = i === selI;
-            const live = inProgress && i === lastI;
+            const live = p.month
+              ? p.month === toLocalIsoDate(new Date()).slice(0, 7)
+              : inProgress && i === lastI;
             const kept = keptOf(p);
             const keptWord = kept < 0 ? 'overspent' : 'kept';
             return (
               <Pressable
                 key={i}
+                disabled={p.recorded === false}
                 onPress={() => pick(i)}
-                style={withPressed([styles.flowCol, on && styles.flowColOn])}
+                style={withPressed([
+                  styles.flowCol,
+                  { minWidth: 44, opacity: p.recorded === false ? 0.35 : 1 },
+                  on && styles.flowColOn,
+                ])}
                 accessibilityRole="button"
-                accessibilityLabel={`${p.label}${live ? ' so far' : ''}, ${formatMoney(roundedMinor(p.incomeMinor))} in, ${formatMoney(roundedMinor(p.expenseMinor))} out, ${keptWord} ${formatMoney(roundedMinor(Math.abs(kept)))}`}
-                accessibilityState={{ selected: on }}
+                accessibilityLabel={
+                  p.recorded === false
+                    ? `${p.label}, outside recorded history or in the future`
+                    : `${p.label}${live ? ' so far' : ''}, ${formatMoney(roundedMinor(p.incomeMinor))} in, ${formatMoney(roundedMinor(p.expenseMinor))} out, ${keptWord} ${formatMoney(roundedMinor(Math.abs(kept)))}`
+                }
+                accessibilityState={{ selected: on, disabled: p.recorded === false }}
               >
                 <View style={styles.flowBars}>
                   <FlowBar
@@ -147,22 +161,33 @@ export function CashFlowCard({
                 <Text style={[styles.flowLabel, on && styles.flowLabelOn]} numberOfLines={1}>
                   {(lastI - i) % labelEvery === 0 ? p.label : ''}
                 </Text>
-                {showKept && (
-                  <View
-                    style={[styles.flowKept, kept < 0 && styles.flowKeptNeg, live && styles.flowKeptLive]}
-                  >
-                    <Text style={[styles.flowKeptText, kept < 0 && styles.flowKeptTextNeg]} numberOfLines={1}>
-                      {compact(kept)}
-                    </Text>
-                  </View>
-                )}
               </Pressable>
             );
           })}
+        </ScrollView>
+        <View style={[styles.stripCard, stacked && styles.stripCardStack]}>
+          {[
+            { label: 'Income', value: points[selI].incomeMinor },
+            { label: 'Spent', value: points[selI].expenseMinor },
+            { label: 'Left after spending', value: keptOf(points[selI]) },
+          ].map((item) => (
+            <View key={item.label} style={styles.stripCell}>
+              <Text style={styles.stripLabel}>{item.label}</Text>
+              <Text style={styles.stripValue} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>
+                {formatMoney(roundedMinor(item.value))}
+              </Text>
+            </View>
+          ))}
         </View>
-        {showKept && <Text style={styles.flowKeptCaption}>Kept each month</Text>}
+        <Text style={styles.stripSub}>Kept means income minus spending; it is not your savings balance.</Text>
         <Text style={styles.trendRead}>
-          {cashFlowReadLine(points[selI], inProgress && selI === lastI, summary?.usualRatePct ?? null)}
+          {cashFlowReadLine(
+            points[selI],
+            points[selI].month
+              ? points[selI].month === toLocalIsoDate(new Date()).slice(0, 7)
+              : inProgress && selI === lastI,
+            null
+          )}
         </Text>
         {link && (
           <Pressable

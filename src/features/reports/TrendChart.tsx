@@ -1,6 +1,6 @@
-import { useState } from 'react';
-import { Animated, View, Pressable } from 'react-native';
-import Svg, { Circle, Line, Polygon, Polyline, Text as SvgText } from 'react-native-svg';
+import { useRef, useState } from 'react';
+import { Animated, View, Pressable, ScrollView } from 'react-native';
+import Svg, { Circle, Line, Polyline, Text as SvgText } from 'react-native-svg';
 import { Text } from '@/components/Text';
 import type { NetWorthPoint, TrendPoint } from '@/db/reports';
 import { formatMoney } from '@/lib/money';
@@ -11,6 +11,7 @@ import { styles } from './reports.styles';
 import { withPressed } from '@/lib/pressed';
 import { useGrowFrom } from '@/lib/useGrowFrom';
 import { useAccent } from '@/theme/AccentContext';
+import { toLocalIsoDate } from '@/lib/date';
 
 /** A trend needs at least this many points to be worth drawing. */
 export const MIN_TREND_POINTS = 3;
@@ -72,11 +73,12 @@ export function TrendChart({
   /** For the picked point (its index and the point count): the month it stands for and how to open it; null if it can't be. */
   monthLink?: (index: number, count: number) => { name: string; open: () => void } | null;
 }) {
-  const hasSpend = trend.length >= MIN_TREND_POINTS;
-  const hasNw = netWorthTrend.length >= MIN_TREND_POINTS;
+  const hasSpend = trend.length >= MIN_TREND_POINTS && trend.some((p) => p.recorded !== false);
+  const hasNw = netWorthTrend.length >= MIN_TREND_POINTS && netWorthTrend.some((p) => p.recorded !== false);
   const [kind, setKind] = useState<Kind>(hasSpend ? 'spend' : 'netWorth');
   const [width, setWidth] = useState(0);
   const [sel, setSel] = useState<number | null>(null);
+  const monthScroll = useRef<ScrollView>(null);
   const { accent } = useAccent();
   if (!hasSpend && !hasNw) return null;
   const showing: Kind =
@@ -84,26 +86,44 @@ export function TrendChart({
 
   const points =
     showing === 'spend'
-      ? trend.map((t) => ({ label: t.label, value: t.totalMinor }))
-      : netWorthTrend.map((t) => ({ label: t.label, value: t.netWorthMinor }));
+      ? trend.map((t) => ({
+          label: t.label,
+          value: t.totalMinor,
+          available: t.recorded !== false,
+          month: t.month,
+        }))
+      : netWorthTrend.map((t) => ({
+          label: t.label,
+          value: t.netWorthMinor,
+          available: t.recorded !== false,
+          month: t.month,
+        }));
   const avg = showing === 'spend' ? baseline : null;
 
-  const values = points.map((p) => p.value);
+  const values = points.filter((p) => p.available).map((p) => p.value);
   const lo = Math.min(...values, avg ?? Infinity);
   const hi = Math.max(...values, avg ?? -Infinity);
   const pad = (hi - lo) * 0.12 || Math.abs(hi) * 0.1 || 1;
   const y = (v: number) => PLOT_BOTTOM - ((v - (lo - pad)) / (hi - lo + 2 * pad)) * (PLOT_BOTTOM - PLOT_TOP);
   const x = (i: number) => PAD_X + (i * (width - 2 * PAD_X)) / Math.max(1, points.length - 1);
-  const line = points.map((p, i) => `${x(i)},${y(p.value)}`).join(' ');
-  const partial = showing === 'spend' && inProgress && points.length >= 2;
-  const lastI = points.length - 1;
-  const selI = sel != null && sel <= lastI ? sel : lastI;
-  const solidCoords = (partial ? points.slice(0, -1) : points).map((p, i) => ({ x: x(i), y: y(p.value) }));
+  const lastI = points.findLastIndex((p) => p.available);
+  const partial =
+    showing === 'spend' &&
+    (points[lastI]?.month ? points[lastI].month === toLocalIsoDate(new Date()).slice(0, 7) : inProgress) &&
+    lastI >= 1;
+  const selI = sel != null && points[sel]?.available ? sel : lastI;
+  const solidSegments: { x: number; y: number }[][] = [];
+  points.forEach((p, i) => {
+    if (!p.available || (partial && i === lastI)) return;
+    if (i === 0 || !points[i - 1].available) solidSegments.push([]);
+    solidSegments[solidSegments.length - 1].push({ x: x(i), y: y(p.value) });
+  });
 
   const pickAt = (locationX: number) => {
     if (width <= 2 * PAD_X) return;
     const i = Math.round(((locationX - PAD_X) / (width - 2 * PAD_X)) * lastI);
     const next = Math.max(0, Math.min(lastI, i));
+    if (!points[next].available) return;
     if (next === selI) return;
     haptics.tap();
     setSel(next);
@@ -127,8 +147,8 @@ export function TrendChart({
   })();
   const link = monthLink ? monthLink(selI, points.length) : null;
   const read =
-    selI !== lastI
-      ? pointRead
+    selI !== lastI || points[lastI].month
+      ? `${pointRead}${partial && selI === lastI ? ' · so far versus full recorded months' : ''}`
       : showing === 'spend'
         ? avg != null && partial
           ? `${periodName} so far: ${formatMoney(roundedMinor(spentMinor))}. The dashed line is your usual month, ${formatMoney(roundedMinor(avg))}.`
@@ -136,7 +156,7 @@ export function TrendChart({
             ? `${periodName} is ${formatMoney(Math.abs(roundedMinor(spentMinor - avg)))} ${
                 spentMinor >= avg ? 'above' : 'below'
               } your average of ${formatMoney(roundedMinor(avg))}.`
-            : `${periodName}: ${formatMoney(roundedMinor(spentMinor))} spent.`
+            : `${points[selI].label}: ${formatMoney(roundedMinor(points[selI].value))} spent.`
         : `${nwDelta >= 0 ? 'Up' : 'Down'} ${formatMoney(Math.abs(nwDelta))} over the last ${netWorthTrend.length} months, now ${formatMoney(roundedMinor(nwLast))}.`;
 
   const pick = (k: Kind) => {
@@ -147,7 +167,7 @@ export function TrendChart({
 
   return (
     <View style={styles.trendCard}>
-      <View style={styles.trendHead}>
+      <View style={{ gap: 10 }}>
         <Text style={styles.trendTitle}>{showing === 'spend' ? 'Spending' : 'Net worth'}</Text>
         {hasSpend && hasNw && (
           <View style={styles.trendSwitch} accessibilityRole="radiogroup">
@@ -175,19 +195,14 @@ export function TrendChart({
       <View
         testID="trend-touch"
         onLayout={(e) => setWidth(e.nativeEvent.layout.width)}
-        onStartShouldSetResponder={() => true}
+        onStartShouldSetResponder={() => false}
         onResponderGrant={(e) => pickAt(e.nativeEvent.locationX)}
         onResponderMove={(e) => pickAt(e.nativeEvent.locationX)}
         style={{ height: H }}
-        accessibilityHint="Touch or drag along the chart to pick a month"
+        accessibilityHint="Use the month buttons below to pick a month"
       >
         {width > 0 && (
           <Svg width={width} height={H} pointerEvents="none">
-            <Polygon
-              points={`${x(0)},${PLOT_BOTTOM + 4} ${line} ${x(points.length - 1)},${PLOT_BOTTOM + 4}`}
-              fill={accent}
-              fillOpacity={0.18}
-            />
             {avg != null && (
               <>
                 <Line
@@ -213,8 +228,10 @@ export function TrendChart({
                 )}
               </>
             )}
-            <DrawnLine animKey={`trend:${showing}:${points.length}`} coords={solidCoords} />
-            {partial && (
+            {solidSegments.map((coords, i) => (
+              <DrawnLine key={i} animKey={`trend:${showing}:${points.length}:${i}`} coords={coords} />
+            ))}
+            {partial && points[lastI - 1].available && (
               <Line
                 x1={x(lastI - 1)}
                 y1={y(points[lastI - 1].value)}
@@ -237,6 +254,7 @@ export function TrendChart({
               strokeWidth={1}
             />
             {points.map((p, i) => {
+              if (!p.available) return null;
               const last = i === lastI;
               const on = i === selI;
               const hollow = last && partial && !on;
@@ -255,6 +273,7 @@ export function TrendChart({
             })}
             {points.map((p, i) => {
               const last = i === selI;
+              if (!last && i % Math.ceil(points.length / 7) !== 0) return null;
               return (
                 <SvgText
                   key={`l-${i}`}
@@ -272,6 +291,52 @@ export function TrendChart({
           </Svg>
         )}
       </View>
+      <ScrollView
+        ref={monthScroll}
+        onContentSizeChange={() => {
+          if (sel === null) monthScroll.current?.scrollToEnd({ animated: false });
+        }}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{ gap: 4 }}
+      >
+        {points.map((p, i) => (
+          <Pressable
+            key={i}
+            disabled={!p.available}
+            accessibilityRole="button"
+            accessibilityLabel={`Select ${p.label}`}
+            accessibilityState={{ selected: selI === i, disabled: !p.available }}
+            onPress={() => {
+              haptics.tap();
+              setSel(i);
+            }}
+            style={withPressed({
+              minWidth: 44,
+              minHeight: 44,
+              justifyContent: 'center',
+              alignItems: 'center',
+              borderRadius: 12,
+              backgroundColor: selI === i ? accent : 'transparent',
+              opacity: p.available ? 1 : 0.35,
+            })}
+          >
+            <Text>{points.length > 12 && p.month ? `${p.label} ${p.month.slice(2, 4)}` : p.label}</Text>
+          </Pressable>
+        ))}
+      </ScrollView>
+      <Text style={styles.stripSub}>
+        Scale: {formatMoney(roundedMinor(lo))}–{formatMoney(roundedMinor(hi))}
+      </Text>
+      <Text style={styles.stripSub}>
+        {showing === 'netWorth'
+          ? 'Net worth across your accounts. '
+          : avg != null
+            ? 'Dashed horizontal line: recorded-month average. '
+            : 'More finished months are needed for an average. '}
+        {partial ? 'Dashed segment: current month so far. ' : ''}
+        {points.some((p) => !p.available) ? 'Gaps: before tracking or future months.' : ''}
+      </Text>
       <Text style={styles.trendRead}>{read}</Text>
       {link && (
         <Pressable

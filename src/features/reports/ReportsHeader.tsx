@@ -55,7 +55,7 @@ export function ReportsHeader({
 
 const styles = StyleSheet.create({
   chip: {
-    height: 30,
+    minHeight: 44,
     maxWidth: 150,
     paddingHorizontal: 12,
     borderRadius: theme.radius.pill,

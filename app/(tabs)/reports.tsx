@@ -2,8 +2,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View, Pressable, ActivityIndicator } from 'react-native';
 import ReanimatedAnimated from 'react-native-reanimated';
 import { useCollapsingHeader } from '@/lib/useCollapsingHeader';
-import { HeaderSummary } from '@/features/home/SkyHeader';
-import { formatMoney } from '@/lib/money';
 import { getCachedCurrency } from '@/db/settings';
 import { Text } from '@/components/Text';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
@@ -54,7 +52,6 @@ import { theme } from '@/constants/theme';
 import { useTabScrollPad } from '@/lib/uiScale';
 import { HomeWallpaper } from '@/features/home/HomeWallpaper';
 import { useAccent } from '@/theme/AccentContext';
-import { ReportsHero } from '@/features/reports/ReportsHero';
 import { ReportsSkeleton } from '@/features/reports/ReportsSkeleton';
 import { ReportsHeader } from '@/features/reports/ReportsHeader';
 import { HeatmapCard } from '@/features/reports/HeatmapCard';
@@ -74,7 +71,6 @@ import {
   RANGE_DAY_GRID_MAX_DAYS,
   baselineFromTrend,
   recurringVsDiscretionary,
-  vsUsual,
   categoryDeltas,
   patternFacts,
   quietDays,
@@ -90,6 +86,7 @@ import { growHref } from '@/lib/cardGrow';
 import { withPressed } from '@/lib/pressed';
 import { EmptyState } from '@/components/EmptyState';
 import { useTabScrollToTop } from '@/lib/useTabScrollToTop';
+import { useReduceMotion } from '@/lib/useReduceMotion';
 
 type ReportTab = 'days' | 'cats' | 'trends';
 const TAB_OPTIONS: { value: ReportTab; label: string }[] = [
@@ -108,6 +105,7 @@ const BIGGEST_COUNT = 5;
 const CATEGORIES_COLLAPSED = 5;
 
 export default function ReportsScreen() {
+  const reduceMotion = useReduceMotion();
   const { hideAmounts } = usePrivacy();
   const { accent, secondary } = useAccent();
   const insets = useSafeAreaInsets();
@@ -116,7 +114,7 @@ export default function ReportsScreen() {
   const stepCursor = (next: ReportWindow) => setCursor(next);
   // "Where it went" (spending) or "Where it came from" (income).
   const [flow, setFlow] = useState<'expense' | 'income'>('expense');
-  // Days, Categories or Trends: one lens at a time under the pinned summary.
+  // Days, Categories or Trends: one lens at a time under the period control.
   const [tab, setTab] = useState<ReportTab>('days');
   // Categories Tidy up reads as starting balances logged as income: the
   // Income view points at Tidy up when one of them makes up most of it.
@@ -161,10 +159,27 @@ export default function ReportsScreen() {
   const [daily, setDaily] = useState<DailyExpensePoint[]>([]);
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
   const [errorText, setErrorText] = useState<string | null>(null);
+  const [loadedKey, setLoadedKey] = useState<string | null>(null);
+  const requestKey = `${JSON.stringify(cursor)}|${hideAmounts}`;
+  const [detailRetry, setDetailRetry] = useState(0);
+  const [detailErrors, setDetailErrors] = useState<Record<string, string>>({});
+  const detailError = (key: string, message: string | null) =>
+    setDetailErrors((old) => {
+      const next = { ...old };
+      if (message) next[key] = message;
+      else delete next[key];
+      return next;
+    });
+  const retryDetails = () => {
+    setDetailErrors({});
+    setDetailRetry((n) => n + 1);
+  };
 
   // The heatmap day open under the grid, and its entries (null while loading).
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [dayData, setDayData] = useState<{ iso: string; txs: Transaction[] } | null>(null);
+  const [dayError, setDayError] = useState<string | null>(null);
+  const daySeq = useRef(0);
   // A category the heatmap is narrowed to, with its daily totals; the id says which category they belong
   // to, so a stale set is never shown for another.
   const [catFilter, setCatFilter] = useState<string | null>(null);
@@ -184,7 +199,7 @@ export default function ReportsScreen() {
   // stale month's expanded list never carries over.
   const [catExpanded, setCatExpanded] = useState(false);
 
-  // The header shrinks as the report scrolls; the summary and tabs scroll with it.
+  // The header shrinks as the report scrolls; the tabs pin below it.
   const { collapse, headerHeight, collapsedHeight, scrollHandler, scrollRef, resetScroll } =
     useCollapsingHeader();
   useTabScrollToTop(scrollRef);
@@ -206,7 +221,7 @@ export default function ReportsScreen() {
             ? Math.min(24, Math.max(7, Math.ceil(rangeDays(range) / 30.44)))
             : 7;
       try {
-        setStatus((s) => (s === 'ready' ? s : 'loading'));
+        setStatus('loading');
         const [cmp, tr, nw, cf, ct, dy, cats, tidy, accs] = await Promise.all([
           getRangeComparison(range, previousWindowRange(c), isCustomWindow(c) ? 'month' : c.granularity),
           getMonthlyExpenseTrend(trendMonths, anchor, hideAmounts),
@@ -220,12 +235,30 @@ export default function ReportsScreen() {
           listAccounts(true),
         ]);
         if (seq !== loadSeq.current) return false;
+        const thisMonth = toLocalIsoDate(new Date()).slice(0, 7);
         setComparison(cmp);
-        setTrend(tr);
+        setLoadedKey(`${JSON.stringify(c)}|${hideAmounts}`);
+        setTrend(
+          tr.map((p, i) => ({
+            ...p,
+            totalMinor: cf[i]?.month === thisMonth ? cf[i].expenseMinor : p.totalMinor,
+            recorded: cf[i]?.recorded,
+            month: cf[i]?.month,
+          }))
+        );
         // Net worth counts every account, savings included, so it goes while savings are hidden.
-        setNetWorthTrend(hideAmounts && accs.some((a) => a.type === 'savings') ? [] : nw);
+        setNetWorthTrend(
+          hideAmounts && accs.some((a) => a.type === 'savings')
+            ? []
+            : nw.map((p, i) => ({
+                ...p,
+                month: cf[i]?.month,
+                recorded: !cf[i]?.month || cf[i].month! <= thisMonth,
+              }))
+        );
         setCashFlow(cf);
-        setCatTracks(ct);
+        const lastElapsed = cf.findLastIndex((p) => !p.month || p.month <= thisMonth);
+        setCatTracks(ct.map((p) => ({ ...p, totalsMinor: p.totalsMinor.slice(0, lastElapsed + 1) })));
         setSavingsIds(savingsAccountIdsOf(accs));
         setDaily(dy);
         setCategories(cats);
@@ -260,17 +293,28 @@ export default function ReportsScreen() {
   // The heatmap leaves savings and investments out while they're hidden, so the day it opens does too.
   const openDay = useCallback(
     async (iso: string) => {
+      const seq = ++daySeq.current;
       setSelectedDay(iso);
-      const txs = await listTransactions({ fromDate: iso, toDate: iso, currency: getCachedCurrency() });
-      setDayData({
-        iso,
-        txs: hideAmounts ? txs.filter((tx) => !isSavingsEntry(tx, catById, savingsIds)) : txs,
-      });
+      setDayData(null);
+      setDayError(null);
+      try {
+        const txs = await listTransactions({ fromDate: iso, toDate: iso, currency: getCachedCurrency() });
+        if (seq !== daySeq.current) return;
+        setDayData({
+          iso,
+          txs: hideAmounts ? txs.filter((tx) => !isSavingsEntry(tx, catById, savingsIds)) : txs,
+        });
+      } catch (e) {
+        if (seq === daySeq.current) setDayError(errorMessage(e));
+      }
     },
     [hideAmounts, catById, savingsIds]
   );
   const closeDay = useCallback(() => {
+    ++daySeq.current;
     setSelectedDay(null);
+    setDayData(null);
+    setDayError(null);
   }, []);
 
   // A new period starts clean: no day open, no filter, no category picked.
@@ -282,49 +326,71 @@ export default function ReportsScreen() {
     setCatFilter(null);
     setSelectedCat(null);
     setSelectedAccount(null);
-  }, [cursorKey, closeDay]);
+  }, [cursorKey, hideAmounts, closeDay]);
+
+  useEffect(() => {
+    setDetailErrors({});
+  }, [cursorKey, hideAmounts, catFilter, selectedCat, flow, group]);
+
+  useEffect(
+    () => () => {
+      ++loadSeq.current;
+      ++daySeq.current;
+    },
+    []
+  );
 
   // The filtered heatmap's days, reloaded with each fresh load of the period (`daily`).
   useEffect(() => {
     if (catFilter == null) return;
     let live = true;
+    setFiltered(null);
     getDailyExpenseTotals(windowRange(cursor), hideAmounts, catFilter)
       .then((d) => live && setFiltered({ id: catFilter, daily: d }))
-      .catch(() => live && setFiltered({ id: catFilter, daily: [] }));
+      .catch((e) => {
+        if (live) detailError('heatmap', errorMessage(e));
+      });
     return () => {
       live = false;
     };
-  }, [catFilter, cursor, hideAmounts, daily]);
+  }, [catFilter, cursor, hideAmounts, daily, detailRetry]);
 
   // The picked category's subcategories.
   useEffect(() => {
     if (selectedCat == null) return;
     let live = true;
+    setSplit(null);
     getSubcategoryBreakdown(selectedCat, windowRange(cursor), flow)
       .then((items) => live && setSplit({ id: selectedCat, items }))
-      .catch(() => live && setSplit({ id: selectedCat, items: [] }));
+      .catch((e) => {
+        if (live) detailError('split', errorMessage(e));
+      });
     return () => {
       live = false;
     };
-  }, [selectedCat, cursor, flow, daily]);
+  }, [selectedCat, cursor, flow, daily, detailRetry]);
 
   // Where the period's spending (or income) went, by account.
   const accountsKey = `${cursorKey}|${flow}|${hideAmounts}`;
   useEffect(() => {
     if (group !== 'account') return;
     let live = true;
+    setAccounts(null);
     getAccountBreakdown(windowRange(cursor), flow, hideAmounts)
       .then((items) => live && setAccounts({ key: accountsKey, items }))
-      .catch(() => live && setAccounts({ key: accountsKey, items: [] }));
+      .catch((e) => {
+        if (live) detailError('accounts', errorMessage(e));
+      });
     return () => {
       live = false;
     };
-  }, [group, cursor, flow, hideAmounts, accountsKey, daily]);
+  }, [group, cursor, flow, hideAmounts, accountsKey, daily, detailRetry]);
 
   // The period's biggest single expenses, up to today (entries logged ahead aren't spent yet).
   const largestKey = `${cursorKey}|${hideAmounts}|${catFilter ?? ''}`;
   useEffect(() => {
     let live = true;
+    setLargest(null);
     const r = windowRange(cursor);
     const today = toLocalIsoDate(new Date());
     getLargestExpenses(
@@ -334,11 +400,13 @@ export default function ReportsScreen() {
       catFilter ?? undefined
     )
       .then((items) => live && setLargest({ key: largestKey, items }))
-      .catch(() => live && setLargest({ key: largestKey, items: [] }));
+      .catch((e) => {
+        if (live) detailError('largest', errorMessage(e));
+      });
     return () => {
       live = false;
     };
-  }, [cursor, hideAmounts, catFilter, largestKey, daily]);
+  }, [cursor, hideAmounts, catFilter, largestKey, daily, detailRetry]);
 
   // A tab switch remounts the list at its top, so the header opens again with it.
   // A new sub-tab starts at the top. The scroll view itself stays mounted (remounting it on every tap rebuilt the
@@ -369,12 +437,14 @@ export default function ReportsScreen() {
       </View>
     );
   }
-  if (!comparison) {
+  if (status === 'loading' || loadedKey !== requestKey || !comparison) {
     return (
       <View style={styles.container}>
         <HomeWallpaper accent={accent} secondary={secondary} />
         {header}
-        <ReportsSkeleton />
+        <View style={{ paddingTop: headerHeight }}>
+          <ReportsSkeleton />
+        </View>
       </View>
     );
   }
@@ -395,6 +465,8 @@ export default function ReportsScreen() {
   const baseline = baselineFromTrend(trend);
   const todayIso = toLocalIsoDate(new Date());
   const monthInProgress = cursor.granularity === 'month' && cursor.offset === 0;
+  const historyInProgress =
+    cashFlow.filter((p) => p.recorded !== false).at(-1)?.month === todayIso.slice(0, 7) || monthInProgress;
   // Spending dated after today is in the total but not in the days so far.
   const facts = daySpendFacts(daily, range, todayIso, dispExpense);
   const { recurringMinor, discretionaryMinor } = recurringVsDiscretionary(current.categoryBreakdown);
@@ -466,6 +538,7 @@ export default function ReportsScreen() {
   const filterCat = filterId ? catById.get(filterId) : undefined;
   const heatDaily = filterId ? (filtered?.id === filterId ? filtered.daily : []) : daily;
   const onTapDay = (iso: string) => (iso === selectedDay ? closeDay() : openDay(iso));
+  /* eslint-disable react-hooks/refs -- These pure builders store the event handler; they do not invoke it or read refs during render. */
   const heatGrid = custom
     ? buildRangeHeatGrid({
         start: range.start,
@@ -482,6 +555,7 @@ export default function ReportsScreen() {
         onDayPress: onTapDay,
         selectedIso: selectedDay,
       });
+  /* eslint-enable react-hooks/refs */
   // With a category filter on, the day lists that category's entries (and its subcategories').
   const inFilter = (tx: Transaction) =>
     tx.categoryId != null &&
@@ -508,13 +582,13 @@ export default function ReportsScreen() {
     : Math.max(0, dispExpense - facts.laterMinor);
   const showBiggestDay = (iso: string) => {
     openDay(iso);
-    scrollRef.current?.scrollTo({ y: 0, animated: true });
+    scrollRef.current?.scrollTo({ y: 0, animated: !reduceMotion });
   };
   const onStoryAction = (a: StoryAction) => {
     if (a.type === 'day') {
       setCatFilter(null);
       openDay(a.iso);
-      scrollRef.current?.scrollTo({ y: 0, animated: true });
+      scrollRef.current?.scrollTo({ y: 0, animated: !reduceMotion });
       return;
     }
     setTab('cats');
@@ -550,38 +624,15 @@ export default function ReportsScreen() {
         ref={scrollRef}
         onScroll={scrollHandler}
         scrollEventThrottle={16}
-        // The tabs (after the summary card) stick under the shrunk header.
-        stickyHeaderIndices={hasData ? [1] : undefined}
+        // The first child is now the tab band; there is no duplicate Home summary.
+        stickyHeaderIndices={[0]}
         contentContainerStyle={{
           paddingTop: headerHeight,
           paddingHorizontal: 20,
           paddingBottom: tabScrollPad + insets.bottom,
         }}
       >
-        {hasData && (
-          <ReportsHero
-            periodLabel={periodName}
-            spentMinor={dispExpense}
-            incomeMinor={roundedMinor(current.incomeMinor)}
-            baselineMinor={cursor.granularity === 'month' ? baseline : null}
-            vsUsual={vsUsual({
-              spentMinor: current.expenseMinor,
-              baselineMinor: baseline,
-              granularity: cursor.granularity,
-              inProgress: monthInProgress,
-              todayIso,
-            })}
-            previousMinor={previous.expenseMinor > 0 ? previous.expenseMinor : null}
-            previousLabel={isCustomWindow(cursor) ? 'the period before' : previousPeriodLabel(cursor)}
-            monthProgress={
-              monthInProgress
-                ? new Date().getDate() /
-                  new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate()
-                : null
-            }
-          />
-        )}
-        {hasData && (
+        {
           // Stuck at the top of the list, which sits under the header: the padding (as tall as the shrunk header,
           // and pulled up by as much in place) keeps the tabs just below it.
           <View
@@ -592,37 +643,60 @@ export default function ReportsScreen() {
               <SegmentedControl options={TAB_OPTIONS} value={tab} onChange={setTab} onBand />
             </View>
           </View>
+        }
+        {Object.keys(detailErrors).length > 0 && (
+          <View style={styles.tidyNudge}>
+            <Text style={styles.errTitle}>Some report details couldn’t load</Text>
+            <Text style={styles.errDetail}>{Object.values(detailErrors).join('\n')}</Text>
+            <PrimaryButton title="Retry details" variant="secondary" onPress={retryDetails} />
+          </View>
         )}
-        {!hasData ? (
+        {tab === 'days' && !hasSpend ? (
           <EmptyState
             title="Nothing spent in this period"
-            subtitle="Use the arrows above to look back at a month with data."
-          />
-        ) : tab === 'days' && !hasSpend ? (
-          <EmptyState
-            title="Nothing spent in this period"
-            subtitle="Money in is under Categories, and Trends shows the bigger picture."
+            subtitle={
+              hasData
+                ? 'Money in is under Categories, and Trends shows the bigger picture.'
+                : 'Use the arrows to look back, or open Trends for recorded history.'
+            }
           />
         ) : tab === 'days' ? (
           <>
-            <HeatmapCard
-              grid={heatGrid}
-              isYear={byMonth}
-              filter={
-                filterCat
-                  ? {
-                      name: filterCat.name,
-                      color: filterCat.color,
-                      onClear: () => {
-                        closeDay();
-                        setCatFilter(null);
-                      },
-                    }
-                  : null
-              }
-            />
+            {filterId && filtered?.id !== filterId ? (
+              !detailErrors.heatmap && (
+                <ActivityIndicator
+                  accessibilityLabel="Loading category days"
+                  color={theme.colors.ink}
+                  style={styles.daySpinner}
+                />
+              )
+            ) : (
+              <HeatmapCard
+                grid={heatGrid}
+                isYear={byMonth}
+                filter={
+                  filterCat
+                    ? {
+                        name: filterCat.name,
+                        color: filterCat.color,
+                        onClear: () => {
+                          closeDay();
+                          setCatFilter(null);
+                        },
+                      }
+                    : null
+                }
+              />
+            )}
             {!byMonth && selectedDay && (
-              <DayCard iso={selectedDay} txs={shownDayTx} catById={catById} onClose={closeDay} />
+              <DayCard
+                iso={selectedDay}
+                txs={shownDayTx}
+                catById={catById}
+                onClose={closeDay}
+                error={dayError}
+                onRetry={() => void openDay(selectedDay)}
+              />
             )}
             <StoryCards
               // A new period starts the cards over at the first one.
@@ -631,22 +705,32 @@ export default function ReportsScreen() {
               cards={stories}
               onAction={onStoryAction}
             />
-            {!byMonth && (
+            {!byMonth && (!filterId || filtered?.id === filterId) && (
               <>
                 <WeekdayRhythm
                   key={`${cursorKey}|${filterId ?? ''}`}
                   rhythm={weekdayRhythm(heatDaily, range, todayIso)}
                   scopeName={filterCat?.name}
                 />
-                <BiggestSpends
-                  items={largest?.key === largestKey ? largest.items : []}
-                  catById={catById}
-                  shareOfMinor={biggestShareOf}
-                  openIso={selectedDay}
-                  onOpenDay={showBiggestDay}
-                  inProgress={range.end >= todayIso}
-                  scopeName={filterCat?.name}
-                />
+                {!largest || largest.key !== largestKey ? (
+                  !detailErrors.largest && (
+                    <ActivityIndicator
+                      accessibilityLabel="Loading biggest spends"
+                      color={theme.colors.ink}
+                      style={styles.daySpinner}
+                    />
+                  )
+                ) : (
+                  <BiggestSpends
+                    items={largest?.key === largestKey ? largest.items : []}
+                    catById={catById}
+                    shareOfMinor={biggestShareOf}
+                    openIso={selectedDay}
+                    onOpenDay={showBiggestDay}
+                    inProgress={range.end >= todayIso}
+                    scopeName={filterCat?.name}
+                  />
+                )}
               </>
             )}
           </>
@@ -677,7 +761,7 @@ export default function ReportsScreen() {
               }}
             />
             {byAccount ? (
-              accountItems === null ? (
+              detailErrors.accounts ? null : accountItems === null ? (
                 <ActivityIndicator color={theme.colors.ink} style={styles.daySpinner} />
               ) : accountBreakdown.length === 0 ? (
                 <Text style={styles.empty}>
@@ -712,11 +796,12 @@ export default function ReportsScreen() {
                   breakdown={shownBreakdown}
                   spentMinor={shownTotal}
                   deltas={deltas}
+                  comparisonLabel={`${range.end >= todayIso ? 'So far vs full ' : 'Vs '}${isCustomWindow(cursor) ? 'previous period' : previousPeriodLabel(cursor)}`}
                   expanded={catExpanded}
                   onToggleExpanded={() => setCatExpanded((v) => !v)}
                   selectedId={selectedCat}
                   onSelect={(c) => setSelectedCat((id) => (id === c.categoryId ? null : c.categoryId))}
-                  split={split?.id === selectedCat ? split.items : null}
+                  split={detailErrors.split ? [] : split?.id === selectedCat ? split.items : null}
                   onOpen={onPressCategory}
                   onShowDays={income || byMonth ? undefined : showCategoryDays}
                   kind={flow}
@@ -758,7 +843,7 @@ export default function ReportsScreen() {
             <CategoryTracks
               rows={categoriesAgainstUsual(catTracks)}
               catById={catById}
-              inProgress={monthInProgress}
+              inProgress={historyInProgress}
               onOpen={(id) => openCategory(id, true)}
             />
           </>
@@ -773,12 +858,7 @@ export default function ReportsScreen() {
         cursor={cursor}
         onChange={stepCursor}
         collapse={collapse}
-        summary={
-          hasData ? (
-            <HeaderSummary figure={formatMoney(dispExpense)} rest="spent" dot={theme.colors.slice.spent} />
-          ) : undefined
-        }
-        onChipPress={() => scrollRef.current?.scrollTo({ y: 0, animated: true })}
+        onChipPress={() => scrollRef.current?.scrollTo({ y: 0, animated: !reduceMotion })}
       />
     </View>
   );

@@ -155,7 +155,7 @@ const summary = (breakdown: ReturnType<typeof cat>[], income: ReturnType<typeof 
 const mockIncomeOnly = { current: false };
 jest.mock('@/db/reports', () => ({
   ...jest.requireActual('@/db/reports'),
-  getRangeComparison: async () => ({
+  getRangeComparison: jest.fn(async () => ({
     period: 'month',
     current: summary(
       mockIncomeOnly.current ? [] : [cat('rent', 'Rent', 1800000), cat('food', 'Food', 620000)],
@@ -164,7 +164,7 @@ jest.mock('@/db/reports', () => ({
     previous: summary([cat('rent', 'Rent', 1800000), cat('food', 'Food', 410000)]),
     incomeChangePct: null,
     expenseChangePct: null,
-  }),
+  })),
   getMonthlyExpenseTrend: async () =>
     ['Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep'].map((label) => ({ label, totalMinor: 2200000 })),
   getNetWorthTrend: async () =>
@@ -284,21 +284,87 @@ describe('Reports screen', () => {
     (require('expo-router').router.navigate as jest.Mock).mockClear();
   });
 
-  it('opens on the period at a glance, then the three lenses, starting on Days', async () => {
+  it('opens directly on Days without the duplicated Home summary', async () => {
     const shown = texts(await render());
     expect(shown).toEqual(
       expect.arrayContaining(['Days', 'Categories', 'Trends', 'Tap a day to see what went out'])
     );
-    // The summary card: spent, the usual month (₹22,000 from the trend), the change on the month before
-    // (₹22,100 then), and money in · spent · kept.
-    expect(shown.some((t) => t.startsWith('Spent in '))).toBe(true);
-    expect(shown).toEqual(
-      expect.arrayContaining(['Usual month', '₹22,000', 'Money in', '₹1,67,000', 'Kept', '₹1,42,800'])
-    );
-    expect(shown.some((t) => t.startsWith('₹2,100 more than'))).toBe(true);
-    expect(shown.indexOf('Kept')).toBeLessThan(shown.indexOf('Days'));
+    expect(shown.some((t) => t.startsWith('Spent in '))).toBe(false);
+    expect(shown).not.toContain('Usual month');
     expect(shown.some((t) => t.endsWith(', in short'))).toBe(true);
     expect(shown).not.toContain('Where it went');
+  });
+
+  it('shows a failed day read and retries instead of presenting an empty day', async () => {
+    const tree = await render();
+    mockListTransactions.mockRejectedValueOnce(new Error('Read interrupted'));
+    await pressText(tree, '5');
+    expect(texts(tree)).toContain('Couldn’t load this day');
+    expect(texts(tree)).not.toContain('Nothing on this day.');
+    await pressText(tree, 'Retry day');
+    expect(texts(tree)).toContain('Groceries');
+    expect(texts(tree)).not.toContain('Couldn’t load this day');
+  });
+
+  it('hides the previous report while stepping periods and ignores an older response', async () => {
+    const tree = await render();
+    await pressText(tree, 'Categories');
+    expect(texts(tree)).toContain('Food');
+    const read = require('@/db/reports').getRangeComparison as jest.Mock;
+    const cmp = await read.mock.results.at(-1)!.value;
+    let finish!: (value: typeof cmp) => void;
+    read.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          finish = resolve;
+        })
+    );
+    await act(async () => byLabel(tree, 'Previous period').props.onPress());
+    expect(texts(tree)).not.toContain('Food');
+    read.mockResolvedValueOnce({ ...cmp, current: summary([cat('latest', 'Latest period', 12345)]) });
+    await act(async () => byLabel(tree, 'Previous period').props.onPress());
+    expect(texts(tree)).toContain('Latest period');
+    await act(async () => finish({ ...cmp, current: summary([cat('older', 'Outdated response', 77777)]) }));
+    expect(texts(tree)).toContain('Latest period');
+    expect(texts(tree)).not.toContain('Outdated response');
+  });
+
+  it('does not reopen a day after its pending request finishes', async () => {
+    const tree = await render();
+    let finish!: (items: Awaited<ReturnType<typeof mockListTransactions>>) => void;
+    mockListTransactions.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          finish = resolve;
+        })
+    );
+    await pressText(tree, '5');
+    await act(async () => byLabel(tree, 'Close this day').props.onPress());
+    await act(async () =>
+      finish([
+        {
+          id: 'late',
+          type: 'expense',
+          amountMinor: 100,
+          date: '2026-10-05',
+          note: 'Late entry',
+          categoryId: 'food',
+        },
+      ])
+    );
+    expect(texts(tree)).not.toContain('Late entry');
+    expect(texts(tree)).not.toContain('Close this day');
+  });
+
+  it('reports account-query failures and recovers through retry', async () => {
+    const tree = await render();
+    mockAccounts.mockRejectedValueOnce(new Error('Account read interrupted'));
+    await pressText(tree, 'Categories');
+    await pressText(tree, 'By account');
+    expect(texts(tree)).toContain('Some report details couldn’t load');
+    await pressText(tree, 'Retry details');
+    expect(texts(tree)).not.toContain('Some report details couldn’t load');
+    expect(texts(tree)).toContain('Everyday account');
   });
 
   it('switches lens: Categories shows where it went, Trends the chart', async () => {
@@ -316,6 +382,26 @@ describe('Reports screen', () => {
     expect(shown).not.toContain('Where it went');
     await pressText(tree, 'Days');
     expect(texts(tree)).toContain('Tap a day to see what went out');
+  });
+
+  it('scales category bars to their share of all spending', async () => {
+    const tree = await render();
+    await pressText(tree, 'Categories');
+    const Fill = require('@/features/reports/AnimatedCategoryFill').AnimatedCategoryFill;
+    const bars = tree.root.findAllByType(Fill).map((n) => n.props.targetPct as number);
+    expect(bars[0]).toBeCloseTo((1800000 / 2420000) * 100);
+    expect(bars[1]).toBeCloseTo((620000 / 2420000) * 100);
+    expect(bars.reduce((sum, value) => sum + value, 0)).toBeCloseTo(100);
+  });
+
+  it('lets the insight arrows move forward and back as an alternative to swiping', async () => {
+    const tree = await render();
+    await layOut(tree);
+    await act(async () => byLabel(tree, 'Next insight').props.onPress());
+    expect(texts(tree).some((t) => t.startsWith('2 of '))).toBe(true);
+    await act(async () => byLabel(tree, 'Previous insight').props.onPress());
+    expect(texts(tree).some((t) => t.startsWith('1 of '))).toBe(true);
+    expect(byLabel(tree, 'Previous insight').props.disabled).toBe(true);
   });
 
   it('Trends asks for the in-and-out and category tracks with savings left out while hidden', async () => {

@@ -98,7 +98,7 @@ export function buildHeatGrid(input: {
       isToday: iso === todayIso,
       isFuture: iso > todayIso,
       isSelected: iso === input.selectedIso,
-      onPress: total > 0 ? () => input.onDayPress(iso) : undefined,
+      onPress: iso <= todayIso ? () => input.onDayPress(iso) : undefined,
     };
   });
   return { cells, leadingPad: new Date(y, m, 1).getDay(), columns: 7, weekdayLabels: WEEKDAYS };
@@ -143,7 +143,7 @@ export function buildRangeHeatGrid(input: {
           isToday: iso === todayIso,
           isFuture: iso > todayIso,
           isSelected: iso === input.selectedIso,
-          onPress: total > 0 ? () => input.onDayPress(iso) : undefined,
+          onPress: iso <= todayIso ? () => input.onDayPress(iso) : undefined,
         };
       }),
       leadingPad: parseLocalIsoDate(input.start).getDay(),
@@ -168,7 +168,12 @@ export function buildRangeHeatGrid(input: {
 
 /** Rolling average of the prior months in a monthly trend (excludes the last / current point). */
 export function baselineFromTrend(trend: TrendPoint[]): number | null {
-  const prior = trend.slice(0, -1).map((t) => t.totalMinor);
+  const nowMonth = toLocalIsoDate(new Date()).slice(0, 7);
+  const available = trend.filter((t) => t.recorded !== false);
+  const prior = available
+    .slice(0, -1)
+    .filter((t) => !t.month || t.month < nowMonth)
+    .map((t) => t.totalMinor);
   if (prior.length < 2) return null;
   return prior.reduce((a, b) => a + b, 0) / prior.length;
 }
@@ -647,7 +652,10 @@ export const KEPT_MIN_MONTHS = 2;
 /** Kept, averaged over the finished months (a month still going is left out); null with too few of them. */
 export function keptSummary(points: CashFlowPoint[], inProgress: boolean): KeptSummary | null {
   const done = (inProgress ? points.slice(0, -1) : points).filter(
-    (p) => p.incomeMinor > 0 || p.expenseMinor > 0
+    (p) =>
+      p.recorded !== false &&
+      (!p.month || p.month < toLocalIsoDate(new Date()).slice(0, 7)) &&
+      (p.recorded === true || p.incomeMinor > 0 || p.expenseMinor > 0)
   );
   if (done.length < KEPT_MIN_MONTHS) return null;
   const kept = done.map(keptOf);

@@ -37,8 +37,8 @@ export const styles = StyleSheet.create({
     borderRadius: theme.radius.pill,
   },
   periodArrow: {
-    width: 40,
-    height: 40,
+    width: 44,
+    height: 44,
     borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
@@ -73,7 +73,7 @@ export const styles = StyleSheet.create({
     paddingTop: 12,
     paddingBottom: 8,
   },
-  stickyTabs: { marginHorizontal: -20, zIndex: 1 },
+  stickyTabs: { marginHorizontal: -20, zIndex: 1, backgroundColor: '#DFE3F8' },
 
   // The Days tab's heatmap card.
   hmCard: {
@@ -90,6 +90,7 @@ export const styles = StyleSheet.create({
   },
   hmHead: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: 8,
@@ -104,7 +105,7 @@ export const styles = StyleSheet.create({
     maxWidth: '100%',
     borderRadius: theme.radius.pill,
     backgroundColor: 'rgba(255,255,255,0.7)',
-    minHeight: 32,
+    minHeight: 44,
     paddingLeft: 12,
     paddingRight: 10,
   },
@@ -153,8 +154,8 @@ export const styles = StyleSheet.create({
   storyKicker: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textSecondary },
   storyBig: {
     fontFamily: theme.font.roundedBold,
-    fontSize: 30,
-    lineHeight: 34,
+    fontSize: 23,
+    lineHeight: 28,
     color: theme.colors.textPrimary,
   },
   storyDetail: {
@@ -194,8 +195,8 @@ export const styles = StyleSheet.create({
   dayHeadText: { flex: 1, minWidth: 0 },
   dayTitle: { fontFamily: theme.font.roundedBold, fontSize: 17, color: theme.colors.textPrimary },
   dayClose: {
-    width: 36,
-    height: 36,
+    width: 44,
+    height: 44,
     borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
@@ -311,7 +312,13 @@ export const styles = StyleSheet.create({
     gap: 8,
     boxShadow: GLASS.shadow,
   },
-  trendHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
+  trendHead: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
   trendTitle: { fontFamily: theme.font.roundedBold, fontSize: 17, color: theme.colors.textPrimary },
   trendSwitch: {
     flexDirection: 'row',
@@ -320,7 +327,9 @@ export const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.7)',
   },
   trendSwitchBtn: {
-    minHeight: 32,
+    flex: 1,
+    alignItems: 'center',
+    minHeight: 44,
     justifyContent: 'center',
     paddingHorizontal: 12,
     borderRadius: theme.radius.pill,
@@ -489,7 +498,8 @@ export const styles = StyleSheet.create({
   catSplitName: { flex: 1, fontFamily: theme.font.body, fontSize: 14, color: theme.colors.textSecondary },
   catSplitAmt: { fontFamily: theme.font.mono, fontSize: 14, color: theme.colors.textPrimary },
   catLinks: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 18, rowGap: 2, paddingTop: 4 },
-  catLink: { paddingVertical: 8 },
+  catLink: { minHeight: 44, justifyContent: 'center', paddingVertical: 8 },
+  catMeta: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 8 },
   catLinkText: { fontFamily: theme.font.bodyBold, fontSize: 14, color: theme.colors.link },
   catTop: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
   catName: { flex: 1, fontFamily: theme.font.bodyBold, fontSize: 15, color: theme.colors.textPrimary },
@@ -503,7 +513,7 @@ export const styles = StyleSheet.create({
   },
   catRight: { flexDirection: 'row', alignItems: 'center', gap: 6, marginLeft: 8 },
   catAmt: { fontFamily: theme.font.monoBold, fontSize: 15, color: theme.colors.textPrimary },
-  catDelta: { fontFamily: theme.font.monoBold, fontSize: 12 },
+  catDelta: { flexShrink: 1, fontFamily: theme.font.monoBold, fontSize: 12 },
   catTrack: {
     height: 6,
     borderRadius: 3,

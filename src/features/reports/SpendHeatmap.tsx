@@ -1,12 +1,9 @@
 import { View, Pressable, StyleSheet } from 'react-native';
 import { Text } from '@/components/Text';
-import Animated, { FadeIn, ReduceMotion } from 'react-native-reanimated';
 import { theme } from '@/constants/theme';
 import { spendHeatScale, hexToHsl } from '@/lib/color';
 import { useAccent } from '@/theme/AccentContext';
-import { MAX_LIST_STAGGER_MS } from '@/lib/animation';
 import { gridRows } from '@/lib/gridRows';
-import { DURATIONS } from '@/lib/motionTimings';
 import { withPressed } from '@/lib/pressed';
 
 export interface HeatCell {
@@ -61,13 +58,11 @@ export function SpendHeatmap({
         <View key={r} style={styles.row}>
           {row.map((c, col) => {
             if (!c) return <View key={`blank-${col}`} style={[styles.slot, styles.cellWrap]} />;
-            const i = r * columns + col - leadingPad;
             const inner = (
               <View
                 style={[
                   styles.cell,
                   c.level === 0 && styles.cellEmpty,
-                  c.isToday && styles.cellToday,
                   c.isFuture && styles.cellFuture,
                   c.isSelected && styles.cellSelected,
                   { backgroundColor: heatScale[c.level] },
@@ -82,16 +77,11 @@ export function SpendHeatmap({
                 >
                   {c.label}
                 </Text>
+                {c.isToday && <View style={styles.todayDot} />}
               </View>
             );
             return (
-              <Animated.View
-                key={c.key}
-                entering={FadeIn.delay(Math.min(i * 12, MAX_LIST_STAGGER_MS))
-                  .duration(DURATIONS.standard)
-                  .reduceMotion(ReduceMotion.System)}
-                style={[styles.slot, styles.cellWrap]}
-              >
+              <View key={c.key} style={[styles.slot, styles.cellWrap]}>
                 {c.onPress ? (
                   <Pressable
                     style={withPressed()}
@@ -107,7 +97,7 @@ export function SpendHeatmap({
                     {inner}
                   </View>
                 )}
-              </Animated.View>
+              </View>
             );
           })}
         </View>
@@ -128,10 +118,17 @@ const styles = StyleSheet.create({
     color: theme.colors.textMuted,
   },
   cellWrap: { padding: 2 },
-  cell: { height: 40, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
+  cell: { minHeight: 44, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
   cellEmpty: { borderWidth: StyleSheet.hairlineWidth, borderColor: theme.colors.borderSoft },
   cellFuture: { borderWidth: 0, opacity: 0.35 },
-  cellToday: { borderWidth: 2, borderColor: theme.colors.ink },
+  todayDot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: theme.colors.ink,
+    position: 'absolute',
+    bottom: 5,
+  },
   cellSelected: { borderWidth: 2.5, borderColor: theme.colors.ink },
   cellLabel: { fontFamily: theme.font.mono, fontSize: 12 },
   cellLabelTop: { fontFamily: theme.font.monoBold },
