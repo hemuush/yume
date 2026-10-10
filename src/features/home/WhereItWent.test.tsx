@@ -31,7 +31,12 @@ const cat = (name: string, totalMinor: number, isSensitive = false): CategoryBre
   isSensitive,
 });
 
-function render(breakdown: CategoryBreakdownItem[], onOpenReports = jest.fn()) {
+function render(
+  breakdown: CategoryBreakdownItem[],
+  onOpenReports = jest.fn(),
+  onOpenCategory = jest.fn(),
+  onAddExpense = jest.fn()
+) {
   let r!: ReactTestRenderer;
   act(() => {
     r = create(
@@ -43,6 +48,8 @@ function render(breakdown: CategoryBreakdownItem[], onOpenReports = jest.fn()) {
         periodName="October"
         previousName="Sept"
         onOpenReports={onOpenReports}
+        onOpenCategory={onOpenCategory}
+        onAddExpense={onAddExpense}
       />
     );
   });
@@ -60,13 +67,13 @@ describe('Where it went', () => {
         'Spent in October',
         '₹50,000',
         '₹4,210 less than Sept',
-        'Food',
-        '₹16,000 · 32% of spending',
+        'Rent',
+        '₹24,000 · 48% of spending',
       ])
     );
   });
 
-  it('selects a category without hiding the other category amounts', () => {
+  it('shows the selected category immediately', () => {
     const r = render(breakdown);
     act(() =>
       r.root
@@ -75,7 +82,7 @@ describe('Where it went', () => {
     );
     const all = texts(r);
     expect(all).toEqual(expect.arrayContaining(['Shares', '₹10,000 · 20% of spending', '20%']));
-    expect(all).toContain('₹16,000 · 32% of spending');
+    expect(all).not.toContain('₹16,000 · 32% of spending');
     expect(
       r.root.findAll((n) => n.props.accessibilityLabel === 'Shares, 20% of spending')[0].props
         .accessibilityState.selected
@@ -93,15 +100,38 @@ describe('Where it went', () => {
     expect(open).toHaveBeenCalled();
   });
 
-  it('draws nothing for a period with no spending', () => {
-    expect(render([]).toJSON()).toBeNull();
+  it('offers an expense action for a period with no spending', () => {
+    const add = jest.fn();
+    const r = render([], jest.fn(), jest.fn(), add);
+    expect(texts(r)).toContain('No spending yet');
+    act(() =>
+      r.root.find((n) => n.props.accessibilityLabel === 'Add expense' && n.props.onPress).props.onPress()
+    );
+    expect(add).toHaveBeenCalledTimes(1);
   });
 
   it('keeps shares based on all categories and offers the remaining categories in Reports', () => {
     const tree = render(['A', 'B', 'C', 'D', 'E'].map((name) => cat(name, 10000)));
     const shown = texts(tree);
     expect(shown).toContain('₹100 · 20% of spending');
-    expect(shown).toContain('View all 5 categories');
+    expect(
+      tree.root.findAll((n) => n.props.accessibilityLabel === 'All categories in Reports').length
+    ).toBeGreaterThan(0);
     expect(shown).not.toContain('E');
   });
+});
+
+it('opens the selected category only from its detail action', () => {
+  const open = jest.fn();
+  const r = render([cat('Food', 10000), cat('Rent', 20000)], jest.fn(), open);
+  act(() =>
+    r.root
+      .find((n) => n.props.accessibilityLabel === 'Food, 33% of spending' && n.props.onPress)
+      .props.onPress()
+  );
+  expect(open).not.toHaveBeenCalled();
+  act(() =>
+    r.root.find((n) => n.props.accessibilityLabel === 'View Food category' && n.props.onPress).props.onPress()
+  );
+  expect(open).toHaveBeenCalledWith('Food');
 });
