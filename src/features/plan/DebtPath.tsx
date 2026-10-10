@@ -1,41 +1,29 @@
-import { useState } from 'react';
-import { View, Pressable, LayoutChangeEvent } from 'react-native';
+import { View, Pressable, StyleSheet } from 'react-native';
 import { Text } from '@/components/Text';
 import { Glass } from '@/components/Glass';
 import { formatMoney } from '@/lib/money';
 import { formatRatioPct } from '@/lib/format';
 import { withPressed } from '@/lib/pressed';
-import { shade } from '@/lib/color';
-import { parseLocalIsoDate } from '@/lib/date';
-import { useAccent } from '@/theme/AccentContext';
-import { dayMonth, longMonthYear, shortMonthYear } from '@/lib/dateLabels';
-import { homeInk } from '@/features/home/homeInk';
-import { DueSoon, LoansSummary, PlanLoanRow } from './planOverview';
+import { dayMonth, longMonthYear } from '@/lib/dateLabels';
+import { DueSoon, LoansSummary } from './planOverview';
 import { Kicker, PlanChip } from './PlanTiles';
 import { styles } from './plan.styles';
 
-const LANES_SHOWN = 3;
+import Feather from '@expo/vector-icons/Feather';
+import { theme } from '@/constants/theme';
 
-/**
- * The way to debt-free: a timeline from today to the last EMI. Each borrowed loan is a line that stops at the
- * month it ends, so you see which goes first; under it, debt left, how much is paid, EMIs due in the next 14
- * days and what you lent out. Opens Loans. With nothing borrowed it's a prompt to track an EMI.
- */
+/** A compact debt overview. Individual schedules stay on Loans. */
 export function DebtPath({
   loans,
   dueSoon,
   today,
   onOpen,
-  onLoan,
 }: {
   loans: LoansSummary;
   dueSoon: DueSoon;
   today: string;
   onOpen: () => void;
-  onLoan?: (id: string) => void;
 }) {
-  const { accent } = useAccent();
-  const [width, setWidth] = useState(0);
   const borrowed = loans.rows.filter((r) => r.direction === 'borrowed');
   if (borrowed.length === 0) {
     return (
@@ -61,110 +49,31 @@ export function DebtPath({
     );
   }
 
-  const shown = borrowed.slice(0, LANES_SHOWN);
-  const more = borrowed.length - shown.length;
-  const start = parseLocalIsoDate(today).getTime();
   // A debt-free month is only claimed when every loan has an end date and it's still ahead.
   const knownEnd =
     loans.debtFreeDate != null && loans.debtFreeDate > today && borrowed.every((r) => r.endDate != null)
       ? loans.debtFreeDate
       : null;
-  const end = knownEnd ? parseLocalIsoDate(knownEnd).getTime() : null;
-  const share = (row: PlanLoanRow) =>
-    end && row.endDate && end > start
-      ? Math.min(1, Math.max(0.04, (parseLocalIsoDate(row.endDate).getTime() - start) / (end - start)))
-      : null;
-  const colors = [homeInk(accent), shade(accent, 58), shade(accent, 74)];
-  const startYear = new Date(start).getFullYear();
-  const endYear = end ? new Date(end).getFullYear() : null;
-  const midYear = endYear && endYear - startYear >= 4 ? Math.round((startYear + endYear) / 2) : null;
   const nextEmi = borrowed.find((r) => r.nextDueDate && r.nextEmiMinor != null);
 
   return (
     <View>
       <Glass style={styles.card}>
-        <Pressable
-          onPress={onOpen}
-          style={withPressed()}
-          accessibilityRole="button"
-          accessibilityLabel="Open loans"
-        >
-          <Kicker icon="flag">
-            {knownEnd
-              ? `Estimated debt-free · ${longMonthYear(knownEnd)}`
-              : 'Debt left · schedule incomplete'}
-          </Kicker>
-        </Pressable>
+        <Kicker icon="flag">
+          {knownEnd ? `Estimated debt-free · ${longMonthYear(knownEnd)}` : 'Debt left · schedule incomplete'}
+        </Kicker>
         <Text style={styles.pathValue} numberOfLines={1} adjustsFontSizeToFit>
           {formatMoney(loans.debtLeftMinor)}
         </Text>
         <Text style={styles.pathNote}>Principal left · {formatRatioPct(loans.paidFraction)} repaid</Text>
-        <Text style={styles.tileSub}>Lanes show time to scheduled payoff</Text>
         <View
-          style={styles.lanes}
-          onLayout={(e: LayoutChangeEvent) => setWidth(Math.round(e.nativeEvent.layout.width))}
+          style={local.track}
+          accessibilityRole="progressbar"
+          accessibilityLabel="Principal repaid"
+          accessibilityValue={{ min: 0, max: 100, now: Math.round(loans.paidFraction * 100) }}
         >
-          {shown.map((row, i) => {
-            const s = share(row);
-            const color = colors[i % colors.length];
-            const barWidth = s != null ? s * width : width;
-            return (
-              <Pressable
-                key={row.id}
-                onPress={() => (onLoan ? onLoan(row.id) : onOpen())}
-                style={withPressed(styles.lane)}
-                accessibilityRole="button"
-                accessibilityLabel={`${row.name}, ${row.paidCount} of ${row.totalCount} installments paid. ${row.endDate ? `Scheduled end ${longMonthYear(row.endDate)}` : 'End date unknown'}. Open loan`}
-              >
-                <View style={styles.laneTop}>
-                  <Text style={styles.laneName} numberOfLines={2}>
-                    {row.name}
-                  </Text>
-                  <Text style={styles.laneSub} numberOfLines={1}>
-                    {row.totalCount > 0
-                      ? `${row.paidCount} of ${row.totalCount} installments paid`
-                      : 'Installment schedule unavailable'}
-                  </Text>
-                </View>
-                {width > 0 && s != null && (
-                  <View style={styles.laneTrack}>
-                    <View
-                      style={[
-                        styles.laneBar,
-                        { width: Math.max(8, barWidth - (s != null ? 6 : 0)), backgroundColor: color },
-                        s == null && { opacity: 0.35 },
-                      ]}
-                    />
-                    {s != null && (
-                      <View
-                        style={[styles.laneEnd, { left: Math.max(0, barWidth - 16), borderColor: color }]}
-                      />
-                    )}
-                  </View>
-                )}
-                <Text style={styles.laneSub}>
-                  {row.endDate ? `Scheduled end · ${shortMonthYear(row.endDate)}` : 'End date unknown'}
-                </Text>
-              </Pressable>
-            );
-          })}
+          <View style={[local.fill, { width: `${Math.min(100, Math.max(0, loans.paidFraction * 100))}%` }]} />
         </View>
-        {endYear != null && (
-          <View
-            style={styles.axis}
-            accessibilityElementsHidden
-            importantForAccessibility="no-hide-descendants"
-          >
-            <Text style={styles.axisText}>Now</Text>
-            {midYear != null && <Text style={styles.axisText}>{midYear}</Text>}
-            <Text style={[styles.axisText, styles.axisEnd]}>Debt-free {endYear}</Text>
-          </View>
-        )}
-        {more > 0 && (
-          <Text style={styles.more}>
-            +{more} more loan{more === 1 ? '' : 's'}
-          </Text>
-        )}
         <View style={styles.chips}>
           {dueSoon.emiMinor > 0 ? (
             <PlanChip icon="calendar">{formatMoney(dueSoon.emiMinor)} in EMIs over 14 days</PlanChip>
@@ -177,10 +86,31 @@ export function DebtPath({
             <PlanChip icon="arrow-up-right">{formatMoney(loans.lentLeftMinor)} you lent out</PlanChip>
           )}
         </View>
-        <Text style={styles.tileSub}>
-          Based on recorded schedules. Rate changes and extra payments can change these dates.
-        </Text>
+        <Pressable
+          onPress={onOpen}
+          style={withPressed(local.link)}
+          accessibilityRole="button"
+          accessibilityLabel="Open loans"
+        >
+          <Text style={local.linkText}>View loans · {borrowed.length} active</Text>
+          <Feather name="arrow-up-right" size={17} color={theme.colors.link} />
+        </Pressable>
       </Glass>
     </View>
   );
 }
+
+const local = StyleSheet.create({
+  track: { height: 6, borderRadius: 3, backgroundColor: theme.colors.borderSoft, overflow: 'hidden' },
+  fill: { height: '100%', borderRadius: 3, backgroundColor: theme.colors.incomeText },
+  link: {
+    minHeight: 44,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: theme.colors.borderSoft,
+    paddingTop: 6,
+  },
+  linkText: { flexShrink: 1, fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.link },
+});
