@@ -115,6 +115,8 @@ export function SearchStatus({
   minChars,
   loading,
   resultCount,
+  failed = false,
+  onRetry,
   suggestions = [],
   recent = [],
   onPick,
@@ -124,6 +126,8 @@ export function SearchStatus({
   minChars: number;
   loading: boolean;
   resultCount: number;
+  failed?: boolean;
+  onRetry?: () => void;
   /** Things to try, from the user's own entries (a category, an amount, a day). */
   suggestions?: string[];
   /** Past searches, newest first. */
@@ -192,6 +196,17 @@ export function SearchStatus({
     return (
       <View style={styles.searchLoading}>
         <ActivityIndicator color={theme.colors.ink} />
+      </View>
+    );
+  }
+  if (failed) {
+    return (
+      <View style={styles.searchEmpty}>
+        <Text style={styles.searchEmptyTitle}>Couldn't search</Text>
+        <Text style={styles.searchEmptySub}>Your entries haven't changed. Please try again.</Text>
+        <Pressable onPress={onRetry} accessibilityRole="button" style={withPressed(styles.searchSuggestChip)}>
+          <Text style={styles.searchSuggestText}>Retry search</Text>
+        </Pressable>
       </View>
     );
   }

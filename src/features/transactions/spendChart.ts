@@ -149,6 +149,7 @@ export interface ChartLegendItem {
 export function legendForBars(bars: SpendBar[]): ChartLegendItem[] {
   const seen = new Map<string, ChartLegendItem & { totalMinor: number }>();
   for (const bar of bars) {
+    if (bar.totalMinor <= 0 || bar.state) continue;
     for (const seg of bar.segments) {
       const item = seen.get(seg.categoryId);
       if (item) item.totalMinor += seg.amountMinor;
