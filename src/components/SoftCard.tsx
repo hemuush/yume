@@ -4,7 +4,7 @@ import { useUiScale } from '@/lib/uiScale';
 
 interface Props {
   children: React.ReactNode;
-  /** Tinted fills carry their own separation and get no border (like NeoTile). */
+  /** Tinted fills carry their own separation and get no border. */
   backgroundColor?: string;
   borderRadius?: number;
   padding?: number;
@@ -14,8 +14,7 @@ interface Props {
 }
 
 /**
- * Home's calmer card: rounder, airier than doodle-register `NeoTile`, hairline only on plain surfaces,
- * optional soft blurred shadow (never hard offset). Separate from `NeoTile` on purpose: other screens use it.
+ * Rounded card with a hairline border on plain surfaces and an optional soft shadow.
  */
 export function SoftCard({
   children,

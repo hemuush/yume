@@ -11,7 +11,7 @@ import { formatMoney } from '@/lib/money';
 import { haptics } from '@/lib/haptics';
 import { withPressed } from '@/lib/pressed';
 
-export const DIAL_CATEGORIES = 4;
+const TOP_CATEGORIES = 4;
 
 /** Category amounts and shares stay visible together, without a sparse icon dial. */
 export function WhereItWent({
@@ -32,7 +32,7 @@ export function WhereItWent({
   onOpenReports: () => void;
 }) {
   const positive = breakdown.filter((category) => category.totalMinor > 0);
-  const top = positive.slice(0, DIAL_CATEGORIES);
+  const top = positive.slice(0, TOP_CATEGORIES);
   const total = positive.reduce((sum, category) => sum + category.totalMinor, 0);
   const [picked, setPicked] = useState(top[0]?.categoryId);
   const selected = top.some((category) => category.categoryId === picked) ? picked : top[0]?.categoryId;

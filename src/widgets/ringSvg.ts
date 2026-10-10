@@ -1,14 +1,14 @@
 import type { HeroSlices } from '@/features/home/heroSlices';
 
 const STROKE = 9;
-/** The gap left between two slices, along the ring — the same as Home's MonthRing. */
+/** The gap left between two slices along the widget ring. */
 const GAP = 3.5;
-// The same slices, in the same order, as Home's MonthRing: bills still due sit between saved and free.
+// Bills still due sit between saved and free.
 const LAYERS = ['spent', 'saved', 'due', 'free'] as const;
 
 /**
  * Home's month ring as an SVG string for the This Month widget: income split into spent, savings and free
- * to use, on a moon-cream face. Like MonthRing (one dashed circle per slice) but static (widgets can't animate).
+ * to use, on a moon-cream face. One static dashed circle per slice (widgets can't animate).
  */
 export function ringSvg(
   slices: HeroSlices,
