@@ -457,6 +457,17 @@ export default function DashboardScreen() {
     });
   }, [loans, loanProgress, cardBills, recurringRules, accent, secondary, categoriesById, accountsById]);
 
+  const openSpendingReports = () => {
+    const range = periodRange(loadedCursor);
+    router.navigate({
+      pathname: '/reports',
+      params:
+        loadedCursor.granularity === 'month'
+          ? { month: String(loadedCursor.offset) }
+          : { from: range.start, to: range.end },
+    });
+  };
+
   return (
     <View style={styles.container}>
       <HomeWallpaper accent={accent} secondary={secondary} />
@@ -542,8 +553,8 @@ export default function DashboardScreen() {
           </>
         )}
 
-        {loaded && comparison && comparison.current.categoryBreakdown.some((c) => c.totalMinor > 0) && (
-          <Section title="Where it went" onSeeAll={() => router.navigate('/reports')}>
+        {loaded && comparison && (
+          <Section title="Where it went" onSeeAll={openSpendingReports}>
             <WhereItWent
               // A new period starts on its own biggest category, not whichever place was picked before.
               key={`${loadedCursor.granularity}:${loadedCursor.offset}`}
@@ -556,7 +567,14 @@ export default function DashboardScreen() {
               }
               periodName={periodLabel(loadedCursor)}
               previousName={periodShortLabel(stepPeriod(loadedCursor, -1))}
-              onOpenReports={() => router.navigate('/reports')}
+              onOpenReports={openSpendingReports}
+              onOpenCategory={(id) =>
+                router.push({
+                  pathname: '/category/[id]',
+                  params: { id, g: loadedCursor.granularity, o: String(loadedCursor.offset) },
+                })
+              }
+              onAddExpense={() => router.push('/add-transaction?type=expense')}
             />
           </Section>
         )}

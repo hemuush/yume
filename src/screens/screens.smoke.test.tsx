@@ -615,6 +615,26 @@ describe('Home, stepping between months on a lived-in phone', () => {
     expect(textOf(tree)).toContain(monthName(-1));
     act(() => tree.unmount());
   });
+  it('keeps Home spending drill-downs in the displayed period', async () => {
+    const { router } = require('expo-router');
+    const navigate = jest.spyOn(router, 'navigate');
+    const push = jest.spyOn(router, 'push');
+    const { WhereItWent } = require('@/features/home/WhereItWent');
+    const tree = await open(SCREENS[0][1]);
+    await step(tree, 'decrement');
+    await settle();
+    const dial = tree.root.findByType(WhereItWent);
+    act(() => dial.props.onOpenReports());
+    expect(navigate).toHaveBeenLastCalledWith({ pathname: '/reports', params: { month: '-1' } });
+    act(() => dial.props.onOpenCategory('food'));
+    expect(push).toHaveBeenLastCalledWith({
+      pathname: '/category/[id]',
+      params: { id: 'food', g: 'month', o: '-1' },
+    });
+    act(() => dial.props.onAddExpense());
+    expect(push).toHaveBeenLastCalledWith('/add-transaction?type=expense');
+    act(() => tree.unmount());
+  });
 });
 
 describe('Plan links open the selected existing flow', () => {

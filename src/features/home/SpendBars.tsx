@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { View, Pressable, StyleSheet } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { View, Pressable, StyleSheet, ScrollView } from 'react-native';
 import Animated, {
   cancelAnimation,
   useSharedValue,
@@ -36,6 +36,8 @@ function Bar({
   delay,
   animateEntry,
   dateLabel,
+  selected,
+  onSelect,
 }: {
   bar: SpendBar;
   maxMinor: number;
@@ -45,6 +47,8 @@ function Bar({
   delay: number;
   animateEntry: boolean;
   dateLabel: string;
+  selected: boolean;
+  onSelect: () => void;
 }) {
   const reduce = useReduceMotion();
   const target =
@@ -58,22 +62,28 @@ function Bar({
   }, [reduce, animateEntry, delay, growth]);
   const style = useAnimatedStyle(() => ({ transform: [{ scaleY: growth.value }] }));
   return (
-    <View style={styles.col} accessible accessibilityLabel={`${dateLabel}, ${formatMoney(bar.totalMinor)}`}>
-      {bar.current && (
-        <Text style={styles.value} numberOfLines={1}>
+    <Pressable
+      style={styles.col}
+      onPress={onSelect}
+      accessibilityRole="button"
+      accessibilityState={{ selected }}
+      accessibilityLabel={`${dateLabel}, ${formatMoney(bar.totalMinor)}`}
+    >
+      {selected && (
+        <Text style={styles.value} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
           {formatMoney(bar.totalMinor)}
         </Text>
       )}
       <Animated.View
         style={[
           styles.bar,
-          { height: target, transformOrigin: 'bottom', backgroundColor: bar.current ? ink : tint },
-          bar.totalMinor === 0 && !bar.current && styles.barEmpty,
+          { height: target, transformOrigin: 'bottom', backgroundColor: selected ? ink : tint },
+          bar.totalMinor === 0 && !selected && styles.barEmpty,
           style,
         ]}
       />
-      <Text style={[styles.label, bar.current && styles.labelOn]}>{bar.label}</Text>
-    </View>
+      <Text style={[styles.label, selected && styles.labelOn]}>{bar.label}</Text>
+    </Pressable>
   );
 }
 
@@ -88,12 +98,24 @@ export function SpendBars({
   daily: { date: string; totalMinor: number }[];
   today: string;
 }) {
+  const chart = useRef<ScrollView>(null);
   const { accent } = useAccent();
   const ink = homeInk(accent);
   const tint = hexToRgba(ink, 0.22);
   const [range, setRange] = useState<Range>('week');
   const [switched, setSwitched] = useState(false);
+  const [picked, setPicked] = useState<{ range: Range; today: string; key: string } | null>(null);
   const bars = range === 'week' ? weekBars(daily, today) : monthBars(daily, today);
+  const selectedKey =
+    picked?.range === range && picked.today === today && bars.some((b) => b.key === picked.key)
+      ? picked.key
+      : bars[bars.length - 1].key;
+  const selectedBar = bars.find((b) => b.key === selectedKey)!;
+  const selectedIndex = bars.indexOf(selectedBar);
+  const selectedDate =
+    range === 'week'
+      ? parseLocalIsoDate(selectedBar.key).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })
+      : `${selectedIndex * 7 + 1}–${Math.min((selectedIndex + 1) * 7, Number(today.slice(8)))} ${parseLocalIsoDate(today).toLocaleDateString(undefined, { month: 'short' })}`;
   const maxMinor = Math.max(0, ...bars.map((b) => b.totalMinor));
   const total = bars.reduce((s, b) => s + b.totalMinor, 0);
   const rangeDates =
@@ -123,6 +145,7 @@ export function SpendBars({
                 haptics.tap();
                 setSwitched(true);
                 setRange(r);
+                setPicked(null);
               }}
               hitSlop={{ top: 9, bottom: 9, left: 0, right: 0 }}
               style={[styles.seg, r === range && styles.segOn]}
@@ -136,11 +159,22 @@ export function SpendBars({
           ))}
         </View>
       </View>
-      <View style={styles.bars}>
+      <ScrollView
+        ref={chart}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.bars}
+        onContentSizeChange={() => chart.current?.scrollToEnd({ animated: false })}
+      >
         {bars.map((b, i) => (
           <Bar
             key={`${range}:${b.key}`}
             bar={b}
+            selected={b.key === selectedKey}
+            onSelect={() => {
+              haptics.tap();
+              setPicked({ range, today, key: b.key });
+            }}
             maxMinor={maxMinor}
             ink={ink}
             tint={tint}
@@ -157,7 +191,10 @@ export function SpendBars({
             }
           />
         ))}
-      </View>
+      </ScrollView>
+      <Text accessibilityLiveRegion="polite" style={styles.readout}>
+        {selectedDate} · {formatMoney(selectedBar.totalMinor)}
+      </Text>
     </Glass>
   );
 }
@@ -179,8 +216,28 @@ const styles = StyleSheet.create({
   segOn: { backgroundColor: theme.colors.white, boxShadow: '0px 1px 3px rgba(18,19,15,0.12)' },
   segText: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textSecondary },
   segTextOn: { color: theme.colors.textPrimary },
-  bars: { flexDirection: 'row', alignItems: 'flex-end', gap: 8, height: MAX_H + 44, marginTop: 8 },
-  col: { flex: 1, alignItems: 'center', justifyContent: 'flex-end', gap: 6, height: '100%' },
+  readout: {
+    fontFamily: theme.font.bodyMedium,
+    fontSize: 12,
+    color: theme.colors.textSecondary,
+    marginTop: 8,
+  },
+  bars: {
+    flexGrow: 1,
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: 8,
+    height: MAX_H + 44,
+    marginTop: 8,
+  },
+  col: {
+    flexGrow: 1,
+    width: 44,
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    gap: 6,
+    height: '100%',
+  },
   bar: { width: '100%', maxWidth: 34, borderRadius: 10 },
   barEmpty: { opacity: 0.6, borderRadius: 2 },
   value: { fontFamily: theme.font.bodyBold, fontSize: 11, color: theme.colors.textPrimary },
