@@ -18,7 +18,7 @@
         "backgroundImage": "./assets/android-icon-background.png"
       },
       "predictiveBackGestureEnabled": true,
-      "versionCode": 9,
+      "versionCode": 10,
       "allowBackup": false,
       "permissions": [
         "android.permission.USE_BIOMETRIC",
