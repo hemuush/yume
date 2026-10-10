@@ -253,6 +253,20 @@ describe('Profile · Settings section', () => {
     alert.mockRestore();
   });
 
+  it('reports a failed native security check without changing the lock preference', async () => {
+    mockLock.lockEnabled = false;
+    mockDeviceSecured.mockRejectedValue(new Error('Native check failed'));
+    const tree = await render();
+    const [toggle] = tree.root.findAll(
+      (node) => node.props.value === false && typeof node.props.onChange === 'function'
+    );
+    await act(async () => {
+      await toggle.props.onChange(true);
+    });
+    expect(showAlert).toHaveBeenCalledWith("Couldn't check the device lock", 'Native check failed');
+    expect(mockLock.setLockEnabled).not.toHaveBeenCalled();
+  });
+
   it('counts what Tidy up has found, and opens it', async () => {
     mockTidyReport.fractionalCount = 3;
     const tree = await render();

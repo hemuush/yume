@@ -1,5 +1,5 @@
 /**
- * Savings goals on real SQLite: validation, contribution clamping, archive-vs-delete split (mirrors
+ * Savings goals on real SQLite: validation, contribution bounds, archive-vs-delete split (mirrors
  * deleteAccount/deleteLoan), and the delete/undo round trip.
  */
 import { createRealDataTestDb } from '@/test-support/realDataTestDb';
@@ -53,7 +53,7 @@ describe('savings goals', () => {
     ).rejects.toThrow('positive amount');
   });
 
-  it('contributeToGoal adds and subtracts, clamped so it never goes negative', async () => {
+  it('contributeToGoal adds and subtracts, rejecting withdrawals above the current balance', async () => {
     const goal = await createSavingsGoal({
       name: 'Goa Trip',
       targetAmountMinor: 4000000,
@@ -68,10 +68,10 @@ describe('savings goals', () => {
     current = (await listSavingsGoals()).find((g) => g.id === goal.id)!;
     expect(current.currentAmountMinor).toBe(420000);
 
-    // A large withdrawal clamps at 0, never goes negative.
-    await contributeToGoal(goal.id, -999999999);
+    // A stale sheet must never silently record less than the requested withdrawal.
+    await expect(contributeToGoal(goal.id, -999999999)).rejects.toThrow('currently saved');
     const clamped = (await listSavingsGoals()).find((g) => g.id === goal.id)!;
-    expect(clamped.currentAmountMinor).toBe(0);
+    expect(clamped.currentAmountMinor).toBe(420000);
   });
 
   it('contributeToGoal rejects a zero amount and an unknown id', async () => {
@@ -83,6 +83,20 @@ describe('savings goals', () => {
     });
     await expect(contributeToGoal(goal.id, 0)).rejects.toThrow('Enter an amount');
     await expect(contributeToGoal('not-a-real-id', 1000)).rejects.toThrow('no longer exists');
+  });
+
+  it('rejects an addition that would take the saved total outside exact integer precision', async () => {
+    const goal = await createSavingsGoal({
+      name: 'Large goal',
+      targetAmountMinor: 100000,
+      targetDate: null,
+      linkedAccountId: null,
+    });
+    await contributeToGoal(goal.id, Number.MAX_SAFE_INTEGER);
+    await expect(contributeToGoal(goal.id, 1)).rejects.toThrow('accurately');
+    expect((await listSavingsGoals()).find((item) => item.id === goal.id)!.currentAmountMinor).toBe(
+      Number.MAX_SAFE_INTEGER
+    );
   });
 
   it('updateSavingsGoal changes name/target/date/linked account without touching progress', async () => {
