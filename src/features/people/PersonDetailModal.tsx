@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { View, Pressable } from 'react-native';
 import { Text } from '@/components/Text';
+import { getCachedCurrency } from '@/db/settings';
 import Feather from '@expo/vector-icons/Feather';
 import { router, useFocusEffect } from 'expo-router';
 import {
@@ -13,7 +14,7 @@ import {
   PersonWithBalance,
 } from '@/db/people';
 import { listAccounts, listCategories } from '@/db/ledger';
-import { spendableAccountsOf } from '@/lib/account';
+import { spendableAccountsOf, defaultCurrencyAccountsOf } from '@/lib/account';
 import { listLoansForPerson } from '@/db/loans';
 import { inputMinor, formatMoney, toMinor } from '@/lib/money';
 import { roundedMinor, allocateRoundedMinor } from '@/lib/round';
@@ -89,7 +90,7 @@ export function PersonDetailModal({
       if (ticket !== loadTicket.current) return;
       setLedger(led);
       // Cash moving to or from a friend is income or spending, which a savings account can't take (as on Add).
-      setAccounts(spendableAccountsOf(accs));
+      setAccounts(defaultCurrencyAccountsOf(spendableAccountsOf(accs)));
       setCategories(cats);
       setLinkedLoans(loans);
       setLoadError(null);
@@ -107,14 +108,25 @@ export function PersonDetailModal({
 
   // Derived from the live ledger, not the `person` prop, which is a snapshot from when the modal opened and
   // goes stale once a new entry is recorded.
-  const liveBalanceMinor = ledger.reduce((sum, e) => sum + e.amountMinor, 0);
+  const currency = getCachedCurrency();
+  const liveBalanceMinor = ledger.reduce(
+    (sum, e) => ((e.currency ?? currency) === currency ? sum + e.amountMinor : sum),
+    0
+  );
   // Show each history entry rounded so the running list adds up to the
   // rounded balance shown at the top of the sheet.
-  const dispEntryAmounts = allocateRoundedMinor(
-    ledger.map((e) => e.amountMinor),
-    liveBalanceMinor
+  const dispEntryAmounts = new Array<number>(ledger.length);
+  for (const code of new Set(ledger.map((e) => e.currency ?? currency))) {
+    const indexes = ledger.flatMap((e, i) => ((e.currency ?? currency) === code ? [i] : []));
+    const rounded = allocateRoundedMinor(indexes.map((i) => ledger[i].amountMinor));
+    indexes.forEach((index, i) => {
+      dispEntryAmounts[index] = rounded[i];
+    });
+  }
+  const dispBalanceMinor = dispEntryAmounts.reduce(
+    (sum, v, i) => ((ledger[i].currency ?? currency) === currency ? sum + v : sum),
+    0
   );
-  const dispBalanceMinor = dispEntryAmounts.reduce((sum, v) => sum + v, 0);
 
   // "They owe more" (sign 1) with an account means cash left it: recorded as a real expense transaction plus
   // the ledger entry, not a bookkeeping-only IOU. Likewise "They repaid" (sign -1) is real income into it.
@@ -385,7 +397,7 @@ export function PersonDetailModal({
                 style={withPressed(styles.row)}
                 onLongPress={() => onDeleteEntry(entry)}
                 accessibilityRole="button"
-                accessibilityLabel={`${entry.note || (entry.amountMinor >= 0 ? 'Lent' : 'Repaid')}, ${formatMoney(Math.abs(dispEntryAmounts[i]))}, ${dayMonthYear(entry.date)}`}
+                accessibilityLabel={`${entry.note || (entry.amountMinor >= 0 ? 'Lent' : 'Repaid')}, ${formatMoney(Math.abs(dispEntryAmounts[i]), entry.currency)}, ${dayMonthYear(entry.date)}`}
                 accessibilityHint="Double tap and hold to delete"
                 disabled={saving}
               >
@@ -417,7 +429,7 @@ export function PersonDetailModal({
                   ]}
                 >
                   {entry.amountMinor >= 0 ? '+' : '-'}
-                  {formatMoney(Math.abs(dispEntryAmounts[i]))}
+                  {formatMoney(Math.abs(dispEntryAmounts[i]), entry.currency)}
                 </Text>
                 <Pressable
                   onPress={() => setMenuEntry(entry)}

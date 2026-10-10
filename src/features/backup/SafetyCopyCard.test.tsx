@@ -83,7 +83,7 @@ describe('Backup & Restore · safety copy card', () => {
   it('is not shown when there is no safety copy', async () => {
     mockInfo.current = null;
     const shown = texts(await render());
-    expect(shown).not.toContain('Before your last restore');
+    expect(shown).not.toContain('Saved recovery snapshot');
     expect(shown).toContain('Restore from file');
   });
 
@@ -91,7 +91,7 @@ describe('Backup & Restore · safety copy card', () => {
     mockInfo.current = { savedAt: '2026-09-26T04:44:00.000Z', transactions: 284, accounts: 4 };
     const alert = jest.mocked(showAlert);
     const tree = await render();
-    expect(texts(tree)).toContain('Before your last restore');
+    expect(texts(tree)).toContain('Saved recovery snapshot');
     expect(texts(tree).some((t) => t.includes('284 entries') && t.includes('4 accounts'))).toBe(true);
 
     const button = tree.root.find(

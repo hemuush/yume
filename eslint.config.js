@@ -9,7 +9,16 @@ module.exports = defineConfig([
   expoConfig,
   eslintPluginPrettierRecommended,
   {
-    ignores: ['dist/*', 'node_modules/*', '.expo/*', 'scripts/fixtures/*', 'android/*', 'ios/*'],
+    ignores: [
+      'dist/*',
+      'node_modules/*',
+      '.expo/*',
+      'scripts/fixtures/*',
+      'android/*',
+      'ios/*',
+      'sites/**',
+      'design-preview/**',
+    ],
   },
   {
     // Rule calibration. The bundled react-hooks plugin ships the newer
@@ -31,7 +40,7 @@ module.exports = defineConfig([
   },
   {
     // Node scripts and config files: CommonJS, Node globals.
-    files: ['scripts/**/*.js', '*.config.js', 'jest.setup.ts'],
+    files: ['scripts/**/*.js', 'scripts/**/*.cjs', '*.config.js', 'jest.setup.ts'],
     languageOptions: {
       globals: { __dirname: 'readonly', require: 'readonly', module: 'writable', process: 'readonly' },
     },

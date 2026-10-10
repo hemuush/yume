@@ -9,12 +9,12 @@ import { theme } from './theme';
 /** A section heading above a card or list: Home's "Recent activity", Categories' groups. */
 export const SECTION_TITLE: TextStyle = {
   fontFamily: theme.font.roundedBold,
-  fontSize: 19,
+  fontSize: theme.typeSize.section,
   color: theme.colors.textPrimary,
 };
 
 /** The gap above a section heading, and below it before its card. */
-export const SECTION_GAP = { top: 24, bottom: 12 } as const;
+export const SECTION_GAP = { top: 20, bottom: 8 } as const;
 
 /**
  * A small uppercase label: a figure's caption ("SPENT", "YOU OWE"), a

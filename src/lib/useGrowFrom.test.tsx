@@ -24,6 +24,17 @@ const valueOf = (v: Animated.Value | null) => (v as unknown as { __getValue: () 
 beforeEach(() => resetGrowMemory());
 
 describe('useGrowFrom', () => {
+  it('stops a pending animation when its owner unmounts', () => {
+    let tree!: ReturnType<typeof create>;
+    act(() => {
+      tree = create(<Probe k="cancelled" value={60} />);
+    });
+    const value = box.seen;
+    expect(valueOf(value)).toBe(0);
+    act(() => tree.unmount());
+    act(() => jest.advanceTimersByTime(2000));
+    expect(valueOf(value)).toBe(0);
+  });
   it('draws in from 0 the first time', () => {
     act(() => {
       create(<Probe k="bar" value={60} />);

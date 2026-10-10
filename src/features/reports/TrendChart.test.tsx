@@ -2,6 +2,15 @@
 import { Text } from 'react-native';
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
 
+// Every rendered chart owns animation frames; dispose them before Jest tears down its environment.
+const mounted: ReactTestRenderer[] = [];
+afterEach(() => {
+  act(() => {
+    for (const tree of mounted) tree.unmount();
+  });
+  mounted.length = 0;
+});
+
 jest.mock('@/lib/money', () => ({
   ...jest.requireActual('@/lib/money'),
   formatMoney: (minor: number) => `₹${minor / 100}`,
@@ -33,6 +42,7 @@ function chart(inProgress: boolean) {
       />
     );
   });
+  mounted.push(r);
   return r;
 }
 
@@ -71,6 +81,7 @@ describe('TrendChart touch', () => {
         />
       );
     });
+    mounted.push(r);
     const touch = r.root.findByProps({ testID: 'trend-touch' });
     act(() => {
       touch.props.onLayout({ nativeEvent: { layout: { width: 300 } } });
@@ -109,6 +120,7 @@ describe('TrendChart touch', () => {
         .findByProps({ testID: 'trend-touch' })
         .props.onResponderGrant({ nativeEvent: { locationX: 14 } });
     });
+    mounted.push(r);
     expect(texts(r)).toContain('October is ₹19899 below your average of ₹33683.');
   });
 

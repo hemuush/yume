@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { getFrequentAmountsForCategory, getRepeatEntries, RepeatEntry } from '@/db/ledger';
 import { toLocalIsoDate } from '@/lib/date';
 import { EntryType } from './addEntry';
+import { usePrivacy } from '@/theme/PrivacyContext';
 
 /** How many "Your usual" chips Add shows. */
 const USUAL_COUNT = 4;
@@ -14,12 +15,17 @@ export function useAddSuggestions({
   type,
   categoryId,
   editingId,
+  accountCurrency,
 }: {
   type: EntryType;
   categoryId: string | null;
   editingId: string | undefined;
+  accountCurrency?: string;
 }) {
+  const { hideAmounts } = usePrivacy();
   const [frequentAmounts, setFrequentAmounts] = useState<number[]>([]);
+  const [frequentKey, setFrequentKey] = useState('');
+  const currentKey = `${type}:${categoryId}:${hideAmounts}:${accountCurrency}`;
   const [usual, setUsual] = useState<RepeatEntry[]>([]);
 
   // Only expense/income have a "usual amount for this category"; transfers and friend entries (keyed to a
@@ -30,9 +36,12 @@ export function useAddSuggestions({
       return;
     }
     let cancelled = false;
-    getFrequentAmountsForCategory(categoryId)
+    getFrequentAmountsForCategory(categoryId, 4, toLocalIsoDate(new Date()), hideAmounts, accountCurrency)
       .then((amounts) => {
-        if (!cancelled) setFrequentAmounts(amounts);
+        if (!cancelled) {
+          setFrequentAmounts(amounts);
+          setFrequentKey(currentKey);
+        }
       })
       .catch(() => {
         if (!cancelled) setFrequentAmounts([]);
@@ -40,7 +49,7 @@ export function useAddSuggestions({
     return () => {
       cancelled = true;
     };
-  }, [type, categoryId]);
+  }, [type, categoryId, hideAmounts, accountCurrency, currentKey]);
 
   // The entries of this type logged most in the last 90 days (category, amount and account together), one
   // tap each. New entries only.
@@ -60,5 +69,9 @@ export function useAddSuggestions({
     };
   }, [type, editingId]);
 
-  return { frequentAmounts, usual };
+  // Hide stale suggestions immediately while a privacy-aware reload is pending.
+  return {
+    frequentAmounts: frequentKey === currentKey ? frequentAmounts : [],
+    usual: hideAmounts ? usual.filter((e) => !e.isSensitive) : usual,
+  };
 }

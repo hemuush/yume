@@ -1082,8 +1082,11 @@ export async function getNetWorthTrend(months = 6, reference: Date = new Date())
     }
 
     const peopleRow = await db.getFirstAsync<{ total: number | null }>(
-      `SELECT SUM(amount_minor) as total FROM person_ledger_entries WHERE date <= ?`,
-      [cutoffIso]
+      `SELECT SUM(e.amount_minor) as total FROM person_ledger_entries e
+       LEFT JOIN transactions t ON t.id = e.transaction_id
+       LEFT JOIN accounts a ON a.id = t.account_id
+       WHERE e.date <= ? AND (e.transaction_id IS NULL OR a.currency = ?)`,
+      [cutoffIso, currency]
     );
 
     const netWorthMinor = accountsMinor + loansNet + (peopleRow?.total ?? 0);

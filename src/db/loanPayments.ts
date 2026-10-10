@@ -1,5 +1,6 @@
 import { LoanPaymentRow, LoanRow } from './rows';
 import { getDb } from './client';
+import { assertDefaultCurrencyAccount } from './currencyInvariant';
 import { newId } from '@/lib/id';
 import { assertSpendableAccount } from './ledger';
 import { calculateEmi, recalculateAfterPrepayment } from '@/lib/loan';
@@ -28,6 +29,7 @@ export async function payInstallment(
   const loan = await db.getFirstAsync<LoanRow>('SELECT * FROM loans WHERE id = ?', [payment.loan_id]);
   if (!loan) throw new Error('Loan not found');
   await assertSpendableAccount(loan.direction === 'borrowed' ? 'expense' : 'income', opts.accountId);
+  await assertDefaultCurrencyAccount(db, opts.accountId, 'Loans');
 
   // Insert inside the same withTransactionAsync as the loan updates (not via createTransaction) so a
   // mid-write failure can't leave an expense recorded against a stale schedule.
@@ -430,6 +432,7 @@ export async function applyPrepayment(
   // it when you lent (the borrower pays you the charge). Both go under the loan's own category, Loan EMI or
   // Loan Repayment, so one check covers both.
   await assertSpendableAccount(loan.direction === 'borrowed' ? 'expense' : 'income', opts.accountId);
+  await assertDefaultCurrencyAccount(db, opts.accountId, 'Loans');
   // The UI already blocks this, but nothing else guards it: an over-prepayment would record more cash than
   // the loan needed, with the excess untracked.
   if (opts.amountMinor > loan.outstanding_principal_minor) {

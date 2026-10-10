@@ -244,6 +244,13 @@ describe('buildExportWorkbook', () => {
     expect(flat).toContain(4800); // Combined balance: 5,000 − 200, not counting the USD account
     const txs = XLSX.utils.sheet_to_json<any[]>(wb.Sheets['Transactions'], { header: 1 });
     expect(txs.some((r) => r[2] === 'Chase')).toBe(true);
+    const foreignRow = txs.find((r) => r[2] === 'Chase')!;
+    expect(foreignRow[8]).toBe('USD');
+    const rowIndex = txs.indexOf(foreignRow) + 1;
+    expect(wb.Sheets['Transactions'][`F${rowIndex}`].s.numFmt).toContain('$');
+    const total = wb.Sheets['Transactions'][`F${txs.length}`];
+    expect(total.f).toBeUndefined();
+    expect(total.v).toBe('');
   });
 
   it('the Transactions total row is a SUBTOTAL formula, not a hardcoded value', () => {

@@ -8,7 +8,7 @@ import { GLASS } from '@/components/Glass';
 export const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
   errorBanner: {
-    marginHorizontal: 20,
+    marginHorizontal: 16,
     marginBottom: 12,
     padding: 14,
     borderRadius: theme.radius.md,
@@ -50,7 +50,7 @@ export const styles = StyleSheet.create({
   searchCancel: { fontSize: 14, fontFamily: theme.font.bodyBold, color: theme.colors.link },
   searchLoading: { paddingVertical: 40, alignItems: 'center' },
   // Search before anything is typed: what it looks at, things to try, and past searches.
-  searchEmpty: { alignItems: 'center', gap: 10, paddingHorizontal: 20, paddingTop: 24 },
+  searchEmpty: { alignItems: 'center', gap: 10, paddingHorizontal: 16, paddingTop: 24 },
   searchEmptyIcon: {
     width: 56,
     height: 56,
@@ -98,19 +98,19 @@ export const styles = StyleSheet.create({
 
   // The Spent card leads the tab, frosted like Home's month card: the kicker, a big light figure, its chips
   // (the change, money in, net), the chart and a one-line legend.
-  sumCard: { marginHorizontal: 20, marginTop: 8, padding: 16 },
+  sumCard: { marginHorizontal: 16, marginTop: 8, padding: 14 },
   sumKicker: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textSecondary },
   headlineAmt: {
     fontFamily: theme.font.bodyLight,
-    fontSize: 40,
-    lineHeight: 46,
-    letterSpacing: -1.4,
+    fontSize: theme.typeSize.headline,
+    lineHeight: 40,
+    letterSpacing: -1.1,
     color: theme.colors.textPrimary,
     marginTop: 6,
   },
   headlineSymbol: {
     fontFamily: theme.font.body,
-    fontSize: 24,
+    fontSize: 22,
     letterSpacing: 0,
     color: theme.colors.textMuted,
   },
@@ -215,7 +215,7 @@ export const styles = StyleSheet.create({
   typeBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginHorizontal: 20,
+    marginHorizontal: 16,
     marginTop: 16,
     height: 36,
     padding: 3,
@@ -228,7 +228,7 @@ export const styles = StyleSheet.create({
   typeBtnOn: { backgroundColor: theme.colors.white, boxShadow: '0px 1px 4px rgba(16,32,51,0.12)' },
   typeText: { fontFamily: theme.font.bodyMedium, fontSize: 12.5, color: theme.colors.textSecondary },
   typeTextOn: { color: theme.colors.textPrimary },
-  chipsRow: { gap: 8, paddingHorizontal: 20, paddingTop: 10 },
+  chipsRow: { gap: 8, paddingHorizontal: 16, paddingTop: 10 },
   filterGap: { height: 16 },
   chip: {
     flexDirection: 'row',

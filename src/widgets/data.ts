@@ -86,16 +86,16 @@ export interface ThisMonthWidgetData {
 /** Home's month card, for today's month: the same figures ThisMonthHero shows. */
 export async function getThisMonthWidgetData(now: Date = new Date()): Promise<ThisMonthWidgetData> {
   const today = toLocalIsoDate(now);
-  const [rawCmp, theme, paceIn, hideSavings] = await Promise.all([
+  const hideSavings = await getHideSensitiveAmounts();
+  const [rawCmp, theme, paceIn] = await Promise.all([
     getMonthComparisonOnce(now),
     getActiveThemeOnce(),
-    getMonthPaceInputs(today),
-    getHideSensitiveAmounts(),
+    getMonthPaceInputs(today, hideSavings),
   ]);
   // What earlier months left over, and bills still due this month: Home's card counts both, so the widget does.
   const [carryRaw, dueRaw] = await Promise.all([
     getCarryInMinor(periodRange(CURRENT_PERIOD, now).start, hideSavings),
-    getStillToPayThisMonth(today),
+    getStillToPayThisMonth(today, hideSavings),
   ]);
   const carryMinor = roundedMinor(carryRaw);
   const dueMinor = roundedMinor(dueRaw);

@@ -18,7 +18,7 @@
         "backgroundImage": "./assets/android-icon-background.png"
       },
       "predictiveBackGestureEnabled": true,
-      "versionCode": 24,
+      "versionCode": 9,
       "allowBackup": false,
       "permissions": [
         "android.permission.USE_BIOMETRIC",
@@ -153,9 +153,9 @@
         "style": "dark"
       },
       "eas": {
-        "projectId": "1461f910-0ead-4d89-ac9a-b4446ee02635"
+        "projectId": "cfdddccb-d19e-4c4d-9935-1af379ed6e74"
       }
     },
-    "owner": "yume-expense-tracking"
+    "owner": "yume-expense-track"
   }
 }

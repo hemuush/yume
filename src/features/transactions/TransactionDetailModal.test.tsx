@@ -79,6 +79,13 @@ const lunch = {
   createdAt: '',
 };
 
+const mounted: ReactTestRenderer[] = [];
+afterEach(() => {
+  act(() => {
+    for (const tree of mounted) tree.unmount();
+  });
+  mounted.length = 0;
+});
 async function render(entry: object = lunch) {
   let tree!: ReactTestRenderer;
   await act(async () => {
@@ -96,6 +103,7 @@ async function render(entry: object = lunch) {
   await act(async () => {
     await new Promise((r) => setTimeout(r, 0));
   });
+  mounted.push(tree);
   return tree;
 }
 /** The pressable rows and buttons labelled `label` — actions and links in the sheet. */

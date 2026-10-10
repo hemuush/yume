@@ -3,6 +3,7 @@ import { View, Pressable } from 'react-native';
 import { Text } from '@/components/Text';
 import { Chip } from '@/components/Chip';
 import { Account } from '@/types';
+import { defaultCurrencyAccountsOf } from '@/lib/account';
 import { formatMaskableMoney } from '@/lib/money';
 import { usePrivacy } from '@/theme/PrivacyContext';
 import { goalsFollowingAccount } from '@/db/savingsGoals';
@@ -57,7 +58,7 @@ export function GoalAccountField({
       <Text style={styles.fieldLabel}>Keeping it in (optional)</Text>
       <View style={styles.chipRow}>
         <Chip label="None" active={accountId === null} onPress={() => onChangeAccount(null)} />
-        {accounts.map((a) => (
+        {defaultCurrencyAccountsOf(accounts).map((a) => (
           <Chip key={a.id} label={a.name} active={accountId === a.id} onPress={() => onChangeAccount(a.id)} />
         ))}
       </View>

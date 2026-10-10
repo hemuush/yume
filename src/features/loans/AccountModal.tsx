@@ -9,7 +9,7 @@ import { ModalSheet } from '@/components/ModalSheet';
 import { modalFooterStyles as f } from '@/constants/theme';
 import { styles } from './loans.styles';
 import { errorMessage } from '@/lib/errorMessage';
-import { spendableAccountsOf } from '@/lib/account';
+import { spendableAccountsOf, defaultCurrencyAccountsOf } from '@/lib/account';
 
 export function AccountModal({
   accounts,
@@ -64,7 +64,7 @@ export function AccountModal({
         never rewrites transactions already recorded.
       </Text>
       <View style={styles.chipRow}>
-        {spendableAccountsOf(accounts).map((acc) => (
+        {defaultCurrencyAccountsOf(spendableAccountsOf(accounts)).map((acc) => (
           <Chip
             key={acc.id}
             label={acc.name}

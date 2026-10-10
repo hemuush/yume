@@ -24,7 +24,7 @@ import { styles } from './loans.styles';
 import { errorMessage } from '@/lib/errorMessage';
 import { DURATIONS } from '@/lib/motionTimings';
 import { dayMonthYear } from '@/lib/dateLabels';
-import { spendableAccountsOf } from '@/lib/account';
+import { spendableAccountsOf, defaultCurrencyAccountsOf } from '@/lib/account';
 import { rateProblem, tenureProblem } from '@/lib/loanLimits';
 import { useAccent } from '@/theme/AccentContext';
 import { useSaveOnce } from '@/lib/useSaveOnce';
@@ -129,11 +129,12 @@ export function AddLoanModal({
     (async () => {
       try {
         const [accs, cats, ppl] = await Promise.all([listAccounts(), listCategories(), listPeople()]);
-        setAccounts(accs);
+        const eligible = defaultCurrencyAccountsOf(accs);
+        setAccounts(eligible);
         setCategories(cats);
         setPeople(ppl);
         // Never a savings account: the disbursement and EMIs are income and spending, which it can't take.
-        const firstSpendable = spendableAccountsOf(accs)[0]?.id ?? null;
+        const firstSpendable = spendableAccountsOf(eligible)[0]?.id ?? null;
         setDisbAccountId((prev) => prev ?? firstSpendable);
         setRepayAccountId((prev) => prev ?? firstSpendable);
       } catch (e) {

@@ -496,6 +496,32 @@ describe('every screen on a phone full of awkward data', () => {
 });
 
 describe('Home, stepping between months on a lived-in phone', () => {
+  it('keeps archived foreign-account currency in history without restoring its active account card', async () => {
+    const foreign = await createAccount({
+      name: 'Archived USD history',
+      type: 'bank',
+      currency: 'USD',
+      openingBalanceMinor: 0,
+    });
+    const date = new Date();
+    await createTransaction({
+      type: 'expense',
+      accountId: foreign.id,
+      categoryId: seededCategoryId,
+      amountMinor: 123400,
+      date: toLocalIsoDate(new Date(date.getFullYear(), date.getMonth() + 1, 0)),
+      note: 'Foreign history regression',
+    });
+    await archiveAccount(foreign.id);
+    const tree = await open(SCREENS[0][1]);
+    const { formatMoney } = require('@/lib/money');
+    expect(textOf(tree)).toContain(formatMoney(123400, 'USD'));
+    const { HomeAccounts } = require('@/features/home/HomeAccounts');
+    expect(
+      tree.root.findByType(HomeAccounts).props.accounts.some((a: { id: string }) => a.id === foreign.id)
+    ).toBe(false);
+    act(() => tree.unmount());
+  });
   // The month card steps by swiping; a screen reader gets the same as two actions on its figure.
   const step = async (tree: ReactTestRenderer, dir: 'decrement' | 'increment') => {
     await act(async () => {

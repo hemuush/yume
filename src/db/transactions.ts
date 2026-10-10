@@ -196,6 +196,7 @@ export async function createTransaction(input: CreateTransactionInput): Promise<
 }
 
 export async function listTransactions(filters?: {
+  currency?: string;
   accountId?: string;
   categoryId?: string;
   fromDate?: string;
@@ -210,6 +211,11 @@ export async function listTransactions(filters?: {
   const db = await getDb();
   const clauses: string[] = [];
   const args: SqlParam[] = [];
+
+  if (filters?.currency) {
+    clauses.push('account_id IN (SELECT id FROM accounts WHERE currency = ?)');
+    args.push(filters.currency);
+  }
 
   if (filters?.accountId) {
     clauses.push('(account_id = ? OR to_account_id = ?)');
@@ -253,10 +259,12 @@ export async function listTransactions(filters?: {
 export async function getFrequentAmountsForCategory(
   categoryId: string,
   limit = 4,
-  today: string = toLocalIsoDate(new Date())
+  today: string = toLocalIsoDate(new Date()),
+  hideSensitive = false,
+  accountCurrency?: string
 ): Promise<number[]> {
   const db = await getDb();
-  const currency = await getDefaultCurrency();
+  const currency = accountCurrency ?? (await getDefaultCurrency());
   const since = addDaysToIsoDate(today, -90);
   // Same currency scoping as every other aggregate (see getPeriodSummary): without the accounts join, a
   // foreign-currency transaction would rank among default-currency ones with its face value mislabeled.
@@ -264,11 +272,14 @@ export async function getFrequentAmountsForCategory(
     `SELECT t.amount_minor as amount_minor, COUNT(*) as freq, MAX(t.date) as lastDate
      FROM transactions t
      JOIN accounts a ON a.id = t.account_id
+     JOIN categories c ON c.id = t.category_id
+     LEFT JOIN categories pc ON pc.id = c.parent_id
      WHERE t.category_id = ? AND a.currency = ? AND t.date >= ? AND t.date <= ?
+       AND (? = 0 OR (c.is_sensitive = 0 AND COALESCE(pc.is_sensitive, 0) = 0))
      GROUP BY t.amount_minor
      ORDER BY freq DESC, lastDate DESC, t.amount_minor ASC
      LIMIT ?`,
-    [categoryId, currency, since, today, limit]
+    [categoryId, currency, since, today, hideSensitive ? 1 : 0, limit]
   );
   return rows.map((r) => r.amount_minor);
 }
@@ -382,6 +393,7 @@ export async function searchTransactions(
 }
 
 export interface RepeatEntry {
+  isSensitive?: boolean;
   type: 'expense' | 'income';
   accountId: string;
   accountCurrency: string;
@@ -419,6 +431,7 @@ export async function getRepeatEntries(
     parent_name: string | null;
     category_icon: string;
     category_color: string;
+    is_sensitive: number;
     amount_minor: number;
     freq: number;
     last_key: string;
@@ -426,7 +439,7 @@ export async function getRepeatEntries(
   }>(
     `SELECT t.type AS type, t.account_id AS account_id, a.currency AS currency,
        t.category_id AS category_id, c.name AS category_name, pc.name AS parent_name, c.icon AS category_icon, c.color AS category_color,
-       t.amount_minor AS amount_minor, COUNT(*) AS freq,
+       t.amount_minor AS amount_minor, MAX(c.is_sensitive, COALESCE(pc.is_sensitive, 0)) AS is_sensitive, COUNT(*) AS freq,
        MAX(t.date || ' ' || t.created_at) AS last_key, t.note AS note
      FROM transactions t
      JOIN categories c ON c.id = t.category_id
@@ -457,6 +470,7 @@ export async function getRepeatEntries(
     parentName: r.parent_name,
     categoryIcon: r.category_icon,
     categoryColor: r.category_color,
+    isSensitive: !!r.is_sensitive,
     amountMinor: r.amount_minor,
     note: r.note ?? '',
     timesLogged: r.freq,

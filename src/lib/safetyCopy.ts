@@ -113,14 +113,14 @@ async function readCopy(): Promise<SafetyCopyFile | null> {
   }
 }
 
-/** What the current safety copy holds, for the Backup screen's "Undo your last restore" card — null when there isn't one. */
+/** What the saved recovery copy holds — it can predate an older restore; null when there isn't one. */
 export async function getSafetyCopyInfo(): Promise<SafetyCopyInfo | null> {
   const copy = await readCopy();
   return copy ? { savedAt: copy.savedAt, transactions: copy.transactions, accounts: copy.accounts } : null;
 }
 
 /**
- * Puts back the data from before the last restore. Itself a restore, so the
+ * Puts back the saved recovery snapshot. Itself a restore, so the
  * data it replaces becomes the new safety copy (undo can be undone).
  */
 export async function undoLastRestore(): Promise<RestoreResult & { undoAvailable: boolean }> {

@@ -334,7 +334,11 @@ describe('Reports screen', () => {
   it('opens a heatmap day as a card under the grid, and closes it', async () => {
     const tree = await render();
     await pressText(tree, '5');
-    expect(mockListTransactions).toHaveBeenCalledWith({ fromDate: '2026-10-05', toDate: '2026-10-05' });
+    expect(mockListTransactions).toHaveBeenCalledWith({
+      fromDate: '2026-10-05',
+      toDate: '2026-10-05',
+      currency: 'INR',
+    });
     let shown = texts(tree);
     expect(shown).toContain('Groceries');
     expect(shown).toContain('1 transaction');
@@ -366,7 +370,11 @@ describe('Reports screen', () => {
       card.props.onPress();
       await new Promise((resolve) => setTimeout(resolve, 0));
     });
-    expect(mockListTransactions).toHaveBeenCalledWith({ fromDate: '2026-10-05', toDate: '2026-10-05' });
+    expect(mockListTransactions).toHaveBeenCalledWith({
+      fromDate: '2026-10-05',
+      toDate: '2026-10-05',
+      currency: 'INR',
+    });
     expect(texts(await Promise.resolve(tree))).toContain('Groceries');
   });
 
@@ -525,7 +533,11 @@ describe('Reports screen', () => {
         byLabel(tree, 'Weekly groceries, Mon, 5 Oct. Show this day').props.onPress();
         await new Promise((resolve) => setTimeout(resolve, 0));
       });
-      expect(mockListTransactions).toHaveBeenCalledWith({ fromDate: '2026-10-05', toDate: '2026-10-05' });
+      expect(mockListTransactions).toHaveBeenCalledWith({
+        fromDate: '2026-10-05',
+        toDate: '2026-10-05',
+        currency: 'INR',
+      });
       expect(texts(tree)).toContain('1 transaction');
     });
 

@@ -187,8 +187,8 @@ export function buildExportWorkbook(data: ExportData): XLSX.WorkBook {
 
   const sorted = [...transactions].sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
   // Totals add up the default currency only, as every total in the app does: other currencies' amounts have
-  // no conversion, so adding them would sum face values. (An entry on an account not listed, i.e. archived,
-  // counts as the default currency.) Every entry is still listed on the Transactions sheet.
+  // no conversion, so adding them would sum face values. Archived accounts are loaded too so history keeps
+  // its currency; the balance headline excludes them. Every entry is listed on the Transactions sheet.
   const currencyOf = new Map(accounts.map((a) => [a.id, a.currency]));
   const counted = transactions.filter((t) => (currencyOf.get(t.accountId) ?? currency) === currency);
   // Refunds count against spending, never as income — the same rule as everywhere in the app.
@@ -200,7 +200,7 @@ export function buildExportWorkbook(data: ExportData): XLSX.WorkBook {
     counted.reduce((s, t) => s + (t.type === 'expense' ? t.amountMinor : t.isRefund ? -t.amountMinor : 0), 0)
   );
   const totalBalance = accounts
-    .filter((a) => a.currency === currency)
+    .filter((a) => a.currency === currency && !a.archived)
     .reduce((s, a) => s + a.currentBalanceMinor, 0);
   const totalDebt = loans
     .filter((l) => l.direction === 'borrowed' && l.status === 'active')
@@ -309,7 +309,20 @@ export function buildExportWorkbook(data: ExportData): XLSX.WorkBook {
   XLSX.utils.book_append_sheet(wb, summary, 'Summary');
 
   // ----------------------------------------------------------- Transactions
-  const txHeaders = ['Date', 'Type', 'Account', 'To Account', 'Category', 'Amount', 'Note', 'Payment Mode'];
+  const txHeaders = [
+    'Date',
+    'Type',
+    'Account',
+    'To Account',
+    'Category',
+    'Amount',
+    'Note',
+    'Payment Mode',
+    'Currency',
+  ];
+  const transactionCurrencies = new Set(sorted.map((t) => currencyOf.get(t.accountId) ?? currency));
+  const mixedCurrencies = transactionCurrencies.size > 1;
+  const transactionMoneyStyle = moneyFmt(currencySymbol([...transactionCurrencies][0] ?? currency));
   const txRows = sorted.map((t) => [
     t.date,
     t.isRefund ? 'Refund' : t.type[0].toUpperCase() + t.type.slice(1),
@@ -319,6 +332,7 @@ export function buildExportWorkbook(data: ExportData): XLSX.WorkBook {
     toMajor(t.amountMinor),
     t.note ?? '',
     t.paymentMode ? t.paymentMode.replace('_', ' ') : '',
+    currencyOf.get(t.accountId) ?? currency,
   ]);
   const txSheet = XLSX.utils.aoa_to_sheet([txHeaders, ...txRows]);
   for (let c = 0; c < txHeaders.length; c++) {
@@ -332,7 +346,7 @@ export function buildExportWorkbook(data: ExportData): XLSX.WorkBook {
       const ref = XLSX.utils.encode_cell({ r: i + 1, c });
       if (c === 5) {
         txSheet[ref].s = bodyStyle(shaded, {
-          numFmt: moneyStyle,
+          numFmt: moneyFmt(currencySymbol(currencyOf.get(sorted[i].accountId) ?? currency)),
           font: { color: { rgb: amountColor }, bold: true },
           alignment: { horizontal: 'right' },
         });
@@ -346,13 +360,15 @@ export function buildExportWorkbook(data: ExportData): XLSX.WorkBook {
   setCell(
     txSheet,
     XLSX.utils.encode_cell({ r: totalRowIdx, c: 0 }),
-    'Total (respects any filter applied above)',
+    mixedCurrencies ? 'Mixed currencies — no combined total' : 'Total (respects any filter applied above)',
     totalRowStyle()
   );
   for (let c = 1; c < 5; c++) {
     setCell(txSheet, XLSX.utils.encode_cell({ r: totalRowIdx, c }), '', totalRowStyle());
   }
-  if (txRows.length > 0) {
+  if (mixedCurrencies) {
+    setCell(txSheet, XLSX.utils.encode_cell({ r: totalRowIdx, c: 5 }), '', totalRowStyle());
+  } else if (txRows.length > 0) {
     setFormula(
       txSheet,
       XLSX.utils.encode_cell({ r: totalRowIdx, c: 5 }),
@@ -360,7 +376,7 @@ export function buildExportWorkbook(data: ExportData): XLSX.WorkBook {
       // The cached value must be what the formula itself yields (the sum of the Amount column), or a viewer that
       // doesn't recalculate shows a different total than Excel does.
       txRows.reduce((sum, row) => sum + (row[5] as number), 0),
-      totalRowStyle({ numFmt: moneyStyle, alignment: { horizontal: 'right' } })
+      totalRowStyle({ numFmt: transactionMoneyStyle, alignment: { horizontal: 'right' } })
     );
   } else {
     setCell(
@@ -370,7 +386,7 @@ export function buildExportWorkbook(data: ExportData): XLSX.WorkBook {
       totalRowStyle({ numFmt: moneyStyle, alignment: { horizontal: 'right' } })
     );
   }
-  for (let c = 6; c < 8; c++) {
+  for (let c = 6; c < txHeaders.length; c++) {
     setCell(txSheet, XLSX.utils.encode_cell({ r: totalRowIdx, c }), '', totalRowStyle());
   }
   txSheet['!ref'] = XLSX.utils.encode_range({
@@ -393,6 +409,7 @@ export function buildExportWorkbook(data: ExportData): XLSX.WorkBook {
     { wch: 32 },
     { wch: 14 },
   ];
+  txSheet['!cols'].push({ wch: 10 });
   XLSX.utils.book_append_sheet(wb, txSheet, 'Transactions');
 
   // --------------------------------------------------------------- Accounts
@@ -421,7 +438,7 @@ export function buildExportWorkbook(data: ExportData): XLSX.WorkBook {
       accSheet[ref].s =
         c === 2 || c >= 4
           ? bodyStyle(shaded, {
-              numFmt: moneyStyle,
+              numFmt: moneyFmt(currencySymbol(accounts[i].currency)),
               font: { color: { rgb: c === 2 && negative ? C.expense : C.ink }, bold: c === 2 },
               alignment: { horizontal: 'right' },
             })
@@ -608,7 +625,7 @@ export const MAX_EXPORT_TRANSACTIONS = 200000;
 export async function generateExportWorkbookBytes(): Promise<Uint8Array> {
   const [currency, accounts, categories, transactions, loans, people] = await Promise.all([
     getDefaultCurrency(),
-    listAccounts(),
+    listAccounts(true),
     listCategories(true),
     listTransactions({ limit: MAX_EXPORT_TRANSACTIONS + 1 }),
     listLoans(),

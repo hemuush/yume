@@ -30,5 +30,6 @@ describe('GardenMonthCard', () => {
     expect(label(4)).toBe('4, today: kept under the goal');
     expect(label(1)).toBe('1: not tracked yet');
     expect(label(31)).toBe('31: still to come');
+    act(() => tree.unmount());
   });
 });

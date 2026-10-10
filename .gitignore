@@ -44,3 +44,7 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# Separate design review site repository and generated previews
+/sites/
+/design-preview/
