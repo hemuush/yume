@@ -5,6 +5,7 @@ import ReanimatedAnimated, {
   FadeInDown,
   ReduceMotion,
   useSharedValue,
+  useDerivedValue,
   useAnimatedStyle,
   useAnimatedReaction,
   runOnJS,
@@ -94,9 +95,11 @@ export function HomeHeader({
   // the greeting row, or the compact one in the brand row once collapsed.
   const [collapsed, setCollapsed] = useState(false);
   const collapsedMotion = useSharedValue(false);
+  const shift = useDerivedValue(() => Math.min(Math.max(0, distance.value), Math.max(0, scrollY.value)));
+  const progress = useDerivedValue(() => (distance.value > 0 ? shift.value / distance.value : 0));
   useAnimatedReaction(
     () => {
-      const p = distance.value > 0 ? scrollY.value / distance.value : 0;
+      const p = progress.value;
       return headerIsCollapsed(p, collapsedMotion.value);
     },
     (now, prev) => {
@@ -108,23 +111,17 @@ export function HomeHeader({
   );
 
   const bandStyle = useAnimatedStyle(() => {
-    const d = distance.value;
-    const shift = d > 0 ? Math.min(d, Math.max(0, scrollY.value)) : 0;
-    return { transform: [{ translateY: -shift }] };
+    return { transform: [{ translateY: -shift.value }] };
   });
   const rowStyle = useAnimatedStyle(() => {
-    const d = distance.value;
-    const shift = d > 0 ? Math.min(d, Math.max(0, scrollY.value)) : 0;
-    return { transform: [{ translateY: shift }] };
+    return { transform: [{ translateY: shift.value }] };
   });
   const fadeStyle = useAnimatedStyle(() => {
-    const d = distance.value;
-    const p = d > 0 ? Math.min(1, Math.max(0, scrollY.value / d)) : 0;
+    const p = progress.value;
     return { opacity: 1 - Math.min(1, p * 1.6), transform: [{ translateY: -p * 8 }] };
   });
   const miniStyle = useAnimatedStyle(() => {
-    const d = distance.value;
-    const p = d > 0 ? Math.min(1, Math.max(0, scrollY.value / d)) : 0;
+    const p = progress.value;
     const t = Math.min(1, Math.max(0, (p - 0.4) / 0.6));
     return { opacity: t, transform: [{ scale: reduce ? 1 : 0.92 + 0.08 * t }] };
   });

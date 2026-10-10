@@ -87,6 +87,9 @@ it('settles the native collapsing header without animation under reduced motion'
   expect(mockScroll).toHaveBeenLastCalledWith(expect.anything(), 0, 100, false);
   act(() => mockHandlers.onMomentumEnd({ contentOffset: { y: 30 } }));
   expect(mockScroll).toHaveBeenLastCalledWith(expect.anything(), 0, 0, false);
+  mockScroll.mockClear();
+  act(() => mockHandlers.onEndDrag({ contentOffset: { y: 70 } }));
+  expect(mockScroll).not.toHaveBeenCalled();
   act(() => root.unmount());
   mockReduce = false;
 });

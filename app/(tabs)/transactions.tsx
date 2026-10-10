@@ -336,6 +336,15 @@ export default function TransactionsScreen() {
   const { fromDate: rangeFromDate, toDate: rangeToDate } = visibleRange;
   useEffect(() => setSelectedBar(null), [rangeFromDate, rangeToDate, viewScope]);
   const freshness = useFreshness();
+  const focused = useRef(false);
+  useFocusEffect(
+    useCallback(() => {
+      focused.current = true;
+      return () => {
+        focused.current = false;
+      };
+    }, [])
+  );
   const searchState = useRef({ searching, query: searchQuery });
   useEffect(() => {
     searchState.current = { searching, query: searchQuery };
@@ -364,6 +373,7 @@ export default function TransactionsScreen() {
   useEffect(
     () =>
       onTransactionsChanged(() => {
+        if (!focused.current) return;
         void load({ fromDate: rangeFromDate, toDate: rangeToDate }, viewScope);
         const live = searchState.current;
         if (live.searching) runSearch(live.query.trim());

@@ -26,7 +26,7 @@ export const HomeWallpaper = memo(function HomeWallpaper({
   const blobA = shade(accent, 80);
   const blobB = shade(secondary, 86);
   return (
-    <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+    <View pointerEvents="none" renderToHardwareTextureAndroid style={StyleSheet.absoluteFill}>
       <LinearGradient
         colors={[top, mid, theme.colors.background]}
         locations={[0, 0.4, 1]}

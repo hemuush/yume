@@ -51,10 +51,13 @@ export function useCollapsingHeader<T extends Component = Animated.ScrollView>()
       scrollY.value = e.contentOffset.y;
     },
     onEndDrag: (e) => {
-      const v = Math.abs(e.velocity?.y ?? 0);
+      const velocity = e.velocity?.y;
       const y = e.contentOffset.y;
       const d = distance.value;
-      if (v < FLING && d > 0 && y > 0 && y < d) scrollTo(scrollRef, 0, y < d / 2 ? 0 : d, !reduce);
+      // Some Android releases omit velocity here. Treating that as zero interrupts an active fling;
+      // wait for momentum end instead of issuing a competing programmatic scroll.
+      if (velocity != null && Math.abs(velocity) < FLING && d > 0 && y > 0 && y < d)
+        scrollTo(scrollRef, 0, y < d / 2 ? 0 : d, !reduce);
     },
     onMomentumEnd: (e) => {
       const y = e.contentOffset.y;
