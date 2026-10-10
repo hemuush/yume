@@ -31,6 +31,7 @@ interface Props {
   onSearchFocusChange?: (focused: boolean) => void;
   /** Shown faded: already used elsewhere (a split's other parts). Still tappable, so the host can say why. */
   dimmedIds?: string[];
+  minColumnWidth?: number;
 }
 
 /**
@@ -45,12 +46,13 @@ export function CategoryPicker({
   searchable,
   onSearchFocusChange,
   dimmedIds,
+  minColumnWidth = MEDAL_MIN_WIDTH,
 }: Props) {
   const topLevel = topLevelOnly(categories);
   // The medal grid fills its width evenly: as many columns as fit, each an equal share,
   // so a row never ends in a lopsided gap on the right.
   const [gridWidth, setGridWidth] = useState(0);
-  const cols = gridWidth > 0 ? Math.max(4, Math.floor(gridWidth / MEDAL_MIN_WIDTH)) : 0;
+  const cols = gridWidth > 0 ? Math.max(3, Math.floor(gridWidth / minColumnWidth)) : 0;
   const tileWidth = cols > 0 ? Math.floor(gridWidth / cols) : undefined;
   const onGridLayout = (e: LayoutChangeEvent) => {
     const w = Math.round(e.nativeEvent.layout.width);

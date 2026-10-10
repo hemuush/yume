@@ -76,7 +76,7 @@ export function PadButton({
   /** The sum keys' wash and ink (Add colours them by the entry's type). */
   tone?: { bg: string; ink: string };
 }) {
-  const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.94);
+  const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.97);
   const operator = padKey === '÷' || padKey === '×' || padKey === '−' || padKey === '+';
   // The sum keys sit on a pale theme tint, so they stand apart from the digits.
   const { accent } = useAccent();
