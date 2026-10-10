@@ -1,8 +1,14 @@
 import { create, act } from 'react-test-renderer';
 
-jest.mock('expo-router', () => ({ useFocusEffect: () => {} }));
+let mockFocus: () => void;
+jest.mock('expo-router', () => ({
+  useFocusEffect: (callback: () => void) => {
+    mockFocus = callback;
+  },
+}));
 
 import { useScreenLoad } from './useScreenLoad';
+import { bumpDataVersion, trackDataVersion } from '@/db/dataVersion';
 
 function setup(loadFn: () => Promise<void>) {
   let latest!: ReturnType<typeof useScreenLoad>;
@@ -17,6 +23,32 @@ function setup(loadFn: () => Promise<void>) {
 }
 
 describe('useScreenLoad', () => {
+  it('skips unchanged focus reads, invalidates after writes, and records manual reloads', async () => {
+    trackDataVersion();
+    const load = jest.fn().mockResolvedValue(undefined);
+    const get = setup(load);
+    await act(async () => {
+      mockFocus();
+    });
+    expect(load).toHaveBeenCalledTimes(1);
+    await act(async () => {
+      mockFocus();
+    });
+    expect(load).toHaveBeenCalledTimes(1);
+    bumpDataVersion();
+    await act(async () => {
+      mockFocus();
+    });
+    expect(load).toHaveBeenCalledTimes(2);
+    await act(async () => {
+      await get().reload();
+    });
+    expect(load).toHaveBeenCalledTimes(3);
+    await act(async () => {
+      mockFocus();
+    });
+    expect(load).toHaveBeenCalledTimes(3);
+  });
   it('distinguishes an initial failure from usable data and retains data after a refresh fails', async () => {
     const load = jest
       .fn()

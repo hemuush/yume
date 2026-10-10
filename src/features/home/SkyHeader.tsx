@@ -4,6 +4,7 @@ import ReanimatedAnimated, {
   useAnimatedReaction,
   useAnimatedStyle,
   useSharedValue,
+  useDerivedValue,
   runOnJS,
   interpolate,
   Extrapolation,
@@ -80,6 +81,9 @@ export function SkyHeader({
   const scrollY = collapse?.scrollY ?? fallbackY;
   const distance = collapse?.distance ?? fallbackD;
   const titleWidth = useSharedValue(0);
+  // Stop invalidating every header style once scrolling passes the collapse range.
+  const shift = useDerivedValue(() => Math.min(Math.max(0, distance.value), Math.max(0, scrollY.value)));
+  const collapseProgress = useDerivedValue(() => (distance.value > 0 ? shift.value / distance.value : 0));
   const onRootLayout = (e: LayoutChangeEvent) => {
     const h = e.nativeEvent.layout.height;
     collapse?.onMeasure(h, Math.max(0, h - (top + ROW + BAR_PAD)));
@@ -90,7 +94,7 @@ export function SkyHeader({
   const [expandedInteractive, setExpandedInteractive] = useState(true);
   const compactActive = useSharedValue(false);
   useAnimatedReaction(
-    () => (distance.value > 0 ? Math.min(1, Math.max(0, scrollY.value / distance.value)) : 0),
+    () => collapseProgress.value,
     (now, prev) => {
       const compact = headerIsCollapsed(now, compactActive.value);
       if (compact !== compactActive.value) {
@@ -103,16 +107,13 @@ export function SkyHeader({
 
   const progress = () => {
     'worklet';
-    const d = distance.value;
-    return d > 0 ? Math.min(1, Math.max(0, scrollY.value / d)) : 0;
+    return collapseProgress.value;
   };
   const rootStyle = useAnimatedStyle(() => {
-    const d = distance.value;
-    return { transform: [{ translateY: d > 0 ? -Math.min(d, Math.max(0, scrollY.value)) : 0 }] };
+    return { transform: [{ translateY: -shift.value }] };
   });
   const rowStyle = useAnimatedStyle(() => {
-    const d = distance.value;
-    return { transform: [{ translateY: d > 0 ? Math.min(d, Math.max(0, scrollY.value)) : 0 }] };
+    return { transform: [{ translateY: shift.value }] };
   });
   const titleStyle = useAnimatedStyle(() => {
     const s = reduce ? 1 : interpolate(progress(), [0, 1], [1, TITLE_SCALE]);
@@ -139,14 +140,16 @@ export function SkyHeader({
       style={[collapse && styles.over, rootStyle]}
       onLayout={collapse ? onRootLayout : undefined}
     >
-      <SkyBackdrop
-        accent={accent}
-        scrollY={scrollY}
-        distance={distance}
-        collapsedHeight={top + ROW + BAR_PAD}
-        wash={!wallpaper}
-        barColor={wallpaper ? wallpaperTop(accent) : undefined}
-      />
+      {(collapse || !wallpaper) && (
+        <SkyBackdrop
+          accent={accent}
+          scrollY={scrollY}
+          distance={distance}
+          collapsedHeight={top + ROW + BAR_PAD}
+          wash={!wallpaper}
+          barColor={wallpaper ? wallpaperTop(accent) : undefined}
+        />
+      )}
       <View style={[styles.band, { paddingTop: top }]}>
         <ReanimatedAnimated.View style={[styles.titleRow, rowStyle]}>
           {showBack && (
@@ -243,7 +246,7 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
   summary: { marginLeft: 10, flexShrink: 1, minWidth: 0 },
-  below: { gap: 10, paddingBottom: 2 },
+  below: { gap: 10, paddingTop: 8, paddingBottom: 2 },
   // Just the chevron, nudged so the icon (not its 40dp touch area) sits on the page gutter.
   backBtn: {
     width: 40,

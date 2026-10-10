@@ -3,7 +3,7 @@
  * Income switch, and a custom range carried to the category page. Charts draw once measured (tests give a width).
  */
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
-import { Text } from 'react-native';
+import { Text, ScrollView } from 'react-native';
 
 jest.setTimeout(30000);
 
@@ -37,10 +37,14 @@ jest.mock('react-native-safe-area-context', () => ({
 }));
 jest.mock('@/components/AppHeader', () => ({ HeaderUserButton: () => null }));
 const mockSearch = { current: {} as Record<string, string> };
+let mockReportsFocus: () => void;
 jest.mock('expo-router', () => ({
   router: { setParams: jest.fn(), push: jest.fn(), navigate: jest.fn() },
   useLocalSearchParams: () => mockSearch.current,
-  useFocusEffect: (cb: () => void) => require('react').useEffect(cb, [cb]),
+  useFocusEffect: (cb: () => void) => {
+    mockReportsFocus = cb;
+    require('react').useEffect(cb, [cb]);
+  },
 }));
 // Sheets render their content only while open; the real one needs the keyboard controller's native module.
 jest.mock('@/components/ModalSheet', () => ({
@@ -218,6 +222,7 @@ jest.mock('@/db/ledger', () => ({
 }));
 
 import ReportsScreen from '../../../app/(tabs)/reports';
+import { getRangeComparison } from '@/db/reports';
 
 // Bars and rings animate to their values (useGrowFrom, at most the 700ms draw):
 // let the last ones finish before the file ends, so no frame fires after teardown.
@@ -233,6 +238,29 @@ async function render() {
   });
   return tree;
 }
+
+it('keeps the report scroll view mounted during a same-period refresh and refresh failure', async () => {
+  const tree = await render();
+  const scroll = tree.root.findAllByType(ScrollView).find((node) => node.props.stickyHeaderIndices);
+  expect(scroll).toBeDefined();
+  let rejectRefresh!: (error: Error) => void;
+  jest.mocked(getRangeComparison).mockImplementationOnce(
+    () =>
+      new Promise((_, reject) => {
+        rejectRefresh = reject;
+      })
+  );
+  await act(async () => {
+    mockReportsFocus();
+  });
+  expect(tree.root.findAllByType(ScrollView).find((node) => node.props.stickyHeaderIndices)).toBe(scroll);
+  await act(async () => {
+    rejectRefresh(new Error('refresh interrupted'));
+  });
+  expect(tree.root.findAllByType(ScrollView).find((node) => node.props.stickyHeaderIndices)).toBe(scroll);
+  expect(texts(tree)).toContain('Couldn’t refresh your report');
+  act(() => tree.unmount());
+});
 const texts = (tree: ReactTestRenderer) =>
   tree.root.findAllByType(Text).map((t) => [].concat(t.props.children).join(''));
 // The innermost pressable showing exactly this text.

@@ -30,10 +30,13 @@ export function useGrowFrom(
   const reduce = useReduceMotion();
   const [v] = useState(() => new Animated.Value(lastShown.get(key) ?? 0));
   const drawn = useRef(lastShown.has(key));
+  const previous = useRef({ key, target: lastShown.get(key) ?? 0 });
 
   useEffect(() => {
     lastShown.set(key, target);
-    if (reduce) {
+    const unchanged = previous.current.key === key && previous.current.target === target;
+    previous.current = { key, target };
+    if (reduce || unchanged) {
       v.stopAnimation();
       v.setValue(target);
       drawn.current = true;
