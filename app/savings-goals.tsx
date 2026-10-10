@@ -1,4 +1,5 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { router, useLocalSearchParams } from 'expo-router';
 import { View } from 'react-native';
 import { MovingRow } from '@/components/MovingRow';
 import { Text } from '@/components/Text';
@@ -67,6 +68,13 @@ export default function SavingsGoalsScreen() {
     }
   }, []);
   const { loaded, loadError, reload: load } = useScreenLoad(loadGoals);
+  const { goal: goalId, add } = useLocalSearchParams<{ goal?: string; add?: string }>();
+  useEffect(() => {
+    if (!loaded || loadError || (!goalId && add !== '1')) return;
+    if (add === '1') setAddVisible(true);
+    else setEditingGoal(allGoals.find((goal) => goal.id === goalId && !goal.archived) ?? null);
+    router.setParams({ goal: undefined, add: undefined });
+  }, [loaded, loadError, goalId, add, allGoals]);
 
   const activeGoals = allGoals.filter((g) => !g.archived);
   const archivedGoals = allGoals.filter((g) => g.archived);

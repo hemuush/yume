@@ -337,3 +337,14 @@ describe('buildHabitState', () => {
     ).toEqual({ days: [false, true, true, true, true], streakDays: 4 });
   });
 });
+
+it('preserves untracked days separately from missed daily goals', () => {
+  const result = buildHabitState([
+    { date: '2026-10-08', tracked: false, streakDays: 0 },
+    { date: '2026-10-09', tracked: true, streakDays: 0 },
+    { date: '2026-10-10', tracked: true, streakDays: 1 },
+  ]);
+  expect(result.days).toEqual([false, false, true]);
+  expect(result.tracked).toEqual([false, true, true]);
+  expect(result.dates).toEqual(['2026-10-08', '2026-10-09', '2026-10-10']);
+});

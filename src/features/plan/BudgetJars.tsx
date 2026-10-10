@@ -22,7 +22,17 @@ const ROOM = JAR_HEIGHT - 9;
  * limit, coral and overflowing (with what it's over by) past it. The line above names how many are over and
  * the worst one. Every jar opens Budgets; empty, it's a prompt to set the first limit.
  */
-export function BudgetJars({ summary, onOpen }: { summary: BudgetsSummary; onOpen: () => void }) {
+export function BudgetJars({
+  summary,
+  onOpen,
+  onBudget,
+  onAdd,
+}: {
+  summary: BudgetsSummary;
+  onOpen: () => void;
+  onBudget?: (id: string) => void;
+  onAdd?: () => void;
+}) {
   if (summary.rows.length === 0) {
     return (
       <Pressable
@@ -68,6 +78,7 @@ export function BudgetJars({ summary, onOpen }: { summary: BudgetsSummary; onOpe
             ? `${worst.categoryName} is ${formatMoney(-worst.remainingMinor)} over`
             : `${worst.categoryName} has ${formatMoney(worst.remainingMinor)} left`}
         </Text>
+        <Text style={styles.tileSub}>Jars show spending used</Text>
       </Pressable>
       <ScrollView
         horizontal
@@ -76,10 +87,10 @@ export function BudgetJars({ summary, onOpen }: { summary: BudgetsSummary; onOpe
         contentContainerStyle={styles.jars}
       >
         {summary.rows.map((b) => (
-          <Jar key={b.id} budget={b} onPress={onOpen} />
+          <Jar key={b.id} budget={b} onPress={() => (onBudget ? onBudget(b.id) : onOpen())} />
         ))}
         <Pressable
-          onPress={onOpen}
+          onPress={onAdd ?? onOpen}
           style={withPressed(styles.jar)}
           accessibilityRole="button"
           accessibilityLabel="Add a budget"
@@ -141,12 +152,13 @@ function Jar({ budget: b, onPress }: { budget: PlanBudgetInput; onPress: () => v
           </View>
         )}
       </View>
-      <Text style={styles.jarName} numberOfLines={1}>
+      <Text style={styles.jarName} numberOfLines={2}>
         {b.categoryName}
       </Text>
       <Text style={[styles.jarLeft, b.overBudget && styles.jarOver]} numberOfLines={1}>
-        {b.overBudget ? `${compactMoney(-b.remainingMinor)} over` : `${compactMoney(b.remainingMinor)} left`}
+        {left}
       </Text>
+      {tone === 'near' && <Text style={styles.jarLeft}>Near limit</Text>}
     </Pressable>
   );
 }

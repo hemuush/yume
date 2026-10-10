@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Pressable, LayoutChangeEvent } from 'react-native';
+import { View, Pressable, ScrollView, LayoutChangeEvent } from 'react-native';
 import Svg, { Path, Line, Defs, LinearGradient, Stop } from 'react-native-svg';
 import Feather from '@expo/vector-icons/Feather';
 import { Text } from '@/components/Text';
@@ -22,12 +22,12 @@ import { styles, RUNWAY_HEIGHT } from './plan.styles';
 /** Room above the line's highest point and below its lowest, inside the drawing. */
 const PAD_TOP = 18;
 const PAD_BOTTOM = 10;
-const PIN = 32;
+const PIN = 44;
 
 /**
  * The Plan hero: what's going out in the next 14 days, and a line of what your spending accounts hold as each
  * EMI and bill comes out (and income comes in), so it answers "can I cover it?". Each payment day is a pin:
- * tap one for that day, then jump to it in Coming up. Without a spending account there's no balance to draw,
+ * use the date buttons for details, then jump to that day in Coming up. Without a spending account there's no balance to draw,
  * so it says what's next instead.
  */
 export function RunwayCard({
@@ -82,15 +82,7 @@ export function RunwayCard({
   const dayLabel = (d: RunwayDay) => moneyOf(d, 'label');
 
   return (
-    <Pressable
-      onPress={onOpen}
-      accessibilityRole="button"
-      accessibilityLabel={
-        none
-          ? 'Nothing due in the next 14 days. Open Coming up'
-          : `${formatMoney(dueSoon.totalMinor)} due in the next 14 days. Open Coming up`
-      }
-    >
+    <View>
       <Glass radius={28} tone="strong" style={[styles.card, styles.cardFirst]}>
         <View style={styles.head}>
           <Kicker icon="calendar">Next 14 days</Kicker>
@@ -101,7 +93,7 @@ export function RunwayCard({
           )}
         </View>
         {none ? (
-          <Text style={styles.bigNothing}>Nothing due</Text>
+          <Text style={styles.bigNothing}>No scheduled payments</Text>
         ) : (
           <View style={styles.bigRow}>
             <Text style={styles.bigValue} numberOfLines={1} adjustsFontSizeToFit>
@@ -130,6 +122,10 @@ export function RunwayCard({
 
         {hasAccounts && (
           <View>
+            <View style={styles.head}>
+              <Text style={styles.tileSub}>Spending-account balance</Text>
+              <Text style={styles.pathNote}>{formatMoney(runway.startMinor)}</Text>
+            </View>
             <View style={styles.runway} onLayout={onLayout} testID="runway">
               {width > 0 && (
                 <Svg width={width} height={RUNWAY_HEIGHT}>
@@ -154,15 +150,13 @@ export function RunwayCard({
                   <Path d={line} fill="none" stroke={ink} strokeWidth={2} strokeLinejoin="round" />
                 </Svg>
               )}
-              <Text style={styles.runwayStart} accessibilityElementsHidden importantForAccessibility="no">
-                {compactMoney(runway.startMinor)}
-              </Text>
+
               {width > 0 && !runway.short && !none && lowIndex >= 0 && (
                 <Text
                   style={[
                     styles.runwayLow,
                     {
-                      left: Math.min(Math.max(0, x(lowIndex) - 20), width - 64),
+                      left: Math.max(0, Math.min(x(lowIndex) - 20, width - 64)),
                       top: Math.min(y(runway.lowMinor) + 6, RUNWAY_HEIGHT - 14),
                     },
                   ]}
@@ -178,22 +172,24 @@ export function RunwayCard({
                   const on = picked?.date === d.date;
                   const color = pinColor(d);
                   return (
-                    <Pressable
+                    <View
                       key={d.date}
-                      onPress={() => {
-                        haptics.tap();
-                        setSelected(on ? null : d.date);
-                      }}
+                      pointerEvents="none"
                       style={[
                         styles.pin,
-                        { left: x(i) - PIN / 2, top: (y(d.beforeMinor) + y(d.afterMinor)) / 2 - PIN / 2 },
+                        {
+                          left: x(i) - PIN / 2,
+                          top: Math.max(
+                            0,
+                            Math.min(RUNWAY_HEIGHT - PIN, (y(d.beforeMinor) + y(d.afterMinor)) / 2 - PIN / 2)
+                          ),
+                        },
                       ]}
-                      accessibilityRole="button"
-                      accessibilityState={{ selected: on }}
-                      accessibilityLabel={`${weekdayDayMonth(d.date)}, ${dayLabel(d)}. ${on ? 'Hide details' : 'Show details'}`}
+                      accessibilityElementsHidden
+                      importantForAccessibility="no-hide-descendants"
                     >
                       <View style={[styles.pinDot, on && styles.pinDotOn, { borderColor: color }]} />
-                    </Pressable>
+                    </View>
                   );
                 })}
             </View>
@@ -211,6 +207,35 @@ export function RunwayCard({
           </View>
         )}
 
+        {runway.days.some((d) => d.items.length > 0) && (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.dayButtons}
+          >
+            {runway.days
+              .filter((d) => d.items.length > 0)
+              .map((d) => {
+                const on = picked?.date === d.date;
+                return (
+                  <Pressable
+                    key={d.date}
+                    onPress={() => {
+                      haptics.tap();
+                      setSelected(on ? null : d.date);
+                    }}
+                    style={withPressed([styles.dayButton, on && styles.dayButtonOn])}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: on }}
+                    accessibilityLabel={`${weekdayDayMonth(d.date)}, ${dayLabel(d)}. ${on ? 'Hide details' : 'Show details'}`}
+                  >
+                    <Text style={styles.dayButtonText}>{dayMonth(d.date)}</Text>
+                    <Text style={styles.gainNote}>{moneyOf(d, 'caption')}</Text>
+                  </Pressable>
+                );
+              })}
+          </ScrollView>
+        )}
         <Foot
           picked={picked}
           runway={runway}
@@ -219,8 +244,27 @@ export function RunwayCard({
           next={next}
           onJumpToDay={onJumpToDay}
         />
+        <Text style={styles.tileSub}>
+          Scheduled bills and income only. Everyday spending can change this balance.
+        </Text>
+        {!hasAccounts && (
+          <Text style={styles.tileSub}>
+            Add a bank, cash or wallet account to see your scheduled balance.
+          </Text>
+        )}
+        <Pressable
+          onPress={onOpen}
+          style={withPressed(styles.openRow)}
+          accessibilityRole="button"
+          accessibilityLabel="Open Coming up"
+        >
+          <Text style={styles.openText}>
+            {next && none ? `Next payments · ${dayMonth(next.date)}` : 'See upcoming payments'}
+          </Text>
+          <Feather name="arrow-down" size={16} color={theme.colors.link} />
+        </Pressable>
       </Glass>
-    </Pressable>
+    </View>
   );
 }
 
@@ -274,11 +318,11 @@ function Foot({
     );
   }
   let body: React.ReactNode = null;
-  if (hasAccounts && none) {
+  if (hasAccounts && none && runway.inMinor === 0) {
     body = (
       <>
-        Your spending accounts hold <Text style={styles.footBold}>{formatMoney(runway.startMinor)}</Text>.
-        Bills and EMIs you add show up on this line.
+        Your spending accounts hold <Text style={styles.footBold}>{formatMoney(runway.startMinor)}</Text>. No
+        bills or EMIs are scheduled in this window.
       </>
     );
   } else if (hasAccounts && runway.short) {

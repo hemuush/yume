@@ -10,6 +10,7 @@ import { hueFor } from '@/lib/hueFor';
 import { compactMoney } from '@/lib/compactMoney';
 import { HabitState, PeopleState } from './planOverview';
 import { styles } from './plan.styles';
+import { parseLocalIsoDate } from '@/lib/date';
 import { Kicker } from '@/components/Frost';
 
 export { Kicker, FrostChip as PlanChip } from '@/components/Frost';
@@ -86,13 +87,10 @@ export function PeopleTile({
   } else if (state.owedToYouMinor >= state.youOweMinor) {
     value = (
       <Text style={[styles.value, styles.income]} numberOfLines={1} adjustsFontSizeToFit>
-        +{formatMoney(state.owedToYouMinor)}
+        {formatMoney(state.owedToYouMinor)}
       </Text>
     );
-    sub =
-      state.youOweMinor > 0
-        ? `to collect · you owe ${formatMoney(state.youOweMinor)}`
-        : `to collect from ${count(state.count)}`;
+    sub = state.youOweMinor > 0 ? `to collect · you owe ${formatMoney(state.youOweMinor)}` : 'To collect';
   } else {
     value = (
       <Text style={[styles.value, styles.over]} numberOfLines={1} adjustsFontSizeToFit>
@@ -102,7 +100,7 @@ export function PeopleTile({
     sub =
       state.owedToYouMinor > 0
         ? `to pay back · ${formatMoney(state.owedToYouMinor)} to collect`
-        : `to pay back to ${count(state.count)}`;
+        : 'To pay back';
   }
   const shown =
     state.kind === 'balances' ? people.filter((p) => p.balanceMinor !== 0).slice(0, PEOPLE_SHOWN) : [];
@@ -126,6 +124,9 @@ export function PeopleTile({
               <View style={[styles.avatar, { backgroundColor: hueFor(p.id) }]}>
                 <Text style={styles.avatarText}>{p.name.trim().charAt(0).toUpperCase() || '?'}</Text>
               </View>
+              <Text style={styles.personName} numberOfLines={1}>
+                {p.name.split(' ')[0]}
+              </Text>
               <Text style={[styles.personAmt, p.balanceMinor > 0 ? styles.income : styles.over]}>
                 {p.balanceMinor > 0 ? '+' : '−'}
                 {compactMoney(Math.abs(p.balanceMinor))}
@@ -148,10 +149,12 @@ export function HabitTile({
   habit,
   goalMinor,
   onOpen,
+  today,
 }: {
   /** Null when no daily spending goal is set. */
   habit: HabitState | null;
   goalMinor: number | null;
+  today?: string;
   onOpen: () => void;
 }) {
   const sprout = <MaterialCommunityIcons name="sprout" size={14} color={theme.colors.ink} />;
@@ -168,7 +171,7 @@ export function HabitTile({
   }
   return (
     <PlanTile
-      label={`${habit.streakDays}-day streak under ${formatMoney(goalMinor)} a day. Open Suu's garden`}
+      label={`${habit.streakDays}-day streak at ${formatMoney(goalMinor)} or less a day. ${habit.days.map((kept, i) => `${habit.dates?.[i] ?? `Day ${i + 1}`}: ${habit.tracked?.[i] === false ? 'not tracked' : kept ? 'within goal' : 'over goal'}`).join(', ')}. Open Suu's garden`}
       onPress={onOpen}
     >
       <Kicker icon={sprout} inTile>
@@ -183,18 +186,25 @@ export function HabitTile({
         importantForAccessibility="no-hide-descendants"
       >
         {habit.days.map((kept, i) => (
-          <MaterialCommunityIcons
-            key={i}
-            name="sprout"
-            size={kept ? SPROUT_BASE + i * SPROUT_STEP : SPROUT_BASE - 2}
-            color={kept ? theme.colors.incomeText : theme.colors.textMuted}
-            style={!kept && { opacity: 0.45 }}
-          />
+          <View key={i} style={styles.sproutDay}>
+            <MaterialCommunityIcons
+              name="sprout"
+              size={kept ? SPROUT_BASE + i * SPROUT_STEP : SPROUT_BASE - 2}
+              color={kept ? theme.colors.incomeText : theme.colors.textMuted}
+              style={!kept && { opacity: 0.45 }}
+            />
+            <Text style={[styles.dayLabel, habit.dates?.[i] === today && styles.income]}>
+              {habit.tracked?.[i] === false
+                ? '—'
+                : habit.dates?.[i]
+                  ? parseLocalIsoDate(habit.dates[i]).toLocaleDateString(undefined, { weekday: 'narrow' })
+                  : `${i + 1}`}
+            </Text>
+          </View>
         ))}
       </View>
-      <Text style={styles.tileSub} numberOfLines={1}>
-        under {formatMoney(goalMinor)} a day
-      </Text>
+      <Text style={styles.tileSub}>{formatMoney(goalMinor)} or less / day</Text>
+      {habit.tracked?.includes(false) && <Text style={styles.dayLabel}>— Not tracked</Text>}
     </PlanTile>
   );
 }
