@@ -316,7 +316,7 @@ const styles = StyleSheet.create({
   weeksLabel: { fontFamily: theme.font.bodyMedium, fontSize: 12.5, color: theme.colors.textSecondary },
   weekRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   weekChip: {
-    minHeight: 34,
+    minHeight: 44,
     paddingHorizontal: 12,
     borderRadius: 17,
     justifyContent: 'center',

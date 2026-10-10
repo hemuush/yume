@@ -629,7 +629,7 @@ export default function ReportsScreen() {
         stickyHeaderIndices={[0]}
         contentContainerStyle={{
           paddingTop: headerHeight,
-          paddingHorizontal: 20,
+          paddingHorizontal: 16,
           paddingBottom: tabScrollPad + insets.bottom,
         }}
       >

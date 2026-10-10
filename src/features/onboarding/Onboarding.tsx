@@ -284,10 +284,7 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
 
             {slide.isNameStep && (
               <TextInput
-                style={[
-                  styles.nameInput,
-                  nameFocused && [styles.nameInputFocused, { borderColor: secondary }],
-                ]}
+                style={[styles.nameInput, nameFocused && styles.nameInputFocused]}
                 placeholder="Your name"
                 accessibilityLabel="Your name"
                 placeholderTextColor={theme.colors.textMuted}
@@ -498,7 +495,7 @@ const styles = StyleSheet.create({
     color: theme.colors.textPrimary,
     textAlign: 'center',
   },
-  nameInputFocused: { backgroundColor: theme.colors.surface },
+  nameInputFocused: { backgroundColor: theme.colors.surface, borderColor: theme.colors.link },
   dots: { flexDirection: 'row', gap: 6, marginTop: 24 },
   // A plain muted fill, not an outlined dot: a hairline border was barely visible on the cream page.
   dot: {
@@ -519,6 +516,7 @@ const styles = StyleSheet.create({
   ctaWithLink: { marginBottom: 6 },
   ctaBusy: { opacity: 0.6 },
   restoreLink: {
+    minHeight: 44,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',

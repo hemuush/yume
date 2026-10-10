@@ -44,6 +44,7 @@ export function PrimaryButton({
   doneLabel = 'Done',
   compact,
   icon,
+  accessibilityState,
   ...rest
 }: Props) {
   const { animatedStyle, onPressIn, onPressOut } = usePressScale();
@@ -74,6 +75,7 @@ export function PrimaryButton({
         style,
       ]}
       accessibilityRole="button"
+      accessibilityState={{ ...accessibilityState, disabled: !!disabled }}
       // Both variants have a 44dp minimum height; slop gives tightly spaced controls extra reach.
       hitSlop={compact ? HIT_SLOP_COMPACT : HIT_SLOP}
       {...rest}

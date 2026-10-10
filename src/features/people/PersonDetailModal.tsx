@@ -346,7 +346,7 @@ export function PersonDetailModal({
               accessibilityRole="button"
             >
               <View style={{ flex: 1 }}>
-                <Text style={styles.rowLabel} numberOfLines={1}>
+                <Text style={styles.rowLabel} numberOfLines={2}>
                   {loan.direction === 'borrowed' ? 'You borrowed' : 'You lent'} ·{' '}
                   {(loan.interestRateAnnualBp / 100).toFixed(2)}%
                 </Text>

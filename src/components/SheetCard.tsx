@@ -106,8 +106,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   kicker: {
+    maxWidth: '75%',
+    flexShrink: 1,
+    textAlign: 'right',
     fontFamily: theme.font.bodyBold,
-    fontSize: 10.5,
+    fontSize: 11,
     letterSpacing: 0.8,
     textTransform: 'uppercase',
     color: theme.colors.textSecondary,
@@ -115,7 +118,13 @@ const styles = StyleSheet.create({
   amount: { fontFamily: theme.font.monoBold, fontSize: 28, marginTop: 10 },
   title: { fontFamily: theme.font.roundedBold, fontSize: 16, color: theme.colors.textPrimary, marginTop: 2 },
   titleBig: { fontFamily: theme.font.roundedBold, fontSize: 22, marginTop: 10 },
-  meta: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary, marginTop: 2 },
+  meta: {
+    fontFamily: theme.font.body,
+    fontSize: 12,
+    lineHeight: 18,
+    color: theme.colors.textSecondary,
+    marginTop: 4,
+  },
   track: {
     height: 6,
     borderRadius: 3,

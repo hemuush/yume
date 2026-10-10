@@ -30,21 +30,21 @@ export function EmptyState({
 }
 
 const styles = StyleSheet.create({
-  wrap: { alignItems: 'center', paddingVertical: 28, paddingHorizontal: 32 },
+  wrap: { alignItems: 'center', paddingVertical: 24, paddingHorizontal: 20 },
   title: {
     fontFamily: theme.font.roundedMedium,
-    fontSize: 14.5,
-    color: theme.colors.textSecondary,
+    fontSize: 16,
+    color: theme.colors.textPrimary,
     marginTop: 14,
     textAlign: 'center',
   },
   subtitle: {
     fontFamily: theme.font.body,
-    fontSize: 12.5,
+    fontSize: 13,
     color: theme.colors.textMuted,
     marginTop: 4,
     textAlign: 'center',
-    lineHeight: 18,
+    lineHeight: 19,
   },
   action: { alignSelf: 'stretch', marginTop: 16 },
 });

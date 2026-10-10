@@ -147,7 +147,7 @@ export default function RecurringScreen() {
         scrollEventThrottle={16}
 
         contentContainerStyle={{
-          paddingHorizontal: 20,
+          paddingHorizontal: 16,
           paddingTop: headerHeight + theme.layout.screenTopGap,
           paddingBottom: theme.layout.screenScrollPad + insets.bottom,
         }}

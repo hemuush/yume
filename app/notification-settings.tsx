@@ -269,10 +269,10 @@ const styles = StyleSheet.create({
   },
   footNote: {
     fontFamily: theme.font.body,
-    fontSize: 11,
+    fontSize: 12,
     color: theme.colors.textMuted,
     marginHorizontal: 20,
     marginTop: 16,
-    lineHeight: 16,
+    lineHeight: 18,
   },
 });
