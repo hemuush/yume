@@ -370,7 +370,7 @@ export function SplitScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
   content: { paddingTop: theme.layout.screenTopGap },
-  summary: { marginHorizontal: 20, padding: 16, gap: 12 },
+  summary: { marginHorizontal: 16, padding: 16, gap: 12 },
   summaryTop: { flexDirection: 'row', alignItems: 'center', gap: 16 },
   summaryText: { flex: 1, minWidth: 0, gap: 4 },
   legend: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 12, rowGap: 6 },
@@ -435,7 +435,7 @@ const styles = StyleSheet.create({
     borderColor: GLASS.edge,
     backgroundColor: 'rgba(255,255,255,0.86)',
     boxShadow: '0px -8px 24px rgba(16,32,51,0.06)',
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     paddingTop: 12,
   },
   typing: {

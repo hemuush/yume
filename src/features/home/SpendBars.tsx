@@ -11,7 +11,7 @@ import { useReduceMotion } from '@/lib/useReduceMotion';
 import { useAccent } from '@/theme/AccentContext';
 import { hexToRgba } from '@/lib/color';
 import { homeInk } from './homeInk';
-import { monthBars, weekBars, SpendBar } from './spendBars';
+import { monthBars, weekBars, SpendBar } from './spendBarData';
 
 /** The tallest bar's height; the amount over today's bar sits above it. */
 const MAX_H = 84;
@@ -127,7 +127,7 @@ export function SpendBars({
 }
 
 const styles = StyleSheet.create({
-  card: { marginHorizontal: 20, paddingHorizontal: 14, paddingTop: 14, paddingBottom: 12 },
+  card: { marginHorizontal: 16, paddingHorizontal: 14, paddingTop: 14, paddingBottom: 12 },
   head: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 },
   title: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textSecondary },
   total: { fontFamily: theme.font.body, fontSize: 12.5, color: theme.colors.textMuted, marginTop: 2 },

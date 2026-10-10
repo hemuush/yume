@@ -40,18 +40,23 @@ export const styles = StyleSheet.create({
   identityRow: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   identityText: { flex: 1, minWidth: 0 },
   avatar: {
-    width: 58,
-    height: 58,
-    borderRadius: 29,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     alignItems: 'center',
     justifyContent: 'center',
     // Without this, a circular View's background can render clipped to a stale layout measurement on Android
     // (the "half-circle avatar" symptom).
     overflow: 'hidden',
   },
-  avatarInitial: { fontFamily: theme.font.roundedBold, fontSize: 24 },
+  avatarInitial: { fontFamily: theme.font.roundedBold, fontSize: 20 },
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: 8, alignSelf: 'flex-start', maxWidth: '100%' },
-  name: { fontFamily: theme.font.roundedBold, fontSize: 21, color: theme.colors.textPrimary, flexShrink: 1 },
+  name: {
+    fontFamily: theme.font.roundedBold,
+    fontSize: theme.typeSize.greeting,
+    color: theme.colors.textPrimary,
+    flexShrink: 1,
+  },
   nameEditRow: {
     flexDirection: 'row',
     alignItems: 'center',

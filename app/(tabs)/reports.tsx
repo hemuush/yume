@@ -4,6 +4,7 @@ import ReanimatedAnimated from 'react-native-reanimated';
 import { useCollapsingHeader } from '@/lib/useCollapsingHeader';
 import { HeaderSummary } from '@/features/home/SkyHeader';
 import { formatMoney } from '@/lib/money';
+import { getCachedCurrency } from '@/db/settings';
 import { Text } from '@/components/Text';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { PrimaryButton } from '@/components/PrimaryButton';
@@ -213,10 +214,10 @@ export default function ReportsScreen() {
           getMonthlyCashFlow(trendMonths, anchor, hideAmounts),
           getCategoryMonthlyTotals(trendMonths, anchor, hideAmounts),
           getDailyExpenseTotals(range, hideAmounts),
-          listCategories(),
+          listCategories(true),
           // Only the starting-balance names (to word an insight); not Tidy up's whole-ledger repeat scan.
           findStartingBalances().catch(() => null),
-          listAccounts(),
+          listAccounts(true),
         ]);
         if (seq !== loadSeq.current) return false;
         setComparison(cmp);
@@ -260,7 +261,7 @@ export default function ReportsScreen() {
   const openDay = useCallback(
     async (iso: string) => {
       setSelectedDay(iso);
-      const txs = await listTransactions({ fromDate: iso, toDate: iso });
+      const txs = await listTransactions({ fromDate: iso, toDate: iso, currency: getCachedCurrency() });
       setDayData({
         iso,
         txs: hideAmounts ? txs.filter((tx) => !isSavingsEntry(tx, catById, savingsIds)) : txs,

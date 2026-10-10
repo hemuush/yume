@@ -23,6 +23,7 @@ export function RecentTransactionRow({
   divider,
   savingsTransfer = false,
   showDay = true,
+  currency,
 }: {
   tx: Transaction;
   category: Category | undefined;
@@ -35,6 +36,7 @@ export function RecentTransactionRow({
   savingsTransfer?: boolean;
   /** Off when the rows sit under a day heading (Home), so the day isn't said twice. */
   showDay?: boolean;
+  currency?: string;
 }) {
   const { secondary } = useAccent();
   const isTransfer = tx.type === 'transfer';
@@ -70,7 +72,11 @@ export function RecentTransactionRow({
       {/* Spending reads in ink with its minus; only money in is coloured (green). */}
       <Text style={[styles.amount, tx.type === 'income' && styles.income]}>
         {tx.type === 'expense' ? '−' : tx.type === 'income' ? '+' : ''}
-        <Amount minor={tx.amountMinor} sensitive={category?.isSensitive || savingsTransfer} />
+        <Amount
+          minor={tx.amountMinor}
+          sensitive={category?.isSensitive || savingsTransfer}
+          currency={currency}
+        />
       </Text>
     </View>
   );

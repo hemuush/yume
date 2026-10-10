@@ -1,4 +1,5 @@
 import { found } from './found';
+import { assertDefaultCurrencyAccount } from './currencyInvariant';
 import { LoanRow } from './rows';
 import { getDb } from './client';
 import { newId } from '@/lib/id';
@@ -116,6 +117,8 @@ export async function createLoan(input: CreateLoanInput): Promise<Loan> {
   }
 
   await db.withTransactionAsync(async (tx) => {
+    if (input.linkedAccountId) await assertDefaultCurrencyAccount(tx, input.linkedAccountId, 'Loans');
+    if (input.disbursement) await assertDefaultCurrencyAccount(tx, input.disbursement.accountId, 'Loans');
     // Insert the loan row before its disbursement/fee transactions, which FK back to it via loan_id.
     await tx.runAsync(
       `INSERT INTO loans
@@ -286,6 +289,7 @@ export async function updateLoanAsset(
  */
 export async function updateLoanAccount(loanId: string, accountId: string): Promise<void> {
   const db = await getDb();
+  await assertDefaultCurrencyAccount(db, accountId, 'Loans');
   const account = await db.getFirstAsync<{ id: string }>('SELECT id FROM accounts WHERE id = ?', [accountId]);
   if (!account) throw new Error('Account not found');
   await db.runAsync('UPDATE loans SET linked_account_id = ? WHERE id = ?', [accountId, loanId]);

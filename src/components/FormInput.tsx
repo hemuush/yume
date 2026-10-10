@@ -37,7 +37,7 @@ export const FormInput = forwardRef<RNTextInput, Props>(function FormInput(
 });
 
 const styles = StyleSheet.create({
-  wrap: { marginBottom: 14 },
+  wrap: { marginBottom: 12 },
   label: { ...FIELD_LABEL, marginBottom: 6 },
   input: {
     // A transparent border by default so the focus ring can appear without
@@ -46,8 +46,9 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
     borderRadius: theme.radius.lg,
     paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 15,
+    paddingVertical: 10,
+    minHeight: 44,
+    fontSize: 14,
     fontFamily: theme.font.body,
     color: theme.colors.textPrimary,
     backgroundColor: theme.colors.surfaceAlt,

@@ -120,8 +120,8 @@ export default function BackupScreen() {
   const [frequency, setFrequency] = useState<BackupFrequency>('daily');
   const [busy, setBusy] = useState<string | null>(null);
   const [doneLabel, setDoneLabel] = useState<string | null>(null);
-  // The copy of the data from just before the last restore, if there is one
-  // (see lib/safetyCopy.ts) — shown as the "Undo your last restore" card.
+  // The saved recovery copy may predate an earlier restore if the latest restore could not keep one.
+  // Show its saved date rather than claiming it always undoes the latest restore.
   const [safetyInfo, setSafetyInfo] = useState<SafetyCopyInfo | null>(null);
   // The backup files in the chosen folder, newest first.
   const [files, setFiles] = useState<LocalBackupFile[] | null>(null);
@@ -222,12 +222,12 @@ export default function BackupScreen() {
 
   /**
    * Puts back the pre-restore data (lib/safetyCopy.ts) after one more confirmation; shared by the "Undo
-   * restore" button on the completion message and the "Undo your last restore" card.
+   * restore" button on the completion message and the saved recovery snapshot card.
    */
   const confirmUndo = () =>
     showAlert(
       'Put back your earlier data?',
-      'This replaces what is in the app now with your data from just before the restore. What is there now is kept as a copy, so this can be undone too.',
+      'This replaces what is in the app now with the saved recovery snapshot. Check its saved date before continuing: it may come from an earlier restore. What is there now is kept as a new recovery copy.',
       [
         { text: 'Cancel', style: 'cancel', onPress: () => void load() },
         {
@@ -238,7 +238,7 @@ export default function BackupScreen() {
             try {
               await undoLastRestore();
               void resyncAfterRestore();
-              showAlert('Data put back', 'Your data is back to how it was before the restore.', [
+              showAlert('Data put back', 'The saved recovery snapshot has been restored.', [
                 { text: 'OK', onPress: goHome },
               ]);
             } catch (e) {
@@ -495,7 +495,7 @@ Restore anyway? Your current data would be replaced with no way back.`,
                 {safetyInfo && (
                   <TimelineNode first last={shownFiles.length === 0} copy>
                     <View style={h.mid}>
-                      <Text style={h.title}>Before your last restore</Text>
+                      <Text style={h.title}>Saved recovery snapshot</Text>
                       <Text style={[h.sub, styles.copySub]}>
                         {formatWhen(safetyInfo.savedAt)} · {safetyInfo.transactions}{' '}
                         {safetyInfo.transactions === 1 ? 'entry' : 'entries'}, {safetyInfo.accounts}{' '}
@@ -505,7 +505,7 @@ Restore anyway? Your current data would be replaced with no way back.`,
                     <PrimaryButton
                       compact
                       title={busy === 'undo-restore' ? 'Putting back…' : 'Put back'}
-                      accessibilityLabel="Put back your data from before the last restore"
+                      accessibilityLabel="Put back the saved recovery snapshot"
                       onPress={confirmUndo}
                       disabled={!!busy}
                     />

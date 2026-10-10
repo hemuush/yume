@@ -8,7 +8,8 @@ import { accountBadgeColor, accountIcon } from '@/lib/account';
 import { Text } from '@/components/Text';
 import Feather from '@expo/vector-icons/Feather';
 import { theme } from '@/constants/theme';
-import { formatMoney, getCurrencySymbol } from '@/lib/money';
+import { formatMoney, formatMaskableMoney, getCurrencySymbol } from '@/lib/money';
+import { usePrivacy } from '@/theme/PrivacyContext';
 import { haptics } from '@/lib/haptics';
 import { Account } from '@/types';
 import { RepeatEntry } from '@/db/ledger';
@@ -308,6 +309,9 @@ export function UsualChips({
   onPick: (entry: RepeatEntry) => void;
 }) {
   const { secondary } = useAccent();
+  const { hideAmounts } = usePrivacy();
+  const usualMoney = (u: RepeatEntry) =>
+    formatMaskableMoney(u.amountMinor, { currency: u.accountCurrency, masked: hideAmounts && u.isSensitive });
   return (
     <>
       <Text style={styles.label}>Your usual</Text>
@@ -328,13 +332,13 @@ export function UsualChips({
               ])}
               accessibilityRole="button"
               accessibilityState={{ selected: active }}
-              accessibilityLabel={`${categorySpoken(u.categoryName, u.parentName)}, ${formatMoney(u.amountMinor, u.accountCurrency)}, logged ${u.timesLogged} times`}
+              accessibilityLabel={`${categorySpoken(u.categoryName, u.parentName)}, ${usualMoney(u)}, logged ${u.timesLogged} times`}
             >
               <CategoryIcon name={u.categoryIcon} color={u.categoryColor} size={11} square={20} />
               <Text style={styles.recentChipText} numberOfLines={1}>
                 {categorySentence(u.categoryName, u.parentName)} ·
               </Text>
-              <Text style={styles.recentChipAmount}>{formatMoney(u.amountMinor, u.accountCurrency)}</Text>
+              <Text style={styles.recentChipAmount}>{usualMoney(u)}</Text>
             </Pressable>
           );
         })}

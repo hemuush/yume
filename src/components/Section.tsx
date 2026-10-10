@@ -89,5 +89,5 @@ const styles = StyleSheet.create({
   },
   badgeText: { fontFamily: theme.font.monoBold, fontSize: 11, color: theme.colors.white },
   seeAll: { flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 32 },
-  seeAllText: { fontFamily: theme.font.bodyMedium, fontSize: 14, color: theme.colors.link },
+  seeAllText: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.link },
 });

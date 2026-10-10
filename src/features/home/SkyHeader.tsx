@@ -216,7 +216,7 @@ export function SkyHeader({
 
 const styles = StyleSheet.create({
   over: { position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10 },
-  band: { paddingHorizontal: 20, paddingBottom: 8 },
+  band: { paddingHorizontal: 16, paddingBottom: 8 },
   titleRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -229,7 +229,7 @@ const styles = StyleSheet.create({
   actions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   title: {
     fontFamily: theme.font.roundedBold,
-    fontSize: 22,
+    fontSize: theme.typeSize.title,
     color: theme.colors.ink,
     transformOrigin: 'left center',
     flexShrink: 1,

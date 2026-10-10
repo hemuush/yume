@@ -121,7 +121,8 @@ export async function getLoanPaymentContext(loanId: string): Promise<LoanPayment
   if (!next) return null;
   // Savings accounts can't pay or receive an EMI directly (assertSpendableAccount), so they're never offered.
   const accounts = await db.getAllAsync<{ id: string; name: string }>(
-    `SELECT id, name FROM accounts WHERE archived = 0 AND type != 'savings' ORDER BY created_at ASC`
+    `SELECT id, name FROM accounts WHERE archived = 0 AND type != 'savings'
+       AND currency = COALESCE((SELECT value FROM settings WHERE key = 'default_currency'), 'INR') ORDER BY created_at ASC`
   );
   const account = accounts.find((a) => a.id === loan.linked_account_id) ?? accounts[0] ?? null;
   const kind = loan.direction === 'borrowed' ? 'expense' : 'income';

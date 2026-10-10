@@ -58,7 +58,7 @@ export function ReportsSkeleton() {
 }
 
 const styles = StyleSheet.create({
-  wrap: { paddingHorizontal: 20 },
+  wrap: { paddingHorizontal: 16 },
   summary: {
     marginTop: 4,
     paddingHorizontal: 18,

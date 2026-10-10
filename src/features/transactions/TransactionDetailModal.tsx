@@ -346,7 +346,11 @@ export function TransactionDetailModal({
         amount={
           <>
             {tx.type === 'expense' ? '−' : tx.type === 'income' ? '+' : ''}
-            <Amount minor={tx.amountMinor} sensitive={cat?.isSensitive || movesSavings} />
+            <Amount
+              minor={tx.amountMinor}
+              sensitive={cat?.isSensitive || movesSavings}
+              currency={account?.currency}
+            />
           </>
         }
         amountColor={
@@ -429,6 +433,7 @@ export function TransactionDetailModal({
               {formatMaskableMoney(
                 splitParts.reduce((s, p) => s + p.amountMinor, 0),
                 {
+                  currency: account?.currency,
                   masked:
                     hideAmounts &&
                     splitParts.some((p) => categories.find((c) => c.id === p.categoryId)?.isSensitive),
@@ -447,6 +452,7 @@ export function TransactionDetailModal({
                       : 'Uncategorised'}
                   </Text>
                   <Amount
+                    currency={accounts.find((a) => a.id === p.accountId)?.currency}
                     minor={p.amountMinor}
                     sensitive={pc?.isSensitive}
                     style={[styles.splitPartAmount, mine && styles.splitPartMine]}

@@ -70,7 +70,7 @@ import { useAddSuggestions } from '@/features/add/useAddSuggestions';
 import { useDiscardGuard } from '@/features/add/useDiscardGuard';
 import { showAlert } from '@/components/AppDialog';
 import { useUndoToast } from '@/components/UndoToast';
-import { spendableAccountsOf } from '@/lib/account';
+import { spendableAccountsOf, defaultCurrencyAccountsOf } from '@/lib/account';
 import { useAccent } from '@/theme/AccentContext';
 
 /** How far ahead a date can be before saving asks "are you sure?". */
@@ -207,7 +207,12 @@ export default function AddTransactionScreen() {
         : expr !== initialExpr || note.trim() !== '' || rows.length > 0 || splitParts !== null)
   );
 
-  const { frequentAmounts, usual } = useAddSuggestions({ type, categoryId, editingId });
+  const { frequentAmounts, usual } = useAddSuggestions({
+    type,
+    categoryId,
+    editingId,
+    accountCurrency: accounts.find((a) => a.id === accountId)?.currency,
+  });
 
   // A new entry's account follows its category (the account that category was last used with) until you
   // pick an account yourself.
@@ -362,7 +367,9 @@ export default function AddTransactionScreen() {
   // Savings accounts aren't directly spendable: expense/income/friend entries offer only non-savings
   // accounts, transfers all. createTransaction (src/db/ledger.ts) enforces it too.
   const spendableAccounts = useMemo(() => spendableAccountsOf(accounts), [accounts]);
-  const pickableAccounts = type === 'transfer' ? accounts : spendableAccounts;
+  const friendAccounts = defaultCurrencyAccountsOf(spendableAccounts);
+  const pickableAccounts =
+    type === 'transfer' ? accounts : type === 'friend' ? friendAccounts : spendableAccounts;
   const effectiveAccountId =
     accountId && pickableAccounts.some((a) => a.id === accountId)
       ? accountId
@@ -800,7 +807,7 @@ export default function AddTransactionScreen() {
           <Glass radius={24} style={styles.fieldCard}>
             <FriendFields
               people={people}
-              accounts={spendableAccounts}
+              accounts={friendAccounts}
               personId={personId}
               setPersonId={setPersonId}
               friendSign={friendSign}

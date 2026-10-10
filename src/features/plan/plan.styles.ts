@@ -13,13 +13,13 @@ export const JAR_HEIGHT = 92;
 
 const figure = {
   fontFamily: theme.font.body,
-  fontSize: 22,
+  fontSize: theme.typeSize.title,
   letterSpacing: -0.5,
   color: theme.colors.textPrimary,
 } as const;
 
 export const styles = StyleSheet.create({
-  card: { marginHorizontal: SCREEN.gutter, padding: 16, gap: 10 },
+  card: { marginHorizontal: SCREEN.gutter, padding: SCREEN.cardPad, gap: 10 },
   cardFirst: { marginTop: theme.layout.screenTopGap },
   row: { flexDirection: 'row', gap: GAP, marginHorizontal: SCREEN.gutter },
   rowGap: { gap: GAP },
@@ -31,9 +31,9 @@ export const styles = StyleSheet.create({
   bigRow: { flexDirection: 'row', alignItems: 'baseline', gap: 6, flexWrap: 'wrap' },
   bigValue: {
     fontFamily: theme.font.bodyLight,
-    fontSize: 44,
-    lineHeight: 50,
-    letterSpacing: -1.5,
+    fontSize: theme.typeSize.hero,
+    lineHeight: 42,
+    letterSpacing: -1.2,
     color: theme.colors.textPrimary,
   },
   bigNote: { fontFamily: theme.font.bodyMedium, fontSize: 14, color: theme.colors.textMuted },

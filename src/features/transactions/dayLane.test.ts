@@ -5,6 +5,21 @@
 import { buildDayLane, dropIndex, laneOrderIds, moveLine } from './transactions.helpers';
 import { Transaction } from '@/types';
 
+it('never stacks face values from different currencies together', () => {
+  const items = [
+    tx('inr1', {}),
+    tx('inr2', {}),
+    tx('usd1', { accountId: 'usd' }),
+    tx('usd2', { accountId: 'usd' }),
+  ];
+  const lane = buildDayLane(items, '2026-09-25', (id) => (id === 'usd' ? 'USD' : 'INR'));
+  expect(lane.lines).toHaveLength(2);
+  expect(lane.lines.map((l) => (l.kind === 'stack' ? l.items.map((t) => t.id) : []))).toEqual([
+    ['inr1', 'inr2'],
+    ['usd1', 'usd2'],
+  ]);
+});
+
 const tx = (id: string, over: Partial<Transaction>): Transaction =>
   ({
     id,

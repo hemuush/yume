@@ -119,6 +119,8 @@ export const theme = {
   spacing: (n: number) => n * 4,
   // The one spacing scale. Gutter and card padding are roles on top of it (see SCREEN in screenStyles).
   space: { xs: 4, sm: 8, md: 12, lg: 16, xl: 20, xxl: 24, xxxl: 32 },
+  // Compact sizing keeps Yume's existing fonts and hierarchy, without shrinking secondary labels.
+  typeSize: { hero: 36, headline: 34, inputAmount: 44, title: 20, greeting: 18, section: 17, row: 14 },
   // Tab bar metrics shared with screens that scroll clear of it. A tab screen needs `tabScreenScrollPad`
   // bottom padding (bar height + margin), a pushed screen `screenScrollPad`; callers add `insets.bottom`.
   layout: {

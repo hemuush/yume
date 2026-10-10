@@ -130,7 +130,7 @@ export function ReportsHero({
 }
 
 const styles = StyleSheet.create({
-  card: { padding: 16, gap: 10, marginTop: 4, marginBottom: 4 },
+  card: { padding: 14, gap: 10, marginTop: 4, marginBottom: 4 },
   cells: { flexDirection: 'row', gap: 6 },
   cell: {
     flex: 1,

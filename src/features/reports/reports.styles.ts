@@ -69,7 +69,7 @@ export const styles = StyleSheet.create({
   // brings its own bottom margin; the negative one trims it to the gap this bar wants.
   // On the page colour, so the report scrolls under the tabs once they stick.
   tabs: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     paddingTop: 12,
     paddingBottom: 8,
   },

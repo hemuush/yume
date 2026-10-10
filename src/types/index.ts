@@ -160,6 +160,7 @@ export interface Person {
 // Informal IOU ledger. Positive amountMinor = the entry increased what the person owes you (you paid for
 // them / lent cash). Negative = it reduced it (they repaid you, or you're settling a debt to them).
 export interface PersonLedgerEntry {
+  currency?: string;
   id: string;
   personId: string;
   transactionId: string | null;

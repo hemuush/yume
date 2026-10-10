@@ -13,6 +13,37 @@ jest.mock('@/theme/PrivacyContext', () => ({
 
 import { TimelineDay } from './TimelineDay';
 import { Category, Transaction } from '@/types';
+import { formatMoney } from '@/lib/money';
+
+it('shows foreign amounts in their own currency and excludes them from the day total', () => {
+  let tree!: ReactTestRenderer;
+  act(() => {
+    tree = create(
+      <TimelineDay
+        date={DATE}
+        label="Today"
+        dateLabel="25 Sept"
+        items={[
+          tx('inr', { amountMinor: 10000 }),
+          tx('usd', { accountId: 'usd', amountMinor: 1000, categoryId: 'travel' }),
+        ]}
+        categories={categories}
+        accountName={(id) => id}
+        categoryName={(id) => names[id ?? ''] ?? ''}
+        accountCurrency={(id) => (id === 'usd' ? 'USD' : 'INR')}
+        onPressTx={jest.fn()}
+        openStacks={new Set()}
+        onToggleStack={jest.fn()}
+      />
+    );
+  });
+  const labels = tree.root
+    .findAll((n) => typeof n.props.accessibilityLabel === 'string')
+    .map((n) => n.props.accessibilityLabel);
+  expect(labels.some((label) => label.includes(formatMoney(1000, 'USD')))).toBe(true);
+  expect(texts(tree).join(' ')).not.toContain(formatMoney(11000, 'INR'));
+  act(() => tree.unmount());
+});
 
 // Bars, rings and the new-entry glow animate (useGrowFrom, JustAddedGlow); fake
 // timers keep those frames inside the test instead of firing after it ends.

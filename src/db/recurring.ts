@@ -35,6 +35,22 @@ function rowToRule(row: RecurringRuleRow): RecurringRule {
   };
 }
 
+function sameRuleInputs(a: RecurringRuleRow, b: RecurringRuleRow): boolean {
+  return (
+    a.type === b.type &&
+    a.account_id === b.account_id &&
+    a.to_account_id === b.to_account_id &&
+    a.category_id === b.category_id &&
+    a.amount_minor === b.amount_minor &&
+    a.note === b.note &&
+    a.payment_mode === b.payment_mode &&
+    a.frequency === b.frequency &&
+    a.interval_count === b.interval_count &&
+    a.end_date === b.end_date &&
+    a.anchor_day === b.anchor_day
+  );
+}
+
 // The cadence maths lives in lib (pure, shared with the month forecast); re-exported for existing callers.
 export { advanceDate };
 
@@ -250,14 +266,34 @@ async function runDueRecurringRulesOnce(referenceDate: string): Promise<number> 
         const input = occurrence(cursor);
         const next = advanceDate(cursor, rule.frequency, rule.intervalCount, anchorDay);
         const expired = !!rule.endDate && next > rule.endDate;
+        let posted = false;
         await db.withTransactionAsync(async (tx) => {
+          // An edit, pause, delete or restore can run between catch-up occurrences.
+          // Compare the complete rule inside the same transaction as the insert.
+          const current = await tx.getFirstAsync<RecurringRuleRow>(
+            'SELECT * FROM recurring_rules WHERE id = ?',
+            [rule.id]
+          );
+          if (
+            !current ||
+            !current.active ||
+            current.next_run_date !== cursor ||
+            !sameRuleInputs(current, row)
+          )
+            return;
+          if (rule.endDate && cursor > rule.endDate) {
+            await tx.runAsync('UPDATE recurring_rules SET active = 0 WHERE id = ?', [rule.id]);
+            return;
+          }
           await insertTransactionRow(tx, input);
           await tx.runAsync('UPDATE recurring_rules SET next_run_date = ?, active = ? WHERE id = ?', [
             next,
             expired ? 0 : 1,
             rule.id,
           ]);
+          posted = true;
         });
+        if (!posted) break;
         await checkOverspendForNewTransaction(input);
         created++;
         iterations++;
@@ -267,8 +303,16 @@ async function runDueRecurringRulesOnce(referenceDate: string): Promise<number> 
     } catch (err) {
       // One rule's failure (e.g. its category was deleted) must not stop the rest of the batch or spin
       // re-attempting the same occurrence: deactivate it and move on.
-      console.error(`Recurring rule ${rule.id} failed and was deactivated:`, err);
-      await db.runAsync('UPDATE recurring_rules SET active = 0 WHERE id = ?', [rule.id]);
+      console.error(`Recurring rule ${rule.id} failed; deactivating it if unchanged:`, err);
+      await db.withTransactionAsync(async (tx) => {
+        const current = await tx.getFirstAsync<RecurringRuleRow>(
+          'SELECT * FROM recurring_rules WHERE id = ?',
+          [rule.id]
+        );
+        if (current && current.active && sameRuleInputs(current, row)) {
+          await tx.runAsync('UPDATE recurring_rules SET active = 0 WHERE id = ?', [rule.id]);
+        }
+      });
     }
   }
   return created;

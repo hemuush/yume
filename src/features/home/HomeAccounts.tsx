@@ -128,14 +128,14 @@ export function HomeAccounts({
 }
 
 const styles = StyleSheet.create({
-  wrap: { marginHorizontal: 20 },
+  wrap: { marginHorizontal: 16 },
   tile: { padding: 14, gap: 4 },
   head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 },
   title: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textSecondary },
   big: {
     fontFamily: theme.font.body,
-    fontSize: 22,
-    lineHeight: 28,
+    fontSize: theme.typeSize.title,
+    lineHeight: 26,
     letterSpacing: -0.5,
     color: theme.colors.textPrimary,
   },

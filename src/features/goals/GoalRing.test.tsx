@@ -2,7 +2,19 @@
  * Smoke-renders GoalRing/GoalChip/GoalCard across real data shapes (0%, mid, done, over target, no date);
  * a render-time throw reproduces a crash without a device, which the db tests can't catch.
  */
-import { create, act } from 'react-test-renderer';
+import { create as createTree, act } from 'react-test-renderer';
+const mounted: ReturnType<typeof createTree>[] = [];
+function create(...args: Parameters<typeof createTree>) {
+  const tree = createTree(...args);
+  mounted.push(tree);
+  return tree;
+}
+afterEach(() => {
+  act(() => {
+    for (const tree of mounted) tree.unmount();
+  });
+  mounted.length = 0;
+});
 import { GoalRing } from './GoalRing';
 import { GoalChip } from './GoalChip';
 import { GoalCard } from './GoalCard';

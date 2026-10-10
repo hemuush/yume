@@ -41,13 +41,15 @@ export function useGrowFrom(
     }
     const first = !drawn.current;
     drawn.current = true;
-    Animated.timing(v, {
+    const animation = Animated.timing(v, {
       toValue: target,
       duration: first ? drawMs : changeMs,
       delay: first ? delay : 0,
       easing: Easing.out(Easing.cubic),
       useNativeDriver: false,
-    }).start();
+    });
+    animation.start();
+    return () => animation.stop();
     // The durations are fixed per call site; only a new value or key moves it.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key, target, reduce]);

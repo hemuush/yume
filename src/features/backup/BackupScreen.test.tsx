@@ -98,6 +98,23 @@ jest.mock('@/lib/safetyCopy', () => ({
 }));
 
 import BackupScreen from '../../../app/backup';
+import { getSafetyCopyInfo } from '@/lib/safetyCopy';
+
+it('labels an older recovery copy without promising it undoes the latest restore', async () => {
+  (getSafetyCopyInfo as jest.Mock).mockResolvedValueOnce({
+    savedAt: '2026-09-01T00:00:00Z',
+    transactions: 2,
+    accounts: 1,
+  });
+  const tree = await render();
+  const labels = tree.root.findAllByType(Text).map((n) => [n.props.children].flat(Infinity).join(''));
+  expect(labels).toContain('Saved recovery snapshot');
+  expect(labels.join(' ')).not.toContain('Before your last restore');
+  expect(
+    tree.root.findAll((n) => n.props.accessibilityLabel === 'Put back the saved recovery snapshot').length
+  ).toBeGreaterThan(0);
+  act(() => tree.unmount());
+});
 import { readLocalBackup } from '@/lib/localBackup';
 
 const file = (n: number) => ({

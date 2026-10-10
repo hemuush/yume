@@ -218,13 +218,13 @@ function Bubble({
 }
 
 const styles = StyleSheet.create({
-  wrap: { marginHorizontal: 20, height: DIAL.height, justifyContent: 'center' },
+  wrap: { marginHorizontal: 16, height: DIAL.height, justifyContent: 'center' },
   text: { maxWidth: 200, gap: 6 },
   k: { fontFamily: theme.font.bodyMedium, fontSize: 12.5, color: theme.colors.textMuted },
   v: {
     fontFamily: theme.font.bodyLight,
-    fontSize: 32,
-    lineHeight: 38,
+    fontSize: 28,
+    lineHeight: 34,
     letterSpacing: -1,
     color: theme.colors.textPrimary,
   },

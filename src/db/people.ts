@@ -5,6 +5,7 @@ import { newId } from '@/lib/id';
 import { Person, PersonLedgerEntry } from '@/types';
 import { queueSpendAlerts } from './ledger';
 import { captureRow, restoreRows, RowSnapshot } from './undoSnapshot';
+import { assertDefaultCurrencyAccount } from './currencyInvariant';
 
 function rowToPerson(row: PersonRow): Person {
   return {
@@ -16,7 +17,7 @@ function rowToPerson(row: PersonRow): Person {
   };
 }
 
-function rowToEntry(row: PersonLedgerEntryRow): PersonLedgerEntry {
+function rowToEntry(row: PersonLedgerEntryRow & { currency?: string }): PersonLedgerEntry {
   return {
     id: row.id,
     personId: row.person_id,
@@ -25,6 +26,7 @@ function rowToEntry(row: PersonLedgerEntryRow): PersonLedgerEntry {
     date: row.date,
     note: row.note,
     createdAt: row.created_at,
+    ...(row.currency ? { currency: row.currency } : {}),
   };
 }
 
@@ -39,7 +41,11 @@ export async function listPeople(includeArchived = false): Promise<PersonWithBal
   // separate trip through the app-wide statement queue).
   const rows = await db.getAllAsync<PersonRow & { balance_total: number | null; last_date: string | null }>(
     `SELECT p.*,
-       (SELECT SUM(e.amount_minor) FROM person_ledger_entries e WHERE e.person_id = p.id) AS balance_total,
+       (SELECT SUM(e.amount_minor) FROM person_ledger_entries e
+        LEFT JOIN transactions t ON t.id = e.transaction_id
+        LEFT JOIN accounts a ON a.id = t.account_id
+        WHERE e.person_id = p.id AND (e.transaction_id IS NULL OR
+          a.currency = COALESCE((SELECT value FROM settings WHERE key = 'default_currency'), 'INR'))) AS balance_total,
        (SELECT MAX(e.date) FROM person_ledger_entries e WHERE e.person_id = p.id) AS last_date
      FROM people p ${includeArchived ? '' : 'WHERE p.archived = 0'} ORDER BY p.created_at ASC`
   );
@@ -70,8 +76,11 @@ export async function createPerson(input: { name: string; notes?: string }): Pro
 
 export async function getPersonLedger(personId: string): Promise<PersonLedgerEntry[]> {
   const db = await getDb();
-  const rows = await db.getAllAsync<PersonLedgerEntryRow>(
-    'SELECT * FROM person_ledger_entries WHERE person_id = ? ORDER BY date DESC, created_at DESC',
+  const rows = await db.getAllAsync<PersonLedgerEntryRow & { currency: string }>(
+    `SELECT e.*, COALESCE(a.currency, (SELECT value FROM settings WHERE key = 'default_currency'), 'INR') AS currency
+     FROM person_ledger_entries e LEFT JOIN transactions t ON t.id = e.transaction_id
+     LEFT JOIN accounts a ON a.id = t.account_id
+     WHERE e.person_id = ? ORDER BY e.date DESC, e.created_at DESC`,
     [personId]
   );
   return rows.map(rowToEntry);
@@ -93,11 +102,21 @@ export async function addLedgerEntry(input: {
   }
   const db = await getDb();
   const id = newId();
-  await db.runAsync(
-    `INSERT INTO person_ledger_entries (id, person_id, transaction_id, amount_minor, date, note)
+  await db.withTransactionAsync(async (tx) => {
+    if (input.transactionId) {
+      const linked = await tx.getFirstAsync<{ account_id: string }>(
+        'SELECT account_id FROM transactions WHERE id = ?',
+        [input.transactionId]
+      );
+      if (!linked) throw new Error('Linked transaction not found');
+      await assertDefaultCurrencyAccount(tx, linked.account_id, 'Friends & family entries');
+    }
+    await tx.runAsync(
+      `INSERT INTO person_ledger_entries (id, person_id, transaction_id, amount_minor, date, note)
      VALUES (?, ?, ?, ?, ?, ?)`,
-    [id, input.personId, input.transactionId ?? null, input.amountMinor, input.date, input.note ?? '']
-  );
+      [id, input.personId, input.transactionId ?? null, input.amountMinor, input.date, input.note ?? '']
+    );
+  });
   const row = await db.getFirstAsync<PersonLedgerEntryRow>(
     'SELECT * FROM person_ledger_entries WHERE id = ?',
     [id]
@@ -122,6 +141,7 @@ async function insertPersonMoneyMovement(
     ledgerAmountMinor: number;
   }
 ): Promise<void> {
+  await assertDefaultCurrencyAccount(tx, input.accountId, 'Friends & family entries');
   if (!Number.isSafeInteger(input.amountMinor) || input.amountMinor <= 0) {
     throw new Error('Amount must be a positive number');
   }

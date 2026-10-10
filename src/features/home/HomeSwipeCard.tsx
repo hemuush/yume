@@ -218,7 +218,7 @@ const styles = StyleSheet.create({
   pagesRow: { alignItems: 'flex-start' },
   // Frosted, like the rest of Home.
   card: {
-    marginHorizontal: 20,
+    marginHorizontal: 16,
     borderRadius: 24,
     overflow: 'hidden',
     backgroundColor: GLASS.fill,
