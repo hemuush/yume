@@ -135,6 +135,11 @@ export default function DashboardScreen() {
   // The period the on-screen figures belong to: `cursor` moves at once, this catches up once that month's
   // data loads. The hero turns its page on it, so a new month name never shows the old month's numbers.
   const [loadedCursor, setLoadedCursor] = useState<PeriodCursor>(CURRENT_PERIOD);
+  const [displayedPeriodKey, setDisplayedPeriodKey] = useState('month:0');
+  const displayedCursor = useMemo<PeriodCursor>(() => {
+    const [kind, offset] = displayedPeriodKey.split(':');
+    return { granularity: kind === 'year' ? 'year' : 'month', offset: Number(offset) };
+  }, [displayedPeriodKey]);
   const [loadError, setLoadError] = useState<string | null>(null);
   // Defaults ([], 0, null) look like a genuinely empty period, so the skeleton gates on this flag: set once
   // after the first `load()` (success or failure), never reset; later fetches update in place.
@@ -490,7 +495,16 @@ export default function DashboardScreen() {
             <ThisMonthHero
               periodKey={`${loadedCursor.granularity}:${loadedCursor.offset}`}
               direction={heroDirection}
-              period={<MonthPill cursor={cursor} onChange={handleCursorChange} />}
+              renderPeriod={(key) => {
+                const [kind, offset] = key.split(':');
+                return (
+                  <MonthPill
+                    cursor={{ granularity: kind === 'year' ? 'year' : 'month', offset: Number(offset) }}
+                    onChange={handleCursorChange}
+                  />
+                );
+              }}
+              onPeriodDisplayed={setDisplayedPeriodKey}
               canStepForward={canStepForward(cursor)}
               onStep={(dir) => handleCursorChange(stepPeriod(cursor, dir))}
               incomeMinor={dispIncome}
@@ -627,7 +641,7 @@ export default function DashboardScreen() {
       </Animated.ScrollView>
 
       <HomeHeader
-        cursor={cursor}
+        cursor={displayedCursor}
         onChange={handleCursorChange}
         userName={userName}
         alertCount={needsYou.length}

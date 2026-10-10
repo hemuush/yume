@@ -569,7 +569,8 @@ describe('Home, stepping between months on a lived-in phone', () => {
     expect(back).not.toContain('still to pay');
     expect(back).not.toContain('Short after bills');
     expect(back).toContain(`+ ${formatMoney(carry)} carried over`);
-    expect(back).toContain(`of ${formatMoney(lastMonth.incomeMinor)} income`);
+    expect(back).toContain(`Income ${formatMoney(lastMonth.incomeMinor)}`);
+    expect(back).toContain('less spending and savings');
 
     await step(tree, 'increment');
     await settle();

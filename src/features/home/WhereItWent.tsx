@@ -8,6 +8,8 @@ import Animated, {
   useAnimatedStyle,
   useAnimatedProps,
   withTiming,
+  cancelAnimation,
+  runOnJS,
 } from 'react-native-reanimated';
 import { Text } from '@/components/Text';
 import { GLASS } from '@/components/Glass';
@@ -58,13 +60,35 @@ export function WhereItWent({
   const top = breakdown.filter((c) => c.totalMinor > 0).slice(0, DIAL_CATEGORIES);
   const count = top.length + 1; // + the Reports bubble
   const total = breakdown.reduce((s, c) => s + Math.max(0, c.totalMinor), 0);
-  const [picked, setPicked] = useState(0);
+  const [picked, setPicked] = useState(top[0]?.categoryId);
+  const [settled, setSettled] = useState(top[0]?.categoryId);
+  const [width, setWidth] = useState(0);
   const sel = useSharedValue(0);
-  const index = Math.min(picked, Math.max(0, top.length - 1));
+  const index = Math.max(
+    0,
+    top.findIndex((c) => c.categoryId === picked)
+  );
+  const targetKey = top[index]?.categoryId;
 
   useEffect(() => {
-    sel.value = reduce ? index : withTiming(index, timing(420));
-  }, [index, reduce, sel]);
+    let active = true;
+    cancelAnimation(sel);
+    const commit = () => {
+      if (active) setSettled(targetKey);
+    };
+    if (reduce) {
+      sel.value = index;
+      commit();
+    } else {
+      sel.value = withTiming(index, timing(420), (finished) => {
+        if (finished) runOnJS(commit)();
+      });
+    }
+    return () => {
+      active = false;
+      cancelAnimation(sel);
+    };
+  }, [index, targetKey, count, reduce, sel]);
 
   const pillProps = useAnimatedProps(() => {
     const [a0, a1] = dialPill(count, sel.value);
@@ -76,23 +100,23 @@ export function WhereItWent({
   const iconStyle = useAnimatedStyle(() => {
     const [a0] = dialPill(count, sel.value);
     const p = dialPoint(a0 + 7.5);
-    return { left: p.x - 15, top: p.y - 15 };
+    return { transform: [{ translateX: p.x - 15 }, { translateY: p.y - 15 }] };
   });
   const shareStyle = useAnimatedStyle(() => {
     const [, a1] = dialPill(count, sel.value);
     const a = a1 - 10.5;
     const p = dialPoint(a);
-    return { left: p.x - 24, top: p.y - 9, transform: [{ rotate: `${a + 90}deg` }] };
+    return { transform: [{ translateX: p.x - 24 }, { translateY: p.y - 9 }, { rotate: `${a + 90}deg` }] };
   });
 
   if (top.length === 0) return null;
-  const current = top[index];
+  const current = top.find((c) => c.categoryId === settled) ?? top[0];
   const share = total > 0 ? Math.round((current.totalMinor / total) * 100) : 0;
   const diff = spentMinor - previousSpentMinor;
 
   return (
-    <View style={styles.wrap}>
-      <View style={styles.text}>
+    <View style={styles.wrap} onLayout={(e) => setWidth(e.nativeEvent.layout.width)}>
+      <View style={[styles.text, width > 0 && { maxWidth: Math.min(200, Math.max(0, width - 125)) }]}>
         <Text style={styles.k}>Spent in {periodName}</Text>
         <Text style={styles.v} numberOfLines={1} adjustsFontSizeToFit>
           {formatMoney(spentMinor)}
@@ -140,7 +164,7 @@ export function WhereItWent({
             onPress={() => {
               if (i === index) return;
               haptics.tap();
-              setPicked(i);
+              setPicked(c.categoryId);
             }}
           >
             <MaterialCommunityIcons
@@ -195,8 +219,7 @@ function Bubble({
     const [a0, a1] = dialSpans(count, sel.value)[i];
     const p = dialPoint((a0 + a1) / 2);
     return {
-      left: p.x - DIAL.dot / 2,
-      top: p.y - DIAL.dot / 2,
+      transform: [{ translateX: p.x - DIAL.dot / 2 }, { translateY: p.y - DIAL.dot / 2 }],
       // The picked one melts into the pill.
       opacity: Math.min(1, Math.abs(i - sel.value) * 1.4),
     };
@@ -254,7 +277,7 @@ const styles = StyleSheet.create({
   selName: { fontFamily: theme.font.bodyBold, fontSize: 14, color: theme.colors.textPrimary },
   selSub: { fontFamily: theme.font.body, fontSize: 12.5, color: theme.colors.textMuted, marginTop: 2 },
   dial: { position: 'absolute', right: 0, top: 0, width: DIAL.width, height: DIAL.height },
-  bubbleSlot: { position: 'absolute', width: DIAL.dot, height: DIAL.dot },
+  bubbleSlot: { position: 'absolute', left: 0, top: 0, width: DIAL.dot, height: DIAL.dot },
   bubble: {
     flex: 1,
     borderRadius: DIAL.dot / 2,
@@ -264,9 +287,19 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: GLASS.edge,
   },
-  pillIcon: { position: 'absolute', width: 30, height: 30, alignItems: 'center', justifyContent: 'center' },
+  pillIcon: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    width: 30,
+    height: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   share: {
     position: 'absolute',
+    left: 0,
+    top: 0,
     width: 48,
     textAlign: 'center',
     fontFamily: theme.font.bodyBold,

@@ -48,5 +48,7 @@ yarn-error.*
 # Separate private design review site and review documents
 /sites/
 /design-preview/
+/.codex-remote-attachments/
+/HOME_FIX_REPORT.md
 /APP_AUDIT.md
 /FIX_REPORT.md

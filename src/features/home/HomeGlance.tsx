@@ -257,7 +257,7 @@ export function HomeGlance({
                     iconBg={upcoming.next.iconBg}
                     iconColor={upcoming.next.iconColor}
                     title={upcoming.next.title}
-                    subtitle={`Next · ${upcoming.next.subtitle.toLowerCase()}`}
+                    subtitle={`After this week · ${upcoming.next.subtitle.toLowerCase()}`}
                     amountMinor={upcoming.next.amountMinor}
                     sign={upcoming.next.sign}
                     onPress={() => router.push(upcoming.next!.route)}

@@ -7,6 +7,7 @@ import ReanimatedAnimated, {
   useAnimatedStyle,
   withTiming,
   runOnJS,
+  cancelAnimation,
 } from 'react-native-reanimated';
 import { theme } from '@/constants/theme';
 import { formatMoney, formatMaskableMoney } from '@/lib/money';
@@ -43,6 +44,8 @@ interface HeroContent {
   outstandingLoansMinor: number;
   /** Which period these figures are for: a new period remounts the rolling figures instead of rolling them. */
   periodKey: string;
+  today?: { spentMinor: number; goalMinor: number } | null;
+  pace?: { projectedMinor: number; byLabel: string } | null;
 }
 
 /** How far a horizontal drag must travel before letting go changes the period. */
@@ -58,6 +61,8 @@ export function ThisMonthHero({
   periodKey,
   direction,
   period,
+  renderPeriod,
+  onPeriodDisplayed,
   canStepForward,
   onStep,
   incomeMinor,
@@ -76,6 +81,8 @@ export function ThisMonthHero({
   direction: -1 | 0 | 1;
   /** The period control (the month pill), top right. */
   period?: React.ReactNode;
+  renderPeriod?: (key: string) => React.ReactNode;
+  onPeriodDisplayed?: (key: string) => void;
   canStepForward: boolean;
   /** -1 for the period before, 1 for the one after. */
   onStep: (dir: -1 | 1) => void;
@@ -95,6 +102,8 @@ export function ThisMonthHero({
     dueMinor,
     outstandingLoansMinor,
     periodKey,
+    today,
+    pace,
   });
   // The sum behind "Free after bills", opened from the "still to pay" chip.
   const [showWorking, setShowWorking] = useState(false);
@@ -103,9 +112,20 @@ export function ThisMonthHero({
   const dragX = useSharedValue(0);
   const opacity = useSharedValue(1);
   const runId = useRef(0);
+  const displayedCallback = useRef(onPeriodDisplayed);
+  useEffect(() => {
+    displayedCallback.current = onPeriodDisplayed;
+  }, [onPeriodDisplayed]);
+  const todaySpent = today?.spentMinor;
+  const todayGoal = today?.goalMinor;
+  const paceProjected = pace?.projectedMinor;
+  const paceLabel = pace?.byLabel;
 
   useEffect(() => {
     const myRun = ++runId.current;
+    let active = true;
+    cancelAnimation(tx);
+    cancelAnimation(opacity);
     const next: HeroContent = {
       incomeMinor,
       spentMinor,
@@ -115,19 +135,36 @@ export function ThisMonthHero({
       dueMinor,
       outstandingLoansMinor,
       periodKey,
+      today:
+        todaySpent != null && todayGoal != null ? { spentMinor: todaySpent, goalMinor: todayGoal } : null,
+      pace:
+        paceProjected != null && paceLabel != null
+          ? { projectedMinor: paceProjected, byLabel: paceLabel }
+          : null,
     };
     const isPeriodTurn = prevPeriodKey.current !== periodKey;
     prevPeriodKey.current = periodKey;
 
     if (!isPeriodTurn || reduce) {
+      tx.value = 0;
+      opacity.value = 1;
       setDisplayed(next);
-      return;
+      displayedCallback.current?.(next.periodKey);
+      return () => {
+        active = false;
+        cancelAnimation(tx);
+        cancelAnimation(opacity);
+      };
     }
     const outX = direction > 0 ? -18 : direction < 0 ? 18 : 0;
     const inX = direction > 0 ? 18 : direction < 0 ? -18 : 0;
     const commit = () => {
-      if (runId.current !== myRun) return;
+      if (!active || runId.current !== myRun) return;
       setDisplayed(next);
+      displayedCallback.current?.(next.periodKey);
+      tx.value = inX;
+      tx.value = withTiming(0, inCfg);
+      opacity.value = withTiming(1, inCfg);
     };
     // Built on the JS thread: the completion callback runs on the UI thread, where calling a JS helper like
     // `timing()` crashes the app. A config object can be captured into the worklet; a function call can't.
@@ -137,10 +174,12 @@ export function ThisMonthHero({
     tx.value = withTiming(outX, outCfg, (finished) => {
       if (!finished) return;
       runOnJS(commit)();
-      tx.value = inX;
-      tx.value = withTiming(0, inCfg);
-      opacity.value = withTiming(1, inCfg);
     });
+    return () => {
+      active = false;
+      cancelAnimation(tx);
+      cancelAnimation(opacity);
+    };
   }, [
     periodKey,
     direction,
@@ -151,10 +190,19 @@ export function ThisMonthHero({
     carryMinor,
     dueMinor,
     outstandingLoansMinor,
+    todaySpent,
+    todayGoal,
+    paceProjected,
+    paceLabel,
     reduce,
     opacity,
     tx,
   ]);
+  useEffect(() => {
+    cancelAnimation(dragX);
+    if (reduce) dragX.value = 0;
+    return () => cancelAnimation(dragX);
+  }, [reduce, dragX]);
 
   const slideStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: tx.value + dragX.value }],
@@ -232,19 +280,21 @@ export function ThisMonthHero({
     : over
       ? 'more went out than came in'
       : hasDue
-        ? `of ${formatMoney(displayed.incomeMinor)} income${carryNote}`
+        ? `Income ${formatMoney(displayed.incomeMinor)}${carryNote}, less ${hideAmounts ? 'deductions' : 'spending, savings'} and bills`
         : displayed.surplusMinor < 0
           ? 'below zero'
-          : `left of ${formatMoney(displayed.incomeMinor)} income${carryNote}`;
+          : `Income ${formatMoney(displayed.incomeMinor)}${carryNote}, less ${hideAmounts ? 'deductions' : 'spending and savings'}`;
 
   const spentShare = slices.hasIncome && !over ? heroPct(heroShare(slices, 'spent')) : null;
-  const todayOverMinor = today ? today.spentMinor - today.goalMinor : 0;
+  const shownToday = displayed.today;
+  const shownPace = displayed.pace;
+  const todayOverMinor = shownToday ? shownToday.spentMinor - shownToday.goalMinor : 0;
 
   return (
     <Glass radius={28} style={styles.card}>
       <View style={styles.bar}>
         <Text style={styles.headLabel}>{headLabel}</Text>
-        {period}
+        {renderPeriod ? renderPeriod(displayed.periodKey) : period}
       </View>
 
       <ReanimatedAnimated.View style={[styles.body, slideStyle]} {...pan.panHandlers}>
@@ -282,7 +332,7 @@ export function ThisMonthHero({
           </Text>
         </View>
 
-        {(spentShare || today || hasDue) && (
+        {(spentShare || shownToday || hasDue) && (
           <View style={styles.chips}>
             {spentShare && (
               <View style={styles.chip}>
@@ -290,7 +340,7 @@ export function ThisMonthHero({
                 <Text style={styles.chipText}>{spentShare} spent</Text>
               </View>
             )}
-            {today && (
+            {shownToday && (
               <View style={[styles.chip, todayOverMinor > 0 && styles.chipOver]}>
                 <Feather
                   name="clock"
@@ -299,8 +349,8 @@ export function ThisMonthHero({
                 />
                 <Text style={[styles.chipText, todayOverMinor > 0 && styles.chipTextOver]} numberOfLines={1}>
                   {todayOverMinor > 0
-                    ? `${formatMoney(today.spentMinor)} today · ${formatMoney(todayOverMinor)} over`
-                    : `${formatMoney(today.spentMinor)} of ${formatMoney(today.goalMinor)} today`}
+                    ? `${formatMoney(shownToday.spentMinor)} today · ${formatMoney(todayOverMinor)} over`
+                    : `${formatMoney(shownToday.spentMinor)} of ${formatMoney(shownToday.goalMinor)} today`}
                 </Text>
               </View>
             )}
@@ -358,12 +408,12 @@ export function ThisMonthHero({
           />
         </View>
 
-        {pace && (
+        {shownPace && (
           <View style={styles.pace}>
             <Feather name="trending-up" size={14} color={theme.colors.textMuted} />
             <Text style={styles.paceText} numberOfLines={1}>
-              On pace for about {formatMoney(Math.round(pace.projectedMinor / 10000) * 10000)} by{' '}
-              {pace.byLabel}
+              On pace for about {formatMoney(Math.round(shownPace.projectedMinor / 10000) * 10000)} by{' '}
+              {shownPace.byLabel}
             </Text>
           </View>
         )}
