@@ -155,9 +155,9 @@ export function nextLocalBackupLabel(
 ): string | null {
   if (!lastBackupIso) return null;
   if (isLocalBackupDue(lastBackupIso, frequency, now)) return 'Next backup when you open Yume';
-  if (frequency === 'daily') return 'Next backup tomorrow';
+  if (frequency === 'daily') return 'Backs up when you open Yume tomorrow';
   const due = new Date(new Date(lastBackupIso).getTime() + BACKUP_FREQUENCY_MS[frequency]);
-  return `Next backup on ${due.toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}`;
+  return `Backs up when you open Yume on or after ${due.toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}`;
 }
 
 // The run in progress, if any — cold start and the app coming to the

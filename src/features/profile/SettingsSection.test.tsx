@@ -17,10 +17,14 @@ jest.mock('@/components/YumeLogo', () => ({ YumeLogo: () => null }));
 // The real switch animates its knob after every render; only its value and onChange matter here.
 jest.mock('@/components/ToggleSwitch', () => ({ ToggleSwitch: () => null }));
 
+const mockSetWidgets = jest.fn<Promise<void>, [boolean]>(async () => {});
+jest.mock('@/widgets/notifyWidgets', () => ({ refreshAllWidgets: jest.fn() }));
 const mockBackupResult = jest.fn();
 const mockSetCurrency = jest.fn<Promise<void>, [string]>(async () => {});
 const mockSetDailyGoal = jest.fn<Promise<void>, [number | null]>(async () => {});
 jest.mock('@/db/settings', () => ({
+  getHideWidgetValues: async () => false,
+  setHideWidgetValues: (value: boolean) => mockSetWidgets(value),
   SUPPORTED_CURRENCIES: [
     { code: 'INR', label: 'Indian Rupee' },
     { code: 'USD', label: 'US Dollar' },
@@ -284,4 +288,22 @@ describe('daysAgoLabel', () => {
     expect(daysAgoLabel(new Date(2026, 8, 25, 23, 58).toISOString(), now)).toBe('yesterday');
     expect(daysAgoLabel(new Date(2026, 8, 22, 12).toISOString(), now)).toBe('4 days ago');
   });
+});
+
+it('persists widget privacy and refreshes placed widgets; failed writes retain the last value', async () => {
+  const { ToggleSwitch } = require('@/components/ToggleSwitch');
+  const { refreshAllWidgets } = require('@/widgets/notifyWidgets');
+  const tree = await render();
+  const toggle = () =>
+    tree.root.findAllByType(ToggleSwitch).find((n) => n.props.accessibilityLabel === 'Hide widget details')!;
+  await act(async () => toggle().props.onChange(true));
+  expect(mockSetWidgets).toHaveBeenCalledWith(true);
+  expect(toggle().props.value).toBe(true);
+  expect(refreshAllWidgets).toHaveBeenCalledTimes(1);
+  mockSetWidgets.mockRejectedValueOnce(new Error('write failed'));
+  await act(async () => toggle().props.onChange(false));
+  expect(toggle().props.value).toBe(true);
+  expect(refreshAllWidgets).toHaveBeenCalledTimes(1);
+  expect(showAlert).toHaveBeenCalledWith("Couldn't change widget privacy", 'write failed');
+  act(() => tree.unmount());
 });

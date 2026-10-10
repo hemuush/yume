@@ -17,6 +17,7 @@ module.exports = defineConfig([
       'android/*',
       'ios/*',
       'sites/**',
+      'vendor/**',
       'design-preview/**',
     ],
   },

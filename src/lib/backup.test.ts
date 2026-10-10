@@ -123,3 +123,23 @@ describe('restoreFromSnapshot', () => {
     expect(await listTransactions({ limit: 100 })).toHaveLength(before.length);
   });
 });
+
+it("keeps this phone's widget privacy when restoring an older or less-private backup", async () => {
+  await mockTestDb.runAsync(
+    "INSERT INTO settings (key,value) VALUES ('hide_widget_values','1') ON CONFLICT(key) DO UPDATE SET value='1'"
+  );
+  const base = await buildBackupSnapshot();
+  const snapshot = {
+    ...base,
+    tables: {
+      ...base.tables,
+      settings: (base.tables.settings as { key: string; value: string }[])
+        .filter((row) => row.key !== 'hide_widget_values')
+        .concat([{ key: 'hide_widget_values', value: '0' }]),
+    },
+  };
+  await restoreFromSnapshot(snapshot);
+  expect(await mockTestDb.getFirstAsync("SELECT value FROM settings WHERE key='hide_widget_values'")).toEqual(
+    { value: '1' }
+  );
+});

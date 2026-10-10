@@ -480,6 +480,7 @@ export function resetSettingsCache(): void {
   cachedLastLocalResult = undefined;
   cachedLastOverspendNotified = undefined;
   cachedHideSensitiveAmounts = undefined;
+  cachedHideWidgetValues = undefined;
   cachedBudgetNudgesSent = undefined;
   cachedMilestonesSeen = undefined;
 }
@@ -876,4 +877,24 @@ export async function setRecentSearches(queries: string[]): Promise<void> {
      ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
     [RECENT_SEARCHES_KEY, JSON.stringify(kept)]
   );
+}
+
+let cachedHideWidgetValues: boolean | undefined;
+/** Independent launcher privacy, off by default to preserve existing widgets. */
+export async function getHideWidgetValues(): Promise<boolean> {
+  if (cachedHideWidgetValues !== undefined) return cachedHideWidgetValues;
+  const db = await getDb();
+  const row = await db.getFirstAsync<{ value: string }>('SELECT value FROM settings WHERE key = ?', [
+    'hide_widget_values',
+  ]);
+  cachedHideWidgetValues = row?.value === '1';
+  return cachedHideWidgetValues;
+}
+export async function setHideWidgetValues(value: boolean): Promise<void> {
+  const db = await getDb();
+  await db.runAsync(
+    'INSERT INTO settings (key,value) VALUES (?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value',
+    ['hide_widget_values', value ? '1' : '0']
+  );
+  cachedHideWidgetValues = value;
 }

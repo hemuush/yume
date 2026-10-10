@@ -12,7 +12,7 @@ const DEVICE_BOUND_SETTINGS = ['local_backup_folder_uri', 'last_local_backup_at'
  * Preferences where the phone's value wins if set, else the backup's returns: an older backup must not
  * flip the app lock, but a fresh install/new phone should get the user's preference back.
  */
-const CURRENT_WINS_SETTINGS = ['app_lock_enabled'];
+const CURRENT_WINS_SETTINGS = ['app_lock_enabled', 'hide_widget_values'];
 
 const PHONE_SETTINGS = [...DEVICE_BOUND_SETTINGS, ...CURRENT_WINS_SETTINGS];
 

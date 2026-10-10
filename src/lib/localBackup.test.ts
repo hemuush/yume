@@ -82,7 +82,9 @@ describe('nextLocalBackupLabel', () => {
   });
 
   it('says tomorrow for a daily backup already made today', () => {
-    expect(nextLocalBackupLabel(at(24, 8).toISOString(), 'daily', at(24, 20))).toBe('Next backup tomorrow');
+    expect(nextLocalBackupLabel(at(24, 8).toISOString(), 'daily', at(24, 20))).toBe(
+      'Backs up when you open Yume tomorrow'
+    );
   });
 
   it('says the backup runs on the next open once one is due', () => {
@@ -98,7 +100,9 @@ describe('nextLocalBackupLabel', () => {
     const last = at(20, 9);
     const due = new Date(last.getTime() + 6.5 * 24 * 60 * 60 * 1000);
     const day = due.toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
-    expect(nextLocalBackupLabel(last.toISOString(), 'weekly', at(22, 9))).toBe(`Next backup on ${day}`);
+    expect(nextLocalBackupLabel(last.toISOString(), 'weekly', at(22, 9))).toBe(
+      `Backs up when you open Yume on or after ${day}`
+    );
     expect(isLocalBackupDue(last.toISOString(), 'weekly', due)).toBe(true);
   });
 });

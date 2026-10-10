@@ -1,3 +1,4 @@
+/** @jest-environment-options {"customExportConditions":["node","node-addons"]} */
 /**
  * The app-icon shortcuts (plugins/withAppShortcuts.js) open Add with a type Add understands, through the
  * app's own scheme, and the plugin is registered in app.json so a build includes them.
