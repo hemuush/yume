@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { View, Pressable, ActivityIndicator } from 'react-native';
-import ReanimatedAnimated from 'react-native-reanimated';
+import { View, Pressable, ActivityIndicator, StyleSheet } from 'react-native';
+import ReanimatedAnimated, { useAnimatedStyle, useDerivedValue } from 'react-native-reanimated';
 import { useCollapsingHeader } from '@/lib/useCollapsingHeader';
 import { getCachedCurrency } from '@/db/settings';
 import { Text } from '@/components/Text';
@@ -50,7 +50,7 @@ import { SegmentedControl } from '@/components/SegmentedControl';
 import { parseLocalIsoDate, toLocalIsoDate, isIsoDate } from '@/lib/date';
 import { theme } from '@/constants/theme';
 import { useTabScrollPad } from '@/lib/uiScale';
-import { HomeWallpaper } from '@/features/home/HomeWallpaper';
+import { HomeWallpaper, wallpaperTop } from '@/features/home/HomeWallpaper';
 import { useAccent } from '@/theme/AccentContext';
 import { ReportsSkeleton } from '@/features/reports/ReportsSkeleton';
 import { ReportsHeader } from '@/features/reports/ReportsHeader';
@@ -202,6 +202,14 @@ export default function ReportsScreen() {
   // The header shrinks as the report scrolls; the tabs pin below it.
   const { collapse, headerHeight, collapsedHeight, scrollHandler, scrollRef, resetScroll } =
     useCollapsingHeader();
+  const stickyBarColor = wallpaperTop(accent);
+  const stickyProgress = useDerivedValue(() => {
+    const distance = collapse.distance.value;
+    return distance > 0 ? Math.min(1, Math.max(0, collapse.scrollY.value / distance)) : 0;
+  });
+  const stickyBackdropStyle = useAnimatedStyle(() => ({
+    opacity: Math.min(1, Math.max(0, (stickyProgress.value - 0.55) / 0.45)),
+  }));
   useTabScrollToTop(scrollRef);
 
   // Only the most recent load may write state — stepping periods quickly
@@ -640,6 +648,10 @@ export default function ReportsScreen() {
             style={[styles.stickyTabs, { paddingTop: collapsedHeight, marginTop: -collapsedHeight }]}
             pointerEvents="box-none"
           >
+            <ReanimatedAnimated.View
+              pointerEvents="none"
+              style={[StyleSheet.absoluteFill, { backgroundColor: stickyBarColor }, stickyBackdropStyle]}
+            />
             <View style={styles.tabs}>
               <SegmentedControl options={TAB_OPTIONS} value={tab} onChange={setTab} onBand />
             </View>
