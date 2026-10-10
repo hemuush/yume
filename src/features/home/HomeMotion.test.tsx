@@ -294,3 +294,42 @@ it('holds card height through a drag and settles to the destination height', () 
   act(() => r.root.findByType(ScrollView).props.onMomentumScrollEnd(offset(300)));
   expect(mockTargets).toContain(200);
 });
+
+it('inspects chart bars and resets to the current period when switching range', () => {
+  mockReduce = true;
+  const r = render(
+    <SpendBars
+      daily={[
+        { date: '2026-10-05', totalMinor: 2650000 },
+        { date: '2026-10-10', totalMinor: 13200 },
+      ]}
+      today="2026-10-10"
+    />
+  );
+  const day = r.root.find(
+    (n) =>
+      n.props.onPress &&
+      typeof n.props.accessibilityLabel === 'string' &&
+      /Monday.*5.*October/.test(n.props.accessibilityLabel)
+  );
+  act(() => day.props.onPress());
+  expect(text(r)).toContain('5 Oct · ₹26,500');
+  expect(day.props.accessibilityState.selected).toBe(true);
+  const switchRange = (name: string) =>
+    act(() =>
+      r.root
+        .find(
+          (n) =>
+            n.props.onPress &&
+            n.props.accessibilityRole === 'tab' &&
+            n.findAllByType(Text).some((t) => t.props.children === name)
+        )
+        .props.onPress()
+    );
+  switchRange('Month');
+  expect(text(r)).toContain('8–10 Oct · ₹132');
+  switchRange('Week');
+  expect(text(r)).toContain('10 Oct · ₹132');
+  act(() => r.update(<SpendBars daily={[]} today="2026-10-11" />));
+  expect(text(r)).toContain('11 Oct · ₹0');
+});
