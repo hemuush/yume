@@ -4,9 +4,7 @@
  */
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
 import { Text, ScrollView } from 'react-native';
-
 jest.setTimeout(30000);
-
 // Only the clock's date is faked, so the month under test is October 2026 whenever this runs.
 beforeAll(() => {
   jest.useFakeTimers({
@@ -30,7 +28,6 @@ beforeAll(() => {
 afterAll(() => {
   jest.useRealTimers();
 });
-
 jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMock').createReanimatedMock());
 jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
@@ -80,7 +77,6 @@ jest.mock('@/lib/useGrowFrom', () => ({
   useGrowFrom: (_key: string, target: number) => new (require('react-native').Animated.Value)(target),
   resetGrowMemory: () => {},
 }));
-
 const mockDaily = jest.fn(async (..._args: unknown[]) => [
   { date: '2026-10-02', totalMinor: 100000 },
   { date: '2026-10-05', totalMinor: 620000 },
@@ -123,7 +119,6 @@ const mockAccounts = jest.fn(async (..._args: unknown[]) => [
   },
 ]);
 const mockSubs = jest.fn(async (..._args: unknown[]) => [] as ReturnType<typeof cat>[]);
-
 const cat = (categoryId: string, name: string, totalMinor: number) => ({
   categoryId,
   name,
@@ -220,14 +215,11 @@ jest.mock('@/db/ledger', () => ({
   ],
   listAccounts: async () => [],
 }));
-
 import ReportsScreen from '../../../app/(tabs)/reports';
 import { getRangeComparison } from '@/db/reports';
-
 // Bars and rings animate to their values (useGrowFrom, at most the 700ms draw):
 // let the last ones finish before the file ends, so no frame fires after teardown.
 afterAll(() => new Promise((resolve) => setTimeout(resolve, 800)));
-
 async function render() {
   let tree!: ReactTestRenderer;
   await act(async () => {
@@ -238,10 +230,9 @@ async function render() {
   });
   return tree;
 }
-
 it('keeps the report scroll view mounted during a same-period refresh and refresh failure', async () => {
   const tree = await render();
-  const scroll = tree.root.findAllByType(ScrollView).find((node) => node.props.stickyHeaderIndices);
+  const scroll = tree.root.findAllByType(ScrollView).find((node) => node.props.testID === 'reports-content');
   expect(scroll).toBeDefined();
   let rejectRefresh!: (error: Error) => void;
   jest.mocked(getRangeComparison).mockImplementationOnce(
@@ -253,11 +244,15 @@ it('keeps the report scroll view mounted during a same-period refresh and refres
   await act(async () => {
     mockReportsFocus();
   });
-  expect(tree.root.findAllByType(ScrollView).find((node) => node.props.stickyHeaderIndices)).toBe(scroll);
+  expect(tree.root.findAllByType(ScrollView).find((node) => node.props.testID === 'reports-content')).toBe(
+    scroll
+  );
   await act(async () => {
     rejectRefresh(new Error('refresh interrupted'));
   });
-  expect(tree.root.findAllByType(ScrollView).find((node) => node.props.stickyHeaderIndices)).toBe(scroll);
+  expect(tree.root.findAllByType(ScrollView).find((node) => node.props.testID === 'reports-content')).toBe(
+    scroll
+  );
   expect(texts(tree)).toContain('Couldn’t refresh your report');
   act(() => tree.unmount());
 });
@@ -277,13 +272,11 @@ const pressText = async (tree: ReactTestRenderer, label: string) => {
     await new Promise((resolve) => setTimeout(resolve, 0));
   });
 };
-
 /** Month / Year / Custom sit in the period button's menu: open it, then pick. */
 const pickPeriodType = async (tree: ReactTestRenderer, label: string) => {
   await pressText(tree, 'Month');
   await pressText(tree, label);
 };
-
 const lastPush = () => (require('expo-router').router.push as jest.Mock).mock.calls.at(-1)[0];
 // The story cards and chart draw once they have a width; the renderer never lays anything out.
 const layOut = async (tree: ReactTestRenderer) => {
@@ -295,12 +288,10 @@ const layOut = async (tree: ReactTestRenderer) => {
 };
 const byLabel = (tree: ReactTestRenderer, label: string) =>
   tree.root.find((n) => typeof n.props.onPress === 'function' && n.props.accessibilityLabel === label);
-
 // Loads React Native's lazily-required components once, with a generous budget.
 beforeAll(async () => {
   await render();
 }, 180000);
-
 describe('Reports screen', () => {
   beforeEach(() => {
     mockDaily.mockClear();
@@ -311,18 +302,16 @@ describe('Reports screen', () => {
     (require('expo-router').router.push as jest.Mock).mockClear();
     (require('expo-router').router.navigate as jest.Mock).mockClear();
   });
-
   it('opens directly on Days without the duplicated Home summary', async () => {
     const shown = texts(await render());
     expect(shown).toEqual(
-      expect.arrayContaining(['Days', 'Categories', 'Trends', 'Tap a day to see what went out'])
+      expect.arrayContaining(['Days', 'Breakdown', 'Trends', 'Tap a day to see what went out'])
     );
     expect(shown.some((t) => t.startsWith('Spent in '))).toBe(false);
     expect(shown).not.toContain('Usual month');
     expect(shown.some((t) => t.endsWith(', in short'))).toBe(true);
     expect(shown).not.toContain('Where it went');
   });
-
   it('shows a failed day read and retries instead of presenting an empty day', async () => {
     const tree = await render();
     mockListTransactions.mockRejectedValueOnce(new Error('Read interrupted'));
@@ -333,10 +322,9 @@ describe('Reports screen', () => {
     expect(texts(tree)).toContain('Groceries');
     expect(texts(tree)).not.toContain('Couldn’t load this day');
   });
-
   it('hides the previous report while stepping periods and ignores an older response', async () => {
     const tree = await render();
-    await pressText(tree, 'Categories');
+    await pressText(tree, 'Breakdown');
     expect(texts(tree)).toContain('Food');
     const read = require('@/db/reports').getRangeComparison as jest.Mock;
     const cmp = await read.mock.results.at(-1)!.value;
@@ -356,7 +344,6 @@ describe('Reports screen', () => {
     expect(texts(tree)).toContain('Latest period');
     expect(texts(tree)).not.toContain('Outdated response');
   });
-
   it('does not reopen a day after its pending request finishes', async () => {
     const tree = await render();
     let finish!: (items: Awaited<ReturnType<typeof mockListTransactions>>) => void;
@@ -383,21 +370,20 @@ describe('Reports screen', () => {
     expect(texts(tree)).not.toContain('Late entry');
     expect(texts(tree)).not.toContain('Close this day');
   });
-
   it('reports account-query failures and recovers through retry', async () => {
     const tree = await render();
     mockAccounts.mockRejectedValueOnce(new Error('Account read interrupted'));
-    await pressText(tree, 'Categories');
+    await pressText(tree, 'Breakdown');
+    await pressText(tree, 'By category');
     await pressText(tree, 'By account');
     expect(texts(tree)).toContain('Some report details couldn’t load');
     await pressText(tree, 'Retry details');
     expect(texts(tree)).not.toContain('Some report details couldn’t load');
     expect(texts(tree)).toContain('Everyday account');
   });
-
   it('switches lens: Categories shows where it went, Trends the chart', async () => {
     const tree = await render();
-    await pressText(tree, 'Categories');
+    await pressText(tree, 'Breakdown');
     let shown = texts(tree);
     expect(shown).toEqual(expect.arrayContaining(['Where it went', 'Spending', 'Income', 'Rent', 'Food']));
     expect(shown).not.toContain('Tap a day to see what went out');
@@ -411,27 +397,33 @@ describe('Reports screen', () => {
     await pressText(tree, 'Days');
     expect(texts(tree)).toContain('Tap a day to see what went out');
   });
-
   it('scales category bars to their share of all spending', async () => {
     const tree = await render();
-    await pressText(tree, 'Categories');
+    await pressText(tree, 'Breakdown');
     const Fill = require('@/features/reports/AnimatedCategoryFill').AnimatedCategoryFill;
     const bars = tree.root.findAllByType(Fill).map((n) => n.props.targetPct as number);
     expect(bars[0]).toBeCloseTo((1800000 / 2420000) * 100);
     expect(bars[1]).toBeCloseTo((620000 / 2420000) * 100);
     expect(bars.reduce((sum, value) => sum + value, 0)).toBeCloseTo(100);
   });
-
-  it('lets the insight arrows move forward and back as an alternative to swiping', async () => {
+  it('expands insights individually and keeps the stable header outside report scrolling', async () => {
     const tree = await render();
-    await layOut(tree);
-    await act(async () => byLabel(tree, 'Next insight').props.onPress());
-    expect(texts(tree).some((t) => t.startsWith('2 of '))).toBe(true);
-    await act(async () => byLabel(tree, 'Previous insight').props.onPress());
-    expect(texts(tree).some((t) => t.startsWith('1 of '))).toBe(true);
-    expect(byLabel(tree, 'Previous insight').props.disabled).toBe(true);
+    const scroll = tree.root.findAllByType(ScrollView).find((n) => n.props.testID === 'reports-content')!;
+    expect(scroll.props.stickyHeaderIndices).toBeUndefined();
+    expect(scroll.findAllByType(Text).map((n) => n.props.children)).not.toContain('Reports');
+    expect(texts(tree)).not.toContain('Show on the heatmap →');
+    const insight = tree.root.find(
+      (n) =>
+        typeof n.props.onPress === 'function' &&
+        typeof n.props.accessibilityLabel === 'string' &&
+        n.props.accessibilityLabel.startsWith('Heaviest day')
+    );
+    await act(async () => insight.props.onPress());
+    expect(insight.props.accessibilityState.expanded).toBe(true);
+    expect(texts(tree)).toContain('Show on the heatmap →');
+    await act(async () => insight.props.onPress());
+    expect(texts(tree)).not.toContain('Show on the heatmap →');
   });
-
   it('Trends asks for the in-and-out and category tracks with savings left out while hidden', async () => {
     mockHide.current = true;
     try {
@@ -444,7 +436,6 @@ describe('Reports screen', () => {
       mockHide.current = false;
     }
   });
-
   it('opens a heatmap day as a card under the grid, and closes it', async () => {
     const tree = await render();
     await pressText(tree, '5');
@@ -462,7 +453,6 @@ describe('Reports screen', () => {
     shown = texts(tree);
     expect(shown).not.toContain('Groceries');
   });
-
   it('tapping the open day again puts it away', async () => {
     const tree = await render();
     await pressText(tree, '5');
@@ -470,7 +460,6 @@ describe('Reports screen', () => {
     await pressText(tree, '5');
     expect(texts(tree)).not.toContain('Groceries');
   });
-
   it('the heaviest-day story opens that day on the heatmap', async () => {
     const tree = await render();
     await layOut(tree);
@@ -484,6 +473,7 @@ describe('Reports screen', () => {
       card.props.onPress();
       await new Promise((resolve) => setTimeout(resolve, 0));
     });
+    await pressText(tree, 'Show on the heatmap →');
     expect(mockListTransactions).toHaveBeenCalledWith({
       fromDate: '2026-10-05',
       toDate: '2026-10-05',
@@ -491,7 +481,6 @@ describe('Reports screen', () => {
     });
     expect(texts(await Promise.resolve(tree))).toContain('Groceries');
   });
-
   it('a category story switches to Categories with that row picked', async () => {
     const tree = await render();
     await layOut(tree);
@@ -505,24 +494,23 @@ describe('Reports screen', () => {
       card.props.onPress();
       await new Promise((resolve) => setTimeout(resolve, 0));
     });
+    await pressText(tree, 'Show in categories →');
     const shown = texts(tree);
     expect(shown).toContain('Where it went');
     expect(shown).toContain('Open Food ›');
   });
-
   it('a category row picks itself and links to its own page, on the same period', async () => {
     const tree = await render();
-    await pressText(tree, 'Categories');
+    await pressText(tree, 'Breakdown');
     expect(texts(tree)).not.toContain('Open Food ›');
     await pressText(tree, 'Food');
     expect(texts(tree)).toContain('Open Food ›');
     await pressText(tree, 'Open Food ›');
     expect(lastPush()).toBe('/category/food?g=month&o=0');
   });
-
   it('"See its days on the heatmap" narrows the heatmap to that category, and the chip clears it', async () => {
     const tree = await render();
-    await pressText(tree, 'Categories');
+    await pressText(tree, 'Breakdown');
     await pressText(tree, 'Food');
     await pressText(tree, 'See its days on the heatmap →');
     expect(texts(tree)).toContain('Tap a day to see what went out');
@@ -532,10 +520,9 @@ describe('Reports screen', () => {
     });
     expect(tree.root.findAll((n) => n.props.accessibilityLabel === 'Clear the Food filter')).toHaveLength(0);
   });
-
   it('a new period forgets the open day and the filter', async () => {
     const tree = await render();
-    await pressText(tree, 'Categories');
+    await pressText(tree, 'Breakdown');
     await pressText(tree, 'Food');
     await pressText(tree, 'See its days on the heatmap →');
     expect(
@@ -547,10 +534,9 @@ describe('Reports screen', () => {
     });
     expect(tree.root.findAll((n) => n.props.accessibilityLabel === 'Clear the Food filter')).toHaveLength(0);
   });
-
   it('switches to where the money came from, and points starting balances at Tidy up', async () => {
     const tree = await render();
-    await pressText(tree, 'Categories');
+    await pressText(tree, 'Breakdown');
     await pressText(tree, 'Income');
     const shown = texts(tree);
     expect(shown).toEqual(expect.arrayContaining(['Where it came from', 'Previous', 'Salary']));
@@ -562,7 +548,6 @@ describe('Reports screen', () => {
     await pressText(tree, 'Tidy up');
     expect(require('expo-router').router.push).toHaveBeenCalledWith('/tidy-up');
   });
-
   it('shows a custom range and carries it to the category page', async () => {
     const tree = await render();
     await pickPeriodType(tree, 'Custom range');
@@ -571,17 +556,16 @@ describe('Reports screen', () => {
     const show = texts(tree).find((t) => t.startsWith('Show '))!;
     await pressText(tree, show);
     expect(texts(tree)).not.toContain('Pick a range');
-    await pressText(tree, 'Categories');
+    await pressText(tree, 'Breakdown');
     await pressText(tree, 'Food');
     await pressText(tree, 'Open Food ›');
     expect(lastPush()).toMatch(/^\/category\/food\?g=custom&from=\d{4}-\d{2}-\d{2}&to=\d{4}-\d{2}-\d{2}$/);
   });
-
   it("opens on a week from a link, as the week Wrap's report button sends", async () => {
     mockSearch.current = { from: '2026-09-20', to: '2026-09-26' };
     try {
       const tree = await render();
-      await pressText(tree, 'Categories');
+      await pressText(tree, 'Breakdown');
       await pressText(tree, 'Food');
       await pressText(tree, 'Open Food ›');
       expect(lastPush()).toBe('/category/food?g=custom&from=2026-09-20&to=2026-09-26');
@@ -589,12 +573,11 @@ describe('Reports screen', () => {
       mockSearch.current = {};
     }
   });
-
   it('ignores a malformed range link', async () => {
     mockSearch.current = { from: 'yesterday', to: '2026-09-26' };
     try {
       const tree = await render();
-      await pressText(tree, 'Categories');
+      await pressText(tree, 'Breakdown');
       await pressText(tree, 'Food');
       await pressText(tree, 'Open Food ›');
       expect(lastPush()).toBe('/category/food?g=month&o=0');
@@ -602,7 +585,6 @@ describe('Reports screen', () => {
       mockSearch.current = {};
     }
   });
-
   describe('Weekday rhythm', () => {
     it('shows seven bars with the busiest weekday read out, and a tapped bar reads its own line', async () => {
       const tree = await render();
@@ -618,7 +600,6 @@ describe('Reports screen', () => {
         true
       );
     });
-
     it('says so on a month too young to have a pattern', async () => {
       jest.setSystemTime(new Date(2026, 9, 5, 12));
       try {
@@ -631,7 +612,6 @@ describe('Reports screen', () => {
       }
     });
   });
-
   describe('Biggest spends', () => {
     it("lists the period's largest single expenses, up to today, and opens one's day", async () => {
       const tree = await render();
@@ -654,7 +634,6 @@ describe('Reports screen', () => {
       });
       expect(texts(tree)).toContain('1 transaction');
     });
-
     it('is left out when there are fewer than three entries', async () => {
       const original = mockLargest.getMockImplementation()!;
       mockLargest.mockImplementation(async () => [bigEntry('b1', '2026-10-05', 620000, 'Groceries', 'food')]);
@@ -664,15 +643,13 @@ describe('Reports screen', () => {
         mockLargest.mockImplementation(original);
       }
     });
-
     it('follows the category the heatmap is narrowed to', async () => {
       const tree = await render();
-      await pressText(tree, 'Categories');
+      await pressText(tree, 'Breakdown');
       await pressText(tree, 'Food');
       await pressText(tree, 'See its days on the heatmap →');
       expect(mockLargest).toHaveBeenCalledWith({ start: '2026-10-01', end: '2026-10-20' }, 5, false, 'food');
     });
-
     it('is not shown for a year, which has no days to open', async () => {
       const tree = await render();
       await pickPeriodType(tree, 'Year');
@@ -680,12 +657,12 @@ describe('Reports screen', () => {
       expect(texts(tree)).not.toContain('Weekday rhythm');
     });
   });
-
   describe('By account', () => {
     it('groups where it went by account; an account opens its top categories and Activity on the month', async () => {
       const tree = await render();
-      await pressText(tree, 'Categories');
+      await pressText(tree, 'Breakdown');
       expect(texts(tree)).toContain('By category');
+      await pressText(tree, 'By category');
       await pressText(tree, 'By account');
       expect(mockAccounts).toHaveBeenCalledWith({ start: '2026-10-01', end: '2026-10-31' }, 'expense', false);
       expect(texts(tree)).toEqual(expect.arrayContaining(['Everyday account', 'Credit card']));
@@ -697,55 +674,51 @@ describe('Reports screen', () => {
         '/transactions?account=acc2&month=2026-10'
       );
     });
-
     it('goes back to categories, and the income side groups by account too', async () => {
       const tree = await render();
-      await pressText(tree, 'Categories');
+      await pressText(tree, 'Breakdown');
+      await pressText(tree, 'By category');
       await pressText(tree, 'By account');
       await pressText(tree, 'Income');
       expect(mockAccounts).toHaveBeenCalledWith({ start: '2026-10-01', end: '2026-10-31' }, 'income', false);
+      await pressText(tree, 'By account');
       await pressText(tree, 'By category');
       expect(texts(tree)).toEqual(expect.arrayContaining(['Where it came from', 'Salary']));
     });
-
     it('has no Activity link outside a single month', async () => {
       const tree = await render();
       await pickPeriodType(tree, 'Year');
-      await pressText(tree, 'Categories');
+      await pressText(tree, 'Breakdown');
+      await pressText(tree, 'By category');
       await pressText(tree, 'By account');
       await pressText(tree, 'Credit card');
       expect(texts(tree)).toContain('Top categories');
       expect(texts(tree)).not.toContain('Open Credit card ›');
     });
   });
-
   describe('a period with income but no spending', () => {
     afterEach(() => {
       mockIncomeOnly.current = false;
     });
-
     it('still shows the lenses and the income breakdown', async () => {
       mockIncomeOnly.current = true;
       const tree = await render();
-      expect(texts(tree)).toEqual(expect.arrayContaining(['Days', 'Categories', 'Trends']));
-      await pressText(tree, 'Categories');
+      expect(texts(tree)).toEqual(expect.arrayContaining(['Days', 'Breakdown', 'Trends']));
+      await pressText(tree, 'Breakdown');
       await pressText(tree, 'Income');
       expect(texts(tree)).toEqual(expect.arrayContaining(['Where it came from', 'Salary']));
     });
-
     it('says there is no spending, not no income, on the Spending side', async () => {
       mockIncomeOnly.current = true;
       const tree = await render();
-      await pressText(tree, 'Categories');
+      await pressText(tree, 'Breakdown');
       expect(texts(tree).some((t) => t.startsWith('No spending in '))).toBe(true);
     });
   });
-
   describe('with savings & investment amounts hidden', () => {
     afterEach(() => {
       mockHide.current = false;
     });
-
     it('asks for the biggest spends and the accounts without the sensitive categories', async () => {
       mockHide.current = true;
       const tree = await render();
@@ -755,7 +728,8 @@ describe('Reports screen', () => {
         true,
         undefined
       );
-      await pressText(tree, 'Categories');
+      await pressText(tree, 'Breakdown');
+      await pressText(tree, 'By category');
       await pressText(tree, 'By account');
       expect(mockAccounts).toHaveBeenCalledWith({ start: '2026-10-01', end: '2026-10-31' }, 'expense', true);
     });

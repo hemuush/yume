@@ -7,7 +7,7 @@ import { GLASS } from '@/components/Glass';
 /** The even gap between Reports' blocks (heatmap card, day card, story cards, "Where it went"). */
 export const BLOCK_GAP = SCREEN.sectionGap;
 
-// Shared by the Reports screen and its pieces (PeriodRow, HeatmapCard, DayCard, StoryCards, CategoryBar, CategoryList, TrendChart, DayTotal).
+// Shared by the Reports screen and its pieces (PeriodRow, HeatmapCard, DayCard, ReportInsights, CategoryBar, CategoryList, TrendChart, DayTotal).
 export const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
@@ -65,20 +65,10 @@ export const styles = StyleSheet.create({
     borderRadius: theme.radius.pill,
   },
   granChipText: { fontFamily: theme.font.roundedMedium, fontSize: 15, color: theme.colors.ink },
-  // Days / Categories / Trends, pinned under the header. SegmentedControl
-  // brings its own bottom margin; the negative one trims it to the gap this bar wants.
-  // The backdrop fades in only while collapsing, so the expanded header keeps its wallpaper.
-  tabs: {
-    paddingHorizontal: 16,
-    paddingTop: 12,
-    paddingBottom: 8,
-  },
-  stickyTabs: { marginHorizontal: -16, zIndex: 1 },
-
   // The Days tab's heatmap card.
   hmCard: {
     backgroundColor: GLASS.fill,
-    borderRadius: 24,
+    borderRadius: 20,
     borderWidth: 1,
     borderColor: GLASS.edge,
     paddingHorizontal: 14,
@@ -86,7 +76,6 @@ export const styles = StyleSheet.create({
     paddingBottom: 14,
     gap: 12,
     marginBottom: BLOCK_GAP,
-    boxShadow: GLASS.shadow,
   },
   hmHead: {
     flexDirection: 'row',
@@ -122,67 +111,19 @@ export const styles = StyleSheet.create({
     color: theme.colors.textSecondary,
   },
 
-  // Story cards: the period "in short", swiped sideways.
-  storyBlock: { marginBottom: BLOCK_GAP },
+  // Shared section headings.
   storyHead: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },
   storyPos: { fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textMuted },
-  story: {
-    minHeight: 176,
-    borderRadius: 26,
-    borderWidth: 1,
-    borderColor: GLASS.edge,
-    boxShadow: GLASS.shadow,
-    padding: 18,
-    justifyContent: 'space-between',
-    gap: 10,
-  },
-  storyCompact: {
-    borderRadius: 24,
-    borderWidth: 1,
-    borderColor: GLASS.edge,
-    paddingHorizontal: 18,
-    paddingVertical: 14,
-    gap: 3,
-  },
-  storyCompactTitle: { fontFamily: theme.font.bodyBold, fontSize: 15, color: theme.colors.textPrimary },
-  storyCompactDetail: {
-    fontFamily: theme.font.body,
-    fontSize: 14,
-    lineHeight: 20,
-    color: theme.colors.textSecondary,
-  },
-  storyKicker: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textSecondary },
-  storyBig: {
-    fontFamily: theme.font.roundedBold,
-    fontSize: 23,
-    lineHeight: 28,
-    color: theme.colors.textPrimary,
-  },
-  storyDetail: {
-    fontFamily: theme.font.body,
-    fontSize: 14,
-    lineHeight: 20,
-    color: theme.colors.textPrimary,
-    marginTop: 6,
-  },
-  storyCta: { fontFamily: theme.font.bodyBold, fontSize: 14, color: theme.colors.textPrimary },
-  storyFoot: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textSecondary },
-  storyMoonRow: { flexDirection: 'row', alignItems: 'center', gap: 14 },
-  storyMoonText: { flex: 1, minWidth: 0 },
-  storyDots: { flexDirection: 'row', justifyContent: 'center', gap: 6, marginTop: 12 },
-  storyDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#DCD3C1' },
-  storyDotOn: { width: 18, backgroundColor: theme.colors.ink },
 
   // The day open under the heatmap.
   dayCard: {
     backgroundColor: GLASS.fill,
-    borderRadius: 24,
+    borderRadius: 20,
     borderWidth: 1,
     borderColor: GLASS.edge,
     paddingTop: 14,
     paddingBottom: 12,
     marginBottom: BLOCK_GAP,
-    boxShadow: GLASS.shadow,
   },
   dayHead: {
     flexDirection: 'row',
@@ -214,12 +155,11 @@ export const styles = StyleSheet.create({
   rhythmBlock: { marginBottom: BLOCK_GAP },
   rhythmCard: {
     backgroundColor: GLASS.fill,
-    borderRadius: 24,
+    borderRadius: 20,
     borderWidth: 1,
     borderColor: GLASS.edge,
     padding: 16,
     gap: 12,
-    boxShadow: GLASS.shadow,
   },
   rhythmChart: { height: 140, flexDirection: 'row', alignItems: 'flex-end', gap: 8, paddingTop: 16 },
   rhythmBar: { flex: 1, height: '100%', justifyContent: 'flex-end', alignItems: 'center', gap: 4 },
@@ -273,13 +213,12 @@ export const styles = StyleSheet.create({
   bigBlock: { marginBottom: BLOCK_GAP },
   bigCard: {
     backgroundColor: GLASS.fill,
-    borderRadius: 24,
+    borderRadius: 20,
     borderWidth: 1,
     borderColor: GLASS.edge,
     paddingTop: 4,
     paddingBottom: 12,
     overflow: 'hidden',
-    boxShadow: GLASS.shadow,
   },
   bigFoot: {
     marginTop: 4,
@@ -305,12 +244,11 @@ export const styles = StyleSheet.create({
   // Trends: one line chart with a Spending / Net worth switch.
   trendCard: {
     backgroundColor: GLASS.fill,
-    borderRadius: 24,
+    borderRadius: 20,
     borderWidth: 1,
     borderColor: GLASS.edge,
     padding: 16,
     gap: 8,
-    boxShadow: GLASS.shadow,
   },
   trendHead: {
     flexDirection: 'row',
@@ -389,10 +327,9 @@ export const styles = StyleSheet.create({
   stripCard: {
     flexDirection: 'row',
     backgroundColor: GLASS.fill,
-    borderRadius: 24,
+    borderRadius: 20,
     borderWidth: 1,
     borderColor: GLASS.edge,
-    boxShadow: GLASS.shadow,
   },
   stripCardStack: { flexDirection: 'column' },
   stripCell: { flex: 1, minWidth: 0, paddingHorizontal: 14, paddingVertical: 14, gap: 3 },
@@ -406,11 +343,10 @@ export const styles = StyleSheet.create({
   tracksBlock: { marginTop: BLOCK_GAP },
   tracksCard: {
     backgroundColor: GLASS.fill,
-    borderRadius: 24,
+    borderRadius: 20,
     borderWidth: 1,
     borderColor: GLASS.edge,
     overflow: 'hidden',
-    boxShadow: GLASS.shadow,
   },
   trackRow: {
     flexDirection: 'row',
@@ -467,14 +403,13 @@ export const styles = StyleSheet.create({
     backgroundColor: GLASS.fill,
     borderWidth: 1,
     borderColor: GLASS.edge,
-    borderRadius: 24,
+    borderRadius: 20,
     paddingHorizontal: 16,
     overflow: 'hidden',
-    boxShadow: GLASS.shadow,
   },
   catBar: {
     flexDirection: 'row',
-    height: 16,
+    height: 9,
     gap: 3,
     marginTop: 4,
     marginBottom: 14,
@@ -482,27 +417,32 @@ export const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   catBarSeg: { flexBasis: 0, minWidth: 3, borderRadius: 4 },
-  catRow: { paddingVertical: 12 },
-  // The picked row: tinted edge to edge, the others fade.
-  catRowOn: { marginHorizontal: -16, paddingHorizontal: 16, backgroundColor: theme.colors.tray },
-  catRowDim: { opacity: 0.5 },
-  catPanel: {
-    marginHorizontal: -16,
-    paddingHorizontal: 16,
-    paddingBottom: 12,
-    gap: 4,
-    backgroundColor: theme.colors.tray,
+  breakdownContext: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'baseline',
+    gap: 8,
+    marginBottom: 12,
+  },
+  breakdownAmount: { fontFamily: theme.font.body, fontSize: 26, color: theme.colors.textPrimary },
+  catMain: { flex: 1, minWidth: 0 },
+  catRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
+    paddingVertical: 16,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: theme.colors.borderSoft,
   },
   catSplitLoading: { paddingVertical: 8 },
-  catSplitRow: { flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 30, paddingLeft: 18 },
+  catSplitRow: { flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 44, paddingVertical: 8 },
   catSplitName: { flex: 1, fontFamily: theme.font.body, fontSize: 14, color: theme.colors.textSecondary },
   catSplitAmt: { fontFamily: theme.font.mono, fontSize: 14, color: theme.colors.textPrimary },
   catLinks: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 18, rowGap: 2, paddingTop: 4 },
   catLink: { minHeight: 44, justifyContent: 'center', paddingVertical: 8 },
-  catMeta: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 8 },
+  catMeta: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4, marginBottom: 8 },
   catLinkText: { fontFamily: theme.font.bodyBold, fontSize: 14, color: theme.colors.link },
-  catTop: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
-  catName: { flex: 1, fontFamily: theme.font.bodyBold, fontSize: 15, color: theme.colors.textPrimary },
+  catName: { fontFamily: theme.font.bodyBold, fontSize: 15, color: theme.colors.textPrimary },
   catDot: { width: 10, height: 10, borderRadius: 5 },
   catPct: {
     fontFamily: theme.font.mono,
@@ -511,8 +451,8 @@ export const styles = StyleSheet.create({
     width: 38,
     textAlign: 'right',
   },
-  catRight: { flexDirection: 'row', alignItems: 'center', gap: 6, marginLeft: 8 },
-  catAmt: { fontFamily: theme.font.monoBold, fontSize: 15, color: theme.colors.textPrimary },
+  catRight: { alignItems: 'flex-end', gap: 8, maxWidth: '40%', flexShrink: 1 },
+  catAmt: { fontFamily: theme.font.bodyBold, fontSize: 14, color: theme.colors.textPrimary },
   catDelta: { flexShrink: 1, fontFamily: theme.font.monoBold, fontSize: 12 },
   catTrack: {
     height: 6,
@@ -520,8 +460,6 @@ export const styles = StyleSheet.create({
     backgroundColor: theme.colors.inkWash,
     overflow: 'hidden',
   },
-  // Under the name, past the icon (34 wide, plus the row's gap).
-  catTrackIcon: { marginLeft: 42 },
   catMore: {
     minHeight: 48,
     flexDirection: 'row',

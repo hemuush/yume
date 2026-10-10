@@ -6,9 +6,8 @@ export function ReportsSkeleton() {
   const width = Math.max(0, useWindowDimensions().width - 40);
   return (
     <View style={styles.wrap} accessibilityLabel="Loading report">
-      <Skeleton width={width} height={48} radius={24} />
-      <Skeleton width={width} height={290} radius={24} />
-      <Skeleton width={width} height={176} radius={24} />
+      <Skeleton width={width} height={290} radius={20} />
+      <Skeleton width={width} height={150} radius={20} />
     </View>
   );
 }

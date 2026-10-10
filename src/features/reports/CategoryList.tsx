@@ -3,7 +3,8 @@ import Feather from '@expo/vector-icons/Feather';
 import { CategoryIcon } from '@/components/CategoryIcon';
 import { Text } from '@/components/Text';
 import { Amount } from '@/components/Amount';
-import { CategoryBreakdownItem } from '@/db/reports';
+import { ModalSheet } from '@/components/ModalSheet';
+import type { CategoryBreakdownItem } from '@/db/reports';
 import { formatPctChange } from '@/lib/format';
 import { allocateRoundedMinor, roundedMinor } from '@/lib/round';
 import { theme } from '@/constants/theme';
@@ -11,18 +12,10 @@ import { AnimatedCategoryFill } from './AnimatedCategoryFill';
 import { styles } from './reports.styles';
 import { withPressed } from '@/lib/pressed';
 
-/** Categories shown before "N more" — like every other long list in the app. */
 const COLLAPSED_COUNT = 5;
-/** A change smaller than this (in %) against the previous period isn't worth an arrow. */
 const DELTA_MIN_PCT = 10;
-/** Stagger each bar's fill a little, capped so a long list doesn't lag. */
-const FILL_STAGGER_MS = 60;
-const FILL_STAGGER_MAX_ROWS = 8;
 
-/**
- * "Where it went": each category's share, amount, change vs the previous period, and a bar. Tapping a row
- * picks it (others fade), opening its subcategory split and links to its page and (spending) its heatmap days.
- */
+/** Aligned category/account rows; details open in one sheet without dimming the report. */
 export function CategoryList({
   breakdown,
   spentMinor,
@@ -37,167 +30,204 @@ export function CategoryList({
   onShowDays,
   kind = 'expense',
   iconOf,
-  comparisonLabel,
+  splitError,
+  onRetrySplit,
 }: {
   breakdown: CategoryBreakdownItem[];
-  /** The period's rounded total — the rows' rounded amounts add up to it. */
   spentMinor: number;
-  /** % change per category id against the previous period. */
   deltas: Map<string, number | null>;
   expanded: boolean;
   onToggleExpanded: () => void;
   selectedId: string | null;
-  onSelect: (c: CategoryBreakdownItem) => void;
-  /** The picked category's subcategories; null while they load. */
+  onSelect: (row: CategoryBreakdownItem) => void;
   split: CategoryBreakdownItem[] | null;
-  /** A small line above the split rows ("Top categories"), when the split isn't subcategories. */
   splitCaption?: string;
-  /** Opens the row's own page; left out where it has none (an account outside a month view). */
-  onOpen?: (c: CategoryBreakdownItem) => void;
-  /** Shows the category's days on the heatmap; left out where the heatmap has no days (income, by-month views). */
-  onShowDays?: (c: CategoryBreakdownItem) => void;
-  /** Income: a rise is good news, so it's green rather than red. */
+  onOpen?: (row: CategoryBreakdownItem) => void;
+  onShowDays?: (row: CategoryBreakdownItem) => void;
   kind?: 'expense' | 'income';
-  /** A row's icon (categories); rows without one (accounts) keep their colour dot. */
   iconOf?: (id: string) => string | undefined;
-  comparisonLabel?: string;
+  splitError?: string;
+  onRetrySplit?: () => void;
 }) {
-  const upIsBad = kind === 'expense';
   const shown = expanded ? breakdown : breakdown.slice(0, COLLAPSED_COUNT);
   const rounded = allocateRoundedMinor(
-    breakdown.map((c) => c.totalMinor),
+    breakdown.map((row) => row.totalMinor),
     spentMinor
   );
+  const selected = breakdown.find((row) => row.categoryId === selectedId);
+  const close = () => {
+    if (selected) onSelect(selected);
+  };
   return (
-    <View style={styles.catCard}>
-      {shown.map((c, i) => {
-        const d = deltas.get(c.categoryId);
-        const pct = spentMinor > 0 ? Math.round((c.totalMinor / spentMinor) * 100) : 0;
-        const on = selectedId === c.categoryId;
-        return (
-          <View key={c.categoryId}>
+    <>
+      <View style={styles.catCard}>
+        {shown.map((row, i) => {
+          const delta = deltas.get(row.categoryId);
+          const share = spentMinor > 0 ? Math.max(0, Math.min(100, (row.totalMinor / spentMinor) * 100)) : 0;
+          const icon = iconOf?.(row.categoryId);
+          return (
             <Pressable
-              onPress={() => onSelect(c)}
-              style={withPressed([
-                styles.catRow,
-                on && styles.catRowOn,
-                selectedId != null && !on && styles.catRowDim,
-              ])}
+              key={row.categoryId}
+              onPress={() => onSelect(row)}
+              style={withPressed(styles.catRow)}
               accessibilityRole="button"
-              accessibilityState={{ selected: on, expanded: on }}
+              accessibilityLabel={`${row.name}. Open breakdown`}
+              accessibilityState={{ selected: selectedId === row.categoryId }}
             >
-              <View style={styles.catTop}>
-                {iconOf?.(c.categoryId) ? (
-                  <CategoryIcon name={iconOf(c.categoryId)!} color={c.color} size={15} square={34} round />
-                ) : (
-                  <View style={[styles.catDot, { backgroundColor: c.color }]} />
-                )}
-                <Text style={styles.catName} numberOfLines={2}>
-                  {c.name}
-                </Text>
-                <View style={styles.catRight}>
-                  <Amount minor={rounded[i]} sensitive={c.isSensitive} style={styles.catAmt} />
+              {icon ? (
+                <CategoryIcon name={icon} color={row.color} size={16} square={32} round />
+              ) : (
+                <View style={[styles.catDot, { backgroundColor: row.color }]} />
+              )}
+              <View style={styles.catMain}>
+                <Text style={styles.catName}>{row.name}</Text>
+                <View style={styles.catMeta}>
+                  <Text style={styles.stripSub}>{Math.round(share)}% of total</Text>
+                  {delta != null && Math.abs(delta) >= DELTA_MIN_PCT && (
+                    <Text
+                      style={[
+                        styles.catDelta,
+                        {
+                          color:
+                            delta > 0 === (kind === 'expense')
+                              ? theme.colors.expenseText
+                              : theme.colors.incomeText,
+                        },
+                      ]}
+                    >
+                      {delta > 0 ? '↑' : '↓'}
+                      {formatPctChange(delta)}
+                    </Text>
+                  )}
+                </View>
+                <View style={styles.catTrack}>
+                  <AnimatedCategoryFill
+                    animKey={`reports:${row.categoryId}`}
+                    targetPct={share}
+                    color={row.color}
+                    delay={Math.min(i, 8) * 40}
+                  />
                 </View>
               </View>
-              <View style={styles.catMeta}>
-                <Text style={styles.stripSub}>{pct}% of total</Text>
-                {d != null && Math.abs(d) >= DELTA_MIN_PCT && (
-                  <Text
-                    style={[
-                      styles.catDelta,
-                      { color: d > 0 === upIsBad ? theme.colors.expenseText : theme.colors.incomeText },
-                    ]}
-                  >
-                    {d > 0 ? '↑' : '↓'}
-                    {formatPctChange(d)}
-                    {comparisonLabel ? ` · ${comparisonLabel}` : ''}
-                  </Text>
-                )}
-              </View>
-              <View style={[styles.catTrack, !!iconOf?.(c.categoryId) && styles.catTrackIcon]}>
-                <AnimatedCategoryFill
-                  animKey={`reports:${c.categoryId}`}
-                  targetPct={
-                    spentMinor > 0 ? Math.max(0, Math.min(100, (c.totalMinor / spentMinor) * 100)) : 0
-                  }
-                  color={c.color}
-                  delay={Math.min(i, FILL_STAGGER_MAX_ROWS) * FILL_STAGGER_MS}
+              <View style={styles.catRight}>
+                <Amount
+                  minor={rounded[i]}
+                  sensitive={row.isSensitive}
+                  style={styles.catAmt}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                  minimumFontScale={0.8}
                 />
+                <Feather name="chevron-right" size={14} color={theme.colors.textMuted} />
               </View>
             </Pressable>
-
-            {on && (
-              <View style={styles.catPanel}>
-                {c.hasSubcategories &&
-                  (split === null ? (
-                    <ActivityIndicator color={theme.colors.ink} style={styles.catSplitLoading} />
-                  ) : (
-                    [
-                      splitCaption ? (
-                        <Text key="caption" style={styles.catSplitCaption}>
-                          {splitCaption}
-                        </Text>
-                      ) : null,
-                      ...split.map((s) => (
-                        <View key={s.categoryId} style={styles.catSplitRow}>
-                          <View style={[styles.catDot, { backgroundColor: s.color }]} />
-                          <Text style={styles.catSplitName}>{s.name}</Text>
-                          <Text style={styles.catPct}>
-                            {c.totalMinor > 0 ? Math.round((s.totalMinor / c.totalMinor) * 100) : 0}%
-                          </Text>
-                          <Amount
-                            minor={roundedMinor(s.totalMinor)}
-                            sensitive={s.isSensitive}
-                            style={styles.catSplitAmt}
-                          />
-                        </View>
-                      )),
-                    ]
-                  ))}
-                {(onOpen || onShowDays) && (
-                  <View style={styles.catLinks}>
-                    {onOpen && (
-                      <Pressable
-                        onPress={() => onOpen(c)}
-                        hitSlop={6}
-                        style={withPressed(styles.catLink)}
-                        accessibilityRole="link"
-                      >
-                        <Text style={styles.catLinkText}>Open {c.name} ›</Text>
-                      </Pressable>
-                    )}
-                    {onShowDays && (
-                      <Pressable
-                        onPress={() => onShowDays(c)}
-                        hitSlop={6}
-                        style={withPressed(styles.catLink)}
-                        accessibilityRole="link"
-                      >
-                        <Text style={styles.catLinkText}>See its days on the heatmap →</Text>
-                      </Pressable>
-                    )}
-                  </View>
-                )}
+          );
+        })}
+        {breakdown.length > COLLAPSED_COUNT && (
+          <Pressable
+            onPress={onToggleExpanded}
+            style={withPressed(styles.catMore)}
+            accessibilityRole="button"
+            accessibilityLabel={
+              expanded
+                ? 'Show fewer categories'
+                : `Show ${breakdown.length - COLLAPSED_COUNT} more categories`
+            }
+          >
+            <Text style={styles.catMoreText}>{expanded ? 'Show less' : `View all ${breakdown.length}`}</Text>
+            <Feather
+              name={expanded ? 'chevron-up' : 'chevron-down'}
+              size={14}
+              color={theme.colors.textMuted}
+            />
+          </Pressable>
+        )}
+      </View>
+      <ModalSheet
+        visible={!!selected}
+        onClose={close}
+        title={selected?.name}
+        subtitle={kind === 'income' ? 'Income breakdown' : 'Spending breakdown'}
+      >
+        {selected && (
+          <>
+            <Amount
+              minor={rounded[breakdown.indexOf(selected)]}
+              sensitive={selected.isSensitive}
+              style={styles.breakdownAmount}
+            />
+            {splitError ? (
+              <View style={styles.tidyNudge}>
+                <Text style={styles.errTitle}>Couldn’t load this breakdown</Text>
+                <Text style={styles.errDetail}>{splitError}</Text>
+                <Pressable
+                  onPress={onRetrySplit}
+                  accessibilityRole="button"
+                  style={withPressed(styles.catLink)}
+                >
+                  <Text style={styles.catLinkText}>Retry breakdown</Text>
+                </Pressable>
               </View>
+            ) : (
+              selected.hasSubcategories &&
+              (split === null ? (
+                <ActivityIndicator
+                  accessibilityLabel="Loading breakdown"
+                  color={theme.colors.ink}
+                  style={styles.catSplitLoading}
+                />
+              ) : (
+                <View>
+                  {splitCaption && <Text style={styles.catSplitCaption}>{splitCaption}</Text>}
+                  {split.map((row) => (
+                    <View key={row.categoryId} style={styles.catSplitRow}>
+                      <View style={[styles.catDot, { backgroundColor: row.color }]} />
+                      <Text style={styles.catSplitName}>{row.name}</Text>
+                      <Text style={styles.catPct}>
+                        {selected.totalMinor > 0
+                          ? Math.round((row.totalMinor / selected.totalMinor) * 100)
+                          : 0}
+                        %
+                      </Text>
+                      <Amount
+                        minor={roundedMinor(row.totalMinor)}
+                        sensitive={row.isSensitive}
+                        style={styles.catSplitAmt}
+                      />
+                    </View>
+                  ))}
+                </View>
+              ))
             )}
-          </View>
-        );
-      })}
-      {breakdown.length > COLLAPSED_COUNT && (
-        <Pressable
-          onPress={onToggleExpanded}
-          style={withPressed(styles.catMore)}
-          accessibilityRole="button"
-          accessibilityLabel={
-            expanded ? 'Show fewer categories' : `Show ${breakdown.length - COLLAPSED_COUNT} more categories`
-          }
-        >
-          <Text style={styles.catMoreText}>
-            {expanded ? 'Show less' : `${breakdown.length - COLLAPSED_COUNT} more`}
-          </Text>
-          <Feather name={expanded ? 'chevron-up' : 'chevron-down'} size={14} color={theme.colors.textMuted} />
-        </Pressable>
-      )}
-    </View>
+            <View style={styles.catLinks}>
+              {onOpen && (
+                <Pressable
+                  onPress={() => {
+                    close();
+                    onOpen(selected);
+                  }}
+                  accessibilityRole="link"
+                  style={withPressed(styles.catLink)}
+                >
+                  <Text style={styles.catLinkText}>Open {selected.name} ›</Text>
+                </Pressable>
+              )}
+              {onShowDays && (
+                <Pressable
+                  onPress={() => {
+                    close();
+                    onShowDays(selected);
+                  }}
+                  accessibilityRole="link"
+                  style={withPressed(styles.catLink)}
+                >
+                  <Text style={styles.catLinkText}>See its days on the heatmap →</Text>
+                </Pressable>
+              )}
+            </View>
+          </>
+        )}
+      </ModalSheet>
+    </>
   );
 }
