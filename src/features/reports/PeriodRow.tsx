@@ -28,11 +28,13 @@ export function PeriodRow({
   cursor,
   onChange,
   style,
+  compact = false,
 }: {
   cursor: ReportWindow;
   onChange: (c: ReportWindow) => void;
   /** Placement: a category page adds its side padding here; Reports' header has its own. */
   style?: StyleProp<ViewStyle>;
+  compact?: boolean;
 }) {
   const [rangeOpen, setRangeOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -56,12 +58,24 @@ export function PeriodRow({
   );
   const granLabel = GRANULARITIES.find((g) => g.key === cursor.granularity)?.label ?? 'Month';
   return (
-    <View style={[styles.periodRow, style]}>
-      <View style={styles.periodPill} {...swipe.panHandlers}>
+    <View
+      style={[
+        styles.periodRow,
+        compact && { borderBottomWidth: 1, borderBottomColor: theme.colors.borderSoft, paddingBottom: 6 },
+        style,
+      ]}
+    >
+      <View
+        style={[
+          styles.periodPill,
+          compact && { backgroundColor: 'transparent', borderWidth: 0, borderRadius: 0 },
+        ]}
+        {...swipe.panHandlers}
+      >
         <Pressable
           onPress={() => change(stepWindow(cursor, -1))}
           hitSlop={4}
-          style={withPressed(styles.periodArrow)}
+          style={withPressed([styles.periodArrow, compact && { backgroundColor: 'transparent' }])}
           accessibilityRole="button"
           accessibilityLabel="Previous period"
         >
@@ -80,7 +94,11 @@ export function PeriodRow({
           onPress={() => change(stepWindow(cursor, 1))}
           disabled={!fwd}
           hitSlop={4}
-          style={withPressed([styles.periodArrow, !fwd && styles.periodArrowOff])}
+          style={withPressed([
+            styles.periodArrow,
+            !fwd && styles.periodArrowOff,
+            compact && { backgroundColor: 'transparent' },
+          ])}
           accessibilityRole="button"
           accessibilityLabel="Next period"
           accessibilityState={{ disabled: !fwd }}
@@ -94,7 +112,7 @@ export function PeriodRow({
           haptics.tap();
           setMenuOpen(true);
         }}
-        style={withPressed(styles.granChip)}
+        style={withPressed([styles.granChip, compact && { borderRadius: 12, minHeight: 44 }])}
         accessibilityRole="button"
         accessibilityLabel={`Period type: ${granLabel}. Change`}
       >

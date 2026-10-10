@@ -1,7 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { View, Pressable, ActivityIndicator, StyleSheet } from 'react-native';
-import ReanimatedAnimated, { useAnimatedStyle, useDerivedValue } from 'react-native-reanimated';
-import { useCollapsingHeader } from '@/lib/useCollapsingHeader';
+import { View, Pressable, ActivityIndicator, ScrollView } from 'react-native';
 import { getCachedCurrency } from '@/db/settings';
 import { Text } from '@/components/Text';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
@@ -46,17 +44,24 @@ import {
 } from '@/lib/period';
 import { findStartingBalances } from '@/db/tidyUp';
 import { useFreshness } from '@/lib/useFreshness';
-import { SegmentedControl } from '@/components/SegmentedControl';
+import { ModalSheet } from '@/components/ModalSheet';
+import { Amount } from '@/components/Amount';
+import {
+  ReportTabs,
+  BreakdownControls,
+  ComparisonNote,
+  type ReportTab,
+} from '@/features/reports/ReportControls';
 import { parseLocalIsoDate, toLocalIsoDate, isIsoDate } from '@/lib/date';
 import { theme } from '@/constants/theme';
 import { useTabScrollPad } from '@/lib/uiScale';
-import { HomeWallpaper, wallpaperTop } from '@/features/home/HomeWallpaper';
+import { HomeWallpaper } from '@/features/home/HomeWallpaper';
 import { useAccent } from '@/theme/AccentContext';
 import { ReportsSkeleton } from '@/features/reports/ReportsSkeleton';
 import { ReportsHeader } from '@/features/reports/ReportsHeader';
 import { HeatmapCard } from '@/features/reports/HeatmapCard';
 import { DayCard } from '@/features/reports/DayCard';
-import { StoryCards } from '@/features/reports/StoryCards';
+import { ReportInsights } from '@/features/reports/ReportInsights';
 import { CategoryBar } from '@/features/reports/CategoryBar';
 import { CategoryList } from '@/features/reports/CategoryList';
 import { WeekdayRhythm } from '@/features/reports/WeekdayRhythm';
@@ -87,23 +92,11 @@ import { withPressed } from '@/lib/pressed';
 import { EmptyState } from '@/components/EmptyState';
 import { useTabScrollToTop } from '@/lib/useTabScrollToTop';
 import { useReduceMotion } from '@/lib/useReduceMotion';
-
-type ReportTab = 'days' | 'cats' | 'trends';
-const TAB_OPTIONS: { value: ReportTab; label: string }[] = [
-  { value: 'days', label: 'Days' },
-  { value: 'cats', label: 'Categories' },
-  { value: 'trends', label: 'Trends' },
-];
 type CategoryGroup = 'category' | 'account';
-const GROUP_OPTIONS: { value: CategoryGroup; label: string }[] = [
-  { value: 'category', label: 'By category' },
-  { value: 'account', label: 'By account' },
-];
 /** How many single expenses "Biggest spends" lists. */
 const BIGGEST_COUNT = 5;
 /** Rows shown before "N more" in Categories (CategoryList's own limit). */
 const CATEGORIES_COLLAPSED = 5;
-
 export default function ReportsScreen() {
   const reduceMotion = useReduceMotion();
   const { hideAmounts } = usePrivacy();
@@ -174,7 +167,6 @@ export default function ReportsScreen() {
     setDetailErrors({});
     setDetailRetry((n) => n + 1);
   };
-
   // The heatmap day open under the grid, and its entries (null while loading).
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [dayData, setDayData] = useState<{ iso: string; txs: Transaction[] } | null>(null);
@@ -198,20 +190,10 @@ export default function ReportsScreen() {
   // "Where it went" shows the top 5 categories by default like every long list; reset on period change so a
   // stale month's expanded list never carries over.
   const [catExpanded, setCatExpanded] = useState(false);
-
-  // The header shrinks as the report scrolls; the tabs pin below it.
-  const { collapse, headerHeight, collapsedHeight, scrollHandler, scrollRef, resetScroll } =
-    useCollapsingHeader();
-  const stickyBarColor = wallpaperTop(accent);
-  const stickyProgress = useDerivedValue(() => {
-    const distance = collapse.distance.value;
-    return distance > 0 ? Math.min(1, Math.max(0, collapse.scrollY.value / distance)) : 0;
-  });
-  const stickyBackdropStyle = useAnimatedStyle(() => ({
-    opacity: Math.min(1, Math.max(0, (stickyProgress.value - 0.55) / 0.45)),
-  }));
+  // Stable header and tabs are normal-flow siblings, so neither can cover content.
+  const scrollRef = useRef<ScrollView>(null);
+  const resetScroll = useCallback(() => scrollRef.current?.scrollTo({ y: 0, animated: false }), []);
   useTabScrollToTop(scrollRef);
-
   // Only the most recent load may write state — stepping periods quickly
   // starts overlapping loads, and an earlier one can finish last.
   const loadSeq = useRef(0);
@@ -283,7 +265,6 @@ export default function ReportsScreen() {
     },
     [hideAmounts]
   );
-
   // Coming back with nothing written since this period loaded (same day): what's shown is current.
   const freshness = useFreshness();
   useFocusEffect(
@@ -295,9 +276,7 @@ export default function ReportsScreen() {
       });
     }, [load, cursor, freshness])
   );
-
   const catById = useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories]);
-
   // The heatmap leaves savings and investments out while they're hidden, so the day it opens does too.
   const openDay = useCallback(
     async (iso: string) => {
@@ -324,7 +303,6 @@ export default function ReportsScreen() {
     setDayData(null);
     setDayError(null);
   }, []);
-
   // A new period starts clean: no day open, no filter, no category picked.
   const cursorKey = isCustomWindow(cursor)
     ? `${cursor.start}|${cursor.end}`
@@ -335,11 +313,9 @@ export default function ReportsScreen() {
     setSelectedCat(null);
     setSelectedAccount(null);
   }, [cursorKey, hideAmounts, closeDay]);
-
   useEffect(() => {
     setDetailErrors({});
   }, [cursorKey, hideAmounts, catFilter, selectedCat, flow, group]);
-
   useEffect(
     () => () => {
       ++loadSeq.current;
@@ -347,7 +323,6 @@ export default function ReportsScreen() {
     },
     []
   );
-
   // The filtered heatmap's days, reloaded with each fresh load of the period (`daily`).
   useEffect(() => {
     if (catFilter == null) return;
@@ -362,7 +337,6 @@ export default function ReportsScreen() {
       live = false;
     };
   }, [catFilter, cursor, hideAmounts, daily, detailRetry]);
-
   // The picked category's subcategories.
   useEffect(() => {
     if (selectedCat == null) return;
@@ -377,7 +351,6 @@ export default function ReportsScreen() {
       live = false;
     };
   }, [selectedCat, cursor, flow, daily, detailRetry]);
-
   // Where the period's spending (or income) went, by account.
   const accountsKey = `${cursorKey}|${flow}|${hideAmounts}`;
   useEffect(() => {
@@ -393,7 +366,6 @@ export default function ReportsScreen() {
       live = false;
     };
   }, [group, cursor, flow, hideAmounts, accountsKey, daily, detailRetry]);
-
   // The period's biggest single expenses, up to today (entries logged ahead aren't spent yet).
   const largestKey = `${cursorKey}|${hideAmounts}|${catFilter ?? ''}`;
   useEffect(() => {
@@ -415,23 +387,20 @@ export default function ReportsScreen() {
       live = false;
     };
   }, [cursor, hideAmounts, catFilter, largestKey, daily, detailRetry]);
-
-  // A tab switch remounts the list at its top, so the header opens again with it.
+  // A different report view or period starts at the top.
   // A new sub-tab starts at the top. The scroll view itself stays mounted (remounting it on every tap rebuilt the
-  // heatmap, charts and sticky tabs and hitched), so the jump to the top is explicit.
+  // heatmap and charts and hitched), so the jump to the top is explicit.
   useEffect(() => {
-    scrollRef.current?.scrollTo({ y: 0, animated: false });
     resetScroll();
   }, [tab, cursor, resetScroll, scrollRef]);
-
-  // While loading or on an error, a plain header; the report's own one shrinks as it scrolls.
+  // Use the same stable header in loading, error and ready states.
   const header = <ReportsHeader cursor={cursor} onChange={stepCursor} />;
-
   if (status === 'error' && (loadedKey !== requestKey || !comparison)) {
     return (
       <View style={styles.container}>
         <HomeWallpaper accent={accent} secondary={secondary} />
         {header}
+        <ReportTabs value={tab} onChange={setTab} />
         <View style={styles.center}>
           <Text style={styles.errTitle}>Couldn&rsquo;t build your report</Text>
           <Text style={styles.errDetail}>{errorText}</Text>
@@ -450,6 +419,7 @@ export default function ReportsScreen() {
       <View style={styles.container}>
         <HomeWallpaper accent={accent} secondary={secondary} />
         {header}
+        <ReportTabs value={tab} onChange={setTab} />
         {/* The loading header is in normal flow and already reserves its height. */}
         <View>
           <ReportsSkeleton />
@@ -457,7 +427,6 @@ export default function ReportsScreen() {
       </View>
     );
   }
-
   const { current, previous } = comparison;
   const periodName = windowLabel(cursor);
   const custom = isCustomWindow(cursor);
@@ -465,12 +434,10 @@ export default function ReportsScreen() {
   const hasSpend = current.expenseMinor > 0;
   // A period with money in but nothing spent still has an Income breakdown and Trends to show.
   const hasData = hasSpend || current.incomeMinor > 0;
-
   const range = windowRange(cursor);
   const rangeStart = parseLocalIsoDate(range.start);
   const rangeEnd = parseLocalIsoDate(range.end);
   const daysInPeriod = Math.round((rangeEnd.getTime() - rangeStart.getTime()) / 86400000) + 1;
-
   const baseline = baselineFromTrend(trend);
   const todayIso = toLocalIsoDate(new Date());
   const monthInProgress = cursor.granularity === 'month' && cursor.offset === 0;
@@ -484,8 +451,7 @@ export default function ReportsScreen() {
   // A long custom range reads like a year: by month, with no daily patterns.
   const byMonth = isYear || (custom && daysInPeriod > RANGE_DAY_GRID_MAX_DAYS);
   const quiet = quietDays(daily, range, todayIso);
-
-  // The period "in short" as story cards (see buildStoryCards). The daily
+  // The period "in short" as expandable insights (see buildStoryCards). The daily
   // pattern reads describe a month's shape, so a year view gets none.
   const stories = buildStoryCards({
     mover: topGrowing
@@ -541,7 +507,6 @@ export default function ReportsScreen() {
     router.push(grow ? growHref(href) : href);
   };
   const onPressCategory = (c: CategoryBreakdownItem) => openCategory(c.categoryId);
-
   // The heatmap is narrowed to a category's days only where it has days at all.
   const filterId = byMonth ? null : catFilter;
   const filterCat = filterId ? catById.get(filterId) : undefined;
@@ -572,7 +537,6 @@ export default function ReportsScreen() {
   // Entries that arrive for a day other than the open one are never shown.
   const dayTx = dayData?.iso === selectedDay ? dayData.txs : null;
   const shownDayTx = dayTx && filterId ? dayTx.filter(inFilter) : dayTx;
-
   const showCategoryDays = (c: CategoryBreakdownItem) => {
     closeDay();
     setCatFilter(c.categoryId);
@@ -601,11 +565,11 @@ export default function ReportsScreen() {
       return;
     }
     setTab('cats');
+    setGroup('category');
     setFlow('expense');
     if (a.type === 'category') pickCategory(a.id);
     else setSelectedCat(null);
   };
-
   // A point on the trend chart stands for a month: this opens Reports on it.
   const monthLink = custom
     ? undefined
@@ -625,38 +589,20 @@ export default function ReportsScreen() {
           open: () => stepCursor({ granularity: 'month', offset }),
         };
       };
-
   return (
     <View style={styles.container}>
       <HomeWallpaper accent={accent} secondary={secondary} />
-      <ReanimatedAnimated.ScrollView
+      {header}
+      <ReportTabs value={tab} onChange={setTab} />
+      <ScrollView
         ref={scrollRef}
-        onScroll={scrollHandler}
-        scrollEventThrottle={16}
-        // The first child is now the tab band; there is no duplicate Home summary.
-        stickyHeaderIndices={[0]}
+        testID="reports-content"
         contentContainerStyle={{
-          paddingTop: headerHeight,
+          paddingTop: 18,
           paddingHorizontal: 16,
           paddingBottom: tabScrollPad + insets.bottom,
         }}
       >
-        {
-          // Stuck at the top of the list, which sits under the header: the padding (as tall as the shrunk header,
-          // and pulled up by as much in place) keeps the tabs just below it.
-          <View
-            style={[styles.stickyTabs, { paddingTop: collapsedHeight, marginTop: -collapsedHeight }]}
-            pointerEvents="box-none"
-          >
-            <ReanimatedAnimated.View
-              pointerEvents="none"
-              style={[StyleSheet.absoluteFill, { backgroundColor: stickyBarColor }, stickyBackdropStyle]}
-            />
-            <View style={styles.tabs}>
-              <SegmentedControl options={TAB_OPTIONS} value={tab} onChange={setTab} onBand />
-            </View>
-          </View>
-        }
         {status === 'error' && (
           <View style={styles.tidyNudge}>
             <Text style={styles.errTitle}>Couldn’t refresh your report</Text>
@@ -676,7 +622,7 @@ export default function ReportsScreen() {
             title="Nothing spent in this period"
             subtitle={
               hasData
-                ? 'Money in is under Categories, and Trends shows the bigger picture.'
+                ? 'Money in is under Breakdown, and Trends shows the bigger picture.'
                 : 'Use the arrows to look back, or open Trends for recorded history.'
             }
           />
@@ -709,17 +655,19 @@ export default function ReportsScreen() {
               />
             )}
             {!byMonth && selectedDay && (
-              <DayCard
-                iso={selectedDay}
-                txs={shownDayTx}
-                catById={catById}
-                onClose={closeDay}
-                error={dayError}
-                onRetry={() => void openDay(selectedDay)}
-              />
+              <ModalSheet visible onClose={closeDay} showClose={false}>
+                <DayCard
+                  iso={selectedDay}
+                  txs={shownDayTx}
+                  catById={catById}
+                  onClose={closeDay}
+                  error={dayError}
+                  onRetry={() => void openDay(selectedDay)}
+                />
+              </ModalSheet>
             )}
-            <StoryCards
-              // A new period starts the cards over at the first one.
+            <ReportInsights
+              // A new period closes any expanded insight.
               key={`${range.start}:${range.end}`}
               title={`${periodName}, in short`}
               cards={stories}
@@ -757,29 +705,37 @@ export default function ReportsScreen() {
         ) : tab === 'cats' ? (
           <View>
             <Text style={styles.blockTitle}>{income ? 'Where it came from' : 'Where it went'}</Text>
-            <SegmentedControl
-              options={[
-                { value: 'expense', label: 'Spending' },
-                { value: 'income', label: 'Income' },
-              ]}
-              value={flow}
-              onChange={(f) => {
+            <BreakdownControls
+              flow={flow}
+              group={group}
+              onFlow={(f) => {
                 setFlow(f);
                 setCatExpanded(false);
                 setSelectedCat(null);
                 setSelectedAccount(null);
               }}
-            />
-            <SegmentedControl
-              options={GROUP_OPTIONS}
-              value={group}
-              onChange={(g) => {
+              onGroup={(g) => {
                 setGroup(g);
                 setCatExpanded(false);
                 setSelectedCat(null);
                 setSelectedAccount(null);
               }}
             />
+            {(byAccount ? accountItems !== null : shownBreakdown.length > 0) && (
+              <View style={styles.breakdownContext}>
+                <Amount minor={byAccount ? accountTotal : shownTotal} style={styles.breakdownAmount} />
+                <Text style={styles.stripSub}>
+                  {income ? 'received' : 'spent'} · {periodName}
+                  {range.end >= todayIso ? ' so far' : ''}
+                </Text>
+              </View>
+            )}
+            {!byAccount && shownBreakdown.length > 0 && (
+              <ComparisonNote
+                label={`${range.end >= todayIso ? 'So far vs full ' : 'Vs '}${custom ? 'previous period' : previousPeriodLabel(cursor)}`}
+                partial={range.end >= todayIso}
+              />
+            )}
             {byAccount ? (
               detailErrors.accounts ? null : accountItems === null ? (
                 <ActivityIndicator color={theme.colors.ink} style={styles.daySpinner} />
@@ -816,7 +772,8 @@ export default function ReportsScreen() {
                   breakdown={shownBreakdown}
                   spentMinor={shownTotal}
                   deltas={deltas}
-                  comparisonLabel={`${range.end >= todayIso ? 'So far vs full ' : 'Vs '}${isCustomWindow(cursor) ? 'previous period' : previousPeriodLabel(cursor)}`}
+                  splitError={detailErrors.split}
+                  onRetrySplit={retryDetails}
                   expanded={catExpanded}
                   onToggleExpanded={() => setCatExpanded((v) => !v)}
                   selectedId={selectedCat}
@@ -873,13 +830,7 @@ export default function ReportsScreen() {
             subtitle="Trends show up once there are a few months of entries."
           />
         )}
-      </ReanimatedAnimated.ScrollView>
-      <ReportsHeader
-        cursor={cursor}
-        onChange={stepCursor}
-        collapse={collapse}
-        onChipPress={() => scrollRef.current?.scrollTo({ y: 0, animated: !reduceMotion })}
-      />
+      </ScrollView>
     </View>
   );
 }

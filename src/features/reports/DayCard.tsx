@@ -16,7 +16,7 @@ const txCount = (txs: Transaction[] | null) =>
   txs && txs.length > 0 ? `${txs.length} transaction${txs.length === 1 ? '' : 's'}` : undefined;
 
 /**
- * One heatmap day's entries, open under the grid; `txs` is null while loading. With a category filter on,
+ * One heatmap day's entries, open in a sheet; `txs` is null while loading. With a category filter on,
  * the heatmap showed only that category's days, so the list does too (the caller filters).
  */
 export function DayCard({
