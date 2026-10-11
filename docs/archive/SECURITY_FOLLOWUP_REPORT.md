@@ -4,9 +4,9 @@
 
 Reviewed against the repository on **11 October 2026**. The local URI-decoder compatibility package and separate widget-detail privacy setting remain intentional. Dependency counts and advisory status below are dated observations; rerun the audit gate for current results. App lock is an access control, not database encryption.
 
-Implementation: [vendor/decode-uri-component](vendor/decode-uri-component) and [src/lib/appLock.ts](src/lib/appLock.ts). Tests generally live beside these modules; use the [architecture and logic guide](docs/ARCHITECTURE.md) to find related flows.
+Implementation: [vendor/decode-uri-component](../../vendor/decode-uri-component) and [src/lib/appLock.ts](../../src/lib/appLock.ts). Tests generally live beside these modules; use the [architecture and logic guide](../../docs/ARCHITECTURE.md) to find related flows.
 
-This document preserves earlier findings and validation. Statements inside the historical record describe that revision, including old layouts, build status and test counts. They are not new verification results. See the [documentation index](docs/INDEX.md), [data model](DATA_MODEL.md), [backup guide](BACKUP.md) and [build guide](BUILD.md) for current contracts.
+This document preserves earlier findings and validation. Statements inside the historical record describe that revision, including old layouts, build status and test counts. They are not new verification results. See the [documentation index](../../docs/INDEX.md), [data model](../../DATA_MODEL.md), [backup guide](../../BACKUP.md) and [build guide](../../BUILD.md) for current contracts.
 
 <details>
 <summary>Historical findings, implementation and validation</summary>

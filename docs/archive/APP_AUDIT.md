@@ -4,9 +4,9 @@
 
 Reviewed against the repository on **11 October 2026**. The original findings below are a historical baseline. Subsequent fixes cover privacy inheritance, currency isolation, recurring writes and restore safety; current architecture and release limits are documented separately.
 
-Implementation: [src/db](src/db) and [src/lib](src/lib). Tests generally live beside these modules; use the [architecture and logic guide](docs/ARCHITECTURE.md) to find related flows.
+Implementation: [src/db](../../src/db) and [src/lib](../../src/lib). Tests generally live beside these modules; use the [architecture and logic guide](../../docs/ARCHITECTURE.md) to find related flows.
 
-This document preserves earlier findings and validation. Statements inside the historical record describe that revision, including old layouts, build status and test counts. They are not new verification results. See the [documentation index](docs/INDEX.md), [data model](DATA_MODEL.md), [backup guide](BACKUP.md) and [build guide](BUILD.md) for current contracts.
+This document preserves earlier findings and validation. Statements inside the historical record describe that revision, including old layouts, build status and test counts. They are not new verification results. See the [documentation index](../../docs/INDEX.md), [data model](../../DATA_MODEL.md), [backup guide](../../BACKUP.md) and [build guide](../../BUILD.md) for current contracts.
 
 <details>
 <summary>Historical findings, implementation and validation</summary>

@@ -4,9 +4,9 @@
 
 Reviewed against the repository on **11 October 2026**. Cache keys must include the relevant data version and query scope. Avoid redundant state updates and chart animation work; desktop query timing and export success do not establish phone frame rates. Reports now uses its static header design.
 
-Implementation: [src/db/readCache.ts](src/db/readCache.ts) and [src/lib/useScreenLoad.ts](src/lib/useScreenLoad.ts). Tests generally live beside these modules; use the [architecture and logic guide](docs/ARCHITECTURE.md) to find related flows.
+Implementation: [src/db/readCache.ts](../../src/db/readCache.ts) and [src/lib/useScreenLoad.ts](../../src/lib/useScreenLoad.ts). Tests generally live beside these modules; use the [architecture and logic guide](../../docs/ARCHITECTURE.md) to find related flows.
 
-This document preserves earlier findings and validation. Statements inside the historical record describe that revision, including old layouts, build status and test counts. They are not new verification results. See the [documentation index](docs/INDEX.md), [data model](DATA_MODEL.md), [backup guide](BACKUP.md) and [build guide](BUILD.md) for current contracts.
+This document preserves earlier findings and validation. Statements inside the historical record describe that revision, including old layouts, build status and test counts. They are not new verification results. See the [documentation index](../../docs/INDEX.md), [data model](../../DATA_MODEL.md), [backup guide](../../BACKUP.md) and [build guide](../../BUILD.md) for current contracts.
 
 <details>
 <summary>Historical findings, implementation and validation</summary>
