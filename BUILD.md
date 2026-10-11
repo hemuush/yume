@@ -10,6 +10,8 @@ The project owner is `xyumex`, configured in [app.json](app.json). Log into an a
 
 When changing EAS projects, preserve the Android package (`com.yume.app`), version-code progression and original signing key. A new signing key cannot update the APK already installed under the old key. Confirm credential availability before the next build. Historical build links below belong to the previous account.
 
+For the new `xyumex` project, the owner requested resetting Android's version code to 1 while keeping the app version at 1.0.0. This is a fresh version-code baseline, not an upgrade to the historical version-code-15 APK. EAS auto-increment remains enabled, so the next build will increase this value.
+
 ```sh
 npm ci
 npx eas-cli login
