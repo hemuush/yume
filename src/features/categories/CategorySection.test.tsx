@@ -117,3 +117,12 @@ describe('Categories · tile grid', () => {
     expect(onManage).toHaveBeenLastCalledWith(expect.objectContaining({ id: 'swiggy' }));
   });
 });
+
+it('offers a visible parent options button without holding the tile', async () => {
+  const { tree, onManage, onEdit } = await render();
+  act(() => pressable(tree, 'Food & Dining, 2 subcategories').props.onPress());
+  act(() => pressable(tree, 'More options for Food & Dining').props.onPress());
+  expect(onManage).toHaveBeenCalledWith(expect.objectContaining({ id: 'food' }));
+  expect(onEdit).not.toHaveBeenCalled();
+  expect(texts(tree)).toContain('Edit');
+});
