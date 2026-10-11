@@ -1,128 +1,190 @@
-# Yume (夢)
+<div align="center">
+  <img src="assets/yume-mark.png" alt="Yume logo" width="88" />
+  <h1>Yume · 夢</h1>
+  <p><strong>Better money. Bigger dreams.</strong></p>
+  <p>A calm, local-first money tracker for Android.<br />Track today, plan ahead, and see where your money goes.</p>
+  <p>
+    <img src="https://img.shields.io/badge/Android-12130F?style=flat-square&amp;logo=android&amp;logoColor=8FE8C8" alt="Android" />
+    <img src="https://img.shields.io/badge/Expo-SDK%2057-8FCBFF?style=flat-square&amp;labelColor=12130F" alt="Expo SDK 57" />
+    <img src="https://img.shields.io/badge/TypeScript-C9B8FF?style=flat-square&amp;labelColor=12130F" alt="TypeScript" />
+    <img src="https://img.shields.io/badge/Data-local%20first-8FE8C8?style=flat-square&amp;labelColor=12130F" alt="Local-first data" />
+  </p>
+  <p>
+    <a href="#what-yume-does">Features</a> ·
+    <a href="#privacy--backups">Privacy</a> ·
+    <a href="#run-locally">Get started</a> ·
+    <a href="#build-an-apk">Build APK</a> ·
+    <a href="#documentation">Documentation</a>
+  </p>
+</div>
 
-**Better money. Bigger dreams.** A warm, private, offline-first money tracker made for India: daily
-spending, income, savings goals, budgets, loans with proper EMI amortization, credit cards, fully
-custom categories, recurring transactions, and an informal IOU ledger for friends and family —
-with fully local backups and nothing sent to any server.
+---
 
-## Features
+## What Yume does
 
-- **Transactions** — expense/income/transfer entry with a calculator keypad, "Your usual" one-tap
-  entries, a repeat-entry warning, bulk backfill, search (words or amounts), and filters by
-  category, account and type
-- **Accounts** — bank, cash, credit card and savings accounts, each with its own currency
-- **Loans** — EMI amortization, prepayments, rate changes, and a linked asset's tracked equity
-- **Budgets & savings goals** — monthly category limits with a spending-pace marker and 80% / over
-  alerts; goals filled by hand or following a savings account's balance
-- **Recurring rules** — bills and regular transfers that post themselves on schedule, with a
-  monthly and yearly total and suggestions for subscriptions not set up yet
-- **People** — an informal ledger for money owed to or by friends and family, net of settlements
-- **Reports** — spending and income by category, a spend heatmap, month-over-month comparisons,
-  any custom date range (financial years included), and a page for each category
-- **Weekly & monthly Wraps** — stories with selectable chapters, category shares, tappable days,
-  exact-period reports, replay and a shareable summary card; exploration pauses playback
-- **Home-screen widgets** — live balances, this month's spend, next due bill, and a Suu check-in
-  (they show amounts on the home screen even while App Lock is on)
-- **Exclusive themes** — eleven named colour packs (see `src/theme/themes.ts`) alongside the
-  default, switchable from Settings → Appearance
-- **App lock & privacy** — biometric/PIN lock (via whatever the phone itself is secured with) and a
-  one-tap "hide amounts" toggle
-- **Needs you** — one list of what wants attention: EMIs due, budgets running hot, failed
-  backups, and things to tidy
-- **Tidy up** — finds likely duplicate entries and starting balances logged as income, each fix
-  undoable
-- **Suu** — the app's mascot, with a one-line nudge about how the month's going
+Yume brings everyday spending, future payments and longer-term goals together. Its pastel themes,
+translucent cards and compact overviews keep the information approachable, with rupee formatting
+and India-friendly dates.
 
-## Why local-first
+| Screen       | What you can do                                                                                                                        |
+| ------------ | -------------------------------------------------------------------------------------------------------------------------------------- |
+| **Home**     | Check money free after bills, explore spending categories, see upcoming payments, budgets, goals and recent activity.                  |
+| **Activity** | Browse entries by day, switch periods, search words or amounts, filter transactions and open entry details.                            |
+| **Add**      | Record expenses, income, transfers and friend entries with a calculator pad, usual entries, notes, splits and an Add to list workflow. |
+| **Plan**     | Review a 14-day forecast, budget limits, debt progress, savings goals, people balances, habits and scheduled payments.                 |
+| **Reports**  | Explore daily spending, category or account breakdowns, income, trends, comparisons and custom date ranges.                            |
 
-All data lives in an on-device SQLite database. Nothing is ever sent to any server. Backups are files you export yourself or an automatic write to a folder you choose on the device — no account, no network. See [DATA_MODEL.md](./DATA_MODEL.md) for the schema and [BACKUP.md](./BACKUP.md) for how backup/restore works.
+### The details that matter
 
-## Stack
+| Area                      | Included                                                                                                                   |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| **Accounts & categories** | Bank, cash, credit-card and savings accounts; account currencies; editable parent categories and subcategories.            |
+| **Loans**                 | EMI schedules and amortization, prepayments, rate changes, payment tracking and linked assets.                             |
+| **Budgets & goals**       | Monthly category limits, rollover, near-limit alerts, goal contributions and goals that follow a savings account.          |
+| **Recurring payments**    | Scheduled expenses, income and transfers, subscription suggestions, and monthly/yearly totals.                             |
+| **Friends & family**      | Money owed in either direction, settlement history, and a choice between balance adjustments and actual account movements. |
+| **Wrap & Suu**            | Weekly/monthly stories, selectable chapters, day and category exploration, replay, share cards and Suu's spending nudges.  |
+| **Personalization**       | Twelve themes, app amount hiding, a separate widget-privacy setting, and app lock using the phone's authentication.        |
+| **Everyday housekeeping** | Needs you alerts, duplicate/starting-balance checks, undoable tidy-up actions and recently deleted entries.                |
 
-- **Expo SDK 57 (React Native, TypeScript)** with `expo-router` for file-based navigation
-- **expo-sqlite** for the local database — no backend required
-- **expo-file-system** + Storage Access Framework for local-folder backups; **expo-sharing** for file export
-- **expo-local-authentication** for app lock; **expo-notifications** for reminders and due-date alerts
-- **react-native-reanimated** for in-app animation; **react-native-android-widget** for the home-screen widgets
-- **Jest** (with a `better-sqlite3` harness that runs the real query code) for tests; **ESLint + Prettier** for lint/format
+### Android widgets
 
-## Project layout
+Five widgets keep useful shortcuts and summaries on your home screen: **This Month**, **Quick Add**,
+**Suu Check-in**, **Next Due** and **Accounts**.
 
+<p align="center">
+  <img src="assets/widget-preview/this-month.png" alt="This Month widget preview" width="300" />
+  &nbsp;
+  <img src="assets/widget-preview/quick-add.png" alt="Quick Add widget preview" width="180" />
+</p>
+
+Financial widgets have their own **Hide widget details** setting. App Lock alone does not conceal
+home-screen widget information. Quick Add remains available when widget details are hidden.
+
+## Privacy & backups
+
+Your financial records live in an **on-device SQLite database**. Yume does not require an app
+account or a hosted backend to track your money.
+
+- **Local backups:** save a copy yourself or choose an Android folder for automatic backups while
+  Yume is open.
+- **Existing folder data:** backup files are inspected before newer or different data is replaced;
+  choosing a folder can offer a restore preview.
+- **Restore preview:** review the backup's contents and the current data before replacing it.
+- **Recovery:** a safety copy is retained before a restore, with an option to put it back.
+- **App lock:** use the phone's supported authentication to protect access to the app.
+- **Sharing:** backup and report exports go to the destination you choose through Android's sharing UI.
+
+Backups belong to you. Keep a copy outside the app's private storage before uninstalling or clearing
+app data. See [Backup & restore](BACKUP.md) for folder selection, restore validation and recovery behavior.
+
+## Run locally
+
+### Requirements
+
+- **Node.js 22.13 or newer**; `.nvmrc` selects Node 22. See the [Expo SDK 57 reference](https://docs.expo.dev/versions/v57.0.0/).
+- npm and the dependencies in the committed lockfile.
+- An Android development environment and an emulator or connected Android phone for local native builds.
+
+```bash
+git clone https://github.com/hemuush/yume.git
+cd yume
+npm ci
+npx expo run:android
 ```
-app/                    Screens (expo-router file-based routing)
-  (tabs)/               Bottom tabs: index (Home), transactions (Activity),
-                        add (raised "+", opens add-transaction), plan, reports
-  loans.tsx             Loans with an EMI schedule, reached from Plan
-  people.tsx            Friends & Family — informal IOUs, reached from Plan
-  profile.tsx           Identity, tracked balance, accounts, and Settings
-                        (currency, theme, app lock, privacy) — pushed from the
-                        header avatar
-  categories.tsx        Category management
-  budgets.tsx           Monthly category budgets
-  savings-goals.tsx     Savings goals and contributions
-  recurring.tsx         Recurring-transaction rules, subscriptions and bills
-  category/[id].tsx     One category's page: total, budget, split, months, entries
-  tidy-up.tsx           Duplicates and starting balances to fix
-  backup.tsx            Backup & restore (local folder, file export & restore)
-  add-transaction.tsx   Unified add screen — single entry, bulk backfill, friend IOU
-  notifications.tsx / notification-settings.tsx   Needs you (the full list) + reminder prefs
+
+The last command builds and installs the development app and starts Metro. Once that development
+build is installed, start the normal development session with:
+
+```bash
+npm start
+```
+
+> **Use a native development build.** Yume depends on native integrations, including Android
+> widgets and the keyboard controller, that are not available in Expo Go. This repository targets Android.
+
+## Build an APK
+
+The EAS profiles are defined in [eas.json](eas.json). Building through EAS requires an Expo account;
+using the installed app does not.
+
+```bash
+npm install -g eas-cli
+eas login
+eas build --platform android --profile preview
+```
+
+| Profile      | Output                    | Purpose                                                 |
+| ------------ | ------------------------- | ------------------------------------------------------- |
+| `preview`    | Installable `.apk`        | Internal/device testing; currently targets `arm64-v8a`. |
+| `production` | Android App Bundle `.aab` | A build for Play Store distribution.                    |
+
+Both profiles automatically increment the Android version code. EAS provides a build page and
+download link when the build completes. For a production bundle:
+
+```bash
+eas build --platform android --profile production
+```
+
+See [Build guide](BUILD.md) for additional setup and physical-device checks.
+
+## Development checks
+
+```bash
+npm run typecheck
+npm run lint
+npm run format:check
+npm test -- --runInBand
+npm run test:security
+npx expo export --platform android
+```
+
+Use `npm run format` to apply formatting and `npm run test:perf` for the repository's performance
+fixtures. CI also runs Expo Doctor and the dependency audit gate.
+
+Tests cover money/date calculations, SQLite queries, backup validation, privacy, component
+interactions and screen flows. Release validation also needs a real phone: keyboard behavior,
+back gestures, enlarged text, scrolling, app-resume behavior and widgets are device checks.
+
+## Project structure
+
+```text
+app/                  Expo Router screens and navigation
+  (tabs)/             Home, Activity, Plan, Reports and the Add entry route
 src/
-  db/                   All data access — schema, ledger, loans, people, recurring,
-                        budgets, reports, settings (co-located *.test.ts integration tests)
-  lib/                  Pure logic — money/date/EMI math, backup serialization,
-                        local-folder backup, notifications, app lock, Excel export
-  components/           Shared UI primitives
-  features/             Per-screen sub-modules — each big screen's modals,
-                        rows, styles and helpers live in features/<screen>/,
-                        while app/ owns navigation and screen orchestration
-  constants/            Theme tokens and default categories
-  theme/                Exclusive theme packs, plus the accent + privacy React contexts
-  widgets/              Home-screen widgets (react-native-android-widget) and their data sources
-  test-support/         better-sqlite3 test harness
-  __tests__/            Cross-cutting integration tests
+  components/         Shared controls, cards, sheets and dialogs
+  features/           Screen-specific UI, styles and helpers
+  db/                 SQLite schema, queries and transactional mutations
+  lib/                Money/date logic, backups, exports, locks and reminders
+  constants/          Design tokens and default categories
+  theme/              Theme packs and appearance/privacy contexts
+  widgets/            Android widgets and their data sources
+  test-support/       Real SQLite test harness and native-module mocks
+  __tests__/          Cross-cutting checks
+assets/               Brand, icons and widget previews
+plugins/              Native Expo config plugins
+scripts/              Test runner, performance fixtures and audit checks
+.github/workflows/    Continuous integration
 ```
 
-## Running locally
+Keep reusable UI in `src/components/`, screen-specific presentation in `src/features/`, database
+access in `src/db/` and independent logic in `src/lib/`. Tests usually live beside the code they
+exercise. Type checking rejects unused imports, locals and parameters; intentional unused
+parameters use an `_` prefix.
 
-Yume is **Android-only** — there is no iOS build (backups use Android's Storage Access Framework, and the
-home-screen widgets are Android widgets).
+When evaluating unused code, include file-based routes, the widget handler in `index.js`, config
+plugins and performance fixtures. Native integration can use a dependency without a direct app import.
 
-```bash
-npm install
-npx expo run:android   # builds and installs a development build, then starts Metro
-```
+## Documentation
 
-Expo Go can't run Yume: it depends on native modules Expo Go doesn't include
-(`react-native-android-widget`, `react-native-keyboard-controller`). Once a development build is
-installed on the device, `npm start` is enough for day-to-day work.
+| Guide                                                  | Read it for                                                                |
+| ------------------------------------------------------ | -------------------------------------------------------------------------- |
+| [Data model](DATA_MODEL.md)                            | Schema, accounts, the friends ledger and calculation decisions.            |
+| [Backup & restore](BACKUP.md)                          | Local-folder backups, choosing existing data, restore safety and recovery. |
+| [Build guide](BUILD.md)                                | APK/AAB builds and device verification.                                    |
+| [Audit record](AUDIT.md)                               | Recorded fixes, validation and remaining device checks.                    |
+| [Expo SDK 57](https://docs.expo.dev/versions/v57.0.0/) | The versioned Expo reference used by this project.                         |
 
-## Checks
+---
 
-```bash
-npm run typecheck    # tsc --noEmit
-npm run lint         # eslint
-npm run format       # prettier --write .
-npm test             # jest
-```
-
-Type checking also rejects unused imports, local variables, and parameters. Intentional unused
-parameters should start with `_`. Keep screen-specific code in `src/features/<screen>/`, reusable
-UI in `src/components/`, data access in `src/db/`, and independent logic in `src/lib/`.
-Tests stay next to the code they exercise; cross-screen tests belong in `src/__tests__/`.
-
-When checking unused files, include Expo Router's file-based routes, the widget handler registered
-in `index.js`, config plugins, and performance-test fixtures as entry points. Dependencies used
-by Expo/native integration may have no direct application import; check their integration before
-removing them.
-
-## Building an APK
-
-See [BUILD.md](./BUILD.md).
-
-## Data model & calculation logic
-
-See [DATA_MODEL.md](./DATA_MODEL.md) for the full schema and the reasoning behind it (why savings are accounts, not categories; how the friends ledger nets out; how EMI amortization is computed).
-
-## Audit record
-
-See [AUDIT.md](./AUDIT.md) for the latest verified fixes, checks, and remaining device checks.
+<p align="center"><strong>Small daily decisions. More room for your dreams.</strong></p>
