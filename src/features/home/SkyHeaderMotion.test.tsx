@@ -93,3 +93,26 @@ it('settles the native collapsing header without animation under reduced motion'
   act(() => root.unmount());
   mockReduce = false;
 });
+
+it('keeps a larger title row visible after font scaling changes its measured height', () => {
+  const onMeasure = jest.fn();
+  let root!: ReactTestRenderer;
+  act(() => {
+    root = create(
+      <SkyHeader
+        title="Plan"
+        hideUser
+        collapse={{ scrollY: { value: 0 }, distance: { value: 0 }, onMeasure } as never}
+      />
+    );
+  });
+  const layouts = root.root.findAll(
+    (node) => node.type === View && typeof node.props.onLayout === 'function'
+  );
+  const event = (height: number) => ({ nativeEvent: { layout: { height } } });
+  act(() => layouts[0].props.onLayout(event(150)));
+  expect(onMeasure).toHaveBeenLastCalledWith(150, 94);
+  act(() => layouts[1].props.onLayout(event(64)));
+  expect(onMeasure).toHaveBeenLastCalledWith(150, 74);
+  act(() => root.unmount());
+});

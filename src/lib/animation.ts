@@ -3,9 +3,9 @@ import { DURATIONS } from './motionTimings';
 
 /**
  * Cap on a list row's FadeIn stagger delay (`Math.min(i * step, MAX_LIST_STAGGER_MS)`), shared by every plain
- * list so long lists settle in under a second and the app-wide stagger feel is tuned in one place.
+ * list. Zero keeps content available together instead of cascading down the screen.
  */
-export const MAX_LIST_STAGGER_MS = 320;
+export const MAX_LIST_STAGGER_MS = 0;
 
 /**
  * Home's motion rules: one curve (fast out, soft landing) and a short list of durations so every card moves
@@ -37,7 +37,7 @@ export function markHomeOpeningPlayed(): void {
 }
 
 /**
- * How a Home row fades in: staggered on the first load after open, or one quick unstaggered fade for rows
+ * How a Home row fades in: a brief simultaneous fade on the first load after open, or one quick unstaggered fade for rows
  * appearing later (new month, pull-to-refresh) so the screen never replays its whole entrance.
  */
 export function homeRowEntering(index: number, opening: boolean) {

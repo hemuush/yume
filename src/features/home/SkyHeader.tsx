@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { View, Pressable, StyleSheet, LayoutChangeEvent } from 'react-native';
 import ReanimatedAnimated, {
   useAnimatedReaction,
@@ -13,6 +13,7 @@ import { router } from 'expo-router';
 import Feather from '@expo/vector-icons/Feather';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, MAX_FONT_SCALE } from '@/components/Text';
+import { HEADER } from '@/components/headerMetrics';
 import { HeaderUserButton } from '@/components/AppHeader';
 import { theme } from '@/constants/theme';
 import { useAccent } from '@/theme/AccentContext';
@@ -25,7 +26,7 @@ import { wallpaperTop } from './HomeWallpaper';
 import { headerIsCollapsed } from './headerMotion';
 
 /** The title row's height; the band keeps just this row (plus BAR_PAD) once collapsed. */
-const ROW = 40;
+const ROW = HEADER.actionSize;
 const BAR_PAD = 6;
 /** The title steps down from 22 to 17 as the header collapses. */
 const TITLE_SCALE = 17 / 22;
@@ -73,7 +74,7 @@ export function SkyHeader({
   const { accent } = useAccent();
   const insets = useSafeAreaInsets();
   const reduce = useReduceMotion();
-  const top = insets.top + 6;
+  const top = insets.top + HEADER.topGap;
 
   // Measured, not hardcoded, so a larger system font still collapses to exactly the title row.
   const fallbackY = useSharedValue(0);
@@ -84,9 +85,15 @@ export function SkyHeader({
   // Stop invalidating every header style once scrolling passes the collapse range.
   const shift = useDerivedValue(() => Math.min(Math.max(0, distance.value), Math.max(0, scrollY.value)));
   const collapseProgress = useDerivedValue(() => (distance.value > 0 ? shift.value / distance.value : 0));
+  const [rootHeight, setRootHeight] = useState(0);
+  const [rowHeight, setRowHeight] = useState<number>(ROW);
+  const onMeasure = collapse?.onMeasure;
+  useEffect(() => {
+    if (rootHeight > 0) onMeasure?.(rootHeight, Math.max(0, rootHeight - (top + rowHeight + BAR_PAD)));
+  }, [rootHeight, rowHeight, top, onMeasure]);
   const onRootLayout = (e: LayoutChangeEvent) => {
     const h = e.nativeEvent.layout.height;
-    collapse?.onMeasure(h, Math.max(0, h - (top + ROW + BAR_PAD)));
+    setRootHeight(h);
   };
 
   // Touch/focus follows visibility: the compact chip must not activate while still transparent.
@@ -145,13 +152,16 @@ export function SkyHeader({
           accent={accent}
           scrollY={scrollY}
           distance={distance}
-          collapsedHeight={top + ROW + BAR_PAD}
+          collapsedHeight={top + rowHeight + BAR_PAD}
           wash={!wallpaper}
           barColor={wallpaper ? wallpaperTop(accent) : undefined}
         />
       )}
       <View style={[styles.band, { paddingTop: top }]}>
-        <ReanimatedAnimated.View style={[styles.titleRow, rowStyle]}>
+        <ReanimatedAnimated.View
+          style={[styles.titleRow, rowStyle]}
+          onLayout={(e) => setRowHeight(e.nativeEvent.layout.height)}
+        >
           {showBack && (
             <Pressable
               onPress={() => router.back()}
@@ -202,7 +212,7 @@ export function SkyHeader({
           )}
           <View style={styles.actions}>
             {actions}
-            {!hideUser && <HeaderUserButton size={36} />}
+            {!hideUser && <HeaderUserButton />}
           </View>
         </ReanimatedAnimated.View>
         {(subtitle || children) && (
@@ -227,13 +237,13 @@ export function SkyHeader({
 
 const styles = StyleSheet.create({
   over: { position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10 },
-  band: { paddingHorizontal: 16, paddingBottom: 8 },
+  band: { paddingHorizontal: HEADER.gutter, paddingBottom: HEADER.bottomGap },
   titleRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: 10,
-    height: ROW,
+    minHeight: ROW,
     zIndex: 1,
   },
   titleBlock: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center' },
@@ -249,9 +259,9 @@ const styles = StyleSheet.create({
   below: { gap: 10, paddingTop: 8, paddingBottom: 2 },
   // Just the chevron, nudged so the icon (not its 40dp touch area) sits on the page gutter.
   backBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: HEADER.actionSize,
+    height: HEADER.actionSize,
+    borderRadius: HEADER.actionSize / 2,
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: -9,
@@ -260,9 +270,9 @@ const styles = StyleSheet.create({
   closeBtn: {
     marginLeft: 0,
     marginRight: 4,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: HEADER.actionSize,
+    height: HEADER.actionSize,
+    borderRadius: HEADER.actionSize / 2,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: GLASS.fillStrong,
