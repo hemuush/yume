@@ -7,9 +7,9 @@ import { GLASS } from '@/components/Glass';
 // the people and streak tiles, and Coming up.
 const GAP = 10;
 /** The runway's drawing height, without the date row under it. */
-export const RUNWAY_HEIGHT = 112;
+export const RUNWAY_HEIGHT = 72;
 /** A budget jar's inside height (its liquid fills this). */
-export const JAR_HEIGHT = 92;
+export const JAR_HEIGHT = 60;
 
 const figure = {
   fontFamily: theme.font.body,
@@ -19,12 +19,19 @@ const figure = {
 } as const;
 
 export const styles = StyleSheet.create({
-  card: { marginHorizontal: SCREEN.gutter, padding: SCREEN.cardPad, gap: 10 },
+  card: { marginHorizontal: SCREEN.gutter, padding: SCREEN.cardPad, gap: 8 },
   cardFirst: { marginTop: theme.layout.screenTopGap },
   row: { flexDirection: 'row', gap: GAP, marginHorizontal: SCREEN.gutter },
-  rowGap: { gap: GAP },
+  rowGap: { gap: 8 },
+  rowStack: { flexDirection: 'column' },
 
-  head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
+  head: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
 
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   dayButtons: { flexDirection: 'row', gap: 6 },
@@ -71,7 +78,7 @@ export const styles = StyleSheet.create({
   foot: {
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: theme.colors.borderSoft,
-    paddingTop: 10,
+    paddingTop: 4,
     gap: 6,
   },
   footText: { fontFamily: theme.font.body, fontSize: 14, lineHeight: 20, color: theme.colors.textSecondary },
@@ -83,7 +90,7 @@ export const styles = StyleSheet.create({
   caption: { fontFamily: theme.font.body, fontSize: 14, lineHeight: 20, color: theme.colors.textSecondary },
   captionBad: { fontFamily: theme.font.bodyBold, color: theme.colors.expenseText },
   captionOk: { fontFamily: theme.font.bodyBold, color: theme.colors.incomeText },
-  jars: { gap: 10, paddingTop: 16, paddingHorizontal: 16 },
+  jars: { gap: 10, paddingTop: 8, paddingHorizontal: 16 },
   jarsScroll: { marginHorizontal: -16 },
   jar: { width: 90, alignItems: 'center', gap: 5 },
   jarBody: {
@@ -125,7 +132,7 @@ export const styles = StyleSheet.create({
   spillText: { fontFamily: theme.font.bodyBold, fontSize: 10.5, color: theme.colors.surface },
   jarName: {
     maxWidth: '100%',
-    minHeight: 32,
+    minHeight: 28,
     textAlign: 'center',
     fontFamily: theme.font.bodyBold,
     fontSize: 12,
@@ -135,7 +142,7 @@ export const styles = StyleSheet.create({
   jarOver: { fontFamily: theme.font.bodyBold, color: theme.colors.expenseText },
 
   /* ---------- Debt path ---------- */
-  pathValue: { ...figure },
+  pathValue: { ...figure, flexShrink: 1 },
   pathNote: {
     fontFamily: theme.font.bodyMedium,
     fontSize: 13,
@@ -145,14 +152,8 @@ export const styles = StyleSheet.create({
 
   /* ---------- Goals ---------- */
   goals: { gap: 10, paddingHorizontal: SCREEN.gutter },
-  goal: { width: 136, height: 184, padding: 12, overflow: 'hidden' },
+  goal: { width: 136, minHeight: 132, padding: 12, overflow: 'hidden' },
   goalReservoir: { position: 'absolute', top: 52, left: 0, right: 0, bottom: 0 },
-  goalRemaining: {
-    fontFamily: theme.font.body,
-    fontSize: 10,
-    color: theme.colors.textSecondary,
-    marginTop: 4,
-  },
   goalFill: { position: 'absolute', left: 0, right: 0, bottom: 0, opacity: 0.5 },
   goalFillEdge: { position: 'absolute', left: 0, right: 0, top: 0, height: 2, opacity: 0.8 },
   goalPct: {
@@ -224,12 +225,12 @@ export const styles = StyleSheet.create({
     justifyContent: 'space-between',
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: theme.colors.borderSoft,
-    paddingTop: 10,
+    paddingTop: 4,
   },
   openText: { fontFamily: theme.font.bodyMedium, fontSize: 13.5, color: theme.colors.link },
 
   /* ---------- Friends & streak ---------- */
-  tile: { flex: 1, minWidth: 0, minHeight: 180, padding: 14, gap: 6 },
+  tile: { flex: 1, minWidth: 0, padding: 14, gap: 6 },
   go: { position: 'absolute', top: 14, right: 14 },
   value: { ...figure },
   income: { color: theme.colors.incomeText },
@@ -243,7 +244,7 @@ export const styles = StyleSheet.create({
   sproutDay: { alignItems: 'center', gap: 3 },
   dayLabel: { fontFamily: theme.font.body, fontSize: 9, color: theme.colors.textMuted },
   personAmt: { fontFamily: theme.font.bodyBold, fontSize: 10, color: theme.colors.textSecondary },
-  sprouts: { flexDirection: 'row', alignItems: 'flex-end', gap: 6, minHeight: 48, marginTop: 'auto' },
+  sprouts: { flexDirection: 'row', alignItems: 'flex-end', gap: 6, minHeight: 32, marginTop: 'auto' },
 
   /* ---------- Coming up ---------- */
   list: { marginHorizontal: SCREEN.gutter, paddingTop: 4, overflow: 'hidden' },
@@ -269,7 +270,7 @@ export const styles = StyleSheet.create({
   },
   dayHeadText: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textSecondary },
   dayHeadAmount: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textMuted },
-  dueRow: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 10, minHeight: 65 },
+  dueRow: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 10, minHeight: 56 },
   dueIcon: {
     width: 38,
     height: 38,

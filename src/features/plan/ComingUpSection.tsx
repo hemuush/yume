@@ -152,7 +152,7 @@ export function ComingUpSection({
   const { accent } = useAccent();
   const ink = homeInk(accent);
   return (
-    <Section title="Coming up">
+    <Section compact title="Coming up">
       <View onLayout={(e) => onCardLayout?.(e.nativeEvent.layout.y)}>
         <Glass style={styles.list}>
           {groups.length === 0 ? (
@@ -199,7 +199,7 @@ export function ComingUpSection({
                 </View>
                 <Text style={styles.dueSub}>
                   {g.date > addDaysToIsoDate(today, DUE_SOON_DAYS - 1) ? 'Next scheduled · ' : ''}
-                  {g.items.length} {g.items.length === 1 ? 'entry' : 'entries'} · {dueDateLabel(g.date)}
+                  {g.items.length} {g.items.length === 1 ? 'entry' : 'entries'}
                 </Text>
                 {g.items.map((it) => (
                   <DueRow key={it.key} item={it} today={today} onOpen={onOpen} onPay={onPay} />

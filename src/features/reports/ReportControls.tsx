@@ -132,7 +132,7 @@ const s = StyleSheet.create({
   filters: { flexDirection: 'row', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 14 },
   flow: { flexDirection: 'row', backgroundColor: theme.colors.inkWash, borderRadius: 12, padding: 3 },
   flowButton: {
-    minHeight: 40,
+    minHeight: 48,
     paddingHorizontal: 12,
     alignItems: 'center',
     justifyContent: 'center',
@@ -142,14 +142,14 @@ const s = StyleSheet.create({
   filterText: { fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textSecondary },
   activeText: { fontFamily: theme.font.bodyBold, color: theme.colors.ink },
   group: {
-    minHeight: 44,
+    minHeight: 48,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
     paddingHorizontal: 8,
     flexShrink: 1,
   },
-  comparison: { minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 },
+  comparison: { minHeight: 48, flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 },
   note: { flex: 1, fontFamily: theme.font.body, fontSize: 12, lineHeight: 17, color: theme.colors.textMuted },
   explanation: {
     fontFamily: theme.font.body,

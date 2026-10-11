@@ -15,6 +15,8 @@ jest.mock('@/theme/AccentContext', () => ({
 import { WhereItWent } from './WhereItWent';
 import type { CategoryBreakdownItem } from '@/db/reports';
 
+const ReactNative = require('react-native');
+
 const texts = (r: ReactTestRenderer) =>
   r.root.findAllByType(Text).map((t) =>
     [t.props.children]
@@ -57,8 +59,50 @@ function render(
 }
 
 describe('Where it went', () => {
+  beforeEach(() => {
+    jest.spyOn(ReactNative, 'useWindowDimensions').mockReturnValue({
+      width: 390,
+      height: 800,
+      scale: 3,
+      fontScale: 1,
+    });
+  });
+  afterEach(() => jest.restoreAllMocks());
   // Hidden (sensitive) groups are left out before the dial sees them (privateComparison), so none here.
   const breakdown = [cat('Food', 1_600_000), cat('Rent', 2_400_000), cat('Shares', 1_000_000)];
+
+  it.each([
+    { width: 320, fontScale: 1 },
+    { width: 390, fontScale: 1.5 },
+  ])('keeps selection and drill-through reachable at $width dp and $fontScale text scale', (size) => {
+    jest.spyOn(ReactNative, 'useWindowDimensions').mockReturnValue({ ...size, height: 800, scale: 3 });
+    const openReports = jest.fn();
+    const openCategory = jest.fn();
+    const r = render(breakdown, openReports, openCategory);
+    expect(
+      r.root.findAll((n) => [n.props.style].flat(Infinity).some((style) => style?.flexDirection === 'column'))
+        .length
+    ).toBeGreaterThan(0);
+    act(() =>
+      r.root
+        .find((n) => n.props.accessibilityLabel === 'Shares, 20% of spending' && n.props.onPress)
+        .props.onPress()
+    );
+    expect(texts(r)).toContain('₹10,000 · 20% of spending');
+    act(() =>
+      r.root
+        .find((n) => n.props.accessibilityLabel === 'View Shares category' && n.props.onPress)
+        .props.onPress()
+    );
+    expect(openCategory).toHaveBeenCalledWith('Shares');
+    act(() =>
+      r.root
+        .find((n) => n.props.accessibilityLabel === 'All categories in Reports' && n.props.onPress)
+        .props.onPress()
+    );
+    expect(openReports).toHaveBeenCalledTimes(1);
+    act(() => r.unmount());
+  });
 
   it('shows the spending, the change from last period, and the biggest category picked', () => {
     const all = texts(render(breakdown));

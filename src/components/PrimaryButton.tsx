@@ -76,7 +76,7 @@ export function PrimaryButton({
       ]}
       accessibilityRole="button"
       accessibilityState={{ ...accessibilityState, disabled: !!disabled }}
-      // Both variants have a 44dp minimum height; slop gives tightly spaced controls extra reach.
+      // Both variants have a 48dp minimum height; slop gives tightly spaced controls extra reach.
       hitSlop={compact ? HIT_SLOP_COMPACT : HIT_SLOP}
       {...rest}
     >
@@ -111,13 +111,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 44,
+    minHeight: 48,
   },
   baseCompact: { paddingVertical: 7, paddingHorizontal: 14 },
   withIcon: { flexDirection: 'row', gap: 8 },
   textCompact: { fontFamily: theme.font.roundedBold, fontSize: 13 },
   primary: { backgroundColor: theme.colors.ink },
-  danger: { backgroundColor: theme.colors.expense },
+  danger: { backgroundColor: theme.colors.expenseText },
   secondary: {
     backgroundColor: theme.colors.surface,
     borderWidth: StyleSheet.hairlineWidth,

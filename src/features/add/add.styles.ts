@@ -83,9 +83,9 @@ export const styles = StyleSheet.create({
   },
   hint: {
     fontFamily: theme.font.body,
-    fontSize: 11.5,
+    fontSize: 12,
     color: theme.colors.textMuted,
-    lineHeight: 16,
+    lineHeight: 18,
     marginTop: 8,
   },
 
@@ -115,8 +115,8 @@ export const styles = StyleSheet.create({
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: theme.colors.borderSoft,
     fontFamily: theme.font.bodyMedium,
-    fontSize: 11.5,
-    lineHeight: 17,
+    fontSize: 12,
+    lineHeight: 18,
     color: theme.colors.textSecondary,
   },
   footerSummary: {
@@ -231,8 +231,8 @@ export const styles = StyleSheet.create({
   noteInput: {
     marginBottom: 10,
     borderWidth: 1.5,
-    borderColor: theme.colors.ink,
-    borderRadius: 24,
+    borderColor: theme.colors.borderSoft,
+    borderRadius: theme.radius.lg,
     backgroundColor: theme.colors.surface,
     paddingHorizontal: 16,
     paddingVertical: 13,
@@ -335,7 +335,7 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    height: 36,
+    minHeight: 48,
     paddingHorizontal: 14,
     borderRadius: theme.radius.pill,
     backgroundColor: GLASS.fillStrong,

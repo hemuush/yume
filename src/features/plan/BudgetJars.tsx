@@ -37,22 +37,13 @@ export function BudgetJars({
     return (
       <Pressable
         onPress={onOpen}
-        style={withPressed()}
+        style={withPressed({ minHeight: 44 })}
         accessibilityRole="button"
         accessibilityLabel="Set a monthly limit. Open budgets"
       >
         <Glass style={styles.card}>
           <Text style={styles.title}>Set a monthly limit</Text>
-          <Text style={styles.sub}>
-            For food, bills, anything you watch. Each one gets a jar that fills as you spend.
-          </Text>
-          <View style={[styles.cuts, { marginTop: 4 }]}>
-            {[0, 1, 2].map((i) => (
-              <View key={i} style={[styles.jarBody, styles.jarEmpty]}>
-                <Feather name="plus" size={18} color={theme.colors.textMuted} />
-              </View>
-            ))}
-          </View>
+          <Text style={styles.sub}>Watch spending for a category. Tap to add your first budget.</Text>
         </Glass>
       </Pressable>
     );
@@ -63,7 +54,7 @@ export function BudgetJars({
     <Glass style={styles.card}>
       <Pressable
         onPress={onOpen}
-        style={withPressed()}
+        style={withPressed({ minHeight: 44 })}
         accessibilityRole="button"
         accessibilityLabel={`Budgets, ${over ? `${summary.overCount} over` : 'all within their limits'}. Open budgets`}
       >
@@ -78,7 +69,6 @@ export function BudgetJars({
             ? `${worst.categoryName} is ${formatMoney(-worst.remainingMinor)} over`
             : `${worst.categoryName} has ${formatMoney(worst.remainingMinor)} left`}
         </Text>
-        <Text style={styles.tileSub}>Jars show spending used</Text>
       </Pressable>
       <ScrollView
         horizontal
@@ -155,10 +145,10 @@ function Jar({ budget: b, onPress }: { budget: PlanBudgetInput; onPress: () => v
       <Text style={styles.jarName} numberOfLines={2}>
         {b.categoryName}
       </Text>
-      <Text style={[styles.jarLeft, b.overBudget && styles.jarOver]} numberOfLines={1}>
+      <Text style={[styles.jarLeft, b.overBudget && styles.jarOver]} numberOfLines={2}>
         {left}
+        {tone === 'near' ? ' · Near limit' : ''}
       </Text>
-      {tone === 'near' && <Text style={styles.jarLeft}>Near limit</Text>}
     </Pressable>
   );
 }

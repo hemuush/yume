@@ -69,9 +69,9 @@ const styles = StyleSheet.create({
   },
   top: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   heading: { flex: 1, minWidth: 0, gap: 3 },
-  icon: { width: 36, height: 36, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
-  kicker: { fontFamily: theme.font.body, fontSize: 11, lineHeight: 16, color: theme.colors.textSecondary },
-  amount: { fontFamily: theme.font.bodyMedium, fontSize: 26, marginTop: 12 },
+  icon: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
+  kicker: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 18, color: theme.colors.textSecondary },
+  amount: { fontFamily: theme.font.bodyMedium, fontSize: 26, lineHeight: 34, marginTop: 10 },
   title: { fontFamily: theme.font.bodyBold, fontSize: 15, color: theme.colors.textPrimary },
   meta: {
     fontFamily: theme.font.body,

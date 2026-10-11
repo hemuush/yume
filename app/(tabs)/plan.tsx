@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, useWindowDimensions } from 'react-native';
 import { Text } from '@/components/Text';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -29,7 +29,6 @@ import { useScreenLoad } from '@/lib/useScreenLoad';
 import { categorySentence, parentNameOf } from '@/lib/categoryLabel';
 import { SCREEN } from '@/components/screenStyles';
 import { Section } from '@/components/Section';
-import { SECTION_GAP } from '@/constants/textStyles';
 import {
   buildLoansSummary,
   buildDueItems,
@@ -89,6 +88,8 @@ interface PlanData {
  * People & habit), then Coming up. Tiles open their screen; empty ones say what to do (planOverview.ts).
  */
 export default function PlanScreen() {
+  const { width, fontScale } = useWindowDimensions();
+  const stackTiles = width < 360 || fontScale > 1.2;
   const insets = useSafeAreaInsets();
   const tabScrollPad = useTabScrollPad();
   const { hideAmounts } = usePrivacy();
@@ -273,7 +274,7 @@ export default function PlanScreen() {
     const groupY = target == null ? undefined : groupYs.current[target];
     if (groupY == null) return scrollToComingUp();
     scrollRef.current?.scrollTo({
-      y: Math.max(0, comingUpY.current + SECTION_GAP.top + cardY.current + groupY - underHeader() - 8),
+      y: Math.max(0, comingUpY.current + 16 + cardY.current + groupY - underHeader() - 8),
       animated: !reduceMotion,
     });
   };
@@ -326,7 +327,7 @@ export default function PlanScreen() {
               onOpen={scrollToComingUp}
               onJumpToDay={scrollToDay}
             />
-            <Section title="This month’s budgets" onSeeAll={() => open('/budgets')}>
+            <Section compact title="This month’s budgets" onSeeAll={() => open('/budgets')}>
               <BudgetJars
                 summary={data.budgets}
                 onOpen={() => open('/budgets')}
@@ -334,7 +335,7 @@ export default function PlanScreen() {
                 onAdd={() => router.push({ pathname: '/budgets', params: { add: '1' } })}
               />
             </Section>
-            <Section title="The way to debt-free">
+            <Section compact title="The way to debt-free">
               <DebtPath
                 loans={data.loans}
                 dueSoon={data.dueSoon}
@@ -342,7 +343,7 @@ export default function PlanScreen() {
                 onOpen={() => open('/loans')}
               />
             </Section>
-            <Section title="Saving toward" onSeeAll={() => open('/savings-goals')}>
+            <Section compact title="Saving toward" onSeeAll={() => open('/savings-goals')}>
               <View style={planStyles.rowGap}>
                 <GoalsStrip
                   goals={data.goals}
@@ -354,8 +355,8 @@ export default function PlanScreen() {
                 <WhatIfCard whatIf={data.whatIf} onOpen={() => open('/whatif')} />
               </View>
             </Section>
-            <Section title="People & habit">
-              <View style={planStyles.row}>
+            <Section compact title="People & habit">
+              <View style={[planStyles.row, stackTiles && planStyles.rowStack]}>
                 <PeopleTile state={data.people} people={data.topPeople} onOpen={() => open('/people')} />
                 <HabitTile
                   habit={data.habit}

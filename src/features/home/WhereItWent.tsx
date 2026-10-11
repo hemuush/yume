@@ -9,6 +9,7 @@ import Animated, {
 import Feather from '@expo/vector-icons/Feather';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Text } from '@/components/Text';
+import { GLASS } from '@/components/Glass';
 import type { McIconName } from '@/components/iconName';
 import type { CategoryBreakdownItem } from '@/db/reports';
 import { theme } from '@/constants/theme';
@@ -21,11 +22,11 @@ import { useAccent } from '@/theme/AccentContext';
 import { homeInk } from './homeInk';
 
 const POSITIONS = [
-  [78, 0],
-  [100, 46],
-  [110, 92],
-  [100, 138],
-  [78, 184],
+  [38, 0],
+  [54, 48],
+  [62, 96],
+  [54, 144],
+  [38, 192],
 ] as const;
 
 /** Fixed curved targets; only the selection pill moves, while details update immediately. */
@@ -61,7 +62,8 @@ export function WhereItWent({
   const selected = top[index];
   const share = selected ? Math.round((selected.totalMinor / total) * 100) : 0;
   const reduce = useReduceMotion();
-  const { fontScale } = useWindowDimensions();
+  const { width, fontScale } = useWindowDimensions();
+  const stacked = width < 360 || fontScale > 1.2;
   const { accent } = useAccent();
   const ink = homeInk(accent);
   const x = useSharedValue(POSITIONS[index][0] - 38);
@@ -79,7 +81,7 @@ export function WhereItWent({
   }));
   const diff = spentMinor - previousSpentMinor;
   return (
-    <View style={[styles.section, { minHeight: fontScale > 1.1 ? 290 : 236 }]}>
+    <View style={[styles.section, stacked && styles.stacked]}>
       <View style={styles.details}>
         <Text style={styles.label}>Spent in {periodName}</Text>
         <Text style={styles.total} numberOfLines={1} adjustsFontSizeToFit>
@@ -108,19 +110,23 @@ export function WhereItWent({
         </Pressable>
       </View>
       {selected && (
-        <View style={styles.dial}>
-          <Animated.View pointerEvents="none" style={[styles.highlight, { backgroundColor: ink }, highlight]}>
-            <Text style={styles.share}>{share}%</Text>
-          </Animated.View>
+        <View style={stacked ? styles.selectorRow : styles.dial}>
+          {!stacked && (
+            <Animated.View
+              pointerEvents="none"
+              style={[styles.highlight, { backgroundColor: ink }, highlight]}
+            >
+              <Text style={styles.share}>{share}%</Text>
+            </Animated.View>
+          )}
           {top.map((c, i) => (
             <Pressable
               key={c.categoryId}
               style={withPressed([
-                styles.target,
+                stacked ? styles.inlineTarget : styles.target,
                 {
-                  left: POSITIONS[i][0],
-                  top: POSITIONS[i][1],
-                  backgroundColor: i === index ? 'transparent' : theme.colors.white,
+                  ...(stacked ? {} : { left: POSITIONS[i][0], top: POSITIONS[i][1] }),
+                  backgroundColor: i === index ? (stacked ? ink : 'transparent') : theme.colors.white,
                 },
               ])}
               onPress={() => {
@@ -141,7 +147,9 @@ export function WhereItWent({
             </Pressable>
           ))}
           <Pressable
-            style={withPressed([styles.target, { left: POSITIONS[4][0], top: POSITIONS[4][1] }])}
+            style={withPressed(
+              stacked ? styles.inlineTarget : [styles.target, { left: POSITIONS[4][0], top: POSITIONS[4][1] }]
+            )}
             onPress={onOpenReports}
             accessibilityRole="button"
             accessibilityLabel="All categories in Reports"
@@ -154,10 +162,30 @@ export function WhereItWent({
   );
 }
 const styles = StyleSheet.create({
-  section: { marginHorizontal: 16, flexDirection: 'row', alignItems: 'center', gap: 4 },
+  section: {
+    marginHorizontal: 16,
+    padding: 14,
+    borderRadius: 24,
+    backgroundColor: GLASS.fill,
+    borderWidth: 1,
+    borderColor: GLASS.edge,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  stacked: { flexDirection: 'column', alignItems: 'stretch' },
+  selectorRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  inlineTarget: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: theme.colors.white,
+  },
   details: { flex: 1, minWidth: 0, paddingVertical: 8 },
-  dial: { width: 155, height: 228 },
-  highlight: { position: 'absolute', width: 82, height: 44, borderRadius: 22, justifyContent: 'center' },
+  dial: { width: 110, height: 240 },
+  highlight: { position: 'absolute', width: 86, height: 48, borderRadius: 24, justifyContent: 'center' },
   share: {
     width: 38,
     textAlign: 'center',
@@ -167,9 +195,9 @@ const styles = StyleSheet.create({
   },
   target: {
     position: 'absolute',
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: theme.colors.white,

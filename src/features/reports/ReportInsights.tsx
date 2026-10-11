@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { View, Pressable, StyleSheet } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import { Text } from '@/components/Text';
+import { GLASS } from '@/components/Glass';
 import { theme } from '@/constants/theme';
 import { useAccent } from '@/theme/AccentContext';
 import { MoonPhase } from './MoonPhase';
@@ -25,7 +26,7 @@ export function ReportInsights({
   return (
     <View style={s.block}>
       <View style={s.head}>
-        <Text style={styles.blockTitle}>{title}</Text>
+        <Text style={[styles.blockTitle, { flex: 1, minWidth: 0 }]}>{title}</Text>
         <Text style={styles.stripSub}>{cards.length} insights</Text>
       </View>
       <View style={s.card}>
@@ -76,10 +77,10 @@ const s = StyleSheet.create({
   block: { marginBottom: 22 },
   head: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: 8 },
   card: {
-    backgroundColor: theme.colors.surface + 'D9',
-    borderRadius: 20,
+    backgroundColor: GLASS.fillStrong,
+    borderRadius: 24,
     borderWidth: 1,
-    borderColor: '#FFFFFF',
+    borderColor: GLASS.edge,
     paddingHorizontal: 14,
   },
   row: { paddingVertical: 6 },
