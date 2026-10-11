@@ -10,7 +10,7 @@ interface Props extends TextProps {
   minor: number;
   currency?: string;
   /**
-   * Count up from 0 on first appearance (default). Off: show the value at once and roll only on later
+   * Opt in to counting from 0 on first appearance. By default: show the value at once and roll only on later
    * changes (money added to a goal, an EMI paid).
    */
   countFromZero?: boolean;
@@ -25,10 +25,17 @@ export function splitLeadingSymbol(text: string): [string, string, string] | nul
 }
 
 /**
- * A rupee figure that counts up on mount and eases when `minor` changes; shared by ThisMonthHero and Reports.
+ * A rupee figure that appears immediately by default and eases when `minor` changes; shared by ThisMonthHero and Reports.
  * Uses a JS listener (`useNativeDriver: false`): text can't be driven natively; one short number, so cheap.
  */
-export function CountUpAmount({ minor, currency, countFromZero = true, symbolStyle, style, ...rest }: Props) {
+export function CountUpAmount({
+  minor,
+  currency,
+  countFromZero = false,
+  symbolStyle,
+  style,
+  ...rest
+}: Props) {
   const reduce = useReduceMotion();
   const [display, setDisplay] = useState(countFromZero && !reduce ? 0 : minor);
   const [t] = useState(() => new Animated.Value(1));

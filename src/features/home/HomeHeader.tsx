@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { View, StyleSheet, LayoutChangeEvent } from 'react-native';
 import { Text } from '@/components/Text';
 import ReanimatedAnimated, {
-  FadeInDown,
+  FadeIn,
   ReduceMotion,
   useSharedValue,
   useDerivedValue,
@@ -17,6 +17,7 @@ import { theme } from '@/constants/theme';
 import { useAccent } from '@/theme/AccentContext';
 import { SkyBackdrop } from './SkyBackdrop';
 import { YumeLogo } from '@/components/YumeLogo';
+import { HEADER } from '@/components/headerMetrics';
 import { HeaderIconButton, HeaderUserButton } from '@/components/AppHeader';
 import { PeriodCursor } from '@/lib/period';
 import { MonthPill } from './MonthPill';
@@ -79,7 +80,7 @@ export function HomeHeader({
   const reduce = useReduceMotion();
   const insets = useSafeAreaInsets();
   // The same top spacing as every other screen's SkyHeader.
-  const contentTop = insets.top + 6;
+  const contentTop = insets.top + HEADER.topGap;
 
   // How far the band can travel: its full height minus the brand row and a little padding. Measured, not
   // hardcoded, so a larger system font still collapses to exactly the brand row.
@@ -118,7 +119,7 @@ export function HomeHeader({
   });
   const fadeStyle = useAnimatedStyle(() => {
     const p = progress.value;
-    return { opacity: 1 - Math.min(1, p * 1.6), transform: [{ translateY: -p * 8 }] };
+    return { opacity: 1 - Math.min(1, p * 1.6), transform: [{ translateY: reduce ? 0 : -p * 8 }] };
   });
   const miniStyle = useAnimatedStyle(() => {
     const p = progress.value;
@@ -168,11 +169,11 @@ export function HomeHeader({
               onPress={() => router.push('/notifications')}
               label={alertCount > 0 ? `Needs you, ${alertCount}` : 'Needs you'}
               count={alertCount}
-              size={40}
+              size={HEADER.actionSize}
               glass
             />
             {onPlayWrap && <WrapButton wraps={wraps} onPlay={onPlayWrap} />}
-            <HeaderUserButton size={40} />
+            <HeaderUserButton size={HEADER.actionSize} />
           </View>
         </ReanimatedAnimated.View>
 
@@ -184,7 +185,7 @@ export function HomeHeader({
           importantForAccessibility={collapsed ? 'no-hide-descendants' : 'auto'}
         >
           <ReanimatedAnimated.View
-            entering={FadeInDown.duration(MOTION.enter).easing(MOTION.ease).reduceMotion(ReduceMotion.System)}
+            entering={FadeIn.duration(MOTION.enter).easing(MOTION.ease).reduceMotion(ReduceMotion.System)}
           >
             <Text style={styles.date} numberOfLines={1}>
               {todayLabel()}
@@ -211,8 +212,14 @@ const styles = StyleSheet.create({
   root: { position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10 },
   fading: { gap: 12, paddingTop: 10 },
   miniSlot: { flex: 1, minWidth: 0, alignItems: 'flex-end' },
-  band: { paddingHorizontal: 16, paddingBottom: 12, gap: 8, overflow: 'hidden' },
-  row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
+  band: { paddingHorizontal: HEADER.gutter, paddingBottom: 12, gap: 8, overflow: 'hidden' },
+  row: {
+    minHeight: HEADER.actionSize,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
   brandRow: { flexDirection: 'row', alignItems: 'center', gap: 7 },
   brand: { fontFamily: theme.font.roundedBold, fontSize: 22, letterSpacing: 0.2, color: theme.colors.ink },
   actions: { flexDirection: 'row', alignItems: 'center', gap: 8 },

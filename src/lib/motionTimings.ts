@@ -4,20 +4,20 @@
  */
 export const DURATIONS = {
   /** Fades and highlight changes. */
-  quick: 200,
+  quick: 140,
   /** Rows opening/closing, a swipe settling back, a bar gliding to a new value. */
-  standard: 240,
+  standard: 180,
   /** A page turn (the month changing): out, then in. */
   slideOut: 140,
   slideIn: 220,
   /** Shapes and bars drawing in, and a goal ring filling. */
-  draw: 700,
+  draw: 320,
   /** Figures counting up. */
-  count: 550,
+  count: 220,
   /** The opening fade-in, and the gap between one row's start and the next. */
-  enter: 280,
-  enterStep: 50,
+  enter: 160,
+  enterStep: 0,
   /** A list row sliding into its new place / fading out when removed. */
-  rowMove: 220,
+  rowMove: 180,
   rowExit: 160,
 } as const;

@@ -4,6 +4,7 @@ import { Text } from '@/components/Text';
 import { useFocusEffect } from 'expo-router';
 import Feather from '@expo/vector-icons/Feather';
 import { theme } from '@/constants/theme';
+import { HEADER } from './headerMetrics';
 import { GLASS } from '@/components/Glass';
 import { useAccent } from '@/theme/AccentContext';
 import { usePrivacy } from '@/theme/PrivacyContext';
@@ -32,7 +33,7 @@ export function HeaderPrivacyToggle() {
 export function HeaderUserButton({
   size,
 }: {
-  /** A larger round button (Home's header); the default is 34. */
+  /** A larger round button (Home's header); the default is 44. */
   size?: number;
 } = {}) {
   const { accent, onAccent } = useAccent();
@@ -90,7 +91,7 @@ export function HeaderIconButton({
   badge?: boolean;
   /** A small number in the corner instead of the dot — e.g. how many filters are on. Hidden at 0. */
   count?: number;
-  /** A larger round button (Home's header); the default is 34. */
+  /** A larger round button (Home's header); the default is 44. */
   size?: number;
   /** A frosted disc, for headers on a wallpaper (Home, Activity). */
   glass?: boolean;
@@ -126,16 +127,22 @@ export function HeaderIconButton({
 
 const styles = StyleSheet.create({
   iconBtn: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
+    width: HEADER.actionSize,
+    height: HEADER.actionSize,
+    borderRadius: HEADER.actionSize / 2,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
     alignItems: 'center',
     justifyContent: 'center',
   },
   // A header action: just the icon on the header, no disc and no border (the quiet bar).
-  bare: { width: 40, height: 40, borderRadius: 20, borderWidth: 0, backgroundColor: 'transparent' },
+  bare: {
+    width: HEADER.actionSize,
+    height: HEADER.actionSize,
+    borderRadius: HEADER.actionSize / 2,
+    borderWidth: 0,
+    backgroundColor: 'transparent',
+  },
   glass: { borderWidth: 1, borderColor: GLASS.edge, backgroundColor: GLASS.fillStrong },
   initial: { fontFamily: theme.font.bodyBold, fontSize: 14 },
   initialLarge: { fontFamily: theme.font.bodyBold, fontSize: 15 },

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Animated } from 'react-native';
+import { Animated, Easing } from 'react-native';
 import { useReduceMotion } from './useReduceMotion';
 
 /**
@@ -23,11 +23,11 @@ export function usePressScale(pressedScale = 0.99) {
       scale.setValue(1);
       return;
     }
-    Animated.spring(scale, {
+    Animated.timing(scale, {
       toValue: pressedScale,
       useNativeDriver: true,
-      speed: 60,
-      bounciness: 0,
+      duration: 80,
+      easing: Easing.out(Easing.quad),
     }).start();
   };
   const onPressOut = () => {
@@ -36,7 +36,12 @@ export function usePressScale(pressedScale = 0.99) {
       scale.setValue(1);
       return;
     }
-    Animated.spring(scale, { toValue: 1, useNativeDriver: true, speed: 24, bounciness: 0 }).start();
+    Animated.timing(scale, {
+      toValue: 1,
+      useNativeDriver: true,
+      duration: 120,
+      easing: Easing.out(Easing.quad),
+    }).start();
   };
 
   // Derived from the same driver, not Pressable's `pressed` render-prop, which doesn't compose with

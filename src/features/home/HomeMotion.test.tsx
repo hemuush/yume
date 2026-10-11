@@ -61,6 +61,13 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 
+it('shows settled money immediately when opening a screen by default', () => {
+  const timing = jest.spyOn(Animated, 'timing');
+  const r = render(<CountUpAmount minor={12345600} />);
+  expect(text(r)).toContain('₹1,23,456');
+  expect(timing).not.toHaveBeenCalled();
+});
+
 it('continues a changed amount from the visible value and ignores an obsolete completion', () => {
   const runs: { value: Animated.Value; finish?: Animated.EndCallback; stop: jest.Mock }[] = [];
   jest.spyOn(Animated, 'timing').mockImplementation((value) => {
@@ -206,8 +213,8 @@ it('cancels press feedback on reduced-motion changes and unmount', () => {
     feedback = usePressScale();
     return <Text>Button</Text>;
   }
-  const spring = jest
-    .spyOn(Animated, 'spring')
+  const timing = jest
+    .spyOn(Animated, 'timing')
     .mockReturnValue({ start: jest.fn(), stop: jest.fn(), reset: jest.fn() });
   const r = render(<Button />);
   const scale = feedback.animatedStyle.transform[0].scale;
@@ -217,15 +224,25 @@ it('cancels press feedback on reduced-motion changes and unmount', () => {
     feedback.onPressOut();
   });
   expect(stop).toHaveBeenCalledTimes(2);
-  expect(spring).toHaveBeenCalledTimes(2);
+  expect(timing).toHaveBeenCalledTimes(2);
+  expect(timing).toHaveBeenNthCalledWith(
+    1,
+    scale,
+    expect.objectContaining({ duration: 80, useNativeDriver: true })
+  );
+  expect(timing).toHaveBeenNthCalledWith(
+    2,
+    scale,
+    expect.objectContaining({ duration: 120, useNativeDriver: true })
+  );
   mockReduce = true;
   act(() => r.update(<Button />));
-  spring.mockClear();
+  timing.mockClear();
   act(() => {
     feedback.onPressIn();
     feedback.onPressOut();
   });
-  expect(spring).not.toHaveBeenCalled();
+  expect(timing).not.toHaveBeenCalled();
   stop.mockClear();
   act(() => r.unmount());
   roots = roots.filter((root) => root !== r);
