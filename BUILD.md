@@ -6,7 +6,7 @@ Yume uses Expo SDK 57 and EAS Build. Read the [exact SDK 57 documentation](https
 
 Use Node 22.13 or newer and install the lockfile dependencies with `npm ci`. The SDK 57 reference lists React Native 0.86, React 19.2.3, Android 7 or newer, and Android compile/target API 36. These platform floors do not guarantee compatibility with every device or future Android version.
 
-The project owner is `hemant.shar.3004`, configured in [app.json](app.json). Log into an account with access to that EAS project. Run `eas init` only when intentionally linking a new project or fork.
+The project owner is `xyumex`, configured in [app.json](app.json). Log into an account with access to that EAS project. Run `eas init` only when intentionally linking a new project or fork.
 
 When changing EAS projects, preserve the Android package (`com.yume.app`), version-code progression and original signing key. A new signing key cannot update the APK already installed under the old key. Confirm credential availability before the next build. Historical build links below belong to the previous account.
 
