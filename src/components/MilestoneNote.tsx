@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { AccessibilityInfo, AppState, Pressable, StyleSheet, View } from 'react-native';
-import ReanimatedAnimated, { FadeInUp, FadeOutUp, ReduceMotion } from 'react-native-reanimated';
+import ReanimatedAnimated, { FadeIn, FadeOut, ReduceMotion } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text } from '@/components/Text';
 import { SuuIllustration } from '@/components/SuuIllustration';
@@ -74,8 +74,8 @@ function NoteView({ note, onDismiss }: { note: Shown; onDismiss: () => void }) {
   const insets = useSafeAreaInsets();
   return (
     <ReanimatedAnimated.View
-      entering={FadeInUp.duration(DURATIONS.slideIn).reduceMotion(ReduceMotion.System)}
-      exiting={FadeOutUp.duration(DURATIONS.rowExit).reduceMotion(ReduceMotion.System)}
+      entering={FadeIn.duration(DURATIONS.slideIn).reduceMotion(ReduceMotion.System)}
+      exiting={FadeOut.duration(DURATIONS.rowExit).reduceMotion(ReduceMotion.System)}
       style={[styles.wrap, { top: insets.top + 8 }]}
       pointerEvents="box-none"
     >

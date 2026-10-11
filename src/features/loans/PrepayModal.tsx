@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { View, Animated, Easing, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { Text } from '@/components/Text';
 import { applyPrepayment, previewPrepayment, PrepaymentSummary } from '@/db/loans';
 import { toMinor, formatMoney } from '@/lib/money';
@@ -11,12 +11,10 @@ import { PrimaryButton } from '@/components/PrimaryButton';
 import { Chip } from '@/components/Chip';
 import { ModalSheet } from '@/components/ModalSheet';
 import { toLocalIsoDate } from '@/lib/date';
-import { useReduceMotion } from '@/lib/useReduceMotion';
 import { styles } from './loans.styles';
 import { shortMonthYear } from '@/lib/dateLabels';
 import { errorMessage } from '@/lib/errorMessage';
-import { DURATIONS } from '@/lib/motionTimings';
-import { useAccent } from '@/theme/AccentContext';
+import { CompletionCard } from '@/components/CompletionCard';
 
 /**
  * Jurisdiction-specific tax-on-fee conventions offered as a labelled one-tap fill, never a silent default.
@@ -103,123 +101,34 @@ const previewStyles = StyleSheet.create({
   was: { fontFamily: theme.font.mono, color: theme.colors.textMuted, textDecorationLine: 'line-through' },
 });
 
-// A decorative tick row, not one tick per installment (a 240-month loan would overflow); scaled down
-// proportionally so "the tail shrinks" reads clearly whatever the loan's remaining length.
-const MAX_TICKS = 26;
-
-function PrepaymentReveal({
-  summary,
-  lent,
-  onDone,
-}: {
-  summary: PrepaymentSummary;
-  lent: boolean;
-  onDone: () => void;
-}) {
-  const reduce = useReduceMotion();
-  const { secondary } = useAccent();
-  const [progress] = useState(() => new Animated.Value(reduce ? 1 : 0));
-  const [glow] = useState(() => new Animated.Value(0));
-
-  useEffect(() => {
-    if (reduce) return;
-    Animated.timing(progress, {
-      toValue: 1,
-      duration: DURATIONS.draw,
-      delay: DURATIONS.slideOut,
-      easing: Easing.out(Easing.cubic),
-      useNativeDriver: false,
-    }).start();
-    Animated.sequence([
-      Animated.timing(glow, { toValue: 1, duration: DURATIONS.standard, delay: 60, useNativeDriver: true }),
-      Animated.timing(glow, { toValue: 0, duration: DURATIONS.count, useNativeDriver: true }),
-    ]).start();
-  }, [reduce, progress, glow]);
-
-  const scale = MAX_TICKS / Math.max(summary.oldRemainingCount, 1);
-  const oldTicks = Math.max(1, Math.round(summary.oldRemainingCount * Math.min(1, scale)));
-  const shavedTicks = Math.max(
-    summary.monthsShaved > 0 ? 1 : 0,
-    Math.round(summary.monthsShaved * Math.min(1, scale))
-  );
-  const keptTicks = Math.max(0, oldTicks - shavedTicks);
-  const closedOutright = summary.newRemainingCount === 0;
-
+function PrepaymentReveal({ summary, lent }: { summary: PrepaymentSummary; lent: boolean }) {
+  const closed = summary.newRemainingCount === 0;
+  const detail = closed
+    ? lent
+      ? 'Fully repaid. No installments remain.'
+      : 'Fully paid off. No installments remain.'
+    : summary.monthsShaved > 0
+      ? `${summary.monthsShaved} fewer installment${summary.monthsShaved === 1 ? '' : 's'}. Your new payoff date is ${shortMonthYear(summary.newPayoffDate)}.`
+      : 'Your balance is lower. The payoff date stays the same.';
   return (
-    <View>
-      <Animated.View
-        pointerEvents="none"
-        style={[revealStyles.glow, { backgroundColor: secondary, opacity: glow }]}
-      />
-      <View style={revealStyles.ticks}>
-        {Array.from({ length: keptTicks }, (_, i) => (
-          <View key={`k${i}`} style={revealStyles.tick} />
-        ))}
-        {Array.from({ length: shavedTicks }, (_, i) => (
-          <Animated.View
-            key={`s${i}`}
-            style={[
-              revealStyles.tick,
-              {
-                backgroundColor: secondary,
-                opacity: progress.interpolate({ inputRange: [0, 1], outputRange: [1, 0] }),
-                transform: [{ scaleY: progress.interpolate({ inputRange: [0, 1], outputRange: [1, 0.2] }) }],
-              },
-            ]}
-          />
-        ))}
-      </View>
-
-      <Animated.View
-        style={{
-          opacity: progress.interpolate({ inputRange: [0, 0.6, 1], outputRange: [0, 0, 1] }),
-          transform: [{ translateY: progress.interpolate({ inputRange: [0, 1], outputRange: [6, 0] }) }],
-        }}
-      >
-        <Text style={revealStyles.saved}>
-          {summary.interestSavedMinor > 0
-            ? lent
-              ? `${formatMoney(summary.interestSavedMinor)} less interest to come`
-              : `${formatMoney(summary.interestSavedMinor)} in interest saved`
-            : closedOutright
-              ? 'Loan closed'
-              : 'Prepayment applied'}
-        </Text>
-        <Text style={revealStyles.sub}>
-          {closedOutright
-            ? `Fully paid off — no installments left.`
-            : summary.monthsShaved > 0
-              ? `${summary.monthsShaved} installment${summary.monthsShaved === 1 ? '' : 's'} shaved off — done in ${shortMonthYear(summary.newPayoffDate)} instead of ${shortMonthYear(summary.oldPayoffDate)}.`
-              : `Payoff date unchanged, but you now owe less along the way.`}
-        </Text>
-      </Animated.View>
-
-      <PrimaryButton title="Nice!" onPress={onDone} style={revealStyles.doneBtn} />
-    </View>
+    <CompletionCard title={closed ? 'Loan closed' : 'Prepayment saved'} detail={detail}>
+      {summary.interestSavedMinor > 0 && (
+        <View style={revealStyles.result}>
+          <Text style={revealStyles.label}>{lent ? 'Less interest to receive' : 'Interest saved'}</Text>
+          <Text style={revealStyles.value}>{formatMoney(summary.interestSavedMinor)}</Text>
+        </View>
+      )}
+      {!closed && summary.monthsShaved > 0 && (
+        <Text style={revealStyles.previous}>Previously ending {shortMonthYear(summary.oldPayoffDate)}</Text>
+      )}
+    </CompletionCard>
   );
 }
-
 const revealStyles = StyleSheet.create({
-  glow: {
-    position: 'absolute',
-    top: -10,
-    left: '50%',
-    marginLeft: -40,
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-  },
-  ticks: { flexDirection: 'row', alignItems: 'center', gap: 3, height: 20 },
-  tick: { width: 6, height: 14, borderRadius: 2, backgroundColor: theme.colors.borderSoft },
-  saved: { fontFamily: theme.font.monoBold, fontSize: 18, color: theme.colors.incomeText, marginTop: 14 },
-  sub: {
-    fontFamily: theme.font.body,
-    fontSize: 11.5,
-    color: theme.colors.textSecondary,
-    marginTop: 4,
-    lineHeight: 16,
-  },
-  doneBtn: { marginTop: 20 },
+  result: { backgroundColor: theme.colors.incomeTint, borderRadius: 14, padding: 14, gap: 6 },
+  label: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textSecondary },
+  value: { fontFamily: theme.font.monoBold, fontSize: 22, color: theme.colors.incomeText },
+  previous: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
 });
 
 export function PrepayModal({
@@ -318,8 +227,13 @@ export function PrepayModal({
 
   if (result) {
     return (
-      <ModalSheet visible onClose={onDone} variant="center" title="Prepayment applied">
-        <PrepaymentReveal summary={result} lent={lent} onDone={onDone} />
+      <ModalSheet
+        visible
+        onClose={onDone}
+        title="Payment saved"
+        footer={<PrimaryButton title="Done" onPress={onDone} />}
+      >
+        <PrepaymentReveal summary={result} lent={lent} />
       </ModalSheet>
     );
   }

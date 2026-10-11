@@ -39,9 +39,9 @@ export function ContributeModal({
   const [amount, setAmount] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  // Set only when this contribution first pushes the goal to target and a sealed note exists (see submit()).
+  // Shown when this contribution first reaches the target, with the sealed note when one exists.
   // Held locally so the sheet stays open on the reveal instead of the host closing it.
-  const [reveal, setReveal] = useState<{ note: string } | null>(null);
+  const [reveal, setReveal] = useState<{ note: string | null } | null>(null);
   // One save at a time: two taps can land before `saving` disables the button.
   const running = useRef(false);
   const showNote = useMilestoneNote();
@@ -57,9 +57,9 @@ export function ContributeModal({
 
   if (!goal) return null;
 
-  // Once per line, ever: crossing 25 and 50 in one save marks both so neither fires later. The sealed-letter
-  // reveal already marks a finished goal, so 100% is remembered but not announced a second time.
-  const announceMilestone = async (deltaMinor: number, letterShown: boolean) => {
+  // Once per line, ever: crossing 25 and 50 in one save marks both so neither fires later. The completion
+  // card already confirms a finished goal, so 100% is remembered but not announced a second time.
+  const announceMilestone = async (deltaMinor: number, completionShown: boolean) => {
     if (!goal) return;
     try {
       const after = goal.currentAmountMinor + deltaMinor;
@@ -69,7 +69,7 @@ export function ContributeModal({
       const fresh = milestonesUpTo(reached).filter((m) => !seen.includes(goalMilestoneKey(goal.id, m)));
       if (fresh.length === 0) return;
       await markMilestonesSeen(fresh.map((m) => goalMilestoneKey(goal.id, m)));
-      if (!fresh.includes(reached) || (reached === 100 && letterShown)) return;
+      if (!fresh.includes(reached) || (reached === 100 && completionShown)) return;
       const toGo = Math.max(0, goal.targetAmountMinor - after);
       showNote(goalMilestoneCopy(reached, goal.name, toGo, hideAmounts));
     } catch {
@@ -111,14 +111,14 @@ export function ContributeModal({
         goal.currentAmountMinor < goal.targetAmountMinor &&
         goal.currentAmountMinor + deltaMinor >= goal.targetAmountMinor;
       const hasLetter = justCompleted && !!goal.noteToSelf && !goal.letterRevealed;
-      if (hasLetter) {
-        await markGoalLetterRevealed(goal.id);
-        setReveal({ note: goal.noteToSelf as string });
+      if (justCompleted) {
+        if (hasLetter) await markGoalLetterRevealed(goal.id);
+        setReveal({ note: hasLetter ? goal.noteToSelf : null });
       } else {
         onContributed();
       }
       if (direction === 'add') {
-        await announceMilestone(deltaMinor, hasLetter);
+        await announceMilestone(deltaMinor, justCompleted);
       }
     } catch {
       onContributed();
@@ -130,12 +130,12 @@ export function ContributeModal({
 
   return (
     <ModalSheet
-      title="Add to goal"
+      title={reveal ? 'Goal completed' : 'Add to goal'}
       visible
       onClose={reveal ? onContributed : onClose}
       footer={
         reveal ? (
-          <PrimaryButton title="Nice, thanks Suu" onPress={onContributed} />
+          <PrimaryButton title="Done" onPress={onContributed} />
         ) : (
           <View style={f.footerCol}>
             {error && <Text style={styles.errorText}>{error}</Text>}
