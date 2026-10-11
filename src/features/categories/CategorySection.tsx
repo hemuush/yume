@@ -1,5 +1,8 @@
 import { ReactNode, useState } from 'react';
 import { View, Pressable, Animated } from 'react-native';
+import Feather from '@expo/vector-icons/Feather';
+import { theme } from '@/constants/theme';
+import { withPressed } from '@/lib/pressed';
 import { MovingRow } from '@/components/MovingRow';
 import { Text } from '@/components/Text';
 import { Category } from '@/types';
@@ -86,7 +89,7 @@ function SubcategoryPill({
       accessibilityHint="Press and hold for more options"
     >
       <View style={[styles.pillDot, { backgroundColor: category.color }]} />
-      <Text style={styles.pillText} numberOfLines={1}>
+      <Text style={styles.pillText} numberOfLines={2}>
         {category.name}
       </Text>
     </AnimatedPressable>
@@ -204,23 +207,31 @@ function PanelHeader({
   onPress: () => void;
   onLongPress: () => void;
 }) {
-  const { animatedStyle, onPressIn, onPressOut } = usePressScale();
   return (
-    <AnimatedPressable
-      style={[styles.panelHeader, animatedStyle]}
-      onPressIn={onPressIn}
-      onPressOut={onPressOut}
-      onPress={onPress}
-      onLongPress={onLongPress}
-      accessibilityRole="button"
-      accessibilityLabel={`Edit ${parent.name}`}
-    >
-      <Text style={styles.panelTitle} numberOfLines={1}>
-        {parent.name}
-      </Text>
-      <Text style={styles.panelCount}>
-        Edit · {count} subcategor{count === 1 ? 'y' : 'ies'}
-      </Text>
-    </AnimatedPressable>
+    <View style={styles.panelHeader}>
+      <View style={styles.panelHeading}>
+        <Text style={styles.panelTitle}>{parent.name}</Text>
+        <Text style={styles.panelCount}>
+          {count} subcategor{count === 1 ? 'y' : 'ies'}
+        </Text>
+      </View>
+      <Pressable
+        onPress={onPress}
+        style={withPressed(styles.parentEdit)}
+        accessibilityRole="button"
+        accessibilityLabel={`Edit ${parent.name}`}
+      >
+        <Feather name="edit-2" size={15} color={theme.colors.ink} />
+        <Text style={styles.parentEditText}>Edit</Text>
+      </Pressable>
+      <Pressable
+        onPress={onLongPress}
+        style={withPressed(styles.parentMore)}
+        accessibilityRole="button"
+        accessibilityLabel={`More options for ${parent.name}`}
+      >
+        <Feather name="more-horizontal" size={19} color={theme.colors.ink} />
+      </Pressable>
+    </View>
   );
 }

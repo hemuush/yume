@@ -181,6 +181,12 @@ export default function CategoriesScreen() {
           },
         ]
       : [
+          {
+            key: 'edit',
+            label: 'Edit category',
+            icon: 'edit-2',
+            onPress: () => setEditingCategory(manageTarget.cat),
+          },
           // Moving is a parent change in the edit sheet, so a subcategory's menu just opens it there.
           ...(manageTarget.cat.parentId
             ? [
