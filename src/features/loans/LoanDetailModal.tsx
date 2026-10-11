@@ -280,16 +280,14 @@ export function LoanDetailModal({
               title={liveLoan.counterparty}
               meta={`EMI ${formatMoney(liveLoan.emiAmountMinor)} a month`}
             />
-            <View style={styles.sheetTabs}>
-              <SheetTabs
-                options={[
-                  { label: 'Overview', value: 'overview' },
-                  { label: 'Schedule', value: 'schedule' },
-                ]}
-                value={tab}
-                onChange={setTab}
-              />
-            </View>
+            <SheetTabs
+              options={[
+                { label: 'Overview', value: 'overview' },
+                { label: 'Schedule', value: 'schedule' },
+              ]}
+              value={tab}
+              onChange={setTab}
+            />
 
             {tab === 'overview' ? (
               <>

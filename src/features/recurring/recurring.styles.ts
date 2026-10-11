@@ -66,7 +66,6 @@ export const styles = StyleSheet.create({
   },
   // The recurring sheet (Direction C): its tabs, a row's picker opened in
   // place, and the row of next dates.
-  tabs: { marginBottom: 14 },
   gap: { height: 14 },
   rowPanel: {
     flexDirection: 'row',

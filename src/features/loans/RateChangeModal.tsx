@@ -6,7 +6,7 @@ import { calculateEmi } from '@/lib/loan';
 import { formatMoney } from '@/lib/money';
 import { Loan } from '@/types';
 import { AmountField } from '@/components/AmountField';
-import { SegmentedControl } from '@/components/SegmentedControl';
+import { SheetTabs } from '@/components/SheetTabs';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { ModalSheet } from '@/components/ModalSheet';
 import { modalFooterStyles as f } from '@/constants/theme';
@@ -101,7 +101,7 @@ export function RateChangeModal({
         pending.
       </Text>
       <Text style={styles.fieldLabel}>When the rate changes, your bank lets you choose:</Text>
-      <SegmentedControl options={RATE_CHANGE_MODES} value={mode} onChange={setMode} />
+      <SheetTabs options={RATE_CHANGE_MODES} value={mode} onChange={setMode} />
       {mode === 'keepEmi' ? (
         <Text style={styles.hintText}>
           EMI stays {formatMoney(loan.emiAmountMinor)}; the remaining schedule recalculates at the new rate

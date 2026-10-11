@@ -52,7 +52,6 @@ export const styles = StyleSheet.create({
   statLabel: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textMuted },
   errorText: { fontFamily: theme.font.body, color: theme.colors.expenseText, fontSize: 13, marginBottom: 12 },
   // The Overview / Schedule switch under a loan's card.
-  sheetTabs: { marginBottom: 14 },
   sectionTitle: {
     ...SECTION_TITLE,
     marginTop: SECTION_GAP.top,

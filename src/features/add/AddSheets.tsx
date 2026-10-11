@@ -29,12 +29,7 @@ export function AddSheets({
 }) {
   return (
     <>
-      <ModalSheet
-        visible={accountSheet.open}
-        onClose={accountSheet.onClose}
-        title={accountSheet.title}
-        scrollable={false}
-      >
+      <ModalSheet visible={accountSheet.open} onClose={accountSheet.onClose} title={accountSheet.title}>
         <AccountPickList
           accounts={accountSheet.accounts}
           activeId={accountSheet.activeId}

@@ -59,6 +59,7 @@ export function RestorePreviewSheet({
   return (
     <ModalSheet
       visible
+      title="Restore preview"
       // Backdrop, ✕ and Android back do nothing while the restore is running.
       onClose={busy ? noop : onCancel}
       scrollable={false}

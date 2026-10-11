@@ -8,8 +8,8 @@ jest.mock('@/components/ModalSheet', () => ({
   ModalSheet: ({ children, footer }: { children: unknown; footer?: unknown }) =>
     require('react').createElement(require('react').Fragment, null, children, footer),
 }));
-jest.mock('@/components/SegmentedControl', () => ({
-  SegmentedControl: (p: { value: string }) =>
+jest.mock('@/components/SheetTabs', () => ({
+  SheetTabs: (p: { value: string }) =>
     require('react').createElement(require('react-native').View, { testID: 'type', ...p }),
 }));
 

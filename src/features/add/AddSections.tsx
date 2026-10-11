@@ -197,7 +197,6 @@ export function TransferAccounts({
         visible={picking !== null}
         onClose={() => setPicking(null)}
         title={picking === 'from' ? 'Move from' : 'Move to'}
-        scrollable={false}
       >
         <AccountPickList
           accounts={options}

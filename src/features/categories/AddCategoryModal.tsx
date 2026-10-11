@@ -4,7 +4,7 @@ import { Text } from '@/components/Text';
 import { createCategory, updateCategory } from '@/db/ledger';
 import { Category, CategoryKind } from '@/types';
 import { FormInput } from '@/components/FormInput';
-import { SegmentedControl } from '@/components/SegmentedControl';
+import { SheetTabs } from '@/components/SheetTabs';
 import { ToggleSwitch } from '@/components/ToggleSwitch';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { ModalSheet, SheetLink } from '@/components/ModalSheet';
@@ -154,7 +154,7 @@ export function AddCategoryModal({
       ) : (
         <>
           <Text style={styles.fieldLabel}>Type</Text>
-          <SegmentedControl options={KINDS} value={kind} onChange={onKindChange} />
+          <SheetTabs options={KINDS} value={kind} onChange={onKindChange} />
         </>
       )}
       {showParentPicker && (

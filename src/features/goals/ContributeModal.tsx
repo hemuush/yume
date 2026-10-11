@@ -8,7 +8,7 @@ import { ModalSheet } from '@/components/ModalSheet';
 import { modalFooterStyles as f } from '@/constants/theme';
 import { AmountField } from '@/components/AmountField';
 import { PrimaryButton } from '@/components/PrimaryButton';
-import { SegmentedControl } from '@/components/SegmentedControl';
+import { SheetTabs } from '@/components/SheetTabs';
 import { GoalLetterReveal } from './GoalLetterReveal';
 import { GoalSheetCard } from './GoalSheetCard';
 import { haptics } from '@/lib/haptics';
@@ -167,7 +167,7 @@ export function ContributeModal({
             targetDate={goal.targetDate}
             kicker={inputMinor(amount) > 0 ? 'After this' : undefined}
           />
-          <SegmentedControl options={DIRECTIONS} value={direction} onChange={setDirection} />
+          <SheetTabs options={DIRECTIONS} value={direction} onChange={setDirection} />
           <View style={{ height: 14 }} />
           <AmountField
             label="Amount"

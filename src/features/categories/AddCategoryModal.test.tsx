@@ -20,7 +20,7 @@ function mockStub(testID: string) {
   return (p: object) => require('react').createElement(require('react-native').View, { testID, ...p });
 }
 jest.mock('@/components/FormInput', () => ({ FormInput: mockStub('name') }));
-jest.mock('@/components/SegmentedControl', () => ({ SegmentedControl: mockStub('kind') }));
+jest.mock('@/components/SheetTabs', () => ({ SheetTabs: mockStub('kind') }));
 jest.mock('@/components/ToggleSwitch', () => ({ ToggleSwitch: mockStub('sensitive') }));
 jest.mock('@/components/SheetCard', () => ({ SheetCard: mockStub('card') }));
 jest.mock('@/components/CategoryIcon', () => ({ CategoryIcon: () => null }));

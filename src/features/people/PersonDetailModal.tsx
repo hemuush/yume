@@ -325,16 +325,14 @@ export function PersonDetailModal({
           <PrimaryButton title="Retry" variant="secondary" compact onPress={load} />
         </>
       )}
-      <View style={styles.sheetTabs}>
-        <SheetTabs
-          options={[
-            { label: 'Settle', value: 'settle' },
-            { label: 'History', value: 'history' },
-          ]}
-          value={tab}
-          onChange={setTab}
-        />
-      </View>
+      <SheetTabs
+        options={[
+          { label: 'Settle', value: 'settle' },
+          { label: 'History', value: 'history' },
+        ]}
+        value={tab}
+        onChange={setTab}
+      />
 
       {tab === 'history' && linkedLoans.length > 0 && (
         <>

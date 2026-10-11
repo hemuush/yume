@@ -35,7 +35,7 @@ jest.mock('@/components/FormInput', () => ({
 }));
 jest.mock('@/components/DateField', () => ({ DateField: () => null }));
 jest.mock('@/components/ToggleSwitch', () => ({ ToggleSwitch: () => null }));
-jest.mock('@/components/SegmentedControl', () => ({ SegmentedControl: () => null }));
+jest.mock('@/components/SheetTabs', () => ({ SheetTabs: () => null }));
 jest.mock('./AddLoanParts', () => ({
   OptionCards: (p: { options: { value: string }[]; value: string; onChange: (v: string) => void }) =>
     require('react').createElement(require('react-native').View, {
