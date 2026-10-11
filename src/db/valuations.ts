@@ -1,6 +1,6 @@
 import { getDb } from './client';
 import { newId } from '@/lib/id';
-import { isIsoDate } from '@/lib/date';
+import { assertValidIsoDate } from '@/lib/date';
 import { captureRow, restoreRow, RowSnapshot } from './undoSnapshot';
 
 /** What a tracked account was worth on a date, as you entered it. */
@@ -51,7 +51,7 @@ const VALUATION_SELECT = `SELECT v.id, v.account_id, v.date, v.value_minor,
   FROM account_valuations v JOIN accounts a ON a.id = v.account_id`;
 
 function assertInput(input: { date: string; valueMinor: number }): void {
-  if (!isIsoDate(input.date)) throw new Error('Pick a valid date');
+  assertValidIsoDate(input.date);
   if (!Number.isSafeInteger(input.valueMinor) || input.valueMinor < 0) {
     throw new Error('Enter what it is worth, as zero or more');
   }

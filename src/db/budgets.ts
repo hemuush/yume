@@ -224,6 +224,7 @@ export async function createBudget(input: BudgetInput): Promise<Budget> {
   }
   const db = await getDb();
   const periodMonth = input.periodMonth ?? periodMonthOf();
+  if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(periodMonth)) throw new Error('Pick a valid budget month');
   const existing = await db.getFirstAsync<{ id: string }>(
     'SELECT id FROM budgets WHERE category_id = ? AND period_month = ?',
     [input.categoryId, periodMonth]

@@ -159,6 +159,13 @@ export async function createAccount(input: {
   if (!input.name.trim()) {
     throw new Error('Account name is required');
   }
+  if (!Number.isSafeInteger(input.openingBalanceMinor ?? 0))
+    throw new Error('Opening balance must be a valid whole number');
+  if (
+    input.creditLimitMinor != null &&
+    (!Number.isSafeInteger(input.creditLimitMinor) || input.creditLimitMinor < 0)
+  )
+    throw new Error('Credit limit must be a valid, non-negative whole number');
   assertCycleDays(input.statementDay, input.dueDay);
   const db = await getDb();
   const id = newId();
@@ -204,13 +211,13 @@ export async function updateAccount(id: string, input: UpdateAccountInput): Prom
   if (!input.name.trim()) {
     throw new Error('Account name is required');
   }
-  if (!Number.isFinite(input.openingBalanceMinor)) {
+  if (!Number.isSafeInteger(input.openingBalanceMinor)) {
     throw new Error('Opening balance must be a valid number');
   }
   assertCycleDays(input.statementDay, input.dueDay);
   if (
     input.creditLimitMinor != null &&
-    (!Number.isFinite(input.creditLimitMinor) || input.creditLimitMinor < 0)
+    (!Number.isSafeInteger(input.creditLimitMinor) || input.creditLimitMinor < 0)
   ) {
     throw new Error('Credit limit must be a valid, non-negative number');
   }

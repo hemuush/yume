@@ -29,8 +29,7 @@ import { getDb } from '@/db/client';
 import { shouldRelock } from '@/lib/appLock';
 import { getHasOnboarded, setHasOnboarded, getAppLockEnabled } from '@/db/settings';
 import { listAccounts, listTransactions } from '@/db/ledger';
-import { runLocalBackupIfDue } from '@/lib/localBackup';
-import { runDueRecurringRules } from '@/db/recurring';
+import { runAppMaintenance } from '@/lib/runAppMaintenance';
 import {
   ensureAndroidChannel,
   rebuildNotifications,
@@ -40,7 +39,6 @@ import {
 } from '@/lib/notifications';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { refreshAllWidgets } from '@/widgets/notifyWidgets';
-import { emitTransactionsChanged } from '@/lib/dataEvents';
 import { AccentProvider } from '@/theme/AccentContext';
 import { PrivacyProvider } from '@/theme/PrivacyContext';
 import { AppLockProvider, useAppLock } from '@/lib/AppLockContext';
@@ -92,21 +90,11 @@ export default function RootLayout() {
       .then(async () => {
         if (cancelled) return;
         setDbReady(true);
-        // Fire-and-forget; never blocks startup or errors. Waits for the first screen to settle: reading
-        // the whole ledger for the snapshot holds the DB queue, and Home's own queries should go first.
-        InteractionManager.runAfterInteractions(
-          () => void runLocalBackupIfDue().catch((err) => console.error('runLocalBackupIfDue failed:', err))
-        );
-        // Catches up missed recurring transactions since last open. Rules isolate their own failures; this
-        // catch only guards the outer query (e.g. getDb()) from an unhandled rejection.
-        // Screens that loaded before it finished reload when it posts something.
-        runDueRecurringRules()
-          .then((created) => {
-            if (created > 0) emitTransactionsChanged();
-          })
-          .catch((err) => console.error('runDueRecurringRules failed:', err));
-        // Unlike runDueRecurringRules/runLocalBackupIfDue, ensureAndroidChannel has no internal try/catch
-        // and can reject (bad channel, revoked permission), so this call needs its own catch on cold start.
+        // Start after the first screen settles. Catch-up finishes before the snapshot is taken.
+        InteractionManager.runAfterInteractions(() => {
+          void runAppMaintenance().catch((err) => console.error('App maintenance failed:', err));
+        });
+        // Channel setup can reject after a permission change; contain that failure on cold start.
         void ensureAndroidChannel().catch((err) => console.error('ensureAndroidChannel failed:', err));
         // One-time: drop notifications still scheduled under the pre-rename
         // `flynse-*` identifiers.
@@ -244,12 +232,9 @@ function AppGate({ needsOnboarding, initialLocked }: { needsOnboarding: boolean;
     const sub = AppState.addEventListener('change', (next: AppStateStatus) => {
       if (next === 'background') refreshAllWidgets();
       if (next === 'active') {
-        void runLocalBackupIfDue();
-        runDueRecurringRules()
-          .then((created) => {
-            if (created > 0) emitTransactionsChanged();
-          })
-          .catch((err) => console.error('runDueRecurringRules failed:', err));
+        InteractionManager.runAfterInteractions(() => {
+          void runAppMaintenance().catch((err) => console.error('App maintenance failed:', err));
+        });
       }
     });
     return () => sub.remove();

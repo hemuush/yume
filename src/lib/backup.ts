@@ -1,5 +1,6 @@
 import { getDb, type AppDb } from '@/db/client';
 import { resetSettingsCache } from '@/db/settings';
+import { assertValidIsoDate } from './date';
 import { BACKFILL_LOAN_TX_KIND_SQL } from '@/db/loanTxKind';
 
 /**
@@ -77,9 +78,13 @@ function isValidSnapshotShape(snapshot: unknown): snapshot is BackupSnapshot {
   return (
     !!s &&
     typeof s === 'object' &&
-    typeof s.formatVersion === 'number' &&
+    Number.isSafeInteger(s.formatVersion) &&
+    (s.formatVersion ?? 0) >= 1 &&
     typeof s.tables === 'object' &&
-    s.tables !== null
+    s.tables !== null &&
+    !Array.isArray(s.tables) &&
+    Array.isArray(s.tables.transactions) &&
+    Array.isArray(s.tables.accounts)
   );
 }
 
@@ -103,7 +108,7 @@ export async function restoreFromSnapshot(snapshot: BackupSnapshot): Promise<Res
 /** restoreFromSnapshot on a handle the caller already holds (see buildBackupSnapshotOn). */
 export async function restoreFromSnapshotOn(db: AppDb, snapshot: BackupSnapshot): Promise<RestoreResult> {
   if (!isValidSnapshotShape(snapshot)) {
-    throw new Error("This doesn't look like a Yume backup file.");
+    throw new Error("This backup file is damaged or isn't a Yume backup. Nothing was changed.");
   }
   if (snapshot.formatVersion > BACKUP_FORMAT_VERSION) {
     throw new Error('This backup was made with a newer version of Yume. Please update the app first.');
@@ -135,6 +140,21 @@ export async function restoreFromSnapshotOn(db: AppDb, snapshot: BackupSnapshot)
       );
     } // Money is whole minor units everywhere: text or a fraction there would be stored as-is (SQLite accepts
     // it) and quietly break every total later, so it's rejected now, before anything is touched.
+    const dateColumns = [
+      'date',
+      'start_date',
+      'due_date',
+      'paid_date',
+      'effective_date',
+      'target_date',
+      'next_run_date',
+      'end_date',
+    ];
+    for (const row of rows) {
+      for (const column of dateColumns) {
+        if (row[column] != null) assertValidIsoDate(row[column] as string);
+      }
+    }
     const badAmount = rows.some((r) =>
       Object.entries(r as Record<string, unknown>).some(
         ([key, value]) => key.endsWith('_minor') && value != null && !Number.isSafeInteger(value)
@@ -257,8 +277,14 @@ export function isTooLargeForBackup(bytes: number | null | undefined): boolean {
 
 /** A backup file's summary — or null when the file isn't a Yume backup at all. */
 export function summarizeSnapshot(snapshot: unknown): BackupSummary | null {
-  const tables = (snapshot as BackupSnapshot | null)?.tables;
+  if (!isValidSnapshotShape(snapshot)) return null;
+  const tables = snapshot.tables;
   if (!tables || !Array.isArray(tables.transactions) || !Array.isArray(tables.accounts)) return null;
+  if (
+    tables.transactions.some((row) => !row || typeof row !== 'object' || Array.isArray(row)) ||
+    tables.accounts.some((row) => !row || typeof row !== 'object' || Array.isArray(row))
+  )
+    return null;
   const dates = tables.transactions
     .map((t: { date?: unknown }) => t.date)
     .filter((d): d is string => typeof d === 'string');

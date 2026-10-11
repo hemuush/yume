@@ -10,6 +10,7 @@ import { rebuildNotificationsAfterCommit } from './afterCommit';
 import { captureRow, captureRows, restoreRows, RowSnapshot } from './undoSnapshot';
 
 import { rowToLoan } from './loanRows';
+import { assertValidIsoDate } from '@/lib/date';
 import { rateProblem, tenureProblem } from '@/lib/loanLimits';
 
 /** Creating, editing and deleting loans (re-exported from ./loans). */
@@ -68,6 +69,16 @@ export async function createLoan(input: CreateLoanInput): Promise<Loan> {
   ) {
     throw new Error('Loan principal, interest rate, and tenure must be valid numbers');
   }
+  assertValidIsoDate(input.startDate);
+  if (input.emiStartDate) assertValidIsoDate(input.emiStartDate);
+  if (!input.counterparty.trim()) throw new Error('Loan name is required');
+  if (
+    input.alreadyPaidInstallments != null &&
+    (!Number.isSafeInteger(input.alreadyPaidInstallments) || input.alreadyPaidInstallments < 0)
+  )
+    throw new Error('Installments paid must be a non-negative whole number');
+  if (input.disbursement && (input.alreadyPaidInstallments ?? 0) > 0)
+    throw new Error('An existing loan cannot also record a new disbursement');
   const limitProblem = rateProblem(input.interestRateAnnualBp) ?? tenureProblem(input.tenureMonths);
   if (limitProblem) throw new Error(limitProblem);
   const db = await getDb();

@@ -1,6 +1,7 @@
 import { LoanPaymentRow, LoanRow } from './rows';
 import { getDb } from './client';
 import { assertDefaultCurrencyAccount } from './currencyInvariant';
+import { assertValidIsoDate } from '@/lib/date';
 import { newId } from '@/lib/id';
 import { assertSpendableAccount } from './ledger';
 import { calculateEmi, recalculateAfterPrepayment } from '@/lib/loan';
@@ -20,6 +21,7 @@ export async function payInstallment(
   loanPaymentId: string,
   opts: { accountId: string; categoryId: string; paidDate: string }
 ): Promise<void> {
+  assertValidIsoDate(opts.paidDate);
   const db = await getDb();
   const payment = await db.getFirstAsync<LoanPaymentRow>('SELECT * FROM loan_payments WHERE id = ?', [
     loanPaymentId,
@@ -43,6 +45,11 @@ export async function payInstallment(
     ]);
     if (!current) throw new Error('Loan payment not found');
     if (current.status === 'paid') throw new Error('This installment has already been paid');
+    const earlier = await tx.getFirstAsync<{ id: string }>(
+      "SELECT id FROM loan_payments WHERE loan_id = ? AND status = 'pending' AND installment_number < ? LIMIT 1",
+      [current.loan_id, current.installment_number]
+    );
+    if (earlier) throw new Error('Pay the earlier installments first');
     await tx.runAsync(
       `INSERT INTO transactions (id, type, account_id, category_id, amount_minor, date, note)
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
@@ -87,6 +94,7 @@ export async function applyRateChange(
   if (!opts.effectiveDate) {
     throw new Error('Enter the date this rate change actually took effect');
   }
+  assertValidIsoDate(opts.effectiveDate);
   const mode = opts.mode ?? 'keepEmi';
   const db = await getDb();
   await db.withTransactionAsync(async (tx) => {
@@ -416,6 +424,7 @@ export async function applyPrepayment(
     chargeAmountMinor?: number;
   }
 ): Promise<PrepaymentSummary> {
+  assertValidIsoDate(opts.date);
   if (!Number.isSafeInteger(opts.amountMinor) || opts.amountMinor <= 0) {
     throw new Error('Prepayment amount must be a valid positive number');
   }

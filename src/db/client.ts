@@ -12,25 +12,36 @@ import { bumpDataVersion, trackDataVersion } from './dataVersion';
 const DB_NAME = 'yume.db';
 const LEGACY_DB_NAME = 'flynse.db';
 
-/**
- * Renames the pre-Yume `flynse.db` in place on first launch so an existing install keeps its data instead of
- * opening an empty `yume.db`. Best-effort: on failure the app starts empty (recoverable from a backup).
- */
-async function migrateDbFilename(): Promise<void> {
+/** Copy an older install before opening the new name. Failure preserves the original and blocks startup. */
+export async function migrateDbFilename(): Promise<void> {
+  const sqliteDir = new Directory(Paths.document, 'SQLite');
+  if (!sqliteDir.exists) return;
+  const legacyMain = new File(sqliteDir, LEGACY_DB_NAME);
+  const newMain = new File(sqliteDir, DB_NAME);
+  if (!legacyMain.exists || newMain.exists) return;
+  const copied: File[] = [];
   try {
-    const sqliteDir = new Directory(Paths.document, 'SQLite');
-    if (!sqliteDir.exists) return;
-    const legacyMain = new File(sqliteDir, LEGACY_DB_NAME);
-    const newMain = new File(sqliteDir, DB_NAME);
-    if (!legacyMain.exists || newMain.exists) return;
-    for (const suffix of ['', '-wal', '-shm', '-journal']) {
-      const src = new File(sqliteDir, `${LEGACY_DB_NAME}${suffix}`);
-      if (src.exists) {
-        await src.move(new File(sqliteDir, `${DB_NAME}${suffix}`));
+    // Main is the completion marker: never create it before its write-ahead log is in place.
+    for (const suffix of ['-wal', '-shm', '-journal', '']) {
+      const source = new File(sqliteDir, `${LEGACY_DB_NAME}${suffix}`);
+      if (!source.exists) continue;
+      const target = new File(sqliteDir, `${DB_NAME}${suffix}`);
+      if (target.exists) target.delete();
+      copied.push(target);
+      source.copy(target);
+    }
+  } catch (error) {
+    for (const file of copied.reverse()) {
+      try {
+        if (file.exists) file.delete();
+      } catch {
+        /* Retried before the next copy. */
       }
     }
-  } catch (e) {
-    console.warn('DB filename migration skipped:', e);
+    console.warn('Existing database upgrade failed:', error);
+    throw new Error(
+      'Your existing data could not be upgraded. The original database is kept; free some storage and try again.'
+    );
   }
 }
 

@@ -3,8 +3,6 @@ import { RecurringRuleRow } from './rows';
 import { getDb } from './client';
 import { newId } from '@/lib/id';
 import {
-  assertSpendableAccount,
-  assertSameCurrencyTransfer,
   assertValidTransactionInput,
   insertTransactionRow,
   checkOverspendForNewTransaction,
@@ -12,7 +10,7 @@ import {
 } from './ledger';
 import { captureRow, restoreRow, RowSnapshot } from './undoSnapshot';
 import { RecurringRule, RecurrenceFrequency, TransactionType, PaymentMode } from '@/types';
-import { toLocalIsoDate, dayOfIsoDate } from '@/lib/date';
+import { toLocalIsoDate, dayOfIsoDate, assertValidIsoDate } from '@/lib/date';
 import { advanceDate } from '@/lib/recurrence';
 
 function rowToRule(row: RecurringRuleRow): RecurringRule {
@@ -84,13 +82,24 @@ async function validate(input: RecurringRuleInput) {
   if (!Number.isInteger(input.intervalCount) || input.intervalCount <= 0) {
     throw new Error('Repeat interval must be a whole number of 1 or more');
   }
+  assertValidIsoDate(input.nextRunDate);
+  if (input.endDate) assertValidIsoDate(input.endDate);
+  if (!['daily', 'weekly', 'monthly', 'yearly'].includes(input.frequency))
+    throw new Error('Pick a valid repeat frequency');
+  const next = advanceDate(
+    input.nextRunDate,
+    input.frequency,
+    input.intervalCount,
+    dayOfIsoDate(input.nextRunDate)
+  );
+  assertValidIsoDate(next);
+  if (next <= input.nextRunDate) throw new Error('Repeat interval must advance the date');
   if (input.endDate && input.endDate < input.nextRunDate) {
     throw new Error('End date must be on or after the start date');
   }
   // Same rules createTransaction enforces when a rule fires, checked at save time so a bad rule can't
   // fail silently every cycle.
-  await assertSpendableAccount(input.type, input.accountId);
-  await assertSameCurrencyTransfer(input.type, input.accountId, input.toAccountId);
+  await assertValidTransactionInput({ ...input, date: input.nextRunDate });
 }
 
 export async function listRecurringRules(): Promise<RecurringRule[]> {

@@ -167,7 +167,7 @@ export default function BackupScreen() {
   }, []);
   // `loaded` keeps the unloaded default `!localFolderUri` from briefly showing the "choose a folder"
   // call-to-action to someone with a folder configured; `loadError` says so if the settings can't be read.
-  const { loaded, hasData, loadError, reload: load } = useScreenLoad(loadData);
+  const { loaded, hasData, loadError, reload: load } = useScreenLoad(loadData, { skipWhenUnchanged: false });
 
   const run = async (label: string, fn: () => Promise<void>, opts?: { confirm?: boolean }) => {
     setBusy(label);
