@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { View, Animated, Easing, StyleProp, ViewStyle, TextStyle } from 'react-native';
+import { View, Animated, Easing, StyleProp, TextStyle, Pressable } from 'react-native';
 import { captureRef } from 'react-native-view-shot';
 import * as Sharing from 'expo-sharing';
 import { File } from 'expo-file-system';
@@ -12,59 +12,24 @@ import { PrimaryButton } from '@/components/PrimaryButton';
 import { showAlert } from '@/components/AppDialog';
 import { theme } from '@/constants/theme';
 import { formatMoney } from '@/lib/money';
-import { dayMonth, longWeekday } from '@/lib/dateLabels';
 import { withoutRelock } from '@/lib/appLock';
 import { errorMessage } from '@/lib/errorMessage';
 import { useAccent } from '@/theme/AccentContext';
 import { Wrap, WrapBeat, USUAL_BAND_PCT } from './wrapData';
-import { KickerDot } from '@/components/StripCard';
 import { Glass } from '@/components/Glass';
 import { HomeWallpaper } from '@/features/home/HomeWallpaper';
 import { YumeLogo } from '@/components/YumeLogo';
-import { styles, kickerTone } from './wrap.styles';
+import { styles } from './wrap.styles';
+import { Rise, Kicker } from './WrapBeatPrimitives';
+import { BarsBeat, DaysBeat, WeekDaysBeat } from './WrapCharts';
+import { withPressed } from '@/lib/pressed';
+
+export { BarsBeat, DaysBeat, WeekDaysBeat } from './WrapCharts';
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 const EASE = Easing.out(Easing.cubic);
 
 type BeatOf<K extends WrapBeat['kind']> = Extract<WrapBeat, { kind: K }>;
-
-/** Fades and lifts something in after `delay` ms, once, when the beat appears. Still when `still`. */
-function Rise({
-  delay = 0,
-  still,
-  style,
-  onShown,
-  children,
-}: {
-  delay?: number;
-  still: boolean;
-  style?: StyleProp<ViewStyle>;
-  /** Called once it is fully visible (straight away when still). */
-  onShown?: () => void;
-  children: React.ReactNode;
-}) {
-  const [v] = useState(() => new Animated.Value(still ? 1 : 0));
-  const shown = useRef(onShown);
-  useEffect(() => {
-    shown.current = onShown;
-  });
-  useEffect(() => {
-    if (still) {
-      v.setValue(1);
-      shown.current?.();
-      return;
-    }
-    const a = Animated.timing(v, { toValue: 1, duration: 380, delay, easing: EASE, useNativeDriver: true });
-    a.start(({ finished }) => {
-      if (finished) shown.current?.();
-    });
-    return () => a.stop();
-  }, [v, delay, still]);
-  const translateY = v.interpolate({ inputRange: [0, 1], outputRange: [14, 0] });
-  return (
-    <Animated.View style={[style, { opacity: v, transform: [{ translateY }] }]}>{children}</Animated.View>
-  );
-}
 
 /** A 0→`to` number that counts up once, for percentages. */
 function CountUpPct({ to, still, style }: { to: number; still: boolean; style: StyleProp<TextStyle> }) {
@@ -114,16 +79,6 @@ function Letter({ ch, index, still }: { ch: string; index: number; still: boolea
   );
 }
 
-/** A beat's small heading, after a dot in the beat's colour. */
-function Kicker({ kind, children }: { kind: WrapBeat['kind']; children: React.ReactNode }) {
-  return (
-    <View style={styles.kickerRow}>
-      <KickerDot color={kickerTone(kind)} />
-      <Text style={styles.kicker}>{children}</Text>
-    </View>
-  );
-}
-
 export function HookBeat({ beat, still }: { beat: BeatOf<'hook'>; still: boolean }) {
   return (
     <View style={styles.beat}>
@@ -138,6 +93,7 @@ export function HookBeat({ beat, still }: { beat: BeatOf<'hook'>; still: boolean
         </View>
         <CountUpAmount
           minor={beat.spentMinor}
+          countFromZero={!still}
           style={[styles.huge, styles.gapM]}
           numberOfLines={1}
           adjustsFontSizeToFit
@@ -250,170 +206,6 @@ export function KeptBeat({ beat, still }: { beat: BeatOf<'kept'>; still: boolean
   );
 }
 
-function Bar({ pct, color, index, still }: { pct: number; color: string; index: number; still: boolean }) {
-  const [v] = useState(() => new Animated.Value(still ? pct : 0));
-  useEffect(() => {
-    if (still) {
-      v.setValue(pct);
-      return;
-    }
-    const a = Animated.timing(v, {
-      toValue: pct,
-      duration: 700,
-      delay: 150 + index * 160,
-      easing: EASE,
-      useNativeDriver: false,
-    });
-    a.start();
-    return () => a.stop();
-  }, [v, pct, index, still]);
-  const width = v.interpolate({ inputRange: [0, 100], outputRange: ['0%', '100%'], extrapolate: 'clamp' });
-  return (
-    <View style={styles.barTrack}>
-      <Animated.View style={[styles.barFill, { width, backgroundColor: color }]} />
-    </View>
-  );
-}
-
-export function BarsBeat({ beat, still }: { beat: BeatOf<'bars'>; still: boolean }) {
-  const max = Math.max(1, ...beat.items.map((c) => c.totalMinor));
-  const lead = beat.items[0];
-  return (
-    <View style={styles.beat}>
-      <Kicker kind="bars">Where it went</Kicker>
-      <Rise still={still}>
-        <Text style={[styles.display, styles.gapM]}>
-          {beat.items.length === 1 ? `All of it went to ${lead.name}.` : `${lead.name} took the most.`}
-        </Text>
-      </Rise>
-      <View style={styles.middle}>
-        <Glass radius={24} tone="strong" style={styles.chartCard}>
-          <View style={[styles.bars, styles.chartBody]}>
-            {beat.items.map((c, i) => (
-              <Rise key={c.categoryId} delay={i * 160} still={still}>
-                <View style={styles.barHead}>
-                  <Text style={styles.barName} numberOfLines={1}>
-                    {c.name}
-                  </Text>
-                  <Amount minor={c.totalMinor} sensitive={c.isSensitive} style={styles.barAmount} />
-                </View>
-                <Bar pct={Math.max(2, (c.totalMinor / max) * 100)} color={c.color} index={i} still={still} />
-              </Rise>
-            ))}
-          </View>
-        </Glass>
-      </View>
-    </View>
-  );
-}
-
-/** How dark a day is on the calendar: four steps of gold, by its share of the heaviest day. */
-function dayLevel(totalMinor: number, max: number): number {
-  if (totalMinor <= 0 || max <= 0) return 0;
-  const share = totalMinor / max;
-  return share > 0.66 ? 1 : share > 0.33 ? 0.7 : share > 0.12 ? 0.45 : 0.25;
-}
-
-function DayCell({
-  day,
-  level,
-  index,
-  ring,
-  still,
-}: {
-  day: number;
-  level: number;
-  index: number;
-  ring: boolean;
-  still: boolean;
-}) {
-  const [fill] = useState(() => new Animated.Value(still ? level : 0));
-  const [ringV] = useState(() => new Animated.Value(still && ring ? 1 : 0));
-  useEffect(() => {
-    if (still) {
-      fill.setValue(level);
-      ringV.setValue(ring ? 1 : 0);
-      return;
-    }
-    const a = Animated.parallel([
-      Animated.timing(fill, { toValue: level, duration: 180, delay: 80 + index * 45, useNativeDriver: true }),
-      ...(ring
-        ? [
-            Animated.timing(ringV, {
-              toValue: 1,
-              duration: 240,
-              delay: 1500,
-              easing: EASE,
-              useNativeDriver: true,
-            }),
-          ]
-        : []),
-    ]);
-    a.start();
-    return () => a.stop();
-  }, [fill, ringV, level, index, ring, still]);
-  return (
-    <View style={styles.calSlot}>
-      <View style={styles.calCell}>
-        <Animated.View style={[styles.calFill, { opacity: fill }]} />
-        {ring && <Animated.View style={[styles.calRing, { opacity: ringV }]} />}
-        <Text style={styles.calDay}>{day}</Text>
-      </View>
-    </View>
-  );
-}
-
-function quietLine(quietDays: number, span: 'month' | 'week'): string {
-  if (quietDays === 0) return `Something went out every day of the ${span}.`;
-  if (quietDays === 1) return 'And 1 day nothing went out at all.';
-  return `And ${quietDays} days nothing went out at all.`;
-}
-
-export function DaysBeat({ beat, still }: { beat: BeatOf<'days'>; still: boolean }) {
-  const max = beat.heaviest.totalMinor;
-  return (
-    <View style={styles.beat}>
-      <Kicker kind="days">How the days went</Kicker>
-      <View style={styles.middle}>
-        <Glass radius={24} tone="strong" style={styles.chartCard}>
-          <View style={styles.chartBody}>
-            <View
-              style={styles.cal}
-              accessibilityElementsHidden
-              importantForAccessibility="no-hide-descendants"
-            >
-              {Array.from({ length: beat.firstWeekday }, (_, i) => (
-                <View key={`pad-${i}`} style={styles.calSlot} />
-              ))}
-              {beat.days.map((d, i) => (
-                <DayCell
-                  key={d.date}
-                  day={i + 1}
-                  level={dayLevel(d.totalMinor, max)}
-                  index={i}
-                  ring={d.date === beat.heaviest.date}
-                  still={still}
-                />
-              ))}
-            </View>
-          </View>
-        </Glass>
-        <Rise delay={1500} still={still}>
-          <Text style={[styles.displaySmall, styles.gapM]}>
-            {dayMonth(beat.heaviest.date)} was the heaviest day.
-          </Text>
-        </Rise>
-        <Rise delay={1700} still={still}>
-          <Text style={[styles.body, styles.gapS]}>
-            <Text style={styles.bodyStrong}>{formatMoney(beat.heaviest.totalMinor)}</Text> went out.{' '}
-            {quietLine(beat.quietDays, 'month')}
-          </Text>
-        </Rise>
-      </View>
-    </View>
-  );
-}
-
 export function MoverBeat({ beat, still }: { beat: BeatOf<'mover'>; still: boolean }) {
   const [punch] = useState(() => new Animated.Value(still ? 1 : 0));
   useEffect(() => {
@@ -453,92 +245,7 @@ export function MoverBeat({ beat, still }: { beat: BeatOf<'mover'>; still: boole
               sensitive={beat.category.isSensitive}
               style={styles.bodyStrong}
             />{' '}
-            this month.
-          </Text>
-        </Rise>
-      </View>
-    </View>
-  );
-}
-
-/** Sunday first, as Yume's weeks start. */
-const WEEK_LETTERS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
-
-function WeekBar({
-  pct,
-  color,
-  index,
-  still,
-}: {
-  pct: number;
-  color: string;
-  index: number;
-  still: boolean;
-}) {
-  const [v] = useState(() => new Animated.Value(still ? pct : 0));
-  useEffect(() => {
-    if (still) {
-      v.setValue(pct);
-      return;
-    }
-    const a = Animated.timing(v, {
-      toValue: pct,
-      duration: 500,
-      delay: index * 110,
-      easing: EASE,
-      useNativeDriver: false,
-    });
-    a.start();
-    return () => a.stop();
-  }, [v, pct, index, still]);
-  const height = v.interpolate({ inputRange: [0, 100], outputRange: ['0%', '100%'], extrapolate: 'clamp' });
-  return <Animated.View style={[styles.weekBar, { height, backgroundColor: color }]} />;
-}
-
-export function WeekDaysBeat({ beat, still }: { beat: BeatOf<'weekDays'>; still: boolean }) {
-  const { accent } = useAccent();
-  const max = Math.max(1, beat.heaviest.totalMinor);
-  return (
-    <View style={styles.beat}>
-      <Kicker kind="weekDays">Day by day</Kicker>
-      <View style={styles.middle}>
-        <Glass radius={24} tone="strong" style={styles.chartCard}>
-          <View style={styles.chartBody}>
-            <View
-              style={styles.week}
-              accessibilityElementsHidden
-              importantForAccessibility="no-hide-descendants"
-            >
-              {beat.days.map((d, i) => {
-                const heaviest = d.date === beat.heaviest.date;
-                return (
-                  <View key={d.date} style={styles.weekCol}>
-                    <View style={{ flex: 1, width: '100%', justifyContent: 'flex-end' }}>
-                      <WeekBar
-                        pct={d.totalMinor > 0 ? Math.max(4, (d.totalMinor / max) * 100) : 3}
-                        color={
-                          heaviest ? theme.colors.ink : d.totalMinor > 0 ? accent : theme.colors.inkHairline
-                        }
-                        index={i}
-                        still={still}
-                      />
-                    </View>
-                    <Text style={styles.weekDay}>{WEEK_LETTERS[i]}</Text>
-                  </View>
-                );
-              })}
-            </View>
-          </View>
-        </Glass>
-        <Rise delay={900} still={still}>
-          <Text style={[styles.displaySmall, styles.gapM]}>
-            {longWeekday(beat.heaviest.date)} did the most.
-          </Text>
-        </Rise>
-        <Rise delay={1050} still={still}>
-          <Text style={[styles.body, styles.gapS]}>
-            <Text style={styles.bodyStrong}>{formatMoney(beat.heaviest.totalMinor)}</Text> went out.{' '}
-            {quietLine(beat.quietDays, 'week')}
+            this period.
           </Text>
         </Rise>
       </View>
@@ -602,7 +309,9 @@ function cardLine(wrap: Wrap): string | null {
     if (b.kind === 'kept') {
       return b.keptMinor > 0
         ? `Kept ${Math.round(b.keptPct)}% of what came in`
-        : 'Everything that came in went out';
+        : b.keptMinor === 0
+          ? 'Everything that came in went out'
+          : 'More went out than came in';
     }
   }
   return null;
@@ -617,11 +326,13 @@ export function FinalBeat({
   beat,
   still,
   onOpenReport,
+  onReplay,
 }: {
   wrap: Wrap;
   beat: BeatOf<'final'>;
   still: boolean;
   onOpenReport: () => void;
+  onReplay?: () => void;
 }) {
   const card = useRef<View>(null);
   const { accent, secondary } = useAccent();
@@ -630,8 +341,12 @@ export function FinalBeat({
   const line = cardLine(wrap);
   // Capturing mid fade-in would send a half-transparent card, so Share waits until the card is fully visible.
   const [cardShown, setCardShown] = useState(still);
+  const [sharing, setSharing] = useState(false);
+  const shareInFlight = useRef(false);
   const share = async () => {
-    if (!cardShown) return;
+    if (!cardShown || shareInFlight.current) return;
+    shareInFlight.current = true;
+    setSharing(true);
     let uri: string | null = null;
     try {
       uri = await captureRef(card, { format: 'png', quality: 1 });
@@ -641,6 +356,8 @@ export function FinalBeat({
     } catch (e) {
       showAlert("Couldn't share it", errorMessage(e));
     } finally {
+      shareInFlight.current = false;
+      setSharing(false);
       // The capture is a temp PNG in the cache; once the share sheet is done with it, don't leave it behind.
       if (uri) {
         try {
@@ -654,7 +371,8 @@ export function FinalBeat({
   return (
     <View style={styles.beat}>
       <Rise still={still}>
-        <Kicker kind="final">{beat.title}</Kicker>
+        <Kicker kind="final">Your wrap, in one card</Kicker>
+        <Text style={[styles.displaySmall, styles.gapM]}>{beat.title}</Text>
       </Rise>
       <View style={styles.finalMiddle}>
         <Rise delay={200} still={still} onShown={() => setCardShown(true)}>
@@ -670,8 +388,15 @@ export function FinalBeat({
                   </View>
                   <Text style={styles.cardKicker}>{wrap.label}</Text>
                 </View>
-                {hook && <Text style={styles.cardTotal}>{formatMoney(hook.spentMinor)}</Text>}
-                <Text style={styles.cardLine}>went out{line ? ` · ${line}` : ''}</Text>
+                <Amount
+                  minor={hook?.spentMinor ?? 0}
+                  style={styles.cardTotal}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                />
+                <Text style={styles.cardLine}>
+                  {hook ? `went out${line ? ` · ${line}` : ''}` : 'No spending recorded'}
+                </Text>
                 {top.length > 0 && (
                   <View style={styles.cardRows}>
                     {top.map((c) => (
@@ -690,6 +415,17 @@ export function FinalBeat({
           </View>
         </Rise>
       </View>
+      {onReplay && (
+        <Pressable
+          onPress={onReplay}
+          style={withPressed(styles.replay)}
+          accessibilityRole="button"
+          accessibilityLabel="Replay wrap"
+        >
+          <Feather name="rotate-ccw" size={16} color={theme.colors.ink} />
+          <Text style={styles.controlText}>Watch again</Text>
+        </Pressable>
+      )}
       <Rise delay={450} still={still} style={styles.actions}>
         <PrimaryButton
           title="See the full report"
@@ -697,7 +433,12 @@ export function FinalBeat({
           onPress={onOpenReport}
           style={styles.action}
         />
-        <PrimaryButton title="Share" onPress={share} disabled={!cardShown} style={styles.action} />
+        <PrimaryButton
+          title={sharing ? 'Sharing…' : 'Share'}
+          onPress={share}
+          disabled={!cardShown || sharing}
+          style={styles.action}
+        />
       </Rise>
     </View>
   );
@@ -709,11 +450,17 @@ export function Beat({
   beat,
   still,
   onOpenReport,
+  onInteract,
+  onOpenDay,
+  onReplay,
 }: {
   wrap: Wrap;
   beat: WrapBeat;
   still: boolean;
   onOpenReport: () => void;
+  onInteract?: () => void;
+  onOpenDay?: (date: string) => void;
+  onReplay?: () => void;
 }) {
   switch (beat.kind) {
     case 'hook':
@@ -721,16 +468,25 @@ export function Beat({
     case 'kept':
       return <KeptBeat beat={beat} still={still} />;
     case 'bars':
-      return <BarsBeat beat={beat} still={still} />;
+      return (
+        <BarsBeat
+          beat={beat}
+          still={still}
+          totalMinor={wrap.beats.find((part) => part.kind === 'hook')?.spentMinor}
+          onInteract={onInteract}
+        />
+      );
     case 'days':
-      return <DaysBeat beat={beat} still={still} />;
+      return <DaysBeat beat={beat} still={still} onInteract={onInteract} onOpenDay={onOpenDay} />;
     case 'mover':
       return <MoverBeat beat={beat} still={still} />;
     case 'weekDays':
-      return <WeekDaysBeat beat={beat} still={still} />;
+      return <WeekDaysBeat beat={beat} still={still} onInteract={onInteract} onOpenDay={onOpenDay} />;
     case 'usual':
       return <UsualBeat beat={beat} still={still} />;
     case 'final':
-      return <FinalBeat wrap={wrap} beat={beat} still={still} onOpenReport={onOpenReport} />;
+      return (
+        <FinalBeat wrap={wrap} beat={beat} still={still} onOpenReport={onOpenReport} onReplay={onReplay} />
+      );
   }
 }

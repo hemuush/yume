@@ -64,14 +64,14 @@ export interface Wrap {
 
 /** How long each beat plays (ms). A skipped beat shortens the Wrap rather than stretching the others. */
 export const BEAT_MS: Record<WrapBeat['kind'], number> = {
-  hook: 1500,
-  kept: 2500,
-  bars: 3000,
-  days: 3000,
-  mover: 2500,
-  weekDays: 2500,
-  usual: 2000,
-  final: 2500,
+  hook: 4000,
+  kept: 5500,
+  bars: 6500,
+  days: 6500,
+  mover: 5500,
+  weekDays: 5500,
+  usual: 5000,
+  final: 0,
 };
 
 /** The most categories the bars beat shows — five fit a phone and still read at a glance. */
@@ -198,7 +198,9 @@ export function buildWeekWrap(input: {
       quietDays: days.filter((d) => d.totalMinor === 0).length,
     },
   ];
-  const top = toWrapCategories(input.summary)[0] ?? null;
+  const categories = toWrapCategories(input.summary);
+  if (categories.length > 0) beats.push({ kind: 'bars', items: categories.slice(0, WRAP_MAX_BARS) });
+  const top = categories[0] ?? null;
   let closing = 'That was the week.';
   if (input.usualWeekMinor != null && input.usualWeekMinor > 0) {
     const changePct = ((spentMinor - input.usualWeekMinor) / input.usualWeekMinor) * 100;
@@ -261,3 +263,22 @@ export async function loadWeekWrap(today: Date = new Date()): Promise<Wrap> {
     usualWeekMinor: usualWeekFrom(start, daily),
   });
 }
+
+/** Stable period bounds: opening Reports later must still show the wrap being read. */
+export function wrapRange(wrap: Wrap): { start: string; end: string } {
+  if (wrap.period === 'week') return { start: wrap.key, end: addDaysToIsoDate(wrap.key, 6) };
+  const start = `${wrap.key}-01`;
+  const date = parseLocalIsoDate(start);
+  return { start, end: toLocalIsoDate(new Date(date.getFullYear(), date.getMonth() + 1, 0)) };
+}
+
+export const CHAPTER_LABELS: Record<WrapBeat['kind'], string> = {
+  hook: 'Overview',
+  kept: 'Kept',
+  bars: 'Categories',
+  days: 'Days',
+  mover: 'Changes',
+  weekDays: 'Days',
+  usual: 'Your usual',
+  final: 'Your card',
+};

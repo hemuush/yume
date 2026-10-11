@@ -7,6 +7,8 @@ import {
   AccessibilityInfo,
   GestureResponderEvent,
   LayoutChangeEvent,
+  ScrollView,
+  AppState,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from '@expo/vector-icons/Feather';
@@ -16,7 +18,7 @@ import { useReduceMotion } from '@/lib/useReduceMotion';
 import { haptics } from '@/lib/haptics';
 import { withPressed } from '@/lib/pressed';
 import { useAccent } from '@/theme/AccentContext';
-import { Wrap, BEAT_MS } from './wrapData';
+import { Wrap, BEAT_MS, CHAPTER_LABELS } from './wrapData';
 import { Beat } from './WrapBeats';
 import { styles } from './wrap.styles';
 import { HomeWallpaper } from '@/features/home/HomeWallpaper';
@@ -51,10 +53,12 @@ export function WrapPlayer({
   wrap,
   onClose,
   onOpenReport,
+  onOpenDay,
 }: {
   wrap: Wrap;
   onClose: () => void;
   onOpenReport: () => void;
+  onOpenDay?: (date: string) => void;
 }) {
   const insets = useSafeAreaInsets();
   const reduce = useReduceMotion();
@@ -64,8 +68,39 @@ export function WrapPlayer({
 
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
+  const [holding, setHolding] = useState(false);
+  const [active, setActive] = useState(
+    AppState.currentState !== 'background' && AppState.currentState !== 'inactive'
+  );
+  const [headerHeight, setHeaderHeight] = useState(180);
+  const chapterScroll = useRef<ScrollView>(null);
+  const storyScroll = useRef<ScrollView>(null);
+  const holdTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const held = useRef(false);
+  const chapterPositions = useRef<number[]>([]);
+  const stopped = paused || holding || !active;
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (state) => {
+      setActive(state === 'active');
+      if (state !== 'active') {
+        if (holdTimer.current) clearTimeout(holdTimer.current);
+        held.current = false;
+        setHolding(false);
+      }
+    });
+    return () => sub.remove();
+  }, []);
+  useEffect(() => {
+    chapterScroll.current?.scrollTo({
+      x: Math.max(0, (chapterPositions.current[index] ?? 0) - 24),
+      animated: !still,
+    });
+  }, [index, still]);
   // Bumped to replay the current beat from its start (tapping back on the first one).
   const [replay, setReplay] = useState(0);
+  useEffect(() => {
+    storyScroll.current?.scrollTo({ y: 0, animated: false });
+  }, [index, replay]);
   const [progress] = useState(() => wrap.beats.map(() => new Animated.Value(0)));
   // Where the current beat's bar had got to when it was paused.
   const from = useRef(0);
@@ -82,12 +117,12 @@ export function WrapPlayer({
       else if (k > index) p.setValue(0);
     });
     const bar = progress[index];
-    if (still) {
+    if (still || index === last) {
       bar.setValue(1);
       return;
     }
     bar.setValue(from.current);
-    if (paused) return;
+    if (stopped) return;
     const a = Animated.timing(bar, {
       toValue: 1,
       duration: BEAT_MS[wrap.beats[index].kind] * (1 - from.current),
@@ -98,14 +133,13 @@ export function WrapPlayer({
       if (finished && index < last) setIndex(index + 1);
     });
     return () => bar.stopAnimation((v) => (from.current = v));
-  }, [index, replay, paused, still, progress, wrap.beats, last]);
+  }, [index, replay, stopped, still, progress, wrap.beats, last]);
 
   const { accent, secondary } = useAccent();
 
   const [size, setSize] = useState({ w: 0, h: 0 });
 
   const step = (dir: -1 | 1) => {
-    setPaused(false);
     if (dir > 0) {
       if (index < last) {
         haptics.tap();
@@ -117,9 +151,7 @@ export function WrapPlayer({
     else setReplay((n) => n + 1);
   };
 
-  // Tap to step, hold to pause: decided when the finger lifts.
-  const holdTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const held = useRef(false);
+  // Navigate only on a completed press; a scroll cancel must never change the chapter.
   useEffect(
     () => () => {
       if (holdTimer.current) clearTimeout(holdTimer.current);
@@ -131,17 +163,21 @@ export function WrapPlayer({
     if (still) return;
     holdTimer.current = setTimeout(() => {
       held.current = true;
-      setPaused(true);
+      setHolding(true);
     }, HOLD_MS);
   };
-  const onPressOut = (e: GestureResponderEvent) => {
+  const onPressOut = () => {
     if (holdTimer.current) clearTimeout(holdTimer.current);
-    if (held.current) {
-      held.current = false;
-      setPaused(false);
-      return;
-    }
+    setHolding(false);
+  };
+  const onPress = (e: GestureResponderEvent) => {
+    if (held.current) return;
     step(e.nativeEvent.pageX < size.w / 3 ? -1 : 1);
+  };
+  const replayWrap = () => {
+    setIndex(0);
+    setReplay((value) => value + 1);
+    setPaused(false);
   };
 
   const onLayout = (e: LayoutChangeEvent) => {
@@ -154,7 +190,10 @@ export function WrapPlayer({
     <View style={styles.root} onLayout={onLayout}>
       <HomeWallpaper accent={accent} secondary={secondary} />
 
-      <View style={{ paddingTop: insets.top + 10 }}>
+      <View
+        style={{ paddingTop: insets.top + 10 }}
+        onLayout={(event) => setHeaderHeight(event.nativeEvent.layout.height)}
+      >
         <View style={styles.segs} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
           {progress.map((p, k) => (
             <View key={k} style={styles.seg}>
@@ -168,7 +207,13 @@ export function WrapPlayer({
           ))}
         </View>
         <View style={styles.topBar}>
-          <Text style={styles.topLabel}>{wrap.label}</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.topEyebrow}>YOUR {wrap.period.toUpperCase()}, WRAPPED</Text>
+            <Text style={styles.topLabel}>{wrap.label}</Text>
+          </View>
+          <Text style={styles.partCount}>
+            {index + 1} / {wrap.beats.length}
+          </Text>
           <Pressable
             onPress={onClose}
             hitSlop={10}
@@ -179,6 +224,35 @@ export function WrapPlayer({
             <Feather name="x" size={16} color={theme.colors.ink} />
           </Pressable>
         </View>
+        <ScrollView
+          ref={chapterScroll}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.chapters}
+        >
+          {wrap.beats.map((part, chapterIndex) => (
+            <Pressable
+              key={`${part.kind}:${chapterIndex}`}
+              onLayout={(event) => {
+                chapterPositions.current[chapterIndex] = event.nativeEvent.layout.x;
+              }}
+              onPress={() => {
+                haptics.tap();
+                setIndex(chapterIndex);
+                setReplay((value) => value + 1);
+                setPaused(true);
+              }}
+              style={withPressed([styles.chapter, chapterIndex === index && styles.chapterSelected])}
+              accessibilityRole="button"
+              accessibilityLabel={`Jump to ${CHAPTER_LABELS[part.kind]}`}
+              accessibilityState={{ selected: chapterIndex === index }}
+            >
+              <Text style={[styles.chapterText, chapterIndex === index && styles.chapterTextSelected]}>
+                {CHAPTER_LABELS[part.kind]}
+              </Text>
+            </Pressable>
+          ))}
+        </ScrollView>
         <View style={styles.controls}>
           <Pressable
             style={withPressed(styles.control)}
@@ -189,7 +263,7 @@ export function WrapPlayer({
             <Feather name="chevron-left" size={18} color={theme.colors.ink} />
             <Text style={styles.controlText}>Previous</Text>
           </Pressable>
-          {!still && (
+          {!still && index < last && (
             <Pressable
               style={withPressed(styles.control)}
               onPress={() => setPaused((value) => !value)}
@@ -212,25 +286,44 @@ export function WrapPlayer({
             <Feather name="chevron-right" size={18} color={theme.colors.ink} />
           </Pressable>
         </View>
+        <Text style={styles.playbackHint}>
+          {index === last
+            ? 'Your wrap, ready to share'
+            : paused || holding
+              ? 'Paused · Explore at your pace'
+              : still
+                ? 'Move through at your own pace'
+                : 'Tap the sides to browse · Hold to pause'}
+        </Text>
       </View>
 
-      <Pressable
-        style={[styles.tapArea, { paddingBottom: insets.bottom }]}
-        onPressIn={onPressIn}
-        onPressOut={onPressOut}
-        accessibilityRole="button"
-        accessibilityLabel={index < last ? `Part ${index + 1} of ${last + 1}. Next part` : undefined}
-        accessibilityHint={index < last ? 'Tap the left side to go back.' : undefined}
-        accessible={index < last}
+      <ScrollView
+        ref={storyScroll}
+        style={styles.tapArea}
+        contentContainerStyle={{ flexGrow: 1 }}
+        showsVerticalScrollIndicator={false}
+        onScrollBeginDrag={() => setPaused(true)}
       >
-        <Beat key={`${index}:${replay}`} wrap={wrap} beat={beat} still={still} onOpenReport={onOpenReport} />
-      </Pressable>
-
-      {paused && (
-        <View style={[styles.paused, { bottom: insets.bottom + 16 }]} pointerEvents="none">
-          <Text style={styles.pausedText}>Paused</Text>
-        </View>
-      )}
+        <Pressable
+          style={{ flexGrow: 1, minHeight: Math.max(0, size.h - headerHeight), paddingBottom: insets.bottom }}
+          onPressIn={onPressIn}
+          onPressOut={onPressOut}
+          onPress={onPress}
+          accessible={false}
+          testID="wrap-story-surface"
+        >
+          <Beat
+            key={`${index}:${replay}`}
+            wrap={wrap}
+            beat={beat}
+            still={still}
+            onOpenReport={onOpenReport}
+            onOpenDay={onOpenDay}
+            onInteract={() => setPaused(true)}
+            onReplay={replayWrap}
+          />
+        </Pressable>
+      </ScrollView>
     </View>
   );
 }

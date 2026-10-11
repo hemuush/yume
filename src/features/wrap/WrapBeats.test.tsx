@@ -128,7 +128,7 @@ describe('beat wording', () => {
       quietDays: 28,
     });
     expect(texts(r)).toMatch(/1 Sept? was the heaviest day\./);
-    expect(texts(r)).toContain('And 28 days nothing went out at all.');
+    expect(texts(r)).toContain('28 days with no recorded spending.');
   });
 
   it('calls a week within 5% of usual the same as usual', () => {
@@ -191,4 +191,108 @@ describe('beat wording', () => {
     act(() => jest.advanceTimersByTime(3000));
     expect(share().props.disabled).toBe(false);
   });
+});
+
+function interactiveButton(r: ReactTestRenderer, label: string) {
+  return r.root.findAll(
+    (node) => node.props.accessibilityLabel === label && typeof node.props.onPress === 'function'
+  )[0];
+}
+
+it('selects a calendar day, pauses exploration and opens that exact day', () => {
+  const onInteract = jest.fn();
+  const onOpenDay = jest.fn();
+  let r!: ReactTestRenderer;
+  act(() => {
+    r = create(
+      <Beat
+        wrap={WRAP}
+        beat={BEATS.find(([name]) => name === 'days')![1]}
+        still
+        onOpenReport={jest.fn()}
+        onInteract={onInteract}
+        onOpenDay={onOpenDay}
+      />
+    );
+  });
+  act(() =>
+    interactiveButton(r, `Select ${require('@/lib/dateLabels').dayMonth('2026-09-12')}`).props.onPress()
+  );
+  expect(onInteract).toHaveBeenCalledTimes(1);
+  expect(texts(r)).toContain('₹2,900');
+  act(() =>
+    interactiveButton(
+      r,
+      `Open report for ${require('@/lib/dateLabels').dayMonth('2026-09-12')}`
+    ).props.onPress()
+  );
+  expect(onOpenDay).toHaveBeenCalledWith('2026-09-12');
+  act(() =>
+    interactiveButton(r, `Select ${require('@/lib/dateLabels').dayMonth('2026-09-13')}`).props.onPress()
+  );
+  expect(texts(r)).toContain('No spending recorded');
+  act(() => r.unmount());
+});
+
+it('lets a category reveal its share of the full period while preserving sensitive amount masking', () => {
+  const onInteract = jest.fn();
+  let r!: ReactTestRenderer;
+  act(() => {
+    r = create(
+      <Beat
+        wrap={WRAP}
+        beat={{ kind: 'bars', items: [food, invest] }}
+        still
+        onOpenReport={jest.fn()}
+        onInteract={onInteract}
+      />
+    );
+  });
+  act(() => interactiveButton(r, 'Explore Investments').props.onPress());
+  expect(onInteract).toHaveBeenCalledTimes(1);
+  expect(texts(r)).toContain('13% of recorded spending');
+  expect(texts(r)).not.toContain('₹5,000');
+  act(() => r.unmount());
+});
+
+it('does not start two picture captures when Share is tapped repeatedly', async () => {
+  const capture = require('react-native-view-shot').captureRef as jest.Mock;
+  capture.mockClear();
+  let r!: ReactTestRenderer;
+  act(() => {
+    r = create(<Beat wrap={WRAP} beat={{ kind: 'final', title: 'Done' }} still onOpenReport={jest.fn()} />);
+  });
+  const share = r.root.find((node) => node.props.title === 'Share' && node.props.onPress);
+  await act(async () => {
+    await Promise.all([share.props.onPress(), share.props.onPress()]);
+  });
+  expect(capture).toHaveBeenCalledTimes(1);
+  act(() => r.unmount());
+});
+
+it('the closing card does not describe overspending as exactly breaking even', () => {
+  const final = { kind: 'final' as const, title: 'Done' };
+  const wrap: Wrap = {
+    ...WRAP,
+    beats: [WRAP.beats[0], { kind: 'kept', incomeMinor: 100000, keptMinor: -20000, keptPct: -20 }, final],
+  };
+  let r!: ReactTestRenderer;
+  act(() => {
+    r = create(<Beat wrap={wrap} beat={final} still onOpenReport={jest.fn()} />);
+  });
+  expect(texts(r)).toContain('More went out than came in');
+  expect(texts(r)).not.toContain('Everything that came in went out');
+  act(() => r.unmount());
+});
+
+it('an empty week still has a useful share card with a zero total', () => {
+  const final = { kind: 'final' as const, title: 'A quiet week. Nothing went out.' };
+  const wrap: Wrap = { period: 'week', key: '2026-09-20', label: '20–26 Sept', beats: [final] };
+  let r!: ReactTestRenderer;
+  act(() => {
+    r = create(<Beat wrap={wrap} beat={final} still onOpenReport={jest.fn()} />);
+  });
+  expect(texts(r)).toContain('₹0');
+  expect(texts(r)).toContain('No spending recorded');
+  act(() => r.unmount());
 });

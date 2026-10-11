@@ -3,7 +3,7 @@
  * the last beat's buttons work, and with reduce motion nothing advances itself. Made-up figures.
  */
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
-import { Text } from 'react-native';
+import { Text, AppState } from 'react-native';
 
 jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMock').createReanimatedMock());
 const mockReduce = { current: false };
@@ -47,18 +47,18 @@ function texts(r: ReactTestRenderer): string[] {
 const has = (r: ReactTestRenderer, s: string) => texts(r).some((t) => t.includes(s));
 
 function tapArea(r: ReactTestRenderer) {
-  return r.root.find(
-    (n) => typeof n.props.onPressOut === 'function' && typeof n.props.onPressIn === 'function'
-  );
+  return r.root.findAll(
+    (n) => n.props.testID === 'wrap-story-surface' && typeof n.props.onPress === 'function'
+  )[0];
 }
 
-async function render(onClose = jest.fn(), onOpenReport = jest.fn()) {
+async function render(onClose = jest.fn(), onOpenReport = jest.fn(), wrap = WRAP) {
   let r!: ReactTestRenderer;
   await act(async () => {
-    r = create(<WrapPlayer wrap={WRAP} onClose={onClose} onOpenReport={onOpenReport} />);
+    r = create(<WrapPlayer wrap={wrap} onClose={onClose} onOpenReport={onOpenReport} />);
   });
   // Give it a size, as a phone would.
-  const root = r.root.find((n) => typeof n.props.onLayout === 'function');
+  const root = r.root.findAll((n) => typeof n.props.onLayout === 'function')[0];
   act(() => root.props.onLayout({ nativeEvent: { layout: { x: 0, y: 0, width: 360, height: 760 } } }));
   return r;
 }
@@ -66,7 +66,10 @@ async function render(onClose = jest.fn(), onOpenReport = jest.fn()) {
 function tap(r: ReactTestRenderer, pageX: number) {
   const area = tapArea(r);
   act(() => area.props.onPressIn());
-  act(() => area.props.onPressOut({ nativeEvent: { pageX } }));
+  act(() => {
+    area.props.onPressOut();
+    area.props.onPress({ nativeEvent: { pageX } });
+  });
 }
 
 afterEach(() => {
@@ -169,4 +172,102 @@ describe('WrapPlayer', () => {
     expect(has(r, '22%')).toBe(true);
     act(() => r.unmount());
   });
+});
+
+function button(r: ReactTestRenderer, label: string) {
+  return r.root.findAll(
+    (node) => node.props.accessibilityLabel === label && typeof node.props.onPress === 'function'
+  )[0];
+}
+
+it('jumping to a chapter pauses playback and replay starts the whole wrap again', async () => {
+  const r = await render();
+  act(() => button(r, 'Jump to Changes').props.onPress());
+  expect(has(r, 'What moved')).toBe(true);
+  act(() => jest.advanceTimersByTime(BEAT_MS.mover * 2));
+  expect(has(r, 'What moved')).toBe(true);
+  expect(button(r, 'Resume wrap')).toBeDefined();
+  act(() => button(r, 'Jump to Your card').props.onPress());
+  act(() => button(r, 'Replay wrap').props.onPress());
+  expect(has(r, 'Your month, wrapped')).toBe(true);
+  expect(button(r, 'Pause wrap')).toBeDefined();
+  act(() => r.unmount());
+});
+
+it('holding and releasing does not undo an explicit pause or navigate', async () => {
+  const r = await render();
+  act(() => button(r, 'Pause wrap').props.onPress());
+  const area = tapArea(r);
+  act(() => area.props.onPressIn());
+  act(() => jest.advanceTimersByTime(HOLD_MS + 10));
+  act(() => {
+    area.props.onPressOut();
+    area.props.onPress({ nativeEvent: { pageX: 300 } });
+  });
+  act(() => jest.advanceTimersByTime(BEAT_MS.hook * 2));
+  expect(has(r, 'Your month, wrapped')).toBe(true);
+  expect(button(r, 'Resume wrap')).toBeDefined();
+  act(() => r.unmount());
+});
+
+it('backgrounding pauses the current chapter until the app becomes active again', async () => {
+  let change!: (state: string) => void;
+  const appStateListenerMock = AppState.addEventListener as jest.MockedFunction<
+    typeof AppState.addEventListener
+  >;
+  const originalImplementation = jest.isMockFunction(appStateListenerMock)
+    ? appStateListenerMock.getMockImplementation()
+    : undefined;
+  const listener = jest.spyOn(AppState, 'addEventListener').mockImplementation((_event, callback) => {
+    change = callback as (state: string) => void;
+    return { remove: jest.fn() };
+  });
+  const r = await render();
+  act(() => change('background'));
+  act(() => jest.advanceTimersByTime(BEAT_MS.hook * 2));
+  expect(has(r, 'Your month, wrapped')).toBe(true);
+  act(() => change('active'));
+  act(() => jest.advanceTimersByTime(BEAT_MS.hook + 50));
+  expect(has(r, 'What you kept')).toBe(true);
+  act(() => r.unmount());
+  listener.mockRestore();
+  if (originalImplementation && jest.isMockFunction(AppState.addEventListener))
+    appStateListenerMock.mockImplementation(originalImplementation);
+});
+
+it('exploring a category pauses the story without stepping to another chapter', async () => {
+  const wrap: Wrap = {
+    ...WRAP,
+    beats: [
+      WRAP.beats[0],
+      {
+        kind: 'bars',
+        items: [
+          { categoryId: 'food', name: 'Food', color: '#FFC9B3', totalMinor: 980000, isSensitive: false },
+        ],
+      },
+      WRAP.beats[3],
+    ],
+  };
+  const r = await render(jest.fn(), jest.fn(), wrap);
+  tap(r, 300);
+  act(() => button(r, 'Explore Food').props.onPress());
+  act(() => jest.advanceTimersByTime(BEAT_MS.bars * 2));
+  expect(has(r, 'Where it went')).toBe(true);
+  expect(button(r, 'Resume wrap')).toBeDefined();
+  act(() => r.unmount());
+});
+
+it('a canceled press during scrolling pauses rather than navigating', async () => {
+  const r = await render();
+  const area = tapArea(r);
+  act(() => area.props.onPressIn());
+  act(() =>
+    r.root.findAll((node) => typeof node.props.onScrollBeginDrag === 'function')[0].props.onScrollBeginDrag()
+  );
+  act(() => area.props.onPressOut());
+  act(() => jest.advanceTimersByTime(BEAT_MS.hook * 2));
+  expect(has(r, 'Your month, wrapped')).toBe(true);
+  expect(button(r, 'Resume wrap')).toBeDefined();
+  act(() => r.unmount());
 });

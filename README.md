@@ -19,6 +19,8 @@ with fully local backups and nothing sent to any server.
 - **People** — an informal ledger for money owed to or by friends and family, net of settlements
 - **Reports** — spending and income by category, a spend heatmap, month-over-month comparisons,
   any custom date range (financial years included), and a page for each category
+- **Weekly & monthly Wraps** — stories with selectable chapters, category shares, tappable days,
+  exact-period reports, replay and a shareable summary card; exploration pauses playback
 - **Home-screen widgets** — live balances, this month's spend, next due bill, and a Suu check-in
   (they show amounts on the home screen even while App Lock is on)
 - **Exclusive themes** — eleven named colour packs (see `src/theme/themes.ts`) alongside the
