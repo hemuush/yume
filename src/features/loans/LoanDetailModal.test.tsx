@@ -33,8 +33,8 @@ jest.mock('@/lib/useReduceMotion', () => ({ useReduceMotion: () => true }));
 jest.mock('@/components/ModalSheet', () => ({
   ModalSheet: ({ children, footer }: { children: unknown; footer?: unknown }) =>
     require('react').createElement(require('react').Fragment, null, children, footer),
-  SheetFooter: ({ children }: { children: unknown }) =>
-    require('react').createElement(require('react').Fragment, null, children),
+  SheetFooter: ({ children, onMore }: { children: unknown; onMore?: () => void }) =>
+    require('react').createElement(require('react-native').View, { testID: 'loan-footer', onMore }, children),
 }));
 jest.mock('@/components/SheetCard', () => ({
   SheetCard: (p: { title: string }) =>
@@ -48,7 +48,13 @@ jest.mock('@/components/SettingsRow', () => ({
     }),
 }));
 jest.mock('@/components/SegmentedControl', () => ({ SegmentedControl: () => null }));
-jest.mock('@/components/ActionSheet', () => ({ ActionSheet: () => null }));
+jest.mock('@/components/ActionSheet', () => ({
+  ActionList: (props: unknown) =>
+    require('react').createElement(require('react-native').View, {
+      testID: 'loan-actions',
+      ...(props as object),
+    }),
+}));
 jest.mock('./AssetModal', () => ({ AssetModal: () => null }));
 jest.mock('./AccountModal', () => ({ AccountModal: () => null }));
 jest.mock('./RateChangeModal', () => ({ RateChangeModal: () => null }));
@@ -254,4 +260,17 @@ describe('stale loads', () => {
     });
     expect(tree.root.findByProps({ testID: 'card' }).props.title).toBe('New Lender');
   });
+});
+
+it('shows loan actions inside the existing sheet and returns to its overview', async () => {
+  setup([installment(1, addDaysToIsoDate(todayIso, 10))]);
+  const tree = await render();
+  await act(async () => tree.root.findByProps({ testID: 'loan-footer' }).props.onMore());
+  const actions = tree.root.findByProps({ testID: 'loan-actions' });
+  expect(actions.props.items.map((item: { label: string }) => item.label)).toContain('Delete loan');
+  expect(tree.root.findAllByProps({ testID: 'card' })).toHaveLength(0);
+  expect(payButton(tree).props.title).toBe('Back to loan');
+  await act(async () => payButton(tree).props.onPress());
+  expect(tree.root.findAllByProps({ testID: 'loan-actions' })).toHaveLength(0);
+  expect(tree.root.findAllByProps({ testID: 'card' }).length).toBeGreaterThan(0);
 });

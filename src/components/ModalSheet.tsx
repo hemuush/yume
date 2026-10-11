@@ -3,10 +3,7 @@ import { Text } from '@/components/Text';
 import Feather from '@expo/vector-icons/Feather';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { SafeAreaProvider, useSafeAreaInsets, initialWindowMetrics } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
 import { theme } from '@/constants/theme';
-import { shade } from '@/lib/color';
-import { useAccent } from '@/theme/AccentContext';
 import { usePressScale } from '@/lib/usePressScale';
 import { useReduceMotion } from '@/lib/useReduceMotion';
 import { AmountPadHostProvider, useAmountPadHost } from '@/components/AmountField';
@@ -184,15 +181,6 @@ function ModalSheetBody({
 }: Props) {
   const insets = useSafeAreaInsets();
   const isSheet = variant === 'sheet';
-  const { accent } = useAccent();
-  // A sheet opens under a light wash of the theme's sky that fades into the cream page below the title.
-  const sky = isSheet ? (
-    <LinearGradient
-      colors={[shade(accent, 93, 3), theme.colors.background]}
-      style={styles.sky}
-      pointerEvents="none"
-    />
-  ) : null;
   const stripView = !isSheet && strip ? <View style={[styles.strip, { backgroundColor: strip }]} /> : null;
 
   // The pad an AmountField docks under the sheet, in place of the phone keyboard.
@@ -230,7 +218,11 @@ function ModalSheetBody({
             accessibilityLabel="Close"
           />
           <View
-            style={[styles.flex, styles.alignCenter, { paddingVertical: insets.top + 12 }]}
+            style={[
+              styles.flex,
+              styles.alignCenter,
+              { paddingTop: insets.top + 12, paddingBottom: insets.bottom + 12 },
+            ]}
             pointerEvents="box-none"
           >
             <View style={[styles.dialog, styles.dialogFramed]}>
@@ -270,7 +262,6 @@ function ModalSheetBody({
             pointerEvents="box-none"
           >
             <View style={styles.framedSheet}>
-              {sky}
               <View style={styles.grabber} />
               <View style={styles.framedPad}>{header}</View>
               <KeyboardAwareScrollView
@@ -306,7 +297,6 @@ function ModalSheetBody({
         { paddingBottom: isSheet ? 24 + insets.bottom : 20 },
       ]}
     >
-      {sky}
       {stripView}
       {isSheet && <View style={styles.grabber} />}
       {header}
@@ -388,9 +378,9 @@ const styles = StyleSheet.create({
   scrollDialog: { flexGrow: 0, maxHeight: '85%' },
   scrollDialogContent: { justifyContent: 'center' },
 
-  header: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 14, minHeight: 32 },
+  header: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12, minHeight: 44 },
   headerText: { flex: 1, minWidth: 0 },
-  title: { fontFamily: theme.font.roundedBold, fontSize: 19, color: theme.colors.textPrimary },
+  title: { fontFamily: theme.font.roundedBold, fontSize: 18, color: theme.colors.textPrimary },
   subtitle: {
     fontFamily: theme.font.body,
     fontSize: 12,
@@ -467,7 +457,6 @@ const styles = StyleSheet.create({
     maxHeight: '78%',
     alignSelf: 'stretch',
   },
-  sky: { position: 'absolute', top: 0, left: 0, right: 0, height: 96 },
   strip: { position: 'absolute', top: 0, left: 0, right: 0, height: 4 },
   // The strip is clipped to the dialog's corners; the space under it keeps the title off it.
   dialogStriped: { overflow: 'hidden', paddingTop: 22 },
@@ -483,14 +472,9 @@ const styles = StyleSheet.create({
   closeBtn: {
     width: 44,
     height: 44,
-    borderRadius: 22,
-    backgroundColor: theme.colors.surface,
+    borderRadius: 14,
+    backgroundColor: theme.colors.surfaceAlt,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: theme.colors.link,
-    shadowOpacity: 0.12,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
   },
 });

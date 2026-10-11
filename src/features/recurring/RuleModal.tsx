@@ -23,7 +23,7 @@ import { weekdayDayMonth, dayMonth } from '@/lib/dateLabels';
 import { DateTile } from '@/components/DateTile';
 import { FormInput } from '@/components/FormInput';
 import { AmountField } from '@/components/AmountField';
-import { SegmentedControl } from '@/components/SegmentedControl';
+import { SheetTabs } from '@/components/SheetTabs';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { Chip } from '@/components/Chip';
 import { ToggleSwitch } from '@/components/ToggleSwitch';
@@ -294,6 +294,7 @@ export function RuleModal({
   return (
     <ModalSheet
       visible={visible}
+      title={editing ? 'Edit recurring entry' : 'New recurring entry'}
       onClose={onClose}
       footer={
         <View style={f.footerCol}>
@@ -324,7 +325,7 @@ export function RuleModal({
         meta={`${type === 'income' ? 'Into' : 'From'} ${accountName(effectiveAccountId) ?? '—'} · next ${weekdayDayMonth(startDate)}`}
       />
       <View style={styles.tabs}>
-        <SegmentedControl
+        <SheetTabs
           options={[
             { label: 'Set up', value: 'setup' },
             { label: 'Schedule', value: 'schedule' },
@@ -336,7 +337,7 @@ export function RuleModal({
 
       {tab === 'setup' ? (
         <>
-          <SegmentedControl options={TX_TYPES} value={type} onChange={onTypeChange} />
+          <SheetTabs options={TX_TYPES} value={type} onChange={onTypeChange} />
           <View style={styles.gap} />
           <AmountField label="Amount" value={amount} onChangeText={setAmount} placeholder="0.00" />
           <View style={[h.card, h.cardInSheet]}>
@@ -425,7 +426,7 @@ export function RuleModal({
         </>
       ) : (
         <>
-          <SegmentedControl options={FREQUENCIES} value={frequency} onChange={setFrequency} />
+          <SheetTabs options={FREQUENCIES} value={frequency} onChange={setFrequency} />
           <View style={styles.gap} />
           <AmountField
             decimal={false}

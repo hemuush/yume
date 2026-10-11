@@ -20,8 +20,8 @@ import { PrimaryButton } from '@/components/PrimaryButton';
 import { ModalSheet, SheetFooter } from '@/components/ModalSheet';
 import { SheetCard } from '@/components/SheetCard';
 import { SettingsRow } from '@/components/SettingsRow';
-import { SegmentedControl } from '@/components/SegmentedControl';
-import { ActionSheet, ActionSheetItem } from '@/components/ActionSheet';
+import { SheetTabs } from '@/components/SheetTabs';
+import { ActionList, ActionSheetItem } from '@/components/ActionSheet';
 import { theme, modalFooterStyles as f } from '@/constants/theme';
 import { screenStyles as h } from '@/components/screenStyles';
 import { toLocalIsoDate } from '@/lib/date';
@@ -152,7 +152,7 @@ export function LoanDetailModal({
   };
 
   // Pay is the one frequent action so it stays visible; Prepay/Update rate/Delete are rare, behind "⋯"
-  // (shared `ActionSheet`) so a 240-month loan's detail screen looks as simple as a 6-month one.
+  // (shared action list) so a 240-month loan's detail screen looks as simple as a 6-month one.
   const moreActionItems: ActionSheetItem[] = [];
   // Offered only when it can open: it needs an account to pay from and the EMI category, like Pay.
   if (liveLoan.status === 'active' && nextInstallment && defaultAccount && emiCategory) {
@@ -229,176 +229,197 @@ export function LoanDetailModal({
     <>
       <ModalSheet
         visible
-        onClose={onClose}
+        title={moreActionsVisible ? 'Loan actions' : 'Loan details'}
+        onClose={moreActionsVisible ? () => setMoreActionsVisible(false) : onClose}
         footer={
-          <SheetFooter
-            onMore={() => setMoreActionsVisible(true)}
-            moreLabel="More loan actions"
-            disabled={busy}
-          >
-            {canPay && (
-              <PrimaryButton
-                title={
-                  busy
-                    ? 'Recording…'
-                    : isPayingEarly
-                      ? `Pay #${nextInstallment.installmentNumber} early`
-                      : `Pay #${nextInstallment.installmentNumber} · ${formatMoney(nextInstallment.emiAmountMinor)}`
-                }
-                onPress={openPay}
-                disabled={busy || !defaultAccount || !emiCategory}
-                style={f.footerBtn}
-              />
-            )}
-          </SheetFooter>
-        }
-      >
-        {loadError && <Text style={styles.errorText}>Couldn't load the latest details: {loadError}</Text>}
-
-        <SheetCard
-          hue={hue ?? (liveLoan.direction === 'borrowed' ? theme.colors.idCoralDeep : theme.colors.secondary)}
-          icon={liveLoan.direction === 'borrowed' ? 'bank-outline' : 'hand-coin-outline'}
-          kicker={`${(liveLoan.interestRateAnnualBp / 100).toFixed(2)}% · ${
-            liveLoan.rateType === 'floating' ? 'floating' : 'fixed'
-          }${liveLoan.status === 'active' ? '' : ` · ${liveLoan.status}`}`}
-          amount={formatMoney(dispOutstanding)}
-          title={liveLoan.counterparty}
-          meta={`EMI ${formatMoney(liveLoan.emiAmountMinor)} a month`}
-        />
-        <View style={styles.sheetTabs}>
-          <SegmentedControl
-            options={[
-              { label: 'Overview', value: 'overview' },
-              { label: 'Schedule', value: 'schedule' },
-            ]}
-            value={tab}
-            onChange={setTab}
-          />
-        </View>
-
-        {tab === 'overview' ? (
-          <>
-            <LoanStatGrid
-              stats={[
-                {
-                  label: 'Next EMI',
-                  value: nextInstallment ? formatMoney(nextInstallment.emiAmountMinor) : 'None left',
-                  sub: nextInstallment
-                    ? `${weekdayDayMonth(nextInstallment.dueDate)}${nextOverdue ? ' · overdue' : ''}`
-                    : undefined,
-                },
-                {
-                  label: 'EMIs paid',
-                  value: schedule.length > 0 ? `${paidCount} of ${schedule.length}` : '–',
-                },
-                {
-                  label: liveLoan.direction === 'borrowed' ? 'Borrowed' : 'Lent',
-                  value: formatMoney(liveLoan.principalMinor),
-                  sub: `Since ${dayMonthYear(liveLoan.startDate)}`,
-                },
-                {
-                  label: liveLoan.direction === 'borrowed' ? 'Interest to pay' : 'Interest to come',
-                  value: formatMoney(payoff.interestLeftMinor),
-                },
-              ]}
+          moreActionsVisible ? (
+            <PrimaryButton
+              title="Back to loan"
+              variant="secondary"
+              onPress={() => setMoreActionsVisible(false)}
             />
-            {payoff.lastDueDate && (
-              <View style={styles.payoffCard}>
-                <Text style={styles.statLabel}>
-                  {liveLoan.direction === 'borrowed' ? 'Debt-free in' : 'Paid back in full by'}
-                </Text>
-                <Text style={styles.payoffMonth}>{payoffMonth(payoff.lastDueDate)}</Text>
-                <Text style={styles.rowSub}>
-                  {payoff.emisLeft} EMI{payoff.emisLeft === 1 ? '' : 's'} to go
-                </Text>
-                <Svg
-                  width="100%"
-                  height={PAYOFF_LINE_HEIGHT}
-                  viewBox={`0 0 ${PAYOFF_LINE_WIDTH} ${PAYOFF_LINE_HEIGHT}`}
-                  preserveAspectRatio="none"
-                >
-                  <Path
-                    d={balanceLinePath(payoff.balances, PAYOFF_LINE_WIDTH, PAYOFF_LINE_HEIGHT - 4)}
-                    stroke={theme.colors.income}
-                    strokeWidth={2.5}
-                    fill="none"
-                    strokeLinecap="round"
-                  />
-                </Svg>
-                <View style={styles.payoffAxis}>
-                  <Text style={styles.rowSub}>Now · {formatMoney(dispOutstanding)} left</Text>
-                  <Text style={styles.rowSub}>{payoff.lastDueDate.slice(0, 4)}</Text>
-                </View>
-              </View>
-            )}
-
-            <View style={[h.card, h.cardInSheet]}>
-              <SettingsRow
-                round
-                icon="bank"
-                label="EMI account"
-                sub={defaultAccount ? defaultAccount.name : 'Add an account first'}
-                onPress={() => setAccountModalVisible(true)}
-              />
-              {liveLoan.direction === 'borrowed' && (
-                <SettingsRow
-                  round
-                  icon="home-outline"
-                  label={liveLoan.assetLabel || 'What it paid for'}
-                  sub={
-                    liveLoan.assetValueMinor
-                      ? `Worth ${formatMoney(dispAssetValue)} · ${formatMoney(dispEquity)} equity`
-                      : liveLoan.assetLabel
-                        ? 'No value set yet'
-                        : 'Track a home or car this loan financed'
+          ) : (
+            <SheetFooter
+              onMore={() => setMoreActionsVisible(true)}
+              moreLabel="More loan actions"
+              disabled={busy}
+            >
+              {canPay && (
+                <PrimaryButton
+                  title={
+                    busy
+                      ? 'Recording…'
+                      : isPayingEarly
+                        ? `Pay #${nextInstallment.installmentNumber} early`
+                        : `Pay #${nextInstallment.installmentNumber} · ${formatMoney(nextInstallment.emiAmountMinor)}`
                   }
-                  subColor={liveLoan.assetValueMinor && dispEquity < 0 ? theme.colors.expenseText : undefined}
-                  onPress={() => setAssetModalVisible(true)}
-                  divider
+                  onPress={openPay}
+                  disabled={busy || !defaultAccount || !emiCategory}
+                  style={f.footerBtn}
                 />
               )}
-            </View>
-
-            {!defaultAccount && (
-              <Text style={styles.hintText}>Add an account first to record payments against this loan.</Text>
-            )}
-            {!!defaultAccount && !emiCategory && (
-              <Text style={styles.hintText}>
-                The built-in "{emiCategoryName}" category is missing — payments need it to record against.
-              </Text>
-            )}
-            {linkedAccountMissing && defaultAccount && (
-              <Text style={styles.hintText}>
-                This loan's original account was deleted — payments will go through {defaultAccount.name}{' '}
-                instead.
-              </Text>
-            )}
-          </>
+            </SheetFooter>
+          )
+        }
+      >
+        {moreActionsVisible ? (
+          <ActionList items={moreActionItems} onClose={() => setMoreActionsVisible(false)} />
         ) : (
           <>
-            <LoanSchedule schedule={schedule} />
+            {loadError && <Text style={styles.errorText}>Couldn't load the latest details: {loadError}</Text>}
 
-            {rateHistory.length > 0 && (
+            <SheetCard
+              hue={
+                hue ?? (liveLoan.direction === 'borrowed' ? theme.colors.idCoralDeep : theme.colors.secondary)
+              }
+              icon={liveLoan.direction === 'borrowed' ? 'bank-outline' : 'hand-coin-outline'}
+              kicker={`${(liveLoan.interestRateAnnualBp / 100).toFixed(2)}% · ${
+                liveLoan.rateType === 'floating' ? 'floating' : 'fixed'
+              }${liveLoan.status === 'active' ? '' : ` · ${liveLoan.status}`}`}
+              amount={formatMoney(dispOutstanding)}
+              title={liveLoan.counterparty}
+              meta={`EMI ${formatMoney(liveLoan.emiAmountMinor)} a month`}
+            />
+            <View style={styles.sheetTabs}>
+              <SheetTabs
+                options={[
+                  { label: 'Overview', value: 'overview' },
+                  { label: 'Schedule', value: 'schedule' },
+                ]}
+                value={tab}
+                onChange={setTab}
+              />
+            </View>
+
+            {tab === 'overview' ? (
               <>
-                <Text style={styles.sectionTitle}>Rate history</Text>
-                {rateHistory.map((r) => (
-                  <View key={r.id} style={styles.scheduleRow}>
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.rowLabel}>
-                        {(r.oldRateAnnualBp / 100).toFixed(2)}% → {(r.newRateAnnualBp / 100).toFixed(2)}%
-                      </Text>
-                      <Text style={styles.rowSub}>
-                        From {dayMonthYear(r.effectiveDate)} ·{' '}
-                        {r.mode === 'keepTenure' ? 'EMI changed' : 'tenure changed'}
-                      </Text>
+                <LoanStatGrid
+                  stats={[
+                    {
+                      label: 'Next EMI',
+                      value: nextInstallment ? formatMoney(nextInstallment.emiAmountMinor) : 'None left',
+                      sub: nextInstallment
+                        ? `${weekdayDayMonth(nextInstallment.dueDate)}${nextOverdue ? ' · overdue' : ''}`
+                        : undefined,
+                    },
+                    {
+                      label: 'EMIs paid',
+                      value: schedule.length > 0 ? `${paidCount} of ${schedule.length}` : '–',
+                    },
+                    {
+                      label: liveLoan.direction === 'borrowed' ? 'Borrowed' : 'Lent',
+                      value: formatMoney(liveLoan.principalMinor),
+                      sub: `Since ${dayMonthYear(liveLoan.startDate)}`,
+                    },
+                    {
+                      label: liveLoan.direction === 'borrowed' ? 'Interest to pay' : 'Interest to come',
+                      value: formatMoney(payoff.interestLeftMinor),
+                    },
+                  ]}
+                />
+                {payoff.lastDueDate && (
+                  <View style={styles.payoffCard}>
+                    <Text style={styles.statLabel}>
+                      {liveLoan.direction === 'borrowed' ? 'Debt-free in' : 'Paid back in full by'}
+                    </Text>
+                    <Text style={styles.payoffMonth}>{payoffMonth(payoff.lastDueDate)}</Text>
+                    <Text style={styles.rowSub}>
+                      {payoff.emisLeft} EMI{payoff.emisLeft === 1 ? '' : 's'} to go
+                    </Text>
+                    <Svg
+                      width="100%"
+                      height={PAYOFF_LINE_HEIGHT}
+                      viewBox={`0 0 ${PAYOFF_LINE_WIDTH} ${PAYOFF_LINE_HEIGHT}`}
+                      preserveAspectRatio="none"
+                    >
+                      <Path
+                        d={balanceLinePath(payoff.balances, PAYOFF_LINE_WIDTH, PAYOFF_LINE_HEIGHT - 4)}
+                        stroke={theme.colors.income}
+                        strokeWidth={2.5}
+                        fill="none"
+                        strokeLinecap="round"
+                      />
+                    </Svg>
+                    <View style={styles.payoffAxis}>
+                      <Text style={styles.rowSub}>Now · {formatMoney(dispOutstanding)} left</Text>
+                      <Text style={styles.rowSub}>{payoff.lastDueDate.slice(0, 4)}</Text>
                     </View>
-                    {r.mode === 'keepTenure' && (
-                      <Text style={styles.rowValue}>
-                        {formatMoney(r.oldEmiAmountMinor)} → {formatMoney(r.newEmiAmountMinor)}
-                      </Text>
-                    )}
                   </View>
-                ))}
+                )}
+
+                <View style={[h.card, h.cardInSheet]}>
+                  <SettingsRow
+                    round
+                    icon="bank"
+                    label="EMI account"
+                    sub={defaultAccount ? defaultAccount.name : 'Add an account first'}
+                    onPress={() => setAccountModalVisible(true)}
+                  />
+                  {liveLoan.direction === 'borrowed' && (
+                    <SettingsRow
+                      round
+                      icon="home-outline"
+                      label={liveLoan.assetLabel || 'What it paid for'}
+                      sub={
+                        liveLoan.assetValueMinor
+                          ? `Worth ${formatMoney(dispAssetValue)} · ${formatMoney(dispEquity)} equity`
+                          : liveLoan.assetLabel
+                            ? 'No value set yet'
+                            : 'Track a home or car this loan financed'
+                      }
+                      subColor={
+                        liveLoan.assetValueMinor && dispEquity < 0 ? theme.colors.expenseText : undefined
+                      }
+                      onPress={() => setAssetModalVisible(true)}
+                      divider
+                    />
+                  )}
+                </View>
+
+                {!defaultAccount && (
+                  <Text style={styles.hintText}>
+                    Add an account first to record payments against this loan.
+                  </Text>
+                )}
+                {!!defaultAccount && !emiCategory && (
+                  <Text style={styles.hintText}>
+                    The built-in "{emiCategoryName}" category is missing — payments need it to record against.
+                  </Text>
+                )}
+                {linkedAccountMissing && defaultAccount && (
+                  <Text style={styles.hintText}>
+                    This loan's original account was deleted — payments will go through {defaultAccount.name}{' '}
+                    instead.
+                  </Text>
+                )}
+              </>
+            ) : (
+              <>
+                <LoanSchedule schedule={schedule} />
+
+                {rateHistory.length > 0 && (
+                  <>
+                    <Text style={styles.sectionTitle}>Rate history</Text>
+                    {rateHistory.map((r) => (
+                      <View key={r.id} style={styles.scheduleRow}>
+                        <View style={{ flex: 1 }}>
+                          <Text style={styles.rowLabel}>
+                            {(r.oldRateAnnualBp / 100).toFixed(2)}% → {(r.newRateAnnualBp / 100).toFixed(2)}%
+                          </Text>
+                          <Text style={styles.rowSub}>
+                            From {dayMonthYear(r.effectiveDate)} ·{' '}
+                            {r.mode === 'keepTenure' ? 'EMI changed' : 'tenure changed'}
+                          </Text>
+                        </View>
+                        {r.mode === 'keepTenure' && (
+                          <Text style={styles.rowValue}>
+                            {formatMoney(r.oldEmiAmountMinor)} → {formatMoney(r.newEmiAmountMinor)}
+                          </Text>
+                        )}
+                      </View>
+                    ))}
+                  </>
+                )}
               </>
             )}
           </>
@@ -471,13 +492,6 @@ export function LoanDetailModal({
           loanId={liveLoan.id}
         />
       )}
-
-      <ActionSheet
-        visible={moreActionsVisible}
-        onClose={() => setMoreActionsVisible(false)}
-        title="More options"
-        items={moreActionItems}
-      />
     </>
   );
 }

@@ -144,6 +144,7 @@ export function AddAccountModal({
   // by the type you pick, with its opening balance.
   return (
     <ModalSheet
+      title="Account setup"
       visible={visible}
       onClose={close}
       footer={

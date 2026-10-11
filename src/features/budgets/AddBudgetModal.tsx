@@ -114,6 +114,7 @@ export function AddBudgetModal({
   return (
     <ModalSheet
       visible={visible}
+      title={editing ? 'Edit budget' : 'New budget'}
       onClose={onClose}
       footer={
         <View style={f.footerCol}>
@@ -167,10 +168,7 @@ export function AddBudgetModal({
       <View style={styles.toggleRow}>
         <View style={{ flex: 1, marginRight: 10 }}>
           <Text style={styles.fieldLabel}>Roll over unspent</Text>
-          <Text style={styles.modalHint}>
-            Anything left under this limit at month's end adds to next month's — so a light month buys some
-            slack the next time this category runs hot.
-          </Text>
+          <Text style={styles.modalHint}>Add this month’s remaining amount to next month’s limit.</Text>
         </View>
         <ToggleSwitch value={rollover} onChange={setRollover} />
       </View>

@@ -3,7 +3,6 @@ import { Text } from '@/components/Text';
 import Feather from '@expo/vector-icons/Feather';
 import { ModalSheet } from './ModalSheet';
 import { theme } from '@/constants/theme';
-import { StripCard } from './StripCard';
 import { usePressScale } from '@/lib/usePressScale';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -35,14 +34,19 @@ export function ActionSheet({
 }) {
   return (
     <ModalSheet visible={visible} onClose={onClose} title={title} subtitle={subtitle} scrollable={false}>
-      <StripCard tone={theme.colors.slice.free}>
-        <View style={styles.list}>
-          {items.map((item, i) => (
-            <ActionSheetRow key={item.key} item={item} divider={i > 0} onClose={onClose} />
-          ))}
-        </View>
-      </StripCard>
+      <ActionList items={items} onClose={onClose} />
     </ModalSheet>
+  );
+}
+
+/** Also used inside a detail sheet, avoiding a second modal for a short menu. */
+export function ActionList({ items, onClose }: { items: ActionSheetItem[]; onClose: () => void }) {
+  return (
+    <View style={styles.list}>
+      {items.map((item, i) => (
+        <ActionSheetRow key={item.key} item={item} divider={i > 0} onClose={onClose} />
+      ))}
+    </View>
   );
 }
 
@@ -82,7 +86,13 @@ function ActionSheetRow({
 }
 
 const styles = StyleSheet.create({
-  list: { paddingTop: 4 },
+  list: {
+    borderRadius: 16,
+    backgroundColor: theme.colors.surface,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.borderSoft,
+    overflow: 'hidden',
+  },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 16 },
   rowDivider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.borderSoft },
   icon: {
@@ -94,6 +104,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   iconDestructive: { backgroundColor: theme.colors.expenseTint },
-  rowLabel: { fontFamily: theme.font.bodyMedium, fontSize: 15, color: theme.colors.textPrimary },
+  rowLabel: { flex: 1, fontFamily: theme.font.bodyMedium, fontSize: 15, color: theme.colors.textPrimary },
   rowLabelDestructive: { color: theme.colors.expenseText },
 });

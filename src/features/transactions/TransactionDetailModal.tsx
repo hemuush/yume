@@ -292,6 +292,7 @@ export function TransactionDetailModal({
   return (
     <ModalSheet
       visible
+      title="Entry details"
       onClose={onClose}
       footer={
         canEdit ? (
@@ -377,9 +378,7 @@ export function TransactionDetailModal({
               <View style={styles.quickIcon}>
                 <Feather name={a.icon} size={17} color={theme.colors.ink} />
               </View>
-              <Text style={styles.quickText} numberOfLines={1}>
-                {a.short}
-              </Text>
+              <Text style={styles.quickText}>{a.short}</Text>
             </Pressable>
           ))}
         </View>

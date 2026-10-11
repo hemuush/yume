@@ -24,7 +24,7 @@ import { AmountField } from '@/components/AmountField';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { ModalSheet } from '@/components/ModalSheet';
 import { SheetCard } from '@/components/SheetCard';
-import { SegmentedControl } from '@/components/SegmentedControl';
+import { SheetTabs } from '@/components/SheetTabs';
 import { dayMonthYear } from '@/lib/dateLabels';
 import { Chip } from '@/components/Chip';
 import { theme, modalFooterStyles as f } from '@/constants/theme';
@@ -248,6 +248,7 @@ export function PersonDetailModal({
   return (
     <ModalSheet
       visible
+      title="Friends & family"
       onClose={saving ? () => {} : onClose}
       footer={
         tab === 'history' ? (
@@ -325,7 +326,7 @@ export function PersonDetailModal({
         </>
       )}
       <View style={styles.sheetTabs}>
-        <SegmentedControl
+        <SheetTabs
           options={[
             { label: 'Settle', value: 'settle' },
             { label: 'History', value: 'history' },

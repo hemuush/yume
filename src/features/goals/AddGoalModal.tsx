@@ -93,6 +93,7 @@ export function AddGoalModal({
 
   return (
     <ModalSheet
+      title="Savings goal"
       visible={visible}
       onClose={onClose}
       footer={

@@ -42,7 +42,7 @@ jest.mock('@/db/loans', () => ({ listLoansForPerson: jest.fn(async () => []) }))
 
 import { PersonDetailModal } from './PersonDetailModal';
 import { PrimaryButton } from '@/components/PrimaryButton';
-import { SegmentedControl } from '@/components/SegmentedControl';
+import { SheetTabs } from '@/components/SheetTabs';
 import { getPersonLedger, addLedgerEntry } from '@/db/people';
 
 const ledger = [
@@ -106,9 +106,9 @@ it('keeps the balance on a failed fetch and recovers through Retry', async () =>
 
 it('uses a history-only footer and preserves the settlement controls on returning', async () => {
   const tree = await render();
-  act(() => tree.root.findByType(SegmentedControl).props.onChange('history'));
+  act(() => tree.root.findByType(SheetTabs).props.onChange('history'));
   expect(tree.root.findAllByType(PrimaryButton).map((n) => n.props.title)).toEqual(['Done']);
-  act(() => tree.root.findByType(SegmentedControl).props.onChange('settle'));
+  act(() => tree.root.findByType(SheetTabs).props.onChange('settle'));
   expect(button(tree, 'They owe more')).toBeDefined();
   expect(button(tree, 'They repaid')).toBeDefined();
 });

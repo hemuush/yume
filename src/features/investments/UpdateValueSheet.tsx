@@ -119,6 +119,7 @@ export function UpdateValueSheet({
 
   return (
     <ModalSheet
+      title="Update value"
       visible={visible}
       onClose={onClose}
       footer={
