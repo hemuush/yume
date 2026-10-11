@@ -303,7 +303,7 @@ function ModalSheetBody({
       style={[
         isSheet ? styles.sheet : styles.dialog,
         stripView && styles.dialogStriped,
-        { paddingBottom: (isSheet ? 24 : 20) + insets.bottom },
+        { paddingBottom: isSheet ? 24 + insets.bottom : 20 },
       ]}
     >
       {sky}
@@ -339,7 +339,9 @@ function ModalSheetBody({
           style={[
             styles.flex,
             isSheet ? styles.alignBottom : styles.alignCenter,
-            isSheet ? { paddingTop: insets.top + 8 } : { paddingVertical: insets.top + 12 },
+            isSheet
+              ? { paddingTop: insets.top + 8 }
+              : { paddingTop: insets.top + 12, paddingBottom: insets.bottom + 12 },
           ]}
           pointerEvents="box-none"
         >
