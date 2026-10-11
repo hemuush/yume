@@ -194,6 +194,7 @@ export function AccountSummarySheet({
   return (
     <>
       <ModalSheet
+        title="Account details"
         visible
         onClose={onClose}
         footer={

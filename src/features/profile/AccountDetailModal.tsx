@@ -190,6 +190,7 @@ export function AccountDetailModal({
   // Archive/delete is a quiet link at the end, not a second button beside Save.
   return (
     <ModalSheet
+      title="Account details"
       visible
       onClose={onClose}
       footer={

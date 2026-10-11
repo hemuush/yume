@@ -130,6 +130,7 @@ export function ContributeModal({
 
   return (
     <ModalSheet
+      title="Add to goal"
       visible
       onClose={reveal ? onContributed : onClose}
       footer={

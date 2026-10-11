@@ -349,6 +349,7 @@ export function AddLoanModal({
 
   return (
     <ModalSheet
+      title="Loan setup"
       visible={visible}
       onClose={onClose}
       footer={

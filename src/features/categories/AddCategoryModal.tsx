@@ -112,6 +112,7 @@ export function AddCategoryModal({
   const hiddenWithParent = !!parent?.isSensitive;
   return (
     <ModalSheet
+      title="Category setup"
       visible={visible}
       onClose={onClose}
       footer={

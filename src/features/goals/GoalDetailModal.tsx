@@ -161,6 +161,7 @@ export function GoalDetailModal({
 
   return (
     <ModalSheet
+      title="Goal details"
       visible
       onClose={onClose}
       footer={
