@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, useWindowDimensions } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import { Text } from '@/components/Text';
 import { ModalSheet } from '@/components/ModalSheet';
@@ -36,6 +36,7 @@ export function showAlert(title: string, message?: string, buttons?: DialogButto
 }
 
 export function AppDialogHost() {
+  const { width, fontScale } = useWindowDimensions();
   const [dialog, setDialog] = useState<Dialog | null>(null);
   useEffect(() => {
     show = setDialog;
@@ -45,6 +46,7 @@ export function AppDialogHost() {
   }, []);
   if (!dialog) return null;
 
+  const stacked = dialog.buttons.length > 2 || fontScale > 1.3 || width < 340;
   const destructive = dialog.buttons.some((b) => b.style === 'destructive');
   // Cancel first, so the risky button sits on the right, under the thumb.
   const buttons = [...dialog.buttons].sort(
@@ -64,12 +66,11 @@ export function AppDialogHost() {
       variant="center"
       scrollable={false}
       showClose={false}
-      strip={destructive ? theme.colors.slice.spent : theme.colors.slice.free}
     >
       <View style={styles.head}>
         {destructive && (
           <View style={styles.icon}>
-            <Feather name="trash-2" size={20} color={theme.colors.expense} />
+            <Feather name="trash-2" size={18} color={theme.colors.expense} />
           </View>
         )}
         <View style={styles.headText}>
@@ -77,14 +78,14 @@ export function AppDialogHost() {
           {dialog.message ? <Text style={styles.message}>{dialog.message}</Text> : null}
         </View>
       </View>
-      <View style={[styles.buttons, buttons.length > 2 && styles.buttonsStacked]}>
+      <View style={[styles.buttons, stacked && styles.buttonsStacked]}>
         {buttons.map((b, i) => (
           <PrimaryButton
             key={i}
             title={b.text}
             variant={b.style === 'destructive' ? 'danger' : b.style === 'cancel' ? 'secondary' : 'primary'}
             onPress={() => press(b)}
-            style={buttons.length > 2 ? undefined : styles.button}
+            style={stacked ? undefined : styles.button}
           />
         ))}
       </View>
@@ -97,16 +98,16 @@ const styles = StyleSheet.create({
   head: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
   headText: { flex: 1, minWidth: 0 },
   icon: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     backgroundColor: theme.colors.expenseTint,
     alignItems: 'center',
     justifyContent: 'center',
   },
   title: {
     fontFamily: theme.font.roundedBold,
-    fontSize: 19,
+    fontSize: 18,
     color: theme.colors.textPrimary,
   },
   message: {
@@ -116,7 +117,7 @@ const styles = StyleSheet.create({
     color: theme.colors.textSecondary,
     marginTop: 4,
   },
-  buttons: { flexDirection: 'row', gap: 8, marginTop: 18 },
+  buttons: { flexDirection: 'row', gap: 8, marginTop: 16 },
   buttonsStacked: { flexDirection: 'column-reverse' },
   button: { flex: 1 },
 });
