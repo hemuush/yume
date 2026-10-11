@@ -187,15 +187,15 @@ describe('buildWeekWrap', () => {
       ],
       usualWeekMinor: 709_000,
     });
-    expect(kinds(wrap.beats)).toEqual(['hook', 'weekDays', 'usual', 'final']);
+    expect(kinds(wrap.beats)).toEqual(['hook', 'weekDays', 'bars', 'usual', 'final']);
     const week = wrap.beats[1] as Extract<WrapBeat, { kind: 'weekDays' }>;
     expect(week.days).toHaveLength(7);
     expect(week.heaviest.date).toBe('2026-09-23');
     expect(week.quietDays).toBe(5);
-    const usual = wrap.beats[2] as Extract<WrapBeat, { kind: 'usual' }>;
+    const usual = wrap.beats.find((beat) => beat.kind === 'usual') as Extract<WrapBeat, { kind: 'usual' }>;
     expect(Math.round(usual.changePct)).toBe(-12);
     expect(usual.top?.categoryId).toBe('food');
-    expect(wrap.beats[3]).toEqual({ kind: 'final', title: 'A lighter week.' });
+    expect(wrap.beats.at(-1)).toEqual({ kind: 'final', title: 'A lighter week.' });
   });
 
   it('leaves out the usual beat without history', () => {
@@ -233,5 +233,14 @@ describe('fillDays', () => {
       { date: '2026-09-02', totalMinor: 5_000 },
       { date: '2026-09-03', totalMinor: 0 },
     ]);
+  });
+});
+
+it('keeps month and week report bounds anchored to the wrap, including leap years', () => {
+  const { wrapRange } = require('./wrapData');
+  expect(wrapRange({ period: 'month', key: '2024-02' })).toEqual({ start: '2024-02-01', end: '2024-02-29' });
+  expect(wrapRange({ period: 'week', key: '2026-09-27' })).toEqual({
+    start: '2026-09-27',
+    end: '2026-10-03',
   });
 });

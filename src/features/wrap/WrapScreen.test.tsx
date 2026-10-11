@@ -83,10 +83,10 @@ describe('Wrap screen', () => {
     act(() => r.unmount());
   });
 
-  it("opens last month's report on the Reports tab", async () => {
+  it('opens the exact wrapped month on the Reports tab', async () => {
     const r = await render();
     press(r, 'See the full report');
-    expect(router.navigate).toHaveBeenCalledWith('/reports?month=-1');
+    expect(router.navigate).toHaveBeenCalledWith('/reports?from=2026-09-01&to=2026-09-30');
     expect(router.replace).not.toHaveBeenCalled();
     act(() => r.unmount());
   });
@@ -124,4 +124,16 @@ describe('Wrap screen', () => {
     expect(texts(r)).toContain('Database is busy');
     act(() => r.unmount());
   });
+});
+
+it('can retry a failed load without leaving the wrap screen', async () => {
+  mockFail.current = true;
+  const r = await render();
+  expect(texts(r)).toContain("Couldn't make your Wrap");
+  mockFail.current = false;
+  await act(async () => {
+    r.root.find((node) => node.props.title === 'Try again' && node.props.onPress).props.onPress();
+  });
+  expect(texts(r)).toContain('That was September.');
+  act(() => r.unmount());
 });
