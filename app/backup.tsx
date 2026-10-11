@@ -35,6 +35,8 @@ import {
   LocalBackupFile,
 } from '@/lib/localBackup';
 import {
+  setLocalBackupFolderUri,
+  setLastLocalBackupAt,
   getLocalBackupFolderUri,
   getLastLocalBackupAt,
   getBackupFrequency,
@@ -118,6 +120,7 @@ export default function BackupScreen() {
   const [localFolderUri, setLocalFolderUri] = useState<string | null>(null);
   const [lastLocalBackup, setLastLocalBackup] = useState<string | null>(null);
   const [localResult, setLocalResult] = useState<BackupOutcome | null>(null);
+  const [folderNeedsReview, setFolderNeedsReview] = useState(false);
   const [frequency, setFrequency] = useState<BackupFrequency>('daily');
   const [busy, setBusy] = useState<string | null>(null);
   const [doneLabel, setDoneLabel] = useState<string | null>(null);
@@ -127,7 +130,11 @@ export default function BackupScreen() {
   // The backup files in the chosen folder, newest first.
   const [files, setFiles] = useState<LocalBackupFile[] | null>(null);
   // A restore waiting on the preview sheet, and whether it's running.
-  const [pending, setPending] = useState<{ snapshot: BackupSnapshot; preview: RestorePreview } | null>(null);
+  const [pending, setPending] = useState<{
+    snapshot: BackupSnapshot;
+    preview: RestorePreview;
+    folderUri?: string;
+  } | null>(null);
   const [restoring, setRestoring] = useState(false);
   const [tab, setTab] = useState<'points' | 'copy'>('points');
   const [showAll, setShowAll] = useState(false);
@@ -140,12 +147,22 @@ export default function BackupScreen() {
       getLastLocalBackupResult(),
       getBackupFrequency(),
     ]);
-    const list = folder ? await listLocalBackups(folder).catch(() => []) : null;
+    const list = folder ? await listLocalBackups(folder) : null;
     setSafetyInfo(safety);
     setLocalFolderUri(folder);
     setFiles(list);
-    setLastLocalBackup(lastAt);
-    setLocalResult(result);
+    const latest = list?.find((file) => file.summary);
+    setLastLocalBackup(latest?.exportedAt ?? null);
+    setLocalResult(
+      latest && result?.ok ? { ...result, sizeBytes: latest.sizeBytes } : result?.ok ? null : result
+    );
+    setFolderNeedsReview(
+      !!latest &&
+        (!latest.exportedAt ||
+          !lastAt ||
+          !Number.isFinite(Date.parse(lastAt)) ||
+          Date.parse(latest.exportedAt) > Date.parse(lastAt))
+    );
     setFrequency(freq);
   }, []);
   // `loaded` keeps the unloaded default `!localFolderUri` from briefly showing the "choose a folder"
@@ -292,7 +309,7 @@ export default function BackupScreen() {
   };
 
   /** Shows the restore preview for a backup; the sheet's Restore does the rest. */
-  const confirmAndRestore = async (snapshot: BackupSnapshot) => {
+  const confirmAndRestore = async (snapshot: BackupSnapshot, folderUri?: string) => {
     const backup = summarizeSnapshot(snapshot);
     if (!backup) throw new Error("That file isn't a Yume backup — pick a full backup Yume exported.");
     // A backup without a usable export time still restores; the preview just doesn't say when it was made.
@@ -303,16 +320,24 @@ export default function BackupScreen() {
     ]);
     setPending({
       snapshot,
+      folderUri,
       preview: { exportedAt: exportedAt ?? '', backup, current, lostCount },
     });
   };
 
   const restorePending = async () => {
     if (!pending) return;
-    const { snapshot } = pending;
+    const { snapshot, folderUri } = pending;
+    const adoptFolder = async () => {
+      if (!folderUri) return;
+      await setLastLocalBackupAt(snapshot.exportedAt);
+      await setLastLocalBackupResult({ at: new Date().toISOString(), ok: true });
+      await setLocalBackupFolderUri(folderUri);
+    };
     setRestoring(true);
     try {
       const result = await restoreKeepingSafetyCopy(snapshot);
+      await adoptFolder();
       setPending(null);
       finishRestore(result);
     } catch (e) {
@@ -335,7 +360,9 @@ Restore anyway? Your current data would be replaced with no way back.`,
             style: 'destructive',
             onPress: async () => {
               try {
-                finishRestore(await restoreKeepingSafetyCopy(snapshot, { withoutCopy: true }));
+                const result = await restoreKeepingSafetyCopy(snapshot, { withoutCopy: true });
+                await adoptFolder();
+                finishRestore(result);
               } catch (err) {
                 showAlert('Something went wrong', errorMessage(err));
               }
@@ -351,7 +378,40 @@ Restore anyway? Your current data would be replaced with no way back.`,
   const choosePickFolder = () =>
     run('pick-folder', async () => {
       const uri = await pickBackupFolder();
-      if (uri) await writeLocalBackupNow(uri); // confirm the grant works with a first backup right away
+      if (!uri) return;
+      const existing = await listLocalBackups(uri);
+      const latest = existing.find((file) => file.summary);
+      const startFolderBackups = () =>
+        run('pick-folder', async () => {
+          const { sizeBytes } = await writeLocalBackupNow(uri, { preserveExisting: true });
+          await setLastLocalBackupResult({ at: new Date().toISOString(), ok: true, sizeBytes });
+          await setLocalBackupFolderUri(uri);
+        });
+      if (existing.length) {
+        showAlert(
+          'Backups found in this folder',
+          latest
+            ? `Latest backup: ${latest.exportedAt ? formatWhen(latest.exportedAt) : 'date unknown'} · ${latest.summary!.entries} entries. Review it before replacing your app data, or keep your current data and start backing it up here.`
+            : 'Backup files exist, but none could be validated. They will be kept if you back up your current data here.',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            ...(latest
+              ? [
+                  {
+                    text: 'Review latest backup',
+                    onPress: () =>
+                      void run('review-backup', async () => {
+                        await confirmAndRestore(await readLocalBackup(latest.uri), uri);
+                      }),
+                  },
+                ]
+              : []),
+            { text: 'Keep current data', onPress: () => void startFolderBackups() },
+          ]
+        );
+      } else {
+        await startFolderBackups();
+      }
     });
 
   const backupNowLocal = () =>
@@ -360,7 +420,9 @@ Restore anyway? Your current data would be replaced with no way back.`,
       async () => {
         if (!localFolderUri) return;
         try {
-          const { sizeBytes } = await writeLocalBackupNow(localFolderUri);
+          const { sizeBytes } = await writeLocalBackupNow(localFolderUri, {
+            preserveExisting: folderNeedsReview,
+          });
           await setLastLocalBackupResult({ at: new Date().toISOString(), ok: true, sizeBytes });
         } catch (e) {
           await setLastLocalBackupResult({
@@ -381,7 +443,10 @@ Restore anyway? Your current data would be replaced with no way back.`,
 
   const restoreFile = (file: LocalBackupFile) =>
     run('restore-local', async () => {
-      await confirmAndRestore(await readLocalBackup(file.uri));
+      await confirmAndRestore(
+        await readLocalBackup(file.uri),
+        folderNeedsReview ? (localFolderUri ?? undefined) : undefined
+      );
     });
 
   const status = backupStatus({
@@ -389,6 +454,7 @@ Restore anyway? Your current data would be replaced with no way back.`,
     lastAt: lastLocalBackup,
     outcome: localResult,
     frequency,
+    existingOnly: folderNeedsReview,
     now: new Date(),
   });
   const shownFiles = files ? (showAll ? files : files.slice(0, COLLAPSED_FILES)) : [];
@@ -506,6 +572,7 @@ Restore anyway? Your current data would be replaced with no way back.`,
                         {safetyInfo.transactions === 1 ? 'entry' : 'entries'}, {safetyInfo.accounts}{' '}
                         {safetyInfo.accounts === 1 ? 'account' : 'accounts'}
                       </Text>
+                      <Text style={h.sub}>Kept before a restore · separate from folder backups</Text>
                     </View>
                     <PrimaryButton
                       compact
@@ -521,14 +588,14 @@ Restore anyway? Your current data would be replaced with no way back.`,
                     key={file.uri}
                     first={!safetyInfo && i === 0}
                     last={i === shownFiles.length - 1}
-                    latest={i === 0}
+                    latest={i === 0 && !!file.summary}
                   >
                     <View style={h.mid}>
                       <View style={styles.whenRow}>
                         <Text style={h.title} numberOfLines={2}>
                           {file.exportedAt ? formatWhen(file.exportedAt) : 'Backup file'}
                         </Text>
-                        {i === 0 && (
+                        {i === 0 && file.summary && (
                           <View style={[styles.latestChip, { backgroundColor: shade(accent, 95) }]}>
                             <Text style={styles.latestText}>Latest</Text>
                           </View>
