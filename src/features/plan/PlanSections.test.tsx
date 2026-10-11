@@ -166,3 +166,64 @@ describe('Goals with amounts hidden', () => {
     }
   });
 });
+
+describe('Compact forecast disclosure', () => {
+  it('hides a flat chart and keeps the next-payment action and expandable explanation', () => {
+    const open = jest.fn();
+    const tree = render(
+      <RunwayCard
+        dueSoon={dueSoon}
+        runway={buildRunway(1125000, [], '2026-10-09', 14)}
+        hasAccounts
+        next={null}
+        onOpen={open}
+        onJumpToDay={jest.fn()}
+      />
+    );
+    expect(tree.root.findAll((n) => n.props.testID === 'runway')).toHaveLength(0);
+    expect(texts(tree)).toContain('₹11,250');
+    expect(texts(tree)).not.toContain(
+      'Scheduled bills and income only. Everyday spending can change this balance.'
+    );
+    const disclosure = tree.root.findAll(
+      (n) => n.props.accessibilityLabel === 'Forecast details' && n.props.onPress
+    )[0];
+    act(() => disclosure.props.onPress());
+    expect(disclosure.props.accessibilityState.expanded).toBe(true);
+    expect(texts(tree)).toContain(
+      'Scheduled bills and income only. Everyday spending can change this balance.'
+    );
+    act(() => disclosure.props.onPress());
+    expect(disclosure.props.accessibilityState.expanded).toBe(false);
+    act(() =>
+      tree.root
+        .findAll((n) => n.props.accessibilityLabel === 'Open Coming up' && n.props.onPress)[0]
+        .props.onPress()
+    );
+    expect(open).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps an income-only changing forecast visible without claiming payment coverage', () => {
+    const item = {
+      key: 'salary',
+      title: 'Salary',
+      kind: 'income' as const,
+      dueDate: '2026-10-11',
+      amountMinor: 500000,
+      route: '/recurring' as const,
+    };
+    const tree = render(
+      <RunwayCard
+        dueSoon={dueSoon}
+        runway={buildRunway(100000, [item], '2026-10-09', 14)}
+        hasAccounts
+        next={null}
+        onOpen={jest.fn()}
+        onJumpToDay={jest.fn()}
+      />
+    );
+    expect(tree.root.findAll((n) => n.props.testID === 'runway').length).toBeGreaterThan(0);
+    expect(texts(tree)).not.toContain('Your accounts cover it');
+    expect(texts(tree)).toContain('+₹5,000 coming in');
+  });
+});

@@ -193,13 +193,9 @@ function ModalSheetBody({
   // sheet that opens on its own card instead of a title.
   const header =
     title || subtitle || showClose ? (
-      <View style={styles.header}>
+      <View style={[styles.header, (title || subtitle) && styles.headerDivider]}>
         <View style={styles.headerText}>
-          {title ? (
-            <Text style={styles.title} numberOfLines={2}>
-              {title}
-            </Text>
-          ) : null}
+          {title ? <Text style={styles.title}>{title}</Text> : null}
           {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
         </View>
         {showClose && <ModalCloseButton onClose={onClose} />}
@@ -378,7 +374,18 @@ const styles = StyleSheet.create({
   scrollDialog: { flexGrow: 0, maxHeight: '85%' },
   scrollDialogContent: { justifyContent: 'center' },
 
-  header: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12, minHeight: 44 },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 12,
+    minHeight: 48,
+  },
+  headerDivider: {
+    paddingBottom: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: theme.colors.borderSoft,
+  },
   headerText: { flex: 1, minWidth: 0 },
   title: { fontFamily: theme.font.roundedBold, fontSize: 18, color: theme.colors.textPrimary },
   subtitle: {
@@ -416,9 +423,9 @@ const styles = StyleSheet.create({
   framedDialogFooter: { paddingHorizontal: 16, paddingTop: 12, backgroundColor: theme.colors.surface },
   footerRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   roundBtn: {
-    width: 46,
-    height: 46,
-    borderRadius: 23,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     backgroundColor: theme.colors.surface,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
@@ -476,8 +483,8 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   closeBtn: {
-    width: 44,
-    height: 44,
+    width: 48,
+    height: 48,
     borderRadius: 14,
     backgroundColor: theme.colors.surfaceAlt,
     alignItems: 'center',

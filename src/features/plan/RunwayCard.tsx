@@ -51,8 +51,10 @@ export function RunwayCard({
   const { accent } = useAccent();
   const ink = homeInk(accent);
   const [width, setWidth] = useState(0);
+  const [details, setDetails] = useState(false);
   const [selected, setSelected] = useState<string | null>(null);
   const none = dueSoon.count === 0;
+  const hasChanges = runway.days.some((d) => d.afterMinor !== d.beforeMinor);
   const picked = runway.days.find((d) => d.date === selected && d.items.length > 0) ?? null;
   const last = runway.days[runway.days.length - 1];
 
@@ -126,84 +128,91 @@ export function RunwayCard({
               <Text style={styles.tileSub}>Spending-account balance</Text>
               <Text style={styles.pathNote}>{formatMoney(runway.startMinor)}</Text>
             </View>
-            <View style={styles.runway} onLayout={onLayout} testID="runway">
-              {width > 0 && (
-                <Svg width={width} height={RUNWAY_HEIGHT}>
-                  <Defs>
-                    <LinearGradient id="runwayArea" x1="0" y1="0" x2="0" y2="1">
-                      <Stop offset="0" stopColor={shade(accent, 70)} stopOpacity={0.5} />
-                      <Stop offset="1" stopColor={shade(accent, 70)} stopOpacity={0} />
-                    </LinearGradient>
-                  </Defs>
-                  <Path d={area} fill="url(#runwayArea)" />
-                  {min < 0 && (
-                    <Line
-                      x1={0}
-                      x2={width}
-                      y1={y(0)}
-                      y2={y(0)}
-                      stroke={theme.colors.expense}
-                      strokeWidth={1}
-                      strokeDasharray="3 3"
-                    />
+            {hasChanges && (
+              <>
+                <View style={styles.runway} onLayout={onLayout} testID="runway">
+                  {width > 0 && (
+                    <Svg width={width} height={RUNWAY_HEIGHT}>
+                      <Defs>
+                        <LinearGradient id="runwayArea" x1="0" y1="0" x2="0" y2="1">
+                          <Stop offset="0" stopColor={shade(accent, 70)} stopOpacity={0.5} />
+                          <Stop offset="1" stopColor={shade(accent, 70)} stopOpacity={0} />
+                        </LinearGradient>
+                      </Defs>
+                      <Path d={area} fill="url(#runwayArea)" />
+                      {min < 0 && (
+                        <Line
+                          x1={0}
+                          x2={width}
+                          y1={y(0)}
+                          y2={y(0)}
+                          stroke={theme.colors.expense}
+                          strokeWidth={1}
+                          strokeDasharray="3 3"
+                        />
+                      )}
+                      <Path d={line} fill="none" stroke={ink} strokeWidth={2} strokeLinejoin="round" />
+                    </Svg>
                   )}
-                  <Path d={line} fill="none" stroke={ink} strokeWidth={2} strokeLinejoin="round" />
-                </Svg>
-              )}
 
-              {width > 0 && !runway.short && !none && lowIndex >= 0 && (
-                <Text
-                  style={[
-                    styles.runwayLow,
-                    {
-                      left: Math.max(0, Math.min(x(lowIndex) - 20, width - 64)),
-                      top: Math.min(y(runway.lowMinor) + 6, RUNWAY_HEIGHT - 14),
-                    },
-                  ]}
-                  accessibilityElementsHidden
-                  importantForAccessibility="no"
-                >
-                  low {compactMoney(runway.lowMinor)}
-                </Text>
-              )}
-              {width > 0 &&
-                runway.days.map((d, i) => {
-                  if (d.items.length === 0) return null;
-                  const on = picked?.date === d.date;
-                  const color = pinColor(d);
-                  return (
-                    <View
-                      key={d.date}
-                      pointerEvents="none"
+                  {width > 0 && !runway.short && !none && lowIndex >= 0 && (
+                    <Text
                       style={[
-                        styles.pin,
+                        styles.runwayLow,
                         {
-                          left: x(i) - PIN / 2,
-                          top: Math.max(
-                            0,
-                            Math.min(RUNWAY_HEIGHT - PIN, (y(d.beforeMinor) + y(d.afterMinor)) / 2 - PIN / 2)
-                          ),
+                          left: Math.max(0, Math.min(x(lowIndex) - 20, width - 64)),
+                          top: Math.min(y(runway.lowMinor) + 6, RUNWAY_HEIGHT - 14),
                         },
                       ]}
                       accessibilityElementsHidden
-                      importantForAccessibility="no-hide-descendants"
+                      importantForAccessibility="no"
                     >
-                      <View style={[styles.pinDot, on && styles.pinDotOn, { borderColor: color }]} />
-                    </View>
-                  );
-                })}
-            </View>
-            <View
-              style={styles.runwayAxis}
-              accessibilityElementsHidden
-              importantForAccessibility="no-hide-descendants"
-            >
-              <Text style={styles.runwayAxisText}>Today</Text>
-              <Text style={styles.runwayAxisText}>
-                {dayMonth(runway.days[Math.floor(count / 2)]?.date ?? last.date)}
-              </Text>
-              <Text style={styles.runwayAxisText}>{dayMonth(last.date)}</Text>
-            </View>
+                      low {compactMoney(runway.lowMinor)}
+                    </Text>
+                  )}
+                  {width > 0 &&
+                    runway.days.map((d, i) => {
+                      if (d.items.length === 0) return null;
+                      const on = picked?.date === d.date;
+                      const color = pinColor(d);
+                      return (
+                        <View
+                          key={d.date}
+                          pointerEvents="none"
+                          style={[
+                            styles.pin,
+                            {
+                              left: x(i) - PIN / 2,
+                              top: Math.max(
+                                0,
+                                Math.min(
+                                  RUNWAY_HEIGHT - PIN,
+                                  (y(d.beforeMinor) + y(d.afterMinor)) / 2 - PIN / 2
+                                )
+                              ),
+                            },
+                          ]}
+                          accessibilityElementsHidden
+                          importantForAccessibility="no-hide-descendants"
+                        >
+                          <View style={[styles.pinDot, on && styles.pinDotOn, { borderColor: color }]} />
+                        </View>
+                      );
+                    })}
+                </View>
+                <View
+                  style={styles.runwayAxis}
+                  accessibilityElementsHidden
+                  importantForAccessibility="no-hide-descendants"
+                >
+                  <Text style={styles.runwayAxisText}>Today</Text>
+                  <Text style={styles.runwayAxisText}>
+                    {dayMonth(runway.days[Math.floor(count / 2)]?.date ?? last.date)}
+                  </Text>
+                  <Text style={styles.runwayAxisText}>{dayMonth(last.date)}</Text>
+                </View>
+              </>
+            )}
           </View>
         )}
 
@@ -236,17 +245,31 @@ export function RunwayCard({
               })}
           </ScrollView>
         )}
-        <Foot
-          picked={picked}
-          runway={runway}
-          hasAccounts={hasAccounts}
-          none={none}
-          next={next}
-          onJumpToDay={onJumpToDay}
-        />
-        <Text style={styles.tileSub}>
-          Scheduled bills and income only. Everyday spending can change this balance.
-        </Text>
+        {(picked || details || !hasAccounts) && (
+          <Foot
+            picked={picked}
+            runway={runway}
+            hasAccounts={hasAccounts}
+            none={none}
+            next={next}
+            onJumpToDay={onJumpToDay}
+          />
+        )}
+        <Pressable
+          onPress={() => setDetails((value) => !value)}
+          style={withPressed({ minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 6 })}
+          accessibilityRole="button"
+          accessibilityLabel="Forecast details"
+          accessibilityState={{ expanded: details }}
+        >
+          <Text style={styles.openText}>Details</Text>
+          <Feather name={details ? 'chevron-up' : 'chevron-down'} size={16} color={theme.colors.link} />
+        </Pressable>
+        {details && (
+          <Text style={styles.tileSub}>
+            Scheduled bills and income only. Everyday spending can change this balance.
+          </Text>
+        )}
         {!hasAccounts && (
           <Text style={styles.tileSub}>
             Add a bank, cash or wallet account to see your scheduled balance.

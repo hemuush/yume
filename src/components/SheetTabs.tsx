@@ -39,7 +39,7 @@ const styles = StyleSheet.create({
   },
   tab: {
     flex: 1,
-    minHeight: 44,
+    minHeight: 48,
     paddingHorizontal: 6,
     paddingVertical: 10,
     alignItems: 'center',

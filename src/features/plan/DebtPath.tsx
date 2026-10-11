@@ -59,13 +59,13 @@ export function DebtPath({
   return (
     <View>
       <Glass style={styles.card}>
-        <Kicker icon="flag">
-          {knownEnd ? `Estimated debt-free · ${longMonthYear(knownEnd)}` : 'Debt left · schedule incomplete'}
-        </Kicker>
-        <Text style={styles.pathValue} numberOfLines={1} adjustsFontSizeToFit>
-          {formatMoney(loans.debtLeftMinor)}
-        </Text>
-        <Text style={styles.pathNote}>Principal left · {formatRatioPct(loans.paidFraction)} repaid</Text>
+        <View style={styles.head}>
+          <Text style={styles.pathValue} numberOfLines={1} adjustsFontSizeToFit>
+            {formatMoney(loans.debtLeftMinor)}
+          </Text>
+          <Text style={styles.pathNote}>{formatRatioPct(loans.paidFraction)} repaid</Text>
+        </View>
+        <Text style={styles.pathNote}>Principal left</Text>
         <View
           style={local.track}
           accessibilityRole="progressbar"
@@ -74,6 +74,11 @@ export function DebtPath({
         >
           <View style={[local.fill, { width: `${Math.min(100, Math.max(0, loans.paidFraction * 100))}%` }]} />
         </View>
+        <Text style={styles.pathNote}>
+          {knownEnd
+            ? `Estimated debt-free · ${longMonthYear(knownEnd)}`
+            : 'Schedule incomplete · debt-free date unavailable'}
+        </Text>
         <View style={styles.chips}>
           {dueSoon.emiMinor > 0 ? (
             <PlanChip icon="calendar">{formatMoney(dueSoon.emiMinor)} in EMIs over 14 days</PlanChip>

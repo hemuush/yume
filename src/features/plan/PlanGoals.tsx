@@ -42,7 +42,7 @@ export function GoalsStrip({
   const { hideAmounts } = usePrivacy();
   const { width, fontScale } = useWindowDimensions();
   const cardWidth = Math.max(112 * Math.min(fontScale, 1.3), Math.min(160, (width - 60) / 3));
-  const cardHeight = 184 * Math.min(Math.max(fontScale, 1), 1.3);
+  const cardHeight = 132 * Math.min(Math.max(fontScale, 1), 1.3);
   const active = goals.filter((g) => !g.archived);
   if (active.length === 0) {
     return (
@@ -83,7 +83,7 @@ export function GoalsStrip({
       ))}
       <Pressable
         onPress={onAdd ?? onOpen}
-        style={withPressed([styles.goal, styles.goalNew, { width: cardWidth, height: cardHeight }])}
+        style={withPressed([styles.goal, styles.goalNew, { width: cardWidth, minHeight: cardHeight }])}
         accessibilityRole="button"
         accessibilityLabel="Open savings goals to start a new one"
       >
@@ -128,7 +128,7 @@ function GoalCard({
             }. Open savings goals`
       }
     >
-      <Glass radius={24} style={[styles.goal, { width, height }]}>
+      <Glass radius={24} style={[styles.goal, { width, minHeight: height }]}>
         {!masked && pct > 0 && (
           <View style={styles.goalReservoir} pointerEvents="none">
             <View style={[styles.goalFill, { height: `${pct}%`, backgroundColor: hue }]}>
@@ -144,11 +144,6 @@ function GoalCard({
           <Text style={styles.goalPct}>
             {pct}
             <Text style={styles.goalPctSign}>%</Text>
-          </Text>
-        )}
-        {!masked && (
-          <Text style={styles.goalRemaining}>
-            {formatMoney(Math.max(0, goal.targetAmountMinor - goal.currentAmountMinor))} left
           </Text>
         )}
         <Text style={styles.goalName} numberOfLines={2}>
@@ -185,8 +180,9 @@ export function WhatIfCard({
       {whatIf ? (
         <>
           <Text style={styles.gainNote}>Spend a little less</Text>
-          <Text style={styles.whatIfBold}>{whatIf.categoryName}</Text>
-          <Text style={styles.gainNote}>{formatMoney(whatIf.avgMonthlyMinor)} average / month</Text>
+          <Text style={styles.whatIfBold}>
+            {whatIf.categoryName} · {formatMoney(whatIf.avgMonthlyMinor)} / month
+          </Text>
           <View style={styles.lever}>
             <View style={styles.cuts}>
               {WHAT_IF_CUTS.map((c) => (
@@ -211,8 +207,7 @@ export function WhatIfCard({
               <Text style={styles.gainValue} numberOfLines={1} adjustsFontSizeToFit>
                 {formatMoney(extra)}
               </Text>
-              <Text style={styles.gainNote}>a month</Text>
-              <Text style={styles.gainNote}>{formatMoney(extra * 12)} a year</Text>
+              <Text style={styles.gainNote}>/ month · {formatMoney(extra * 12)} / year</Text>
             </View>
           </View>
         </>

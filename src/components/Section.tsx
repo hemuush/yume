@@ -19,6 +19,7 @@ export function Section({
   onSeeAll,
   right,
   first,
+  compact,
   children,
 }: {
   title: string;
@@ -28,12 +29,14 @@ export function Section({
   right?: React.ReactNode;
   /** The first section under a screen's header: it sits the usual 8 below it, not a full section gap. */
   first?: boolean;
+  /** Denser spacing for overview screens; retains full-size actions. */
+  compact?: boolean;
   children: React.ReactNode;
 }) {
   const { animatedStyle, onPressIn, onPressOut } = usePressScale();
   return (
-    <View style={[styles.wrap, first && styles.wrapFirst]}>
-      <View style={styles.head}>
+    <View style={[styles.wrap, compact && { marginTop: 16 }, first && styles.wrapFirst]}>
+      <View style={[styles.head, compact && { marginBottom: 8 }]}>
         {heading ?? (
           <View style={styles.titleRow}>
             <Text style={styles.title}>{title}</Text>
@@ -75,9 +78,10 @@ const styles = StyleSheet.create({
     marginHorizontal: SCREEN.gutter,
     marginBottom: SECTION_GAP.bottom,
     minHeight: 24,
+    gap: 8,
   },
-  titleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  title: SECTION_TITLE,
+  titleRow: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: 8 },
+  title: { ...SECTION_TITLE, flexShrink: 1 },
   badge: {
     minWidth: 20,
     minHeight: 20,
@@ -88,6 +92,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   badgeText: { fontFamily: theme.font.monoBold, fontSize: 11, color: theme.colors.white },
-  seeAll: { flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 32 },
+  seeAll: { flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 48, flexShrink: 0 },
   seeAllText: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.link },
 });
