@@ -88,22 +88,39 @@ export function RunwayCard({
       <Glass radius={28} tone="strong" style={[styles.card, styles.cardFirst]}>
         <View style={styles.head}>
           <Kicker icon="calendar">Next 14 days</Kicker>
-          {!none && (
-            <PlanChip>
-              {dueSoon.count} payment{dueSoon.count === 1 ? '' : 's'}
-            </PlanChip>
+          <Pressable
+            onPress={() => setDetails((value) => !value)}
+            style={withPressed(styles.detailsButton)}
+            accessibilityRole="button"
+            accessibilityLabel="Forecast details"
+            accessibilityState={{ expanded: details }}
+          >
+            <Text style={styles.openText}>Details</Text>
+            <Feather name={details ? 'chevron-up' : 'chevron-down'} size={16} color={theme.colors.link} />
+          </Pressable>
+        </View>
+        <View style={styles.forecastSummary}>
+          <View style={styles.forecastMain}>
+            {none ? (
+              <Text style={styles.bigNothing}>No scheduled payments</Text>
+            ) : (
+              <View style={styles.bigRow}>
+                <Text style={styles.bigValue} numberOfLines={1} adjustsFontSizeToFit>
+                  {formatMoney(dueSoon.totalMinor)}
+                </Text>
+                <Text style={styles.bigNote}>
+                  going out · {dueSoon.count} payment{dueSoon.count === 1 ? '' : 's'}
+                </Text>
+              </View>
+            )}
+          </View>
+          {hasAccounts && (
+            <View style={styles.forecastBalance}>
+              <Text style={styles.tileSub}>Spending-account balance</Text>
+              <Text style={styles.pathValue}>{formatMoney(runway.startMinor)}</Text>
+            </View>
           )}
         </View>
-        {none ? (
-          <Text style={styles.bigNothing}>No scheduled payments</Text>
-        ) : (
-          <View style={styles.bigRow}>
-            <Text style={styles.bigValue} numberOfLines={1} adjustsFontSizeToFit>
-              {formatMoney(dueSoon.totalMinor)}
-            </Text>
-            <Text style={styles.bigNote}>going out</Text>
-          </View>
-        )}
         {hasAccounts && (!none || runway.inMinor > 0) && (
           <View style={styles.chips}>
             {!none &&
@@ -124,10 +141,6 @@ export function RunwayCard({
 
         {hasAccounts && (
           <View>
-            <View style={styles.head}>
-              <Text style={styles.tileSub}>Spending-account balance</Text>
-              <Text style={styles.pathNote}>{formatMoney(runway.startMinor)}</Text>
-            </View>
             {hasChanges && (
               <>
                 <View style={styles.runway} onLayout={onLayout} testID="runway">
@@ -255,16 +268,6 @@ export function RunwayCard({
             onJumpToDay={onJumpToDay}
           />
         )}
-        <Pressable
-          onPress={() => setDetails((value) => !value)}
-          style={withPressed({ minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 6 })}
-          accessibilityRole="button"
-          accessibilityLabel="Forecast details"
-          accessibilityState={{ expanded: details }}
-        >
-          <Text style={styles.openText}>Details</Text>
-          <Feather name={details ? 'chevron-up' : 'chevron-down'} size={16} color={theme.colors.link} />
-        </Pressable>
         {details && (
           <Text style={styles.tileSub}>
             Scheduled bills and income only. Everyday spending can change this balance.

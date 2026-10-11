@@ -26,8 +26,8 @@ export function BudgetsHero({ figures: h }: { figures: BudgetsHeroFigures }) {
   ].join(' · ');
 
   return (
-    <Glass radius={28} tone="strong" style={frost.hero}>
-      <View style={frost.heroRow}>
+    <Glass radius={28} tone="strong" style={[frost.hero, { padding: 14, gap: 8 }]}>
+      <View style={[frost.heroRow, { flexWrap: 'wrap', gap: 8 }]}>
         <View style={frost.heroMain}>
           <Kicker icon="pie-chart">{over ? 'Over this month' : 'Left this month'}</Kicker>
           <CountUpAmount
@@ -48,11 +48,11 @@ export function BudgetsHero({ figures: h }: { figures: BudgetsHeroFigures }) {
           </View>
         )}
       </View>
-      <Text style={frost.sub} numberOfLines={2}>
+      <Text style={frost.sub}>
         of <Text style={frost.subBold}>{formatMoney(h.limitMinor)}</Text> · {sub}
       </Text>
       <PaceBar animKey="budgets:hero" pct={h.usedPct} color={FILL[h.tone]} marker={h.expectedPct} />
-      <Text style={frost.note2} numberOfLines={1}>
+      <Text style={frost.note2}>
         {formatMoney(h.spentMinor)} spent · the tick is where an even month would be today
       </Text>
       <View style={frost.chips}>

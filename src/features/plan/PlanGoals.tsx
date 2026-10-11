@@ -203,11 +203,10 @@ export function WhatIfCard({
               ))}
             </View>
             <View style={styles.gain} accessibilityLiveRegion="polite">
-              <Text style={styles.gainNote}>Could free up</Text>
               <Text style={styles.gainValue} numberOfLines={1} adjustsFontSizeToFit>
-                {formatMoney(extra)}
+                {formatMoney(extra)} / month
               </Text>
-              <Text style={styles.gainNote}>/ month · {formatMoney(extra * 12)} / year</Text>
+              <Text style={styles.gainNote}>{formatMoney(extra * 12)} / year</Text>
             </View>
           </View>
         </>

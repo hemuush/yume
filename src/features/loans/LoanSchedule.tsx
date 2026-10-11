@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Pressable, StyleSheet } from 'react-native';
+import { View, Pressable, StyleSheet, useWindowDimensions } from 'react-native';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
@@ -36,6 +36,8 @@ function Marker({ status, isNext }: { status: LoanPayment['status']; isNext: boo
  * the others are one tap away, so a 240-month loan doesn't open as a wall of rows.
  */
 export function LoanSchedule({ schedule }: { schedule: LoanPayment[] }) {
+  const { width, fontScale } = useWindowDimensions();
+  const stacked = width < 360 || fontScale > 1.2;
   const years = groupScheduleByYear(schedule);
   const nextId = nextUnpaidInstallment(schedule)?.id;
   const todayIso = toLocalIsoDate(new Date());
@@ -89,23 +91,27 @@ export function LoanSchedule({ schedule }: { schedule: LoanPayment[] }) {
                     ]}
                   >
                     <Marker status={p.status} isNext={isNext} />
-                    <View style={{ flex: 1 }}>
-                      <Text style={shared.rowLabel}>
-                        #{p.installmentNumber} · {dayMonthYear(p.dueDate)}
-                      </Text>
-                      <Text style={shared.rowSub}>
-                        Principal {formatMoney(dispPrincipal)} · Interest {formatMoney(dispInterest)}
-                      </Text>
-                    </View>
-                    <View style={{ alignItems: 'flex-end' }}>
-                      <Text style={shared.rowValue}>{formatMoney(p.emiAmountMinor)}</Text>
-                      {overdue ? (
-                        <Text style={[shared.statusTag, styles.overdueTag]}>Overdue</Text>
-                      ) : isNext ? (
-                        <Text style={[shared.statusTag, styles.nextTag]}>Next</Text>
-                      ) : p.status === 'prepaid' ? (
-                        <Text style={shared.statusTag}>{p.status}</Text>
-                      ) : null}
+                    <View style={styles.content}>
+                      <View style={[styles.payment, stacked && styles.paymentStacked]}>
+                        <View style={styles.description}>
+                          <Text style={shared.rowLabel}>
+                            #{p.installmentNumber} · {dayMonthYear(p.dueDate)}
+                          </Text>
+                          <Text style={shared.rowSub}>
+                            Principal {formatMoney(dispPrincipal)} · Interest {formatMoney(dispInterest)}
+                          </Text>
+                        </View>
+                        <View style={[styles.amount, stacked && styles.amountStacked]}>
+                          <Text style={shared.rowValue}>{formatMoney(p.emiAmountMinor)}</Text>
+                          {overdue ? (
+                            <Text style={[shared.statusTag, styles.overdueTag]}>Overdue</Text>
+                          ) : isNext ? (
+                            <Text style={[shared.statusTag, styles.nextTag]}>Next</Text>
+                          ) : p.status === 'prepaid' ? (
+                            <Text style={shared.statusTag}>{p.status}</Text>
+                          ) : null}
+                        </View>
+                      </View>
                     </View>
                   </View>
                 );
@@ -119,7 +125,9 @@ export function LoanSchedule({ schedule }: { schedule: LoanPayment[] }) {
 
 const styles = StyleSheet.create({
   yearHead: {
+    minHeight: 44,
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
     gap: 10,
     paddingVertical: 12,
@@ -130,6 +138,12 @@ const styles = StyleSheet.create({
   year: { fontFamily: theme.font.roundedBold, fontSize: 15, color: theme.colors.textPrimary },
   yearSub: { fontFamily: theme.font.mono, fontSize: 11, color: theme.colors.textMuted },
   row: { gap: 12 },
+  content: { flex: 1, minWidth: 0 },
+  payment: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  paymentStacked: { flexDirection: 'column', alignItems: 'stretch' },
+  description: { flex: 1, minWidth: 0 },
+  amount: { alignItems: 'flex-end', flexShrink: 1 },
+  amountStacked: { alignItems: 'flex-start' },
   rowNext: {
     borderRadius: theme.radius.md,
     paddingHorizontal: 10,

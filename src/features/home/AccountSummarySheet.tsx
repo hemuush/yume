@@ -5,7 +5,7 @@ import { Text } from '@/components/Text';
 import ReanimatedAnimated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
 import { getAccountFlow, listTransactions, AccountFlow } from '@/db/ledger';
 import { Account, Category, Transaction } from '@/types';
-import { theme, modalFooterStyles as f } from '@/constants/theme';
+import { theme } from '@/constants/theme';
 import { ModalSheet } from '@/components/ModalSheet';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { SheetCard } from '@/components/SheetCard';
@@ -198,17 +198,17 @@ export function AccountSummarySheet({
         visible
         onClose={onClose}
         footer={
-          <View style={f.footerRow}>
+          <View style={styles.footerRow}>
             <PrimaryButton
               title="Edit account"
               variant="secondary"
               onPress={() => onEdit(account)}
-              style={f.footerBtn}
+              style={styles.footerBtn}
             />
             <PrimaryButton
               title={isSavings ? 'Transfer from here' : 'Add expense here'}
               onPress={() => onAdd(account)}
-              style={f.footerBtn}
+              style={styles.footerBtn}
             />
           </View>
         }
@@ -428,9 +428,7 @@ function BillLine({
 }) {
   return (
     <View style={[styles.billLine, divider && styles.billDivider]}>
-      <Text style={[styles.billLabel, strong && styles.billLabelStrong]} numberOfLines={1}>
-        {label}
-      </Text>
+      <Text style={[styles.billLabel, strong && styles.billLabelStrong]}>{label}</Text>
       <Text style={[styles.billValue, valueColor ? { color: valueColor } : null]}>{value}</Text>
     </View>
   );
@@ -479,19 +477,18 @@ function FlowRow({
           {value}
         </Text>
       </View>
-      {!!detail && (
-        <Text style={styles.flowDetail} numberOfLines={1}>
-          {detail}
-        </Text>
-      )}
+      {!!detail && <Text style={styles.flowDetail}>{detail}</Text>}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  footerRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  footerBtn: { flexGrow: 1, flexBasis: 140 },
   label: EYEBROW,
   billLine: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: 10,
@@ -499,7 +496,13 @@ const styles = StyleSheet.create({
     paddingVertical: 11,
   },
   billDivider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.borderSoft },
-  billLabel: { flex: 1, fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textSecondary },
+  billLabel: {
+    flexGrow: 1,
+    flexBasis: 140,
+    fontFamily: theme.font.body,
+    fontSize: 13,
+    color: theme.colors.textSecondary,
+  },
   billLabelStrong: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
   billValue: { fontFamily: theme.font.monoBold, fontSize: 13, color: theme.colors.textPrimary },
   payBill: { marginTop: 10 },
@@ -570,6 +573,7 @@ const styles = StyleSheet.create({
   },
   empty: { fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textMuted, marginTop: 8 },
   seeAll: {
+    minHeight: 48,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',

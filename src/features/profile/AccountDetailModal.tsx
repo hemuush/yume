@@ -243,7 +243,7 @@ export function AccountDetailModal({
         <>
           <View style={styles.toggleRow}>
             <Text style={styles.fieldLabel}>Track its value</Text>
-            <ToggleSwitch value={tracked} onChange={setTracked} />
+            <ToggleSwitch accessibilityLabel="Track its value" value={tracked} onChange={setTracked} />
           </View>
           <Text style={styles.hintText}>
             {tracked

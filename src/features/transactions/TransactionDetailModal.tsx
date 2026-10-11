@@ -19,7 +19,7 @@ import { Amount } from '@/components/Amount';
 import { ModalSheet } from '@/components/ModalSheet';
 import { SheetCard } from '@/components/SheetCard';
 import { SettingsRow } from '@/components/SettingsRow';
-import { theme, modalFooterStyles as f } from '@/constants/theme';
+import { theme } from '@/constants/theme';
 import { screenStyles as h } from '@/components/screenStyles';
 import { accountIcon, savingsAccountIdsOf } from '@/lib/account';
 import { isSavingsEntry } from '@/lib/privateSummary';
@@ -252,8 +252,8 @@ export function TransactionDetailModal({
     );
   };
 
-  // The entry as a card in its category's colour, then two pages (what it is, what you can do) so neither
-  // scrolls. Delete is the bin beside Edit.
+  // The entry card, contextual actions and details share one scrollable sheet.
+  // Delete remains beside Edit, with inline confirmation and undo.
   const canEdit = link === null;
   // New entries (again today, or on a schedule) only go on accounts still in use, never an archived one.
   const isActive = (id: string | null) => {
@@ -305,7 +305,12 @@ export function TransactionDetailModal({
       footer={
         canEdit ? (
           <View style={styles.detailFoot}>
-            <PrimaryButton title="Edit" onPress={() => onEdit(tx)} disabled={busy} style={f.footerBtn} />
+            <PrimaryButton
+              title="Edit"
+              onPress={() => onEdit(tx)}
+              disabled={busy}
+              style={styles.detailEdit}
+            />
             {/* Asks once in place ("Delete?"), then deletes with an undo. */}
             <Pressable
               onPress={() => {
@@ -448,7 +453,7 @@ export function TransactionDetailModal({
               const mine = p.id === tx.id;
               return (
                 <View key={p.id} style={styles.splitPart}>
-                  <Text style={[styles.splitPartName, mine && styles.splitPartMine]} numberOfLines={1}>
+                  <Text style={[styles.splitPartName, mine && styles.splitPartMine]}>
                     {pc
                       ? categorySentence(pc.name, parentNameOf(p.categoryId, categoriesById))
                       : 'Uncategorised'}

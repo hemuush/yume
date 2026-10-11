@@ -76,7 +76,9 @@ describe('LoanCard', () => {
   it('Pay opens the pay sheet and does not open the loan', () => {
     const { r, onPress, onPay } = render(loan(), progress);
     const pay = r.root.find((n) => /^Pay next EMI for/.test(n.props.accessibilityLabel ?? ''));
-    act(() => pay.props.onPress());
+    const stopPropagation = jest.fn();
+    act(() => pay.props.onPress({ stopPropagation }));
+    expect(stopPropagation).toHaveBeenCalledTimes(1);
     expect(onPay).toHaveBeenCalledTimes(1);
     expect(onPress).not.toHaveBeenCalled();
   });
@@ -101,7 +103,7 @@ describe('LoanCard', () => {
   it('says Lent and to receive on a lent loan', () => {
     const { text } = render(loan({ direction: 'lent' }), progress);
     expect(text).toContain('Lent');
-    expect(text).toContain('to receive');
+    expect(text).toContain('Still to receive');
     expect(text).toContain('Repaid');
   });
 

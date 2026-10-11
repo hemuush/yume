@@ -110,7 +110,7 @@ export function WhereItWent({
         </Pressable>
       </View>
       {selected && (
-        <View style={stacked ? styles.selectorRow : styles.dial}>
+        <View style={stacked ? styles.selectorRow : [styles.dial, { height: (top.length + 1) * 48 }]}>
           {!stacked && (
             <Animated.View
               pointerEvents="none"
@@ -148,7 +148,9 @@ export function WhereItWent({
           ))}
           <Pressable
             style={withPressed(
-              stacked ? styles.inlineTarget : [styles.target, { left: POSITIONS[4][0], top: POSITIONS[4][1] }]
+              stacked
+                ? styles.inlineTarget
+                : [styles.target, { left: POSITIONS[top.length][0], top: POSITIONS[top.length][1] }]
             )}
             onPress={onOpenReports}
             accessibilityRole="button"
@@ -219,6 +221,6 @@ const styles = StyleSheet.create({
     color: theme.colors.textSecondary,
     marginTop: 4,
   },
-  linkButton: { minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 6 },
+  linkButton: { minHeight: 48, flexDirection: 'row', alignItems: 'center', gap: 6 },
   link: { flexShrink: 1, fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.link },
 });

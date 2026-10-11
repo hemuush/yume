@@ -62,7 +62,7 @@ export function RestorePreviewSheet({
       title="Restore preview"
       // Backdrop, ✕ and Android back do nothing while the restore is running.
       onClose={busy ? noop : onCancel}
-      scrollable={false}
+      scrollable
       footer={
         <PrimaryButton
           title={busy ? 'Restoring…' : 'Restore this backup'}

@@ -16,8 +16,12 @@ import type { GoalsTotals } from './goalPlan';
 export function GoalsHero({ totals }: { totals: GoalsTotals }) {
   const { hideAmounts } = usePrivacy();
   return (
-    <Glass radius={28} tone="strong" style={[frost.hero, { marginTop: 0, marginBottom: 12 }]}>
-      <View style={frost.heroRow}>
+    <Glass
+      radius={28}
+      tone="strong"
+      style={[frost.hero, { marginTop: 0, marginBottom: 12, padding: 14, gap: 8 }]}
+    >
+      <View style={[frost.heroRow, { flexWrap: 'wrap', gap: 8 }]}>
         <View style={frost.heroMain}>
           <Kicker icon="flag">Saved toward goals</Kicker>
           {hideAmounts ? (

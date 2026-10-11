@@ -82,9 +82,7 @@ export function ProfileIdentity({
               accessibilityHint="Edit your name"
               onPress={onStartEdit}
             >
-              <Text style={styles.name} numberOfLines={1}>
-                {name || 'Add your name'}
-              </Text>
+              <Text style={styles.name}>{name || 'Add your name'}</Text>
               <Feather name="edit-2" size={14} color={theme.colors.textMuted} />
             </Pressable>
           )}
@@ -101,7 +99,7 @@ export function ProfileIdentity({
 }
 
 const local = StyleSheet.create({
-  card: { marginHorizontal: SCREEN.gutter, marginTop: theme.layout.screenTopGap, padding: 16 },
+  card: { marginHorizontal: SCREEN.gutter, marginTop: theme.layout.screenTopGap, padding: 14 },
   halo: { padding: 3, borderRadius: 35, borderWidth: 3 },
   chip: {
     marginTop: 8,
@@ -116,5 +114,10 @@ const local = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 4,
   },
-  chipText: { fontFamily: theme.font.bodyMedium, fontSize: 11.5, color: theme.colors.textSecondary },
+  chipText: {
+    flexShrink: 1,
+    fontFamily: theme.font.bodyMedium,
+    fontSize: 11.5,
+    color: theme.colors.textSecondary,
+  },
 });

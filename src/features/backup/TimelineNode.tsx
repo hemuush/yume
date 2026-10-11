@@ -22,7 +22,7 @@ export function TimelineNode({
         <View style={[styles.rail, { top: first ? '50%' : 0, bottom: last ? '50%' : 0 }]} />
       )}
       <View style={[styles.dot, latest && styles.dotLatest, copy && styles.dotCopy]} />
-      <View style={h.row}>{children}</View>
+      <View style={[h.row, styles.nodeRow]}>{children}</View>
     </View>
   );
 }

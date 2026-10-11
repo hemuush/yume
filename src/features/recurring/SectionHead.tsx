@@ -16,6 +16,8 @@ export function SectionHead({ title, note }: { title: string; note?: string }) {
 const styles = StyleSheet.create({
   head: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
     alignItems: 'baseline',
     justifyContent: 'space-between',
     marginTop: SECTION_GAP.top,

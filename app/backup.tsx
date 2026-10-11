@@ -504,7 +504,7 @@ Restore anyway? Your current data would be replaced with no way back.`,
                 <View style={h.mid}>
                   <Text style={styles.statusTitle}>{status.title}</Text>
                   {status.lines.map((line) => (
-                    <Text key={line} style={[h.sub, status.failed && styles.errorLine]} numberOfLines={2}>
+                    <Text key={line} style={[h.sub, status.failed && styles.errorLine]}>
                       {line}
                     </Text>
                   ))}
@@ -537,7 +537,7 @@ Restore anyway? Your current data would be replaced with no way back.`,
                       disabled={!!busy}
                       hitSlop={8}
                       accessibilityRole="button"
-                      style={withPressed(busy ? styles.linkDisabled : undefined)}
+                      style={withPressed([styles.linkAction, busy && styles.linkDisabled])}
                     >
                       <Text style={styles.link}>Forget folder</Text>
                     </Pressable>
@@ -562,7 +562,7 @@ Restore anyway? Your current data would be replaced with no way back.`,
                   hitSlop={8}
                   accessibilityRole="button"
                   accessibilityState={{ expanded: showAll }}
-                  style={withPressed()}
+                  style={withPressed(styles.linkAction)}
                 >
                   <Text style={styles.seeAll}>{showAll ? 'Show less' : `See all ${files.length} →`}</Text>
                 </Pressable>
@@ -572,7 +572,7 @@ Restore anyway? Your current data would be replaced with no way back.`,
               <View style={[h.card, GLASS_CARD, styles.timeline]}>
                 {safetyInfo && (
                   <TimelineNode first last={shownFiles.length === 0} copy>
-                    <View style={h.mid}>
+                    <View style={[h.mid, styles.nodeDetails]}>
                       <Text style={h.title}>Saved recovery snapshot</Text>
                       <Text style={[h.sub, styles.copySub]}>
                         {formatWhen(safetyInfo.savedAt)} · {safetyInfo.transactions}{' '}
@@ -597,9 +597,9 @@ Restore anyway? Your current data would be replaced with no way back.`,
                     last={i === shownFiles.length - 1}
                     latest={i === 0 && !!file.summary}
                   >
-                    <View style={h.mid}>
+                    <View style={[h.mid, styles.nodeDetails]}>
                       <View style={styles.whenRow}>
-                        <Text style={h.title} numberOfLines={2}>
+                        <Text style={h.title}>
                           {file.exportedAt ? formatWhen(file.exportedAt) : 'Backup file'}
                         </Text>
                         {i === 0 && file.summary && (

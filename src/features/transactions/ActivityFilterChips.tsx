@@ -165,7 +165,12 @@ export function SearchStatus({
             <View style={styles.recentHead}>
               <Text style={styles.recentLabel}>Recent</Text>
               {onClearRecent && (
-                <Pressable onPress={onClearRecent} hitSlop={10} accessibilityRole="button">
+                <Pressable
+                  onPress={onClearRecent}
+                  style={withPressed(styles.searchClear)}
+                  accessibilityRole="button"
+                  accessibilityLabel="Clear recent searches"
+                >
                   <Text style={styles.recentClear}>Clear</Text>
                 </Pressable>
               )}
@@ -180,9 +185,7 @@ export function SearchStatus({
                   accessibilityLabel={`Search again for ${q}`}
                 >
                   <Feather name="clock" size={15} color={theme.colors.textMuted} />
-                  <Text style={styles.recentText} numberOfLines={1}>
-                    {q}
-                  </Text>
+                  <Text style={styles.recentText}>{q}</Text>
                   <Feather name="arrow-up-left" size={15} color={theme.colors.textMuted} />
                 </Pressable>
               ))}

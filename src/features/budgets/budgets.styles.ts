@@ -10,15 +10,15 @@ export const styles = StyleSheet.create({
   lapsedCard: {
     marginHorizontal: 20,
     marginTop: 12,
-    padding: 16,
+    padding: 14,
     borderRadius: 22,
     // A warm frost: the gold tint let through the glass, so it reads as a note on the wallpaper.
     backgroundColor: 'rgba(255,239,204,0.8)',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.9)',
   },
-  lapsedHead: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  lapsedHeadText: { flex: 1, minWidth: 0 },
+  lapsedHead: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 },
+  lapsedHeadText: { flexGrow: 1, flexBasis: 180, minWidth: 0 },
   lapsedTitle: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textPrimary },
   lapsedNames: {
     fontFamily: theme.font.body,
@@ -26,9 +26,16 @@ export const styles = StyleSheet.create({
     color: theme.colors.textSecondary,
     marginTop: 2,
   },
-  lapsedChevron: { width: 24, height: 32, alignItems: 'center', justifyContent: 'center' },
-  lapsedRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingTop: 10 },
-  lapsedName: { flex: 1, fontSize: 13, fontFamily: theme.font.bodyMedium, color: theme.colors.textPrimary },
+  lapsedChevron: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
+  lapsedRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8, paddingTop: 10 },
+  lapsedName: {
+    flexGrow: 1,
+    flexBasis: 100,
+    minWidth: 0,
+    fontSize: 13,
+    fontFamily: theme.font.bodyMedium,
+    color: theme.colors.textPrimary,
+  },
   lapsedAmount: {
     fontFamily: theme.font.mono,
     fontSize: 12,
@@ -36,6 +43,8 @@ export const styles = StyleSheet.create({
     marginRight: 8,
   },
   continueBtn: {
+    minHeight: 44,
+    justifyContent: 'center',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 999,
@@ -62,12 +71,13 @@ export const styles = StyleSheet.create({
   listCardTitled: { marginTop: 0 },
   // Self-padded like RecentTransactionRow: BudgetRow renders in this listCard on Profile's "You" tab but
   // also in Home's unpadded card, so it can't rely on a container for its horizontal inset.
-  row: { paddingVertical: 16, paddingHorizontal: 16 },
+  row: { paddingVertical: 12, paddingHorizontal: 14 },
   rowDivider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.borderSoft },
-  rowTop: { flexDirection: 'row', alignItems: 'center', gap: 11, marginBottom: 8 },
+  rowTop: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8, marginBottom: 8 },
   // With a jar the foot line sits under the name, beside the jar, instead of under a bar.
   jarRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   rowTopJar: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  jarAmounts: { alignItems: 'flex-start', marginTop: 2 },
   jar: {
     width: 34,
     height: 50,
@@ -90,9 +100,9 @@ export const styles = StyleSheet.create({
   },
   jarLiquidFull: { borderRadius: 10 },
   moreBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: StyleSheet.hairlineWidth,
@@ -103,6 +113,8 @@ export const styles = StyleSheet.create({
   rowName: { fontSize: 15, fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
   rowParent: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, marginTop: 1 },
   rowAmount: {
+    flexShrink: 1,
+    maxWidth: '100%',
     fontFamily: theme.font.mono,
     fontSize: 12.5,
     textAlign: 'right',
@@ -112,6 +124,7 @@ export const styles = StyleSheet.create({
   rowAmountOf: { color: theme.colors.textMuted, fontFamily: theme.font.mono },
   rowFoot: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     justifyContent: 'space-between',
     alignItems: 'baseline',
     gap: 8,
@@ -122,6 +135,14 @@ export const styles = StyleSheet.create({
   rowPaceAhead: { color: theme.colors.warnInk },
   rowNoteOver: { color: theme.colors.expenseText, fontFamily: theme.font.bodyBold },
 
-  toggleRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 14 },
+  toggleRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    alignItems: 'center',
+    minHeight: 44,
+    marginBottom: 14,
+  },
+  rolloverCopy: { flexGrow: 1, flexBasis: 180, minWidth: 0 },
   pickerGap: { marginBottom: 16 },
 });

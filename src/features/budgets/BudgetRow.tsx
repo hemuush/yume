@@ -88,14 +88,8 @@ export function BudgetRow({
 
   const name = (
     <View style={styles.rowNameBlock}>
-      <Text style={styles.rowName} numberOfLines={1}>
-        {progress.categoryName}
-      </Text>
-      {!!progress.parentName && (
-        <Text style={styles.rowParent} numberOfLines={1}>
-          {inParent(progress.parentName)}
-        </Text>
-      )}
+      <Text style={styles.rowName}>{progress.categoryName}</Text>
+      {!!progress.parentName && <Text style={styles.rowParent}>{inParent(progress.parentName)}</Text>}
     </View>
   );
   const amount = (
@@ -108,7 +102,10 @@ export function BudgetRow({
   );
   const more = onMore && (
     <Pressable
-      onPress={onMore}
+      onPress={(event) => {
+        event?.stopPropagation();
+        onMore();
+      }}
       hitSlop={10}
       style={withPressed(styles.moreBtn)}
       accessibilityRole="button"
@@ -164,9 +161,9 @@ export function BudgetRow({
           <View style={styles.rowNameBlock}>
             <View style={styles.rowTopJar}>
               {name}
-              {amount}
               {more}
             </View>
+            <View style={styles.jarAmounts}>{amount}</View>
             {foot}
           </View>
         </View>

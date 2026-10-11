@@ -200,7 +200,7 @@ export function AddAccountModal({
         <>
           <View style={styles.toggleRow}>
             <Text style={styles.fieldLabel}>Track its value</Text>
-            <ToggleSwitch value={tracked} onChange={setTracked} />
+            <ToggleSwitch accessibilityLabel="Track its value" value={tracked} onChange={setTracked} />
           </View>
           <Text style={styles.hintText}>
             For an index fund, stocks or gold: you update what it's worth now and then, and Yume shows the

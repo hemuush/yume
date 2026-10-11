@@ -171,11 +171,11 @@ export function AddBudgetModal({
       />
 
       <View style={styles.toggleRow}>
-        <View style={{ flex: 1, marginRight: 10 }}>
+        <View style={styles.rolloverCopy}>
           <Text style={styles.fieldLabel}>Roll over unspent</Text>
           <Text style={styles.modalHint}>Add this month’s remaining amount to next month’s limit.</Text>
         </View>
-        <ToggleSwitch value={rollover} onChange={setRollover} />
+        <ToggleSwitch value={rollover} onChange={setRollover} accessibilityLabel="Roll over unspent" />
       </View>
     </ModalSheet>
   );

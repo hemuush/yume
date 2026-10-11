@@ -33,6 +33,7 @@ export const styles = StyleSheet.create({
     borderColor: theme.colors.borderSoft,
   },
   closedHeader: {
+    minHeight: 44,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -131,5 +132,12 @@ export const styles = StyleSheet.create({
     borderColor: theme.colors.borderSoft,
   },
   payoffMonth: { fontFamily: theme.font.roundedBold, fontSize: 22, color: theme.colors.textPrimary },
-  payoffAxis: { flexDirection: 'row', justifyContent: 'space-between' },
+  payoffAxis: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, justifyContent: 'space-between' },
+  payoffHeading: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
 });

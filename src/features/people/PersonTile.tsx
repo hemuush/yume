@@ -74,9 +74,7 @@ export function PersonTile({
             <View style={[styles.tileAvatar, { backgroundColor: color }]}>
               <Text style={styles.tileInitial}>{person.name.trim().charAt(0).toUpperCase() || '?'}</Text>
             </View>
-            <Text style={styles.tileName} numberOfLines={2}>
-              {person.name}
-            </Text>
+            <Text style={styles.tileName}>{person.name}</Text>
           </View>
           <Text style={[styles.tileAmount, { color: look.amount }]} numberOfLines={1} adjustsFontSizeToFit>
             {dispBalanceMinor > 0 ? '+' : '−'}

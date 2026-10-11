@@ -1,4 +1,4 @@
-import { View, Pressable, StyleSheet } from 'react-native';
+import { View, Pressable, ScrollView, StyleSheet, useWindowDimensions } from 'react-native';
 import { Text } from '@/components/Text';
 import { Glass, GLASS } from '@/components/Glass';
 import { Kicker, FrostChip } from '@/components/Frost';
@@ -14,6 +14,8 @@ const WEEKDAYS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
  * passes a week), clear when missed, faint before the first expense or still to come, today outlined.
  */
 export function GardenMonthCard({ month, today }: { month: GardenMonth; today: string }) {
+  const { width, fontScale } = useWindowDimensions();
+  const gridWidth = Math.max(width - 68, 7 * Math.max(44, Math.ceil(32 * fontScale)) + 24);
   const cells: (GardenMonth['days'][number] | null)[] = [...Array(month.lead).fill(null), ...month.days];
   while (cells.length % 7) cells.push(null);
   const weeks = Array.from({ length: cells.length / 7 }, (_, w) => cells.slice(w * 7, w * 7 + 7));
@@ -27,61 +29,70 @@ export function GardenMonthCard({ month, today }: { month: GardenMonth; today: s
           </FrostChip>
         )}
       </View>
-      <View style={styles.row} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-        {WEEKDAYS.map((d, i) => (
-          <Text key={i} style={styles.weekday}>
-            {d}
-          </Text>
-        ))}
-      </View>
-      {weeks.map((week, w) => (
-        <View key={w} style={styles.row}>
-          {week.map((d, i) =>
-            d ? (
-              <Pressable
-                key={d.date}
-                style={[
-                  styles.cell,
-                  d.state === 'kept' && (d.streakDays >= DEEP_STREAK ? styles.keptDeep : styles.kept),
-                  d.state === 'missed' && styles.missed,
-                  d.state === 'untracked' && styles.untracked,
-                  d.state === 'future' && styles.faint,
-                  d.today && styles.today,
-                ]}
-                accessible
-                accessibilityRole="button"
-                disabled={d.state === 'future'}
-                onPress={() =>
-                  showAlert(
-                    `${d.day} ${longMonthYear(today)}`,
-                    `${d.state === 'kept' ? 'Kept under the daily goal.' : d.state === 'missed' ? 'Over the daily goal.' : 'No tracked spending yet.'}${d.today ? ' Today is still in progress; its result can change.' : ''}`
-                  )
-                }
-                accessibilityLabel={`${d.day}${d.today ? ', today' : ''}: ${
-                  d.state === 'kept'
-                    ? 'kept under the goal'
-                    : d.state === 'missed'
-                      ? 'over the goal'
-                      : d.state === 'future'
-                        ? 'still to come'
-                        : 'not tracked yet'
-                }`}
-              >
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
-                  <Text style={[styles.day, d.state === 'kept' && styles.dayKept]}>{d.day}</Text>
-                  {d.state !== 'future' && (
-                    <Text style={styles.stateMark} accessible={false}>
-                      {d.state === 'kept' ? '✓' : d.state === 'missed' ? '●' : '◌'}
-                    </Text>
-                  )}
-                </View>
-              </Pressable>
-            ) : (
-              <View key={`blank-${i}`} style={[styles.cell, styles.blank]} />
-            )
-          )}
+      <ScrollView horizontal showsHorizontalScrollIndicator>
+        <View style={{ width: gridWidth, gap: 6 }}>
+          <View
+            style={styles.row}
+            accessibilityElementsHidden
+            importantForAccessibility="no-hide-descendants"
+          >
+            {WEEKDAYS.map((d, i) => (
+              <Text key={i} style={styles.weekday}>
+                {d}
+              </Text>
+            ))}
+          </View>
+          {weeks.map((week, w) => (
+            <View key={w} style={styles.row}>
+              {week.map((d, i) =>
+                d ? (
+                  <Pressable
+                    key={d.date}
+                    style={[
+                      styles.cell,
+                      d.state === 'kept' && (d.streakDays >= DEEP_STREAK ? styles.keptDeep : styles.kept),
+                      d.state === 'missed' && styles.missed,
+                      d.state === 'untracked' && styles.untracked,
+                      d.state === 'future' && styles.faint,
+                      d.today && styles.today,
+                    ]}
+                    accessible
+                    accessibilityRole="button"
+                    disabled={d.state === 'future'}
+                    onPress={() =>
+                      showAlert(
+                        `${d.day} ${longMonthYear(today)}`,
+                        `${d.state === 'kept' ? 'Kept under the daily goal.' : d.state === 'missed' ? 'Over the daily goal.' : 'No tracked spending yet.'}${d.today ? ' Today is still in progress; its result can change.' : ''}`
+                      )
+                    }
+                    accessibilityLabel={`${d.day}${d.today ? ', today' : ''}: ${
+                      d.state === 'kept'
+                        ? 'kept under the goal'
+                        : d.state === 'missed'
+                          ? 'over the goal'
+                          : d.state === 'future'
+                            ? 'still to come'
+                            : 'not tracked yet'
+                    }`}
+                  >
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
+                      <Text style={[styles.day, d.state === 'kept' && styles.dayKept]}>{d.day}</Text>
+                      {d.state !== 'future' && (
+                        <Text style={styles.stateMark} accessible={false}>
+                          {d.state === 'kept' ? '✓' : d.state === 'missed' ? '●' : '◌'}
+                        </Text>
+                      )}
+                    </View>
+                  </Pressable>
+                ) : (
+                  <View key={`blank-${i}`} style={[styles.cell, styles.blank]} />
+                )
+              )}
+            </View>
+          ))}
         </View>
-      ))}
+      </ScrollView>
+      {gridWidth > width - 68 && <Text style={styles.legendText}>Scroll across to see all days.</Text>}
       <View style={styles.legend}>
         <Text style={styles.legendText}>✓ Kept</Text>
         <Text style={styles.legendText}>● Over goal</Text>
@@ -113,7 +124,8 @@ const styles = StyleSheet.create({
   },
   cell: {
     flex: 1,
-    aspectRatio: 1,
+    minHeight: 44,
+    paddingVertical: 10,
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',

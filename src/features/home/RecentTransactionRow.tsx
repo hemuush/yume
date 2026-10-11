@@ -1,4 +1,4 @@
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, useWindowDimensions } from 'react-native';
 import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
 import { Category, Transaction } from '@/types';
@@ -39,6 +39,8 @@ export function RecentTransactionRow({
   currency?: string;
 }) {
   const { secondary } = useAccent();
+  const { width, fontScale } = useWindowDimensions();
+  const stacked = width < 360 || fontScale > 1.2;
   const isTransfer = tx.type === 'transfer';
   const note = tx.note?.trim();
   const title = isTransfer ? 'Transfer' : note || category?.name || tx.type;
@@ -53,18 +55,16 @@ export function RecentTransactionRow({
       ]);
 
   return (
-    <View style={[styles.row, divider && styles.divider]}>
+    <View style={[styles.row, stacked && styles.stackedRow, divider && styles.divider]}>
       <JustAddedGlow ids={[tx.id]} surface="home" />
       <CategoryIcon
         name={isTransfer ? 'swap-horizontal' : (category?.icon ?? 'tag')}
         color={isTransfer ? secondary : (category?.color ?? theme.colors.textMuted)}
         round
       />
-      <View style={styles.mid}>
-        <Text style={styles.title} numberOfLines={1}>
-          {title}
-        </Text>
-        <Text style={styles.sub} numberOfLines={1}>
+      <View style={[styles.mid, stacked && styles.stackedMid]}>
+        <Text style={styles.title}>{title}</Text>
+        <Text style={styles.sub}>
           {tx.isRefund && <Text style={styles.refund}>Refund · </Text>}
           {sub}
         </Text>
@@ -84,6 +84,8 @@ export function RecentTransactionRow({
 
 const styles = StyleSheet.create({
   row: h.row,
+  stackedRow: { flexWrap: 'wrap', rowGap: 6 },
+  stackedMid: { flexGrow: 1, flexBasis: '70%' },
   divider: h.divider,
   mid: h.mid,
   title: h.title,

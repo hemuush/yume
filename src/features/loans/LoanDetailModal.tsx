@@ -44,7 +44,7 @@ import { showAlert } from '@/components/AppDialog';
 
 /** The payoff line's drawing box (it stretches to the card's width). */
 const PAYOFF_LINE_WIDTH = 300;
-const PAYOFF_LINE_HEIGHT = 56;
+const PAYOFF_LINE_HEIGHT = 40;
 
 export function LoanDetailModal({
   loan,
@@ -325,10 +325,12 @@ export function LoanDetailModal({
                     <Text style={styles.statLabel}>
                       {liveLoan.direction === 'borrowed' ? 'Debt-free in' : 'Paid back in full by'}
                     </Text>
-                    <Text style={styles.payoffMonth}>{payoffMonth(payoff.lastDueDate)}</Text>
-                    <Text style={styles.rowSub}>
-                      {payoff.emisLeft} EMI{payoff.emisLeft === 1 ? '' : 's'} to go
-                    </Text>
+                    <View style={styles.payoffHeading}>
+                      <Text style={styles.payoffMonth}>{payoffMonth(payoff.lastDueDate)}</Text>
+                      <Text style={styles.rowSub}>
+                        {payoff.emisLeft} EMI{payoff.emisLeft === 1 ? '' : 's'} to go
+                      </Text>
+                    </View>
                     <Svg
                       width="100%"
                       height={PAYOFF_LINE_HEIGHT}

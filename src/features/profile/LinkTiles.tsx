@@ -30,9 +30,7 @@ function Tile({
     >
       <View style={[styles.dot, { backgroundColor: tone }]} />
       <Text style={styles.value}>{value}</Text>
-      <Text style={styles.label} numberOfLines={2}>
-        {label}
-      </Text>
+      <Text style={styles.label}>{label}</Text>
     </AnimatedPressable>
   );
 }
@@ -63,9 +61,10 @@ export function LinkTiles({
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', gap: 8, marginHorizontal: SCREEN.gutter, marginTop: 10 },
+  row: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginHorizontal: SCREEN.gutter, marginTop: 10 },
   tile: {
-    flex: 1,
+    flexGrow: 1,
+    flexBasis: 96,
     minWidth: 0,
     paddingHorizontal: 12,
     paddingTop: 13,
@@ -82,7 +81,6 @@ const styles = StyleSheet.create({
     fontFamily: theme.font.bodyMedium,
     fontSize: 12,
     lineHeight: 17,
-    minHeight: 34,
     color: theme.colors.textSecondary,
   },
 });

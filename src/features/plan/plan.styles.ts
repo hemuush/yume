@@ -53,6 +53,10 @@ export const styles = StyleSheet.create({
   },
 
   /* ---------- Runway ---------- */
+  forecastSummary: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, alignItems: 'flex-start' },
+  forecastMain: { flexGrow: 1, flexBasis: 180, minWidth: 0 },
+  forecastBalance: { flexGrow: 1, flexBasis: 120, minWidth: 0, gap: 4 },
+  detailsButton: { minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 6 },
   runway: { height: RUNWAY_HEIGHT, marginTop: 4 },
   runwayAxis: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 },
   runwayAxisText: { fontFamily: theme.font.bodyMedium, fontSize: 11, color: theme.colors.textMuted },
@@ -92,7 +96,21 @@ export const styles = StyleSheet.create({
   captionOk: { fontFamily: theme.font.bodyBold, color: theme.colors.incomeText },
   jars: { gap: 10, paddingTop: 8, paddingHorizontal: 16 },
   jarsScroll: { marginHorizontal: -16 },
-  jar: { width: 90, alignItems: 'center', gap: 5 },
+  jar: { width: 160, flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 60 },
+  jarCopy: { flex: 1, minWidth: 0, gap: 4 },
+  jarAdd: {
+    minHeight: 60,
+    minWidth: 72,
+    paddingHorizontal: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: 'rgba(18,19,15,0.22)',
+  },
   jarBody: {
     width: 52,
     height: JAR_HEIGHT,
@@ -105,13 +123,6 @@ export const styles = StyleSheet.create({
     borderColor: GLASS.edge,
     justifyContent: 'flex-end',
     padding: 3,
-  },
-  jarEmpty: {
-    borderStyle: 'dashed',
-    borderColor: 'rgba(18,19,15,0.22)',
-    backgroundColor: 'transparent',
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   jarLiquid: {
     borderTopLeftRadius: 4,
@@ -132,8 +143,6 @@ export const styles = StyleSheet.create({
   spillText: { fontFamily: theme.font.bodyBold, fontSize: 10.5, color: theme.colors.surface },
   jarName: {
     maxWidth: '100%',
-    minHeight: 28,
-    textAlign: 'center',
     fontFamily: theme.font.bodyBold,
     fontSize: 12,
     color: theme.colors.textPrimary,
@@ -210,7 +219,7 @@ export const styles = StyleSheet.create({
   },
   cutText: { fontFamily: theme.font.bodyBold, fontSize: 13.5, color: theme.colors.textPrimary },
   cutTextOn: { color: theme.colors.surface },
-  gain: { flexGrow: 1, alignItems: 'flex-end', minWidth: 100 },
+  gain: { flexGrow: 1, alignItems: 'flex-end', minWidth: 100, gap: 2 },
   gainValue: {
     fontFamily: theme.font.body,
     fontSize: 20,
@@ -269,6 +278,7 @@ export const styles = StyleSheet.create({
     paddingTop: 11,
   },
   dayHeadText: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textSecondary },
+  dayHeading: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'baseline', gap: 6, flexShrink: 1 },
   dayHeadAmount: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textMuted },
   dueRow: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 10, minHeight: 56 },
   dueIcon: {

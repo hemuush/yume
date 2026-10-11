@@ -50,7 +50,14 @@ export const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   avatarInitial: { fontFamily: theme.font.roundedBold, fontSize: 20 },
-  nameRow: { flexDirection: 'row', alignItems: 'center', gap: 8, alignSelf: 'flex-start', maxWidth: '100%' },
+  nameRow: {
+    minHeight: 48,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    alignSelf: 'flex-start',
+    maxWidth: '100%',
+  },
   name: {
     fontFamily: theme.font.roundedBold,
     fontSize: theme.typeSize.greeting,
@@ -73,7 +80,7 @@ export const styles = StyleSheet.create({
     fontSize: 15,
     color: theme.colors.textPrimary,
   },
-  nameSave: { paddingLeft: 10 },
+  nameSave: { minWidth: 48, minHeight: 48, alignItems: 'center', justifyContent: 'center' },
   memberSince: { fontFamily: theme.font.body, fontSize: 12.5, color: theme.colors.textMuted, marginTop: 2 },
   // SegmentedControl draws its own pill; this only places it.
   tabWrap: { marginHorizontal: SCREEN.gutter, marginTop: 16 },
@@ -81,6 +88,8 @@ export const styles = StyleSheet.create({
   // ---- You: accounts, grouped by type ----
   groupHead: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
     alignItems: 'baseline',
     justifyContent: 'space-between',
     paddingHorizontal: 14,
@@ -171,8 +180,8 @@ export const styles = StyleSheet.create({
   codeText: { fontFamily: theme.font.bodyBold, fontSize: 11, color: theme.colors.ink },
   // Compact Save/Clear pair inside the daily-spending-goal accordion; smaller than the modal-footer
   // PrimaryButton because it sits inline in a settings row.
-  dailyGoalBtnRow: { flexDirection: 'row', gap: 8, marginTop: 2 },
-  dailyGoalBtn: { flex: 1 },
+  dailyGoalBtnRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 2 },
+  dailyGoalBtn: { flexGrow: 1, flexBasis: 120 },
 
   // ---- Settings: About footer ----
   footer: { alignItems: 'center', gap: 2, paddingTop: 26, paddingBottom: 4 },
@@ -183,7 +192,7 @@ export const styles = StyleSheet.create({
     marginTop: 6,
   },
   footerSub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
-  footerLink: { flexDirection: 'row', alignItems: 'center', gap: 2, paddingVertical: 4 },
+  footerLink: { minHeight: 48, flexDirection: 'row', alignItems: 'center', gap: 2, paddingVertical: 4 },
   footerLinkText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textSecondary },
   aboutCard: { padding: 14, gap: 12, marginTop: 8 },
   aboutTagline: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textPrimary },
@@ -205,7 +214,14 @@ export const styles = StyleSheet.create({
     marginBottom: 6,
   },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 14 },
-  toggleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 },
+  toggleRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 6,
+  },
   hintText: {
     fontFamily: theme.font.body,
     fontSize: 12,

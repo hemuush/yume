@@ -1,4 +1,4 @@
-import { View, Pressable, Animated, StyleSheet } from 'react-native';
+import { View, Pressable, Animated, StyleSheet, useWindowDimensions } from 'react-native';
 import { Text } from '@/components/Text';
 import Feather from '@expo/vector-icons/Feather';
 import { theme } from '@/constants/theme';
@@ -53,14 +53,22 @@ export function UpcomingRow({
   highlight?: boolean;
 }) {
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.98);
+  const { width, fontScale } = useWindowDimensions();
+  const stacked = width < 360 || fontScale > 1.2;
   return (
     <AnimatedPressable
       onPress={onPress}
       onPressIn={onPressIn}
       onPressOut={onPressOut}
       accessibilityRole="button"
-      accessibilityLabel={`${title}, ${subtitle}`}
-      style={[styles.row, divider && styles.divider, highlight && styles.highlight, animatedStyle]}
+      accessibilityLabel={`${title}, ${subtitle}, ${sign}${formatMoney(amountMinor)}${actionLabel ? `, ${actionLabel}` : ''}`}
+      style={[
+        styles.row,
+        stacked && styles.stackedRow,
+        divider && styles.divider,
+        highlight && styles.highlight,
+        animatedStyle,
+      ]}
     >
       {date ? (
         <DateTile iso={date} background={iconBg} urgent={urgent} soon={soon} />
@@ -69,13 +77,9 @@ export function UpcomingRow({
           <Feather name={icon} size={SCREEN.iconGlyph} color={urgent ? theme.colors.expense : iconColor} />
         </View>
       )}
-      <View style={styles.mid}>
-        <Text style={styles.title} numberOfLines={2}>
-          {title}
-        </Text>
-        <Text style={[styles.sub, urgent ? styles.subUrgent : soon && styles.subSoon]} numberOfLines={1}>
-          {subtitle}
-        </Text>
+      <View style={[styles.mid, stacked && styles.stackedMid]}>
+        <Text style={styles.title}>{title}</Text>
+        <Text style={[styles.sub, urgent ? styles.subUrgent : soon && styles.subSoon]}>{subtitle}</Text>
       </View>
       {/* A bill reads in ink; only money coming in is coloured (green). */}
       <Text style={[styles.amount, sign === '+' && styles.income]}>
@@ -107,6 +111,8 @@ export function UpcomingMoreRow({
   onPress: () => void;
 }) {
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.98);
+  const { width, fontScale } = useWindowDimensions();
+  const stacked = width < 360 || fontScale > 1.2;
   return (
     <AnimatedPressable
       onPress={onPress}
@@ -114,12 +120,12 @@ export function UpcomingMoreRow({
       onPressOut={onPressOut}
       accessibilityRole="button"
       accessibilityLabel={`${count} more due this week, open Plan`}
-      style={[styles.row, divider && styles.divider, animatedStyle]}
+      style={[styles.row, stacked && styles.stackedRow, divider && styles.divider, animatedStyle]}
     >
       <View style={[styles.iconWrap, { backgroundColor: theme.colors.surfaceAlt }]}>
         <Feather name="more-horizontal" size={SCREEN.iconGlyph} color={theme.colors.textMuted} />
       </View>
-      <View style={styles.mid}>
+      <View style={[styles.mid, stacked && styles.stackedMid]}>
         <Text style={styles.moreText}>+{count} more this week</Text>
         <Text style={styles.sub}>Opens Plan › Coming up</Text>
       </View>
@@ -130,6 +136,8 @@ export function UpcomingMoreRow({
 
 const styles = StyleSheet.create({
   row: h.row,
+  stackedRow: { flexWrap: 'wrap', rowGap: 8 },
+  stackedMid: { flexGrow: 1, flexBasis: '70%' },
   divider: h.divider,
   iconWrap: h.iconTile,
   mid: h.mid,

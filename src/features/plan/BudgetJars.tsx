@@ -81,13 +81,11 @@ export function BudgetJars({
         ))}
         <Pressable
           onPress={onAdd ?? onOpen}
-          style={withPressed(styles.jar)}
+          style={withPressed(styles.jarAdd)}
           accessibilityRole="button"
           accessibilityLabel="Add a budget"
         >
-          <View style={[styles.jarBody, styles.jarEmpty]}>
-            <Feather name="plus" size={18} color={theme.colors.textMuted} />
-          </View>
+          <Feather name="plus" size={18} color={theme.colors.textMuted} />
           <Text style={styles.jarName}>Add</Text>
         </Pressable>
       </ScrollView>
@@ -142,13 +140,13 @@ function Jar({ budget: b, onPress }: { budget: PlanBudgetInput; onPress: () => v
           </View>
         )}
       </View>
-      <Text style={styles.jarName} numberOfLines={2}>
-        {b.categoryName}
-      </Text>
-      <Text style={[styles.jarLeft, b.overBudget && styles.jarOver]} numberOfLines={2}>
-        {left}
-        {tone === 'near' ? ' · Near limit' : ''}
-      </Text>
+      <View style={styles.jarCopy}>
+        <Text style={styles.jarName}>{b.categoryName}</Text>
+        <Text style={[styles.jarLeft, b.overBudget && styles.jarOver]}>
+          {left}
+          {tone === 'near' ? ' · Near limit' : ''}
+        </Text>
+      </View>
     </Pressable>
   );
 }

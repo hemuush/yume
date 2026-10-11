@@ -62,7 +62,8 @@ describe('Categories · tile grid', () => {
     const name = tree.root
       .findAllByType(Text)
       .find((t) => t.props.children === 'Transportation & Travel Costs');
-    expect(name?.props.numberOfLines).toBe(2);
+    expect(name).toBeDefined();
+    expect(name?.props.numberOfLines).toBeUndefined();
   });
 
   it('badges a parent with its subcategory count and edits a childless tile on tap', async () => {

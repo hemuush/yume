@@ -77,10 +77,14 @@ export function HomeAccounts({
         </Pressable>
         {inHand.length > 0 && (
           <>
-            <Amount minor={inHandMinor} currency={currency} style={styles.big} numberOfLines={1} />
-            <Text style={styles.sub} numberOfLines={1}>
-              Bank, cash & wallets only
-            </Text>
+            <Amount
+              minor={inHandMinor}
+              currency={currency}
+              style={styles.big}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+            />
+            <Text style={styles.sub}>Bank, cash & wallets only</Text>
           </>
         )}
         <View style={styles.chips}>
@@ -103,12 +107,10 @@ export function HomeAccounts({
                 </View>
                 <View style={styles.chipText}>
                   <View style={styles.chipNameRow}>
-                    <Text style={styles.chipName} numberOfLines={1}>
-                      {a.name}
-                    </Text>
+                    <Text style={styles.chipName}>{a.name}</Text>
                     {a.investment && <GainPill account={a} />}
                   </View>
-                  <Text style={styles.chipSub} numberOfLines={1}>
+                  <Text style={styles.chipSub}>
                     {accountTypeLabel(a)} ·{' '}
                     <Amount
                       minor={a.currentBalanceMinor}
@@ -130,7 +132,13 @@ export function HomeAccounts({
 const styles = StyleSheet.create({
   wrap: { marginHorizontal: 16 },
   tile: { padding: 14, gap: 4 },
-  head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 },
+  head: {
+    minHeight: 48,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
   title: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textSecondary },
   big: {
     fontFamily: theme.font.body,
@@ -145,7 +153,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    minHeight: 44,
+    minHeight: 48,
     paddingLeft: 5,
     paddingRight: 12,
     paddingVertical: 5,
@@ -157,7 +165,7 @@ const styles = StyleSheet.create({
   },
   chipIcon: { width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
   chipText: { flexShrink: 1, minWidth: 0 },
-  chipNameRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  chipNameRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 6 },
   chipName: { flexShrink: 1, fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textPrimary },
   chipSub: {
     fontFamily: theme.font.body,

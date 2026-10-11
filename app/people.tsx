@@ -1,7 +1,7 @@
 import { ScreenLoadError } from '@/components/ScreenLoadError';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { useCallback, useState } from 'react';
-import { View } from 'react-native';
+import { View, useWindowDimensions } from 'react-native';
 import { Text } from '@/components/Text';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { listPeople, PersonWithBalance } from '@/db/people';
@@ -32,6 +32,7 @@ import { styles } from '@/features/people/people.styles';
  */
 export default function PeopleScreen() {
   const insets = useSafeAreaInsets();
+  const { width, fontScale } = useWindowDimensions();
   const { accent, secondary } = useAccent();
   // The header sits over the page and shrinks as it scrolls.
   const { collapse, headerHeight, scrollHandler, scrollRef } = useCollapsingHeader();
@@ -46,7 +47,7 @@ export default function PeopleScreen() {
   const loading = !loaded && !loadError;
   const { owed, owe, settled, owedToYouMinor, youOweMinor, netMinor } = groupPeople(people);
   const summary = showPeopleSummary(owed.length + owe.length);
-  const columns = summary ? 2 : 1;
+  const columns = summary && width >= 360 && fontScale <= 1.2 ? 2 : 1;
   // Hashed from the person's own id, not list position, so a rename or a new
   // person never swaps anyone's colour.
   const colorOf = (p: PersonWithBalance) => FLAT_PALETTE[stableIndexFromId(p.id, FLAT_PALETTE.length)];

@@ -45,13 +45,13 @@ export function PeopleNet({
         </View>
       )}
       <View style={styles.legend}>
-        <Text style={styles.legendText} numberOfLines={1}>
+        <Text style={styles.legendText}>
           <Text style={[styles.legendBold, { color: theme.colors.incomeText }]}>
             +{formatMoney(owedToYouMinor)}
           </Text>{' '}
           owed to you · {owedCount}
         </Text>
-        <Text style={styles.legendText} numberOfLines={1}>
+        <Text style={styles.legendText}>
           you owe{' '}
           <Text style={[styles.legendBold, { color: theme.colors.expenseText }]}>
             {formatMoney(youOweMinor)}
@@ -64,12 +64,12 @@ export function PeopleNet({
 }
 
 const styles = StyleSheet.create({
-  card: { marginTop: 0, marginBottom: 6 },
+  card: { marginTop: 0, marginBottom: 6, padding: 14, gap: 8 },
   bar: { flexDirection: 'row', height: 12, gap: 2, borderRadius: 6, overflow: 'hidden' },
   side: { height: '100%' },
   owed: { backgroundColor: theme.colors.slice.saved },
   owe: { backgroundColor: theme.colors.slice.spent },
-  legend: { flexDirection: 'row', justifyContent: 'space-between', gap: 8 },
+  legend: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: 8 },
   legendText: {
     flexShrink: 1,
     fontFamily: theme.font.body,

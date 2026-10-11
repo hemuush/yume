@@ -42,7 +42,7 @@ export function CashHero({
   // Only money that's there makes the bar; a card in debt shows in the legend instead.
   const bar = shares.filter((s) => s.minor > 0 && !(masked && s.sensitive));
   return (
-    <Glass radius={28} tone="strong" style={frost.hero}>
+    <Glass radius={28} tone="strong" style={[frost.hero, { padding: 14, gap: 8 }]}>
       <Kicker icon="layers">{label}</Kicker>
       {masked ? (
         <Text style={frost.bigValue}>{formatMaskableMoney(0, { masked: true })}</Text>
@@ -94,7 +94,7 @@ const styles = StyleSheet.create({
   shelf: { flexDirection: 'row', gap: 3, height: 12 },
   slice: { flexBasis: 0, minWidth: 8, height: 12, borderRadius: 6 },
   legend: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 12, rowGap: 6 },
-  legendItem: { flexDirection: 'row', alignItems: 'center' },
+  legendItem: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', maxWidth: '100%' },
   key: { width: 9, height: 9, borderRadius: 5, marginRight: 5 },
   legendLabel: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textSecondary },
   legendValue: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textPrimary },

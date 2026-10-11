@@ -89,14 +89,12 @@ export const styles = StyleSheet.create({
     marginTop: 8,
   },
 
-  // Amount is centred and large with no boxed input: the biggest number wins, as on Home's This Month card.
+  // Left-aligned amount; the pad toggle retains its 44dp touch target.
   heroLabelRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'flex-start',
     gap: 5,
-    marginTop: 2,
-    marginBottom: 6,
   },
   heroDot: { width: 6, height: 6, borderRadius: 3 },
   heroLabel: { fontFamily: theme.font.bodyBold, fontSize: 12.5 },
@@ -109,31 +107,31 @@ export const styles = StyleSheet.create({
     gap: 4,
   },
   padToggleText: { fontFamily: theme.font.bodyMedium, fontSize: 11.5, color: theme.colors.textMuted },
-  selectionSummary: {
-    marginTop: 8,
-    paddingTop: 8,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: theme.colors.borderSoft,
-    fontFamily: theme.font.bodyMedium,
-    fontSize: 12,
-    lineHeight: 18,
-    color: theme.colors.textSecondary,
+  // Fits on one row when space permits; long labels and enlarged text wrap naturally.
+  footerStatus: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
+    columnGap: 12,
+    rowGap: 4,
+    marginBottom: 8,
   },
   footerSummary: {
     fontFamily: theme.font.bodyMedium,
     fontSize: 11.5,
     lineHeight: 16,
     color: theme.colors.textSecondary,
-    marginBottom: 6,
+    maxWidth: '100%',
   },
   queueHint: { fontFamily: theme.font.bodyBold, fontSize: 11.5, color: theme.colors.link, marginBottom: 6 },
-  formHint: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textMuted, marginBottom: 6 },
+  formHint: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textMuted, maxWidth: '100%' },
   amountRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'flex-start',
     gap: 4,
-    paddingVertical: 6,
+    minHeight: 60,
   },
   amountCurrency: { fontFamily: theme.font.body, fontSize: 24, color: theme.colors.textMuted },
   amountText: {
@@ -157,8 +155,10 @@ export const styles = StyleSheet.create({
 
   // The amount on frosted glass, its label and currency in the entry type's colour.
   heroCard: {
-    marginBottom: 14,
-    padding: 12,
+    marginBottom: 12,
+    paddingHorizontal: 12,
+    paddingTop: 8,
+    paddingBottom: 12,
     borderRadius: 28,
     backgroundColor: GLASS.fill,
     borderWidth: 1,

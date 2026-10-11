@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { View, Pressable } from 'react-native';
+import { View, Pressable, useWindowDimensions } from 'react-native';
 import { Text } from '@/components/Text';
 import { getCachedCurrency } from '@/db/settings';
 import Feather from '@expo/vector-icons/Feather';
@@ -51,6 +51,8 @@ export function PersonDetailModal({
 }) {
   const { show: showUndo } = useUndoToast();
   const { accent } = useAccent();
+  const { width, fontScale } = useWindowDimensions();
+  const stacked = width < 360 || fontScale > 1.2;
   const [ledger, setLedger] = useState<PersonLedgerEntry[]>([]);
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -255,7 +257,7 @@ export function PersonDetailModal({
           <PrimaryButton title="Done" onPress={onClose} disabled={saving} />
         ) : (
           // Worded from where the balance stands: when you owe them, paying back is the main action.
-          <View style={f.footerRow}>
+          <View style={[f.footerRow, stacked && styles.footerStack]}>
             {liveBalanceMinor < 0 ? (
               <>
                 <PrimaryButton
@@ -263,13 +265,13 @@ export function PersonDetailModal({
                   variant="secondary"
                   onPress={() => record(-1)}
                   disabled={saving || !detailsLoaded || !!loadError}
-                  style={f.footerBtn}
+                  style={[f.footerBtn, stacked && styles.footerStackButton]}
                 />
                 <PrimaryButton
                   title={saving ? 'Saving…' : 'I paid them back'}
                   onPress={() => record(1)}
                   disabled={saving || !detailsLoaded || !!loadError}
-                  style={f.footerBtn}
+                  style={[f.footerBtn, stacked && styles.footerStackButton]}
                 />
               </>
             ) : (
@@ -279,13 +281,13 @@ export function PersonDetailModal({
                   variant="secondary"
                   onPress={() => record(1)}
                   disabled={saving || !detailsLoaded || !!loadError}
-                  style={f.footerBtn}
+                  style={[f.footerBtn, stacked && styles.footerStackButton]}
                 />
                 <PrimaryButton
                   title={saving ? 'Saving…' : 'They repaid'}
                   onPress={() => record(-1)}
                   disabled={saving || !detailsLoaded || !!loadError}
-                  style={f.footerBtn}
+                  style={[f.footerBtn, stacked && styles.footerStackButton]}
                 />
               </>
             )}
@@ -344,7 +346,7 @@ export function PersonDetailModal({
               onPress={openLoans}
               accessibilityRole="button"
             >
-              <View style={{ flex: 1 }}>
+              <View style={styles.detailCopy}>
                 <Text style={styles.rowLabel} numberOfLines={2}>
                   {loan.direction === 'borrowed' ? 'You borrowed' : 'You lent'} ·{' '}
                   {(loan.interestRateAnnualBp / 100).toFixed(2)}%
@@ -445,7 +447,7 @@ export function PersonDetailModal({
                     color={entry.amountMinor >= 0 ? theme.colors.income : theme.colors.expense}
                   />
                 </View>
-                <View style={{ flex: 1 }}>
+                <View style={styles.detailCopy}>
                   <Text style={styles.rowLabel}>
                     {entry.note || (entry.amountMinor >= 0 ? 'Lent' : 'Repaid')}
                   </Text>
@@ -461,7 +463,10 @@ export function PersonDetailModal({
                   {formatMoney(Math.abs(dispEntryAmounts[i]), entry.currency)}
                 </Text>
                 <Pressable
-                  onPress={() => setMenuEntry(entry)}
+                  onPress={(event) => {
+                    event?.stopPropagation();
+                    setMenuEntry(entry);
+                  }}
                   hitSlop={10}
                   disabled={saving}
                   style={withPressed(styles.moreBtn)}
