@@ -1,4 +1,15 @@
-# Popup refinements — 11 October 2026
+# Sheets and dialogs: implementation record
+
+## Current reading guide
+
+Reviewed against the repository on **11 October 2026**. Shared sheets and detail cards provide consistent spacing and wrapping. Loan options use an inline view rather than another stacked sheet. Keyboard, safe-area and large-text behavior still require physical-device checks.
+
+Implementation: [src/components](src/components) and [src/features/loans](src/features/loans). Tests generally live beside these modules; use the [architecture and logic guide](docs/ARCHITECTURE.md) to find related flows.
+
+This document preserves earlier findings and validation. Statements inside the historical record describe that revision, including old layouts, build status and test counts. They are not new verification results. See the [documentation index](docs/INDEX.md), [data model](DATA_MODEL.md), [backup guide](BACKUP.md) and [build guide](BUILD.md) for current contracts.
+
+<details>
+<summary>Historical findings, implementation and validation</summary>
 
 The supplied screenshots still showed the shared gradient SheetCard banners, blank sheet headers, raised circular close controls, and a second action sheet above the loan details. The previous dialog fix addressed confirmation spacing, not these detail sheets.
 
@@ -28,3 +39,5 @@ Additional misses fixed:
 - Account pickers, action menus, calendar dialogs and Wrap menus can scroll within their available height. Split category selection and period selection already have bounded internal scrolling; their scroll ownership was retained. Framed forms keep their pinned footer and keyboard-aware scrolling.
 
 The additional affected behavior tests passed: 80 tests in nine suites. Type checking, changed-file lint and diff checks passed; Android export succeeded with 2,303 modules. The remaining full-page SegmentedControls belong to page-level navigation or inline transaction fields rather than forgotten popup navigation. No screenshot-perfect or device-performance claim is made from this code audit; device visual QA remains open.
+
+</details>

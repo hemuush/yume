@@ -1,4 +1,15 @@
-# UI and UX refinement review — 10 October 2026
+# UI and UX refinement: implementation record
+
+## Current reading guide
+
+Reviewed against the repository on **11 October 2026**. The current UI keeps the existing visual identity with compact Plan cards and shared control/sheet refinements. Automated interaction checks supplement, but cannot replace, device testing for scrolling, focus, keyboard and gestures.
+
+Implementation: [src/features](src/features) and [src/components](src/components). Tests generally live beside these modules; use the [architecture and logic guide](docs/ARCHITECTURE.md) to find related flows.
+
+This document preserves earlier findings and validation. Statements inside the historical record describe that revision, including old layouts, build status and test counts. They are not new verification results. See the [documentation index](docs/INDEX.md), [data model](DATA_MODEL.md), [backup guide](BACKUP.md) and [build guide](BUILD.md) for current contracts.
+
+<details>
+<summary>Historical findings, implementation and validation</summary>
 
 This pass keeps the existing pastel backgrounds, glass cards, rounded shapes, Archivo/Fredoka/Space Mono typography, navigation and features. It changes presentation and accessibility rather than financial calculations, storage or transaction behavior. Expo 57 versioned documentation was read before editing.
 
@@ -19,33 +30,33 @@ This pass keeps the existing pastel backgrounds, glass cards, rounded shapes, Ar
 
 Coverage means source and shared-component review plus the automated checks recorded below. It does not mean every screen has been visually exercised on a physical phone.
 
-| Area | Review and outcome |
-| --- | --- |
-| Home | Existing card hierarchy retained; shared chips and headings wrap. Prior scroll-animation fixes retained. |
-| Activity | Existing search, filters, period controls and transactions retained; shared segmented controls and row metadata improved. |
-| Add transaction | Aligned gutter; shared field, date and sheet improvements; split labels wrap. Expense, income, transfer, friend, repeat, list, refund and split features retained. |
-| Plan | Existing forecast, budgets, debt timeline, goals, what-if, friends, habit and upcoming sections retained; shared headings/chips improved. |
-| Reports | Aligned gutter and period-control improvements. Days, Categories and Trends retained; the previously removed duplicate summary stays removed. |
-| Profile | Two-line shortcut labels; account descriptions wrap; shared controls improved. |
-| Backup | Longer backup names wrap; restore and export actions retained. |
-| Budgets | Existing progress cards and editor retained; shared forms and date controls improved. |
-| Categories | Existing hierarchy and editor retained; shared forms and sheets improved. |
-| Category detail | Existing totals, breakdowns and linked transactions retained; shared card headings/chips improved. |
-| Garden | Existing calendar and growth states retained; shared descriptions and card headings improved. |
-| Loans | Existing schedules, payments, assets, rates and prepayment flows retained; shared forms, date choices and sheets improved. |
-| Notification settings | Explanatory text enlarged slightly with more line spacing; scheduling controls retained. |
-| Notifications | Existing notification rows and actions retained; shared empty-state hierarchy improved. |
-| Friends and family | Settled rows reorganized for long names; linked-loan labels wrap. Settlement, history and cash-movement choices retained. |
-| Recently deleted | Entry names/descriptions wrap; restore actions retained. |
-| Recurring | Aligned gutter; shared form and schedule controls improved. Running toggles and editors retained. |
-| Savings goals | Existing goal cards, contributions and editing retained; shared forms and sheets improved. |
-| Split | Existing allocations and calculator retained; split-category labels wrap. |
-| Themes | Aligned gutter; theme choices retained. |
-| Tidy up | Existing diagnostics and repair actions retained; shared controls improved. |
-| What-if | Existing projections and choices retained; shared card text/chips improved. |
-| Wrap | Existing summary flow retained; shared controls improved. |
-| Onboarding | Clearer name-field focus and larger backup-restore link target; account setup retained. |
-| App lock | More readable instructions and accessibility busy state; authentication behavior retained. |
+| Area                  | Review and outcome                                                                                                                                                 |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Home                  | Existing card hierarchy retained; shared chips and headings wrap. Prior scroll-animation fixes retained.                                                           |
+| Activity              | Existing search, filters, period controls and transactions retained; shared segmented controls and row metadata improved.                                          |
+| Add transaction       | Aligned gutter; shared field, date and sheet improvements; split labels wrap. Expense, income, transfer, friend, repeat, list, refund and split features retained. |
+| Plan                  | Existing forecast, budgets, debt timeline, goals, what-if, friends, habit and upcoming sections retained; shared headings/chips improved.                          |
+| Reports               | Aligned gutter and period-control improvements. Days, Categories and Trends retained; the previously removed duplicate summary stays removed.                      |
+| Profile               | Two-line shortcut labels; account descriptions wrap; shared controls improved.                                                                                     |
+| Backup                | Longer backup names wrap; restore and export actions retained.                                                                                                     |
+| Budgets               | Existing progress cards and editor retained; shared forms and date controls improved.                                                                              |
+| Categories            | Existing hierarchy and editor retained; shared forms and sheets improved.                                                                                          |
+| Category detail       | Existing totals, breakdowns and linked transactions retained; shared card headings/chips improved.                                                                 |
+| Garden                | Existing calendar and growth states retained; shared descriptions and card headings improved.                                                                      |
+| Loans                 | Existing schedules, payments, assets, rates and prepayment flows retained; shared forms, date choices and sheets improved.                                         |
+| Notification settings | Explanatory text enlarged slightly with more line spacing; scheduling controls retained.                                                                           |
+| Notifications         | Existing notification rows and actions retained; shared empty-state hierarchy improved.                                                                            |
+| Friends and family    | Settled rows reorganized for long names; linked-loan labels wrap. Settlement, history and cash-movement choices retained.                                          |
+| Recently deleted      | Entry names/descriptions wrap; restore actions retained.                                                                                                           |
+| Recurring             | Aligned gutter; shared form and schedule controls improved. Running toggles and editors retained.                                                                  |
+| Savings goals         | Existing goal cards, contributions and editing retained; shared forms and sheets improved.                                                                         |
+| Split                 | Existing allocations and calculator retained; split-category labels wrap.                                                                                          |
+| Themes                | Aligned gutter; theme choices retained.                                                                                                                            |
+| Tidy up               | Existing diagnostics and repair actions retained; shared controls improved.                                                                                        |
+| What-if               | Existing projections and choices retained; shared card text/chips improved.                                                                                        |
+| Wrap                  | Existing summary flow retained; shared controls improved.                                                                                                          |
+| Onboarding            | Clearer name-field focus and larger backup-restore link target; account setup retained.                                                                            |
+| App lock              | More readable instructions and accessibility busy state; authentication behavior retained.                                                                         |
 
 ## Verification
 
@@ -59,3 +70,5 @@ Coverage means source and shared-component review plus the automated checks reco
 ## Remaining device verification
 
 Native screenshot comparison, keyboard/sheet positioning on small phones, large-font wrapping, and actual scroll/navigation frame rate require an Android device or emulator. Automated render tests do not measure these. No new APK was built in this pass, so the existing APK does not include these changes.
+
+</details>

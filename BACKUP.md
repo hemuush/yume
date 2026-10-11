@@ -1,4 +1,26 @@
-# Backup, restore, and data privacy
+# Backup and restore: implementation record
+
+## Current backup contract
+
+- Backups are plain JSON, format version 1, containing the tables explicitly listed in [backup.ts](src/lib/backup.ts). Recently deleted records are not included. Sharing a copy sends it to the destination the user selects.
+- Android folder access uses a persisted storage grant. Choosing a folder scans existing valid files before a write; newer folder data requires an explicit choice rather than silent replacement. Restore replaces records; it does not merge ledgers.
+- Snapshot table reads are serialized in one exclusive database section. Restore validates data and foreign-key consistency; unknown columns and tables emptied by older backups are reported.
+- The phone keeps its folder URI and last-backup status. Already-set app-lock and widget-detail preferences take precedence; a fresh install can adopt those preferences from the backup.
+- Daily backup is due on a different local calendar day; weekly/monthly use elapsed windows. Maintenance runs while the app is open, catching up recurring entries first. It is not guaranteed background execution.
+- A successful managed daily write replaces same-day managed files only after the new file is written. Retention keeps the newest 14 managed daily backup files by content ordering; exported copies are outside this policy. Initial-folder preservation avoids replacing existing files or pruning them.
+- The private recovery copy contains the data present before a restore. Its own timestamp/counts must be shown. Putting it back is another restore, not selection of the latest folder file.
+- Test revoked permissions, invalid/truncated files, newer folder contents, restore rollback and device-owned settings. See [local backup tests](src/lib/localBackup.test.ts), [backup tests](src/lib/backup.test.ts) and [build/device checks](BUILD.md).
+
+## Current reading guide
+
+Reviewed against the repository on **11 October 2026**. Folder selection scans existing files before writing. Restore replaces local records rather than merging them. A private safety snapshot captures pre-restore data; its own timestamp describes what it contains, not the latest folder backup.
+
+Implementation: [src/lib/backup.ts](src/lib/backup.ts) and [src/lib/localBackup.ts](src/lib/localBackup.ts). Tests generally live beside these modules; use the [architecture and logic guide](docs/ARCHITECTURE.md) to find related flows.
+
+This document preserves earlier findings and validation. Statements inside the historical record describe that revision, including old layouts, build status and test counts. They are not new verification results. See the [documentation index](docs/INDEX.md), [data model](DATA_MODEL.md), [backup guide](BACKUP.md) and [build guide](BUILD.md) for current contracts.
+
+<details>
+<summary>Historical findings, implementation and validation</summary>
 
 ## What leaves the device
 
@@ -10,7 +32,7 @@ From **Settings → Backup & Restore**:
 
 - **Export full backup (JSON)** — every table, serialized, shareable via any app (email, a cloud drive, a file manager). This is the complete source of truth for a restore.
 - **Export to Excel (.xlsx)** — a real, styled workbook matching Yume's own colors: Summary (key totals), Transactions (with an AutoFilter and a live SUBTOTAL total row), Accounts, Categories (rolled up the same way Reports does), Loans, and Friends & Family — each its own sheet, opens directly in Excel/Sheets/Numbers.
-- **Restore from file** — pick a previously exported JSON file; this **replaces all current data** after the restore preview (see *Restore safety*).
+- **Restore from file** — pick a previously exported JSON file; this **replaces all current data** after the restore preview (see _Restore safety_).
 
 On a new phone, the first onboarding page has **I have a Yume backup**: pick the file, check the same preview, and Yume restores it and skips the rest of setup.
 
@@ -35,3 +57,5 @@ Restoring **replaces every table**. Before doing this, every restore path (a fil
 Before a restore replaces anything, Yume saves the current data as a **safety copy**: one file in the app's own private storage (`yume-safety-copy.json` in the app's documents folder — never the backup folder, never shared, removed with the app). "Restore complete" then offers **Undo restore**, and while a copy exists the Backup & Restore screen shows **Saved recovery snapshot**, its saved date and contents, and **Put back**. A retained copy can come from an earlier restore; the screen does not claim it always reverses the latest one. Undo is itself a restore, so it keeps a copy of what it replaces — the user can go back and forth without losing either version.
 
 Only the latest copy is kept. It's written to a pending file first and replaces the previous copy only once the restore succeeds, so a restore that fails (a damaged file) leaves both the data and the existing copy untouched. If the copy can't be saved at all (e.g. the phone is full), nothing is replaced unless the user explicitly chooses "Restore anyway". See `src/lib/safetyCopy.ts`.
+
+</details>

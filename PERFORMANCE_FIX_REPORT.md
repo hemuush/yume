@@ -1,21 +1,32 @@
-# Scroll and navigation audit — 10 October 2026
+# Performance: implementation record
+
+## Current reading guide
+
+Reviewed against the repository on **11 October 2026**. Cache keys must include the relevant data version and query scope. Avoid redundant state updates and chart animation work; desktop query timing and export success do not establish phone frame rates. Reports now uses its static header design.
+
+Implementation: [src/db/readCache.ts](src/db/readCache.ts) and [src/lib/useScreenLoad.ts](src/lib/useScreenLoad.ts). Tests generally live beside these modules; use the [architecture and logic guide](docs/ARCHITECTURE.md) to find related flows.
+
+This document preserves earlier findings and validation. Statements inside the historical record describe that revision, including old layouts, build status and test counts. They are not new verification results. See the [documentation index](docs/INDEX.md), [data model](DATA_MODEL.md), [backup guide](BACKUP.md) and [build guide](BUILD.md) for current contracts.
+
+<details>
+<summary>Historical findings, implementation and validation</summary>
 
 The screenshots show a visible change in background below the Reports status bar and tightly joined title/control rows. Still images do not measure dropped frames or establish the cause of the background seam. This pass preserves the existing screens, theme, charts, gestures and financial features.
 
 ## Findings and changes
 
-| Area | Finding | Change |
-| --- | --- | --- |
-| Shared collapsing headers | Every scroll offset invalidated several header styles even after collapse had finished. | Derive a clamped offset and progress on the UI thread. Home, shared headers and their backdrops consume those values. |
-| Scroll release | A missing drag velocity was treated as zero, allowing a programmatic header snap to interrupt momentum. | Only snap at drag end with a known slow velocity; otherwise settle at momentum end. |
-| Secondary screen visits | Most shared screen loaders repeated queries on every focus, including returning from a sheet or child page with no database change. | Default to the existing version/day/input/age freshness check. Successful manual reloads also record freshness. Writes invalidate it, failures remain retryable, and explicit reloads always run. |
-| Activity | Transaction-change events reloaded Activity even while another screen was showing. | Reload in place only while focused; the existing freshness check fetches changes on return. |
-| Reports refresh | Refreshing the same period replaced the entire scroll view with a skeleton, rebuilding charts and resetting the view. | Retain the same scroll view and data during refresh. A refresh failure shows an inline retry. A new period/privacy input still waits for matching data. |
-| Reports loading and period changes | An in-flow loading header was followed by another header-height padding. A previous period's collapse could survive into the new period. | Remove duplicate padding; reset scroll and collapse on period changes. |
-| Header spacing | Title and period/type controls touched vertically. | Add 8 dp between the title row and controls. No font family or overall page design change. |
-| Wallpaper | Each page uses a static gradient/SVG background underneath translucent content. | Cache the static Android wallpaper in a hardware texture. Device memory and frame-time checks remain necessary. |
-| Add and static headers | Static wallpaper headers mounted an invisible collapse backdrop that they did not use. | Omit that backdrop when there is no collapsing header. |
-| Progress and animation lifetime | Returning to unchanged bars/rings started animations with identical endpoints. Garden growth/pop and screen fades could continue after unmount. | Skip identical endpoints; stop growth/pop and fade animations when their owners leave. |
+| Area                               | Finding                                                                                                                                         | Change                                                                                                                                                                                            |
+| ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Shared collapsing headers          | Every scroll offset invalidated several header styles even after collapse had finished.                                                         | Derive a clamped offset and progress on the UI thread. Home, shared headers and their backdrops consume those values.                                                                             |
+| Scroll release                     | A missing drag velocity was treated as zero, allowing a programmatic header snap to interrupt momentum.                                         | Only snap at drag end with a known slow velocity; otherwise settle at momentum end.                                                                                                               |
+| Secondary screen visits            | Most shared screen loaders repeated queries on every focus, including returning from a sheet or child page with no database change.             | Default to the existing version/day/input/age freshness check. Successful manual reloads also record freshness. Writes invalidate it, failures remain retryable, and explicit reloads always run. |
+| Activity                           | Transaction-change events reloaded Activity even while another screen was showing.                                                              | Reload in place only while focused; the existing freshness check fetches changes on return.                                                                                                       |
+| Reports refresh                    | Refreshing the same period replaced the entire scroll view with a skeleton, rebuilding charts and resetting the view.                           | Retain the same scroll view and data during refresh. A refresh failure shows an inline retry. A new period/privacy input still waits for matching data.                                           |
+| Reports loading and period changes | An in-flow loading header was followed by another header-height padding. A previous period's collapse could survive into the new period.        | Remove duplicate padding; reset scroll and collapse on period changes.                                                                                                                            |
+| Header spacing                     | Title and period/type controls touched vertically.                                                                                              | Add 8 dp between the title row and controls. No font family or overall page design change.                                                                                                        |
+| Wallpaper                          | Each page uses a static gradient/SVG background underneath translucent content.                                                                 | Cache the static Android wallpaper in a hardware texture. Device memory and frame-time checks remain necessary.                                                                                   |
+| Add and static headers             | Static wallpaper headers mounted an invisible collapse backdrop that they did not use.                                                          | Omit that backdrop when there is no collapsing header.                                                                                                                                            |
+| Progress and animation lifetime    | Returning to unchanged bars/rings started animations with identical endpoints. Garden growth/pop and screen fades could continue after unmount. | Skip identical endpoints; stop growth/pop and fade animations when their owners leave.                                                                                                            |
 
 ## Coverage
 
@@ -39,3 +50,5 @@ Android device tooling is not available on PATH or at the standard local SDK pat
 The previously shared version-code-11 APK predates these fixes. This pass does not start another EAS build.
 
 Implementation references: [Expo SDK 57](https://docs.expo.dev/versions/v57.0.0/), [Reanimated derived values](https://docs.swmansion.com/react-native-reanimated/docs/core/useDerivedValue/), [React Native View texture caching](https://reactnative.dev/docs/view#rendertohardwaretextureandroid).
+
+</details>

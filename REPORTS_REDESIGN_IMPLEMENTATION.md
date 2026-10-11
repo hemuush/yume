@@ -1,4 +1,15 @@
-# Reports redesign — 11 October 2026
+# Reports redesign: implementation record
+
+## Current reading guide
+
+Reviewed against the repository on **11 October 2026**. The current report presentation retains date-range selection, spending/income and category/account breakdowns, day drill-downs, comparisons and insights. Presentation changes must preserve query scope and stale-response protection.
+
+Implementation: [app/(tabs)/reports.tsx](<app/(tabs)/reports.tsx>) and [src/features/reports](src/features/reports). Tests generally live beside these modules; use the [architecture and logic guide](docs/ARCHITECTURE.md) to find related flows.
+
+This document preserves earlier findings and validation. Statements inside the historical record describe that revision, including old layouts, build status and test counts. They are not new verification results. See the [documentation index](docs/INDEX.md), [data model](DATA_MODEL.md), [backup guide](BACKUP.md) and [build guide](BUILD.md) for current contracts.
+
+<details>
+<summary>Historical findings, implementation and validation</summary>
 
 Implemented the approved Reports review in the native app.
 
@@ -13,3 +24,5 @@ Implemented the approved Reports review in the native app.
 Validation: 113 targeted tests passed across ReportsScreen, reportsInsights, TrendChart, CashFlowCard, CategoryScreen and RangeSheet. The final ReportsScreen rerun passed all 33 tests. TypeScript, changed-file ESLint and git diff checks passed. Expo Android export completed successfully (2,302 modules).
 
 The CategoryScreen/RangeSheet run reported an outstanding asynchronous handle after all eight tests passed and was stopped. No claim of physical-device performance or native screenshot verification is made: scroll feel, keyboard/sheet transitions and large system fonts still need review on a phone. No APK was built for this change.
+
+</details>

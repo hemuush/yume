@@ -1,4 +1,15 @@
-# Yume app review — 10 October 2026
+# Initial application audit: implementation record
+
+## Current reading guide
+
+Reviewed against the repository on **11 October 2026**. The original findings below are a historical baseline. Subsequent fixes cover privacy inheritance, currency isolation, recurring writes and restore safety; current architecture and release limits are documented separately.
+
+Implementation: [src/db](src/db) and [src/lib](src/lib). Tests generally live beside these modules; use the [architecture and logic guide](docs/ARCHITECTURE.md) to find related flows.
+
+This document preserves earlier findings and validation. Statements inside the historical record describe that revision, including old layouts, build status and test counts. They are not new verification results. See the [documentation index](docs/INDEX.md), [data model](DATA_MODEL.md), [backup guide](BACKUP.md) and [build guide](BUILD.md) for current contracts.
+
+<details>
+<summary>Historical findings, implementation and validation</summary>
 
 ## Fix progress
 
@@ -12,12 +23,12 @@ The Expo SDK 57 versioned documentation was read as required by AGENTS.md. No ap
 
 Checks against the current checkout and installed dependencies:
 
-| Check | Result |
-| --- | --- |
-| TypeScript | Failed: SpendBars/spendBars module resolution collision and missing installed expo-screen-capture |
-| ESLint | Failed: the same component import casing problem and missing expo-screen-capture |
-| Jest | All 241 suites failed during setup; zero tests executed because expo-screen-capture cannot be resolved |
-| npm audit gate | Passed its configured policy; two advisories were explicitly allowed by the repository allowlist |
+| Check          | Result                                                                                                 |
+| -------------- | ------------------------------------------------------------------------------------------------------ |
+| TypeScript     | Failed: SpendBars/spendBars module resolution collision and missing installed expo-screen-capture      |
+| ESLint         | Failed: the same component import casing problem and missing expo-screen-capture                       |
+| Jest           | All 241 suites failed during setup; zero tests executed because expo-screen-capture cannot be resolved |
+| npm audit gate | Passed its configured policy; two advisories were explicitly allowed by the repository allowlist       |
 
 expo-screen-capture is declared in package.json and the lockfile, but absent from node_modules. This is an installation problem, not evidence of an undeclared dependency. Existing tests cannot currently substantiate runtime correctness.
 
@@ -102,3 +113,5 @@ Choose an explicit invariant: give these entities a currency and enforce matchin
 ## Follow-up verification
 
 First reconcile the installed dependencies and resolve the component/helper naming collision, then rerun typecheck, lint and Jest. Add targeted tests for the privacy, currency and recurring interleaving cases. Exercise backup failure/undo, app background relocking, notifications and widgets in an Android native build. Release export and native-build correctness remain unverified in this audit.
+
+</details>

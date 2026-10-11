@@ -1,53 +1,62 @@
-# Building an installable APK
+# Build and release guide
 
-Yume is an Expo app, so a real Android APK is built in Expo's cloud build service (EAS Build) — this keeps your own laptop from ever running a heavy Android/Gradle toolchain locally.
+Yume uses Expo SDK 57 and EAS Build. Read the [exact SDK 57 documentation](https://docs.expo.dev/versions/v57.0.0/) before changing native configuration or Expo APIs.
 
-## One-time setup
+## Environment
 
-1. Create a free Expo account at [expo.dev](https://expo.dev) if you don't have one.
-2. Install the EAS CLI and log in:
-   ```bash
-   npm install -g eas-cli
-   eas login
-   ```
-3. Link this project to your account (run once from the project root):
-   ```bash
-   eas init
-   ```
+Use Node 22.13 or newer and install the lockfile dependencies with `npm ci`. The SDK 57 reference lists React Native 0.86, React 19.2.3, Android 7 or newer, and Android compile/target API 36. These platform floors do not guarantee compatibility with every device or future Android version.
 
-## Building the APK
+The existing project is already linked to EAS in [app.json](app.json). Log into the account that can access that project. Run `eas init` only when intentionally linking a new project or fork.
 
-```bash
-eas build --platform android --profile preview
+```sh
+npm ci
+npx eas-cli login
+npx eas-cli whoami
 ```
 
-This uses the `preview` profile in `eas.json`, which is configured to output a directly-installable **APK** (not the Play Store `.aab` format). The build runs on Expo's servers; you'll get a link to download the `.apk` when it finishes (usually 10-20 minutes). Install it on any Android phone via that link, or `adb install`.
+## Installable APK
 
-## Android version support
-
-The app targets whatever Android API level the current Expo SDK ships with (SDK 57 → a recent, current `targetSdkVersion`, managed automatically by Expo — you don't set this by hand in `app.json`). Note that "Android 17" isn't an existing OS version as of this writing (Android's naming is currently in the low teens by version number); this build config targets the **latest available Android APIs**, which by Android's own backward-compatibility guarantees will keep working correctly on every future Android release, not just the current one — a compliant app built against a recent SDK doesn't need to be rebuilt for each new Android version to keep functioning.
-
-The app also runs on older devices — `expo-sqlite`, `expo-router`, and everything else used here has no unusual minimum-version requirements beyond what Expo SDK 57 itself supports. `android.predictiveBackGestureEnabled` is `true` in `app.json`, opting into the standard Android 13+ back-gesture preview animation rather than disabling it (Expo's own scaffold default).
-
-## Production builds (Play Store)
-
-```bash
-eas build --platform android --profile production
+```sh
+npx eas-cli build --platform android --profile preview
 ```
 
-This produces an `.aab` (Android App Bundle), the format the Play Store requires, with auto-incrementing version codes. Submitting to the Play Store separately needs a Play Console developer account and `eas submit` — out of scope until you're ready to publish there.
+The [preview profile](eas.json) creates an internal-distribution APK and restricts native architecture to **arm64-v8a**. It is not an APK for every Android architecture. EAS returns a build page and download link after success; build duration varies. Install only on a compatible device, for example using `adb install path/to/yume.apk`.
 
-## Before shipping
+The latest recorded build is **1.0.0, version code 15**: [build page](https://expo.dev/accounts/yume-expense-track/projects/yume/builds/0e6f1aa4-9054-41b9-8d90-44b446a7b819). This is a historical artifact, not a promise that later source changes have been rebuilt.
 
-- Update the app icon/splash assets in `assets/` if you want custom branding beyond the defaults.
+## Play Store bundle
 
-## Device checks before a release
+```sh
+npx eas-cli build --platform android --profile production
+```
 
-Automated tests cover the logic and components, but not the `app/` route screens, the Android keyboard, or real performance. Run through these on a physical phone with a build you intend to ship:
+Production creates an AAB. Both profiles auto-increment the version code using the local version source. Review and commit resulting configuration changes. Store submission is a separate action requiring Play Console access and release approval.
 
-- **Number pad:** open Add, a goal contribution, a loan prepayment and a budget. The cream pad should dock under the sheet, the field should stay visible above it, and the system keyboard should not appear. Tap a note field next to it and confirm the pad hides.
-- **Backup and restore:** export a backup, restore it, and confirm balances match. Pick a non-backup file and confirm a clear error appears.
-- **Cold start:** force-stop, open the app, and watch for a stall on the splash or the first screen. Note it if it takes more than about two seconds.
-- **Search:** on Activity, type a query quickly and clear it. Results should never flash from an older query.
-- **Lock:** with app lock on, background the app and return; confirm the lock screen appears and the widgets show what you expect.
-- **Large data:** with a few thousand transactions, scroll Activity and Reports and open Home. Look for dropped frames.
+[app.config.js](app.config.js) blocks `android.permission.INTERNET` when `EAS_BUILD_PROFILE` is set. Development requires Metro connectivity. Verify generated permissions on the actual release artifact when changing native plugins.
+
+## Automated checks
+
+```sh
+npm run typecheck
+npm run lint
+npm run format:check
+npm test -- --runInBand
+npm run test:security
+npm run test:perf
+npx expo-doctor
+npx expo export --platform android
+```
+
+Inspect [.github/workflows](.github/workflows) and [scripts](scripts) for CI and dependency-audit policy. Markdown is excluded by the default Prettier ignore file; explicitly format documentation with an empty ignore file when editing it. Tests cover database, component and screen interactions. Export success does not establish native installation or frame-rate performance.
+
+## Device release checks
+
+- Verify cold start, lock/unlock, resume, back gestures and navigation from notifications/widgets.
+- Test Add, sheet forms, calculator, notes and the docked pad with the system keyboard.
+- Check compact Plan, Reports, long names, large amounts and enlarged system text for clipping.
+- Exercise empty, populated, overdue and insufficient-balance states; confirm every payment and detail action.
+- Restore a valid backup, reject an invalid file, select a folder containing newer data and revoke folder permission.
+- Test hidden amounts and widget privacy separately; app lock alone does not hide launcher details.
+- Profile scrolling and navigation with realistic large data on a physical phone, including reduced motion.
+
+Record the artifact, device, OS and results. Do not label these checks passed unless they were performed.
