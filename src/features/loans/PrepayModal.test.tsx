@@ -93,3 +93,18 @@ describe('prepay guard', () => {
     expect(texts(tree)).toContain('Enter a valid amount');
   });
 });
+
+it('shows a closed loan and interest savings together without another payment action', async () => {
+  mockApply.mockResolvedValueOnce({
+    interestSavedMinor: 120000,
+    monthsShaved: 10,
+    oldRemainingCount: 10,
+    newRemainingCount: 0,
+    oldPayoffDate: '2027-01-01',
+    newPayoffDate: '2026-10-11',
+  });
+  const tree = await submit(100000, '1000');
+  expect(texts(tree)).toContain('Loan closed');
+  expect(texts(tree)).toContain('Interest saved');
+  expect(tree.root.findAllByType(PrimaryButton).map((node) => node.props.title)).toEqual(['Done']);
+});

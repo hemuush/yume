@@ -119,9 +119,13 @@ describe('milestone note on a contribution', () => {
     expect(mockSeen.keys).toContain('goal:g1:100');
   });
 
-  it('celebrates 100% when there is no letter', async () => {
-    await add(goal({ currentAmountMinor: 900_000 }), '1000');
-    expect(mockShow.mock.calls[0][0].title).toBe('Goal reached');
+  it('keeps the completion confirmation open without a letter and avoids a duplicate toast', async () => {
+    const { tree, onContributed } = await add(goal({ currentAmountMinor: 900_000 }), '1000');
+    expect(mockShow).not.toHaveBeenCalled();
+    expect(onContributed).not.toHaveBeenCalled();
+    expect(mockSeen.keys).toContain('goal:g1:100');
+    act(() => tree.root.findByProps({ title: 'Done' }).props.onPress());
+    expect(onContributed).toHaveBeenCalledTimes(1);
   });
 });
 
