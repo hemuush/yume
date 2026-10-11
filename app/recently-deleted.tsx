@@ -1,3 +1,4 @@
+import { useSaveOnce } from '@/lib/useSaveOnce';
 import { ScreenLoadError } from '@/components/ScreenLoadError';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { useCallback, useMemo, useState } from 'react';
@@ -49,6 +50,9 @@ export default function RecentlyDeletedScreen() {
   const { accent, secondary } = useAccent();
   // The header sits over the page and shrinks as it scrolls.
   const { collapse, headerHeight, scrollHandler, scrollRef } = useCollapsingHeader();
+  const runAction = useSaveOnce(async (action: () => Promise<void>) => {
+    await action();
+  });
   const [entries, setEntries] = useState<DeletedEntry[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [accounts, setAccounts] = useState<Account[]>([]);
@@ -72,19 +76,20 @@ export default function RecentlyDeletedScreen() {
     ].filter((g) => g.items.length > 0);
   }, [entries, today]);
 
-  const restore = async (entry: DeletedEntry) => {
-    setBusyId(entry.id);
-    try {
-      await restoreDeletedEntry(entry.id);
-      haptics.confirm();
-      emitTransactionsChanged();
-      await reload();
-    } catch (e) {
-      showAlert("Couldn't restore it", errorMessage(e));
-    } finally {
-      setBusyId(null);
-    }
-  };
+  const restore = (entry: DeletedEntry) =>
+    runAction(async () => {
+      setBusyId(entry.id);
+      try {
+        await restoreDeletedEntry(entry.id);
+        haptics.confirm();
+        emitTransactionsChanged();
+        await reload();
+      } catch (e) {
+        showAlert("Couldn't restore it", errorMessage(e));
+      } finally {
+        setBusyId(null);
+      }
+    });
 
   const emptyAll = () => {
     showAlert(
@@ -95,15 +100,19 @@ export default function RecentlyDeletedScreen() {
         {
           text: 'Delete all',
           style: 'destructive',
-          onPress: async () => {
-            try {
-              await emptyDeletedEntries();
-              haptics.warn();
-              await reload();
-            } catch (e) {
-              showAlert("Couldn't empty it", errorMessage(e));
-            }
-          },
+          onPress: () =>
+            runAction(async () => {
+              setBusyId('empty-all');
+              try {
+                await emptyDeletedEntries();
+                haptics.warn();
+                await reload();
+              } catch (e) {
+                showAlert("Couldn't empty it", errorMessage(e));
+              } finally {
+                setBusyId(null);
+              }
+            }),
         },
       ]
     );
@@ -238,6 +247,8 @@ export default function RecentlyDeletedScreen() {
             ))}
             <Pressable
               onPress={emptyAll}
+              disabled={busyId != null}
+              accessibilityState={{ disabled: busyId != null }}
               accessibilityRole="button"
               style={withPressed(styles.emptyAll)}
               hitSlop={8}

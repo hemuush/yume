@@ -1,3 +1,4 @@
+import { useSaveOnce } from '@/lib/useSaveOnce';
 import { useState } from 'react';
 import { View } from 'react-native';
 import { Text } from '@/components/Text';
@@ -21,45 +22,50 @@ export function AssetModal({
   onClose: () => void;
   onDone: () => void;
 }) {
+  const runAction = useSaveOnce(async (action: () => Promise<void>) => {
+    await action();
+  });
   const [label, setLabel] = useState(loan.assetLabel ?? '');
   const [value, setValue] = useState(loan.assetValueMinor ? String(loan.assetValueMinor / 100) : '');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const submit = async () => {
-    setError(null);
-    // Value is optional (record "this loan financed my Home" now, estimate later) and validated only when
-    // provided; equity math in Reports/Profile treats "no value" as "not tracked" until one is set.
-    let valueMinor: number | null = null;
-    if (value.trim()) {
-      valueMinor = toMinor(parseFloat(value));
-      if (!Number.isFinite(valueMinor) || valueMinor <= 0) {
-        setError('Enter a valid current value, or leave it blank for now');
-        return;
+  const submit = () =>
+    runAction(async () => {
+      setError(null);
+      // Value is optional (record "this loan financed my Home" now, estimate later) and validated only when
+      // provided; equity math in Reports/Profile treats "no value" as "not tracked" until one is set.
+      let valueMinor: number | null = null;
+      if (value.trim()) {
+        valueMinor = toMinor(parseFloat(value));
+        if (!Number.isFinite(valueMinor) || valueMinor <= 0) {
+          setError('Enter a valid current value, or leave it blank for now');
+          return;
+        }
       }
-    }
-    setSaving(true);
-    try {
-      await updateLoanAsset(loan.id, { assetLabel: label.trim() || 'Asset', assetValueMinor: valueMinor });
-      onDone();
-    } catch (e) {
-      setError(errorMessage(e));
-    } finally {
-      setSaving(false);
-    }
-  };
+      setSaving(true);
+      try {
+        await updateLoanAsset(loan.id, { assetLabel: label.trim() || 'Asset', assetValueMinor: valueMinor });
+        onDone();
+      } catch (e) {
+        setError(errorMessage(e));
+      } finally {
+        setSaving(false);
+      }
+    });
 
-  const stopTracking = async () => {
-    setSaving(true);
-    try {
-      await updateLoanAsset(loan.id, { assetLabel: null, assetValueMinor: null });
-      onDone();
-    } catch (e) {
-      setError(errorMessage(e));
-    } finally {
-      setSaving(false);
-    }
-  };
+  const stopTracking = () =>
+    runAction(async () => {
+      setSaving(true);
+      try {
+        await updateLoanAsset(loan.id, { assetLabel: null, assetValueMinor: null });
+        onDone();
+      } catch (e) {
+        setError(errorMessage(e));
+      } finally {
+        setSaving(false);
+      }
+    });
 
   return (
     <ModalSheet

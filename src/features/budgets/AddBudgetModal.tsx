@@ -1,3 +1,4 @@
+import { useSaveOnce } from '@/lib/useSaveOnce';
 import { useState } from 'react';
 import { View } from 'react-native';
 import { Text } from '@/components/Text';
@@ -55,6 +56,9 @@ export function AddBudgetModal({
   onSaved: () => void;
 }) {
   const { accent } = useAccent();
+  const runAction = useSaveOnce(async (action: () => Promise<void>) => {
+    await action();
+  });
   const [categoryId, setCategoryId] = useState<string | null>(null);
   const [limit, setLimit] = useState('');
   const [rollover, setRollover] = useState(false);
@@ -81,32 +85,33 @@ export function AddBudgetModal({
     }
   }
 
-  const submit = async () => {
-    setError(null);
-    // Whole units by design: the field takes digits only, so the limit is never fractional.
-    const limitAmountMinor = toMinor(parseFloat(limit || '0'));
-    if (!Number.isFinite(limitAmountMinor) || limitAmountMinor <= 0) {
-      setError('Enter a valid monthly limit');
-      return;
-    }
-    if (!editing && !categoryId) {
-      setError('Pick a category');
-      return;
-    }
-    setSaving(true);
-    try {
-      if (editing) {
-        await updateBudget(editing.budget.id, { limitAmountMinor, rollover });
-      } else {
-        await createBudget({ categoryId: categoryId!, limitAmountMinor, rollover });
+  const submit = () =>
+    runAction(async () => {
+      setError(null);
+      // Whole units by design: the field takes digits only, so the limit is never fractional.
+      const limitAmountMinor = toMinor(parseFloat(limit || '0'));
+      if (!Number.isFinite(limitAmountMinor) || limitAmountMinor <= 0) {
+        setError('Enter a valid monthly limit');
+        return;
       }
-      onSaved();
-    } catch (e) {
-      setError(errorMessage(e));
-    } finally {
-      setSaving(false);
-    }
-  };
+      if (!editing && !categoryId) {
+        setError('Pick a category');
+        return;
+      }
+      setSaving(true);
+      try {
+        if (editing) {
+          await updateBudget(editing.budget.id, { limitAmountMinor, rollover });
+        } else {
+          await createBudget({ categoryId: categoryId!, limitAmountMinor, rollover });
+        }
+        onSaved();
+      } catch (e) {
+        setError(errorMessage(e));
+      } finally {
+        setSaving(false);
+      }
+    });
 
   // The calm-sheets sign-off (Direction C): a live card of the budget in
   // its category's colour, then the form.

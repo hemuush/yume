@@ -1,3 +1,4 @@
+import { useSaveOnce } from '@/lib/useSaveOnce';
 import { ScreenLoadError } from '@/components/ScreenLoadError';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { useCallback, useState } from 'react';
@@ -37,6 +38,9 @@ export default function CategoriesScreen() {
   const { collapse, headerHeight, scrollHandler, scrollRef } = useCollapsingHeader();
   const { show: showUndo } = useUndoToast();
   const { accent, secondary } = useAccent();
+  const runAction = useSaveOnce(async (action: () => Promise<void>) => {
+    await action();
+  });
   const [allCategories, setAllCategories] = useState<Category[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
@@ -63,18 +67,19 @@ export default function CategoriesScreen() {
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Restore',
-        onPress: async () => {
-          if (actionBusy) return;
-          setActionBusy(true);
-          try {
-            await unarchiveCategory(cat.id);
-            await load();
-          } catch (e) {
-            showAlert("Couldn't restore category", errorMessage(e));
-          } finally {
-            setActionBusy(false);
-          }
-        },
+        onPress: () =>
+          runAction(async () => {
+            if (actionBusy) return;
+            setActionBusy(true);
+            try {
+              await unarchiveCategory(cat.id);
+              await load();
+            } catch (e) {
+              showAlert("Couldn't restore category", errorMessage(e));
+            } finally {
+              setActionBusy(false);
+            }
+          }),
       },
     ]);
   };
@@ -91,40 +96,42 @@ export default function CategoriesScreen() {
         {
           text: 'Archive',
           style: 'destructive',
-          onPress: async () => {
-            if (actionBusy) return;
-            setActionBusy(true);
-            try {
-              await archiveCategory(cat.id);
-              await load();
-            } catch (e) {
-              showAlert("Couldn't archive category", errorMessage(e));
-            } finally {
-              setActionBusy(false);
-            }
-          },
+          onPress: () =>
+            runAction(async () => {
+              if (actionBusy) return;
+              setActionBusy(true);
+              try {
+                await archiveCategory(cat.id);
+                await load();
+              } catch (e) {
+                showAlert("Couldn't archive category", errorMessage(e));
+              } finally {
+                setActionBusy(false);
+              }
+            }),
         },
       ]
     );
   };
 
-  const runDelete = async (cat: Category) => {
-    if (actionBusy) return;
-    setActionBusy(true);
-    try {
-      const snapshot = await deleteCategory(cat.id);
-      haptics.warn();
-      await load();
-      showUndo(`Deleted "${cat.name}"`, async () => {
-        await restoreCategory(snapshot);
+  const runDelete = (cat: Category) =>
+    runAction(async () => {
+      if (actionBusy) return;
+      setActionBusy(true);
+      try {
+        const snapshot = await deleteCategory(cat.id);
+        haptics.warn();
         await load();
-      });
-    } catch (e) {
-      showAlert("Couldn't delete category", errorMessage(e));
-    } finally {
-      setActionBusy(false);
-    }
-  };
+        showUndo(`Deleted "${cat.name}"`, async () => {
+          await restoreCategory(snapshot);
+          await load();
+        });
+      } catch (e) {
+        showAlert("Couldn't delete category", errorMessage(e));
+      } finally {
+        setActionBusy(false);
+      }
+    });
 
   const onDelete = (cat: Category) => {
     // A single category is instant-delete + undo, but one with subcategories cascades them all in the same

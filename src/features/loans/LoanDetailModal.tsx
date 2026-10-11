@@ -1,3 +1,4 @@
+import { useSaveOnce } from '@/lib/useSaveOnce';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { View } from 'react-native';
 import { Text } from '@/components/Text';
@@ -61,6 +62,9 @@ export function LoanDetailModal({
   hue?: string;
 }) {
   const { show: showUndo } = useUndoToast();
+  const runAction = useSaveOnce(async (action: () => Promise<void>) => {
+    await action();
+  });
   const [liveLoan, setLiveLoan] = useState<Loan>(loan);
   const [schedule, setSchedule] = useState<LoanPayment[]>([]);
   const [rateHistory, setRateHistory] = useState<LoanRateChange[]>([]);
@@ -182,23 +186,24 @@ export function LoanDetailModal({
     onPress: () => confirmDelete(),
   });
 
-  const runDelete = async () => {
-    setBusy(true);
-    try {
-      const snapshot = await deleteLoan(liveLoan.id);
-      haptics.warn();
-      onChanged();
-      onClose();
-      showUndo(`Deleted "${liveLoan.counterparty}"`, async () => {
-        await restoreLoan(snapshot);
+  const runDelete = () =>
+    runAction(async () => {
+      setBusy(true);
+      try {
+        const snapshot = await deleteLoan(liveLoan.id);
+        haptics.warn();
         onChanged();
-      });
-    } catch (e) {
-      showAlert("Couldn't delete loan", errorMessage(e));
-    } finally {
-      setBusy(false);
-    }
-  };
+        onClose();
+        showUndo(`Deleted "${liveLoan.counterparty}"`, async () => {
+          await restoreLoan(snapshot);
+          onChanged();
+        });
+      } catch (e) {
+        showAlert("Couldn't delete loan", errorMessage(e));
+      } finally {
+        setBusy(false);
+      }
+    });
 
   // Deleting a loan cascades (schedule, rate-change history, disbursement/fee transactions), so unlike a
   // single transaction or account it always confirms before the instant-delete + undo toast.

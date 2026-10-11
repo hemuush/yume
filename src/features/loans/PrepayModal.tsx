@@ -1,3 +1,4 @@
+import { useSaveOnce } from '@/lib/useSaveOnce';
 import { useEffect, useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Text } from '@/components/Text';
@@ -145,6 +146,9 @@ export function PrepayModal({
   onDone: () => void;
 }) {
   const lent = loan.direction === 'lent';
+  const runAction = useSaveOnce(async (action: () => Promise<void>) => {
+    await action();
+  });
   const [amount, setAmount] = useState('');
   // No jurisdiction default is assumed: whether a prepayment charge applies, and how much, depends on the
   // loan agreement and local law, which Yume can't know. Starts blank; the hint below says what to check.
@@ -196,34 +200,43 @@ export function PrepayModal({
     };
   }, [amountMinor, payMinor, loan.id]);
 
-  const submit = async () => {
-    setError(null);
-    if (!Number.isFinite(amountMinor) || amountMinor <= 0) {
-      setError('Enter a valid amount');
-      return;
-    }
-    if (amountMinor > roundedMinor(loan.outstandingPrincipalMinor)) {
-      setError(
-        `Amount can't exceed the outstanding balance of ${formatMoney(roundedMinor(loan.outstandingPrincipalMinor))}`
-      );
-      return;
-    }
-    setSaving(true);
-    try {
-      const summary = await applyPrepayment(loan.id, {
-        amountMinor: payMinor,
-        accountId: account.id,
-        categoryId,
-        date: toLocalIsoDate(new Date()),
-        chargeAmountMinor: chargeMinor > 0 ? chargeMinor : undefined,
-      });
-      setResult(summary);
-    } catch (e) {
-      setError(errorMessage(e));
-    } finally {
-      setSaving(false);
-    }
-  };
+  const submit = () =>
+    runAction(async () => {
+      setError(null);
+      if (!Number.isFinite(amountMinor) || amountMinor <= 0) {
+        setError('Enter a valid amount');
+        return;
+      }
+      if (amountMinor > roundedMinor(loan.outstandingPrincipalMinor)) {
+        setError(
+          `Amount can't exceed the outstanding balance of ${formatMoney(roundedMinor(loan.outstandingPrincipalMinor))}`
+        );
+        return;
+      }
+      if (
+        ![chargePercent, ...(lent ? [] : [taxPercent])].every(
+          (value) => !value.trim() || (Number.isFinite(Number(value)) && Number(value) >= 0)
+        )
+      ) {
+        setError('Enter a valid non-negative charge and tax percentage');
+        return;
+      }
+      setSaving(true);
+      try {
+        const summary = await applyPrepayment(loan.id, {
+          amountMinor: payMinor,
+          accountId: account.id,
+          categoryId,
+          date: toLocalIsoDate(new Date()),
+          chargeAmountMinor: chargeMinor > 0 ? chargeMinor : undefined,
+        });
+        setResult(summary);
+      } catch (e) {
+        setError(errorMessage(e));
+      } finally {
+        setSaving(false);
+      }
+    });
 
   if (result) {
     return (
