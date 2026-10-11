@@ -18,11 +18,6 @@ jest.mock('./backup', () => ({
   summarizeSnapshot: () => null,
   isTooLargeForBackup: (bytes: number | null | undefined) => bytes != null && bytes > 150 * 1024 * 1024,
 }));
-jest.mock('./backupIndex', () => ({
-  readBackupIndex: jest.fn(async () => ({})),
-  writeBackupIndex: jest.fn(),
-  rememberBackupFile: jest.fn(async () => {}),
-}));
 jest.mock('@/db/settings', () => ({
   getLocalBackupFolderUri: jest.fn(),
   setLocalBackupFolderUri: jest.fn(),
@@ -58,9 +53,9 @@ const MAX_BACKUP_FILE_BYTES = 150 * 1024 * 1024;
 const saf = StorageAccessFramework as jest.Mocked<typeof StorageAccessFramework>;
 
 describe('local backup folder', () => {
-  it('a folder that can no longer be read lists as empty instead of throwing', async () => {
+  it('an inaccessible folder reports its error instead of pretending it is empty', async () => {
     saf.readDirectoryAsync.mockRejectedValueOnce(new Error('permission revoked'));
-    await expect(listLocalBackups('content://gone')).resolves.toEqual([]);
+    await expect(listLocalBackups('content://gone')).rejects.toThrow('permission revoked');
   });
 
   it('a file whose URI is malformed is skipped, and does not break the list of the others', async () => {

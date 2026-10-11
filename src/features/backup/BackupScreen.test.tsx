@@ -83,6 +83,8 @@ jest.mock('@/db/settings', () => ({
   getLastLocalBackupAt: async () => mockState.lastAt,
   getBackupFrequency: async () => 'daily',
   setBackupFrequency: jest.fn(),
+  setLocalBackupFolderUri: jest.fn(),
+  setLastLocalBackupAt: jest.fn(),
   getLastLocalBackupResult: async () => mockState.result,
   setLastLocalBackupResult: jest.fn(),
   getNotificationPrefs: async () => ({}),
@@ -170,6 +172,7 @@ describe('Backup & restore · status', () => {
     mockState.folder = 'content://folder';
     mockState.lastAt = new Date().toISOString();
     mockState.result = { at: mockState.lastAt, ok: true, sizeBytes: 285491 };
+    mockState.files = [{ ...file(1), exportedAt: mockState.lastAt, sizeBytes: 285491 }];
     const tree = await render();
     const shown = texts(tree);
     expect(shown).toContain('Backed up today');
@@ -285,4 +288,40 @@ describe('Backup & restore · the temporary export file', () => {
     expect(mockSharing.shareAsync).not.toHaveBeenCalled();
     expect(mockCreated[0].deleted).toBe(true);
   });
+});
+
+it('scans an occupied folder and reviews its latest backup before any write or adoption', async () => {
+  const { pickBackupFolder, writeLocalBackupNow, listLocalBackups } = jest.requireMock('@/lib/localBackup');
+  const { setLocalBackupFolderUri } = jest.requireMock('@/db/settings');
+  const { showAlert } = jest.requireMock('@/components/AppDialog');
+  pickBackupFolder.mockResolvedValue('content://existing');
+  mockState.files = [file(5), file(4)];
+  const tree = await render();
+  await act(async () => {
+    await buttons(tree, 'Choose folder')[0].props.onPress();
+  });
+  expect(listLocalBackups).toHaveBeenCalledWith('content://existing');
+  expect(writeLocalBackupNow).not.toHaveBeenCalled();
+  expect(setLocalBackupFolderUri).not.toHaveBeenCalled();
+  const actions = showAlert.mock.calls.find(
+    (call: unknown[]) => call[0] === 'Backups found in this folder'
+  )[2];
+  await act(async () => {
+    await actions.find((action: { text: string }) => action.text === 'Review latest backup').onPress();
+  });
+  expect(readLocalBackup).toHaveBeenCalledWith('content://backups/5');
+  expect(writeLocalBackupNow).not.toHaveBeenCalled();
+  expect(setLocalBackupFolderUri).not.toHaveBeenCalled();
+  act(() => tree.unmount());
+});
+
+it('does not claim a backup exists when only the saved settings say one exists', async () => {
+  mockState.folder = 'content://empty';
+  mockState.lastAt = new Date().toISOString();
+  mockState.result = { at: mockState.lastAt, ok: true };
+  mockState.files = [];
+  const tree = await render();
+  expect(texts(tree)).toContain('Not backed up yet');
+  expect(texts(tree)).not.toContain('Backed up today');
+  act(() => tree.unmount());
 });

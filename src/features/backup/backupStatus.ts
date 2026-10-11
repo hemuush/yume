@@ -37,12 +37,14 @@ export function backupStatus({
   outcome,
   frequency,
   now,
+  existingOnly = false,
 }: {
   folder: string | null;
   lastAt: string | null;
   outcome: BackupOutcome | null;
   frequency: BackupFrequency;
   now: Date;
+  existingOnly?: boolean;
 }): StatusView {
   if (!folder) {
     return {
@@ -51,6 +53,19 @@ export function backupStatus({
       tone: 'waiting',
       title: 'No backup folder yet',
       lines: ['Pick a folder once. Yume writes a backup there on its own.'],
+      failed: false,
+    };
+  }
+  if (existingOnly) {
+    return {
+      icon: 'folder-outline',
+      tint: theme.colors.idGold,
+      tone: 'waiting',
+      title: 'Existing backup found',
+      lines: [
+        lastAt ? `Latest in folder: ${formatWhen(lastAt)}` : 'Backup date unknown',
+        'Review the latest restore point, or Back up now to keep your current app data.',
+      ],
       failed: false,
     };
   }

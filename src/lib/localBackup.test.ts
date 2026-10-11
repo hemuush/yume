@@ -14,19 +14,10 @@ jest.mock('expo-file-system/legacy', () => ({
 }));
 jest.mock('./backup', () => ({
   buildBackupSnapshot: jest.fn(async () => ({ formatVersion: 1, exportedAt: 'x', tables: {} })),
+  isTooLargeForBackup: (bytes: number) => bytes > 150 * 1024 * 1024,
   summarizeSnapshot: (s: any) => (s?.tables?.transactions ? { entries: s.tables.transactions.length } : null),
 }));
-// The phone's backup index, in memory.
-const mockIndex = { current: {} as Record<string, any> };
-jest.mock('./backupIndex', () => ({
-  readBackupIndex: jest.fn(async () => ({ ...mockIndex.current })),
-  writeBackupIndex: jest.fn((index: Record<string, any>) => {
-    mockIndex.current = { ...index };
-  }),
-  rememberBackupFile: jest.fn(async (uri: string, info: any) => {
-    mockIndex.current = { ...mockIndex.current, [uri]: info };
-  }),
-}));
+jest.mock('./appLock', () => ({ withoutRelock: (fn: () => unknown) => fn() }));
 jest.mock('@/db/settings', () => ({
   getLocalBackupFolderUri: jest.fn(),
   setLocalBackupFolderUri: jest.fn(),
@@ -44,6 +35,8 @@ import {
   nextLocalBackupLabel,
   listLocalBackups,
   backupFileDate,
+  runLocalBackupIfDue,
+  pickBackupFolder,
 } from './localBackup';
 import { toLocalIsoDate } from './date';
 
@@ -196,7 +189,6 @@ describe('listLocalBackups', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockIndex.current = {};
   });
 
   it('lists backup files newest first, each with what is inside', async () => {
@@ -236,41 +228,28 @@ describe('listLocalBackups', () => {
     expect(files[0].uri).toBe(file('2026-09-20'));
   });
 
-  it("reads a file only once: after that, what's inside comes from the index", async () => {
+  it('refreshes files even when the URI stays the same', async () => {
     (StorageAccessFramework.readDirectoryAsync as jest.Mock).mockResolvedValue([file('2026-09-25')]);
     (StorageAccessFramework.readAsStringAsync as jest.Mock).mockResolvedValue(
       JSON.stringify({ exportedAt: '2026-09-25T10:00:00Z', tables: { transactions: [{}] } })
     );
-    const first = await listLocalBackups(folder);
+    await listLocalBackups(folder);
     expect(StorageAccessFramework.readAsStringAsync).toHaveBeenCalledTimes(1);
+    (StorageAccessFramework.readAsStringAsync as jest.Mock).mockResolvedValue(
+      JSON.stringify({ exportedAt: '2026-09-25T11:00:00Z', tables: { transactions: [{}, {}] } })
+    );
     const second = await listLocalBackups(folder);
-    expect(StorageAccessFramework.readAsStringAsync).toHaveBeenCalledTimes(1);
-    expect(second).toEqual(first);
+    expect(StorageAccessFramework.readAsStringAsync).toHaveBeenCalledTimes(2);
+    expect(second[0].summary).toEqual({ entries: 2 });
+    expect(second[0].exportedAt).toBe('2026-09-25T11:00:00Z');
   });
 
   it('forgets files that have left the folder, and retries ones it could not read', async () => {
-    mockIndex.current = {
-      [file('2026-09-01')]: { exportedAt: 'old', sizeBytes: 5, summary: null },
-    };
     (StorageAccessFramework.readDirectoryAsync as jest.Mock).mockResolvedValue([file('2026-09-25')]);
     (StorageAccessFramework.readAsStringAsync as jest.Mock).mockResolvedValue('not json');
     await listLocalBackups(folder);
-    expect(mockIndex.current).toEqual({});
     await listLocalBackups(folder);
     expect(StorageAccessFramework.readAsStringAsync).toHaveBeenCalledTimes(2);
-  });
-});
-
-describe('writeLocalBackupNow and the index', () => {
-  it('remembers the file it just wrote, so the list never has to read it', async () => {
-    mockIndex.current = {};
-    (StorageAccessFramework.readDirectoryAsync as jest.Mock).mockResolvedValue([]);
-    (StorageAccessFramework.createFileAsync as jest.Mock).mockResolvedValue('content://folder/new');
-    (StorageAccessFramework.writeAsStringAsync as jest.Mock).mockResolvedValue(undefined);
-    await writeLocalBackupNow('content://folder');
-    expect(mockIndex.current['content://folder/new']).toEqual(
-      expect.objectContaining({ exportedAt: 'x', sizeBytes: expect.any(Number) })
-    );
   });
 });
 
@@ -282,7 +261,6 @@ const safUri = (folderPath: string, fileName: string) =>
 describe('recognising backup files by their own name', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockIndex.current = {};
     (StorageAccessFramework.deleteAsync as jest.Mock).mockResolvedValue(undefined);
   });
 
@@ -360,5 +338,73 @@ describe('recognising backup files by their own name', () => {
     const written = (StorageAccessFramework.writeAsStringAsync as jest.Mock).mock.calls[0][1] as string;
     expect(written.length).toBeLessThan(sizeBytes);
     expect(sizeBytes).toBe(Buffer.byteLength(written, 'utf8'));
+  });
+});
+
+describe('folder discovery and automatic backup protection', () => {
+  const saf = StorageAccessFramework as jest.Mocked<typeof StorageAccessFramework>;
+  const settings = jest.requireMock('@/db/settings');
+  beforeEach(() => jest.clearAllMocks());
+
+  it('picking a folder grants access without adopting or writing it', async () => {
+    (saf.requestDirectoryPermissionsAsync as jest.Mock).mockResolvedValue({
+      granted: true,
+      directoryUri: 'content://existing',
+    });
+    expect(await pickBackupFolder()).toBe('content://existing');
+    expect(settings.setLocalBackupFolderUri).not.toHaveBeenCalled();
+    expect(saf.createFileAsync).not.toHaveBeenCalled();
+  });
+
+  it('selects by actual export time before applying a limit, and discovers exported copies', async () => {
+    const oldName = 'content://folder/yume-backup-2026-01-01.json';
+    const newName = 'content://folder/yume-backup-2026-10-11.json';
+    const exported = 'content://folder/yume-backup-1791690000000.json';
+    saf.readDirectoryAsync.mockResolvedValue([oldName, newName, exported]);
+    saf.readAsStringAsync.mockImplementation(async (uri) =>
+      JSON.stringify({
+        exportedAt: uri === oldName ? '2026-10-11T12:00:00Z' : '2026-10-10T12:00:00Z',
+        tables: { transactions: [] },
+      })
+    );
+    const list = await listLocalBackups('content://folder', 1);
+    expect(list[0].uri).toBe(oldName);
+    expect(saf.readAsStringAsync).toHaveBeenCalledTimes(3);
+  });
+
+  it('never marks a corrupt file as the latest valid backup', async () => {
+    saf.readDirectoryAsync.mockResolvedValue([
+      'content://folder/yume-backup-2026-10-11',
+      'content://folder/yume-backup-2026-10-10',
+    ]);
+    saf.readAsStringAsync.mockImplementation(async (uri) =>
+      uri.endsWith('11')
+        ? 'invalid'
+        : JSON.stringify({ exportedAt: '2026-10-10T12:00:00Z', tables: { transactions: [] } })
+    );
+    expect((await listLocalBackups('content://folder'))[0].summary).not.toBeNull();
+  });
+
+  it('pauses automatic writes when the folder contains unreviewed newer data', async () => {
+    settings.getLocalBackupFolderUri.mockResolvedValue('content://folder');
+    settings.getLastLocalBackupAt.mockResolvedValue('2026-10-01T00:00:00Z');
+    settings.getBackupFrequency.mockResolvedValue('daily');
+    saf.readDirectoryAsync.mockResolvedValue(['content://folder/yume-backup-2026-10-11']);
+    saf.readAsStringAsync.mockResolvedValue(
+      JSON.stringify({ exportedAt: '2026-10-11T12:00:00Z', tables: { transactions: [] } })
+    );
+    await runLocalBackupIfDue();
+    expect(saf.createFileAsync).not.toHaveBeenCalled();
+    expect(settings.setLastLocalBackupResult).toHaveBeenCalledWith(
+      expect.objectContaining({ ok: false, error: expect.stringContaining('need review') })
+    );
+  });
+
+  it('preserves existing files when explicitly starting backups in an occupied folder', async () => {
+    saf.readDirectoryAsync.mockResolvedValue([`content://folder/yume-backup-${toLocalIsoDate(new Date())}`]);
+    saf.createFileAsync.mockResolvedValue('content://new');
+    saf.writeAsStringAsync.mockResolvedValue(undefined);
+    await writeLocalBackupNow('content://folder', { preserveExisting: true });
+    expect(saf.deleteAsync).not.toHaveBeenCalled();
   });
 });
