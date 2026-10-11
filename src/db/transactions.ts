@@ -6,7 +6,7 @@ import { MAX_AMOUNT_MINOR } from '@/lib/amountLimits';
 import { captureRow, restoreRow, RowSnapshot } from './undoSnapshot';
 import { getDefaultCurrency } from './settings';
 import { Transaction, TransactionType, PaymentMode } from '@/types';
-import { toLocalIsoDate, addDaysToIsoDate, isIsoDate, parseLocalIsoDate } from '@/lib/date';
+import { toLocalIsoDate, addDaysToIsoDate, assertValidIsoDate } from '@/lib/date';
 import { parseSearchQuery } from '@/lib/searchQuery';
 
 import { queueSpendAlerts } from './spendAlerts';
@@ -55,9 +55,13 @@ export interface CreateTransactionInput {
  * Savings accounts aren't spendable in place: money must transfer out before it's logged as income or
  * expense. Enforced here, not only in pickers, so every writer (recurring, friend ledger, imports...) obeys.
  */
-export async function assertSpendableAccount(type: TransactionType, accountId: string): Promise<void> {
+export async function assertSpendableAccount(
+  type: TransactionType,
+  accountId: string,
+  handle?: AppDb
+): Promise<void> {
   if (type === 'transfer') return;
-  const db = await getDb();
+  const db = handle ?? (await getDb());
   const acc = await db.getFirstAsync<{ type: string }>('SELECT type FROM accounts WHERE id = ?', [accountId]);
   if (acc?.type === 'savings') {
     throw new Error(
@@ -73,10 +77,11 @@ export async function assertSpendableAccount(type: TransactionType, accountId: s
 export async function assertSameCurrencyTransfer(
   type: TransactionType,
   accountId: string,
-  toAccountId: string | null | undefined
+  toAccountId: string | null | undefined,
+  handle?: AppDb
 ): Promise<void> {
   if (type !== 'transfer' || !toAccountId) return;
-  const db = await getDb();
+  const db = handle ?? (await getDb());
   const rows = await db.getAllAsync<{ id: string; currency: string }>(
     'SELECT id, currency FROM accounts WHERE id IN (?, ?)',
     [accountId, toAccountId]
@@ -90,25 +95,23 @@ export async function assertSameCurrencyTransfer(
   }
 }
 
-/** An entry's date must be a real calendar day (not "2026-02-31"): anything else drops out of every month's totals. */
-function assertRealDate(date: string): void {
-  if (!isIsoDate(date) || toLocalIsoDate(parseLocalIsoDate(date)) !== date) {
-    throw new Error('Pick a valid date');
-  }
-}
-
 /**
  * Every check createTransaction applies before writing; shared with runDueRecurringRules, which inserts inside
  * a transaction (see insertTransactionRow) yet must apply the same rules as a hand-typed entry.
  */
-export async function assertValidTransactionInput(input: CreateTransactionInput): Promise<void> {
-  assertRealDate(input.date);
+export async function assertValidTransactionInput(
+  input: CreateTransactionInput,
+  handle?: AppDb
+): Promise<void> {
+  assertValidIsoDate(input.date);
   if (!Number.isFinite(input.amountMinor) || input.amountMinor <= 0) {
     throw new Error('Amount must be a positive number');
   }
   if (input.amountMinor > MAX_AMOUNT_MINOR) {
     throw new Error('That amount is too large');
   }
+  if (!Number.isSafeInteger(input.amountMinor))
+    throw new Error('Amount must be a whole number of minor units');
   if (input.type === 'transfer' && !input.toAccountId) {
     throw new Error('Transfer requires a destination account');
   }
@@ -118,18 +121,19 @@ export async function assertValidTransactionInput(input: CreateTransactionInput)
   if (input.type !== 'transfer' && !input.categoryId) {
     throw new Error('Income/expense requires a category');
   }
-  await assertSpendableAccount(input.type, input.accountId);
-  await assertSameCurrencyTransfer(input.type, input.accountId, input.toAccountId);
-  if (input.isRefund) await assertRefundTarget(input.type, input.categoryId);
+  await assertSpendableAccount(input.type, input.accountId, handle);
+  await assertSameCurrencyTransfer(input.type, input.accountId, input.toAccountId, handle);
+  if (input.isRefund) await assertRefundTarget(input.type, input.categoryId, handle);
 }
 
 /** A refund is money in, back to a spending category. */
 async function assertRefundTarget(
   type: TransactionType,
-  categoryId: string | null | undefined
+  categoryId: string | null | undefined,
+  handle?: AppDb
 ): Promise<void> {
   if (type !== 'income') throw new Error('A refund is money coming back in');
-  const db = await getDb();
+  const db = handle ?? (await getDb());
   const cat = await db.getFirstAsync<{ kind: string }>('SELECT kind FROM categories WHERE id = ?', [
     categoryId ?? '',
   ]);
@@ -503,61 +507,48 @@ export interface UpdateTransactionInput {
   isRefund?: boolean;
 }
 
-/**
- * Edits a plain transaction's own fields. Never call on one linked to a loan payment or person ledger entry
- * (check getTransactionLink): use the loan/person "undo" flow, or the schedule/balance desyncs.
- */
-export async function updateTransaction(id: string, input: UpdateTransactionInput): Promise<Transaction> {
-  assertRealDate(input.date);
-  if (!Number.isFinite(input.amountMinor) || input.amountMinor <= 0) {
-    throw new Error('Amount must be a positive number');
+/** Checks links on the same handle that will edit/delete, so a stale screen cannot sever a ledger pair. */
+export async function assertEditableTransactionOn(
+  db: AppDb,
+  id: string,
+  allowSplit = false
+): Promise<TransactionRow> {
+  const row = found(
+    await db.getFirstAsync<TransactionRow>('SELECT * FROM transactions WHERE id = ?', [id]),
+    'entry'
+  );
+  if (await transactionLinkOn(db, id)) {
+    throw new Error('This transaction is linked to a loan or person entry — undo it from there instead.');
   }
-  if (input.amountMinor > MAX_AMOUNT_MINOR) {
-    throw new Error('That amount is too large');
-  }
-  if (input.type === 'transfer' && !input.toAccountId) {
-    throw new Error('Transfer requires a destination account');
-  }
-  if (input.type === 'transfer' && input.toAccountId === input.accountId) {
-    throw new Error('Cannot transfer to the same account');
-  }
-  if (input.type !== 'transfer' && !input.categoryId) {
-    throw new Error('Income/expense requires a category');
-  }
-  await assertSpendableAccount(input.type, input.accountId);
-  await assertSameCurrencyTransfer(input.type, input.accountId, input.toAccountId);
+  if (row.split_id && !allowSplit) throw new Error('This is part of a split. Edit the whole split instead.');
+  return row;
+}
 
+export async function updateTransaction(id: string, input: UpdateTransactionInput): Promise<Transaction> {
   const db = await getDb();
-  const current = await db.getFirstAsync<{ is_refund: number }>(
-    'SELECT is_refund FROM transactions WHERE id = ?',
-    [id]
-  );
-  // Only money in can be a refund: changing its type clears the flag.
-  const isRefund = input.type === 'income' && (input.isRefund ?? !!current?.is_refund);
-  if (isRefund) await assertRefundTarget(input.type, input.categoryId);
-  // `paymentMode` omitted = leave as-is: the edit screen has no such field, so `?? null` would wipe the mode
-  // a recurring rule stamped on the transaction.
-  const keepPaymentMode = input.paymentMode === undefined;
-  await db.runAsync(
-    `UPDATE transactions
-     SET type = ?, account_id = ?, to_account_id = ?, category_id = ?, amount_minor = ?, date = ?, note = ?, is_refund = ?, day_rank = CASE WHEN date = ? THEN day_rank END${
-       keepPaymentMode ? '' : ', payment_mode = ?'
-     }
-     WHERE id = ?`,
-    [
-      input.type,
-      input.accountId,
-      input.toAccountId ?? null,
-      input.categoryId ?? null,
-      input.amountMinor,
-      input.date,
-      input.note ?? '',
-      isRefund ? 1 : 0,
-      input.date,
-      ...(keepPaymentMode ? [] : [input.paymentMode ?? null]),
-      id,
-    ]
-  );
+  await db.withTransactionAsync(async (tx) => {
+    const current = await assertEditableTransactionOn(tx, id);
+    const isRefund = input.type === 'income' && (input.isRefund ?? !!current.is_refund);
+    await assertValidTransactionInput({ ...input, isRefund }, tx);
+    // Omitted mode stays as-is; changing type clears fields from the old kind.
+    const keepPaymentMode = input.paymentMode === undefined;
+    await tx.runAsync(
+      `UPDATE transactions SET type = ?, account_id = ?, to_account_id = ?, category_id = ?, amount_minor = ?, date = ?, note = ?, is_refund = ?, day_rank = CASE WHEN date = ? THEN day_rank END${keepPaymentMode ? '' : ', payment_mode = ?'} WHERE id = ?`,
+      [
+        input.type,
+        input.accountId,
+        input.type === 'transfer' ? (input.toAccountId ?? null) : null,
+        input.type === 'transfer' ? null : (input.categoryId ?? null),
+        input.amountMinor,
+        input.date,
+        input.note ?? '',
+        isRefund ? 1 : 0,
+        input.date,
+        ...(keepPaymentMode ? [] : [input.paymentMode ?? null]),
+        id,
+      ]
+    );
+  });
   const row = await db.getFirstAsync<TransactionRow>('SELECT * FROM transactions WHERE id = ?', [id]);
   return rowToTransaction(found(row, 'entry'));
 }

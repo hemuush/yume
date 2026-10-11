@@ -5,6 +5,7 @@ import { getDb } from './client';
 import { newId } from '@/lib/id';
 import { captureRow, restoreRow, RowSnapshot } from './undoSnapshot';
 import { SavingsGoal } from '@/types';
+import { assertValidIsoDate } from '@/lib/date';
 import { valuationAdjSql } from './valuationSql';
 
 /**
@@ -67,6 +68,7 @@ export interface SavingsGoalInput {
 }
 
 function validateInput(input: SavingsGoalInput): void {
+  if (input.targetDate) assertValidIsoDate(input.targetDate);
   if (!input.name.trim()) throw new Error('Goal name is required');
   if (!Number.isSafeInteger(input.targetAmountMinor) || input.targetAmountMinor <= 0) {
     throw new Error('Target amount must be a positive amount');

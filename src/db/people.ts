@@ -3,7 +3,8 @@ import { PersonLedgerEntryRow, PersonRow } from './rows';
 import { getDb, AppDb } from './client';
 import { newId } from '@/lib/id';
 import { Person, PersonLedgerEntry } from '@/types';
-import { queueSpendAlerts } from './ledger';
+import { queueSpendAlerts, assertValidTransactionInput } from './ledger';
+import { assertValidIsoDate } from '@/lib/date';
 import { captureRow, restoreRows, RowSnapshot } from './undoSnapshot';
 import { assertDefaultCurrencyAccount } from './currencyInvariant';
 
@@ -57,6 +58,7 @@ export async function listPeople(includeArchived = false): Promise<PersonWithBal
 }
 
 export async function createPerson(input: { name: string; notes?: string }): Promise<Person> {
+  if (!input.name.trim()) throw new Error('Person name is required');
   const db = await getDb();
   // Two people with one name couldn't be told apart in Add's picker or on Friends & family.
   const clash = await db.getFirstAsync<{ id: string }>(
@@ -67,7 +69,7 @@ export async function createPerson(input: { name: string; notes?: string }): Pro
   const id = newId();
   await db.runAsync('INSERT INTO people (id, name, notes) VALUES (?, ?, ?)', [
     id,
-    input.name,
+    input.name.trim(),
     input.notes ?? '',
   ]);
   const row = await db.getFirstAsync<PersonRow>('SELECT * FROM people WHERE id = ?', [id]);
@@ -97,6 +99,7 @@ export async function addLedgerEntry(input: {
   note?: string;
   transactionId?: string | null;
 }): Promise<PersonLedgerEntry> {
+  assertValidIsoDate(input.date);
   if (!Number.isSafeInteger(input.amountMinor) || input.amountMinor === 0) {
     throw new Error('Ledger amount must be a non-zero number');
   }
@@ -142,17 +145,7 @@ async function insertPersonMoneyMovement(
   }
 ): Promise<void> {
   await assertDefaultCurrencyAccount(tx, input.accountId, 'Friends & family entries');
-  if (!Number.isSafeInteger(input.amountMinor) || input.amountMinor <= 0) {
-    throw new Error('Amount must be a positive number');
-  }
-  const acc = await tx.getFirstAsync<{ type: string }>('SELECT type FROM accounts WHERE id = ?', [
-    input.accountId,
-  ]);
-  if (acc?.type === 'savings') {
-    throw new Error(
-      'Savings accounts can’t be used for income or expenses — transfer to a spendable account first.'
-    );
-  }
+  await assertValidTransactionInput(input, tx);
   const txId = newId();
   await tx.runAsync(
     `INSERT INTO transactions (id, type, account_id, category_id, amount_minor, date, note)

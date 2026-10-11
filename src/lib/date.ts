@@ -105,3 +105,10 @@ export function isoDatesInRange(from: string, to: string): string[] {
   }
   return dates;
 }
+
+/** A stored date must survive a local calendar round-trip, not just match YYYY-MM-DD. */
+export function assertValidIsoDate(value: string): void {
+  if (!isIsoDate(value) || toLocalIsoDate(parseLocalIsoDate(value)) !== value) {
+    throw new Error('Pick a valid date');
+  }
+}

@@ -120,3 +120,7 @@ See [BUILD.md](./BUILD.md).
 ## Data model & calculation logic
 
 See [DATA_MODEL.md](./DATA_MODEL.md) for the full schema and the reasoning behind it (why savings are accounts, not categories; how the friends ledger nets out; how EMI amortization is computed).
+
+## Audit record
+
+See [AUDIT.md](./AUDIT.md) for the latest verified fixes, checks, and remaining device checks.

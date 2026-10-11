@@ -2,6 +2,7 @@ import { getDb } from './client';
 import { MIN_SPLIT_PARTS, MAX_SPLIT_PARTS } from '@/lib/splitLimits';
 import { newId } from '@/lib/id';
 import {
+  assertEditableTransactionOn,
   assertValidTransactionInput,
   insertTransactionRow,
   checkOverspendForNewTransaction,
@@ -60,9 +61,21 @@ export async function saveSplit(input: SaveSplitInput): Promise<string> {
     note: input.note ?? '',
     splitId,
   }));
-  for (const e of entries) await assertValidTransactionInput(e);
   const db = await getDb();
   await db.withTransactionAsync(async (tx) => {
+    if (input.splitId && input.replacesEntryId) throw new Error('Choose one payment to replace');
+    if (input.replacesEntryId) {
+      const current = await assertEditableTransactionOn(tx, input.replacesEntryId);
+      if (current.type !== 'expense' || current.is_refund) throw new Error('Only an expense can be split');
+    }
+    if (input.splitId) {
+      const current = await tx.getAllAsync<{ id: string }>('SELECT id FROM transactions WHERE split_id = ?', [
+        input.splitId,
+      ]);
+      if (!current.length) throw new Error('This split no longer exists');
+      for (const part of current) await assertEditableTransactionOn(tx, part.id, true);
+    }
+    for (const entry of entries) await assertValidTransactionInput(entry, tx);
     // Editing replaces the parts outright; the old ones aren't "deleted" in the sense of Recently deleted.
     if (input.splitId) await tx.runAsync('DELETE FROM transactions WHERE split_id = ?', [input.splitId]);
     if (input.replacesEntryId)
