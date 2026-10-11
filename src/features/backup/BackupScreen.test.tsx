@@ -325,3 +325,21 @@ it('does not claim a backup exists when only the saved settings say one exists',
   expect(texts(tree)).not.toContain('Backed up today');
   act(() => tree.unmount());
 });
+
+it('creates one backup in an empty folder even when Choose folder is tapped twice', async () => {
+  const { pickBackupFolder, writeLocalBackupNow } = jest.requireMock('@/lib/localBackup');
+  const { setLocalBackupFolderUri } = jest.requireMock('@/db/settings');
+  pickBackupFolder.mockResolvedValue('content://new-folder');
+  writeLocalBackupNow.mockResolvedValue({ sizeBytes: 321 });
+  mockState.files = [];
+  const tree = await render();
+  const choose = buttons(tree, 'Choose folder')[0].props.onPress;
+  await act(async () => {
+    await Promise.all([choose(), choose()]);
+  });
+  expect(pickBackupFolder).toHaveBeenCalledTimes(1);
+  expect(writeLocalBackupNow).toHaveBeenCalledTimes(1);
+  expect(writeLocalBackupNow).toHaveBeenCalledWith('content://new-folder', { preserveExisting: true });
+  expect(setLocalBackupFolderUri).toHaveBeenCalledWith('content://new-folder');
+  act(() => tree.unmount());
+});

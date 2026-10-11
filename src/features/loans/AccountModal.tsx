@@ -1,3 +1,4 @@
+import { useSaveOnce } from '@/lib/useSaveOnce';
 import { useState } from 'react';
 import { View } from 'react-native';
 import { Text } from '@/components/Text';
@@ -24,23 +25,27 @@ export function AccountModal({
   onClose: () => void;
   onDone: () => void;
 }) {
+  const runAction = useSaveOnce(async (action: () => Promise<void>) => {
+    await action();
+  });
   const [selected, setSelected] = useState<string | null>(currentAccountId);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const submit = async () => {
-    if (!selected) return;
-    setError(null);
-    setSaving(true);
-    try {
-      await updateLoanAccount(loanId, selected);
-      onDone();
-    } catch (e) {
-      setError(errorMessage(e));
-    } finally {
-      setSaving(false);
-    }
-  };
+  const submit = () =>
+    runAction(async () => {
+      if (!selected) return;
+      setError(null);
+      setSaving(true);
+      try {
+        await updateLoanAccount(loanId, selected);
+        onDone();
+      } catch (e) {
+        setError(errorMessage(e));
+      } finally {
+        setSaving(false);
+      }
+    });
 
   return (
     <ModalSheet

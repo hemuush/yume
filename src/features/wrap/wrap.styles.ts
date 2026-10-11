@@ -31,7 +31,7 @@ export const styles = StyleSheet.create({
     marginTop: 10,
     marginHorizontal: 14,
   },
-  topEyebrow: { ...EYEBROW, fontSize: 10, color: theme.colors.textSecondary },
+  topEyebrow: { ...EYEBROW, fontFamily: EYEBROW.fontFamily, fontSize: 10, color: theme.colors.textSecondary },
   topLabel: {
     fontFamily: theme.font.roundedBold,
     fontSize: 22,

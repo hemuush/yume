@@ -1,3 +1,4 @@
+import { useSaveOnce } from '@/lib/useSaveOnce';
 import { useEffect, useMemo, useState } from 'react';
 import { View, Pressable } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
@@ -59,6 +60,9 @@ export function TransactionDetailModal({
   const { hideAmounts } = usePrivacy();
   const { show: showUndo } = useUndoToast();
   const { accent, secondary } = useAccent();
+  const runAction = useSaveOnce(async (action: () => Promise<void>) => {
+    await action();
+  });
   const [link, setLink] = useState<TransactionLink | undefined>(undefined);
   // The link lookup failed: stop saying "Checking…" and treat the entry as plain, so Edit stays usable.
   const [linkFailed, setLinkFailed] = useState(false);
@@ -137,62 +141,64 @@ export function TransactionDetailModal({
   const sensitiveEntry = (entry: Transaction) => isSavingsEntry(entry, categoriesById, savingsAccountIds);
 
   /** Saves the same entry for today, with an undo — like ↻ Repeat on Add. */
-  const logAgainToday = async () => {
-    setBusy(true);
-    try {
-      const again = await createTransaction({
-        type: tx.type,
-        accountId: tx.accountId,
-        toAccountId: tx.toAccountId,
-        categoryId: tx.categoryId,
-        amountMinor: tx.amountMinor,
-        date: toLocalIsoDate(new Date()),
-        note: tx.note,
-        // A refund logged again is still a refund, not ordinary income.
-        isRefund: tx.isRefund,
-      });
-      haptics.confirm();
-      emitTransactionsChanged();
-      onChanged();
-      showUndo('Logged again for today', async () => {
-        await deleteTransaction(again.id, { keep: false });
+  const logAgainToday = () =>
+    runAction(async () => {
+      setBusy(true);
+      try {
+        const again = await createTransaction({
+          type: tx.type,
+          accountId: tx.accountId,
+          toAccountId: tx.toAccountId,
+          categoryId: tx.categoryId,
+          amountMinor: tx.amountMinor,
+          date: toLocalIsoDate(new Date()),
+          note: tx.note,
+          // A refund logged again is still a refund, not ordinary income.
+          isRefund: tx.isRefund,
+        });
+        haptics.confirm();
         emitTransactionsChanged();
         onChanged();
-      });
-    } catch (e) {
-      showAlert("Couldn't log it", errorMessage(e));
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const confirmDelete = async () => {
-    setBusy(true);
-    try {
-      if (tx.splitId) {
-        // One payment: every part goes together, and comes back together.
-        const snapshots = await deleteSplit(tx.splitId);
-        haptics.warn();
-        onChanged();
-        showUndo('Split moved to Recently deleted', async () => {
-          await restoreSplit(snapshots);
+        showUndo('Logged again for today', async () => {
+          await deleteTransaction(again.id, { keep: false });
+          emitTransactionsChanged();
           onChanged();
         });
-        return;
+      } catch (e) {
+        showAlert("Couldn't log it", errorMessage(e));
+      } finally {
+        setBusy(false);
       }
-      const snapshot = await deleteTransaction(tx.id);
-      haptics.warn();
-      onChanged();
-      showUndo('Moved to Recently deleted', async () => {
-        await restoreTransaction(snapshot);
+    });
+
+  const confirmDelete = () =>
+    runAction(async () => {
+      setBusy(true);
+      try {
+        if (tx.splitId) {
+          // One payment: every part goes together, and comes back together.
+          const snapshots = await deleteSplit(tx.splitId);
+          haptics.warn();
+          onChanged();
+          showUndo('Split moved to Recently deleted', async () => {
+            await restoreSplit(snapshots);
+            onChanged();
+          });
+          return;
+        }
+        const snapshot = await deleteTransaction(tx.id);
+        haptics.warn();
         onChanged();
-      });
-    } catch (e) {
-      showAlert("Couldn't delete", errorMessage(e));
-    } finally {
-      setBusy(false);
-    }
-  };
+        showUndo('Moved to Recently deleted', async () => {
+          await restoreTransaction(snapshot);
+          onChanged();
+        });
+      } catch (e) {
+        showAlert("Couldn't delete", errorMessage(e));
+      } finally {
+        setBusy(false);
+      }
+    });
 
   const confirmUndoLoan = (loanPaymentId: string) => {
     showAlert(
@@ -203,17 +209,18 @@ export function TransactionDetailModal({
         {
           text: 'Undo payment',
           style: 'destructive',
-          onPress: async () => {
-            setBusy(true);
-            try {
-              await undoInstallmentPayment(loanPaymentId);
-              onChanged();
-            } catch (e) {
-              showAlert("Couldn't undo", errorMessage(e));
-            } finally {
-              setBusy(false);
-            }
-          },
+          onPress: () =>
+            runAction(async () => {
+              setBusy(true);
+              try {
+                await undoInstallmentPayment(loanPaymentId);
+                onChanged();
+              } catch (e) {
+                showAlert("Couldn't undo", errorMessage(e));
+              } finally {
+                setBusy(false);
+              }
+            }),
         },
       ]
     );
@@ -228,17 +235,18 @@ export function TransactionDetailModal({
         {
           text: 'Undo entry',
           style: 'destructive',
-          onPress: async () => {
-            setBusy(true);
-            try {
-              await undoPersonTransaction(tx.id);
-              onChanged();
-            } catch (e) {
-              showAlert("Couldn't undo", errorMessage(e));
-            } finally {
-              setBusy(false);
-            }
-          },
+          onPress: () =>
+            runAction(async () => {
+              setBusy(true);
+              try {
+                await undoPersonTransaction(tx.id);
+                onChanged();
+              } catch (e) {
+                showAlert("Couldn't undo", errorMessage(e));
+              } finally {
+                setBusy(false);
+              }
+            }),
         },
       ]
     );

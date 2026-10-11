@@ -1,3 +1,4 @@
+import { useSaveOnce } from '@/lib/useSaveOnce';
 import { useEffect, useState } from 'react';
 import { View, Pressable, StyleSheet } from 'react-native';
 import { Text } from '@/components/Text';
@@ -46,6 +47,9 @@ export function UpdateValueSheet({
   const { show: showUndo } = useUndoToast();
   const inv = account.investment;
   const today = toLocalIsoDate(new Date());
+  const runAction = useSaveOnce(async (action: () => Promise<void>) => {
+    await action();
+  });
   const [value, setValue] = useState('');
   const [date, setDate] = useState(today);
   const [saving, setSaving] = useState(false);
@@ -79,43 +83,45 @@ export function UpdateValueSheet({
           { currency: account.currency, masked }
         );
 
-  const submit = async () => {
-    setError(null);
-    const valueMinor = toMinor(parseFloat(value || ''));
-    if (!value.trim() || !Number.isFinite(valueMinor) || valueMinor < 0) {
-      setError('Enter what it is worth');
-      return;
-    }
-    setSaving(true);
-    try {
-      if (valuation) await updateValuation(valuation.id, { date, valueMinor });
-      else await addValuation(account.id, { date, valueMinor });
-      haptics.confirm();
-      onSaved();
-    } catch (e) {
-      setError(errorMessage(e));
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const remove = async () => {
-    if (!valuation) return;
-    setSaving(true);
-    try {
-      const snapshot = await deleteValuation(valuation.id);
-      haptics.warn();
-      onDeleted();
-      showUndo('Deleted that value', async () => {
-        await restoreValuation(snapshot);
+  const submit = () =>
+    runAction(async () => {
+      setError(null);
+      const valueMinor = toMinor(parseFloat(value || ''));
+      if (!value.trim() || !Number.isFinite(valueMinor) || valueMinor < 0) {
+        setError('Enter what it is worth');
+        return;
+      }
+      setSaving(true);
+      try {
+        if (valuation) await updateValuation(valuation.id, { date, valueMinor });
+        else await addValuation(account.id, { date, valueMinor });
+        haptics.confirm();
         onSaved();
-      });
-    } catch (e) {
-      setError(errorMessage(e));
-    } finally {
-      setSaving(false);
-    }
-  };
+      } catch (e) {
+        setError(errorMessage(e));
+      } finally {
+        setSaving(false);
+      }
+    });
+
+  const remove = () =>
+    runAction(async () => {
+      if (!valuation) return;
+      setSaving(true);
+      try {
+        const snapshot = await deleteValuation(valuation.id);
+        haptics.warn();
+        onDeleted();
+        showUndo('Deleted that value', async () => {
+          await restoreValuation(snapshot);
+          onSaved();
+        });
+      } catch (e) {
+        setError(errorMessage(e));
+      } finally {
+        setSaving(false);
+      }
+    });
 
   return (
     <ModalSheet

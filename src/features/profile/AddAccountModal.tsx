@@ -1,3 +1,4 @@
+import { useSaveOnce } from '@/lib/useSaveOnce';
 import { useEffect, useRef, useState } from 'react';
 import { View } from 'react-native';
 import { Text } from '@/components/Text';
@@ -33,6 +34,9 @@ export function AddAccountModal({
   onCreated: () => void;
 }) {
   const { accent } = useAccent();
+  const runAction = useSaveOnce(async (action: () => Promise<void>) => {
+    await action();
+  });
   const [name, setName] = useState('');
   const [type, setType] = useState<AccountType>('bank');
   const [opening, setOpening] = useState('0');
@@ -84,59 +88,61 @@ export function AddAccountModal({
     onClose();
   };
 
-  const submit = async () => {
-    setError(null);
-    if (!name.trim()) {
-      setError('Enter a name');
-      return;
-    }
-    const openingBalanceMinor = toMinor(parseFloat(opening || '0'));
-    const creditLimitMinor = type === 'credit_card' && creditLimit ? toMinor(parseFloat(creditLimit)) : null;
-    if (
-      !Number.isFinite(openingBalanceMinor) ||
-      (creditLimitMinor !== null && !Number.isFinite(creditLimitMinor))
-    ) {
-      setError('Enter a valid opening balance and credit limit');
-      return;
-    }
-    const days =
-      type === 'credit_card' ? parseCycleDays(statementDay, dueDay) : { statementDay: null, dueDay: null };
-    if ('error' in days) {
-      setError(days.error);
-      return;
-    }
-    const tracking = type === 'savings' && tracked;
-    const worthMinor = tracking && worth.trim() ? toMinor(parseFloat(worth)) : null;
-    if (worthMinor !== null && (!Number.isFinite(worthMinor) || worthMinor < 0)) {
-      setError('Enter what it is worth today');
-      return;
-    }
-    setSaving(true);
-    try {
-      if (createdId.current === null) {
-        const created = await createAccount({
-          name: name.trim(),
-          type,
-          currency,
-          openingBalanceMinor,
-          creditLimitMinor,
-          statementDay: days.statementDay,
-          dueDay: days.dueDay,
-          tracked: tracking,
-        });
-        createdId.current = created.id;
+  const submit = () =>
+    runAction(async () => {
+      setError(null);
+      if (!name.trim()) {
+        setError('Enter a name');
+        return;
       }
-      if (worthMinor !== null) {
-        await addValuation(createdId.current, { date: toLocalIsoDate(new Date()), valueMinor: worthMinor });
+      const openingBalanceMinor = toMinor(parseFloat(opening || '0'));
+      const creditLimitMinor =
+        type === 'credit_card' && creditLimit ? toMinor(parseFloat(creditLimit)) : null;
+      if (
+        !Number.isFinite(openingBalanceMinor) ||
+        (creditLimitMinor !== null && !Number.isFinite(creditLimitMinor))
+      ) {
+        setError('Enter a valid opening balance and credit limit');
+        return;
       }
-      reset();
-      onCreated();
-    } catch (e) {
-      setError(errorMessage(e));
-    } finally {
-      setSaving(false);
-    }
-  };
+      const days =
+        type === 'credit_card' ? parseCycleDays(statementDay, dueDay) : { statementDay: null, dueDay: null };
+      if ('error' in days) {
+        setError(days.error);
+        return;
+      }
+      const tracking = type === 'savings' && tracked;
+      const worthMinor = tracking && worth.trim() ? toMinor(parseFloat(worth)) : null;
+      if (worthMinor !== null && (!Number.isFinite(worthMinor) || worthMinor < 0)) {
+        setError('Enter what it is worth today');
+        return;
+      }
+      setSaving(true);
+      try {
+        if (createdId.current === null) {
+          const created = await createAccount({
+            name: name.trim(),
+            type,
+            currency,
+            openingBalanceMinor,
+            creditLimitMinor,
+            statementDay: days.statementDay,
+            dueDay: days.dueDay,
+            tracked: tracking,
+          });
+          createdId.current = created.id;
+        }
+        if (worthMinor !== null) {
+          await addValuation(createdId.current, { date: toLocalIsoDate(new Date()), valueMinor: worthMinor });
+        }
+        reset();
+        onCreated();
+      } catch (e) {
+        setError(errorMessage(e));
+      } finally {
+        setSaving(false);
+      }
+    });
 
   const trackingNow = type === 'savings' && tracked;
 

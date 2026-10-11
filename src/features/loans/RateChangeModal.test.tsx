@@ -92,7 +92,7 @@ describe('rate change', () => {
     expect(onDone).toHaveBeenCalledTimes(1);
   });
 
-  it.each(['abc', '-2'])('rejects an invalid rate (%s) without touching the database', async (typed) => {
+  it.each(['', 'abc', '-2'])('rejects an invalid rate (%s) without touching the database', async (typed) => {
     const { tree, onDone } = await render();
     await act(async () => byId(tree, 'rate').props.onChangeText(typed));
     await press(tree);

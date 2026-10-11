@@ -1,3 +1,4 @@
+import { useSaveOnce } from '@/lib/useSaveOnce';
 import { useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { Text } from '@/components/Text';
@@ -42,6 +43,9 @@ export function GoalDetailModal({
   onChanged: () => void;
 }) {
   const { show: showUndo } = useUndoToast();
+  const runAction = useSaveOnce(async (action: () => Promise<void>) => {
+    await action();
+  });
   const [name, setName] = useState('');
   const [target, setTarget] = useState('');
   const [hasTargetDate, setHasTargetDate] = useState(false);
@@ -73,34 +77,35 @@ export function GoalDetailModal({
     setTracksAccount(accounts.find((a) => a.id === id)?.type === 'savings');
   };
 
-  const submit = async () => {
-    setError(null);
-    if (!name.trim()) {
-      setError('Enter a name');
-      return;
-    }
-    const targetAmountMinor = toMinor(parseFloat(target || '0'));
-    if (!Number.isFinite(targetAmountMinor) || targetAmountMinor <= 0) {
-      setError('Enter a valid target amount');
-      return;
-    }
-    const targetDate = hasTargetDate ? targetDateValue : null;
-    setSaving(true);
-    try {
-      await updateSavingsGoal(goal.id, {
-        name: name.trim(),
-        targetAmountMinor,
-        targetDate,
-        linkedAccountId,
-        tracksAccount,
-      });
-      onChanged();
-    } catch (e) {
-      setError(errorMessage(e));
-    } finally {
-      setSaving(false);
-    }
-  };
+  const submit = () =>
+    runAction(async () => {
+      setError(null);
+      if (!name.trim()) {
+        setError('Enter a name');
+        return;
+      }
+      const targetAmountMinor = toMinor(parseFloat(target || '0'));
+      if (!Number.isFinite(targetAmountMinor) || targetAmountMinor <= 0) {
+        setError('Enter a valid target amount');
+        return;
+      }
+      const targetDate = hasTargetDate ? targetDateValue : null;
+      setSaving(true);
+      try {
+        await updateSavingsGoal(goal.id, {
+          name: name.trim(),
+          targetAmountMinor,
+          targetDate,
+          linkedAccountId,
+          tracksAccount,
+        });
+        onChanged();
+      } catch (e) {
+        setError(errorMessage(e));
+      } finally {
+        setSaving(false);
+      }
+    });
 
   const confirmArchive = () => {
     showAlert(
@@ -111,50 +116,53 @@ export function GoalDetailModal({
         {
           text: 'Archive',
           style: 'destructive',
-          onPress: async () => {
-            setBusy(true);
-            try {
-              await archiveSavingsGoal(goal.id);
-              onChanged();
-            } catch (e) {
-              showAlert("Couldn't archive", errorMessage(e));
-            } finally {
-              setBusy(false);
-            }
-          },
+          onPress: () =>
+            runAction(async () => {
+              setBusy(true);
+              try {
+                await archiveSavingsGoal(goal.id);
+                onChanged();
+              } catch (e) {
+                showAlert("Couldn't archive", errorMessage(e));
+              } finally {
+                setBusy(false);
+              }
+            }),
         },
       ]
     );
   };
 
-  const onUnarchive = async () => {
-    setBusy(true);
-    try {
-      await unarchiveSavingsGoal(goal.id);
-      onChanged();
-    } catch (e) {
-      showAlert("Couldn't unarchive", errorMessage(e));
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const confirmDelete = async () => {
-    setBusy(true);
-    try {
-      const snapshot = await deleteSavingsGoal(goal.id);
-      haptics.warn();
-      onChanged();
-      showUndo(`Deleted "${goal.name}"`, async () => {
-        await restoreSavingsGoal(snapshot);
+  const onUnarchive = () =>
+    runAction(async () => {
+      setBusy(true);
+      try {
+        await unarchiveSavingsGoal(goal.id);
         onChanged();
-      });
-    } catch (e) {
-      showAlert("Couldn't delete", errorMessage(e));
-    } finally {
-      setBusy(false);
-    }
-  };
+      } catch (e) {
+        showAlert("Couldn't unarchive", errorMessage(e));
+      } finally {
+        setBusy(false);
+      }
+    });
+
+  const confirmDelete = () =>
+    runAction(async () => {
+      setBusy(true);
+      try {
+        const snapshot = await deleteSavingsGoal(goal.id);
+        haptics.warn();
+        onChanged();
+        showUndo(`Deleted "${goal.name}"`, async () => {
+          await restoreSavingsGoal(snapshot);
+          onChanged();
+        });
+      } catch (e) {
+        showAlert("Couldn't delete", errorMessage(e));
+      } finally {
+        setBusy(false);
+      }
+    });
 
   // Calm-sheets layout: a live card of the goal as typed, then the form. Archive/delete is a quiet link at
   // the end.

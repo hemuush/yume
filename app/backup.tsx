@@ -1,3 +1,4 @@
+import { useSaveOnce } from '@/lib/useSaveOnce';
 import { ScreenLoadError } from '@/components/ScreenLoadError';
 import { useCallback, useState } from 'react';
 import { View, Pressable } from 'react-native';
@@ -117,6 +118,9 @@ export default function BackupScreen() {
   const { accent, secondary } = useAccent();
   // The header sits over the page and shrinks as it scrolls.
   const { collapse, headerHeight, scrollHandler, scrollRef } = useCollapsingHeader();
+  const runAction = useSaveOnce(async (action: () => Promise<void>) => {
+    await action();
+  });
   const [localFolderUri, setLocalFolderUri] = useState<string | null>(null);
   const [lastLocalBackup, setLastLocalBackup] = useState<string | null>(null);
   const [localResult, setLocalResult] = useState<BackupOutcome | null>(null);
@@ -169,24 +173,25 @@ export default function BackupScreen() {
   // call-to-action to someone with a folder configured; `loadError` says so if the settings can't be read.
   const { loaded, hasData, loadError, reload: load } = useScreenLoad(loadData, { skipWhenUnchanged: false });
 
-  const run = async (label: string, fn: () => Promise<void>, opts?: { confirm?: boolean }) => {
-    setBusy(label);
-    try {
-      await fn();
-      // A brief "done" checkmark (PrimaryButton `done`), wired only to `backup-now-local` (see
-      // `opts.confirm` below), not every button this helper runs.
-      if (opts?.confirm) {
-        setDoneLabel(label);
-        await new Promise((resolve) => setTimeout(resolve, 380));
-        setDoneLabel(null);
+  const run = (label: string, fn: () => Promise<void>, opts?: { confirm?: boolean }) =>
+    runAction(async () => {
+      setBusy(label);
+      try {
+        await fn();
+        // A brief "done" checkmark (PrimaryButton `done`), wired only to `backup-now-local` (see
+        // `opts.confirm` below), not every button this helper runs.
+        if (opts?.confirm) {
+          setDoneLabel(label);
+          await new Promise((resolve) => setTimeout(resolve, 380));
+          setDoneLabel(null);
+        }
+      } catch (e) {
+        showAlert('Something went wrong', errorMessage(e));
+      } finally {
+        setBusy(null);
+        await load();
       }
-    } catch (e) {
-      showAlert('Something went wrong', errorMessage(e));
-    } finally {
-      setBusy(null);
-      await load();
-    }
-  };
+    });
 
   const onChangeFrequency = (f: BackupFrequency) =>
     run('frequency', async () => setBackupFrequency(f).then(() => setFrequency(f)));
@@ -251,21 +256,22 @@ export default function BackupScreen() {
         {
           text: 'Put back',
           style: 'destructive',
-          onPress: async () => {
-            setBusy('undo-restore');
-            try {
-              await undoLastRestore();
-              void resyncAfterRestore();
-              showAlert('Data put back', 'The saved recovery snapshot has been restored.', [
-                { text: 'OK', onPress: goHome },
-              ]);
-            } catch (e) {
-              showAlert("Couldn't put your data back", errorMessage(e));
-            } finally {
-              setBusy(null);
-              await load();
-            }
-          },
+          onPress: () =>
+            runAction(async () => {
+              setBusy('undo-restore');
+              try {
+                await undoLastRestore();
+                void resyncAfterRestore();
+                showAlert('Data put back', 'The saved recovery snapshot has been restored.', [
+                  { text: 'OK', onPress: goHome },
+                ]);
+              } catch (e) {
+                showAlert("Couldn't put your data back", errorMessage(e));
+              } finally {
+                setBusy(null);
+                await load();
+              }
+            }),
         },
       ]
     );
@@ -325,55 +331,57 @@ export default function BackupScreen() {
     });
   };
 
-  const restorePending = async () => {
-    if (!pending) return;
-    const { snapshot, folderUri } = pending;
-    const adoptFolder = async () => {
-      if (!folderUri) return;
-      await setLastLocalBackupAt(snapshot.exportedAt);
-      await setLastLocalBackupResult({ at: new Date().toISOString(), ok: true });
-      await setLocalBackupFolderUri(folderUri);
-    };
-    setRestoring(true);
-    try {
-      const result = await restoreKeepingSafetyCopy(snapshot);
-      await adoptFolder();
-      setPending(null);
-      finishRestore(result);
-    } catch (e) {
-      setPending(null);
-      if (!(e instanceof SafetyCopyError)) {
-        showAlert('Something went wrong', errorMessage(e));
-        return;
-      }
-      // The copy couldn't be saved (usually a full phone) and nothing is replaced yet; proceed only if the
-      // user accepts having no way back. Cancel is the default.
-      showAlert(
-        "Couldn't keep a copy of your current data",
-        `${e.message}
+  const restorePending = () =>
+    runAction(async () => {
+      if (!pending) return;
+      const { snapshot, folderUri } = pending;
+      const adoptFolder = async () => {
+        if (!folderUri) return;
+        await setLastLocalBackupAt(snapshot.exportedAt);
+        await setLastLocalBackupResult({ at: new Date().toISOString(), ok: true });
+        await setLocalBackupFolderUri(folderUri);
+      };
+      setRestoring(true);
+      try {
+        const result = await restoreKeepingSafetyCopy(snapshot);
+        await adoptFolder();
+        setPending(null);
+        finishRestore(result);
+      } catch (e) {
+        setPending(null);
+        if (!(e instanceof SafetyCopyError)) {
+          showAlert('Something went wrong', errorMessage(e));
+          return;
+        }
+        // The copy couldn't be saved (usually a full phone) and nothing is replaced yet; proceed only if the
+        // user accepts having no way back. Cancel is the default.
+        showAlert(
+          "Couldn't keep a copy of your current data",
+          `${e.message}
 
 Restore anyway? Your current data would be replaced with no way back.`,
-        [
-          { text: 'Cancel', style: 'cancel' },
-          {
-            text: 'Restore anyway',
-            style: 'destructive',
-            onPress: async () => {
-              try {
-                const result = await restoreKeepingSafetyCopy(snapshot, { withoutCopy: true });
-                await adoptFolder();
-                finishRestore(result);
-              } catch (err) {
-                showAlert('Something went wrong', errorMessage(err));
-              }
+          [
+            { text: 'Cancel', style: 'cancel' },
+            {
+              text: 'Restore anyway',
+              style: 'destructive',
+              onPress: () =>
+                runAction(async () => {
+                  try {
+                    const result = await restoreKeepingSafetyCopy(snapshot, { withoutCopy: true });
+                    await adoptFolder();
+                    finishRestore(result);
+                  } catch (err) {
+                    showAlert('Something went wrong', errorMessage(err));
+                  }
+                }),
             },
-          },
-        ]
-      );
-    } finally {
-      setRestoring(false);
-    }
-  };
+          ]
+        );
+      } finally {
+        setRestoring(false);
+      }
+    });
 
   const choosePickFolder = () =>
     run('pick-folder', async () => {
@@ -381,12 +389,11 @@ Restore anyway? Your current data would be replaced with no way back.`,
       if (!uri) return;
       const existing = await listLocalBackups(uri);
       const latest = existing.find((file) => file.summary);
-      const startFolderBackups = () =>
-        run('pick-folder', async () => {
-          const { sizeBytes } = await writeLocalBackupNow(uri, { preserveExisting: true });
-          await setLastLocalBackupResult({ at: new Date().toISOString(), ok: true, sizeBytes });
-          await setLocalBackupFolderUri(uri);
-        });
+      const startFolderBackups = async () => {
+        const { sizeBytes } = await writeLocalBackupNow(uri, { preserveExisting: true });
+        await setLastLocalBackupResult({ at: new Date().toISOString(), ok: true, sizeBytes });
+        await setLocalBackupFolderUri(uri);
+      };
       if (existing.length) {
         showAlert(
           'Backups found in this folder',
@@ -406,7 +413,7 @@ Restore anyway? Your current data would be replaced with no way back.`,
                   },
                 ]
               : []),
-            { text: 'Keep current data', onPress: () => void startFolderBackups() },
+            { text: 'Keep current data', onPress: () => void run('pick-folder', startFolderBackups) },
           ]
         );
       } else {

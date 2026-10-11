@@ -1,3 +1,4 @@
+import { useSaveOnce } from '@/lib/useSaveOnce';
 import { useState } from 'react';
 import { View } from 'react-native';
 import { Text } from '@/components/Text';
@@ -32,6 +33,9 @@ export function RateChangeModal({
   onClose: () => void;
   onDone: () => void;
 }) {
+  const runAction = useSaveOnce(async (action: () => Promise<void>) => {
+    await action();
+  });
   const [newRate, setNewRate] = useState((loan.interestRateAnnualBp / 100).toString());
   // Lenders offer both: change the EMI and keep the payoff date, or keep the EMI and let the tenure
   // shrink/stretch.
@@ -52,27 +56,28 @@ export function RateChangeModal({
       ? calculateEmi(loan.outstandingPrincipalMinor, rateBp, remainingMonths)
       : null;
 
-  const submit = async () => {
-    setError(null);
-    if (!Number.isFinite(rateBp) || rateBp < 0) {
-      setError('Enter a valid interest rate');
-      return;
-    }
-    const tooHigh = rateProblem(rateBp);
-    if (tooHigh) {
-      setError(tooHigh);
-      return;
-    }
-    setSaving(true);
-    try {
-      await applyRateChange(loan.id, { newAnnualRateBp: rateBp, effectiveDate, mode });
-      onDone();
-    } catch (e) {
-      setError(errorMessage(e));
-    } finally {
-      setSaving(false);
-    }
-  };
+  const submit = () =>
+    runAction(async () => {
+      setError(null);
+      if (!newRate.trim() || !Number.isFinite(rateBp) || rateBp < 0) {
+        setError('Enter a valid interest rate');
+        return;
+      }
+      const tooHigh = rateProblem(rateBp);
+      if (tooHigh) {
+        setError(tooHigh);
+        return;
+      }
+      setSaving(true);
+      try {
+        await applyRateChange(loan.id, { newAnnualRateBp: rateBp, effectiveDate, mode });
+        onDone();
+      } catch (e) {
+        setError(errorMessage(e));
+      } finally {
+        setSaving(false);
+      }
+    });
 
   return (
     <ModalSheet

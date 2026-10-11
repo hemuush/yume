@@ -108,3 +108,49 @@ it('shows a closed loan and interest savings together without another payment ac
   expect(texts(tree)).toContain('Interest saved');
   expect(tree.root.findAllByType(PrimaryButton).map((node) => node.props.title)).toEqual(['Done']);
 });
+
+it('records only one prepayment when two presses arrive before rendering disables the button', async () => {
+  const tree = await submit(100000, '');
+  act(() => tree.root.findByProps({ testID: 'Amount' }).props.onChangeText('1000'));
+  const save = tree.root.findByType(PrimaryButton).props.onPress;
+  let finish!: (value: Awaited<ReturnType<typeof mockApply>>) => void;
+  mockApply.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        finish = resolve;
+      })
+  );
+  let first!: Promise<void>;
+  let second!: Promise<void>;
+  await act(async () => {
+    first = save();
+    second = save();
+    expect(mockApply).toHaveBeenCalledTimes(1);
+    finish({
+      interestSavedMinor: 0,
+      monthsShaved: 10,
+      oldRemainingCount: 10,
+      newRemainingCount: 0,
+      oldPayoffDate: '2027-01-01',
+      newPayoffDate: '2026-10-11',
+    });
+    await Promise.all([first, second]);
+  });
+  expect(mockApply).toHaveBeenCalledTimes(1);
+});
+
+it.each(['-1', 'abc'])(
+  'rejects an invalid prepayment fee (%s) instead of silently dropping it',
+  async (fee) => {
+    const tree = await submit(100000, '');
+    act(() => {
+      tree.root.findByProps({ testID: 'Amount' }).props.onChangeText('1000');
+      tree.root.findByProps({ testID: 'Prepayment charge, if any (%)' }).props.onChangeText(fee);
+    });
+    await act(async () => {
+      await tree.root.findByType(PrimaryButton).props.onPress();
+    });
+    expect(mockApply).not.toHaveBeenCalled();
+    expect(texts(tree)).toContain('Enter a valid non-negative charge and tax percentage');
+  }
+);

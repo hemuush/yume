@@ -52,3 +52,40 @@ Automated results are recorded below. Passing checks reduce risk; they do not es
 - Full Jest run: **250 suites and 10,752 tests passed**, no failures. The two skipped suites are opt-in performance suites; both passed separately with `npm run test:perf`. Jest reported lingering asynchronous handles after producing the complete passing results; this is a test-runner cleanup limitation, not a demonstrated app-runtime failure.
 
 A focused `--detectOpenHandles` follow-up did not complete within the bounded diagnostic run and was stopped. The lingering-handle cause remains unresolved; no force-exit option was added to hide it.
+
+
+## Follow-up edge-case audit — final source pass
+
+Reviewed every route, the shared editors and the data/restore boundaries. This pass preserves the existing storage, backup-format and amount-design decisions.
+
+| Area | Boundaries reviewed and regression coverage |
+| --- | --- |
+| Startup/onboarding | Empty install, existing data, failed migration copy, retry, canceled/invalid onboarding restore, settings reads and app maintenance ordering. |
+| Home, Activity, Reports and Plan | Empty/loading/error states, period changes, stale results, privacy, category selection, charts, direct payment routes and linked transaction edits. |
+| Add, splits and refunds | Invalid/zero/large values, dates, account/category validity, cross-currency transfers, batch saving, split integrity, refunds and repeated presses. |
+| Accounts, categories and investments | Create/edit/archive/restore/delete, system category restrictions, parent/child editing, partial account creation retry and valuation failures. |
+| Loans, goals, budgets and friends | Installment order, exact payoff, prepayment/rate boundaries, over-withdrawal, linked balances, conflicting actions, completion notes, rollover and settlement. |
+| Recurring, Garden, What-if and Wrap | Catch-up, pause/resume, insufficient history, goal boundaries, calculations, interrupted playback and export/share cleanup. |
+| Backup, recovery, Recently deleted and Tidy up | Latest valid folder data, corrupt/oversized input, canceled restore, write failures, recovery copy, undo and restore/delete conflicts. |
+| Settings, themes, notifications, lock and widgets | Settings restoration, denied permissions, notification routing, failed preference writes, background privacy and masked widget values. |
+
+### Additional fixes
+
+- Applied the existing synchronous save lock to unprotected editors and action handlers. Repeated presses in one frame, and save/delete conflicts in the same editor, cannot run overlapping writes. The lock releases after a failure so retry remains possible.
+- Backup/export/restore/recovery share an operation lock. Empty-folder setup no longer nests a guarded operation inside another guarded operation; a regression confirms that two folder-selection presses create exactly one backup and adopt the folder.
+- Recently deleted locks restore against permanent clearing, exposes the busy state, and disables destructive actions while an operation runs.
+- A blank interest-rate input no longer silently applies 0%. An explicitly entered zero remains valid. Negative or nonnumeric prepayment fee/tax percentages are rejected rather than omitted from the saved payment.
+- Wrap's eyebrow font is explicitly declared, satisfying the source-level typography check while retaining its inherited typography.
+
+### Verification and remaining limits
+
+- Full sweep initially produced 250 passing suites / 10,771 passing tests and one font-consistency failure. That failure was corrected and rerun separately; the initial result is retained here rather than presented as a clean full-run result.
+- After mutation locking: 26 editor/sheet suites, 186 tests passed.
+- Final backup, prepayment, rate, shared-lock and all-screen smoke regressions: 5 suites, 155 tests passed.
+- Performance/output parity: 2 suites passed with 20,000 entries. Security parser/decoder: 4 tests passed. Dependency audit has no unacknowledged high/critical advisories; the two previously recorded toolchain advisories remain.
+- The full runner again reported lingering asynchronous handles after printing results. Its completed process was stopped after capturing the result; this does not resolve that cleanup issue.
+- Device verification above remains required. Source review and automated tests cannot establish Android scroll frame rate, OEM permission behavior, actual biometric enrollment, low-storage recovery, or layout quality at every device/font configuration. No assertion of perfection or exhaustive coverage of all possible states is made.
+
+- Final backup folder and typography rerun: 2 suites, 15 tests passed.
+- Final-source TypeScript, ESLint, Prettier and whitespace checks: passed.
+- Final-source Android production export: passed (Hermes bundle and metadata). No native APK/device installation test was performed in this pass.

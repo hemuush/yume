@@ -1,3 +1,4 @@
+import { useSaveOnce } from '@/lib/useSaveOnce';
 import { ScreenLoadError } from '@/components/ScreenLoadError';
 import { useCallback, useState } from 'react';
 import { View, StyleSheet } from 'react-native';
@@ -84,6 +85,9 @@ export default function TidyUpScreen() {
   // Savings and investment amounts stay masked here too while hidden.
   const money = (minor: number, savings: boolean) =>
     formatMaskableMoney(minor, { masked: hideAmounts && savings });
+  const runAction = useSaveOnce(async (action: () => Promise<void>) => {
+    await action();
+  });
   const [report, setReport] = useState<TidyUpReport | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -93,19 +97,20 @@ export default function TidyUpScreen() {
   const { loaded, hasData, loadError, reload } = useScreenLoad(load);
 
   /** Runs one fix, refreshes, and tells the rest of the app the ledger changed. */
-  const act = async (fix: () => Promise<void>, failTitle: string) => {
-    if (busy) return;
-    setBusy(true);
-    try {
-      await fix();
-      emitTransactionsChanged();
-      await reload();
-    } catch (e) {
-      showAlert(failTitle, errorMessage(e));
-    } finally {
-      setBusy(false);
-    }
-  };
+  const act = (fix: () => Promise<void>, failTitle: string) =>
+    runAction(async () => {
+      if (busy) return;
+      setBusy(true);
+      try {
+        await fix();
+        emitTransactionsChanged();
+        await reload();
+      } catch (e) {
+        showAlert(failTitle, errorMessage(e));
+      } finally {
+        setBusy(false);
+      }
+    });
 
   const deleteOne = (group: RepeatGroup) =>
     act(async () => {

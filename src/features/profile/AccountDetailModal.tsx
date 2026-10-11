@@ -1,3 +1,4 @@
+import { useSaveOnce } from '@/lib/useSaveOnce';
 import { useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { Text } from '@/components/Text';
@@ -48,6 +49,9 @@ export function AccountDetailModal({
   const { accent } = useAccent();
   const { hideAmounts } = usePrivacy();
   const hideSavings = hideAmounts && account?.type === 'savings';
+  const runAction = useSaveOnce(async (action: () => Promise<void>) => {
+    await action();
+  });
   const [name, setName] = useState('');
   const [type, setType] = useState<AccountType>('bank');
   const [opening, setOpening] = useState('0');
@@ -90,45 +94,47 @@ export function AccountDetailModal({
 
   if (!account) return null;
 
-  const submit = async () => {
-    setError(null);
-    if (!name.trim()) {
-      setError('Enter a name');
-      return;
-    }
-    const openingBalanceMinor = toMinor(parseFloat(opening || '0'));
-    const creditLimitMinor = type === 'credit_card' && creditLimit ? toMinor(parseFloat(creditLimit)) : null;
-    if (
-      !Number.isFinite(openingBalanceMinor) ||
-      (creditLimitMinor !== null && !Number.isFinite(creditLimitMinor))
-    ) {
-      setError('Enter a valid opening balance and credit limit');
-      return;
-    }
-    const days =
-      type === 'credit_card' ? parseCycleDays(statementDay, dueDay) : { statementDay: null, dueDay: null };
-    if ('error' in days) {
-      setError(days.error);
-      return;
-    }
-    setSaving(true);
-    try {
-      await updateAccount(account.id, {
-        name: name.trim(),
-        type,
-        openingBalanceMinor,
-        creditLimitMinor,
-        statementDay: days.statementDay,
-        dueDay: days.dueDay,
-        tracked: type === 'savings' && tracked,
-      });
-      onChanged();
-    } catch (e) {
-      setError(errorMessage(e));
-    } finally {
-      setSaving(false);
-    }
-  };
+  const submit = () =>
+    runAction(async () => {
+      setError(null);
+      if (!name.trim()) {
+        setError('Enter a name');
+        return;
+      }
+      const openingBalanceMinor = toMinor(parseFloat(opening || '0'));
+      const creditLimitMinor =
+        type === 'credit_card' && creditLimit ? toMinor(parseFloat(creditLimit)) : null;
+      if (
+        !Number.isFinite(openingBalanceMinor) ||
+        (creditLimitMinor !== null && !Number.isFinite(creditLimitMinor))
+      ) {
+        setError('Enter a valid opening balance and credit limit');
+        return;
+      }
+      const days =
+        type === 'credit_card' ? parseCycleDays(statementDay, dueDay) : { statementDay: null, dueDay: null };
+      if ('error' in days) {
+        setError(days.error);
+        return;
+      }
+      setSaving(true);
+      try {
+        await updateAccount(account.id, {
+          name: name.trim(),
+          type,
+          openingBalanceMinor,
+          creditLimitMinor,
+          statementDay: days.statementDay,
+          dueDay: days.dueDay,
+          tracked: type === 'savings' && tracked,
+        });
+        onChanged();
+      } catch (e) {
+        setError(errorMessage(e));
+      } finally {
+        setSaving(false);
+      }
+    });
 
   const confirmArchive = () => {
     showAlert(
@@ -139,50 +145,53 @@ export function AccountDetailModal({
         {
           text: 'Archive',
           style: 'destructive',
-          onPress: async () => {
-            setBusy(true);
-            try {
-              await archiveAccount(account.id);
-              onChanged();
-            } catch (e) {
-              showAlert("Couldn't archive", errorMessage(e));
-            } finally {
-              setBusy(false);
-            }
-          },
+          onPress: () =>
+            runAction(async () => {
+              setBusy(true);
+              try {
+                await archiveAccount(account.id);
+                onChanged();
+              } catch (e) {
+                showAlert("Couldn't archive", errorMessage(e));
+              } finally {
+                setBusy(false);
+              }
+            }),
         },
       ]
     );
   };
 
-  const onUnarchive = async () => {
-    setBusy(true);
-    try {
-      await unarchiveAccount(account.id);
-      onChanged();
-    } catch (e) {
-      showAlert("Couldn't unarchive", errorMessage(e));
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const confirmDelete = async () => {
-    setBusy(true);
-    try {
-      const snapshot = await deleteAccount(account.id);
-      haptics.warn();
-      onChanged();
-      showUndo(`Deleted "${account.name}"`, async () => {
-        await restoreAccount(snapshot);
+  const onUnarchive = () =>
+    runAction(async () => {
+      setBusy(true);
+      try {
+        await unarchiveAccount(account.id);
         onChanged();
-      });
-    } catch (e) {
-      showAlert("Couldn't delete", errorMessage(e));
-    } finally {
-      setBusy(false);
-    }
-  };
+      } catch (e) {
+        showAlert("Couldn't unarchive", errorMessage(e));
+      } finally {
+        setBusy(false);
+      }
+    });
+
+  const confirmDelete = () =>
+    runAction(async () => {
+      setBusy(true);
+      try {
+        const snapshot = await deleteAccount(account.id);
+        haptics.warn();
+        onChanged();
+        showUndo(`Deleted "${account.name}"`, async () => {
+          await restoreAccount(snapshot);
+          onChanged();
+        });
+      } catch (e) {
+        showAlert("Couldn't delete", errorMessage(e));
+      } finally {
+        setBusy(false);
+      }
+    });
 
   const trackingNow = type === 'savings' && tracked;
 
