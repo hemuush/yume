@@ -1,4 +1,15 @@
-# UI refinements — 10 October 2026
+# Screen refinements: implementation record
+
+## Current reading guide
+
+Reviewed against the repository on **11 October 2026**. Preserve financial actions, loading/error states, privacy and accessibility while refining presentation. Reduced motion and enlarged text must be considered alongside normal layouts. Earlier dimensions and build statements below belong to that implementation pass.
+
+Implementation: [app](app) and [src/components](src/components). Tests generally live beside these modules; use the [architecture and logic guide](docs/ARCHITECTURE.md) to find related flows.
+
+This document preserves earlier findings and validation. Statements inside the historical record describe that revision, including old layouts, build status and test counts. They are not new verification results. See the [documentation index](docs/INDEX.md), [data model](DATA_MODEL.md), [backup guide](BACKUP.md) and [build guide](BUILD.md) for current contracts.
+
+<details>
+<summary>Historical findings, implementation and validation</summary>
 
 ## Scope
 
@@ -22,33 +33,33 @@ Read the exact Expo v57 documentation before editing. No dependency upgrades, da
 
 Not every screen needed a direct edit. The following inventory includes routes, sheets and non-route surfaces; shared refinements apply wherever their components are used.
 
-| Area | Work in this pass | Existing features retained |
-| --- | --- | --- |
-| Add transaction and Add shortcut | Shared input/button/sheet refinements; existing screen and flow tests | Expense, Income, Transfer, Friend, calculator pad, repeat, usual entries, account/date/note, refunds, batch list, split, new account/person and edit flows |
-| Friends & family, person and history sheets | Direct refinements and loading/write fixes | Add person, both debt directions, cash-account versus balance-only entries, full settlement, custom date, linked loans, history, delete and undo |
-| Garden | Direct readability/calendar/goal-link refinements | Daily goal setup, streak calculation, growth stages, Suu note, savings progress and privacy |
-| Recurring and rule editor | Direct timeline/schedule/pause refinements | All transaction types, suggestions, cadence/interval, start/end dates, account/category/note, pause/resume, catch-up, delete and undo |
-| Budgets and limit editor | Error recovery, shared labels/controls | Add/edit limits, rollover, lapsed budgets, continue one/all, category links, delete and undo |
-| Savings goals and funding sheets | Wrapping names, error recovery and shared forms | Manual/account-linked goals, contributions, funding transfers, deadlines, completed/archived goals and privacy |
-| Loans, setup/detail/payment sheets | Wrapping dates, larger Pay/Received target, recovery and shared forms | Existing full setup wizard, borrowed/lent directions, interest/schedules, payments, prepayments, account creation, detail/history and linked-person flows |
-| What-if | Honest initial-load failure and Retry; shared labels/controls | Category/goal selection, percentage adjustments, account-linked pace calculations and reset; remains a non-writing sandbox |
-| Profile, accounts and account sheets | Wrapping names, tab link, error recovery and shared controls | Identity edits, currencies, account types, balances, account history, card cycles, pay-card flows and archive/manage actions |
-| Investment values and asset editors | Existing implementations inspected; shared sheet/form/button refinements | Valuation updates/history, gain and contribution calculations, estimate chip, custom dates, asset details, privacy masking, delete and undo |
-| Settings | Wrapping rows, readable labels and honest read-failure states | Daily goal, currency, privacy, lock, alerts, data links, appearance and About |
-| Categories and category editor | Recovery and shared form/sheet refinements | Parent/child categories, icons/colors, sensitivity, archive/manage actions and undo |
-| Category detail | Initial-error recovery and Retry | Transactions, monthly data, budget/what-if links and existing privacy behavior |
-| Split payment | Wrapping category/legend/typing text and larger removal control | 2–6 parts, automatic remainder, category picker, calculator, validation, Done/back handoff to Add |
-| Notifications inbox | Retry and shared buttons | Action links, dismiss, snooze, optimistic rollback and undo |
-| Notification settings | Larger time controls and wrapping shared rows | Permission checks, all toggles, morning/evening times, scheduling and save-error rollback |
-| Backup and restore sheets | Initial-error recovery, Retry and shared controls | Export/import, CSV/spreadsheet options, local folder scheduling, preview, safety copy and restore resynchronization |
-| Recently deleted | Initial-error recovery, Retry and shared controls | Restore, retention information, privacy masking and confirmed permanent removal |
-| Tidy up | Initial-error recovery, Retry and shared controls | Repeat/starting-balance/fractional review, existing fixes and undo |
-| Themes | Wrapping theme names and color labels | All current theme packs, live preview, selection and persistence |
-| Wrap | Direct navigation-control refinement | Every beat/chart, playback, tap/hold gestures, share/export and report navigation |
-| Onboarding | Larger targets and accessible name input | Existing introduction, optional name, starter accounts/opening balances, Skip and backup restore |
-| Lock screen | Scrollable content and shared button refinements | Native authentication, retry, device-security checks and existing recovery path |
-| Android widgets | Existing widget implementations and tests inspected; layout retained | All five widgets, real-data calculations, themes/privacy and deep links |
-| Home, Activity, Plan and Reports | Prior approved layouts retained; shared refinements apply | Existing cards, charts, tabs, navigation and data behavior, including Reports' previously approved top-card removal |
+| Area                                        | Work in this pass                                                        | Existing features retained                                                                                                                                 |
+| ------------------------------------------- | ------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Add transaction and Add shortcut            | Shared input/button/sheet refinements; existing screen and flow tests    | Expense, Income, Transfer, Friend, calculator pad, repeat, usual entries, account/date/note, refunds, batch list, split, new account/person and edit flows |
+| Friends & family, person and history sheets | Direct refinements and loading/write fixes                               | Add person, both debt directions, cash-account versus balance-only entries, full settlement, custom date, linked loans, history, delete and undo           |
+| Garden                                      | Direct readability/calendar/goal-link refinements                        | Daily goal setup, streak calculation, growth stages, Suu note, savings progress and privacy                                                                |
+| Recurring and rule editor                   | Direct timeline/schedule/pause refinements                               | All transaction types, suggestions, cadence/interval, start/end dates, account/category/note, pause/resume, catch-up, delete and undo                      |
+| Budgets and limit editor                    | Error recovery, shared labels/controls                                   | Add/edit limits, rollover, lapsed budgets, continue one/all, category links, delete and undo                                                               |
+| Savings goals and funding sheets            | Wrapping names, error recovery and shared forms                          | Manual/account-linked goals, contributions, funding transfers, deadlines, completed/archived goals and privacy                                             |
+| Loans, setup/detail/payment sheets          | Wrapping dates, larger Pay/Received target, recovery and shared forms    | Existing full setup wizard, borrowed/lent directions, interest/schedules, payments, prepayments, account creation, detail/history and linked-person flows  |
+| What-if                                     | Honest initial-load failure and Retry; shared labels/controls            | Category/goal selection, percentage adjustments, account-linked pace calculations and reset; remains a non-writing sandbox                                 |
+| Profile, accounts and account sheets        | Wrapping names, tab link, error recovery and shared controls             | Identity edits, currencies, account types, balances, account history, card cycles, pay-card flows and archive/manage actions                               |
+| Investment values and asset editors         | Existing implementations inspected; shared sheet/form/button refinements | Valuation updates/history, gain and contribution calculations, estimate chip, custom dates, asset details, privacy masking, delete and undo                |
+| Settings                                    | Wrapping rows, readable labels and honest read-failure states            | Daily goal, currency, privacy, lock, alerts, data links, appearance and About                                                                              |
+| Categories and category editor              | Recovery and shared form/sheet refinements                               | Parent/child categories, icons/colors, sensitivity, archive/manage actions and undo                                                                        |
+| Category detail                             | Initial-error recovery and Retry                                         | Transactions, monthly data, budget/what-if links and existing privacy behavior                                                                             |
+| Split payment                               | Wrapping category/legend/typing text and larger removal control          | 2–6 parts, automatic remainder, category picker, calculator, validation, Done/back handoff to Add                                                          |
+| Notifications inbox                         | Retry and shared buttons                                                 | Action links, dismiss, snooze, optimistic rollback and undo                                                                                                |
+| Notification settings                       | Larger time controls and wrapping shared rows                            | Permission checks, all toggles, morning/evening times, scheduling and save-error rollback                                                                  |
+| Backup and restore sheets                   | Initial-error recovery, Retry and shared controls                        | Export/import, CSV/spreadsheet options, local folder scheduling, preview, safety copy and restore resynchronization                                        |
+| Recently deleted                            | Initial-error recovery, Retry and shared controls                        | Restore, retention information, privacy masking and confirmed permanent removal                                                                            |
+| Tidy up                                     | Initial-error recovery, Retry and shared controls                        | Repeat/starting-balance/fractional review, existing fixes and undo                                                                                         |
+| Themes                                      | Wrapping theme names and color labels                                    | All current theme packs, live preview, selection and persistence                                                                                           |
+| Wrap                                        | Direct navigation-control refinement                                     | Every beat/chart, playback, tap/hold gestures, share/export and report navigation                                                                          |
+| Onboarding                                  | Larger targets and accessible name input                                 | Existing introduction, optional name, starter accounts/opening balances, Skip and backup restore                                                           |
+| Lock screen                                 | Scrollable content and shared button refinements                         | Native authentication, retry, device-security checks and existing recovery path                                                                            |
+| Android widgets                             | Existing widget implementations and tests inspected; layout retained     | All five widgets, real-data calculations, themes/privacy and deep links                                                                                    |
+| Home, Activity, Plan and Reports            | Prior approved layouts retained; shared refinements apply                | Existing cards, charts, tabs, navigation and data behavior, including Reports' previously approved top-card removal                                        |
 
 ## Validation
 
@@ -72,3 +83,5 @@ Test coverage verifies behavior and rendering structure; it does not establish f
 - Check onboarding, native authentication, notification permission prompts, folder/file pickers and Android widget sizes on a device.
 
 These require a running native app. No device visual review or measured animation-performance claim is made in this report. APK builds remain on hold until requested.
+
+</details>

@@ -1,6 +1,6 @@
 # Data model
 
-All money is stored as **integer minor units** (e.g. paise, cents) everywhere — in the database, in memory, in every calculation — and only converted to a decimal for display. This is the single rule that keeps loan and budget math from drifting due to floating-point rounding.
+Persisted money uses **integer minor units** (for example paise). Rate, interest and schedule calculations may use floating-point intermediates before rounding to stored units; do not assume every intermediate is an integer. New typed amounts intentionally round to whole major units in [money.ts](src/lib/money.ts). Unedited historical and loan-linked amounts can retain minor-unit precision. Display formatting uses whole major units.
 
 Currency is never hardcoded. `formatMoney()` reads the user's chosen currency from Settings; a specific ISO code can still be passed per-call (an account keeps its own currency if it differs from the default).
 
@@ -10,19 +10,20 @@ Every rupee/dollar the app knows about lives in an account: `bank`, `cash`, `wal
 
 - Moving money into savings, an SIP, or a PF contribution is a **transfer** from a spending account into a savings account.
 - Withdrawing from savings is a transfer the other way.
-- The savings account's balance is always correct because it's derived the same way every account balance is derived: opening balance + all transactions that touch it.
+- The savings account's balance follows the same derivation as other account balances: opening balance + signed transactions, with the latest valuation adjustment for tracked accounts.
 
-An account's `currentBalanceMinor` is **never stored** — it's computed on every read from `opening_balance_minor` plus the sum of every transaction that touches that account (`ledger.ts: getAccountBalance`). This means a balance can never silently drift out of sync with its transaction history; there's no separate number to forget to update.
+An account's `currentBalanceMinor` is **never stored** — it's computed on every read from `opening_balance_minor` plus the sum of every transaction that touches that account (see [accounts.ts](src/db/accounts.ts) and [valuationSql.ts](src/db/valuationSql.ts)). There is no independently stored current-balance field to update. Tracked valuations are a separate source of balance adjustments; review them alongside transaction history.
 
 ## Categories (`categories`)
 
 Mostly user-defined: name, income/expense kind, optional parent (for subcategories — one level deep, enforced in `assertValidParent`), icon, color, archive flag, an `is_sensitive` flag, and an `is_system` flag. Archiving keeps historical transactions intact while removing the category from new-entry pickers, and cascades to subcategories — nothing is ever hard-deleted if it has transaction history. When `is_sensitive` is set and the global "hide sensitive amounts" setting is on, that category's amounts render masked everywhere (Savings Deposit and Investments start flagged).
 
-**`is_system`** marks the five built-in categories the app looks up *by name* at runtime to auto-file real transactions: **Loan EMI** (expense), **Loan Repayment** (income), **Fees & Charges** (expense), and **Friends & Family** (one income, one expense). The loan and Friends & Family screens do `categories.find(c => c.name === '…') ?? categories[0]`, so a delete, archive, or rename would silently mis-file EMI/fee/friend transactions — `deleteCategory` / `archiveCategory` / `updateCategory` (name change) all reject a system category. Icon, colour, `is_sensitive`, and adding subcategories stay editable. User-created categories are never system, even one named identically to a built-in. `flagSystemCategories` in `src/db/client.ts` re-asserts the flag on every launch (and `restoreFromSnapshot` repeats it inline, for a backup taken before the column existed).
+**`is_system`** marks the five built-in categories the app looks up _by name_ at runtime to auto-file real transactions: **Loan EMI** (expense), **Loan Repayment** (income), **Fees & Charges** (expense), and **Friends & Family** (one income, one expense). These names identify the built-in filing categories, so deleting, archiving or renaming them would break their contract — `deleteCategory` / `archiveCategory` / `updateCategory` (name change) all reject a system category. Icon, colour, `is_sensitive`, and adding subcategories stay editable. User-created categories are never system, even one named identically to a built-in. `flagSystemCategories` in `src/db/client.ts` re-asserts the flag on every launch (and `restoreFromSnapshot` repeats it inline, for a backup taken before the column existed).
 
 ## Transactions (`transactions`)
 
 Three types:
+
 - `income` — increases an account's balance, requires a category
 - `expense` — decreases an account's balance, requires a category
 - `transfer` — moves money between two accounts, no category (the accounts themselves say what it was: e.g. spending → savings)
@@ -59,7 +60,7 @@ Distinct from `loans` on purpose: this is for informal, interest-free IOUs — "
 
 Period comparisons (day/week/month/year vs. the immediately preceding equivalent period) are computed directly from the transaction and account tables — there's no separate aggregation table to keep in sync. `getPeriodSummary` returns income, expenses, net, net savings-account contribution, and per-category expense and income breakdowns for any date range; `getPeriodComparison` runs it twice (current + previous period) and computes percentage change. Every aggregate query joins to `accounts` and filters to the default currency, so totals are never summed across currencies. The category breakdown rolls subcategory spend up into the parent row, with `getSubcategoryBreakdown` for the drill-down. `getNetWorthTrend` reconstructs net worth as of the end of each of the last N months from the same tables filtered to a cutoff date.
 
-Reports looks at a *report window* (`src/lib/period.ts`): a month or year by offset from today, or a custom range the person picks. A custom range made of whole months steps by that many months (so a financial year, 1 April to 31 March, steps to the next one); any other range steps by its number of days, and is compared with the same number of days just before it.
+Reports looks at a _report window_ (`src/lib/period.ts`): a month or year by offset from today, or a custom range the person picks. A custom range made of whole months steps by that many months (so a financial year, 1 April to 31 March, steps to the next one); any other range steps by its number of days, and is compared with the same number of days just before it.
 
 ## Recurring rules (`recurring_rules`)
 
@@ -88,4 +89,8 @@ Not a table: worked out from `recurring_rules` and `transactions` for the Recurr
 
 ## Migrations
 
-`CREATE_TABLES_SQL` runs `IF NOT EXISTS` on every launch for fresh installs; `runMigrations` in `src/db/client.ts` adds any column an older install is missing (via `ensureColumn`, which also drives one-time backfills). Category flags like `is_sensitive` / `is_system` and the built-in "Friends & Family" category are seeded on a fresh install and backfilled for upgrades. A default category's *colour* is migrated the same targeted way: `remapLegacyCategoryColors` updates a built-in category's colour only when its name, kind, and current colour all still exactly match what an older version of the app originally seeded — so a category the user has renamed or recoloured themselves is never touched, and the migration is a no-op once applied (there's nothing left for the `WHERE` to match).
+`CREATE_TABLES_SQL` runs `IF NOT EXISTS` on every launch for fresh installs; `runMigrations` in `src/db/client.ts` adds any column an older install is missing (via `ensureColumn`, which also drives one-time backfills). Category flags like `is_sensitive` / `is_system` and the built-in "Friends & Family" category are seeded on a fresh install and backfilled for upgrades. A default category's _colour_ is migrated the same targeted way: `remapLegacyCategoryColors` updates a built-in category's colour only when its name, kind, and current colour all still exactly match what an older version of the app originally seeded — so a category the user has renamed or recoloured themselves is never touched, and the migration is a no-op once applied (there's nothing left for the `WHERE` to match).
+
+## Implementation and validation
+
+The [schema](src/db/schema.ts) defines persisted fields and constraints. [Client serialization](src/db/client.ts) protects transaction boundaries; [currency invariants](src/db/currencyInvariant.ts) prevent unsupported mixed-currency financial links. See [architecture](docs/ARCHITECTURE.md) for flow ownership and test locations. Existing scenarios are evidence for their inputs, not proof of every possible financial case.

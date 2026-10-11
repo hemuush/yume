@@ -1,4 +1,15 @@
-# Transaction improvements — 10 October 2026
+# Transaction entry: implementation record
+
+## Current reading guide
+
+Reviewed against the repository on **11 October 2026**. Entry previews round to whole major units by design. Preserve stored precision when an amount has not been edited. Validate calculator results, account/category relationships and linked records before a transactional save; repeated taps must not duplicate it.
+
+Implementation: [app/add-transaction.tsx](app/add-transaction.tsx) and [src/features/add](src/features/add). Tests generally live beside these modules; use the [architecture and logic guide](docs/ARCHITECTURE.md) to find related flows.
+
+This document preserves earlier findings and validation. Statements inside the historical record describe that revision, including old layouts, build status and test counts. They are not new verification results. See the [documentation index](docs/INDEX.md), [data model](DATA_MODEL.md), [backup guide](BACKUP.md) and [build guide](BUILD.md) for current contracts.
+
+<details>
+<summary>Historical findings, implementation and validation</summary>
 
 Implemented the approved transaction review in the native Expo app. The existing wallpaper, frosted cards, rounded icons, four transaction types and calculator remain.
 
@@ -23,3 +34,5 @@ Implemented the approved transaction review in the native Expo app. The existing
 - Test output includes asynchronous vector-icon `act(...)` warnings in some existing component suites; assertions passed. Device keyboard, small-screen layout, TalkBack and animation performance remain to be verified on a phone.
 
 The private Site remains the approved design demonstration; it does not run the native ledger. No APK was requested or built.
+
+</details>

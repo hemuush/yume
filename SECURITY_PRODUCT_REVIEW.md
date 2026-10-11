@@ -1,4 +1,15 @@
-# Yume security and product review
+# Security and product decisions: implementation record
+
+## Current reading guide
+
+Reviewed against the repository on **11 October 2026**. Plain JSON backups, whole-major-unit entry and local SQLite are explicit product decisions. Several findings below were addressed later. EAS release configuration blocks Internet permission; development tooling has separate needs. No source audit alone proves an APK has no exploitable behavior.
+
+Implementation: [app.config.js](app.config.js) and [src/widgets](src/widgets). Tests generally live beside these modules; use the [architecture and logic guide](docs/ARCHITECTURE.md) to find related flows.
+
+This document preserves earlier findings and validation. Statements inside the historical record describe that revision, including old layouts, build status and test counts. They are not new verification results. See the [documentation index](docs/INDEX.md), [data model](DATA_MODEL.md), [backup guide](BACKUP.md) and [build guide](BUILD.md) for current contracts.
+
+<details>
+<summary>Historical findings, implementation and validation</summary>
 
 Reviewed source at commit 461ebfd on 11 October 2026. This is a focused source/configuration and dependency review, not a penetration test or certification of the installed APK. No application code changed.
 
@@ -45,3 +56,5 @@ After the priority work, useful candidate additions are CSV/bank-statement impor
 - https://docs.expo.dev/versions/v57.0.0/sdk/sqlite/
 
 No APK built or configuration/dependency change applied during this assessment.
+
+</details>

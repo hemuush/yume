@@ -1,4 +1,15 @@
-# Final code cleanup
+# Code cleanup: implementation record
+
+## Current reading guide
+
+Reviewed against the repository on **11 October 2026**. Unused-local type checks do not prove that every export is unused or reachable. Routes, widgets, config plugins and test/performance entry points must be considered before removing code.
+
+Implementation: [app](app) and [index.js](index.js). Tests generally live beside these modules; use the [architecture and logic guide](docs/ARCHITECTURE.md) to find related flows.
+
+This document preserves earlier findings and validation. Statements inside the historical record describe that revision, including old layouts, build status and test counts. They are not new verification results. See the [documentation index](docs/INDEX.md), [data model](DATA_MODEL.md), [backup guide](BACKUP.md) and [build guide](BUILD.md) for current contracts.
+
+<details>
+<summary>Historical findings, implementation and validation</summary>
 
 Scope: application source, file references, unused locals/parameters, dependencies, and project organization. This cleanup preserves the current UI and features.
 
@@ -34,3 +45,5 @@ All production dependencies have either direct references or verified framework 
 ## Limits
 
 Removing unreachable source improves maintenance; it is not evidence of faster device rendering. Physical-device scrolling, navigation frame times, keyboard behavior, native authentication, widgets, and notification delivery still require device validation. No APK is built by this cleanup.
+
+</details>

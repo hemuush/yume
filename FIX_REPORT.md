@@ -1,18 +1,29 @@
-# Yume audit fixes — 10 October 2026
+# Initial audit fixes: implementation record
+
+## Current reading guide
+
+Reviewed against the repository on **11 October 2026**. These changes resolved the initial audit findings. Currency filtering, sensitive-parent inheritance and atomic recurring/restore operations remain core invariants. Recorded test counts describe that historical revision.
+
+Implementation: [src/db/currencyInvariant.ts](src/db/currencyInvariant.ts) and [src/db/categories.ts](src/db/categories.ts). Tests generally live beside these modules; use the [architecture and logic guide](docs/ARCHITECTURE.md) to find related flows.
+
+This document preserves earlier findings and validation. Statements inside the historical record describe that revision, including old layouts, build status and test counts. They are not new verification results. See the [documentation index](docs/INDEX.md), [data model](DATA_MODEL.md), [backup guide](BACKUP.md) and [build guide](BUILD.md) for current contracts.
+
+<details>
+<summary>Historical findings, implementation and validation</summary>
 
 All eight findings from APP_AUDIT.md have implementation changes. The original audit remains a record of the initial checkout; this report describes the resulting behavior and verification.
 
 ## Changes
 
-| Audit item | Resulting behavior |
-| --- | --- |
-| 1. Windows import collision | The Home chart helper is spendBarData.ts, distinct from the SpendBars.tsx component. Imports and existing tests use the new name. Installed packages were reconciled with the existing lockfile, restoring expo-screen-capture. |
-| 2. Sensitive repeat shortcuts | Repeat-query results carry inherited category sensitivity. Hidden sensitive shortcuts are excluded from the repeat sheet and Add suggestions; amount labels and accessibility text also mask sensitive values. Category amount suggestions reload when privacy or account currency changes and do not show stale results from another selection. |
-| 3. Archived-category privacy | Home, Activity and Reports retain archived category metadata when reading history, so archived sensitive categories continue to mask amounts and leave private aggregate views. |
-| 4. Currency mixing | Activity charts and daily totals scope to the default currency. Foreign-currency entries retain their own currency in rows, detail sheets and Home history. Activity stacks separate currencies. Report day queries explicitly filter currency. Excel adds a Currency column, formats transaction/account amounts in their own currency, retains archived-account metadata and omits mixed-currency subtotals. |
-| 5. Recurring catch-up race | Each occurrence rereads the rule inside its insert transaction and checks its inputs, active state and expected next date. Pause, deletion and edits stop stale catch-up. An expired rule does not create an occurrence after its end date. The error handler also preserves a concurrently edited rule. |
-| 6. Misleading restore undo | The persistent recovery card and confirmation identify a saved recovery snapshot, with its existing date/count metadata, without promising it belongs to the latest restore. Older recovery copies remain usable. The immediate undo action still depends on successfully saving the current pre-restore copy. |
-| 7. Widget privacy | This Month passes the privacy setting to both pace and remaining-bills queries, consistently with its headline and carry-in calculations. Sensitive recurring bills no longer influence hidden projections. |
+| Audit item                      | Resulting behavior                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1. Windows import collision     | The Home chart helper is spendBarData.ts, distinct from the SpendBars.tsx component. Imports and existing tests use the new name. Installed packages were reconciled with the existing lockfile, restoring expo-screen-capture.                                                                                                                                                                                                      |
+| 2. Sensitive repeat shortcuts   | Repeat-query results carry inherited category sensitivity. Hidden sensitive shortcuts are excluded from the repeat sheet and Add suggestions; amount labels and accessibility text also mask sensitive values. Category amount suggestions reload when privacy or account currency changes and do not show stale results from another selection.                                                                                     |
+| 3. Archived-category privacy    | Home, Activity and Reports retain archived category metadata when reading history, so archived sensitive categories continue to mask amounts and leave private aggregate views.                                                                                                                                                                                                                                                      |
+| 4. Currency mixing              | Activity charts and daily totals scope to the default currency. Foreign-currency entries retain their own currency in rows, detail sheets and Home history. Activity stacks separate currencies. Report day queries explicitly filter currency. Excel adds a Currency column, formats transaction/account amounts in their own currency, retains archived-account metadata and omits mixed-currency subtotals.                       |
+| 5. Recurring catch-up race      | Each occurrence rereads the rule inside its insert transaction and checks its inputs, active state and expected next date. Pause, deletion and edits stop stale catch-up. An expired rule does not create an occurrence after its end date. The error handler also preserves a concurrently edited rule.                                                                                                                             |
+| 6. Misleading restore undo      | The persistent recovery card and confirmation identify a saved recovery snapshot, with its existing date/count metadata, without promising it belongs to the latest restore. Older recovery copies remain usable. The immediate undo action still depends on successfully saving the current pre-restore copy.                                                                                                                       |
+| 7. Widget privacy               | This Month passes the privacy setting to both pace and remaining-bills queries, consistently with its headline and carry-in calculations. Sensitive recurring bills no longer influence hidden projections.                                                                                                                                                                                                                          |
 | 8. Financial currency ownership | Loans, IOUs and goals explicitly use the default currency. Database writers reject foreign-currency linked accounts, and corresponding account pickers offer compatible accounts. Changing the default is blocked while loans, goals, IOUs or budgets would be relabelled. Legacy foreign IOU rows retain their currency and are excluded from default-currency balances; legacy foreign-linked goals do not compare unlike amounts. |
 
 No exchange-rate conversion was introduced. Existing stored amounts are preserved. Historical mixed-currency loan movements or other ambiguous legacy records cannot be numerically corrected without knowing the intended currency and conversion rate.
@@ -37,16 +48,16 @@ Validation also reproduced a shared animation continuing after its owner unmount
 
 ## Verification
 
-| Check | Final result |
-| --- | --- |
-| Full Jest suite | 241 suites passed, 10,654 tests passed, 2 suites/tests intentionally skipped; no failures or teardown errors. The skipped suites are the existing PERF=1 opt-in benchmarks. |
-| TypeScript | npm run typecheck passed. |
-| ESLint | Passed with --max-warnings=0, using a cache under .expo. |
-| Formatting | npm run format:check passed. |
-| Expo Doctor | All 21 checks passed. |
-| Android export | Passed: 2,300 modules, 40 assets and a 7.8 MB Hermes bundle. Output is under .expo/audit-export-final. |
-| Dependency audit gate | Passed the repository policy. The existing braces and node-forge tooling advisories remain explicitly allowlisted; no blocking high or critical advisory. |
-| Diff whitespace | git diff --check passed. |
+| Check                 | Final result                                                                                                                                                                |
+| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Full Jest suite       | 241 suites passed, 10,654 tests passed, 2 suites/tests intentionally skipped; no failures or teardown errors. The skipped suites are the existing PERF=1 opt-in benchmarks. |
+| TypeScript            | npm run typecheck passed.                                                                                                                                                   |
+| ESLint                | Passed with --max-warnings=0, using a cache under .expo.                                                                                                                    |
+| Formatting            | npm run format:check passed.                                                                                                                                                |
+| Expo Doctor           | All 21 checks passed.                                                                                                                                                       |
+| Android export        | Passed: 2,300 modules, 40 assets and a 7.8 MB Hermes bundle. Output is under .expo/audit-export-final.                                                                      |
+| Dependency audit gate | Passed the repository policy. The existing braces and node-forge tooling advisories remain explicitly allowlisted; no blocking high or critical advisory.                   |
+| Diff whitespace       | git diff --check passed.                                                                                                                                                    |
 
 The final full suite ran through the portable npm test command with two workers and a 512 MB idle-worker memory limit. The complete Jest log is .expo/audit-fixes-jest-complete.log; the export log is .expo/audit-export-final.log. Earlier failed runs were used to identify and correct test setup, outdated assertions, incomplete fixtures and animation cleanup before this successful full run.
 
@@ -67,3 +78,5 @@ All 194 targeted UI/font-scaling tests passed, including the full screen smoke s
 The signed EAS preview APK completed successfully, using the existing keystore and version code 9. Build: https://expo.dev/accounts/yume-expense-track/projects/yume/builds/71729692-c1b9-4308-aa17-359acb3dcc03. Android device behavior remains unverified.
 
 The private review site has its own source repository. Its generated files and the earlier design preview are excluded from the app repository and EAS upload.
+
+</details>

@@ -1,4 +1,15 @@
-# Plan page improvement report
+# Plan: implementation record
+
+## Current reading guide
+
+Reviewed against the repository on **11 October 2026**. Current Plan uses content-sized cards, 60dp budget jars, a 72dp active forecast chart and approximately 132dp goal tiles at normal text size. Empty flat forecasts are hidden; details, shortages, scheduled groups and payment links remain available.
+
+Implementation: [app/(tabs)/plan.tsx](<app/(tabs)/plan.tsx>) and [src/features/plan](src/features/plan). Tests generally live beside these modules; use the [architecture and logic guide](docs/ARCHITECTURE.md) to find related flows.
+
+This document preserves earlier findings and validation. Statements inside the historical record describe that revision, including old layouts, build status and test counts. They are not new verification results. See the [documentation index](docs/INDEX.md), [data model](DATA_MODEL.md), [backup guide](BACKUP.md) and [build guide](BUILD.md) for current contracts.
+
+<details>
+<summary>Historical findings, implementation and validation</summary>
 
 The approved improvements cover the full Plan page while preserving its existing wallpaper, glass cards, typography, jars, goal fills, debt lanes, sprouts, and navigation dock.
 
@@ -25,3 +36,5 @@ The approved improvements cover the full Plan page while preserving its existing
 The private design proposal is available at https://yume-design-review.earthystork1.chatgpt.site/plan.html. It is a design preview, not the native app runtime.
 
 Device verification of native animation smoothness, scrolling, and actual font scaling remains pending. No Android device tooling was available through PATH. No APK or EAS build was requested or created for this work.
+
+</details>

@@ -1,4 +1,15 @@
-# Yume audit — 11 October 2026
+# Application verification record: implementation record
+
+## Current reading guide
+
+Reviewed against the repository on **11 October 2026**. Source and automated checks are evidence for specific invariants, not proof that every device behavior is correct. The latest APK is version code 15. The last full Jest run had one selector-fixture failure; its corrected focused rerun passed all eight tests. A clean full rerun after that fixture correction has not been recorded.
+
+Implementation: [src/**tests**](src/__tests__) and [scripts](scripts). Tests generally live beside these modules; use the [architecture and logic guide](docs/ARCHITECTURE.md) to find related flows.
+
+This document preserves earlier findings and validation. Statements inside the historical record describe that revision, including old layouts, build status and test counts. They are not new verification results. See the [documentation index](docs/INDEX.md), [data model](DATA_MODEL.md), [backup guide](BACKUP.md) and [build guide](BUILD.md) for current contracts.
+
+<details>
+<summary>Historical findings, implementation and validation</summary>
 
 ## Scope
 
@@ -53,21 +64,20 @@ Automated results are recorded below. Passing checks reduce risk; they do not es
 
 A focused `--detectOpenHandles` follow-up did not complete within the bounded diagnostic run and was stopped. The lingering-handle cause remains unresolved; no force-exit option was added to hide it.
 
-
 ## Follow-up edge-case audit — final source pass
 
 Reviewed every route, the shared editors and the data/restore boundaries. This pass preserves the existing storage, backup-format and amount-design decisions.
 
-| Area | Boundaries reviewed and regression coverage |
-| --- | --- |
-| Startup/onboarding | Empty install, existing data, failed migration copy, retry, canceled/invalid onboarding restore, settings reads and app maintenance ordering. |
-| Home, Activity, Reports and Plan | Empty/loading/error states, period changes, stale results, privacy, category selection, charts, direct payment routes and linked transaction edits. |
-| Add, splits and refunds | Invalid/zero/large values, dates, account/category validity, cross-currency transfers, batch saving, split integrity, refunds and repeated presses. |
-| Accounts, categories and investments | Create/edit/archive/restore/delete, system category restrictions, parent/child editing, partial account creation retry and valuation failures. |
-| Loans, goals, budgets and friends | Installment order, exact payoff, prepayment/rate boundaries, over-withdrawal, linked balances, conflicting actions, completion notes, rollover and settlement. |
-| Recurring, Garden, What-if and Wrap | Catch-up, pause/resume, insufficient history, goal boundaries, calculations, interrupted playback and export/share cleanup. |
-| Backup, recovery, Recently deleted and Tidy up | Latest valid folder data, corrupt/oversized input, canceled restore, write failures, recovery copy, undo and restore/delete conflicts. |
-| Settings, themes, notifications, lock and widgets | Settings restoration, denied permissions, notification routing, failed preference writes, background privacy and masked widget values. |
+| Area                                              | Boundaries reviewed and regression coverage                                                                                                                    |
+| ------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Startup/onboarding                                | Empty install, existing data, failed migration copy, retry, canceled/invalid onboarding restore, settings reads and app maintenance ordering.                  |
+| Home, Activity, Reports and Plan                  | Empty/loading/error states, period changes, stale results, privacy, category selection, charts, direct payment routes and linked transaction edits.            |
+| Add, splits and refunds                           | Invalid/zero/large values, dates, account/category validity, cross-currency transfers, batch saving, split integrity, refunds and repeated presses.            |
+| Accounts, categories and investments              | Create/edit/archive/restore/delete, system category restrictions, parent/child editing, partial account creation retry and valuation failures.                 |
+| Loans, goals, budgets and friends                 | Installment order, exact payoff, prepayment/rate boundaries, over-withdrawal, linked balances, conflicting actions, completion notes, rollover and settlement. |
+| Recurring, Garden, What-if and Wrap               | Catch-up, pause/resume, insufficient history, goal boundaries, calculations, interrupted playback and export/share cleanup.                                    |
+| Backup, recovery, Recently deleted and Tidy up    | Latest valid folder data, corrupt/oversized input, canceled restore, write failures, recovery copy, undo and restore/delete conflicts.                         |
+| Settings, themes, notifications, lock and widgets | Settings restoration, denied permissions, notification routing, failed preference writes, background privacy and masked widget values.                         |
 
 ### Additional fixes
 
@@ -89,3 +99,5 @@ Reviewed every route, the shared editors and the data/restore boundaries. This p
 - Final backup folder and typography rerun: 2 suites, 15 tests passed.
 - Final-source TypeScript, ESLint, Prettier and whitespace checks: passed.
 - Final-source Android production export: passed (Hermes bundle and metadata). No native APK/device installation test was performed in this pass.
+
+</details>

@@ -177,6 +177,8 @@ plugins and performance fixtures. Native integration can use a dependency withou
 
 ## Documentation
 
+Start with the [documentation index](docs/INDEX.md) and [architecture and logic guide](docs/ARCHITECTURE.md). Historical reports record earlier revisions; their validation counts are not fresh release results.
+
 | Guide                                                  | Read it for                                                                |
 | ------------------------------------------------------ | -------------------------------------------------------------------------- |
 | [Data model](DATA_MODEL.md)                            | Schema, accounts, the friends ledger and calculation decisions.            |

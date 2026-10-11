@@ -1,4 +1,15 @@
-# Reports fixes — approved design
+# Reports logic: implementation record
+
+## Current reading guide
+
+Reviewed against the repository on **11 October 2026**. Reports currently has Days, Breakdown and Trends with a consistent static header. Comparisons distinguish partial periods from completed periods. Category shares use the total; currency and privacy filters must apply before aggregation. Older carousel/header descriptions below are historical.
+
+Implementation: [app/(tabs)/reports.tsx](<app/(tabs)/reports.tsx>) and [src/db/reports.ts](src/db/reports.ts). Tests generally live beside these modules; use the [architecture and logic guide](docs/ARCHITECTURE.md) to find related flows.
+
+This document preserves earlier findings and validation. Statements inside the historical record describe that revision, including old layouts, build status and test counts. They are not new verification results. See the [documentation index](docs/INDEX.md), [data model](DATA_MODEL.md), [backup guide](BACKUP.md) and [build guide](BUILD.md) for current contracts.
+
+<details>
+<summary>Historical findings, implementation and validation</summary>
 
 Implemented the approved [private Reports preview](https://yume-design-review.earthystork1.chatgpt.site/reports.html), including the request to remove the duplicate Home summary. The native page keeps its wallpaper, frosted cards, fonts, heatmap, category colours, story carousel, charts and floating navigation.
 
@@ -14,13 +25,13 @@ Implemented the approved [private Reports preview](https://yume-design-review.ea
 
 ## Verification
 
-| Check | Result |
-| --- | --- |
-| Final Reports, report-window and reporting-database tests | 11 suites, 156 tests passed |
-| TypeScript (`npx tsc --noEmit`) | Passed |
-| ESLint on all changed application/test files | Passed, no errors or warnings |
-| Android JavaScript/Hermes export with Expo 57 | Passed; 7.8 MB Hermes bundle |
-| Formatting and Git whitespace check | Passed |
+| Check                                                     | Result                        |
+| --------------------------------------------------------- | ----------------------------- |
+| Final Reports, report-window and reporting-database tests | 11 suites, 156 tests passed   |
+| TypeScript (`npx tsc --noEmit`)                           | Passed                        |
+| ESLint on all changed application/test files              | Passed, no errors or warnings |
+| Android JavaScript/Hermes export with Expo 57             | Passed; 7.8 MB Hermes bundle  |
+| Formatting and Git whitespace check                       | Passed                        |
 
 The wider app run passed 244 suites and 10,689 tests, with two suites/tests skipped. Its one failure was an old custom-range assertion that expected no-spend days to be disabled. That assertion was corrected for the approved behavior and passed in the final affected run. The final run also covers later year-view and future-entry corrections. The full app suite was not repeated after those focused fixes.
 
@@ -29,3 +40,5 @@ Regression coverage includes period-response races, closing a pending day reques
 Jest needed `--forceExit` because of lingering animation/test handles; existing icon/Expo test warnings remain. Assertions passed, but this is not evidence of an issue-free native animation runtime.
 
 No APK or EAS build was requested or created. Android exports are local JavaScript/Hermes compilation checks only. Native device scrolling, frame timing and physical touch behaviour have not been verified on a connected phone; adb was unavailable on PATH and at the standard local SDK path.
+
+</details>
