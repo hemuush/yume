@@ -184,7 +184,7 @@ Start with the [documentation index](docs/INDEX.md) and [architecture and logic 
 | [Data model](DATA_MODEL.md)                            | Schema, accounts, the friends ledger and calculation decisions.            |
 | [Backup & restore](BACKUP.md)                          | Local-folder backups, choosing existing data, restore safety and recovery. |
 | [Build guide](BUILD.md)                                | APK/AAB builds and device verification.                                    |
-| [Audit record](AUDIT.md)                               | Recorded fixes, validation and remaining device checks.                    |
+| [Audit record](docs/archive/AUDIT.md)                               | Recorded fixes, validation and remaining device checks.                    |
 | [Expo SDK 57](https://docs.expo.dev/versions/v57.0.0/) | The versioned Expo reference used by this project.                         |
 
 ---

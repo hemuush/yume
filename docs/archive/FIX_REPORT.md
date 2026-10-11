@@ -4,9 +4,9 @@
 
 Reviewed against the repository on **11 October 2026**. These changes resolved the initial audit findings. Currency filtering, sensitive-parent inheritance and atomic recurring/restore operations remain core invariants. Recorded test counts describe that historical revision.
 
-Implementation: [src/db/currencyInvariant.ts](src/db/currencyInvariant.ts) and [src/db/categories.ts](src/db/categories.ts). Tests generally live beside these modules; use the [architecture and logic guide](docs/ARCHITECTURE.md) to find related flows.
+Implementation: [src/db/currencyInvariant.ts](../../src/db/currencyInvariant.ts) and [src/db/categories.ts](../../src/db/categories.ts). Tests generally live beside these modules; use the [architecture and logic guide](../../docs/ARCHITECTURE.md) to find related flows.
 
-This document preserves earlier findings and validation. Statements inside the historical record describe that revision, including old layouts, build status and test counts. They are not new verification results. See the [documentation index](docs/INDEX.md), [data model](DATA_MODEL.md), [backup guide](BACKUP.md) and [build guide](BUILD.md) for current contracts.
+This document preserves earlier findings and validation. Statements inside the historical record describe that revision, including old layouts, build status and test counts. They are not new verification results. See the [documentation index](../../docs/INDEX.md), [data model](../../DATA_MODEL.md), [backup guide](../../BACKUP.md) and [build guide](../../BUILD.md) for current contracts.
 
 <details>
 <summary>Historical findings, implementation and validation</summary>

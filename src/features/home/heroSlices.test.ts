@@ -1,10 +1,10 @@
-import { heroSlices, heroPct, heroModes, heroRestingMode, withoutSavings } from './heroSlices';
+import { heroSlices, heroPct, heroRestingMode, withoutSavings } from './heroSlices';
 
 const sum = (s: { spent: number; saved: number; free: number }) => s.spent + s.saved + s.free;
 
 describe('heroSlices', () => {
   it('splits a normal month into spent, savings and free to use that add up to income', () => {
-    // ₹1,80,000 in, ₹82,000 out, ₹97,000 to savings.
+    // Ã¢â€šÂ¹1,80,000 in, Ã¢â€šÂ¹82,000 out, Ã¢â€šÂ¹97,000 to savings.
     const s = heroSlices(18000000, 8200000, 9700000);
     expect(s.hasIncome).toBe(true);
     expect(s.overMinor).toBe(0);
@@ -45,7 +45,7 @@ describe('heroSlices', () => {
   });
 
   it('gives bills still to pay their own slice out of what would be free', () => {
-    // ₹1,000 in, ₹100 out, ₹300 to savings, ₹200 still to pay → ₹400 free after bills.
+    // Ã¢â€šÂ¹1,000 in, Ã¢â€šÂ¹100 out, Ã¢â€šÂ¹300 to savings, Ã¢â€šÂ¹200 still to pay Ã¢â€ â€™ Ã¢â€šÂ¹400 free after bills.
     const s = heroSlices(100000, 10000, 30000, 20000);
     expect(s.due).toBeCloseTo(0.2);
     expect(s.free).toBeCloseTo(0.4);
@@ -76,28 +76,13 @@ describe('heroPct', () => {
   });
 });
 
-describe('heroModes / heroRestingMode', () => {
-  it('offers every view in a month with all three slices, resting on Kept', () => {
-    const s = heroSlices(18000000, 8200000, 9700000);
-    expect(heroModes(s)).toEqual(['kept', 'spent', 'saved', 'free']);
-    expect(heroRestingMode(s)).toBe('kept');
+describe('heroRestingMode', () => {
+  it('rests on Kept when some income remains', () => {
+    expect(heroRestingMode(heroSlices(18000000, 8200000, 9700000))).toBe('kept');
   });
 
-  it('rests on Spent and offers nothing else when income was exactly spent', () => {
-    // e.g. a salary that exactly covers an EMI: everything in went straight out.
-    const s = heroSlices(2500000, 2500000, 0);
-    expect(heroModes(s)).toEqual(['spent']);
-    expect(heroRestingMode(s)).toBe('spent');
-  });
-
-  it('skips an empty slice', () => {
-    const s = heroSlices(100000, 40000, 0);
-    expect(heroModes(s)).toEqual(['kept', 'spent', 'free']);
-  });
-
-  it('offers no views when overspent or without income', () => {
-    expect(heroModes(heroSlices(100000, 120000, 0))).toEqual([]);
-    expect(heroModes(heroSlices(0, 0, 0))).toEqual([]);
+  it('rests on Spent when income was exactly spent', () => {
+    expect(heroRestingMode(heroSlices(2500000, 2500000, 0))).toBe('spent');
   });
 });
 
@@ -111,14 +96,12 @@ describe('with savings hidden', () => {
 
   it('offers only spent and free, resting on free', () => {
     const s = withoutSavings(heroSlices(100000, 10000, 60000));
-    expect(heroModes(s, true)).toEqual(['spent', 'free']);
     expect(heroRestingMode(s, true)).toBe('free');
   });
 
-  it('rests on spent when nothing is free, and offers no free view', () => {
+  it('rests on spent when nothing is free', () => {
     // Everything unspent went to savings: free is 0 once savings is taken out.
     const s = withoutSavings(heroSlices(100000, 40000, 60000));
-    expect(heroModes(s, true)).toEqual(['spent']);
     expect(heroRestingMode(s, true)).toBe('spent');
   });
 });

@@ -6,31 +6,33 @@ Reports retain previous evidence in an expandable historical section. Their date
 
 | Document                                                                          | Purpose                                              |
 | --------------------------------------------------------------------------------- | ---------------------------------------------------- |
-| [ACTIVITY_FIX_REPORT.md](../ACTIVITY_FIX_REPORT.md)                               | Historical implementation and validation record      |
+| [ACTIVITY_FIX_REPORT.md](archive/ACTIVITY_FIX_REPORT.md)                          | Historical implementation and validation record      |
 | [AGENTS.md](../AGENTS.md)                                                         | Current guide / project instructions                 |
-| [APP_AUDIT.md](../APP_AUDIT.md)                                                   | Historical implementation and validation record      |
-| [AUDIT.md](../AUDIT.md)                                                           | Historical implementation and validation record      |
+| [APP_AUDIT.md](archive/APP_AUDIT.md)                                              | Historical implementation and validation record      |
+| [AUDIT.md](archive/AUDIT.md)                                                      | Historical implementation and validation record      |
 | [BACKUP.md](../BACKUP.md)                                                         | Backup behavior and historical implementation record |
 | [BUILD.md](../BUILD.md)                                                           | Current guide / project instructions                 |
 | [CLAUDE.md](../CLAUDE.md)                                                         | Current guide / project instructions                 |
-| [CODE_CLEANUP_REPORT.md](../CODE_CLEANUP_REPORT.md)                               | Historical implementation and validation record      |
+| [CODE_CLEANUP_REPORT.md](archive/CODE_CLEANUP_REPORT.md)                          | Historical implementation and validation record      |
 | [DATA_MODEL.md](../DATA_MODEL.md)                                                 | Current guide / project instructions                 |
-| [FIX_REPORT.md](../FIX_REPORT.md)                                                 | Historical implementation and validation record      |
+| [FIX_REPORT.md](archive/FIX_REPORT.md)                                            | Historical implementation and validation record      |
 | [FOLLOWUP_CODE_AUDIT.md](../FOLLOWUP_CODE_AUDIT.md)                               | Historical implementation and validation record      |
-| [HOME_FIX_REPORT.md](../HOME_FIX_REPORT.md)                                       | Historical implementation and validation record      |
-| [HOME_PLAN_SECTION_FIXES.md](../HOME_PLAN_SECTION_FIXES.md)                       | Historical implementation and validation record      |
-| [PERFORMANCE_FIX_REPORT.md](../PERFORMANCE_FIX_REPORT.md)                         | Historical implementation and validation record      |
-| [PLAN_FIX_REPORT.md](../PLAN_FIX_REPORT.md)                                       | Historical implementation and validation record      |
-| [POPUP_REFINEMENT_REPORT.md](../POPUP_REFINEMENT_REPORT.md)                       | Historical implementation and validation record      |
+| [HOME_FIX_REPORT.md](archive/HOME_FIX_REPORT.md)                                  | Historical implementation and validation record      |
+| [HOME_PLAN_SECTION_FIXES.md](archive/HOME_PLAN_SECTION_FIXES.md)                  | Historical implementation and validation record      |
+| [PERFORMANCE_FIX_REPORT.md](archive/PERFORMANCE_FIX_REPORT.md)                    | Historical implementation and validation record      |
+| [PLAN_FIX_REPORT.md](archive/PLAN_FIX_REPORT.md)                                  | Historical implementation and validation record      |
+| [POPUP_REFINEMENT_REPORT.md](archive/POPUP_REFINEMENT_REPORT.md)                  | Historical implementation and validation record      |
 | [README.md](../README.md)                                                         | Current guide / project instructions                 |
-| [REPORTS_FIX_REPORT.md](../REPORTS_FIX_REPORT.md)                                 | Historical implementation and validation record      |
-| [REPORTS_REDESIGN_IMPLEMENTATION.md](../REPORTS_REDESIGN_IMPLEMENTATION.md)       | Historical implementation and validation record      |
-| [SECURITY_FOLLOWUP_REPORT.md](../SECURITY_FOLLOWUP_REPORT.md)                     | Historical implementation and validation record      |
+| [REPORTS_FIX_REPORT.md](archive/REPORTS_FIX_REPORT.md)                            | Historical implementation and validation record      |
+| [REPORTS_REDESIGN_IMPLEMENTATION.md](archive/REPORTS_REDESIGN_IMPLEMENTATION.md)  | Historical implementation and validation record      |
+| [SECURITY_FOLLOWUP_REPORT.md](archive/SECURITY_FOLLOWUP_REPORT.md)                | Historical implementation and validation record      |
 | [SECURITY_PRODUCT_REVIEW.md](../SECURITY_PRODUCT_REVIEW.md)                       | Historical implementation and validation record      |
-| [TRANSACTION_FIX_REPORT.md](../TRANSACTION_FIX_REPORT.md)                         | Historical implementation and validation record      |
-| [UI_REFINEMENT_REPORT.md](../UI_REFINEMENT_REPORT.md)                             | Historical implementation and validation record      |
-| [UI_UX_REFINEMENT_REPORT.md](../UI_UX_REFINEMENT_REPORT.md)                       | Historical implementation and validation record      |
+| [TRANSACTION_FIX_REPORT.md](archive/TRANSACTION_FIX_REPORT.md)                    | Historical implementation and validation record      |
+| [UI_REFINEMENT_REPORT.md](archive/UI_REFINEMENT_REPORT.md)                        | Historical implementation and validation record      |
+| [UI_UX_REFINEMENT_REPORT.md](archive/UI_UX_REFINEMENT_REPORT.md)                  | Historical implementation and validation record      |
 | [vendor/decode-uri-component/README.md](../vendor/decode-uri-component/README.md) | Compatibility package maintenance                    |
+
+See the [latest cleanup record](CLEANUP.md) for removal decisions and validation.
 
 ## Maintaining documentation
 

@@ -37,15 +37,8 @@ export function heroSlices(
   };
 }
 
-/** The moon's headline views, in the order tapping the moon steps through them. */
+/** Headline views shared by Home and the monthly widget. */
 export type HeroMode = 'kept' | 'spent' | 'saved' | 'free';
-const HERO_MODES: HeroMode[] = ['kept', 'spent', 'saved', 'free'];
-export const HERO_MODE_LABEL: Record<HeroMode, string> = {
-  kept: 'Kept',
-  spent: 'Spent',
-  saved: 'To savings',
-  free: 'Free to use',
-};
 
 /** "54%", or "<1%" for a real but tiny share rather than a misleading "0%". */
 export function heroPct(fraction: number): string {
@@ -53,19 +46,9 @@ export function heroPct(fraction: number): string {
   return v > 0 && v < 1 ? '<1%' : `${Math.round(v)}%`;
 }
 
-/** Each headline view's share of income — "kept" is savings plus free to use. */
+/** Each headline view's share of income â€” "kept" is savings plus free to use. */
 export function heroShare(s: HeroSlices, mode: HeroMode): number {
   return mode === 'kept' ? s.saved + s.free : s[mode];
-}
-
-/**
- * Slice views worth showing in tap order: only those with a real share (no "0% kept" steps).
- * Empty with no income or when overspent (nothing to split).
- */
-export function heroModes(s: HeroSlices, hideSavings = false): HeroMode[] {
-  if (!s.hasIncome || s.overMinor > 0) return [];
-  const modes = hideSavings ? HERO_MODES.filter((m) => m === 'spent' || m === 'free') : HERO_MODES;
-  return modes.filter((m) => heroShare(s, m) > 0);
 }
 
 /** The resting headline: Kept, or Spent when nothing was kept. With savings hidden, Free or Spent. */
