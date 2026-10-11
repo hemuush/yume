@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { View } from 'react-native';
 import { Text } from '@/components/Text';
 import { Account, Category, TransactionType } from '@/types';
-import { SegmentedControl } from '@/components/SegmentedControl';
+import { SheetTabs } from '@/components/SheetTabs';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { Chip } from '@/components/Chip';
 import { ModalSheet } from '@/components/ModalSheet';
@@ -137,7 +137,7 @@ export function FilterModal({
       }
     >
       <Text style={styles.fieldLabel}>Type</Text>
-      <SegmentedControl options={FILTER_TYPES} value={draftType} onChange={onTypeChange} />
+      <SheetTabs options={FILTER_TYPES} value={draftType} onChange={onTypeChange} />
 
       {accounts.length > 1 && (
         <>

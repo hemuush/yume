@@ -126,7 +126,6 @@ export const styles = StyleSheet.create({
   rowSub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, marginTop: 2 },
   rowValue: { fontFamily: theme.font.monoBold, fontSize: 15 },
   // The Settle / History switch under a person's card.
-  sheetTabs: { marginBottom: 14 },
   sectionTitle: {
     ...SECTION_TITLE,
     marginTop: SECTION_GAP.top,

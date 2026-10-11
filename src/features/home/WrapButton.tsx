@@ -73,12 +73,7 @@ export function WrapButton({ wraps, onPlay }: { wraps: ReadyWrap[]; onPlay: (wra
         )}
       </Pressable>
 
-      <ModalSheet
-        visible={choosing}
-        onClose={() => setChoosing(false)}
-        title="Which Wrap?"
-        scrollable={false}
-      >
+      <ModalSheet visible={choosing} onClose={() => setChoosing(false)} title="Which Wrap?">
         <View style={styles.card}>
           {wraps.map((w, i) => (
             <Pressable

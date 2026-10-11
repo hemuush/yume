@@ -29,7 +29,7 @@ function mockStub(testID: string) {
   return (p: object) => require('react').createElement(require('react-native').View, { testID, ...p });
 }
 jest.mock('@/components/SheetCard', () => ({ SheetCard: mockStub('card') }));
-jest.mock('@/components/SegmentedControl', () => ({ SegmentedControl: mockStub('tabs') }));
+jest.mock('@/components/SheetTabs', () => ({ SheetTabs: mockStub('tabs') }));
 jest.mock('./RecentTransactionRow', () => ({ RecentTransactionRow: mockStub('row') }));
 jest.mock('@/features/investments/InvestmentPanel', () => ({ InvestmentPanel: mockStub('panel') }));
 jest.mock('@/features/investments/UpdateValueSheet', () => ({ UpdateValueSheet: mockStub('value-sheet') }));

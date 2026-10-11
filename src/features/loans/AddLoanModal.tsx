@@ -10,7 +10,7 @@ import { formatMoney, toMinor } from '@/lib/money';
 import { LoanDirection, LoanRateType, Account, Category } from '@/types';
 import { FormInput } from '@/components/FormInput';
 import { AmountField } from '@/components/AmountField';
-import { SegmentedControl } from '@/components/SegmentedControl';
+import { SheetTabs } from '@/components/SheetTabs';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { Chip } from '@/components/Chip';
 import { ModalSheet } from '@/components/ModalSheet';
@@ -439,7 +439,7 @@ export function AddLoanModal({
             placeholder="e.g. 9.5"
           />
           <Text style={styles.fieldLabel}>Rate type</Text>
-          <SegmentedControl options={RATE_TYPES} value={rateType} onChange={setRateType} />
+          <SheetTabs options={RATE_TYPES} value={rateType} onChange={setRateType} />
           {rateType === 'floating' && (
             <Text style={styles.hintText}>When the rate changes, update it from the loan's menu.</Text>
           )}

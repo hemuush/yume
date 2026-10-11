@@ -20,8 +20,8 @@ jest.mock('@/components/DateField', () => ({
   DateField: (p: { label: string }) =>
     require('react').createElement(require('react-native').View, { testID: 'date', ...p }),
 }));
-jest.mock('@/components/SegmentedControl', () => ({
-  SegmentedControl: (p: { value: string }) =>
+jest.mock('@/components/SheetTabs', () => ({
+  SheetTabs: (p: { value: string }) =>
     require('react').createElement(require('react-native').View, { testID: 'mode', ...p }),
 }));
 jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMock').createReanimatedMock());

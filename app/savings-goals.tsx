@@ -210,6 +210,7 @@ export default function SavingsGoalsScreen() {
       {letterGoal && (
         <ModalSheet
           visible
+          title="Your goal milestone"
           onClose={() => setLetterGoal(null)}
           footer={<PrimaryButton title="Nice, thanks Suu" onPress={() => setLetterGoal(null)} />}
         >

@@ -9,7 +9,7 @@ import { theme, modalFooterStyles as f } from '@/constants/theme';
 import { ModalSheet } from '@/components/ModalSheet';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { SheetCard } from '@/components/SheetCard';
-import { SegmentedControl } from '@/components/SegmentedControl';
+import { SheetTabs } from '@/components/SheetTabs';
 import { accountHue, accountIcon } from '@/lib/account';
 import { useAccent } from '@/theme/AccentContext';
 import { formatMaskableMoney } from '@/lib/money';
@@ -231,17 +231,15 @@ export function AccountSummarySheet({
               : 'Balance'
           }
         />
-        <View style={styles.tabs}>
-          <SegmentedControl
-            options={[
-              ...(inv ? [{ label: 'Value', value: 'value' as const }] : []),
-              { label: periodLabel(cursor), value: 'flow' as const },
-              { label: 'Latest', value: 'latest' as const },
-            ]}
-            value={tab}
-            onChange={setTab}
-          />
-        </View>
+        <SheetTabs
+          options={[
+            ...(inv ? [{ label: 'Value', value: 'value' as const }] : []),
+            { label: periodLabel(cursor), value: 'flow' as const },
+            { label: 'Latest', value: 'latest' as const },
+          ]}
+          value={tab}
+          onChange={setTab}
+        />
 
         {tab === 'value' && inv && (
           <InvestmentPanel
@@ -506,7 +504,6 @@ const styles = StyleSheet.create({
   billValue: { fontFamily: theme.font.monoBold, fontSize: 13, color: theme.colors.textPrimary },
   payBill: { marginTop: 10 },
   sectionGap: { marginTop: 18 },
-  tabs: { marginBottom: 14 },
   flows: { gap: 10, marginTop: 10 },
   flowRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   flowLabel: {

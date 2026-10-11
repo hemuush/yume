@@ -33,7 +33,7 @@ export function ActionSheet({
   items: ActionSheetItem[];
 }) {
   return (
-    <ModalSheet visible={visible} onClose={onClose} title={title} subtitle={subtitle} scrollable={false}>
+    <ModalSheet visible={visible} onClose={onClose} title={title} subtitle={subtitle}>
       <ActionList items={items} onClose={onClose} />
     </ModalSheet>
   );

@@ -324,16 +324,14 @@ export function RuleModal({
         }
         meta={`${type === 'income' ? 'Into' : 'From'} ${accountName(effectiveAccountId) ?? '—'} · next ${weekdayDayMonth(startDate)}`}
       />
-      <View style={styles.tabs}>
-        <SheetTabs
-          options={[
-            { label: 'Set up', value: 'setup' },
-            { label: 'Schedule', value: 'schedule' },
-          ]}
-          value={tab}
-          onChange={setTab}
-        />
-      </View>
+      <SheetTabs
+        options={[
+          { label: 'Set up', value: 'setup' },
+          { label: 'Schedule', value: 'schedule' },
+        ]}
+        value={tab}
+        onChange={setTab}
+      />
 
       {tab === 'setup' ? (
         <>
