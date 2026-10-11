@@ -334,6 +334,8 @@ export function HomeGlance({
 const styles = StyleSheet.create({
   windowCaption: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingTop: 10,
@@ -362,9 +364,17 @@ const styles = StyleSheet.create({
   // Rows inside a HomeSwipeCard page: no outer border/background (the card draws it); BudgetRow/UpcomingRow
   // already carry their own horizontal padding.
   pageList: { paddingHorizontal: 2 },
-  goalsPageRow: { flexDirection: 'row', gap: 10, paddingHorizontal: 14, paddingVertical: 14 },
+  goalsPageRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+  },
   goalsMoreTile: {
-    width: 90,
+    minWidth: 90,
+    minHeight: 48,
+    padding: 8,
     borderRadius: theme.radius.lg,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,

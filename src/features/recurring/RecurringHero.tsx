@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Pressable, StyleSheet, LayoutChangeEvent } from 'react-native';
+import { View, Pressable, ScrollView, StyleSheet, LayoutChangeEvent } from 'react-native';
 import { Text } from '@/components/Text';
 import { Glass } from '@/components/Glass';
 import { Kicker, frost } from '@/components/Frost';
@@ -103,7 +103,7 @@ export function RecurringHero({
         </View>
       )}
       {grouped.length > 0 && (
-        <View style={styles.dateGroups}>
+        <ScrollView horizontal showsHorizontalScrollIndicator contentContainerStyle={styles.dateGroups}>
           {grouped.map((m) => (
             <Pressable
               key={m.date}
@@ -118,7 +118,7 @@ export function RecurringHero({
               </Text>
             </Pressable>
           ))}
-        </View>
+        </ScrollView>
       )}
     </>
   );
@@ -128,7 +128,7 @@ export function RecurringHero({
     <Glass key={running ? 'totals' : 'intro'} radius={28} tone="strong" style={styles.card}>
       {running ? (
         <>
-          <View style={frost.heroRow}>
+          <View style={[frost.heroRow, styles.summary]}>
             <View style={frost.heroMain}>
               <Kicker icon="repeat">Subscriptions & bills</Kicker>
               <View style={frost.bigRow}>
@@ -171,8 +171,9 @@ export function RecurringHero({
 }
 
 const styles = StyleSheet.create({
-  card: { padding: 16, gap: 10 },
-  dateGroups: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  card: { padding: 14, gap: 8 },
+  summary: { flexWrap: 'wrap', gap: 8 },
+  dateGroups: { gap: 6, paddingBottom: 6 },
   dateGroup: {
     minHeight: 44,
     justifyContent: 'center',
@@ -190,7 +191,7 @@ const styles = StyleSheet.create({
   line: { height: LINE_HEIGHT, justifyContent: 'center' },
   rail: { height: 2, borderRadius: 1, backgroundColor: 'rgba(18,19,15,0.12)' },
   dot: { position: 'absolute', borderWidth: 3, backgroundColor: theme.colors.surface },
-  axis: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 2 },
+  axis: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, justifyContent: 'space-between', marginTop: 2 },
   axisText: { fontFamily: theme.font.bodyMedium, fontSize: 11, color: theme.colors.textMuted },
   stack: {
     flexDirection: 'row',

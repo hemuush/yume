@@ -69,31 +69,29 @@ export function LoanCard({
               />
             </View>
             <View style={styles.headText}>
-              <Text style={styles.name} numberOfLines={2}>
-                {loan.counterparty}
-              </Text>
-              <Text style={styles.sub} numberOfLines={1}>
+              <Text style={styles.name}>{loan.counterparty}</Text>
+              <Text style={styles.sub}>
                 {(loan.interestRateAnnualBp / 100).toFixed(2)}% ·{' '}
                 {loan.rateType === 'floating' ? 'Floating' : 'Fixed'}
                 {isBorrowed ? '' : ' · Lent'}
               </Text>
             </View>
-            <View style={styles.figs}>
-              {isClosed ? (
-                <Text style={styles.paidOff}>Paid off</Text>
-              ) : (
-                <>
-                  <CountUpAmount
-                    minor={roundedMinor(loan.outstandingPrincipalMinor)}
-                    countFromZero={false}
-                    style={styles.outstanding}
-                    numberOfLines={1}
-                    adjustsFontSizeToFit
-                  />
-                  <Text style={styles.left}>{isBorrowed ? 'left' : 'to receive'}</Text>
-                </>
-              )}
-            </View>
+          </View>
+          <View style={styles.figs}>
+            {isClosed ? (
+              <Text style={styles.paidOff}>Paid off</Text>
+            ) : (
+              <>
+                <Text style={styles.left}>{isBorrowed ? 'Principal remaining' : 'Still to receive'}</Text>
+                <CountUpAmount
+                  minor={roundedMinor(loan.outstandingPrincipalMinor)}
+                  countFromZero={false}
+                  style={styles.outstanding}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                />
+              </>
+            )}
           </View>
 
           <View style={styles.track}>
@@ -125,7 +123,10 @@ export function LoanCard({
                 </Text>
               </View>
               <Pressable
-                onPress={onPay}
+                onPress={(event) => {
+                  event?.stopPropagation();
+                  onPay();
+                }}
                 accessibilityRole="button"
                 accessibilityLabel={`${isBorrowed ? 'Pay' : 'Mark received'} next EMI for ${loan.counterparty}`}
                 hitSlop={8}
@@ -146,8 +147,7 @@ const styles = StyleSheet.create({
   card: {
     marginHorizontal: 20,
     marginBottom: 12,
-    paddingVertical: 16,
-    paddingHorizontal: 16,
+    padding: 14,
     borderRadius: 24,
     backgroundColor: GLASS.fill,
     borderWidth: 1,
@@ -165,8 +165,20 @@ const styles = StyleSheet.create({
   headText: { flex: 1, minWidth: 0 },
   name: { fontFamily: theme.font.roundedBold, fontSize: 15, color: theme.colors.textPrimary },
   sub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, marginTop: 2 },
-  figs: { alignItems: 'flex-end', flexShrink: 0, maxWidth: '42%' },
-  outstanding: { fontFamily: theme.font.monoBold, fontSize: 15, color: theme.colors.textPrimary },
+  figs: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
+    gap: 8,
+    marginTop: 10,
+  },
+  outstanding: {
+    fontFamily: theme.font.monoBold,
+    fontSize: 20,
+    color: theme.colors.textPrimary,
+    flexShrink: 1,
+  },
   left: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textMuted, marginTop: 2 },
   paidOff: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.incomeText },
   track: {
@@ -179,7 +191,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   fill: { height: '100%', borderRadius: 4, minWidth: 5 },
-  caption: { flexDirection: 'row', justifyContent: 'space-between', gap: 10, marginTop: 8 },
+  caption: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: 6, marginTop: 8 },
   captionText: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, flexShrink: 1 },
   captionBold: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
   // The next payment in a soft amber box, so what's due next stands out from the loan's figures.
@@ -187,8 +199,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    marginTop: 12,
-    paddingVertical: 10,
+    marginTop: 10,
+    paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 16,
     backgroundColor: 'rgba(255,239,204,0.85)',

@@ -71,19 +71,23 @@ describe('BudgetRow', () => {
 
   it('opens its actions from a visible button, and from a long-press too', () => {
     const onMore = jest.fn();
+    const onPress = jest.fn();
+    const stopPropagation = jest.fn();
     let tree!: ReturnType<typeof create>;
     act(() => {
       tree = create(
-        <BudgetRow progress={makeProgress()} divider={false} onPress={() => {}} onMore={onMore} />
+        <BudgetRow progress={makeProgress()} divider={false} onPress={onPress} onMore={onMore} />
       );
     });
     act(() =>
       tree.root
         .find((n) => n.props.accessibilityLabel === 'More for Groceries budget' && n.props.onPress)
-        .props.onPress()
+        .props.onPress({ stopPropagation })
     );
     act(() => tree.root.find((n) => typeof n.props.onLongPress === 'function').props.onLongPress());
     expect(onMore).toHaveBeenCalledTimes(2);
+    expect(stopPropagation).toHaveBeenCalledTimes(1);
+    expect(onPress).not.toHaveBeenCalled();
   });
 });
 

@@ -24,7 +24,7 @@ export const styles = StyleSheet.create({
   // Skeleton rows while the screen loads.
   card: { marginBottom: 10, padding: 14 },
   // The Running, Paused and Not set up yet cards: rows with a hairline between.
-  list: { paddingVertical: 2, paddingHorizontal: 16 },
+  list: { paddingVertical: 2, paddingHorizontal: 14 },
   footnote: {
     fontFamily: theme.font.body,
     fontSize: 12,
@@ -39,9 +39,31 @@ export const styles = StyleSheet.create({
   rowTitle: { fontFamily: theme.font.bodyBold, fontSize: 15, color: theme.colors.textPrimary },
   rowSub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, marginTop: 2 },
   ruleMain: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10, minWidth: 0 },
+  ruleCopy: { flex: 1, minWidth: 0 },
+  ruleMainStacked: { flex: 0 },
+  ruleStacked: { flexDirection: 'column', alignItems: 'stretch', gap: 8 },
+  ruleSideStacked: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingLeft: 46,
+  },
+  amountButton: { minHeight: 44, justifyContent: 'center' },
+  suggestion: { paddingVertical: 12, gap: 8 },
+  suggestionHead: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  suggestionActions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: 8,
+    paddingLeft: 46,
+  },
+  hide: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
   ruleSide: { alignItems: 'flex-end', gap: 6 },
   ruleAmount: { fontFamily: theme.font.monoBold, fontSize: 15, color: theme.colors.textPrimary },
   make: {
+    minHeight: 44,
+    justifyContent: 'center',
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 999,
@@ -66,7 +88,7 @@ export const styles = StyleSheet.create({
   },
   // The recurring sheet (Direction C): its tabs, a row's picker opened in
   // place, and the row of next dates.
-  gap: { height: 14 },
+  gap: { height: 8 },
   rowPanel: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -79,8 +101,11 @@ export const styles = StyleSheet.create({
   upcoming: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   endDateRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexWrap: 'wrap',
+    gap: 8,
     alignItems: 'center',
+    minHeight: 44,
+    justifyContent: 'space-between',
     marginTop: 10,
     marginBottom: 8,
   },

@@ -833,7 +833,6 @@ export default function AddTransactionScreen() {
             setPadOpen(!padVisible);
             setError(null);
           }}
-          selectionSummary={selectionSummary}
           amountIssue={invalidAmount ? 'Enter a positive amount. Check the calculation.' : roundingNote}
           frequentAmounts={frequentAmounts}
           amountMinor={amountMinor}
@@ -956,15 +955,17 @@ export default function AddTransactionScreen() {
         offset={{ opened: insets.bottom }}
         style={[styles.footer, { paddingBottom: insets.bottom + 12 }]}
       >
-        <Text style={styles.footerSummary} accessibilityLiveRegion="polite">
-          {selectionSummary}
-        </Text>
-        {rows.length > 0 && <Text style={styles.queueHint}>{rows.length} on your list · not saved yet</Text>}
-        {!error && !repeatWarning && !splitParts && currentProblem && (
-          <Text style={styles.formHint}>
-            {invalidAmount ? 'Enter a positive amount. Check the calculation.' : currentProblem}
+        <View style={styles.footerStatus}>
+          <Text style={styles.footerSummary} accessibilityLiveRegion="polite">
+            {selectionSummary}
           </Text>
-        )}
+          {!error && !repeatWarning && !splitParts && currentProblem && (
+            <Text style={styles.formHint}>
+              {invalidAmount ? 'Enter a positive amount. Check the calculation.' : currentProblem}
+            </Text>
+          )}
+        </View>
+        {rows.length > 0 && <Text style={styles.queueHint}>{rows.length} on your list · not saved yet</Text>}
         {error && <Text style={styles.error}>{error}</Text>}
         {rows.length > 0 && (
           <View style={styles.totalsRow}>

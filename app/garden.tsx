@@ -198,27 +198,28 @@ export default function GardenScreen() {
                 </EmptyState>
               ) : (
                 <>
-                  <View
+                  <Glass
+                    radius={24}
+                    tone="strong"
                     style={[
-                      styles.streakPill,
+                      styles.streakSummary,
                       { backgroundColor: shade(secondary, 94), borderColor: secondary },
                     ]}
                   >
-                    <SuuIllustration size={16} pose={streakToday > 0 ? 'default' : 'sleepy'} />
-                    <Text style={styles.streakPillText}>
-                      {streakToday > 0 ? `${streakToday}-day streak` : 'No streak yet'} · under{' '}
-                      {formatMoney(dailyGoalMinor)} a day
-                    </Text>
-                  </View>
-
-                  <View style={{ marginHorizontal: 20, marginTop: 8 }}>
+                    <View style={styles.summaryHead}>
+                      <SuuIllustration size={16} pose={streakToday > 0 ? 'default' : 'sleepy'} />
+                      <Text style={styles.streakValue}>
+                        {streakToday > 0 ? `${streakToday}-day streak` : 'No streak yet'}
+                      </Text>
+                    </View>
+                    <Text style={styles.summaryGoal}>Daily goal · under {formatMoney(dailyGoalMinor)}</Text>
                     <PrimaryButton
                       title="Change daily goal"
                       compact
                       variant="secondary"
                       onPress={() => router.push({ pathname: '/profile', params: { tab: 'settings' } })}
                     />
-                  </View>
+                  </Glass>
                   <Glass radius={28} tone="strong" style={styles.bed}>
                     {potDays.map((point) => {
                       const isToday = point.date === today;

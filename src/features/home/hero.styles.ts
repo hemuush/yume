@@ -4,7 +4,14 @@ import { GLASS } from '@/components/Glass';
 
 export const styles = StyleSheet.create({
   card: { marginHorizontal: 16, padding: 14, gap: 10 },
-  bar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8, minHeight: 32 },
+  bar: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
+    minHeight: 32,
+  },
   body: { gap: 10 },
 
   headLabel: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textSecondary },
@@ -49,12 +56,14 @@ export const styles = StyleSheet.create({
   },
   chipOver: { borderColor: 'rgba(189,53,71,0.28)', backgroundColor: 'rgba(226,63,85,0.06)' },
   chipTextOver: { color: theme.colors.expenseText },
-  dueChip: { borderColor: 'transparent', backgroundColor: theme.colors.dueTint },
+  dueChip: { minHeight: 48, borderColor: 'transparent', backgroundColor: theme.colors.dueTint },
   dueDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: theme.colors.slice.due },
   dueText: { flexShrink: 1, fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.dueInk },
 
   stats: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
+    rowGap: 8,
     paddingVertical: 10,
     paddingHorizontal: 4,
     borderRadius: 18,
@@ -62,7 +71,7 @@ export const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: GLASS.edge,
   },
-  stat: { flex: 1, minWidth: 0, paddingHorizontal: 8, gap: 3 },
+  stat: { flexGrow: 1, flexBasis: 100, minWidth: 0, paddingHorizontal: 8, gap: 3 },
   statDivider: { borderLeftWidth: StyleSheet.hairlineWidth, borderLeftColor: theme.colors.borderSoft },
   statHead: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   statDot: { width: 8, height: 8, borderRadius: 4 },
@@ -84,6 +93,7 @@ export const styles = StyleSheet.create({
   },
   workingRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'baseline',
     justifyContent: 'space-between',
     gap: 8,
@@ -95,7 +105,13 @@ export const styles = StyleSheet.create({
     marginTop: 3,
     paddingTop: 8,
   },
-  workingLabel: { flex: 1, fontFamily: theme.font.body, fontSize: 14, color: theme.colors.textSecondary },
+  workingLabel: {
+    flexGrow: 1,
+    flexBasis: 140,
+    fontFamily: theme.font.body,
+    fontSize: 14,
+    color: theme.colors.textSecondary,
+  },
   workingLabelTotal: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
   workingValue: { fontFamily: theme.font.monoBold, fontSize: 14, color: theme.colors.textPrimary },
   workingValueDue: { color: theme.colors.dueInk },

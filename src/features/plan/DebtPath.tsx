@@ -60,12 +60,14 @@ export function DebtPath({
     <View>
       <Glass style={styles.card}>
         <View style={styles.head}>
-          <Text style={styles.pathValue} numberOfLines={1} adjustsFontSizeToFit>
-            {formatMoney(loans.debtLeftMinor)}
-          </Text>
+          <View style={{ flexShrink: 1, gap: 4 }}>
+            <Text style={styles.pathNote}>Principal left</Text>
+            <Text style={styles.pathValue} numberOfLines={1} adjustsFontSizeToFit>
+              {formatMoney(loans.debtLeftMinor)}
+            </Text>
+          </View>
           <Text style={styles.pathNote}>{formatRatioPct(loans.paidFraction)} repaid</Text>
         </View>
-        <Text style={styles.pathNote}>Principal left</Text>
         <View
           style={local.track}
           accessibilityRole="progressbar"

@@ -98,7 +98,8 @@ function DueRow({
           style={[styles.dueSub, tone === 'urgent' ? styles.dueUrgent : tone === 'soon' && styles.dueSoon]}
           numberOfLines={2}
         >
-          {KIND_LABEL[item.kind]} · {when}
+          {KIND_LABEL[item.kind]}
+          {tone ? ` · ${when}` : ''}
         </Text>
       </View>
       {item.loanId && onPay ? (
@@ -192,15 +193,17 @@ export function ComingUpSection({
                 )}
                 <View style={[styles.node, { borderColor: nodeColor(g, today, ink) }]} />
                 <View style={styles.dayHead}>
-                  <Text style={styles.dayHeadText}>{weekdayDayMonth(g.date)}</Text>
+                  <View style={styles.dayHeading}>
+                    <Text style={styles.dayHeadText}>{weekdayDayMonth(g.date)}</Text>
+                    <Text style={styles.dueSub}>
+                      {g.date > addDaysToIsoDate(today, DUE_SOON_DAYS - 1) ? 'Next scheduled · ' : ''}
+                      {g.items.length} {g.items.length === 1 ? 'entry' : 'entries'}
+                    </Text>
+                  </View>
                   {g.outMinor > 0 && (
                     <Text style={styles.dayHeadAmount}>Total out {formatMoney(g.outMinor)}</Text>
                   )}
                 </View>
-                <Text style={styles.dueSub}>
-                  {g.date > addDaysToIsoDate(today, DUE_SOON_DAYS - 1) ? 'Next scheduled · ' : ''}
-                  {g.items.length} {g.items.length === 1 ? 'entry' : 'entries'}
-                </Text>
                 {g.items.map((it) => (
                   <DueRow key={it.key} item={it} today={today} onOpen={onOpen} onPay={onPay} />
                 ))}

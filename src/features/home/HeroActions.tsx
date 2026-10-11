@@ -38,9 +38,7 @@ function Action({ type, label, icon, ink }: (typeof ACTIONS)[number] & { ink: st
         style={[styles.action, primary && { backgroundColor: ink, borderColor: ink }, animatedStyle]}
       >
         <Feather name={icon} size={19} color={primary ? theme.colors.white : theme.colors.ink} />
-        <Text style={[styles.label, primary && styles.labelPrimary]} numberOfLines={1}>
-          {label}
-        </Text>
+        <Text style={[styles.label, primary && styles.labelPrimary]}>{label}</Text>
       </Animated.View>
     </Pressable>
   );
@@ -59,8 +57,8 @@ export function HeroActions() {
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', gap: 8 },
-  wrap: { flex: 1 },
+  row: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  wrap: { flexGrow: 1, flexBasis: 88 },
   action: {
     minHeight: 52,
     paddingVertical: 10,
@@ -72,6 +70,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: GLASS.edge,
   },
-  label: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textPrimary },
+  label: {
+    textAlign: 'center',
+    fontFamily: theme.font.bodyMedium,
+    fontSize: 13,
+    color: theme.colors.textPrimary,
+  },
   labelPrimary: { color: theme.colors.white },
 });

@@ -65,17 +65,13 @@ export function GoalCard({
       )}
       {monthsLine && (
         <View style={styles.tag}>
-          <Text style={styles.tagText} numberOfLines={1}>
-            {monthsLine}
-          </Text>
+          <Text style={styles.tagText}>{monthsLine}</Text>
         </View>
       )}
       {following && (
         <View style={[styles.tag, { backgroundColor: shade(secondary, 94) }]}>
           <Feather name="refresh-cw" size={10} color={theme.colors.textSecondary} />
-          <Text style={styles.tagText} numberOfLines={1}>
-            Following {accountName ?? 'its account'}
-          </Text>
+          <Text style={styles.tagText}>Following {accountName ?? 'its account'}</Text>
         </View>
       )}
     </>
@@ -96,6 +92,7 @@ export function GoalCard({
             <View style={[styles.fillEdge, { backgroundColor: shade(fillColor, 60) }]} />
           </View>
         )}
+        <Text style={styles.name}>{goal.name}</Text>
         <View style={styles.head}>
           {hideAmounts ? (
             <Feather name="eye-off" size={20} color={theme.colors.textMuted} />
@@ -127,10 +124,7 @@ export function GoalCard({
           </View>
         </View>
 
-        <Text style={styles.name} numberOfLines={2}>
-          {goal.name}
-        </Text>
-        <Text style={styles.sub} numberOfLines={2}>
+        <Text style={styles.sub}>
           {hideAmounts
             ? formatMaskableMoney(goal.currentAmountMinor, { masked: true })
             : formatMoney(goal.currentAmountMinor)}{' '}
@@ -142,11 +136,12 @@ export function GoalCard({
           <View style={styles.tags}>{tags}</View>
           {showPill && (
             <Pressable
-              onPress={
-                following
-                  ? () => router.push(`/add-transaction?type=transfer&toAccountId=${goal.linkedAccountId}`)
-                  : onContribute
-              }
+              onPress={(event) => {
+                event?.stopPropagation();
+                if (following)
+                  router.push(`/add-transaction?type=transfer&toAccountId=${goal.linkedAccountId}`);
+                else onContribute();
+              }}
               accessibilityRole="button"
               accessibilityLabel={`${following ? 'Move money to' : 'Add money to'} ${goal.name}`}
               hitSlop={8}
@@ -165,9 +160,8 @@ const styles = StyleSheet.create({
   wrap: { marginHorizontal: 20, marginBottom: 12 },
   // Frosted glass that fills from the bottom; the goal's colour is the liquid.
   card: {
-    minHeight: 156,
-    padding: 16,
-    gap: 4,
+    padding: 14,
+    gap: 8,
     borderRadius: 24,
     borderWidth: 1,
     borderColor: GLASS.edge,
@@ -179,6 +173,7 @@ const styles = StyleSheet.create({
   fillEdge: { position: 'absolute', left: 0, right: 0, top: 0, height: 2, opacity: 0.8 },
   head: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'flex-start',
     justifyContent: 'space-between',
     gap: 10,
@@ -200,11 +195,10 @@ const styles = StyleSheet.create({
     fontFamily: theme.font.roundedBold,
     fontSize: 17,
     color: theme.colors.textPrimary,
-    marginTop: 'auto',
   },
   sub: { fontFamily: theme.font.body, fontSize: 12.5, color: theme.colors.textSecondary },
-  footer: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 8 },
-  tags: { flex: 1, minWidth: 0, flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  footer: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 },
+  tags: { flexGrow: 1, flexBasis: 160, minWidth: 0, flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   tag: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -228,6 +222,8 @@ const styles = StyleSheet.create({
   onPace: { color: theme.colors.incomeText },
   behind: { color: theme.colors.warnInk },
   pill: {
+    minHeight: 44,
+    justifyContent: 'center',
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: theme.radius.pill,

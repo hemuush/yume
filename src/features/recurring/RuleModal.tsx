@@ -433,10 +433,18 @@ export function RuleModal({
             onChangeText={setIntervalCount}
             placeholder="1"
           />
-          <DateField label="Starts on" value={startDate} onChange={setStartDate} />
+          <DateField
+            label={editing ? 'Next entry on' : 'Starts on'}
+            value={startDate}
+            onChange={setStartDate}
+          />
           <View style={styles.endDateRow}>
             <Text style={styles.fieldLabel}>Ends on a specific date</Text>
-            <ToggleSwitch value={hasEndDate} onChange={setHasEndDate} />
+            <ToggleSwitch
+              value={hasEndDate}
+              onChange={setHasEndDate}
+              accessibilityLabel="Ends on a specific date"
+            />
           </View>
           {hasEndDate && (
             <DateField label="Ends on" value={endDate} onChange={setEndDate} minDate={startDate} />

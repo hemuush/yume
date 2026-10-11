@@ -1,5 +1,5 @@
 import { ReactNode, useState } from 'react';
-import { View, Pressable, Animated } from 'react-native';
+import { View, Pressable, Animated, useWindowDimensions } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import { theme } from '@/constants/theme';
 import { withPressed } from '@/lib/pressed';
@@ -60,9 +60,7 @@ export function CategoryTile({
           </View>
         )}
       </View>
-      <Text style={styles.tileName} numberOfLines={2}>
-        {isSubcategory ? `↳ ${category.name}` : category.name}
-      </Text>
+      <Text style={styles.tileName}>{isSubcategory ? `↳ ${category.name}` : category.name}</Text>
     </AnimatedPressable>
   );
 }
@@ -89,15 +87,13 @@ function SubcategoryPill({
       accessibilityHint="Press and hold for more options"
     >
       <View style={[styles.pillDot, { backgroundColor: category.color }]} />
-      <Text style={styles.pillText} numberOfLines={2}>
-        {category.name}
-      </Text>
+      <Text style={styles.pillText}>{category.name}</Text>
     </AnimatedPressable>
   );
 }
 
 /**
- * Tiles in rows of `TILE_COLUMNS`. `panelAfter` can return a panel to open under a row (given that row's items
+ * Tiles in four columns, or two on narrow screens and with enlarged text. `panelAfter` can return a panel to open under a row (given that row's items
  * and the column to point at), which is why the rows are built here rather than left to a wrapping flex.
  */
 export function TileRows<T extends { id: string }>({
@@ -107,25 +103,28 @@ export function TileRows<T extends { id: string }>({
 }: {
   items: T[];
   renderTile: (item: T) => ReactNode;
-  panelAfter?: (rowItems: T[]) => ReactNode;
+  panelAfter?: (rowItems: T[], columns: number) => ReactNode;
 }) {
+  const { width, fontScale } = useWindowDimensions();
+  const columns = width < 360 || fontScale > 1.2 ? 2 : TILE_COLUMNS;
+  const cellStyle = { width: `${100 / columns}%` as `${number}%` };
   const rows: T[][] = [];
-  for (let i = 0; i < items.length; i += TILE_COLUMNS) rows.push(items.slice(i, i + TILE_COLUMNS));
+  for (let i = 0; i < items.length; i += columns) rows.push(items.slice(i, i + columns));
   return (
     <View style={styles.grid}>
       {rows.map((row) => (
         <MovingRow key={row[0].id}>
           <View style={styles.gridRow}>
             {row.map((item) => (
-              <View key={item.id} style={styles.cell}>
+              <View key={item.id} style={[styles.cell, cellStyle]}>
                 {renderTile(item)}
               </View>
             ))}
-            {Array.from({ length: TILE_COLUMNS - row.length }, (_, i) => (
-              <View key={`pad-${i}`} style={styles.cell} />
+            {Array.from({ length: columns - row.length }, (_, i) => (
+              <View key={`pad-${i}`} style={[styles.cell, cellStyle]} />
             ))}
           </View>
-          {panelAfter?.(row)}
+          {panelAfter?.(row, columns)}
         </MovingRow>
       ))}
     </View>
@@ -133,7 +132,7 @@ export function TileRows<T extends { id: string }>({
 }
 
 /**
- * Every top-level category as a tile, A to Z, four to a row. A parent shows its subcategory count; tapping it
+ * Every top-level category as a tile, A to Z, in adaptive rows. A parent shows its subcategory count; tapping it
  * opens its pills in a panel under that row (and the panel's header edits the parent), a childless one edits.
  */
 export function CategorySection({
@@ -163,14 +162,14 @@ export function CategorySection({
           />
         );
       }}
-      panelAfter={(row) => {
+      panelAfter={(row, columns) => {
         const index = row.findIndex((c) => c.id === openId);
         if (index < 0) return null;
         const parent = row[index];
         const kids = childrenOf(cats, parent.id);
         return (
           <View style={styles.panelWrap}>
-            <View style={[styles.notch, { left: `${(index + 0.5) * (100 / TILE_COLUMNS)}%` }]} />
+            <View style={[styles.notch, { left: `${(index + 0.5) * (100 / columns)}%` }]} />
             <View style={styles.panel}>
               <PanelHeader
                 parent={parent}

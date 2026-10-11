@@ -27,8 +27,8 @@ import { useAccent } from '@/theme/AccentContext';
  */
 
 /**
- * The white card under the sky header: the amount being typed, and this category's usual amounts. A strip
- * along its top edge, the kicker and the caret take the entry type's colour (the type switch is in the header).
+ * The glass card under the sky header: the amount and this category's usual amounts.
+ * The kicker and caret take the entry type's colour; selection details stay in the dock.
  */
 export function AmountCard({
   type,
@@ -40,7 +40,6 @@ export function AmountCard({
   isLinked,
   onOpenPad,
   onTogglePad,
-  selectionSummary,
   amountIssue,
   frequentAmounts,
   amountMinor,
@@ -59,7 +58,6 @@ export function AmountCard({
   isLinked: boolean;
   onOpenPad: () => void;
   onTogglePad?: () => void;
-  selectionSummary?: string;
   amountIssue?: string;
   frequentAmounts: number[];
   amountMinor: number;
@@ -120,7 +118,6 @@ export function AmountCard({
           {amountIssue}
         </Text>
       )}
-      {selectionSummary && <Text style={styles.selectionSummary}>{selectionSummary}</Text>}
 
       {frequentAmounts.length > 0 && (
         <View style={styles.frequentRow}>

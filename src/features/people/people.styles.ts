@@ -32,6 +32,8 @@ export const styles = StyleSheet.create({
   // A row of person tiles (one or two across) and the headings that group them.
   groupHead: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
     justifyContent: 'space-between',
     alignItems: 'baseline',
     marginHorizontal: 24,
@@ -43,7 +45,7 @@ export const styles = StyleSheet.create({
   tileRow: { flexDirection: 'row', gap: 10, marginHorizontal: 20, marginBottom: 10 },
   tileCell: { flex: 1, minWidth: 0 },
   // A white tile (StripCard) whose top strip says which way the money goes: mint they owe you, coral you owe.
-  personTile: { padding: 16 },
+  personTile: { padding: 14 },
   tileWho: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   tileAvatar: {
     width: 32,
@@ -62,13 +64,13 @@ export const styles = StyleSheet.create({
     fontSize: 15,
     color: theme.colors.textPrimary,
   },
-  tileAmount: { fontFamily: theme.font.body, fontSize: 21, letterSpacing: -0.4, marginTop: 12 },
+  tileAmount: { fontFamily: theme.font.body, fontSize: 21, letterSpacing: -0.4, marginTop: 8 },
   tileMeta: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary, marginTop: 2 },
   settlePill: {
     minHeight: 44,
     justifyContent: 'center',
     alignSelf: 'flex-start',
-    marginTop: 12,
+    marginTop: 8,
     paddingHorizontal: 13,
     paddingVertical: 6,
     borderRadius: theme.radius.pill,
@@ -105,9 +107,10 @@ export const styles = StyleSheet.create({
   // suits a modal's inner list better than more tiles.
   row: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
     gap: 10,
-    paddingHorizontal: 20,
+    paddingHorizontal: 14,
     paddingVertical: 12,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: theme.colors.borderSoft,
@@ -125,6 +128,9 @@ export const styles = StyleSheet.create({
   rowLabel: { fontFamily: theme.font.bodyMedium, fontSize: 15, color: theme.colors.textPrimary },
   rowSub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, marginTop: 2 },
   rowValue: { fontFamily: theme.font.monoBold, fontSize: 15 },
+  detailCopy: { flexGrow: 1, flexBasis: 120, minWidth: 0 },
+  footerStack: { flexDirection: 'column', gap: 8 },
+  footerStackButton: { flex: 0, width: '100%' },
   // The Settle / History switch under a person's card.
   sectionTitle: {
     ...SECTION_TITLE,

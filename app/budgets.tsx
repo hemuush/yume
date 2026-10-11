@@ -237,7 +237,9 @@ export default function BudgetsScreen() {
           <EmptyState
             title="No budgets yet"
             subtitle="Set a monthly limit for a category to see how close you are, right from Home."
-          />
+          >
+            <PrimaryButton title="Create a budget" onPress={() => setModalVisible(true)} />
+          </EmptyState>
         ) : (
           budgets.length > 0 && (
             <>

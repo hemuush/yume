@@ -31,30 +31,28 @@ export const styles = StyleSheet.create({
     lineHeight: 17,
   },
 
-  streakPill: {
-    alignSelf: 'flex-start',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
+  streakSummary: {
+    gap: 8,
     marginHorizontal: 20,
-    marginTop: 14,
+    marginTop: 12,
     borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: theme.radius.pill,
-    paddingVertical: 6,
-    paddingHorizontal: 12,
+    padding: 14,
   },
-  streakPillText: { fontFamily: theme.font.bodyBold, fontSize: 11.5, color: theme.colors.ink },
+  summaryHead: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  streakValue: { flex: 1, fontFamily: theme.font.roundedBold, fontSize: 22, color: theme.colors.ink },
+  summaryGoal: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textSecondary },
 
   bed: {
     marginHorizontal: 20,
-    marginTop: 16,
-    paddingHorizontal: 12,
-    paddingVertical: 18,
+    marginTop: 12,
+    padding: 14,
     flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
     justifyContent: 'space-between',
     alignItems: 'flex-end',
   },
-  pot: { flex: 1, minWidth: 0, alignItems: 'center', gap: 8 },
+  pot: { flexGrow: 1, flexBasis: 52, minWidth: 52, alignItems: 'center', gap: 6 },
   potToday: {
     borderRadius: 18,
     paddingVertical: 6,
@@ -62,7 +60,7 @@ export const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.95)',
   },
-  plantSlot: { height: 58, justifyContent: 'flex-end', alignItems: 'center' },
+  plantSlot: { height: 64, justifyContent: 'flex-end', alignItems: 'center' },
   soil: { width: 36, height: 11, backgroundColor: theme.colors.inkWash, borderRadius: 6 },
   dayLabel: {
     fontFamily: theme.font.body,
@@ -72,11 +70,11 @@ export const styles = StyleSheet.create({
   },
   dayLabelToday: { fontFamily: theme.font.bodyBold, color: theme.colors.ink },
 
-  legend: { flexDirection: 'row', marginHorizontal: 20, marginTop: 14 },
-  legendItem: { flex: 1, alignItems: 'center', gap: 4 },
+  legend: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginHorizontal: 20, marginTop: 12 },
+  legendItem: { flexGrow: 1, flexBasis: 64, alignItems: 'center', gap: 4 },
   legendLabel: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
 
-  note: { marginHorizontal: 20, marginTop: 18, padding: 14 },
+  note: { marginHorizontal: 20, marginTop: 12, padding: 14 },
   noteLabel: {
     fontFamily: theme.font.roundedMedium,
     fontSize: 12,

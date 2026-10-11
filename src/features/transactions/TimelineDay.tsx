@@ -1,5 +1,5 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Animated, Pressable, View, StyleSheet } from 'react-native';
+import { Animated, Pressable, View, StyleSheet, useWindowDimensions } from 'react-native';
 import ReanimatedAnimated from 'react-native-reanimated';
 import Feather from '@expo/vector-icons/Feather';
 import { Text } from '@/components/Text';
@@ -96,6 +96,8 @@ function TimelineDayView({
   accountCurrency?: (id: string) => string;
 }) {
   const { hideAmounts } = usePrivacy();
+  const { width, fontScale } = useWindowDimensions();
+  const stacked = width < 360 || fontScale > 1.2;
   const { accent } = useAccent();
   const categoriesById = useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories]);
   // "in Food & Dining" for a subcategory, nothing for a top-level category.
@@ -235,17 +237,15 @@ function TimelineDayView({
           <Pressable
             onPress={() => onPressTx(tx)}
             {...reorderProps(i)}
-            style={withPressed(styles.line)}
+            style={withPressed([styles.line, stacked && styles.wrapLine])}
             accessibilityRole="button"
             accessibilityLabel={`${categorySpoken(categoryName(tx.categoryId), parentNameOf(tx.categoryId, categoriesById))}${tx.note ? `, ${tx.note}` : ''}, ${money(tx.amountMinor, hidden(tx), tx.accountId)}`}
           >
             <JustAddedGlow ids={[tx.id]} surface="activity" />
             <CategoryIcon name={cat?.icon ?? 'tag'} color={cat?.color} size={14} square={30} round />
-            <View style={styles.mid}>
-              <Text style={styles.name} numberOfLines={1}>
-                {categoryName(tx.categoryId)}
-              </Text>
-              <Text style={styles.sub} numberOfLines={1}>
+            <View style={[styles.mid, stacked && styles.wideMid]}>
+              <Text style={styles.name}>{categoryName(tx.categoryId)}</Text>
+              <Text style={styles.sub}>
                 {tx.isRefund && <Text style={styles.refund}>Refund · </Text>}
                 {parentLine(tx.categoryId) ? `${parentLine(tx.categoryId)} · ` : ''}
                 {tx.note ? `${tx.note} · ` : ''}
@@ -279,7 +279,7 @@ function TimelineDayView({
             onToggleStack(line.key);
           }}
           {...reorderProps(i)}
-          style={withPressed(styles.line)}
+          style={withPressed([styles.line, stacked && styles.wrapLine])}
           accessibilityRole="button"
           accessibilityState={{ expanded: open }}
           accessibilityLabel={`${categorySpoken(name, stackParent)}, ${line.items.length} entries, ${money(line.totalMinor, lineMasked, first.accountId)}. ${open ? 'Close' : 'Open'}`}
@@ -287,11 +287,9 @@ function TimelineDayView({
           {/* A new entry folded into this line glows the line. */}
           <JustAddedGlow ids={line.items.map((t) => t.id)} surface="activity" />
           <CategoryIcon name={cat?.icon ?? 'tag'} color={cat?.color} size={14} square={30} round />
-          <View style={styles.mid}>
+          <View style={[styles.mid, stacked && styles.wideMid]}>
             <View style={styles.stackMid}>
-              <Text style={[styles.name, styles.stackName]} numberOfLines={1}>
-                {name}
-              </Text>
+              <Text style={[styles.name, styles.stackName]}>{name}</Text>
               <View style={styles.stackChip}>
                 <Feather
                   name={open ? 'chevron-up' : 'chevron-down'}
@@ -300,7 +298,7 @@ function TimelineDayView({
                 />
               </View>
             </View>
-            <Text style={styles.sub} numberOfLines={1}>
+            <Text style={styles.sub}>
               {joinSub([
                 inParent(stackParent),
                 `${line.items.length} entries`,
@@ -325,22 +323,16 @@ function TimelineDayView({
                 <MovingRow key={tx.id} style={styles.divider}>
                   <Pressable
                     onPress={() => onPressTx(tx)}
-                    style={withPressed(styles.subLine)}
+                    style={withPressed([styles.subLine, stacked && styles.wrapLine])}
                     accessibilityRole="button"
                     accessibilityLabel={`${categorySpoken(name, stackParent)}${tx.note ? `, ${tx.note}` : ''}, ${money(tx.amountMinor, hidden(tx), tx.accountId)}`}
                   >
                     <View
                       style={[styles.subDot, { backgroundColor: cat?.color ?? theme.colors.borderSoft }]}
                     />
-                    <View style={styles.mid}>
-                      <Text style={styles.name} numberOfLines={1}>
-                        {label}
-                      </Text>
-                      {sub && (
-                        <Text style={styles.sub} numberOfLines={1}>
-                          {sub}
-                        </Text>
-                      )}
+                    <View style={[styles.mid, stacked && styles.wideMid]}>
+                      <Text style={styles.name}>{label}</Text>
+                      {sub && <Text style={styles.sub}>{sub}</Text>}
                     </View>
                     <Amount
                       type={tx.type}
@@ -361,7 +353,7 @@ function TimelineDayView({
   return (
     <ReanimatedAnimated.View entering={entering} style={styles.day}>
       <View style={styles.head}>
-        <Text style={styles.title} numberOfLines={1}>
+        <Text style={styles.title}>
           {label}
           {'  '}
           <Text style={styles.date}>{dateLabel}</Text>
@@ -391,7 +383,11 @@ function TimelineDayView({
           <Pressable
             key={tx.id}
             onPress={() => onPressTx(tx)}
-            style={withPressed([styles.line, (lines.length > 0 || i > 0) && styles.divider])}
+            style={withPressed([
+              styles.line,
+              stacked && styles.wrapLine,
+              (lines.length > 0 || i > 0) && styles.divider,
+            ])}
             accessibilityRole="button"
             accessibilityLabel={`${money(tx.amountMinor, hidden(tx), tx.accountId)} moved from ${accountName(tx.accountId)} to ${accountName(tx.toAccountId!)}`}
           >
@@ -399,13 +395,11 @@ function TimelineDayView({
             <View style={[styles.transferIcon, { backgroundColor: shade(accent, 95) }]}>
               <Feather name="repeat" size={13} color={theme.colors.ink} />
             </View>
-            <View style={styles.mid}>
-              <Text style={[styles.name, styles.transferName]} numberOfLines={1}>
+            <View style={[styles.mid, stacked && styles.wideMid]}>
+              <Text style={[styles.name, styles.transferName]}>
                 {accountName(tx.accountId)} → {accountName(tx.toAccountId!)}
               </Text>
-              <Text style={styles.sub} numberOfLines={1}>
-                {tx.note ? `${tx.note} · ` : ''}Transfer
-              </Text>
+              <Text style={styles.sub}>{tx.note ? `${tx.note} · ` : ''}Transfer</Text>
             </View>
             <Text style={[styles.amount, styles.transferAmount]} numberOfLines={1}>
               {money(tx.amountMinor, hidden(tx), tx.accountId)}
@@ -421,12 +415,19 @@ const styles = StyleSheet.create({
   day: { paddingHorizontal: 16, paddingBottom: 16 },
   head: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'baseline',
     justifyContent: 'space-between',
     gap: 8,
     marginBottom: 12,
   },
-  title: { flex: 1, fontFamily: theme.font.roundedBold, fontSize: 16, color: theme.colors.textPrimary },
+  title: {
+    flexGrow: 1,
+    flexBasis: 160,
+    fontFamily: theme.font.roundedBold,
+    fontSize: 16,
+    color: theme.colors.textPrimary,
+  },
   date: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
   // Spending reads in ink with its minus sign; only money in is green.
   total: { fontFamily: theme.font.monoBold, fontSize: 13, color: theme.colors.textPrimary },
@@ -454,11 +455,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    // Every line has a name and a second line, so every line is this tall.
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    // A minimum target; text can wrap and measured row heights drive reordering.
     minHeight: 52,
   },
+  wrapLine: { flexWrap: 'wrap', rowGap: 6 },
+  wideMid: { flexGrow: 1, flexBasis: '75%' },
   mid: { flex: 1, minWidth: 0 },
   stackMid: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   stackChip: {

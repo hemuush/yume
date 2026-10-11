@@ -184,7 +184,7 @@ describe('Plan tab', () => {
     const shown = texts(await render());
     const headings = [
       'Next 14 days',
-      '2 payments',
+      'going out · 2 payments',
       'This month’s budgets',
       'The way to debt-free',
       'Estimated debt-free · ' +
@@ -218,7 +218,8 @@ describe('Plan tab', () => {
     expect(shown.some((t) => t.startsWith('Follow Pot (₹54,000)'))).toBe(true);
     // What-if cuts the biggest category it can, not the EMI: 10% of Food's ₹20,000.
     expect(shown).toContain('Food');
-    expect(shown).toContain('₹2,000');
+    expect(shown).toContain('₹2,000 / month');
+    expect(shown).toContain('₹24,000 / year');
     expect(shown.some((t) => t.includes('Loan EMI'))).toBe(false);
     // 25% of the home loan's principal repaid.
     expect(shown.some((t) => t.includes('25% repaid'))).toBe(true);
@@ -328,7 +329,7 @@ describe('Plan tab', () => {
       ).color;
     // The EMI is 3 days out (amber); the streaming bill tomorrow is not an EMI or card bill.
     expect(subColor('EMI · ')).toBe(theme.colors.dueInk);
-    expect(subColor('Bill · ')).toBe(theme.colors.textMuted);
+    expect(subColor('Bill')).toBe(theme.colors.textMuted);
   });
 
   it('marks an EMI paid straight from Coming up, showing what the account holds after', async () => {

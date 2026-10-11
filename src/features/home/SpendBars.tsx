@@ -201,7 +201,13 @@ export function SpendBars({
 
 const styles = StyleSheet.create({
   card: { marginHorizontal: 16, paddingHorizontal: 14, paddingTop: 14, paddingBottom: 12 },
-  head: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 },
+  head: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
   title: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textSecondary },
   total: { fontFamily: theme.font.body, fontSize: 12.5, color: theme.colors.textMuted, marginTop: 2 },
   switch: {
@@ -212,7 +218,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     backgroundColor: 'rgba(18,19,15,0.05)',
   },
-  seg: { minHeight: 26, paddingHorizontal: 12, borderRadius: 13, justifyContent: 'center' },
+  seg: { minHeight: 48, paddingHorizontal: 12, borderRadius: 13, justifyContent: 'center' },
   segOn: { backgroundColor: theme.colors.white, boxShadow: '0px 1px 3px rgba(18,19,15,0.12)' },
   segText: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textSecondary },
   segTextOn: { color: theme.colors.textPrimary },

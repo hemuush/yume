@@ -6,7 +6,6 @@ import { SheetTabs } from '@/components/SheetTabs';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { Chip } from '@/components/Chip';
 import { ModalSheet } from '@/components/ModalSheet';
-import { modalFooterStyles as f } from '@/constants/theme';
 import { orderCategoriesForPicker, topLevelOnly, childrenOf } from '@/lib/categoryTree';
 import { styles } from './transactions.styles';
 import { accountHue, accountIcon } from '@/lib/account';
@@ -111,7 +110,7 @@ export function FilterModal({
     count == null
       ? 'Apply'
       : count === 0
-        ? 'Show nothing'
+        ? 'Show 0 entries'
         : `Show ${count} ${count === 1 ? 'entry' : 'entries'}`;
 
   return (
@@ -120,7 +119,7 @@ export function FilterModal({
       onClose={onClose}
       title="Filter"
       footer={
-        <View style={f.footerRow}>
+        <View style={styles.filterFoot}>
           <PrimaryButton
             title="Clear filters"
             variant="secondary"
@@ -131,7 +130,7 @@ export function FilterModal({
             title={applyTitle}
             accessibilityLabel={`Apply. ${applyTitle}`}
             onPress={() => onApply(draft)}
-            style={f.footerBtn}
+            style={styles.filterApply}
           />
         </View>
       }

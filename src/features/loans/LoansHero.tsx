@@ -19,9 +19,7 @@ function Stat({ value, label, lent }: { value: string; label: string; lent?: boo
       <Text style={[styles.statValue, lent && styles.statLent]} numberOfLines={1} adjustsFontSizeToFit>
         {value}
       </Text>
-      <Text style={styles.statLabel} numberOfLines={1}>
-        {label}
-      </Text>
+      <Text style={styles.statLabel}>{label}</Text>
     </View>
   );
 }
@@ -48,7 +46,7 @@ export function LoansHero({
 }) {
   if (loading) {
     return (
-      <Glass key="loading" radius={28} tone="strong" style={frost.hero}>
+      <Glass key="loading" radius={28} tone="strong" style={[frost.hero, styles.hero]}>
         <Skeleton width={70} height={10} radius={4} />
         <Skeleton width={160} height={28} radius={6} />
         <Skeleton width={200} height={14} radius={5} />
@@ -66,7 +64,7 @@ export function LoansHero({
     !!timeline && timeline.rows.length > 0 && shares.every((s) => timeline.rows.some((r) => r.id === s.id));
 
   return (
-    <Glass key="hero" radius={28} tone="strong" style={frost.hero}>
+    <Glass key="hero" radius={28} tone="strong" style={[frost.hero, styles.hero]}>
       {allClear ? (
         <>
           <Kicker icon="check">Debt-free</Kicker>
@@ -77,7 +75,7 @@ export function LoansHero({
         </>
       ) : (
         <>
-          <View style={frost.heroRow}>
+          <View style={[frost.heroRow, styles.summary]}>
             <View style={frost.heroMain}>
               <Kicker icon={onlyLent ? 'users' : 'flag'}>{onlyLent ? 'Owed to you' : 'You owe'}</Kicker>
               <CountUpAmount
@@ -89,13 +87,11 @@ export function LoansHero({
               />
             </View>
             {owes && (
-              <View style={frost.side}>
+              <View style={[frost.side, styles.summarySide]}>
                 {totals.debtFreeDate && (
                   <>
                     <Text style={frost.sideLabel}>Debt-free</Text>
-                    <Text style={frost.sideValue} numberOfLines={1}>
-                      {payoffMonthShort(totals.debtFreeDate)}
-                    </Text>
+                    <Text style={frost.sideValue}>{payoffMonthShort(totals.debtFreeDate)}</Text>
                   </>
                 )}
                 <Text style={styles.sideNote} numberOfLines={1}>
@@ -110,9 +106,7 @@ export function LoansHero({
               {timeline!.rows.map((row) => (
                 <View key={row.id} style={styles.lane}>
                   <View style={styles.laneHead}>
-                    <Text style={styles.laneName} numberOfLines={1}>
-                      {row.name}
-                    </Text>
+                    <Text style={styles.laneName}>{row.name}</Text>
                     <Text style={styles.laneDate}>{payoffMonthShort(row.endDate)}</Text>
                   </View>
                   <View style={styles.laneTrack}>
@@ -172,11 +166,20 @@ export function LoansHero({
 }
 
 const styles = StyleSheet.create({
+  hero: { padding: 14, gap: 8 },
+  summary: { flexWrap: 'wrap', gap: 8 },
+  summarySide: { flexShrink: 1 },
   title: { fontFamily: theme.font.roundedBold, fontSize: 17, color: theme.colors.textPrimary },
   sideNote: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary, marginTop: 4 },
-  lanes: { gap: 10, marginTop: 2 },
+  lanes: { gap: 8, marginTop: 2 },
   lane: { gap: 5 },
-  laneHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 },
+  laneHead: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    alignItems: 'baseline',
+    gap: 6,
+  },
   laneName: { flexShrink: 1, fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textPrimary },
   laneDate: { fontFamily: theme.font.bodyMedium, fontSize: 11.5, color: theme.colors.textMuted },
   laneTrack: {
@@ -203,8 +206,8 @@ const styles = StyleSheet.create({
   stats: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   stat: {
     flexGrow: 1,
-    flexBasis: '30%',
-    minWidth: 0,
+    flexBasis: 120,
+    minWidth: 120,
     paddingVertical: 8,
     paddingHorizontal: 10,
     borderRadius: 14,

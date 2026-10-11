@@ -327,9 +327,7 @@ export function ThisMonthHero({
           ) : (
             <Text style={styles.headValue}>—</Text>
           )}
-          <Text style={styles.headCaption} numberOfLines={2}>
-            {headCaption}
-          </Text>
+          <Text style={styles.headCaption}>{headCaption}</Text>
         </View>
 
         {(spentShare || shownToday || hasDue) && (
@@ -347,7 +345,7 @@ export function ThisMonthHero({
                   size={13}
                   color={todayOverMinor > 0 ? theme.colors.expenseText : theme.colors.textSecondary}
                 />
-                <Text style={[styles.chipText, todayOverMinor > 0 && styles.chipTextOver]} numberOfLines={1}>
+                <Text style={[styles.chipText, todayOverMinor > 0 && styles.chipTextOver]}>
                   {todayOverMinor > 0
                     ? `${formatMoney(shownToday.spentMinor)} today · ${formatMoney(todayOverMinor)} over`
                     : `${formatMoney(shownToday.spentMinor)} of ${formatMoney(shownToday.goalMinor)} today`}
@@ -368,9 +366,7 @@ export function ThisMonthHero({
                 accessibilityHint="Shows how this adds up"
               >
                 <View style={styles.dueDot} />
-                <Text style={styles.dueText} numberOfLines={1}>
-                  {formatMoney(displayed.dueMinor)} still to pay
-                </Text>
+                <Text style={styles.dueText}>{formatMoney(displayed.dueMinor)} still to pay</Text>
                 <Feather
                   name={showWorking ? 'chevron-up' : 'chevron-down'}
                   size={12}
@@ -411,7 +407,7 @@ export function ThisMonthHero({
         {shownPace && (
           <View style={styles.pace}>
             <Feather name="trending-up" size={14} color={theme.colors.textMuted} />
-            <Text style={styles.paceText} numberOfLines={1}>
+            <Text style={styles.paceText}>
               On pace for about {formatMoney(Math.round(shownPace.projectedMinor / 10000) * 10000)} by{' '}
               {shownPace.byLabel}
             </Text>
@@ -473,9 +469,7 @@ function Stat({
     >
       <View style={styles.statHead}>
         <View style={[styles.statDot, { backgroundColor: color }]} />
-        <Text style={styles.statLabel} numberOfLines={1}>
-          {label}
-        </Text>
+        <Text style={styles.statLabel}>{label}</Text>
         {cleared && <Feather name="check" size={12} color={theme.colors.incomeText} />}
       </View>
       {/* Rolls to its new value after a save; a new period slides in instead. */}

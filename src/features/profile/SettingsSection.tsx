@@ -300,7 +300,7 @@ export function SettingsSection() {
         />
       )}
 
-      <Section title="Money">
+      <Section compact title="Money">
         <View style={[h.card, GLASS_CARD]}>
           <SettingsRow
             icon="currency-inr"
@@ -397,7 +397,7 @@ export function SettingsSection() {
         </View>
       </Section>
 
-      <Section title="Privacy & alerts">
+      <Section compact title="Privacy & alerts">
         <View style={[h.card, GLASS_CARD]}>
           <SettingsRow
             icon="fingerprint"
@@ -405,7 +405,9 @@ export function SettingsSection() {
             round
             label="Require unlock"
             sub="Fingerprint, face, or your phone's PIN"
-            right={<ToggleSwitch value={lockEnabled} onChange={onToggleLock} />}
+            right={
+              <ToggleSwitch accessibilityLabel="Require unlock" value={lockEnabled} onChange={onToggleLock} />
+            }
           />
           <SettingsRow
             icon="eye-off-outline"
@@ -413,7 +415,13 @@ export function SettingsSection() {
             round
             label="Hide savings & investment amounts"
             sub="Also on the eye icon at the top"
-            right={<ToggleSwitch value={hideAmounts} onChange={toggleHideAmounts} />}
+            right={
+              <ToggleSwitch
+                accessibilityLabel="Hide savings and investment amounts"
+                value={hideAmounts}
+                onChange={toggleHideAmounts}
+              />
+            }
             divider
           />
           <SettingsRow
@@ -447,7 +455,7 @@ export function SettingsSection() {
         </View>
       </Section>
 
-      <Section title="Your data">
+      <Section compact title="Your data">
         <View style={[h.card, GLASS_CARD]}>
           <SettingsRow
             icon="folder-outline"
@@ -490,7 +498,7 @@ export function SettingsSection() {
         </View>
       </Section>
 
-      <Section title="Appearance">
+      <Section compact title="Appearance">
         <Pressable
           onPress={() => router.push('/themes')}
           style={withPressed([h.card, GLASS_CARD, h.row])}

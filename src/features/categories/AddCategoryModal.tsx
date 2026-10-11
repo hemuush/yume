@@ -245,6 +245,7 @@ export function AddCategoryModal({
           </Text>
         </View>
         <ToggleSwitch
+          accessibilityLabel="Treat as sensitive"
           value={isSensitive || hiddenWithParent}
           onChange={setIsSensitive}
           disabled={hiddenWithParent}

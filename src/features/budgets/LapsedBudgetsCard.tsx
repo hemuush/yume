@@ -37,7 +37,7 @@ export function LapsedBudgetsCard({
     <View style={[styles.lapsedCard, style]}>
       <View style={styles.lapsedHead}>
         <View style={styles.lapsedHeadText}>
-          <Text style={styles.lapsedTitle} numberOfLines={1}>
+          <Text style={styles.lapsedTitle}>
             {items.length} {items.length === 1 ? 'budget' : 'budgets'} ended last month
           </Text>
           <Text style={styles.lapsedNames} numberOfLines={1}>
@@ -76,9 +76,7 @@ export function LapsedBudgetsCard({
         items.map((item) => (
           <View key={item.categoryId} style={styles.lapsedRow}>
             <CategoryIcon name={item.categoryIcon} color={item.categoryColor} square={30} size={14} />
-            <Text style={styles.lapsedName} numberOfLines={1}>
-              {categorySentence(item.categoryName, item.parentName)}
-            </Text>
+            <Text style={styles.lapsedName}>{categorySentence(item.categoryName, item.parentName)}</Text>
             <Text style={styles.lapsedAmount}>{formatMoney(item.limitAmountMinor)}/mo</Text>
             <Pressable
               style={withPressed(styles.continueBtn)}

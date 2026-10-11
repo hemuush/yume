@@ -1,4 +1,4 @@
-import { View, Pressable } from 'react-native';
+import { View, Pressable, useWindowDimensions } from 'react-native';
 import { Text } from '@/components/Text';
 import Animated, { FadeIn, ReduceMotion } from 'react-native-reanimated';
 import { Category, RecurringRule } from '@/types';
@@ -44,6 +44,8 @@ export function RuleRow({
   busy?: boolean;
 }) {
   const { secondary } = useAccent();
+  const { width, fontScale } = useWindowDimensions();
+  const stacked = width < 360 || fontScale > 1.2;
   const transfer = rule.type === 'transfer';
   const name = transfer
     ? `${accountName(rule.accountId)} → ${rule.toAccountId ? accountName(rule.toAccountId) : '—'}`
@@ -58,24 +60,42 @@ export function RuleRow({
         .reduceMotion(ReduceMotion.System)}
       layout={ROW_LAYOUT}
       exiting={ROW_EXIT}
-      style={[styles.row, index > 0 && styles.rowDivider, muted && styles.rowMuted]}
+      style={[
+        styles.row,
+        stacked && styles.ruleStacked,
+        index > 0 && styles.rowDivider,
+        muted && styles.rowMuted,
+      ]}
     >
-      <Pressable style={withPressed(styles.ruleMain)} onPress={onPress} accessibilityRole="button">
+      <Pressable
+        style={withPressed([styles.ruleMain, stacked && styles.ruleMainStacked])}
+        onPress={onPress}
+        accessibilityRole="button"
+      >
         <CategoryIcon
           name={transfer ? 'swap-horizontal' : (category?.icon ?? 'repeat')}
           color={transfer ? secondary : category?.color}
         />
-        <View style={{ flex: 1 }}>
-          <Text style={styles.rowTitle} numberOfLines={2}>
-            {title}
-          </Text>
-          <Text style={styles.rowSub} numberOfLines={2}>
-            {transfer ? when : joinSub([inParent(parentName), when, accountName(rule.accountId)])}
+        <View style={styles.ruleCopy}>
+          <Text style={styles.rowTitle}>{title}</Text>
+          <Text style={styles.rowSub}>{when}</Text>
+          <Text style={styles.rowSub}>
+            {transfer
+              ? 'Transfer'
+              : joinSub([
+                  inParent(parentName),
+                  `${rule.type === 'income' ? 'Into' : 'From'} ${accountName(rule.accountId)}`,
+                ])}
           </Text>
         </View>
       </Pressable>
-      <View style={styles.ruleSide}>
-        <Pressable onPress={onPress} importantForAccessibility="no" accessibilityElementsHidden>
+      <View style={[styles.ruleSide, stacked && styles.ruleSideStacked]}>
+        <Pressable
+          style={styles.amountButton}
+          onPress={onPress}
+          importantForAccessibility="no"
+          accessibilityElementsHidden
+        >
           <Text style={[styles.ruleAmount, rule.type === 'income' && styles.income]}>
             {/* Bills read in ink with no sign, as on Plan's Coming up; only money in is green with a "+". */}
             {rule.type === 'income' ? '+' : ''}

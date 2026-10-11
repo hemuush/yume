@@ -53,6 +53,9 @@ export const styles = StyleSheet.create({
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 14 },
   toggleRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    minHeight: 44,
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: 14,
