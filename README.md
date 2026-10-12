@@ -36,16 +36,17 @@ and India-friendly dates.
 
 ### The details that matter
 
-| Area                      | Included                                                                                                                   |
-| ------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| **Accounts & categories** | Bank, cash, credit-card and savings accounts; account currencies; editable parent categories and subcategories.            |
-| **Loans**                 | EMI schedules and amortization, prepayments, rate changes, payment tracking and linked assets.                             |
-| **Budgets & goals**       | Monthly category limits, rollover, near-limit alerts, goal contributions and goals that follow a savings account.          |
-| **Recurring payments**    | Scheduled expenses, income and transfers, subscription suggestions, and monthly/yearly totals.                             |
-| **Friends & family**      | Money owed in either direction, settlement history, and a choice between balance adjustments and actual account movements. |
-| **Wrap & Suu**            | Weekly/monthly stories, selectable chapters, day and category exploration, replay, share cards and Suu's spending nudges.  |
-| **Personalization**       | Twelve themes, app amount hiding, a separate widget-privacy setting, and app lock using the phone's authentication.        |
-| **Everyday housekeeping** | Needs you alerts, duplicate/starting-balance checks, undoable tidy-up actions and recently deleted entries.                |
+| Area                      | Included                                                                                                                                          |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Accounts & categories** | Bank, cash, credit-card and savings accounts; account currencies; editable parent categories and subcategories.                                   |
+| **Loans**                 | EMI schedules and amortization, prepayments, rate changes, payment tracking and linked assets.                                                    |
+| **Budgets & goals**       | Monthly limits, rollover, goal contributions, whole-account tracking and shared goal reservations without moving money.                           |
+| **Recurring payments**    | Scheduled expenses, income and transfers, subscription suggestions, and monthly/yearly totals.                                                    |
+| **Planning insights**     | Pending refunds and partial receipts, reservation-aware purchase checks, annual-bill preparation goals, and matched-period spending explanations. |
+| **Friends & family**      | Money owed in either direction, settlement history, and a choice between balance adjustments and actual account movements.                        |
+| **Wrap & Suu**            | Weekly/monthly stories, selectable chapters, day and category exploration, replay, share cards and Suu's spending nudges.                         |
+| **Personalization**       | Twelve themes, app amount hiding, a separate widget-privacy setting, and app lock using the phone's authentication.                               |
+| **Everyday housekeeping** | Needs you alerts, duplicate/starting-balance checks, undoable tidy-up actions and recently deleted entries.                                       |
 
 ### Android widgets
 
@@ -184,7 +185,7 @@ Start with the [documentation index](docs/INDEX.md) and [architecture and logic 
 | [Data model](DATA_MODEL.md)                            | Schema, accounts, the friends ledger and calculation decisions.            |
 | [Backup & restore](BACKUP.md)                          | Local-folder backups, choosing existing data, restore safety and recovery. |
 | [Build guide](BUILD.md)                                | APK/AAB builds and device verification.                                    |
-| [Audit record](docs/archive/AUDIT.md)                               | Recorded fixes, validation and remaining device checks.                    |
+| [Audit record](docs/archive/AUDIT.md)                  | Recorded fixes, validation and remaining device checks.                    |
 | [Expo SDK 57](https://docs.expo.dev/versions/v57.0.0/) | The versioned Expo reference used by this project.                         |
 
 ---

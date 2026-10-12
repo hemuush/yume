@@ -17,7 +17,7 @@ const CURRENT_WINS_SETTINGS = ['app_lock_enabled', 'hide_widget_values'];
 
 const PHONE_SETTINGS = [...DEVICE_BOUND_SETTINGS, ...CURRENT_WINS_SETTINGS];
 
-export const BACKUP_FORMAT_VERSION = 1;
+export const BACKUP_FORMAT_VERSION = 3;
 
 const TABLES = [
   'accounts',
@@ -27,9 +27,12 @@ const TABLES = [
   'loan_payments',
   'loan_rate_changes',
   'transactions',
+  'refund_expectations',
+  'refund_receipts',
   'savings_goals',
   'budgets',
   'recurring_rules',
+  'annual_bill_goals',
   'people',
   'person_ledger_entries',
   'settings',
@@ -113,8 +116,7 @@ export async function restoreFromSnapshotOn(db: AppDb, snapshot: BackupSnapshot)
   if (snapshot.formatVersion > BACKUP_FORMAT_VERSION) {
     throw new Error('This backup was made with a newer version of Yume. Please update the app first.');
   }
-  // Older formatVersions restore as-is (v1 is the only format shipped). On the first bump, translate older
-  // snapshots up to the current shape here, before the insert loop.
+  // Version 1 has no reservations; omitted reservation columns use their zero defaults.
 
   const deleteOrder = [...TABLES].reverse();
   const insertOrder = TABLES;
@@ -155,6 +157,29 @@ export async function restoreFromSnapshotOn(db: AppDb, snapshot: BackupSnapshot)
         if (row[column] != null) assertValidIsoDate(row[column] as string);
       }
     }
+    if (
+      table === 'savings_goals' &&
+      rows.some((row) => {
+        const mode = row.reserve_account ?? 0;
+        const reserved = row.reserved_amount_minor ?? 0;
+        const linked = snapshot.tables.accounts.find((a) => a.id === row.linked_account_id);
+        const currency = snapshot.tables.settings?.find((s) => s.key === 'default_currency')?.value ?? 'INR';
+        return (
+          (mode !== 0 && mode !== 1) ||
+          typeof reserved !== 'number' ||
+          reserved < 0 ||
+          (mode === 0 && reserved !== 0) ||
+          (mode === 1 &&
+            (!row.linked_account_id ||
+              (row.track_account != null && row.track_account !== 0) ||
+              !linked ||
+              linked.type === 'credit_card' ||
+              linked.tracked === 1 ||
+              linked.currency !== currency))
+        );
+      })
+    )
+      throw new Error('This backup contains invalid goal reservations. Nothing was changed.');
     const badAmount = rows.some((r) =>
       Object.entries(r as Record<string, unknown>).some(
         ([key, value]) => key.endsWith('_minor') && value != null && !Number.isSafeInteger(value)
@@ -165,6 +190,70 @@ export async function restoreFromSnapshotOn(db: AppDb, snapshot: BackupSnapshot)
         `This backup file is damaged (an amount in "${table}" isn't a number) — nothing was changed.`
       );
     }
+  }
+
+  // Validate cross-record planner links before replacing any data, not just their foreign keys.
+  const entriesById = new Map((snapshot.tables.transactions ?? []).map((row) => [row.id, row]));
+  const accountsById = new Map((snapshot.tables.accounts ?? []).map((row) => [row.id, row]));
+  const expectationsById = new Map((snapshot.tables.refund_expectations ?? []).map((row) => [row.id, row]));
+  const personTransactions = new Set(
+    (snapshot.tables.person_ledger_entries ?? []).map((row) => row.transaction_id)
+  );
+  const receivedByExpectation = new Map<unknown, number>();
+  for (const expectation of snapshot.tables.refund_expectations ?? []) {
+    const purchase = entriesById.get(expectation.transaction_id);
+    if (
+      !purchase ||
+      purchase.type !== 'expense' ||
+      purchase.loan_id ||
+      purchase.loan_payment_id ||
+      personTransactions.has(purchase.id) ||
+      !Number.isSafeInteger(expectation.expected_amount_minor) ||
+      Number(expectation.expected_amount_minor) <= 0 ||
+      Number(expectation.expected_amount_minor) > Number(purchase.amount_minor) ||
+      (expectation.closed !== 0 && expectation.closed !== 1) ||
+      (expectation.due_date && String(expectation.due_date) < String(purchase.date))
+    )
+      throw new Error('This backup contains an invalid expected refund. Nothing was changed.');
+  }
+  for (const receipt of snapshot.tables.refund_receipts ?? []) {
+    const expectation = expectationsById.get(receipt.expectation_id);
+    const purchase = expectation ? entriesById.get(expectation.transaction_id) : null;
+    const entry = entriesById.get(receipt.transaction_id);
+    if (
+      !purchase ||
+      !entry ||
+      entry.type !== 'income' ||
+      entry.is_refund !== 1 ||
+      Number(entry.amount_minor) <= 0 ||
+      entry.loan_id ||
+      entry.loan_payment_id ||
+      personTransactions.has(entry.id) ||
+      entry.category_id !== purchase.category_id ||
+      String(entry.date) < String(purchase.date) ||
+      accountsById.get(entry.account_id)?.currency !== accountsById.get(purchase.account_id)?.currency ||
+      (receipt.created_transaction !== 0 && receipt.created_transaction !== 1)
+    )
+      throw new Error('This backup contains an invalid refund receipt. Nothing was changed.');
+    const received = (receivedByExpectation.get(receipt.expectation_id) ?? 0) + Number(entry.amount_minor);
+    if (!Number.isSafeInteger(received) || received > Number(expectation!.expected_amount_minor))
+      throw new Error('This backup contains an over-received refund. Nothing was changed.');
+    receivedByExpectation.set(receipt.expectation_id, received);
+  }
+  const rulesById = new Map((snapshot.tables.recurring_rules ?? []).map((row) => [row.id, row]));
+  const goalsById = new Map((snapshot.tables.savings_goals ?? []).map((row) => [row.id, row]));
+  for (const link of snapshot.tables.annual_bill_goals ?? []) {
+    const rule = rulesById.get(link.rule_id),
+      goal = goalsById.get(link.goal_id);
+    if (
+      !rule ||
+      !goal ||
+      rule.type !== 'expense' ||
+      rule.frequency !== 'yearly' ||
+      goal.reserve_account !== 1 ||
+      accountsById.get(rule.account_id)?.currency !== accountsById.get(goal.linked_account_id)?.currency
+    )
+      throw new Error('This backup contains an invalid annual preparation goal. Nothing was changed.');
   }
 
   // One exclusive statement-queue slot: `PRAGMA foreign_keys` only changes outside a transaction, and another

@@ -1,3 +1,4 @@
+import { PurchaseCheck } from '@/features/whatif/PurchaseCheck';
 import { ScreenLoadError } from '@/components/ScreenLoadError';
 import { useCallback, useState } from 'react';
 import { View } from 'react-native';
@@ -165,6 +166,7 @@ export default function WhatIfScreen() {
           </View>
         )}
 
+        <PurchaseCheck />
         {categories.length === 0 ? (
           <EmptyState
             title="Nothing to try yet"

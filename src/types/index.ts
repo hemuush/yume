@@ -133,6 +133,11 @@ export interface SavingsGoal {
    * (never below zero), not hand-added money. Only ever true with a linked account.
    */
   tracksAccount: boolean;
+  /** Explicit earmark in the linked account; independent of manual and whole-account progress. */
+  reservesAccount?: boolean;
+  reservedAmountMinor?: number;
+  /** Retained manual progress, even while following or reserving an account. */
+  manualAmountMinor?: number;
   /** An optional note written at creation, sealed until the goal first reaches 100% — see contributeToGoal. */
   noteToSelf: string | null;
   /** Flips to true exactly once, the moment the completion reveal is shown — see markGoalLetterRevealed. */

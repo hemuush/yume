@@ -29,6 +29,7 @@ let mockGoals: unknown[] = [];
 jest.mock('@/db/savingsGoals', () => ({ listSavingsGoals: async () => mockGoals }));
 jest.mock('@/db/ledger', () => ({ getAccountMonthlyGrowth: async () => 0 }));
 
+jest.mock('./PurchaseCheck', () => ({ PurchaseCheck: () => null }));
 import WhatIfScreen from '../../../app/whatif';
 import { router } from 'expo-router';
 

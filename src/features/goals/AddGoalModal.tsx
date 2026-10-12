@@ -36,6 +36,7 @@ export function AddGoalModal({
   const [targetDateValue, setTargetDateValue] = useState(() => addMonthsToIsoDate(today, 12));
   const [linkedAccountId, setLinkedAccountId] = useState<string | null>(null);
   const [tracksAccount, setTracksAccount] = useState(false);
+  const [reservesAccount, setReservesAccount] = useState(false);
   const [noteToSelf, setNoteToSelf] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -49,6 +50,7 @@ export function AddGoalModal({
     setTargetDateValue(addMonthsToIsoDate(toLocalIsoDate(new Date()), 12));
     setLinkedAccountId(null);
     setTracksAccount(false);
+    setReservesAccount(false);
     setNoteToSelf('');
     setError(null);
   }, [visible]);
@@ -57,6 +59,7 @@ export function AddGoalModal({
   // so picking one starts on Follow; any other account starts by hand.
   const pickAccount = (id: string | null) => {
     setLinkedAccountId(id);
+    setReservesAccount(false);
     setTracksAccount(accounts.find((a) => a.id === id)?.type === 'savings');
   };
 
@@ -80,6 +83,7 @@ export function AddGoalModal({
         targetDate,
         linkedAccountId,
         tracksAccount,
+        reservesAccount,
         noteToSelf,
       });
       onCreated();
@@ -129,6 +133,8 @@ export function AddGoalModal({
         accounts={accounts}
         accountId={linkedAccountId}
         tracks={tracksAccount}
+        reserves={reservesAccount}
+        onChangeReserves={setReservesAccount}
         onChangeAccount={pickAccount}
         onChangeTracks={setTracksAccount}
       />

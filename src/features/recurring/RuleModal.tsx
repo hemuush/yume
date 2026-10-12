@@ -38,6 +38,7 @@ import { errorMessage } from '@/lib/errorMessage';
 import { showAlert } from '@/components/AppDialog';
 import { categorySentence, parentNameOf } from '@/lib/categoryLabel';
 import { spendableAccountsOf } from '@/lib/account';
+import { AnnualBillPreparation } from './AnnualBillPreparation';
 import { useSaveOnce } from '@/lib/useSaveOnce';
 
 const TX_TYPES: { label: string; value: TransactionType }[] = [
@@ -324,6 +325,9 @@ export function RuleModal({
         }
         meta={`${type === 'income' ? 'Into' : 'From'} ${accountName(effectiveAccountId) ?? '—'} · next ${weekdayDayMonth(startDate)}`}
       />
+      {editing && editing.type === 'expense' && editing.frequency === 'yearly' && (
+        <AnnualBillPreparation rule={editing} accounts={accounts} onNavigate={onClose} />
+      )}
       <SheetTabs
         options={[
           { label: 'Set up', value: 'setup' },

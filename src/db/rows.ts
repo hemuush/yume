@@ -122,6 +122,8 @@ export interface SavingsGoalRow {
   note_to_self: string | null;
   letter_revealed: number;
   track_account: number;
+  reserve_account?: number;
+  reserved_amount_minor?: number;
 }
 
 /** A row of `budgets`. */

@@ -166,6 +166,7 @@ describe('account linking', () => {
       targetDate: null,
       linkedAccountId: 'pot',
       tracksAccount: true,
+      reservesAccount: false,
     });
     expect(onChanged).toHaveBeenCalledTimes(1);
   });
@@ -195,6 +196,7 @@ describe('saving', () => {
       targetDate: '2027-03-01',
       linkedAccountId: null,
       tracksAccount: false,
+      reservesAccount: false,
     });
   });
 
@@ -244,7 +246,7 @@ describe('archive and delete', () => {
     await act(async () => {
       await buttons.find((b) => b.text === 'Archive')!.onPress!();
     });
-    expect(mockArchive).toHaveBeenCalledWith('g1');
+    expect(mockArchive).toHaveBeenCalledWith('g1', false);
     expect(onChanged).toHaveBeenCalledTimes(1);
   });
 

@@ -6,10 +6,25 @@ const mockShow = jest.fn();
 const mockContribute = jest.fn(async () => {});
 const mockSeen: { keys: string[] } = { keys: [] };
 const mockHide = { current: false };
+const mockMove = jest.fn(async () => {});
+const mockRelease = jest.fn(async () => {});
+const mockAvailable = { amount: 500000, shortfall: 0 };
+jest.mock('@/db/goalReservations', () => ({
+  getGoalReservationSummary: jest.fn(async () => ({
+    availableMinor: mockAvailable.amount,
+    shortfallMinor: mockAvailable.shortfall,
+  })),
+  moveGoalReservation: (...args: unknown[]) => (mockMove as (...a: unknown[]) => Promise<void>)(...args),
+  releaseGoalReservation: (...args: unknown[]) =>
+    (mockRelease as (...a: unknown[]) => Promise<void>)(...args),
+}));
 
 jest.mock('@/db/savingsGoals', () => ({
   contributeToGoal: (...a: unknown[]) => (mockContribute as (...x: unknown[]) => Promise<void>)(...a),
   markGoalLetterRevealed: jest.fn(async () => {}),
+  listSavingsGoals: jest.fn(async () => [
+    { id: 'g2', name: 'Emergency', reservesAccount: true, linkedAccountId: 'pot' },
+  ]),
 }));
 jest.mock('@/db/settings', () => ({
   getCachedCurrency: () => 'INR',
@@ -24,6 +39,9 @@ jest.mock('@/lib/haptics', () => ({ haptics: { tap: jest.fn(), confirm: jest.fn(
 jest.mock('@/components/ModalSheet', () => ({
   ModalSheet: ({ children, footer }: { children: unknown; footer?: unknown }) =>
     require('react').createElement(require('react').Fragment, null, children, footer),
+}));
+jest.mock('@/components/Chip', () => ({
+  Chip: (props: object) => require('react').createElement(require('react-native').View, props),
 }));
 jest.mock('@/components/AmountField', () => ({
   AmountField: ({ onChangeText }: { onChangeText: (v: string) => void }) =>
@@ -74,6 +92,8 @@ async function add(g: SavingsGoal, rupees: string, direction: 'add' | 'withdraw'
 beforeEach(() => {
   mockShow.mockClear();
   mockContribute.mockClear();
+  mockMove.mockClear();
+  mockRelease.mockClear();
   mockSeen.keys = [];
   mockHide.current = false;
 });
@@ -144,5 +164,66 @@ describe('withdrawing more than is saved', () => {
     const { onContributed } = await add(goal({ currentAmountMinor: 200_000 }), '2000', 'withdraw');
     expect(mockContribute).toHaveBeenCalledWith('g1', -200_000);
     expect(onContributed).toHaveBeenCalled();
+  });
+});
+
+describe('shared account reservations', () => {
+  const reserved = () => goal({ reservesAccount: true, linkedAccountId: 'pot' });
+  it('reserves/releases through the goal action and masks available amounts', async () => {
+    mockHide.current = true;
+    const { tree } = await add(reserved(), '100');
+    expect(mockContribute).toHaveBeenCalledWith('g1', 10000);
+    const texts = tree.root
+      .findAllByType(Text)
+      .map((t) => [t.props.children].flat().join(''))
+      .join(' ');
+    expect(texts).toContain('Available to reserve');
+    expect(texts).toContain('••••');
+    expect(texts).not.toContain('₹5,000');
+    const result = await add(reserved(), '100', 'withdraw');
+    expect(mockContribute).toHaveBeenLastCalledWith('g1', -10000);
+    await act(async () => {
+      tree.unmount();
+      result.tree.unmount();
+    });
+  });
+  it('moves a reservation to the selected goal without creating a contribution', async () => {
+    let tree!: ReactTestRenderer;
+    const changed = jest.fn();
+    await act(async () => {
+      tree = create(<ContributeModal goal={reserved()} onClose={jest.fn()} onContributed={changed} />);
+    });
+    await act(async () =>
+      tree.root.find((n) => n.props.options && typeof n.props.onChange === 'function').props.onChange('move')
+    );
+    await act(async () =>
+      tree.root
+        .find((n) => n.props.label === 'Emergency' && typeof n.props.onPress === 'function')
+        .props.onPress()
+    );
+    await act(async () => tree.root.findByProps({ testID: 'amount' }).props.onChangeText('100'));
+    await act(async () =>
+      tree.root
+        .find((n) => n.props.title === 'Move reservation' && typeof n.props.onPress === 'function')
+        .props.onPress()
+    );
+    expect(mockMove).toHaveBeenCalledWith('g1', 'g2', 10000);
+    expect(mockContribute).not.toHaveBeenCalled();
+    expect(changed).toHaveBeenCalledTimes(1);
+    await act(async () => tree.unmount());
+  });
+  it('offers an explicit keep/release decision after completing a reservation goal', async () => {
+    const { tree } = await add(
+      goal({ reservesAccount: true, linkedAccountId: 'pot', currentAmountMinor: 900000 }),
+      '1000'
+    );
+    expect(tree.root.findAll((n) => n.props.title === 'Keep reserved')).not.toHaveLength(0);
+    await act(async () =>
+      tree.root
+        .find((n) => n.props.title === 'Release reservation' && typeof n.props.onPress === 'function')
+        .props.onPress()
+    );
+    expect(mockRelease).toHaveBeenCalledWith('g1');
+    await act(async () => tree.unmount());
   });
 });

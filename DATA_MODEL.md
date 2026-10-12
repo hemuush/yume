@@ -72,12 +72,14 @@ A plain key/value table — default currency, accent color, user name, onboardin
 
 ## Savings goals (`savings_goals`)
 
-A named target amount with an optional target date, an optional linked account, and an optional note sealed until the goal is first reached (`note_to_self`, `letter_revealed`). Progress works one of two ways (`src/db/savingsGoals.ts`):
+A named target amount with an optional target date, an optional linked account, and an optional note sealed until the goal is first reached (`note_to_self`, `letter_revealed`). Progress works one of three ways (`src/db/savingsGoals.ts`):
 
-- **By hand** (`track_account = 0`, the default): `current_amount_minor`, moved by "+ Add money". There is no contribution ledger and nothing creates a transaction, so adding to a goal is never confused with moving money. A linked account is then only a label.
+- **By hand** (`track_account = 0`, `reserve_account = 0`, the default): `current_amount_minor`, moved by "+ Add money". There is no contribution ledger and nothing creates a transaction, so adding to a goal is never confused with moving money. A linked account is then only a label.
 - **Following the linked account** (`track_account = 1`): progress is that account's balance, worked out on every read in the same query that loads the goal (opening balance + income and transfers in − expenses and transfers out, never below zero). `current_amount_minor` is left untouched meanwhile, so switching back to "by hand" brings the old amount back. "+ Add money" is refused; the goal's button opens a transfer into the account instead. What-if uses the account's net growth over the last 90 days as the goal's saving rate (`getAccountMonthlyGrowth`), not the whole balance, which includes money from before the goal existed.
 
-If the linked account is deleted, `linked_account_id` goes null and the goal falls back to its hand-tracked amount.
+- **Reserved from an account** (`reserve_account = 1`, `track_account = 0`): progress is the explicitly reserved share, while the previous manual amount remains untouched. All reservation goals share a live available balance. See Goal reservations below for safeguards and lifecycle behavior.
+
+For legacy manual/following goals, account deletion unlinks the account and restores hand-tracked progress. Reservation goals must first release their allocation and change tracking mode before the account can be deleted.
 
 ## Budgets (`budgets`)
 
@@ -94,3 +96,15 @@ Not a table: worked out from `recurring_rules` and `transactions` for the Recurr
 ## Implementation and validation
 
 The [schema](src/db/schema.ts) defines persisted fields and constraints. [Client serialization](src/db/client.ts) protects transaction boundaries; [currency invariants](src/db/currencyInvariant.ts) prevent unsupported mixed-currency financial links. See [architecture](docs/ARCHITECTURE.md) for flow ownership and test locations. Existing scenarios are evidence for their inputs, not proof of every possible financial case.
+
+## Goal reservations
+
+A goal can use manual progress, follow its whole linked account, or reserve a share of the account. `reserve_account` and `track_account` are mutually exclusive. Reservation progress is `reserved_amount_minor`; the pre-existing `current_amount_minor` remains untouched for switching back to manual tracking. All reservation goals, including archived/completed ones, count against available money. New reservations cannot exceed the live account balance minus reservations; release and same-account reassignment remain available during a shortfall. Allocations do not change the ledger, net worth, income or spending. Account deletion and incompatible retyping are blocked until reservation goals are detached explicitly.
+
+## Refund and annual-bill planning
+
+`refund_expectations` stores one expected amount and optional due date per ordinary purchase. `refund_receipts` links actual income/refund transactions to that expectation, recording whether tracking created the transaction. Expectations never change balances. Partial receipts cannot exceed the remaining expected amount. Linking an existing refund does not create another transaction; undo removes a created receipt transaction, but only unlinks an existing one. Tracked purchases and receipts cannot be edited or deleted independently; use their detail actions to maintain consistency.
+
+`annual_bill_goals` links one yearly expense rule to one reservation goal. Creating/linking a preparation goal does not allocate money automatically. Unlinking retains the goal and reserved money. Changing a linked rule away from a yearly expense, changing the goal away from reservations, or deleting either record requires unlinking first. Pausing a rule retains its preparation link.
+
+Purchase checks and spending explanations are calculated, not persisted. Purchase checks subtract reservations and project recorded account-specific recurring movements and pending/overdue loan installments through 30 days after a purchase date (up to 90 days ahead). Expected refunds and unrecorded everyday spending are excluded; missing loan schedules remain visible. Spending explanations compare equal elapsed ranges in the default currency and apply category privacy. Their symmetric frequency/average-purchase decomposition plus refund changes sums to the exact net spending difference, without claiming a cause.

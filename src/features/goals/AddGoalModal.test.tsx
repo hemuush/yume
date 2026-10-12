@@ -85,6 +85,7 @@ describe('AddGoalModal', () => {
       targetDate: null,
       linkedAccountId: null,
       tracksAccount: false,
+      reservesAccount: false,
       noteToSelf: '',
     });
     expect(onCreated).toHaveBeenCalledTimes(1);
@@ -139,4 +140,18 @@ describe('AddGoalModal', () => {
     expect(byId(tree, 'target').props.value).toBe('');
     expect(byId(tree, 'toggle').props.value).toBe(false);
   });
+});
+
+it('saves reservation mode only when explicitly selected', async () => {
+  const { tree } = await render();
+  await fill(tree, 'Emergency', '10000');
+  await act(async () => byId(tree, 'account').props.onChangeAccount('s1'));
+  await act(async () => {
+    byId(tree, 'account').props.onChangeTracks(false);
+    byId(tree, 'account').props.onChangeReserves(true);
+  });
+  await submit(tree);
+  expect(mockCreateGoal).toHaveBeenCalledWith(
+    expect.objectContaining({ linkedAccountId: 's1', tracksAccount: false, reservesAccount: true })
+  );
 });

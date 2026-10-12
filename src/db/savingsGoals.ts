@@ -7,10 +7,12 @@ import { captureRow, restoreRow, RowSnapshot } from './undoSnapshot';
 import { SavingsGoal } from '@/types';
 import { assertValidIsoDate } from '@/lib/date';
 import { valuationAdjSql } from './valuationSql';
+import { assertReservableAccount, changeReservationOn } from './goalReservations';
 
 /**
  * Savings target, by hand (`current_amount_minor`, creates no transaction) or, with `track_account = 1`,
- * following the linked account's live balance (as getAccountBalance); the manual amount is then left alone.
+ * following the linked account's live balance (as getAccountBalance); reservations instead use an explicit
+ * share in reserved_amount_minor. Manual progress is retained in either account mode.
  */
 
 /** Reads SELECTed through GOAL_SELECT: the goal's row plus its account's balance when it follows one. */
@@ -37,7 +39,14 @@ function rowToGoal(row: SavingsGoalRow & { account_balance_minor: number | null 
     id: row.id,
     name: row.name,
     targetAmountMinor: row.target_amount_minor,
-    currentAmountMinor: tracksAccount && balance != null ? Math.max(0, balance) : row.current_amount_minor,
+    currentAmountMinor: row.reserve_account
+      ? (row.reserved_amount_minor ?? 0)
+      : tracksAccount && balance != null
+        ? Math.max(0, balance)
+        : row.current_amount_minor,
+    reservesAccount: !!row.reserve_account,
+    reservedAmountMinor: row.reserved_amount_minor ?? 0,
+    manualAmountMinor: row.current_amount_minor,
     targetDate: row.target_date,
     linkedAccountId: row.linked_account_id,
     tracksAccount,
@@ -63,11 +72,14 @@ export interface SavingsGoalInput {
   linkedAccountId: string | null;
   /** Follow the linked account's balance instead of adding money by hand. Ignored without an account. */
   tracksAccount?: boolean;
+  reservesAccount?: boolean;
   /** Only ever set at creation — see `SavingsGoal.noteToSelf`'s own comment. */
   noteToSelf?: string | null;
 }
 
 function validateInput(input: SavingsGoalInput): void {
+  if (input.reservesAccount && (!input.linkedAccountId || input.tracksAccount))
+    throw new Error('Reservations need an account and cannot follow its whole balance.');
   if (input.targetDate) assertValidIsoDate(input.targetDate);
   if (!input.name.trim()) throw new Error('Goal name is required');
   if (!Number.isSafeInteger(input.targetAmountMinor) || input.targetAmountMinor <= 0) {
@@ -95,9 +107,21 @@ export async function createSavingsGoal(input: SavingsGoalInput): Promise<Saving
   const id = newId();
   await db.withTransactionAsync(async (tx) => {
     if (input.linkedAccountId) await assertDefaultCurrencyAccount(tx, input.linkedAccountId, 'Goals');
+    if (input.reservesAccount && input.linkedAccountId)
+      await assertReservableAccount(tx, input.linkedAccountId, id);
+    if (input.tracksAccount && input.linkedAccountId) {
+      const reserved = await tx.getFirstAsync<{ n: number }>(
+        'SELECT SUM(reserved_amount_minor) AS n FROM savings_goals WHERE reserve_account = 1 AND linked_account_id = ?',
+        [input.linkedAccountId]
+      );
+      if (reserved?.n)
+        throw new Error(
+          'This account has reserved money. Release its reservations before following the whole balance.'
+        );
+    }
     await tx.runAsync(
-      `INSERT INTO savings_goals (id, name, target_amount_minor, current_amount_minor, target_date, linked_account_id, note_to_self, letter_revealed, archived, track_account)
-     VALUES (?, ?, ?, 0, ?, ?, ?, 0, 0, ?)`,
+      `INSERT INTO savings_goals (id, name, target_amount_minor, current_amount_minor, target_date, linked_account_id, note_to_self, letter_revealed, archived, track_account, reserve_account)
+     VALUES (?, ?, ?, 0, ?, ?, ?, 0, 0, ?, ?)`,
       [
         id,
         input.name.trim(),
@@ -106,6 +130,7 @@ export async function createSavingsGoal(input: SavingsGoalInput): Promise<Saving
         input.linkedAccountId,
         input.noteToSelf?.trim() || null,
         trackFlag(input),
+        input.reservesAccount ? 1 : 0,
       ]
     );
   });
@@ -121,14 +146,45 @@ export async function updateSavingsGoal(id: string, input: SavingsGoalInput): Pr
   const db = await getDb();
   await db.withTransactionAsync(async (tx) => {
     if (input.linkedAccountId) await assertDefaultCurrencyAccount(tx, input.linkedAccountId, 'Goals');
+    if (input.reservesAccount && input.linkedAccountId)
+      await assertReservableAccount(tx, input.linkedAccountId, id);
+    if (input.tracksAccount && input.linkedAccountId) {
+      const reserved = await tx.getFirstAsync<{ n: number }>(
+        'SELECT SUM(reserved_amount_minor) AS n FROM savings_goals WHERE reserve_account = 1 AND linked_account_id = ?',
+        [input.linkedAccountId]
+      );
+      if (reserved?.n)
+        throw new Error(
+          'This account has reserved money. Release its reservations before following the whole balance.'
+        );
+    }
+    const existing = await tx.getFirstAsync<{
+      reserve_account: number;
+      reserved_amount_minor: number;
+      linked_account_id: string | null;
+    }>('SELECT reserve_account, reserved_amount_minor, linked_account_id FROM savings_goals WHERE id = ?', [
+      id,
+    ]);
+    if (!existing) throw new Error('This goal no longer exists');
+    if (!input.reservesAccount) {
+      const bill = await tx.getFirstAsync('SELECT rule_id FROM annual_bill_goals WHERE goal_id = ?', [id]);
+      if (bill) throw new Error('Unlink the annual bill before changing this goal’s reservation mode.');
+    }
+    if (
+      existing.reserve_account &&
+      existing.reserved_amount_minor > 0 &&
+      (!input.reservesAccount || input.linkedAccountId !== existing.linked_account_id)
+    )
+      throw new Error('Release this goal’s reservation before changing its account or tracking mode.');
     await tx.runAsync(
-      `UPDATE savings_goals SET name = ?, target_amount_minor = ?, target_date = ?, linked_account_id = ?, track_account = ? WHERE id = ?`,
+      `UPDATE savings_goals SET name = ?, target_amount_minor = ?, target_date = ?, linked_account_id = ?, track_account = ?, reserve_account = ? WHERE id = ?`,
       [
         input.name.trim(),
         input.targetAmountMinor,
         input.targetDate,
         input.linkedAccountId,
         trackFlag(input),
+        input.reservesAccount ? 1 : 0,
         id,
       ]
     );
@@ -148,12 +204,18 @@ export async function contributeToGoal(id: string, deltaMinor: number): Promise<
     const existing = await tx.getFirstAsync<{
       id: string;
       track_account: number;
+      reserve_account: number;
       linked_account_id: string | null;
       current_amount_minor: number;
-    }>('SELECT id, track_account, linked_account_id, current_amount_minor FROM savings_goals WHERE id = ?', [
-      id,
-    ]);
+    }>(
+      'SELECT id, track_account, reserve_account, linked_account_id, current_amount_minor FROM savings_goals WHERE id = ?',
+      [id]
+    );
     if (!existing) throw new Error('This goal no longer exists');
+    if (existing.reserve_account) {
+      await changeReservationOn(tx, id, deltaMinor);
+      return;
+    }
     if (existing.track_account && existing.linked_account_id) {
       throw new Error("This goal follows its account's balance — move money into the account instead.");
     }
@@ -177,14 +239,33 @@ export async function markGoalLetterRevealed(id: string): Promise<void> {
   await db.runAsync('UPDATE savings_goals SET letter_revealed = 1 WHERE id = ?', [id]);
 }
 
-export async function archiveSavingsGoal(id: string): Promise<void> {
+export async function archiveSavingsGoal(id: string, releaseReservation = false): Promise<void> {
   const db = await getDb();
-  await db.runAsync('UPDATE savings_goals SET archived = 1 WHERE id = ?', [id]);
+  await db.runAsync(
+    'UPDATE savings_goals SET archived = 1, reserved_amount_minor = CASE WHEN ? THEN 0 ELSE reserved_amount_minor END WHERE id = ?',
+    [releaseReservation ? 1 : 0, id]
+  );
 }
 
 export async function unarchiveSavingsGoal(id: string): Promise<void> {
   const db = await getDb();
-  await db.runAsync('UPDATE savings_goals SET archived = 0 WHERE id = ?', [id]);
+  await db.withTransactionAsync(async (tx) => {
+    const goal = await tx.getFirstAsync<{ track_account: number; linked_account_id: string | null }>(
+      'SELECT track_account, linked_account_id FROM savings_goals WHERE id = ?',
+      [id]
+    );
+    if (goal?.track_account && goal.linked_account_id) {
+      const reserved = await tx.getFirstAsync<{ n: number }>(
+        'SELECT SUM(reserved_amount_minor) AS n FROM savings_goals WHERE reserve_account = 1 AND linked_account_id = ?',
+        [goal.linked_account_id]
+      );
+      if (reserved?.n)
+        throw new Error(
+          'This account now has reservations. Release them before unarchiving a whole-account goal.'
+        );
+    }
+    await tx.runAsync('UPDATE savings_goals SET archived = 0 WHERE id = ?', [id]);
+  });
 }
 
 /**
@@ -197,15 +278,17 @@ export async function deleteSavingsGoal(id: string): Promise<RowSnapshot> {
   // The "nothing saved yet" check, the capture and the delete share one transaction: a contribution landing
   // in between can't be deleted along with the goal.
   await db.withTransactionAsync(async (tx) => {
-    const existing = await tx.getFirstAsync<{ current_amount_minor: number }>(
-      'SELECT current_amount_minor FROM savings_goals WHERE id = ?',
+    const existing = await tx.getFirstAsync<{ current_amount_minor: number; reserved_amount_minor: number }>(
+      'SELECT current_amount_minor, reserved_amount_minor FROM savings_goals WHERE id = ?',
       [id]
     );
-    if (existing && existing.current_amount_minor > 0) {
+    if (existing && (existing.current_amount_minor > 0 || existing.reserved_amount_minor > 0)) {
       throw new Error(
         'This goal already has money saved toward it — archive it instead, so its progress stays intact.'
       );
     }
+    const bill = await tx.getFirstAsync('SELECT rule_id FROM annual_bill_goals WHERE goal_id = ?', [id]);
+    if (bill) throw new Error('Unlink this goal from its annual bill before deleting it.');
     const captured = await captureRow(tx, 'savings_goals', id);
     if (!captured) throw new Error('This goal is already deleted.');
     await tx.runAsync('DELETE FROM savings_goals WHERE id = ?', [id]);
