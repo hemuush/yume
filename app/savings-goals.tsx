@@ -73,7 +73,11 @@ export default function SavingsGoalsScreen() {
   useEffect(() => {
     if (!loaded || loadError || (!goalId && add !== '1')) return;
     if (add === '1') setAddVisible(true);
-    else setEditingGoal(allGoals.find((goal) => goal.id === goalId && !goal.archived) ?? null);
+    else {
+      const goal = allGoals.find((g) => g.id === goalId);
+      if (goal?.archived) setShowArchived(true);
+      setEditingGoal(goal ?? null);
+    }
     router.setParams({ goal: undefined, add: undefined });
   }, [loaded, loadError, goalId, add, allGoals]);
 

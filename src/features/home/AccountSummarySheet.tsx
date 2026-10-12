@@ -7,6 +7,7 @@ import { getAccountFlow, listTransactions, AccountFlow } from '@/db/ledger';
 import { Account, Category, Transaction } from '@/types';
 import { theme } from '@/constants/theme';
 import { ModalSheet } from '@/components/ModalSheet';
+import { AccountReservations } from '@/features/goals/AccountReservations';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { SheetCard } from '@/components/SheetCard';
 import { SheetTabs } from '@/components/SheetTabs';
@@ -231,6 +232,7 @@ export function AccountSummarySheet({
               : 'Balance'
           }
         />
+        <AccountReservations account={account} onNavigate={onClose} />
         <SheetTabs
           options={[
             ...(inv ? [{ label: 'Value', value: 'value' as const }] : []),

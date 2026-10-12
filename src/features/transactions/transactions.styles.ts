@@ -16,6 +16,7 @@ export const styles = StyleSheet.create({
     borderWidth: theme.border.thin,
     borderColor: theme.colors.expense,
   },
+  errorText: { fontFamily: theme.font.body, fontSize: 13, color: theme.colors.expenseText, marginBottom: 8 },
   errorTitle: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.expenseText },
   errorDetail: {
     fontFamily: theme.font.body,

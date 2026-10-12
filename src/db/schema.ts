@@ -160,7 +160,10 @@ CREATE TABLE IF NOT EXISTS savings_goals (
   -- 1 = progress is the linked account's balance (worked out, never
   -- stored); current_amount_minor is then left alone, so switching back
   -- to adding money by hand brings the old amount back.
-  track_account INTEGER NOT NULL DEFAULT 0
+  track_account INTEGER NOT NULL DEFAULT 0,
+  reserve_account INTEGER NOT NULL DEFAULT 0 CHECK (reserve_account IN (0, 1)),
+  reserved_amount_minor INTEGER NOT NULL DEFAULT 0 CHECK (reserved_amount_minor >= 0),
+  CHECK (reserve_account = 0 OR (track_account = 0 AND linked_account_id IS NOT NULL))
 );
 
 CREATE TABLE IF NOT EXISTS budgets (
@@ -256,4 +259,25 @@ CREATE INDEX IF NOT EXISTS idx_person_ledger_transaction ON person_ledger_entrie
 -- have existed since the table was created: this runs on every launch, before any column migration.
 CREATE INDEX IF NOT EXISTS idx_transactions_account_date ON transactions(account_id, date);
 CREATE INDEX IF NOT EXISTS idx_transactions_category_date ON transactions(category_id, date);
+
+CREATE TABLE IF NOT EXISTS refund_expectations (
+  id TEXT PRIMARY KEY,
+  transaction_id TEXT NOT NULL UNIQUE REFERENCES transactions(id) ON DELETE RESTRICT,
+  expected_amount_minor INTEGER NOT NULL CHECK(expected_amount_minor > 0),
+  due_date TEXT,
+  closed INTEGER NOT NULL DEFAULT 0 CHECK(closed IN (0, 1)),
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE TABLE IF NOT EXISTS refund_receipts (
+  id TEXT PRIMARY KEY,
+  expectation_id TEXT NOT NULL REFERENCES refund_expectations(id) ON DELETE RESTRICT,
+  transaction_id TEXT NOT NULL UNIQUE REFERENCES transactions(id) ON DELETE RESTRICT,
+  created_transaction INTEGER NOT NULL DEFAULT 0 CHECK(created_transaction IN (0, 1)),
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_refund_receipts_expectation ON refund_receipts(expectation_id);
+CREATE TABLE IF NOT EXISTS annual_bill_goals (
+  rule_id TEXT PRIMARY KEY REFERENCES recurring_rules(id) ON DELETE RESTRICT,
+  goal_id TEXT NOT NULL UNIQUE REFERENCES savings_goals(id) ON DELETE RESTRICT
+);
 `;

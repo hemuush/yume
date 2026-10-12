@@ -59,3 +59,7 @@ Before a restore replaces anything, Yume saves the current data as a **safety co
 Only the latest copy is kept. It's written to a pending file first and replaces the previous copy only once the restore succeeds, so a restore that fails (a damaged file) leaves both the data and the existing copy untouched. If the copy can't be saved at all (e.g. the phone is full), nothing is replaced unless the user explicitly chooses "Restore anyway". See `src/lib/safetyCopy.ts`.
 
 </details>
+
+## Shared goal reservations
+
+New exports use backup format 3 to preserve goal reservations, expected refunds, receipt links and annual-bill goal links. Format-1 and format-2 backups remain readable; missing planner tables restore as empty, and missing reservation fields default to zero. Earlier app versions reject newer formats rather than silently losing data. Invalid reservation modes, negative/fractional amounts, missing linked accounts and combined whole-account tracking are rejected before replacement. Refund receipts must match the purchase category/currency and cannot exceed the expectation; annual preparation requires a yearly expense and a reservation goal in the same currency. A valid snapshot may contain a shortfall after a withdrawal; reservations remain intact and the app shows the shortfall.

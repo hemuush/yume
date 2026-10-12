@@ -152,27 +152,34 @@ export async function updateRecurringRule(id: string, input: RecurringRuleInput)
     current && current.next_run_date === input.nextRunDate
       ? (current.anchor_day ?? dayOfIsoDate(input.nextRunDate))
       : dayOfIsoDate(input.nextRunDate);
-  await db.runAsync(
-    `UPDATE recurring_rules SET
+  await db.withTransactionAsync(async (tx) => {
+    if (input.type !== 'expense' || input.frequency !== 'yearly') {
+      const linked = await tx.getFirstAsync('SELECT goal_id FROM annual_bill_goals WHERE rule_id = ?', [id]);
+      if (linked)
+        throw new Error('Unlink the preparation goal before changing this bill’s type or frequency.');
+    }
+    await tx.runAsync(
+      `UPDATE recurring_rules SET
        type = ?, account_id = ?, to_account_id = ?, category_id = ?, amount_minor = ?, note = ?,
        payment_mode = ?, frequency = ?, interval_count = ?, next_run_date = ?, end_date = ?, anchor_day = ?
      WHERE id = ?`,
-    [
-      input.type,
-      input.accountId,
-      input.type === 'transfer' ? (input.toAccountId ?? null) : null,
-      input.type === 'transfer' ? null : (input.categoryId ?? null),
-      input.amountMinor,
-      input.note ?? '',
-      input.paymentMode ?? null,
-      input.frequency,
-      input.intervalCount,
-      input.nextRunDate,
-      input.endDate ?? null,
-      anchorDay,
-      id,
-    ]
-  );
+      [
+        input.type,
+        input.accountId,
+        input.type === 'transfer' ? (input.toAccountId ?? null) : null,
+        input.type === 'transfer' ? null : (input.categoryId ?? null),
+        input.amountMinor,
+        input.note ?? '',
+        input.paymentMode ?? null,
+        input.frequency,
+        input.intervalCount,
+        input.nextRunDate,
+        input.endDate ?? null,
+        anchorDay,
+        id,
+      ]
+    );
+  });
   const row = await db.getFirstAsync<RecurringRuleRow>('SELECT * FROM recurring_rules WHERE id = ?', [id]);
   return rowToRule(found(row, 'recurring entry'));
 }
@@ -213,6 +220,10 @@ export async function deleteRecurringRule(id: string): Promise<RowSnapshot> {
   // Captured inside the transaction that deletes it, so the snapshot is exactly the row removed even if a
   // run of due rules advances the rule meanwhile.
   await db.withTransactionAsync(async (tx) => {
+    const preparation = await tx.getFirstAsync('SELECT goal_id FROM annual_bill_goals WHERE rule_id = ?', [
+      id,
+    ]);
+    if (preparation) throw new Error('Unlink the preparation goal before deleting this annual bill.');
     const captured = await captureRow(tx, 'recurring_rules', id);
     if (!captured) throw new Error('This recurring entry is already deleted.');
     await tx.runAsync('DELETE FROM recurring_rules WHERE id = ?', [id]);

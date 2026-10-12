@@ -1,3 +1,5 @@
+import { SpendingExplanation } from './SpendingExplanation';
+import { DateRange } from '@/types';
 import { View, Pressable, ActivityIndicator } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import { CategoryIcon } from '@/components/CategoryIcon';
@@ -32,6 +34,8 @@ export function CategoryList({
   iconOf,
   splitError,
   onRetrySplit,
+  currentRange,
+  previousRange,
 }: {
   breakdown: CategoryBreakdownItem[];
   spentMinor: number;
@@ -48,6 +52,8 @@ export function CategoryList({
   iconOf?: (id: string) => string | undefined;
   splitError?: string;
   onRetrySplit?: () => void;
+  currentRange?: DateRange;
+  previousRange?: DateRange;
 }) {
   const shown = expanded ? breakdown : breakdown.slice(0, COLLAPSED_COUNT);
   const rounded = allocateRoundedMinor(
@@ -156,6 +162,15 @@ export function CategoryList({
               sensitive={selected.isSensitive}
               style={styles.breakdownAmount}
             />
+            {kind === 'expense' && currentRange && previousRange && (
+              <SpendingExplanation
+                categoryId={selected.categoryId}
+                current={currentRange}
+                previous={previousRange}
+                onBeforeEntry={close}
+                onExplore={onOpen ? () => onOpen(selected) : undefined}
+              />
+            )}
             {splitError ? (
               <View style={styles.tidyNudge}>
                 <Text style={styles.errTitle}>Couldn’t load this breakdown</Text>

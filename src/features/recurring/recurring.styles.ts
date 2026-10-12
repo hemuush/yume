@@ -13,6 +13,13 @@ export const styles = StyleSheet.create({
     borderWidth: theme.border.thin,
     borderColor: theme.colors.expense,
   },
+  modalHint: {
+    fontFamily: theme.font.body,
+    fontSize: 12.5,
+    lineHeight: 18,
+    color: theme.colors.textSecondary,
+  },
+  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   errorTitle: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.expenseText },
   errorDetail: {
     fontFamily: theme.font.body,

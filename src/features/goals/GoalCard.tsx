@@ -68,6 +68,11 @@ export function GoalCard({
           <Text style={styles.tagText}>{monthsLine}</Text>
         </View>
       )}
+      {goal.reservesAccount && (
+        <View style={styles.tag}>
+          <Text style={styles.tagText}>Reserved in {accountName ?? 'its account'}</Text>
+        </View>
+      )}
       {following && (
         <View style={[styles.tag, { backgroundColor: shade(secondary, 94) }]}>
           <Feather name="refresh-cw" size={10} color={theme.colors.textSecondary} />
@@ -143,11 +148,13 @@ export function GoalCard({
                 else onContribute();
               }}
               accessibilityRole="button"
-              accessibilityLabel={`${following ? 'Move money to' : 'Add money to'} ${goal.name}`}
+              accessibilityLabel={`${following ? 'Move money to' : goal.reservesAccount ? 'Manage reservation for' : 'Add money to'} ${goal.name}`}
               hitSlop={8}
               style={({ pressed }) => [styles.pill, pressed && styles.pillPressed]}
             >
-              <Text style={styles.pillText}>{following ? 'Move money' : 'Add money'}</Text>
+              <Text style={styles.pillText}>
+                {following ? 'Move money' : goal.reservesAccount ? 'Reserve / release' : 'Add money'}
+              </Text>
             </Pressable>
           )}
         </View>

@@ -25,6 +25,9 @@ import { dayMonth, longMonth, longWeekday } from '@/lib/dateLabels';
 import { PeriodPicker } from '@/components/PeriodPicker';
 import { FilterModal } from '@/features/transactions/FilterModal';
 import { TimelineDay } from '@/features/transactions/TimelineDay';
+import { getTransactionById } from '@/db/transactions';
+import { showAlert } from '@/components/AppDialog';
+import { PendingRefunds } from '@/features/transactions/PendingRefunds';
 import { TransactionDetailModal } from '@/features/transactions/TransactionDetailModal';
 import { TransactionsHeadline } from '@/features/transactions/TransactionsHeadline';
 import { TransactionsSkeleton } from '@/features/transactions/TransactionsSkeleton';
@@ -148,7 +151,12 @@ export default function TransactionsScreen() {
   const [direction, setDirection] = useState<-1 | 0 | 1>(0);
   // A link can open Activity already filtered: ?category= (a category page's
   // "See all") or ?account= (Home's account sheet), with ?month=YYYY-MM.
-  const linkParams = useLocalSearchParams<{ category?: string; account?: string; month?: string }>();
+  const linkParams = useLocalSearchParams<{
+    category?: string;
+    account?: string;
+    month?: string;
+    entry?: string;
+  }>();
   useEffect(() => {
     const { category, account, month } = linkParams;
     if (!category && !account) return;
@@ -174,6 +182,34 @@ export default function TransactionsScreen() {
     }
     router.setParams({ category: undefined, account: undefined, month: undefined });
   }, [linkParams]);
+  useEffect(() => {
+    if (!linkParams.entry || accounts.length === 0) return;
+    let live = true;
+    getTransactionById(linkParams.entry)
+      .then((tx) => {
+        if (!live) return;
+        if (tx) {
+          const [year, month] = tx.date.split('-').map(Number);
+          setSearching(false);
+          setFilterType('all');
+          setFilterCategoryIds([]);
+          setFilterAccountIds([]);
+          setViewScope('month');
+          setAnchor(new Date(year, month - 1, 1));
+          setDetailTx(tx);
+        } else showAlert('Entry unavailable', 'This entry may have been deleted.');
+        router.setParams({ entry: undefined });
+      })
+      .catch(() => {
+        if (live) {
+          showAlert("Couldn't open entry", 'Reopen it from Reports to retry.');
+          router.setParams({ entry: undefined });
+        }
+      });
+    return () => {
+      live = false;
+    };
+  }, [linkParams.entry, accounts.length]);
   // The last-tapped chart bar lifts while the rest fade (see SpendBarChart); cleared on period change since
   // its key belongs to the old period's bars.
   const [selectedBar, setSelectedBar] = useState<string | null>(null);
@@ -711,6 +747,7 @@ export default function TransactionsScreen() {
                     />
                   </ReanimatedAnimated.View>
 
+                  <PendingRefunds refreshToken={transactions} onOpen={setDetailTx} />
                   <ActivityFilterChips
                     filterType={filterType}
                     onFilterType={setFilterType}

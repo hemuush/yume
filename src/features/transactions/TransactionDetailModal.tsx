@@ -30,6 +30,8 @@ import { useUndoToast } from '@/components/UndoToast';
 import { haptics } from '@/lib/haptics';
 import { emitTransactionsChanged } from '@/lib/dataEvents';
 import { toLocalIsoDate, nextMonthlyDateAfter } from '@/lib/date';
+import { RefundTracker } from './RefundTracker';
+import { undoRefundReceipt } from '@/db/refundTracking';
 import { RuleModal } from '@/features/recurring/RuleModal';
 import { styles } from './transactions.styles';
 import { errorMessage } from '@/lib/errorMessage';
@@ -337,6 +339,38 @@ export function TransactionDetailModal({
               )}
             </Pressable>
           </View>
+        ) : link?.kind === 'refund-received' ? (
+          <PrimaryButton
+            title={busy ? 'Undoing…' : 'Undo refund receipt'}
+            variant="secondary"
+            disabled={busy}
+            onPress={() =>
+              showAlert(
+                'Undo this refund receipt?',
+                'If recorded here, its refund transaction is removed. If linked from an existing entry, that entry stays recorded and is unlinked.',
+                [
+                  { text: 'Cancel', style: 'cancel' },
+                  {
+                    text: 'Undo',
+                    style: 'destructive',
+                    onPress: () =>
+                      void runAction(async () => {
+                        setBusy(true);
+                        try {
+                          await undoRefundReceipt(link.receiptId);
+                          emitTransactionsChanged();
+                          onChanged();
+                        } catch (e) {
+                          showAlert("Couldn't undo", errorMessage(e));
+                        } finally {
+                          setBusy(false);
+                        }
+                      }),
+                  },
+                ]
+              )
+            }
+          />
         ) : link?.kind === 'loan' ? (
           <PrimaryButton
             title={busy ? 'Undoing…' : 'Undo payment'}
@@ -375,6 +409,9 @@ export function TransactionDetailModal({
         meta={route ? weekdayDayMonth(tx.date) : `${weekdayDayMonth(tx.date)} · ${accountName(tx.accountId)}`}
       />
 
+      {tx.type === 'expense' && (link === null || link?.kind === 'refund-expected') && (
+        <RefundTracker transaction={tx} accounts={accounts} onChanged={onChanged} />
+      )}
       {/* What you can do with it, right under the amount: no second page to find it on. */}
       {moreActions.length > 0 && (
         <View style={styles.quickRow}>
@@ -478,6 +515,10 @@ export function TransactionDetailModal({
               Couldn't check whether this entry is tied to a loan or a person. You can still edit it.
             </Text>
           ) : null
+        ) : link.kind === 'refund-expected' || link.kind === 'refund-received' ? (
+          <Text style={styles.hintText}>
+            Tracked refund — manage the expectation or undo its receipt here before editing the linked entry.
+          </Text>
         ) : link.kind === 'loan' ? (
           <Text style={styles.hintText}>
             A loan EMI payment — it can't be edited directly. Undo it to put the installment back to pending.

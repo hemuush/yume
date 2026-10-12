@@ -262,19 +262,31 @@ export async function updateAccount(id: string, input: UpdateAccountInput): Prom
         : input.tracked
           ? 1
           : 0;
-  await db.runAsync(
-    `UPDATE accounts SET name = ?, type = ?, opening_balance_minor = ?, credit_limit_minor = ?, statement_day = ?, due_day = ?, tracked = ? WHERE id = ?`,
-    [
-      input.name.trim(),
-      input.type,
-      input.openingBalanceMinor,
-      input.creditLimitMinor ?? null,
-      isCard ? (input.statementDay ?? null) : null,
-      isCard ? (input.dueDay ?? null) : null,
-      tracked,
-      id,
-    ]
-  );
+  await db.withTransactionAsync(async (tx) => {
+    if (isCard || tracked) {
+      const reserved = await tx.getFirstAsync<{ n: number }>(
+        'SELECT COUNT(*) AS n FROM savings_goals WHERE reserve_account = 1 AND linked_account_id = ?',
+        [id]
+      );
+      if (reserved?.n)
+        throw new Error(
+          'Switch reservation goals to manual tracking before making this account a credit card or tracked investment.'
+        );
+    }
+    await tx.runAsync(
+      `UPDATE accounts SET name = ?, type = ?, opening_balance_minor = ?, credit_limit_minor = ?, statement_day = ?, due_day = ?, tracked = ? WHERE id = ?`,
+      [
+        input.name.trim(),
+        input.type,
+        input.openingBalanceMinor,
+        input.creditLimitMinor ?? null,
+        isCard ? (input.statementDay ?? null) : null,
+        isCard ? (input.dueDay ?? null) : null,
+        tracked,
+        id,
+      ]
+    );
+  });
   // The summary figures need the grouped query, not the bare row.
   const account = (await listAccounts(true)).find((a) => a.id === id);
   if (!account) throw new Error('Account not found');
@@ -380,6 +392,14 @@ export async function deleteAccount(id: string): Promise<DeletedAccount> {
   // Every check, the capture and the DELETE share one transaction: an entry (or value update, or repeating
   // rule) saved between a separate check and the delete can't slip past it.
   await db.withTransactionAsync(async (tx) => {
+    const reservations = await tx.getFirstAsync<{ n: number }>(
+      'SELECT COUNT(*) AS n FROM savings_goals WHERE reserve_account = 1 AND linked_account_id = ?',
+      [id]
+    );
+    if (reservations?.n)
+      throw new Error(
+        'This account has reservation goals. Release them and switch their tracking mode before deleting the account.'
+      );
     const valuations = await tx.getFirstAsync<{ total: number }>(
       'SELECT COUNT(*) AS total FROM account_valuations WHERE account_id = ?',
       [id]

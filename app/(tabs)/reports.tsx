@@ -776,6 +776,8 @@ export default function ReportsScreen() {
                   onRetrySplit={retryDetails}
                   expanded={catExpanded}
                   onToggleExpanded={() => setCatExpanded((v) => !v)}
+                  currentRange={range}
+                  previousRange={previousWindowRange(cursor)}
                   selectedId={selectedCat}
                   onSelect={(c) => setSelectedCat((id) => (id === c.categoryId ? null : c.categoryId))}
                   split={detailErrors.split ? [] : split?.id === selectedCat ? split.items : null}

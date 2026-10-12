@@ -20,6 +20,7 @@ import { useAccent } from '@/theme/AccentContext';
 import { accountHue, accountIcon } from '@/lib/account';
 import { FormInput } from '@/components/FormInput';
 import { AmountField } from '@/components/AmountField';
+import { AccountReservations } from '@/features/goals/AccountReservations';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { Chip } from '@/components/Chip';
 import { ToggleSwitch } from '@/components/ToggleSwitch';
@@ -232,6 +233,7 @@ export function AccountDetailModal({
               : `Balance now · opened with ${formatMoney(toMinor(parseFloat(opening || '0')) || 0, account.currency)}`
         }
       />
+      <AccountReservations account={account} onNavigate={onClose} />
       <FormInput label="Name" value={name} onChangeText={setName} placeholder="e.g. HDFC Savings" />
       <Text style={styles.fieldLabel}>Type</Text>
       <View style={styles.chipRow}>

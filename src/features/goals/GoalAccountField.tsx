@@ -22,10 +22,14 @@ export function GoalAccountField({
   onChangeTracks,
   goalId,
   manualAmountMinor = 0,
+  reserves = false,
+  onChangeReserves,
 }: {
   accounts: Account[];
   accountId: string | null;
   tracks: boolean;
+  reserves?: boolean;
+  onChangeReserves?: (reserves: boolean) => void;
   onChangeAccount: (id: string | null) => void;
   onChangeTracks: (tracks: boolean) => void;
   /** The goal being edited, so it doesn't warn about itself. */
@@ -55,7 +59,7 @@ export function GoalAccountField({
 
   return (
     <>
-      <Text style={styles.fieldLabel}>Keeping it in (optional)</Text>
+      <Text style={styles.fieldLabel}>Account (optional)</Text>
       <View style={styles.chipRow}>
         <Chip label="None" active={accountId === null} onPress={() => onChangeAccount(null)} />
         {defaultCurrencyAccountsOf(accounts).map((a) => (
@@ -65,17 +69,34 @@ export function GoalAccountField({
 
       {account && (
         <View style={styles.followGroup}>
+          {onChangeReserves && account.type !== 'credit_card' && !account.investment && !account.archived && (
+            <FollowOption
+              on={reserves}
+              title={`Reserve from ${account.name}`}
+              sub="Set aside a share for this goal. Reserve money after saving."
+              onPress={() => {
+                onChangeTracks(false);
+                onChangeReserves(true);
+              }}
+            />
+          )}
           <FollowOption
-            on={tracks}
+            on={tracks && !reserves}
             title={`Follow ${account.name}`}
             sub="Progress is this account's balance and updates by itself."
-            onPress={() => onChangeTracks(true)}
+            onPress={() => {
+              onChangeReserves?.(false);
+              onChangeTracks(true);
+            }}
           />
           <FollowOption
-            on={!tracks}
+            on={!tracks && !reserves}
             title="I'll add money myself"
             sub="Tap + Add money as you save. The account is just a label."
-            onPress={() => onChangeTracks(false)}
+            onPress={() => {
+              onChangeReserves?.(false);
+              onChangeTracks(false);
+            }}
           />
           {tracks && othersFollowing.length > 0 && (
             <Text style={styles.followWarn}>
@@ -84,7 +105,7 @@ export function GoalAccountField({
               {othersFollowing.length > 1 ? '' : 's'} {account.name}. Both will show the same balance.
             </Text>
           )}
-          {tracks && manualAmountMinor > 0 && (
+          {(tracks || reserves) && manualAmountMinor > 0 && (
             <Text style={styles.modalHint}>
               The {formatMaskableMoney(manualAmountMinor, { masked: hideAmounts })} you added by hand is kept,
               and comes back if you switch back.
@@ -118,7 +139,7 @@ function FollowOption({
       <View style={[styles.followDot, on && styles.followDotOn]} />
       <View style={{ flex: 1 }}>
         <Text style={styles.followTitle}>{title}</Text>
-        <Text style={styles.followSub}>{sub}</Text>
+        {on && <Text style={styles.followSub}>{sub}</Text>}
       </View>
     </Pressable>
   );

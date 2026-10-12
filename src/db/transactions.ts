@@ -518,7 +518,9 @@ export async function assertEditableTransactionOn(
     'entry'
   );
   if (await transactionLinkOn(db, id)) {
-    throw new Error('This transaction is linked to a loan or person entry — undo it from there instead.');
+    throw new Error(
+      'This transaction is linked to a loan or person entry, or a tracked refund — open its detail and undo it from there.'
+    );
   }
   if (row.split_id && !allowSplit) throw new Error('This is part of a split. Edit the whole split instead.');
   return row;
@@ -573,6 +575,8 @@ export async function setDayOrder(date: string, orderedIds: string[]): Promise<v
 export type TransactionLink =
   | { kind: 'loan'; loanPaymentId: string } // an EMI payment — undoInstallmentPayment reverses it
   | { kind: 'person' } // a Friends & Family entry — undoPersonTransaction reverses it
+  | { kind: 'refund-received'; receiptId: string }
+  | { kind: 'refund-expected' }
   | { kind: 'loan-unlinked' } // a loan disbursement or prepayment — no undo exists yet, block editing
   | null;
 
@@ -601,6 +605,15 @@ async function transactionLinkOn(db: AppDb, id: string): Promise<TransactionLink
   if (loanRow) return { kind: 'loan', loanPaymentId: loanRow.id };
   if (personRow) return { kind: 'person' };
   if (own?.loan_id) return { kind: 'loan-unlinked' };
+  const received = await db.getFirstAsync<{ id: string }>(
+    'SELECT id FROM refund_receipts WHERE transaction_id = ?',
+    [id]
+  );
+  if (received) return { kind: 'refund-received', receiptId: received.id };
+  const expected = await db.getFirstAsync('SELECT id FROM refund_expectations WHERE transaction_id = ?', [
+    id,
+  ]);
+  if (expected) return { kind: 'refund-expected' };
   return null;
 }
 
@@ -622,7 +635,9 @@ export async function deleteTransaction(
   // double-tap can't capture a row the other call is deleting.
   await db.withTransactionAsync(async (tx) => {
     if ((await transactionLinkOn(tx, id)) !== null) {
-      throw new Error('This transaction is linked to a loan or person entry — undo it from there instead.');
+      throw new Error(
+        'This transaction is linked to a loan or person entry, or a tracked refund — open its detail and undo it from there.'
+      );
     }
     const captured = await captureRow(tx, 'transactions', id);
     if (!captured) throw new Error('This transaction is already deleted.');
