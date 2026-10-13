@@ -53,3 +53,5 @@ See [release follow-up audit](RELEASE_FOLLOWUP_AUDIT.md) for the notification li
 See [final UI consistency review](FINAL_UI_CONSISTENCY.md) and its file-coverage inventory for the latest local spacing/readability refinements and fresh presentation checks. No APK was built for that review.
 
 See [optimization and structure review](OPTIMIZATION_REVIEW.md) for Activity lookup improvements, cache clock handling, comment cleanup and fresh performance-fixture checks.
+
+See [screen source coverage](SCREEN_SOURCE_COVERAGE.md) for all route/component mappings, the final Activity period layout refinement and fresh UI checks.

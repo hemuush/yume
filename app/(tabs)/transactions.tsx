@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { onTransactionsChanged } from '@/lib/dataEvents';
 import { useFreshness } from '@/lib/useFreshness';
-import { View, FlatList, Pressable, Animated } from 'react-native';
+import { View, FlatList, Pressable, Animated, useWindowDimensions } from 'react-native';
 import { Text, TextInput } from '@/components/Text';
 import ReanimatedAnimated, { FadeIn, ReduceMotion } from 'react-native-reanimated';
 import { useFocusEffect, router, useLocalSearchParams } from 'expo-router';
@@ -70,6 +70,8 @@ const SEARCH_RESULT_LIMIT = 50;
 
 export default function TransactionsScreen() {
   const insets = useSafeAreaInsets();
+  const { width, fontScale } = useWindowDimensions();
+  const stackPeriod = width < 380 || fontScale > 1.15;
   const tabScrollPad = useTabScrollPad();
   const { hideAmounts } = usePrivacy();
   const { accent, secondary } = useAccent();
@@ -869,8 +871,11 @@ export default function TransactionsScreen() {
         ) : (
           // ‹ This week › in a frosted pill, Week | Month beside it. Dragging the pill (or the Spent card
           // below) steps the period, same as the chevrons.
-          <View style={styles.periodBar}>
-            <View style={styles.periodRow} {...periodSwipe.panHandlers}>
+          <View style={[styles.periodBar, stackPeriod && styles.periodBarStacked]}>
+            <View
+              style={[styles.periodRow, stackPeriod && styles.periodRowStacked]}
+              {...periodSwipe.panHandlers}
+            >
               {/* Only the contents follow the finger, inside the clipped pill, so a drag never slides the
                   pill over the Week | Month switch beside it. */}
               <ReanimatedAnimated.View style={[styles.periodInner, periodSwipe.dragStyle]}>
@@ -878,7 +883,7 @@ export default function TransactionsScreen() {
                   onPress={stepBack}
                   onPressIn={stepBackPress.onPressIn}
                   onPressOut={stepBackPress.onPressOut}
-                  hitSlop={6}
+                  hitSlop={2}
                   style={[styles.periodNav, stepBackPress.animatedStyle]}
                   accessibilityRole="button"
                   accessibilityLabel={viewScope === 'month' ? 'Previous month' : 'Previous week'}
@@ -905,7 +910,7 @@ export default function TransactionsScreen() {
                   onPress={stepForward}
                   onPressIn={stepForwardPress.onPressIn}
                   onPressOut={stepForwardPress.onPressOut}
-                  hitSlop={6}
+                  hitSlop={2}
                   disabled={atCurrent}
                   style={[styles.periodNav, atCurrent && styles.periodNavOff, stepForwardPress.animatedStyle]}
                   accessibilityRole="button"
@@ -923,8 +928,12 @@ export default function TransactionsScreen() {
                   <Pressable
                     key={o.value}
                     onPress={() => onChangeViewScope(o.value)}
-                    hitSlop={4}
-                    style={withPressed([styles.scopeBtn, on && { backgroundColor: ink }])}
+                    hitSlop={2}
+                    style={withPressed([
+                      styles.scopeBtn,
+                      stackPeriod && styles.scopeBtnStacked,
+                      on && { backgroundColor: ink },
+                    ])}
                     accessibilityRole="radio"
                     accessibilityState={{ selected: on }}
                   >

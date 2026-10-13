@@ -22,7 +22,7 @@ app/(tabs)/add.tsx,presentation,7,content scanned; global static checks apply,,a
 app/(tabs)/index.tsx,presentation,757,content scanned; global static checks apply,,4118d628ccdf678c4af3fed11dacd4889d8ad31d52134c7008253abeb56f5a76
 app/(tabs)/plan.tsx,presentation,438,content scanned; global static checks apply,,d7c45e1142b0e2b876779d95a778b970c55e0aaad70d5427a2713a614b22b8c2
 app/(tabs)/reports.tsx,presentation,838,content scanned; global static checks apply,,288343f05da04cbcd94db15d19583c19e8441f1f2ab5443cdeb221392bfb4cad
-app/(tabs)/transactions.tsx,presentation,979,focused optimization/structure review + targeted checks,single-line label: check intended truncation,d934df7a28a197d4fb63788cc836f9a4f99e6326a745b33f8f71756be9732366
+app/(tabs)/transactions.tsx,presentation,988,focused optimization/structure review + targeted checks,single-line label: check intended truncation,3707c0c2497bda2a46ceee894141b3156f6ffc60dcfdb046bf64b0256897a02f
 app/_layout.tsx,presentation,342,content scanned; global static checks apply,,9aadcabc618db83fa2c2d8bb795f6e83c9cbb721dad22fad1e21b047dad7cda1
 app/add-transaction.tsx,presentation,1052,content scanned; global static checks apply,,95002402ae56d8a9e929027b76242735d6d87ab7ec5304da0388d04d6923f314
 app/backup.tsx,presentation,700,focused layout review + content scan,,ff167c8e1643095a87bbded2d121c4ecdc29cb483655709d4afff743eb587665
@@ -56,15 +56,16 @@ assets/widget-preview/quick-add.png,asset/binary,,catalogued; not visually inspe
 assets/widget-preview/suu.png,asset/binary,,catalogued; not visually inspected,,c87a47d69bc2a3cd8d8c3e6602c6aa5f320726e5450cd3cad452cdbe51e6c3e1
 assets/widget-preview/this-month.png,asset/binary,,catalogued; not visually inspected,,a1c082bacc58acd77345187db8464550ad889d7d26c8d26e0ea0df003548cdc2
 assets/yume-mark.png,asset/binary,,catalogued; not visually inspected,,616fb3d94bd0534b6ec76d444404022c26d8e866e1e8ff8eb19b2fd6e16728c8
-docs/ARCHITECTURE.md,documentation/other,126,content scanned; reference/context,,8c21d5c7d274291046f9bf42ea130c4d1532f77c0dba299daf0d35317c907db4
+docs/ARCHITECTURE.md,documentation/other,128,content scanned; reference/context,,5de0c7f27c53dcba5ce2b41604b1510c0e35995620e07eed1bebc44b95342a4b
 docs/CLEANUP.md,documentation/other,13,content scanned; reference/context,,47401433b83ca4d45a2cb69ce18bc7fe1d817cce8125c066e511236a1c9cf8fe
 docs/FINAL_UI_AUDIT.md,documentation/other,46,content scanned; reference/context,,e84dbc97a538de25a52038ce37aac5b7130200c37510d38e8522e32928e7b9ce
 docs/FINAL_UI_CONSISTENCY.md,documentation/other,32,content scanned; reference/context,,14778f2a81d42a5312c0621693def6a1a2cae9a78b84fb90c5ab483da55e33a6
-docs/INDEX.md,documentation/other,55,content scanned; reference/context,,d77b03e66cda446451dc5b942cb9caf2fcbc12c1b40422939bed935abc6b74d7
+docs/INDEX.md,documentation/other,57,content scanned; reference/context,,d40fb647b7751af07b7902ee84dd130fe8f78fcc93d09753abbc6deede3194ad
 docs/OPTIMIZATION_REVIEW.md,documentation/other,23,content scanned; reference/context,,4bdaed17aa58b2a0d122f0271b58cb70cac10b3f9e9f5724256684de59725681
 docs/PRODUCTION_RELEASE_AUDIT.md,documentation/other,72,content scanned; reference/context,,18c4fc5c3326cba80f2e8d54a6947c5f9456939512d721073b4a9f884745aa3b
 docs/RELEASE_DEVICE_CHECKS.md,documentation/other,27,content scanned; reference/context,,0afcdca332487ee09e30417e2bdfa822270db9c8990ab923927ff1e1396e7cb7
 docs/RELEASE_FOLLOWUP_AUDIT.md,documentation/other,69,content scanned; reference/context,,8e79a4b17515b99722055507d2cc8ca096e90d27b367cc36a7687537ed2408b1
+docs/SCREEN_SOURCE_COVERAGE.md,documentation/other,1002,content scanned; reference/context,,552971b0eb7c38e6fc4ca2e7ef98a5ed0dfe6aef5a335d076af93c492440c184
 docs/archive/ACTIVITY_FIX_REPORT.md,documentation/other,50,content scanned; reference/context,,6bab7365ec510784dcacde0ee0d0e34b58f1cea04da2fb7d9f44a34aa45ecd6c
 docs/archive/APP_AUDIT.md,documentation/other,117,content scanned; reference/context,,da5e37911d3ec42b6ed92013eac77d6263c8c13bdf99cf6d36f5f2c4b0f0e247
 docs/archive/AUDIT.md,documentation/other,103,content scanned; reference/context,,20b862e8757085cb8273f43557542b62501999f4c619319e2d02c79cd30e5c45
@@ -571,7 +572,7 @@ src/features/transactions/spendChart.test.ts,test,212,content scanned; existing 
 src/features/transactions/spendChart.ts,logic/tooling,168,content scanned; global static checks apply,,d3915af573b3fb8085c6429d381eea8a15dead70bd7a11f3659481992ed803f1
 src/features/transactions/transactions.helpers.test.ts,test,195,focused optimization/structure review + targeted checks,,ae2f9a19c0390cb07b6499bf62902169f18a7130122721856aa84ce8bce67629
 src/features/transactions/transactions.helpers.ts,logic/tooling,271,focused optimization/structure review + targeted checks,,b9354b9c1e37fbdd806155153ce7836dd0fc05aee2911f40e633e94094437a2e
-src/features/transactions/transactions.styles.ts,presentation,375,focused layout review + content scan,,bac2211ca8130da648ac99483607c4a8b3d4bf490d49a03ea1279307f7515e96
+src/features/transactions/transactions.styles.ts,presentation,392,focused layout review + content scan,,4559d313078551fbf70bbe84f2248d3636c4b1ed66502c1b64567a04cd4594cc
 src/features/whatif/PurchaseCheck.test.tsx,test,167,content scanned; existing test inventory,,18a299e18f0e5de46c036cce8c5d40350c9c202083fbef96e1415d8c0c1cba66
 src/features/whatif/PurchaseCheck.tsx,presentation,224,content scanned; global static checks apply,,ca0637edbed6a0e17234265dc137308d52ce5f84f3d4257f06cacfaeb322987a
 src/features/whatif/WhatIfScreen.test.tsx,test,119,content scanned; existing test inventory,,7f000b0adc416ac2b071182a63a1bf89d90b40c25f5d78a9730cd4409c6f00f2

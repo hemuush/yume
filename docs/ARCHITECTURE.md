@@ -124,3 +124,5 @@ Foreground maintenance renews notification schedules after recurring catch-up, b
 Shared period/range picker actions have content-sized minimum heights; date tiles grow with text. Undo messages wrap with a full-height action, and queued Add entries use clearer metadata and a 44dp removal target with limited hit slop. Home payment actions and small Plan captions are more readable. Delivery check has its own internal padding; row-group cards retain row-owned padding. These presentation changes preserve all financial and scheduling behavior.
 
 Activity chart currency/privacy scoping lives in `transactions.helpers.ts` and reuses memoized ID maps. Shared read caching rejects clock rollback ages as well as expired/data-version-stale entries; callers must not mutate cached results.
+
+Activity period/date controls grow with text and stack the Week/Month selector below the date pill on narrow screens or above 1.15 system font scale. Period navigation/swipes and filter/calculation behavior remain unchanged.
