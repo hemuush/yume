@@ -297,9 +297,9 @@ export const styles = StyleSheet.create({
   stagedMid: { flex: 1, minWidth: 0 },
   stagedLabel: { fontFamily: theme.font.bodyMedium, fontSize: 12.5, color: theme.colors.textPrimary },
   stagedNote: { fontFamily: theme.font.body, color: theme.colors.textMuted },
-  stagedSub: { fontFamily: theme.font.body, fontSize: 10, color: theme.colors.textMuted, marginTop: 1 },
+  stagedSub: { fontFamily: theme.font.body, fontSize: 11.5, color: theme.colors.textMuted, marginTop: 1 },
   stagedValue: { fontFamily: theme.font.monoBold, fontSize: 11.5, color: theme.colors.textPrimary },
-  removeBtn: { padding: 2 },
+  removeBtn: { width: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' },
 
   linkedNote: { marginBottom: 16 },
   // A white note card with a strip; the space at the top clears the strip.

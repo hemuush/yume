@@ -249,10 +249,10 @@ export const styles = StyleSheet.create({
   person: { maxWidth: 50, alignItems: 'center', gap: 3 },
   avatar: { width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
   avatarText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.surface },
-  personName: { fontFamily: theme.font.body, fontSize: 10, color: theme.colors.textMuted },
+  personName: { fontFamily: theme.font.body, fontSize: 11.5, color: theme.colors.textMuted },
   sproutDay: { alignItems: 'center', gap: 3 },
-  dayLabel: { fontFamily: theme.font.body, fontSize: 9, color: theme.colors.textMuted },
-  personAmt: { fontFamily: theme.font.bodyBold, fontSize: 10, color: theme.colors.textSecondary },
+  dayLabel: { fontFamily: theme.font.body, fontSize: 10.5, color: theme.colors.textMuted },
+  personAmt: { fontFamily: theme.font.bodyBold, fontSize: 11.5, color: theme.colors.textSecondary },
   sprouts: { flexDirection: 'row', alignItems: 'flex-end', gap: 6, minHeight: 32, marginTop: 'auto' },
 
   /* ---------- Coming up ---------- */

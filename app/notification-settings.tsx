@@ -274,7 +274,7 @@ export default function NotificationSettingsScreen() {
         </Section>
 
         <Section title="Delivery check">
-          <View style={[h.card, cardSurface.neutral]}>
+          <View style={[h.card, cardSurface.neutral, styles.deliveryCard]}>
             <Text style={styles.deliveryStatus}>
               {deliveryError
                 ? 'Could not check notifications'
@@ -288,7 +288,7 @@ export default function NotificationSettingsScreen() {
             </Text>
             <Text style={styles.deliveryHint}>
               {deliveryError ??
-                'Times are delivery windows, not two daily alarms. Morning needs something due; the evening logging nudge is skipped after an entry.'}
+                'Morning reminders appear when something is due. The evening log reminder appears if you haven’t logged that day.'}
             </Text>
             <View style={styles.deliveryActions}>
               <PrimaryButton
@@ -336,6 +336,7 @@ export default function NotificationSettingsScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
+  deliveryCard: { padding: 14 },
   deliveryStatus: { fontFamily: theme.font.bodyBold, fontSize: 14, color: theme.colors.textPrimary },
   deliveryHint: {
     fontFamily: theme.font.body,

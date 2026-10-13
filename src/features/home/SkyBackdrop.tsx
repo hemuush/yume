@@ -9,15 +9,7 @@ const clamp01 = (v: number) => {
   return Math.min(1, Math.max(0, v));
 };
 
-/**
- * What sits behind a header, the "quiet bar": open, the page colour with only a faint wash of the theme
- * behind the status bar, fading to nothing before the header's bottom, so the header has no edge. As it
- * collapses the wash fades and a solid page-colour `bar` comes in over the status bar and the title row
- * with a hairline under it, so rows slide under a clean edge (nothing shows through it).
- *
- * Render it first inside the sliding header (it sits under the title row). `collapsedHeight` is how much of
- * the page the collapsed title row covers; 0 until it is measured.
- */
+/** Header wash fades into a pinned solid bar during collapse. Render before header content. */
 export function SkyBackdrop({
   accent,
   scrollY,

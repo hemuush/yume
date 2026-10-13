@@ -41,6 +41,7 @@ import {
   groupByDate,
   periodHeading,
   filterActivity,
+  chartTransactionsFor,
 } from '@/features/transactions/transactions.helpers';
 import { savingsAccountIdsOf } from '@/lib/account';
 import { privateComparison, isSavingsEntry } from '@/lib/privateSummary';
@@ -259,20 +260,12 @@ export default function TransactionsScreen() {
 
   // Chart/headline show the real unfiltered period (only the rows follow Filter; hidden savings &
   // investment categories stay out). Week = bar per day; month = bar per week, as 28-31 bars crowded.
+  const accountsById = useMemo(() => new Map(accounts.map((a) => [a.id, a])), [accounts]);
   const categoriesById = useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories]);
-  // The chart groups by top-level category like the headline does, and a group is hidden when the parent or
-  // any of its subcategories is flagged, so a hidden group's entries leave the bars too, not just the total.
-  const chartTransactions = useMemo(() => {
-    const defaultRows = transactions.filter(
-      (t) => accounts.find((a) => a.id === t.accountId)?.currency === getCachedCurrency()
-    );
-    if (!hideAmounts) return defaultRows;
-    const hiddenGroups = new Set(categories.filter((c) => c.isSensitive).map((c) => c.parentId ?? c.id));
-    return defaultRows.filter((t) => {
-      const cat = t.categoryId ? categoriesById.get(t.categoryId) : undefined;
-      return !cat || !hiddenGroups.has(cat.parentId ?? cat.id);
-    });
-  }, [transactions, categories, categoriesById, hideAmounts, accounts]);
+  const chartTransactions = useMemo(
+    () => chartTransactionsFor(transactions, accountsById, categoriesById, getCachedCurrency(), hideAmounts),
+    [transactions, accountsById, categoriesById, hideAmounts]
+  );
 
   const requestedHeading = periodHeading({ scope: viewScope, week, anchor, today: todayDate });
   const groupedDays = useMemo(() => groupByDate(filteredTransactions), [filteredTransactions]);
@@ -558,9 +551,6 @@ export default function TransactionsScreen() {
     return true;
   };
 
-  // Built once per accounts/categories change instead of `.find()` per row per render (an O(V*C) scan,
-  // repeated on every "expand a day" tap since that re-renders all mounted rows).
-  const accountsById = useMemo(() => new Map(accounts.map((a) => [a.id, a])), [accounts]);
   // Stable, so a day of the list only redraws when its own entries change.
   const accountName = useCallback((id: string) => accountsById.get(id)?.name ?? '—', [accountsById]);
   const accountCurrency = useCallback(

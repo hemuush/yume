@@ -49,3 +49,7 @@ See [production release audit](PRODUCTION_RELEASE_AUDIT.md) for the final regres
 Use [release device acceptance](RELEASE_DEVICE_CHECKS.md) to record manual phone results and expected behavior, including conditional reminders. Unperformed checks remain open.
 
 See [release follow-up audit](RELEASE_FOLLOWUP_AUDIT.md) for the notification lifecycle findings, signed build 10 inspection and current validation limits.
+
+See [final UI consistency review](FINAL_UI_CONSISTENCY.md) and its file-coverage inventory for the latest local spacing/readability refinements and fresh presentation checks. No APK was built for that review.
+
+See [optimization and structure review](OPTIMIZATION_REVIEW.md) for Activity lookup improvements, cache clock handling, comment cleanup and fresh performance-fixture checks.

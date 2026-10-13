@@ -164,7 +164,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.dueRow,
   },
   action: {
-    minHeight: 36,
+    minHeight: 44,
     justifyContent: 'center',
     paddingHorizontal: 16,
     borderRadius: theme.radius.pill,

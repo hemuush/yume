@@ -1,4 +1,4 @@
-import { Category, Transaction } from '@/types';
+import { Account, Category, Transaction } from '@/types';
 import { getCachedCurrency } from '@/db/settings';
 import type { ActivityFilter } from './FilterModal';
 import { toLocalIsoDate, parseLocalIsoDate, addDaysToIsoDate } from '@/lib/date';
@@ -250,4 +250,22 @@ export function laneOrderIds(lines: LaneLine[], transfers: Transaction[]): strin
     ...lines.flatMap((l) => (l.kind === 'single' ? [l.tx.id] : l.items.map((t) => t.id))),
     ...transfers.map((t) => t.id),
   ];
+}
+
+/** Charts ignore row filters, but retain currency scope and whole-category privacy. */
+export function chartTransactionsFor(
+  transactions: Transaction[],
+  accountsById: ReadonlyMap<string, Account>,
+  categoriesById: ReadonlyMap<string, Category>,
+  currency: string,
+  hideAmounts: boolean
+): Transaction[] {
+  const hiddenGroups = hideAmounts
+    ? new Set([...categoriesById.values()].filter((c) => c.isSensitive).map((c) => c.parentId ?? c.id))
+    : null;
+  return transactions.filter((t) => {
+    if (accountsById.get(t.accountId)?.currency !== currency) return false;
+    const category = t.categoryId ? categoriesById.get(t.categoryId) : undefined;
+    return !category || !hiddenGroups?.has(category.parentId ?? category.id);
+  });
 }

@@ -1,14 +1,6 @@
 import { getDataVersion, isDataVersionTracked } from './dataVersion';
 
-/**
- * Shares one heavy read between everything that asks for it until the data changes. Home and its Needs you
- * list, for example, both want this month's totals, this month's budgets and the card cycles; without this
- * each was computed twice per visit, every query waiting its turn in the one database queue.
- *
- * Keyed by the caller (name + arguments) and the data version, so any write makes every entry stale. Results
- * are shared objects: callers must not change them in place. Also capped by age, for reads that depend on
- * the clock as well as the data. Off in tests that bring their own database (see dataVersion.ts).
- */
+/** Shares reads by key/data version for one minute. Callers must not mutate shared results. */
 const MAX_AGE_MS = 60_000;
 /** Plenty for the handful of reads that use this; the oldest goes first. */
 const MAX_ENTRIES = 50;
@@ -20,7 +12,8 @@ export function cachedRead<T>(key: string, read: () => Promise<T>): Promise<T> {
   const version = getDataVersion();
   const now = Date.now();
   const hit = entries.get(key);
-  if (hit && hit.version === version && now - hit.at < MAX_AGE_MS) return hit.value as Promise<T>;
+  const age = hit ? now - hit.at : NaN;
+  if (hit && hit.version === version && age >= 0 && age < MAX_AGE_MS) return hit.value as Promise<T>;
   const value = read();
   entries.delete(key);
   entries.set(key, { version, at: now, value });

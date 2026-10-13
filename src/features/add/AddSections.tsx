@@ -432,7 +432,7 @@ export function StagedList({
             </Text>
             <Pressable
               onPress={() => onRemove(r.id)}
-              hitSlop={14}
+              hitSlop={4}
               style={withPressed(styles.removeBtn)}
               accessibilityRole="button"
               accessibilityLabel="Remove this entry from the list"
