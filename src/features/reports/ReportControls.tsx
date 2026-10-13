@@ -38,11 +38,13 @@ export function BreakdownControls({
   group,
   onFlow,
   onGroup,
+  onLabels,
 }: {
   flow: 'expense' | 'income';
   group: 'category' | 'account';
   onFlow: (value: 'expense' | 'income') => void;
   onGroup: (value: 'category' | 'account') => void;
+  onLabels?: () => void;
 }) {
   const [open, setOpen] = useState(false);
   return (
@@ -78,12 +80,17 @@ export function BreakdownControls({
         visible={open}
         onClose={() => setOpen(false)}
         title="Group breakdown"
-        items={(['category', 'account'] as const).map((key) => ({
-          key,
-          label: key === 'category' ? 'By category' : 'By account',
-          icon: group === key ? 'check-circle' : 'circle',
-          onPress: () => onGroup(key),
-        }))}
+        items={[
+          ...(['category', 'account'] as const).map((key) => ({
+            key,
+            label: key === 'category' ? 'By category' : 'By account',
+            icon: group === key ? ('check-circle' as const) : ('circle' as const),
+            onPress: () => onGroup(key),
+          })),
+          ...(flow === 'expense' && onLabels
+            ? [{ key: 'label', label: 'Explore expense labels', icon: 'tag' as const, onPress: onLabels }]
+            : []),
+        ]}
       />
     </View>
   );
@@ -111,6 +118,10 @@ export function ComparisonNote({ label, partial }: { label: string; partial: boo
         <Text style={s.explanation}>
           A decrease is favourable for spending; an increase is favourable for income. Small changes are left
           unmarked. All shares and totals follow your saved privacy setting.
+        </Text>
+        <Text style={s.explanation}>
+          The “What changed?” insight inside a category compares matching days instead. Its amount can differ
+          from this full-period comparison.
         </Text>
       </ModalSheet>
     </>

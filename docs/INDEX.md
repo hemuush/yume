@@ -1,5 +1,7 @@
 # Documentation index
 
+See [14 October release readiness](RELEASE_READINESS_2026_10_14.md) for the latest local audit, fixes, fresh validation and remaining release gates.
+
 Start with the [README](../README.md), then [architecture and logic](ARCHITECTURE.md), [data model](../DATA_MODEL.md), [backup and restore](../BACKUP.md) and [build/release guide](../BUILD.md).
 
 Reports retain previous evidence in an expandable historical section. Their dates, test counts and old UI descriptions belong to the recorded revision. Current behavior summaries link back to implementation; changing a contract requires updating its guide and meaningful tests.
@@ -59,3 +61,5 @@ See [screen source coverage](SCREEN_SOURCE_COVERAGE.md) for all route/component 
 Lock-screen automatic prompting and the top-aligned layout are described in the architecture guide; prior manual-only lock descriptions are historical. No APK was built for this change.
 
 See [consolidated UI review](CONSOLIDATED_UI_REVIEW.md) for the final refinements, full regression evidence and open phone checks. No APK was built for this review.
+
+See [expense labels](EXPENSE_LABELS.md) for the single-field expense UI, legacy-note compatibility, Activity/Reports usage and fresh validation.

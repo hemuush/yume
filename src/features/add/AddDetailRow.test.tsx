@@ -1,3 +1,4 @@
+jest.mock('./ExpenseLabelSheet', () => ({ ExpenseLabelSheet: () => null }));
 /** The bar above Add's pad: which chips show for each entry type, what they say, and the note field. */
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
 import { Text, TextInput } from 'react-native';
@@ -65,7 +66,7 @@ describe('AddDetailRow', () => {
     expect(labels(tree)).toEqual([
       'Account, Test Bank. Change',
       expect.stringMatching(/^Date, /),
-      'Add a note',
+      'Add a label',
       'Money back (a refund)',
       'Split this payment',
     ]);
@@ -103,7 +104,7 @@ describe('AddDetailRow', () => {
   it('reports a tap on each chip', () => {
     const r = render();
     act(() => chip(r.tree, 'Account, Test Bank. Change').props.onPress());
-    act(() => chip(r.tree, 'Add a note').props.onPress());
+    act(() => chip(r.tree, 'Add a label').props.onPress());
     act(() => chip(r.tree, 'Money back (a refund)').props.onPress());
     act(() => chip(r.tree, 'Split this payment').props.onPress());
     expect(r.onPickAccount).toHaveBeenCalledTimes(1);
@@ -120,7 +121,7 @@ describe('AddDetailRow', () => {
   it('shows the note, and offers to edit it', () => {
     const r = render({ note: ' Lunch ' });
     expect(texts(r.tree)).toContain('Lunch');
-    expect(chip(r.tree, 'Note,  Lunch . Edit')).toBeDefined();
+    expect(chip(r.tree, 'Label,  Lunch . Edit')).toBeDefined();
   });
 
   it('shows how many parts a split has, and blocks Money back while it is split', () => {
@@ -137,7 +138,7 @@ describe('AddDetailRow', () => {
   });
 
   it('swaps the bar for the note field while the note is being typed', () => {
-    const r = render({ noteEditing: true, note: 'Lunch' });
+    const r = render({ type: 'income', noteEditing: true, note: 'Lunch' });
     const input = r.tree.root.findByType(TextInput);
     expect(input.props.value).toBe('Lunch');
     expect(labels(r.tree)).toEqual([]);

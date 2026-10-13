@@ -193,3 +193,17 @@ describe('chartTransactionsFor', () => {
     ]);
   });
 });
+
+it('filters expenses and their refunds by the single label, excluding income notes', () => {
+  const rows = [
+    { id: 'expense', type: 'expense', note: 'Lunch', isRefund: false },
+    { id: 'refund', type: 'income', note: 'Lunch', isRefund: true },
+    { id: 'income', type: 'income', note: 'Lunch', isRefund: false },
+    { id: 'other', type: 'expense', note: 'Travel', isRefund: false },
+  ] as Transaction[];
+  expect(
+    filterActivity(rows, { type: 'all', categoryIds: [], accountIds: [], expenseLabel: 'Lunch' }, []).map(
+      (row) => row.id
+    )
+  ).toEqual(['expense', 'refund']);
+});

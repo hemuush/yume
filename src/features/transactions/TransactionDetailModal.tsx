@@ -271,7 +271,10 @@ export function TransactionDetailModal({
       icon: 'rotate-ccw' as const,
       short: 'Log again',
       label: 'Log again today',
-      sub: 'Same amount, account and note',
+      sub:
+        tx.type === 'expense' || tx.isRefund
+          ? 'Same amount, account and label'
+          : 'Same amount, account and note',
       onPress: logAgainToday,
     },
     canRepeat && {
@@ -489,7 +492,7 @@ export function TransactionDetailModal({
               round
               icon="note-text-outline"
               iconBg={theme.colors.idGold}
-              label="Note"
+              label={tx.type === 'expense' || tx.isRefund ? 'Label' : 'Note'}
               sub={tx.note}
               divider
             />

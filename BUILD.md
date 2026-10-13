@@ -26,7 +26,7 @@ npx eas-cli build --platform android --profile preview
 
 The [preview profile](eas.json) creates an internal-distribution APK and restricts native architecture to **arm64-v8a**. It is not an APK for every Android architecture. EAS returns a build page and download link after success; build duration varies. Install only on a compatible device, for example using `adb install path/to/yume.apk`.
 
-The latest recorded build is **1.0.0, version code 15**: [build page](https://expo.dev/accounts/yume-expense-track/projects/yume/builds/0e6f1aa4-9054-41b9-8d90-44b446a7b819). This is a historical artifact, not a promise that later source changes have been rebuilt.
+The latest submitted preview is **1.0.0, version code 15**: [build page](https://expo.dev/accounts/xyumex/projects/yume/builds/f4528fb4-decc-4a47-a217-9a0a481192c5). It includes the label keyboard/loading and final-audit refinements. Submission alone does not confirm completion or device acceptance.
 
 ## Play Store bundle
 
@@ -56,7 +56,7 @@ Inspect [.github/workflows](.github/workflows) and [scripts](scripts) for CI and
 ## Device release checks
 
 - Verify cold start, lock/unlock, resume, back gestures and navigation from notifications/widgets.
-- Test Add, sheet forms, calculator, notes and the docked pad with the system keyboard.
+- Test Add, sheet forms, calculator, expense labels, other-entry notes and the docked pad with the system keyboard.
 - Check compact Plan, Reports, long names, large amounts and enlarged system text for clipping.
 - Exercise empty, populated, overdue and insufficient-balance states; confirm every payment and detail action.
 - Restore a valid backup, reject an invalid file, select a folder containing newer data and revoke folder permission.

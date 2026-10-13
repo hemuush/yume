@@ -134,6 +134,8 @@ export function filterActivity(
   return transactions.filter((t) => {
     // A refund belongs with spending (it lowers it), so "Spent" shows it and "Income" doesn't.
     const filterAs = t.isRefund ? 'expense' : t.type;
+    if (filter.expenseLabel && (filterAs !== 'expense' || t.note.trim() !== filter.expenseLabel.trim()))
+      return false;
     if (filter.type !== 'all' && filterAs !== filter.type) return false;
     if (
       filter.accountIds.length > 0 &&

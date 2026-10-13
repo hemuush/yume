@@ -148,7 +148,7 @@ export function SearchStatus({
         </View>
         <Text style={styles.searchEmptyTitle}>Search everything</Text>
         <Text style={styles.searchEmptySub}>
-          Notes, categories, accounts, amounts and days, across your whole history.
+          Labels, notes, categories, accounts, amounts and days, across your whole history.
         </Text>
         {suggestions.length > 0 && (
           <View style={styles.searchSuggest}>

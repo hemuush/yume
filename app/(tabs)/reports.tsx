@@ -1,3 +1,4 @@
+import { ExpenseLabelsReport } from '@/features/reports/ExpenseLabelsReport';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View, Pressable, ActivityIndicator, ScrollView } from 'react-native';
 import { getCachedCurrency } from '@/db/settings';
@@ -180,6 +181,8 @@ export default function ReportsScreen() {
   const [selectedCat, setSelectedCat] = useState<string | null>(null);
   const [split, setSplit] = useState<{ id: string; items: CategoryBreakdownItem[] } | null>(null);
   // Categories grouped by category (the default) or by account, with the account row opened.
+  const [labelsOpen, setLabelsOpen] = useState(false);
+  useEffect(() => setLabelsOpen(false), [tab, cursor, flow]);
   const [group, setGroup] = useState<CategoryGroup>('category');
   const [selectedAccount, setSelectedAccount] = useState<string | null>(null);
   // Fetched results carry the key they were fetched for, so one for another
@@ -723,6 +726,7 @@ export default function ReportsScreen() {
             <BreakdownControls
               flow={flow}
               group={group}
+              onLabels={() => setLabelsOpen(true)}
               onFlow={(f) => {
                 setFlow(f);
                 setCatExpanded(false);
@@ -736,6 +740,7 @@ export default function ReportsScreen() {
                 setSelectedAccount(null);
               }}
             />
+            <ExpenseLabelsReport visible={labelsOpen} range={range} onClose={() => setLabelsOpen(false)} />
             {byAccount ? (
               detailErrors.accounts ? null : accountItems === null ? (
                 <ActivityIndicator color={theme.colors.ink} style={styles.daySpinner} />

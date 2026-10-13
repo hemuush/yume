@@ -85,6 +85,33 @@ describe('TrendChart sentence', () => {
 });
 
 describe('TrendChart touch', () => {
+  it('maps touches to plotted slots when future months are unavailable', () => {
+    let r!: ReactTestRenderer;
+    act(() => {
+      r = create(
+        <TrendChart
+          periodName="2026"
+          spentMinor={60000}
+          baseline={null}
+          netWorthTrend={[]}
+          trend={[
+            { label: 'Jan', totalMinor: 10000, recorded: true, month: '2026-01' },
+            { label: 'Feb', totalMinor: 20000, recorded: true, month: '2026-02' },
+            { label: 'Mar', totalMinor: 30000, recorded: true, month: '2026-03' },
+            { label: 'Apr', totalMinor: 0, recorded: false, month: '2026-04' },
+            { label: 'May', totalMinor: 0, recorded: false, month: '2026-05' },
+          ]}
+        />
+      );
+    });
+    mounted.push(r);
+    const touch = r.root.findByProps({ testID: 'trend-touch' });
+    act(() => touch.props.onLayout({ nativeEvent: { layout: { width: 300 } } }));
+    act(() => touch.props.onResponderGrant({ nativeEvent: { locationX: 82 } }));
+    expect(texts(r).some((text) => text.startsWith('Feb: ₹200'))).toBe(true);
+    act(() => touch.props.onResponderGrant({ nativeEvent: { locationX: 286 } }));
+    expect(texts(r).some((text) => text.startsWith('Feb: ₹200'))).toBe(true);
+  });
   const pressable = (r: ReactTestRenderer, text: string) =>
     r.root.find(
       (n) =>

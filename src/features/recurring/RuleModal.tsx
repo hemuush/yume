@@ -424,7 +424,12 @@ export function RuleModal({
               </>
             )}
           </View>
-          <FormInput label="Note (optional)" value={note} onChangeText={setNote} placeholder="e.g. Netflix" />
+          <FormInput
+            label={type === 'expense' ? 'Label (optional)' : 'Note (optional)'}
+            value={note}
+            onChangeText={setNote}
+            placeholder="e.g. Netflix"
+          />
           {editing && (
             <InsightDisclosure title="More options">
               <SheetLink label="Delete recurring entry" onPress={confirmDelete} disabled={saving} />
