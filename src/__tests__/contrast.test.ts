@@ -6,6 +6,7 @@
 import fs from 'fs';
 import path from 'path';
 import { theme } from '@/constants/theme';
+import { AVATAR_COLORS } from '@/lib/hueFor';
 
 const channel = (v: number) => {
   const s = v / 255;
@@ -58,5 +59,11 @@ describe('text contrast', () => {
 describe('graphic contrast', () => {
   it('Trends bar edges stand out from the card', () => {
     expect(contrast(c.textMuted, c.surface)).toBeGreaterThanOrEqual(3);
+  });
+});
+
+describe('avatar initials', () => {
+  it.each(AVATAR_COLORS)('ink initials read on %s', (background) => {
+    expect(contrast(c.ink, background)).toBeGreaterThanOrEqual(4.5);
   });
 });

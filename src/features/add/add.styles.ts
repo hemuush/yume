@@ -16,7 +16,7 @@ export const styles = StyleSheet.create({
   avatarRingOn: { borderColor: theme.colors.ink },
   avatar: { width: 46, height: 46, borderRadius: 23, alignItems: 'center', justifyContent: 'center' },
   avatarAdd: { borderWidth: 1.5, borderStyle: 'dashed', borderColor: theme.colors.borderSoft },
-  avatarText: { fontFamily: theme.font.bodyBold, fontSize: 17, color: theme.colors.white },
+  avatarText: { fontFamily: theme.font.bodyBold, fontSize: 17, color: theme.colors.ink },
   personName: { fontFamily: theme.font.bodyMedium, fontSize: 11.5, color: theme.colors.textSecondary },
   personNameOn: { color: theme.colors.textPrimary, fontFamily: theme.font.bodyBold },
   // A transfer: From and To as two cards, Swap in a dark disc between them.

@@ -55,3 +55,5 @@ See [final UI consistency review](FINAL_UI_CONSISTENCY.md) and its file-coverage
 See [optimization and structure review](OPTIMIZATION_REVIEW.md) for Activity lookup improvements, cache clock handling, comment cleanup and fresh performance-fixture checks.
 
 See [screen source coverage](SCREEN_SOURCE_COVERAGE.md) for all route/component mappings, the final Activity period layout refinement and fresh UI checks.
+
+Lock-screen automatic prompting and the top-aligned layout are described in the architecture guide; prior manual-only lock descriptions are historical. No APK was built for this change.

@@ -1,4 +1,5 @@
 import { act, create, ReactTestRenderer } from 'react-test-renderer';
+import { AppState, AppStateStatus } from 'react-native';
 import { LockScreen } from './LockScreen';
 import { PrimaryButton } from './PrimaryButton';
 import { authenticate, isDeviceSecured } from '@/lib/appLock';
@@ -20,6 +21,9 @@ const render = async (onUnlocked = jest.fn()) => {
   await act(async () => {
     tree = create(<LockScreen onUnlocked={onUnlocked} />);
   });
+  await act(async () => {
+    jest.advanceTimersByTime(250);
+  });
   return onUnlocked;
 };
 const unlock = async () => {
@@ -27,9 +31,18 @@ const unlock = async () => {
     await tree.root.findAllByType(PrimaryButton)[0].props.onPress();
   });
 };
+beforeEach(() => {
+  jest.useFakeTimers();
+  AppState.currentState = 'active';
+  jest.spyOn(AppState, 'addEventListener').mockReturnValue({ remove: jest.fn() });
+  auth.mockResolvedValue(false);
+  secured.mockResolvedValue(true);
+});
 afterEach(() => {
   act(() => tree?.unmount());
   jest.resetAllMocks();
+  jest.restoreAllMocks();
+  jest.useRealTimers();
 });
 
 it('stays locked when both authentication and the security check fail', async () => {
@@ -51,15 +64,15 @@ it('offers recovery only when Android explicitly confirms no device lock', async
   );
 });
 
-it('does not open a system prompt until Unlock is tapped', async () => {
+it('opens the system prompt automatically and unlocks only after success', async () => {
+  auth.mockResolvedValue(true);
   const unlocked = await render();
-  expect(auth).not.toHaveBeenCalled();
+  expect(auth).toHaveBeenCalledTimes(1);
   expect(secured).not.toHaveBeenCalled();
-  expect(unlocked).not.toHaveBeenCalled();
-  expect(tree.root.findAllByType(PrimaryButton).map((button) => button.props.title)).toEqual(['Unlock']);
+  expect(unlocked).toHaveBeenCalledTimes(1);
 });
 
-it('does not start a second prompt while a user-requested prompt is pending', async () => {
+it('does not start a second prompt while the automatic prompt is pending', async () => {
   let finish!: (ok: boolean) => void;
   auth.mockImplementation(
     () =>
@@ -86,10 +99,44 @@ it('stays locked after dismissal and allows a successful manual retry', async ()
   auth.mockResolvedValueOnce(false).mockResolvedValueOnce(true);
   secured.mockResolvedValue(true);
   const unlocked = await render();
-  await unlock();
   expect(unlocked).not.toHaveBeenCalled();
   expect(auth).toHaveBeenCalledTimes(1);
   await unlock();
   expect(unlocked).toHaveBeenCalledTimes(1);
   expect(auth).toHaveBeenCalledTimes(2);
+});
+
+it('waits for an active app and does not reopen after cancellation on resume', async () => {
+  AppState.currentState = 'background';
+  let change!: (state: AppStateStatus) => void;
+  const remove = jest.fn();
+  jest.spyOn(AppState, 'addEventListener').mockImplementation((_event, listener) => {
+    change = listener;
+    return { remove };
+  });
+  const unlocked = await render();
+  expect(auth).not.toHaveBeenCalled();
+  await act(async () => {
+    AppState.currentState = 'active';
+    change('active');
+    jest.advanceTimersByTime(250);
+  });
+  expect(auth).toHaveBeenCalledTimes(1);
+  expect(unlocked).not.toHaveBeenCalled();
+  await act(async () => {
+    change('active');
+    jest.advanceTimersByTime(1000);
+  });
+  expect(auth).toHaveBeenCalledTimes(1);
+  act(() => tree.unmount());
+  expect(remove).toHaveBeenCalledTimes(1);
+});
+
+it('clears the pending automatic prompt when the lock screen unmounts', async () => {
+  await act(async () => {
+    tree = create(<LockScreen onUnlocked={jest.fn()} />);
+  });
+  act(() => tree.unmount());
+  await act(async () => jest.advanceTimersByTime(1000));
+  expect(auth).not.toHaveBeenCalled();
 });

@@ -248,7 +248,7 @@ export const styles = StyleSheet.create({
   people: { flexDirection: 'row', gap: 6, marginTop: 'auto', overflow: 'hidden' },
   person: { maxWidth: 50, alignItems: 'center', gap: 3 },
   avatar: { width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
-  avatarText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.surface },
+  avatarText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.ink },
   personName: { fontFamily: theme.font.body, fontSize: 11.5, color: theme.colors.textMuted },
   sproutDay: { alignItems: 'center', gap: 3 },
   dayLabel: { fontFamily: theme.font.body, fontSize: 10.5, color: theme.colors.textMuted },
