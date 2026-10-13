@@ -34,11 +34,19 @@ export function DateTile({
 }
 
 const styles = StyleSheet.create({
-  tile: { width: 42, height: 44, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
+  tile: {
+    minWidth: 44,
+    minHeight: 44,
+    paddingHorizontal: 6,
+    paddingVertical: 4,
+    borderRadius: 13,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   day: { fontFamily: theme.font.roundedBold, fontSize: 15, lineHeight: 17, color: theme.colors.textPrimary },
   month: {
     fontFamily: theme.font.bodyBold,
-    fontSize: 10,
+    fontSize: 11,
     letterSpacing: 0.7,
     color: theme.colors.textSecondary,
     marginTop: 1,

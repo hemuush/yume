@@ -1,4 +1,4 @@
-import { Transaction } from '@/types';
+import { Account, Category, Transaction } from '@/types';
 import {
   weekContaining,
   stepWeekAnchor,
@@ -7,6 +7,7 @@ import {
   groupByDate,
   periodHeading,
   filterActivity,
+  chartTransactionsFor,
 } from './transactions.helpers';
 import { dayMonth } from '@/lib/dateLabels';
 import { toLocalIsoDate } from '@/lib/date';
@@ -160,5 +161,35 @@ describe('filterActivity', () => {
   it('needs every kind of filter to match', () => {
     expect(ids({ categoryIds: ['food'], accountIds: ['hdfc'] })).toEqual(['order']);
     expect(ids({ type: 'transfer', accountIds: ['sbi'] })).toEqual(['move']);
+  });
+});
+
+describe('chartTransactionsFor', () => {
+  const accounts = new Map([
+    ['inr', { id: 'inr', currency: 'INR' } as Account],
+    ['usd', { id: 'usd', currency: 'USD' } as Account],
+  ]);
+  const categories = new Map([
+    ['food', { id: 'food', parentId: null, isSensitive: false } as Category],
+    ['private', { id: 'private', parentId: 'food', isSensitive: true } as Category],
+  ]);
+  const rows = [
+    { id: 'parent', accountId: 'inr', categoryId: 'food' },
+    { id: 'child', accountId: 'inr', categoryId: 'private' },
+    { id: 'uncategorised', accountId: 'inr', categoryId: null },
+    { id: 'foreign', accountId: 'usd', categoryId: null },
+    { id: 'missing', accountId: 'deleted', categoryId: null },
+  ] as Transaction[];
+  it('keeps currency scope and input order when amounts are visible', () => {
+    expect(chartTransactionsFor(rows, accounts, categories, 'INR', false).map((t) => t.id)).toEqual([
+      'parent',
+      'child',
+      'uncategorised',
+    ]);
+  });
+  it('hides the whole group when any child is sensitive', () => {
+    expect(chartTransactionsFor(rows, accounts, categories, 'INR', true).map((t) => t.id)).toEqual([
+      'uncategorised',
+    ]);
   });
 });

@@ -112,7 +112,7 @@ function ToastView({
       pointerEvents="box-none"
     >
       <View style={[styles.pill, { backgroundColor: ink }]}>
-        <Text style={styles.message} numberOfLines={1}>
+        <Text style={styles.message}>
           {toast.message}
           {/* Another delete landed while this toast was still showing — say so,
               so the still-queued undo doesn't feel like it vanished. */}
@@ -164,14 +164,23 @@ const styles = StyleSheet.create({
     paddingLeft: 18,
     paddingRight: 8,
     maxWidth: 420,
+    width: '100%',
     shadowColor: theme.colors.ink,
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.24,
     shadowRadius: 18,
     elevation: 10,
   },
-  message: { flex: 1, fontFamily: theme.font.bodyMedium, fontSize: 13.5, color: theme.colors.white },
+  message: {
+    flex: 1,
+    minWidth: 0,
+    fontFamily: theme.font.bodyMedium,
+    fontSize: 13.5,
+    color: theme.colors.white,
+  },
   undoChip: {
+    minHeight: 44,
+    justifyContent: 'center',
     borderRadius: theme.radius.pill,
     paddingHorizontal: 14,
     paddingVertical: 8,

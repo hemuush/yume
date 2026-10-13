@@ -1,0 +1,749 @@
+file,category,lines,review_method,review_prompts_not_confirmed_defects,sha256
+.easignore,documentation/other,54,content scanned; reference/context,,4469a62ee33e2059cb36d38fdb79ea785da0629c1378ad0f7ffadc902a31a019
+.github/workflows/ci.yml,logic/tooling,47,content scanned; global static checks apply,,0a441831cebc6b93195bf7edcf0a8cc17b94d040bd786c09344008e15e02ce2f
+.gitignore,documentation/other,51,content scanned; reference/context,,e858a7e450f7cbc1543da805c6f75079ad24955f6eb93c62775e57e0af509c10
+.npmrc,documentation/other,3,content scanned; reference/context,,1cdfb80ee02fd14bfb26fe751df6b6e15a73308aa73c92a5f1ea93bd090c22ca
+.nvmrc,documentation/other,1,content scanned; reference/context,,f14b4987904bcb5814e4459a057ed4d20f58a633152288a761214dcd28780b56
+.prettierignore,documentation/other,13,content scanned; reference/context,,9e8dda4c72d1a4f992bac33be402fb48ce982924d9c788a5f8d8dc027762640e
+.prettierrc.json,logic/tooling,8,content scanned; global static checks apply,,3918a6864d44df3c9a919e4239428a0ec30ce2530a690ad1641b0183adb5fd00
+AGENTS.md,documentation/other,9,content scanned; reference/context,,38c1de4f18f15d5853e3e928ebf02d6845004168fbd31ef7c7bdabb070f04859
+BACKUP.md,documentation/other,65,content scanned; reference/context,,7dab5691dd394b52fdf9bc5daf96cdb482f25e7758dec88d311a43b435f5a756
+BUILD.md,documentation/other,70,content scanned; reference/context,,ba2fc58b0e607973cf0f196536b02a49c52f9e95ee742a248c7be02f630c0a8e
+CLAUDE.md,documentation/other,7,content scanned; reference/context,,65ca59550170a957b562e29f64132b761871719573d6f75ddb55804bbdf44ce8
+DATA_MODEL.md,documentation/other,110,content scanned; reference/context,,b29cd2b52959a72aa7fccb46a596dc269599dec5b13320829a3bd74da216e5f3
+FOLLOWUP_CODE_AUDIT.md,documentation/other,78,content scanned; reference/context,,0fb73f0d009c80fc07e1f3beffc13d2fe0ebfec7a912366e07ca55d9f45a8523
+LICENSE,documentation/other,21,content scanned; reference/context,,fb3ca4a837f5779e83cef89b78253a8949cfb9429c340309f62d0465ec6610b4
+README.md,documentation/other,193,content scanned; reference/context,,6c25780d60157a13cf6ab77cf8114364f12ab37d80fa8b9f9f8a3a097a977729
+SECURITY_PRODUCT_REVIEW.md,documentation/other,60,content scanned; reference/context,,578f28aecbab1d1c40d8d1eb81ef634ae899eefceeb3713b43d90404316b3091
+app.config.js,logic/tooling,14,content scanned; global static checks apply,,b3bff321bfa82555bf89b80809918a556bc0e3f915682b1d1871d5d74387b18f
+app.json,logic/tooling,163,content scanned; global static checks apply,,6c4ef7021b9e1a34b057c26a2c6ce0062a13d909cd92b1af7efb805fa70b8428
+app/(tabs)/_layout.tsx,presentation,41,content scanned; global static checks apply,,e77d6234486737c01e9b3abeeb5bf0a603bf991ceebbea7ae3bcbcc54f1d5573
+app/(tabs)/add.tsx,presentation,7,content scanned; global static checks apply,,a3e071a4a206017b2099087868b84ebbbe90bf0a3543e587d196fee11c059b4a
+app/(tabs)/index.tsx,presentation,757,content scanned; global static checks apply,,4118d628ccdf678c4af3fed11dacd4889d8ad31d52134c7008253abeb56f5a76
+app/(tabs)/plan.tsx,presentation,438,content scanned; global static checks apply,,d7c45e1142b0e2b876779d95a778b970c55e0aaad70d5427a2713a614b22b8c2
+app/(tabs)/reports.tsx,presentation,838,content scanned; global static checks apply,,288343f05da04cbcd94db15d19583c19e8441f1f2ab5443cdeb221392bfb4cad
+app/(tabs)/transactions.tsx,presentation,979,focused optimization/structure review + targeted checks,single-line label: check intended truncation,d934df7a28a197d4fb63788cc836f9a4f99e6326a745b33f8f71756be9732366
+app/_layout.tsx,presentation,342,content scanned; global static checks apply,,9aadcabc618db83fa2c2d8bb795f6e83c9cbb721dad22fad1e21b047dad7cda1
+app/add-transaction.tsx,presentation,1052,content scanned; global static checks apply,,95002402ae56d8a9e929027b76242735d6d87ab7ec5304da0388d04d6923f314
+app/backup.tsx,presentation,700,focused layout review + content scan,,ff167c8e1643095a87bbded2d121c4ecdc29cb483655709d4afff743eb587665
+app/budgets.tsx,presentation,315,content scanned; global static checks apply,,851714bdc5c09599e5289a14c5269ef8ef4b1d0776fe03149a93e02e725896fb
+app/categories.tsx,presentation,362,content scanned; global static checks apply,,0bcff303863cbdf5f4b05ba73556854556080293139d699d861e793fb78a6179
+app/category/[id].tsx,presentation,503,content scanned; global static checks apply,single-line label: check intended truncation,8bf4a042118fde42fdc0149a8971894d8058a1c33b14e9b452dd16a58dec7b1d
+app/garden.tsx,presentation,295,content scanned; global static checks apply,,d258c632aab1b4b88b0d4f6383ea4216990779ac1ae686472af690095abf76fb
+app/loans.tsx,presentation,227,content scanned; global static checks apply,,90717d270a8adac0be3804e372c0cdfd7667c1b0192865ec31c4ffbaa7585d45
+app/notification-settings.tsx,presentation,365,focused layout review + content scan,,970d1c0fad1bbdcdc139fccdf0a6c1aff603be6f9822316b3007ed0532c2628e
+app/notifications.tsx,presentation,370,content scanned; global static checks apply,,b87f4fc0e35650ea7f5f70e1109a1a5f6e82b8571200db5a9e2a403eee7b325a
+app/people.tsx,presentation,196,content scanned; global static checks apply,,d8b9a2077407f29bb538fd6a3468b740f7a1638005d8af42a68ebb1a79c87b2c
+app/profile.tsx,presentation,163,content scanned; global static checks apply,,e5f962d5f6ab22ed214e042d25e62b6f13eb2479e2b7b695e1c2ba4ae21b129d
+app/recently-deleted.tsx,presentation,321,focused layout review + content scan,,2ac2df243eb9e4433de7421f4188262071f84605f1b941c350a0a59e8ca5f2a8
+app/recurring.tsx,presentation,340,content scanned; global static checks apply,,319c8cff3c62d525888ad7f0d1c5764ded0fe68290e4aaa70abaf065678a696b
+app/savings-goals.tsx,presentation,239,content scanned; global static checks apply,,d6b5b99504b5797e292b87c5717d8054df720b50f6754b6e2a46c3869946cfd4
+app/split.tsx,presentation,4,content scanned; global static checks apply,,b03c819f6faf2b87059e174a8e45fbea2ccb5f500b9ac4a2f357d671ec826f6a
+app/themes.tsx,presentation,155,content scanned; global static checks apply,large visual: check intentional chart/illustration,263886df3949a4eeb708b248fedf6fe3c546f0c23116b04030278a4777708a49
+app/tidy-up.tsx,presentation,453,focused layout review + content scan,,257e050409e3ef4844b67fc824d7035ebde09608022c2fa64e24cb37ef66de0b
+app/whatif.tsx,presentation,302,content scanned; global static checks apply,,c4295032a1db1c3a8ee36dc12b74caeb5db7e399420899933d8e4235392f930c
+app/wrap.tsx,presentation,113,content scanned; global static checks apply,,02d2f0a2b4d0a1589ada439ffbe34d9c545ab3a50857d4a81fe21fc598d7f14f
+assets/android-icon-background.png,asset/binary,,catalogued; not visually inspected,,77483c468ce86e47dd6cb474bab672ca19e74370309220cac6dd296a13cbec39
+assets/android-icon-foreground.png,asset/binary,,catalogued; not visually inspected,,e0b1b62d5753d968b1b51fd147d77d1fee4bc90fffa49a57bdf5bc40dd34cb19
+assets/icon.png,asset/binary,,catalogued; not visually inspected,,6ab8faba0ff1a56fc7dafc342b0afd423c0698fa8ef487cfc41e16969bf59ab3
+assets/logo-mark.svg,documentation/other,9,content scanned; reference/context,,7463f8503808bbefedf316415eaf12f32fd011f3f7708d13b9915f537ef9b077
+assets/notification-icon.png,asset/binary,,catalogued; not visually inspected,,050814765590e20015a98af5d178fd9f8295ef95acaf77ce265c9b0d9c98e794
+assets/splash-icon.png,asset/binary,,catalogued; not visually inspected,,6ab8faba0ff1a56fc7dafc342b0afd423c0698fa8ef487cfc41e16969bf59ab3
+assets/suu-ring.png,asset/binary,,catalogued; not visually inspected,,c1d1d4881b3f2c57b715efa85b59471a932ef7e3cb173c20e61ab9bf8eafe522
+assets/widget-preview/accounts.png,asset/binary,,catalogued; not visually inspected,,01e947e5a90eea8bb2e00149530959b7c99c44dc2a4c227cbb216818ea51c1c3
+assets/widget-preview/next-due.png,asset/binary,,catalogued; not visually inspected,,1f8f97e5d47e3a22991a556abcc344c8159262d576da52207079d8a40992d0f2
+assets/widget-preview/quick-add.png,asset/binary,,catalogued; not visually inspected,,eb4c4a6fe1e4cbce8233b6850b2b4cc40f9fe42289b254a3e5352c6763d0f9f8
+assets/widget-preview/suu.png,asset/binary,,catalogued; not visually inspected,,c87a47d69bc2a3cd8d8c3e6602c6aa5f320726e5450cd3cad452cdbe51e6c3e1
+assets/widget-preview/this-month.png,asset/binary,,catalogued; not visually inspected,,a1c082bacc58acd77345187db8464550ad889d7d26c8d26e0ea0df003548cdc2
+assets/yume-mark.png,asset/binary,,catalogued; not visually inspected,,616fb3d94bd0534b6ec76d444404022c26d8e866e1e8ff8eb19b2fd6e16728c8
+docs/ARCHITECTURE.md,documentation/other,126,content scanned; reference/context,,8c21d5c7d274291046f9bf42ea130c4d1532f77c0dba299daf0d35317c907db4
+docs/CLEANUP.md,documentation/other,13,content scanned; reference/context,,47401433b83ca4d45a2cb69ce18bc7fe1d817cce8125c066e511236a1c9cf8fe
+docs/FINAL_UI_AUDIT.md,documentation/other,46,content scanned; reference/context,,e84dbc97a538de25a52038ce37aac5b7130200c37510d38e8522e32928e7b9ce
+docs/FINAL_UI_CONSISTENCY.md,documentation/other,32,content scanned; reference/context,,14778f2a81d42a5312c0621693def6a1a2cae9a78b84fb90c5ab483da55e33a6
+docs/INDEX.md,documentation/other,55,content scanned; reference/context,,d77b03e66cda446451dc5b942cb9caf2fcbc12c1b40422939bed935abc6b74d7
+docs/OPTIMIZATION_REVIEW.md,documentation/other,23,content scanned; reference/context,,4bdaed17aa58b2a0d122f0271b58cb70cac10b3f9e9f5724256684de59725681
+docs/PRODUCTION_RELEASE_AUDIT.md,documentation/other,72,content scanned; reference/context,,18c4fc5c3326cba80f2e8d54a6947c5f9456939512d721073b4a9f884745aa3b
+docs/RELEASE_DEVICE_CHECKS.md,documentation/other,27,content scanned; reference/context,,0afcdca332487ee09e30417e2bdfa822270db9c8990ab923927ff1e1396e7cb7
+docs/RELEASE_FOLLOWUP_AUDIT.md,documentation/other,69,content scanned; reference/context,,8e79a4b17515b99722055507d2cc8ca096e90d27b367cc36a7687537ed2408b1
+docs/archive/ACTIVITY_FIX_REPORT.md,documentation/other,50,content scanned; reference/context,,6bab7365ec510784dcacde0ee0d0e34b58f1cea04da2fb7d9f44a34aa45ecd6c
+docs/archive/APP_AUDIT.md,documentation/other,117,content scanned; reference/context,,da5e37911d3ec42b6ed92013eac77d6263c8c13bdf99cf6d36f5f2c4b0f0e247
+docs/archive/AUDIT.md,documentation/other,103,content scanned; reference/context,,20b862e8757085cb8273f43557542b62501999f4c619319e2d02c79cd30e5c45
+docs/archive/CODE_CLEANUP_REPORT.md,documentation/other,49,content scanned; reference/context,,6ed6db1da432c04d68ed84499e95d545d9721f49418d3c8e85eaae3443c5b655
+docs/archive/FIX_REPORT.md,documentation/other,82,content scanned; reference/context,,33a49365c6d18811ba243ea0318e95f0de849bbe745736e76f85215b9c58d1f8
+docs/archive/HOME_FIX_REPORT.md,documentation/other,63,content scanned; reference/context,,35a45069bb1c2a61f31171eebee221c5943a4a4ef583dbd7dd8b70ed4841cd6a
+docs/archive/HOME_PLAN_SECTION_FIXES.md,documentation/other,35,content scanned; reference/context,,5b9613206311df4b12d23a65a1b96cfe78f8c0736278d86a55cd6a875befa9be
+docs/archive/PERFORMANCE_FIX_REPORT.md,documentation/other,54,content scanned; reference/context,,de0bb3bbda2e67dc55e8669b89c521d2ba7a661dcd153c01e7ad0a44d3783788
+docs/archive/PLAN_FIX_REPORT.md,documentation/other,40,content scanned; reference/context,,cecc9d1f0ed85d44b491312ae3d6d9240dfd19e4419b219c7347ecc7146b6ccf
+docs/archive/POPUP_REFINEMENT_REPORT.md,documentation/other,43,content scanned; reference/context,,5ea75da8bafbefa5ea74aea3dfa07ad6ece29ae95634c3498030b070f6ca390b
+docs/archive/REPORTS_FIX_REPORT.md,documentation/other,44,content scanned; reference/context,,2dfec108ad3d1b74306ae0417ea0b5ee84af1c41f158d8c6b5b718c503e6263f
+docs/archive/REPORTS_REDESIGN_IMPLEMENTATION.md,documentation/other,28,content scanned; reference/context,,8d9c62101f7a6515a2d012afd62f57cf8266002681a8c183cd7737b3979ed499
+docs/archive/SECURITY_FOLLOWUP_REPORT.md,documentation/other,45,content scanned; reference/context,,dab76241659ee46333dcc22528a3fa157fcf9135b462022f5bcf79e0ae2dfd59
+docs/archive/TRANSACTION_FIX_REPORT.md,documentation/other,38,content scanned; reference/context,,a17228fe342246ffb39e90c84d28a16ab50fcf83ef4a5b6c59db7a81f3088dfb
+docs/archive/UI_REFINEMENT_REPORT.md,documentation/other,87,content scanned; reference/context,,6a96f17879f2b7c760dd73f3f1e6062dccdaefec31449bfce6fb9b0ce05012a8
+docs/archive/UI_UX_REFINEMENT_REPORT.md,documentation/other,74,content scanned; reference/context,,39dd6e868f685381d5f412d7efa4eae6da31734a0972ba08d546b2beada83c3d
+eas.json,logic/tooling,27,content scanned; global static checks apply,,86bd614452563ea02c82cc5efc005aa42225ba84d8ba44500a2fa085ddf8a3a5
+eslint.config.js,logic/tooling,64,content scanned; global static checks apply,,d9c0fe7dbf14f1dda6dacc3b6edafc604ac072c5d26c44b12a45abda04d280e4
+index.js,logic/tooling,11,content scanned; global static checks apply,,88331a4a2a61bf7e4648cad79d85927be37e548711abaa55e6c248d5af1c1014
+jest.config.js,logic/tooling,17,content scanned; global static checks apply,,92e2955f658c623b513b28a27496b7e3bd423efdbf03a26c61ab3d7a0a885149
+jest.setup.ts,logic/tooling,40,content scanned; global static checks apply,,546be5212972544a39f4dd727d241027edb9c7c1f401dbe4b43ce0a613c32e0f
+package-lock.json,logic/tooling,15557,content scanned; global static checks apply,,0c529840cca97cddbb9d6e0f1e20e6fc1f78399316b3b0bf91d47b958af35ffe
+package.json,logic/tooling,82,content scanned; global static checks apply,,a65a439a3106ab96d17dd6cb0715668abe250ddfe968c5bd99c0d6255c458f58
+plugins/withAppShortcuts.js,logic/tooling,96,content scanned; global static checks apply,,6fdc6a6601f1359259bc67ffb3341b1118794cc8fb921be3ca716006c1500c09
+plugins/withWidgetPrivacy.js,logic/tooling,105,content scanned; global static checks apply,,5bcea09d91c951c0b669b9dff45171bae1a0991f6c8682fd2cc6660902e72330
+scripts/auditGate.js,logic/tooling,64,content scanned; global static checks apply,,a7b7705c32c6bafe53e41cbfab4565c2ad2fa2162c8377a7a92cc6d38f1b6f89
+scripts/auditGate.test.js,test,46,content scanned; existing test inventory,,448442340465048ed7dc5e216831662b1a966b07fdf0bcaf25202a9e3889511d
+scripts/runPerf.cjs,logic/tooling,19,content scanned; global static checks apply,,1dfbc766b85f30c0d705a198efb2cce963be887003adce7db0a3f69b2c41f61b
+scripts/test.cjs,logic/tooling,9,content scanned; global static checks apply,,bfc3aec8a4b5a51304e76f0f23a33ac39a2d640fb683b24d5306c4f78e7a436b
+scripts/uriDecoder.test.cjs,test,49,content scanned; existing test inventory,,396fda58cf00d00ec6f82535d550b51a53c810285ed0ebbb50a35cb57624a01c
+scripts/widgetPrivacy.test.cjs,test,44,content scanned; existing test inventory,,dfa0ac2cbd6b9d4b7f86a1d238660fb689f422e3a31925c1714ca91975de18e1
+src/__tests__/appShortcuts.test.ts,test,31,content scanned; existing test inventory,,e5c853d67b7c8627219f92eb99b4fcbcdd417e189a5499b91714ae60150046f1
+src/__tests__/contrast.test.ts,test,62,content scanned; existing test inventory,,257bd319e4663a8387205873f683fc0e05c779014c567428b8b0cf97ecd3b0f5
+src/__tests__/fontConsistency.test.ts,test,38,content scanned; existing test inventory,,7079b106017e5c3b490f274ba026d1e48588c39c9340635f71d4eba9baa26390
+src/__tests__/fontScale.test.ts,test,46,content scanned; existing test inventory,,e60fa8b5c58a3d1fd335dae6417a9f12160359b9dc395257ff6505fcc2fc9f93
+src/__tests__/screenConsistency.test.ts,test,176,content scanned; existing test inventory,,df04e71c2a68b89d2e1cd16db08945bbffc4b36e3ffa912e09dde72f5968cf7c
+src/components/ActionSheet.test.tsx,test,96,content scanned; existing test inventory,,4722083c6cecf671166fbf7cd06f452c814c67d498b629ae8d3764318720e9b3
+src/components/ActionSheet.tsx,presentation,112,content scanned; global static checks apply,,c8a8d3ad6db2e86c91ac7717c3c1923d33c475ab890abf95827dcb84c7eaf273
+src/components/AddButton.tsx,presentation,44,content scanned; global static checks apply,,76ef59efc201acbffe95ab423f8b96ac080ea25a74e1d0887071b75275fd9fe7
+src/components/Amount.tsx,presentation,26,content scanned; global static checks apply,,dd57801746cc097d7d8be287b4dc977820443917ab2e47260d850db20617a0a9
+src/components/AmountField.test.tsx,test,166,content scanned; existing test inventory,,c8483bdd7b107806c5e5b5bd1e9d937220e947f7053cf547c4234d04d95baa71
+src/components/AmountField.tsx,presentation,240,content scanned; global static checks apply,,0b47d2f8479a754daab0e60be00a21c1062ff72e62a15cd0c6159ecef39a0421
+src/components/AmountPad.tsx,presentation,142,content scanned; global static checks apply,,cdd010dac196ff8efa2c2ec03365f557fa948992db730627ee4b378525695c1f
+src/components/AppDialog.test.tsx,test,64,content scanned; existing test inventory,,1351e7638a3a94a2e0fa2a6d445c9688c3239ddbfbe0efd97d386e5f8ca94a6a
+src/components/AppDialog.tsx,presentation,125,content scanned; global static checks apply,,53fddfbcf7100493cca87034b72c16a983db8ec6b0c664cb7f0968dbb0572b39
+src/components/AppHeader.tsx,presentation,173,content scanned; global static checks apply,small text: check label versus decorative badge/chart,72fed070d18745780f1a2ef014e3060d6f8bdcba50fd4639fb8ade4a09df5f5c
+src/components/CalendarSheet.tsx,presentation,402,content scanned; global static checks apply,small text: check label versus decorative badge/chart,a09ebf5e0ee455c77fcb4338124a62253798143b716699c452363d89769d2545
+src/components/CardGrowHost.tsx,presentation,87,content scanned; global static checks apply,,0cc884a59861d8e164582312f88bd2e04adfb8854092766184a05b9d89e97016
+src/components/CardSurface.ts,logic/tooling,24,focused layout review + content scan,,bc4c198d341ad8505ac723b3347452aabfc21adb9114aeef55232398291bc134
+src/components/CategoryIcon.tsx,presentation,44,content scanned; global static checks apply,,040bc5a8e59b5170e4fc73a2ea857fe91641ad478317ecf716e8b744ebafa406
+src/components/CategoryPicker.tsx,presentation,345,content scanned; global static checks apply,small text: check label versus decorative badge/chart; single-line label: check intended truncation,4d01c8e01d8c81d91d025b9726993228d32cb8778af8d14b5cbb5a6ada0de6ce
+src/components/CategoryPickerGrid.test.tsx,test,79,content scanned; existing test inventory,,199cdb828dce9d6f2106a3f431302e2d269e9a5ada31d95bee0407f451060c73
+src/components/Chip.test.tsx,test,47,content scanned; existing test inventory,,6e49509b59095f4ce586e19542b050407f9513a700f09fdf529db39d7759dc49
+src/components/Chip.tsx,presentation,92,content scanned; global static checks apply,,fff7f4cde66d7ad3a151f020b804121c1469cff6617972091b1264f6dea25f5b
+src/components/CompletionCard.test.tsx,test,50,content scanned; existing test inventory,,a59e4e02c71572994f03e99a0d585b096d36594f1142c87c0f5506c9ab2d3ac2
+src/components/CompletionCard.tsx,presentation,62,content scanned; global static checks apply,,2705c45639a667190d9840b23b4b41dbd5a1d063fdd4d4e65bdbea80463cc51a
+src/components/CountUpAmount.test.ts,test,17,content scanned; existing test inventory,,8f3254b808b0fc2d00acac75328d98885e29730a060c35126d85e743fda8b7d1
+src/components/CountUpAmount.tsx,presentation,114,content scanned; global static checks apply,,d1257854f000030987e556fe307dcbdafed2a1163302e09fd6a92acde92d21ee
+src/components/DateField.test.tsx,test,117,content scanned; existing test inventory,,ab49972b8ec59a1abd1a2f8d9dfdb10ad2aab153eb35d34cbeb6b83aae5c332c
+src/components/DateField.tsx,presentation,131,content scanned; global static checks apply,,0dd2c53d8aca2639d0884561d900596506b32f49cbdca3ae9fd53930ddb71901
+src/components/DateTile.tsx,presentation,56,focused layout review + content scan,,5311c49f4bdfe32329c57f05e16fb4654c2e66ef90cac873e5d0c6a875bdf192
+src/components/EmptyState.tsx,presentation,50,content scanned; global static checks apply,,99cbec8262ad44552502de7f8640eede28f7e313b767f64cfddb5094a8286ab9
+src/components/ErrorBoundary.test.tsx,test,63,content scanned; existing test inventory,,8e6c248f85dbb9f8a55f2ab0904203feffe04511eb114b9d27c855b2f30b5bb3
+src/components/ErrorBoundary.tsx,presentation,72,content scanned; global static checks apply,,ec9c39ec7dffac8eab75e94bc815ac11558434be9e1e72960cb3025342c44e9b
+src/components/FormInput.tsx,presentation,59,content scanned; global static checks apply,,5ef543e4e000bc971eb984d7a229a93b729eced0af65de35c4ef61cf07f31d87
+src/components/Frost.tsx,presentation,202,content scanned; global static checks apply,,3e689ed806784d30e0491adf1f8c8991d62634b4ceb868794b1086d35e77e908
+src/components/Glass.tsx,presentation,46,content scanned; global static checks apply,,95592212fc59364bf75d676e31a7f6fa41fa95aff8c494bbd1b73b0de25ccb44
+src/components/GrowFill.tsx,presentation,22,content scanned; global static checks apply,,f8a479f3904d216cc473b59533f8cb4f5c7b853c947d53b8a37d4fd54127fabd
+src/components/InsightCard.tsx,presentation,159,focused layout review + content scan,,9066643046335c8a021acc3034d7355c649aec9e0f84953bc6e02aadfc6abc19
+src/components/JustAddedGlow.tsx,presentation,54,content scanned; global static checks apply,,a5f977bf293047efcad94828214b84575c3dcc99ee5b5b64d306dcab5fd224f9
+src/components/LimitMeter.tsx,presentation,67,content scanned; global static checks apply,,4b8784e8d7ba900957e48972b8c6cfd8621e9242d87fcf80367aea03d499f26f
+src/components/ListSkeleton.tsx,presentation,62,content scanned; global static checks apply,,6b1aeb36760e9e2a9800abaf73b9599ae6b431f19b3c94f72af47f67fa80f33a
+src/components/LockScreen.test.tsx,test,95,content scanned; existing test inventory,,642437dc9505cc923d6213709812cac14fa97071a4f7938670c0d974e155ff72
+src/components/LockScreen.tsx,presentation,203,content scanned; global static checks apply,,6b86d7faa37c08ae65a7e38dd9b824dd75c962cf1bc97fe98ab762e0529ed83a
+src/components/MilestoneNote.test.tsx,test,112,content scanned; existing test inventory,,eb9d7591ba84fc61bec68eedd2c9a826847794eba512dc2ac0000c439defe831
+src/components/MilestoneNote.tsx,presentation,212,content scanned; global static checks apply,,a55b625c422e2b5eb2d8c2d869b28085b705133159d5c6c0de8dcd6571cd9013
+src/components/ModalSheet.tsx,presentation,493,content scanned; global static checks apply,,a64c060a799e1140d73cdecb43dfdea96089f7c171c1894b034ec6d6670556d3
+src/components/MovingRow.tsx,presentation,25,content scanned; global static checks apply,,b63aae9c25c5ff2ab17082b3b6d147288a66359ad2854d1b6e57bfa752e7cf0a
+src/components/OdometerAmount.tsx,presentation,92,content scanned; global static checks apply,,e4f07743bb89e0fa97040eb5f938658aef6cef3b9d52a9957daf652788eb3d5e
+src/components/PeriodPicker.test.tsx,test,116,content scanned; existing test inventory,,9d142e271992bed95988559a970bac02d156d831ac406470bf03e75096cae99f
+src/components/PeriodPicker.tsx,presentation,348,focused layout review + content scan,small text: check label versus decorative badge/chart; single-line label: check intended truncation,2d0a26db79b572eb985e009d23f9d6ebaaadc923e89295f8f93efc885eca07c4
+src/components/PillTabBar.tsx,presentation,192,content scanned; global static checks apply,single-line label: check intended truncation,b532156a5afa083072fa4a469cf36b278d01830ca9dba69551ff7925db2244b3
+src/components/PrimaryButton.test.tsx,test,54,content scanned; existing test inventory,,52b2bd1f3dfc9e7d25e1dd0339a196c04476d7b9253f788b996e644f128f2ec6
+src/components/PrimaryButton.tsx,presentation,126,content scanned; global static checks apply,,59546efe185a566c7b67ea79c2c55913489efe9981899ce5b67e683d5baf9b2c
+src/components/QuietMotion.test.tsx,test,119,content scanned; existing test inventory,,7ddeb4201c0044b889ace06677f64506e314d2f791aaf3d6bf77db613c4c62a8
+src/components/ScreenLoadError.tsx,presentation,39,content scanned; global static checks apply,,11f203acae0a5b9662d49f87c3b6fbf7cf8c3787d8babef1e33e22b40d0af6ca
+src/components/Section.tsx,presentation,97,focused layout review + content scan,,a6634ba72d4959a7dcc8bfc39d315c797b8ec006f6e3617eef4b35dc10b6a1fc
+src/components/SegmentedControl.tsx,presentation,159,content scanned; global static checks apply,,ec9c2df154bed4b65e8a013c66854e64d1c74ae51c091e57454a772ea778d4c1
+src/components/SettingsRow.tsx,presentation,93,focused layout review + content scan,,5f90fd3f53cb8ef164b2172f0e5cb884e8a1bb621b91fc32fb3bbe2cd873ad9c
+src/components/SheetCard.tsx,presentation,95,content scanned; global static checks apply,,2bb14e7ae7aee12fd4ccc11d96bbac866895e2aa8861efc6130d8d686d53ab8f
+src/components/SheetTabs.tsx,presentation,63,content scanned; global static checks apply,,4bd340374b48db2af5bf1b653383a1530adb2bf670189b8ccea2af9eef6a8e0a
+src/components/Skeleton.tsx,presentation,66,content scanned; global static checks apply,,d692e9360e0302f60fcc5226502737c4e7fb9d1898d8acdec9f465d6228c919a
+src/components/SoftCard.tsx,presentation,57,content scanned; global static checks apply,,3f9840df17ab2f854f3081301edd10c870a287e0166f63272df861a5fd593a5b
+src/components/StatusBadge.tsx,presentation,44,content scanned; global static checks apply,,3e8f2e6eebbb48c8a865095b5d4d98b823e3852aff273f70434efd3ae994c3d3
+src/components/StripCard.tsx,presentation,69,content scanned; global static checks apply,,1f0e462653d2df165de7fd4a65088fc2834bb98028cecc8faf3c142294be72a5
+src/components/SuuIllustration.tsx,presentation,95,content scanned; global static checks apply,,0e78568ad935025e30117c7471f82f536168ce7c1f08f82538fbcf76104e9fe7
+src/components/Text.tsx,presentation,21,content scanned; global static checks apply,,01a082ed595245efd0d907556ea9b8a1d1d2f8e21dab7c8c02cbc330c24f1c17
+src/components/ToggleSwitch.tsx,presentation,96,content scanned; global static checks apply,,b73a319a921f54f96eb030579c3bf21f1944eb850cf2ad4273732dfacd2d3db5
+src/components/UndoToast.test.tsx,test,95,content scanned; existing test inventory,,2d7fe2084c1ab963b78e7384d8127a2edf77fbd5545b4e2b6f92ca59e08d2e1c
+src/components/UndoToast.tsx,presentation,190,focused layout review + content scan,,679972676329b7f4cf78aecf0449fe895b246db3939264afdd52f183c25192a2
+src/components/YumeLogo.tsx,presentation,24,content scanned; global static checks apply,,7718d911f2648a9dfe05150d6af1a73b01aaf6a20bb918399fff98b467cbabd3
+src/components/headerMetrics.ts,logic/tooling,7,content scanned; global static checks apply,,e8fb265c215dc5e7429038532895678da3ad82f418f3bc2a5680867e16831c75
+src/components/iconName.ts,logic/tooling,7,content scanned; global static checks apply,,47d1aec6f6e5ddec1ef0fd1844a36fa4b4e6d800e5fc723468ccb3a3a6cf79a3
+src/components/icons/TabIcons.tsx,presentation,66,content scanned; global static checks apply,,115efcc21bd905c0f699c494493c640b84a941c60479f0d5739aca42e0ec74d0
+src/components/screenStyles.ts,logic/tooling,74,focused layout review + content scan,,07730ecaf2c8254e093833b7d8e8d3308db5db00d9616dbcbd0437277a2ab5d8
+src/components/softTint.ts,logic/tooling,12,content scanned; global static checks apply,,394e077c1561bb22f908be9842dcce9ec49117b301c95f789f985f3146e335b5
+src/constants/categories.ts,logic/tooling,204,content scanned; global static checks apply,,64fb658022519ee66f7055c896ee01e1500df00e5e2a0497c0034971c14ee614
+src/constants/textStyles.ts,logic/tooling,37,content scanned; global static checks apply,,686f6192e2721c6a46bcfb8cead8a5785f3d0f4e2bdaae1899bfc9b485ed6d26
+src/constants/theme.ts,logic/tooling,189,content scanned; global static checks apply,,1160c3662a1b65dd67f5dc128de561afc1fdc77966e66563f04991090c6f3234
+src/db/accountFlow.test.ts,test,108,content scanned; existing test inventory,,26e1adf216c4a676cb03f489881030fcfee6fd91515e07238d2ed1709bda6167
+src/db/accounts.ts,logic/tooling,469,content scanned; global static checks apply,,b3674e0cd903b88d271d4faa91dadff0bff035ecb32e33f35d423d0408d5629f
+src/db/addHelpers.test.ts,test,109,content scanned; existing test inventory,,a252736026441575900b2afb782e4219d34b17d08190ba55b5cee3244a88884a
+src/db/afterCommit.ts,logic/tooling,14,content scanned; global static checks apply,,8d052e18a7606d9c146ac1ebccc92925197753752125ae039dcf0ab7b091cfe6
+src/db/amountLimit.test.ts,test,65,content scanned; existing test inventory,,198a06ef4a72c75aac5b90612d3e7064231cbea809d8d22d3335035619967a49
+src/db/annualBills.ts,logic/tooling,119,content scanned; global static checks apply,,3a340c32123dd4b7b3aef222be650ff4f575f1413ceca8adcb0e9923a78472ff
+src/db/auditFixes.test.ts,test,234,content scanned; existing test inventory,,dc190a584d7b08cedb047d579846b384132b0a606c405a6dc13ff5edf793d0cb
+src/db/budgetNudge.test.ts,test,87,content scanned; existing test inventory,,193e83d657d5b3ac487f43c88ec778fca360a4639c33467d1d4500df21c8fc04
+src/db/budgets.test.ts,test,335,content scanned; existing test inventory,,a988aef758654554324e628942919a82efcc83980487aa3201bdadeab1c99218
+src/db/budgets.ts,logic/tooling,289,content scanned; global static checks apply,,2e2936a8294eb9598f94d642ca007f43e6ebc274bafb9e1b336a9b740a5c0192
+src/db/calculation.scenarios.test.ts,test,259,content scanned; existing test inventory,,737350ac8665a9ff5c7d3171cae9f97cf211117d6acf07d3a526546aa1cddc9e
+src/db/cardCycles.test.ts,test,186,content scanned; existing test inventory,,5540b49fb9f808d07a7be5bd8596df040e4933a68610d42ea30629ec39081eeb
+src/db/cardCycles.ts,logic/tooling,54,content scanned; global static checks apply,,fb06535234522522a65f1549a302cb08ffbd40b46ac6a8e2e0fc60fff908699a
+src/db/carryIn.test.ts,test,107,content scanned; existing test inventory,,f98af79f51e09a37b15aea30cea45f26edffa05204e75b4853fe5e7fd0cb32c7
+src/db/cashFlowQueries.test.ts,test,117,content scanned; existing test inventory,,76c7ce591288494e73d3270d3049cb351eaf60f6cd1d75470058598fc6a6df5e
+src/db/categories.system.test.ts,test,163,content scanned; existing test inventory,,56c80f5aad0359c34e4d0ead49f8d15a7305ddeab81ac8ec733408354dbee20c
+src/db/categories.ts,logic/tooling,292,content scanned; global static checks apply,,bd1f67ca999893633e737afb2d9f1195409715468a4c935a28755eedbdea69a7
+src/db/categoryMonthlyAverages.test.ts,test,78,content scanned; existing test inventory,,b2dc8948db8eac7caf0659e2edd007904e78940649a772a79da73d92393cf425
+src/db/categoryOrder.test.ts,test,60,content scanned; existing test inventory,,c3a0e0c85de46b77060015afb48c5d2e89909da161fb500ada66a3797f3ac48a
+src/db/categoryOverview.test.ts,test,80,content scanned; existing test inventory,,77f1957b96b96b0ca2e6125587269bc4bc2f5eed0e21da4affa771869c0bc7a5
+src/db/client.ts,logic/tooling,418,content scanned; global static checks apply,,e5e6f4fdcc38029e62d5d19f79b1f2fba00016390bbd90cfdf61783bdb29f1a9
+src/db/currencyInvariant.ts,logic/tooling,21,content scanned; global static checks apply,,14cf7d38d24ccc89fa65c91d25f4b382bf0b8f6cae590a4384a3ab10e79cb823
+src/db/dailyGoalStreak.test.ts,test,71,content scanned; existing test inventory,,6eddf55f2b436aeab6e53fb8c5daf62c16ef8eeaffcacb01e41e5d3e10baae29
+src/db/dailyTotalsByCategory.test.ts,test,57,content scanned; existing test inventory,,52d531fb24407ed11af3b3e8cedb5ee093ab3063702d7a1081ae3e2ca30f1aa3
+src/db/dataCoreHardening.test.ts,test,490,content scanned; existing test inventory,,f185cc45d421403fecce1c35c15f202302267798f0273d7858ea75f20d40d7ad
+src/db/dataVersion.ts,logic/tooling,26,content scanned; global static checks apply,,66062441f0c846456ed8c6984e5bf0c1098d0037e4e26a8a852b564692606389
+src/db/databaseUpgrade.test.ts,test,58,content scanned; existing test inventory,,9819623b9f16e4e1887b7e6a1ea533afd55d8b17965eef99a2517a6f31f7abf2
+src/db/dayOrder.test.ts,test,83,content scanned; existing test inventory,,d33f9df9e10826f55a86878aa19d72879e5bb52b98cff4e0f1ddb30c8f0dbcb1
+src/db/endToEndAudit.test.ts,test,203,content scanned; existing test inventory,,c1fe62f7f7fdda065e28113915abd4803cb278b9d07a3237b6d2ef05a01a1429
+src/db/found.ts,logic/tooling,8,content scanned; global static checks apply,,d741ce0c906829b3df2d9da79d48fd98bc0ca819c80f12c17fbaa85c5c2bae6b
+src/db/frequentAmounts.test.ts,test,80,content scanned; existing test inventory,,dfc265c5e9d685b002ed0636013848f857849b7cfa766c0df2dbeb3c9a5c273a
+src/db/goalFollowsAccount.test.ts,test,166,content scanned; existing test inventory,,781b30c7db24e9972e03f05f7bda5b9d2a02de0449502aa0628da209f69dc212
+src/db/goalReservations.test.ts,test,197,content scanned; existing test inventory,,139142001df047eed23073c5970c0797b7a48b5a77eb7b3673d2a54551530970
+src/db/goalReservations.ts,logic/tooling,165,content scanned; global static checks apply,,b75ee20a3d07a28e87b31e5d6a663d8478c89ca4e5df80acf41556b53ab9f26c
+src/db/insightFeatures.test.ts,test,277,content scanned; existing test inventory,,cdb9108d37737a8966937999376d2d09f58bc79847aa8b28fb0b0d8665ce39db
+src/db/largeBackup.test.ts,test,50,content scanned; existing test inventory,,eb08bcc95fd77ba5dee44c6eb5e6b8c837d62cbe08b1bf1ded3d7b5cd4f0f539
+src/db/ledger.ts,logic/tooling,8,content scanned; global static checks apply,,02923d1d95801d1c08401cdf30f6d0b1d6bf124805491f243d8f3e0c0d7cad0e
+src/db/ledgerIntegrity.test.ts,test,342,content scanned; existing test inventory,,15d479249e94c377c3435c89af20dcba841af74a01f964f4f70109612c208070
+src/db/loanIntegrity.test.ts,test,370,content scanned; existing test inventory,,c23cda3a8b68fc556f61f311fe2b4a279769a9e1efc37ce05488237d788b9b99
+src/db/loanPaymentContext.test.ts,test,65,content scanned; existing test inventory,,92adf211c226289f96782d165fcbc041b9a9e5d409e65cc0bc8adb8a426637fa
+src/db/loanPayments.ts,logic/tooling,536,content scanned; global static checks apply,,049d0dc677ac4edde7b971538354ecc199d1a6715c2443746f7daf37fc9f3423
+src/db/loanProgress.test.ts,test,73,content scanned; existing test inventory,,6307d34b4918eff13a15e8b01ac6ab7cdb6e1e3d98e69bce042ff14215aa4acd
+src/db/loanQueries.ts,logic/tooling,207,content scanned; global static checks apply,,f0ee93227bc98435fa050f79b0c00383930adfeea99380452e6a19163819ff5c
+src/db/loanRecords.ts,logic/tooling,307,content scanned; global static checks apply,,abbee695d5cd86fdd9057d62be74dcd14786bd14e11dfc0b4d4119e6ec597073
+src/db/loanRows.ts,logic/tooling,74,content scanned; global static checks apply,,65d361edb61b3a6f880e3924f5e56aeac80f4777c423fbb4232a2995b5dd0bad
+src/db/loanTxKind.ts,logic/tooling,13,content scanned; global static checks apply,,0bdf07fc1c84a228faadca3e49cba5ebab5a84441543539627ad220d2e4e355c
+src/db/loans.ts,logic/tooling,7,content scanned; global static checks apply,,d6463fe37d6dd28180ffeb651bee3d8d5584af84e6c81a5422e6d6e9715b5df6
+src/db/maintenance.test.ts,test,111,content scanned; existing test inventory,,ba6dc3240437052ad3fb908688d51e8a93a17b29a93ba03056d70e57307328f3
+src/db/maintenance.ts,logic/tooling,196,content scanned; global static checks apply,,7764b17ef7de14d003cbc26bcef9c50430aaa74b402fe092d259179766ed9250
+src/db/migrationVersion.test.ts,test,88,content scanned; existing test inventory,,bdb84f663dc7914d6d9cdac3409c30c5d37207ac070eb59f46df90dd6e63874e
+src/db/milestonesSeen.test.ts,test,48,content scanned; existing test inventory,,2b1ae342e35459d73da690bc8498c28c138f8d5edf57578c55fccbc0e3fd0c4d
+src/db/monthPace.test.ts,test,128,content scanned; existing test inventory,,52086918e96177090a8b023e4d2c5f6e5d904330e8547acdee3702eb57a3e22b
+src/db/networth.scenarios.test.ts,test,220,content scanned; existing test inventory,,8e34e8496d189116c34cabc78a36ba55acb6e712d33cd8041217efdf10b4a32a
+src/db/notificationData.test.ts,test,80,content scanned; existing test inventory,,79e113b0a9b63210d1b6eed6b182348a302a605cc1993c7ecf635fa98c9af943
+src/db/notificationData.ts,logic/tooling,39,content scanned; global static checks apply,,1f63d8158f6622c584a6ee7cc7022d4862f571cc788faf9a0bc2aa94abf36b02
+src/db/parentCategory.test.ts,test,103,content scanned; existing test inventory,,43a9fa2e651850cc9c2860e601535ef1f8d33b32eac0b15e6893fb4d747b8314
+src/db/people.ts,logic/tooling,250,content scanned; global static checks apply,,03074fd2d139485763e3071da4f96447cec5a83c42c590a342b77d9846e6dd72
+src/db/postCommitContainment.test.ts,test,55,content scanned; existing test inventory,,bacebc6006e10ee551a26d9ae15af689393525c260a8316fa1a8043da741a965
+src/db/privacyQueries.test.ts,test,89,content scanned; existing test inventory,,891279981b2b3489b0f54ec029aabea6ea3d15aa89702dc15ab10ddbb297f43f
+src/db/purchaseAffordability.ts,logic/tooling,75,content scanned; global static checks apply,,99c12226d2d597e2386862e7d79f73ceb98eb8669244790ca55abb48128847c9
+src/db/readCache.test.ts,test,34,focused optimization/structure review + targeted checks,,5a307cd5a2c5b0f2f44eb5d7aac6edac7eca2fc6b89864cae85ea964afeb53c3
+src/db/readCache.ts,logic/tooling,31,focused optimization/structure review + targeted checks,,9caf00714f544c783d91ccdd2f23f6c0f30e726ba705b88f8ddd6564647ab035
+src/db/recentSearches.test.ts,test,29,content scanned; existing test inventory,,d18821b0a1fddfcfeaa4cfd0d3619c9948abd916c3775e7152a4600c9efe34bb
+src/db/recentlyDeleted.test.ts,test,161,content scanned; existing test inventory,,b5258b0964f6a34830bddb2f64d1dc74bddbd75a6373a5699781e665499cc8b1
+src/db/recentlyDeleted.ts,logic/tooling,173,content scanned; global static checks apply,,4726733d2039c99593bc1f2e05ca4da504c55cd9ad6174c4ab5c760957731da5
+src/db/recurring.integration.test.ts,test,372,content scanned; existing test inventory,,f0c5bf458575781020ada2d1f372092b3cfdaa668ab0bcf182d8d2622ace7359
+src/db/recurring.ts,logic/tooling,339,content scanned; global static checks apply,,ad1f20572dc31199f24a09fd256f52f3aa6252497c2d530039aa9ea73552fa82
+src/db/refundTracking.ts,logic/tooling,269,content scanned; global static checks apply,,d691008a96c4087987fcf318e2077087245829cda2b5a9cbb1d7d3911188dbe5
+src/db/refunds.test.ts,test,180,content scanned; existing test inventory,,b2ed31d6640f99971713b50f8404ee4cf7e3854fc733dc877d608a54e1e86298
+src/db/repeatCheck.test.ts,test,125,content scanned; existing test inventory,,87e542d01d0e395d0daed0ec10d4f8dcd2a5fbeb06e11409d19d974f59ac1498
+src/db/reports.scenarios.test.ts,test,123,content scanned; existing test inventory,,beef3bbca9861f805155a2abdfaf4812bead1c2c4fbc9158cd8629c30e8fda2a
+src/db/reports.test.ts,test,194,content scanned; existing test inventory,,7b31737c9ce22e149a9eed5e056059a2d1696c4c4ace62a1beb5ab56750bf2d0
+src/db/reports.trackedBalance.matrix.test.ts,test,155,content scanned; existing test inventory,,f2120680ca4890dac50862356ce5228c5a979a1f4d57ad43b8a4561566d55047
+src/db/reports.ts,logic/tooling,1135,content scanned; global static checks apply,,839fe479f77b2eb9dafdc90a49197ba5deffa81d5e070919e235d049ad0dad2e
+src/db/reportsExtras.test.ts,test,120,content scanned; existing test inventory,,d5453177be0ec86c056a6d096c42180411dc7ce0351a347b2766eceb2238ed77
+src/db/reportsLiveQueries.test.ts,test,113,content scanned; existing test inventory,,5ea02548ff5aa76884ea9e6ff90c4373c2dc61a0f898ab812ba3520c449c9a72
+src/db/rows.ts,logic/tooling,174,content scanned; global static checks apply,,0ae4abc8295616daa330d4f4ca638caacb1c668ec3c788e532a5afac3859e4eb
+src/db/savingsAccountGuard.test.ts,test,259,content scanned; existing test inventory,,d207f4fa8fbac05cc1d70481f90f33ac804409ca601e4912e05d01d34cf8ee22
+src/db/savingsGoals.test.ts,test,206,content scanned; existing test inventory,,4587e62830fb81886e51da71e049e2a7d8863a1f37cb399782ff0208f4b6ec08
+src/db/savingsGoals.ts,logic/tooling,304,content scanned; global static checks apply,,f0e3d4ad6d4c344a54ee4313dace9be316821f15b5edbee27153cb959585efbd
+src/db/schema.ts,logic/tooling,283,content scanned; global static checks apply,,87673a1598312a4809e0d6541ccbd1f8c885d39327cc74eceb74ce1dd5e3f590
+src/db/sensitiveInherit.test.ts,test,57,content scanned; existing test inventory,,cdad68b400ffa8b1b191b37889e85d37565ed42fb5c3cbcc8c8438efb0052dc6
+src/db/settings.ts,logic/tooling,919,content scanned; global static checks apply,,ead8cf61b0c68e4728fa8bf776100f2c4274a5acf38e85b58effd2876907b09e
+src/db/spendAlerts.ts,logic/tooling,126,content scanned; global static checks apply,,eaba401359943d092b9e90d96f633d1beaa89db53885bf42bd0e020cf1847b50
+src/db/spendSql.ts,logic/tooling,38,content scanned; global static checks apply,,65a62ea1723e5d5435fc3522aedd5196850ce8ecc3ef40b1408d633906d2a8bc
+src/db/spendingExplanation.ts,logic/tooling,34,content scanned; global static checks apply,,670bcdc61b7ff5c9ee8861e911f83ad4beddd06d2bf12deefa60d8cea8cc487c
+src/db/splits.test.ts,test,167,content scanned; existing test inventory,,814fc5d018a5166f87782bba97e71c1bb601d470c0faf7f2be1969015676d1ca
+src/db/splits.ts,logic/tooling,126,content scanned; global static checks apply,,6707ffaa18f311f4737382098c766778f63b365ef539d7b97d991479fa45b96f
+src/db/subcategories.test.ts,test,275,content scanned; existing test inventory,,319e04b89977dcfac2f2c0f77ef48f14038c717db1ac2e1a5000b56a8ae0dc32
+src/db/subscriptions.test.ts,test,168,content scanned; existing test inventory,,82491ae6b7fe6b0671bf9b71b9070473f6506b855db81cc43a23c2d1b641a3db
+src/db/subscriptions.ts,logic/tooling,212,content scanned; global static checks apply,,2849a555d14502c8e9719441ca099fb4312fe0e4aa98e970c7c8e84e631eebb7
+src/db/tidyUp.test.ts,test,157,content scanned; existing test inventory,,832b9854703c84e0f2fd1ee89058da312ae1581aa1788b47707006ed8310d600
+src/db/tidyUp.ts,logic/tooling,310,content scanned; global static checks apply,,f7e3acfb09fc5c94b1e95c43208cf8592121672334e11999050c015a8e50a2d0
+src/db/transactionEditLink.scenarios.test.ts,test,232,content scanned; existing test inventory,,2fe609e006f63160da848f0e95ed4170dc8c6cbde389f5dd938a4a9d5a563533
+src/db/transactionSafety.test.ts,test,657,content scanned; existing test inventory,,58da4d6e5b5839d3e0aec128230ca18fcb7eb5b5ce074eb4e13777d9b5f98585
+src/db/transactionSearch.test.ts,test,149,content scanned; existing test inventory,,f7f737325fbed9b99dde53b0a608e4901403453230c38f9da5f9d96acab49004
+src/db/transactions.ts,logic/tooling,664,content scanned; global static checks apply,,26e274a80082ab181b5b5ae0f86e14c70b1b7a06c8f656872d503d93a035d186
+src/db/undoSnapshot.ts,logic/tooling,55,content scanned; global static checks apply,,ebec27c92073dd65fd84f8141726e39be72b873267f4d2e603e378af3f735410
+src/db/userJourney.test.ts,test,445,content scanned; existing test inventory,,7b9fa28bef4d092e75a92fcb464f8de84156c430f3773cc75673cade9278ba55
+src/db/valuationSql.ts,logic/tooling,46,content scanned; global static checks apply,,b89cfca4e5b47a7fe8810a7ea5f474795a600f04f80e529b9581ac8ba5d0752b
+src/db/valuationUnique.test.ts,test,63,content scanned; existing test inventory,,0d5022ebc67d6570e20ec36535570e356dcd442ebed48f3737c41622d00f81ac
+src/db/valuations.test.ts,test,256,content scanned; existing test inventory,,8143b9e19e780c6c5139c0fa434a0eaab7ee6235bcb02e6dea50c4390b820735
+src/db/valuations.ts,logic/tooling,157,content scanned; global static checks apply,,a364f6ce752d7ce040b6d0ebe162913f9d06ad826e09cb2e52d3e631abfe7c1e
+src/db/wrapsSeen.test.ts,test,52,content scanned; existing test inventory,,7eb2fdbde085f724f7e508b61dadd60076462948d0c50ad2b6273cb4113d9a51
+src/features/add/AddDetailRow.test.tsx,test,151,content scanned; existing test inventory,,22e082620a526e2ed2de4dc9d58557f3e3138adb93541b6860600321ed2f2384
+src/features/add/AddDetailRow.tsx,presentation,116,content scanned; global static checks apply,,fb5be9f0b1b1669da1cf2f0cb85c8b7ee59e42b90f32b3e32cedbd6406076ae1
+src/features/add/AddFields.tsx,presentation,256,content scanned; global static checks apply,single-line label: check intended truncation,293b1b6ff6b2e54f59b611fce0838feec10e71d52ec7c4a624897e022c56c33a
+src/features/add/AddSections.tsx,presentation,447,focused layout review + content scan,single-line label: check intended truncation,671b73fb1ee4b4e80dff361a1f01b9da9e357c6754fdbd659e414823b84aee64
+src/features/add/AddSheets.test.tsx,test,134,content scanned; existing test inventory,,2785c409b58e5f3647f14856ca7394a3db10cb548be376d84c08544f282ebc71
+src/features/add/AddSheets.tsx,presentation,60,content scanned; global static checks apply,,dffa528dbbc7580f16696a7cc78c0d506baa86120491f119dcc07124f877598b
+src/features/add/AddTransactionScreen.test.tsx,test,927,content scanned; existing test inventory,,6e8f3c652a93e962b9cd90388c72acc1d933c9f6d0665d3b23b2cfdf34048870
+src/features/add/SplitCard.tsx,presentation,162,content scanned; global static checks apply,,89cc38615bd520291f8562513ae89d37d705bb6a22b58e6aa95f17bf3b0a9b06
+src/features/add/SplitDonut.tsx,presentation,76,content scanned; global static checks apply,,528727abda591ef83acb9494b629525e5b1b447ee31f73130886f15c219fefd2
+src/features/add/SplitScreen.test.tsx,test,164,content scanned; existing test inventory,,78a4ebed032aac159862fefbdf5d38e9dea7c2549f7978f283a31f2ffcacc449
+src/features/add/SplitScreen.tsx,presentation,452,focused layout review + content scan,small text: check label versus decorative badge/chart; single-line label: check intended truncation,388073b6cf7744947b53243765790bbc7ee556fa56f600d2c48b8242a2fcb1da
+src/features/add/TransferAccounts.test.tsx,test,78,content scanned; existing test inventory,,8be135963cd35bfc4f2d895355d09cdae5b83ff8eb99eb513cbfcdc531fc0406
+src/features/add/UsualChips.privacy.test.tsx,test,54,content scanned; existing test inventory,,bf73525d1fe3a91fb51199ffd20d8ad1f7994529db149b087044f99f3e079484
+src/features/add/add.styles.ts,presentation,401,focused layout review + content scan,small text: check label versus decorative badge/chart,72b59d1fc7a74fbddec4f83b96e9716a7c988de7219d408aca675cd84f28a496
+src/features/add/addEntry.ts,logic/tooling,171,content scanned; global static checks apply,,34a7fff3509c8e5318543c0af894089fb99178613603c2709d8ca948fa14d7ef
+src/features/add/deleteEntry.ts,logic/tooling,77,content scanned; global static checks apply,,e2d86cb5e1f3a45dc56bfad9d3ff652f8cd7e9149ff3fd4311e575becae3a5fa
+src/features/add/formToStaged.test.ts,test,80,content scanned; existing test inventory,,06f545cdc8a65bd5518c9ae8a354d5fde171de66ed05dd248beb7d3767294f38
+src/features/add/saveEntry.test.ts,test,143,content scanned; existing test inventory,,0de3181f9fc2db053c97cf8feeec2d9c8afe67e13988e3d06ef1c6dee8737498
+src/features/add/saveEntry.ts,logic/tooling,108,content scanned; global static checks apply,,ae3cbb883bbdd05ecd4af3a95a889a7deb8109c7552e58de82511b427006d573
+src/features/add/splitDraft.test.ts,test,95,content scanned; existing test inventory,,49d498306ec272af63d569550bc3d49f257f4137b4c274dacfdd002f5c4c1d2e
+src/features/add/splitDraft.ts,logic/tooling,109,content scanned; global static checks apply,,565e8f8fc1b48c7d2f531f74e5455864ed287ddccface45213dcdeb9f42ec793
+src/features/add/splitSession.ts,logic/tooling,42,content scanned; global static checks apply,,4e4b7bd5c1832b5f2aaf7c47c07c8040ae4f5b383bd2481adb0327f434c213e5
+src/features/add/useAddSuggestions.ts,logic/tooling,84,content scanned; global static checks apply,,79f5a6c23fea5cbe0a05876ad685a9cdba6099a9917cf550cbb79ce39542ba11
+src/features/add/useDiscardGuard.ts,logic/tooling,30,content scanned; global static checks apply,,5e7631f588d20bb74aecded54f9980f0ddf704cfee318a53579eaf32dec87c48
+src/features/backup/BackupScreen.test.tsx,test,345,content scanned; existing test inventory,,0b3a247298c198e9c9e5e93395f42d235b0e9eca831ba5170f2904d314bebb07
+src/features/backup/BackupShield.tsx,presentation,51,content scanned; global static checks apply,,2e2e92e038992daa633e0d5ddbab8d1f0067bd68a1b6aa9ad6f82c6314b8b3b6
+src/features/backup/RestorePreviewSheet.test.tsx,test,87,content scanned; existing test inventory,,b5b34dfb9edafe90d6776f93be5cbac72a3839bbf2d900e3a2f55ff7ca6e01c2
+src/features/backup/RestorePreviewSheet.tsx,presentation,125,content scanned; global static checks apply,,253c69d800960610a2dfee2df20ddc8dd457581226cdf770dae5c46d96738c66
+src/features/backup/SafetyCopyCard.test.tsx,test,114,content scanned; existing test inventory,,e47a98a0e99b6f15ca65cd401870801b9fc434140ab14b1b5e6107d4a84b6e8c
+src/features/backup/TimelineNode.tsx,presentation,28,content scanned; global static checks apply,,4dd107c90a251a930797119e9c49010533296abf177f86630e72338d8726e17f
+src/features/backup/backup.styles.ts,presentation,112,content scanned; global static checks apply,,cf74f0374bffe62d66aa83e3375775780499f7f4f1f56c536e3a6259455b4192
+src/features/backup/backupStatus.test.ts,test,56,content scanned; existing test inventory,,8469e5307712f4064e4fca08c0044f5f4b0b0b060a6be489220cf5c8d9158279
+src/features/backup/backupStatus.ts,logic/tooling,105,content scanned; global static checks apply,,7ee8cf333cdff7f91b611044f476c0a2bdbf7657546294f84e9bd59ac0d39673
+src/features/budgets/AddBudgetModal.test.tsx,test,109,content scanned; existing test inventory,,fb62cacd39467b234e7c34977aa99d9032739fed685e5a8fe09ac400a24cbb0f
+src/features/budgets/AddBudgetModal.tsx,presentation,182,content scanned; global static checks apply,,c4ce440db381066cdc92dc1ea9fc3ca9006c849e8dd7f32b9a9f7e69186fe375
+src/features/budgets/BudgetRow.test.tsx,test,186,content scanned; existing test inventory,,0c2525ef11d281d45757cbe0b2b4a20ac5128ee9527939ee4363e5fd7651af0a
+src/features/budgets/BudgetRow.tsx,presentation,189,focused layout review + content scan,,ecf18c3f1835ef1872d7146a8848a5797a7bc866e57b52ca64804403c33567f3
+src/features/budgets/BudgetsHero.tsx,presentation,77,content scanned; global static checks apply,single-line label: check intended truncation,d298a94c7061eb40af735d12b85d265b0dc93dab098ad46cddcb53218caa5940
+src/features/budgets/LapsedBudgetsCard.test.tsx,test,66,content scanned; existing test inventory,,50de6c977a3588464797c9e9c4bd9576f11b03f97ce98a515ee07ce05cb4606e
+src/features/budgets/LapsedBudgetsCard.tsx,presentation,97,content scanned; global static checks apply,single-line label: check intended truncation,dec625fa4695fb08ea12641b752da068a7c4a22127f4824e4ac3a3d3c3367bc0
+src/features/budgets/budgets.styles.ts,presentation,148,content scanned; global static checks apply,,3c3d13d9b0283ce1021b1447da223a9d5773b621cef7173cf0d48d76e608a896
+src/features/budgets/budgetsOverview.test.ts,test,64,content scanned; existing test inventory,,6d6bded77f165b26e9800c1682a09d0e5fd118a66771c5572cdb57e902f09fc7
+src/features/budgets/budgetsOverview.ts,logic/tooling,65,content scanned; global static checks apply,,57664fdc8282cc9859745083c20749bcc43ce08091ac73943347386b5835dc69
+src/features/budgets/continueBudgets.test.ts,test,23,content scanned; existing test inventory,,763364ad57803a5dfdac4191c714d529af0b99c3aae0bd0e74207895eba0bb3f
+src/features/budgets/continueBudgets.ts,logic/tooling,24,content scanned; global static checks apply,,d0acf159229ab74faaf725dd5ba185e8dd01a7aa4627ce2bc4e163a16fd2d665
+src/features/budgets/useToday.ts,logic/tooling,35,content scanned; global static checks apply,,a61fef87d963aa86c051e56d88e5cda12a1e6e71a0200e4c06416fe763426bd7
+src/features/categories/AddCategoryModal.test.tsx,test,247,content scanned; existing test inventory,,1c8145eb65e0309ad62209c461394fefbe82c9ebd074251ac98d1cce5d2b0dd5
+src/features/categories/AddCategoryModal.tsx,presentation,259,content scanned; global static checks apply,,0c0ff639a3a822d45e71ed14c958d70622e5eb762b16c4012dad80f9b1fa6cd9
+src/features/categories/CategorySection.test.tsx,test,129,content scanned; existing test inventory,,4006a7ad9c951856ce53dd3b69196e6b6be5e45dbb837b8eb49404ba14fa45f4
+src/features/categories/CategorySection.tsx,presentation,236,content scanned; global static checks apply,,4951ef68a732041bd8a99aeb83b4c1676e4efd80a11c906c72c6d67bb45ef0bb
+src/features/categories/categories.styles.ts,presentation,177,focused layout review + content scan,small text: check label versus decorative badge/chart,020c9038c6e15e0f2106435395fd230551de04189574f9443bb6b82eb09e1f9e
+src/features/garden/GardenMonthCard.test.tsx,test,35,content scanned; existing test inventory,,e65d40a0de602e44463e95da76d0083f5dcd2b80d63795e56fc5456ff42e51a6
+src/features/garden/GardenMonthCard.tsx,presentation,148,content scanned; global static checks apply,small text: check label versus decorative badge/chart,25469a4aaa33694e8c84d204a3d8454e37f4975d449e1127e40ef5f87db1797e
+src/features/garden/GardenPlant.tsx,presentation,178,content scanned; global static checks apply,,1e7d615e26e00ecd26bcbfeedc165f3fd765b788f2b2b2e12ced2d5f7808770f
+src/features/garden/garden.styles.ts,presentation,100,content scanned; global static checks apply,,84a17f5aa05ca9df6fba81f5188e7cebbcee55426a05f687bc9b5eee264e3c32
+src/features/garden/gardenMonth.test.ts,test,38,content scanned; existing test inventory,,97a78adbe97596d7e3127e0948ba45ca8220af2d83889d52e6f550827fe36fcf
+src/features/garden/gardenMonth.ts,logic/tooling,54,content scanned; global static checks apply,,14c2290841ca85554d5da7c5eba41bdd81a33fe8754028b3d3ed67a45c527336
+src/features/goals/AccountReservations.test.tsx,test,66,content scanned; existing test inventory,,ff3f19f2ee5b626238c82d3f3e0e4981c81ad3790f83e4b84f008c9ae8d173d3
+src/features/goals/AccountReservations.tsx,presentation,75,content scanned; global static checks apply,,879b5c37bd605d03315d467cfcb70c688b8f8a05ecaf9f6c7a51b8a74afe0cf7
+src/features/goals/AddGoalModal.test.tsx,test,157,content scanned; existing test inventory,,5acc6f6c01c0ca4f685d4e8644228e0681337ac1310f255adc38cbd4d66578a0
+src/features/goals/AddGoalModal.tsx,presentation,154,content scanned; global static checks apply,,51ab9214f0396ed6cc3eb7acc63ea9e08517795db5daa9fa17b0c98a684ae7f6
+src/features/goals/ContributeModal.test.tsx,test,229,content scanned; existing test inventory,,d88bc98749f5cb9d52eea78965a178b633a39dfba9e957bfa6881aaeffd005b0
+src/features/goals/ContributeModal.tsx,presentation,313,content scanned; global static checks apply,,6ab7a0807e378ee4f5e2b77c72b50d84707a24105f6116fd9e466ae858e18dc9
+src/features/goals/GoalAccountField.tsx,presentation,146,content scanned; global static checks apply,,63d730cf2c57d24fdb4977043b0b63fdf48eb3a1b5dd315e7e366eeeedcc4d97
+src/features/goals/GoalCard.test.tsx,test,83,content scanned; existing test inventory,,a0453012da81901339548825cae563806596bbfcf13009c36d4f51e548729cd6
+src/features/goals/GoalCard.tsx,presentation,234,content scanned; global static checks apply,single-line label: check intended truncation,68d4aa70147c993f6eda9115022c70ba5105985e0a0613bf8462fad6ec48af76
+src/features/goals/GoalChip.test.tsx,test,76,content scanned; existing test inventory,,b370192fa128005585942be65ad1208eb0f77c6ed6acb779bc45cd88fd0b4e18
+src/features/goals/GoalChip.tsx,presentation,83,content scanned; global static checks apply,small text: check label versus decorative badge/chart; single-line label: check intended truncation,1c4fa9a7dac112846ffc16a70ecee5dc1e17690802c3c76f855d7bd20b4f0616
+src/features/goals/GoalDetailModal.test.tsx,test,293,content scanned; existing test inventory,,ce5eff77e19b58a1f138a2a615c792bb1e193a65c84b3be1346d4c11cb49abb9
+src/features/goals/GoalDetailModal.tsx,presentation,296,content scanned; global static checks apply,,15527ebc45bf4f51fc94a00ac488bf36f7eb4eb47427b5f9cd1f7c0b1bad620b
+src/features/goals/GoalFollow.test.tsx,test,152,content scanned; existing test inventory,,f963d8b1be8c8b7d38bf3cdf1ed4c7cb5c6fa589bc724c17a7fbe96c93715e57
+src/features/goals/GoalLetterReveal.tsx,presentation,32,content scanned; global static checks apply,,c43b5e1a8fe91942a5af2b738c7f1404afe706a37e6b68842e809ffcdac718ee
+src/features/goals/GoalPrivacy.test.tsx,test,64,content scanned; existing test inventory,,918977fd06860ef63b4b920c62189809ad071a9abc11521523d5f7096196c499
+src/features/goals/GoalRing.test.tsx,test,111,content scanned; existing test inventory,,496dce36cd50525642479a4813b052e144facc217d843c49df0b6587fb5968a5
+src/features/goals/GoalRing.tsx,presentation,134,content scanned; global static checks apply,,939692347f12513330ef515b46f9059a29445ff6c24ad31ff96b39775539e153
+src/features/goals/GoalSheetCard.test.tsx,test,68,content scanned; existing test inventory,,fbb05aca5a6ee6c718eee4c47064b2130bb2c2c14a6eed321456313cb5accbd5
+src/features/goals/GoalSheetCard.tsx,presentation,41,content scanned; global static checks apply,,cd1e620d5a43269a5df684db1af8e34ea1566746edfb3c210e8e216bb359e7af
+src/features/goals/GoalsHero.test.tsx,test,70,content scanned; existing test inventory,,359c4e2396ba8e98a447fd761c25ad0e19d37f5a653574c10e04a99b11ae7202
+src/features/goals/GoalsHero.tsx,presentation,63,content scanned; global static checks apply,single-line label: check intended truncation,db47f95a48fb0978e7ec9910e6e6d36f50089b8a558cd83f5d85c7ba4298bff0
+src/features/goals/goalPlan.test.ts,test,119,content scanned; existing test inventory,,cb78eae9f70897df389c552cad7c3b6e85b79b80393f1eb42c420eb62a9230b6
+src/features/goals/goalPlan.ts,logic/tooling,124,content scanned; global static checks apply,,a1e3fe1c668d864d714123c7ae5fd06b37ee4e046f91883c9a6a5602bf3c83fa
+src/features/goals/goals.styles.ts,presentation,122,content scanned; global static checks apply,small text: check label versus decorative badge/chart,ba597660d8d52b7d4c168524a937b58b8372af617aaa23328d6766c3529bb022
+src/features/home/AccountSummarySheet.test.tsx,test,384,content scanned; existing test inventory,,23b0cf8bfc604b650ff5ed1d2b77ca166f03fe3ee4576583fa427f619b289ede
+src/features/home/AccountSummarySheet.tsx,presentation,587,content scanned; global static checks apply,single-line label: check intended truncation,95d03de5380d140fcbf1a15513722221ea48058be0e9bf315e3725dcbfbe91da
+src/features/home/HeaderHills.tsx,presentation,64,content scanned; global static checks apply,,61b1fc2f9d7ba13ea00bf897d5e915372997caf93113d52e0eb2dc215bcb1887
+src/features/home/HeroActions.tsx,presentation,80,content scanned; global static checks apply,,7607c2e315a1ccd4a716b9a367396f1f7ad085984037beafa14fd27340cb6f31
+src/features/home/HomeAccounts.test.tsx,test,97,content scanned; existing test inventory,,7d04ab54403f25f82a74051e5e9b323c305bad8251da6f044daa51668dcd8588
+src/features/home/HomeAccounts.tsx,presentation,178,content scanned; global static checks apply,single-line label: check intended truncation,55ec964c632e02f3338ccc7b92276c58990d5867595cb779a91a84684c76799f
+src/features/home/HomeGlance.tsx,presentation,385,content scanned; global static checks apply,,602b199946ed66c836f5e409945a4baf300a430ca65f0240774ad7d91a0c974c
+src/features/home/HomeHeader.tsx,presentation,243,content scanned; global static checks apply,single-line label: check intended truncation,892b9f9a8ecd4649b79bd35832e550775849e05ff5ce5bcb479dfc2a9143b801
+src/features/home/HomeMotion.test.tsx,test,352,content scanned; existing test inventory,,6dd5f65e14c277e51158c0d54bb90cdc934bd87319ecdd93d8c7921167a6726c
+src/features/home/HomeSkeleton.tsx,presentation,41,content scanned; global static checks apply,,000c700e584184e6eaf2a8d772b65cfbb8ca8e5d0a8362cdc4409efdb48c7b67
+src/features/home/HomeSwipeCard.tsx,presentation,318,content scanned; global static checks apply,single-line label: check intended truncation,dadb96670186adae227aa792980259fca5c0606c55c511a9bcc81d4edb26f7c0
+src/features/home/HomeWallpaper.tsx,presentation,51,content scanned; global static checks apply,,9be3201d2dc7803a74ab6ad774da26072af5b794ba99256429b1f6d24c467caa
+src/features/home/MonthPill.tsx,presentation,89,content scanned; global static checks apply,single-line label: check intended truncation,78290746eeac1d3a444a5746842cdb30acf8f828bf5e652f4fe27b1c89866d8f
+src/features/home/NeedsYouRow.test.tsx,test,112,content scanned; existing test inventory,,98f43f763a65e27c0b4ce8af0ac78367000c567d191a0600f2bd62ad32505b86
+src/features/home/NeedsYouRow.tsx,presentation,131,content scanned; global static checks apply,single-line label: check intended truncation,0ef1c83a9a17fd520777868d82b553ef3aa6c6eaade5da513119235d5014bedd
+src/features/home/NotificationsScreen.test.tsx,test,137,content scanned; existing test inventory,,f266b5160f8ce481c391ddf99436addec4c53c8c2c393734e8ba406a24bdf3c9
+src/features/home/RecentTransactionRow.test.tsx,test,74,content scanned; existing test inventory,,5507140e2ba733af1e36a3cf3adab135625d9e097d5910d894d84830acc154ac
+src/features/home/RecentTransactionRow.tsx,presentation,96,content scanned; global static checks apply,,3a51bf876445746c567182d85982dfd17ba4926845193d5962e68b99099f1809
+src/features/home/RepeatEntrySheet.test.tsx,test,148,content scanned; existing test inventory,,571dccf413dbe1ba68a914ca976515d6838add672806858759f62c50824986bb
+src/features/home/RepeatEntrySheet.tsx,presentation,128,content scanned; global static checks apply,,65f20f8c40d0cbaff672318a917f362d3fb3ed5ae89b4c85cab580bc12112f7e
+src/features/home/SkyBackdrop.tsx,presentation,74,focused optimization/structure review + targeted checks,,e583d54aa1fe4343ce95be0e05d1e722c07d0fadbba2e8a7f9a71f0cc450b09c
+src/features/home/SkyHeader.tsx,presentation,300,focused optimization/structure review + targeted checks,single-line label: check intended truncation,919d60ea03bd4ab896b5fc51d7fbbcf1cb3d31980d2d1e80ddabe6306d60833b
+src/features/home/SkyHeaderMotion.test.tsx,test,118,content scanned; existing test inventory,,a37c69d67d5ae8dca8cc4dc39af8812eaa74244ab53dd16bf810a2079fc0a06e
+src/features/home/SpendBars.tsx,presentation,253,content scanned; global static checks apply,single-line label: check intended truncation,1da10f4423ae890af7803c191535f17d064a249b7765f6721d6cd608e84fe9e8
+src/features/home/SuuRefreshBadge.tsx,presentation,56,content scanned; global static checks apply,,1814bb786f50807ad510af92a35b856fc83ba5423b5d27c2718764b58f9e4c53
+src/features/home/ThisMonthHero.test.tsx,test,315,content scanned; existing test inventory,,0d7f62487a3afa90260a4b5144c4a71311e7f060b5c7c3d28f3539c056167fe1
+src/features/home/ThisMonthHero.tsx,presentation,487,content scanned; global static checks apply,single-line label: check intended truncation,b4f1f79c1ffcbb6d734b817dd9774260a8e80728428d4c7abb4f5a92211cd046
+src/features/home/TidyUpScreen.test.tsx,test,150,content scanned; existing test inventory,,6a62f73601a4ce0a98bc29ffd5f6f906db3ffd7807f335a059d633853423c7ae
+src/features/home/UpcomingRow.tsx,presentation,175,focused layout review + content scan,,2e925133e63531807745e24f8c73d5306ac98cf808a848775035bbb58cc386c1
+src/features/home/WhereItWent.test.tsx,test,181,content scanned; existing test inventory,,17328b521bd73da2690527ab7ab555debe2c517464fc74fdaad170347af6f6b9
+src/features/home/WhereItWent.tsx,presentation,227,content scanned; global static checks apply,single-line label: check intended truncation; large visual: check intentional chart/illustration,81cd3117c977537f2e1f81f56b674a4d3025ac1404416b24b236cf2fa8691736
+src/features/home/WorkingRow.tsx,presentation,22,content scanned; global static checks apply,,9f08875d6f47f62c025080b9bddbe382c6e47bd72d3beee79004bff0fc5d9c9c
+src/features/home/WrapButton.test.tsx,test,85,content scanned; existing test inventory,,919f7bcc46eb65ff86f8632687d8ee76f46d5fd836083effe1559e8265feb4e2
+src/features/home/WrapButton.tsx,presentation,173,content scanned; global static checks apply,small text: check label versus decorative badge/chart; single-line label: check intended truncation,e8de17c54302505a52efbed7acf1e9232f33f982b30d56b9eb7819602f26e9bc
+src/features/home/headerMotion.test.ts,test,10,content scanned; existing test inventory,,881d6629fc3f974d904f31cb39300c03cfc92569188cfde833d7349819a11cee
+src/features/home/headerMotion.ts,logic/tooling,5,content scanned; global static checks apply,,36c431dd9fcb7d6a08f4f5e7006c01a2430f52811df4369ec8d3d424b5680b37
+src/features/home/hero.styles.ts,presentation,118,content scanned; global static checks apply,,728c29720ffbfc26731d65d7f9d60bcb49e3d40a7452dd00415c8181b7b151b7
+src/features/home/heroSlices.test.ts,test,107,content scanned; existing test inventory,,051406fb0df716ed31605596e3e17dac41ca62c758132181d65703f188779ed5
+src/features/home/heroSlices.ts,logic/tooling,66,content scanned; global static checks apply,,0712fe14aeb9088c3ca4563f1b28ac1f7e918cf30f2f8f29011c05a04b4c93f2
+src/features/home/homeInk.ts,logic/tooling,9,content scanned; global static checks apply,,c1b1720a45061bcc2ddb481fc1db7204508af6ffbccff0c7b69fd3ff82a96ee8
+src/features/home/needsTone.ts,logic/tooling,13,content scanned; global static checks apply,,73bc0440b5bd91551afb92b363f2c2510ca81014e57fd91542746343706f011c
+src/features/home/needsYou.test.ts,test,152,content scanned; existing test inventory,,33949adc4878b24aabd94f5013b6b7fcc75cdfc3c97a041f26cc1aa1b7059351
+src/features/home/needsYou.ts,logic/tooling,225,content scanned; global static checks apply,,77f4003b2e4e6c421769b0736c3ea5df355e4dc7f5cb40de381e1833b0059060
+src/features/home/needsYouData.test.ts,test,136,content scanned; existing test inventory,,9ab8141877a4f2d55d9b6c582c86dda43d4fd712fbf6e9a3531ddeec75a1a7a3
+src/features/home/needsYouData.ts,logic/tooling,136,content scanned; global static checks apply,,0c3048c5a56d96ba27713d931eeb551cd0c45e11308c95382fbf33d9684a5866
+src/features/home/spendBarData.test.ts,test,31,content scanned; existing test inventory,,fb846d5a0e98bcf4704c9bc30e6b9937b5fbcbe5b34d1380d9858e7bda417612
+src/features/home/spendBarData.ts,logic/tooling,49,content scanned; global static checks apply,,96e1873e1f19ddffe53b74cc7024c5eb5e99bd69a7a596ab662f7bd112767be6
+src/features/home/suuLine.test.ts,test,111,content scanned; existing test inventory,,c4b88ef62969679a4f973c52348a3ddedeb89435b7a8e15aa7d847bcee0f6428
+src/features/home/suuLine.ts,logic/tooling,65,content scanned; global static checks apply,,278d5cab9222e52d78b905a5c142079c90bd6e85d135769ecf9d25b8527af090
+src/features/home/suuLinePools.ts,logic/tooling,109,content scanned; global static checks apply,,abe921f2527528dd5426bdc4a9ba69d83b1a8b3b9572e4270df8de953a578406
+src/features/home/upcomingItems.test.ts,test,164,content scanned; existing test inventory,,4fbc8dc2d10fd14abd1c992dbc03c68ac3672938ad08d827cbd5e8535b14ed44
+src/features/investments/GainPill.test.tsx,test,78,content scanned; existing test inventory,,a53fb0c9a656bd0ab3ef9de61d59b7d7220b06e3c3e2537f38765a31715fc198
+src/features/investments/GainPill.tsx,presentation,78,content scanned; global static checks apply,,a58c5769de58ad846b00df18f1aaa8913ec8b0ad08e25f8a38af4163ad7e0d5b
+src/features/investments/InvestmentPanel.tsx,presentation,195,content scanned; global static checks apply,single-line label: check intended truncation,6b0b6756ce38f28220eefa77794be62a19e407b4d7e8a7daeb722b36e68330f1
+src/features/investments/UpdateValueSheet.test.tsx,test,183,content scanned; existing test inventory,,3484fa47a3acfefb9e075bdf4db66bcfbc561838c87b272ec9bbb61abd7baf4f
+src/features/investments/UpdateValueSheet.tsx,presentation,223,content scanned; global static checks apply,,068382747d2b948e7fa86640f7c9933f98906b3e67b18eb73e71fed5b4907303
+src/features/loans/AccountModal.test.tsx,test,93,content scanned; existing test inventory,,d5c41ea9d69e329e1c260ccfd581cac2379739641445bfd0963a8a23d4ddcbad
+src/features/loans/AccountModal.tsx,presentation,83,content scanned; global static checks apply,,26de060918f62e82455fdad54de9399becca3fdc242b176829df6921ad9c93de
+src/features/loans/AddLoanModal.test.tsx,test,127,content scanned; existing test inventory,,79c5b39724fb770276761b6c0e8c615ab7b4e1e849d130c7397cefe8d8b81c6f
+src/features/loans/AddLoanModal.tsx,presentation,608,content scanned; global static checks apply,,bf80fc2fecaf3c4d72ada2b1500401431ae1d96b868ea749d7b9bf9cd64f58af
+src/features/loans/AddLoanParts.tsx,presentation,139,content scanned; global static checks apply,,0bdf57594854e59848d2d55db14c6f7df94b4ec2b45f52c2539eb7aeb83c9ec5
+src/features/loans/AssetModal.test.tsx,test,118,content scanned; existing test inventory,,72a4a59a7d92a58da6c7a41b6cbf21d09ca76214cf0b09a6650ce825f040d1eb
+src/features/loans/AssetModal.tsx,presentation,100,content scanned; global static checks apply,,f6dd4ba81fcdb3d5e0d02d3fe9218a893a56c06b18811a057a0cf7ea69e3229f
+src/features/loans/LoanCard.test.tsx,test,121,content scanned; existing test inventory,,d58ee3086002b143a22efc08c86ddbb92a9086ef3d72ecc27ba5baff95022ac9
+src/features/loans/LoanCard.tsx,presentation,221,content scanned; global static checks apply,single-line label: check intended truncation,6036bda4edd67f334bf2a1fe00ac080ebb67b9f413bc9966d8390041ff689527
+src/features/loans/LoanDetailModal.test.tsx,test,276,content scanned; existing test inventory,,594120d7816a4a6a992071be67b80b3fa7b571602ba9855c431724a8fe971520
+src/features/loans/LoanDetailModal.tsx,presentation,506,content scanned; global static checks apply,,d57f6c871a25e50ab37fb3339c57c17422e864f20e6157c2cf70fde3599b9a4a
+src/features/loans/LoanSchedule.tsx,presentation,157,content scanned; global static checks apply,,43ef8c555afae950dee2cb142a42a26c40c7cb9b2d9f8533ba2e9a6e22281cfb
+src/features/loans/LoanStatGrid.tsx,presentation,39,content scanned; global static checks apply,single-line label: check intended truncation,c6badf363b88fa4de5560e2f75183da60195d96ba7573c64428d730fac850a69
+src/features/loans/LoansHero.test.tsx,test,131,content scanned; existing test inventory,,937e5a7310d43d7e6d8cc038580acf520e22948ea7bbec4253c25a13d5db83af
+src/features/loans/LoansHero.tsx,presentation,226,content scanned; global static checks apply,single-line label: check intended truncation,d072d0bdbd6e6c99fcd6a1eeafa1b3734f8c74fd567679e833ad3f813ded3e6a
+src/features/loans/PayInstallmentSheet.test.tsx,test,153,content scanned; existing test inventory,,5eccacb9abdc130f998f5f3d3be243d97ea2c3691456bfce67514770fe2d34c6
+src/features/loans/PayInstallmentSheet.tsx,presentation,151,content scanned; global static checks apply,,915ef3796add710bd1814edcefed67e9c334ceeda885fd9cc2c1ab7d9fb342e5
+src/features/loans/PrepayModal.test.tsx,test,156,content scanned; existing test inventory,,b6c6d6ffd8eeb8a2664c69129e07e890c30e2b21045ff3aad0fe348ae5ce3e8b
+src/features/loans/PrepayModal.tsx,presentation,323,content scanned; global static checks apply,,5f008510e028c675c6e98f0b0773eb8ef9ac951bbc81fed8b572a3957e819bc8
+src/features/loans/RateChangeModal.test.tsx,test,131,content scanned; existing test inventory,,3429070f0672e357619589616c0c19b0fd9cc2235fd68fed2b6d05dd5f9e2560
+src/features/loans/RateChangeModal.tsx,presentation,124,content scanned; global static checks apply,,a8fe4e6b6738c8316a3753e8a2578453b09b24335b6902e8ec5442b9ac57d20b
+src/features/loans/installmentStatus.test.ts,test,24,content scanned; existing test inventory,,0cc654b3a5cb00aaa04d2d9a57afd89e37cb5d892d84bb9d0ff4c6a3c9ba42b8
+src/features/loans/installmentStatus.ts,logic/tooling,24,content scanned; global static checks apply,,c997e1ad1005b4ef942c03552bbedca56766e103e4a04cc3bd49e8134b3c847a
+src/features/loans/loanIdentity.ts,logic/tooling,59,content scanned; global static checks apply,,d85d764df5b2348d89a7be21743e52e79a482a39ba1f7449f7b5471fabf3105f
+src/features/loans/loanTotals.test.ts,test,76,content scanned; existing test inventory,,152170adfda6be2aa00ce844ec2410e96391b703b24ee6edb81bcd303af5a2aa
+src/features/loans/loanTotals.ts,logic/tooling,63,content scanned; global static checks apply,,fd39c4646c551b2e3e133626fd6d96c717cc4570368088f1afba671f7069661d
+src/features/loans/loans.styles.ts,presentation,151,content scanned; global static checks apply,,639f3bec0b39fd6730d02840da0277650359c7af92ebc5df11efcdc375229e5f
+src/features/loans/scheduleYears.test.ts,test,42,content scanned; existing test inventory,,4d87cb90721d6d99cfdaa06657b24128a04641e4dcae837a65e4d3e7d037474d
+src/features/loans/scheduleYears.ts,logic/tooling,27,content scanned; global static checks apply,,4278c308d1120d62d541bbba36586a12e7a2132d6a08a5a640ddfa2164233788
+src/features/loans/timelineLayout.test.ts,test,41,content scanned; existing test inventory,,5556b8e058154b43d635caa2cc3bdc3b94be7074cb8c1197739fe514ad7a38fe
+src/features/loans/timelineLayout.ts,logic/tooling,47,content scanned; global static checks apply,,b595ebcf7e6803a04453f097fa9d484c9cc83cceba3327544d49df1fcc6f769e
+src/features/notifications/DayArc.test.tsx,test,46,content scanned; existing test inventory,,34d60d446a88c3670f4ff2dd2b60b00719ec48563effb0582d719eb15f48a6a1
+src/features/notifications/DayArc.tsx,presentation,142,content scanned; global static checks apply,single-line label: check intended truncation,47bf2783ecb57abb1bc9c3ca840e10392b2dd38d09d428dd830339111cf51168
+src/features/notifications/SlotTimeStepper.tsx,presentation,90,content scanned; global static checks apply,,9cc6ece74f04a2218b470dff7cb44750d47e767357cbfc2787e94249d54cb324
+src/features/onboarding/Onboarding.test.tsx,test,234,content scanned; existing test inventory,,6ec4331fde14a6bb762b4490b5575cb11bfba065c03ab5239469cb88836e40f6
+src/features/onboarding/Onboarding.tsx,presentation,529,content scanned; global static checks apply,,2ef3ab6b52eed5456e47216879bd30734e7ba30150ad3504d49f214b6632e4a6
+src/features/people/AddPersonModal.test.tsx,test,77,content scanned; existing test inventory,,c5e52263ef05b3872ceb631b1dd6a5ad11b2a94b14267b4923856aab66d4ed8e
+src/features/people/AddPersonModal.tsx,presentation,61,content scanned; global static checks apply,,16e4178772fd37a97bb5599332bc02862129500ff6c6830b4dec7a6220fd7f69
+src/features/people/PeopleNet.tsx,presentation,80,content scanned; global static checks apply,single-line label: check intended truncation,8bb7787a8e74caa3436bc0fd1c90c2dbd262cca2991ab7ce645454b52f2d81ef
+src/features/people/PeopleScreen.test.tsx,test,119,content scanned; existing test inventory,,90b82aea38ea1cd920c85a9656b202f424fea03c811c7ab8aa9f420f60d1b459
+src/features/people/PersonDetailModal.test.tsx,test,140,content scanned; existing test inventory,,d4fdc5f69edb6c85235ac86503f0df5e0df9f54f7aaa3f8d3778a7d9fe171ba3
+src/features/people/PersonDetailModal.tsx,presentation,506,content scanned; global static checks apply,,acef361036fbe658c8dec0577aa884b1e883c1ec01e01f63363549235fc8ecdf
+src/features/people/PersonQuietRow.tsx,presentation,37,content scanned; global static checks apply,,86efff6e4ae777be27f5f7646a1997743be1a3eaa497616dba20f21f3d1483f1
+src/features/people/PersonTile.tsx,presentation,85,content scanned; global static checks apply,single-line label: check intended truncation,db539ef4e15051d9c4f3d5a9caf07a98b10c7122df873d0576dcff4a3b4eec05
+src/features/people/people.helpers.test.ts,test,75,content scanned; existing test inventory,,bea925b51849d10d4f2df110924c0a7b81598385e8549c77e8374e041f4370b5
+src/features/people/people.helpers.ts,logic/tooling,89,content scanned; global static checks apply,,cd286d26b7404bb7369be6b0a26294125cea680eabb78773f80705fa54ee509f
+src/features/people/people.styles.ts,presentation,171,content scanned; global static checks apply,,2574fdf882841f26763c4c5e7e7c580e457519742842e6bf0ef862a405a2709e
+src/features/plan/BudgetJars.tsx,presentation,157,content scanned; global static checks apply,,466bcd26927ee568b5831daaaa58f23c312c38e7746e5b063cb60b350ec30d8c
+src/features/plan/ComingUpSection.tsx,presentation,229,content scanned; global static checks apply,single-line label: check intended truncation,c595fe4a4f4030dc40a46b0224bcd77641ef0cedc1112012e40a59871edde511
+src/features/plan/DebtPath.tsx,presentation,124,content scanned; global static checks apply,single-line label: check intended truncation,70729674acdeeb53ed186e62110d9f623a2b16fe6185b70fc01a983010c0a6cb
+src/features/plan/PlanGoals.tsx,presentation,231,content scanned; global static checks apply,single-line label: check intended truncation,ef87716a20db350bc3b6e5641a1808b694da82126242595f1d9c920ea46ba3fd
+src/features/plan/PlanScreen.test.tsx,test,404,content scanned; existing test inventory,,4a87c446824aa947d256db7aab77d319405d0085a95571708510eb7f85b595d3
+src/features/plan/PlanSections.test.tsx,test,293,content scanned; existing test inventory,,61ced721c89b4237be9312253bb5c56c6762563031843f91dbd7c53a82b5c76b
+src/features/plan/PlanTiles.tsx,presentation,211,content scanned; global static checks apply,single-line label: check intended truncation,a24a2e29aa2ade80a9e0aa9f484eeeb7538c4e1b3199a07604392e2c505f69a4
+src/features/plan/RunwayCard.tsx,presentation,394,content scanned; global static checks apply,single-line label: check intended truncation,884d5a7fcab4bbd9b497ff864a8ba612ff55ebefba058c71f1d2d19d56f8fd78
+src/features/plan/plan.styles.ts,presentation,327,focused layout review + content scan,small text: check label versus decorative badge/chart,4e30ae8612581c1dc3922ee762e11e151b1d1ba164e400f30de62b94e9372559
+src/features/plan/planOverview.test.ts,test,350,content scanned; existing test inventory,,cb5bc163ff0113d4232fd60b8ceefaa18cd40afa25de20697048a34d9cc37cb2
+src/features/plan/planOverview.ts,logic/tooling,392,content scanned; global static checks apply,,6d81e32dbbb782ff741a75bcfe37178e6eaa06b7a30beab7cda578bfaa628d34
+src/features/plan/runway.test.ts,test,87,content scanned; existing test inventory,,5af6c12b91c785f8af97f041980cd4ffc111c7d04c317bfffda59f2067d8452f
+src/features/plan/runway.ts,logic/tooling,76,content scanned; global static checks apply,,ab223a6d864fe1601743abeb2a26641d2876a7b9be8242b3fb70a18e06b69134
+src/features/profile/AccountDetailModal.test.tsx,test,102,content scanned; existing test inventory,,283da5bb260140e05f67cd1c23f5b95354e4feedc07bf06db9dfcf3a20adc688
+src/features/profile/AccountDetailModal.tsx,presentation,306,content scanned; global static checks apply,,fc54d1b6827fb2f2fa53ae430231324a1b0518f1f04ecec303b4c59107dbae3c
+src/features/profile/AddAccountModal.test.tsx,test,116,content scanned; existing test inventory,,5657884fc0ac60fa1ec37275622519ae4beecca8134982be4b9f3aa484523c9f
+src/features/profile/AddAccountModal.tsx,presentation,243,content scanned; global static checks apply,,d5148c0446046e9891b637ab375d49b1db24249f3b97d9e275cccf9c59ab985d
+src/features/profile/CardCycleFields.tsx,presentation,64,content scanned; global static checks apply,,3b9d160d348f196cf919af6ef069e27abd6db077847b4e2fdfe8b2b599a2b969
+src/features/profile/CashHero.tsx,presentation,102,content scanned; global static checks apply,single-line label: check intended truncation,afa8c9b28eb3856d4e4aeee4f8f7ddf7d12ba0be9c51e0f57c77683f4489256d
+src/features/profile/DaysLeftRing.tsx,presentation,60,content scanned; global static checks apply,,166dc1fefffe50197616c12f1eb33289685e553cf47352683a22a96bbb6add0b
+src/features/profile/LinkTiles.tsx,presentation,85,content scanned; global static checks apply,,a6358449eee2c955be4016d5a687fef7cbef2fa17f380ac1aef3e5f04591f223
+src/features/profile/ProfileIdentity.tsx,presentation,118,content scanned; global static checks apply,,5f6fd8288cf580e3f60a72e190b34f96ba6d6616e04ba15a36e7a884123ca9ad
+src/features/profile/RecentlyDeletedScreen.test.tsx,test,117,content scanned; existing test inventory,,202c4a79e716c20a0cbd9b9a8858db08d348bf1af3662e1772d03fe2a210dbaf
+src/features/profile/SafetyCheck.tsx,presentation,191,content scanned; global static checks apply,,3442f5a70fb20d16f40745389fe8fff1cb60b02bb7cf25cee8ecac81f24c5b83
+src/features/profile/SettingsSection.test.tsx,test,309,content scanned; existing test inventory,,e7cc72c390bf2f8f64f6dc7f9890b36a7e1de98dae5ed7676c124fa3030a95ec
+src/features/profile/SettingsSection.tsx,presentation,557,focused layout review + content scan,,9d5d983bca10ed43013603001870682ee4c54d0c62be261f252b33be829a7342
+src/features/profile/ThemePreview.tsx,presentation,125,content scanned; global static checks apply,,025fa2250330d12ad9d30e7edc672f8251861e16919d50bc103701204af98b6e
+src/features/profile/ThemesScreen.test.tsx,test,81,content scanned; existing test inventory,,c393420d1de5bf3ac001b13eb189fb8189c44ab65fa9cc0d9c4035abcd94bf8b
+src/features/profile/TrackedCard.tsx,presentation,198,content scanned; global static checks apply,single-line label: check intended truncation,6c2ddc8dfb1151946d64586c7a7b2cd19ca21a61683d25c6ba56a96e1c741c02
+src/features/profile/YouSection.test.tsx,test,260,content scanned; existing test inventory,,d019bbbf486220820740789f32e92816dca0b7d44424d3ed9cf978a9320f1416
+src/features/profile/YouSection.tsx,presentation,376,content scanned; global static checks apply,,a752834236b19eedc08efdca070e3b4e8eee0ecca8973f12e87d583191532e18
+src/features/profile/profile.constants.ts,logic/tooling,9,content scanned; global static checks apply,,8b1e70d62ddca759ea8fe2c37b17e3edd209ed4dfabe6d1c7646b675160cb1e1
+src/features/profile/profile.styles.ts,presentation,236,content scanned; global static checks apply,,6440a7705dbd360c06b92704a7e97212f99977a7a15baaf84b789aa8ce0ff84a
+src/features/profile/trackedSum.test.ts,test,70,content scanned; existing test inventory,,90f06f3ee0c42f2b273779a99c4959ed5c4652216399f59dd72cd706469e58e5
+src/features/profile/trackedSum.ts,logic/tooling,58,content scanned; global static checks apply,,357fff78d907f3930ffa34ee4288aae53491f3a1e6d6f65cc672e8febae54750
+src/features/recurring/AnnualBillPreparation.test.tsx,test,111,content scanned; existing test inventory,,55e3fa380e112c0fc8ad2e14417d323ec6cf4a90ec8473654e4c900fc0515481
+src/features/recurring/AnnualBillPreparation.tsx,presentation,199,content scanned; global static checks apply,,cf635d05a672bacd98a05ce6da32e7a90d076929497ce8c6e7170b8f1b572a82
+src/features/recurring/RecurringHero.test.tsx,test,127,content scanned; existing test inventory,,fe716b27f1fa31c4816daca2392f9a978e350f069944392fb543f297561ee5e6
+src/features/recurring/RecurringHero.tsx,presentation,217,content scanned; global static checks apply,single-line label: check intended truncation,12c4e89568cb8fe7fc8eb16d7961e250c2bf0703ea8e239ba6f837bb161c88b9
+src/features/recurring/RuleModal.test.tsx,test,190,content scanned; existing test inventory,,614bb885cf974e0662c336cc3afea9d619637d9d415f1a150599e05c70a463c7
+src/features/recurring/RuleModal.tsx,presentation,471,content scanned; global static checks apply,,5f1c45d902d9ea6774f9e34ef6d3b925dd7ff7c89db78486a34b53c61bd1f07d
+src/features/recurring/RuleRow.tsx,presentation,111,content scanned; global static checks apply,,4ae553dd5c31a5454e01a634dd55f15fd04726119ec4f41811d45c1f677e3e8b
+src/features/recurring/SectionHead.tsx,presentation,28,content scanned; global static checks apply,,ea47b07c979f41154e57e6bd546f78bd10d327d4bf22be83ba5b137032ec4946
+src/features/recurring/SuggestionsList.test.tsx,test,76,content scanned; existing test inventory,,fe468712ea3247f7311d53a29a967652d96be8cc030b3c97fef36308d06afb24
+src/features/recurring/SuggestionsList.tsx,presentation,75,content scanned; global static checks apply,,37d1c5cd4a8b7ec319d624821a4c1b24597cbb5a072f051e136059fb612f579e
+src/features/recurring/recurring.helpers.test.ts,test,127,content scanned; existing test inventory,,a1c334b81e652639cd2742cd500dd8292d65a85dbd496082e36c3c4b7e30992c
+src/features/recurring/recurring.helpers.ts,logic/tooling,133,content scanned; global static checks apply,,a5c8f84902f116eeba87fb28064a8726054932a606803b3116b71cf513c856e8
+src/features/recurring/recurring.styles.ts,presentation,144,content scanned; global static checks apply,,fb58274a4ece4f5f91a7b00cc9ef6dc29badfe4d2d7106b4a3ac07e4c08c049d
+src/features/reports/AnimatedCategoryFill.tsx,presentation,23,content scanned; global static checks apply,,e0f48a7c91a699d43ffda7b7d51e5f557874baddbe407b5f1bd48086d1fc86ee
+src/features/reports/BiggestSpends.tsx,presentation,96,content scanned; global static checks apply,single-line label: check intended truncation,19553b5f12e7e694d26acd90694b96a8e2315f5b89918a720abbc1c1ca6ad184
+src/features/reports/CashFlowCard.test.tsx,test,137,content scanned; existing test inventory,,0db6278f2db4d8772f0dba831a765d948e3e8b0d048dd0f6d8a61ecc8bfe0a8a
+src/features/reports/CashFlowCard.tsx,presentation,243,content scanned; global static checks apply,single-line label: check intended truncation,df1a9eca1b7d4ec714e557f807001452ae706f170e75e1a6f9cf3c434e63adfe
+src/features/reports/CategoryBar.tsx,presentation,33,content scanned; global static checks apply,,b6deeea65a0645c61ea7e3a203707513ecf51077aca4e8d3af64c00d275c6cde
+src/features/reports/CategoryList.tsx,presentation,251,content scanned; global static checks apply,single-line label: check intended truncation,81d07e5f087d14bc6f0e5cc5611cafc151012449ee5777efaed764984acc2fb4
+src/features/reports/CategoryScreen.test.tsx,test,176,content scanned; existing test inventory,,7404915a31df21ef7b1263ff60142bc4146ef8b099edefd639dcf558493f910b
+src/features/reports/CategoryTracks.tsx,presentation,207,content scanned; global static checks apply,,6259f24090967491649310d65315396a85bf7d81e3b6339b20d3b990f1f5a035
+src/features/reports/DayCard.tsx,presentation,120,content scanned; global static checks apply,single-line label: check intended truncation,cc578e3ba8307c8ffda4f4f2159ec659b4af1dd48a874e6717a10b7adb2dc2cb
+src/features/reports/DayTotal.tsx,presentation,26,content scanned; global static checks apply,,619269c92444985a7eec3a7d4f1a2d4a802a81051502b0b2527f93bf50973c84
+src/features/reports/HeatmapCard.tsx,presentation,76,content scanned; global static checks apply,single-line label: check intended truncation,153ec3c67b8486b93917fb2142b19f9bf41d458125b0a10ccf1ac24be1358eb6
+src/features/reports/MonthBars.tsx,presentation,99,content scanned; global static checks apply,small text: check label versus decorative badge/chart,7a29d69d22b7db2af79e034754ce3415bd950c0232843676c1cf9db7858a7564
+src/features/reports/MoonPhase.tsx,presentation,47,content scanned; global static checks apply,,ecd7924fce3101807176a98c3865efbc99ba66509904cc5dd988c24201a28ad9
+src/features/reports/PeriodRow.tsx,presentation,136,content scanned; global static checks apply,,dde4354de4da51f09f25cda50b7e1a48eba39e4aca194a9435816ec7b1d03bbb
+src/features/reports/RangeSheet.test.tsx,test,100,content scanned; existing test inventory,,497f5c661bac0bf6a2b202867e175da3e733c9f9a1d84dc15ccb0513f62c4c3f
+src/features/reports/RangeSheet.tsx,presentation,263,focused layout review + content scan,small text: check label versus decorative badge/chart,3c527f17a978ab248c1b0edceb80b789ba6ce646106f0cd465e099ad377e5095
+src/features/reports/ReportControls.tsx,presentation,161,content scanned; global static checks apply,,0bda278ef408a55e042b67bc6a15e35d75939b343ab8a91e6e3491b058d4a803
+src/features/reports/ReportInsights.tsx,presentation,102,content scanned; global static checks apply,,30a89aa0bd533f08cc4705267cbe0aae52efc433974e8ea58a12a8b412e948ab
+src/features/reports/ReportsHeader.tsx,presentation,17,content scanned; global static checks apply,,ffd060490dfc89df71b00fb835c548dc61111c7891fe8cfe1bea7124155da646
+src/features/reports/ReportsScreen.test.tsx,test,744,content scanned; existing test inventory,,e7a19c2512a3aee9ef06459a92871082ce951a63a14b33cf7ca350671efabe7c
+src/features/reports/ReportsSkeleton.tsx,presentation,14,content scanned; global static checks apply,,76b13686405a1c7370ae0751c3ca9366ed4325e9649746b9d6076579d1f6d3a2
+src/features/reports/SpendHeatmap.tsx,presentation,135,content scanned; global static checks apply,,e5e398061e89a9325d4cc45c0ce7bf98cb4d33e22bd51294ddf2ea3e4c60ebbd
+src/features/reports/SpendingExplanation.test.tsx,test,107,content scanned; existing test inventory,,28cd54e1205e304be700a6313a0bd9db3ab64d55be17d7735b2965eef20b6415
+src/features/reports/SpendingExplanation.tsx,presentation,180,content scanned; global static checks apply,,c16f99bb511e2ab48023e0853087da75937b3e6e28fe4a71ec10ca6e8c07e873
+src/features/reports/SplitBreakdown.tsx,presentation,78,content scanned; global static checks apply,single-line label: check intended truncation,51528c63d5b3b1534c22bc433029112400c06b03fd0ad4c43e50be5dc0df6357
+src/features/reports/TrendChart.test.tsx,test,165,content scanned; existing test inventory,,a03496c77acfa5cdc6bbd6e0dbdde67363c9198b9e5cfd0f689f10be4f16ad60
+src/features/reports/TrendChart.tsx,presentation,353,content scanned; global static checks apply,,35e03d95b41b08ad97365217490649a19858dec4261a93ad6bf6abcda0bcafb0
+src/features/reports/WeekdayRhythm.tsx,presentation,103,content scanned; global static checks apply,single-line label: check intended truncation,ef08df0332f689d01e19d5469b57ba5295b60a0bbd8d15a3898b85141e73affb
+src/features/reports/reports.styles.ts,presentation,512,content scanned; global static checks apply,,59b9928ab633b054323d5e24dca12e5fa7ac198d1070580c8405d5511075614a
+src/features/reports/reportsInsights.test.ts,test,669,content scanned; existing test inventory,,4be960d1f041066e882eb7f9baafa2f8329e2343e7afaab1f5668e822109d5b8
+src/features/reports/reportsInsights.ts,logic/tooling,730,content scanned; global static checks apply,,a08de7d77a45bb9ff6e7d686a547ba0af8599b3c8da9625694498f3c8f46f180
+src/features/reports/visits.test.ts,test,17,content scanned; existing test inventory,,759c7bb9fc4ec04265d7146be1ecd98bad6803ef183a0cb81d560033031bb6c3
+src/features/reports/visits.ts,logic/tooling,14,content scanned; global static checks apply,,9aeb6f24bfe48c2329ff372e98f3cb8e7152d0f19e4d3a9299f21f63659152ce
+src/features/shared/listScreenStyles.ts,logic/tooling,39,content scanned; global static checks apply,,ee2ed33440f5ec45a674632c60170c04c9a6eacee18a7fb1e6a7978d3faad1db
+src/features/transactions/ActivityFilterChips.tsx,presentation,225,content scanned; global static checks apply,,1d3cb6c4775bb807aeb88b6a5f5241e0ff89ef219ed11303c0024820b20113ad
+src/features/transactions/ActivityMotion.test.tsx,test,95,content scanned; existing test inventory,,27c6f0ec51a9a220806b890f894b91fca0b34284c3c56718e0e770b00e70f952
+src/features/transactions/ActivityTop.test.tsx,test,121,content scanned; existing test inventory,,bb9aa27a7d535aef039c05175d025dc2ccf98843864d0a411b96c10b2bf43b00
+src/features/transactions/DraggableLine.tsx,presentation,71,content scanned; global static checks apply,,5d14b079169565097af1d654832c6c0b2b2d568ac4d4d4e73402faeb4986aa5d
+src/features/transactions/FilterModal.test.tsx,test,191,content scanned; existing test inventory,,9c30932718531ef847bb713424314cf1f37bbc7c39c850b8cf7231e7cee6c35b
+src/features/transactions/FilterModal.tsx,presentation,199,content scanned; global static checks apply,,7c0c77159679c4aba8783a1637fa4877ba3567cec513c36992610bf3b6f0f59d
+src/features/transactions/PendingRefunds.test.tsx,test,25,content scanned; existing test inventory,,06611cd3e51d2ca7becb9b52afa57765dd8eaced2da19164fda080d4b7d78e0b
+src/features/transactions/PendingRefunds.tsx,presentation,93,content scanned; global static checks apply,,8f5c1e210ee45991e1f79f37de33832b4327f29420ed6d84f1a398249ba97c7f
+src/features/transactions/RefundTracker.test.tsx,test,94,content scanned; existing test inventory,,0d9aeb0b90ea52c910c96df741343adf5367dc33f0f1848aa8ce9734a171cde3
+src/features/transactions/RefundTracker.tsx,presentation,284,content scanned; global static checks apply,,521b9dfd5511b85b3ca2f33955486156b0a8a1ae31a37f1be63d4bdf2ac2cc7b
+src/features/transactions/SearchStatus.test.tsx,test,60,content scanned; existing test inventory,,0b3a65a16baeea997ac44e080e6fb5b31a4e4115dca978ee23b989c9d86231f3
+src/features/transactions/SpendBarChart.test.tsx,test,102,content scanned; existing test inventory,,4225d12c93b259a92875f3ec2396e409513e796842c668a30ff623bd9c776e32
+src/features/transactions/SpendBarChart.tsx,presentation,262,content scanned; global static checks apply,small text: check label versus decorative badge/chart; single-line label: check intended truncation,959ba64a6844a72dcb5a75b4f61d10b198a2bad7dd54e743a4ee46dba251d734
+src/features/transactions/TimelineDay.test.tsx,test,316,content scanned; existing test inventory,,0c48ff9a52ea351a74c72069f60645b134bcb13a98f9d338ce49531738fd7bab
+src/features/transactions/TimelineDay.tsx,presentation,520,content scanned; global static checks apply,single-line label: check intended truncation,4c055b1f050fd1f320215dc9f9b37e601252245c731f4848f5af572d2ff2e280
+src/features/transactions/TransactionDetailModal.test.tsx,test,252,content scanned; existing test inventory,,1f872824e7e109447db67dd11bdc3e9985d9b07edc921fde5ccadf402c6fc784
+src/features/transactions/TransactionDetailModal.tsx,presentation,576,content scanned; global static checks apply,,53c6d158d37f632c98fc8cb674a982192136b0aac9806de52dcab1c197bb4fb5
+src/features/transactions/TransactionRow.tsx,presentation,99,content scanned; global static checks apply,single-line label: check intended truncation,44d93f8b7bf5fa8b71f693a989259b40e46097c855ba22fc11200346f90bb0b4
+src/features/transactions/TransactionsHeadline.tsx,presentation,173,content scanned; global static checks apply,single-line label: check intended truncation,28eb32f5d7f4b55859d05445e32bcc09b01fcfdc41f40226d10e44656f02b44a
+src/features/transactions/TransactionsScreen.test.tsx,test,157,content scanned; existing test inventory,,7fd6542e95af9b966635a5467f1967e6fc0cc585a68d923efc6c14bbcfa3af18
+src/features/transactions/TransactionsSkeleton.tsx,presentation,74,content scanned; global static checks apply,,3a21eb00ffc14b745d5cd02cdf85002c2de0966f0b89731d05f549fb4526ac5f
+src/features/transactions/dayLane.test.ts,test,145,content scanned; existing test inventory,,3e9caf2c0c796a34c8fdb771a7ba2a20c728f5e083ed7923f4a32c54b99030e3
+src/features/transactions/spendChart.test.ts,test,212,content scanned; existing test inventory,,7c4394368725c6381f331eac9c46156472a391b8dcd767a669c2bc810384a207
+src/features/transactions/spendChart.ts,logic/tooling,168,content scanned; global static checks apply,,d3915af573b3fb8085c6429d381eea8a15dead70bd7a11f3659481992ed803f1
+src/features/transactions/transactions.helpers.test.ts,test,195,focused optimization/structure review + targeted checks,,ae2f9a19c0390cb07b6499bf62902169f18a7130122721856aa84ce8bce67629
+src/features/transactions/transactions.helpers.ts,logic/tooling,271,focused optimization/structure review + targeted checks,,b9354b9c1e37fbdd806155153ce7836dd0fc05aee2911f40e633e94094437a2e
+src/features/transactions/transactions.styles.ts,presentation,375,focused layout review + content scan,,bac2211ca8130da648ac99483607c4a8b3d4bf490d49a03ea1279307f7515e96
+src/features/whatif/PurchaseCheck.test.tsx,test,167,content scanned; existing test inventory,,18a299e18f0e5de46c036cce8c5d40350c9c202083fbef96e1415d8c0c1cba66
+src/features/whatif/PurchaseCheck.tsx,presentation,224,content scanned; global static checks apply,,ca0637edbed6a0e17234265dc137308d52ce5f84f3d4257f06cacfaeb322987a
+src/features/whatif/WhatIfScreen.test.tsx,test,119,content scanned; existing test inventory,,7f000b0adc416ac2b071182a63a1bf89d90b40c25f5d78a9730cd4409c6f00f2
+src/features/whatif/whatif.styles.ts,presentation,124,content scanned; global static checks apply,,e7a53944a19cac961df499786ca095f76a6c1dac34dee53ba46a29723c9f768f
+src/features/wrap/WrapBeatPrimitives.tsx,presentation,55,content scanned; global static checks apply,,b7deee77392e277a30a93edba277afa8f2f4663835271236288db7a5b1b09dc6
+src/features/wrap/WrapBeats.test.tsx,test,298,content scanned; existing test inventory,,fb259f2072cfa02c2e41e5bfe52f33efa0b3d5533221085186c069a52433776d
+src/features/wrap/WrapBeats.tsx,presentation,492,content scanned; global static checks apply,single-line label: check intended truncation,9884ab571e99e8fba1f4eb4b89bb5b9d6c8a9ed40242cd39250a97b21d882cd8
+src/features/wrap/WrapCharts.tsx,presentation,394,content scanned; global static checks apply,single-line label: check intended truncation,7e6f48b126bd18741d2404c850f686ebbf9af03861e14d38de6a9ed2d8478217
+src/features/wrap/WrapPlayer.test.tsx,test,273,content scanned; existing test inventory,,0a084c18b36b445da1c0151d4a82c69781a0e7e30e02ec63ca49861e13476145
+src/features/wrap/WrapPlayer.tsx,presentation,329,content scanned; global static checks apply,,810c6520ebc5da44025c60f287969a4172378bd2c91bdd0a92a101a902d56890
+src/features/wrap/WrapScreen.test.tsx,test,139,content scanned; existing test inventory,,264a248dfd3ab12e824b89ba78a4979fbdfbbf5af88fb0e31c763e7276cbb3e2
+src/features/wrap/wrap.styles.ts,presentation,218,content scanned; global static checks apply,small text: check label versus decorative badge/chart,966717f64f1695ebabfbbd6a37b1ac742b4433fd790bd280e995c464e3fa2bd4
+src/features/wrap/wrapData.test.ts,test,246,content scanned; existing test inventory,,e21e25d6acf80578c8afec459b06fa58c35e07a7946a796d6a59edab780668e9
+src/features/wrap/wrapData.ts,logic/tooling,284,content scanned; global static checks apply,,1720e8cfd8ef0bba818bbc53fc80d56fd43c8f2528be5f675bcfe674153da95f
+src/features/wrap/wrapWindow.test.ts,test,81,content scanned; existing test inventory,,cd5266ad48a2a4d8ac4278462230cd5e3ccf71fd0a94c322d59430f5f34f91fb
+src/features/wrap/wrapWindow.ts,logic/tooling,69,content scanned; global static checks apply,,7197ca865f365ef80d2c989b8e7a752a75ac1888987ab683bf1e1368c1a6d23f
+src/lib/AppLockContext.test.tsx,test,56,content scanned; existing test inventory,,a85e1aac994801fc12fa2a8148188821a174cae4bafd775fa8150d193dca98de
+src/lib/AppLockContext.tsx,presentation,88,content scanned; global static checks apply,,73a005438a4b43cb62b9f2c5f4db6163f00b6119f326a2c665941d32ba40d5b7
+src/lib/account.test.ts,test,15,content scanned; existing test inventory,,36f0f034b93d0beecd4dc3a49911da079f13426e553c3e25f4fbc07811eee943
+src/lib/account.ts,logic/tooling,55,content scanned; global static checks apply,,3488ad8453dc23c60f975f394983ec0e5762678e199daf5827fc1c455896b82a
+src/lib/amountLimits.ts,logic/tooling,6,content scanned; global static checks apply,,42c8be84b9513575ee02d9808825b1dd5f0b13fbf5f297fae1102a29f72a134f
+src/lib/animation.ts,logic/tooling,67,content scanned; global static checks apply,,35dbe4d4ceb367c06aa0b0ce96173f05dfa99acdc6f3dff9fd073274abad410d
+src/lib/appLock.test.ts,test,93,content scanned; existing test inventory,,c96bc27f525550271ae939abb8f6bd5da6053b4bdd6cf802ceaf69070ca45671
+src/lib/appLock.ts,logic/tooling,69,content scanned; global static checks apply,,c1fb58ce8cab5ec4a0a63c736aca87370f7e2d4f6e8ca005fd307514049abb3e
+src/lib/backup.test.ts,test,145,content scanned; existing test inventory,,fb7b5931a61e281e1a55b69db7f0e95443b3a84b3f1b0a7d5f33487e36d53fcc
+src/lib/backup.ts,logic/tooling,419,content scanned; global static checks apply,,96ae78b628eab66ae18f0e4916bfb2d14bf6f068cc440812ae48ff55992afc3e
+src/lib/backupSummary.test.ts,test,102,content scanned; existing test inventory,,ae866e398bcc2bd305c1cd391e34f9b7e22ad45b969efd98c1b9b865237c3803
+src/lib/cardCycle.test.ts,test,130,content scanned; existing test inventory,,8e85a3acb088f9de0ef033bf3a5962b6d2c022f52fc9d13cf8b121a6cbda6d22
+src/lib/cardCycle.ts,logic/tooling,112,content scanned; global static checks apply,,a6350b4dd3e0c9b28e65b650b57ebd619844acfc493a0697e5149911e1ecd8b3
+src/lib/cardGrow.test.tsx,test,85,content scanned; existing test inventory,,80f18765d38abca688a6c803c40480fb6791f6312c9821ac2517e8f3bfb35bda
+src/lib/cardGrow.ts,logic/tooling,69,content scanned; global static checks apply,,a43340b1853c20086dbffecdc126f3eb0c141044924f0c0288207a96d48e1c8b
+src/lib/categoryLabel.test.ts,test,50,content scanned; existing test inventory,,44e044b2ccf3c7dcb922cca0ecbfe1c6213735e77af113432e7b584729436d18
+src/lib/categoryLabel.ts,logic/tooling,42,content scanned; global static checks apply,,034a19de5ee1a8ff59ac38bb4f2d0a2f731fa6124aa50f48d5e63ea55775bde6
+src/lib/categorySearch.test.ts,test,27,content scanned; existing test inventory,,a1e0c60e0ff19c69d9222f3b950d5ea3b1ea919d81cb51eeb2a541496c891fbf
+src/lib/categoryTree.ts,logic/tooling,42,content scanned; global static checks apply,,8ca95af13523d33c0008e54551001f852265b5c98e47bd7e7370dc5301c583e7
+src/lib/color.test.ts,test,91,content scanned; existing test inventory,,1c3d04c29f03591e006857c06716b8db028b60e386a448d0b2b9456c79b5b270
+src/lib/color.ts,logic/tooling,98,content scanned; global static checks apply,,133140cc65cfa9c04209c79aa2592afe7e58c5ed1c191518c5c1baf001577735
+src/lib/compactMoney.ts,logic/tooling,14,content scanned; global static checks apply,,764c30a5cbf3be3e0354b24b64c084db317127d918b6875ca4492da1df097f16
+src/lib/dataCoreHardening.test.ts,test,159,content scanned; existing test inventory,,602d8fb8efdaed6b733264dc5edb92f1f40183eac41491a5cdcef49abd7a3e87
+src/lib/dataEvents.ts,logic/tooling,45,content scanned; global static checks apply,,bf51188c5e7a09e351046bbd3a60219262699ad86722e678387fe0e520bce2d2
+src/lib/date.matrix.test.ts,test,143,content scanned; existing test inventory,,c678270aa73a202ed68e2163bcf61cde580cfa53ac4665d41e64195937c8d495
+src/lib/date.scenarios.test.ts,test,80,content scanned; existing test inventory,,b4ee11ef07064bc75afcfb22ee9f7a4090b7cf9ce567adc1012aadef920fa634
+src/lib/date.test.ts,test,127,content scanned; existing test inventory,,331a87392d807773352f8cb82ae033ba64b2c0890110826e7bfccb64dc2ca41a
+src/lib/date.ts,logic/tooling,114,content scanned; global static checks apply,,adef513bf61513fffbb5e24ce64389603e3260b9d8976b00266ab659079bb347
+src/lib/dateLabels.ts,logic/tooling,34,content scanned; global static checks apply,,e53396947ec671660eecd8729edba666db710ee9d855baa567199df98a426e99
+src/lib/dueDate.test.ts,test,20,content scanned; existing test inventory,,52e4f3946257cbba40c45c137be381929e3125c3dc95af917c9350ac4b622f36
+src/lib/dueDate.ts,logic/tooling,19,content scanned; global static checks apply,,287f771e182d0ba43563b27a9bd8439969512cb900a17aee2327542381b2cb37
+src/lib/errorMessage.ts,logic/tooling,7,content scanned; global static checks apply,,4f4f9567f91527fca4277501b5b6dc08e9334007ec636fac2ae0fcbacba19c0d
+src/lib/exportExcel.test.ts,test,289,content scanned; existing test inventory,,6abf094f9b7dd95c3beffebd724074cf3cc651b0d43ed7238314cbd79a869658
+src/lib/exportExcel.ts,logic/tooling,643,content scanned; global static checks apply,,5d26e5ee29bc415542cb6f9ddc28fc153b635de383282225e80c3c5a9cd4bf62
+src/lib/format.matrix.test.ts,test,35,content scanned; existing test inventory,,44d420733df7282d78eef05779df209f210746c853d75eee195823cc31fb913a
+src/lib/format.ts,logic/tooling,16,content scanned; global static checks apply,,d81af755bf7cd99351102c3172e46f54b0b167cd1b3196131f8726763e3d0fc8
+src/lib/gardenGrowth.test.ts,test,30,content scanned; existing test inventory,,a7caa291c3e35a847bcb5151be8857c656c1d51e17b225332ab5faeb77b5c30f
+src/lib/gardenGrowth.ts,logic/tooling,39,content scanned; global static checks apply,,95acbc9fc2c71f03d7fff2e61b9edeae797f16d684f1debde238526bac835126
+src/lib/gridRows.test.ts,test,27,content scanned; existing test inventory,,de987e6303bf1f7674edc16ed24e2ac62027d9a6060385784ce621e6eb8e2c0b
+src/lib/gridRows.ts,logic/tooling,11,content scanned; global static checks apply,,765a71b5bcbd3e480cbf14801e84ea070081416315b353ee207f3791a89ccd95
+src/lib/haptics.ts,logic/tooling,20,content scanned; global static checks apply,,9be625de43f165abee5533349943cbb0b2f088e377cfbe91a13ccb193c1f1fbf
+src/lib/hueFor.ts,logic/tooling,8,content scanned; global static checks apply,,f04f538d31ab3f382bcff50615dd10ec0ac4fc9ca44d34f3d44b85302408c524
+src/lib/id.ts,logic/tooling,8,content scanned; global static checks apply,,43354d8b925a50f3f02cea7caf5b8e34a10ba26ed85ce76e04bdb5f7973c17fa
+src/lib/investment.test.ts,test,102,content scanned; existing test inventory,,92baf2eff7f90e772cef33bbf94cb8dd362078aa5e728cb2901bf3a1efc02398
+src/lib/investment.ts,logic/tooling,71,content scanned; global static checks apply,,80130f1dab4723345246d976d3a51196d87e67262e43508c309c2e52f1f996b5
+src/lib/justAdded.test.ts,test,52,content scanned; existing test inventory,,8cd0ce562bd15619e1e15f854f329206952a79aadc59bfbe23ef841030785c6f
+src/lib/justAdded.ts,logic/tooling,60,content scanned; global static checks apply,,e7e8a4474e683beca0307fc926b2bdccb1e713e44f2ab68b36016c40e7c8241b
+src/lib/loan.matrix.test.ts,test,197,content scanned; existing test inventory,,48d740443f9f3390302781f092506b46b4fca2cf833360c2c6c7fd4b6909b87f
+src/lib/loan.scenarios.test.ts,test,85,content scanned; existing test inventory,,a9ac243521dfdb54a3ab808d7900f8999fe0692797e94139538ccbcd2880ae94
+src/lib/loan.test.ts,test,207,content scanned; existing test inventory,,bdadbdb07605b04cadf8a4b03cb11c8b467bc6a2cdefccf296fef4dfaebd571a
+src/lib/loan.ts,logic/tooling,148,content scanned; global static checks apply,,c617f93891f689da13b3c395b618925011498f395ebf8bb175b6d03fa4adc745
+src/lib/loanLimits.test.ts,test,31,content scanned; existing test inventory,,db7a0e816173629f7041061af73fa543a2965d463cb56748cf2494ebef2d014c
+src/lib/loanLimits.ts,logic/tooling,16,content scanned; global static checks apply,,24675d2b6786cbeed1f61ab653d14b54c129a4ce74b6debc6bebb38ac41d37d6
+src/lib/loanMath.audit.test.ts,test,264,content scanned; existing test inventory,,a715f5ea332ceccc297f847025f6533c0cdb88c2c6db8650af3e95a4cd60bb3e
+src/lib/loanPayoff.test.ts,test,68,content scanned; existing test inventory,,27c2508a778999b12986c7c5817f18712287844322ef3b06e4923c5e609e20b2
+src/lib/loanPayoff.ts,logic/tooling,57,content scanned; global static checks apply,,3d36941cdb8348e67d63ed381ed92da0ad45ff0f5079254e3e608fa9e391d29c
+src/lib/localBackup.test.ts,test,410,content scanned; existing test inventory,,65d00cf98d3daca851da061f4fec4dfd2e1e165623e90a4d105f9c749364e8ba
+src/lib/localBackup.ts,logic/tooling,287,content scanned; global static checks apply,,b8d48cd824077f45906175e4e90279d096936791a8c19cb6c96c5695a9f94eae
+src/lib/milestones.test.ts,test,74,content scanned; existing test inventory,,7fa0c488db6071976f58b23098afca2cfb4b923b17ea77651d1fe3a7804a609a
+src/lib/milestones.ts,logic/tooling,71,content scanned; global static checks apply,,2855ec89bc3c43842e60fa3ae8214442687f9e51bfa358dd3ce640df2f4e920a
+src/lib/money.matrix.test.ts,test,110,content scanned; existing test inventory,,b7a8b29e03153b94961b6548da216a980664b8042f72536e6b07da3adb431a6d
+src/lib/money.scenarios.test.ts,test,62,content scanned; existing test inventory,,acaba77be84497080f3ac015d61aa217ab8f8820977eee30d46eb5d44cd3c7e5
+src/lib/money.ts,logic/tooling,70,content scanned; global static checks apply,,7edaf245e473b74e70a5b7f2c1cc1b9e8d186ceb4b9502a0939758f03f77d49c
+src/lib/motionTimings.ts,logic/tooling,23,content scanned; global static checks apply,,c4ee875e26f74520060b517a70f56b1419d6f18f72bae2b5c0b0d5834a6fc541
+src/lib/notificationCopy.ts,logic/tooling,81,content scanned; global static checks apply,,c6d7e35df8c332a1e5f5bd497e8928aec1c28d6c459720cb14f29dba21ccdb85
+src/lib/notificationPlan.test.ts,test,285,content scanned; existing test inventory,,da67b4a6cfa3e84bb92447816ff5e13c200d19efcf506c8fdee3df70a14f60fe
+src/lib/notificationPlan.ts,logic/tooling,237,content scanned; global static checks apply,,895b0dbe6e0466aee6ea202fa794d1cf6dd49894432081a7b42d7d23f20cb999
+src/lib/notificationRoutes.test.ts,test,255,content scanned; existing test inventory,,bfa1730bafd13bdca71a1131c4a90b7b1d4cd51c32b57be7ba3e4466453baf16
+src/lib/notificationTimes.test.ts,test,34,content scanned; existing test inventory,,e35e7d923c308ffbc33fdea1c6c027d6fad8eb13a1f3c3ac55d67682d6a4d01b
+src/lib/notificationTimes.ts,logic/tooling,40,content scanned; global static checks apply,,c80118f13d6ce55bdf18b82d2019ed1325089b42299d88f7e6f18b0216353a54
+src/lib/notifications.ts,logic/tooling,215,content scanned; global static checks apply,,6367e8e54d979919692ed7070e5be3062d080d2cacd47c5f561c0c758959e724
+src/lib/pace.test.ts,test,65,content scanned; existing test inventory,,354e40adf82442f80598bdba0538c918aad5af7ffe50f2820c306c354e812a9f
+src/lib/pace.ts,logic/tooling,52,content scanned; global static checks apply,,6e375f2686829959718464d7a0c8cb9f7a0fa0fa58b1029f9d71555275e2d21e
+src/lib/padMath.test.ts,test,88,content scanned; existing test inventory,,1101e1ea7dfc06813fd42893cef292780e3da0d9314efd6d039d88c5b4df3170
+src/lib/padMath.ts,logic/tooling,98,content scanned; global static checks apply,,703fbddade7e6bfaa12cb62bb2e2f97db1015b2485d5b5aec01c847b34b6b024
+src/lib/payCard.ts,logic/tooling,9,content scanned; global static checks apply,,52a3a8c18db63ee34f927e104c9197974326098a869b2ebd2aff62792266f365
+src/lib/period.matrix.test.ts,test,170,content scanned; existing test inventory,,3211466f17a0d317ad9c79d34a1afdbb5a8381a41fedffecc78f243ca8df73ec
+src/lib/period.ts,logic/tooling,199,content scanned; global static checks apply,,dd5d97a46feb42351b1b17057bc415f413943b2fce1aa7ebf8a3f264e25ccd04
+src/lib/pickRandom.ts,logic/tooling,7,content scanned; global static checks apply,,a251af66533a66491e4f919ccf8ef9f8fa6f77aedaf0c76146ef7b9189b34850
+src/lib/pressed.ts,logic/tooling,12,content scanned; global static checks apply,,ffab64eb0a9d06d7c7efd10bee4afcbb8da9fc414dabe7336aeb4b0e99fa7b8d
+src/lib/privateSummary.test.ts,test,116,content scanned; existing test inventory,,368cba7e95e17ae94c31d9a07d16f3ad520e5c80147d08eda8ddeae265066ccd
+src/lib/privateSummary.ts,logic/tooling,67,content scanned; global static checks apply,,927a94308bf2d79dc3da758b5b398ccf46ad3877836649725c34ecce47a748aa
+src/lib/purchaseAffordability.test.ts,test,51,content scanned; existing test inventory,,f656977bf0796e679ae34d26eab1149c585c3a3853060cbc4085b3a925f33055
+src/lib/purchaseAffordability.ts,logic/tooling,60,content scanned; global static checks apply,,3293b140b6b8dbb892d885b8c9539be4ca148c424ad2513b2c2a6ebf4122b57c
+src/lib/pushOnce.ts,logic/tooling,16,content scanned; global static checks apply,,00576d08d669d5f51872775e04b0102debcec7171c724a0cb86ee14dce3b64f1
+src/lib/recurrence.test.ts,test,38,content scanned; existing test inventory,,8233595196707772d61ffef7b6697134baa5c13b2db364d25873ff2ce74eb4b5
+src/lib/recurrence.ts,logic/tooling,50,content scanned; global static checks apply,,0c1fdd36f8723eded89d4da0e561280b723a0b8cf3ad9ac93335802e40b8f7be
+src/lib/reportWindow.test.ts,test,136,content scanned; existing test inventory,,281b1c532171af80048b6d0909ec04d5c11112c5b97d55e9d74fc0e79369eb12
+src/lib/restoreSync.ts,logic/tooling,30,content scanned; global static checks apply,,d75ac02e353969e610e57cb86cb4927241be80d8988017f12d9f908cb17b1f5f
+src/lib/round.matrix.test.ts,test,107,content scanned; existing test inventory,,04d4d150e758decfc4bb4ea15f1c620cb179da92cfc7cf40ce94792c50ecf72a
+src/lib/round.ts,logic/tooling,50,content scanned; global static checks apply,,f150de3fe7432fab756db92ea15bc2ce78cfe855464b9eeb9511c66017f973cb
+src/lib/runAppMaintenance.test.ts,test,44,content scanned; existing test inventory,,5e5a86215246e89ea2173210519cea5f7175d2a164fa2795c7978104a28e4eb9
+src/lib/runAppMaintenance.ts,logic/tooling,26,content scanned; global static checks apply,,57b12d47469b243fca258218374366167d826f16cf2a4069b072ea1cab198cf1
+src/lib/safetyCopy.test.ts,test,166,content scanned; existing test inventory,,1d06348f7bc537089a4faaf5d24a31694f269588501ae216a224b528627d8e0b
+src/lib/safetyCopy.ts,logic/tooling,130,content scanned; global static checks apply,,3e5e8385d0fde788b7f8b3a5d7551245fa0086ee3ab87025094fe061dc863409
+src/lib/savingsGoalProgress.test.ts,test,24,content scanned; existing test inventory,,7d7d492418354d03afea3c241c3b4fe1e7d7dd8957afe4801ba2a28409b44032
+src/lib/savingsGoalProgress.ts,logic/tooling,14,content scanned; global static checks apply,,a65ba9e37eac12866d8bb80ed28ee18720e28335a721dac1e3a930bfacdd6cb1
+src/lib/savingsRate.test.ts,test,28,content scanned; existing test inventory,,c39146cb2a6e73b7fe295de38d56e5307ee23cb91056846f7659ca9ad6ee9b22
+src/lib/savingsRate.ts,logic/tooling,14,content scanned; global static checks apply,,c41732f26d1a7aaf551fbf798bb7775881259fe0cba7b645e4d4b80cc6926705
+src/lib/searchQuery.test.ts,test,53,content scanned; existing test inventory,,adf51cd9f2935a596e7ec5ce10c0d8d0f38c848fc8cdc839266a88720db4fee7
+src/lib/searchQuery.ts,logic/tooling,76,content scanned; global static checks apply,,7b1427309ef1c953b8a4a87c05cf83f4f1cea5f3961667ff581374b2b78f2ee8
+src/lib/spendingExplanation.test.ts,test,54,content scanned; existing test inventory,,724960eca27b021e7ea17f43fd15705bb5f8d3a75485ee01bea3b0eb5f06dd71
+src/lib/spendingExplanation.ts,logic/tooling,43,content scanned; global static checks apply,,0ac3c57d5fa95e180f27016f51194debcc499e5c1ff78724ea3033ae5ffa7fec
+src/lib/splitLimits.ts,logic/tooling,3,content scanned; global static checks apply,,502341b60d44a64438af5312752c37156070213dda8636593779b00bacc670c3
+src/lib/uiScale.test.ts,test,11,content scanned; existing test inventory,,ec4843cbccfb10141c346abb65d8e55441b700e477b6d67bd91a7ce003e7dcb0
+src/lib/uiScale.ts,logic/tooling,24,content scanned; global static checks apply,,3baa42ab3f3bcc77047ae50e09c23bde26f03bdb04abd85a02fd4a10de924ccb
+src/lib/useCollapsingHeader.ts,logic/tooling,97,content scanned; global static checks apply,,3b6636a41aa4c88092147e206009437e964c1a2c6e0af8328fe0cfb4e6b01f87
+src/lib/useFadeIn.ts,logic/tooling,35,content scanned; global static checks apply,,f64662b963b20a1e2b02021a58bcefd48e4059fc00fbdfd569cae5ccea8f5da2
+src/lib/useFreshness.ts,logic/tooling,50,content scanned; global static checks apply,,71faef91521ce859be62082167bb0709c442e9b0724dc4da2e3b19323727f492
+src/lib/useGrowFrom.test.tsx,test,88,content scanned; existing test inventory,,73e0db79714684886e4561d47599a3b1b7f1d1d265e05e15828864b51248ca6d
+src/lib/useGrowFrom.ts,logic/tooling,61,content scanned; global static checks apply,,3d35e58a37a5af89c501f0e253338e03223e4f73adac3b9b2639dc248d4e5083
+src/lib/useOnKeyboardHide.ts,logic/tooling,21,content scanned; global static checks apply,,b5ca94f098d15aa03f5dbb876d70546a5d92c401d14be6afca15b40f7ef3d580
+src/lib/usePressScale.ts,logic/tooling,56,content scanned; global static checks apply,,f977c804a14b3081a510f99962c509c2af15250ea08f4aeee8d22686e57e5dab
+src/lib/useReduceMotion.ts,logic/tooling,42,content scanned; global static checks apply,,85996ffb18aa06002d6674280b385802ae1b6f4ca83c5b5d27d0c846a8609765
+src/lib/useReturnOrPush.test.tsx,test,70,content scanned; existing test inventory,,ab93b9d4756b526b47a388a95ee0303b80ce54a2a8427f1f9c40200d8df3dc88
+src/lib/useReturnOrPush.ts,logic/tooling,41,content scanned; global static checks apply,,6cff142320f4b795cdab2f4f654fc54dfc5f14a9fd3d050c28d9f69e1c9f4eb8
+src/lib/useSaveOnce.test.tsx,test,33,content scanned; existing test inventory,,ed1fa6997ce3e8fcee77627628379a793c30e70d2b3408e13ec3aa02910a5ffb
+src/lib/useSaveOnce.ts,logic/tooling,21,content scanned; global static checks apply,,28d70948295bcc332fbc4017616453351304420dc444108f9c4ca9f3d1e3a415
+src/lib/useScreenLoad.test.tsx,test,127,content scanned; existing test inventory,,2847186879c9733f56df6562810a614342cd064bf3dd7c9f26f2b3e80bad1dd7
+src/lib/useScreenLoad.ts,logic/tooling,56,content scanned; global static checks apply,,8a51ba9f4008bef0888dae1f262a38bb87a3d4fb21291981f50153dd92cf7b52
+src/lib/useSwipeDrag.test.tsx,test,65,content scanned; existing test inventory,,e1e46c8ae7c12391638ab6ec4fc94de869ec578ef9cc9c4ecd253b5e24d15662
+src/lib/useSwipeDrag.ts,logic/tooling,59,content scanned; global static checks apply,,c7dd0140cd3bdabf1d7e18d19c655c51665af702b58378e72baa2911408e3106
+src/lib/useSwipeStep.ts,logic/tooling,33,content scanned; global static checks apply,,e9328e8520f377506c654dfa42eb994dc7f3b3ad6d5716a87bba4838f759df78
+src/lib/useTabScrollToTop.ts,logic/tooling,11,content scanned; global static checks apply,,99e3e076c39fafee00ea35eacf1786dfe9e02b2b6d0dac18590d71be5f717a1e
+src/lib/whatIf.test.ts,test,63,content scanned; existing test inventory,,f07f87ec0b8cb347a58020538fca4fd36ba801b215da44ab8d758d85a7363220
+src/lib/whatIf.ts,logic/tooling,77,content scanned; global static checks apply,,cd91515f8035adaf07d9ef7c23275260f9edc85ccf8fe07d6f45af0ec9cec80f
+src/perf/loadPerf.test.ts,test,192,content scanned; existing test inventory,,bff7cd9e8f1915c248b7f6ebd67ee42ef08b98a2ea4309f24ffbb3f7bc8676ca
+src/perf/outputParity.test.ts,test,130,content scanned; existing test inventory,,fe1a6d2fa126beaf1f42a33295ba9de7306513184ad0e4d94814180791392763
+src/perf/seedLedger.ts,logic/tooling,183,content scanned; global static checks apply,,859055597f1a62d493519602bf0cdebb23598aca593df3cd11dad28d94b84b04
+src/screens/screens.smoke.test.tsx,test,708,content scanned; existing test inventory,,c266a26bf0b91f1cf30886474b4fec3abe0cef506d5df38575e981e086b5658b
+src/test-support/realDataTestDb.ts,logic/tooling,51,content scanned; global static checks apply,,e5168e9320ace4fd772e11368ea8316e2ea8d9b1baee8017dfcde48e900631a3
+src/test-support/reanimatedMock.ts,logic/tooling,74,content scanned; global static checks apply,,a6bb3ea99021b04ddfbde2b839f9da478c1a877cea7ec1960657e46d1f3d54ca
+src/theme/AccentContext.tsx,presentation,93,content scanned; global static checks apply,,b6255909093da009f4ec152223ffd1078aae4c951a3ea9fe62644af880a6f5c8
+src/theme/PrivacyContext.tsx,presentation,78,content scanned; global static checks apply,,efef08be05b510d25394e100fddcbad4b27473bfe3225970502ebb8d2e1d0343
+src/theme/settingsRestored.test.tsx,test,55,content scanned; existing test inventory,,19961e3411290132a49f5e33033c5411f385b99ef4237f5d4b1a1733c3c78f09
+src/theme/themes.test.ts,test,68,content scanned; existing test inventory,,fd6da460f01b9f5e692294aa39e660fc44e1d6170968cec15bcb4dcf1aa6e632
+src/theme/themes.ts,logic/tooling,150,content scanned; global static checks apply,,f327e2a0f9a852d6f7d2a2a6c99df2d77131f087e797d07060ff6900f8736d7e
+src/types/index.ts,logic/tooling,202,content scanned; global static checks apply,,6d7fd5213967baa62bc74db49df724d64e104501f2a1e44f888d5cdd23a53812
+src/widgets/AccountsWidget.tsx,presentation,82,content scanned; global static checks apply,small text: check label versus decorative badge/chart,8778f019a4a11f9d09773c53c8ed764075b654e38c699c6021019ea48ff419a7
+src/widgets/NextDueWidget.tsx,presentation,82,content scanned; global static checks apply,,2e9f057523c0d7ada9e4c0660b3454dda5b90a19dda12a914ee7d5404eaa8556
+src/widgets/QuickAddWidget.tsx,presentation,135,content scanned; global static checks apply,small text: check label versus decorative badge/chart,9bf3f2b0f65d6ba57ccdc4a879fe397fec027b0f9e316cb2c2bdcaed5b26a746
+src/widgets/SuuWidget.tsx,presentation,73,content scanned; global static checks apply,,be01b55254ec4a7283f77fb70b2eb47c8bf3f5441e814c87d04ddd69e0f112ab
+src/widgets/ThisMonthWidget.tsx,presentation,187,content scanned; global static checks apply,small text: check label versus decorative badge/chart,1253f46e0b11d4602c0ff5f099f0dae9ae88fbeb964f60c823b357621a4a565d
+src/widgets/WidgetShell.tsx,presentation,115,content scanned; global static checks apply,small text: check label versus decorative badge/chart,d1f76befb4d3c5e4be357af3bd336dc4f86790031be6b87a91b7871ca3f60657
+src/widgets/accountsWidgetData.test.ts,test,50,content scanned; existing test inventory,,bb3df77e57d4b66875775d99d65247e84cd12a5233442bb89ba41ba447ab2232
+src/widgets/data.ts,logic/tooling,332,content scanned; global static checks apply,,72791116cbdb253510d2a1f153345f8ab62741a4ef2021aa894ecb2144dee5a3
+src/widgets/notifyWidgets.ts,logic/tooling,17,content scanned; global static checks apply,,00c16737efa76f2b4a502b6013f571541e68b0b98f25aa877c7838ce534381a0
+src/widgets/registry.tsx,presentation,60,content scanned; global static checks apply,,0d657b483ff895a29286b827e14c7967dfe36050b85f7357f7a3b358af4cf1a0
+src/widgets/ringSvg.ts,logic/tooling,37,content scanned; global static checks apply,,0f4d01adeba9c4fba6c853f0a81081f1fc56ec4184115db152ad35df560fd5b2
+src/widgets/thisMonthWidgetData.test.ts,test,196,content scanned; existing test inventory,,6ab6f6b39966bdcbefbf046c77274d8005ee731945306ec1ccfb1805bd32358a
+src/widgets/widgetPrivacy.test.tsx,test,41,content scanned; existing test inventory,,c38fd783826ed1354f8764732edb56d3ae4bc1f4b4588eee3dbb8cf05ab22203
+src/widgets/widgetTaskHandler.ts,logic/tooling,21,content scanned; global static checks apply,,5da2830bdfbd45b23e69c9eb5c52ae0addc85ea8351b74413ea964e318bf3691
+src/widgets/widgetTheme.ts,logic/tooling,62,content scanned; global static checks apply,,512f443ea4af4549c06dcec25cc7fc7908dc14ef812f170f2404384bfc33d92d
+src/widgets/widgets.test.ts,test,202,content scanned; existing test inventory,,9f9494cb6eb4a778192f418877d8f83fc1f34c507e64c0ae1fd25ca10a2e0972
+tsconfig.json,logic/tooling,15,content scanned; global static checks apply,,e4bcbe4c55137330a26ef1ca078f3bbce67484ffa43584220f523e3979f1935e
+vendor/decode-uri-component/README.md,documentation/other,14,content scanned; reference/context,,5d8afbffae8bf65a980b0dae77072b59627ca3d24329adfb7b2160d1a80c8870
+vendor/decode-uri-component/index.js,logic/tooling,172,content scanned; global static checks apply,,684ba79779327ba789733a3a563050370a928a57eb7dd33d19b346f43b32cbb7
+vendor/decode-uri-component/license,documentation/other,9,content scanned; reference/context,,ed7a9a0f74e43951b2520efe1a4349cb9ed5f3dff0b0f268e2e51a4d38df7ea4
+vendor/decode-uri-component/package.json,logic/tooling,6,content scanned; global static checks apply,,cf697b7e52fbd72e9b68007e7effb8e165907c9626d3edf55e79c5cb81d1c631

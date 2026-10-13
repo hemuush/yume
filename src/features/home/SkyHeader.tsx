@@ -31,17 +31,7 @@ const BAR_PAD = 6;
 /** The title steps down from 22 to 17 as the header collapses. */
 const TITLE_SCALE = 17 / 22;
 
-/**
- * The header every screen shares (the "quiet bar"): a 22px title row (back button, title, actions, profile), an
- * optional line under it, and anything passed as children (a period control, a search box), on the page colour
- * with a faint theme wash (SkyBackdrop), so it never looks like a separate strip.
- *
- * Given `collapse` (useCollapsingHeader) it sits over the screen's list and shrinks as the list scrolls, 1:1
- * with the finger: the band slides up under the title row, which stays put; the title steps down to 17; the
- * line and children fade and lift; the wash fades and a solid bar takes over. `summary` (the screen's
- * key figure) writes itself in beside the title as the line leaves, and `collapsedAccessory` (Activity's
- * period chip) appears in the row. Without `collapse` it is a plain header in the page's flow (Add).
- */
+/** Shared title/actions header. Optional collapse pins the title and reveals the summary/accessory. */
 export function SkyHeader({
   title,
   subtitle,
