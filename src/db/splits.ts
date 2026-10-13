@@ -1,3 +1,4 @@
+import { rebuildNotificationsAfterCommit } from './afterCommit';
 import { getDb } from './client';
 import { MIN_SPLIT_PARTS, MAX_SPLIT_PARTS } from '@/lib/splitLimits';
 import { newId } from '@/lib/id';
@@ -110,6 +111,7 @@ export async function deleteSplit(splitId: string): Promise<RowSnapshot[]> {
     await tx.runAsync('DELETE FROM transactions WHERE split_id = ?', [splitId]);
     for (const s of snapshots) await keepDeletedEntry(tx, s);
   });
+  await rebuildNotificationsAfterCommit();
   return snapshots;
 }
 
@@ -120,4 +122,5 @@ export async function restoreSplit(snapshots: RowSnapshot[]): Promise<void> {
     await restoreRows(tx, snapshots);
     for (const s of snapshots) await forgetDeletedEntry(tx, String(s.row.id));
   });
+  await rebuildNotificationsAfterCommit();
 }

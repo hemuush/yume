@@ -31,7 +31,8 @@ export async function listLoansDue(): Promise<PlanLoan[]> {
 export async function hasLoggedOn(dateIso: string): Promise<boolean> {
   const db = await getDb();
   const row = await db.getFirstAsync<{ n: number }>(
-    `SELECT COUNT(*) AS n FROM transactions WHERE date = ? AND loan_payment_id IS NULL AND loan_id IS NULL`,
+    `SELECT COUNT(*) AS n FROM transactions t WHERE t.date = ? AND t.loan_payment_id IS NULL AND t.loan_id IS NULL
+       AND NOT EXISTS (SELECT 1 FROM loan_payments p WHERE p.transaction_id = t.id)`,
     [dateIso]
   );
   return (row?.n ?? 0) > 0;

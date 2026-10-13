@@ -1,3 +1,4 @@
+import { rebuildNotificationsAfterCommit } from './afterCommit';
 import { found } from './found';
 import { TransactionRow } from './rows';
 import { getDb, AppDb, SqlParam } from './client';
@@ -552,6 +553,7 @@ export async function updateTransaction(id: string, input: UpdateTransactionInpu
     );
   });
   const row = await db.getFirstAsync<TransactionRow>('SELECT * FROM transactions WHERE id = ?', [id]);
+  await rebuildNotificationsAfterCommit();
   return rowToTransaction(found(row, 'entry'));
 }
 
@@ -647,6 +649,7 @@ export async function deleteTransaction(
     if (keep) await keepDeletedEntry(tx, captured);
     snapshot = captured;
   });
+  await rebuildNotificationsAfterCommit();
   return snapshot as unknown as RowSnapshot;
 }
 
@@ -657,4 +660,5 @@ export async function restoreTransaction(snapshot: RowSnapshot): Promise<void> {
     await restoreRow(tx, snapshot);
     await forgetDeletedEntry(tx, String(snapshot.row.id));
   });
+  await rebuildNotificationsAfterCommit();
 }

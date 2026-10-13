@@ -1,3 +1,4 @@
+import { rebuildNotificationsAfterCommit } from './afterCommit';
 import { getDb, AppDb } from './client';
 import { restoreRow, RowSnapshot } from './undoSnapshot';
 import type { TransactionRow } from './rows';
@@ -162,6 +163,7 @@ export async function restoreDeletedEntry(id: string, now: Date = new Date()): P
       await tx.runAsync('DELETE FROM deleted_entries WHERE id = ?', [entry.id]);
     }
   });
+  await rebuildNotificationsAfterCommit();
 }
 
 /** Empties the list for good. */

@@ -1,5 +1,7 @@
 # Production release audit
 
+Current source and validation: see the [release follow-up audit](RELEASE_FOLLOWUP_AUDIT.md). This document retains the preceding audit record.
+
 Recorded 13 October 2026. Source baseline: `4dff801ff2ddc88aa5745c458e60d4b547b15154`, plus the release fixes described below. This is release-candidate evidence, not a claim that every phone has been tested.
 
 ## Decision
@@ -64,3 +66,7 @@ Local ignored evidence: `.expo/audit-build9.apk`, `.expo/apk-release-inspection.
 7. Complete distribution-specific privacy/data-safety, financial-feature declarations, listing/contact and content-rating requirements in the release console. No store metadata or public privacy policy was verified in this audit.
 
 No Android SDK/adb or attached phone was available here. Desktop timing, export and tests do not prove these native/device gates. Freeze feature work after acceptance, retain the signing key and backup compatibility, and handle subsequent fixes as versioned maintenance.
+
+## Subsequent notification follow-up
+
+This earlier validation record is superseded for current-source sign-off by [release follow-up audit](RELEASE_FOLLOWUP_AUDIT.md). Build 10 completed and its permission/provider packaging and certificate continuity were inspected, but it predates the new notification fixes. The owner reported missing reminders; handset delivery remains unconfirmed. See the [manual acceptance checklist](RELEASE_DEVICE_CHECKS.md) and keep production approval open.

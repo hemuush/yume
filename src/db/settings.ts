@@ -95,10 +95,29 @@ const DEFAULT_NOTIFICATION_PREFS: NotificationPrefs = {
 };
 
 function clampPrefTimes(prefs: NotificationPrefs): NotificationPrefs {
-  const morning = clampSlotMinutes('morning', prefs.morningHour * 60 + prefs.morningMinute);
-  const evening = clampSlotMinutes('evening', prefs.eveningHour * 60 + prefs.eveningMinute);
+  // Restored settings are untrusted JSON too. Invalid clock fields must not produce NaN dates,
+  // and strings such as "false" must not silently enable reminders.
+  const valid = { ...prefs };
+  for (const key of [
+    'morningEnabled',
+    'eveningEnabled',
+    'billAlerts',
+    'overspendAlerts',
+    'weeklySummary',
+    'suuCheckins',
+  ] as const) {
+    valid[key] = typeof prefs[key] === 'boolean' ? prefs[key] : DEFAULT_NOTIFICATION_PREFS[key];
+  }
+  for (const key of ['morningHour', 'morningMinute', 'eveningHour', 'eveningMinute'] as const) {
+    const value = prefs[key];
+    const max = key.endsWith('Hour') ? 23 : 59;
+    valid[key] =
+      Number.isInteger(value) && value >= 0 && value <= max ? value : DEFAULT_NOTIFICATION_PREFS[key];
+  }
+  const morning = clampSlotMinutes('morning', valid.morningHour * 60 + valid.morningMinute);
+  const evening = clampSlotMinutes('evening', valid.eveningHour * 60 + valid.eveningMinute);
   return {
-    ...prefs,
+    ...valid,
     morningHour: Math.floor(morning / 60),
     morningMinute: morning % 60,
     eveningHour: Math.floor(evening / 60),
