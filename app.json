@@ -18,7 +18,7 @@
         "backgroundImage": "./assets/android-icon-background.png"
       },
       "predictiveBackGestureEnabled": true,
-      "versionCode": 9,
+      "versionCode": 10,
       "allowBackup": false,
       "permissions": [
         "android.permission.USE_BIOMETRIC",
@@ -27,7 +27,8 @@
       "blockedPermissions": [
         "android.permission.SYSTEM_ALERT_WINDOW",
         "android.permission.READ_EXTERNAL_STORAGE",
-        "android.permission.WRITE_EXTERNAL_STORAGE"
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.READ_MEDIA_IMAGES"
       ]
     },
     "plugins": [
@@ -136,6 +137,7 @@
           ]
         }
       ],
+      "./plugins/withWidgetPrivacy",
       [
         "expo-splash-screen",
         {
