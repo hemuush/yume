@@ -10,6 +10,8 @@ The [root layout](../app/_layout.tsx) initializes application services and provi
 
 [runAppMaintenance](../src/lib/runAppMaintenance.ts) shares overlapping runs, catches up recurring entries before backup and emits transaction-change events when records were added. Recurring failures are logged; the backup step still runs. This is foreground maintenance, not a guaranteed background scheduler.
 
+Screen freshness skips unchanged focus reads for up to five minutes, scoped to data version, calendar day and load dependencies. An expired cache or a clock moving backwards forces a fresh read instead of extending the cache lifetime.
+
 ## Financial contracts
 
 | Area                    | Source                                                                             | Contract                                                                                                                                                               |
@@ -28,6 +30,22 @@ The [root layout](../app/_layout.tsx) initializes application services and provi
 See [data model](../DATA_MODEL.md) for persisted fields. Whole-major-unit entry, local SQLite and plain JSON backup are current product decisions.
 
 ## Screen coverage
+
+Quiet motion keeps Recurring/People rows and category-picker results visible immediately, without entrance fades. List layout/removal feedback remains. Bottom navigation uses a 180ms eased layout transition instead of a spring, with reduced motion still disabling it. Ordinary button/busy labels are static; only successful completion feedback uses the brief existing fade. Suu is static on the lock screen through an optional animation flag; its finite breathing elsewhere and swipe/drag interactions retain their behavior.
+
+Loans list and Profile account groups also appear without mount-time fades. Reports period labels and the moon proportion graphic update directly, and cash-flow bars draw together without stagger. Remembered progress/chart values, month gestures, accordion feedback, loading indicators and undo notices retain their existing behavior.
+
+Profile/settings, category grids, notification lists/settings and backup lists use the same flat supporting surfaces as the financial pages. Profile identity and status summaries retain the current palette with smaller outlines and thinner account-share bars; Safety Check labels wrap and its three actions adapt to available width. Category icons are 44dp with readable wrapping labels and a distinct subcategory panel; parent editing and management remain available. Notification counts grow with text, dismissed actions have 44dp minimum height, and backup status/restore headings wrap. Scheduling, privacy, category relationships and backup/restore data semantics are unchanged.
+
+Detail sheets share compact 24dp amount summaries and plain settings/action groups with hairline dividers rather than nested bordered cards. Goal archive/unarchive/delete and recurring deletion expand under “More options”, preserving the existing guards, confirmations and undo. Transaction quick actions remain directly reachable with 48dp targets. Sheet footer rows wrap; safe-area padding, amount-pad hosting and keyboard-aware scrolling remain intact. Confirmation messages scroll when text exceeds the available space, while their buttons stay pinned in the dialog footer.
+
+Loans, Recurring and Goals use flat cream summary/list surfaces without card shadows. Loan timeline lanes and the recurring 30-day plot expand through labelled 44dp disclosures; recurring date links remain visible and actionable. Loan summary facts and next-payment rows avoid nested panels. Goal cards use a thin identity-coloured progress bar rather than filling the entire card, with smaller percentage figures and plain supporting labels. Privacy, completed/archived states, financial calculations and existing payment, pause, contribution and reservation actions remain unchanged.
+
+Activity uses a flat cream headline and day cards, with stronger amount typography and a matching loading surface. Refunds carry a labelled badge in single/grouped rows and spoken labels; amount masking remains governed by the existing category/account privacy rules. Transaction details keep category-coloured icon/edge accents on a pale mint, coral or blue summary and add factual split/linked-record badges. Quick-action icon discs are smaller, while all actions, pinned footers, grouping and measured-height drag ordering retain their behavior. Add transaction remains outside this refinement.
+
+Home and Plan opt into flat `CardSurface` fills: cream for supporting cards, mint for goals, coral for debt and pale gold for scheduled payments. Forecast shortfalls use the existing expense tint. Stronger summary edges distinguish the main cards without adding shadows or animations. `StatusBadge` labels near/over-budget, completed and due/overdue states using existing conditions and readable semantic text colours. Completion badges are withheld when goal amounts are hidden; payment actions and navigation remain unchanged.
+
+Shared visual refinements keep the palette and financial behavior intact: section-heading gaps are 16dp, field labels use the existing secondary text colour, selected chips have a stable 1dp outline, and long chip labels wrap. Sheet headers/grabbers leave less empty space, with 44dp close buttons and retained safe-area/keyboard handling. Sheet summary amounts wrap rather than shrinking to fit; summary figures use tabular digits. Planning details use the existing localized day/month/year formatter for displayed dates. Add transaction's main layout and usual-entry behavior are unchanged.
 
 | Routes / flows                                           | Review focus                                                                                                                      |
 | -------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
@@ -67,6 +85,8 @@ Goal reservations are independent earmarks in `savings_goals.reserve_account` / 
 
 ## Privacy, restore and platform boundaries
 
+The lock gate renders before authentication and opens the native unlock prompt only after an explicit Unlock tap. Cancellation or native failure leaves the app locked with a manual retry; overlapping taps share the existing single-attempt guard. Device PIN/biometric verification, relock timing and the recovery option for explicitly unsecured devices retain their existing behavior. The lock screen uses the current theme gradient, a smaller mascot and one flat action card.
+
 [App lock](../src/lib/appLock.ts) controls access but does not encrypt SQLite or exported backups. [Widget sources](../src/widgets) use a separate hide-details preference; do not infer widget privacy from the lock setting. Restore preserves this phone's folder grant and backup status, and gives already-set local lock/widget preferences precedence over the snapshot.
 
 [Backup](../src/lib/backup.ts) captures table reads in one exclusive operation. [Safety copy](../src/lib/safetyCopy.ts) captures pre-restore records in the same exclusive section as replacement. Recovery refers to that saved snapshot's contents and date; it is not automatic selection of the newest folder file. See [backup guide](../BACKUP.md).
@@ -86,3 +106,11 @@ Saved yearly expenses expose annual preparation through db/annualBills.ts, linki
 Planning summaries share `components/InsightCard.tsx`: wrapping amount tiles, labelled rows and accessible disclosures with 44dp minimum targets. Refund receipt forms/history and expectation management are expandable; annual preparation separates its monthly estimate from setup/management controls. Purchase checks keep coverage and balance facts visible while schedule details and assumptions expand on request. Reports shows frequency/size/refund effects as rows, with comparison dates and contributing entries in disclosures. Reservations retain their warnings and allocations; only the selected goal-tracking mode shows its explanation. These are presentation changes; financial calculations and persisted records are unchanged.
 
 Purchase Check reloads eligible accounts on focus and invalidates previous estimates when returning, preserving the entered amount/date. Missing accounts offer Profile setup; failed reads offer retry. Everyday-spending exclusions remain visible before checking. Paused annual entries cannot start preparation until resumed, and untracked expenses show only an optional refund action. Reports with no matched-period purchases/refunds shows an empty comparison instead of zero-valued effect rows.
+
+Goals, Loans and Recurring use smaller 30dp summary amounts with tighter label spacing. Goal cards combine the name, progress percentage and remaining amount in a wrapping header. Loan cards combine the next-EMI label, date and amount beside the existing payment action. Recurring rows place the amount beside the pause switch at normal text size, retaining stacked controls on narrow screens or enlarged text. All card heights remain content-driven; contribution, payment, pause and detail actions retain their behavior.
+
+The shared centered-dialog scroll container grows its content area to center short dialogs vertically, retaining scrolling for tall content. CalendarSheet constrains its inner grid to 420dp, uses content-sized day rows with 44dp minimum targets and keeps quick dates, month/year selection and range restrictions.
+
+Reports category detail leads with its labelled total and subcategory breakdown, followed by a flat compact spending-comparison section. Effect rows retain frequency, average-size and refund figures; matching-date and contributing-entry disclosures remain. Category navigation is provided once below the comparison rather than duplicated inside it. Queries, rounding and privacy scope are unchanged.
+
+Loan details uses an unboxed identity/balance summary, compact responsive facts and a separated payoff summary. The balance forecast chart expands on demand while the payoff month and remaining EMI count stay visible. Overview/Schedule tabs, account/asset editing and pinned payment/management actions are preserved.

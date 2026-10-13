@@ -3,6 +3,7 @@ import Feather from '@expo/vector-icons/Feather';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Text } from '@/components/Text';
 import { Glass } from '@/components/Glass';
+import { cardSurface } from '@/components/CardSurface';
 import { theme } from '@/constants/theme';
 import { formatMoney } from '@/lib/money';
 import { usePressScale } from '@/lib/usePressScale';
@@ -44,7 +45,7 @@ export function PlanTile({
       accessibilityLabel={label}
       style={[{ flex: wide ? 1.25 : 1, minWidth: 0 }, animatedStyle]}
     >
-      <Glass radius={22} style={styles.tile}>
+      <Glass radius={22} style={[styles.tile, cardSurface.neutral]}>
         <View style={styles.go}>
           <Feather name="arrow-up-right" size={15} color={theme.colors.textMuted} />
         </View>

@@ -17,6 +17,7 @@ import { SpendBar, ChartLegendItem } from './spendChart';
 import { styles } from './transactions.styles';
 import { DURATIONS } from '@/lib/motionTimings';
 import { Glass } from '@/components/Glass';
+import { cardSurface } from '@/components/CardSurface';
 
 /** How many categories the legend names before "+N more". */
 const LEGEND_MAX = 4;
@@ -105,7 +106,7 @@ export function TransactionsHeadline({
   const net = displayed.incomeMinor - displayed.expenseMinor;
   const change = displayed.expenseChangeMinor;
   return (
-    <Glass radius={28} style={styles.sumCard}>
+    <Glass radius={28} style={[styles.sumCard, cardSurface.summary]}>
       <Text style={styles.sumKicker} numberOfLines={1}>
         {current ? `Spent this ${viewScope}` : 'Spent'}
       </Text>

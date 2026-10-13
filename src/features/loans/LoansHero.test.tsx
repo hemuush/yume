@@ -74,7 +74,7 @@ describe('LoansHero', () => {
     expect(shown).not.toContain('You owe');
   });
 
-  it('draws the road to debt-free: a line per loan ending the month it finishes', () => {
+  it('keeps the payoff timeline behind a disclosure and reveals every loan on demand', () => {
     let tree!: ReactTestRenderer;
     act(() => {
       tree = create(
@@ -93,10 +93,18 @@ describe('LoansHero', () => {
         />
       );
     });
+    expect(texts(tree)).not.toContain('Car loan');
+    const disclosure = tree.root.findAll(
+      (n) => n.props.accessibilityLabel === 'Payoff timeline' && typeof n.props.onPress === 'function'
+    )[0];
+    expect(disclosure.props.accessibilityState.expanded).toBe(false);
+    act(() => disclosure.props.onPress());
     const shown = texts(tree);
     expect(shown).toEqual(
       expect.arrayContaining(['Car loan', 'Jun 2028', 'Home loan', 'Now', '2035', 'Debt-free 2045'])
     );
+    act(() => disclosure.props.onPress());
+    expect(texts(tree)).not.toContain('Car loan');
   });
 
   it('keeps the split bar when a loan you owe on has no end date to put on the timeline', () => {

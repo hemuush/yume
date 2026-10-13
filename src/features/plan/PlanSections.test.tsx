@@ -15,6 +15,7 @@ import { BudgetJars } from './BudgetJars';
 import { DebtPath } from './DebtPath';
 import { GoalsStrip } from './PlanGoals';
 import { RunwayCard } from './RunwayCard';
+import { ComingUpSection } from './ComingUpSection';
 import { buildBudgetsSummary, buildLoansSummary } from './planOverview';
 import { buildRunway } from './runway';
 import type { SavingsGoal } from '@/types';
@@ -30,6 +31,45 @@ const texts = (tree: ReactTestRenderer) =>
   tree.root.findAllByType(Text).map((t) => [].concat(t.props.children).join(''));
 
 const dueSoon = { totalMinor: 0, emiMinor: 0, billMinor: 0, count: 0, untilDate: '2026-10-22' };
+
+it.each([
+  ['2026-10-08', 'Overdue'],
+  ['2026-10-09', 'Due today'],
+  ['2026-10-10', 'Due soon'],
+])('labels payment status for %s while retaining Pay', (date, label) => {
+  const pay = jest.fn(),
+    open = jest.fn(),
+    stopPropagation = jest.fn();
+  const item = {
+    key: 'emi',
+    title: 'Home loan',
+    kind: 'emi' as const,
+    dueDate: date,
+    amountMinor: 10000,
+    route: '/loans' as const,
+    loanId: 'loan',
+  };
+  const tree = render(
+    <ComingUpSection
+      groups={[{ date, outMinor: 10000, items: [item] }]}
+      today="2026-10-09"
+      onOpen={open}
+      onPay={pay}
+    />
+  );
+  expect(texts(tree)).toContain(label);
+  act(() =>
+    tree.root
+      .findAll(
+        (n) => n.props.accessibilityLabel === 'Pay Home loan EMI' && typeof n.props.onPress === 'function'
+      )[0]
+      .props.onPress({ stopPropagation })
+  );
+  expect(stopPropagation).toHaveBeenCalledTimes(1);
+  expect(pay).toHaveBeenCalledWith('loan');
+  expect(open).not.toHaveBeenCalled();
+  act(() => tree.unmount());
+});
 
 describe('Plan sections with nothing in them yet', () => {
   it('shows only the debt summary and opens Loans without selecting a loan detail', () => {
@@ -163,6 +203,30 @@ describe('Goals with amounts hidden', () => {
       ).toBeGreaterThan(0);
     } finally {
       mockHide = false;
+    }
+  });
+  it('labels completed goals, preserves their action and hides completion under privacy', () => {
+    mockHide = false;
+    const open = jest.fn();
+    const completed = { ...goal, currentAmountMinor: goal.targetAmountMinor };
+    const tree = render(<GoalsStrip goals={[completed]} savingsAccounts={[]} onOpen={open} />);
+    expect(texts(tree)).toContain('Completed');
+    act(() =>
+      tree.root
+        .findAll(
+          (n) =>
+            n.props.accessibilityRole === 'button' && String(n.props.accessibilityLabel).includes('reached')
+        )[0]
+        .props.onPress()
+    );
+    expect(open).toHaveBeenCalledTimes(1);
+    mockHide = true;
+    try {
+      act(() => tree.update(<GoalsStrip goals={[completed]} savingsAccounts={[]} onOpen={open} />));
+      expect(texts(tree)).not.toContain('Completed');
+    } finally {
+      mockHide = false;
+      act(() => tree.unmount());
     }
   });
 });

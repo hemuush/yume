@@ -26,12 +26,14 @@ export function useFreshness() {
     () => ({
       isFresh(deps: readonly unknown[]): boolean {
         const l = last.current;
+        const age = l ? Date.now() - l.at : NaN;
         return (
           isDataVersionTracked() &&
           l !== null &&
           l.version === getDataVersion() &&
           l.day === toLocalIsoDate(new Date()) &&
-          Date.now() - l.at < FRESH_FOR_MS &&
+          age >= 0 &&
+          age < FRESH_FOR_MS &&
           l.deps.length === deps.length &&
           l.deps.every((d, i) => Object.is(d, deps[i]))
         );

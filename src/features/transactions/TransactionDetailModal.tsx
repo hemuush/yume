@@ -18,6 +18,8 @@ import { PrimaryButton } from '@/components/PrimaryButton';
 import { Amount } from '@/components/Amount';
 import { ModalSheet } from '@/components/ModalSheet';
 import { SheetCard } from '@/components/SheetCard';
+import { cardSurface } from '@/components/CardSurface';
+import { StatusBadge } from '@/components/StatusBadge';
 import { SettingsRow } from '@/components/SettingsRow';
 import { theme } from '@/constants/theme';
 import { screenStyles as h } from '@/components/screenStyles';
@@ -389,6 +391,13 @@ export function TransactionDetailModal({
       }
     >
       <SheetCard
+        style={
+          tx.type === 'income'
+            ? cardSurface.savings
+            : transfer
+              ? { backgroundColor: theme.colors.primaryTint }
+              : cardSurface.debt
+        }
         hue={transfer ? secondary : (cat?.color ?? theme.colors.textMuted)}
         icon={transfer ? 'swap-horizontal' : (cat?.icon ?? 'tag')}
         kicker={transfer || !parentName ? kind : `${kind} · ${parentName}`}
@@ -408,6 +417,21 @@ export function TransactionDetailModal({
         title={route ?? cat?.name ?? kind}
         meta={route ? weekdayDayMonth(tx.date) : `${weekdayDayMonth(tx.date)} · ${accountName(tx.accountId)}`}
       />
+
+      {(tx.splitId ||
+        link?.kind === 'loan' ||
+        link?.kind === 'person' ||
+        link?.kind === 'refund-expected' ||
+        link?.kind === 'refund-received') && (
+        <View style={styles.entryBadges}>
+          {tx.splitId && <StatusBadge label="Split payment" />}
+          {link?.kind === 'loan' && <StatusBadge label="Loan payment" />}
+          {link?.kind === 'person' && <StatusBadge label="Linked to person" />}
+          {(link?.kind === 'refund-expected' || link?.kind === 'refund-received') && (
+            <StatusBadge label="Refund tracking" />
+          )}
+        </View>
+      )}
 
       {tx.type === 'expense' && (link === null || link?.kind === 'refund-expected') && (
         <RefundTracker transaction={tx} accounts={accounts} onChanged={onChanged} />

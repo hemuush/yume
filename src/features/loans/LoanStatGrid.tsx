@@ -30,7 +30,7 @@ export function LoanStatGrid({ stats }: { stats: LoanStat[] }) {
 }
 
 const styles = StyleSheet.create({
-  grid: { flexDirection: 'row', flexWrap: 'wrap', padding: 14, rowGap: 14 },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 0, paddingVertical: 10, rowGap: 10 },
   cell: { width: '50%', paddingRight: 8 },
   cellStacked: { width: '100%' },
   label: { fontFamily: theme.font.bodyMedium, fontSize: 11, color: theme.colors.textMuted },

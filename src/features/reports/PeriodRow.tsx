@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { View, Pressable, StyleProp, ViewStyle } from 'react-native';
-import { Text, MAX_FONT_SCALE } from '@/components/Text';
+import { Text } from '@/components/Text';
 import { ActionSheet } from '@/components/ActionSheet';
-import ReanimatedAnimated, { FadeIn, ReduceMotion } from 'react-native-reanimated';
 import Feather from '@expo/vector-icons/Feather';
 import { ReportWindow, windowLabel, windowRange, stepWindow, canStepWindowForward } from '@/lib/period';
 import { theme } from '@/constants/theme';
@@ -10,7 +9,6 @@ import { useSwipeStep } from '@/lib/useSwipeStep';
 import { haptics } from '@/lib/haptics';
 import { styles } from './reports.styles';
 import { RangeSheet } from './RangeSheet';
-import { DURATIONS } from '@/lib/motionTimings';
 import { withPressed } from '@/lib/pressed';
 
 const GRANULARITIES = [
@@ -81,15 +79,9 @@ export function PeriodRow({
         >
           <Feather name="chevron-left" size={18} color={theme.colors.ink} />
         </Pressable>
-        <ReanimatedAnimated.Text
-          maxFontSizeMultiplier={MAX_FONT_SCALE}
-          key={windowLabel(cursor)}
-          entering={FadeIn.duration(DURATIONS.quick).reduceMotion(ReduceMotion.System)}
-          numberOfLines={2}
-          style={styles.periodLabel}
-        >
+        <Text numberOfLines={2} style={styles.periodLabel}>
           {windowLabel(cursor)}
-        </ReanimatedAnimated.Text>
+        </Text>
         <Pressable
           onPress={() => change(stepWindow(cursor, 1))}
           disabled={!fwd}

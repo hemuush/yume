@@ -25,7 +25,8 @@ import { Section } from '@/components/Section';
 import { screenStyles as h } from '@/components/screenStyles';
 import { NeedsYouRow } from '@/features/home/NeedsYouRow';
 import { NEEDS_TONE } from '@/features/home/needsTone';
-import { Glass, GLASS, GLASS_CARD } from '@/components/Glass';
+import { Glass } from '@/components/Glass';
+import { cardSurface } from '@/components/CardSurface';
 import { Kicker, frost } from '@/components/Frost';
 import { HomeWallpaper } from '@/features/home/HomeWallpaper';
 import { SuuIllustration } from '@/components/SuuIllustration';
@@ -186,7 +187,11 @@ export default function NeedsYouScreen() {
           />
         ) : (
           <>
-            <Glass radius={28} tone="strong" style={frost.hero}>
+            <Glass
+              radius={22}
+              tone="strong"
+              style={[frost.hero, cardSurface.summary, { padding: 14, gap: 8 }]}
+            >
               <Kicker icon="bell">Needs you</Kicker>
               <View style={frost.bigRow}>
                 <Text style={frost.bigValue}>{shown.length}</Text>
@@ -206,7 +211,7 @@ export default function NeedsYouScreen() {
                 })}
               </View>
             </Glass>
-            <View style={[h.card, GLASS_CARD, styles.list]}>
+            <View style={[h.card, cardSurface.neutral, styles.list]}>
               {shown.map((item, i) => (
                 <NeedsYouRow
                   key={item.key}
@@ -251,7 +256,7 @@ export default function NeedsYouScreen() {
               </Text>
             </Pressable>
             {showDismissed && (
-              <View style={[h.card, GLASS_CARD, styles.dismissedList]}>
+              <View style={[h.card, cardSurface.neutral, styles.dismissedList]}>
                 {dismissed.map((item, i) => (
                   <NeedsYouRow
                     key={item.key}
@@ -314,12 +319,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    height: 28,
+    minHeight: 28,
     paddingHorizontal: 11,
     borderRadius: theme.radius.pill,
-    backgroundColor: GLASS.fillStrong,
+    backgroundColor: theme.colors.surface,
     borderWidth: 1,
-    borderColor: GLASS.edge,
+    borderColor: theme.colors.borderSoft,
   },
   toneDot: { width: 8, height: 8, borderRadius: 4 },
   toneText: { fontFamily: theme.font.bodyBold, fontSize: 12.5, color: theme.colors.textPrimary },
@@ -333,10 +338,10 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 20,
     borderTopLeftRadius: 4,
-    backgroundColor: GLASS.fillStrong,
+    backgroundColor: theme.colors.surface,
     borderWidth: 1,
-    borderColor: GLASS.edge,
-    boxShadow: GLASS.shadow,
+    borderColor: theme.colors.borderSoft,
+    boxShadow: 'none',
   },
   suuText: {
     fontFamily: theme.font.body,
@@ -345,14 +350,16 @@ const styles = StyleSheet.create({
     color: theme.colors.textSecondary,
   },
   dismissedToggle: {
+    minHeight: 44,
+    justifyContent: 'center',
     alignSelf: 'center',
     marginTop: 20,
     paddingHorizontal: 16,
     paddingVertical: 9,
     borderRadius: theme.radius.pill,
-    backgroundColor: GLASS.fill,
+    backgroundColor: theme.colors.surface,
     borderWidth: 1,
-    borderColor: GLASS.edge,
+    borderColor: theme.colors.borderSoft,
   },
   dismissedToggleText: {
     fontFamily: theme.font.bodyMedium,

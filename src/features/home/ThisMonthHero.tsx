@@ -16,6 +16,7 @@ import { haptics } from '@/lib/haptics';
 import { MOTION, timing } from '@/lib/animation';
 import { CountUpAmount } from '@/components/CountUpAmount';
 import { Glass } from '@/components/Glass';
+import { cardSurface } from '@/components/CardSurface';
 import { usePrivacy } from '@/theme/PrivacyContext';
 import { heroSlices, heroPct, heroShare, withoutSavings } from './heroSlices';
 import { styles } from './hero.styles';
@@ -291,7 +292,7 @@ export function ThisMonthHero({
   const todayOverMinor = shownToday ? shownToday.spentMinor - shownToday.goalMinor : 0;
 
   return (
-    <Glass radius={28} style={styles.card}>
+    <Glass radius={28} style={[styles.card, cardSurface.summary]}>
       <View style={styles.bar}>
         <Text style={styles.headLabel}>{headLabel}</Text>
         {renderPeriod ? renderPeriod(displayed.periodKey) : period}

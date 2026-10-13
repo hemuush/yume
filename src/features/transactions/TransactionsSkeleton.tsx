@@ -1,7 +1,6 @@
 import { View, StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
 import { Skeleton } from '@/components/Skeleton';
-import { GLASS } from '@/components/Glass';
 
 const BAR_HEIGHTS = [14, 28, 10, 38, 22, 32, 18];
 
@@ -48,9 +47,9 @@ const styles = StyleSheet.create({
   wrap: { paddingHorizontal: 20, paddingTop: 6 },
   sumCard: {
     padding: 16,
-    backgroundColor: GLASS.fill,
+    backgroundColor: theme.colors.surface,
     borderWidth: 1,
-    borderColor: GLASS.edge,
+    borderColor: theme.colors.inkHairline,
     borderRadius: 28,
   },
   barRow: {
@@ -63,9 +62,9 @@ const styles = StyleSheet.create({
   dayGroup: { marginTop: 26 },
   dayCard: {
     marginTop: 10,
-    backgroundColor: GLASS.fill,
+    backgroundColor: theme.colors.surface,
     borderWidth: 1,
-    borderColor: GLASS.edge,
+    borderColor: theme.colors.borderSoft,
     borderRadius: 24,
     overflow: 'hidden',
   },

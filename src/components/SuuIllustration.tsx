@@ -15,13 +15,15 @@ import { useReduceMotion } from '@/lib/useReduceMotion';
 interface Props {
   size?: number;
   pose?: 'default' | 'peek' | 'sleepy';
+  /** Static where idle movement would distract from the main action. */
+  animate?: boolean;
 }
 
 // Suu is the logo itself (the app icon's ring asset, no face); personality comes from the one dot, in the
 // theme pack's colour (see `AccentContext`): centered at rest, shrunk/dimmed/drifted down for 'sleepy'.
 const BREATH_REPEATS = 6;
 
-export function SuuIllustration({ size = 90, pose = 'default' }: Props) {
+export function SuuIllustration({ size = 90, pose = 'default', animate = true }: Props) {
   const { dot } = useAccent();
   const sleepy = pose === 'sleepy';
   const dotSize = size * (sleepy ? 0.24 : 0.33);
@@ -34,7 +36,7 @@ export function SuuIllustration({ size = 90, pose = 'default' }: Props) {
   const dotOpacity = useSharedValue(dotRestOpacity);
 
   useEffect(() => {
-    if (reduce) {
+    if (reduce || !animate) {
       scale.value = 1;
       dotOpacity.value = dotRestOpacity;
       return;
@@ -51,7 +53,7 @@ export function SuuIllustration({ size = 90, pose = 'default' }: Props) {
       cancelAnimation(scale);
       cancelAnimation(dotOpacity);
     };
-  }, [reduce, dotRestOpacity, scale, dotOpacity]);
+  }, [reduce, animate, dotRestOpacity, scale, dotOpacity]);
 
   const ringStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
   const dotStyle = useAnimatedStyle(() => ({ opacity: dotOpacity.value }));

@@ -2,7 +2,6 @@ import { StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
 import { EYEBROW } from '@/constants/textStyles';
 import { SCREEN } from '@/components/screenStyles';
-import { GLASS } from '@/components/Glass';
 
 // Shared by Profile (shell, YouSection, SettingsSection) and the account modals. Cards, rows and headings
 // come from Home's visual system (screenStyles, Section); these are only what Profile adds.
@@ -99,7 +98,11 @@ export const styles = StyleSheet.create({
   groupLabel: { ...EYEBROW },
   groupTotal: { fontFamily: theme.font.monoBold, fontSize: 12, color: theme.colors.textSecondary },
   archivedCard: { marginTop: 10 },
-  archivedIcon: { backgroundColor: GLASS.fillStrong, borderWidth: 1, borderColor: GLASS.edge },
+  archivedIcon: {
+    backgroundColor: theme.colors.surfaceAlt,
+    borderWidth: 1,
+    borderColor: theme.colors.borderSoft,
+  },
   archivedDim: { opacity: 0.6 },
   planLink: {
     flexDirection: 'row',
@@ -107,11 +110,11 @@ export const styles = StyleSheet.create({
     gap: 12,
     marginHorizontal: SCREEN.gutter,
     marginTop: 14,
-    backgroundColor: GLASS.fill,
+    backgroundColor: theme.colors.surface,
     borderWidth: 1,
-    borderColor: GLASS.edge,
+    borderColor: theme.colors.borderSoft,
     borderRadius: 20,
-    boxShadow: GLASS.shadow,
+    boxShadow: 'none',
     paddingHorizontal: 14,
     paddingVertical: 12,
   },

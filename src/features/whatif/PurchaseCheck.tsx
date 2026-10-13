@@ -14,6 +14,7 @@ import { useSaveOnce } from '@/lib/useSaveOnce';
 import { errorMessage } from '@/lib/errorMessage';
 import { toMinor, formatMaskableMoney } from '@/lib/money';
 import { toLocalIsoDate, addDaysToIsoDate } from '@/lib/date';
+import { dayMonthYear } from '@/lib/dateLabels';
 import { usePrivacy } from '@/theme/PrivacyContext';
 import { styles } from './whatif.styles';
 import { theme } from '@/constants/theme';
@@ -174,7 +175,7 @@ export function PurchaseCheck() {
                 <InsightRow label="Kept for your goals" value={money(result.reservedMinor)} />
               )}
               <Text style={insight.caption}>
-                Checked through {result.through}. Expected refunds aren't counted.
+                Checked through {dayMonthYear(result.through)}. Expected refunds aren't counted.
               </Text>
               {result.incompleteSchedule && (
                 <Text style={styles.errorDetail}>
@@ -183,8 +184,8 @@ export function PurchaseCheck() {
               )}
               <InsightDisclosure title="How this estimate works">
                 <Text style={insight.caption}>
-                  Lowest balance on {hideAmounts ? '••••' : result.lowestDate}. Same-day debits are checked
-                  before income.
+                  Lowest balance on {hideAmounts ? '••••' : dayMonthYear(result.lowestDate)}. Same-day debits
+                  are checked before income.
                 </Text>
                 <Text style={insight.caption}>
                   Estimate only. Excludes unrecorded everyday spending, expected refunds, and credit-card
@@ -203,7 +204,12 @@ export function PurchaseCheck() {
                 {result.movements
                   .filter((m) => !m.isPurchase)
                   .map((m, i) => (
-                    <InsightRow key={i} label={m.label} detail={m.date} value={money(m.deltaMinor)} />
+                    <InsightRow
+                      key={i}
+                      label={m.label}
+                      detail={dayMonthYear(m.date)}
+                      value={money(m.deltaMinor)}
+                    />
                   ))}
                 {!result.movements.some((m) => !m.isPurchase) && (
                   <Text style={insight.caption}>No scheduled account movements in this window.</Text>

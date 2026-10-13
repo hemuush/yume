@@ -34,6 +34,8 @@ Reports retain previous evidence in an expandable historical section. Their date
 
 See the [latest cleanup record](CLEANUP.md) for removal decisions and validation.
 
+See the [13 October app-wide audit](FINAL_UI_AUDIT.md) for the reviewed UI/logic changes, SDK compatibility fixes, validation results and remaining device checks. Its results apply to that recorded working tree.
+
 ## Maintaining documentation
 
 - Verify names, commands, source links and behavior against code before describing them.

@@ -80,11 +80,7 @@ export function PrimaryButton({
       hitSlop={compact ? HIT_SLOP_COMPACT : HIT_SLOP}
       {...rest}
     >
-      {/* `key` forces a remount on the label/done swap so `entering` — which
-          only plays once, on mount — replays every time instead of just the
-          first. There's no matching `exiting`: the old text disappears the
-          instant the new one mounts, which reads fine since it's masked by
-          the concurrent press-scale settle. */}
+      {/* Only success feedback fades in. Ordinary labels and busy states stay static. */}
       {icon && !done && (
         <Feather
           name={icon}
@@ -95,7 +91,7 @@ export function PrimaryButton({
       <ReanimatedAnimated.Text
         maxFontSizeMultiplier={MAX_FONT_SCALE}
         key={done ? 'done' : 'label'}
-        entering={reduceMotion ? undefined : FadeIn.duration(DURATIONS.quick)}
+        entering={done && !reduceMotion ? FadeIn.duration(DURATIONS.quick) : undefined}
         style={[styles.text, compact && styles.textCompact, textStyle]}
       >
         {done ? `✓ ${doneLabel}` : title}

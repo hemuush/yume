@@ -22,7 +22,7 @@ import { PrimaryButton } from '@/components/PrimaryButton';
 import { listScreenStyles } from '@/features/shared/listScreenStyles';
 import { useAccent } from '@/theme/AccentContext';
 import { shade } from '@/lib/color';
-import { GLASS_CARD } from '@/components/Glass';
+import { cardSurface } from '@/components/CardSurface';
 import { HomeWallpaper } from '@/features/home/HomeWallpaper';
 import { DayArc } from '@/features/notifications/DayArc';
 
@@ -153,7 +153,7 @@ export default function NotificationSettingsScreen() {
         />
         {/* The same grouped rows as Profile's settings: a section title, one glass card, hairlines between rows. */}
         <Section title="Times">
-          <View style={[h.card, GLASS_CARD]}>
+          <View style={[h.card, cardSurface.neutral]}>
             <SettingsRow
               icon="white-balance-sunny"
               iconBg={theme.colors.goldTint}
@@ -198,7 +198,7 @@ export default function NotificationSettingsScreen() {
         </Section>
 
         <Section title="Yume can mention">
-          <View style={[h.card, GLASS_CARD]}>
+          <View style={[h.card, cardSurface.neutral]}>
             <SettingsRow
               icon="credit-card-outline"
               iconBg={theme.colors.idGold}
@@ -233,7 +233,7 @@ export default function NotificationSettingsScreen() {
         </Section>
 
         <Section title="In the app">
-          <View style={[h.card, GLASS_CARD]}>
+          <View style={[h.card, cardSurface.neutral]}>
             <SettingsRow
               icon="weather-night"
               iconBg={shade(secondary, 94)}

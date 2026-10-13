@@ -4,6 +4,7 @@ import Svg, { Path, Line, Defs, LinearGradient, Stop } from 'react-native-svg';
 import Feather from '@expo/vector-icons/Feather';
 import { Text } from '@/components/Text';
 import { Glass } from '@/components/Glass';
+import { cardSurface } from '@/components/CardSurface';
 import { theme } from '@/constants/theme';
 import { formatMoney } from '@/lib/money';
 import { haptics } from '@/lib/haptics';
@@ -85,7 +86,17 @@ export function RunwayCard({
 
   return (
     <View>
-      <Glass radius={28} tone="strong" style={[styles.card, styles.cardFirst]}>
+      <Glass
+        radius={28}
+        tone="strong"
+        style={[
+          styles.card,
+          styles.cardFirst,
+          cardSurface.summary,
+          !none && cardSurface.payments,
+          runway.short && cardSurface.warning,
+        ]}
+      >
         <View style={styles.head}>
           <Kicker icon="calendar">Next 14 days</Kicker>
           <Pressable

@@ -5,6 +5,8 @@ import { theme } from '@/constants/theme';
 import { formatMoney } from '@/lib/money';
 import { usePressScale } from '@/lib/usePressScale';
 import { DateTile } from '@/components/DateTile';
+import { StatusBadge } from '@/components/StatusBadge';
+import { toLocalIsoDate } from '@/lib/date';
 import { screenStyles as h, SCREEN } from '@/components/screenStyles';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -80,6 +82,12 @@ export function UpcomingRow({
       <View style={[styles.mid, stacked && styles.stackedMid]}>
         <Text style={styles.title}>{title}</Text>
         <Text style={[styles.sub, urgent ? styles.subUrgent : soon && styles.subSoon]}>{subtitle}</Text>
+        {(urgent || soon) && (
+          <StatusBadge
+            label={urgent ? (date && date < toLocalIsoDate(new Date()) ? 'Overdue' : 'Due now') : 'Due soon'}
+            tone={urgent ? 'warning' : 'due'}
+          />
+        )}
       </View>
       {/* A bill reads in ink; only money coming in is coloured (green). */}
       <Text style={[styles.amount, sign === '+' && styles.income]}>

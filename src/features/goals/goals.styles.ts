@@ -32,6 +32,7 @@ export const styles = StyleSheet.create({
     backgroundColor: theme.colors.surface,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
+    boxShadow: 'none',
   },
   cardArchived: { opacity: 0.6 },
   cardTop: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 11 },

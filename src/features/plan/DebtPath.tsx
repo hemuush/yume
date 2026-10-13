@@ -1,6 +1,7 @@
 import { View, Pressable, StyleSheet } from 'react-native';
 import { Text } from '@/components/Text';
 import { Glass } from '@/components/Glass';
+import { cardSurface } from '@/components/CardSurface';
 import { formatMoney } from '@/lib/money';
 import { formatRatioPct } from '@/lib/format';
 import { withPressed } from '@/lib/pressed';
@@ -33,7 +34,7 @@ export function DebtPath({
         accessibilityRole="button"
         accessibilityLabel="Track an EMI. Open loans"
       >
-        <Glass style={styles.card}>
+        <Glass style={[styles.card, cardSurface.neutral]}>
           <Kicker icon="flag">No loans yet</Kicker>
           <Text style={styles.title}>Track an EMI</Text>
           <Text style={styles.sub}>
@@ -58,7 +59,7 @@ export function DebtPath({
 
   return (
     <View>
-      <Glass style={styles.card}>
+      <Glass style={[styles.card, cardSurface.debt]}>
         <View style={styles.head}>
           <View style={{ flexShrink: 1, gap: 4 }}>
             <Text style={styles.pathNote}>Principal left</Text>

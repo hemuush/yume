@@ -3,6 +3,8 @@ import { View, Pressable, ScrollView, Animated, useWindowDimensions } from 'reac
 import Feather from '@expo/vector-icons/Feather';
 import { Text } from '@/components/Text';
 import { Glass } from '@/components/Glass';
+import { cardSurface } from '@/components/CardSurface';
+import { StatusBadge } from '@/components/StatusBadge';
 import { theme } from '@/constants/theme';
 import { formatMoney, formatMaskableMoney } from '@/lib/money';
 import { withPressed } from '@/lib/pressed';
@@ -52,7 +54,7 @@ export function GoalsStrip({
         accessibilityRole="button"
         accessibilityLabel="Open savings goals"
       >
-        <Glass style={styles.card}>
+        <Glass style={[styles.card, cardSurface.neutral]}>
           <Text style={styles.title}>Start a goal that fills up by itself</Text>
           <Text style={styles.sub}>
             {savingsAccounts.length > 0
@@ -128,7 +130,7 @@ function GoalCard({
             }. Open savings goals`
       }
     >
-      <Glass radius={24} style={[styles.goal, { width, minHeight: height }]}>
+      <Glass radius={24} style={[styles.goal, cardSurface.savings, { width, minHeight: height }]}>
         {!masked && pct > 0 && (
           <View style={styles.goalReservoir} pointerEvents="none">
             <View style={[styles.goalFill, { height: `${pct}%`, backgroundColor: hue }]}>
@@ -139,7 +141,7 @@ function GoalCard({
         {masked ? (
           <Feather name="eye-off" size={20} color={theme.colors.textMuted} />
         ) : done ? (
-          <Feather name="check-circle" size={26} color={theme.colors.incomeText} />
+          <StatusBadge label="Completed" tone="complete" />
         ) : (
           <Text style={styles.goalPct}>
             {pct}
@@ -176,7 +178,7 @@ export function WhatIfCard({
   const [cut, setCut] = useState<number>(10);
   const extra = whatIf ? projectedMonthlySpend(whatIf.avgMonthlyMinor, cut).extraMinor : 0;
   return (
-    <Glass style={styles.card}>
+    <Glass style={[styles.card, cardSurface.neutral]}>
       {whatIf ? (
         <>
           <Text style={styles.gainNote}>Spend a little less</Text>

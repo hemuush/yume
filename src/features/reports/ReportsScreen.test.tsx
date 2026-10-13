@@ -217,13 +217,20 @@ jest.mock('@/db/ledger', () => ({
 }));
 import ReportsScreen from '../../../app/(tabs)/reports';
 import { getRangeComparison } from '@/db/reports';
-// Bars and rings animate to their values (useGrowFrom, at most the 700ms draw):
-// let the last ones finish before the file ends, so no frame fires after teardown.
-afterAll(() => new Promise((resolve) => setTimeout(resolve, 800)));
+// Date is frozen but animation timers are real. Unmount every screen before restoring the clock,
+// otherwise unfinished animations can keep scheduling frames against a future start time.
+const mountedScreens = new Set<ReactTestRenderer>();
+afterEach(() => {
+  act(() => {
+    for (const screen of mountedScreens) screen.unmount();
+  });
+  mountedScreens.clear();
+});
 async function render() {
   let tree!: ReactTestRenderer;
   await act(async () => {
     tree = create(<ReportsScreen />);
+    mountedScreens.add(tree);
   });
   await act(async () => {
     await new Promise((resolve) => setTimeout(resolve, 0));

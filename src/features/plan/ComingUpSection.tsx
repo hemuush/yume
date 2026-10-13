@@ -2,6 +2,8 @@ import { View, Pressable, Animated } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import { Text } from '@/components/Text';
 import { Glass } from '@/components/Glass';
+import { cardSurface } from '@/components/CardSurface';
+import { StatusBadge } from '@/components/StatusBadge';
 import { Section } from '@/components/Section';
 import { theme } from '@/constants/theme';
 import { formatMoney } from '@/lib/money';
@@ -101,6 +103,12 @@ function DueRow({
           {KIND_LABEL[item.kind]}
           {tone ? ` · ${when}` : ''}
         </Text>
+        {tone && (
+          <StatusBadge
+            label={tone === 'urgent' ? (item.dueDate < today ? 'Overdue' : 'Due today') : 'Due soon'}
+            tone={tone === 'urgent' ? 'warning' : 'due'}
+          />
+        )}
       </View>
       {item.loanId && onPay ? (
         <View style={styles.payWrap}>
@@ -155,7 +163,7 @@ export function ComingUpSection({
   return (
     <Section compact title="Coming up">
       <View onLayout={(e) => onCardLayout?.(e.nativeEvent.layout.y)}>
-        <Glass style={styles.list}>
+        <Glass style={[styles.list, cardSurface.neutral]}>
           {groups.length === 0 ? (
             <Pressable
               onPress={() => onOpen('/recurring')}

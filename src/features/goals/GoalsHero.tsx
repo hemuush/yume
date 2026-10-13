@@ -2,6 +2,7 @@ import { View } from 'react-native';
 import { Text } from '@/components/Text';
 import { CountUpAmount } from '@/components/CountUpAmount';
 import { Glass } from '@/components/Glass';
+import { cardSurface } from '@/components/CardSurface';
 import { Kicker, PaceBar, frost } from '@/components/Frost';
 import { theme } from '@/constants/theme';
 import { formatMoney, formatMaskableMoney } from '@/lib/money';
@@ -17,21 +18,23 @@ export function GoalsHero({ totals }: { totals: GoalsTotals }) {
   const { hideAmounts } = usePrivacy();
   return (
     <Glass
-      radius={28}
+      radius={22}
       tone="strong"
-      style={[frost.hero, { marginTop: 0, marginBottom: 12, padding: 14, gap: 8 }]}
+      style={[frost.hero, cardSurface.summary, { marginTop: 0, marginBottom: 12, padding: 14, gap: 8 }]}
     >
       <View style={[frost.heroRow, { flexWrap: 'wrap', gap: 8 }]}>
-        <View style={frost.heroMain}>
+        <View style={[frost.heroMain, { gap: 2 }]}>
           <Kicker icon="flag">Saved toward goals</Kicker>
           {hideAmounts ? (
-            <Text style={frost.bigValue}>{formatMaskableMoney(totals.savedMinor, { masked: true })}</Text>
+            <Text style={[frost.bigValue, { fontSize: 30, lineHeight: 36 }]}>
+              {formatMaskableMoney(totals.savedMinor, { masked: true })}
+            </Text>
           ) : (
             <CountUpAmount
               minor={totals.savedMinor}
               countFromZero={false}
               symbolStyle={frost.bigSymbol}
-              style={frost.bigValue}
+              style={[frost.bigValue, { fontSize: 30, lineHeight: 36 }]}
               numberOfLines={1}
               adjustsFontSizeToFit
             />

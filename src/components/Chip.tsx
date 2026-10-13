@@ -31,13 +31,13 @@ interface Props {
 export function Chip({ label, active, onPress, activeBorderColor, icon, iconColor, more }: Props) {
   const tinted = active && activeBorderColor;
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.94);
-  const { accent, secondary } = useAccent();
+  const { accent } = useAccent();
   return (
     <AnimatedPressable
       style={[
         styles.chip,
         icon && styles.chipWithIcon,
-        active && !tinted && { backgroundColor: shade(accent, 95), borderColor: secondary },
+        active && !tinted && { backgroundColor: shade(accent, 95), borderColor: theme.colors.ink },
         tinted && { backgroundColor: softTint(activeBorderColor, 0.1), borderColor: activeBorderColor },
         animatedStyle,
       ]}
@@ -59,7 +59,7 @@ export function Chip({ label, active, onPress, activeBorderColor, icon, iconColo
           <MaterialCommunityIcons name={icon as McIconName} size={13} color={theme.colors.ink} />
         </View>
       )}
-      <Text style={[styles.text, active && styles.textActive]} numberOfLines={1}>
+      <Text style={[styles.text, active && styles.textActive]}>
         {label}
         {more ? ' ›' : ''}
       </Text>
@@ -70,17 +70,23 @@ export function Chip({ label, active, onPress, activeBorderColor, icon, iconColo
 const styles = StyleSheet.create({
   chip: {
     flexDirection: 'row',
+    maxWidth: '100%',
     alignItems: 'center',
     gap: 6,
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: theme.radius.pill,
-    borderWidth: StyleSheet.hairlineWidth,
+    borderWidth: 1,
     borderColor: theme.colors.borderSoft,
     backgroundColor: theme.colors.surface,
   },
   chipWithIcon: { paddingLeft: 4, paddingVertical: 4 },
   iconDisc: { width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
-  text: { fontSize: 12.5, color: theme.colors.textSecondary, fontFamily: theme.font.roundedMedium },
+  text: {
+    fontSize: 12.5,
+    color: theme.colors.textSecondary,
+    fontFamily: theme.font.roundedMedium,
+    flexShrink: 1,
+  },
   textActive: { color: theme.colors.textPrimary, fontFamily: theme.font.roundedBold },
 });

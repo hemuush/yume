@@ -229,9 +229,17 @@ describe('saving', () => {
 
 describe('archive and delete', () => {
   const link = (t: ReactTestRenderer) => byId(t, 'sheet-link');
+  const openMore = (tree: ReactTestRenderer) => {
+    expect(tree.root.findAll((n) => n.props.testID === 'sheet-link')).toHaveLength(0);
+    const more = tree.root.findAll(
+      (n) => n.props.accessibilityLabel === 'More options' && typeof n.props.onPress === 'function'
+    )[0];
+    act(() => more.props.onPress());
+  };
 
   it('offers Archive, not Delete, once progress was added by hand', async () => {
     const { tree } = await render(makeGoal({ currentAmountMinor: 20_000 }));
+    openMore(tree);
     expect(link(tree).props.label).toBe('Archive goal');
     await act(async () => link(tree).props.onPress());
     expect(mockAlert).toHaveBeenCalledWith('Archive this goal?', expect.any(String), expect.any(Array));
@@ -240,6 +248,7 @@ describe('archive and delete', () => {
 
   it('archives only after the confirmation is accepted', async () => {
     const { tree, onChanged } = await render(makeGoal({ currentAmountMinor: 20_000 }));
+    openMore(tree);
     await act(async () => link(tree).props.onPress());
     const buttons = mockAlert.mock.calls[0][2] as { text: string; onPress?: () => Promise<void> }[];
     expect(mockArchive).not.toHaveBeenCalled();
@@ -256,6 +265,7 @@ describe('archive and delete', () => {
       mockDelete.mockClear();
       mockShowUndo.mockClear();
       const { tree, onChanged } = await render(goal);
+      openMore(tree);
       expect(link(tree).props.label).toBe('Delete goal');
       await act(async () => {
         await link(tree).props.onPress();
@@ -272,6 +282,7 @@ describe('archive and delete', () => {
 
   it('offers Unarchive for an archived goal', async () => {
     const { tree, onChanged } = await render(makeGoal({ archived: true, currentAmountMinor: 5_000 }));
+    openMore(tree);
     expect(link(tree).props.label).toBe('Unarchive goal');
     await act(async () => {
       await link(tree).props.onPress();

@@ -32,7 +32,14 @@ export const screenStyles = StyleSheet.create({
   // The main Home cards: the same card, lifted like the month card.
   cardLifted: { ...SOFT_LIFT },
   // A card inside a sheet, which already has its own side padding.
-  cardInSheet: { marginHorizontal: 0, marginBottom: 12 },
+  cardInSheet: {
+    marginHorizontal: 0,
+    marginBottom: 12,
+    backgroundColor: 'transparent',
+    borderWidth: 0,
+    borderRadius: 0,
+    overflow: 'visible',
+  },
   row: {
     flexDirection: 'row',
     alignItems: 'center',

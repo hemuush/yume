@@ -14,6 +14,7 @@ import { toLocalIsoDate, addMonthsToIsoDate } from '@/lib/date';
 import { DateField } from '@/components/DateField';
 import { Account, SavingsGoal } from '@/types';
 import { ModalSheet, SheetLink } from '@/components/ModalSheet';
+import { InsightDisclosure } from '@/components/InsightCard';
 import { modalFooterStyles as f } from '@/constants/theme';
 import { GoalSheetCard } from './GoalSheetCard';
 import { FormInput } from '@/components/FormInput';
@@ -263,31 +264,33 @@ export function GoalDetailModal({
         </>
       )}
 
-      {goal.archived ? (
-        <SheetLink
-          label={busy ? 'Working…' : 'Unarchive goal'}
-          onPress={onUnarchive}
-          disabled={busy}
-          danger={false}
-        />
-      ) : !goal.tracksAccount && (goal.currentAmountMinor > 0 || goal.reservesAccount) ? (
-        <View>
+      <InsightDisclosure title="More options">
+        {goal.archived ? (
           <SheetLink
-            label={busy ? 'Working…' : goal.reservesAccount ? 'Archive and keep reserved' : 'Archive goal'}
-            onPress={() => confirmArchive()}
+            label={busy ? 'Working…' : 'Unarchive goal'}
+            onPress={onUnarchive}
             disabled={busy}
+            danger={false}
           />
-          {goal.reservesAccount && (
+        ) : !goal.tracksAccount && (goal.currentAmountMinor > 0 || goal.reservesAccount) ? (
+          <View>
             <SheetLink
-              label="Release reservation and archive"
-              onPress={() => confirmArchive(true)}
+              label={busy ? 'Working…' : goal.reservesAccount ? 'Archive and keep reserved' : 'Archive goal'}
+              onPress={() => confirmArchive()}
               disabled={busy}
             />
-          )}
-        </View>
-      ) : (
-        <SheetLink label={busy ? 'Working…' : 'Delete goal'} onPress={confirmDelete} disabled={busy} />
-      )}
+            {goal.reservesAccount && (
+              <SheetLink
+                label="Release reservation and archive"
+                onPress={() => confirmArchive(true)}
+                disabled={busy}
+              />
+            )}
+          </View>
+        ) : (
+          <SheetLink label={busy ? 'Working…' : 'Delete goal'} onPress={confirmDelete} disabled={busy} />
+        )}
+      </InsightDisclosure>
     </ModalSheet>
   );
 }

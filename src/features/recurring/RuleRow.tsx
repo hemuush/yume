@@ -1,6 +1,6 @@
 import { View, Pressable, useWindowDimensions } from 'react-native';
 import { Text } from '@/components/Text';
-import Animated, { FadeIn, ReduceMotion } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 import { Category, RecurringRule } from '@/types';
 import { ToggleSwitch } from '@/components/ToggleSwitch';
 import { CategoryIcon } from '@/components/CategoryIcon';
@@ -8,14 +8,14 @@ import { formatMaskableMoney } from '@/lib/money';
 import { useAccent } from '@/theme/AccentContext';
 import { styles } from './recurring.styles';
 import { ruleCadenceLabel } from './recurring.helpers';
-import { MAX_LIST_STAGGER_MS, MOTION, ROW_LAYOUT, ROW_EXIT } from '@/lib/animation';
+import { ROW_LAYOUT, ROW_EXIT } from '@/lib/animation';
 import { withPressed } from '@/lib/pressed';
 import { weekdayDayMonth } from '@/lib/dateLabels';
 import { inParent, joinSub } from '@/lib/categoryLabel';
 
 /**
  * One rule in the Running or Paused card: category icon, what and when, amount, and a pause switch. Tapping
- * the rest opens the edit sheet. Rows settle in staggered; others slide into place on pause or delete.
+ * the rest opens the edit sheet. Rows appear immediately; others slide into place on pause or delete.
  */
 export function RuleRow({
   rule,
@@ -54,10 +54,6 @@ export function RuleRow({
   const when = `${ruleCadenceLabel(rule)} · Next ${weekdayDayMonth(rule.nextRunDate)}`;
   return (
     <Animated.View
-      entering={FadeIn.delay(Math.min(index * MOTION.enterStep, MAX_LIST_STAGGER_MS))
-        .duration(MOTION.enter)
-        .easing(MOTION.ease)
-        .reduceMotion(ReduceMotion.System)}
       layout={ROW_LAYOUT}
       exiting={ROW_EXIT}
       style={[

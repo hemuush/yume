@@ -86,6 +86,42 @@ const categories = [
 const names: Record<string, string> = { food: 'Food', travel: 'Travel', salary: 'Salary' };
 const accounts: Record<string, string> = { bank: 'Bank', cash: 'Cash' };
 
+it('labels a received refund without exposing its sensitive amount and still opens the entry', () => {
+  mockHideAmounts = true;
+  const refund = tx('refund', { type: 'income', isRefund: true });
+  const open = jest.fn();
+  let tree!: ReactTestRenderer;
+  try {
+    act(() => {
+      tree = create(
+        <TimelineDay
+          date={DATE}
+          label="Today"
+          dateLabel="25 Sept"
+          items={[refund]}
+          categories={categories.map((c) => ({ ...c, isSensitive: true }))}
+          accountName={(id) => id}
+          categoryName={(id) => names[id ?? '']}
+          onPressTx={open}
+          openStacks={new Set()}
+          onToggleStack={jest.fn()}
+        />
+      );
+    });
+    expect(texts(tree)).toContain('Refund');
+    expect(texts(tree).join(' ')).not.toContain('₹100');
+    const row = tree.root.findAll(
+      (n) => typeof n.props.onPress === 'function' && String(n.props.accessibilityLabel).includes(', refund')
+    )[0];
+    expect(row.props.accessibilityLabel).toContain('••••');
+    act(() => row.props.onPress());
+    expect(open).toHaveBeenCalledWith(refund);
+  } finally {
+    mockHideAmounts = false;
+    if (tree) act(() => tree.unmount());
+  }
+});
+
 function texts(r: ReactTestRenderer): string[] {
   return r.root.findAllByType(Text).map((t) => [t.props.children].flat(Infinity).join(''));
 }

@@ -20,6 +20,7 @@ import { theme } from '@/constants/theme';
 import { Section } from '@/components/Section';
 import { haptics } from '@/lib/haptics';
 import { GLASS } from '@/components/Glass';
+import { cardSurface } from '@/components/CardSurface';
 import { SECTION_GAP } from '@/constants/textStyles';
 import Feather from '@expo/vector-icons/Feather';
 import { withPressed } from '@/lib/pressed';
@@ -140,7 +141,7 @@ export function HomeSwipeCard({ pages }: { pages: SwipePage[] }) {
 
   return (
     <View style={styles.wrap}>
-      <View style={styles.card}>
+      <View style={[styles.card, cardSurface.neutral]}>
         <View
           style={styles.track}
           accessibilityRole="tablist"

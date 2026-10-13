@@ -64,8 +64,21 @@ export function AppDialogHost() {
       visible
       onClose={() => (cancel ? press(cancel) : close())}
       variant="center"
-      scrollable={false}
+      scrollable
       showClose={false}
+      footer={
+        <View style={[styles.buttons, stacked && styles.buttonsStacked]}>
+          {buttons.map((b, i) => (
+            <PrimaryButton
+              key={i}
+              title={b.text}
+              variant={b.style === 'destructive' ? 'danger' : b.style === 'cancel' ? 'secondary' : 'primary'}
+              onPress={() => press(b)}
+              style={stacked ? undefined : styles.button}
+            />
+          ))}
+        </View>
+      }
     >
       <View style={styles.head}>
         {destructive && (
@@ -77,17 +90,6 @@ export function AppDialogHost() {
           <Text style={styles.title}>{dialog.title}</Text>
           {dialog.message ? <Text style={styles.message}>{dialog.message}</Text> : null}
         </View>
-      </View>
-      <View style={[styles.buttons, stacked && styles.buttonsStacked]}>
-        {buttons.map((b, i) => (
-          <PrimaryButton
-            key={i}
-            title={b.text}
-            variant={b.style === 'destructive' ? 'danger' : b.style === 'cancel' ? 'secondary' : 'primary'}
-            onPress={() => press(b)}
-            style={stacked ? undefined : styles.button}
-          />
-        ))}
       </View>
     </ModalSheet>
   );
@@ -117,7 +119,7 @@ const styles = StyleSheet.create({
     color: theme.colors.textSecondary,
     marginTop: 4,
   },
-  buttons: { flexDirection: 'row', gap: 8, marginTop: 16 },
+  buttons: { flexDirection: 'row', gap: 8 },
   buttonsStacked: { flexDirection: 'column-reverse' },
   button: { flex: 1 },
 });

@@ -7,6 +7,7 @@ import { getTransactionById } from '@/db/transactions';
 import { Transaction } from '@/types';
 import { formatMaskableMoney } from '@/lib/money';
 import { usePrivacy } from '@/theme/PrivacyContext';
+import { dayMonthYear } from '@/lib/dateLabels';
 import { styles } from './transactions.styles';
 import { InsightHeader, InsightRow, insight } from '@/components/InsightCard';
 export function PendingRefunds({
@@ -71,7 +72,7 @@ export function PendingRefunds({
                   key={r.id}
                   label={r.label}
                   value={formatMaskableMoney(r.remainingMinor, { currency: r.currency, masked: hideAmounts })}
-                  detail={r.dueDate ? `Expected ${r.dueDate}` : 'No expected date'}
+                  detail={r.dueDate ? `Expected ${dayMonthYear(r.dueDate)}` : 'No expected date'}
                   onPress={async () => {
                     try {
                       const tx = await getTransactionById(r.transactionId);
