@@ -163,8 +163,8 @@ export function BudgetRow({
               {name}
               {more}
             </View>
-            <View style={styles.jarAmounts}>{amount}</View>
             {foot}
+            <View style={styles.jarAmounts}>{amount}</View>
           </View>
         </View>
       ) : (
@@ -172,16 +172,16 @@ export function BudgetRow({
           <View style={styles.rowTop}>
             <CategoryIcon name={progress.categoryIcon} color={progress.categoryColor} square={38} size={17} />
             {name}
-            {amount}
             {more}
           </View>
+          {foot}
+          <View style={styles.jarAmounts}>{amount}</View>
           <LimitMeter
             pct={barPct}
             tone={tone}
             marker={pace ? pace.expectedFraction * 100 : undefined}
             animKey={`budget:${progress.budget.id}`}
           />
-          {foot}
         </>
       )}
     </AnimatedPressable>

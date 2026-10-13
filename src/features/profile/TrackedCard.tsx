@@ -24,9 +24,7 @@ function SumLine({ color, label, text }: { color: string; label: string; text: s
   return (
     <View style={styles.sumLine}>
       <View style={[styles.sumKey, { backgroundColor: color }]} />
-      <Text style={styles.sumLabel} numberOfLines={1}>
-        {label}
-      </Text>
+      <Text style={styles.sumLabel}>{label}</Text>
       <Text style={styles.sumValue}>{text}</Text>
     </View>
   );
@@ -164,7 +162,12 @@ const styles = StyleSheet.create({
   sumLine: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 10 },
   sumKey: { width: 10, height: 10, borderRadius: 3 },
   sumLabel: { flex: 1, fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textSecondary },
-  sumValue: { fontFamily: theme.font.monoBold, fontSize: 13, color: theme.colors.textPrimary },
+  sumValue: {
+    fontVariant: ['tabular-nums'],
+    fontFamily: theme.font.monoBold,
+    fontSize: 13,
+    color: theme.colors.textPrimary,
+  },
   sumTotal: {
     flexDirection: 'row',
     flexWrap: 'wrap',

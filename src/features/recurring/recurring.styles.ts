@@ -85,7 +85,12 @@ export const styles = StyleSheet.create({
   },
   hide: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
   ruleSide: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  ruleAmount: { fontFamily: theme.font.monoBold, fontSize: 15, color: theme.colors.textPrimary },
+  ruleAmount: {
+    fontFamily: theme.font.monoBold,
+    fontVariant: ['tabular-nums'],
+    fontSize: 15,
+    color: theme.colors.textPrimary,
+  },
   make: {
     minHeight: 44,
     justifyContent: 'center',

@@ -18,6 +18,7 @@ export const styles = StyleSheet.create({
   headValue: {
     fontFamily: theme.font.bodyLight,
     fontSize: theme.typeSize.hero,
+    fontVariant: ['tabular-nums'],
     lineHeight: 42,
     letterSpacing: -1.2,
     color: theme.colors.textPrimary,

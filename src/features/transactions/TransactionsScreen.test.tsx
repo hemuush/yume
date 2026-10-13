@@ -155,3 +155,18 @@ it('keeps the committed week caption while month data is still loading', async (
     mockComparison.wait = undefined;
   }
 });
+
+it('clears a type-only filter and returns to All', async () => {
+  const tree = await render();
+  const button = (label: string) =>
+    tree.root.findAll(
+      (node) => node.props.accessibilityLabel === label && typeof node.props.onPress === 'function'
+    )[0];
+  await act(async () => button('Show spent').props.onPress());
+  expect(button('Show spent').props.accessibilityState.selected).toBe(true);
+  await act(async () => button('Clear all Activity filters').props.onPress());
+  expect(button('Show all').props.accessibilityState.selected).toBe(true);
+  expect(
+    tree.root.findAll((node) => node.props.accessibilityLabel === 'Clear all Activity filters')
+  ).toHaveLength(0);
+});

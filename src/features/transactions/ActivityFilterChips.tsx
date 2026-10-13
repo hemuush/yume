@@ -43,7 +43,7 @@ export function ActivityFilterChips({
   onRemoveAccount: (id: string) => void;
   onClearAll: () => void;
 }) {
-  const picked = categoryIds.length + accountIds.length;
+  const picked = categoryIds.length + accountIds.length + (filterType === 'all' ? 0 : 1);
   const { accent } = useAccent();
   const chipBg = shade(accent, 95);
   return (
@@ -97,8 +97,13 @@ export function ActivityFilterChips({
               <Feather name="x" size={12} color={theme.colors.textSecondary} />
             </Pressable>
           ))}
-          {picked > 1 && (
-            <Pressable onPress={onClearAll} style={withPressed(styles.chip)} accessibilityRole="button">
+          {picked > 0 && (
+            <Pressable
+              onPress={onClearAll}
+              style={withPressed(styles.chip)}
+              accessibilityRole="button"
+              accessibilityLabel="Clear all Activity filters"
+            >
               <Text style={styles.chipText}>Clear all</Text>
             </Pressable>
           )}

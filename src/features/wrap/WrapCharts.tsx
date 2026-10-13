@@ -83,9 +83,7 @@ export function BarsBeat({
                   accessibilityState={{ selected: selectedId === c.categoryId }}
                 >
                   <View style={styles.barHead}>
-                    <Text style={styles.barName} numberOfLines={1}>
-                      {c.name}
-                    </Text>
+                    <Text style={styles.barName}>{c.name}</Text>
                     <Amount minor={c.totalMinor} sensitive={c.isSensitive} style={styles.barAmount} />
                   </View>
                   <Bar

@@ -74,7 +74,10 @@ export function HomeAccounts({
           accessibilityLabel={`Accounts, ${accounts.length}. See all`}
         >
           <Text style={styles.title}>Accounts</Text>
-          <Feather name="arrow-up-right" size={17} color={theme.colors.textSecondary} />
+          <View style={styles.headingAction}>
+            <Text style={styles.headingActionText}>View all</Text>
+            <Feather name="arrow-up-right" size={17} color={theme.colors.link} />
+          </View>
         </Pressable>
         {inHand.length > 0 && (
           <>
@@ -140,10 +143,13 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 8,
   },
+  headingAction: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  headingActionText: { fontFamily: theme.font.bodyMedium, fontSize: 12.5, color: theme.colors.link },
   title: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textSecondary },
   big: {
     fontFamily: theme.font.body,
     fontSize: theme.typeSize.title,
+    fontVariant: ['tabular-nums'],
     lineHeight: 26,
     letterSpacing: -0.5,
     color: theme.colors.textPrimary,

@@ -115,8 +115,8 @@ export function RunwayCard({
             {none ? (
               <Text style={styles.bigNothing}>No scheduled payments</Text>
             ) : (
-              <View style={styles.bigRow}>
-                <Text style={styles.bigValue} numberOfLines={1} adjustsFontSizeToFit>
+              <View style={styles.forecastFigure}>
+                <Text style={styles.forecastValue} numberOfLines={1} adjustsFontSizeToFit>
                   {formatMoney(dueSoon.totalMinor)}
                 </Text>
                 <Text style={styles.bigNote}>
@@ -337,7 +337,7 @@ function Foot({
   if (picked) {
     return (
       <View style={styles.foot}>
-        <Text style={styles.footText} numberOfLines={2}>
+        <Text style={styles.footText}>
           <Text style={styles.footBold}>{weekdayDayMonth(picked.date)}</Text> · {moneyOf(picked, 'caption')} ·{' '}
           {picked.items.map((i) => i.title).join(', ')}
         </Text>

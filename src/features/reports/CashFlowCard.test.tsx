@@ -50,18 +50,21 @@ describe('CashFlowCard', () => {
     expect(labels.find((l) => l.startsWith('Apr,'))).toMatch(/, kept /);
   });
 
-  it('stacks the summary strip at a large font scale', () => {
+  it.each([
+    { width: 360, fontScale: 1.3 },
+    { width: 320, fontScale: 1 },
+  ])('stacks the summary strip at $width dp and $fontScale text scale', (size) => {
     const RN = require('react-native');
-    const stacked = (scale: number) => {
+    const stacked = (width: number, fontScale: number) => {
       const spy = jest
         .spyOn(RN, 'useWindowDimensions')
-        .mockReturnValue({ width: 360, height: 800, scale: 2, fontScale: scale });
+        .mockReturnValue({ width, height: 800, scale: 2, fontScale });
       const r = render(<CashFlowCard points={flow} inProgress />);
       spy.mockRestore();
       return r.root.findAll((n) => [n.props.style].flat(Infinity).some((x) => x?.flexDirection === 'column'))
         .length;
     };
-    expect(stacked(1.3)).toBeGreaterThan(stacked(1));
+    expect(stacked(size.width, size.fontScale)).toBeGreaterThan(stacked(390, 1));
   });
 
   it('reads another month when its bars are tapped', () => {

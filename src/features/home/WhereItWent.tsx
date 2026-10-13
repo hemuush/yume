@@ -89,7 +89,9 @@ export function WhereItWent({
           {formatMoney(spentMinor)}
         </Text>
         {previousSpentMinor > 0 && diff !== 0 && (
-          <Text style={styles.meta}>
+          <Text
+            style={[styles.meta, { color: diff < 0 ? theme.colors.incomeText : theme.colors.expenseText }]}
+          >
             {formatMoney(Math.abs(diff))} {diff < 0 ? 'less' : 'more'} than {previousName}
           </Text>
         )}
@@ -210,6 +212,7 @@ const styles = StyleSheet.create({
     fontFamily: theme.font.bodyLight,
     fontSize: 28,
     lineHeight: 36,
+    fontVariant: ['tabular-nums'],
     color: theme.colors.textPrimary,
     marginTop: 6,
   },
