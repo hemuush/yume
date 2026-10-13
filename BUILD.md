@@ -64,3 +64,7 @@ Inspect [.github/workflows](.github/workflows) and [scripts](scripts) for CI and
 - Profile scrolling and navigation with realistic large data on a physical phone, including reduced motion.
 
 Record the artifact, device, OS and results. Do not label these checks passed unless they were performed.
+
+## Final release candidate
+
+See [production release audit](docs/PRODUCTION_RELEASE_AUDIT.md) before public release. Build 9 completed and its APK manifest was inspected; it must be replaced by a candidate containing the widget-provider restriction and unused-photo-permission removal. After the new APK succeeds, verify widget rendering, caller denial, permissions, lock/keyboard/restore behavior and upgrade continuity on a phone before building/submitting the production AAB. Passing source/export checks alone does not close these gates.

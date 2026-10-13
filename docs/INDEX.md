@@ -43,3 +43,5 @@ See the [13 October app-wide audit](FINAL_UI_AUDIT.md) for the reviewed UI/logic
 - Explain transaction boundaries, currency/privacy scope and failures where they affect a flow.
 - Preserve product decisions unless the owner changes them; avoid promising perfect security or performance.
 - Follow [AGENTS.md](../AGENTS.md) and the exact Expo version documentation before code changes.
+
+See [production release audit](PRODUCTION_RELEASE_AUDIT.md) for the final regression run, signed APK findings, native privacy fixes and outstanding release gates.
