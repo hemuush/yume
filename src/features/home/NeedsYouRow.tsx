@@ -60,12 +60,8 @@ export function NeedsYouRow({
         <Feather name={icon} size={SCREEN.iconGlyph} color={tone.color} />
       </View>
       <View style={styles.mid}>
-        <Text style={styles.title} numberOfLines={1}>
-          {item.title}
-        </Text>
-        <Text style={[styles.sub, item.tone === 'urgent' && styles.subUrgent]} numberOfLines={1}>
-          {item.detail}
-        </Text>
+        <Text style={styles.title}>{item.title}</Text>
+        <Text style={[styles.sub, item.tone === 'urgent' && styles.subUrgent]}>{item.detail}</Text>
       </View>
       {item.amountMinor != null && <Text style={styles.amount}>{formatMoney(item.amountMinor)}</Text>}
       {item.snoozable ? (

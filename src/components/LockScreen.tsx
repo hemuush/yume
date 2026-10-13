@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
-import { View, ScrollView, StyleSheet } from 'react-native';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { AppState, View, ScrollView, StyleSheet } from 'react-native';
 import { Text } from '@/components/Text';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -16,7 +16,7 @@ import { useAppLock } from '@/lib/AppLockContext';
 
 /**
  * Yume's app-level lock gate (never a password of its own, see `tryUnlock`). Reuses Home's "Dreamlight"
- * gradient with one quiet summary; the phone's prompt opens only when Unlock is tapped.
+ * gradient with a top-aligned summary and one automatic device-authentication prompt per lock visit.
  */
 export function LockScreen({ onUnlocked }: { onUnlocked: () => void }) {
   const insets = useSafeAreaInsets();
@@ -28,6 +28,7 @@ export function LockScreen({ onUnlocked }: { onUnlocked: () => void }) {
   const [deviceUnsecured, setDeviceUnsecured] = useState(false);
   const mounted = useRef(true);
   const running = useRef(false);
+  const automaticAttempted = useRef(false);
   useEffect(() => {
     mounted.current = true;
     return () => {
@@ -35,17 +36,20 @@ export function LockScreen({ onUnlocked }: { onUnlocked: () => void }) {
     };
   }, []);
 
-  const tryUnlock = async () => {
+  const tryUnlock = useCallback(async () => {
     if (running.current) return;
+    automaticAttempted.current = true;
     running.current = true;
     setBusy(true);
     setFailed(false);
     try {
-      const [ok, secured] = await Promise.all([authenticate(), isDeviceSecured()]);
+      const ok = await authenticate();
       if (!mounted.current) return;
       if (ok) {
         onUnlocked();
       } else {
+        const secured = await isDeviceSecured();
+        if (!mounted.current) return;
         setFailed(true);
         setDeviceUnsecured(!secured);
       }
@@ -60,9 +64,33 @@ export function LockScreen({ onUnlocked }: { onUnlocked: () => void }) {
       running.current = false;
       if (mounted.current) setBusy(false);
     }
-  };
+  }, [onUnlocked]);
 
-  // The system prompt opens only after Unlock is tapped, leaving this screen readable.
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const schedule = () => {
+      if (automaticAttempted.current || timer) return;
+      timer = setTimeout(() => {
+        timer = undefined;
+        if (
+          !mounted.current ||
+          AppState.currentState === 'background' ||
+          AppState.currentState === 'inactive'
+        )
+          return;
+        automaticAttempted.current = true;
+        void tryUnlock();
+      }, 250);
+    };
+    if (AppState.currentState !== 'background' && AppState.currentState !== 'inactive') schedule();
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state === 'active') schedule();
+    });
+    return () => {
+      if (timer) clearTimeout(timer);
+      subscription.remove();
+    };
+  }, [tryUnlock]);
 
   const turnOffLock = () => {
     setLockEnabled(false);
@@ -75,29 +103,35 @@ export function LockScreen({ onUnlocked }: { onUnlocked: () => void }) {
   const gradientBottom = shade(accent, 96, 2);
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={{ flexGrow: 1 }}>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={[
+        styles.content,
+        { paddingTop: insets.top + 24, paddingBottom: insets.bottom + 24 },
+      ]}
+      showsVerticalScrollIndicator={false}
+    >
       <LinearGradient colors={[gradientTop, gradientBottom]} style={StyleSheet.absoluteFill} />
-      <View style={[styles.wordmark, { top: insets.top + 24 }]}>
-        <YumeLogo size={18} />
-        <Text style={styles.wordmarkText}>Yume</Text>
+      <View pointerEvents="none" style={styles.hills}>
+        <HeaderHills sky="transparent" primary={accent} secondary={secondary} />
       </View>
-
-      <View style={[styles.centered, { paddingTop: insets.top + 64 }]}>
-        <SuuIllustration size={72} pose="sleepy" animate={false} />
-      </View>
-
-      {/* Suu's hills, rolling into the cream the card stands on. */}
-      <HeaderHills sky="transparent" primary={accent} secondary={secondary} />
-      <View style={[styles.ground, { paddingBottom: insets.bottom + 28 }]}>
+      <View style={styles.topContent}>
+        <View style={styles.wordmark}>
+          <YumeLogo size={26} />
+          <Text style={styles.wordmarkText}>Yume</Text>
+        </View>
         <View style={styles.card}>
           <View style={styles.cardBody}>
-            <View style={styles.kickerRow}>
-              <Feather name="lock" size={16} color={theme.colors.textSecondary} />
-              <Text style={styles.kicker}>Private until you unlock</Text>
+            <View style={styles.identityRow}>
+              <View style={styles.kickerRow}>
+                <Feather name="lock" size={16} color={theme.colors.textSecondary} />
+                <Text style={styles.kicker}>Your private space</Text>
+              </View>
+              <SuuIllustration size={48} pose="sleepy" animate={false} />
             </View>
             <Text style={styles.title}>Yume is locked</Text>
             <Text style={styles.subtitle}>
-              Tap Unlock to use your phone’s fingerprint, face or screen lock.
+              Use your phone’s fingerprint, face or screen lock to continue.
             </Text>
             {failed && !deviceUnsecured && (
               <Text style={styles.failedText} accessibilityLiveRegion="polite">
@@ -137,30 +171,12 @@ export function LockScreen({ onUnlocked }: { onUnlocked: () => void }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  wordmark: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-  },
-  wordmarkText: {
-    fontFamily: theme.font.roundedBold,
-    fontSize: 12.5,
-    color: theme.colors.textSecondary,
-    letterSpacing: 0.2,
-  },
-  // Fills the sky between the wordmark and the hills, and centres the moon row and Suu in it.
-  centered: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 28,
-  },
-  // Suu stands on Home's hills; the message and Unlock sit below in a white card, under the thumb.
-  ground: { backgroundColor: theme.colors.background, paddingHorizontal: 20, paddingTop: 4 },
+  content: { flexGrow: 1, paddingHorizontal: 20 },
+  topContent: { width: '100%', maxWidth: 420, alignSelf: 'center' },
+  hills: { position: 'absolute', bottom: 0, left: 0, right: 0, opacity: 0.5 },
+  wordmark: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 24 },
+  wordmarkText: { fontFamily: theme.font.roundedBold, fontSize: 24, color: theme.colors.textPrimary },
+  identityRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
   card: {
     alignSelf: 'stretch',
     borderRadius: 22,
@@ -168,8 +184,8 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
   },
-  cardBody: { padding: 16 },
-  kickerRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  cardBody: { padding: 20 },
+  kickerRow: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 6 },
   kicker: {
     fontFamily: theme.font.bodyMedium,
     fontSize: 12,

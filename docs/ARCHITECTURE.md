@@ -85,7 +85,7 @@ Goal reservations are independent earmarks in `savings_goals.reserve_account` / 
 
 ## Privacy, restore and platform boundaries
 
-The lock gate renders before authentication and opens the native unlock prompt only after an explicit Unlock tap. Cancellation or native failure leaves the app locked with a manual retry; overlapping taps share the existing single-attempt guard. Device PIN/biometric verification, relock timing and the recovery option for explicitly unsecured devices retain their existing behavior. The lock screen uses the current theme gradient, a smaller mascot and one flat action card.
+LockScreen places branding and its compact unlock panel near the top, within safe-area padding, with scrollable content for short screens and enlarged text. One automatic device-authentication attempt is scheduled after 250ms when the app is active; cancellation keeps the gate locked with a manual retry button. Foreground events do not repeat a completed automatic attempt. Pending timers/listeners are removed on unmount; overlapping prompts are blocked. Device-security failure remains fail-closed, and lock-disable recovery is offered only after explicit confirmation that no device lock exists. Native authentication presentation still needs phone verification.
 
 [App lock](../src/lib/appLock.ts) controls access but does not encrypt SQLite or exported backups. [Widget sources](../src/widgets) use a separate hide-details preference; do not infer widget privacy from the lock setting. Restore preserves this phone's folder grant and backup status, and gives already-set local lock/widget preferences precedence over the snapshot.
 
@@ -126,3 +126,5 @@ Shared period/range picker actions have content-sized minimum heights; date tile
 Activity chart currency/privacy scoping lives in `transactions.helpers.ts` and reuses memoized ID maps. Shared read caching rejects clock rollback ages as well as expired/data-version-stale entries; callers must not mutate cached results.
 
 Activity period/date controls grow with text and stack the Week/Month selector below the date pill on narrow screens or above 1.15 system font scale. Period navigation/swipes and filter/calculation behavior remain unchanged.
+
+Add and Plan avatar initials use the existing ink token on the deterministic avatar palette for readable contrast. Notification Needs you rows wrap names and due/context details instead of forcing one line; urgency colours, financial amounts and navigation actions remain unchanged.
