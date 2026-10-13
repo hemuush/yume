@@ -1,9 +1,13 @@
+import { Platform } from 'react-native';
 /**
  * Notification taps: each carries the screen to open, and only routes on the fixed list are honoured.
  * The cold-start response is cleared once read, so it can't reopen that screen on every later launch.
  */
 import * as Notifications from 'expo-notifications';
 import {
+  getNotificationDeliveryStatus,
+  requestNotificationPermission,
+  sendTestNotification,
   notificationRoute,
   rebuildNotifications,
   subscribeToNotificationTaps,
@@ -168,6 +172,15 @@ describe('rebuildNotifications', () => {
     warn.mockRestore();
   });
 
+  it('reports failed removal rather than claiming stale reminders were replaced', async () => {
+    const warn = jest.spyOn(console, 'error').mockImplementation(() => {});
+    N.getAllScheduledNotificationsAsync.mockResolvedValue([scheduled('yume-old')]);
+    N.cancelScheduledNotificationAsync.mockRejectedValue(new Error('OS cancellation failed'));
+    expect(await rebuildNotifications()).toBe(false);
+    expect(N.scheduleNotificationAsync).toHaveBeenCalled();
+    warn.mockRestore();
+  });
+
   it('runs one rebuild at a time', async () => {
     const order: string[] = [];
     N.getAllScheduledNotificationsAsync.mockImplementation(async () => {
@@ -178,5 +191,65 @@ describe('rebuildNotifications', () => {
     });
     await Promise.all([rebuildNotifications(), rebuildNotifications()]);
     expect(order).toEqual(['start', 'end', 'start', 'end']);
+  });
+});
+
+describe('notification delivery checks', () => {
+  const originalOS = Object.getOwnPropertyDescriptor(Platform, 'OS');
+  beforeEach(() => {
+    jest.clearAllMocks();
+    Object.defineProperty(Platform, 'OS', { value: 'android', configurable: true });
+    N.setNotificationChannelAsync.mockResolvedValue(null as any);
+    N.getPermissionsAsync.mockResolvedValue({ granted: true } as any);
+    N.getNotificationChannelAsync.mockResolvedValue({
+      importance: Notifications.AndroidImportance.DEFAULT,
+    } as any);
+    N.getAllScheduledNotificationsAsync.mockResolvedValue([]);
+    N.scheduleNotificationAsync.mockResolvedValue('test');
+  });
+  afterEach(() => {
+    if (originalOS) Object.defineProperty(Platform, 'OS', originalOS);
+  });
+  it('creates the Android channel before asking for notification permission', async () => {
+    await requestNotificationPermission();
+    expect(N.setNotificationChannelAsync.mock.invocationCallOrder[0]).toBeLessThan(
+      N.getPermissionsAsync.mock.invocationCallOrder[0]
+    );
+  });
+  it('distinguishes an enabled app permission from a blocked reminder category', async () => {
+    N.getNotificationChannelAsync.mockResolvedValue({
+      importance: Notifications.AndroidImportance.NONE,
+    } as any);
+    expect(await getNotificationDeliveryStatus()).toEqual({
+      permitted: true,
+      channelBlocked: true,
+      scheduledCount: 0,
+    });
+    await expect(sendTestNotification()).rejects.toThrow('Yume reminders category');
+    expect(N.scheduleNotificationAsync).not.toHaveBeenCalled();
+  });
+  it('counts actual dated reminder requests without counting unrelated or test notifications', async () => {
+    N.getAllScheduledNotificationsAsync.mockResolvedValue(
+      ['yume-2026-10-13-evening', 'yume-2026-10-14-morning', 'yume-delivery-test', 'other'].map(
+        (identifier) => ({ identifier })
+      ) as any
+    );
+    expect((await getNotificationDeliveryStatus()).scheduledCount).toBe(2);
+  });
+  it('sends a test immediately through the real reminder channel without personal amounts', async () => {
+    await sendTestNotification();
+    expect(N.scheduleNotificationAsync).toHaveBeenCalledWith(
+      expect.objectContaining({
+        identifier: 'yume-delivery-test',
+        trigger: { channelId: 'default' },
+        content: expect.objectContaining({ title: 'Yume notification test' }),
+      })
+    );
+  });
+  it('does not report a test as sent when permission is denied', async () => {
+    N.getPermissionsAsync.mockResolvedValue({ granted: false } as any);
+    N.requestPermissionsAsync.mockResolvedValue({ granted: false } as any);
+    await expect(sendTestNotification()).rejects.toThrow('Allow Yume notifications');
+    expect(N.scheduleNotificationAsync).not.toHaveBeenCalled();
   });
 });

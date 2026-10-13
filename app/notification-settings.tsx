@@ -13,7 +13,13 @@ import { screenStyles as h } from '@/components/screenStyles';
 import { SlotTimeStepper } from '@/features/notifications/SlotTimeStepper';
 import { CardRowsSkeleton } from '@/components/ListSkeleton';
 import { getNotificationPrefs, setNotificationPrefs, NotificationPrefs } from '@/db/settings';
-import { rebuildNotifications, requestNotificationPermission } from '@/lib/notifications';
+import {
+  rebuildNotifications,
+  requestNotificationPermission,
+  getNotificationDeliveryStatus,
+  sendTestNotification,
+  NotificationDeliveryStatus,
+} from '@/lib/notifications';
 import { TimeSlotKind, clampSlotMinutes, formatSlotTime } from '@/lib/notificationTimes';
 import { theme } from '@/constants/theme';
 import { errorMessage } from '@/lib/errorMessage';
@@ -42,16 +48,50 @@ export default function NotificationSettingsScreen() {
   }, []);
   const [openSlot, setOpenSlot] = useState<TimeSlotKind | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [delivery, setDelivery] = useState<NotificationDeliveryStatus | null>(null);
+  const [deliveryError, setDeliveryError] = useState<string | null>(null);
+  const [deliveryBusy, setDeliveryBusy] = useState(false);
+  const deliveryRunning = useRef(false);
+  const refreshDelivery = useCallback(async () => {
+    try {
+      setDelivery(await getNotificationDeliveryStatus());
+      setDeliveryError(null);
+    } catch (e) {
+      setDeliveryError(errorMessage(e));
+    }
+  }, []);
+  const checkDelivery = async (test: boolean) => {
+    if (deliveryRunning.current) return;
+    deliveryRunning.current = true;
+    setDeliveryBusy(true);
+    try {
+      if (test) {
+        await sendTestNotification();
+        showAlert(
+          'Test sent',
+          'Check your notification tray. If it is missing, check the Yume reminders category, Do Not Disturb and battery restrictions on your phone.'
+        );
+      } else if (!(await rebuildNotifications()))
+        throw new Error('Could not rebuild reminders. Please try again.');
+      await refreshDelivery();
+    } catch (e) {
+      showAlert('Notification check', errorMessage(e));
+    } finally {
+      deliveryRunning.current = false;
+      setDeliveryBusy(false);
+    }
+  };
 
   const load = useCallback(async () => {
     try {
       setPrefs(await getNotificationPrefs());
       setLoadError(null);
+      await refreshDelivery();
     } catch (e) {
       // Without this the skeleton below would sit there forever.
       setLoadError(errorMessage(e));
     }
-  }, [setPrefs]);
+  }, [setPrefs, refreshDelivery]);
 
   useFocusEffect(
     useCallback(() => {
@@ -76,6 +116,7 @@ export default function NotificationSettingsScreen() {
     if (!(await rebuildNotifications())) {
       showAlert('Saved, but reminders may not fire', 'Yume could not schedule them. Try again in a moment.');
     }
+    await refreshDelivery();
   };
 
   const ensurePermission = async (): Promise<boolean> => {
@@ -158,7 +199,7 @@ export default function NotificationSettingsScreen() {
               icon="white-balance-sunny"
               iconBg={theme.colors.goldTint}
               label="Morning"
-              sub="EMIs, Monday wrap, spending alerts"
+              sub="Only when an EMI, wrap or spending alert is due"
               value={formatSlotTime(morningMinutes)}
               expanded={openSlot === 'morning'}
               onPress={() => toggleSlot('morning')}
@@ -177,7 +218,7 @@ export default function NotificationSettingsScreen() {
               icon="weather-night"
               iconBg={shade(accent, 95)}
               label="Evening"
-              sub="Log today, plus anything waiting"
+              sub="Log reminder only if you haven’t logged today; plus pending alerts"
               value={formatSlotTime(eveningMinutes)}
               expanded={openSlot === 'evening'}
               divider
@@ -232,6 +273,42 @@ export default function NotificationSettingsScreen() {
           </View>
         </Section>
 
+        <Section title="Delivery check">
+          <View style={[h.card, cardSurface.neutral]}>
+            <Text style={styles.deliveryStatus}>
+              {deliveryError
+                ? 'Could not check notifications'
+                : !delivery
+                  ? 'Checking…'
+                  : !delivery.permitted
+                    ? 'Phone permission is off'
+                    : delivery.channelBlocked
+                      ? 'Yume reminders category is off'
+                      : `${delivery.scheduledCount} reminders scheduled`}
+            </Text>
+            <Text style={styles.deliveryHint}>
+              {deliveryError ??
+                'Times are delivery windows, not two daily alarms. Morning needs something due; the evening logging nudge is skipped after an entry.'}
+            </Text>
+            <View style={styles.deliveryActions}>
+              <PrimaryButton
+                compact
+                variant="secondary"
+                title="Test notification"
+                disabled={deliveryBusy}
+                onPress={() => void checkDelivery(true)}
+              />
+              <PrimaryButton
+                compact
+                variant="secondary"
+                title="Rebuild reminders"
+                disabled={deliveryBusy}
+                onPress={() => void checkDelivery(false)}
+              />
+            </View>
+          </View>
+        </Section>
+
         <Section title="In the app">
           <View style={[h.card, cardSurface.neutral]}>
             <SettingsRow
@@ -259,6 +336,15 @@ export default function NotificationSettingsScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
+  deliveryStatus: { fontFamily: theme.font.bodyBold, fontSize: 14, color: theme.colors.textPrimary },
+  deliveryHint: {
+    fontFamily: theme.font.body,
+    fontSize: 12,
+    lineHeight: 18,
+    color: theme.colors.textSecondary,
+    marginTop: 6,
+  },
+  deliveryActions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 10 },
   retry: { alignSelf: 'flex-start', marginTop: 10 },
   warn: {
     fontFamily: theme.font.body,

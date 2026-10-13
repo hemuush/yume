@@ -45,3 +45,7 @@ See the [13 October app-wide audit](FINAL_UI_AUDIT.md) for the reviewed UI/logic
 - Follow [AGENTS.md](../AGENTS.md) and the exact Expo version documentation before code changes.
 
 See [production release audit](PRODUCTION_RELEASE_AUDIT.md) for the final regression run, signed APK findings, native privacy fixes and outstanding release gates.
+
+Use [release device acceptance](RELEASE_DEVICE_CHECKS.md) to record manual phone results and expected behavior, including conditional reminders. Unperformed checks remain open.
+
+See [release follow-up audit](RELEASE_FOLLOWUP_AUDIT.md) for the notification lifecycle findings, signed build 10 inspection and current validation limits.

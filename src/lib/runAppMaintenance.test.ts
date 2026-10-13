@@ -1,3 +1,5 @@
+jest.mock('@/db/afterCommit', () => ({ rebuildNotificationsAfterCommit: jest.fn(async () => {}) }));
+import { rebuildNotificationsAfterCommit } from '@/db/afterCommit';
 jest.mock('@/db/recurring', () => ({ runDueRecurringRules: jest.fn() }));
 jest.mock('./localBackup', () => ({ runLocalBackupIfDue: jest.fn(async () => {}) }));
 jest.mock('./dataEvents', () => ({ emitTransactionsChanged: jest.fn() }));
@@ -30,4 +32,13 @@ it('still attempts backup if recurring catch-up fails', async () => {
   expect(runLocalBackupIfDue).toHaveBeenCalledTimes(1);
   expect(emitTransactionsChanged).not.toHaveBeenCalled();
   warning.mockRestore();
+});
+
+it('renews reminders even when no recurring entry is due', async () => {
+  jest.mocked(runDueRecurringRules).mockResolvedValue(0);
+  await runAppMaintenance();
+  expect(rebuildNotificationsAfterCommit).toHaveBeenCalledTimes(1);
+  expect(jest.mocked(rebuildNotificationsAfterCommit).mock.invocationCallOrder[0]).toBeLessThan(
+    jest.mocked(runLocalBackupIfDue).mock.invocationCallOrder[0]
+  );
 });

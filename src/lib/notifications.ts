@@ -39,10 +39,54 @@ export async function ensureAndroidChannel(): Promise<void> {
 }
 
 export async function requestNotificationPermission(): Promise<boolean> {
+  // Android 13's permission prompt needs a channel to exist first.
+  await ensureAndroidChannel();
   const existing = await Notifications.getPermissionsAsync();
   if (existing.granted) return true;
   const result = await Notifications.requestPermissionsAsync();
   return result.granted;
+}
+
+export interface NotificationDeliveryStatus {
+  permitted: boolean;
+  channelBlocked: boolean;
+  scheduledCount: number;
+}
+
+/** App permission and the reminder channel are independent Android settings. */
+export async function getNotificationDeliveryStatus(): Promise<NotificationDeliveryStatus> {
+  const [permission, scheduled, channel] = await Promise.all([
+    Notifications.getPermissionsAsync(),
+    Notifications.getAllScheduledNotificationsAsync(),
+    Platform.OS === 'android'
+      ? Notifications.getNotificationChannelAsync(NOTIFICATION_CHANNEL_ID)
+      : Promise.resolve(null),
+  ]);
+  return {
+    permitted: !!permission?.granted,
+    channelBlocked: channel?.importance === Notifications.AndroidImportance.NONE,
+    scheduledCount: (scheduled ?? []).filter((n) =>
+      /^yume-\d{4}-\d{2}-\d{2}-(morning|evening)$/.test(n.identifier)
+    ).length,
+  };
+}
+
+/** An immediate, amount-free test of the same channel used by real reminders. */
+export async function sendTestNotification(): Promise<void> {
+  if (!(await requestNotificationPermission()))
+    throw new Error('Allow Yume notifications in phone settings first.');
+  const status = await getNotificationDeliveryStatus();
+  if (status.channelBlocked)
+    throw new Error('Enable the Yume reminders category in phone notification settings.');
+  await Notifications.scheduleNotificationAsync({
+    identifier: 'yume-delivery-test',
+    content: {
+      title: 'Yume notification test',
+      body: 'Reminders use this notification category.',
+      data: { url: '/add-transaction' },
+    },
+    trigger: { channelId: NOTIFICATION_CHANNEL_ID },
+  });
 }
 
 /**
@@ -98,17 +142,23 @@ async function doRebuild(): Promise<boolean> {
     const { notifications, waitingAlerts } = planNotifications({ prefs, loans, alerts, loggedToday, now });
 
     const scheduled = (await Notifications.getAllScheduledNotificationsAsync()) ?? [];
+    let allCancelled = true;
     await Promise.all(
       scheduled
         .filter((n) => typeof n.identifier === 'string' && n.identifier.startsWith(ID_PREFIX))
-        .map((n) => Notifications.cancelScheduledNotificationAsync(n.identifier).catch(() => {}))
+        .map((n) =>
+          Notifications.cancelScheduledNotificationAsync(n.identifier).catch((err) => {
+            allCancelled = false;
+            console.error(`Cancelling notification ${n.identifier} failed:`, err);
+          })
+        )
     );
     // Alerts already sent (or stale) drop out of the queue here.
     if (waitingAlerts.length !== alerts.length) await setAlertQueue(waitingAlerts);
 
-    if (notifications.length === 0) return true;
+    if (notifications.length === 0) return allCancelled;
     const permission = await Notifications.getPermissionsAsync();
-    if (!permission?.granted) return true;
+    if (!permission?.granted) return allCancelled;
 
     await ensureAndroidChannel();
     let allScheduled = true;
@@ -129,7 +179,7 @@ async function doRebuild(): Promise<boolean> {
         console.error(`Scheduling notification ${n.id} failed:`, err);
       }
     }
-    return allScheduled;
+    return allScheduled && allCancelled;
   } catch (err) {
     console.error('rebuildNotifications failed:', err);
     return false;
