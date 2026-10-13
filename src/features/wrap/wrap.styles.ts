@@ -167,7 +167,12 @@ export const styles = StyleSheet.create({
     marginBottom: 6,
   },
   barName: { flex: 1, fontFamily: theme.font.bodyBold, fontSize: 14, color: theme.colors.textPrimary },
-  barAmount: { fontFamily: theme.font.monoBold, fontSize: 13, color: theme.colors.textPrimary },
+  barAmount: {
+    fontVariant: ['tabular-nums'],
+    fontFamily: theme.font.monoBold,
+    fontSize: 13,
+    color: theme.colors.textPrimary,
+  },
   barTrack: { height: 14, borderRadius: 7, backgroundColor: theme.colors.surfaceAlt, overflow: 'hidden' },
   barFill: { height: '100%', borderRadius: 7 },
 
@@ -199,6 +204,7 @@ export const styles = StyleSheet.create({
   cardHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
   cardKicker: { ...EYEBROW, color: theme.colors.textMuted },
   cardTotal: {
+    fontVariant: ['tabular-nums'],
     fontFamily: theme.font.monoBold,
     fontSize: 32,
     lineHeight: 40,
@@ -210,7 +216,12 @@ export const styles = StyleSheet.create({
   cardRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   cardDot: { width: 9, height: 9, borderRadius: 5 },
   cardName: { flex: 1, fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textPrimary },
-  cardAmount: { fontFamily: theme.font.monoBold, fontSize: 13, color: theme.colors.textPrimary },
+  cardAmount: {
+    fontVariant: ['tabular-nums'],
+    fontFamily: theme.font.monoBold,
+    fontSize: 13,
+    color: theme.colors.textPrimary,
+  },
   cardBrand: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   cardBrandText: { fontFamily: theme.font.roundedBold, fontSize: 12, color: theme.colors.textPrimary },
   actions: { flexDirection: 'row', gap: 10 },

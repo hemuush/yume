@@ -62,13 +62,12 @@ export function PersonTile({
             </View>
             <Text style={styles.tileName}>{person.name}</Text>
           </View>
+          <Text style={[styles.tileDirection, { color: look.amount }]}>{look.label}</Text>
           <Text style={[styles.tileAmount, { color: look.amount }]} numberOfLines={1} adjustsFontSizeToFit>
             {dispBalanceMinor > 0 ? '+' : '−'}
             {formatMoney(Math.abs(dispBalanceMinor))}
           </Text>
-          <Text style={styles.tileMeta}>
-            {`${look.label} · ${lastActivityShort(person.lastActivityDate)}`}
-          </Text>
+          <Text style={styles.tileMeta}>{lastActivityShort(person.lastActivityDate)}</Text>
         </AnimatedPressable>
         <Pressable
           onPress={onPress}

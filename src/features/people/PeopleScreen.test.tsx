@@ -55,14 +55,7 @@ describe('Friends & Family screen', () => {
     ];
     const shown = texts(await render());
     expect(shown).toEqual(
-      expect.arrayContaining([
-        'Aarav',
-        'Owes you · No activity',
-        'Meera',
-        'You owe · No activity',
-        'Riya',
-        'Settled',
-      ])
+      expect.arrayContaining(['Aarav', 'Owes you', 'Meera', 'You owe', 'Riya', 'Settled'])
     );
   });
 
@@ -101,7 +94,7 @@ describe('Friends & Family screen', () => {
     const shown = texts(await render());
     expect(shown).toContain('Aarav');
     expect(shown.filter((t) => t === 'Settle up')).toHaveLength(1);
-    expect(shown).not.toContain('Owes you');
+    expect(shown.filter((text) => text === 'Owes you')).toHaveLength(1);
     expect(shown.some((t) => t.startsWith('Net,'))).toBe(false);
   });
 

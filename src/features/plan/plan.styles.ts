@@ -16,6 +16,7 @@ const figure = {
   fontSize: theme.typeSize.title,
   letterSpacing: -0.5,
   color: theme.colors.textPrimary,
+  fontVariant: ['tabular-nums'] as 'tabular-nums'[],
 } as const;
 
 export const styles = StyleSheet.create({
@@ -53,6 +54,15 @@ export const styles = StyleSheet.create({
   },
 
   /* ---------- Runway ---------- */
+  forecastFigure: { gap: 4 },
+  forecastValue: {
+    fontFamily: theme.font.bodyLight,
+    fontSize: 30,
+    lineHeight: 36,
+    letterSpacing: -0.6,
+    fontVariant: ['tabular-nums'],
+    color: theme.colors.textPrimary,
+  },
   forecastSummary: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, alignItems: 'flex-start' },
   forecastMain: { flexGrow: 1, flexBasis: 180, minWidth: 0 },
   forecastBalance: { flexGrow: 1, flexBasis: 120, minWidth: 0, gap: 4 },
@@ -179,7 +189,13 @@ export const styles = StyleSheet.create({
     fontSize: 13,
     color: theme.colors.textPrimary,
   },
-  goalAmt: { fontFamily: theme.font.body, fontSize: 11, marginTop: 3, color: theme.colors.textSecondary },
+  goalAmt: {
+    fontFamily: theme.font.body,
+    fontVariant: ['tabular-nums'],
+    fontSize: 11.5,
+    marginTop: 3,
+    color: theme.colors.textSecondary,
+  },
   goalOf: { color: theme.colors.textMuted },
   goalNew: {
     alignItems: 'center',
@@ -223,6 +239,7 @@ export const styles = StyleSheet.create({
   gainValue: {
     fontFamily: theme.font.body,
     fontSize: 20,
+    fontVariant: ['tabular-nums'],
     letterSpacing: -0.4,
     color: theme.colors.incomeText,
   },

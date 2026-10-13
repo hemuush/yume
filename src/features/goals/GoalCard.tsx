@@ -121,17 +121,17 @@ export function GoalCard({
           </View>
         </View>
 
-        <View style={styles.track}>
-          <View style={[styles.fill, { width: `${fillPct}%`, backgroundColor: shade(fillColor, 60) }]} />
-        </View>
-
-        <Text style={styles.sub}>
+        <Text style={styles.savedSummary}>
           {hideAmounts
             ? formatMaskableMoney(goal.currentAmountMinor, { masked: true })
             : formatMoney(goal.currentAmountMinor)}{' '}
           of {formatMoney(goal.targetAmountMinor)} ·{' '}
           {reached ? 'Reached' : goal.targetDate ? `By ${dayMonthYear(goal.targetDate)}` : 'No target date'}
         </Text>
+
+        <View style={styles.track}>
+          <View style={[styles.fill, { width: `${fillPct}%`, backgroundColor: shade(fillColor, 60) }]} />
+        </View>
 
         <View style={styles.footer}>
           <View style={styles.tags}>{tags}</View>
@@ -182,13 +182,19 @@ const styles = StyleSheet.create({
   },
   pct: {
     fontFamily: theme.font.bodyLight,
-    fontSize: 17,
-    lineHeight: 23,
+    fontSize: 15,
+    fontVariant: ['tabular-nums'],
+    lineHeight: 21,
     color: theme.colors.textPrimary,
   },
   pctSign: { fontFamily: theme.font.body, fontSize: 15, letterSpacing: 0, color: theme.colors.textMuted },
   figs: { flexDirection: 'row', alignItems: 'baseline', gap: 4, flexWrap: 'wrap', flexShrink: 1 },
-  toGo: { fontFamily: theme.font.bodyMedium, fontSize: 16, color: theme.colors.textPrimary },
+  toGo: {
+    fontFamily: theme.font.bodyMedium,
+    fontVariant: ['tabular-nums'],
+    fontSize: 12.5,
+    color: theme.colors.textSecondary,
+  },
   toGoLabel: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textMuted, marginTop: 1 },
   reached: { fontFamily: theme.font.roundedBold, fontSize: 15, color: theme.colors.incomeText },
   name: {
@@ -199,7 +205,13 @@ const styles = StyleSheet.create({
     flexBasis: 140,
     minWidth: 0,
   },
-  sub: { fontFamily: theme.font.body, fontSize: 12.5, color: theme.colors.textSecondary },
+  savedSummary: {
+    fontFamily: theme.font.bodyMedium,
+    fontVariant: ['tabular-nums'],
+    fontSize: 15,
+    lineHeight: 21,
+    color: theme.colors.textPrimary,
+  },
   footer: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 },
   tags: { flexGrow: 1, flexBasis: 140, minWidth: 0, flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   tag: {

@@ -174,6 +174,7 @@ const styles = StyleSheet.create({
   outstanding: {
     fontFamily: theme.font.monoBold,
     fontSize: 20,
+    fontVariant: ['tabular-nums'],
     color: theme.colors.textPrimary,
     flexShrink: 1,
   },
@@ -186,13 +187,14 @@ const styles = StyleSheet.create({
     marginTop: 8,
     overflow: 'hidden',
   },
-  fill: { height: '100%', borderRadius: 4, minWidth: 5 },
+  fill: { height: '100%', borderRadius: 4 },
   caption: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: 6, marginTop: 6 },
   captionText: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, flexShrink: 1 },
   captionBold: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
   // A separated payment row instead of a second card inside the loan.
   footer: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
     gap: 10,
     marginTop: 6,
@@ -200,7 +202,7 @@ const styles = StyleSheet.create({
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: theme.colors.borderSoft,
   },
-  footerText: { flex: 1, minWidth: 0 },
+  footerText: { flexGrow: 1, flexBasis: 180, minWidth: 0 },
   nextLabel: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.dueInk },
   nextLine: {
     fontFamily: theme.font.bodyBold,
@@ -208,7 +210,7 @@ const styles = StyleSheet.create({
     color: theme.colors.textPrimary,
     marginTop: 2,
   },
-  nextAmount: { fontFamily: theme.font.monoBold },
+  nextAmount: { fontFamily: theme.font.monoBold, fontVariant: ['tabular-nums'] },
   pill: {
     minHeight: 44,
     justifyContent: 'center',

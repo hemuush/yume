@@ -96,7 +96,12 @@ export const styles = StyleSheet.create({
     paddingBottom: 6,
   },
   groupLabel: { ...EYEBROW },
-  groupTotal: { fontFamily: theme.font.monoBold, fontSize: 12, color: theme.colors.textSecondary },
+  groupTotal: {
+    fontVariant: ['tabular-nums'],
+    fontFamily: theme.font.monoBold,
+    fontSize: 12,
+    color: theme.colors.textSecondary,
+  },
   archivedCard: { marginTop: 10 },
   archivedIcon: {
     backgroundColor: theme.colors.surfaceAlt,

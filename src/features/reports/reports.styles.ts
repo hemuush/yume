@@ -336,7 +336,12 @@ export const styles = StyleSheet.create({
   stripCellStacked: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.borderSoft },
   stripCellDivided: { borderLeftWidth: StyleSheet.hairlineWidth, borderLeftColor: theme.colors.borderSoft },
   stripLabel: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
-  stripValue: { fontFamily: theme.font.monoBold, fontSize: 16, color: theme.colors.textPrimary },
+  stripValue: {
+    fontVariant: ['tabular-nums'],
+    fontFamily: theme.font.monoBold,
+    fontSize: 16,
+    color: theme.colors.textPrimary,
+  },
   stripSub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
 
   // Against your usual: each category's month beside its own earlier months.
@@ -431,7 +436,12 @@ export const styles = StyleSheet.create({
     marginTop: 16,
     marginBottom: 6,
   },
-  breakdownAmount: { fontFamily: theme.font.body, fontSize: 26, color: theme.colors.textPrimary },
+  breakdownAmount: {
+    fontVariant: ['tabular-nums'],
+    fontFamily: theme.font.body,
+    fontSize: 26,
+    color: theme.colors.textPrimary,
+  },
   catMain: { flex: 1, minWidth: 0 },
   catRow: {
     flexDirection: 'row',
@@ -444,7 +454,12 @@ export const styles = StyleSheet.create({
   catSplitLoading: { paddingVertical: 8 },
   catSplitRow: { flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 44, paddingVertical: 8 },
   catSplitName: { flex: 1, fontFamily: theme.font.body, fontSize: 14, color: theme.colors.textSecondary },
-  catSplitAmt: { fontFamily: theme.font.mono, fontSize: 14, color: theme.colors.textPrimary },
+  catSplitAmt: {
+    fontVariant: ['tabular-nums'],
+    fontFamily: theme.font.mono,
+    fontSize: 14,
+    color: theme.colors.textPrimary,
+  },
   catLinks: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 18, rowGap: 2, paddingTop: 4 },
   catLink: { minHeight: 44, justifyContent: 'center', paddingVertical: 8 },
   catMeta: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4, marginBottom: 8 },
@@ -459,7 +474,12 @@ export const styles = StyleSheet.create({
     textAlign: 'right',
   },
   catRight: { alignItems: 'flex-end', gap: 8, maxWidth: '40%', flexShrink: 1 },
-  catAmt: { fontFamily: theme.font.bodyBold, fontSize: 14, color: theme.colors.textPrimary },
+  catAmt: {
+    fontVariant: ['tabular-nums'],
+    fontFamily: theme.font.bodyBold,
+    fontSize: 14,
+    color: theme.colors.textPrimary,
+  },
   catDelta: { flexShrink: 1, fontFamily: theme.font.monoBold, fontSize: 12 },
   catTrack: {
     height: 6,
@@ -499,14 +519,30 @@ export const styles = StyleSheet.create({
     color: theme.colors.textMuted,
     marginTop: 2,
   },
-  dayAmt: { fontFamily: theme.font.monoBold, fontSize: 15, color: theme.colors.textPrimary },
+  dayAmt: {
+    fontVariant: ['tabular-nums'],
+    fontFamily: theme.font.monoBold,
+    fontSize: 15,
+    color: theme.colors.textPrimary,
+  },
   daySpinner: { paddingVertical: 24 },
   dayEmpty: { alignItems: 'center', paddingVertical: 8, gap: 4 },
-  dayTotalRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  dayTotalRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
   dayTotalLabel: {
     fontFamily: theme.font.bodyMedium,
     fontSize: 13,
     color: theme.colors.textSecondary,
   },
-  dayTotalValue: { fontFamily: theme.font.monoBold, fontSize: 15, color: theme.colors.textPrimary },
+  dayTotalValue: {
+    fontVariant: ['tabular-nums'],
+    fontFamily: theme.font.monoBold,
+    fontSize: 15,
+    color: theme.colors.textPrimary,
+  },
 });

@@ -402,9 +402,7 @@ export function FinalBeat({
                     {top.map((c) => (
                       <View key={c.categoryId} style={styles.cardRow}>
                         <View style={[styles.cardDot, { backgroundColor: c.color }]} />
-                        <Text style={styles.cardName} numberOfLines={1}>
-                          {c.name}
-                        </Text>
+                        <Text style={styles.cardName}>{c.name}</Text>
                         <Amount minor={c.totalMinor} sensitive={c.isSensitive} style={styles.cardAmount} />
                       </View>
                     ))}

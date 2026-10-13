@@ -705,6 +705,21 @@ export default function ReportsScreen() {
         ) : tab === 'cats' ? (
           <View>
             <Text style={styles.blockTitle}>{income ? 'Where it came from' : 'Where it went'}</Text>
+            {(byAccount ? accountItems !== null : shownBreakdown.length > 0) && (
+              <View style={styles.breakdownContext}>
+                <Amount minor={byAccount ? accountTotal : shownTotal} style={styles.breakdownAmount} />
+                <Text style={styles.stripSub}>
+                  {income ? 'received' : 'spent'} · {periodName}
+                  {range.end >= todayIso ? ' so far' : ''}
+                </Text>
+              </View>
+            )}
+            {!byAccount && shownBreakdown.length > 0 && (
+              <ComparisonNote
+                label={`${range.end >= todayIso ? 'So far vs full ' : 'Vs '}${custom ? 'previous period' : previousPeriodLabel(cursor)}`}
+                partial={range.end >= todayIso}
+              />
+            )}
             <BreakdownControls
               flow={flow}
               group={group}
@@ -721,21 +736,6 @@ export default function ReportsScreen() {
                 setSelectedAccount(null);
               }}
             />
-            {(byAccount ? accountItems !== null : shownBreakdown.length > 0) && (
-              <View style={styles.breakdownContext}>
-                <Amount minor={byAccount ? accountTotal : shownTotal} style={styles.breakdownAmount} />
-                <Text style={styles.stripSub}>
-                  {income ? 'received' : 'spent'} · {periodName}
-                  {range.end >= todayIso ? ' so far' : ''}
-                </Text>
-              </View>
-            )}
-            {!byAccount && shownBreakdown.length > 0 && (
-              <ComparisonNote
-                label={`${range.end >= todayIso ? 'So far vs full ' : 'Vs '}${custom ? 'previous period' : previousPeriodLabel(cursor)}`}
-                partial={range.end >= todayIso}
-              />
-            )}
             {byAccount ? (
               detailErrors.accounts ? null : accountItems === null ? (
                 <ActivityIndicator color={theme.colors.ink} style={styles.daySpinner} />

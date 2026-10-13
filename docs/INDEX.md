@@ -57,3 +57,5 @@ See [optimization and structure review](OPTIMIZATION_REVIEW.md) for Activity loo
 See [screen source coverage](SCREEN_SOURCE_COVERAGE.md) for all route/component mappings, the final Activity period layout refinement and fresh UI checks.
 
 Lock-screen automatic prompting and the top-aligned layout are described in the architecture guide; prior manual-only lock descriptions are historical. No APK was built for this change.
+
+See [consolidated UI review](CONSOLIDATED_UI_REVIEW.md) for the final refinements, full regression evidence and open phone checks. No APK was built for this review.

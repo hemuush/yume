@@ -50,7 +50,7 @@ export function RuleRow({
   const name = transfer
     ? `${accountName(rule.accountId)} → ${rule.toAccountId ? accountName(rule.toAccountId) : '—'}`
     : (category?.name ?? '—');
-  const title = !transfer && rule.note ? `${name} · ${rule.note}` : name;
+  const title = !transfer && rule.note ? rule.note : name;
   const when = `${ruleCadenceLabel(rule)} · Next ${weekdayDayMonth(rule.nextRunDate)}`;
   return (
     <Animated.View
@@ -67,6 +67,7 @@ export function RuleRow({
         style={withPressed([styles.ruleMain, stacked && styles.ruleMainStacked])}
         onPress={onPress}
         accessibilityRole="button"
+        accessibilityLabel={`${title}. ${when}. ${formatMaskableMoney(rule.amountMinor, { masked })}. Open recurring entry`}
       >
         <CategoryIcon
           name={transfer ? 'swap-horizontal' : (category?.icon ?? 'repeat')}
@@ -79,6 +80,7 @@ export function RuleRow({
             {transfer
               ? 'Transfer'
               : joinSub([
+                  rule.note && name,
                   inParent(parentName),
                   `${rule.type === 'income' ? 'Into' : 'From'} ${accountName(rule.accountId)}`,
                 ])}

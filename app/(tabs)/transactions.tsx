@@ -750,6 +750,7 @@ export default function TransactionsScreen() {
                     onRemoveCategory={(id) => setFilterCategoryIds((ids) => ids.filter((x) => x !== id))}
                     onRemoveAccount={(id) => setFilterAccountIds((ids) => ids.filter((x) => x !== id))}
                     onClearAll={() => {
+                      setFilterType('all');
                       setFilterCategoryIds([]);
                       setFilterAccountIds([]);
                     }}

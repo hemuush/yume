@@ -245,13 +245,16 @@ function TimelineDayView({
             <CategoryIcon name={cat?.icon ?? 'tag'} color={cat?.color} size={14} square={30} round />
             <View style={[styles.mid, stacked && styles.wideMid]}>
               <View style={styles.entryHead}>
-                <Text style={[styles.name, styles.stackName]}>{categoryName(tx.categoryId)}</Text>
+                <Text style={[styles.name, styles.stackName]}>{tx.note || categoryName(tx.categoryId)}</Text>
                 {tx.isRefund && <StatusBadge label="Refund" tone="complete" />}
+                {tx.splitId && <StatusBadge label="Split" />}
               </View>
               <Text style={styles.sub}>
-                {parentLine(tx.categoryId) ? `${parentLine(tx.categoryId)} · ` : ''}
-                {tx.note ? `${tx.note} · ` : ''}
-                {accountName(tx.accountId)}
+                {joinSub([
+                  tx.note && categoryName(tx.categoryId),
+                  parentLine(tx.categoryId),
+                  accountName(tx.accountId),
+                ])}
               </Text>
             </View>
             <Amount
@@ -334,7 +337,10 @@ function TimelineDayView({
                       style={[styles.subDot, { backgroundColor: cat?.color ?? theme.colors.borderSoft }]}
                     />
                     <View style={[styles.mid, stacked && styles.wideMid]}>
-                      <Text style={styles.name}>{label}</Text>
+                      <View style={styles.entryHead}>
+                        <Text style={[styles.name, styles.stackName]}>{label}</Text>
+                        {tx.splitId && <StatusBadge label="Split" />}
+                      </View>
                       {sub && <Text style={styles.sub}>{sub}</Text>}
                     </View>
                     <Amount
@@ -422,18 +428,23 @@ const styles = StyleSheet.create({
     alignItems: 'baseline',
     justifyContent: 'space-between',
     gap: 8,
-    marginBottom: 12,
+    marginBottom: 8,
   },
   title: {
     flexGrow: 1,
     flexBasis: 160,
-    fontFamily: theme.font.roundedBold,
-    fontSize: 16,
+    fontFamily: theme.font.roundedMedium,
+    fontSize: 15,
     color: theme.colors.textPrimary,
   },
   date: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
   // Spending reads in ink with its minus sign; only money in is green.
-  total: { fontFamily: theme.font.monoBold, fontSize: 13, color: theme.colors.textPrimary },
+  total: {
+    fontFamily: theme.font.monoBold,
+    fontVariant: ['tabular-nums'],
+    fontSize: 13,
+    color: theme.colors.textPrimary,
+  },
   transferIcon: {
     width: 30,
     height: 30,

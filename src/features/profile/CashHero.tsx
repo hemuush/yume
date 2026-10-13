@@ -98,5 +98,10 @@ const styles = StyleSheet.create({
   legendItem: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', maxWidth: '100%' },
   key: { width: 9, height: 9, borderRadius: 5, marginRight: 5 },
   legendLabel: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textSecondary },
-  legendValue: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textPrimary },
+  legendValue: {
+    fontVariant: ['tabular-nums'],
+    fontFamily: theme.font.bodyBold,
+    fontSize: 12,
+    color: theme.colors.textPrimary,
+  },
 });

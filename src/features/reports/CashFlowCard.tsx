@@ -66,7 +66,7 @@ export function CashFlowCard({
 }) {
   const [sel, setSel] = useState<number | null>(null);
   const chartScroll = useRef<ScrollView>(null);
-  const { fontScale } = useWindowDimensions();
+  const { width, fontScale } = useWindowDimensions();
   const { accent } = useAccent();
   if (points.length < MIN_TREND_POINTS || !points.some((p) => p.recorded !== false && p.incomeMinor > 0))
     return null;
@@ -77,7 +77,7 @@ export function CashFlowCard({
   const summary = keptSummary(points, inProgress);
   const narrow = points.length > 12;
   const labelEvery = narrow ? 3 : 1;
-  const stacked = fontScale >= STACK_STRIP_AT;
+  const stacked = width < 360 || fontScale >= STACK_STRIP_AT;
   const divided = stacked ? styles.stripCellStacked : styles.stripCellDivided;
   const link = monthLink ? monthLink(selI, points.length) : null;
   const height = (v: number) => (v > 0 ? Math.max(3, (v / max) * BAR_MAX) : 0);
@@ -198,9 +198,7 @@ export function CashFlowCard({
       {summary && (
         <View style={[styles.stripCard, stacked && styles.stripCardStack]}>
           <View style={styles.stripCell}>
-            <Text style={styles.stripLabel} numberOfLines={1}>
-              Avg kept
-            </Text>
+            <Text style={styles.stripLabel}>Avg kept</Text>
             <CountUpAmount
               minor={roundedMinor(summary.avgKeptMinor)}
               style={[
@@ -213,24 +211,20 @@ export function CashFlowCard({
             <Text style={styles.stripSub}>a month</Text>
           </View>
           <View style={[styles.stripCell, divided]}>
-            <Text style={styles.stripLabel} numberOfLines={1}>
-              Best month
-            </Text>
+            <Text style={styles.stripLabel}>Best month</Text>
             <CountUpAmount
               minor={roundedMinor(summary.best.keptMinor)}
               style={styles.stripValue}
               numberOfLines={1}
               adjustsFontSizeToFit
             />
-            <Text style={styles.stripSub} numberOfLines={1}>
+            <Text style={styles.stripSub}>
               {summary.best.label}
               {summary.best.ratePct != null ? `, ${summary.best.ratePct}% kept` : ''}
             </Text>
           </View>
           <View style={[styles.stripCell, divided]}>
-            <Text style={styles.stripLabel} numberOfLines={1}>
-              Months kept
-            </Text>
+            <Text style={styles.stripLabel}>Months kept</Text>
             <Text style={styles.stripValue} numberOfLines={1}>
               {summary.inBlack} of {summary.months}
             </Text>
