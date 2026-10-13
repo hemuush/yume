@@ -1,3 +1,4 @@
+jest.mock('@/db/expenseLabels', () => ({ listExpenseLabels: jest.fn().mockResolvedValue([]) }));
 /** Activity's filter sheet: what it opens on, how the type narrows categories, and what Apply / Clear hand back. */
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
 
@@ -16,6 +17,8 @@ jest.mock('@/components/SheetTabs', () => ({
 import { FilterModal, type ActivityFilter } from './FilterModal';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { Chip } from '@/components/Chip';
+import { TextInput } from '@/components/Text';
+import { listExpenseLabels } from '@/db/expenseLabels';
 import type { Account, Category } from '@/types';
 
 const cat = (id: string, name: string, kind: Category['kind'], parentId: string | null = null) =>
@@ -74,6 +77,18 @@ function render(filter: ActivityFilter = none, accs = accounts) {
 afterEach(() => act(() => mounted.splice(0).forEach((t) => t.unmount())));
 
 describe('FilterModal', () => {
+  it('filters recent labels locally without reloading on each keystroke', async () => {
+    (listExpenseLabels as jest.Mock).mockClear().mockResolvedValueOnce(['Lunch', 'Travel']);
+    let tree!: ReactTestRenderer;
+    await act(async () => {
+      tree = create(element(true, none));
+    });
+    mounted.push(tree);
+    act(() => tree.root.findByType(TextInput).props.onChangeText(' lun '));
+    expect(labels(tree)).toContain('Lunch');
+    expect(labels(tree)).not.toContain('Travel');
+    expect(listExpenseLabels).toHaveBeenCalledTimes(1);
+  });
   it('opens on the filter already applied', () => {
     const { tree } = render({ type: 'expense', categoryIds: ['fuel'], accountIds: ['a2'] });
     expect(typeControl(tree).props.value).toBe('expense');
@@ -188,4 +203,23 @@ it('drops hidden category picks when switching to transfers, preserving the acco
   act(() => typeControl(tree).props.onChange('transfer'));
   act(() => button(tree, 'Apply').props.onPress());
   expect(onApply).toHaveBeenCalledWith({ type: 'transfer', categoryIds: [], accountIds: ['a2'] });
+});
+
+it('keeps a selected expense label and clears it for an incompatible type', () => {
+  const { tree, onApply } = render({
+    type: 'expense',
+    categoryIds: [],
+    accountIds: [],
+    expenseLabel: 'Lunch',
+  });
+  act(() => button(tree, 'Apply').props.onPress());
+  expect(onApply).toHaveBeenLastCalledWith({
+    type: 'expense',
+    categoryIds: [],
+    accountIds: [],
+    expenseLabel: 'Lunch',
+  });
+  act(() => typeControl(tree).props.onChange('income'));
+  act(() => button(tree, 'Apply').props.onPress());
+  expect(onApply).toHaveBeenLastCalledWith({ type: 'income', categoryIds: [], accountIds: [] });
 });

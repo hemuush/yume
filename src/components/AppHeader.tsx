@@ -9,7 +9,8 @@ import { GLASS } from '@/components/Glass';
 import { useAccent } from '@/theme/AccentContext';
 import { usePrivacy } from '@/theme/PrivacyContext';
 import { usePressScale } from '@/lib/usePressScale';
-import { getCachedUserName } from '@/db/settings';
+import { getCachedUserName, getUserName } from '@/db/settings';
+import { onSettingsRestored } from '@/lib/dataEvents';
 import { useReturnOrPush } from '@/lib/useReturnOrPush';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -37,12 +38,30 @@ export function HeaderUserButton({
   size?: number;
 } = {}) {
   const { accent, onAccent } = useAccent();
-  // getCachedUserName() is a non-reactive module cache, so re-read it on every focus: a name edited in
-  // Profile must update the initial in every already-mounted header (Home, Loans, Transactions, Reports).
+  // Paint the cached initial immediately, then load it for a cold start and after restored settings.
   const [name, setName] = useState(() => getCachedUserName());
   useFocusEffect(
     useCallback(() => {
-      setName(getCachedUserName());
+      let active = true;
+      let request = 0;
+      const refresh = () => {
+        const id = ++request;
+        setName(getCachedUserName());
+        void getUserName().then(
+          (savedName) => {
+            if (active && id === request) setName(savedName);
+          },
+          () => {
+            // Keep the cached initial or safe user icon if the name read fails.
+          }
+        );
+      };
+      refresh();
+      const unsubscribe = onSettingsRestored(refresh);
+      return () => {
+        active = false;
+        unsubscribe();
+      };
     }, [])
   );
   const initial = name?.trim().charAt(0).toUpperCase();

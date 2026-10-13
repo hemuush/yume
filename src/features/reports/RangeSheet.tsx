@@ -103,7 +103,7 @@ export function RangeSheet({
       visible={visible}
       onClose={onClose}
       title="Pick a range"
-      scrollable={false}
+      scrollable
       footer={
         <PrimaryButton
           title={range ? `Show ${customRangeLabel(range)}` : 'Tap the last day'}

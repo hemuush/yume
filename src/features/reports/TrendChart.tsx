@@ -121,8 +121,8 @@ export function TrendChart({
 
   const pickAt = (locationX: number) => {
     if (width <= 2 * PAD_X) return;
-    const i = Math.round(((locationX - PAD_X) / (width - 2 * PAD_X)) * lastI);
-    const next = Math.max(0, Math.min(lastI, i));
+    const i = Math.round(((locationX - PAD_X) / (width - 2 * PAD_X)) * (points.length - 1));
+    const next = Math.max(0, Math.min(points.length - 1, i));
     if (!points[next].available) return;
     if (next === selI) return;
     haptics.tap();

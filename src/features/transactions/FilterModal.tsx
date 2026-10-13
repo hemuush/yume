@@ -1,6 +1,8 @@
+import { listExpenseLabels } from '@/db/expenseLabels';
+import { usePrivacy } from '@/theme/PrivacyContext';
 import { useEffect, useMemo, useState } from 'react';
-import { View } from 'react-native';
-import { Text } from '@/components/Text';
+import { View, Keyboard } from 'react-native';
+import { Text, TextInput } from '@/components/Text';
 import { Account, Category, TransactionType } from '@/types';
 import { SheetTabs } from '@/components/SheetTabs';
 import { PrimaryButton } from '@/components/PrimaryButton';
@@ -8,6 +10,7 @@ import { Chip } from '@/components/Chip';
 import { ModalSheet } from '@/components/ModalSheet';
 import { orderCategoriesForPicker, topLevelOnly, childrenOf } from '@/lib/categoryTree';
 import { styles } from './transactions.styles';
+import { theme } from '@/constants/theme';
 import { accountHue, accountIcon } from '@/lib/account';
 import { shade } from '@/lib/color';
 import { useAccent } from '@/theme/AccentContext';
@@ -22,6 +25,7 @@ const FILTER_TYPES: { label: string; value: TransactionType | 'all' }[] = [
 /** What Activity is filtered to — see FilterModal. */
 export interface ActivityFilter {
   type: TransactionType | 'all';
+  expenseLabel?: string;
   categoryIds: string[];
   /** A transfer matches either of its accounts. */
   accountIds: string[];
@@ -50,22 +54,47 @@ export function FilterModal({
   countFor?: (filter: ActivityFilter) => number;
 }) {
   const { accent } = useAccent();
+  const { hideAmounts } = usePrivacy();
+  const [labels, setLabels] = useState<string[]>([]);
   const { type, categoryIds, accountIds } = filter;
+  const [draftLabel, setDraftLabel] = useState(filter.expenseLabel ?? '');
   const [draftType, setDraftType] = useState(type);
   const [draftCategoryIds, setDraftCategoryIds] = useState<string[]>(categoryIds);
   const [draftAccountIds, setDraftAccountIds] = useState<string[]>(accountIds);
+  useEffect(() => {
+    if (!visible || draftType === 'income' || draftType === 'transfer') return;
+    let live = true;
+    setLabels([]);
+    void listExpenseLabels('', hideAmounts).then(
+      (data) => {
+        if (live) setLabels(data);
+      },
+      () => {}
+    );
+    return () => {
+      live = false;
+    };
+  }, [visible, hideAmounts, draftType]);
+  const matchingLabels = labels.filter((label) =>
+    label.toLowerCase().includes(draftLabel.trim().toLowerCase())
+  );
+  const apply = (next: ActivityFilter) => {
+    Keyboard.dismiss();
+    onApply(next);
+  };
   // Which top-level category's subcategory row is expanded; reset on reopen or type change so a stale
   // expansion from a previous session doesn't linger.
   const [expandedParentId, setExpandedParentId] = useState<string | null>(null);
 
   useEffect(() => {
     if (visible) {
+      setDraftLabel(filter.expenseLabel ?? '');
       setDraftType(type);
       setDraftCategoryIds(categoryIds);
       setDraftAccountIds(accountIds);
       setExpandedParentId(null);
     }
-  }, [visible, type, categoryIds, accountIds]);
+  }, [visible, type, categoryIds, accountIds, filter.expenseLabel]);
 
   // A specific type narrows the categories shown (an income one checked under "Expense" could never match);
   // "All"/"Transfer" show every category, as transfers have none of their own to filter by.
@@ -95,6 +124,7 @@ export function FilterModal({
 
   const onTypeChange = (next: TransactionType | 'all') => {
     setDraftType(next);
+    if (next === 'income' || next === 'transfer') setDraftLabel('');
     setExpandedParentId(null);
     // Drop selected categories that no longer match the chosen type: keeping them would silently filter out
     // everything, since a transaction can never match a category of the wrong kind.
@@ -104,7 +134,12 @@ export function FilterModal({
     }
   };
 
-  const draft = { type: draftType, categoryIds: draftCategoryIds, accountIds: draftAccountIds };
+  const draft = {
+    type: draftType,
+    categoryIds: draftCategoryIds,
+    accountIds: draftAccountIds,
+    ...(draftLabel.trim() ? { expenseLabel: draftLabel.trim() } : {}),
+  };
   const count = countFor?.(draft);
   const applyTitle =
     count == null
@@ -116,20 +151,23 @@ export function FilterModal({
   return (
     <ModalSheet
       visible={visible}
-      onClose={onClose}
+      onClose={() => {
+        Keyboard.dismiss();
+        onClose();
+      }}
       title="Filter"
       footer={
         <View style={styles.filterFoot}>
           <PrimaryButton
             title="Clear filters"
             variant="secondary"
-            onPress={() => onApply({ type: 'all', categoryIds: [], accountIds: [] })}
+            onPress={() => apply({ type: 'all', categoryIds: [], accountIds: [] })}
             style={styles.filterClear}
           />
           <PrimaryButton
             title={applyTitle}
             accessibilityLabel={`Apply. ${applyTitle}`}
-            onPress={() => onApply(draft)}
+            onPress={() => apply(draft)}
             style={styles.filterApply}
           />
         </View>
@@ -138,6 +176,37 @@ export function FilterModal({
       <Text style={styles.fieldLabel}>Type</Text>
       <SheetTabs options={FILTER_TYPES} value={draftType} onChange={onTypeChange} />
 
+      {(draftType === 'all' || draftType === 'expense') && (
+        <>
+          <Text style={styles.fieldLabel}>Expense label</Text>
+          <TextInput
+            value={draftLabel}
+            onChangeText={setDraftLabel}
+            placeholder="Find a label (optional)"
+            accessibilityLabel="Filter expense label"
+            returnKeyType="done"
+            onSubmitEditing={() => Keyboard.dismiss()}
+            style={{
+              minHeight: 48,
+              padding: 12,
+              marginBottom: 12,
+              borderRadius: 14,
+              backgroundColor: theme.colors.surfaceAlt,
+              color: theme.colors.textPrimary,
+            }}
+          />
+          <View style={styles.chipRow}>
+            {matchingLabels.slice(0, 10).map((label) => (
+              <Chip
+                key={label}
+                label={label}
+                active={draftLabel === label}
+                onPress={() => setDraftLabel(label)}
+              />
+            ))}
+          </View>
+        </>
+      )}
       {accounts.length > 1 && (
         <>
           <Text style={styles.fieldLabel}>Account</Text>

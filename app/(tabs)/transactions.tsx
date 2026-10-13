@@ -92,6 +92,7 @@ export default function TransactionsScreen() {
   const [filterVisible, setFilterVisible] = useState(false);
   const [filterType, setFilterType] = useState<TransactionType | 'all'>('all');
   const [filterCategoryIds, setFilterCategoryIds] = useState<string[]>([]);
+  const [filterLabel, setFilterLabel] = useState<string | undefined>();
   const [filterAccountIds, setFilterAccountIds] = useState<string[]>([]);
   // Search is its own mode, not a filter: it queries the whole ledger, so the period nav/chart/Filter
   // (which only apply to the loaded range) step aside while it is active.
@@ -171,6 +172,7 @@ export default function TransactionsScreen() {
     setFilterType('all');
     setFilterCategoryIds(category ? [category] : []);
     setFilterAccountIds(account ? [account] : []);
+    setFilterLabel(undefined);
     const [y, m] = month && /^\d{4}-\d{2}$/.test(month) ? month.split('-').map(Number) : [0, 0];
     // A real month that isn't in the future; anything else keeps the current view.
     const now = new Date();
@@ -197,6 +199,7 @@ export default function TransactionsScreen() {
           setFilterType('all');
           setFilterCategoryIds([]);
           setFilterAccountIds([]);
+          setFilterLabel(undefined);
           setViewScope('month');
           setAnchor(new Date(year, month - 1, 1));
           setDetailTx(tx);
@@ -254,10 +257,15 @@ export default function TransactionsScreen() {
     () =>
       filterActivity(
         transactions,
-        { type: filterType, categoryIds: filterCategoryIds, accountIds: filterAccountIds },
+        {
+          type: filterType,
+          categoryIds: filterCategoryIds,
+          accountIds: filterAccountIds,
+          expenseLabel: filterLabel,
+        },
         categories
       ),
-    [transactions, filterType, filterCategoryIds, filterAccountIds, categories]
+    [transactions, filterType, filterCategoryIds, filterAccountIds, filterLabel, categories]
   );
 
   // Chart/headline show the real unfiltered period (only the rows follow Filter; hidden savings &
@@ -486,7 +494,8 @@ export default function TransactionsScreen() {
 
   // Days can be arranged by hand, but only on the plain list: a search or filter shows
   // part of a day, and its order would be saved over the whole day.
-  const noFilter = filterType === 'all' && filterCategoryIds.length === 0 && filterAccountIds.length === 0;
+  const noFilter =
+    !filterLabel && filterType === 'all' && filterCategoryIds.length === 0 && filterAccountIds.length === 0;
   const canReorder = !searching && noFilter;
   const [dragging, setDragging] = useState(false);
   const reorderDay = useCallback(
@@ -574,7 +583,7 @@ export default function TransactionsScreen() {
       ? headline.current.expenseMinor - headline.previous.expenseMinor
       : null;
   // Categories and accounts picked in the filter sheet (the type has its own chips).
-  const filterCount = filterCategoryIds.length + filterAccountIds.length;
+  const filterCount = filterCategoryIds.length + filterAccountIds.length + (filterLabel ? 1 : 0);
 
   // Before the first successful load only (`loadError` set falls through to the inline error banner), the
   // list area shows the skeleton so "Nothing logged this month" doesn't flash before the data arrives. The
@@ -641,13 +650,19 @@ export default function TransactionsScreen() {
         visible={filterVisible}
         categories={categories}
         accounts={accounts}
-        filter={{ type: filterType, categoryIds: filterCategoryIds, accountIds: filterAccountIds }}
+        filter={{
+          type: filterType,
+          categoryIds: filterCategoryIds,
+          accountIds: filterAccountIds,
+          expenseLabel: filterLabel,
+        }}
         onClose={() => setFilterVisible(false)}
         countFor={(next) => filterActivity(transactions, next, categories).length}
         onApply={(next) => {
           setFilterType(next.type);
           setFilterCategoryIds(next.categoryIds);
           setFilterAccountIds(next.accountIds);
+          setFilterLabel(next.expenseLabel);
           setFilterVisible(false);
         }}
       />
@@ -740,9 +755,22 @@ export default function TransactionsScreen() {
                   </ReanimatedAnimated.View>
 
                   <PendingRefunds refreshToken={transactions} onOpen={setDetailTx} />
+                  {filterLabel && (
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel="Remove expense label filter"
+                      onPress={() => setFilterLabel(undefined)}
+                      style={{ minHeight: 44, paddingHorizontal: 16, justifyContent: 'center' }}
+                    >
+                      <Text style={{ color: theme.colors.link }}>Label: {filterLabel} ×</Text>
+                    </Pressable>
+                  )}
                   <ActivityFilterChips
                     filterType={filterType}
-                    onFilterType={setFilterType}
+                    onFilterType={(value) => {
+                      setFilterType(value);
+                      if (value === 'income' || value === 'transfer') setFilterLabel(undefined);
+                    }}
                     categoryIds={filterCategoryIds}
                     accountIds={filterAccountIds}
                     categoryName={categoryPathName}
@@ -751,6 +779,7 @@ export default function TransactionsScreen() {
                     onRemoveAccount={(id) => setFilterAccountIds((ids) => ids.filter((x) => x !== id))}
                     onClearAll={() => {
                       setFilterType('all');
+                      setFilterLabel(undefined);
                       setFilterCategoryIds([]);
                       setFilterAccountIds([]);
                     }}
