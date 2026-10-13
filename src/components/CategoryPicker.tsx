@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { View, Pressable, Animated, StyleSheet, Keyboard, LayoutChangeEvent } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import { Text, TextInput } from '@/components/Text';
-import ReanimatedAnimated, { FadeIn, ReduceMotion } from 'react-native-reanimated';
 import { Category } from '@/types';
 import { theme } from '@/constants/theme';
 import { CategoryIcon } from './CategoryIcon';
@@ -10,8 +9,6 @@ import { Chip } from './Chip';
 import { topLevelOnly, childrenOf, searchCategories } from '@/lib/categoryTree';
 import { usePressScale } from '@/lib/usePressScale';
 import { haptics } from '@/lib/haptics';
-import { MAX_LIST_STAGGER_MS } from '@/lib/animation';
-import { DURATIONS } from '@/lib/motionTimings';
 import { withPressed } from '@/lib/pressed';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -214,14 +211,8 @@ export function CategoryPicker({
         <View style={styles.subGroup}>
           <Text style={styles.subGroupLabel}>{expandedParent?.name} —</Text>
           <View style={styles.medalGrid}>
-            {expandedChildren.map((cat, i) => (
-              <ReanimatedAnimated.View
-                key={cat.id}
-                style={tileWidth ? { width: tileWidth } : undefined}
-                entering={FadeIn.delay(Math.min(i * DURATIONS.enterStep, MAX_LIST_STAGGER_MS))
-                  .duration(DURATIONS.enter)
-                  .reduceMotion(ReduceMotion.System)}
-              >
+            {expandedChildren.map((cat) => (
+              <View key={cat.id} style={tileWidth ? { width: tileWidth } : undefined}>
                 <MedalTile
                   width={tileWidth}
                   dimmed={dimmed(cat.id)}
@@ -232,7 +223,7 @@ export function CategoryPicker({
                   onPress={() => select(cat.id)}
                   sub
                 />
-              </ReanimatedAnimated.View>
+              </View>
             ))}
           </View>
         </View>

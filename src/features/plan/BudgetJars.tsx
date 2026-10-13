@@ -3,6 +3,8 @@ import Feather from '@expo/vector-icons/Feather';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Text } from '@/components/Text';
 import { Glass } from '@/components/Glass';
+import { cardSurface } from '@/components/CardSurface';
+import { StatusBadge } from '@/components/StatusBadge';
 import { theme } from '@/constants/theme';
 import { formatMoney } from '@/lib/money';
 import { withPressed } from '@/lib/pressed';
@@ -41,7 +43,7 @@ export function BudgetJars({
         accessibilityRole="button"
         accessibilityLabel="Set a monthly limit. Open budgets"
       >
-        <Glass style={styles.card}>
+        <Glass style={[styles.card, cardSurface.neutral]}>
           <Text style={styles.title}>Set a monthly limit</Text>
           <Text style={styles.sub}>Watch spending for a category. Tap to add your first budget.</Text>
         </Glass>
@@ -51,7 +53,7 @@ export function BudgetJars({
   const over = summary.overCount > 0;
   const worst = summary.rows.find((b) => b.overBudget) ?? summary.rows[0];
   return (
-    <Glass style={styles.card}>
+    <Glass style={[styles.card, cardSurface.neutral]}>
       <Pressable
         onPress={onOpen}
         style={withPressed({ minHeight: 44 })}
@@ -142,10 +144,13 @@ function Jar({ budget: b, onPress }: { budget: PlanBudgetInput; onPress: () => v
       </View>
       <View style={styles.jarCopy}>
         <Text style={styles.jarName}>{b.categoryName}</Text>
-        <Text style={[styles.jarLeft, b.overBudget && styles.jarOver]}>
-          {left}
-          {tone === 'near' ? ' · Near limit' : ''}
-        </Text>
+        <Text style={[styles.jarLeft, b.overBudget && styles.jarOver]}>{left}</Text>
+        {tone !== 'calm' && (
+          <StatusBadge
+            label={tone === 'near' ? 'Near limit' : 'Over limit'}
+            tone={tone === 'near' ? 'due' : 'warning'}
+          />
+        )}
       </View>
     </Pressable>
   );

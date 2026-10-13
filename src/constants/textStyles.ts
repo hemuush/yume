@@ -14,7 +14,7 @@ export const SECTION_TITLE: TextStyle = {
 };
 
 /** The gap above a section heading, and below it before its card. */
-export const SECTION_GAP = { top: 20, bottom: 8 } as const;
+export const SECTION_GAP = { top: 16, bottom: 8 } as const;
 
 /**
  * A small uppercase label: a figure's caption ("SPENT", "YOU OWE"), a
@@ -22,16 +22,16 @@ export const SECTION_GAP = { top: 20, bottom: 8 } as const;
  */
 export const EYEBROW: TextStyle = {
   fontFamily: theme.font.bodyBold,
-  fontSize: 11,
-  letterSpacing: 0.8,
+  fontSize: 11.5,
+  letterSpacing: 0.6,
   textTransform: 'uppercase',
   color: theme.colors.textMuted,
 };
 
 /** A form field's label, above its input (FormInput, DateField, pickers). */
 export const FIELD_LABEL: TextStyle = {
-  fontSize: 12,
+  fontSize: 12.5,
   fontFamily: theme.font.roundedMedium,
   letterSpacing: 0,
-  color: theme.colors.textMuted,
+  color: theme.colors.textSecondary,
 };

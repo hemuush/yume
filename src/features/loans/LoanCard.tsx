@@ -12,7 +12,6 @@ import { GrowFill } from '@/components/GrowFill';
 import { CountUpAmount } from '@/components/CountUpAmount';
 import type { McIconName } from '@/components/iconName';
 import { theme } from '@/constants/theme';
-import { GLASS } from '@/components/Glass';
 import { payoffMonthShort } from '@/lib/loanPayoff';
 import type { LoanProgress } from '@/db/loans';
 import { loanBarTone, loanGlyph, loanIcon, loanTint } from './loanIdentity';
@@ -34,7 +33,7 @@ export function LoanCard({
   hue: string;
   /** This loan's row from getLoanProgress: EMIs paid, next EMI, last EMI. */
   progress?: LoanProgress;
-  fadeStyle: React.ComponentProps<typeof Animated.View>['style'];
+  fadeStyle?: React.ComponentProps<typeof Animated.View>['style'];
   onPress: () => void;
   /** Opens this loan's pay sheet for its next EMI. */
   onPay: () => void;
@@ -116,8 +115,8 @@ export function LoanCard({
           {!isClosed && nextDueDate && (
             <View style={styles.footer}>
               <View style={styles.footerText}>
-                <Text style={styles.nextLabel}>Next EMI</Text>
                 <Text style={styles.nextLine}>
+                  <Text style={styles.nextLabel}>Next EMI · </Text>
                   {weekdayDayMonth(nextDueDate)} ·{' '}
                   <Text style={styles.nextAmount}>{formatMoney(nextEmiMinor)}</Text>
                 </Text>
@@ -143,21 +142,20 @@ export function LoanCard({
 }
 
 const styles = StyleSheet.create({
-  // Frosted glass on the wallpaper, as on Plan and Home.
+  // Flat supporting surface; identity colour is confined to the icon and progress.
   card: {
     marginHorizontal: 20,
     marginBottom: 12,
     padding: 14,
-    borderRadius: 24,
-    backgroundColor: GLASS.fill,
+    borderRadius: 20,
+    backgroundColor: theme.colors.surface,
     borderWidth: 1,
-    borderColor: GLASS.edge,
-    boxShadow: GLASS.shadow,
+    borderColor: theme.colors.borderSoft,
   },
   head: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   icon: {
-    width: 40,
-    height: 40,
+    width: 34,
+    height: 34,
     borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
@@ -171,7 +169,7 @@ const styles = StyleSheet.create({
     alignItems: 'baseline',
     justifyContent: 'space-between',
     gap: 8,
-    marginTop: 10,
+    marginTop: 6,
   },
   outstanding: {
     fontFamily: theme.font.monoBold,
@@ -182,28 +180,25 @@ const styles = StyleSheet.create({
   left: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textMuted, marginTop: 2 },
   paidOff: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.incomeText },
   track: {
-    height: 8,
+    height: 5,
     borderRadius: 4,
-    backgroundColor: 'rgba(255,255,255,0.75)',
-    borderWidth: 1,
-    borderColor: GLASS.edge,
-    marginTop: 12,
+    backgroundColor: theme.colors.inkWash,
+    marginTop: 8,
     overflow: 'hidden',
   },
   fill: { height: '100%', borderRadius: 4, minWidth: 5 },
-  caption: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: 6, marginTop: 8 },
+  caption: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: 6, marginTop: 6 },
   captionText: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, flexShrink: 1 },
   captionBold: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
-  // The next payment in a soft amber box, so what's due next stands out from the loan's figures.
+  // A separated payment row instead of a second card inside the loan.
   footer: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    marginTop: 10,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 16,
-    backgroundColor: 'rgba(255,239,204,0.85)',
+    marginTop: 6,
+    paddingTop: 6,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: theme.colors.borderSoft,
   },
   footerText: { flex: 1, minWidth: 0 },
   nextLabel: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.dueInk },

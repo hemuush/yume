@@ -104,164 +104,166 @@ export function CalendarSheet({
 
   return (
     <ModalSheet visible={visible} onClose={onClose} variant="center" title={title}>
-      {quickPicks && (
-        <View style={styles.quickRow}>
-          {[
-            { iso: today, label: 'Today' },
-            { iso: yesterday, label: 'Yesterday' },
-          ]
-            .filter((q) => !outOfRange(q.iso))
-            .map((q) => (
-              <Pressable
-                key={q.label}
-                onPress={() => pick(q.iso)}
-                style={withPressed([
-                  styles.quick,
-                  value === q.iso && { backgroundColor: accent, borderColor: theme.colors.ink },
-                ])}
-                accessibilityRole="button"
-                accessibilityState={{ selected: value === q.iso }}
-              >
-                <Text style={[styles.quickText, value === q.iso && { color: onAccent }]}>{q.label}</Text>
-              </Pressable>
-            ))}
-        </View>
-      )}
+      <View style={styles.calendar}>
+        {quickPicks && (
+          <View style={styles.quickRow}>
+            {[
+              { iso: today, label: 'Today' },
+              { iso: yesterday, label: 'Yesterday' },
+            ]
+              .filter((q) => !outOfRange(q.iso))
+              .map((q) => (
+                <Pressable
+                  key={q.label}
+                  onPress={() => pick(q.iso)}
+                  style={withPressed([
+                    styles.quick,
+                    value === q.iso && { backgroundColor: accent, borderColor: theme.colors.ink },
+                  ])}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: value === q.iso }}
+                >
+                  <Text style={[styles.quickText, value === q.iso && { color: onAccent }]}>{q.label}</Text>
+                </Pressable>
+              ))}
+          </View>
+        )}
 
-      <View style={styles.header}>
-        <AnimatedPressable
-          onPress={() => (pickingMonth ? setViewMonth(`${y - 1}-${viewMonth.slice(5)}`) : stepMonth(-1))}
-          onPressIn={prevBtn.onPressIn}
-          onPressOut={prevBtn.onPressOut}
-          hitSlop={10}
-          style={[styles.navBtn, prevBtn.animatedStyle]}
-          accessibilityLabel={pickingMonth ? 'Previous year' : 'Previous month'}
-        >
-          <Feather name="chevron-left" size={20} color={theme.colors.ink} />
-        </AnimatedPressable>
-        <Pressable
-          onPress={() => {
-            haptics.tap();
-            setPickingMonth((v) => !v);
-          }}
-          style={withPressed(styles.titleBtn)}
-          accessibilityRole="button"
-          accessibilityLabel={
-            pickingMonth ? 'Back to the days' : `${MONTHS[m - 1]} ${y}. Pick a month and year`
-          }
-        >
-          <Text style={styles.monthLabel}>{pickingMonth ? String(y) : `${MONTHS[m - 1]} ${y}`}</Text>
-          <Feather name={pickingMonth ? 'chevron-up' : 'chevron-down'} size={15} color={theme.colors.ink} />
-        </Pressable>
-        <AnimatedPressable
-          onPress={() => (pickingMonth ? setViewMonth(`${y + 1}-${viewMonth.slice(5)}`) : stepMonth(1))}
-          onPressIn={nextBtn.onPressIn}
-          onPressOut={nextBtn.onPressOut}
-          hitSlop={10}
-          style={[styles.navBtn, nextBtn.animatedStyle]}
-          accessibilityLabel={pickingMonth ? 'Next year' : 'Next month'}
-        >
-          <Feather name="chevron-right" size={20} color={theme.colors.ink} />
-        </AnimatedPressable>
-      </View>
-
-      {pickingMonth ? (
-        <>
-          <ScrollView
-            ref={yearStripRef}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.yearStrip}
-            // Opens scrolled so the year on screen is visible, not the oldest
-            // one — scrolled once it's laid out, which works on Android too.
-            onLayout={() =>
-              yearStripRef.current?.scrollTo({
-                x: Math.max(0, (y - firstYear - 2) * YEAR_CHIP_STEP),
-                animated: false,
-              })
+        <View style={styles.header}>
+          <AnimatedPressable
+            onPress={() => (pickingMonth ? setViewMonth(`${y - 1}-${viewMonth.slice(5)}`) : stepMonth(-1))}
+            onPressIn={prevBtn.onPressIn}
+            onPressOut={prevBtn.onPressOut}
+            hitSlop={10}
+            style={[styles.navBtn, prevBtn.animatedStyle]}
+            accessibilityLabel={pickingMonth ? 'Previous year' : 'Previous month'}
+          >
+            <Feather name="chevron-left" size={20} color={theme.colors.ink} />
+          </AnimatedPressable>
+          <Pressable
+            onPress={() => {
+              haptics.tap();
+              setPickingMonth((v) => !v);
+            }}
+            style={withPressed(styles.titleBtn)}
+            accessibilityRole="button"
+            accessibilityLabel={
+              pickingMonth ? 'Back to the days' : `${MONTHS[m - 1]} ${y}. Pick a month and year`
             }
           >
-            {years.map((year) => (
-              <Pressable
-                key={year}
-                onPress={() => setViewMonth(`${year}-${viewMonth.slice(5)}`)}
-                style={withPressed([
-                  styles.yearChip,
-                  year === y && { backgroundColor: accent, borderColor: theme.colors.ink },
-                ])}
-                accessibilityRole="button"
-                accessibilityState={{ selected: year === y }}
-              >
-                <Text style={[styles.yearText, year === y && { color: onAccent }]}>{year}</Text>
-              </Pressable>
-            ))}
-          </ScrollView>
-          {gridRows(
-            MONTHS.map((_, i) => i + 1),
-            0,
-            3
-          ).map((row, r) => (
-            <View key={r} style={styles.row}>
-              {row.map((month) =>
-                month === null ? null : (
-                  <Pressable
-                    key={month}
-                    disabled={monthOutOfRange(month)}
-                    onPress={() => {
-                      haptics.tap();
-                      setViewMonth(`${y}-${String(month).padStart(2, '0')}`);
-                      setPickingMonth(false);
-                    }}
-                    style={withPressed([styles.monthCell, month === m && { backgroundColor: accent }])}
-                    accessibilityRole="button"
-                    accessibilityLabel={`${MONTHS[month - 1]} ${y}`}
-                  >
-                    <Text
-                      style={[
-                        styles.monthCellText,
-                        monthOutOfRange(month) && styles.dayTextDisabled,
-                        month === m && { color: onAccent },
-                      ]}
+            <Text style={styles.monthLabel}>{pickingMonth ? String(y) : `${MONTHS[m - 1]} ${y}`}</Text>
+            <Feather name={pickingMonth ? 'chevron-up' : 'chevron-down'} size={15} color={theme.colors.ink} />
+          </Pressable>
+          <AnimatedPressable
+            onPress={() => (pickingMonth ? setViewMonth(`${y + 1}-${viewMonth.slice(5)}`) : stepMonth(1))}
+            onPressIn={nextBtn.onPressIn}
+            onPressOut={nextBtn.onPressOut}
+            hitSlop={10}
+            style={[styles.navBtn, nextBtn.animatedStyle]}
+            accessibilityLabel={pickingMonth ? 'Next year' : 'Next month'}
+          >
+            <Feather name="chevron-right" size={20} color={theme.colors.ink} />
+          </AnimatedPressable>
+        </View>
+
+        {pickingMonth ? (
+          <>
+            <ScrollView
+              ref={yearStripRef}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.yearStrip}
+              // Opens scrolled so the year on screen is visible, not the oldest
+              // one — scrolled once it's laid out, which works on Android too.
+              onLayout={() =>
+                yearStripRef.current?.scrollTo({
+                  x: Math.max(0, (y - firstYear - 2) * YEAR_CHIP_STEP),
+                  animated: false,
+                })
+              }
+            >
+              {years.map((year) => (
+                <Pressable
+                  key={year}
+                  onPress={() => setViewMonth(`${year}-${viewMonth.slice(5)}`)}
+                  style={withPressed([
+                    styles.yearChip,
+                    year === y && { backgroundColor: accent, borderColor: theme.colors.ink },
+                  ])}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: year === y }}
+                >
+                  <Text style={[styles.yearText, year === y && { color: onAccent }]}>{year}</Text>
+                </Pressable>
+              ))}
+            </ScrollView>
+            {gridRows(
+              MONTHS.map((_, i) => i + 1),
+              0,
+              3
+            ).map((row, r) => (
+              <View key={r} style={styles.row}>
+                {row.map((month) =>
+                  month === null ? null : (
+                    <Pressable
+                      key={month}
+                      disabled={monthOutOfRange(month)}
+                      onPress={() => {
+                        haptics.tap();
+                        setViewMonth(`${y}-${String(month).padStart(2, '0')}`);
+                        setPickingMonth(false);
+                      }}
+                      style={withPressed([styles.monthCell, month === m && { backgroundColor: accent }])}
+                      accessibilityRole="button"
+                      accessibilityLabel={`${MONTHS[month - 1]} ${y}`}
                     >
-                      {MONTHS[month - 1].slice(0, 3)}
-                    </Text>
-                  </Pressable>
-                )
-              )}
-            </View>
-          ))}
-        </>
-      ) : (
-        <>
-          <View style={styles.row}>
-            {WEEKDAYS.map((w, i) => (
-              <Text key={i} style={[styles.slot, styles.weekday]}>
-                {w}
-              </Text>
+                      <Text
+                        style={[
+                          styles.monthCellText,
+                          monthOutOfRange(month) && styles.dayTextDisabled,
+                          month === m && { color: onAccent },
+                        ]}
+                      >
+                        {MONTHS[month - 1].slice(0, 3)}
+                      </Text>
+                    </Pressable>
+                  )
+                )}
+              </View>
             ))}
-          </View>
-          {weeks.map((week, r) => (
-            <View key={r} style={styles.row}>
-              {week.map((iso, c) =>
-                iso === null ? (
-                  <View key={`blank-${c}`} style={styles.slot} />
-                ) : (
-                  <DayCell
-                    key={iso}
-                    iso={iso}
-                    disabled={outOfRange(iso)}
-                    isToday={iso === today}
-                    selected={iso === value}
-                    accent={accent}
-                    onAccent={onAccent}
-                    onPress={() => pick(iso)}
-                  />
-                )
-              )}
+          </>
+        ) : (
+          <>
+            <View style={styles.row}>
+              {WEEKDAYS.map((w, i) => (
+                <Text key={i} style={[styles.slot, styles.weekday]}>
+                  {w}
+                </Text>
+              ))}
             </View>
-          ))}
-        </>
-      )}
+            {weeks.map((week, r) => (
+              <View key={r} style={styles.row}>
+                {week.map((iso, c) =>
+                  iso === null ? (
+                    <View key={`blank-${c}`} style={styles.slot} />
+                  ) : (
+                    <DayCell
+                      key={iso}
+                      iso={iso}
+                      disabled={outOfRange(iso)}
+                      isToday={iso === today}
+                      selected={iso === value}
+                      accent={accent}
+                      onAccent={onAccent}
+                      onPress={() => pick(iso)}
+                    />
+                  )
+                )}
+              </View>
+            ))}
+          </>
+        )}
+      </View>
     </ModalSheet>
   );
 }
@@ -319,11 +321,14 @@ function DayCell({
 }
 
 const styles = StyleSheet.create({
-  quickRow: { flexDirection: 'row', gap: 8, marginBottom: 14 },
+  calendar: { width: '100%', maxWidth: 420, alignSelf: 'center' },
+  quickRow: { flexDirection: 'row', gap: 8, marginBottom: 8 },
   quick: {
     flex: 1,
     alignItems: 'center',
-    paddingVertical: 9,
+    minHeight: 44,
+    justifyContent: 'center',
+    paddingVertical: 8,
     borderRadius: theme.radius.pill,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
@@ -334,20 +339,27 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 12,
+    marginBottom: 8,
   },
-  navBtn: { width: 34, height: 34, alignItems: 'center', justifyContent: 'center' },
+  navBtn: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
   titleBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
     paddingHorizontal: 12,
-    paddingVertical: 5,
+    minHeight: 44,
+    paddingVertical: 8,
+    flexShrink: 1,
     borderRadius: theme.radius.pill,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
   },
-  monthLabel: { fontFamily: theme.font.roundedBold, fontSize: 16, color: theme.colors.textPrimary },
+  monthLabel: {
+    flexShrink: 1,
+    fontFamily: theme.font.roundedBold,
+    fontSize: 16,
+    color: theme.colors.textPrimary,
+  },
   row: { flexDirection: 'row' },
   // Every slot takes an equal share of its row — see gridRows for why.
   slot: { flex: 1, minWidth: 0 },
@@ -358,10 +370,11 @@ const styles = StyleSheet.create({
     color: theme.colors.textMuted,
     marginBottom: 4,
   },
-  cell: { aspectRatio: 1, alignItems: 'center', justifyContent: 'center' },
+  cell: { minHeight: 44, paddingVertical: 4, alignItems: 'center', justifyContent: 'center' },
   day: {
-    width: 34,
-    height: 34,
+    minWidth: 36,
+    minHeight: 36,
+    padding: 4,
     borderRadius: 17,
     alignItems: 'center',
     justifyContent: 'center',
@@ -375,6 +388,8 @@ const styles = StyleSheet.create({
   yearChip: {
     width: 58,
     alignItems: 'center',
+    minHeight: 44,
+    justifyContent: 'center',
     paddingVertical: 7,
     borderRadius: 12,
     borderWidth: StyleSheet.hairlineWidth,

@@ -10,6 +10,7 @@ import { ToggleSwitch } from '@/components/ToggleSwitch';
 import { useSaveOnce } from '@/lib/useSaveOnce';
 import { toMinor, formatMaskableMoney } from '@/lib/money';
 import { toLocalIsoDate } from '@/lib/date';
+import { dayMonthYear } from '@/lib/dateLabels';
 import { errorMessage } from '@/lib/errorMessage';
 import { emitTransactionsChanged } from '@/lib/dataEvents';
 import { usePrivacy } from '@/theme/PrivacyContext';
@@ -104,7 +105,9 @@ export function RefundTracker({
                 <InsightStat label="Still awaiting" value={money(refund.remainingMinor)} />
                 <InsightStat label="Received" value={money(refund.receivedMinor)} />
               </View>
-              {refund.dueDate && <Text style={insight.caption}>Expected by {refund.dueDate}</Text>}
+              {refund.dueDate && (
+                <Text style={insight.caption}>Expected by {dayMonthYear(refund.dueDate)}</Text>
+              )}
               {refund.dueDate && refund.dueDate < toLocalIsoDate(new Date()) && refund.remainingMinor > 0 && (
                 <Text style={styles.errorText}>Past the expected date</Text>
               )}
@@ -113,7 +116,7 @@ export function RefundTracker({
                   {refund.receipts.map((r) => (
                     <View key={r.id} style={styles.splitPart}>
                       <Text style={styles.splitPartName}>
-                        {r.date} · {money(r.amountMinor)}
+                        {dayMonthYear(r.date)} · {money(r.amountMinor)}
                       </Text>
                       <PrimaryButton
                         compact
@@ -224,7 +227,7 @@ export function RefundTracker({
                           <Chip
                             key={c.id}
                             active={false}
-                            label={`${c.date} · ${money(c.amount_minor)}`}
+                            label={`${dayMonthYear(c.date)} · ${money(c.amount_minor)}`}
                             onPress={() =>
                               void run(() =>
                                 receiveRefund(transaction.id, {

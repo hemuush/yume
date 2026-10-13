@@ -123,6 +123,11 @@ describe('recurring sheet', () => {
 
   it('deletes from the quiet link, with an undo', async () => {
     const tree = await render(rule);
+    expect(texts(tree)).not.toContain('Delete recurring entry');
+    const more = tree.root.findAll(
+      (n) => n.props.accessibilityLabel === 'More options' && typeof n.props.onPress === 'function'
+    )[0];
+    act(() => more.props.onPress());
     const link = tree.root.find(
       (n) =>
         typeof n.props.onPress === 'function' &&

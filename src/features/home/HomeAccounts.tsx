@@ -4,6 +4,7 @@ import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Text } from '@/components/Text';
 import { Amount } from '@/components/Amount';
 import { Glass, GLASS } from '@/components/Glass';
+import { cardSurface } from '@/components/CardSurface';
 import type { McIconName } from '@/components/iconName';
 import { theme } from '@/constants/theme';
 import { accountHue, accountIcon } from '@/lib/account';
@@ -47,7 +48,7 @@ export function HomeAccounts({
         accessibilityRole="button"
         accessibilityLabel="Add an account"
       >
-        <Glass radius={22} style={styles.tile}>
+        <Glass radius={22} style={[styles.tile, cardSurface.neutral]}>
           <View style={styles.head}>
             <Text style={styles.title}>Accounts</Text>
             <Feather name="plus" size={17} color={theme.colors.textSecondary} />
@@ -64,7 +65,7 @@ export function HomeAccounts({
   const inHandMinor = inHand.reduce((s, a) => s + a.currentBalanceMinor, 0);
   return (
     <View style={styles.wrap}>
-      <Glass radius={22} style={styles.tile}>
+      <Glass radius={22} style={[styles.tile, cardSurface.neutral]}>
         <Pressable
           onPress={onOpenAccounts}
           hitSlop={8}

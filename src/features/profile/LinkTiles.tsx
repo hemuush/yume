@@ -3,7 +3,6 @@ import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
 import { usePressScale } from '@/lib/usePressScale';
 import { SCREEN } from '@/components/screenStyles';
-import { GLASS } from '@/components/Glass';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -69,11 +68,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingTop: 13,
     paddingBottom: 10,
-    borderRadius: 20,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: GLASS.edge,
-    backgroundColor: GLASS.fill,
-    boxShadow: GLASS.shadow,
+    borderColor: theme.colors.borderSoft,
+    backgroundColor: theme.colors.surface,
+    boxShadow: 'none',
   },
   dot: { position: 'absolute', top: 12, right: 12, width: 8, height: 8, borderRadius: 4 },
   value: { fontFamily: theme.font.roundedBold, fontSize: 18, color: theme.colors.textPrimary },

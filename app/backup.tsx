@@ -50,7 +50,8 @@ import {
 import { resyncAfterRestore } from '@/lib/restoreSync';
 import { authenticate, withoutRelock } from '@/lib/appLock';
 import { SkyHeader, HeaderSummary } from '@/features/home/SkyHeader';
-import { Glass, GLASS_CARD } from '@/components/Glass';
+import { Glass } from '@/components/Glass';
+import { cardSurface } from '@/components/CardSurface';
 import { HomeWallpaper } from '@/features/home/HomeWallpaper';
 import { BackupShield } from '@/features/backup/BackupShield';
 import { shade } from '@/lib/color';
@@ -490,7 +491,7 @@ Restore anyway? Your current data would be replaced with no way back.`,
           </View>
         )}
         {/* Glass, with a shield in the status's colour (green when safe, amber or red when it needs you). */}
-        <Glass radius={28} tone="strong" style={styles.statusCard}>
+        <Glass radius={22} tone="strong" style={[styles.statusCard, cardSurface.summary]}>
           {!loaded ? (
             <>
               <Skeleton width={200} height={16} radius={4} />
@@ -569,7 +570,7 @@ Restore anyway? Your current data would be replaced with no way back.`,
               )}
             </View>
             {(safetyInfo || shownFiles.length > 0) && (
-              <View style={[h.card, GLASS_CARD, styles.timeline]}>
+              <View style={[h.card, cardSurface.neutral, styles.timeline]}>
                 {safetyInfo && (
                   <TimelineNode first last={shownFiles.length === 0} copy>
                     <View style={[h.mid, styles.nodeDetails]}>
@@ -629,7 +630,7 @@ Restore anyway? Your current data would be replaced with no way back.`,
               </View>
             )}
             {loaded && shownFiles.length === 0 && (
-              <View style={[h.card, GLASS_CARD, styles.emptyCard, safetyInfo && styles.emptyAfter]}>
+              <View style={[h.card, cardSurface.neutral, styles.emptyCard, safetyInfo && styles.emptyAfter]}>
                 <Text style={styles.emptyTitle}>No backups yet</Text>
                 <Text style={styles.emptySub}>
                   {hasFolder
@@ -638,7 +639,7 @@ Restore anyway? Your current data would be replaced with no way back.`,
                 </Text>
               </View>
             )}
-            <View style={[h.card, GLASS_CARD, styles.restoreFile]}>
+            <View style={[h.card, cardSurface.neutral, styles.restoreFile]}>
               <SettingsRow
                 icon="file-restore-outline"
                 label="Restore from file"
@@ -651,7 +652,7 @@ Restore anyway? Your current data would be replaced with no way back.`,
         ) : (
           <>
             <Text style={styles.sectionTitle}>Save a copy</Text>
-            <View style={[h.card, GLASS_CARD]}>
+            <View style={[h.card, cardSurface.neutral]}>
               <SettingsRow
                 icon="code-json"
                 label="Full backup (JSON)"

@@ -9,6 +9,7 @@ import Animated, {
 import Feather from '@expo/vector-icons/Feather';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Text } from '@/components/Text';
+import { cardSurface } from '@/components/CardSurface';
 import { GLASS } from '@/components/Glass';
 import type { McIconName } from '@/components/iconName';
 import type { CategoryBreakdownItem } from '@/db/reports';
@@ -81,7 +82,7 @@ export function WhereItWent({
   }));
   const diff = spentMinor - previousSpentMinor;
   return (
-    <View style={[styles.section, stacked && styles.stacked]}>
+    <View style={[styles.section, cardSurface.neutral, stacked && styles.stacked]}>
       <View style={styles.details}>
         <Text style={styles.label}>Spent in {periodName}</Text>
         <Text style={styles.total} numberOfLines={1} adjustsFontSizeToFit>

@@ -11,7 +11,7 @@ export const styles = StyleSheet.create({
     marginBottom: SECTION_GAP.bottom,
   },
   statusCard: { marginHorizontal: 20, marginTop: theme.layout.screenTopGap, padding: 14 },
-  statusHead: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  statusHead: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   statusTitle: { fontFamily: theme.font.roundedBold, fontSize: 17, color: theme.colors.textPrimary },
   errorLine: { color: theme.colors.expenseText },
   mainAction: { marginTop: 14 },
@@ -48,7 +48,8 @@ export const styles = StyleSheet.create({
   tabs: { marginHorizontal: 20, marginTop: 16 },
   titleRow: {
     flexDirection: 'row',
-    alignItems: 'baseline',
+    flexWrap: 'wrap',
+    alignItems: 'center',
     justifyContent: 'space-between',
     paddingRight: 20,
   },
@@ -57,7 +58,7 @@ export const styles = StyleSheet.create({
   whenRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 6 },
   latestChip: {
     paddingHorizontal: 7,
-    paddingVertical: 1,
+    paddingVertical: 3,
     borderRadius: theme.radius.pill,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
@@ -65,8 +66,6 @@ export const styles = StyleSheet.create({
   latestText: {
     fontFamily: theme.font.bodyBold,
     fontSize: 11,
-    letterSpacing: 0.4,
-    textTransform: 'uppercase',
     color: theme.colors.textSecondary,
   },
   copySub: { color: theme.colors.textSecondary },

@@ -4,7 +4,7 @@ import ReanimatedAnimated from 'react-native-reanimated';
 import Feather from '@expo/vector-icons/Feather';
 import { Text } from '@/components/Text';
 import { CategoryIcon } from '@/components/CategoryIcon';
-import { GLASS } from '@/components/Glass';
+import { StatusBadge } from '@/components/StatusBadge';
 import { MovingRow } from '@/components/MovingRow';
 import { JustAddedGlow } from '@/components/JustAddedGlow';
 import { Category, Transaction } from '@/types';
@@ -239,14 +239,16 @@ function TimelineDayView({
             {...reorderProps(i)}
             style={withPressed([styles.line, stacked && styles.wrapLine])}
             accessibilityRole="button"
-            accessibilityLabel={`${categorySpoken(categoryName(tx.categoryId), parentNameOf(tx.categoryId, categoriesById))}${tx.note ? `, ${tx.note}` : ''}, ${money(tx.amountMinor, hidden(tx), tx.accountId)}`}
+            accessibilityLabel={`${categorySpoken(categoryName(tx.categoryId), parentNameOf(tx.categoryId, categoriesById))}${tx.isRefund ? ', refund' : ''}${tx.note ? `, ${tx.note}` : ''}, ${money(tx.amountMinor, hidden(tx), tx.accountId)}`}
           >
             <JustAddedGlow ids={[tx.id]} surface="activity" />
             <CategoryIcon name={cat?.icon ?? 'tag'} color={cat?.color} size={14} square={30} round />
             <View style={[styles.mid, stacked && styles.wideMid]}>
-              <Text style={styles.name}>{categoryName(tx.categoryId)}</Text>
+              <View style={styles.entryHead}>
+                <Text style={[styles.name, styles.stackName]}>{categoryName(tx.categoryId)}</Text>
+                {tx.isRefund && <StatusBadge label="Refund" tone="complete" />}
+              </View>
               <Text style={styles.sub}>
-                {tx.isRefund && <Text style={styles.refund}>Refund · </Text>}
                 {parentLine(tx.categoryId) ? `${parentLine(tx.categoryId)} · ` : ''}
                 {tx.note ? `${tx.note} · ` : ''}
                 {accountName(tx.accountId)}
@@ -282,7 +284,7 @@ function TimelineDayView({
           style={withPressed([styles.line, stacked && styles.wrapLine])}
           accessibilityRole="button"
           accessibilityState={{ expanded: open }}
-          accessibilityLabel={`${categorySpoken(name, stackParent)}, ${line.items.length} entries, ${money(line.totalMinor, lineMasked, first.accountId)}. ${open ? 'Close' : 'Open'}`}
+          accessibilityLabel={`${categorySpoken(name, stackParent)}${line.items.every((t) => t.isRefund) ? ', refunds' : ''}, ${line.items.length} entries, ${money(line.totalMinor, lineMasked, first.accountId)}. ${open ? 'Close' : 'Open'}`}
         >
           {/* A new entry folded into this line glows the line. */}
           <JustAddedGlow ids={line.items.map((t) => t.id)} surface="activity" />
@@ -290,6 +292,7 @@ function TimelineDayView({
           <View style={[styles.mid, stacked && styles.wideMid]}>
             <View style={styles.stackMid}>
               <Text style={[styles.name, styles.stackName]}>{name}</Text>
+              {line.items.every((t) => t.isRefund) && <StatusBadge label="Refund" tone="complete" />}
               <View style={styles.stackChip}>
                 <Feather
                   name={open ? 'chevron-up' : 'chevron-down'}
@@ -325,7 +328,7 @@ function TimelineDayView({
                     onPress={() => onPressTx(tx)}
                     style={withPressed([styles.subLine, stacked && styles.wrapLine])}
                     accessibilityRole="button"
-                    accessibilityLabel={`${categorySpoken(name, stackParent)}${tx.note ? `, ${tx.note}` : ''}, ${money(tx.amountMinor, hidden(tx), tx.accountId)}`}
+                    accessibilityLabel={`${categorySpoken(name, stackParent)}${tx.isRefund ? ', refund' : ''}${tx.note ? `, ${tx.note}` : ''}, ${money(tx.amountMinor, hidden(tx), tx.accountId)}`}
                   >
                     <View
                       style={[styles.subDot, { backgroundColor: cat?.color ?? theme.colors.borderSoft }]}
@@ -440,12 +443,12 @@ const styles = StyleSheet.create({
   },
   transferName: { fontFamily: theme.font.bodyMedium, color: theme.colors.textSecondary },
   transferAmount: { color: theme.colors.textSecondary },
-  // Frosted, on the wallpaper like Home's cards.
+  // Flat cream keeps category colours and amounts prominent, matching Home's supporting cards.
   lane: {
-    backgroundColor: GLASS.fill,
+    backgroundColor: theme.colors.surface,
     borderRadius: 24,
     borderWidth: 1,
-    borderColor: GLASS.edge,
+    borderColor: theme.colors.borderSoft,
     // No shadow: at 4% it was invisible, and a shadow on a clipped, rounded row in a scrolling list costs a
     // clipping layer per day on Android.
     overflow: 'hidden',
@@ -463,7 +466,7 @@ const styles = StyleSheet.create({
   wrapLine: { flexWrap: 'wrap', rowGap: 6 },
   wideMid: { flexGrow: 1, flexBasis: '75%' },
   mid: { flex: 1, minWidth: 0 },
-  stackMid: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  stackMid: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 6 },
   stackChip: {
     minHeight: 20,
     paddingHorizontal: 6,
@@ -471,11 +474,23 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: theme.colors.surfaceAlt,
   },
-  name: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textPrimary },
+  entryHead: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 6 },
+  name: { fontFamily: theme.font.bodyBold, fontSize: 13.5, color: theme.colors.textPrimary },
   stackName: { flexShrink: 1 },
-  sub: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textMuted, marginTop: 2 },
-  refund: { fontFamily: theme.font.bodyBold, color: theme.colors.incomeText },
-  amount: { fontFamily: theme.font.monoBold, fontSize: 12.5, color: theme.colors.textPrimary },
+  sub: {
+    fontFamily: theme.font.body,
+    fontSize: 12,
+    lineHeight: 17,
+    color: theme.colors.textSecondary,
+    marginTop: 3,
+  },
+  amount: {
+    fontFamily: theme.font.monoBold,
+    fontSize: 14,
+    color: theme.colors.textPrimary,
+    fontVariant: ['tabular-nums'],
+    flexShrink: 1,
+  },
   income: { color: theme.colors.incomeText },
   // An open stack's entries: the same card, dividers and text as every other
   // line, each with a dot in its category's colour under the stack's icon.

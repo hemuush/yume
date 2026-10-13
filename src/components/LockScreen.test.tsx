@@ -22,6 +22,11 @@ const render = async (onUnlocked = jest.fn()) => {
   });
   return onUnlocked;
 };
+const unlock = async () => {
+  await act(async () => {
+    await tree.root.findAllByType(PrimaryButton)[0].props.onPress();
+  });
+};
 afterEach(() => {
   act(() => tree?.unmount());
   jest.resetAllMocks();
@@ -31,6 +36,7 @@ it('stays locked when both authentication and the security check fail', async ()
   auth.mockRejectedValue(new Error('native error'));
   secured.mockRejectedValue(new Error('security status unavailable'));
   const unlocked = await render();
+  await unlock();
   expect(unlocked).not.toHaveBeenCalled();
   expect(tree.root.findAllByType(PrimaryButton).map((button) => button.props.title)).toEqual(['Unlock']);
 });
@@ -39,12 +45,21 @@ it('offers recovery only when Android explicitly confirms no device lock', async
   auth.mockResolvedValue(false);
   secured.mockResolvedValue(false);
   await render();
+  await unlock();
   expect(tree.root.findAllByType(PrimaryButton).map((button) => button.props.title)).toContain(
     "Turn off Yume's lock"
   );
 });
 
-it('does not start a second prompt while the automatic prompt is pending', async () => {
+it('does not open a system prompt until Unlock is tapped', async () => {
+  const unlocked = await render();
+  expect(auth).not.toHaveBeenCalled();
+  expect(secured).not.toHaveBeenCalled();
+  expect(unlocked).not.toHaveBeenCalled();
+  expect(tree.root.findAllByType(PrimaryButton).map((button) => button.props.title)).toEqual(['Unlock']);
+});
+
+it('does not start a second prompt while a user-requested prompt is pending', async () => {
   let finish!: (ok: boolean) => void;
   auth.mockImplementation(
     () =>
@@ -54,6 +69,9 @@ it('does not start a second prompt while the automatic prompt is pending', async
   );
   secured.mockResolvedValue(true);
   const unlocked = await render();
+  act(() => {
+    void tree.root.findByType(PrimaryButton).props.onPress();
+  });
   await act(async () => {
     tree.root.findByType(PrimaryButton).props.onPress();
   });
@@ -62,4 +80,16 @@ it('does not start a second prompt while the automatic prompt is pending', async
     finish(true);
   });
   expect(unlocked).toHaveBeenCalledTimes(1);
+});
+
+it('stays locked after dismissal and allows a successful manual retry', async () => {
+  auth.mockResolvedValueOnce(false).mockResolvedValueOnce(true);
+  secured.mockResolvedValue(true);
+  const unlocked = await render();
+  await unlock();
+  expect(unlocked).not.toHaveBeenCalled();
+  expect(auth).toHaveBeenCalledTimes(1);
+  await unlock();
+  expect(unlocked).toHaveBeenCalledTimes(1);
+  expect(auth).toHaveBeenCalledTimes(2);
 });

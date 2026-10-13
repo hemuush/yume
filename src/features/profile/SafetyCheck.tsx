@@ -2,7 +2,8 @@ import { View, Pressable, StyleSheet } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 import Feather from '@expo/vector-icons/Feather';
 import { Text } from '@/components/Text';
-import { Glass, GLASS } from '@/components/Glass';
+import { Glass } from '@/components/Glass';
+import { cardSurface } from '@/components/CardSurface';
 import { Kicker, frost } from '@/components/Frost';
 import { theme } from '@/constants/theme';
 import { withPressed } from '@/lib/pressed';
@@ -80,12 +81,8 @@ function Guard({
       accessibilityLabel={label}
     >
       <Ring fraction={fraction} color={color} icon={icon} />
-      <Text style={styles.guardTitle} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>
-        {title}
-      </Text>
-      <Text style={[styles.guardSub, bad && styles.guardSubBad]} numberOfLines={2}>
-        {sub}
-      </Text>
+      <Text style={styles.guardTitle}>{title}</Text>
+      <Text style={[styles.guardSub, bad && styles.guardSubBad]}>{sub}</Text>
     </Pressable>
   );
 }
@@ -128,7 +125,7 @@ export function SafetyCheck({
   const good = theme.colors.incomeText;
   const muted = theme.colors.textMuted;
   return (
-    <Glass radius={28} tone="strong" style={frost.hero}>
+    <Glass radius={22} tone="strong" style={[frost.hero, cardSurface.summary, { padding: 14, gap: 8 }]}>
       <Kicker icon="shield">Safety check</Kicker>
       <Text style={[styles.headline, backup === 'failed' && styles.headlineBad]}>{headline}</Text>
       <View style={styles.guards}>
@@ -169,18 +166,15 @@ export function SafetyCheck({
 const styles = StyleSheet.create({
   headline: { fontFamily: theme.font.bodyBold, fontSize: 17, color: theme.colors.textPrimary },
   headlineBad: { color: theme.colors.expenseText },
-  guards: { flexDirection: 'row', gap: 8 },
+  guards: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   guard: {
-    flex: 1,
-    minWidth: 0,
-    padding: 10,
+    flexGrow: 1,
+    flexBasis: 96,
+    minWidth: 96,
+    paddingVertical: 8,
     gap: 6,
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: GLASS.edge,
-    backgroundColor: GLASS.fillStrong,
   },
-  guardBad: { backgroundColor: theme.colors.expenseTint, borderColor: theme.colors.expense },
+  guardBad: { paddingHorizontal: 8, borderRadius: 12, backgroundColor: theme.colors.expenseTint },
   ring: { width: RING, height: RING },
   ringIcon: {
     position: 'absolute',
@@ -192,6 +186,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   guardTitle: { fontFamily: theme.font.bodyBold, fontSize: 12.5, color: theme.colors.textPrimary },
-  guardSub: { fontFamily: theme.font.body, fontSize: 11, lineHeight: 14, color: theme.colors.textMuted },
+  guardSub: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 17, color: theme.colors.textSecondary },
   guardSubBad: { fontFamily: theme.font.bodyBold, color: theme.colors.expenseText },
 });

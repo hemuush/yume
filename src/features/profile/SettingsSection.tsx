@@ -38,7 +38,7 @@ import { Section } from '@/components/Section';
 import { screenStyles as h } from '@/components/screenStyles';
 import { styles } from './profile.styles';
 import { SafetyCheck } from './SafetyCheck';
-import { GLASS_CARD } from '@/components/Glass';
+import { cardSurface } from '@/components/CardSurface';
 import { softTint } from '@/components/softTint';
 import { errorMessage } from '@/lib/errorMessage';
 import type { McIconName } from '@/components/iconName';
@@ -301,7 +301,7 @@ export function SettingsSection() {
       )}
 
       <Section compact title="Money">
-        <View style={[h.card, GLASS_CARD]}>
+        <View style={[h.card, cardSurface.neutral]}>
           <SettingsRow
             icon="currency-inr"
             iconBg={softTint(theme.colors.slice.free, 0.35)}
@@ -398,7 +398,7 @@ export function SettingsSection() {
       </Section>
 
       <Section compact title="Privacy & alerts">
-        <View style={[h.card, GLASS_CARD]}>
+        <View style={[h.card, cardSurface.neutral]}>
           <SettingsRow
             icon="fingerprint"
             iconBg={softTint(theme.colors.slice.saved, 0.35)}
@@ -456,7 +456,7 @@ export function SettingsSection() {
       </Section>
 
       <Section compact title="Your data">
-        <View style={[h.card, GLASS_CARD]}>
+        <View style={[h.card, cardSurface.neutral]}>
           <SettingsRow
             icon="folder-outline"
             iconBg={softTint(theme.colors.slice.free, 0.35)}
@@ -501,7 +501,7 @@ export function SettingsSection() {
       <Section compact title="Appearance">
         <Pressable
           onPress={() => router.push('/themes')}
-          style={withPressed([h.card, GLASS_CARD, h.row])}
+          style={withPressed([h.card, cardSurface.neutral, h.row])}
           accessibilityRole="button"
           accessibilityLabel={`Theme: ${activeTheme.name}. Change theme`}
         >
@@ -536,7 +536,7 @@ export function SettingsSection() {
       </View>
       {aboutOpen && (
         <ReanimatedAnimated.View entering={PANEL_ENTER} exiting={ROW_EXIT}>
-          <View style={[h.card, GLASS_CARD, styles.aboutCard]}>
+          <View style={[h.card, cardSurface.neutral, styles.aboutCard]}>
             <Text style={styles.aboutTagline}>Track every rupee, on your terms.</Text>
             <View style={styles.aboutFacts}>
               <AboutFact icon="wifi-off" text="Works fully offline — no account, no server, no signup." />

@@ -94,6 +94,11 @@ describe('RecurringHero', () => {
         { key: 'pay', date: '2026-11-01', amountMinor: 9500000, incoming: true },
       ],
     });
+    expect(tree.root.findAll((n) => n.props.testID === 'landLine')).toHaveLength(0);
+    const disclosure = tree.root.findAll(
+      (n) => n.props.accessibilityLabel === 'Next 30 days timeline' && typeof n.props.onPress === 'function'
+    )[0];
+    act(() => disclosure.props.onPress());
     act(() =>
       tree.root
         .find((n) => n.props.testID === 'landLine')

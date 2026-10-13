@@ -12,7 +12,7 @@ import { formatMaskableMoney, formatMoney } from '@/lib/money';
 import { withPressed } from '@/lib/pressed';
 import { screenStyles as h } from '@/components/screenStyles';
 import { useAccent } from '@/theme/AccentContext';
-import { GLASS, GLASS_CARD } from '@/components/Glass';
+import { cardSurface } from '@/components/CardSurface';
 
 /** "+₹1,600" / "−₹23,18,958" / "₹0": a true minus sign, and a plus for the lines of a sum. */
 function signedMoney(minor: number, plus = true, masked = false, currency?: string): string {
@@ -68,7 +68,7 @@ export function TrackedCard({
   const [open, setOpen] = useState(false);
   const { secondary } = useAccent();
   return (
-    <View style={embedded ? styles.embedded : [h.card, GLASS_CARD, styles.card]}>
+    <View style={embedded ? styles.embedded : [h.card, cardSurface.neutral, styles.card]}>
       <Pressable
         style={withPressed([styles.head, embedded && styles.headEmbedded])}
         onPress={() => setOpen((v) => !v)}
@@ -156,21 +156,18 @@ const styles = StyleSheet.create({
   // The sum, on a brighter pane: each part, then a rule and the total.
   sumLines: {
     marginTop: 10,
-    paddingHorizontal: 12,
+    paddingHorizontal: 0,
     paddingVertical: 10,
     gap: 8,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: GLASS.edge,
-    backgroundColor: GLASS.fillStrong,
   },
   inset: { marginHorizontal: 14, marginBottom: 10 },
-  sumLine: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  sumLine: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 10 },
   sumKey: { width: 10, height: 10, borderRadius: 3 },
   sumLabel: { flex: 1, fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textSecondary },
   sumValue: { fontFamily: theme.font.monoBold, fontSize: 13, color: theme.colors.textPrimary },
   sumTotal: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
     gap: 10,
     paddingTop: 7,
@@ -187,8 +184,8 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: GLASS.edge,
-    backgroundColor: GLASS.fill,
+    borderColor: theme.colors.borderSoft,
+    backgroundColor: theme.colors.surface,
   },
   hintWarn: { backgroundColor: theme.colors.idGold },
   hintText: {

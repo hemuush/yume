@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { View, Pressable, ScrollView, StyleSheet, LayoutChangeEvent } from 'react-native';
 import { Text } from '@/components/Text';
 import { Glass } from '@/components/Glass';
+import { cardSurface } from '@/components/CardSurface';
+import { InsightDisclosure } from '@/components/InsightCard';
 import { Kicker, frost } from '@/components/Frost';
 import { theme } from '@/constants/theme';
 import { formatMoney } from '@/lib/money';
@@ -65,42 +67,44 @@ export function RecurringHero({
   const schedule = (
     <>
       {today && marks.length > 0 && (
-        <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-          <Text style={styles.lineLabel}>When they land, next 30 days</Text>
-          <View
-            testID="landLine"
-            style={styles.line}
-            onLayout={(e: LayoutChangeEvent) => setWidth(e.nativeEvent.layout.width)}
-          >
-            <View style={styles.rail} />
-            {width > 0 &&
-              grouped.map((m) => {
-                const size = Math.round(DOT_MIN + Math.sqrt(m.amountMinor / max) * (DOT_MAX - DOT_MIN));
-                const x = Math.min(1, Math.max(0, xOf(m.date))) * width;
-                return (
-                  <View
-                    key={m.key}
-                    style={[
-                      styles.dot,
-                      {
-                        width: size,
-                        height: size,
-                        borderRadius: size / 2,
-                        left: Math.min(width - size, Math.max(0, x - size / 2)),
-                        top: (LINE_HEIGHT - size) / 2,
-                        borderColor: m.incoming ? theme.colors.income : ink,
-                      },
-                    ]}
-                  />
-                );
-              })}
+        <InsightDisclosure title="Next 30 days timeline">
+          <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+            <Text style={styles.lineLabel}>When they land, next 30 days</Text>
+            <View
+              testID="landLine"
+              style={styles.line}
+              onLayout={(e: LayoutChangeEvent) => setWidth(e.nativeEvent.layout.width)}
+            >
+              <View style={styles.rail} />
+              {width > 0 &&
+                grouped.map((m) => {
+                  const size = Math.round(DOT_MIN + Math.sqrt(m.amountMinor / max) * (DOT_MAX - DOT_MIN));
+                  const x = Math.min(1, Math.max(0, xOf(m.date))) * width;
+                  return (
+                    <View
+                      key={m.key}
+                      style={[
+                        styles.dot,
+                        {
+                          width: size,
+                          height: size,
+                          borderRadius: size / 2,
+                          left: Math.min(width - size, Math.max(0, x - size / 2)),
+                          top: (LINE_HEIGHT - size) / 2,
+                          borderColor: m.incoming ? theme.colors.income : ink,
+                        },
+                      ]}
+                    />
+                  );
+                })}
+            </View>
+            <View style={styles.axis}>
+              <Text style={styles.axisText}>Today</Text>
+              {midDate && <Text style={styles.axisText}>{dayMonth(midDate)}</Text>}
+              {endDate && <Text style={styles.axisText}>{dayMonth(endDate)}</Text>}
+            </View>
           </View>
-          <View style={styles.axis}>
-            <Text style={styles.axisText}>Today</Text>
-            {midDate && <Text style={styles.axisText}>{dayMonth(midDate)}</Text>}
-            {endDate && <Text style={styles.axisText}>{dayMonth(endDate)}</Text>}
-          </View>
-        </View>
+        </InsightDisclosure>
       )}
       {grouped.length > 0 && (
         <ScrollView horizontal showsHorizontalScrollIndicator contentContainerStyle={styles.dateGroups}>
@@ -125,14 +129,23 @@ export function RecurringHero({
 
   return (
     // Keyed so it can't lose its children when it switches between the two states.
-    <Glass key={running ? 'totals' : 'intro'} radius={28} tone="strong" style={styles.card}>
+    <Glass
+      key={running ? 'totals' : 'intro'}
+      radius={22}
+      tone="strong"
+      style={[styles.card, cardSurface.summary]}
+    >
       {running ? (
         <>
           <View style={[frost.heroRow, styles.summary]}>
-            <View style={frost.heroMain}>
+            <View style={[frost.heroMain, { gap: 2 }]}>
               <Kicker icon="repeat">Subscriptions & bills</Kicker>
               <View style={frost.bigRow}>
-                <Text style={frost.bigValue} numberOfLines={1} adjustsFontSizeToFit>
+                <Text
+                  style={[frost.bigValue, { fontSize: 30, lineHeight: 36 }]}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                >
                   {formatMoney(totals.monthlyMinor)}
                 </Text>
                 <Text style={frost.bigNote}>a month</Text>
@@ -173,13 +186,14 @@ export function RecurringHero({
 const styles = StyleSheet.create({
   card: { padding: 14, gap: 8 },
   summary: { flexWrap: 'wrap', gap: 8 },
-  dateGroups: { gap: 6, paddingBottom: 6 },
+  dateGroups: { gap: 6 },
   dateGroup: {
     minHeight: 44,
     justifyContent: 'center',
     paddingHorizontal: 12,
-    borderRadius: 22,
-    backgroundColor: theme.colors.surfaceAlt,
+    borderRadius: 12,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.borderSoft,
   },
   dateText: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textPrimary },
   lineLabel: {
@@ -195,7 +209,7 @@ const styles = StyleSheet.create({
   axisText: { fontFamily: theme.font.bodyMedium, fontSize: 11, color: theme.colors.textMuted },
   stack: {
     flexDirection: 'row',
-    height: 10,
+    height: 5,
     gap: 2,
     borderRadius: theme.radius.pill,
     overflow: 'hidden',

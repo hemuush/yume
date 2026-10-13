@@ -35,7 +35,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     borderBottomWidth: 1,
     borderBottomColor: theme.colors.borderSoft,
-    marginBottom: 14,
+    marginBottom: 12,
   },
   tab: {
     flex: 1,
@@ -47,7 +47,12 @@ const styles = StyleSheet.create({
     borderBottomWidth: 2,
     borderBottomColor: 'transparent',
   },
-  selected: { borderBottomColor: theme.colors.ink },
+  selected: {
+    borderBottomColor: theme.colors.ink,
+    backgroundColor: theme.colors.surface,
+    borderTopLeftRadius: 12,
+    borderTopRightRadius: 12,
+  },
   label: {
     fontFamily: theme.font.body,
     fontSize: 13,

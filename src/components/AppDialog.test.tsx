@@ -8,10 +8,16 @@ import { Text } from 'react-native';
 jest.unmock('@/components/AppDialog');
 jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMock').createReanimatedMock());
 jest.mock('@/components/ModalSheet', () => ({
-  ModalSheet: ({ children }: { children: React.ReactNode }) => children,
+  ModalSheet: ({ children, footer }: { children: React.ReactNode; footer?: React.ReactNode }) => (
+    <>
+      {children}
+      {footer}
+    </>
+  ),
 }));
 
 import { AppDialogHost, showAlert } from './AppDialog';
+import { ModalSheet } from './ModalSheet';
 
 const texts = (tree: ReactTestRenderer) =>
   tree.root.findAllByType(Text).map((t) => [].concat(t.props.children).join(''));
@@ -31,6 +37,8 @@ describe('showAlert', () => {
     const tree = await render();
     act(() => showAlert("Couldn't save", 'The disk is full.'));
     expect(texts(tree)).toEqual(expect.arrayContaining(["Couldn't save", 'The disk is full.']));
+    expect(tree.root.findByType(ModalSheet).props.scrollable).toBe(true);
+    expect(tree.root.findByType(ModalSheet).props.footer).toBeDefined();
     const [ok] = buttons(tree);
     expect(ok.props.title).toBe('OK');
     act(() => ok.props.onPress());

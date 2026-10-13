@@ -23,6 +23,28 @@ function setup(loadFn: () => Promise<void>) {
 }
 
 describe('useScreenLoad', () => {
+  it.each([-60_000, 5 * 60_000])(
+    'reloads on focus when the cache age is invalid or expired (%dms)',
+    async (age) => {
+      jest.useFakeTimers({ now: new Date(2026, 9, 13, 12) });
+      try {
+        trackDataVersion();
+        const load = jest.fn().mockResolvedValue(undefined);
+        setup(load);
+        await act(async () => {
+          mockFocus();
+        });
+        expect(load).toHaveBeenCalledTimes(1);
+        jest.setSystemTime(Date.now() + age);
+        await act(async () => {
+          mockFocus();
+        });
+        expect(load).toHaveBeenCalledTimes(2);
+      } finally {
+        jest.useRealTimers();
+      }
+    }
+  );
   it('skips unchanged focus reads, invalidates after writes, and records manual reloads', async () => {
     trackDataVersion();
     const load = jest.fn().mockResolvedValue(undefined);

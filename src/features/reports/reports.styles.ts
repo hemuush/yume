@@ -424,6 +424,13 @@ export const styles = StyleSheet.create({
     gap: 8,
     marginBottom: 12,
   },
+  breakdownHeading: {
+    fontFamily: theme.font.roundedBold,
+    fontSize: 16,
+    color: theme.colors.textPrimary,
+    marginTop: 16,
+    marginBottom: 6,
+  },
   breakdownAmount: { fontFamily: theme.font.body, fontSize: 26, color: theme.colors.textPrimary },
   catMain: { flex: 1, minWidth: 0 },
   catRow: {

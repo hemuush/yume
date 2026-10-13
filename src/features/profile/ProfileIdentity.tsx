@@ -2,7 +2,8 @@ import { View, Pressable, StyleSheet } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import { Text, TextInput } from '@/components/Text';
 import { theme } from '@/constants/theme';
-import { Glass, GLASS } from '@/components/Glass';
+import { Glass } from '@/components/Glass';
+import { cardSurface } from '@/components/CardSurface';
 import { withPressed } from '@/lib/pressed';
 import { SCREEN } from '@/components/screenStyles';
 import { useAccent } from '@/theme/AccentContext';
@@ -34,7 +35,7 @@ export function ProfileIdentity({
   const { accent, onAccent, secondary } = useAccent();
 
   return (
-    <Glass radius={28} tone="strong" style={local.card}>
+    <Glass radius={22} tone="strong" style={[local.card, cardSurface.summary]}>
       <View style={styles.identityRow}>
         <View style={[local.halo, { borderColor: secondary }]}>
           <View
@@ -100,19 +101,13 @@ export function ProfileIdentity({
 
 const local = StyleSheet.create({
   card: { marginHorizontal: SCREEN.gutter, marginTop: theme.layout.screenTopGap, padding: 14 },
-  halo: { padding: 3, borderRadius: 35, borderWidth: 3 },
+  halo: { padding: 2, borderRadius: 28, borderWidth: 1 },
   chip: {
-    marginTop: 8,
+    marginTop: 6,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
     alignSelf: 'flex-start',
-    backgroundColor: GLASS.fillStrong,
-    borderWidth: 1,
-    borderColor: GLASS.edge,
-    borderRadius: theme.radius.pill,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
   },
   chipText: {
     flexShrink: 1,

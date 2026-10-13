@@ -2,7 +2,6 @@ import { StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
 import { listScreenStyles } from '@/features/shared/listScreenStyles';
 import { SECTION_TITLE, SECTION_GAP } from '@/constants/textStyles';
-import { GLASS } from '@/components/Glass';
 
 /** Tiles per row on the Categories grid (a cell is one column wide). */
 export const TILE_COLUMNS = 4;
@@ -18,18 +17,17 @@ export const styles = StyleSheet.create({
     marginBottom: SECTION_GAP.bottom,
   },
   firstTitle: { marginTop: theme.layout.screenTopGap },
-  // Each grid sits in a glass card on the wallpaper.
+  // A flat supporting surface keeps the category colours readable.
   grid: {
     marginHorizontal: 20,
     paddingHorizontal: 4,
     paddingVertical: 14,
     gap: 12,
     marginBottom: 4,
-    backgroundColor: GLASS.fill,
-    borderRadius: 24,
+    backgroundColor: theme.colors.surface,
+    borderRadius: 20,
     borderWidth: 1,
-    borderColor: GLASS.edge,
-    boxShadow: GLASS.shadow,
+    borderColor: theme.colors.borderSoft,
   },
   gridRow: { flexDirection: 'row' },
   cell: { width: `${100 / TILE_COLUMNS}%`, paddingHorizontal: 2 },
@@ -40,7 +38,7 @@ export const styles = StyleSheet.create({
     width: 12,
     height: 12,
     marginLeft: -6,
-    backgroundColor: theme.colors.surface,
+    backgroundColor: theme.colors.surfaceAlt,
     borderLeftWidth: StyleSheet.hairlineWidth,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
@@ -50,7 +48,7 @@ export const styles = StyleSheet.create({
     marginHorizontal: 6,
     padding: 14,
     borderRadius: 20,
-    backgroundColor: theme.colors.surface,
+    backgroundColor: theme.colors.surfaceAlt,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
   },
@@ -87,8 +85,8 @@ export const styles = StyleSheet.create({
     maxWidth: '100%',
     paddingHorizontal: 11,
     paddingVertical: 7,
-    borderRadius: 999,
-    backgroundColor: theme.colors.surfaceAlt,
+    borderRadius: 12,
+    backgroundColor: theme.colors.surface,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
   },
@@ -130,8 +128,8 @@ export const styles = StyleSheet.create({
     color: theme.colors.surface,
   },
   tileName: {
-    fontSize: 11.5,
-    lineHeight: 14,
+    fontSize: 12,
+    lineHeight: 17,
     color: theme.colors.textPrimary,
     fontFamily: theme.font.bodyMedium,
     marginTop: 4,

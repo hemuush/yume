@@ -29,9 +29,21 @@ export const styles = StyleSheet.create({
     lineHeight: 16,
   },
   // Skeleton rows while the screen loads.
-  card: { marginBottom: 10, padding: 14 },
+  card: {
+    marginBottom: 10,
+    padding: 14,
+    backgroundColor: theme.colors.surface,
+    borderColor: theme.colors.borderSoft,
+    boxShadow: 'none',
+  },
   // The Running, Paused and Not set up yet cards: rows with a hairline between.
-  list: { paddingVertical: 2, paddingHorizontal: 14 },
+  list: {
+    paddingVertical: 2,
+    paddingHorizontal: 14,
+    backgroundColor: theme.colors.surface,
+    borderColor: theme.colors.borderSoft,
+    boxShadow: 'none',
+  },
   footnote: {
     fontFamily: theme.font.body,
     fontSize: 12,
@@ -40,11 +52,17 @@ export const styles = StyleSheet.create({
     marginHorizontal: 4,
     marginTop: 12,
   },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10 },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8 },
   rowDivider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.borderSoft },
   rowMuted: { opacity: 0.6 },
   rowTitle: { fontFamily: theme.font.bodyBold, fontSize: 15, color: theme.colors.textPrimary },
-  rowSub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, marginTop: 2 },
+  rowSub: {
+    fontFamily: theme.font.body,
+    fontSize: 12,
+    lineHeight: 17,
+    color: theme.colors.textSecondary,
+    marginTop: 2,
+  },
   ruleMain: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10, minWidth: 0 },
   ruleCopy: { flex: 1, minWidth: 0 },
   ruleMainStacked: { flex: 0 },
@@ -66,7 +84,7 @@ export const styles = StyleSheet.create({
     paddingLeft: 46,
   },
   hide: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
-  ruleSide: { alignItems: 'flex-end', gap: 6 },
+  ruleSide: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   ruleAmount: { fontFamily: theme.font.monoBold, fontSize: 15, color: theme.colors.textPrimary },
   make: {
     minHeight: 44,

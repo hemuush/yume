@@ -23,7 +23,6 @@ import { theme } from '@/constants/theme';
 import { useAccent } from '@/theme/AccentContext';
 import { usePrivacy } from '@/theme/PrivacyContext';
 import { formatMaskableMoney } from '@/lib/money';
-import { useFadeIn } from '@/lib/useFadeIn';
 import { useScreenLoad } from '@/lib/useScreenLoad';
 import { usePressScale } from '@/lib/usePressScale';
 import { accountBadgeColor, accountIcon } from '@/lib/account';
@@ -38,7 +37,7 @@ import { LinkTiles } from './LinkTiles';
 import { AddAccountModal } from './AddAccountModal';
 import { AccountDetailModal } from './AccountDetailModal';
 import { withPressed } from '@/lib/pressed';
-import { GLASS_CARD } from '@/components/Glass';
+import { cardSurface } from '@/components/CardSurface';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -73,7 +72,6 @@ export function YouSection() {
   const [hasLoans, setHasLoans] = useState(false);
   const [hasUntrackedAssetLoan, setHasUntrackedAssetLoan] = useState(false);
   const [addAccountVisible, setAddAccountVisible] = useState(false);
-  const accountsFadeStyle = useFadeIn();
 
   const loadYou = useCallback(async () => {
     const [accs, allAccs, txCountNow, loans, people, currency] = await Promise.all([
@@ -214,7 +212,7 @@ export function YouSection() {
         {accounts.length === 0 ? (
           <EmptyState title="No accounts yet" subtitle="Tap + Account to create one." />
         ) : (
-          <Animated.View style={[h.card, GLASS_CARD, accountsFadeStyle]}>
+          <Animated.View style={[h.card, cardSurface.neutral]}>
             {groups.map((group, gi) => (
               <View key={group.type}>
                 {groups.length > 1 && (
@@ -247,7 +245,7 @@ export function YouSection() {
         )}
 
         {archivedAccounts.length > 0 && (
-          <View style={[h.card, GLASS_CARD, styles.archivedCard]}>
+          <View style={[h.card, cardSurface.neutral, styles.archivedCard]}>
             <Pressable
               style={withPressed(h.row)}
               onPress={() => setArchivedOpen((v) => !v)}

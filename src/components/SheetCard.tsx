@@ -1,4 +1,4 @@
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, StyleProp, ViewStyle } from 'react-native';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
@@ -18,6 +18,7 @@ export function SheetCard({
   title,
   meta,
   progress,
+  style,
 }: {
   hue: string;
   icon: string;
@@ -30,9 +31,10 @@ export function SheetCard({
   meta?: string;
   /** 0–1: draws a bar under the meta line — how far a goal has got. */
   progress?: number;
+  style?: StyleProp<ViewStyle>;
 }) {
   return (
-    <View style={[styles.card, { borderLeftColor: shade(hue, 65) }]}>
+    <View style={[styles.card, { borderLeftColor: shade(hue, 65) }, style]}>
       <View style={styles.top}>
         <View style={[styles.icon, { backgroundColor: shade(hue, 92) }]}>
           <MaterialCommunityIcons name={icon as McIconName} size={18} color={shade(hue, 30, 10)} />
@@ -42,11 +44,7 @@ export function SheetCard({
           {kicker ? <Text style={styles.kicker}>{kicker}</Text> : null}
         </View>
       </View>
-      {amount !== undefined ? (
-        <Text style={[styles.amount, { color: amountColor }]} numberOfLines={1} adjustsFontSizeToFit>
-          {amount}
-        </Text>
-      ) : null}
+      {amount !== undefined ? <Text style={[styles.amount, { color: amountColor }]}>{amount}</Text> : null}
       {meta ? <Text style={styles.meta}>{meta}</Text> : null}
       {progress !== undefined && (
         <View style={styles.track}>
@@ -60,19 +58,25 @@ export function SheetCard({
 const styles = StyleSheet.create({
   card: {
     borderRadius: 18,
-    padding: 14,
+    padding: 12,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
     borderLeftWidth: 3,
     backgroundColor: theme.colors.surface,
-    marginBottom: 16,
+    marginBottom: 12,
   },
-  top: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  top: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   heading: { flex: 1, minWidth: 0, gap: 3 },
-  icon: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
+  icon: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
   kicker: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 18, color: theme.colors.textSecondary },
-  amount: { fontFamily: theme.font.bodyMedium, fontSize: 26, lineHeight: 34, marginTop: 10 },
-  title: { fontFamily: theme.font.bodyBold, fontSize: 15, color: theme.colors.textPrimary },
+  amount: {
+    fontFamily: theme.font.bodyMedium,
+    fontSize: 24,
+    lineHeight: 32,
+    marginTop: 6,
+    fontVariant: ['tabular-nums'],
+  },
+  title: { fontFamily: theme.font.bodyBold, fontSize: 16, color: theme.colors.textPrimary },
   meta: {
     fontFamily: theme.font.body,
     fontSize: 12,

@@ -18,7 +18,6 @@ import { PrimaryButton } from '@/components/PrimaryButton';
 import { Skeleton } from '@/components/Skeleton';
 import { theme } from '@/constants/theme';
 import { SECTION_TITLE, SECTION_GAP } from '@/constants/textStyles';
-import { useFadeIn } from '@/lib/useFadeIn';
 import { useScreenLoad } from '@/lib/useScreenLoad';
 import { styles } from '@/features/loans/loans.styles';
 import { LoanCard } from '@/features/loans/LoanCard';
@@ -56,7 +55,6 @@ export default function LoansScreen() {
   const [selectedLoan, setSelectedLoan] = useState<Loan | null>(null);
   const [payOnOpen, setPayOnOpen] = useState(false);
   const { pay: payLoanId, loan: detailLoanId } = useLocalSearchParams<{ pay?: string; loan?: string }>();
-  const listFadeStyle = useFadeIn();
 
   const loadLoans = useCallback(async () => {
     const [list, rows] = await Promise.all([listLoans(), getLoanProgress()]);
@@ -148,7 +146,6 @@ export default function LoansScreen() {
                   loan={loan}
                   hue={hues[loan.id]}
                   progress={progress[loan.id]}
-                  fadeStyle={listFadeStyle}
                   onPress={() => setSelectedLoan(loan)}
                   onPay={() => payLoan(loan)}
                 />
@@ -176,7 +173,6 @@ export default function LoansScreen() {
                         loan={loan}
                         hue={hues[loan.id]}
                         progress={progress[loan.id]}
-                        fadeStyle={listFadeStyle}
                         onPress={() => setSelectedLoan(loan)}
                         onPay={() => payLoan(loan)}
                       />

@@ -2,8 +2,6 @@ import { View, Pressable, Animated, StyleSheet } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import { router } from 'expo-router';
 import { Text } from '@/components/Text';
-import { GLASS } from '@/components/Glass';
-import { softTint } from '@/components/softTint';
 import { CountUpAmount } from '@/components/CountUpAmount';
 import { SavingsGoal } from '@/types';
 import { formatMoney, formatMaskableMoney } from '@/lib/money';
@@ -91,14 +89,8 @@ export function GoalCard({
         accessibilityRole="button"
         style={[styles.card, goal.archived && shared.cardArchived]}
       >
-        {/* Fills from the bottom to how far along it is, in the goal's colour (as on Plan). */}
-        {fillPct > 0 && (
-          <View style={[styles.fill, { height: `${fillPct}%`, backgroundColor: softTint(fillColor, 0.45) }]}>
-            <View style={[styles.fillEdge, { backgroundColor: shade(fillColor, 60) }]} />
-          </View>
-        )}
-        <Text style={styles.name}>{goal.name}</Text>
         <View style={styles.head}>
+          <Text style={styles.name}>{goal.name}</Text>
           {hideAmounts ? (
             <Feather name="eye-off" size={20} color={theme.colors.textMuted} />
           ) : reached ? (
@@ -127,6 +119,10 @@ export function GoalCard({
               </>
             )}
           </View>
+        </View>
+
+        <View style={styles.track}>
+          <View style={[styles.fill, { width: `${fillPct}%`, backgroundColor: shade(fillColor, 60) }]} />
         </View>
 
         <Text style={styles.sub}>
@@ -165,36 +161,33 @@ export function GoalCard({
 
 const styles = StyleSheet.create({
   wrap: { marginHorizontal: 20, marginBottom: 12 },
-  // Frosted glass that fills from the bottom; the goal's colour is the liquid.
+  // A quiet surface with one thin, colour-coded progress bar.
   card: {
     padding: 14,
     gap: 8,
-    borderRadius: 24,
+    borderRadius: 20,
     borderWidth: 1,
-    borderColor: GLASS.edge,
-    backgroundColor: GLASS.fill,
-    boxShadow: GLASS.shadow,
+    borderColor: theme.colors.borderSoft,
+    backgroundColor: theme.colors.surface,
     overflow: 'hidden',
   },
-  fill: { position: 'absolute', left: 0, right: 0, bottom: 0 },
-  fillEdge: { position: 'absolute', left: 0, right: 0, top: 0, height: 2, opacity: 0.8 },
+  track: { height: 5, borderRadius: 3, backgroundColor: theme.colors.inkWash, overflow: 'hidden' },
+  fill: { height: '100%', borderRadius: 3 },
   head: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     alignItems: 'flex-start',
     justifyContent: 'space-between',
-    gap: 10,
-    minHeight: 38,
+    gap: 8,
   },
   pct: {
     fontFamily: theme.font.bodyLight,
-    fontSize: 34,
-    lineHeight: 38,
-    letterSpacing: -1.2,
+    fontSize: 17,
+    lineHeight: 23,
     color: theme.colors.textPrimary,
   },
   pctSign: { fontFamily: theme.font.body, fontSize: 15, letterSpacing: 0, color: theme.colors.textMuted },
-  figs: { alignItems: 'flex-end', flexShrink: 0, maxWidth: '50%' },
+  figs: { flexDirection: 'row', alignItems: 'baseline', gap: 4, flexWrap: 'wrap', flexShrink: 1 },
   toGo: { fontFamily: theme.font.bodyMedium, fontSize: 16, color: theme.colors.textPrimary },
   toGoLabel: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textMuted, marginTop: 1 },
   reached: { fontFamily: theme.font.roundedBold, fontSize: 15, color: theme.colors.incomeText },
@@ -202,24 +195,24 @@ const styles = StyleSheet.create({
     fontFamily: theme.font.roundedBold,
     fontSize: 17,
     color: theme.colors.textPrimary,
+    flexGrow: 1,
+    flexBasis: 140,
+    minWidth: 0,
   },
   sub: { fontFamily: theme.font.body, fontSize: 12.5, color: theme.colors.textSecondary },
   footer: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 },
-  tags: { flexGrow: 1, flexBasis: 160, minWidth: 0, flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  tags: { flexGrow: 1, flexBasis: 140, minWidth: 0, flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   tag: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    minHeight: 24,
-    paddingHorizontal: 9,
+    minHeight: 20,
+    paddingHorizontal: 0,
     borderRadius: theme.radius.pill,
-    backgroundColor: GLASS.fillStrong,
-    borderWidth: 1,
-    borderColor: GLASS.edge,
     maxWidth: '100%',
   },
-  tagOk: { backgroundColor: '#CDEFD9', borderColor: '#CDEFD9' },
-  tagWarn: { backgroundColor: '#FFE6C7', borderColor: '#FFE6C7' },
+  tagOk: { paddingHorizontal: 8, backgroundColor: theme.colors.secondaryTint },
+  tagWarn: { paddingHorizontal: 8, backgroundColor: theme.colors.dueRow },
   tagText: {
     flexShrink: 1,
     fontFamily: theme.font.bodyBold,

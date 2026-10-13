@@ -4,6 +4,7 @@ import Svg, { Path, Line, Circle } from 'react-native-svg';
 import Feather from '@expo/vector-icons/Feather';
 import { Text } from '@/components/Text';
 import { Glass } from '@/components/Glass';
+import { cardSurface } from '@/components/CardSurface';
 import { Kicker, frost } from '@/components/Frost';
 import { theme } from '@/constants/theme';
 import { formatSlotTime } from '@/lib/notificationTimes';
@@ -44,7 +45,7 @@ export function DayArc({ morning, evening }: { morning: Slot; evening: Slot }) {
     : 'No times on';
 
   return (
-    <Glass radius={28} tone="strong" style={frost.hero}>
+    <Glass radius={22} tone="strong" style={[frost.hero, cardSurface.summary, { padding: 14, gap: 8 }]}>
       <Kicker icon="bell">Your day with Yume</Kicker>
       <View
         style={styles.plot}

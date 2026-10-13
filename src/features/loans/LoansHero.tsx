@@ -3,6 +3,8 @@ import { Text } from '@/components/Text';
 import { CountUpAmount } from '@/components/CountUpAmount';
 import { Skeleton } from '@/components/Skeleton';
 import { Glass, GLASS } from '@/components/Glass';
+import { cardSurface } from '@/components/CardSurface';
+import { InsightDisclosure } from '@/components/InsightCard';
 import { GrowFill } from '@/components/GrowFill';
 import { Kicker, frost } from '@/components/Frost';
 import { theme } from '@/constants/theme';
@@ -46,7 +48,7 @@ export function LoansHero({
 }) {
   if (loading) {
     return (
-      <Glass key="loading" radius={28} tone="strong" style={[frost.hero, styles.hero]}>
+      <Glass key="loading" radius={22} tone="strong" style={[frost.hero, styles.hero, cardSurface.summary]}>
         <Skeleton width={70} height={10} radius={4} />
         <Skeleton width={160} height={28} radius={6} />
         <Skeleton width={200} height={14} radius={5} />
@@ -64,7 +66,7 @@ export function LoansHero({
     !!timeline && timeline.rows.length > 0 && shares.every((s) => timeline.rows.some((r) => r.id === s.id));
 
   return (
-    <Glass key="hero" radius={28} tone="strong" style={[frost.hero, styles.hero]}>
+    <Glass key="hero" radius={22} tone="strong" style={[frost.hero, styles.hero, cardSurface.summary]}>
       {allClear ? (
         <>
           <Kicker icon="check">Debt-free</Kicker>
@@ -76,12 +78,16 @@ export function LoansHero({
       ) : (
         <>
           <View style={[frost.heroRow, styles.summary]}>
-            <View style={frost.heroMain}>
+            <View style={[frost.heroMain, { gap: 2 }]}>
               <Kicker icon={onlyLent ? 'users' : 'flag'}>{onlyLent ? 'Owed to you' : 'You owe'}</Kicker>
               <CountUpAmount
                 minor={onlyLent ? totals.owedToYouMinor : totals.youOweMinor}
                 symbolStyle={frost.bigSymbol}
-                style={[frost.bigValue, onlyLent && { color: theme.colors.incomeText }]}
+                style={[
+                  frost.bigValue,
+                  { fontSize: 30, lineHeight: 36 },
+                  onlyLent && { color: theme.colors.incomeText },
+                ]}
                 numberOfLines={1}
                 adjustsFontSizeToFit
               />
@@ -102,32 +108,34 @@ export function LoansHero({
           </View>
 
           {owes && showLanes ? (
-            <View style={styles.lanes}>
-              {timeline!.rows.map((row) => (
-                <View key={row.id} style={styles.lane}>
-                  <View style={styles.laneHead}>
-                    <Text style={styles.laneName}>{row.name}</Text>
-                    <Text style={styles.laneDate}>{payoffMonthShort(row.endDate)}</Text>
+            <InsightDisclosure title="Payoff timeline">
+              <View style={styles.lanes}>
+                {timeline!.rows.map((row) => (
+                  <View key={row.id} style={styles.lane}>
+                    <View style={styles.laneHead}>
+                      <Text style={styles.laneName}>{row.name}</Text>
+                      <Text style={styles.laneDate}>{payoffMonthShort(row.endDate)}</Text>
+                    </View>
+                    <View style={styles.laneTrack}>
+                      <GrowFill
+                        animKey={`loan-timeline:${row.id}`}
+                        pct={row.fraction * 100}
+                        style={[styles.laneFill, { backgroundColor: tone(row.id) }]}
+                      />
+                    </View>
                   </View>
-                  <View style={styles.laneTrack}>
-                    <GrowFill
-                      animKey={`loan-timeline:${row.id}`}
-                      pct={row.fraction * 100}
-                      style={[styles.laneFill, { backgroundColor: tone(row.id) }]}
-                    />
-                  </View>
+                ))}
+                <View
+                  style={styles.axis}
+                  accessibilityElementsHidden
+                  importantForAccessibility="no-hide-descendants"
+                >
+                  <Text style={styles.axisText}>Now</Text>
+                  {timeline!.midYear !== null && <Text style={styles.axisText}>{timeline!.midYear}</Text>}
+                  <Text style={[styles.axisText, styles.axisEnd]}>Debt-free {timeline!.endYear}</Text>
                 </View>
-              ))}
-              <View
-                style={styles.axis}
-                accessibilityElementsHidden
-                importantForAccessibility="no-hide-descendants"
-              >
-                <Text style={styles.axisText}>Now</Text>
-                {timeline!.midYear !== null && <Text style={styles.axisText}>{timeline!.midYear}</Text>}
-                <Text style={[styles.axisText, styles.axisEnd]}>Debt-free {timeline!.endYear}</Text>
               </View>
-            </View>
+            </InsightDisclosure>
           ) : (
             owes &&
             shares.length > 0 && (
@@ -208,15 +216,11 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     flexBasis: 120,
     minWidth: 120,
-    paddingVertical: 8,
-    paddingHorizontal: 10,
-    borderRadius: 14,
-    backgroundColor: GLASS.fillStrong,
-    borderWidth: 1,
-    borderColor: GLASS.edge,
+    paddingVertical: 2,
+    paddingHorizontal: 0,
     gap: 2,
   },
   statValue: { fontFamily: theme.font.bodyBold, fontSize: 14, color: theme.colors.textPrimary },
   statLent: { color: theme.colors.incomeText },
-  statLabel: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textMuted },
+  statLabel: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
 });

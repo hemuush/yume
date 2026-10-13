@@ -13,6 +13,7 @@ import { useUndoToast } from '@/components/UndoToast';
 import { haptics } from '@/lib/haptics';
 import { Account, Category, RecurringRule, RecurrenceFrequency, TransactionType } from '@/types';
 import { ModalSheet, SheetLink } from '@/components/ModalSheet';
+import { InsightDisclosure } from '@/components/InsightCard';
 import { SheetCard } from '@/components/SheetCard';
 import { SettingsRow } from '@/components/SettingsRow';
 import { theme, modalFooterStyles as f } from '@/constants/theme';
@@ -424,7 +425,11 @@ export function RuleModal({
             )}
           </View>
           <FormInput label="Note (optional)" value={note} onChangeText={setNote} placeholder="e.g. Netflix" />
-          {editing && <SheetLink label="Delete recurring entry" onPress={confirmDelete} disabled={saving} />}
+          {editing && (
+            <InsightDisclosure title="More options">
+              <SheetLink label="Delete recurring entry" onPress={confirmDelete} disabled={saving} />
+            </InsightDisclosure>
+          )}
         </>
       ) : (
         <>

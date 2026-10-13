@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { View, Pressable, StyleSheet, Keyboard, Animated as RNAnimated } from 'react-native';
-import Animated, { LinearTransition, FadeIn } from 'react-native-reanimated';
+import Animated, { LinearTransition } from 'react-native-reanimated';
+import { MOTION } from '@/lib/animation';
 import Feather from '@expo/vector-icons/Feather';
 import type { Tabs } from 'expo-router';
 import { Text } from '@/components/Text';
@@ -59,7 +60,7 @@ function Tab({
           inside. Never both on one view. */}
       <RNAnimated.View style={animatedStyle}>
         <Animated.View
-          layout={reduce ? undefined : LinearTransition.springify().damping(18).stiffness(220)}
+          layout={reduce ? undefined : LinearTransition.duration(MOTION.standard).easing(MOTION.ease)}
           style={[
             styles.tab,
             { height: size, minWidth: size, borderRadius: size / 2 },
@@ -68,11 +69,11 @@ function Tab({
         >
           <Icon color={focused ? theme.colors.white : theme.colors.inkSoft} size={20} />
           {focused && (
-            <Animated.View entering={reduce ? undefined : FadeIn.duration(180)}>
+            <View>
               <Text style={styles.label} numberOfLines={1} maxFontSizeMultiplier={1.15}>
                 {label}
               </Text>
-            </Animated.View>
+            </View>
           )}
         </Animated.View>
       </RNAnimated.View>

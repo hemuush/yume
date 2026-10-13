@@ -19,6 +19,7 @@ import { haptics } from '@/lib/haptics';
 import { Loan, LoanPayment, Account, Category } from '@/types';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { ModalSheet, SheetFooter } from '@/components/ModalSheet';
+import { InsightDisclosure } from '@/components/InsightCard';
 import { SheetCard } from '@/components/SheetCard';
 import { SettingsRow } from '@/components/SettingsRow';
 import { SheetTabs } from '@/components/SheetTabs';
@@ -274,6 +275,7 @@ export function LoanDetailModal({
             {loadError && <Text style={styles.errorText}>Couldn't load the latest details: {loadError}</Text>}
 
             <SheetCard
+              style={styles.detailSummary}
               hue={
                 hue ?? (liveLoan.direction === 'borrowed' ? theme.colors.idCoralDeep : theme.colors.secondary)
               }
@@ -331,24 +333,26 @@ export function LoanDetailModal({
                         {payoff.emisLeft} EMI{payoff.emisLeft === 1 ? '' : 's'} to go
                       </Text>
                     </View>
-                    <Svg
-                      width="100%"
-                      height={PAYOFF_LINE_HEIGHT}
-                      viewBox={`0 0 ${PAYOFF_LINE_WIDTH} ${PAYOFF_LINE_HEIGHT}`}
-                      preserveAspectRatio="none"
-                    >
-                      <Path
-                        d={balanceLinePath(payoff.balances, PAYOFF_LINE_WIDTH, PAYOFF_LINE_HEIGHT - 4)}
-                        stroke={theme.colors.income}
-                        strokeWidth={2.5}
-                        fill="none"
-                        strokeLinecap="round"
-                      />
-                    </Svg>
-                    <View style={styles.payoffAxis}>
-                      <Text style={styles.rowSub}>Now · {formatMoney(dispOutstanding)} left</Text>
-                      <Text style={styles.rowSub}>{payoff.lastDueDate.slice(0, 4)}</Text>
-                    </View>
+                    <InsightDisclosure title="Balance forecast">
+                      <Svg
+                        width="100%"
+                        height={PAYOFF_LINE_HEIGHT}
+                        viewBox={`0 0 ${PAYOFF_LINE_WIDTH} ${PAYOFF_LINE_HEIGHT}`}
+                        preserveAspectRatio="none"
+                      >
+                        <Path
+                          d={balanceLinePath(payoff.balances, PAYOFF_LINE_WIDTH, PAYOFF_LINE_HEIGHT - 4)}
+                          stroke={theme.colors.income}
+                          strokeWidth={2.5}
+                          fill="none"
+                          strokeLinecap="round"
+                        />
+                      </Svg>
+                      <View style={styles.payoffAxis}>
+                        <Text style={styles.rowSub}>Now · {formatMoney(dispOutstanding)} left</Text>
+                        <Text style={styles.rowSub}>{payoff.lastDueDate.slice(0, 4)}</Text>
+                      </View>
+                    </InsightDisclosure>
                   </View>
                 )}
 

@@ -50,8 +50,8 @@ export function CategoryTile({
         <CategoryIcon
           name={category.icon}
           color={category.color}
-          square={isSubcategory ? 42 : 50}
-          size={isSubcategory ? 18 : 22}
+          square={isSubcategory ? 40 : 44}
+          size={isSubcategory ? 18 : 20}
           round
         />
         {!!count && (

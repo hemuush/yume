@@ -20,25 +20,22 @@ const BAR_MAX = 100;
 
 /** From this system font scale the summary strip stacks, so each figure keeps a full row. */
 const STACK_STRIP_AT = 1.3;
-const BAR_STAGGER_MS = 45;
 
-/** One bar: grows from the baseline in turn, once after app open; glides if the figure changes. */
+/** Bars draw together once after app open and glide only when their figures change. */
 function FlowBar({
   animKey,
   heightPx,
-  index,
   color,
   narrow,
   live,
 }: {
   animKey: string;
   heightPx: number;
-  index: number;
   color: string;
   narrow: boolean;
   live: boolean;
 }) {
-  const h = useGrowFrom(animKey, heightPx, { delay: index * BAR_STAGGER_MS });
+  const h = useGrowFrom(animKey, heightPx);
   return (
     <Animated.View
       style={[
@@ -144,7 +141,6 @@ export function CashFlowCard({
                   <FlowBar
                     animKey={`flow:${p.label}:${i}:in`}
                     heightPx={height(p.incomeMinor)}
-                    index={i}
                     color={accent}
                     narrow={narrow}
                     live={false}
@@ -152,7 +148,6 @@ export function CashFlowCard({
                   <FlowBar
                     animKey={`flow:${p.label}:${i}:out`}
                     heightPx={height(p.expenseMinor)}
-                    index={i}
                     color={theme.colors.spentSoft}
                     narrow={narrow}
                     live={live}

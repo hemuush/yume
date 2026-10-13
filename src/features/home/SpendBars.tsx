@@ -9,6 +9,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Text } from '@/components/Text';
 import { Glass } from '@/components/Glass';
+import { cardSurface } from '@/components/CardSurface';
 import { theme } from '@/constants/theme';
 import { formatMoney } from '@/lib/money';
 import { haptics } from '@/lib/haptics';
@@ -124,7 +125,7 @@ export function SpendBars({
       : `1–${Number(today.slice(8))} ${parseLocalIsoDate(today).toLocaleDateString(undefined, { month: 'short' })}`;
 
   return (
-    <Glass radius={24} style={styles.card}>
+    <Glass radius={24} style={[styles.card, cardSurface.neutral]}>
       <View style={styles.head}>
         <View
           style={{ flex: 1, minWidth: 0 }}

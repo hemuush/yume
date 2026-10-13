@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { View } from 'react-native';
+import { View, StyleSheet } from 'react-native';
+import { theme } from '@/constants/theme';
 import { Text } from '@/components/Text';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { DateRange } from '@/types';
@@ -8,8 +9,9 @@ import { formatMaskableMoney } from '@/lib/money';
 import { usePrivacy } from '@/theme/PrivacyContext';
 import { allocateRoundedMinor } from '@/lib/round';
 import { errorMessage } from '@/lib/errorMessage';
+import { dayMonthYear } from '@/lib/dateLabels';
 import { router } from 'expo-router';
-import { InsightHeader, InsightRow, InsightDisclosure, insight } from '@/components/InsightCard';
+import { InsightRow, InsightDisclosure, insight } from '@/components/InsightCard';
 export function SpendingExplanation({
   categoryId,
   current,
@@ -61,15 +63,16 @@ export function SpendingExplanation({
       result.current.refundMinor > 0 ||
       result.previous.refundMinor > 0);
   return (
-    <View style={insight.card}>
-      <InsightHeader title="What changed?" subtitle="Compared over matching days" icon="trending-up" />
+    <View style={styles.section}>
+      <Text style={styles.heading}>What changed?</Text>
+      <Text style={insight.caption}>Compared over matching days</Text>
       {error ? (
         <Text style={insight.caption}>{error}</Text>
       ) : !result ? (
         <Text style={insight.caption}>Comparing matching days…</Text>
       ) : (
         <>
-          <Text style={insight.value}>
+          <Text style={styles.change}>
             {!hasActivity
               ? 'No spending to compare'
               : result.deltaMinor === 0
@@ -86,23 +89,24 @@ export function SpendingExplanation({
           )}
           {hasActivity && (
             <>
-              <InsightRow
+              <EffectRow
                 label="Purchase frequency"
                 value={money(effects[0])}
                 detail={`${result.previous.count} → ${result.current.count} purchases`}
               />
-              <InsightRow
+              <EffectRow
                 label="Purchase size"
                 value={money(effects[1])}
                 detail={`Average ${money(result.previousAverage)} → ${money(result.currentAverage)}`}
               />
-              <InsightRow label="Refund changes" value={money(effects[2])} />
+              <EffectRow label="Refund changes" value={money(effects[2])} />
             </>
           )}
           <InsightDisclosure title="Comparison details">
             <Text style={insight.caption}>
-              {result.ranges.current.start}–{result.ranges.current.end} vs {result.ranges.previous.start}–
-              {result.ranges.previous.end}. {result.ranges.days} days in each.
+              {dayMonthYear(result.ranges.current.start)}–{dayMonthYear(result.ranges.current.end)} vs{' '}
+              {dayMonthYear(result.ranges.previous.start)}–{dayMonthYear(result.ranges.previous.end)}.{' '}
+              {result.ranges.days} days in each.
             </Text>
             {hasActivity && (
               <Text style={insight.caption}>
@@ -117,7 +121,7 @@ export function SpendingExplanation({
                   <InsightRow
                     key={r.id}
                     label={r.note || 'Expense'}
-                    detail={r.date}
+                    detail={dayMonthYear(r.date)}
                     value={money(r.amount_minor)}
                     onPress={() => {
                       onBeforeEntry?.();
@@ -136,3 +140,41 @@ export function SpendingExplanation({
     </View>
   );
 }
+
+function EffectRow({ label, value, detail }: { label: string; value: string; detail?: string }) {
+  return (
+    <View style={styles.effect}>
+      <View style={styles.copy}>
+        <Text style={styles.label}>{label}</Text>
+        {detail && <Text style={insight.caption}>{detail}</Text>}
+      </View>
+      <Text style={styles.amount}>{value}</Text>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  section: {
+    gap: 6,
+    paddingTop: 14,
+    marginTop: 10,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: theme.colors.borderSoft,
+  },
+  heading: { fontFamily: theme.font.roundedBold, fontSize: 16, color: theme.colors.textPrimary },
+  change: {
+    fontFamily: theme.font.bodyMedium,
+    fontSize: 21,
+    color: theme.colors.textPrimary,
+    marginVertical: 4,
+  },
+  effect: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8, paddingVertical: 6 },
+  copy: { flexGrow: 1, flexBasis: 180, minWidth: 0, gap: 2 },
+  label: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textPrimary },
+  amount: {
+    fontFamily: theme.font.bodyBold,
+    fontSize: 14,
+    color: theme.colors.textPrimary,
+    fontVariant: ['tabular-nums'],
+  },
+});

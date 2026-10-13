@@ -9,6 +9,7 @@ import { getAnnualBillGoal, prepareAnnualBill, unlinkAnnualBill, annualPreparati
 import { listSavingsGoals } from '@/db/savingsGoals';
 import { useSaveOnce } from '@/lib/useSaveOnce';
 import { toLocalIsoDate } from '@/lib/date';
+import { dayMonthYear } from '@/lib/dateLabels';
 import { formatMaskableMoney } from '@/lib/money';
 import { usePrivacy } from '@/theme/PrivacyContext';
 import { errorMessage } from '@/lib/errorMessage';
@@ -84,7 +85,7 @@ export function AnnualBillPreparation({
     <View style={insight.card}>
       <InsightHeader
         title="Prepare for renewal"
-        subtitle={`Next bill · ${rule.nextRunDate}`}
+        subtitle={`Next bill · ${dayMonthYear(rule.nextRunDate)}`}
         icon="calendar"
       />
       {error && <Text style={styles.errorText}>{error}</Text>}

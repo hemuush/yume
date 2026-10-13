@@ -1,6 +1,7 @@
 import { View, StyleSheet } from 'react-native';
 import { Skeleton } from '@/components/Skeleton';
 import { Glass } from '@/components/Glass';
+import { cardSurface } from '@/components/CardSurface';
 
 export { CardRowsSkeleton } from '@/components/ListSkeleton';
 
@@ -10,7 +11,7 @@ export { CardRowsSkeleton } from '@/components/ListSkeleton';
  */
 export function ThisMonthHeroSkeleton() {
   return (
-    <Glass radius={28} style={styles.card}>
+    <Glass radius={28} style={[styles.card, cardSurface.summary]}>
       <View style={styles.bar}>
         <Skeleton width={84} height={12} radius={4} />
         <Skeleton width={96} height={30} radius={15} />

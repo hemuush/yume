@@ -111,7 +111,7 @@ export function CategoryList({
                     animKey={`reports:${row.categoryId}`}
                     targetPct={share}
                     color={row.color}
-                    delay={Math.min(i, 8) * 40}
+                    delay={0}
                   />
                 </View>
               </View>
@@ -157,20 +157,14 @@ export function CategoryList({
       >
         {selected && (
           <>
+            <Text style={styles.catSplitCaption}>
+              {kind === 'income' ? 'Total income' : 'Total spending'}
+            </Text>
             <Amount
               minor={rounded[breakdown.indexOf(selected)]}
               sensitive={selected.isSensitive}
               style={styles.breakdownAmount}
             />
-            {kind === 'expense' && currentRange && previousRange && (
-              <SpendingExplanation
-                categoryId={selected.categoryId}
-                current={currentRange}
-                previous={previousRange}
-                onBeforeEntry={close}
-                onExplore={onOpen ? () => onOpen(selected) : undefined}
-              />
-            )}
             {splitError ? (
               <View style={styles.tidyNudge}>
                 <Text style={styles.errTitle}>Couldn’t load this breakdown</Text>
@@ -193,6 +187,7 @@ export function CategoryList({
                 />
               ) : (
                 <View>
+                  <Text style={styles.breakdownHeading}>By subcategory</Text>
                   {splitCaption && <Text style={styles.catSplitCaption}>{splitCaption}</Text>}
                   {split.map((row) => (
                     <View key={row.categoryId} style={styles.catSplitRow}>
@@ -213,6 +208,14 @@ export function CategoryList({
                   ))}
                 </View>
               ))
+            )}
+            {kind === 'expense' && currentRange && previousRange && (
+              <SpendingExplanation
+                categoryId={selected.categoryId}
+                current={currentRange}
+                previous={previousRange}
+                onBeforeEntry={close}
+              />
             )}
             <View style={styles.catLinks}>
               {onOpen && (
