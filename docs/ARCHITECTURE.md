@@ -31,6 +31,11 @@ See [data model](../DATA_MODEL.md) for persisted fields. Whole-major-unit entry,
 
 ## Screen coverage
 
+Loans, budgets and recurring list amounts use the existing sans-serif faces with tabular digits. Budget rows use category icons and horizontal pace meters (no jar-only alternate layout), with a borderless 44dp menu target. Goal account identity appears above the saved/target line; contribution, transfer and reservation buttons retain their distinct actions with secondary styling. People group headings identify balance direction, including a single-person state; initials use two letters for a single name or first/last initials, and activity appears below the name. Recurring list rows open editing rather than exposing live pause switches. Pause/resume is under More options in the edit sheet, requires confirmation that unsaved edits are discarded, uses the existing active-status mutation and closes/reloads only after success. Date-group quick actions remain available.
+
+Garden combines its stage legend and Suu note, uses a coloured flower for Bloom and neutral over-goal calendar tiles while retaining status marks and spoken labels. A 44dp edit action replaces the full-width goal-settings button. Today's remaining/over amount uses getTodaySpend with the same scope as the streak series and is omitted while amounts are hidden. Today remains provisional. Unrelated savings-goal summaries and their query are removed; safe-area padding and growth animation/reduced-motion behavior remain intact.
+
+
 Home shows the top four spending categories in responsive tiles with names, values and shares, plus a full positive-net-spending colour strip. Category taps open details directly; all categories remain available in Reports. Negative category totals get a refund-scope explanation. The hero retains the period total rather than duplicating it in this card. Accounts are grouped into everyday money (default currency), savings/investments, credit cards and other currencies, with each account's currency and privacy preserved. Zero-balance accounts stay visible. Tiles stack on narrow screens or enlarged text; no account totals combine different currencies.
 
 

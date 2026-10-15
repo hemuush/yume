@@ -1,15 +1,12 @@
 import { ScreenLoadError } from '@/components/ScreenLoadError';
 import { useCallback, useState } from 'react';
-import { View, ScrollView } from 'react-native';
+import { View, ScrollView, Pressable } from 'react-native';
 import { Text } from '@/components/Text';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getDailySpendingGoal, setDailySpendingGoal } from '@/db/settings';
-import { getDailyGoalStreakSeries, DailyGoalStreakPoint } from '@/db/reports';
-import { listSavingsGoals } from '@/db/savingsGoals';
-import { goalProgress } from '@/lib/savingsGoalProgress';
+import { getDailyGoalStreakSeries, DailyGoalStreakPoint, getTodaySpend } from '@/db/reports';
 import { stageForStreak, stageLabel, GrowthStage } from '@/lib/gardenGrowth';
 import { parseLocalIsoDate, toLocalIsoDate } from '@/lib/date';
-import { SavingsGoal } from '@/types';
 import { SkyHeader, HeaderSummary } from '@/features/home/SkyHeader';
 import { useCollapsingHeader } from '@/lib/useCollapsingHeader';
 import { EmptyState } from '@/components/EmptyState';
@@ -30,6 +27,7 @@ import { errorMessage } from '@/lib/errorMessage';
 import { shade } from '@/lib/color';
 import { useAccent } from '@/theme/AccentContext';
 import { router } from 'expo-router';
+import { usePrivacy } from '@/theme/PrivacyContext';
 
 const POT_COUNT = 5;
 const LEGEND_STAGES: GrowthStage[] = ['seed', 'sprout', 'sapling', 'bloom'];
@@ -45,10 +43,7 @@ function noteFor(stage: GrowthStage, streak: number): string {
   return `${streak} days running — in full bloom. A day over the goal starts it again from a seed.`;
 }
 
-/**
- * A daily-goal streak plus savings-goal context drawn as something growing ("Suu's Garden" sign-off). Uses
- * only tracked data: no contribution ledger for savings goals (DATA_MODEL.md), so it shows overall funded%.
- */
+/** Daily spending-goal progress and streak history, with provisional results for today. */
 export default function GardenScreen() {
   const insets = useSafeAreaInsets();
   const { accent, secondary } = useAccent();
@@ -56,7 +51,8 @@ export default function GardenScreen() {
   const { collapse, headerHeight, onJsScroll, settleJs } = useCollapsingHeader();
   const [dailyGoalMinor, setDailyGoalMinor] = useState<number | null>(null);
   const [series, setSeries] = useState<DailyGoalStreakPoint[]>([]);
-  const [goals, setGoals] = useState<SavingsGoal[]>([]);
+  const [todaySpentMinor, setTodaySpentMinor] = useState(0);
+  const { hideAmounts } = usePrivacy();
   // The first-run goal form, right in the empty garden rather than directions to Settings.
   const [goalInput, setGoalInput] = useState('');
   const [goalError, setGoalError] = useState<string | null>(null);
@@ -65,15 +61,15 @@ export default function GardenScreen() {
   const load = useCallback(async () => {
     const goal = await getDailySpendingGoal();
     setDailyGoalMinor(goal);
-    const [streakSeries, goalList] = await Promise.all([
+    const [streakSeries, todaySpend] = await Promise.all([
       // Back to the 1st (or the last five days, early in a month) for the bed and the month calendar.
       goal != null
         ? getDailyGoalStreakSeries(goal, Math.max(POT_COUNT, new Date().getDate()))
         : Promise.resolve([]),
-      listSavingsGoals(),
+      goal != null ? getTodaySpend() : Promise.resolve(0),
     ]);
     setSeries(streakSeries);
-    setGoals(goalList.filter((g) => !g.archived));
+    setTodaySpentMinor(todaySpend);
   }, []);
   const { loaded, hasData, loadError, reload } = useScreenLoad(load);
 
@@ -102,17 +98,6 @@ export default function GardenScreen() {
   const potDays = series.slice(-POT_COUNT);
   const month = buildGardenMonth(series, today);
   const stageToday = stageForStreak(streakToday);
-
-  const fundedGoals = goals.filter((g) => g.currentAmountMinor > 0);
-  const avgFundedPct =
-    fundedGoals.length > 0
-      ? Math.round(
-          fundedGoals.reduce(
-            (sum, g) => sum + goalProgress(g.currentAmountMinor, g.targetAmountMinor).percent,
-            0
-          ) / fundedGoals.length
-        )
-      : 0;
 
   if (!hasData && loadError)
     return <ScreenLoadError title="Suu’s garden" message={loadError} onRetry={() => void reload()} />;
@@ -212,13 +197,25 @@ export default function GardenScreen() {
                         {streakToday > 0 ? `${streakToday}-day streak` : 'No streak yet'}
                       </Text>
                     </View>
-                    <Text style={styles.summaryGoal}>Daily goal · under {formatMoney(dailyGoalMinor)}</Text>
-                    <PrimaryButton
-                      title="Change daily goal"
-                      compact
-                      variant="secondary"
-                      onPress={() => router.push({ pathname: '/profile', params: { tab: 'settings' } })}
-                    />
+                    <View style={styles.goalRow}>
+                      <Text style={styles.summaryGoal}>Daily goal · under {formatMoney(dailyGoalMinor)}</Text>
+                      <Pressable
+                        accessibilityRole="button"
+                        accessibilityLabel="Change daily goal"
+                        style={styles.editGoal}
+                        onPress={() => router.push({ pathname: '/profile', params: { tab: 'settings' } })}
+                      >
+                        <Text style={styles.editGoalText}>Edit goal</Text>
+                      </Pressable>
+                    </View>
+                    {!hideAmounts && (
+                      <Text style={styles.summaryGoal}>
+                        {todaySpentMinor <= dailyGoalMinor
+                          ? `${formatMoney(dailyGoalMinor - todaySpentMinor)} left today`
+                          : `${formatMoney(todaySpentMinor - dailyGoalMinor)} over today's goal`}
+                      </Text>
+                    )}
+                    <Text style={styles.introHint}>Today's result can change until the day ends.</Text>
                   </Glass>
                   <Glass radius={28} tone="strong" style={styles.bed}>
                     {potDays.map((point) => {
@@ -243,32 +240,22 @@ export default function GardenScreen() {
                     })}
                   </Glass>
 
-                  <View style={styles.legend}>
-                    {LEGEND_STAGES.map((stage) => (
-                      <View key={stage} style={styles.legendItem}>
-                        <GardenPlant stage={stage} size={30} decorative />
-                        <Text style={styles.legendLabel}>{stageLabel(stage)}</Text>
-                      </View>
-                    ))}
-                  </View>
-
                   <Glass radius={22} style={styles.note}>
+                    <View style={styles.legend}>
+                      {LEGEND_STAGES.map((stage) => (
+                        <View key={stage} style={styles.legendItem}>
+                          <GardenPlant stage={stage} size={30} decorative />
+                          <Text style={styles.legendLabel}>{stageLabel(stage)}</Text>
+                        </View>
+                      ))}
+                    </View>
+
                     <Text style={styles.noteLabel}>Suu says</Text>
                     <Text style={styles.noteText}>{noteFor(stageToday, streakToday)}</Text>
                   </Glass>
 
                   <GardenMonthCard month={month} today={today} />
                 </>
-              )}
-
-              {fundedGoals.length > 0 && (
-                <View style={styles.goalsSummary}>
-                  <SuuIllustration size={16} />
-                  <Text style={styles.goalsSummaryText}>
-                    {fundedGoals.length} savings goal{fundedGoals.length === 1 ? '' : 's'} with real progress
-                    — {avgFundedPct}% funded on average.
-                  </Text>
-                </View>
               )}
             </ScrollView>
             <SkyHeader

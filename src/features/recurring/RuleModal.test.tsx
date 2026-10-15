@@ -33,6 +33,7 @@ jest.mock('@/db/recurring', () => ({
   ...jest.requireActual('@/db/recurring'),
   deleteRecurringRule: jest.fn(async () => ({ snapshot: true })),
   updateRecurringRule: jest.fn(async () => {}),
+  setRecurringRuleActive: jest.fn(async () => {}),
 }));
 
 import { RuleModal } from './RuleModal';
@@ -187,4 +188,26 @@ describe('recurring sheet', () => {
     await save(tree);
     expect(updateRecurringRule).toHaveBeenCalledWith('r1', expect.objectContaining({ intervalCount: 3 }));
   });
+});
+
+it.each([true, false])('confirms a status change from active=%s before writing', async (active) => {
+  const dialog = require('@/components/AppDialog');
+  const alert = jest.spyOn(dialog, 'showAlert').mockImplementation(() => {});
+  const { setRecurringRuleActive } = require('@/db/recurring');
+  setRecurringRuleActive.mockClear();
+  const tree = await render({ ...rule, active });
+  const disclosure = tree.root.find((n) => n.props.title === 'More options' && typeof n.type !== 'string');
+  // Disclosure content mounts only when expanded.
+  const button = disclosure.findAll((n) => n.props.accessibilityRole === 'button' && n.props.onPress)[0];
+  if (button) act(() => button.props.onPress());
+  const label = active ? 'Pause recurring entry' : 'Resume recurring entry';
+  act(() => tree.root.find((n) => n.props.label === label && n.props.onPress).props.onPress());
+  expect(setRecurringRuleActive).not.toHaveBeenCalled();
+  const args = alert.mock.calls.at(-1) as any[];
+  expect(args[1]).toContain('Unsaved edits');
+  await act(async () => {
+    await args[2][1].onPress();
+  });
+  expect(setRecurringRuleActive).toHaveBeenCalledWith('r1', !active);
+  alert.mockRestore();
 });

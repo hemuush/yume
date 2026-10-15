@@ -1,5 +1,6 @@
 import {
   personStatus,
+  personInitials,
   peopleTotals,
   lastActivityShort,
   groupPeople,
@@ -73,3 +74,11 @@ describe('inRows', () => {
     expect(inRows([], 2)).toEqual([]);
   });
 });
+
+it.each([
+  ['Abhinav', 'AB'],
+  ['Avinash', 'AV'],
+  ['Hemant Sharma', 'HS'],
+  ['  A  ', 'A'],
+  ['   ', '?'],
+])('uses readable initials for %s', (name, initials) => expect(personInitials(name)).toBe(initials));

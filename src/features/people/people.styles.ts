@@ -1,6 +1,6 @@
 import { StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
-import { SECTION_TITLE, SECTION_GAP, EYEBROW } from '@/constants/textStyles';
+import { SECTION_TITLE, SECTION_GAP } from '@/constants/textStyles';
 
 // Shared by the Friends & Family screen, PersonTile, and the person modals.
 export const styles = StyleSheet.create({
@@ -40,8 +40,8 @@ export const styles = StyleSheet.create({
     marginTop: 14,
     marginBottom: 8,
   },
-  groupTitle: EYEBROW,
-  groupTotal: { fontFamily: theme.font.monoBold, fontSize: 12 },
+  groupTitle: SECTION_TITLE,
+  groupTotal: { fontFamily: theme.font.bodyBold, fontSize: 12 },
   tileRow: { flexDirection: 'row', gap: 10, marginHorizontal: 20, marginBottom: 10 },
   tileCell: { flex: 1, minWidth: 0 },
   // A white tile (StripCard) whose top strip says which way the money goes: mint they owe you, coral you owe.
@@ -58,13 +58,12 @@ export const styles = StyleSheet.create({
   },
   tileInitial: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.onFlat },
   tileName: {
-    flex: 1,
+    flexShrink: 1,
     minWidth: 0,
     fontFamily: theme.font.roundedMedium,
     fontSize: 15,
     color: theme.colors.textPrimary,
   },
-  tileDirection: { fontFamily: theme.font.bodyMedium, fontSize: 12, marginTop: 8 },
   tileAmount: {
     fontVariant: ['tabular-nums'],
     fontFamily: theme.font.body,
@@ -83,7 +82,7 @@ export const styles = StyleSheet.create({
     borderRadius: theme.radius.pill,
   },
   settlePillText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textPrimary },
-  settledTitle: { ...EYEBROW, marginHorizontal: 24, marginTop: 12, marginBottom: 8 },
+  settledTitle: { ...SECTION_TITLE, marginHorizontal: 24, marginTop: 12, marginBottom: 8 },
   settledCard: { marginHorizontal: 20, overflow: 'hidden' },
   quietRow: {
     flexDirection: 'row',
@@ -134,7 +133,7 @@ export const styles = StyleSheet.create({
   },
   rowLabel: { fontFamily: theme.font.bodyMedium, fontSize: 15, color: theme.colors.textPrimary },
   rowSub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, marginTop: 2 },
-  rowValue: { fontVariant: ['tabular-nums'], fontFamily: theme.font.monoBold, fontSize: 15 },
+  rowValue: { fontVariant: ['tabular-nums'], fontFamily: theme.font.bodyBold, fontSize: 15 },
   detailCopy: { flexGrow: 1, flexBasis: 120, minWidth: 0 },
   footerStack: { flexDirection: 'column', gap: 8 },
   footerStackButton: { flex: 0, width: '100%' },

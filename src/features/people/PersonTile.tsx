@@ -8,7 +8,7 @@ import { theme } from '@/constants/theme';
 import { usePressScale } from '@/lib/usePressScale';
 import { withPressed } from '@/lib/pressed';
 import { ROW_LAYOUT, ROW_EXIT } from '@/lib/animation';
-import { lastActivityShort } from './people.helpers';
+import { lastActivityShort, personInitials } from './people.helpers';
 import { styles } from './people.styles';
 import { Glass } from '@/components/Glass';
 
@@ -58,16 +58,17 @@ export function PersonTile({
         >
           <View style={styles.tileWho}>
             <View style={[styles.tileAvatar, { backgroundColor: color }]}>
-              <Text style={styles.tileInitial}>{person.name.trim().charAt(0).toUpperCase() || '?'}</Text>
+              <Text style={styles.tileInitial}>{personInitials(person.name)}</Text>
             </View>
-            <Text style={styles.tileName}>{person.name}</Text>
+            <View style={{ flex: 1, minWidth: 0 }}>
+              <Text style={styles.tileName}>{person.name}</Text>
+              <Text style={styles.tileMeta}>{lastActivityShort(person.lastActivityDate)}</Text>
+            </View>
           </View>
-          <Text style={[styles.tileDirection, { color: look.amount }]}>{look.label}</Text>
           <Text style={[styles.tileAmount, { color: look.amount }]} numberOfLines={1} adjustsFontSizeToFit>
             {dispBalanceMinor > 0 ? '+' : '−'}
             {formatMoney(Math.abs(dispBalanceMinor))}
           </Text>
-          <Text style={styles.tileMeta}>{lastActivityShort(person.lastActivityDate)}</Text>
         </AnimatedPressable>
         <Pressable
           onPress={onPress}

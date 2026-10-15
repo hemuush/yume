@@ -172,7 +172,7 @@ const styles = StyleSheet.create({
     marginTop: 6,
   },
   outstanding: {
-    fontFamily: theme.font.monoBold,
+    fontFamily: theme.font.bodyBold,
     fontSize: 20,
     fontVariant: ['tabular-nums'],
     color: theme.colors.textPrimary,
@@ -210,7 +210,7 @@ const styles = StyleSheet.create({
     color: theme.colors.textPrimary,
     marginTop: 2,
   },
-  nextAmount: { fontFamily: theme.font.monoBold, fontVariant: ['tabular-nums'] },
+  nextAmount: { fontFamily: theme.font.bodyBold, fontVariant: ['tabular-nums'] },
   pill: {
     minHeight: 44,
     justifyContent: 'center',

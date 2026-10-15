@@ -1,6 +1,6 @@
-import { useEffect, useId, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Animated, Easing } from 'react-native';
-import Svg, { Circle, Ellipse, Rect, Mask, Defs, G } from 'react-native-svg';
+import Svg, { Circle, Ellipse, Rect, G } from 'react-native-svg';
 import { theme } from '@/constants/theme';
 import { DURATIONS } from '@/lib/motionTimings';
 import { useReduceMotion } from '@/lib/useReduceMotion';
@@ -122,9 +122,6 @@ function GrowingPlant({
 }
 
 function PlantSvg({ pos, size, label }: { pos: number; size: number; label?: string }) {
-  // The crescent mask is referenced by id, and ids are document-wide: every bloom on the screen needs its own,
-  // or they all resolve to the first one. useId yields ":r1:", which isn't safe inside url(#…).
-  const maskId = `crescent-${useId().replace(/[^a-zA-Z0-9_-]/g, '')}`;
   const { stemH, leafScale } = shapeAt(pos);
   const bloom = pos >= STAGES.length - 1 - 0.001;
   const seed = pos <= 0.001;
@@ -141,20 +138,27 @@ function PlantSvg({ pos, size, label }: { pos: number; size: number; label?: str
       accessibilityLabel={label}
       importantForAccessibility={label ? 'yes' : 'no-hide-descendants'}
     >
-      {bloom && (
-        <Defs>
-          <Mask id={maskId} maskUnits="userSpaceOnUse" x="0" y="0" width="44" height="56">
-            <Rect x="0" y="0" width="44" height="56" fill="white" />
-            <Circle cx={31} cy={13} r={15} fill="black" />
-          </Mask>
-        </Defs>
-      )}
       {seed ? (
         <Circle cx={22} cy={baseY - 3} r={2.6} fill={theme.colors.ink} opacity={0.45} />
       ) : (
         <G>
-          {bloom && <Circle cx={22} cy={13} r={15} fill={theme.colors.ink} mask={`url(#${maskId})`} />}
           <Rect x={21} y={stemTopY} width={2} height={stemH} fill={theme.colors.ink} />
+          {bloom && (
+            <G>
+              {[0, 60, 120, 180, 240, 300].map((angle) => (
+                <Ellipse
+                  key={angle}
+                  cx={22}
+                  cy={stemTopY - 7}
+                  rx={4}
+                  ry={7}
+                  fill={theme.colors.idCoral}
+                  transform={`rotate(${angle} 22 ${stemTopY})`}
+                />
+              ))}
+              <Circle cx={22} cy={stemTopY} r={4} fill={theme.colors.flatLime} />
+            </G>
+          )}
           <Ellipse
             cx={22 - 8 * leafScale}
             cy={stemTopY + stemH * 0.42}

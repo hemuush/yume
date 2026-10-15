@@ -40,6 +40,22 @@ export const styles = StyleSheet.create({
   },
   summaryHead: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   streakValue: { flex: 1, fontFamily: theme.font.roundedBold, fontSize: 22, color: theme.colors.ink },
+  goalRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: 8,
+    justifyContent: 'space-between',
+  },
+  editGoal: {
+    minHeight: 44,
+    paddingHorizontal: 12,
+    justifyContent: 'center',
+    borderRadius: 22,
+    backgroundColor: theme.colors.surface,
+  },
+  editGoalText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textPrimary },
+  introHint: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
   summaryGoal: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textSecondary },
 
   bed: {
@@ -70,7 +86,7 @@ export const styles = StyleSheet.create({
   },
   dayLabelToday: { fontFamily: theme.font.bodyBold, color: theme.colors.ink },
 
-  legend: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginHorizontal: 20, marginTop: 12 },
+  legend: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 12 },
   legendItem: { flexGrow: 1, flexBasis: 64, alignItems: 'center', gap: 4 },
   legendLabel: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
 
@@ -83,14 +99,6 @@ export const styles = StyleSheet.create({
   },
   noteText: { fontFamily: theme.font.body, fontSize: 12.5, color: theme.colors.textPrimary, lineHeight: 18 },
 
-  goalsSummary: {
-    marginHorizontal: 20,
-    marginTop: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  goalsSummaryText: { fontFamily: theme.font.body, fontSize: 11.5, color: theme.colors.textMuted, flex: 1 },
   goalError: {
     fontFamily: theme.font.body,
     fontSize: 12.5,

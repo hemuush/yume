@@ -87,3 +87,14 @@ export function inRows<T>(items: T[], size: number): T[][] {
   for (let i = 0; i < items.length; i += size) rows.push(items.slice(i, i + size));
   return rows;
 }
+
+/** First two letters for one name; first and last initials for a multi-part name. */
+export function personInitials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (!parts.length) return '?';
+  return (
+    parts.length > 1
+      ? Array.from(parts[0])[0] + Array.from(parts[parts.length - 1])[0]
+      : Array.from(parts[0]).slice(0, 2).join('')
+  ).toUpperCase();
+}

@@ -136,7 +136,7 @@ const styles = StyleSheet.create({
   blank: { backgroundColor: 'transparent', borderColor: 'transparent' },
   kept: { backgroundColor: '#B6E3C6', borderColor: '#B6E3C6' },
   keptDeep: { backgroundColor: '#6FC290', borderColor: '#6FC290' },
-  missed: { backgroundColor: theme.colors.expenseTint, borderColor: theme.colors.idCoral },
+  missed: { backgroundColor: theme.colors.surfaceAlt, borderColor: theme.colors.borderSoft },
   untracked: { backgroundColor: 'transparent', borderStyle: 'dashed', borderColor: theme.colors.textMuted },
   legend: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 8 },
   legendText: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },

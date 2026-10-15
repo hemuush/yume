@@ -14,29 +14,6 @@ import { withPressed } from '@/lib/pressed';
 import { categorySentence, inParent } from '@/lib/categoryLabel';
 import { useCardGrow } from '@/lib/cardGrow';
 import { useToday } from './useToday';
-import { softTint } from '@/components/softTint';
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import type { McIconName } from '@/components/iconName';
-
-/** A small glass jar filled to `pct` (0–100) in `color`, the category's icon near the top: Plan's jars, up close. */
-function MiniJar({ icon, pct, color }: { icon: string; pct: number; color: string }) {
-  return (
-    <View style={styles.jar} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-      <View style={styles.jarIcon}>
-        <MaterialCommunityIcons name={icon as McIconName} size={13} color={theme.colors.textSecondary} />
-      </View>
-      {pct > 0 && (
-        <View
-          style={[
-            styles.jarLiquid,
-            pct >= 98 && styles.jarLiquidFull,
-            { height: `${pct}%`, backgroundColor: color },
-          ]}
-        />
-      )}
-    </View>
-  );
-}
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -51,7 +28,6 @@ export function BudgetRow({
   onMore,
   showPerDay,
   grow,
-  jar,
 }: {
   progress: BudgetProgress;
   divider: boolean;
@@ -60,8 +36,6 @@ export function BudgetRow({
   showPerDay?: boolean;
   /** The page it opens expands out of this row (the caller marks that push with `growHref`). */
   grow?: boolean;
-  /** Budgets' own list: the category as a small jar filled to what's used, in place of the icon and bar. */
-  jar?: boolean;
 }) {
   const { ref, growFrom } = useCardGrow();
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.98);
@@ -97,7 +71,7 @@ export function BudgetRow({
       <Text style={progress.overBudget ? styles.rowAmountOver : undefined}>
         {formatMoney(progress.spentMinor)}
       </Text>
-      <Text style={styles.rowAmountOf}> / {formatMoney(progress.effectiveLimitMinor)}</Text>
+      <Text style={styles.rowAmountOf}> of {formatMoney(progress.effectiveLimitMinor)}</Text>
     </Text>
   );
   const more = onMore && (
@@ -144,46 +118,21 @@ export function BudgetRow({
       accessibilityLabel={rowLabel}
       accessibilityHint={onMore ? 'Press and hold for more options' : undefined}
     >
-      {jar ? (
-        // Budgets' list: the jar on the left, name and figures beside it, the note under the name.
-        <View style={styles.jarRow}>
-          <MiniJar
-            icon={progress.categoryIcon}
-            pct={barPct}
-            color={
-              tone === 'over'
-                ? theme.colors.slice.spent
-                : tone === 'near'
-                  ? theme.colors.slice.due
-                  : softTint(progress.categoryColor, 0.75)
-            }
-          />
-          <View style={styles.rowNameBlock}>
-            <View style={styles.rowTopJar}>
-              {name}
-              {more}
-            </View>
-            {foot}
-            <View style={styles.jarAmounts}>{amount}</View>
-          </View>
+      <>
+        <View style={styles.rowTop}>
+          <CategoryIcon name={progress.categoryIcon} color={progress.categoryColor} square={38} size={17} />
+          {name}
+          {more}
         </View>
-      ) : (
-        <>
-          <View style={styles.rowTop}>
-            <CategoryIcon name={progress.categoryIcon} color={progress.categoryColor} square={38} size={17} />
-            {name}
-            {more}
-          </View>
-          {foot}
-          <View style={styles.jarAmounts}>{amount}</View>
-          <LimitMeter
-            pct={barPct}
-            tone={tone}
-            marker={pace ? pace.expectedFraction * 100 : undefined}
-            animKey={`budget:${progress.budget.id}`}
-          />
-        </>
-      )}
+        {foot}
+        <View style={styles.rowAmounts}>{amount}</View>
+        <LimitMeter
+          pct={barPct}
+          tone={tone}
+          marker={pace ? pace.expectedFraction * 100 : undefined}
+          animKey={`budget:${progress.budget.id}`}
+        />
+      </>
     </AnimatedPressable>
   );
 }

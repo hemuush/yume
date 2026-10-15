@@ -1,9 +1,9 @@
 import { ScreenLoadError } from '@/components/ScreenLoadError';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { View } from 'react-native';
 import { Text } from '@/components/Text';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { listRecurringRules, setRecurringRuleActive } from '@/db/recurring';
+import { listRecurringRules } from '@/db/recurring';
 import { listAccounts, listCategories } from '@/db/ledger';
 import { getHiddenSubscriptionSuggestions, hideSubscriptionSuggestion } from '@/db/settings';
 import { getSubscriptionSuggestions, subscriptionTotals, SubscriptionSuggestion } from '@/db/subscriptions';
@@ -30,8 +30,6 @@ import { RuleModal } from '@/features/recurring/RuleModal';
 import { Skeleton } from '@/components/Skeleton';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { AddAccountModal } from '@/features/profile/AddAccountModal';
-import { errorMessage } from '@/lib/errorMessage';
-import { showAlert } from '@/components/AppDialog';
 import { usePrivacy } from '@/theme/PrivacyContext';
 import { isSavingsEntry } from '@/lib/privateSummary';
 import { savingsAccountIdsOf } from '@/lib/account';
@@ -59,8 +57,7 @@ export default function RecurringScreen() {
   const [fromSuggestion, setFromSuggestion] = useState<SubscriptionSuggestion | null>(null);
   const [addAccountVisible, setAddAccountVisible] = useState(false);
   const [selectedRunDate, setSelectedRunDate] = useState<string | null>(null);
-  const pendingPause = useRef(new Set<string>());
-  const [busyRuleIds, setBusyRuleIds] = useState<Set<string>>(new Set());
+
   const loadRules = useCallback(async () => {
     const [r, allAccs, cats, hidden] = await Promise.all([
       listRecurringRules(),
@@ -118,21 +115,6 @@ export default function RecurringScreen() {
   const hideSuggestion = async (s: SubscriptionSuggestion) => {
     setSuggestions((prev) => prev.filter((x) => x.key !== s.key));
     await hideSubscriptionSuggestion(s.key).catch(() => {});
-  };
-
-  const togglePause = async (rule: RecurringRule) => {
-    if (pendingPause.current.has(rule.id)) return;
-    pendingPause.current.add(rule.id);
-    setBusyRuleIds(new Set(pendingPause.current));
-    try {
-      await setRecurringRuleActive(rule.id, !rule.active);
-      await load();
-    } catch (e) {
-      showAlert("Couldn't update", errorMessage(e));
-    } finally {
-      pendingPause.current.delete(rule.id);
-      setBusyRuleIds(new Set(pendingPause.current));
-    }
   };
 
   if (!hasData && loadError)
@@ -213,8 +195,6 @@ export default function RecurringScreen() {
                       accountName={accountName}
                       index={i}
                       onPress={() => setEditingRule(rule)}
-                      onTogglePause={() => togglePause(rule)}
-                      busy={busyRuleIds.has(rule.id)}
                     />
                   ))}
                 </Glass>
@@ -246,8 +226,6 @@ export default function RecurringScreen() {
                       accountName={accountName}
                       index={i}
                       onPress={() => setEditingRule(rule)}
-                      onTogglePause={() => togglePause(rule)}
-                      busy={busyRuleIds.has(rule.id)}
                       muted
                     />
                   ))}
@@ -318,12 +296,10 @@ export default function RecurringScreen() {
                 parentName={parentNameOf(rule.categoryId, categoriesById)}
                 accountName={accountName}
                 index={index}
-                busy={busyRuleIds.has(rule.id)}
                 onPress={() => {
                   setSelectedRunDate(null);
                   setEditingRule(rule);
                 }}
-                onTogglePause={() => togglePause(rule)}
               />
             ))}
       </ModalSheet>
