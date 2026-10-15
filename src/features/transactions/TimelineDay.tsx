@@ -19,7 +19,7 @@ import { buildDayLane, dropIndex, laneOrderIds, LaneLine, moveLine } from './tra
 import { isSavingsEntry } from '@/lib/privateSummary';
 import { DraggableLine } from './DraggableLine';
 import { withPressed } from '@/lib/pressed';
-import { categorySpoken, inParent, joinSub, parentNameOf } from '@/lib/categoryLabel';
+import { categorySpoken, joinSub, parentNameOf } from '@/lib/categoryLabel';
 
 const NO_ACCOUNTS: ReadonlySet<string> = new Set();
 
@@ -100,8 +100,8 @@ function TimelineDayView({
   const stacked = width < 360 || fontScale > 1.2;
   const { accent } = useAccent();
   const categoriesById = useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories]);
-  // "in Food & Dining" for a subcategory, nothing for a top-level category.
-  const parentLine = (categoryId: string | null) => inParent(parentNameOf(categoryId, categoriesById));
+  // Parent context for a subcategory; top-level categories need no extra label.
+  const parentLine = (categoryId: string | null) => parentNameOf(categoryId, categoriesById);
   const { transfers, lines } = useMemo(
     () => buildDayLane(items, date, accountCurrency),
     [items, date, accountCurrency]
@@ -306,7 +306,7 @@ function TimelineDayView({
             </View>
             <Text style={styles.sub}>
               {joinSub([
-                inParent(stackParent),
+                stackParent,
                 `${line.items.length} entries`,
                 sameAccount && accountName(first.accountId),
               ])}
@@ -440,7 +440,7 @@ const styles = StyleSheet.create({
   date: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
   // Spending reads in ink with its minus sign; only money in is green.
   total: {
-    fontFamily: theme.font.monoBold,
+    fontFamily: theme.font.bodyBold,
     fontVariant: ['tabular-nums'],
     fontSize: 13,
     color: theme.colors.textPrimary,
@@ -496,7 +496,7 @@ const styles = StyleSheet.create({
     marginTop: 3,
   },
   amount: {
-    fontFamily: theme.font.monoBold,
+    fontFamily: theme.font.bodyBold,
     fontSize: 14,
     color: theme.colors.textPrimary,
     fontVariant: ['tabular-nums'],

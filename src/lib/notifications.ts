@@ -1,7 +1,7 @@
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 import { getAlertQueue, getNotificationPrefs, setAlertQueue } from '@/db/settings';
-import { hasLoggedOn, listLoansDue } from '@/db/notificationData';
+import { hasLoggedOn, listLoansDue, listReminderAttention } from '@/db/notificationData';
 import { theme } from '@/constants/theme';
 import { toLocalIsoDate } from './date';
 import { NOTIFICATION_ROUTES, NotificationRoute, planNotifications } from './notificationPlan';
@@ -19,10 +19,9 @@ const ID_PREFIX = 'yume-';
 // open never shows anything at all on some platforms.
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
-    shouldShowAlert: true,
     shouldShowBanner: true,
     shouldShowList: true,
-    shouldPlaySound: false,
+    shouldPlaySound: true,
     shouldSetBadge: false,
   }),
 });
@@ -48,6 +47,8 @@ export async function requestNotificationPermission(): Promise<boolean> {
 }
 
 export interface NotificationDeliveryStatus {
+  morningCount?: number;
+  eveningCount?: number;
   permitted: boolean;
   channelBlocked: boolean;
   scheduledCount: number;
@@ -65,6 +66,10 @@ export async function getNotificationDeliveryStatus(): Promise<NotificationDeliv
   return {
     permitted: !!permission?.granted,
     channelBlocked: channel?.importance === Notifications.AndroidImportance.NONE,
+    morningCount: (scheduled ?? []).filter((n) => /^yume-\d{4}-\d{2}-\d{2}-morning$/.test(n.identifier))
+      .length,
+    eveningCount: (scheduled ?? []).filter((n) => /^yume-\d{4}-\d{2}-\d{2}-evening$/.test(n.identifier))
+      .length,
     scheduledCount: (scheduled ?? []).filter((n) =>
       /^yume-\d{4}-\d{2}-\d{2}-(morning|evening)$/.test(n.identifier)
     ).length,
@@ -83,6 +88,7 @@ export async function sendTestNotification(): Promise<void> {
     content: {
       title: 'Yume notification test',
       body: 'Reminders use this notification category.',
+      sound: 'default',
       data: { url: '/add-transaction' },
     },
     trigger: { channelId: NOTIFICATION_CHANNEL_ID },
@@ -122,7 +128,7 @@ let rebuildChain: Promise<unknown> = Promise.resolve();
 
 /**
  * Works out everything to notify about (planNotifications) from settings and data, then replaces whatever is
- * scheduled. Safe to re-call; serialized; never throws; false on failure (a missing permission isn't one).
+ * scheduled. Safe to re-call; serialized; never throws; false when enabled reminders cannot be scheduled.
  */
 export function rebuildNotifications(): Promise<boolean> {
   const run = rebuildChain.then(doRebuild, doRebuild);
@@ -132,42 +138,49 @@ export function rebuildNotifications(): Promise<boolean> {
 
 async function doRebuild(): Promise<boolean> {
   try {
-    const now = new Date();
-    const [prefs, loans, alerts, loggedToday] = await Promise.all([
+    const logDate = toLocalIsoDate(new Date());
+    const [prefs, loans, alerts, initiallyLogged] = await Promise.all([
       getNotificationPrefs(),
       listLoansDue(),
       getAlertQueue(),
-      hasLoggedOn(toLocalIsoDate(now)),
+      hasLoggedOn(logDate),
     ]);
-    const { notifications, waitingAlerts } = planNotifications({ prefs, loans, alerts, loggedToday, now });
+    const attention =
+      (prefs.morningEnabled || prefs.eveningEnabled) && (prefs.recurringAlerts || prefs.refundAlerts)
+        ? await listReminderAttention(
+            toLocalIsoDate(new Date()),
+            !!prefs.recurringAlerts,
+            !!prefs.refundAlerts
+          )
+        : [];
+    const now = new Date();
+    const loggedToday =
+      toLocalIsoDate(now) === logDate ? initiallyLogged : await hasLoggedOn(toLocalIsoDate(now));
+    const { notifications, waitingAlerts } = planNotifications({
+      prefs,
+      loans,
+      alerts,
+      attention,
+      loggedToday,
+      now,
+    });
 
     const scheduled = (await Notifications.getAllScheduledNotificationsAsync()) ?? [];
-    let allCancelled = true;
-    await Promise.all(
-      scheduled
-        .filter((n) => typeof n.identifier === 'string' && n.identifier.startsWith(ID_PREFIX))
-        .map((n) =>
-          Notifications.cancelScheduledNotificationAsync(n.identifier).catch((err) => {
-            allCancelled = false;
-            console.error(`Cancelling notification ${n.identifier} failed:`, err);
-          })
-        )
-    );
-    // Alerts already sent (or stale) drop out of the queue here.
-    if (waitingAlerts.length !== alerts.length) await setAlertQueue(waitingAlerts);
-
-    if (notifications.length === 0) return allCancelled;
-    const permission = await Notifications.getPermissionsAsync();
-    if (!permission?.granted) return allCancelled;
-
-    await ensureAndroidChannel();
+    if (notifications.length > 0) {
+      const permission = await Notifications.getPermissionsAsync();
+      if (!permission?.granted) return false;
+      await ensureAndroidChannel();
+      if (Platform.OS === 'android') {
+        const channel = await Notifications.getNotificationChannelAsync(NOTIFICATION_CHANNEL_ID);
+        if (channel?.importance === Notifications.AndroidImportance.NONE) return false;
+      }
+    }
     let allScheduled = true;
     for (const n of notifications) {
-      // One that fails to schedule must not stop the ones after it.
       try {
         await Notifications.scheduleNotificationAsync({
           identifier: n.id,
-          content: { title: n.title, body: n.body, data: { url: n.route } },
+          content: { title: n.title, body: n.body, sound: 'default', data: { url: n.route } },
           trigger: {
             type: Notifications.SchedulableTriggerInputTypes.DATE,
             date: n.at,
@@ -179,6 +192,26 @@ async function doRebuild(): Promise<boolean> {
         console.error(`Scheduling notification ${n.id} failed:`, err);
       }
     }
+    const desiredIds = new Set(notifications.map((n) => n.id));
+    let allCancelled = true;
+    await Promise.all(
+      scheduled
+        .filter(
+          (n) =>
+            typeof n.identifier === 'string' &&
+            n.identifier.startsWith(ID_PREFIX) &&
+            !desiredIds.has(n.identifier)
+        )
+        .map((n) =>
+          Notifications.cancelScheduledNotificationAsync(n.identifier).catch((err) => {
+            allCancelled = false;
+            console.error(`Cancelling notification ${n.identifier} failed:`, err);
+          })
+        )
+    );
+    // Alerts already sent (or stale) drop out of the queue here.
+    if (allScheduled && allCancelled && waitingAlerts.length !== alerts.length)
+      await setAlertQueue(waitingAlerts);
     return allScheduled && allCancelled;
   } catch (err) {
     console.error('rebuildNotifications failed:', err);

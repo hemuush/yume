@@ -12,6 +12,7 @@ import { captureRow, restoreRow, RowSnapshot } from './undoSnapshot';
 import { RecurringRule, RecurrenceFrequency, TransactionType, PaymentMode } from '@/types';
 import { toLocalIsoDate, dayOfIsoDate, assertValidIsoDate } from '@/lib/date';
 import { advanceDate } from '@/lib/recurrence';
+import { rebuildAttentionNotificationsAfterCommit } from './afterCommit';
 
 function rowToRule(row: RecurringRuleRow): RecurringRule {
   return {
@@ -136,6 +137,7 @@ export async function createRecurringRule(input: RecurringRuleInput): Promise<Re
     ]
   );
   const row = await db.getFirstAsync<RecurringRuleRow>('SELECT * FROM recurring_rules WHERE id = ?', [id]);
+  await rebuildAttentionNotificationsAfterCommit('recurringAlerts');
   return rowToRule(found(row, 'recurring entry'));
 }
 
@@ -181,6 +183,7 @@ export async function updateRecurringRule(id: string, input: RecurringRuleInput)
     );
   });
   const row = await db.getFirstAsync<RecurringRuleRow>('SELECT * FROM recurring_rules WHERE id = ?', [id]);
+  await rebuildAttentionNotificationsAfterCommit('recurringAlerts');
   return rowToRule(found(row, 'recurring entry'));
 }
 
@@ -196,6 +199,7 @@ export async function setRecurringRuleActive(
   const db = await getDb();
   if (!active) {
     await db.runAsync('UPDATE recurring_rules SET active = 0 WHERE id = ?', [id]);
+    await rebuildAttentionNotificationsAfterCommit('recurringAlerts');
     return;
   }
   const row = found(
@@ -212,6 +216,7 @@ export async function setRecurringRuleActive(
     throw new Error('This recurring entry has already ended. Edit its end date to resume it.');
   }
   await db.runAsync('UPDATE recurring_rules SET active = 1, next_run_date = ? WHERE id = ?', [next, id]);
+  await rebuildAttentionNotificationsAfterCommit('recurringAlerts');
 }
 
 export async function deleteRecurringRule(id: string): Promise<RowSnapshot> {
@@ -229,6 +234,7 @@ export async function deleteRecurringRule(id: string): Promise<RowSnapshot> {
     await tx.runAsync('DELETE FROM recurring_rules WHERE id = ?', [id]);
     snapshot = captured;
   });
+  await rebuildAttentionNotificationsAfterCommit('recurringAlerts');
   return snapshot as unknown as RowSnapshot;
 }
 
@@ -236,6 +242,7 @@ export async function deleteRecurringRule(id: string): Promise<RowSnapshot> {
 export async function restoreRecurringRule(snapshot: RowSnapshot): Promise<void> {
   const db = await getDb();
   await restoreRow(db, snapshot);
+  await rebuildAttentionNotificationsAfterCommit('recurringAlerts');
 }
 
 /**

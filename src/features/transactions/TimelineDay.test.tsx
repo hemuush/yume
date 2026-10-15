@@ -300,7 +300,7 @@ describe('TimelineDay with subcategories', () => {
         />
       );
     });
-    expect(texts(r).map((t) => t.replace(/^false/, ''))).toContain('in Groceries · Bank');
+    expect(texts(r).map((t) => t.replace(/^false/, ''))).toContain('Groceries · Bank');
     expect(byLabel(r, 'Flipkart Minutes, in Groceries')).toHaveLength(1);
   });
 });

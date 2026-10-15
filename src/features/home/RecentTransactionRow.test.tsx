@@ -67,8 +67,8 @@ describe('RecentTransactionRow', () => {
     expect(texts('', addDaysToIsoDate(today, -1))).toContain('SBI · Yesterday');
   });
 
-  it('names the parent of a subcategory, as a path under a note and as "in …" without one', () => {
-    expect(texts('', undefined, 'Groceries')).toContain('in Groceries · SBI · Today');
+  it('names the parent of a subcategory, as a path under a note and directly without one', () => {
+    expect(texts('', undefined, 'Groceries')).toContain('Groceries · SBI · Today');
     expect(texts('Lunch', undefined, 'Groceries')).toContain('Groceries › Food & Dining · SBI · Today');
   });
 });

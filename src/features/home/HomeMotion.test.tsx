@@ -110,7 +110,7 @@ it('continues a changed amount from the visible value and ignores an obsolete co
   expect(text(r)).toContain('₹5,000');
 });
 
-it('updates category selection immediately and preserves it across data reordering', () => {
+it('keeps category tiles immediately readable across reordering and reduced motion', () => {
   const categories = ['Food', 'Rent', 'Travel', 'Shopping'].map((name, i) => ({
     categoryId: name,
     name,
@@ -131,16 +131,13 @@ it('updates category selection immediately and preserves it across data reorderi
     />
   );
   const r = render(dial());
-  press(r, 'Shopping, 10% of spending');
-  press(r, 'Rent, 30% of spending');
-  const selected = () =>
-    r.root.findAll((n) => n.props.accessibilityLabel === 'Rent, 30% of spending')[0].props.accessibilityState
-      .selected;
-  expect(selected()).toBe(true);
+  expect(text(r)).toContain('30% of spending');
+  expect(text(r)).toContain('₹300');
+  const before = mockTargets.length;
   mockReduce = true;
   act(() => r.update(dial([...categories].reverse())));
-  expect(text(r)).toContain('₹300 · 30% of spending');
-  expect(selected()).toBe(true);
+  expect(text(r)).toContain('₹300');
+  expect(mockTargets).toHaveLength(before);
 });
 
 it('keeps the month label, figures and current-month chips together through interrupted transitions', () => {

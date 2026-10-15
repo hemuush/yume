@@ -1,7 +1,7 @@
-import { emiCopy, emiOverdueCopy, logCopy, wrapCopy } from './notificationCopy';
+import { emiCopy, emiOverdueCopy, logCopy, wrapCopy, morningCopy } from './notificationCopy';
 import { dayMonth } from './dateLabels';
 import { clampSlotMinutes, TimeSlotKind } from './notificationTimes';
-import { toLocalIsoDate } from './date';
+import { toLocalIsoDate, addDaysToIsoDate } from './date';
 
 /**
  * What Yume will notify about in the coming days, planned in one place so two never land together.
@@ -11,7 +11,9 @@ import { toLocalIsoDate } from './date';
 /** The screens a notification can open; a payload naming anything else is ignored. */
 export const NOTIFICATION_ROUTES = [
   '/add-transaction',
+  '/(tabs)/plan',
   '/loans',
+  '/recurring',
   '/reports',
   '/budgets',
   '/wrap?period=week',
@@ -48,6 +50,8 @@ export interface PlanLoan {
 }
 
 export interface PlanPrefs {
+  recurringAlerts?: boolean;
+  refundAlerts?: boolean;
   morningEnabled: boolean;
   morningHour: number;
   morningMinute: number;
@@ -120,6 +124,7 @@ function parseIsoDate(iso: string): Date {
 }
 
 export function planNotifications(input: {
+  attention?: { kind: 'bill' | 'refund'; id: string; label: string; date: string }[];
   prefs: PlanPrefs;
   loans: PlanLoan[];
   alerts: QueuedAlert[];
@@ -140,6 +145,39 @@ export function planNotifications(input: {
   };
   /** The first time on `day` that is still ahead of us. */
   const firstSlotOn = (day: Date): Slot | undefined => slots.find((s) => slotTime(day, s) > now);
+
+  for (const item of input.attention ?? []) {
+    if ((item.kind === 'bill' && !prefs.recurringAlerts) || (item.kind === 'refund' && !prefs.refundAlerts))
+      continue;
+    const dates =
+      item.kind === 'bill' ? [addDaysToIsoDate(item.date, -1)] : [item.date, addDaysToIsoDate(item.date, 3)];
+    for (const iso of dates) {
+      const day = parseIsoDate(iso);
+      if (daysBetween(today, day) < 0 || daysBetween(today, day) >= PLAN_DAYS) continue;
+      const slot = firstSlotOn(day);
+      if (!slot) continue;
+      const late = item.kind === 'refund' && iso !== item.date;
+      add(
+        day,
+        slot,
+        item.kind === 'bill'
+          ? {
+              title: 'A bill is coming up tomorrow',
+              body: `${item.label} is scheduled for tomorrow. Take a look before it’s recorded.`,
+              extra: `${item.label} is scheduled tomorrow`,
+              route: '/recurring',
+            }
+          : {
+              title: late ? 'Still waiting on your refund?' : 'A refund is expected today',
+              body: late
+                ? `${item.label}: check whether the refund arrived and update it in Plan.`
+                : `${item.label}: check whether the refund has arrived.`,
+              extra: `${item.label}: ${late ? 'refund follow-up' : 'refund expected today'}`,
+              route: '/(tabs)/plan',
+            }
+      );
+    }
+  }
 
   // EMIs go out on the day they are due, at the first time that is still ahead.
   // Not limited to the 14 days: a late due date should still be reminded of.
@@ -203,6 +241,18 @@ export function planNotifications(input: {
     }
   }
 
+  // Enabling Morning promises a daily check-in even when no financial alert is due.
+  // Existing due-item buckets take its place, keeping one notification per slot.
+  const morning = slots.find((slot) => slot.kind === 'morning');
+  if (morning) {
+    for (let i = 0; i < PLAN_DAYS; i++) {
+      const day = startOfDay(today, i);
+      if (slotTime(day, morning) > now && !due.has(slotId(day, morning))) {
+        add(day, morning, { ...morningCopy(), route: '/(tabs)/plan' });
+      }
+    }
+  }
+
   const notifications = [...due.entries()]
     .map(([id, { day, slot, entries }]): PlannedNotification => {
       // `entries` order is: EMIs, Monday's wrap and log nudge, then spending alerts (as added).
@@ -226,12 +276,15 @@ function priority(entry: Entry): number {
   switch (entry.route) {
     case '/loans':
       return 0;
+    case '/recurring':
     case '/budgets':
     case '/reports':
       return 1;
-    case '/wrap?period=week':
+    case '/(tabs)/plan':
       return 2;
-    default:
+    case '/wrap?period=week':
       return 3;
+    default:
+      return 4;
   }
 }

@@ -8,6 +8,7 @@ import { create, act, ReactTestRenderer } from 'react-test-renderer';
 // The first render loads React Native's component tree; on a cold parallel run (CI) that can exceed Jest's
 // 5s default, so the timeout is generous.
 jest.setTimeout(30000);
+jest.mock('@/db/refundTracking', () => ({ listExpectedRefunds: jest.fn(async () => []) }));
 import { Text } from 'react-native';
 
 jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMock').createReanimatedMock());
@@ -173,6 +174,16 @@ beforeAll(async () => {
 }, 180000);
 
 describe('Plan tab', () => {
+  it('opens a pending refund purchase directly in Activity', async () => {
+    const tree = await render();
+    const { PendingRefunds } = require('@/features/transactions/PendingRefunds');
+    act(() => tree.root.findByType(PendingRefunds).props.onOpen({ id: 'refund-purchase' }));
+    expect(router.push).toHaveBeenCalledWith({
+      pathname: '/(tabs)/transactions',
+      params: { entry: 'refund-purchase' },
+    });
+    act(() => tree.unmount());
+  });
   const dayLabel = (n: number) =>
     new Date(`${mockDay(n)}T00:00:00`).toLocaleDateString(undefined, {
       weekday: 'short',

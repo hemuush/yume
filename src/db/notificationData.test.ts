@@ -8,6 +8,18 @@ import { CREATE_TABLES_SQL } from './schema';
 import { getNotificationPrefs } from './settings';
 import { hasLoggedOn } from './notificationData';
 
+it('round-trips optional attention preferences and rejects non-boolean restored values', async () => {
+  const base = await getNotificationPrefs();
+  await mockDb.runAsync("INSERT OR REPLACE INTO settings (key,value) VALUES ('notification_prefs',?)", [
+    JSON.stringify({ ...base, recurringAlerts: true, refundAlerts: true }),
+  ]);
+  expect(await getNotificationPrefs()).toMatchObject({ recurringAlerts: true, refundAlerts: true });
+  await mockDb.runAsync("UPDATE settings SET value=? WHERE key='notification_prefs'", [
+    JSON.stringify({ ...base, recurringAlerts: 'true', refundAlerts: 1 }),
+  ]);
+  expect(await getNotificationPrefs()).toMatchObject({ recurringAlerts: false, refundAlerts: false });
+});
+
 beforeAll(async () => {
   await mockDb.execAsync(CREATE_TABLES_SQL);
   await mockDb.runAsync(

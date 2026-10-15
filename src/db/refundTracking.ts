@@ -1,6 +1,7 @@
 import { getDb, AppDb } from './client';
 import { newId } from '@/lib/id';
 import { assertValidIsoDate, toLocalIsoDate } from '@/lib/date';
+import { rebuildAttentionNotificationsAfterCommit } from './afterCommit';
 import {
   assertValidTransactionInput,
   insertTransactionRow,
@@ -146,6 +147,7 @@ export async function expectRefund(
         [newId(), transactionId, amountMinor, dueDate]
       );
   });
+  await rebuildAttentionNotificationsAfterCommit('refundAlerts');
 }
 export async function receiveRefund(
   transactionId: string,
@@ -228,6 +230,7 @@ export async function receiveRefund(
     );
   });
   if (posted) await checkOverspendForNewTransaction(posted);
+  else await rebuildAttentionNotificationsAfterCommit('refundAlerts');
 }
 export async function closeExpectedRefund(transactionId: string): Promise<void> {
   await (
@@ -239,6 +242,7 @@ export async function closeExpectedRefund(transactionId: string): Promise<void> 
       await db.runAsync('DELETE FROM refund_expectations WHERE id = ?', [refund.id]);
     else await db.runAsync('UPDATE refund_expectations SET closed = 1 WHERE id = ?', [refund.id]);
   });
+  await rebuildAttentionNotificationsAfterCommit('refundAlerts');
 }
 export async function undoRefundReceipt(receiptId: string): Promise<void> {
   await (
@@ -255,6 +259,7 @@ export async function undoRefundReceipt(receiptId: string): Promise<void> {
       await db.runAsync('DELETE FROM transactions WHERE id = ?', [row.transaction_id]);
     await db.runAsync('UPDATE refund_expectations SET closed = 0 WHERE id = ?', [row.expectation_id]);
   });
+  await rebuildAttentionNotificationsAfterCommit('refundAlerts');
 }
 export async function refundCandidates(transactionId: string) {
   return (await getDb()).getAllAsync<{ id: string; date: string; amount_minor: number }>(

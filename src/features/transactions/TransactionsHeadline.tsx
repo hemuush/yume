@@ -120,8 +120,8 @@ export function TransactionsHeadline({
           numberOfLines={1}
           adjustsFontSizeToFit
         />
-        {/* The change, then money in and the net, as small chips under the figure. */}
-        {((change != null && change !== 0) || displayed.incomeMinor > 0) && (
+        {/* Keep the comparison beside the headline; cash flow sits below the chart. */}
+        {change != null && change !== 0 && (
           <View style={styles.sumChips}>
             {change != null && change !== 0 && (
               <View style={[styles.sumChip, change > 0 ? styles.changePillUp : styles.changePillDown]}>
@@ -136,30 +136,6 @@ export function TransactionsHeadline({
                 </Text>
               </View>
             )}
-            {displayed.incomeMinor > 0 && (
-              <>
-                <View
-                  style={styles.sumChip}
-                  accessible
-                  accessibilityLabel={`Money in, ${formatMoney(displayed.incomeMinor)}`}
-                >
-                  <Feather name="arrow-down-left" size={12} color={theme.colors.incomeText} />
-                  <Text style={[styles.sumChipText, styles.income]}>
-                    {formatMoney(displayed.incomeMinor)} in
-                  </Text>
-                </View>
-                <View
-                  style={styles.sumChip}
-                  accessible
-                  accessibilityLabel={`Net, ${net < 0 ? 'minus ' : ''}${formatMoney(Math.abs(net))}`}
-                >
-                  <Text style={[styles.sumChipText, net > 0 && styles.income, net < 0 && styles.expense]}>
-                    Net {net > 0 ? '+' : net < 0 ? '−' : ''}
-                    {formatMoney(Math.abs(net))}
-                  </Text>
-                </View>
-              </>
-            )}
           </View>
         )}
 
@@ -167,6 +143,23 @@ export function TransactionsHeadline({
           <SpendBarChart bars={displayed.bars} onPressDay={onPressDay} selectedKey={selectedKey} inset={0} />
         </View>
         <ChartLegend items={displayed.legend} inset={0} max={LEGEND_MAX} />
+        {displayed.incomeMinor > 0 && (
+          <View style={styles.sumFooter}>
+            <View style={styles.sumMetric}>
+              <Text style={styles.sumKicker}>Money in</Text>
+              <Text style={[styles.sumMetricAmount, styles.income]}>
+                {formatMoney(displayed.incomeMinor)}
+              </Text>
+            </View>
+            <View style={styles.sumMetric}>
+              <Text style={styles.sumKicker}>Net</Text>
+              <Text style={[styles.sumMetricAmount, net > 0 && styles.income, net < 0 && styles.expense]}>
+                {net > 0 ? '+' : net < 0 ? '−' : ''}
+                {formatMoney(Math.abs(net))}
+              </Text>
+            </View>
+          </View>
+        )}
       </ReanimatedAnimated.View>
     </Glass>
   );

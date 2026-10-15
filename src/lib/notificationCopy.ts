@@ -10,18 +10,26 @@ export interface NotificationText {
   extra: string;
 }
 
+export function morningCopy(): NotificationText {
+  return {
+    title: 'Your day, at a glance',
+    body: 'Check upcoming payments, budgets and goals for today.',
+    extra: 'Review your plans for today',
+  };
+}
+
 export function logCopy(): NotificationText {
   return {
-    title: 'Log today',
-    body: 'Anything spent today? Tap to add it.',
-    extra: 'Anything to log today?',
+    title: 'Before you call it a day',
+    body: 'Add today’s spending while it’s fresh in mind.',
+    extra: 'Add anything you spent today',
   };
 }
 
 export function wrapCopy(): NotificationText {
   return {
     title: 'Your week, wrapped',
-    body: 'Tap to play last week.',
+    body: 'See where your money went and what stood out last week.',
     extra: 'Your week, wrapped',
   };
 }
@@ -32,7 +40,7 @@ export function emiCopy(loans: { counterparty: string; emiMinor: number }[]): No
   const body = `${loans.map((l) => l.counterparty).join(', ')} · ${total}`;
   return {
     title: loans.length === 1 ? 'EMI due today' : `${loans.length} EMIs due today`,
-    body,
+    body: `${body}\nReview your ${loans.length === 1 ? 'payment' : 'payments'} in Loans.`,
     extra: body,
   };
 }
@@ -49,7 +57,7 @@ export function emiOverdueCopy(
       : `${loans.map((l) => l.counterparty).join(', ')} · ${total}`;
   return {
     title: loans.length === 1 ? 'EMI overdue' : `${loans.length} EMIs overdue`,
-    body,
+    body: `${body}\nReview ${loans.length === 1 ? 'this payment' : 'these payments'} in Loans.`,
     extra:
       loans.length === 1 ? `${loans[0].counterparty} EMI is overdue` : `${loans.length} EMIs are overdue`,
   };
@@ -65,17 +73,25 @@ export function budgetAlertCopy(
 ): NotificationText {
   if (level === 'over') {
     const title = `${categoryName} is over budget`;
-    return { title, body: `${spent} of ${limit} this month.`, extra: `${title} (${spent} of ${limit})` };
+    return {
+      title,
+      body: `${spent} spent against your ${limit} monthly budget. Tap to review it.`,
+      extra: `${title} (${spent} of ${limit})`,
+    };
   }
-  const title = `${categoryName} is at 80% of its budget`;
-  return { title, body: `${left} of ${limit} left this month.`, extra: title };
+  const title = `${categoryName} budget is nearing its limit`;
+  return {
+    title,
+    body: `${left} left from your ${limit} monthly budget. Tap to review.`,
+    extra: `${categoryName}: ${left} left in the budget`,
+  };
 }
 
 /** A category well past its total for last month. */
 export function spikeCopy(categoryName: string, pctLabel: string): NotificationText {
   return {
     title: `${categoryName} is up ${pctLabel}`,
-    body: 'Compared with last month.',
+    body: 'Higher than last month’s total. Tap to explore the breakdown.',
     extra: `${categoryName} is up ${pctLabel} on last month`,
   };
 }

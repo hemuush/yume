@@ -10,6 +10,7 @@ import { usePrivacy } from '@/theme/PrivacyContext';
 import { dayMonthYear } from '@/lib/dateLabels';
 import { styles } from './transactions.styles';
 import { InsightHeader, InsightRow, insight } from '@/components/InsightCard';
+import { toLocalIsoDate } from '@/lib/date';
 export function PendingRefunds({
   refreshToken,
   onOpen,
@@ -39,15 +40,19 @@ export function PendingRefunds({
     };
   }, [refreshToken, revision]);
   if (!items.length && !failed) return null;
+  const today = toLocalIsoDate(new Date());
+  const ordered = [...items].sort((a, b) => (a.dueDate ?? '9999').localeCompare(b.dueDate ?? '9999'));
   return (
     <View style={insight.card}>
+      <InsightHeader
+        title="Refunds awaiting payment"
+        subtitle={
+          items.length ? `${items.length} pending · excluded from balances` : 'Couldn’t load pending refunds'
+        }
+        icon="corner-down-left"
+      />
       {failed ? (
         <>
-          <InsightHeader
-            title="Refunds on the way"
-            subtitle={`${items.length} awaiting payment`}
-            icon="corner-down-left"
-          />
           <Text style={styles.errorText}>Couldn't refresh pending refunds.</Text>
           <PrimaryButton
             compact
@@ -58,33 +63,35 @@ export function PendingRefunds({
         </>
       ) : (
         <>
-          <PrimaryButton
-            compact
-            variant="secondary"
-            title={expanded ? 'Hide pending refunds' : 'View pending refunds'}
-            onPress={() => setExpanded(!expanded)}
-          />
-          {expanded && (
-            <>
-              <Text style={styles.hintText}>Across all dates. Expected money is excluded from balances.</Text>
-              {items.map((r) => (
-                <InsightRow
-                  key={r.id}
-                  label={r.label}
-                  value={formatMaskableMoney(r.remainingMinor, { currency: r.currency, masked: hideAmounts })}
-                  detail={r.dueDate ? `Expected ${dayMonthYear(r.dueDate)}` : 'No expected date'}
-                  onPress={async () => {
-                    try {
-                      const tx = await getTransactionById(r.transactionId);
-                      if (tx) onOpen(tx);
-                      else setFailed(true);
-                    } catch {
-                      setFailed(true);
-                    }
-                  }}
-                />
-              ))}
-            </>
+          {ordered.slice(0, expanded ? ordered.length : 3).map((r) => (
+            <InsightRow
+              key={r.id}
+              label={r.label}
+              value={formatMaskableMoney(r.remainingMinor, { currency: r.currency, masked: hideAmounts })}
+              detail={
+                r.dueDate
+                  ? `${r.dueDate < today ? 'Overdue' : r.dueDate === today ? 'Due today' : 'Expected'} · ${dayMonthYear(r.dueDate)}`
+                  : 'No expected date'
+              }
+              onPress={async () => {
+                try {
+                  const tx = await getTransactionById(r.transactionId);
+                  if (tx) onOpen(tx);
+                  else setFailed(true);
+                } catch {
+                  setFailed(true);
+                }
+              }}
+            />
+          ))}
+          <Text style={styles.hintText}>Tap a purchase to record a refund received.</Text>
+          {items.length > 3 && (
+            <PrimaryButton
+              compact
+              variant="secondary"
+              title={expanded ? 'Show fewer refunds' : `View all ${items.length} refunds`}
+              onPress={() => setExpanded(!expanded)}
+            />
           )}
         </>
       )}
