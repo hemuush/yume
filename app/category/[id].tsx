@@ -280,7 +280,7 @@ export default function CategoryScreen() {
               <Section title="Budget">
                 {budget ? (
                   <Glass style={styles.glassList}>
-                    <BudgetRow progress={budget} divider={false} onPress={openBudgets} jar />
+                    <BudgetRow progress={budget} divider={false} onPress={openBudgets} />
                   </Glass>
                 ) : (
                   <Pressable

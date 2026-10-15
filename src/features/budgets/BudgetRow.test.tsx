@@ -150,7 +150,7 @@ describe('BudgetRow per-day figure', () => {
     expect(shown(makeProgress()).some((t) => t.startsWith('in '))).toBe(false);
   });
 
-  it('draws a jar in place of the icon and bar on Budgets, keeping the figures and the menu', () => {
+  it('uses a capped horizontal meter on Budgets, keeping figures and the menu', () => {
     const { LimitMeter } = require('@/components/LimitMeter');
     let tree!: ReactTestRenderer;
     act(() => {
@@ -165,20 +165,14 @@ describe('BudgetRow per-day figure', () => {
           divider={false}
           onPress={() => {}}
           onMore={() => {}}
-          jar
         />
       );
     });
-    expect(tree.root.findAllByType(LimitMeter)).toHaveLength(0);
+    expect(tree.root.findAllByType(LimitMeter)).toHaveLength(1);
     const shown = tree.root.findAllByType(Text).map((t) => [].concat(t.props.children).join(''));
     expect(shown).toContain('Groceries');
     expect(shown.some((t) => t.includes('over budget'))).toBe(true);
-    // Over the limit, the jar is full (no overflow past its top).
-    const full = tree.root.findAll((n) => {
-      const st = [].concat(n.props.style ?? []) as { height?: string }[];
-      return typeof n.type === 'string' && st.some((x) => x && x.height === '100%');
-    });
-    expect(full.length).toBeGreaterThan(0);
+    expect(tree.root.findByType(LimitMeter).props.pct).toBe(100);
     expect(
       tree.root.findAll((n) => n.props.accessibilityLabel === 'More for Groceries budget' && n.props.onPress)
     ).toHaveLength(1);

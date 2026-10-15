@@ -66,17 +66,6 @@ export function GoalCard({
           <Text style={styles.tagText}>{monthsLine}</Text>
         </View>
       )}
-      {goal.reservesAccount && (
-        <View style={styles.tag}>
-          <Text style={styles.tagText}>Reserved in {accountName ?? 'its account'}</Text>
-        </View>
-      )}
-      {following && (
-        <View style={[styles.tag, { backgroundColor: shade(secondary, 94) }]}>
-          <Feather name="refresh-cw" size={10} color={theme.colors.textSecondary} />
-          <Text style={styles.tagText}>Following {accountName ?? 'its account'}</Text>
-        </View>
-      )}
     </>
   );
 
@@ -121,12 +110,29 @@ export function GoalCard({
           </View>
         </View>
 
+        {(goal.reservesAccount || following) && (
+          <View style={styles.accountIdentity}>
+            {goal.reservesAccount && (
+              <View style={styles.tag}>
+                <Text style={styles.tagText}>Reserved in {accountName ?? 'its account'}</Text>
+              </View>
+            )}
+            {following && (
+              <View style={[styles.tag, { backgroundColor: shade(secondary, 94) }]}>
+                <Feather name="refresh-cw" size={10} color={theme.colors.textSecondary} />
+                <Text style={styles.tagText}>Following {accountName ?? 'its account'}</Text>
+              </View>
+            )}
+          </View>
+        )}
         <Text style={styles.savedSummary}>
           {hideAmounts
             ? formatMaskableMoney(goal.currentAmountMinor, { masked: true })
             : formatMoney(goal.currentAmountMinor)}{' '}
-          of {formatMoney(goal.targetAmountMinor)} ·{' '}
-          {reached ? 'Reached' : goal.targetDate ? `By ${dayMonthYear(goal.targetDate)}` : 'No target date'}
+          <Text style={styles.targetSummary}>
+            of {formatMoney(goal.targetAmountMinor)} ·{' '}
+            {reached ? 'Reached' : goal.targetDate ? `By ${dayMonthYear(goal.targetDate)}` : 'No target date'}
+          </Text>
         </Text>
 
         <View style={styles.track}>
@@ -205,6 +211,8 @@ const styles = StyleSheet.create({
     flexBasis: 140,
     minWidth: 0,
   },
+  accountIdentity: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  targetSummary: { fontFamily: theme.font.body, color: theme.colors.textSecondary },
   savedSummary: {
     fontFamily: theme.font.bodyMedium,
     fontVariant: ['tabular-nums'],
@@ -239,8 +247,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: theme.radius.pill,
-    backgroundColor: theme.colors.ink,
+    backgroundColor: theme.colors.surfaceAlt,
   },
   pillPressed: { opacity: 0.8 },
-  pillText: { fontFamily: theme.font.roundedBold, fontSize: 13, color: theme.colors.surface },
+  pillText: { fontFamily: theme.font.roundedBold, fontSize: 13, color: theme.colors.textPrimary },
 });

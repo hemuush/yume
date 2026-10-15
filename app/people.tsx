@@ -117,14 +117,14 @@ export default function PeopleScreen() {
               (group) =>
                 group.list.length > 0 && (
                   <View key={group.key}>
-                    {summary && (
-                      <View style={styles.groupHead}>
-                        <Text style={styles.groupTitle}>{group.title}</Text>
+                    <View style={styles.groupHead}>
+                      <Text style={styles.groupTitle}>{group.title}</Text>
+                      {summary && (
                         <Text style={[styles.groupTotal, { color: group.color }]}>
                           {formatMoney(group.totalMinor)}
                         </Text>
-                      </View>
-                    )}
+                      )}
+                    </View>
                     {inRows(group.list, columns).map((row, r) => (
                       <View key={row[0].id} style={styles.tileRow}>
                         {row.map((p, c) => (

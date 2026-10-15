@@ -2,7 +2,6 @@ import { View, Pressable, useWindowDimensions } from 'react-native';
 import { Text } from '@/components/Text';
 import Animated from 'react-native-reanimated';
 import { Category, RecurringRule } from '@/types';
-import { ToggleSwitch } from '@/components/ToggleSwitch';
 import { CategoryIcon } from '@/components/CategoryIcon';
 import { formatMaskableMoney } from '@/lib/money';
 import { useAccent } from '@/theme/AccentContext';
@@ -11,11 +10,11 @@ import { ruleCadenceLabel } from './recurring.helpers';
 import { ROW_LAYOUT, ROW_EXIT } from '@/lib/animation';
 import { withPressed } from '@/lib/pressed';
 import { weekdayDayMonth } from '@/lib/dateLabels';
-import { inParent, joinSub } from '@/lib/categoryLabel';
+import { joinSub } from '@/lib/categoryLabel';
 
 /**
- * One rule in the Running or Paused card: category icon, what and when, amount, and a pause switch. Tapping
- * the rest opens the edit sheet. Rows appear immediately; others slide into place on pause or delete.
+ * One rule in the Running or Paused card: category icon, context and amount. Tapping
+ * opens the edit sheet, where status changes require confirmation. Rows appear immediately; others slide into place on pause or delete.
  */
 export function RuleRow({
   rule,
@@ -24,10 +23,8 @@ export function RuleRow({
   accountName,
   index,
   onPress,
-  onTogglePause,
   muted,
   masked,
-  busy,
 }: {
   rule: RecurringRule;
   category: Category | undefined;
@@ -37,11 +34,9 @@ export function RuleRow({
   /** Position within its own group (running or paused) — each group's stagger restarts from 0. */
   index: number;
   onPress: () => void;
-  onTogglePause: () => void;
   muted?: boolean;
   /** A savings or investment rule while those amounts are hidden. */
   masked?: boolean;
-  busy?: boolean;
 }) {
   const { secondary } = useAccent();
   const { width, fontScale } = useWindowDimensions();
@@ -75,15 +70,15 @@ export function RuleRow({
         />
         <View style={styles.ruleCopy}>
           <Text style={styles.rowTitle}>{title}</Text>
-          <Text style={styles.rowSub}>{when}</Text>
           <Text style={styles.rowSub}>
-            {transfer
-              ? 'Transfer'
-              : joinSub([
-                  rule.note && name,
-                  inParent(parentName),
-                  `${rule.type === 'income' ? 'Into' : 'From'} ${accountName(rule.accountId)}`,
-                ])}
+            {joinSub([
+              `${weekdayDayMonth(rule.nextRunDate)} · ${ruleCadenceLabel(rule)}`,
+              !transfer && rule.note && name,
+              !transfer && parentName,
+              transfer
+                ? 'Transfer'
+                : `${rule.type === 'income' ? 'Into' : 'From'} ${accountName(rule.accountId)}`,
+            ])}
           </Text>
         </View>
       </Pressable>
@@ -100,13 +95,6 @@ export function RuleRow({
             {formatMaskableMoney(rule.amountMinor, { masked })}
           </Text>
         </Pressable>
-        <ToggleSwitch
-          small
-          value={rule.active}
-          onChange={onTogglePause}
-          accessibilityLabel={`${title}, ${rule.active ? 'running' : 'paused'}`}
-          disabled={busy}
-        />
       </View>
     </Animated.View>
   );

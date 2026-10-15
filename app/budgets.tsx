@@ -251,7 +251,6 @@ export default function BudgetsScreen() {
                       progress={progress}
                       divider={i > 0}
                       showPerDay
-                      jar
                       // The row opens its category's page; Edit and Delete are in ⋯.
                       onPress={() =>
                         returnOrPush(

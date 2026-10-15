@@ -3,6 +3,7 @@ import { View } from 'react-native';
 import { Text } from '@/components/Text';
 import {
   advanceDate,
+  setRecurringRuleActive,
   createRecurringRule,
   updateRecurringRule,
   deleteRecurringRule,
@@ -273,6 +274,30 @@ export function RuleModal({
     }
   };
 
+  const toggleActive = useSaveOnce(async () => {
+    if (!editing || saving) return;
+    setSaving(true);
+    try {
+      await setRecurringRuleActive(editing.id, !editing.active);
+      onSaved();
+    } catch (e) {
+      setError(errorMessage(e));
+    } finally {
+      setSaving(false);
+    }
+  });
+  const confirmActive = () => {
+    if (!editing || saving) return;
+    showAlert(
+      editing.active ? 'Pause this recurring entry?' : 'Resume this recurring entry?',
+      'This changes its running status. Unsaved edits in this sheet will not be saved.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: editing.active ? 'Pause' : 'Resume', onPress: () => void toggleActive() },
+      ]
+    );
+  };
+
   // The calm-sheets sign-off (Direction C): a live card of the rule as it
   // will be logged, then two pages — what gets logged, and when.
   const categoriesById = new Map(categories.map((c) => [c.id, c]));
@@ -432,6 +457,11 @@ export function RuleModal({
           />
           {editing && (
             <InsightDisclosure title="More options">
+              <SheetLink
+                label={editing.active ? 'Pause recurring entry' : 'Resume recurring entry'}
+                onPress={confirmActive}
+                disabled={saving}
+              />
               <SheetLink label="Delete recurring entry" onPress={confirmDelete} disabled={saving} />
             </InsightDisclosure>
           )}
