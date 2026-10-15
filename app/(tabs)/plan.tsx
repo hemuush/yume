@@ -61,6 +61,7 @@ import { errorMessage } from '@/lib/errorMessage';
 import { useTabScrollToTop } from '@/lib/useTabScrollToTop';
 import { useReduceMotion } from '@/lib/useReduceMotion';
 import { PrimaryButton } from '@/components/PrimaryButton';
+import { PendingRefunds } from '@/features/transactions/PendingRefunds';
 
 interface PlanData {
   hideAmounts: boolean;
@@ -327,6 +328,12 @@ export default function PlanScreen() {
               onOpen={scrollToComingUp}
               onJumpToDay={scrollToDay}
             />
+            <View style={{ marginHorizontal: 16 }}>
+              <PendingRefunds
+                refreshToken={data}
+                onOpen={(tx) => router.push({ pathname: '/(tabs)/transactions', params: { entry: tx.id } })}
+              />
+            </View>
             <Section compact title="This month’s budgets" onSeeAll={() => open('/budgets')}>
               <BudgetJars
                 summary={data.budgets}

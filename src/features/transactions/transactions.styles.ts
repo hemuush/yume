@@ -142,6 +142,22 @@ export const styles = StyleSheet.create({
   },
   // Room above the tallest bar for the tapped bar's amount bubble.
   sumChart: { marginTop: 22 },
+  sumFooter: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    marginTop: 14,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.divider,
+  },
+  sumMetric: { flexGrow: 1, flexBasis: 140, minWidth: 0, gap: 4 },
+  sumMetricAmount: {
+    fontFamily: theme.font.bodyBold,
+    fontVariant: ['tabular-nums'],
+    fontSize: 17,
+    color: theme.colors.textPrimary,
+  },
   // Week | Month beside the period pill, the picked one on deep ink.
   scopeSwitch: {
     flexDirection: 'row',
@@ -150,7 +166,7 @@ export const styles = StyleSheet.create({
     minHeight: 50,
     padding: 3,
     borderRadius: 20,
-    backgroundColor: GLASS.fill,
+    backgroundColor: 'rgba(255,255,255,0.9)',
     borderWidth: 1,
     borderColor: GLASS.edge,
   },
@@ -162,7 +178,7 @@ export const styles = StyleSheet.create({
     borderRadius: 16,
   },
   scopeBtnStacked: { flex: 1, alignItems: 'center' },
-  scopeText: { fontFamily: theme.font.bodyMedium, fontSize: 12.5, color: theme.colors.textSecondary },
+  scopeText: { fontFamily: theme.font.bodyMedium, fontSize: 12.5, color: theme.colors.textPrimary },
   scopeTextOn: { color: theme.colors.white },
 
   // ‹ This week › in a frosted pill, Week | Month beside it.
@@ -178,7 +194,7 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 3,
     borderRadius: 20,
     overflow: 'hidden',
-    backgroundColor: GLASS.fill,
+    backgroundColor: 'rgba(255,255,255,0.9)',
     borderWidth: 1,
     borderColor: GLASS.edge,
   },

@@ -90,7 +90,14 @@ export function TransactionRow({
             : ''}
         </Text>
       </View>
-      <Text style={[h.amount, tx.type === 'income' && h.income, tx.type === 'expense' && h.expense]}>
+      <Text
+        style={[
+          h.amount,
+          { fontFamily: theme.font.bodyBold, fontVariant: ['tabular-nums'] },
+          tx.type === 'income' && h.income,
+          tx.type === 'expense' && h.expense,
+        ]}
+      >
         {tx.type === 'expense' ? '−' : tx.type === 'income' ? '+' : ''}
         <Amount minor={tx.amountMinor} sensitive={cat?.isSensitive || savingsTransfer} />
       </Text>

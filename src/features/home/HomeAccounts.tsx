@@ -1,4 +1,4 @@
-import { View, Pressable, StyleSheet } from 'react-native';
+import { View, Pressable, StyleSheet, useWindowDimensions } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Text } from '@/components/Text';
@@ -19,12 +19,7 @@ export function accountTypeLabel(a: Account): string {
   return a.investment ? 'savings · tracked' : a.type.replace('_', ' ');
 }
 
-/**
- * Home's Accounts card: money in hand (bank, cash and wallets in the default currency), then a chip per
- * account with its type and balance, and the gain on a tracked investment. The heading opens the full list;
- * each chip opens that account, so a screen reader reaches every chip on its own. With no accounts yet it
- * offers to add one.
- */
+/** Accounts grouped by purpose, keeping currencies separate and each summary reachable. */
 export function HomeAccounts({
   accounts,
   currency,
@@ -40,6 +35,8 @@ export function HomeAccounts({
   onAddAccount: () => void;
 }) {
   const { accent } = useAccent();
+  const { width, fontScale } = useWindowDimensions();
+  const stacked = width < 360 || fontScale > 1.2;
   if (accounts.length === 0) {
     return (
       <Pressable
@@ -62,7 +59,17 @@ export function HomeAccounts({
   const inHand = accounts.filter(
     (a) => (a.type === 'bank' || a.type === 'cash' || a.type === 'wallet') && a.currency === currency
   );
-  const inHandMinor = inHand.reduce((s, a) => s + a.currentBalanceMinor, 0);
+  const groups = [
+    { title: 'Everyday money', items: inHand },
+    { title: 'Savings & investments', items: accounts.filter((a) => a.type === 'savings') },
+    { title: 'Credit cards', items: accounts.filter((a) => a.type === 'credit_card') },
+    {
+      title: 'Other currencies',
+      items: accounts.filter(
+        (a) => a.currency !== currency && a.type !== 'savings' && a.type !== 'credit_card'
+      ),
+    },
+  ].filter((group) => group.items.length > 0);
   return (
     <View style={styles.wrap}>
       <Glass radius={22} style={[styles.tile, cardSurface.neutral]}>
@@ -79,55 +86,46 @@ export function HomeAccounts({
             <Feather name="arrow-up-right" size={17} color={theme.colors.link} />
           </View>
         </Pressable>
-        {inHand.length > 0 && (
-          <>
-            <Amount
-              minor={inHandMinor}
-              currency={currency}
-              style={styles.big}
-              numberOfLines={1}
-              adjustsFontSizeToFit
-            />
-            <Text style={styles.sub}>Bank, cash & wallets only</Text>
-          </>
-        )}
-        <View style={styles.chips}>
-          {accounts.map((a) => {
-            const hue = accountHue(a.type, accent);
-            return (
-              <Pressable
-                key={a.id}
-                onPress={() => onOpenAccount(a)}
-                style={withPressed(styles.chip)}
-                accessibilityRole="button"
-                accessibilityLabel={`${a.name}, ${accountTypeLabel(a)}. Open summary`}
-              >
-                <View style={[styles.chipIcon, { backgroundColor: shade(hue, 88) }]}>
-                  <MaterialCommunityIcons
-                    name={accountIcon(a.type) as McIconName}
-                    size={14}
-                    color={shade(hue, 30, 10)}
-                  />
-                </View>
-                <View style={styles.chipText}>
-                  <View style={styles.chipNameRow}>
-                    <Text style={styles.chipName}>{a.name}</Text>
-                    {a.investment && <GainPill account={a} />}
-                  </View>
-                  <Text style={styles.chipSub}>
-                    {accountTypeLabel(a)} ·{' '}
-                    <Amount
-                      minor={a.currentBalanceMinor}
-                      currency={a.currency}
-                      sensitive={a.type === 'savings'}
-                      style={styles.chipAmount}
-                    />
-                  </Text>
-                </View>
-              </Pressable>
-            );
-          })}
-        </View>
+        {groups.map((group) => (
+          <View key={group.title} style={styles.group}>
+            <Text style={styles.groupTitle}>{group.title}</Text>
+            <View style={styles.chips}>
+              {group.items.map((a) => {
+                const hue = accountHue(a.type, accent);
+                return (
+                  <Pressable
+                    key={a.id}
+                    onPress={() => onOpenAccount(a)}
+                    style={withPressed([styles.chip, stacked && styles.full])}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${a.name}, ${accountTypeLabel(a)}. Open summary`}
+                  >
+                    <View style={[styles.chipIcon, { backgroundColor: shade(hue, 88) }]}>
+                      <MaterialCommunityIcons
+                        name={accountIcon(a.type) as McIconName}
+                        size={14}
+                        color={shade(hue, 30, 10)}
+                      />
+                    </View>
+                    <View style={styles.chipText}>
+                      <View style={styles.chipNameRow}>
+                        <Text style={styles.chipName}>{a.name}</Text>
+                        {a.investment && <GainPill account={a} />}
+                      </View>
+                      <Text style={styles.chipSub}>{accountTypeLabel(a)}</Text>
+                      <Amount
+                        minor={a.currentBalanceMinor}
+                        currency={a.currency}
+                        sensitive={a.type === 'savings'}
+                        style={styles.chipAmount}
+                      />
+                    </View>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </View>
+        ))}
       </Glass>
     </View>
   );
@@ -155,6 +153,9 @@ const styles = StyleSheet.create({
     color: theme.colors.textPrimary,
   },
   sub: { fontFamily: theme.font.body, fontSize: 12.5, color: theme.colors.textMuted },
+  group: { gap: 6, marginTop: 8 },
+  groupTitle: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textSecondary },
+  full: { flexBasis: '100%' },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 10 },
   chip: {
     flexDirection: 'row',
@@ -168,10 +169,12 @@ const styles = StyleSheet.create({
     backgroundColor: GLASS.fillStrong,
     borderWidth: 1,
     borderColor: GLASS.edge,
-    maxWidth: '100%',
+    flexBasis: '47%',
+    flexGrow: 1,
+    minWidth: 0,
   },
   chipIcon: { width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
-  chipText: { flexShrink: 1, minWidth: 0 },
+  chipText: { flex: 1, minWidth: 0 },
   chipNameRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 6 },
   chipName: { flexShrink: 1, fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textPrimary },
   chipSub: {
@@ -180,5 +183,10 @@ const styles = StyleSheet.create({
     color: theme.colors.textMuted,
     textTransform: 'capitalize',
   },
-  chipAmount: { fontFamily: theme.font.monoBold, fontSize: 11.5, color: theme.colors.textSecondary },
+  chipAmount: {
+    fontVariant: ['tabular-nums'],
+    fontFamily: theme.font.bodyBold,
+    fontSize: 15,
+    color: theme.colors.textPrimary,
+  },
 });

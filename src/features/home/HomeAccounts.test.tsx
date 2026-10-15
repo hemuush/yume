@@ -1,5 +1,5 @@
 /** Home's Accounts card: money in hand, a chip per account with its type, and adding the first one. */
-import { Text } from 'react-native';
+import { Text, StyleSheet } from 'react-native';
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
 
 // Icons draw nothing here: their font load would update state after each test.
@@ -54,7 +54,7 @@ describe('Home accounts', () => {
     expect(onAddAccount).toHaveBeenCalled();
   });
 
-  it('adds up money in hand in the default currency, leaving savings, cards and other currencies out', () => {
+  it('groups everyday, savings, cards and foreign currencies without a misleading combined total', () => {
     const all = texts(
       render({
         accounts: [
@@ -66,14 +66,16 @@ describe('Home accounts', () => {
         ],
       })
     );
-    expect(all).toContain('₹10,500');
-    expect(all).toContain('Bank, cash & wallets only');
+    expect(all).toEqual(
+      expect.arrayContaining(['Everyday money', 'Savings & investments', 'Credit cards', 'Other currencies'])
+    );
+    expect(all).not.toContain('₹10,500');
     expect(all.join(' ')).not.toContain('99,000');
   });
 
   it('says what kind each account is', () => {
     const all = texts(render({ accounts: [account('HDFC', 'credit_card', -400_000)] }));
-    expect(all.some((t) => t.startsWith('credit card · '))).toBe(true);
+    expect(all).toContain('credit card');
     expect(all).not.toContain('Bank, cash & wallets only');
   });
 
@@ -94,4 +96,35 @@ describe('Home accounts', () => {
     expect(onOpenAccount).toHaveBeenCalled();
     expect(onOpenAccounts).toHaveBeenCalled();
   });
+});
+
+it('keeps zero-balance accounts visible and reachable', () => {
+  const open = jest.fn();
+  const tree = render({ accounts: [account('Cash', 'cash', 0)], onOpenAccount: open });
+  act(() =>
+    tree.root
+      .find((n) => n.props.accessibilityLabel === 'Cash, cash. Open summary' && n.props.onPress)
+      .props.onPress()
+  );
+  expect(open).toHaveBeenCalledWith(expect.objectContaining({ id: 'Cash' }));
+});
+
+it.each([
+  { width: 320, fontScale: 1 },
+  { width: 390, fontScale: 1.5 },
+])('stacks account tiles at $width / $fontScale', (size) => {
+  const dimensions = jest
+    .spyOn(require('react-native'), 'useWindowDimensions')
+    .mockReturnValue({ ...size, height: 800, scale: 3 });
+  try {
+    const tree = render({ accounts: [account('Long account name', 'bank', 100)] });
+    const tile = tree.root.find(
+      (n) => n.props.accessibilityLabel === 'Long account name, bank. Open summary' && n.props.onPress
+    );
+    const style =
+      typeof tile.props.style === 'function' ? tile.props.style({ pressed: false }) : tile.props.style;
+    expect(StyleSheet.flatten(style).flexBasis).toBe('100%');
+  } finally {
+    dimensions.mockRestore();
+  }
 });

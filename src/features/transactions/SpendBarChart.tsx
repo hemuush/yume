@@ -169,11 +169,15 @@ export function ChartLegend({
 }: {
   items: ChartLegendItem[];
   inset?: number;
-  /** Names this many (the chart's biggest), then "+N more", so the legend stays one line. */
+  /** Names this many (the chart's biggest), then an expandable "+N more" control. */
   max?: number;
 }) {
+  const [expandedKey, setExpandedKey] = useState<string | null>(null);
+  const itemKey = JSON.stringify(items.map((item) => item.categoryId));
+  const expanded = expandedKey === itemKey;
   if (items.length === 0) return null;
-  const shown = max != null && items.length > max ? items.slice(0, max) : items;
+  const canExpand = max != null && max > 0 && items.length > max;
+  const shown = canExpand && !expanded ? items.slice(0, max) : items;
   const more = items.length - shown.length;
   return (
     <View style={[styles.legend, { paddingHorizontal: inset }]}>
@@ -185,7 +189,19 @@ export function ChartLegend({
           </Text>
         </View>
       ))}
-      {more > 0 && <Text style={[styles.legendText, styles.legendMore]}>+{more} more</Text>}
+      {canExpand && (
+        <Pressable
+          style={styles.legendToggle}
+          accessibilityRole="button"
+          accessibilityLabel={expanded ? 'Show fewer categories' : `Show all ${items.length} categories`}
+          accessibilityState={{ expanded }}
+          onPress={() => setExpandedKey(expanded ? null : itemKey)}
+        >
+          <Text style={[styles.legendText, styles.legendMore]}>
+            {expanded ? 'Show fewer' : `+${more} more`}
+          </Text>
+        </Pressable>
+      )}
     </View>
   );
 }
@@ -254,9 +270,23 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.ink,
     transform: [{ rotate: '45deg' }],
   },
-  legend: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 14 },
+  legend: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    columnGap: 10,
+    rowGap: 4,
+    marginTop: 14,
+  },
   legendItem: { flexDirection: 'row', alignItems: 'center', gap: 5, maxWidth: '100%', flexShrink: 1 },
   legendDot: { width: 8, height: 8, borderRadius: 3, flexShrink: 0 },
   legendText: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textSecondary, flexShrink: 1 },
-  legendMore: { color: theme.colors.textMuted },
+  legendToggle: {
+    minHeight: 44,
+    paddingHorizontal: 10,
+    justifyContent: 'center',
+    borderRadius: 14,
+    backgroundColor: theme.colors.surfaceAlt,
+  },
+  legendMore: { color: theme.colors.textPrimary, fontFamily: theme.font.bodyMedium },
 });

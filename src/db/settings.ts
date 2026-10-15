@@ -68,6 +68,8 @@ export async function setDefaultCurrency(code: string): Promise<void> {
  * the rest are what it may mention at those times.
  */
 export interface NotificationPrefs {
+  recurringAlerts?: boolean;
+  refundAlerts?: boolean;
   morningEnabled: boolean;
   morningHour: number;
   morningMinute: number;
@@ -98,6 +100,9 @@ function clampPrefTimes(prefs: NotificationPrefs): NotificationPrefs {
   // Restored settings are untrusted JSON too. Invalid clock fields must not produce NaN dates,
   // and strings such as "false" must not silently enable reminders.
   const valid = { ...prefs };
+  for (const key of ['recurringAlerts', 'refundAlerts'] as const) {
+    if (key in prefs) valid[key] = prefs[key] === true;
+  }
   for (const key of [
     'morningEnabled',
     'eveningEnabled',

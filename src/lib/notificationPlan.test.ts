@@ -45,13 +45,65 @@ const alert = (over: Partial<QueuedAlert> = {}): QueuedAlert => ({
 });
 
 describe('planNotifications', () => {
-  it('nudges at the Evening time each day for two weeks, and only then', () => {
-    const { notifications } = plan();
+  it('merges optional bill and refund reminders into one morning slot', () => {
+    const { notifications } = plan({
+      prefs: { ...prefs, recurringAlerts: true, refundAlerts: true },
+      attention: [
+        { id: 'bill', kind: 'bill', label: 'Internet', date: '2026-10-04' },
+        { id: 'refund', kind: 'refund', label: 'Shoes', date: '2026-10-03' },
+      ],
+    });
+    const morning = find(notifications, at(3, 9));
+    expect(morning?.route).toBe('/recurring');
+    expect(morning?.body).toContain('Internet');
+    expect(morning?.body).toContain('Shoes');
+    expect(notifications.filter((n) => n.at.getTime() === at(3, 9).getTime())).toHaveLength(1);
+    expect(find(notifications, at(6, 9))?.title).toBe('Still waiting on your refund?');
+  });
+
+  it('keeps optional reminders off unless explicitly enabled, and honours disabled slots', () => {
+    const attention = [{ id: 'refund', kind: 'refund' as const, label: 'Shoes', date: '2026-10-03' }];
+    expect(find(plan({ attention }).notifications, at(3, 9))?.title).toBe('Your day, at a glance');
+    expect(
+      plan({
+        attention,
+        prefs: { ...prefs, refundAlerts: true, morningEnabled: false, eveningEnabled: false },
+      }).notifications
+    ).toEqual([]);
+    expect(
+      find(
+        plan({ attention, prefs: { ...prefs, refundAlerts: true, morningEnabled: false } }).notifications,
+        at(3, 20)
+      )?.route
+    ).toBe('/(tabs)/plan');
+  });
+  it('schedules morning-only daily check-ins without bills, alerts or a wrap, even after logging', () => {
+    const { notifications } = plan({ prefs: { ...prefs, eveningEnabled: false }, loggedToday: true });
+    expect(notifications).toHaveLength(PLAN_DAYS);
+    expect(notifications[0]).toMatchObject({
+      id: 'yume-2026-10-03-morning',
+      title: 'Your day, at a glance',
+      route: '/(tabs)/plan',
+    });
+    expect(notifications[0].at).toEqual(at(3, 9));
+    expect(notifications.at(-1)?.id).toBe('yume-2026-10-16-morning');
+  });
+
+  it('uses the next morning after the configured time has passed', () => {
+    const { notifications } = plan({
+      prefs: { ...prefs, eveningEnabled: false, morningHour: 10 },
+      now: at(3, 10),
+    });
+    expect(notifications[0].at).toEqual(at(4, 10));
+    expect(notifications.every((n) => n.at > at(3, 10))).toBe(true);
+  });
+  it('nudges at the Evening time each day for two weeks', () => {
+    const notifications = plan().notifications.filter((n) => n.id.endsWith('-evening'));
     expect(notifications).toHaveLength(PLAN_DAYS);
     expect(notifications[0]).toMatchObject({
       id: 'yume-2026-10-03-evening',
-      title: 'Log today',
-      body: 'Anything spent today? Tap to add it.',
+      title: 'Before you call it a day',
+      body: 'Add today’s spending while it’s fresh in mind.',
       route: '/add-transaction',
     });
     expect(notifications[0].at).toEqual(at(3, 20));
@@ -80,7 +132,10 @@ describe('planNotifications', () => {
     });
     // Out-of-range times are pulled back into their own ranges (11:30 AM and 4:00 PM at the most/least).
     const day = notifications.filter((n) => n.at.getDate() === 4);
-    expect(day.map((n) => [n.at.getHours(), n.at.getMinutes()])).toEqual([[16, 0]]);
+    expect(day.map((n) => [n.at.getHours(), n.at.getMinutes()])).toEqual([
+      [11, 30],
+      [16, 0],
+    ]);
   });
 
   describe('EMIs', () => {
@@ -88,7 +143,7 @@ describe('planNotifications', () => {
       const { notifications } = plan({ loans: [loan()] });
       const emi = find(notifications, at(5, 9));
       expect(emi).toMatchObject({ id: 'yume-2026-10-05-morning', title: 'EMI due today', route: '/loans' });
-      expect(emi?.body).toBe('Test Person Bank · ₹12,500');
+      expect(emi?.body).toBe('Test Person Bank · ₹12,500\nReview your payment in Loans.');
     });
 
     it('several due the same day make one notification', () => {
@@ -97,7 +152,7 @@ describe('planNotifications', () => {
       });
       expect(find(notifications, at(5, 9))).toMatchObject({
         title: '2 EMIs due today',
-        body: 'Test Person Bank, Ravi · ₹17,500',
+        body: 'Test Person Bank, Ravi · ₹17,500\nReview your payments in Loans.',
       });
     });
 
@@ -152,7 +207,7 @@ describe('planNotifications', () => {
       const { notifications } = plan({ prefs: { ...prefs, morningEnabled: false }, loans: [loan()] });
       expect(find(notifications, at(5, 20))).toMatchObject({
         title: 'EMI due today',
-        body: 'Test Person Bank · ₹12,500\nAnything to log today?',
+        body: 'Test Person Bank · ₹12,500\nReview your payment in Loans.\nAdd anything you spent today',
         route: '/loans',
       });
     });
@@ -165,7 +220,10 @@ describe('planNotifications', () => {
       const { notifications } = plan({ prefs: wrapPrefs });
       const wraps = notifications.filter((n) => n.title === 'Your week, wrapped');
       expect(wraps.map((n) => n.id)).toEqual(['yume-2026-10-05-morning', 'yume-2026-10-12-morning']);
-      expect(wraps[0]).toMatchObject({ body: 'Tap to play last week.', route: '/wrap?period=week' });
+      expect(wraps[0]).toMatchObject({
+        body: 'See where your money went and what stood out last week.',
+        route: '/wrap?period=week',
+      });
     });
 
     it('is not sent when off', () => {
@@ -176,7 +234,7 @@ describe('planNotifications', () => {
       const { notifications } = plan({ prefs: { ...wrapPrefs, morningEnabled: false } });
       expect(find(notifications, at(5, 20))).toMatchObject({
         title: 'Your week, wrapped',
-        body: 'Tap to play last week.\nAnything to log today?',
+        body: 'See where your money went and what stood out last week.\nAdd anything you spent today',
         route: '/wrap?period=week',
       });
     });
@@ -185,7 +243,7 @@ describe('planNotifications', () => {
       const { notifications } = plan({ prefs: wrapPrefs, loans: [loan()] });
       expect(find(notifications, at(5, 9))).toMatchObject({
         title: 'EMI due today',
-        body: 'Test Person Bank · ₹12,500\nYour week, wrapped',
+        body: 'Test Person Bank · ₹12,500\nReview your payment in Loans.\nYour week, wrapped',
         route: '/loans',
       });
     });
@@ -198,19 +256,20 @@ describe('planNotifications', () => {
       expect(find(notifications, at(4, 20))).toBeDefined();
     });
 
-    it('is not sent when the Evening is off, and the Morning never carries it', () => {
+    it('keeps the daily morning check-in when Evening is off', () => {
       const { notifications } = plan({ prefs: { ...prefs, eveningEnabled: false } });
-      expect(notifications).toHaveLength(0);
+      expect(notifications).toHaveLength(PLAN_DAYS);
+      expect(notifications.every((n) => n.title === 'Your day, at a glance')).toBe(true);
     });
 
     it('moves to the chosen Evening time', () => {
       const { notifications } = plan({ prefs: { ...prefs, eveningHour: 21, eveningMinute: 30 } });
-      expect(notifications[0].at).toEqual(at(3, 21, 30));
+      expect(notifications.find((n) => n.id.endsWith('-evening'))?.at).toEqual(at(3, 21, 30));
     });
 
     it('skips today once its time has passed', () => {
       const { notifications } = plan({ now: new Date(2026, 9, 3, 21, 0) });
-      expect(notifications[0].id).toBe('yume-2026-10-04-evening');
+      expect(notifications.find((n) => n.id.endsWith('-evening'))?.id).toBe('yume-2026-10-04-evening');
     });
   });
 
@@ -220,7 +279,7 @@ describe('planNotifications', () => {
       expect(waitingAlerts).toHaveLength(1);
       expect(find(notifications, at(3, 20))).toMatchObject({
         title: 'Food is over budget',
-        body: '₹1,050 of ₹1,000 this month.\nAnything to log today?',
+        body: '₹1,050 of ₹1,000 this month.\nAdd anything you spent today',
         route: '/budgets',
       });
     });

@@ -1,5 +1,7 @@
 # Documentation index
 
+See [16 October morning notification fix](NOTIFICATION_FIX_2026_10_16.md) for current reminder behaviour, corrections and verification limits.
+
 See [14 October release readiness](RELEASE_READINESS_2026_10_14.md) for the latest local audit, fixes, fresh validation and remaining release gates.
 
 Start with the [README](../README.md), then [architecture and logic](ARCHITECTURE.md), [data model](../DATA_MODEL.md), [backup and restore](../BACKUP.md) and [build/release guide](../BUILD.md).

@@ -6,7 +6,7 @@ import { JustAddedGlow } from '@/components/JustAddedGlow';
 import { CategoryIcon } from '@/components/CategoryIcon';
 import { Amount } from '@/components/Amount';
 import { dayLabel } from '@/lib/date';
-import { categoryPath, inParent, joinSub } from '@/lib/categoryLabel';
+import { categoryPath, joinSub } from '@/lib/categoryLabel';
 import { screenStyles as h } from '@/components/screenStyles';
 import { useAccent } from '@/theme/AccentContext';
 
@@ -45,11 +45,11 @@ export function RecentTransactionRow({
   const note = tx.note?.trim();
   const title = isTransfer ? 'Transfer' : note || category?.name || tx.type;
   // The category goes under a note ("Lunch" / "Food & Dining › Zomato · SBI");
-  // when the title already is the category, a subcategory says "in Food & Dining" first.
+  // A subcategory without a label shows its parent alongside the account.
   const sub = isTransfer
     ? `${accountName ?? '—'} → ${toAccountName ?? '—'}`
     : joinSub([
-        note ? category && categoryPath(category.name, parentName) : inParent(parentName),
+        note ? category && categoryPath(category.name, parentName) : parentName,
         accountName,
         showDay && dayLabel(tx.date),
       ]);
@@ -90,7 +90,7 @@ const styles = StyleSheet.create({
   mid: h.mid,
   title: h.title,
   sub: h.sub,
-  amount: h.amount,
+  amount: { ...h.amount, fontFamily: theme.font.bodyBold, fontVariant: ['tabular-nums'] },
   income: h.income,
   refund: { fontFamily: theme.font.bodyBold, color: theme.colors.incomeText },
 });

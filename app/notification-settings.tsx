@@ -32,7 +32,14 @@ import { cardSurface } from '@/components/CardSurface';
 import { HomeWallpaper } from '@/features/home/HomeWallpaper';
 import { DayArc } from '@/features/notifications/DayArc';
 
-type SwitchKey = 'morningEnabled' | 'eveningEnabled' | 'billAlerts' | 'overspendAlerts' | 'weeklySummary';
+type SwitchKey =
+  | 'morningEnabled'
+  | 'eveningEnabled'
+  | 'billAlerts'
+  | 'overspendAlerts'
+  | 'weeklySummary'
+  | 'recurringAlerts'
+  | 'refundAlerts';
 
 export default function NotificationSettingsScreen() {
   const insets = useSafeAreaInsets();
@@ -199,7 +206,7 @@ export default function NotificationSettingsScreen() {
               icon="white-balance-sunny"
               iconBg={theme.colors.goldTint}
               label="Morning"
-              sub="Only when an EMI, wrap or spending alert is due"
+              sub="Daily check-in, with due EMIs, wraps or spending alerts when available"
               value={formatSlotTime(morningMinutes)}
               expanded={openSlot === 'morning'}
               onPress={() => toggleSlot('morning')}
@@ -243,8 +250,8 @@ export default function NotificationSettingsScreen() {
             <SettingsRow
               icon="credit-card-outline"
               iconBg={theme.colors.idGold}
-              label="Bills & EMIs due"
-              sub="On the day"
+              label="Loan EMIs due"
+              sub="On the due date, then for up to 7 days if unpaid"
               dimmed={noTimes}
               right={<ToggleSwitch value={prefs.billAlerts} onChange={(v) => toggle('billAlerts', v)} />}
             />
@@ -257,6 +264,34 @@ export default function NotificationSettingsScreen() {
               dimmed={noTimes}
               right={
                 <ToggleSwitch value={prefs.overspendAlerts} onChange={(v) => toggle('overspendAlerts', v)} />
+              }
+            />
+            <SettingsRow
+              icon="repeat"
+              iconBg={theme.colors.accentTint}
+              label="Recurring expense heads-up"
+              sub="The day before each rule’s next scheduled expense"
+              divider
+              dimmed={noTimes}
+              right={
+                <ToggleSwitch
+                  value={prefs.recurringAlerts === true}
+                  onChange={(v) => toggle('recurringAlerts', v)}
+                />
+              }
+            />
+            <SettingsRow
+              icon="cash-refund"
+              iconBg={theme.colors.goldTint}
+              label="Refund follow-ups"
+              sub="On the expected date, then once more 3 days later if still pending"
+              divider
+              dimmed={noTimes}
+              right={
+                <ToggleSwitch
+                  value={prefs.refundAlerts === true}
+                  onChange={(v) => toggle('refundAlerts', v)}
+                />
               }
             />
             <SettingsRow
@@ -288,8 +323,17 @@ export default function NotificationSettingsScreen() {
             </Text>
             <Text style={styles.deliveryHint}>
               {deliveryError ??
-                'Morning reminders appear when something is due. The evening log reminder appears if you haven’t logged that day.'}
+                'Morning includes a daily check-in. Evening skips the log reminder if you’ve logged that day. Reminders are planned 14 days ahead and renewed when you open Yume; Android may delay delivery.'}
             </Text>
+            {delivery?.permitted &&
+              !delivery.channelBlocked &&
+              typeof delivery.morningCount === 'number' &&
+              typeof delivery.eveningCount === 'number' && (
+                <Text style={styles.deliveryHint}>
+                  Morning: {prefs.morningEnabled ? `${delivery.morningCount} scheduled` : 'Off'} · Evening:{' '}
+                  {prefs.eveningEnabled ? `${delivery.eveningCount} scheduled` : 'Off'}
+                </Text>
+              )}
             <View style={styles.deliveryActions}>
               <PrimaryButton
                 compact

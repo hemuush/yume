@@ -49,9 +49,9 @@ function headline(over: Partial<React.ComponentProps<typeof TransactionsHeadline
 }
 
 describe('Spent card', () => {
-  it('says the change, money in and the net as chips', () => {
+  it('separates the comparison from the money in and net footer', () => {
     const all = texts(headline());
-    expect(all).toEqual(expect.arrayContaining(['Spent', '₹5,796 in', 'Net −₹11,273']));
+    expect(all).toEqual(expect.arrayContaining(['Spent', 'Money in', '₹5,796', 'Net', '−₹11,273']));
     expect(all.some((t) => t.includes('₹2,310 less than last week'))).toBe(true);
   });
 
@@ -118,4 +118,20 @@ describe('Activity filter bar', () => {
   it('adds a removable chip for a picked category', () => {
     expect(texts(bar(['groc']))).toContain('Groceries');
   });
+});
+
+it('expands and collapses the category legend without changing the selected period', () => {
+  const tree = headline();
+  const toggle = () =>
+    tree.root.findAll(
+      (n) =>
+        n.props.accessibilityLabel === 'Show all 6 categories' ||
+        n.props.accessibilityLabel === 'Show fewer categories'
+    )[0]!;
+  expect(toggle().props.accessibilityState.expanded).toBe(false);
+  act(() => toggle().props.onPress());
+  expect(texts(tree)).toContain('Travel');
+  expect(toggle().props.accessibilityState.expanded).toBe(true);
+  act(() => toggle().props.onPress());
+  expect(texts(tree)).not.toContain('Travel');
 });
