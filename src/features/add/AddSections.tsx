@@ -195,6 +195,7 @@ export function TransferAccounts({
         </Pressable>
       )}
       <ModalSheet
+        size="compact"
         visible={picking !== null}
         onClose={() => setPicking(null)}
         title={picking === 'from' ? 'Move from' : 'Move to'}

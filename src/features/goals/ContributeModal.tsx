@@ -37,10 +37,12 @@ const DIRECTIONS: { label: string; value: Direction }[] = [
 export function ContributeModal({
   goal,
   onClose,
+  backLabel,
   onContributed,
 }: {
   goal: SavingsGoal | null;
   onClose: () => void;
+  backLabel?: string;
   onContributed: () => void;
 }) {
   const [summary, setSummary] = useState<GoalReservationSummary | null>(null);
@@ -172,6 +174,8 @@ export function ContributeModal({
 
   return (
     <ModalSheet
+      backLabel={backLabel}
+      dismissible={!saving}
       title={reveal ? 'Goal completed' : goal.reservesAccount ? 'Goal reservation' : 'Add to goal'}
       visible
       onClose={() => {

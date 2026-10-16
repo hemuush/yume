@@ -16,6 +16,7 @@ export function GoalSheetCard({
   targetMinor,
   targetDate,
   kicker,
+  compact = false,
 }: {
   name: string;
   savedMinor: number;
@@ -23,18 +24,30 @@ export function GoalSheetCard({
   targetDate?: string | null;
   /** Replaces the "40%" in the corner — "After this" on Add money. */
   kicker?: string;
+  compact?: boolean;
 }) {
   const { hideAmounts } = usePrivacy();
   const { secondary } = useAccent();
   const { percent, done } = goalProgress(savedMinor, targetMinor);
   return (
     <SheetCard
+      compact={compact}
       hue={done && !hideAmounts ? theme.colors.flatLime : secondary}
       icon={done && !hideAmounts ? 'flag-checkered' : 'piggy-bank-outline'}
-      kicker={kicker ?? (hideAmounts ? 'Saved' : done ? 'Reached' : `${Math.round(percent)}%`)}
+      kicker={
+        compact
+          ? 'Savings goal'
+          : (kicker ?? (hideAmounts ? 'Saved' : done ? 'Reached' : `${Math.round(percent)}%`))
+      }
       amount={formatMaskableMoney(savedMinor, { masked: hideAmounts })}
       title={name}
-      meta={`of ${formatMoney(targetMinor)}${targetDate ? ` · by ${dayMonthYear(targetDate)}` : ''}`}
+      meta={
+        compact
+          ? targetDate
+            ? `By ${dayMonthYear(targetDate)}`
+            : undefined
+          : `of ${formatMoney(targetMinor)}${targetDate ? ` · by ${dayMonthYear(targetDate)}` : ''}`
+      }
       progress={hideAmounts ? 0 : percent / 100}
     />
   );

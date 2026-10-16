@@ -58,6 +58,9 @@ jest.mock('./GoalAccountField', () => ({
 }));
 jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMock').createReanimatedMock());
 
+jest.mock('./ContributeModal', () => ({ ContributeModal: () => null }));
+import { ModalSheet } from '@/components/ModalSheet';
+import { ContributeModal } from './ContributeModal';
 import { GoalDetailModal } from './GoalDetailModal';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import type { Account, SavingsGoal } from '@/types';
@@ -290,4 +293,19 @@ describe('archive and delete', () => {
     expect(mockUnarchive).toHaveBeenCalledWith('g1');
     expect(onChanged).toHaveBeenCalledTimes(1);
   });
+});
+
+it('opens reservation management without a second visible goal sheet and preserves the draft', async () => {
+  const { tree } = await render(makeGoal({ reservesAccount: true, linkedAccountId: 'bank' }));
+  act(() => byId(tree, 'Goal name').props.onChangeText('My draft'));
+  act(() =>
+    tree.root
+      .findAllByType(PrimaryButton)
+      .find((n) => n.props.title === 'Manage reservation')!
+      .props.onPress()
+  );
+  expect(tree.root.findByType(ModalSheet).props.visible).toBe(false);
+  act(() => tree.root.findByType(ContributeModal).props.onClose());
+  expect(tree.root.findByType(ModalSheet).props.visible).toBe(true);
+  expect(byId(tree, 'Goal name').props.value).toBe('My draft');
 });

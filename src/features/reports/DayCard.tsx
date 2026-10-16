@@ -26,6 +26,7 @@ export function DayCard({
   onClose,
   error,
   onRetry,
+  embedded = false,
 }: {
   iso: string;
   txs: Transaction[] | null;
@@ -33,6 +34,7 @@ export function DayCard({
   onClose: () => void;
   error?: string | null;
   onRetry?: () => void;
+  embedded?: boolean;
 }) {
   const title = parseLocalIsoDate(iso).toLocaleDateString(undefined, {
     weekday: 'short',
@@ -41,22 +43,24 @@ export function DayCard({
   });
   const count = txCount(txs);
   return (
-    <View style={styles.dayCard}>
-      <View style={styles.dayHead}>
-        <View style={styles.dayHeadText}>
-          <Text style={styles.dayTitle}>{title}</Text>
-          {count ? <Text style={styles.daySub}>{count}</Text> : null}
+    <View style={[styles.dayCard, embedded && styles.dayCardEmbedded]}>
+      {!embedded && (
+        <View style={styles.dayHead}>
+          <View style={styles.dayHeadText}>
+            <Text style={styles.dayTitle}>{title}</Text>
+            {count ? <Text style={styles.daySub}>{count}</Text> : null}
+          </View>
+          <Pressable
+            onPress={onClose}
+            hitSlop={10}
+            style={withPressed(styles.dayClose)}
+            accessibilityRole="button"
+            accessibilityLabel="Close this day"
+          >
+            <Feather name="x" size={16} color={theme.colors.textSecondary} />
+          </Pressable>
         </View>
-        <Pressable
-          onPress={onClose}
-          hitSlop={10}
-          style={withPressed(styles.dayClose)}
-          accessibilityRole="button"
-          accessibilityLabel="Close this day"
-        >
-          <Feather name="x" size={16} color={theme.colors.textSecondary} />
-        </Pressable>
-      </View>
+      )}
 
       {error ? (
         <View style={styles.dayEmpty}>

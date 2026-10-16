@@ -112,6 +112,7 @@ export function AddCategoryModal({
   const hiddenWithParent = !!parent?.isSensitive;
   return (
     <ModalSheet
+      dismissible={!saving}
       title="Category setup"
       visible={visible}
       onClose={onClose}
@@ -127,6 +128,7 @@ export function AddCategoryModal({
       }
     >
       <SheetCard
+        compact
         hue={color}
         icon={icon}
         kicker={kind === 'income' ? 'Income' : 'Expense'}

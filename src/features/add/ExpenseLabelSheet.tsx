@@ -66,7 +66,18 @@ export function ExpenseLabelSheet({
     close();
   };
   return (
-    <ModalSheet visible={visible} onClose={close} title="Expense label" scrollable>
+    <ModalSheet
+      visible={visible}
+      onClose={close}
+      title="Expense label"
+      size="compact"
+      footer={
+        <PrimaryButton
+          title={draft.trim() ? 'Use label' : value.trim() ? 'Remove label' : 'Done'}
+          onPress={() => pick(draft.trim())}
+        />
+      }
+    >
       <TextInput
         value={draft}
         onChangeText={setDraft}
@@ -75,10 +86,14 @@ export function ExpenseLabelSheet({
         returnKeyType="done"
         onSubmitEditing={() => pick(draft.trim())}
         style={{
-          minHeight: 48,
-          padding: 12,
-          borderRadius: 14,
-          backgroundColor: theme.colors.surfaceAlt,
+          minHeight: 52,
+          padding: 14,
+          fontFamily: theme.font.body,
+          fontSize: 16,
+          borderRadius: 18,
+          borderWidth: 1,
+          borderColor: theme.colors.borderSoft,
+          backgroundColor: theme.colors.surface,
           color: theme.colors.textPrimary,
         }}
       />
@@ -115,12 +130,6 @@ export function ExpenseLabelSheet({
           <Text style={s.link}>Show more labels</Text>
         </Pressable>
       )}
-      <View style={{ marginTop: 16 }}>
-        <PrimaryButton
-          title={draft.trim() ? 'Use label' : value.trim() ? 'Remove label' : 'Done'}
-          onPress={() => pick(draft.trim())}
-        />
-      </View>
     </ModalSheet>
   );
 }

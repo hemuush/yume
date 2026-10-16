@@ -27,7 +27,7 @@ import { Fredoka_500Medium } from '@expo-google-fonts/fredoka/500Medium';
 import { Fredoka_600SemiBold } from '@expo-google-fonts/fredoka/600SemiBold';
 import { getDb } from '@/db/client';
 import { shouldRelock } from '@/lib/appLock';
-import { getHasOnboarded, setHasOnboarded, getAppLockEnabled } from '@/db/settings';
+import { getHasOnboarded, setHasOnboarded, getAppLockEnabled, getHideSensitiveAmounts } from '@/db/settings';
 import { listAccounts, listTransactions } from '@/db/ledger';
 import { runAppMaintenance } from '@/lib/runAppMaintenance';
 import {
@@ -108,7 +108,8 @@ export default function RootLayout() {
           void rebuildNotifications().catch((err) => console.error('rebuildNotifications failed:', err));
         });
 
-        const locked = await getAppLockEnabled();
+        // Prime masking before mounting any financial screen, including an unlocked cold launch.
+        const [locked] = await Promise.all([getAppLockEnabled(), getHideSensitiveAmounts()]);
         if (cancelled) return;
         setInitialLocked(locked);
 

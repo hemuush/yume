@@ -36,6 +36,8 @@ export function PrivacyProvider({ children }: { children: ReactNode }) {
   // The latest value, readable synchronously: the toggle needs "what is it now" to compute the next value
   // and write it, which a setState updater must not do (updaters have to be pure; StrictMode runs them twice).
   const hideRef = useRef(hideAmounts);
+  const generation = useRef(0);
+  const authenticating = useRef(false);
 
   const apply = useCallback((next: boolean) => {
     hideRef.current = next;
@@ -45,23 +47,40 @@ export function PrivacyProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     // Same reasoning as AccentContext: falls back to the cached default
     // already seeded above rather than leaving an unhandled rejection.
-    const read = () =>
-      getHideSensitiveAmounts()
-        .then(apply)
+    const read = () => {
+      const call = ++generation.current;
+      return getHideSensitiveAmounts()
+        .then((next) => {
+          if (call === generation.current) apply(next);
+        })
         .catch(() => {});
+    };
     void read();
-    // A restore brings back the backup's setting.
-    return onSettingsRestored(() => void read());
+    const unsubscribe = onSettingsRestored(() => void read());
+    return () => {
+      generation.current += 1;
+      unsubscribe();
+    };
   }, [apply]);
 
   const { lockEnabled } = useAppLock();
   const toggleHideAmounts = useCallback(async () => {
+    if (authenticating.current) return;
     const next = !hideRef.current;
+    const call = ++generation.current;
     // Showing hidden amounts again takes the phone's own unlock when the app lock is on: the point of hiding
     // them is handing the phone over, and whoever holds it shouldn't be one tap from seeing them.
     if (!next && lockEnabled) {
-      const ok = await authenticate().catch(() => false);
-      if (!ok) return;
+      authenticating.current = true;
+      let ok = false;
+      try {
+        ok = await authenticate();
+      } catch {
+        // A failed or cancelled unlock keeps amounts hidden.
+      } finally {
+        authenticating.current = false;
+      }
+      if (!ok || call !== generation.current) return;
     }
     apply(next);
     // A failed write only costs the preference on the next launch; the switch still works this session.

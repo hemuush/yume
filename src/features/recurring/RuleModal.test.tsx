@@ -40,6 +40,7 @@ import { RuleModal } from './RuleModal';
 import { deleteRecurringRule, updateRecurringRule } from '@/db/recurring';
 import { weekdayDayMonth } from '@/lib/dateLabels';
 import { PrimaryButton } from '@/components/PrimaryButton';
+import { AmountField } from '@/components/AmountField';
 
 const accounts = [{ id: 'sbi', name: 'SBI', type: 'bank' } as any];
 const categories = [
@@ -100,10 +101,10 @@ describe('recurring sheet', () => {
     expect(t.slice(i + 1)).not.toContain('DEC');
     act(() => tree.unmount());
   });
-  it('previews the rule on its card', async () => {
+  it('keeps rule context compact and the amount editable', async () => {
     const tree = await render(rule);
     expect(texts(tree)).toEqual(expect.arrayContaining(['Every month', 'YouTube Premium']));
-    expect(texts(tree).some((t) => t.includes('299'))).toBe(true);
+    expect(tree.root.findByType(AmountField).props.value).toBe('299');
     expect(texts(tree)).toContain(`From SBI · next ${weekdayDayMonth('2026-10-01')}`);
   });
 

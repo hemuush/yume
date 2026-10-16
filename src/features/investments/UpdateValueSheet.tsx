@@ -30,6 +30,7 @@ export function UpdateValueSheet({
   valuation,
   visible,
   onClose,
+  backLabel,
   onSaved,
   onDeleted,
 }: {
@@ -38,6 +39,7 @@ export function UpdateValueSheet({
   valuation?: Valuation | null;
   visible: boolean;
   onClose: () => void;
+  backLabel?: string;
   onSaved: () => void;
   /** After a delete, once the undo toast is up — the caller closes whatever sits behind this sheet. */
   onDeleted: () => void;
@@ -125,6 +127,8 @@ export function UpdateValueSheet({
 
   return (
     <ModalSheet
+      backLabel={backLabel}
+      dismissible={!saving}
       title="Update value"
       visible={visible}
       onClose={onClose}

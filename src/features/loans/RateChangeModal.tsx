@@ -26,11 +26,13 @@ export function RateChangeModal({
   loan,
   remainingMonths,
   onClose,
+  backLabel,
   onDone,
 }: {
   loan: Loan;
   remainingMonths: number;
   onClose: () => void;
+  backLabel?: string;
   onDone: () => void;
 }) {
   const runAction = useSaveOnce(async (action: () => Promise<void>) => {
@@ -81,6 +83,8 @@ export function RateChangeModal({
 
   return (
     <ModalSheet
+      backLabel={backLabel}
+      dismissible={!saving}
       visible
       onClose={onClose}
       variant="center"

@@ -101,10 +101,11 @@ export function PeriodPicker({
 
   return (
     <ModalSheet
+      size="compact"
       visible={visible}
       onClose={onClose}
       title={allowYear ? 'Pick a period' : 'Jump to a month'}
-      scrollable={false}
+      scrollable
     >
       <View style={styles.body}>
         {allowYear && (

@@ -118,6 +118,7 @@ export function AddBudgetModal({
   const cat = categories.find((c) => c.id === categoryId);
   return (
     <ModalSheet
+      dismissible={!saving}
       visible={visible}
       title={editing ? 'Edit budget' : 'New budget'}
       onClose={onClose}
@@ -133,6 +134,7 @@ export function AddBudgetModal({
       }
     >
       <SheetCard
+        compact
         hue={cat?.color ?? accent}
         icon={cat?.icon ?? 'wallet-outline'}
         kicker={rollover ? 'Monthly · rolls over' : 'Monthly'}

@@ -6,11 +6,11 @@ Yume uses Expo SDK 57 and EAS Build. Read the [exact SDK 57 documentation](https
 
 Use Node 22.13 or newer and install the lockfile dependencies with `npm ci`. The SDK 57 reference lists React Native 0.86, React 19.2.3, Android 7 or newer, and Android compile/target API 36. These platform floors do not guarantee compatibility with every device or future Android version.
 
-The project owner is `xyumex`, configured in [app.json](app.json). Log into an account with access to that EAS project. Run `eas init` only when intentionally linking a new project or fork.
+The project owner is `yume-expense-tracker`, configured in [app.json](app.json), linked to EAS project `6c5db8df-593f-429b-a168-6f734be681b5`. This replaces the previous `xyumex` project link. Log into an account with access to that EAS project. Run `eas init` only when intentionally linking a new project or fork.
+
+The 16 October account switch linked `@yume-expense-tracker/yume`. The owner explicitly selected a fresh signing setup and version-code baseline of **1**, with app version **1.0.0**. This APK cannot update an installation signed with the old account's key; export a backup before uninstalling that installation, then restore it after the fresh install. The first submission temporarily disables preview auto-increment so its actual version code stays 1; auto-increment is restored for subsequent builds.
 
 When changing EAS projects, preserve the Android package (`com.yume.app`), version-code progression and original signing key. A new signing key cannot update the APK already installed under the old key. Confirm credential availability before the next build. Historical build links below belong to the previous account.
-
-For the new `xyumex` project, the owner requested resetting Android's version code to 1 while keeping the app version at 1.0.0. This is a fresh version-code baseline, not an upgrade to the historical version-code-15 APK. EAS auto-increment remains enabled, so the next build will increase this value.
 
 ```sh
 npm ci
@@ -26,7 +26,7 @@ npx eas-cli build --platform android --profile preview
 
 The [preview profile](eas.json) creates an internal-distribution APK and restricts native architecture to **arm64-v8a**. It is not an APK for every Android architecture. EAS returns a build page and download link after success; build duration varies. Install only on a compatible device, for example using `adb install path/to/yume.apk`.
 
-The latest submitted preview is **1.0.0, version code 15**: [build page](https://expo.dev/accounts/xyumex/projects/yume/builds/f4528fb4-decc-4a47-a217-9a0a481192c5). It includes the label keyboard/loading and final-audit refinements. Submission alone does not confirm completion or device acceptance.
+The current account's first submitted preview is **1.0.0, version code 1**: [build page](https://expo.dev/accounts/yume-expense-tracker/projects/yume/builds/06193728-45c8-4b2b-9133-a08171c9f1c1). It contains the earlier popup and startup/privacy refinements. The subsequent pastel sheet redesign is newer than this submission and requires another build. It was accepted by EAS on 16 October 2026; completion and APK availability must be checked on the build page. This is a fresh-install signing baseline.
 
 ## Play Store bundle
 

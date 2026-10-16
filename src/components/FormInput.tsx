@@ -2,6 +2,7 @@ import { forwardRef, useState } from 'react';
 import { View, StyleSheet, TextInputProps, type TextInput as RNTextInput } from 'react-native';
 import { Text, TextInput } from '@/components/Text';
 import { theme } from '@/constants/theme';
+import { useSheetSurface } from './SheetSurface';
 import { FIELD_LABEL } from '@/constants/textStyles';
 
 interface Props extends TextInputProps {
@@ -12,6 +13,7 @@ export const FormInput = forwardRef<RNTextInput, Props>(function FormInput(
   { label, style, onFocus, onBlur, ...rest },
   ref
 ) {
+  const inSheet = useSheetSurface();
   const [focused, setFocused] = useState(false);
   return (
     <View style={styles.wrap}>
@@ -19,7 +21,7 @@ export const FormInput = forwardRef<RNTextInput, Props>(function FormInput(
       <TextInput
         ref={ref}
         accessibilityLabel={label}
-        style={[styles.input, focused && styles.inputFocused, style]}
+        style={[styles.input, inSheet && styles.sheetInput, focused && styles.inputFocused, style]}
         placeholderTextColor={theme.colors.textMuted}
         onFocus={(e) => {
           setFocused(true);
@@ -52,6 +54,7 @@ const styles = StyleSheet.create({
     color: theme.colors.textPrimary,
     backgroundColor: theme.colors.surfaceAlt,
   },
+  sheetInput: { backgroundColor: theme.colors.surface, borderRadius: 18, minHeight: 52 },
   inputFocused: {
     borderColor: theme.colors.link,
     backgroundColor: theme.colors.surface,

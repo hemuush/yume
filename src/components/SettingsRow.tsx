@@ -5,6 +5,7 @@ import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
 import { usePressScale } from '@/lib/usePressScale';
 import { screenStyles as h } from '@/components/screenStyles';
+import { useSheetSurface } from './SheetSurface';
 import type { McIconName } from '@/components/iconName';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -49,11 +50,14 @@ export function SettingsRow({
   /** Muted field label above a prominent value (sub). */
   field?: boolean;
 }) {
+  const inSheet = useSheetSurface();
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.99);
   const chevron = expanded === undefined ? 'chevron-right' : expanded ? 'chevron-up' : 'chevron-down';
   const content = (
     <>
-      <View style={[h.iconTile, round && styles.round, { backgroundColor: iconBg }]}>
+      <View
+        style={[h.iconTile, round && styles.round, inSheet && styles.sheetIcon, { backgroundColor: iconBg }]}
+      >
         <MaterialCommunityIcons name={icon as McIconName} size={17} color={theme.colors.ink} />
       </View>
       <View style={h.mid}>
@@ -110,4 +114,5 @@ const styles = StyleSheet.create({
   },
   dimmed: { opacity: 0.45 },
   round: { borderRadius: 19 },
+  sheetIcon: { width: 40, height: 40, borderRadius: 20 },
 });
