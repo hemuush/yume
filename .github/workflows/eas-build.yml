@@ -1,0 +1,52 @@
+name: EAS Build
+
+# Starts an EAS Android build after CI passes on main. Production (AAB) builds
+# are manual only: run this workflow from the Actions tab and pick "production".
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: EAS build profile
+        type: choice
+        options: [preview, production]
+        default: preview
+
+permissions:
+  contents: read
+
+concurrency:
+  group: eas-build-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    # Automatic runs only follow a green CI push to main, never a PR.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+      PROFILE: ${{ inputs.profile || 'preview' }}
+    steps:
+      # Actions are pinned to a commit so a moved tag can't change what runs.
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          # Build exactly the commit CI validated, not whatever main moved to.
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Check EXPO_TOKEN
+        run: test -n "$EXPO_TOKEN" || { echo "::error::Add an EXPO_TOKEN repository secret"; exit 1; }
+      # --no-wait queues the build on EAS and returns, so runner minutes are
+      # not spent waiting; the build page link is in the log.
+      - run: npx eas-cli build --platform android --profile "$PROFILE" --non-interactive --no-wait
