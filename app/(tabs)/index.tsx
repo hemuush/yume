@@ -447,7 +447,6 @@ export default function DashboardScreen() {
   // Where this month is heading — the current month only, and only once
   // there's enough of it to go on (monthPace returns null before the 5th).
   const todayIso = toLocalIsoDate(new Date());
-  const currentMonth = loadedCursor.granularity === 'month' && loadedCursor.offset === 0;
   const paceMinor =
     paceInputs && comparison && loadedCursor.granularity === 'month' && loadedCursor.offset === 0
       ? monthPace({ spentMinor: comparison.current.expenseMinor, ...paceInputs, today: todayIso })
@@ -583,9 +582,6 @@ export default function DashboardScreen() {
                     : null
                 }
                 pace={paceMinor != null ? { projectedMinor: paceMinor, byLabel: monthEndLabel } : null}
-                // The day rail only goes with the current month: it travels through the spending so far.
-                railDaily={currentMonth ? dailySpend : undefined}
-                railToday={currentMonth ? todayIso : undefined}
               />
             </Animated.View>
           ) : (
