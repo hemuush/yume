@@ -291,3 +291,19 @@ describe('Compact forecast disclosure', () => {
     expect(texts(tree)).toContain('+₹5,000 coming in');
   });
 });
+
+it('starts budget setup directly from an empty Plan budget card', () => {
+  const open = jest.fn(),
+    add = jest.fn();
+  const tree = render(<BudgetJars summary={buildBudgetsSummary([])} onOpen={open} onAdd={add} />);
+  act(() =>
+    tree.root
+      .findAll(
+        (n) => n.props.accessibilityLabel === 'Set a monthly limit. Open budgets' && n.props.onPress
+      )[0]
+      .props.onPress()
+  );
+  expect(add).toHaveBeenCalledTimes(1);
+  expect(open).not.toHaveBeenCalled();
+  act(() => tree.unmount());
+});

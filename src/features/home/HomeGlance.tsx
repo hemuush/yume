@@ -17,6 +17,8 @@ import { GoalChip } from '@/features/goals/GoalChip';
 import { HomeSwipeCard, SwipePage } from './HomeSwipeCard';
 import { UpcomingRow, UpcomingMoreRow } from './UpcomingRow';
 import { withPressed } from '@/lib/pressed';
+import { ExpectedRefund } from '@/db/refundTracking';
+import { HomeRefunds } from './HomeRefunds';
 import { growHref } from '@/lib/cardGrow';
 
 export interface UpcomingItem {
@@ -163,8 +165,18 @@ export function HomeGlance({
   rowEntering,
   onSeeMoreUpcoming,
   budgetAlert,
+  refunds = [],
+  refundError = false,
+  openingRefund,
+  onOpenRefund,
+  onRetryRefunds,
 }: {
   upcoming: Upcoming;
+  refunds?: ExpectedRefund[];
+  refundError?: boolean;
+  openingRefund?: string | null;
+  onOpenRefund?: (transactionId: string) => void;
+  onRetryRefunds?: () => void;
   /** "+N more" — opens Plan's Coming up, which lists the whole fortnight by day. */
   onSeeMoreUpcoming: () => void;
   /** Most urgent first, as listBudgetsForMonth returns them. */
@@ -269,6 +281,25 @@ export function HomeGlance({
                   <UpcomingMoreRow count={hiddenUpcoming} divider onPress={onSeeMoreUpcoming} />
                 )}
               </View>
+            ),
+          },
+        ]
+      : []),
+    ...(refunds.length > 0 || refundError
+      ? [
+          {
+            key: 'refunds',
+            label: 'Refunds',
+            count: refunds.length,
+            alert: refunds.some((r) => r.dueDate != null && r.dueDate < toLocalIsoDate(new Date())),
+            content: (
+              <HomeRefunds
+                refunds={refunds}
+                failed={refundError}
+                openingId={openingRefund}
+                onOpen={onOpenRefund}
+                onRetry={onRetryRefunds}
+              />
             ),
           },
         ]

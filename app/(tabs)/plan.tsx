@@ -14,9 +14,11 @@ import { getDailySpendingGoal, getDefaultCurrency } from '@/db/settings';
 import { usePrivacy } from '@/theme/PrivacyContext';
 import { isSavingsEntry } from '@/lib/privateSummary';
 import { savingsAccountIdsOf } from '@/lib/account';
-import { Account, Category, Loan, SavingsGoal } from '@/types';
+import { Account, Category, Loan, SavingsGoal, RecurringRule, Transaction } from '@/types';
 import type { BudgetProgress } from '@/db/budgets';
 import type { PersonWithBalance } from '@/db/people';
+import { AddBudgetModal } from '@/features/budgets/AddBudgetModal';
+import { RuleModal } from '@/features/recurring/RuleModal';
 import { BudgetDetailModal } from '@/features/budgets/BudgetDetailModal';
 import { LoanDetailModal } from '@/features/loans/LoanDetailModal';
 import { loanHues } from '@/features/loans/loanIdentity';
@@ -57,6 +59,8 @@ import { PeopleTile, HabitTile, PlanPerson, PEOPLE_SHOWN } from '@/features/plan
 import { RunwayCard } from '@/features/plan/RunwayCard';
 import { BudgetJars } from '@/features/plan/BudgetJars';
 import { DebtPath } from '@/features/plan/DebtPath';
+import { GoalOverviewModal } from '@/features/goals/GoalOverviewModal';
+import { AddGoalModal } from '@/features/goals/AddGoalModal';
 import { GoalsStrip, WhatIfCard } from '@/features/plan/PlanGoals';
 import { buildRunway, isRunwayAccount, runwayStartMinor, Runway } from '@/features/plan/runway';
 import { styles as planStyles } from '@/features/plan/plan.styles';
@@ -67,6 +71,7 @@ import { errorMessage } from '@/lib/errorMessage';
 import { useTabScrollToTop } from '@/lib/useTabScrollToTop';
 import { useReduceMotion } from '@/lib/useReduceMotion';
 import { PrimaryButton } from '@/components/PrimaryButton';
+import { TransactionDetailModal } from '@/features/transactions/TransactionDetailModal';
 import { PendingRefunds } from '@/features/transactions/PendingRefunds';
 
 interface PlanData {
@@ -77,6 +82,7 @@ interface PlanData {
   budgetDetails: BudgetProgress[];
   loanDetails: Loan[];
   personDetails: PersonWithBalance[];
+  ruleDetails: RecurringRule[];
   loans: LoansSummary;
   dueSoon: DueSoon;
   dueGroups: DueGroup[];
@@ -91,15 +97,12 @@ interface PlanData {
   people: PeopleState;
   topPeople: PlanPerson[];
   goals: SavingsGoal[];
-  whatIf: { categoryName: string; avgMonthlyMinor: number } | null;
+  whatIf: { categoryId: string; categoryName: string; avgMonthlyMinor: number } | null;
   habit: HabitState | null;
   dailyGoalMinor: number | null;
 }
 
-/**
- * Everything you're planning: one tile per topic in titled groups (next 14 days, Where you stand, Goals,
- * People & habit), then Coming up. Tiles open their screen; empty ones say what to do (planOverview.ts).
- */
+/** Plan previews open item sheets directly; collection links keep the full-screen routes. */
 export default function PlanScreen() {
   const { width, fontScale } = useWindowDimensions();
   const stackTiles = width < 360 || fontScale > 1.2;
@@ -111,7 +114,11 @@ export default function PlanScreen() {
   const request = useRef(0);
   const paymentRequest = useRef(0);
   const openingPayment = useRef(false);
-  const [detail, setDetail] = useState<{ kind: 'loan' | 'budget' | 'person'; id: string } | null>(null);
+  const [detail, setDetail] = useState<{
+    kind: 'loan' | 'budget' | 'person' | 'goal' | 'new-goal' | 'new-budget' | 'rule';
+    id: string;
+  } | null>(null);
+  const [refundTx, setRefundTx] = useState<Transaction | null>(null);
   const reduceMotion = useReduceMotion();
   useFocusEffect(
     useCallback(
@@ -221,6 +228,7 @@ export default function PlanScreen() {
       budgetDetails: budgets,
       loanDetails: loans,
       personDetails: people,
+      ruleDetails: visibleRules,
       loans: loansSummary,
       dueSoon: buildDueSoon(dueItems, today),
       dueGroups: groupDueItems(dueItems, today),
@@ -254,7 +262,9 @@ export default function PlanScreen() {
         .slice(0, PEOPLE_SHOWN)
         .map((p) => ({ id: p.id, name: p.name, balanceMinor: p.balanceMinor })),
       goals,
-      whatIf: top ? { categoryName: top.name, avgMonthlyMinor: top.totalMinor } : null,
+      whatIf: top
+        ? { categoryId: top.categoryId, categoryName: top.name, avgMonthlyMinor: top.totalMinor }
+        : null,
       habit: streak ? buildHabitState(streak) : null,
       dailyGoalMinor: dailyGoal,
     });
@@ -275,6 +285,7 @@ export default function PlanScreen() {
     openingPayment.current = true;
     const ticket = ++paymentRequest.current;
     setDetail(null);
+    setRefundTx(null);
     try {
       const context = await getLoanPaymentContext(loanId);
       if (ticket !== paymentRequest.current) return;
@@ -286,11 +297,15 @@ export default function PlanScreen() {
       if (ticket === paymentRequest.current) openingPayment.current = false;
     }
   };
-  const openDetail = (kind: 'loan' | 'budget' | 'person', id: string) => {
+  const openDetail = (
+    kind: 'loan' | 'budget' | 'person' | 'goal' | 'new-goal' | 'new-budget' | 'rule',
+    id: string
+  ) => {
     // A slow earlier Pay lookup must not cover a detail the user opened more recently.
     paymentRequest.current++;
     openingPayment.current = false;
     setPaying(null);
+    setRefundTx(null);
     setDetail({ kind, id });
   };
   const open = (route: PlanRoute) => router.push(route);
@@ -344,6 +359,14 @@ export default function PlanScreen() {
     detail?.kind === 'budget' ? scoped?.budgetDetails.find((b) => b.budget.id === detail.id) : undefined;
   const selectedPerson =
     detail?.kind === 'person' ? scoped?.personDetails.find((p) => p.id === detail.id) : undefined;
+  const selectedRule =
+    detail?.kind === 'rule' ? scoped?.ruleDetails.find((r) => r.id === detail.id) : undefined;
+  const selectedGoal =
+    detail?.kind === 'goal' ? scoped?.goals.find((g) => g.id === detail.id && !g.archived) : undefined;
+  useEffect(() => {
+    if (scoped && ((detail?.kind === 'goal' && !selectedGoal) || (detail?.kind === 'rule' && !selectedRule)))
+      setDetail(null);
+  }, [detail, scoped, selectedGoal, selectedRule]);
 
   return (
     <View style={styles.container}>
@@ -386,7 +409,13 @@ export default function PlanScreen() {
             <View style={{ marginHorizontal: 16 }}>
               <PendingRefunds
                 refreshToken={data}
-                onOpen={(tx) => router.push({ pathname: '/(tabs)/transactions', params: { entry: tx.id } })}
+                onOpen={(tx) => {
+                  paymentRequest.current++;
+                  openingPayment.current = false;
+                  setPaying(null);
+                  setDetail(null);
+                  setRefundTx(tx);
+                }}
               />
             </View>
             <Section compact title="This month’s budgets" onSeeAll={() => open('/budgets')}>
@@ -394,7 +423,7 @@ export default function PlanScreen() {
                 summary={data.budgets}
                 onOpen={() => open('/budgets')}
                 onBudget={(id) => openDetail('budget', id)}
-                onAdd={() => router.push({ pathname: '/budgets', params: { add: '1' } })}
+                onAdd={() => openDetail('new-budget', '')}
               />
             </Section>
             <Section compact title="The way to debt-free">
@@ -412,10 +441,20 @@ export default function PlanScreen() {
                   goals={data.goals}
                   savingsAccounts={data.savingsAccounts}
                   onOpen={() => open('/savings-goals')}
-                  onGoal={(id) => router.push({ pathname: '/savings-goals', params: { goal: id } })}
-                  onAdd={() => router.push({ pathname: '/savings-goals', params: { add: '1' } })}
+                  onGoal={(id) => openDetail('goal', id)}
+                  onAdd={() => openDetail('new-goal', '')}
                 />
-                <WhatIfCard whatIf={data.whatIf} onOpen={() => open('/whatif')} />
+                <WhatIfCard
+                  whatIf={data.whatIf}
+                  onOpen={(cut) =>
+                    data.whatIf
+                      ? router.push({
+                          pathname: '/whatif',
+                          params: { category: data.whatIf.categoryId, cut: String(cut) },
+                        })
+                      : open('/whatif')
+                  }
+                />
               </View>
             </Section>
             <Section compact title="People & habit">
@@ -441,6 +480,7 @@ export default function PlanScreen() {
                 onOpen={open}
                 onPay={(id) => void payEmi(id)}
                 onLoan={(id) => openDetail('loan', id)}
+                onRule={(id) => openDetail('rule', id)}
                 onCardLayout={(y) => (cardY.current = y)}
                 onGroupLayout={(date, y) => (groupYs.current[date] = y)}
               />
@@ -490,6 +530,83 @@ export default function PlanScreen() {
           initialTab="history"
           onClose={() => setDetail(null)}
           onChanged={() => void reload()}
+        />
+      )}
+      {selectedGoal && scoped && (
+        <GoalOverviewModal
+          key={selectedGoal.id}
+          goal={selectedGoal}
+          accounts={scoped.accounts}
+          onClose={() => setDetail(null)}
+          onChanged={() => void reload()}
+          onMoveMoney={(accountId) => {
+            setDetail(null);
+            router.push({
+              pathname: '/add-transaction',
+              params: { type: 'transfer', toAccountId: accountId },
+            });
+          }}
+        />
+      )}
+      {detail?.kind === 'new-goal' && scoped && (
+        <AddGoalModal
+          visible
+          accounts={scoped.accounts}
+          onClose={() => setDetail(null)}
+          onCreated={() => {
+            setDetail(null);
+            void reload();
+          }}
+        />
+      )}
+      {detail?.kind === 'new-budget' && scoped && (
+        <AddBudgetModal
+          visible
+          editing={null}
+          categories={scoped.categories.filter(
+            (c) => c.kind === 'expense' && !(hideAmounts && c.isSensitive)
+          )}
+          budgetedCategoryIds={new Set(scoped.budgetDetails.map((b) => b.budget.categoryId))}
+          onClose={() => setDetail(null)}
+          onSaved={() => {
+            setDetail(null);
+            void reload();
+          }}
+        />
+      )}
+      {selectedRule && scoped && (
+        <RuleModal
+          key={selectedRule.id}
+          visible
+          editing={selectedRule}
+          accounts={scoped.accounts}
+          categories={scoped.categories}
+          onClose={() => setDetail(null)}
+          onSaved={() => {
+            setDetail(null);
+            void reload();
+          }}
+          onDeleted={() => {
+            setDetail(null);
+            void reload();
+          }}
+        />
+      )}
+      {refundTx && scoped && (
+        <TransactionDetailModal
+          key={refundTx.id}
+          tx={refundTx}
+          accounts={scoped.accounts}
+          categories={scoped.categories}
+          onClose={() => setRefundTx(null)}
+          onEdit={(tx) => {
+            setRefundTx(null);
+            router.push({ pathname: '/add-transaction', params: { id: tx.id } });
+          }}
+          onChanged={() => {
+            setRefundTx(null);
+            void reload();
+          }}
         />
       )}
       {paying && (

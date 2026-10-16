@@ -29,7 +29,7 @@ import { styles } from '@/features/whatif/whatif.styles';
 import { dayMonth } from '@/lib/dateLabels';
 import { daysUntilIsoDate } from '@/lib/date';
 
-const CUT_OPTIONS = [10, 20, 30, 40, 50];
+const CUT_OPTIONS = [5, 10, 20, 30, 40, 50];
 const DEFAULT_CUT_PCT = 20;
 
 function soonerLabel(days: number): string {
@@ -81,12 +81,18 @@ export default function WhatIfScreen() {
   // The header sits over the page and shrinks as it scrolls.
   const { collapse, headerHeight, scrollHandler, scrollRef } = useCollapsingHeader();
   // `category` opens What-if with that category already chosen (from its category page).
-  const { category: askedCategoryId } = useLocalSearchParams<{ category?: string }>();
+  const { category: askedCategoryId, cut: askedCut } = useLocalSearchParams<{
+    category?: string;
+    cut?: string;
+  }>();
   const [categories, setCategories] = useState<CategoryBreakdownItem[]>([]);
   const [goals, setGoals] = useState<SavingsGoal[]>([]);
   const [categoryId, setCategoryId] = useState<string | null>(null);
   const [goalId, setGoalId] = useState<string | null>(null);
-  const [cutPct, setCutPct] = useState(DEFAULT_CUT_PCT);
+  const [cutPct, setCutPct] = useState(() => {
+    const cut = Number(askedCut);
+    return CUT_OPTIONS.includes(cut) ? cut : DEFAULT_CUT_PCT;
+  });
   // Monthly growth of the account each following goal tracks, by goal id.
   const [growth, setGrowth] = useState<Record<string, number>>({});
 

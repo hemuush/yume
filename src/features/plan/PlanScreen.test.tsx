@@ -52,7 +52,8 @@ jest.mock('@/db/budgets', () => ({
     },
   ],
 }));
-jest.mock('@/db/savingsGoals', () => ({ listSavingsGoals: async () => [] }));
+let mockGoals: import('@/types').SavingsGoal[] = [];
+jest.mock('@/db/savingsGoals', () => ({ listSavingsGoals: async () => mockGoals }));
 jest.mock('@/db/recurring', () => ({
   listRecurringRules: async () => [
     {
@@ -160,6 +161,26 @@ jest.mock('@/features/people/PersonDetailModal', () => ({
   PersonDetailModal: (props: object) =>
     require('react').createElement(require('react-native').View, { ...props, testID: 'plan-person-detail' }),
 }));
+jest.mock('@/features/budgets/AddBudgetModal', () => ({
+  AddBudgetModal: (props: object) =>
+    require('react').createElement(require('react-native').View, { ...props, testID: 'plan-new-budget' }),
+}));
+jest.mock('@/features/recurring/RuleModal', () => ({
+  RuleModal: (props: object) =>
+    require('react').createElement(require('react-native').View, { ...props, testID: 'plan-rule' }),
+}));
+jest.mock('@/features/transactions/TransactionDetailModal', () => ({
+  TransactionDetailModal: (props: object) =>
+    require('react').createElement(require('react-native').View, { ...props, testID: 'plan-refund-detail' }),
+}));
+jest.mock('@/features/goals/GoalOverviewModal', () => ({
+  GoalOverviewModal: (props: object) =>
+    require('react').createElement(require('react-native').View, { ...props, testID: 'plan-goal-overview' }),
+}));
+jest.mock('@/features/goals/AddGoalModal', () => ({
+  AddGoalModal: (props: object) =>
+    require('react').createElement(require('react-native').View, { ...props, testID: 'plan-new-goal' }),
+}));
 import PlanScreen from '../../../app/(tabs)/plan';
 import { router } from 'expo-router';
 
@@ -186,14 +207,12 @@ beforeAll(async () => {
 }, 180000);
 
 describe('Plan tab', () => {
-  it('opens a pending refund purchase directly in Activity', async () => {
+  it('opens a pending refund purchase over Plan', async () => {
     const tree = await render();
     const { PendingRefunds } = require('@/features/transactions/PendingRefunds');
     act(() => tree.root.findByType(PendingRefunds).props.onOpen({ id: 'refund-purchase' }));
-    expect(router.push).toHaveBeenCalledWith({
-      pathname: '/(tabs)/transactions',
-      params: { entry: 'refund-purchase' },
-    });
+    expect(tree.root.findByProps({ testID: 'plan-refund-detail' }).props.tx.id).toBe('refund-purchase');
+    expect(router.push).not.toHaveBeenCalled();
     act(() => tree.unmount());
   });
   const dayLabel = (n: number) =>
@@ -298,10 +317,13 @@ describe('Plan tab', () => {
     expect(router.push).toHaveBeenLastCalledWith('/loans');
     act(() => byLabel('Friends & Family').props.onPress());
     expect(router.push).toHaveBeenLastCalledWith('/people');
-    act(() => byLabel('Open savings goals').props.onPress());
+    act(() => byLabel('See all — Saving toward').props.onPress());
     expect(router.push).toHaveBeenLastCalledWith('/savings-goals');
     act(() => byLabel('Open the what-if sandbox').props.onPress());
-    expect(router.push).toHaveBeenLastCalledWith('/whatif');
+    expect(router.push).toHaveBeenLastCalledWith({
+      pathname: '/whatif',
+      params: { category: 'food', cut: '10' },
+    });
     act(() => byLabel('Open Recurring').props.onPress());
     expect(router.push).toHaveBeenLastCalledWith('/recurring');
     act(() => byLabel('4-day streak').props.onPress());
@@ -486,5 +508,64 @@ it('ignores an obsolete payment lookup when another item is opened and coalesces
     tree.root.findAllByType(require('@/features/loans/PayInstallmentSheet').PayInstallmentSheet)
   ).toHaveLength(0);
   expect(tree.root.findByProps({ testID: 'plan-person-detail' }).props.person.id).toBe('p1');
+  act(() => tree.unmount());
+});
+
+it('opens a savings goal directly, preserves Plan on close, and creates a goal without a collection-page detour', async () => {
+  mockGoals = [
+    {
+      id: 'g1',
+      name: 'Emergency fund',
+      targetAmountMinor: 500000,
+      currentAmountMinor: 100000,
+      targetDate: null,
+      linkedAccountId: null,
+      tracksAccount: false,
+      archived: false,
+      createdAt: '2026-01-01',
+      noteToSelf: null,
+      letterRevealed: false,
+    },
+  ];
+  let tree!: ReactTestRenderer;
+  try {
+    tree = await render();
+    (router.push as jest.Mock).mockClear();
+    const { GoalsStrip } = require('@/features/plan/PlanGoals');
+    act(() => tree.root.findByType(GoalsStrip).props.onGoal('g1'));
+    const overview = tree.root.findByProps({ testID: 'plan-goal-overview' });
+    expect(overview.props.goal.id).toBe('g1');
+    act(() => overview.props.onClose());
+    expect(tree.root.findAllByProps({ testID: 'plan-goal-overview' })).toHaveLength(0);
+    act(() => tree.root.findByType(GoalsStrip).props.onAdd());
+    const create = tree.root.findByProps({ testID: 'plan-new-goal' });
+    expect(create.props.visible).toBe(true);
+    act(() => create.props.onClose());
+    expect(router.push).not.toHaveBeenCalled();
+    expect(texts(tree)).toContain('Saving toward');
+  } finally {
+    if (tree) act(() => tree.unmount());
+    mockGoals = [];
+  }
+});
+
+it('opens budget setup and a scheduled rule without leaving Plan', async () => {
+  const tree = await render();
+  const { BudgetJars } = require('@/features/plan/BudgetJars');
+  const scroll = tree.root.findByProps({ scrollEventThrottle: 16 });
+  act(() => tree.root.findByType(BudgetJars).props.onAdd());
+  expect(tree.root.findByProps({ testID: 'plan-new-budget' }).props.editing).toBeNull();
+  act(() => tree.root.findByProps({ testID: 'plan-new-budget' }).props.onClose());
+  const row = tree.root.find(
+    (n) =>
+      typeof n.props.accessibilityLabel === 'string' &&
+      n.props.accessibilityLabel.startsWith('Streaming, Bill,') &&
+      typeof n.props.onPress === 'function'
+  );
+  act(() => row.props.onPress());
+  expect(tree.root.findByProps({ testID: 'plan-rule' }).props.editing.id).toBe('r1');
+  act(() => tree.root.findByProps({ testID: 'plan-rule' }).props.onClose());
+  expect(tree.root.findByProps({ scrollEventThrottle: 16 })).toBe(scroll);
+  expect(router.push).not.toHaveBeenCalled();
   act(() => tree.unmount());
 });

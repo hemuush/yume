@@ -7,6 +7,10 @@ import { router, useFocusEffect } from 'expo-router';
 import { listAccounts, listCategories, listTransactions } from '@/db/ledger';
 import { listLoans, getLoanProgress } from '@/db/loans';
 import { listCardCycles } from '@/db/cardCycles';
+import { listExpectedRefunds, ExpectedRefund } from '@/db/refundTracking';
+import { getTransactionById } from '@/db/transactions';
+import { TransactionDetailModal } from '@/features/transactions/TransactionDetailModal';
+import { showAlert } from '@/components/AppDialog';
 import { listRecurringRules } from '@/db/recurring';
 import {
   getRangeComparison,
@@ -106,6 +110,12 @@ export default function DashboardScreen() {
   // Spending per day, from a week back (or the 1st) to today: the Week/Month bars.
   // The default currency: Home's in-hand total counts only accounts in it.
   const [currency, setCurrency] = useState('INR');
+  const [refunds, setRefunds] = useState<ExpectedRefund[]>([]);
+  const [refundError, setRefundError] = useState(false);
+  const [refundTx, setRefundTx] = useState<Transaction | null>(null);
+  const [openingRefund, setOpeningRefund] = useState<string | null>(null);
+  const refundRequest = useRef(0);
+  const openingRefundRef = useRef(false);
   const [goals, setGoals] = useState<SavingsGoal[]>([]);
   const [dailySpend, setDailySpend] = useState<{ date: string; totalMinor: number }[]>([]);
   // Both are always about today, not the browsed period (like Budgets/Goals below); `dailyGoal` stays
@@ -260,6 +270,7 @@ export default function DashboardScreen() {
           needs,
           wraps,
           defaultCurrency,
+          refundResult,
         ] = await Promise.all([
           fetchPeriod(c),
           listAccounts(true),
@@ -284,6 +295,9 @@ export default function DashboardScreen() {
           loadNeedsYou(),
           loadReadyWraps(),
           getDefaultCurrency(),
+          listExpectedRefunds()
+            .then((rows) => ({ rows, failed: false }))
+            .catch(() => ({ rows: [] as ExpectedRefund[], failed: true })),
         ]);
         if (pSeq === periodSeq.current) {
           const [tx, cmp, carry] = period;
@@ -312,6 +326,8 @@ export default function DashboardScreen() {
         setUserNameState(name);
         setBudgets(budgetList);
         setGoals(goalList);
+        setRefunds(refundResult.rows);
+        setRefundError(refundResult.failed);
         setDailySpend(daily);
         setTodaySpendMinor(todaySpend);
         setDailyGoalMinor(dailyGoal);
@@ -348,6 +364,9 @@ export default function DashboardScreen() {
       focused.current = true;
       return () => {
         focused.current = false;
+        refundRequest.current++;
+        openingRefundRef.current = false;
+        setOpeningRefund(null);
       };
     }, [])
   );
@@ -372,6 +391,30 @@ export default function DashboardScreen() {
   useEffect(() => {
     if (fetchedCursor.current !== cursor) void loadPeriod(cursor);
   }, [cursor, loadPeriod]);
+
+  const openRefund = async (transactionId: string) => {
+    if (openingRefundRef.current) return;
+    openingRefundRef.current = true;
+    const ticket = ++refundRequest.current;
+    setOpeningRefund(transactionId);
+    try {
+      const tx = await getTransactionById(transactionId);
+      if (ticket !== refundRequest.current) return;
+      if (!tx) {
+        showAlert('Purchase unavailable', 'This purchase may have been deleted. Refresh Home and try again.');
+        return;
+      }
+      setSummaryAccount(null);
+      setRefundTx(tx);
+    } catch (e) {
+      if (ticket === refundRequest.current) showAlert('Couldn’t open the refund', errorMessage(e));
+    } finally {
+      if (ticket === refundRequest.current) {
+        openingRefundRef.current = false;
+        setOpeningRefund(null);
+      }
+    }
+  };
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -586,6 +629,11 @@ export default function DashboardScreen() {
               upcoming={upcoming}
               budgets={budgets}
               goals={goals}
+              refunds={refunds}
+              refundError={refundError}
+              openingRefund={openingRefund}
+              onOpenRefund={(id) => void openRefund(id)}
+              onRetryRefunds={() => void load(cursorRef.current)}
               budgetAlert={needsYou.some((i) => i.action === 'budgets')}
               rowEntering={rowEntering}
               onSeeMoreUpcoming={() =>
@@ -700,6 +748,22 @@ export default function DashboardScreen() {
         }}
       />
 
+      {refundTx && (
+        <TransactionDetailModal
+          tx={refundTx}
+          accounts={historyAccounts}
+          categories={categories}
+          onClose={() => setRefundTx(null)}
+          onEdit={(tx) => {
+            setRefundTx(null);
+            router.push({ pathname: '/add-transaction', params: { id: tx.id } });
+          }}
+          onChanged={() => {
+            setRefundTx(null);
+            void load(cursorRef.current);
+          }}
+        />
+      )}
       <AccountDetailModal
         account={editAccount}
         onClose={() => setEditAccount(null)}

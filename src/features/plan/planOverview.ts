@@ -134,6 +134,7 @@ export interface PlanDueItem {
   route: '/loans' | '/recurring' | PayCardRoute;
   /** Set on an EMI — Coming up's Paid button records that loan's next installment. */
   loanId?: string;
+  ruleId?: string;
 }
 
 /** A credit card's bill still to pay (from listCardCycles). */
@@ -181,6 +182,7 @@ export function buildDueItems(
         dueDate: date,
         amountMinor: r.amountMinor,
         route: '/recurring',
+        ruleId: r.id,
       });
       if (!r.frequency || !untilDate) break;
       date = advanceDate(date, r.frequency, Math.max(1, r.intervalCount ?? 1), anchorDay);
