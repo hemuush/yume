@@ -39,6 +39,7 @@ export function SegmentedControl<T extends string>({ options, value, onChange, o
   );
 
   useEffect(() => {
+    x.stopAnimation();
     if (segWidth === 0) return;
     const to = index * segWidth;
     // The first placement (and reduce motion) lands straight on the choice.
@@ -53,6 +54,7 @@ export function SegmentedControl<T extends string>({ options, value, onChange, o
       easing: Easing.out(Easing.cubic),
       useNativeDriver: true,
     }).start();
+    return () => x.stopAnimation();
   }, [index, segWidth, reduce, x]);
 
   const onLayout = (e: LayoutChangeEvent) => {
@@ -101,7 +103,8 @@ function Segment({
       style={[styles.segment, animatedStyle]}
       onPress={() => {
         // A light tick when the choice actually changes — every switch in the app gets it here.
-        if (!active) haptics.tap();
+        if (active) return;
+        haptics.tap();
         onPress();
       }}
       accessibilityRole="button"

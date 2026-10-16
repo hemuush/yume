@@ -280,7 +280,7 @@ export function TrendChart({
                   x={x(i)}
                   y={LABEL_Y}
                   textAnchor="middle"
-                  fontFamily={last ? theme.font.monoBold : theme.font.mono}
+                  fontFamily={last ? theme.font.bodyBold : theme.font.body}
                   fontSize={12}
                   fill={last ? theme.colors.textPrimary : theme.colors.textMuted}
                 >

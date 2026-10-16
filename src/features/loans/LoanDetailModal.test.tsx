@@ -286,3 +286,30 @@ it('shows only the payment popup and restores the loan when it closes', async ()
   act(() => tree.root.findByType(PayInstallmentSheet).props.onClose());
   expect(tree.root.findByType(ModalSheet).props.visible).toBe(true);
 });
+
+it('does not flash a paid-off EMI or zero interest while the schedule is still loading', async () => {
+  let release!: (value: unknown[]) => void;
+  mockGetSchedule.mockImplementationOnce(
+    () =>
+      new Promise<unknown[]>((resolve) => {
+        release = resolve;
+      })
+  );
+  let tree!: ReactTestRenderer;
+  await act(async () => {
+    tree = create(
+      <LoanDetailModal loan={makeLoan('loading', 'Loading loan')} onClose={jest.fn()} onChanged={jest.fn()} />
+    );
+  });
+  const labels = tree.root
+    .findAllByType(Text)
+    .map((n) => [n.props.children].flat().join(''))
+    .join(' ');
+  expect(labels).toContain('Loading…');
+  expect(labels).not.toContain('None left');
+  expect(labels).not.toContain('Add an account first');
+  await act(async () => {
+    release([]);
+  });
+  act(() => tree.unmount());
+});

@@ -39,7 +39,7 @@ export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const { accent, secondary } = useAccent();
   // The header sits over the page and shrinks as it scrolls; the amount pad's scroll tracking feeds it.
-  const { collapse, headerHeight, onJsScroll, settleJs } = useCollapsingHeader();
+  const { collapse, headerHeight, onJsScroll } = useCollapsingHeader();
   const [name, setName] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState('');
@@ -101,18 +101,6 @@ export default function ProfileScreen() {
                 scrollProps.onScroll(e);
                 onJsScroll(e.nativeEvent.contentOffset.y);
               }}
-              // A slow release settles the header open or closed; a fling carries on and settles at its end.
-              onScrollEndDrag={(e) => {
-                if (Math.abs(e.nativeEvent.velocity?.y ?? 0) < 0.2)
-                  settleJs(e.nativeEvent.contentOffset.y, (y) =>
-                    scrollProps.ref.current?.scrollTo({ y, animated: true })
-                  );
-              }}
-              onMomentumScrollEnd={(e) =>
-                settleJs(e.nativeEvent.contentOffset.y, (y) =>
-                  scrollProps.ref.current?.scrollTo({ y, animated: true })
-                )
-              }
               contentContainerStyle={{
                 paddingTop: headerHeight,
                 paddingBottom: theme.layout.screenScrollPad + insets.bottom,

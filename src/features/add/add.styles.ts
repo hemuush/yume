@@ -294,7 +294,12 @@ export const styles = StyleSheet.create({
     marginBottom: 4,
   },
   stagedHead: { ...EYEBROW, color: theme.colors.textSecondary },
-  stagedHeadTotal: { fontFamily: theme.font.monoBold, fontSize: 12.5, color: theme.colors.textPrimary },
+  stagedHeadTotal: {
+    fontVariant: ['tabular-nums'],
+    fontFamily: theme.font.bodyBold,
+    fontSize: 12.5,
+    color: theme.colors.textPrimary,
+  },
   stagedRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -306,7 +311,12 @@ export const styles = StyleSheet.create({
   stagedLabel: { fontFamily: theme.font.bodyMedium, fontSize: 12.5, color: theme.colors.textPrimary },
   stagedNote: { fontFamily: theme.font.body, color: theme.colors.textMuted },
   stagedSub: { fontFamily: theme.font.body, fontSize: 11.5, color: theme.colors.textMuted, marginTop: 1 },
-  stagedValue: { fontFamily: theme.font.monoBold, fontSize: 11.5, color: theme.colors.textPrimary },
+  stagedValue: {
+    fontVariant: ['tabular-nums'],
+    fontFamily: theme.font.bodyBold,
+    fontSize: 11.5,
+    color: theme.colors.textPrimary,
+  },
   removeBtn: { width: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' },
 
   linkedNote: { marginBottom: 16 },
@@ -396,7 +406,7 @@ export const styles = StyleSheet.create({
   totalsRow: { flexDirection: 'row', justifyContent: 'space-around', marginBottom: 10 },
   total: { alignItems: 'center' },
   totalLabel: EYEBROW,
-  totalValue: { fontFamily: theme.font.monoBold, fontSize: 12, marginTop: 2 },
+  totalValue: { fontVariant: ['tabular-nums'], fontFamily: theme.font.bodyBold, fontSize: 12, marginTop: 2 },
   error: {
     fontFamily: theme.font.bodyBold,
     fontSize: 12,

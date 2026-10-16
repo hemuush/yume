@@ -343,7 +343,7 @@ const styles = StyleSheet.create({
   },
   windowLabel: { fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textMuted },
   windowBold: { fontFamily: theme.font.bodyBold, color: theme.colors.textSecondary },
-  windowCount: { fontFamily: theme.font.monoBold, fontSize: 13, color: theme.colors.textSecondary },
+  windowCount: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textSecondary },
   groupLabel: {
     paddingHorizontal: 16,
     paddingTop: 10,

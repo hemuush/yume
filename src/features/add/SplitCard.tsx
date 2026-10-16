@@ -155,7 +155,7 @@ const styles = StyleSheet.create({
   line: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   dot: { width: 10, height: 10, borderRadius: 3 },
   name: { flex: 1, fontFamily: theme.font.bodyMedium, fontSize: 13.5, color: theme.colors.textPrimary },
-  amount: { fontFamily: theme.font.monoBold, fontSize: 13, color: theme.colors.textPrimary },
+  amount: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textPrimary },
   problem: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.expenseText },
   remove: { alignSelf: 'center', minHeight: 44, justifyContent: 'center', marginTop: 12, paddingVertical: 4 },
   removeText: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textMuted },

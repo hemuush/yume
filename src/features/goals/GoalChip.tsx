@@ -78,6 +78,6 @@ const styles = StyleSheet.create({
     padding: 12,
   },
   name: { fontFamily: theme.font.bodyBold, fontSize: 12.5, color: theme.colors.textPrimary, marginTop: 8 },
-  amt: { fontFamily: theme.font.mono, fontSize: 10.5, color: theme.colors.textSecondary, marginTop: 3 },
+  amt: { fontFamily: theme.font.body, fontSize: 10.5, color: theme.colors.textSecondary, marginTop: 3 },
   of: { color: theme.colors.textMuted },
 });

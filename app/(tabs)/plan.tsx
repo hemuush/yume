@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { View, StyleSheet, useWindowDimensions } from 'react-native';
 import { Text } from '@/components/Text';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { router, useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { listBudgetsForMonth } from '@/db/budgets';
 import { listSavingsGoals } from '@/db/savingsGoals';
 import { listRecurringRules } from '@/db/recurring';
@@ -14,7 +14,13 @@ import { getDailySpendingGoal, getDefaultCurrency } from '@/db/settings';
 import { usePrivacy } from '@/theme/PrivacyContext';
 import { isSavingsEntry } from '@/lib/privateSummary';
 import { savingsAccountIdsOf } from '@/lib/account';
-import { Account, SavingsGoal } from '@/types';
+import { Account, Category, Loan, SavingsGoal } from '@/types';
+import type { BudgetProgress } from '@/db/budgets';
+import type { PersonWithBalance } from '@/db/people';
+import { BudgetDetailModal } from '@/features/budgets/BudgetDetailModal';
+import { LoanDetailModal } from '@/features/loans/LoanDetailModal';
+import { loanHues } from '@/features/loans/loanIdentity';
+import { PersonDetailModal } from '@/features/people/PersonDetailModal';
 import { theme } from '@/constants/theme';
 import { useTabScrollPad } from '@/lib/uiScale';
 import { addDaysToIsoDate, toLocalIsoDate } from '@/lib/date';
@@ -65,6 +71,12 @@ import { PendingRefunds } from '@/features/transactions/PendingRefunds';
 
 interface PlanData {
   hideAmounts: boolean;
+  currency: string;
+  accounts: Account[];
+  categories: Category[];
+  budgetDetails: BudgetProgress[];
+  loanDetails: Loan[];
+  personDetails: PersonWithBalance[];
   loans: LoansSummary;
   dueSoon: DueSoon;
   dueGroups: DueGroup[];
@@ -97,7 +109,19 @@ export default function PlanScreen() {
   const { accent, secondary } = useAccent();
   const [data, setData] = useState<PlanData | null>(null);
   const request = useRef(0);
+  const paymentRequest = useRef(0);
+  const openingPayment = useRef(false);
+  const [detail, setDetail] = useState<{ kind: 'loan' | 'budget' | 'person'; id: string } | null>(null);
   const reduceMotion = useReduceMotion();
+  useFocusEffect(
+    useCallback(
+      () => () => {
+        paymentRequest.current++;
+        openingPayment.current = false;
+      },
+      []
+    )
+  );
 
   const loadPlan = useCallback(async () => {
     const call = ++request.current;
@@ -191,6 +215,12 @@ export default function PlanScreen() {
 
     setData({
       hideAmounts,
+      currency,
+      accounts,
+      categories,
+      budgetDetails: budgets,
+      loanDetails: loans,
+      personDetails: people,
       loans: loansSummary,
       dueSoon: buildDueSoon(dueItems, today),
       dueGroups: groupDueItems(dueItems, today),
@@ -234,19 +264,34 @@ export default function PlanScreen() {
   useEffect(
     () => () => {
       request.current++;
+      paymentRequest.current++;
     },
     []
   );
   // The EMI being paid from Coming up, with the account and category it goes on.
   const [paying, setPaying] = useState<LoanPaymentContext | null>(null);
   const payEmi = async (loanId: string) => {
+    if (openingPayment.current) return;
+    openingPayment.current = true;
+    const ticket = ++paymentRequest.current;
+    setDetail(null);
     try {
       const context = await getLoanPaymentContext(loanId);
+      if (ticket !== paymentRequest.current) return;
       if (context) setPaying(context);
       else showAlert('Nothing to pay', 'This loan has no installment due right now.');
     } catch (e) {
-      showAlert("Couldn't open the payment", errorMessage(e));
+      if (ticket === paymentRequest.current) showAlert("Couldn't open the payment", errorMessage(e));
+    } finally {
+      if (ticket === paymentRequest.current) openingPayment.current = false;
     }
+  };
+  const openDetail = (kind: 'loan' | 'budget' | 'person', id: string) => {
+    // A slow earlier Pay lookup must not cover a detail the user opened more recently.
+    paymentRequest.current++;
+    openingPayment.current = false;
+    setPaying(null);
+    setDetail({ kind, id });
   };
   const open = (route: PlanRoute) => router.push(route);
   // The header shrinks as the page scrolls; the 14-day tile jumps down to Coming up.
@@ -289,6 +334,16 @@ export default function PlanScreen() {
     }, 60);
     return () => clearTimeout(t);
   }, [section, loaded, data, scrollToComingUp]);
+
+  const scoped = data?.hideAmounts === hideAmounts ? data : null;
+  const selectedLoan =
+    detail?.kind === 'loan'
+      ? scoped?.loanDetails.find((l) => l.id === detail.id && l.status !== 'closed')
+      : undefined;
+  const selectedBudget =
+    detail?.kind === 'budget' ? scoped?.budgetDetails.find((b) => b.budget.id === detail.id) : undefined;
+  const selectedPerson =
+    detail?.kind === 'person' ? scoped?.personDetails.find((p) => p.id === detail.id) : undefined;
 
   return (
     <View style={styles.container}>
@@ -338,7 +393,7 @@ export default function PlanScreen() {
               <BudgetJars
                 summary={data.budgets}
                 onOpen={() => open('/budgets')}
-                onBudget={(id) => router.push({ pathname: '/budgets', params: { budget: id } })}
+                onBudget={(id) => openDetail('budget', id)}
                 onAdd={() => router.push({ pathname: '/budgets', params: { add: '1' } })}
               />
             </Section>
@@ -348,6 +403,7 @@ export default function PlanScreen() {
                 dueSoon={data.dueSoon}
                 today={data.today}
                 onOpen={() => open('/loans')}
+                onLoan={(id) => openDetail('loan', id)}
               />
             </Section>
             <Section compact title="Saving toward" onSeeAll={() => open('/savings-goals')}>
@@ -364,7 +420,12 @@ export default function PlanScreen() {
             </Section>
             <Section compact title="People & habit">
               <View style={[planStyles.row, stackTiles && planStyles.rowStack]}>
-                <PeopleTile state={data.people} people={data.topPeople} onOpen={() => open('/people')} />
+                <PeopleTile
+                  state={data.people}
+                  people={data.topPeople}
+                  onOpen={() => open('/people')}
+                  onPerson={(id) => openDetail('person', id)}
+                />
                 <HabitTile
                   habit={data.habit}
                   goalMinor={data.dailyGoalMinor}
@@ -379,6 +440,7 @@ export default function PlanScreen() {
                 today={data.today}
                 onOpen={open}
                 onPay={(id) => void payEmi(id)}
+                onLoan={(id) => openDetail('loan', id)}
                 onCardLayout={(y) => (cardY.current = y)}
                 onGroupLayout={(date, y) => (groupYs.current[date] = y)}
               />
@@ -401,6 +463,35 @@ export default function PlanScreen() {
           ) : undefined
         }
       />
+      {selectedLoan && scoped && (
+        <LoanDetailModal
+          key={selectedLoan.id}
+          loan={selectedLoan}
+          hue={loanHues(scoped.loanDetails)[selectedLoan.id]}
+          onClose={() => setDetail(null)}
+          onChanged={() => void reload()}
+        />
+      )}
+      {selectedBudget && scoped && (
+        <BudgetDetailModal
+          key={selectedBudget.budget.id}
+          progress={selectedBudget}
+          accounts={scoped.accounts}
+          categories={scoped.categories}
+          currency={scoped.currency}
+          onClose={() => setDetail(null)}
+          onChanged={() => void reload()}
+        />
+      )}
+      {selectedPerson && (
+        <PersonDetailModal
+          key={selectedPerson.id}
+          person={selectedPerson}
+          initialTab="history"
+          onClose={() => setDetail(null)}
+          onChanged={() => void reload()}
+        />
+      )}
       {paying && (
         <PayInstallmentSheet
           installment={paying.installment}

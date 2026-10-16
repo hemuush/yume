@@ -173,14 +173,14 @@ export const styles = StyleSheet.create({
   rhythmBar: { flex: 1, height: '100%', justifyContent: 'flex-end', alignItems: 'center', gap: 4 },
   rhythmValue: {
     minHeight: 15,
-    fontFamily: theme.font.mono,
+    fontFamily: theme.font.body,
     fontSize: 11,
     color: theme.colors.textMuted,
   },
-  rhythmValueOn: { fontFamily: theme.font.monoBold, color: theme.colors.textPrimary },
+  rhythmValueOn: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
   rhythmFill: { width: '100%', borderTopLeftRadius: 8, borderTopRightRadius: 8, borderRadius: 4 },
-  rhythmLabel: { minHeight: 16, fontFamily: theme.font.mono, fontSize: 12, color: theme.colors.textMuted },
-  rhythmLabelOn: { fontFamily: theme.font.monoBold, color: theme.colors.textPrimary },
+  rhythmLabel: { minHeight: 16, fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
+  rhythmLabelOn: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
   rhythmUsual: {
     position: 'absolute',
     left: 0,
@@ -198,7 +198,7 @@ export const styles = StyleSheet.create({
     borderRadius: 4,
     overflow: 'hidden',
     backgroundColor: 'rgba(255,255,255,0.85)',
-    fontFamily: theme.font.mono,
+    fontFamily: theme.font.body,
     fontSize: 11,
     color: theme.colors.textSecondary,
   },
@@ -238,7 +238,7 @@ export const styles = StyleSheet.create({
     fontSize: 13,
     color: theme.colors.textSecondary,
   },
-  bigFootStrong: { fontFamily: theme.font.monoBold, color: theme.colors.textPrimary },
+  bigFootStrong: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
   bigRowOn: { backgroundColor: 'rgba(18,19,15,0.05)' },
 
   // Categories: how the list is grouped (by category or by account).
@@ -308,8 +308,8 @@ export const styles = StyleSheet.create({
     borderColor: theme.colors.textMuted,
   },
   flowBarLive: { borderWidth: 1.5, borderStyle: 'dashed', borderColor: theme.colors.ink },
-  flowLabel: { fontFamily: theme.font.mono, fontSize: 12, color: theme.colors.textMuted },
-  flowLabelOn: { fontFamily: theme.font.monoBold, color: theme.colors.textPrimary },
+  flowLabel: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
+  flowLabelOn: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
   flowKept: {
     minWidth: 38,
     alignItems: 'center',
@@ -324,7 +324,7 @@ export const styles = StyleSheet.create({
     borderStyle: 'dashed',
     borderColor: theme.colors.secondaryDeep,
   },
-  flowKeptText: { fontFamily: theme.font.monoBold, fontSize: 11, color: theme.colors.incomeText },
+  flowKeptText: { fontFamily: theme.font.bodyBold, fontSize: 11, color: theme.colors.incomeText },
   flowKeptTextNeg: { color: theme.colors.expenseText },
   flowKeptCaption: {
     textAlign: 'center',
@@ -346,7 +346,7 @@ export const styles = StyleSheet.create({
   stripLabel: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
   stripValue: {
     fontVariant: ['tabular-nums'],
-    fontFamily: theme.font.monoBold,
+    fontFamily: theme.font.bodyBold,
     fontSize: 16,
     color: theme.colors.textPrimary,
   },
@@ -375,7 +375,7 @@ export const styles = StyleSheet.create({
   trackName: { fontFamily: theme.font.bodyBold, fontSize: 15, color: theme.colors.textPrimary },
   trackSub: { fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textMuted, marginTop: 2 },
   trackEnd: { alignItems: 'flex-end', gap: 4 },
-  trackPct: { fontFamily: theme.font.monoBold, fontSize: 12, color: theme.colors.textMuted },
+  trackPct: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textMuted },
   trackPctOver: { color: theme.colors.expenseText },
   trackPctUnder: { color: theme.colors.incomeText },
   trackFoot: {
@@ -483,7 +483,7 @@ export const styles = StyleSheet.create({
   catName: { fontFamily: theme.font.bodyBold, fontSize: 15, color: theme.colors.textPrimary },
   catDot: { width: 10, height: 10, borderRadius: 5 },
   catPct: {
-    fontFamily: theme.font.mono,
+    fontFamily: theme.font.body,
     fontSize: 12,
     color: theme.colors.textMuted,
     width: 38,
@@ -496,7 +496,7 @@ export const styles = StyleSheet.create({
     fontSize: 14,
     color: theme.colors.textPrimary,
   },
-  catDelta: { flexShrink: 1, fontFamily: theme.font.monoBold, fontSize: 12 },
+  catDelta: { flexShrink: 1, fontFamily: theme.font.bodyBold, fontSize: 12 },
   catTrack: {
     height: 6,
     borderRadius: 3,
@@ -537,7 +537,7 @@ export const styles = StyleSheet.create({
   },
   dayAmt: {
     fontVariant: ['tabular-nums'],
-    fontFamily: theme.font.monoBold,
+    fontFamily: theme.font.bodyBold,
     fontSize: 15,
     color: theme.colors.textPrimary,
   },
@@ -557,7 +557,7 @@ export const styles = StyleSheet.create({
   },
   dayTotalValue: {
     fontVariant: ['tabular-nums'],
-    fontFamily: theme.font.monoBold,
+    fontFamily: theme.font.bodyBold,
     fontSize: 15,
     color: theme.colors.textPrimary,
   },

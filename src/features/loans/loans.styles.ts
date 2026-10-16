@@ -87,7 +87,12 @@ export const styles = StyleSheet.create({
   },
   rowLabel: { fontFamily: theme.font.bodyMedium, fontSize: 15, color: theme.colors.textPrimary },
   rowSub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, marginTop: 2 },
-  rowValue: { fontFamily: theme.font.monoBold, fontSize: 15, color: theme.colors.textPrimary },
+  rowValue: {
+    fontVariant: ['tabular-nums'],
+    fontFamily: theme.font.bodyBold,
+    fontSize: 15,
+    color: theme.colors.textPrimary,
+  },
   // A soft pill (the app's chip language) rather than grey capitals.
   statusTag: {
     fontFamily: theme.font.bodyBold,

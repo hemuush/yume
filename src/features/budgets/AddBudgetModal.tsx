@@ -42,6 +42,7 @@ export function AddBudgetModal({
   budgetedCategoryIds,
   onClose,
   onSaved,
+  backLabel,
 }: {
   visible: boolean;
   editing: BudgetProgress | null;
@@ -54,6 +55,7 @@ export function AddBudgetModal({
   budgetedCategoryIds?: ReadonlySet<string>;
   onClose: () => void;
   onSaved: () => void;
+  backLabel?: string;
 }) {
   const { accent } = useAccent();
   const runAction = useSaveOnce(async (action: () => Promise<void>) => {
@@ -120,6 +122,7 @@ export function AddBudgetModal({
     <ModalSheet
       dismissible={!saving}
       visible={visible}
+      backLabel={backLabel}
       title={editing ? 'Edit budget' : 'New budget'}
       onClose={onClose}
       footer={

@@ -69,7 +69,12 @@ export const screenStyles = StyleSheet.create({
   },
   subUrgent: { fontFamily: theme.font.bodyBold, color: theme.colors.expenseText },
   subSoon: { fontFamily: theme.font.bodyBold, color: theme.colors.warnInk },
-  amount: { fontFamily: theme.font.monoBold, fontSize: theme.typeSize.row, color: theme.colors.textPrimary },
+  amount: {
+    fontVariant: ['tabular-nums'],
+    fontFamily: theme.font.bodyBold,
+    fontSize: theme.typeSize.row,
+    color: theme.colors.textPrimary,
+  },
   income: { color: theme.colors.incomeText },
   expense: { color: theme.colors.expenseText },
 });

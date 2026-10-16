@@ -372,8 +372,13 @@ export const styles = StyleSheet.create({
     fontSize: 13,
     color: theme.colors.textSecondary,
   },
-  splitPartAmount: { fontFamily: theme.font.mono, fontSize: 13, color: theme.colors.textSecondary },
-  splitPartMine: { fontFamily: theme.font.monoBold, color: theme.colors.textPrimary },
+  splitPartAmount: {
+    fontVariant: ['tabular-nums'],
+    fontFamily: theme.font.body,
+    fontSize: 13,
+    color: theme.colors.textSecondary,
+  },
+  splitPartMine: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
   hintText: {
     fontFamily: theme.font.body,
     fontSize: 12,

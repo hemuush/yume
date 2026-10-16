@@ -44,10 +44,12 @@ export function PersonDetailModal({
   person,
   onClose,
   onChanged,
+  initialTab = 'settle',
 }: {
   person: PersonWithBalance;
   onClose: () => void;
   onChanged: () => void;
+  initialTab?: 'settle' | 'history';
 }) {
   const { show: showUndo } = useUndoToast();
   const { accent } = useAccent();
@@ -67,7 +69,7 @@ export function PersonDetailModal({
   const [entryDateIso, setEntryDateIso] = useState(() => toLocalIsoDate(new Date()));
   // The history entry whose ⋯ menu is open.
   const [menuEntry, setMenuEntry] = useState<PersonLedgerEntry | null>(null);
-  const [tab, setTab] = useState<'settle' | 'history'>('settle');
+  const [tab, setTab] = useState<'settle' | 'history'>(initialTab);
 
   const [loadError, setLoadError] = useState<string | null>(null);
   const [loadedPersonId, setLoadedPersonId] = useState<string | null>(null);
@@ -255,7 +257,11 @@ export function PersonDetailModal({
       onClose={saving ? () => {} : onClose}
       footer={
         tab === 'history' ? (
-          <PrimaryButton title="Done" onPress={onClose} disabled={saving} />
+          <PrimaryButton
+            title="Settle up"
+            onPress={() => setTab('settle')}
+            disabled={saving || !detailsLoaded || !!loadError}
+          />
         ) : (
           // Worded from where the balance stands: when you owe them, paying back is the main action.
           <View style={[f.footerRow, stacked && styles.footerStack]}>

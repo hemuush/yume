@@ -90,11 +90,11 @@ jest.mock('@/db/loans', () => ({
       pendingInterestMinor: 0,
     },
   ],
-  getLoanPaymentContext: async () => ({
+  getLoanPaymentContext: jest.fn(async () => ({
     installment: { id: 'p13', installmentNumber: 13, dueDate: mockDay(3), emiAmountMinor: 2500000 },
     account: { id: 'bank', name: 'Bank' },
     categoryId: 'emi',
-  }),
+  })),
 }));
 const mockPaySheet = { current: null as null | { installment: { id: string } } };
 jest.mock('@/features/loans/PayInstallmentSheet', () => ({
@@ -148,6 +148,18 @@ jest.mock('@/db/settings', () => ({
   getDefaultCurrency: async () => 'INR',
 }));
 
+jest.mock('@/features/budgets/BudgetDetailModal', () => ({
+  BudgetDetailModal: (props: object) =>
+    require('react').createElement(require('react-native').View, { ...props, testID: 'plan-budget-detail' }),
+}));
+jest.mock('@/features/loans/LoanDetailModal', () => ({
+  LoanDetailModal: (props: object) =>
+    require('react').createElement(require('react-native').View, { ...props, testID: 'plan-loan-detail' }),
+}));
+jest.mock('@/features/people/PersonDetailModal', () => ({
+  PersonDetailModal: (props: object) =>
+    require('react').createElement(require('react-native').View, { ...props, testID: 'plan-person-detail' }),
+}));
 import PlanScreen from '../../../app/(tabs)/plan';
 import { router } from 'expo-router';
 
@@ -279,7 +291,9 @@ describe('Plan tab', () => {
     act(() => byLabel('Budgets,').props.onPress());
     expect(router.push).toHaveBeenLastCalledWith('/budgets');
     act(() => byLabel('Fuel, 25% used').props.onPress());
-    expect(router.push).toHaveBeenLastCalledWith({ pathname: '/budgets', params: { budget: 'b2' } });
+    const detail = tree.root.findByProps({ testID: 'plan-budget-detail' });
+    expect(detail.props.progress.budget.id).toBe('b2');
+    act(() => detail.props.onClose());
     act(() => byLabel('Open loans').props.onPress());
     expect(router.push).toHaveBeenLastCalledWith('/loans');
     act(() => byLabel('Friends & Family').props.onPress());
@@ -412,4 +426,65 @@ it('keeps the latest Plan result when a previous privacy load resolves later', a
     mockHideAmounts = false;
     mockBank = 3000000;
   }
+});
+
+it('opens individual Plan items directly, ignores repeated taps, and closes back onto the same Plan tree', async () => {
+  const tree = await render();
+  const tap = (label: string) =>
+    act(() => tree.root.find((n) => n.props.accessibilityLabel === label && n.props.onPress).props.onPress());
+  const scroll = tree.root.findByProps({ scrollEventThrottle: 16 });
+  const scrollTo = jest.spyOn(scroll.instance, 'scrollTo');
+  scrollTo.mockClear();
+  (router.push as jest.Mock).mockClear();
+  tap('Open loan details: Home loan');
+  tap('Open loan details: Home loan');
+  const loan = tree.root.findByProps({ testID: 'plan-loan-detail' });
+  expect(loan.props.loan.id).toBe('l1');
+  expect(tree.root.findAllByType(require('@/features/loans/LoanDetailModal').LoanDetailModal)).toHaveLength(
+    1
+  );
+  act(() => loan.props.onClose());
+  tap('Open Ravi details');
+  const person = tree.root.findByProps({ testID: 'plan-person-detail' });
+  expect(person.props.person.id).toBe('p1');
+  expect(person.props.initialTab).toBe('history');
+  act(() => person.props.onClose());
+  expect(router.push).not.toHaveBeenCalled();
+  expect(scrollTo).not.toHaveBeenCalled();
+  expect(texts(tree)).toContain('The way to debt-free');
+  act(() => tree.unmount());
+});
+
+it('ignores an obsolete payment lookup when another item is opened and coalesces repeated Pay taps', async () => {
+  const context = require('@/db/loans').getLoanPaymentContext as jest.Mock;
+  let release!: (value: unknown) => void;
+  context.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        release = resolve;
+      })
+  );
+  const tree = await render();
+  const pay = tree.root.find((n) => n.props.accessibilityLabel === 'Pay Home loan EMI' && n.props.onPress);
+  const before = context.mock.calls.length;
+  let request!: Promise<void>;
+  act(() => {
+    request = pay.props.onPress({ stopPropagation: jest.fn() });
+    pay.props.onPress({ stopPropagation: jest.fn() });
+  });
+  expect(context.mock.calls.length - before).toBe(1);
+  act(() =>
+    tree.root
+      .find((n) => n.props.accessibilityLabel === 'Open Ravi details' && n.props.onPress)
+      .props.onPress()
+  );
+  await act(async () => {
+    release({ installment: { id: 'old' }, account: null, categoryId: 'emi' });
+    await request;
+  });
+  expect(
+    tree.root.findAllByType(require('@/features/loans/PayInstallmentSheet').PayInstallmentSheet)
+  ).toHaveLength(0);
+  expect(tree.root.findByProps({ testID: 'plan-person-detail' }).props.person.id).toBe('p1');
+  act(() => tree.unmount());
 });
