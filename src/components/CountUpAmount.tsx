@@ -9,6 +9,8 @@ interface Props extends TextProps {
   /** Amount in minor units, same as formatMoney. */
   minor: number;
   currency?: string;
+  /** How long a change takes to roll; the month card passes a longer one for its first roll up from zero. */
+  duration?: number;
   /**
    * Opt in to counting from 0 on first appearance. By default: show the value at once and roll only on later
    * changes (money added to a goal, an EMI paid).
@@ -32,6 +34,7 @@ export function CountUpAmount({
   minor,
   currency,
   countFromZero = false,
+  duration = DURATIONS.count,
   symbolStyle,
   style,
   ...rest
@@ -75,7 +78,7 @@ export function CountUpAmount({
     // Core Animated here, so the shared curve is spelled out with core Easing.
     const animation = Animated.timing(t, {
       toValue: 1,
-      duration: DURATIONS.count,
+      duration,
       easing: Easing.out(Easing.cubic),
       useNativeDriver: false,
     });

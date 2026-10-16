@@ -14,9 +14,14 @@ export const DURATIONS = {
   draw: 320,
   /** Figures counting up. */
   count: 220,
+  /** The month card's figures rolling up from zero when Home first opens. */
+  rollUp: 800,
   /** The opening fade-in, and the gap between one row's start and the next. */
   enter: 160,
   enterStep: 0,
+  /** A Home section rising into place when Home first opens, and the gap before the next one starts. */
+  section: 520,
+  sectionStep: 70,
   /** A list row sliding into its new place / fading out when removed. */
   rowMove: 180,
   rowExit: 160,

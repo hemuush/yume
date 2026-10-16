@@ -19,6 +19,8 @@ import { Glass } from '@/components/Glass';
 import { cardSurface } from '@/components/CardSurface';
 import { usePrivacy } from '@/theme/PrivacyContext';
 import { heroSlices, heroPct, heroShare, withoutSavings } from './heroSlices';
+import { MoneyBar } from './MoneyBar';
+import { DURATIONS } from '@/lib/motionTimings';
 import { styles } from './hero.styles';
 import { WorkingRow } from './WorkingRow';
 import { HeroActions } from './HeroActions';
@@ -315,11 +317,12 @@ export function ThisMonthHero({
           }}
         >
           {slices.hasIncome ? (
-            // Rolls to its new value after a save; a new period slides in instead.
+            // Rolls up from zero when Home opens or the period turns, and to its new value after a save.
             <CountUpAmount
               key={displayed.periodKey}
               minor={headMinor}
-              countFromZero={false}
+              countFromZero
+              duration={DURATIONS.rollUp}
               style={[styles.headValue, headNeg && styles.headValueNeg]}
               symbolStyle={styles.headSymbol}
               numberOfLines={1}
@@ -330,6 +333,8 @@ export function ThisMonthHero({
           )}
           <Text style={styles.headCaption}>{headCaption}</Text>
         </View>
+
+        {slices.hasIncome && <MoneyBar slices={slices} />}
 
         {(spentShare || shownToday || hasDue) && (
           <View style={styles.chips}>
@@ -473,11 +478,12 @@ function Stat({
         <Text style={styles.statLabel}>{label}</Text>
         {cleared && <Feather name="check" size={12} color={theme.colors.incomeText} />}
       </View>
-      {/* Rolls to its new value after a save; a new period slides in instead. */}
+      {/* Rolls up from zero when Home opens or the period turns, and to its new value after a save. */}
       <CountUpAmount
         key={periodKey}
         minor={minor}
-        countFromZero={false}
+        countFromZero
+        duration={DURATIONS.rollUp}
         style={styles.statValue}
         numberOfLines={1}
         adjustsFontSizeToFit

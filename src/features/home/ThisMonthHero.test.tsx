@@ -313,3 +313,20 @@ describe('month card, debt', () => {
     ).toBeGreaterThan(0);
   });
 });
+
+describe('month card money bar', () => {
+  const bar = (r: ReactTestRenderer) => r.root.findAll((n) => n.props.testID === 'home-money-bar');
+
+  it('shows where the money went as a thin bar under the figure', () => {
+    expect(bar(render()).length).toBeGreaterThan(0);
+  });
+
+  it('is hidden from a screen reader, which gets the same facts in words', () => {
+    const [node] = bar(render());
+    expect(node.props.importantForAccessibility).toBe('no-hide-descendants');
+  });
+
+  it('is not there with no income', () => {
+    expect(bar(render({ incomeMinor: 0, spentMinor: 0, savingsMinor: 0, surplusMinor: 0 }))).toHaveLength(0);
+  });
+});
