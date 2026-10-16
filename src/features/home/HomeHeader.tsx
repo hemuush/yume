@@ -185,6 +185,7 @@ export function HomeHeader({
           importantForAccessibility={collapsed ? 'no-hide-descendants' : 'auto'}
         >
           <ReanimatedAnimated.View
+            style={styles.greetBlock}
             entering={FadeIn.duration(MOTION.enter).easing(MOTION.ease).reduceMotion(ReduceMotion.System)}
           >
             <Text style={styles.date} numberOfLines={1}>
@@ -210,7 +211,8 @@ export function HomeHeader({
 
 const styles = StyleSheet.create({
   root: { position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10 },
-  fading: { gap: 12, paddingTop: 10 },
+  fading: { gap: 12, paddingTop: 10, alignItems: 'center' },
+  greetBlock: { alignItems: 'center' },
   miniSlot: { flex: 1, minWidth: 0, alignItems: 'flex-end' },
   band: { paddingHorizontal: HEADER.gutter, paddingBottom: 12, gap: 8, overflow: 'hidden' },
   row: {
@@ -223,21 +225,29 @@ const styles = StyleSheet.create({
   brandRow: { flexDirection: 'row', alignItems: 'center', gap: 7 },
   brand: { fontFamily: theme.font.roundedBold, fontSize: 22, letterSpacing: 0.2, color: theme.colors.ink },
   actions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  date: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textSecondary },
-  greet: {
-    fontFamily: theme.font.body,
-    fontSize: theme.typeSize.greeting,
-    lineHeight: 25,
-    letterSpacing: -0.3,
-    color: theme.colors.ink,
-    marginTop: 2,
-  },
-  greetName: { fontFamily: theme.font.bodyBold },
-  insight: {
-    fontFamily: theme.font.body,
-    fontSize: 13,
-    lineHeight: 19,
+  date: {
+    textAlign: 'center',
+    fontFamily: theme.font.bodyMedium,
+    fontSize: 12,
     color: theme.colors.textSecondary,
-    marginTop: 4,
+  },
+  greet: {
+    textAlign: 'center',
+    fontFamily: theme.font.roundedMedium,
+    fontSize: theme.typeSize.greeting,
+    lineHeight: 24,
+    letterSpacing: -0.2,
+    color: theme.colors.ink,
+    marginTop: 1,
+  },
+  greetName: { fontFamily: theme.font.roundedBold },
+  insight: {
+    textAlign: 'center',
+    fontFamily: theme.font.body,
+    fontSize: 12.5,
+    lineHeight: 18,
+    color: theme.colors.textSecondary,
+    marginTop: 3,
+    maxWidth: 320,
   },
 });
