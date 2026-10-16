@@ -28,6 +28,10 @@ The [preview profile](eas.json) creates an internal-distribution APK and restric
 
 The current account's first submitted preview is **1.0.0, version code 1**: [build page](https://expo.dev/accounts/yume-expense-tracker/projects/yume/builds/06193728-45c8-4b2b-9133-a08171c9f1c1). It contains the earlier popup and startup/privacy refinements. The subsequent pastel sheet redesign is newer than this submission and requires another build. It was accepted by EAS on 16 October 2026; completion and APK availability must be checked on the build page. This is a fresh-install signing baseline.
 
+## CI builds
+
+[eas-build.yml](.github/workflows/eas-build.yml) queues a `preview` APK build on EAS after CI passes on `main` (or when run manually from the Actions tab). It needs an `EXPO_TOKEN` repository secret from the `yume-expense-tracker` account. Download the APK from the build page on expo.dev. CI never builds the production AAB or submits to the Play Store.
+
 ## Play Store bundle
 
 ```sh
