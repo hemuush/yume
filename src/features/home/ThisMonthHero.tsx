@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { View, Pressable, PanResponder } from 'react-native';
 import { Text } from '@/components/Text';
 import Feather from '@expo/vector-icons/Feather';
@@ -18,7 +18,11 @@ import { CountUpAmount } from '@/components/CountUpAmount';
 import { Glass } from '@/components/Glass';
 import { cardSurface } from '@/components/CardSurface';
 import { usePrivacy } from '@/theme/PrivacyContext';
-import { heroSlices, heroPct, heroShare, withoutSavings } from './heroSlices';
+import { heroSlices, withoutSavings } from './heroSlices';
+import { MonthMoon } from './MonthMoon';
+import { DayRail } from './DayRail';
+import { buildRail, railDayLabel, spentAfterDay } from './dayRail';
+import { parseLocalIsoDate } from '@/lib/date';
 import { styles } from './hero.styles';
 import { WorkingRow } from './WorkingRow';
 import { HeroActions } from './HeroActions';
@@ -75,6 +79,8 @@ export function ThisMonthHero({
   outstandingLoansMinor,
   today = null,
   pace = null,
+  railDaily,
+  railToday,
 }: Omit<HeroContent, 'dueMinor' | 'carryMinor'> & {
   dueMinor?: number;
   carryMinor?: number;
@@ -91,6 +97,9 @@ export function ThisMonthHero({
   today?: { spentMinor: number; goalMinor: number } | null;
   /** Where this month's spending is heading (monthPace) — the current month only, from the 5th. */
   pace?: { projectedMinor: number; byLabel: string } | null;
+  /** Spending per day for the current month, and today's date: the day rail to travel through it. Omit for other periods. */
+  railDaily?: { date: string; totalMinor: number }[];
+  railToday?: string;
 }) {
   const reduce = useReduceMotion();
   const { hideAmounts } = usePrivacy();
@@ -108,6 +117,8 @@ export function ThisMonthHero({
   });
   // The sum behind "Free after bills", opened from the "still to pay" chip.
   const [showWorking, setShowWorking] = useState(false);
+  // The day a finger has taken the card to; it belongs to one period and is ignored once the period turns.
+  const [scrub, setScrub] = useState<{ key: string; day: number | null } | null>(null);
   const prevPeriodKey = useRef(periodKey);
   const tx = useSharedValue(0);
   const dragX = useSharedValue(0);
@@ -250,24 +261,45 @@ export function ThisMonthHero({
     });
   });
 
+  const rail = useMemo(
+    () => (railDaily && railToday ? buildRail(railDaily, railToday) : null),
+    [railDaily, railToday]
+  );
+  const railMonth = railToday
+    ? parseLocalIsoDate(railToday).toLocaleDateString(undefined, { month: 'long' })
+    : '';
+  // Travelling the rail to a day before today shows what the month looked like then: the spending after it is
+  // put back (income, savings and bills stay as they are). Today, or no finger, shows the month as it is.
+  const travelDay =
+    rail && scrub?.key === displayed.periodKey && scrub.day != null && scrub.day < rail.todayDay
+      ? scrub.day
+      : null;
+  const settled = travelDay == null;
+  const putBack = rail && travelDay != null ? spentAfterDay(rail, travelDay) : 0;
+  const shownSpent = Math.max(0, displayed.spentMinor - putBack);
+  const shownSurplus = displayed.surplusMinor + (displayed.spentMinor - shownSpent);
+
   // Carry-over joins the pool like income; a carried shortfall only lowers the headline. With "hide savings"
   // on, nothing may reveal savings.
   const poolMinor = displayed.incomeMinor + Math.max(0, displayed.carryMinor);
-  const full = heroSlices(poolMinor, displayed.spentMinor, displayed.savingsMinor, displayed.dueMinor);
+  const full = heroSlices(poolMinor, shownSpent, displayed.savingsMinor, displayed.dueMinor);
   const slices = hideAmounts ? withoutSavings(full) : full;
 
   // The headline: what's free to use, or by how much the month went over.
   const over = slices.overMinor > 0;
   // With bills still to come this month, what is free is counted after them.
   const hasDue = slices.hasIncome && !over && displayed.dueMinor > 0;
-  const freeMinor = displayed.surplusMinor - (hasDue ? displayed.dueMinor : 0);
-  const headLabel = over
-    ? 'Over by'
-    : hasDue
-      ? freeMinor < 0
-        ? 'Short after bills'
-        : 'Free after bills'
-      : 'Free to use';
+  const freeMinor = shownSurplus - (hasDue ? displayed.dueMinor : 0);
+  const headLabel =
+    rail && travelDay != null
+      ? `On ${railDayLabel(rail, travelDay)}`
+      : over
+        ? 'Over by'
+        : hasDue
+          ? freeMinor < 0
+            ? 'Short after bills'
+            : 'Free after bills'
+          : 'Free to use';
   const headMinor = over ? slices.overMinor : freeMinor;
   const headNeg = over || freeMinor < 0;
   const carryNote =
@@ -278,18 +310,22 @@ export function ThisMonthHero({
         : '';
   const headCaption = !slices.hasIncome
     ? 'Add income to see what is free'
-    : over
-      ? 'more went out than came in'
-      : hasDue
-        ? `Income ${formatMoney(displayed.incomeMinor)}${carryNote}, less ${hideAmounts ? 'deductions' : 'spending, savings'} and bills`
-        : displayed.surplusMinor < 0
-          ? 'below zero'
-          : `Income ${formatMoney(displayed.incomeMinor)}${carryNote}, less ${hideAmounts ? 'deductions' : 'spending and savings'}`;
+    : travelDay != null
+      ? hasDue
+        ? 'Left on that day, after bills'
+        : 'Left on that day'
+      : over
+        ? 'more went out than came in'
+        : hasDue
+          ? `Income ${formatMoney(displayed.incomeMinor)}${carryNote}, less ${hideAmounts ? 'deductions' : 'spending, savings'} and bills`
+          : displayed.surplusMinor < 0
+            ? 'below zero'
+            : `Income ${formatMoney(displayed.incomeMinor)}${carryNote}, less ${hideAmounts ? 'deductions' : 'spending and savings'}`;
 
-  const spentShare = slices.hasIncome && !over ? heroPct(heroShare(slices, 'spent')) : null;
-  const shownToday = displayed.today;
-  const shownPace = displayed.pace;
+  const shownToday = settled ? displayed.today : null;
+  const shownPace = settled ? displayed.pace : null;
   const todayOverMinor = shownToday ? shownToday.spentMinor - shownToday.goalMinor : 0;
+  const showDueChip = hasDue && settled;
 
   return (
     <Glass radius={28} style={[styles.card, cardSurface.summary]}>
@@ -299,46 +335,44 @@ export function ThisMonthHero({
       </View>
 
       <ReanimatedAnimated.View style={[styles.body, slideStyle]} {...pan.panHandlers}>
-        <View
-          accessible
-          accessibilityLabel={
-            slices.hasIncome ? `${headLabel}, ${formatMoney(headMinor)}, ${headCaption}` : headCaption
-          }
-          // The swipe, for a screen reader: swipe up or down on the figure to step the period.
-          accessibilityActions={[
-            { name: 'decrement', label: 'Previous period' },
-            ...(canStepForward ? [{ name: 'increment', label: 'Next period' }] : []),
-          ]}
-          onAccessibilityAction={(e) => {
-            if (e.nativeEvent.actionName === 'decrement') onStep(-1);
-            else if (e.nativeEvent.actionName === 'increment' && canStepForward) onStep(1);
-          }}
-        >
-          {slices.hasIncome ? (
-            // Rolls to its new value after a save; a new period slides in instead.
-            <CountUpAmount
-              key={displayed.periodKey}
-              minor={headMinor}
-              countFromZero={false}
-              style={[styles.headValue, headNeg && styles.headValueNeg]}
-              symbolStyle={styles.headSymbol}
-              numberOfLines={1}
-              adjustsFontSizeToFit
-            />
-          ) : (
-            <Text style={styles.headValue}>—</Text>
-          )}
-          <Text style={styles.headCaption}>{headCaption}</Text>
+        <View style={styles.figureRow}>
+          <View
+            style={styles.headBlock}
+            accessible
+            accessibilityLabel={
+              slices.hasIncome ? `${headLabel}, ${formatMoney(headMinor)}, ${headCaption}` : headCaption
+            }
+            // The swipe, for a screen reader: swipe up or down on the figure to step the period.
+            accessibilityActions={[
+              { name: 'decrement', label: 'Previous period' },
+              ...(canStepForward ? [{ name: 'increment', label: 'Next period' }] : []),
+            ]}
+            onAccessibilityAction={(e) => {
+              if (e.nativeEvent.actionName === 'decrement') onStep(-1);
+              else if (e.nativeEvent.actionName === 'increment' && canStepForward) onStep(1);
+            }}
+          >
+            {slices.hasIncome ? (
+              // Rolls to its new value after a save or a day on the rail; a new period slides in instead.
+              <CountUpAmount
+                key={displayed.periodKey}
+                minor={headMinor}
+                countFromZero={false}
+                style={[styles.headValue, headNeg && styles.headValueNeg]}
+                symbolStyle={styles.headSymbol}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+              />
+            ) : (
+              <Text style={styles.headValue}>—</Text>
+            )}
+            <Text style={styles.headCaption}>{headCaption}</Text>
+          </View>
+          {slices.hasIncome && <MonthMoon slices={slices} keptLabel={hideAmounts ? 'free' : 'kept'} />}
         </View>
 
-        {(spentShare || shownToday || hasDue) && (
+        {(shownToday || showDueChip) && (
           <View style={styles.chips}>
-            {spentShare && (
-              <View style={styles.chip}>
-                <Feather name="pie-chart" size={13} color={theme.colors.textSecondary} />
-                <Text style={styles.chipText}>{spentShare} spent</Text>
-              </View>
-            )}
             {shownToday && (
               <View style={[styles.chip, todayOverMinor > 0 && styles.chipOver]}>
                 <Feather
@@ -353,7 +387,7 @@ export function ThisMonthHero({
                 </Text>
               </View>
             )}
-            {hasDue && (
+            {showDueChip && (
               <Pressable
                 onPress={() => {
                   haptics.tap();
@@ -378,12 +412,45 @@ export function ThisMonthHero({
           </View>
         )}
 
+        {hasDue && settled && showWorking && (
+          <View style={styles.working}>
+            <WorkingRow label="Income" value={formatMoney(displayed.incomeMinor)} />
+            <WorkingRow label="Spent" value={`−${formatMoney(displayed.spentMinor)}`} />
+            <WorkingRow
+              label="Set aside"
+              value={
+                hideAmounts
+                  ? `−${formatMaskableMoney(0, { masked: true })}`
+                  : `${displayed.savingsMinor < 0 ? '+' : '−'}${formatMoney(Math.abs(displayed.savingsMinor))}`
+              }
+            />
+            {displayed.carryMinor !== 0 && (
+              <WorkingRow
+                label="Carried over"
+                value={`${displayed.carryMinor < 0 ? '−' : '+'}${formatMoney(Math.abs(displayed.carryMinor))}`}
+              />
+            )}
+            <WorkingRow label="Free to use" value={formatMoney(displayed.surplusMinor)} total />
+            <WorkingRow label="Still to pay" value={`−${formatMoney(displayed.dueMinor)}`} due />
+            <WorkingRow label="After bills" value={formatMoney(freeMinor)} total />
+          </View>
+        )}
+
+        {rail && slices.hasIncome && (
+          <DayRail
+            rail={rail}
+            monthName={railMonth}
+            selected={scrub?.key === displayed.periodKey ? scrub.day : null}
+            onSelect={(day) => setScrub({ key: displayed.periodKey, day })}
+          />
+        )}
+
         {/* Spent | Saved | Debt left, as on the old card; Saved stays out while savings are hidden. */}
         <View style={styles.stats}>
           <Stat
             label="Spent"
             color={theme.colors.spentSoft}
-            minor={displayed.spentMinor}
+            minor={shownSpent}
             periodKey={displayed.periodKey}
           />
           {!hideAmounts && (
@@ -412,30 +479,6 @@ export function ThisMonthHero({
               On pace for about {formatMoney(Math.round(shownPace.projectedMinor / 10000) * 10000)} by{' '}
               {shownPace.byLabel}
             </Text>
-          </View>
-        )}
-
-        {hasDue && showWorking && (
-          <View style={styles.working}>
-            <WorkingRow label="Income" value={formatMoney(displayed.incomeMinor)} />
-            <WorkingRow label="Spent" value={`−${formatMoney(displayed.spentMinor)}`} />
-            <WorkingRow
-              label="Set aside"
-              value={
-                hideAmounts
-                  ? `−${formatMaskableMoney(0, { masked: true })}`
-                  : `${displayed.savingsMinor < 0 ? '+' : '−'}${formatMoney(Math.abs(displayed.savingsMinor))}`
-              }
-            />
-            {displayed.carryMinor !== 0 && (
-              <WorkingRow
-                label="Carried over"
-                value={`${displayed.carryMinor < 0 ? '−' : '+'}${formatMoney(Math.abs(displayed.carryMinor))}`}
-              />
-            )}
-            <WorkingRow label="Free to use" value={formatMoney(displayed.surplusMinor)} total />
-            <WorkingRow label="Still to pay" value={`−${formatMoney(displayed.dueMinor)}`} due />
-            <WorkingRow label="After bills" value={formatMoney(freeMinor)} total />
           </View>
         )}
       </ReanimatedAnimated.View>
