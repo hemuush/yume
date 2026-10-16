@@ -142,16 +142,13 @@ export const styles = StyleSheet.create({
   },
   // Room above the tallest bar for the tapped bar's amount bubble.
   sumChart: { marginTop: 22 },
-  sumFooter: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-    marginTop: 14,
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: theme.colors.divider,
-  },
-  sumMetric: { flexGrow: 1, flexBasis: 140, minWidth: 0, gap: 4 },
+  sumTop: { flexDirection: 'row', alignItems: 'flex-start', gap: 14 },
+  sumTopStacked: { flexDirection: 'column' },
+  sumLead: { flexGrow: 1, flexShrink: 1, minWidth: 0 },
+  sumCashflow: { width: '42%', gap: 8, alignItems: 'stretch' },
+  sumCashflowStacked: { width: '100%', flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
+  sumMetric: { minWidth: 0, gap: 3, alignItems: 'flex-end' },
+  sumMetricStacked: { flexGrow: 1, flexBasis: 120, alignItems: 'flex-start' },
   sumMetricAmount: {
     fontFamily: theme.font.bodyBold,
     fontVariant: ['tabular-nums'],

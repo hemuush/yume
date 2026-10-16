@@ -1,9 +1,9 @@
 import { ScreenLoadError } from '@/components/ScreenLoadError';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { View } from 'react-native';
 import { Text } from '@/components/Text';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { listRecurringRules } from '@/db/recurring';
+import { listRecurringRules, setRecurringRuleActive } from '@/db/recurring';
 import { listAccounts, listCategories } from '@/db/ledger';
 import { getHiddenSubscriptionSuggestions, hideSubscriptionSuggestion } from '@/db/settings';
 import { getSubscriptionSuggestions, subscriptionTotals, SubscriptionSuggestion } from '@/db/subscriptions';
@@ -36,6 +36,8 @@ import { savingsAccountIdsOf } from '@/lib/account';
 import { parentNameOf } from '@/lib/categoryLabel';
 import { ModalSheet } from '@/components/ModalSheet';
 import { weekdayDayMonth } from '@/lib/dateLabels';
+import { errorMessage } from '@/lib/errorMessage';
+import { showAlert } from '@/components/AppDialog';
 
 /**
  * Rent, subscriptions, salary: rules caught up on app open (runDueRecurringRules, src/db/recurring.ts, via
@@ -57,6 +59,9 @@ export default function RecurringScreen() {
   const [fromSuggestion, setFromSuggestion] = useState<SubscriptionSuggestion | null>(null);
   const [addAccountVisible, setAddAccountVisible] = useState(false);
   const [selectedRunDate, setSelectedRunDate] = useState<string | null>(null);
+
+  const pendingPause = useRef(new Set<string>());
+  const [busyRuleIds, setBusyRuleIds] = useState<Set<string>>(new Set());
 
   const loadRules = useCallback(async () => {
     const [r, allAccs, cats, hidden] = await Promise.all([
@@ -115,6 +120,22 @@ export default function RecurringScreen() {
   const hideSuggestion = async (s: SubscriptionSuggestion) => {
     setSuggestions((prev) => prev.filter((x) => x.key !== s.key));
     await hideSubscriptionSuggestion(s.key).catch(() => {});
+  };
+
+  const togglePause = async (rule: RecurringRule) => {
+    if (pendingPause.current.has(rule.id)) return;
+    pendingPause.current.add(rule.id);
+    setBusyRuleIds(new Set(pendingPause.current));
+    try {
+      await setRecurringRuleActive(rule.id, !rule.active);
+      setRules((current) => current.map((r) => (r.id === rule.id ? { ...r, active: !rule.active } : r)));
+      await load();
+    } catch (e) {
+      showAlert("Couldn't update recurring entry", errorMessage(e));
+    } finally {
+      pendingPause.current.delete(rule.id);
+      setBusyRuleIds(new Set(pendingPause.current));
+    }
   };
 
   if (!hasData && loadError)
@@ -194,6 +215,9 @@ export default function RecurringScreen() {
                       masked={isHidden(rule)}
                       accountName={accountName}
                       index={i}
+                      onTogglePause={() => void togglePause(rule)}
+                      busy={busyRuleIds.has(rule.id)}
+                      currency={accounts.find((a) => a.id === rule.accountId)?.currency}
                       onPress={() => setEditingRule(rule)}
                     />
                   ))}
@@ -225,6 +249,9 @@ export default function RecurringScreen() {
                       masked={isHidden(rule)}
                       accountName={accountName}
                       index={i}
+                      onTogglePause={() => void togglePause(rule)}
+                      busy={busyRuleIds.has(rule.id)}
+                      currency={accounts.find((a) => a.id === rule.accountId)?.currency}
                       onPress={() => setEditingRule(rule)}
                       muted
                     />
@@ -296,6 +323,9 @@ export default function RecurringScreen() {
                 parentName={parentNameOf(rule.categoryId, categoriesById)}
                 accountName={accountName}
                 index={index}
+                onTogglePause={() => void togglePause(rule)}
+                busy={busyRuleIds.has(rule.id)}
+                currency={accounts.find((a) => a.id === rule.accountId)?.currency}
                 onPress={() => {
                   setSelectedRunDate(null);
                   setEditingRule(rule);

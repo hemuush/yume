@@ -84,7 +84,7 @@ export const styles = StyleSheet.create({
     paddingLeft: 46,
   },
   hide: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
-  ruleSide: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  ruleSide: { flexDirection: 'row', alignItems: 'center', gap: 16 },
   ruleAmount: {
     fontFamily: theme.font.bodyBold,
     fontVariant: ['tabular-nums'],

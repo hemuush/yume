@@ -59,66 +59,139 @@ function render(
 }
 
 describe('Where it went', () => {
-  beforeEach(() =>
-    jest
-      .spyOn(ReactNative, 'useWindowDimensions')
-      .mockReturnValue({ width: 390, height: 800, scale: 3, fontScale: 1 })
-  );
-  afterEach(() => jest.restoreAllMocks());
-  const breakdown = [cat('Food', 1600000), cat('Rent', 2400000), cat('Shares', 1000000)];
-  it('shows names, amounts and shares together without repeating the hero total', () => {
-    const all = texts(render(breakdown));
-    expect(all).toEqual(
-      expect.arrayContaining([
-        'October spending breakdown',
-        '₹4,210 less than Sept',
-        'Rent',
-        '₹24,000',
-        '48% of spending',
-        'Food',
-        '₹16,000',
-      ])
-    );
-    expect(all).not.toContain('₹50,000');
+  beforeEach(() => {
+    jest.spyOn(ReactNative, 'useWindowDimensions').mockReturnValue({
+      width: 390,
+      height: 800,
+      scale: 3,
+      fontScale: 1,
+    });
   });
+  afterEach(() => jest.restoreAllMocks());
+  // Hidden (sensitive) groups are left out before the dial sees them (privateComparison), so none here.
+  const breakdown = [cat('Food', 1_600_000), cat('Rent', 2_400_000), cat('Shares', 1_000_000)];
+
   it.each([
     { width: 320, fontScale: 1 },
     { width: 390, fontScale: 1.5 },
-  ])('keeps direct category and Reports navigation at $width / $fontScale', (size) => {
+  ])('keeps selection and drill-through reachable at $width dp and $fontScale text scale', (size) => {
     jest.spyOn(ReactNative, 'useWindowDimensions').mockReturnValue({ ...size, height: 800, scale: 3 });
-    const category = jest.fn();
-    const reports = jest.fn();
-    const tree = render(breakdown, reports, category);
+    const openReports = jest.fn();
+    const openCategory = jest.fn();
+    const r = render(breakdown, openReports, openCategory);
+    expect(
+      r.root.findAll((n) => [n.props.style].flat(Infinity).some((style) => style?.flexDirection === 'column'))
+        .length
+    ).toBeGreaterThan(0);
     act(() =>
-      tree.root
-        .find((n) => n.props.accessibilityLabel?.startsWith('View Shares category,') && n.props.onPress)
+      r.root
+        .find((n) => n.props.accessibilityLabel === 'Shares, 20% of spending' && n.props.onPress)
         .props.onPress()
     );
-    expect(category).toHaveBeenCalledWith('Shares');
+    expect(texts(r)).toContain('₹10,000 · 20% of spending');
     act(() =>
-      tree.root
+      r.root
+        .find((n) => n.props.accessibilityLabel === 'View Shares category' && n.props.onPress)
+        .props.onPress()
+    );
+    expect(openCategory).toHaveBeenCalledWith('Shares');
+    act(() =>
+      r.root
         .find((n) => n.props.accessibilityLabel === 'All categories in Reports' && n.props.onPress)
         .props.onPress()
     );
-    expect(reports).toHaveBeenCalledTimes(1);
+    expect(openReports).toHaveBeenCalledTimes(1);
+    act(() => r.unmount());
   });
-  it('offers setup for empty spending', () => {
-    const add = jest.fn();
-    const tree = render([], jest.fn(), jest.fn(), add);
-    expect(texts(tree)).toContain('No spending yet');
+
+  it('shows the spending, the change from last period, and the biggest category picked', () => {
+    const all = texts(render(breakdown));
+    expect(all).toEqual(
+      expect.arrayContaining([
+        'Spent in October',
+        '₹50,000',
+        '₹4,210 less than Sept',
+        'Rent',
+        '₹24,000 · 48% of spending',
+      ])
+    );
+  });
+
+  it('shows the selected category immediately', () => {
+    const r = render(breakdown);
     act(() =>
-      tree.root.find((n) => n.props.accessibilityLabel === 'Add expense' && n.props.onPress).props.onPress()
+      r.root
+        .find((n) => n.props.accessibilityLabel === 'Shares, 20% of spending' && n.props.onPress)
+        .props.onPress()
+    );
+    const all = texts(r);
+    expect(all).toEqual(expect.arrayContaining(['Shares', '₹10,000 · 20% of spending', '20%']));
+    expect(all).not.toContain('₹16,000 · 32% of spending');
+    expect(
+      r.root.findAll((n) => n.props.accessibilityLabel === 'Shares, 20% of spending')[0].props
+        .accessibilityState.selected
+    ).toBe(true);
+  });
+
+  it('opens Reports from the last bubble', () => {
+    const open = jest.fn();
+    const r = render(breakdown, open);
+    act(() =>
+      r.root
+        .find((n) => n.props.accessibilityLabel === 'All categories in Reports' && n.props.onPress)
+        .props.onPress()
+    );
+    expect(open).toHaveBeenCalled();
+  });
+
+  it('offers an expense action for a period with no spending', () => {
+    const add = jest.fn();
+    const r = render([], jest.fn(), jest.fn(), add);
+    expect(texts(r)).toContain('No spending yet');
+    act(() =>
+      r.root.find((n) => n.props.accessibilityLabel === 'Add expense' && n.props.onPress).props.onPress()
     );
     expect(add).toHaveBeenCalledTimes(1);
   });
-  it('uses all positive categories for shares while limiting previews to four', () => {
-    const all = texts(render(['A', 'B', 'C', 'D', 'E'].map((name) => cat(name, 10000))));
-    expect(all).toContain('20% of spending');
-    expect(all).not.toContain('E');
+
+  it('keeps shares based on all categories and offers the remaining categories in Reports', () => {
+    const tree = render(['A', 'B', 'C', 'D', 'E'].map((name) => cat(name, 10000)));
+    const shown = texts(tree);
+    expect(shown).toContain('₹100 · 20% of spending');
+    expect(
+      tree.root.findAll((n) => n.props.accessibilityLabel === 'All categories in Reports').length
+    ).toBeGreaterThan(0);
+    expect(shown).not.toContain('E');
   });
-  it('explains refund effects instead of pretending positive shares include negative categories', () => {
-    const all = texts(render([cat('Food', 10000), cat('Refunds', -5000)]));
-    expect(all).toContain('100% of spending');
-    expect(all.some((t) => t.includes('refunds are included in the period total'))).toBe(true);
-  });
+});
+
+it('opens the selected category only from its detail action', () => {
+  const open = jest.fn();
+  const r = render([cat('Food', 10000), cat('Rent', 20000)], jest.fn(), open);
+  act(() =>
+    r.root
+      .find((n) => n.props.accessibilityLabel === 'Food, 33% of spending' && n.props.onPress)
+      .props.onPress()
+  );
+  expect(open).not.toHaveBeenCalled();
+  act(() =>
+    r.root.find((n) => n.props.accessibilityLabel === 'View Food category' && n.props.onPress).props.onPress()
+  );
+  expect(open).toHaveBeenCalledWith('Food');
+});
+
+it('does not retain a selected category after privacy-filtered inputs remove it', () => {
+  const tree = render([cat('Private', 20000, true), cat('Public', 10000)]);
+  expect(texts(tree)).toContain('Private');
+  const props = tree.root.findByType(WhereItWent).props as Parameters<typeof WhereItWent>[0];
+  act(() => tree.update(<WhereItWent {...props} breakdown={[cat('Public', 10000)]} spentMinor={10000} />));
+  expect(texts(tree)).not.toContain('Private');
+  expect(texts(tree)).toContain('₹100 · 100% of spending');
+  act(() => tree.unmount());
+});
+it('retains the refund explanation with the curved selector', () => {
+  const tree = render([cat('Food', 10000), cat('Refunds', -5000)]);
+  expect(texts(tree)).toContain('₹100 · 100% of spending');
+  expect(texts(tree).some((t) => t.includes('refunds are included in the period total'))).toBe(true);
+  act(() => tree.unmount());
 });
