@@ -17,9 +17,12 @@ export function wallpaperTop(accent: string): string {
 export const HomeWallpaper = memo(function HomeWallpaper({
   accent,
   secondary,
+  plain = false,
 }: {
   accent: string;
   secondary: string;
+  /** Home's own: the wash alone, without the two light blobs the other screens keep behind their glass. */
+  plain?: boolean;
 }) {
   const top = wallpaperTop(accent);
   const mid = shade(accent, 94);
@@ -32,20 +35,22 @@ export const HomeWallpaper = memo(function HomeWallpaper({
         locations={[0, 0.4, 1]}
         style={StyleSheet.absoluteFill}
       />
-      <Svg style={StyleSheet.absoluteFill}>
-        <Defs>
-          <RadialGradient id="wpA" cx="50%" cy="50%" r="50%">
-            <Stop offset="0" stopColor={blobA} stopOpacity={0.75} />
-            <Stop offset="1" stopColor={blobA} stopOpacity={0} />
-          </RadialGradient>
-          <RadialGradient id="wpB" cx="50%" cy="50%" r="50%">
-            <Stop offset="0" stopColor={blobB} stopOpacity={0.6} />
-            <Stop offset="1" stopColor={blobB} stopOpacity={0} />
-          </RadialGradient>
-        </Defs>
-        <Circle cx="92%" cy="40" r="190" fill="url(#wpA)" />
-        <Circle cx="0%" cy="460" r="170" fill="url(#wpB)" />
-      </Svg>
+      {!plain && (
+        <Svg style={StyleSheet.absoluteFill}>
+          <Defs>
+            <RadialGradient id="wpA" cx="50%" cy="50%" r="50%">
+              <Stop offset="0" stopColor={blobA} stopOpacity={0.75} />
+              <Stop offset="1" stopColor={blobA} stopOpacity={0} />
+            </RadialGradient>
+            <RadialGradient id="wpB" cx="50%" cy="50%" r="50%">
+              <Stop offset="0" stopColor={blobB} stopOpacity={0.6} />
+              <Stop offset="1" stopColor={blobB} stopOpacity={0} />
+            </RadialGradient>
+          </Defs>
+          <Circle cx="92%" cy="40" r="190" fill="url(#wpA)" />
+          <Circle cx="0%" cy="460" r="170" fill="url(#wpB)" />
+        </Svg>
+      )}
     </View>
   );
 });
