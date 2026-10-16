@@ -51,6 +51,7 @@ export function createReanimatedMock() {
     Extrapolation: { CLAMP: 'clamp' },
     withRepeat: (toValue: unknown) => toValue,
     withTiming: (toValue: unknown) => toValue,
+    withSpring: (toValue: unknown) => toValue,
     withDelay: (_delay: number, toValue: unknown) => toValue,
     cancelAnimation: (...args: unknown[]) => mockCancelAnimation(...args),
     // src/lib/animation.ts builds its shared curve at import time.
