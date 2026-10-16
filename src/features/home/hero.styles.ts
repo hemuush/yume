@@ -13,9 +13,6 @@ export const styles = StyleSheet.create({
     minHeight: 32,
   },
   body: { gap: 10 },
-  // The figure and its caption on the left, the moon on the right; the moon wraps below on a narrow screen.
-  figureRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 6 },
-  headBlock: { flexGrow: 1, flexBasis: 180, minWidth: 0 },
 
   headLabel: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textSecondary },
   headValue: {
