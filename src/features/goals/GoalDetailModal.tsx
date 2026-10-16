@@ -38,11 +38,13 @@ export function GoalDetailModal({
   accounts,
   onClose,
   onChanged,
+  backLabel,
 }: {
   goal: SavingsGoal | null;
   accounts: Account[];
   onClose: () => void;
   onChanged: () => void;
+  backLabel?: string;
 }) {
   const { show: showUndo } = useUndoToast();
   const runAction = useSaveOnce(async (action: () => Promise<void>) => {
@@ -192,7 +194,8 @@ export function GoalDetailModal({
     <>
       <ModalSheet
         dismissible={!saving && !busy}
-        title="Goal details"
+        title={backLabel ? 'Edit goal' : 'Goal details'}
+        backLabel={backLabel}
         visible={!manageReservation}
         onClose={onClose}
         footer={

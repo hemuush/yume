@@ -59,12 +59,14 @@ function DueRow({
   onOpen,
   onPay,
   onLoan,
+  onRule,
 }: {
   item: PlanDueItem;
   today: string;
   onOpen: (route: PlanRoute) => void;
   onPay?: (loanId: string) => void;
   onLoan?: (loanId: string) => void;
+  onRule?: (ruleId: string) => void;
 }) {
   const { accent } = useAccent();
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.98);
@@ -84,7 +86,11 @@ function DueRow({
   );
   return (
     <AnimatedPressable
-      onPress={() => (item.loanId && onLoan ? onLoan(item.loanId) : onOpen(item.route))}
+      onPress={() => {
+        if (item.loanId && onLoan) onLoan(item.loanId);
+        else if (item.ruleId && onRule) onRule(item.ruleId);
+        else onOpen(item.route);
+      }}
       onPressIn={onPressIn}
       onPressOut={onPressOut}
       accessibilityRole="button"
@@ -148,6 +154,7 @@ export function ComingUpSection({
   onOpen,
   onPay,
   onLoan,
+  onRule,
   onCardLayout,
   onGroupLayout,
 }: {
@@ -158,6 +165,7 @@ export function ComingUpSection({
   /** Records an EMI as paid — shown as a Pay button on each EMI row. */
   onPay?: (loanId: string) => void;
   onLoan?: (loanId: string) => void;
+  onRule?: (ruleId: string) => void;
   /** Where the card sits inside the section, and each day's group inside the card, so the runway can scroll to one. */
   onCardLayout?: (y: number) => void;
   onGroupLayout?: (date: string, y: number) => void;
@@ -224,6 +232,7 @@ export function ComingUpSection({
                     onOpen={onOpen}
                     onPay={onPay}
                     onLoan={onLoan}
+                    onRule={onRule}
                   />
                 ))}
               </View>

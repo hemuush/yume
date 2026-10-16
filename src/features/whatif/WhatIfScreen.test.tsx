@@ -11,9 +11,10 @@ jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
 }));
 jest.mock('@/components/AppHeader', () => ({ HeaderUserButton: () => null }));
+let mockParams: { category?: string; cut?: string } = {};
 jest.mock('expo-router', () => ({
   router: { push: jest.fn(), back: jest.fn() },
-  useLocalSearchParams: () => ({}),
+  useLocalSearchParams: () => mockParams,
   useFocusEffect: (cb: () => void) => require('react').useEffect(cb, [cb]),
 }));
 let mockHide = false;
@@ -77,6 +78,7 @@ beforeAll(async () => {
 
 describe('What-if', () => {
   beforeEach(() => {
+    mockParams = {};
     mockGoals = [goal];
     mockHide = false;
     mockSensitive = false;
@@ -85,6 +87,19 @@ describe('What-if', () => {
   it('shows the month now and with the default 20% cut', async () => {
     const shown = texts(await render());
     expect(shown).toEqual(expect.arrayContaining(['Now, a month', 'New monthly spend', '₹12,000', '₹9,600']));
+  });
+
+  it('keeps the category and 5% cut selected on Plan', async () => {
+    mockParams = { category: 'fun', cut: '5' };
+    const tree = await render();
+    expect(texts(tree)).toEqual(expect.arrayContaining(['₹3,000', '₹2,850']));
+    act(() => tree.unmount());
+  });
+  it('rejects an invalid requested cut and uses the default', async () => {
+    mockParams = { cut: '150' };
+    const tree = await render();
+    expect(texts(tree)).toContain('₹9,600');
+    act(() => tree.unmount());
   });
 
   it('updates the figures when you pick another cut or category', async () => {

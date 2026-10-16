@@ -48,10 +48,10 @@ export function GoalsStrip({
   if (active.length === 0) {
     return (
       <Pressable
-        onPress={onOpen}
+        onPress={onAdd ?? onOpen}
         style={withPressed()}
         accessibilityRole="button"
-        accessibilityLabel="Open savings goals"
+        accessibilityLabel={onAdd ? 'Create a savings goal' : 'Open savings goals'}
       >
         <Glass style={[styles.card, cardSurface.neutral]}>
           <Text style={styles.title}>Start a goal that fills up by itself</Text>
@@ -164,7 +164,7 @@ export function WhatIfCard({
   onOpen,
 }: {
   whatIf: { categoryName: string; avgMonthlyMinor: number } | null;
-  onOpen: () => void;
+  onOpen: (cut: number) => void;
 }) {
   const { accent } = useAccent();
   const ink = homeInk(accent);
@@ -211,7 +211,7 @@ export function WhatIfCard({
         </Text>
       )}
       <Pressable
-        onPress={onOpen}
+        onPress={() => onOpen(cut)}
         style={withPressed(styles.openRow)}
         accessibilityRole="button"
         accessibilityLabel="Open the what-if sandbox"

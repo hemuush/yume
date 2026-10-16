@@ -38,7 +38,7 @@ export function BudgetJars({
   if (summary.rows.length === 0) {
     return (
       <Pressable
-        onPress={onOpen}
+        onPress={onAdd ?? onOpen}
         style={withPressed({ minHeight: 44 })}
         accessibilityRole="button"
         accessibilityLabel="Set a monthly limit. Open budgets"

@@ -6,6 +6,7 @@ import {
   NativeSyntheticEvent,
   NativeScrollEvent,
   StyleSheet,
+  useWindowDimensions,
 } from 'react-native';
 import { Text } from '@/components/Text';
 import ReanimatedAnimated, {
@@ -41,6 +42,8 @@ export interface SwipePage {
  * omitted. Height tracks the active page, not the tallest; a single page falls back to a plain Section.
  */
 export function HomeSwipeCard({ pages }: { pages: SwipePage[] }) {
+  const { width, fontScale } = useWindowDimensions();
+  const tabScrollRef = useRef<ScrollView>(null);
   const [selectedKey, setSelectedKey] = useState<string | undefined>(pages[0]?.key);
   const [settledKey, setSettledKey] = useState<string | undefined>(pages[0]?.key);
   const [moving, setMoving] = useState(false);
@@ -79,6 +82,13 @@ export function HomeSwipeCard({ pages }: { pages: SwipePage[] }) {
     tabX.value = reduce || tabWidth === 0 ? x : withTiming(x, timing(MOTION.standard));
     return () => cancelAnimation(tabX);
   }, [shownIndex, tabWidth, reduce, tabX]);
+  useEffect(() => {
+    if (pages.length > 3)
+      tabScrollRef.current?.scrollTo({
+        x: Math.max(0, shownIndex * tabWidth - (width - 64 - tabWidth) / 2),
+        animated: !reduce,
+      });
+  }, [shownIndex, tabWidth, width, reduce, pages.length]);
   const highlightStyle = useAnimatedStyle(() => ({ transform: [{ translateX: tabX.value }] }));
   // The card can be re-measured (split-screen, font scale, rotation): keep the strip on the active page
   // rather than leaving it between two at the old offset.
@@ -140,41 +150,59 @@ export function HomeSwipeCard({ pages }: { pages: SwipePage[] }) {
   const safeIndex = Math.min(activeIndex, pages.length - 1);
   const active = pages[safeIndex];
 
+  const tabTrack = (
+    <View
+      style={[
+        styles.track,
+        pages.length > 3 && { minWidth: Math.max(width - 64, pages.length * 112 * Math.max(1, fontScale)) },
+      ]}
+      accessibilityRole="tablist"
+      onLayout={(e) => setTrackWidth(e.nativeEvent.layout.width)}
+    >
+      {tabWidth > 0 && (
+        <ReanimatedAnimated.View style={[styles.highlight, { width: tabWidth }, highlightStyle]} />
+      )}
+      {pages.map((p, i) => (
+        <Pressable
+          key={p.key}
+          onPress={() => goToPage(i)}
+          style={withPressed(styles.tab)}
+          // The pill is 34dp tall; the slop brings the touch target to 44dp without changing the look.
+          hitSlop={{ top: 5, bottom: 5 }}
+          accessibilityRole="tab"
+          accessibilityState={{ selected: i === safeIndex }}
+          accessibilityLabel={p.alert ? `${p.label}, needs you` : p.label}
+        >
+          <Text style={[styles.tabText, i === safeIndex && styles.tabTextActive]} numberOfLines={1}>
+            {p.label}
+          </Text>
+          {p.count != null && p.count > 0 ? (
+            <View style={[styles.count, p.alert && styles.countAlert]}>
+              <Text style={[styles.countText, p.alert && styles.countTextAlert]}>{p.count}</Text>
+            </View>
+          ) : (
+            p.alert && <View style={styles.alertDot} />
+          )}
+        </Pressable>
+      ))}
+    </View>
+  );
+
   return (
     <View style={styles.wrap}>
       <View style={[styles.card, cardSurface.neutral]}>
-        <View
-          style={styles.track}
-          accessibilityRole="tablist"
-          onLayout={(e) => setTrackWidth(e.nativeEvent.layout.width)}
-        >
-          {tabWidth > 0 && (
-            <ReanimatedAnimated.View style={[styles.highlight, { width: tabWidth }, highlightStyle]} />
-          )}
-          {pages.map((p, i) => (
-            <Pressable
-              key={p.key}
-              onPress={() => goToPage(i)}
-              style={withPressed(styles.tab)}
-              // The pill is 34dp tall; the slop brings the touch target to 44dp without changing the look.
-              hitSlop={{ top: 5, bottom: 5 }}
-              accessibilityRole="tab"
-              accessibilityState={{ selected: i === safeIndex }}
-              accessibilityLabel={p.alert ? `${p.label}, needs you` : p.label}
-            >
-              <Text style={[styles.tabText, i === safeIndex && styles.tabTextActive]} numberOfLines={1}>
-                {p.label}
-              </Text>
-              {p.count != null && p.count > 0 ? (
-                <View style={[styles.count, p.alert && styles.countAlert]}>
-                  <Text style={[styles.countText, p.alert && styles.countTextAlert]}>{p.count}</Text>
-                </View>
-              ) : (
-                p.alert && <View style={styles.alertDot} />
-              )}
-            </Pressable>
-          ))}
-        </View>
+        {pages.length > 3 ? (
+          <ScrollView
+            ref={tabScrollRef}
+            horizontal
+            showsHorizontalScrollIndicator
+            accessibilityLabel="Home overview tabs"
+          >
+            {tabTrack}
+          </ScrollView>
+        ) : (
+          tabTrack
+        )}
         <ReanimatedAnimated.View
           testID="home-swipe-pages"
           style={heightStyle}

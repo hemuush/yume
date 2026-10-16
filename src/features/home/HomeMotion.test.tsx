@@ -371,3 +371,26 @@ it('keeps an already-selected overview page settled instead of restarting its sc
       .selected
   ).toBe(true);
 });
+
+it('keeps four overview tabs reachable and preserves selection when refunds disappear', () => {
+  mockReduce = true;
+  const four = [
+    ...pages,
+    { key: 'refunds', label: 'refunds', count: 2, content: <Text>refunds content</Text> },
+  ];
+  const r = render(<HomeSwipeCard pages={four} />);
+  measure(r);
+  expect(r.root.findAll((n) => n.props.accessibilityLabel === 'Home overview tabs').length).toBeGreaterThan(
+    0
+  );
+  press(r, 'goals');
+  expect(
+    r.root.find((n) => n.props.accessibilityLabel === 'goals' && n.props.onPress).props.accessibilityState
+      .selected
+  ).toBe(true);
+  act(() => r.update(<HomeSwipeCard pages={pages} />));
+  expect(
+    r.root.find((n) => n.props.accessibilityLabel === 'goals' && n.props.onPress).props.accessibilityState
+      .selected
+  ).toBe(true);
+});
