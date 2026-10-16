@@ -1,4 +1,4 @@
-import { Easing, FadeIn, FadeInDown, FadeOut, LinearTransition, ReduceMotion } from 'react-native-reanimated';
+import { Easing, FadeIn, FadeOut, LinearTransition, ReduceMotion } from 'react-native-reanimated';
 import { DURATIONS } from './motionTimings';
 
 /**
@@ -44,19 +44,6 @@ export function homeRowEntering(index: number, opening: boolean) {
   return opening
     ? FadeIn.delay(Math.min(index * MOTION.enterStep, MAX_LIST_STAGGER_MS))
         .duration(MOTION.enter)
-        .easing(MOTION.ease)
-        .reduceMotion(ReduceMotion.System)
-    : FadeIn.duration(MOTION.quick).easing(MOTION.ease).reduceMotion(ReduceMotion.System);
-}
-
-/**
- * How a Home section arrives: on the first open after the app starts, each rises into place a beat after the
- * one above it; later (a new month, a refresh) it is one quick fade, so the screen never replays its entrance.
- */
-export function homeSectionEntering(index: number, opening: boolean) {
-  return opening
-    ? FadeInDown.delay(index * DURATIONS.sectionStep)
-        .duration(DURATIONS.section)
         .easing(MOTION.ease)
         .reduceMotion(ReduceMotion.System)
     : FadeIn.duration(MOTION.quick).easing(MOTION.ease).reduceMotion(ReduceMotion.System);

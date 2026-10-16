@@ -48,7 +48,6 @@ import {
 } from '@/lib/period';
 import {
   homeRowEntering,
-  homeSectionEntering,
   hasPlayedHomeOpening,
   markHomeOpeningPlayed,
   ROW_LAYOUT,
@@ -167,7 +166,6 @@ export default function DashboardScreen() {
     return () => clearTimeout(t);
   }, [loaded, openingDone]);
   const rowEntering = (i: number) => homeRowEntering(i, !openingDone);
-  const sectionEntering = (i: number) => homeSectionEntering(i, !openingDone);
   // Hero slide direction on month change: +1/-1 for a same-granularity step, else 0 (crossfade). State, not
   // a ref (ThisMonthHero reads it in render); set with `setCursor` so one re-render carries both.
   const [heroDirection, setHeroDirection] = useState<-1 | 0 | 1>(0);
@@ -447,7 +445,6 @@ export default function DashboardScreen() {
   // Where this month is heading — the current month only, and only once
   // there's enough of it to go on (monthPace returns null before the 5th).
   const todayIso = toLocalIsoDate(new Date());
-  const currentMonth = loadedCursor.granularity === 'month' && loadedCursor.offset === 0;
   const paceMinor =
     paceInputs && comparison && loadedCursor.granularity === 'month' && loadedCursor.offset === 0
       ? monthPace({ spentMinor: comparison.current.expenseMinor, ...paceInputs, today: todayIso })
@@ -549,45 +546,40 @@ export default function DashboardScreen() {
 
         <View style={styles.heroGap}>
           {loaded ? (
-            <Animated.View entering={sectionEntering(0)}>
-              <ThisMonthHero
-                periodKey={`${loadedCursor.granularity}:${loadedCursor.offset}`}
-                direction={heroDirection}
-                renderPeriod={(key) => {
-                  const [kind, offset] = key.split(':');
-                  return (
-                    <MonthPill
-                      cursor={{ granularity: kind === 'year' ? 'year' : 'month', offset: Number(offset) }}
-                      onChange={handleCursorChange}
-                    />
-                  );
-                }}
-                onPeriodDisplayed={setDisplayedPeriodKey}
-                canStepForward={canStepForward(cursor)}
-                onStep={(dir) => handleCursorChange(stepPeriod(cursor, dir))}
-                incomeMinor={dispIncome}
-                spentMinor={dispExpense}
-                savingsMinor={savingsInPeriod}
-                surplusMinor={surplusInPeriod}
-                carryMinor={carryIn}
-                outstandingLoansMinor={roundedMinor(totalOutstandingLoans)}
-                dueMinor={
-                  loadedCursor.granularity === 'month' && loadedCursor.offset === 0
-                    ? roundedMinor(stillToPayMinor)
-                    : 0
-                }
-                // Today is always about today — only alongside the current period.
-                today={
-                  dailyGoalMinor != null && loadedCursor.offset === 0
-                    ? { spentMinor: todaySpendMinor, goalMinor: dailyGoalMinor }
-                    : null
-                }
-                pace={paceMinor != null ? { projectedMinor: paceMinor, byLabel: monthEndLabel } : null}
-                // The day rail only goes with the current month: it travels through the spending so far.
-                railDaily={currentMonth ? dailySpend : undefined}
-                railToday={currentMonth ? todayIso : undefined}
-              />
-            </Animated.View>
+            <ThisMonthHero
+              periodKey={`${loadedCursor.granularity}:${loadedCursor.offset}`}
+              direction={heroDirection}
+              renderPeriod={(key) => {
+                const [kind, offset] = key.split(':');
+                return (
+                  <MonthPill
+                    cursor={{ granularity: kind === 'year' ? 'year' : 'month', offset: Number(offset) }}
+                    onChange={handleCursorChange}
+                  />
+                );
+              }}
+              onPeriodDisplayed={setDisplayedPeriodKey}
+              canStepForward={canStepForward(cursor)}
+              onStep={(dir) => handleCursorChange(stepPeriod(cursor, dir))}
+              incomeMinor={dispIncome}
+              spentMinor={dispExpense}
+              savingsMinor={savingsInPeriod}
+              surplusMinor={surplusInPeriod}
+              carryMinor={carryIn}
+              outstandingLoansMinor={roundedMinor(totalOutstandingLoans)}
+              dueMinor={
+                loadedCursor.granularity === 'month' && loadedCursor.offset === 0
+                  ? roundedMinor(stillToPayMinor)
+                  : 0
+              }
+              // Today is always about today — only alongside the current period.
+              today={
+                dailyGoalMinor != null && loadedCursor.offset === 0
+                  ? { spentMinor: todaySpendMinor, goalMinor: dailyGoalMinor }
+                  : null
+              }
+              pace={paceMinor != null ? { projectedMinor: paceMinor, byLabel: monthEndLabel } : null}
+            />
           ) : (
             <ThisMonthHeroSkeleton />
           )}
@@ -605,54 +597,50 @@ export default function DashboardScreen() {
         )}
 
         {loaded && comparison && (
-          <Animated.View entering={sectionEntering(1)}>
-            <Section title="Where it went" onSeeAll={openSpendingReports}>
-              <WhereItWent
-                // A new period starts on its own biggest category, not whichever place was picked before.
-                key={`${loadedCursor.granularity}:${loadedCursor.offset}`}
-                breakdown={comparison.current.categoryBreakdown}
-                iconFor={(id) => categoriesById.get(id)?.icon}
-                spentMinor={dispExpense}
-                // The current period is only part-way through, so it isn't set against a whole one.
-                previousSpentMinor={
-                  loadedCursor.offset === 0 ? 0 : roundedMinor(comparison.previous.expenseMinor)
-                }
-                periodName={periodLabel(loadedCursor)}
-                previousName={periodShortLabel(stepPeriod(loadedCursor, -1))}
-                onOpenReports={openSpendingReports}
-                onOpenCategory={(id) =>
-                  router.push({
-                    pathname: '/category/[id]',
-                    params: { id, g: loadedCursor.granularity, o: String(loadedCursor.offset) },
-                  })
-                }
-                onAddExpense={() => router.push('/add-transaction?type=expense')}
-              />
-            </Section>
-          </Animated.View>
+          <Section title="Where it went" onSeeAll={openSpendingReports}>
+            <WhereItWent
+              // A new period starts on its own biggest category, not whichever place was picked before.
+              key={`${loadedCursor.granularity}:${loadedCursor.offset}`}
+              breakdown={comparison.current.categoryBreakdown}
+              iconFor={(id) => categoriesById.get(id)?.icon}
+              spentMinor={dispExpense}
+              // The current period is only part-way through, so it isn't set against a whole one.
+              previousSpentMinor={
+                loadedCursor.offset === 0 ? 0 : roundedMinor(comparison.previous.expenseMinor)
+              }
+              periodName={periodLabel(loadedCursor)}
+              previousName={periodShortLabel(stepPeriod(loadedCursor, -1))}
+              onOpenReports={openSpendingReports}
+              onOpenCategory={(id) =>
+                router.push({
+                  pathname: '/category/[id]',
+                  params: { id, g: loadedCursor.granularity, o: String(loadedCursor.offset) },
+                })
+              }
+              onAddExpense={() => router.push('/add-transaction?type=expense')}
+            />
+          </Section>
         )}
 
         {loaded && (
           <>
             {/* Upcoming | Budgets | Goals, the old Home's tabbed card. */}
-            <Animated.View entering={sectionEntering(2)}>
-              <HomeGlance
-                upcoming={upcoming}
-                budgets={budgets}
-                goals={goals}
-                refunds={refunds}
-                refundError={refundError}
-                openingRefund={openingRefund}
-                onOpenRefund={(id) => void openRefund(id)}
-                onRetryRefunds={() => void load(cursorRef.current)}
-                budgetAlert={needsYou.some((i) => i.action === 'budgets')}
-                rowEntering={rowEntering}
-                onSeeMoreUpcoming={() =>
-                  router.navigate({ pathname: '/plan', params: { section: 'coming-up' } })
-                }
-              />
-            </Animated.View>
-            <Animated.View entering={sectionEntering(3)} style={styles.bento}>
+            <HomeGlance
+              upcoming={upcoming}
+              budgets={budgets}
+              goals={goals}
+              refunds={refunds}
+              refundError={refundError}
+              openingRefund={openingRefund}
+              onOpenRefund={(id) => void openRefund(id)}
+              onRetryRefunds={() => void load(cursorRef.current)}
+              budgetAlert={needsYou.some((i) => i.action === 'budgets')}
+              rowEntering={rowEntering}
+              onSeeMoreUpcoming={() =>
+                router.navigate({ pathname: '/plan', params: { section: 'coming-up' } })
+              }
+            />
+            <View style={styles.bento}>
               <HomeAccounts
                 accounts={accounts}
                 currency={currency}
@@ -660,7 +648,7 @@ export default function DashboardScreen() {
                 onOpenAccount={setSummaryAccount}
                 onAddAccount={() => setAddAccountVisible(true)}
               />
-            </Animated.View>
+            </View>
           </>
         )}
 
@@ -669,54 +657,52 @@ export default function DashboardScreen() {
           dailySpend.length > 0 &&
           loadedCursor.granularity === 'month' &&
           loadedCursor.offset === 0 && (
-            <Animated.View entering={sectionEntering(4)} style={styles.bars}>
+            <View style={styles.bars}>
               <SpendBars daily={dailySpend} today={todayIso} />
-            </Animated.View>
+            </View>
           )}
 
         {loaded && (
-          <Animated.View entering={sectionEntering(5)}>
-            <Section title="Recent activity" onSeeAll={() => router.push('/transactions')}>
-              {recent.length === 0 ? (
-                <EmptyState
-                  title="Nothing logged in this period"
-                  subtitle="Use the month pill above to check another period."
-                />
-              ) : (
-                <Glass radius={24} style={styles.recent}>
-                  {recent.map((tx, i, rows) => {
-                    // Rows come newest first; a new day gets its own small heading ("Today", "Yesterday", "1 Oct").
-                    const newDay = i === 0 || rows[i - 1].date !== tx.date;
-                    return (
-                      <Animated.View
-                        key={tx.id}
-                        entering={rowEntering(i)}
-                        layout={ROW_LAYOUT}
-                        exiting={ROW_EXIT}
-                      >
-                        {newDay && (
-                          <Text style={[styles.dayHead, i > 0 && styles.dayHeadDivider]}>
-                            {dayLabel(tx.date)}
-                          </Text>
-                        )}
-                        <RecentTransactionRow
-                          currency={accountsById.get(tx.accountId)?.currency}
-                          tx={tx}
-                          category={categoryFor(tx.categoryId) ?? undefined}
-                          parentName={parentNameFor(tx.categoryId)}
-                          accountName={accountName(tx.accountId)}
-                          toAccountName={accountName(tx.toAccountId)}
-                          savingsTransfer={isSavingsTransfer(tx)}
-                          divider={!newDay}
-                          showDay={false}
-                        />
-                      </Animated.View>
-                    );
-                  })}
-                </Glass>
-              )}
-            </Section>
-          </Animated.View>
+          <Section title="Recent activity" onSeeAll={() => router.push('/transactions')}>
+            {recent.length === 0 ? (
+              <EmptyState
+                title="Nothing logged in this period"
+                subtitle="Use the month pill above to check another period."
+              />
+            ) : (
+              <Glass radius={24} style={styles.recent}>
+                {recent.map((tx, i, rows) => {
+                  // Rows come newest first; a new day gets its own small heading ("Today", "Yesterday", "1 Oct").
+                  const newDay = i === 0 || rows[i - 1].date !== tx.date;
+                  return (
+                    <Animated.View
+                      key={tx.id}
+                      entering={rowEntering(i)}
+                      layout={ROW_LAYOUT}
+                      exiting={ROW_EXIT}
+                    >
+                      {newDay && (
+                        <Text style={[styles.dayHead, i > 0 && styles.dayHeadDivider]}>
+                          {dayLabel(tx.date)}
+                        </Text>
+                      )}
+                      <RecentTransactionRow
+                        currency={accountsById.get(tx.accountId)?.currency}
+                        tx={tx}
+                        category={categoryFor(tx.categoryId) ?? undefined}
+                        parentName={parentNameFor(tx.categoryId)}
+                        accountName={accountName(tx.accountId)}
+                        toAccountName={accountName(tx.toAccountId)}
+                        savingsTransfer={isSavingsTransfer(tx)}
+                        divider={!newDay}
+                        showDay={false}
+                      />
+                    </Animated.View>
+                  );
+                })}
+              </Glass>
+            )}
+          </Section>
         )}
       </Animated.ScrollView>
 

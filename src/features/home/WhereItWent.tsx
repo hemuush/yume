@@ -4,7 +4,7 @@ import Animated, {
   cancelAnimation,
   useSharedValue,
   useAnimatedStyle,
-  withSpring,
+  withTiming,
 } from 'react-native-reanimated';
 import Feather from '@expo/vector-icons/Feather';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
@@ -17,6 +17,7 @@ import { theme } from '@/constants/theme';
 import { formatMoney } from '@/lib/money';
 import { haptics } from '@/lib/haptics';
 import { withPressed } from '@/lib/pressed';
+import { timing } from '@/lib/animation';
 import { useReduceMotion } from '@/lib/useReduceMotion';
 import { useAccent } from '@/theme/AccentContext';
 import { homeInk } from './homeInk';
@@ -28,9 +29,6 @@ const POSITIONS = [
   [54, 144],
   [38, 192],
 ] as const;
-
-/** The selection pill overshoots a touch and settles: it lands with a little life, not a slide. */
-const PILL_SPRING = { damping: 13, stiffness: 190, mass: 0.9 };
 
 /** Fixed curved targets; only the selection pill moves, while details update immediately. */
 export function WhereItWent({
@@ -72,8 +70,8 @@ export function WhereItWent({
   const x = useSharedValue(POSITIONS[index][0] - 38);
   const y = useSharedValue(POSITIONS[index][1]);
   useEffect(() => {
-    x.value = reduce ? POSITIONS[index][0] - 38 : withSpring(POSITIONS[index][0] - 38, PILL_SPRING);
-    y.value = reduce ? POSITIONS[index][1] : withSpring(POSITIONS[index][1], PILL_SPRING);
+    x.value = reduce ? POSITIONS[index][0] - 38 : withTiming(POSITIONS[index][0] - 38, timing(200));
+    y.value = reduce ? POSITIONS[index][1] : withTiming(POSITIONS[index][1], timing(200));
     return () => {
       cancelAnimation(x);
       cancelAnimation(y);
