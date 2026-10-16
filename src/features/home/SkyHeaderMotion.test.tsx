@@ -71,28 +71,35 @@ it('keeps invisible period controls out of touch/focus and avoids compact-chip f
   act(() => root.unmount());
 });
 
-it('settles the native collapsing header without animation under reduced motion', () => {
-  mockReduce = true;
-  mockScroll.mockClear();
-  function Harness() {
-    const header = useCollapsingHeader();
-    header.collapse.distance.value = 100;
-    return null;
+it.each([false, true])(
+  'preserves the native scroll offset without a release snap (reduced motion: %s)',
+  (reduce) => {
+    mockReduce = reduce;
+    mockScroll.mockClear();
+    let header!: ReturnType<typeof useCollapsingHeader>;
+    function Harness() {
+      header = useCollapsingHeader();
+      header.collapse.distance.value = 100;
+      return null;
+    }
+    let root!: ReactTestRenderer;
+    act(() => {
+      root = create(<Harness />);
+    });
+    try {
+      act(() => mockHandlers.onScroll({ contentOffset: { y: 70 } }));
+      expect(header.collapse.scrollY.value).toBe(70);
+      expect(mockHandlers.onEndDrag).toBeUndefined();
+      expect(mockHandlers.onMomentumEnd).toBeUndefined();
+      act(() => mockHandlers.onScroll({ contentOffset: { y: 30 } }));
+      expect(header.collapse.scrollY.value).toBe(30);
+      expect(mockScroll).not.toHaveBeenCalled();
+    } finally {
+      act(() => root.unmount());
+      mockReduce = false;
+    }
   }
-  let root!: ReactTestRenderer;
-  act(() => {
-    root = create(<Harness />);
-  });
-  act(() => mockHandlers.onEndDrag({ contentOffset: { y: 70 }, velocity: { y: 0 } }));
-  expect(mockScroll).toHaveBeenLastCalledWith(expect.anything(), 0, 100, false);
-  act(() => mockHandlers.onMomentumEnd({ contentOffset: { y: 30 } }));
-  expect(mockScroll).toHaveBeenLastCalledWith(expect.anything(), 0, 0, false);
-  mockScroll.mockClear();
-  act(() => mockHandlers.onEndDrag({ contentOffset: { y: 70 } }));
-  expect(mockScroll).not.toHaveBeenCalled();
-  act(() => root.unmount());
-  mockReduce = false;
-});
+);
 
 it('keeps a larger title row visible after font scaling changes its measured height', () => {
   const onMeasure = jest.fn();
