@@ -74,5 +74,5 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
   },
   neutral: { backgroundColor: theme.colors.inkWash },
-  text: { fontFamily: theme.font.monoBold, fontSize: 11 },
+  text: { fontFamily: theme.font.bodyBold, fontSize: 11 },
 });

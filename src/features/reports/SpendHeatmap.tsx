@@ -113,7 +113,7 @@ const styles = StyleSheet.create({
   weekday: {
     marginBottom: 6,
     textAlign: 'center',
-    fontFamily: theme.font.mono,
+    fontFamily: theme.font.body,
     fontSize: 11,
     color: theme.colors.textMuted,
   },
@@ -130,6 +130,6 @@ const styles = StyleSheet.create({
     bottom: 5,
   },
   cellSelected: { borderWidth: 2.5, borderColor: theme.colors.ink },
-  cellLabel: { fontFamily: theme.font.mono, fontSize: 12 },
-  cellLabelTop: { fontFamily: theme.font.monoBold },
+  cellLabel: { fontFamily: theme.font.body, fontSize: 12 },
+  cellLabelTop: { fontFamily: theme.font.bodyBold },
 });

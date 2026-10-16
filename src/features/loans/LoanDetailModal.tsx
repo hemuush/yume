@@ -68,6 +68,8 @@ export function LoanDetailModal({
   });
   const [liveLoan, setLiveLoan] = useState<Loan>(loan);
   const [schedule, setSchedule] = useState<LoanPayment[]>([]);
+  const [loadedLoanId, setLoadedLoanId] = useState<string | null>(null);
+  const detailsLoaded = loadedLoanId === loan.id;
   const [rateHistory, setRateHistory] = useState<LoanRateChange[]>([]);
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -105,6 +107,7 @@ export function LoanDetailModal({
       if (ticket !== loadTicket.current) return;
       if (freshLoan) setLiveLoan(freshLoan);
       setSchedule(sched);
+      setLoadedLoanId(loan.id);
       setRateHistory(history);
       // EMIs and prepayments are spending or income, which a savings account can't take.
       setAccounts(defaultCurrencyAccountsOf(spendableAccountsOf(accs)));
@@ -310,14 +313,26 @@ export function LoanDetailModal({
                   stats={[
                     {
                       label: 'Next EMI',
-                      value: nextInstallment ? formatMoney(nextInstallment.emiAmountMinor) : 'None left',
+                      value: !detailsLoaded
+                        ? loadError
+                          ? 'Unavailable'
+                          : 'Loading…'
+                        : nextInstallment
+                          ? formatMoney(nextInstallment.emiAmountMinor)
+                          : 'None left',
                       sub: nextInstallment
                         ? `${weekdayDayMonth(nextInstallment.dueDate)}${nextOverdue ? ' · overdue' : ''}`
                         : undefined,
                     },
                     {
                       label: 'EMIs paid',
-                      value: schedule.length > 0 ? `${paidCount} of ${schedule.length}` : '–',
+                      value: !detailsLoaded
+                        ? loadError
+                          ? 'Unavailable'
+                          : 'Loading…'
+                        : schedule.length > 0
+                          ? `${paidCount} of ${schedule.length}`
+                          : '–',
                     },
                     {
                       label: liveLoan.direction === 'borrowed' ? 'Borrowed' : 'Lent',
@@ -326,7 +341,11 @@ export function LoanDetailModal({
                     },
                     {
                       label: liveLoan.direction === 'borrowed' ? 'Interest to pay' : 'Interest to come',
-                      value: formatMoney(payoff.interestLeftMinor),
+                      value: !detailsLoaded
+                        ? loadError
+                          ? 'Unavailable'
+                          : 'Loading…'
+                        : formatMoney(payoff.interestLeftMinor),
                     },
                   ]}
                 />
@@ -382,7 +401,13 @@ export function LoanDetailModal({
                     round
                     icon="bank"
                     label="EMI account"
-                    sub={defaultAccount ? defaultAccount.name : 'Add an account first'}
+                    sub={
+                      !detailsLoaded
+                        ? 'Loading account…'
+                        : defaultAccount
+                          ? defaultAccount.name
+                          : 'Add an account first'
+                    }
                     onPress={() => setAccountModalVisible(true)}
                   />
                   {liveLoan.direction === 'borrowed' && (
@@ -406,12 +431,12 @@ export function LoanDetailModal({
                   )}
                 </View>
 
-                {!defaultAccount && (
+                {detailsLoaded && !defaultAccount && (
                   <Text style={styles.hintText}>
                     Add an account first to record payments against this loan.
                   </Text>
                 )}
-                {!!defaultAccount && !emiCategory && (
+                {detailsLoaded && !!defaultAccount && !emiCategory && (
                   <Text style={styles.hintText}>
                     The built-in "{emiCategoryName}" category is missing — payments need it to record against.
                   </Text>
@@ -425,7 +450,13 @@ export function LoanDetailModal({
               </>
             ) : (
               <>
-                <LoanSchedule schedule={schedule} />
+                {detailsLoaded ? (
+                  <LoanSchedule schedule={schedule} />
+                ) : (
+                  <Text style={styles.hintText}>
+                    {loadError ? 'Schedule unavailable. Try again.' : 'Loading schedule…'}
+                  </Text>
+                )}
 
                 {rateHistory.length > 0 && (
                   <>

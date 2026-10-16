@@ -172,9 +172,14 @@ export const styles = StyleSheet.create({
   /* ---------- Goals ---------- */
   goals: { gap: 10, paddingHorizontal: SCREEN.gutter },
   goal: { width: 136, minHeight: 132, padding: 12, overflow: 'hidden' },
-  goalReservoir: { position: 'absolute', top: 52, left: 0, right: 0, bottom: 0 },
-  goalFill: { position: 'absolute', left: 0, right: 0, bottom: 0, opacity: 0.5 },
-  goalFillEdge: { position: 'absolute', left: 0, right: 0, top: 0, height: 2, opacity: 0.8 },
+  goalTrack: {
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: theme.colors.inkWash,
+    marginTop: 8,
+    overflow: 'hidden',
+  },
+  goalProgress: { height: '100%', borderRadius: 3 },
   goalPct: {
     fontFamily: theme.font.bodyLight,
     fontSize: 30,

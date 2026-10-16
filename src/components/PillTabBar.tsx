@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { View, Pressable, StyleSheet, Keyboard, Animated as RNAnimated } from 'react-native';
 import Animated, { LinearTransition } from 'react-native-reanimated';
 import { MOTION } from '@/lib/animation';
+import { LinearGradient } from 'expo-linear-gradient';
+import { hexToRgba } from '@/lib/color';
 import Feather from '@expo/vector-icons/Feather';
 import type { Tabs } from 'expo-router';
 import { Text } from '@/components/Text';
@@ -113,6 +115,15 @@ export function PillTabBar({
 
   return (
     <View pointerEvents="box-none" style={[styles.dock, { bottom: insets.bottom + PILL_BAR.bottomGap }]}>
+      <LinearGradient
+        pointerEvents="none"
+        colors={[hexToRgba(theme.colors.background, 0), hexToRgba(theme.colors.background, 0.94)]}
+        locations={[0, 0.65]}
+        style={[
+          styles.fade,
+          { height: height + insets.bottom + 38, bottom: -insets.bottom - PILL_BAR.bottomGap },
+        ]}
+      />
       <View style={[styles.pill, { height, borderRadius: height / 2 }]} accessibilityRole="tablist">
         {state.routes.map((route, index) => {
           const Icon = ICONS[route.name];
@@ -171,6 +182,7 @@ export function PillTabBar({
 
 const styles = StyleSheet.create({
   dock: { position: 'absolute', left: 16, right: 16, flexDirection: 'row', alignItems: 'center', gap: 10 },
+  fade: { position: 'absolute', left: -16, right: -16 },
   pill: {
     flex: 1,
     flexDirection: 'row',

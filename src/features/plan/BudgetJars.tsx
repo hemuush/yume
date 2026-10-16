@@ -22,7 +22,7 @@ const ROOM = JAR_HEIGHT - 9;
 /**
  * This month's budgets as glass jars that fill as you spend: the category's own colour, amber near the
  * limit, coral and overflowing (with what it's over by) past it. The line above names how many are over and
- * the worst one. Every jar opens Budgets; empty, it's a prompt to set the first limit.
+ * the worst one. Individual jars open their overview; the summary opens Budgets. Empty prompts setup.
  */
 export function BudgetJars({
   summary,

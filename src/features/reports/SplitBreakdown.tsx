@@ -69,7 +69,7 @@ const styles = StyleSheet.create({
   visits: { fontFamily: theme.font.body, fontSize: 11.5, color: theme.colors.textMuted, marginTop: 1 },
   share: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
   amount: {
-    fontFamily: theme.font.monoBold,
+    fontFamily: theme.font.bodyBold,
     fontSize: 12.5,
     color: theme.colors.textPrimary,
     minWidth: 62,

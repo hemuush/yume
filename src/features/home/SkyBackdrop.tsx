@@ -56,19 +56,20 @@ export function SkyBackdrop({
         <ReanimatedAnimated.View
           pointerEvents="none"
           style={[styles.bar, { height: collapsedHeight, backgroundColor: barColor }, barStyle]}
-        />
+        >
+          <LinearGradient colors={[barColor, hexToRgba(barColor, 0)]} style={styles.edge} />
+        </ReanimatedAnimated.View>
       )}
     </>
   );
 }
 
 const styles = StyleSheet.create({
+  edge: { position: 'absolute', top: '100%', left: 0, right: 0, height: 16 },
   bar: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: theme.colors.borderSoft,
   },
 });

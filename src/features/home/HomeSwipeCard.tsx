@@ -105,7 +105,8 @@ export function HomeSwipeCard({ pages }: { pages: SwipePage[] }) {
   }
 
   const goToPage = (index: number) => {
-    if (index !== activeIndex) haptics.tap();
+    if (index === activeIndex) return;
+    haptics.tap();
     const key = pages[index].key;
     setSelectedKey(key);
     setMoving(!reduce && cardWidth > 0);

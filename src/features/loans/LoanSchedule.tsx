@@ -136,7 +136,7 @@ const styles = StyleSheet.create({
   },
   pressed: { opacity: 0.6 },
   year: { fontFamily: theme.font.roundedBold, fontSize: 15, color: theme.colors.textPrimary },
-  yearSub: { fontFamily: theme.font.mono, fontSize: 11, color: theme.colors.textMuted },
+  yearSub: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textMuted },
   row: { gap: 12 },
   content: { flex: 1, minWidth: 0 },
   payment: { flexDirection: 'row', alignItems: 'center', gap: 8 },

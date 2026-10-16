@@ -353,3 +353,21 @@ it('inspects chart bars and resets to the current period when switching range', 
   act(() => r.update(<SpendBars daily={[]} today="2026-10-11" />));
   expect(text(r)).toContain('11 Oct · ₹0');
 });
+
+it('keeps an already-selected overview page settled instead of restarting its scroll', () => {
+  const r = render(<HomeSwipeCard pages={pages} />);
+  measure(r);
+  const scroll = jest.spyOn(r.root.findByType(ScrollView).instance, 'scrollTo');
+  scroll.mockClear();
+  press(r, 'upcoming');
+  expect(scroll).not.toHaveBeenCalled();
+  press(r, 'budgets');
+  expect(scroll).toHaveBeenCalledTimes(1);
+  press(r, 'budgets');
+  expect(scroll).toHaveBeenCalledTimes(1);
+  act(() => r.root.findByType(ScrollView).props.onMomentumScrollEnd(offset(300)));
+  expect(
+    r.root.find((n) => n.props.accessibilityLabel === 'budgets' && n.props.onPress).props.accessibilityState
+      .selected
+  ).toBe(true);
+});

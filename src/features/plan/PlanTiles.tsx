@@ -4,10 +4,11 @@ import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Text } from '@/components/Text';
 import { Glass } from '@/components/Glass';
 import { cardSurface } from '@/components/CardSurface';
-import { theme } from '@/constants/theme';
+import { theme, FLAT_PALETTE } from '@/constants/theme';
+import { stableIndexFromId } from '@/lib/color';
+import { personInitials } from '@/features/people/people.helpers';
 import { formatMoney } from '@/lib/money';
 import { usePressScale } from '@/lib/usePressScale';
-import { hueFor } from '@/lib/hueFor';
 import { compactMoney } from '@/lib/compactMoney';
 import { HabitState, PeopleState } from './planOverview';
 import { styles } from './plan.styles';
@@ -29,29 +30,34 @@ export function PlanTile({
   onPress,
   wide,
   children,
+  footer,
 }: {
   label: string;
   onPress: () => void;
   wide?: boolean;
   children: React.ReactNode;
+  footer?: React.ReactNode;
 }) {
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.97);
   return (
-    <AnimatedPressable
-      onPress={onPress}
-      onPressIn={onPressIn}
-      onPressOut={onPressOut}
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      style={[{ flex: wide ? 1.25 : 1, minWidth: 0 }, animatedStyle]}
-    >
+    <View style={{ flex: wide ? 1.25 : 1, minWidth: 0 }}>
       <Glass radius={22} style={[styles.tile, cardSurface.neutral]}>
-        <View style={styles.go}>
-          <Feather name="arrow-up-right" size={15} color={theme.colors.textMuted} />
-        </View>
-        {children}
+        <AnimatedPressable
+          onPress={onPress}
+          onPressIn={onPressIn}
+          onPressOut={onPressOut}
+          accessibilityRole="button"
+          accessibilityLabel={label}
+          style={[{ gap: 6, flexGrow: 1 }, animatedStyle]}
+        >
+          <View style={[styles.go, { top: 0, right: 0 }]}>
+            <Feather name="chevron-right" size={15} color={theme.colors.textMuted} />
+          </View>
+          {children}
+        </AnimatedPressable>
+        {footer}
       </Glass>
-    </AnimatedPressable>
+    </View>
   );
 }
 
@@ -70,11 +76,13 @@ export function PeopleTile({
   state,
   people,
   onOpen,
+  onPerson,
 }: {
   state: PeopleState;
   /** The people with the biggest balances either way, biggest first. */
   people: PlanPerson[];
   onOpen: () => void;
+  onPerson?: (id: string) => void;
 }) {
   const count = (n: number) => `${n} ${n === 1 ? 'person' : 'people'}`;
   let value: React.ReactNode;
@@ -106,7 +114,47 @@ export function PeopleTile({
   const shown =
     state.kind === 'balances' ? people.filter((p) => p.balanceMinor !== 0).slice(0, PEOPLE_SHOWN) : [];
   return (
-    <PlanTile wide label={`Friends & Family, ${sub}. Open Friends & Family`} onPress={onOpen}>
+    <PlanTile
+      wide
+      label={`Friends & Family, ${sub}. Open Friends & Family`}
+      onPress={onOpen}
+      footer={
+        shown.length > 0 && (
+          <View
+            style={[styles.people, { flexWrap: 'wrap', overflow: 'visible' }]}
+            accessibilityElementsHidden={!onPerson}
+            importantForAccessibility={onPerson ? 'auto' : 'no-hide-descendants'}
+          >
+            {shown.map((p) => (
+              <Pressable
+                key={p.id}
+                style={[styles.person, { minHeight: 44, minWidth: 44 }]}
+                disabled={!onPerson}
+                onPress={() => onPerson?.(p.id)}
+                accessibilityRole="button"
+                accessibilityLabel={`Open ${p.name} details`}
+              >
+                <View
+                  style={[
+                    styles.avatar,
+                    { backgroundColor: FLAT_PALETTE[stableIndexFromId(p.id, FLAT_PALETTE.length)] },
+                  ]}
+                >
+                  <Text style={styles.avatarText}>{personInitials(p.name)}</Text>
+                </View>
+                <Text style={styles.personName} numberOfLines={1}>
+                  {p.name.split(' ')[0]}
+                </Text>
+                <Text style={[styles.personAmt, p.balanceMinor > 0 ? styles.income : styles.over]}>
+                  {p.balanceMinor > 0 ? '+' : '−'}
+                  {compactMoney(Math.abs(p.balanceMinor))}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+        )
+      }
+    >
       <Kicker icon="users" inTile>
         Friends
       </Kicker>
@@ -114,28 +162,6 @@ export function PeopleTile({
       <Text style={styles.tileSub} numberOfLines={2}>
         {sub}
       </Text>
-      {shown.length > 0 && (
-        <View
-          style={styles.people}
-          accessibilityElementsHidden
-          importantForAccessibility="no-hide-descendants"
-        >
-          {shown.map((p) => (
-            <View key={p.id} style={styles.person}>
-              <View style={[styles.avatar, { backgroundColor: hueFor(p.id) }]}>
-                <Text style={styles.avatarText}>{p.name.trim().charAt(0).toUpperCase() || '?'}</Text>
-              </View>
-              <Text style={styles.personName} numberOfLines={1}>
-                {p.name.split(' ')[0]}
-              </Text>
-              <Text style={[styles.personAmt, p.balanceMinor > 0 ? styles.income : styles.over]}>
-                {p.balanceMinor > 0 ? '+' : '−'}
-                {compactMoney(Math.abs(p.balanceMinor))}
-              </Text>
-            </View>
-          ))}
-        </View>
-      )}
     </PlanTile>
   );
 }

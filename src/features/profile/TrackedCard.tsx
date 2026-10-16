@@ -150,7 +150,7 @@ const styles = StyleSheet.create({
   head: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 14, paddingVertical: 12 },
   headEmbedded: { paddingHorizontal: 0, paddingBottom: 0 },
   label: EYEBROW,
-  value: { fontFamily: theme.font.monoBold, fontSize: 16, color: theme.colors.textPrimary, flexShrink: 1 },
+  value: { fontFamily: theme.font.bodyBold, fontSize: 16, color: theme.colors.textPrimary, flexShrink: 1 },
   // The sum, on a brighter pane: each part, then a rule and the total.
   sumLines: {
     marginTop: 10,
@@ -164,7 +164,7 @@ const styles = StyleSheet.create({
   sumLabel: { flex: 1, fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textSecondary },
   sumValue: {
     fontVariant: ['tabular-nums'],
-    fontFamily: theme.font.monoBold,
+    fontFamily: theme.font.bodyBold,
     fontSize: 13,
     color: theme.colors.textPrimary,
   },

@@ -123,7 +123,7 @@ function RingSvg({
         x={c}
         y={c + size * 0.09}
         textAnchor="middle"
-        fontFamily={theme.font.mono}
+        fontFamily={theme.font.body}
         fontSize={size * 0.24}
         fill={theme.colors.ink}
       >

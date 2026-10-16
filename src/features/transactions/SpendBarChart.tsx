@@ -241,7 +241,7 @@ const styles = StyleSheet.create({
   },
   labelAway: { opacity: 0.45 },
   label: {
-    fontFamily: theme.font.mono,
+    fontFamily: theme.font.body,
     fontSize: 9,
     lineHeight: 13,
     minHeight: 13,
@@ -256,10 +256,10 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     backgroundColor: theme.colors.ink,
   },
-  todayText: { fontFamily: theme.font.monoBold, fontSize: 9, lineHeight: 13, color: theme.colors.surface },
+  todayText: { fontFamily: theme.font.bodyBold, fontSize: 9, lineHeight: 13, color: theme.colors.surface },
   bubbleWrap: { position: 'absolute', left: -24, right: -24, alignItems: 'center' },
   bubble: { paddingHorizontal: 7, paddingVertical: 3, borderRadius: 8, backgroundColor: theme.colors.ink },
-  bubbleText: { fontFamily: theme.font.monoBold, fontSize: 10.5, color: theme.colors.surface },
+  bubbleText: { fontFamily: theme.font.bodyBold, fontSize: 10.5, color: theme.colors.surface },
   bubbleNub: {
     position: 'absolute',
     bottom: -3,

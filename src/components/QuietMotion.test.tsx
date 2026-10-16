@@ -3,7 +3,7 @@
  * still reports taps, and a Garden plant that grows a stage (or first loads) never throws.
  */
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
-import { Animated, View } from 'react-native';
+import { Animated, View, Text } from 'react-native';
 import { JustAddedGlow } from './JustAddedGlow';
 import { SegmentedControl } from './SegmentedControl';
 import { GardenPlant } from '@/features/garden/GardenPlant';
@@ -116,4 +116,38 @@ describe('GardenPlant', () => {
     act(() => jest.runOnlyPendingTimers());
     act(() => r.unmount());
   });
+});
+
+it('does not restart a form or filter when its selected segment is tapped', () => {
+  const onChange = jest.fn();
+  let tree!: ReactTestRenderer;
+  act(() => {
+    tree = create(
+      <SegmentedControl
+        options={[
+          { label: 'You', value: 'you' },
+          { label: 'Settings', value: 'settings' },
+        ]}
+        value="you"
+        onChange={onChange}
+      />
+    );
+  });
+  const press = (label: string) =>
+    act(() =>
+      tree.root
+        .find(
+          (n) =>
+            n.props.onPress &&
+            n.props.accessibilityRole === 'button' &&
+            n.findAllByType(Text).some((t) => t.props.children === label)
+        )
+        .props.onPress()
+    );
+  press('You');
+  expect(onChange).not.toHaveBeenCalled();
+  press('Settings');
+  expect(onChange).toHaveBeenCalledTimes(1);
+  expect(onChange).toHaveBeenCalledWith('settings');
+  act(() => tree.unmount());
 });

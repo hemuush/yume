@@ -107,7 +107,7 @@ it('keeps the balance on a failed fetch and recovers through Retry', async () =>
 it('uses a history-only footer and preserves the settlement controls on returning', async () => {
   const tree = await render();
   act(() => tree.root.findByType(SheetTabs).props.onChange('history'));
-  expect(tree.root.findAllByType(PrimaryButton).map((n) => n.props.title)).toEqual(['Done']);
+  expect(tree.root.findAllByType(PrimaryButton).map((n) => n.props.title)).toEqual(['Settle up']);
   act(() => tree.root.findByType(SheetTabs).props.onChange('settle'));
   expect(button(tree, 'They owe more')).toBeDefined();
   expect(button(tree, 'They repaid')).toBeDefined();
@@ -137,4 +137,19 @@ it('records only once when settlement is tapped twice before rendering', async (
     finish();
     await first;
   });
+});
+
+it('can open directly on history, with settlement available as an explicit next action', async () => {
+  let tree!: ReactTestRenderer;
+  await act(async () => {
+    tree = create(
+      <PersonDetailModal person={person} initialTab="history" onClose={jest.fn()} onChanged={jest.fn()} />
+    );
+  });
+  trees.push(tree);
+  expect(tree.root.findByType(SheetTabs).props.value).toBe('history');
+  expect(button(tree, 'They repaid')).toBeUndefined();
+  act(() => button(tree, 'Settle up').props.onPress());
+  expect(tree.root.findByType(SheetTabs).props.value).toBe('settle');
+  expect(button(tree, 'They repaid')).toBeDefined();
 });

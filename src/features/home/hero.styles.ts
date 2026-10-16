@@ -82,7 +82,12 @@ export const styles = StyleSheet.create({
     fontSize: 11.5,
     color: theme.colors.textSecondary,
   },
-  statValue: { fontFamily: theme.font.monoBold, fontSize: 14, color: theme.colors.textPrimary },
+  statValue: {
+    fontVariant: ['tabular-nums'],
+    fontFamily: theme.font.bodyBold,
+    fontSize: 14,
+    color: theme.colors.textPrimary,
+  },
   pace: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   paceText: { flex: 1, fontFamily: theme.font.body, fontSize: 12.5, color: theme.colors.textMuted },
 
@@ -114,6 +119,11 @@ export const styles = StyleSheet.create({
     color: theme.colors.textSecondary,
   },
   workingLabelTotal: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
-  workingValue: { fontFamily: theme.font.monoBold, fontSize: 14, color: theme.colors.textPrimary },
+  workingValue: {
+    fontVariant: ['tabular-nums'],
+    fontFamily: theme.font.bodyBold,
+    fontSize: 14,
+    color: theme.colors.textPrimary,
+  },
   workingValueDue: { color: theme.colors.dueInk },
 });

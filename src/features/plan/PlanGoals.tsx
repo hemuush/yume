@@ -23,9 +23,8 @@ import { styles } from './plan.styles';
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 /**
- * Saving toward: each goal as a card that fills from the bottom to how far along it is, in its own colour
- * ("a goal that fills up by itself"), then a dashed card to start another. With savings amounts hidden the
- * fill and the saved figure are withheld; only the target shows. No goals yet: one card saying how to start.
+ * Saving toward: readable goal summaries with a separate progress track, then a card to start another.
+ * With savings amounts hidden the progress and saved figure are withheld; only the target shows. No goals yet: one card saying how to start.
  */
 export function GoalsStrip({
   goals,
@@ -131,13 +130,6 @@ function GoalCard({
       }
     >
       <Glass radius={24} style={[styles.goal, cardSurface.savings, { width, minHeight: height }]}>
-        {!masked && pct > 0 && (
-          <View style={styles.goalReservoir} pointerEvents="none">
-            <View style={[styles.goalFill, { height: `${pct}%`, backgroundColor: hue }]}>
-              <View style={[styles.goalFillEdge, { backgroundColor: hue }]} />
-            </View>
-          </View>
-        )}
         {masked ? (
           <Feather name="eye-off" size={20} color={theme.colors.textMuted} />
         ) : done ? (
@@ -151,12 +143,13 @@ function GoalCard({
         <Text style={styles.goalName} numberOfLines={2}>
           {goal.name}
         </Text>
-        <Text style={styles.goalAmt} numberOfLines={1} adjustsFontSizeToFit>
-          {formatMaskableMoney(goal.currentAmountMinor, { masked })} saved
-        </Text>
-        <Text style={[styles.goalAmt, styles.goalOf]} numberOfLines={1} adjustsFontSizeToFit>
-          of {formatMoney(goal.targetAmountMinor)}
-        </Text>
+        {!masked && (
+          <View style={styles.goalTrack} pointerEvents="none">
+            <View style={[styles.goalProgress, { width: `${pct}%`, backgroundColor: hue }]} />
+          </View>
+        )}
+        <Text style={styles.goalAmt}>{formatMaskableMoney(goal.currentAmountMinor, { masked })} saved</Text>
+        <Text style={[styles.goalAmt, styles.goalOf]}>of {formatMoney(goal.targetAmountMinor)}</Text>
       </Glass>
     </AnimatedPressable>
   );

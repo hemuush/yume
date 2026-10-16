@@ -13,17 +13,19 @@ import { styles } from './plan.styles';
 import Feather from '@expo/vector-icons/Feather';
 import { theme } from '@/constants/theme';
 
-/** A compact debt overview. Individual schedules stay on Loans. */
+/** A compact debt overview with direct loan shortcuts and a link to the full collection. */
 export function DebtPath({
   loans,
   dueSoon,
   today,
   onOpen,
+  onLoan,
 }: {
   loans: LoansSummary;
   dueSoon: DueSoon;
   today: string;
   onOpen: () => void;
+  onLoan?: (id: string) => void;
 }) {
   const borrowed = loans.rows.filter((r) => r.direction === 'borrowed');
   if (borrowed.length === 0) {
@@ -94,6 +96,25 @@ export function DebtPath({
             <PlanChip icon="arrow-up-right">{formatMoney(loans.lentLeftMinor)} you lent out</PlanChip>
           )}
         </View>
+        {onLoan &&
+          borrowed.slice(0, 2).map((loan) => (
+            <Pressable
+              key={loan.id}
+              onPress={() => onLoan(loan.id)}
+              style={withPressed(local.loanRow)}
+              accessibilityRole="button"
+              accessibilityLabel={`Open loan details: ${loan.name}`}
+            >
+              <View style={local.loanCopy}>
+                <Text style={local.loanName}>{loan.name}</Text>
+                {loan.nextDueDate && (
+                  <Text style={styles.pathNote}>Next EMI · {dayMonth(loan.nextDueDate)}</Text>
+                )}
+              </View>
+              <Text style={local.loanName}>{formatMoney(loan.leftMinor)}</Text>
+              <Feather name="chevron-right" size={16} color={theme.colors.textMuted} />
+            </Pressable>
+          ))}
         <Pressable
           onPress={onOpen}
           style={withPressed(local.link)}
@@ -101,7 +122,7 @@ export function DebtPath({
           accessibilityLabel="Open loans"
         >
           <Text style={local.linkText}>View loans · {borrowed.length} active</Text>
-          <Feather name="arrow-up-right" size={17} color={theme.colors.link} />
+          <Feather name="chevron-right" size={17} color={theme.colors.link} />
         </Pressable>
       </Glass>
     </View>
@@ -109,6 +130,23 @@ export function DebtPath({
 }
 
 const local = StyleSheet.create({
+  loanRow: {
+    minHeight: 48,
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 8,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: theme.colors.borderSoft,
+    paddingVertical: 8,
+  },
+  loanCopy: { flexGrow: 1, flexBasis: 120, gap: 3 },
+  loanName: {
+    fontFamily: theme.font.bodyMedium,
+    fontSize: 13,
+    color: theme.colors.textPrimary,
+    fontVariant: ['tabular-nums'],
+  },
   track: { height: 6, borderRadius: 3, backgroundColor: theme.colors.borderSoft, overflow: 'hidden' },
   fill: { height: '100%', borderRadius: 3, backgroundColor: theme.colors.incomeText },
   link: {

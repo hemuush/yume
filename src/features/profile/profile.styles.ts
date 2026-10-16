@@ -98,7 +98,7 @@ export const styles = StyleSheet.create({
   groupLabel: { ...EYEBROW },
   groupTotal: {
     fontVariant: ['tabular-nums'],
-    fontFamily: theme.font.monoBold,
+    fontFamily: theme.font.bodyBold,
     fontSize: 12,
     color: theme.colors.textSecondary,
   },

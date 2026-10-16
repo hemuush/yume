@@ -172,7 +172,7 @@ const styles = StyleSheet.create({
   stat: { flex: 1, paddingVertical: 12, paddingHorizontal: 12, gap: 4 },
   statDivider: { borderLeftWidth: StyleSheet.hairlineWidth, borderLeftColor: theme.colors.borderSoft },
   statLabel: { ...EYEBROW, marginBottom: 0 },
-  statValue: { fontFamily: theme.font.monoBold, fontSize: 13.5, color: theme.colors.textPrimary },
+  statValue: { fontFamily: theme.font.bodyBold, fontSize: 13.5, color: theme.colors.textPrimary },
   pillRow: { marginTop: 10, marginBottom: 6, alignItems: 'flex-start' },
   card: {
     marginTop: 8,
@@ -187,7 +187,7 @@ const styles = StyleSheet.create({
   divider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.borderSoft },
   tile: { width: 38, height: 38, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   rowText: { flex: 1 },
-  rowValue: { fontFamily: theme.font.monoBold, fontSize: 14, color: theme.colors.textPrimary },
+  rowValue: { fontFamily: theme.font.bodyBold, fontSize: 14, color: theme.colors.textPrimary },
   rowMeta: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, marginTop: 2 },
   empty: { fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textMuted, marginTop: 8 },
   sip: { fontFamily: theme.font.body, fontSize: 12.5, color: theme.colors.textSecondary, marginTop: 12 },
