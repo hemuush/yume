@@ -735,12 +735,14 @@ export default function AddTransactionScreen() {
       style={styles.saveBtn}
     />
   );
+  const addToListDisabled = saving || addingRow || saveDone || !!currentProblem;
   const addToListButton = !editing && !splitParts && (
     <Pressable
       onPress={addRow}
-      disabled={saving || addingRow || saveDone || !!currentProblem}
-      style={withPressed(styles.addToList)}
+      disabled={addToListDisabled}
+      style={withPressed([styles.addToList, addToListDisabled && styles.actionDisabled])}
       accessibilityRole="button"
+      accessibilityState={{ disabled: addToListDisabled }}
       accessibilityHint="Keeps this entry on a list and starts the next one; Save saves them all"
     >
       <Feather name="plus" size={14} color={theme.colors.textPrimary} />
@@ -959,6 +961,17 @@ export default function AddTransactionScreen() {
           <Text style={styles.footerSummary} accessibilityLiveRegion="polite">
             {selectionSummary}
           </Text>
+          {padVisible && (
+            <Pressable
+              style={withPressed(styles.padToggle)}
+              accessibilityRole="button"
+              accessibilityLabel="Hide number pad"
+              onPress={() => setPadOpen(false)}
+            >
+              <Text style={styles.padToggleText}>Hide pad</Text>
+              <Feather name="chevron-down" size={13} color={theme.colors.textSecondary} />
+            </Pressable>
+          )}
           {!error && !repeatWarning && !splitParts && currentProblem && (
             <Text style={styles.formHint}>
               {invalidAmount ? 'Enter a positive amount. Check the calculation.' : currentProblem}
@@ -997,7 +1010,7 @@ export default function AddTransactionScreen() {
           onSplit={openSplit}
         />
         {padVisible ? (
-          <AmountPad onKey={onPadKey} onClear={() => setExpr('')} tone={padTone}>
+          <AmountPad keySurface="#F1F5F9" onKey={onPadKey} onClear={() => setExpr('')} tone={padTone}>
             {addToListButton}
             {saveButton}
           </AmountPad>

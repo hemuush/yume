@@ -95,13 +95,30 @@ it('shows matching dates, explains the three effects and opens a contributing en
   expect(router.push).toHaveBeenCalledWith('/transactions?entry=entry');
   await act(async () => tree.unmount());
 });
-it('passes privacy scope to the query and hides displayed money', async () => {
+it('excludes sensitive query data but keeps everyday explanations readable', async () => {
   mockHidden.value = true;
   let tree!: ReactTestRenderer;
   await act(async () => {
     tree = create(<SpendingExplanation categoryId="food" current={current} previous={previous} />);
   });
   expect(getSpendingExplanation).toHaveBeenCalledWith('food', current, previous, true);
-  expect(words(tree)).not.toMatch(/₹[\d,]+/);
+  expect(words(tree)).toContain('₹100');
+  expect(words(tree)).not.toContain('••••');
+  await act(async () => tree.unmount());
+});
+
+it('does not reuse unfiltered figures while a privacy-scoped reload is pending', async () => {
+  mockHidden.value = false;
+  let tree!: ReactTestRenderer;
+  await act(async () => {
+    tree = create(<SpendingExplanation categoryId="food" current={current} previous={previous} />);
+  });
+  expect(words(tree)).toContain('₹100');
+  jest.mocked(getSpendingExplanation).mockImplementationOnce(() => new Promise(() => {}));
+  mockHidden.value = true;
+  await act(async () => {
+    tree.update(<SpendingExplanation categoryId="food" current={current} previous={previous} />);
+  });
+  expect(words(tree)).not.toContain('₹100');
   await act(async () => tree.unmount());
 });

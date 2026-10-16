@@ -275,3 +275,24 @@ it('round-trips the four features through the new backup format', async () => {
   expect((await getExpectedRefund(purchase))!.remainingMinor).toBe(99000);
   expect((await getAnnualBillGoal(rule.id))!.id).toBe(goalId);
 });
+
+it('marks refunds by inherited category privacy without hiding ordinary refunds', async () => {
+  await expectRefund(purchase, 50000, null);
+  expect((await listExpectedRefunds())[0].isSensitive).toBe(false);
+  await mockDb.runAsync(
+    "INSERT INTO categories (id, name, kind, is_sensitive) VALUES ('private-parent', 'Private', 'expense', 1)"
+  );
+  await mockDb.runAsync("UPDATE categories SET parent_id = 'private-parent' WHERE id = ?", [category]);
+  expect((await getExpectedRefund(purchase))!.isSensitive).toBe(true);
+  expect((await listExpectedRefunds())[0].isSensitive).toBe(true);
+});
+it('flags a sensitive scheduled forecast without changing its financial calculation', async () => {
+  const rule = await yearly();
+  await updateRecurringRule(rule.id, { ...rule, nextRunDate: today });
+  const normal = await estimatePurchase(bank, 10000, today);
+  expect(normal.sensitiveForecast).toBe(false);
+  await mockDb.runAsync('UPDATE categories SET is_sensitive = 1 WHERE id = ?', [category]);
+  const hidden = await estimatePurchase(bank, 10000, today);
+  expect(hidden.sensitiveForecast).toBe(true);
+  expect(hidden.lowestMinor).toBe(normal.lowestMinor);
+});

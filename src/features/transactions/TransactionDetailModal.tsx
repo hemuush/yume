@@ -26,7 +26,7 @@ import { screenStyles as h } from '@/components/screenStyles';
 import { accountIcon, savingsAccountIdsOf } from '@/lib/account';
 import { isSavingsEntry } from '@/lib/privateSummary';
 import { hexToRgba, shade } from '@/lib/color';
-import { categorySentence, inParent, joinSub, parentNameOf } from '@/lib/categoryLabel';
+import { categorySentence, joinSub, parentNameOf } from '@/lib/categoryLabel';
 import { weekdayDayMonth } from '@/lib/dateLabels';
 import { useUndoToast } from '@/components/UndoToast';
 import { haptics } from '@/lib/haptics';
@@ -72,6 +72,11 @@ export function TransactionDetailModal({
   const [linkFailed, setLinkFailed] = useState(false);
   const [busy, setBusy] = useState(false);
   const [ruleOpen, setRuleOpen] = useState(false);
+  const [refundRequest, setRefundRequest] = useState<{
+    transactionId: string;
+    sequence: number;
+    mode: 'expect' | 'receive';
+  }>();
   // Delete asks once in place before it deletes; it settles back after a moment untouched.
   const [askDelete, setAskDelete] = useState(false);
   useEffect(() => {
@@ -99,6 +104,7 @@ export function TransactionDetailModal({
   useEffect(() => {
     setAskDelete(false);
     setRuleOpen(false);
+    setRefundRequest(undefined);
     setLinkFailed(false);
     setLink(undefined);
     if (!tx) return;
@@ -284,21 +290,44 @@ export function TransactionDetailModal({
       sub: 'Yume logs it for you on a schedule',
       onPress: () => setRuleOpen(true),
     },
-    canEdit &&
+    (canEdit || link?.kind === 'refund-expected') &&
       tx.type === 'expense' &&
-      cat && {
+      !tx.isRefund && {
         icon: 'corner-down-left' as const,
         short: 'Refund',
-        label: 'Got money back',
-        sub: 'Add a refund for this',
-        onPress: () => {
-          onClose();
-          // A refund for this purchase: its category, account and note, filled in on Add.
-          router.push(
-            `/add-transaction?type=expense&refund=1&categoryId=${cat.id}&accountId=${tx.accountId}` +
-              (tx.note ? `&note=${encodeURIComponent(tx.note)}` : '')
-          );
-        },
+        label: 'Refund options',
+        sub: 'Record money received or track a refund expected later',
+        onPress: () =>
+          showAlert('Refund', 'Has the money arrived, or are you expecting it later?', [
+            { text: 'Cancel', style: 'cancel' },
+            {
+              text: 'Received now',
+              onPress: () => {
+                if (link?.kind === 'refund-expected') {
+                  setRefundRequest((current) => ({
+                    sequence: (current?.sequence ?? 0) + 1,
+                    transactionId: tx.id,
+                    mode: 'receive',
+                  }));
+                  return;
+                }
+                onClose();
+                router.push(
+                  `/add-transaction?type=expense&refund=1&accountId=${tx.accountId}${cat ? `&categoryId=${cat.id}` : ''}` +
+                    (tx.note ? `&note=${encodeURIComponent(tx.note)}` : '')
+                );
+              },
+            },
+            {
+              text: 'Expecting later',
+              onPress: () =>
+                setRefundRequest((current) => ({
+                  transactionId: tx.id,
+                  sequence: (current?.sequence ?? 0) + 1,
+                  mode: 'expect',
+                })),
+            },
+          ]),
       },
   ].filter((a) => !!a);
   const kind = transfer ? 'Transfer' : tx.isRefund ? 'Refund' : tx.type === 'income' ? 'Income' : 'Expense';
@@ -394,6 +423,7 @@ export function TransactionDetailModal({
       }
     >
       <SheetCard
+        softAccent
         style={
           tx.type === 'income'
             ? cardSurface.savings
@@ -437,7 +467,15 @@ export function TransactionDetailModal({
       )}
 
       {tx.type === 'expense' && (link === null || link?.kind === 'refund-expected') && (
-        <RefundTracker transaction={tx} accounts={accounts} onChanged={onChanged} />
+        <RefundTracker
+          sensitive={sensitiveEntry(tx)}
+          key={tx.id}
+          transaction={tx}
+          accounts={accounts}
+          onChanged={onChanged}
+          hideCreateAction
+          request={refundRequest?.transactionId === tx.id ? refundRequest : undefined}
+        />
       )}
       {/* What you can do with it, right under the amount: no second page to find it on. */}
       {moreActions.length > 0 && (
@@ -468,8 +506,9 @@ export function TransactionDetailModal({
               round
               icon={cat.icon}
               iconBg={hexToRgba(cat.color, 0.25)}
-              label={cat.name}
-              sub={joinSub([inParent(parentName), 'See everything in it'])}
+              field
+              label="Category"
+              sub={joinSub([cat.name, parentName])}
               onPress={() => {
                 onClose();
                 // Opened from that category's own page? Then closing is enough.
@@ -481,10 +520,9 @@ export function TransactionDetailModal({
             round
             icon={transfer ? 'swap-horizontal' : account ? accountIcon(account.type) : 'bank'}
             iconBg={shade(accent, 95)}
-            label={route ?? accountName(tx.accountId)}
-            sub={
-              transfer ? 'Moved between your accounts' : tx.type === 'income' ? 'Received in' : 'Paid from'
-            }
+            field
+            label={transfer ? 'Accounts' : tx.type === 'income' ? 'Received in' : 'Paid from'}
+            sub={route ?? accountName(tx.accountId)}
             divider={!!cat && !transfer}
           />
           {!!tx.note && (

@@ -194,7 +194,7 @@ describe('entry detail', () => {
     mockStack.routes = [{ name: '(tabs)' }, { name: 'category/[id]', params: { id: 'food' } }];
     try {
       const tree = await render();
-      const link = rows(tree, 'Food')[0];
+      const link = rows(tree, 'Category')[0];
       (router.push as jest.Mock).mockClear();
       act(() => link.props.onPress());
       expect(router.push).not.toHaveBeenCalled();
@@ -206,7 +206,7 @@ describe('entry detail', () => {
 
   it("opens the entry's category page", async () => {
     const tree = await render();
-    const link = rows(tree, 'Food')[0];
+    const link = rows(tree, 'Category')[0];
     act(() => link.props.onPress());
     expect(router.push).toHaveBeenCalledWith('/category/food');
   });
@@ -233,7 +233,7 @@ describe('deleting from the sheet', () => {
     const tree = await render();
     expect(tree.root.findAll((n) => n.props.value === 'details' && n.props.onChange)).toHaveLength(0);
     expect(rows(tree, 'Log again today').length).toBeGreaterThan(0);
-    expect(rows(tree, 'Got money back').length).toBeGreaterThan(0);
+    expect(rows(tree, 'Refund options').length).toBeGreaterThan(0);
   });
 });
 
@@ -249,4 +249,37 @@ it('keeps a sensitive parent category masked when opening a child entry detail',
     .join(' ');
   expect(shown).toContain('••••');
   expect(shown).not.toContain('₹110');
+});
+
+it('offers one refund action with separate received and expected choices', async () => {
+  const dialog = require('@/components/AppDialog');
+  const alert = jest.spyOn(dialog, 'showAlert').mockImplementation(() => {});
+  try {
+    const tree = await render();
+    act(() => rows(tree, 'Refund options')[0].props.onPress());
+    const buttons = alert.mock.calls.at(-1)![2] as { text: string; onPress?: () => void }[];
+    expect(buttons.map((b) => b.text)).toEqual(['Cancel', 'Received now', 'Expecting later']);
+    expect(tree.root.findAll((n) => n.props.title === 'Expect refund')).toHaveLength(0);
+    act(() => buttons.find((b) => b.text === 'Received now')!.onPress!());
+    expect(router.push).toHaveBeenLastCalledWith(expect.stringContaining('refund=1'));
+  } finally {
+    alert.mockRestore();
+  }
+});
+
+it('routes an expected refund to its receipt tracker instead of an unlinked refund entry', async () => {
+  const alert = jest.spyOn(require('@/components/AppDialog'), 'showAlert').mockImplementation(() => {});
+  try {
+    mockLink.current = { kind: 'refund-expected' };
+    (router.push as jest.Mock).mockClear();
+    const tree = await render();
+    act(() => rows(tree, 'Refund options')[0].props.onPress());
+    const buttons = alert.mock.calls.at(-1)![2] as { text: string; onPress?: () => void }[];
+    act(() => buttons.find((b) => b.text === 'Received now')!.onPress!());
+    expect(router.push).not.toHaveBeenCalled();
+    const tracker = tree.root.findByType(require('./RefundTracker').RefundTracker);
+    expect(tracker.props.request).toEqual(expect.objectContaining({ mode: 'receive' }));
+  } finally {
+    alert.mockRestore();
+  }
 });

@@ -92,3 +92,47 @@ it('cancels expectation edits without creating or receiving money', async () => 
   expect(changed).not.toHaveBeenCalled();
   await act(async () => tree.unmount());
 });
+
+it('hides the redundant creation button and opens expectation editing on request', async () => {
+  let tree!: ReactTestRenderer;
+  const base = { transaction, accounts, onChanged: jest.fn(), hideCreateAction: true };
+  await act(async () => {
+    tree = create(<RefundTracker {...base} />);
+  });
+  expect(tree.root.findAll((n) => n.props.title === 'Expect refund')).toHaveLength(0);
+  expect(tree.root.findAllByProps({ testID: 'Expected refund amount' })).toHaveLength(0);
+  await act(async () => {
+    tree.update(<RefundTracker {...base} request={{ sequence: 1, mode: 'expect' }} />);
+  });
+  expect(tree.root.findAllByProps({ testID: 'Expected refund amount' }).length).toBeGreaterThan(0);
+  await act(async () => press(tree, 'Cancel editing').props.onPress());
+  expect(tree.root.findAllByProps({ testID: 'Expected refund amount' })).toHaveLength(0);
+  act(() => tree.unmount());
+});
+it('opens receipt recording for an existing expectation without creating another refund', async () => {
+  mockRefund.value = {
+    id: 'e1',
+    expectedMinor: 100000,
+    receivedMinor: 0,
+    remainingMinor: 100000,
+    dueDate: null,
+    closed: false,
+    receipts: [],
+  };
+  let tree!: ReactTestRenderer;
+  await act(async () => {
+    tree = create(
+      <RefundTracker
+        transaction={transaction}
+        accounts={accounts}
+        onChanged={jest.fn()}
+        hideCreateAction
+        request={{ sequence: 1, mode: 'receive' }}
+      />
+    );
+  });
+  expect(tree.root.findAllByProps({ testID: 'Refund received' }).length).toBeGreaterThan(0);
+  expect(expectRefund).not.toHaveBeenCalled();
+  expect(receiveRefund).not.toHaveBeenCalled();
+  act(() => tree.unmount());
+});

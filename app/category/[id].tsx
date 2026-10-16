@@ -7,6 +7,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from '@expo/vector-icons/Feather';
 import { listAccounts, listCategories, listTransactions } from '@/db/ledger';
+import { getDefaultCurrency } from '@/db/settings';
 import { getCategoryOverview, usualMonthly, CategoryOverview } from '@/db/reports';
 import { listBudgetsForMonth, BudgetProgress } from '@/db/budgets';
 import { Account, Category, Transaction } from '@/types';
@@ -82,7 +83,11 @@ export default function CategoryScreen() {
 
   const load = useCallback(async () => {
     const range = windowRange(cursor);
-    const [cats, accs] = await Promise.all([listCategories(true), listAccounts(true)]);
+    const [cats, accs, currency] = await Promise.all([
+      listCategories(true),
+      listAccounts(true),
+      getDefaultCurrency(),
+    ]);
     const cat = cats.find((c) => c.id === params.id) ?? null;
     setCategories(cats);
     setAccounts(accs);
@@ -92,6 +97,7 @@ export default function CategoryScreen() {
     const [ov, list, budgets] = await Promise.all([
       getCategoryOverview(cat.id, cat.kind, range),
       listTransactions({
+        currency,
         categoryId: cat.id,
         includeSubcategories: true,
         fromDate: range.start,
@@ -130,6 +136,11 @@ export default function CategoryScreen() {
   const accountName = (id: string) => accounts.find((a) => a.id === id)?.name ?? '—';
   const categoryName = (id: string | null) => categories.find((c) => c.id === id)?.name ?? '—';
   const parent = category?.parentId ? categories.find((c) => c.id === category.parentId) : undefined;
+  const rootCategory = parent ?? category;
+  const loanRepayments = !!rootCategory?.isSystem && rootCategory.name === 'Loan EMI';
+  const singleActivityMonth =
+    activityMonth === range.start.slice(0, 7) && activityMonth === range.end.slice(0, 7);
+  const openActivity = () => router.navigate(`/transactions?category=${params.id}&month=${activityMonth}`);
   const openParent = () => {
     if (!parent) return;
     const period =
@@ -153,7 +164,10 @@ export default function CategoryScreen() {
   }
 
   // A savings or investment category has nothing to show while those amounts are hidden.
-  if (hideAmounts && category?.isSensitive) {
+  const privateFamily =
+    !!rootCategory &&
+    categories.some((c) => c.isSensitive && (c.id === rootCategory.id || c.parentId === rootCategory.id));
+  if (hideAmounts && category && privateFamily) {
     return (
       <View style={styles.container}>
         <HomeWallpaper accent={accent} secondary={secondary} />
@@ -175,7 +189,7 @@ export default function CategoryScreen() {
         scrollEventThrottle={16}
         contentContainerStyle={{
           paddingTop: headerHeight,
-          paddingBottom: theme.layout.screenScrollPad + insets.bottom,
+          paddingBottom: Math.max(48, theme.layout.screenScrollPad) + insets.bottom,
         }}
       >
         {loadError && (
@@ -224,8 +238,9 @@ export default function CategoryScreen() {
                   {overview.count} {overview.count === 1 ? 'entry' : 'entries'}
                 </Chip>
                 {overview.count > 1 && <Chip>{formatMoney(overview.totalMinor / overview.count)} each</Chip>}
-                {overview.totalMinor > 0 && <Chip>{formatMoney(overview.totalMinor / daysSoFar)} a day</Chip>}
-                {usual != null && <Chip>usually {formatMoney(usual)} a month</Chip>}
+                {overview.totalMinor > 0 && !loanRepayments && (
+                  <Chip>{formatMoney(overview.totalMinor / daysSoFar)} a day</Chip>
+                )}
               </View>
               {overview.refundMinor > 0 && (
                 // What it cost is already net of refunds; this says how much came back.
@@ -274,9 +289,22 @@ export default function CategoryScreen() {
                   />
                 </>
               )}
+              {spend && (
+                <View style={styles.heroActions}>
+                  {loanRepayments ? (
+                    <ActionChip icon="credit-card" label="View loans" onPress={() => router.push('/loans')} />
+                  ) : (
+                    <ActionChip
+                      icon="scissors"
+                      label="What if I cut this?"
+                      onPress={() => router.push(`/whatif?category=${category.id}`)}
+                    />
+                  )}
+                </View>
+              )}
             </Glass>
 
-            {spend && isThisMonth(cursor) && (
+            {spend && isThisMonth(cursor) && (!loanRepayments || budget) && (
               <Section title="Budget">
                 {budget ? (
                   <Glass style={styles.glassList}>
@@ -296,28 +324,23 @@ export default function CategoryScreen() {
               </Section>
             )}
 
-            <View style={styles.actions}>
-              {spend && (
-                <ActionChip
-                  icon="scissors"
-                  label="What if I cut this?"
-                  onPress={() => router.push(`/whatif?category=${category.id}`)}
-                />
-              )}
-              <ActionChip
-                icon="list"
-                label={
-                  activityMonth === range.start.slice(0, 7) && activityMonth === range.end.slice(0, 7)
-                    ? 'See all in Activity'
-                    : `See ${monthLong(activityMonth)} in Activity`
-                }
-                onPress={() =>
-                  router.navigate(`/transactions?category=${category.id}&month=${activityMonth}`)
-                }
-              />
-            </View>
-
-            <Section title="Latest entries">
+            <Section
+              title="Latest entries"
+              onSeeAll={singleActivityMonth ? openActivity : undefined}
+              right={
+                !singleActivityMonth ? (
+                  <Pressable
+                    onPress={openActivity}
+                    style={withPressed(styles.activityLink)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`See ${monthLong(activityMonth)} in Activity`}
+                  >
+                    <Text style={styles.activityLinkText}>See {monthLong(activityMonth)} in Activity</Text>
+                    <Feather name="arrow-right" size={14} color={theme.colors.link} />
+                  </Pressable>
+                ) : undefined
+              }
+            >
               {entries.length === 0 ? (
                 <Text style={styles.empty}>Nothing in {periodName} yet.</Text>
               ) : (
@@ -326,6 +349,8 @@ export default function CategoryScreen() {
                     <TransactionRow
                       key={tx.id}
                       tx={tx}
+                      contextCategoryId={category.id}
+                      currency={accounts.find((a) => a.id === tx.accountId)?.currency}
                       cat={categories.find((c) => c.id === tx.categoryId)}
                       accountName={accountName}
                       categoryName={categoryName}
@@ -411,7 +436,7 @@ const styles = StyleSheet.create({
   heroLabel: { ...EYEBROW },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 10 },
   chip: {
-    backgroundColor: GLASS.fillStrong,
+    backgroundColor: '#F1F5F9',
     borderWidth: 1,
     borderColor: GLASS.edge,
     borderRadius: theme.radius.pill,
@@ -448,13 +473,21 @@ const styles = StyleSheet.create({
     backgroundColor: GLASS.fill,
   },
   noLimitText: { flex: 1, fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textSecondary },
-  actions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginHorizontal: 20, marginTop: 18 },
+  heroActions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 12 },
+  activityLink: { minHeight: 44, maxWidth: '55%', flexDirection: 'row', alignItems: 'center', gap: 6 },
+  activityLinkText: {
+    flexShrink: 1,
+    fontFamily: theme.font.bodyMedium,
+    fontSize: 12,
+    color: theme.colors.link,
+  },
   actionChip: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
     paddingHorizontal: 14,
     paddingVertical: 10,
+    minHeight: 44,
     borderRadius: theme.radius.pill,
     borderWidth: 1,
     borderColor: GLASS.edge,

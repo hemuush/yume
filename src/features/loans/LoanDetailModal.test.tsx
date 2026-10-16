@@ -144,7 +144,7 @@ describe('next installment', () => {
     const shown = texts(tree);
     expect(shown).toContain(`${weekdayDayMonth(due)} · overdue`);
     expect(shown).toContain('1 of 3');
-    expect(payButton(tree).props.title).toBe(`Pay #2 · ${formatMoney(100_000)}`);
+    expect(payButton(tree).props.title).toBe(`Record EMI 2 · ${formatMoney(100_000)}`);
     expect(payButton(tree).props.disabled).toBe(false);
   });
 
@@ -154,7 +154,7 @@ describe('next installment', () => {
     const tree = await render();
     expect(texts(tree)).toContain(weekdayDayMonth(due));
     expect(texts(tree).some((t) => t.includes('overdue'))).toBe(false);
-    expect(payButton(tree).props.title).toBe('Pay #1 early');
+    expect(payButton(tree).props.title).toBe(`Record EMI 1 · ${formatMoney(100_000)} · early`);
   });
 
   it('picks the lowest-numbered unpaid installment even when the schedule is out of order', async () => {
@@ -164,7 +164,7 @@ describe('next installment', () => {
       installment(1, '2026-01-01', 'paid'),
     ]);
     const tree = await render();
-    expect(payButton(tree).props.title).toBe('Pay #2 early');
+    expect(payButton(tree).props.title).toBe(`Record EMI 2 · ${formatMoney(100_000)} · early`);
   });
 
   it('says none are left and offers no pay button once every installment is paid', async () => {

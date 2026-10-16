@@ -1,4 +1,5 @@
 import { getDb, AppDb } from './client';
+import { sensitiveOf } from './spendSql';
 import { newId } from '@/lib/id';
 import { assertValidIsoDate, toLocalIsoDate } from '@/lib/date';
 import { rebuildAttentionNotificationsAfterCommit } from './afterCommit';
@@ -18,6 +19,7 @@ export interface ExpectedRefund {
   closed: boolean;
   currency: string;
   label: string;
+  isSensitive?: boolean;
   receipts: {
     id: string;
     transactionId: string;
@@ -34,8 +36,9 @@ async function readOn(db: AppDb, transactionId: string): Promise<ExpectedRefund 
     closed: number;
     currency: string;
     label: string;
+    is_sensitive: number;
   }>(
-    `SELECT r.*, a.currency, CASE WHEN t.note != '' THEN t.note ELSE c.name END AS label
+    `SELECT r.*, a.currency, ${sensitiveOf('c')} AS is_sensitive, CASE WHEN t.note != '' THEN t.note ELSE c.name END AS label
      FROM refund_expectations r JOIN transactions t ON t.id = r.transaction_id
      JOIN accounts a ON a.id = t.account_id JOIN categories c ON c.id = t.category_id
      WHERE r.transaction_id = ?`,
@@ -64,6 +67,7 @@ async function readOn(db: AppDb, transactionId: string): Promise<ExpectedRefund 
     closed: !!row.closed,
     currency: row.currency,
     label: row.label,
+    isSensitive: !!row.is_sensitive,
     receipts: receipts.map((r) => ({
       id: r.id,
       transactionId: r.transaction_id,
@@ -86,9 +90,10 @@ export async function listExpectedRefunds(): Promise<ExpectedRefund[]> {
     due_date: string | null;
     currency: string;
     label: string;
+    is_sensitive: number;
     received: number;
   }>(
-    `SELECT r.id, r.transaction_id, r.expected_amount_minor, r.due_date, a.currency,
+    `SELECT r.id, r.transaction_id, r.expected_amount_minor, r.due_date, a.currency, ${sensitiveOf('c')} AS is_sensitive,
      CASE WHEN p.note != '' THEN p.note ELSE c.name END AS label, COALESCE(SUM(t.amount_minor), 0) AS received
      FROM refund_expectations r JOIN transactions p ON p.id = r.transaction_id JOIN accounts a ON a.id = p.account_id
      JOIN categories c ON c.id = p.category_id LEFT JOIN refund_receipts rr ON rr.expectation_id = r.id
@@ -105,6 +110,7 @@ export async function listExpectedRefunds(): Promise<ExpectedRefund[]> {
     closed: false,
     currency: r.currency,
     label: r.label,
+    isSensitive: !!r.is_sensitive,
     receipts: [],
   }));
 }

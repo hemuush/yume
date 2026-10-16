@@ -1,3 +1,4 @@
+import { sensitiveOf } from './spendSql';
 import { getDb } from './client';
 import { reservationSummaryOn } from './goalReservations';
 import { purchaseAffordability, PurchaseMovement } from '@/lib/purchaseAffordability';
@@ -18,10 +19,11 @@ export async function estimatePurchase(accountId: string, amountMinor: number, p
       throw new Error('Choose an active spending account.');
     const summary = await reservationSummaryOn(db, accountId);
     const movements: PurchaseMovement[] = [];
-    const rules = await db.getAllAsync<RecurringRuleRow>(
-      'SELECT * FROM recurring_rules WHERE active = 1 AND (account_id = ? OR to_account_id = ?)',
+    const rules = await db.getAllAsync<RecurringRuleRow & { is_sensitive: number; savings_transfer: number }>(
+      `SELECT r.*, COALESCE((SELECT ${sensitiveOf('c')} FROM categories c WHERE c.id = r.category_id), 0) AS is_sensitive, EXISTS (SELECT 1 FROM accounts sa WHERE sa.type = 'savings' AND sa.id IN (r.account_id, r.to_account_id)) AS savings_transfer FROM recurring_rules r WHERE active = 1 AND (account_id = ? OR to_account_id = ?)`,
       [accountId, accountId]
     );
+    let sensitiveForecast = false;
     for (const rule of rules) {
       let date = rule.next_run_date;
       const anchor = rule.anchor_day ?? dayOfIsoDate(date);
@@ -29,6 +31,8 @@ export async function estimatePurchase(accountId: string, amountMinor: number, p
         if (n >= 400) throw new Error('Catch up overdue recurring entries before estimating this purchase.');
         const credit =
           rule.type === 'income' || (rule.type === 'transfer' && rule.to_account_id === accountId);
+        if (rule.is_sensitive || (rule.type === 'transfer' && rule.savings_transfer))
+          sensitiveForecast = true;
         movements.push({
           date,
           deltaMinor: credit ? rule.amount_minor : -rule.amount_minor,
@@ -65,6 +69,7 @@ export async function estimatePurchase(accountId: string, amountMinor: number, p
         through,
         movements,
       }),
+      sensitiveForecast,
       reservedMinor: summary.reservedMinor,
       reservations: summary.goals,
       currency: account.currency,

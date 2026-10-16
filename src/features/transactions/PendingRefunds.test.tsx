@@ -1,5 +1,7 @@
 import { act, create, ReactTestRenderer } from 'react-test-renderer';
 import { Text } from 'react-native';
+const mockPrivacy = { hideAmounts: false };
+jest.mock('@/theme/PrivacyContext', () => ({ usePrivacy: () => mockPrivacy }));
 jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMock').createReanimatedMock());
 jest.mock('@/db/refundTracking', () => ({ listExpectedRefunds: jest.fn(async () => []) }));
 jest.mock('@/db/transactions', () => ({ getTransactionById: jest.fn() }));
@@ -74,4 +76,31 @@ it('retries a failed pending-refund load without displaying it as an empty resul
   expect(listExpectedRefunds).toHaveBeenCalledTimes(2);
   expect(tree.toJSON()).toBeNull();
   await act(async () => tree.unmount());
+});
+
+it('keeps ordinary refunds visible and masks only sensitive refunds', async () => {
+  mockPrivacy.hideAmounts = true;
+  const refund = {
+    transactionId: 'p',
+    expectedMinor: 2000,
+    receivedMinor: 0,
+    remainingMinor: 2000,
+    dueDate: null,
+    closed: false,
+    currency: 'INR',
+    receipts: [],
+  };
+  jest.mocked(listExpectedRefunds).mockResolvedValueOnce([
+    { ...refund, id: 'normal', label: 'Normal', isSensitive: false },
+    { ...refund, id: 'private', label: 'Private', isSensitive: true },
+  ]);
+  let tree!: ReactTestRenderer;
+  await act(async () => {
+    tree = create(<PendingRefunds refreshToken={1} onOpen={jest.fn()} />);
+  });
+  const rows = tree.root.findAllByType(InsightRow);
+  expect(rows[0].props.value).toContain('₹20');
+  expect(rows[1].props.value).toContain('••••');
+  await act(async () => tree.unmount());
+  mockPrivacy.hideAmounts = false;
 });

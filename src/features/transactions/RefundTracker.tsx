@@ -31,10 +31,16 @@ export function RefundTracker({
   transaction,
   accounts,
   onChanged,
+  hideCreateAction = false,
+  request,
+  sensitive = false,
 }: {
   transaction: Transaction;
   accounts: Account[];
   onChanged: () => void;
+  hideCreateAction?: boolean;
+  sensitive?: boolean;
+  request?: { sequence: number; mode: 'expect' | 'receive' };
 }) {
   const [refund, setRefund] = useState<ExpectedRefund | null>(null);
   const [loaded, setLoaded] = useState(false),
@@ -50,7 +56,8 @@ export function RefundTracker({
     [error, setError] = useState<string | null>(null);
   const { hideAmounts } = usePrivacy();
   const currency = accounts.find((a) => a.id === transaction.accountId)?.currency ?? 'INR';
-  const money = (minor: number) => formatMaskableMoney(minor, { currency, masked: hideAmounts });
+  const money = (minor: number) =>
+    formatMaskableMoney(minor, { currency, masked: hideAmounts && (sensitive || !!refund?.isSensitive) });
   useEffect(() => {
     let live = true;
     Promise.all([getExpectedRefund(transaction.id), refundCandidates(transaction.id)])
@@ -70,6 +77,9 @@ export function RefundTracker({
       live = false;
     };
   }, [transaction.id, transaction.amountMinor]);
+  useEffect(() => {
+    if (request?.mode === 'expect') setEditing(true);
+  }, [request]);
   const run = useSaveOnce(async (action: () => Promise<void>) => {
     setBusy(true);
     setError(null);
@@ -83,6 +93,7 @@ export function RefundTracker({
       setBusy(false);
     }
   });
+  if (loaded && !refund && !editing && hideCreateAction) return null;
   if (loaded && !refund && !editing)
     return (
       <PrimaryButton compact variant="secondary" title="Expect refund" onPress={() => setEditing(true)} />
@@ -183,7 +194,11 @@ export function RefundTracker({
           ) : (
             <>
               {!refund.closed && refund.remainingMinor > 0 && (
-                <InsightDisclosure title="Record money received">
+                <InsightDisclosure
+                  key={request?.mode === 'receive' ? request.sequence : 0}
+                  initiallyOpen={request?.mode === 'receive'}
+                  title="Record money received"
+                >
                   <AmountField label="Refund received" value={amount} onChangeText={setAmount} />
                   <DateField
                     label="Received date"

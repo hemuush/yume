@@ -68,8 +68,16 @@ export function InsightRow({
     <View style={insight.row}>{content}</View>
   );
 }
-export function InsightDisclosure({ title, children }: { title: string; children: ReactNode }) {
-  const [open, setOpen] = useState(false);
+export function InsightDisclosure({
+  title,
+  children,
+  initiallyOpen = false,
+}: {
+  title: string;
+  children: ReactNode;
+  initiallyOpen?: boolean;
+}) {
+  const [open, setOpen] = useState(initiallyOpen);
   return (
     <View>
       <Pressable

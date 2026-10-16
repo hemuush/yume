@@ -19,10 +19,12 @@ export function AnnualBillPreparation({
   rule,
   accounts,
   onNavigate,
+  sensitive = false,
 }: {
   rule: RecurringRule;
   accounts: Account[];
   onNavigate: () => void;
+  sensitive?: boolean;
 }) {
   const [goal, setGoal] = useState<Awaited<ReturnType<typeof getAnnualBillGoal>>>(null);
   const [goals, setGoals] = useState<SavingsGoal[]>([]),
@@ -80,7 +82,8 @@ export function AnnualBillPreparation({
     rule.nextRunDate,
     toLocalIsoDate(new Date())
   );
-  const money = (minor: number) => formatMaskableMoney(minor, { masked: hideAmounts });
+  const hidePreparation = hideAmounts && (sensitive || !!goal);
+  const money = (minor: number) => formatMaskableMoney(minor, { masked: hidePreparation });
   return (
     <View style={insight.card}>
       <InsightHeader
@@ -100,6 +103,10 @@ export function AnnualBillPreparation({
         <Text style={styles.modalHint}>Checking preparation goal…</Text>
       ) : goal ? (
         <>
+          <InsightRow
+            label="Annual bill"
+            value={formatMaskableMoney(rule.amountMinor, { masked: hideAmounts && sensitive })}
+          />
           <View style={insight.facts}>
             <InsightStat label="Set aside" value={money(goal.reserved_amount_minor)} />
             <InsightStat label="Still needed" value={money(plan.remainingMinor)} />
@@ -109,7 +116,7 @@ export function AnnualBillPreparation({
               ? 'This bill is paused.'
               : plan.overdue
                 ? 'Payment is overdue. Review the amount needed now.'
-                : !hideAmounts && plan.remainingMinor === 0
+                : !hidePreparation && plan.remainingMinor === 0
                   ? 'No additional reservation needed for this bill amount.'
                   : `${money(plan.perMonthMinor)} a month across ${plan.months} month${plan.months === 1 ? '' : 's'} to prepare.`}
           </Text>

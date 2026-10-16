@@ -255,9 +255,7 @@ export function LoanDetailModal({
                   title={
                     busy
                       ? 'Recording…'
-                      : isPayingEarly
-                        ? `Pay #${nextInstallment.installmentNumber} early`
-                        : `Pay #${nextInstallment.installmentNumber} · ${formatMoney(nextInstallment.emiAmountMinor)}`
+                      : `Record EMI ${nextInstallment.installmentNumber} · ${formatMoney(nextInstallment.emiAmountMinor)}${isPayingEarly ? ' · early' : ''}`
                   }
                   onPress={openPay}
                   disabled={busy || !defaultAccount || !emiCategory}
@@ -288,6 +286,7 @@ export function LoanDetailModal({
               meta={`EMI ${formatMoney(liveLoan.emiAmountMinor)} a month`}
             />
             <SheetTabs
+              variant="pill"
               options={[
                 { label: 'Overview', value: 'overview' },
                 { label: 'Schedule', value: 'schedule' },
@@ -329,30 +328,43 @@ export function LoanDetailModal({
                     </Text>
                     <View style={styles.payoffHeading}>
                       <Text style={styles.payoffMonth}>{payoffMonth(payoff.lastDueDate)}</Text>
-                      <Text style={styles.rowSub}>
-                        {payoff.emisLeft} EMI{payoff.emisLeft === 1 ? '' : 's'} to go
-                      </Text>
                     </View>
-                    <InsightDisclosure title="Balance forecast">
-                      <Svg
-                        width="100%"
-                        height={PAYOFF_LINE_HEIGHT}
-                        viewBox={`0 0 ${PAYOFF_LINE_WIDTH} ${PAYOFF_LINE_HEIGHT}`}
-                        preserveAspectRatio="none"
-                      >
-                        <Path
-                          d={balanceLinePath(payoff.balances, PAYOFF_LINE_WIDTH, PAYOFF_LINE_HEIGHT - 4)}
-                          stroke={theme.colors.income}
-                          strokeWidth={2.5}
-                          fill="none"
-                          strokeLinecap="round"
-                        />
-                      </Svg>
-                      <View style={styles.payoffAxis}>
-                        <Text style={styles.rowSub}>Now · {formatMoney(dispOutstanding)} left</Text>
-                        <Text style={styles.rowSub}>{payoff.lastDueDate.slice(0, 4)}</Text>
-                      </View>
-                    </InsightDisclosure>
+                    <View
+                      style={styles.repaymentTrack}
+                      accessible
+                      accessibilityLabel={`${paidCount} of ${schedule.length} installments paid`}
+                    >
+                      <View
+                        style={[
+                          styles.repaymentFill,
+                          {
+                            width: `${schedule.length ? Math.min(100, (paidCount / schedule.length) * 100) : 0}%`,
+                          },
+                        ]}
+                      />
+                    </View>
+                    <View style={styles.forecastDisclosure}>
+                      <InsightDisclosure title="Balance forecast">
+                        <Svg
+                          width="100%"
+                          height={PAYOFF_LINE_HEIGHT}
+                          viewBox={`0 0 ${PAYOFF_LINE_WIDTH} ${PAYOFF_LINE_HEIGHT}`}
+                          preserveAspectRatio="none"
+                        >
+                          <Path
+                            d={balanceLinePath(payoff.balances, PAYOFF_LINE_WIDTH, PAYOFF_LINE_HEIGHT - 4)}
+                            stroke={theme.colors.income}
+                            strokeWidth={2.5}
+                            fill="none"
+                            strokeLinecap="round"
+                          />
+                        </Svg>
+                        <View style={styles.payoffAxis}>
+                          <Text style={styles.rowSub}>Now · {formatMoney(dispOutstanding)} left</Text>
+                          <Text style={styles.rowSub}>{payoff.lastDueDate.slice(0, 4)}</Text>
+                        </View>
+                      </InsightDisclosure>
+                    </View>
                   </View>
                 )}
 

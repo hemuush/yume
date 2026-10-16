@@ -34,6 +34,12 @@ const styles = StyleSheet.create({
   cell: { width: '50%', paddingRight: 8 },
   cellStacked: { width: '100%' },
   label: { fontFamily: theme.font.bodyMedium, fontSize: 11, color: theme.colors.textMuted },
-  value: { fontFamily: theme.font.monoBold, fontSize: 16, color: theme.colors.textPrimary, marginTop: 2 },
+  value: {
+    fontFamily: theme.font.bodyBold,
+    fontVariant: ['tabular-nums'],
+    fontSize: 16,
+    color: theme.colors.textPrimary,
+    marginTop: 2,
+  },
   sub: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textMuted, marginTop: 1 },
 });

@@ -26,6 +26,7 @@ export function SettingsRow({
   expanded,
   dimmed,
   round,
+  field = false,
 }: {
   icon: string;
   /** Defaults to the neutral tile; only pass a colour when it says something. */
@@ -45,6 +46,8 @@ export function SettingsRow({
   dimmed?: boolean;
   /** A round icon, as in Home's rows and every sheet's rows. */
   round?: boolean;
+  /** Muted field label above a prominent value (sub). */
+  field?: boolean;
 }) {
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.99);
   const chevron = expanded === undefined ? 'chevron-right' : expanded ? 'chevron-up' : 'chevron-down';
@@ -54,8 +57,25 @@ export function SettingsRow({
         <MaterialCommunityIcons name={icon as McIconName} size={17} color={theme.colors.ink} />
       </View>
       <View style={h.mid}>
-        <Text style={h.title}>{label}</Text>
-        {sub ? <Text style={[h.sub, subColor && { color: subColor }]}>{sub}</Text> : null}
+        <Text
+          style={[
+            h.title,
+            field && { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
+          ]}
+        >
+          {label}
+        </Text>
+        {sub ? (
+          <Text
+            style={[
+              h.sub,
+              field && { fontFamily: theme.font.bodyBold, fontSize: 14, color: theme.colors.textPrimary },
+              subColor && { color: subColor },
+            ]}
+          >
+            {sub}
+          </Text>
+        ) : null}
       </View>
       {value ? <Text style={styles.value}>{value}</Text> : null}
       {right ?? (onPress ? <Feather name={chevron} size={18} color={theme.colors.textMuted} /> : null)}
