@@ -54,7 +54,7 @@ describe('Home accounts', () => {
     expect(onAddAccount).toHaveBeenCalled();
   });
 
-  it('groups everyday, savings, cards and foreign currencies without a misleading combined total', () => {
+  it('totals only everyday accounts in the default currency and masks savings', () => {
     const all = texts(
       render({
         accounts: [
@@ -67,15 +67,16 @@ describe('Home accounts', () => {
       })
     );
     expect(all).toEqual(
-      expect.arrayContaining(['Everyday money', 'Savings & investments', 'Credit cards', 'Other currencies'])
+      expect.arrayContaining(['Bank, cash & wallets only · INR', 'SBI', 'Cash', 'Wise', 'Card', 'Pot'])
     );
-    expect(all).not.toContain('₹10,500');
+    expect(all).toContain('₹10,500');
+    expect(all.join(' ')).toContain('$50');
     expect(all.join(' ')).not.toContain('99,000');
   });
 
   it('says what kind each account is', () => {
     const all = texts(render({ accounts: [account('HDFC', 'credit_card', -400_000)] }));
-    expect(all).toContain('credit card');
+    expect(all.some((text) => text.includes('credit card'))).toBe(true);
     expect(all).not.toContain('Bank, cash & wallets only');
   });
 

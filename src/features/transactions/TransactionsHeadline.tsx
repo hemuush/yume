@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { View } from 'react-native';
+import { View, useWindowDimensions } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import { Text } from '@/components/Text';
 import ReanimatedAnimated, {
@@ -61,6 +61,8 @@ export function TransactionsHeadline({
   current?: boolean;
 }) {
   const reduce = useReduceMotion();
+  const { width, fontScale } = useWindowDimensions();
+  const stacked = width < 360 || fontScale > 1.2;
   // Render the committed period immediately so chart taps and timeline rows share one snapshot.
   const displayed: HeadlineContent = {
     expenseMinor,
@@ -107,20 +109,39 @@ export function TransactionsHeadline({
   const change = displayed.expenseChangeMinor;
   return (
     <Glass radius={28} style={[styles.sumCard, cardSurface.summary]}>
-      <Text style={styles.sumKicker} numberOfLines={1}>
-        {current ? `Spent this ${viewScope}` : 'Spent'}
-      </Text>
       <ReanimatedAnimated.View style={slideStyle}>
-        <CountUpAmount
-          key={periodKey}
-          countFromZero={false}
-          minor={displayed.expenseMinor}
-          style={styles.headlineAmt}
-          symbolStyle={styles.headlineSymbol}
-          numberOfLines={1}
-          adjustsFontSizeToFit
-        />
-        {/* Keep the comparison beside the headline; cash flow sits below the chart. */}
+        <View style={[styles.sumTop, stacked && styles.sumTopStacked]}>
+          <View style={styles.sumLead}>
+            <Text style={styles.sumKicker}>{current ? `Spent this ${viewScope}` : 'Spent'}</Text>
+            <CountUpAmount
+              key={periodKey}
+              countFromZero={false}
+              minor={displayed.expenseMinor}
+              style={styles.headlineAmt}
+              symbolStyle={styles.headlineSymbol}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+            />
+          </View>
+          {displayed.incomeMinor > 0 && (
+            <View style={[styles.sumCashflow, stacked && styles.sumCashflowStacked]}>
+              <View style={[styles.sumMetric, stacked && styles.sumMetricStacked]}>
+                <Text style={styles.sumKicker}>Money in</Text>
+                <Text style={[styles.sumMetricAmount, styles.income]}>
+                  {formatMoney(displayed.incomeMinor)}
+                </Text>
+              </View>
+              <View style={[styles.sumMetric, stacked && styles.sumMetricStacked]}>
+                <Text style={styles.sumKicker}>Net</Text>
+                <Text style={[styles.sumMetricAmount, net > 0 && styles.income, net < 0 && styles.expense]}>
+                  {net > 0 ? '+' : net < 0 ? '−' : ''}
+                  {formatMoney(Math.abs(net))}
+                </Text>
+              </View>
+            </View>
+          )}
+        </View>
+        {/* Keep the period comparison below the figures and above the chart. */}
         {change != null && change !== 0 && (
           <View style={styles.sumChips}>
             {change != null && change !== 0 && (
@@ -143,23 +164,6 @@ export function TransactionsHeadline({
           <SpendBarChart bars={displayed.bars} onPressDay={onPressDay} selectedKey={selectedKey} inset={0} />
         </View>
         <ChartLegend items={displayed.legend} inset={0} max={LEGEND_MAX} />
-        {displayed.incomeMinor > 0 && (
-          <View style={styles.sumFooter}>
-            <View style={styles.sumMetric}>
-              <Text style={styles.sumKicker}>Money in</Text>
-              <Text style={[styles.sumMetricAmount, styles.income]}>
-                {formatMoney(displayed.incomeMinor)}
-              </Text>
-            </View>
-            <View style={styles.sumMetric}>
-              <Text style={styles.sumKicker}>Net</Text>
-              <Text style={[styles.sumMetricAmount, net > 0 && styles.income, net < 0 && styles.expense]}>
-                {net > 0 ? '+' : net < 0 ? '−' : ''}
-                {formatMoney(Math.abs(net))}
-              </Text>
-            </View>
-          </View>
-        )}
       </ReanimatedAnimated.View>
     </Glass>
   );

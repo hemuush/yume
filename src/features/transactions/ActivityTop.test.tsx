@@ -1,8 +1,9 @@
 /**
- * Top of Activity: the Spent card (change pill, Week/Month corner, one-line legend, Money in | Net strip)
+ * Top of Activity: the Spent card (change pill, Week/Month corner, one-line legend, Money in / Net corner)
  * and the type filter as one segmented bar, picked categories under it only while any. Figures are made up.
  */
-import { Text } from 'react-native';
+import { Text, StyleSheet } from 'react-native';
+import { styles } from './transactions.styles';
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
 
 jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMock').createReanimatedMock());
@@ -49,7 +50,7 @@ function headline(over: Partial<React.ComponentProps<typeof TransactionsHeadline
 }
 
 describe('Spent card', () => {
-  it('separates the comparison from the money in and net footer', () => {
+  it('shows cashflow above the chart and keeps the comparison separate', () => {
     const all = texts(headline());
     expect(all).toEqual(expect.arrayContaining(['Spent', 'Money in', '₹5,796', 'Net', '−₹11,273']));
     expect(all.some((t) => t.includes('₹2,310 less than last week'))).toBe(true);
@@ -134,4 +135,29 @@ it('expands and collapses the category legend without changing the selected peri
   expect(toggle().props.accessibilityState.expanded).toBe(true);
   act(() => toggle().props.onPress());
   expect(texts(tree)).not.toContain('Travel');
+});
+
+it.each([
+  { width: 390, fontScale: 1, direction: 'row', align: 'flex-end' },
+  { width: 320, fontScale: 1, direction: 'column', align: 'flex-start' },
+  { width: 390, fontScale: 1.5, direction: 'column', align: 'flex-start' },
+])('places cashflow in the top summary at $width / $fontScale', (size) => {
+  const dimensions = jest
+    .spyOn(require('react-native'), 'useWindowDimensions')
+    .mockReturnValue({ ...size, height: 800, scale: 3 });
+  try {
+    const tree = headline();
+    const top = tree.root.find((n) => Array.isArray(n.props.style) && n.props.style[0] === styles.sumTop);
+    expect(StyleSheet.flatten(top.props.style).flexDirection).toBe(size.direction);
+    const labels = top.findAllByType(Text).map((n) => [n.props.children].flat().join(''));
+    expect(labels).toContain('Money in');
+    expect(labels).toContain('Net');
+    const metric = top.findAll(
+      (n) => Array.isArray(n.props.style) && n.props.style[0] === styles.sumMetric
+    )[0];
+    expect(StyleSheet.flatten(metric.props.style).alignItems).toBe(size.align);
+    act(() => tree.unmount());
+  } finally {
+    dimensions.mockRestore();
+  }
 });
