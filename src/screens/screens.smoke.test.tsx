@@ -522,14 +522,15 @@ describe('Home, stepping between months on a lived-in phone', () => {
     ).toBe(false);
     act(() => tree.unmount());
   });
-  // The month card steps by swiping; a screen reader gets the same as two actions on its figure.
+  // The month card steps by swiping; a screen reader gets the same as two actions on its figure (not the day
+  // rail's own increment and decrement, which travel within the month).
   const step = async (tree: ReactTestRenderer, dir: 'decrement' | 'increment') => {
     await act(async () => {
       tree.root
         .find(
           (n) =>
             Array.isArray(n.props.accessibilityActions) &&
-            n.props.accessibilityActions.some((a: { name: string }) => a.name === 'decrement') &&
+            n.props.accessibilityActions.some((a: { label?: string }) => a.label === 'Previous period') &&
             typeof n.props.onAccessibilityAction === 'function'
         )
         .props.onAccessibilityAction({ nativeEvent: { actionName: dir } });
@@ -605,7 +606,8 @@ describe('Home, stepping between months on a lived-in phone', () => {
           .find(
             (n) =>
               typeof n.props.onAccessibilityAction === 'function' &&
-              Array.isArray(n.props.accessibilityActions)
+              Array.isArray(n.props.accessibilityActions) &&
+              n.props.accessibilityActions.some((a: { label?: string }) => a.label === 'Previous period')
           )
           .props.onAccessibilityAction({ nativeEvent: { actionName: 'decrement' } });
       }

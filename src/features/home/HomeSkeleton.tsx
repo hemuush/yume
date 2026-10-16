@@ -7,7 +7,7 @@ export { CardRowsSkeleton } from '@/components/ListSkeleton';
 
 /**
  * Stands in for `ThisMonthHero` on Home's first load, in the card's own shape (label and month pill, the big
- * figure, its chips, the three Add buttons), so nothing jumps when the real card replaces it.
+ * figure beside the moon, its chip, the day rail, the three Add buttons), so nothing jumps when the real card replaces it.
  */
 export function ThisMonthHeroSkeleton() {
   const innerWidth = Math.max(0, useWindowDimensions().width - 62);
@@ -18,12 +18,17 @@ export function ThisMonthHeroSkeleton() {
         <Skeleton width={84} height={12} radius={4} />
         <Skeleton width={96} height={30} radius={15} />
       </View>
-      <Skeleton width={Math.min(170, innerWidth)} height={36} radius={8} />
-      <Skeleton width={Math.min(190, innerWidth)} height={11} radius={4} />
+      <View style={styles.figureRow}>
+        <View style={styles.figure}>
+          <Skeleton width={Math.min(150, Math.max(0, innerWidth - 120))} height={36} radius={8} />
+          <Skeleton width={Math.min(150, Math.max(0, innerWidth - 120))} height={11} radius={4} />
+        </View>
+        <Skeleton width={104} height={104} radius={52} />
+      </View>
       <View style={styles.row}>
-        <Skeleton width={90} height={26} radius={13} />
         <Skeleton width={Math.max(0, Math.min(150, innerWidth - 98))} height={26} radius={13} />
       </View>
+      <Skeleton width={innerWidth} height={62} radius={18} />
       <View style={styles.row}>
         {[0, 1, 2].map((i) => (
           <View key={i} style={styles.action}>
@@ -39,5 +44,7 @@ const styles = StyleSheet.create({
   card: { marginHorizontal: 16, padding: 14, gap: 10 },
   bar: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   row: { flexDirection: 'row', gap: 8 },
+  figureRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  figure: { gap: 10 },
   action: { flex: 1, alignItems: 'center' },
 });
