@@ -160,10 +160,12 @@ function EffectRow({ label, value, detail }: { label: string; value: string; det
 const styles = StyleSheet.create({
   section: {
     gap: 6,
-    paddingTop: 14,
-    marginTop: 10,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: theme.colors.borderSoft,
+    padding: 14,
+    marginTop: 12,
+    borderRadius: 22,
+    backgroundColor: theme.colors.surface,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.borderSoft,
   },
   heading: { fontFamily: theme.font.roundedBold, fontSize: 16, color: theme.colors.textPrimary },
   change: {

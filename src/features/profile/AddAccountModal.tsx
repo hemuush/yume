@@ -150,6 +150,7 @@ export function AddAccountModal({
   // by the type you pick, with its opening balance.
   return (
     <ModalSheet
+      dismissible={!saving}
       title="Account setup"
       visible={visible}
       onClose={close}
@@ -161,6 +162,7 @@ export function AddAccountModal({
       }
     >
       <SheetCard
+        compact
         hue={accountHue(type, accent)}
         icon={accountIcon(type)}
         kicker={ACCOUNT_TYPES.find((t) => t.value === type)?.label}

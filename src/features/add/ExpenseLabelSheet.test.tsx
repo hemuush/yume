@@ -2,6 +2,7 @@ import { act, create, ReactTestRenderer } from 'react-test-renderer';
 import { TextInput } from '@/components/Text';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { Chip } from '@/components/Chip';
+import { ModalSheet } from '@/components/ModalSheet';
 import { ExpenseLabelSheet } from './ExpenseLabelSheet';
 import { listExpenseLabels } from '@/db/expenseLabels';
 import { Keyboard } from 'react-native';
@@ -49,6 +50,7 @@ async function render(value = '') {
 }
 it('reuses a prior label as the only expense text field', async () => {
   const { pick, close } = await render();
+  expect(tree.root.findByType(ModalSheet).props.footer).toBeDefined();
   expect(tree.root.findAllByType(TextInput)).toHaveLength(1);
   act(() => tree.root.findByType(Chip).props.onPress());
   expect(pick).toHaveBeenCalledWith('Lunch');

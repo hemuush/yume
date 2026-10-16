@@ -137,12 +137,14 @@ export function PrepayModal({
   account,
   categoryId,
   onClose,
+  backLabel,
   onDone,
 }: {
   loan: Loan;
   account: Account;
   categoryId: string;
   onClose: () => void;
+  backLabel?: string;
   onDone: () => void;
 }) {
   const lent = loan.direction === 'lent';
@@ -241,6 +243,8 @@ export function PrepayModal({
   if (result) {
     return (
       <ModalSheet
+        backLabel={backLabel}
+        dismissible={!saving}
         visible
         onClose={onDone}
         title="Payment saved"
@@ -253,6 +257,8 @@ export function PrepayModal({
 
   return (
     <ModalSheet
+      backLabel={backLabel}
+      dismissible={!saving}
       visible
       onClose={onClose}
       variant="center"

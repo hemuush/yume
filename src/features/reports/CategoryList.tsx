@@ -12,6 +12,7 @@ import { allocateRoundedMinor, roundedMinor } from '@/lib/round';
 import { theme } from '@/constants/theme';
 import { AnimatedCategoryFill } from './AnimatedCategoryFill';
 import { styles } from './reports.styles';
+import { shade } from '@/lib/color';
 import { withPressed } from '@/lib/pressed';
 
 const COLLAPSED_COUNT = 5;
@@ -157,14 +158,19 @@ export function CategoryList({
       >
         {selected && (
           <>
-            <Text style={styles.catSplitCaption}>
-              {kind === 'income' ? 'Total income' : 'Total spending'}
-            </Text>
-            <Amount
-              minor={rounded[breakdown.indexOf(selected)]}
-              sensitive={selected.isSensitive}
-              style={styles.breakdownAmount}
-            />
+            <View style={[styles.breakdownSummary, { backgroundColor: shade(selected.color, 94) }]}>
+              <CategoryIcon name={iconOf?.(selected.categoryId) ?? 'tag'} color={selected.color} />
+              <View style={styles.catMain}>
+                <Text style={styles.catSplitCaption}>
+                  {kind === 'income' ? 'Total income' : 'Total spending'}
+                </Text>
+                <Amount
+                  minor={rounded[breakdown.indexOf(selected)]}
+                  sensitive={selected.isSensitive}
+                  style={styles.breakdownAmount}
+                />
+              </View>
+            </View>
             {splitError ? (
               <View style={styles.tidyNudge}>
                 <Text style={styles.errTitle}>Couldn’t load this breakdown</Text>

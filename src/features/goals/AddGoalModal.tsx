@@ -97,6 +97,7 @@ export function AddGoalModal({
 
   return (
     <ModalSheet
+      dismissible={!saving}
       title="Savings goal"
       visible={visible}
       onClose={onClose}
@@ -108,6 +109,7 @@ export function AddGoalModal({
       }
     >
       <GoalSheetCard
+        compact
         name={name.trim() || 'New goal'}
         savedMinor={0}
         targetMinor={inputMinor(target)}

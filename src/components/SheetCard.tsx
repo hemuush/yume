@@ -1,4 +1,5 @@
 import { View, StyleSheet, StyleProp, ViewStyle } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
@@ -6,8 +7,8 @@ import { shade } from '@/lib/color';
 import type { McIconName } from '@/components/iconName';
 
 /**
- * Compact sheet summary: category colour stays in the icon and edge, while the amount and context
- * remain readable. Forms keep their live preview without repeating a full hero banner.
+ * Pastel identity summary matching the main screen cards. Compact form previews keep the identity
+ * while read-only details retain their amount and context.
  */
 export function SheetCard({
   hue,
@@ -19,7 +20,7 @@ export function SheetCard({
   meta,
   progress,
   style,
-  softAccent = false,
+  compact = false,
 }: {
   hue: string;
   icon: string;
@@ -33,38 +34,40 @@ export function SheetCard({
   /** 0–1: draws a bar under the meta line — how far a goal has got. */
   progress?: number;
   style?: StyleProp<ViewStyle>;
-  softAccent?: boolean;
+  compact?: boolean;
 }) {
   return (
-    <View
-      style={[
-        styles.card,
-        softAccent
-          ? { borderLeftWidth: StyleSheet.hairlineWidth, borderColor: shade(hue, 80) }
-          : { borderLeftColor: shade(hue, 65) },
-        style,
-      ]}
-    >
+    <View style={[styles.card, compact && styles.compact, style]}>
+      {!compact && (
+        <LinearGradient
+          pointerEvents="none"
+          colors={[shade(hue, 89), shade(hue, 96)]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={StyleSheet.absoluteFill}
+        />
+      )}
       <View style={styles.top}>
-        <View
-          style={[
-            styles.icon,
-            softAccent && { width: 40, height: 40, borderRadius: 20 },
-            { backgroundColor: shade(hue, 92) },
-          ]}
-        >
-          <MaterialCommunityIcons name={icon as McIconName} size={18} color={shade(hue, 30, 10)} />
+        <View style={[styles.icon, { backgroundColor: compact ? shade(hue, 92) : theme.colors.glass }]}>
+          <MaterialCommunityIcons name={icon as McIconName} size={22} color={shade(hue, 30, 10)} />
         </View>
         <View style={styles.heading}>
           <Text style={styles.title}>{title}</Text>
           {kicker ? <Text style={styles.kicker}>{kicker}</Text> : null}
         </View>
       </View>
-      {amount !== undefined ? <Text style={[styles.amount, { color: amountColor }]}>{amount}</Text> : null}
+      {!compact && amount !== undefined ? (
+        <Text style={[styles.amount, { color: amountColor }]}>{amount}</Text>
+      ) : null}
       {meta ? <Text style={styles.meta}>{meta}</Text> : null}
-      {progress !== undefined && (
+      {!compact && progress !== undefined && (
         <View style={styles.track}>
-          <View style={[styles.fillBar, { width: `${Math.min(100, Math.max(0, progress * 100))}%` }]} />
+          <View
+            style={[
+              styles.fillBar,
+              { backgroundColor: shade(hue, 46), width: `${Math.min(100, Math.max(0, progress * 100))}%` },
+            ]}
+          />
         </View>
       )}
     </View>
@@ -73,23 +76,24 @@ export function SheetCard({
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: 18,
-    padding: 12,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-    borderLeftWidth: 3,
+    borderRadius: 22,
+    padding: 16,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: theme.colors.glass,
     backgroundColor: theme.colors.surface,
     marginBottom: 12,
   },
-  top: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  compact: { padding: 12, borderColor: theme.colors.borderSoft },
+  top: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   heading: { flex: 1, minWidth: 0, gap: 3 },
-  icon: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
+  icon: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
   kicker: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 18, color: theme.colors.textSecondary },
   amount: {
     fontFamily: theme.font.bodyMedium,
-    fontSize: 24,
-    lineHeight: 32,
-    marginTop: 6,
+    fontSize: 28,
+    lineHeight: 36,
+    marginTop: 10,
     fontVariant: ['tabular-nums'],
   },
   title: { fontFamily: theme.font.bodyBold, fontSize: 16, color: theme.colors.textPrimary },
@@ -101,7 +105,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   track: {
-    height: 5,
+    height: 6,
     borderRadius: 3,
     backgroundColor: theme.colors.inkWash,
     marginTop: 12,

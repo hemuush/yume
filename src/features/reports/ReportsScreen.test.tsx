@@ -48,11 +48,15 @@ jest.mock('@/components/ModalSheet', () => ({
   ModalSheet: ({
     visible,
     title,
+    subtitle,
+    onClose,
     children,
     footer,
   }: {
     visible: boolean;
     title?: string;
+    subtitle?: string;
+    onClose: () => void;
     children: unknown;
     footer?: unknown;
   }) =>
@@ -61,6 +65,11 @@ jest.mock('@/components/ModalSheet', () => ({
           require('react').Fragment,
           null,
           require('react').createElement(require('react-native').Text, null, title),
+          require('react').createElement(require('react-native').Text, null, subtitle),
+          require('react').createElement(require('react-native').Pressable, {
+            accessibilityLabel: 'Close',
+            onPress: onClose,
+          }),
           children,
           footer
         )
@@ -361,7 +370,7 @@ describe('Reports screen', () => {
         })
     );
     await pressText(tree, '5');
-    await act(async () => byLabel(tree, 'Close this day').props.onPress());
+    await act(async () => byLabel(tree, 'Close').props.onPress());
     await act(async () =>
       finish([
         {
@@ -375,7 +384,7 @@ describe('Reports screen', () => {
       ])
     );
     expect(texts(tree)).not.toContain('Late entry');
-    expect(texts(tree)).not.toContain('Close this day');
+    expect(tree.root.findAll((n) => n.props.accessibilityLabel === 'Close')).toHaveLength(0);
   });
   it('reports account-query failures and recovers through retry', async () => {
     const tree = await render();
@@ -443,7 +452,7 @@ describe('Reports screen', () => {
       mockHide.current = false;
     }
   });
-  it('opens a heatmap day as a card under the grid, and closes it', async () => {
+  it('opens a heatmap day in a sheet with a fixed header, and closes it', async () => {
     const tree = await render();
     await pressText(tree, '5');
     expect(mockListTransactions).toHaveBeenCalledWith({
@@ -455,7 +464,7 @@ describe('Reports screen', () => {
     expect(shown).toContain('Groceries');
     expect(shown).toContain('1 transaction');
     await act(async () => {
-      byLabel(tree, 'Close this day').props.onPress();
+      byLabel(tree, 'Close').props.onPress();
     });
     shown = texts(tree);
     expect(shown).not.toContain('Groceries');

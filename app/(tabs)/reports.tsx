@@ -658,8 +658,22 @@ export default function ReportsScreen() {
               />
             )}
             {!byMonth && selectedDay && (
-              <ModalSheet visible onClose={closeDay} showClose={false}>
+              <ModalSheet
+                visible
+                onClose={closeDay}
+                title={parseLocalIsoDate(selectedDay).toLocaleDateString(undefined, {
+                  weekday: 'short',
+                  day: 'numeric',
+                  month: 'long',
+                })}
+                subtitle={
+                  shownDayTx && shownDayTx.length > 0
+                    ? `${shownDayTx.length} transaction${shownDayTx.length === 1 ? '' : 's'}`
+                    : undefined
+                }
+              >
                 <DayCard
+                  embedded
                   iso={selectedDay}
                   txs={shownDayTx}
                   catById={catById}

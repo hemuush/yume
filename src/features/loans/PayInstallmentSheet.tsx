@@ -29,6 +29,7 @@ export function PayInstallmentSheet({
   linkedAccountMissing = false,
   balanceMinor,
   onClose,
+  backLabel,
   onPaid,
 }: {
   installment: LoanPayment;
@@ -39,6 +40,7 @@ export function PayInstallmentSheet({
   /** What the paying account holds now, to show what it'll hold after (Plan knows it; omitted elsewhere). */
   balanceMinor?: number;
   onClose: () => void;
+  backLabel?: string;
   /** After the payment (or its undo) is saved — refresh whatever shows it. */
   onPaid: () => void | Promise<void>;
 }) {
@@ -98,6 +100,8 @@ export function PayInstallmentSheet({
 
   return (
     <ModalSheet
+      backLabel={backLabel}
+      dismissible={!busy}
       visible
       onClose={onClose}
       variant="center"

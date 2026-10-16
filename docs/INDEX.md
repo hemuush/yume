@@ -1,5 +1,7 @@
 # Documentation index
 
+See the [16 October app audit](APP_AUDIT_2026_10_16.md) for popup validation, preference-race fixes, startup privacy gating and outstanding device checks.
+
 See [16 October morning notification fix](NOTIFICATION_FIX_2026_10_16.md) for current reminder behaviour, corrections and verification limits.
 
 See [14 October release readiness](RELEASE_READINESS_2026_10_14.md) for the latest local audit, fixes, fresh validation and remaining release gates.

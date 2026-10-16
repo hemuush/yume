@@ -58,6 +58,7 @@ export function RestorePreviewSheet({
       });
   return (
     <ModalSheet
+      dismissible={!busy}
       visible
       title="Restore preview"
       // Backdrop, ✕ and Android back do nothing while the restore is running.

@@ -1,4 +1,13 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, ReactNode } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  useRef,
+  ReactNode,
+} from 'react';
 import { getAccentColor, setAccentColor, getCachedAccentColor, getThemeId, setThemeId } from '@/db/settings';
 import { THEMES, DEFAULT_THEME_ID, themeById } from './themes';
 import { theme } from '@/constants/theme';
@@ -46,25 +55,34 @@ const AccentContext = createContext<AccentContextValue>({
 export function AccentProvider({ children }: { children: ReactNode }) {
   const [themeId, setThemeIdState] = useState(DEFAULT_THEME_ID);
   const [accent, setAccentState] = useState(getCachedAccentColor());
+  const generation = useRef(0);
 
   useEffect(() => {
     // Reads the last-picked pack. A pre-theme install has no `theme_id` row (null), so it keeps the stored
     // accent hex as-is, with the default pack's secondary, rather than snapping back to Yume's.
-    const read = () =>
-      Promise.all([getThemeId(), getAccentColor()])
+    const read = () => {
+      const call = ++generation.current;
+      return Promise.all([getThemeId(), getAccentColor()])
         .then(([id, hex]) => {
+          if (call !== generation.current) return;
           setAccentState(hex);
           setThemeIdState(id ?? DEFAULT_THEME_ID);
         })
         .catch(() => {});
+    };
     void read();
     // A restore brings back the backup's theme.
-    return onSettingsRestored(() => void read());
+    const unsubscribe = onSettingsRestored(() => void read());
+    return () => {
+      generation.current += 1;
+      unsubscribe();
+    };
   }, []);
 
   const setTheme = useCallback((id: string) => {
     const pack = themeById(id);
     if (!pack) return;
+    generation.current += 1;
     setThemeIdState(id);
     setAccentState(pack.primary);
     // A failed write only costs the choice on the next launch; the theme still applies this session.

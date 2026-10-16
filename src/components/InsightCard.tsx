@@ -3,6 +3,9 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import { Text } from './Text';
 import { theme } from '@/constants/theme';
+import { useSheetSurface } from './SheetSurface';
+import { withPressed } from '@/lib/pressed';
+import { haptics } from '@/lib/haptics';
 
 /** Compact financial summaries using the app's existing surfaces and typography. */
 export function InsightHeader({
@@ -77,24 +80,41 @@ export function InsightDisclosure({
   children: ReactNode;
   initiallyOpen?: boolean;
 }) {
+  const inSheet = useSheetSurface();
   const [open, setOpen] = useState(initiallyOpen);
   return (
-    <View>
+    <View style={inSheet && insight.sheetDisclosure}>
       <Pressable
         accessibilityRole="button"
         accessibilityState={{ expanded: open }}
         accessibilityLabel={title}
-        onPress={() => setOpen((v) => !v)}
-        style={insight.disclosure}
+        onPress={() => {
+          if (inSheet) haptics.tap();
+          setOpen((v) => !v);
+        }}
+        style={withPressed([
+          insight.disclosure,
+          inSheet && insight.sheetDisclosureHead,
+          inSheet && open && insight.sheetDisclosureOpen,
+        ])}
       >
         <Text style={insight.link}>{title}</Text>
         <Feather name={open ? 'chevron-up' : 'chevron-down'} size={16} color={theme.colors.textSecondary} />
       </Pressable>
-      {open && <View style={insight.content}>{children}</View>}
+      {open && <View style={[insight.content, inSheet && insight.sheetDisclosureContent]}>{children}</View>}
     </View>
   );
 }
 export const insight = StyleSheet.create({
+  sheetDisclosure: {
+    borderRadius: 18,
+    backgroundColor: theme.colors.surface,
+    overflow: 'hidden',
+    marginVertical: 4,
+  },
+  sheetDisclosureHead: { paddingHorizontal: 12, minHeight: 48 },
+  sheetDisclosureOpen: { backgroundColor: theme.colors.primaryTint },
+  sheetDisclosureContent: { paddingHorizontal: 12, paddingTop: 10, paddingBottom: 12 },
   card: {
     padding: 14,
     gap: 12,

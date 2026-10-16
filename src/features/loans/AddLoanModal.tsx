@@ -349,6 +349,7 @@ export function AddLoanModal({
 
   return (
     <ModalSheet
+      dismissible={!saving}
       title="Loan setup"
       visible={visible}
       onClose={onClose}

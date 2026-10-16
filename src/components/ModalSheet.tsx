@@ -1,5 +1,9 @@
-import { View, Modal, Pressable, Animated, StyleSheet, ScrollView } from 'react-native';
+import { View, Modal, Pressable, Animated, StyleSheet, useWindowDimensions } from 'react-native';
 import { Text } from '@/components/Text';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useAccent } from '@/theme/AccentContext';
+import { shade } from '@/lib/color';
+import { SheetSurfaceProvider } from './SheetSurface';
 import Feather from '@expo/vector-icons/Feather';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { SafeAreaProvider, useSafeAreaInsets, initialWindowMetrics } from 'react-native-safe-area-context';
@@ -17,14 +21,17 @@ interface Props {
   /** A quieter line under the title — a count, a date range, etc. */
   subtitle?: string;
   children: React.ReactNode;
-  /** 'sheet' slides up from the bottom edge; 'center' is a small centered dialog. */
+  /** Bottom-anchored sheet or centred dialog, both with a stationary dimmed backdrop. */
   variant?: 'sheet' | 'center';
+  size?: 'compact' | 'standard' | 'expanded';
+  dismissible?: boolean;
+  backLabel?: string;
   /** Set false for short dialogs whose content should not scroll. */
   scrollable?: boolean;
   /** The ✕ that closes it, top-right. On by default — it's what replaced every Cancel button. */
   showClose?: boolean;
   /**
-   * A pinned action bar. Switches the modal to three bands (grabber + title, scrolling content, `footer`
+   * A pinned action bar. Switches the modal to three bands (header, scrolling content, `footer`
    * padded past the system nav bar) so the main action never scrolls away. Works for sheet and dialog.
    */
   footer?: React.ReactNode;
@@ -34,10 +41,14 @@ interface Props {
 
 /**
  * Every modal goes through here: backdrop tap, ✕ or Android back closes it; the keyboard pushes the sheet
- * up; bottom padding clears the gesture/nav bar; one surface colour top to bottom, pinned footer included.
+ * up; bottom padding clears the gesture/nav bar. The themed header, neutral body and pinned action tray
+ * share the main screens' palette.
  */
 export function ModalSheet(props: Props) {
-  const { visible, onClose } = props;
+  const { visible, onClose, dismissible = true } = props;
+  const close = () => {
+    if (dismissible) onClose();
+  };
   const reduceMotion = useReduceMotion();
   return (
     <Modal
@@ -46,7 +57,7 @@ export function ModalSheet(props: Props) {
       // leaves the backdrop short of full-screen early on, so the real screen shows through at full brightness.
       animationType={reduceMotion ? 'none' : 'fade'}
       transparent
-      onRequestClose={onClose}
+      onRequestClose={close}
       statusBarTranslucent
       navigationBarTranslucent
     >
@@ -55,25 +66,50 @@ export function ModalSheet(props: Props) {
           this, useSafeAreaInsets() reads { bottom: 0 } inside here and every
           sheet's footer buttons end up clipped behind the system nav bar. */}
       <SafeAreaProvider initialMetrics={initialWindowMetrics}>
-        <ModalSheetBody {...props} />
+        <SheetSurfaceProvider value>
+          <ModalSheetBody {...props} onClose={close} />
+        </SheetSurfaceProvider>
       </SafeAreaProvider>
     </Modal>
   );
 }
 
-function ModalCloseButton({ onClose }: { onClose: () => void }) {
+function SheetWash() {
+  const { accent } = useAccent();
+  return (
+    <LinearGradient
+      pointerEvents="none"
+      colors={[shade(accent ?? theme.colors.primary, 92), theme.colors.background]}
+      style={styles.wash}
+    />
+  );
+}
+
+function ModalCloseButton({
+  onClose,
+  disabled,
+  label = 'Close',
+  back = false,
+}: {
+  onClose: () => void;
+  disabled: boolean;
+  label?: string;
+  back?: boolean;
+}) {
   const { animatedStyle, onPressIn, onPressOut } = usePressScale();
   return (
     <AnimatedPressable
-      style={[styles.closeBtn, animatedStyle]}
+      style={[styles.closeBtn, disabled && styles.disabled, animatedStyle]}
+      disabled={disabled}
+      accessibilityState={{ disabled }}
       onPress={onClose}
       onPressIn={onPressIn}
       onPressOut={onPressOut}
       hitSlop={10}
       accessibilityRole="button"
-      accessibilityLabel="Close"
+      accessibilityLabel={label}
     >
-      <Feather name="x" size={16} color={theme.colors.textSecondary} />
+      <Feather name={back ? 'arrow-left' : 'x'} size={20} color={theme.colors.textPrimary} />
     </AnimatedPressable>
   );
 }
@@ -178,8 +214,14 @@ function ModalSheetBody({
   showClose = true,
   footer,
   strip,
+  size = 'standard',
+  dismissible = true,
+  backLabel,
 }: Props) {
   const insets = useSafeAreaInsets();
+  const { height, fontScale } = useWindowDimensions();
+  const maxHeight =
+    height < 640 || fontScale > 1.2 || size === 'expanded' ? '94%' : size === 'compact' ? '78%' : '90%';
   const isSheet = variant === 'sheet';
   const stripView = !isSheet && strip ? <View style={[styles.strip, { backgroundColor: strip }]} /> : null;
 
@@ -187,18 +229,19 @@ function ModalSheetBody({
   const { host, pad, scrollProps: scrollTracking } = useAmountPadHost();
   // A pinned footer means the three-band layout (fixed header / scrolling body / fixed footer). A scrolling
   // sheet always uses it: the single-column scroll can be taller than its content and strand the sheet.
-  const framed = footer !== undefined || (isSheet && scrollable);
+  const framed = footer !== undefined || scrollable;
 
   // Title and subtitle on the left, the ✕ on the right — or just the ✕ for a
   // sheet that opens on its own card instead of a title.
   const header =
-    title || subtitle || showClose ? (
-      <View style={[styles.header, (title || subtitle) && styles.headerDivider]}>
+    title || subtitle || showClose || backLabel ? (
+      <View style={styles.header}>
+        {backLabel && <ModalCloseButton onClose={onClose} disabled={!dismissible} label={backLabel} back />}
         <View style={styles.headerText}>
           {title ? <Text style={styles.title}>{title}</Text> : null}
           {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
         </View>
-        {showClose && <ModalCloseButton onClose={onClose} />}
+        {showClose && !backLabel && <ModalCloseButton onClose={onClose} disabled={!dismissible} />}
       </View>
     ) : null;
 
@@ -209,6 +252,7 @@ function ModalSheetBody({
         <View style={styles.flex}>
           <Pressable
             style={styles.backdrop}
+            disabled={!dismissible}
             onPress={onClose}
             accessibilityRole="button"
             accessibilityLabel="Close"
@@ -221,17 +265,20 @@ function ModalSheetBody({
             ]}
             pointerEvents="box-none"
           >
-            <View style={[styles.dialog, styles.dialogFramed]}>
+            <View testID="sheet-surface" style={[styles.dialog, styles.dialogFramed, { maxHeight }]}>
+              <SheetWash />
               {stripView}
               <View style={styles.framedPad}>{header}</View>
-              <ScrollView
+              <KeyboardAwareScrollView
                 {...scrollTracking}
                 style={styles.framedBody}
                 contentContainerStyle={styles.framedDialogContent}
+                bottomOffset={24}
+                keyboardShouldPersistTaps="handled"
                 showsVerticalScrollIndicator={false}
               >
                 {children}
-              </ScrollView>
+              </KeyboardAwareScrollView>
               <View style={[styles.framedDialogFooter, { paddingBottom: pad ? 10 : 16 }]}>{footer}</View>
               {pad && <View style={styles.dialogDock}>{pad}</View>}
             </View>
@@ -241,7 +288,7 @@ function ModalSheetBody({
     );
   }
 
-  // Bottom sheet with a pinned footer: fixed grabber + header, scrolling
+  // Bottom sheet with a pinned footer: fixed header, scrolling
   // content, action bar pinned to the bottom above the nav bar.
   if (framed) {
     return (
@@ -249,6 +296,7 @@ function ModalSheetBody({
         <View style={styles.flex}>
           <Pressable
             style={styles.backdrop}
+            disabled={!dismissible}
             onPress={onClose}
             accessibilityRole="button"
             accessibilityLabel="Close"
@@ -257,8 +305,8 @@ function ModalSheetBody({
             style={[styles.flex, styles.alignBottom, { paddingTop: insets.top + 8 }]}
             pointerEvents="box-none"
           >
-            <View style={styles.framedSheet}>
-              <View style={styles.grabber} />
+            <View testID="sheet-surface" style={[styles.framedSheet, { maxHeight }]}>
+              <SheetWash />
               <View style={styles.framedPad}>{header}</View>
               <KeyboardAwareScrollView
                 {...scrollTracking}
@@ -293,8 +341,8 @@ function ModalSheetBody({
         { paddingBottom: isSheet ? 24 + insets.bottom : 20 },
       ]}
     >
+      <SheetWash />
       {stripView}
-      {isSheet && <View style={styles.grabber} />}
       {header}
       {children}
       {pad && <View style={styles.inlineDock}>{pad}</View>}
@@ -308,19 +356,11 @@ function ModalSheetBody({
           a parent Pressable would swallow every tap inside the sheet too. */}
         <Pressable
           style={styles.backdrop}
+          disabled={!dismissible}
           onPress={onClose}
           accessibilityRole="button"
           accessibilityLabel="Close"
         />
-        {/* KeyboardAwareScrollView (react-native-keyboard-controller) scrolls the
-          focused input clear of the keyboard and animates in sync with it,
-          inside the Modal's own Android Dialog window where the built-in
-          KeyboardAvoidingView / manual keyboard-height padding both fell
-          short. `bottomOffset` keeps a small gap between the field and the
-          keyboard's top edge. */}
-        {/* paddingTop keeps the sheet (grabber + title) clear of the
-          translucent status bar even when its content is tall enough to
-          fill the screen or the keyboard has pushed it up. */}
         <View
           style={[
             styles.flex,
@@ -331,19 +371,7 @@ function ModalSheetBody({
           ]}
           pointerEvents="box-none"
         >
-          {scrollable ? (
-            <KeyboardAwareScrollView
-              style={isSheet ? styles.scrollSheet : styles.scrollDialog}
-              contentContainerStyle={isSheet ? undefined : styles.scrollDialogContent}
-              bottomOffset={24}
-              keyboardShouldPersistTaps="handled"
-              showsVerticalScrollIndicator={false}
-            >
-              {body}
-            </KeyboardAwareScrollView>
-          ) : (
-            body
-          )}
+          {body}
         </View>
       </View>
     </AmountPadHostProvider>
@@ -353,9 +381,9 @@ function ModalSheetBody({
 const SHEET_SHADOW = {
   shadowColor: theme.colors.ink,
   shadowOffset: { width: 0, height: -6 },
-  shadowOpacity: 0.12,
+  shadowOpacity: 0.08,
   shadowRadius: 22,
-  elevation: 14,
+  elevation: 8,
 } as const;
 
 const styles = StyleSheet.create({
@@ -370,24 +398,17 @@ const styles = StyleSheet.create({
   },
   alignBottom: { justifyContent: 'flex-end' },
   alignCenter: { justifyContent: 'center' },
-  scrollSheet: { flexGrow: 0, maxHeight: '88%' },
-  scrollDialog: { flexGrow: 0, maxHeight: '85%' },
-  scrollDialogContent: { flexGrow: 1, justifyContent: 'center' },
+  wash: { position: 'absolute', top: 0, left: 0, right: 0, height: 180 },
 
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    marginBottom: 8,
+    marginBottom: 12,
     minHeight: 44,
   },
-  headerDivider: {
-    paddingBottom: 8,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: theme.colors.borderSoft,
-  },
   headerText: { flex: 1, minWidth: 0 },
-  title: { fontFamily: theme.font.roundedBold, fontSize: 18, color: theme.colors.textPrimary },
+  title: { fontFamily: theme.font.roundedBold, fontSize: 20, color: theme.colors.textPrimary },
   subtitle: {
     fontFamily: theme.font.body,
     fontSize: 12,
@@ -397,14 +418,13 @@ const styles = StyleSheet.create({
   },
 
   // --- pinned-footer layouts ---
-  framedPad: { paddingHorizontal: 16 },
+  framedPad: { paddingHorizontal: 16, paddingTop: 18 },
   framedBody: { flexGrow: 0, flexShrink: 1 },
   framedSheet: {
     backgroundColor: theme.colors.background,
     overflow: 'hidden',
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    maxHeight: '92%',
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
     flexShrink: 1,
     ...SHEET_SHADOW,
   },
@@ -412,12 +432,14 @@ const styles = StyleSheet.create({
   framedSheetFooter: {
     paddingHorizontal: 16,
     paddingTop: 12,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: theme.colors.borderSoft,
-    backgroundColor: theme.colors.background,
+    backgroundColor: theme.colors.surface,
+    borderTopLeftRadius: 22,
+    borderTopRightRadius: 22,
+    borderTopWidth: 1,
+    borderColor: theme.colors.white,
   },
   framedDialogContent: { paddingHorizontal: 16, paddingBottom: 4 },
-  sheetDock: { paddingHorizontal: 16, paddingTop: 2, backgroundColor: theme.colors.background },
+  sheetDock: { paddingHorizontal: 16, paddingTop: 2, backgroundColor: theme.colors.surface },
   dialogDock: { paddingHorizontal: 16, paddingBottom: 14, backgroundColor: theme.colors.surface },
   inlineDock: { marginTop: 12 },
   framedDialogFooter: { paddingHorizontal: 16, paddingTop: 12, backgroundColor: theme.colors.surface },
@@ -447,14 +469,15 @@ const styles = StyleSheet.create({
   sheet: {
     backgroundColor: theme.colors.background,
     overflow: 'hidden',
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
     paddingHorizontal: 16,
+    paddingTop: 18,
     ...SHEET_SHADOW,
   },
   dialog: {
-    backgroundColor: theme.colors.surface,
-    borderRadius: 26,
+    backgroundColor: theme.colors.background,
+    borderRadius: 28,
     padding: 18,
     marginHorizontal: 24,
     shadowColor: theme.colors.ink,
@@ -467,26 +490,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 0,
     paddingBottom: 0,
     overflow: 'hidden',
-    maxHeight: '78%',
     alignSelf: 'stretch',
   },
   strip: { position: 'absolute', top: 0, left: 0, right: 0, height: 4 },
   // The strip is clipped to the dialog's corners; the space under it keeps the title off it.
   dialogStriped: { overflow: 'hidden', paddingTop: 22 },
-  grabber: {
-    alignSelf: 'center',
-    width: 38,
-    height: 4,
-    borderRadius: 999,
-    backgroundColor: theme.colors.inkHairline,
-    marginTop: 8,
-    marginBottom: 6,
-  },
   closeBtn: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: theme.colors.surfaceAlt,
+    backgroundColor: theme.colors.surface,
+    borderWidth: 1,
+    borderColor: theme.colors.white,
     alignItems: 'center',
     justifyContent: 'center',
   },

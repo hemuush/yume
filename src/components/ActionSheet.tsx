@@ -33,7 +33,7 @@ export function ActionSheet({
   items: ActionSheetItem[];
 }) {
   return (
-    <ModalSheet visible={visible} onClose={onClose} title={title} subtitle={subtitle}>
+    <ModalSheet size="compact" visible={visible} onClose={onClose} title={title} subtitle={subtitle}>
       <ActionList items={items} onClose={onClose} />
     </ModalSheet>
   );
@@ -43,22 +43,14 @@ export function ActionSheet({
 export function ActionList({ items, onClose }: { items: ActionSheetItem[]; onClose: () => void }) {
   return (
     <View style={styles.list}>
-      {items.map((item, i) => (
-        <ActionSheetRow key={item.key} item={item} divider={i > 0} onClose={onClose} />
+      {items.map((item) => (
+        <ActionSheetRow key={item.key} item={item} onClose={onClose} />
       ))}
     </View>
   );
 }
 
-function ActionSheetRow({
-  item,
-  divider,
-  onClose,
-}: {
-  item: ActionSheetItem;
-  divider: boolean;
-  onClose: () => void;
-}) {
+function ActionSheetRow({ item, onClose }: { item: ActionSheetItem; onClose: () => void }) {
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.98);
   return (
     <AnimatedPressable
@@ -68,7 +60,7 @@ function ActionSheetRow({
       }}
       onPressIn={onPressIn}
       onPressOut={onPressOut}
-      style={[styles.row, divider && styles.rowDivider, animatedStyle]}
+      style={[styles.row, item.destructive && styles.destructiveRow, animatedStyle]}
       accessibilityRole="button"
     >
       {item.icon && (
@@ -81,26 +73,31 @@ function ActionSheetRow({
         </View>
       )}
       <Text style={[styles.rowLabel, item.destructive && styles.rowLabelDestructive]}>{item.label}</Text>
+      {!item.destructive && <Feather name="chevron-right" size={18} color={theme.colors.textMuted} />}
     </AnimatedPressable>
   );
 }
 
 const styles = StyleSheet.create({
   list: {
-    paddingVertical: 2,
+    gap: 8,
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    minHeight: 48,
+    minHeight: 60,
     paddingVertical: 10,
-    paddingHorizontal: 4,
+    paddingHorizontal: 12,
+    borderRadius: 18,
+    backgroundColor: theme.colors.surface,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.borderSoft,
   },
-  rowDivider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.borderSoft },
+  destructiveRow: { backgroundColor: theme.colors.expenseTint, borderColor: theme.colors.expenseTint },
   icon: {
-    width: 28,
-    height: 28,
+    width: 40,
+    height: 40,
     borderRadius: 14,
     backgroundColor: theme.colors.surfaceAlt,
     alignItems: 'center',

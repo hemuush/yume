@@ -195,8 +195,9 @@ export function AccountSummarySheet({
   return (
     <>
       <ModalSheet
+        size="expanded"
         title="Account details"
-        visible
+        visible={!(valueSheet && inv)}
         onClose={onClose}
         footer={
           <View style={styles.footerRow}>
@@ -394,6 +395,7 @@ export function AccountSummarySheet({
       </ModalSheet>
       {valueSheet && inv && (
         <UpdateValueSheet
+          backLabel="Back to account"
           visible
           account={account}
           valuation={valueSheet.valuation}

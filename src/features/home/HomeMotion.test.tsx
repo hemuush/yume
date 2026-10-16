@@ -110,7 +110,7 @@ it('continues a changed amount from the visible value and ignores an obsolete co
   expect(text(r)).toContain('₹5,000');
 });
 
-it('keeps category tiles immediately readable across reordering and reduced motion', () => {
+it('keeps selected category details readable across reordering and reduced motion', () => {
   const categories = ['Food', 'Rent', 'Travel', 'Shopping'].map((name, i) => ({
     categoryId: name,
     name,
@@ -131,6 +131,12 @@ it('keeps category tiles immediately readable across reordering and reduced moti
     />
   );
   const r = render(dial());
+  expect(text(r)).toContain('40% of spending');
+  act(() => {
+    r.root
+      .find((n) => n.props.accessibilityLabel === 'Rent, 30% of spending' && n.props.onPress)
+      .props.onPress();
+  });
   expect(text(r)).toContain('30% of spending');
   expect(text(r)).toContain('₹300');
   const before = mockTargets.length;

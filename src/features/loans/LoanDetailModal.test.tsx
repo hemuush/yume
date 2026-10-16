@@ -64,6 +64,8 @@ jest.mock('./LoanSchedule', () => ({ LoanSchedule: () => null }));
 jest.mock('react-native-svg', () => ({ __esModule: true, default: () => null, Path: () => null }));
 jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMock').createReanimatedMock());
 
+import { ModalSheet } from '@/components/ModalSheet';
+import { PayInstallmentSheet } from './PayInstallmentSheet';
 import { LoanDetailModal } from './LoanDetailModal';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { formatMoney } from '@/lib/money';
@@ -273,4 +275,14 @@ it('shows loan actions inside the existing sheet and returns to its overview', a
   await act(async () => payButton(tree).props.onPress());
   expect(tree.root.findAllByProps({ testID: 'loan-actions' })).toHaveLength(0);
   expect(tree.root.findAllByProps({ testID: 'card' }).length).toBeGreaterThan(0);
+});
+
+it('shows only the payment popup and restores the loan when it closes', async () => {
+  setup([installment(1, todayIso)]);
+  const tree = await render();
+  expect(tree.root.findByType(ModalSheet).props.visible).toBe(true);
+  act(() => payButton(tree).props.onPress());
+  expect(tree.root.findByType(ModalSheet).props.visible).toBe(false);
+  act(() => tree.root.findByType(PayInstallmentSheet).props.onClose());
+  expect(tree.root.findByType(ModalSheet).props.visible).toBe(true);
 });

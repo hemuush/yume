@@ -16,10 +16,12 @@ import { errorMessage } from '@/lib/errorMessage';
 export function AssetModal({
   loan,
   onClose,
+  backLabel,
   onDone,
 }: {
   loan: Loan;
   onClose: () => void;
+  backLabel?: string;
   onDone: () => void;
 }) {
   const runAction = useSaveOnce(async (action: () => Promise<void>) => {
@@ -69,6 +71,8 @@ export function AssetModal({
 
   return (
     <ModalSheet
+      backLabel={backLabel}
+      dismissible={!saving}
       visible
       onClose={onClose}
       variant="center"

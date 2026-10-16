@@ -35,10 +35,11 @@ export const screenStyles = StyleSheet.create({
   cardInSheet: {
     marginHorizontal: 0,
     marginBottom: 12,
-    backgroundColor: 'transparent',
-    borderWidth: 0,
-    borderRadius: 0,
-    overflow: 'visible',
+    backgroundColor: theme.colors.surface,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.borderSoft,
+    borderRadius: 22,
+    overflow: 'hidden',
   },
   row: {
     flexDirection: 'row',

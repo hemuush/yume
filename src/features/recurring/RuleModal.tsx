@@ -320,6 +320,7 @@ export function RuleModal({
 
   return (
     <ModalSheet
+      dismissible={!saving}
       visible={visible}
       title={editing ? 'Edit recurring entry' : 'New recurring entry'}
       onClose={onClose}
@@ -335,6 +336,7 @@ export function RuleModal({
       }
     >
       <SheetCard
+        compact
         hue={type === 'transfer' ? secondary : (cat?.color ?? accent)}
         icon={type === 'transfer' ? 'swap-horizontal' : (cat?.icon ?? 'repeat')}
         kicker={cadenceLabel(frequency, interval)}

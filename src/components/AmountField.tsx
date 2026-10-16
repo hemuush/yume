@@ -236,5 +236,5 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', gap: 7 },
   gap: { flex: 1 },
   done: { paddingVertical: 11 },
-  figure: { fontFamily: theme.font.monoBold, fontSize: 16 },
+  figure: { fontFamily: theme.font.bodyBold, fontVariant: ['tabular-nums'], fontSize: 16 },
 });

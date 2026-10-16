@@ -150,6 +150,7 @@ export function FilterModal({
 
   return (
     <ModalSheet
+      size="expanded"
       visible={visible}
       onClose={() => {
         Keyboard.dismiss();

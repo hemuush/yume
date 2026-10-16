@@ -18,7 +18,6 @@ import { PrimaryButton } from '@/components/PrimaryButton';
 import { Amount } from '@/components/Amount';
 import { ModalSheet } from '@/components/ModalSheet';
 import { SheetCard } from '@/components/SheetCard';
-import { cardSurface } from '@/components/CardSurface';
 import { StatusBadge } from '@/components/StatusBadge';
 import { SettingsRow } from '@/components/SettingsRow';
 import { theme } from '@/constants/theme';
@@ -337,6 +336,7 @@ export function TransactionDetailModal({
     <ModalSheet
       visible
       title="Entry details"
+      dismissible={!busy}
       onClose={onClose}
       footer={
         canEdit ? (
@@ -423,14 +423,6 @@ export function TransactionDetailModal({
       }
     >
       <SheetCard
-        softAccent
-        style={
-          tx.type === 'income'
-            ? cardSurface.savings
-            : transfer
-              ? { backgroundColor: theme.colors.primaryTint }
-              : cardSurface.debt
-        }
         hue={transfer ? secondary : (cat?.color ?? theme.colors.textMuted)}
         icon={transfer ? 'swap-horizontal' : (cat?.icon ?? 'tag')}
         kicker={transfer || !parentName ? kind : `${kind} · ${parentName}`}
@@ -491,7 +483,7 @@ export function TransactionDetailModal({
               accessibilityHint={a.sub}
             >
               <View style={styles.quickIcon}>
-                <Feather name={a.icon} size={17} color={theme.colors.ink} />
+                <Feather name={a.icon} size={20} color={theme.colors.ink} />
               </View>
               <Text style={styles.quickText}>{a.short}</Text>
             </Pressable>

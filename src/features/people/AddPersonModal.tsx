@@ -44,6 +44,7 @@ export function AddPersonModal({
 
   return (
     <ModalSheet
+      dismissible={!saving}
       visible={visible}
       onClose={onClose}
       variant="center"

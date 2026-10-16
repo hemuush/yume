@@ -234,7 +234,17 @@ export function LoanDetailModal({
   return (
     <>
       <ModalSheet
-        visible
+        size="expanded"
+        dismissible={!busy}
+        visible={
+          !(
+            (payVisible && nextInstallment) ||
+            (prepayVisible && defaultAccount && emiCategory) ||
+            rateChangeVisible ||
+            assetModalVisible ||
+            accountModalVisible
+          )
+        }
         title={moreActionsVisible ? 'Loan actions' : 'Loan details'}
         onClose={moreActionsVisible ? () => setMoreActionsVisible(false) : onClose}
         footer={
@@ -273,7 +283,6 @@ export function LoanDetailModal({
             {loadError && <Text style={styles.errorText}>Couldn't load the latest details: {loadError}</Text>}
 
             <SheetCard
-              style={styles.detailSummary}
               hue={
                 hue ?? (liveLoan.direction === 'borrowed' ? theme.colors.idCoralDeep : theme.colors.secondary)
               }
@@ -449,6 +458,7 @@ export function LoanDetailModal({
 
       {payVisible && nextInstallment && (
         <PayInstallmentSheet
+          backLabel="Back to loan"
           installment={nextInstallment}
           account={defaultAccount ?? null}
           categoryId={emiCategory?.id ?? null}
@@ -463,6 +473,7 @@ export function LoanDetailModal({
 
       {prepayVisible && defaultAccount && emiCategory && (
         <PrepayModal
+          backLabel="Back to loan"
           loan={liveLoan}
           account={defaultAccount}
           categoryId={emiCategory.id}
@@ -477,6 +488,7 @@ export function LoanDetailModal({
 
       {rateChangeVisible && (
         <RateChangeModal
+          backLabel="Back to loan"
           loan={liveLoan}
           remainingMonths={pendingInstallments.length}
           onClose={() => setRateChangeVisible(false)}
@@ -490,6 +502,7 @@ export function LoanDetailModal({
 
       {assetModalVisible && (
         <AssetModal
+          backLabel="Back to loan"
           loan={liveLoan}
           onClose={() => setAssetModalVisible(false)}
           onDone={async () => {
@@ -502,6 +515,7 @@ export function LoanDetailModal({
 
       {accountModalVisible && (
         <AccountModal
+          backLabel="Back to loan"
           accounts={accounts}
           currentAccountId={defaultAccount?.id ?? null}
           onClose={() => setAccountModalVisible(false)}

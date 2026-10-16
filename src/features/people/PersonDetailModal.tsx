@@ -249,6 +249,7 @@ export function PersonDetailModal({
 
   return (
     <ModalSheet
+      dismissible={!saving}
       visible
       title="Friends & family"
       onClose={saving ? () => {} : onClose}

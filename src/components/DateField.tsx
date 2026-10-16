@@ -7,6 +7,7 @@ import { theme } from '@/constants/theme';
 import { FIELD_LABEL } from '@/constants/textStyles';
 import { haptics } from '@/lib/haptics';
 import { parseLocalIsoDate, toLocalIsoDate, addDaysToIsoDate } from '@/lib/date';
+import { useSheetSurface } from './SheetSurface';
 import { withPressed } from '@/lib/pressed';
 
 /** "5 Oct 2026" — the full date, since form dates are often in another year. */
@@ -37,6 +38,7 @@ export function DateField({
   maxDate?: string;
   pastFacing?: boolean;
 }) {
+  const inSheet = useSheetSurface();
   const [open, setOpen] = useState(false);
   const today = toLocalIsoDate(new Date());
   const yesterday = addDaysToIsoDate(today, -1);
@@ -59,7 +61,7 @@ export function DateField({
               if (value !== q.iso) haptics.tap();
               onChange(q.iso);
             }}
-            style={withPressed([styles.chip, value === q.iso && styles.chipOn])}
+            style={withPressed([styles.chip, inSheet && styles.sheetChip, value === q.iso && styles.chipOn])}
             accessibilityRole="button"
             accessibilityState={{ selected: value === q.iso }}
             accessibilityLabel={`${label}: ${q.label}`}
@@ -72,7 +74,11 @@ export function DateField({
             haptics.tap();
             setOpen(true);
           }}
-          style={withPressed([styles.chip, !isQuick && pastFacing && styles.chipOn])}
+          style={withPressed([
+            styles.chip,
+            inSheet && styles.sheetChip,
+            !isQuick && pastFacing && styles.chipOn,
+          ])}
           accessibilityRole="button"
           accessibilityLabel={`${label}: ${dateFieldLabel(value)}. Change`}
         >
@@ -106,6 +112,7 @@ export function DateField({
 
 const styles = StyleSheet.create({
   wrap: { marginBottom: 14 },
+  sheetChip: { backgroundColor: theme.colors.surface, borderColor: theme.colors.borderSoft },
   label: {
     ...FIELD_LABEL,
     color: theme.colors.textMuted,

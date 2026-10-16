@@ -125,6 +125,14 @@ export const styles = StyleSheet.create({
     paddingBottom: 12,
     marginBottom: BLOCK_GAP,
   },
+  dayCardEmbedded: {
+    backgroundColor: 'transparent',
+    borderWidth: 0,
+    paddingTop: 0,
+    paddingBottom: 0,
+    marginBottom: 0,
+    marginHorizontal: -16,
+  },
   dayHead: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -238,7 +246,7 @@ export const styles = StyleSheet.create({
     fontFamily: theme.font.bodyMedium,
     fontSize: 13,
     color: theme.colors.textMuted,
-    paddingTop: 8,
+    paddingTop: 0,
   },
 
   // Trends: one line chart with a Spending / Net worth switch.
@@ -436,6 +444,14 @@ export const styles = StyleSheet.create({
     marginTop: 16,
     marginBottom: 6,
   },
+  breakdownSummary: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    borderRadius: 22,
+    padding: 14,
+    marginBottom: 12,
+  },
   breakdownAmount: {
     fontVariant: ['tabular-nums'],
     fontFamily: theme.font.body,
@@ -456,7 +472,7 @@ export const styles = StyleSheet.create({
   catSplitName: { flex: 1, fontFamily: theme.font.body, fontSize: 14, color: theme.colors.textSecondary },
   catSplitAmt: {
     fontVariant: ['tabular-nums'],
-    fontFamily: theme.font.mono,
+    fontFamily: theme.font.bodyMedium,
     fontSize: 14,
     color: theme.colors.textPrimary,
   },

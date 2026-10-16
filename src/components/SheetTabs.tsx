@@ -1,14 +1,15 @@
 import { View, Pressable, StyleSheet } from 'react-native';
 import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
+import { haptics } from '@/lib/haptics';
 import { withPressed } from '@/lib/pressed';
 
-/** Quiet sheet navigation without another full-width pill card. */
+/** Match the main page filters, with a clear selected state and light tap feedback. */
 export function SheetTabs<T extends string>({
   options,
   value,
   onChange,
-  variant = 'underline',
+  variant = 'pill',
 }: {
   options: { label: string; value: T }[];
   value: T;
@@ -20,7 +21,11 @@ export function SheetTabs<T extends string>({
       {options.map((option) => (
         <Pressable
           key={option.value}
-          onPress={() => onChange(option.value)}
+          onPress={() => {
+            if (option.value === value) return;
+            haptics.tap();
+            onChange(option.value);
+          }}
           accessibilityRole="tab"
           accessibilityState={{ selected: option.value === value }}
           style={withPressed([
@@ -29,7 +34,15 @@ export function SheetTabs<T extends string>({
             option.value === value && (variant === 'pill' ? styles.pillSelected : styles.selected),
           ])}
         >
-          <Text style={[styles.label, option.value === value && styles.active]}>{option.label}</Text>
+          <Text
+            style={[
+              styles.label,
+              option.value === value && styles.active,
+              variant === 'pill' && option.value === value && styles.pillActive,
+            ]}
+          >
+            {option.label}
+          </Text>
         </Pressable>
       ))}
     </View>
@@ -64,10 +77,13 @@ const styles = StyleSheet.create({
     padding: 3,
     gap: 4,
     borderRadius: 24,
-    backgroundColor: theme.colors.surfaceAlt,
+    backgroundColor: theme.colors.surface,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.borderSoft,
   },
   pillTab: { borderBottomWidth: 0, borderRadius: 21 },
-  pillSelected: { backgroundColor: theme.colors.surface },
+  pillSelected: { backgroundColor: theme.colors.ink },
+  pillActive: { color: theme.colors.surface },
   label: {
     fontFamily: theme.font.body,
     fontSize: 13,

@@ -17,12 +17,14 @@ export function AccountModal({
   currentAccountId,
   loanId,
   onClose,
+  backLabel,
   onDone,
 }: {
   accounts: Account[];
   currentAccountId: string | null;
   loanId: string;
   onClose: () => void;
+  backLabel?: string;
   onDone: () => void;
 }) {
   const runAction = useSaveOnce(async (action: () => Promise<void>) => {
@@ -49,6 +51,8 @@ export function AccountModal({
 
   return (
     <ModalSheet
+      backLabel={backLabel}
+      dismissible={!saving}
       visible
       onClose={onClose}
       variant="center"

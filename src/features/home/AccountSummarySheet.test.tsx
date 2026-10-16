@@ -35,6 +35,7 @@ jest.mock('@/features/investments/InvestmentPanel', () => ({ InvestmentPanel: mo
 jest.mock('@/features/investments/UpdateValueSheet', () => ({ UpdateValueSheet: mockStub('value-sheet') }));
 
 import { AccountSummarySheet } from './AccountSummarySheet';
+import { ModalSheet } from '@/components/ModalSheet';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { formatMoney } from '@/lib/money';
 import { CURRENT_PERIOD } from '@/lib/period';
@@ -367,9 +368,11 @@ describe('AccountSummarySheet — tracked account', () => {
     const tree = await render({ account: tracked, accounts: [tracked], onChanged });
     act(() => byId(tree, 'panel').props.onUpdate());
     expect(has(tree, 'value-sheet')).toBe(true);
+    expect(tree.root.findByType(ModalSheet).props.visible).toBe(false);
     act(() => byId(tree, 'value-sheet').props.onSaved());
     expect(onChanged).toHaveBeenCalledTimes(1);
     expect(has(tree, 'value-sheet')).toBe(false);
+    expect(tree.root.findByType(ModalSheet).props.visible).toBe(true);
   });
 
   it('closes the whole sheet after a value is deleted', async () => {
