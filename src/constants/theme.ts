@@ -75,8 +75,6 @@ export const theme = {
       free: '#7DB9F2',
       debt: '#BBA9F7',
     },
-    // Home's month moon: the lit side's gradient ends and the faint craters on it (the dark side is `homeInk`).
-    moon: { lit: '#FFF9E0', litEdge: '#FFE59A', crater: '#C9A24A', halo: '#FFE18C' },
     // The "still to pay" family: the chip and date tile, a paler row behind a bill due soon, and its text.
     dueTint: '#FCEFC9',
     dueRow: '#FDF7E8',

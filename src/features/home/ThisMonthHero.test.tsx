@@ -1,6 +1,6 @@
 /**
- * Home's month card: the free-to-use headline with income and carry-over under it, the month moon, chips for
- * today and bills still to pay, the day rail, the Add buttons, and stepping the period. All figures are made up.
+ * Home's month card: the free-to-use headline with income and carry-over under it, chips for the spent
+ * share, today and bills still to pay, the Add buttons, and stepping the period. All figures are made up.
  */
 import { Text } from 'react-native';
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
@@ -69,14 +69,14 @@ function render(over: Partial<React.ComponentProps<typeof ThisMonthHero>> = {}) 
 }
 
 describe('month card', () => {
-  it('leads with what is free to use, the income under it, the moon, and today as a chip', () => {
+  it('leads with what is free to use, the income under it, and the spent share and today as chips', () => {
     const all = texts(render());
     expect(all).toEqual(
       expect.arrayContaining([
         'Free to use',
         '₹794',
         'Income ₹1,96,056, less spending and savings',
-        '51% kept',
+        '49% spent',
         '₹2,045 of ₹5,000 today',
         'Expense',
         'Income',
@@ -209,9 +209,11 @@ describe('month card with savings hidden', () => {
     mockHideAmounts = false;
   });
 
-  it('keeps the free headline and the moon, and never says what was saved', () => {
+  it('keeps the free headline and the spent share, and never says what was saved', () => {
     const all = texts(render(hidden));
-    expect(all).toEqual(expect.arrayContaining(['30% free', 'Free to use', '₹30,000', 'Spent', 'Debt left']));
+    expect(all).toEqual(
+      expect.arrayContaining(['10% spent', 'Free to use', '₹30,000', 'Spent', 'Debt left'])
+    );
     expect(all).not.toContain('Saved');
   });
 
@@ -309,60 +311,5 @@ describe('month card, debt', () => {
     expect(
       r.root.findAll((n) => n.props.accessibilityLabel === 'Debt left, ₹0, all paid off').length
     ).toBeGreaterThan(0);
-  });
-});
-
-describe('month card day rail', () => {
-  const railDaily = [
-    { date: '2026-10-15', totalMinor: 3_000_000 },
-    { date: '2026-10-16', totalMinor: 5_000_000 },
-  ];
-  const withRail = { railDaily, railToday: '2026-10-16' };
-  const rail = (r: ReactTestRenderer) => r.root.find((n) => n.props.accessibilityRole === 'adjustable');
-  const step = (r: ReactTestRenderer, name: 'increment' | 'decrement') =>
-    act(() => rail(r).props.onAccessibilityAction({ nativeEvent: { actionName: name } }));
-
-  it('is only there when the card is given the month to travel through', () => {
-    expect(render().root.findAll((n) => n.props.accessibilityRole === 'adjustable')).toHaveLength(0);
-    const all = texts(render(withRail));
-    expect(all).toEqual(expect.arrayContaining(['Drag to travel through October', 'Today, 16 Oct']));
-  });
-
-  it('shows the month as it was on an earlier day: the spending after it is put back', () => {
-    const r = render(withRail);
-    step(r, 'decrement');
-    const all = texts(r);
-    expect(all).toEqual(expect.arrayContaining(['On 15 Oct', '₹50,794', 'Left on that day', '15 Oct']));
-    expect(all).toContain('Travelling through October');
-    // Spent goes back by what was spent afterwards; saved and debt stay as they are.
-    expect(all).toEqual(expect.arrayContaining(['₹45,762', '₹99,500', '₹23,18,958']));
-    // Today's chip and the pace line are about today only.
-    expect(all.some((t) => t.includes('today'))).toBe(false);
-    expect(all.some((t) => t.startsWith('On pace for about'))).toBe(false);
-  });
-
-  it('comes back to today, and never travels past it', () => {
-    const r = render(withRail);
-    step(r, 'decrement');
-    step(r, 'increment');
-    step(r, 'increment');
-    const all = texts(r);
-    expect(all).toEqual(expect.arrayContaining(['Free to use', '₹794', 'Today, 16 Oct']));
-    expect(all.some((t) => t.startsWith('On pace for about'))).toBe(true);
-  });
-
-  it('forgets the day when the period turns', () => {
-    const r = render(withRail);
-    step(r, 'decrement');
-    act(() => r.update(hero({ ...withRail, periodKey: 'month:-1', incomeMinor: 19_605_600 })));
-    expect(texts(r)).not.toContain('On 15 Oct');
-  });
-
-  it('never lets the spending go below zero when travelling', () => {
-    const r = render({ ...withRail, spentMinor: 1_000_000, surplusMinor: 79_400 });
-    step(r, 'decrement');
-    const all = texts(r);
-    expect(all).toContain('On 15 Oct');
-    expect(all).toContain('₹0');
   });
 });

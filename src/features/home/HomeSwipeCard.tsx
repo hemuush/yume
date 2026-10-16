@@ -13,7 +13,6 @@ import ReanimatedAnimated, {
   cancelAnimation,
   useSharedValue,
   useAnimatedStyle,
-  withSpring,
   withTiming,
 } from 'react-native-reanimated';
 import { useReduceMotion } from '@/lib/useReduceMotion';
@@ -80,7 +79,7 @@ export function HomeSwipeCard({ pages }: { pages: SwipePage[] }) {
   const shownIndex = Math.min(activeIndex, Math.max(0, pages.length - 1));
   useEffect(() => {
     const x = shownIndex * tabWidth;
-    tabX.value = reduce || tabWidth === 0 ? x : withSpring(x, TAB_SPRING);
+    tabX.value = reduce || tabWidth === 0 ? x : withTiming(x, timing(MOTION.standard));
     return () => cancelAnimation(tabX);
   }, [shownIndex, tabWidth, reduce, tabX]);
   useEffect(() => {
@@ -274,9 +273,6 @@ export function HomeSwipeCard({ pages }: { pages: SwipePage[] }) {
     </View>
   );
 }
-
-/** The tab highlight overshoots slightly and settles. */
-const TAB_SPRING = { damping: 15, stiffness: 210, mass: 0.9 };
 
 /** Space between the pill track's edge and its tabs. */
 const TRACK_PAD = 4;
