@@ -5,7 +5,7 @@ import { Text } from '@/components/Text';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { DateRange } from '@/types';
 import { getSpendingExplanation } from '@/db/spendingExplanation';
-import { formatMaskableMoney } from '@/lib/money';
+import { formatMoney } from '@/lib/money';
 import { usePrivacy } from '@/theme/PrivacyContext';
 import { allocateRoundedMinor } from '@/lib/round';
 import { errorMessage } from '@/lib/errorMessage';
@@ -25,9 +25,13 @@ export function SpendingExplanation({
   onExplore?: () => void;
   onBeforeEntry?: () => void;
 }) {
-  const [result, setResult] = useState<Awaited<ReturnType<typeof getSpendingExplanation>> | null>(null),
+  const [loadedResult, setResult] = useState<{
+      data: Awaited<ReturnType<typeof getSpendingExplanation>>;
+      private: boolean;
+    } | null>(null),
     [error, setError] = useState<string | null>(null);
   const { hideAmounts } = usePrivacy();
+  const result = loadedResult?.private === hideAmounts ? loadedResult.data : null;
   const currentStart = current.start,
     currentEnd = current.end,
     previousStart = previous.start,
@@ -43,7 +47,7 @@ export function SpendingExplanation({
       hideAmounts
     )
       .then((r) => {
-        if (live) setResult(r);
+        if (live) setResult({ data: r, private: hideAmounts });
       })
       .catch((e) => {
         if (live) setError(errorMessage(e));
@@ -52,7 +56,7 @@ export function SpendingExplanation({
       live = false;
     };
   }, [categoryId, currentStart, currentEnd, previousStart, previousEnd, hideAmounts]);
-  const money = (minor: number) => formatMaskableMoney(minor, { masked: hideAmounts });
+  const money = (minor: number) => formatMoney(minor);
   const effects = result
     ? allocateRoundedMinor([result.frequencyMinor, result.sizeMinor, result.refundsMinor], result.deltaMinor)
     : [0, 0, 0];

@@ -165,3 +165,13 @@ it('refreshes accounts and discards the previous estimate when returning to the 
   expect(tree.root.findByProps({ testID: 'amount' }).props.value).toBe('500');
   await act(async () => tree.unmount());
 });
+
+it('shows an everyday purchase result without hidden savings inputs', async () => {
+  mockHidden.value = true;
+  const result = await estimatePurchase('bank', 50000, '2026-10-12');
+  jest.mocked(estimatePurchase).mockResolvedValueOnce({ ...result, reservedMinor: 0, reservations: [] });
+  const tree = await check();
+  expect(words(tree)).toContain('Short by');
+  expect(words(tree)).not.toContain('Estimate hidden');
+  await act(async () => tree.unmount());
+});

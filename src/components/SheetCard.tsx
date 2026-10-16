@@ -19,6 +19,7 @@ export function SheetCard({
   meta,
   progress,
   style,
+  softAccent = false,
 }: {
   hue: string;
   icon: string;
@@ -32,11 +33,26 @@ export function SheetCard({
   /** 0–1: draws a bar under the meta line — how far a goal has got. */
   progress?: number;
   style?: StyleProp<ViewStyle>;
+  softAccent?: boolean;
 }) {
   return (
-    <View style={[styles.card, { borderLeftColor: shade(hue, 65) }, style]}>
+    <View
+      style={[
+        styles.card,
+        softAccent
+          ? { borderLeftWidth: StyleSheet.hairlineWidth, borderColor: shade(hue, 80) }
+          : { borderLeftColor: shade(hue, 65) },
+        style,
+      ]}
+    >
       <View style={styles.top}>
-        <View style={[styles.icon, { backgroundColor: shade(hue, 92) }]}>
+        <View
+          style={[
+            styles.icon,
+            softAccent && { width: 40, height: 40, borderRadius: 20 },
+            { backgroundColor: shade(hue, 92) },
+          ]}
+        >
           <MaterialCommunityIcons name={icon as McIconName} size={18} color={shade(hue, 30, 10)} />
         </View>
         <View style={styles.heading}>

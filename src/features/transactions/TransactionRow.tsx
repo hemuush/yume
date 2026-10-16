@@ -1,4 +1,4 @@
-import { View, Pressable, Animated } from 'react-native';
+import { View, Pressable, Animated, StyleSheet, useWindowDimensions } from 'react-native';
 import { Text } from '@/components/Text';
 import { Category, Transaction } from '@/types';
 import { CategoryIcon } from '@/components/CategoryIcon';
@@ -10,13 +10,11 @@ import { screenStyles as h } from '@/components/screenStyles';
 import { formatMaskableMoney } from '@/lib/money';
 import { usePrivacy } from '@/theme/PrivacyContext';
 import { useAccent } from '@/theme/AccentContext';
+import { dayMonthYear, shortMonth } from '@/lib/dateLabels';
 
 const AnimatedRowPressable = Animated.createAnimatedComponent(Pressable);
 
-/**
- * One row in a day's group: sits directly on the page with a hairline bottom border, not in a card.
- * Subtitle is just the account, since the date is the day-group header above the run of rows.
- */
+/** Note-first entry row; category details opt into date badges and retain subcategory context. */
 export function TransactionRow({
   tx,
   cat,
@@ -25,6 +23,8 @@ export function TransactionRow({
   divider,
   onPress,
   savingsTransfer = false,
+  contextCategoryId,
+  currency,
 }: {
   tx: Transaction;
   cat: Category | undefined;
@@ -34,14 +34,21 @@ export function TransactionRow({
   onPress: () => void;
   /** A transfer into or out of a savings account — masked with "hide savings & investment amounts". */
   savingsTransfer?: boolean;
+  /** Category details already name the parent: use a date badge and note-first title. */
+  contextCategoryId?: string;
+  currency?: string;
 }) {
   const { hideAmounts } = usePrivacy();
+  const { width, fontScale } = useWindowDimensions();
+  const stacked = width < 360 || fontScale > 1.2;
+  const title = tx.note?.trim() || categoryName(tx.categoryId);
   const { secondary } = useAccent();
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.98);
   const isTransfer = tx.type === 'transfer';
   // Read aloud as one line, with the amount masked exactly as it is on screen.
   const spokenAmount = formatMaskableMoney(tx.amountMinor, {
     masked: hideAmounts && !!(cat?.isSensitive || savingsTransfer),
+    currency,
   });
   const spoken = [
     isTransfer
@@ -55,52 +62,83 @@ export function TransactionRow({
         : spokenAmount,
     isTransfer ? null : accountName(tx.accountId),
     tx.note || null,
+    contextCategoryId ? dayMonthYear(tx.date) : null,
   ]
     .filter(Boolean)
     .join(', ');
   return (
     <AnimatedRowPressable
-      style={[h.row, divider && h.divider, animatedStyle]}
+      style={[h.row, stacked && local.stacked, divider && h.divider, animatedStyle]}
       accessibilityRole="button"
       accessibilityLabel={spoken}
       onPress={onPress}
       onPressIn={onPressIn}
       onPressOut={onPressOut}
     >
-      <CategoryIcon
-        name={tx.type === 'transfer' ? 'swap-horizontal' : (cat?.icon ?? 'tag')}
-        color={tx.type === 'transfer' ? secondary : (cat?.color ?? theme.colors.textMuted)}
-      />
-      <View style={h.mid}>
-        <Text style={h.title} numberOfLines={1}>
-          {tx.type === 'transfer' ? (
-            `${accountName(tx.accountId)} → ${accountName(tx.toAccountId!)}`
-          ) : (
-            <>
-              {categoryName(tx.categoryId)}
-              {!!tx.note && <Text style={styles.rowNoteInline}> · {tx.note}</Text>}
-            </>
-          )}
+      {contextCategoryId ? (
+        <View
+          style={local.dateBadge}
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+        >
+          <Text style={local.dateDay}>{Number(tx.date.slice(8, 10))}</Text>
+          <Text style={local.dateMonth}>{shortMonth(tx.date).toUpperCase()}</Text>
+        </View>
+      ) : (
+        <CategoryIcon
+          name={isTransfer ? 'swap-horizontal' : (cat?.icon ?? 'tag')}
+          color={isTransfer ? secondary : (cat?.color ?? theme.colors.textMuted)}
+        />
+      )}
+      <View style={[h.mid, stacked && local.wideMid]}>
+        <Text style={h.title} numberOfLines={2}>
+          {isTransfer ? `${accountName(tx.accountId)} → ${accountName(tx.toAccountId!)}` : title}
         </Text>
         <Text style={h.sub} numberOfLines={1}>
           {tx.isRefund && <Text style={styles.rowRefund}>Refund · </Text>}
-          {tx.type === 'transfer' ? 'Own accounts' : accountName(tx.accountId)}
+          {contextCategoryId && tx.note?.trim() && tx.categoryId !== contextCategoryId
+            ? `${categoryName(tx.categoryId)} · `
+            : ''}
+          {isTransfer ? 'Own accounts' : accountName(tx.accountId)}
           {tx.splitTotalMinor
-            ? ` · Part of a ${formatMaskableMoney(tx.splitTotalMinor, { masked: hideAmounts && !!cat?.isSensitive })} split`
+            ? ` · Part of a ${formatMaskableMoney(tx.splitTotalMinor, { currency, masked: hideAmounts && !!cat?.isSensitive })} split`
             : ''}
         </Text>
       </View>
       <Text
+        numberOfLines={1}
+        adjustsFontSizeToFit
         style={[
           h.amount,
+          { maxWidth: '100%', flexShrink: 1 },
           { fontFamily: theme.font.bodyBold, fontVariant: ['tabular-nums'] },
           tx.type === 'income' && h.income,
-          tx.type === 'expense' && h.expense,
         ]}
       >
         {tx.type === 'expense' ? '−' : tx.type === 'income' ? '+' : ''}
-        <Amount minor={tx.amountMinor} sensitive={cat?.isSensitive || savingsTransfer} />
+        <Amount minor={tx.amountMinor} currency={currency} sensitive={cat?.isSensitive || savingsTransfer} />
       </Text>
     </AnimatedRowPressable>
   );
 }
+
+const local = StyleSheet.create({
+  stacked: { flexWrap: 'wrap', rowGap: 6 },
+  wideMid: { flexGrow: 1, flexBasis: '65%' },
+  dateBadge: {
+    minWidth: 40,
+    minHeight: 44,
+    padding: 4,
+    borderRadius: 12,
+    backgroundColor: theme.colors.surfaceAlt,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dateDay: {
+    fontFamily: theme.font.bodyBold,
+    fontVariant: ['tabular-nums'],
+    fontSize: 15,
+    color: theme.colors.textPrimary,
+  },
+  dateMonth: { fontFamily: theme.font.bodyMedium, fontSize: 10, color: theme.colors.textSecondary },
+});

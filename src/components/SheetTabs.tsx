@@ -8,20 +8,26 @@ export function SheetTabs<T extends string>({
   options,
   value,
   onChange,
+  variant = 'underline',
 }: {
   options: { label: string; value: T }[];
   value: T;
   onChange: (value: T) => void;
+  variant?: 'underline' | 'pill';
 }) {
   return (
-    <View style={styles.row} accessibilityRole="tablist">
+    <View style={[styles.row, variant === 'pill' && styles.pillRow]} accessibilityRole="tablist">
       {options.map((option) => (
         <Pressable
           key={option.value}
           onPress={() => onChange(option.value)}
           accessibilityRole="tab"
           accessibilityState={{ selected: option.value === value }}
-          style={withPressed([styles.tab, option.value === value && styles.selected])}
+          style={withPressed([
+            styles.tab,
+            variant === 'pill' && styles.pillTab,
+            option.value === value && (variant === 'pill' ? styles.pillSelected : styles.selected),
+          ])}
         >
           <Text style={[styles.label, option.value === value && styles.active]}>{option.label}</Text>
         </Pressable>
@@ -53,6 +59,15 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 12,
     borderTopRightRadius: 12,
   },
+  pillRow: {
+    borderBottomWidth: 0,
+    padding: 3,
+    gap: 4,
+    borderRadius: 24,
+    backgroundColor: theme.colors.surfaceAlt,
+  },
+  pillTab: { borderBottomWidth: 0, borderRadius: 21 },
+  pillSelected: { backgroundColor: theme.colors.surface },
   label: {
     fontFamily: theme.font.body,
     fontSize: 13,

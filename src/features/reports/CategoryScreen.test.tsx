@@ -6,6 +6,11 @@ import { create, act, ReactTestRenderer } from 'react-test-renderer';
 import { Text } from 'react-native';
 
 jest.setTimeout(30000);
+let mockHidden = false;
+jest.mock('@/theme/PrivacyContext', () => ({ usePrivacy: () => ({ hideAmounts: mockHidden }) }));
+afterEach(() => {
+  mockHidden = false;
+});
 
 jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMock').createReanimatedMock());
 jest.mock('react-native-safe-area-context', () => ({
@@ -36,10 +41,22 @@ const category = (id: string, name: string, parentId: string | null = null) => (
   parentId,
   archived: false,
 });
+jest.mock('@/db/settings', () => ({
+  ...jest.requireActual('@/db/settings'),
+  getDefaultCurrency: async () => 'INR',
+}));
 jest.mock('@/db/ledger', () => ({
-  listCategories: async () => [category('food', 'Food'), category('bistro', 'Bistro', 'food')],
+  listCategories: async () => [
+    category('food', 'Food'),
+    category('bistro', 'Bistro', 'food'),
+    { ...category('loans', 'Loan EMI'), isSystem: true },
+    category('rent', 'Rent'),
+    category('private-parent', 'Private family'),
+    { ...category('private-child', 'Hidden child', 'private-parent'), isSensitive: true },
+    category('public-child', 'Visible sibling', 'private-parent'),
+  ],
   listAccounts: async () => [{ id: 'bank', name: 'Bank', type: 'bank', currency: 'INR' }],
-  listTransactions: async () => [
+  listTransactions: jest.fn(async () => [
     {
       id: 't1',
       type: 'expense',
@@ -50,7 +67,7 @@ jest.mock('@/db/ledger', () => ({
       date: '2026-09-10',
       note: '',
     },
-  ],
+  ]),
 }));
 jest.mock('@/db/reports', () => ({
   getCategoryOverview: async () => ({
@@ -91,6 +108,7 @@ jest.mock('@/db/budgets', () => ({
 
 import CategoryScreen from '../../../app/category/[id]';
 import { router } from 'expo-router';
+import { listTransactions } from '@/db/ledger';
 
 // Bars and rings animate to their values (useGrowFrom, at most the 700ms draw):
 // let the last ones finish before the file ends, so no frame fires after teardown.
@@ -147,7 +165,7 @@ describe('Category page', () => {
     const tree = await render();
     press(tree, 'What if I cut this?');
     expect(router.push).toHaveBeenCalledWith('/whatif?category=food');
-    press(tree, 'See all in Activity');
+    press(tree, 'See all');
     expect(router.navigate).toHaveBeenCalledWith(
       expect.stringMatching(/^\/transactions\?category=food&month=\d{4}-\d{2}$/)
     );
@@ -173,4 +191,51 @@ describe('Category page', () => {
     expect(router.back).toHaveBeenCalledTimes(1);
     expect(router.push).not.toHaveBeenCalledWith('/budgets');
   });
+});
+
+it('replaces casual spending cuts with Loans only for the protected EMI category', async () => {
+  mockParams.current = { id: 'loans' };
+  try {
+    const tree = await render();
+    expect(texts(tree)).toContain('View loans');
+    expect(texts(tree)).not.toContain('What if I cut this?');
+    expect(texts(tree).some((t) => t.endsWith(' a day'))).toBe(false);
+    expect(texts(tree)).not.toContain('Set a monthly limit');
+    press(tree, 'View loans');
+    expect(router.push).toHaveBeenLastCalledWith('/loans');
+    act(() => tree.unmount());
+  } finally {
+    mockParams.current = { id: 'food' };
+  }
+});
+it('keeps planning tools available for ordinary categories instead of guessing fixed-spend behavior', async () => {
+  mockParams.current = { id: 'rent' };
+  try {
+    const tree = await render();
+    expect(texts(tree)).toContain('What if I cut this?');
+    act(() => tree.unmount());
+  } finally {
+    mockParams.current = { id: 'food' };
+  }
+});
+
+it.each(['private-parent', 'public-child'])('keeps private category-family totals out of %s', async (id) => {
+  mockHidden = true;
+  mockParams.current = { id };
+  try {
+    const tree = await render();
+    expect(texts(tree)).toContain('Hidden for now');
+    expect(texts(tree)).not.toContain('₹650');
+    act(() => tree.unmount());
+  } finally {
+    mockParams.current = { id: 'food' };
+  }
+});
+
+it('scopes the latest entries to the overview currency and preserves the category rollup', async () => {
+  const tree = await render();
+  expect(listTransactions).toHaveBeenLastCalledWith(
+    expect.objectContaining({ currency: 'INR', categoryId: 'food', includeSubcategories: true })
+  );
+  act(() => tree.unmount());
 });

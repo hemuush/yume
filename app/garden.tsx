@@ -36,11 +36,11 @@ function noteFor(stage: GrowthStage, streak: number): string {
   // `stage === 'seed'` only happens at streak exactly 0 (stageForStreak's threshold); today's logged spend
   // resolves the streak at once, so there is no separate in-between state to word differently.
   if (stage === 'seed')
-    return "No streak going right now — spend under today's goal to plant the first seed.";
+    return "No streak going right now â€” spend under today's goal to plant the first seed.";
   if (stage === 'sprout')
     return `${streak} day${streak === 1 ? '' : 's'} running. A couple more and it's a sapling.`;
-  if (stage === 'sapling') return `${streak} days running — getting there. A full week and it blooms.`;
-  return `${streak} days running — in full bloom. A day over the goal starts it again from a seed.`;
+  if (stage === 'sapling') return `${streak} days running â€” getting there. A full week and it blooms.`;
+  return `${streak} days running â€” in full bloom. A day over the goal starts it again from a seed.`;
 }
 
 /** Daily spending-goal progress and streak history, with provisional results for today. */
@@ -51,7 +51,8 @@ export default function GardenScreen() {
   const { collapse, headerHeight, onJsScroll, settleJs } = useCollapsingHeader();
   const [dailyGoalMinor, setDailyGoalMinor] = useState<number | null>(null);
   const [series, setSeries] = useState<DailyGoalStreakPoint[]>([]);
-  const [todaySpentMinor, setTodaySpentMinor] = useState(0);
+  const [todaySpend, setTodaySpend] = useState<{ minor: number; private: boolean } | null>(null);
+  const todaySpentMinor = todaySpend?.minor ?? 0;
   const { hideAmounts } = usePrivacy();
   // The first-run goal form, right in the empty garden rather than directions to Settings.
   const [goalInput, setGoalInput] = useState('');
@@ -66,11 +67,11 @@ export default function GardenScreen() {
       goal != null
         ? getDailyGoalStreakSeries(goal, Math.max(POT_COUNT, new Date().getDate()))
         : Promise.resolve([]),
-      goal != null ? getTodaySpend() : Promise.resolve(0),
+      goal != null ? getTodaySpend(undefined, hideAmounts) : Promise.resolve(0),
     ]);
     setSeries(streakSeries);
-    setTodaySpentMinor(todaySpend);
-  }, []);
+    setTodaySpend({ minor: todaySpend, private: hideAmounts });
+  }, [hideAmounts]);
   const { loaded, hasData, loadError, reload } = useScreenLoad(load);
 
   // Same rule Settings' daily goal uses: a positive amount, saved as the same setting.
@@ -100,7 +101,7 @@ export default function GardenScreen() {
   const stageToday = stageForStreak(streakToday);
 
   if (!hasData && loadError)
-    return <ScreenLoadError title="Suu’s garden" message={loadError} onRetry={() => void reload()} />;
+    return <ScreenLoadError title="Suuâ€™s garden" message={loadError} onRetry={() => void reload()} />;
 
   if (!loaded && !loadError) {
     return (
@@ -176,7 +177,7 @@ export default function GardenScreen() {
                   />
                   {goalError && <Text style={styles.goalError}>{goalError}</Text>}
                   <PrimaryButton
-                    title={goalSaving ? 'Saving…' : 'Start growing'}
+                    title={goalSaving ? 'Savingâ€¦' : 'Start growing'}
                     onPress={startGoal}
                     disabled={goalSaving}
                   />
@@ -198,7 +199,9 @@ export default function GardenScreen() {
                       </Text>
                     </View>
                     <View style={styles.goalRow}>
-                      <Text style={styles.summaryGoal}>Daily goal · under {formatMoney(dailyGoalMinor)}</Text>
+                      <Text style={styles.summaryGoal}>
+                        Daily goal Â· under {formatMoney(dailyGoalMinor)}
+                      </Text>
                       <Pressable
                         accessibilityRole="button"
                         accessibilityLabel="Change daily goal"
@@ -208,14 +211,17 @@ export default function GardenScreen() {
                         <Text style={styles.editGoalText}>Edit goal</Text>
                       </Pressable>
                     </View>
-                    {!hideAmounts && (
+                    {todaySpend?.private === hideAmounts && (
                       <Text style={styles.summaryGoal}>
                         {todaySpentMinor <= dailyGoalMinor
                           ? `${formatMoney(dailyGoalMinor - todaySpentMinor)} left today`
                           : `${formatMoney(todaySpentMinor - dailyGoalMinor)} over today's goal`}
                       </Text>
                     )}
-                    <Text style={styles.introHint}>Today's result can change until the day ends.</Text>
+                    <Text style={styles.introHint}>
+                      {hideAmounts ? 'Sensitive spending excluded from the amount above. ' : ''}Today's result
+                      can change until the day ends.
+                    </Text>
                   </Glass>
                   <Glass radius={28} tone="strong" style={styles.bed}>
                     {potDays.map((point) => {

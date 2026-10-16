@@ -67,7 +67,10 @@ export function PendingRefunds({
             <InsightRow
               key={r.id}
               label={r.label}
-              value={formatMaskableMoney(r.remainingMinor, { currency: r.currency, masked: hideAmounts })}
+              value={formatMaskableMoney(r.remainingMinor, {
+                currency: r.currency,
+                masked: hideAmounts && !!r.isSensitive,
+              })}
               detail={
                 r.dueDate
                   ? `${r.dueDate < today ? 'Overdue' : r.dueDate === today ? 'Due today' : 'Expected'} · ${dayMonthYear(r.dueDate)}`

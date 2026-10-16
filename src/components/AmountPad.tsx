@@ -34,12 +34,14 @@ export function AmountPad({
   onClear,
   tone,
   children,
+  keySurface,
 }: {
   onKey: (key: PadKey) => void;
   onClear: () => void;
   /** The sum keys' wash and ink; defaults to the theme's sky. */
   tone?: { bg: string; ink: string };
   children: React.ReactNode;
+  keySurface?: string;
 }) {
   return (
     <View style={styles.pad}>
@@ -52,6 +54,7 @@ export function AmountPad({
               onPress={() => onKey(key)}
               onLongPress={key === 'back' ? onClear : undefined}
               tone={tone}
+              surface={keySurface}
             />
           ))}
         </View>
@@ -63,12 +66,14 @@ export function AmountPad({
 
 export function PadButton({
   padKey,
+  surface,
   onPress,
   onLongPress,
   compact,
   tone,
 }: {
   padKey: PadKey;
+  surface?: string;
   onPress: () => void;
   onLongPress?: () => void;
   /** A shorter key, for the pad docked under a sheet. */
@@ -85,6 +90,7 @@ export function PadButton({
     <AnimatedPressable
       style={[
         styles.key,
+        surface && { backgroundColor: surface },
         compact && styles.keyCompact,
         operator && { backgroundColor: opTone.bg, borderColor: opTone.bg },
         animatedStyle,

@@ -352,7 +352,17 @@ export function RuleModal({
         meta={`${type === 'income' ? 'Into' : 'From'} ${accountName(effectiveAccountId) ?? '—'} · next ${weekdayDayMonth(startDate)}`}
       />
       {editing && editing.type === 'expense' && editing.frequency === 'yearly' && (
-        <AnnualBillPreparation rule={editing} accounts={accounts} onNavigate={onClose} />
+        <AnnualBillPreparation
+          rule={editing}
+          accounts={accounts}
+          onNavigate={onClose}
+          sensitive={
+            !!(
+              categoriesById.get(editing.categoryId ?? '')?.isSensitive ||
+              categoriesById.get(categoriesById.get(editing.categoryId ?? '')?.parentId ?? '')?.isSensitive
+            )
+          }
+        />
       )}
       <SheetTabs
         options={[

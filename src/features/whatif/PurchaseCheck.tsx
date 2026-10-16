@@ -75,8 +75,9 @@ export function PurchaseCheck() {
       setBusy(false);
     }
   });
+  const hideEstimate = hideAmounts && !!result && (result.reservedMinor > 0 || result.sensitiveForecast);
   const money = (minor: number) =>
-    formatMaskableMoney(minor, { currency: result?.currency, masked: hideAmounts });
+    formatMaskableMoney(minor, { currency: result?.currency, masked: hideEstimate });
   return (
     <Glass radius={28} style={[styles.card, { gap: 12 }]}>
       <InsightHeader
@@ -152,14 +153,14 @@ export function PurchaseCheck() {
             <View
               style={[
                 insight.result,
-                !hideAmounts &&
+                !hideEstimate &&
                   (result.shortfallMinor > 0 || result.incompleteSchedule) && {
                     backgroundColor: theme.colors.expenseTint,
                   },
               ]}
             >
               <Text style={insight.title}>
-                {hideAmounts
+                {hideEstimate
                   ? 'Estimate hidden'
                   : result.incompleteSchedule
                     ? 'Incomplete loan schedule — review before deciding'
@@ -184,7 +185,7 @@ export function PurchaseCheck() {
               )}
               <InsightDisclosure title="How this estimate works">
                 <Text style={insight.caption}>
-                  Lowest balance on {hideAmounts ? '••••' : dayMonthYear(result.lowestDate)}. Same-day debits
+                  Lowest balance on {hideEstimate ? '••••' : dayMonthYear(result.lowestDate)}. Same-day debits
                   are checked before income.
                 </Text>
                 <Text style={insight.caption}>

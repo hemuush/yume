@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Pressable, Animated } from 'react-native';
+import { View, Pressable, Animated, ScrollView, useWindowDimensions } from 'react-native';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import type { McIconName } from '@/components/iconName';
 import { Amount } from '@/components/Amount';
@@ -67,51 +67,55 @@ export function AmountCard({
 }) {
   const { accent } = useAccent();
   const wash = refund ? TYPE_WASH.income : typeWash(type, accent);
+  const { width, fontScale } = useWindowDimensions();
+  const stacked = width < 380 || fontScale > 1.15;
   return (
     <View style={styles.heroCard}>
-      <View style={styles.heroLabelRow}>
-        <View style={[styles.heroDot, { backgroundColor: wash.accent }]} />
-        <Text style={[styles.heroLabel, { color: wash.accent }]}>
-          {refund
-            ? 'Money back'
-            : type === 'friend'
-              ? 'Amount'
-              : `${type[0].toUpperCase()}${type.slice(1)} amount`}
-        </Text>
-        {onTogglePad && !isLinked && (
-          <Pressable
-            onPress={onTogglePad}
-            style={withPressed(styles.padToggle)}
-            accessibilityRole="button"
-            accessibilityLabel={padVisible ? 'Hide number pad' : 'Show number pad'}
-          >
-            <Text style={styles.padToggleText}>{padVisible ? 'Hide pad' : 'Show pad'}</Text>
-            <Feather
-              name={padVisible ? 'chevron-down' : 'chevron-up'}
-              size={13}
-              color={theme.colors.textMuted}
-            />
-          </Pressable>
-        )}
-      </View>
-      <Pressable
-        onPress={onOpenPad}
-        disabled={isLinked}
-        style={withPressed(styles.amountRow)}
-        accessibilityRole="button"
-        accessibilityLabel={`Amount, ${expr === '' ? 'empty' : shownAmount}`}
-        accessibilityHint={padVisible ? undefined : 'Opens the number pad'}
-      >
-        <Text style={[styles.amountCurrency, { color: wash.accent }]}>{getCurrencySymbol(currency)}</Text>
-        <Text
-          style={[styles.amountText, expr === '' && styles.amountPlaceholder]}
-          numberOfLines={1}
-          adjustsFontSizeToFit
+      <View style={[styles.amountHeader, stacked && styles.amountHeaderStacked]}>
+        <View style={styles.heroLabelRow}>
+          <View style={[styles.heroDot, { backgroundColor: wash.accent }]} />
+          <Text style={[styles.heroLabel, { color: wash.accent }]}>
+            {refund
+              ? 'Money back'
+              : type === 'friend'
+                ? 'Amount'
+                : `${type[0].toUpperCase()}${type.slice(1)} amount`}
+          </Text>
+          {onTogglePad && !isLinked && !padVisible && (
+            <Pressable
+              onPress={onTogglePad}
+              style={withPressed(styles.padToggle)}
+              accessibilityRole="button"
+              accessibilityLabel={padVisible ? 'Hide number pad' : 'Show number pad'}
+            >
+              <Text style={styles.padToggleText}>{padVisible ? 'Hide pad' : 'Show pad'}</Text>
+              <Feather
+                name={padVisible ? 'chevron-down' : 'chevron-up'}
+                size={13}
+                color={theme.colors.textMuted}
+              />
+            </Pressable>
+          )}
+        </View>
+        <Pressable
+          onPress={onOpenPad}
+          disabled={isLinked}
+          style={withPressed([styles.amountRow, stacked && styles.amountRowStacked])}
+          accessibilityRole="button"
+          accessibilityLabel={`Amount, ${expr === '' ? 'empty' : shownAmount}`}
+          accessibilityHint={padVisible ? undefined : 'Opens the number pad'}
         >
-          {shownAmount}
-        </Text>
-        {padVisible && <View style={[styles.caret, { backgroundColor: wash.accent }]} />}
-      </Pressable>
+          <Text style={[styles.amountCurrency, { color: wash.accent }]}>{getCurrencySymbol(currency)}</Text>
+          <Text
+            style={[styles.amountText, expr === '' && styles.amountPlaceholder]}
+            numberOfLines={1}
+            adjustsFontSizeToFit
+          >
+            {shownAmount}
+          </Text>
+          {padVisible && <View style={[styles.caret, { backgroundColor: wash.accent }]} />}
+        </Pressable>
+      </View>
       {isSum && <Text style={styles.expression}>{expr.replace(/([+−×÷])/g, ' $1 ')}</Text>}
       {amountIssue && (
         <Text style={styles.hint} accessibilityLiveRegion="polite">
@@ -331,6 +335,7 @@ export function UsualChips({
   accountId: string | null;
   onPick: (entry: RepeatEntry) => void;
 }) {
+  const { fontScale } = useWindowDimensions();
   const { secondary } = useAccent();
   const { hideAmounts } = usePrivacy();
   const usualMoney = (u: RepeatEntry) =>
@@ -338,7 +343,12 @@ export function UsualChips({
   return (
     <>
       <Text style={styles.label}>Your usual</Text>
-      <View style={styles.recentRow}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator
+        contentContainerStyle={styles.recentRow}
+        keyboardShouldPersistTaps="handled"
+      >
         {usual.map((u) => {
           const active =
             categoryId === u.categoryId && amountMinor === u.amountMinor && accountId === u.accountId;
@@ -351,6 +361,7 @@ export function UsualChips({
               }}
               style={withPressed([
                 styles.recentChip,
+                { width: Math.min(280, 192 * Math.max(1, fontScale)) },
                 active && [styles.recentChipActive, { borderColor: secondary }],
               ])}
               accessibilityRole="button"
@@ -374,7 +385,7 @@ export function UsualChips({
             </Pressable>
           );
         })}
-      </View>
+      </ScrollView>
     </>
   );
 }

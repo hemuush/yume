@@ -5,6 +5,15 @@ import { EYEBROW, SECTION_TITLE, SECTION_GAP } from '@/constants/textStyles';
 // Shared by the Loans screen and every loan modal (LoanCard, LoanDetailModal, AssetModal, AccountModal,
 // RateChangeModal, PrepayModal, AddLoanModal), so styling stays in one place.
 export const styles = StyleSheet.create({
+  repaymentTrack: {
+    height: 5,
+    borderRadius: 3,
+    overflow: 'hidden',
+    backgroundColor: theme.colors.inkWash,
+    marginVertical: 10,
+  },
+  repaymentFill: { height: '100%', backgroundColor: theme.colors.incomeText },
+  forecastDisclosure: { paddingHorizontal: 10, borderRadius: 16, backgroundColor: theme.colors.surfaceAlt },
   container: { flex: 1, backgroundColor: theme.colors.background },
   errorBanner: {
     marginHorizontal: 20,

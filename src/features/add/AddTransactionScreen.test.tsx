@@ -925,3 +925,17 @@ describe('Add screen — money back', () => {
     );
   });
 });
+
+it('keeps invalid actions visibly disabled and preserves pad hide/show and valid saving', async () => {
+  const tree = await render();
+  const saveButton = () =>
+    tree.root.find((n) => n.props.title === 'Save' && typeof n.props.onPress === 'function');
+  expect(saveButton().props.disabled).toBe(true);
+  expect(pressable(tree, 'Add to list').props.disabled).toBe(true);
+  await press(tree, 'Hide pad');
+  await press(tree, 'Show pad');
+  await press(tree, 'Food');
+  await typeAmount(tree, '120');
+  expect(saveButton().props.disabled).toBe(false);
+  expect(pressable(tree, 'Add to list').props.disabled).toBe(false);
+});

@@ -66,10 +66,11 @@ it.each([
   ).toBeGreaterThan(0);
   act(() => tree.unmount());
 });
-it('omits the allowance while amounts are hidden', async () => {
+it('shows the allowance with sensitive spending excluded', async () => {
   mockHidden = true;
   const tree = await render();
-  expect(texts(tree).some((t) => t.includes('left today') || t.includes("over today's goal"))).toBe(false);
+  expect(texts(tree)).toContain('₹385 left today');
+  expect(getTodaySpend).toHaveBeenCalledWith(undefined, true);
   act(() => tree.unmount());
 });
 it('keeps first-run setup and skips the allowance query without a daily goal', async () => {
