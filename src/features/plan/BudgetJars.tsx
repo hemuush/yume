@@ -1,28 +1,26 @@
-import { View, Pressable, ScrollView } from 'react-native';
+import { View, Pressable } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Text } from '@/components/Text';
 import { Glass } from '@/components/Glass';
 import { cardSurface } from '@/components/CardSurface';
-import { StatusBadge } from '@/components/StatusBadge';
 import { theme } from '@/constants/theme';
 import { formatMoney } from '@/lib/money';
 import { withPressed } from '@/lib/pressed';
 import { softTint } from '@/components/softTint';
 import type { McIconName } from '@/components/iconName';
-import { compactMoney } from '@/lib/compactMoney';
 import { BudgetsSummary, PlanBudgetInput } from './planOverview';
-import { styles, JAR_HEIGHT } from './plan.styles';
+import { styles } from './plan.styles';
 
 /** Used this much of its limit, a jar turns amber. */
 const NEAR = 85;
-/** The liquid's room inside a jar (its 3px padding and 1.5px border on each side). */
-const ROOM = JAR_HEIGHT - 9;
+/** Budgets shown on Plan (two columns); the rest are under See all. */
+const SHOWN = 4;
 
 /**
- * This month's budgets as glass jars that fill as you spend: the category's own colour, amber near the
- * limit, coral and overflowing (with what it's over by) past it. The line above names how many are over and
- * Individual jars open their overview; the summary opens Budgets. Empty prompts setup.
+ * This month's budgets as two-column tiles: the category, what is left (or over), and a thin bar that is
+ * amber near the limit and coral past it. A tile opens its overview; the header's See all opens Budgets.
+ * Empty prompts setup.
  */
 export function BudgetJars({
   summary,
@@ -51,46 +49,40 @@ export function BudgetJars({
     );
   }
   const over = summary.overCount > 0;
+  const shown = summary.rows.slice(0, SHOWN);
   return (
     <Glass style={[styles.card, cardSurface.neutral]}>
-      <Pressable
-        onPress={onOpen}
-        style={withPressed({ minHeight: 44 })}
-        accessibilityRole="button"
-        accessibilityLabel={`Budgets, ${over ? `${summary.overCount} over` : 'all within their limits'}. Open budgets`}
-      >
-        <Text style={styles.caption}>
-          {over ? (
-            <Text style={styles.captionBad}>{summary.overCount} over</Text>
-          ) : (
-            <Text style={styles.captionOk}>All within their limits</Text>
-          )}
-        </Text>
-      </Pressable>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={styles.jarsScroll}
-        contentContainerStyle={styles.jars}
-      >
-        {summary.rows.map((b) => (
-          <Jar key={b.id} budget={b} onPress={() => (onBudget ? onBudget(b.id) : onOpen())} />
-        ))}
+      {over && (
         <Pressable
-          onPress={onAdd ?? onOpen}
-          style={withPressed(styles.jarAdd)}
+          onPress={onOpen}
+          style={withPressed({ minHeight: 32, justifyContent: 'center' })}
           accessibilityRole="button"
-          accessibilityLabel="Add a budget"
+          accessibilityLabel={`Budgets, ${summary.overCount} over. Open budgets`}
         >
-          <Feather name="plus" size={18} color={theme.colors.textMuted} />
-          <Text style={styles.jarName}>Add</Text>
+          <Text style={[styles.caption, styles.captionBad]}>{summary.overCount} over</Text>
         </Pressable>
-      </ScrollView>
+      )}
+      <View style={styles.budgetGrid}>
+        {shown.map((b) => (
+          <BudgetTile key={b.id} budget={b} onPress={() => (onBudget ? onBudget(b.id) : onOpen())} />
+        ))}
+        {shown.length < SHOWN && (
+          <Pressable
+            onPress={onAdd ?? onOpen}
+            style={withPressed([styles.budgetTile, styles.budgetAdd])}
+            accessibilityRole="button"
+            accessibilityLabel="Add a budget"
+          >
+            <Feather name="plus" size={18} color={theme.colors.textMuted} />
+            <Text style={styles.jarName}>Add</Text>
+          </Pressable>
+        )}
+      </View>
     </Glass>
   );
 }
 
-function Jar({ budget: b, onPress }: { budget: PlanBudgetInput; onPress: () => void }) {
+function BudgetTile({ budget: b, onPress }: { budget: PlanBudgetInput; onPress: () => void }) {
   const pct = Math.max(0, b.percentUsed);
   const tone = b.overBudget ? 'over' : pct >= NEAR ? 'near' : 'calm';
   const fill =
@@ -98,54 +90,38 @@ function Jar({ budget: b, onPress }: { budget: PlanBudgetInput; onPress: () => v
       ? theme.colors.slice.spent
       : tone === 'near'
         ? theme.colors.slice.due
-        : softTint(b.categoryColor ?? theme.colors.slice.saved, 0.75);
-  const height = Math.round((Math.min(100, pct) / 100) * ROOM);
+        : (b.categoryColor ?? theme.colors.slice.saved);
   const left = b.overBudget
     ? `${formatMoney(-b.remainingMinor)} over`
     : `${formatMoney(b.remainingMinor)} left`;
   return (
     <Pressable
       onPress={onPress}
-      style={withPressed(styles.jar)}
+      style={withPressed(styles.budgetTile)}
       accessibilityRole="button"
-      accessibilityLabel={`${b.categoryName}, ${Math.round(pct)}% used, ${left}. Open budgets`}
+      accessibilityLabel={`${b.categoryName}, ${Math.round(pct)}% used, ${left}${
+        tone === 'near' ? ', near limit' : ''
+      }. Open budgets`}
     >
-      <View style={styles.jarBody}>
-        {b.categoryIcon ? (
-          <View style={styles.jarIcon}>
-            <MaterialCommunityIcons
-              name={b.categoryIcon as McIconName}
-              size={16}
-              color={theme.colors.textSecondary}
-            />
-          </View>
-        ) : null}
-        {height > 0 && (
-          <View
-            style={[
-              styles.jarLiquid,
-              height >= ROOM - 2 && styles.jarLiquidFull,
-              { height, backgroundColor: fill },
-            ]}
+      <View style={styles.budgetTop}>
+        <View style={[styles.budgetIcon, { backgroundColor: softTint(b.categoryColor ?? fill, 0.75) }]}>
+          <MaterialCommunityIcons
+            name={(b.categoryIcon ?? 'tag') as McIconName}
+            size={18}
+            color={theme.colors.textSecondary}
           />
-        )}
-        {b.overBudget && (
-          <View style={styles.spillWrap}>
-            <View style={styles.spill}>
-              <Text style={styles.spillText}>+{compactMoney(-b.remainingMinor)}</Text>
-            </View>
-          </View>
-        )}
+        </View>
+        <View style={styles.jarCopy}>
+          <Text style={styles.jarName} numberOfLines={1}>
+            {b.categoryName}
+          </Text>
+          <Text style={[styles.jarLeft, b.overBudget && styles.jarOver]} numberOfLines={1}>
+            {left}
+          </Text>
+        </View>
       </View>
-      <View style={styles.jarCopy}>
-        <Text style={styles.jarName}>{b.categoryName}</Text>
-        <Text style={[styles.jarLeft, b.overBudget && styles.jarOver]}>{left}</Text>
-        {tone !== 'calm' && (
-          <StatusBadge
-            label={tone === 'near' ? 'Near limit' : 'Over limit'}
-            tone={tone === 'near' ? 'due' : 'warning'}
-          />
-        )}
+      <View style={styles.budgetTrack}>
+        <View style={[styles.budgetFill, { width: `${Math.min(100, pct)}%`, backgroundColor: fill }]} />
       </View>
     </Pressable>
   );

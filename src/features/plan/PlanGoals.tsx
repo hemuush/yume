@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { View, Pressable, ScrollView, Animated, useWindowDimensions } from 'react-native';
+import { View, Pressable, Animated } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Text } from '@/components/Text';
 import { Glass } from '@/components/Glass';
 import { cardSurface } from '@/components/CardSurface';
@@ -8,6 +9,7 @@ import { StatusBadge } from '@/components/StatusBadge';
 import { theme } from '@/constants/theme';
 import { formatMoney, formatMaskableMoney } from '@/lib/money';
 import { withPressed } from '@/lib/pressed';
+import { softTint } from '@/components/softTint';
 import { haptics } from '@/lib/haptics';
 import { hueFor } from '@/lib/hueFor';
 import { usePressScale } from '@/lib/usePressScale';
@@ -19,6 +21,9 @@ import { homeInk } from '@/features/home/homeInk';
 import { Account, SavingsGoal } from '@/types';
 import { WHAT_IF_CUTS } from './planOverview';
 import { styles } from './plan.styles';
+
+/** Goals shown on Plan (two columns); the rest are under See all. */
+const SHOWN = 4;
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -41,9 +46,6 @@ export function GoalsStrip({
   onAdd?: () => void;
 }) {
   const { hideAmounts } = usePrivacy();
-  const { width, fontScale } = useWindowDimensions();
-  const cardWidth = Math.max(112 * Math.min(fontScale, 1.3), Math.min(160, (width - 60) / 3));
-  const cardHeight = 132 * Math.min(Math.max(fontScale, 1), 1.3);
   const active = goals.filter((g) => !g.archived);
   if (active.length === 0) {
     return (
@@ -70,46 +72,35 @@ export function GoalsStrip({
       </Pressable>
     );
   }
+  const shown = active.slice(0, SHOWN);
   return (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.goals}>
-      {active.map((g) => (
+    <View style={styles.goals}>
+      {shown.map((g) => (
         <GoalCard
           key={g.id}
           goal={g}
           masked={hideAmounts}
-          width={cardWidth}
-          height={cardHeight}
           onPress={() => (onGoal ? onGoal(g.id) : onOpen())}
         />
       ))}
-      <Pressable
-        onPress={onAdd ?? onOpen}
-        style={withPressed([styles.goal, styles.goalNew, { width: cardWidth, minHeight: cardHeight }])}
-        accessibilityRole="button"
-        accessibilityLabel="Open savings goals to start a new one"
-      >
-        <View style={styles.goalNewDisc}>
-          <Feather name="plus" size={17} color={theme.colors.ink} />
-        </View>
-        <Text style={styles.goalNewText}>New goal</Text>
-      </Pressable>
-    </ScrollView>
+      {shown.length < SHOWN && (
+        <Pressable
+          onPress={onAdd ?? onOpen}
+          style={withPressed([styles.goal, styles.goalNew])}
+          accessibilityRole="button"
+          accessibilityLabel="Open savings goals to start a new one"
+        >
+          <View style={styles.goalNewDisc}>
+            <Feather name="plus" size={17} color={theme.colors.ink} />
+          </View>
+          <Text style={styles.goalNewText}>New goal</Text>
+        </Pressable>
+      )}
+    </View>
   );
 }
 
-function GoalCard({
-  goal,
-  masked,
-  onPress,
-  width,
-  height,
-}: {
-  goal: SavingsGoal;
-  masked: boolean;
-  onPress: () => void;
-  width: number;
-  height: number;
-}) {
+function GoalCard({ goal, masked, onPress }: { goal: SavingsGoal; masked: boolean; onPress: () => void }) {
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.98);
   const { percent, done } = goalProgress(goal.currentAmountMinor, goal.targetAmountMinor);
   const hue = done ? theme.colors.income : hueFor(goal.id);
@@ -119,7 +110,7 @@ function GoalCard({
       onPress={onPress}
       onPressIn={onPressIn}
       onPressOut={onPressOut}
-      style={animatedStyle}
+      style={[styles.goalWrap, animatedStyle]}
       accessibilityRole="button"
       accessibilityLabel={
         masked
@@ -129,7 +120,14 @@ function GoalCard({
             }. Open savings goals`
       }
     >
-      <Glass radius={24} style={[styles.goal, cardSurface.savings, { width, minHeight: height }]}>
+      <Glass radius={24} style={[styles.goalCard, cardSurface.savings]}>
+        <View style={[styles.goalIcon, { backgroundColor: softTint(hue, 0.75) }]}>
+          <MaterialCommunityIcons
+            name={goal.linkedAccountId ? 'bank-outline' : 'flag-variant-outline'}
+            size={18}
+            color={theme.colors.ink}
+          />
+        </View>
         {masked ? (
           <Feather name="eye-off" size={20} color={theme.colors.textMuted} />
         ) : done ? (
@@ -140,7 +138,7 @@ function GoalCard({
             <Text style={styles.goalPctSign}>%</Text>
           </Text>
         )}
-        <Text style={styles.goalName} numberOfLines={2}>
+        <Text style={styles.goalName} numberOfLines={1}>
           {goal.name}
         </Text>
         {!masked && (
@@ -148,8 +146,9 @@ function GoalCard({
             <View style={[styles.goalProgress, { width: `${pct}%`, backgroundColor: hue }]} />
           </View>
         )}
-        <Text style={styles.goalAmt}>{formatMaskableMoney(goal.currentAmountMinor, { masked })} saved</Text>
-        <Text style={[styles.goalAmt, styles.goalOf]}>of {formatMoney(goal.targetAmountMinor)}</Text>
+        <Text style={styles.goalAmt} numberOfLines={1}>
+          {masked ? '' : `${formatMoney(goal.currentAmountMinor)} `}of {formatMoney(goal.targetAmountMinor)}
+        </Text>
       </Glass>
     </AnimatedPressable>
   );
@@ -180,6 +179,9 @@ export function WhatIfCard({
             accessibilityRole="button"
             accessibilityLabel="Open the what-if sandbox"
           >
+            <View style={styles.whatIfIcon}>
+              <MaterialCommunityIcons name="lightbulb-on-outline" size={18} color={theme.colors.dueInk} />
+            </View>
             <View style={styles.whatIfHeadCopy}>
               <Text style={styles.gainNote}>Spend a little less</Text>
               <Text style={styles.whatIfBold}>
