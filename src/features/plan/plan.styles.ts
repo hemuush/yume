@@ -114,6 +114,7 @@ export const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: GLASS.edge,
   },
+  addSlim: { width: '100%', minHeight: 44, padding: 6 },
   budgetAdd: { alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 6 },
   budgetTop: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   budgetIcon: { width: 34, height: 34, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
@@ -150,6 +151,8 @@ export const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: theme.colors.dueTint,
   },
+  goalNewSlim: { width: '100%', minHeight: 48, flexDirection: 'row', padding: 6 },
+  goalNewDiscSmall: { width: 32, height: 32, borderRadius: 16 },
   goalWrap: { width: '48.5%', flexGrow: 1 },
   goal: { width: '48.5%', flexGrow: 1, minHeight: 96, padding: 12, overflow: 'hidden', gap: 2 },
   goalTrack: {
