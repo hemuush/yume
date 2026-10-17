@@ -39,13 +39,13 @@ export function Chip({ label, active, onPress }: { label: string; active: boolea
  * The bar atop Add's number pad: account, date, note, and for a purchase Money back and Split, in one row
  * that scrolls sideways; riding on the pad keeps it in view however far the category grid is scrolled.
  */
-export function DetailBar({ children }: { children: React.ReactNode }) {
+export function DetailBar({ children, flush }: { children: React.ReactNode; flush?: boolean }) {
   return (
     <ScrollView
       horizontal
       showsHorizontalScrollIndicator={false}
       keyboardShouldPersistTaps="handled"
-      style={styles.detailBar}
+      style={[styles.detailBar, flush && styles.detailBarFlush]}
       contentContainerStyle={styles.detailBarContent}
     >
       {children}

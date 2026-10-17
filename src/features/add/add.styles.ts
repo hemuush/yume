@@ -380,6 +380,26 @@ export const styles = StyleSheet.create({
   },
   // Bleeds to the screen's edges so it can slide sideways, while its first chip lines up with the pad.
   detailBar: { marginHorizontal: -12, marginBottom: 10, flexGrow: 0 },
+  detailBarFlush: { marginHorizontal: 0, marginBottom: 0 },
+  detailRow: { flexDirection: 'row', alignItems: 'center', marginHorizontal: -12, marginBottom: 10 },
+  hidePadBtn: {
+    width: 44,
+    height: 44,
+    marginRight: 12,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: theme.colors.surface,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.borderSoft,
+  },
+  usualCategory: {
+    flexShrink: 1,
+    maxWidth: '60%',
+    fontFamily: theme.font.bodyBold,
+    fontSize: 12,
+    color: theme.colors.textSecondary,
+  },
   detailBarContent: { paddingLeft: 4, paddingRight: 16, gap: 6 },
   detailChip: {
     flexDirection: 'row',

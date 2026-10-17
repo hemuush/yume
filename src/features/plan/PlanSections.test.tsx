@@ -107,6 +107,44 @@ describe('Plan sections with nothing in them yet', () => {
     expect(open).toHaveBeenCalledTimes(1);
     expect(open.mock.calls[0]).toEqual([]);
   });
+  it('shows the largest loan only, with rupees repaid and one timeline line', () => {
+    const row = (id: string, name: string, leftMinor: number, nextDueDate: string) => ({
+      id,
+      name,
+      direction: 'borrowed' as const,
+      leftMinor,
+      nextDueDate,
+      nextEmiMinor: 340600,
+      paidCount: 1,
+      totalCount: 24,
+      endDate: '2045-01-03',
+    });
+    const loans = {
+      debtLeftMinor: 2254000,
+      paidOffMinor: 46000,
+      borrowedPrincipalMinor: 2300000,
+      paidFraction: 0.02,
+      borrowedCount: 2,
+      debtFreeDate: '2045-01-03',
+      lentLeftMinor: 0,
+      rows: [row('small', 'Personal', 500000, '2026-11-03'), row('big', 'House', 1754000, '2026-11-05')],
+    };
+    const onLoan = jest.fn();
+    const tree = render(
+      <DebtPath loans={loans} dueSoon={dueSoon} today="2026-10-09" onOpen={jest.fn()} onLoan={onLoan} />
+    );
+    const shown = texts(tree);
+    expect(shown).toContain('₹460 repaid of ₹23,000');
+    expect(shown.some((t) => t.startsWith('Debt-free ') && t.includes('next EMI ₹3,406 on'))).toBe(true);
+    expect(shown).toContain('House');
+    expect(shown).not.toContain('Personal');
+    expect(shown).toContain('View loans · 2 active');
+    act(() =>
+      tree.root.find((n) => n.props.accessibilityLabel === 'Open loan details: House').props.onPress()
+    );
+    expect(onLoan).toHaveBeenCalledWith('big');
+  });
+
   it('asks for a first budget, and a first EMI (saying what you lent)', () => {
     expect(texts(render(<BudgetJars summary={buildBudgetsSummary([])} onOpen={jest.fn()} />))).toContain(
       'Set a monthly limit'
