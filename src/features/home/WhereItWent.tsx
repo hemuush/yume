@@ -29,6 +29,7 @@ export function WhereItWent({
   onOpenReports,
   onOpenCategory,
   onAddExpense,
+  footer,
 }: {
   breakdown: CategoryBreakdownItem[];
   iconFor: (categoryId: string) => string | undefined;
@@ -36,6 +37,8 @@ export function WhereItWent({
   onOpenReports: () => void;
   onOpenCategory?: (categoryId: string) => void;
   onAddExpense?: () => void;
+  /** Sits under the category line in the same card, after a divider (Home's week bars). */
+  footer?: React.ReactNode;
 }) {
   const positive = breakdown.filter((c) => c.totalMinor > 0).sort((a, b) => b.totalMinor - a.totalMinor);
   const top = positive.slice(0, SHOWN);
@@ -133,6 +136,12 @@ export function WhereItWent({
         </View>
         <Feather name="chevron-right" size={18} color={theme.colors.link} />
       </Pressable>
+      {footer ? (
+        <>
+          <View style={styles.footerDivider} />
+          {footer}
+        </>
+      ) : null}
     </View>
   );
 }
@@ -163,6 +172,7 @@ const styles = StyleSheet.create({
   },
   picked: { paddingHorizontal: 14 },
   share: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.white },
+  footerDivider: { height: StyleSheet.hairlineWidth, backgroundColor: theme.colors.borderSoft },
   categoryButton: { minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 8 },
   categoryText: { flex: 1, minWidth: 0 },
   name: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textPrimary },
