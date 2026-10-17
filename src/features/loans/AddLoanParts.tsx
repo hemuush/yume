@@ -113,12 +113,12 @@ const styles = StyleSheet.create({
   pressed: { opacity: 0.7 },
   title: {
     fontFamily: theme.font.roundedMedium,
-    fontSize: 14,
+    fontSize: 13,
     color: theme.colors.textSecondary,
     marginTop: 4,
   },
   titleActive: { fontFamily: theme.font.roundedBold, color: theme.colors.textPrimary },
-  sub: { fontFamily: theme.font.body, fontSize: 11.5, lineHeight: 15, color: theme.colors.textMuted },
+  sub: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 15, color: theme.colors.textMuted },
   stepper: { flexDirection: 'row', alignItems: 'center', gap: 16, marginBottom: 14 },
   stepBtn: {
     width: 44,

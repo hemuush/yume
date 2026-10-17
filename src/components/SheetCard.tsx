@@ -96,7 +96,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
     fontVariant: ['tabular-nums'],
   },
-  title: { fontFamily: theme.font.bodyBold, fontSize: 16, color: theme.colors.textPrimary },
+  title: { fontFamily: theme.font.bodyBold, fontSize: 15, color: theme.colors.textPrimary },
   meta: {
     fontFamily: theme.font.body,
     fontSize: 12,

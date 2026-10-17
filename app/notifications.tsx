@@ -309,7 +309,7 @@ const styles = StyleSheet.create({
   errorTitle: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.expenseText },
   errorDetail: {
     fontFamily: theme.font.body,
-    fontSize: 11.5,
+    fontSize: 12,
     color: theme.colors.textSecondary,
     marginTop: 3,
     lineHeight: 16,
@@ -327,7 +327,7 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.borderSoft,
   },
   toneDot: { width: 8, height: 8, borderRadius: 4 },
-  toneText: { fontFamily: theme.font.bodyBold, fontSize: 12.5, color: theme.colors.textPrimary },
+  toneText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textPrimary },
   // Suu, then its lines in a bubble whose corner points back at it.
   suu: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, marginHorizontal: SCREEN.gutter },
   suuFace: { width: 38, height: 38 },
@@ -363,7 +363,7 @@ const styles = StyleSheet.create({
   },
   dismissedToggleText: {
     fontFamily: theme.font.bodyMedium,
-    fontSize: 12.5,
+    fontSize: 12,
     color: theme.colors.textSecondary,
   },
   dismissedList: { opacity: 0.75 },

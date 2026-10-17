@@ -119,7 +119,7 @@ const styles = StyleSheet.create({
     flex: 1,
     textAlign: 'center',
     fontFamily: theme.font.bodyBold,
-    fontSize: 10.5,
+    fontSize: 11,
     color: theme.colors.textMuted,
   },
   cell: {
@@ -143,6 +143,6 @@ const styles = StyleSheet.create({
   faint: { opacity: 0.45 },
   today: { borderWidth: 2, borderColor: theme.colors.ink },
   day: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textSecondary },
-  stateMark: { fontFamily: theme.font.body, fontSize: 10, color: theme.colors.textPrimary },
+  stateMark: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textPrimary },
   dayKept: { color: theme.colors.ink },
 });

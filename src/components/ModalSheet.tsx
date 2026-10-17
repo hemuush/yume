@@ -463,7 +463,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 16,
   },
-  linkText: { fontFamily: theme.font.roundedBold, fontSize: 13.5, color: theme.colors.textPrimary },
+  linkText: { fontFamily: theme.font.roundedBold, fontSize: 13, color: theme.colors.textPrimary },
   linkDanger: { color: theme.colors.expenseText },
 
   sheet: {

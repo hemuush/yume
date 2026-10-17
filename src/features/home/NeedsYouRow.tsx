@@ -123,5 +123,5 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: GLASS.edge,
   },
-  laterText: { fontFamily: theme.font.bodyBold, fontSize: 11.5, color: theme.colors.textSecondary },
+  laterText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textSecondary },
 });

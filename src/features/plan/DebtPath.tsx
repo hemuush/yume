@@ -5,8 +5,8 @@ import { cardSurface } from '@/components/CardSurface';
 import { formatMoney } from '@/lib/money';
 import { formatRatioPct } from '@/lib/format';
 import { withPressed } from '@/lib/pressed';
-import { dayMonth, shortMonthYear } from '@/lib/dateLabels';
-import { DueSoon, LoansSummary } from './planOverview';
+import { shortMonthYear } from '@/lib/dateLabels';
+import { LoansSummary } from './planOverview';
 import { Kicker, PlanChip } from './PlanTiles';
 import { styles } from './plan.styles';
 
@@ -16,13 +16,11 @@ import { theme } from '@/constants/theme';
 /** A compact debt overview with direct loan shortcuts and a link to the full collection. */
 export function DebtPath({
   loans,
-  dueSoon,
   today,
   onOpen,
   onLoan,
 }: {
   loans: LoansSummary;
-  dueSoon: DueSoon;
   today: string;
   onOpen: () => void;
   onLoan?: (id: string) => void;
@@ -61,19 +59,7 @@ export function DebtPath({
     (top, r) => (top == null || r.leftMinor > top.leftMinor ? r : top),
     null
   );
-  const nextEmi = borrowed.find((r) => r.nextDueDate && r.nextEmiMinor != null);
-  const emiPart =
-    dueSoon.emiMinor > 0
-      ? `${formatMoney(dueSoon.emiMinor)} in EMIs over 14 days`
-      : nextEmi?.nextDueDate && nextEmi.nextEmiMinor != null
-        ? `next EMI ${formatMoney(nextEmi.nextEmiMinor)} on ${dayMonth(nextEmi.nextDueDate)}`
-        : null;
-  const timeline = [
-    knownEnd ? `Debt-free ${shortMonthYear(knownEnd)}` : 'Schedule incomplete · debt-free date unavailable',
-    emiPart,
-  ]
-    .filter(Boolean)
-    .join(' · ');
+  const timeline = knownEnd ? `Debt-free ${shortMonthYear(knownEnd)}` : 'Debt-free date unknown';
 
   return (
     <View>
@@ -95,11 +81,6 @@ export function DebtPath({
         >
           <View style={[local.fill, { width: `${Math.min(100, Math.max(0, loans.paidFraction * 100))}%` }]} />
         </View>
-        {loans.borrowedPrincipalMinor > 0 && (
-          <Text style={styles.pathNote}>
-            {`${formatMoney(loans.paidOffMinor)} repaid of ${formatMoney(loans.borrowedPrincipalMinor)}`}
-          </Text>
-        )}
         <Text style={styles.pathNote}>{timeline}</Text>
         {loans.lentLeftMinor > 0 && (
           <View style={styles.chips}>

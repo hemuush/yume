@@ -105,7 +105,7 @@ export default function ThemesScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
   content: { paddingHorizontal: 16, gap: 12 },
-  caption: { fontFamily: theme.font.body, fontSize: 12.5, lineHeight: 17, color: theme.colors.textMuted },
+  caption: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 17, color: theme.colors.textMuted },
   live: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 12 },
   phone: {
     width: 120,
@@ -121,7 +121,7 @@ const styles = StyleSheet.create({
   pair: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginTop: 2 },
   pairItem: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   pairDot: { width: 14, height: 14, borderRadius: 7, borderWidth: 1.5, borderColor: theme.colors.white },
-  pairText: { fontFamily: theme.font.bodyMedium, fontSize: 11.5, color: theme.colors.textSecondary },
+  pairText: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textSecondary },
   grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: 12 },
   card: {
     width: '48.5%',
@@ -143,7 +143,7 @@ const styles = StyleSheet.create({
     paddingTop: 9,
     paddingBottom: 4,
   },
-  name: { flex: 1, fontFamily: theme.font.roundedBold, fontSize: 14, color: theme.colors.textPrimary },
+  name: { flex: 1, fontFamily: theme.font.roundedBold, fontSize: 13, color: theme.colors.textPrimary },
   tick: {
     width: 16,
     height: 16,

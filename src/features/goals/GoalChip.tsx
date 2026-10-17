@@ -77,7 +77,7 @@ const styles = StyleSheet.create({
     borderRadius: theme.radius.xl,
     padding: 12,
   },
-  name: { fontFamily: theme.font.bodyBold, fontSize: 12.5, color: theme.colors.textPrimary, marginTop: 8 },
-  amt: { fontFamily: theme.font.body, fontSize: 10.5, color: theme.colors.textSecondary, marginTop: 3 },
+  name: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textPrimary, marginTop: 8 },
+  amt: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textSecondary, marginTop: 3 },
   of: { color: theme.colors.textMuted },
 });

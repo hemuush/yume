@@ -135,7 +135,7 @@ const styles = StyleSheet.create({
     borderBottomColor: theme.colors.borderSoft,
   },
   pressed: { opacity: 0.6 },
-  year: { fontFamily: theme.font.roundedBold, fontSize: 15, color: theme.colors.textPrimary },
+  year: { fontFamily: theme.font.roundedBold, fontSize: 14, color: theme.colors.textPrimary },
   yearSub: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textMuted },
   row: { gap: 12 },
   content: { flex: 1, minWidth: 0 },

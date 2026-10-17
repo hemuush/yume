@@ -133,7 +133,7 @@ const styles = StyleSheet.create({
   actions: { gap: 8 },
   card: { padding: 14, gap: 6, backgroundColor: theme.colors.surface, borderRadius: 22, marginBottom: 12 },
   caption: { fontFamily: theme.font.body, fontSize: 13, lineHeight: 19, color: theme.colors.textSecondary },
-  account: { fontFamily: theme.font.bodyMedium, fontSize: 15, color: theme.colors.textPrimary },
+  account: { fontFamily: theme.font.bodyMedium, fontSize: 14, color: theme.colors.textPrimary },
   value: {
     fontFamily: theme.font.bodyMedium,
     fontSize: 24,

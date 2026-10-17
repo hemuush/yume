@@ -142,14 +142,14 @@ export function ExpenseLabelsReport({
           }}
         >
           <View style={{ flexGrow: 1, flexBasis: 140 }}>
-            <Text style={{ fontFamily: theme.font.bodyBold, fontSize: 14 }}>{row.label || 'No label'}</Text>
+            <Text style={{ fontFamily: theme.font.bodyBold, fontSize: 13 }}>{row.label || 'No label'}</Text>
             <Text style={{ color: theme.colors.textMuted, fontSize: 12 }}>
               {row.count === 0
                 ? 'Refunds only'
                 : `${row.count} ${row.count === 1 ? 'expense entry' : 'expense entries'}`}
             </Text>
           </View>
-          <Amount minor={row.totalMinor} style={{ fontVariant: ['tabular-nums'], fontSize: 16 }} />
+          <Amount minor={row.totalMinor} style={{ fontVariant: ['tabular-nums'], fontSize: 15 }} />
         </View>
       ))}
       {matching.length > limit && (

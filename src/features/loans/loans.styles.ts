@@ -28,7 +28,7 @@ export const styles = StyleSheet.create({
   errorTitle: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.expenseText },
   errorDetail: {
     fontFamily: theme.font.body,
-    fontSize: 11.5,
+    fontSize: 12,
     color: theme.colors.textSecondary,
     marginTop: 3,
     lineHeight: 16,
@@ -55,7 +55,7 @@ export const styles = StyleSheet.create({
   closedDivider: EYEBROW,
   cardName: {
     fontFamily: theme.font.bodyMedium,
-    fontSize: 16,
+    fontSize: 15,
     color: theme.colors.textPrimary,
     flexShrink: 1,
     marginRight: 8,
@@ -85,12 +85,12 @@ export const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: theme.colors.borderSoft,
   },
-  rowLabel: { fontFamily: theme.font.bodyMedium, fontSize: 15, color: theme.colors.textPrimary },
+  rowLabel: { fontFamily: theme.font.bodyMedium, fontSize: 14, color: theme.colors.textPrimary },
   rowSub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, marginTop: 2 },
   rowValue: {
     fontVariant: ['tabular-nums'],
     fontFamily: theme.font.bodyBold,
-    fontSize: 15,
+    fontSize: 14,
     color: theme.colors.textPrimary,
   },
   // A soft pill (the app's chip language) rather than grey capitals.

@@ -97,7 +97,7 @@ export function saveButtonTitle({
   repeatWarning: boolean;
   rowCount: number;
   hasCurrent?: boolean;
-  /** What a lone entry would save, e.g. "₹250 · Food": the button names it. */
+  /** What a lone entry would save, e.g. "₹250": the button names it. */
   summary?: string;
 }): string {
   if (saving) return 'Saving…';

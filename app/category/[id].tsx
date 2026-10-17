@@ -446,7 +446,7 @@ const styles = StyleSheet.create({
   chipText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textPrimary },
   heroRefund: {
     fontFamily: theme.font.bodyBold,
-    fontSize: 12.5,
+    fontSize: 12,
     color: theme.colors.incomeText,
     marginTop: 8,
   },
@@ -514,7 +514,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: theme.colors.textSecondary,
   },
-  actionChipText: { fontFamily: theme.font.bodyMedium, fontSize: 12.5, color: theme.colors.textPrimary },
+  actionChipText: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textPrimary },
   empty: { fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textMuted, marginHorizontal: 20 },
   errorBanner: {
     marginHorizontal: 20,
@@ -529,7 +529,7 @@ const styles = StyleSheet.create({
   errorTitle: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.expenseText },
   errorDetail: {
     fontFamily: theme.font.body,
-    fontSize: 11.5,
+    fontSize: 12,
     color: theme.colors.textSecondary,
     marginTop: 3,
   },

@@ -104,6 +104,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   iconDestructive: { backgroundColor: theme.colors.expenseTint },
-  rowLabel: { flex: 1, fontFamily: theme.font.bodyMedium, fontSize: 15, color: theme.colors.textPrimary },
+  rowLabel: { flex: 1, fontFamily: theme.font.bodyMedium, fontSize: 14, color: theme.colors.textPrimary },
   rowLabelDestructive: { color: theme.colors.expenseText },
 });

@@ -94,7 +94,7 @@ const previewStyles = StyleSheet.create({
     borderRadius: theme.radius.lg,
     backgroundColor: theme.colors.incomeTint,
   },
-  head: { fontFamily: theme.font.bodyBold, fontSize: 11.5, color: theme.colors.textSecondary },
+  head: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textSecondary },
   row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: 12 },
   label: { fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textPrimary },
   value: { fontFamily: theme.font.monoBold, fontSize: 13, color: theme.colors.textPrimary },

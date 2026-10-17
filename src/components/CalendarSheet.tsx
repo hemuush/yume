@@ -357,7 +357,7 @@ const styles = StyleSheet.create({
   monthLabel: {
     flexShrink: 1,
     fontFamily: theme.font.roundedBold,
-    fontSize: 16,
+    fontSize: 15,
     color: theme.colors.textPrimary,
   },
   row: { flexDirection: 'row' },
@@ -366,7 +366,7 @@ const styles = StyleSheet.create({
   weekday: {
     textAlign: 'center',
     fontFamily: theme.font.bodyBold,
-    fontSize: 10,
+    fontSize: 11,
     color: theme.colors.textMuted,
     marginBottom: 4,
   },
@@ -396,7 +396,7 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.borderSoft,
     backgroundColor: theme.colors.surface,
   },
-  yearText: { fontFamily: theme.font.monoBold, fontSize: 12.5, color: theme.colors.textPrimary },
+  yearText: { fontFamily: theme.font.monoBold, fontSize: 12, color: theme.colors.textPrimary },
   monthCell: { flex: 1, alignItems: 'center', paddingVertical: 12, margin: 3, borderRadius: 12 },
-  monthCellText: { fontFamily: theme.font.roundedMedium, fontSize: 13.5, color: theme.colors.textPrimary },
+  monthCellText: { fontFamily: theme.font.roundedMedium, fontSize: 13, color: theme.colors.textPrimary },
 });

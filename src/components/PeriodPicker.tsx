@@ -284,7 +284,7 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
   },
-  yearText: { fontFamily: theme.font.bodyBold, fontSize: 14, color: theme.colors.textSecondary },
+  yearText: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textSecondary },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   cell: {
     width: '23%',
@@ -298,8 +298,8 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.borderSoft,
   },
   off: { opacity: 0.35 },
-  cellText: { fontFamily: theme.font.bodyBold, fontSize: 14, color: theme.colors.textPrimary },
-  cellSub: { fontFamily: theme.font.body, fontSize: 10.5, color: theme.colors.textMuted, marginTop: 1 },
+  cellText: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textPrimary },
+  cellSub: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textMuted, marginTop: 1 },
   nowDot: {
     position: 'absolute',
     bottom: 5,
@@ -320,9 +320,9 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
   },
-  yearCellText: { fontFamily: theme.font.bodyBold, fontSize: 16, color: theme.colors.textPrimary },
+  yearCellText: { fontFamily: theme.font.bodyBold, fontSize: 15, color: theme.colors.textPrimary },
   weeks: { gap: 8 },
-  weeksLabel: { fontFamily: theme.font.bodyMedium, fontSize: 12.5, color: theme.colors.textSecondary },
+  weeksLabel: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textSecondary },
   weekRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   weekChip: {
     minHeight: 44,
@@ -345,5 +345,5 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
   },
-  currentText: { fontFamily: theme.font.bodyBold, fontSize: 14, color: theme.colors.textPrimary },
+  currentText: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textPrimary },
 });

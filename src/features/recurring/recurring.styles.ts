@@ -15,7 +15,7 @@ export const styles = StyleSheet.create({
   },
   modalHint: {
     fontFamily: theme.font.body,
-    fontSize: 12.5,
+    fontSize: 12,
     lineHeight: 18,
     color: theme.colors.textSecondary,
   },
@@ -23,7 +23,7 @@ export const styles = StyleSheet.create({
   errorTitle: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.expenseText },
   errorDetail: {
     fontFamily: theme.font.body,
-    fontSize: 11.5,
+    fontSize: 12,
     color: theme.colors.textSecondary,
     marginTop: 3,
     lineHeight: 16,
@@ -55,7 +55,7 @@ export const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8 },
   rowDivider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.borderSoft },
   rowMuted: { opacity: 0.6 },
-  rowTitle: { fontFamily: theme.font.bodyBold, fontSize: 15, color: theme.colors.textPrimary },
+  rowTitle: { fontFamily: theme.font.bodyBold, fontSize: 14, color: theme.colors.textPrimary },
   rowSub: {
     fontFamily: theme.font.body,
     fontSize: 12,
@@ -88,7 +88,7 @@ export const styles = StyleSheet.create({
   ruleAmount: {
     fontFamily: theme.font.bodyBold,
     fontVariant: ['tabular-nums'],
-    fontSize: 15,
+    fontSize: 14,
     color: theme.colors.textPrimary,
   },
   make: {
@@ -102,7 +102,7 @@ export const styles = StyleSheet.create({
   makeText: { fontFamily: theme.font.roundedBold, fontSize: 13, color: theme.colors.surface },
   hint: {
     fontFamily: theme.font.body,
-    fontSize: 11.5,
+    fontSize: 12,
     color: theme.colors.textMuted,
     marginTop: 6,
     lineHeight: 16,

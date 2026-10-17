@@ -167,7 +167,7 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
   },
-  heading: { fontFamily: theme.font.roundedBold, fontSize: 16, color: theme.colors.textPrimary },
+  heading: { fontFamily: theme.font.roundedBold, fontSize: 15, color: theme.colors.textPrimary },
   change: {
     fontFamily: theme.font.bodyMedium,
     fontSize: 21,
@@ -179,7 +179,7 @@ const styles = StyleSheet.create({
   label: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textPrimary },
   amount: {
     fontFamily: theme.font.bodyBold,
-    fontSize: 14,
+    fontSize: 13,
     color: theme.colors.textPrimary,
     fontVariant: ['tabular-nums'],
   },

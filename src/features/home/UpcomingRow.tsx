@@ -134,8 +134,7 @@ export function UpcomingMoreRow({
         <Feather name="more-horizontal" size={SCREEN.iconGlyph} color={theme.colors.textMuted} />
       </View>
       <View style={[styles.mid, stacked && styles.stackedMid]}>
-        <Text style={styles.moreText}>+{count} more this week</Text>
-        <Text style={styles.sub}>Opens Plan › Coming up</Text>
+        <Text style={styles.moreText}>+{count} more</Text>
       </View>
       <Feather name="arrow-right" size={16} color={theme.colors.textMuted} />
     </AnimatedPressable>
@@ -170,6 +169,6 @@ const styles = StyleSheet.create({
     borderRadius: theme.radius.pill,
     backgroundColor: theme.colors.ink,
   },
-  actionText: { fontFamily: theme.font.bodyBold, fontSize: 14, color: theme.colors.white },
-  moreText: { fontFamily: theme.font.bodyBold, fontSize: 14, color: theme.colors.textSecondary },
+  actionText: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.white },
+  moreText: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textSecondary },
 });

@@ -69,14 +69,14 @@ function render(over: Partial<React.ComponentProps<typeof ThisMonthHero>> = {}) 
 }
 
 describe('month card', () => {
-  it('leads with what is free to use, what it is out of, and the spent share and what is left today as chips', () => {
+  it('leads with what is free to use, what it is out of, and what is left today as a chip', () => {
     const all = texts(render());
     expect(all).toEqual(
       expect.arrayContaining([
         'Free to use',
         '₹794',
-        'of ₹1,96,056 after spending and savings',
-        '49% spent',
+        'of ₹1,96,056',
+        'Details',
         '₹2,955 left today',
         'Expense',
         'Income',
@@ -89,9 +89,17 @@ describe('month card', () => {
     );
     // Free to use is said once, as the headline.
     expect(all.filter((t) => t === 'Free to use')).toHaveLength(1);
-    // The pace is a spending forecast, and says so.
-    expect(all.some((t) => t.startsWith('On pace to spend about'))).toBe(true);
-    expect(all.some((t) => t.startsWith('On pace for about'))).toBe(false);
+    // The shares are in the bar and the tray, not a chip; the pace waits under Details.
+    expect(all.some((t) => t.endsWith('% spent'))).toBe(false);
+    expect(all.some((t) => t.startsWith('On pace'))).toBe(false);
+  });
+
+  it('puts the pace, a spending forecast, under Details', () => {
+    const r = render();
+    act(() => byLabel(r, 'How this adds up').props.onPress());
+    const all = texts(r);
+    expect(all.some((t) => t.startsWith('On pace by '))).toBe(true);
+    expect(all.some((t) => t.startsWith('about ₹'))).toBe(true);
   });
 
   it('says how far over the daily goal today is', () => {
@@ -133,12 +141,7 @@ describe('month card with bills still to pay', () => {
   it('takes the bills off the headline and shows them as a chip', () => {
     const all = texts(render(base));
     expect(all).toEqual(
-      expect.arrayContaining([
-        'Free after bills',
-        '₹40,000',
-        'of ₹1,00,000 after spending, savings and bills',
-        '₹20,000 still to pay',
-      ])
+      expect.arrayContaining(['Free after bills', '₹40,000', 'of ₹1,00,000', '₹20,000 still to pay'])
     );
     expect(all).not.toContain('Free to use');
   });
@@ -170,9 +173,7 @@ describe('month card with bills still to pay', () => {
 
   it('is the plain Free to use card when nothing is due', () => {
     const all = texts(render({ ...base, dueMinor: 0 }));
-    expect(all).toEqual(
-      expect.arrayContaining(['Free to use', '₹60,000', 'of ₹1,00,000 after spending and savings'])
-    );
+    expect(all).toEqual(expect.arrayContaining(['Free to use', '₹60,000', 'of ₹1,00,000']));
     expect(all.some((t) => t.includes('still to pay'))).toBe(false);
   });
 
@@ -211,11 +212,9 @@ describe('month card with savings hidden', () => {
     mockHideAmounts = false;
   });
 
-  it('keeps the free headline and the spent share, and never says what was saved', () => {
+  it('keeps the free headline, and never says what was saved', () => {
     const all = texts(render(hidden));
-    expect(all).toEqual(
-      expect.arrayContaining(['10% spent', 'Free to use', '₹30,000', 'Spent', 'Debt left'])
-    );
+    expect(all).toEqual(expect.arrayContaining(['Free to use', '₹30,000', 'Spent', 'Debt left']));
     expect(all).not.toContain('Saved');
   });
 
@@ -253,9 +252,7 @@ describe('month card with money carried over from earlier months', () => {
 
   it('says what the figure is out of, income and what carried over together, without double counting it', () => {
     const all = texts(render(base));
-    expect(all).toEqual(
-      expect.arrayContaining(['Free to use', '₹80,000', 'of ₹1,20,000 after spending and savings'])
-    );
+    expect(all).toEqual(expect.arrayContaining(['Free to use', '₹80,000', 'of ₹1,20,000']));
   });
 
   it('shows the carried amount as its own line in the sum', () => {
@@ -411,27 +408,9 @@ describe('month card: how this adds up', () => {
   });
 });
 
-describe('month card: the free label, today and pace', () => {
-  it('names the free part of the bar with the same figure as the headline', () => {
-    expect(texts(render())).toContain('₹794 free');
-  });
-
-  it('has no free label when more went out than came in, or the bills take it all', () => {
-    expect(
-      texts(
-        render({ incomeMinor: 5_000_000, spentMinor: 6_000_000, savingsMinor: 0, surplusMinor: -1_000_000 })
-      )
-    ).not.toContain('₹10,000 free');
-    const all = texts(
-      render({
-        incomeMinor: 10_000_000,
-        spentMinor: 1_000_000,
-        savingsMinor: 3_000_000,
-        surplusMinor: 6_000_000,
-        dueMinor: 7_000_000,
-      })
-    );
-    expect(all.some((t) => t.endsWith(' free'))).toBe(false);
+describe('month card: today and the free figure', () => {
+  it('says the free figure once, in the headline, with no second "free" label', () => {
+    expect(texts(render()).some((t) => t.endsWith(' free'))).toBe(false);
   });
 
   it('says what is left of the daily goal, and none left once it is spent', () => {

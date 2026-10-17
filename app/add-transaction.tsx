@@ -45,7 +45,7 @@ import { HomeWallpaper } from '@/features/home/HomeWallpaper';
 import { Glass } from '@/components/Glass';
 import { applyPadKey, evaluateAmount, exprFromMinor, hasOperator, PadKey } from '@/lib/padMath';
 import { AmountPad } from '@/components/AmountPad';
-import { Totals, FriendFields } from '@/features/add/AddFields';
+import { FriendFields } from '@/features/add/AddFields';
 import { AddDetailRow } from '@/features/add/AddDetailRow';
 import { AddSheets } from '@/features/add/AddSheets';
 import { AmountCard, TransferAccounts, UsualChips, StagedList } from '@/features/add/AddSections';
@@ -75,9 +75,6 @@ import { useAccent } from '@/theme/AccentContext';
 
 /** How far ahead a date can be before saving asks "are you sure?". */
 const FUTURE_DATE_CHECK_DAYS = 7;
-/** A name cut to fit a button: the Save button says what it saves, and a long category must not push it out. */
-const shortName = (name?: string) => (name && name.length > 14 ? `${name.slice(0, 13)}…` : name);
-
 export default function AddTransactionScreen() {
   const insets = useSafeAreaInsets();
   const { show: showUndo } = useUndoToast();
@@ -705,22 +702,8 @@ export default function AddTransactionScreen() {
   const cannotSave = splitParts
     ? !!splitProblem(amountMinor, splitParts) || !effectiveAccountId
     : (expr !== '' || rows.length === 0) && !!currentProblem;
-  const category = categories.find((c) => c.id === categoryId);
-  const accountName = effectiveAccount?.name ?? 'Choose account';
-  // What an expense or income will be saved as; the amount card shows it while the pad covers the grid.
-  const selection =
-    type === 'expense' || type === 'income'
-      ? `${splitParts ? `Split · ${splitParts.length} categories` : (category?.name ?? 'Choose a category')} · ${accountName}`
-      : undefined;
-  const saveSummary =
-    amountMinor > 0 && !invalidAmount
-      ? [
-          formatMoney(amountMinor, currency),
-          type === 'expense' || type === 'income' ? shortName(category?.name) : undefined,
-        ]
-          .filter(Boolean)
-          .join(' · ')
-      : undefined;
+  // The Save button names the amount it saves; the category shows on the grid and the account on its chip.
+  const saveSummary = amountMinor > 0 && !invalidAmount ? formatMoney(amountMinor, currency) : undefined;
   const saveTitle = saveButtonTitle({
     saving,
     editing: !!editing,
@@ -759,7 +742,7 @@ export default function AddTransactionScreen() {
       accessibilityHint="Keeps this entry on a list and starts the next one; Save saves them all"
     >
       <Feather name="plus" size={14} color={theme.colors.textPrimary} />
-      <Text style={styles.addToListText}>{addingRow ? 'Adding…' : 'Add another'}</Text>
+      <Text style={styles.addToListText}>{addingRow ? 'Adding…' : 'Add more'}</Text>
     </Pressable>
   );
 
@@ -851,7 +834,6 @@ export default function AddTransactionScreen() {
           amountIssue={invalidAmount ? 'Enter a positive amount. Check the calculation.' : roundingNote}
           frequentAmounts={frequentAmounts}
           amountMinor={amountMinor}
-          selection={selection}
           onPickAmount={(minor) => setExpr(exprFromMinor(minor))}
         />
 
@@ -887,8 +869,8 @@ export default function AddTransactionScreen() {
                 </Text>
                 <Text style={styles.noAccountText}>
                   {accounts.length === 0
-                    ? 'A bank account, cash, or a UPI wallet. That is where this entry will be recorded.'
-                    : 'Savings accounts can only send or receive transfers. Add a bank, cash or wallet account for spending.'}
+                    ? 'A bank, cash or wallet account.'
+                    : 'Savings only take transfers. Add a bank, cash or wallet account.'}
                 </Text>
                 <PrimaryButton
                   title="Add an account"
@@ -982,15 +964,8 @@ export default function AddTransactionScreen() {
             </Text>
           </View>
         )}
-        {rows.length > 0 && <Text style={styles.queueHint}>{rows.length} on your list · not saved yet</Text>}
+        {rows.length > 0 && <Text style={styles.queueHint}>{rows.length} on your list</Text>}
         {error && <Text style={styles.error}>{error}</Text>}
-        {rows.length > 0 && (
-          <View style={styles.totalsRow}>
-            <Totals label="In" value={totals.income} color={theme.colors.incomeText} />
-            <Totals label="Out" value={totals.expense} color={theme.colors.expenseText} />
-            <Totals label="Net" value={totals.income - totals.expense} color={theme.colors.textPrimary} />
-          </View>
-        )}
         <AddDetailRow
           type={type}
           accountName={effectiveAccount?.name}

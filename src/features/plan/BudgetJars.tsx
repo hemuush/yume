@@ -22,7 +22,7 @@ const ROOM = JAR_HEIGHT - 9;
 /**
  * This month's budgets as glass jars that fill as you spend: the category's own colour, amber near the
  * limit, coral and overflowing (with what it's over by) past it. The line above names how many are over and
- * the worst one. Individual jars open their overview; the summary opens Budgets. Empty prompts setup.
+ * Individual jars open their overview; the summary opens Budgets. Empty prompts setup.
  */
 export function BudgetJars({
   summary,
@@ -51,7 +51,6 @@ export function BudgetJars({
     );
   }
   const over = summary.overCount > 0;
-  const worst = summary.rows.find((b) => b.overBudget) ?? summary.rows[0];
   return (
     <Glass style={[styles.card, cardSurface.neutral]}>
       <Pressable
@@ -66,10 +65,6 @@ export function BudgetJars({
           ) : (
             <Text style={styles.captionOk}>All within their limits</Text>
           )}
-          {' · '}
-          {worst.overBudget
-            ? `${worst.categoryName} is ${formatMoney(-worst.remainingMinor)} over`
-            : `${worst.categoryName} has ${formatMoney(worst.remainingMinor)} left`}
         </Text>
       </Pressable>
       <ScrollView
