@@ -43,6 +43,13 @@ describe('RecurringHero', () => {
         { key: 'salary-b', date: '2026-11-01', amountMinor: 200000, incoming: true },
       ],
     });
+    // The dates sit inside the timeline, which opens on tap.
+    expect(texts(tree)).not.toContain('1 Nov · 2 entries');
+    act(() =>
+      tree.root
+        .find((n) => n.props.accessibilityLabel === 'Next 30 days timeline' && n.props.onPress)
+        .props.onPress()
+    );
     expect(texts(tree)).toContain('1 Nov · 2 entries');
     const date = tree.root.findAll(
       (node) =>

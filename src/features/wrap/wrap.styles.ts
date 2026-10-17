@@ -31,18 +31,12 @@ export const styles = StyleSheet.create({
     marginTop: 10,
     marginHorizontal: 14,
   },
-  topEyebrow: { ...EYEBROW, fontFamily: EYEBROW.fontFamily, fontSize: 10, color: theme.colors.textSecondary },
+  topEyebrow: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textSecondary },
   topLabel: {
     fontFamily: theme.font.roundedBold,
     fontSize: 22,
     color: theme.colors.textPrimary,
     marginTop: 3,
-  },
-  partCount: {
-    fontFamily: theme.font.mono,
-    fontSize: 12,
-    color: theme.colors.textSecondary,
-    marginRight: 12,
   },
   chapters: { gap: 8, paddingHorizontal: 14, paddingTop: 14, paddingBottom: 4 },
   chapter: {
@@ -80,14 +74,6 @@ export const styles = StyleSheet.create({
     fontSize: 12,
     color: theme.colors.textPrimary,
     flexShrink: 1,
-  },
-  playbackHint: {
-    fontFamily: theme.font.body,
-    fontSize: 11,
-    color: theme.colors.textSecondary,
-    textAlign: 'center',
-    marginTop: 3,
-    marginBottom: 6,
   },
 
   // A beat fills the space under the bar: kicker at the top, the story centred below it.

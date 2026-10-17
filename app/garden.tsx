@@ -36,11 +36,11 @@ function noteFor(stage: GrowthStage, streak: number): string {
   // `stage === 'seed'` only happens at streak exactly 0 (stageForStreak's threshold); today's logged spend
   // resolves the streak at once, so there is no separate in-between state to word differently.
   if (stage === 'seed')
-    return "No streak going right now â€” spend under today's goal to plant the first seed.";
+    return "No streak going right now — spend under today's goal to plant the first seed.";
   if (stage === 'sprout')
     return `${streak} day${streak === 1 ? '' : 's'} running. A couple more and it's a sapling.`;
-  if (stage === 'sapling') return `${streak} days running â€” getting there. A full week and it blooms.`;
-  return `${streak} days running â€” in full bloom. A day over the goal starts it again from a seed.`;
+  if (stage === 'sapling') return `${streak} days running — getting there. A full week and it blooms.`;
+  return `${streak} days running — in full bloom. A day over the goal starts it again from a seed.`;
 }
 
 /** Daily spending-goal progress and streak history, with provisional results for today. */
@@ -101,7 +101,7 @@ export default function GardenScreen() {
   const stageToday = stageForStreak(streakToday);
 
   if (!hasData && loadError)
-    return <ScreenLoadError title="Suuâ€™s garden" message={loadError} onRetry={() => void reload()} />;
+    return <ScreenLoadError title="Suu’s garden" message={loadError} onRetry={() => void reload()} />;
 
   if (!loaded && !loadError) {
     return (
@@ -165,7 +165,7 @@ export default function GardenScreen() {
                   />
                   {goalError && <Text style={styles.goalError}>{goalError}</Text>}
                   <PrimaryButton
-                    title={goalSaving ? 'Savingâ€¦' : 'Start growing'}
+                    title={goalSaving ? 'Saving…' : 'Start growing'}
                     onPress={startGoal}
                     disabled={goalSaving}
                   />
@@ -187,9 +187,7 @@ export default function GardenScreen() {
                       </Text>
                     </View>
                     <View style={styles.goalRow}>
-                      <Text style={styles.summaryGoal}>
-                        Daily goal Â· under {formatMoney(dailyGoalMinor)}
-                      </Text>
+                      <Text style={styles.summaryGoal}>Daily goal · under {formatMoney(dailyGoalMinor)}</Text>
                       <Pressable
                         accessibilityRole="button"
                         accessibilityLabel="Change daily goal"

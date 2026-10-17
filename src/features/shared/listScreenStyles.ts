@@ -1,11 +1,12 @@
 import { StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
+import { SCREEN } from '@/components/screenStyles';
 
 /** Styles Budgets and Categories (screens, rows, and their add/edit sheets) have in common. */
 export const listScreenStyles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
   errorBanner: {
-    marginHorizontal: 20,
+    marginHorizontal: SCREEN.gutter,
     marginTop: theme.layout.screenTopGap,
     marginBottom: 4,
     padding: 14,

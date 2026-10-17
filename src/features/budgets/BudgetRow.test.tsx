@@ -121,12 +121,12 @@ describe('BudgetRow per-day figure', () => {
   };
 
   it('says what is left each day when asked to', () => {
-    expect(rowText(true)).toContain('left · ₹138 a day');
+    expect(rowText(true)).toContain('₹138 a day');
   });
 
-  it('keeps "left this month" when not asked', () => {
+  it('puts what is left beside the name, and no daily figure when not asked', () => {
     const t = rowText(false);
-    expect(t).toContain('left this month');
+    expect(t).toContain(' left');
     expect(t).not.toContain('a day');
   });
 
@@ -171,7 +171,7 @@ describe('BudgetRow per-day figure', () => {
     expect(tree.root.findAllByType(LimitMeter)).toHaveLength(1);
     const shown = tree.root.findAllByType(Text).map((t) => [].concat(t.props.children).join(''));
     expect(shown).toContain('Groceries');
-    expect(shown.some((t) => t.includes('over budget'))).toBe(true);
+    expect(shown).toContain('₹1,200 over');
     expect(tree.root.findByType(LimitMeter).props.pct).toBe(100);
     expect(
       tree.root.findAll((n) => n.props.accessibilityLabel === 'More for Groceries budget' && n.props.onPress)

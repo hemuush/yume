@@ -1,6 +1,5 @@
 import { useEffect, useRef } from 'react';
 import { View, useWindowDimensions } from 'react-native';
-import Feather from '@expo/vector-icons/Feather';
 import { Text } from '@/components/Text';
 import ReanimatedAnimated, {
   useSharedValue,
@@ -10,12 +9,13 @@ import ReanimatedAnimated, {
 } from 'react-native-reanimated';
 import { CountUpAmount } from '@/components/CountUpAmount';
 import { formatMoney } from '@/lib/money';
-import { theme } from '@/constants/theme';
 import { useReduceMotion } from '@/lib/useReduceMotion';
 import { SpendBarChart, ChartLegend } from './SpendBarChart';
 import { SpendBar, ChartLegendItem } from './spendChart';
 import { styles } from './transactions.styles';
 import { DURATIONS } from '@/lib/motionTimings';
+import Feather from '@expo/vector-icons/Feather';
+import { theme } from '@/constants/theme';
 import { Glass } from '@/components/Glass';
 import { cardSurface } from '@/components/CardSurface';
 
@@ -122,6 +122,19 @@ export function TransactionsHeadline({
               numberOfLines={1}
               adjustsFontSizeToFit
             />
+            {change != null && change !== 0 && (
+              <View style={styles.sumChangeRow}>
+                <Feather
+                  name={change > 0 ? 'arrow-up-right' : 'arrow-down-right'}
+                  size={13}
+                  color={change > 0 ? theme.colors.expenseText : theme.colors.incomeText}
+                />
+                <Text style={[styles.sumChange, change > 0 ? styles.expense : styles.income]}>
+                  {formatMoney(Math.abs(change))} {change > 0 ? 'more' : 'less'} than{' '}
+                  {displayed.compareLabel ?? `last ${displayed.viewScope}`}
+                </Text>
+              </View>
+            )}
           </View>
           {displayed.incomeMinor > 0 && (
             <View style={[styles.sumCashflow, stacked && styles.sumCashflowStacked]}>
@@ -132,7 +145,7 @@ export function TransactionsHeadline({
                 </Text>
               </View>
               <View style={[styles.sumMetric, stacked && styles.sumMetricStacked]}>
-                <Text style={styles.sumKicker}>Net</Text>
+                <Text style={styles.sumKicker}>Left</Text>
                 <Text style={[styles.sumMetricAmount, net > 0 && styles.income, net < 0 && styles.expense]}>
                   {net > 0 ? '+' : net < 0 ? '−' : ''}
                   {formatMoney(Math.abs(net))}
@@ -141,25 +154,6 @@ export function TransactionsHeadline({
             </View>
           )}
         </View>
-        {/* Keep the period comparison below the figures and above the chart. */}
-        {change != null && change !== 0 && (
-          <View style={styles.sumChips}>
-            {change != null && change !== 0 && (
-              <View style={[styles.sumChip, change > 0 ? styles.changePillUp : styles.changePillDown]}>
-                <Feather
-                  name={change > 0 ? 'arrow-up-right' : 'arrow-down-right'}
-                  size={12}
-                  color={change > 0 ? theme.colors.expenseText : theme.colors.incomeText}
-                />
-                <Text style={[styles.sumChipText, change > 0 ? styles.expense : styles.income]}>
-                  {formatMoney(Math.abs(change))} {change > 0 ? 'more' : 'less'} than{' '}
-                  {displayed.compareLabel ?? `last ${displayed.viewScope}`}
-                </Text>
-              </View>
-            )}
-          </View>
-        )}
-
         <View style={styles.sumChart}>
           <SpendBarChart bars={displayed.bars} onPressDay={onPressDay} selectedKey={selectedKey} inset={0} />
         </View>

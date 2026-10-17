@@ -224,6 +224,8 @@ export const styles = StyleSheet.create({
   sub: { fontFamily: theme.font.body, fontSize: 13, lineHeight: 18, color: theme.colors.textSecondary },
 
   whatIfQ: { fontFamily: theme.font.body, fontSize: 14, lineHeight: 20, color: theme.colors.textSecondary },
+  whatIfHead: { minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 6 },
+  whatIfHeadCopy: { flex: 1, minWidth: 0 },
   whatIfBold: { fontSize: 14, fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
   lever: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 12 },
   cuts: { flexDirection: 'row', gap: 6 },

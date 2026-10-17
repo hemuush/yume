@@ -170,6 +170,15 @@ async function press(tree: ReactTestRenderer, label: string) {
     await settle();
   });
 }
+/** Presses an icon-only button by its accessibility label (the pad's Hide button has no text). */
+async function pressLabelled(tree: ReactTestRenderer, label: string) {
+  await act(async () => {
+    await tree.root
+      .find((n) => n.props.accessibilityLabel === label && typeof n.props.onPress === 'function')
+      .props.onPress();
+    await settle();
+  });
+}
 const KEY_LABEL: Record<string, string> = {
   '.': 'decimal point',
   '+': 'plus',
@@ -206,11 +215,17 @@ async function clearAmount(tree: ReactTestRenderer) {
       .props.onLongPress();
   });
 }
+/** The Save button's title: plain "Save", or "Save ₹250 · Food" once there is something to name. */
+const isSaveTitle = (t?: string) => t === 'Save' || !!t?.startsWith('Save ₹');
 /** Save, then wait past the short "done" tick before going back. */
 async function save(tree: ReactTestRenderer, title = 'Save') {
   await act(async () => {
     await tree.root
-      .find((n) => n.props.title === title && typeof n.props.onPress === 'function')
+      .find(
+        (n) =>
+          (title === 'Save' ? isSaveTitle(n.props.title) : n.props.title === title) &&
+          typeof n.props.onPress === 'function'
+      )
       .props.onPress();
     await new Promise((resolve) => setTimeout(resolve, 400));
   });
@@ -305,7 +320,7 @@ describe('Add screen', () => {
     const tree = await render();
     await press(tree, 'Food');
     await typeAmount(tree, '120');
-    const button = pressable(tree, 'Add to list');
+    const button = pressable(tree, 'Add another');
     await act(async () => {
       button.props.onPress();
       button.props.onPress();
@@ -322,7 +337,7 @@ describe('Add screen', () => {
     const tree = await render();
     await press(tree, 'Food');
     await typeAmount(tree, '120');
-    await press(tree, 'Add to list');
+    await press(tree, 'Add another');
     await typeAmount(tree, '40');
     await save(tree, 'Save 2 entries');
     expect(createTransaction).toHaveBeenCalledTimes(2);
@@ -331,10 +346,28 @@ describe('Add screen', () => {
   it('hides and reopens the number pad without losing the amount', async () => {
     const tree = await render();
     await typeAmount(tree, '120');
-    await press(tree, 'Hide pad');
+    await pressLabelled(tree, 'Hide pad');
     expect(tree.root.findAll((n) => n.props.accessibilityLabel === 'delete')).toHaveLength(0);
     await press(tree, 'Show pad');
     expect(texts(tree)).toContain('120');
+  });
+
+  it('folds the pad away when a category is picked after an amount, and says what Save saves', async () => {
+    const tree = await render();
+    await typeAmount(tree, '250');
+    expect(tree.root.findAll((n) => n.props.accessibilityLabel === 'delete').length).toBeGreaterThan(0);
+    expect(texts(tree)).toContain('Choose a category · Bank');
+    await press(tree, 'Food');
+    expect(tree.root.findAll((n) => n.props.accessibilityLabel === 'delete')).toHaveLength(0);
+    expect(tree.root.find((n) => n.props.title === 'Save ₹250 · Food')).toBeTruthy();
+    await press(tree, 'Show pad');
+    expect(texts(tree)).toContain('Food · Bank');
+  });
+
+  it('keeps the pad up when a category is picked before any amount', async () => {
+    const tree = await render();
+    await press(tree, 'Food');
+    expect(tree.root.findAll((n) => n.props.accessibilityLabel === 'delete').length).toBeGreaterThan(0);
   });
 
   it('explains invalid calculations and disables Save', async () => {
@@ -342,7 +375,7 @@ describe('Add screen', () => {
     await press(tree, 'Food');
     await typeAmount(tree, '1÷0');
     expect(texts(tree)).toContain('Enter a positive amount. Check the calculation.');
-    expect(tree.root.find((n) => n.props.title === 'Save').props.disabled).toBe(true);
+    expect(tree.root.find((n) => isSaveTitle(n.props.title)).props.disabled).toBe(true);
     expect(texts(tree)).toContain('—');
   });
   it('opens with no category picked, even one saved before, but keeps the account', async () => {
@@ -413,9 +446,9 @@ describe('Add screen', () => {
     await press(tree, 'Food');
 
     await typeAmount(tree, '100');
-    await press(tree, 'Add to list');
+    await press(tree, 'Add another');
     await typeAmount(tree, '200');
-    await press(tree, 'Add to list');
+    await press(tree, 'Add another');
     await save(tree, 'Save 2 entries');
 
     expect(createTransaction).toHaveBeenCalledTimes(2);
@@ -619,7 +652,7 @@ describe('Add screen', () => {
     expect(texts(tree).some((t) => t.startsWith('You added'))).toBe(true);
     await typeAmount(tree, '0');
     expect(texts(tree).some((t) => t.startsWith('You added'))).toBe(false);
-    expect(texts(tree)).toContain('Save');
+    expect(texts(tree).some(isSaveTitle)).toBe(true);
   });
 
   it('warns when the same entry is already on the list', async () => {
@@ -630,9 +663,9 @@ describe('Add screen', () => {
     // Add opens with no category picked; this entry is Food.
     await press(tree, 'Food');
     await typeAmount(tree, '80');
-    await press(tree, 'Add to list');
+    await press(tree, 'Add another');
     await typeAmount(tree, '80');
-    await press(tree, 'Add to list');
+    await press(tree, 'Add another');
     expect(texts(tree)).toContain('₹80 · Food is already on your list below. Tap again to add it anyway.');
     expect(texts(tree)).toContain('1 staged');
   });
@@ -929,13 +962,13 @@ describe('Add screen — money back', () => {
 it('keeps invalid actions visibly disabled and preserves pad hide/show and valid saving', async () => {
   const tree = await render();
   const saveButton = () =>
-    tree.root.find((n) => n.props.title === 'Save' && typeof n.props.onPress === 'function');
+    tree.root.find((n) => isSaveTitle(n.props.title) && typeof n.props.onPress === 'function');
   expect(saveButton().props.disabled).toBe(true);
-  expect(pressable(tree, 'Add to list').props.disabled).toBe(true);
-  await press(tree, 'Hide pad');
+  expect(pressable(tree, 'Add another').props.disabled).toBe(true);
+  await pressLabelled(tree, 'Hide pad');
   await press(tree, 'Show pad');
   await press(tree, 'Food');
   await typeAmount(tree, '120');
   expect(saveButton().props.disabled).toBe(false);
-  expect(pressable(tree, 'Add to list').props.disabled).toBe(false);
+  expect(pressable(tree, 'Add another').props.disabled).toBe(false);
 });

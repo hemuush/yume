@@ -174,10 +174,21 @@ export function WhatIfCard({
     <Glass style={[styles.card, cardSurface.neutral]}>
       {whatIf ? (
         <>
-          <Text style={styles.gainNote}>Spend a little less</Text>
-          <Text style={styles.whatIfBold}>
-            {whatIf.categoryName} · {formatMoney(whatIf.avgMonthlyMinor)} / month
-          </Text>
+          <Pressable
+            onPress={() => onOpen(cut)}
+            style={withPressed(styles.whatIfHead)}
+            accessibilityRole="button"
+            accessibilityLabel="Open the what-if sandbox"
+          >
+            <View style={styles.whatIfHeadCopy}>
+              <Text style={styles.gainNote}>Spend a little less</Text>
+              <Text style={styles.whatIfBold}>
+                {whatIf.categoryName} · {formatMoney(whatIf.avgMonthlyMinor)} / month
+              </Text>
+            </View>
+            <Text style={styles.openText}>Explore</Text>
+            <Feather name="chevron-right" size={16} color={theme.colors.link} />
+          </Pressable>
           <View style={styles.lever}>
             <View style={styles.cuts}>
               {WHAT_IF_CUTS.map((c) => (
@@ -210,15 +221,17 @@ export function WhatIfCard({
           What-if: try a spending cut once you&rsquo;ve logged a few expenses
         </Text>
       )}
-      <Pressable
-        onPress={() => onOpen(cut)}
-        style={withPressed(styles.openRow)}
-        accessibilityRole="button"
-        accessibilityLabel="Open the what-if sandbox"
-      >
-        <Text style={styles.openText}>Explore this scenario</Text>
-        <Feather name="chevron-right" size={16} color={theme.colors.textMuted} />
-      </Pressable>
+      {!whatIf && (
+        <Pressable
+          onPress={() => onOpen(cut)}
+          style={withPressed(styles.openRow)}
+          accessibilityRole="button"
+          accessibilityLabel="Open the what-if sandbox"
+        >
+          <Text style={styles.openText}>Explore this scenario</Text>
+          <Feather name="chevron-right" size={16} color={theme.colors.textMuted} />
+        </Pressable>
+      )}
     </Glass>
   );
 }

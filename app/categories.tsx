@@ -31,6 +31,7 @@ import { errorMessage } from '@/lib/errorMessage';
 import { showAlert } from '@/components/AppDialog';
 import { HomeWallpaper } from '@/features/home/HomeWallpaper';
 import { useAccent } from '@/theme/AccentContext';
+import { SCREEN } from '@/components/screenStyles';
 
 export default function CategoriesScreen() {
   const insets = useSafeAreaInsets();
@@ -225,7 +226,12 @@ export default function CategoriesScreen() {
         <HomeWallpaper accent={accent} secondary={secondary} />
         <SkyHeader title="Categories" showBack hideUser wallpaper />
         <View style={{ paddingTop: 20 }}>
-          <Skeleton width={100} height={13} radius={4} style={{ marginHorizontal: 20, marginBottom: 14 }} />
+          <Skeleton
+            width={100}
+            height={13}
+            radius={4}
+            style={{ marginHorizontal: SCREEN.gutter, marginBottom: 14 }}
+          />
           <View style={styles.grid}>
             {[0, 1].map((row) => (
               <View key={row} style={styles.gridRow}>

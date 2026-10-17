@@ -45,6 +45,7 @@ export function AmountCard({
   amountMinor,
   onPickAmount,
   refund = false,
+  selection,
 }: {
   type: EntryType;
   currency: string | undefined;
@@ -64,6 +65,8 @@ export function AmountCard({
   onPickAmount: (minor: number) => void;
   /** "Money back" is on: the card turns the income green and says so. */
   refund?: boolean;
+  /** "Food · HDFC Bank": what this will be saved as, beside the amount's label while the pad is up. */
+  selection?: string;
 }) {
   const { accent } = useAccent();
   const wash = refund ? TYPE_WASH.income : typeWash(type, accent);
@@ -81,6 +84,11 @@ export function AmountCard({
                 ? 'Amount'
                 : `${type[0].toUpperCase()}${type.slice(1)} amount`}
           </Text>
+          {padVisible && selection && (
+            <Text style={styles.usualCategory} numberOfLines={1} accessibilityLiveRegion="polite">
+              {selection}
+            </Text>
+          )}
           {onTogglePad && !isLinked && !padVisible && (
             <Pressable
               onPress={onTogglePad}

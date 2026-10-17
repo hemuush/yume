@@ -197,7 +197,7 @@ describe('Profile · Settings section', () => {
         'Require unlock',
         'Hide savings & investment amounts',
         'Notifications',
-        '4 of 6 on',
+        '4 of 8 on',
         'Backup & restore',
         'Last backup yesterday',
         'Tidy up',

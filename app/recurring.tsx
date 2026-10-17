@@ -94,10 +94,9 @@ export default function RecurringScreen() {
   const pausedRules = rules.filter((r) => !r.active);
   const visibleRules = rules.filter((r) => !isHidden(r));
   const shares = costShares(visibleRules, categoriesById);
-  const nextDate = activeRules.reduce<string | null>(
-    (min, r) => (min === null || r.nextRunDate < min ? r.nextRunDate : min),
-    null
-  );
+  const nextDate = activeRules
+    .filter((r) => !isHidden(r))
+    .reduce<string | null>((min, r) => (min === null || r.nextRunDate < min ? r.nextRunDate : min), null);
 
   // Memoized: the form resets whenever its prefill changes identity, so a
   // fresh object each render would wipe whatever was typed.

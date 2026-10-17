@@ -176,7 +176,7 @@ export function AccountDetailModal({
       }
     });
 
-  const confirmDelete = () =>
+  const deleteNow = () =>
     runAction(async () => {
       setBusy(true);
       try {
@@ -193,6 +193,12 @@ export function AccountDetailModal({
         setBusy(false);
       }
     });
+
+  const confirmDelete = () =>
+    showAlert(`Delete "${account.name}"?`, 'You can undo this right after.', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Delete', style: 'destructive', onPress: deleteNow },
+    ]);
 
   const trackingNow = type === 'savings' && tracked;
 
