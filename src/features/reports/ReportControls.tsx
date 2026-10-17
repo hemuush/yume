@@ -136,7 +136,7 @@ const s = StyleSheet.create({
     borderBottomColor: theme.colors.borderSoft,
   },
   tab: { flex: 1, minHeight: 48, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 4 },
-  tabText: { fontFamily: theme.font.body, fontSize: 14, color: theme.colors.textMuted },
+  tabText: { fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textMuted },
   tabOn: { fontFamily: theme.font.bodyBold, color: theme.colors.ink },
   underline: { position: 'absolute', bottom: 0, height: 3, left: '18%', right: '18%', borderRadius: 3 },
   underlineOn: { backgroundColor: theme.colors.ink },
@@ -164,7 +164,7 @@ const s = StyleSheet.create({
   note: { flex: 1, fontFamily: theme.font.body, fontSize: 12, lineHeight: 17, color: theme.colors.textMuted },
   explanation: {
     fontFamily: theme.font.body,
-    fontSize: 14,
+    fontSize: 13,
     lineHeight: 21,
     color: theme.colors.textSecondary,
     marginBottom: 14,

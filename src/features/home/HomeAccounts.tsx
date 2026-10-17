@@ -172,7 +172,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   headingAction: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  headingActionText: { fontFamily: theme.font.bodyMedium, fontSize: 12.5, color: theme.colors.link },
+  headingActionText: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.link },
   title: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textSecondary },
   big: {
     fontFamily: theme.font.body,
@@ -182,7 +182,7 @@ const styles = StyleSheet.create({
     letterSpacing: -0.5,
     color: theme.colors.textPrimary,
   },
-  sub: { fontFamily: theme.font.body, fontSize: 12.5, color: theme.colors.textMuted },
+  sub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
   full: { flexBasis: '100%' },
   // Two even columns when the accounts are grouped.
   half: { width: '48.5%' },
@@ -232,14 +232,14 @@ const styles = StyleSheet.create({
   chipName: { flexShrink: 1, fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textPrimary },
   chipSub: {
     fontFamily: theme.font.body,
-    fontSize: 11.5,
+    fontSize: 12,
     color: theme.colors.textMuted,
     textTransform: 'capitalize',
   },
   chipAmount: {
     fontFamily: theme.font.bodyBold,
     fontVariant: ['tabular-nums'],
-    fontSize: 11.5,
+    fontSize: 12,
     color: theme.colors.textSecondary,
   },
 });

@@ -418,7 +418,7 @@ export default function PlanScreen() {
                 }}
               />
             </View>
-            <Section compact title="This month’s budgets" onSeeAll={() => open('/budgets')}>
+            <Section compact title="Budgets" onSeeAll={() => open('/budgets')}>
               <BudgetJars
                 summary={data.budgets}
                 onOpen={() => open('/budgets')}
@@ -426,16 +426,15 @@ export default function PlanScreen() {
                 onAdd={() => openDetail('new-budget', '')}
               />
             </Section>
-            <Section compact title="The way to debt-free">
+            <Section compact title="Debt">
               <DebtPath
                 loans={data.loans}
-                dueSoon={data.dueSoon}
                 today={data.today}
                 onOpen={() => open('/loans')}
                 onLoan={(id) => openDetail('loan', id)}
               />
             </Section>
-            <Section compact title="Saving toward" onSeeAll={() => open('/savings-goals')}>
+            <Section compact title="Goals" onSeeAll={() => open('/savings-goals')}>
               <View style={planStyles.rowGap}>
                 <GoalsStrip
                   goals={data.goals}
@@ -490,7 +489,6 @@ export default function PlanScreen() {
       </ReanimatedAnimated.ScrollView>
       <SkyHeader
         title="Plan"
-        subtitle="What’s ahead, and where you stand"
         collapse={collapse}
         wallpaper
         summary={
@@ -645,7 +643,7 @@ const styles = StyleSheet.create({
   errorTitle: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.expenseText },
   errorDetail: {
     fontFamily: theme.font.body,
-    fontSize: 11.5,
+    fontSize: 12,
     color: theme.colors.textSecondary,
     marginTop: 3,
     lineHeight: 16,

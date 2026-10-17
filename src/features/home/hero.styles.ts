@@ -32,7 +32,7 @@ export const styles = StyleSheet.create({
   headValueNeg: { color: theme.colors.expenseText },
   headCaption: {
     fontFamily: theme.font.body,
-    fontSize: 13.5,
+    fontSize: 13,
     lineHeight: 19,
     color: theme.colors.textSecondary,
   },
@@ -48,16 +48,8 @@ export const styles = StyleSheet.create({
     marginTop: -6,
     marginBottom: -2,
   },
-  howText: { fontFamily: theme.font.bodyBold, fontSize: 12.5, color: theme.colors.link },
+  howText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.link },
   // Names the (often tiny) free part of the money bar.
-  freeLabel: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-end', gap: 5, marginTop: -4 },
-  freeDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: theme.colors.slice.free },
-  freeText: {
-    fontFamily: theme.font.bodyBold,
-    fontSize: 11.5,
-    fontVariant: ['tabular-nums'],
-    color: theme.colors.link,
-  },
 
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   chip: {
@@ -110,17 +102,15 @@ export const styles = StyleSheet.create({
   statLabel: {
     flexShrink: 1,
     fontFamily: theme.font.bodyMedium,
-    fontSize: 11.5,
+    fontSize: 12,
     color: theme.colors.textSecondary,
   },
   statValue: {
     fontVariant: ['tabular-nums'],
     fontFamily: theme.font.bodyBold,
-    fontSize: 14,
+    fontSize: 13,
     color: theme.colors.textPrimary,
   },
-  pace: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  paceText: { flex: 1, fontFamily: theme.font.body, fontSize: 12.5, color: theme.colors.textMuted },
 
   working: {
     borderRadius: 16,
@@ -146,14 +136,14 @@ export const styles = StyleSheet.create({
     flexGrow: 1,
     flexBasis: 140,
     fontFamily: theme.font.body,
-    fontSize: 14,
+    fontSize: 13,
     color: theme.colors.textSecondary,
   },
   workingLabelTotal: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
   workingValue: {
     fontVariant: ['tabular-nums'],
     fontFamily: theme.font.bodyBold,
-    fontSize: 14,
+    fontSize: 13,
     color: theme.colors.textPrimary,
   },
   workingValueDue: { color: theme.colors.dueInk },

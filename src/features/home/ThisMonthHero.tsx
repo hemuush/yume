@@ -18,7 +18,7 @@ import { CountUpAmount } from '@/components/CountUpAmount';
 import { Glass } from '@/components/Glass';
 import { cardSurface } from '@/components/CardSurface';
 import { usePrivacy } from '@/theme/PrivacyContext';
-import { heroSlices, heroPct, heroShare, withoutSavings } from './heroSlices';
+import { heroSlices, withoutSavings } from './heroSlices';
 import { MoneyBar } from './MoneyBar';
 import { DURATIONS } from '@/lib/motionTimings';
 import { styles } from './hero.styles';
@@ -272,17 +272,18 @@ export function ThisMonthHero({
       : 'Free to use';
   const headMinor = over ? slices.overMinor : freeMinor;
   const headNeg = over || freeMinor < 0;
-  // "of ₹2,62,393 after spending and savings": the pool is income plus what carried over. A carried shortfall only
-  // lowers the headline and is not part of the pool, so then the caption leaves the amount out; the full sum
-  // (income, carried over, spent, set aside) is one tap away under "How this adds up".
-  const ofPool = displayed.carryMinor >= 0 ? `of ${formatMoney(poolMinor)} ` : '';
+  // "of ₹2,62,393": the pool is income plus what carried over. A carried shortfall only lowers the headline and is
+  // not part of the pool, so then the caption says what was taken off instead. The full sum (income, carried over,
+  // spent, set aside, pace) is one tap away under "Details".
+  const poolCaption = displayed.carryMinor >= 0 ? `of ${formatMoney(poolMinor)}` : null;
   const headCaption = !slices.hasIncome
     ? 'Add income to see what is free'
     : over
       ? 'more went out than came in'
       : displayed.surplusMinor < 0 && !hasDue
         ? 'below zero'
-        : `${ofPool}after ${
+        : (poolCaption ??
+          `after ${
             hasDue
               ? hideAmounts
                 ? 'deductions and bills'
@@ -290,9 +291,8 @@ export function ThisMonthHero({
               : hideAmounts
                 ? 'deductions'
                 : 'spending and savings'
-          }`;
+          }`);
 
-  const spentShare = slices.hasIncome && !over ? heroPct(heroShare(slices, 'spent')) : null;
   const shownToday = displayed.today;
   const shownPace = displayed.pace;
   const todayOverMinor = shownToday ? shownToday.spentMinor - shownToday.goalMinor : 0;
@@ -350,7 +350,7 @@ export function ThisMonthHero({
             accessibilityState={{ expanded: showWorking }}
             accessibilityLabel="How this adds up"
           >
-            <Text style={styles.howText}>How this adds up</Text>
+            <Text style={styles.howText}>Details</Text>
             <Feather name={showWorking ? 'chevron-up' : 'chevron-down'} size={13} color={theme.colors.link} />
           </Pressable>
         )}
@@ -380,26 +380,18 @@ export function ThisMonthHero({
                 <WorkingRow label="After bills" value={formatMoney(freeMinor)} total />
               </>
             )}
+            {shownPace && (
+              <WorkingRow
+                label={`On pace by ${shownPace.byLabel}`}
+                value={`about ${formatMoney(Math.round(shownPace.projectedMinor / 10000) * 10000)}`}
+              />
+            )}
           </View>
         )}
 
         {slices.hasIncome && <MoneyBar slices={slices} />}
-        {/* The free part of the bar can be a sliver; this names it. */}
-        {slices.hasIncome && !over && freeMinor > 0 && (
-          <View style={styles.freeLabel} accessible={false} importantForAccessibility="no-hide-descendants">
-            <View style={styles.freeDot} />
-            <Text style={styles.freeText}>{formatMoney(freeMinor)} free</Text>
-          </View>
-        )}
-
-        {(spentShare || shownToday || hasDue) && (
+        {(shownToday || hasDue) && (
           <View style={styles.chips}>
-            {spentShare && (
-              <View style={styles.chip}>
-                <Feather name="pie-chart" size={13} color={theme.colors.textSecondary} />
-                <Text style={styles.chipText}>{spentShare} spent</Text>
-              </View>
-            )}
             {shownToday && (
               <View style={[styles.chip, styles.chipClip, todayOverMinor > 0 && styles.chipOver]}>
                 <Feather
@@ -477,16 +469,6 @@ export function ThisMonthHero({
             cleared={displayed.outstandingLoansMinor === 0}
           />
         </View>
-
-        {shownPace && (
-          <View style={styles.pace}>
-            <Feather name="trending-up" size={14} color={theme.colors.textMuted} />
-            <Text style={styles.paceText}>
-              On pace to spend about {formatMoney(Math.round(shownPace.projectedMinor / 10000) * 10000)} by{' '}
-              {shownPace.byLabel}
-            </Text>
-          </View>
-        )}
       </ReanimatedAnimated.View>
 
       <HeroActions />

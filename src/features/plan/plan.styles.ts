@@ -45,7 +45,7 @@ export const styles = StyleSheet.create({
     letterSpacing: -1.2,
     color: theme.colors.textPrimary,
   },
-  bigNote: { fontFamily: theme.font.bodyMedium, fontSize: 14, color: theme.colors.textMuted },
+  bigNote: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textMuted },
   bigNothing: {
     fontFamily: theme.font.body,
     fontSize: 24,
@@ -95,13 +95,13 @@ export const styles = StyleSheet.create({
     paddingTop: 4,
     gap: 6,
   },
-  footText: { fontFamily: theme.font.body, fontSize: 14, lineHeight: 20, color: theme.colors.textSecondary },
+  footText: { fontFamily: theme.font.body, fontSize: 13, lineHeight: 20, color: theme.colors.textSecondary },
   footBold: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
   jump: { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 44 },
-  jumpText: { fontFamily: theme.font.bodyBold, fontSize: 14, color: theme.colors.link },
+  jumpText: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.link },
 
   /* ---------- Budget jars ---------- */
-  caption: { fontFamily: theme.font.body, fontSize: 14, lineHeight: 20, color: theme.colors.textSecondary },
+  caption: { fontFamily: theme.font.body, fontSize: 13, lineHeight: 20, color: theme.colors.textSecondary },
   captionBad: { fontFamily: theme.font.bodyBold, color: theme.colors.expenseText },
   captionOk: { fontFamily: theme.font.bodyBold, color: theme.colors.incomeText },
   jars: { gap: 10, paddingTop: 8, paddingHorizontal: 16 },
@@ -150,7 +150,7 @@ export const styles = StyleSheet.create({
     borderRadius: 10,
     backgroundColor: theme.colors.expense,
   },
-  spillText: { fontFamily: theme.font.bodyBold, fontSize: 10.5, color: theme.colors.surface },
+  spillText: { fontFamily: theme.font.bodyBold, fontSize: 11, color: theme.colors.surface },
   jarName: {
     maxWidth: '100%',
     fontFamily: theme.font.bodyBold,
@@ -187,7 +187,7 @@ export const styles = StyleSheet.create({
     letterSpacing: -1,
     color: theme.colors.textPrimary,
   },
-  goalPctSign: { fontFamily: theme.font.body, fontSize: 14, letterSpacing: 0, color: theme.colors.textMuted },
+  goalPctSign: { fontFamily: theme.font.body, fontSize: 13, letterSpacing: 0, color: theme.colors.textMuted },
   goalName: {
     marginTop: 'auto',
     fontFamily: theme.font.bodyBold,
@@ -197,7 +197,7 @@ export const styles = StyleSheet.create({
   goalAmt: {
     fontFamily: theme.font.body,
     fontVariant: ['tabular-nums'],
-    fontSize: 11.5,
+    fontSize: 12,
     marginTop: 3,
     color: theme.colors.textSecondary,
   },
@@ -220,13 +220,13 @@ export const styles = StyleSheet.create({
     backgroundColor: GLASS.fillStrong,
   },
   goalNewText: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textSecondary },
-  title: { fontFamily: theme.font.roundedBold, fontSize: 17, color: theme.colors.textPrimary },
+  title: { fontFamily: theme.font.roundedBold, fontSize: 15, color: theme.colors.textPrimary },
   sub: { fontFamily: theme.font.body, fontSize: 13, lineHeight: 18, color: theme.colors.textSecondary },
 
-  whatIfQ: { fontFamily: theme.font.body, fontSize: 14, lineHeight: 20, color: theme.colors.textSecondary },
+  whatIfQ: { fontFamily: theme.font.body, fontSize: 13, lineHeight: 20, color: theme.colors.textSecondary },
   whatIfHead: { minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 6 },
   whatIfHeadCopy: { flex: 1, minWidth: 0 },
-  whatIfBold: { fontSize: 14, fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
+  whatIfBold: { fontSize: 13, fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
   lever: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 12 },
   cuts: { flexDirection: 'row', gap: 6 },
   cut: {
@@ -240,7 +240,7 @@ export const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
   },
-  cutText: { fontFamily: theme.font.bodyBold, fontSize: 13.5, color: theme.colors.textPrimary },
+  cutText: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textPrimary },
   cutTextOn: { color: theme.colors.surface },
   gain: { flexGrow: 1, alignItems: 'flex-end', minWidth: 100, gap: 2 },
   gainValue: {
@@ -250,7 +250,7 @@ export const styles = StyleSheet.create({
     letterSpacing: -0.4,
     color: theme.colors.incomeText,
   },
-  gainNote: { fontFamily: theme.font.body, fontSize: 11.5, color: theme.colors.textMuted },
+  gainNote: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
   openRow: {
     minHeight: 44,
     flexDirection: 'row',
@@ -260,7 +260,7 @@ export const styles = StyleSheet.create({
     borderTopColor: theme.colors.borderSoft,
     paddingTop: 4,
   },
-  openText: { fontFamily: theme.font.bodyMedium, fontSize: 13.5, color: theme.colors.link },
+  openText: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.link },
 
   /* ---------- Friends & streak ---------- */
   tile: { flex: 1, minWidth: 0, padding: 14, gap: 6 },
@@ -268,15 +268,15 @@ export const styles = StyleSheet.create({
   value: { ...figure },
   income: { color: theme.colors.incomeText },
   over: { color: theme.colors.expenseText },
-  tileSub: { fontFamily: theme.font.body, fontSize: 12.5, lineHeight: 17, color: theme.colors.textMuted },
+  tileSub: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 17, color: theme.colors.textMuted },
   people: { flexDirection: 'row', gap: 6, marginTop: 'auto', overflow: 'hidden' },
   person: { maxWidth: 50, alignItems: 'center', gap: 3 },
   avatar: { width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
   avatarText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.ink },
-  personName: { fontFamily: theme.font.body, fontSize: 11.5, color: theme.colors.textMuted },
+  personName: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
   sproutDay: { alignItems: 'center', gap: 3 },
-  dayLabel: { fontFamily: theme.font.body, fontSize: 10.5, color: theme.colors.textMuted },
-  personAmt: { fontFamily: theme.font.bodyBold, fontSize: 11.5, color: theme.colors.textSecondary },
+  dayLabel: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textMuted },
+  personAmt: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textSecondary },
   sprouts: { flexDirection: 'row', alignItems: 'flex-end', gap: 6, minHeight: 32, marginTop: 'auto' },
 
   /* ---------- Coming up ---------- */
@@ -316,11 +316,11 @@ export const styles = StyleSheet.create({
     borderColor: GLASS.edge,
   },
   dueMid: { flex: 1, minWidth: 0 },
-  dueTitle: { fontFamily: theme.font.bodyMedium, fontSize: 15, color: theme.colors.textPrimary },
-  dueSub: { fontFamily: theme.font.body, fontSize: 12.5, color: theme.colors.textMuted, marginTop: 1 },
+  dueTitle: { fontFamily: theme.font.bodyMedium, fontSize: 14, color: theme.colors.textPrimary },
+  dueSub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, marginTop: 1 },
   dueSoon: { color: theme.colors.dueInk },
   dueUrgent: { color: theme.colors.expenseText },
-  dueAmount: { fontFamily: theme.font.bodyMedium, fontSize: 15, color: theme.colors.textPrimary },
+  dueAmount: { fontFamily: theme.font.bodyMedium, fontSize: 14, color: theme.colors.textPrimary },
   payWrap: {
     flexWrap: 'wrap',
     maxWidth: 112,
@@ -347,5 +347,5 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   linkDivider: { borderLeftWidth: StyleSheet.hairlineWidth, borderLeftColor: theme.colors.borderSoft },
-  linkText: { fontFamily: theme.font.bodyMedium, fontSize: 14, color: theme.colors.link },
+  linkText: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.link },
 });

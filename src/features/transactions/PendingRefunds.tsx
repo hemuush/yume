@@ -87,7 +87,6 @@ export function PendingRefunds({
               }}
             />
           ))}
-          <Text style={styles.hintText}>Tap a purchase to record a refund received.</Text>
           {items.length > 3 && (
             <PrimaryButton
               compact

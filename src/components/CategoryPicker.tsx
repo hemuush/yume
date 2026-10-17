@@ -309,7 +309,7 @@ const styles = StyleSheet.create({
   },
   medalHint: {
     fontFamily: theme.font.body,
-    fontSize: 10.5,
+    fontSize: 11,
     color: theme.colors.textMuted,
     textAlign: 'center',
   },
@@ -326,10 +326,10 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 9,
     fontFamily: theme.font.body,
-    fontSize: 13.5,
+    fontSize: 13,
     color: theme.colors.textPrimary,
   },
-  noMatch: { fontFamily: theme.font.body, fontSize: 12.5, color: theme.colors.textMuted, paddingVertical: 8 },
+  noMatch: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, paddingVertical: 8 },
   subGroup: {
     marginTop: 10,
     paddingTop: 10,
@@ -337,7 +337,7 @@ const styles = StyleSheet.create({
     borderTopColor: theme.colors.borderSoft,
   },
   subGroupLabel: {
-    fontSize: 11.5,
+    fontSize: 12,
     fontFamily: theme.font.bodyBold,
     color: theme.colors.textMuted,
     marginBottom: 8,

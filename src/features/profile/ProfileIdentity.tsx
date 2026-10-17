@@ -112,7 +112,7 @@ const local = StyleSheet.create({
   chipText: {
     flexShrink: 1,
     fontFamily: theme.font.bodyMedium,
-    fontSize: 11.5,
+    fontSize: 12,
     color: theme.colors.textSecondary,
   },
 });

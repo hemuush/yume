@@ -215,10 +215,9 @@ export function ComingUpSection({
                 <View style={styles.dayHead}>
                   <View style={styles.dayHeading}>
                     <Text style={styles.dayHeadText}>{weekdayDayMonth(g.date)}</Text>
-                    <Text style={styles.dueSub}>
-                      {g.date > addDaysToIsoDate(today, DUE_SOON_DAYS - 1) ? 'Next scheduled · ' : ''}
-                      {g.items.length} {g.items.length === 1 ? 'entry' : 'entries'}
-                    </Text>
+                    {g.date > addDaysToIsoDate(today, DUE_SOON_DAYS - 1) && (
+                      <Text style={styles.dueSub}>Next scheduled</Text>
+                    )}
                   </View>
                   {g.outMinor > 0 && (
                     <Text style={styles.dayHeadAmount}>Total out {formatMoney(g.outMinor)}</Text>

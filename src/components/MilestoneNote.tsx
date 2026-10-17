@@ -207,6 +207,6 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   copy: { flexShrink: 1, gap: 2 },
-  title: { fontFamily: theme.font.roundedBold, fontSize: 16, color: theme.colors.ink },
+  title: { fontFamily: theme.font.roundedBold, fontSize: 15, color: theme.colors.ink },
   body: { fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textMuted },
 });

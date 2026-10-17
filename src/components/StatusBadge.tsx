@@ -40,5 +40,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 4,
   },
-  label: { fontFamily: theme.font.bodyMedium, fontSize: 11.5, lineHeight: 16 },
+  label: { fontFamily: theme.font.bodyMedium, fontSize: 12, lineHeight: 16 },
 });

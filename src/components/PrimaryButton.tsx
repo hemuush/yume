@@ -119,7 +119,7 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
   },
-  text: { fontFamily: theme.font.roundedBold, fontSize: 15, textAlign: 'center', flexShrink: 1 },
+  text: { fontFamily: theme.font.roundedBold, fontSize: 14, textAlign: 'center', flexShrink: 1 },
   textPrimary: { color: theme.colors.surface },
   textSecondary: { color: theme.colors.textPrimary },
   disabled: { opacity: 0.45 },

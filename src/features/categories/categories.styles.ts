@@ -74,8 +74,8 @@ export const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
   },
-  panelTitle: { ...SECTION_TITLE, fontFamily: theme.font.roundedBold, fontSize: 15 },
-  panelCount: { fontFamily: theme.font.body, fontSize: 11.5, color: theme.colors.textMuted },
+  panelTitle: { ...SECTION_TITLE, fontFamily: theme.font.roundedBold, fontSize: 14 },
+  panelCount: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
   pillRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 12 },
   pill: {
     flexDirection: 'row',
@@ -93,7 +93,7 @@ export const styles = StyleSheet.create({
   pillDot: { width: 8, height: 8, borderRadius: 4 },
   pillText: {
     flexShrink: 1,
-    fontSize: 12.5,
+    fontSize: 12,
     fontFamily: theme.font.bodyMedium,
     color: theme.colors.textPrimary,
   },
@@ -123,7 +123,7 @@ export const styles = StyleSheet.create({
   },
   tileBadgeText: {
     fontFamily: theme.font.bodyBold,
-    fontSize: 10,
+    fontSize: 11,
     lineHeight: 13,
     color: theme.colors.surface,
   },
@@ -169,7 +169,7 @@ export const styles = StyleSheet.create({
   parentChipActive: { backgroundColor: theme.colors.ink, borderColor: theme.colors.ink },
   parentChipText: {
     flexShrink: 1,
-    fontSize: 12.5,
+    fontSize: 12,
     fontFamily: theme.font.bodyMedium,
     color: theme.colors.textPrimary,
   },

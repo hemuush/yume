@@ -18,7 +18,7 @@ export const styles = StyleSheet.create({
   errorTitle: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.expenseText },
   errorDetail: {
     fontFamily: theme.font.body,
-    fontSize: 11.5,
+    fontSize: 12,
     color: theme.colors.textSecondary,
     marginTop: 3,
     lineHeight: 16,
@@ -57,7 +57,7 @@ export const styles = StyleSheet.create({
   },
   compareSide: { flex: 1, minWidth: 0, gap: 2 },
   compareRight: { alignItems: 'flex-end' },
-  compareLabel: { fontFamily: theme.font.bodyMedium, fontSize: 11.5, color: theme.colors.textMuted },
+  compareLabel: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textMuted },
   compareValue: {
     fontFamily: theme.font.body,
     fontSize: 20,
@@ -76,10 +76,10 @@ export const styles = StyleSheet.create({
 
   paceRow: { marginTop: 14, gap: 7 },
   paceHeadRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 },
-  paceLabel: { fontFamily: theme.font.body, fontSize: 12.5, color: theme.colors.textSecondary },
-  paceLabelStrong: { fontFamily: theme.font.bodyBold, fontSize: 12.5, color: theme.colors.textPrimary },
-  paceDate: { fontFamily: theme.font.bodyMedium, fontSize: 12.5, color: theme.colors.textSecondary },
-  paceDateStrong: { fontFamily: theme.font.bodyBold, fontSize: 12.5, color: theme.colors.textPrimary },
+  paceLabel: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
+  paceLabelStrong: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textPrimary },
+  paceDate: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textSecondary },
+  paceDateStrong: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textPrimary },
   // A frosted line with a dot where the date lands; the dot sits on the line's end, so no clipping.
   paceTrack: {
     height: 10,
@@ -109,14 +109,14 @@ export const styles = StyleSheet.create({
     backgroundColor: theme.colors.secondaryTint,
     textAlign: 'center',
     fontFamily: theme.font.bodyBold,
-    fontSize: 12.5,
+    fontSize: 12,
     color: theme.colors.incomeText,
   },
   neutralText: {
     marginTop: 12,
     textAlign: 'center',
     fontFamily: theme.font.body,
-    fontSize: 11.5,
+    fontSize: 12,
     color: theme.colors.textMuted,
   },
 

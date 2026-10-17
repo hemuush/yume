@@ -73,7 +73,7 @@ const styles = StyleSheet.create({
   legendText: {
     flexShrink: 1,
     fontFamily: theme.font.body,
-    fontSize: 12.5,
+    fontSize: 12,
     color: theme.colors.textSecondary,
   },
   legendBold: { fontFamily: theme.font.bodyBold },

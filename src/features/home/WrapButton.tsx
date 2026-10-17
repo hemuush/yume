@@ -154,7 +154,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  countText: { fontFamily: theme.font.monoBold, fontSize: 10, color: theme.colors.surface },
+  countText: { fontFamily: theme.font.monoBold, fontSize: 11, color: theme.colors.surface },
   card: {
     backgroundColor: theme.colors.surface,
     borderRadius: theme.radius.xl2,

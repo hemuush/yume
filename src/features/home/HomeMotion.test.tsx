@@ -131,13 +131,13 @@ it('keeps selected category details readable across reordering and reduced motio
     />
   );
   const r = render(dial());
-  expect(text(r)).toContain('40% of spending');
+  expect(text(r)).toContain('40%');
   act(() => {
     r.root
       .find((n) => n.props.accessibilityLabel === 'Rent, 30% of spending' && n.props.onPress)
       .props.onPress();
   });
-  expect(text(r)).toContain('30% of spending');
+  expect(text(r)).toContain('30%');
   expect(text(r)).toContain('₹300');
   const before = mockTargets.length;
   mockReduce = true;

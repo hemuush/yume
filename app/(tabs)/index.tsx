@@ -679,10 +679,7 @@ export default function DashboardScreen() {
           <Animated.View entering={sectionEntering(5)}>
             <Section title="Recent activity" onSeeAll={() => router.push('/transactions')}>
               {recent.length === 0 ? (
-                <EmptyState
-                  title="Nothing logged in this period"
-                  subtitle="Use the month pill above to check another period."
-                />
+                <EmptyState title="Nothing logged" subtitle="Try another period." />
               ) : (
                 <Glass radius={24} style={styles.recent}>
                   {recent.map((tx, i, rows) => {
@@ -820,7 +817,7 @@ const styles = StyleSheet.create({
   errorTitle: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.expenseText },
   errorDetail: {
     fontFamily: theme.font.body,
-    fontSize: 11.5,
+    fontSize: 12,
     color: theme.colors.textSecondary,
     marginTop: 4,
     lineHeight: 16,

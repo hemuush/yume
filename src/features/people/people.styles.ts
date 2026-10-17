@@ -19,7 +19,7 @@ export const styles = StyleSheet.create({
   errorTitle: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.expenseText },
   errorDetail: {
     fontFamily: theme.font.body,
-    fontSize: 11.5,
+    fontSize: 12,
     color: theme.colors.textSecondary,
     marginTop: 3,
     lineHeight: 16,
@@ -61,7 +61,7 @@ export const styles = StyleSheet.create({
     flexShrink: 1,
     minWidth: 0,
     fontFamily: theme.font.roundedMedium,
-    fontSize: 15,
+    fontSize: 14,
     color: theme.colors.textPrimary,
   },
   tileAmount: {
@@ -95,7 +95,7 @@ export const styles = StyleSheet.create({
   quietName: {
     minWidth: 0,
     fontFamily: theme.font.roundedMedium,
-    fontSize: 14,
+    fontSize: 13,
     color: theme.colors.textPrimary,
   },
   quietSub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
@@ -121,9 +121,9 @@ export const styles = StyleSheet.create({
     borderColor: theme.colors.borderSoft,
     backgroundColor: theme.colors.surface,
   },
-  rowLabel: { fontFamily: theme.font.bodyMedium, fontSize: 15, color: theme.colors.textPrimary },
+  rowLabel: { fontFamily: theme.font.bodyMedium, fontSize: 14, color: theme.colors.textPrimary },
   rowSub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, marginTop: 2 },
-  rowValue: { fontVariant: ['tabular-nums'], fontFamily: theme.font.bodyBold, fontSize: 15 },
+  rowValue: { fontVariant: ['tabular-nums'], fontFamily: theme.font.bodyBold, fontSize: 14 },
   detailCopy: { flexGrow: 1, flexBasis: 120, minWidth: 0 },
   footerStack: { flexDirection: 'column', gap: 8 },
   footerStackButton: { flex: 0, width: '100%' },

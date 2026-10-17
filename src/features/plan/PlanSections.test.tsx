@@ -96,7 +96,7 @@ describe('Plan sections with nothing in them yet', () => {
         },
       ],
     };
-    const tree = render(<DebtPath loans={loans} dueSoon={dueSoon} today="2026-10-09" onOpen={open} />);
+    const tree = render(<DebtPath loans={loans} today="2026-10-09" onOpen={open} />);
     expect(texts(tree)).toContain('₹900');
     expect(texts(tree)).not.toContain('House loan');
     const actions = tree.root.findAll(
@@ -130,12 +130,12 @@ describe('Plan sections with nothing in them yet', () => {
       rows: [row('small', 'Personal', 500000, '2026-11-03'), row('big', 'House', 1754000, '2026-11-05')],
     };
     const onLoan = jest.fn();
-    const tree = render(
-      <DebtPath loans={loans} dueSoon={dueSoon} today="2026-10-09" onOpen={jest.fn()} onLoan={onLoan} />
-    );
+    const tree = render(<DebtPath loans={loans} today="2026-10-09" onOpen={jest.fn()} onLoan={onLoan} />);
     const shown = texts(tree);
-    expect(shown).toContain('₹460 repaid of ₹23,000');
-    expect(shown.some((t) => t.startsWith('Debt-free ') && t.includes('next EMI ₹3,406 on'))).toBe(true);
+    // The percent and the bar say how much is repaid; no second rupee line repeats it.
+    expect(shown.some((t) => t.includes('repaid of'))).toBe(false);
+    expect(shown.some((t) => t.startsWith('Debt-free '))).toBe(true);
+    expect(shown.some((t) => t.includes('next EMI'))).toBe(false);
     expect(shown).toContain('House');
     expect(shown).not.toContain('Personal');
     expect(shown).toContain('View loans · 2 active');
@@ -162,9 +162,7 @@ describe('Plan sections with nothing in them yet', () => {
       ],
       []
     );
-    const shown = texts(
-      render(<DebtPath loans={loans} dueSoon={dueSoon} today="2026-10-09" onOpen={jest.fn()} />)
-    );
+    const shown = texts(render(<DebtPath loans={loans} today="2026-10-09" onOpen={jest.fn()} />));
     expect(shown).toContain('Track an EMI');
     expect(shown).toContain('₹2,000 you lent out');
   });
