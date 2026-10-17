@@ -378,7 +378,7 @@ export const styles = StyleSheet.create({
     lineHeight: 17,
     color: theme.colors.dueInk,
   },
-  // Bleeds to the screen's edges so it can slide sideways, while its first chip lines up with the pad.
+  // Bleeds to the panel's edges so it can slide sideways; its first chip is padded in to line up with the pad.
   detailBar: { marginHorizontal: -12, marginBottom: 10, flexGrow: 0 },
   detailBarFlush: { marginHorizontal: 0, marginBottom: 0 },
   detailRow: { flexDirection: 'row', alignItems: 'center', marginHorizontal: -12, marginBottom: 10 },
@@ -393,7 +393,9 @@ export const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
   },
-  detailBarContent: { paddingLeft: 4, paddingRight: 16, gap: 6 },
+  // The bar bleeds to the panel's edges so chips scroll under them, but the first one lines up with the hint and
+  // the buttons (the panel's own 12 padding).
+  detailBarContent: { paddingLeft: 12, paddingRight: 16, gap: 6 },
   detailChip: {
     flexDirection: 'row',
     alignItems: 'center',
