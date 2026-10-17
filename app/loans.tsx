@@ -30,6 +30,7 @@ import { loanHues } from '@/features/loans/loanIdentity';
 import { debtShares, summarizeLoans } from '@/features/loans/loanTotals';
 import { buildTimeline } from '@/features/loans/timelineLayout';
 import { AddLoanModal } from '@/features/loans/AddLoanModal';
+import { SCREEN } from '@/components/screenStyles';
 
 /**
  * Formal loans with a schedule (informal IOUs live in /people). Reached from the Plan Loans tile, Home EMI
@@ -37,7 +38,7 @@ import { AddLoanModal } from '@/features/loans/AddLoanModal';
  */
 const listTitle = {
   ...SECTION_TITLE,
-  marginHorizontal: 20,
+  marginHorizontal: SCREEN.gutter,
   marginTop: SECTION_GAP.top,
   marginBottom: SECTION_GAP.bottom,
 };

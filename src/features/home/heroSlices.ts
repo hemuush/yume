@@ -46,7 +46,7 @@ export function heroPct(fraction: number): string {
   return v > 0 && v < 1 ? '<1%' : `${Math.round(v)}%`;
 }
 
-/** Each headline view's share of income â€” "kept" is savings plus free to use. */
+/** Each headline view's share of income — "kept" is savings plus free to use. */
 export function heroShare(s: HeroSlices, mode: HeroMode): number {
   return mode === 'kept' ? s.saved + s.free : s[mode];
 }

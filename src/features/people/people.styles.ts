@@ -1,13 +1,14 @@
 import { StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
 import { SECTION_TITLE, SECTION_GAP } from '@/constants/textStyles';
+import { SCREEN } from '@/components/screenStyles';
 
 // Shared by the Friends & Family screen, PersonTile, and the person modals.
 export const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
   // The page already pads by the top gap.
   errorBanner: {
-    marginHorizontal: 20,
+    marginHorizontal: SCREEN.gutter,
     marginBottom: 12,
     padding: 14,
     borderRadius: theme.radius.md,
@@ -25,7 +26,7 @@ export const styles = StyleSheet.create({
   },
   emptyText: {
     fontFamily: theme.font.body,
-    marginHorizontal: 20,
+    marginHorizontal: SCREEN.gutter,
     color: theme.colors.textMuted,
     fontSize: 13,
   },
@@ -42,7 +43,7 @@ export const styles = StyleSheet.create({
   },
   groupTitle: SECTION_TITLE,
   groupTotal: { fontFamily: theme.font.bodyBold, fontSize: 12 },
-  tileRow: { flexDirection: 'row', gap: 10, marginHorizontal: 20, marginBottom: 10 },
+  tileRow: { flexDirection: 'row', gap: 10, marginHorizontal: SCREEN.gutter, marginBottom: 10 },
   tileCell: { flex: 1, minWidth: 0 },
   // A white tile (StripCard) whose top strip says which way the money goes: mint they owe you, coral you owe.
   personTile: { padding: 14 },
@@ -83,7 +84,7 @@ export const styles = StyleSheet.create({
   },
   settlePillText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textPrimary },
   settledTitle: { ...SECTION_TITLE, marginHorizontal: 24, marginTop: 12, marginBottom: 8 },
-  settledCard: { marginHorizontal: 20, overflow: 'hidden' },
+  settledCard: { marginHorizontal: SCREEN.gutter, overflow: 'hidden' },
   quietRow: {
     flexDirection: 'row',
     alignItems: 'center',

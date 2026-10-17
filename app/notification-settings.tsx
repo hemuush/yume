@@ -9,7 +9,7 @@ import { useCollapsingHeader } from '@/lib/useCollapsingHeader';
 import { ToggleSwitch } from '@/components/ToggleSwitch';
 import { SettingsRow } from '@/components/SettingsRow';
 import { Section } from '@/components/Section';
-import { screenStyles as h } from '@/components/screenStyles';
+import { screenStyles as h, SCREEN } from '@/components/screenStyles';
 import { SlotTimeStepper } from '@/features/notifications/SlotTimeStepper';
 import { CardRowsSkeleton } from '@/components/ListSkeleton';
 import { getNotificationPrefs, setNotificationPrefs, NotificationPrefs } from '@/db/settings';
@@ -211,7 +211,11 @@ export default function NotificationSettingsScreen() {
               expanded={openSlot === 'morning'}
               onPress={() => toggleSlot('morning')}
               right={
-                <ToggleSwitch value={prefs.morningEnabled} onChange={(v) => toggle('morningEnabled', v)} />
+                <ToggleSwitch
+                  accessibilityLabel="Morning"
+                  value={prefs.morningEnabled}
+                  onChange={(v) => toggle('morningEnabled', v)}
+                />
               }
             />
             {openSlot === 'morning' && (
@@ -231,7 +235,11 @@ export default function NotificationSettingsScreen() {
               divider
               onPress={() => toggleSlot('evening')}
               right={
-                <ToggleSwitch value={prefs.eveningEnabled} onChange={(v) => toggle('eveningEnabled', v)} />
+                <ToggleSwitch
+                  accessibilityLabel="Evening"
+                  value={prefs.eveningEnabled}
+                  onChange={(v) => toggle('eveningEnabled', v)}
+                />
               }
             />
             {openSlot === 'evening' && (
@@ -253,7 +261,13 @@ export default function NotificationSettingsScreen() {
               label="Loan EMIs due"
               sub="On the due date, then for up to 7 days if unpaid"
               dimmed={noTimes}
-              right={<ToggleSwitch value={prefs.billAlerts} onChange={(v) => toggle('billAlerts', v)} />}
+              right={
+                <ToggleSwitch
+                  accessibilityLabel="Loan EMIs due"
+                  value={prefs.billAlerts}
+                  onChange={(v) => toggle('billAlerts', v)}
+                />
+              }
             />
             <SettingsRow
               icon="alert-outline"
@@ -263,7 +277,11 @@ export default function NotificationSettingsScreen() {
               divider
               dimmed={noTimes}
               right={
-                <ToggleSwitch value={prefs.overspendAlerts} onChange={(v) => toggle('overspendAlerts', v)} />
+                <ToggleSwitch
+                  accessibilityLabel="Spending alerts"
+                  value={prefs.overspendAlerts}
+                  onChange={(v) => toggle('overspendAlerts', v)}
+                />
               }
             />
             <SettingsRow
@@ -275,6 +293,7 @@ export default function NotificationSettingsScreen() {
               dimmed={noTimes}
               right={
                 <ToggleSwitch
+                  accessibilityLabel="Recurring expense heads-up"
                   value={prefs.recurringAlerts === true}
                   onChange={(v) => toggle('recurringAlerts', v)}
                 />
@@ -289,6 +308,7 @@ export default function NotificationSettingsScreen() {
               dimmed={noTimes}
               right={
                 <ToggleSwitch
+                  accessibilityLabel="Refund follow-ups"
                   value={prefs.refundAlerts === true}
                   onChange={(v) => toggle('refundAlerts', v)}
                 />
@@ -302,7 +322,11 @@ export default function NotificationSettingsScreen() {
               divider
               dimmed={noTimes}
               right={
-                <ToggleSwitch value={prefs.weeklySummary} onChange={(v) => toggle('weeklySummary', v)} />
+                <ToggleSwitch
+                  accessibilityLabel="Weekly wrap"
+                  value={prefs.weeklySummary}
+                  onChange={(v) => toggle('weeklySummary', v)}
+                />
               }
             />
           </View>
@@ -362,6 +386,7 @@ export default function NotificationSettingsScreen() {
               sub="Two lines on the bell screen"
               right={
                 <ToggleSwitch
+                  accessibilityLabel="Suu's check-ins"
                   value={prefs.suuCheckins}
                   onChange={(v) => save({ ...prefs, suuCheckins: v })}
                 />
@@ -395,14 +420,14 @@ const styles = StyleSheet.create({
     fontFamily: theme.font.body,
     fontSize: 12,
     color: theme.colors.warnInk,
-    marginHorizontal: 20,
+    marginHorizontal: SCREEN.gutter,
     marginTop: 8,
   },
   footNote: {
     fontFamily: theme.font.body,
     fontSize: 12,
     color: theme.colors.textMuted,
-    marginHorizontal: 20,
+    marginHorizontal: SCREEN.gutter,
     marginTop: 16,
     lineHeight: 18,
   },

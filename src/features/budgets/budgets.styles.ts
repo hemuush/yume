@@ -2,13 +2,14 @@ import { StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
 import { SECTION_TITLE, SECTION_GAP } from '@/constants/textStyles';
 import { listScreenStyles } from '@/features/shared/listScreenStyles';
+import { SCREEN } from '@/components/screenStyles';
 
 // Shared by the Budgets screen, BudgetRow, and AddBudgetModal.
 export const styles = StyleSheet.create({
   ...listScreenStyles,
 
   lapsedCard: {
-    marginHorizontal: 20,
+    marginHorizontal: SCREEN.gutter,
     marginTop: 12,
     padding: 14,
     borderRadius: 22,
@@ -53,7 +54,7 @@ export const styles = StyleSheet.create({
   continueBtnText: { fontSize: 13, fontFamily: theme.font.roundedBold, color: theme.colors.surface },
 
   listCard: {
-    marginHorizontal: 20,
+    marginHorizontal: SCREEN.gutter,
     marginTop: 16,
     borderRadius: theme.radius.xl2,
     backgroundColor: theme.colors.surface,
@@ -64,7 +65,7 @@ export const styles = StyleSheet.create({
   // Budgets' own list sits under a "This month" heading; Profile's use of the card has none.
   listTitle: {
     ...SECTION_TITLE,
-    marginHorizontal: 20,
+    marginHorizontal: SCREEN.gutter,
     marginTop: SECTION_GAP.top,
     marginBottom: SECTION_GAP.bottom,
   },

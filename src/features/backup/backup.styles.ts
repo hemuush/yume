@@ -1,16 +1,17 @@
 import { StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
 import { SECTION_TITLE, SECTION_GAP, EYEBROW } from '@/constants/textStyles';
+import { SCREEN } from '@/components/screenStyles';
 
 export const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
   sectionTitle: {
     ...SECTION_TITLE,
-    marginHorizontal: 20,
+    marginHorizontal: SCREEN.gutter,
     marginTop: SECTION_GAP.top,
     marginBottom: SECTION_GAP.bottom,
   },
-  statusCard: { marginHorizontal: 20, marginTop: theme.layout.screenTopGap, padding: 14 },
+  statusCard: { marginHorizontal: SCREEN.gutter, marginTop: theme.layout.screenTopGap, padding: 14 },
   statusHead: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   statusTitle: { fontFamily: theme.font.roundedBold, fontSize: 17, color: theme.colors.textPrimary },
   errorLine: { color: theme.colors.expenseText },
@@ -45,7 +46,7 @@ export const styles = StyleSheet.create({
     textDecorationLine: 'underline',
   },
   linkDisabled: { opacity: 0.45 },
-  tabs: { marginHorizontal: 20, marginTop: 16 },
+  tabs: { marginHorizontal: SCREEN.gutter, marginTop: 16 },
   titleRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -86,7 +87,7 @@ export const styles = StyleSheet.create({
     fontSize: 12,
     color: theme.colors.textMuted,
     lineHeight: 17,
-    marginHorizontal: 20,
+    marginHorizontal: SCREEN.gutter,
     marginTop: 10,
   },
   node: { paddingLeft: 40 },
