@@ -1,3 +1,6 @@
+import { View, Pressable } from 'react-native';
+import Feather from '@expo/vector-icons/Feather';
+import { withPressed } from '@/lib/pressed';
 import { ExpenseLabelSheet } from './ExpenseLabelSheet';
 import { TextInput } from '@/components/Text';
 import { theme } from '@/constants/theme';
@@ -27,6 +30,7 @@ export function AddDetailRow({
   onPickDate,
   onToggleRefund,
   onSplit,
+  onHidePad,
 }: {
   type: EntryType;
   /** The account the entry goes on (expense/income only); undefined when there isn't one yet. */
@@ -48,6 +52,8 @@ export function AddDetailRow({
   onPickDate: () => void;
   onToggleRefund: () => void;
   onSplit: () => void;
+  /** The number pad is up: a button at the end of the row folds it away. */
+  onHidePad?: () => void;
 }) {
   if (noteEditing && type !== 'expense') {
     return (
@@ -67,59 +73,71 @@ export function AddDetailRow({
   }
   return (
     <>
-      <DetailBar>
-        {(type === 'expense' || type === 'income') && accountName && (
+      <View style={onHidePad ? styles.detailRow : undefined}>
+        <DetailBar flush={!!onHidePad}>
+          {(type === 'expense' || type === 'income') && accountName && (
+            <DetailChip
+              icon="credit-card"
+              label={accountName}
+              onPress={onPickAccount}
+              accessibilityLabel={`Account, ${accountName}. Change`}
+            />
+          )}
           <DetailChip
-            icon="credit-card"
-            label={accountName}
-            onPress={onPickAccount}
-            accessibilityLabel={`Account, ${accountName}. Change`}
+            icon="calendar"
+            label={date === today ? 'Today' : date === yesterday ? 'Yesterday' : dateChipLabel(date)}
+            onPress={onPickDate}
+            accessibilityLabel={`Date, ${dateChipLabel(date)}. Change`}
           />
-        )}
-        <DetailChip
-          icon="calendar"
-          label={date === today ? 'Today' : date === yesterday ? 'Yesterday' : dateChipLabel(date)}
-          onPress={onPickDate}
-          accessibilityLabel={`Date, ${dateChipLabel(date)}. Change`}
-        />
-        <DetailChip
-          icon={type === 'expense' ? 'tag' : 'edit-3'}
-          label={note.trim() || (type === 'expense' ? 'Label' : 'Note')}
-          muted={!note.trim()}
-          onPress={() => onNoteEditing(true)}
-          accessibilityLabel={
-            note.trim()
-              ? `${type === 'expense' ? 'Label' : 'Note'}, ${note}. Edit`
-              : type === 'expense'
-                ? 'Add a label'
-                : 'Add a note'
-          }
-        />
-        {/* A purchase can be money back, or one payment across several categories, but not both. */}
-        {type === 'expense' && !isLinked && (
           <DetailChip
-            icon="corner-up-left"
-            label="Money back"
-            active={refund}
-            disabled={splitCount !== null}
-            onPress={onToggleRefund}
-            accessibilityLabel="Money back (a refund)"
-          />
-        )}
-        {/* Not alongside a list being built: a split is saved on its own. */}
-        {type === 'expense' && !isLinked && (
-          <DetailChip
-            icon="scissors"
-            label={splitCount !== null ? `Split · ${splitCount}` : 'Split'}
-            active={splitCount !== null}
-            disabled={refund || hasList}
-            onPress={onSplit}
+            icon={type === 'expense' ? 'tag' : 'edit-3'}
+            label={note.trim() || (type === 'expense' ? 'Label' : 'Note')}
+            muted={!note.trim()}
+            onPress={() => onNoteEditing(true)}
             accessibilityLabel={
-              splitCount !== null ? `Split into ${splitCount} parts. Edit` : 'Split this payment'
+              note.trim()
+                ? `${type === 'expense' ? 'Label' : 'Note'}, ${note}. Edit`
+                : type === 'expense'
+                  ? 'Add a label'
+                  : 'Add a note'
             }
           />
+          {/* A purchase can be money back, or one payment across several categories, but not both. */}
+          {type === 'expense' && !isLinked && (
+            <DetailChip
+              icon="corner-up-left"
+              label="Money back"
+              active={refund}
+              disabled={splitCount !== null}
+              onPress={onToggleRefund}
+              accessibilityLabel="Money back (a refund)"
+            />
+          )}
+          {/* Not alongside a list being built: a split is saved on its own. */}
+          {type === 'expense' && !isLinked && (
+            <DetailChip
+              icon="scissors"
+              label={splitCount !== null ? `Split · ${splitCount}` : 'Split'}
+              active={splitCount !== null}
+              disabled={refund || hasList}
+              onPress={onSplit}
+              accessibilityLabel={
+                splitCount !== null ? `Split into ${splitCount} parts. Edit` : 'Split this payment'
+              }
+            />
+          )}
+        </DetailBar>
+        {onHidePad && (
+          <Pressable
+            onPress={onHidePad}
+            style={withPressed(styles.hidePadBtn)}
+            accessibilityRole="button"
+            accessibilityLabel="Hide pad"
+          >
+            <Feather name="chevron-down" size={16} color={theme.colors.textSecondary} />
+          </Pressable>
         )}
-      </DetailBar>
+      </View>
       {type === 'expense' && (
         <ExpenseLabelSheet
           visible={noteEditing}

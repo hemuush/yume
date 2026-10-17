@@ -207,13 +207,37 @@ export function WrapPlayer({
           ))}
         </View>
         <View style={styles.topBar}>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.topEyebrow}>YOUR {wrap.period.toUpperCase()}, WRAPPED</Text>
+          {/* One stop for a screen reader: swipe up or down to move between parts. */}
+          <View
+            style={{ flex: 1 }}
+            accessible
+            accessibilityRole="adjustable"
+            accessibilityLabel={`Your ${wrap.period}, wrapped, ${wrap.label}`}
+            accessibilityValue={{
+              text: `Part ${index + 1} of ${wrap.beats.length}, ${CHAPTER_LABELS[beat.kind]}`,
+            }}
+            accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
+            onAccessibilityAction={(event) => {
+              if (event.nativeEvent.actionName === 'increment') step(1);
+              else if (event.nativeEvent.actionName === 'decrement') step(-1);
+            }}
+          >
+            <Text style={styles.topEyebrow}>
+              Your {wrap.period}, wrapped · {index + 1} / {wrap.beats.length}
+            </Text>
             <Text style={styles.topLabel}>{wrap.label}</Text>
           </View>
-          <Text style={styles.partCount}>
-            {index + 1} / {wrap.beats.length}
-          </Text>
+          {!still && index < last && (
+            <Pressable
+              onPress={() => setPaused((value) => !value)}
+              hitSlop={4}
+              accessibilityRole="button"
+              accessibilityLabel={paused || holding ? 'Resume wrap' : 'Pause wrap'}
+              style={withPressed(styles.close)}
+            >
+              <Feather name={paused || holding ? 'play' : 'pause'} size={16} color={theme.colors.ink} />
+            </Pressable>
+          )}
           <Pressable
             onPress={onClose}
             hitSlop={10}
@@ -253,48 +277,30 @@ export function WrapPlayer({
             </Pressable>
           ))}
         </ScrollView>
-        <View style={styles.controls}>
-          <Pressable
-            style={withPressed(styles.control)}
-            onPress={() => step(-1)}
-            accessibilityRole="button"
-            accessibilityLabel="Previous part"
-          >
-            <Feather name="chevron-left" size={18} color={theme.colors.ink} />
-            <Text style={styles.controlText}>Previous</Text>
-          </Pressable>
-          {!still && index < last && (
+        {still && (
+          <View style={styles.controls}>
             <Pressable
               style={withPressed(styles.control)}
-              onPress={() => setPaused((value) => !value)}
+              onPress={() => step(-1)}
               accessibilityRole="button"
-              accessibilityLabel={paused ? 'Resume wrap' : 'Pause wrap'}
+              accessibilityLabel="Previous part"
             >
-              <Feather name={paused ? 'play' : 'pause'} size={16} color={theme.colors.ink} />
-              <Text style={styles.controlText}>{paused ? 'Resume' : 'Pause'}</Text>
+              <Feather name="chevron-left" size={18} color={theme.colors.ink} />
+              <Text style={styles.controlText}>Previous</Text>
             </Pressable>
-          )}
-          <Pressable
-            style={withPressed(styles.control)}
-            onPress={() => step(1)}
-            disabled={index === last}
-            accessibilityRole="button"
-            accessibilityLabel="Next part"
-            accessibilityState={{ disabled: index === last }}
-          >
-            <Text style={[styles.controlText, index === last && { opacity: 0.4 }]}>Next</Text>
-            <Feather name="chevron-right" size={18} color={theme.colors.ink} />
-          </Pressable>
-        </View>
-        <Text style={styles.playbackHint}>
-          {index === last
-            ? 'Your wrap, ready to share'
-            : paused || holding
-              ? 'Paused · Explore at your pace'
-              : still
-                ? 'Move through at your own pace'
-                : 'Tap the sides to browse · Hold to pause'}
-        </Text>
+            <Pressable
+              style={withPressed(styles.control)}
+              onPress={() => step(1)}
+              disabled={index === last}
+              accessibilityRole="button"
+              accessibilityLabel="Next part"
+              accessibilityState={{ disabled: index === last }}
+            >
+              <Text style={[styles.controlText, index === last && { opacity: 0.4 }]}>Next</Text>
+              <Feather name="chevron-right" size={18} color={theme.colors.ink} />
+            </Pressable>
+          </View>
+        )}
       </View>
 
       <ScrollView

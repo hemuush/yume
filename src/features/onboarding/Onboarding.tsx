@@ -258,13 +258,19 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
                 </View>
                 <Pressable
                   style={withPressed(styles.skip)}
-                  onPress={finish}
+                  // The intro slides skip ahead to adding accounts; only the accounts step itself finishes, so
+                  // nobody leaves setup by accident with nowhere to record a first entry.
+                  onPress={
+                    slide.isAccountsStep ? finish : () => setIndex(SLIDES.findIndex((s) => s.isAccountsStep))
+                  }
                   hitSlop={10}
                   accessibilityRole="button"
-                  accessibilityLabel={slide.isAccountsStep ? 'Skip accounts' : 'Skip'}
+                  accessibilityLabel={slide.isAccountsStep ? 'Skip accounts' : 'Skip to accounts'}
                 >
                   {/* On the accounts step, skipping also skips the ticked accounts: it says so. */}
-                  <Text style={styles.skipText}>{slide.isAccountsStep ? 'Skip accounts' : 'Skip'}</Text>
+                  <Text style={styles.skipText}>
+                    {slide.isAccountsStep ? 'Skip accounts' : 'Skip to accounts'}
+                  </Text>
                 </Pressable>
               </View>
               <View style={[styles.illustWrap, slide.isAccountsStep && styles.illustWrapSmall]}>

@@ -66,14 +66,6 @@ export function BudgetRow({
       {!!progress.parentName && <Text style={styles.rowParent}>{inParent(progress.parentName)}</Text>}
     </View>
   );
-  const amount = (
-    <Text style={styles.rowAmount}>
-      <Text style={progress.overBudget ? styles.rowAmountOver : undefined}>
-        {formatMoney(progress.spentMinor)}
-      </Text>
-      <Text style={styles.rowAmountOf}> of {formatMoney(progress.effectiveLimitMinor)}</Text>
-    </Text>
-  );
   const more = onMore && (
     <Pressable
       onPress={(event) => {
@@ -88,21 +80,33 @@ export function BudgetRow({
       <Feather name="more-horizontal" size={16} color={theme.colors.textSecondary} />
     </Pressable>
   );
-  const foot = (
-    <View style={styles.rowFoot}>
-      <Text style={[styles.rowNote, progress.overBudget && styles.rowNoteOver]}>
-        {progress.overBudget
-          ? `${formatMoney(Math.abs(progress.remainingMinor))} over budget`
-          : perDayMinor != null
-            ? `${formatMoney(progress.remainingMinor)} left · ${formatMoney(perDayMinor)} a day`
-            : `${formatMoney(progress.remainingMinor)} left this month`}
-      </Text>
+  // What matters sits beside the name; the caption carries the rest once: spent of limit, a day, pace.
+  const head = (
+    <Text
+      style={[styles.rowHead, progress.overBudget && styles.rowHeadOver]}
+      numberOfLines={1}
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+    >
+      {progress.overBudget
+        ? `${formatMoney(Math.abs(progress.remainingMinor))} over`
+        : `${formatMoney(progress.remainingMinor)} left`}
+    </Text>
+  );
+  const caption = (
+    <Text
+      style={styles.rowCaption}
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+    >
+      {`${formatMoney(progress.spentMinor)} of ${formatMoney(progress.effectiveLimitMinor)}`}
+      {perDayMinor != null ? ` · ${formatMoney(perDayMinor)} a day` : ''}
       {pace && !progress.overBudget && (
-        <Text style={[styles.rowPace, pace.state === 'ahead' && styles.rowPaceAhead]}>
-          {BUDGET_PACE_LABEL[pace.state]}
+        <Text style={pace.state === 'ahead' ? styles.rowPaceAhead : styles.rowPace}>
+          {` · ${BUDGET_PACE_LABEL[pace.state]}`}
         </Text>
       )}
-    </View>
+    </Text>
   );
 
   return (
@@ -122,16 +126,16 @@ export function BudgetRow({
         <View style={styles.rowTop}>
           <CategoryIcon name={progress.categoryIcon} color={progress.categoryColor} square={38} size={17} />
           {name}
+          {head}
           {more}
         </View>
-        {foot}
-        <View style={styles.rowAmounts}>{amount}</View>
         <LimitMeter
           pct={barPct}
           tone={tone}
           marker={pace ? pace.expectedFraction * 100 : undefined}
           animKey={`budget:${progress.budget.id}`}
         />
+        {caption}
       </>
     </AnimatedPressable>
   );

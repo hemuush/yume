@@ -2,13 +2,14 @@ import { StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
 import { SECTION_TITLE, SECTION_GAP } from '@/constants/textStyles';
 import { listScreenStyles } from '@/features/shared/listScreenStyles';
+import { SCREEN } from '@/components/screenStyles';
 
 // Shared by the Budgets screen, BudgetRow, and AddBudgetModal.
 export const styles = StyleSheet.create({
   ...listScreenStyles,
 
   lapsedCard: {
-    marginHorizontal: 20,
+    marginHorizontal: SCREEN.gutter,
     marginTop: 12,
     padding: 14,
     borderRadius: 22,
@@ -53,7 +54,7 @@ export const styles = StyleSheet.create({
   continueBtnText: { fontSize: 13, fontFamily: theme.font.roundedBold, color: theme.colors.surface },
 
   listCard: {
-    marginHorizontal: 20,
+    marginHorizontal: SCREEN.gutter,
     marginTop: 16,
     borderRadius: theme.radius.xl2,
     backgroundColor: theme.colors.surface,
@@ -64,7 +65,7 @@ export const styles = StyleSheet.create({
   // Budgets' own list sits under a "This month" heading; Profile's use of the card has none.
   listTitle: {
     ...SECTION_TITLE,
-    marginHorizontal: 20,
+    marginHorizontal: SCREEN.gutter,
     marginTop: SECTION_GAP.top,
     marginBottom: SECTION_GAP.bottom,
   },
@@ -73,8 +74,24 @@ export const styles = StyleSheet.create({
   // also in Home's unpadded card, so it can't rely on a container for its horizontal inset.
   row: { paddingVertical: 12, paddingHorizontal: 14 },
   rowDivider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.borderSoft },
-  rowTop: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8, marginBottom: 8 },
-  rowAmounts: { alignItems: 'flex-start', marginTop: 2 },
+  rowTop: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 2 },
+  rowHead: {
+    flexShrink: 0,
+    maxWidth: '45%',
+    fontVariant: ['tabular-nums'],
+    fontFamily: theme.font.bodyBold,
+    fontSize: 15,
+    color: theme.colors.textPrimary,
+  },
+  rowHeadOver: { color: theme.colors.expenseText },
+  rowCaption: {
+    marginTop: 7,
+    fontVariant: ['tabular-nums'],
+    fontFamily: theme.font.bodyMedium,
+    fontSize: 12,
+    lineHeight: 17,
+    color: theme.colors.textSecondary,
+  },
   moreBtn: {
     width: 44,
     height: 44,
@@ -88,35 +105,8 @@ export const styles = StyleSheet.create({
   rowNameBlock: { flex: 1, minWidth: 0 },
   rowName: { fontSize: 15, fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
   rowParent: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, marginTop: 1 },
-  rowAmount: {
-    fontVariant: ['tabular-nums'],
-    flexShrink: 1,
-    maxWidth: '100%',
-    fontFamily: theme.font.bodyMedium,
-    fontSize: 12.5,
-    textAlign: 'right',
-    color: theme.colors.textSecondary,
-  },
-  rowAmountOver: { color: theme.colors.expenseText, fontFamily: theme.font.bodyBold },
-  rowAmountOf: { color: theme.colors.textMuted, fontFamily: theme.font.bodyMedium },
-  rowFoot: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    alignItems: 'baseline',
-    gap: 8,
-    marginTop: 6,
-  },
-  rowNote: {
-    fontVariant: ['tabular-nums'],
-    fontFamily: theme.font.bodyMedium,
-    fontSize: 16,
-    lineHeight: 22,
-    color: theme.colors.textPrimary,
-  },
   rowPace: { fontFamily: theme.font.bodyBold, fontSize: 11, color: theme.colors.incomeText },
   rowPaceAhead: { color: theme.colors.warnInk },
-  rowNoteOver: { color: theme.colors.expenseText, fontFamily: theme.font.bodyBold },
 
   toggleRow: {
     flexDirection: 'row',

@@ -5,7 +5,7 @@ import { cardSurface } from '@/components/CardSurface';
 import { formatMoney } from '@/lib/money';
 import { formatRatioPct } from '@/lib/format';
 import { withPressed } from '@/lib/pressed';
-import { dayMonth, longMonthYear } from '@/lib/dateLabels';
+import { dayMonth, shortMonthYear } from '@/lib/dateLabels';
 import { DueSoon, LoansSummary } from './planOverview';
 import { Kicker, PlanChip } from './PlanTiles';
 import { styles } from './plan.styles';
@@ -57,7 +57,23 @@ export function DebtPath({
     loans.debtFreeDate != null && loans.debtFreeDate > today && borrowed.every((r) => r.endDate != null)
       ? loans.debtFreeDate
       : null;
+  const largest = borrowed.reduce<(typeof borrowed)[number] | null>(
+    (top, r) => (top == null || r.leftMinor > top.leftMinor ? r : top),
+    null
+  );
   const nextEmi = borrowed.find((r) => r.nextDueDate && r.nextEmiMinor != null);
+  const emiPart =
+    dueSoon.emiMinor > 0
+      ? `${formatMoney(dueSoon.emiMinor)} in EMIs over 14 days`
+      : nextEmi?.nextDueDate && nextEmi.nextEmiMinor != null
+        ? `next EMI ${formatMoney(nextEmi.nextEmiMinor)} on ${dayMonth(nextEmi.nextDueDate)}`
+        : null;
+  const timeline = [
+    knownEnd ? `Debt-free ${shortMonthYear(knownEnd)}` : 'Schedule incomplete · debt-free date unavailable',
+    emiPart,
+  ]
+    .filter(Boolean)
+    .join(' · ');
 
   return (
     <View>
@@ -79,42 +95,31 @@ export function DebtPath({
         >
           <View style={[local.fill, { width: `${Math.min(100, Math.max(0, loans.paidFraction * 100))}%` }]} />
         </View>
-        <Text style={styles.pathNote}>
-          {knownEnd
-            ? `Estimated debt-free · ${longMonthYear(knownEnd)}`
-            : 'Schedule incomplete · debt-free date unavailable'}
-        </Text>
-        <View style={styles.chips}>
-          {dueSoon.emiMinor > 0 ? (
-            <PlanChip icon="calendar">{formatMoney(dueSoon.emiMinor)} in EMIs over 14 days</PlanChip>
-          ) : nextEmi?.nextDueDate && nextEmi.nextEmiMinor != null ? (
-            <PlanChip icon="calendar">
-              Next EMI {formatMoney(nextEmi.nextEmiMinor)} on {dayMonth(nextEmi.nextDueDate)}
-            </PlanChip>
-          ) : null}
-          {loans.lentLeftMinor > 0 && (
+        {loans.borrowedPrincipalMinor > 0 && (
+          <Text style={styles.pathNote}>
+            {`${formatMoney(loans.paidOffMinor)} repaid of ${formatMoney(loans.borrowedPrincipalMinor)}`}
+          </Text>
+        )}
+        <Text style={styles.pathNote}>{timeline}</Text>
+        {loans.lentLeftMinor > 0 && (
+          <View style={styles.chips}>
             <PlanChip icon="arrow-up-right">{formatMoney(loans.lentLeftMinor)} you lent out</PlanChip>
-          )}
-        </View>
-        {onLoan &&
-          borrowed.slice(0, 2).map((loan) => (
-            <Pressable
-              key={loan.id}
-              onPress={() => onLoan(loan.id)}
-              style={withPressed(local.loanRow)}
-              accessibilityRole="button"
-              accessibilityLabel={`Open loan details: ${loan.name}`}
-            >
-              <View style={local.loanCopy}>
-                <Text style={local.loanName}>{loan.name}</Text>
-                {loan.nextDueDate && (
-                  <Text style={styles.pathNote}>Next EMI · {dayMonth(loan.nextDueDate)}</Text>
-                )}
-              </View>
-              <Text style={local.loanName}>{formatMoney(loan.leftMinor)}</Text>
-              <Feather name="chevron-right" size={16} color={theme.colors.textMuted} />
-            </Pressable>
-          ))}
+          </View>
+        )}
+        {onLoan && largest && (
+          <Pressable
+            onPress={() => onLoan(largest.id)}
+            style={withPressed(local.loanRow)}
+            accessibilityRole="button"
+            accessibilityLabel={`Open loan details: ${largest.name}`}
+          >
+            <Text style={[local.loanName, local.loanCopy]} numberOfLines={1}>
+              {largest.name}
+            </Text>
+            <Text style={local.loanName}>{formatMoney(largest.leftMinor)}</Text>
+            <Feather name="chevron-right" size={16} color={theme.colors.textMuted} />
+          </Pressable>
+        )}
         <Pressable
           onPress={onOpen}
           style={withPressed(local.link)}
@@ -131,16 +136,15 @@ export function DebtPath({
 
 const local = StyleSheet.create({
   loanRow: {
-    minHeight: 48,
+    minHeight: 44,
     flexDirection: 'row',
     alignItems: 'center',
-    flexWrap: 'wrap',
     gap: 8,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: theme.colors.borderSoft,
     paddingVertical: 8,
   },
-  loanCopy: { flexGrow: 1, flexBasis: 120, gap: 3 },
+  loanCopy: { flex: 1 },
   loanName: {
     fontFamily: theme.font.bodyMedium,
     fontSize: 13,
@@ -150,7 +154,7 @@ const local = StyleSheet.create({
   track: { height: 6, borderRadius: 3, backgroundColor: theme.colors.borderSoft, overflow: 'hidden' },
   fill: { height: '100%', borderRadius: 3, backgroundColor: theme.colors.incomeText },
   link: {
-    minHeight: 44,
+    minHeight: 40,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',

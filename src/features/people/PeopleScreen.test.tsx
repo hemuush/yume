@@ -59,7 +59,7 @@ describe('Friends & Family screen', () => {
     );
   });
 
-  it('puts the biggest open balances first, with a Settle up pill, and settled people in their own list', async () => {
+  it('puts the biggest open balances first, and settled people in their own list', async () => {
     mockPeople.current = [
       { id: 'p3', name: 'Riya', balanceMinor: 0, lastActivityDate: null },
       { id: 'p2', name: 'Meera', balanceMinor: 30000, lastActivityDate: null },
@@ -69,12 +69,13 @@ describe('Friends & Family screen', () => {
     const shown = texts(tree);
     expect(shown.indexOf('Aarav')).toBeLessThan(shown.indexOf('Meera'));
     expect(shown.indexOf('Meera')).toBeLessThan(shown.indexOf('Riya'));
-    expect(shown.filter((t) => t === 'Settle up')).toHaveLength(2);
+    // Tapping a tile opens the sheet; there is no second Settle up button on it.
+    expect(shown.filter((t) => t === 'Settle up')).toHaveLength(0);
     expect(shown).toContain('Settled · No activity');
     expect(shown).toContain('Net, in your favour');
   });
 
-  it('groups the tiles under headings that carry the totals', async () => {
+  it('groups the tiles under headings, with the totals on the net card', async () => {
     mockPeople.current = [
       { id: 'p1', name: 'Aarav', balanceMinor: 90000, lastActivityDate: null },
       { id: 'p2', name: 'Meera', balanceMinor: -30000, lastActivityDate: null },
@@ -93,7 +94,7 @@ describe('Friends & Family screen', () => {
     mockPeople.current = [{ id: 'p1', name: 'Aarav', balanceMinor: 240000, lastActivityDate: null }];
     const shown = texts(await render());
     expect(shown).toContain('Aarav');
-    expect(shown.filter((t) => t === 'Settle up')).toHaveLength(1);
+    expect(shown).not.toContain('Settle up');
     expect(shown.filter((text) => text === 'Owes you')).toHaveLength(1);
     expect(shown.some((t) => t.startsWith('Net,'))).toBe(false);
   });

@@ -75,6 +75,9 @@ import { useAccent } from '@/theme/AccentContext';
 
 /** How far ahead a date can be before saving asks "are you sure?". */
 const FUTURE_DATE_CHECK_DAYS = 7;
+/** A name cut to fit a button: the Save button says what it saves, and a long category must not push it out. */
+const shortName = (name?: string) => (name && name.length > 14 ? `${name.slice(0, 13)}…` : name);
+
 export default function AddTransactionScreen() {
   const insets = useSafeAreaInsets();
   const { show: showUndo } = useUndoToast();
@@ -684,15 +687,6 @@ export default function AddTransactionScreen() {
   };
 
   const title = editing ? 'Edit entry' : 'Add';
-  const saveTitle = saveButtonTitle({
-    saving,
-    editing: !!editing,
-    split: !!splitParts,
-    refund,
-    repeatWarning: !!repeatWarning,
-    rowCount: rows.length,
-    hasCurrent: expr !== '',
-  });
   const sum = hasOperator(expr);
   const shownAmount = sum
     ? amountValue === null
@@ -712,12 +706,31 @@ export default function AddTransactionScreen() {
     ? !!splitProblem(amountMinor, splitParts) || !effectiveAccountId
     : (expr !== '' || rows.length === 0) && !!currentProblem;
   const category = categories.find((c) => c.id === categoryId);
-  const selectionSummary =
-    type === 'transfer'
-      ? `${effectiveAccount?.name ?? 'Choose account'} → ${accounts.find((a) => a.id === toAccountId)?.name ?? 'Choose destination'}`
-      : type === 'friend'
-        ? `${people.find((p) => p.id === personId)?.name ?? 'Choose a person'} · ${accounts.find((a) => a.id === friendAccountId)?.name ?? 'Balance only'}`
-        : `${splitParts ? `Split · ${splitParts.length} categories` : (category?.name ?? 'Choose a category')} · ${effectiveAccount?.name ?? 'Choose account'}`;
+  const accountName = effectiveAccount?.name ?? 'Choose account';
+  // What an expense or income will be saved as; the amount card shows it while the pad covers the grid.
+  const selection =
+    type === 'expense' || type === 'income'
+      ? `${splitParts ? `Split · ${splitParts.length} categories` : (category?.name ?? 'Choose a category')} · ${accountName}`
+      : undefined;
+  const saveSummary =
+    amountMinor > 0 && !invalidAmount
+      ? [
+          formatMoney(amountMinor, currency),
+          type === 'expense' || type === 'income' ? shortName(category?.name) : undefined,
+        ]
+          .filter(Boolean)
+          .join(' · ')
+      : undefined;
+  const saveTitle = saveButtonTitle({
+    saving,
+    editing: !!editing,
+    split: !!splitParts,
+    refund,
+    repeatWarning: !!repeatWarning,
+    rowCount: rows.length,
+    hasCurrent: expr !== '',
+    summary: saveSummary,
+  });
   // The pad steps aside whenever the phone keyboard is up (a note, a category search).
   const padVisible = padOpen && !noteEditing && !searchFocused && !isLinked;
 
@@ -746,7 +759,7 @@ export default function AddTransactionScreen() {
       accessibilityHint="Keeps this entry on a list and starts the next one; Save saves them all"
     >
       <Feather name="plus" size={14} color={theme.colors.textPrimary} />
-      <Text style={styles.addToListText}>{addingRow ? 'Adding…' : 'Add to list'}</Text>
+      <Text style={styles.addToListText}>{addingRow ? 'Adding…' : 'Add another'}</Text>
     </Pressable>
   );
 
@@ -838,6 +851,7 @@ export default function AddTransactionScreen() {
           amountIssue={invalidAmount ? 'Enter a positive amount. Check the calculation.' : roundingNote}
           frequentAmounts={frequentAmounts}
           amountMinor={amountMinor}
+          selection={selection}
           onPickAmount={(minor) => setExpr(exprFromMinor(minor))}
         />
 
@@ -930,7 +944,11 @@ export default function AddTransactionScreen() {
                   <CategoryPicker
                     categories={filteredCategories}
                     selectedId={categoryId}
-                    onSelect={setCategoryId}
+                    onSelect={(id) => {
+                      setCategoryId(id);
+                      // Amount typed: the pad folds away so the grid and Save have the room.
+                      if (expr !== '') setPadOpen(false);
+                    }}
                     variant="medal"
                     searchable
                     minColumnWidth={80}
@@ -957,27 +975,13 @@ export default function AddTransactionScreen() {
         offset={{ opened: insets.bottom }}
         style={[styles.footer, { paddingBottom: insets.bottom + 12 }]}
       >
-        <View style={styles.footerStatus}>
-          <Text style={styles.footerSummary} accessibilityLiveRegion="polite">
-            {selectionSummary}
-          </Text>
-          {padVisible && (
-            <Pressable
-              style={withPressed(styles.padToggle)}
-              accessibilityRole="button"
-              accessibilityLabel="Hide number pad"
-              onPress={() => setPadOpen(false)}
-            >
-              <Text style={styles.padToggleText}>Hide pad</Text>
-              <Feather name="chevron-down" size={13} color={theme.colors.textSecondary} />
-            </Pressable>
-          )}
-          {!error && !repeatWarning && !splitParts && currentProblem && (
+        {!error && !repeatWarning && !splitParts && currentProblem && (
+          <View style={styles.footerStatus}>
             <Text style={styles.formHint}>
               {invalidAmount ? 'Enter a positive amount. Check the calculation.' : currentProblem}
             </Text>
-          )}
-        </View>
+          </View>
+        )}
         {rows.length > 0 && <Text style={styles.queueHint}>{rows.length} on your list · not saved yet</Text>}
         {error && <Text style={styles.error}>{error}</Text>}
         {rows.length > 0 && (
@@ -1008,6 +1012,7 @@ export default function AddTransactionScreen() {
             setError(null);
           }}
           onSplit={openSplit}
+          onHidePad={padVisible ? () => setPadOpen(false) : undefined}
         />
         {padVisible ? (
           <AmountPad keySurface="#F1F5F9" onKey={onPadKey} onClear={() => setExpr('')} tone={padTone}>

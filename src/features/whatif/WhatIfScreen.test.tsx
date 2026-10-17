@@ -20,8 +20,16 @@ jest.mock('expo-router', () => ({
 let mockHide = false;
 jest.mock('@/theme/PrivacyContext', () => ({ usePrivacy: () => ({ hideAmounts: mockHide }) }));
 let mockSensitive = false;
+let mockExtraCategories = 0;
 jest.mock('@/db/reports', () => ({
   getCategoryMonthlyAverages: async () => [
+    ...Array.from({ length: mockExtraCategories }, (_, i) => ({
+      categoryId: `x${i}`,
+      name: `Extra ${i}`,
+      color: '#ccc',
+      totalMinor: 100000 - i * 1000,
+      isSensitive: false,
+    })),
     { categoryId: 'food', name: 'Food', color: '#FFA8CE', totalMinor: 1200000, isSensitive: mockSensitive },
     { categoryId: 'fun', name: 'Fun', color: '#8FE8C8', totalMinor: 300000, isSensitive: false },
   ],
@@ -82,6 +90,22 @@ describe('What-if', () => {
     mockGoals = [goal];
     mockHide = false;
     mockSensitive = false;
+    mockExtraCategories = 0;
+  });
+
+  it('shows the six biggest categories and the rest behind "N more"', async () => {
+    mockExtraCategories = 8;
+    const tree = await render();
+    // Food and Fun lead (₹12,000 and ₹3,000 a month), then four extras: ten categories in all.
+    let shown = texts(tree);
+    expect(shown).toContain('Food');
+    expect(shown).toContain('Extra 3');
+    expect(shown).not.toContain('Extra 4');
+    expect(shown).toContain('4 more');
+    await press(tree, '4 more');
+    shown = texts(tree);
+    expect(shown).toContain('Extra 7');
+    expect(shown).toContain('Fewer');
   });
 
   it('shows the month now and with the default 20% cut', async () => {

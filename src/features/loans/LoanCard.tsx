@@ -15,6 +15,7 @@ import { theme } from '@/constants/theme';
 import { payoffMonthShort } from '@/lib/loanPayoff';
 import type { LoanProgress } from '@/db/loans';
 import { loanBarTone, loanGlyph, loanIcon, loanTint } from './loanIdentity';
+import { SCREEN } from '@/components/screenStyles';
 
 /**
  * One loan in the list: flat card with its pale tile, progress and debt-free month; open loans end with the
@@ -144,7 +145,7 @@ export function LoanCard({
 const styles = StyleSheet.create({
   // Flat supporting surface; identity colour is confined to the icon and progress.
   card: {
-    marginHorizontal: 20,
+    marginHorizontal: SCREEN.gutter,
     marginBottom: 12,
     padding: 14,
     borderRadius: 20,

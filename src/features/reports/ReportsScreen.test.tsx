@@ -318,12 +318,13 @@ describe('Reports screen', () => {
     (require('expo-router').router.push as jest.Mock).mockClear();
     (require('expo-router').router.navigate as jest.Mock).mockClear();
   });
-  it('opens directly on Days without the duplicated Home summary', async () => {
+  it('opens directly on Days with the period total, not Home’s full summary', async () => {
     const shown = texts(await render());
     expect(shown).toEqual(
       expect.arrayContaining(['Days', 'Breakdown', 'Trends', 'Tap a day to see what went out'])
     );
-    expect(shown.some((t) => t.startsWith('Spent in '))).toBe(false);
+    // One compact card with the period's total (Reports can look at any period, unlike Home).
+    expect(shown.some((t) => t.startsWith('Spent in '))).toBe(true);
     expect(shown).not.toContain('Usual month');
     expect(shown.some((t) => t.endsWith(', in short'))).toBe(true);
     expect(shown).not.toContain('Where it went');

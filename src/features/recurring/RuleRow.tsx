@@ -78,11 +78,11 @@ export function RuleRow({
         />
         <View style={styles.ruleCopy}>
           <Text style={styles.rowTitle}>{title}</Text>
-          <Text style={styles.rowSub}>{when}</Text>
           <Text style={styles.rowSub}>
             {transfer
-              ? 'Transfer'
+              ? `${when} · Transfer`
               : joinSub([
+                  when,
                   rule.note && name,
                   parentName,
                   `${rule.type === 'income' ? 'Into' : 'From'} ${accountName(rule.accountId)}`,

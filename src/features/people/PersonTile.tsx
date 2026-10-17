@@ -6,7 +6,6 @@ import { formatMoney } from '@/lib/money';
 import { roundedMinor } from '@/lib/round';
 import { theme } from '@/constants/theme';
 import { usePressScale } from '@/lib/usePressScale';
-import { withPressed } from '@/lib/pressed';
 import { ROW_LAYOUT, ROW_EXIT } from '@/lib/animation';
 import { lastActivityShort, personInitials } from './people.helpers';
 import { styles } from './people.styles';
@@ -16,12 +15,10 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 const LOOK = {
   owed: {
-    pill: theme.colors.secondaryTint,
     amount: theme.colors.incomeText,
     label: 'Owes you',
   },
   owe: {
-    pill: theme.colors.idCoral,
     amount: theme.colors.expenseText,
     label: 'You owe',
   },
@@ -29,8 +26,7 @@ const LOOK = {
 
 /**
  * One person with an open balance on Friends & Family, as a glass tile, its balance green when they owe you and red when you
- * owe them. Shows initial, name, balance and last activity, plus a Settle up pill that opens the same sheet as
- * the tile (on its Settle tab).
+ * owe them. Shows initial, name, balance and last activity; tapping opens the person's sheet, where Settle up lives.
  */
 export function PersonTile({
   person,
@@ -70,15 +66,6 @@ export function PersonTile({
             {formatMoney(Math.abs(dispBalanceMinor))}
           </Text>
         </AnimatedPressable>
-        <Pressable
-          onPress={onPress}
-          hitSlop={8}
-          style={withPressed([styles.settlePill, { backgroundColor: look.pill }])}
-          accessibilityRole="button"
-          accessibilityLabel={`Settle up with ${person.name}`}
-        >
-          <Text style={styles.settlePillText}>Settle up</Text>
-        </Pressable>
       </Glass>
     </ReanimatedAnimated.View>
   );

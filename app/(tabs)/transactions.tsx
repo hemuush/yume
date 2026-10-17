@@ -4,6 +4,7 @@ import { useFreshness } from '@/lib/useFreshness';
 import { View, FlatList, Pressable, Animated, useWindowDimensions } from 'react-native';
 import { Text, TextInput } from '@/components/Text';
 import ReanimatedAnimated, { FadeIn, ReduceMotion } from 'react-native-reanimated';
+import { PrimaryButton } from '@/components/PrimaryButton';
 import { useFocusEffect, router, useLocalSearchParams } from 'expo-router';
 import Feather from '@expo/vector-icons/Feather';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -590,6 +591,8 @@ export default function TransactionsScreen() {
   // header stays the same one throughout, so nothing jumps when the data lands.
   const firstLoad = !comparison && !loadError && !comparisonFailed;
 
+  const retryLoad = () => void load({ fromDate: rangeFromDate, toDate: rangeToDate }, viewScope);
+
   // Under the header, at the top of the list: a load that failed, or totals that couldn't load.
   const banners = (
     <>
@@ -597,15 +600,15 @@ export default function TransactionsScreen() {
         <View style={styles.errorBanner}>
           <Text style={styles.errorTitle}>Couldn't load your transactions</Text>
           <Text style={styles.errorDetail}>{loadError}</Text>
+          <PrimaryButton title="Try again" compact variant="secondary" onPress={retryLoad} />
         </View>
       )}
 
       {comparisonFailed && !loadError && (
         <View style={styles.errorBanner}>
           <Text style={styles.errorTitle}>Couldn't load this period's totals</Text>
-          <Text style={styles.errorDetail}>
-            Your entries are below. Change the period or reopen this tab to try again.
-          </Text>
+          <Text style={styles.errorDetail}>Your entries are below.</Text>
+          <PrimaryButton title="Try again" compact variant="secondary" onPress={retryLoad} />
         </View>
       )}
     </>
@@ -838,7 +841,6 @@ export default function TransactionsScreen() {
       {/* Over the list, which it shrinks with as it scrolls. */}
       <SkyHeader
         title="Activity"
-        subtitle={SUBTITLE}
         collapse={collapse}
         wallpaper
         collapsedAccessory={
@@ -1009,8 +1011,6 @@ export default function TransactionsScreen() {
     </View>
   );
 }
-
-const SUBTITLE = 'Every entry, day by day';
 
 const VIEW_SCOPES: { label: string; value: 'week' | 'month' }[] = [
   { label: 'Week', value: 'week' },

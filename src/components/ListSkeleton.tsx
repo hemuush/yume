@@ -1,6 +1,7 @@
 import { View, StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
 import { Skeleton } from './Skeleton';
+import { SCREEN } from '@/components/screenStyles';
 
 /** One skeleton row inside a list-shaped card — `subtitle` adds a second, shorter line under the title (an Upcoming/Recent-activity row); `meter` adds the thin progress-bar-shaped line a Budget row has underneath. */
 function RowSkeleton({
@@ -49,7 +50,7 @@ export function CardRowsSkeleton({
 
 const styles = StyleSheet.create({
   card: {
-    marginHorizontal: 20,
+    marginHorizontal: SCREEN.gutter,
     backgroundColor: theme.colors.surface,
     borderRadius: theme.radius.xl2,
     borderWidth: StyleSheet.hairlineWidth,

@@ -48,6 +48,7 @@ import { frost } from '@/components/Frost';
 import { errorMessage } from '@/lib/errorMessage';
 import { useReturnOrPush } from '@/lib/useReturnOrPush';
 import { showAlert } from '@/components/AppDialog';
+import { SCREEN } from '@/components/screenStyles';
 
 export default function BudgetsScreen() {
   // A category's page and Budgets link to each other: return to that page
@@ -189,9 +190,19 @@ export default function BudgetsScreen() {
         <HomeWallpaper accent={accent} secondary={secondary} />
         <SkyHeader title="Budgets" showBack hideUser wallpaper />
         <View style={{ paddingTop: 14 }}>
-          <Skeleton width={110} height={12} radius={4} style={{ marginHorizontal: 20 }} />
-          <Skeleton width={220} height={26} radius={6} style={{ marginHorizontal: 20, marginTop: 8 }} />
-          <Skeleton width={260} height={9} radius={4} style={{ marginHorizontal: 20, marginTop: 14 }} />
+          <Skeleton width={110} height={12} radius={4} style={{ marginHorizontal: SCREEN.gutter }} />
+          <Skeleton
+            width={220}
+            height={26}
+            radius={6}
+            style={{ marginHorizontal: SCREEN.gutter, marginTop: 8 }}
+          />
+          <Skeleton
+            width={260}
+            height={9}
+            radius={4}
+            style={{ marginHorizontal: SCREEN.gutter, marginTop: 14 }}
+          />
           <View style={{ marginTop: 20 }}>
             <CardRowsSkeleton rows={4} meter />
           </View>

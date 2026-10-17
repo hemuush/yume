@@ -146,7 +146,15 @@ describe('Onboarding account step', () => {
     expect(onDone).toHaveBeenCalledTimes(1);
   });
 
-  it('Skip always finishes without creating anything', async () => {
+  it('Skip on an intro slide jumps to the accounts step instead of finishing', async () => {
+    const onDone = jest.fn();
+    const tree = await render(onDone);
+    await press(byLabel(tree, 'Skip to accounts'));
+    expect(onDone).not.toHaveBeenCalled();
+    expect(byLabel(tree, 'Skip accounts')).toBeTruthy();
+  });
+
+  it('Skip accounts always finishes without creating anything', async () => {
     const onDone = jest.fn();
     const tree = await render(onDone);
     await goToAccountStep(tree);
