@@ -6,8 +6,9 @@ import { create, act, ReactTestRenderer } from 'react-test-renderer';
 jest.mock('@expo/vector-icons/Feather', () => () => null);
 jest.mock('@expo/vector-icons/MaterialCommunityIcons', () => () => null);
 jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMock').createReanimatedMock());
+let mockHideAmounts = true;
 jest.mock('@/theme/PrivacyContext', () => ({
-  usePrivacy: () => ({ hideAmounts: true, toggleHideAmounts: jest.fn() }),
+  usePrivacy: () => ({ hideAmounts: mockHideAmounts, toggleHideAmounts: jest.fn() }),
 }));
 jest.mock('@/theme/AccentContext', () => ({
   useAccent: () => ({ dot: '#F0876A', accent: '#8FCBFF', secondary: '#8FE8C8' }),
@@ -128,4 +129,96 @@ it.each([
   } finally {
     dimensions.mockRestore();
   }
+});
+
+describe('Home accounts, grouped', () => {
+  const mixed = [
+    account('SBI', 'bank', 54_500),
+    account('Cash', 'cash', 56_000),
+    account('Pot', 'savings', 20_000_000),
+    account('Gr', 'savings', 4_050_000),
+  ];
+  afterEach(() => {
+    mockHideAmounts = true;
+  });
+
+  it('labels what is in hand, and splits everyday accounts from savings with a heading each', () => {
+    const all = texts(render({ accounts: mixed }));
+    expect(all).toEqual(expect.arrayContaining(['In hand now', 'Everyday', 'Savings']));
+    expect(all).toContain('₹1,105');
+  });
+
+  it('gives savings a subtotal, masked like each savings account while amounts are hidden', () => {
+    mockHideAmounts = false;
+    expect(texts(render({ accounts: mixed }))).toContain('₹2,40,500');
+    mockHideAmounts = true;
+    const hidden = texts(render({ accounts: mixed })).join(' ');
+    expect(hidden).not.toContain('2,40,500');
+    expect(hidden).not.toContain('2,00,000');
+  });
+
+  it('leaves the subtotal out when savings are in more than one currency', () => {
+    mockHideAmounts = false;
+    const all = texts(render({ accounts: [...mixed, account('Wise', 'savings', 5_000, 'USD')] }));
+    expect(all).toEqual(expect.arrayContaining(['Everyday', 'Savings']));
+    expect(all).not.toContain('₹2,40,500');
+  });
+
+  it('has no headings when there is only one kind of account', () => {
+    for (const accounts of [mixed.slice(0, 2), mixed.slice(2)]) {
+      const all = texts(render({ accounts }));
+      expect(all).not.toContain('Everyday');
+      expect(all).not.toContain('Savings');
+    }
+  });
+
+  it('puts the tiles in two even columns, one column when the screen is narrow', () => {
+    const tile = (tree: ReactTestRenderer) => {
+      const t = tree.root.find(
+        (n) => n.props.accessibilityLabel === 'SBI, bank. Open summary' && n.props.onPress
+      );
+      return StyleSheet.flatten(
+        typeof t.props.style === 'function' ? t.props.style({ pressed: false }) : t.props.style
+      );
+    };
+    // The test environment's own screen has a 2x font scale, which stacks; a normal phone does not.
+    const screen = (width: number, fontScale: number) =>
+      jest
+        .spyOn(require('react-native'), 'useWindowDimensions')
+        .mockReturnValue({ width, fontScale, height: 800, scale: 3 });
+    let dimensions = screen(390, 1);
+    try {
+      expect(tile(render({ accounts: mixed })).width).toBe('48.5%');
+      dimensions.mockRestore();
+      dimensions = screen(320, 1);
+      expect(tile(render({ accounts: mixed })).flexBasis).toBe('100%');
+    } finally {
+      dimensions.mockRestore();
+    }
+  });
+
+  it('announces the two group names as headings', () => {
+    const headings = render({ accounts: mixed })
+      .root.findAllByType(Text)
+      .filter((t) => t.props.accessibilityRole === 'header')
+      .map((t) => String(t.props.children).trim());
+    expect(headings).toEqual(['Everyday', 'Savings']);
+  });
+
+  it('keeps each account reachable with its full description', () => {
+    const open = jest.fn();
+    const r = render({ accounts: mixed, onOpenAccount: open });
+    act(() =>
+      r.root
+        .find((n) => n.props.accessibilityLabel === 'Pot, savings. Open summary' && n.props.onPress)
+        .props.onPress()
+    );
+    expect(open).toHaveBeenCalledWith(expect.objectContaining({ id: 'Pot' }));
+  });
+
+  it('does not repeat "savings" on tiles that are already under the Savings heading', () => {
+    mockHideAmounts = false;
+    const sub = texts(render({ accounts: mixed })).filter((t) => t.includes('·'));
+    expect(sub.some((t) => t.toLowerCase().includes('savings'))).toBe(false);
+  });
 });

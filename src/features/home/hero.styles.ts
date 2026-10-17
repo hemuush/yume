@@ -37,6 +37,28 @@ export const styles = StyleSheet.create({
     color: theme.colors.textSecondary,
   },
 
+  // "How this adds up": a link under the caption; the touch area is taller than the text (hitSlop).
+  // Pulled up under the caption (the card's gap is 10) so the link does not add a row of its own.
+  howLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    gap: 4,
+    minHeight: 24,
+    marginTop: -6,
+    marginBottom: -2,
+  },
+  howText: { fontFamily: theme.font.bodyBold, fontSize: 12.5, color: theme.colors.link },
+  // Names the (often tiny) free part of the money bar.
+  freeLabel: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-end', gap: 5, marginTop: -4 },
+  freeDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: theme.colors.slice.free },
+  freeText: {
+    fontFamily: theme.font.bodyBold,
+    fontSize: 11.5,
+    fontVariant: ['tabular-nums'],
+    color: theme.colors.link,
+  },
+
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   chip: {
     flexDirection: 'row',
@@ -54,6 +76,15 @@ export const styles = StyleSheet.create({
     fontFamily: theme.font.bodyMedium,
     fontSize: 12,
     color: theme.colors.textSecondary,
+  },
+  // The today chip clips a thin meter along its bottom edge.
+  chipClip: { overflow: 'hidden' },
+  chipMeter: {
+    position: 'absolute',
+    left: 0,
+    bottom: 0,
+    height: 3,
+    backgroundColor: theme.colors.slice.free,
   },
   chipOver: { borderColor: 'rgba(189,53,71,0.28)', backgroundColor: 'rgba(226,63,85,0.06)' },
   chipTextOver: { color: theme.colors.expenseText },
