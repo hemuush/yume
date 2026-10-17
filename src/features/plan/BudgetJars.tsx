@@ -69,7 +69,13 @@ export function BudgetJars({
         {shown.length < SHOWN && (
           <Pressable
             onPress={onAdd ?? onOpen}
-            style={withPressed([styles.budgetTile, styles.budgetAdd])}
+            // After an even number of tiles the add button is a slim row; after an odd number it takes the
+            // empty half beside the last tile, so no row is ever mostly blank.
+            style={withPressed([
+              styles.budgetTile,
+              styles.budgetAdd,
+              shown.length % 2 === 0 && styles.addSlim,
+            ])}
             accessibilityRole="button"
             accessibilityLabel="Add a budget"
           >
