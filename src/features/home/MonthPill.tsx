@@ -43,6 +43,7 @@ export function MonthPill({
         accessibilityLabel={`Change period, currently ${periodLabel(cursor)}`}
         style={[styles.pill, compact && styles.pillCompact, animatedStyle]}
       >
+        {!compact && <Feather name="calendar" size={14} color={theme.colors.ink} />}
         <Text style={[styles.pillText, compact && styles.pillTextCompact]} numberOfLines={1}>
           {compact ? periodShortLabel(cursor) : periodLabel(cursor)}
         </Text>
