@@ -103,15 +103,11 @@ export default function PeopleScreen() {
                 key: 'owed',
                 title: 'Owes you',
                 list: owed,
-                totalMinor: owedToYouMinor,
-                color: theme.colors.incomeText,
               },
               {
                 key: 'owe',
                 title: 'You owe',
                 list: owe,
-                totalMinor: youOweMinor,
-                color: theme.colors.expenseText,
               },
             ].map(
               (group) =>
@@ -119,11 +115,6 @@ export default function PeopleScreen() {
                   <View key={group.key}>
                     <View style={styles.groupHead}>
                       <Text style={styles.groupTitle}>{group.title}</Text>
-                      {summary && (
-                        <Text style={[styles.groupTotal, { color: group.color }]}>
-                          {formatMoney(group.totalMinor)}
-                        </Text>
-                      )}
                     </View>
                     {inRows(group.list, columns).map((row, r) => (
                       <View key={row[0].id} style={styles.tileRow}>

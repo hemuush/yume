@@ -77,7 +77,7 @@ afterEach(() => {
 });
 
 describe('WrapPlayer', () => {
-  it('offers visible navigation and a pause control without losing gesture navigation', async () => {
+  it('has a pause control up top, and moves between parts by screen-reader action, without losing gesture navigation', async () => {
     const r = await render();
     const control = (label: string) =>
       r.root.findAll(
@@ -87,9 +87,11 @@ describe('WrapPlayer', () => {
     act(() => jest.advanceTimersByTime(BEAT_MS.hook + 50));
     expect(has(r, 'Your month, wrapped')).toBe(true);
     expect(control('Resume wrap')).toBeDefined();
-    act(() => control('Next part').props.onPress());
+    // Part to part by a screen reader's swipe: the top label is one adjustable stop.
+    const stop = r.root.findAll((n) => n.props.accessibilityRole === 'adjustable')[0];
+    act(() => stop.props.onAccessibilityAction({ nativeEvent: { actionName: 'increment' } }));
     expect(has(r, 'What you kept')).toBe(true);
-    act(() => control('Previous part').props.onPress());
+    act(() => stop.props.onAccessibilityAction({ nativeEvent: { actionName: 'decrement' } }));
     expect(has(r, 'Your month, wrapped')).toBe(true);
     act(() => r.unmount());
   });
@@ -123,7 +125,8 @@ describe('WrapPlayer', () => {
     const area = tapArea(r);
     act(() => area.props.onPressIn());
     act(() => jest.advanceTimersByTime(HOLD_MS + 10));
-    expect(has(r, 'Paused')).toBe(true);
+    // Holding shows as the pause button turning into play.
+    expect(button(r, 'Resume wrap')).toBeDefined();
     act(() => jest.advanceTimersByTime(BEAT_MS.hook * 3));
     expect(has(r, 'Your month, wrapped')).toBe(true);
     act(() => area.props.onPressOut({ nativeEvent: { pageX: 300 } }));
