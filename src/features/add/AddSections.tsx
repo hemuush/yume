@@ -354,9 +354,10 @@ export function UsualChips({
                 haptics.tap();
                 onPick(u);
               }}
+              hitSlop={{ top: 2, bottom: 2 }}
               style={withPressed([
                 styles.recentChip,
-                { width: Math.min(280, 192 * Math.max(1, fontScale)) },
+                { maxWidth: Math.min(300, 220 * Math.max(1, fontScale)) },
                 active && [styles.recentChipActive, { borderColor: secondary }],
               ])}
               accessibilityRole="button"
@@ -364,14 +365,10 @@ export function UsualChips({
               accessibilityLabel={`${categorySpoken(u.categoryName, u.parentName)}, ${usualMoney(u)}, logged ${u.timesLogged} times`}
             >
               <CategoryIcon name={u.categoryIcon} color={u.categoryColor} size={11} square={20} />
-              <View style={styles.recentChipMid}>
-                <Text style={styles.recentChipText} numberOfLines={2}>
-                  {u.categoryName}
-                </Text>
-                <View style={styles.recentChipSubRow}>
-                  <Text style={styles.recentChipAmount}>{usualMoney(u)}</Text>
-                </View>
-              </View>
+              <Text style={styles.recentChipText} numberOfLines={1}>
+                {u.categoryName}
+              </Text>
+              <Text style={styles.recentChipAmount}>{usualMoney(u)}</Text>
             </Pressable>
           );
         })}
