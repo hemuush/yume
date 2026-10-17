@@ -8,8 +8,6 @@ import { GLASS } from '@/components/Glass';
 const GAP = 10;
 /** The runway's drawing height, without the date row under it. */
 export const RUNWAY_HEIGHT = 72;
-/** A budget jar's inside height (its liquid fills this). */
-export const JAR_HEIGHT = 60;
 
 const figure = {
   fontFamily: theme.font.body,
@@ -100,57 +98,28 @@ export const styles = StyleSheet.create({
   jump: { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 44 },
   jumpText: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.link },
 
-  /* ---------- Budget jars ---------- */
+  /* ---------- Budgets ---------- */
   caption: { fontFamily: theme.font.body, fontSize: 13, lineHeight: 20, color: theme.colors.textSecondary },
   captionBad: { fontFamily: theme.font.bodyBold, color: theme.colors.expenseText },
   captionOk: { fontFamily: theme.font.bodyBold, color: theme.colors.incomeText },
-  jars: { gap: 10, paddingTop: 8, paddingHorizontal: 16 },
-  jarsScroll: { marginHorizontal: -16 },
-  jar: { width: 160, flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 60 },
-  jarCopy: { flex: 1, minWidth: 0, gap: 4 },
-  jarAdd: {
-    minHeight: 60,
-    minWidth: 72,
-    paddingHorizontal: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    borderRadius: 14,
+  budgetGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  budgetTile: {
+    width: '48.5%',
+    flexGrow: 1,
+    minHeight: 64,
+    gap: 8,
+    padding: 8,
+    borderRadius: 18,
+    backgroundColor: GLASS.fillStrong,
     borderWidth: 1,
-    borderStyle: 'dashed',
-    borderColor: 'rgba(18,19,15,0.22)',
-  },
-  jarBody: {
-    width: 52,
-    height: JAR_HEIGHT,
-    borderTopLeftRadius: 18,
-    borderTopRightRadius: 18,
-    borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.6)',
-    borderWidth: 1.5,
     borderColor: GLASS.edge,
-    justifyContent: 'flex-end',
-    padding: 3,
   },
-  jarLiquid: {
-    borderTopLeftRadius: 4,
-    borderTopRightRadius: 4,
-    borderBottomLeftRadius: 16,
-    borderBottomRightRadius: 16,
-  },
-  jarLiquidFull: { borderRadius: 15 },
-  jarIcon: { position: 'absolute', top: 10, left: 0, right: 0, alignItems: 'center', zIndex: 1 },
-  spillWrap: { position: 'absolute', top: -13, left: -12, right: -12, alignItems: 'center', zIndex: 2 },
-  spill: {
-    minHeight: 20,
-    justifyContent: 'center',
-    paddingHorizontal: 7,
-    borderRadius: 10,
-    backgroundColor: theme.colors.expense,
-  },
-  spillText: { fontFamily: theme.font.bodyBold, fontSize: 11, color: theme.colors.surface },
+  budgetAdd: { alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 6 },
+  budgetTop: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  budgetIcon: { width: 34, height: 34, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  budgetTrack: { height: 5, borderRadius: 3, backgroundColor: theme.colors.inkWash, overflow: 'hidden' },
+  budgetFill: { height: '100%', borderRadius: 3 },
+  jarCopy: { flex: 1, minWidth: 0, gap: 2 },
   jarName: {
     maxWidth: '100%',
     fontFamily: theme.font.bodyBold,
@@ -170,8 +139,10 @@ export const styles = StyleSheet.create({
   },
 
   /* ---------- Goals ---------- */
-  goals: { gap: 10, paddingHorizontal: SCREEN.gutter },
-  goal: { width: 136, minHeight: 132, padding: 12, overflow: 'hidden' },
+  goals: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginHorizontal: SCREEN.gutter },
+  goalCard: { minHeight: 96, padding: 12, overflow: 'hidden', gap: 2 },
+  goalWrap: { width: '48.5%', flexGrow: 1 },
+  goal: { width: '48.5%', flexGrow: 1, minHeight: 96, padding: 12, overflow: 'hidden', gap: 2 },
   goalTrack: {
     height: 5,
     borderRadius: 3,
@@ -189,7 +160,6 @@ export const styles = StyleSheet.create({
   },
   goalPctSign: { fontFamily: theme.font.body, fontSize: 13, letterSpacing: 0, color: theme.colors.textMuted },
   goalName: {
-    marginTop: 'auto',
     fontFamily: theme.font.bodyBold,
     fontSize: 13,
     color: theme.colors.textPrimary,
@@ -198,10 +168,9 @@ export const styles = StyleSheet.create({
     fontFamily: theme.font.body,
     fontVariant: ['tabular-nums'],
     fontSize: 12,
-    marginTop: 3,
+    marginTop: 4,
     color: theme.colors.textSecondary,
   },
-  goalOf: { color: theme.colors.textMuted },
   goalNew: {
     alignItems: 'center',
     justifyContent: 'center',
