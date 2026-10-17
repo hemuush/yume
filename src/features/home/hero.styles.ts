@@ -37,17 +37,9 @@ export const styles = StyleSheet.create({
     color: theme.colors.textSecondary,
   },
 
-  // "How this adds up": a link under the caption; the touch area is taller than the text (hitSlop).
-  // Pulled up under the caption (the card's gap is 10) so the link does not add a row of its own.
-  howLink: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'flex-start',
-    gap: 4,
-    minHeight: 24,
-    marginTop: -6,
-    marginBottom: -2,
-  },
+  // "Details": a link at the end of the caption's line; the touch area is taller than the text (hitSlop).
+  captionRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: 10 },
+  howLink: { flexDirection: 'row', alignItems: 'center', gap: 3, minHeight: 24 },
   howText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.link },
   // Names the (often tiny) free part of the money bar.
 
