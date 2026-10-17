@@ -144,13 +144,13 @@ describe('Where it went', () => {
   });
 
   it('keeps shares based on all categories and offers the remaining categories in Reports', () => {
-    const tree = render(['A', 'B', 'C', 'D', 'E'].map((name) => cat(name, 10000)));
+    const tree = render(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'].map((name) => cat(name, 10000)));
     const shown = texts(tree);
-    expect(shown).toContain('₹100 · 20%');
+    expect(shown).toContain('₹100 · 11%');
     expect(
       tree.root.findAll((n) => n.props.accessibilityLabel === 'All categories in Reports').length
     ).toBeGreaterThan(0);
-    expect(shown).not.toContain('E');
+    expect(shown).not.toContain('I');
   });
 });
 

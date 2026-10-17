@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Pressable, StyleSheet } from 'react-native';
+import { View, Pressable, ScrollView, StyleSheet } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Text } from '@/components/Text';
@@ -15,10 +15,10 @@ import { useAccent } from '@/theme/AccentContext';
 import { homeInk } from './homeInk';
 
 /** How many categories get their own button before the "all categories" one. */
-const SHOWN = 4;
+const SHOWN = 8;
 
 /**
- * Where the month's money went: a row of the biggest categories (the picked one is a dark pill with its
+ * Where the month's money went: a single row of the eight biggest categories (the picked one is a dark pill with its
  * share), and under it that category, one tap from its page. The month's total is not repeated here: the
  * month card above already says it.
  */
@@ -74,7 +74,12 @@ export function WhereItWent({
 
   return (
     <View style={[styles.section, cardSurface.neutral]}>
-      <View style={styles.row}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.row}
+        style={styles.rowScroll}
+      >
         {top.map((c, i) => {
           const on = i === index;
           const icon = (
@@ -113,7 +118,7 @@ export function WhereItWent({
         >
           <Feather name="more-horizontal" size={20} color={ink} />
         </Pressable>
-      </View>
+      </ScrollView>
       <Pressable
         style={withPressed(styles.categoryButton)}
         onPress={() => (onOpenCategory ? onOpenCategory(selected.categoryId) : onOpenReports())}
@@ -142,7 +147,9 @@ const styles = StyleSheet.create({
     borderColor: GLASS.edge,
     gap: 8,
   },
-  row: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 },
+  // One row, however many categories: it scrolls sideways rather than wrapping.
+  rowScroll: { marginHorizontal: -12, flexGrow: 0 },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12 },
   target: {
     height: 44,
     minWidth: 44,
