@@ -20,10 +20,7 @@ const FILL: Record<BudgetsTone, string> = {
  */
 export function BudgetsHero({ figures: h }: { figures: BudgetsHeroFigures }) {
   const over = h.spentMinor > h.limitMinor;
-  const sub = [
-    h.daysLeft === 0 ? 'last day' : `${h.daysLeft} ${h.daysLeft === 1 ? 'day' : 'days'} left`,
-    `${h.budgetCount} ${h.budgetCount === 1 ? 'category' : 'categories'}`,
-  ].join(' · ');
+  const daysLeft = h.daysLeft === 0 ? 'last day' : `${h.daysLeft} ${h.daysLeft === 1 ? 'day' : 'days'} left`;
 
   return (
     <Glass radius={28} tone="strong" style={[frost.hero, { padding: 14, gap: 8 }]}>
@@ -49,12 +46,16 @@ export function BudgetsHero({ figures: h }: { figures: BudgetsHeroFigures }) {
         )}
       </View>
       <Text style={frost.sub}>
-        of <Text style={frost.subBold}>{formatMoney(h.limitMinor)}</Text> · {sub}
+        <Text style={frost.subBold}>{formatMoney(h.spentMinor)}</Text> spent of {formatMoney(h.limitMinor)} ·{' '}
+        {daysLeft}
       </Text>
-      <PaceBar animKey="budgets:hero" pct={h.usedPct} color={FILL[h.tone]} marker={h.expectedPct} />
-      <Text style={frost.note2}>
-        {formatMoney(h.spentMinor)} spent · the tick is where an even month would be today
-      </Text>
+      <PaceBar
+        animKey="budgets:hero"
+        pct={h.usedPct}
+        color={FILL[h.tone]}
+        marker={h.expectedPct}
+        accessibilityLabel={`${formatMoney(h.spentMinor)} spent of ${formatMoney(h.limitMinor)}. An even month would be at ${formatMoney(Math.round((h.limitMinor * h.expectedPct) / 100))} by today.`}
+      />
       <View style={frost.chips}>
         {h.overCount > 0 && (
           <FrostChip icon="alert-triangle" tone="bad">

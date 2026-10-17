@@ -84,15 +84,22 @@ export function PaceBar({
   marker,
   animKey,
   style,
+  accessibilityLabel,
 }: {
   pct: number;
   color: string;
   marker?: number;
   animKey: string;
   style?: StyleProp<ViewStyle>;
+  /** Read out for the bar, which is otherwise decorative (the marker has no words of its own). */
+  accessibilityLabel?: string;
 }) {
   return (
-    <View style={[frost.paceWrap, style]}>
+    <View
+      style={[frost.paceWrap, style]}
+      accessible={accessibilityLabel != null}
+      accessibilityLabel={accessibilityLabel}
+    >
       <View style={frost.paceTrack}>
         <GrowFill
           animKey={animKey}

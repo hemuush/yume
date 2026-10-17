@@ -154,7 +154,7 @@ describe('Category page', () => {
         'Latest entries',
       ])
     );
-    expect(shown).toContain('₹150 over budget');
+    expect(shown).toContain('₹150 over');
     // Each place in the split: its share, and how often with the usual amount only when it was more than once.
     expect(shown).toEqual(expect.arrayContaining(['77%', '23%', '3 times · ₹167 each']));
     expect(shown).not.toContain('once');

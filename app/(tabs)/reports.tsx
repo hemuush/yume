@@ -61,6 +61,7 @@ import { useAccent } from '@/theme/AccentContext';
 import { ReportsSkeleton } from '@/features/reports/ReportsSkeleton';
 import { ReportsHeader } from '@/features/reports/ReportsHeader';
 import { HeatmapCard } from '@/features/reports/HeatmapCard';
+import { DaysSummary } from '@/features/reports/DaysSummary';
 import { DayCard } from '@/features/reports/DayCard';
 import { ReportInsights } from '@/features/reports/ReportInsights';
 import { CategoryBar } from '@/features/reports/CategoryBar';
@@ -631,6 +632,20 @@ export default function ReportsScreen() {
           />
         ) : tab === 'days' ? (
           <>
+            {!filterId && (
+              <DaysSummary
+                periodName={periodName}
+                inProgress={range.end >= todayIso}
+                spentMinor={dispExpense}
+                changeMinor={
+                  range.end < todayIso && previous.expenseMinor > 0
+                    ? dispExpense - roundedMinor(previous.expenseMinor)
+                    : null
+                }
+                comparedTo={custom ? 'the period before' : previousPeriodLabel(cursor)}
+                perDayMinor={facts.countedDays > 0 ? facts.perDayMinor : null}
+              />
+            )}
             {filterId && filtered?.id !== filterId ? (
               !detailErrors.heatmap && (
                 <ActivityIndicator
