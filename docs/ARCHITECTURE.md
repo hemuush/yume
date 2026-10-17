@@ -202,6 +202,8 @@ Home’s overview card adds a Refunds page when expected refunds remain, alongsi
 
 ## Home header, wallpaper, money bar and motion
 
+The shared wallpaper (every screen except Home, which stays a plain wash) has two large blurred blobs: the theme colour, deeper, at the top right (radius 260) and the second colour at the left, halfway down the screen (radius 230).
+
 Home's greeting (date, "Good morning", Suu's line) is small, left-aligned and centred vertically between the brand row and the month card, and collapses into the brand row on scroll as before. Tapping the Yume logo scrolls Home back to the top (instant with reduced motion). Home's wallpaper is the theme wash alone: [HomeWallpaper](../src/features/home/HomeWallpaper.tsx) takes a `plain` option that drops the two light blobs, and only Home sets it, so the other screens that use the wallpaper are unchanged.
 
 The month card's caption is short: "of ₹2,62,393 after spending and savings" (income plus what carried over, then what was taken off; with bills due, "after spending, savings and bills"). A carried shortfall only lowers the headline and is not part of what the figure is out of, so then the amount is left out. A "How this adds up" link under it opens the full sum for any month: income, carried over, spent, set aside (masked while savings are hidden), free to use, and with bills due also still to pay and after bills. The bills chip opens the same sum. The sum was previously only reachable when bills were due. The card's title row pairs a small wallet tile with the one label ("Free to use", no second subtitle) and a month pill with a calendar icon; the Expense, Income and Transfer buttons put the icon above a left-aligned label, with no chevron.

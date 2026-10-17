@@ -11,8 +11,8 @@ export function wallpaperTop(accent: string): string {
 }
 
 /**
- * Home's wallpaper: a soft wash of the theme colour at the top fading into the page colour, with two blurred
- * light blobs (radial gradients) for depth behind the glass cards. Static: nothing here re-renders on scroll.
+ * Home's wallpaper: a soft wash of the theme colour at the top fading into the page colour, with two large blurred
+ * blobs (radial gradients: the theme colour at the top right, the second colour at the left) for depth behind the glass cards. Static: nothing here re-renders on scroll.
  */
 export const HomeWallpaper = memo(function HomeWallpaper({
   accent,
@@ -26,7 +26,7 @@ export const HomeWallpaper = memo(function HomeWallpaper({
 }) {
   const top = wallpaperTop(accent);
   const mid = shade(accent, 94);
-  const blobA = shade(accent, 80);
+  const blobA = shade(accent, 74);
   const blobB = shade(secondary, 86);
   return (
     <View pointerEvents="none" renderToHardwareTextureAndroid style={StyleSheet.absoluteFill}>
@@ -47,8 +47,8 @@ export const HomeWallpaper = memo(function HomeWallpaper({
               <Stop offset="1" stopColor={blobB} stopOpacity={0} />
             </RadialGradient>
           </Defs>
-          <Circle cx="92%" cy="40" r="190" fill="url(#wpA)" />
-          <Circle cx="0%" cy="460" r="170" fill="url(#wpB)" />
+          <Circle cx="92%" cy="30" r="260" fill="url(#wpA)" />
+          <Circle cx="0%" cy="46%" r="230" fill="url(#wpB)" />
         </Svg>
       )}
     </View>
