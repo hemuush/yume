@@ -52,14 +52,14 @@ function headline(over: Partial<React.ComponentProps<typeof TransactionsHeadline
 describe('Spent card', () => {
   it('shows cashflow above the chart and keeps the comparison separate', () => {
     const all = texts(headline());
-    expect(all).toEqual(expect.arrayContaining(['Spent', 'Money in', '₹5,796', 'Net', '−₹11,273']));
+    expect(all).toEqual(expect.arrayContaining(['Spent', 'Money in', '₹5,796', 'Left', '−₹11,273']));
     expect(all.some((t) => t.includes('₹2,310 less than last week'))).toBe(true);
   });
 
   it('leaves money in and net out when nothing came in, since Net would only repeat Spent', () => {
     const all = texts(headline({ incomeMinor: 0 }));
     expect(all.some((t) => t.endsWith(' in'))).toBe(false);
-    expect(all.some((t) => t.startsWith('Net'))).toBe(false);
+    expect(all.some((t) => t.startsWith('Left'))).toBe(false);
   });
 
   it('says how much more, in rupees, and what it is compared with', () => {
@@ -151,7 +151,7 @@ it.each([
     expect(StyleSheet.flatten(top.props.style).flexDirection).toBe(size.direction);
     const labels = top.findAllByType(Text).map((n) => [n.props.children].flat().join(''));
     expect(labels).toContain('Money in');
-    expect(labels).toContain('Net');
+    expect(labels).toContain('Left');
     const metric = top.findAll(
       (n) => Array.isArray(n.props.style) && n.props.style[0] === styles.sumMetric
     )[0];

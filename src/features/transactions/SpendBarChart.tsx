@@ -242,9 +242,9 @@ const styles = StyleSheet.create({
   labelAway: { opacity: 0.45 },
   label: {
     fontFamily: theme.font.body,
-    fontSize: 9,
-    lineHeight: 13,
-    minHeight: 13,
+    fontSize: 11,
+    lineHeight: 15,
+    minHeight: 15,
     color: theme.colors.textMuted,
     marginTop: 8,
   },
@@ -280,7 +280,7 @@ const styles = StyleSheet.create({
   },
   legendItem: { flexDirection: 'row', alignItems: 'center', gap: 5, maxWidth: '100%', flexShrink: 1 },
   legendDot: { width: 8, height: 8, borderRadius: 3, flexShrink: 0 },
-  legendText: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textSecondary, flexShrink: 1 },
+  legendText: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary, flexShrink: 1 },
   legendToggle: {
     minHeight: 44,
     paddingHorizontal: 10,

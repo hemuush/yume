@@ -841,7 +841,6 @@ export default function TransactionsScreen() {
       {/* Over the list, which it shrinks with as it scrolls. */}
       <SkyHeader
         title="Activity"
-        subtitle={SUBTITLE}
         collapse={collapse}
         wallpaper
         collapsedAccessory={
@@ -1012,8 +1011,6 @@ export default function TransactionsScreen() {
     </View>
   );
 }
-
-const SUBTITLE = 'Every entry, day by day';
 
 const VIEW_SCOPES: { label: string; value: 'week' | 'month' }[] = [
   { label: 'Week', value: 'week' },
