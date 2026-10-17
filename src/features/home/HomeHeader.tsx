@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { View, StyleSheet, LayoutChangeEvent } from 'react-native';
+import { View, Pressable, StyleSheet, LayoutChangeEvent } from 'react-native';
 import { Text } from '@/components/Text';
 import ReanimatedAnimated, {
   FadeIn,
@@ -27,6 +27,7 @@ import { MOTION } from '@/lib/animation';
 import { wallpaperTop } from './HomeWallpaper';
 import { headerIsCollapsed } from './headerMotion';
 import { useReduceMotion } from '@/lib/useReduceMotion';
+import { withPressed } from '@/lib/pressed';
 
 /** "Wednesday, 7 October" — above the greeting. */
 function todayLabel(): string {
@@ -58,6 +59,7 @@ export function HomeHeader({
   wraps = [],
   onPlayWrap,
   line,
+  onBrandPress,
   children,
 }: {
   cursor: PeriodCursor;
@@ -74,6 +76,8 @@ export function HomeHeader({
   onPlayWrap?: (wrap: ReadyWrap) => void;
   /** Suu's line about the month, said right after the greeting. */
   line?: string;
+  /** Tapping the Yume logo (Home scrolls back to the top). Without it the logo is only a picture. */
+  onBrandPress?: () => void;
   children?: React.ReactNode;
 }) {
   const { accent } = useAccent();
@@ -151,10 +155,23 @@ export function HomeHeader({
             setRowBottom(y + height);
           }}
         >
-          <View style={styles.brandRow}>
-            <YumeLogo size={26} />
-            <Text style={styles.brand}>Yume</Text>
-          </View>
+          {onBrandPress ? (
+            <Pressable
+              onPress={onBrandPress}
+              hitSlop={8}
+              style={withPressed(styles.brandRow)}
+              accessibilityRole="button"
+              accessibilityLabel="Yume, scroll to top"
+            >
+              <YumeLogo size={26} />
+              <Text style={styles.brand}>Yume</Text>
+            </Pressable>
+          ) : (
+            <View style={styles.brandRow}>
+              <YumeLogo size={26} />
+              <Text style={styles.brand}>Yume</Text>
+            </View>
+          )}
           <ReanimatedAnimated.View
             style={[styles.miniSlot, miniStyle]}
             pointerEvents={collapsed ? 'auto' : 'none'}

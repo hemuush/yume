@@ -15,16 +15,16 @@ export function spendBarsStart(today: string): string {
   return weekAgo < monthStart ? weekAgo : monthStart;
 }
 
-const DAY_LETTER = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+const DAY_NAME = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-/** The last seven days, oldest first, each labelled by its weekday's letter; today is the last. */
+/** The last seven days, oldest first, each labelled by its weekday's short name; today is the last, labelled "Today". */
 export function weekBars(daily: { date: string; totalMinor: number }[], today: string): SpendBar[] {
   const byDate = new Map(daily.map((d) => [d.date, d.totalMinor]));
   return Array.from({ length: 7 }, (_, i) => {
     const date = addDaysToIsoDate(today, i - 6);
     return {
       key: date,
-      label: DAY_LETTER[parseLocalIsoDate(date).getDay()],
+      label: i === 6 ? 'Today' : DAY_NAME[parseLocalIsoDate(date).getDay()],
       totalMinor: byDate.get(date) ?? 0,
       current: i === 6,
     };
@@ -46,4 +46,13 @@ export function monthBars(daily: { date: string; totalMinor: number }[], today: 
     totalMinor,
     current: i === todayWeek,
   }));
+}
+
+/**
+ * The bar the chart opens on: the latest one with spending, so a quiet morning shows the last busy day instead of
+ * "today, ₹0". With nothing spent anywhere, the last bar (today, or this week).
+ */
+export function defaultBar(bars: SpendBar[]): SpendBar {
+  for (let i = bars.length - 1; i >= 0; i--) if (bars[i].totalMinor > 0) return bars[i];
+  return bars[bars.length - 1];
 }

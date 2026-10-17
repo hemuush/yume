@@ -568,9 +568,18 @@ describe('Home, stepping between months on a lived-in phone', () => {
     expect(back).toContain(monthName(-1));
     expect(back).not.toContain('still to pay');
     expect(back).not.toContain('Short after bills');
-    expect(back).toContain(`+ ${formatMoney(carry)} carried over`);
-    expect(back).toContain(`Income ${formatMoney(lastMonth.incomeMinor)}`);
-    expect(back).toContain('less spending and savings');
+    // The caption says what the figure is out of: that month's income plus what carried into it.
+    expect(back).toContain(`of ${formatMoney(lastMonth.incomeMinor + carry)} after spending and savings`);
+    // And the sum behind "How this adds up" itemises both.
+    await act(async () => {
+      tree.root
+        .find((n) => n.props.accessibilityLabel === 'How this adds up' && n.props.onPress)
+        .props.onPress();
+    });
+    const sum = textOf(tree);
+    expect(sum).toContain('Carried over');
+    expect(sum).toContain(`+${formatMoney(carry)}`);
+    expect(sum).toContain(formatMoney(lastMonth.incomeMinor));
 
     await step(tree, 'increment');
     await settle();
