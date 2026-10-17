@@ -569,7 +569,7 @@ describe('Home, stepping between months on a lived-in phone', () => {
     expect(back).not.toContain('still to pay');
     expect(back).not.toContain('Short after bills');
     // The caption says what the figure is out of: that month's income plus what carried into it.
-    expect(back).toContain(`of ${formatMoney(lastMonth.incomeMinor + carry)} after spending and savings`);
+    expect(back).toContain(`of ${formatMoney(lastMonth.incomeMinor + carry)}`);
     // And the sum behind "How this adds up" itemises both.
     await act(async () => {
       tree.root

@@ -7,7 +7,7 @@ import { theme } from '@/constants/theme';
 import { hexToRgba, shade } from '@/lib/color';
 import { dueDateLabel, isDueUrgent } from '@/lib/dueDate';
 import { formatMoney } from '@/lib/money';
-import { addDaysToIsoDate, daysUntilIsoDate, parseLocalIsoDate, toLocalIsoDate } from '@/lib/date';
+import { daysUntilIsoDate, toLocalIsoDate } from '@/lib/date';
 import { payCardRoute, PayCardRoute } from '@/lib/payCard';
 import type { PlanCardBillInput } from '@/features/plan/planOverview';
 import { BudgetProgress } from '@/db/budgets';
@@ -148,12 +148,6 @@ export function buildUpcomingItems(input: {
   return { items, next: all.find((i) => daysUntilIsoDate(i.sortDate) > UPCOMING_DAYS) ?? null };
 }
 
-/** "8 Oct" — the last day Upcoming looks at. */
-function windowEndLabel(): string {
-  const end = addDaysToIsoDate(toLocalIsoDate(new Date()), UPCOMING_DAYS);
-  return parseLocalIsoDate(end).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
-}
-
 /**
  * Home's swipe card pages: Upcoming (time-sensitive), then budgets nearest their limits, then goals;
  * a page with nothing to show isn't drawn.
@@ -215,18 +209,17 @@ export function HomeGlance({
               <View style={styles.pageList}>
                 <View style={styles.windowCaption}>
                   <Text style={styles.windowLabel}>
-                    <Text style={styles.windowBold}>Next {UPCOMING_DAYS} days</Text> · till {windowEndLabel()}
+                    <Text style={styles.windowBold}>Next {UPCOMING_DAYS} days</Text>
                   </Text>
                   <Text style={styles.windowCount}>
                     {upcoming.items.length > 0
                       ? `${dueMinor > 0 ? `${formatMoney(dueMinor)} · ` : ''}${upcoming.items.length} due`
-                      : 'none'}
+                      : ''}
                   </Text>
                 </View>
                 {upcoming.items.length === 0 && (
                   <View style={styles.quiet}>
-                    <Text style={styles.quietTitle}>Nothing due this week</Text>
-                    <Text style={styles.quietSub}>Enjoy the quiet.</Text>
+                    <Text style={styles.quietTitle}>Nothing due</Text>
                   </View>
                 )}
                 {visibleUpcoming.map((item, i) => {

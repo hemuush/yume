@@ -88,7 +88,7 @@ describe('Where it went', () => {
         .find((n) => n.props.accessibilityLabel === 'Shares, 20% of spending' && n.props.onPress)
         .props.onPress()
     );
-    expect(texts(r)).toContain('₹10,000 · 20% of spending');
+    expect(texts(r)).toContain('₹10,000 · 20%');
     act(() =>
       r.root
         .find((n) => n.props.accessibilityLabel === 'View Shares category' && n.props.onPress)
@@ -112,7 +112,7 @@ describe('Where it went', () => {
         '₹50,000',
         '₹4,210 less than Sept',
         'Rent',
-        '₹24,000 · 48% of spending',
+        '₹24,000 · 48%',
       ])
     );
   });
@@ -125,8 +125,8 @@ describe('Where it went', () => {
         .props.onPress()
     );
     const all = texts(r);
-    expect(all).toEqual(expect.arrayContaining(['Shares', '₹10,000 · 20% of spending', '20%']));
-    expect(all).not.toContain('₹16,000 · 32% of spending');
+    expect(all).toEqual(expect.arrayContaining(['Shares', '₹10,000 · 20%', '20%']));
+    expect(all).not.toContain('₹16,000 · 32%');
     expect(
       r.root.findAll((n) => n.props.accessibilityLabel === 'Shares, 20% of spending')[0].props
         .accessibilityState.selected
@@ -157,7 +157,7 @@ describe('Where it went', () => {
   it('keeps shares based on all categories and offers the remaining categories in Reports', () => {
     const tree = render(['A', 'B', 'C', 'D', 'E'].map((name) => cat(name, 10000)));
     const shown = texts(tree);
-    expect(shown).toContain('₹100 · 20% of spending');
+    expect(shown).toContain('₹100 · 20%');
     expect(
       tree.root.findAll((n) => n.props.accessibilityLabel === 'All categories in Reports').length
     ).toBeGreaterThan(0);
@@ -186,12 +186,13 @@ it('does not retain a selected category after privacy-filtered inputs remove it'
   const props = tree.root.findByType(WhereItWent).props as Parameters<typeof WhereItWent>[0];
   act(() => tree.update(<WhereItWent {...props} breakdown={[cat('Public', 10000)]} spentMinor={10000} />));
   expect(texts(tree)).not.toContain('Private');
-  expect(texts(tree)).toContain('₹100 · 100% of spending');
+  expect(texts(tree)).toContain('₹100 · 100%');
   act(() => tree.unmount());
 });
-it('retains the refund explanation with the curved selector', () => {
+it('keeps shares on net spending without a long disclaimer', () => {
   const tree = render([cat('Food', 10000), cat('Refunds', -5000)]);
-  expect(texts(tree)).toContain('₹100 · 100% of spending');
-  expect(texts(tree).some((t) => t.includes('refunds are included in the period total'))).toBe(true);
+  expect(texts(tree)).toContain('₹100 · 100%');
+  // No long disclaimer under the figure: the share is on the category line and the net total above it.
+  expect(texts(tree).some((t) => t.includes('refunds are included in the period total'))).toBe(false);
   act(() => tree.unmount());
 });

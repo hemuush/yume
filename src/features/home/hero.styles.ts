@@ -50,14 +50,6 @@ export const styles = StyleSheet.create({
   },
   howText: { fontFamily: theme.font.bodyBold, fontSize: 12.5, color: theme.colors.link },
   // Names the (often tiny) free part of the money bar.
-  freeLabel: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-end', gap: 5, marginTop: -4 },
-  freeDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: theme.colors.slice.free },
-  freeText: {
-    fontFamily: theme.font.bodyBold,
-    fontSize: 11.5,
-    fontVariant: ['tabular-nums'],
-    color: theme.colors.link,
-  },
 
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   chip: {
@@ -119,8 +111,6 @@ export const styles = StyleSheet.create({
     fontSize: 14,
     color: theme.colors.textPrimary,
   },
-  pace: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  paceText: { flex: 1, fontFamily: theme.font.body, fontSize: 12.5, color: theme.colors.textMuted },
 
   working: {
     borderRadius: 16,
