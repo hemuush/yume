@@ -60,6 +60,52 @@ export function HomeAccounts({
     (a) => (a.type === 'bank' || a.type === 'cash' || a.type === 'wallet') && a.currency === currency
   );
   const inHandMinor = inHand.reduce((s, a) => s + a.currentBalanceMinor, 0);
+  // With savings and everyday accounts side by side, each gets its own heading and the savings a subtotal.
+  const savings = accounts.filter((a) => a.type === 'savings');
+  const everyday = accounts.filter((a) => a.type !== 'savings');
+  const grouped = savings.length > 0 && everyday.length > 0;
+  // A sum across currencies would mean nothing: the subtotal is only for savings all in the default currency.
+  const savingsMinor = savings.every((a) => a.currency === currency)
+    ? savings.reduce((sum, a) => sum + a.currentBalanceMinor, 0)
+    : null;
+
+  const chip = (a: Account, inSavingsGroup: boolean) => {
+    const hue = accountHue(a.type, accent);
+    return (
+      <Pressable
+        key={a.id}
+        onPress={() => onOpenAccount(a)}
+        style={withPressed([styles.chip, stacked ? styles.full : grouped && styles.half])}
+        accessibilityRole="button"
+        accessibilityLabel={`${a.name}, ${accountTypeLabel(a)}. Open summary`}
+      >
+        <View style={[styles.chipIcon, { backgroundColor: shade(hue, 88) }]}>
+          <MaterialCommunityIcons
+            name={accountIcon(a.type) as McIconName}
+            size={14}
+            color={shade(hue, 30, 10)}
+          />
+        </View>
+        <View style={styles.chipText}>
+          <View style={styles.chipNameRow}>
+            <Text style={styles.chipName}>{a.name}</Text>
+            {a.investment && <GainPill account={a} />}
+          </View>
+          <Text style={styles.chipSub}>
+            {/* Under the Savings heading the type is known; only "tracked" still says something. */}
+            {inSavingsGroup ? (a.investment ? 'tracked · ' : '') : `${accountTypeLabel(a)} · `}
+            <Amount
+              minor={a.currentBalanceMinor}
+              currency={a.currency}
+              sensitive={a.type === 'savings'}
+              style={styles.chipAmount}
+            />
+          </Text>
+        </View>
+      </Pressable>
+    );
+  };
+
   return (
     <View style={styles.wrap}>
       <Glass radius={22} style={[styles.tile, cardSurface.neutral]}>
@@ -78,6 +124,7 @@ export function HomeAccounts({
         </Pressable>
         {inHand.length > 0 && (
           <>
+            <Text style={styles.inHandLabel}>In hand now</Text>
             <Amount
               minor={inHandMinor}
               currency={currency}
@@ -90,43 +137,25 @@ export function HomeAccounts({
             </Text>
           </>
         )}
-        <View style={styles.chips}>
-          {accounts.map((a) => {
-            const hue = accountHue(a.type, accent);
-            return (
-              <Pressable
-                key={a.id}
-                onPress={() => onOpenAccount(a)}
-                style={withPressed([styles.chip, stacked && styles.full])}
-                accessibilityRole="button"
-                accessibilityLabel={`${a.name}, ${accountTypeLabel(a)}. Open summary`}
-              >
-                <View style={[styles.chipIcon, { backgroundColor: shade(hue, 88) }]}>
-                  <MaterialCommunityIcons
-                    name={accountIcon(a.type) as McIconName}
-                    size={14}
-                    color={shade(hue, 30, 10)}
-                  />
-                </View>
-                <View style={styles.chipText}>
-                  <View style={styles.chipNameRow}>
-                    <Text style={styles.chipName}>{a.name}</Text>
-                    {a.investment && <GainPill account={a} />}
-                  </View>
-                  <Text style={styles.chipSub}>
-                    {accountTypeLabel(a)} ·{' '}
-                    <Amount
-                      minor={a.currentBalanceMinor}
-                      currency={a.currency}
-                      sensitive={a.type === 'savings'}
-                      style={styles.chipAmount}
-                    />
-                  </Text>
-                </View>
-              </Pressable>
-            );
-          })}
-        </View>
+        {grouped ? (
+          <>
+            <Text style={styles.groupHead} accessibilityRole="header">
+              Everyday
+            </Text>
+            <View style={styles.chips}>{everyday.map((a) => chip(a, false))}</View>
+            <View style={styles.groupHeadRow}>
+              <Text style={styles.groupHeadText} accessibilityRole="header">
+                Savings
+              </Text>
+              {savingsMinor != null && (
+                <Amount minor={savingsMinor} currency={currency} sensitive style={styles.groupHeadText} />
+              )}
+            </View>
+            <View style={styles.chips}>{savings.map((a) => chip(a, true))}</View>
+          </>
+        ) : (
+          <View style={[styles.chips, styles.chipsFirst]}>{accounts.map((a) => chip(a, false))}</View>
+        )}
       </Glass>
     </View>
   );
@@ -155,7 +184,34 @@ const styles = StyleSheet.create({
   },
   sub: { fontFamily: theme.font.body, fontSize: 12.5, color: theme.colors.textMuted },
   full: { flexBasis: '100%' },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 10 },
+  // Two even columns when the accounts are grouped.
+  half: { width: '48.5%' },
+  inHandLabel: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textMuted },
+  groupHead: {
+    marginTop: 14,
+    marginHorizontal: 2,
+    fontFamily: theme.font.bodyBold,
+    fontSize: 12,
+    color: theme.colors.textMuted,
+  },
+  groupHeadRow: {
+    marginTop: 14,
+    marginHorizontal: 2,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
+  groupHeadText: {
+    fontFamily: theme.font.bodyBold,
+    fontSize: 12,
+    fontVariant: ['tabular-nums'],
+    color: theme.colors.textMuted,
+  },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 6 },
+  // Not grouped: the tiles start a little further below the total, as they always did.
+  chipsFirst: { marginTop: 10 },
   chip: {
     flexDirection: 'row',
     alignItems: 'center',

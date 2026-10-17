@@ -2,7 +2,7 @@
  * Home's month card: the free-to-use headline with income and carry-over under it, chips for the spent
  * share, today and bills still to pay, the Add buttons, and stepping the period. All figures are made up.
  */
-import { Text } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
 jest.mock('@expo/vector-icons/Feather', () => () => null);
 
@@ -69,15 +69,15 @@ function render(over: Partial<React.ComponentProps<typeof ThisMonthHero>> = {}) 
 }
 
 describe('month card', () => {
-  it('leads with what is free to use, the income under it, and the spent share and today as chips', () => {
+  it('leads with what is free to use, what it is out of, and the spent share and what is left today as chips', () => {
     const all = texts(render());
     expect(all).toEqual(
       expect.arrayContaining([
         'Free to use',
         '₹794',
-        'Income ₹1,96,056, less spending and savings',
+        'of ₹1,96,056 after spending and savings',
         '49% spent',
-        '₹2,045 of ₹5,000 today',
+        '₹2,955 left today',
         'Expense',
         'Income',
         'Transfer',
@@ -89,7 +89,9 @@ describe('month card', () => {
     );
     // Free to use is said once, as the headline.
     expect(all.filter((t) => t === 'Free to use')).toHaveLength(1);
-    expect(all.some((t) => t.startsWith('On pace for about'))).toBe(true);
+    // The pace is a spending forecast, and says so.
+    expect(all.some((t) => t.startsWith('On pace to spend about'))).toBe(true);
+    expect(all.some((t) => t.startsWith('On pace for about'))).toBe(false);
   });
 
   it('says how far over the daily goal today is', () => {
@@ -134,7 +136,7 @@ describe('month card with bills still to pay', () => {
       expect.arrayContaining([
         'Free after bills',
         '₹40,000',
-        'Income ₹1,00,000, less spending, savings and bills',
+        'of ₹1,00,000 after spending, savings and bills',
         '₹20,000 still to pay',
       ])
     );
@@ -169,7 +171,7 @@ describe('month card with bills still to pay', () => {
   it('is the plain Free to use card when nothing is due', () => {
     const all = texts(render({ ...base, dueMinor: 0 }));
     expect(all).toEqual(
-      expect.arrayContaining(['Free to use', '₹60,000', 'Income ₹1,00,000, less spending and savings'])
+      expect.arrayContaining(['Free to use', '₹60,000', 'of ₹1,00,000 after spending and savings'])
     );
     expect(all.some((t) => t.includes('still to pay'))).toBe(false);
   });
@@ -249,10 +251,11 @@ describe('month card with money carried over from earlier months', () => {
     carryMinor: 2_000_000,
   };
 
-  it('says what carried over beside the income, without double counting it', () => {
+  it('says what the figure is out of, income and what carried over together, without double counting it', () => {
     const all = texts(render(base));
-    expect(all).toEqual(expect.arrayContaining(['Free to use', '₹80,000']));
-    expect(all.join(' ')).toContain('Income ₹1,00,000 + ₹20,000 carried over');
+    expect(all).toEqual(
+      expect.arrayContaining(['Free to use', '₹80,000', 'of ₹1,20,000 after spending and savings'])
+    );
   });
 
   it('shows the carried amount as its own line in the sum', () => {
@@ -263,9 +266,12 @@ describe('month card with money carried over from earlier months', () => {
     );
   });
 
-  it('carries a shortfall as a minus', () => {
-    const all = texts(render({ ...base, carryMinor: -1_000_000, surplusMinor: 5_000_000 }));
-    expect(all.join(' ')).toContain('− ₹10,000 carried over');
+  it('carries a shortfall as a minus in the sum, and leaves the amount out of the caption', () => {
+    const r = render({ ...base, carryMinor: -1_000_000, surplusMinor: 5_000_000 });
+    // A carried shortfall only lowers the headline: it is not part of what the figure is "out of".
+    expect(texts(r)).toContain('after spending and savings');
+    act(() => byLabel(r, 'How this adds up').props.onPress());
+    expect(texts(r)).toEqual(expect.arrayContaining(['Carried over', '−₹10,000']));
   });
 
   it('says nothing about it when nothing carried over', () => {
@@ -328,5 +334,125 @@ describe('month card money bar', () => {
 
   it('is not there with no income', () => {
     expect(bar(render({ incomeMinor: 0, spentMinor: 0, savingsMinor: 0, surplusMinor: 0 }))).toHaveLength(0);
+  });
+});
+
+describe('month card: how this adds up', () => {
+  const open = (r: ReactTestRenderer) => act(() => byLabel(r, 'How this adds up').props.onPress());
+
+  it('opens the sum from the link, with no bills due, and closes it again', () => {
+    const r = render();
+    expect(texts(r)).not.toContain('Set aside');
+    open(r);
+    expect(texts(r)).toEqual(
+      expect.arrayContaining([
+        'Income',
+        '₹1,96,056',
+        'Spent',
+        '−₹95,762',
+        'Set aside',
+        '−₹99,500',
+        'Free to use',
+      ])
+    );
+    // No bills due: no bills lines.
+    expect(texts(r)).not.toContain('Still to pay');
+    expect(texts(r)).not.toContain('After bills');
+    open(r);
+    expect(texts(r)).not.toContain('Set aside');
+  });
+
+  it('is the same sum, with the bills lines, whether opened from the link or the bills chip', () => {
+    const r = render({ dueMinor: 2_000_000 });
+    open(r);
+    expect(texts(r)).toEqual(expect.arrayContaining(['Still to pay', '−₹20,000', 'After bills']));
+    // The chip toggles the same sum.
+    act(() => byLabel(r, '₹20,000 still to pay').props.onPress());
+    expect(texts(r)).not.toContain('After bills');
+  });
+
+  it('reports its state to a screen reader', () => {
+    const r = render();
+    expect(byLabel(r, 'How this adds up').props.accessibilityState).toEqual({ expanded: false });
+    open(r);
+    expect(byLabel(r, 'How this adds up').props.accessibilityState).toEqual({ expanded: true });
+  });
+
+  it('never shows the amount that went to savings when savings are hidden', () => {
+    mockHideAmounts = true;
+    try {
+      const r = render();
+      open(r);
+      const all = texts(r).join(' | ');
+      expect(all).toContain('Set aside');
+      expect(all).not.toContain('99,500');
+      expect(all).toContain('₹••••');
+    } finally {
+      mockHideAmounts = false;
+    }
+  });
+
+  it('is not there when there is no income to add up', () => {
+    const r = render({ incomeMinor: 0, spentMinor: 0, savingsMinor: 0, surplusMinor: 0 });
+    expect(r.root.findAll((n) => n.props.accessibilityLabel === 'How this adds up')).toHaveLength(0);
+  });
+
+  it('still adds up when more went out than came in', () => {
+    const r = render({
+      incomeMinor: 5_000_000,
+      spentMinor: 6_000_000,
+      savingsMinor: 0,
+      surplusMinor: -1_000_000,
+    });
+    open(r);
+    expect(texts(r)).toEqual(
+      expect.arrayContaining(['Income', '₹50,000', 'Spent', '−₹60,000', 'Free to use'])
+    );
+  });
+});
+
+describe('month card: the free label, today and pace', () => {
+  it('names the free part of the bar with the same figure as the headline', () => {
+    expect(texts(render())).toContain('₹794 free');
+  });
+
+  it('has no free label when more went out than came in, or the bills take it all', () => {
+    expect(
+      texts(
+        render({ incomeMinor: 5_000_000, spentMinor: 6_000_000, savingsMinor: 0, surplusMinor: -1_000_000 })
+      )
+    ).not.toContain('₹10,000 free');
+    const all = texts(
+      render({
+        incomeMinor: 10_000_000,
+        spentMinor: 1_000_000,
+        savingsMinor: 3_000_000,
+        surplusMinor: 6_000_000,
+        dueMinor: 7_000_000,
+      })
+    );
+    expect(all.some((t) => t.endsWith(' free'))).toBe(false);
+  });
+
+  it('says what is left of the daily goal, and none left once it is spent', () => {
+    expect(texts(render({ today: { spentMinor: 0, goalMinor: 500_000 } }))).toContain('₹5,000 left today');
+    expect(texts(render({ today: { spentMinor: 500_000, goalMinor: 500_000 } }))).toContain('₹0 left today');
+  });
+
+  it('draws a thin meter that fills as the daily goal is spent', () => {
+    const meter = (spentMinor: number) =>
+      render({ today: { spentMinor, goalMinor: 500_000 } }).root.findAll(
+        (n) => n.props.testID === 'home-today-meter'
+      )[0];
+    expect(StyleSheet.flatten(meter(125_000).props.style).width).toBe('25%');
+    expect(StyleSheet.flatten(meter(0).props.style).width).toBe('0%');
+    // Refunds can make today's net spend negative: the meter stays empty rather than going below zero.
+    expect(StyleSheet.flatten(meter(-50_000).props.style).width).toBe('0%');
+  });
+
+  it('keeps saying how far over it is, and then shows no meter', () => {
+    const r = render({ today: { spentMinor: 600_000, goalMinor: 500_000 } });
+    expect(texts(r)).toContain('₹6,000 today · ₹1,000 over');
+    expect(r.root.findAll((n) => n.props.testID === 'home-today-meter')).toHaveLength(0);
   });
 });

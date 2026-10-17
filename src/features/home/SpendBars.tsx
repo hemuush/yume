@@ -18,11 +18,11 @@ import { useReduceMotion } from '@/lib/useReduceMotion';
 import { useAccent } from '@/theme/AccentContext';
 import { hexToRgba } from '@/lib/color';
 import { homeInk } from './homeInk';
-import { monthBars, weekBars, SpendBar } from './spendBarData';
+import { defaultBar, monthBars, weekBars, SpendBar } from './spendBarData';
 import { parseLocalIsoDate } from '@/lib/date';
 
-/** The tallest bar's height; the amount over today's bar sits above it. */
-const MAX_H = 84;
+/** The tallest bar's height; the amount over the selected bar sits above it. */
+const MAX_H = 70;
 const MIN_H = 8;
 /** A day with nothing spent: a thin line, so it doesn't read as a small amount. */
 const EMPTY_H = 4;
@@ -52,9 +52,10 @@ function Bar({
   onSelect: () => void;
 }) {
   const reduce = useReduceMotion();
+  // Square-root scaled: one big payment would otherwise flatten every ordinary day to a sliver.
   const target =
     bar.totalMinor > 0 && maxMinor > 0
-      ? Math.max(MIN_H, Math.round((bar.totalMinor / maxMinor) * MAX_H))
+      ? Math.round(MIN_H + Math.sqrt(bar.totalMinor / maxMinor) * (MAX_H - MIN_H))
       : EMPTY_H;
   const growth = useSharedValue(reduce || !animateEntry ? 1 : 0);
   useEffect(() => {
@@ -110,7 +111,7 @@ export function SpendBars({
   const selectedKey =
     picked?.range === range && picked.today === today && bars.some((b) => b.key === picked.key)
       ? picked.key
-      : bars[bars.length - 1].key;
+      : defaultBar(bars).key;
   const selectedBar = bars.find((b) => b.key === selectedKey)!;
   const selectedIndex = bars.indexOf(selectedBar);
   const selectedDate =
