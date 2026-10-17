@@ -16,8 +16,8 @@ export const styles = StyleSheet.create({
   avatarRingOn: { borderColor: theme.colors.ink },
   avatar: { width: 46, height: 46, borderRadius: 23, alignItems: 'center', justifyContent: 'center' },
   avatarAdd: { borderWidth: 1.5, borderStyle: 'dashed', borderColor: theme.colors.borderSoft },
-  avatarText: { fontFamily: theme.font.bodyBold, fontSize: 17, color: theme.colors.ink },
-  personName: { fontFamily: theme.font.bodyMedium, fontSize: 11.5, color: theme.colors.textSecondary },
+  avatarText: { fontFamily: theme.font.bodyBold, fontSize: 15, color: theme.colors.ink },
+  personName: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textSecondary },
   personNameOn: { color: theme.colors.textPrimary, fontFamily: theme.font.bodyBold },
   // A transfer: From and To as two cards, Swap in a dark disc between them.
   transfer: { gap: 8 },
@@ -40,8 +40,8 @@ export const styles = StyleSheet.create({
     textTransform: 'uppercase',
     color: theme.colors.textMuted,
   },
-  transferName: { fontFamily: theme.font.bodyBold, fontSize: 15, color: theme.colors.textPrimary },
-  transferBal: { fontFamily: theme.font.body, fontSize: 12.5, color: theme.colors.textMuted },
+  transferName: { fontFamily: theme.font.bodyBold, fontSize: 14, color: theme.colors.textPrimary },
+  transferBal: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
   swapBtn: {
     position: 'absolute',
     alignSelf: 'center',
@@ -99,7 +99,7 @@ export const styles = StyleSheet.create({
     gap: 5,
   },
   heroDot: { width: 6, height: 6, borderRadius: 3 },
-  heroLabel: { fontFamily: theme.font.bodyBold, fontSize: 12.5 },
+  heroLabel: { fontFamily: theme.font.bodyBold, fontSize: 12 },
   padToggle: {
     marginLeft: 'auto',
     minHeight: 44,
@@ -108,7 +108,7 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 4,
   },
-  padToggleText: { fontFamily: theme.font.bodyMedium, fontSize: 11.5, color: theme.colors.textMuted },
+  padToggleText: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textMuted },
   // Fits on one row when space permits; long labels and enlarged text wrap naturally.
   footerStatus: {
     flexDirection: 'row',
@@ -121,12 +121,12 @@ export const styles = StyleSheet.create({
   },
   footerSummary: {
     fontFamily: theme.font.bodyMedium,
-    fontSize: 11.5,
+    fontSize: 12,
     lineHeight: 16,
     color: theme.colors.textSecondary,
     maxWidth: '100%',
   },
-  queueHint: { fontFamily: theme.font.bodyBold, fontSize: 11.5, color: theme.colors.link, marginBottom: 6 },
+  queueHint: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.link, marginBottom: 6 },
   formHint: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textMuted, maxWidth: '100%' },
   amountHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
   amountHeaderStacked: { flexDirection: 'column', alignItems: 'stretch', gap: 0 },
@@ -194,25 +194,25 @@ export const styles = StyleSheet.create({
   recentChipSubRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 },
   recentChipSub: {
     fontFamily: theme.font.body,
-    fontSize: 10.5,
+    fontSize: 11,
     lineHeight: 15,
     color: theme.colors.textSecondary,
     marginTop: 2,
   },
   recentChipText: {
     fontFamily: theme.font.bodyMedium,
-    fontSize: 11.5,
+    fontSize: 12,
     color: theme.colors.textPrimary,
     flexShrink: 1,
   },
   // Its own Text so a long category name is what gets cut at large text sizes, never the amount.
   recentChipAmount: {
     fontFamily: theme.font.bodyMedium,
-    fontSize: 11.5,
+    fontSize: 12,
     color: theme.colors.textPrimary,
   },
   noAccountCard: { marginBottom: 18 },
-  noAccountTitle: { fontFamily: theme.font.roundedBold, fontSize: 15, color: theme.colors.textPrimary },
+  noAccountTitle: { fontFamily: theme.font.roundedBold, fontSize: 14, color: theme.colors.textPrimary },
   noAccountText: {
     fontFamily: theme.font.body,
     fontSize: 12,
@@ -233,7 +233,7 @@ export const styles = StyleSheet.create({
     borderColor: GLASS.edge,
   },
   frequentChipActive: { backgroundColor: theme.colors.ink, borderColor: theme.colors.ink },
-  frequentChipText: { fontFamily: theme.font.bodyMedium, fontSize: 12.5, color: theme.colors.textSecondary },
+  frequentChipText: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textSecondary },
   frequentChipTextActive: { color: theme.colors.surface },
 
   noteInput: {
@@ -244,7 +244,7 @@ export const styles = StyleSheet.create({
     backgroundColor: theme.colors.surface,
     paddingHorizontal: 16,
     paddingVertical: 13,
-    fontSize: 14,
+    fontSize: 13,
     fontFamily: theme.font.body,
     color: theme.colors.textPrimary,
   },
@@ -260,7 +260,7 @@ export const styles = StyleSheet.create({
     borderColor: theme.colors.borderSoft,
     backgroundColor: theme.colors.surface,
   },
-  chipText: { fontFamily: theme.font.bodyMedium, fontSize: 12.5, color: theme.colors.textPrimary },
+  chipText: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textPrimary },
 
   addToList: {
     flexDirection: 'row',
@@ -274,7 +274,7 @@ export const styles = StyleSheet.create({
     borderRadius: theme.radius.pill,
     minHeight: 52,
   },
-  addToListText: { fontFamily: theme.font.bodyBold, fontSize: 14, color: theme.colors.textPrimary },
+  addToListText: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textPrimary },
 
   // The entries queued with Add to list, on one frosted card.
   staged: {
@@ -297,7 +297,7 @@ export const styles = StyleSheet.create({
   stagedHeadTotal: {
     fontVariant: ['tabular-nums'],
     fontFamily: theme.font.bodyBold,
-    fontSize: 12.5,
+    fontSize: 12,
     color: theme.colors.textPrimary,
   },
   stagedRow: {
@@ -308,13 +308,13 @@ export const styles = StyleSheet.create({
   },
   stagedRowDivider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.borderSoft },
   stagedMid: { flex: 1, minWidth: 0 },
-  stagedLabel: { fontFamily: theme.font.bodyMedium, fontSize: 12.5, color: theme.colors.textPrimary },
+  stagedLabel: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textPrimary },
   stagedNote: { fontFamily: theme.font.body, color: theme.colors.textMuted },
-  stagedSub: { fontFamily: theme.font.body, fontSize: 11.5, color: theme.colors.textMuted, marginTop: 1 },
+  stagedSub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, marginTop: 1 },
   stagedValue: {
     fontVariant: ['tabular-nums'],
     fontFamily: theme.font.bodyBold,
-    fontSize: 11.5,
+    fontSize: 12,
     color: theme.colors.textPrimary,
   },
   removeBtn: { width: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' },
@@ -374,7 +374,7 @@ export const styles = StyleSheet.create({
   repeatNoteText: {
     flex: 1,
     fontFamily: theme.font.body,
-    fontSize: 12.5,
+    fontSize: 12,
     lineHeight: 17,
     color: theme.colors.dueInk,
   },
@@ -407,7 +407,7 @@ export const styles = StyleSheet.create({
   },
   detailChipText: {
     fontFamily: theme.font.bodyMedium,
-    fontSize: 12.5,
+    fontSize: 12,
     color: theme.colors.textPrimary,
     maxWidth: 150,
   },

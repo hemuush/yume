@@ -90,7 +90,7 @@ const styles = StyleSheet.create({
     maxWidth: '100%',
     fontFamily: theme.font.bodyMedium,
     fontVariant: ['tabular-nums'],
-    fontSize: 10,
+    fontSize: 11,
     color: theme.colors.textSecondary,
   },
   bar: {

@@ -235,7 +235,7 @@ const styles = StyleSheet.create({
   actions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   greet: {
     fontFamily: theme.font.roundedMedium,
-    fontSize: 16,
+    fontSize: 15,
     lineHeight: 22,
     letterSpacing: -0.2,
     color: theme.colors.ink,
@@ -244,7 +244,7 @@ const styles = StyleSheet.create({
   greetName: { fontFamily: theme.font.roundedBold },
   insight: {
     fontFamily: theme.font.body,
-    fontSize: 12.5,
+    fontSize: 12,
     lineHeight: 18,
     color: theme.colors.textSecondary,
     marginTop: 3,

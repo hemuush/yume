@@ -190,13 +190,13 @@ const styles = StyleSheet.create({
   caption: { fontFamily: theme.font.body, fontSize: 13, lineHeight: 19, color: theme.colors.textSecondary },
   value: {
     fontFamily: theme.font.bodyBold,
-    fontSize: 17,
+    fontSize: 15,
     fontVariant: ['tabular-nums'],
     color: theme.colors.textPrimary,
   },
   heading: {
     fontFamily: theme.font.roundedBold,
-    fontSize: 17,
+    fontSize: 15,
     color: theme.colors.textPrimary,
     marginVertical: 10,
   },

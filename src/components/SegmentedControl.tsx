@@ -153,7 +153,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  segmentText: { fontSize: 14, fontFamily: theme.font.roundedMedium, color: theme.colors.textSecondary },
+  segmentText: { fontSize: 13, fontFamily: theme.font.roundedMedium, color: theme.colors.textSecondary },
   segmentTextActive: { color: theme.colors.textPrimary, fontFamily: theme.font.roundedBold },
   // On a wallpaper (Add's header): a frosted track and an ink pill.
   wrapBand: { backgroundColor: GLASS.fill, borderWidth: 1, borderColor: GLASS.edge, marginBottom: 0 },

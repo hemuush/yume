@@ -63,7 +63,7 @@ const styles = StyleSheet.create({
   },
   body: {
     fontFamily: theme.font.body,
-    fontSize: 14,
+    fontSize: 13,
     color: theme.colors.textSecondary,
     textAlign: 'center',
     marginBottom: 14,

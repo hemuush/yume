@@ -446,7 +446,7 @@ const styles = StyleSheet.create({
   },
   accountStrip: { position: 'absolute', top: 0, left: 0, right: 0, height: 4 },
   accountHead: { minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 12 },
-  accountName: { flex: 1, fontFamily: theme.font.bodyBold, fontSize: 14, color: theme.colors.textPrimary },
+  accountName: { flex: 1, fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textPrimary },
   check: {
     width: 22,
     height: 22,
@@ -464,7 +464,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
     fontFamily: theme.font.monoBold,
-    fontSize: 14,
+    fontSize: 13,
     color: theme.colors.textPrimary,
   },
   accountsError: {
@@ -497,7 +497,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     fontFamily: theme.font.bodyMedium,
-    fontSize: 16,
+    fontSize: 15,
     color: theme.colors.textPrimary,
     textAlign: 'center',
   },
@@ -531,5 +531,5 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   restoreLinkText: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.link },
-  ctaText: { fontFamily: theme.font.bodyBold, fontSize: 15, color: theme.colors.surface },
+  ctaText: { fontFamily: theme.font.bodyBold, fontSize: 14, color: theme.colors.surface },
 });

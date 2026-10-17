@@ -162,7 +162,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   headText: { flex: 1, minWidth: 0 },
-  name: { fontFamily: theme.font.roundedBold, fontSize: 15, color: theme.colors.textPrimary },
+  name: { fontFamily: theme.font.roundedBold, fontSize: 14, color: theme.colors.textPrimary },
   sub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, marginTop: 2 },
   figs: {
     flexDirection: 'row',
@@ -207,7 +207,7 @@ const styles = StyleSheet.create({
   nextLabel: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.dueInk },
   nextLine: {
     fontFamily: theme.font.bodyBold,
-    fontSize: 13.5,
+    fontSize: 13,
     color: theme.colors.textPrimary,
     marginTop: 2,
   },
@@ -220,5 +220,5 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.ink,
   },
   pillPressed: { opacity: 0.8 },
-  pillText: { fontFamily: theme.font.bodyBold, fontSize: 12.5, color: theme.colors.white },
+  pillText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.white },
 });

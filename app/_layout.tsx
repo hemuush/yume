@@ -329,7 +329,7 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontFamily: theme.font.bodyMedium,
-    fontSize: 16,
+    fontSize: 15,
     color: theme.colors.expenseText,
     marginBottom: 8,
   },

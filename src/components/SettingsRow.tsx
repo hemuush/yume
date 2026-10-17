@@ -73,7 +73,7 @@ export function SettingsRow({
           <Text
             style={[
               h.sub,
-              field && { fontFamily: theme.font.bodyBold, fontSize: 14, color: theme.colors.textPrimary },
+              field && { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textPrimary },
               subColor && { color: subColor },
             ]}
           >

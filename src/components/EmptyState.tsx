@@ -33,7 +33,7 @@ const styles = StyleSheet.create({
   wrap: { alignItems: 'center', paddingVertical: 24, paddingHorizontal: 20 },
   title: {
     fontFamily: theme.font.roundedMedium,
-    fontSize: 16,
+    fontSize: 15,
     color: theme.colors.textPrimary,
     marginTop: 14,
     textAlign: 'center',

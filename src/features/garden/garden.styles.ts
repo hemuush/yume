@@ -17,7 +17,7 @@ export const styles = StyleSheet.create({
   errorTitle: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.expenseText },
   errorDetail: {
     fontFamily: theme.font.body,
-    fontSize: 11.5,
+    fontSize: 12,
     color: theme.colors.textSecondary,
     marginTop: 3,
     lineHeight: 16,
@@ -97,11 +97,11 @@ export const styles = StyleSheet.create({
     color: theme.colors.textSecondary,
     marginBottom: 3,
   },
-  noteText: { fontFamily: theme.font.body, fontSize: 12.5, color: theme.colors.textPrimary, lineHeight: 18 },
+  noteText: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textPrimary, lineHeight: 18 },
 
   goalError: {
     fontFamily: theme.font.body,
-    fontSize: 12.5,
+    fontSize: 12,
     color: theme.colors.expenseText,
     marginBottom: 10,
   },

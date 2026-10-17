@@ -32,7 +32,7 @@ export const styles = StyleSheet.create({
   headValueNeg: { color: theme.colors.expenseText },
   headCaption: {
     fontFamily: theme.font.body,
-    fontSize: 13.5,
+    fontSize: 13,
     lineHeight: 19,
     color: theme.colors.textSecondary,
   },
@@ -48,7 +48,7 @@ export const styles = StyleSheet.create({
     marginTop: -6,
     marginBottom: -2,
   },
-  howText: { fontFamily: theme.font.bodyBold, fontSize: 12.5, color: theme.colors.link },
+  howText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.link },
   // Names the (often tiny) free part of the money bar.
 
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
@@ -102,13 +102,13 @@ export const styles = StyleSheet.create({
   statLabel: {
     flexShrink: 1,
     fontFamily: theme.font.bodyMedium,
-    fontSize: 11.5,
+    fontSize: 12,
     color: theme.colors.textSecondary,
   },
   statValue: {
     fontVariant: ['tabular-nums'],
     fontFamily: theme.font.bodyBold,
-    fontSize: 14,
+    fontSize: 13,
     color: theme.colors.textPrimary,
   },
 
@@ -136,14 +136,14 @@ export const styles = StyleSheet.create({
     flexGrow: 1,
     flexBasis: 140,
     fontFamily: theme.font.body,
-    fontSize: 14,
+    fontSize: 13,
     color: theme.colors.textSecondary,
   },
   workingLabelTotal: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
   workingValue: {
     fontVariant: ['tabular-nums'],
     fontFamily: theme.font.bodyBold,
-    fontSize: 14,
+    fontSize: 13,
     color: theme.colors.textPrimary,
   },
   workingValueDue: { color: theme.colors.dueInk },

@@ -49,7 +49,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
     minHeight: 48,
-    fontSize: 14,
+    fontSize: 13,
     fontFamily: theme.font.body,
     color: theme.colors.textPrimary,
     backgroundColor: theme.colors.surfaceAlt,

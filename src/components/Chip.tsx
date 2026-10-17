@@ -83,7 +83,7 @@ const styles = StyleSheet.create({
   chipWithIcon: { paddingLeft: 4, paddingVertical: 4 },
   iconDisc: { width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   text: {
-    fontSize: 12.5,
+    fontSize: 12,
     color: theme.colors.textSecondary,
     fontFamily: theme.font.roundedMedium,
     flexShrink: 1,

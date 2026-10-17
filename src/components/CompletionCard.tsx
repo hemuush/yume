@@ -58,5 +58,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   title: { fontFamily: theme.font.roundedBold, fontSize: 22, color: theme.colors.ink },
-  detail: { fontFamily: theme.font.body, fontSize: 14, lineHeight: 21, color: theme.colors.textSecondary },
+  detail: { fontFamily: theme.font.body, fontSize: 13, lineHeight: 21, color: theme.colors.textSecondary },
 });

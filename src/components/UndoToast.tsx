@@ -175,7 +175,7 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 0,
     fontFamily: theme.font.bodyMedium,
-    fontSize: 13.5,
+    fontSize: 13,
     color: theme.colors.white,
   },
   undoChip: {
@@ -186,5 +186,5 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     backgroundColor: 'rgba(255,255,255,0.16)',
   },
-  undo: { fontFamily: theme.font.bodyBold, fontSize: 13.5, color: theme.colors.white },
+  undo: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.white },
 });

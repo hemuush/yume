@@ -104,7 +104,7 @@ const styles = StyleSheet.create({
   },
   detail: {
     fontFamily: theme.font.body,
-    fontSize: 14,
+    fontSize: 13,
     color: theme.colors.textSecondary,
     textAlign: 'center',
     marginTop: 6,
