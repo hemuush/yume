@@ -21,12 +21,14 @@ import { useReduceMotion } from '@/lib/useReduceMotion';
 import { useAccent } from '@/theme/AccentContext';
 import { homeInk } from './homeInk';
 
+/** One step down the curve; the targets are STEP tall (hitSlop brings the touch area back to 48). */
+const STEP = 42;
 const POSITIONS = [
   [38, 0],
-  [54, 48],
-  [62, 96],
-  [54, 144],
-  [38, 192],
+  [54, STEP],
+  [62, STEP * 2],
+  [54, STEP * 3],
+  [38, STEP * 4],
 ] as const;
 
 /** The selection pill overshoots a touch and settles: it lands with a little life, not a slide. */
@@ -133,7 +135,7 @@ export function WhereItWent({
         )}
       </View>
       {selected && (
-        <View style={stacked ? styles.selectorRow : [styles.dial, { height: (top.length + 1) * 48 }]}>
+        <View style={stacked ? styles.selectorRow : [styles.dial, { height: (top.length + 1) * STEP }]}>
           {!stacked && (
             <Animated.View
               pointerEvents="none"
@@ -158,6 +160,7 @@ export function WhereItWent({
                   setPicked(c.categoryId);
                 }
               }}
+              hitSlop={3}
               accessibilityRole="button"
               accessibilityLabel={`${c.name}, ${Math.round((c.totalMinor / total) * 100)}% of spending`}
               accessibilityState={{ selected: i === index }}
@@ -189,7 +192,7 @@ export function WhereItWent({
 const styles = StyleSheet.create({
   section: {
     marginHorizontal: 16,
-    padding: 14,
+    padding: 12,
     borderRadius: 24,
     backgroundColor: GLASS.fill,
     borderWidth: 1,
@@ -208,11 +211,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: theme.colors.white,
   },
-  details: { flex: 1, minWidth: 0, paddingVertical: 8 },
-  dial: { width: 110, height: 240 },
-  highlight: { position: 'absolute', width: 86, height: 48, borderRadius: 24, justifyContent: 'center' },
+  details: { flex: 1, minWidth: 0 },
+  dial: { width: 110 },
+  highlight: {
+    position: 'absolute',
+    width: 82,
+    height: STEP,
+    borderRadius: STEP / 2,
+    justifyContent: 'center',
+  },
   share: {
-    width: 38,
+    width: 34,
     textAlign: 'center',
     fontFamily: theme.font.bodyBold,
     fontSize: 11,
@@ -220,9 +229,9 @@ const styles = StyleSheet.create({
   },
   target: {
     position: 'absolute',
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: STEP,
+    height: STEP,
+    borderRadius: STEP / 2,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: theme.colors.white,
