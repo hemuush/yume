@@ -14,6 +14,15 @@ export const styles = StyleSheet.create({
   },
   body: { gap: 10 },
 
+  headTitle: { flexDirection: 'row', alignItems: 'center', gap: 10, flexShrink: 1 },
+  headIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: GLASS.fillStrong,
+  },
   headLabel: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textSecondary },
   headValue: {
     fontFamily: theme.font.bodyLight,
