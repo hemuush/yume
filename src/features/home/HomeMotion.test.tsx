@@ -265,7 +265,7 @@ it('labels chart days with full dates while retaining the original week and mont
       .props.onPress()
   );
   expect(text(r)).toContain('W2');
-  expect(text(r)).toContain('₹132 this month');
+  expect(text(r)).toMatch(/This month\s+₹132/);
 });
 
 it('ignores old scroll destinations after rapid taps and reconciles a finger takeover', () => {
@@ -325,7 +325,7 @@ it('inspects chart bars and resets to the current period when switching range', 
       /Monday.*5.*October/.test(n.props.accessibilityLabel)
   );
   act(() => day.props.onPress());
-  expect(text(r)).toContain('5 Oct · ₹26,500');
+  expect(text(r)).toContain('Sun ₹26,500');
   expect(day.props.accessibilityState.selected).toBe(true);
   const switchRange = (name: string) =>
     act(() =>
@@ -339,11 +339,22 @@ it('inspects chart bars and resets to the current period when switching range', 
         .props.onPress()
     );
   switchRange('Month');
-  expect(text(r)).toContain('8–10 Oct · ₹132');
+  // The picked bar says what it holds in its spoken label (there is no separate readout line).
+  const picked = () =>
+    String(
+      r.root.find(
+        (n) =>
+          n.props.accessibilityRole === 'button' &&
+          n.props.accessibilityState?.selected === true &&
+          typeof n.props.accessibilityLabel === 'string' &&
+          n.props.accessibilityLabel.includes('₹')
+      ).props.accessibilityLabel
+    );
+  expect(picked()).toMatch(/Week 2 .*₹132/);
   switchRange('Week');
-  expect(text(r)).toContain('10 Oct · ₹132');
+  expect(picked()).toMatch(/10 .*₹132/);
   act(() => r.update(<SpendBars daily={[]} today="2026-10-11" />));
-  expect(text(r)).toContain('11 Oct · ₹0');
+  expect(picked()).toMatch(/11 .*₹0/);
 });
 
 it('keeps an already-selected overview page settled instead of restarting its scroll', () => {

@@ -246,7 +246,6 @@ describe('Plan tab', () => {
     expect(shown).toEqual(
       expect.arrayContaining([
         '₹25,450', // ₹25,000 EMI + ₹450 bill in the next 14 days
-        '1 over',
         '₹500',
         '4 days',
         'Start a goal that fills up by itself',
@@ -254,6 +253,8 @@ describe('Plan tab', () => {
         'Streaming',
       ])
     );
+    // The over-limit budget says by how much, on its own tile.
+    expect(shown.some((t) => t.endsWith(' over'))).toBe(true);
     // A savings account a new goal could follow.
     expect(shown.some((t) => t.startsWith('Follow Pot (₹54,000)'))).toBe(true);
     // What-if cuts the biggest category it can, not the EMI: 10% of Food's ₹20,000.
@@ -292,8 +293,8 @@ describe('Plan tab', () => {
 
   it('says what each section means in plain words', async () => {
     const shown = texts(await render());
-    expect(shown).toContain('1 over');
-    // The caption no longer names the worst jar: the jars below say it.
+    // The over-limit budget's own tile says it; no caption names it.
+    expect(shown.some((t) => t.endsWith(' over'))).toBe(true);
     expect(shown.some((t) => t.includes('Food is ₹20,000 over'))).toBe(false);
     expect(shown).toContain('To collect');
   });
@@ -307,7 +308,7 @@ describe('Plan tab', () => {
           n.props.accessibilityLabel.startsWith(start) &&
           n.props.onPress
       )[0];
-    act(() => byLabel('Budgets,').props.onPress());
+    act(() => byLabel('See all — Budgets').props.onPress());
     expect(router.push).toHaveBeenLastCalledWith('/budgets');
     act(() => byLabel('Fuel, 25% used').props.onPress());
     const detail = tree.root.findByProps({ testID: 'plan-budget-detail' });

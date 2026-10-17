@@ -21,9 +21,8 @@ import { homeInk } from '@/features/home/homeInk';
 import { Account, SavingsGoal } from '@/types';
 import { WHAT_IF_CUTS } from './planOverview';
 import { styles } from './plan.styles';
-
-/** Goals shown on Plan (two columns); the rest are under See all. */
-const SHOWN = 4;
+import { AddSlot, GRID_SHOWN } from './PlanGrid';
+import { compactMoney } from '@/lib/compactMoney';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -72,9 +71,9 @@ export function GoalsStrip({
       </Pressable>
     );
   }
-  const shown = active.slice(0, SHOWN);
+  const shown = active.slice(0, GRID_SHOWN);
   return (
-    <View style={styles.goals}>
+    <View style={styles.grid}>
       {shown.map((g) => (
         <GoalCard
           key={g.id}
@@ -83,20 +82,12 @@ export function GoalsStrip({
           onPress={() => (onGoal ? onGoal(g.id) : onOpen())}
         />
       ))}
-      {shown.length < SHOWN && (
-        <Pressable
-          onPress={onAdd ?? onOpen}
-          // Same rule as the budgets: a slim row after an even number of goals, the empty half after an odd one.
-          style={withPressed([styles.goal, styles.goalNew, shown.length % 2 === 0 && styles.goalNewSlim])}
-          accessibilityRole="button"
-          accessibilityLabel="Open savings goals to start a new one"
-        >
-          <View style={[styles.goalNewDisc, shown.length % 2 === 0 && styles.goalNewDiscSmall]}>
-            <Feather name="plus" size={17} color={theme.colors.ink} />
-          </View>
-          <Text style={styles.goalNewText}>New goal</Text>
-        </Pressable>
-      )}
+      <AddSlot
+        count={shown.length}
+        label="New goal"
+        accessibilityLabel="Open savings goals to start a new one"
+        onPress={onAdd ?? onOpen}
+      />
     </View>
   );
 }
@@ -111,7 +102,7 @@ function GoalCard({ goal, masked, onPress }: { goal: SavingsGoal; masked: boolea
       onPress={onPress}
       onPressIn={onPressIn}
       onPressOut={onPressOut}
-      style={[styles.goalWrap, animatedStyle]}
+      style={[styles.tileWrap, animatedStyle]}
       accessibilityRole="button"
       accessibilityLabel={
         masked
@@ -121,8 +112,8 @@ function GoalCard({ goal, masked, onPress }: { goal: SavingsGoal; masked: boolea
             }. Open savings goals`
       }
     >
-      <Glass radius={24} style={[styles.goalCard, cardSurface.savings]}>
-        <View style={[styles.goalIcon, { backgroundColor: softTint(hue, 0.75) }]}>
+      <Glass radius={24} style={[styles.tileFill, cardSurface.savings]}>
+        <View style={[styles.tileIcon, { backgroundColor: softTint(hue, 0.75) }]}>
           <MaterialCommunityIcons
             name={goal.linkedAccountId ? 'bank-outline' : 'flag-variant-outline'}
             size={18}
@@ -134,21 +125,22 @@ function GoalCard({ goal, masked, onPress }: { goal: SavingsGoal; masked: boolea
         ) : done ? (
           <StatusBadge label="Completed" tone="complete" />
         ) : (
-          <Text style={styles.goalPct}>
+          <Text style={styles.tilePct}>
             {pct}
-            <Text style={styles.goalPctSign}>%</Text>
+            <Text style={styles.tilePctSign}>%</Text>
           </Text>
         )}
-        <Text style={styles.goalName} numberOfLines={1}>
+        <Text style={styles.tileName} numberOfLines={2}>
           {goal.name}
         </Text>
         {!masked && (
-          <View style={styles.goalTrack} pointerEvents="none">
-            <View style={[styles.goalProgress, { width: `${pct}%`, backgroundColor: hue }]} />
+          <View style={styles.tileTrack} pointerEvents="none">
+            <View style={[styles.tileProgress, { width: `${pct}%`, backgroundColor: hue }]} />
           </View>
         )}
-        <Text style={styles.goalAmt} numberOfLines={1}>
-          {masked ? '' : `${formatMoney(goal.currentAmountMinor)} `}of {formatMoney(goal.targetAmountMinor)}
+        <Text style={styles.tileAmt} numberOfLines={2}>
+          {masked ? '' : `${compactMoney(goal.currentAmountMinor)}\n`}of{' '}
+          {compactMoney(goal.targetAmountMinor)}
         </Text>
       </Glass>
     </AnimatedPressable>

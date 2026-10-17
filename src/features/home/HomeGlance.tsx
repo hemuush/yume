@@ -44,7 +44,7 @@ export const UPCOMING_DAYS = 7;
 /** An EMI or card bill this close (or late) is pinned to the top of Upcoming as "Due soon". */
 export const DUE_SOON_DAYS = 3;
 /** Rows shown before "+N more". */
-export const UPCOMING_ROWS = 5;
+export const UPCOMING_ROWS = 3;
 
 export interface UpcomingLoanInput {
   id: string;
@@ -183,7 +183,6 @@ export function HomeGlance({
   const visibleUpcoming = upcoming.items.slice(0, UPCOMING_ROWS);
   const hiddenUpcoming = upcoming.items.length - visibleUpcoming.length;
   // Labels only help when a bill is pinned: otherwise the list reads as it always did.
-  const hasPinned = visibleUpcoming.some((i) => i.pinned);
   // Red only for what is due today or late; a bill a few days out is amber.
   const hasUrgent = visibleUpcoming.some((i) => i.urgent);
   // What leaves your accounts in the window — every bill and expense, not money coming in.
@@ -207,23 +206,19 @@ export function HomeGlance({
             // row deep-links to where it lives (Loans, Recurring, pay a card).
             content: (
               <View style={styles.pageList}>
-                <View style={styles.windowCaption}>
-                  <Text style={styles.windowLabel}>
-                    <Text style={styles.windowBold}>Next {UPCOMING_DAYS} days</Text>
-                  </Text>
-                  <Text style={styles.windowCount}>
-                    {upcoming.items.length > 0
-                      ? `${dueMinor > 0 ? `${formatMoney(dueMinor)} · ` : ''}${upcoming.items.length} due`
-                      : ''}
-                  </Text>
-                </View>
-                {upcoming.items.length === 0 && (
-                  <View style={styles.quiet}>
-                    <Text style={styles.quietTitle}>Nothing due</Text>
+                {upcoming.items.length > 0 && (
+                  <View style={styles.windowCaption}>
+                    <Text style={styles.windowLabel}>
+                      <Text style={styles.windowBold}>Next {UPCOMING_DAYS} days</Text>
+                    </Text>
+                    <Text style={styles.windowCount}>
+                      {`${dueMinor > 0 ? `${formatMoney(dueMinor)} · ` : ''}${upcoming.items.length} due`}
+                    </Text>
                   </View>
                 )}
                 {visibleUpcoming.map((item, i) => {
-                  const startsGroup = hasPinned && (i === 0 || item.pinned !== visibleUpcoming[i - 1].pinned);
+                  // Sub-headings only when something is late or due today; otherwise the rows speak for themselves.
+                  const startsGroup = hasUrgent && (i === 0 || item.pinned !== visibleUpcoming[i - 1].pinned);
                   return (
                     <Animated.View key={item.key} entering={rowEntering(i)}>
                       {startsGroup && (
@@ -262,11 +257,10 @@ export function HomeGlance({
                     iconBg={upcoming.next.iconBg}
                     iconColor={upcoming.next.iconColor}
                     title={upcoming.next.title}
-                    subtitle={`After this week · ${upcoming.next.subtitle.toLowerCase()}`}
+                    subtitle={`Nothing due this week · ${upcoming.next.subtitle.toLowerCase()}`}
                     amountMinor={upcoming.next.amountMinor}
                     sign={upcoming.next.sign}
                     onPress={() => router.push(upcoming.next!.route)}
-                    divider
                     date={upcoming.next.sortDate}
                   />
                 )}
@@ -382,9 +376,6 @@ const styles = StyleSheet.create({
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: theme.colors.divider,
   },
-  quiet: { paddingHorizontal: 14, paddingTop: 12, paddingBottom: 10, gap: 2 },
-  quietTitle: { fontFamily: theme.font.roundedBold, fontSize: 14, color: theme.colors.textPrimary },
-  quietSub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
   // Rows inside a HomeSwipeCard page: no outer border/background (the card draws it); BudgetRow/UpcomingRow
   // already carry their own horizontal padding.
   pageList: { paddingHorizontal: 2 },

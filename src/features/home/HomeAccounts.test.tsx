@@ -68,7 +68,7 @@ describe('Home accounts', () => {
       })
     );
     expect(all).toEqual(
-      expect.arrayContaining(['Bank, cash & wallets only · INR', 'SBI', 'Cash', 'Wise', 'Card', 'Pot'])
+      expect.arrayContaining(['Everyday · 4 accounts', 'SBI', 'Cash', 'Wise', 'Card', 'Pot'])
     );
     expect(all).toContain('₹10,500');
     expect(all.join(' ')).toContain('$50');
@@ -76,9 +76,11 @@ describe('Home accounts', () => {
   });
 
   it('says what kind each account is', () => {
-    const all = texts(render({ accounts: [account('HDFC', 'credit_card', -400_000)] }));
-    expect(all.some((text) => text.includes('credit card'))).toBe(true);
-    expect(all).not.toContain('Bank, cash & wallets only');
+    const r = render({ accounts: [account('HDFC', 'credit_card', -400_000)] });
+    // Tiles are name and balance only; the kind is in the spoken label.
+    expect(
+      r.root.findAll((n) => n.props.accessibilityLabel === 'HDFC, credit card. Open summary').length
+    ).toBeGreaterThan(0);
   });
 
   it('lets each chip be reached on its own, and the heading open the list', () => {
@@ -144,7 +146,9 @@ describe('Home accounts, grouped', () => {
 
   it('labels what is in hand, and splits everyday accounts from savings with a heading each', () => {
     const all = texts(render({ accounts: mixed }));
-    expect(all).toEqual(expect.arrayContaining(['In hand now', 'Everyday', 'Savings']));
+    // The heading carries the everyday total; there is no second headline figure repeating the month card.
+    expect(all).toEqual(expect.arrayContaining(['Everyday · 2 accounts', 'Savings', '2 accounts']));
+    expect(all).not.toContain('In hand now');
     expect(all).toContain('₹1,105');
   });
 
@@ -160,16 +164,17 @@ describe('Home accounts, grouped', () => {
   it('leaves the subtotal out when savings are in more than one currency', () => {
     mockHideAmounts = false;
     const all = texts(render({ accounts: [...mixed, account('Wise', 'savings', 5_000, 'USD')] }));
-    expect(all).toEqual(expect.arrayContaining(['Everyday', 'Savings']));
+    expect(all).toEqual(expect.arrayContaining(['Everyday · 2 accounts', 'Savings']));
     expect(all).not.toContain('₹2,40,500');
   });
 
-  it('has no headings when there is only one kind of account', () => {
-    for (const accounts of [mixed.slice(0, 2), mixed.slice(2)]) {
-      const all = texts(render({ accounts }));
-      expect(all).not.toContain('Everyday');
-      expect(all).not.toContain('Savings');
-    }
+  it('shows only the group that exists', () => {
+    const everyday = texts(render({ accounts: mixed.slice(0, 2) }));
+    expect(everyday).toContain('Everyday · 2 accounts');
+    expect(everyday).not.toContain('Savings');
+    const savings = texts(render({ accounts: mixed.slice(2) }));
+    expect(savings).toContain('Savings');
+    expect(savings.some((t) => t.startsWith('Everyday'))).toBe(false);
   });
 
   it('puts the tiles in two even columns, one column when the screen is narrow', () => {
@@ -197,19 +202,27 @@ describe('Home accounts, grouped', () => {
     }
   });
 
-  it('announces the two group names as headings', () => {
+  it('announces the everyday heading', () => {
     const headings = render({ accounts: mixed })
       .root.findAllByType(Text)
       .filter((t) => t.props.accessibilityRole === 'header')
       .map((t) => String(t.props.children).trim());
-    expect(headings).toEqual(['Everyday', 'Savings']);
+    expect(headings).toEqual(['Everyday · 2 accounts']);
   });
 
-  it('keeps each account reachable with its full description', () => {
-    const open = jest.fn();
-    const r = render({ accounts: mixed, onOpenAccount: open });
+  it('opens the list from the savings summary, and shows a single savings account as itself', () => {
+    const openList = jest.fn();
+    const r = render({ accounts: mixed, onOpenAccounts: openList });
     act(() =>
       r.root
+        .find((n) => n.props.accessibilityLabel === 'Savings, 2 accounts. See all' && n.props.onPress)
+        .props.onPress()
+    );
+    expect(openList).toHaveBeenCalled();
+    const open = jest.fn();
+    const one = render({ accounts: mixed.slice(0, 3), onOpenAccount: open });
+    act(() =>
+      one.root
         .find((n) => n.props.accessibilityLabel === 'Pot, savings. Open summary' && n.props.onPress)
         .props.onPress()
     );

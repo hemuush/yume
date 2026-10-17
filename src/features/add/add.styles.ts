@@ -173,15 +173,14 @@ export const styles = StyleSheet.create({
     borderColor: GLASS.edge,
     boxShadow: GLASS.shadow,
   },
-  recentRow: { flexDirection: 'row', gap: 7, paddingRight: 16, paddingBottom: 12 },
+  recentRow: { flexDirection: 'row', gap: 6, paddingRight: 16, paddingBottom: 10 },
   recentChip: {
-    width: 192,
-    minHeight: 44,
+    minHeight: 40,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    paddingLeft: 4,
-    paddingRight: 11,
+    paddingLeft: 6,
+    paddingRight: 12,
     paddingVertical: 4,
     borderRadius: theme.radius.pill,
     backgroundColor: GLASS.fillStrong,
@@ -190,15 +189,6 @@ export const styles = StyleSheet.create({
     maxWidth: '100%',
   },
   recentChipActive: { backgroundColor: theme.colors.surface, borderColor: theme.colors.ink },
-  recentChipMid: { flex: 1, minWidth: 0 },
-  recentChipSubRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 },
-  recentChipSub: {
-    fontFamily: theme.font.body,
-    fontSize: 11,
-    lineHeight: 15,
-    color: theme.colors.textSecondary,
-    marginTop: 2,
-  },
   recentChipText: {
     fontFamily: theme.font.bodyMedium,
     fontSize: 12,
@@ -378,7 +368,7 @@ export const styles = StyleSheet.create({
     lineHeight: 17,
     color: theme.colors.dueInk,
   },
-  // Bleeds to the screen's edges so it can slide sideways, while its first chip lines up with the pad.
+  // Bleeds to the panel's edges so it can slide sideways; its first chip is padded in to line up with the pad.
   detailBar: { marginHorizontal: -12, marginBottom: 10, flexGrow: 0 },
   detailBarFlush: { marginHorizontal: 0, marginBottom: 0 },
   detailRow: { flexDirection: 'row', alignItems: 'center', marginHorizontal: -12, marginBottom: 10 },
@@ -393,7 +383,9 @@ export const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
   },
-  detailBarContent: { paddingLeft: 4, paddingRight: 16, gap: 6 },
+  // The bar bleeds to the panel's edges so chips scroll under them, but the first one lines up with the hint and
+  // the buttons (the panel's own 12 padding).
+  detailBarContent: { paddingLeft: 12, paddingRight: 16, gap: 6 },
   detailChip: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -76,7 +76,7 @@ import { loadReadyWraps, ReadyWrap } from '@/features/wrap/wrapWindow';
 import { NeedsYouItem } from '@/features/home/needsYou';
 import { loadNeedsYou } from '@/features/home/needsYouData';
 import { AddAccountModal } from '@/features/profile/AddAccountModal';
-import { dayLabel, toLocalIsoDate } from '@/lib/date';
+import { toLocalIsoDate } from '@/lib/date';
 import { categorySentence } from '@/lib/categoryLabel';
 import { onTransactionsChanged } from '@/lib/dataEvents';
 import { useFreshness } from '@/lib/useFreshness';
@@ -84,7 +84,7 @@ import { errorMessage } from '@/lib/errorMessage';
 import { payCardRoute } from '@/lib/payCard';
 
 /** Home shows this many of the period's latest entries; fetch no more than that. */
-const RECENT_ROWS = 4;
+const RECENT_ROWS = 3;
 
 export default function DashboardScreen() {
   const insets = useSafeAreaInsets();
@@ -603,9 +603,30 @@ export default function DashboardScreen() {
           </>
         )}
 
-        {loaded && comparison && (
+        {/* What needs you first (upcoming bills, budgets near their limit, goals), then spending, then history. */}
+        {loaded && (
           <Animated.View entering={sectionEntering(1)}>
-            <Section title="Where it went" onSeeAll={openSpendingReports}>
+            <HomeGlance
+              upcoming={upcoming}
+              budgets={budgets}
+              goals={goals}
+              refunds={refunds}
+              refundError={refundError}
+              openingRefund={openingRefund}
+              onOpenRefund={(id) => void openRefund(id)}
+              onRetryRefunds={() => void load(cursorRef.current)}
+              budgetAlert={needsYou.some((i) => i.action === 'budgets')}
+              rowEntering={rowEntering}
+              onSeeMoreUpcoming={() =>
+                router.navigate({ pathname: '/plan', params: { section: 'coming-up' } })
+              }
+            />
+          </Animated.View>
+        )}
+
+        {loaded && comparison && (
+          <Animated.View entering={sectionEntering(2)}>
+            <Section title="Spending" onSeeAll={openSpendingReports}>
               <WhereItWent
                 // A new period starts on its own biggest category, not whichever place was picked before.
                 key={`${loadedCursor.granularity}:${loadedCursor.offset}`}
@@ -620,92 +641,61 @@ export default function DashboardScreen() {
                   })
                 }
                 onAddExpense={() => router.push('/add-transaction?type=expense')}
+                // The bars are always about now (the last 7 days, this month), so only beside the current month.
+                footer={
+                  dailySpend.length > 0 &&
+                  loadedCursor.granularity === 'month' &&
+                  loadedCursor.offset === 0 ? (
+                    <SpendBars daily={dailySpend} today={todayIso} />
+                  ) : undefined
+                }
               />
             </Section>
           </Animated.View>
         )}
 
         {loaded && (
-          <>
-            {/* Upcoming | Budgets | Goals, the old Home's tabbed card. */}
-            <Animated.View entering={sectionEntering(2)}>
-              <HomeGlance
-                upcoming={upcoming}
-                budgets={budgets}
-                goals={goals}
-                refunds={refunds}
-                refundError={refundError}
-                openingRefund={openingRefund}
-                onOpenRefund={(id) => void openRefund(id)}
-                onRetryRefunds={() => void load(cursorRef.current)}
-                budgetAlert={needsYou.some((i) => i.action === 'budgets')}
-                rowEntering={rowEntering}
-                onSeeMoreUpcoming={() =>
-                  router.navigate({ pathname: '/plan', params: { section: 'coming-up' } })
-                }
-              />
-            </Animated.View>
-            <Animated.View entering={sectionEntering(3)} style={styles.bento}>
-              <HomeAccounts
-                accounts={accounts}
-                currency={currency}
-                onOpenAccounts={() => router.push('/profile')}
-                onOpenAccount={setSummaryAccount}
-                onAddAccount={() => setAddAccountVisible(true)}
-              />
-            </Animated.View>
-          </>
-        )}
-
-        {/* The bars are always about now (the last 7 days, this month), so only beside the current month. */}
-        {loaded &&
-          dailySpend.length > 0 &&
-          loadedCursor.granularity === 'month' &&
-          loadedCursor.offset === 0 && (
-            <Animated.View entering={sectionEntering(4)} style={styles.bars}>
-              <SpendBars daily={dailySpend} today={todayIso} />
-            </Animated.View>
-          )}
-
-        {loaded && (
-          <Animated.View entering={sectionEntering(5)}>
+          <Animated.View entering={sectionEntering(3)}>
             <Section title="Recent activity" onSeeAll={() => router.push('/transactions')}>
               {recent.length === 0 ? (
                 <EmptyState title="Nothing logged" subtitle="Try another period." />
               ) : (
                 <Glass radius={24} style={styles.recent}>
-                  {recent.map((tx, i, rows) => {
-                    // Rows come newest first; a new day gets its own small heading ("Today", "Yesterday", "1 Oct").
-                    const newDay = i === 0 || rows[i - 1].date !== tx.date;
-                    return (
-                      <Animated.View
-                        key={tx.id}
-                        entering={rowEntering(i)}
-                        layout={ROW_LAYOUT}
-                        exiting={ROW_EXIT}
-                      >
-                        {newDay && (
-                          <Text style={[styles.dayHead, i > 0 && styles.dayHeadDivider]}>
-                            {dayLabel(tx.date)}
-                          </Text>
-                        )}
-                        <RecentTransactionRow
-                          currency={accountsById.get(tx.accountId)?.currency}
-                          tx={tx}
-                          category={categoryFor(tx.categoryId) ?? undefined}
-                          parentName={parentNameFor(tx.categoryId)}
-                          accountName={accountName(tx.accountId)}
-                          toAccountName={accountName(tx.toAccountId)}
-                          savingsTransfer={isSavingsTransfer(tx)}
-                          divider={!newDay}
-                          showDay={false}
-                        />
-                      </Animated.View>
-                    );
-                  })}
+                  {recent.map((tx, i) => (
+                    <Animated.View
+                      key={tx.id}
+                      entering={rowEntering(i)}
+                      layout={ROW_LAYOUT}
+                      exiting={ROW_EXIT}
+                    >
+                      <RecentTransactionRow
+                        currency={accountsById.get(tx.accountId)?.currency}
+                        tx={tx}
+                        category={categoryFor(tx.categoryId) ?? undefined}
+                        parentName={parentNameFor(tx.categoryId)}
+                        accountName={accountName(tx.accountId)}
+                        toAccountName={accountName(tx.toAccountId)}
+                        savingsTransfer={isSavingsTransfer(tx)}
+                        divider={i > 0}
+                      />
+                    </Animated.View>
+                  ))}
                 </Glass>
               )}
             </Section>
+          </Animated.View>
+        )}
+
+        {/* Accounts last: the money you hold, one tap from the full list. */}
+        {loaded && (
+          <Animated.View entering={sectionEntering(4)} style={styles.bento}>
+            <HomeAccounts
+              accounts={accounts}
+              currency={currency}
+              onOpenAccounts={() => router.push('/profile')}
+              onOpenAccount={setSummaryAccount}
+              onAddAccount={() => setAddAccountVisible(true)}
+            />
           </Animated.View>
         )}
       </Animated.ScrollView>
@@ -795,7 +785,6 @@ const styles = StyleSheet.create({
   scroll: { flex: 1 },
   heroGap: { marginTop: 4 },
   bento: { marginTop: SCREEN.cardStack },
-  bars: { marginTop: 10 },
   recent: { marginHorizontal: SCREEN.gutter, overflow: 'hidden' },
   errorBanner: {
     marginHorizontal: 20,
@@ -814,13 +803,4 @@ const styles = StyleSheet.create({
     marginTop: 4,
     lineHeight: 16,
   },
-  dayHead: {
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 4,
-    fontFamily: theme.font.bodyBold,
-    fontSize: 12,
-    color: theme.colors.textMuted,
-  },
-  dayHeadDivider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.divider },
 });

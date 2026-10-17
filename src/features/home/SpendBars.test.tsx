@@ -37,17 +37,17 @@ describe('Home spending bars', () => {
     for (const label of ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Today']) expect(t).toContain(label);
   });
 
-  it('opens on the latest day with spending, and says so in the readout', () => {
+  it('opens on the latest day with spending, with its amount over the bar', () => {
     const r = render([{ date: '2026-10-16', totalMinor: 92_700 }], '2026-10-17');
-    expect(text(r)).toContain('16 Oct · ₹927');
+    expect(text(r)).toContain('₹927');
   });
 
   it('opens on today when nothing has been spent', () => {
-    expect(text(render([], '2026-10-17'))).toContain('17 Oct · ₹0');
+    expect(text(render([], '2026-10-17'))).toContain('₹0');
   });
 
   it('keeps an ordinary day visible next to one big payment', () => {
-    // 5,000 against 56,900: a straight scale would draw it at 8 of 70.
+    // 5,000 against 56,900: a straight scale would draw it at 6 of 44.
     const r = render(
       [
         { date: '2026-10-11', totalMinor: 5_690_000 },
@@ -57,8 +57,8 @@ describe('Home spending bars', () => {
       '2026-10-17'
     );
     const [big, small, none] = heights(r);
-    expect(big).toBe(70);
-    expect(small).toBeGreaterThanOrEqual(25);
+    expect(big).toBe(44);
+    expect(small).toBeGreaterThanOrEqual(15);
     expect(small).toBeLessThan(big);
     // A day with nothing spent stays a thin line, not a small amount.
     expect(none).toBe(4);
