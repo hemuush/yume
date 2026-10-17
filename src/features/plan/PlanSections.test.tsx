@@ -220,7 +220,7 @@ describe('Goals with amounts hidden', () => {
     mockHide = false;
     const shown = texts(render(<GoalsStrip goals={[goal]} savingsAccounts={[]} onOpen={jest.fn()} />));
     expect(shown.some((t) => t.startsWith('62'))).toBe(true);
-    expect(shown.some((t) => t.includes('₹31,000'))).toBe(true);
+    expect(shown.some((t) => t.includes('₹31k'))).toBe(true);
   });
 
   it('withholds the fill, percent and saved amount, keeping the target', () => {
@@ -229,7 +229,7 @@ describe('Goals with amounts hidden', () => {
       const tree = render(<GoalsStrip goals={[goal]} savingsAccounts={[]} onOpen={jest.fn()} />);
       const shown = texts(tree);
       expect(shown.some((t) => t.startsWith('62'))).toBe(false);
-      expect(shown.some((t) => t.includes('₹31,000'))).toBe(false);
+      expect(shown.some((t) => t.includes('₹31k'))).toBe(false);
       expect(
         tree.root.findAll(
           (n) =>
