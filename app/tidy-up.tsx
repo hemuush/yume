@@ -400,14 +400,14 @@ export default function TidyUpScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
   intro: { fontFamily: theme.font.body, fontSize: 13, lineHeight: 19, color: theme.colors.textSecondary },
-  headline: { fontFamily: theme.font.bodyBold, fontSize: 17, color: theme.colors.textPrimary },
+  headline: { fontFamily: theme.font.bodyBold, fontSize: 15, color: theme.colors.textPrimary },
   checks: { gap: 2 },
   check: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 36 },
   checkMark: { width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   checkOk: { backgroundColor: theme.colors.incomeTint },
   checkTodo: { backgroundColor: theme.colors.expenseTint },
-  checkLabel: { flex: 1, fontFamily: theme.font.bodyMedium, fontSize: 13.5, color: theme.colors.textPrimary },
-  checkFound: { fontFamily: theme.font.bodyMedium, fontSize: 12.5, color: theme.colors.textMuted },
+  checkLabel: { flex: 1, fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textPrimary },
+  checkFound: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textMuted },
   // What a fix changes, on a brighter pane under the item.
   after: {
     flexDirection: 'row',
@@ -424,7 +424,7 @@ const styles = StyleSheet.create({
   afterText: {
     flex: 1,
     fontFamily: theme.font.body,
-    fontSize: 12.5,
+    fontSize: 12,
     lineHeight: 17,
     color: theme.colors.textSecondary,
   },
@@ -446,7 +446,7 @@ const styles = StyleSheet.create({
   errorTitle: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.expenseText },
   errorDetail: {
     fontFamily: theme.font.body,
-    fontSize: 11.5,
+    fontSize: 12,
     color: theme.colors.textSecondary,
     marginTop: 3,
   },

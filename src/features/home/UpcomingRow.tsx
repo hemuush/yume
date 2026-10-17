@@ -169,6 +169,6 @@ const styles = StyleSheet.create({
     borderRadius: theme.radius.pill,
     backgroundColor: theme.colors.ink,
   },
-  actionText: { fontFamily: theme.font.bodyBold, fontSize: 14, color: theme.colors.white },
-  moreText: { fontFamily: theme.font.bodyBold, fontSize: 14, color: theme.colors.textSecondary },
+  actionText: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.white },
+  moreText: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textSecondary },
 });

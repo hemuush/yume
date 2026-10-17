@@ -132,7 +132,7 @@ export const insight = StyleSheet.create({
     justifyContent: 'center',
   },
   main: { flexGrow: 1, flexBasis: 120, minWidth: 0, gap: 3 },
-  title: { fontFamily: theme.font.bodyBold, fontSize: 16, color: theme.colors.textPrimary },
+  title: { fontFamily: theme.font.bodyBold, fontSize: 15, color: theme.colors.textPrimary },
   caption: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 17, color: theme.colors.textSecondary },
   facts: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   stat: {
@@ -152,7 +152,7 @@ export const insight = StyleSheet.create({
   label: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textPrimary },
   rowValue: {
     fontFamily: theme.font.bodyBold,
-    fontSize: 14,
+    fontSize: 13,
     color: theme.colors.textPrimary,
     flexShrink: 1,
     fontVariant: ['tabular-nums'],

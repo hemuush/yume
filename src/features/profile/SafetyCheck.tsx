@@ -164,7 +164,7 @@ export function SafetyCheck({
 }
 
 const styles = StyleSheet.create({
-  headline: { fontFamily: theme.font.bodyBold, fontSize: 17, color: theme.colors.textPrimary },
+  headline: { fontFamily: theme.font.bodyBold, fontSize: 15, color: theme.colors.textPrimary },
   headlineBad: { color: theme.colors.expenseText },
   guards: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   guard: {
@@ -185,7 +185,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  guardTitle: { fontFamily: theme.font.bodyBold, fontSize: 12.5, color: theme.colors.textPrimary },
+  guardTitle: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textPrimary },
   guardSub: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 17, color: theme.colors.textSecondary },
   guardSubBad: { fontFamily: theme.font.bodyBold, color: theme.colors.expenseText },
 });

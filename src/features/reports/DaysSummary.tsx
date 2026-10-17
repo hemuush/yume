@@ -59,7 +59,7 @@ const s = StyleSheet.create({
     color: theme.colors.textPrimary,
     fontVariant: ['tabular-nums'],
   },
-  line: { fontFamily: theme.font.bodyMedium, fontSize: 12.5, color: theme.colors.textSecondary },
+  line: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textSecondary },
   up: { color: theme.colors.expenseText },
   down: { color: theme.colors.incomeText },
 });

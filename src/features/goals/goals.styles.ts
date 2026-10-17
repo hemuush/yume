@@ -18,7 +18,7 @@ export const styles = StyleSheet.create({
   errorTitle: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.expenseText },
   errorDetail: {
     fontFamily: theme.font.body,
-    fontSize: 11.5,
+    fontSize: 12,
     color: theme.colors.textSecondary,
     marginTop: 3,
     lineHeight: 16,
@@ -86,7 +86,7 @@ export const styles = StyleSheet.create({
   followTitle: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textPrimary },
   followSub: {
     fontFamily: theme.font.body,
-    fontSize: 11.5,
+    fontSize: 12,
     color: theme.colors.textMuted,
     marginTop: 2,
     lineHeight: 16,
@@ -110,7 +110,7 @@ export const styles = StyleSheet.create({
     paddingVertical: 2,
     borderRadius: 999,
   },
-  followTagText: { fontFamily: theme.font.bodyBold, fontSize: 10.5, color: theme.colors.textSecondary },
+  followTagText: { fontFamily: theme.font.bodyBold, fontSize: 11, color: theme.colors.textSecondary },
   letterNote: {
     fontFamily: theme.font.body,
     fontStyle: 'italic',

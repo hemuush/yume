@@ -195,7 +195,7 @@ const styles = StyleSheet.create({
     boxShadow: '0px 10px 28px rgba(16,32,51,0.12)',
   },
   tab: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7 },
-  label: { fontFamily: theme.font.bodyBold, fontSize: 13.5, color: theme.colors.white },
+  label: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.white },
   add: {
     alignItems: 'center',
     justifyContent: 'center',

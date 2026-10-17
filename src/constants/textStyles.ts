@@ -22,7 +22,7 @@ export const SECTION_GAP = { top: 16, bottom: 8 } as const;
  */
 export const EYEBROW: TextStyle = {
   fontFamily: theme.font.bodyBold,
-  fontSize: 11.5,
+  fontSize: 12,
   letterSpacing: 0.6,
   textTransform: 'uppercase',
   color: theme.colors.textMuted,
@@ -30,7 +30,7 @@ export const EYEBROW: TextStyle = {
 
 /** A form field's label, above its input (FormInput, DateField, pickers). */
 export const FIELD_LABEL: TextStyle = {
-  fontSize: 12.5,
+  fontSize: 12,
   fontFamily: theme.font.roundedMedium,
   letterSpacing: 0,
   color: theme.colors.textSecondary,

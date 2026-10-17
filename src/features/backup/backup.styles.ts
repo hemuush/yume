@@ -13,7 +13,7 @@ export const styles = StyleSheet.create({
   },
   statusCard: { marginHorizontal: SCREEN.gutter, marginTop: theme.layout.screenTopGap, padding: 14 },
   statusHead: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  statusTitle: { fontFamily: theme.font.roundedBold, fontSize: 17, color: theme.colors.textPrimary },
+  statusTitle: { fontFamily: theme.font.roundedBold, fontSize: 15, color: theme.colors.textPrimary },
   errorLine: { color: theme.colors.expenseText },
   mainAction: { marginTop: 14 },
   scheduleBlock: {
@@ -54,7 +54,7 @@ export const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingRight: 20,
   },
-  seeAll: { fontFamily: theme.font.bodyMedium, fontSize: 14, color: theme.colors.link },
+  seeAll: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.link },
   timeline: { overflow: 'hidden' },
   whenRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 6 },
   latestChip: {
@@ -72,7 +72,7 @@ export const styles = StyleSheet.create({
   copySub: { color: theme.colors.textSecondary },
   emptyCard: { padding: 16, alignItems: 'center' },
   emptyAfter: { marginTop: 12 },
-  emptyTitle: { fontFamily: theme.font.roundedBold, fontSize: 16, color: theme.colors.textPrimary },
+  emptyTitle: { fontFamily: theme.font.roundedBold, fontSize: 15, color: theme.colors.textPrimary },
   emptySub: {
     fontFamily: theme.font.body,
     fontSize: 13,

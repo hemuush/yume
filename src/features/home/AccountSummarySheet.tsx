@@ -515,7 +515,7 @@ const styles = StyleSheet.create({
   flowRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   flowLabel: {
     fontFamily: theme.font.bodyMedium,
-    fontSize: 12.5,
+    fontSize: 12,
     color: theme.colors.textSecondary,
     width: 30,
   },
@@ -537,7 +537,7 @@ const styles = StyleSheet.create({
   },
   flowDetail: {
     fontFamily: theme.font.body,
-    fontSize: 11.5,
+    fontSize: 12,
     color: theme.colors.textMuted,
     marginLeft: 40,
     marginTop: 3,
@@ -554,11 +554,11 @@ const styles = StyleSheet.create({
   },
   netLabel: {
     fontFamily: theme.font.bodyMedium,
-    fontSize: 12.5,
+    fontSize: 12,
     color: theme.colors.textSecondary,
     width: 30,
   },
-  netValue: { fontFamily: theme.font.monoBold, fontSize: 14, color: theme.colors.textPrimary },
+  netValue: { fontFamily: theme.font.monoBold, fontSize: 13, color: theme.colors.textPrimary },
   netText: {
     flexBasis: '100%',
     fontFamily: theme.font.body,
@@ -585,5 +585,5 @@ const styles = StyleSheet.create({
     marginTop: 10,
     paddingVertical: 8,
   },
-  seeAllText: { fontFamily: theme.font.bodyMedium, fontSize: 14, color: theme.colors.link },
+  seeAllText: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.link },
 });

@@ -383,8 +383,8 @@ const styles = StyleSheet.create({
     borderTopColor: theme.colors.divider,
   },
   quiet: { paddingHorizontal: 14, paddingTop: 12, paddingBottom: 10, gap: 2 },
-  quietTitle: { fontFamily: theme.font.roundedBold, fontSize: 15, color: theme.colors.textPrimary },
-  quietSub: { fontFamily: theme.font.body, fontSize: 12.5, color: theme.colors.textMuted },
+  quietTitle: { fontFamily: theme.font.roundedBold, fontSize: 14, color: theme.colors.textPrimary },
+  quietSub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
   // Rows inside a HomeSwipeCard page: no outer border/background (the card draws it); BudgetRow/UpcomingRow
   // already carry their own horizontal padding.
   pageList: { paddingHorizontal: 2 },

@@ -137,8 +137,8 @@ const local = StyleSheet.create({
   dateDay: {
     fontFamily: theme.font.bodyBold,
     fontVariant: ['tabular-nums'],
-    fontSize: 15,
+    fontSize: 14,
     color: theme.colors.textPrimary,
   },
-  dateMonth: { fontFamily: theme.font.bodyMedium, fontSize: 10, color: theme.colors.textSecondary },
+  dateMonth: { fontFamily: theme.font.bodyMedium, fontSize: 11, color: theme.colors.textSecondary },
 });

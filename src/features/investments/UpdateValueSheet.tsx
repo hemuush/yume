@@ -223,5 +223,5 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     marginTop: 4,
   },
-  stripText: { fontFamily: theme.font.body, fontSize: 12.5, color: theme.colors.textSecondary },
+  stripText: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
 });

@@ -103,7 +103,7 @@ export const styles = StyleSheet.create({
     color: theme.colors.textPrimary,
   },
   huge: { fontFamily: theme.font.monoBold, fontSize: 48, lineHeight: 56, color: theme.colors.textPrimary },
-  body: { fontFamily: theme.font.body, fontSize: 15, lineHeight: 21, color: theme.colors.textSecondary },
+  body: { fontFamily: theme.font.body, fontSize: 14, lineHeight: 21, color: theme.colors.textSecondary },
   bodyStrong: { fontFamily: theme.font.monoBold, color: theme.colors.textPrimary },
   center: { textAlign: 'center' },
   gapS: { marginTop: 6 },
@@ -117,7 +117,7 @@ export const styles = StyleSheet.create({
   choiceSelected: { backgroundColor: theme.colors.surfaceAlt },
   insight: { padding: 18, borderRadius: 22, backgroundColor: theme.colors.surface },
   insightHead: { flexDirection: 'row', justifyContent: 'space-between', gap: 12 },
-  insightLabel: { flex: 1, fontFamily: theme.font.bodyBold, fontSize: 14, color: theme.colors.textPrimary },
+  insightLabel: { flex: 1, fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textPrimary },
   insightAmount: {
     fontFamily: theme.font.monoBold,
     fontSize: 26,
@@ -152,7 +152,7 @@ export const styles = StyleSheet.create({
     gap: 10,
     marginBottom: 6,
   },
-  barName: { flex: 1, fontFamily: theme.font.bodyBold, fontSize: 14, color: theme.colors.textPrimary },
+  barName: { flex: 1, fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textPrimary },
   barAmount: {
     fontVariant: ['tabular-nums'],
     fontFamily: theme.font.monoBold,
@@ -174,7 +174,7 @@ export const styles = StyleSheet.create({
   },
   calFill: { ...StyleSheet.absoluteFill, backgroundColor: theme.colors.idGoldDeep },
   calRing: { ...StyleSheet.absoluteFill, borderRadius: 8, borderWidth: 2.5, borderColor: theme.colors.ink },
-  calDay: { fontFamily: theme.font.mono, fontSize: 10, color: theme.colors.textPrimary },
+  calDay: { fontFamily: theme.font.mono, fontSize: 11, color: theme.colors.textPrimary },
 
   moverRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 10 },
 

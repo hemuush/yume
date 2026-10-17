@@ -163,8 +163,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   glass: { borderWidth: 1, borderColor: GLASS.edge, backgroundColor: GLASS.fillStrong },
-  initial: { fontFamily: theme.font.bodyBold, fontSize: 14 },
-  initialLarge: { fontFamily: theme.font.bodyBold, fontSize: 15 },
+  initial: { fontFamily: theme.font.bodyBold, fontSize: 13 },
+  initialLarge: { fontFamily: theme.font.bodyBold, fontSize: 14 },
   countBadge: {
     position: 'absolute',
     top: -4,
@@ -177,7 +177,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  countText: { fontFamily: theme.font.monoBold, fontSize: 10, color: theme.colors.surface },
+  countText: { fontFamily: theme.font.monoBold, fontSize: 11, color: theme.colors.surface },
   badge: {
     position: 'absolute',
     top: -2,

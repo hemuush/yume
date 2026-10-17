@@ -116,7 +116,7 @@ export function PaceBar({
 
 export const frost = StyleSheet.create({
   /** A screen's first card (its hero), under the header. */
-  hero: { marginHorizontal: SCREEN.gutter, marginTop: theme.layout.screenTopGap, padding: 16, gap: 10 },
+  hero: { marginHorizontal: SCREEN.gutter, marginTop: theme.layout.screenTopGap, padding: 14, gap: 8 },
   /** A glass card holding a list of rows. */
   list: { marginHorizontal: SCREEN.gutter, overflow: 'hidden' },
   heroRow: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10 },
@@ -145,14 +145,14 @@ export const frost = StyleSheet.create({
     color: theme.colors.textPrimary,
   },
   bigSymbol: { fontFamily: theme.font.body, fontSize: 22, letterSpacing: 0, color: theme.colors.textMuted },
-  bigNote: { fontFamily: theme.font.bodyMedium, fontSize: 14, color: theme.colors.textMuted },
+  bigNote: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textMuted },
   side: { alignItems: 'flex-end', maxWidth: '45%' },
-  sideLabel: { fontFamily: theme.font.bodyMedium, fontSize: 11.5, color: theme.colors.textMuted },
-  sideValue: { fontFamily: theme.font.body, fontSize: 17, color: theme.colors.textPrimary, marginTop: 1 },
-  sub: { fontFamily: theme.font.body, fontSize: 13.5, lineHeight: 19, color: theme.colors.textSecondary },
+  sideLabel: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textMuted },
+  sideValue: { fontFamily: theme.font.body, fontSize: 15, color: theme.colors.textPrimary, marginTop: 1 },
+  sub: { fontFamily: theme.font.body, fontSize: 13, lineHeight: 19, color: theme.colors.textSecondary },
   subBold: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
   /** A small line under a bar. */
-  note2: { fontFamily: theme.font.bodyMedium, fontSize: 11.5, color: theme.colors.textMuted },
+  note2: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textMuted },
 
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   chip: {

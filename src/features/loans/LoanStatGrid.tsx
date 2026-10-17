@@ -43,7 +43,7 @@ const styles = StyleSheet.create({
   value: {
     fontFamily: theme.font.bodyBold,
     fontVariant: ['tabular-nums'],
-    fontSize: 16,
+    fontSize: 15,
     color: theme.colors.textPrimary,
     marginTop: 2,
   },

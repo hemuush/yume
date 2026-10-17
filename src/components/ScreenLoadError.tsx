@@ -21,7 +21,7 @@ export function ScreenLoadError({
   const { accent, secondary } = useAccent();
   const content = (
     <View style={{ padding: 20, gap: 12 }}>
-      <Text style={{ fontFamily: theme.font.bodyBold, fontSize: 16 }}>Couldn't load your data</Text>
+      <Text style={{ fontFamily: theme.font.bodyBold, fontSize: 15 }}>Couldn't load your data</Text>
       <Text style={{ fontFamily: theme.font.body, color: theme.colors.textSecondary, fontSize: 13 }}>
         {message}
       </Text>

@@ -91,7 +91,7 @@ export function CashHero({
 }
 
 const styles = StyleSheet.create({
-  sub: { fontFamily: theme.font.body, fontSize: 12.5, color: theme.colors.textSecondary, marginTop: -6 },
+  sub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary, marginTop: -6 },
   shelf: { flexDirection: 'row', gap: 3, height: 5 },
   slice: { flexBasis: 0, minWidth: 8, height: 5, borderRadius: 3 },
   legend: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 12, rowGap: 6 },

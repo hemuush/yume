@@ -20,7 +20,7 @@ export const styles = StyleSheet.create({
   errorTitle: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.expenseText },
   errorDetail: {
     fontFamily: theme.font.body,
-    fontSize: 11.5,
+    fontSize: 12,
     color: theme.colors.textSecondary,
     marginTop: 3,
     lineHeight: 16,
@@ -43,12 +43,12 @@ export const styles = StyleSheet.create({
   },
   searchInput: {
     flex: 1,
-    fontSize: 14,
+    fontSize: 13,
     fontFamily: theme.font.body,
     color: theme.colors.textPrimary,
     padding: 0,
   },
-  searchCancel: { fontSize: 14, fontFamily: theme.font.bodyBold, color: theme.colors.link },
+  searchCancel: { fontSize: 13, fontFamily: theme.font.bodyBold, color: theme.colors.link },
   searchLoading: { paddingVertical: 40, alignItems: 'center' },
   // Search before anything is typed: what it looks at, things to try, and past searches.
   searchEmpty: { alignItems: 'center', gap: 10, paddingHorizontal: 16, paddingTop: 24 },
@@ -62,7 +62,7 @@ export const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: GLASS.edge,
   },
-  searchEmptyTitle: { fontFamily: theme.font.bodyBold, fontSize: 16, color: theme.colors.textPrimary },
+  searchEmptyTitle: { fontFamily: theme.font.bodyBold, fontSize: 15, color: theme.colors.textPrimary },
   searchEmptySub: {
     fontFamily: theme.font.body,
     fontSize: 13,
@@ -81,7 +81,7 @@ export const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: GLASS.edge,
   },
-  searchSuggestText: { fontFamily: theme.font.bodyMedium, fontSize: 12.5, color: theme.colors.textSecondary },
+  searchSuggestText: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textSecondary },
   recentWrap: { alignSelf: 'stretch', marginTop: 8, gap: 6 },
   recentHead: {
     flexDirection: 'row',
@@ -90,7 +90,7 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   recentLabel: { ...EYEBROW, color: theme.colors.textMuted },
-  recentClear: { fontFamily: theme.font.bodyBold, fontSize: 12.5, color: theme.colors.link },
+  recentClear: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.link },
   recentCard: {
     borderRadius: 22,
     paddingHorizontal: 14,
@@ -100,7 +100,7 @@ export const styles = StyleSheet.create({
   },
   recentRow: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 48 },
   recentDivider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.borderSoft },
-  recentText: { flex: 1, fontFamily: theme.font.body, fontSize: 14, color: theme.colors.textPrimary },
+  recentText: { flex: 1, fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textPrimary },
 
   // The Spent card leads the tab, frosted like Home's month card: the kicker, a big light figure, its chips
   // (the change, money in, net), the chart and a one-line legend.
@@ -122,7 +122,7 @@ export const styles = StyleSheet.create({
   },
   // The change against the period before, one line under the figure (green when spending is down).
   sumChangeRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 },
-  sumChange: { flexShrink: 1, fontFamily: theme.font.bodyMedium, fontSize: 12.5 },
+  sumChange: { flexShrink: 1, fontFamily: theme.font.bodyMedium, fontSize: 12 },
   // Room above the tallest bar for the tapped bar's amount bubble.
   sumChart: { marginTop: 22 },
   sumTop: { flexDirection: 'row', alignItems: 'flex-start', gap: 14 },
@@ -135,7 +135,7 @@ export const styles = StyleSheet.create({
   sumMetricAmount: {
     fontFamily: theme.font.bodyBold,
     fontVariant: ['tabular-nums'],
-    fontSize: 17,
+    fontSize: 15,
     color: theme.colors.textPrimary,
   },
   // Week | Month beside the period pill, the picked one on deep ink.
@@ -158,7 +158,7 @@ export const styles = StyleSheet.create({
     borderRadius: 16,
   },
   scopeBtnStacked: { flex: 1, alignItems: 'center' },
-  scopeText: { fontFamily: theme.font.bodyMedium, fontSize: 12.5, color: theme.colors.textPrimary },
+  scopeText: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textPrimary },
   scopeTextOn: { color: theme.colors.white },
 
   // ‹ This week › in a frosted pill, Week | Month beside it.
@@ -198,8 +198,8 @@ export const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  periodTitle: { fontFamily: theme.font.bodyBold, fontSize: 14, color: theme.colors.textPrimary },
-  periodSub: { fontFamily: theme.font.body, fontSize: 11.5, color: theme.colors.textMuted },
+  periodTitle: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textPrimary },
+  periodSub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
 
   listArea: { flex: 1 },
   // Shown while a line is being moved, above the tab bar like the undo bar.
@@ -214,7 +214,7 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 10,
   },
-  dragHintText: { flex: 1, fontFamily: theme.font.bodyMedium, fontSize: 13.5, color: theme.colors.white },
+  dragHintText: { flex: 1, fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.white },
   // The period, as a small chip in the shrunk header; it opens the month picker.
   periodChip: {
     minHeight: 44,
@@ -256,7 +256,7 @@ export const styles = StyleSheet.create({
   typeText: {
     textAlign: 'center',
     fontFamily: theme.font.bodyMedium,
-    fontSize: 12.5,
+    fontSize: 12,
     color: theme.colors.textSecondary,
   },
   typeTextOn: { color: theme.colors.surface, fontFamily: theme.font.bodyBold },
@@ -273,7 +273,7 @@ export const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: GLASS.edge,
   },
-  chipText: { fontFamily: theme.font.bodyBold, fontSize: 12.5, color: theme.colors.textSecondary },
+  chipText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textSecondary },
 
   rowNoteInline: { fontSize: 13, color: theme.colors.textSecondary, fontFamily: theme.font.body },
   income: { color: theme.colors.incomeText },
@@ -328,7 +328,7 @@ export const styles = StyleSheet.create({
     borderColor: theme.colors.borderSoft,
   },
   deleteBtnAsk: { backgroundColor: theme.colors.expenseText, borderColor: theme.colors.expenseText },
-  deleteAskText: { fontFamily: theme.font.bodyBold, fontSize: 14, color: theme.colors.white },
+  deleteAskText: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.white },
   // A split part's detail: the whole payment, this part in bold.
   splitCard: {
     marginBottom: 12,
@@ -389,7 +389,7 @@ export const styles = StyleSheet.create({
     borderTopColor: theme.colors.borderSoft,
   },
   subGroupLabel: {
-    fontSize: 11.5,
+    fontSize: 12,
     fontFamily: theme.font.bodyBold,
     color: theme.colors.textMuted,
     marginBottom: 8,

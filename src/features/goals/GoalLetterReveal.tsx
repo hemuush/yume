@@ -28,5 +28,5 @@ export interface GoalLetterRevealProps {
 const styles = StyleSheet.create({
   letterBox: { backgroundColor: theme.colors.surfaceAlt, borderRadius: 14, padding: 16, gap: 10 },
   label: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textSecondary },
-  letterText: { fontFamily: theme.font.body, fontSize: 15, color: theme.colors.ink, lineHeight: 23 },
+  letterText: { fontFamily: theme.font.body, fontSize: 14, color: theme.colors.ink, lineHeight: 23 },
 });

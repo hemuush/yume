@@ -43,7 +43,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  day: { fontFamily: theme.font.roundedBold, fontSize: 15, lineHeight: 17, color: theme.colors.textPrimary },
+  day: { fontFamily: theme.font.roundedBold, fontSize: 14, lineHeight: 17, color: theme.colors.textPrimary },
   month: {
     fontFamily: theme.font.bodyBold,
     fontSize: 11,

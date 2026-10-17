@@ -11,8 +11,8 @@ export const SCREEN = {
   sectionGap: 20,
   gutter: 16,
   /** Padding inside a standalone card; a hero card with a top strip takes `heroPadTop`. */
-  cardPad: 14,
-  heroPadTop: 16,
+  cardPad: 12,
+  heroPadTop: 14,
   /** Between cards stacked in a list. */
   cardStack: 10,
   rowMinHeight: 56,

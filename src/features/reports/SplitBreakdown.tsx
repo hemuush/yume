@@ -66,11 +66,11 @@ const styles = StyleSheet.create({
   dot: { width: 9, height: 9, borderRadius: 5 },
   names: { flex: 1, minWidth: 0 },
   name: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textPrimary },
-  visits: { fontFamily: theme.font.body, fontSize: 11.5, color: theme.colors.textMuted, marginTop: 1 },
+  visits: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, marginTop: 1 },
   share: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
   amount: {
     fontFamily: theme.font.bodyBold,
-    fontSize: 12.5,
+    fontSize: 12,
     color: theme.colors.textPrimary,
     minWidth: 62,
     textAlign: 'right',

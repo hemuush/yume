@@ -20,7 +20,7 @@ export const styles = StyleSheet.create({
   errorTitle: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.expenseText },
   errorDetail: {
     fontFamily: theme.font.body,
-    fontSize: 11.5,
+    fontSize: 12,
     color: theme.colors.textSecondary,
     marginTop: 3,
     lineHeight: 16,
@@ -76,11 +76,11 @@ export const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 8,
     fontFamily: theme.font.bodyMedium,
-    fontSize: 15,
+    fontSize: 14,
     color: theme.colors.textPrimary,
   },
   nameSave: { minWidth: 48, minHeight: 48, alignItems: 'center', justifyContent: 'center' },
-  memberSince: { fontFamily: theme.font.body, fontSize: 12.5, color: theme.colors.textMuted, marginTop: 2 },
+  memberSince: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, marginTop: 2 },
   // SegmentedControl draws its own pill; this only places it.
   tabWrap: { marginHorizontal: SCREEN.gutter, marginTop: 16 },
 
@@ -124,7 +124,7 @@ export const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   planLinkIcon: { width: 32, height: 32, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
-  planLinkText: { flex: 1, fontFamily: theme.font.roundedMedium, fontSize: 13.5, color: theme.colors.ink },
+  planLinkText: { flex: 1, fontFamily: theme.font.roundedMedium, fontSize: 13, color: theme.colors.ink },
 
   // ---- Settings: backup needs attention ----
   nudge: {
@@ -169,7 +169,7 @@ export const styles = StyleSheet.create({
   },
   pickerHint: {
     fontFamily: theme.font.body,
-    fontSize: 12.5,
+    fontSize: 12,
     color: theme.colors.textMuted,
     lineHeight: 18,
     marginBottom: 6,
@@ -195,7 +195,7 @@ export const styles = StyleSheet.create({
   footer: { alignItems: 'center', gap: 2, paddingTop: 26, paddingBottom: 4 },
   footerName: {
     fontFamily: theme.font.roundedBold,
-    fontSize: 14,
+    fontSize: 13,
     color: theme.colors.textPrimary,
     marginTop: 6,
   },
@@ -209,7 +209,7 @@ export const styles = StyleSheet.create({
   aboutFactText: {
     flex: 1,
     fontFamily: theme.font.body,
-    fontSize: 12.5,
+    fontSize: 12,
     color: theme.colors.textSecondary,
     lineHeight: 17,
   },

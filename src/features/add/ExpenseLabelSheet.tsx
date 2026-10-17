@@ -89,7 +89,7 @@ export function ExpenseLabelSheet({
           minHeight: 52,
           padding: 14,
           fontFamily: theme.font.body,
-          fontSize: 16,
+          fontSize: 15,
           borderRadius: 18,
           borderWidth: 1,
           borderColor: theme.colors.borderSoft,

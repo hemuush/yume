@@ -105,7 +105,7 @@ export function RestorePreviewSheet({
 const styles = StyleSheet.create({
   row: { paddingVertical: 10, gap: 2 },
   label: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textPrimary },
-  value: { fontFamily: theme.font.body, fontSize: 12.5, color: theme.colors.textSecondary, lineHeight: 18 },
+  value: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary, lineHeight: 18 },
   note: {
     flexDirection: 'row',
     gap: 8,
@@ -119,7 +119,7 @@ const styles = StyleSheet.create({
   noteText: {
     flex: 1,
     fontFamily: theme.font.body,
-    fontSize: 12.5,
+    fontSize: 12,
     lineHeight: 18,
     color: theme.colors.textPrimary,
   },

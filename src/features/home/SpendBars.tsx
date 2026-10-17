@@ -206,7 +206,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   title: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textSecondary },
-  total: { fontFamily: theme.font.body, fontSize: 12.5, color: theme.colors.textMuted, marginTop: 2 },
+  total: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, marginTop: 2 },
   switch: {
     flexShrink: 0,
     flexDirection: 'row',

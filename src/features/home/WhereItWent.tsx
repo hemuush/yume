@@ -98,35 +98,39 @@ export function WhereItWent({
           </Text>
         )}
         <View style={styles.divider} />
-        <Text style={styles.name}>
-          {selected?.name ?? (spentMinor < 0 ? 'Refunds exceed spending' : 'No spending yet')}
-        </Text>
-        <Text style={styles.meta}>
-          {selected
-            ? `${formatMoney(selected.totalMinor)} · ${share}%`
-            : spentMinor < 0
-              ? 'See your net spending and refunds in Reports.'
-              : 'Your categories appear after an expense.'}
-        </Text>
-        <Pressable
-          style={withPressed(styles.linkButton)}
-          onPress={
-            selected
-              ? () => (onOpenCategory ? onOpenCategory(selected.categoryId) : onOpenReports())
-              : spentMinor < 0
-                ? onOpenReports
-                : onAddExpense
-          }
-          accessibilityRole="button"
-          accessibilityLabel={
-            selected ? `View ${selected.name} category` : spentMinor < 0 ? 'View Reports' : 'Add expense'
-          }
-        >
-          <Text style={styles.link}>
-            {selected ? 'View category' : spentMinor < 0 ? 'View Reports' : 'Add expense'}
-          </Text>
-          <Feather name="arrow-right" size={16} color={theme.colors.link} />
-        </Pressable>
+        {selected ? (
+          // The category itself is the way in: no separate "View category" line.
+          <Pressable
+            style={withPressed(styles.categoryButton)}
+            onPress={() => (onOpenCategory ? onOpenCategory(selected.categoryId) : onOpenReports())}
+            accessibilityRole="button"
+            accessibilityLabel={`View ${selected.name} category`}
+          >
+            <View style={{ flex: 1, minWidth: 0 }}>
+              <Text style={styles.name}>{selected.name}</Text>
+              <Text style={styles.meta}>{`${formatMoney(selected.totalMinor)} · ${share}%`}</Text>
+            </View>
+            <Feather name="chevron-right" size={18} color={theme.colors.link} />
+          </Pressable>
+        ) : (
+          <>
+            <Text style={styles.name}>{spentMinor < 0 ? 'Refunds exceed spending' : 'No spending yet'}</Text>
+            <Text style={styles.meta}>
+              {spentMinor < 0
+                ? 'See your net spending and refunds in Reports.'
+                : 'Your categories appear after an expense.'}
+            </Text>
+            <Pressable
+              style={withPressed(styles.linkButton)}
+              onPress={spentMinor < 0 ? onOpenReports : onAddExpense}
+              accessibilityRole="button"
+              accessibilityLabel={spentMinor < 0 ? 'View Reports' : 'Add expense'}
+            >
+              <Text style={styles.link}>{spentMinor < 0 ? 'View Reports' : 'Add expense'}</Text>
+              <Feather name="arrow-right" size={16} color={theme.colors.link} />
+            </Pressable>
+          </>
+        )}
       </View>
       {selected && (
         <View style={stacked ? styles.selectorRow : [styles.dial, { height: (top.length + 1) * 48 }]}>
@@ -223,7 +227,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: theme.colors.white,
   },
-  label: { fontFamily: theme.font.bodyMedium, fontSize: 12.5, color: theme.colors.textMuted },
+  label: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textMuted },
   total: {
     fontFamily: theme.font.bodyLight,
     fontSize: 28,
@@ -233,7 +237,7 @@ const styles = StyleSheet.create({
     marginTop: 6,
   },
   divider: { height: StyleSheet.hairlineWidth, backgroundColor: theme.colors.borderSoft, marginVertical: 10 },
-  name: { fontFamily: theme.font.bodyBold, fontSize: 14, color: theme.colors.textPrimary },
+  name: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textPrimary },
   meta: {
     fontFamily: theme.font.body,
     fontSize: 12,
@@ -241,6 +245,7 @@ const styles = StyleSheet.create({
     color: theme.colors.textSecondary,
     marginTop: 4,
   },
+  categoryButton: { minHeight: 48, flexDirection: 'row', alignItems: 'center', gap: 6 },
   linkButton: { minHeight: 48, flexDirection: 'row', alignItems: 'center', gap: 6 },
   link: { flexShrink: 1, fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.link },
 });
