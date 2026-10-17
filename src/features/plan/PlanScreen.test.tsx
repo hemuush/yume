@@ -227,12 +227,10 @@ describe('Plan tab', () => {
     const headings = [
       'Next 14 days',
       'going out · 2 payments',
-      'This month’s budgets',
-      'The way to debt-free',
-      'Debt-free ' +
-        new Date(2035, 5, 5).toLocaleDateString(undefined, { month: 'short', year: 'numeric' }) +
-        ' · ₹25,000 in EMIs over 14 days',
-      'Saving toward',
+      'Budgets',
+      'Debt',
+      'Debt-free ' + new Date(2035, 5, 5).toLocaleDateString(undefined, { month: 'short', year: 'numeric' }),
+      'Goals',
       'People & habit',
       'Friends',
       'Spend streak',
@@ -294,7 +292,9 @@ describe('Plan tab', () => {
 
   it('says what each section means in plain words', async () => {
     const shown = texts(await render());
-    expect(shown.some((t) => t.includes('Food is ₹20,000 over'))).toBe(true);
+    expect(shown).toContain('1 over');
+    // The caption no longer names the worst jar: the jars below say it.
+    expect(shown.some((t) => t.includes('Food is ₹20,000 over'))).toBe(false);
     expect(shown).toContain('To collect');
   });
 
@@ -317,7 +317,7 @@ describe('Plan tab', () => {
     expect(router.push).toHaveBeenLastCalledWith('/loans');
     act(() => byLabel('Friends & Family').props.onPress());
     expect(router.push).toHaveBeenLastCalledWith('/people');
-    act(() => byLabel('See all — Saving toward').props.onPress());
+    act(() => byLabel('See all — Goals').props.onPress());
     expect(router.push).toHaveBeenLastCalledWith('/savings-goals');
     act(() => byLabel('Open the what-if sandbox').props.onPress());
     expect(router.push).toHaveBeenLastCalledWith({
@@ -473,7 +473,7 @@ it('opens individual Plan items directly, ignores repeated taps, and closes back
   act(() => person.props.onClose());
   expect(router.push).not.toHaveBeenCalled();
   expect(scrollTo).not.toHaveBeenCalled();
-  expect(texts(tree)).toContain('The way to debt-free');
+  expect(texts(tree)).toContain('Debt');
   act(() => tree.unmount());
 });
 
@@ -542,7 +542,7 @@ it('opens a savings goal directly, preserves Plan on close, and creates a goal w
     expect(create.props.visible).toBe(true);
     act(() => create.props.onClose());
     expect(router.push).not.toHaveBeenCalled();
-    expect(texts(tree)).toContain('Saving toward');
+    expect(texts(tree)).toContain('Goals');
   } finally {
     if (tree) act(() => tree.unmount());
     mockGoals = [];
