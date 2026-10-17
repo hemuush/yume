@@ -46,9 +46,6 @@ function render(
         breakdown={breakdown}
         iconFor={() => 'food'}
         spentMinor={5_000_000}
-        previousSpentMinor={5_421_000}
-        periodName="October"
-        previousName="Sept"
         onOpenReports={onOpenReports}
         onOpenCategory={onOpenCategory}
         onAddExpense={onAddExpense}
@@ -79,10 +76,6 @@ describe('Where it went', () => {
     const openReports = jest.fn();
     const openCategory = jest.fn();
     const r = render(breakdown, openReports, openCategory);
-    expect(
-      r.root.findAll((n) => [n.props.style].flat(Infinity).some((style) => style?.flexDirection === 'column'))
-        .length
-    ).toBeGreaterThan(0);
     act(() =>
       r.root
         .find((n) => n.props.accessibilityLabel === 'Shares, 20% of spending' && n.props.onPress)
@@ -104,17 +97,13 @@ describe('Where it went', () => {
     act(() => r.unmount());
   });
 
-  it('shows the spending, the change from last period, and the biggest category picked', () => {
+  it('picks the biggest category, and repeats neither the month total nor the change from last month', () => {
     const all = texts(render(breakdown));
-    expect(all).toEqual(
-      expect.arrayContaining([
-        'Spent in October',
-        '₹50,000',
-        '₹4,210 less than Sept',
-        'Rent',
-        '₹24,000 · 48%',
-      ])
-    );
+    expect(all).toEqual(expect.arrayContaining(['Rent', '₹24,000 · 48%', '48%']));
+    // The month card above says what was spent; the card does not say it again.
+    expect(all.some((t) => t.startsWith('Spent in'))).toBe(false);
+    expect(all).not.toContain('₹50,000');
+    expect(all.some((t) => t.includes('less than') || t.includes('more than'))).toBe(false);
   });
 
   it('shows the selected category immediately', () => {

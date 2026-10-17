@@ -44,8 +44,6 @@ import {
   previousPeriodRange,
   stepPeriod,
   canStepForward,
-  periodLabel,
-  periodShortLabel,
 } from '@/lib/period';
 import {
   homeRowEntering,
@@ -614,12 +612,6 @@ export default function DashboardScreen() {
                 breakdown={comparison.current.categoryBreakdown}
                 iconFor={(id) => categoriesById.get(id)?.icon}
                 spentMinor={dispExpense}
-                // The current period is only part-way through, so it isn't set against a whole one.
-                previousSpentMinor={
-                  loadedCursor.offset === 0 ? 0 : roundedMinor(comparison.previous.expenseMinor)
-                }
-                periodName={periodLabel(loadedCursor)}
-                previousName={periodShortLabel(stepPeriod(loadedCursor, -1))}
                 onOpenReports={openSpendingReports}
                 onOpenCategory={(id) =>
                   router.push({
