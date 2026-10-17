@@ -168,7 +168,7 @@ it('keeps the month label, figures and current-month chips together through inte
   act(() => r.update(hero('month:-1', 200000)));
   const stale = mockCompletions.at(-1)!;
   expect(text(r)).toContain('month:0');
-  expect(text(r)).toContain('₹132 of ₹500 today');
+  expect(text(r)).toContain('₹368 left today');
   act(() => r.update(hero('month:-2', 300000)));
   const latest = mockCompletions.at(-1)!;
   act(() => stale.finish(true));
@@ -176,7 +176,7 @@ it('keeps the month label, figures and current-month chips together through inte
   act(() => latest.finish(true));
   expect(text(r)).toContain('month:-2');
   expect(text(r)).toContain('₹3,000');
-  expect(text(r)).not.toContain('₹132 of ₹500 today');
+  expect(text(r)).not.toContain('₹368 left today');
   expect(displayed.mock.calls.map(([key]) => key)).toEqual(['month:0', 'month:-2']);
   act(() => r.unmount());
   roots = roots.filter((root) => root !== r);

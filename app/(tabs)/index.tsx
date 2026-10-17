@@ -33,6 +33,7 @@ import { Account, Category, Transaction, Loan, RecurringRule, SavingsGoal } from
 import { listSavingsGoals } from '@/db/savingsGoals';
 import { theme } from '@/constants/theme';
 import { useTabScrollPad } from '@/lib/uiScale';
+import { useReduceMotion } from '@/lib/useReduceMotion';
 import { useAccent } from '@/theme/AccentContext';
 import { usePrivacy } from '@/theme/PrivacyContext';
 import { EmptyState } from '@/components/EmptyState';
@@ -175,6 +176,9 @@ export default function DashboardScreen() {
   // The header overlays the ScrollView and collapses on scroll (see HomeHeader); its expanded height pads
   // the content so nothing hides under it. The estimate only covers the first frame before it measures.
   const scrollY = useSharedValue(0);
+  // Tapping the logo scrolls Home back to the top.
+  const scrollRef = useRef<Animated.ScrollView>(null);
+  const reduceMotion = useReduceMotion();
   const onScroll = useAnimatedScrollHandler((e) => {
     scrollY.value = e.contentOffset.y;
   });
@@ -520,6 +524,7 @@ export default function DashboardScreen() {
           quick actions in it), your month, what needs you, your plans, then
           history — recent activity and accounts. */}
       <Animated.ScrollView
+        ref={scrollRef}
         style={styles.scroll}
         onScroll={onScroll}
         scrollEventThrottle={16}
@@ -726,6 +731,7 @@ export default function DashboardScreen() {
         wraps={readyWraps}
         onPlayWrap={(w) => router.push(`/wrap?period=${w.period}`)}
         line={suu.text}
+        onBrandPress={() => scrollRef.current?.scrollTo({ y: 0, animated: !reduceMotion })}
       />
       <SuuRefreshBadge refreshing={refreshing} />
 

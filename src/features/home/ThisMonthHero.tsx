@@ -272,21 +272,25 @@ export function ThisMonthHero({
       : 'Free to use';
   const headMinor = over ? slices.overMinor : freeMinor;
   const headNeg = over || freeMinor < 0;
-  const carryNote =
-    displayed.carryMinor > 0
-      ? ` + ${formatMoney(displayed.carryMinor)} carried over`
-      : displayed.carryMinor < 0
-        ? ` − ${formatMoney(-displayed.carryMinor)} carried over`
-        : '';
+  // "of ₹2,62,393 after spending and savings": the pool is income plus what carried over. A carried shortfall only
+  // lowers the headline and is not part of the pool, so then the caption leaves the amount out; the full sum
+  // (income, carried over, spent, set aside) is one tap away under "How this adds up".
+  const ofPool = displayed.carryMinor >= 0 ? `of ${formatMoney(poolMinor)} ` : '';
   const headCaption = !slices.hasIncome
     ? 'Add income to see what is free'
     : over
       ? 'more went out than came in'
-      : hasDue
-        ? `Income ${formatMoney(displayed.incomeMinor)}${carryNote}, less ${hideAmounts ? 'deductions' : 'spending, savings'} and bills`
-        : displayed.surplusMinor < 0
-          ? 'below zero'
-          : `Income ${formatMoney(displayed.incomeMinor)}${carryNote}, less ${hideAmounts ? 'deductions' : 'spending and savings'}`;
+      : displayed.surplusMinor < 0 && !hasDue
+        ? 'below zero'
+        : `${ofPool}after ${
+            hasDue
+              ? hideAmounts
+                ? 'deductions and bills'
+                : 'spending, savings and bills'
+              : hideAmounts
+                ? 'deductions'
+                : 'spending and savings'
+          }`;
 
   const spentShare = slices.hasIncome && !over ? heroPct(heroShare(slices, 'spent')) : null;
   const shownToday = displayed.today;
@@ -334,7 +338,59 @@ export function ThisMonthHero({
           <Text style={styles.headCaption}>{headCaption}</Text>
         </View>
 
+        {slices.hasIncome && (
+          <Pressable
+            onPress={() => {
+              haptics.tap();
+              setShowWorking((v) => !v);
+            }}
+            style={withPressed(styles.howLink)}
+            hitSlop={{ top: 6, bottom: 6, left: 8, right: 8 }}
+            accessibilityRole="button"
+            accessibilityState={{ expanded: showWorking }}
+            accessibilityLabel="How this adds up"
+          >
+            <Text style={styles.howText}>How this adds up</Text>
+            <Feather name={showWorking ? 'chevron-up' : 'chevron-down'} size={13} color={theme.colors.link} />
+          </Pressable>
+        )}
+
+        {slices.hasIncome && showWorking && (
+          <View style={styles.working}>
+            <WorkingRow label="Income" value={formatMoney(displayed.incomeMinor)} />
+            {displayed.carryMinor !== 0 && (
+              <WorkingRow
+                label="Carried over"
+                value={`${displayed.carryMinor < 0 ? '−' : '+'}${formatMoney(Math.abs(displayed.carryMinor))}`}
+              />
+            )}
+            <WorkingRow label="Spent" value={`−${formatMoney(displayed.spentMinor)}`} />
+            <WorkingRow
+              label="Set aside"
+              value={
+                hideAmounts
+                  ? `−${formatMaskableMoney(0, { masked: true })}`
+                  : `${displayed.savingsMinor < 0 ? '+' : '−'}${formatMoney(Math.abs(displayed.savingsMinor))}`
+              }
+            />
+            <WorkingRow label="Free to use" value={formatMoney(displayed.surplusMinor)} total />
+            {hasDue && (
+              <>
+                <WorkingRow label="Still to pay" value={`−${formatMoney(displayed.dueMinor)}`} due />
+                <WorkingRow label="After bills" value={formatMoney(freeMinor)} total />
+              </>
+            )}
+          </View>
+        )}
+
         {slices.hasIncome && <MoneyBar slices={slices} />}
+        {/* The free part of the bar can be a sliver; this names it. */}
+        {slices.hasIncome && !over && freeMinor > 0 && (
+          <View style={styles.freeLabel} accessible={false} importantForAccessibility="no-hide-descendants">
+            <View style={styles.freeDot} />
+            <Text style={styles.freeText}>{formatMoney(freeMinor)} free</Text>
+          </View>
+        )}
 
         {(spentShare || shownToday || hasDue) && (
           <View style={styles.chips}>
@@ -345,7 +401,7 @@ export function ThisMonthHero({
               </View>
             )}
             {shownToday && (
-              <View style={[styles.chip, todayOverMinor > 0 && styles.chipOver]}>
+              <View style={[styles.chip, styles.chipClip, todayOverMinor > 0 && styles.chipOver]}>
                 <Feather
                   name="clock"
                   size={13}
@@ -354,8 +410,20 @@ export function ThisMonthHero({
                 <Text style={[styles.chipText, todayOverMinor > 0 && styles.chipTextOver]}>
                   {todayOverMinor > 0
                     ? `${formatMoney(shownToday.spentMinor)} today · ${formatMoney(todayOverMinor)} over`
-                    : `${formatMoney(shownToday.spentMinor)} of ${formatMoney(shownToday.goalMinor)} today`}
+                    : `${formatMoney(shownToday.goalMinor - shownToday.spentMinor)} left today`}
                 </Text>
+                {todayOverMinor <= 0 && shownToday.goalMinor > 0 && (
+                  <View
+                    testID="home-today-meter"
+                    style={[
+                      styles.chipMeter,
+                      {
+                        // Refunds can make today's net spend negative: the meter just stays empty.
+                        width: `${Math.max(0, Math.min(100, (shownToday.spentMinor / shownToday.goalMinor) * 100))}%`,
+                      },
+                    ]}
+                  />
+                )}
               </View>
             )}
             {hasDue && (
@@ -414,33 +482,9 @@ export function ThisMonthHero({
           <View style={styles.pace}>
             <Feather name="trending-up" size={14} color={theme.colors.textMuted} />
             <Text style={styles.paceText}>
-              On pace for about {formatMoney(Math.round(shownPace.projectedMinor / 10000) * 10000)} by{' '}
+              On pace to spend about {formatMoney(Math.round(shownPace.projectedMinor / 10000) * 10000)} by{' '}
               {shownPace.byLabel}
             </Text>
-          </View>
-        )}
-
-        {hasDue && showWorking && (
-          <View style={styles.working}>
-            <WorkingRow label="Income" value={formatMoney(displayed.incomeMinor)} />
-            <WorkingRow label="Spent" value={`−${formatMoney(displayed.spentMinor)}`} />
-            <WorkingRow
-              label="Set aside"
-              value={
-                hideAmounts
-                  ? `−${formatMaskableMoney(0, { masked: true })}`
-                  : `${displayed.savingsMinor < 0 ? '+' : '−'}${formatMoney(Math.abs(displayed.savingsMinor))}`
-              }
-            />
-            {displayed.carryMinor !== 0 && (
-              <WorkingRow
-                label="Carried over"
-                value={`${displayed.carryMinor < 0 ? '−' : '+'}${formatMoney(Math.abs(displayed.carryMinor))}`}
-              />
-            )}
-            <WorkingRow label="Free to use" value={formatMoney(displayed.surplusMinor)} total />
-            <WorkingRow label="Still to pay" value={`−${formatMoney(displayed.dueMinor)}`} due />
-            <WorkingRow label="After bills" value={formatMoney(freeMinor)} total />
           </View>
         )}
       </ReanimatedAnimated.View>
