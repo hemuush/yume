@@ -22,7 +22,7 @@ import { useUndoToast } from '@/components/UndoToast';
 import { theme } from '@/constants/theme';
 import { useAccent } from '@/theme/AccentContext';
 import { Section } from '@/components/Section';
-import { screenStyles as h } from '@/components/screenStyles';
+import { screenStyles as h, SCREEN } from '@/components/screenStyles';
 import { NeedsYouRow } from '@/features/home/NeedsYouRow';
 import { NEEDS_TONE } from '@/features/home/needsTone';
 import { Glass } from '@/components/Glass';
@@ -297,7 +297,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
   list: { marginTop: 12 },
   errorBanner: {
-    marginHorizontal: 20,
+    marginHorizontal: SCREEN.gutter,
     marginTop: theme.layout.screenTopGap,
     marginBottom: 4,
     padding: 14,
@@ -329,7 +329,7 @@ const styles = StyleSheet.create({
   toneDot: { width: 8, height: 8, borderRadius: 4 },
   toneText: { fontFamily: theme.font.bodyBold, fontSize: 12.5, color: theme.colors.textPrimary },
   // Suu, then its lines in a bubble whose corner points back at it.
-  suu: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, marginHorizontal: 20 },
+  suu: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, marginHorizontal: SCREEN.gutter },
   suuFace: { width: 38, height: 38 },
   suuLines: {
     flex: 1,

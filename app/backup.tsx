@@ -445,9 +445,21 @@ Restore anyway? Your current data would be replaced with no way back.`,
     );
 
   const forgetFolder = () =>
-    run('forget-folder', async () => {
-      await forgetBackupFolder();
-    });
+    showAlert(
+      'Forget this backup folder?',
+      'Automatic backups stop until you pick a folder again. Backup files already in it stay where they are.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Forget folder',
+          style: 'destructive',
+          onPress: () =>
+            void run('forget-folder', async () => {
+              await forgetBackupFolder();
+            }),
+        },
+      ]
+    );
 
   const restoreFile = (file: LocalBackupFile) =>
     run('restore-local', async () => {

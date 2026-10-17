@@ -74,6 +74,8 @@ const ALERT_KEYS = [
   'billAlerts',
   'weeklySummary',
   'suuCheckins',
+  'recurringAlerts',
+  'refundAlerts',
 ] as const satisfies readonly (keyof NotificationPrefs)[];
 
 function AboutFact({ icon, text }: { icon: string; text: string }) {

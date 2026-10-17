@@ -14,7 +14,7 @@ import { CategoryIcon } from '@/components/CategoryIcon';
 import { Amount } from '@/components/Amount';
 import { theme } from '@/constants/theme';
 import { Section } from '@/components/Section';
-import { screenStyles as h } from '@/components/screenStyles';
+import { screenStyles as h, SCREEN } from '@/components/screenStyles';
 import { listCategories } from '@/db/categories';
 import { inParent } from '@/lib/categoryLabel';
 import { listAccounts } from '@/db/accounts';
@@ -291,7 +291,7 @@ const styles = StyleSheet.create({
   emptyAll: {
     alignSelf: 'stretch',
     alignItems: 'center',
-    marginHorizontal: 20,
+    marginHorizontal: SCREEN.gutter,
     marginTop: 24,
     paddingVertical: 13,
     borderRadius: theme.radius.pill,
@@ -301,7 +301,7 @@ const styles = StyleSheet.create({
   },
   emptyAllText: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.expenseText },
   errorBanner: {
-    marginHorizontal: 20,
+    marginHorizontal: SCREEN.gutter,
     marginTop: theme.layout.screenTopGap,
     marginBottom: 4,
     padding: 14,

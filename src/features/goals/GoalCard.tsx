@@ -15,6 +15,7 @@ import { dayMonthYear } from '@/lib/dateLabels';
 import { toLocalIsoDate } from '@/lib/date';
 import { styles as shared } from './goals.styles';
 import { goalPlan, GOAL_PACE_LABEL } from './goalPlan';
+import { SCREEN } from '@/components/screenStyles';
 
 /**
  * One full-width goal: what's left, progress, monthly amount to finish on time. Tap opens edit/archive/delete;
@@ -166,7 +167,7 @@ export function GoalCard({
 }
 
 const styles = StyleSheet.create({
-  wrap: { marginHorizontal: 20, marginBottom: 12 },
+  wrap: { marginHorizontal: SCREEN.gutter, marginBottom: 12 },
   // A quiet surface with one thin, colour-coded progress bar.
   card: {
     padding: 14,

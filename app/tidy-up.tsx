@@ -31,7 +31,7 @@ import { PrimaryButton } from '@/components/PrimaryButton';
 import { CardRowsSkeleton } from '@/components/ListSkeleton';
 import { useUndoToast } from '@/components/UndoToast';
 import { Section } from '@/components/Section';
-import { screenStyles as h } from '@/components/screenStyles';
+import { screenStyles as h, SCREEN } from '@/components/screenStyles';
 import { dayMonth, longMonth, shortMonthYear } from '@/lib/dateLabels';
 import { errorMessage } from '@/lib/errorMessage';
 import { categoryPath } from '@/lib/categoryLabel';
@@ -284,13 +284,13 @@ export default function TidyUpScreen() {
                       <View style={styles.actions}>
                         <PrimaryButton
                           title="Keep both"
-                          variant="secondary"
                           onPress={() => keepBoth(g)}
                           disabled={busy}
                           style={styles.action}
                         />
                         <PrimaryButton
                           title={g.ids.length === 2 ? 'Delete one' : 'Delete newest'}
+                          variant="secondary"
                           onPress={() => deleteOne(g)}
                           disabled={busy}
                           style={styles.action}
@@ -434,7 +434,7 @@ const styles = StyleSheet.create({
   actions: { flexDirection: 'row', justifyContent: 'flex-end', gap: 8 },
   action: { flexShrink: 1 },
   errorBanner: {
-    marginHorizontal: 20,
+    marginHorizontal: SCREEN.gutter,
     marginTop: theme.layout.screenTopGap,
     marginBottom: 4,
     padding: 14,
