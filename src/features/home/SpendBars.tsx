@@ -8,8 +8,6 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { Text } from '@/components/Text';
-import { Glass } from '@/components/Glass';
-import { cardSurface } from '@/components/CardSurface';
 import { theme } from '@/constants/theme';
 import { formatMoney } from '@/lib/money';
 import { haptics } from '@/lib/haptics';
@@ -22,8 +20,8 @@ import { defaultBar, monthBars, weekBars, SpendBar } from './spendBarData';
 import { parseLocalIsoDate } from '@/lib/date';
 
 /** The tallest bar's height; the amount over the selected bar sits above it. */
-const MAX_H = 70;
-const MIN_H = 8;
+const MAX_H = 44;
+const MIN_H = 6;
 /** A day with nothing spent: a thin line, so it doesn't read as a small amount. */
 const EMPTY_H = 4;
 
@@ -112,25 +110,19 @@ export function SpendBars({
     picked?.range === range && picked.today === today && bars.some((b) => b.key === picked.key)
       ? picked.key
       : defaultBar(bars).key;
-  const selectedBar = bars.find((b) => b.key === selectedKey)!;
-  const selectedIndex = bars.indexOf(selectedBar);
-  const selectedDate =
-    range === 'week'
-      ? parseLocalIsoDate(selectedBar.key).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })
-      : `${selectedIndex * 7 + 1}–${Math.min((selectedIndex + 1) * 7, Number(today.slice(8)))} ${parseLocalIsoDate(today).toLocaleDateString(undefined, { month: 'short' })}`;
   const maxMinor = Math.max(0, ...bars.map((b) => b.totalMinor));
   const total = bars.reduce((s, b) => s + b.totalMinor, 0);
   return (
-    <Glass radius={24} style={[styles.card, cardSurface.neutral]}>
+    <View style={styles.wrap}>
       <View style={styles.head}>
         <View
           style={{ flex: 1, minWidth: 0 }}
           accessible
           accessibilityLabel={`Spending ${range === 'week' ? 'in the last 7 days' : 'this month'}, ${formatMoney(total)}`}
         >
-          <Text style={styles.title}>Spending</Text>
-          <Text style={styles.total}>
-            {formatMoney(total)} {range === 'week' ? 'in 7 days' : 'this month'}
+          <Text style={styles.title}>
+            {range === 'week' ? 'Last 7 days' : 'This month'}{' '}
+            <Text style={styles.total}>{formatMoney(total)}</Text>
           </Text>
         </View>
         <View style={styles.switch} accessibilityRole="tablist">
@@ -144,7 +136,7 @@ export function SpendBars({
                 setRange(r);
                 setPicked(null);
               }}
-              hitSlop={{ top: 9, bottom: 9, left: 0, right: 0 }}
+              hitSlop={{ top: 7, bottom: 7, left: 0, right: 0 }}
               style={[styles.seg, r === range && styles.segOn]}
               accessibilityRole="tab"
               accessibilityState={{ selected: r === range }}
@@ -189,24 +181,22 @@ export function SpendBars({
           />
         ))}
       </ScrollView>
-      <Text accessibilityLiveRegion="polite" style={styles.readout}>
-        {selectedDate} · {formatMoney(selectedBar.totalMinor)}
-      </Text>
-    </Glass>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  card: { marginHorizontal: 16, paddingHorizontal: 14, paddingTop: 14, paddingBottom: 12 },
+  // Sits inside Where it went's card, under its divider.
+  wrap: { gap: 6 },
   head: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     justifyContent: 'space-between',
     gap: 8,
   },
   title: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textSecondary },
-  total: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, marginTop: 2 },
+  total: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
   switch: {
     flexShrink: 0,
     flexDirection: 'row',
@@ -215,30 +205,23 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     backgroundColor: 'rgba(18,19,15,0.05)',
   },
-  seg: { minHeight: 48, paddingHorizontal: 12, borderRadius: 13, justifyContent: 'center' },
+  seg: { minHeight: 30, paddingHorizontal: 12, borderRadius: 13, justifyContent: 'center' },
   segOn: { backgroundColor: theme.colors.white, boxShadow: '0px 1px 3px rgba(18,19,15,0.12)' },
   segText: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textSecondary },
   segTextOn: { color: theme.colors.textPrimary },
-  readout: {
-    fontFamily: theme.font.bodyMedium,
-    fontSize: 12,
-    color: theme.colors.textSecondary,
-    marginTop: 8,
-  },
   bars: {
     flexGrow: 1,
     flexDirection: 'row',
     alignItems: 'flex-end',
     gap: 8,
-    height: MAX_H + 44,
-    marginTop: 8,
+    height: MAX_H + 34,
   },
   col: {
     flexGrow: 1,
     width: 44,
     alignItems: 'center',
     justifyContent: 'flex-end',
-    gap: 6,
+    gap: 4,
     height: '100%',
   },
   bar: { width: '100%', maxWidth: 34, borderRadius: 10 },
