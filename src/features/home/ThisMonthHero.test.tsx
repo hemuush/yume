@@ -5,6 +5,7 @@
 import { StyleSheet, Text } from 'react-native';
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
 jest.mock('@expo/vector-icons/Feather', () => () => null);
+jest.mock('@expo/vector-icons/MaterialCommunityIcons', () => () => null);
 
 jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMock').createReanimatedMock());
 jest.mock('@/lib/useReduceMotion', () => ({ useReduceMotion: () => true }));

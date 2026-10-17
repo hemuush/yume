@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { View, Pressable, PanResponder } from 'react-native';
 import { Text } from '@/components/Text';
 import Feather from '@expo/vector-icons/Feather';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import ReanimatedAnimated, {
   useSharedValue,
   useAnimatedStyle,
@@ -18,6 +19,8 @@ import { CountUpAmount } from '@/components/CountUpAmount';
 import { Glass } from '@/components/Glass';
 import { cardSurface } from '@/components/CardSurface';
 import { usePrivacy } from '@/theme/PrivacyContext';
+import { useAccent } from '@/theme/AccentContext';
+import { homeInk } from './homeInk';
 import { heroSlices, withoutSavings } from './heroSlices';
 import { MoneyBar } from './MoneyBar';
 import { DURATIONS } from '@/lib/motionTimings';
@@ -96,6 +99,7 @@ export function ThisMonthHero({
 }) {
   const reduce = useReduceMotion();
   const { hideAmounts } = usePrivacy();
+  const { accent } = useAccent();
   const [displayed, setDisplayed] = useState<HeroContent>({
     incomeMinor,
     spentMinor,
@@ -300,7 +304,12 @@ export function ThisMonthHero({
   return (
     <Glass radius={28} style={[styles.card, cardSurface.summary]}>
       <View style={styles.bar}>
-        <Text style={styles.headLabel}>{headLabel}</Text>
+        <View style={styles.headTitle}>
+          <View style={styles.headIcon}>
+            <MaterialCommunityIcons name="wallet-outline" size={18} color={homeInk(accent)} />
+          </View>
+          <Text style={styles.headLabel}>{headLabel}</Text>
+        </View>
         {renderPeriod ? renderPeriod(displayed.periodKey) : period}
       </View>
 
