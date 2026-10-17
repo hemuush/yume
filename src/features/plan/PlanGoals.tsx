@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { View, Pressable, Animated } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Text } from '@/components/Text';
 import { Glass } from '@/components/Glass';
 import { cardSurface } from '@/components/CardSurface';
@@ -8,6 +9,7 @@ import { StatusBadge } from '@/components/StatusBadge';
 import { theme } from '@/constants/theme';
 import { formatMoney, formatMaskableMoney } from '@/lib/money';
 import { withPressed } from '@/lib/pressed';
+import { softTint } from '@/components/softTint';
 import { haptics } from '@/lib/haptics';
 import { hueFor } from '@/lib/hueFor';
 import { usePressScale } from '@/lib/usePressScale';
@@ -119,6 +121,13 @@ function GoalCard({ goal, masked, onPress }: { goal: SavingsGoal; masked: boolea
       }
     >
       <Glass radius={24} style={[styles.goalCard, cardSurface.savings]}>
+        <View style={[styles.goalIcon, { backgroundColor: softTint(hue, 0.75) }]}>
+          <MaterialCommunityIcons
+            name={goal.linkedAccountId ? 'bank-outline' : 'flag-variant-outline'}
+            size={18}
+            color={theme.colors.ink}
+          />
+        </View>
         {masked ? (
           <Feather name="eye-off" size={20} color={theme.colors.textMuted} />
         ) : done ? (
@@ -170,6 +179,9 @@ export function WhatIfCard({
             accessibilityRole="button"
             accessibilityLabel="Open the what-if sandbox"
           >
+            <View style={styles.whatIfIcon}>
+              <MaterialCommunityIcons name="lightbulb-on-outline" size={18} color={theme.colors.dueInk} />
+            </View>
             <View style={styles.whatIfHeadCopy}>
               <Text style={styles.gainNote}>Spend a little less</Text>
               <Text style={styles.whatIfBold}>

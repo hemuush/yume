@@ -140,7 +140,16 @@ export const styles = StyleSheet.create({
 
   /* ---------- Goals ---------- */
   goals: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginHorizontal: SCREEN.gutter },
-  goalCard: { minHeight: 96, padding: 12, overflow: 'hidden', gap: 2 },
+  goalCard: { minHeight: 110, padding: 12, overflow: 'hidden', gap: 2 },
+  goalIcon: { width: 30, height: 30, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  whatIfIcon: {
+    width: 34,
+    height: 34,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: theme.colors.dueTint,
+  },
   goalWrap: { width: '48.5%', flexGrow: 1 },
   goal: { width: '48.5%', flexGrow: 1, minHeight: 96, padding: 12, overflow: 'hidden', gap: 2 },
   goalTrack: {
@@ -193,7 +202,7 @@ export const styles = StyleSheet.create({
   sub: { fontFamily: theme.font.body, fontSize: 13, lineHeight: 18, color: theme.colors.textSecondary },
 
   whatIfQ: { fontFamily: theme.font.body, fontSize: 13, lineHeight: 20, color: theme.colors.textSecondary },
-  whatIfHead: { minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 6 },
+  whatIfHead: { minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 10 },
   whatIfHeadCopy: { flex: 1, minWidth: 0 },
   whatIfBold: { fontSize: 13, fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
   lever: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 12 },
