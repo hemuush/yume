@@ -86,11 +86,12 @@ export function GoalsStrip({
       {shown.length < SHOWN && (
         <Pressable
           onPress={onAdd ?? onOpen}
-          style={withPressed([styles.goal, styles.goalNew])}
+          // Same rule as the budgets: a slim row after an even number of goals, the empty half after an odd one.
+          style={withPressed([styles.goal, styles.goalNew, shown.length % 2 === 0 && styles.goalNewSlim])}
           accessibilityRole="button"
           accessibilityLabel="Open savings goals to start a new one"
         >
-          <View style={styles.goalNewDisc}>
+          <View style={[styles.goalNewDisc, shown.length % 2 === 0 && styles.goalNewDiscSmall]}>
             <Feather name="plus" size={17} color={theme.colors.ink} />
           </View>
           <Text style={styles.goalNewText}>New goal</Text>
