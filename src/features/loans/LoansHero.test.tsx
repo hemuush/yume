@@ -43,11 +43,10 @@ afterAll(() => new Promise((resolve) => setTimeout(resolve, 800)));
 describe('LoansHero', () => {
   it('shows the debt, the debt-free month and the repaid share while you owe', () => {
     const shown = texts(render(totals()));
-    expect(shown).toEqual(
-      expect.arrayContaining(['You owe', '₹90,000', 'Debt-free', 'Jan 2045', '₹2,500', 'EMIs a month'])
-    );
+    expect(shown).toEqual(expect.arrayContaining(['You owe', '₹90,000', 'Debt-free', 'Jan 2045']));
     expect(shown.some((t) => t.includes('2%') && t.includes('repaid'))).toBe(true);
-    expect(shown).toEqual(expect.arrayContaining(['2', 'active loans']));
+    // The figures sit on one muted line, not in a row of tiles.
+    expect(shown.some((t) => t.startsWith('₹2,500 EMIs a month') && t.includes('2 active loans'))).toBe(true);
   });
 
   it('has no explainer line under the share bar', () => {
@@ -66,7 +65,7 @@ describe('LoansHero', () => {
     const shown = texts(
       render(totals({ youOweMinor: 0, owedToYouMinor: 500000, debtFreeDate: null, activeCount: 1 }))
     );
-    expect(shown).toEqual(expect.arrayContaining(['Owed to you', '₹5,000', '1', 'active loan']));
+    expect(shown).toEqual(expect.arrayContaining(['Owed to you', '₹5,000', '1 active loan']));
   });
 
   it('shows a skeleton and none of the figures while loading', () => {

@@ -15,6 +15,7 @@ import { SkyHeader } from '@/features/home/SkyHeader';
 import ReanimatedAnimated from 'react-native-reanimated';
 import { useCollapsingHeader } from '@/lib/useCollapsingHeader';
 import { EmptyState } from '@/components/EmptyState';
+import { Section } from '@/components/Section';
 import { Skeleton } from '@/components/Skeleton';
 import { Chip } from '@/components/Chip';
 import { Amount } from '@/components/Amount';
@@ -75,6 +76,9 @@ function PaceLane({ width, color, faded }: { width: `${number}%`; color: string;
  * Non-destructive sandbox: pick a category, cut its spend by a percentage, see how much sooner a savings
  * goal lands. Nothing is saved; numbers are recomputed client-side from existing data (src/lib/whatIf.ts).
  */
+/** How many category chips What-if shows before "N more". */
+const CATEGORY_CHIPS = 6;
+
 export default function WhatIfScreen() {
   const insets = useSafeAreaInsets();
   const { accent, secondary } = useAccent();
@@ -122,6 +126,13 @@ export default function WhatIfScreen() {
   const { loaded, hasData, loadError, reload } = useScreenLoad(load);
 
   const selectedCategory = categories.find((c) => c.categoryId === categoryId) ?? null;
+  // The biggest few, and whichever one is picked; the rest sit behind "N more".
+  const [showAllCategories, setShowAllCategories] = useState(false);
+  const bySpend = [...categories].sort((a, b) => b.totalMinor - a.totalMinor);
+  const shownCategories = showAllCategories
+    ? bySpend
+    : bySpend.filter((c, i) => i < CATEGORY_CHIPS || c.categoryId === categoryId);
+  const hiddenCount = bySpend.length - shownCategories.length;
   const selectedGoal = goals.find((g) => g.id === goalId) ?? null;
   const cut = selectedCategory ? projectedMonthlySpend(selectedCategory.totalMinor, cutPct) : null;
   const pace =
@@ -172,18 +183,17 @@ export default function WhatIfScreen() {
           </View>
         )}
 
-        <PurchaseCheck />
         {categories.length === 0 ? (
           <EmptyState
             title="Nothing to try yet"
             subtitle="Log a few expenses first — this needs some real spending to project from."
           />
         ) : (
-          <>
+          <Section first compact title="Spend a little less">
             <Glass radius={28} tone="strong" style={styles.card}>
               <Text style={styles.fieldLabel}>Cut spending on</Text>
               <View style={styles.chipRow}>
-                {categories.map((c) => (
+                {shownCategories.map((c) => (
                   <Chip
                     key={c.categoryId}
                     label={c.name}
@@ -192,6 +202,13 @@ export default function WhatIfScreen() {
                     onPress={() => setCategoryId(c.categoryId)}
                   />
                 ))}
+                {bySpend.length > CATEGORY_CHIPS && (
+                  <Chip
+                    label={showAllCategories ? 'Fewer' : `${hiddenCount} more`}
+                    active={false}
+                    onPress={() => setShowAllCategories((v) => !v)}
+                  />
+                )}
               </View>
 
               <Text style={[styles.fieldLabel, { marginTop: 16 }]}>By how much</Text>
@@ -297,8 +314,11 @@ export default function WhatIfScreen() {
             <View style={styles.footer}>
               <PrimaryButton title="Reset" variant="secondary" onPress={reset} />
             </View>
-          </>
+          </Section>
         )}
+        <Section compact first={categories.length === 0} title="Can I afford it?">
+          <PurchaseCheck />
+        </Section>
       </ReanimatedAnimated.ScrollView>
       <SkyHeader collapse={collapse} summary={undefined} title="What if…?" showBack hideUser wallpaper>
         <Text style={styles.intro}>Try a change, see where it lands. Nothing here changes your money.</Text>

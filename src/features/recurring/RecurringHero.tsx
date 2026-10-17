@@ -64,6 +64,28 @@ export function RecurringHero({
   const midDate = today ? addDaysToIsoDate(today, Math.round((RUN_WINDOW_DAYS - 1) / 2)) : null;
   const endDate = today ? addDaysToIsoDate(today, RUN_WINDOW_DAYS - 1) : null;
 
+  const timelineShown = !!today && marks.length > 0;
+  // The dates a run lands on; each jumps to its day. Inside the timeline when there is one.
+  const chips =
+    grouped.length > 0 ? (
+      <ScrollView horizontal showsHorizontalScrollIndicator contentContainerStyle={styles.dateGroups}>
+        {grouped.map((m) => (
+          <Pressable
+            key={m.date}
+            style={styles.dateGroup}
+            onPress={() => onDatePress?.(m.date)}
+            disabled={!onDatePress}
+            accessibilityRole="button"
+            accessibilityLabel={`${weekdayDayMonth(m.date)}, ${m.count} ${m.count === 1 ? 'entry' : 'entries'}`}
+          >
+            <Text style={styles.dateText}>
+              {dayMonth(m.date)} · {m.count} {m.count === 1 ? 'entry' : 'entries'}
+            </Text>
+          </Pressable>
+        ))}
+      </ScrollView>
+    ) : null;
+
   const schedule = (
     <>
       {today && marks.length > 0 && (
@@ -104,26 +126,10 @@ export function RecurringHero({
               {endDate && <Text style={styles.axisText}>{dayMonth(endDate)}</Text>}
             </View>
           </View>
+          {chips}
         </InsightDisclosure>
       )}
-      {grouped.length > 0 && (
-        <ScrollView horizontal showsHorizontalScrollIndicator contentContainerStyle={styles.dateGroups}>
-          {grouped.map((m) => (
-            <Pressable
-              key={m.date}
-              style={styles.dateGroup}
-              onPress={() => onDatePress?.(m.date)}
-              disabled={!onDatePress}
-              accessibilityRole="button"
-              accessibilityLabel={`${weekdayDayMonth(m.date)}, ${m.count} ${m.count === 1 ? 'entry' : 'entries'}`}
-            >
-              <Text style={styles.dateText}>
-                {dayMonth(m.date)} · {m.count} {m.count === 1 ? 'entry' : 'entries'}
-              </Text>
-            </Pressable>
-          ))}
-        </ScrollView>
-      )}
+      {!timelineShown && chips}
     </>
   );
 

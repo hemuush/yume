@@ -49,7 +49,7 @@ export function PeopleNet({
           <Text style={[styles.legendBold, { color: theme.colors.incomeText }]}>
             +{formatMoney(owedToYouMinor)}
           </Text>{' '}
-          owed to you · {owedCount}
+          owed to you · {owedCount} {owedCount === 1 ? 'person' : 'people'}
         </Text>
         <Text style={styles.legendText}>
           you owe{' '}

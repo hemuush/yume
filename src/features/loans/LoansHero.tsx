@@ -15,17 +15,6 @@ import { loanBarTone } from './loanIdentity';
 import type { DebtShare, LoanTotals } from './loanTotals';
 import type { Timeline } from './timelineLayout';
 
-function Stat({ value, label, lent }: { value: string; label: string; lent?: boolean }) {
-  return (
-    <View style={styles.stat}>
-      <Text style={[styles.statValue, lent && styles.statLent]} numberOfLines={1} adjustsFontSizeToFit>
-        {value}
-      </Text>
-      <Text style={styles.statLabel}>{label}</Text>
-    </View>
-  );
-}
-
 /**
  * First card on Loans, the road to debt-free: what you owe, how much is repaid, and the same timeline Plan
  * shows (one line per loan, ending the month it finishes). With no end dates it falls back to the debt
@@ -154,19 +143,18 @@ export function LoansHero({
             )
           )}
 
-          <View style={styles.stats}>
-            {owes && <Stat value={formatMoney(totals.emiPerMonthMinor)} label="EMIs a month" />}
-            {owes && totals.interestLeftMinor > 0 && (
-              <Stat value={formatMoney(totals.interestLeftMinor)} label="interest still to pay" />
-            )}
-            <Stat
-              value={String(totals.activeCount)}
-              label={totals.activeCount === 1 ? 'active loan' : 'active loans'}
-            />
-            {owes && totals.owedToYouMinor > 0 && (
-              <Stat lent value={formatMoney(totals.owedToYouMinor)} label="owed to you" />
-            )}
-          </View>
+          <Text style={styles.statLine}>
+            {[
+              owes ? `${formatMoney(totals.emiPerMonthMinor)} EMIs a month` : null,
+              owes && totals.interestLeftMinor > 0
+                ? `${formatMoney(totals.interestLeftMinor)} interest to go`
+                : null,
+              `${totals.activeCount} ${totals.activeCount === 1 ? 'active loan' : 'active loans'}`,
+              owes && totals.owedToYouMinor > 0 ? `${formatMoney(totals.owedToYouMinor)} owed to you` : null,
+            ]
+              .filter(Boolean)
+              .join(' · ')}
+          </Text>
         </>
       )}
     </Glass>
@@ -176,6 +164,13 @@ export function LoansHero({
 const styles = StyleSheet.create({
   hero: { padding: 14, gap: 8 },
   summary: { flexWrap: 'wrap', gap: 8 },
+  statLine: {
+    fontFamily: theme.font.body,
+    fontSize: 12.5,
+    lineHeight: 18,
+    fontVariant: ['tabular-nums'],
+    color: theme.colors.textSecondary,
+  },
   summarySide: { flexShrink: 1 },
   title: { fontFamily: theme.font.roundedBold, fontSize: 17, color: theme.colors.textPrimary },
   sideNote: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary, marginTop: 4 },
@@ -211,16 +206,4 @@ const styles = StyleSheet.create({
   axisEnd: { fontFamily: theme.font.bodyBold, color: theme.colors.incomeText },
   share: { flexDirection: 'row', gap: 3, height: 8 },
   segment: { flexBasis: 0, minWidth: 6, height: 8, borderRadius: 4 },
-  stats: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-  stat: {
-    flexGrow: 1,
-    flexBasis: 120,
-    minWidth: 120,
-    paddingVertical: 2,
-    paddingHorizontal: 0,
-    gap: 2,
-  },
-  statValue: { fontFamily: theme.font.bodyBold, fontSize: 14, color: theme.colors.textPrimary },
-  statLent: { color: theme.colors.incomeText },
-  statLabel: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
 });
