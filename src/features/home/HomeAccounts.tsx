@@ -11,6 +11,7 @@ import { accountHue, accountIcon } from '@/lib/account';
 import { shade } from '@/lib/color';
 import { withPressed } from '@/lib/pressed';
 import { useAccent } from '@/theme/AccentContext';
+import { homeInk } from './homeInk';
 import { GainPill } from '@/features/investments/GainPill';
 import type { Account } from '@/types';
 
@@ -69,39 +70,63 @@ export function HomeAccounts({
     ? savings.reduce((sum, a) => sum + a.currentBalanceMinor, 0)
     : null;
 
-  const chip = (a: Account, inSavingsGroup: boolean) => {
+  // Everyday accounts are two-column tiles (name, kind, balance); savings are full-width rows (name, balance).
+  const tile = (a: Account) => {
     const hue = accountHue(a.type, accent);
     return (
       <Pressable
         key={a.id}
         onPress={() => onOpenAccount(a)}
-        style={withPressed([styles.chip, stacked ? styles.full : grouped && styles.half])}
+        style={withPressed([styles.tileBtn, stacked ? styles.full : styles.half])}
         accessibilityRole="button"
         accessibilityLabel={`${a.name}, ${accountTypeLabel(a)}. Open summary`}
       >
         <View style={[styles.chipIcon, { backgroundColor: shade(hue, 88) }]}>
           <MaterialCommunityIcons
             name={accountIcon(a.type) as McIconName}
-            size={14}
+            size={18}
             color={shade(hue, 30, 10)}
           />
         </View>
         <View style={styles.chipText}>
           <View style={styles.chipNameRow}>
-            <Text style={styles.chipName}>{a.name}</Text>
+            <Text style={styles.chipName} numberOfLines={1}>
+              {a.name}
+            </Text>
             {a.investment && <GainPill account={a} />}
           </View>
-          <Text style={styles.chipSub}>
-            {/* Under the Savings heading the type is known; only "tracked" still says something. */}
-            {inSavingsGroup ? (a.investment ? 'tracked · ' : '') : `${accountTypeLabel(a)} · `}
-            <Amount
-              minor={a.currentBalanceMinor}
-              currency={a.currency}
-              sensitive={a.type === 'savings'}
-              style={styles.chipAmount}
-            />
+          <Text style={styles.chipSub} numberOfLines={1}>
+            {accountTypeLabel(a)}
           </Text>
+          <Amount minor={a.currentBalanceMinor} currency={a.currency} style={styles.chipAmount} />
         </View>
+      </Pressable>
+    );
+  };
+  const row = (a: Account) => {
+    const hue = accountHue(a.type, accent);
+    return (
+      <Pressable
+        key={a.id}
+        onPress={() => onOpenAccount(a)}
+        style={withPressed(styles.rowBtn)}
+        accessibilityRole="button"
+        accessibilityLabel={`${a.name}, ${accountTypeLabel(a)}. Open summary`}
+      >
+        <View style={[styles.chipIcon, { backgroundColor: shade(hue, 88) }]}>
+          <MaterialCommunityIcons
+            name={accountIcon(a.type) as McIconName}
+            size={18}
+            color={shade(hue, 30, 10)}
+          />
+        </View>
+        <View style={[styles.chipNameRow, styles.rowName]}>
+          <Text style={styles.chipName} numberOfLines={1}>
+            {a.name}
+          </Text>
+          {a.investment && <GainPill account={a} />}
+        </View>
+        <Amount minor={a.currentBalanceMinor} currency={a.currency} sensitive style={styles.chipAmount} />
       </Pressable>
     );
   };
@@ -109,21 +134,24 @@ export function HomeAccounts({
   return (
     <View style={styles.wrap}>
       <Glass radius={22} style={[styles.tile, cardSurface.neutral]}>
-        <Pressable
-          onPress={onOpenAccounts}
-          hitSlop={8}
-          style={withPressed(styles.head)}
-          accessibilityRole="button"
-          accessibilityLabel={`Accounts, ${accounts.length}. See all`}
-        >
-          <Text style={styles.title}>Accounts</Text>
-          <View style={styles.headingAction}>
-            <Text style={styles.headingActionText}>View all</Text>
-            <Feather name="arrow-up-right" size={17} color={theme.colors.link} />
+        <View style={styles.head}>
+          <View style={[styles.headIcon, { backgroundColor: shade(accent, 88) }]}>
+            <MaterialCommunityIcons name="wallet-outline" size={18} color={homeInk(accent)} />
           </View>
-        </Pressable>
+          <Text style={styles.title}>Accounts</Text>
+          <Pressable
+            onPress={onOpenAccounts}
+            hitSlop={8}
+            style={withPressed(styles.headingAction)}
+            accessibilityRole="button"
+            accessibilityLabel={`Accounts, ${accounts.length}. See all`}
+          >
+            <Text style={styles.headingActionText}>View all</Text>
+            <Feather name="arrow-up-right" size={15} color={theme.colors.link} />
+          </Pressable>
+        </View>
         {inHand.length > 0 && (
-          <>
+          <View style={[styles.inHand, { backgroundColor: shade(accent, 92) }]}>
             <Text style={styles.inHandLabel}>In hand now</Text>
             <Amount
               minor={inHandMinor}
@@ -135,26 +163,32 @@ export function HomeAccounts({
             <Text style={styles.sub}>
               Bank, cash & wallets only{accounts.some((a) => a.currency !== currency) ? ` · ${currency}` : ''}
             </Text>
+          </View>
+        )}
+        {everyday.length > 0 && (
+          <>
+            {grouped && (
+              <Text style={styles.groupHead} accessibilityRole="header">
+                Everyday
+              </Text>
+            )}
+            <View style={styles.chips}>{everyday.map(tile)}</View>
           </>
         )}
-        {grouped ? (
+        {savings.length > 0 && (
           <>
-            <Text style={styles.groupHead} accessibilityRole="header">
-              Everyday
-            </Text>
-            <View style={styles.chips}>{everyday.map((a) => chip(a, false))}</View>
-            <View style={styles.groupHeadRow}>
-              <Text style={styles.groupHeadText} accessibilityRole="header">
-                Savings
-              </Text>
-              {savingsMinor != null && (
-                <Amount minor={savingsMinor} currency={currency} sensitive style={styles.groupHeadText} />
-              )}
-            </View>
-            <View style={styles.chips}>{savings.map((a) => chip(a, true))}</View>
+            {grouped && (
+              <View style={styles.groupHeadRow}>
+                <Text style={styles.groupHeadText} accessibilityRole="header">
+                  Savings
+                </Text>
+                {savingsMinor != null && (
+                  <Amount minor={savingsMinor} currency={currency} sensitive style={styles.groupHeadText} />
+                )}
+              </View>
+            )}
+            <View style={styles.rows}>{savings.map(row)}</View>
           </>
-        ) : (
-          <View style={[styles.chips, styles.chipsFirst]}>{accounts.map((a) => chip(a, false))}</View>
         )}
       </Glass>
     </View>
@@ -164,16 +198,20 @@ export function HomeAccounts({
 const styles = StyleSheet.create({
   wrap: { marginHorizontal: 16 },
   tile: { padding: 14, gap: 4 },
-  head: {
-    minHeight: 48,
+  head: { minHeight: 40, flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 6 },
+  headIcon: { width: 36, height: 36, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  headingAction: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 8,
+    gap: 4,
+    minHeight: 32,
+    paddingHorizontal: 12,
+    borderRadius: theme.radius.pill,
+    backgroundColor: GLASS.fillStrong,
   },
-  headingAction: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  inHand: { borderRadius: 18, padding: 12, gap: 2 },
   headingActionText: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.link },
-  title: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textSecondary },
+  title: { flex: 1, fontFamily: theme.font.bodyBold, fontSize: 15, color: theme.colors.textPrimary },
   big: {
     fontFamily: theme.font.body,
     fontSize: theme.typeSize.title,
@@ -186,6 +224,8 @@ const styles = StyleSheet.create({
   full: { flexBasis: '100%' },
   // Two even columns when the accounts are grouped.
   half: { width: '48.5%' },
+  rows: { gap: 6, marginTop: 6 },
+  rowName: { flex: 1, minWidth: 0 },
   inHandLabel: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textMuted },
   groupHead: {
     marginTop: 14,
@@ -210,23 +250,31 @@ const styles = StyleSheet.create({
     color: theme.colors.textMuted,
   },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 6 },
-  // Not grouped: the tiles start a little further below the total, as they always did.
-  chipsFirst: { marginTop: 10 },
-  chip: {
+  tileBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    minHeight: 48,
-    paddingLeft: 5,
-    paddingRight: 12,
-    paddingVertical: 5,
-    borderRadius: 22,
+    minHeight: 56,
+    padding: 8,
+    borderRadius: 18,
     backgroundColor: GLASS.fillStrong,
     borderWidth: 1,
     borderColor: GLASS.edge,
     maxWidth: '100%',
   },
-  chipIcon: { width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
+  rowBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    minHeight: 48,
+    paddingVertical: 6,
+    paddingHorizontal: 8,
+    borderRadius: 18,
+    backgroundColor: GLASS.fillStrong,
+    borderWidth: 1,
+    borderColor: GLASS.edge,
+  },
+  chipIcon: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center' },
   chipText: { flexShrink: 1, minWidth: 0 },
   chipNameRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 6 },
   chipName: { flexShrink: 1, fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textPrimary },
@@ -239,7 +287,7 @@ const styles = StyleSheet.create({
   chipAmount: {
     fontFamily: theme.font.bodyBold,
     fontVariant: ['tabular-nums'],
-    fontSize: 12,
-    color: theme.colors.textSecondary,
+    fontSize: 13,
+    color: theme.colors.textPrimary,
   },
 });
