@@ -15,6 +15,9 @@ import { homeInk } from './homeInk';
 import { GainPill } from '@/features/investments/GainPill';
 import type { Account } from '@/types';
 
+/** Everyday accounts drawn as tiles; the rest are under View all. */
+const EVERYDAY_SHOWN = 4;
+
 /** "bank", "credit card", "savings · tracked": what kind of account, as the old account cards said it. */
 export function accountTypeLabel(a: Account): string {
   return a.investment ? 'savings · tracked' : a.type.replace('_', ' ');
@@ -61,10 +64,8 @@ export function HomeAccounts({
     (a) => (a.type === 'bank' || a.type === 'cash' || a.type === 'wallet') && a.currency === currency
   );
   const inHandMinor = inHand.reduce((s, a) => s + a.currentBalanceMinor, 0);
-  // With savings and everyday accounts side by side, each gets its own heading and the savings a subtotal.
   const savings = accounts.filter((a) => a.type === 'savings');
   const everyday = accounts.filter((a) => a.type !== 'savings');
-  const grouped = savings.length > 0 && everyday.length > 0;
   // A sum across currencies would mean nothing: the subtotal is only for savings all in the default currency.
   const savingsMinor = savings.every((a) => a.currency === currency)
     ? savings.reduce((sum, a) => sum + a.currentBalanceMinor, 0)
@@ -95,14 +96,37 @@ export function HomeAccounts({
             </Text>
             {a.investment && <GainPill account={a} />}
           </View>
-          <Text style={styles.chipSub} numberOfLines={1}>
-            {accountTypeLabel(a)}
-          </Text>
           <Amount minor={a.currentBalanceMinor} currency={a.currency} style={styles.chipAmount} />
         </View>
       </Pressable>
     );
   };
+  // Several savings accounts are one summary row (the count and the total, masked like each balance) that opens
+  // the full list; a single one is shown as itself.
+  const savingsSummary = (
+    <Pressable
+      onPress={onOpenAccounts}
+      style={withPressed(styles.rowBtn)}
+      accessibilityRole="button"
+      accessibilityLabel={`Savings, ${savings.length} accounts. See all`}
+    >
+      <View style={[styles.chipIcon, { backgroundColor: shade(accountHue('savings', accent), 88) }]}>
+        <MaterialCommunityIcons
+          name={accountIcon('savings') as McIconName}
+          size={18}
+          color={shade(accountHue('savings', accent), 30, 10)}
+        />
+      </View>
+      <View style={styles.rowName}>
+        <Text style={styles.chipName}>Savings</Text>
+        <Text style={styles.chipSub}>{`${savings.length} accounts`}</Text>
+      </View>
+      {savingsMinor != null && (
+        <Amount minor={savingsMinor} currency={currency} sensitive style={styles.chipAmount} />
+      )}
+      <Feather name="chevron-right" size={16} color={theme.colors.textMuted} />
+    </Pressable>
+  );
   const row = (a: Account) => {
     const hue = accountHue(a.type, accent);
     return (
@@ -150,45 +174,21 @@ export function HomeAccounts({
             <Feather name="arrow-up-right" size={15} color={theme.colors.link} />
           </Pressable>
         </View>
-        {inHand.length > 0 && (
-          <View style={[styles.inHand, { backgroundColor: shade(accent, 92) }]}>
-            <Text style={styles.inHandLabel}>In hand now</Text>
-            <Amount
-              minor={inHandMinor}
-              currency={currency}
-              style={styles.big}
-              numberOfLines={1}
-              adjustsFontSizeToFit
-            />
-            <Text style={styles.sub}>
-              Bank, cash & wallets only{accounts.some((a) => a.currency !== currency) ? ` · ${currency}` : ''}
-            </Text>
-          </View>
-        )}
         {everyday.length > 0 && (
           <>
-            {grouped && (
-              <Text style={styles.groupHead} accessibilityRole="header">
-                Everyday
+            <View style={styles.groupHeadRow}>
+              <Text style={styles.groupHeadText} accessibilityRole="header">
+                {`Everyday · ${everyday.length} ${everyday.length === 1 ? 'account' : 'accounts'}`}
               </Text>
-            )}
-            <View style={styles.chips}>{everyday.map(tile)}</View>
+              {inHand.length > 0 && (
+                <Amount minor={inHandMinor} currency={currency} style={styles.groupHeadAmount} />
+              )}
+            </View>
+            <View style={styles.chips}>{everyday.slice(0, EVERYDAY_SHOWN).map(tile)}</View>
           </>
         )}
         {savings.length > 0 && (
-          <>
-            {grouped && (
-              <View style={styles.groupHeadRow}>
-                <Text style={styles.groupHeadText} accessibilityRole="header">
-                  Savings
-                </Text>
-                {savingsMinor != null && (
-                  <Amount minor={savingsMinor} currency={currency} sensitive style={styles.groupHeadText} />
-                )}
-              </View>
-            )}
-            <View style={styles.rows}>{savings.map(row)}</View>
-          </>
+          <View style={styles.rows}>{savings.length === 1 ? row(savings[0]) : savingsSummary}</View>
         )}
       </Glass>
     </View>
@@ -209,7 +209,6 @@ const styles = StyleSheet.create({
     borderRadius: theme.radius.pill,
     backgroundColor: GLASS.fillStrong,
   },
-  inHand: { borderRadius: 18, padding: 12, gap: 2 },
   headingActionText: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.link },
   title: { flex: 1, fontFamily: theme.font.bodyBold, fontSize: 15, color: theme.colors.textPrimary },
   big: {
@@ -226,22 +225,20 @@ const styles = StyleSheet.create({
   half: { width: '48.5%' },
   rows: { gap: 6, marginTop: 6 },
   rowName: { flex: 1, minWidth: 0 },
-  inHandLabel: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textMuted },
-  groupHead: {
-    marginTop: 14,
-    marginHorizontal: 2,
-    fontFamily: theme.font.bodyBold,
-    fontSize: 12,
-    color: theme.colors.textMuted,
-  },
   groupHeadRow: {
-    marginTop: 14,
+    marginTop: 4,
     marginHorizontal: 2,
     flexDirection: 'row',
     flexWrap: 'wrap',
     alignItems: 'baseline',
     justifyContent: 'space-between',
     gap: 8,
+  },
+  groupHeadAmount: {
+    fontFamily: theme.font.bodyBold,
+    fontSize: 12,
+    fontVariant: ['tabular-nums'],
+    color: theme.colors.textPrimary,
   },
   groupHeadText: {
     fontFamily: theme.font.bodyBold,
