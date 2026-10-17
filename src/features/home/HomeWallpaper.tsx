@@ -11,8 +11,9 @@ export function wallpaperTop(accent: string): string {
 }
 
 /**
- * Home's wallpaper: a soft wash of the theme colour at the top fading into the page colour, with two large blurred
- * blobs (radial gradients: the theme colour at the top right, the second colour at the left) for depth behind the glass cards. Static: nothing here re-renders on scroll.
+ * Home's wallpaper: a soft wash of the theme colour at the top fading into the page colour, with two blurred
+ * colour blobs (the theme colour at the top right, the second colour at the left) and two white glows (a pale
+ * circle behind the upper left, and one at the bottom) for depth behind the glass cards. Static: nothing here re-renders on scroll.
  */
 export const HomeWallpaper = memo(function HomeWallpaper({
   accent,
@@ -26,7 +27,7 @@ export const HomeWallpaper = memo(function HomeWallpaper({
 }) {
   const top = wallpaperTop(accent);
   const mid = shade(accent, 94);
-  const blobA = shade(accent, 74);
+  const blobA = shade(accent, 82);
   const blobB = shade(secondary, 86);
   return (
     <View pointerEvents="none" renderToHardwareTextureAndroid style={StyleSheet.absoluteFill}>
@@ -39,16 +40,22 @@ export const HomeWallpaper = memo(function HomeWallpaper({
         <Svg style={StyleSheet.absoluteFill}>
           <Defs>
             <RadialGradient id="wpA" cx="50%" cy="50%" r="50%">
-              <Stop offset="0" stopColor={blobA} stopOpacity={0.75} />
+              <Stop offset="0" stopColor={blobA} stopOpacity={0.8} />
               <Stop offset="1" stopColor={blobA} stopOpacity={0} />
             </RadialGradient>
             <RadialGradient id="wpB" cx="50%" cy="50%" r="50%">
-              <Stop offset="0" stopColor={blobB} stopOpacity={0.6} />
+              <Stop offset="0" stopColor={blobB} stopOpacity={0.5} />
               <Stop offset="1" stopColor={blobB} stopOpacity={0} />
             </RadialGradient>
+            <RadialGradient id="wpC" cx="50%" cy="50%" r="50%">
+              <Stop offset="0" stopColor="#FFFFFF" stopOpacity={0.45} />
+              <Stop offset="1" stopColor="#FFFFFF" stopOpacity={0} />
+            </RadialGradient>
           </Defs>
-          <Circle cx="92%" cy="30" r="260" fill="url(#wpA)" />
-          <Circle cx="0%" cy="46%" r="230" fill="url(#wpB)" />
+          <Circle cx="30%" cy="38%" r="240" fill="url(#wpC)" />
+          <Circle cx="95%" cy="0" r="240" fill="url(#wpA)" />
+          <Circle cx="0%" cy="46%" r="190" fill="url(#wpB)" />
+          <Circle cx="75%" cy="100%" r="300" fill="url(#wpC)" />
         </Svg>
       )}
     </View>

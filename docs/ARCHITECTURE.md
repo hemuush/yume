@@ -202,7 +202,7 @@ Home’s overview card adds a Refunds page when expected refunds remain, alongsi
 
 ## Home header, wallpaper, money bar and motion
 
-The shared wallpaper (every screen except Home, which stays a plain wash) has two large blurred blobs: the theme colour, deeper, at the top right (radius 260) and the second colour at the left, halfway down the screen (radius 230).
+The shared wallpaper (every screen except Home, which stays a plain wash) layers two colour blobs on the wash (the theme colour in the top right corner, the second colour at the left, halfway down) and two white glows (behind the upper left, and at the bottom), so the cards sit on a soft, light, layered sky.
 
 Home's greeting (date, "Good morning", Suu's line) is small, left-aligned and centred vertically between the brand row and the month card, and collapses into the brand row on scroll as before. Tapping the Yume logo scrolls Home back to the top (instant with reduced motion). Home's wallpaper is the theme wash alone: [HomeWallpaper](../src/features/home/HomeWallpaper.tsx) takes a `plain` option that drops the two light blobs, and only Home sets it, so the other screens that use the wallpaper are unchanged.
 
