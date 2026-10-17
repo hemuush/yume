@@ -335,25 +335,38 @@ export function ThisMonthHero({
           ) : (
             <Text style={styles.headValue}>—</Text>
           )}
-          <Text style={styles.headCaption}>{headCaption}</Text>
         </View>
 
-        {slices.hasIncome && (
-          <Pressable
-            onPress={() => {
-              haptics.tap();
-              setShowWorking((v) => !v);
-            }}
-            style={withPressed(styles.howLink)}
-            hitSlop={{ top: 6, bottom: 6, left: 8, right: 8 }}
-            accessibilityRole="button"
-            accessibilityState={{ expanded: showWorking }}
-            accessibilityLabel="How this adds up"
+        {/* The caption and its Details link share one line; the caption is already in the figure's spoken label. */}
+        <View style={styles.captionRow}>
+          <Text
+            style={styles.headCaption}
+            accessibilityElementsHidden
+            importantForAccessibility="no-hide-descendants"
           >
-            <Text style={styles.howText}>Details</Text>
-            <Feather name={showWorking ? 'chevron-up' : 'chevron-down'} size={13} color={theme.colors.link} />
-          </Pressable>
-        )}
+            {headCaption}
+          </Text>
+          {slices.hasIncome && (
+            <Pressable
+              onPress={() => {
+                haptics.tap();
+                setShowWorking((v) => !v);
+              }}
+              style={withPressed(styles.howLink)}
+              hitSlop={{ top: 6, bottom: 6, left: 8, right: 8 }}
+              accessibilityRole="button"
+              accessibilityState={{ expanded: showWorking }}
+              accessibilityLabel="How this adds up"
+            >
+              <Text style={styles.howText}>Details</Text>
+              <Feather
+                name={showWorking ? 'chevron-up' : 'chevron-down'}
+                size={13}
+                color={theme.colors.link}
+              />
+            </Pressable>
+          )}
+        </View>
 
         {slices.hasIncome && showWorking && (
           <View style={styles.working}>

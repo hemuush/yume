@@ -120,15 +120,7 @@ it('keeps selected category details readable across reordering and reduced motio
     isSensitive: false,
   }));
   const dial = (breakdown = categories) => (
-    <WhereItWent
-      breakdown={breakdown}
-      iconFor={() => 'tag'}
-      spentMinor={100000}
-      previousSpentMinor={0}
-      periodName="October"
-      previousName="September"
-      onOpenReports={jest.fn()}
-    />
+    <WhereItWent breakdown={breakdown} iconFor={() => 'tag'} spentMinor={100000} onOpenReports={jest.fn()} />
   );
   const r = render(dial());
   expect(text(r)).toContain('40%');

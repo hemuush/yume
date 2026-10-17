@@ -8,7 +8,7 @@ import { SOFT_LIFT } from './SoftCard';
  */
 export const SCREEN = {
   /** Space above each section heading (and between a hero card and the block under it). */
-  sectionGap: 20,
+  sectionGap: 16,
   gutter: 16,
   /** Padding inside a standalone card; a hero card with a top strip takes `heroPadTop`. */
   cardPad: 12,

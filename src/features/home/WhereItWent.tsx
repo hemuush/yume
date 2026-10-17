@@ -1,11 +1,5 @@
-import { useEffect, useState } from 'react';
-import { View, Pressable, StyleSheet, useWindowDimensions } from 'react-native';
-import Animated, {
-  cancelAnimation,
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-} from 'react-native-reanimated';
+import { useState } from 'react';
+import { View, Pressable, StyleSheet } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Text } from '@/components/Text';
@@ -17,29 +11,21 @@ import { theme } from '@/constants/theme';
 import { formatMoney } from '@/lib/money';
 import { haptics } from '@/lib/haptics';
 import { withPressed } from '@/lib/pressed';
-import { useReduceMotion } from '@/lib/useReduceMotion';
 import { useAccent } from '@/theme/AccentContext';
 import { homeInk } from './homeInk';
 
-const POSITIONS = [
-  [38, 0],
-  [54, 48],
-  [62, 96],
-  [54, 144],
-  [38, 192],
-] as const;
+/** How many categories get their own button before the "all categories" one. */
+const SHOWN = 4;
 
-/** The selection pill overshoots a touch and settles: it lands with a little life, not a slide. */
-const PILL_SPRING = { damping: 13, stiffness: 190, mass: 0.9 };
-
-/** Fixed curved targets; only the selection pill moves, while details update immediately. */
+/**
+ * Where the month's money went: a row of the biggest categories (the picked one is a dark pill with its
+ * share), and under it that category, one tap from its page. The month's total is not repeated here: the
+ * month card above already says it.
+ */
 export function WhereItWent({
   breakdown,
   iconFor,
   spentMinor,
-  previousSpentMinor,
-  periodName,
-  previousName,
   onOpenReports,
   onOpenCategory,
   onAddExpense,
@@ -47,15 +33,12 @@ export function WhereItWent({
   breakdown: CategoryBreakdownItem[];
   iconFor: (categoryId: string) => string | undefined;
   spentMinor: number;
-  previousSpentMinor: number;
-  periodName: string;
-  previousName: string;
   onOpenReports: () => void;
   onOpenCategory?: (categoryId: string) => void;
   onAddExpense?: () => void;
 }) {
   const positive = breakdown.filter((c) => c.totalMinor > 0).sort((a, b) => b.totalMinor - a.totalMinor);
-  const top = positive.slice(0, 4);
+  const top = positive.slice(0, SHOWN);
   const total = positive.reduce((sum, c) => sum + c.totalMinor, 0);
   const [picked, setPicked] = useState(top[0]?.categoryId);
   const index = Math.max(
@@ -64,188 +47,125 @@ export function WhereItWent({
   );
   const selected = top[index];
   const share = selected ? Math.round((selected.totalMinor / total) * 100) : 0;
-  const reduce = useReduceMotion();
-  const { width, fontScale } = useWindowDimensions();
-  const stacked = width < 360 || fontScale > 1.2;
   const { accent } = useAccent();
   const ink = homeInk(accent);
-  const x = useSharedValue(POSITIONS[index][0] - 38);
-  const y = useSharedValue(POSITIONS[index][1]);
-  useEffect(() => {
-    x.value = reduce ? POSITIONS[index][0] - 38 : withSpring(POSITIONS[index][0] - 38, PILL_SPRING);
-    y.value = reduce ? POSITIONS[index][1] : withSpring(POSITIONS[index][1], PILL_SPRING);
-    return () => {
-      cancelAnimation(x);
-      cancelAnimation(y);
-    };
-  }, [index, reduce, x, y]);
-  const highlight = useAnimatedStyle(() => ({
-    transform: [{ translateX: x.value }, { translateY: y.value }],
-  }));
-  const diff = spentMinor - previousSpentMinor;
-  return (
-    <View style={[styles.section, cardSurface.neutral, stacked && styles.stacked]}>
-      <View style={styles.details}>
-        <Text style={styles.label}>Spent in {periodName}</Text>
-        <Text style={styles.total} numberOfLines={1} adjustsFontSizeToFit>
-          {formatMoney(spentMinor)}
+
+  if (!selected) {
+    return (
+      <View style={[styles.section, cardSurface.neutral]}>
+        <Text style={styles.name}>{spentMinor < 0 ? 'Refunds exceed spending' : 'No spending yet'}</Text>
+        <Text style={styles.meta}>
+          {spentMinor < 0
+            ? 'See your net spending and refunds in Reports.'
+            : 'Your categories appear after an expense.'}
         </Text>
-        {previousSpentMinor > 0 && diff !== 0 && (
-          <Text
-            style={[styles.meta, { color: diff < 0 ? theme.colors.incomeText : theme.colors.expenseText }]}
-          >
-            {formatMoney(Math.abs(diff))} {diff < 0 ? 'less' : 'more'} than {previousName}
-          </Text>
-        )}
-        <View style={styles.divider} />
-        {selected ? (
-          // The category itself is the way in: no separate "View category" line.
-          <Pressable
-            style={withPressed(styles.categoryButton)}
-            onPress={() => (onOpenCategory ? onOpenCategory(selected.categoryId) : onOpenReports())}
-            accessibilityRole="button"
-            accessibilityLabel={`View ${selected.name} category`}
-          >
-            <View style={{ flex: 1, minWidth: 0 }}>
-              <Text style={styles.name}>{selected.name}</Text>
-              <Text style={styles.meta}>{`${formatMoney(selected.totalMinor)} · ${share}%`}</Text>
-            </View>
-            <Feather name="chevron-right" size={18} color={theme.colors.link} />
-          </Pressable>
-        ) : (
-          <>
-            <Text style={styles.name}>{spentMinor < 0 ? 'Refunds exceed spending' : 'No spending yet'}</Text>
-            <Text style={styles.meta}>
-              {spentMinor < 0
-                ? 'See your net spending and refunds in Reports.'
-                : 'Your categories appear after an expense.'}
-            </Text>
-            <Pressable
-              style={withPressed(styles.linkButton)}
-              onPress={spentMinor < 0 ? onOpenReports : onAddExpense}
-              accessibilityRole="button"
-              accessibilityLabel={spentMinor < 0 ? 'View Reports' : 'Add expense'}
-            >
-              <Text style={styles.link}>{spentMinor < 0 ? 'View Reports' : 'Add expense'}</Text>
-              <Feather name="arrow-right" size={16} color={theme.colors.link} />
-            </Pressable>
-          </>
-        )}
+        <Pressable
+          style={withPressed(styles.linkButton)}
+          onPress={spentMinor < 0 ? onOpenReports : onAddExpense}
+          accessibilityRole="button"
+          accessibilityLabel={spentMinor < 0 ? 'View Reports' : 'Add expense'}
+        >
+          <Text style={styles.link}>{spentMinor < 0 ? 'View Reports' : 'Add expense'}</Text>
+          <Feather name="arrow-right" size={16} color={theme.colors.link} />
+        </Pressable>
       </View>
-      {selected && (
-        <View style={stacked ? styles.selectorRow : [styles.dial, { height: (top.length + 1) * 48 }]}>
-          {!stacked && (
-            <Animated.View
-              pointerEvents="none"
-              style={[styles.highlight, { backgroundColor: ink }, highlight]}
-            >
-              <Text style={styles.share}>{share}%</Text>
-            </Animated.View>
-          )}
-          {top.map((c, i) => (
+    );
+  }
+
+  return (
+    <View style={[styles.section, cardSurface.neutral]}>
+      <View style={styles.row}>
+        {top.map((c, i) => {
+          const on = i === index;
+          const icon = (
+            <MaterialCommunityIcons
+              name={(iconFor(c.categoryId) ?? 'tag') as McIconName}
+              size={20}
+              color={on ? theme.colors.white : ink}
+            />
+          );
+          return (
             <Pressable
               key={c.categoryId}
-              style={withPressed([
-                stacked ? styles.inlineTarget : styles.target,
-                {
-                  ...(stacked ? {} : { left: POSITIONS[i][0], top: POSITIONS[i][1] }),
-                  backgroundColor: i === index ? (stacked ? ink : 'transparent') : theme.colors.white,
-                },
-              ])}
+              style={withPressed([styles.target, on && [styles.picked, { backgroundColor: ink }]])}
               onPress={() => {
-                if (c.categoryId !== selected.categoryId) {
+                if (!on) {
                   haptics.tap();
                   setPicked(c.categoryId);
                 }
               }}
+              hitSlop={3}
               accessibilityRole="button"
               accessibilityLabel={`${c.name}, ${Math.round((c.totalMinor / total) * 100)}% of spending`}
-              accessibilityState={{ selected: i === index }}
+              accessibilityState={{ selected: on }}
             >
-              <MaterialCommunityIcons
-                name={(iconFor(c.categoryId) ?? 'tag') as McIconName}
-                size={20}
-                color={i === index ? theme.colors.white : ink}
-              />
+              {on && <Text style={styles.share}>{share}%</Text>}
+              {icon}
             </Pressable>
-          ))}
-          <Pressable
-            style={withPressed(
-              stacked
-                ? styles.inlineTarget
-                : [styles.target, { left: POSITIONS[top.length][0], top: POSITIONS[top.length][1] }]
-            )}
-            onPress={onOpenReports}
-            accessibilityRole="button"
-            accessibilityLabel="All categories in Reports"
-          >
-            <Feather name="more-horizontal" size={20} color={ink} />
-          </Pressable>
+          );
+        })}
+        <Pressable
+          style={withPressed(styles.target)}
+          onPress={onOpenReports}
+          hitSlop={3}
+          accessibilityRole="button"
+          accessibilityLabel="All categories in Reports"
+        >
+          <Feather name="more-horizontal" size={20} color={ink} />
+        </Pressable>
+      </View>
+      <Pressable
+        style={withPressed(styles.categoryButton)}
+        onPress={() => (onOpenCategory ? onOpenCategory(selected.categoryId) : onOpenReports())}
+        accessibilityRole="button"
+        accessibilityLabel={`View ${selected.name} category`}
+      >
+        <View style={styles.categoryText}>
+          <Text style={styles.name} numberOfLines={1}>
+            {selected.name}
+          </Text>
+          <Text style={styles.meta}>{`${formatMoney(selected.totalMinor)} · ${share}%`}</Text>
         </View>
-      )}
+        <Feather name="chevron-right" size={18} color={theme.colors.link} />
+      </Pressable>
     </View>
   );
 }
+
 const styles = StyleSheet.create({
   section: {
     marginHorizontal: 16,
-    padding: 14,
+    padding: 12,
     borderRadius: 24,
     backgroundColor: GLASS.fill,
     borderWidth: 1,
     borderColor: GLASS.edge,
+    gap: 8,
+  },
+  row: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 },
+  target: {
+    height: 44,
+    minWidth: 44,
+    borderRadius: 22,
+    paddingHorizontal: 10,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-  },
-  stacked: { flexDirection: 'column', alignItems: 'stretch' },
-  selectorRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  inlineTarget: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    alignItems: 'center',
     justifyContent: 'center',
+    gap: 6,
     backgroundColor: theme.colors.white,
   },
-  details: { flex: 1, minWidth: 0, paddingVertical: 8 },
-  dial: { width: 110, height: 240 },
-  highlight: { position: 'absolute', width: 86, height: 48, borderRadius: 24, justifyContent: 'center' },
-  share: {
-    width: 38,
-    textAlign: 'center',
-    fontFamily: theme.font.bodyBold,
-    fontSize: 11,
-    color: theme.colors.white,
-  },
-  target: {
-    position: 'absolute',
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: theme.colors.white,
-  },
-  label: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textMuted },
-  total: {
-    fontFamily: theme.font.bodyLight,
-    fontSize: 28,
-    lineHeight: 36,
-    fontVariant: ['tabular-nums'],
-    color: theme.colors.textPrimary,
-    marginTop: 6,
-  },
-  divider: { height: StyleSheet.hairlineWidth, backgroundColor: theme.colors.borderSoft, marginVertical: 10 },
+  picked: { paddingHorizontal: 14 },
+  share: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.white },
+  categoryButton: { minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 8 },
+  categoryText: { flex: 1, minWidth: 0 },
   name: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textPrimary },
   meta: {
     fontFamily: theme.font.body,
     fontSize: 12,
     lineHeight: 18,
     color: theme.colors.textSecondary,
-    marginTop: 4,
+    marginTop: 2,
   },
-  categoryButton: { minHeight: 48, flexDirection: 'row', alignItems: 'center', gap: 6 },
-  linkButton: { minHeight: 48, flexDirection: 'row', alignItems: 'center', gap: 6 },
+  linkButton: { minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 6 },
   link: { flexShrink: 1, fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.link },
 });
