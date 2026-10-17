@@ -45,7 +45,6 @@ export function AmountCard({
   amountMinor,
   onPickAmount,
   refund = false,
-  selection,
 }: {
   type: EntryType;
   currency: string | undefined;
@@ -65,8 +64,6 @@ export function AmountCard({
   onPickAmount: (minor: number) => void;
   /** "Money back" is on: the card turns the income green and says so. */
   refund?: boolean;
-  /** "Food · HDFC Bank": what this will be saved as, beside the amount's label while the pad is up. */
-  selection?: string;
 }) {
   const { accent } = useAccent();
   const wash = refund ? TYPE_WASH.income : typeWash(type, accent);
@@ -77,18 +74,7 @@ export function AmountCard({
       <View style={[styles.amountHeader, stacked && styles.amountHeaderStacked]}>
         <View style={styles.heroLabelRow}>
           <View style={[styles.heroDot, { backgroundColor: wash.accent }]} />
-          <Text style={[styles.heroLabel, { color: wash.accent }]}>
-            {refund
-              ? 'Money back'
-              : type === 'friend'
-                ? 'Amount'
-                : `${type[0].toUpperCase()}${type.slice(1)} amount`}
-          </Text>
-          {padVisible && selection && (
-            <Text style={styles.usualCategory} numberOfLines={1} accessibilityLiveRegion="polite">
-              {selection}
-            </Text>
-          )}
+          <Text style={[styles.heroLabel, { color: wash.accent }]}>{refund ? 'Money back' : 'Amount'}</Text>
           {onTogglePad && !isLinked && !padVisible && (
             <Pressable
               onPress={onTogglePad}
@@ -383,11 +369,6 @@ export function UsualChips({
                   {u.categoryName}
                 </Text>
                 <View style={styles.recentChipSubRow}>
-                  {u.parentName && (
-                    <Text style={[styles.recentChipSub, { flex: 1 }]} numberOfLines={1}>
-                      {u.parentName}
-                    </Text>
-                  )}
                   <Text style={styles.recentChipAmount}>{usualMoney(u)}</Text>
                 </View>
               </View>
