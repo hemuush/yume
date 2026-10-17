@@ -229,8 +229,9 @@ describe('Plan tab', () => {
       'going out · 2 payments',
       'This month’s budgets',
       'The way to debt-free',
-      'Estimated debt-free · ' +
-        new Date(2035, 5, 5).toLocaleDateString(undefined, { month: 'long', year: 'numeric' }),
+      'Debt-free ' +
+        new Date(2035, 5, 5).toLocaleDateString(undefined, { month: 'short', year: 'numeric' }) +
+        ' · ₹25,000 in EMIs over 14 days',
       'Saving toward',
       'People & habit',
       'Friends',
@@ -253,7 +254,6 @@ describe('Plan tab', () => {
         'Start a goal that fills up by itself',
         'Home loan',
         'Streaming',
-        '₹25,000 in EMIs over 14 days',
       ])
     );
     // A savings account a new goal could follow.

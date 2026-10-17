@@ -88,6 +88,7 @@ export function saveButtonTitle({
   repeatWarning,
   rowCount,
   hasCurrent = false,
+  summary,
 }: {
   saving: boolean;
   editing: boolean;
@@ -96,6 +97,8 @@ export function saveButtonTitle({
   repeatWarning: boolean;
   rowCount: number;
   hasCurrent?: boolean;
+  /** What a lone entry would save, e.g. "₹250 · Food": the button names it. */
+  summary?: string;
 }): string {
   if (saving) return 'Saving…';
   if (editing) return 'Save changes';
@@ -104,5 +107,5 @@ export function saveButtonTitle({
   if (repeatWarning) return 'Save anyway';
   const count = rowCount + (hasCurrent ? 1 : 0);
   if (rowCount > 0) return `Save ${count} ${count === 1 ? 'entry' : 'entries'}`;
-  return 'Save';
+  return summary && hasCurrent ? `Save ${summary}` : 'Save';
 }

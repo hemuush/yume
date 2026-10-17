@@ -5,7 +5,7 @@ import { cardSurface } from '@/components/CardSurface';
 import { formatMoney } from '@/lib/money';
 import { formatRatioPct } from '@/lib/format';
 import { withPressed } from '@/lib/pressed';
-import { dayMonth, longMonthYear } from '@/lib/dateLabels';
+import { dayMonth, shortMonthYear } from '@/lib/dateLabels';
 import { DueSoon, LoansSummary } from './planOverview';
 import { Kicker, PlanChip } from './PlanTiles';
 import { styles } from './plan.styles';
@@ -62,6 +62,18 @@ export function DebtPath({
     null
   );
   const nextEmi = borrowed.find((r) => r.nextDueDate && r.nextEmiMinor != null);
+  const emiPart =
+    dueSoon.emiMinor > 0
+      ? `${formatMoney(dueSoon.emiMinor)} in EMIs over 14 days`
+      : nextEmi?.nextDueDate && nextEmi.nextEmiMinor != null
+        ? `next EMI ${formatMoney(nextEmi.nextEmiMinor)} on ${dayMonth(nextEmi.nextDueDate)}`
+        : null;
+  const timeline = [
+    knownEnd ? `Debt-free ${shortMonthYear(knownEnd)}` : 'Schedule incomplete · debt-free date unavailable',
+    emiPart,
+  ]
+    .filter(Boolean)
+    .join(' · ');
 
   return (
     <View>
@@ -83,23 +95,17 @@ export function DebtPath({
         >
           <View style={[local.fill, { width: `${Math.min(100, Math.max(0, loans.paidFraction * 100))}%` }]} />
         </View>
-        <Text style={styles.pathNote}>
-          {knownEnd
-            ? `Estimated debt-free · ${longMonthYear(knownEnd)}`
-            : 'Schedule incomplete · debt-free date unavailable'}
-        </Text>
-        <View style={styles.chips}>
-          {dueSoon.emiMinor > 0 ? (
-            <PlanChip icon="calendar">{formatMoney(dueSoon.emiMinor)} in EMIs over 14 days</PlanChip>
-          ) : nextEmi?.nextDueDate && nextEmi.nextEmiMinor != null ? (
-            <PlanChip icon="calendar">
-              Next EMI {formatMoney(nextEmi.nextEmiMinor)} on {dayMonth(nextEmi.nextDueDate)}
-            </PlanChip>
-          ) : null}
-          {loans.lentLeftMinor > 0 && (
+        {loans.borrowedPrincipalMinor > 0 && (
+          <Text style={styles.pathNote}>
+            {`${formatMoney(loans.paidOffMinor)} repaid of ${formatMoney(loans.borrowedPrincipalMinor)}`}
+          </Text>
+        )}
+        <Text style={styles.pathNote}>{timeline}</Text>
+        {loans.lentLeftMinor > 0 && (
+          <View style={styles.chips}>
             <PlanChip icon="arrow-up-right">{formatMoney(loans.lentLeftMinor)} you lent out</PlanChip>
-          )}
-        </View>
+          </View>
+        )}
         {onLoan && largest && (
           <Pressable
             onPress={() => onLoan(largest.id)}
