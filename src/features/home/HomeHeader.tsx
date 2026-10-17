@@ -29,11 +29,6 @@ import { headerIsCollapsed } from './headerMotion';
 import { useReduceMotion } from '@/lib/useReduceMotion';
 import { withPressed } from '@/lib/pressed';
 
-/** "Wednesday, 7 October" — above the greeting. */
-function todayLabel(): string {
-  return new Date().toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' });
-}
-
 function greetingWord(): string {
   const h = new Date().getHours();
   if (h < 12) return 'morning';
@@ -204,9 +199,6 @@ export function HomeHeader({
           <ReanimatedAnimated.View
             entering={FadeIn.duration(MOTION.enter).easing(MOTION.ease).reduceMotion(ReduceMotion.System)}
           >
-            <Text style={styles.date} numberOfLines={1}>
-              {todayLabel()}
-            </Text>
             <Text style={styles.greet}>
               Good {greetingWord()}
               {userName ? (
@@ -241,15 +233,10 @@ const styles = StyleSheet.create({
   brandRow: { flexDirection: 'row', alignItems: 'center', gap: 7 },
   brand: { fontFamily: theme.font.roundedBold, fontSize: 22, letterSpacing: 0.2, color: theme.colors.ink },
   actions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  date: {
-    fontFamily: theme.font.bodyMedium,
-    fontSize: 12,
-    color: theme.colors.textSecondary,
-  },
   greet: {
     fontFamily: theme.font.roundedMedium,
-    fontSize: theme.typeSize.greeting,
-    lineHeight: 24,
+    fontSize: 16,
+    lineHeight: 22,
     letterSpacing: -0.2,
     color: theme.colors.ink,
     marginTop: 1,

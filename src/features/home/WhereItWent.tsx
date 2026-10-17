@@ -103,16 +103,11 @@ export function WhereItWent({
         </Text>
         <Text style={styles.meta}>
           {selected
-            ? `${formatMoney(selected.totalMinor)} · ${share}% of spending`
+            ? `${formatMoney(selected.totalMinor)} · ${share}%`
             : spentMinor < 0
               ? 'See your net spending and refunds in Reports.'
               : 'Your categories appear after an expense.'}
         </Text>
-        {selected && breakdown.some((c) => c.totalMinor < 0) && (
-          <Text style={styles.meta}>
-            Shares show categories with positive net spending; refunds are included in the period total.
-          </Text>
-        )}
         <Pressable
           style={withPressed(styles.linkButton)}
           onPress={

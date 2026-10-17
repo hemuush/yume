@@ -120,11 +120,6 @@ export function SpendBars({
       : `${selectedIndex * 7 + 1}–${Math.min((selectedIndex + 1) * 7, Number(today.slice(8)))} ${parseLocalIsoDate(today).toLocaleDateString(undefined, { month: 'short' })}`;
   const maxMinor = Math.max(0, ...bars.map((b) => b.totalMinor));
   const total = bars.reduce((s, b) => s + b.totalMinor, 0);
-  const rangeDates =
-    range === 'week'
-      ? `${parseLocalIsoDate(bars[0].key).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}–${parseLocalIsoDate(today).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}`
-      : `1–${Number(today.slice(8))} ${parseLocalIsoDate(today).toLocaleDateString(undefined, { month: 'short' })}`;
-
   return (
     <Glass radius={24} style={[styles.card, cardSurface.neutral]}>
       <View style={styles.head}>
@@ -135,7 +130,7 @@ export function SpendBars({
         >
           <Text style={styles.title}>Spending</Text>
           <Text style={styles.total}>
-            {formatMoney(total)} {range === 'week' ? 'in 7 days' : 'this month'} · {rangeDates}
+            {formatMoney(total)} {range === 'week' ? 'in 7 days' : 'this month'}
           </Text>
         </View>
         <View style={styles.switch} accessibilityRole="tablist">
