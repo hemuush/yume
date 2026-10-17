@@ -140,8 +140,8 @@ describe('saveButtonTitle', () => {
     expect(saveButtonTitle({ ...base, rowCount: 4 })).toBe('Save 4 entries');
     expect(saveButtonTitle(base)).toBe('Save');
     // A lone entry's button names what it saves, but only with an amount typed and never over the list or edit wording.
-    expect(saveButtonTitle({ ...base, hasCurrent: true, summary: '₹250 · Food' })).toBe('Save ₹250 · Food');
-    expect(saveButtonTitle({ ...base, summary: '₹250 · Food' })).toBe('Save');
+    expect(saveButtonTitle({ ...base, hasCurrent: true, summary: '₹250' })).toBe('Save ₹250');
+    expect(saveButtonTitle({ ...base, summary: '₹250' })).toBe('Save');
     expect(saveButtonTitle({ ...base, hasCurrent: true, rowCount: 2, summary: '₹250' })).toBe(
       'Save 3 entries'
     );

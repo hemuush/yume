@@ -393,13 +393,6 @@ export const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
   },
-  usualCategory: {
-    flexShrink: 1,
-    maxWidth: '60%',
-    fontFamily: theme.font.bodyBold,
-    fontSize: 12,
-    color: theme.colors.textSecondary,
-  },
   detailBarContent: { paddingLeft: 4, paddingRight: 16, gap: 6 },
   detailChip: {
     flexDirection: 'row',
@@ -423,7 +416,6 @@ export const styles = StyleSheet.create({
   // A detail chip that's a switch (Money back), switched on.
   detailChipActive: { backgroundColor: theme.colors.ink, borderColor: theme.colors.ink },
   detailChipTextActive: { color: theme.colors.surface },
-  totalsRow: { flexDirection: 'row', justifyContent: 'space-around', marginBottom: 10 },
   total: { alignItems: 'center' },
   totalLabel: EYEBROW,
   totalValue: { fontVariant: ['tabular-nums'], fontFamily: theme.font.bodyBold, fontSize: 12, marginTop: 2 },

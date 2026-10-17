@@ -4,7 +4,6 @@ import { theme } from '@/constants/theme';
 import { Text } from '@/components/Text';
 import { PersonWithBalance } from '@/db/people';
 import { Account } from '@/types';
-import { OdometerAmount } from '@/components/OdometerAmount';
 import { SegmentedControl } from '@/components/SegmentedControl';
 import { useAccent } from '@/theme/AccentContext';
 import { haptics } from '@/lib/haptics';
@@ -120,15 +119,6 @@ export function DetailChip({
   );
 }
 
-export function Totals({ label, value, color }: { label: string; value: number; color: string }) {
-  return (
-    <View style={styles.total}>
-      <Text style={styles.totalLabel}>{label}</Text>
-      <OdometerAmount minor={value} style={[styles.totalValue, { color }]} />
-    </View>
-  );
-}
-
 export function FriendFields({
   people,
   accounts,
@@ -218,7 +208,6 @@ export function FriendFields({
         )}
       </View>
       <View style={styles.section}>
-        <Text style={styles.label}>What happened?</Text>
         <SegmentedControl
           options={[
             { label: 'They owe more', value: 'owe' },
@@ -229,10 +218,10 @@ export function FriendFields({
         />
       </View>
       <View style={styles.section}>
-        <Text style={styles.label}>Did cash actually move?</Text>
+        <Text style={styles.label}>Cash moved?</Text>
         <View style={styles.chipRow}>
           <Chip
-            label="Just adjust balance"
+            label="Balance only"
             active={friendAccountId === null}
             onPress={() => setFriendAccountId(null)}
           />
@@ -246,9 +235,7 @@ export function FriendFields({
           ))}
         </View>
         <Text style={styles.hint}>
-          {friendAccountId
-            ? 'Records a real transaction on that account too, so it shows in Activity and Reports.'
-            : 'Only updates the balance — no real transaction, so it won’t appear in Activity or Reports.'}
+          {friendAccountId ? 'Also recorded as a transaction.' : 'Balance only. Not in Activity or Reports.'}
         </Text>
       </View>
     </>
