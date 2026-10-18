@@ -65,7 +65,7 @@ export async function listSavingsGoals(includeArchived = false): Promise<Savings
   return rows.map(rowToGoal);
 }
 
-export interface SavingsGoalInput {
+interface SavingsGoalInput {
   name: string;
   targetAmountMinor: number;
   targetDate: string | null;

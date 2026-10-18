@@ -5,7 +5,7 @@ import { DURATIONS } from './motionTimings';
  * Cap on a list row's FadeIn stagger delay (`Math.min(i * step, MAX_LIST_STAGGER_MS)`), shared by every plain
  * list. Zero keeps content available together instead of cascading down the screen.
  */
-export const MAX_LIST_STAGGER_MS = 0;
+const MAX_LIST_STAGGER_MS = 0;
 
 /**
  * Home's motion rules: one curve (fast out, soft landing) and a short list of durations so every card moves

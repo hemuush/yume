@@ -37,7 +37,7 @@ export function Kicker({
   );
 }
 
-export type FrostTone = 'ok' | 'warn' | 'bad';
+type FrostTone = 'ok' | 'warn' | 'bad';
 
 /** A small outlined chip: neutral, or green / amber / red when it carries news. */
 export function FrostChip({

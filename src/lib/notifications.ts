@@ -10,7 +10,7 @@ export { NOTIFICATION_ROUTES };
 export type { NotificationRoute };
 
 /** Kept as 'default' so a phone that already has the channel keeps its sound/importance settings. */
-export const NOTIFICATION_CHANNEL_ID = 'default';
+const NOTIFICATION_CHANNEL_ID = 'default';
 
 /** Every notification Yume schedules has an id starting with this, which is how a rebuild finds them. */
 const ID_PREFIX = 'yume-';

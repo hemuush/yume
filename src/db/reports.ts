@@ -23,7 +23,7 @@ import {
   sensitiveOf,
 } from './spendSql';
 
-export type ReportPeriod = 'day' | 'week' | 'month' | 'year';
+type ReportPeriod = 'day' | 'week' | 'month' | 'year';
 
 // Defined in @/types (so src/lib can use it without importing the db layer); re-exported here for existing callers.
 export type { DateRange };
@@ -980,7 +980,7 @@ export function computeTrackedBalance(input: TrackedBalanceInput): number {
   return parts.accountsMinor + parts.loansMinor + parts.peopleMinor;
 }
 
-export interface TrackedBalanceInput {
+interface TrackedBalanceInput {
   accounts: { currency: string; currentBalanceMinor: number }[];
   loans: {
     direction: 'borrowed' | 'lent';

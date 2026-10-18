@@ -33,7 +33,7 @@ export interface PlanLoanProgressInput {
   lastDueDate?: string | null;
 }
 
-export interface PlanLoanRow {
+interface PlanLoanRow {
   id: string;
   name: string;
   direction: 'borrowed' | 'lent';
@@ -123,7 +123,7 @@ export interface PlanRuleInput {
   endDate?: string | null;
 }
 
-export type DueKind = 'emi' | 'bill' | 'income' | 'transfer';
+type DueKind = 'emi' | 'bill' | 'income' | 'transfer';
 
 export interface PlanDueItem {
   key: string;
@@ -236,7 +236,7 @@ export function buildDueSoon(items: PlanDueItem[], today: string, days = DUE_SOO
 }
 
 /** One day of the next 14, for the Plan hero's strip. */
-export interface DueDay {
+interface DueDay {
   date: string;
   /** What's due that day: EMIs and bills only (money going out). */
   emi: boolean;
@@ -275,7 +275,7 @@ export function buildDueDays(items: PlanDueItem[], today: string, days = DUE_SOO
 }
 
 /** An EMI or card bill this close is flagged amber in Coming up, as on Home. */
-export const PLAN_SOON_DAYS = 3;
+const PLAN_SOON_DAYS = 3;
 
 /**
  * How urgent a Coming up row looks, by Home's rules: red when outgoing money is late or due today, amber

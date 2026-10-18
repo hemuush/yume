@@ -1,6 +1,6 @@
 import type { HeroSlices } from './heroSlices';
 
-export type MoneyBarKey = 'spent' | 'saved' | 'due' | 'free';
+type MoneyBarKey = 'spent' | 'saved' | 'due' | 'free';
 
 export interface MoneyBarSegment {
   key: MoneyBarKey;

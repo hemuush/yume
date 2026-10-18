@@ -5,7 +5,7 @@ import { SCREEN } from '@/components/screenStyles';
 import { GLASS } from '@/components/Glass';
 
 /** The even gap between Reports' blocks (heatmap card, day card, story cards, "Where it went"). */
-export const BLOCK_GAP = SCREEN.sectionGap;
+const BLOCK_GAP = SCREEN.sectionGap;
 
 // Shared by the Reports screen and its pieces (PeriodRow, HeatmapCard, DayCard, ReportInsights, CategoryBar, CategoryList, TrendChart, DayTotal).
 export const styles = StyleSheet.create({

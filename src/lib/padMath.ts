@@ -5,7 +5,7 @@ import { MAX_AMOUNT_MAJOR } from '@/lib/amountLimits';
  * The expression is plain text: digits, one `.` per number, operators `+ − × ÷`, e.g. "120+45".
  */
 export type PadKey = '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | '.' | PadOperator | 'back';
-export type PadOperator = '+' | '−' | '×' | '÷';
+type PadOperator = '+' | '−' | '×' | '÷';
 
 const OPERATORS: readonly string[] = ['+', '−', '×', '÷'];
 /** Digits allowed before the decimal point in one number — ₹99,99,99,999 is plenty. */

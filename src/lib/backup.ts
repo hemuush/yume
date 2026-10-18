@@ -39,7 +39,7 @@ const TABLES = [
 ] as const;
 
 /** One table row in a backup: column name → its JSON value. */
-export type BackupRow = Record<string, string | number | boolean | null>;
+type BackupRow = Record<string, string | number | boolean | null>;
 
 export interface BackupSnapshot {
   formatVersion: number;

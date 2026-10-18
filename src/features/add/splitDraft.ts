@@ -52,7 +52,7 @@ export function draftFromSaved(
 }
 
 /** Why a split can't be saved yet, as something the page can put into words; null when it can. */
-export type SplitProblem =
+type SplitProblem =
   | { kind: 'noAmount' }
   | { kind: 'needSecond' }
   | { kind: 'noCategory'; key: string }

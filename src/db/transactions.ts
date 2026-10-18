@@ -75,7 +75,7 @@ export async function assertSpendableAccount(
  * A transfer moves the same stored number between accounts (the schema has no exchange rate), so across
  * currencies it would silently turn ₹1,000 into $1,000. Rejected until real conversion exists.
  */
-export async function assertSameCurrencyTransfer(
+async function assertSameCurrencyTransfer(
   type: TransactionType,
   accountId: string,
   toAccountId: string | null | undefined,
@@ -308,7 +308,7 @@ export async function getLastAccountForCategory(categoryId: string): Promise<str
 }
 
 /** How long after saving an entry an identical one counts as a possible repeat. */
-export const REPEAT_WINDOW_MINUTES = 30;
+const REPEAT_WINDOW_MINUTES = 30;
 
 /** `created_at`'s own format: UTC, "YYYY-MM-DD HH:MM:SS" (SQLite's datetime('now')). */
 function toSqliteUtc(d: Date): string {
@@ -495,7 +495,7 @@ export async function getTransactionById(id: string): Promise<Transaction | null
   return row ? rowToTransaction(row) : null;
 }
 
-export interface UpdateTransactionInput {
+interface UpdateTransactionInput {
   type: TransactionType;
   accountId: string;
   toAccountId?: string | null;

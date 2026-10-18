@@ -232,7 +232,7 @@ export function categoryDeltas(
 const WEEKDAY = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 /** One notable thing about a period's daily-spend shape, as a story card: its label, headline and detail. */
-export interface PatternFact {
+interface PatternFact {
   key: 'heaviest' | 'frontLoaded' | 'weekends' | 'noSpend' | 'busiestDay';
   kicker: string;
   big: string;
@@ -363,7 +363,7 @@ export function patternFacts(
   return facts.slice(0, 3);
 }
 
-export interface QuietDays {
+interface QuietDays {
   /** Days counted so far: the whole period, or up to today for the one in progress. */
   countedDays: number;
   noSpendDays: number;
@@ -400,7 +400,7 @@ export function quietDays(
 /** What tapping a story card does on the page: show its day, open its category row, or go to Categories. */
 export type StoryAction =
   { type: 'day'; iso: string } | { type: 'category'; id: string } | { type: 'categories' };
-export type StoryTone = 'coral' | 'sky' | 'lavender' | 'mint' | 'gold';
+type StoryTone = 'coral' | 'sky' | 'lavender' | 'mint' | 'gold';
 
 export interface StoryCard {
   key: string;
@@ -581,7 +581,7 @@ export function weekdayReadLine(r: WeekdayRhythm, dow: number): string {
 }
 
 /** Accounts have no colour of their own, so each takes the next of these pastel tones by its place in the list. */
-export const ACCOUNT_COLORS = ['#8CB8E8', '#F0876A', '#9CC96B', '#E0AC3F', '#6CCFC0', '#C9B8FF', '#FFA8CE'];
+const ACCOUNT_COLORS = ['#8CB8E8', '#F0876A', '#9CC96B', '#E0AC3F', '#6CCFC0', '#C9B8FF', '#FFA8CE'];
 
 /** An account breakdown as category rows, so the category bar and list can show it unchanged. */
 export function accountRows(items: AccountBreakdownItem[]): CategoryBreakdownItem[] {
@@ -595,7 +595,7 @@ export function accountRows(items: AccountBreakdownItem[]): CategoryBreakdownIte
   }));
 }
 
-export interface DaySpendFacts {
+interface DaySpendFacts {
   /** Days so far that had spending. */
   spendDays: number;
   /** Days counted so far: the whole period, or up to today for the one in progress. */
@@ -627,7 +627,7 @@ export function daySpendFacts(
   return { spendDays, countedDays, laterMinor, perDayMinor };
 }
 
-export interface KeptSummary {
+interface KeptSummary {
   /** Finished months with any activity: the ones the figures below are over. */
   months: number;
   avgKeptMinor: number;
@@ -642,12 +642,12 @@ export interface KeptSummary {
 export const keptOf = (p: CashFlowPoint) => p.incomeMinor - p.expenseMinor;
 
 /** How much of a month's income was kept, as a %; null when it had no income. */
-export function keptRatePct(p: CashFlowPoint): number | null {
+function keptRatePct(p: CashFlowPoint): number | null {
   return p.incomeMinor > 0 ? Math.round((keptOf(p) / p.incomeMinor) * 100) : null;
 }
 
 /** Fewer finished months than this and an average or a "best month" says nothing. */
-export const KEPT_MIN_MONTHS = 2;
+const KEPT_MIN_MONTHS = 2;
 
 /** Kept, averaged over the finished months (a month still going is left out); null with too few of them. */
 export function keptSummary(points: CashFlowPoint[], inProgress: boolean): KeptSummary | null {

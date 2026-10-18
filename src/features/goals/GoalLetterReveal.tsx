@@ -20,7 +20,7 @@ export function GoalLetterReveal({ goalName, note, targetAmountMinor }: GoalLett
     </CompletionCard>
   );
 }
-export interface GoalLetterRevealProps {
+interface GoalLetterRevealProps {
   goalName: string;
   note: string | null;
   targetAmountMinor: number;

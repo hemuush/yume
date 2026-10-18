@@ -4,7 +4,7 @@ import { formatMoney } from './money';
  * Wording of every Yume notification: one fixed, plain text each. When several things are due together the
  * first leads and the others join as extra lines, using `extra` (a one-line form of the same thing).
  */
-export interface NotificationText {
+interface NotificationText {
   title: string;
   body: string;
   extra: string;

@@ -50,7 +50,7 @@ export function shouldRelock(backgroundedAt: number | null, now: number): boolea
 }
 
 /** The longest a trip through Yume's own picker or share sheet can last before it locks anyway. */
-export const OWN_ACTIVITY_MAX_MS = 5 * 60_000;
+const OWN_ACTIVITY_MAX_MS = 5 * 60_000;
 
 /**
  * Shows the phone's biometric prompt, falling back to device PIN/pattern/password (disableDeviceFallback:

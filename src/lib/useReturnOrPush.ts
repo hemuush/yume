@@ -1,7 +1,7 @@
 import { useNavigation, router, Href } from 'expo-router';
 
 /** A screen in the stack: its route name (the file path, e.g. `category/[id]`) and, optionally, params that must match. */
-export interface RouteMatch {
+interface RouteMatch {
   name: string;
   params?: Record<string, string>;
 }

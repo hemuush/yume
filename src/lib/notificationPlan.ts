@@ -23,9 +23,9 @@ export type NotificationRoute = (typeof NOTIFICATION_ROUTES)[number];
 /** How many days ahead the daily and Monday notifications are scheduled. */
 export const PLAN_DAYS = 14;
 /** An unpaid EMI is reminded of once a day for this many days after its due day, then left to the app. */
-export const OVERDUE_EMI_DAYS = 7;
+const OVERDUE_EMI_DAYS = 7;
 /** A spending alert nobody could be notified about (both times off) is dropped after this long. */
-export const ALERT_MAX_AGE_DAYS = 3;
+const ALERT_MAX_AGE_DAYS = 3;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 /** A spending alert (a budget limit, a big jump) waiting for the next time. */
@@ -63,7 +63,7 @@ export interface PlanPrefs {
   weeklySummary: boolean;
 }
 
-export interface PlannedNotification {
+interface PlannedNotification {
   /** Always starts with `yume-`, which is how a rebuild finds what to cancel. */
   id: string;
   at: Date;

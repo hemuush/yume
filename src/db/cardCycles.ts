@@ -15,7 +15,7 @@ export interface AccountCardCycle extends CardCycle {
 }
 
 /** Whether an account has what a bill cycle needs. */
-export function tracksCardCycle(a: Account): a is Account & { statementDay: number; dueDay: number } {
+function tracksCardCycle(a: Account): a is Account & { statementDay: number; dueDay: number } {
   return a.type === 'credit_card' && a.statementDay != null && a.dueDay != null;
 }
 

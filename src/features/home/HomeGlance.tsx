@@ -20,7 +20,7 @@ import { ExpectedRefund } from '@/db/refundTracking';
 import { HomeRefunds } from './HomeRefunds';
 import { growHref } from '@/lib/cardGrow';
 
-export interface UpcomingItem {
+interface UpcomingItem {
   key: string;
   icon: React.ComponentProps<typeof Feather>['name'];
   iconBg: string;
@@ -43,9 +43,9 @@ export const UPCOMING_DAYS = 7;
 /** An EMI or card bill this close (or late) is pinned to the top of Upcoming as "Due soon". */
 export const DUE_SOON_DAYS = 3;
 /** Rows shown before "+N more". */
-export const UPCOMING_ROWS = 3;
+const UPCOMING_ROWS = 3;
 
-export interface UpcomingLoanInput {
+interface UpcomingLoanInput {
   id: string;
   name: string;
   nextDueDate: string;

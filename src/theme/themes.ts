@@ -114,7 +114,7 @@ export function themeById(id: string | null | undefined): ThemePack | undefined 
   return THEMES.find((t) => t.id === id);
 }
 
-export interface ActiveTheme {
+interface ActiveTheme {
   themeId: string;
   primary: string;
   secondary: string;

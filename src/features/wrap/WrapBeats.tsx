@@ -79,7 +79,7 @@ function Letter({ ch, index, still }: { ch: string; index: number; still: boolea
   );
 }
 
-export function HookBeat({ beat, still }: { beat: BeatOf<'hook'>; still: boolean }) {
+function HookBeat({ beat, still }: { beat: BeatOf<'hook'>; still: boolean }) {
   return (
     <View style={styles.beat}>
       <Rise still={still}>
@@ -153,7 +153,7 @@ function Ring({ pct, color, still }: { pct: number; color: string; still: boolea
   );
 }
 
-export function KeptBeat({ beat, still }: { beat: BeatOf<'kept'>; still: boolean }) {
+function KeptBeat({ beat, still }: { beat: BeatOf<'kept'>; still: boolean }) {
   const kept = beat.keptMinor > 0;
   return (
     <View style={styles.beat}>
@@ -206,7 +206,7 @@ export function KeptBeat({ beat, still }: { beat: BeatOf<'kept'>; still: boolean
   );
 }
 
-export function MoverBeat({ beat, still }: { beat: BeatOf<'mover'>; still: boolean }) {
+function MoverBeat({ beat, still }: { beat: BeatOf<'mover'>; still: boolean }) {
   const [punch] = useState(() => new Animated.Value(still ? 1 : 0));
   useEffect(() => {
     if (still) {
@@ -253,7 +253,7 @@ export function MoverBeat({ beat, still }: { beat: BeatOf<'mover'>; still: boole
   );
 }
 
-export function UsualBeat({ beat, still }: { beat: BeatOf<'usual'>; still: boolean }) {
+function UsualBeat({ beat, still }: { beat: BeatOf<'usual'>; still: boolean }) {
   const less = beat.changePct < 0;
   const steady = Math.abs(beat.changePct) < USUAL_BAND_PCT;
   return (
@@ -321,7 +321,7 @@ function cardLine(wrap: Wrap): string | null {
  * The closing beat: the period as a card (what went out, comparison, top three categories) with Share, which
  * sends the card as a picture via Android's share sheet (nothing leaves the phone unless you choose), and the report.
  */
-export function FinalBeat({
+function FinalBeat({
   wrap,
   beat,
   still,
