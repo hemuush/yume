@@ -13,7 +13,7 @@ import { dayMonth, weekdayDayMonth } from '@/lib/dateLabels';
 import { homeInk } from '@/features/home/homeInk';
 import { DueSoon } from './planOverview';
 import { Runway, RunwayDay } from './runway';
-import { Kicker } from './PlanTiles';
+import { Kicker, PlanChip } from './PlanTiles';
 import { styles, RUNWAY_HEIGHT } from './plan.styles';
 
 /** Room above the line's highest point and below its lowest, inside the drawing. */
@@ -22,23 +22,26 @@ const PAD_BOTTOM = 10;
 const PIN = 44;
 
 /**
- * The Plan hero, verdict first: whether your spending accounts cover the next 14 days of EMIs and bills, in
- * one headline ("Short ₹6,619", "Covered", "Nothing due") with a single grey line under it, then the balance
- * walk as a line with a pin per payment day. The Coming up list is drawn under it, inside the same card.
- * Without a spending account there's no balance to draw, so it says what is going out instead.
+ * The Plan balance card: what your spending accounts hold, with the verdict on the next `days` days of EMIs and
+ * bills as a chip ("Short on 1 Nov", "Covered", "Nothing due") and one grey line under it. With `showChart` the
+ * balance line follows, a pin per payment day. Without a spending account there's no balance to draw, so it says
+ * what is going out instead.
  */
 export function RunwayCard({
   dueSoon,
   runway,
   hasAccounts,
-  children,
+  days,
+  showChart,
 }: {
   dueSoon: DueSoon;
   runway: Runway;
   /** Whether any bank, cash or wallet account holds the balance the line starts from. */
   hasAccounts: boolean;
-  /** The Coming up list, drawn under the verdict inside the same card. */
-  children?: React.ReactNode;
+  /** The window the runway covers. */
+  days: number;
+  /** Draw the balance line under the sentence (the Upcoming tab). */
+  showChart?: boolean;
 }) {
   const { accent } = useAccent();
   const ink = homeInk(accent);
@@ -73,21 +76,25 @@ export function RunwayCard({
 
   const payments = `${dueSoon.count} payment${dueSoon.count === 1 ? '' : 's'}`;
   const comingIn = runway.inMinor > 0 ? ` · +${formatMoney(runway.inMinor)} coming in` : '';
-  let headline: string;
+  let chip: { label: string; tone?: 'ok' | 'bad' } | null = null;
+  let figure: string;
   let note: string;
   if (!hasAccounts) {
-    headline = none ? 'Nothing due' : formatMoney(dueSoon.totalMinor);
+    figure = none ? 'Nothing due' : formatMoney(dueSoon.totalMinor);
     note = none
       ? 'Add a bank, cash or wallet account to see your balance.'
       : `going out · ${payments}. Add a bank, cash or wallet account to see your balance.`;
   } else if (none) {
-    headline = 'Nothing due';
-    note = `Your spending accounts hold ${formatMoney(runway.startMinor)}${comingIn}`;
+    figure = formatMoney(runway.startMinor);
+    chip = { label: 'Nothing due' };
+    note = `No payments in the next ${days} days${comingIn}`;
   } else if (runway.short) {
-    headline = `Short ${formatMoney(runway.short.minor)}`;
-    note = `on ${weekdayDayMonth(runway.short.date)} · ${formatMoney(dueSoon.totalMinor)} going out, you hold ${formatMoney(runway.startMinor)}${comingIn}`;
+    figure = formatMoney(runway.startMinor);
+    chip = { label: `Short on ${dayMonth(runway.short.date)}`, tone: 'bad' };
+    note = `${formatMoney(dueSoon.totalMinor)} going out · short ${formatMoney(runway.short.minor)} on ${weekdayDayMonth(runway.short.date)}${comingIn}`;
   } else {
-    headline = 'Covered';
+    figure = formatMoney(runway.startMinor);
+    chip = { label: 'Covered', tone: 'ok' };
     note = `${formatMoney(dueSoon.totalMinor)} going out · ${payments}. Ends at ${formatMoney(runway.endMinor)}, lowest ${formatMoney(runway.lowMinor)} on ${dayMonth(runway.lowDate)}${comingIn}`;
   }
 
@@ -103,19 +110,18 @@ export function RunwayCard({
         runway.short && cardSurface.warning,
       ]}
     >
-      <Kicker icon="calendar">Next 14 days</Kicker>
+      <View style={styles.head}>
+        <Kicker icon="database">{hasAccounts ? 'Spending accounts' : `Next ${days} days`}</Kicker>
+        {chip && <PlanChip tone={chip.tone}>{chip.label}</PlanChip>}
+      </View>
       <View style={styles.forecastFigure}>
-        <Text
-          style={[styles.forecastValue, !!runway.short && hasAccounts && { color: theme.colors.expenseText }]}
-          numberOfLines={1}
-          adjustsFontSizeToFit
-        >
-          {headline}
+        <Text style={styles.forecastValue} numberOfLines={1} adjustsFontSizeToFit>
+          {figure}
         </Text>
         <Text style={styles.bigNote}>{note}</Text>
       </View>
 
-      {hasAccounts && hasChanges && (
+      {showChart && hasAccounts && hasChanges && (
         <View>
           <View style={styles.runway} onLayout={onLayout} testID="runway">
             {width > 0 && (
@@ -194,7 +200,6 @@ export function RunwayCard({
           </View>
         </View>
       )}
-      {children}
     </Glass>
   );
 }

@@ -209,6 +209,7 @@ describe('Plan sections with nothing in them yet', () => {
         dueSoon={{ ...dueSoon, totalMinor: 45000, billMinor: 45000, count: 1 }}
         runway={buildRunway(0, next.items, '2026-10-09', 14)}
         hasAccounts={false}
+        days={14}
       />
     );
     const shown = texts(tree);
@@ -289,7 +290,12 @@ describe('Goals with amounts hidden', () => {
 describe('Runway card', () => {
   it('hides a flat chart and says nothing is due', () => {
     const tree = render(
-      <RunwayCard dueSoon={dueSoon} runway={buildRunway(1125000, [], '2026-10-09', 14)} hasAccounts />
+      <RunwayCard
+        dueSoon={dueSoon}
+        runway={buildRunway(1125000, [], '2026-10-09', 14)}
+        hasAccounts
+        days={14}
+      />
     );
     expect(tree.root.findAll((n) => n.props.testID === 'runway')).toHaveLength(0);
     expect(texts(tree)).toContain('Nothing due');
@@ -309,7 +315,13 @@ describe('Runway card', () => {
       route: '/recurring' as const,
     };
     const tree = render(
-      <RunwayCard dueSoon={dueSoon} runway={buildRunway(100000, [item], '2026-10-09', 14)} hasAccounts />
+      <RunwayCard
+        dueSoon={dueSoon}
+        runway={buildRunway(100000, [item], '2026-10-09', 14)}
+        hasAccounts
+        days={14}
+        showChart
+      />
     );
     expect(tree.root.findAll((n) => n.props.testID === 'runway').length).toBeGreaterThan(0);
     expect(texts(tree)).not.toContain('Covered');

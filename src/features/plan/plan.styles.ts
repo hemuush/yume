@@ -26,9 +26,8 @@ export const styles = StyleSheet.create({
     paddingHorizontal: INSET,
     gap: 8,
   },
-  cardFirst: { marginTop: theme.layout.screenTopGap },
+  cardFirst: { marginTop: 0 },
   row: { flexDirection: 'row', gap: GAP, marginHorizontal: SCREEN.gutter },
-  rowGap: { gap: 8 },
   rowStack: { flexDirection: 'column' },
 
   head: {
@@ -170,24 +169,28 @@ export const styles = StyleSheet.create({
   sprouts: { flexDirection: 'row', alignItems: 'flex-end', gap: 6, minHeight: 32, marginTop: 'auto' },
 
   /* ---------- Coming up ---------- */
-  comingUp: { marginHorizontal: -INSET, marginBottom: -4 },
+  list: { marginHorizontal: SCREEN.gutter, overflow: 'hidden', paddingBottom: 4 },
   dayHead: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingHorizontal: INSET,
     paddingTop: 10,
   },
-  dayHeadText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textMuted },
-  allLink: {
-    minHeight: 44,
-    flexDirection: 'row',
+  statRow: { flexDirection: 'row', gap: GAP, marginHorizontal: SCREEN.gutter, marginTop: GAP },
+  statWrap: { flex: 1, minWidth: 0 },
+  stat: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12 },
+  statIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 4,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: theme.colors.borderSoft,
+    backgroundColor: theme.colors.secondaryTint,
   },
-  allLinkText: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.link },
+  statCopy: { flex: 1, minWidth: 0 },
+  statValue: { fontFamily: theme.font.bodyBold, fontSize: 18, color: theme.colors.textPrimary },
+  statLine: { fontFamily: theme.font.body, fontSize: 11, lineHeight: 15, color: theme.colors.textMuted },
+  dayHeadText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textMuted },
   dueIcon: {
     width: 38,
     height: 38,

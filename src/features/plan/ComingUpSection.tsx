@@ -1,6 +1,8 @@
 import { View, Pressable } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import { Text } from '@/components/Text';
+import { Glass } from '@/components/Glass';
+import { cardSurface } from '@/components/CardSurface';
 import { theme } from '@/constants/theme';
 import { dueDateLabel } from '@/lib/dueDate';
 import { withPressed } from '@/lib/pressed';
@@ -29,10 +31,10 @@ function kindIcon(item: PlanDueItem): FeatherName {
 }
 
 /**
- * Plan's Coming up, inside the runway card under the verdict: every EMI, bill and income of the next 14 days,
+ * Plan's upcoming payments as one card: the EMIs, bills and income of the window (all of them, or the first `limit`),
  * a small heading per day (its date once, with what leaves that day) and Home's row under it (icon, title,
  * kind and, when it is late or close, when; amount; a chip). A due or close EMI ends in a Pay pill and its row
- * opens the pay sheet; any other EMI opens its loan, a rule opens the rule sheet. Ends with a link to Recurring.
+ * opens the pay sheet; any other EMI opens its loan, a rule opens the rule sheet.
  */
 export function ComingUpSection({
   groups,
@@ -41,6 +43,7 @@ export function ComingUpSection({
   onPay,
   onLoan,
   onRule,
+  limit,
 }: {
   groups: DueGroup[];
   /** YYYY-MM-DD — the day the amber/red tones count from. */
@@ -50,11 +53,21 @@ export function ComingUpSection({
   onPay?: (loanId: string) => void;
   onLoan?: (loanId: string) => void;
   onRule?: (ruleId: string) => void;
+  /** Show only the first N rows (the Overview preview). */
+  limit?: number;
 }) {
   const { accent } = useAccent();
+  // The first `limit` rows, keeping each day's heading only while it still has a row.
+  const shown = groups.reduce<{ rows: DueGroup[]; used: number }>(
+    (acc, g) => {
+      const items = g.items.slice(0, Math.max(0, (limit ?? Infinity) - acc.used));
+      return items.length > 0 ? { rows: [...acc.rows, { ...g, items }], used: acc.used + items.length } : acc;
+    },
+    { rows: [], used: 0 }
+  ).rows;
   return (
-    <View style={styles.comingUp}>
-      {groups.length === 0 ? (
+    <Glass style={[styles.list, cardSurface.neutral]}>
+      {shown.length === 0 ? (
         <Pressable
           onPress={() => onOpen('/recurring')}
           style={withPressed(styles.emptyRow)}
@@ -71,7 +84,7 @@ export function ComingUpSection({
           <Feather name="chevron-right" size={16} color={theme.colors.textMuted} />
         </Pressable>
       ) : (
-        groups.map((g) => (
+        shown.map((g) => (
           <View key={g.date}>
             <View style={styles.dayHead}>
               <Text style={styles.dayHeadText}>{weekdayDayMonth(g.date)}</Text>
@@ -116,15 +129,6 @@ export function ComingUpSection({
           </View>
         ))
       )}
-      <Pressable
-        onPress={() => onOpen('/recurring')}
-        style={withPressed(styles.allLink)}
-        accessibilityRole="button"
-        accessibilityLabel="All recurring"
-      >
-        <Text style={styles.allLinkText}>All recurring</Text>
-        <Feather name="chevron-right" size={14} color={theme.colors.link} />
-      </Pressable>
-    </View>
+    </Glass>
   );
 }

@@ -16,17 +16,20 @@ export const GRID_SHOWN = GRID_COLUMNS * 2;
  */
 export function AddSlot({
   count,
+  limit = GRID_SHOWN,
   label,
   accessibilityLabel,
   onPress,
 }: {
   /** How many tiles are already in the grid. */
   count: number;
+  /** Tiles shown at most; the button is left out once they are all there. */
+  limit?: number;
   label: string;
   accessibilityLabel: string;
   onPress: () => void;
 }) {
-  if (count >= GRID_SHOWN) return null;
+  if (count >= limit) return null;
   const slim = count % GRID_COLUMNS === 0;
   return (
     <Pressable
@@ -53,25 +56,29 @@ export function TileGrid({
   label,
   accessibilityLabel,
   onAdd,
+  limit = GRID_SHOWN,
 }: {
   tiles: React.ReactNode[];
   label: string;
   accessibilityLabel: string;
   onAdd: () => void;
+  /** How many tiles show: one row on Overview (3), two on a tab (6). */
+  limit?: number;
 }) {
-  const shown = tiles.slice(0, GRID_SHOWN);
+  const shown = tiles.slice(0, limit);
   const rows: React.ReactNode[][] = [];
   for (let i = 0; i < shown.length; i += GRID_COLUMNS) rows.push(shown.slice(i, i + GRID_COLUMNS));
   const add = (
     <AddSlot
       key="add"
       count={shown.length}
+      limit={limit}
       label={label}
       accessibilityLabel={accessibilityLabel}
       onPress={onAdd}
     />
   );
-  const hasAdd = shown.length < GRID_SHOWN;
+  const hasAdd = shown.length < limit;
   // A full last row sends the add button to a row of its own; it then fills that row (the slim button).
   const slimRow = hasAdd && shown.length % GRID_COLUMNS === 0;
   if (hasAdd) {

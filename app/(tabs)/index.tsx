@@ -627,7 +627,7 @@ export default function DashboardScreen() {
               onRetryRefunds={() => void load(cursorRef.current)}
               budgetAlert={needsYou.some((i) => i.action === 'budgets')}
               rowEntering={rowEntering}
-              onSeeMoreUpcoming={() => router.navigate('/plan')}
+              onSeeMoreUpcoming={() => router.navigate({ pathname: '/plan', params: { tab: 'upcoming' } })}
             />
           </Animated.View>
         )}

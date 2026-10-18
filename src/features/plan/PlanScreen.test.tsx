@@ -23,8 +23,10 @@ const mockDay = (n: number) => {
   const { addDaysToIsoDate, toLocalIsoDate } = require('@/lib/date');
   return addDaysToIsoDate(toLocalIsoDate(new Date()), n);
 };
+let mockTab: string | undefined;
 jest.mock('expo-router', () => ({
-  router: { push: jest.fn() },
+  router: { push: jest.fn(), setParams: jest.fn() },
+  useLocalSearchParams: () => ({ tab: mockTab }),
   // useScreenLoad's focus effect: run once, like a first focus.
   useFocusEffect: (cb: () => void) => require('react').useEffect(cb, [cb]),
 }));
@@ -196,6 +198,12 @@ async function render() {
 }
 
 /** The Home loan EMI row: it ends in a Pay pill and opens the pay sheet. */
+/** Switch Plan's tab the way the segmented control does. */
+const openTab = (tree: ReactTestRenderer, tab: 'overview' | 'upcoming' | 'goals' | 'debt') =>
+  act(() =>
+    tree.root.findByType(require('@/components/SegmentedControl').SegmentedControl).props.onChange(tab)
+  );
+
 const payRow = (tree: ReactTestRenderer) =>
   tree.root.find(
     (n) =>
@@ -223,12 +231,12 @@ describe('Plan tab', () => {
     expect(router.push).not.toHaveBeenCalled();
     act(() => tree.unmount());
   });
-  it('shows the verdict with its bills inside, then the sections', async () => {
+  it('shows the balance with its verdict, then the sections of Overview', async () => {
     const shown = texts(await render());
     const headings = [
-      'Next 14 days',
+      'Spending accounts',
       'Covered',
-      'All recurring',
+      'Upcoming payments',
       'Budgets',
       'Goals',
       'Debt',
@@ -259,9 +267,11 @@ describe('Plan tab', () => {
     expect(shown.some((t) => t.startsWith('Follow Pot (₹54,000)'))).toBe(true);
     // ₹25,000 EMI + ₹450 bill in the next 14 days.
     expect(shown.some((t) => t.startsWith('₹25,450 going out · 2 payments'))).toBe(true);
-    // What-if cuts the biggest category it can, not the EMI: 10% of Food's ₹20,000, in one line.
-    expect(shown).toContain('Food −10% saves ₹2,000 a month');
     expect(shown.some((t) => t.includes('Loan EMI'))).toBe(false);
+    // The Goals tab holds what-if: it cuts the biggest category it can, not the EMI (10% of Food's ₹20,000).
+    const goalsTab = await render();
+    openTab(goalsTab, 'goals');
+    expect(texts(goalsTab)).toContain('Food −10% saves ₹2,000 a month');
     // 25% of the home loan's principal repaid.
     expect(shown.some((t) => t.includes('25% repaid'))).toBe(true);
   });
@@ -272,19 +282,21 @@ describe('Plan tab', () => {
     try {
       const shown = texts(await render());
       expect(shown).not.toContain('Covered');
-      expect(shown).toContain('Short ₹15,450');
       const short = new Date(`${mockDay(3)}T00:00:00`).toLocaleDateString(undefined, {
         day: 'numeric',
         month: 'short',
       });
-      expect(shown.some((t) => t.startsWith('on ') && t.includes(short))).toBe(true);
+      expect(shown).toContain(`Short on ${short}`);
+      expect(shown.some((t) => t.includes('short ₹15,450'))).toBe(true);
     } finally {
       mockBank = 3000000;
     }
   });
 
-  it('lists Coming up in date order, one row per payment', async () => {
-    const shown = texts(await render());
+  it('lists the Upcoming tab in date order, one row per payment', async () => {
+    const tree = await render();
+    openTab(tree, 'upcoming');
+    const shown = texts(tree);
     const from = shown.indexOf('Covered');
     expect(shown.indexOf('Streaming', from)).toBeGreaterThan(from);
     expect(shown.indexOf('Home loan', from)).toBeGreaterThan(shown.indexOf('Streaming', from));
@@ -301,7 +313,7 @@ describe('Plan tab', () => {
     expect(shown).toContain('To collect');
   });
 
-  it('opens each section’s own screen', async () => {
+  it('opens each section’s own screen, and keeps Recurring, Loans and What-if one tap away', async () => {
     const tree = await render();
     const byLabel = (start: string) =>
       tree.root.findAll(
@@ -316,10 +328,20 @@ describe('Plan tab', () => {
     const detail = tree.root.findByProps({ testID: 'plan-budget-detail' });
     expect(detail.props.progress.budget.id).toBe('b2');
     act(() => detail.props.onClose());
-    act(() => byLabel('Principal left').props.onPress());
-    expect(router.push).toHaveBeenLastCalledWith('/loans');
     act(() => byLabel('Friends & Family').props.onPress());
     expect(router.push).toHaveBeenLastCalledWith('/people');
+    act(() => byLabel('4-day streak').props.onPress());
+    expect(router.push).toHaveBeenLastCalledWith('/garden');
+    // The Overview's Upcoming, Goals and Debt headers go to their tabs instead of leaving Plan.
+    (router.push as jest.Mock).mockClear();
+    act(() => byLabel('See all — Upcoming payments').props.onPress());
+    expect(router.push).not.toHaveBeenCalled();
+    // Upcoming: Recurring is in the header.
+    expect(texts(tree)).toContain('Recurring');
+    act(() => byLabel('Recurring').props.onPress());
+    expect(router.push).toHaveBeenLastCalledWith('/recurring');
+    // Goals: the full goals page and the what-if sandbox.
+    openTab(tree, 'goals');
     act(() => byLabel('See all — Goals').props.onPress());
     expect(router.push).toHaveBeenLastCalledWith('/savings-goals');
     act(() => byLabel('Open the what-if sandbox').props.onPress());
@@ -327,16 +349,50 @@ describe('Plan tab', () => {
       pathname: '/whatif',
       params: { category: 'food', cut: '10' },
     });
-    act(() => byLabel('All recurring').props.onPress());
-    expect(router.push).toHaveBeenLastCalledWith('/recurring');
-    act(() => byLabel('4-day streak').props.onPress());
-    expect(router.push).toHaveBeenLastCalledWith('/garden');
+    // Debt: the summary and each loan open Loans / the loan.
+    openTab(tree, 'debt');
+    act(() => byLabel('Principal left').props.onPress());
+    expect(router.push).toHaveBeenLastCalledWith('/loans');
+    act(() => byLabel('See all — Loans').props.onPress());
+    expect(router.push).toHaveBeenLastCalledWith('/loans');
+    act(() => byLabel('Home loan, ').props.onPress());
+    expect(tree.root.findByProps({ testID: 'plan-loan-detail' }).props.loan.id).toBe('l1');
+  });
+
+  it('opens on Upcoming when Home sends you there, then forgets it was asked', async () => {
+    mockTab = 'upcoming';
+    try {
+      const tree = await render();
+      expect(tree.root.findAll((n) => n.props.testID === 'runway').length).toBeGreaterThan(0);
+      expect(texts(tree)).not.toContain('People & habit');
+      expect(router.setParams).toHaveBeenCalledWith({ tab: undefined });
+    } finally {
+      mockTab = undefined;
+    }
+  });
+
+  it('has four tabs, and only the chosen one is drawn', async () => {
+    const tree = await render();
+    const control = tree.root.findByType(require('@/components/SegmentedControl').SegmentedControl);
+    expect(control.props.options.map((o: { label: string }) => o.label)).toEqual([
+      'Overview',
+      'Upcoming',
+      'Goals',
+      'Debt',
+    ]);
+    expect(texts(tree)).toContain('People & habit');
+    openTab(tree, 'upcoming');
+    expect(texts(tree)).not.toContain('People & habit');
+    expect(tree.root.findAll((n) => n.props.testID === 'runway').length).toBeGreaterThan(0);
+    openTab(tree, 'overview');
+    expect(texts(tree)).toContain('People & habit');
   });
 
   it('colours Coming up rows by how soon they are due', async () => {
     const { StyleSheet } = require('react-native');
     const { theme } = require('@/constants/theme');
     const tree = await render();
+    openTab(tree, 'upcoming');
     const subColor = (start: string) =>
       StyleSheet.flatten(
         tree.root.findAllByType(Text).find((t) => [].concat(t.props.children).join('').startsWith(start))!
@@ -393,11 +449,11 @@ it('keeps the latest Plan result when a previous privacy load resolves later', a
     await act(async () => {
       tree.update(<PlanScreen />);
     });
-    expect(texts(tree).some((t) => t.includes('you hold ₹10,000'))).toBe(true);
+    expect(texts(tree)).toContain('₹10,000');
     await act(async () => {
       release([]);
     });
-    expect(texts(tree).some((t) => t.includes('you hold ₹10,000'))).toBe(true);
+    expect(texts(tree)).toContain('₹10,000');
     expect(texts(tree).some((t) => t.includes('₹30,000'))).toBe(false);
   } finally {
     act(() => tree.unmount());

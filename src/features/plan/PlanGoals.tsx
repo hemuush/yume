@@ -32,6 +32,7 @@ export function GoalsStrip({
   onOpen,
   onGoal,
   onAdd,
+  limit,
 }: {
   goals: SavingsGoal[];
   /** Savings accounts a new goal could follow, with their balances. */
@@ -39,6 +40,8 @@ export function GoalsStrip({
   onOpen: () => void;
   onGoal?: (id: string) => void;
   onAdd?: () => void;
+  /** Tiles shown at most (default: two rows). */
+  limit?: number;
 }) {
   const { hideAmounts } = usePrivacy();
   const active = goals.filter((g) => !g.archived);
@@ -80,6 +83,7 @@ export function GoalsStrip({
       label="New goal"
       accessibilityLabel="Open savings goals to start a new one"
       onAdd={onAdd ?? onOpen}
+      limit={limit}
     />
   );
 }

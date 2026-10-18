@@ -25,11 +25,14 @@ export function BudgetJars({
   onOpen,
   onBudget,
   onAdd,
+  limit,
 }: {
   summary: BudgetsSummary;
   onOpen: () => void;
   onBudget?: (id: string) => void;
   onAdd?: () => void;
+  /** Tiles shown at most (default: two rows). */
+  limit?: number;
 }) {
   if (summary.rows.length === 0) {
     return (
@@ -54,6 +57,7 @@ export function BudgetJars({
       label="Add"
       accessibilityLabel="Add a budget"
       onAdd={onAdd ?? onOpen}
+      limit={limit}
     />
   );
 }
