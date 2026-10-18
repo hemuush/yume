@@ -5,7 +5,7 @@ import { DraftPart } from './splitDraft';
  * In-memory hand-off between Add and the split page (app/split.tsx): parts are too big for a URL. Done
  * leaves a result Add takes on refocus; leaving any other way (back) leaves none.
  */
-export interface SplitSession {
+interface SplitSession {
   totalMinor: number;
   /** The account's currency, for every amount on the page. */
   currency: string | undefined;

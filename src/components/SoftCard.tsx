@@ -42,7 +42,7 @@ export function SoftCard({
 }
 
 /** The one soft lift every main Home card shares. */
-export const SOFT_LIFT = {
+const SOFT_LIFT = {
   shadowColor: theme.colors.ink,
   shadowOpacity: 0.06,
   shadowRadius: 12,

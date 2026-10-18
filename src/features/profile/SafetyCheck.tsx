@@ -87,7 +87,7 @@ function Guard({
   );
 }
 
-export type BackupState = 'ok' | 'failed' | 'never';
+type BackupState = 'ok' | 'failed' | 'never';
 
 /**
  * Settings' first card: is my data looked after? Backup, unlock and notifications as three rings, from the

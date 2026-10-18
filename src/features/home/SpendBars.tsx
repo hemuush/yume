@@ -214,7 +214,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-end',
     gap: 8,
-    height: MAX_H + 34,
+    // Room for the label, the tallest bar and the amount that rides above the picked one (it was clipped at +34).
+    height: MAX_H + 52,
   },
   col: {
     flexGrow: 1,

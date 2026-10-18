@@ -30,16 +30,36 @@ function render(el: React.ReactElement) {
 const texts = (tree: ReactTestRenderer) =>
   tree.root.findAllByType(Text).map((t) => [].concat(t.props.children).join(''));
 
+// The rows count days from the real clock; pin only Date so the fixture's "today" is today.
+beforeAll(() =>
+  jest.useFakeTimers({
+    now: new Date(2026, 9, 9, 9, 0, 0),
+    doNotFake: [
+      'setTimeout',
+      'clearTimeout',
+      'setInterval',
+      'clearInterval',
+      'setImmediate',
+      'clearImmediate',
+      'nextTick',
+      'queueMicrotask',
+      'requestAnimationFrame',
+      'cancelAnimationFrame',
+      'performance',
+    ],
+  })
+);
+afterAll(() => jest.useRealTimers());
+
 const dueSoon = { totalMinor: 0, emiMinor: 0, billMinor: 0, count: 0, untilDate: '2026-10-22' };
 
 it.each([
   ['2026-10-08', 'Overdue'],
-  ['2026-10-09', 'Due today'],
+  ['2026-10-09', 'Due now'],
   ['2026-10-10', 'Due soon'],
 ])('labels payment status for %s while retaining Pay', (date, label) => {
   const pay = jest.fn(),
-    open = jest.fn(),
-    stopPropagation = jest.fn();
+    open = jest.fn();
   const item = {
     key: 'emi',
     title: 'Home loan',
@@ -58,14 +78,17 @@ it.each([
     />
   );
   expect(texts(tree)).toContain(label);
+  // The Pay pill ends the row; the row is the one tap target and opens the pay sheet.
   act(() =>
     tree.root
       .findAll(
-        (n) => n.props.accessibilityLabel === 'Pay Home loan EMI' && typeof n.props.onPress === 'function'
+        (n) =>
+          typeof n.props.accessibilityLabel === 'string' &&
+          n.props.accessibilityLabel.endsWith(', Pay') &&
+          typeof n.props.onPress === 'function'
       )[0]
-      .props.onPress({ stopPropagation })
+      .props.onPress()
   );
-  expect(stopPropagation).toHaveBeenCalledTimes(1);
   expect(pay).toHaveBeenCalledWith('loan');
   expect(open).not.toHaveBeenCalled();
   act(() => tree.unmount());
@@ -97,17 +120,17 @@ describe('Plan sections with nothing in them yet', () => {
       ],
     };
     const tree = render(<DebtPath loans={loans} today="2026-10-09" onOpen={open} />);
-    expect(texts(tree)).toContain('₹900');
+    expect(texts(tree)).toContain('₹900 left');
     expect(texts(tree)).not.toContain('House loan');
     const actions = tree.root.findAll(
       (node) => node.props.onPress && node.props.accessibilityRole === 'button'
     );
-    expect(actions.every((node) => node.props.accessibilityLabel === 'Open loans')).toBe(true);
+    expect(actions.every((node) => String(node.props.accessibilityLabel).endsWith('Open loans'))).toBe(true);
     act(() => actions[0].props.onPress());
     expect(open).toHaveBeenCalledTimes(1);
     expect(open.mock.calls[0]).toEqual([]);
   });
-  it('shows the largest loan only, with rupees repaid and one timeline line', () => {
+  it('shows what is left, the debt-free month and how much is repaid, and opens Loans', () => {
     const row = (id: string, name: string, leftMinor: number, nextDueDate: string) => ({
       id,
       name,
@@ -129,20 +152,19 @@ describe('Plan sections with nothing in them yet', () => {
       lentLeftMinor: 0,
       rows: [row('small', 'Personal', 500000, '2026-11-03'), row('big', 'House', 1754000, '2026-11-05')],
     };
-    const onLoan = jest.fn();
-    const tree = render(<DebtPath loans={loans} today="2026-10-09" onOpen={jest.fn()} onLoan={onLoan} />);
+    const onOpen = jest.fn();
+    const tree = render(<DebtPath loans={loans} today="2026-10-09" onOpen={onOpen} />);
     const shown = texts(tree);
-    // The percent and the bar say how much is repaid; no second rupee line repeats it.
-    expect(shown.some((t) => t.includes('repaid of'))).toBe(false);
     expect(shown.some((t) => t.startsWith('Debt-free '))).toBe(true);
-    expect(shown.some((t) => t.includes('next EMI'))).toBe(false);
-    expect(shown).toContain('House');
-    expect(shown).not.toContain('Personal');
-    expect(shown).toContain('View loans · 2 active');
+    expect(shown).toContain('₹22,540 left');
+    expect(shown).toContain('2% repaid · 2 loans');
+    // One card, one action: no second link and no loan row repeating what Loans lists.
+    expect(shown).not.toContain('House');
+    expect(shown.some((t) => t.includes('View loans'))).toBe(false);
     act(() =>
-      tree.root.find((n) => n.props.accessibilityLabel === 'Open loan details: House').props.onPress()
+      tree.root.find((n) => n.props.onPress && n.props.accessibilityRole === 'button').props.onPress()
     );
-    expect(onLoan).toHaveBeenCalledWith('big');
+    expect(onOpen).toHaveBeenCalledTimes(1);
   });
 
   it('asks for a first budget, and a first EMI (saying what you lent)', () => {
@@ -167,7 +189,7 @@ describe('Plan sections with nothing in them yet', () => {
     expect(shown).toContain('₹2,000 you lent out');
   });
 
-  it('says what is next when there is no spending account to draw the runway from', () => {
+  it('says what is going out when there is no spending account to draw the runway from', () => {
     const next = {
       date: '2026-10-11',
       outMinor: 45000,
@@ -187,16 +209,14 @@ describe('Plan sections with nothing in them yet', () => {
         dueSoon={{ ...dueSoon, totalMinor: 45000, billMinor: 45000, count: 1 }}
         runway={buildRunway(0, next.items, '2026-10-09', 14)}
         hasAccounts={false}
-        next={next}
-        onOpen={jest.fn()}
-        onJumpToDay={jest.fn()}
+        days={14}
       />
     );
     const shown = texts(tree);
-    expect(shown).not.toContain('Your accounts cover it');
-    // "Next: Sun, 11 Oct (₹450), in 2 days" — the day is its own bold piece.
-    const { weekdayDayMonth } = require('@/lib/dateLabels');
-    expect(shown).toContain(weekdayDayMonth('2026-10-11'));
+    expect(shown).not.toContain('Covered');
+    // No balance to draw: it says what is going out and asks for an account.
+    expect(shown).toContain('₹450');
+    expect(shown.some((t) => t.includes('Add a bank, cash or wallet account'))).toBe(true);
     expect(tree.root.findAll((n) => n.props.testID === 'runway')).toHaveLength(0);
   });
 });
@@ -267,40 +287,22 @@ describe('Goals with amounts hidden', () => {
   });
 });
 
-describe('Compact forecast disclosure', () => {
-  it('hides a flat chart and keeps the next-payment action and expandable explanation', () => {
-    const open = jest.fn();
+describe('Runway card', () => {
+  it('hides a flat chart and says nothing is due', () => {
     const tree = render(
       <RunwayCard
         dueSoon={dueSoon}
         runway={buildRunway(1125000, [], '2026-10-09', 14)}
         hasAccounts
-        next={null}
-        onOpen={open}
-        onJumpToDay={jest.fn()}
+        days={14}
       />
     );
     expect(tree.root.findAll((n) => n.props.testID === 'runway')).toHaveLength(0);
-    expect(texts(tree)).toContain('₹11,250');
-    expect(texts(tree)).not.toContain(
-      'Scheduled bills and income only. Everyday spending can change this balance.'
-    );
-    const disclosure = tree.root.findAll(
-      (n) => n.props.accessibilityLabel === 'Forecast details' && n.props.onPress
-    )[0];
-    act(() => disclosure.props.onPress());
-    expect(disclosure.props.accessibilityState.expanded).toBe(true);
-    expect(texts(tree)).toContain(
-      'Scheduled bills and income only. Everyday spending can change this balance.'
-    );
-    act(() => disclosure.props.onPress());
-    expect(disclosure.props.accessibilityState.expanded).toBe(false);
-    act(() =>
-      tree.root
-        .findAll((n) => n.props.accessibilityLabel === 'Open Coming up' && n.props.onPress)[0]
-        .props.onPress()
-    );
-    expect(open).toHaveBeenCalledTimes(1);
+    expect(texts(tree)).toContain('Nothing due');
+    expect(texts(tree).some((t) => t.includes('₹11,250'))).toBe(true);
+    // The old extras are gone: the list under the card is the detail.
+    expect(tree.root.findAll((n) => n.props.accessibilityLabel === 'Forecast details')).toHaveLength(0);
+    expect(tree.root.findAll((n) => n.props.accessibilityLabel === 'Open Coming up')).toHaveLength(0);
   });
 
   it('keeps an income-only changing forecast visible without claiming payment coverage', () => {
@@ -317,14 +319,13 @@ describe('Compact forecast disclosure', () => {
         dueSoon={dueSoon}
         runway={buildRunway(100000, [item], '2026-10-09', 14)}
         hasAccounts
-        next={null}
-        onOpen={jest.fn()}
-        onJumpToDay={jest.fn()}
+        days={14}
+        showChart
       />
     );
     expect(tree.root.findAll((n) => n.props.testID === 'runway').length).toBeGreaterThan(0);
-    expect(texts(tree)).not.toContain('Your accounts cover it');
-    expect(texts(tree)).toContain('+₹5,000 coming in');
+    expect(texts(tree)).not.toContain('Covered');
+    expect(texts(tree).some((t) => t.includes('+₹5,000 coming in'))).toBe(true);
   });
 });
 

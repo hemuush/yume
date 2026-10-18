@@ -1,7 +1,7 @@
 import type { DateRange } from '@/types';
 import { toLocalIsoDate, addDaysToIsoDate, addMonthsToIsoDate, parseLocalIsoDate } from './date';
 
-export type PeriodGranularity = 'month' | 'year';
+type PeriodGranularity = 'month' | 'year';
 
 /**
  * A browsable point in time: the month/year being viewed, stored as an offset from today so stepping back is

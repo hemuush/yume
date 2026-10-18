@@ -88,12 +88,8 @@ describe('Where it went', () => {
         .props.onPress()
     );
     expect(openCategory).toHaveBeenCalledWith('Shares');
-    act(() =>
-      r.root
-        .find((n) => n.props.accessibilityLabel === 'All categories in Reports' && n.props.onPress)
-        .props.onPress()
-    );
-    expect(openReports).toHaveBeenCalledTimes(1);
+    // Nothing else opens Reports from the row: the card's See all does.
+    expect(openReports).not.toHaveBeenCalled();
     act(() => r.unmount());
   });
 
@@ -122,17 +118,6 @@ describe('Where it went', () => {
     ).toBe(true);
   });
 
-  it('opens Reports from the last bubble', () => {
-    const open = jest.fn();
-    const r = render(breakdown, open);
-    act(() =>
-      r.root
-        .find((n) => n.props.accessibilityLabel === 'All categories in Reports' && n.props.onPress)
-        .props.onPress()
-    );
-    expect(open).toHaveBeenCalled();
-  });
-
   it('offers an expense action for a period with no spending', () => {
     const add = jest.fn();
     const r = render([], jest.fn(), jest.fn(), add);
@@ -143,14 +128,17 @@ describe('Where it went', () => {
     expect(add).toHaveBeenCalledTimes(1);
   });
 
-  it('keeps shares based on all categories and offers the remaining categories in Reports', () => {
+  it('shows the six biggest categories in one row, with shares based on all of them', () => {
     const tree = render(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'].map((name) => cat(name, 10000)));
     const shown = texts(tree);
     expect(shown).toContain('₹100 · 11%');
-    expect(
-      tree.root.findAll((n) => n.props.accessibilityLabel === 'All categories in Reports').length
-    ).toBeGreaterThan(0);
-    expect(shown).not.toContain('I');
+    const buttons = tree.root.findAll(
+      (n) =>
+        typeof n.props.accessibilityLabel === 'string' && n.props.accessibilityLabel.endsWith('of spending')
+    );
+    // Each button appears as several nodes in the tree; count them by their spoken label.
+    expect(new Set(buttons.map((n) => n.props.accessibilityLabel)).size).toBe(6);
+    expect(shown).not.toContain('G');
   });
 });
 

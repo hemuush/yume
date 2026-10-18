@@ -191,7 +191,7 @@ export async function createAccount(input: {
   return rowToAccount(found(row, 'account'));
 }
 
-export interface UpdateAccountInput {
+interface UpdateAccountInput {
   name: string;
   type: Account['type'];
   openingBalanceMinor: number;
@@ -380,7 +380,7 @@ export async function unarchiveAccount(id: string): Promise<void> {
  * Permanently deletes a never-used account; one with history must be archived. Checked first so the user
  * gets a clear message, not the raw SQLite error from `ON DELETE RESTRICT` on `transactions.account_id`.
  */
-export interface DeletedAccount extends RowSnapshot {
+interface DeletedAccount extends RowSnapshot {
   /** Loans and goals that pointed at the account; the delete unlinks them (ON DELETE SET NULL), Undo relinks. */
   linkedLoanIds: string[];
   linkedGoalIds: string[];

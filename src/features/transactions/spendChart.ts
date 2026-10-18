@@ -2,7 +2,7 @@ import { Category, Transaction } from '@/types';
 import { addDaysToIsoDate, parseLocalIsoDate } from '@/lib/date';
 import { theme } from '@/constants/theme';
 
-export interface SpendBarSegment {
+interface SpendBarSegment {
   categoryId: string;
   name: string;
   color: string;

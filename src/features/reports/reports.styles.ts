@@ -5,7 +5,7 @@ import { SCREEN } from '@/components/screenStyles';
 import { GLASS } from '@/components/Glass';
 
 /** The even gap between Reports' blocks (heatmap card, day card, story cards, "Where it went"). */
-export const BLOCK_GAP = SCREEN.sectionGap;
+const BLOCK_GAP = SCREEN.sectionGap;
 
 // Shared by the Reports screen and its pieces (PeriodRow, HeatmapCard, DayCard, ReportInsights, CategoryBar, CategoryList, TrendChart, DayTotal).
 export const styles = StyleSheet.create({
@@ -310,28 +310,6 @@ export const styles = StyleSheet.create({
   flowBarLive: { borderWidth: 1.5, borderStyle: 'dashed', borderColor: theme.colors.ink },
   flowLabel: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
   flowLabelOn: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
-  flowKept: {
-    minWidth: 38,
-    alignItems: 'center',
-    paddingVertical: 3,
-    borderRadius: theme.radius.pill,
-    backgroundColor: theme.colors.secondaryTint,
-  },
-  flowKeptNeg: { backgroundColor: theme.colors.idCoral },
-  flowKeptLive: {
-    backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderStyle: 'dashed',
-    borderColor: theme.colors.secondaryDeep,
-  },
-  flowKeptText: { fontFamily: theme.font.bodyBold, fontSize: 11, color: theme.colors.incomeText },
-  flowKeptTextNeg: { color: theme.colors.expenseText },
-  flowKeptCaption: {
-    textAlign: 'center',
-    fontFamily: theme.font.body,
-    fontSize: 12,
-    color: theme.colors.textMuted,
-  },
   stripCard: {
     flexDirection: 'row',
     backgroundColor: GLASS.fill,

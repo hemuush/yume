@@ -275,7 +275,6 @@ export const styles = StyleSheet.create({
   },
   chipText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textSecondary },
 
-  rowNoteInline: { fontSize: 13, color: theme.colors.textSecondary, fontFamily: theme.font.body },
   income: { color: theme.colors.incomeText },
   expense: { color: theme.colors.expenseText },
   rowRefund: { fontFamily: theme.font.bodyBold, color: theme.colors.incomeText },

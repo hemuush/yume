@@ -5,7 +5,7 @@ import { roundedMinor } from '@/lib/round';
  * A balance that rounds to exactly 0 reads as settled, not a small open debt, so status is always decided
  * on the whole-rupee figure the row shows.
  */
-export type PersonStatus = 'owed' | 'owe' | 'settled';
+type PersonStatus = 'owed' | 'owe' | 'settled';
 
 export function personStatus(dispBalanceMinor: number): PersonStatus {
   if (dispBalanceMinor === 0) return 'settled';
@@ -46,7 +46,7 @@ export function lastActivityShort(dateStr: string | null, now: Date = new Date()
   return `${Math.round(days / 7)}w ago`;
 }
 
-export interface PeopleGroups<T extends { balanceMinor: number }> {
+interface PeopleGroups<T extends { balanceMinor: number }> {
   /** People who owe you, the biggest balance first. */
   owed: T[];
   /** People you owe, the biggest balance first. */

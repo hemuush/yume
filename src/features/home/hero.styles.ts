@@ -3,7 +3,12 @@ import { theme } from '@/constants/theme';
 import { GLASS } from '@/components/Glass';
 
 export const styles = StyleSheet.create({
-  card: { marginHorizontal: 16, padding: 14, gap: 10 },
+  card: {
+    marginHorizontal: 16,
+    padding: 16,
+    gap: 12,
+    boxShadow: '0px 10px 28px rgba(19,41,63,0.07)',
+  },
   bar: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -13,23 +18,32 @@ export const styles = StyleSheet.create({
     minHeight: 32,
   },
   body: { gap: 10 },
+  // The figure and today's allowance share a line; the pill wraps under the figure on a narrow screen.
+  figureRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
+  figure: { flexShrink: 1, minWidth: 0 },
 
   headTitle: { flexDirection: 'row', alignItems: 'center', gap: 10, flexShrink: 1 },
   headIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 12,
+    width: 32,
+    height: 32,
+    borderRadius: 11,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: GLASS.fillStrong,
+    backgroundColor: theme.colors.surfaceAlt,
   },
   headLabel: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textSecondary },
   headValue: {
     fontFamily: theme.font.bodyLight,
-    fontSize: theme.typeSize.hero,
+    fontSize: 44,
     fontVariant: ['tabular-nums'],
-    lineHeight: 42,
-    letterSpacing: -1.2,
+    lineHeight: 50,
+    letterSpacing: -1.6,
     color: theme.colors.textPrimary,
   },
   headSymbol: {
@@ -85,18 +99,10 @@ export const styles = StyleSheet.create({
   dueDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: theme.colors.slice.due },
   dueText: { flexShrink: 1, fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.dueInk },
 
-  stats: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    rowGap: 8,
-    paddingVertical: 10,
-    paddingHorizontal: 4,
-    borderRadius: 18,
-    backgroundColor: GLASS.fillStrong,
-    borderWidth: 1,
-    borderColor: GLASS.edge,
-  },
-  stat: { flexGrow: 1, flexBasis: 100, minWidth: 0, paddingHorizontal: 8, gap: 3 },
+  // Three columns straight under the bar, no panel of their own: each dot is the bar's colour, so the bar is the legend.
+  stats: { flexDirection: 'row', flexWrap: 'wrap', rowGap: 8 },
+  stat: { flexGrow: 1, flexBasis: 100, minWidth: 0, paddingHorizontal: 12, gap: 3 },
+  statFirst: { paddingLeft: 0 },
   statDivider: { borderLeftWidth: StyleSheet.hairlineWidth, borderLeftColor: theme.colors.borderSoft },
   statHead: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   statDot: { width: 8, height: 8, borderRadius: 4 },
@@ -109,7 +115,7 @@ export const styles = StyleSheet.create({
   statValue: {
     fontVariant: ['tabular-nums'],
     fontFamily: theme.font.bodyBold,
-    fontSize: 13,
+    fontSize: 15,
     color: theme.colors.textPrimary,
   },
 

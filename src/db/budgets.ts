@@ -273,7 +273,7 @@ export async function restoreBudget(snapshot: RowSnapshot): Promise<void> {
 
 export type BudgetNudgeLevel = 'near' | 'over';
 /** A budget at or past this share of its limit gets one "getting close" notification. */
-export const BUDGET_NUDGE_PCT = 80;
+const BUDGET_NUDGE_PCT = 80;
 
 /**
  * Which budget notification is due, given those already sent this month: one past BUDGET_NUDGE_PCT, one when

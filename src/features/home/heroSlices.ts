@@ -38,7 +38,7 @@ export function heroSlices(
 }
 
 /** Headline views shared by Home and the monthly widget. */
-export type HeroMode = 'kept' | 'spent' | 'saved' | 'free';
+type HeroMode = 'kept' | 'spent' | 'saved' | 'free';
 
 /** "54%", or "<1%" for a real but tiny share rather than a misleading "0%". */
 export function heroPct(fraction: number): string {

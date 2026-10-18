@@ -177,8 +177,18 @@ export default function DashboardScreen() {
   // Tapping the logo scrolls Home back to the top.
   const scrollRef = useRef<Animated.ScrollView>(null);
   const reduceMotion = useReduceMotion();
-  const onScroll = useAnimatedScrollHandler((e) => {
-    scrollY.value = e.contentOffset.y;
+  // Also re-read the offset where the list stops: a throttled last scroll event can miss it, which would leave the
+  // header a little collapsed with the list at its top (see useCollapsingHeader).
+  const onScroll = useAnimatedScrollHandler({
+    onScroll: (e) => {
+      scrollY.value = e.contentOffset.y;
+    },
+    onEndDrag: (e) => {
+      scrollY.value = e.contentOffset.y;
+    },
+    onMomentumEnd: (e) => {
+      scrollY.value = e.contentOffset.y;
+    },
   });
   const [headerHeight, setHeaderHeight] = useState(insets.top + 200);
 
@@ -617,9 +627,7 @@ export default function DashboardScreen() {
               onRetryRefunds={() => void load(cursorRef.current)}
               budgetAlert={needsYou.some((i) => i.action === 'budgets')}
               rowEntering={rowEntering}
-              onSeeMoreUpcoming={() =>
-                router.navigate({ pathname: '/plan', params: { section: 'coming-up' } })
-              }
+              onSeeMoreUpcoming={() => router.navigate({ pathname: '/plan', params: { tab: 'upcoming' } })}
             />
           </Animated.View>
         )}

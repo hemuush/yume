@@ -89,10 +89,11 @@ it.each([false, true])(
     try {
       act(() => mockHandlers.onScroll({ contentOffset: { y: 70 } }));
       expect(header.collapse.scrollY.value).toBe(70);
-      expect(mockHandlers.onEndDrag).toBeUndefined();
-      expect(mockHandlers.onMomentumEnd).toBeUndefined();
       act(() => mockHandlers.onScroll({ contentOffset: { y: 30 } }));
       expect(header.collapse.scrollY.value).toBe(30);
+      // Where the list stops is re-read (a throttled last event can miss it), but nothing scrolls or snaps.
+      act(() => mockHandlers.onMomentumEnd({ contentOffset: { y: 0 } }));
+      expect(header.collapse.scrollY.value).toBe(0);
       expect(mockScroll).not.toHaveBeenCalled();
     } finally {
       act(() => root.unmount());

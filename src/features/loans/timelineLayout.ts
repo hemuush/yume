@@ -1,13 +1,13 @@
 import { parseLocalIsoDate } from '@/lib/date';
 
-export interface TimelineInput {
+interface TimelineInput {
   id: string;
   name: string;
   /** The loan's last EMI, YYYY-MM-DD. */
   endDate: string;
 }
 
-export interface TimelineRow extends TimelineInput {
+interface TimelineRow extends TimelineInput {
   /** 0–1: how far along the shared axis this loan ends (the latest end date is 1). */
   fraction: number;
 }

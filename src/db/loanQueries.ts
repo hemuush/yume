@@ -174,7 +174,7 @@ export async function getLoanRateHistory(loanId: string): Promise<LoanRateChange
   }));
 }
 
-export interface NextDueInstallment {
+interface NextDueInstallment {
   loanId: string;
   counterparty: string;
   emiAmountMinor: number;

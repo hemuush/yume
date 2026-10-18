@@ -1,6 +1,6 @@
 import { CategoryKind } from '@/types';
 
-export interface DefaultCategory {
+interface DefaultCategory {
   name: string;
   kind: CategoryKind;
   icon: string;

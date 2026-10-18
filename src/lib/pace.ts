@@ -3,7 +3,7 @@ import { parseLocalIsoDate } from './date';
 /** Before this day of the month there's too little to go on, so no forecast is shown. */
 export const PACE_MIN_DAY = 5;
 /** How far past the even-spending line a budget can be before it's "ahead of pace", as a share of its limit. */
-export const BUDGET_PACE_SLACK = 0.1;
+const BUDGET_PACE_SLACK = 0.1;
 
 function dayAndLength(today: string): { day: number; daysInMonth: number } {
   const d = parseLocalIsoDate(today);
@@ -26,7 +26,7 @@ export function monthPace(input: {
   return Math.round(input.spentMinor + perDay * (daysInMonth - day) + input.dueRestOfMonthMinor);
 }
 
-export type BudgetPaceState = 'onTrack' | 'ahead' | 'over';
+type BudgetPaceState = 'onTrack' | 'ahead' | 'over';
 
 /**
  * A budget vs the even-spending line, from the share of its limit used (1 = all). `expectedFraction` is the

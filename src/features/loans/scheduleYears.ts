@@ -1,7 +1,7 @@
 import type { LoanPayment } from '@/types';
 import { isUnpaidInstallment } from './installmentStatus';
 
-export interface ScheduleYear {
+interface ScheduleYear {
   year: number;
   payments: LoanPayment[];
   paidCount: number;

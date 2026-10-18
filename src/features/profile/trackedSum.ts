@@ -1,7 +1,7 @@
 import type { TrackedBalanceParts } from '@/db/reports';
 import { roundedMinor } from '@/lib/round';
 
-export interface TrackedSumLines {
+interface TrackedSumLines {
   totalMinor: number;
   accountsMinor: number;
   loansMinor: number;
@@ -23,7 +23,7 @@ export function trackedSumLines(parts: TrackedBalanceParts, accountsShownMinor: 
   };
 }
 
-export interface AccountGroup<T> {
+interface AccountGroup<T> {
   type: string;
   accounts: T[];
   /** Whole-rupee sum of the group's default-currency accounts; null when it has none. */

@@ -8,7 +8,7 @@ import { formatPctChange } from '@/lib/format';
  * Pure (date is an input). Keys carry the situation (near/over, soon/due) so a dismissed item can return.
  */
 export type NeedsYouTone = 'urgent' | 'warn' | 'info';
-export type NeedsYouAction = 'loans' | 'budgets' | 'backup' | 'reports' | 'tidy' | 'recurring' | 'payCard';
+type NeedsYouAction = 'loans' | 'budgets' | 'backup' | 'reports' | 'tidy' | 'recurring' | 'payCard';
 
 export interface NeedsYouItem {
   key: string;
@@ -62,7 +62,7 @@ export const BACKUP_NUDGE_MIN_TRANSACTIONS = 10;
 const EMI_SOON_DAYS = 3;
 const UPCOMING_EMI_DAYS = 14;
 /** A card bill shows in the last few days before it's due, and once it's late. */
-export const CARD_BILL_DAYS = 5;
+const CARD_BILL_DAYS = 5;
 
 function wholeDaysBetween(fromIso: string, toIso: string): number {
   return Math.round((parseLocalIsoDate(toIso).getTime() - parseLocalIsoDate(fromIso).getTime()) / 86400000);

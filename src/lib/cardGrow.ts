@@ -20,7 +20,7 @@ export function subscribeCardGrow(next: Listener): () => void {
   };
 }
 
-export function startCardGrow(rect: GrowRect): void {
+function startCardGrow(rect: GrowRect): void {
   listener?.(rect);
 }
 

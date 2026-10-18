@@ -264,7 +264,7 @@ export async function undoDeleteNewestOfGroup(snapshot: RowSnapshot): Promise<vo
   await restoreTransaction(snapshot);
 }
 
-export interface OpeningBalanceMove {
+interface OpeningBalanceMove {
   transactions: RowSnapshot[];
   accountId: string;
   previousOpeningMinor: number;

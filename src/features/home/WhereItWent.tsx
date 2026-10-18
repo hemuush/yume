@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Pressable, ScrollView, StyleSheet } from 'react-native';
+import { View, Pressable, StyleSheet } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Text } from '@/components/Text';
@@ -14,11 +14,11 @@ import { withPressed } from '@/lib/pressed';
 import { useAccent } from '@/theme/AccentContext';
 import { homeInk } from './homeInk';
 
-/** How many categories get their own button before the "all categories" one. */
-const SHOWN = 8;
+/** How many categories get their own button; the rest are in Reports (the card's See all). */
+const SHOWN = 6;
 
 /**
- * Where the month's money went: a single row of the eight biggest categories (the picked one is a dark pill with its
+ * Where the month's money went: a single row of the six biggest categories (the picked one is a dark pill with its
  * share), and under it that category, one tap from its page. The month's total is not repeated here: the
  * month card above already says it.
  */
@@ -77,12 +77,7 @@ export function WhereItWent({
 
   return (
     <View style={[styles.section, cardSurface.neutral]}>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.row}
-        style={styles.rowScroll}
-      >
+      <View style={[styles.row, top.length >= SHOWN && styles.rowFull]}>
         {top.map((c, i) => {
           const on = i === index;
           const icon = (
@@ -102,7 +97,7 @@ export function WhereItWent({
                   setPicked(c.categoryId);
                 }
               }}
-              hitSlop={3}
+              hitSlop={4}
               accessibilityRole="button"
               accessibilityLabel={`${c.name}, ${Math.round((c.totalMinor / total) * 100)}% of spending`}
               accessibilityState={{ selected: on }}
@@ -112,16 +107,7 @@ export function WhereItWent({
             </Pressable>
           );
         })}
-        <Pressable
-          style={withPressed(styles.target)}
-          onPress={onOpenReports}
-          hitSlop={3}
-          accessibilityRole="button"
-          accessibilityLabel="All categories in Reports"
-        >
-          <Feather name="more-horizontal" size={20} color={ink} />
-        </Pressable>
-      </ScrollView>
+      </View>
       <Pressable
         style={withPressed(styles.categoryButton)}
         onPress={() => (onOpenCategory ? onOpenCategory(selected.categoryId) : onOpenReports())}
@@ -156,21 +142,22 @@ const styles = StyleSheet.create({
     borderColor: GLASS.edge,
     gap: 8,
   },
-  // One row, however many categories: it scrolls sideways rather than wrapping.
-  rowScroll: { marginHorizontal: -12, flexGrow: 0 },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12 },
+  // Six categories fit one row on a normal phone and spread across it; on a very narrow screen or with large
+  // text the row wraps instead of cutting a button off.
+  row: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 },
+  rowFull: { justifyContent: 'space-between' },
   target: {
-    height: 44,
-    minWidth: 44,
-    borderRadius: 22,
-    paddingHorizontal: 10,
+    height: 40,
+    minWidth: 40,
+    borderRadius: 20,
+    paddingHorizontal: 8,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
     backgroundColor: theme.colors.white,
   },
-  picked: { paddingHorizontal: 14 },
+  picked: { paddingHorizontal: 12 },
   share: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.white },
   footerDivider: { height: StyleSheet.hairlineWidth, backgroundColor: theme.colors.borderSoft },
   categoryButton: { minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 8 },

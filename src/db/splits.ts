@@ -26,7 +26,7 @@ export interface SplitPart {
   amountMinor: number;
 }
 
-export interface SaveSplitInput {
+interface SaveSplitInput {
   /** Set when editing a split: its parts are replaced as one change. */
   splitId?: string | null;
   /** Set when an ordinary entry is being split: it's replaced by the parts, in the same change. */

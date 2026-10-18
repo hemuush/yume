@@ -19,7 +19,7 @@ import type { Account } from '@/types';
 const EVERYDAY_SHOWN = 4;
 
 /** "bank", "credit card", "savings · tracked": what kind of account, as the old account cards said it. */
-export function accountTypeLabel(a: Account): string {
+function accountTypeLabel(a: Account): string {
   return a.investment ? 'savings · tracked' : a.type.replace('_', ' ');
 }
 

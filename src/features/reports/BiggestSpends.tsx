@@ -10,7 +10,7 @@ import type { Category } from '@/types';
 import { styles } from './reports.styles';
 
 /** Fewer entries than this and a "top 5" is just the list. */
-export const BIGGEST_MIN_ENTRIES = 3;
+const BIGGEST_MIN_ENTRIES = 3;
 
 /**
  * The period's largest single expenses, in the day card's row; tapping one opens its day on the heatmap.

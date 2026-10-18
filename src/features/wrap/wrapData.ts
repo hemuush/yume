@@ -22,7 +22,7 @@ import { savingsRatePct } from '@/lib/savingsRate';
 
 export type WrapPeriod = 'month' | 'week';
 
-export interface WrapCategory {
+interface WrapCategory {
   categoryId: string;
   name: string;
   color: string;
@@ -217,7 +217,7 @@ export function buildWeekWrap(input: {
 }
 
 /** How many earlier weeks make up "a usual week". */
-export const USUAL_WEEKS = 4;
+const USUAL_WEEKS = 4;
 
 /** The usual week: the average spend of the weeks before `start` that had any, or null when none did. */
 export function usualWeekFrom(start: string, daily: DailyExpensePoint[]): number | null {

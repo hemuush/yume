@@ -2,7 +2,7 @@ import { addDaysToIsoDate, parseLocalIsoDate } from '@/lib/date';
 import type { DailyGoalStreakPoint } from '@/db/reports';
 
 /** One day on the garden's month calendar. */
-export interface GardenDay {
+interface GardenDay {
   date: string;
   day: number;
   /** Kept under the goal; missed; before the first expense; or still to come. */

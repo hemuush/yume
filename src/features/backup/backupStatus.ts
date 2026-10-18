@@ -20,7 +20,7 @@ export function formatWhen(iso: string): string {
   });
 }
 
-export type StatusView = {
+type StatusView = {
   icon: McIconName;
   tint: string;
   /** The shield's colour: backed up, failed, or waiting on a folder or a first backup. */

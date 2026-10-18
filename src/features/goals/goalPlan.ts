@@ -3,11 +3,11 @@ import { parseLocalIsoDate, toLocalIsoDate } from '@/lib/date';
 import type { SavingsGoal } from '@/types';
 
 /** How far a goal may sit from the even-saving line, as a share of its target, and still be "on pace". */
-export const GOAL_PACE_SLACK = 0.05;
+const GOAL_PACE_SLACK = 0.05;
 
-export type GoalPace = 'ahead' | 'onPace' | 'behind';
+type GoalPace = 'ahead' | 'onPace' | 'behind';
 
-export interface GoalPlan {
+interface GoalPlan {
   toGoMinor: number;
   /** Calendar months from today to the target date, counting a part month as a whole one. Null with no date. */
   monthsLeft: number | null;

@@ -30,14 +30,14 @@ function Action({ type, label, icon, ink }: (typeof ACTIONS)[number] & { ink: st
       onPress={() => pushOnce(`/add-transaction?type=${type}`)}
       onPressIn={onPressIn}
       onPressOut={onPressOut}
-      style={styles.wrap}
+      style={[styles.wrap, primary && styles.wrapPrimary]}
       accessibilityRole="button"
       accessibilityLabel={`Add ${label.toLowerCase()}`}
     >
       <Animated.View
         style={[styles.action, primary && { backgroundColor: ink, borderColor: ink }, animatedStyle]}
       >
-        <Feather name={icon} size={19} color={primary ? theme.colors.white : theme.colors.ink} />
+        <Feather name={icon} size={18} color={primary ? theme.colors.white : theme.colors.ink} />
         <Text style={[styles.label, primary && styles.labelPrimary]}>{label}</Text>
       </Animated.View>
     </Pressable>
@@ -59,21 +59,23 @@ export function HeroActions() {
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   wrap: { flexGrow: 1, flexBasis: 88 },
+  // Expense is the main action: a little wider.
+  wrapPrimary: { flexGrow: 1.3 },
   action: {
-    minHeight: 60,
-    paddingVertical: 10,
+    minHeight: 48,
     paddingHorizontal: 12,
     borderRadius: 18,
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    gap: 6,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
     backgroundColor: GLASS.fillStrong,
     borderWidth: 1,
     borderColor: GLASS.edge,
   },
   label: {
     fontFamily: theme.font.bodyMedium,
-    fontSize: 13,
+    fontSize: 14,
     color: theme.colors.textPrimary,
   },
   labelPrimary: { color: theme.colors.white },

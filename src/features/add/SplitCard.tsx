@@ -13,7 +13,7 @@ import { DraftPart, partAmounts, splitProblem, splitProblemText } from './splitD
  * How a payment divides, as one bar: a segment per part, as wide as its share, in its category's colour.
  * Shared by the split page and Add's split card.
  */
-export function SplitMeter({
+function SplitMeter({
   parts,
   amounts,
   categories,

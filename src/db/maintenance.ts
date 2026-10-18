@@ -15,7 +15,7 @@ const ROUND_TO_RUPEE = (col: string) => `CAST(ROUND(${col} / 100.0) AS INTEGER) 
 const ROUNDABLE_TRANSACTION = `loan_id IS NULL AND loan_payment_id IS NULL
   AND NOT EXISTS (SELECT 1 FROM loan_payments lp WHERE lp.transaction_id = transactions.id)`;
 
-export interface RoundAmountsResult {
+interface RoundAmountsResult {
   transactions: number;
   accounts: number;
   personLedgerEntries: number;
@@ -26,7 +26,7 @@ export interface RoundAmountsResult {
   total: number;
 }
 
-export interface RoundAmountsOutcome extends RoundAmountsResult {
+interface RoundAmountsOutcome extends RoundAmountsResult {
   /** Puts every rounded amount back to what it was (rows that have since been deleted are skipped). */
   undo: () => Promise<void>;
 }

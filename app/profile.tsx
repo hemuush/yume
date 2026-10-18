@@ -39,7 +39,7 @@ export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const { accent, secondary } = useAccent();
   // The header sits over the page and shrinks as it scrolls; the amount pad's scroll tracking feeds it.
-  const { collapse, headerHeight, onJsScroll } = useCollapsingHeader();
+  const { collapse, headerHeight, onJsScroll, onJsScrollEnd } = useCollapsingHeader();
   const [name, setName] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState('');
@@ -101,6 +101,8 @@ export default function ProfileScreen() {
                 scrollProps.onScroll(e);
                 onJsScroll(e.nativeEvent.contentOffset.y);
               }}
+              onScrollEndDrag={onJsScrollEnd}
+              onMomentumScrollEnd={onJsScrollEnd}
               contentContainerStyle={{
                 paddingTop: headerHeight,
                 paddingBottom: theme.layout.screenScrollPad + insets.bottom,

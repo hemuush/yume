@@ -1,6 +1,5 @@
 import { StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
-import { SOFT_LIFT } from './SoftCard';
 
 /**
  * The app's one visual system: every card, section heading and list row is built from these so no block gets
@@ -29,8 +28,6 @@ export const screenStyles = StyleSheet.create({
     borderColor: theme.colors.borderSoft,
     overflow: 'hidden',
   },
-  // The main Home cards: the same card, lifted like the month card.
-  cardLifted: { ...SOFT_LIFT },
   // A card inside a sheet, which already has its own side padding.
   cardInSheet: {
     marginHorizontal: 0,

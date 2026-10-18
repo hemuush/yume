@@ -1,7 +1,7 @@
 import { LoanPayment } from '@/types';
 import { parseLocalIsoDate } from './date';
 
-export interface LoanPayoff {
+interface LoanPayoff {
   /** The last EMI still to pay, YYYY-MM-DD — when the loan is done. Null once nothing is pending. */
   lastDueDate: string | null;
   emisLeft: number;
