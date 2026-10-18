@@ -41,17 +41,27 @@ export function GoalRing({
   size = 44,
   done = false,
   animKey,
+  label,
 }: {
   percent: number;
   color: string;
   size?: number;
   done?: boolean;
+  /** Text in the middle instead of the percent (a budget over its limit reads "108%" on a full ring). */
+  label?: string;
   /** e.g. `goal:<id>` — see useGrowFrom. Without it the ring is drawn plain. */
   animKey?: string;
 }) {
   if (animKey)
     return <GrowingRing percent={percent} color={color} size={size} done={done} animKey={animKey} />;
-  return <RingSvg color={color} size={size} progress={clampPct(percent)} label={ringLabel(done, percent)} />;
+  return (
+    <RingSvg
+      color={color}
+      size={size}
+      progress={clampPct(percent)}
+      label={label ?? ringLabel(done, percent)}
+    />
+  );
 }
 
 function ringLabel(done: boolean, percent: number): string {

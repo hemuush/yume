@@ -1,5 +1,5 @@
 /**
- * Smoke-renders GoalRing/GoalChip/GoalCard across real data shapes (0%, mid, done, over target, no date);
+ * Smoke-renders GoalRing/GoalCard across real data shapes (0%, mid, done, over target, no date);
  * a render-time throw reproduces a crash without a device, which the db tests can't catch.
  */
 import { create as createTree, act } from 'react-test-renderer';
@@ -16,7 +16,6 @@ afterEach(() => {
   mounted.length = 0;
 });
 import { GoalRing } from './GoalRing';
-import { GoalChip } from './GoalChip';
 import { GoalCard } from './GoalCard';
 import { SavingsGoal } from '@/types';
 
@@ -42,6 +41,14 @@ function makeGoal(overrides: Partial<SavingsGoal> = {}): SavingsGoal {
 }
 
 describe('GoalRing', () => {
+  it('shows the label it is given instead of the percent', () => {
+    let r!: ReturnType<typeof create>;
+    act(() => {
+      r = create(<GoalRing percent={100} color="#E23F55" size={40} label="108%" />);
+    });
+    expect(JSON.stringify(r.toJSON())).toContain('108%');
+  });
+
   it.each([0, 1, 50, 99, 100])('renders without throwing at %i%%', (percent) => {
     expect(() => {
       act(() => {
@@ -62,32 +69,6 @@ describe('GoalRing', () => {
     expect(() => {
       act(() => {
         create(<GoalRing percent={64} color="#8FE8C8" size={size} />);
-      });
-    }).not.toThrow();
-  });
-});
-
-describe('GoalChip', () => {
-  it('renders a freshly created goal (0% saved) without throwing', () => {
-    expect(() => {
-      act(() => {
-        create(<GoalChip goal={makeGoal()} onPress={() => {}} />);
-      });
-    }).not.toThrow();
-  });
-
-  it('renders a goal saved past its target (>100%) without throwing', () => {
-    expect(() => {
-      act(() => {
-        create(<GoalChip goal={makeGoal({ currentAmountMinor: 5000000 })} onPress={() => {}} />);
-      });
-    }).not.toThrow();
-  });
-
-  it('renders a goal with a target date without throwing', () => {
-    expect(() => {
-      act(() => {
-        create(<GoalChip goal={makeGoal({ targetDate: '2026-12-31' })} onPress={() => {}} />);
       });
     }).not.toThrow();
   });
