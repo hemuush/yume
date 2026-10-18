@@ -354,6 +354,8 @@ export default function PlanScreen() {
       setDetail(null);
   }, [detail, scoped, selectedGoal, selectedRule]);
 
+  // With no loan yet the Debt card is the "Track an EMI" prompt: it goes straight to Loans, not to a tab of it.
+  const openDebt = () => (scoped && scoped.loans.rows.length > 0 ? setTab('debt') : open('/loans'));
   const nextPayment = (() => {
     const first = scoped?.dueGroups.find((g) => g.outMinor > 0);
     const item = first?.items.find((i) => i.kind === 'emi' || i.kind === 'bill');
@@ -415,6 +417,7 @@ export default function PlanScreen() {
             {tab === 'overview' && (
               <>
                 <PlanStats
+                  stack={stackTiles}
                   count={data.dueSoon.count}
                   days={PLAN_DAYS}
                   next={nextPayment}
@@ -456,8 +459,8 @@ export default function PlanScreen() {
                     limit={PREVIEW_TILES}
                   />
                 </Section>
-                <Section compact title="Debt" onSeeAll={() => setTab('debt')}>
-                  <DebtPath loans={data.loans} today={data.today} onOpen={() => setTab('debt')} />
+                <Section compact title="Debt" onSeeAll={openDebt}>
+                  <DebtPath loans={data.loans} today={data.today} onOpen={openDebt} />
                 </Section>
                 <Section compact title="People & habit">
                   <View style={[planStyles.row, stackTiles && planStyles.rowStack]}>
@@ -508,7 +511,7 @@ export default function PlanScreen() {
                     onAdd={() => openDetail('new-goal', '')}
                   />
                 </Section>
-                <Section compact title="Spend a little less">
+                <Section compact title="Ideas">
                   <WhatIfCard
                     whatIf={data.whatIf}
                     onOpen={(cut) =>

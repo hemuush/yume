@@ -57,16 +57,19 @@ export function PlanStats({
   days,
   next,
   onOpen,
+  stack,
 }: {
   count: number;
   days: number;
   /** The first payment going out: its date and name. */
   next: { date: string; title: string } | null;
   onOpen: () => void;
+  /** Large text or a narrow screen: one tile under the other. */
+  stack?: boolean;
 }) {
   if (count === 0) return null;
   return (
-    <View style={styles.statRow}>
+    <View style={[styles.statRow, stack && styles.statStack]}>
       <StatTile
         value={String(count)}
         line1={count === 1 ? 'Payment' : 'Payments'}

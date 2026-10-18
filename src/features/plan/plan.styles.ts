@@ -177,6 +177,7 @@ export const styles = StyleSheet.create({
     paddingTop: 10,
   },
   statRow: { flexDirection: 'row', gap: GAP, marginHorizontal: SCREEN.gutter, marginTop: GAP },
+  statStack: { flexDirection: 'column' },
   statWrap: { flex: 1, minWidth: 0 },
   stat: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12 },
   statIcon: {
