@@ -359,15 +359,16 @@ export default function PlanScreen() {
           )
         ) : (
           <>
-            <RunwayCard dueSoon={data.dueSoon} runway={data.runway} hasAccounts={data.hasAccounts} />
-            <ComingUpSection
-              groups={data.dueGroups}
-              today={data.today}
-              onOpen={open}
-              onPay={(id) => void payEmi(id)}
-              onLoan={(id) => openDetail('loan', id)}
-              onRule={(id) => openDetail('rule', id)}
-            />
+            <RunwayCard dueSoon={data.dueSoon} runway={data.runway} hasAccounts={data.hasAccounts}>
+              <ComingUpSection
+                groups={data.dueGroups}
+                today={data.today}
+                onOpen={open}
+                onPay={(id) => void payEmi(id)}
+                onLoan={(id) => openDetail('loan', id)}
+                onRule={(id) => openDetail('rule', id)}
+              />
+            </RunwayCard>
             <View style={{ marginHorizontal: 16 }}>
               <PendingRefunds
                 refreshToken={data}
@@ -381,21 +382,12 @@ export default function PlanScreen() {
               />
             </View>
             <Section compact title="Budgets" onSeeAll={() => open('/budgets')}>
-              <BudgetJars
-                summary={data.budgets}
-                onOpen={() => open('/budgets')}
-                onBudget={(id) => openDetail('budget', id)}
-                onAdd={() => openDetail('new-budget', '')}
-              />
-            </Section>
-            <Section compact title="Goals" onSeeAll={() => open('/savings-goals')}>
               <View style={planStyles.rowGap}>
-                <GoalsStrip
-                  goals={data.goals}
-                  savingsAccounts={data.savingsAccounts}
-                  onOpen={() => open('/savings-goals')}
-                  onGoal={(id) => openDetail('goal', id)}
-                  onAdd={() => openDetail('new-goal', '')}
+                <BudgetJars
+                  summary={data.budgets}
+                  onOpen={() => open('/budgets')}
+                  onBudget={(id) => openDetail('budget', id)}
+                  onAdd={() => openDetail('new-budget', '')}
                 />
                 <WhatIfCard
                   whatIf={data.whatIf}
@@ -407,6 +399,17 @@ export default function PlanScreen() {
                         })
                       : open('/whatif')
                   }
+                />
+              </View>
+            </Section>
+            <Section compact title="Goals" onSeeAll={() => open('/savings-goals')}>
+              <View style={planStyles.rowGap}>
+                <GoalsStrip
+                  goals={data.goals}
+                  savingsAccounts={data.savingsAccounts}
+                  onOpen={() => open('/savings-goals')}
+                  onGoal={(id) => openDetail('goal', id)}
+                  onAdd={() => openDetail('new-goal', '')}
                 />
               </View>
             </Section>

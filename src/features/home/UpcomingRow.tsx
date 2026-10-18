@@ -25,6 +25,7 @@ export function UpcomingRow({
   urgent,
   soon,
   date,
+  dueDate = date,
   actionLabel,
   highlight,
 }: {
@@ -43,6 +44,8 @@ export function UpcomingRow({
   soon?: boolean;
   /** The due date (YYYY-MM-DD): shown as a date tile ("01 OCT") in place of the icon, as Plan does. */
   date?: string;
+  /** The due date for the Overdue / Due now chip when the row shows an icon instead of the date tile. */
+  dueDate?: string;
   /** A bill to pay: a "Pay" pill ends the row; tapping anywhere on the row still opens it. */
   actionLabel?: string;
   /** Due soon (pinned): the row sits on a pale amber panel so it stands out from the rest of the week. */
@@ -51,7 +54,7 @@ export function UpcomingRow({
   const money = `${sign}${formatMoney(amountMinor)}`;
   const chip = urgent
     ? {
-        label: date && date < toLocalIsoDate(new Date()) ? 'Overdue' : 'Due now',
+        label: dueDate && dueDate < toLocalIsoDate(new Date()) ? 'Overdue' : 'Due now',
         tone: 'warning' as const,
       }
     : soon

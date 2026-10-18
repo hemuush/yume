@@ -162,7 +162,24 @@ export const styles = StyleSheet.create({
   sprouts: { flexDirection: 'row', alignItems: 'flex-end', gap: 6, minHeight: 32, marginTop: 'auto' },
 
   /* ---------- Coming up ---------- */
-  list: { marginHorizontal: SCREEN.gutter, paddingTop: 4, overflow: 'hidden' },
+  comingUp: { marginHorizontal: -SCREEN.cardPad, marginBottom: -4 },
+  dayHead: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: SCREEN.cardPad + 4,
+    paddingTop: 10,
+  },
+  dayHeadText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textMuted },
+  allLink: {
+    minHeight: 44,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: theme.colors.borderSoft,
+  },
+  allLinkText: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.link },
   dueIcon: {
     width: 38,
     height: 38,

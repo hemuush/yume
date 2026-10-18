@@ -24,18 +24,21 @@ const PIN = 44;
 /**
  * The Plan hero, verdict first: whether your spending accounts cover the next 14 days of EMIs and bills, in
  * one headline ("Short ₹6,619", "Covered", "Nothing due") with a single grey line under it, then the balance
- * walk as a line with a pin per payment day. The bills themselves are the Coming up list right under it.
+ * walk as a line with a pin per payment day. The Coming up list is drawn under it, inside the same card.
  * Without a spending account there's no balance to draw, so it says what is going out instead.
  */
 export function RunwayCard({
   dueSoon,
   runway,
   hasAccounts,
+  children,
 }: {
   dueSoon: DueSoon;
   runway: Runway;
   /** Whether any bank, cash or wallet account holds the balance the line starts from. */
   hasAccounts: boolean;
+  /** The Coming up list, drawn under the verdict inside the same card. */
+  children?: React.ReactNode;
 }) {
   const { accent } = useAccent();
   const ink = homeInk(accent);
@@ -191,6 +194,7 @@ export function RunwayCard({
           </View>
         </View>
       )}
+      {children}
     </Glass>
   );
 }

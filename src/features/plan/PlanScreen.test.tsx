@@ -223,12 +223,12 @@ describe('Plan tab', () => {
     expect(router.push).not.toHaveBeenCalled();
     act(() => tree.unmount());
   });
-  it('shows the verdict, then Coming up, then the sections', async () => {
+  it('shows the verdict with its bills inside, then the sections', async () => {
     const shown = texts(await render());
     const headings = [
       'Next 14 days',
       'Covered',
-      'Coming up',
+      'All recurring',
       'Budgets',
       'Goals',
       'Debt',
@@ -285,11 +285,12 @@ describe('Plan tab', () => {
 
   it('lists Coming up in date order, one row per payment', async () => {
     const shown = texts(await render());
-    const from = shown.indexOf('Coming up');
+    const from = shown.indexOf('Covered');
     expect(shown.indexOf('Streaming', from)).toBeGreaterThan(from);
     expect(shown.indexOf('Home loan', from)).toBeGreaterThan(shown.indexOf('Streaming', from));
-    // No per-day totals any more: the card above says what is going out.
-    expect(shown.some((t) => t.startsWith('Total out'))).toBe(false);
+    // Each day is a small heading with what leaves that day.
+    expect(shown).toContain('₹25,000 out');
+    expect(shown).toContain('₹450 out');
   });
 
   it('says what each section means in plain words', async () => {
@@ -326,7 +327,7 @@ describe('Plan tab', () => {
       pathname: '/whatif',
       params: { category: 'food', cut: '10' },
     });
-    act(() => byLabel('See all — Coming up').props.onPress());
+    act(() => byLabel('All recurring').props.onPress());
     expect(router.push).toHaveBeenLastCalledWith('/recurring');
     act(() => byLabel('4-day streak').props.onPress());
     expect(router.push).toHaveBeenLastCalledWith('/garden');
@@ -343,8 +344,8 @@ describe('Plan tab', () => {
       ).color;
     // The EMI is 3 days out (amber); the streaming bill tomorrow is not an EMI or card bill.
     expect(subColor('EMI · ')).toBe(theme.colors.warnInk);
-    expect(subColor('Bill · ')).not.toBe(theme.colors.warnInk);
-    expect(subColor('Bill · ')).not.toBe(theme.colors.expenseText);
+    expect(subColor('Bill')).not.toBe(theme.colors.warnInk);
+    expect(subColor('Bill')).not.toBe(theme.colors.expenseText);
   });
 
   it('marks an EMI paid straight from Coming up, showing what the account holds after', async () => {
