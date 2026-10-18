@@ -314,35 +314,65 @@ export function ThisMonthHero({
       </View>
 
       <ReanimatedAnimated.View style={[styles.body, slideStyle]} {...pan.panHandlers}>
-        <View
-          accessible
-          accessibilityLabel={
-            slices.hasIncome ? `${headLabel}, ${formatMoney(headMinor)}, ${headCaption}` : headCaption
-          }
-          // The swipe, for a screen reader: swipe up or down on the figure to step the period.
-          accessibilityActions={[
-            { name: 'decrement', label: 'Previous period' },
-            ...(canStepForward ? [{ name: 'increment', label: 'Next period' }] : []),
-          ]}
-          onAccessibilityAction={(e) => {
-            if (e.nativeEvent.actionName === 'decrement') onStep(-1);
-            else if (e.nativeEvent.actionName === 'increment' && canStepForward) onStep(1);
-          }}
-        >
-          {slices.hasIncome ? (
-            // Rolls up from zero when Home opens or the period turns, and to its new value after a save.
-            <CountUpAmount
-              key={displayed.periodKey}
-              minor={headMinor}
-              countFromZero
-              duration={DURATIONS.rollUp}
-              style={[styles.headValue, headNeg && styles.headValueNeg]}
-              symbolStyle={styles.headSymbol}
-              numberOfLines={1}
-              adjustsFontSizeToFit
-            />
-          ) : (
-            <Text style={styles.headValue}>—</Text>
+        {/* The figure, and today's allowance beside it so that pill needs no row of its own. */}
+        <View style={styles.figureRow}>
+          <View
+            style={styles.figure}
+            accessible
+            accessibilityLabel={
+              slices.hasIncome ? `${headLabel}, ${formatMoney(headMinor)}, ${headCaption}` : headCaption
+            }
+            // The swipe, for a screen reader: swipe up or down on the figure to step the period.
+            accessibilityActions={[
+              { name: 'decrement', label: 'Previous period' },
+              ...(canStepForward ? [{ name: 'increment', label: 'Next period' }] : []),
+            ]}
+            onAccessibilityAction={(e) => {
+              if (e.nativeEvent.actionName === 'decrement') onStep(-1);
+              else if (e.nativeEvent.actionName === 'increment' && canStepForward) onStep(1);
+            }}
+          >
+            {slices.hasIncome ? (
+              // Rolls up from zero when Home opens or the period turns, and to its new value after a save.
+              <CountUpAmount
+                key={displayed.periodKey}
+                minor={headMinor}
+                countFromZero
+                duration={DURATIONS.rollUp}
+                style={[styles.headValue, headNeg && styles.headValueNeg]}
+                symbolStyle={styles.headSymbol}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+              />
+            ) : (
+              <Text style={styles.headValue}>—</Text>
+            )}
+          </View>
+          {shownToday && (
+            <View style={[styles.chip, styles.chipClip, todayOverMinor > 0 && styles.chipOver]}>
+              <Feather
+                name="clock"
+                size={13}
+                color={todayOverMinor > 0 ? theme.colors.expenseText : theme.colors.textSecondary}
+              />
+              <Text style={[styles.chipText, todayOverMinor > 0 && styles.chipTextOver]}>
+                {todayOverMinor > 0
+                  ? `${formatMoney(shownToday.spentMinor)} today · ${formatMoney(todayOverMinor)} over`
+                  : `${formatMoney(shownToday.goalMinor - shownToday.spentMinor)} left today`}
+              </Text>
+              {todayOverMinor <= 0 && shownToday.goalMinor > 0 && (
+                <View
+                  testID="home-today-meter"
+                  style={[
+                    styles.chipMeter,
+                    {
+                      // Refunds can make today's net spend negative: the meter just stays empty.
+                      width: `${Math.max(0, Math.min(100, (shownToday.spentMinor / shownToday.goalMinor) * 100))}%`,
+                    },
+                  ]}
+                />
+              )}
+            </View>
           )}
         </View>
 
@@ -412,34 +442,8 @@ export function ThisMonthHero({
         )}
 
         {slices.hasIncome && <MoneyBar slices={slices} />}
-        {(shownToday || hasDue) && (
+        {hasDue && (
           <View style={styles.chips}>
-            {shownToday && (
-              <View style={[styles.chip, styles.chipClip, todayOverMinor > 0 && styles.chipOver]}>
-                <Feather
-                  name="clock"
-                  size={13}
-                  color={todayOverMinor > 0 ? theme.colors.expenseText : theme.colors.textSecondary}
-                />
-                <Text style={[styles.chipText, todayOverMinor > 0 && styles.chipTextOver]}>
-                  {todayOverMinor > 0
-                    ? `${formatMoney(shownToday.spentMinor)} today · ${formatMoney(todayOverMinor)} over`
-                    : `${formatMoney(shownToday.goalMinor - shownToday.spentMinor)} left today`}
-                </Text>
-                {todayOverMinor <= 0 && shownToday.goalMinor > 0 && (
-                  <View
-                    testID="home-today-meter"
-                    style={[
-                      styles.chipMeter,
-                      {
-                        // Refunds can make today's net spend negative: the meter just stays empty.
-                        width: `${Math.max(0, Math.min(100, (shownToday.spentMinor / shownToday.goalMinor) * 100))}%`,
-                      },
-                    ]}
-                  />
-                )}
-              </View>
-            )}
             {hasDue && (
               <Pressable
                 onPress={() => {
@@ -517,7 +521,7 @@ function Stat({
 }) {
   return (
     <View
-      style={[styles.stat, divider && styles.statDivider]}
+      style={[styles.stat, divider ? styles.statDivider : styles.statFirst]}
       accessible
       accessibilityLabel={`${label}, ${formatMoney(minor)}${cleared ? ', all paid off' : ''}`}
     >
