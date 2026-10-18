@@ -9,7 +9,7 @@ import { screenStyles as h } from '@/components/screenStyles';
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 /** One shape for the rows of Home's Upcoming, Budgets and Goals pages, so the three read as one list. */
-export const HOME_ROW_HEIGHT = 64;
+const HOME_ROW_HEIGHT = 64;
 
 export type HomeRowChipTone = 'neutral' | 'due' | 'warning' | 'complete';
 

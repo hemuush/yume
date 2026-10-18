@@ -48,7 +48,7 @@ export default function GardenScreen() {
   const insets = useSafeAreaInsets();
   const { accent, secondary } = useAccent();
   // The header sits over the page and shrinks as it scrolls; the amount pad's scroll tracking feeds it.
-  const { collapse, headerHeight, onJsScroll } = useCollapsingHeader();
+  const { collapse, headerHeight, onJsScroll, onJsScrollEnd } = useCollapsingHeader();
   const [dailyGoalMinor, setDailyGoalMinor] = useState<number | null>(null);
   const [series, setSeries] = useState<DailyGoalStreakPoint[]>([]);
   const [todaySpend, setTodaySpend] = useState<{ minor: number; private: boolean } | null>(null);
@@ -136,6 +136,8 @@ export default function GardenScreen() {
                 scrollProps.onScroll(e);
                 onJsScroll(e.nativeEvent.contentOffset.y);
               }}
+              onScrollEndDrag={onJsScrollEnd}
+              onMomentumScrollEnd={onJsScrollEnd}
               keyboardShouldPersistTaps="handled"
               contentContainerStyle={{
                 paddingTop: headerHeight,

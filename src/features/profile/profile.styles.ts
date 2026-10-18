@@ -126,37 +126,6 @@ export const styles = StyleSheet.create({
   planLinkIcon: { width: 32, height: 32, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
   planLinkText: { flex: 1, fontFamily: theme.font.roundedMedium, fontSize: 13, color: theme.colors.ink },
 
-  // ---- Settings: backup needs attention ----
-  nudge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    marginHorizontal: SCREEN.gutter,
-    marginTop: 12,
-    paddingVertical: 11,
-    paddingHorizontal: 14,
-    backgroundColor: theme.colors.idCoral,
-    borderRadius: theme.radius.xl2,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.idCoralDeep,
-  },
-  nudgeIcon: {
-    width: 34,
-    height: 34,
-    borderRadius: 11,
-    backgroundColor: theme.colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  nudgeSub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary, marginTop: 2 },
-  nudgePill: {
-    backgroundColor: theme.colors.ink,
-    borderRadius: theme.radius.pill,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-  },
-  nudgePillText: { fontFamily: theme.font.roundedBold, fontSize: 12, color: theme.colors.surface },
-
   // ---- Settings: rows ----
   // Opens in place under the row that opened it, inside the same card.
   accordionBody: {

@@ -6,7 +6,7 @@ import { withPressed } from '@/lib/pressed';
 import { styles } from './plan.styles';
 
 /** Budgets and goals sit three to a row; the rest are under See all. */
-export const GRID_COLUMNS = 3;
+const GRID_COLUMNS = 3;
 export const GRID_SHOWN = GRID_COLUMNS * 2;
 
 /**

@@ -152,7 +152,6 @@ export const frost = StyleSheet.create({
   sub: { fontFamily: theme.font.body, fontSize: 13, lineHeight: 19, color: theme.colors.textSecondary },
   subBold: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
   /** A small line under a bar. */
-  note2: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textMuted },
 
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   chip: {

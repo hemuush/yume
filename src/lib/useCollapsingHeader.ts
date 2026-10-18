@@ -1,4 +1,5 @@
 import { Component, useCallback, useMemo, useState } from 'react';
+import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 import {
   useAnimatedRef,
   useAnimatedScrollHandler,
@@ -57,6 +58,12 @@ export function useCollapsingHeader<T extends Component = Animated.ScrollView>()
 
   // Keyboard-aware views also track their offset in JS; keep their existing scroll handler intact.
   const onJsScroll = useCallback((y: number) => scrollY.set(y), [scrollY]);
+  // Those views also hand this to onScrollEndDrag and onMomentumScrollEnd, for the same reason as the native
+  // handler above: where the list stops is always recorded, even when the last throttled scroll event missed it.
+  const onJsScrollEnd = useCallback(
+    (e: NativeSyntheticEvent<NativeScrollEvent>) => scrollY.set(e.nativeEvent.contentOffset.y),
+    [scrollY]
+  );
 
   // A list that remounts (a new key) starts at its top without a scroll event: open the header with it.
   const resetScroll = useCallback(() => scrollY.set(0), [scrollY]);
@@ -73,5 +80,6 @@ export function useCollapsingHeader<T extends Component = Animated.ScrollView>()
     scrollRef,
     resetScroll,
     onJsScroll,
+    onJsScrollEnd,
   };
 }
