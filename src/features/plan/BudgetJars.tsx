@@ -10,7 +10,7 @@ import { softTint } from '@/components/softTint';
 import type { McIconName } from '@/components/iconName';
 import { BudgetsSummary, PlanBudgetInput } from './planOverview';
 import { styles } from './plan.styles';
-import { AddSlot, GRID_SHOWN } from './PlanGrid';
+import { TileGrid } from './PlanGrid';
 
 /** Used this much of its limit, a jar turns amber. */
 const NEAR = 85;
@@ -46,14 +46,15 @@ export function BudgetJars({
       </Pressable>
     );
   }
-  const shown = summary.rows.slice(0, GRID_SHOWN);
   return (
-    <View style={styles.grid}>
-      {shown.map((b) => (
+    <TileGrid
+      tiles={summary.rows.map((b) => (
         <BudgetTile key={b.id} budget={b} onPress={() => (onBudget ? onBudget(b.id) : onOpen())} />
       ))}
-      <AddSlot count={shown.length} label="Add" accessibilityLabel="Add a budget" onPress={onAdd ?? onOpen} />
-    </View>
+      label="Add"
+      accessibilityLabel="Add a budget"
+      onAdd={onAdd ?? onOpen}
+    />
   );
 }
 

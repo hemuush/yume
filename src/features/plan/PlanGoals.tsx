@@ -17,7 +17,7 @@ import { usePrivacy } from '@/theme/PrivacyContext';
 import { Account, SavingsGoal } from '@/types';
 import { WHAT_IF_CUTS } from './planOverview';
 import { styles } from './plan.styles';
-import { AddSlot, GRID_SHOWN } from './PlanGrid';
+import { TileGrid } from './PlanGrid';
 import { compactMoney } from '@/lib/compactMoney';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -67,10 +67,9 @@ export function GoalsStrip({
       </Pressable>
     );
   }
-  const shown = active.slice(0, GRID_SHOWN);
   return (
-    <View style={styles.grid}>
-      {shown.map((g) => (
+    <TileGrid
+      tiles={active.map((g) => (
         <GoalCard
           key={g.id}
           goal={g}
@@ -78,13 +77,10 @@ export function GoalsStrip({
           onPress={() => (onGoal ? onGoal(g.id) : onOpen())}
         />
       ))}
-      <AddSlot
-        count={shown.length}
-        label="New goal"
-        accessibilityLabel="Open savings goals to start a new one"
-        onPress={onAdd ?? onOpen}
-      />
-    </View>
+      label="New goal"
+      accessibilityLabel="Open savings goals to start a new one"
+      onAdd={onAdd ?? onOpen}
+    />
   );
 }
 

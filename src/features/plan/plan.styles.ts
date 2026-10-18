@@ -6,6 +6,8 @@ import { GLASS } from '@/components/Glass';
 // Plan as "the road ahead": glass cards on Home's wallpaper. Shared by the runway, jars, debt path, goals,
 // the people and streak tiles, and Coming up.
 const GAP = 10;
+/** The one inset inside every Plan card: card text, day headings and row content start on the same line. */
+const INSET = 14;
 /** The runway's drawing height, without the date row under it. */
 export const RUNWAY_HEIGHT = 72;
 
@@ -18,7 +20,12 @@ const figure = {
 } as const;
 
 export const styles = StyleSheet.create({
-  card: { marginHorizontal: SCREEN.gutter, padding: SCREEN.cardPad, gap: 8 },
+  card: {
+    marginHorizontal: SCREEN.gutter,
+    paddingVertical: SCREEN.cardPad,
+    paddingHorizontal: INSET,
+    gap: 8,
+  },
   cardFirst: { marginTop: theme.layout.screenTopGap },
   row: { flexDirection: 'row', gap: GAP, marginHorizontal: SCREEN.gutter },
   rowGap: { gap: 8 },
@@ -59,8 +66,9 @@ export const styles = StyleSheet.create({
   pinDot: { width: 13, height: 13, borderRadius: 7, borderWidth: 3, backgroundColor: theme.colors.surface },
 
   /* ---------- Budgets and goals: tiles, three to a row ---------- */
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginHorizontal: SCREEN.gutter },
-  gridTile: { width: '31.5%', padding: 10, gap: 2, overflow: 'hidden' },
+  grid: { gap: 8, marginHorizontal: SCREEN.gutter },
+  gridRow: { flexDirection: 'row', gap: 8 },
+  gridTile: { flex: 1, minWidth: 0, padding: 10, gap: 2, overflow: 'hidden' },
   tileAdd: {
     alignItems: 'center',
     justifyContent: 'center',
@@ -70,7 +78,7 @@ export const styles = StyleSheet.create({
     borderColor: 'rgba(18,19,15,0.22)',
     borderRadius: 24,
   },
-  tileSlim: { width: '100%', minHeight: 48, flexDirection: 'row', padding: 6 },
+  tileSlim: { minHeight: 48, flexDirection: 'row', padding: 6 },
   addDisc: {
     width: 38,
     height: 38,
@@ -82,14 +90,14 @@ export const styles = StyleSheet.create({
   addDiscSmall: { width: 32, height: 32, borderRadius: 16 },
   addText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textSecondary },
   whatIfIcon: {
-    width: 34,
-    height: 34,
-    borderRadius: 12,
+    width: 44,
+    height: 44,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: theme.colors.dueTint,
   },
-  tileWrap: { width: '31.5%' },
+  tileWrap: { flex: 1, minWidth: 0 },
   tileFill: { padding: 10, gap: 2, overflow: 'hidden', minHeight: 132 },
   tileIcon: { width: 30, height: 30, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
   tilePct: {
@@ -162,11 +170,11 @@ export const styles = StyleSheet.create({
   sprouts: { flexDirection: 'row', alignItems: 'flex-end', gap: 6, minHeight: 32, marginTop: 'auto' },
 
   /* ---------- Coming up ---------- */
-  comingUp: { marginHorizontal: -SCREEN.cardPad, marginBottom: -4 },
+  comingUp: { marginHorizontal: -INSET, marginBottom: -4 },
   dayHead: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingHorizontal: SCREEN.cardPad + 4,
+    paddingHorizontal: INSET,
     paddingTop: 10,
   },
   dayHeadText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textMuted },
