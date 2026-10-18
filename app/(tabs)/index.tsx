@@ -177,8 +177,18 @@ export default function DashboardScreen() {
   // Tapping the logo scrolls Home back to the top.
   const scrollRef = useRef<Animated.ScrollView>(null);
   const reduceMotion = useReduceMotion();
-  const onScroll = useAnimatedScrollHandler((e) => {
-    scrollY.value = e.contentOffset.y;
+  // Also re-read the offset where the list stops: a throttled last scroll event can miss it, which would leave the
+  // header a little collapsed with the list at its top (see useCollapsingHeader).
+  const onScroll = useAnimatedScrollHandler({
+    onScroll: (e) => {
+      scrollY.value = e.contentOffset.y;
+    },
+    onEndDrag: (e) => {
+      scrollY.value = e.contentOffset.y;
+    },
+    onMomentumEnd: (e) => {
+      scrollY.value = e.contentOffset.y;
+    },
   });
   const [headerHeight, setHeaderHeight] = useState(insets.top + 200);
 
