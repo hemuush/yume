@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { View, StyleSheet, useWindowDimensions } from 'react-native';
 import { Text } from '@/components/Text';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { router, useLocalSearchParams, useFocusEffect } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { listBudgetsForMonth } from '@/db/budgets';
 import { listSavingsGoals } from '@/db/savingsGoals';
 import { listRecurringRules } from '@/db/recurring';
@@ -69,7 +69,6 @@ import { listCardCycles } from '@/db/cardCycles';
 import { showAlert } from '@/components/AppDialog';
 import { errorMessage } from '@/lib/errorMessage';
 import { useTabScrollToTop } from '@/lib/useTabScrollToTop';
-import { useReduceMotion } from '@/lib/useReduceMotion';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { TransactionDetailModal } from '@/features/transactions/TransactionDetailModal';
 import { PendingRefunds } from '@/features/transactions/PendingRefunds';
@@ -119,7 +118,6 @@ export default function PlanScreen() {
     id: string;
   } | null>(null);
   const [refundTx, setRefundTx] = useState<Transaction | null>(null);
-  const reduceMotion = useReduceMotion();
   useFocusEffect(
     useCallback(
       () => () => {
@@ -309,46 +307,9 @@ export default function PlanScreen() {
     setDetail({ kind, id });
   };
   const open = (route: PlanRoute) => router.push(route);
-  // The header shrinks as the page scrolls; the 14-day tile jumps down to Coming up.
-  const { collapse, headerHeight, collapsedHeight, scrollHandler, scrollRef } = useCollapsingHeader();
+  // The header shrinks as the page scrolls.
+  const { collapse, headerHeight, scrollHandler, scrollRef } = useCollapsingHeader();
   useTabScrollToTop(scrollRef);
-  // A jump lands just under the collapsed header, which sits over the page.
-  const underHeader = () => collapsedHeight;
-  const comingUpY = useRef(0);
-  // Where Coming up's card and each day's group sit, for the strip's jump.
-  const cardY = useRef(0);
-  const groupYs = useRef<Record<string, number>>({});
-  const scrollToComingUp = useCallback(
-    () =>
-      scrollRef.current?.scrollTo({
-        y: Math.max(0, comingUpY.current - underHeader() - 8),
-        animated: !reduceMotion,
-      }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [collapsedHeight, reduceMotion]
-  );
-  // A day on the strip lands on its group; today also covers anything overdue,
-  // which sits under its own earlier date, so fall back to the earliest group.
-  const scrollToDay = (date: string) => {
-    const dates = data?.dueGroups.map((g) => g.date) ?? [];
-    const target = dates.includes(date) ? date : dates[0];
-    const groupY = target == null ? undefined : groupYs.current[target];
-    if (groupY == null) return scrollToComingUp();
-    scrollRef.current?.scrollTo({
-      y: Math.max(0, comingUpY.current + 16 + cardY.current + groupY - underHeader() - 8),
-      animated: !reduceMotion,
-    });
-  };
-  // Home's "+N more this week" lands here, already scrolled to Coming up.
-  const { section } = useLocalSearchParams<{ section?: string }>();
-  useEffect(() => {
-    if (section !== 'coming-up' || !loaded || !data) return;
-    const t = setTimeout(() => {
-      scrollToComingUp();
-      router.setParams({ section: undefined });
-    }, 60);
-    return () => clearTimeout(t);
-  }, [section, loaded, data, scrollToComingUp]);
 
   const scoped = data?.hideAmounts === hideAmounts ? data : null;
   const selectedLoan =
@@ -398,13 +359,14 @@ export default function PlanScreen() {
           )
         ) : (
           <>
-            <RunwayCard
-              dueSoon={data.dueSoon}
-              runway={data.runway}
-              hasAccounts={data.hasAccounts}
-              next={data.dueGroups.find((g) => g.outMinor > 0) ?? null}
-              onOpen={scrollToComingUp}
-              onJumpToDay={scrollToDay}
+            <RunwayCard dueSoon={data.dueSoon} runway={data.runway} hasAccounts={data.hasAccounts} />
+            <ComingUpSection
+              groups={data.dueGroups}
+              today={data.today}
+              onOpen={open}
+              onPay={(id) => void payEmi(id)}
+              onLoan={(id) => openDetail('loan', id)}
+              onRule={(id) => openDetail('rule', id)}
             />
             <View style={{ marginHorizontal: 16 }}>
               <PendingRefunds
@@ -424,14 +386,6 @@ export default function PlanScreen() {
                 onOpen={() => open('/budgets')}
                 onBudget={(id) => openDetail('budget', id)}
                 onAdd={() => openDetail('new-budget', '')}
-              />
-            </Section>
-            <Section compact title="Debt">
-              <DebtPath
-                loans={data.loans}
-                today={data.today}
-                onOpen={() => open('/loans')}
-                onLoan={(id) => openDetail('loan', id)}
               />
             </Section>
             <Section compact title="Goals" onSeeAll={() => open('/savings-goals')}>
@@ -456,6 +410,9 @@ export default function PlanScreen() {
                 />
               </View>
             </Section>
+            <Section compact title="Debt" onSeeAll={() => open('/loans')}>
+              <DebtPath loans={data.loans} today={data.today} onOpen={() => open('/loans')} />
+            </Section>
             <Section compact title="People & habit">
               <View style={[planStyles.row, stackTiles && planStyles.rowStack]}>
                 <PeopleTile
@@ -472,18 +429,6 @@ export default function PlanScreen() {
                 />
               </View>
             </Section>
-            <View onLayout={(e) => (comingUpY.current = e.nativeEvent.layout.y)}>
-              <ComingUpSection
-                groups={data.dueGroups}
-                today={data.today}
-                onOpen={open}
-                onPay={(id) => void payEmi(id)}
-                onLoan={(id) => openDetail('loan', id)}
-                onRule={(id) => openDetail('rule', id)}
-                onCardLayout={(y) => (cardY.current = y)}
-                onGroupLayout={(date, y) => (groupYs.current[date] = y)}
-              />
-            </View>
           </>
         )}
       </ReanimatedAnimated.ScrollView>
