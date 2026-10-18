@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { View, Pressable, Animated } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
@@ -10,18 +9,15 @@ import { theme } from '@/constants/theme';
 import { formatMoney, formatMaskableMoney } from '@/lib/money';
 import { withPressed } from '@/lib/pressed';
 import { softTint } from '@/components/softTint';
-import { haptics } from '@/lib/haptics';
 import { hueFor } from '@/lib/hueFor';
 import { usePressScale } from '@/lib/usePressScale';
 import { goalProgress } from '@/lib/savingsGoalProgress';
 import { projectedMonthlySpend } from '@/lib/whatIf';
 import { usePrivacy } from '@/theme/PrivacyContext';
-import { useAccent } from '@/theme/AccentContext';
-import { homeInk } from '@/features/home/homeInk';
 import { Account, SavingsGoal } from '@/types';
 import { WHAT_IF_CUTS } from './planOverview';
 import { styles } from './plan.styles';
-import { AddSlot, GRID_SHOWN } from './PlanGrid';
+import { TileGrid } from './PlanGrid';
 import { compactMoney } from '@/lib/compactMoney';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -36,6 +32,7 @@ export function GoalsStrip({
   onOpen,
   onGoal,
   onAdd,
+  limit,
 }: {
   goals: SavingsGoal[];
   /** Savings accounts a new goal could follow, with their balances. */
@@ -43,6 +40,8 @@ export function GoalsStrip({
   onOpen: () => void;
   onGoal?: (id: string) => void;
   onAdd?: () => void;
+  /** Tiles shown at most (default: two rows). */
+  limit?: number;
 }) {
   const { hideAmounts } = usePrivacy();
   const active = goals.filter((g) => !g.archived);
@@ -71,10 +70,9 @@ export function GoalsStrip({
       </Pressable>
     );
   }
-  const shown = active.slice(0, GRID_SHOWN);
   return (
-    <View style={styles.grid}>
-      {shown.map((g) => (
+    <TileGrid
+      tiles={active.map((g) => (
         <GoalCard
           key={g.id}
           goal={g}
@@ -82,13 +80,11 @@ export function GoalsStrip({
           onPress={() => (onGoal ? onGoal(g.id) : onOpen())}
         />
       ))}
-      <AddSlot
-        count={shown.length}
-        label="New goal"
-        accessibilityLabel="Open savings goals to start a new one"
-        onPress={onAdd ?? onOpen}
-      />
-    </View>
+      label="New goal"
+      accessibilityLabel="Open savings goals to start a new one"
+      onAdd={onAdd ?? onOpen}
+      limit={limit}
+    />
   );
 }
 
@@ -148,8 +144,9 @@ function GoalCard({ goal, masked, onPress }: { goal: SavingsGoal; masked: boolea
 }
 
 /**
- * What-if as a lever: your biggest spending category, three cut sizes, and what each would free up a month
- * and a year, then a way into the full sandbox. Too little spending to project from: one line saying so.
+ * What-if as one row: your biggest spending category and what a 10% cut would free up a month. The whole row
+ * opens the sandbox with that cut picked, where the sizes can be changed. Too little spending to project from:
+ * one line saying so.
  */
 export function WhatIfCard({
   whatIf,
@@ -158,75 +155,31 @@ export function WhatIfCard({
   whatIf: { categoryName: string; avgMonthlyMinor: number } | null;
   onOpen: (cut: number) => void;
 }) {
-  const { accent } = useAccent();
-  const ink = homeInk(accent);
-  const [cut, setCut] = useState<number>(10);
+  const cut = WHAT_IF_CUTS[1];
   const extra = whatIf ? projectedMonthlySpend(whatIf.avgMonthlyMinor, cut).extraMinor : 0;
   return (
-    <Glass style={[styles.card, cardSurface.neutral]}>
-      {whatIf ? (
-        <>
-          <Pressable
-            onPress={() => onOpen(cut)}
-            style={withPressed(styles.whatIfHead)}
-            accessibilityRole="button"
-            accessibilityLabel="Open the what-if sandbox"
-          >
-            <View style={styles.whatIfIcon}>
-              <MaterialCommunityIcons name="lightbulb-on-outline" size={18} color={theme.colors.dueInk} />
-            </View>
-            <View style={styles.whatIfHeadCopy}>
-              <Text style={styles.gainNote}>Spend a little less</Text>
-              <Text style={styles.whatIfBold}>
-                {whatIf.categoryName} · {formatMoney(whatIf.avgMonthlyMinor)} / month
-              </Text>
-            </View>
-            <Text style={styles.openText}>Explore</Text>
-            <Feather name="chevron-right" size={16} color={theme.colors.link} />
-          </Pressable>
-          <View style={styles.lever}>
-            <View style={styles.cuts}>
-              {WHAT_IF_CUTS.map((c) => (
-                <Pressable
-                  key={c}
-                  onPress={() => {
-                    haptics.tap();
-                    setCut(c);
-                  }}
-                  hitSlop={4}
-                  style={withPressed([styles.cut, cut === c && { backgroundColor: ink, borderColor: ink }])}
-                  accessibilityRole="button"
-                  accessibilityState={{ selected: cut === c }}
-                  accessibilityLabel={`Cut by ${c}%`}
-                >
-                  <Text style={[styles.cutText, cut === c && styles.cutTextOn]}>−{c}%</Text>
-                </Pressable>
-              ))}
-            </View>
-            <View style={styles.gain} accessibilityLiveRegion="polite">
-              <Text style={styles.gainValue} numberOfLines={1} adjustsFontSizeToFit>
-                {formatMoney(extra)} / month
-              </Text>
-              <Text style={styles.gainNote}>{formatMoney(extra * 12)} / year</Text>
-            </View>
-          </View>
-        </>
-      ) : (
-        <Text style={styles.whatIfQ}>
-          What-if: try a spending cut once you&rsquo;ve logged a few expenses
-        </Text>
-      )}
-      {!whatIf && (
-        <Pressable
-          onPress={() => onOpen(cut)}
-          style={withPressed(styles.openRow)}
-          accessibilityRole="button"
-          accessibilityLabel="Open the what-if sandbox"
-        >
-          <Text style={styles.openText}>Explore this scenario</Text>
-          <Feather name="chevron-right" size={16} color={theme.colors.textMuted} />
-        </Pressable>
-      )}
+    <Glass style={[styles.card, cardSurface.neutral, styles.whatIfCard]}>
+      <Pressable
+        onPress={() => onOpen(cut)}
+        style={withPressed(styles.whatIfHead)}
+        accessibilityRole="button"
+        accessibilityLabel="Open the what-if sandbox"
+      >
+        <View style={styles.whatIfIcon}>
+          <MaterialCommunityIcons name="lightbulb-on-outline" size={18} color={theme.colors.dueInk} />
+        </View>
+        <View style={styles.whatIfHeadCopy}>
+          <Text style={styles.whatIfBold} numberOfLines={1}>
+            {whatIf ? 'Spend a little less' : 'What if you spent less?'}
+          </Text>
+          <Text style={styles.gainNote} numberOfLines={2}>
+            {whatIf
+              ? `${whatIf.categoryName} −${cut}% saves ${formatMoney(extra)} a month`
+              : 'Try a cut once you have logged a few expenses'}
+          </Text>
+        </View>
+        <Feather name="chevron-right" size={16} color={theme.colors.textMuted} />
+      </Pressable>
     </Glass>
   );
 }

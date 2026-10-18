@@ -27,7 +27,7 @@ const ICONS: Record<string, typeof HomeIcon> = {
 };
 
 /** The pill's height at the default font size, and its gap above the phone's bottom edge. */
-export const PILL_BAR = { height: 60, bottomGap: 10 } as const;
+const PILL_BAR = { height: 60, bottomGap: 10 } as const;
 
 function Tab({
   label,

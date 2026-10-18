@@ -80,7 +80,7 @@ export interface Transaction {
 }
 
 export type LoanDirection = 'borrowed' | 'lent';
-export type LoanStatus = 'active' | 'closed' | 'defaulted';
+type LoanStatus = 'active' | 'closed' | 'defaulted';
 export type LoanRateType = 'fixed' | 'floating';
 
 export interface Loan {

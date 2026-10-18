@@ -9,14 +9,14 @@ const DAY_SLASH_MONTH = /(?:^|\s)(\d{1,2})[/.-](\d{1,2})(?=\s|$)/;
 // "184", "1807", "₹1,807", "$1,807.50" — an amount as it is shown or typed, with any currency sign.
 const AMOUNT = /^\p{Sc}?(\d{1,3}(?:,\d{2,3})*|\d+)(\.\d{1,2})?$/u;
 
-export interface SearchWord {
+interface SearchWord {
   /** Matched as text against the note, category and account names. */
   text: string;
   /** Also matches an amount in this minor-unit range (inclusive), when the word is a number. */
   amountMinor?: { min: number; max: number };
 }
 
-export interface ParsedSearch {
+interface ParsedSearch {
   /** A day named in the query ("24 sep"), as YYYY-MM-DD, or null. */
   date: string | null;
   /** The rest of the query, word by word — every word has to match something. */

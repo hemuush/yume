@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { View, StyleSheet, useWindowDimensions } from 'react-native';
+import { View, Pressable, StyleSheet, useWindowDimensions } from 'react-native';
+import Feather from '@expo/vector-icons/Feather';
 import { Text } from '@/components/Text';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { router, useLocalSearchParams, useFocusEffect } from 'expo-router';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { listBudgetsForMonth } from '@/db/budgets';
 import { listSavingsGoals } from '@/db/savingsGoals';
 import { listRecurringRules } from '@/db/recurring';
@@ -45,7 +46,7 @@ import {
   buildBudgetsSummary,
   buildPeopleState,
   buildHabitState,
-  DUE_SOON_DAYS,
+  PLAN_DAYS,
   LoansSummary,
   DueSoon,
   DueGroup,
@@ -59,6 +60,9 @@ import { PeopleTile, HabitTile, PlanPerson, PEOPLE_SHOWN } from '@/features/plan
 import { RunwayCard } from '@/features/plan/RunwayCard';
 import { BudgetJars } from '@/features/plan/BudgetJars';
 import { DebtPath } from '@/features/plan/DebtPath';
+import { DebtLoans } from '@/features/plan/DebtLoans';
+import { PlanStats } from '@/features/plan/PlanStats';
+import { SegmentedControl } from '@/components/SegmentedControl';
 import { GoalOverviewModal } from '@/features/goals/GoalOverviewModal';
 import { AddGoalModal } from '@/features/goals/AddGoalModal';
 import { GoalsStrip, WhatIfCard } from '@/features/plan/PlanGoals';
@@ -69,7 +73,7 @@ import { listCardCycles } from '@/db/cardCycles';
 import { showAlert } from '@/components/AppDialog';
 import { errorMessage } from '@/lib/errorMessage';
 import { useTabScrollToTop } from '@/lib/useTabScrollToTop';
-import { useReduceMotion } from '@/lib/useReduceMotion';
+import { withPressed } from '@/lib/pressed';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { TransactionDetailModal } from '@/features/transactions/TransactionDetailModal';
 import { PendingRefunds } from '@/features/transactions/PendingRefunds';
@@ -102,6 +106,17 @@ interface PlanData {
   dailyGoalMinor: number | null;
 }
 
+type PlanTab = 'overview' | 'upcoming' | 'goals' | 'debt';
+const TABS: { label: string; value: PlanTab }[] = [
+  { label: 'Overview', value: 'overview' },
+  { label: 'Upcoming', value: 'upcoming' },
+  { label: 'Goals', value: 'goals' },
+  { label: 'Debt', value: 'debt' },
+];
+/** Overview shows one row of budget and goal tiles and this many payments; the tabs hold the rest. */
+const PREVIEW_PAYMENTS = 3;
+const PREVIEW_TILES = 3;
+
 /** Plan previews open item sheets directly; collection links keep the full-screen routes. */
 export default function PlanScreen() {
   const { width, fontScale } = useWindowDimensions();
@@ -119,7 +134,15 @@ export default function PlanScreen() {
     id: string;
   } | null>(null);
   const [refundTx, setRefundTx] = useState<Transaction | null>(null);
-  const reduceMotion = useReduceMotion();
+  const [tab, setTab] = useState<PlanTab>('overview');
+  // Home's "See all upcoming" arrives with ?tab=upcoming; the param is spent once it has picked the tab.
+  const { tab: tabParam } = useLocalSearchParams<{ tab?: string }>();
+  useEffect(() => {
+    if (tabParam == null) return;
+    const picked = TABS.find((t) => t.value === tabParam);
+    if (picked) setTab(picked.value);
+    router.setParams({ tab: undefined });
+  }, [tabParam]);
   useFocusEffect(
     useCallback(
       () => () => {
@@ -190,7 +213,7 @@ export default function PlanScreen() {
           : r.note || categoryLabelOf(r.categoryId) || 'Recurring',
     });
     const visibleRules = rules.filter((r) => !hideAmounts || !isSavingsEntry(r, categoriesById, savingsIds));
-    const until = addDaysToIsoDate(today, DUE_SOON_DAYS - 1);
+    const until = addDaysToIsoDate(today, PLAN_DAYS - 1);
     // Every run in the fortnight Plan shows: a weekly bill is due twice in it, not once.
     const dueItems = buildDueItems(
       loansSummary.rows,
@@ -230,9 +253,9 @@ export default function PlanScreen() {
       personDetails: people,
       ruleDetails: visibleRules,
       loans: loansSummary,
-      dueSoon: buildDueSoon(dueItems, today),
-      dueGroups: groupDueItems(dueItems, today),
-      runway: buildRunway(runwayStartMinor(accounts, currency), runwayItems, today, DUE_SOON_DAYS),
+      dueSoon: buildDueSoon(dueItems, today, PLAN_DAYS),
+      dueGroups: groupDueItems(dueItems, today, PLAN_DAYS),
+      runway: buildRunway(runwayStartMinor(accounts, currency), runwayItems, today, PLAN_DAYS),
       hasAccounts: accounts.some((a) => isRunwayAccount(a, currency)),
       // A savings balance stays hidden in privacy mode, so the pay sheet doesn't show it either.
       balances: Object.fromEntries(
@@ -309,46 +332,9 @@ export default function PlanScreen() {
     setDetail({ kind, id });
   };
   const open = (route: PlanRoute) => router.push(route);
-  // The header shrinks as the page scrolls; the 14-day tile jumps down to Coming up.
-  const { collapse, headerHeight, collapsedHeight, scrollHandler, scrollRef } = useCollapsingHeader();
+  // The header shrinks as the page scrolls.
+  const { collapse, headerHeight, scrollHandler, scrollRef } = useCollapsingHeader();
   useTabScrollToTop(scrollRef);
-  // A jump lands just under the collapsed header, which sits over the page.
-  const underHeader = () => collapsedHeight;
-  const comingUpY = useRef(0);
-  // Where Coming up's card and each day's group sit, for the strip's jump.
-  const cardY = useRef(0);
-  const groupYs = useRef<Record<string, number>>({});
-  const scrollToComingUp = useCallback(
-    () =>
-      scrollRef.current?.scrollTo({
-        y: Math.max(0, comingUpY.current - underHeader() - 8),
-        animated: !reduceMotion,
-      }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [collapsedHeight, reduceMotion]
-  );
-  // A day on the strip lands on its group; today also covers anything overdue,
-  // which sits under its own earlier date, so fall back to the earliest group.
-  const scrollToDay = (date: string) => {
-    const dates = data?.dueGroups.map((g) => g.date) ?? [];
-    const target = dates.includes(date) ? date : dates[0];
-    const groupY = target == null ? undefined : groupYs.current[target];
-    if (groupY == null) return scrollToComingUp();
-    scrollRef.current?.scrollTo({
-      y: Math.max(0, comingUpY.current + 16 + cardY.current + groupY - underHeader() - 8),
-      animated: !reduceMotion,
-    });
-  };
-  // Home's "+N more this week" lands here, already scrolled to Coming up.
-  const { section } = useLocalSearchParams<{ section?: string }>();
-  useEffect(() => {
-    if (section !== 'coming-up' || !loaded || !data) return;
-    const t = setTimeout(() => {
-      scrollToComingUp();
-      router.setParams({ section: undefined });
-    }, 60);
-    return () => clearTimeout(t);
-  }, [section, loaded, data, scrollToComingUp]);
 
   const scoped = data?.hideAmounts === hideAmounts ? data : null;
   const selectedLoan =
@@ -367,6 +353,26 @@ export default function PlanScreen() {
     if (scoped && ((detail?.kind === 'goal' && !selectedGoal) || (detail?.kind === 'rule' && !selectedRule)))
       setDetail(null);
   }, [detail, scoped, selectedGoal, selectedRule]);
+
+  // With no loan yet the Debt card is the "Track an EMI" prompt: it goes straight to Loans, not to a tab of it.
+  const openDebt = () => (scoped && scoped.loans.rows.length > 0 ? setTab('debt') : open('/loans'));
+  const nextPayment = (() => {
+    const first = scoped?.dueGroups.find((g) => g.outMinor > 0);
+    const item = first?.items.find((i) => i.kind === 'emi' || i.kind === 'bill');
+    return first && item ? { date: first.date, title: item.title } : null;
+  })();
+  const upcoming = (limit?: number) =>
+    scoped && (
+      <ComingUpSection
+        groups={scoped.dueGroups}
+        today={scoped.today}
+        limit={limit}
+        onOpen={open}
+        onPay={(id) => void payEmi(id)}
+        onLoan={(id) => openDetail('loan', id)}
+        onRule={(id) => openDetail('rule', id)}
+      />
+    );
 
   return (
     <View style={styles.container}>
@@ -398,104 +404,153 @@ export default function PlanScreen() {
           )
         ) : (
           <>
+            <View style={styles.tabs}>
+              <SegmentedControl options={TABS} value={tab} onChange={setTab} onBand />
+            </View>
             <RunwayCard
               dueSoon={data.dueSoon}
               runway={data.runway}
               hasAccounts={data.hasAccounts}
-              next={data.dueGroups.find((g) => g.outMinor > 0) ?? null}
-              onOpen={scrollToComingUp}
-              onJumpToDay={scrollToDay}
+              days={PLAN_DAYS}
+              showChart={tab === 'upcoming'}
             />
-            <View style={{ marginHorizontal: 16 }}>
-              <PendingRefunds
-                refreshToken={data}
-                onOpen={(tx) => {
-                  paymentRequest.current++;
-                  openingPayment.current = false;
-                  setPaying(null);
-                  setDetail(null);
-                  setRefundTx(tx);
-                }}
-              />
-            </View>
-            <Section compact title="Budgets" onSeeAll={() => open('/budgets')}>
-              <BudgetJars
-                summary={data.budgets}
-                onOpen={() => open('/budgets')}
-                onBudget={(id) => openDetail('budget', id)}
-                onAdd={() => openDetail('new-budget', '')}
-              />
-            </Section>
-            <Section compact title="Debt">
-              <DebtPath
-                loans={data.loans}
-                today={data.today}
-                onOpen={() => open('/loans')}
-                onLoan={(id) => openDetail('loan', id)}
-              />
-            </Section>
-            <Section compact title="Goals" onSeeAll={() => open('/savings-goals')}>
-              <View style={planStyles.rowGap}>
-                <GoalsStrip
-                  goals={data.goals}
-                  savingsAccounts={data.savingsAccounts}
-                  onOpen={() => open('/savings-goals')}
-                  onGoal={(id) => openDetail('goal', id)}
-                  onAdd={() => openDetail('new-goal', '')}
+            {tab === 'overview' && (
+              <>
+                <PlanStats
+                  stack={stackTiles}
+                  count={data.dueSoon.count}
+                  days={PLAN_DAYS}
+                  next={nextPayment}
+                  onOpen={() => setTab('upcoming')}
                 />
-                <WhatIfCard
-                  whatIf={data.whatIf}
-                  onOpen={(cut) =>
-                    data.whatIf
-                      ? router.push({
-                          pathname: '/whatif',
-                          params: { category: data.whatIf.categoryId, cut: String(cut) },
-                        })
-                      : open('/whatif')
-                  }
-                />
-              </View>
-            </Section>
-            <Section compact title="People & habit">
-              <View style={[planStyles.row, stackTiles && planStyles.rowStack]}>
-                <PeopleTile
-                  state={data.people}
-                  people={data.topPeople}
-                  onOpen={() => open('/people')}
-                  onPerson={(id) => openDetail('person', id)}
-                />
-                <HabitTile
-                  habit={data.habit}
-                  goalMinor={data.dailyGoalMinor}
-                  today={data.today}
-                  onOpen={() => open('/garden')}
-                />
-              </View>
-            </Section>
-            <View onLayout={(e) => (comingUpY.current = e.nativeEvent.layout.y)}>
-              <ComingUpSection
-                groups={data.dueGroups}
-                today={data.today}
-                onOpen={open}
-                onPay={(id) => void payEmi(id)}
-                onLoan={(id) => openDetail('loan', id)}
-                onRule={(id) => openDetail('rule', id)}
-                onCardLayout={(y) => (cardY.current = y)}
-                onGroupLayout={(date, y) => (groupYs.current[date] = y)}
-              />
-            </View>
+                <View style={{ marginHorizontal: 16 }}>
+                  <PendingRefunds
+                    refreshToken={data}
+                    onOpen={(tx) => {
+                      paymentRequest.current++;
+                      openingPayment.current = false;
+                      setPaying(null);
+                      setDetail(null);
+                      setRefundTx(tx);
+                    }}
+                  />
+                </View>
+                {data.dueGroups.length > 0 && (
+                  <Section compact title="Upcoming payments" onSeeAll={() => setTab('upcoming')}>
+                    {upcoming(PREVIEW_PAYMENTS)}
+                  </Section>
+                )}
+                <Section compact title="Budgets" onSeeAll={() => open('/budgets')}>
+                  <BudgetJars
+                    summary={data.budgets}
+                    onOpen={() => open('/budgets')}
+                    onBudget={(id) => openDetail('budget', id)}
+                    onAdd={() => openDetail('new-budget', '')}
+                    limit={PREVIEW_TILES}
+                  />
+                </Section>
+                <Section compact title="Goals" onSeeAll={() => setTab('goals')}>
+                  <GoalsStrip
+                    goals={data.goals}
+                    savingsAccounts={data.savingsAccounts}
+                    onOpen={() => open('/savings-goals')}
+                    onGoal={(id) => openDetail('goal', id)}
+                    onAdd={() => openDetail('new-goal', '')}
+                    limit={PREVIEW_TILES}
+                  />
+                </Section>
+                <Section compact title="Debt" onSeeAll={openDebt}>
+                  <DebtPath loans={data.loans} today={data.today} onOpen={openDebt} />
+                </Section>
+                <Section compact title="People & habit">
+                  <View style={[planStyles.row, stackTiles && planStyles.rowStack]}>
+                    <PeopleTile
+                      state={data.people}
+                      people={data.topPeople}
+                      onOpen={() => open('/people')}
+                      onPerson={(id) => openDetail('person', id)}
+                    />
+                    <HabitTile
+                      habit={data.habit}
+                      goalMinor={data.dailyGoalMinor}
+                      today={data.today}
+                      onOpen={() => open('/garden')}
+                    />
+                  </View>
+                </Section>
+              </>
+            )}
+            {tab === 'upcoming' && (
+              <Section
+                compact
+                title="Upcoming payments"
+                right={
+                  <Pressable
+                    onPress={() => open('/recurring')}
+                    hitSlop={8}
+                    style={withPressed(styles.headLink)}
+                    accessibilityRole="button"
+                    accessibilityLabel="Recurring"
+                  >
+                    <Text style={styles.headLinkText}>Recurring</Text>
+                    <Feather name="arrow-right" size={14} color={theme.colors.link} />
+                  </Pressable>
+                }
+              >
+                {upcoming()}
+              </Section>
+            )}
+            {tab === 'goals' && (
+              <>
+                <Section compact title="Goals" onSeeAll={() => open('/savings-goals')}>
+                  <GoalsStrip
+                    goals={data.goals}
+                    savingsAccounts={data.savingsAccounts}
+                    onOpen={() => open('/savings-goals')}
+                    onGoal={(id) => openDetail('goal', id)}
+                    onAdd={() => openDetail('new-goal', '')}
+                  />
+                </Section>
+                <Section compact title="Ideas">
+                  <WhatIfCard
+                    whatIf={data.whatIf}
+                    onOpen={(cut) =>
+                      data.whatIf
+                        ? router.push({
+                            pathname: '/whatif',
+                            params: { category: data.whatIf.categoryId, cut: String(cut) },
+                          })
+                        : open('/whatif')
+                    }
+                  />
+                </Section>
+              </>
+            )}
+            {tab === 'debt' && (
+              <>
+                <Section compact title="Debt">
+                  <DebtPath loans={data.loans} today={data.today} onOpen={() => open('/loans')} />
+                </Section>
+                {data.loans.rows.length > 0 && (
+                  <Section compact title="Loans" onSeeAll={() => open('/loans')}>
+                    <DebtLoans loans={data.loans} onLoan={(id) => openDetail('loan', id)} />
+                  </Section>
+                )}
+              </>
+            )}
           </>
         )}
       </ReanimatedAnimated.ScrollView>
       <SkyHeader
         title="Plan"
+        subtitle="Upcoming, goals, debt and more"
         collapse={collapse}
         wallpaper
         summary={
           data && data.hideAmounts === hideAmounts && data.dueSoon.count > 0 ? (
             <HeaderSummary
               figure={formatMoney(data.dueSoon.totalMinor)}
-              rest="due in 14 days"
+              rest={`due in ${PLAN_DAYS} days`}
               dot={theme.colors.slice.due}
             />
           ) : undefined
@@ -629,6 +684,9 @@ export default function PlanScreen() {
 }
 
 const styles = StyleSheet.create({
+  tabs: { marginHorizontal: 16, marginTop: theme.layout.screenTopGap },
+  headLink: { flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 48 },
+  headLinkText: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.link },
   container: { flex: 1, backgroundColor: theme.colors.background },
   errorBanner: {
     marginHorizontal: 20,

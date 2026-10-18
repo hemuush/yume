@@ -4,7 +4,7 @@ import { theme } from '@/constants/theme';
 import { formatMoney } from '@/lib/money';
 import { visitsLine } from './visits';
 
-export interface SplitItem {
+interface SplitItem {
   key: string;
   name: string;
   minor: number;

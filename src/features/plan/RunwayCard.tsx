@@ -1,21 +1,17 @@
 import { useState } from 'react';
-import { View, Pressable, ScrollView, LayoutChangeEvent } from 'react-native';
+import { View, LayoutChangeEvent } from 'react-native';
 import Svg, { Path, Line, Defs, LinearGradient, Stop } from 'react-native-svg';
-import Feather from '@expo/vector-icons/Feather';
 import { Text } from '@/components/Text';
 import { Glass } from '@/components/Glass';
 import { cardSurface } from '@/components/CardSurface';
 import { theme } from '@/constants/theme';
 import { formatMoney } from '@/lib/money';
-import { haptics } from '@/lib/haptics';
-import { withPressed } from '@/lib/pressed';
 import { shade } from '@/lib/color';
 import { useAccent } from '@/theme/AccentContext';
 import { compactMoney } from '@/lib/compactMoney';
 import { dayMonth, weekdayDayMonth } from '@/lib/dateLabels';
-import { dueDateLabel } from '@/lib/dueDate';
 import { homeInk } from '@/features/home/homeInk';
-import { DueGroup, DueSoon } from './planOverview';
+import { DueSoon } from './planOverview';
 import { Runway, RunwayDay } from './runway';
 import { Kicker, PlanChip } from './PlanTiles';
 import { styles, RUNWAY_HEIGHT } from './plan.styles';
@@ -26,37 +22,32 @@ const PAD_BOTTOM = 10;
 const PIN = 44;
 
 /**
- * The Plan hero: what's going out in the next 14 days, and a line of what your spending accounts hold as each
- * EMI and bill comes out (and income comes in), so it answers "can I cover it?". Each payment day is a pin:
- * use the date buttons for details, then jump to that day in Coming up. Without a spending account there's no balance to draw,
- * so it says what's next instead.
+ * The Plan balance card: what your spending accounts hold, with the verdict on the next `days` days of EMIs and
+ * bills as a chip ("Short on 1 Nov", "Covered", "Nothing due") and one grey line under it. With `showChart` the
+ * balance line follows, a pin per payment day. Without a spending account there's no balance to draw, so it says
+ * what is going out instead.
  */
 export function RunwayCard({
   dueSoon,
   runway,
   hasAccounts,
-  next,
-  onOpen,
-  onJumpToDay,
+  days,
+  showChart,
 }: {
   dueSoon: DueSoon;
   runway: Runway;
   /** Whether any bank, cash or wallet account holds the balance the line starts from. */
   hasAccounts: boolean;
-  /** The first day with something going out, if any. */
-  next: DueGroup | null;
-  /** The card itself: scrolls down to Coming up. */
-  onOpen: () => void;
-  onJumpToDay: (date: string) => void;
+  /** The window the runway covers. */
+  days: number;
+  /** Draw the balance line under the sentence (the Upcoming tab). */
+  showChart?: boolean;
 }) {
   const { accent } = useAccent();
   const ink = homeInk(accent);
   const [width, setWidth] = useState(0);
-  const [details, setDetails] = useState(false);
-  const [selected, setSelected] = useState<string | null>(null);
   const none = dueSoon.count === 0;
   const hasChanges = runway.days.some((d) => d.afterMinor !== d.beforeMinor);
-  const picked = runway.days.find((d) => d.date === selected && d.items.length > 0) ?? null;
   const last = runway.days[runway.days.length - 1];
 
   const onLayout = (e: LayoutChangeEvent) => setWidth(Math.round(e.nativeEvent.layout.width));
@@ -82,313 +73,133 @@ export function RunwayCard({
       : d.outMinor > 0
         ? theme.colors.slice.due
         : theme.colors.income;
-  const dayLabel = (d: RunwayDay) => moneyOf(d, 'label');
+
+  const payments = `${dueSoon.count} payment${dueSoon.count === 1 ? '' : 's'}`;
+  const comingIn = runway.inMinor > 0 ? ` · +${formatMoney(runway.inMinor)} coming in` : '';
+  let chip: { label: string; tone?: 'ok' | 'bad' } | null = null;
+  let figure: string;
+  let note: string;
+  if (!hasAccounts) {
+    figure = none ? 'Nothing due' : formatMoney(dueSoon.totalMinor);
+    note = none
+      ? 'Add a bank, cash or wallet account to see your balance.'
+      : `going out · ${payments}. Add a bank, cash or wallet account to see your balance.`;
+  } else if (none) {
+    figure = formatMoney(runway.startMinor);
+    chip = { label: 'Nothing due' };
+    note = `No payments in the next ${days} days${comingIn}`;
+  } else if (runway.short) {
+    figure = formatMoney(runway.startMinor);
+    chip = { label: `Short on ${dayMonth(runway.short.date)}`, tone: 'bad' };
+    note = `${formatMoney(dueSoon.totalMinor)} going out · short ${formatMoney(runway.short.minor)} on ${weekdayDayMonth(runway.short.date)}${comingIn}`;
+  } else {
+    figure = formatMoney(runway.startMinor);
+    chip = { label: 'Covered', tone: 'ok' };
+    note = `${formatMoney(dueSoon.totalMinor)} going out · ${payments}. Ends at ${formatMoney(runway.endMinor)}, lowest ${formatMoney(runway.lowMinor)} on ${dayMonth(runway.lowDate)}${comingIn}`;
+  }
 
   return (
-    <View>
-      <Glass
-        radius={28}
-        tone="strong"
-        style={[
-          styles.card,
-          styles.cardFirst,
-          cardSurface.summary,
-          !none && cardSurface.payments,
-          runway.short && cardSurface.warning,
-        ]}
-      >
-        <View style={styles.head}>
-          <Kicker icon="calendar">Next 14 days</Kicker>
-          <Pressable
-            onPress={() => setDetails((value) => !value)}
-            style={withPressed(styles.detailsButton)}
-            accessibilityRole="button"
-            accessibilityLabel="Forecast details"
-            accessibilityState={{ expanded: details }}
-          >
-            <Text style={styles.openText}>Details</Text>
-            <Feather name={details ? 'chevron-up' : 'chevron-down'} size={16} color={theme.colors.link} />
-          </Pressable>
-        </View>
-        <View style={styles.forecastSummary}>
-          <View style={styles.forecastMain}>
-            {none ? (
-              <Text style={styles.bigNothing}>No scheduled payments</Text>
-            ) : (
-              <View style={styles.forecastFigure}>
-                <Text style={styles.forecastValue} numberOfLines={1} adjustsFontSizeToFit>
-                  {formatMoney(dueSoon.totalMinor)}
-                </Text>
-                <Text style={styles.bigNote}>
-                  going out · {dueSoon.count} payment{dueSoon.count === 1 ? '' : 's'}
-                </Text>
-              </View>
-            )}
-          </View>
-          {hasAccounts && (
-            <View style={styles.forecastBalance}>
-              <Text style={styles.tileSub}>Spending-account balance</Text>
-              <Text style={styles.pathValue}>{formatMoney(runway.startMinor)}</Text>
-            </View>
-          )}
-        </View>
-        {hasAccounts && (!none || runway.inMinor > 0) && (
-          <View style={styles.chips}>
-            {!none &&
-              (runway.short ? (
-                <PlanChip icon="alert-triangle" tone="bad">
-                  Short {formatMoney(runway.short.minor)} on {dayMonth(runway.short.date)}
-                </PlanChip>
-              ) : (
-                <PlanChip icon="check" tone="ok">
-                  Your accounts cover it
-                </PlanChip>
-              ))}
-            {runway.inMinor > 0 && (
-              <PlanChip icon="arrow-down-left">+{formatMoney(runway.inMinor)} coming in</PlanChip>
-            )}
-          </View>
-        )}
+    <Glass
+      radius={28}
+      tone="strong"
+      style={[
+        styles.card,
+        styles.cardFirst,
+        cardSurface.summary,
+        !none && cardSurface.payments,
+        runway.short && cardSurface.warning,
+      ]}
+    >
+      <View style={styles.head}>
+        <Kicker icon="database">{hasAccounts ? 'Spending accounts' : `Next ${days} days`}</Kicker>
+        {chip && <PlanChip tone={chip.tone}>{chip.label}</PlanChip>}
+      </View>
+      <View style={styles.forecastFigure}>
+        <Text style={styles.forecastValue} numberOfLines={1} adjustsFontSizeToFit>
+          {figure}
+        </Text>
+        <Text style={styles.bigNote}>{note}</Text>
+      </View>
 
-        {hasAccounts && (
-          <View>
-            {hasChanges && (
-              <>
-                <View style={styles.runway} onLayout={onLayout} testID="runway">
-                  {width > 0 && (
-                    <Svg width={width} height={RUNWAY_HEIGHT}>
-                      <Defs>
-                        <LinearGradient id="runwayArea" x1="0" y1="0" x2="0" y2="1">
-                          <Stop offset="0" stopColor={shade(accent, 70)} stopOpacity={0.5} />
-                          <Stop offset="1" stopColor={shade(accent, 70)} stopOpacity={0} />
-                        </LinearGradient>
-                      </Defs>
-                      <Path d={area} fill="url(#runwayArea)" />
-                      {min < 0 && (
-                        <Line
-                          x1={0}
-                          x2={width}
-                          y1={y(0)}
-                          y2={y(0)}
-                          stroke={theme.colors.expense}
-                          strokeWidth={1}
-                          strokeDasharray="3 3"
-                        />
-                      )}
-                      <Path d={line} fill="none" stroke={ink} strokeWidth={2} strokeLinejoin="round" />
-                    </Svg>
-                  )}
-
-                  {width > 0 && !runway.short && !none && lowIndex >= 0 && (
-                    <Text
-                      style={[
-                        styles.runwayLow,
-                        {
-                          left: Math.max(0, Math.min(x(lowIndex) - 20, width - 64)),
-                          top: Math.min(y(runway.lowMinor) + 6, RUNWAY_HEIGHT - 14),
-                        },
-                      ]}
-                      accessibilityElementsHidden
-                      importantForAccessibility="no"
-                    >
-                      low {compactMoney(runway.lowMinor)}
-                    </Text>
-                  )}
-                  {width > 0 &&
-                    runway.days.map((d, i) => {
-                      if (d.items.length === 0) return null;
-                      const on = picked?.date === d.date;
-                      const color = pinColor(d);
-                      return (
-                        <View
-                          key={d.date}
-                          pointerEvents="none"
-                          style={[
-                            styles.pin,
-                            {
-                              left: x(i) - PIN / 2,
-                              top: Math.max(
-                                0,
-                                Math.min(
-                                  RUNWAY_HEIGHT - PIN,
-                                  (y(d.beforeMinor) + y(d.afterMinor)) / 2 - PIN / 2
-                                )
-                              ),
-                            },
-                          ]}
-                          accessibilityElementsHidden
-                          importantForAccessibility="no-hide-descendants"
-                        >
-                          <View style={[styles.pinDot, on && styles.pinDotOn, { borderColor: color }]} />
-                        </View>
-                      );
-                    })}
-                </View>
-                <View
-                  style={styles.runwayAxis}
-                  accessibilityElementsHidden
-                  importantForAccessibility="no-hide-descendants"
-                >
-                  <Text style={styles.runwayAxisText}>Today</Text>
-                  <Text style={styles.runwayAxisText}>
-                    {dayMonth(runway.days[Math.floor(count / 2)]?.date ?? last.date)}
-                  </Text>
-                  <Text style={styles.runwayAxisText}>{dayMonth(last.date)}</Text>
-                </View>
-              </>
+      {showChart && hasAccounts && hasChanges && (
+        <View>
+          <View style={styles.runway} onLayout={onLayout} testID="runway">
+            {width > 0 && (
+              <Svg width={width} height={RUNWAY_HEIGHT}>
+                <Defs>
+                  <LinearGradient id="runwayArea" x1="0" y1="0" x2="0" y2="1">
+                    <Stop offset="0" stopColor={shade(accent, 70)} stopOpacity={0.5} />
+                    <Stop offset="1" stopColor={shade(accent, 70)} stopOpacity={0} />
+                  </LinearGradient>
+                </Defs>
+                <Path d={area} fill="url(#runwayArea)" />
+                {min < 0 && (
+                  <Line
+                    x1={0}
+                    x2={width}
+                    y1={y(0)}
+                    y2={y(0)}
+                    stroke={theme.colors.expense}
+                    strokeWidth={1}
+                    strokeDasharray="3 3"
+                  />
+                )}
+                <Path d={line} fill="none" stroke={ink} strokeWidth={2} strokeLinejoin="round" />
+              </Svg>
             )}
-          </View>
-        )}
-
-        {runway.days.some((d) => d.items.length > 0) && (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.dayButtons}
-          >
-            {runway.days
-              .filter((d) => d.items.length > 0)
-              .map((d) => {
-                const on = picked?.date === d.date;
+            {width > 0 && !runway.short && !none && lowIndex >= 0 && (
+              <Text
+                style={[
+                  styles.runwayLow,
+                  {
+                    left: Math.max(0, Math.min(x(lowIndex) - 20, width - 64)),
+                    top: Math.min(y(runway.lowMinor) + 6, RUNWAY_HEIGHT - 14),
+                  },
+                ]}
+                accessibilityElementsHidden
+                importantForAccessibility="no"
+              >
+                low {compactMoney(runway.lowMinor)}
+              </Text>
+            )}
+            {width > 0 &&
+              runway.days.map((d, i) => {
+                if (d.items.length === 0) return null;
                 return (
-                  <Pressable
+                  <View
                     key={d.date}
-                    onPress={() => {
-                      haptics.tap();
-                      setSelected(on ? null : d.date);
-                    }}
-                    style={withPressed([styles.dayButton, on && styles.dayButtonOn])}
-                    accessibilityRole="button"
-                    accessibilityState={{ selected: on }}
-                    accessibilityLabel={`${weekdayDayMonth(d.date)}, ${dayLabel(d)}. ${on ? 'Hide details' : 'Show details'}`}
+                    pointerEvents="none"
+                    style={[
+                      styles.pin,
+                      {
+                        left: x(i) - PIN / 2,
+                        top: Math.max(
+                          0,
+                          Math.min(RUNWAY_HEIGHT - PIN, (y(d.beforeMinor) + y(d.afterMinor)) / 2 - PIN / 2)
+                        ),
+                      },
+                    ]}
+                    accessibilityElementsHidden
+                    importantForAccessibility="no-hide-descendants"
                   >
-                    <Text style={styles.dayButtonText}>{dayMonth(d.date)}</Text>
-                    <Text style={styles.gainNote}>{moneyOf(d, 'caption')}</Text>
-                  </Pressable>
+                    <View style={[styles.pinDot, { borderColor: pinColor(d) }]} />
+                  </View>
                 );
               })}
-          </ScrollView>
-        )}
-        {(picked || details || !hasAccounts) && (
-          <Foot
-            picked={picked}
-            runway={runway}
-            hasAccounts={hasAccounts}
-            none={none}
-            next={next}
-            onJumpToDay={onJumpToDay}
-          />
-        )}
-        {details && (
-          <Text style={styles.tileSub}>
-            Scheduled bills and income only. Everyday spending can change this balance.
-          </Text>
-        )}
-        {!hasAccounts && (
-          <Text style={styles.tileSub}>
-            Add a bank, cash or wallet account to see your scheduled balance.
-          </Text>
-        )}
-        <Pressable
-          onPress={onOpen}
-          style={withPressed(styles.openRow)}
-          accessibilityRole="button"
-          accessibilityLabel="Open Coming up"
-        >
-          <Text style={styles.openText}>
-            {next && none ? `Next payments · ${dayMonth(next.date)}` : 'See upcoming payments'}
-          </Text>
-          <Feather name="arrow-down" size={16} color={theme.colors.link} />
-        </Pressable>
-      </Glass>
-    </View>
-  );
-}
-
-/**
- * A day's money. For a screen reader: "₹20,000 due", "₹50,000 coming in", or both. For the caption: "₹20,000",
- * "+₹50,000", or "₹20,000 out, +₹50,000 in" on a day with both.
- */
-function moneyOf(d: RunwayDay, mode: 'label' | 'caption'): string {
-  const out = d.outMinor > 0 ? formatMoney(d.outMinor) : '';
-  const inn = d.inMinor > 0 ? formatMoney(d.inMinor) : '';
-  if (mode === 'label') {
-    return [out && `${out} due`, inn && `${inn} coming in`].filter(Boolean).join(', ');
-  }
-  if (out && inn) return `${out} out, +${inn} in`;
-  return out || `+${inn}`;
-}
-
-function Foot({
-  picked,
-  runway,
-  hasAccounts,
-  none,
-  next,
-  onJumpToDay,
-}: {
-  picked: RunwayDay | null;
-  runway: Runway;
-  hasAccounts: boolean;
-  none: boolean;
-  next: DueGroup | null;
-  onJumpToDay: (date: string) => void;
-}) {
-  if (picked) {
-    return (
-      <View style={styles.foot}>
-        <Text style={styles.footText}>
-          <Text style={styles.footBold}>{weekdayDayMonth(picked.date)}</Text> · {moneyOf(picked, 'caption')} ·{' '}
-          {picked.items.map((i) => i.title).join(', ')}
-        </Text>
-        <Pressable
-          onPress={() => onJumpToDay(picked.date)}
-          hitSlop={8}
-          style={withPressed(styles.jump)}
-          accessibilityRole="button"
-          accessibilityLabel={`See ${weekdayDayMonth(picked.date)} in the list`}
-        >
-          <Text style={styles.jumpText}>See in list</Text>
-          <Feather name="arrow-down" size={14} color={theme.colors.link} />
-        </Pressable>
-      </View>
-    );
-  }
-  let body: React.ReactNode = null;
-  if (hasAccounts && none && runway.inMinor === 0) {
-    body = (
-      <>
-        Your spending accounts hold <Text style={styles.footBold}>{formatMoney(runway.startMinor)}</Text>. No
-        bills or EMIs are scheduled in this window.
-      </>
-    );
-  } else if (hasAccounts && runway.short) {
-    body = (
-      <>
-        Your balance goes below {formatMoney(0)} on{' '}
-        <Text style={styles.footBold}>{weekdayDayMonth(runway.short.date)}</Text>. Move money in before then.
-      </>
-    );
-  } else if (hasAccounts) {
-    body = (
-      <>
-        Your spending accounts end the fortnight at{' '}
-        <Text style={styles.footBold}>{formatMoney(runway.endMinor)}</Text>. Lowest is{' '}
-        {formatMoney(runway.lowMinor)} on {dayMonth(runway.lowDate)}.
-      </>
-    );
-  } else if (next && next.outMinor > 0) {
-    body = (
-      <>
-        Next: <Text style={styles.footBold}>{weekdayDayMonth(next.date)}</Text> ({formatMoney(next.outMinor)}
-        ), {dueDateLabel(next.date).replace('Due ', '').toLowerCase()}
-      </>
-    );
-  }
-  if (!body) return null;
-  return (
-    <View style={styles.foot}>
-      <Text style={styles.footText}>{body}</Text>
-    </View>
+          </View>
+          <View
+            style={styles.runwayAxis}
+            accessibilityElementsHidden
+            importantForAccessibility="no-hide-descendants"
+          >
+            <Text style={styles.runwayAxisText}>Today</Text>
+            <Text style={styles.runwayAxisText}>
+              {dayMonth(runway.days[Math.floor(count / 2)]?.date ?? last.date)}
+            </Text>
+            <Text style={styles.runwayAxisText}>{dayMonth(last.date)}</Text>
+          </View>
+        </View>
+      )}
+    </Glass>
   );
 }

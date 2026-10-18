@@ -3,9 +3,9 @@ import Svg, { Path, Rect, Circle } from 'react-native-svg';
 import { theme } from '@/constants/theme';
 import { shade } from '@/lib/color';
 
-export const HILLS_HEIGHT = 26;
+const HILLS_HEIGHT = 26;
 /** The shorter edge under the shared SkyHeader: the same hills drawn flatter, with one small tree. */
-export const HILLS_HEIGHT_COMPACT = 14;
+const HILLS_HEIGHT_COMPACT = 14;
 
 /**
  * Header's bottom edge: thin rolling hills with two little trees in the theme pack's colours, costing no

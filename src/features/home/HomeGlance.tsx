@@ -1,4 +1,4 @@
-import { View, Pressable, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import Animated from 'react-native-reanimated';
 import Feather from '@expo/vector-icons/Feather';
 import { router } from 'expo-router';
@@ -12,16 +12,15 @@ import { payCardRoute, PayCardRoute } from '@/lib/payCard';
 import type { PlanCardBillInput } from '@/features/plan/planOverview';
 import { BudgetProgress } from '@/db/budgets';
 import { RecurringRule, SavingsGoal } from '@/types';
-import { BudgetRow } from '@/features/budgets/BudgetRow';
-import { GoalChip } from '@/features/goals/GoalChip';
 import { HomeSwipeCard, SwipePage } from './HomeSwipeCard';
-import { UpcomingRow, UpcomingMoreRow } from './UpcomingRow';
-import { withPressed } from '@/lib/pressed';
+import { UpcomingRow } from './UpcomingRow';
+import { HomeBudgetRow } from './HomeBudgetRow';
+import { HomeGoalRow } from './HomeGoalRow';
 import { ExpectedRefund } from '@/db/refundTracking';
 import { HomeRefunds } from './HomeRefunds';
 import { growHref } from '@/lib/cardGrow';
 
-export interface UpcomingItem {
+interface UpcomingItem {
   key: string;
   icon: React.ComponentProps<typeof Feather>['name'];
   iconBg: string;
@@ -44,9 +43,9 @@ export const UPCOMING_DAYS = 7;
 /** An EMI or card bill this close (or late) is pinned to the top of Upcoming as "Due soon". */
 export const DUE_SOON_DAYS = 3;
 /** Rows shown before "+N more". */
-export const UPCOMING_ROWS = 3;
+const UPCOMING_ROWS = 3;
 
-export interface UpcomingLoanInput {
+interface UpcomingLoanInput {
   id: string;
   name: string;
   nextDueDate: string;
@@ -181,7 +180,6 @@ export function HomeGlance({
   rowEntering: (i: number) => React.ComponentProps<typeof Animated.View>['entering'];
 }) {
   const visibleUpcoming = upcoming.items.slice(0, UPCOMING_ROWS);
-  const hiddenUpcoming = upcoming.items.length - visibleUpcoming.length;
   // Labels only help when a bill is pinned: otherwise the list reads as it always did.
   // Red only for what is due today or late; a bill a few days out is amber.
   const hasUrgent = visibleUpcoming.some((i) => i.urgent);
@@ -191,8 +189,7 @@ export function HomeGlance({
   const activeGoals = goals.filter((g) => !g.archived);
   // Capped, not a nested horizontal ScrollView: that would fight the swipe card's own page-swipe gesture.
   // Shows as many chips as fit plus a "+N" tile, the cap-and-link pattern Budgets/Upcoming use.
-  const topGoals = activeGoals.slice(0, 2);
-  const hiddenGoalsCount = activeGoals.length - topGoals.length;
+  const topGoals = activeGoals.slice(0, 3);
 
   const pages: SwipePage[] = [
     ...(upcoming.items.length > 0 || upcoming.next
@@ -202,6 +199,7 @@ export function HomeGlance({
             label: 'Upcoming',
             alert: upcoming.items.some((i) => i.pinned),
             count: upcoming.items.length,
+            onSeeAll: onSeeMoreUpcoming,
             // No "See all" footer: "+N more" already leads to Plan, and each
             // row deep-links to where it lives (Loans, Recurring, pay a card).
             content: (
@@ -264,9 +262,6 @@ export function HomeGlance({
                     date={upcoming.next.sortDate}
                   />
                 )}
-                {hiddenUpcoming > 0 && (
-                  <UpcomingMoreRow count={hiddenUpcoming} divider onPress={onSeeMoreUpcoming} />
-                )}
               </View>
             ),
           },
@@ -303,10 +298,9 @@ export function HomeGlance({
               <View style={styles.pageList}>
                 {topBudgets.map((progress, i) => (
                   <Animated.View key={progress.budget.id} entering={rowEntering(i)}>
-                    <BudgetRow
+                    <HomeBudgetRow
                       progress={progress}
                       divider={i > 0}
-                      grow
                       onPress={() => router.push(growHref('/budgets'))}
                     />
                   </Animated.View>
@@ -324,22 +318,16 @@ export function HomeGlance({
             count: activeGoals.length,
             onSeeAll: () => router.push('/savings-goals'),
             content: (
-              <View style={styles.goalsPageRow}>
+              <View style={styles.pageList}>
                 {topGoals.map((goal, i) => (
                   <Animated.View key={goal.id} entering={rowEntering(i)}>
-                    <GoalChip goal={goal} grow onPress={() => router.push(growHref('/savings-goals'))} />
+                    <HomeGoalRow
+                      goal={goal}
+                      divider={i > 0}
+                      onPress={() => router.push(growHref('/savings-goals'))}
+                    />
                   </Animated.View>
                 ))}
-                {hiddenGoalsCount > 0 && (
-                  <Pressable
-                    onPress={() => router.push('/savings-goals')}
-                    style={withPressed(styles.goalsMoreTile)}
-                    accessibilityRole="button"
-                    accessibilityLabel={`${hiddenGoalsCount} more goals`}
-                  >
-                    <Text style={styles.goalsMoreText}>+{hiddenGoalsCount} more</Text>
-                  </Pressable>
-                )}
               </View>
             ),
           },
@@ -379,22 +367,4 @@ const styles = StyleSheet.create({
   // Rows inside a HomeSwipeCard page: no outer border/background (the card draws it); BudgetRow/UpcomingRow
   // already carry their own horizontal padding.
   pageList: { paddingHorizontal: 2 },
-  goalsPageRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 14,
-  },
-  goalsMoreTile: {
-    minWidth: 90,
-    minHeight: 48,
-    padding: 8,
-    borderRadius: theme.radius.lg,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  goalsMoreText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textSecondary },
 });

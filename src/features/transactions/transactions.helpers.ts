@@ -6,7 +6,7 @@ import { dayMonth } from '@/lib/dateLabels';
 import { weekRangesInMonth } from './spendChart';
 
 /** One Sunday-to-Saturday week of a calendar month, cut at the month's own first and last day. */
-export interface ActivityWeek {
+interface ActivityWeek {
   start: string;
   end: string;
   /** 0-based position among the month's weeks. */

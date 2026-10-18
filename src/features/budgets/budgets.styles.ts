@@ -53,15 +53,6 @@ export const styles = StyleSheet.create({
   },
   continueBtnText: { fontSize: 13, fontFamily: theme.font.roundedBold, color: theme.colors.surface },
 
-  listCard: {
-    marginHorizontal: SCREEN.gutter,
-    marginTop: 16,
-    borderRadius: theme.radius.xl2,
-    backgroundColor: theme.colors.surface,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-    overflow: 'hidden',
-  },
   // Budgets' own list sits under a "This month" heading; Profile's use of the card has none.
   listTitle: {
     ...SECTION_TITLE,
@@ -69,7 +60,6 @@ export const styles = StyleSheet.create({
     marginTop: SECTION_GAP.top,
     marginBottom: SECTION_GAP.bottom,
   },
-  listCardTitled: { marginTop: 0 },
   // Self-padded like RecentTransactionRow: BudgetRow renders in this listCard on Profile's "You" tab but
   // also in Home's unpadded card, so it can't rely on a container for its horizontal inset.
   row: { paddingVertical: 12, paddingHorizontal: 14 },

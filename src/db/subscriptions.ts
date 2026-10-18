@@ -140,7 +140,7 @@ export async function findUnscheduledSubscriptions(
 /** How close a month's charge must be to the latest one to count as the same charge. */
 const PATTERN_AMOUNT_TOLERANCE = 0.1;
 const PATTERN_DAY_TOLERANCE = 5;
-export const PATTERN_MIN_MONTHS = 3;
+const PATTERN_MIN_MONTHS = 3;
 
 /**
  * Same charge monthly for 3+ months: same category, within 10% of the latest amount, near its day-of-month,

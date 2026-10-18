@@ -18,7 +18,7 @@ import {
 
 /** Must match `name` for each widget entry in app.json's config-plugin block. */
 export const WIDGET_NAMES = ['ThisMonth', 'QuickAdd', 'Suu', 'NextDue', 'Accounts'] as const;
-export type WidgetName = (typeof WIDGET_NAMES)[number];
+type WidgetName = (typeof WIDGET_NAMES)[number];
 
 export function isWidgetName(name: string): name is WidgetName {
   return (WIDGET_NAMES as readonly string[]).includes(name);

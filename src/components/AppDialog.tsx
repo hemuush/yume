@@ -6,7 +6,7 @@ import { ModalSheet } from '@/components/ModalSheet';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { theme } from '@/constants/theme';
 
-export interface DialogButton {
+interface DialogButton {
   text: string;
   style?: 'default' | 'cancel' | 'destructive';
   onPress?: () => void;

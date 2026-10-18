@@ -2,7 +2,7 @@ import { View, StyleSheet, useWindowDimensions } from 'react-native';
 import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
 
-export interface LoanStat {
+interface LoanStat {
   label: string;
   value: string;
   /** A line under the value: a date, a total. */

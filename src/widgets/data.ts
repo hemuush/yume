@@ -130,7 +130,7 @@ export async function getThisMonthWidgetData(now: Date = new Date()): Promise<Th
   };
 }
 
-export interface QuickAddCategory {
+interface QuickAddCategory {
   id: string;
   name: string;
   icon: string;
@@ -144,7 +144,7 @@ export interface QuickAddWidgetData {
 
 /** How far back Quick Add looks for the categories you use most. */
 const QUICK_ADD_LOOKBACK_DAYS = 90;
-export const QUICK_ADD_CATEGORY_COUNT = 4;
+const QUICK_ADD_CATEGORY_COUNT = 4;
 
 /** Quick Add's shortcuts: your four most-used expense categories of the last 90 days. */
 export async function getQuickAddWidgetData(now: Date = new Date()): Promise<QuickAddWidgetData> {
@@ -269,7 +269,7 @@ export function dateTileParts(iso: string): { day: string; month: string } {
   };
 }
 
-export interface AccountWidgetRow {
+interface AccountWidgetRow {
   name: string;
   /** "Credit card", "Bank" — the account's type, spelled out. */
   typeLabel: string;

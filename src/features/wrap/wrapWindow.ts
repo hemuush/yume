@@ -12,9 +12,9 @@ import { WrapPeriod, lastFullWeek, weekLabel } from './wrapData';
  */
 
 /** Last month's Wrap is offered on days 1 to this of each month. */
-export const MONTH_WRAP_LAST_DAY = 7;
+const MONTH_WRAP_LAST_DAY = 7;
 /** Last week's Wrap is offered on this weekday (Date.getDay(): Monday). */
-export const WEEK_WRAP_WEEKDAY = 1;
+const WEEK_WRAP_WEEKDAY = 1;
 
 export interface ReadyWrap {
   period: WrapPeriod;

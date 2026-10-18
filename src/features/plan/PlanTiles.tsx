@@ -25,7 +25,7 @@ export { Kicker, FrostChip as PlanChip } from '@/components/Frost';
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 /** A tappable glass tile that shrinks a touch when pressed. */
-export function PlanTile({
+function PlanTile({
   label,
   onPress,
   wide,

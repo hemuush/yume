@@ -6,6 +6,8 @@ import { GLASS } from '@/components/Glass';
 // Plan as "the road ahead": glass cards on Home's wallpaper. Shared by the runway, jars, debt path, goals,
 // the people and streak tiles, and Coming up.
 const GAP = 10;
+/** The one inset inside every Plan card: card text, day headings and row content start on the same line. */
+const INSET = 14;
 /** The runway's drawing height, without the date row under it. */
 export const RUNWAY_HEIGHT = 72;
 
@@ -18,10 +20,14 @@ const figure = {
 } as const;
 
 export const styles = StyleSheet.create({
-  card: { marginHorizontal: SCREEN.gutter, padding: SCREEN.cardPad, gap: 8 },
-  cardFirst: { marginTop: theme.layout.screenTopGap },
+  card: {
+    marginHorizontal: SCREEN.gutter,
+    paddingVertical: SCREEN.cardPad,
+    paddingHorizontal: INSET,
+    gap: 8,
+  },
+  cardFirst: { marginTop: 0 },
   row: { flexDirection: 'row', gap: GAP, marginHorizontal: SCREEN.gutter },
-  rowGap: { gap: 8 },
   rowStack: { flexDirection: 'column' },
 
   head: {
@@ -33,23 +39,8 @@ export const styles = StyleSheet.create({
   },
 
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-  dayButtons: { flexDirection: 'row', gap: 6 },
 
-  bigRow: { flexDirection: 'row', alignItems: 'baseline', gap: 6, flexWrap: 'wrap' },
-  bigValue: {
-    fontFamily: theme.font.bodyLight,
-    fontSize: theme.typeSize.hero,
-    lineHeight: 42,
-    letterSpacing: -1.2,
-    color: theme.colors.textPrimary,
-  },
   bigNote: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textMuted },
-  bigNothing: {
-    fontFamily: theme.font.body,
-    fontSize: 24,
-    letterSpacing: -0.5,
-    color: theme.colors.textPrimary,
-  },
 
   /* ---------- Runway ---------- */
   forecastFigure: { gap: 4 },
@@ -61,10 +52,6 @@ export const styles = StyleSheet.create({
     fontVariant: ['tabular-nums'],
     color: theme.colors.textPrimary,
   },
-  forecastSummary: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, alignItems: 'flex-start' },
-  forecastMain: { flexGrow: 1, flexBasis: 180, minWidth: 0 },
-  forecastBalance: { flexGrow: 1, flexBasis: 120, minWidth: 0, gap: 4 },
-  detailsButton: { minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 6 },
   runway: { height: RUNWAY_HEIGHT, marginTop: 4 },
   runwayAxis: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 },
   runwayAxisText: { fontFamily: theme.font.bodyMedium, fontSize: 11, color: theme.colors.textMuted },
@@ -75,32 +62,12 @@ export const styles = StyleSheet.create({
     color: theme.colors.textSecondary,
   },
   pin: { position: 'absolute', width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
-  dayButton: {
-    minHeight: 44,
-    minWidth: 72,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 14,
-    backgroundColor: GLASS.fillStrong,
-  },
-  dayButtonOn: { borderWidth: 1, borderColor: theme.colors.incomeText },
-  dayButtonText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textPrimary },
   pinDot: { width: 13, height: 13, borderRadius: 7, borderWidth: 3, backgroundColor: theme.colors.surface },
-  pinDotOn: { width: 18, height: 18, borderRadius: 9, borderWidth: 4 },
-  foot: {
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: theme.colors.borderSoft,
-    paddingTop: 4,
-    gap: 6,
-  },
-  footText: { fontFamily: theme.font.body, fontSize: 13, lineHeight: 20, color: theme.colors.textSecondary },
-  footBold: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
-  jump: { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 44 },
-  jumpText: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.link },
 
   /* ---------- Budgets and goals: tiles, three to a row ---------- */
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginHorizontal: SCREEN.gutter },
-  gridTile: { width: '31.5%', padding: 10, gap: 2, overflow: 'hidden' },
+  grid: { gap: 8, marginHorizontal: SCREEN.gutter },
+  gridRow: { flexDirection: 'row', gap: 8 },
+  gridTile: { flex: 1, minWidth: 0, padding: 10, gap: 2, overflow: 'hidden' },
   tileAdd: {
     alignItems: 'center',
     justifyContent: 'center',
@@ -110,7 +77,7 @@ export const styles = StyleSheet.create({
     borderColor: 'rgba(18,19,15,0.22)',
     borderRadius: 24,
   },
-  tileSlim: { width: '100%', minHeight: 48, flexDirection: 'row', padding: 6 },
+  tileSlim: { minHeight: 48, flexDirection: 'row', padding: 6 },
   addDisc: {
     width: 38,
     height: 38,
@@ -122,14 +89,14 @@ export const styles = StyleSheet.create({
   addDiscSmall: { width: 32, height: 32, borderRadius: 16 },
   addText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textSecondary },
   whatIfIcon: {
-    width: 34,
-    height: 34,
-    borderRadius: 12,
+    width: 44,
+    height: 44,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: theme.colors.dueTint,
   },
-  tileWrap: { width: '31.5%' },
+  tileWrap: { flex: 1, minWidth: 0 },
   tileFill: { padding: 10, gap: 2, overflow: 'hidden', minHeight: 132 },
   tileIcon: { width: 30, height: 30, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
   tilePct: {
@@ -178,44 +145,11 @@ export const styles = StyleSheet.create({
   title: { fontFamily: theme.font.roundedBold, fontSize: 15, color: theme.colors.textPrimary },
   sub: { fontFamily: theme.font.body, fontSize: 13, lineHeight: 18, color: theme.colors.textSecondary },
 
-  whatIfQ: { fontFamily: theme.font.body, fontSize: 13, lineHeight: 20, color: theme.colors.textSecondary },
+  whatIfCard: { paddingVertical: 8 },
   whatIfHead: { minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 10 },
   whatIfHeadCopy: { flex: 1, minWidth: 0 },
   whatIfBold: { fontSize: 13, fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
-  lever: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 12 },
-  cuts: { flexDirection: 'row', gap: 6 },
-  cut: {
-    minHeight: 44,
-    minWidth: 54,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    borderRadius: theme.radius.pill,
-    backgroundColor: theme.colors.surface,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-  },
-  cutText: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textPrimary },
-  cutTextOn: { color: theme.colors.surface },
-  gain: { flexGrow: 1, alignItems: 'flex-end', minWidth: 100, gap: 2 },
-  gainValue: {
-    fontFamily: theme.font.body,
-    fontSize: 20,
-    fontVariant: ['tabular-nums'],
-    letterSpacing: -0.4,
-    color: theme.colors.incomeText,
-  },
   gainNote: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
-  openRow: {
-    minHeight: 44,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: theme.colors.borderSoft,
-    paddingTop: 4,
-  },
-  openText: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.link },
 
   /* ---------- Friends & streak ---------- */
   tile: { flex: 1, minWidth: 0, padding: 14, gap: 6 },
@@ -235,31 +169,29 @@ export const styles = StyleSheet.create({
   sprouts: { flexDirection: 'row', alignItems: 'flex-end', gap: 6, minHeight: 32, marginTop: 'auto' },
 
   /* ---------- Coming up ---------- */
-  list: { marginHorizontal: SCREEN.gutter, paddingTop: 4, overflow: 'hidden' },
-  group: { paddingLeft: 36, paddingRight: 14 },
-  rail: { position: 'absolute', left: 19, width: 2, backgroundColor: 'rgba(18,19,15,0.1)' },
-  node: {
-    position: 'absolute',
-    left: 14,
-    top: 14,
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    borderWidth: 2.5,
-    backgroundColor: theme.colors.surface,
-  },
+  list: { marginHorizontal: SCREEN.gutter, overflow: 'hidden', paddingBottom: 4 },
   dayHead: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 6,
     justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingTop: 11,
+    paddingHorizontal: INSET,
+    paddingTop: 10,
   },
-  dayHeadText: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textSecondary },
-  dayHeading: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'baseline', gap: 6, flexShrink: 1 },
-  dayHeadAmount: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textMuted },
-  dueRow: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 10, minHeight: 56 },
+  statRow: { flexDirection: 'row', gap: GAP, marginHorizontal: SCREEN.gutter, marginTop: GAP },
+  statStack: { flexDirection: 'column' },
+  statWrap: { flex: 1, minWidth: 0 },
+  stat: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12 },
+  statIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: theme.colors.secondaryTint,
+  },
+  statCopy: { flex: 1, minWidth: 0 },
+  statValue: { fontFamily: theme.font.bodyBold, fontSize: 18, color: theme.colors.textPrimary },
+  statLine: { fontFamily: theme.font.body, fontSize: 11, lineHeight: 15, color: theme.colors.textMuted },
+  dayHeadText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textMuted },
   dueIcon: {
     width: 38,
     height: 38,
@@ -273,34 +205,5 @@ export const styles = StyleSheet.create({
   dueMid: { flex: 1, minWidth: 0 },
   dueTitle: { fontFamily: theme.font.bodyMedium, fontSize: 14, color: theme.colors.textPrimary },
   dueSub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, marginTop: 1 },
-  dueSoon: { color: theme.colors.dueInk },
-  dueUrgent: { color: theme.colors.expenseText },
-  dueAmount: { fontFamily: theme.font.bodyMedium, fontSize: 14, color: theme.colors.textPrimary },
-  payWrap: {
-    flexWrap: 'wrap',
-    maxWidth: 112,
-    justifyContent: 'flex-end',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  payBtn: { minHeight: 44, justifyContent: 'center', paddingHorizontal: 14, borderRadius: theme.radius.pill },
-  payBtnText: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.surface },
   emptyRow: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 64, paddingHorizontal: 14 },
-  links: {
-    flexDirection: 'row',
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: theme.colors.borderSoft,
-    marginTop: 6,
-  },
-  linkCell: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    minHeight: 50,
-    paddingHorizontal: 16,
-  },
-  linkDivider: { borderLeftWidth: StyleSheet.hairlineWidth, borderLeftColor: theme.colors.borderSoft },
-  linkText: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.link },
 });

@@ -100,17 +100,6 @@ export const styles = StyleSheet.create({
     borderRadius: theme.radius.lg,
     padding: 10,
   },
-  followTag: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    alignSelf: 'flex-start',
-    marginTop: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 999,
-  },
-  followTagText: { fontFamily: theme.font.bodyBold, fontSize: 11, color: theme.colors.textSecondary },
   letterNote: {
     fontFamily: theme.font.body,
     fontStyle: 'italic',

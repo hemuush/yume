@@ -12,7 +12,7 @@ import { usePrivacy } from '@/theme/PrivacyContext';
 import { useAccent } from '@/theme/AccentContext';
 import { homeInk } from '@/features/home/homeInk';
 
-export interface PickedPeriod {
+interface PickedPeriod {
   kind: 'month' | 'year';
   year: number;
   /** 0-11; ignored for a year. */

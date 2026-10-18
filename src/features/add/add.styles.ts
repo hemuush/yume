@@ -119,13 +119,6 @@ export const styles = StyleSheet.create({
     rowGap: 4,
     marginBottom: 8,
   },
-  footerSummary: {
-    fontFamily: theme.font.bodyMedium,
-    fontSize: 12,
-    lineHeight: 16,
-    color: theme.colors.textSecondary,
-    maxWidth: '100%',
-  },
   queueHint: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.link, marginBottom: 6 },
   formHint: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textMuted, maxWidth: '100%' },
   amountHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
@@ -409,8 +402,6 @@ export const styles = StyleSheet.create({
   detailChipActive: { backgroundColor: theme.colors.ink, borderColor: theme.colors.ink },
   detailChipTextActive: { color: theme.colors.surface },
   total: { alignItems: 'center' },
-  totalLabel: EYEBROW,
-  totalValue: { fontVariant: ['tabular-nums'], fontFamily: theme.font.bodyBold, fontSize: 12, marginTop: 2 },
   error: {
     fontFamily: theme.font.bodyBold,
     fontSize: 12,

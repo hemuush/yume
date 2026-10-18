@@ -1,8 +1,8 @@
 import { formatMoney } from './money';
 import { longMonth } from './dateLabels';
 
-export const GOAL_MILESTONES = [25, 50, 75, 100] as const;
-export type GoalMilestone = (typeof GOAL_MILESTONES)[number];
+const GOAL_MILESTONES = [25, 50, 75, 100] as const;
+type GoalMilestone = (typeof GOAL_MILESTONES)[number];
 
 export interface MilestoneCopy {
   title: string;

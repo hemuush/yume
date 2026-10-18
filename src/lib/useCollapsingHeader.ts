@@ -1,4 +1,5 @@
 import { Component, useCallback, useMemo, useState } from 'react';
+import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 import {
   useAnimatedRef,
   useAnimatedScrollHandler,
@@ -39,14 +40,30 @@ export function useCollapsingHeader<T extends Component = Animated.ScrollView>()
     [distance]
   );
 
+  // Scroll events are throttled, so the last one before the list comes to rest can be a few points short of
+  // where it stopped. Reading the final offset again when the finger lifts and when the momentum ends keeps the
+  // header in step with the list: a list left at its top always reads 0, never a stale "a little scrolled" that
+  // leaves the controls under the title half faded. This only records the offset; it never scrolls or snaps.
   const scrollHandler = useAnimatedScrollHandler({
     onScroll: (e) => {
+      scrollY.value = e.contentOffset.y;
+    },
+    onEndDrag: (e) => {
+      scrollY.value = e.contentOffset.y;
+    },
+    onMomentumEnd: (e) => {
       scrollY.value = e.contentOffset.y;
     },
   });
 
   // Keyboard-aware views also track their offset in JS; keep their existing scroll handler intact.
   const onJsScroll = useCallback((y: number) => scrollY.set(y), [scrollY]);
+  // Those views also hand this to onScrollEndDrag and onMomentumScrollEnd, for the same reason as the native
+  // handler above: where the list stops is always recorded, even when the last throttled scroll event missed it.
+  const onJsScrollEnd = useCallback(
+    (e: NativeSyntheticEvent<NativeScrollEvent>) => scrollY.set(e.nativeEvent.contentOffset.y),
+    [scrollY]
+  );
 
   // A list that remounts (a new key) starts at its top without a scroll event: open the header with it.
   const resetScroll = useCallback(() => scrollY.set(0), [scrollY]);
@@ -63,5 +80,6 @@ export function useCollapsingHeader<T extends Component = Animated.ScrollView>()
     scrollRef,
     resetScroll,
     onJsScroll,
+    onJsScrollEnd,
   };
 }

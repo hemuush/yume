@@ -31,7 +31,7 @@ export function dueDateFor(dueDay: number, statement: string): string {
   return sameMonth > statement ? sameMonth : dayInMonth(s.getFullYear(), s.getMonth() + 1, dueDay);
 }
 
-export interface CardCycleInput {
+interface CardCycleInput {
   statementDay: number;
   dueDay: number;
   today: string;

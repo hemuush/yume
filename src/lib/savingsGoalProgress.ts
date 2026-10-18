@@ -2,7 +2,7 @@
  * A goal's progress, derived once so GoalCard, GoalDetailModal and Home chips agree. `percent` is clamped to
  * 100: saving past the goal is real, but the ring can't depict more than a full circle.
  */
-export interface GoalProgress {
+interface GoalProgress {
   percent: number;
   done: boolean;
 }

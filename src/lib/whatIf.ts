@@ -7,7 +7,7 @@ function daysBetweenIsoDates(from: string, to: string): number {
   return Math.round((b.getTime() - a.getTime()) / 86400000);
 }
 
-export interface SpendCut {
+interface SpendCut {
   extraMinor: number;
   newMonthlyMinor: number;
 }
@@ -18,7 +18,7 @@ export function projectedMonthlySpend(avgMonthlyMinor: number, cutPct: number): 
   return { extraMinor, newMonthlyMinor: Math.max(0, avgMonthlyMinor - extraMinor) };
 }
 
-export interface GoalPaceProjection {
+interface GoalPaceProjection {
   /** How much is saved per month on average, derived from progress so far — 0 if the goal was just created or nothing's been added yet. */
   currentMonthlyRateMinor: number;
   /** Projected date the goal is reached at the current rate — null if the rate is 0 and the goal isn't already done. */

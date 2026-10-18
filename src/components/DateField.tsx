@@ -11,7 +11,7 @@ import { useSheetSurface } from './SheetSurface';
 import { withPressed } from '@/lib/pressed';
 
 /** "5 Oct 2026" — the full date, since form dates are often in another year. */
-export function dateFieldLabel(iso: string): string {
+function dateFieldLabel(iso: string): string {
   return parseLocalIsoDate(iso).toLocaleDateString(undefined, {
     day: 'numeric',
     month: 'short',

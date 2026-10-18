@@ -7,7 +7,7 @@ import { shade } from '@/lib/color';
  * Lune path covering exactly `k` of a circle's area (radius `r` at cx, cy), lit on the right: right half-circle
  * plus an ellipse arc (radius `a`); crescent for k < 0.5, gibbous for k > 0.5; k=0 empty, k=1 full disc.
  */
-export function lunePath(cx: number, cy: number, r: number, k: number): string {
+function lunePath(cx: number, cy: number, r: number, k: number): string {
   const clamped = Math.max(0, Math.min(1, k));
   const a = r * Math.abs(1 - 2 * clamped);
   const sweepEllipse = clamped < 0.5 ? 0 : 1;
