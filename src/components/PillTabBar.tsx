@@ -37,6 +37,7 @@ function Tab({
   size,
   onPress,
   onLongPress,
+  homeLayout = false,
 }: {
   label: string;
   Icon: typeof HomeIcon;
@@ -45,6 +46,7 @@ function Tab({
   size: number;
   onPress: () => void;
   onLongPress: () => void;
+  homeLayout?: boolean;
 }) {
   const reduce = useReduceMotion();
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.92);
@@ -57,6 +59,7 @@ function Tab({
       accessibilityRole="tab"
       accessibilityState={{ selected: focused }}
       accessibilityLabel={label}
+      accessibilityHint={homeLayout && focused ? 'Long-press to log a recent entry again' : undefined}
     >
       {/* The press is core Animated (usePressScale) on its own view; the resize is Reanimated on the one
           inside. Never both on one view. */}
@@ -67,12 +70,17 @@ function Tab({
             styles.tab,
             { height: size, minWidth: size, borderRadius: size / 2 },
             focused && { backgroundColor: ink, paddingHorizontal: 16 },
+            homeLayout && !focused && styles.homeInactive,
           ]}
         >
           <Icon color={focused ? theme.colors.white : theme.colors.inkSoft} size={20} />
-          {focused && (
+          {(focused || homeLayout) && (
             <View>
-              <Text style={styles.label} numberOfLines={1} maxFontSizeMultiplier={1.15}>
+              <Text
+                style={[styles.label, homeLayout && !focused && styles.homeLabel]}
+                numberOfLines={1}
+                maxFontSizeMultiplier={1.15}
+              >
                 {label}
               </Text>
             </View>
@@ -101,6 +109,7 @@ export function PillTabBar({
   const scale = useUiScale();
   const height = Math.round(PILL_BAR.height * scale);
   const inner = height - 12;
+  const isHome = state.routes[state.index]?.name === 'index';
   const add = usePressScale(0.92);
   const [keyboard, setKeyboard] = useState(false);
   useEffect(() => {
@@ -137,7 +146,8 @@ export function PillTabBar({
               Icon={Icon}
               focused={focused}
               ink={ink}
-              size={inner}
+              size={isHome ? Math.min(inner, 48) : inner}
+              homeLayout={isHome}
               onPress={() => {
                 const event = navigation.emit({
                   type: 'tabPress',
@@ -149,33 +159,38 @@ export function PillTabBar({
                   navigation.navigate(route.name, route.params);
                 }
               }}
-              onLongPress={() => navigation.emit({ type: 'tabLongPress', target: route.key })}
+              onLongPress={() => {
+                if (isHome && focused) onAddLongPress();
+                else navigation.emit({ type: 'tabLongPress', target: route.key });
+              }}
             />
           );
         })}
       </View>
-      <Pressable
-        onPress={onAdd}
-        onLongPress={() => {
-          haptics.tap();
-          onAddLongPress();
-        }}
-        onPressIn={add.onPressIn}
-        onPressOut={add.onPressOut}
-        accessibilityRole="button"
-        accessibilityLabel="Add a transaction"
-        accessibilityHint="Long-press to log a recent entry again"
-      >
-        <RNAnimated.View
-          style={[
-            styles.add,
-            { width: height, height, borderRadius: height / 2, backgroundColor: ink },
-            add.animatedStyle,
-          ]}
+      {!isHome && (
+        <Pressable
+          onPress={onAdd}
+          onLongPress={() => {
+            haptics.tap();
+            onAddLongPress();
+          }}
+          onPressIn={add.onPressIn}
+          onPressOut={add.onPressOut}
+          accessibilityRole="button"
+          accessibilityLabel="Add a transaction"
+          accessibilityHint="Long-press to log a recent entry again"
         >
-          <Feather name="plus" size={24} color={theme.colors.white} />
-        </RNAnimated.View>
-      </Pressable>
+          <RNAnimated.View
+            style={[
+              styles.add,
+              { width: height, height, borderRadius: height / 2, backgroundColor: ink },
+              add.animatedStyle,
+            ]}
+          >
+            <Feather name="plus" size={24} color={theme.colors.white} />
+          </RNAnimated.View>
+        </Pressable>
+      )}
     </View>
   );
 }
@@ -194,6 +209,8 @@ const styles = StyleSheet.create({
     borderColor: GLASS.edge,
     boxShadow: '0px 10px 28px rgba(16,32,51,0.12)',
   },
+  homeInactive: { flexDirection: 'column', gap: 3 },
+  homeLabel: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textMuted },
   tab: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7 },
   label: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.white },
   add: {

@@ -3,8 +3,7 @@
  * hidden, and the runway without a spending account. The full screen is in PlanScreen.test.tsx.
  */
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
-import { Text, View, StyleSheet } from 'react-native';
-import { styles as planStyles, RUNWAY_HEIGHT } from './plan.styles';
+import { Text, StyleSheet, View } from 'react-native';
 
 jest.setTimeout(30000);
 jest.mock('@/components/ModalSheet', () => ({
@@ -242,6 +241,27 @@ describe('Goals with amounts hidden', () => {
     createdAt: '2026-01-01',
   };
 
+  it('keeps compact goal rows private while retaining their detail action', () => {
+    const onGoal = jest.fn();
+    mockHide = true;
+    try {
+      const tree = render(
+        <GoalsStrip compact goals={[goal]} savingsAccounts={[]} onOpen={jest.fn()} onGoal={onGoal} />
+      );
+      const { PlanSummaryRow } = require('./PlanSummaryRow');
+      const row = tree.root.findByType(PlanSummaryRow);
+      expect(row.props.progress).toBeUndefined();
+      expect(row.props.subtitle).toBe('Target ₹50,000');
+      expect(row.props.amount).toBe('Saved amount hidden');
+      expect(texts(tree).some((t) => t.includes('₹31,000'))).toBe(false);
+      act(() => row.props.onPress());
+      expect(onGoal).toHaveBeenCalledWith('g');
+      act(() => tree.unmount());
+    } finally {
+      mockHide = false;
+    }
+  });
+
   it('shows the percent and saved amount normally', () => {
     mockHide = false;
     const shown = texts(render(<GoalsStrip goals={[goal]} savingsAccounts={[]} onOpen={jest.fn()} />));
@@ -325,7 +345,7 @@ describe('Runway card', () => {
     expect(tree.root.findAllByType(ForecastDetails)).toHaveLength(0);
   });
 
-  it('anchors payment markers on closing balances inside the chart bounds', () => {
+  it('lets users inspect negative daily balances and navigate the full forecast', () => {
     const runway = buildRunway(
       10000,
       [
@@ -333,7 +353,7 @@ describe('Runway card', () => {
           key: 'bill',
           title: 'Bill',
           kind: 'bill',
-          dueDate: '2026-10-09',
+          dueDate: '2026-10-10',
           amountMinor: 20000,
           route: '/recurring',
         },
@@ -342,18 +362,63 @@ describe('Runway card', () => {
       30
     );
     const tree = render(<RunwayCard dueSoon={dueSoon} runway={runway} hasAccounts days={30} showChart />);
-    act(() =>
-      tree.root.findByProps({ testID: 'runway' }).props.onLayout({ nativeEvent: { layout: { width: 280 } } })
+    const action = (label: string) =>
+      tree.root.findAll((n) => n.props.accessibilityLabel === label && n.props.onPress)[0];
+    const bar = tree.root.findByProps({ testID: 'balance-bar-2026-10-10' });
+    const geometry = StyleSheet.flatten(bar.props.style);
+    expect(geometry.top).toBe(56);
+    expect(geometry.height).toBe(56);
+    const buttons = tree.root.findAll(
+      (n) => n.props.onPress && String(n.props.accessibilityLabel).includes('closing balance')
     );
-    const pins = tree.root
-      .findAllByType(View)
-      .filter((n) => Array.isArray(n.props.style) && n.props.style[0] === planStyles.pin);
-    expect(pins).toHaveLength(1);
-    const marker = StyleSheet.flatten(pins[0].props.style);
-    expect(marker.left).toBeGreaterThanOrEqual(0);
-    expect(marker.left + marker.width).toBeLessThanOrEqual(280);
-    expect(marker.top + marker.height / 2).toBeCloseTo(RUNWAY_HEIGHT - 10);
-    expect(texts(tree).some((t) => t.includes('Dashed line: zero balance'))).toBe(true);
+    act(() =>
+      buttons.find((node) => String(node.props.accessibilityLabel).includes('10 Oct'))!.props.onPress()
+    );
+    expect(texts(tree).some((t) => t.includes('Shortfall'))).toBe(true);
+    expect(texts(tree)).toContain('Bill');
+    expect(action('Previous seven days').props.disabled).toBe(true);
+    act(() => action('Next seven days').props.onPress());
+    expect(tree.root.findAllByProps({ testID: 'balance-bar-2026-10-09' })).toHaveLength(0);
+    expect(tree.root.findAllByProps({ testID: 'balance-bar-2026-10-16' }).length).toBeGreaterThan(0);
+    for (let i = 0; i < 3; i++) act(() => action('Next seven days').props.onPress());
+    expect(action('Next seven days').props.disabled).toBe(true);
+    expect(tree.root.findAllByProps({ testID: 'balance-bar-2026-11-07' }).length).toBeGreaterThan(0);
+    act(() => action('Previous seven days').props.onPress());
+    expect(action('Next seven days').props.disabled).toBe(false);
+  });
+
+  it('shows offsetting inflows and outflows even when closing balances stay flat', () => {
+    const items = [
+      {
+        key: 'in',
+        title: 'Salary',
+        kind: 'income' as const,
+        dueDate: '2026-10-09',
+        amountMinor: 10000,
+        route: '/recurring' as const,
+      },
+      {
+        key: 'out',
+        title: 'Rent',
+        kind: 'bill' as const,
+        dueDate: '2026-10-09',
+        amountMinor: 10000,
+        route: '/recurring' as const,
+      },
+    ];
+    const tree = render(
+      <RunwayCard
+        dueSoon={dueSoon}
+        runway={buildRunway(0, items, '2026-10-09', 1)}
+        hasAccounts
+        days={1}
+        showChart
+      />
+    );
+    expect(texts(tree)).toEqual(expect.arrayContaining(['In ₹100', 'Out ₹100', 'Salary · Rent']));
+    const bar = StyleSheet.flatten(tree.root.findByProps({ testID: 'balance-bar-2026-10-09' }).props.style);
+    expect(bar.height).toBe(0);
+    expect(Number.isFinite(bar.top)).toBe(true);
   });
 
   it('hides a flat chart and says nothing is due', () => {
@@ -464,4 +529,71 @@ it('shows both People balances without netting one against the other', () => {
         n.props.accessibilityLabel.includes('200 to pay back')
     ).length
   ).toBeGreaterThan(0);
+});
+
+it('prioritises over-budget compact rows, limits the preview and opens the selected budget', () => {
+  const summary = buildBudgetsSummary([
+    {
+      id: 'fine',
+      categoryName: 'Travel',
+      spentMinor: 9000,
+      effectiveLimitMinor: 10000,
+      remainingMinor: 1000,
+      percentUsed: 90,
+      overBudget: false,
+    },
+    {
+      id: 'over',
+      categoryName: 'Food',
+      spentMinor: 15000,
+      effectiveLimitMinor: 10000,
+      remainingMinor: -5000,
+      percentUsed: 150,
+      overBudget: true,
+    },
+  ]);
+  const onBudget = jest.fn();
+  const tree = render(
+    <BudgetJars compact limit={1} summary={summary} onOpen={jest.fn()} onBudget={onBudget} />
+  );
+  const { PlanSummaryRow } = require('./PlanSummaryRow');
+  const rows = tree.root.findAllByType(PlanSummaryRow);
+  expect(rows).toHaveLength(1);
+  expect(rows[0].props.name).toBe('Food');
+  expect(rows[0].props.amount).toBe('₹50 over');
+  act(() => rows[0].props.onPress());
+  expect(onBudget).toHaveBeenCalledWith('over');
+  act(() => tree.unmount());
+});
+
+it.each([
+  [320, 1, true],
+  [390, 1.5, true],
+  [390, 1, false],
+])('wraps compact row amounts at width %s and font scale %s', (width, fontScale, stacked) => {
+  const rn = require('react-native');
+  const dimensions = jest
+    .spyOn(rn, 'useWindowDimensions')
+    .mockReturnValue({ width, height: 800, scale: 1, fontScale });
+  try {
+    const { PlanSummaryRow } = require('./PlanSummaryRow');
+    const tree = render(
+      <PlanSummaryRow
+        name="A long category name"
+        subtitle="150% used"
+        amount="₹10,000 over"
+        icon="tag"
+        progress={150}
+        color="#BD3547"
+        accessibilityLabel="Open category"
+        onPress={jest.fn()}
+      />
+    );
+    const styles = tree.root.findAllByType(View).map((node) => StyleSheet.flatten(node.props.style));
+    expect(styles.some((style) => style?.flexDirection === 'column')).toBe(stacked);
+    expect(styles.some((style) => style?.width === '100%')).toBe(true);
+    act(() => tree.unmount());
+  } finally {
+    dimensions.mockRestore();
+  }
 });

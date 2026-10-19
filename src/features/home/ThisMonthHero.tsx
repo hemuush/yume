@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react';
 import { View, Pressable, PanResponder, useWindowDimensions } from 'react-native';
 import { Text } from '@/components/Text';
 import Feather from '@expo/vector-icons/Feather';
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import ReanimatedAnimated, {
   useSharedValue,
   useAnimatedStyle,
@@ -19,10 +18,7 @@ import { CountUpAmount } from '@/components/CountUpAmount';
 import { Glass } from '@/components/Glass';
 import { cardSurface } from '@/components/CardSurface';
 import { usePrivacy } from '@/theme/PrivacyContext';
-import { useAccent } from '@/theme/AccentContext';
-import { homeInk } from './homeInk';
 import { heroSlices, withoutSavings } from './heroSlices';
-import { MoneyBar } from './MoneyBar';
 import { DURATIONS } from '@/lib/motionTimings';
 import { styles } from './hero.styles';
 import { WorkingRow } from './WorkingRow';
@@ -56,8 +52,8 @@ interface HeroContent {
 const SWIPE_STEP_PX = 60;
 
 /**
- * Home's month card, frosted glass: what is free to use as one big light figure, small chips under it (the
- * spent share, today against the daily goal, bills still to pay), then the Add shortcuts. Swipe it sideways
+ * Home's compact month card: available money, an inline period footer and calculation disclosure,
+ * with entry shortcuts below. Daily goals and ready recaps stay in the disclosure. Swipe it sideways
  * to step the period. `displayed` lags `periodKey` so the old figures slide out first; a `runId` guard stops
  * a stale slide overwriting a newer one.
  */
@@ -77,6 +73,7 @@ export function ThisMonthHero({
   dueMinor = null,
   today = null,
   pace = null,
+  recaps = [],
 }: Omit<HeroContent, 'dueMinor' | 'carryMinor'> & {
   dueMinor?: number | null;
   carryMinor?: number;
@@ -91,14 +88,14 @@ export function ThisMonthHero({
   onStep: (dir: -1 | 1) => void;
   /** Today's spend against the daily goal — only when a goal is set and the current period is showing. */
   today?: { spentMinor: number; goalMinor: number } | null;
+  recaps?: { key: string; label: string; onPress: () => void }[];
   /** Where this month's spending is heading (monthPace) — the current month only, from the 5th. */
   pace?: { projectedMinor: number; byLabel: string } | null;
 }) {
   const reduce = useReduceMotion();
-  const { width, fontScale } = useWindowDimensions();
-  const stackStats = width < 360 || fontScale > 1.2;
+  const { fontScale } = useWindowDimensions();
+  const stackStats = fontScale > 1.2;
   const { hideAmounts } = usePrivacy();
-  const { accent } = useAccent();
   const [displayed, setDisplayed] = useState<HeroContent>({
     incomeMinor,
     spentMinor,
@@ -287,56 +284,66 @@ export function ThisMonthHero({
   const todayOverMinor = shownToday ? shownToday.spentMinor - shownToday.goalMinor : 0;
 
   return (
-    <Glass radius={28} style={[cardSurface.summary, styles.card]}>
-      <View style={styles.bar}>
-        <View style={styles.headTitle}>
-          <View style={styles.headIcon}>
-            <MaterialCommunityIcons name="wallet-outline" size={18} color={homeInk(accent)} />
+    <>
+      <Glass radius={24} style={[cardSurface.summary, styles.card]}>
+        <View style={styles.bar}>
+          <View style={styles.headTitle}>
+            <Text style={styles.headLabel}>{headLabel}</Text>
           </View>
-          <Text style={styles.headLabel}>{headLabel}</Text>
+          {renderPeriod ? renderPeriod(displayed.periodKey) : period}
         </View>
-        {renderPeriod ? renderPeriod(displayed.periodKey) : period}
-      </View>
 
-      <ReanimatedAnimated.View style={[styles.body, slideStyle]} {...pan.panHandlers}>
-        {/* The figure, and today's allowance beside it so that pill needs no row of its own. */}
-        <View style={styles.figureRow}>
-          <View
-            style={styles.figure}
-            accessible
-            accessibilityLabel={
-              slices.hasIncome ? `${headLabel}, ${formatMoney(headMinor)}, ${headCaption}` : headCaption
-            }
-            // The swipe, for a screen reader: swipe up or down on the figure to step the period.
-            accessibilityActions={[
-              { name: 'decrement', label: 'Previous period' },
-              ...(canStepForward ? [{ name: 'increment', label: 'Next period' }] : []),
-            ]}
-            onAccessibilityAction={(e) => {
-              if (e.nativeEvent.actionName === 'decrement') onStep(-1);
-              else if (e.nativeEvent.actionName === 'increment' && canStepForward) onStep(1);
-            }}
-          >
-            {slices.hasIncome ? (
-              // Rolls up from zero when Home opens or the period turns, and to its new value after a save.
-              <CountUpAmount
-                key={displayed.periodKey}
-                minor={headMinor}
-                countFromZero
-                duration={DURATIONS.rollUp}
-                style={[styles.headValue, headNeg && styles.headValueNeg]}
-                symbolStyle={styles.headSymbol}
-                numberOfLines={1}
-                adjustsFontSizeToFit
-              />
-            ) : (
-              <Text style={styles.headValue}>—</Text>
+        <ReanimatedAnimated.View style={[styles.body, slideStyle]} {...pan.panHandlers}>
+          <View style={styles.figureRow}>
+            <View
+              style={styles.figure}
+              accessible
+              accessibilityLabel={
+                slices.hasIncome ? `${headLabel}, ${formatMoney(headMinor)}, ${headCaption}` : headCaption
+              }
+              // The swipe, for a screen reader: swipe up or down on the figure to step the period.
+              accessibilityActions={[
+                { name: 'decrement', label: 'Previous period' },
+                ...(canStepForward ? [{ name: 'increment', label: 'Next period' }] : []),
+              ]}
+              onAccessibilityAction={(e) => {
+                if (e.nativeEvent.actionName === 'decrement') onStep(-1);
+                else if (e.nativeEvent.actionName === 'increment' && canStepForward) onStep(1);
+              }}
+            >
+              {slices.hasIncome ? (
+                // Rolls up from zero when Home opens or the period turns, and to its new value after a save.
+                <CountUpAmount
+                  key={displayed.periodKey}
+                  minor={headMinor}
+                  countFromZero
+                  duration={DURATIONS.rollUp}
+                  style={[styles.headValue, headNeg && styles.headValueNeg]}
+                  symbolStyle={styles.headSymbol}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                />
+              ) : (
+                <Text style={styles.headValue}>—</Text>
+              )}
+            </View>
+            {slices.hasIncome && (
+              <Pressable
+                onPress={() => {
+                  haptics.tap();
+                  setShowWorking((v) => !v);
+                }}
+                style={withPressed(styles.howLink)}
+                hitSlop={{ top: 6, bottom: 6, left: 8, right: 8 }}
+                accessibilityRole="button"
+                accessibilityState={{ expanded: showWorking }}
+                accessibilityLabel="How this adds up"
+              >
+                <Feather name="info" size={17} color={theme.colors.link} />
+              </Pressable>
             )}
           </View>
-        </View>
 
-        {/* The caption and its Details link share one line; the caption is already in the figure's spoken label. */}
-        <View style={styles.captionRow}>
           <Text
             style={styles.headCaption}
             accessibilityElementsHidden
@@ -344,144 +351,135 @@ export function ThisMonthHero({
           >
             {headCaption}
           </Text>
-          {slices.hasIncome && (
-            <Pressable
-              onPress={() => {
-                haptics.tap();
-                setShowWorking((v) => !v);
-              }}
-              style={withPressed(styles.howLink)}
-              hitSlop={{ top: 6, bottom: 6, left: 8, right: 8 }}
-              accessibilityRole="button"
-              accessibilityState={{ expanded: showWorking }}
-              accessibilityLabel="How this adds up"
-            >
-              <Text style={styles.howText}>How this adds up</Text>
-              <Feather
-                name={showWorking ? 'chevron-up' : 'chevron-down'}
-                size={13}
-                color={theme.colors.link}
-              />
-            </Pressable>
-          )}
-        </View>
 
-        {slices.hasIncome && showWorking && (
-          <View style={styles.working}>
-            <WorkingRow label="Income" value={formatMoney(displayed.incomeMinor)} />
-            {displayed.carryMinor !== 0 && (
+          {slices.hasIncome && showWorking && (
+            <View style={styles.working}>
+              <WorkingRow label="Income" value={formatMoney(displayed.incomeMinor)} />
+              {displayed.carryMinor !== 0 && (
+                <WorkingRow
+                  label="Carried over"
+                  value={`${displayed.carryMinor < 0 ? '−' : '+'}${formatMoney(Math.abs(displayed.carryMinor))}`}
+                />
+              )}
+              <WorkingRow label="Spent" value={`−${formatMoney(displayed.spentMinor)}`} />
               <WorkingRow
-                label="Carried over"
-                value={`${displayed.carryMinor < 0 ? '−' : '+'}${formatMoney(Math.abs(displayed.carryMinor))}`}
+                label="Set aside"
+                value={
+                  hideAmounts
+                    ? `−${formatMaskableMoney(0, { masked: true })}`
+                    : `${displayed.savingsMinor < 0 ? '+' : '−'}${formatMoney(Math.abs(displayed.savingsMinor))}`
+                }
+              />
+              <WorkingRow label="Free to use" value={formatMoney(displayed.surplusMinor)} total />
+              {hasDue && (
+                <>
+                  <WorkingRow label="Still to pay" value={`−${formatMoney(billsMinor)}`} due />
+                  <WorkingRow label="After bills" value={formatMoney(freeMinor)} total />
+                </>
+              )}
+              {shownPace && (
+                <WorkingRow
+                  label={`On pace by ${shownPace.byLabel}`}
+                  value={`about ${formatMoney(Math.round(shownPace.projectedMinor / 10000) * 10000)}`}
+                />
+              )}
+              {recaps.map((recap) => (
+                <Pressable
+                  key={recap.key}
+                  onPress={recap.onPress}
+                  accessibilityRole="button"
+                  accessibilityLabel={`View ${recap.label} recap`}
+                  style={withPressed({ minHeight: 44, justifyContent: 'center' })}
+                >
+                  <Text style={{ fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.link }}>
+                    View {recap.label} recap →
+                  </Text>
+                </Pressable>
+              ))}
+              {shownToday && (
+                <View style={[styles.chip, styles.chipClip, todayOverMinor > 0 && styles.chipOver]}>
+                  <Feather
+                    name="clock"
+                    size={13}
+                    color={todayOverMinor > 0 ? theme.colors.expenseText : theme.colors.textSecondary}
+                  />
+                  <Text style={[styles.chipText, todayOverMinor > 0 && styles.chipTextOver]}>
+                    {todayOverMinor > 0
+                      ? `${formatMoney(shownToday.spentMinor)} today · ${formatMoney(todayOverMinor)} over`
+                      : `${formatMoney(shownToday.goalMinor - shownToday.spentMinor)} left today`}
+                  </Text>
+                  {todayOverMinor <= 0 && shownToday.goalMinor > 0 && (
+                    <View
+                      testID="home-today-meter"
+                      style={[
+                        styles.chipMeter,
+                        {
+                          // Refunds can make today's net spend negative: the meter just stays empty.
+                          width: `${Math.max(0, Math.min(100, (shownToday.spentMinor / shownToday.goalMinor) * 100))}%`,
+                        },
+                      ]}
+                    />
+                  )}
+                </View>
+              )}
+            </View>
+          )}
+
+          {/* The legend describes this period; total debt belongs in Plan. */}
+          <View style={styles.stats}>
+            <Stat
+              stacked={stackStats}
+              label="Spent"
+              color={theme.colors.spentSoft}
+              minor={displayed.spentMinor}
+              periodKey={displayed.periodKey}
+            />
+            {!hideAmounts && (
+              <Stat
+                stacked={stackStats}
+                label="Saved"
+                color={theme.colors.secondary}
+                minor={displayed.savingsMinor}
+                periodKey={displayed.periodKey}
+                divider
               />
             )}
-            <WorkingRow label="Spent" value={`−${formatMoney(displayed.spentMinor)}`} />
-            <WorkingRow
-              label="Set aside"
-              value={
-                hideAmounts
-                  ? `−${formatMaskableMoney(0, { masked: true })}`
-                  : `${displayed.savingsMinor < 0 ? '+' : '−'}${formatMoney(Math.abs(displayed.savingsMinor))}`
-              }
-            />
-            <WorkingRow label="Free to use" value={formatMoney(displayed.surplusMinor)} total />
-            {hasDue && (
-              <>
-                <WorkingRow label="Still to pay" value={`−${formatMoney(billsMinor)}`} due />
-                <WorkingRow label="After bills" value={formatMoney(freeMinor)} total />
-              </>
-            )}
-            {shownPace && (
-              <WorkingRow
-                label={`On pace by ${shownPace.byLabel}`}
-                value={`about ${formatMoney(Math.round(shownPace.projectedMinor / 10000) * 10000)}`}
+            {displayed.dueMinor != null && billsMinor > 0 && (
+              <Stat
+                stacked={stackStats}
+                label="Bills left"
+                color={theme.colors.slice.due}
+                minor={billsMinor}
+                periodKey={displayed.periodKey}
+                divider
+                onPress={
+                  slices.hasIncome
+                    ? () => {
+                        haptics.tap();
+                        setShowWorking((v) => !v);
+                      }
+                    : undefined
+                }
+                expanded={showWorking}
               />
             )}
           </View>
-        )}
-
-        {slices.hasIncome && <MoneyBar slices={slices} />}
-        {/* The legend describes this period; total debt belongs in Plan. */}
-        <View style={styles.stats}>
-          <Stat
-            stacked={stackStats}
-            label="Spent"
-            color={theme.colors.spentSoft}
-            minor={displayed.spentMinor}
-            periodKey={displayed.periodKey}
-          />
-          {!hideAmounts && (
-            <Stat
-              stacked={stackStats}
-              label="Saved"
-              color={theme.colors.secondary}
-              minor={displayed.savingsMinor}
-              periodKey={displayed.periodKey}
-              divider
-            />
-          )}
-          {displayed.dueMinor != null && (
-            <Stat
-              stacked={stackStats}
-              label="Bills left"
-              color={theme.colors.slice.due}
-              minor={billsMinor}
-              periodKey={displayed.periodKey}
-              divider
-              cleared={billsMinor === 0}
-              onPress={
-                slices.hasIncome
-                  ? () => {
-                      haptics.tap();
-                      setShowWorking((v) => !v);
-                    }
-                  : undefined
-              }
-              expanded={showWorking}
-            />
-          )}
-        </View>
-        {shownToday && (
-          <View style={[styles.chip, styles.chipClip, todayOverMinor > 0 && styles.chipOver]}>
-            <Feather
-              name="clock"
-              size={13}
-              color={todayOverMinor > 0 ? theme.colors.expenseText : theme.colors.textSecondary}
-            />
-            <Text style={[styles.chipText, todayOverMinor > 0 && styles.chipTextOver]}>
-              {todayOverMinor > 0
-                ? `${formatMoney(shownToday.spentMinor)} today · ${formatMoney(todayOverMinor)} over`
-                : `${formatMoney(shownToday.goalMinor - shownToday.spentMinor)} left today`}
-            </Text>
-            {todayOverMinor <= 0 && shownToday.goalMinor > 0 && (
-              <View
-                testID="home-today-meter"
-                style={[
-                  styles.chipMeter,
-                  {
-                    // Refunds can make today's net spend negative: the meter just stays empty.
-                    width: `${Math.max(0, Math.min(100, (shownToday.spentMinor / shownToday.goalMinor) * 100))}%`,
-                  },
-                ]}
-              />
-            )}
-          </View>
-        )}
-      </ReanimatedAnimated.View>
-
-      <HeroActions />
-    </Glass>
+        </ReanimatedAnimated.View>
+      </Glass>
+      <View style={{ marginHorizontal: 16, marginTop: 10 }}>
+        <HeroActions />
+      </View>
+    </>
   );
 }
 
-/** The money-bar legend; Bills left also opens the calculation. */
+/** The compact period footer; a nonzero bill estimate also opens the calculation. */
 function Stat({
   label,
   color,
   minor,
   periodKey,
   divider = false,
-  cleared = false,
   onPress,
   expanded,
   stacked = false,
@@ -494,8 +492,6 @@ function Stat({
   onPress?: () => void;
   expanded?: boolean;
   stacked?: boolean;
-  /** No bills remain in the selected current month. */
-  cleared?: boolean;
 }) {
   const Container = onPress ? Pressable : View;
   return (
@@ -506,12 +502,11 @@ function Stat({
       accessibilityHint={onPress ? 'Shows how this adds up' : undefined}
       style={[styles.stat, divider ? styles.statDivider : styles.statFirst, stacked && styles.statStack]}
       accessible
-      accessibilityLabel={`${label}, ${formatMoney(minor)}${cleared ? ', nothing still to pay' : ''}`}
+      accessibilityLabel={`${label}, ${formatMoney(minor)}`}
     >
       <View style={styles.statHead}>
         <View style={[styles.statDot, { backgroundColor: color }]} />
         <Text style={styles.statLabel}>{label}</Text>
-        {cleared && <Feather name="check" size={12} color={theme.colors.incomeText} />}
       </View>
       {/* Rolls up from zero when Home opens or the period turns, and to its new value after a save. */}
       <CountUpAmount

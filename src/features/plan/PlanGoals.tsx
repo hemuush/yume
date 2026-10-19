@@ -17,6 +17,7 @@ import { usePrivacy } from '@/theme/PrivacyContext';
 import { Account, SavingsGoal } from '@/types';
 import { WHAT_IF_CUTS } from './planOverview';
 import { styles } from './plan.styles';
+import { PlanSummaryRow, summaryListStyle } from './PlanSummaryRow';
 import { TileGrid } from './PlanGrid';
 import { compactMoney } from '@/lib/compactMoney';
 
@@ -33,6 +34,7 @@ export function GoalsStrip({
   onGoal,
   onAdd,
   limit,
+  compact = false,
 }: {
   goals: SavingsGoal[];
   /** Savings accounts a new goal could follow, with their balances. */
@@ -42,6 +44,8 @@ export function GoalsStrip({
   onAdd?: () => void;
   /** Tiles shown at most (default: two rows). */
   limit?: number;
+  /** Flat goal rows; privacy hides both progress and saved amount. */
+  compact?: boolean;
 }) {
   const { hideAmounts } = usePrivacy();
   const active = goals.filter((g) => !g.archived);
@@ -68,6 +72,37 @@ export function GoalsStrip({
           </Text>
         </Glass>
       </Pressable>
+    );
+  }
+  if (compact) {
+    return (
+      <View style={summaryListStyle}>
+        {active.slice(0, limit ?? active.length).map((goal) => {
+          const { percent, done } = goalProgress(goal.currentAmountMinor, goal.targetAmountMinor);
+          const pct = Math.round(Math.min(100, percent));
+          return (
+            <PlanSummaryRow
+              key={goal.id}
+              name={goal.name}
+              subtitle={
+                hideAmounts
+                  ? `Target ${formatMoney(goal.targetAmountMinor)}`
+                  : `${formatMoney(goal.currentAmountMinor)} of ${formatMoney(goal.targetAmountMinor)}`
+              }
+              amount={hideAmounts ? 'Saved amount hidden' : done ? 'Completed' : `${pct}%`}
+              icon={goal.linkedAccountId ? 'bank-outline' : 'flag-variant-outline'}
+              progress={hideAmounts ? undefined : pct}
+              color={theme.colors.incomeText}
+              accessibilityLabel={
+                hideAmounts
+                  ? `${goal.name}, saved amount hidden, target ${formatMoney(goal.targetAmountMinor)}. Open savings goals`
+                  : `${goal.name}, ${formatMoney(goal.currentAmountMinor)} of ${formatMoney(goal.targetAmountMinor)}, ${done ? 'reached' : `${pct} percent`}. Open savings goals`
+              }
+              onPress={() => (onGoal ? onGoal(goal.id) : onOpen())}
+            />
+          );
+        })}
+      </View>
     );
   }
   return (

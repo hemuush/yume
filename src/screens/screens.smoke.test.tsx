@@ -761,13 +761,13 @@ describe('Home, stepping between months on a lived-in phone', () => {
     expect(textOf(tree)).toContain(monthName(-1));
     act(() => tree.unmount());
   });
-  it('keeps Accounts before Coming up and opens recent entries over Home', async () => {
+  it('keeps Accounts before Next up and opens recent entries over Home', async () => {
     const tree = await open(SCREENS[0][1]);
     const { Section } = require('@/components/Section');
     const titles = tree.root.findAllByType(Section).map((n) => n.props.title);
     expect(titles.indexOf('Accounts')).toBeGreaterThanOrEqual(0);
-    expect(titles.indexOf('Coming up')).toBeGreaterThan(titles.indexOf('Accounts'));
-    expect(titles.indexOf('Your spending')).toBeGreaterThan(titles.indexOf('Coming up'));
+    expect(titles.indexOf('Next up')).toBeGreaterThan(titles.indexOf('Accounts'));
+    expect(titles.indexOf('Spending')).toBeGreaterThan(titles.indexOf('Next up'));
     const { HomeSwipeCard } = require('@/features/home/HomeSwipeCard');
     expect(tree.root.findAllByType(HomeSwipeCard)).toHaveLength(0);
     const { RecentTransactionRow } = require('@/features/home/RecentTransactionRow');
@@ -790,7 +790,7 @@ describe('Home, stepping between months on a lived-in phone', () => {
     await settle();
     act(() =>
       tree.root
-        .findAll((n) => n.props.accessibilityLabel === 'See all — Your spending' && n.props.onPress)[0]
+        .findAll((n) => n.props.accessibilityLabel === 'See insights — Spending' && n.props.onPress)[0]
         .props.onPress()
     );
     expect(navigate).toHaveBeenLastCalledWith({ pathname: '/reports', params: { month: '-1' } });

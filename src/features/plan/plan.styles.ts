@@ -8,8 +8,6 @@ import { GLASS } from '@/components/Glass';
 const GAP = 10;
 /** The one inset inside every Plan card: card text, day headings and row content start on the same line. */
 const INSET = 14;
-/** The runway's drawing height, without the date row under it. */
-export const RUNWAY_HEIGHT = 96;
 
 const figure = {
   fontFamily: theme.font.body,
@@ -43,7 +41,14 @@ export const styles = StyleSheet.create({
   bigNote: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textMuted },
 
   /* ---------- Runway ---------- */
-  forecastFigure: { gap: 4, paddingVertical: 4 },
+  forecastHeading: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
+  forecastFigure: { gap: 2 },
   forecastValue: {
     fontFamily: theme.font.bodyLight,
     fontSize: 30,
@@ -57,10 +62,8 @@ export const styles = StyleSheet.create({
     flexGrow: 1,
     flexBasis: 110,
     minWidth: 0,
-    backgroundColor: theme.colors.surfaceAlt,
-    padding: 12,
-    borderRadius: 16,
-    gap: 4,
+    paddingVertical: 6,
+    gap: 2,
   },
   forecastMetricValue: {
     fontFamily: theme.font.bodyMedium,
@@ -84,21 +87,6 @@ export const styles = StyleSheet.create({
     lineHeight: 20,
     color: theme.colors.textPrimary,
   },
-  forecastChart: {
-    marginTop: 4,
-    paddingTop: 14,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: theme.colors.borderSoft,
-    gap: 8,
-  },
-  forecastChartHeading: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 8,
-  },
-  forecastChartTitle: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textPrimary },
   forecastFact: {
     fontFamily: theme.font.body,
     fontSize: 12,
@@ -120,22 +108,7 @@ export const styles = StyleSheet.create({
     borderRadius: 18,
     padding: 12,
   },
-  forecastNext: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    paddingTop: 10,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: theme.colors.borderSoft,
-    minHeight: 48,
-  },
   forecastAttentionCopy: { flex: 1, minWidth: 0, gap: 3 },
-  runway: { height: RUNWAY_HEIGHT, marginTop: 4 },
-  runwayAxis: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 },
-  runwayAxisText: { fontFamily: theme.font.bodyMedium, fontSize: 11, color: theme.colors.textMuted },
-  pin: { position: 'absolute', width: 12, height: 12, alignItems: 'center', justifyContent: 'center' },
-  pinDot: { width: 8, height: 8, borderRadius: 4, borderWidth: 2, backgroundColor: theme.colors.surface },
-
   /* ---------- Budgets and goals: tiles, three to a row ---------- */
   grid: { gap: 8, marginHorizontal: SCREEN.gutter },
   gridRow: { flexDirection: 'row', gap: 8 },
@@ -224,6 +197,21 @@ export const styles = StyleSheet.create({
   gainNote: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
 
   /* ---------- Friends & streak ---------- */
+  compactSummary: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 10,
+  },
+  balanceLine: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
+    gap: 4,
+  },
+  compactValue: { fontSize: 18, lineHeight: 24 },
   tile: { flex: 1, minWidth: 0, padding: 14, gap: 6 },
   go: { position: 'absolute', top: 14, right: 14 },
   value: { ...figure },
@@ -238,7 +226,7 @@ export const styles = StyleSheet.create({
   sproutDay: { alignItems: 'center', gap: 3 },
   dayLabel: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textMuted },
   personAmt: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textSecondary },
-  sprouts: { flexDirection: 'row', alignItems: 'flex-end', gap: 6, minHeight: 32, marginTop: 'auto' },
+  sprouts: { flexDirection: 'row', alignItems: 'flex-end', gap: 6, minHeight: 32 },
 
   /* ---------- Coming up ---------- */
   list: { marginHorizontal: SCREEN.gutter, overflow: 'hidden', paddingBottom: 4 },

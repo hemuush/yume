@@ -71,21 +71,23 @@ function render(over: Partial<React.ComponentProps<typeof ThisMonthHero>> = {}) 
 
 describe('month card', () => {
   it('leads with what is free to use, what it is out of, and what is left today as a chip', () => {
-    const all = texts(render());
+    const r = render();
+    const all = texts(r);
     expect(all).toEqual(
       expect.arrayContaining([
         'Free to use',
         '₹794',
         'after spending and savings',
-        'How this adds up',
-        '₹2,955 left today',
-        'Expense',
+        'Add expense',
         'Income',
         'Transfer',
       ])
     );
     // The money-bar legend stays scoped to this month.
-    expect(all).toEqual(expect.arrayContaining(['Spent', 'Saved', 'Bills left', '₹95,762', '₹99,500', '₹0']));
+    expect(all).toEqual(expect.arrayContaining(['Spent', 'Saved', '₹95,762', '₹99,500']));
+    expect(all).not.toContain('Bills left');
+    expect(all).not.toContain('₹2,955 left today');
+    expect(byLabel(r, 'How this adds up')).toBeDefined();
     // Free to use is said once, as the headline.
     expect(all.filter((t) => t === 'Free to use')).toHaveLength(1);
     // The shares are in the bar and the tray, not a chip; the pace waits under Details.
@@ -102,7 +104,9 @@ describe('month card', () => {
   });
 
   it('says how far over the daily goal today is', () => {
-    const all = texts(render({ today: { spentMinor: 600_000, goalMinor: 500_000 } }));
+    const r = render({ today: { spentMinor: 600_000, goalMinor: 500_000 } });
+    act(() => byLabel(r, 'How this adds up').props.onPress());
+    const all = texts(r);
     expect(all).toContain('₹6,000 today · ₹1,000 over');
   });
 
@@ -219,7 +223,7 @@ describe('month card with savings hidden', () => {
 
   it('keeps the free headline, and never says what was saved', () => {
     const all = texts(render(hidden));
-    expect(all).toEqual(expect.arrayContaining(['Free to use', '₹30,000', 'Spent', 'Bills left']));
+    expect(all).toEqual(expect.arrayContaining(['Free to use', '₹30,000', 'Spent']));
     expect(all).not.toContain('Saved');
   });
 
@@ -312,30 +316,9 @@ describe('month card when bills change without the period changing', () => {
   });
 });
 
-describe('month card, bills', () => {
-  it('ticks Bills left when nothing remains this month', () => {
-    const r = render({ dueMinor: 0 });
-    expect(
-      r.root.findAll((n) => n.props.accessibilityLabel === 'Bills left, ₹0, nothing still to pay').length
-    ).toBeGreaterThan(0);
-  });
-});
-
-describe('month card money bar', () => {
-  const bar = (r: ReactTestRenderer) => r.root.findAll((n) => n.props.testID === 'home-money-bar');
-
-  it('shows where the money went as a thin bar under the figure', () => {
-    expect(bar(render()).length).toBeGreaterThan(0);
-  });
-
-  it('is hidden from a screen reader, which gets the same facts in words', () => {
-    const [node] = bar(render());
-    expect(node.props.importantForAccessibility).toBe('no-hide-descendants');
-  });
-
-  it('is not there with no income', () => {
-    expect(bar(render({ incomeMinor: 0, spentMinor: 0, savingsMinor: 0, surplusMinor: 0 }))).toHaveLength(0);
-  });
+it('omits zero bills from the summary', () => {
+  const r = render({ dueMinor: 0 });
+  expect(texts(r)).not.toContain('Bills left');
 });
 
 describe('month card: how this adds up', () => {
@@ -413,18 +396,25 @@ describe('month card: how this adds up', () => {
 });
 
 describe('month card: today and the free figure', () => {
+  const expanded = (over: Partial<React.ComponentProps<typeof ThisMonthHero>> = {}) => {
+    const r = render(over);
+    act(() => byLabel(r, 'How this adds up').props.onPress());
+    return r;
+  };
   it('says the free figure once, in the headline, with no second "free" label', () => {
     expect(texts(render()).some((t) => t.endsWith(' free'))).toBe(false);
   });
 
   it('says what is left of the daily goal, and none left once it is spent', () => {
-    expect(texts(render({ today: { spentMinor: 0, goalMinor: 500_000 } }))).toContain('₹5,000 left today');
-    expect(texts(render({ today: { spentMinor: 500_000, goalMinor: 500_000 } }))).toContain('₹0 left today');
+    expect(texts(expanded({ today: { spentMinor: 0, goalMinor: 500_000 } }))).toContain('₹5,000 left today');
+    expect(texts(expanded({ today: { spentMinor: 500_000, goalMinor: 500_000 } }))).toContain(
+      '₹0 left today'
+    );
   });
 
   it('draws a thin meter that fills as the daily goal is spent', () => {
     const meter = (spentMinor: number) =>
-      render({ today: { spentMinor, goalMinor: 500_000 } }).root.findAll(
+      expanded({ today: { spentMinor, goalMinor: 500_000 } }).root.findAll(
         (n) => n.props.testID === 'home-today-meter'
       )[0];
     expect(StyleSheet.flatten(meter(125_000).props.style).width).toBe('25%');
@@ -434,7 +424,7 @@ describe('month card: today and the free figure', () => {
   });
 
   it('keeps saying how far over it is, and then shows no meter', () => {
-    const r = render({ today: { spentMinor: 600_000, goalMinor: 500_000 } });
+    const r = expanded({ today: { spentMinor: 600_000, goalMinor: 500_000 } });
     expect(texts(r)).toContain('₹6,000 today · ₹1,000 over');
     expect(r.root.findAll((n) => n.props.testID === 'home-today-meter')).toHaveLength(0);
   });
@@ -446,4 +436,21 @@ it('omits Bills left when a period has no current bill estimate', () => {
   act(() => byLabel(r, 'How this adds up').props.onPress());
   expect(texts(r)).not.toContain('Still to pay');
   act(() => r.unmount());
+});
+
+it('keeps every ready recap available from the calculation disclosure', () => {
+  const month = jest.fn(),
+    week = jest.fn();
+  const r = render({
+    recaps: [
+      { key: 'month', label: 'September', onPress: month },
+      { key: 'week', label: '12–18 Oct', onPress: week },
+    ],
+  });
+  expect(r.root.findAll((n) => n.props.accessibilityLabel === 'View September recap')).toHaveLength(0);
+  act(() => byLabel(r, 'How this adds up').props.onPress());
+  act(() => byLabel(r, 'View September recap').props.onPress());
+  act(() => byLabel(r, 'View 12–18 Oct recap').props.onPress());
+  expect(month).toHaveBeenCalledTimes(1);
+  expect(week).toHaveBeenCalledTimes(1);
 });

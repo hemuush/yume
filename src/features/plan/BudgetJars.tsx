@@ -10,6 +10,7 @@ import { softTint } from '@/components/softTint';
 import type { McIconName } from '@/components/iconName';
 import { BudgetsSummary, PlanBudgetInput } from './planOverview';
 import { styles } from './plan.styles';
+import { PlanSummaryRow, summaryListStyle } from './PlanSummaryRow';
 import { TileGrid } from './PlanGrid';
 
 /** Used this much of its limit, a jar turns amber. */
@@ -26,6 +27,7 @@ export function BudgetJars({
   onBudget,
   onAdd,
   limit,
+  compact = false,
 }: {
   summary: BudgetsSummary;
   onOpen: () => void;
@@ -33,6 +35,8 @@ export function BudgetJars({
   onAdd?: () => void;
   /** Tiles shown at most (default: two rows). */
   limit?: number;
+  /** Flat rows used by Plan; limit counts actual budgets, not an Add tile. */
+  compact?: boolean;
 }) {
   if (summary.rows.length === 0) {
     return (
@@ -47,6 +51,38 @@ export function BudgetJars({
           <Text style={styles.sub}>Watch spending for a category. Tap to add your first budget.</Text>
         </Glass>
       </Pressable>
+    );
+  }
+  if (compact) {
+    const sorted = [...summary.rows].sort(
+      (a, b) => Number(b.overBudget) - Number(a.overBudget) || b.percentUsed - a.percentUsed
+    );
+    return (
+      <View style={summaryListStyle}>
+        {sorted.slice(0, limit ?? sorted.length).map((b) => {
+          const amount = b.overBudget
+            ? `${formatMoney(Math.max(0, -b.remainingMinor))} over`
+            : `${formatMoney(b.remainingMinor)} left`;
+          const color = b.overBudget
+            ? theme.colors.expenseText
+            : b.percentUsed >= NEAR
+              ? theme.colors.warnInk
+              : theme.colors.link;
+          return (
+            <PlanSummaryRow
+              key={b.id}
+              name={b.categoryName}
+              subtitle={`${Math.round(b.percentUsed)}% used`}
+              amount={amount}
+              icon={(b.categoryIcon ?? 'tag') as McIconName}
+              progress={b.percentUsed}
+              color={color}
+              accessibilityLabel={`${b.categoryName}, ${Math.round(b.percentUsed)}% used, ${amount}. Open budgets`}
+              onPress={() => (onBudget ? onBudget(b.id) : onOpen())}
+            />
+          );
+        })}
+      </View>
     );
   }
   return (
