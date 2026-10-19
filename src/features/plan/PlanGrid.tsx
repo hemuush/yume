@@ -1,18 +1,18 @@
-import { View, Pressable } from 'react-native';
+import { View, Pressable, useWindowDimensions } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
 import { withPressed } from '@/lib/pressed';
 import { styles } from './plan.styles';
 
-/** Budgets and goals sit three to a row; the rest are under See all. */
+/** Budgets and goals use three columns normally, two on narrow screens and one with enlarged text. */
 const GRID_COLUMNS = 3;
 export const GRID_SHOWN = GRID_COLUMNS * 2;
 
 /**
  * The add button of a budgets or goals grid. It takes the next free slot of the row; when the row is already
- * full (3, or 6 shown) it starts a new row as a slim full-width button, so it never stretches into a blank block.
- * Nothing is drawn once the grid is full.
+ * full for the current column count it starts a new row as a slim full-width button, so it never stretches into a blank block.
+ * Nothing is drawn once the configured item limit is reached.
  */
 export function AddSlot({
   count,
@@ -20,9 +20,11 @@ export function AddSlot({
   label,
   accessibilityLabel,
   onPress,
+  columns = GRID_COLUMNS,
 }: {
   /** How many tiles are already in the grid. */
   count: number;
+  columns?: number;
   /** Tiles shown at most; the button is left out once they are all there. */
   limit?: number;
   label: string;
@@ -30,7 +32,7 @@ export function AddSlot({
   onPress: () => void;
 }) {
   if (count >= limit) return null;
-  const slim = count % GRID_COLUMNS === 0;
+  const slim = count % columns === 0;
   return (
     <Pressable
       onPress={onPress}
@@ -47,7 +49,7 @@ export function AddSlot({
 }
 
 /**
- * Budgets or goals as rows of exactly three equal tiles, so the left and right edges line up with every card
+ * Budgets or goals as rows of equal tiles adapted to screen width and text scale, so the left and right edges line up with every card
  * above and below (percentage widths and wrapping left a ragged gap). The add button takes the next free slot,
  * or a slim full-width row of its own when the last row is full; short rows are padded with empty slots.
  */
@@ -62,16 +64,19 @@ export function TileGrid({
   label: string;
   accessibilityLabel: string;
   onAdd: () => void;
-  /** How many tiles show: one row on Overview (3), two on a tab (6). */
+  /** How many items show: three on Overview, six for goals, all loaded budgets on Budgets. */
   limit?: number;
 }) {
+  const { width, fontScale } = useWindowDimensions();
+  const columns = fontScale > 1.2 ? 1 : width < 360 ? 2 : GRID_COLUMNS;
   const shown = tiles.slice(0, limit);
   const rows: React.ReactNode[][] = [];
-  for (let i = 0; i < shown.length; i += GRID_COLUMNS) rows.push(shown.slice(i, i + GRID_COLUMNS));
+  for (let i = 0; i < shown.length; i += columns) rows.push(shown.slice(i, i + columns));
   const add = (
     <AddSlot
       key="add"
       count={shown.length}
+      columns={columns}
       limit={limit}
       label={label}
       accessibilityLabel={accessibilityLabel}
@@ -80,7 +85,7 @@ export function TileGrid({
   );
   const hasAdd = shown.length < limit;
   // A full last row sends the add button to a row of its own; it then fills that row (the slim button).
-  const slimRow = hasAdd && shown.length % GRID_COLUMNS === 0;
+  const slimRow = hasAdd && shown.length % columns === 0;
   if (hasAdd) {
     if (slimRow) rows.push([add]);
     else rows[rows.length - 1].push(add);
@@ -91,7 +96,7 @@ export function TileGrid({
         <View key={r} style={styles.gridRow}>
           {row}
           {!(slimRow && r === rows.length - 1) &&
-            Array.from({ length: GRID_COLUMNS - row.length }, (_, k) => (
+            Array.from({ length: columns - row.length }, (_, k) => (
               <View key={`gap${k}`} style={styles.tileWrap} />
             ))}
         </View>

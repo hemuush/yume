@@ -1,4 +1,4 @@
-import { View, Pressable } from 'react-native';
+import { View, Pressable, StyleSheet } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import { Text } from '@/components/Text';
 import { Glass } from '@/components/Glass';
@@ -6,52 +6,9 @@ import { cardSurface } from '@/components/CardSurface';
 import { theme } from '@/constants/theme';
 import { withPressed } from '@/lib/pressed';
 import { dayMonth } from '@/lib/dateLabels';
-import { styles } from './plan.styles';
+import { SCREEN } from '@/components/screenStyles';
 
-function StatTile({
-  value,
-  line1,
-  line2,
-  label,
-  onPress,
-}: {
-  value: string;
-  line1: string;
-  line2: string;
-  label: string;
-  onPress: () => void;
-}) {
-  return (
-    <Pressable
-      onPress={onPress}
-      style={withPressed(styles.statWrap)}
-      accessibilityRole="button"
-      accessibilityLabel={label}
-    >
-      <Glass radius={22} style={[styles.stat, cardSurface.neutral]}>
-        <View style={styles.statIcon}>
-          <Feather name="calendar" size={16} color={theme.colors.ink} />
-        </View>
-        <View style={styles.statCopy}>
-          <Text style={styles.statValue} numberOfLines={1}>
-            {value}
-          </Text>
-          <Text style={styles.statLine} numberOfLines={1}>
-            {line1}
-          </Text>
-          <Text style={styles.statLine} numberOfLines={1}>
-            {line2}
-          </Text>
-        </View>
-      </Glass>
-    </Pressable>
-  );
-}
-
-/**
- * Two small tiles under the balance card: how many payments are coming and which is next. Both open the Upcoming
- * tab. Nothing is drawn when nothing is due, since the balance card already says so.
- */
+/** One compact summary opens the full schedule, keeping the count scoped to outgoing payments. */
 export function PlanStats({
   count,
   days,
@@ -61,31 +18,38 @@ export function PlanStats({
 }: {
   count: number;
   days: number;
-  /** The first payment going out: its date and name. */
   next: { date: string; title: string } | null;
   onOpen: () => void;
-  /** Large text or a narrow screen: one tile under the other. */
   stack?: boolean;
 }) {
   if (count === 0) return null;
+  const label = `${count} payment${count === 1 ? '' : 's'} in the next ${days} days`;
   return (
-    <View style={[styles.statRow, stack && styles.statStack]}>
-      <StatTile
-        value={String(count)}
-        line1={count === 1 ? 'Payment' : 'Payments'}
-        line2={`Next ${days} days`}
-        label={`${count} payment${count === 1 ? '' : 's'} in the next ${days} days. Open Upcoming`}
-        onPress={onOpen}
-      />
-      {next && (
-        <StatTile
-          value={dayMonth(next.date)}
-          line1="Next payment"
-          line2={next.title}
-          label={`Next payment ${dayMonth(next.date)}, ${next.title}. Open Upcoming`}
-          onPress={onOpen}
-        />
-      )}
-    </View>
+    <Pressable
+      onPress={onOpen}
+      accessibilityRole="button"
+      accessibilityLabel={`${label}${next ? `. Next ${dayMonth(next.date)}, ${next.title}` : ''}. Open Upcoming`}
+      style={withPressed(styles.wrap)}
+    >
+      <Glass radius={24} style={[styles.card, cardSurface.neutral]}>
+        <View style={styles.copy}>
+          <Text style={styles.caption}>{label}</Text>
+          {next && (
+            <Text style={[styles.next, stack && styles.nextStack]}>
+              Next · {dayMonth(next.date)} · {next.title}
+            </Text>
+          )}
+        </View>
+        <Feather name="chevron-right" size={16} color={theme.colors.link} />
+      </Glass>
+    </Pressable>
   );
 }
+const styles = StyleSheet.create({
+  wrap: { marginHorizontal: SCREEN.gutter, marginTop: SCREEN.sectionGap },
+  card: { padding: 14, flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 64 },
+  copy: { flex: 1, minWidth: 0, gap: 6 },
+  caption: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 18, color: theme.colors.textMuted },
+  next: { fontFamily: theme.font.bodyMedium, fontSize: 13, lineHeight: 19, color: theme.colors.textPrimary },
+  nextStack: { flexShrink: 1 },
+});

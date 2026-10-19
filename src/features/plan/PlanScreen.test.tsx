@@ -1,6 +1,6 @@
 /**
  * Renders the Plan tab with fixed data dated from today: the runway, jars, debt path, goals and tiles show
- * real figures in order and open their screens, Coming up lists 14 days grouped by day with Pay on EMIs.
+ * real figures in order and open their screens, Coming up lists 30 days grouped by day with Pay on EMIs.
  * Wording rules are in planOverview.test.ts and runway.test.ts.
  */
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
@@ -11,6 +11,10 @@ jest.setTimeout(30000);
 jest.mock('@/db/refundTracking', () => ({ listExpectedRefunds: jest.fn(async () => []) }));
 import { Text } from 'react-native';
 
+jest.mock('@/components/ModalSheet', () => ({
+  ModalSheet: ({ children }: { children: React.ReactNode }) =>
+    require('react').createElement(require('react-native').View, null, children),
+}));
 jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMock').createReanimatedMock());
 jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
@@ -161,6 +165,10 @@ jest.mock('@/features/people/PersonDetailModal', () => ({
   PersonDetailModal: (props: object) =>
     require('react').createElement(require('react-native').View, { ...props, testID: 'plan-person-detail' }),
 }));
+jest.mock('@/features/profile/AddAccountModal', () => ({
+  AddAccountModal: (props: object) =>
+    require('react').createElement(require('react-native').View, { ...props, testID: 'plan-new-account' }),
+}));
 jest.mock('@/features/budgets/AddBudgetModal', () => ({
   AddBudgetModal: (props: object) =>
     require('react').createElement(require('react-native').View, { ...props, testID: 'plan-new-budget' }),
@@ -199,10 +207,8 @@ async function render() {
 
 /** The Home loan EMI row: it ends in a Pay pill and opens the pay sheet. */
 /** Switch Plan's tab the way the segmented control does. */
-const openTab = (tree: ReactTestRenderer, tab: 'overview' | 'upcoming' | 'goals' | 'debt') =>
-  act(() =>
-    tree.root.findByType(require('@/components/SegmentedControl').SegmentedControl).props.onChange(tab)
-  );
+const openTab = (tree: ReactTestRenderer, tab: 'overview' | 'upcoming' | 'budgets' | 'goals' | 'debt') =>
+  act(() => tree.root.findByType(require('./PlanNavigation').PlanNavigation).props.onChange(tab));
 
 const payRow = (tree: ReactTestRenderer) =>
   tree.root.find(
@@ -223,6 +229,35 @@ beforeAll(async () => {
 }, 180000);
 
 describe('Plan tab', () => {
+  it('opens the existing account setup and closes it after creation', async () => {
+    const tree = await render();
+    const { RunwayCard } = require('./RunwayCard');
+    act(() => tree.root.findByType(RunwayCard).props.onAddAccount());
+    expect(tree.root.findByProps({ testID: 'plan-new-account' }).props.visible).toBe(true);
+    await act(async () => tree.root.findByProps({ testID: 'plan-new-account' }).props.onCreated());
+    expect(tree.root.findAllByProps({ testID: 'plan-new-account' })).toHaveLength(0);
+    act(() => tree.unmount());
+  });
+  it('opens Budgets directly from a route and keeps add/detail actions inside Plan', async () => {
+    mockTab = 'budgets';
+    try {
+      const tree = await render();
+      const { PlanNavigation } = require('./PlanNavigation');
+      const { BudgetJars } = require('./BudgetJars');
+      expect(tree.root.findByType(PlanNavigation).props.value).toBe('budgets');
+      const jars = tree.root.findByType(BudgetJars);
+      expect(jars.props.limit).toBe(jars.props.summary.rows.length + 1);
+      act(() => jars.props.onBudget('b2'));
+      expect(tree.root.findByProps({ testID: 'plan-budget-detail' }).props.progress.budget.id).toBe('b2');
+      act(() => tree.root.findByProps({ testID: 'plan-budget-detail' }).props.onClose());
+      act(() => tree.root.findByType(BudgetJars).props.onAdd());
+      expect(tree.root.findByProps({ testID: 'plan-new-budget' }).props.visible).toBe(true);
+      expect(router.push).not.toHaveBeenCalled();
+      act(() => tree.unmount());
+    } finally {
+      mockTab = undefined;
+    }
+  });
   it('opens a pending refund purchase over Plan', async () => {
     const tree = await render();
     const { PendingRefunds } = require('@/features/transactions/PendingRefunds');
@@ -265,8 +300,8 @@ describe('Plan tab', () => {
     expect(shown.some((t) => t.endsWith(' over'))).toBe(true);
     // A savings account a new goal could follow.
     expect(shown.some((t) => t.startsWith('Follow Pot (₹54,000)'))).toBe(true);
-    // ₹25,000 EMI + ₹450 bill in the next 14 days.
-    expect(shown.some((t) => t.startsWith('₹25,450 going out · 2 payments'))).toBe(true);
+    // ₹25,000 EMI + ₹450 bill in the next 30 days.
+    expect(shown).toContain('2 payments in the next 30 days');
     expect(shown.some((t) => t.includes('Loan EMI'))).toBe(false);
     // The Goals tab holds what-if: it cuts the biggest category it can, not the EMI (10% of Food's ₹20,000).
     const goalsTab = await render();
@@ -287,7 +322,7 @@ describe('Plan tab', () => {
         month: 'short',
       });
       expect(shown).toContain(`Short on ${short}`);
-      expect(shown.some((t) => t.includes('short ₹15,450'))).toBe(true);
+      expect(shown).toContain('₹15,450 more needed');
     } finally {
       mockBank = 3000000;
     }
@@ -323,11 +358,17 @@ describe('Plan tab', () => {
           n.props.onPress
       )[0];
     act(() => byLabel('See all — Budgets').props.onPress());
+    expect(router.push).not.toHaveBeenCalled();
+    expect(tree.root.findByType(require('@/features/plan/PlanNavigation').PlanNavigation).props.value).toBe(
+      'budgets'
+    );
+    act(() => byLabel('See all — Budgets').props.onPress());
     expect(router.push).toHaveBeenLastCalledWith('/budgets');
     act(() => byLabel('Fuel, 25% used').props.onPress());
     const detail = tree.root.findByProps({ testID: 'plan-budget-detail' });
     expect(detail.props.progress.budget.id).toBe('b2');
     act(() => detail.props.onClose());
+    openTab(tree, 'overview');
     act(() => byLabel('Friends & Family').props.onPress());
     expect(router.push).toHaveBeenLastCalledWith('/people');
     act(() => byLabel('4-day streak').props.onPress());
@@ -371,12 +412,13 @@ describe('Plan tab', () => {
     }
   });
 
-  it('has four tabs, and only the chosen one is drawn', async () => {
+  it('has five tabs, and only the chosen one is drawn', async () => {
     const tree = await render();
-    const control = tree.root.findByType(require('@/components/SegmentedControl').SegmentedControl);
-    expect(control.props.options.map((o: { label: string }) => o.label)).toEqual([
+    const navigation = require('./PlanNavigation');
+    expect(navigation.PLAN_TABS.map((o: { label: string }) => o.label)).toEqual([
       'Overview',
       'Upcoming',
+      'Budgets',
       'Goals',
       'Debt',
     ]);

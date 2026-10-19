@@ -22,30 +22,36 @@ function render(el: React.ReactElement) {
 const texts = (tree: ReactTestRenderer) =>
   tree.root.findAllByType(Text).map((t) => [].concat(t.props.children).join(''));
 
+beforeEach(() => {
+  jest
+    .spyOn(require('react-native'), 'useWindowDimensions')
+    .mockReturnValue({ width: 390, height: 800, fontScale: 1, scale: 1 });
+});
+afterEach(() => jest.restoreAllMocks());
+
 describe('PlanStats', () => {
   it('draws nothing when nothing is due', () => {
     const tree = render(<PlanStats count={0} days={30} next={null} onOpen={jest.fn()} />);
     expect(tree.toJSON()).toBeNull();
   });
 
-  it('counts the payments, names the next one, and opens Upcoming from either tile', () => {
+  it('opens Upcoming from the combined count and next-payment summary', () => {
     const onOpen = jest.fn();
     const tree = render(
       <PlanStats count={3} days={30} next={{ date: '2026-11-01', title: 'Parents' }} onOpen={onOpen} />
     );
     const shown = texts(tree);
-    expect(shown).toEqual(
-      expect.arrayContaining(['3', 'Payments', 'Next 30 days', 'Next payment', 'Parents'])
-    );
-    const tiles = tree.root.findAll((n) => n.props.accessibilityRole === 'button' && n.props.onPress);
-    expect(tiles).toHaveLength(2);
-    tiles.forEach((t) => act(() => t.props.onPress()));
-    expect(onOpen).toHaveBeenCalledTimes(2);
+    expect(shown).toContain('3 payments in the next 30 days');
+    expect(shown.some((value) => value.includes('Parents') && value.startsWith('Next ·'))).toBe(true);
+    const button = tree.root.findAll((n) => n.props.accessibilityRole === 'button' && n.props.onPress);
+    expect(button).toHaveLength(1);
+    act(() => button[0].props.onPress());
+    expect(onOpen).toHaveBeenCalledTimes(1);
   });
 
-  it('says "Payment" for one', () => {
+  it('uses singular payment for one', () => {
     const tree = render(<PlanStats count={1} days={30} next={null} onOpen={jest.fn()} />);
-    expect(texts(tree)).toContain('Payment');
+    expect(texts(tree)).toContain('1 payment in the next 30 days');
   });
 });
 
