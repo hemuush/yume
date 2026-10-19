@@ -696,14 +696,14 @@ describe('Home, stepping between months on a lived-in phone', () => {
 
     const tree = await open(SCREENS[0][1]);
     expect(textOf(tree)).toContain(monthName(0));
-    expect(textOf(tree)).toContain('still to pay');
+    expect(textOf(tree)).toContain('Bills left');
 
     await step(tree, 'decrement');
     await settle();
 
     const back = textOf(tree);
     expect(back).toContain(monthName(-1));
-    expect(back).not.toContain('still to pay');
+    expect(back).not.toContain('Bills left');
     expect(back).not.toContain('Short after bills');
     // The caption says what the figure is out of: that month's income plus what carried into it.
     expect(back).toContain(`of ${formatMoney(lastMonth.incomeMinor + carry)}`);
@@ -722,7 +722,7 @@ describe('Home, stepping between months on a lived-in phone', () => {
     await settle();
     const again = textOf(tree);
     expect(again).toContain(monthName(0));
-    expect(again).toContain('still to pay');
+    expect(again).toContain('Bills left');
     act(() => tree.unmount());
   });
 
