@@ -5,7 +5,8 @@ import { GLASS } from '@/components/Glass';
 export const styles = StyleSheet.create({
   card: {
     marginHorizontal: 16,
-    padding: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 16,
     gap: 12,
     boxShadow: '0px 10px 28px rgba(19,41,63,0.07)',
   },
@@ -66,7 +67,6 @@ export const styles = StyleSheet.create({
   howText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.link },
   // Names the (often tiny) free part of the money bar.
 
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   chip: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -95,13 +95,26 @@ export const styles = StyleSheet.create({
   },
   chipOver: { borderColor: 'rgba(189,53,71,0.28)', backgroundColor: 'rgba(226,63,85,0.06)' },
   chipTextOver: { color: theme.colors.expenseText },
-  dueChip: { minHeight: 48, borderColor: 'transparent', backgroundColor: theme.colors.dueTint },
-  dueDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: theme.colors.slice.due },
-  dueText: { flexShrink: 1, fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.dueInk },
 
   // Three columns straight under the bar, no panel of their own: each dot is the bar's colour, so the bar is the legend.
   stats: { flexDirection: 'row', flexWrap: 'wrap', rowGap: 8 },
-  stat: { flexGrow: 1, flexBasis: 100, minWidth: 0, paddingHorizontal: 12, gap: 3 },
+  stat: {
+    flexGrow: 1,
+    flexBasis: 100,
+    minWidth: 0,
+    minHeight: 48,
+    paddingHorizontal: 10,
+    gap: 3,
+    justifyContent: 'center',
+  },
+  statStack: {
+    flexBasis: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderLeftWidth: 0,
+    paddingHorizontal: 0,
+  },
   statFirst: { paddingLeft: 0 },
   statDivider: { borderLeftWidth: StyleSheet.hairlineWidth, borderLeftColor: theme.colors.borderSoft },
   statHead: { flexDirection: 'row', alignItems: 'center', gap: 5 },

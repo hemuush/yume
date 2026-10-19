@@ -451,10 +451,6 @@ export default function DashboardScreen() {
     tx.type === 'transfer' &&
     (savingsIds.has(tx.accountId) || (!!tx.toAccountId && savingsIds.has(tx.toAccountId)));
 
-  const totalOutstandingLoans = loans
-    .filter((l) => l.direction === 'borrowed')
-    .reduce((sum, l) => sum + l.outstandingPrincipalMinor, 0);
-
   const dispIncome = roundedMinor(comparison?.current.incomeMinor ?? 0);
   const dispExpense = roundedMinor(comparison?.current.expenseMinor ?? 0);
   // Where this month is heading — the current month only, and only once
@@ -594,11 +590,10 @@ export default function DashboardScreen() {
                 savingsMinor={savingsInPeriod}
                 surplusMinor={surplusInPeriod}
                 carryMinor={carryIn}
-                outstandingLoansMinor={roundedMinor(totalOutstandingLoans)}
                 dueMinor={
                   loadedCursor.granularity === 'month' && loadedCursor.offset === 0
                     ? roundedMinor(stillToPayMinor)
-                    : 0
+                    : null
                 }
                 // Today is always about today — only alongside the current period.
                 today={
@@ -708,7 +703,7 @@ export default function DashboardScreen() {
 
         {/* Accounts last: the money you hold, one tap from the full list. */}
         {loaded && (
-          <Animated.View entering={sectionEntering(4)} style={styles.bento}>
+          <Animated.View entering={sectionEntering(4)}>
             <HomeAccounts
               accounts={accounts}
               currency={currency}
@@ -804,7 +799,6 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
   scroll: { flex: 1 },
   heroGap: { marginTop: 4 },
-  bento: { marginTop: SCREEN.cardStack },
   recent: { marginHorizontal: SCREEN.gutter, overflow: 'hidden' },
   errorBanner: {
     marginHorizontal: 20,

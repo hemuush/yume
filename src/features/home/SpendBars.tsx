@@ -137,7 +137,7 @@ export function SpendBars({
                 setPicked(null);
               }}
               hitSlop={{ top: 7, bottom: 7, left: 0, right: 0 }}
-              style={[styles.seg, r === range && styles.segOn]}
+              style={[styles.seg, r === range && [styles.segOn, { backgroundColor: ink }]]}
               accessibilityRole="tab"
               accessibilityState={{ selected: r === range }}
             >
@@ -204,12 +204,12 @@ const styles = StyleSheet.create({
     gap: 2,
     padding: 3,
     borderRadius: 16,
-    backgroundColor: 'rgba(18,19,15,0.05)',
+    backgroundColor: theme.colors.surfaceAlt,
   },
-  seg: { minHeight: 30, paddingHorizontal: 12, borderRadius: 13, justifyContent: 'center' },
+  seg: { minHeight: 44, paddingHorizontal: 12, borderRadius: 13, justifyContent: 'center' },
   segOn: { backgroundColor: theme.colors.white, boxShadow: '0px 1px 3px rgba(18,19,15,0.12)' },
   segText: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textSecondary },
-  segTextOn: { color: theme.colors.textPrimary },
+  segTextOn: { color: theme.colors.white },
   bars: {
     flexGrow: 1,
     flexDirection: 'row',

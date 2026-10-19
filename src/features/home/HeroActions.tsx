@@ -1,4 +1,4 @@
-import { View, Pressable, StyleSheet, Animated } from 'react-native';
+import { View, Pressable, StyleSheet, Animated, useWindowDimensions } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import { Text } from '@/components/Text';
 import { GLASS } from '@/components/Glass';
@@ -24,20 +24,21 @@ const ACTIONS: {
  */
 function Action({ type, label, icon, ink }: (typeof ACTIONS)[number] & { ink: string }) {
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.96);
+  const { fontScale } = useWindowDimensions();
   const primary = type === 'expense';
   return (
     <Pressable
       onPress={() => pushOnce(`/add-transaction?type=${type}`)}
       onPressIn={onPressIn}
       onPressOut={onPressOut}
-      style={[styles.wrap, primary && styles.wrapPrimary]}
+      style={[styles.wrap, { flexBasis: 88 * Math.max(1, fontScale) }]}
       accessibilityRole="button"
       accessibilityLabel={`Add ${label.toLowerCase()}`}
     >
       <Animated.View
         style={[styles.action, primary && { backgroundColor: ink, borderColor: ink }, animatedStyle]}
       >
-        <Feather name={icon} size={18} color={primary ? theme.colors.white : theme.colors.ink} />
+        <Feather name={icon} size={16} color={primary ? theme.colors.white : theme.colors.ink} />
         <Text style={[styles.label, primary && styles.labelPrimary]}>{label}</Text>
       </Animated.View>
     </Pressable>
@@ -59,23 +60,21 @@ export function HeroActions() {
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   wrap: { flexGrow: 1, flexBasis: 88 },
-  // Expense is the main action: a little wider.
-  wrapPrimary: { flexGrow: 1.3 },
   action: {
     minHeight: 48,
-    paddingHorizontal: 12,
+    paddingHorizontal: 8,
     borderRadius: 18,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
+    gap: 6,
     backgroundColor: GLASS.fillStrong,
     borderWidth: 1,
     borderColor: GLASS.edge,
   },
   label: {
     fontFamily: theme.font.bodyMedium,
-    fontSize: 14,
+    fontSize: 13,
     color: theme.colors.textPrimary,
   },
   labelPrimary: { color: theme.colors.white },

@@ -94,7 +94,7 @@ describe('Home accounts', () => {
     );
     act(() =>
       r.root
-        .find((n) => n.props.accessibilityLabel === 'Accounts, 1. See all' && n.props.onPress)
+        .find((n) => n.props.accessibilityLabel === 'See all — Accounts' && n.props.onPress)
         .props.onPress()
     );
     expect(onOpenAccount).toHaveBeenCalled();
@@ -234,4 +234,14 @@ describe('Home accounts, grouped', () => {
     const sub = texts(render({ accounts: mixed })).filter((t) => t.includes('·'));
     expect(sub.some((t) => t.toLowerCase().includes('savings'))).toBe(false);
   });
+});
+
+it('adds another account from the free preview slot', () => {
+  const add = jest.fn();
+  const r = render({ accounts: [account('Cash', 'cash', 100)], onAddAccount: add });
+  act(() =>
+    r.root.find((n) => n.props.accessibilityLabel === 'Add an account' && n.props.onPress).props.onPress()
+  );
+  expect(add).toHaveBeenCalledTimes(1);
+  act(() => r.unmount());
 });

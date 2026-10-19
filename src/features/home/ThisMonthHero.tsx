@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { View, Pressable, PanResponder } from 'react-native';
+import { View, Pressable, PanResponder, useWindowDimensions } from 'react-native';
 import { Text } from '@/components/Text';
 import Feather from '@expo/vector-icons/Feather';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
@@ -42,12 +42,10 @@ interface HeroContent {
    */
   carryMinor: number;
   /**
-   * EMIs and bills still to pay this month (current month only; 0 = none). The headline is free to use minus
+   * EMIs and bills still to pay this month (null outside the current month; 0 = none). The headline is free to use minus
    * this.
    */
-  dueMinor: number;
-  /** Loans you still owe, all of them (not just this period). */
-  outstandingLoansMinor: number;
+  dueMinor: number | null;
   /** Which period these figures are for: a new period remounts the rolling figures instead of rolling them. */
   periodKey: string;
   today?: { spentMinor: number; goalMinor: number } | null;
@@ -76,12 +74,11 @@ export function ThisMonthHero({
   savingsMinor,
   surplusMinor,
   carryMinor = 0,
-  dueMinor = 0,
-  outstandingLoansMinor,
+  dueMinor = null,
   today = null,
   pace = null,
 }: Omit<HeroContent, 'dueMinor' | 'carryMinor'> & {
-  dueMinor?: number;
+  dueMinor?: number | null;
   carryMinor?: number;
   periodKey: string;
   direction: -1 | 0 | 1;
@@ -98,6 +95,8 @@ export function ThisMonthHero({
   pace?: { projectedMinor: number; byLabel: string } | null;
 }) {
   const reduce = useReduceMotion();
+  const { width, fontScale } = useWindowDimensions();
+  const stackStats = width < 360 || fontScale > 1.2;
   const { hideAmounts } = usePrivacy();
   const { accent } = useAccent();
   const [displayed, setDisplayed] = useState<HeroContent>({
@@ -107,7 +106,6 @@ export function ThisMonthHero({
     surplusMinor,
     carryMinor,
     dueMinor,
-    outstandingLoansMinor,
     periodKey,
     today,
     pace,
@@ -140,7 +138,6 @@ export function ThisMonthHero({
       surplusMinor,
       carryMinor,
       dueMinor,
-      outstandingLoansMinor,
       periodKey,
       today:
         todaySpent != null && todayGoal != null ? { spentMinor: todaySpent, goalMinor: todayGoal } : null,
@@ -196,7 +193,6 @@ export function ThisMonthHero({
     surplusMinor,
     carryMinor,
     dueMinor,
-    outstandingLoansMinor,
     todaySpent,
     todayGoal,
     paceProjected,
@@ -259,14 +255,15 @@ export function ThisMonthHero({
   // Carry-over joins the pool like income; a carried shortfall only lowers the headline. With "hide savings"
   // on, nothing may reveal savings.
   const poolMinor = displayed.incomeMinor + Math.max(0, displayed.carryMinor);
-  const full = heroSlices(poolMinor, displayed.spentMinor, displayed.savingsMinor, displayed.dueMinor);
+  const billsMinor = displayed.dueMinor ?? 0;
+  const full = heroSlices(poolMinor, displayed.spentMinor, displayed.savingsMinor, billsMinor);
   const slices = hideAmounts ? withoutSavings(full) : full;
 
   // The headline: what's free to use, or by how much the month went over.
   const over = slices.overMinor > 0;
   // With bills still to come this month, what is free is counted after them.
-  const hasDue = slices.hasIncome && !over && displayed.dueMinor > 0;
-  const freeMinor = displayed.surplusMinor - (hasDue ? displayed.dueMinor : 0);
+  const hasDue = slices.hasIncome && !over && billsMinor > 0;
+  const freeMinor = displayed.surplusMinor - (hasDue ? billsMinor : 0);
   const headLabel = over
     ? 'Over by'
     : hasDue
@@ -302,7 +299,7 @@ export function ThisMonthHero({
   const todayOverMinor = shownToday ? shownToday.spentMinor - shownToday.goalMinor : 0;
 
   return (
-    <Glass radius={28} style={[styles.card, cardSurface.summary]}>
+    <Glass radius={28} style={[cardSurface.summary, styles.card]}>
       <View style={styles.bar}>
         <View style={styles.headTitle}>
           <View style={styles.headIcon}>
@@ -428,7 +425,7 @@ export function ThisMonthHero({
             <WorkingRow label="Free to use" value={formatMoney(displayed.surplusMinor)} total />
             {hasDue && (
               <>
-                <WorkingRow label="Still to pay" value={`−${formatMoney(displayed.dueMinor)}`} due />
+                <WorkingRow label="Still to pay" value={`−${formatMoney(billsMinor)}`} due />
                 <WorkingRow label="After bills" value={formatMoney(freeMinor)} total />
               </>
             )}
@@ -442,36 +439,10 @@ export function ThisMonthHero({
         )}
 
         {slices.hasIncome && <MoneyBar slices={slices} />}
-        {hasDue && (
-          <View style={styles.chips}>
-            {hasDue && (
-              <Pressable
-                onPress={() => {
-                  haptics.tap();
-                  setShowWorking((v) => !v);
-                }}
-                style={withPressed([styles.chip, styles.dueChip])}
-                hitSlop={5}
-                accessibilityRole="button"
-                accessibilityState={{ expanded: showWorking }}
-                accessibilityLabel={`${formatMoney(displayed.dueMinor)} still to pay this month`}
-                accessibilityHint="Shows how this adds up"
-              >
-                <View style={styles.dueDot} />
-                <Text style={styles.dueText}>{formatMoney(displayed.dueMinor)} still to pay</Text>
-                <Feather
-                  name={showWorking ? 'chevron-up' : 'chevron-down'}
-                  size={12}
-                  color={theme.colors.dueInk}
-                />
-              </Pressable>
-            )}
-          </View>
-        )}
-
-        {/* Spent | Saved | Debt left, as on the old card; Saved stays out while savings are hidden. */}
+        {/* The legend describes this period; total debt belongs in Plan. */}
         <View style={styles.stats}>
           <Stat
+            stacked={stackStats}
             label="Spent"
             color={theme.colors.spentSoft}
             minor={displayed.spentMinor}
@@ -479,6 +450,7 @@ export function ThisMonthHero({
           />
           {!hideAmounts && (
             <Stat
+              stacked={stackStats}
               label="Saved"
               color={theme.colors.secondary}
               minor={displayed.savingsMinor}
@@ -486,14 +458,26 @@ export function ThisMonthHero({
               divider
             />
           )}
-          <Stat
-            label="Debt left"
-            color={theme.colors.slice.debt}
-            minor={displayed.outstandingLoansMinor}
-            periodKey={displayed.periodKey}
-            divider
-            cleared={displayed.outstandingLoansMinor === 0}
-          />
+          {displayed.dueMinor != null && (
+            <Stat
+              stacked={stackStats}
+              label="Bills left"
+              color={theme.colors.slice.due}
+              minor={billsMinor}
+              periodKey={displayed.periodKey}
+              divider
+              cleared={billsMinor === 0}
+              onPress={
+                slices.hasIncome
+                  ? () => {
+                      haptics.tap();
+                      setShowWorking((v) => !v);
+                    }
+                  : undefined
+              }
+              expanded={showWorking}
+            />
+          )}
         </View>
       </ReanimatedAnimated.View>
 
@@ -502,7 +486,7 @@ export function ThisMonthHero({
   );
 }
 
-/** One figure in the Spent | Saved | Debt left row: a coloured dot, its name, the amount. */
+/** The money-bar legend; Bills left also opens the calculation. */
 function Stat({
   label,
   color,
@@ -510,20 +494,31 @@ function Stat({
   periodKey,
   divider = false,
   cleared = false,
+  onPress,
+  expanded,
+  stacked = false,
 }: {
   label: string;
   color: string;
   minor: number;
   periodKey: string;
   divider?: boolean;
-  /** Debt paid off: a tick beside the name. */
+  onPress?: () => void;
+  expanded?: boolean;
+  stacked?: boolean;
+  /** No bills remain in the selected current month. */
   cleared?: boolean;
 }) {
+  const Container = onPress ? Pressable : View;
   return (
-    <View
-      style={[styles.stat, divider ? styles.statDivider : styles.statFirst]}
+    <Container
+      onPress={onPress}
+      accessibilityRole={onPress ? 'button' : undefined}
+      accessibilityState={onPress ? { expanded } : undefined}
+      accessibilityHint={onPress ? 'Shows how this adds up' : undefined}
+      style={[styles.stat, divider ? styles.statDivider : styles.statFirst, stacked && styles.statStack]}
       accessible
-      accessibilityLabel={`${label}, ${formatMoney(minor)}${cleared ? ', all paid off' : ''}`}
+      accessibilityLabel={`${label}, ${formatMoney(minor)}${cleared ? ', nothing still to pay' : ''}`}
     >
       <View style={styles.statHead}>
         <View style={[styles.statDot, { backgroundColor: color }]} />
@@ -540,6 +535,6 @@ function Stat({
         numberOfLines={1}
         adjustsFontSizeToFit
       />
-    </View>
+    </Container>
   );
 }
