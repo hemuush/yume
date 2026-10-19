@@ -9,7 +9,7 @@ const GAP = 10;
 /** The one inset inside every Plan card: card text, day headings and row content start on the same line. */
 const INSET = 14;
 /** The runway's drawing height, without the date row under it. */
-export const RUNWAY_HEIGHT = 72;
+export const RUNWAY_HEIGHT = 96;
 
 const figure = {
   fontFamily: theme.font.body,
@@ -43,7 +43,7 @@ export const styles = StyleSheet.create({
   bigNote: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textMuted },
 
   /* ---------- Runway ---------- */
-  forecastFigure: { gap: 4 },
+  forecastFigure: { gap: 4, paddingVertical: 4 },
   forecastValue: {
     fontFamily: theme.font.bodyLight,
     fontSize: 30,
@@ -52,40 +52,89 @@ export const styles = StyleSheet.create({
     fontVariant: ['tabular-nums'],
     color: theme.colors.textPrimary,
   },
-  forecastFacts: { flexDirection: 'row', flexWrap: 'wrap', gap: 14 },
+  forecastFacts: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  forecastMetric: {
+    flexGrow: 1,
+    flexBasis: 110,
+    minWidth: 0,
+    backgroundColor: theme.colors.surfaceAlt,
+    padding: 12,
+    borderRadius: 16,
+    gap: 4,
+  },
+  forecastMetricValue: {
+    fontFamily: theme.font.bodyMedium,
+    fontSize: 18,
+    lineHeight: 24,
+    color: theme.colors.textPrimary,
+    fontVariant: ['tabular-nums'],
+  },
+  forecastStatusIcon: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: theme.colors.secondaryTint,
+  },
+  forecastStatusWarning: { backgroundColor: theme.colors.surface },
+  forecastStatusTitle: {
+    fontFamily: theme.font.bodyMedium,
+    fontSize: 14,
+    lineHeight: 20,
+    color: theme.colors.textPrimary,
+  },
+  forecastChart: {
+    marginTop: 4,
+    paddingTop: 14,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: theme.colors.borderSoft,
+    gap: 8,
+  },
+  forecastChartHeading: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
+  forecastChartTitle: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textPrimary },
   forecastFact: {
     fontFamily: theme.font.body,
     fontSize: 12,
     lineHeight: 18,
     color: theme.colors.textSecondary,
   },
-  forecastFactValue: {
-    fontFamily: theme.font.bodyMedium,
-    color: theme.colors.textPrimary,
-    fontVariant: ['tabular-nums'],
-  },
   forecastAttention: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
     alignItems: 'center',
-    gap: 8,
+    gap: 10,
     minHeight: 48,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: theme.colors.borderSoft,
     paddingTop: 8,
   },
-  forecastAttentionCopy: { flex: 1, minWidth: 120, gap: 3 },
+  forecastWarning: {
+    backgroundColor: theme.colors.expenseTint,
+    borderTopWidth: 0,
+    borderRadius: 18,
+    padding: 12,
+  },
+  forecastNext: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingTop: 10,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: theme.colors.borderSoft,
+    minHeight: 48,
+  },
+  forecastAttentionCopy: { flex: 1, minWidth: 0, gap: 3 },
   runway: { height: RUNWAY_HEIGHT, marginTop: 4 },
   runwayAxis: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 },
   runwayAxisText: { fontFamily: theme.font.bodyMedium, fontSize: 11, color: theme.colors.textMuted },
-  runwayLow: {
-    position: 'absolute',
-    fontFamily: theme.font.bodyBold,
-    fontSize: 11,
-    color: theme.colors.textSecondary,
-  },
-  pin: { position: 'absolute', width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
-  pinDot: { width: 13, height: 13, borderRadius: 7, borderWidth: 3, backgroundColor: theme.colors.surface },
+  pin: { position: 'absolute', width: 12, height: 12, alignItems: 'center', justifyContent: 'center' },
+  pinDot: { width: 8, height: 8, borderRadius: 4, borderWidth: 2, backgroundColor: theme.colors.surface },
 
   /* ---------- Budgets and goals: tiles, three to a row ---------- */
   grid: { gap: 8, marginHorizontal: SCREEN.gutter },

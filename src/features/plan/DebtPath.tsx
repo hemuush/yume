@@ -61,7 +61,7 @@ export function DebtPath({
       accessibilityRole="button"
       accessibilityLabel={`Principal left ${formatMoney(loans.debtLeftMinor)}, ${formatRatioPct(loans.paidFraction)} repaid, ${timeline}. Open loans`}
     >
-      <Glass style={[styles.card, cardSurface.debt]}>
+      <Glass style={[styles.card, cardSurface.neutral]}>
         <View style={styles.head}>
           <View style={{ flexShrink: 1, gap: 4 }}>
             <Text style={styles.pathNote}>{timeline}</Text>

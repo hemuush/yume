@@ -93,30 +93,28 @@ export function PeopleTile({
   } else if (state.kind === 'settled') {
     value = <Text style={styles.title}>All settled</Text>;
     sub = `With ${count(state.count)}`;
-  } else if (state.owedToYouMinor >= state.youOweMinor) {
-    value = (
-      <Text style={[styles.value, styles.income]} numberOfLines={1} adjustsFontSizeToFit>
-        {formatMoney(state.owedToYouMinor)}
-      </Text>
-    );
-    sub = state.youOweMinor > 0 ? `to collect · you owe ${formatMoney(state.youOweMinor)}` : 'To collect';
   } else {
     value = (
-      <Text style={[styles.value, styles.over]} numberOfLines={1} adjustsFontSizeToFit>
-        −{formatMoney(state.youOweMinor)}
-      </Text>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 20 }}>
+        <View style={{ gap: 4 }}>
+          <Text style={styles.tileSub}>To collect</Text>
+          <Text style={[styles.value, styles.income]}>{formatMoney(state.owedToYouMinor)}</Text>
+        </View>
+        <View style={{ gap: 4 }}>
+          <Text style={styles.tileSub}>To pay back</Text>
+          <Text style={[styles.value, styles.over]}>{formatMoney(state.youOweMinor)}</Text>
+        </View>
+      </View>
     );
-    sub =
-      state.owedToYouMinor > 0
-        ? `to pay back · ${formatMoney(state.owedToYouMinor)} to collect`
-        : 'To pay back';
+    sub = `With ${count(state.count)}`;
   }
+
   const shown =
     state.kind === 'balances' ? people.filter((p) => p.balanceMinor !== 0).slice(0, PEOPLE_SHOWN) : [];
   return (
     <PlanTile
       wide
-      label={`Friends & Family, ${sub}. Open Friends & Family`}
+      label={`Friends & Family, ${state.kind === 'balances' ? `${formatMoney(state.owedToYouMinor)} to collect, ${formatMoney(state.youOweMinor)} to pay back. ` : ''}${sub}. Open Friends & Family`}
       onPress={onOpen}
       footer={
         shown.length > 0 && (

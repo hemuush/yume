@@ -28,7 +28,6 @@ import { FilterModal } from '@/features/transactions/FilterModal';
 import { TimelineDay } from '@/features/transactions/TimelineDay';
 import { getTransactionById } from '@/db/transactions';
 import { showAlert } from '@/components/AppDialog';
-import { PendingRefunds } from '@/features/transactions/PendingRefunds';
 import { TransactionDetailModal } from '@/features/transactions/TransactionDetailModal';
 import { TransactionsHeadline } from '@/features/transactions/TransactionsHeadline';
 import { TransactionsSkeleton } from '@/features/transactions/TransactionsSkeleton';
@@ -757,7 +756,6 @@ export default function TransactionsScreen() {
                     />
                   </ReanimatedAnimated.View>
 
-                  <PendingRefunds refreshToken={transactions} onOpen={setDetailTx} />
                   {filterLabel && (
                     <Pressable
                       accessibilityRole="button"

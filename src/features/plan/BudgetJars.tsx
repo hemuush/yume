@@ -51,9 +51,11 @@ export function BudgetJars({
   }
   return (
     <TileGrid
-      tiles={summary.rows.map((b) => (
-        <BudgetTile key={b.id} budget={b} onPress={() => (onBudget ? onBudget(b.id) : onOpen())} />
-      ))}
+      tiles={[...summary.rows]
+        .sort((a, b) => Number(b.overBudget) - Number(a.overBudget) || b.percentUsed - a.percentUsed)
+        .map((b) => (
+          <BudgetTile key={b.id} budget={b} onPress={() => (onBudget ? onBudget(b.id) : onOpen())} />
+        ))}
       label="Add"
       accessibilityLabel="Add a budget"
       onAdd={onAdd ?? onOpen}
@@ -79,10 +81,7 @@ function BudgetTile({ budget: b, onPress }: { budget: PlanBudgetInput; onPress: 
         tone === 'near' ? ', near limit' : ''
       }. Open budgets`}
     >
-      <Glass
-        radius={24}
-        style={[styles.tileFill, cardSurface.neutral, { backgroundColor: softTint(base, 0.2) }]}
-      >
+      <Glass radius={24} style={[styles.tileFill, cardSurface.neutral]}>
         <View style={[styles.tileIcon, { backgroundColor: softTint(base, 0.6) }]}>
           <MaterialCommunityIcons
             name={(b.categoryIcon ?? 'tag') as McIconName}

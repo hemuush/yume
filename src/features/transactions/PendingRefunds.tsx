@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { View } from 'react-native';
+import { View, StyleSheet } from 'react-native';
+import { theme } from '@/constants/theme';
 import { Text } from '@/components/Text';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { listExpectedRefunds, ExpectedRefund } from '@/db/refundTracking';
@@ -43,7 +44,20 @@ export function PendingRefunds({
   const today = toLocalIsoDate(new Date());
   const ordered = [...items].sort((a, b) => (a.dueDate ?? '9999').localeCompare(b.dueDate ?? '9999'));
   return (
-    <View style={insight.card}>
+    <View
+      style={[
+        insight.card,
+        {
+          marginVertical: 0,
+          marginTop: 16,
+          borderRadius: 24,
+          backgroundColor: theme.colors.surface,
+          borderWidth: StyleSheet.hairlineWidth,
+          borderColor: theme.colors.borderSoft,
+          gap: 8,
+        },
+      ]}
+    >
       <InsightHeader
         title="Refunds awaiting payment"
         subtitle={
