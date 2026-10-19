@@ -396,3 +396,25 @@ it('keeps four overview tabs reachable and preserves selection when refunds disa
       .selected
   ).toBe(true);
 });
+
+it('centres Home tabs within the measured inset viewport and clamps the final tab', () => {
+  mockReduce = true;
+  const four = [...pages, { key: 'refunds', label: 'refunds', count: 2, content: <Text>refunds</Text> }];
+  const r = render(<HomeSwipeCard pages={four} />);
+  measure(r);
+  const viewport = r.root.findByProps({ accessibilityLabel: 'Home overview tabs' });
+  const scroll = jest.spyOn(viewport.instance, 'scrollTo');
+  act(() => {
+    viewport.props.onLayout({ nativeEvent: { layout: { width: 280 } } });
+    r.root
+      .findAll((n) => n.props.accessibilityRole === 'tablist' && n.props.onLayout)[0]
+      .props.onLayout({ nativeEvent: { layout: { width: 448 } } });
+  });
+  press(r, 'budgets');
+  expect(scroll).toHaveBeenLastCalledWith({ x: 29, animated: false });
+  press(r, 'refunds');
+  expect(scroll).toHaveBeenLastCalledWith({ x: 168, animated: false });
+  // Resizing the actual viewport, rather than the whole screen, changes the scroll boundary.
+  act(() => viewport.props.onLayout({ nativeEvent: { layout: { width: 320 } } }));
+  expect(scroll).toHaveBeenLastCalledWith({ x: 128, animated: false });
+});

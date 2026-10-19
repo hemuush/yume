@@ -707,7 +707,7 @@ export default function PlanScreen() {
 }
 
 const styles = StyleSheet.create({
-  tabs: { marginHorizontal: 16, marginTop: theme.layout.screenTopGap },
+  tabs: { marginHorizontal: 16, marginTop: theme.layout.screenTopGap, marginBottom: SCREEN.sectionGap },
   headLink: { flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 48 },
   headLinkText: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.link },
   container: { flex: 1, backgroundColor: theme.colors.background },
