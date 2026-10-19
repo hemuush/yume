@@ -6,6 +6,10 @@ import { create, act, ReactTestRenderer } from 'react-test-renderer';
 import { Text } from 'react-native';
 
 jest.setTimeout(30000);
+jest.mock('@/components/ModalSheet', () => ({
+  ModalSheet: ({ children }: { children: React.ReactNode }) =>
+    require('react').createElement(require('react-native').View, null, children),
+}));
 jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMock').createReanimatedMock());
 
 let mockHide = false;
@@ -288,6 +292,37 @@ describe('Goals with amounts hidden', () => {
 });
 
 describe('Runway card', () => {
+  it('uses cash-flow outgoings even when no EMI or bill is listed', () => {
+    // Plan converts a spending-to-savings transfer into an expense for the runway only.
+    const runway = buildRunway(
+      10000,
+      [
+        {
+          key: 'savings-transfer',
+          title: 'Move to savings',
+          kind: 'bill',
+          dueDate: '2026-10-10',
+          amountMinor: 25000,
+          route: '/recurring',
+        },
+      ],
+      '2026-10-09',
+      30
+    );
+    const tree = render(<RunwayCard dueSoon={dueSoon} runway={runway} hasAccounts days={30} />);
+    expect(texts(tree)).not.toContain('Nothing due');
+    expect(texts(tree)).toContain('₹250');
+    expect(texts(tree)).toContain('₹150 more needed');
+    const button = tree.root.findAll(
+      (n) => n.props.onPress && String(n.props.accessibilityLabel).startsWith('Forecast details.')
+    )[0];
+    act(() => button.props.onPress());
+    const { ForecastDetails } = require('./ForecastDetails');
+    expect(tree.root.findByType(ForecastDetails).props.runway).toBe(runway);
+    act(() => tree.root.findByType(ForecastDetails).props.onClose());
+    expect(tree.root.findAllByType(ForecastDetails)).toHaveLength(0);
+  });
+
   it('hides a flat chart and says nothing is due', () => {
     const tree = render(
       <RunwayCard
@@ -343,4 +378,38 @@ it('starts budget setup directly from an empty Plan budget card', () => {
   expect(add).toHaveBeenCalledTimes(1);
   expect(open).not.toHaveBeenCalled();
   act(() => tree.unmount());
+});
+
+it('keeps every budget and the add action available beyond the six-tile preview', () => {
+  const summary = buildBudgetsSummary(
+    Array.from({ length: 8 }, (_, i) => ({
+      id: `budget-${i}`,
+      categoryName: `Category ${i}`,
+      spentMinor: 10000,
+      effectiveLimitMinor: 20000,
+      remainingMinor: 10000,
+      percentUsed: 50,
+      overBudget: false,
+    }))
+  );
+  const onBudget = jest.fn(),
+    onAdd = jest.fn();
+  const tree = render(
+    <BudgetJars
+      summary={summary}
+      limit={summary.rows.length + 1}
+      onOpen={jest.fn()}
+      onBudget={onBudget}
+      onAdd={onAdd}
+    />
+  );
+  expect(texts(tree)).toContain('Category 7');
+  const last = tree.root.findAll(
+    (n) => n.props.onPress && String(n.props.accessibilityLabel).startsWith('Category 7,')
+  )[0];
+  act(() => last.props.onPress());
+  expect(onBudget).toHaveBeenCalledWith('budget-7');
+  const add = tree.root.findAll((n) => n.props.onPress && n.props.accessibilityLabel === 'Add a budget')[0];
+  act(() => add.props.onPress());
+  expect(onAdd).toHaveBeenCalledTimes(1);
 });

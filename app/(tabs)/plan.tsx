@@ -63,7 +63,7 @@ import { BudgetJars } from '@/features/plan/BudgetJars';
 import { DebtPath } from '@/features/plan/DebtPath';
 import { DebtLoans } from '@/features/plan/DebtLoans';
 import { PlanStats } from '@/features/plan/PlanStats';
-import { SegmentedControl } from '@/components/SegmentedControl';
+import { PlanNavigation, PLAN_TABS as TABS, PlanTab } from '@/features/plan/PlanNavigation';
 import { GoalOverviewModal } from '@/features/goals/GoalOverviewModal';
 import { AddGoalModal } from '@/features/goals/AddGoalModal';
 import { GoalsStrip, WhatIfCard } from '@/features/plan/PlanGoals';
@@ -78,6 +78,7 @@ import { withPressed } from '@/lib/pressed';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { TransactionDetailModal } from '@/features/transactions/TransactionDetailModal';
 import { PendingRefunds } from '@/features/transactions/PendingRefunds';
+import { AddAccountModal } from '@/features/profile/AddAccountModal';
 
 interface PlanData {
   hideAmounts: boolean;
@@ -107,13 +108,6 @@ interface PlanData {
   dailyGoalMinor: number | null;
 }
 
-type PlanTab = 'overview' | 'upcoming' | 'goals' | 'debt';
-const TABS: { label: string; value: PlanTab }[] = [
-  { label: 'Overview', value: 'overview' },
-  { label: 'Upcoming', value: 'upcoming' },
-  { label: 'Goals', value: 'goals' },
-  { label: 'Debt', value: 'debt' },
-];
 /** Overview shows one row of budget and goal tiles and this many payments; the tabs hold the rest. */
 const PREVIEW_PAYMENTS = 3;
 const PREVIEW_TILES = 3;
@@ -131,7 +125,7 @@ export default function PlanScreen() {
   const paymentRequest = useRef(0);
   const openingPayment = useRef(false);
   const [detail, setDetail] = useState<{
-    kind: 'loan' | 'budget' | 'person' | 'goal' | 'new-goal' | 'new-budget' | 'rule';
+    kind: 'loan' | 'budget' | 'person' | 'goal' | 'new-goal' | 'new-budget' | 'new-account' | 'rule';
     id: string;
   } | null>(null);
   const [refundTx, setRefundTx] = useState<Transaction | null>(null);
@@ -326,10 +320,7 @@ export default function PlanScreen() {
       if (ticket === paymentRequest.current) openingPayment.current = false;
     }
   };
-  const openDetail = (
-    kind: 'loan' | 'budget' | 'person' | 'goal' | 'new-goal' | 'new-budget' | 'rule',
-    id: string
-  ) => {
+  const openDetail = (kind: NonNullable<typeof detail>['kind'], id: string) => {
     // A slow earlier Pay lookup must not cover a detail the user opened more recently.
     paymentRequest.current++;
     openingPayment.current = false;
@@ -341,6 +332,10 @@ export default function PlanScreen() {
   // The header shrinks as the page scrolls.
   const { collapse, headerHeight, scrollHandler, scrollRef } = useCollapsingHeader();
   useTabScrollToTop(scrollRef);
+  const selectTab = (next: PlanTab) => {
+    setTab(next);
+    scrollRef.current?.scrollTo({ y: 0, animated: false });
+  };
 
   const scoped = data?.hideAmounts === hideAmounts ? data : null;
   const selectedLoan =
@@ -361,7 +356,7 @@ export default function PlanScreen() {
   }, [detail, scoped, selectedGoal, selectedRule]);
 
   // With no loan yet the Debt card is the "Track an EMI" prompt: it goes straight to Loans, not to a tab of it.
-  const openDebt = () => (scoped && scoped.loans.rows.length > 0 ? setTab('debt') : open('/loans'));
+  const openDebt = () => (scoped && scoped.loans.rows.length > 0 ? selectTab('debt') : open('/loans'));
   const nextPayment = (() => {
     const first = scoped?.dueGroups.find((g) => g.outMinor > 0);
     const item = first?.items.find((i) => i.kind === 'emi' || i.kind === 'bill');
@@ -411,7 +406,7 @@ export default function PlanScreen() {
         ) : (
           <>
             <View style={styles.tabs}>
-              <SegmentedControl options={TABS} value={tab} onChange={setTab} onBand />
+              <PlanNavigation value={tab} onChange={selectTab} stacked={stackTiles} />
             </View>
             <RunwayCard
               dueSoon={data.dueSoon}
@@ -419,6 +414,7 @@ export default function PlanScreen() {
               hasAccounts={data.hasAccounts}
               days={PLAN_DAYS}
               showChart={tab === 'upcoming'}
+              onAddAccount={() => openDetail('new-account', '')}
             />
             {tab === 'overview' && (
               <>
@@ -427,7 +423,7 @@ export default function PlanScreen() {
                   count={data.dueSoon.count}
                   days={PLAN_DAYS}
                   next={nextPayment}
-                  onOpen={() => setTab('upcoming')}
+                  onOpen={() => selectTab('upcoming')}
                 />
                 <View style={{ marginHorizontal: 16 }}>
                   <PendingRefunds
@@ -442,11 +438,11 @@ export default function PlanScreen() {
                   />
                 </View>
                 {data.dueGroups.length > 0 && (
-                  <Section compact title="Upcoming payments" onSeeAll={() => setTab('upcoming')}>
+                  <Section compact title="Upcoming payments" onSeeAll={() => selectTab('upcoming')}>
                     {upcoming(PREVIEW_PAYMENTS)}
                   </Section>
                 )}
-                <Section compact title="Budgets" onSeeAll={() => open('/budgets')}>
+                <Section compact title="Budgets" onSeeAll={() => selectTab('budgets')}>
                   <BudgetJars
                     summary={data.budgets}
                     onOpen={() => open('/budgets')}
@@ -455,7 +451,7 @@ export default function PlanScreen() {
                     limit={PREVIEW_TILES}
                   />
                 </Section>
-                <Section compact title="Goals" onSeeAll={() => setTab('goals')}>
+                <Section compact title="Goals" onSeeAll={() => selectTab('goals')}>
                   <GoalsStrip
                     goals={data.goals}
                     savingsAccounts={data.savingsAccounts}
@@ -504,6 +500,17 @@ export default function PlanScreen() {
                 }
               >
                 {upcoming()}
+              </Section>
+            )}
+            {tab === 'budgets' && (
+              <Section compact title="Budgets" onSeeAll={() => open('/budgets')}>
+                <BudgetJars
+                  summary={data.budgets}
+                  onOpen={() => open('/budgets')}
+                  onBudget={(id) => openDetail('budget', id)}
+                  onAdd={() => openDetail('new-budget', '')}
+                  limit={data.budgets.rows.length + 1}
+                />
               </Section>
             )}
             {tab === 'goals' && (
@@ -562,6 +569,16 @@ export default function PlanScreen() {
           ) : undefined
         }
       />
+      {detail?.kind === 'new-account' && scoped && (
+        <AddAccountModal
+          visible
+          onClose={() => setDetail(null)}
+          onCreated={() => {
+            setDetail(null);
+            void reload();
+          }}
+        />
+      )}
       {selectedLoan && scoped && (
         <LoanDetailModal
           key={selectedLoan.id}
