@@ -148,7 +148,6 @@ it('keeps the month label, figures and current-month chips together through inte
       spentMinor={0}
       savingsMinor={0}
       surplusMinor={income}
-      outstandingLoansMinor={0}
       canStepForward
       onStep={jest.fn()}
       renderPeriod={(key) => <Text>{key}</Text>}

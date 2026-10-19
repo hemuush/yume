@@ -53,7 +53,7 @@ function hero(over: Partial<React.ComponentProps<typeof ThisMonthHero>> = {}) {
       spentMinor={9_576_200}
       savingsMinor={9_950_000}
       surplusMinor={79_400}
-      outstandingLoansMinor={231_895_800}
+      dueMinor={0}
       today={{ spentMinor: 204_500, goalMinor: 500_000 }}
       pace={{ projectedMinor: 10_370_000, byLabel: '30 Sept' }}
       {...over}
@@ -84,10 +84,8 @@ describe('month card', () => {
         'Transfer',
       ])
     );
-    // Spent | Saved | Debt left, as on the old card.
-    expect(all).toEqual(
-      expect.arrayContaining(['Spent', 'Saved', 'Debt left', '₹95,762', '₹99,500', '₹23,18,958'])
-    );
+    // The money-bar legend stays scoped to this month.
+    expect(all).toEqual(expect.arrayContaining(['Spent', 'Saved', 'Bills left', '₹95,762', '₹99,500', '₹0']));
     // Free to use is said once, as the headline.
     expect(all.filter((t) => t === 'Free to use')).toHaveLength(1);
     // The shares are in the bar and the tray, not a chip; the pace waits under Details.
@@ -139,18 +137,18 @@ describe('month card with bills still to pay', () => {
     dueMinor: 2_000_000,
   };
 
-  it('takes the bills off the headline and shows them as a chip', () => {
+  it('takes bills off the headline and shows them in the legend', () => {
     const all = texts(render(base));
     expect(all).toEqual(
-      expect.arrayContaining(['Free after bills', '₹40,000', 'of ₹1,00,000', '₹20,000 still to pay'])
+      expect.arrayContaining(['Free after bills', '₹40,000', 'of ₹1,00,000', 'Bills left', '₹20,000'])
     );
     expect(all).not.toContain('Free to use');
   });
 
-  it('opens the sum from the chip, and closes it again', () => {
+  it('opens the sum from Bills left, and closes it again', () => {
     const r = render(base);
     expect(texts(r)).not.toContain('After bills');
-    act(() => byLabel(r, '₹20,000 still to pay').props.onPress());
+    act(() => byLabel(r, 'Bills left, ₹20,000').props.onPress());
     expect(texts(r)).toEqual(
       expect.arrayContaining([
         'Income',
@@ -163,13 +161,13 @@ describe('month card with bills still to pay', () => {
       ])
     );
     expect(texts(r)).toEqual(expect.arrayContaining(['Still to pay', '−₹20,000', 'After bills', '₹40,000']));
-    act(() => byLabel(r, '₹20,000 still to pay').props.onPress());
+    act(() => byLabel(r, 'Bills left, ₹20,000').props.onPress());
     expect(texts(r)).not.toContain('After bills');
   });
 
   it('says short when the bills are more than what is free', () => {
     const all = texts(render({ ...base, dueMinor: 7_000_000 }));
-    expect(all).toEqual(expect.arrayContaining(['Short after bills', '-₹10,000', '₹70,000 still to pay']));
+    expect(all).toEqual(expect.arrayContaining(['Short after bills', '-₹10,000', '₹70,000']));
   });
 
   it('is the plain Free to use card when nothing is due', () => {
@@ -182,7 +180,7 @@ describe('month card with bills still to pay', () => {
     mockHideAmounts = true;
     try {
       const r = render(base);
-      act(() => byLabel(r, '₹20,000 still to pay').props.onPress());
+      act(() => byLabel(r, 'Bills left, ₹20,000').props.onPress());
       const all = texts(r).join(' | ');
       expect(all).toContain('Set aside');
       expect(all).not.toContain('30,000');
@@ -215,7 +213,7 @@ describe('month card with savings hidden', () => {
 
   it('keeps the free headline, and never says what was saved', () => {
     const all = texts(render(hidden));
-    expect(all).toEqual(expect.arrayContaining(['Free to use', '₹30,000', 'Spent', 'Debt left']));
+    expect(all).toEqual(expect.arrayContaining(['Free to use', '₹30,000', 'Spent', 'Bills left']));
     expect(all).not.toContain('Saved');
   });
 
@@ -258,7 +256,7 @@ describe('month card with money carried over from earlier months', () => {
 
   it('shows the carried amount as its own line in the sum', () => {
     const r = render({ ...base, dueMinor: 2_000_000 });
-    act(() => byLabel(r, '₹20,000 still to pay').props.onPress());
+    act(() => byLabel(r, 'Bills left, ₹20,000').props.onPress());
     expect(texts(r)).toEqual(
       expect.arrayContaining(['Carried over', '+₹20,000', 'Free to use', '₹80,000', 'After bills', '₹60,000'])
     );
@@ -297,7 +295,6 @@ describe('month card when bills change without the period changing', () => {
           direction={0}
           canStepForward={false}
           onStep={jest.fn()}
-          outstandingLoansMinor={0}
           {...props}
           dueMinor={2_000_000}
         />
@@ -309,11 +306,11 @@ describe('month card when bills change without the period changing', () => {
   });
 });
 
-describe('month card, debt', () => {
-  it('ticks Debt left once it is all paid off', () => {
-    const r = render({ outstandingLoansMinor: 0 });
+describe('month card, bills', () => {
+  it('ticks Bills left when nothing remains this month', () => {
+    const r = render({ dueMinor: 0 });
     expect(
-      r.root.findAll((n) => n.props.accessibilityLabel === 'Debt left, ₹0, all paid off').length
+      r.root.findAll((n) => n.props.accessibilityLabel === 'Bills left, ₹0, nothing still to pay').length
     ).toBeGreaterThan(0);
   });
 });
@@ -365,7 +362,7 @@ describe('month card: how this adds up', () => {
     open(r);
     expect(texts(r)).toEqual(expect.arrayContaining(['Still to pay', '−₹20,000', 'After bills']));
     // The chip toggles the same sum.
-    act(() => byLabel(r, '₹20,000 still to pay').props.onPress());
+    act(() => byLabel(r, 'Bills left, ₹20,000').props.onPress());
     expect(texts(r)).not.toContain('After bills');
   });
 
@@ -435,4 +432,12 @@ describe('month card: today and the free figure', () => {
     expect(texts(r)).toContain('₹6,000 today · ₹1,000 over');
     expect(r.root.findAll((n) => n.props.testID === 'home-today-meter')).toHaveLength(0);
   });
+});
+
+it('omits Bills left when a period has no current bill estimate', () => {
+  const r = render({ periodKey: 'month:-1', dueMinor: null });
+  expect(texts(r)).not.toContain('Bills left');
+  act(() => byLabel(r, 'How this adds up').props.onPress());
+  expect(texts(r)).not.toContain('Still to pay');
+  act(() => r.unmount());
 });

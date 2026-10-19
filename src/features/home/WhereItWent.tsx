@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Pressable, StyleSheet } from 'react-native';
+import { View, Pressable, StyleSheet, ScrollView } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Text } from '@/components/Text';
@@ -18,8 +18,7 @@ import { homeInk } from './homeInk';
 const SHOWN = 6;
 
 /**
- * Where the month's money went: a single row of the six biggest categories (the picked one is a dark pill with its
- * share), and under it that category, one tap from its page. The month's total is not repeated here: the
+ * Where the month's money went: a scrollable row of the six biggest named categories (the picked one is a dark pill), and under it that category, one tap from its page. The month's total is not repeated here: the
  * month card above already says it.
  */
 export function WhereItWent({
@@ -77,7 +76,12 @@ export function WhereItWent({
 
   return (
     <View style={[styles.section, cardSurface.neutral]}>
-      <View style={[styles.row, top.length >= SHOWN && styles.rowFull]}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.row}
+        accessibilityLabel="Spending categories"
+      >
         {top.map((c, i) => {
           const on = i === index;
           const icon = (
@@ -102,12 +106,12 @@ export function WhereItWent({
               accessibilityLabel={`${c.name}, ${Math.round((c.totalMinor / total) * 100)}% of spending`}
               accessibilityState={{ selected: on }}
             >
-              {on && <Text style={styles.share}>{share}%</Text>}
               {icon}
+              <Text style={[styles.categoryLabel, on && styles.categoryLabelOn]}>{c.name}</Text>
             </Pressable>
           );
         })}
-      </View>
+      </ScrollView>
       <Pressable
         style={withPressed(styles.categoryButton)}
         onPress={() => (onOpenCategory ? onOpenCategory(selected.categoryId) : onOpenReports())}
@@ -115,10 +119,8 @@ export function WhereItWent({
         accessibilityLabel={`View ${selected.name} category`}
       >
         <View style={styles.categoryText}>
-          <Text style={styles.name} numberOfLines={1}>
-            {selected.name}
-          </Text>
-          <Text style={styles.meta}>{`${formatMoney(selected.totalMinor)} · ${share}%`}</Text>
+          <Text style={styles.name}>{selected.name}</Text>
+          <Text style={styles.meta}>{`${formatMoney(selected.totalMinor)} · ${share}% of spending`}</Text>
         </View>
         <Feather name="chevron-right" size={18} color={theme.colors.link} />
       </Pressable>
@@ -142,15 +144,14 @@ const styles = StyleSheet.create({
     borderColor: GLASS.edge,
     gap: 8,
   },
-  // Six categories fit one row on a normal phone and spread across it; on a very narrow screen or with large
-  // text the row wraps instead of cutting a button off.
-  row: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 },
-  rowFull: { justifyContent: 'space-between' },
+  // Named category controls scroll horizontally without shrinking their touch targets.
+  row: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 2 },
   target: {
-    height: 40,
-    minWidth: 40,
+    minHeight: 44,
+    minWidth: 44,
     borderRadius: 20,
-    paddingHorizontal: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -158,7 +159,8 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.white,
   },
   picked: { paddingHorizontal: 12 },
-  share: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.white },
+  categoryLabel: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textPrimary },
+  categoryLabelOn: { color: theme.colors.white },
   footerDivider: { height: StyleSheet.hairlineWidth, backgroundColor: theme.colors.borderSoft },
   categoryButton: { minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 8 },
   categoryText: { flex: 1, minWidth: 0 },

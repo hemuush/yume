@@ -11,7 +11,7 @@ import { accountHue, accountIcon } from '@/lib/account';
 import { shade } from '@/lib/color';
 import { withPressed } from '@/lib/pressed';
 import { useAccent } from '@/theme/AccentContext';
-import { homeInk } from './homeInk';
+import { Section } from '@/components/Section';
 import { GainPill } from '@/features/investments/GainPill';
 import type { Account } from '@/types';
 
@@ -91,9 +91,7 @@ export function HomeAccounts({
         </View>
         <View style={styles.chipText}>
           <View style={styles.chipNameRow}>
-            <Text style={styles.chipName} numberOfLines={1}>
-              {a.name}
-            </Text>
+            <Text style={styles.chipName}>{a.name}</Text>
             {a.investment && <GainPill account={a} />}
           </View>
           <Amount minor={a.currentBalanceMinor} currency={a.currency} style={styles.chipAmount} />
@@ -145,9 +143,7 @@ export function HomeAccounts({
           />
         </View>
         <View style={[styles.chipNameRow, styles.rowName]}>
-          <Text style={styles.chipName} numberOfLines={1}>
-            {a.name}
-          </Text>
+          <Text style={styles.chipName}>{a.name}</Text>
           {a.investment && <GainPill account={a} />}
         </View>
         <Amount minor={a.currentBalanceMinor} currency={a.currency} sensitive style={styles.chipAmount} />
@@ -156,42 +152,41 @@ export function HomeAccounts({
   };
 
   return (
-    <View style={styles.wrap}>
-      <Glass radius={22} style={[styles.tile, cardSurface.neutral]}>
-        <View style={styles.head}>
-          <View style={[styles.headIcon, { backgroundColor: shade(accent, 88) }]}>
-            <MaterialCommunityIcons name="wallet-outline" size={18} color={homeInk(accent)} />
-          </View>
-          <Text style={styles.title}>Accounts</Text>
-          <Pressable
-            onPress={onOpenAccounts}
-            hitSlop={8}
-            style={withPressed(styles.headingAction)}
-            accessibilityRole="button"
-            accessibilityLabel={`Accounts, ${accounts.length}. See all`}
-          >
-            <Text style={styles.headingActionText}>View all</Text>
-            <Feather name="arrow-up-right" size={15} color={theme.colors.link} />
-          </Pressable>
-        </View>
-        {everyday.length > 0 && (
-          <>
-            <View style={styles.groupHeadRow}>
-              <Text style={styles.groupHeadText} accessibilityRole="header">
-                {`Everyday · ${everyday.length} ${everyday.length === 1 ? 'account' : 'accounts'}`}
-              </Text>
-              {inHand.length > 0 && (
-                <Amount minor={inHandMinor} currency={currency} style={styles.groupHeadAmount} />
-              )}
-            </View>
-            <View style={styles.chips}>{everyday.slice(0, EVERYDAY_SHOWN).map(tile)}</View>
-          </>
-        )}
-        {savings.length > 0 && (
-          <View style={styles.rows}>{savings.length === 1 ? row(savings[0]) : savingsSummary}</View>
-        )}
-      </Glass>
-    </View>
+    <Section title="Accounts" onSeeAll={onOpenAccounts}>
+      <View style={styles.wrap}>
+        <Glass radius={24} style={[styles.tile, cardSurface.neutral]}>
+          {everyday.length > 0 && (
+            <>
+              <View style={styles.groupHeadRow}>
+                <Text style={styles.groupHeadText} accessibilityRole="header">
+                  {`Everyday · ${everyday.length} ${everyday.length === 1 ? 'account' : 'accounts'}`}
+                </Text>
+                {inHand.length > 0 && (
+                  <Amount minor={inHandMinor} currency={currency} style={styles.groupHeadAmount} />
+                )}
+              </View>
+              <View style={styles.chips}>
+                {everyday.slice(0, EVERYDAY_SHOWN).map(tile)}
+                {everyday.length < EVERYDAY_SHOWN && (
+                  <Pressable
+                    onPress={onAddAccount}
+                    style={withPressed([styles.tileBtn, styles.addTile, stacked ? styles.full : styles.half])}
+                    accessibilityRole="button"
+                    accessibilityLabel="Add an account"
+                  >
+                    <Feather name="plus" size={18} color={theme.colors.textSecondary} />
+                    <Text style={styles.chipName}>Account</Text>
+                  </Pressable>
+                )}
+              </View>
+            </>
+          )}
+          {savings.length > 0 && (
+            <View style={styles.rows}>{savings.length === 1 ? row(savings[0]) : savingsSummary}</View>
+          )}
+        </Glass>
+      </View>
+    </Section>
   );
 }
 
@@ -199,17 +194,6 @@ const styles = StyleSheet.create({
   wrap: { marginHorizontal: 16 },
   tile: { padding: 14, gap: 4 },
   head: { minHeight: 40, flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 6 },
-  headIcon: { width: 36, height: 36, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
-  headingAction: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    minHeight: 32,
-    paddingHorizontal: 12,
-    borderRadius: theme.radius.pill,
-    backgroundColor: GLASS.fillStrong,
-  },
-  headingActionText: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.link },
   title: { flex: 1, fontFamily: theme.font.bodyBold, fontSize: 15, color: theme.colors.textPrimary },
   big: {
     fontFamily: theme.font.body,
@@ -247,16 +231,17 @@ const styles = StyleSheet.create({
     color: theme.colors.textMuted,
   },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 6 },
+  addTile: { justifyContent: 'center', borderStyle: 'dashed', backgroundColor: 'transparent' },
   tileBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    minHeight: 56,
-    padding: 8,
+    minHeight: 72,
+    padding: 10,
     borderRadius: 18,
-    backgroundColor: GLASS.fillStrong,
+    backgroundColor: theme.colors.background,
     borderWidth: 1,
-    borderColor: GLASS.edge,
+    borderColor: theme.colors.borderSoft,
     maxWidth: '100%',
   },
   rowBtn: {
@@ -272,7 +257,7 @@ const styles = StyleSheet.create({
     borderColor: GLASS.edge,
   },
   chipIcon: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center' },
-  chipText: { flexShrink: 1, minWidth: 0 },
+  chipText: { flex: 1, minWidth: 0 },
   chipNameRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 6 },
   chipName: { flexShrink: 1, fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textPrimary },
   chipSub: {

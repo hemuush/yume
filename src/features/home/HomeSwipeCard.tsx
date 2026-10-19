@@ -25,6 +25,8 @@ import { GLASS } from '@/components/Glass';
 import { cardSurface } from '@/components/CardSurface';
 import { SECTION_GAP } from '@/constants/textStyles';
 import Feather from '@expo/vector-icons/Feather';
+import { useAccent } from '@/theme/AccentContext';
+import { homeInk } from './homeInk';
 import { withPressed } from '@/lib/pressed';
 
 export interface SwipePage {
@@ -44,6 +46,8 @@ export interface SwipePage {
  */
 export function HomeSwipeCard({ pages }: { pages: SwipePage[] }) {
   const { width, fontScale } = useWindowDimensions();
+  const { accent } = useAccent();
+  const ink = homeInk(accent);
   const tabScrollRef = useRef<ScrollView>(null);
   const [selectedKey, setSelectedKey] = useState<string | undefined>(pages[0]?.key);
   const [settledKey, setSettledKey] = useState<string | undefined>(pages[0]?.key);
@@ -161,7 +165,9 @@ export function HomeSwipeCard({ pages }: { pages: SwipePage[] }) {
       onLayout={(e) => setTrackWidth(e.nativeEvent.layout.width)}
     >
       {tabWidth > 0 && (
-        <ReanimatedAnimated.View style={[styles.highlight, { width: tabWidth }, highlightStyle]} />
+        <ReanimatedAnimated.View
+          style={[styles.highlight, { width: tabWidth, backgroundColor: ink }, highlightStyle]}
+        />
       )}
       {pages.map((p, i) => (
         <Pressable
@@ -179,7 +185,15 @@ export function HomeSwipeCard({ pages }: { pages: SwipePage[] }) {
           </Text>
           {p.count != null && p.count > 0 ? (
             <View style={[styles.count, p.alert && styles.countAlert]}>
-              <Text style={[styles.countText, p.alert && styles.countTextAlert]}>{p.count}</Text>
+              <Text
+                style={[
+                  styles.countText,
+                  p.alert && styles.countTextAlert,
+                  i === safeIndex && styles.tabTextActive,
+                ]}
+              >
+                {p.count}
+              </Text>
             </View>
           ) : (
             p.alert && <View style={styles.alertDot} />
@@ -300,7 +314,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
     padding: TRACK_PAD,
     borderRadius: theme.radius.pill,
-    backgroundColor: 'rgba(18,19,15,0.05)',
+    backgroundColor: theme.colors.surfaceAlt,
   },
   highlight: {
     position: 'absolute',
@@ -327,9 +341,9 @@ const styles = StyleSheet.create({
   },
   alertDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: theme.colors.expense },
   count: { minWidth: 20, height: 20, paddingHorizontal: 5, alignItems: 'center', justifyContent: 'center' },
-  countAlert: { borderRadius: 10, backgroundColor: theme.colors.expenseTint },
+  countAlert: { borderRadius: 10, backgroundColor: theme.colors.expenseText },
   countText: { fontFamily: theme.font.monoBold, fontSize: 11, color: theme.colors.textMuted },
-  countTextAlert: { color: theme.colors.expenseText },
+  countTextAlert: { color: theme.colors.white },
   tabText: {
     textAlign: 'center',
     flexShrink: 1,
@@ -337,7 +351,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: theme.colors.textSecondary,
   },
-  tabTextActive: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
+  tabTextActive: { fontFamily: theme.font.bodyBold, color: theme.colors.white },
   seeAll: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -81,7 +81,7 @@ describe('Where it went', () => {
         .find((n) => n.props.accessibilityLabel === 'Shares, 20% of spending' && n.props.onPress)
         .props.onPress()
     );
-    expect(texts(r)).toContain('₹10,000 · 20%');
+    expect(texts(r)).toContain('₹10,000 · 20% of spending');
     act(() =>
       r.root
         .find((n) => n.props.accessibilityLabel === 'View Shares category' && n.props.onPress)
@@ -95,7 +95,7 @@ describe('Where it went', () => {
 
   it('picks the biggest category, and repeats neither the month total nor the change from last month', () => {
     const all = texts(render(breakdown));
-    expect(all).toEqual(expect.arrayContaining(['Rent', '₹24,000 · 48%', '48%']));
+    expect(all).toEqual(expect.arrayContaining(['Rent', '₹24,000 · 48% of spending']));
     // The month card above says what was spent; the card does not say it again.
     expect(all.some((t) => t.startsWith('Spent in'))).toBe(false);
     expect(all).not.toContain('₹50,000');
@@ -110,8 +110,8 @@ describe('Where it went', () => {
         .props.onPress()
     );
     const all = texts(r);
-    expect(all).toEqual(expect.arrayContaining(['Shares', '₹10,000 · 20%', '20%']));
-    expect(all).not.toContain('₹16,000 · 32%');
+    expect(all).toEqual(expect.arrayContaining(['Shares', '₹10,000 · 20% of spending']));
+    expect(all).not.toContain('₹16,000 · 32% of spending');
     expect(
       r.root.findAll((n) => n.props.accessibilityLabel === 'Shares, 20% of spending')[0].props
         .accessibilityState.selected
@@ -131,7 +131,7 @@ describe('Where it went', () => {
   it('shows the six biggest categories in one row, with shares based on all of them', () => {
     const tree = render(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'].map((name) => cat(name, 10000)));
     const shown = texts(tree);
-    expect(shown).toContain('₹100 · 11%');
+    expect(shown).toContain('₹100 · 11% of spending');
     const buttons = tree.root.findAll(
       (n) =>
         typeof n.props.accessibilityLabel === 'string' && n.props.accessibilityLabel.endsWith('of spending')
@@ -163,12 +163,12 @@ it('does not retain a selected category after privacy-filtered inputs remove it'
   const props = tree.root.findByType(WhereItWent).props as Parameters<typeof WhereItWent>[0];
   act(() => tree.update(<WhereItWent {...props} breakdown={[cat('Public', 10000)]} spentMinor={10000} />));
   expect(texts(tree)).not.toContain('Private');
-  expect(texts(tree)).toContain('₹100 · 100%');
+  expect(texts(tree)).toContain('₹100 · 100% of spending');
   act(() => tree.unmount());
 });
 it('keeps shares on net spending without a long disclaimer', () => {
   const tree = render([cat('Food', 10000), cat('Refunds', -5000)]);
-  expect(texts(tree)).toContain('₹100 · 100%');
+  expect(texts(tree)).toContain('₹100 · 100% of spending');
   // No long disclaimer under the figure: the share is on the category line and the net total above it.
   expect(texts(tree).some((t) => t.includes('refunds are included in the period total'))).toBe(false);
   act(() => tree.unmount());
