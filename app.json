@@ -2,9 +2,7 @@
   "expo": {
     "name": "Yume",
     "slug": "yume",
-    "platforms": [
-      "android"
-    ],
+    "platforms": ["android"],
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -18,12 +16,9 @@
         "backgroundImage": "./assets/android-icon-background.png"
       },
       "predictiveBackGestureEnabled": true,
-      "versionCode": 3,
+      "versionCode": 1,
       "allowBackup": false,
-      "permissions": [
-        "android.permission.USE_BIOMETRIC",
-        "android.permission.USE_FINGERPRINT"
-      ],
+      "permissions": ["android.permission.USE_BIOMETRIC", "android.permission.USE_FINGERPRINT"],
       "blockedPermissions": [
         "android.permission.SYSTEM_ALERT_WINDOW",
         "android.permission.READ_EXTERNAL_STORAGE",
@@ -155,9 +150,9 @@
         "style": "dark"
       },
       "eas": {
-        "projectId": "6c5db8df-593f-429b-a168-6f734be681b5"
+        "projectId": "cc28c8d3-765f-46b2-accc-4cd89f084075"
       }
     },
-    "owner": "yume-expense-tracker"
+    "owner": "hemant.shrma.3004"
   }
 }

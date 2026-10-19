@@ -9,6 +9,11 @@ on:
     types: [completed]
     branches: [main]
   workflow_dispatch:
+    inputs:
+      verify_only:
+        description: Verify Expo project access without starting a build
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -41,6 +46,14 @@ jobs:
       - run: npm ci
       - name: Check EXPO_TOKEN
         run: test -n "$EXPO_TOKEN" || { echo "::error::Add an EXPO_TOKEN repository secret"; exit 1; }
+      - name: Verify Expo project access
+        run: |
+          if ! npx eas-cli project:info; then
+            echo "::error::EXPO_TOKEN must have access to the owner and EAS project configured in app.json. Update the repository secret for the current Expo account."
+            exit 1
+          fi
       # --no-wait queues the build on EAS and returns, so runner minutes are
       # not spent waiting; the build page link is in the log.
-      - run: npx eas-cli build --platform android --profile preview --non-interactive --no-wait
+      - name: Start Android preview build
+        if: github.event_name != 'workflow_dispatch' || !inputs.verify_only
+        run: npx eas-cli build --platform android --profile preview --non-interactive --no-wait
