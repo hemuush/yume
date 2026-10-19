@@ -157,6 +157,6 @@ it('previews two payments without tabs and keeps the full schedule reachable', (
   const { UpcomingRow } = require('./UpcomingRow');
   act(() => tree.root.findAllByType(UpcomingRow)[0].props.onPress());
   expect(router.push).toHaveBeenCalledWith('/recurring');
-  press(tree, 'See all — Coming up');
+  press(tree, 'View plan — Next up');
   expect(all).toHaveBeenCalledTimes(1);
 });

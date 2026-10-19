@@ -20,6 +20,7 @@ import { Account, Category, Loan, SavingsGoal, RecurringRule, Transaction } from
 import type { BudgetProgress } from '@/db/budgets';
 import type { PersonWithBalance } from '@/db/people';
 import { AddBudgetModal } from '@/features/budgets/AddBudgetModal';
+import { AddLoanModal } from '@/features/loans/AddLoanModal';
 import { RuleModal } from '@/features/recurring/RuleModal';
 import { BudgetDetailModal } from '@/features/budgets/BudgetDetailModal';
 import { LoanDetailModal } from '@/features/loans/LoanDetailModal';
@@ -74,6 +75,7 @@ import { showAlert } from '@/components/AppDialog';
 import { errorMessage } from '@/lib/errorMessage';
 import { useTabScrollToTop } from '@/lib/useTabScrollToTop';
 import { withPressed } from '@/lib/pressed';
+import { ModalSheet } from '@/components/ModalSheet';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { TransactionDetailModal } from '@/features/transactions/TransactionDetailModal';
 import { PendingRefunds } from '@/features/transactions/PendingRefunds';
@@ -109,7 +111,7 @@ interface PlanData {
 
 /** Overview shows one row of budget and goal tiles and this many payments; the tabs hold the rest. */
 const PREVIEW_PAYMENTS = 3;
-const PREVIEW_TILES = 3;
+const PREVIEW_TILES = 2;
 
 /** Plan previews open item sheets directly; collection links keep the full-screen routes. */
 export default function PlanScreen() {
@@ -119,12 +121,23 @@ export default function PlanScreen() {
   const tabScrollPad = useTabScrollPad();
   const { hideAmounts } = usePrivacy();
   const { accent, secondary } = useAccent();
+  const [creationMenu, setCreationMenu] = useState(false);
   const [data, setData] = useState<PlanData | null>(null);
   const request = useRef(0);
   const paymentRequest = useRef(0);
   const openingPayment = useRef(false);
   const [detail, setDetail] = useState<{
-    kind: 'loan' | 'budget' | 'person' | 'goal' | 'new-goal' | 'new-budget' | 'new-account' | 'rule';
+    kind:
+      | 'loan'
+      | 'budget'
+      | 'person'
+      | 'goal'
+      | 'new-goal'
+      | 'new-budget'
+      | 'new-account'
+      | 'new-rule'
+      | 'new-loan'
+      | 'rule';
     id: string;
   } | null>(null);
   const [refundTx, setRefundTx] = useState<Transaction | null>(null);
@@ -357,11 +370,6 @@ export default function PlanScreen() {
 
   // With no loan yet the Debt card is the "Track an EMI" prompt: it goes straight to Loans, not to a tab of it.
   const openDebt = () => (scoped && scoped.loans.rows.length > 0 ? selectTab('debt') : open('/loans'));
-  const nextPayment = (() => {
-    const first = scoped?.dueGroups.find((g) => g.outMinor > 0);
-    const item = first?.items.find((i) => i.kind === 'emi' || i.kind === 'bill');
-    return first && item ? { date: first.date, title: item.title } : null;
-  })();
   const upcoming = (limit?: number) =>
     scoped && (
       <ComingUpSection
@@ -408,38 +416,21 @@ export default function PlanScreen() {
             <View style={styles.tabs}>
               <PlanNavigation value={tab} onChange={selectTab} stacked={stackTiles} />
             </View>
-            <RunwayCard
-              dueSoon={data.dueSoon}
-              runway={data.runway}
-              hasAccounts={data.hasAccounts}
-              days={PLAN_DAYS}
-              showChart={tab === 'upcoming'}
-              onAddAccount={() => openDetail('new-account', '')}
-              nextPayment={tab === 'overview' ? nextPayment : undefined}
-              onUpcoming={() => selectTab('upcoming')}
-            />
+            {(tab === 'overview' || tab === 'upcoming') && (
+              <RunwayCard
+                dueSoon={data.dueSoon}
+                runway={data.runway}
+                hasAccounts={data.hasAccounts}
+                days={PLAN_DAYS}
+                showChart={tab === 'upcoming'}
+                onAddAccount={() => openDetail('new-account', '')}
+              />
+            )}
             {tab === 'overview' && (
               <>
-                {data.dueGroups.length > 0 && (
-                  <Section compact title="Upcoming payments" onSeeAll={() => selectTab('upcoming')}>
-                    {upcoming(PREVIEW_PAYMENTS)}
-                  </Section>
-                )}
-                <Section compact title="Debt" onSeeAll={openDebt}>
-                  <DebtPath loans={data.loans} today={data.today} onOpen={openDebt} />
-                </Section>
-                <Section compact title="People" onSeeAll={() => open('/people')}>
-                  <View style={planStyles.row}>
-                    <PeopleTile
-                      state={data.people}
-                      people={data.topPeople}
-                      onOpen={() => open('/people')}
-                      onPerson={(id) => openDetail('person', id)}
-                    />
-                  </View>
-                </Section>
                 <Section compact title="Budgets" onSeeAll={() => selectTab('money')}>
                   <BudgetJars
+                    compact
                     summary={data.budgets}
                     onOpen={() => open('/budgets')}
                     onBudget={(id) => openDetail('budget', id)}
@@ -447,8 +438,23 @@ export default function PlanScreen() {
                     limit={PREVIEW_TILES}
                   />
                 </Section>
+
+                {data.dueGroups.length > 0 && (
+                  <Section
+                    compact
+                    title="Upcoming payments"
+                    badge={data.dueSoon.count}
+                    onSeeAll={() => selectTab('upcoming')}
+                  >
+                    {upcoming(PREVIEW_PAYMENTS)}
+                  </Section>
+                )}
+                <Section compact title="Debt" onSeeAll={openDebt}>
+                  <DebtPath loans={data.loans} today={data.today} onOpen={openDebt} />
+                </Section>
                 <Section compact title="Goals" onSeeAll={() => selectTab('money')}>
                   <GoalsStrip
+                    compact
                     goals={data.goals}
                     savingsAccounts={data.savingsAccounts}
                     onOpen={() => open('/savings-goals')}
@@ -469,8 +475,14 @@ export default function PlanScreen() {
                     }}
                   />
                 </View>
-                <Section compact title="Daily spending habit">
-                  <View style={planStyles.row}>
+                <Section compact title="People & habit">
+                  <View style={[planStyles.row, stackTiles && planStyles.rowStack]}>
+                    <PeopleTile
+                      state={data.people}
+                      people={data.topPeople}
+                      onOpen={() => open('/people')}
+                      onPerson={(id) => openDetail('person', id)}
+                    />
                     <HabitTile
                       habit={data.habit}
                       goalMinor={data.dailyGoalMinor}
@@ -482,46 +494,83 @@ export default function PlanScreen() {
               </>
             )}
             {tab === 'upcoming' && (
-              <Section
-                compact
-                title="Upcoming payments"
-                right={
-                  <Pressable
-                    onPress={() => open('/recurring')}
-                    hitSlop={8}
-                    style={withPressed(styles.headLink)}
-                    accessibilityRole="button"
-                    accessibilityLabel="Recurring"
-                  >
-                    <Text style={styles.headLinkText}>Recurring</Text>
-                    <Feather name="arrow-right" size={14} color={theme.colors.link} />
-                  </Pressable>
-                }
-              >
-                {upcoming()}
-              </Section>
+              <>
+                <View style={styles.createActions}>
+                  <PrimaryButton
+                    title="Add recurring"
+                    accessibilityLabel="Add recurring"
+                    icon="repeat"
+                    variant="secondary"
+                    compact
+                    style={styles.createAction}
+                    onPress={() => openDetail('new-rule', '')}
+                  />
+                </View>
+                <Section
+                  compact
+                  title="Upcoming payments"
+                  right={
+                    <Pressable
+                      onPress={() => open('/recurring')}
+                      hitSlop={8}
+                      style={withPressed(styles.headLink)}
+                      accessibilityRole="button"
+                      accessibilityLabel="Recurring"
+                    >
+                      <Text style={styles.headLinkText}>Recurring</Text>
+                      <Feather name="arrow-right" size={14} color={theme.colors.link} />
+                    </Pressable>
+                  }
+                >
+                  {upcoming()}
+                </Section>
+              </>
             )}
             {tab === 'money' && (
               <>
                 <Section compact title="Budgets" onSeeAll={() => open('/budgets')}>
                   <BudgetJars
+                    compact
                     summary={data.budgets}
                     onOpen={() => open('/budgets')}
                     onBudget={(id) => openDetail('budget', id)}
                     onAdd={() => openDetail('new-budget', '')}
-                    limit={data.budgets.rows.length + 1}
+                    limit={data.budgets.rows.length}
                   />
                 </Section>
+                <View style={styles.createActions}>
+                  <PrimaryButton
+                    title="Add budget"
+                    accessibilityLabel="Add budget"
+                    icon="plus"
+                    variant="secondary"
+                    compact
+                    style={styles.createAction}
+                    onPress={() => openDetail('new-budget', '')}
+                  />
+                </View>
                 <Section compact title="Goals" onSeeAll={() => open('/savings-goals')}>
                   <GoalsStrip
+                    compact
                     goals={data.goals}
                     savingsAccounts={data.savingsAccounts}
                     onOpen={() => open('/savings-goals')}
                     onGoal={(id) => openDetail('goal', id)}
                     onAdd={() => openDetail('new-goal', '')}
-                    limit={data.goals.length + 1}
+                    limit={data.goals.length}
                   />
                 </Section>
+                <View style={styles.createActions}>
+                  <PrimaryButton
+                    title="Add goal"
+                    accessibilityLabel="Add goal"
+                    icon="plus"
+                    variant="secondary"
+                    compact
+                    style={styles.createAction}
+                    onPress={() => openDetail('new-goal', '')}
+                  />
+                </View>
                 <Section compact title="Ideas">
                   <WhatIfCard
                     whatIf={data.whatIf}
@@ -542,6 +591,17 @@ export default function PlanScreen() {
                 <Section compact title="Debt">
                   <DebtPath loans={data.loans} today={data.today} onOpen={() => open('/loans')} />
                 </Section>
+                <View style={styles.createActions}>
+                  <PrimaryButton
+                    title="Add loan"
+                    accessibilityLabel="Add loan"
+                    icon="plus"
+                    variant="secondary"
+                    compact
+                    style={styles.createAction}
+                    onPress={() => openDetail('new-loan', '')}
+                  />
+                </View>
                 {data.loans.rows.length > 0 && (
                   <Section compact title="Loans" onSeeAll={() => open('/loans')}>
                     <DebtLoans loans={data.loans} onLoan={(id) => openDetail('loan', id)} />
@@ -554,7 +614,20 @@ export default function PlanScreen() {
       </ReanimatedAnimated.ScrollView>
       <SkyHeader
         title="Plan"
-        subtitle="Payments, money plans and progress"
+        subtitle="Make room for what matters."
+        actions={
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Add to your plan"
+            disabled={!scoped}
+            accessibilityState={{ disabled: !scoped }}
+            onPress={() => setCreationMenu(true)}
+            style={withPressed(styles.addPlan)}
+          >
+            <Feather name="plus" size={16} color={theme.colors.textPrimary} />
+            <Text style={styles.headLinkText}>Add</Text>
+          </Pressable>
+        }
         collapse={collapse}
         wallpaper
         summary={
@@ -567,8 +640,53 @@ export default function PlanScreen() {
           ) : undefined
         }
       />
+      {creationMenu && scoped && (
+        <ModalSheet
+          visible
+          title="Add to your plan"
+          subtitle="Give your next commitment a place."
+          onClose={() => setCreationMenu(false)}
+        >
+          {(
+            [
+              ['new-rule', 'Add recurring', 'Bills, subscriptions or income', 'repeat'],
+              ['new-loan', 'Add loan', 'Track borrowing or lending', 'plus'],
+              ['new-budget', 'Add budget', 'Set a category spending limit', 'pie-chart'],
+              ['new-goal', 'Add goal', 'Save for something important', 'flag'],
+            ] as const
+          ).map(([kind, label, description, icon]) => (
+            <Pressable
+              key={kind}
+              accessibilityRole="button"
+              accessibilityLabel={label}
+              onPress={() => {
+                setCreationMenu(false);
+                openDetail(kind, '');
+              }}
+              style={withPressed(styles.menuRow)}
+            >
+              <Feather name={icon} size={20} color={theme.colors.link} />
+              <View style={{ flex: 1, gap: 4 }}>
+                <Text style={styles.menuTitle}>{label}</Text>
+                <Text style={styles.menuDescription}>{description}</Text>
+              </View>
+              <Feather name="chevron-right" size={16} color={theme.colors.textMuted} />
+            </Pressable>
+          ))}
+        </ModalSheet>
+      )}
       {detail?.kind === 'new-account' && scoped && (
         <AddAccountModal
+          visible
+          onClose={() => setDetail(null)}
+          onCreated={() => {
+            setDetail(null);
+            void reload();
+          }}
+        />
+      )}
+      {detail?.kind === 'new-loan' && scoped && (
+        <AddLoanModal
           visible
           onClose={() => setDetail(null)}
           onCreated={() => {
@@ -648,11 +766,11 @@ export default function PlanScreen() {
           }}
         />
       )}
-      {selectedRule && scoped && (
+      {(selectedRule || detail?.kind === 'new-rule') && scoped && (
         <RuleModal
-          key={selectedRule.id}
+          key={selectedRule?.id ?? 'new-rule'}
           visible
-          editing={selectedRule}
+          editing={selectedRule ?? null}
           accounts={scoped.accounts}
           categories={scoped.categories}
           onClose={() => setDetail(null)}
@@ -705,6 +823,20 @@ export default function PlanScreen() {
 }
 
 const styles = StyleSheet.create({
+  addPlan: {
+    minHeight: 44,
+    paddingHorizontal: 12,
+    borderRadius: 22,
+    backgroundColor: theme.colors.surface,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
+  menuRow: { minHeight: 68, paddingVertical: 12, flexDirection: 'row', alignItems: 'center', gap: 14 },
+  menuTitle: { fontFamily: theme.font.bodyMedium, fontSize: 15, color: theme.colors.textPrimary },
+  menuDescription: { fontSize: 12, color: theme.colors.textSecondary },
+  createActions: { marginHorizontal: SCREEN.gutter, marginBottom: 14, flexDirection: 'row', gap: 10 },
+  createAction: { flex: 1, minHeight: 44 },
   tabs: { marginHorizontal: 16, marginTop: theme.layout.screenTopGap, marginBottom: SCREEN.sectionGap },
   headLink: { flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 48 },
   headLinkText: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.link },

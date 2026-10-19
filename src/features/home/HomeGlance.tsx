@@ -1,6 +1,4 @@
 import { Section } from '@/components/Section';
-import { Glass } from '@/components/Glass';
-import { cardSurface } from '@/components/CardSurface';
 import { withPressed } from '@/lib/pressed';
 import { View, Pressable, StyleSheet } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -166,8 +164,8 @@ export function HomeGlance({
   const visible = upcoming.items.length ? upcoming.items.slice(0, 2) : upcoming.next ? [upcoming.next] : [];
   return (
     <>
-      <Section title="Coming up" onSeeAll={onSeeMoreUpcoming}>
-        <Glass radius={24} style={[styles.card, cardSurface.neutral]}>
+      <Section title="Next up" onSeeAll={onSeeMoreUpcoming} actionLabel="View plan">
+        <View style={styles.card}>
           {visible.length ? (
             visible.map((item, i) => (
               <Animated.View key={item.key} entering={rowEntering(i)}>
@@ -176,11 +174,7 @@ export function HomeGlance({
                   iconBg={item.iconBg}
                   iconColor={item.iconColor}
                   title={item.title}
-                  subtitle={
-                    upcoming.items.length
-                      ? item.subtitle
-                      : `Nothing due this week · ${item.subtitle.toLowerCase()}`
-                  }
+                  subtitle={item.subtitle}
                   amountMinor={item.amountMinor}
                   sign={item.sign}
                   onPress={() => router.push(item.route)}
@@ -208,7 +202,7 @@ export function HomeGlance({
               <Feather name="chevron-right" size={16} color={theme.colors.textMuted} />
             </Pressable>
           )}
-        </Glass>
+        </View>
         {(refunds.length > 0 || refundError) && (
           <View style={styles.refunds}>
             <HomeRefunds
@@ -229,12 +223,9 @@ const styles = StyleSheet.create({
   card: { marginHorizontal: 16, overflow: 'hidden' },
   refunds: {
     marginHorizontal: 16,
-    marginTop: 8,
-    borderRadius: 20,
-    backgroundColor: theme.colors.surface,
-    borderWidth: 1,
-    borderColor: theme.colors.borderSoft,
-    overflow: 'hidden',
+    marginTop: 6,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: theme.colors.borderSoft,
   },
   empty: { minHeight: 80, flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14 },
   copy: { flex: 1, minWidth: 0, gap: 5 },

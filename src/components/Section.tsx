@@ -17,6 +17,7 @@ export function Section({
   badge,
   heading,
   onSeeAll,
+  actionLabel = 'See all',
   right,
   first,
   compact,
@@ -26,6 +27,7 @@ export function Section({
   badge?: number;
   heading?: React.ReactNode;
   onSeeAll?: () => void;
+  actionLabel?: string;
   right?: React.ReactNode;
   /** The first section under a screen's header: it sits the usual 8 below it, not a full section gap. */
   first?: boolean;
@@ -55,10 +57,10 @@ export function Section({
             onPressOut={onPressOut}
             hitSlop={12}
             accessibilityRole="button"
-            accessibilityLabel={`See all — ${title}`}
+            accessibilityLabel={`${actionLabel} — ${title}`}
             style={[styles.seeAll, animatedStyle]}
           >
-            <Text style={styles.seeAllText}>See all</Text>
+            <Text style={styles.seeAllText}>{actionLabel}</Text>
             <Feather name="arrow-right" size={14} color={theme.colors.link} />
           </AnimatedPressable>
         )}

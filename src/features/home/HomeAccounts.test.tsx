@@ -263,7 +263,7 @@ it('shows only two everyday previews while keeping the complete account list rea
   expect(texts(tree)).not.toContain('Wise');
   act(() =>
     tree.root
-      .find((n) => n.props.accessibilityLabel === 'See all — Accounts' && n.props.onPress)
+      .find((n) => n.props.accessibilityLabel === 'View all — Accounts' && n.props.onPress)
       .props.onPress()
   );
   expect(onOpenAccounts).toHaveBeenCalledTimes(1);

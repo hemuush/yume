@@ -5,10 +5,11 @@ import { GLASS } from '@/components/Glass';
 export const styles = StyleSheet.create({
   card: {
     marginHorizontal: 16,
-    paddingHorizontal: 14,
-    paddingVertical: 16,
-    gap: 12,
-    boxShadow: '0px 10px 28px rgba(19,41,63,0.07)',
+    paddingHorizontal: 18,
+    paddingVertical: 14,
+    gap: 8,
+    borderWidth: 0,
+    boxShadow: 'none',
   },
   bar: {
     flexDirection: 'row',
@@ -18,26 +19,17 @@ export const styles = StyleSheet.create({
     gap: 8,
     minHeight: 32,
   },
-  body: { gap: 10 },
-  // The figure and today's allowance share a line; the pill wraps under the figure on a narrow screen.
+  body: { gap: 6 },
+  // One figure and its calculation disclosure; long amounts can wrap the disclosure below.
   figureRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     alignItems: 'center',
-    justifyContent: 'space-between',
     gap: 8,
   },
   figure: { flexShrink: 1, minWidth: 0 },
 
   headTitle: { flexDirection: 'row', alignItems: 'center', gap: 10, flexShrink: 1 },
-  headIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 11,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: theme.colors.surfaceAlt,
-  },
   headLabel: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textSecondary },
   headValue: {
     fontFamily: theme.font.bodyLight,
@@ -56,15 +48,13 @@ export const styles = StyleSheet.create({
   headValueNeg: { color: theme.colors.expenseText },
   headCaption: {
     fontFamily: theme.font.body,
-    fontSize: 13,
-    lineHeight: 19,
+    fontSize: 12,
+    lineHeight: 18,
     color: theme.colors.textSecondary,
   },
 
-  // "Details": a link at the end of the caption's line; the touch area is taller than the text (hitSlop).
-  captionRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: 10 },
-  howLink: { flexDirection: 'row', alignItems: 'center', gap: 5, minHeight: 44 },
-  howText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.link },
+  // The info control keeps a full-size touch target beside the balance.
+  howLink: { alignItems: 'center', justifyContent: 'center', width: 44, minHeight: 44 },
   // Names the (often tiny) free part of the money bar.
 
   chip: {
@@ -98,15 +88,25 @@ export const styles = StyleSheet.create({
   chipTextOver: { color: theme.colors.expenseText },
 
   // Three columns straight under the bar, no panel of their own: each dot is the bar's colour, so the bar is the legend.
-  stats: { flexDirection: 'row', flexWrap: 'wrap', rowGap: 8 },
+  stats: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: 8,
+    paddingTop: 10,
+    marginTop: 8,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: theme.colors.borderSoft,
+  },
   stat: {
     flexGrow: 1,
     flexBasis: 100,
     minWidth: 0,
-    minHeight: 48,
-    paddingHorizontal: 10,
-    gap: 3,
-    justifyContent: 'center',
+    minHeight: 32,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: 5,
   },
   statStack: {
     flexBasis: '100%',
@@ -117,9 +117,9 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 0,
   },
   statFirst: { paddingLeft: 0 },
-  statDivider: { borderLeftWidth: StyleSheet.hairlineWidth, borderLeftColor: theme.colors.borderSoft },
+  statDivider: { borderLeftWidth: 0 },
   statHead: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  statDot: { width: 8, height: 8, borderRadius: 4 },
+  statDot: { width: 5, height: 5, borderRadius: 3 },
   statLabel: {
     flexShrink: 1,
     fontFamily: theme.font.bodyMedium,
@@ -129,7 +129,7 @@ export const styles = StyleSheet.create({
   statValue: {
     fontVariant: ['tabular-nums'],
     fontFamily: theme.font.bodyBold,
-    fontSize: 15,
+    fontSize: 12,
     color: theme.colors.textPrimary,
   },
 

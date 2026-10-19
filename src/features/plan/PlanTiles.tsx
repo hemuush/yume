@@ -9,7 +9,6 @@ import { stableIndexFromId } from '@/lib/color';
 import { personInitials } from '@/features/people/people.helpers';
 import { formatMoney } from '@/lib/money';
 import { usePressScale } from '@/lib/usePressScale';
-import { compactMoney } from '@/lib/compactMoney';
 import { HabitState, PeopleState } from './planOverview';
 import { styles } from './plan.styles';
 import { parseLocalIsoDate } from '@/lib/date';
@@ -28,19 +27,17 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 function PlanTile({
   label,
   onPress,
-  wide,
   children,
   footer,
 }: {
   label: string;
   onPress: () => void;
-  wide?: boolean;
   children: React.ReactNode;
   footer?: React.ReactNode;
 }) {
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.97);
   return (
-    <View style={{ flex: wide ? 1.25 : 1, minWidth: 0 }}>
+    <View style={{ flex: 1, minWidth: 0 }}>
       <Glass radius={22} style={[styles.tile, cardSurface.neutral]}>
         <AnimatedPressable
           onPress={onPress}
@@ -48,7 +45,7 @@ function PlanTile({
           onPressOut={onPressOut}
           accessibilityRole="button"
           accessibilityLabel={label}
-          style={[{ gap: 6, flexGrow: 1 }, animatedStyle]}
+          style={[{ gap: 8, paddingRight: 20 }, animatedStyle]}
         >
           <View style={[styles.go, { top: 0, right: 0 }]}>
             <Feather name="chevron-right" size={15} color={theme.colors.textMuted} />
@@ -95,42 +92,58 @@ export function PeopleTile({
     sub = `With ${count(state.count)}`;
   } else {
     value = (
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 20 }}>
-        <View style={{ gap: 4 }}>
+      <View style={{ gap: 4, width: '100%' }}>
+        <View style={styles.balanceLine}>
           <Text style={styles.tileSub}>To collect</Text>
-          <Text style={[styles.value, styles.income]}>{formatMoney(state.owedToYouMinor)}</Text>
+          <Text style={[styles.value, styles.compactValue, styles.income]}>
+            {formatMoney(state.owedToYouMinor)}
+          </Text>
         </View>
-        <View style={{ gap: 4 }}>
+        <View style={styles.balanceLine}>
           <Text style={styles.tileSub}>To pay back</Text>
-          <Text style={[styles.value, styles.over]}>{formatMoney(state.youOweMinor)}</Text>
+          <Text style={[styles.value, styles.compactValue, state.youOweMinor > 0 && styles.over]}>
+            {formatMoney(state.youOweMinor)}
+          </Text>
         </View>
       </View>
     );
     sub = `With ${count(state.count)}`;
   }
 
-  const shown =
-    state.kind === 'balances' ? people.filter((p) => p.balanceMinor !== 0).slice(0, PEOPLE_SHOWN) : [];
+  const shown = state.kind === 'balances' ? people.filter((p) => p.balanceMinor !== 0).slice(0, 2) : [];
   return (
     <PlanTile
-      wide
       label={`Friends & Family, ${state.kind === 'balances' ? `${formatMoney(state.owedToYouMinor)} to collect, ${formatMoney(state.youOweMinor)} to pay back. ` : ''}${sub}. Open Friends & Family`}
       onPress={onOpen}
       footer={
         shown.length > 0 && (
           <View
-            style={[styles.people, { flexWrap: 'wrap', overflow: 'visible' }]}
+            style={[styles.people, { flexWrap: 'wrap', overflow: 'visible', marginTop: 4, gap: 8 }]}
             accessibilityElementsHidden={!onPerson}
             importantForAccessibility={onPerson ? 'auto' : 'no-hide-descendants'}
           >
             {shown.map((p) => (
               <Pressable
                 key={p.id}
-                style={[styles.person, { minHeight: 44, minWidth: 44 }]}
+                style={[
+                  styles.person,
+                  {
+                    minHeight: 44,
+                    minWidth: 44,
+                    flexShrink: 1,
+                    maxWidth: '100%',
+                    flexDirection: 'row',
+                    gap: 6,
+                    paddingHorizontal: 0,
+                    borderRadius: 14,
+                    backgroundColor: 'transparent',
+                  },
+                ]}
                 disabled={!onPerson}
                 onPress={() => onPerson?.(p.id)}
                 accessibilityRole="button"
                 accessibilityLabel={`Open ${p.name} details`}
+                accessibilityHint={`${formatMoney(Math.abs(p.balanceMinor))} ${p.balanceMinor > 0 ? 'to collect' : 'to pay back'}`}
               >
                 <View
                   style={[
@@ -140,26 +153,21 @@ export function PeopleTile({
                 >
                   <Text style={styles.avatarText}>{personInitials(p.name)}</Text>
                 </View>
-                <Text style={styles.personName} numberOfLines={1}>
-                  {p.name.split(' ')[0]}
-                </Text>
-                <Text style={[styles.personAmt, p.balanceMinor > 0 ? styles.income : styles.over]}>
-                  {p.balanceMinor > 0 ? '+' : '−'}
-                  {compactMoney(Math.abs(p.balanceMinor))}
-                </Text>
               </Pressable>
             ))}
           </View>
         )
       }
     >
-      <Kicker icon="users" inTile>
-        Friends
-      </Kicker>
-      {value}
-      <Text style={styles.tileSub} numberOfLines={2}>
-        {sub}
-      </Text>
+      <View style={{ gap: 8 }}>
+        <View style={{ gap: 4 }}>
+          <Kicker icon="users" inTile>
+            Friends
+          </Kicker>
+          <Text style={styles.tileSub}>{sub}</Text>
+        </View>
+        {value}
+      </View>
     </PlanTile>
   );
 }
@@ -199,36 +207,40 @@ export function HabitTile({
       label={`${habit.streakDays}-day streak at ${formatMoney(goalMinor)} or less a day. ${habit.days.map((kept, i) => `${habit.dates?.[i] ?? `Day ${i + 1}`}: ${habit.tracked?.[i] === false ? 'not tracked' : kept ? 'within goal' : 'over goal'}`).join(', ')}. Open Suu's garden`}
       onPress={onOpen}
     >
-      <Kicker icon={sprout} inTile>
-        Spend streak
-      </Kicker>
-      <Text style={styles.value}>
-        {habit.streakDays} day{habit.streakDays === 1 ? '' : 's'}
-      </Text>
-      <View
-        style={styles.sprouts}
-        accessibilityElementsHidden
-        importantForAccessibility="no-hide-descendants"
-      >
-        {habit.days.map((kept, i) => (
-          <View key={i} style={styles.sproutDay}>
-            <MaterialCommunityIcons
-              name="sprout"
-              size={kept ? SPROUT_BASE + i * SPROUT_STEP : SPROUT_BASE - 2}
-              color={kept ? theme.colors.incomeText : theme.colors.textMuted}
-              style={!kept && { opacity: 0.45 }}
-            />
-            <Text style={[styles.dayLabel, habit.dates?.[i] === today && styles.income]}>
-              {habit.tracked?.[i] === false
-                ? '—'
-                : habit.dates?.[i]
-                  ? parseLocalIsoDate(habit.dates[i]).toLocaleDateString(undefined, { weekday: 'narrow' })
-                  : `${i + 1}`}
-            </Text>
-          </View>
-        ))}
+      <View style={styles.compactSummary}>
+        <Kicker icon={sprout} inTile>
+          Spend streak
+        </Kicker>
+        <Text style={styles.value}>
+          {habit.streakDays} day{habit.streakDays === 1 ? '' : 's'}
+        </Text>
       </View>
-      <Text style={styles.tileSub}>{formatMoney(goalMinor)} or less / day</Text>
+      <View style={styles.compactSummary}>
+        <View
+          style={styles.sprouts}
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+        >
+          {habit.days.map((kept, i) => (
+            <View key={i} style={styles.sproutDay}>
+              <MaterialCommunityIcons
+                name="sprout"
+                size={kept ? SPROUT_BASE + i * SPROUT_STEP : SPROUT_BASE - 2}
+                color={kept ? theme.colors.incomeText : theme.colors.textMuted}
+                style={!kept && { opacity: 0.45 }}
+              />
+              <Text style={[styles.dayLabel, habit.dates?.[i] === today && styles.income]}>
+                {habit.tracked?.[i] === false
+                  ? '—'
+                  : habit.dates?.[i]
+                    ? parseLocalIsoDate(habit.dates[i]).toLocaleDateString(undefined, { weekday: 'narrow' })
+                    : `${i + 1}`}
+              </Text>
+            </View>
+          ))}
+        </View>
+        <Text style={styles.tileSub}>{formatMoney(goalMinor)} or less / day</Text>
+      </View>
       {habit.tracked?.includes(false) && <Text style={styles.dayLabel}>— Not tracked</Text>}
     </PlanTile>
   );

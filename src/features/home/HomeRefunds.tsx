@@ -70,13 +70,17 @@ export function HomeRefunds({
             accessibilityState={{ disabled: !!openingId || !onOpen, busy: openingId === r.transactionId }}
             style={withPressed([styles.row, compact && styles.compactRow])}
           >
-            <View style={styles.icon}>
+            <View style={[styles.icon, compact && { backgroundColor: 'transparent' }]}>
               <Feather name="corner-down-left" size={18} color={theme.colors.ink} />
             </View>
             <View style={styles.copy}>
               <Text style={styles.title}>{compact ? `${amount} refund pending` : r.label}</Text>
               <Text style={[styles.hint, overdue && styles.overdue]}>
-                {openingId === r.transactionId ? 'Opening…' : compact ? `${r.label} · ${date}` : date}
+                {openingId === r.transactionId
+                  ? 'Opening…'
+                  : compact
+                    ? `${r.label} · ${r.dueDate ? date + ' · ' : ''}excluded from balance`
+                    : date}
               </Text>
             </View>
             {!compact && <Text style={styles.amount}>{amount}</Text>}
@@ -84,7 +88,6 @@ export function HomeRefunds({
           </Pressable>
         );
       })}
-      {compact && <Text style={styles.compactHint}>Expected money · not included in your balance</Text>}
       {ordered.length > (compact ? 1 : 3) && (
         <PrimaryButton
           title={expanded ? 'Show fewer refunds' : `View all ${ordered.length} refunds`}

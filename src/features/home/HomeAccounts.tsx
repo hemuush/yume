@@ -80,36 +80,7 @@ export function HomeAccounts({
   // Everyday accounts are two-column tiles (name, kind, balance); savings are full-width rows (name, balance).
   const tile = (a: Account) => {
     const hue = accountHue(a.type, accent);
-    if (compact)
-      return (
-        <Pressable
-          key={a.id}
-          onPress={() => onOpenAccount(a)}
-          accessibilityRole="button"
-          accessibilityLabel={`${a.name}, ${accountTypeLabel(a)}. Open summary`}
-          style={withPressed([styles.previewTile, stacked ? styles.full : styles.half])}
-        >
-          <View style={styles.previewHead}>
-            <View style={[styles.chipIcon, { backgroundColor: shade(hue, 88) }]}>
-              <MaterialCommunityIcons
-                name={accountIcon(a.type) as McIconName}
-                size={18}
-                color={shade(hue, 30, 10)}
-              />
-            </View>
-            <View style={styles.chipText}>
-              <Text style={styles.chipName}>{a.name}</Text>
-              <Text style={styles.chipSub}>{accountTypeLabel(a)}</Text>
-            </View>
-          </View>
-          <Amount
-            minor={a.currentBalanceMinor}
-            currency={a.currency}
-            sensitive={a.type === 'savings'}
-            style={styles.previewAmount}
-          />
-        </Pressable>
-      );
+
     return (
       <Pressable
         key={a.id}
@@ -196,14 +167,45 @@ export function HomeAccounts({
     const spending = everyday.filter((a) => a.type === 'bank' || a.type === 'cash' || a.type === 'wallet');
     const preview = (spending.length ? spending : everyday.length ? everyday : savings).slice(0, 2);
     return (
-      <Section title="Accounts" onSeeAll={onOpenAccounts}>
-        <View style={[styles.wrap, styles.previewGrid]}>{preview.map(tile)}</View>
+      <Section title="Accounts" onSeeAll={onOpenAccounts} actionLabel={compact ? 'View all' : undefined}>
+        <View style={styles.wrap}>
+          <Glass radius={20} style={[styles.accountList, cardSurface.neutral]}>
+            {preview.map((a, i) => (
+              <Pressable
+                key={a.id}
+                onPress={() => onOpenAccount(a)}
+                accessibilityRole="button"
+                accessibilityLabel={`${a.name}, ${accountTypeLabel(a)}. Open summary`}
+                style={withPressed([styles.accountListRow, i > 0 && styles.accountListDivider])}
+              >
+                <View style={[styles.chipIcon, { backgroundColor: shade(accountHue(a.type, accent), 88) }]}>
+                  <MaterialCommunityIcons
+                    name={accountIcon(a.type) as McIconName}
+                    size={18}
+                    color={shade(accountHue(a.type, accent), 30, 10)}
+                  />
+                </View>
+                <View style={styles.chipText}>
+                  <Text style={styles.chipName}>{a.name}</Text>
+                  <Text style={styles.chipSub}>{accountTypeLabel(a)}</Text>
+                </View>
+                <Amount
+                  minor={a.currentBalanceMinor}
+                  currency={a.currency}
+                  sensitive={a.type === 'savings'}
+                  style={styles.listAmount}
+                />
+                <Feather name="chevron-right" size={14} color={theme.colors.textMuted} />
+              </Pressable>
+            ))}
+          </Glass>
+        </View>
       </Section>
     );
   }
 
   return (
-    <Section title="Accounts" onSeeAll={onOpenAccounts}>
+    <Section title="Accounts" onSeeAll={onOpenAccounts} actionLabel={compact ? 'View all' : undefined}>
       <View style={styles.wrap}>
         <Glass radius={24} style={[styles.tile, cardSurface.neutral]}>
           {everyday.length > 0 && (
@@ -242,19 +244,17 @@ export function HomeAccounts({
 }
 
 const styles = StyleSheet.create({
-  previewHead: { flexDirection: 'row', alignItems: 'center', gap: 8, width: '100%' },
-  previewGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  previewTile: {
-    backgroundColor: theme.colors.surface,
-    borderWidth: 1,
-    borderColor: theme.colors.borderSoft,
-    flexDirection: 'column',
-    alignItems: 'flex-start',
-    padding: 14,
-    borderRadius: 22,
-    gap: 8,
+  accountList: { paddingHorizontal: 14, borderWidth: 0 },
+  accountListRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: 10,
+    paddingVertical: 12,
+    minHeight: 64,
   },
-  previewAmount: { fontFamily: theme.font.body, fontSize: 20, lineHeight: 28, marginTop: 6 },
+  accountListDivider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.borderSoft },
+  listAmount: { fontFamily: theme.font.body, fontSize: 16, lineHeight: 22, color: theme.colors.textPrimary },
   wrap: { marginHorizontal: 16 },
   tile: { padding: 14, gap: 4 },
   head: { minHeight: 40, flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 6 },

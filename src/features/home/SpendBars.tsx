@@ -55,7 +55,7 @@ function Bar({
   // Square-root scaled: one big payment would otherwise flatten every ordinary day to a sliver.
   const target =
     bar.totalMinor > 0 && maxMinor > 0
-      ? Math.round(MIN_H + Math.sqrt(bar.totalMinor / maxMinor) * (MAX_H - MIN_H))
+      ? Math.round(MIN_H + Math.sqrt(bar.totalMinor / maxMinor) * ((compact ? 64 : MAX_H) - MIN_H))
       : EMPTY_H;
   const growth = useSharedValue(reduce || !animateEntry ? 1 : 0);
   useEffect(() => {
@@ -71,7 +71,7 @@ function Bar({
       accessibilityState={{ selected }}
       accessibilityLabel={`${dateLabel}, ${formatMoney(bar.totalMinor)}`}
     >
-      {selected && (
+      {selected && !compact && (
         <Text style={styles.value} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
           {formatMoney(bar.totalMinor)}
         </Text>
@@ -125,9 +125,15 @@ export function SpendBars({
           accessibilityLabel={`Spending ${range === 'week' ? 'in the last 7 days' : 'this month'}, ${formatMoney(total)}`}
         >
           <Text style={styles.title}>
-            {range === 'week' ? 'Last 7 days' : 'This month'}{' '}
-            <Text style={styles.total}>{formatMoney(total)}</Text>
+            {range === 'week' ? 'Last 7 days' : 'This month'}
+            {!compact && (
+              <>
+                {' '}
+                <Text style={styles.total}>{formatMoney(total)}</Text>
+              </>
+            )}
           </Text>
+          {compact && <Text style={styles.snapshotTotal}>{formatMoney(total)}</Text>}
         </View>
         <View style={styles.switch} accessibilityRole="tablist">
           {(['week', 'month'] as const).map((r) => (
@@ -156,7 +162,7 @@ export function SpendBars({
         ref={chart}
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.bars}
+        contentContainerStyle={[styles.bars, compact && styles.barsCompact]}
         onContentSizeChange={() => chart.current?.scrollToEnd({ animated: false })}
       >
         {bars.map((b, i) => (
@@ -186,6 +192,20 @@ export function SpendBars({
           />
         ))}
       </ScrollView>
+      {compact && (
+        <View style={styles.chartFooter}>
+          <Text style={styles.pickedAmount}>
+            {range === 'week'
+              ? parseLocalIsoDate(selectedKey).toLocaleDateString(undefined, {
+                  weekday: 'short',
+                  day: 'numeric',
+                  month: 'short',
+                })
+              : `Week ${bars.findIndex((b) => b.key === selectedKey) + 1}`}{' '}
+            · {formatMoney(bars.find((b) => b.key === selectedKey)?.totalMinor ?? 0)}
+          </Text>
+        </View>
+      )}
       <Text style={styles.scaleHint}>Bar heights are compressed. Tap a bar for its exact amount.</Text>
     </View>
   );
@@ -222,6 +242,25 @@ const styles = StyleSheet.create({
     gap: 8,
     // Room for the label, the tallest bar and the amount that rides above the picked one (it was clipped at +34).
     height: MAX_H + 52,
+  },
+  snapshotTotal: {
+    fontFamily: theme.font.bodyLight,
+    fontSize: 26,
+    lineHeight: 34,
+    color: theme.colors.textPrimary,
+    marginTop: 3,
+  },
+  barsCompact: { height: 112 },
+  chartFooter: {
+    paddingTop: 10,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: theme.colors.borderSoft,
+  },
+  pickedAmount: {
+    fontFamily: theme.font.body,
+    fontSize: 12,
+    lineHeight: 18,
+    color: theme.colors.textSecondary,
   },
   colFit: { width: 0, minWidth: 0, flexBasis: 0 },
   col: {

@@ -1,4 +1,3 @@
-import { usePrivacy } from '@/theme/PrivacyContext';
 import { useEffect, useState } from 'react';
 import { View, Pressable, StyleSheet, LayoutChangeEvent } from 'react-native';
 import { Text } from '@/components/Text';
@@ -77,7 +76,6 @@ export function HomeHeader({
   children?: React.ReactNode;
 }) {
   const { accent } = useAccent();
-  const { hideAmounts, toggleHideAmounts } = usePrivacy();
   const reduce = useReduceMotion();
   const insets = useSafeAreaInsets();
   // The same top spacing as every other screen's SkyHeader.
@@ -179,13 +177,6 @@ export function HomeHeader({
           </ReanimatedAnimated.View>
           <View style={styles.actions}>
             <HeaderIconButton
-              icon={hideAmounts ? 'eye-off' : 'eye'}
-              onPress={toggleHideAmounts}
-              label={hideAmounts ? 'Show savings & investment amounts' : 'Hide savings & investment amounts'}
-              size={HEADER.actionSize}
-              glass
-            />
-            <HeaderIconButton
               icon="bell"
               onPress={() => router.push('/notifications')}
               label={alertCount > 0 ? `Needs you, ${alertCount}` : 'Needs you'}
@@ -208,6 +199,11 @@ export function HomeHeader({
           <ReanimatedAnimated.View
             entering={FadeIn.duration(MOTION.enter).easing(MOTION.ease).reduceMotion(ReduceMotion.System)}
           >
+            <Text style={styles.date}>
+              {new Date()
+                .toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' })
+                .toUpperCase()}
+            </Text>
             <Text style={styles.greet}>
               Good {greetingWord()}
               {userName ? (
@@ -242,10 +238,18 @@ const styles = StyleSheet.create({
   brandRow: { flexDirection: 'row', alignItems: 'center', gap: 7 },
   brand: { fontFamily: theme.font.roundedBold, fontSize: 22, letterSpacing: 0.2, color: theme.colors.ink },
   actions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  date: {
+    fontFamily: theme.font.body,
+    fontSize: 10,
+    lineHeight: 16,
+    letterSpacing: 1,
+    color: theme.colors.textMuted,
+    marginBottom: 5,
+  },
   greet: {
     fontFamily: theme.font.roundedMedium,
-    fontSize: 15,
-    lineHeight: 22,
+    fontSize: 20,
+    lineHeight: 26,
     letterSpacing: -0.2,
     color: theme.colors.ink,
     marginTop: 1,

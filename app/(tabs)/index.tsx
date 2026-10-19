@@ -16,7 +16,6 @@ import { listRecurringRules } from '@/db/recurring';
 import {
   getRangeComparison,
   PeriodComparison,
-  findTopGrowingCategory,
   getTodaySpend,
   getMonthPaceInputs,
   getStillToPayThisMonth,
@@ -28,7 +27,6 @@ import { getUserName, getDailySpendingGoal, getDefaultCurrency } from '@/db/sett
 import { savingsAccountIdsOf } from '@/lib/account';
 import { privateComparison, isSavingsEntry } from '@/lib/privateSummary';
 import { roundedMinor } from '@/lib/round';
-import { savingsRatePct } from '@/lib/savingsRate';
 import { Account, Category, Transaction, Loan, RecurringRule } from '@/types';
 import { theme } from '@/constants/theme';
 import { useTabScrollPad } from '@/lib/uiScale';
@@ -71,7 +69,6 @@ import { buildLoansSummary } from '@/features/plan/planOverview';
 import { RecentTransactionRow } from '@/features/home/RecentTransactionRow';
 import { AccountSummarySheet } from '@/features/home/AccountSummarySheet';
 import { AccountDetailModal } from '@/features/profile/AccountDetailModal';
-import { suuLine } from '@/features/home/suuLine';
 import { loadReadyWraps, ReadyWrap } from '@/features/wrap/wrapWindow';
 import { NeedsYouItem } from '@/features/home/needsYou';
 import { loadNeedsYou } from '@/features/home/needsYouData';
@@ -460,24 +457,6 @@ export default function DashboardScreen() {
   // What's free to use: what earlier months left over, plus this period's own surplus.
   const surplusInPeriod = carryIn + dispIncome - dispExpense - savingsInPeriod;
 
-  const expenseChangePct = comparison?.expenseChangePct;
-
-  const topGrowing =
-    comparison &&
-    findTopGrowingCategory(comparison.current.categoryBreakdown, comparison.previous.categoryBreakdown);
-
-  // "Saved" = income not spent (in any account), so savers who sweep cash into a pot don't read 0%. The
-  // spend-up nudge is folded into Suu's line (see suuLine's comment for why it takes priority).
-  const savingsPct = savingsRatePct(dispIncome - dispExpense, dispIncome);
-  // Memoised: the line is picked at random, so recomputing it every render would reshuffle it on each re-render.
-  const topGrowingName = topGrowing?.name ?? null;
-  const changePct = expenseChangePct ?? null;
-  const hour = new Date().getHours();
-  const suu = useMemo(
-    () => suuLine(savingsPct, changePct, topGrowingName, hour, hideAmounts),
-    [savingsPct, changePct, topGrowingName, hour, hideAmounts]
-  );
-
   // Rebuilt only when its inputs change, not on every swipe or scroll-driven render.
   const upcoming = useMemo(() => {
     const cat = (id: string | null) => (id ? categoriesById.get(id) : undefined);
@@ -585,6 +564,11 @@ export default function DashboardScreen() {
                     ? roundedMinor(stillToPayMinor)
                     : null
                 }
+                recaps={readyWraps.map((w) => ({
+                  key: `${w.period}:${w.key}`,
+                  label: w.label,
+                  onPress: () => router.push(`/wrap?period=${w.period}`),
+                }))}
                 // Today is always about today — only alongside the current period.
                 today={
                   dailyGoalMinor != null && loadedCursor.offset === 0
@@ -642,7 +626,7 @@ export default function DashboardScreen() {
 
         {loaded && comparison && historyAccounts.length > 0 && (
           <Animated.View entering={sectionEntering(3)}>
-            <Section title="Your spending" onSeeAll={openSpendingReports}>
+            <Section title="Spending" onSeeAll={openSpendingReports} actionLabel="See insights">
               <Glass radius={24} style={[styles.spendingSnapshot, cardSurface.neutral]}>
                 {dailySpend.length > 0 &&
                 loadedCursor.granularity === 'month' &&
@@ -662,12 +646,16 @@ export default function DashboardScreen() {
 
         {loaded && historyAccounts.length > 0 && (
           <Animated.View entering={sectionEntering(4)}>
-            <Section title="Recent activity" onSeeAll={() => router.push('/transactions')}>
+            <Section
+              title="Recent activity"
+              onSeeAll={() => router.push('/transactions')}
+              actionLabel="View all"
+            >
               {recent.length === 0 ? (
                 <EmptyState title="Nothing logged" subtitle="Try another period." />
               ) : (
-                <Glass radius={24} style={styles.recent}>
-                  {recent.map((tx, i) => (
+                <View style={styles.recent}>
+                  {recent.slice(0, 2).map((tx, i) => (
                     <Animated.View
                       key={tx.id}
                       entering={rowEntering(i)}
@@ -693,7 +681,7 @@ export default function DashboardScreen() {
                       />
                     </Animated.View>
                   ))}
-                </Glass>
+                </View>
               )}
             </Section>
           </Animated.View>
@@ -707,9 +695,6 @@ export default function DashboardScreen() {
         alertCount={needsYou.length}
         scrollY={scrollY}
         onHeight={setHeaderHeight}
-        wraps={readyWraps}
-        onPlayWrap={(w) => router.push(`/wrap?period=${w.period}`)}
-        line={suu.text}
         onBrandPress={() => scrollRef.current?.scrollTo({ y: 0, animated: !reduceMotion })}
       />
       <SuuRefreshBadge refreshing={refreshing} />

@@ -1,7 +1,6 @@
 import { View, Pressable, StyleSheet, Animated, useWindowDimensions } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import { Text } from '@/components/Text';
-import { GLASS } from '@/components/Glass';
 import { pushOnce } from '@/lib/pushOnce';
 import { theme } from '@/constants/theme';
 import { usePressScale } from '@/lib/usePressScale';
@@ -13,7 +12,7 @@ const ACTIONS: {
   label: string;
   icon: React.ComponentProps<typeof Feather>['name'];
 }[] = [
-  { type: 'expense', label: 'Expense', icon: 'arrow-up-right' },
+  { type: 'expense', label: 'Add expense', icon: 'arrow-up-right' },
   { type: 'income', label: 'Income', icon: 'arrow-down-left' },
   { type: 'transfer', label: 'Transfer', icon: 'repeat' },
 ];
@@ -31,14 +30,14 @@ function Action({ type, label, icon, ink }: (typeof ACTIONS)[number] & { ink: st
       onPress={() => pushOnce(`/add-transaction?type=${type}`)}
       onPressIn={onPressIn}
       onPressOut={onPressOut}
-      style={[styles.wrap, { flexBasis: 88 * Math.max(1, fontScale) }]}
+      style={[styles.wrap, { flexBasis: (primary ? 96 : 76) * Math.max(1, fontScale) }]}
       accessibilityRole="button"
-      accessibilityLabel={`Add ${label.toLowerCase()}`}
+      accessibilityLabel={type === 'expense' ? 'Add expense' : `Add ${label.toLowerCase()}`}
     >
       <Animated.View
         style={[styles.action, primary && { backgroundColor: ink, borderColor: ink }, animatedStyle]}
       >
-        <Feather name={icon} size={16} color={primary ? theme.colors.white : theme.colors.ink} />
+        <Feather name={icon} size={14} color={primary ? theme.colors.white : theme.colors.ink} />
         <Text style={[styles.label, primary && styles.labelPrimary]}>{label}</Text>
       </Animated.View>
     </Pressable>
@@ -62,19 +61,19 @@ const styles = StyleSheet.create({
   wrap: { flexGrow: 1, flexBasis: 88 },
   action: {
     minHeight: 48,
-    paddingHorizontal: 8,
+    paddingHorizontal: 6,
     borderRadius: 18,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
-    backgroundColor: GLASS.fillStrong,
-    borderWidth: 1,
-    borderColor: GLASS.edge,
+    gap: 4,
+    backgroundColor: theme.colors.surface,
+    borderWidth: 0,
   },
   label: {
     fontFamily: theme.font.bodyMedium,
-    fontSize: 13,
+    flexShrink: 1,
+    fontSize: 12,
     color: theme.colors.textPrimary,
   },
   labelPrimary: { color: theme.colors.white },
