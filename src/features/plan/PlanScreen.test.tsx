@@ -207,7 +207,7 @@ async function render() {
 
 /** The Home loan EMI row: it ends in a Pay pill and opens the pay sheet. */
 /** Switch Plan's tab the way the segmented control does. */
-const openTab = (tree: ReactTestRenderer, tab: 'overview' | 'upcoming' | 'budgets' | 'goals' | 'debt') =>
+const openTab = (tree: ReactTestRenderer, tab: 'overview' | 'upcoming' | 'money' | 'debt') =>
   act(() => tree.root.findByType(require('./PlanNavigation').PlanNavigation).props.onChange(tab));
 
 const payRow = (tree: ReactTestRenderer) =>
@@ -244,7 +244,7 @@ describe('Plan tab', () => {
       const tree = await render();
       const { PlanNavigation } = require('./PlanNavigation');
       const { BudgetJars } = require('./BudgetJars');
-      expect(tree.root.findByType(PlanNavigation).props.value).toBe('budgets');
+      expect(tree.root.findByType(PlanNavigation).props.value).toBe('money');
       const jars = tree.root.findByType(BudgetJars);
       expect(jars.props.limit).toBe(jars.props.summary.rows.length + 1);
       act(() => jars.props.onBudget('b2'));
@@ -257,6 +257,18 @@ describe('Plan tab', () => {
     } finally {
       mockTab = undefined;
     }
+  });
+  it('opens the schedule from the next payment inside the forecast card', async () => {
+    const tree = await render();
+    const button = tree.root.findAll(
+      (n) =>
+        typeof n.props.accessibilityLabel === 'string' &&
+        n.props.accessibilityLabel.startsWith('Next payment ') &&
+        n.props.onPress
+    )[0];
+    expect(button).toBeDefined();
+    act(() => button.props.onPress());
+    expect(tree.root.findByType(require('./PlanNavigation').PlanNavigation).props.value).toBe('upcoming');
   });
   it('opens a pending refund purchase over Plan', async () => {
     const tree = await render();
@@ -272,12 +284,12 @@ describe('Plan tab', () => {
       'Spending accounts',
       'Covered',
       'Upcoming payments',
+      'Debt',
+      'People',
+      'Friends',
       'Budgets',
       'Goals',
-      'Debt',
-      'Debt-free ' + new Date(2035, 5, 5).toLocaleDateString(undefined, { month: 'short', year: 'numeric' }),
-      'People & habit',
-      'Friends',
+      'Daily spending habit',
       'Spend streak',
     ];
     const positions: number[] = [];
@@ -305,7 +317,7 @@ describe('Plan tab', () => {
     expect(shown.some((t) => t.includes('Loan EMI'))).toBe(false);
     // The Goals tab holds what-if: it cuts the biggest category it can, not the EMI (10% of Food's ₹20,000).
     const goalsTab = await render();
-    openTab(goalsTab, 'goals');
+    openTab(goalsTab, 'money');
     expect(texts(goalsTab)).toContain('Food −10% saves ₹2,000 a month');
     // 25% of the home loan's principal repaid.
     expect(shown.some((t) => t.includes('25% repaid'))).toBe(true);
@@ -321,7 +333,7 @@ describe('Plan tab', () => {
         day: 'numeric',
         month: 'short',
       });
-      expect(shown).toContain(`Short on ${short}`);
+      expect(shown).toContain(`First shortfall · ${short}`);
       expect(shown).toContain('₹15,450 more needed');
     } finally {
       mockBank = 3000000;
@@ -360,7 +372,7 @@ describe('Plan tab', () => {
     act(() => byLabel('See all — Budgets').props.onPress());
     expect(router.push).not.toHaveBeenCalled();
     expect(tree.root.findByType(require('@/features/plan/PlanNavigation').PlanNavigation).props.value).toBe(
-      'budgets'
+      'money'
     );
     act(() => byLabel('See all — Budgets').props.onPress());
     expect(router.push).toHaveBeenLastCalledWith('/budgets');
@@ -382,7 +394,7 @@ describe('Plan tab', () => {
     act(() => byLabel('Recurring').props.onPress());
     expect(router.push).toHaveBeenLastCalledWith('/recurring');
     // Goals: the full goals page and the what-if sandbox.
-    openTab(tree, 'goals');
+    openTab(tree, 'money');
     act(() => byLabel('See all — Goals').props.onPress());
     expect(router.push).toHaveBeenLastCalledWith('/savings-goals');
     act(() => byLabel('Open the what-if sandbox').props.onPress());
@@ -405,29 +417,28 @@ describe('Plan tab', () => {
     try {
       const tree = await render();
       expect(tree.root.findAll((n) => n.props.testID === 'runway').length).toBeGreaterThan(0);
-      expect(texts(tree)).not.toContain('People & habit');
+      expect(texts(tree)).not.toContain('Daily spending habit');
       expect(router.setParams).toHaveBeenCalledWith({ tab: undefined });
     } finally {
       mockTab = undefined;
     }
   });
 
-  it('has five tabs, and only the chosen one is drawn', async () => {
+  it('has four tabs, and only the chosen one is drawn', async () => {
     const tree = await render();
     const navigation = require('./PlanNavigation');
     expect(navigation.PLAN_TABS.map((o: { label: string }) => o.label)).toEqual([
       'Overview',
       'Upcoming',
-      'Budgets',
-      'Goals',
+      'Money plan',
       'Debt',
     ]);
-    expect(texts(tree)).toContain('People & habit');
+    expect(texts(tree)).toContain('Daily spending habit');
     openTab(tree, 'upcoming');
-    expect(texts(tree)).not.toContain('People & habit');
+    expect(texts(tree)).not.toContain('Daily spending habit');
     expect(tree.root.findAll((n) => n.props.testID === 'runway').length).toBeGreaterThan(0);
     openTab(tree, 'overview');
-    expect(texts(tree)).toContain('People & habit');
+    expect(texts(tree)).toContain('Daily spending habit');
   });
 
   it('colours Coming up rows by how soon they are due', async () => {

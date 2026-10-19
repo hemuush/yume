@@ -26,9 +26,10 @@ const texts = (tree: ReactTestRenderer) =>
 
 afterEach(() => jest.restoreAllMocks());
 
-it.each([false, true])('keeps Budgets among the five destinations (stacked: %s)', (stacked) => {
+it.each([false, true])('keeps all four destinations visible (stacked: %s)', (stacked) => {
   const onChange = jest.fn();
-  const tree = render(<PlanNavigation value="budgets" onChange={onChange} stacked={stacked} />);
+  const tree = render(<PlanNavigation value="money" onChange={onChange} stacked={stacked} />);
+  expect(PLAN_TABS).toHaveLength(4);
   expect(texts(tree)).toEqual(expect.arrayContaining(PLAN_TABS.map((t) => t.label)));
   const debt = tree.root.findAll(
     (n) =>

@@ -3,7 +3,8 @@
  * hidden, and the runway without a spending account. The full screen is in PlanScreen.test.tsx.
  */
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
-import { Text } from 'react-native';
+import { Text, View, StyleSheet } from 'react-native';
+import { styles as planStyles, RUNWAY_HEIGHT } from './plan.styles';
 
 jest.setTimeout(30000);
 jest.mock('@/components/ModalSheet', () => ({
@@ -15,6 +16,7 @@ jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMoc
 let mockHide = false;
 jest.mock('@/theme/PrivacyContext', () => ({ usePrivacy: () => ({ hideAmounts: mockHide }) }));
 
+import { PeopleTile } from './PlanTiles';
 import { BudgetJars } from './BudgetJars';
 import { DebtPath } from './DebtPath';
 import { GoalsStrip } from './PlanGoals';
@@ -323,6 +325,37 @@ describe('Runway card', () => {
     expect(tree.root.findAllByType(ForecastDetails)).toHaveLength(0);
   });
 
+  it('anchors payment markers on closing balances inside the chart bounds', () => {
+    const runway = buildRunway(
+      10000,
+      [
+        {
+          key: 'bill',
+          title: 'Bill',
+          kind: 'bill',
+          dueDate: '2026-10-09',
+          amountMinor: 20000,
+          route: '/recurring',
+        },
+      ],
+      '2026-10-09',
+      30
+    );
+    const tree = render(<RunwayCard dueSoon={dueSoon} runway={runway} hasAccounts days={30} showChart />);
+    act(() =>
+      tree.root.findByProps({ testID: 'runway' }).props.onLayout({ nativeEvent: { layout: { width: 280 } } })
+    );
+    const pins = tree.root
+      .findAllByType(View)
+      .filter((n) => Array.isArray(n.props.style) && n.props.style[0] === planStyles.pin);
+    expect(pins).toHaveLength(1);
+    const marker = StyleSheet.flatten(pins[0].props.style);
+    expect(marker.left).toBeGreaterThanOrEqual(0);
+    expect(marker.left + marker.width).toBeLessThanOrEqual(280);
+    expect(marker.top + marker.height / 2).toBeCloseTo(RUNWAY_HEIGHT - 10);
+    expect(texts(tree).some((t) => t.includes('Dashed line: zero balance'))).toBe(true);
+  });
+
   it('hides a flat chart and says nothing is due', () => {
     const tree = render(
       <RunwayCard
@@ -412,4 +445,23 @@ it('keeps every budget and the add action available beyond the six-tile preview'
   const add = tree.root.findAll((n) => n.props.onPress && n.props.accessibilityLabel === 'Add a budget')[0];
   act(() => add.props.onPress());
   expect(onAdd).toHaveBeenCalledTimes(1);
+});
+
+it('shows both People balances without netting one against the other', () => {
+  const tree = render(
+    <PeopleTile
+      state={{ kind: 'balances', count: 2, owedToYouMinor: 50000, youOweMinor: 20000 }}
+      people={[]}
+      onOpen={jest.fn()}
+    />
+  );
+  expect(texts(tree)).toEqual(expect.arrayContaining(['To collect', 'To pay back', '₹500', '₹200']));
+  expect(
+    tree.root.findAll(
+      (n) =>
+        typeof n.props.accessibilityLabel === 'string' &&
+        n.props.accessibilityLabel.includes('500 to collect') &&
+        n.props.accessibilityLabel.includes('200 to pay back')
+    ).length
+  ).toBeGreaterThan(0);
 });

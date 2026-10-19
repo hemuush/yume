@@ -170,3 +170,11 @@ it('clears a type-only filter and returns to All', async () => {
     tree.root.findAll((node) => node.props.accessibilityLabel === 'Clear all Activity filters')
   ).toHaveLength(0);
 });
+
+it('does not mount pending refund expectations in Activity', async () => {
+  mockComparison.fail = false;
+  const tree = await render();
+  const { PendingRefunds } = require('./PendingRefunds');
+  expect(tree.root.findAllByType(PendingRefunds)).toHaveLength(0);
+  act(() => tree.unmount());
+});

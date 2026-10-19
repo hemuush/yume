@@ -6,16 +6,15 @@ import { theme } from '@/constants/theme';
 import { haptics } from '@/lib/haptics';
 import { withPressed } from '@/lib/pressed';
 
-export type PlanTab = 'overview' | 'upcoming' | 'budgets' | 'goals' | 'debt';
+export type PlanTab = 'overview' | 'upcoming' | 'money' | 'debt';
 export const PLAN_TABS: { label: string; value: PlanTab }[] = [
   { label: 'Overview', value: 'overview' },
   { label: 'Upcoming', value: 'upcoming' },
-  { label: 'Budgets', value: 'budgets' },
-  { label: 'Goals', value: 'goals' },
+  { label: 'Money plan', value: 'money' },
   { label: 'Debt', value: 'debt' },
 ];
 
-/** Keep every destination visible; enlarged labels get three pills above two. */
+/** Keep every destination visible; enlarged labels get two rows of two pills. */
 export function PlanNavigation({
   value,
   onChange,
@@ -28,7 +27,7 @@ export function PlanNavigation({
   if (!stacked) return <SegmentedControl options={PLAN_TABS} value={value} onChange={onChange} onBand />;
   return (
     <View style={styles.track}>
-      {[PLAN_TABS.slice(0, 3), PLAN_TABS.slice(3)].map((row, index) => (
+      {[PLAN_TABS.slice(0, 2), PLAN_TABS.slice(2)].map((row, index) => (
         <View key={index} style={styles.row}>
           {row.map((tab) => (
             <Pressable
