@@ -245,3 +245,31 @@ it('adds another account from the free preview slot', () => {
   expect(add).toHaveBeenCalledTimes(1);
   act(() => r.unmount());
 });
+
+it('shows only two everyday previews while keeping the complete account list reachable', () => {
+  const onOpenAccounts = jest.fn();
+  const tree = render({
+    compact: true,
+    accounts: [
+      account('Pot', 'savings', 999900),
+      account('SBI', 'bank', 100000),
+      account('Cash', 'cash', 20000),
+      account('Wise', 'wallet', 10000, 'USD'),
+    ],
+    onOpenAccounts,
+  });
+  expect(texts(tree)).toEqual(expect.arrayContaining(['Accounts', 'SBI', 'Cash']));
+  expect(texts(tree)).not.toContain('Pot');
+  expect(texts(tree)).not.toContain('Wise');
+  act(() =>
+    tree.root
+      .find((n) => n.props.accessibilityLabel === 'See all — Accounts' && n.props.onPress)
+      .props.onPress()
+  );
+  expect(onOpenAccounts).toHaveBeenCalledTimes(1);
+});
+it('masks a savings-only preview and never invents an everyday balance', () => {
+  const tree = render({ compact: true, accounts: [account('Pot', 'savings', 999900)] });
+  expect(texts(tree)).toContain('Pot');
+  expect(texts(tree).join(' ')).not.toContain('9,999');
+});

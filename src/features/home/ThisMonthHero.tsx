@@ -273,26 +273,14 @@ export function ThisMonthHero({
       : 'Free to use';
   const headMinor = over ? slices.overMinor : freeMinor;
   const headNeg = over || freeMinor < 0;
-  // "of ₹2,62,393": the pool is income plus what carried over. A carried shortfall only lowers the headline and is
-  // not part of the pool, so then the caption says what was taken off instead. The full sum (income, carried over,
-  // spent, set aside, pace) is one tap away under "Details".
-  const poolCaption = displayed.carryMinor >= 0 ? `of ${formatMoney(poolMinor)}` : null;
+  // Keep the caption about deductions; the disclosure retains the full income/carryover sum.
   const headCaption = !slices.hasIncome
     ? 'Add income to see what is free'
     : over
       ? 'more went out than came in'
       : displayed.surplusMinor < 0 && !hasDue
         ? 'below zero'
-        : (poolCaption ??
-          `after ${
-            hasDue
-              ? hideAmounts
-                ? 'deductions and bills'
-                : 'spending, savings and bills'
-              : hideAmounts
-                ? 'deductions'
-                : 'spending and savings'
-          }`);
+        : `after ${hasDue ? (hideAmounts ? 'deductions and bills' : 'spending, savings and bills') : hideAmounts ? 'deductions' : 'spending and savings'}`;
 
   const shownToday = displayed.today;
   const shownPace = displayed.pace;
@@ -345,32 +333,6 @@ export function ThisMonthHero({
               <Text style={styles.headValue}>—</Text>
             )}
           </View>
-          {shownToday && (
-            <View style={[styles.chip, styles.chipClip, todayOverMinor > 0 && styles.chipOver]}>
-              <Feather
-                name="clock"
-                size={13}
-                color={todayOverMinor > 0 ? theme.colors.expenseText : theme.colors.textSecondary}
-              />
-              <Text style={[styles.chipText, todayOverMinor > 0 && styles.chipTextOver]}>
-                {todayOverMinor > 0
-                  ? `${formatMoney(shownToday.spentMinor)} today · ${formatMoney(todayOverMinor)} over`
-                  : `${formatMoney(shownToday.goalMinor - shownToday.spentMinor)} left today`}
-              </Text>
-              {todayOverMinor <= 0 && shownToday.goalMinor > 0 && (
-                <View
-                  testID="home-today-meter"
-                  style={[
-                    styles.chipMeter,
-                    {
-                      // Refunds can make today's net spend negative: the meter just stays empty.
-                      width: `${Math.max(0, Math.min(100, (shownToday.spentMinor / shownToday.goalMinor) * 100))}%`,
-                    },
-                  ]}
-                />
-              )}
-            </View>
-          )}
         </View>
 
         {/* The caption and its Details link share one line; the caption is already in the figure's spoken label. */}
@@ -394,7 +356,7 @@ export function ThisMonthHero({
               accessibilityState={{ expanded: showWorking }}
               accessibilityLabel="How this adds up"
             >
-              <Text style={styles.howText}>Details</Text>
+              <Text style={styles.howText}>How this adds up</Text>
               <Feather
                 name={showWorking ? 'chevron-up' : 'chevron-down'}
                 size={13}
@@ -479,6 +441,32 @@ export function ThisMonthHero({
             />
           )}
         </View>
+        {shownToday && (
+          <View style={[styles.chip, styles.chipClip, todayOverMinor > 0 && styles.chipOver]}>
+            <Feather
+              name="clock"
+              size={13}
+              color={todayOverMinor > 0 ? theme.colors.expenseText : theme.colors.textSecondary}
+            />
+            <Text style={[styles.chipText, todayOverMinor > 0 && styles.chipTextOver]}>
+              {todayOverMinor > 0
+                ? `${formatMoney(shownToday.spentMinor)} today · ${formatMoney(todayOverMinor)} over`
+                : `${formatMoney(shownToday.goalMinor - shownToday.spentMinor)} left today`}
+            </Text>
+            {todayOverMinor <= 0 && shownToday.goalMinor > 0 && (
+              <View
+                testID="home-today-meter"
+                style={[
+                  styles.chipMeter,
+                  {
+                    // Refunds can make today's net spend negative: the meter just stays empty.
+                    width: `${Math.max(0, Math.min(100, (shownToday.spentMinor / shownToday.goalMinor) * 100))}%`,
+                  },
+                ]}
+              />
+            )}
+          </View>
+        )}
       </ReanimatedAnimated.View>
 
       <HeroActions />

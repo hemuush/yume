@@ -1,3 +1,4 @@
+import { formatMoney } from '@/lib/money';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View, StyleSheet, RefreshControl } from 'react-native';
 import { Text } from '@/components/Text';
@@ -24,13 +25,11 @@ import {
 } from '@/db/reports';
 import { monthPace } from '@/lib/pace';
 import { getUserName, getDailySpendingGoal, getDefaultCurrency } from '@/db/settings';
-import { listBudgetsForMonth, BudgetProgress } from '@/db/budgets';
 import { savingsAccountIdsOf } from '@/lib/account';
 import { privateComparison, isSavingsEntry } from '@/lib/privateSummary';
 import { roundedMinor } from '@/lib/round';
 import { savingsRatePct } from '@/lib/savingsRate';
-import { Account, Category, Transaction, Loan, RecurringRule, SavingsGoal } from '@/types';
-import { listSavingsGoals } from '@/db/savingsGoals';
+import { Account, Category, Transaction, Loan, RecurringRule } from '@/types';
 import { theme } from '@/constants/theme';
 import { useTabScrollPad } from '@/lib/uiScale';
 import { useReduceMotion } from '@/lib/useReduceMotion';
@@ -58,11 +57,11 @@ import { ThisMonthHero } from '@/features/home/ThisMonthHero';
 import { ThisMonthHeroSkeleton, CardRowsSkeleton } from '@/features/home/HomeSkeleton';
 import { MonthPill } from '@/features/home/MonthPill';
 import { HomeWallpaper } from '@/features/home/HomeWallpaper';
-import { WhereItWent } from '@/features/home/WhereItWent';
 import { HomeAccounts } from '@/features/home/HomeAccounts';
 import { SpendBars } from '@/features/home/SpendBars';
 import { spendBarsStart } from '@/features/home/spendBarData';
 import { Glass } from '@/components/Glass';
+import { cardSurface } from '@/components/CardSurface';
 import { SuuRefreshBadge } from '@/features/home/SuuRefreshBadge';
 import { Section } from '@/components/Section';
 import { SCREEN } from '@/components/screenStyles';
@@ -107,7 +106,6 @@ export default function DashboardScreen() {
   );
   const [loanProgress, setLoanProgress] = useState<Awaited<ReturnType<typeof getLoanProgress>>>([]);
   const [cardBills, setCardBills] = useState<Awaited<ReturnType<typeof listCardCycles>>>([]);
-  const [budgets, setBudgets] = useState<BudgetProgress[]>([]);
   // Spending per day, from a week back (or the 1st) to today: the Week/Month bars.
   // The default currency: Home's in-hand total counts only accounts in it.
   const [currency, setCurrency] = useState('INR');
@@ -117,7 +115,6 @@ export default function DashboardScreen() {
   const [openingRefund, setOpeningRefund] = useState<string | null>(null);
   const refundRequest = useRef(0);
   const openingRefundRef = useRef(false);
-  const [goals, setGoals] = useState<SavingsGoal[]>([]);
   const [dailySpend, setDailySpend] = useState<{ date: string; totalMinor: number }[]>([]);
   // Both are always about today, not the browsed period (like Budgets/Goals below); `dailyGoal` stays
   // `null` (strip renders nothing) until the user sets one in Settings → Money.
@@ -275,8 +272,6 @@ export default function DashboardScreen() {
           progress,
           cycles,
           name,
-          budgetList,
-          goalList,
           daily,
           todaySpend,
           dailyGoal,
@@ -295,10 +290,7 @@ export default function DashboardScreen() {
           getLoanProgress(),
           listCardCycles().catch(() => []),
           getUserName(),
-          // Budgets, goals, today's spend and the daily goal are always about *now*, not the browsed period
-          // (a budget is this calendar month; a goal has no period).
-          listBudgetsForMonth(undefined, hideAmounts),
-          listSavingsGoals(),
+          // Daily spending always follows today, independently of the browsed period.
           getDailyExpenseTotals(
             { start: spendBarsStart(toLocalIsoDate(new Date())), end: toLocalIsoDate(new Date()) },
             hideAmounts
@@ -339,8 +331,6 @@ export default function DashboardScreen() {
         setLoanProgress(progress);
         setCardBills(cycles);
         setUserNameState(name);
-        setBudgets(budgetList);
-        setGoals(goalList);
         setRefunds(refundResult.rows);
         setRefundError(refundResult.failed);
         setDailySpend(daily);
@@ -568,7 +558,7 @@ export default function DashboardScreen() {
         )}
 
         <View style={styles.heroGap}>
-          {loaded ? (
+          {loaded && historyAccounts.length === 0 ? null : loaded ? (
             <Animated.View entering={sectionEntering(0)}>
               <ThisMonthHero
                 periodKey={`${loadedCursor.granularity}:${loadedCursor.offset}`}
@@ -620,57 +610,58 @@ export default function DashboardScreen() {
           </>
         )}
 
-        {/* What needs you first (upcoming bills, budgets near their limit, goals), then spending, then history. */}
+        {/* Accounts stay visible directly below the balance. */}
         {loaded && (
           <Animated.View entering={sectionEntering(1)}>
+            <HomeAccounts
+              compact
+              accounts={accounts}
+              currency={currency}
+              onOpenAccounts={() => router.push('/profile')}
+              onOpenAccount={setSummaryAccount}
+              onAddAccount={() => setAddAccountVisible(true)}
+            />
+          </Animated.View>
+        )}
+
+        {/* Next payments and pending refunds stay visible without tabs. */}
+        {loaded && historyAccounts.length > 0 && (
+          <Animated.View entering={sectionEntering(2)}>
             <HomeGlance
               upcoming={upcoming}
-              budgets={budgets}
-              goals={goals}
               refunds={refunds}
               refundError={refundError}
               openingRefund={openingRefund}
               onOpenRefund={(id) => void openRefund(id)}
               onRetryRefunds={() => void load(cursorRef.current)}
-              budgetAlert={needsYou.some((i) => i.action === 'budgets')}
               rowEntering={rowEntering}
               onSeeMoreUpcoming={() => router.navigate({ pathname: '/plan', params: { tab: 'upcoming' } })}
             />
           </Animated.View>
         )}
 
-        {loaded && comparison && (
-          <Animated.View entering={sectionEntering(2)}>
-            <Section title="Spending" onSeeAll={openSpendingReports}>
-              <WhereItWent
-                // A new period starts on its own biggest category, not whichever place was picked before.
-                key={`${loadedCursor.granularity}:${loadedCursor.offset}`}
-                breakdown={comparison.current.categoryBreakdown}
-                iconFor={(id) => categoriesById.get(id)?.icon}
-                spentMinor={dispExpense}
-                onOpenReports={openSpendingReports}
-                onOpenCategory={(id) =>
-                  router.push({
-                    pathname: '/category/[id]',
-                    params: { id, g: loadedCursor.granularity, o: String(loadedCursor.offset) },
-                  })
-                }
-                onAddExpense={() => router.push('/add-transaction?type=expense')}
-                // The bars are always about now (the last 7 days, this month), so only beside the current month.
-                footer={
-                  dailySpend.length > 0 &&
-                  loadedCursor.granularity === 'month' &&
-                  loadedCursor.offset === 0 ? (
-                    <SpendBars daily={dailySpend} today={todayIso} />
-                  ) : undefined
-                }
-              />
+        {loaded && comparison && historyAccounts.length > 0 && (
+          <Animated.View entering={sectionEntering(3)}>
+            <Section title="Your spending" onSeeAll={openSpendingReports}>
+              <Glass radius={24} style={[styles.spendingSnapshot, cardSurface.neutral]}>
+                {dailySpend.length > 0 &&
+                loadedCursor.granularity === 'month' &&
+                loadedCursor.offset === 0 ? (
+                  <SpendBars daily={dailySpend} today={todayIso} compact />
+                ) : (
+                  <>
+                    <Text style={styles.snapshotCaption}>Spent in this period</Text>
+                    <Text style={styles.snapshotValue}>{formatMoney(dispExpense)}</Text>
+                    <Text style={styles.snapshotCaption}>See Reports for categories and comparisons.</Text>
+                  </>
+                )}
+              </Glass>
             </Section>
           </Animated.View>
         )}
 
-        {loaded && (
-          <Animated.View entering={sectionEntering(3)}>
+        {loaded && historyAccounts.length > 0 && (
+          <Animated.View entering={sectionEntering(4)}>
             <Section title="Recent activity" onSeeAll={() => router.push('/transactions')}>
               {recent.length === 0 ? (
                 <EmptyState title="Nothing logged" subtitle="Try another period." />
@@ -684,6 +675,13 @@ export default function DashboardScreen() {
                       exiting={ROW_EXIT}
                     >
                       <RecentTransactionRow
+                        onPress={() => {
+                          refundRequest.current++;
+                          openingRefundRef.current = false;
+                          setOpeningRefund(null);
+                          setSummaryAccount(null);
+                          setRefundTx(tx);
+                        }}
                         currency={accountsById.get(tx.accountId)?.currency}
                         tx={tx}
                         category={categoryFor(tx.categoryId) ?? undefined}
@@ -698,19 +696,6 @@ export default function DashboardScreen() {
                 </Glass>
               )}
             </Section>
-          </Animated.View>
-        )}
-
-        {/* Accounts last: the money you hold, one tap from the full list. */}
-        {loaded && (
-          <Animated.View entering={sectionEntering(4)}>
-            <HomeAccounts
-              accounts={accounts}
-              currency={currency}
-              onOpenAccounts={() => router.push('/profile')}
-              onOpenAccount={setSummaryAccount}
-              onAddAccount={() => setAddAccountVisible(true)}
-            />
           </Animated.View>
         )}
       </Animated.ScrollView>
@@ -796,6 +781,19 @@ export default function DashboardScreen() {
 }
 
 const styles = StyleSheet.create({
+  spendingSnapshot: { marginHorizontal: 16, padding: 16, gap: 6 },
+  snapshotCaption: {
+    fontFamily: theme.font.body,
+    fontSize: 12,
+    lineHeight: 18,
+    color: theme.colors.textSecondary,
+  },
+  snapshotValue: {
+    fontFamily: theme.font.bodyLight,
+    fontSize: 30,
+    lineHeight: 36,
+    color: theme.colors.textPrimary,
+  },
   container: { flex: 1, backgroundColor: theme.colors.background },
   scroll: { flex: 1 },
   heroGap: { marginTop: 4 },

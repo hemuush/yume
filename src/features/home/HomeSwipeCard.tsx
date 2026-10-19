@@ -45,10 +45,9 @@ export interface SwipePage {
  * omitted. Height tracks the active page, not the tallest; a single page falls back to a plain Section.
  */
 export function HomeSwipeCard({ pages }: { pages: SwipePage[] }) {
-  const { fontScale } = useWindowDimensions();
+  const { width: windowWidth, fontScale } = useWindowDimensions();
   const { accent } = useAccent();
   const ink = homeInk(accent);
-  const tabScrollRef = useRef<ScrollView>(null);
   const [selectedKey, setSelectedKey] = useState<string | undefined>(pages[0]?.key);
   const [settledKey, setSettledKey] = useState<string | undefined>(pages[0]?.key);
   const [moving, setMoving] = useState(false);
@@ -78,7 +77,7 @@ export function HomeSwipeCard({ pages }: { pages: SwipePage[] }) {
   const heightStyle = useAnimatedStyle(() => (height.value > 0 ? { height: height.value } : {}));
   // The tab highlight slides to the active tab.
   const [trackWidth, setTrackWidth] = useState(0);
-  const [tabViewportWidth, setTabViewportWidth] = useState(0);
+  const wrapTabs = (cardWidth || windowWidth - 32) - 32 < pages.length * 74 * Math.max(1, fontScale);
   const tabX = useSharedValue(0);
   const tabCount = Math.max(1, pages.length);
   const tabWidth = trackWidth > 0 ? (trackWidth - TRACK_PAD * 2) / tabCount : 0;
@@ -88,19 +87,6 @@ export function HomeSwipeCard({ pages }: { pages: SwipePage[] }) {
     tabX.value = reduce || tabWidth === 0 ? x : withSpring(x, TAB_SPRING);
     return () => cancelAnimation(tabX);
   }, [shownIndex, tabWidth, reduce, tabX]);
-  useEffect(() => {
-    if (pages.length > 3 && tabViewportWidth > 0)
-      tabScrollRef.current?.scrollTo({
-        x: Math.max(
-          0,
-          Math.min(
-            TRACK_PAD + shownIndex * tabWidth - (tabViewportWidth - tabWidth) / 2,
-            Math.max(0, trackWidth - tabViewportWidth)
-          )
-        ),
-        animated: !reduce,
-      });
-  }, [shownIndex, tabWidth, tabViewportWidth, trackWidth, reduce, pages.length]);
   const highlightStyle = useAnimatedStyle(() => ({ transform: [{ translateX: tabX.value }] }));
   // The card can be re-measured (split-screen, font scale, rotation): keep the strip on the active page
   // rather than leaving it between two at the old offset.
@@ -164,17 +150,12 @@ export function HomeSwipeCard({ pages }: { pages: SwipePage[] }) {
 
   const tabTrack = (
     <View
-      style={[
-        styles.track,
-        pages.length > 3 && styles.scrollingTrack,
-        pages.length > 3 && {
-          minWidth: Math.max(tabViewportWidth, pages.length * 112 * Math.max(1, fontScale)),
-        },
-      ]}
+      style={[styles.track, wrapTabs && styles.trackWrapped]}
       accessibilityRole="tablist"
+      accessibilityLabel="Home overview tabs"
       onLayout={(e) => setTrackWidth(e.nativeEvent.layout.width)}
     >
-      {tabWidth > 0 && (
+      {tabWidth > 0 && !wrapTabs && (
         <ReanimatedAnimated.View
           style={[styles.highlight, { width: tabWidth, backgroundColor: ink }, highlightStyle]}
         />
@@ -183,16 +164,17 @@ export function HomeSwipeCard({ pages }: { pages: SwipePage[] }) {
         <Pressable
           key={p.key}
           onPress={() => goToPage(i)}
-          style={withPressed(styles.tab)}
-          // The pill is 34dp tall; the slop brings the touch target to 44dp without changing the look.
-          hitSlop={{ top: 5, bottom: 5 }}
+          style={withPressed([
+            styles.tab,
+            pages.length > 3 && styles.tabWithCount,
+            wrapTabs && styles.tabWrapped,
+            wrapTabs && i === safeIndex && { backgroundColor: ink },
+          ])}
           accessibilityRole="tab"
           accessibilityState={{ selected: i === safeIndex }}
           accessibilityLabel={p.alert ? `${p.label}, needs you` : p.label}
         >
-          <Text style={[styles.tabText, i === safeIndex && styles.tabTextActive]} numberOfLines={1}>
-            {p.label}
-          </Text>
+          <Text style={[styles.tabText, i === safeIndex && styles.tabTextActive]}>{p.label}</Text>
           {p.count != null && p.count > 0 ? (
             <View style={[styles.count, p.alert && styles.countAlert]}>
               <Text
@@ -216,20 +198,7 @@ export function HomeSwipeCard({ pages }: { pages: SwipePage[] }) {
   return (
     <View style={styles.wrap}>
       <View style={[styles.card, cardSurface.neutral]}>
-        {pages.length > 3 ? (
-          <ScrollView
-            ref={tabScrollRef}
-            horizontal
-            style={styles.tabViewport}
-            showsHorizontalScrollIndicator
-            accessibilityLabel="Home overview tabs"
-            onLayout={(e) => setTabViewportWidth(e.nativeEvent.layout.width)}
-          >
-            {tabTrack}
-          </ScrollView>
-        ) : (
-          tabTrack
-        )}
+        {tabTrack}
         <ReanimatedAnimated.View
           testID="home-swipe-pages"
           style={heightStyle}
@@ -328,16 +297,9 @@ const styles = StyleSheet.create({
     borderRadius: theme.radius.pill,
     backgroundColor: theme.colors.surfaceAlt,
   },
-  // The viewport owns the inset and rounded background; the wider content must not reach the card edge.
-  tabViewport: {
-    marginHorizontal: 12,
-    marginTop: 12,
-    marginBottom: 4,
-    borderRadius: theme.radius.pill,
-    backgroundColor: theme.colors.surfaceAlt,
-    overflow: 'hidden',
-  },
-  scrollingTrack: { margin: 0, marginBottom: 0, backgroundColor: 'transparent' },
+  trackWrapped: { flexWrap: 'wrap', borderRadius: 24, gap: 4 },
+  tabWithCount: { flexDirection: 'column', gap: 2, paddingVertical: 6 },
+  tabWrapped: { flexBasis: '45%', flexGrow: 1, flexDirection: 'row', gap: 6 },
   highlight: {
     position: 'absolute',
     top: TRACK_PAD,

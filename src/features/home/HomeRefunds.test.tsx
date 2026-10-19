@@ -112,21 +112,51 @@ it('expands all purchases and reports query failure with retry', () => {
   );
   expect(retry).toHaveBeenCalledTimes(1);
 });
-it('adds the Refunds tab only for pending data or a failed read', () => {
+it('shows compact refunds below Coming up only for pending data or a failed read', () => {
   const props = {
     upcoming: { items: [], next: null },
-    budgets: [],
-    goals: [],
-    budgetAlert: false,
     rowEntering: () => undefined,
     onSeeMoreUpcoming: jest.fn(),
   };
   const tree = render(<HomeGlance {...props} refunds={[refund('a')]} />);
-  expect(tree.root.findByProps({ testID: 'glance-pages' }).props.pages).toEqual([
-    expect.objectContaining({ key: 'refunds', count: 1 }),
-  ]);
+  expect(texts(tree)).toContain('₹80 refund pending');
+  expect(tree.root.findAll((n) => n.props.accessibilityRole === 'tab')).toHaveLength(0);
   act(() => tree.update(<HomeGlance {...props} refunds={[]} />));
-  expect(tree.root.findByProps({ testID: 'glance-pages' }).props.pages).toHaveLength(0);
+  expect(texts(tree)).not.toContain('refund pending');
   act(() => tree.update(<HomeGlance {...props} refunds={[]} refundError />));
-  expect(tree.root.findByProps({ testID: 'glance-pages' }).props.pages[0].key).toBe('refunds');
+  expect(texts(tree)).toContain('Couldn’t load refunds');
+});
+
+it('previews two payments without tabs and keeps the full schedule reachable', () => {
+  const { router } = require('expo-router');
+  const item = (key: string) => ({
+    key,
+    icon: 'file-text' as const,
+    iconBg: '#fff',
+    title: key,
+    subtitle: 'Due today',
+    amountMinor: 10000,
+    sign: '-' as const,
+    sortDate: '2026-10-19',
+    route: '/recurring' as const,
+    urgent: true,
+    payable: false,
+    pinned: true,
+  });
+  const all = jest.fn();
+  const tree = render(
+    <HomeGlance
+      upcoming={{ items: [item('First'), item('Second'), item('Third')], next: null }}
+      rowEntering={() => undefined}
+      onSeeMoreUpcoming={all}
+    />
+  );
+  expect(texts(tree)).toContain('First');
+  expect(texts(tree)).toContain('Second');
+  expect(texts(tree)).not.toContain('Third');
+  const { UpcomingRow } = require('./UpcomingRow');
+  act(() => tree.root.findAllByType(UpcomingRow)[0].props.onPress());
+  expect(router.push).toHaveBeenCalledWith('/recurring');
+  press(tree, 'See all — Coming up');
+  expect(all).toHaveBeenCalledTimes(1);
 });
