@@ -155,10 +155,22 @@ export async function updateRecurringRule(id: string, input: RecurringRuleInput)
       ? (current.anchor_day ?? dayOfIsoDate(input.nextRunDate))
       : dayOfIsoDate(input.nextRunDate);
   await db.withTransactionAsync(async (tx) => {
-    if (input.type !== 'expense' || input.frequency !== 'yearly') {
-      const linked = await tx.getFirstAsync('SELECT goal_id FROM annual_bill_goals WHERE rule_id = ?', [id]);
-      if (linked)
+    const linked = await tx.getFirstAsync<{ funding_currency: string | null; bill_currency: string | null }>(
+      `SELECT funding.currency AS funding_currency, bill.currency AS bill_currency
+       FROM annual_bill_goals b
+       LEFT JOIN savings_goals g ON g.id = b.goal_id
+       LEFT JOIN accounts funding ON funding.id = g.linked_account_id
+       LEFT JOIN accounts bill ON bill.id = ?
+       WHERE b.rule_id = ?`,
+      [input.accountId, id]
+    );
+    if (linked) {
+      if (input.type !== 'expense' || input.frequency !== 'yearly')
         throw new Error('Unlink the preparation goal before changing this bill’s type or frequency.');
+      if (!linked.funding_currency || linked.funding_currency !== linked.bill_currency)
+        throw new Error(
+          'The bill and preparation account must use the same currency. Unlink the preparation goal before changing currency.'
+        );
     }
     await tx.runAsync(
       `UPDATE recurring_rules SET

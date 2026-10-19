@@ -2,12 +2,8 @@ import { getDb, AppDb } from './client';
 import { sensitiveOf } from './spendSql';
 import { newId } from '@/lib/id';
 import { assertValidIsoDate, toLocalIsoDate } from '@/lib/date';
-import { rebuildAttentionNotificationsAfterCommit } from './afterCommit';
-import {
-  assertValidTransactionInput,
-  insertTransactionRow,
-  checkOverspendForNewTransaction,
-} from './transactions';
+import { rebuildAttentionNotificationsAfterCommit, rebuildNotificationsAfterCommit } from './afterCommit';
+import { assertValidTransactionInput, insertTransactionRow } from './transactions';
 
 export interface ExpectedRefund {
   id: string;
@@ -161,7 +157,7 @@ export async function receiveRefund(
 ): Promise<void> {
   assertValidIsoDate(input.date);
   const db = await getDb();
-  let posted: Parameters<typeof assertValidTransactionInput>[0] | null = null;
+  let createdReceipt = false;
   await db.withTransactionAsync(async (tx) => {
     const refund = await readOn(tx, transactionId);
     const purchase = await tx.getFirstAsync<{ category_id: string; date: string; note: string }>(
@@ -218,24 +214,26 @@ export async function receiveRefund(
     if (!Number.isSafeInteger(amount) || amount <= 0 || amount > refund.remainingMinor)
       throw new Error('Receive no more than the remaining expected refund.');
     if (!receiptTransactionId) {
-      posted = {
-        type: 'income',
+      const posted = {
+        type: 'income' as const,
         isRefund: true,
         categoryId: purchase.category_id,
         accountId: input.accountId,
         amountMinor: amount,
         date: input.date,
-        note: `Refund: ${purchase.note || refund.label}`,
+        note: purchase.note,
       };
       await assertValidTransactionInput(posted, tx);
       receiptTransactionId = await insertTransactionRow(tx, posted);
+      createdReceipt = true;
     }
     await tx.runAsync(
       'INSERT INTO refund_receipts (id, expectation_id, transaction_id, created_transaction) VALUES (?, ?, ?, ?)',
       [newId(), refund.id, receiptTransactionId, input.existingRefundId ? 0 : 1]
     );
   });
-  if (posted) await checkOverspendForNewTransaction(posted);
+  // A receipt changes follow-ups regardless of its ledger date. One rebuild also updates today's log nudge.
+  if (createdReceipt) await rebuildNotificationsAfterCommit();
   else await rebuildAttentionNotificationsAfterCommit('refundAlerts');
 }
 export async function closeExpectedRefund(transactionId: string): Promise<void> {

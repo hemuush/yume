@@ -1,5 +1,9 @@
 # Documentation index
 
+See the [19 October re-audit fixes](REAUDIT_FIXES_2026_10_19.md) for the seven-finding resolution checklist and current validation. The [19 October code re-audit](CODE_REAUDIT_2026_10_19.md) preserves the reproduced findings and audit baseline, including the reopened spending-alert privacy issue.
+
+The [19 October audit fixes](AUDIT_FIXES_2026_10_19.md) records the earlier eight-finding implementation checklist and its validation. The [18 October code audit](CODE_AUDIT_2026_10_18.md) preserves the original findings and baseline results.
+
 See the [16 October app audit](APP_AUDIT_2026_10_16.md) for popup validation, preference-race fixes, startup privacy gating and outstanding device checks.
 
 See [16 October morning notification fix](NOTIFICATION_FIX_2026_10_16.md) for current reminder behaviour, corrections and verification limits.

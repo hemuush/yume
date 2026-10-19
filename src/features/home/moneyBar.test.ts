@@ -1,4 +1,4 @@
-import { moneyBarSegments } from './moneyBar';
+import { moneyBarSegments } from './moneyBarSegments';
 import { heroSlices, withoutSavings } from './heroSlices';
 
 describe('moneyBarSegments', () => {

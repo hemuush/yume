@@ -17,6 +17,7 @@ const streamA: SubscriptionSuggestion = {
   icon: 'tag',
   color: '#C9B8FF',
   accountId: 'bank',
+  currency: 'INR',
   amountMinor: 199900,
   date: '2026-09-09',
   note: '',
@@ -52,6 +53,11 @@ async function render(props: Partial<React.ComponentProps<typeof SuggestionsList
 }
 
 describe('SuggestionsList', () => {
+  it('formats foreign suggestions in their own currency', async () => {
+    const shown = texts(await render({ suggestions: [{ ...wifi, currency: 'USD', amountMinor: 10000 }] }));
+    expect(shown.some((t) => t.includes('$100 each month'))).toBe(true);
+    expect(shown.some((t) => t.includes('₹100'))).toBe(false);
+  });
   it('describes each suggestion by where it came from', async () => {
     const shown = texts(await render());
     expect(shown).toContain('Not set up yet');

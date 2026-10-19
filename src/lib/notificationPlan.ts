@@ -38,6 +38,10 @@ export interface QueuedAlert {
   body: string;
   extra: string;
   route: NotificationRoute;
+  /** Re-resolve spending copy against live data/privacy before scheduling. Older queues lack this. */
+  source?:
+    | { kind: 'budget'; budgetId: string; periodMonth: string; level: 'near' | 'over' }
+    | { kind: 'spike'; categoryId: string; periodMonth: string };
 }
 
 /** A borrowed loan's next installment. */

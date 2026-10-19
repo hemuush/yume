@@ -11,7 +11,7 @@ import { theme } from '@/constants/theme';
 import { timing } from '@/lib/animation';
 import { useReduceMotion } from '@/lib/useReduceMotion';
 import type { HeroSlices } from './heroSlices';
-import { moneyBarSegments, MoneyBarSegment } from './moneyBar';
+import { moneyBarSegments, MoneyBarSegment } from './moneyBarSegments';
 
 const GROW_MS = 700;
 

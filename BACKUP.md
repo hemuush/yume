@@ -2,9 +2,10 @@
 
 ## Current backup contract
 
-- Backups are plain JSON, format version 1, containing the tables explicitly listed in [backup.ts](src/lib/backup.ts). Recently deleted records are not included. Sharing a copy sends it to the destination the user selects.
+- New backups are plain JSON, format version 3, containing the tables explicitly listed in [backup.ts](src/lib/backup.ts). Format-1 and format-2 files remain readable. Recently deleted records are not included. Sharing a copy sends it to the destination the user selects.
 - Android folder access uses a persisted storage grant. Choosing a folder scans existing valid files before a write; newer folder data requires an explicit choice rather than silent replacement. Restore replaces records; it does not merge ledgers.
 - Snapshot table reads are serialized in one exclusive database section. Restore validates data and foreign-key consistency; unknown columns and tables emptied by older backups are reported.
+- Restore repairs exact legacy labels on app-created linked refund receipts inside the restore transaction, matching startup repair. Manually linked refunds and custom receipt text are preserved.
 - The phone keeps its folder URI and last-backup status. Already-set app-lock and widget-detail preferences take precedence; a fresh install can adopt those preferences from the backup.
 - Daily backup is due on a different local calendar day; weekly/monthly use elapsed windows. Maintenance runs while the app is open, catching up recurring entries first. It is not guaranteed background execution.
 - A successful managed daily write replaces same-day managed files only after the new file is written. Retention keeps the newest 14 managed daily backup files by content ordering; exported copies are outside this policy. Initial-folder preservation avoids replacing existing files or pruning them.

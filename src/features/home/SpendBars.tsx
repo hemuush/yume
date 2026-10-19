@@ -181,6 +181,7 @@ export function SpendBars({
           />
         ))}
       </ScrollView>
+      <Text style={styles.scaleHint}>Bar heights are compressed. Tap a bar for its exact amount.</Text>
     </View>
   );
 }
@@ -230,4 +231,5 @@ const styles = StyleSheet.create({
   value: { fontFamily: theme.font.bodyBold, fontSize: 11, color: theme.colors.textPrimary },
   label: { fontFamily: theme.font.bodyMedium, fontSize: 11, color: theme.colors.textMuted },
   labelOn: { color: theme.colors.textPrimary },
+  scaleHint: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textSecondary },
 });

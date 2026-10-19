@@ -166,3 +166,87 @@ describe('suggestions', () => {
     expect(await getSubscriptionSuggestions([key], TODAY)).toEqual([]);
   });
 });
+
+describe('currency identity', () => {
+  let inr: string;
+  let usd: string;
+  let categoryId: string;
+  beforeAll(async () => {
+    inr = (
+      await createAccount({ name: 'INR pattern', type: 'bank', currency: 'INR', openingBalanceMinor: 0 })
+    ).id;
+    usd = (
+      await createAccount({ name: 'USD pattern', type: 'bank', currency: 'USD', openingBalanceMinor: 0 })
+    ).id;
+    categoryId = (await createCategory({ name: 'Multi-currency service', kind: 'expense' })).id;
+    await createTransaction({
+      type: 'expense',
+      accountId: inr,
+      categoryId,
+      amountMinor: 10000,
+      date: '2026-07-10',
+    });
+    for (const date of ['2026-08-10', '2026-09-10']) {
+      await createTransaction({ type: 'expense', accountId: usd, categoryId, amountMinor: 10000, date });
+    }
+  });
+
+  it('does not complete a USD monthly pattern using an INR month', async () => {
+    expect((await findMonthlyPatterns(TODAY)).filter((s) => s.categoryId === categoryId)).toEqual([]);
+  });
+
+  it('retains denomination in a real pattern and its key, while honoring old hidden keys', async () => {
+    await createTransaction({
+      type: 'expense',
+      accountId: usd,
+      categoryId,
+      amountMinor: 10000,
+      date: '2026-07-10',
+    });
+    expect((await findMonthlyPatterns(TODAY)).find((s) => s.categoryId === categoryId)).toMatchObject({
+      currency: 'USD',
+      accountId: usd,
+      months: 3,
+      key: `sub-${categoryId}:USD`,
+    });
+    expect(
+      (await getSubscriptionSuggestions([`sub-${categoryId}`], TODAY)).some(
+        (s) => s.categoryId === categoryId
+      )
+    ).toBe(false);
+  });
+
+  it('a rule in another denomination does not suppress the USD suggestion', async () => {
+    await createRecurringRule({
+      type: 'expense',
+      accountId: inr,
+      categoryId,
+      amountMinor: 10000,
+      frequency: 'monthly',
+      intervalCount: 1,
+      nextRunDate: '2026-10-10',
+    });
+    expect((await findMonthlyPatterns(TODAY)).find((s) => s.categoryId === categoryId)?.currency).toBe('USD');
+  });
+
+  it('keeps unscheduled subscription rows and dismissals distinct across currencies', async () => {
+    // Recognition intentionally uses the existing Subscriptions parent name.
+    const subs = (await mockTestDb.getFirstAsync<{ id: string }>(
+      "SELECT id FROM categories WHERE name = 'Subscriptions'"
+    ))!;
+    const service = await createCategory({ name: 'Two denominations', kind: 'expense', parentId: subs.id });
+    for (const accountId of [inr, usd]) {
+      await createTransaction({
+        type: 'expense',
+        accountId,
+        categoryId: service.id,
+        amountMinor: 10000,
+        date: '2026-09-10',
+      });
+    }
+    const found = (await findUnscheduledSubscriptions(60, TODAY)).filter((s) => s.categoryId === service.id);
+    expect(found.map((s) => s.currency).sort()).toEqual(['INR', 'USD']);
+    const shown = await getSubscriptionSuggestions([`sub-${service.id}:USD`], TODAY);
+    expect(shown.filter((s) => s.categoryId === service.id).map((s) => s.currency)).toEqual(['INR']);
+  });
+});

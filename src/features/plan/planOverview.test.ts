@@ -1,4 +1,5 @@
 import { addDaysToIsoDate } from '@/lib/date';
+import { buildRunway } from './runway';
 import {
   buildDueDays,
   dueTone,
@@ -113,6 +114,45 @@ const rule = (over: Partial<PlanRuleInput> & { id: string }): PlanRuleInput => (
 });
 
 describe('buildDueItems / buildDueSoon', () => {
+  it.each([
+    ['2026-02-28', 31, 1, '2026-03-31'],
+    ['2028-02-29', 31, 1, '2028-03-31'],
+    ['2026-02-28', 30, 1, '2026-03-30'],
+    ['2026-02-28', 29, 1, '2026-03-29'],
+    ['2026-02-28', 31, 2, '2026-04-30'],
+  ])(
+    'preserves the stored anchor after %s (day %s, interval %s)',
+    (nextRunDate, anchorDay, intervalCount, expected) => {
+      const items = buildDueItems(
+        [],
+        [rule({ id: 'anchored', nextRunDate, anchorDay, intervalCount, frequency: 'monthly' })],
+        [],
+        expected
+      );
+      expect(items.map((i) => i.dueDate)).toEqual([nextRunDate, expected]);
+    }
+  );
+
+  it('does not forecast a March-28 shortfall for a day-31 bill clamped to February', () => {
+    const items = buildDueItems(
+      [],
+      [
+        rule({
+          id: 'rent',
+          nextRunDate: '2026-02-28',
+          anchorDay: 31,
+          frequency: 'monthly',
+          amountMinor: 10000,
+        }),
+      ],
+      [],
+      '2026-03-29'
+    );
+    expect(items.map((i) => i.dueDate)).toEqual(['2026-02-28']);
+    const runway = buildRunway(15000, items, '2026-02-28', 30);
+    expect(runway.short).toBeNull();
+    expect(runway.endMinor).toBe(5000);
+  });
   const rows = buildLoansSummary(
     [loan({ id: 'house' }), loan({ id: 'lentOut', direction: 'lent' })],
     [

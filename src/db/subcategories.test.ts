@@ -17,11 +17,14 @@ import {
   updateCategory,
   archiveCategory,
   deleteCategory,
+  restoreCategory,
   listCategories,
   createTransaction,
 } from '@/db/ledger';
 import { getPeriodSummary, getSubcategoryBreakdown } from '@/db/reports';
 import { createRecurringRule } from '@/db/recurring';
+import { createBudget } from '@/db/budgets';
+import type { BudgetRow } from '@/db/rows';
 
 describe('subcategories', () => {
   let accountId: string;
@@ -272,4 +275,29 @@ describe('subcategories', () => {
     await expect(deleteCategory(rulesCat.id)).rejects.toThrow('recurring rule');
     expect((await listCategories(true)).some((c) => c.id === rulesCat.id)).toBe(true);
   });
+
+  it.each([false, true])(
+    'category Undo restores exact budgets for all months (with children: %s)',
+    async (withChildren) => {
+      const parent = await createCategory({ name: `Budget Undo ${withChildren}`, kind: 'expense' });
+      const child = withChildren
+        ? await createCategory({ name: 'Child budget', kind: 'expense', parentId: parent.id })
+        : null;
+      for (const categoryId of [parent.id, ...(child ? [child.id] : [])]) {
+        for (const periodMonth of ['2025-01', '2026-10']) {
+          await createBudget({ categoryId, periodMonth, limitAmountMinor: 123400, rollover: true });
+        }
+      }
+      const before = await mockTestDb.getAllAsync<BudgetRow>('SELECT * FROM budgets ORDER BY id');
+      const snapshots = await deleteCategory(parent.id);
+      expect(await mockTestDb.getAllAsync('SELECT * FROM budgets ORDER BY id')).toEqual(
+        before.filter((b) => b.category_id !== parent.id && b.category_id !== child?.id)
+      );
+      await restoreCategory(snapshots);
+      expect(await mockTestDb.getAllAsync('SELECT * FROM budgets ORDER BY id')).toEqual(before);
+      expect((await listCategories(true)).some((c) => c.id === parent.id)).toBe(true);
+      if (child)
+        expect((await listCategories(true)).find((c) => c.id === child.id)?.parentId).toBe(parent.id);
+    }
+  );
 });

@@ -8,6 +8,7 @@ import { BACKFILL_LOAN_TX_KIND_SQL } from './loanTxKind';
 import { addMonthsToIsoDate } from '@/lib/date';
 import { purgeExpiredDeletedEntries } from './recentlyDeleted';
 import { bumpDataVersion, trackDataVersion } from './dataVersion';
+import { repairTrackedRefundLabels } from './refundLabels';
 
 const DB_NAME = 'yume.db';
 const LEGACY_DB_NAME = 'flynse.db';
@@ -296,6 +297,7 @@ async function applyIdempotentMigrations(db: AppDb): Promise<void> {
   // Refunds: money back that lowers a category's spending (db/spendSql.ts).
   await ensureColumn(db, 'transactions', 'is_refund', 'is_refund INTEGER NOT NULL DEFAULT 0');
   await ensureColumn(db, 'transactions', 'day_rank', 'day_rank INTEGER');
+  await repairTrackedRefundLabels(db);
 
   // Covering indexes for the reads every screen makes (here, not in CREATE_TABLES_SQL, since is_refund only
   // exists on older installs once the line above has run). Each holds every column its queries touch, so

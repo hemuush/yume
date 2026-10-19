@@ -16,6 +16,7 @@ import { styles } from './categories.styles';
 import { errorMessage } from '@/lib/errorMessage';
 import { withPressed } from '@/lib/pressed';
 import { useSaveOnce } from '@/lib/useSaveOnce';
+import { showPrivacyReminderWarning } from '@/lib/privacyReminderFeedback';
 
 const KINDS: { label: string; value: CategoryKind }[] = [
   { label: 'Expense', value: 'expense' },
@@ -65,15 +66,14 @@ export function AddCategoryModal({
     }
   }
 
-  // Only a top-level category with no subcategories can be a parent: one level deep only, and a category
-  // with children can't become a subcategory (mirrors createCategory/updateCategory in src/db/ledger.ts).
+  // Parents must be top-level: only one nesting level. A category with children can't become a subcategory
+  // (mirrors createCategory/updateCategory in src/db/ledger.ts).
   const thisHasChildren = !!category && allCategories.some((c) => c.parentId === category.id);
   const eligibleParents = allCategories.filter(
     (c) => c.kind === kind && !c.parentId && c.id !== category?.id
   );
-  // A category that already has children shows only as itself editing, no
-  // parent picker — showing one that can never be used would just confuse.
-  const showParentPicker = !thisHasChildren;
+  // Categories with children and built-ins have no available parent change, so omit the picker.
+  const showParentPicker = !thisHasChildren && !category?.isSystem;
 
   const onKindChange = (next: CategoryKind) => {
     setKind(next);
@@ -89,9 +89,19 @@ export function AddCategoryModal({
     setSaving(true);
     try {
       if (category) {
-        await updateCategory(category.id, { name: name.trim(), icon, color, parentId, isSensitive });
+        const refreshed = await updateCategory(category.id, {
+          name: name.trim(),
+          icon,
+          color,
+          parentId,
+          isSensitive,
+        });
+        if (refreshed === false) showPrivacyReminderWarning();
       } else {
-        await createCategory({ name: name.trim(), kind, color, icon, parentId, isSensitive });
+        await createCategory(
+          { name: name.trim(), kind, color, icon, parentId, isSensitive },
+          showPrivacyReminderWarning
+        );
       }
       onSaved();
     } catch (e) {
@@ -146,7 +156,7 @@ export function AddCategoryModal({
       />
       {isSystem ? (
         <Text style={styles.modalHint}>
-          Built-in category — its name and type are fixed because Yume files loan and Friends & Family
+          Built-in category — its name, type and parent are fixed because Yume files loan and Friends & Family
           transactions under it automatically. Colour, icon and sensitivity can still be changed.
         </Text>
       ) : category ? (

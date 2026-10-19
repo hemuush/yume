@@ -52,7 +52,7 @@ export function NeedsYouRow({
       onPressIn={onPressIn}
       onPressOut={onPressOut}
       accessibilityRole="button"
-      accessibilityLabel={`${item.title}, ${item.detail}${item.amountMinor != null ? `, ${formatMoney(item.amountMinor)}` : ''}`}
+      accessibilityLabel={`${item.title}, ${item.detail}${item.amountMinor != null ? `, ${formatMoney(item.amountMinor, item.currency)}` : ''}`}
       style={[styles.row, divider && styles.divider, animatedStyle]}
     >
       <View style={[styles.rail, { backgroundColor: tone.color }]} />
@@ -63,7 +63,9 @@ export function NeedsYouRow({
         <Text style={styles.title}>{item.title}</Text>
         <Text style={[styles.sub, item.tone === 'urgent' && styles.subUrgent]}>{item.detail}</Text>
       </View>
-      {item.amountMinor != null && <Text style={styles.amount}>{formatMoney(item.amountMinor)}</Text>}
+      {item.amountMinor != null && (
+        <Text style={styles.amount}>{formatMoney(item.amountMinor, item.currency)}</Text>
+      )}
       {item.snoozable ? (
         <Pressable
           onPress={onSnooze}

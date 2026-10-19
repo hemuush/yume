@@ -12,6 +12,7 @@ jest.mock('@/theme/AccentContext', () => ({
 jest.mock('@expo/vector-icons/Feather', () => 'Feather');
 jest.mock('@/features/budgets/useToday', () => ({ useToday: () => '2026-10-17' }));
 jest.useFakeTimers();
+beforeEach(() => jest.setSystemTime(new Date(2026, 9, 17, 12)));
 
 import { HomeBudgetRow } from './HomeBudgetRow';
 import { HomeGoalRow } from './HomeGoalRow';
@@ -152,9 +153,15 @@ describe('Home upcoming row', () => {
   });
 
   it('puts a status chip and a Pay button on a bill that is due now', () => {
-    const r = render(row({ urgent: true, actionLabel: 'Pay' }));
+    const r = render(row({ date: '2026-10-17', subtitle: 'Today', urgent: true, actionLabel: 'Pay' }));
     expect(text(r)).toContain('Due now');
     expect(text(r)).toContain('Pay');
     expect(label(r)).toContain('Pay');
+  });
+
+  it('labels an earlier unpaid bill Overdue instead of Due now', () => {
+    const r = render(row({ date: '2026-10-16', subtitle: 'Yesterday', urgent: true, actionLabel: 'Pay' }));
+    expect(text(r)).toContain('Overdue');
+    expect(text(r)).not.toContain('Due now');
   });
 });

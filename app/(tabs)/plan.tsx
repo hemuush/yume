@@ -14,6 +14,7 @@ import { getDailyGoalStreakSeries, getCategoryMonthlyAverages } from '@/db/repor
 import { getDailySpendingGoal, getDefaultCurrency } from '@/db/settings';
 import { usePrivacy } from '@/theme/PrivacyContext';
 import { isSavingsEntry } from '@/lib/privateSummary';
+import { recurringRulesInCurrency } from '@/lib/recurringScope';
 import { savingsAccountIdsOf } from '@/lib/account';
 import { Account, Category, Loan, SavingsGoal, RecurringRule, Transaction } from '@/types';
 import type { BudgetProgress } from '@/db/budgets';
@@ -178,7 +179,7 @@ export default function PlanScreen() {
       listLoans(),
       getLoanProgress(),
       listPeople(),
-      listCategories(),
+      listCategories(true),
       listAccounts(),
       dailyGoalRead,
       getCategoryMonthlyAverages(3),
@@ -205,6 +206,7 @@ export default function PlanScreen() {
       nextRunDate: r.nextRunDate,
       frequency: r.frequency,
       intervalCount: r.intervalCount,
+      anchorDay: r.anchorDay,
       endDate: r.endDate,
       amountMinor: r.amountMinor,
       label:
@@ -212,7 +214,11 @@ export default function PlanScreen() {
           ? `${accountName(r.accountId)} → ${accountName(r.toAccountId)}`
           : r.note || categoryLabelOf(r.categoryId) || 'Recurring',
     });
-    const visibleRules = rules.filter((r) => !hideAmounts || !isSavingsEntry(r, categoriesById, savingsIds));
+    const visibleRules = recurringRulesInCurrency(
+      rules.filter((r) => !hideAmounts || !isSavingsEntry(r, categoriesById, savingsIds)),
+      accounts,
+      currency
+    );
     const until = addDaysToIsoDate(today, PLAN_DAYS - 1);
     // Every run in the fortnight Plan shows: a weekly bill is due twice in it, not once.
     const dueItems = buildDueItems(
@@ -617,7 +623,7 @@ export default function PlanScreen() {
           visible
           editing={null}
           categories={scoped.categories.filter(
-            (c) => c.kind === 'expense' && !(hideAmounts && c.isSensitive)
+            (c) => !c.archived && c.kind === 'expense' && !(hideAmounts && c.isSensitive)
           )}
           budgetedCategoryIds={new Set(scoped.budgetDetails.map((b) => b.budget.categoryId))}
           onClose={() => setDetail(null)}

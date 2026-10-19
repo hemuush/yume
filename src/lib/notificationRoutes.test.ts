@@ -18,6 +18,7 @@ import { hasLoggedOn, listLoansDue, listReminderAttention } from '@/db/notificat
 import { addDaysToIsoDate, toLocalIsoDate } from './date';
 
 jest.mock('@/db/settings', () => ({
+  getHideSensitiveAmounts: jest.fn(async () => false),
   getNotificationPrefs: jest.fn(),
   getAlertQueue: jest.fn(),
   setAlertQueue: jest.fn(),

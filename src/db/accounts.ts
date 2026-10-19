@@ -8,6 +8,7 @@ import { Account } from '@/types';
 import { toLocalIsoDate, addDaysToIsoDate } from '@/lib/date';
 import { isCycleDay } from '@/lib/cardCycle';
 import { ledgerFlowSql, valuationAdjSql, latestValuedAtSql, latestValueSql } from './valuationSql';
+import { rebuildNotificationsAfterCommit } from './afterCommit';
 
 /** Accounts: balances (always derived from entries), create, edit, archive and delete (re-exported from ./ledger). */
 
@@ -369,6 +370,7 @@ export async function archiveAccount(id: string): Promise<void> {
       id,
     ]);
   });
+  await rebuildNotificationsAfterCommit();
 }
 
 export async function unarchiveAccount(id: string): Promise<void> {

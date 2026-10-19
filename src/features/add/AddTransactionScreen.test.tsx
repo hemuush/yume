@@ -32,7 +32,6 @@ jest.mock('@/features/home/SkyHeader', () => ({
 }));
 const mockShowUndo = jest.fn();
 jest.mock('@/components/UndoToast', () => ({ useUndoToast: () => ({ show: mockShowUndo }) }));
-jest.mock('@/components/OdometerAmount', () => ({ OdometerAmount: () => null }));
 jest.mock('@/features/profile/AddAccountModal', () => ({ AddAccountModal: () => null }));
 jest.mock('@/components/CalendarSheet', () => ({ CalendarSheet: () => null }));
 jest.mock('@/features/home/RepeatEntrySheet', () => ({ RepeatEntrySheet: () => null }));

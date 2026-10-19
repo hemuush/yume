@@ -4,6 +4,7 @@ import { PrivacyProvider, usePrivacy } from './PrivacyContext';
 import { getHideSensitiveAmounts, setHideSensitiveAmounts } from '@/db/settings';
 import { authenticate } from '@/lib/appLock';
 import { emitSettingsRestored } from '@/lib/dataEvents';
+import { showAlert } from '@/components/AppDialog';
 
 jest.mock('@/db/settings', () => ({
   getHideSensitiveAmounts: jest.fn(),
@@ -111,4 +112,29 @@ it('keeps amounts hidden after an unsuccessful unlock', async () => {
   });
   expect(value.hideAmounts).toBe(true);
   expect(setHideSensitiveAmounts).not.toHaveBeenCalled();
+});
+
+it('warns when the preference is saved but private reminders cannot be refreshed', async () => {
+  jest.mocked(getHideSensitiveAmounts).mockResolvedValue(false);
+  jest.mocked(setHideSensitiveAmounts).mockResolvedValueOnce(false);
+  await mount();
+  await act(async () => {
+    await value.toggleHideAmounts();
+  });
+  expect(value.hideAmounts).toBe(true);
+  expect(showAlert).toHaveBeenCalledWith(
+    'Reminders need attention',
+    expect.stringContaining('may still show private details')
+  );
+});
+
+it('keeps the session switch and warns when its preference cannot be saved', async () => {
+  jest.mocked(getHideSensitiveAmounts).mockResolvedValue(false);
+  jest.mocked(setHideSensitiveAmounts).mockRejectedValueOnce(new Error('Disk full'));
+  await mount();
+  await act(async () => {
+    await value.toggleHideAmounts();
+  });
+  expect(value.hideAmounts).toBe(true);
+  expect(showAlert).toHaveBeenCalledWith('Privacy preference not saved', expect.any(String));
 });

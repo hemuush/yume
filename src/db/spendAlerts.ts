@@ -88,6 +88,12 @@ async function budgetAlertFor(
       id: `budget:${key(level)}`,
       queuedAt,
       route: '/budgets',
+      source: {
+        kind: 'budget',
+        budgetId: budget.budget.id,
+        periodMonth: budget.budget.periodMonth,
+        level,
+      },
       ...budgetAlertCopy(
         level,
         budget.categoryName,
@@ -120,6 +126,7 @@ async function spikeAlertFor(
       id: `spike:${monthKey}`,
       queuedAt,
       route: '/reports',
+      source: { kind: 'spike', categoryId: top.categoryId, periodMonth: monthKey.slice(-7) },
       ...spikeCopy(top.name, formatPctChange(top.pctChange)),
     },
   };

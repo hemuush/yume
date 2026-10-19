@@ -16,6 +16,7 @@ export interface NeedsYouItem {
   title: string;
   detail: string;
   amountMinor?: number;
+  currency?: string;
   action: NeedsYouAction;
   /** Only the "no backup yet" reminder can be snoozed; everything else can be dismissed. */
   snoozable?: boolean;
@@ -46,7 +47,13 @@ export interface NeedsYouInput {
   /** How many things Tidy up has found (tidyUpCount). */
   tidyCount?: number;
   /** Charges seen once a month for a while with no rule yet (findMonthlyPatterns), minus hidden ones. */
-  monthlyPatterns?: { key: string; categoryName: string; parentName?: string | null; amountMinor: number }[];
+  monthlyPatterns?: {
+    key: string;
+    categoryName: string;
+    parentName?: string | null;
+    amountMinor: number;
+    currency?: string;
+  }[];
   /** Credit card bills (listCardCycles); only ones with something left to pay matter. */
   cardBills?: { accountId: string; accountName: string; dueDate: string; leftToPayMinor: number }[];
   /** YYYY-MM-DD, local. */
@@ -176,6 +183,7 @@ export function buildNeedsYouItems(input: NeedsYouInput): NeedsYouItem[] {
       title: `${categorySentence(p.categoryName, p.parentName)} looks monthly`,
       detail: 'Set it up once in Recurring',
       amountMinor: p.amountMinor,
+      ...(p.currency ? { currency: p.currency } : {}),
       action: 'recurring',
     });
   }

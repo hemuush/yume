@@ -31,6 +31,12 @@ function render(props: Partial<React.ComponentProps<typeof RecurringHero>> = {})
 }
 
 describe('RecurringHero', () => {
+  it('labels its summary currency and leaves other denominations in their individual rows', () => {
+    const shown = texts(render({ currency: 'USD', hasOtherCurrencies: true }));
+    expect(shown).toContain('$1,000');
+    expect(shown.some((t) => t.includes('Summary and timeline in USD'))).toBe(true);
+    expect(shown).not.toContain('₹1,000');
+  });
   it('keeps income-only schedules visible and opens a grouped date containing every entry', () => {
     const onDatePress = jest.fn();
     const tree = render({
