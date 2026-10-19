@@ -705,8 +705,8 @@ describe('Home, stepping between months on a lived-in phone', () => {
     expect(back).toContain(monthName(-1));
     expect(back).not.toContain('Bills left');
     expect(back).not.toContain('Short after bills');
-    // The caption says what the figure is out of: that month's income plus what carried into it.
-    expect(back).toContain(`of ${formatMoney(lastMonth.incomeMinor + carry)}`);
+    // The short caption names deductions; the expanded sum below retains income and carryover.
+    expect(back).toContain('after spending and savings');
     // And the sum behind "How this adds up" itemises both.
     await act(async () => {
       tree.root
@@ -761,23 +761,45 @@ describe('Home, stepping between months on a lived-in phone', () => {
     expect(textOf(tree)).toContain(monthName(-1));
     act(() => tree.unmount());
   });
+  it('keeps Accounts before Coming up and opens recent entries over Home', async () => {
+    const tree = await open(SCREENS[0][1]);
+    const { Section } = require('@/components/Section');
+    const titles = tree.root.findAllByType(Section).map((n) => n.props.title);
+    expect(titles.indexOf('Accounts')).toBeGreaterThanOrEqual(0);
+    expect(titles.indexOf('Coming up')).toBeGreaterThan(titles.indexOf('Accounts'));
+    expect(titles.indexOf('Your spending')).toBeGreaterThan(titles.indexOf('Coming up'));
+    const { HomeSwipeCard } = require('@/features/home/HomeSwipeCard');
+    expect(tree.root.findAllByType(HomeSwipeCard)).toHaveLength(0);
+    const { RecentTransactionRow } = require('@/features/home/RecentTransactionRow');
+    const row = tree.root.findAllByType(RecentTransactionRow)[0];
+    expect(row).toBeDefined();
+    await act(async () => row.props.onPress());
+    const { TransactionDetailModal } = require('@/features/transactions/TransactionDetailModal');
+    expect(tree.root.findByType(TransactionDetailModal).props.tx.id).toBe(row.props.tx.id);
+    act(() => tree.root.findByType(TransactionDetailModal).props.onClose());
+    expect(tree.root.findAllByType(TransactionDetailModal)).toHaveLength(0);
+    act(() => tree.unmount());
+  });
+
   it('keeps Home spending drill-downs in the displayed period', async () => {
     const { router } = require('expo-router');
     const navigate = jest.spyOn(router, 'navigate');
     const push = jest.spyOn(router, 'push');
-    const { WhereItWent } = require('@/features/home/WhereItWent');
     const tree = await open(SCREENS[0][1]);
     await step(tree, 'decrement');
     await settle();
-    const dial = tree.root.findByType(WhereItWent);
-    act(() => dial.props.onOpenReports());
+    act(() =>
+      tree.root
+        .findAll((n) => n.props.accessibilityLabel === 'See all — Your spending' && n.props.onPress)[0]
+        .props.onPress()
+    );
     expect(navigate).toHaveBeenLastCalledWith({ pathname: '/reports', params: { month: '-1' } });
-    act(() => dial.props.onOpenCategory('food'));
-    expect(push).toHaveBeenLastCalledWith({
-      pathname: '/category/[id]',
-      params: { id: 'food', g: 'month', o: '-1' },
-    });
-    act(() => dial.props.onAddExpense());
+    const { HeroActions } = require('@/features/home/HeroActions');
+    const action = tree.root
+      .findByType(HeroActions)
+      .findAll((n) => n.props.accessibilityLabel === 'Add expense' && n.props.onPress)[0];
+    expect(action).toBeDefined();
+    act(() => action.props.onPress());
     expect(push).toHaveBeenLastCalledWith('/add-transaction?type=expense');
     act(() => tree.unmount());
   });

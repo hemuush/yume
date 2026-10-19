@@ -76,8 +76,8 @@ describe('month card', () => {
       expect.arrayContaining([
         'Free to use',
         '₹794',
-        'of ₹1,96,056',
-        'Details',
+        'after spending and savings',
+        'How this adds up',
         '₹2,955 left today',
         'Expense',
         'Income',
@@ -140,7 +140,13 @@ describe('month card with bills still to pay', () => {
   it('takes bills off the headline and shows them in the legend', () => {
     const all = texts(render(base));
     expect(all).toEqual(
-      expect.arrayContaining(['Free after bills', '₹40,000', 'of ₹1,00,000', 'Bills left', '₹20,000'])
+      expect.arrayContaining([
+        'Free after bills',
+        '₹40,000',
+        'after spending, savings and bills',
+        'Bills left',
+        '₹20,000',
+      ])
     );
     expect(all).not.toContain('Free to use');
   });
@@ -172,7 +178,7 @@ describe('month card with bills still to pay', () => {
 
   it('is the plain Free to use card when nothing is due', () => {
     const all = texts(render({ ...base, dueMinor: 0 }));
-    expect(all).toEqual(expect.arrayContaining(['Free to use', '₹60,000', 'of ₹1,00,000']));
+    expect(all).toEqual(expect.arrayContaining(['Free to use', '₹60,000', 'after spending and savings']));
     expect(all.some((t) => t.includes('still to pay'))).toBe(false);
   });
 
@@ -251,7 +257,7 @@ describe('month card with money carried over from earlier months', () => {
 
   it('says what the figure is out of, income and what carried over together, without double counting it', () => {
     const all = texts(render(base));
-    expect(all).toEqual(expect.arrayContaining(['Free to use', '₹80,000', 'of ₹1,20,000']));
+    expect(all).toEqual(expect.arrayContaining(['Free to use', '₹80,000', 'after spending and savings']));
   });
 
   it('shows the carried amount as its own line in the sum', () => {

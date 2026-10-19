@@ -63,7 +63,7 @@ export const styles = StyleSheet.create({
 
   // "Details": a link at the end of the caption's line; the touch area is taller than the text (hitSlop).
   captionRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: 10 },
-  howLink: { flexDirection: 'row', alignItems: 'center', gap: 3, minHeight: 24 },
+  howLink: { flexDirection: 'row', alignItems: 'center', gap: 5, minHeight: 44 },
   howText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.link },
   // Names the (often tiny) free part of the money bar.
 
@@ -71,11 +71,12 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    minHeight: 28,
-    paddingHorizontal: 10,
-    borderRadius: theme.radius.pill,
-    borderWidth: 1,
-    borderColor: 'rgba(18,19,15,0.1)',
+    minHeight: 46,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 16,
+    backgroundColor: theme.colors.secondaryTint,
+    borderWidth: 0,
     maxWidth: '100%',
   },
   chipText: {

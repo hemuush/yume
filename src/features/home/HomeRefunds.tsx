@@ -17,12 +17,14 @@ export function HomeRefunds({
   openingId,
   onOpen,
   onRetry,
+  compact = false,
 }: {
   refunds: ExpectedRefund[];
   failed: boolean;
   openingId?: string | null;
   onOpen?: (transactionId: string) => void;
   onRetry?: () => void;
+  compact?: boolean;
 }) {
   const { hideAmounts } = usePrivacy();
   const [expanded, setExpanded] = useState(false);
@@ -40,11 +42,13 @@ export function HomeRefunds({
     );
   return (
     <View>
-      <View style={styles.body}>
-        <Text style={styles.title}>Awaiting payment</Text>
-        <Text style={styles.hint}>Expected money · not included in your balance</Text>
-      </View>
-      {ordered.slice(0, expanded ? ordered.length : 3).map((r) => {
+      {!compact && (
+        <View style={styles.body}>
+          <Text style={styles.title}>Awaiting payment</Text>
+          <Text style={styles.hint}>Expected money · not included in your balance</Text>
+        </View>
+      )}
+      {ordered.slice(0, expanded ? ordered.length : compact ? 1 : 3).map((r) => {
         const overdue = r.dueDate != null && r.dueDate < today;
         const date =
           r.dueDate == null
@@ -64,23 +68,24 @@ export function HomeRefunds({
             accessibilityRole="button"
             accessibilityLabel={`${r.label}, ${amount} remaining, ${date}`}
             accessibilityState={{ disabled: !!openingId || !onOpen, busy: openingId === r.transactionId }}
-            style={withPressed(styles.row)}
+            style={withPressed([styles.row, compact && styles.compactRow])}
           >
             <View style={styles.icon}>
               <Feather name="corner-down-left" size={18} color={theme.colors.ink} />
             </View>
             <View style={styles.copy}>
-              <Text style={styles.title}>{r.label}</Text>
+              <Text style={styles.title}>{compact ? `${amount} refund pending` : r.label}</Text>
               <Text style={[styles.hint, overdue && styles.overdue]}>
-                {openingId === r.transactionId ? 'Opening…' : date}
+                {openingId === r.transactionId ? 'Opening…' : compact ? `${r.label} · ${date}` : date}
               </Text>
             </View>
-            <Text style={styles.amount}>{amount}</Text>
+            {!compact && <Text style={styles.amount}>{amount}</Text>}
             <Feather name="chevron-right" size={16} color={theme.colors.textMuted} />
           </Pressable>
         );
       })}
-      {ordered.length > 3 && (
+      {compact && <Text style={styles.compactHint}>Expected money · not included in your balance</Text>}
+      {ordered.length > (compact ? 1 : 3) && (
         <PrimaryButton
           title={expanded ? 'Show fewer refunds' : `View all ${ordered.length} refunds`}
           compact
@@ -92,6 +97,15 @@ export function HomeRefunds({
   );
 }
 const styles = StyleSheet.create({
+  compactRow: { borderTopWidth: 0, paddingBottom: 6 },
+  compactHint: {
+    fontFamily: theme.font.body,
+    fontSize: 11,
+    lineHeight: 16,
+    color: theme.colors.textMuted,
+    paddingHorizontal: 14,
+    paddingBottom: 12,
+  },
   body: { padding: 14, gap: 4 },
   row: {
     flexDirection: 'row',

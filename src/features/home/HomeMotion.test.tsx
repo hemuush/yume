@@ -166,7 +166,7 @@ it('keeps the month label, figures and current-month chips together through inte
   expect(text(r)).toContain('month:0');
   act(() => latest.finish(true));
   expect(text(r)).toContain('month:-2');
-  expect(text(r)).toContain('₹3,000');
+  expect(r.root.findAllByType(CountUpAmount)[0].props.minor).toBe(300000);
   expect(text(r)).not.toContain('₹368 left today');
   expect(displayed.mock.calls.map(([key]) => key)).toEqual(['month:0', 'month:-2']);
   act(() => r.unmount());
@@ -397,24 +397,35 @@ it('keeps four overview tabs reachable and preserves selection when refunds disa
   ).toBe(true);
 });
 
-it('centres Home tabs within the measured inset viewport and clamps the final tab', () => {
-  mockReduce = true;
-  const four = [...pages, { key: 'refunds', label: 'refunds', count: 2, content: <Text>refunds</Text> }];
-  const r = render(<HomeSwipeCard pages={four} />);
-  measure(r);
-  const viewport = r.root.findByProps({ accessibilityLabel: 'Home overview tabs' });
-  const scroll = jest.spyOn(viewport.instance, 'scrollTo');
-  act(() => {
-    viewport.props.onLayout({ nativeEvent: { layout: { width: 280 } } });
-    r.root
-      .findAll((n) => n.props.accessibilityRole === 'tablist' && n.props.onLayout)[0]
-      .props.onLayout({ nativeEvent: { layout: { width: 448 } } });
-  });
-  press(r, 'budgets');
-  expect(scroll).toHaveBeenLastCalledWith({ x: 29, animated: false });
-  press(r, 'refunds');
-  expect(scroll).toHaveBeenLastCalledWith({ x: 168, animated: false });
-  // Resizing the actual viewport, rather than the whole screen, changes the scroll boundary.
-  act(() => viewport.props.onLayout({ nativeEvent: { layout: { width: 320 } } }));
-  expect(scroll).toHaveBeenLastCalledWith({ x: 128, animated: false });
-});
+it.each([
+  [390, 1],
+  [320, 1],
+  [390, 1.3],
+])(
+  'keeps all Home tabs visible without a scrolling tab strip at %sdp and %s text scale',
+  (width, fontScale) => {
+    jest
+      .spyOn(require('react-native'), 'useWindowDimensions')
+      .mockReturnValue({ width, height: 800, scale: 1, fontScale });
+    mockReduce = true;
+    const four = [...pages, { key: 'refunds', label: 'refunds', count: 2, content: <Text>refunds</Text> }];
+    const r = render(<HomeSwipeCard pages={four} />);
+    measure(r);
+    expect(r.root.findAllByType(ScrollView)).toHaveLength(1);
+    for (const page of four)
+      expect(
+        r.root.findAll(
+          (n) =>
+            n.props.accessibilityRole === 'tab' &&
+            n.props.accessibilityLabel === page.label &&
+            n.props.onPress
+        )
+      ).toHaveLength(1);
+    press(r, 'refunds');
+    expect(
+      r.root.find((n) => n.props.accessibilityLabel === 'refunds' && n.props.onPress).props.accessibilityState
+        .selected
+    ).toBe(true);
+    jest.restoreAllMocks();
+  }
+);

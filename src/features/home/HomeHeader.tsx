@@ -1,3 +1,4 @@
+import { usePrivacy } from '@/theme/PrivacyContext';
 import { useEffect, useState } from 'react';
 import { View, Pressable, StyleSheet, LayoutChangeEvent } from 'react-native';
 import { Text } from '@/components/Text';
@@ -76,6 +77,7 @@ export function HomeHeader({
   children?: React.ReactNode;
 }) {
   const { accent } = useAccent();
+  const { hideAmounts, toggleHideAmounts } = usePrivacy();
   const reduce = useReduceMotion();
   const insets = useSafeAreaInsets();
   // The same top spacing as every other screen's SkyHeader.
@@ -176,6 +178,13 @@ export function HomeHeader({
             <MonthPill cursor={cursor} onChange={onChange} compact />
           </ReanimatedAnimated.View>
           <View style={styles.actions}>
+            <HeaderIconButton
+              icon={hideAmounts ? 'eye-off' : 'eye'}
+              onPress={toggleHideAmounts}
+              label={hideAmounts ? 'Show savings & investment amounts' : 'Hide savings & investment amounts'}
+              size={HEADER.actionSize}
+              glass
+            />
             <HeaderIconButton
               icon="bell"
               onPress={() => router.push('/notifications')}

@@ -1,4 +1,8 @@
-import { View, StyleSheet } from 'react-native';
+import { Section } from '@/components/Section';
+import { Glass } from '@/components/Glass';
+import { cardSurface } from '@/components/CardSurface';
+import { withPressed } from '@/lib/pressed';
+import { View, Pressable, StyleSheet } from 'react-native';
 import Animated from 'react-native-reanimated';
 import Feather from '@expo/vector-icons/Feather';
 import { router } from 'expo-router';
@@ -6,19 +10,13 @@ import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
 import { hexToRgba, shade } from '@/lib/color';
 import { dueDateLabel, isDueUrgent } from '@/lib/dueDate';
-import { formatMoney } from '@/lib/money';
-import { daysUntilIsoDate, toLocalIsoDate } from '@/lib/date';
+import { daysUntilIsoDate } from '@/lib/date';
 import { payCardRoute, PayCardRoute } from '@/lib/payCard';
 import type { PlanCardBillInput } from '@/features/plan/planOverview';
-import { BudgetProgress } from '@/db/budgets';
-import { RecurringRule, SavingsGoal } from '@/types';
-import { HomeSwipeCard, SwipePage } from './HomeSwipeCard';
+import { RecurringRule } from '@/types';
 import { UpcomingRow } from './UpcomingRow';
-import { HomeBudgetRow } from './HomeBudgetRow';
-import { HomeGoalRow } from './HomeGoalRow';
 import { ExpectedRefund } from '@/db/refundTracking';
 import { HomeRefunds } from './HomeRefunds';
-import { growHref } from '@/lib/cardGrow';
 
 interface UpcomingItem {
   key: string;
@@ -42,8 +40,6 @@ interface UpcomingItem {
 export const UPCOMING_DAYS = 7;
 /** An EMI or card bill this close (or late) is pinned to the top of Upcoming as "Due soon". */
 export const DUE_SOON_DAYS = 3;
-/** Rows shown before "+N more". */
-const UPCOMING_ROWS = 3;
 
 interface UpcomingLoanInput {
   id: string;
@@ -147,17 +143,11 @@ export function buildUpcomingItems(input: {
   return { items, next: all.find((i) => daysUntilIsoDate(i.sortDate) > UPCOMING_DAYS) ?? null };
 }
 
-/**
- * Home's swipe card pages: Upcoming (time-sensitive), then budgets nearest their limits, then goals;
- * a page with nothing to show isn't drawn.
- */
+/** Next payments stay visible; detailed budgets and goals live in Plan. */
 export function HomeGlance({
   upcoming,
-  budgets,
-  goals,
   rowEntering,
   onSeeMoreUpcoming,
-  budgetAlert,
   refunds = [],
   refundError = false,
   openingRefund,
@@ -165,206 +155,89 @@ export function HomeGlance({
   onRetryRefunds,
 }: {
   upcoming: Upcoming;
+  rowEntering: (i: number) => React.ComponentProps<typeof Animated.View>['entering'];
+  onSeeMoreUpcoming: () => void;
   refunds?: ExpectedRefund[];
   refundError?: boolean;
   openingRefund?: string | null;
   onOpenRefund?: (transactionId: string) => void;
   onRetryRefunds?: () => void;
-  /** "+N more" — opens Plan's Coming up, which lists the whole fortnight by day. */
-  onSeeMoreUpcoming: () => void;
-  /** Most urgent first, as listBudgetsForMonth returns them. */
-  budgets: BudgetProgress[];
-  goals: SavingsGoal[];
-  /** A budget is nearly out or over: the Budgets tab gets a red dot. */
-  budgetAlert: boolean;
-  rowEntering: (i: number) => React.ComponentProps<typeof Animated.View>['entering'];
 }) {
-  const visibleUpcoming = upcoming.items.slice(0, UPCOMING_ROWS);
-  // Labels only help when a bill is pinned: otherwise the list reads as it always did.
-  // Red only for what is due today or late; a bill a few days out is amber.
-  const hasUrgent = visibleUpcoming.some((i) => i.urgent);
-  // What leaves your accounts in the window — every bill and expense, not money coming in.
-  const dueMinor = upcoming.items.reduce((sum, i) => (i.sign === '-' ? sum + i.amountMinor : sum), 0);
-  const topBudgets = budgets.slice(0, 3);
-  const activeGoals = goals.filter((g) => !g.archived);
-  // Capped, not a nested horizontal ScrollView: that would fight the swipe card's own page-swipe gesture.
-  // Shows as many chips as fit plus a "+N" tile, the cap-and-link pattern Budgets/Upcoming use.
-  const topGoals = activeGoals.slice(0, 3);
-
-  const pages: SwipePage[] = [
-    ...(upcoming.items.length > 0 || upcoming.next
-      ? [
-          {
-            key: 'upcoming',
-            label: 'Upcoming',
-            alert: upcoming.items.some((i) => i.pinned),
-            count: upcoming.items.length,
-            onSeeAll: onSeeMoreUpcoming,
-            // No "See all" footer: "+N more" already leads to Plan, and each
-            // row deep-links to where it lives (Loans, Recurring, pay a card).
-            content: (
-              <View style={styles.pageList}>
-                {upcoming.items.length > 0 && (
-                  <View style={styles.windowCaption}>
-                    <Text style={styles.windowLabel}>
-                      <Text style={styles.windowBold}>Next {UPCOMING_DAYS} days</Text>
-                    </Text>
-                    <Text style={styles.windowCount}>
-                      {`${dueMinor > 0 ? `${formatMoney(dueMinor)} · ` : ''}${upcoming.items.length} due`}
-                    </Text>
-                  </View>
-                )}
-                {visibleUpcoming.map((item, i) => {
-                  // Sub-headings only when something is late or due today; otherwise the rows speak for themselves.
-                  const startsGroup = hasUrgent && (i === 0 || item.pinned !== visibleUpcoming[i - 1].pinned);
-                  return (
-                    <Animated.View key={item.key} entering={rowEntering(i)}>
-                      {startsGroup && (
-                        <Text
-                          style={[
-                            styles.groupLabel,
-                            item.pinned && !hasUrgent && styles.groupLabelSoon,
-                            !item.pinned && i > 0 && styles.groupLabelLater,
-                          ]}
-                        >
-                          {item.pinned ? 'Due soon' : 'Later this week'}
-                        </Text>
-                      )}
-                      <UpcomingRow
-                        icon={item.icon}
-                        iconBg={item.iconBg}
-                        iconColor={item.iconColor}
-                        title={item.title}
-                        subtitle={item.subtitle}
-                        amountMinor={item.amountMinor}
-                        sign={item.sign}
-                        onPress={() => router.push(item.route)}
-                        divider={i > 0 && !startsGroup}
-                        urgent={item.urgent}
-                        soon={item.pinned && !item.urgent}
-                        date={item.sortDate}
-                        actionLabel={item.pinned && item.payable ? 'Pay' : undefined}
-                        highlight={item.pinned}
-                      />
-                    </Animated.View>
-                  );
-                })}
-                {upcoming.items.length === 0 && upcoming.next && (
-                  <UpcomingRow
-                    icon={upcoming.next.icon}
-                    iconBg={upcoming.next.iconBg}
-                    iconColor={upcoming.next.iconColor}
-                    title={upcoming.next.title}
-                    subtitle={`Nothing due this week · ${upcoming.next.subtitle.toLowerCase()}`}
-                    amountMinor={upcoming.next.amountMinor}
-                    sign={upcoming.next.sign}
-                    onPress={() => router.push(upcoming.next!.route)}
-                    date={upcoming.next.sortDate}
-                  />
-                )}
+  const visible = upcoming.items.length ? upcoming.items.slice(0, 2) : upcoming.next ? [upcoming.next] : [];
+  return (
+    <>
+      <Section title="Coming up" onSeeAll={onSeeMoreUpcoming}>
+        <Glass radius={24} style={[styles.card, cardSurface.neutral]}>
+          {visible.length ? (
+            visible.map((item, i) => (
+              <Animated.View key={item.key} entering={rowEntering(i)}>
+                <UpcomingRow
+                  icon={item.icon}
+                  iconBg={item.iconBg}
+                  iconColor={item.iconColor}
+                  title={item.title}
+                  subtitle={
+                    upcoming.items.length
+                      ? item.subtitle
+                      : `Nothing due this week · ${item.subtitle.toLowerCase()}`
+                  }
+                  amountMinor={item.amountMinor}
+                  sign={item.sign}
+                  onPress={() => router.push(item.route)}
+                  divider={i > 0}
+                  urgent={item.urgent}
+                  soon={item.pinned && !item.urgent}
+                  date={item.sortDate}
+                  actionLabel={item.pinned && item.payable ? 'Pay' : undefined}
+                  highlight={item.pinned}
+                />
+              </Animated.View>
+            ))
+          ) : (
+            <Pressable
+              onPress={onSeeMoreUpcoming}
+              accessibilityRole="button"
+              accessibilityLabel="Nothing scheduled. Open Plan"
+              style={withPressed(styles.empty)}
+            >
+              <Feather name="check-circle" size={20} color={theme.colors.incomeText} />
+              <View style={styles.copy}>
+                <Text style={styles.title}>Nothing scheduled</Text>
+                <Text style={styles.hint}>Add bills and recurring payments in Plan.</Text>
               </View>
-            ),
-          },
-        ]
-      : []),
-    ...(refunds.length > 0 || refundError
-      ? [
-          {
-            key: 'refunds',
-            label: 'Refunds',
-            count: refunds.length,
-            alert: refunds.some((r) => r.dueDate != null && r.dueDate < toLocalIsoDate(new Date())),
-            content: (
-              <HomeRefunds
-                refunds={refunds}
-                failed={refundError}
-                openingId={openingRefund}
-                onOpen={onOpenRefund}
-                onRetry={onRetryRefunds}
-              />
-            ),
-          },
-        ]
-      : []),
-    ...(topBudgets.length > 0
-      ? [
-          {
-            key: 'budgets',
-            label: 'Budgets',
-            alert: budgetAlert,
-            count: budgets.length,
-            onSeeAll: () => router.push('/budgets'),
-            content: (
-              <View style={styles.pageList}>
-                {topBudgets.map((progress, i) => (
-                  <Animated.View key={progress.budget.id} entering={rowEntering(i)}>
-                    <HomeBudgetRow
-                      progress={progress}
-                      divider={i > 0}
-                      onPress={() => router.push(growHref('/budgets'))}
-                    />
-                  </Animated.View>
-                ))}
-              </View>
-            ),
-          },
-        ]
-      : []),
-    ...(topGoals.length > 0
-      ? [
-          {
-            key: 'goals',
-            label: 'Goals',
-            count: activeGoals.length,
-            onSeeAll: () => router.push('/savings-goals'),
-            content: (
-              <View style={styles.pageList}>
-                {topGoals.map((goal, i) => (
-                  <Animated.View key={goal.id} entering={rowEntering(i)}>
-                    <HomeGoalRow
-                      goal={goal}
-                      divider={i > 0}
-                      onPress={() => router.push(growHref('/savings-goals'))}
-                    />
-                  </Animated.View>
-                ))}
-              </View>
-            ),
-          },
-        ]
-      : []),
-  ];
-  return <HomeSwipeCard pages={pages} />;
+              <Feather name="chevron-right" size={16} color={theme.colors.textMuted} />
+            </Pressable>
+          )}
+        </Glass>
+        {(refunds.length > 0 || refundError) && (
+          <View style={styles.refunds}>
+            <HomeRefunds
+              refunds={refunds}
+              failed={refundError}
+              openingId={openingRefund}
+              onOpen={onOpenRefund}
+              onRetry={onRetryRefunds}
+              compact
+            />
+          </View>
+        )}
+      </Section>
+    </>
+  );
 }
-
 const styles = StyleSheet.create({
-  windowCaption: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingTop: 10,
-    paddingBottom: 4,
+  card: { marginHorizontal: 16, overflow: 'hidden' },
+  refunds: {
+    marginHorizontal: 16,
+    marginTop: 8,
+    borderRadius: 20,
+    backgroundColor: theme.colors.surface,
+    borderWidth: 1,
+    borderColor: theme.colors.borderSoft,
+    overflow: 'hidden',
   },
-  windowLabel: { fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textMuted },
-  windowBold: { fontFamily: theme.font.bodyBold, color: theme.colors.textSecondary },
-  windowCount: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textSecondary },
-  groupLabel: {
-    paddingHorizontal: 16,
-    paddingTop: 10,
-    paddingBottom: 4,
-    fontFamily: theme.font.bodyBold,
-    fontSize: 12,
-    color: theme.colors.expenseText,
-  },
-  groupLabelSoon: { color: theme.colors.dueInk },
-  groupLabelLater: {
-    color: theme.colors.textMuted,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: theme.colors.divider,
-  },
-  // Rows inside a HomeSwipeCard page: no outer border/background (the card draws it); BudgetRow/UpcomingRow
-  // already carry their own horizontal padding.
-  pageList: { paddingHorizontal: 2 },
+  empty: { minHeight: 80, flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14 },
+  copy: { flex: 1, minWidth: 0, gap: 5 },
+  title: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textPrimary },
+  hint: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 18, color: theme.colors.textSecondary },
 });

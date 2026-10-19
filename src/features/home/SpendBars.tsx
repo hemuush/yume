@@ -37,6 +37,7 @@ function Bar({
   dateLabel,
   selected,
   onSelect,
+  compact,
 }: {
   bar: SpendBar;
   maxMinor: number;
@@ -48,6 +49,7 @@ function Bar({
   dateLabel: string;
   selected: boolean;
   onSelect: () => void;
+  compact?: boolean;
 }) {
   const reduce = useReduceMotion();
   // Square-root scaled: one big payment would otherwise flatten every ordinary day to a sliver.
@@ -63,7 +65,7 @@ function Bar({
   const style = useAnimatedStyle(() => ({ transform: [{ scaleY: growth.value }] }));
   return (
     <Pressable
-      style={styles.col}
+      style={[styles.col, compact && styles.colFit]}
       onPress={onSelect}
       accessibilityRole="button"
       accessibilityState={{ selected }}
@@ -94,9 +96,11 @@ function Bar({
 export function SpendBars({
   daily,
   today,
+  compact = false,
 }: {
   daily: { date: string; totalMinor: number }[];
   today: string;
+  compact?: boolean;
 }) {
   const chart = useRef<ScrollView>(null);
   const { accent } = useAccent();
@@ -159,6 +163,7 @@ export function SpendBars({
           <Bar
             key={`${range}:${b.key}`}
             bar={b}
+            compact={compact && range === 'week'}
             selected={b.key === selectedKey}
             onSelect={() => {
               haptics.tap();
@@ -218,6 +223,7 @@ const styles = StyleSheet.create({
     // Room for the label, the tallest bar and the amount that rides above the picked one (it was clipped at +34).
     height: MAX_H + 52,
   },
+  colFit: { width: 0, minWidth: 0, flexBasis: 0 },
   col: {
     flexGrow: 1,
     width: 44,

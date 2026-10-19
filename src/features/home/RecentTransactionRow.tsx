@@ -1,4 +1,5 @@
-import { View, StyleSheet, useWindowDimensions } from 'react-native';
+import { withPressed } from '@/lib/pressed';
+import { View, Pressable, StyleSheet, useWindowDimensions } from 'react-native';
 import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
 import { Category, Transaction } from '@/types';
@@ -24,6 +25,7 @@ export function RecentTransactionRow({
   savingsTransfer = false,
   showDay = true,
   currency,
+  onPress,
 }: {
   tx: Transaction;
   category: Category | undefined;
@@ -37,6 +39,7 @@ export function RecentTransactionRow({
   /** Off when the rows sit under a day heading (Home), so the day isn't said twice. */
   showDay?: boolean;
   currency?: string;
+  onPress?: () => void;
 }) {
   const { secondary } = useAccent();
   const { width, fontScale } = useWindowDimensions();
@@ -54,8 +57,18 @@ export function RecentTransactionRow({
         showDay && dayLabel(tx.date),
       ]);
 
+  const Container = onPress ? Pressable : View;
   return (
-    <View style={[styles.row, stacked && styles.stackedRow, divider && styles.divider]}>
+    <Container
+      onPress={onPress}
+      accessibilityRole={onPress ? 'button' : undefined}
+      accessibilityHint={onPress ? 'Opens transaction details' : undefined}
+      style={
+        onPress
+          ? withPressed([styles.row, stacked && styles.stackedRow, divider && styles.divider])
+          : [styles.row, stacked && styles.stackedRow, divider && styles.divider]
+      }
+    >
       <JustAddedGlow ids={[tx.id]} surface="home" />
       <CategoryIcon
         name={isTransfer ? 'swap-horizontal' : (category?.icon ?? 'tag')}
@@ -78,7 +91,7 @@ export function RecentTransactionRow({
           currency={currency}
         />
       </Text>
-    </View>
+    </Container>
   );
 }
 
