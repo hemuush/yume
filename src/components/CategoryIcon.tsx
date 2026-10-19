@@ -15,7 +15,7 @@ interface Props {
 }
 
 // A category's icon in a soft, borderless tinted square, matching the calm hairline register
-// (SoftCard, Home hero), not the older thick-ink outline.
+// (Home hero and summary cards), not the older thick-ink outline.
 export function CategoryIcon({ name, color, size = 16, square = 34, round = false }: Props) {
   const { accent } = useAccent();
   const resolvedColor = color ?? accent;

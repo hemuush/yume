@@ -2,6 +2,7 @@ import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 import { getAlertQueue, getNotificationPrefs, setAlertQueue } from '@/db/settings';
 import { hasLoggedOn, listLoansDue, listReminderAttention } from '@/db/notificationData';
+import { resolveQueuedSpendAlerts } from '@/db/queuedSpendAlerts';
 import { theme } from '@/constants/theme';
 import { toLocalIsoDate } from './date';
 import { NOTIFICATION_ROUTES, NotificationRoute, planNotifications } from './notificationPlan';
@@ -139,12 +140,13 @@ export function rebuildNotifications(): Promise<boolean> {
 async function doRebuild(): Promise<boolean> {
   try {
     const logDate = toLocalIsoDate(new Date());
-    const [prefs, loans, alerts, initiallyLogged] = await Promise.all([
+    const [prefs, loans, queuedAlerts, initiallyLogged] = await Promise.all([
       getNotificationPrefs(),
       listLoansDue(),
       getAlertQueue(),
       hasLoggedOn(logDate),
     ]);
+    const alerts = await resolveQueuedSpendAlerts(queuedAlerts);
     const attention =
       (prefs.morningEnabled || prefs.eveningEnabled) && (prefs.recurringAlerts || prefs.refundAlerts)
         ? await listReminderAttention(
@@ -210,8 +212,8 @@ async function doRebuild(): Promise<boolean> {
         )
     );
     // Alerts already sent (or stale) drop out of the queue here.
-    if (allScheduled && allCancelled && waitingAlerts.length !== alerts.length)
-      await setAlertQueue(waitingAlerts);
+    if (allScheduled && allCancelled && JSON.stringify(waitingAlerts) !== JSON.stringify(queuedAlerts))
+      await setAlertQueue(waitingAlerts, queuedAlerts);
     return allScheduled && allCancelled;
   } catch (err) {
     console.error('rebuildNotifications failed:', err);

@@ -30,6 +30,7 @@ import { PrimaryButton } from '@/components/PrimaryButton';
 import { SheetLink } from '@/components/ModalSheet';
 import { CATEGORY_COLOR_PALETTE } from '@/constants/theme';
 import { CATEGORY_ICON_CHOICES } from '@/constants/categories';
+import { showAlert } from '@/components/AppDialog';
 import type { Category } from '@/types';
 
 const cat = (over: Partial<Category> & Pick<Category, 'id' | 'name'>) =>
@@ -111,7 +112,7 @@ describe('AddCategoryModal — new category', () => {
     const { tree, onSaved } = await render();
     await type(tree, '  Pet Care  ');
     await save(tree);
-    expect(mockCreate).toHaveBeenCalledWith({
+    expect(mockCreate.mock.calls[0][0]).toEqual({
       name: 'Pet Care',
       kind: 'expense',
       color: CATEGORY_COLOR_PALETTE[0],
@@ -130,7 +131,7 @@ describe('AddCategoryModal — new category', () => {
     act(() => pressable(tree, `${CATEGORY_ICON_CHOICES[1].replace(/-/g, ' ')} icon`).props.onPress());
     act(() => byId(tree, 'sensitive').props.onChange(true));
     await save(tree);
-    expect(mockCreate).toHaveBeenCalledWith({
+    expect(mockCreate.mock.calls[0][0]).toEqual({
       name: 'Side income',
       kind: 'income',
       color: CATEGORY_COLOR_PALETTE[2],
@@ -152,7 +153,7 @@ describe('AddCategoryModal — new category', () => {
     expect(parentChoices(tree)).toEqual(['No parent category', 'Inside Test Salary']);
     expect(byId(tree, 'card').props.meta).toBeUndefined();
     await save(tree);
-    expect(mockCreate).toHaveBeenCalledWith(expect.objectContaining({ kind: 'income', parentId: null }));
+    expect(mockCreate.mock.calls[0][0]).toEqual(expect.objectContaining({ kind: 'income', parentId: null }));
   });
 
   it('saves a subcategory under the parent that was picked', async () => {
@@ -160,7 +161,7 @@ describe('AddCategoryModal — new category', () => {
     await type(tree, 'Snacks');
     act(() => pressable(tree, 'Inside Test Food').props.onPress());
     await save(tree);
-    expect(mockCreate).toHaveBeenCalledWith(expect.objectContaining({ parentId: 'food' }));
+    expect(mockCreate.mock.calls[0][0]).toEqual(expect.objectContaining({ parentId: 'food' }));
   });
 
   it('shows a failure, stays open and does not report success', async () => {
@@ -185,6 +186,16 @@ describe('AddCategoryModal — new category', () => {
 });
 
 describe('AddCategoryModal — editing', () => {
+  it('reports saved changes and warns if queued private reminders cannot be refreshed', async () => {
+    mockUpdate.mockResolvedValueOnce(false);
+    const { tree, onSaved } = await render(cat({ id: 'private', name: 'Private' }));
+    await save(tree);
+    expect(onSaved).toHaveBeenCalledTimes(1);
+    expect(showAlert).toHaveBeenCalledWith(
+      'Reminders need attention',
+      expect.stringContaining('may still show private details')
+    );
+  });
   it('opens on the category, with its type fixed', async () => {
     const own = cat({ id: 'fuel', name: 'Test Fuel', isSensitive: true });
     const { tree } = await render(own);
@@ -228,6 +239,7 @@ describe('AddCategoryModal — editing', () => {
     const builtIn = cat({ id: 'loans', name: 'Test Loans', isSystem: true });
     const { tree } = await render(builtIn, { onManage: jest.fn() });
     expect(byId(tree, 'name').props.editable).toBe(false);
+    expect(parentChoices(tree)).toEqual([]);
     expect(tree.root.findAllByType(SheetLink)).toHaveLength(0);
     expect(texts(tree).some((t) => t.startsWith('Built-in category'))).toBe(true);
   });

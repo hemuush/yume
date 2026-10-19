@@ -1,6 +1,6 @@
 /**
  * The five name-matched built-ins (Loan EMI/Repayment, Fees & Charges, Friends & Family) are `is_system`:
- * no delete/archive/rename, otherwise editable; a user's same-named category is never system.
+ * no delete/archive/rename/reparent; appearance/sensitivity stay editable. A user's same-named category is never system.
  */
 import { createRealDataTestDb } from '@/test-support/realDataTestDb';
 
@@ -101,6 +101,43 @@ describe('is_system enforcement', () => {
     expect(child.isSystem).toBe(false);
     await deleteCategory(child.id); // clean up (not system, no history)
   });
+
+  it('blocks reparenting a childless system category without applying other edits', async () => {
+    const parent = await createCategory({ name: 'System move target', kind: 'expense' });
+    const before = (await listCategories(true)).find((c) => c.id === loanEmiId)!;
+    await expect(
+      updateCategory(loanEmiId, {
+        name: before.name,
+        icon: 'tag',
+        color: '#123456',
+        parentId: parent.id,
+        isSensitive: false,
+      })
+    ).rejects.toThrow('parent of a built-in category');
+    expect((await listCategories(true)).find((c) => c.id === loanEmiId)).toEqual(before);
+  });
+
+  it.each(['archive', 'delete'] as const)(
+    'blocks %s of a parent containing a legacy system child',
+    async (action) => {
+      const parent = await createCategory({ name: `Legacy system ${action}`, kind: 'expense' });
+      // Simulate data saved by an older version or restored from backup.
+      await mockTestDb.runAsync('UPDATE categories SET parent_id = ? WHERE id = ?', [parent.id, loanEmiId]);
+      try {
+        await expect(
+          action === 'archive' ? archiveCategory(parent.id) : deleteCategory(parent.id)
+        ).rejects.toThrow('built-in category');
+        const categories = await listCategories(true);
+        expect(categories.find((c) => c.id === parent.id)?.archived).toBe(false);
+        expect(categories.find((c) => c.id === loanEmiId)).toMatchObject({
+          parentId: parent.id,
+          archived: false,
+        });
+      } finally {
+        await mockTestDb.runAsync('UPDATE categories SET parent_id = NULL WHERE id = ?', [loanEmiId]);
+      }
+    }
+  );
 
   it('a second top-level category with a built-in name is refused', async () => {
     await expect(createCategory({ name: 'loan emi', kind: 'expense' })).rejects.toThrow('already a category');

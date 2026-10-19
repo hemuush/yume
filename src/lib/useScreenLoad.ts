@@ -8,6 +8,7 @@ import { useFreshness } from '@/lib/useFreshness';
  * `useFocusEffect` reload. `loadFn` should only fetch + `setState` (hook wraps try/catch); `useCallback` it.
  * `skipWhenUnchanged` (default true): a screen that shows only database data skips the focus reload when nothing has been
  * written since its last successful load (see useFreshness); `reload()` always runs.
+ * This guards hook bookkeeping only. The callback owns guards for its own state writes after stale reads.
  */
 export function useScreenLoad(loadFn: () => Promise<void>, opts: { skipWhenUnchanged?: boolean } = {}) {
   const [loaded, setLoaded] = useState(false);

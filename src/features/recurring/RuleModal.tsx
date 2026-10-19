@@ -153,10 +153,14 @@ export function RuleModal({
     setOpen(editing || prefill?.categoryId ? null : 'category');
   }, [visible, editing, prefill]);
 
-  const filteredCategories = useMemo(
-    () => categories.filter((c) => c.kind === (type === 'income' ? 'income' : 'expense')),
-    [categories, type]
-  );
+  const filteredCategories = useMemo(() => {
+    const parentId = categories.find((c) => c.id === categoryId)?.parentId;
+    return categories.filter(
+      (c) =>
+        c.kind === (type === 'income' ? 'income' : 'expense') &&
+        (!c.archived || c.id === categoryId || c.id === parentId)
+    );
+  }, [categories, type, categoryId]);
   // Same rule as the add-transaction screen: a recurring expense/income can't fire straight out of a savings
   // account (transfer out first); validate() in src/db/recurring.ts enforces it too.
   const spendableAccounts = useMemo(() => spendableAccountsOf(accounts), [accounts]);

@@ -2,6 +2,7 @@ import { getDb, type AppDb } from '@/db/client';
 import { resetSettingsCache } from '@/db/settings';
 import { assertValidIsoDate } from './date';
 import { BACKFILL_LOAN_TX_KIND_SQL } from '@/db/loanTxKind';
+import { repairTrackedRefundLabels } from '@/db/refundLabels';
 
 /**
  * Phone-owned settings: always the current phone's values, never the backup's. The folder URI is a storage
@@ -326,6 +327,7 @@ export async function restoreFromSnapshotOn(db: AppDb, snapshot: BackupSnapshot)
         );
         // Same reasoning: a backup from before loan_tx_kind existed restores its loan transactions untagged.
         await tx.runAsync(BACKFILL_LOAN_TX_KIND_SQL);
+        await repairTrackedRefundLabels(tx);
         // FKs were off for the inserts, so nothing checked them; a damaged file could leave a transaction
         // pointing at a missing account. Checking before commit rolls back, leaving current data untouched.
         const broken = await tx.getAllAsync<{ table: string }>('PRAGMA foreign_key_check');

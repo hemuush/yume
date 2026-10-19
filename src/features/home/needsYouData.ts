@@ -95,7 +95,10 @@ export async function loadNeedsYou(
   }
   // A charge hidden on Recurring counts as dismissed here too, so it can be
   // brought back from either place.
-  return splitDismissed(items, [...dismissedKeys, ...hiddenSuggestions.map(lookMonthlyKey)]);
+  const hiddenPatternKeys = patterns
+    .filter((p) => hiddenSuggestions.includes(p.key) || hiddenSuggestions.includes(`sub-${p.categoryId}`))
+    .map((p) => lookMonthlyKey(p.key));
+  return splitDismissed(items, [...dismissedKeys, ...hiddenPatternKeys]);
 }
 
 const LOOKS_MONTHLY = 'looks-monthly-';
@@ -121,7 +124,14 @@ export async function dismissNeedsYou(key: string): Promise<void> {
 
 /** Undoes a dismiss. */
 export async function restoreNeedsYou(key: string): Promise<void> {
-  if (key.startsWith(LOOKS_MONTHLY)) return unhideSubscriptionSuggestion(key.slice(LOOKS_MONTHLY.length));
+  if (key.startsWith(LOOKS_MONTHLY)) {
+    const suggestion = key.slice(LOOKS_MONTHLY.length);
+    await unhideSubscriptionSuggestion(suggestion);
+    // A legacy dismissal covered the whole category, before per-currency keys existed.
+    const legacy = suggestion.replace(/:[A-Z]{3}$/, '');
+    if (legacy !== suggestion) await unhideSubscriptionSuggestion(legacy);
+    return;
+  }
   await updateDismissed((keys) => keys.filter((k) => k !== key));
 }
 

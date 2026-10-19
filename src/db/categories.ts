@@ -4,6 +4,12 @@ import { getDb } from './client';
 import { newId } from '@/lib/id';
 import { captureRows, restoreRows, RowSnapshot } from './undoSnapshot';
 import { Category } from '@/types';
+import { refreshPrivacyNotificationsAfterCommit } from './afterCommit';
+
+/** Used by mutations that return a category/snapshot rather than the refresh status. Saves stay successful. */
+async function refreshCategoryPrivacy(onReminderRefreshFailed?: () => void): Promise<void> {
+  if ((await refreshPrivacyNotificationsAfterCommit()) === false) onReminderRefreshFailed?.();
+}
 
 /** Categories and subcategories: list, create, edit, archive and delete (re-exported from ./ledger). */
 
@@ -98,7 +104,8 @@ async function assertUniqueCategoryName(
   name: string,
   kind: Category['kind'],
   parentId: string | null,
-  exceptId?: string
+  exceptId?: string,
+  restoring = false
 ): Promise<void> {
   const clash = await db.getFirstAsync<{ id: string }>(
     `SELECT id FROM categories
@@ -107,63 +114,90 @@ async function assertUniqueCategoryName(
      LIMIT 1`,
     [kind, name, parentId, exceptId ?? null]
   );
-  if (clash) throw new Error(`There's already a category called "${name}" here.`);
+  if (clash)
+    throw new Error(
+      restoring
+        ? `There's already an active category called "${name}" here. Rename that category before restoring this one.`
+        : `There's already a category called "${name}" here.`
+    );
 }
 
-export async function createCategory(input: {
-  name: string;
-  kind: Category['kind'];
-  parentId?: string | null;
-  icon?: string;
-  color?: string;
-  sortOrder?: number;
-  isSensitive?: boolean;
-}): Promise<Category> {
+/** Validate the resulting active set inside the transaction, including a reactivated parent or Undo family. */
+async function assertReactivatedNames(db: Awaited<ReturnType<typeof getDb>>, ids: string[]): Promise<void> {
+  for (const id of ids) {
+    const row = await db.getFirstAsync<CategoryRow>(
+      'SELECT * FROM categories WHERE id = ? AND archived = 0',
+      [id]
+    );
+    if (!row) continue;
+    await assertUniqueCategoryName(db, row.name, row.kind, row.parent_id, row.id, true);
+  }
+}
+
+export async function createCategory(
+  input: {
+    name: string;
+    kind: Category['kind'];
+    parentId?: string | null;
+    icon?: string;
+    color?: string;
+    sortOrder?: number;
+    isSensitive?: boolean;
+  },
+  onReminderRefreshFailed?: () => void
+): Promise<Category> {
   const name = input.name.trim();
   if (!name) throw new Error('Give the category a name');
   const db = await getDb();
-  if (input.parentId) {
-    await assertValidParent(db, input.parentId, input.kind);
-  }
-  await assertUniqueCategoryName(db, name, input.kind, input.parentId ?? null);
-  const id = newId();
-  await db.runAsync(
-    `INSERT INTO categories (id, name, kind, parent_id, icon, color, sort_order, is_sensitive)
+  let created: Category | null = null;
+  await db.withTransactionAsync(async (tx) => {
+    if (input.parentId) {
+      await assertValidParent(tx, input.parentId, input.kind);
+    }
+    await assertUniqueCategoryName(tx, name, input.kind, input.parentId ?? null);
+    const id = newId();
+    await tx.runAsync(
+      `INSERT INTO categories (id, name, kind, parent_id, icon, color, sort_order, is_sensitive)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-    [
-      id,
-      name,
-      input.kind,
-      input.parentId ?? null,
-      input.icon ?? 'tag',
-      input.color ?? '#6366F1',
-      input.sortOrder ?? 0,
-      input.isSensitive ? 1 : 0,
-    ]
-  );
-  const row = await db.getFirstAsync<CategoryRow & { parent_is_sensitive: number }>(
-    `${CATEGORY_SELECT} WHERE c.id = ?`,
-    [id]
-  );
-  return rowToCategory(found(row, 'category'));
+      [
+        id,
+        name,
+        input.kind,
+        input.parentId ?? null,
+        input.icon ?? 'tag',
+        input.color ?? '#6366F1',
+        input.sortOrder ?? 0,
+        input.isSensitive ? 1 : 0,
+      ]
+    );
+    const row = await tx.getFirstAsync<CategoryRow & { parent_is_sensitive: number }>(
+      `${CATEGORY_SELECT} WHERE c.id = ?`,
+      [id]
+    );
+    created = rowToCategory(found(row, 'category'));
+  });
+  // A new sensitive child hides existing sibling/parent reminders as part of the same family.
+  if (input.isSensitive && input.parentId) await refreshCategoryPrivacy(onReminderRefreshFailed);
+  return found<Category>(created, 'category');
 }
 
 /**
  * Archiving a parent cascades to its subcategories, else an active child would be orphaned: its parent gone
  * from every picker and nobody able to find it again on purpose.
  */
-export async function archiveCategory(id: string): Promise<void> {
+export async function archiveCategory(id: string, onReminderRefreshFailed?: () => void): Promise<void> {
   const db = await getDb();
-  await assertNotSystemCategory(db, id, 'archived');
   await db.withTransactionAsync(async (tx) => {
+    await assertNotSystemCategory(tx, id, 'archived');
     await tx.runAsync('UPDATE categories SET archived = 1 WHERE id = ?', [id]);
     await tx.runAsync('UPDATE categories SET archived = 1 WHERE parent_id = ?', [id]);
   });
+  await refreshCategoryPrivacy(onReminderRefreshFailed);
 }
 
 /**
  * The five seeded `is_system` categories are matched by name to auto-file loan and Friends & Family entries;
- * deleting, archiving or renaming one breaks that, so all three are blocked here (every UI path funnels in).
+ * deleting, archiving, renaming or reparenting one breaks that. Family actions also protect legacy children.
  */
 async function assertNotSystemCategory(
   db: Awaited<ReturnType<typeof getDb>>,
@@ -171,8 +205,8 @@ async function assertNotSystemCategory(
   action: 'deleted' | 'archived'
 ): Promise<void> {
   const row = await db.getFirstAsync<{ name: string; is_system: number }>(
-    'SELECT name, is_system FROM categories WHERE id = ?',
-    [id]
+    'SELECT name, is_system FROM categories WHERE (id = ? OR parent_id = ?) AND is_system = 1 LIMIT 1',
+    [id, id]
   );
   if (row?.is_system) {
     throw new Error(
@@ -185,7 +219,7 @@ async function assertNotSystemCategory(
  * Brings a category back. A subcategory brings its parent back with it: an active child under an archived
  * parent would sit in no picker (pickers open a parent to reach its children).
  */
-export async function unarchiveCategory(id: string): Promise<void> {
+export async function unarchiveCategory(id: string, onReminderRefreshFailed?: () => void): Promise<void> {
   const db = await getDb();
   await db.withTransactionAsync(async (tx) => {
     await tx.runAsync('UPDATE categories SET archived = 0 WHERE id = ?', [id]);
@@ -194,56 +228,74 @@ export async function unarchiveCategory(id: string): Promise<void> {
        WHERE id = (SELECT parent_id FROM categories WHERE id = ?) AND archived = 1`,
       [id]
     );
+    const row = await tx.getFirstAsync<{ parent_id: string | null }>(
+      'SELECT parent_id FROM categories WHERE id = ?',
+      [id]
+    );
+    await assertReactivatedNames(tx, [id, ...(row?.parent_id ? [row.parent_id] : [])]);
   });
+  await refreshCategoryPrivacy(onReminderRefreshFailed);
 }
 
+/** Returns false when the edit committed but private reminder content could not be refreshed. */
 export async function updateCategory(
   id: string,
   input: { name: string; icon: string; color: string; parentId?: string | null; isSensitive?: boolean }
-): Promise<void> {
+): Promise<boolean> {
   const name = input.name.trim();
   if (!name) throw new Error('Give the category a name');
   const db = await getDb();
-  const current = await db.getFirstAsync<CategoryRow>('SELECT * FROM categories WHERE id = ?', [id]);
-  if (!current) throw new Error('Category not found');
-  // A built-in category is matched by name at runtime — its icon, colour,
-  // sensitivity and subcategories stay editable, but the name is fixed.
-  if (current.is_system && name !== current.name) {
-    throw new Error("The name of a built-in category can't be changed.");
-  }
-  // Omitted `parentId` means "leave as-is": defaulting to null would strip the parent on every plain
-  // edit by callers that never pass it. Same for `isSensitive`.
-  const nextParentId = input.parentId !== undefined ? input.parentId : current.parent_id;
-  const nextIsSensitive = input.isSensitive !== undefined ? input.isSensitive : !!current.is_sensitive;
-  if (nextParentId) {
-    const hasChildren = await db.getFirstAsync<{ id: string }>(
-      'SELECT id FROM categories WHERE parent_id = ? LIMIT 1',
-      [id]
-    );
-    if (hasChildren) {
-      throw new Error(
-        "This category already has subcategories of its own — it can't also become a subcategory."
-      );
+  let affectsPrivacy = false;
+  await db.withTransactionAsync(async (tx) => {
+    const current = await tx.getFirstAsync<CategoryRow>('SELECT * FROM categories WHERE id = ?', [id]);
+    if (!current) throw new Error('Category not found');
+    // A built-in category is matched by name at runtime — its icon, colour,
+    // sensitivity and subcategories stay editable, but its name and parent are fixed.
+    if (current.is_system && name !== current.name) {
+      throw new Error("The name of a built-in category can't be changed.");
     }
-    await assertValidParent(db, nextParentId, current.kind, id);
-  }
-  await assertUniqueCategoryName(db, name, current.kind, nextParentId, id);
-  await db.runAsync(
-    'UPDATE categories SET name = ?, icon = ?, color = ?, parent_id = ?, is_sensitive = ? WHERE id = ?',
-    [name, input.icon, input.color, nextParentId, nextIsSensitive ? 1 : 0, id]
-  );
+    // Omitted `parentId` means "leave as-is": defaulting to null would strip the parent on every plain
+    // edit by callers that never pass it. Same for `isSensitive`.
+    const nextParentId = input.parentId !== undefined ? input.parentId : current.parent_id;
+    if (current.is_system && nextParentId !== current.parent_id) {
+      throw new Error("The parent of a built-in category can't be changed.");
+    }
+    const nextIsSensitive = input.isSensitive !== undefined ? input.isSensitive : !!current.is_sensitive;
+    affectsPrivacy = nextParentId !== current.parent_id || nextIsSensitive !== !!current.is_sensitive;
+    if (nextParentId) {
+      const hasChildren = await tx.getFirstAsync<{ id: string }>(
+        'SELECT id FROM categories WHERE parent_id = ? LIMIT 1',
+        [id]
+      );
+      if (hasChildren) {
+        throw new Error(
+          "This category already has subcategories of its own — it can't also become a subcategory."
+        );
+      }
+      await assertValidParent(tx, nextParentId, current.kind, id);
+    }
+    await assertUniqueCategoryName(tx, name, current.kind, nextParentId, id);
+    await tx.runAsync(
+      'UPDATE categories SET name = ?, icon = ?, color = ?, parent_id = ?, is_sensitive = ? WHERE id = ?',
+      [name, input.icon, input.color, nextParentId, nextIsSensitive ? 1 : 0, id]
+    );
+  });
+  return !affectsPrivacy || refreshPrivacyNotificationsAfterCommit();
 }
 
 /**
  * Deletes an unused category (else archive); blocked if a transaction or recurring rule uses it or its subs.
  * Why: transactions' CHECK gives a raw SQL error; a rule left with null category_id throws on its next run.
  */
-export async function deleteCategory(id: string): Promise<RowSnapshot[]> {
+export async function deleteCategory(
+  id: string,
+  onReminderRefreshFailed?: () => void
+): Promise<RowSnapshot[]> {
   const db = await getDb();
-  await assertNotSystemCategory(db, id, 'deleted');
   let snapshots: RowSnapshot[] = [];
   // Usage checks, capture and delete share one transaction, so an entry saved in between can't hit the FK.
   await db.withTransactionAsync(async (tx) => {
+    await assertNotSystemCategory(tx, id, 'deleted');
     const children = await tx.getAllAsync<{ id: string }>('SELECT id FROM categories WHERE parent_id = ?', [
       id,
     ]);
@@ -277,16 +329,31 @@ export async function deleteCategory(id: string): Promise<RowSnapshot[]> {
     snapshots = (await captureRows(tx, 'categories', 'id = ? OR parent_id = ?', [id, id])).sort((x, y) =>
       x.row.id === id ? -1 : y.row.id === id ? 1 : 0
     );
+    // Budgets cascade with the category. Keep every month, after all categories for FK-safe Undo.
+    snapshots.push(...(await captureRows(tx, 'budgets', `category_id IN (${placeholders})`, idsToCheck)));
     await tx.runAsync('DELETE FROM categories WHERE id = ? OR parent_id = ?', [id, id]);
   });
+  if (snapshots.some((s) => s.table === 'categories' && s.row.is_sensitive === 1)) {
+    await refreshCategoryPrivacy(onReminderRefreshFailed);
+  }
   return snapshots;
 }
 
-/** Undoes `deleteCategory` — re-inserts the category (and any subcategories it took with it), in the same parent-first order they were captured. */
-export async function restoreCategory(snapshots: RowSnapshot[]): Promise<void> {
+/** Undoes `deleteCategory`: categories parent-first, then all their captured monthly budgets. */
+export async function restoreCategory(
+  snapshots: RowSnapshot[],
+  onReminderRefreshFailed?: () => void
+): Promise<void> {
   const db = await getDb();
   // All-or-nothing: a failure part-way can't leave a parent restored without its subcategories.
   await db.withTransactionAsync(async (tx) => {
     await restoreRows(tx, snapshots);
+    await assertReactivatedNames(
+      tx,
+      snapshots.filter((s) => s.table === 'categories').map((s) => String(s.row.id))
+    );
   });
+  if (snapshots.some((s) => s.table === 'categories' && s.row.is_sensitive === 1)) {
+    await refreshCategoryPrivacy(onReminderRefreshFailed);
+  }
 }

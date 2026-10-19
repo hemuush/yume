@@ -28,6 +28,7 @@ import { useUndoToast } from '@/components/UndoToast';
 import { haptics } from '@/lib/haptics';
 import { Skeleton } from '@/components/Skeleton';
 import { errorMessage } from '@/lib/errorMessage';
+import { showPrivacyReminderWarning } from '@/lib/privacyReminderFeedback';
 import { showAlert } from '@/components/AppDialog';
 import { HomeWallpaper } from '@/features/home/HomeWallpaper';
 import { useAccent } from '@/theme/AccentContext';
@@ -73,7 +74,7 @@ export default function CategoriesScreen() {
             if (actionBusy) return;
             setActionBusy(true);
             try {
-              await unarchiveCategory(cat.id);
+              await unarchiveCategory(cat.id, showPrivacyReminderWarning);
               await load();
             } catch (e) {
               showAlert("Couldn't restore category", errorMessage(e));
@@ -90,8 +91,8 @@ export default function CategoriesScreen() {
     showAlert(
       `Archive "${cat.name}"?`,
       childCount > 0
-        ? `Hides it and its ${childCount} subcategor${childCount === 1 ? 'y' : 'ies'} from pickers. Past transactions keep them.`
-        : `Hides it from pickers. Past transactions keep it.`,
+        ? `Hides it and its ${childCount} subcategor${childCount === 1 ? 'y' : 'ies'} from pickers. Past transactions keep them. Recurring entries keep running; pause them in Recurring if needed.`
+        : `Hides it from pickers. Past transactions keep it. Recurring entries keep running; pause them in Recurring if needed.`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -102,7 +103,7 @@ export default function CategoriesScreen() {
               if (actionBusy) return;
               setActionBusy(true);
               try {
-                await archiveCategory(cat.id);
+                await archiveCategory(cat.id, showPrivacyReminderWarning);
                 await load();
               } catch (e) {
                 showAlert("Couldn't archive category", errorMessage(e));
@@ -120,11 +121,11 @@ export default function CategoriesScreen() {
       if (actionBusy) return;
       setActionBusy(true);
       try {
-        const snapshot = await deleteCategory(cat.id);
+        const snapshot = await deleteCategory(cat.id, showPrivacyReminderWarning);
         haptics.warn();
         await load();
         showUndo(`Deleted "${cat.name}"`, async () => {
-          await restoreCategory(snapshot);
+          await restoreCategory(snapshot, showPrivacyReminderWarning);
           await load();
         });
       } catch (e) {

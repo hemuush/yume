@@ -7,6 +7,7 @@ import { queueSpendAlerts, assertValidTransactionInput } from './ledger';
 import { assertValidIsoDate } from '@/lib/date';
 import { captureRow, restoreRows, RowSnapshot } from './undoSnapshot';
 import { assertDefaultCurrencyAccount } from './currencyInvariant';
+import { rebuildNotificationsAfterCommit } from './afterCommit';
 
 function rowToPerson(row: PersonRow): Person {
   return {
@@ -194,6 +195,7 @@ export async function recordMoneyReceivedFromPerson(input: {
   await db.withTransactionAsync((tx) =>
     insertPersonMoneyMovement(tx, { ...input, type: 'income', ledgerAmountMinor: -input.amountMinor })
   );
+  await rebuildNotificationsAfterCommit();
 }
 
 /**
@@ -214,6 +216,7 @@ export async function undoPersonTransaction(transactionId: string): Promise<void
     }
     await tx.runAsync('DELETE FROM transactions WHERE id = ?', [transactionId]);
   });
+  await rebuildNotificationsAfterCommit();
 }
 
 /**
@@ -237,6 +240,7 @@ export async function deleteLedgerEntry(entryId: string): Promise<RowSnapshot[]>
     // key needs it to already exist.
     snapshots = txSnapshot ? [txSnapshot, entrySnapshot] : [entrySnapshot];
   });
+  if (snapshots.some((s) => s.table === 'transactions')) await rebuildNotificationsAfterCommit();
   return snapshots;
 }
 
@@ -247,4 +251,5 @@ export async function restoreLedgerEntry(snapshots: RowSnapshot[]): Promise<void
   await db.withTransactionAsync(async (tx) => {
     await restoreRows(tx, snapshots);
   });
+  if (snapshots.some((s) => s.table === 'transactions')) await rebuildNotificationsAfterCommit();
 }

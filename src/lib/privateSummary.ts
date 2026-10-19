@@ -60,6 +60,9 @@ export function isSavingsEntry(
     return savingsAccountIds.has(tx.accountId) || (!!tx.toAccountId && savingsAccountIds.has(tx.toAccountId));
   }
   const category = tx.categoryId ? categoriesById.get(tx.categoryId) : undefined;
+  // Incomplete metadata must not turn a private entry public while a screen loads historical records.
+  if (tx.categoryId && !category) return true;
+  if (category?.parentId && !categoriesById.has(category.parentId)) return true;
   return (
     !!category &&
     !!(category.isSensitive || (category.parentId && categoriesById.get(category.parentId)?.isSensitive))

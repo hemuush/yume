@@ -107,7 +107,7 @@ export const theme = {
     lg: 14,
     xl: 18,
     // Generous corner for the softer "calm card" register introduced on the
-    // Home screen (SoftCard) — rounder than the doodle cards' `xl`.
+    // Home screen cards — rounder than the doodle cards' `xl`.
     xl2: 22,
     pill: 999,
   },

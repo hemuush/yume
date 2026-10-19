@@ -79,6 +79,17 @@ describe('privateSummary', () => {
 });
 
 describe('isSavingsEntry', () => {
+  it('keeps missing category or parent metadata private, including archived-record lookups', () => {
+    const entry = { type: 'expense' as const, accountId: 'bank', toAccountId: null, categoryId: 'missing' };
+    expect(isSavingsEntry(entry, new Map(), new Set())).toBe(true);
+    expect(
+      isSavingsEntry(
+        { ...entry, categoryId: 'child' },
+        new Map([['child', { id: 'child', parentId: 'missing', isSensitive: false } as Category]]),
+        new Set()
+      )
+    ).toBe(true);
+  });
   it('inherits sensitivity from the parent even when the child flag is false', () => {
     const categories = new Map<string, Category>([
       ['parent', { id: 'parent', isSensitive: true } as Category],

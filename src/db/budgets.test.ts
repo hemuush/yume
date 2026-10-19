@@ -332,4 +332,60 @@ describe('budgets', () => {
     expect(periodMonthOf(new Date(2026, 0, 15))).toBe('2026-01');
     expect(periodMonthOf(new Date(2026, 10, 3))).toBe('2026-11');
   });
+
+  it('hides a sensitive family from current, rollover and lapsed budgets without changing revealed totals', async () => {
+    const parent = await createCategory({ name: 'Family privacy', kind: 'expense' });
+    const privateChild = await createCategory({
+      name: 'Private child',
+      kind: 'expense',
+      parentId: parent.id,
+      isSensitive: true,
+    });
+    const sibling = await createCategory({ name: 'Public sibling', kind: 'expense', parentId: parent.id });
+    const ordinary = await createCategory({ name: 'Public budget', kind: 'expense' });
+    const privateParent = await createCategory({
+      name: 'Private parent',
+      kind: 'expense',
+      isSensitive: true,
+    });
+    const inherited = await createCategory({
+      name: 'Inherited child',
+      kind: 'expense',
+      parentId: privateParent.id,
+    });
+    for (const categoryId of [parent.id, privateChild.id, sibling.id, ordinary.id, inherited.id]) {
+      for (const periodMonth of ['2028-01', '2028-02']) {
+        await createBudget({ categoryId, periodMonth, limitAmountMinor: 100000, rollover: true });
+      }
+    }
+    await createTransaction({
+      type: 'expense',
+      accountId,
+      categoryId: privateChild.id,
+      amountMinor: 42000,
+      date: '2028-01-10',
+    });
+    await createTransaction({
+      type: 'expense',
+      accountId,
+      categoryId: privateChild.id,
+      amountMinor: 12000,
+      date: '2028-02-10',
+    });
+    // Historical spending remains private even after the sensitive child is archived.
+    await mockTestDb.runAsync('UPDATE categories SET archived = 1 WHERE id = ?', [privateChild.id]);
+    const hidden = await listBudgetsForMonth('2028-02', true);
+    expect(hidden.map((p) => p.budget.categoryId)).toEqual([ordinary.id]);
+    expect(hidden[0]).toMatchObject({ spentMinor: 0, effectiveLimitMinor: 200000, remainingMinor: 200000 });
+    expect((await listLapsedBudgets('2028-03', true)).map((p) => p.categoryId)).toEqual([ordinary.id]);
+    const revealed = (await listBudgetsForMonth('2028-02', false)).find(
+      (p) => p.budget.categoryId === parent.id
+    )!;
+    expect(revealed).toMatchObject({
+      spentMinor: 12000,
+      effectiveLimitMinor: 158000,
+      remainingMinor: 146000,
+    });
+    expect((await listLapsedBudgets('2028-03', false)).some((p) => p.categoryId === parent.id)).toBe(true);
+  });
 });

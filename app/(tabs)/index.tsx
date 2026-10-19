@@ -67,6 +67,7 @@ import { SuuRefreshBadge } from '@/features/home/SuuRefreshBadge';
 import { Section } from '@/components/Section';
 import { SCREEN } from '@/components/screenStyles';
 import { HomeGlance, buildUpcomingItems } from '@/features/home/HomeGlance';
+import { recurringRulesInCurrency } from '@/lib/recurringScope';
 import { buildLoansSummary } from '@/features/plan/planOverview';
 import { RecentTransactionRow } from '@/features/home/RecentTransactionRow';
 import { AccountSummarySheet } from '@/features/home/AccountSummarySheet';
@@ -501,7 +502,7 @@ export default function DashboardScreen() {
           : []
       ),
       cardBills,
-      rules: recurringRules,
+      rules: recurringRulesInCurrency(recurringRules, historyAccounts, currency),
       accent,
       secondary,
       accountName: (id) => (id ? accountsById.get(id)?.name : undefined),
@@ -512,7 +513,18 @@ export default function DashboardScreen() {
       },
       categoryColor: (id) => cat(id)?.color,
     });
-  }, [loans, loanProgress, cardBills, recurringRules, accent, secondary, categoriesById, accountsById]);
+  }, [
+    loans,
+    loanProgress,
+    cardBills,
+    recurringRules,
+    accent,
+    secondary,
+    categoriesById,
+    accountsById,
+    historyAccounts,
+    currency,
+  ]);
 
   const openSpendingReports = () => {
     const range = periodRange(loadedCursor);

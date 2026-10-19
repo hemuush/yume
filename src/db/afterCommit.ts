@@ -1,6 +1,19 @@
 import { rebuildNotifications } from '@/lib/notifications';
 import { getNotificationPrefs } from './settings';
 
+/** Privacy changes can invalidate both optional topics. Report failure separately from the committed save. */
+export async function refreshPrivacyNotificationsAfterCommit(): Promise<boolean> {
+  try {
+    // Rebuild even with both topics disabled: an earlier failed refresh may have left private OS payloads.
+    const refreshed = await rebuildNotifications();
+    if (!refreshed) console.warn('Private reminder content could not be refreshed after a committed change.');
+    return refreshed;
+  } catch (e) {
+    console.warn('Private reminder refresh failed after a committed change:', e);
+    return false;
+  }
+}
+
 /** Optional attention topics refresh only after their write commits; scheduling cannot fail the saved action. */
 export async function rebuildAttentionNotificationsAfterCommit(
   topic: 'recurringAlerts' | 'refundAlerts'

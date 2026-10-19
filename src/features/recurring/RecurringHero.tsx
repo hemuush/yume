@@ -32,6 +32,8 @@ export function RecurringHero({
   marks = [],
   today,
   onDatePress,
+  currency,
+  hasOtherCurrencies = false,
 }: {
   totals: SubscriptionTotals;
   shares: CostShare[];
@@ -42,6 +44,8 @@ export function RecurringHero({
   /** YYYY-MM-DD the line starts from. */
   today?: string;
   onDatePress?: (date: string) => void;
+  currency?: string;
+  hasOtherCurrencies?: boolean;
 }) {
   const { accent } = useAccent();
   const ink = homeInk(accent);
@@ -152,7 +156,7 @@ export function RecurringHero({
                   numberOfLines={1}
                   adjustsFontSizeToFit
                 >
-                  {formatMoney(totals.monthlyMinor)}
+                  {formatMoney(totals.monthlyMinor, currency)}
                 </Text>
                 <Text style={frost.bigNote}>a month</Text>
               </View>
@@ -160,7 +164,7 @@ export function RecurringHero({
             <View style={frost.side}>
               <Text style={frost.sideLabel}>A year</Text>
               <Text style={frost.sideValue} numberOfLines={1} adjustsFontSizeToFit>
-                {formatMoney(totals.yearlyMinor)}
+                {formatMoney(totals.yearlyMinor, currency)}
               </Text>
             </View>
           </View>
@@ -180,10 +184,15 @@ export function RecurringHero({
         <>
           <Kicker icon="repeat">Subscriptions & bills</Kicker>
           <Text style={frost.sub}>
-            Set up rent, a subscription or your salary once. Due entries are added when you open Yume.
+            {hasOtherCurrencies
+              ? `No running expense rules in ${currency}.`
+              : 'Set up rent, a subscription or your salary once. Due entries are added when you open Yume.'}
           </Text>
           {schedule}
         </>
+      )}
+      {hasOtherCurrencies && (
+        <Text style={frost.sub}>Summary and timeline in {currency}. Other currencies are listed below.</Text>
       )}
     </Glass>
   );

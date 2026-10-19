@@ -16,6 +16,8 @@ import {
 import { onSettingsRestored } from '@/lib/dataEvents';
 import { useAppLock } from '@/lib/AppLockContext';
 import { authenticate } from '@/lib/appLock';
+import { showAlert } from '@/components/AppDialog';
+import { showPrivacyReminderWarning } from '@/lib/privacyReminderFeedback';
 
 interface PrivacyContextValue {
   hideAmounts: boolean;
@@ -83,8 +85,15 @@ export function PrivacyProvider({ children }: { children: ReactNode }) {
       if (!ok || call !== generation.current) return;
     }
     apply(next);
-    // A failed write only costs the preference on the next launch; the switch still works this session.
-    Promise.resolve(setHideSensitiveAmounts(next)).catch(() => {});
+    try {
+      if ((await setHideSensitiveAmounts(next)) === false) showPrivacyReminderWarning();
+    } catch {
+      // Keep the switch usable this session, but don't imply persisted preferences or queued alerts changed.
+      showAlert(
+        'Privacy preference not saved',
+        'The switch applies for this session. Saved preferences and scheduled reminders could not be updated.'
+      );
+    }
   }, [apply, lockEnabled]);
 
   const value = useMemo(() => ({ hideAmounts, toggleHideAmounts }), [hideAmounts, toggleHideAmounts]);

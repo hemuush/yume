@@ -85,7 +85,7 @@ it('treats a "looks monthly" charge as one thing with Recurring: hidden and brou
 
   // ✕ in Needs you hides it on Recurring as well…
   await dismissNeedsYou(monthly.key);
-  expect(await getHiddenSubscriptionSuggestions()).toEqual([`sub-${wifi}`]);
+  expect(await getHiddenSubscriptionSuggestions()).toEqual([`sub-${wifi}:INR`]);
   let result = await loadNeedsYou();
   expect(result.shown.map((i) => i.title)).not.toContain('Wifi looks monthly');
   expect(result.dismissed.map((i) => i.title)).toContain('Wifi looks monthly');

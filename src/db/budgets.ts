@@ -5,8 +5,17 @@ import { newId } from '@/lib/id';
 import { getDefaultCurrency } from './settings';
 import { captureRow, restoreRow, RowSnapshot } from './undoSnapshot';
 import { Budget } from '@/types';
-import { SPEND_ROWS, SPEND_AMOUNT, sensitiveOf } from './spendSql';
+import { SPEND_ROWS, SPEND_AMOUNT } from './spendSql';
 import { cachedRead } from './readCache';
+
+// Hide the whole family, including archived children: current spend and rollover can contain their history.
+// Filtering only individual spending rows would expose partial, misleading budget/remaining figures.
+const PUBLIC_BUDGET_FAMILY = `NOT EXISTS (
+  SELECT 1 FROM categories private_category
+  WHERE (private_category.id = COALESCE(c.parent_id, c.id)
+    OR private_category.parent_id = COALESCE(c.parent_id, c.id))
+    AND private_category.is_sensitive = 1
+)`;
 
 /**
  * One row per (category, month), so changing a limit never rewrites history. No background job rolls over:
@@ -85,7 +94,7 @@ export interface BudgetProgress {
 
 /**
  * Every budget for one month, spend computed live, most-urgent (closest to or over its limit) first.
- * `excludeSensitive` leaves out budgets on savings/investment categories (privacy mode).
+ * `excludeSensitive` leaves out any budget whose category family contains a sensitive category.
  */
 export function listBudgetsForMonth(
   periodMonth: string = periodMonthOf(),
@@ -114,7 +123,7 @@ async function readBudgetsForMonth(
     `SELECT b.*, c.name as category_name, pc.name as parent_name, c.icon as category_icon, c.color as category_color
      FROM budgets b JOIN categories c ON c.id = b.category_id
      LEFT JOIN categories pc ON pc.id = c.parent_id
-     WHERE b.period_month = ?${excludeSensitive ? ` AND ${sensitiveOf('c')} = 0` : ''}
+     WHERE b.period_month = ?${excludeSensitive ? ` AND ${PUBLIC_BUDGET_FAMILY}` : ''}
      ORDER BY c.name COLLATE NOCASE ASC`,
     [periodMonth]
   );
@@ -194,7 +203,7 @@ export async function listLapsedBudgets(
             c.name as category_name, pc.name as parent_name, c.icon as category_icon, c.color as category_color
      FROM budgets b JOIN categories c ON c.id = b.category_id
      LEFT JOIN categories pc ON pc.id = c.parent_id
-     WHERE b.period_month = ? AND c.archived = 0${excludeSensitive ? ` AND ${sensitiveOf('c')} = 0` : ''}
+     WHERE b.period_month = ? AND c.archived = 0${excludeSensitive ? ` AND ${PUBLIC_BUDGET_FAMILY}` : ''}
        AND NOT EXISTS (SELECT 1 FROM budgets b2 WHERE b2.category_id = b.category_id AND b2.period_month = ?)
      ORDER BY c.name COLLATE NOCASE ASC`,
     [prevMonth, periodMonth]

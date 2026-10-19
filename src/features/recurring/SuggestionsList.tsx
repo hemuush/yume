@@ -39,8 +39,8 @@ export function SuggestionsList({
                 <Text style={styles.rowTitle}>{categorySentence(s.categoryName, s.parentName)}</Text>
                 <Text style={styles.rowSub}>
                   {s.source === 'pattern'
-                    ? `${formatMoney(s.amountMinor)} each month · ${s.months} months in a row`
-                    : `${formatMoney(s.amountMinor)} on ${dayMonth(s.date)}`}
+                    ? `${formatMoney(s.amountMinor, s.currency)} each month · ${s.months} months in a row`
+                    : `${formatMoney(s.amountMinor, s.currency)} on ${dayMonth(s.date)}`}
                 </Text>
               </View>
             </View>

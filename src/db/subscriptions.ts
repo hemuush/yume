@@ -30,7 +30,7 @@ export interface SubscriptionTotals {
 
 /**
  * Monthly and yearly cost of running expense rules (weekly/daily/yearly at their monthly share); paused rules,
- * income and transfers don't count. Rounded to whole minor units.
+ * income and transfers don't count. Rounded to whole minor units. Callers scope rules to one currency first.
  */
 export function subscriptionTotals(rules: RecurringRule[]): SubscriptionTotals {
   const running = rules.filter((r) => r.active && r.type === 'expense');
@@ -39,7 +39,7 @@ export function subscriptionTotals(rules: RecurringRule[]): SubscriptionTotals {
 }
 
 export interface SubscriptionSuggestion {
-  /** Stable per category, so hiding one sticks: `sub-<categoryId>`. */
+  /** Stable per category and currency; old category-only hidden keys still hide all denominations. */
   key: string;
   categoryId: string;
   categoryName: string;
@@ -48,6 +48,7 @@ export interface SubscriptionSuggestion {
   icon: string;
   color: string;
   accountId: string;
+  currency: string;
   amountMinor: number;
   /** The latest matching entry's date — the rule's next run keeps its day of the month. */
   date: string;
@@ -67,30 +68,34 @@ interface EntryRow {
   icon: string;
   color: string;
   account_id: string;
+  currency: string;
   amount_minor: number;
   date: string;
   note: string;
   is_sensitive: number;
 }
 
-/** Categories that already have a running expense rule — never suggested again. */
+/** Category/currency pairs that already have a running expense rule — never suggested again. */
 async function categoriesWithRules(): Promise<Set<string>> {
   const db = await getDb();
-  const rows = await db.getAllAsync<{ category_id: string }>(
-    `SELECT DISTINCT category_id FROM recurring_rules
-     WHERE active = 1 AND type = 'expense' AND category_id IS NOT NULL`
+  const rows = await db.getAllAsync<{ category_id: string; currency: string }>(
+    `SELECT DISTINCT r.category_id, a.currency FROM recurring_rules r JOIN accounts a ON a.id = r.account_id
+     WHERE r.active = 1 AND r.type = 'expense' AND r.category_id IS NOT NULL`
   );
-  return new Set(rows.map((r) => r.category_id));
+  return new Set(rows.map((r) => suggestionKey(r.category_id, r.currency)));
 }
 
+const suggestionKey = (categoryId: string, currency: string) => `sub-${categoryId}:${currency}`;
+
 const suggestionFrom = (e: EntryRow, source: SubscriptionSuggestion['source'], months?: number) => ({
-  key: `sub-${e.category_id}`,
+  key: suggestionKey(e.category_id, e.currency),
   categoryId: e.category_id,
   categoryName: e.category_name,
   parentName: e.parent_name,
   icon: e.icon,
   color: e.color,
   accountId: e.account_id,
+  currency: e.currency,
   amountMinor: e.amount_minor,
   date: e.date,
   note: e.note,
@@ -110,10 +115,11 @@ export async function findUnscheduledSubscriptions(
   const db = await getDb();
   const since = addDaysToIsoDate(today, -days + 1);
   const rows = await db.getAllAsync<EntryRow>(
-    `SELECT t.category_id, c.name AS category_name, p.name AS parent_name, c.icon, c.color, t.account_id, t.amount_minor, t.date, t.note,
+    `SELECT t.category_id, c.name AS category_name, p.name AS parent_name, c.icon, c.color, t.account_id, a.currency, t.amount_minor, t.date, t.note,
        ${sensitiveOf('c')} AS is_sensitive
      FROM transactions t
      JOIN categories c ON c.id = t.category_id
+     JOIN accounts a ON a.id = t.account_id
      LEFT JOIN categories p ON p.id = c.parent_id
      WHERE t.type = 'expense' AND t.loan_payment_id IS NULL AND t.loan_id IS NULL
        AND t.date >= ? AND t.date <= ?
@@ -130,8 +136,9 @@ export async function findUnscheduledSubscriptions(
   const seen = new Set<string>();
   const out: SubscriptionSuggestion[] = [];
   for (const r of rows) {
-    if (ruled.has(r.category_id) || seen.has(r.category_id)) continue;
-    seen.add(r.category_id);
+    const key = suggestionKey(r.category_id, r.currency);
+    if (ruled.has(key) || seen.has(key)) continue;
+    seen.add(key);
     out.push(suggestionFrom(r, 'subscriptions'));
   }
   return out;
@@ -143,7 +150,7 @@ const PATTERN_DAY_TOLERANCE = 5;
 const PATTERN_MIN_MONTHS = 3;
 
 /**
- * Same charge monthly for 3+ months: same category, within 10% of the latest amount, near its day-of-month,
+ * Same charge monthly for 3+ months: same category and currency, within 10% of the latest amount, near its day-of-month,
  * latest this/last month. Skips loan instalments and ruled categories; needs history (empty on new installs).
  */
 export async function findMonthlyPatterns(
@@ -152,10 +159,11 @@ export async function findMonthlyPatterns(
   const db = await getDb();
   const since = addMonthsToIsoDate(today.slice(0, 7) + '-01', -6);
   const rows = await db.getAllAsync<EntryRow>(
-    `SELECT t.category_id, c.name AS category_name, p.name AS parent_name, c.icon, c.color, t.account_id, t.amount_minor, t.date, t.note,
+    `SELECT t.category_id, c.name AS category_name, p.name AS parent_name, c.icon, c.color, t.account_id, a.currency, t.amount_minor, t.date, t.note,
        ${sensitiveOf('c')} AS is_sensitive
      FROM transactions t
      JOIN categories c ON c.id = t.category_id
+     JOIN accounts a ON a.id = t.account_id
      LEFT JOIN categories p ON p.id = c.parent_id
      WHERE t.type = 'expense' AND t.loan_payment_id IS NULL AND t.loan_id IS NULL
        AND t.date >= ? AND t.date <= ?
@@ -166,10 +174,11 @@ export async function findMonthlyPatterns(
   const ruled = await categoriesWithRules();
   const byCategory = new Map<string, EntryRow[]>();
   for (const r of rows) {
-    if (ruled.has(r.category_id)) continue;
-    const list = byCategory.get(r.category_id) ?? [];
+    const key = suggestionKey(r.category_id, r.currency);
+    if (ruled.has(key)) continue;
+    const list = byCategory.get(key) ?? [];
     list.push(r);
-    byCategory.set(r.category_id, list);
+    byCategory.set(key, list);
   }
 
   const thisMonth = today.slice(0, 7);
@@ -208,5 +217,7 @@ export async function getSubscriptionSuggestions(
   ]);
   const hide = new Set(hidden);
   const listed = new Set(unscheduled.map((s) => s.key));
-  return [...unscheduled, ...patterns.filter((p) => !listed.has(p.key))].filter((s) => !hide.has(s.key));
+  return [...unscheduled, ...patterns.filter((p) => !listed.has(p.key))].filter(
+    (s) => !hide.has(s.key) && !hide.has(`sub-${s.categoryId}`)
+  );
 }

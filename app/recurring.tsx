@@ -5,7 +5,11 @@ import { Text } from '@/components/Text';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { listRecurringRules, setRecurringRuleActive } from '@/db/recurring';
 import { listAccounts, listCategories } from '@/db/ledger';
-import { getHiddenSubscriptionSuggestions, hideSubscriptionSuggestion } from '@/db/settings';
+import {
+  getDefaultCurrency,
+  getHiddenSubscriptionSuggestions,
+  hideSubscriptionSuggestion,
+} from '@/db/settings';
 import { getSubscriptionSuggestions, subscriptionTotals, SubscriptionSuggestion } from '@/db/subscriptions';
 import { RecurringHero } from '@/features/recurring/RecurringHero';
 import { SuggestionsList } from '@/features/recurring/SuggestionsList';
@@ -32,6 +36,7 @@ import { PrimaryButton } from '@/components/PrimaryButton';
 import { AddAccountModal } from '@/features/profile/AddAccountModal';
 import { usePrivacy } from '@/theme/PrivacyContext';
 import { isSavingsEntry } from '@/lib/privateSummary';
+import { recurringRulesInCurrency } from '@/lib/recurringScope';
 import { savingsAccountIdsOf } from '@/lib/account';
 import { parentNameOf } from '@/lib/categoryLabel';
 import { ModalSheet } from '@/components/ModalSheet';
@@ -52,6 +57,7 @@ export default function RecurringScreen() {
   const [rules, setRules] = useState<RecurringRule[]>([]);
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [currency, setCurrency] = useState('INR');
   const [modalVisible, setModalVisible] = useState(false);
   const [editingRule, setEditingRule] = useState<RecurringRule | null>(null);
   const [suggestions, setSuggestions] = useState<SubscriptionSuggestion[]>([]);
@@ -64,11 +70,12 @@ export default function RecurringScreen() {
   const [busyRuleIds, setBusyRuleIds] = useState<Set<string>>(new Set());
 
   const loadRules = useCallback(async () => {
-    const [r, allAccs, cats, hidden] = await Promise.all([
+    const [r, allAccs, cats, hidden, defaultCurrency] = await Promise.all([
       listRecurringRules(),
       listAccounts(true),
-      listCategories(),
+      listCategories(true),
       getHiddenSubscriptionSuggestions(),
+      getDefaultCurrency(),
     ]);
     // Archived accounts stay out, except one a rule still uses: editing that rule must keep it there, not
     // quietly move it to whichever account comes first.
@@ -79,6 +86,7 @@ export default function RecurringScreen() {
     setSuggestions(await getSubscriptionSuggestions(hidden).catch(() => []));
     setAccounts(accs);
     setCategories(cats);
+    setCurrency(defaultCurrency);
   }, []);
   // `loaded` keeps "Add an account first" (an `accounts.length === 0` check)
   // from flashing on every cold open before the DB has answered.
@@ -92,10 +100,14 @@ export default function RecurringScreen() {
 
   const activeRules = useMemo(() => sortRunning(rules.filter((r) => r.active)), [rules]);
   const pausedRules = rules.filter((r) => !r.active);
-  const visibleRules = rules.filter((r) => !isHidden(r));
+  const visibleRules = recurringRulesInCurrency(
+    rules.filter((r) => !isHidden(r)),
+    accounts,
+    currency
+  );
   const shares = costShares(visibleRules, categoriesById);
-  const nextDate = activeRules
-    .filter((r) => !isHidden(r))
+  const nextDate = visibleRules
+    .filter((r) => r.active)
     .reduce<string | null>((min, r) => (min === null || r.nextRunDate < min ? r.nextRunDate : min), null);
 
   // Memoized: the form resets whenever its prefill changes identity, so a
@@ -191,10 +203,17 @@ export default function RecurringScreen() {
             {(activeRules.length > 0 || suggestions.length > 0) && (
               <RecurringHero
                 totals={subscriptionTotals(visibleRules)}
+                currency={currency}
+                hasOtherCurrencies={rules.some(
+                  (r) =>
+                    r.active &&
+                    !isHidden(r) &&
+                    accounts.find((a) => a.id === r.accountId)?.currency !== currency
+                )}
                 shares={shares}
                 nextDate={nextDate}
                 marks={runMarks(
-                  activeRules.filter((r) => !isHidden(r)),
+                  visibleRules.filter((r) => r.active),
                   todayIso
                 )}
                 today={todayIso}
@@ -266,7 +285,7 @@ export default function RecurringScreen() {
         summary={
           visibleRules.length > 0 ? (
             <HeaderSummary
-              figure={formatMoney(subscriptionTotals(visibleRules).monthlyMinor)}
+              figure={formatMoney(subscriptionTotals(visibleRules).monthlyMinor, currency)}
               rest="a month"
               dot={theme.colors.slice.free}
             />

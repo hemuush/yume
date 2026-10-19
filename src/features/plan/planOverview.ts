@@ -120,6 +120,8 @@ export interface PlanRuleInput {
   /** Its cadence, so a weekly or daily rule shows every run in the window, not only the next. */
   frequency?: RecurrenceFrequency;
   intervalCount?: number;
+  /** Original month-day, retained when the next run was clamped by a shorter month. */
+  anchorDay?: number | null;
   endDate?: string | null;
 }
 
@@ -172,7 +174,7 @@ export function buildDueItems(
   for (const r of rules) {
     if (!r.active) continue;
     // The next run always; then, with a cadence and a window, each later run up to the window's end.
-    const anchorDay = dayOfIsoDate(r.nextRunDate);
+    const anchorDay = r.anchorDay ?? dayOfIsoDate(r.nextRunDate);
     let date = r.nextRunDate;
     for (let n = 0; n < 100; n++) {
       items.push({

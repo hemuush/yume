@@ -60,6 +60,15 @@ beforeAll(async () => {
 }, 180000);
 
 describe('NeedsYouRow', () => {
+  it('uses the suggestion currency in visible and spoken amounts', async () => {
+    const tree = await render({ ...emi, currency: 'USD', amountMinor: 10000 });
+    expect(texts(tree)).toContain('$100');
+    expect(
+      tree.root
+        .findAll((n) => typeof n.props.accessibilityLabel === 'string')
+        .some((n) => n.props.accessibilityLabel.includes('$100'))
+    ).toBe(true);
+  });
   it('shows the title and detail', async () => {
     expect(texts(await render(emi))).toEqual(expect.arrayContaining(['Home loan EMI', 'Due today']));
   });

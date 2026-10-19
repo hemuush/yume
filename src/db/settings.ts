@@ -1,6 +1,7 @@
 import { clampSlotMinutes } from '../lib/notificationTimes';
 import type { QueuedAlert } from '../lib/notificationPlan';
 import { getDb } from './client';
+import { refreshPrivacyNotificationsAfterCommit } from './afterCommit';
 
 // Cached in-memory after first load so formatMoney() etc. can read it
 // synchronously without every call touching SQLite.
@@ -562,7 +563,7 @@ export async function setNeedsYouDismissed(keys: string[]): Promise<void> {
 
 const HIDDEN_SUBSCRIPTION_SUGGESTIONS_KEY = 'hidden_subscription_suggestions';
 
-/** Recurring's "Not set up yet" suggestions hidden with ✕ — `sub-<categoryId>` keys, hidden for good. */
+/** Suggestions hidden with ✕: category/currency keys; legacy category-only keys still cover every currency. */
 export async function getHiddenSubscriptionSuggestions(): Promise<string[]> {
   const db = await getDb();
   const row = await db.getFirstAsync<{ value: string }>('SELECT value FROM settings WHERE key = ?', [
@@ -706,8 +707,19 @@ async function writeAlertQueue(alerts: QueuedAlert[]): Promise<void> {
   );
 }
 
-export async function setAlertQueue(alerts: QueuedAlert[]): Promise<void> {
-  await withSettingsLock(() => writeAlertQueue(alerts));
+export async function setAlertQueue(alerts: QueuedAlert[], original?: QueuedAlert[]): Promise<void> {
+  await withSettingsLock(async () => {
+    if (!original) return writeAlertQueue(alerts);
+    // A rebuild resolves a snapshot while other writers can queue alerts. Replace only unchanged entries.
+    const before = new Map(original.map((a) => [a.id, JSON.stringify(a)]));
+    const resolved = new Map(alerts.map((a) => [a.id, a]));
+    const next = (await getAlertQueue()).flatMap((a) => {
+      if (!before.has(a.id) || before.get(a.id) !== JSON.stringify(a)) return [a];
+      const updated = resolved.get(a.id);
+      return updated ? [updated] : [];
+    });
+    await writeAlertQueue(next);
+  });
 }
 
 /** Adds alerts to the queue; one already queued under the same id is replaced, not doubled. */
@@ -737,7 +749,8 @@ export function getCachedHideSensitiveAmounts(): boolean {
   return cachedHideSensitiveAmounts ?? false;
 }
 
-export async function setHideSensitiveAmounts(value: boolean): Promise<void> {
+/** Returns false if saved successfully but queued private reminder content could not be refreshed. */
+export async function setHideSensitiveAmounts(value: boolean): Promise<boolean> {
   const db = await getDb();
   await db.runAsync(
     `INSERT INTO settings (key, value) VALUES (?, ?)
@@ -745,6 +758,7 @@ export async function setHideSensitiveAmounts(value: boolean): Promise<void> {
     [HIDE_SENSITIVE_AMOUNTS_KEY, value ? '1' : '0']
   );
   cachedHideSensitiveAmounts = value;
+  return refreshPrivacyNotificationsAfterCommit();
 }
 
 export const SUPPORTED_CURRENCIES = [

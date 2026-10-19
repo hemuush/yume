@@ -21,6 +21,8 @@ import { createLoan } from './loanRecords';
 import { getSpendingExplanation } from './spendingExplanation';
 import { buildBackupSnapshot, restoreFromSnapshot } from '@/lib/backup';
 import { toLocalIsoDate, addDaysToIsoDate, addMonthsToIsoDate } from '@/lib/date';
+import { expenseLabelTotals } from './expenseLabels';
+import { repairTrackedRefundLabels } from './refundLabels';
 let bank: string, category: string, purchase: string;
 const today = toLocalIsoDate(new Date());
 beforeEach(async () => {
@@ -93,6 +95,91 @@ it('links a previously logged refund without double-counting and unlinks it with
   expect(await getAccountBalance(bank)).toBe(balance);
   expect((await getExpectedRefund(purchase))!.receivedMinor).toBe(0);
 });
+
+it.each(['Shoes', '', 'Refund: user label'])(
+  'keeps tracked refunds in the purchase label %j',
+  async (note) => {
+    await updateTransaction(purchase, {
+      type: 'expense',
+      accountId: bank,
+      categoryId: category,
+      amountMinor: 100000,
+      date: today,
+      note,
+    });
+    await expectRefund(purchase, 100000, null);
+    await receiveRefund(purchase, { accountId: bank, amountMinor: 40000, date: today });
+    expect(await expenseLabelTotals(today, today, false)).toEqual([
+      { label: note, totalMinor: 60000, count: 1 },
+    ]);
+    await receiveRefund(purchase, { accountId: bank, amountMinor: 60000, date: today });
+    expect(await expenseLabelTotals(today, today, false)).toEqual([{ label: note, totalMinor: 0, count: 1 }]);
+    const receipts = (await getExpectedRefund(purchase))!.receipts;
+    for (const receipt of receipts) {
+      expect(
+        await mockDb.getFirstAsync('SELECT note, is_refund FROM transactions WHERE id = ?', [
+          receipt.transactionId,
+        ])
+      ).toEqual({ note, is_refund: 1 });
+    }
+  }
+);
+
+it.each(['Shoes', ''])(
+  'repairs only generated legacy receipt labels on startup and restore (%j)',
+  async (note) => {
+    await updateTransaction(purchase, {
+      type: 'expense',
+      accountId: bank,
+      categoryId: category,
+      amountMinor: 100000,
+      date: today,
+      note,
+    });
+    await expectRefund(purchase, 100000, null);
+    await receiveRefund(purchase, { accountId: bank, amountMinor: 20000, date: today });
+    const generated = (await getExpectedRefund(purchase))!.receipts[0].transactionId;
+    const legacyNote = `Refund: ${note || 'Food'}`;
+    await mockDb.runAsync('UPDATE transactions SET note = ? WHERE id = ?', [legacyNote, generated]);
+    const manual = await createTransaction({
+      type: 'income',
+      isRefund: true,
+      accountId: bank,
+      categoryId: category,
+      amountMinor: 10000,
+      date: today,
+      note: legacyNote,
+    });
+    await receiveRefund(purchase, {
+      accountId: bank,
+      amountMinor: 10000,
+      date: today,
+      existingRefundId: manual.id,
+    });
+    await receiveRefund(purchase, { accountId: bank, amountMinor: 10000, date: today });
+    const receipts = (await getExpectedRefund(purchase))!.receipts;
+    const custom = receipts.find((r) => r.createdTransaction && r.transactionId !== generated)!.transactionId;
+    await mockDb.runAsync('UPDATE transactions SET note = ? WHERE id = ?', ['Custom receipt label', custom]);
+    const legacySnapshot = await buildBackupSnapshot();
+    const assertLabels = async () => {
+      expect(await mockDb.getFirstAsync('SELECT note FROM transactions WHERE id = ?', [generated])).toEqual({
+        note,
+      });
+      expect(await mockDb.getFirstAsync('SELECT note FROM transactions WHERE id = ?', [manual.id])).toEqual({
+        note: legacyNote,
+      });
+      expect(await mockDb.getFirstAsync('SELECT note FROM transactions WHERE id = ?', [custom])).toEqual({
+        note: 'Custom receipt label',
+      });
+    };
+    await repairTrackedRefundLabels(mockDb);
+    await assertLabels();
+    await repairTrackedRefundLabels(mockDb);
+    await assertLabels();
+    await restoreFromSnapshot(legacySnapshot);
+    await assertLabels();
+  }
+);
 it('guards linked entries and restores pending money when a created receipt is undone', async () => {
   await expectRefund(purchase, 100000, null);
   await receiveRefund(purchase, { accountId: bank, amountMinor: 100000, date: today });
@@ -186,6 +273,46 @@ it('includes reserved funds and future scheduled debits in purchase estimates', 
   expect(result.reservedMinor).toBe(200000);
   expect(result.shortfallMinor).toBeGreaterThanOrEqual(100000);
   expect(await getAccountBalance(bank)).toBe(900000);
+});
+
+it('rejects an annual bill currency change atomically and keeps its backup restorable', async () => {
+  const rule = await yearly();
+  const goalId = await prepareAnnualBill(rule.id, { accountId: bank });
+  await contributeToGoal(goalId, 120000);
+  const foreign = await createAccount({ name: 'USD', type: 'bank', currency: 'USD', openingBalanceMinor: 0 });
+  const before = await buildBackupSnapshot();
+  await expect(
+    updateRecurringRule(rule.id, { ...rule, accountId: foreign.id, amountMinor: 99999 })
+  ).rejects.toThrow('same currency');
+  const after = await buildBackupSnapshot();
+  expect(after.tables.recurring_rules).toEqual(before.tables.recurring_rules);
+  expect(after.tables.annual_bill_goals).toEqual(before.tables.annual_bill_goals);
+  expect(after.tables.savings_goals).toEqual(before.tables.savings_goals);
+  await expect(restoreFromSnapshot(after)).resolves.toEqual({ emptiedTables: [], skippedColumns: [] });
+  expect((await getAnnualBillGoal(rule.id))!.reserved_amount_minor).toBe(120000);
+});
+
+it('allows a linked annual bill to move to another account in the same currency', async () => {
+  const rule = await yearly();
+  const goalId = await prepareAnnualBill(rule.id, { accountId: bank });
+  const other = await createAccount({
+    name: 'Other INR',
+    type: 'bank',
+    currency: 'INR',
+    openingBalanceMinor: 0,
+  });
+  const updated = await updateRecurringRule(rule.id, { ...rule, accountId: other.id, amountMinor: 250000 });
+  expect(updated).toMatchObject({ accountId: other.id, amountMinor: 250000 });
+  expect((await getAnnualBillGoal(rule.id))!.id).toBe(goalId);
+  await expect(restoreFromSnapshot(await buildBackupSnapshot())).resolves.toEqual({
+    emptiedTables: [],
+    skippedColumns: [],
+  });
+  await unlinkAnnualBill(rule.id);
+  const foreign = await createAccount({ name: 'USD', type: 'bank', currency: 'USD', openingBalanceMinor: 0 });
+  await expect(updateRecurringRule(rule.id, { ...updated, accountId: foreign.id })).resolves.toMatchObject({
+    accountId: foreign.id,
+  });
 });
 it('uses matching ranges and excludes foreign-currency and hidden category data', async () => {
   const previous = addDaysToIsoDate(today, -1);

@@ -65,13 +65,13 @@ import { CREATE_TABLES_SQL } from '@/db/schema';
 import { createAccount, createCategory, createTransaction } from '@/db/ledger';
 import { createBudget } from '@/db/budgets';
 import { createSavingsGoal, contributeToGoal } from '@/db/savingsGoals';
-import { createRecurringRule } from '@/db/recurring';
+import { createRecurringRule, runDueRecurringRules } from '@/db/recurring';
 import { archiveAccount } from '@/db/accounts';
 import { archiveCategory } from '@/db/categories';
 import { MAX_AMOUNT_MINOR } from '@/lib/amountLimits';
 import { createLoan } from '@/db/loanRecords';
 import { createPerson, addLedgerEntry } from '@/db/people';
-import { setDefaultCurrency, setUserName, setHasOnboarded } from '@/db/settings';
+import { resetSettingsCache, setDefaultCurrency, setUserName, setHasOnboarded } from '@/db/settings';
 import { UndoToastProvider } from '@/components/UndoToast';
 import { toLocalIsoDate } from '@/lib/date';
 
@@ -117,6 +117,7 @@ const monthsAgo = (n: number, day = 5) => {
 async function freshDb() {
   mockDb = createRealDataTestDb();
   await mockDb.execAsync(CREATE_TABLES_SQL);
+  resetSettingsCache();
   await setDefaultCurrency('INR');
 }
 
@@ -428,6 +429,142 @@ async function open(load: () => { default: React.ComponentType }) {
   await settle();
   return tree;
 }
+
+describe('re-audit recurring privacy and currency regressions', () => {
+  beforeEach(async () => {
+    mockHide = false;
+    mockParams = {};
+    await freshDb();
+  });
+  afterEach(() => {
+    jest.useRealTimers();
+    jest.restoreAllMocks();
+  });
+
+  it.each(['home', 'plan', 'recurring'])(
+    '%s keeps archived sensitive recurring amounts out of visible and spoken output',
+    async (name) => {
+      const bank = await createAccount({
+        name: 'Bank',
+        type: 'bank',
+        currency: 'INR',
+        openingBalanceMinor: 0,
+      });
+      const parent = await createCategory({ name: 'Private parent', kind: 'expense', isSensitive: true });
+      const child = await createCategory({ name: 'Private child', kind: 'expense', parentId: parent.id });
+      const publicCategory = await createCategory({ name: 'Public bill', kind: 'expense' });
+      for (const [categoryId, amountMinor] of [
+        [child.id, 9876500],
+        [publicCategory.id, 12300],
+      ] as const) {
+        await createRecurringRule({
+          type: 'expense',
+          accountId: bank.id,
+          categoryId,
+          amountMinor,
+          frequency: 'monthly',
+          intervalCount: 1,
+          nextRunDate: toLocalIsoDate(new Date()),
+        });
+      }
+      await archiveCategory(parent.id);
+      mockHide = true;
+      const tree = await open(SCREENS.find(([key]) => key === name)![1]);
+      try {
+        expectHealthy(name, tree);
+        expect(textOf(tree)).toContain('₹123');
+        expect(textOf(tree)).not.toContain('₹98,765');
+        const spoken = tree.root
+          .findAll((n) => typeof n.props.accessibilityLabel === 'string')
+          .map((n) => n.props.accessibilityLabel)
+          .join(' | ');
+        expect(spoken).not.toContain('₹98,765');
+      } finally {
+        act(() => tree.unmount());
+      }
+    }
+  );
+
+  it.each(['home', 'plan', 'recurring'])(
+    '%s scopes recurring summaries and upcoming calculations to INR',
+    async (name) => {
+      const category = await createCategory({ name: 'Subscription', kind: 'expense' });
+      const ruleIds: Record<string, string> = {};
+      for (const currency of ['INR', 'USD']) {
+        const bank = await createAccount({ name: currency, type: 'bank', currency, openingBalanceMinor: 0 });
+        const r = await createRecurringRule({
+          type: 'expense',
+          accountId: bank.id,
+          categoryId: category.id,
+          amountMinor: 10000,
+          frequency: 'monthly',
+          intervalCount: 1,
+          nextRunDate: toLocalIsoDate(new Date()),
+        });
+        ruleIds[currency] = r.id;
+      }
+      const tree = await open(SCREENS.find(([key]) => key === name)![1]);
+      try {
+        expectHealthy(name, tree);
+        if (name === 'recurring') {
+          const { RecurringHero } = require('@/features/recurring/RecurringHero');
+          expect(tree.root.findByType(RecurringHero).props.totals).toEqual({
+            monthlyMinor: 10000,
+            yearlyMinor: 120000,
+            count: 1,
+          });
+          expect(textOf(tree)).toContain('$100');
+          expect(textOf(tree)).toContain('Summary and timeline in INR');
+        } else if (name === 'home') {
+          const { HomeGlance } = require('@/features/home/HomeGlance');
+          expect(
+            tree.root.findByType(HomeGlance).props.upcoming.items.map((i: { key: string }) => i.key)
+          ).toEqual([ruleIds.INR]);
+        } else {
+          const { RunwayCard } = require('@/features/plan/RunwayCard');
+          expect(tree.root.findByType(RunwayCard).props.dueSoon.totalMinor).toBe(10000);
+          expect(tree.root.findByType(RunwayCard).props.runway.endMinor).toBe(-10000);
+        }
+      } finally {
+        act(() => tree.unmount());
+      }
+    }
+  );
+
+  it('Plan carries the posting engine’s original month-end anchor into its forecast', async () => {
+    jest.useFakeTimers({ doNotFake: ['setTimeout', 'clearTimeout'] });
+    jest.setSystemTime(new Date(2026, 1, 28, 12));
+    const bank = await createAccount({
+      name: 'Bank',
+      type: 'bank',
+      currency: 'INR',
+      openingBalanceMinor: 25000,
+    });
+    const category = await createCategory({ name: 'Month-end bill', kind: 'expense' });
+    await createRecurringRule({
+      type: 'expense',
+      accountId: bank.id,
+      categoryId: category.id,
+      amountMinor: 10000,
+      frequency: 'monthly',
+      intervalCount: 1,
+      nextRunDate: '2026-01-31',
+    });
+    await runDueRecurringRules('2026-02-27');
+    const tree = await open(() => require('../../app/(tabs)/plan'));
+    try {
+      const { RunwayCard } = require('@/features/plan/RunwayCard');
+      const { runway } = tree.root.findByType(RunwayCard).props;
+      expect(runway.short).toBeNull();
+      expect(runway.endMinor).toBe(5000);
+      expect(
+        runway.days.filter((d: { outMinor: number }) => d.outMinor > 0).map((d: { date: string }) => d.date)
+      ).toEqual(['2026-02-28']);
+    } finally {
+      act(() => tree.unmount());
+    }
+  });
+});
 
 describe('every screen on a brand-new install', () => {
   beforeEach(async () => {
