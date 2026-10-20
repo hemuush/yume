@@ -82,3 +82,34 @@ it('fits seven interactive days inside the balance card without range tabs', () 
   expect(text(r)).toContain('₹0');
   act(() => r.unmount());
 });
+
+it('shows every completed-month week including the last partial week', () => {
+  let r!: ReactTestRenderer;
+  act(() => {
+    r = create(
+      <SpendBars
+        daily={[
+          { date: '2026-09-01', totalMinor: 10000 },
+          { date: '2026-09-08', totalMinor: 20000 },
+          { date: '2026-09-30', totalMinor: 30000 },
+        ]}
+        today="2026-09-30"
+        compact
+        embedded
+        periodMode="month"
+      />
+    );
+  });
+  expect(heights(r)).toHaveLength(5);
+  expect(text(r)).toContain('Weekly spending');
+  expect(text(r)).toContain('29–30');
+  expect(text(r)).toContain('₹600');
+  expect(r.root.findAll((n) => n.props.accessibilityRole === 'tab')).toHaveLength(0);
+  const week = r.root.findAll(
+    (n) => n.props.onPress && n.props.accessibilityLabel?.startsWith('Week 2 of')
+  )[0];
+  act(() => week.props.onPress());
+  expect(text(r)).toContain('8–14');
+  expect(text(r)).toContain('₹200');
+  act(() => r.unmount());
+});

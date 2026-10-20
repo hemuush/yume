@@ -120,14 +120,7 @@ function BudgetTile({ budget: b, onPress }: { budget: PlanBudgetInput; onPress: 
         tone === 'near' ? ', near limit' : ''
       }. Open budgets`}
     >
-      <Glass
-        radius={20}
-        style={[
-          styles.tileFill,
-          cardSurface.neutral,
-          { backgroundColor: softTint(base, 0.12), borderColor: softTint(base, 0.28) },
-        ]}
-      >
+      <Glass radius={20} style={[styles.tileFill, cardSurface.neutral]}>
         <View style={[styles.tileIcon, { backgroundColor: softTint(base, 0.6) }]}>
           <MaterialCommunityIcons
             name={(b.categoryIcon ?? 'tag') as McIconName}

@@ -275,7 +275,7 @@ it('masks a savings-only preview and never invents an everyday balance', () => {
 });
 
 it.each([
-  [320, 1, 'column'],
+  [320, 1, 'row'],
   [390, 1.5, 'column'],
   [390, 1, 'row'],
 ])('keeps both account previews reachable at width %s and text scale %s', (width, fontScale, direction) => {
@@ -302,6 +302,33 @@ it.each([
       );
     expect(open.mock.calls.map((call) => call[0].id)).toEqual(['First bank account', 'Cash']);
     act(() => tree.unmount());
+  } finally {
+    dimensions.mockRestore();
+  }
+});
+
+it('places six compact accounts in two rows of three at standard width', () => {
+  const dimensions = jest
+    .spyOn(require('react-native'), 'useWindowDimensions')
+    .mockReturnValue({ width: 390, height: 800, fontScale: 1, scale: 1 });
+  try {
+    const r = render({
+      compact: true,
+      accounts: Array.from({ length: 6 }, (_, i) => account(`Bank ${i}`, 'bank', i * 100)),
+    });
+    const rows = r.root
+      .findAllByType(View)
+      .filter(
+        (n) =>
+          StyleSheet.flatten(n.props.style)?.gap === 10 &&
+          StyleSheet.flatten(n.props.style)?.flexDirection === 'row'
+      );
+    expect(rows).toHaveLength(2);
+    for (const row of rows)
+      expect(
+        row.findAll((n) => n.props.onPress && n.props.accessibilityLabel?.includes('Open summary'))
+      ).toHaveLength(3);
+    act(() => r.unmount());
   } finally {
     dimensions.mockRestore();
   }

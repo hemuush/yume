@@ -1,4 +1,6 @@
-import { View, Pressable, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Pressable, ScrollView, ActivityIndicator, useWindowDimensions } from 'react-native';
+import { HeaderIconButton } from '@/components/AppHeader';
+import { homeInk } from '@/features/home/homeInk';
 import { Text } from '@/components/Text';
 import Feather from '@expo/vector-icons/Feather';
 import { theme } from '@/constants/theme';
@@ -32,6 +34,8 @@ export function ActivityFilterChips({
   onRemoveCategory,
   onRemoveAccount,
   onClearAll,
+  onOpenFilters,
+  filterCount = 0,
 }: {
   filterType: TransactionType | 'all';
   onFilterType: (type: TransactionType | 'all') => void;
@@ -42,28 +46,49 @@ export function ActivityFilterChips({
   onRemoveCategory: (id: string) => void;
   onRemoveAccount: (id: string) => void;
   onClearAll: () => void;
+  onOpenFilters?: () => void;
+  filterCount?: number;
 }) {
   const picked = categoryIds.length + accountIds.length + (filterType === 'all' ? 0 : 1);
   const { accent } = useAccent();
   const chipBg = shade(accent, 95);
+  const { width, fontScale } = useWindowDimensions();
+  const wrapTabs = width < 360 || fontScale > 1.2;
+  const ink = homeInk(accent);
   return (
     <>
-      <View style={styles.typeBar} accessibilityRole="radiogroup">
-        {TYPE_CHIPS.map((c) => {
-          const on = filterType === c.value;
-          return (
-            <Pressable
-              key={c.value}
-              onPress={() => onFilterType(c.value)}
-              style={withPressed([styles.typeBtn, on && styles.typeBtnOn])}
-              accessibilityRole="radio"
-              accessibilityState={{ selected: on }}
-              accessibilityLabel={`Show ${c.label.toLowerCase()}`}
-            >
-              <Text style={[styles.typeText, on && styles.typeTextOn]}>{c.label}</Text>
-            </Pressable>
-          );
-        })}
+      <View style={styles.typeFilterRow}>
+        <View style={[styles.typeBar, wrapTabs && { flexWrap: 'wrap' }]} accessibilityRole="radiogroup">
+          {TYPE_CHIPS.map((c) => {
+            const on = filterType === c.value;
+            return (
+              <Pressable
+                key={c.value}
+                onPress={() => onFilterType(c.value)}
+                style={withPressed([
+                  styles.typeBtn,
+                  wrapTabs && { flexBasis: '40%' },
+                  on && { backgroundColor: ink },
+                ])}
+                accessibilityRole="radio"
+                accessibilityState={{ selected: on }}
+                accessibilityLabel={`Show ${c.label.toLowerCase()}`}
+              >
+                <Text style={[styles.typeText, on && styles.typeTextOn]}>{c.label}</Text>
+              </Pressable>
+            );
+          })}
+        </View>
+        {onOpenFilters && (
+          <HeaderIconButton
+            icon="sliders"
+            size={44}
+            glass
+            onPress={onOpenFilters}
+            label={filterCount > 0 ? `Filters, ${filterCount} on` : 'Filters'}
+            count={filterCount}
+          />
+        )}
       </View>
       {picked > 0 && (
         <ScrollView

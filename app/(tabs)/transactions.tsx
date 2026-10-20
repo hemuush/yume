@@ -767,6 +767,8 @@ export default function TransactionsScreen() {
                     </Pressable>
                   )}
                   <ActivityFilterChips
+                    onOpenFilters={() => setFilterVisible(true)}
+                    filterCount={filterCount}
                     filterType={filterType}
                     onFilterType={(value) => {
                       setFilterType(value);
@@ -865,16 +867,6 @@ export default function TransactionsScreen() {
               onPress={searching ? closeSearch : openSearch}
               label={searching ? 'Close search' : 'Search transactions'}
             />
-            {!searching && (
-              <HeaderIconButton
-                icon="sliders"
-                size={40}
-                glass
-                onPress={() => setFilterVisible(true)}
-                label={filterCount > 0 ? `Filters, ${filterCount} on` : 'Filters'}
-                count={filterCount}
-              />
-            )}
           </>
         }
       >

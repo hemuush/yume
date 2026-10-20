@@ -27,7 +27,11 @@ import { HeroActions } from './HeroActions';
 import { withPressed } from '@/lib/pressed';
 
 interface HeroContent {
-  spendingTrend?: { daily: { date: string; totalMinor: number }[]; today: string } | null;
+  spendingTrend?: {
+    daily: { date: string; totalMinor: number }[];
+    today: string;
+    mode?: 'week' | 'month';
+  } | null;
   incomeMinor: number;
   spentMinor: number;
   /** Net moved into savings accounts this period (negative = more came out). */
@@ -130,6 +134,7 @@ export function ThisMonthHero({
   const paceLabel = pace?.byLabel;
   const trendDaily = spendingTrend?.daily;
   const trendToday = spendingTrend?.today;
+  const trendMode = spendingTrend?.mode;
 
   useEffect(() => {
     const myRun = ++runId.current;
@@ -144,7 +149,8 @@ export function ThisMonthHero({
       carryMinor,
       dueMinor,
       periodKey,
-      spendingTrend: trendDaily && trendToday ? { daily: trendDaily, today: trendToday } : null,
+      spendingTrend:
+        trendDaily && trendToday ? { daily: trendDaily, today: trendToday, mode: trendMode } : null,
       today:
         todaySpent != null && todayGoal != null ? { spentMinor: todaySpent, goalMinor: todayGoal } : null,
       pace:
@@ -205,6 +211,7 @@ export function ThisMonthHero({
     paceLabel,
     trendDaily,
     trendToday,
+    trendMode,
     reduce,
     opacity,
     tx,
@@ -416,11 +423,13 @@ export function ThisMonthHero({
                 <SpendBars
                   daily={displayed.spendingTrend.daily}
                   today={displayed.spendingTrend.today}
+                  periodMode={displayed.spendingTrend.mode}
+                  onSeeInsights={onSeeInsights ? () => onSeeInsights(displayed.periodKey) : undefined}
                   compact
                   embedded
                 />
               )}
-              {onSeeInsights && (
+              {onSeeInsights && !displayed.spendingTrend && (
                 <Pressable
                   accessibilityRole="button"
                   accessibilityLabel="See spending insights"
@@ -535,7 +544,12 @@ function Stat({
       accessibilityRole={onPress ? 'button' : undefined}
       accessibilityState={onPress ? { expanded } : undefined}
       accessibilityHint={onPress ? 'Shows how this adds up' : undefined}
-      style={[styles.stat, divider ? styles.statDivider : styles.statFirst, stacked && styles.statStack]}
+      style={[
+        styles.stat,
+        divider ? styles.statDivider : styles.statFirst,
+        stacked && styles.statStack,
+        onPress && { minHeight: 44 },
+      ]}
       accessible
       accessibilityLabel={`${label}, ${formatMoney(minor)}`}
     >

@@ -231,17 +231,24 @@ export const styles = StyleSheet.create({
 
   // Type filter as one segmented bar, then picked categories/accounts on their own line (only when some).
   // The gap below matches the gap between days.
-  typeBar: {
+  typeFilterRow: {
     flexDirection: 'row',
     alignItems: 'center',
     marginHorizontal: 16,
     marginTop: 12,
+    gap: 8,
+  },
+  typeBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    minWidth: 0,
     minHeight: 50,
-    padding: 3,
-    borderRadius: 18,
-    backgroundColor: theme.colors.surface,
+    padding: 4,
+    borderRadius: theme.radius.pill,
+    backgroundColor: GLASS.fill,
     borderWidth: 1,
-    borderColor: theme.colors.borderSoft,
+    borderColor: GLASS.edge,
   },
   typeBtn: {
     flex: 1,
@@ -250,16 +257,16 @@ export const styles = StyleSheet.create({
     minHeight: 44,
     paddingVertical: 8,
     paddingHorizontal: 4,
-    borderRadius: 18,
+    borderRadius: theme.radius.pill,
   },
   typeBtnOn: { backgroundColor: theme.colors.ink },
   typeText: {
     textAlign: 'center',
-    fontFamily: theme.font.bodyMedium,
+    fontFamily: theme.font.roundedMedium,
     fontSize: 12,
     color: theme.colors.textSecondary,
   },
-  typeTextOn: { color: theme.colors.surface, fontFamily: theme.font.bodyBold },
+  typeTextOn: { color: theme.colors.surface, fontFamily: theme.font.roundedBold },
   chipsRow: { gap: 8, paddingHorizontal: 16, paddingTop: 10 },
   filterGap: { height: 16 },
   chip: {
