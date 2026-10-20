@@ -834,7 +834,7 @@ const styles = StyleSheet.create({
   },
   menuRow: { minHeight: 68, paddingVertical: 12, flexDirection: 'row', alignItems: 'center', gap: 14 },
   menuTitle: { fontFamily: theme.font.bodyMedium, fontSize: 15, color: theme.colors.textPrimary },
-  menuDescription: { fontSize: 12, color: theme.colors.textSecondary },
+  menuDescription: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
   createActions: { marginHorizontal: SCREEN.gutter, marginBottom: 14, flexDirection: 'row', gap: 10 },
   createAction: { flex: 1, minHeight: 44 },
   tabs: { marginHorizontal: 16, marginTop: theme.layout.screenTopGap, marginBottom: SCREEN.sectionGap },
