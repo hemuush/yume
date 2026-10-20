@@ -7,12 +7,8 @@ jest.mock('@expo/vector-icons/Feather', () => () => null);
 jest.mock('@expo/vector-icons/MaterialCommunityIcons', () => () => null);
 jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMock').createReanimatedMock());
 jest.mock('expo-router', () => ({ router: { push: jest.fn() } }));
-jest.mock('./HomeSwipeCard', () => ({
-  HomeSwipeCard: (props: object) =>
-    require('react').createElement(require('react-native').View, { ...props, testID: 'glance-pages' }),
-}));
 import { HomeRefunds } from './HomeRefunds';
-import { HomeGlance, homePriority, HomePriority } from './HomeGlance';
+import { HomeGlance } from './HomeGlance';
 const refund = (id: string, dueDate: string | null = null): ExpectedRefund => ({
   id,
   transactionId: `tx-${id}`,
@@ -159,49 +155,4 @@ it('previews three outgoing payments without tabs and keeps the full schedule re
   expect(router.push).toHaveBeenCalledWith('/recurring');
   press(tree, 'View plan — Next up');
   expect(all).toHaveBeenCalledTimes(1);
-});
-
-it('surfaces one outgoing priority and does not repeat it in Next up', () => {
-  const base = {
-    icon: 'file-text' as const,
-    iconBg: '#fff',
-    subtitle: 'Due today',
-    amountMinor: 10000,
-    sortDate: '2026-10-19',
-    route: '/recurring' as const,
-    urgent: true,
-    payable: false,
-    pinned: true,
-  };
-  const income = { ...base, key: 'income', title: 'Salary', sign: '+' as const };
-  const bill = { ...base, key: 'bill', title: 'Internet bill', sign: '-' as const };
-  const later = { ...base, key: 'later', title: 'Insurance', sign: '-' as const, urgent: false };
-  const upcoming = { items: [income, bill, later], next: null };
-  expect(homePriority(upcoming)?.key).toBe('bill');
-  expect(homePriority({ items: [income], next: null })).toBeUndefined();
-  const viewPlan = jest.fn();
-  const priority = render(<HomePriority item={bill} onViewPlan={viewPlan} />);
-  expect(texts(priority)).toContain('Needs attention');
-  press(priority, 'View plan — Needs attention');
-  expect(viewPlan).toHaveBeenCalledTimes(1);
-  const rest = render(
-    <HomeGlance
-      upcoming={upcoming}
-      priorityKey="bill"
-      rowEntering={() => undefined}
-      onSeeMoreUpcoming={viewPlan}
-    />
-  );
-  expect(texts(rest)).not.toContain('Internet bill');
-  expect(texts(rest)).not.toContain('Salary');
-  expect(texts(rest)).toContain('Insurance');
-  const only = render(
-    <HomeGlance
-      upcoming={{ items: [bill], next: null }}
-      priorityKey="bill"
-      rowEntering={() => undefined}
-      onSeeMoreUpcoming={viewPlan}
-    />
-  );
-  expect(only.toJSON()).toBeNull();
 });

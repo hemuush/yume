@@ -5,6 +5,9 @@ import { theme } from '@/constants/theme';
 import { useSheetSurface } from './SheetSurface';
 import { FIELD_LABEL } from '@/constants/textStyles';
 
+import { useAccent } from '@/theme/AccentContext';
+import { interactionColors } from '@/theme/interactionColors';
+
 interface Props extends TextInputProps {
   label: string;
 }
@@ -14,6 +17,8 @@ export const FormInput = forwardRef<RNTextInput, Props>(function FormInput(
   ref
 ) {
   const inSheet = useSheetSurface();
+  const { accent } = useAccent();
+  const colors = interactionColors(accent);
   const [focused, setFocused] = useState(false);
   return (
     <View style={styles.wrap}>
@@ -21,7 +26,14 @@ export const FormInput = forwardRef<RNTextInput, Props>(function FormInput(
       <TextInput
         ref={ref}
         accessibilityLabel={label}
-        style={[styles.input, inSheet && styles.sheetInput, focused && styles.inputFocused, style]}
+        style={[
+          styles.input,
+          inSheet && styles.sheetInput,
+          focused && [styles.inputFocused, { borderColor: colors.ink }],
+          style,
+        ]}
+        selectionColor={colors.edge}
+        cursorColor={colors.ink}
         placeholderTextColor={theme.colors.textMuted}
         onFocus={(e) => {
           setFocused(true);
@@ -56,7 +68,6 @@ const styles = StyleSheet.create({
   },
   sheetInput: { backgroundColor: theme.colors.surface, borderRadius: 18, minHeight: 52 },
   inputFocused: {
-    borderColor: theme.colors.link,
     backgroundColor: theme.colors.surface,
   },
 });

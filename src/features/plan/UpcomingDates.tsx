@@ -5,7 +5,7 @@ import { theme } from '@/constants/theme';
 import { dayMonth, weekdayDayMonth } from '@/lib/dateLabels';
 import { formatMoney } from '@/lib/money';
 import { withPressed } from '@/lib/pressed';
-import { homeInk } from '@/features/home/homeInk';
+import { themeInk } from '@/theme/interactionColors';
 import { useAccent } from '@/theme/AccentContext';
 import type { Runway, RunwayDay } from './runway';
 
@@ -18,7 +18,7 @@ export function UpcomingDates({
   renderDay?: (day: RunwayDay, mode: 'outgoing' | 'income') => React.ReactNode;
 }) {
   const { accent } = useAccent();
-  const ink = homeInk(accent);
+  const ink = themeInk(accent);
   const [mode, setMode] = useState<'outgoing' | 'income'>('outgoing');
   const dates = runway.days.filter((day) => (mode === 'income' ? day.inMinor : day.outMinor) > 0);
   const [selectedDate, setSelectedDate] = useState(dates[0]?.date);

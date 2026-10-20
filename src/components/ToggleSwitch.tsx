@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { View, Pressable, Animated, StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
 import { useAccent } from '@/theme/AccentContext';
+import { themeInk } from '@/theme/interactionColors';
 import { haptics } from '@/lib/haptics';
 import { DURATIONS } from '@/lib/motionTimings';
 import { useReduceMotion } from '@/lib/useReduceMotion';
@@ -17,6 +18,7 @@ interface Props {
 
 export function ToggleSwitch({ value, onChange, disabled, small, accessibilityLabel }: Props) {
   const { accent } = useAccent();
+  const ink = themeInk(accent);
   const [anim] = useState(() => new Animated.Value(value ? 1 : 0));
   const reduce = useReduceMotion();
 
@@ -60,12 +62,22 @@ export function ToggleSwitch({ value, onChange, disabled, small, accessibilityLa
         style={[
           styles.track,
           small && styles.trackSmall,
-          { backgroundColor: value ? accent : theme.colors.surface },
+          {
+            backgroundColor: value ? ink : theme.colors.surfaceAlt,
+            borderColor: value ? ink : theme.colors.borderSoft,
+          },
           disabled && styles.disabled,
         ]}
       >
         <Animated.View
-          style={[styles.knob, small && styles.knobSmall, { transform: [{ translateX: knobX }] }]}
+          style={[
+            styles.knob,
+            small && styles.knobSmall,
+            {
+              backgroundColor: value ? theme.colors.surface : theme.colors.textMuted,
+              transform: [{ translateX: knobX }],
+            },
+          ]}
         />
       </View>
     </Pressable>

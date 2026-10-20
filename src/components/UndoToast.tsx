@@ -8,7 +8,7 @@ import { usePressScale } from '@/lib/usePressScale';
 import { haptics } from '@/lib/haptics';
 import { DURATIONS } from '@/lib/motionTimings';
 import { useAccent } from '@/theme/AccentContext';
-import { homeInk } from '@/features/home/homeInk';
+import { themeInk } from '@/theme/interactionColors';
 import { showAlert } from '@/components/AppDialog';
 import { errorMessage } from '@/lib/errorMessage';
 
@@ -95,7 +95,7 @@ function ToastView({
   const insets = useSafeAreaInsets();
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.94);
   const { accent } = useAccent();
-  const ink = homeInk(accent);
+  const ink = themeInk(accent);
 
   // A toast is silent to TalkBack otherwise (it never takes focus); MilestoneNote announces the same way.
   // Each toast mounts its own ToastView (keyed), so this speaks once per toast.

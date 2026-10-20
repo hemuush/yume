@@ -5,6 +5,9 @@ import { ModalSheet } from './ModalSheet';
 import { theme } from '@/constants/theme';
 import { usePressScale } from '@/lib/usePressScale';
 
+import { useAccent } from '@/theme/AccentContext';
+import { interactionColors } from '@/theme/interactionColors';
+
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 export interface ActionSheetItem {
@@ -52,6 +55,8 @@ export function ActionList({ items, onClose }: { items: ActionSheetItem[]; onClo
 
 function ActionSheetRow({ item, onClose }: { item: ActionSheetItem; onClose: () => void }) {
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.98);
+  const { accent } = useAccent();
+  const colors = interactionColors(accent);
   return (
     <AnimatedPressable
       onPress={() => {
@@ -64,11 +69,13 @@ function ActionSheetRow({ item, onClose }: { item: ActionSheetItem; onClose: () 
       accessibilityRole="button"
     >
       {item.icon && (
-        <View style={[styles.icon, item.destructive && styles.iconDestructive]}>
+        <View
+          style={[styles.icon, { backgroundColor: colors.tint }, item.destructive && styles.iconDestructive]}
+        >
           <Feather
             name={item.icon}
             size={16}
-            color={item.destructive ? theme.colors.expense : theme.colors.textPrimary}
+            color={item.destructive ? theme.colors.expenseText : colors.ink}
           />
         </View>
       )}

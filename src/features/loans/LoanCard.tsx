@@ -17,6 +17,9 @@ import type { LoanProgress } from '@/db/loans';
 import { loanBarTone, loanGlyph, loanIcon, loanTint } from './loanIdentity';
 import { SCREEN } from '@/components/screenStyles';
 
+import { useAccent } from '@/theme/AccentContext';
+import { themeInk } from '@/theme/interactionColors';
+
 /**
  * One loan in the list: flat card with its pale tile, progress and debt-free month; open loans end with the
  * next EMI and a Pay pill to its pay sheet. A closed loan is the same card in grey, "Paid off", no footer.
@@ -40,6 +43,8 @@ export function LoanCard({
   onPay: () => void;
 }) {
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.98);
+  const { accent } = useAccent();
+  const ink = themeInk(accent);
   const isClosed = loan.status === 'closed';
   const isBorrowed = loan.direction === 'borrowed';
   const fraction = isClosed ? 1 : payoffFraction(loan.principalMinor, loan.outstandingPrincipalMinor);
@@ -130,7 +135,11 @@ export function LoanCard({
                 accessibilityRole="button"
                 accessibilityLabel={`${isBorrowed ? 'Pay' : 'Mark received'} next EMI for ${loan.counterparty}`}
                 hitSlop={8}
-                style={({ pressed }) => [styles.pill, pressed && styles.pillPressed]}
+                style={({ pressed }) => [
+                  styles.pill,
+                  { backgroundColor: ink },
+                  pressed && styles.pillPressed,
+                ]}
               >
                 <Text style={styles.pillText}>{isBorrowed ? 'Pay' : 'Received'}</Text>
               </Pressable>

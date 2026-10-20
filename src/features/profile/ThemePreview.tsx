@@ -1,3 +1,4 @@
+import { themeInk } from '@/theme/interactionColors';
 import { View, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Defs, RadialGradient, Stop, Circle } from 'react-native-svg';
@@ -56,7 +57,7 @@ export function ThemePreview({
           <View style={[styles.glass, { top: 88, right: pad, width: '42%', height: 34 }]} />
           <View style={[styles.glass, { top: 130, left: pad, right: pad, height: 22 }]} />
           <View style={[styles.bar, { left: pad, right: pad, bottom: pad }]}>
-            <View style={styles.barTab} />
+            <View style={[styles.barTab, { backgroundColor: themeInk(pack.primary) }]} />
           </View>
         </>
       ) : (

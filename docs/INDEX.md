@@ -71,3 +71,5 @@ Lock-screen automatic prompting and the top-aligned layout are described in the 
 See [consolidated UI review](CONSOLIDATED_UI_REVIEW.md) for the final refinements, full regression evidence and open phone checks. No APK was built for this review.
 
 See [expense labels](EXPENSE_LABELS.md) for the single-field expense UI, legacy-note compatibility, Activity/Reports usage and fresh validation.
+
+See [20 October UI system refinement](UI_SYSTEM_REFINEMENT_2026_10_20.md) for shared theme controls, popup layout, obsolete UI removal and fresh verification limits.

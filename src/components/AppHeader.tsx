@@ -6,6 +6,7 @@ import Feather from '@expo/vector-icons/Feather';
 import { theme } from '@/constants/theme';
 import { HEADER } from './headerMetrics';
 import { GLASS } from '@/components/Glass';
+import { themeInk } from '@/theme/interactionColors';
 import { useAccent } from '@/theme/AccentContext';
 import { usePrivacy } from '@/theme/PrivacyContext';
 import { usePressScale } from '@/lib/usePressScale';
@@ -116,6 +117,8 @@ export function HeaderIconButton({
   glass?: boolean;
 }) {
   const { animatedStyle, onPressIn, onPressOut } = usePressScale();
+  const { accent } = useAccent();
+  const ink = themeInk(accent);
   return (
     <AnimatedPressable
       onPress={onPress}
@@ -132,9 +135,9 @@ export function HeaderIconButton({
         animatedStyle,
       ]}
     >
-      <Feather name={icon} size={20} color={theme.colors.ink} />
+      <Feather name={icon} size={20} color={ink} />
       {count != null && count > 0 ? (
-        <View style={styles.countBadge}>
+        <View style={[styles.countBadge, { backgroundColor: ink }]}>
           <Text style={styles.countText}>{count}</Text>
         </View>
       ) : (

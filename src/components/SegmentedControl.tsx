@@ -8,6 +8,9 @@ import { usePressScale } from '@/lib/usePressScale';
 import { useReduceMotion } from '@/lib/useReduceMotion';
 import { DURATIONS } from '@/lib/motionTimings';
 
+import { useAccent } from '@/theme/AccentContext';
+import { interactionColors } from '@/theme/interactionColors';
+
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 /** The track's inner padding, which the pill sits inside. */
@@ -22,11 +25,13 @@ interface Props<T extends string> {
 }
 
 /**
- * A pill switch: one white pill, measured from the track and moved with the native driver, glides to the
+ * A pill switch: one theme-ink pill, measured from the track and moved with the native driver, glides to the
  * tapped choice instead of each segment snapping its own background. Reduce motion: it jumps.
  */
 export function SegmentedControl<T extends string>({ options, value, onChange, onBand }: Props<T>) {
   const reduce = useReduceMotion();
+  const { accent } = useAccent();
+  const colors = interactionColors(accent);
   // The track's inner width; each segment's share is worked out per render, so
   // a switch whose options change (Add in edit mode) still sizes its pill right.
   const [innerWidth, setInnerWidth] = useState(0);
@@ -58,7 +63,7 @@ export function SegmentedControl<T extends string>({ options, value, onChange, o
   }, [index, segWidth, reduce, x]);
 
   const onLayout = (e: LayoutChangeEvent) => {
-    setInnerWidth(e.nativeEvent.layout.width - PAD * 2);
+    setInnerWidth(Math.max(0, e.nativeEvent.layout.width - PAD * 2));
   };
 
   return (
@@ -68,7 +73,7 @@ export function SegmentedControl<T extends string>({ options, value, onChange, o
           pointerEvents="none"
           style={[
             styles.pill,
-            onBand && styles.pillBand,
+            { backgroundColor: colors.ink, borderColor: colors.ink },
             { width: segWidth, transform: [{ translateX: x }] },
           ]}
         />
@@ -77,7 +82,7 @@ export function SegmentedControl<T extends string>({ options, value, onChange, o
         <Segment
           key={opt.value}
           active={opt.value === value}
-          onBand={onBand}
+          fallbackInk={segWidth <= 0 ? colors.ink : undefined}
           label={opt.label}
           onPress={() => onChange(opt.value)}
         />
@@ -90,17 +95,21 @@ function Segment({
   active,
   label,
   onPress,
-  onBand,
+  fallbackInk,
 }: {
   active: boolean;
   label: string;
   onPress: () => void;
-  onBand?: boolean;
+  fallbackInk?: string;
 }) {
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.95);
   return (
     <AnimatedPressable
-      style={[styles.segment, animatedStyle]}
+      style={[
+        styles.segment,
+        active && fallbackInk ? { backgroundColor: fallbackInk } : undefined,
+        animatedStyle,
+      ]}
       onPress={() => {
         // A light tick when the choice actually changes — every switch in the app gets it here.
         if (active) return;
@@ -113,11 +122,7 @@ function Segment({
       onPressOut={onPressOut}
     >
       <Text
-        style={[
-          styles.segmentText,
-          active && styles.segmentTextActive,
-          active && onBand && styles.segmentTextBand,
-        ]}
+        style={[styles.segmentText, active && styles.segmentTextActive, active && styles.segmentTextBand]}
       >
         {label}
       </Text>
@@ -157,6 +162,5 @@ const styles = StyleSheet.create({
   segmentTextActive: { color: theme.colors.textPrimary, fontFamily: theme.font.roundedBold },
   // On a wallpaper (Add's header): a frosted track and an ink pill.
   wrapBand: { backgroundColor: GLASS.fill, borderWidth: 1, borderColor: GLASS.edge, marginBottom: 0 },
-  pillBand: { backgroundColor: theme.colors.ink, borderColor: theme.colors.ink },
   segmentTextBand: { color: theme.colors.surface },
 });

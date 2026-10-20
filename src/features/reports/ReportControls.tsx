@@ -8,8 +8,13 @@ import { GLASS } from '@/components/Glass';
 import { theme } from '@/constants/theme';
 import { withPressed } from '@/lib/pressed';
 
+import { useAccent } from '@/theme/AccentContext';
+import { themeInk } from '@/theme/interactionColors';
+
 export type ReportTab = 'days' | 'cats' | 'trends';
 export function ReportTabs({ value, onChange }: { value: ReportTab; onChange: (value: ReportTab) => void }) {
+  const { accent } = useAccent();
+  const ink = themeInk(accent);
   return (
     <View style={s.tabs} accessibilityRole="tablist">
       {(
@@ -21,10 +26,12 @@ export function ReportTabs({ value, onChange }: { value: ReportTab; onChange: (v
       ).map(([key, label]) => (
         <Pressable
           key={key}
-          onPress={() => onChange(key)}
+          onPress={() => {
+            if (value !== key) onChange(key);
+          }}
           accessibilityRole="tab"
           accessibilityState={{ selected: value === key }}
-          style={withPressed([s.tab, value === key && s.tabActive])}
+          style={withPressed([s.tab, value === key && { backgroundColor: ink }])}
         >
           <Text style={[s.tabText, value === key && s.tabOn]}>{label}</Text>
         </Pressable>
@@ -150,7 +157,6 @@ const s = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: theme.radius.pill,
   },
-  tabActive: { backgroundColor: theme.colors.ink },
   tabText: {
     fontFamily: theme.font.roundedMedium,
     fontSize: 13,

@@ -1,3 +1,5 @@
+import { useAccent } from '@/theme/AccentContext';
+import { themeInk } from '@/theme/interactionColors';
 import { useState } from 'react';
 import { View, Pressable } from 'react-native';
 import { Text } from '@/components/Text';
@@ -39,6 +41,8 @@ export function AddCategoryModal({
   /** Opens Archive / Delete for the category being edited — shown for your own categories only. */
   onManage?: () => void;
 }) {
+  const { accent } = useAccent();
+  const ink = themeInk(accent);
   const [name, setName] = useState('');
   const [kind, setKind] = useState<CategoryKind>('expense');
   const [parentId, setParentId] = useState<string | null>(null);
@@ -180,7 +184,10 @@ export function AddCategoryModal({
               accessibilityRole="radio"
               accessibilityLabel={category?.parentId ? 'Top level, no parent category' : 'No parent category'}
               accessibilityState={{ selected: parentId === null, checked: parentId === null }}
-              style={withPressed([styles.parentChip, parentId === null && styles.parentChipActive])}
+              style={withPressed([
+                styles.parentChip,
+                parentId === null && [styles.parentChipActive, { backgroundColor: ink, borderColor: ink }],
+              ])}
             >
               <Text style={[styles.parentChipText, parentId === null && styles.parentChipTextActive]}>
                 {category?.parentId ? 'Top level' : 'None'}
@@ -193,7 +200,10 @@ export function AddCategoryModal({
                 accessibilityRole="radio"
                 accessibilityLabel={`Inside ${p.name}`}
                 accessibilityState={{ selected: parentId === p.id, checked: parentId === p.id }}
-                style={withPressed([styles.parentChip, parentId === p.id && styles.parentChipActive])}
+                style={withPressed([
+                  styles.parentChip,
+                  parentId === p.id && [styles.parentChipActive, { backgroundColor: ink, borderColor: ink }],
+                ])}
               >
                 <Text style={[styles.parentChipText, parentId === p.id && styles.parentChipTextActive]}>
                   {p.name}

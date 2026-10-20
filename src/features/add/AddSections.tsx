@@ -1,3 +1,4 @@
+import { themeInk } from '@/theme/interactionColors';
 import { useState } from 'react';
 import { View, Pressable, Animated, ScrollView, useWindowDimensions } from 'react-native';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
@@ -128,7 +129,13 @@ export function AmountCard({
                   haptics.tap();
                   onPickAmount(minor);
                 }}
-                style={withPressed([styles.frequentChip, active && styles.frequentChipActive])}
+                style={withPressed([
+                  styles.frequentChip,
+                  active && [
+                    styles.frequentChipActive,
+                    { backgroundColor: themeInk(accent), borderColor: themeInk(accent) },
+                  ],
+                ])}
                 accessibilityRole="button"
                 accessibilityState={{ selected: active }}
               >

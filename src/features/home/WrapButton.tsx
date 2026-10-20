@@ -1,3 +1,4 @@
+import { themeInk } from '@/theme/interactionColors';
 import { useState } from 'react';
 import { View, Pressable, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -20,6 +21,7 @@ const SIZE = 34;
  */
 export function WrapButton({ wraps, onPlay }: { wraps: ReadyWrap[]; onPlay: (wrap: ReadyWrap) => void }) {
   const { accent, secondary } = useAccent();
+  const ink = themeInk(accent);
   const [choosing, setChoosing] = useState(false);
   if (wraps.length === 0) return null;
 
@@ -32,11 +34,11 @@ export function WrapButton({ wraps, onPlay }: { wraps: ReadyWrap[]; onPlay: (wra
   };
   const disc = (
     <View style={styles.inner}>
-      <View style={[styles.play, !fresh && styles.playSeen]}>
+      <View style={[styles.play, { backgroundColor: ink }, !fresh && styles.playSeen]}>
         <MaterialCommunityIcons
           name="play"
           size={16}
-          color={fresh ? theme.colors.surface : theme.colors.ink}
+          color={fresh ? theme.colors.surface : ink}
           style={styles.playIcon}
         />
       </View>
@@ -56,7 +58,7 @@ export function WrapButton({ wraps, onPlay }: { wraps: ReadyWrap[]; onPlay: (wra
       >
         {fresh ? (
           <LinearGradient
-            colors={[accent, secondary, theme.colors.accent, theme.colors.spentSoft]}
+            colors={[accent, secondary, accent]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.ring}
@@ -67,7 +69,7 @@ export function WrapButton({ wraps, onPlay }: { wraps: ReadyWrap[]; onPlay: (wra
           <View style={[styles.ring, styles.ringSeen]}>{disc}</View>
         )}
         {wraps.length > 1 && (
-          <View style={styles.count}>
+          <View style={[styles.count, { backgroundColor: ink }]}>
             <Text style={styles.countText}>{wraps.length}</Text>
           </View>
         )}
@@ -86,7 +88,7 @@ export function WrapButton({ wraps, onPlay }: { wraps: ReadyWrap[]; onPlay: (wra
               accessibilityRole="button"
               accessibilityLabel={`Play ${nameOf(w)}, ${formatMoney(w.spentMinor)} spent`}
             >
-              <View style={styles.rowPlay}>
+              <View style={[styles.rowPlay, { backgroundColor: ink }]}>
                 <MaterialCommunityIcons
                   name="play"
                   size={18}

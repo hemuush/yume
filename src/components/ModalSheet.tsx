@@ -79,7 +79,7 @@ function SheetWash() {
   return (
     <LinearGradient
       pointerEvents="none"
-      colors={[shade(accent ?? theme.colors.primary, 92), theme.colors.background]}
+      colors={[shade(accent ?? theme.colors.primary, 94), theme.colors.surface]}
       style={styles.wash}
     />
   );
@@ -398,14 +398,14 @@ const styles = StyleSheet.create({
   },
   alignBottom: { justifyContent: 'flex-end' },
   alignCenter: { justifyContent: 'center' },
-  wash: { position: 'absolute', top: 0, left: 0, right: 0, height: 180 },
+  wash: { position: 'absolute', top: 0, left: 0, right: 0, height: 112 },
 
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
     marginBottom: 12,
-    minHeight: 44,
+    minHeight: 48,
   },
   headerText: { flex: 1, minWidth: 0 },
   title: { fontFamily: theme.font.roundedBold, fontSize: 20, color: theme.colors.textPrimary },
@@ -418,31 +418,35 @@ const styles = StyleSheet.create({
   },
 
   // --- pinned-footer layouts ---
-  framedPad: { paddingHorizontal: 16, paddingTop: 18 },
+  framedPad: { paddingHorizontal: 20, paddingTop: 20 },
   framedBody: { flexGrow: 0, flexShrink: 1 },
   framedSheet: {
-    backgroundColor: theme.colors.background,
+    backgroundColor: theme.colors.surface,
     overflow: 'hidden',
     borderTopLeftRadius: 32,
     borderTopRightRadius: 32,
     flexShrink: 1,
     ...SHEET_SHADOW,
   },
-  framedSheetContent: { paddingHorizontal: 16, paddingBottom: 16 },
+  framedSheetContent: { paddingHorizontal: 20, paddingBottom: 20 },
   framedSheetFooter: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
     paddingTop: 12,
-    backgroundColor: theme.colors.surface,
-    borderTopLeftRadius: 22,
-    borderTopRightRadius: 22,
+    backgroundColor: theme.colors.surfaceAlt,
     borderTopWidth: 1,
-    borderColor: theme.colors.white,
+    borderColor: theme.colors.divider,
   },
-  framedDialogContent: { paddingHorizontal: 16, paddingBottom: 4 },
+  framedDialogContent: { paddingHorizontal: 20, paddingBottom: 8 },
   sheetDock: { paddingHorizontal: 16, paddingTop: 2, backgroundColor: theme.colors.surface },
   dialogDock: { paddingHorizontal: 16, paddingBottom: 14, backgroundColor: theme.colors.surface },
   inlineDock: { marginTop: 12 },
-  framedDialogFooter: { paddingHorizontal: 16, paddingTop: 12, backgroundColor: theme.colors.surface },
+  framedDialogFooter: {
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    backgroundColor: theme.colors.surfaceAlt,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: theme.colors.divider,
+  },
   footerRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 },
   roundBtn: {
     width: 48,
@@ -467,18 +471,18 @@ const styles = StyleSheet.create({
   linkDanger: { color: theme.colors.expenseText },
 
   sheet: {
-    backgroundColor: theme.colors.background,
+    backgroundColor: theme.colors.surface,
     overflow: 'hidden',
     borderTopLeftRadius: 32,
     borderTopRightRadius: 32,
-    paddingHorizontal: 16,
-    paddingTop: 18,
+    paddingHorizontal: 20,
+    paddingTop: 20,
     ...SHEET_SHADOW,
   },
   dialog: {
-    backgroundColor: theme.colors.background,
+    backgroundColor: theme.colors.surface,
     borderRadius: 28,
-    padding: 18,
+    padding: 20,
     marginHorizontal: 24,
     shadowColor: theme.colors.ink,
     shadowOffset: { width: 0, height: 16 },
@@ -487,6 +491,7 @@ const styles = StyleSheet.create({
     elevation: 16,
   },
   dialogFramed: {
+    paddingTop: 0,
     paddingHorizontal: 0,
     paddingBottom: 0,
     overflow: 'hidden',
@@ -500,8 +505,8 @@ const styles = StyleSheet.create({
     height: 44,
     borderRadius: 22,
     backgroundColor: theme.colors.surface,
-    borderWidth: 1,
-    borderColor: theme.colors.white,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.borderSoft,
     alignItems: 'center',
     justifyContent: 'center',
   },

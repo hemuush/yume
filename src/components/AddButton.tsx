@@ -3,6 +3,9 @@ import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
 import { usePressScale } from '@/lib/usePressScale';
 
+import { useAccent } from '@/theme/AccentContext';
+import { themeInk } from '@/theme/interactionColors';
+
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 const HIT_SLOP = { top: 8, bottom: 8, left: 4, right: 4 };
@@ -16,12 +19,19 @@ interface Props extends Omit<PressableProps, 'style'> {
 // a compact ink pill matching PrimaryButton, not a bordered doodle chip.
 export function AddButton({ label = '+ Add', disabled, style, ...rest }: Props) {
   const { animatedStyle, onPressIn, onPressOut } = usePressScale();
+  const { accent } = useAccent();
   return (
     <AnimatedPressable
       disabled={disabled}
       onPressIn={onPressIn}
       onPressOut={onPressOut}
-      style={[styles.btn, disabled && styles.disabled, animatedStyle, style]}
+      style={[
+        styles.btn,
+        { backgroundColor: themeInk(accent) },
+        disabled && styles.disabled,
+        animatedStyle,
+        style,
+      ]}
       accessibilityRole="button"
       // The pill is ~33dp tall; the slop lifts the touch target to 48dp without changing how it looks.
       hitSlop={HIT_SLOP}

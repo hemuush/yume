@@ -259,7 +259,6 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 4,
     borderRadius: theme.radius.pill,
   },
-  typeBtnOn: { backgroundColor: theme.colors.ink },
   typeText: {
     textAlign: 'center',
     fontFamily: theme.font.roundedMedium,

@@ -1,3 +1,5 @@
+import { useAccent } from '@/theme/AccentContext';
+import { themeInk } from '@/theme/interactionColors';
 import { useState } from 'react';
 import { View, Pressable, StyleSheet } from 'react-native';
 import { Text } from '@/components/Text';
@@ -39,6 +41,8 @@ export function DateField({
   pastFacing?: boolean;
 }) {
   const inSheet = useSheetSurface();
+  const { accent } = useAccent();
+  const selectedStyle = { backgroundColor: themeInk(accent), borderColor: themeInk(accent) };
   const [open, setOpen] = useState(false);
   const today = toLocalIsoDate(new Date());
   const yesterday = addDaysToIsoDate(today, -1);
@@ -61,7 +65,7 @@ export function DateField({
               if (value !== q.iso) haptics.tap();
               onChange(q.iso);
             }}
-            style={withPressed([styles.chip, inSheet && styles.sheetChip, value === q.iso && styles.chipOn])}
+            style={withPressed([styles.chip, inSheet && styles.sheetChip, value === q.iso && selectedStyle])}
             accessibilityRole="button"
             accessibilityState={{ selected: value === q.iso }}
             accessibilityLabel={`${label}: ${q.label}`}
@@ -77,7 +81,7 @@ export function DateField({
           style={withPressed([
             styles.chip,
             inSheet && styles.sheetChip,
-            !isQuick && pastFacing && styles.chipOn,
+            !isQuick && pastFacing && selectedStyle,
           ])}
           accessibilityRole="button"
           accessibilityLabel={`${label}: ${dateFieldLabel(value)}. Change`}
@@ -132,7 +136,6 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.borderSoft,
     backgroundColor: theme.colors.surface,
   },
-  chipOn: { backgroundColor: theme.colors.ink, borderColor: theme.colors.ink },
   chipText: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textPrimary },
   chipTextOn: { color: theme.colors.surface },
 });

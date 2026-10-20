@@ -5,7 +5,7 @@ import { Text } from '@/components/Text';
 import { EmptyState } from '@/components/EmptyState';
 import { theme } from '@/constants/theme';
 import { useAccent } from '@/theme/AccentContext';
-import { homeInk } from '@/features/home/homeInk';
+import { themeInk } from '@/theme/interactionColors';
 import { withPressed } from '@/lib/pressed';
 import { TrendChart, MIN_TREND_POINTS } from './TrendChart';
 import { CashFlowCard } from './CashFlowCard';
@@ -55,7 +55,7 @@ export function ReportTrends({ cashFlow, ...props }: Props) {
             accessibilityLabel={`Trend metric: ${option.label}`}
             accessibilityState={{ selected: option.key === selected }}
             onPress={() => setMetric(option.key)}
-            style={withPressed([s.option, option.key === selected && { backgroundColor: homeInk(accent) }])}
+            style={withPressed([s.option, option.key === selected && { backgroundColor: themeInk(accent) }])}
           >
             <Text style={[s.label, option.key === selected && s.active]}>{option.label}</Text>
           </Pressable>

@@ -44,6 +44,10 @@ it.each(['sheet', 'center'] as const)(
     expect(text).not.toContain('Edit amount');
     expect(text).not.toContain('Save');
     expect(body.props.keyboardShouldPersistTaps).toBe('handled');
+    if (variant === 'center') {
+      const surface = tree.root.findAllByProps({ testID: 'sheet-surface' })[0];
+      expect(StyleSheet.flatten(surface.props.style).paddingTop).toBe(0);
+    }
     act(() => tree.unmount());
   }
 );

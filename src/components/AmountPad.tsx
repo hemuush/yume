@@ -6,6 +6,7 @@ import { usePressScale } from '@/lib/usePressScale';
 import { haptics } from '@/lib/haptics';
 import { PadKey } from '@/lib/padMath';
 import { shade } from '@/lib/color';
+import { themeInk } from '@/theme/interactionColors';
 import { useAccent } from '@/theme/AccentContext';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -85,7 +86,7 @@ export function PadButton({
   const operator = padKey === '÷' || padKey === '×' || padKey === '−' || padKey === '+';
   // The sum keys sit on a pale theme tint, so they stand apart from the digits.
   const { accent } = useAccent();
-  const opTone = tone ?? { bg: shade(accent, 95), ink: theme.colors.link };
+  const opTone = tone ?? { bg: shade(accent, 95), ink: themeInk(accent) };
   return (
     <AnimatedPressable
       style={[

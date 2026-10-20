@@ -7,6 +7,8 @@ import { useReduceMotion } from './useReduceMotion';
  * bounce. One shared Animated.Value drives the scale and the dim, so they always move together.
  */
 export function usePressScale(pressedScale = 0.99) {
+  // Keep older callers quiet too: no control shrinks more than 3%.
+  const targetScale = Math.max(0.97, Math.min(0.995, pressedScale));
   // Lazy state init (not useRef.current) so the Animated.Value is created once
   // and read as a plain value in render — the shape the hooks lint rules want.
   const [scale] = useState(() => new Animated.Value(1));
@@ -24,7 +26,7 @@ export function usePressScale(pressedScale = 0.99) {
       return;
     }
     Animated.timing(scale, {
-      toValue: pressedScale,
+      toValue: targetScale,
       useNativeDriver: true,
       duration: 80,
       easing: Easing.out(Easing.quad),
@@ -46,7 +48,11 @@ export function usePressScale(pressedScale = 0.99) {
 
   // Derived from the same driver, not Pressable's `pressed` render-prop, which doesn't compose with
   // Animated.createAnimatedComponent (Animated needs a plain style object/array to find animated nodes).
-  const opacity = scale.interpolate({ inputRange: [pressedScale, 1], outputRange: [0.85, 1] });
+  const opacity = scale.interpolate({
+    inputRange: [targetScale, 1],
+    outputRange: [0.92, 1],
+    extrapolate: 'clamp',
+  });
 
   return {
     animatedStyle: { transform: [{ scale }], opacity },

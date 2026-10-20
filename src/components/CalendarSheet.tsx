@@ -4,6 +4,7 @@ import { Text } from '@/components/Text';
 import Feather from '@expo/vector-icons/Feather';
 import { ModalSheet } from '@/components/ModalSheet';
 import { theme } from '@/constants/theme';
+import { themeInk } from '@/theme/interactionColors';
 import { useAccent } from '@/theme/AccentContext';
 import { usePressScale } from '@/lib/usePressScale';
 import { haptics } from '@/lib/haptics';
@@ -56,7 +57,9 @@ export function CalendarSheet({
   onClose: () => void;
   onPick: (isoDate: string) => void;
 }) {
-  const { accent, onAccent } = useAccent();
+  const { accent } = useAccent();
+  const ink = themeInk(accent);
+  const onAccent = theme.colors.surface;
   const prevBtn = usePressScale();
   const nextBtn = usePressScale();
   // The month currently on screen — starts on the selected date's month.
@@ -118,7 +121,7 @@ export function CalendarSheet({
                   onPress={() => pick(q.iso)}
                   style={withPressed([
                     styles.quick,
-                    value === q.iso && { backgroundColor: accent, borderColor: theme.colors.ink },
+                    value === q.iso && { backgroundColor: ink, borderColor: ink },
                   ])}
                   accessibilityRole="button"
                   accessibilityState={{ selected: value === q.iso }}
@@ -188,7 +191,7 @@ export function CalendarSheet({
                   onPress={() => setViewMonth(`${year}-${viewMonth.slice(5)}`)}
                   style={withPressed([
                     styles.yearChip,
-                    year === y && { backgroundColor: accent, borderColor: theme.colors.ink },
+                    year === y && { backgroundColor: ink, borderColor: ink },
                   ])}
                   accessibilityRole="button"
                   accessibilityState={{ selected: year === y }}
@@ -213,7 +216,7 @@ export function CalendarSheet({
                         setViewMonth(`${y}-${String(month).padStart(2, '0')}`);
                         setPickingMonth(false);
                       }}
-                      style={withPressed([styles.monthCell, month === m && { backgroundColor: accent }])}
+                      style={withPressed([styles.monthCell, month === m && { backgroundColor: ink }])}
                       accessibilityRole="button"
                       accessibilityLabel={`${MONTHS[month - 1]} ${y}`}
                     >
@@ -253,7 +256,7 @@ export function CalendarSheet({
                       disabled={outOfRange(iso)}
                       isToday={iso === today}
                       selected={iso === value}
-                      accent={accent}
+                      accent={ink}
                       onAccent={onAccent}
                       onPress={() => pick(iso)}
                     />
@@ -308,7 +311,7 @@ function DayCell({
         style={[
           styles.day,
           isToday && styles.dayToday,
-          selected && { backgroundColor: accent, borderColor: theme.colors.ink },
+          selected && { backgroundColor: accent, borderColor: accent },
           animatedStyle,
         ]}
       >
