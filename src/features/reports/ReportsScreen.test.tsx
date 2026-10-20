@@ -326,7 +326,8 @@ describe('Reports screen', () => {
     // One compact card with the period's total (Reports can look at any period, unlike Home).
     expect(shown.some((t) => t.startsWith('Spent in '))).toBe(true);
     expect(shown).not.toContain('Usual month');
-    expect(shown.some((t) => t.endsWith(', in short'))).toBe(true);
+    expect(shown.some((t) => t.endsWith(', in short'))).toBe(false);
+    expect(shown).toContain('Spending patterns');
     expect(shown).not.toContain('Where it went');
   });
   it('shows a failed day read and retries instead of presenting an empty day', async () => {
@@ -408,7 +409,15 @@ describe('Reports screen', () => {
     await layOut(tree);
     shown = texts(tree);
     expect(shown).toContain('Net worth');
-    expect(shown).toContain('Money in and out');
+    expect(shown).not.toContain('Money in and out');
+    await pressText(tree, 'Cash flow');
+    await layOut(tree);
+    expect(texts(tree)).toContain('Money in and out');
+    expect(tree.root.findAllByType(require('./TrendChart').TrendChart)).toHaveLength(0);
+    await pressText(tree, 'Net worth');
+    await layOut(tree);
+    expect(tree.root.findAllByType(require('./CashFlowCard').CashFlowCard)).toHaveLength(0);
+    expect(tree.root.findByType(require('./TrendChart').TrendChart).props.fixedKind).toBe('netWorth');
     expect(shown).toContain('Against your usual');
     expect(shown).not.toContain('Where it went');
     await pressText(tree, 'Days');
@@ -429,6 +438,7 @@ describe('Reports screen', () => {
     expect(scroll.props.stickyHeaderIndices).toBeUndefined();
     expect(scroll.findAllByType(Text).map((n) => n.props.children)).not.toContain('Reports');
     expect(texts(tree)).not.toContain('Show on the heatmap →');
+    await pressText(tree, 'Spending patterns');
     const insight = tree.root.find(
       (n) =>
         typeof n.props.onPress === 'function' &&
@@ -443,13 +453,18 @@ describe('Reports screen', () => {
   });
   it('Trends asks for the in-and-out and category tracks with savings left out while hidden', async () => {
     mockHide.current = true;
+    const accountRead = jest
+      .spyOn(require('@/db/ledger'), 'listAccounts')
+      .mockResolvedValue([{ id: 'private', type: 'savings' }]);
     try {
       const tree = await render();
       await pressText(tree, 'Trends');
       await layOut(tree);
       expect(mockCashFlow).toHaveBeenLastCalledWith(7, expect.any(Date), true);
+      expect(texts(tree)).not.toContain('Net worth');
       expect(mockTracks).toHaveBeenLastCalledWith(7, expect.any(Date), true);
     } finally {
+      accountRead.mockRestore();
       mockHide.current = false;
     }
   });
@@ -479,6 +494,7 @@ describe('Reports screen', () => {
   });
   it('the heaviest-day story opens that day on the heatmap', async () => {
     const tree = await render();
+    await pressText(tree, 'Spending patterns');
     await layOut(tree);
     const card = tree.root.find(
       (n) =>
@@ -500,6 +516,7 @@ describe('Reports screen', () => {
   });
   it('a category story switches to Categories with that row picked', async () => {
     const tree = await render();
+    await pressText(tree, 'Spending patterns');
     await layOut(tree);
     const card = tree.root.find(
       (n) =>
@@ -605,6 +622,7 @@ describe('Reports screen', () => {
   describe('Weekday rhythm', () => {
     it('shows seven bars with the busiest weekday read out, and a tapped bar reads its own line', async () => {
       const tree = await render();
+      await pressText(tree, 'Spending patterns');
       const shown = texts(tree);
       expect(shown).toContain('Weekday rhythm');
       expect(shown.some((t) => t.startsWith('Mondays run highest: '))).toBe(true);
@@ -620,7 +638,9 @@ describe('Reports screen', () => {
     it('says so on a month too young to have a pattern', async () => {
       jest.setSystemTime(new Date(2026, 9, 5, 12));
       try {
-        const shown = texts(await render());
+        const tree = await render();
+        await pressText(tree, 'Spending patterns');
+        const shown = texts(tree);
         expect(shown).toContain('Weekday rhythm');
         expect(shown.some((t) => t.startsWith('Needs about 2 weeks of entries'))).toBe(true);
         expect(shown.some((t) => t.startsWith('Mondays run highest'))).toBe(false);
@@ -630,6 +650,28 @@ describe('Reports screen', () => {
     });
   });
   describe('Biggest spends', () => {
+    it('previews three purchases and expands the remaining largest entries', async () => {
+      const original = mockLargest.getMockImplementation()!;
+      mockLargest.mockImplementation(async () =>
+        Array.from({ length: 5 }, (_, i) =>
+          bigEntry(`extra${i}`, '2026-10-05', 50000 - i * 1000, `Purchase ${i}`, 'food')
+        )
+      );
+      let tree!: ReactTestRenderer;
+      try {
+        tree = await render();
+        expect(texts(tree)).toContain('Purchase 2');
+        expect(texts(tree)).not.toContain('Purchase 4');
+        await act(async () => byLabel(tree, 'View all biggest purchases').props.onPress());
+        expect(texts(tree)).toContain('Purchase 4');
+        await act(async () => byLabel(tree, 'Show fewer biggest purchases').props.onPress());
+        expect(texts(tree)).not.toContain('Purchase 4');
+      } finally {
+        if (tree) act(() => tree.unmount());
+        mockLargest.mockImplementation(original);
+      }
+    });
+
     it("lists the period's largest single expenses, up to today, and opens one's day", async () => {
       const tree = await render();
       expect(mockLargest).toHaveBeenCalledWith(

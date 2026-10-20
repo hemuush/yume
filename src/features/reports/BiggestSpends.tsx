@@ -1,9 +1,11 @@
+import { useState } from 'react';
 import { View, Pressable } from 'react-native';
 import { Text } from '@/components/Text';
 import { Amount } from '@/components/Amount';
 import { CategoryIcon } from '@/components/CategoryIcon';
 import { parseLocalIsoDate } from '@/lib/date';
 import { inParent, joinSub, parentNameOf } from '@/lib/categoryLabel';
+import { theme } from '@/constants/theme';
 import { withPressed } from '@/lib/pressed';
 import type { LargestExpense } from '@/db/reports';
 import type { Category } from '@/types';
@@ -36,17 +38,32 @@ export function BiggestSpends({
   /** The category the heatmap is narrowed to, when it is. */
   scopeName?: string;
 }) {
+  const [expanded, setExpanded] = useState(false);
+  const shown = expanded ? items : items.slice(0, 3);
   if (items.length < BIGGEST_MIN_ENTRIES) return null;
-  const together = items.reduce((s, e) => s + e.amountMinor, 0);
+  const together = shown.reduce((s, e) => s + e.amountMinor, 0);
   const share = shareOfMinor > 0 ? Math.min(100, Math.round((together / shareOfMinor) * 100)) : null;
   return (
     <View style={styles.bigBlock}>
       <View style={styles.storyHead}>
         <Text style={styles.blockTitle}>Biggest spends</Text>
-        <Text style={styles.storyPos}>Top {items.length}</Text>
+        {items.length > 3 ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={expanded ? 'Show fewer biggest purchases' : 'View all biggest purchases'}
+            onPress={() => setExpanded((v) => !v)}
+            style={withPressed({ minHeight: 44, justifyContent: 'center', alignItems: 'flex-end' })}
+          >
+            <Text style={{ fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.link }}>
+              {expanded ? 'Show fewer' : `View all ${items.length}`}
+            </Text>
+          </Pressable>
+        ) : (
+          <Text style={styles.storyPos}>Top {shown.length}</Text>
+        )}
       </View>
       <View style={styles.bigCard}>
-        {items.map((e, i) => {
+        {shown.map((e, i) => {
           const cat = e.categoryId ? catById.get(e.categoryId) : undefined;
           const catName = cat?.name ?? 'Expense';
           const note = e.note && e.note !== catName ? e.note : null;

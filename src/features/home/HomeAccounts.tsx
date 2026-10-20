@@ -173,7 +173,14 @@ export function HomeAccounts({
         <View style={styles.wrap}>
           <Glass radius={24} style={[styles.groupedAccounts, cardSurface.neutral]}>
             {rows.map((accounts, index) => (
-              <View key={index} style={[styles.accountGrid, columns === 1 && { flexDirection: 'column' }]}>
+              <View
+                key={index}
+                style={[
+                  styles.accountGrid,
+                  index > 0 && styles.accountGridDivider,
+                  columns === 1 && { flexDirection: 'column' },
+                ]}
+              >
                 {accounts.map((a) => (
                   <Pressable
                     key={a.id}
@@ -182,17 +189,25 @@ export function HomeAccounts({
                     accessibilityLabel={`${a.name}, ${accountTypeLabel(a)}. Open summary`}
                     style={withPressed([styles.accountCard, columns === 1 && styles.accountCardWide])}
                   >
-                    <View
-                      style={[styles.chipIcon, { backgroundColor: shade(accountHue(a.type, accent), 88) }]}
-                    >
-                      <MaterialCommunityIcons
-                        name={accountIcon(a.type) as McIconName}
-                        size={18}
-                        color={shade(accountHue(a.type, accent), 30, 10)}
-                      />
+                    <View style={[styles.accountHead, columns === 1 && { flex: 1 }]}>
+                      <View
+                        style={[
+                          styles.chipIcon,
+                          styles.compactIcon,
+                          { backgroundColor: shade(accountHue(a.type, accent), 88) },
+                        ]}
+                      >
+                        <MaterialCommunityIcons
+                          name={accountIcon(a.type) as McIconName}
+                          size={16}
+                          color={shade(accountHue(a.type, accent), 30, 10)}
+                        />
+                      </View>
+                      <Text style={styles.accountName} numberOfLines={2}>
+                        {a.name}
+                      </Text>
                     </View>
                     <View style={[styles.accountCopy, columns === 1 && styles.accountCopyWide]}>
-                      <Text style={styles.accountName}>{a.name}</Text>
                       <Amount
                         minor={a.currentBalanceMinor}
                         currency={a.currency}
@@ -253,24 +268,33 @@ export function HomeAccounts({
 }
 
 const styles = StyleSheet.create({
-  groupedAccounts: { padding: 12, gap: 8 },
+  groupedAccounts: { paddingHorizontal: 14, paddingVertical: 8, gap: 4 },
   accountGrid: { flexDirection: 'row', gap: 10 },
-  accountCard: { flex: 1, minWidth: 0, alignItems: 'center', paddingVertical: 8, gap: 7, minHeight: 100 },
+  accountCard: { flex: 1, minWidth: 0, alignItems: 'flex-start', paddingVertical: 6, gap: 5, minHeight: 68 },
+  accountHead: { flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 32, alignSelf: 'stretch' },
+  compactIcon: { width: 26, height: 26, borderRadius: 9 },
+  accountGridDivider: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: theme.colors.divider,
+    paddingTop: 6,
+  },
   accountCardWide: { flexDirection: 'row', minHeight: 64, gap: 10 },
-  accountCopy: { alignSelf: 'stretch', alignItems: 'center', gap: 3 },
-  accountCopyWide: { flex: 1, alignItems: 'flex-start', alignSelf: 'auto' },
+  accountCopy: { alignSelf: 'stretch', alignItems: 'flex-start', gap: 3 },
+  accountCopyWide: { flexShrink: 1, alignItems: 'flex-start', alignSelf: 'auto' },
   accountName: {
+    flex: 1,
+    minWidth: 0,
     fontFamily: theme.font.bodyMedium,
     fontSize: 12,
     lineHeight: 16,
-    textAlign: 'center',
+    textAlign: 'left',
     color: theme.colors.textPrimary,
   },
   listAmount: {
     fontFamily: theme.font.bodyMedium,
     fontSize: 14,
     lineHeight: 20,
-    textAlign: 'center',
+    textAlign: 'left',
     color: theme.colors.textPrimary,
   },
   wrap: { marginHorizontal: 16 },

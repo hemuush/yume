@@ -29,6 +29,7 @@ export function BudgetJars({
   limit,
   compact = false,
   showAdd = false,
+  hideAdd = false,
 }: {
   summary: BudgetsSummary;
   onOpen: () => void;
@@ -39,6 +40,7 @@ export function BudgetJars({
   /** Flat rows used by Plan; limit counts actual budgets, not an Add tile. */
   compact?: boolean;
   showAdd?: boolean;
+  hideAdd?: boolean;
 }) {
   if (summary.rows.length === 0) {
     return (
@@ -90,6 +92,7 @@ export function BudgetJars({
   }
   return (
     <TileGrid
+      showAdd={!hideAdd}
       tiles={[...summary.rows]
         .sort((a, b) => Number(b.overBudget) - Number(a.overBudget) || b.percentUsed - a.percentUsed)
         .map((b) => (

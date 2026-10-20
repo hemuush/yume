@@ -68,8 +68,9 @@ import { CategoryBar } from '@/features/reports/CategoryBar';
 import { CategoryList } from '@/features/reports/CategoryList';
 import { WeekdayRhythm } from '@/features/reports/WeekdayRhythm';
 import { BiggestSpends } from '@/features/reports/BiggestSpends';
-import { TrendChart, MIN_TREND_POINTS } from '@/features/reports/TrendChart';
-import { CashFlowCard } from '@/features/reports/CashFlowCard';
+import { ReportPatterns } from '@/features/reports/ReportPatterns';
+import { ReportTrends } from '@/features/reports/ReportTrends';
+import { MIN_TREND_POINTS } from '@/features/reports/TrendChart';
 import { CategoryTracks } from '@/features/reports/CategoryTracks';
 import { styles } from '@/features/reports/reports.styles';
 import {
@@ -698,20 +699,9 @@ export default function ReportsScreen() {
                 />
               </ModalSheet>
             )}
-            <ReportInsights
-              // A new period closes any expanded insight.
-              key={`${range.start}:${range.end}`}
-              title={`${periodName}, in short`}
-              cards={stories}
-              onAction={onStoryAction}
-            />
+
             {!byMonth && (!filterId || filtered?.id === filterId) && (
               <>
-                <WeekdayRhythm
-                  key={`${cursorKey}|${filterId ?? ''}`}
-                  rhythm={weekdayRhythm(heatDaily, range, todayIso)}
-                  scopeName={filterCat?.name}
-                />
                 {!largest || largest.key !== largestKey ? (
                   !detailErrors.largest && (
                     <ActivityIndicator
@@ -722,6 +712,7 @@ export default function ReportsScreen() {
                   )
                 ) : (
                   <BiggestSpends
+                    key={largestKey}
                     items={largest?.key === largestKey ? largest.items : []}
                     catById={catById}
                     shareOfMinor={biggestShareOf}
@@ -733,25 +724,28 @@ export default function ReportsScreen() {
                 )}
               </>
             )}
+            {(stories.length > 0 || (!byMonth && (!filterId || filtered?.id === filterId))) && (
+              <ReportPatterns key={`patterns-${cursorKey}-${filterId ?? ''}`}>
+                <ReportInsights
+                  // A new period closes any expanded insight.
+                  key={`${range.start}:${range.end}`}
+                  title={`${periodName}, in short`}
+                  cards={stories}
+                  onAction={onStoryAction}
+                />
+                {!byMonth && (!filterId || filtered?.id === filterId) && (
+                  <WeekdayRhythm
+                    key={`${cursorKey}|${filterId ?? ''}`}
+                    rhythm={weekdayRhythm(heatDaily, range, todayIso)}
+                    scopeName={filterCat?.name}
+                  />
+                )}
+              </ReportPatterns>
+            )}
           </>
         ) : tab === 'cats' ? (
           <View>
             <Text style={styles.blockTitle}>{income ? 'Where it came from' : 'Where it went'}</Text>
-            {(byAccount ? accountItems !== null : shownBreakdown.length > 0) && (
-              <View style={styles.breakdownContext}>
-                <Amount minor={byAccount ? accountTotal : shownTotal} style={styles.breakdownAmount} />
-                <Text style={styles.stripSub}>
-                  {income ? 'received' : 'spent'} · {periodName}
-                  {range.end >= todayIso ? ' so far' : ''}
-                </Text>
-              </View>
-            )}
-            {!byAccount && shownBreakdown.length > 0 && (
-              <ComparisonNote
-                label={`${range.end >= todayIso ? 'So far vs full ' : 'Vs '}${custom ? 'previous period' : previousPeriodLabel(cursor)}`}
-                partial={range.end >= todayIso}
-              />
-            )}
             <BreakdownControls
               flow={flow}
               group={group}
@@ -769,6 +763,21 @@ export default function ReportsScreen() {
                 setSelectedAccount(null);
               }}
             />
+            {(byAccount ? accountItems !== null : shownBreakdown.length > 0) && (
+              <View style={styles.breakdownContext}>
+                <Amount minor={byAccount ? accountTotal : shownTotal} style={styles.breakdownAmount} />
+                <Text style={styles.stripSub}>
+                  {income ? 'received' : 'spent'} · {periodName}
+                  {range.end >= todayIso ? ' so far' : ''}
+                </Text>
+              </View>
+            )}
+            {!byAccount && shownBreakdown.length > 0 && (
+              <ComparisonNote
+                label={`${range.end >= todayIso ? 'So far vs full ' : 'Vs '}${custom ? 'previous period' : previousPeriodLabel(cursor)}`}
+                partial={range.end >= todayIso}
+              />
+            )}
             <ExpenseLabelsReport visible={labelsOpen} range={range} onClose={() => setLabelsOpen(false)} />
             {byAccount ? (
               detailErrors.accounts ? null : accountItems === null ? (
@@ -837,7 +846,8 @@ export default function ReportsScreen() {
           </View>
         ) : trend.length >= MIN_TREND_POINTS || netWorthTrend.length >= MIN_TREND_POINTS ? (
           <>
-            <TrendChart
+            <ReportTrends
+              cashFlow={cashFlow}
               key={cursorKey}
               periodName={periodName}
               spentMinor={current.expenseMinor}
@@ -845,12 +855,6 @@ export default function ReportsScreen() {
               baseline={baseline}
               inProgress={monthInProgress}
               netWorthTrend={netWorthTrend}
-              monthLink={monthLink}
-            />
-            <CashFlowCard
-              key={`flow-${cursorKey}`}
-              points={cashFlow}
-              inProgress={monthInProgress}
               monthLink={monthLink}
             />
             <CategoryTracks

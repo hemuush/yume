@@ -447,7 +447,7 @@ export function ThisMonthHero({
           <View style={styles.stats}>
             <Stat
               stacked={stackStats}
-              label="Spent"
+              label={displayed.periodKey.startsWith('month:') ? 'Spent this month' : 'Spent this year'}
               color={theme.colors.spentSoft}
               minor={displayed.spentMinor}
               periodKey={displayed.periodKey}
@@ -455,7 +455,7 @@ export function ThisMonthHero({
             {!hideAmounts && (
               <Stat
                 stacked={stackStats}
-                label="Saved"
+                label={displayed.periodKey.startsWith('month:') ? 'Saved this month' : 'Saved this year'}
                 color={theme.colors.secondary}
                 minor={displayed.savingsMinor}
                 periodKey={displayed.periodKey}

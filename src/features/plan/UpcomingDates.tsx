@@ -15,37 +15,57 @@ export function UpcomingDates({
   renderDay,
 }: {
   runway: Runway;
-  renderDay?: (day: RunwayDay) => React.ReactNode;
+  renderDay?: (day: RunwayDay, mode: 'outgoing' | 'income') => React.ReactNode;
 }) {
   const { accent } = useAccent();
   const ink = homeInk(accent);
-  const dates = runway.days.filter((day) => day.outMinor > 0);
+  const [mode, setMode] = useState<'outgoing' | 'income'>('outgoing');
+  const dates = runway.days.filter((day) => (mode === 'income' ? day.inMinor : day.outMinor) > 0);
   const [selectedDate, setSelectedDate] = useState(dates[0]?.date);
   const selected = dates.find((day) => day.date === selectedDate) ?? dates[0];
   return (
     <View testID="runway" style={s.root}>
+      <View style={s.modeRow} accessibilityRole="radiogroup">
+        {(['outgoing', 'income'] as const).map((value) => (
+          <Pressable
+            key={value}
+            accessibilityRole="radio"
+            accessibilityState={{ selected: mode === value }}
+            onPress={() => setMode(value)}
+            style={withPressed([s.mode, mode === value && { backgroundColor: ink }])}
+          >
+            <Text style={[s.dateLabel, mode === value && s.activeText]}>
+              {value === 'outgoing' ? 'Money out' : 'Scheduled income'}
+            </Text>
+          </Pressable>
+        ))}
+      </View>
       {selected ? (
         <>
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={s.dates}
-            accessibilityLabel="Upcoming outgoing payment dates"
+            accessibilityLabel={
+              mode === 'income' ? 'Scheduled income dates' : 'Upcoming outgoing payment dates'
+            }
           >
             {dates.map((day) => {
               const active = day.date === selected.date;
               return (
                 <Pressable
                   key={day.date}
-                  testID={`outgoing-day-${day.date}`}
+                  testID={`${mode}-day-${day.date}`}
                   accessibilityRole="button"
-                  accessibilityLabel={`${weekdayDayMonth(day.date)}, scheduled outgoing ${formatMoney(day.outMinor)}`}
+                  accessibilityLabel={`${weekdayDayMonth(day.date)}, scheduled ${mode === 'income' ? 'income' : 'outgoing'} ${formatMoney(mode === 'income' ? day.inMinor : day.outMinor)}`}
                   accessibilityState={{ selected: active }}
                   onPress={() => setSelectedDate(day.date)}
                   style={withPressed([s.date, active && { backgroundColor: ink, borderColor: ink }])}
                 >
                   <Text style={[s.dateLabel, active && s.activeText]}>{dayMonth(day.date)}</Text>
-                  <Text style={[s.amount, active && s.activeText]}>{formatMoney(day.outMinor)}</Text>
+                  <Text style={[s.amount, active && s.activeText]}>
+                    {formatMoney(mode === 'income' ? day.inMinor : day.outMinor)}
+                  </Text>
                 </Pressable>
               );
             })}
@@ -54,15 +74,19 @@ export function UpcomingDates({
             <Text style={[s.caption, { marginHorizontal: 16 }]}>Includes overdue payments</Text>
           )}
           {renderDay ? (
-            renderDay(selected)
+            renderDay(selected, mode)
           ) : (
             <View style={s.summary} accessibilityLiveRegion="polite">
               <Text style={s.dateLabel}>
-                {weekdayDayMonth(selected.date)} · {formatMoney(selected.outMinor)} due
+                {weekdayDayMonth(selected.date)} ·{' '}
+                {formatMoney(mode === 'income' ? selected.inMinor : selected.outMinor)}{' '}
+                {mode === 'income' ? 'expected' : 'due'}
               </Text>
               <Text style={s.caption}>
                 {selected.items
-                  .filter((item) => item.kind === 'bill' || item.kind === 'emi')
+                  .filter((item) =>
+                    mode === 'income' ? item.kind === 'income' : item.kind === 'bill' || item.kind === 'emi'
+                  )
                   .map((item) => item.title)
                   .join(' · ')}
               </Text>
@@ -71,8 +95,14 @@ export function UpcomingDates({
         </>
       ) : (
         <View style={s.summary}>
-          <Text style={s.dateLabel}>No upcoming outgoing payments</Text>
-          <Text style={s.caption}>New scheduled bills and EMIs will appear here.</Text>
+          <Text style={s.dateLabel}>
+            {mode === 'income' ? 'No scheduled income' : 'No upcoming outgoing payments'}
+          </Text>
+          <Text style={s.caption}>
+            {mode === 'income'
+              ? 'Add recurring income from the Add menu.'
+              : 'New scheduled bills and EMIs will appear here.'}
+          </Text>
         </View>
       )}
     </View>
@@ -80,6 +110,22 @@ export function UpcomingDates({
 }
 const s = StyleSheet.create({
   root: { gap: 10 },
+  modeRow: {
+    marginHorizontal: 16,
+    padding: 4,
+    gap: 4,
+    flexDirection: 'row',
+    borderRadius: 24,
+    backgroundColor: theme.colors.surfaceAlt,
+  },
+  mode: {
+    flex: 1,
+    minHeight: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 6,
+    borderRadius: 22,
+  },
   dates: { paddingHorizontal: 16, gap: 8, paddingVertical: 2 },
   date: {
     minWidth: 88,

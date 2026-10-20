@@ -99,3 +99,45 @@ it('explains an early shortfall even when late income makes the ending balance p
   expect(values.some((t) => t.startsWith('First shortfall'))).toBe(true);
   expect(values.some((t) => t.includes('unreceived refunds are excluded'))).toBe(true);
 });
+
+it('reveals income-only dates and passes only the selected mode to its detail renderer', () => {
+  const { UpcomingDates } = require('./UpcomingDates');
+  const { buildDueItems, buildLoansSummary } = require('./planOverview');
+  const schedule = buildRunway(
+    0,
+    buildDueItems(
+      buildLoansSummary([], []).rows,
+      [
+        {
+          id: 'salary',
+          type: 'income',
+          active: true,
+          nextRunDate: '2026-10-22',
+          amountMinor: 500000,
+          label: 'Salary',
+          frequency: 'monthly',
+          intervalCount: 1,
+        },
+      ],
+      [],
+      '2026-11-18'
+    ),
+    '2026-10-20',
+    30
+  );
+  const detail = jest.fn((day, mode) => (
+    <Text>
+      {mode}:{day.inMinor}
+    </Text>
+  ));
+  const tree = render(<UpcomingDates runway={schedule} renderDay={detail} />);
+  expect(texts(tree)).toContain('No upcoming outgoing payments');
+  const income = tree.root.findAll((n) => n.props.accessibilityRole === 'radio' && n.props.onPress)[1];
+  act(() => income.props.onPress());
+  expect(
+    tree.root.findAll((n) => n.props.testID === 'income-day-2026-10-22' && n.props.onPress)
+  ).toHaveLength(1);
+  expect(detail.mock.calls.at(-1)?.[1]).toBe('income');
+  expect(detail.mock.calls.at(-1)?.[0].inMinor).toBe(500000);
+  act(() => tree.unmount());
+});

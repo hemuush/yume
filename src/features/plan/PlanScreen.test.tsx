@@ -214,14 +214,18 @@ async function render() {
 const openTab = (tree: ReactTestRenderer, tab: 'overview' | 'upcoming' | 'money' | 'debt') =>
   act(() => tree.root.findByType(require('./PlanNavigation').PlanNavigation).props.onChange(tab));
 
-const payRow = (tree: ReactTestRenderer) =>
-  tree.root.find(
+const payRow = (tree: ReactTestRenderer) => {
+  openTab(tree, 'upcoming');
+  const dates = tree.root.findAll((n) => n.props.testID?.startsWith('outgoing-day-') && n.props.onPress);
+  act(() => dates[dates.length - 1].props.onPress());
+  return tree.root.find(
     (n) =>
       typeof n.props.accessibilityLabel === 'string' &&
       n.props.accessibilityLabel.startsWith('Home loan, EMI') &&
       n.props.accessibilityLabel.endsWith(', Pay') &&
       typeof n.props.onPress === 'function'
   );
+};
 
 const texts = (tree: ReactTestRenderer) =>
   tree.root.findAllByType(Text).map((t) => [].concat(t.props.children).join(''));
@@ -257,7 +261,12 @@ describe('Plan tab', () => {
       act(() => tree.root.findByProps({ testID: 'plan-budget-detail' }).props.onClose());
       act(() =>
         tree.root
-          .findAll((n) => n.props.accessibilityLabel === 'Add a budget' && n.props.onPress)[0]
+          .findAll((n) => n.props.accessibilityLabel === 'Add to your plan' && n.props.onPress)[0]
+          .props.onPress()
+      );
+      act(() =>
+        tree.root
+          .findAll((n) => n.props.accessibilityLabel === 'Add budget' && n.props.onPress)[0]
           .props.onPress()
       );
       expect(tree.root.findByProps({ testID: 'plan-new-budget' }).props.visible).toBe(true);
@@ -272,7 +281,7 @@ describe('Plan tab', () => {
     const button = tree.root.findAll(
       (n) =>
         typeof n.props.accessibilityLabel === 'string' &&
-        n.props.accessibilityLabel === 'See all — Upcoming payments' &&
+        n.props.accessibilityLabel === 'View payments' &&
         n.props.onPress
     )[0];
     expect(button).toBeDefined();
@@ -290,11 +299,12 @@ describe('Plan tab', () => {
   it('shows the balance with its verdict, then the sections of Overview', async () => {
     const shown = texts(await render());
     const headings = [
-      'Spending accounts',
+      'Spending-account outlook',
       'Covered',
-      'Budgets',
-      'Upcoming payments',
+      'Needs attention',
+      'Your plans',
       'Debt',
+      'Budgets',
       'Goals',
       'People & habit',
       'Friends',
@@ -307,29 +317,16 @@ describe('Plan tab', () => {
 
   it("shows each section's own figures", async () => {
     const shown = texts(await render());
-    expect(shown).toEqual(
-      expect.arrayContaining([
-        '₹500',
-        '4 days',
-        'Start a goal that fills up by itself',
-        'Home loan',
-        'Streaming',
-      ])
-    );
-    // The over-limit budget says by how much, on its own tile.
-    expect(shown.some((t) => t.endsWith(' over'))).toBe(true);
-    // A savings account a new goal could follow.
-    expect(shown.some((t) => t.startsWith('Follow Pot (₹54,000)'))).toBe(true);
-    // ₹25,000 EMI + ₹450 bill in the next 30 days.
-    expect(shown).toContain('₹25,450');
-    expect(shown).not.toContain('2 payments in the next 30 days');
-    expect(shown.some((t) => t.includes('Loan EMI'))).toBe(false);
+    expect(shown).toEqual(expect.arrayContaining(['₹500', '4 days', 'Your plans', 'Food', '₹25,450']));
+    expect(shown.some((t) => t.endsWith('over budget'))).toBe(true);
+    expect(shown).not.toContain('Streaming');
+    expect(shown).not.toContain('Home loan');
     // The Goals tab holds what-if: it cuts the biggest category it can, not the EMI (10% of Food's ₹20,000).
     const goalsTab = await render();
     openTab(goalsTab, 'money');
     expect(texts(goalsTab)).toContain('Food −10% saves ₹2,000 a month');
     // 25% of the home loan's principal repaid.
-    expect(shown.some((t) => t.includes('25% repaid'))).toBe(true);
+    expect(shown.some((t) => t.includes('25% repaid'))).toBe(false);
   });
 
   it('says whether your accounts cover what’s due, and when they run short', async () => {
@@ -359,14 +356,14 @@ describe('Plan tab', () => {
     act(() => dates[dates.length - 1].props.onPress());
     expect(texts(tree)).toContain('Home loan');
     expect(texts(tree)).not.toContain('Streaming');
-    expect(texts(tree)).toContain('₹25,000 out');
+    expect(texts(tree)).toContain('₹25,000');
     act(() => tree.unmount());
   });
 
   it('says what each section means in plain words', async () => {
     const shown = texts(await render());
     // The over-limit budget's own tile says it; no caption names it.
-    expect(shown.some((t) => t.endsWith(' over'))).toBe(true);
+    expect(shown.some((t) => t.endsWith('over budget'))).toBe(true);
     expect(shown.some((t) => t.includes('Food is ₹20,000 over'))).toBe(false);
     expect(shown).toContain('To collect');
   });
@@ -380,12 +377,12 @@ describe('Plan tab', () => {
           n.props.accessibilityLabel.startsWith(start) &&
           n.props.onPress
       )[0];
-    act(() => byLabel('See all — Budgets').props.onPress());
+    act(() => byLabel('Budgets.').props.onPress());
     expect(router.push).not.toHaveBeenCalled();
     expect(tree.root.findByType(require('@/features/plan/PlanNavigation').PlanNavigation).props.value).toBe(
       'money'
     );
-    act(() => byLabel('See all — Budgets').props.onPress());
+    act(() => byLabel('Manage budgets — Budgets').props.onPress());
     expect(router.push).toHaveBeenLastCalledWith('/budgets');
     act(() => byLabel('Fuel, 25% used').props.onPress());
     const detail = tree.root.findByProps({ testID: 'plan-budget-detail' });
@@ -398,7 +395,7 @@ describe('Plan tab', () => {
     expect(router.push).toHaveBeenLastCalledWith('/garden');
     // The Overview's Upcoming, Goals and Debt headers go to their tabs instead of leaving Plan.
     (router.push as jest.Mock).mockClear();
-    act(() => byLabel('See all — Upcoming payments').props.onPress());
+    act(() => byLabel('View payments').props.onPress());
     expect(router.push).not.toHaveBeenCalled();
     // Upcoming: Recurring is in the header.
     expect(texts(tree)).toContain('Manage recurring');
@@ -406,7 +403,7 @@ describe('Plan tab', () => {
     expect(router.push).toHaveBeenLastCalledWith('/recurring');
     // Goals: the full goals page and the what-if sandbox.
     openTab(tree, 'money');
-    act(() => byLabel('See all — Goals').props.onPress());
+    act(() => byLabel('Manage goals — Goals').props.onPress());
     expect(router.push).toHaveBeenLastCalledWith('/savings-goals');
     act(() => byLabel('Open the what-if sandbox').props.onPress());
     expect(router.push).toHaveBeenLastCalledWith({
@@ -521,11 +518,11 @@ it('keeps the latest Plan result when a previous privacy load resolves later', a
     await act(async () => {
       tree.update(<PlanScreen />);
     });
-    expect(texts(tree)).toContain('₹10,000');
+    expect(tree.root.findByType(require('./RunwayCard').RunwayCard).props.runway.startMinor).toBe(1000000);
     await act(async () => {
       release([]);
     });
-    expect(texts(tree)).toContain('₹10,000');
+    expect(tree.root.findByType(require('./RunwayCard').RunwayCard).props.runway.startMinor).toBe(1000000);
     expect(texts(tree).some((t) => t.includes('₹30,000'))).toBe(false);
   } finally {
     act(() => tree.unmount());
@@ -573,6 +570,7 @@ it('ignores an obsolete payment lookup when another item is opened and coalesces
     pay.props.onPress();
   });
   expect(context.mock.calls.length - before).toBe(1);
+  openTab(tree, 'overview');
   act(() =>
     tree.root
       .find((n) => n.props.accessibilityLabel === 'Open Ravi details' && n.props.onPress)
@@ -609,6 +607,7 @@ it('opens a savings goal directly, preserves Plan on close, and creates a goal w
   try {
     tree = await render();
     (router.push as jest.Mock).mockClear();
+    openTab(tree, 'money');
     const { GoalsStrip } = require('@/features/plan/PlanGoals');
     act(() => tree.root.findByType(GoalsStrip).props.onGoal('g1'));
     const overview = tree.root.findByProps({ testID: 'plan-goal-overview' });
@@ -629,11 +628,13 @@ it('opens a savings goal directly, preserves Plan on close, and creates a goal w
 
 it('opens budget setup and a scheduled rule without leaving Plan', async () => {
   const tree = await render();
+  openTab(tree, 'money');
   const { BudgetJars } = require('@/features/plan/BudgetJars');
   const scroll = tree.root.findByProps({ scrollEventThrottle: 16 });
   act(() => tree.root.findByType(BudgetJars).props.onAdd());
   expect(tree.root.findByProps({ testID: 'plan-new-budget' }).props.editing).toBeNull();
   act(() => tree.root.findByProps({ testID: 'plan-new-budget' }).props.onClose());
+  openTab(tree, 'upcoming');
   const row = tree.root.find(
     (n) =>
       typeof n.props.accessibilityLabel === 'string' &&
@@ -677,18 +678,31 @@ it('creates recurring rules and loans directly from Plan and keeps management li
   expect(goal.props.visible).toBe(true);
   act(() => goal.props.onClose());
   openTab(tree, 'upcoming');
-  expect(texts(tree)).toContain('Add recurring');
   expect(texts(tree)).toContain('Manage recurring');
+  press('Add to your plan');
   press('Add recurring');
   rule = tree.root.findByProps({ testID: 'plan-rule' });
   act(() => rule.props.onClose());
   openTab(tree, 'debt');
-  expect(texts(tree)).toContain('Add loan');
+  press('Add to your plan');
   press('Add loan');
   const loan = tree.root.findByProps({ testID: 'plan-new-loan' });
   expect(loan.props.visible).toBe(true);
   await act(async () => loan.props.onCreated());
   expect(tree.root.findAllByProps({ testID: 'plan-new-loan' })).toHaveLength(0);
   expect(router.push).not.toHaveBeenCalledWith('/add-transaction');
+  act(() => tree.unmount());
+});
+
+it('keeps full collections out of Overview and opens an over-budget exception directly', async () => {
+  const tree = await render();
+  expect(tree.root.findAllByType(require('./BudgetJars').BudgetJars)).toHaveLength(0);
+  expect(tree.root.findAllByType(require('./PlanGoals').GoalsStrip)).toHaveLength(0);
+  expect(tree.root.findAllByType(require('./DebtPath').DebtPath)).toHaveLength(0);
+  const warning = tree.root.findAll(
+    (n) => n.props.accessibilityLabel?.startsWith('Food.') && n.props.onPress
+  )[0];
+  act(() => warning.props.onPress());
+  expect(tree.root.findByProps({ testID: 'plan-budget-detail' }).props.progress.budget.id).toBe('b1');
   act(() => tree.unmount());
 });

@@ -28,7 +28,9 @@ function render(daily: { date: string; totalMinor: number }[], today: string) {
 // A bar is the animated view that takes its height from the amount.
 const heights = (r: ReactTestRenderer) =>
   r.root
-    .findAll((n) => String(n.type) === 'View' && StyleSheet.flatten(n.props.style)?.maxWidth === 34)
+    .findAll(
+      (n) => String(n.type) === 'View' && [34, 16].includes(StyleSheet.flatten(n.props.style)?.maxWidth)
+    )
     .map((n) => StyleSheet.flatten(n.props.style).height as number);
 
 describe('Home spending bars', () => {
@@ -101,7 +103,7 @@ it('shows every completed-month week including the last partial week', () => {
     );
   });
   expect(heights(r)).toHaveLength(5);
-  expect(text(r)).toContain('Weekly spending');
+  expect(text(r)).toContain('Spent · by week');
   expect(text(r)).toContain('29–30');
   expect(text(r)).toContain('₹600');
   expect(r.root.findAll((n) => n.props.accessibilityRole === 'tab')).toHaveLength(0);
@@ -111,5 +113,26 @@ it('shows every completed-month week including the last partial week', () => {
   act(() => week.props.onPress());
   expect(text(r)).toContain('8–14');
   expect(text(r)).toContain('₹200');
+  act(() => r.unmount());
+});
+
+it('uses proportional zero-baseline heights in the embedded hero', () => {
+  let r!: ReactTestRenderer;
+  act(() => {
+    r = create(
+      <SpendBars
+        daily={[
+          { date: '2026-10-11', totalMinor: 10000 },
+          { date: '2026-10-12', totalMinor: 5000 },
+        ]}
+        today="2026-10-17"
+        compact
+        embedded
+      />
+    );
+  });
+  expect(heights(r)).toEqual([52, 26, 0, 0, 0, 0, 0]);
+  expect(text(r)).not.toContain('Compressed scale');
+  expect(text(r)).toContain('Spent · last 7 days');
   act(() => r.unmount());
 });

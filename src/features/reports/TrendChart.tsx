@@ -61,6 +61,7 @@ export function TrendChart({
   inProgress = false,
   netWorthTrend,
   monthLink,
+  fixedKind,
 }: {
   periodName: string;
   /** This period's exact spend — compared against the baseline. */
@@ -70,6 +71,7 @@ export function TrendChart({
   /** The last point is a month still going: drawn dashed and hollow, and read as "so far". */
   inProgress?: boolean;
   netWorthTrend: NetWorthPoint[];
+  fixedKind?: Kind;
   /** For the picked point (its index and the point count): the month it stands for and how to open it; null if it can't be. */
   monthLink?: (index: number, count: number) => { name: string; open: () => void } | null;
 }) {
@@ -81,8 +83,9 @@ export function TrendChart({
   const monthScroll = useRef<ScrollView>(null);
   const { accent } = useAccent();
   if (!hasSpend && !hasNw) return null;
+  const chosen = fixedKind ?? kind;
   const showing: Kind =
-    kind === 'spend' && !hasSpend ? 'netWorth' : kind === 'netWorth' && !hasNw ? 'spend' : kind;
+    chosen === 'spend' && !hasSpend ? 'netWorth' : chosen === 'netWorth' && !hasNw ? 'spend' : chosen;
 
   const points =
     showing === 'spend'
@@ -169,7 +172,7 @@ export function TrendChart({
     <View style={styles.trendCard}>
       <View style={{ gap: 10 }}>
         <Text style={styles.trendTitle}>{showing === 'spend' ? 'Spending' : 'Net worth'}</Text>
-        {hasSpend && hasNw && (
+        {!fixedKind && hasSpend && hasNw && (
           <View style={styles.trendSwitch} accessibilityRole="radiogroup">
             {(['spend', 'netWorth'] as const).map((k) => {
               const on = showing === k;

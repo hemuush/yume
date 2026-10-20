@@ -104,3 +104,34 @@ it('keeps ordinary refunds visible and masks only sensitive refunds', async () =
   await act(async () => tree.unmount());
   mockPrivacy.hideAmounts = false;
 });
+
+it('keeps Plan refunds collapsed until requested and preserves their purchase action', async () => {
+  jest.mocked(listExpectedRefunds).mockResolvedValueOnce([
+    {
+      id: 'pending',
+      transactionId: 'purchase',
+      expectedMinor: 2000,
+      receivedMinor: 0,
+      remainingMinor: 2000,
+      dueDate: null,
+      closed: false,
+      currency: 'INR',
+      label: 'Purchase',
+      receipts: [],
+    },
+  ]);
+  let tree!: ReactTestRenderer;
+  const onOpen = jest.fn();
+  await act(async () => {
+    tree = create(<PendingRefunds summaryOnly refreshToken={1} onOpen={onOpen} />);
+  });
+  expect(tree.root.findAllByType(InsightRow)).toHaveLength(0);
+  act(() =>
+    tree.root.find((n) => n.props.title === 'View 1 pending refund' && n.props.onPress).props.onPress()
+  );
+  expect(tree.root.findAllByType(InsightRow)).toHaveLength(1);
+  jest.mocked(getTransactionById).mockResolvedValueOnce({ id: 'purchase' } as Transaction);
+  await act(async () => tree.root.findByType(InsightRow).props.onPress());
+  expect(onOpen).toHaveBeenCalledWith(expect.objectContaining({ id: 'purchase' }));
+  act(() => tree.unmount());
+});
