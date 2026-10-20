@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { View, StyleSheet, RefreshControl } from 'react-native';
+import { AppState, View, StyleSheet, RefreshControl } from 'react-native';
 import { Text } from '@/components/Text';
 import Animated, { useSharedValue, useAnimatedScrollHandler } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -394,6 +394,13 @@ export default function DashboardScreen() {
       }),
     [load]
   );
+  // Returning from the background does not refocus a navigator tab. Refresh live daily figures explicitly.
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state === 'active' && focused.current) void load(cursorRef.current);
+    });
+    return () => subscription.remove();
+  }, [load]);
   // A new month or year: just that period's figures.
   useEffect(() => {
     if (fetchedCursor.current !== cursor) void loadPeriod(cursor);

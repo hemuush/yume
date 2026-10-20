@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, useWindowDimensions } from 'react-native';
 import { Text } from '@/components/Text';
+import { InsightDisclosure } from '@/components/InsightCard';
 import { ModalSheet } from '@/components/ModalSheet';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { AmountField } from '@/components/AmountField';
@@ -25,6 +26,7 @@ export function MonthlyPlanCheck({
   refreshToken?: object;
 }) {
   const { accent } = useAccent();
+  const { fontScale } = useWindowDimensions();
   const [override, setOverride] = useState<{
     currency: string;
     value: number | null;
@@ -101,7 +103,7 @@ export function MonthlyPlanCheck({
   return (
     <View style={s.card}>
       <View style={s.head}>
-        <Text style={s.title}>Does your monthly plan fit?</Text>
+        <Text style={s.title}>Monthly plan</Text>
         <PrimaryButton
           compact
           variant="secondary"
@@ -131,10 +133,11 @@ export function MonthlyPlanCheck({
               { color: knownIncome && remaining < 0 ? theme.colors.expenseText : themeInk(accent) },
             ]}
           >
-            {knownIncome
-              ? `${money(Math.abs(remaining))} ${remaining < 0 ? 'over income' : 'unallocated'}`
-              : 'Set expected income'}
+            {knownIncome ? money(Math.abs(remaining)) : 'Set expected income'}
           </Text>
+          {knownIncome && (
+            <Text style={s.hint}>{remaining < 0 ? 'Over expected income' : 'Unallocated this month'}</Text>
+          )}
           <View style={s.track}>
             {knownIncome && (
               <View
@@ -148,23 +151,25 @@ export function MonthlyPlanCheck({
               />
             )}
           </View>
-          <View style={s.row}>
-            <Text style={s.hint}>Expected income</Text>
-            <Text style={s.value}>{knownIncome ? money(income) : 'Not set'}</Text>
+          <View style={s.metrics}>
+            {[
+              { label: 'Income', value: knownIncome ? money(income) : 'Not set' },
+              { label: 'Spending', value: money(plan.spendingMinor) },
+              { label: 'Savings', value: money(plan.savingsMinor) },
+            ].map((metric) => (
+              <View key={metric.label} style={[s.metric, { minWidth: 74 * fontScale }]}>
+                <Text style={s.hint}>{metric.label}</Text>
+                <Text style={s.value}>{metric.value}</Text>
+              </View>
+            ))}
           </View>
-          <View style={s.row}>
-            <Text style={s.hint}>Spending, bills & EMIs</Text>
-            <Text style={s.value}>{money(plan.spendingMinor)}</Text>
-          </View>
-          <View style={s.row}>
-            <Text style={s.hint}>Savings commitments</Text>
-            <Text style={s.value}>{money(plan.savingsMinor)}</Text>
-          </View>
-          <Text style={s.hint}>
-            Monthly estimate using {override.value != null ? 'your income estimate' : 'recurring income'}.
-            Budget limits cover matching bills; savings transfers cover matching goal funding. Card repayments
-            are not added again. Unbudgeted daily spending may be missing.
-          </Text>
+          <InsightDisclosure title="How this is calculated">
+            <Text style={s.hint}>
+              Monthly estimate using {override.value != null ? 'your income estimate' : 'recurring income'}.
+              Budget limits cover matching bills; savings transfers cover matching goal funding. Card
+              repayments are not added again. Unbudgeted daily spending may be missing.
+            </Text>
+          </InsightDisclosure>
           {plan.incompleteLoans > 0 && (
             <Text style={s.hint}>
               {plan.incompleteLoans} borrowed loans have no usable EMI schedule. Their payments are excluded;
@@ -214,16 +219,17 @@ const s = StyleSheet.create({
     margin: 16,
     marginBottom: 0,
     padding: 16,
-    gap: 10,
+    gap: 8,
     borderRadius: 24,
     backgroundColor: theme.colors.surface,
   },
   title: { fontFamily: theme.font.roundedBold, fontSize: 15, color: theme.colors.textPrimary, flex: 1 },
   head: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  big: { fontFamily: theme.font.bodyBold, fontSize: 24 },
+  big: { fontFamily: theme.font.bodyBold, fontSize: 26 },
   hint: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 18, color: theme.colors.textSecondary },
   value: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textPrimary },
-  row: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: 8 },
+  metrics: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, paddingTop: 4 },
+  metric: { flexGrow: 1, flexBasis: '28%', gap: 3 },
   track: { height: 6, borderRadius: 4, overflow: 'hidden', backgroundColor: theme.colors.surfaceAlt },
   fill: { height: '100%', borderRadius: 4 },
   error: { fontFamily: theme.font.body, fontSize: 13, color: theme.colors.expenseText },

@@ -143,10 +143,18 @@ export function SpendBars({
   const [chosenRange, setRange] = useState<Range>('week');
   const range = embedded ? periodMode : chosenRange;
   const [switched, setSwitched] = useState(false);
-  const [picked, setPicked] = useState<{ range: Range; today: string; key: string } | null>(null);
+  const [picked, setPicked] = useState<{
+    range: Range;
+    today: string;
+    key: string;
+    daily: typeof daily;
+  } | null>(null);
   const bars = range === 'week' ? weekBars(daily, today) : monthBars(daily, today);
   const selectedKey =
-    picked?.range === range && picked.today === today && bars.some((b) => b.key === picked.key)
+    picked?.range === range &&
+    picked.today === today &&
+    picked.daily === daily &&
+    bars.some((b) => b.key === picked.key)
       ? picked.key
       : defaultBar(bars).key;
   const maxMinor = Math.max(0, ...bars.map((b) => b.totalMinor));
@@ -235,7 +243,7 @@ export function SpendBars({
             selected={b.key === selectedKey}
             onSelect={() => {
               haptics.tap();
-              setPicked({ range, today, key: b.key });
+              setPicked({ range, today, key: b.key, daily });
             }}
             maxMinor={maxMinor}
             ink={ink}
@@ -257,6 +265,7 @@ export function SpendBars({
       {compact && (
         <View style={[styles.chartFooter, embedded && styles.footerEmbedded]}>
           <Text style={styles.pickedAmount}>
+            {range === 'week' && selectedKey === today ? 'Today · ' : ''}
             {range === 'week'
               ? parseLocalIsoDate(selectedKey).toLocaleDateString(undefined, {
                   weekday: 'short',

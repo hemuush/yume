@@ -785,6 +785,12 @@ export default function TransactionsScreen() {
                     onFilterType={(value) => {
                       setFilterType(value);
                       if (value === 'income' || value === 'transfer') setFilterLabel(undefined);
+                      if (value === 'transfer') setFilterCategoryIds([]);
+                      else if (value !== 'all') {
+                        setFilterCategoryIds((ids) =>
+                          ids.filter((id) => categoriesById.get(id)?.kind === value)
+                        );
+                      }
                     }}
                     categoryIds={filterCategoryIds}
                     accountIds={filterAccountIds}

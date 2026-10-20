@@ -31,10 +31,10 @@ describe('Home spending bars', () => {
 });
 
 describe('defaultBar', () => {
-  it('opens on the latest day with spending, not on a quiet today', () => {
+  it('opens on today even when only yesterday has spending', () => {
     const bars = weekBars(daily, '2026-10-09');
     expect(bars[bars.length - 1].totalMinor).toBe(0);
-    expect(defaultBar(bars).key).toBe('2026-10-08');
+    expect(defaultBar(bars).key).toBe('2026-10-09');
   });
 
   it('opens on today when today has spending', () => {
@@ -49,6 +49,6 @@ describe('defaultBar', () => {
     // This week is empty but the week before had spending.
     const bars = monthBars([{ date: '2026-10-03', totalMinor: 500 }], '2026-10-16');
     expect(bars.map((b) => b.totalMinor)).toEqual([500, 0, 0]);
-    expect(defaultBar(bars).key).toBe('w1');
+    expect(defaultBar(bars).key).toBe('w3');
   });
 });

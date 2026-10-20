@@ -72,6 +72,13 @@ export const styles = StyleSheet.create({
   howLink: { alignItems: 'center', justifyContent: 'center', width: 44, minHeight: 44 },
   // Names the (often tiny) free part of the money bar.
 
+  dailyFooter: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
   chip: {
     flexDirection: 'row',
     alignItems: 'center',

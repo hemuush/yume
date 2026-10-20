@@ -314,6 +314,12 @@ export const styles = StyleSheet.create({
     fontSize: 12,
     color: theme.colors.textPrimary,
   },
+  quickHint: {
+    textAlign: 'center',
+    fontFamily: theme.font.body,
+    fontSize: 11,
+    color: theme.colors.textSecondary,
+  },
   // Edit, then the bin, which turns into a red "Delete?" on the first tap.
   entryBadges: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 12 },
   detailFoot: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 },
@@ -378,7 +384,8 @@ export const styles = StyleSheet.create({
     fontSize: 12,
     fontFamily: theme.font.roundedMedium,
     color: theme.colors.textMuted,
-    marginBottom: 6,
+    marginBottom: 8,
+    marginTop: 12,
   },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 14 },
   // The filter sheet's Clear sits small beside its wide Show button.

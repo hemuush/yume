@@ -77,3 +77,7 @@ See [20 October UI system refinement](UI_SYSTEM_REFINEMENT_2026_10_20.md) for sh
 See [planning workflow improvements](PLANNING_FEATURES_2026_10_20.md) for the five approved feature changes, navigation paths and current verification limits.
 
 See [Home daily remaining refresh](HOME_DAILY_REMAINING_FIX_2026_10_20.md) for the reproduced stale-allowance issue, correction and fresh verification.
+
+See [Home and planning screenshot refinements](SCREENSHOT_REFINEMENTS_2026_10_20.md) for current-day chart selection, foreground refresh and compact recurring/plan layouts.
+
+See [Activity interaction refinement](ACTIVITY_INTERACTION_REFINEMENT_2026_10_20.md) for filter hierarchy, transaction action corrections, popup handoff and fresh validation limits.
