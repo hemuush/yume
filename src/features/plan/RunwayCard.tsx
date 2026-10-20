@@ -15,11 +15,8 @@ import { Runway } from './runway';
 import { Kicker } from './PlanTiles';
 import { styles } from './plan.styles';
 
-import { RunwayChart } from './RunwayChart';
-
 /**
- * Spending balance, scoped inflow/outflow and a compact forecast verdict. Upcoming adds the
- * interactive daily closing-balance bars. Without an account,
+ * Spending balance, scoped inflow/outflow and a compact forecast verdict. Without an account,
  * show scheduled outgoing and account setup instead of implying a balance.
  */
 export function RunwayCard({
@@ -27,7 +24,6 @@ export function RunwayCard({
   runway,
   hasAccounts,
   days,
-  showChart,
   onAddAccount,
 }: {
   dueSoon: DueSoon;
@@ -36,8 +32,6 @@ export function RunwayCard({
   hasAccounts: boolean;
   /** The window the runway covers. */
   days: number;
-  /** Show daily balance bars (the Upcoming tab). */
-  showChart?: boolean;
   onAddAccount?: () => void;
 }) {
   const [details, setDetails] = useState(false);
@@ -127,8 +121,6 @@ export function RunwayCard({
             )}
           </View>
         )}
-
-        {showChart && hasAccounts && runway.days.length > 0 && <RunwayChart runway={runway} />}
       </Glass>
       {details && hasAccounts && <ForecastDetails runway={runway} onClose={() => setDetails(false)} />}
     </>

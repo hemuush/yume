@@ -18,7 +18,7 @@ const ACTIONS: {
 ];
 
 /**
- * Add shortcuts inside the month card, each opening Add with its kind picked. Expense is the one filled
+ * Add shortcuts beneath the month card, each opening Add with its kind picked. Expense is the one filled
  * button (deep ink); Income and Transfer are bright glass.
  */
 function Action({ type, label, icon, ink }: (typeof ACTIONS)[number] & { ink: string }) {
@@ -30,14 +30,14 @@ function Action({ type, label, icon, ink }: (typeof ACTIONS)[number] & { ink: st
       onPress={() => pushOnce(`/add-transaction?type=${type}`)}
       onPressIn={onPressIn}
       onPressOut={onPressOut}
-      style={[styles.wrap, { flexBasis: (primary ? 96 : 76) * Math.max(1, fontScale) }]}
+      style={[styles.wrap, { flexBasis: (primary ? 104 : 80) * Math.max(1, fontScale) }]}
       accessibilityRole="button"
       accessibilityLabel={type === 'expense' ? 'Add expense' : `Add ${label.toLowerCase()}`}
     >
       <Animated.View
         style={[styles.action, primary && { backgroundColor: ink, borderColor: ink }, animatedStyle]}
       >
-        <Feather name={icon} size={14} color={primary ? theme.colors.white : theme.colors.ink} />
+        <Feather name={icon} size={16} color={primary ? theme.colors.white : theme.colors.ink} />
         <Text style={[styles.label, primary && styles.labelPrimary]}>{label}</Text>
       </Animated.View>
     </Pressable>
@@ -60,20 +60,20 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   wrap: { flexGrow: 1, flexBasis: 88 },
   action: {
-    minHeight: 48,
+    minHeight: 50,
     paddingHorizontal: 6,
-    borderRadius: 18,
+    borderRadius: 16,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 4,
+    gap: 6,
     backgroundColor: theme.colors.surface,
     borderWidth: 0,
   },
   label: {
     fontFamily: theme.font.bodyMedium,
     flexShrink: 1,
-    fontSize: 12,
+    fontSize: 13,
     color: theme.colors.textPrimary,
   },
   labelPrimary: { color: theme.colors.white },

@@ -396,32 +396,6 @@ export function ThisMonthHero({
                   </Text>
                 </Pressable>
               ))}
-              {shownToday && (
-                <View style={[styles.chip, styles.chipClip, todayOverMinor > 0 && styles.chipOver]}>
-                  <Feather
-                    name="clock"
-                    size={13}
-                    color={todayOverMinor > 0 ? theme.colors.expenseText : theme.colors.textSecondary}
-                  />
-                  <Text style={[styles.chipText, todayOverMinor > 0 && styles.chipTextOver]}>
-                    {todayOverMinor > 0
-                      ? `${formatMoney(shownToday.spentMinor)} today · ${formatMoney(todayOverMinor)} over`
-                      : `${formatMoney(shownToday.goalMinor - shownToday.spentMinor)} left today`}
-                  </Text>
-                  {todayOverMinor <= 0 && shownToday.goalMinor > 0 && (
-                    <View
-                      testID="home-today-meter"
-                      style={[
-                        styles.chipMeter,
-                        {
-                          // Refunds can make today's net spend negative: the meter just stays empty.
-                          width: `${Math.max(0, Math.min(100, (shownToday.spentMinor / shownToday.goalMinor) * 100))}%`,
-                        },
-                      ]}
-                    />
-                  )}
-                </View>
-              )}
             </View>
           )}
 
@@ -464,6 +438,32 @@ export function ThisMonthHero({
               />
             )}
           </View>
+          {shownToday && (
+            <View style={[styles.chip, styles.chipClip, todayOverMinor > 0 && styles.chipOver]}>
+              <Feather
+                name="clock"
+                size={13}
+                color={todayOverMinor > 0 ? theme.colors.expenseText : theme.colors.textSecondary}
+              />
+              <Text style={[styles.chipText, todayOverMinor > 0 && styles.chipTextOver]}>
+                {todayOverMinor > 0
+                  ? `${formatMoney(shownToday.spentMinor)} today · ${formatMoney(todayOverMinor)} over`
+                  : `${formatMoney(shownToday.goalMinor - shownToday.spentMinor)} left today`}
+              </Text>
+              {todayOverMinor <= 0 && shownToday.goalMinor > 0 && (
+                <View
+                  testID="home-today-meter"
+                  style={[
+                    styles.chipMeter,
+                    {
+                      // Refunds can make today's net spend negative: the meter just stays empty.
+                      width: `${Math.max(0, Math.min(100, (shownToday.spentMinor / shownToday.goalMinor) * 100))}%`,
+                    },
+                  ]}
+                />
+              )}
+            </View>
+          )}
         </ReanimatedAnimated.View>
       </Glass>
       <View style={{ marginHorizontal: 16, marginTop: 10 }}>

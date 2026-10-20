@@ -167,27 +167,34 @@ export function HomeAccounts({
     const spending = everyday.filter((a) => a.type === 'bank' || a.type === 'cash' || a.type === 'wallet');
     const preview = (spending.length ? spending : everyday.length ? everyday : savings).slice(0, 2);
     return (
-      <Section title="Accounts" onSeeAll={onOpenAccounts} actionLabel={compact ? 'View all' : undefined}>
+      <Section
+        compact
+        title="Accounts"
+        onSeeAll={onOpenAccounts}
+        actionLabel={compact ? 'View all' : undefined}
+      >
         <View style={styles.wrap}>
-          <Glass radius={20} style={[styles.accountList, cardSurface.neutral]}>
-            {preview.map((a, i) => (
+          <View style={[styles.accountGrid, stacked && { flexDirection: 'column' }]}>
+            {preview.map((a) => (
               <Pressable
                 key={a.id}
                 onPress={() => onOpenAccount(a)}
                 accessibilityRole="button"
                 accessibilityLabel={`${a.name}, ${accountTypeLabel(a)}. Open summary`}
-                style={withPressed([styles.accountListRow, i > 0 && styles.accountListDivider])}
+                style={withPressed(styles.accountCard)}
               >
-                <View style={[styles.chipIcon, { backgroundColor: shade(accountHue(a.type, accent), 88) }]}>
-                  <MaterialCommunityIcons
-                    name={accountIcon(a.type) as McIconName}
-                    size={18}
-                    color={shade(accountHue(a.type, accent), 30, 10)}
-                  />
-                </View>
-                <View style={styles.chipText}>
-                  <Text style={styles.chipName}>{a.name}</Text>
-                  <Text style={styles.chipSub}>{accountTypeLabel(a)}</Text>
+                <View style={styles.accountCardHead}>
+                  <View style={[styles.chipIcon, { backgroundColor: shade(accountHue(a.type, accent), 88) }]}>
+                    <MaterialCommunityIcons
+                      name={accountIcon(a.type) as McIconName}
+                      size={18}
+                      color={shade(accountHue(a.type, accent), 30, 10)}
+                    />
+                  </View>
+                  <View style={styles.chipText}>
+                    <Text style={styles.chipName}>{a.name}</Text>
+                    <Text style={styles.chipSub}>{accountTypeLabel(a)}</Text>
+                  </View>
                 </View>
                 <Amount
                   minor={a.currentBalanceMinor}
@@ -195,10 +202,9 @@ export function HomeAccounts({
                   sensitive={a.type === 'savings'}
                   style={styles.listAmount}
                 />
-                <Feather name="chevron-right" size={14} color={theme.colors.textMuted} />
               </Pressable>
             ))}
-          </Glass>
+          </View>
         </View>
       </Section>
     );
@@ -244,17 +250,23 @@ export function HomeAccounts({
 }
 
 const styles = StyleSheet.create({
-  accountList: { paddingHorizontal: 14, borderWidth: 0 },
-  accountListRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'center',
-    gap: 10,
-    paddingVertical: 12,
-    minHeight: 64,
+  accountGrid: { flexDirection: 'row', gap: 10 },
+  accountCard: {
+    flex: 1,
+    minWidth: 0,
+    padding: 12,
+    gap: 12,
+    borderRadius: 20,
+    backgroundColor: theme.colors.surface,
+    minHeight: 106,
   },
-  accountListDivider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.borderSoft },
-  listAmount: { fontFamily: theme.font.body, fontSize: 16, lineHeight: 22, color: theme.colors.textPrimary },
+  accountCardHead: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  listAmount: {
+    fontFamily: theme.font.bodyMedium,
+    fontSize: 17,
+    lineHeight: 23,
+    color: theme.colors.textPrimary,
+  },
   wrap: { marginHorizontal: 16 },
   tile: { padding: 14, gap: 4 },
   head: { minHeight: 40, flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 6 },
@@ -323,7 +335,12 @@ const styles = StyleSheet.create({
   chipIcon: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center' },
   chipText: { flex: 1, minWidth: 0 },
   chipNameRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 6 },
-  chipName: { flexShrink: 1, fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textPrimary },
+  chipName: {
+    flexShrink: 1,
+    fontFamily: theme.font.bodyMedium,
+    fontSize: 14,
+    color: theme.colors.textPrimary,
+  },
   chipSub: {
     fontFamily: theme.font.body,
     fontSize: 12,

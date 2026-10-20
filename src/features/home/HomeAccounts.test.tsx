@@ -1,5 +1,5 @@
 /** Home's Accounts card: money in hand, a chip per account with its type, and adding the first one. */
-import { Text, StyleSheet } from 'react-native';
+import { Text, StyleSheet, View } from 'react-native';
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
 
 // Icons draw nothing here: their font load would update state after each test.
@@ -272,4 +272,37 @@ it('masks a savings-only preview and never invents an everyday balance', () => {
   const tree = render({ compact: true, accounts: [account('Pot', 'savings', 999900)] });
   expect(texts(tree)).toContain('Pot');
   expect(texts(tree).join(' ')).not.toContain('9,999');
+});
+
+it.each([
+  [320, 1, 'column'],
+  [390, 1.5, 'column'],
+  [390, 1, 'row'],
+])('keeps both account previews reachable at width %s and text scale %s', (width, fontScale, direction) => {
+  const dimensions = jest
+    .spyOn(require('react-native'), 'useWindowDimensions')
+    .mockReturnValue({ width, height: 800, fontScale, scale: 1 });
+  try {
+    const open = jest.fn();
+    const tree = render({
+      compact: true,
+      accounts: [account('First bank account', 'bank', 100), account('Cash', 'cash', 200)],
+      onOpenAccount: open,
+    });
+    const grid = tree.root.findAllByType(View).find((node) => {
+      const style = StyleSheet.flatten(node.props.style);
+      return style?.gap === 10 && (style.flexDirection === 'row' || style.flexDirection === 'column');
+    });
+    expect(StyleSheet.flatten(grid!.props.style).flexDirection).toBe(direction);
+    for (const name of ['First bank account', 'Cash'])
+      act(() =>
+        tree.root
+          .find((n) => n.props.onPress && String(n.props.accessibilityLabel).startsWith(`${name},`))
+          .props.onPress()
+      );
+    expect(open.mock.calls.map((call) => call[0].id)).toEqual(['First bank account', 'Cash']);
+    act(() => tree.unmount());
+  } finally {
+    dimensions.mockRestore();
+  }
 });

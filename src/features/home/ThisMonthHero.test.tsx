@@ -86,7 +86,7 @@ describe('month card', () => {
     // The money-bar legend stays scoped to this month.
     expect(all).toEqual(expect.arrayContaining(['Spent', 'Saved', '₹95,762', '₹99,500']));
     expect(all).not.toContain('Bills left');
-    expect(all).not.toContain('₹2,955 left today');
+    expect(all).toContain('₹2,955 left today');
     expect(byLabel(r, 'How this adds up')).toBeDefined();
     // Free to use is said once, as the headline.
     expect(all.filter((t) => t === 'Free to use')).toHaveLength(1);

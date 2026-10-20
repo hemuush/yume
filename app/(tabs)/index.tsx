@@ -63,7 +63,7 @@ import { cardSurface } from '@/components/CardSurface';
 import { SuuRefreshBadge } from '@/features/home/SuuRefreshBadge';
 import { Section } from '@/components/Section';
 import { SCREEN } from '@/components/screenStyles';
-import { HomeGlance, buildUpcomingItems } from '@/features/home/HomeGlance';
+import { homePriority, HomePriority, HomeGlance, buildUpcomingItems } from '@/features/home/HomeGlance';
 import { recurringRulesInCurrency } from '@/lib/recurringScope';
 import { buildLoansSummary } from '@/features/plan/planOverview';
 import { RecentTransactionRow } from '@/features/home/RecentTransactionRow';
@@ -491,6 +491,9 @@ export default function DashboardScreen() {
     currency,
   ]);
 
+  const priority = homePriority(upcoming);
+  const openUpcomingPlan = () => router.navigate({ pathname: '/plan', params: { tab: 'upcoming' } });
+
   const openSpendingReports = () => {
     const range = periodRange(loadedCursor);
     router.navigate({
@@ -505,9 +508,7 @@ export default function DashboardScreen() {
   return (
     <View style={styles.container}>
       <HomeWallpaper accent={accent} secondary={secondary} plain />
-      {/* Top to bottom, the "arranged Home" sign-off: the header (with the
-          quick actions in it), your month, what needs you, your plans, then
-          history — recent activity and accounts. */}
+      {/* Balance and daily allowance, one payment priority, accounts, then supporting activity. */}
       <Animated.ScrollView
         ref={scrollRef}
         style={styles.scroll}
@@ -594,7 +595,13 @@ export default function DashboardScreen() {
           </>
         )}
 
-        {/* Accounts stay visible directly below the balance. */}
+        {loaded && historyAccounts.length > 0 && priority && (
+          <Animated.View entering={sectionEntering(1)}>
+            <HomePriority item={priority} onViewPlan={openUpcomingPlan} />
+          </Animated.View>
+        )}
+
+        {/* Accounts remain visible after the one actionable priority, when present. */}
         {loaded && (
           <Animated.View entering={sectionEntering(1)}>
             <HomeAccounts
@@ -613,20 +620,21 @@ export default function DashboardScreen() {
           <Animated.View entering={sectionEntering(2)}>
             <HomeGlance
               upcoming={upcoming}
+              priorityKey={priority?.key}
               refunds={refunds}
               refundError={refundError}
               openingRefund={openingRefund}
               onOpenRefund={(id) => void openRefund(id)}
               onRetryRefunds={() => void load(cursorRef.current)}
               rowEntering={rowEntering}
-              onSeeMoreUpcoming={() => router.navigate({ pathname: '/plan', params: { tab: 'upcoming' } })}
+              onSeeMoreUpcoming={openUpcomingPlan}
             />
           </Animated.View>
         )}
 
         {loaded && comparison && historyAccounts.length > 0 && (
           <Animated.View entering={sectionEntering(3)}>
-            <Section title="Spending" onSeeAll={openSpendingReports} actionLabel="See insights">
+            <Section compact title="Spending" onSeeAll={openSpendingReports} actionLabel="See insights">
               <Glass radius={24} style={[styles.spendingSnapshot, cardSurface.neutral]}>
                 {dailySpend.length > 0 &&
                 loadedCursor.granularity === 'month' &&
@@ -647,6 +655,7 @@ export default function DashboardScreen() {
         {loaded && historyAccounts.length > 0 && (
           <Animated.View entering={sectionEntering(4)}>
             <Section
+              compact
               title="Recent activity"
               onSeeAll={() => router.push('/transactions')}
               actionLabel="View all"
@@ -782,7 +791,13 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
   scroll: { flex: 1 },
   heroGap: { marginTop: 4 },
-  recent: { marginHorizontal: SCREEN.gutter, overflow: 'hidden' },
+  recent: {
+    marginHorizontal: SCREEN.gutter,
+    paddingHorizontal: 8,
+    borderRadius: 20,
+    backgroundColor: theme.colors.surface,
+    overflow: 'hidden',
+  },
   errorBanner: {
     marginHorizontal: 20,
     marginTop: 16,

@@ -201,7 +201,7 @@ export function HomeHeader({
           >
             <Text style={styles.date}>
               {new Date()
-                .toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' })
+                .toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' })
                 .toUpperCase()}
             </Text>
             <Text style={styles.greet}>
@@ -225,7 +225,7 @@ export function HomeHeader({
 const styles = StyleSheet.create({
   root: { position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10 },
   // The band's gap above and its padding below are equal, so the greeting sits centred between the brand row and the card.
-  fading: { gap: 12, paddingTop: 4 },
+  fading: { gap: 8, paddingTop: 2 },
   miniSlot: { flex: 1, minWidth: 0, alignItems: 'flex-end' },
   band: { paddingHorizontal: HEADER.gutter, paddingBottom: 12, gap: 8, overflow: 'hidden' },
   row: {
@@ -244,12 +244,12 @@ const styles = StyleSheet.create({
     lineHeight: 16,
     letterSpacing: 1,
     color: theme.colors.textMuted,
-    marginBottom: 5,
+    marginBottom: 2,
   },
   greet: {
     fontFamily: theme.font.roundedMedium,
-    fontSize: 20,
-    lineHeight: 26,
+    fontSize: 18,
+    lineHeight: 24,
     letterSpacing: -0.2,
     color: theme.colors.ink,
     marginTop: 1,
