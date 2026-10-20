@@ -165,6 +165,7 @@ export function TransactionDetailModal({
           note: tx.note,
           // A refund logged again is still a refund, not ordinary income.
           isRefund: tx.isRefund,
+          paymentMode: tx.paymentMode,
         });
         haptics.confirm();
         emitTransactionsChanged();
@@ -275,7 +276,7 @@ export function TransactionDetailModal({
   const moreActions = [
     canRepeat && {
       icon: 'rotate-ccw' as const,
-      short: 'Log again',
+      short: 'Log today',
       label: 'Log again today',
       sub:
         tx.type === 'expense' || tx.isRefund
@@ -285,7 +286,7 @@ export function TransactionDetailModal({
     },
     canRepeat && {
       icon: 'repeat' as const,
-      short: 'Repeat',
+      short: 'Recurring',
       label: 'Make it recurring',
       sub: 'Yume logs it for you on a schedule',
       onPress: () => setRuleOpen(true),
@@ -334,265 +335,278 @@ export function TransactionDetailModal({
   const route = transfer ? `${accountName(tx.accountId)} → ${accountName(tx.toAccountId!)}` : null;
 
   return (
-    <ModalSheet
-      visible
-      title="Entry details"
-      dismissible={!busy}
-      onClose={onClose}
-      footer={
-        canEdit ? (
-          <View style={styles.detailFoot}>
-            <PrimaryButton
-              title="Edit"
-              onPress={() => onEdit(tx)}
-              disabled={busy}
-              style={styles.detailEdit}
-            />
-            {/* Asks once in place ("Delete?"), then deletes with an undo. */}
-            <Pressable
-              onPress={() => {
-                if (!askDelete) {
-                  haptics.tap();
-                  setAskDelete(true);
-                  return;
-                }
-                void confirmDelete();
-              }}
-              disabled={busy}
-              hitSlop={4}
-              style={withPressed([styles.deleteBtn, askDelete && styles.deleteBtnAsk])}
-              accessibilityRole="button"
-              accessibilityLabel={askDelete ? 'Delete, tap again to confirm' : 'Delete entry'}
-            >
-              <Feather
-                name="trash-2"
-                size={18}
-                color={askDelete ? theme.colors.white : theme.colors.expense}
+    <>
+      <ModalSheet
+        visible={!ruleOpen}
+        title="Entry details"
+        dismissible={!busy}
+        onClose={onClose}
+        footer={
+          canEdit ? (
+            <View style={styles.detailFoot}>
+              <PrimaryButton
+                title="Edit"
+                onPress={() => onEdit(tx)}
+                disabled={busy}
+                style={styles.detailEdit}
               />
-              {askDelete && (
-                <Text style={styles.deleteAskText}>{tx.splitId ? 'Delete split?' : 'Delete?'}</Text>
-              )}
-            </Pressable>
-          </View>
-        ) : link?.kind === 'refund-received' ? (
-          <PrimaryButton
-            title={busy ? 'Undoing…' : 'Undo refund receipt'}
-            variant="secondary"
-            disabled={busy}
-            onPress={() =>
-              showAlert(
-                'Undo this refund receipt?',
-                'If recorded here, its refund transaction is removed. If linked from an existing entry, that entry stays recorded and is unlinked.',
-                [
-                  { text: 'Cancel', style: 'cancel' },
-                  {
-                    text: 'Undo',
-                    style: 'destructive',
-                    onPress: () =>
-                      void runAction(async () => {
-                        setBusy(true);
-                        try {
-                          await undoRefundReceipt(link.receiptId);
-                          emitTransactionsChanged();
-                          onChanged();
-                        } catch (e) {
-                          showAlert("Couldn't undo", errorMessage(e));
-                        } finally {
-                          setBusy(false);
-                        }
-                      }),
-                  },
-                ]
-              )
-            }
-          />
-        ) : link?.kind === 'loan' ? (
-          <PrimaryButton
-            title={busy ? 'Undoing…' : 'Undo payment'}
-            variant="secondary"
-            onPress={() => confirmUndoLoan(link.loanPaymentId)}
-            disabled={busy}
-          />
-        ) : link?.kind === 'person' ? (
-          <PrimaryButton
-            title={busy ? 'Undoing…' : 'Undo entry'}
-            variant="secondary"
-            onPress={confirmUndoPerson}
-            disabled={busy}
-          />
-        ) : undefined
-      }
-    >
-      <SheetCard
-        hue={transfer ? secondary : (cat?.color ?? theme.colors.textMuted)}
-        icon={transfer ? 'swap-horizontal' : (cat?.icon ?? 'tag')}
-        kicker={transfer || !parentName ? kind : `${kind} · ${parentName}`}
-        amount={
-          <>
-            {tx.type === 'expense' ? '−' : tx.type === 'income' ? '+' : ''}
-            <Amount minor={tx.amountMinor} sensitive={sensitiveEntry(tx)} currency={account?.currency} />
-          </>
-        }
-        amountColor={
-          tx.type === 'expense'
-            ? theme.colors.expenseText
-            : tx.type === 'income'
-              ? theme.colors.incomeText
-              : theme.colors.textPrimary
-        }
-        title={route ?? cat?.name ?? kind}
-        meta={route ? weekdayDayMonth(tx.date) : `${weekdayDayMonth(tx.date)} · ${accountName(tx.accountId)}`}
-      />
-
-      <StatusBadge label={`Method: ${paymentMethodLabel(tx.paymentMode)}`} />
-      {(tx.splitId ||
-        link?.kind === 'loan' ||
-        link?.kind === 'person' ||
-        link?.kind === 'refund-expected' ||
-        link?.kind === 'refund-received') && (
-        <View style={styles.entryBadges}>
-          {tx.splitId && <StatusBadge label="Split payment" />}
-          {link?.kind === 'loan' && <StatusBadge label="Loan payment" />}
-          {link?.kind === 'person' && <StatusBadge label="Linked to person" />}
-          {(link?.kind === 'refund-expected' || link?.kind === 'refund-received') && (
-            <StatusBadge label="Refund tracking" />
-          )}
-        </View>
-      )}
-
-      {tx.type === 'expense' && (link === null || link?.kind === 'refund-expected') && (
-        <RefundTracker
-          sensitive={sensitiveEntry(tx)}
-          key={tx.id}
-          transaction={tx}
-          accounts={accounts}
-          onChanged={onChanged}
-          hideCreateAction
-          request={refundRequest?.transactionId === tx.id ? refundRequest : undefined}
-        />
-      )}
-      {/* What you can do with it, right under the amount: no second page to find it on. */}
-      {moreActions.length > 0 && (
-        <View style={styles.quickRow}>
-          {moreActions.map((a) => (
-            <Pressable
-              key={a.label}
-              onPress={busy ? undefined : a.onPress}
+              {/* Asks once in place ("Delete?"), then deletes with an undo. */}
+              <Pressable
+                onPress={() => {
+                  if (!askDelete) {
+                    haptics.tap();
+                    setAskDelete(true);
+                    return;
+                  }
+                  void confirmDelete();
+                }}
+                disabled={busy}
+                hitSlop={4}
+                style={withPressed([styles.deleteBtn, askDelete && styles.deleteBtnAsk])}
+                accessibilityRole="button"
+                accessibilityLabel={askDelete ? 'Delete, tap again to confirm' : 'Delete entry'}
+              >
+                <Feather
+                  name="trash-2"
+                  size={18}
+                  color={askDelete ? theme.colors.white : theme.colors.expense}
+                />
+                {askDelete && (
+                  <Text style={styles.deleteAskText}>{tx.splitId ? 'Delete split?' : 'Delete?'}</Text>
+                )}
+              </Pressable>
+            </View>
+          ) : link?.kind === 'refund-received' ? (
+            <PrimaryButton
+              title={busy ? 'Undoing…' : 'Undo refund receipt'}
+              variant="secondary"
               disabled={busy}
-              style={withPressed(styles.quickBtn)}
-              accessibilityRole="button"
-              accessibilityLabel={a.label}
-              accessibilityHint={a.sub}
-            >
-              <View style={styles.quickIcon}>
-                <Feather name={a.icon} size={20} color={theme.colors.ink} />
-              </View>
-              <Text style={styles.quickText}>{a.short}</Text>
-            </Pressable>
-          ))}
-        </View>
-      )}
-
-      <>
-        <View style={[h.card, h.cardInSheet]}>
-          {cat && !transfer && (
-            <SettingsRow
-              round
-              icon={cat.icon}
-              iconBg={hexToRgba(cat.color, 0.25)}
-              field
-              label="Category"
-              sub={joinSub([cat.name, parentName])}
-              onPress={() => {
-                onClose();
-                // Opened from that category's own page? Then closing is enough.
-                returnOrPush({ name: 'category/[id]', params: { id: cat.id } }, `/category/${cat.id}`);
-              }}
+              onPress={() =>
+                showAlert(
+                  'Undo this refund receipt?',
+                  'If recorded here, its refund transaction is removed. If linked from an existing entry, that entry stays recorded and is unlinked.',
+                  [
+                    { text: 'Cancel', style: 'cancel' },
+                    {
+                      text: 'Undo',
+                      style: 'destructive',
+                      onPress: () =>
+                        void runAction(async () => {
+                          setBusy(true);
+                          try {
+                            await undoRefundReceipt(link.receiptId);
+                            emitTransactionsChanged();
+                            onChanged();
+                          } catch (e) {
+                            showAlert("Couldn't undo", errorMessage(e));
+                          } finally {
+                            setBusy(false);
+                          }
+                        }),
+                    },
+                  ]
+                )
+              }
             />
-          )}
-          <SettingsRow
-            round
-            icon={transfer ? 'swap-horizontal' : account ? accountIcon(account.type) : 'bank'}
-            iconBg={shade(accent, 95)}
-            field
-            label={transfer ? 'Accounts' : tx.type === 'income' ? 'Received in' : 'Paid from'}
-            sub={route ?? accountName(tx.accountId)}
-            divider={!!cat && !transfer}
-          />
-          {!!tx.note && (
-            <SettingsRow
-              round
-              icon="note-text-outline"
-              iconBg={theme.colors.idGold}
-              label={tx.type === 'expense' || tx.isRefund ? 'Label' : 'Note'}
-              sub={tx.note}
-              divider
+          ) : link?.kind === 'loan' ? (
+            <PrimaryButton
+              title={busy ? 'Undoing…' : 'Undo payment'}
+              variant="secondary"
+              onPress={() => confirmUndoLoan(link.loanPaymentId)}
+              disabled={busy}
             />
-          )}
-        </View>
+          ) : link?.kind === 'person' ? (
+            <PrimaryButton
+              title={busy ? 'Undoing…' : 'Undo entry'}
+              variant="secondary"
+              onPress={confirmUndoPerson}
+              disabled={busy}
+            />
+          ) : undefined
+        }
+      >
+        <SheetCard
+          hue={transfer ? secondary : (cat?.color ?? theme.colors.textMuted)}
+          icon={transfer ? 'swap-horizontal' : (cat?.icon ?? 'tag')}
+          kicker={transfer || !parentName ? kind : `${kind} · ${parentName}`}
+          amount={
+            <>
+              {tx.type === 'expense' ? '−' : tx.type === 'income' ? '+' : ''}
+              <Amount minor={tx.amountMinor} sensitive={sensitiveEntry(tx)} currency={account?.currency} />
+            </>
+          }
+          amountColor={
+            tx.type === 'expense'
+              ? theme.colors.expenseText
+              : tx.type === 'income'
+                ? theme.colors.incomeText
+                : theme.colors.textPrimary
+          }
+          title={route ?? cat?.name ?? kind}
+          meta={
+            route ? weekdayDayMonth(tx.date) : `${weekdayDayMonth(tx.date)} · ${accountName(tx.accountId)}`
+          }
+        />
 
-        {tx.splitId && splitParts && splitParts.length > 0 && (
-          <View style={styles.splitCard}>
-            <Text style={styles.splitCardTitle}>
-              Part of a{' '}
-              {formatMaskableMoney(
-                splitParts.reduce((s, p) => s + p.amountMinor, 0),
-                {
-                  currency: account?.currency,
-                  masked: hideAmounts && splitParts.some(sensitiveEntry),
-                }
-              )}{' '}
-              split
-            </Text>
-            {splitParts.map((p) => {
-              const pc = categories.find((c) => c.id === p.categoryId);
-              const mine = p.id === tx.id;
-              return (
-                <View key={p.id} style={styles.splitPart}>
-                  <Text style={[styles.splitPartName, mine && styles.splitPartMine]}>
-                    {pc
-                      ? categorySentence(pc.name, parentNameOf(p.categoryId, categoriesById))
-                      : 'Uncategorised'}
-                  </Text>
-                  <Amount
-                    currency={accounts.find((a) => a.id === p.accountId)?.currency}
-                    minor={p.amountMinor}
-                    sensitive={sensitiveEntry(p)}
-                    style={[styles.splitPartAmount, mine && styles.splitPartMine]}
-                  />
-                </View>
-              );
-            })}
+        <StatusBadge label={`Method: ${paymentMethodLabel(tx.paymentMode)}`} />
+        {(tx.splitId ||
+          link?.kind === 'loan' ||
+          link?.kind === 'person' ||
+          link?.kind === 'refund-expected' ||
+          link?.kind === 'refund-received') && (
+          <View style={styles.entryBadges}>
+            {tx.splitId && <StatusBadge label="Split payment" />}
+            {link?.kind === 'loan' && <StatusBadge label="Loan payment" />}
+            {link?.kind === 'person' && <StatusBadge label="Linked to person" />}
+            {(link?.kind === 'refund-expected' || link?.kind === 'refund-received') && (
+              <StatusBadge label="Refund tracking" />
+            )}
           </View>
         )}
 
-        {link === undefined ? (
-          <Text style={styles.hintText}>Checking…</Text>
-        ) : link === null ? (
-          linkFailed ? (
-            <Text style={styles.hintText}>
-              Couldn't check whether this entry is tied to a loan or a person. You can still edit it.
-            </Text>
-          ) : null
-        ) : link.kind === 'refund-expected' || link.kind === 'refund-received' ? (
-          <Text style={styles.hintText}>
-            Tracked refund — manage the expectation or undo its receipt here before editing the linked entry.
-          </Text>
-        ) : link.kind === 'loan' ? (
-          <Text style={styles.hintText}>
-            A loan EMI payment — it can't be edited directly. Undo it to put the installment back to pending.
-          </Text>
-        ) : link.kind === 'person' ? (
-          <Text style={styles.hintText}>
-            A Friends & Family entry — it can't be edited directly. Undo it to remove it from their balance
-            too.
-          </Text>
-        ) : (
-          <Text style={styles.hintText}>
-            This is a loan disbursement or prepayment — editing isn't supported yet.
-          </Text>
+        {tx.type === 'expense' && (link === null || link?.kind === 'refund-expected') && (
+          <RefundTracker
+            sensitive={sensitiveEntry(tx)}
+            key={tx.id}
+            transaction={tx}
+            accounts={accounts}
+            onChanged={onChanged}
+            hideCreateAction
+            request={refundRequest?.transactionId === tx.id ? refundRequest : undefined}
+          />
         )}
-      </>
+        {/* What you can do with it, right under the amount: no second page to find it on. */}
+        {moreActions.length > 0 && (
+          <View style={styles.quickRow}>
+            {moreActions.map((a) => (
+              <Pressable
+                key={a.label}
+                onPress={busy ? undefined : a.onPress}
+                disabled={busy}
+                style={withPressed(styles.quickBtn)}
+                accessibilityRole="button"
+                accessibilityLabel={a.label}
+                accessibilityHint={a.sub}
+              >
+                <View style={[styles.quickIcon, { backgroundColor: shade(accent, 93) }]}>
+                  <Feather name={a.icon} size={20} color={theme.colors.ink} />
+                </View>
+                <Text style={styles.quickText}>{a.short}</Text>
+                <Text style={styles.quickHint}>
+                  {a.icon === 'rotate-ccw'
+                    ? 'Same entry'
+                    : a.icon === 'repeat'
+                      ? 'Set schedule'
+                      : 'Track or receive'}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+        )}
+
+        <>
+          <View style={[h.card, h.cardInSheet]}>
+            {cat && !transfer && (
+              <SettingsRow
+                round
+                icon={cat.icon}
+                iconBg={hexToRgba(cat.color, 0.25)}
+                field
+                label="Category"
+                sub={joinSub([cat.name, parentName])}
+                onPress={() => {
+                  onClose();
+                  // Opened from that category's own page? Then closing is enough.
+                  returnOrPush({ name: 'category/[id]', params: { id: cat.id } }, `/category/${cat.id}`);
+                }}
+              />
+            )}
+            <SettingsRow
+              round
+              icon={transfer ? 'swap-horizontal' : account ? accountIcon(account.type) : 'bank'}
+              iconBg={shade(accent, 95)}
+              field
+              label={transfer ? 'Accounts' : tx.type === 'income' ? 'Received in' : 'Paid from'}
+              sub={route ?? accountName(tx.accountId)}
+              divider={!!cat && !transfer}
+            />
+            {!!tx.note && (
+              <SettingsRow
+                round
+                icon="note-text-outline"
+                iconBg={theme.colors.idGold}
+                label={tx.type === 'expense' || tx.isRefund ? 'Label' : 'Note'}
+                sub={tx.note}
+                divider
+              />
+            )}
+          </View>
+
+          {tx.splitId && splitParts && splitParts.length > 0 && (
+            <View style={styles.splitCard}>
+              <Text style={styles.splitCardTitle}>
+                Part of a{' '}
+                {formatMaskableMoney(
+                  splitParts.reduce((s, p) => s + p.amountMinor, 0),
+                  {
+                    currency: account?.currency,
+                    masked: hideAmounts && splitParts.some(sensitiveEntry),
+                  }
+                )}{' '}
+                split
+              </Text>
+              {splitParts.map((p) => {
+                const pc = categories.find((c) => c.id === p.categoryId);
+                const mine = p.id === tx.id;
+                return (
+                  <View key={p.id} style={styles.splitPart}>
+                    <Text style={[styles.splitPartName, mine && styles.splitPartMine]}>
+                      {pc
+                        ? categorySentence(pc.name, parentNameOf(p.categoryId, categoriesById))
+                        : 'Uncategorised'}
+                    </Text>
+                    <Amount
+                      currency={accounts.find((a) => a.id === p.accountId)?.currency}
+                      minor={p.amountMinor}
+                      sensitive={sensitiveEntry(p)}
+                      style={[styles.splitPartAmount, mine && styles.splitPartMine]}
+                    />
+                  </View>
+                );
+              })}
+            </View>
+          )}
+
+          {link === undefined ? (
+            <Text style={styles.hintText}>Checking…</Text>
+          ) : link === null ? (
+            linkFailed ? (
+              <Text style={styles.hintText}>
+                Couldn't check whether this entry is tied to a loan or a person. You can still edit it.
+              </Text>
+            ) : null
+          ) : link.kind === 'refund-expected' || link.kind === 'refund-received' ? (
+            <Text style={styles.hintText}>
+              Tracked refund — manage the expectation or undo its receipt here before editing the linked
+              entry.
+            </Text>
+          ) : link.kind === 'loan' ? (
+            <Text style={styles.hintText}>
+              A loan EMI payment — it can't be edited directly. Undo it to put the installment back to
+              pending.
+            </Text>
+          ) : link.kind === 'person' ? (
+            <Text style={styles.hintText}>
+              A Friends & Family entry — it can't be edited directly. Undo it to remove it from their balance
+              too.
+            </Text>
+          ) : (
+            <Text style={styles.hintText}>
+              This is a loan disbursement or prepayment — editing isn't supported yet.
+            </Text>
+          )}
+        </>
+      </ModalSheet>
       <RuleModal
         visible={ruleOpen}
         editing={null}
@@ -606,6 +620,6 @@ export function TransactionDetailModal({
         }}
         onDeleted={() => setRuleOpen(false)}
       />
-    </ModalSheet>
+    </>
   );
 }

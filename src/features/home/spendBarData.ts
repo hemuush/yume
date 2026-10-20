@@ -48,11 +48,7 @@ export function monthBars(daily: { date: string; totalMinor: number }[], today: 
   }));
 }
 
-/**
- * The bar the chart opens on: the latest one with spending, so a quiet morning shows the last busy day instead of
- * "today, ₹0". With nothing spent anywhere, the last bar (today, or this week).
- */
+/** Start on the current day/week, including zero spending. Older bars remain tappable. */
 export function defaultBar(bars: SpendBar[]): SpendBar {
-  for (let i = bars.length - 1; i >= 0; i--) if (bars[i].totalMinor > 0) return bars[i];
-  return bars[bars.length - 1];
+  return bars.find((bar) => bar.current) ?? bars[bars.length - 1];
 }

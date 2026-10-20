@@ -40,7 +40,11 @@ jest.mock('expo-router', () => ({
 const mockShowUndo = jest.fn();
 jest.mock('@/components/UndoToast', () => ({ useUndoToast: () => ({ show: mockShowUndo }) }));
 const mockRule = {
-  current: null as null | { visible: boolean; prefill?: { nextRunDate: string; amountMinor: number } },
+  current: null as null | {
+    visible: boolean;
+    onClose: () => void;
+    prefill?: { nextRunDate: string; amountMinor: number };
+  },
 };
 jest.mock('@/features/recurring/RuleModal', () => ({
   RuleModal: (props: typeof mockRule.current) => {
@@ -149,6 +153,14 @@ describe('entry detail', () => {
     expect(mockShowUndo).toHaveBeenCalledWith('Logged again for today', expect.any(Function));
   });
 
+  it('preserves the recorded payment method when logging again', async () => {
+    const tree = await render({ ...lunch, paymentMode: 'upi' });
+    await act(async () => {
+      await rows(tree, 'Log again today')[0].props.onPress();
+    });
+    expect(createTransaction).toHaveBeenCalledWith(expect.objectContaining({ paymentMode: 'upi' }));
+  });
+
   it('keeps the refund flag when a refund is logged again', async () => {
     const tree = await render({ ...lunch, type: 'income', isRefund: true });
     await act(async () => {
@@ -184,10 +196,15 @@ describe('entry detail', () => {
       rows(tree, 'Make it recurring')[0].props.onPress();
     });
     expect(mockRule.current?.visible).toBe(true);
+    expect(rows(tree, 'Log again today')).toHaveLength(0);
+    expect(tree.root.findByType(require('@/components/ModalSheet').ModalSheet).props.visible).toBe(false);
     const next = mockRule.current!.prefill!.nextRunDate;
     expect(next > toLocalIsoDate(new Date())).toBe(true);
     expect(next.slice(8)).toBe('15');
     expect(mockRule.current?.prefill?.amountMinor).toBe(11000);
+    act(() => mockRule.current?.onClose());
+    expect(mockRule.current?.visible).toBe(false);
+    expect(rows(tree, 'Log again today').length).toBeGreaterThan(0);
   });
 
   it("just closes when opened from that category's own page", async () => {

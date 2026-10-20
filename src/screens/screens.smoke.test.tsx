@@ -979,3 +979,44 @@ it('refreshes daily remaining together with the current month after period navig
     act(() => tree.unmount());
   }
 });
+
+it('refreshes today spending when Home returns from the background without navigation', async () => {
+  await freshDb();
+  mockHide = false;
+  mockParams = {};
+  const { AppState } = require('react-native');
+  const { setDailySpendingGoal } = require('@/db/settings');
+  const callbacks: ((state: string) => void)[] = [];
+  const subscription = jest.spyOn(AppState, 'addEventListener').mockImplementation((_event, callback) => {
+    callbacks.push(callback as (state: string) => void);
+    return { remove: jest.fn() };
+  });
+  await setDailySpendingGoal(50000);
+  const bank = await createAccount({
+    name: 'Foreground bank',
+    type: 'bank',
+    currency: 'INR',
+    openingBalanceMinor: 100000,
+  });
+  const food = await createCategory({ name: 'Foreground food', kind: 'expense' });
+  const tree = await open(SCREENS[0][1]);
+  try {
+    expect(textOf(tree)).toContain('₹500 left today');
+    await createTransaction({
+      type: 'expense',
+      accountId: bank.id,
+      categoryId: food.id,
+      amountMinor: 7000,
+      date: toLocalIsoDate(new Date()),
+    });
+    await act(async () => {
+      callbacks.forEach((callback) => callback('active'));
+      await settle();
+    });
+    expect(textOf(tree)).toContain('₹430 left today');
+    expect(textOf(tree)).toContain('₹70 spent today');
+  } finally {
+    act(() => tree.unmount());
+    subscription.mockRestore();
+  }
+});

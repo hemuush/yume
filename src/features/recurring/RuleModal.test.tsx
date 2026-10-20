@@ -243,3 +243,23 @@ it('warns before changing an overdue confirm-first rule to automatic posting', a
   );
   alert.mockRestore();
 });
+
+it('opens one-off controls from Schedule and returns without losing the recurring draft', async () => {
+  const { NextOccurrenceSheet } = require('./NextOccurrenceSheet');
+  const { ModalSheet } = require('@/components/ModalSheet');
+  const tree = await render(rule);
+  act(() => tree.root.findByType(AmountField).props.onChangeText('450'));
+  expect(tree.root.findAllByType(NextOccurrenceSheet)).toHaveLength(0);
+  act(() => tree.root.find((n) => n.props.value === 'setup' && n.props.onChange).props.onChange('schedule'));
+  const action = tree.root.findAll(
+    (n) => n.props.label === 'Manage next occurrence' && typeof n.props.onPress === 'function'
+  )[0];
+  act(() => action.props.onPress());
+  expect(tree.root.findByType(NextOccurrenceSheet).props.rule.id).toBe(rule.id);
+  expect(tree.root.findAllByType(ModalSheet).map((n) => n.props.visible)).toEqual([false, true]);
+  act(() => tree.root.findByType(NextOccurrenceSheet).props.onClose());
+  expect(tree.root.findAllByType(NextOccurrenceSheet)).toHaveLength(0);
+  act(() => tree.root.find((n) => n.props.value === 'schedule' && n.props.onChange).props.onChange('setup'));
+  expect(tree.root.findByType(AmountField).props.value).toBe('450');
+  act(() => tree.unmount());
+});

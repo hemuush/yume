@@ -164,7 +164,8 @@ export function FilterModal({
         Keyboard.dismiss();
         onClose();
       }}
-      title="Filter"
+      title="Filter activity"
+      subtitle="Refine the entries in your selected period"
       footer={
         <View style={styles.filterFoot}>
           <PrimaryButton
@@ -182,44 +183,12 @@ export function FilterModal({
         </View>
       }
     >
-      <PaymentMethodPicker filter value={draftPayment} onChange={setDraftPayment} />
       <Text style={styles.fieldLabel}>Type</Text>
       <SheetTabs options={FILTER_TYPES} value={draftType} onChange={onTypeChange} />
 
-      {(draftType === 'all' || draftType === 'expense') && (
-        <>
-          <Text style={styles.fieldLabel}>Expense label</Text>
-          <TextInput
-            value={draftLabel}
-            onChangeText={setDraftLabel}
-            placeholder="Find a label (optional)"
-            accessibilityLabel="Filter expense label"
-            returnKeyType="done"
-            onSubmitEditing={() => Keyboard.dismiss()}
-            style={{
-              minHeight: 48,
-              padding: 12,
-              marginBottom: 12,
-              borderRadius: 14,
-              backgroundColor: theme.colors.surfaceAlt,
-              color: theme.colors.textPrimary,
-            }}
-          />
-          <View style={styles.chipRow}>
-            {matchingLabels.slice(0, 10).map((label) => (
-              <Chip
-                key={label}
-                label={label}
-                active={draftLabel === label}
-                onPress={() => setDraftLabel(label)}
-              />
-            ))}
-          </View>
-        </>
-      )}
       {accounts.length > 1 && (
         <>
-          <Text style={styles.fieldLabel}>Account</Text>
+          <Text style={styles.fieldLabel}>Accounts · choose any</Text>
           <View style={styles.chipRow}>
             {accounts.map((acc) => (
               <Chip
@@ -241,7 +210,7 @@ export function FilterModal({
 
       {draftType !== 'transfer' && (
         <>
-          <Text style={styles.fieldLabel}>Category</Text>
+          <Text style={styles.fieldLabel}>Categories · choose any</Text>
           <View style={styles.chipRow}>
             {topLevelCategories.map((cat) => (
               <Chip
@@ -271,6 +240,38 @@ export function FilterModal({
               </View>
             </View>
           )}
+        </>
+      )}
+      <PaymentMethodPicker filter value={draftPayment} onChange={setDraftPayment} />
+      {(draftType === 'all' || draftType === 'expense') && (
+        <>
+          <Text style={styles.fieldLabel}>Expense label</Text>
+          <TextInput
+            value={draftLabel}
+            onChangeText={setDraftLabel}
+            placeholder="Find a label (optional)"
+            accessibilityLabel="Filter expense label"
+            returnKeyType="done"
+            onSubmitEditing={() => Keyboard.dismiss()}
+            style={{
+              minHeight: 48,
+              padding: 12,
+              marginBottom: 12,
+              borderRadius: 14,
+              backgroundColor: theme.colors.surfaceAlt,
+              color: theme.colors.textPrimary,
+            }}
+          />
+          <View style={styles.chipRow}>
+            {matchingLabels.slice(0, 10).map((label) => (
+              <Chip
+                key={label}
+                label={label}
+                active={draftLabel === label}
+                onPress={() => setDraftLabel(label)}
+              />
+            ))}
+          </View>
         </>
       )}
     </ModalSheet>

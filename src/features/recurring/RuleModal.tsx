@@ -379,14 +379,6 @@ export function RuleModal({
           }
           meta={`${type === 'income' ? 'Into' : 'From'} ${accountName(effectiveAccountId) ?? '—'} · next ${weekdayDayMonth(startDate)}`}
         />
-        {editing?.active && (
-          <PrimaryButton
-            variant="secondary"
-            compact
-            title="Manage next occurrence"
-            onPress={() => setOccurrenceVisible(true)}
-          />
-        )}
         {editing && editing.type === 'expense' && editing.frequency === 'yearly' && (
           <AnnualBillPreparation
             rule={editing}
@@ -411,7 +403,7 @@ export function RuleModal({
 
         {tab === 'setup' ? (
           <>
-            <SheetTabs options={TX_TYPES} value={type} onChange={onTypeChange} />
+            {!editing && <SheetTabs options={TX_TYPES} value={type} onChange={onTypeChange} />}
             <View style={styles.gap} />
             <AmountField label="Amount" value={amount} onChangeText={setAmount} placeholder="0.00" />
             <View style={[h.card, h.cardInSheet]}>
@@ -505,6 +497,8 @@ export function RuleModal({
             />
             {editing && (
               <InsightDisclosure title="More options">
+                <Text style={styles.fieldLabel}>Entry type</Text>
+                <SheetTabs options={TX_TYPES} value={type} onChange={onTypeChange} />
                 <SheetLink
                   label={editing.active ? 'Pause recurring entry' : 'Resume recurring entry'}
                   onPress={confirmActive}
@@ -516,6 +510,16 @@ export function RuleModal({
           </>
         ) : (
           <>
+            {editing?.active && (
+              <SettingsRow
+                icon="calendar"
+                label="Manage next occurrence"
+                value="Change or skip"
+                onPress={() => {
+                  if (!saving) setOccurrenceVisible(true);
+                }}
+              />
+            )}
             <Text style={styles.fieldLabel}>Recording</Text>
             <SheetTabs
               options={[

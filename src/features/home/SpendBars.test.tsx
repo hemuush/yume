@@ -39,9 +39,17 @@ describe('Home spending bars', () => {
     for (const label of ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Today']) expect(t).toContain(label);
   });
 
-  it('opens on the latest day with spending, with its amount over the bar', () => {
+  it('starts on today while keeping the seven-day spending total', () => {
     const r = render([{ date: '2026-10-16', totalMinor: 92_700 }], '2026-10-17');
     expect(text(r)).toContain('₹927');
+    expect(
+      r.root.findAll(
+        (n) =>
+          n.props.accessibilityRole === 'button' &&
+          n.props.accessibilityState?.selected &&
+          n.props.accessibilityLabel?.includes('17')
+      ).length
+    ).toBeGreaterThan(0);
   });
 
   it('opens on today when nothing has been spent', () => {
@@ -135,4 +143,46 @@ it('uses proportional zero-baseline heights in the embedded hero', () => {
   expect(text(r)).not.toContain('Compressed scale');
   expect(text(r)).toContain('Spent · last 7 days');
   act(() => r.unmount());
+});
+
+it('defaults to today with zero spend and returns to today after a transaction refresh', () => {
+  let tree!: ReactTestRenderer;
+  act(() => {
+    tree = create(
+      <SpendBars compact embedded daily={[{ date: '2026-10-19', totalMinor: 11300 }]} today="2026-10-20" />
+    );
+  });
+  const selected = () =>
+    tree.root.findAll(
+      (n) =>
+        n.props.accessibilityRole === 'button' &&
+        n.props.accessibilityState?.selected &&
+        typeof n.props.onPress === 'function'
+    )[0];
+  expect(selected().props.accessibilityLabel).toMatch(/20.*October.*₹0/);
+  expect(text(tree)).toContain('Today · Tue, 20 Oct · ₹0');
+  const previous = tree.root.findAll(
+    (n) =>
+      n.props.accessibilityRole === 'button' &&
+      n.props.accessibilityLabel?.includes('19') &&
+      typeof n.props.onPress === 'function'
+  )[0];
+  act(() => previous.props.onPress());
+  expect(selected().props.accessibilityLabel).toMatch(/19.*October.*₹113/);
+  act(() =>
+    tree.update(
+      <SpendBars
+        compact
+        embedded
+        daily={[
+          { date: '2026-10-19', totalMinor: 11300 },
+          { date: '2026-10-20', totalMinor: 7000 },
+        ]}
+        today="2026-10-20"
+      />
+    )
+  );
+  expect(selected().props.accessibilityLabel).toMatch(/20.*October.*₹70/);
+  expect(text(tree)).toContain('Today · Tue, 20 Oct · ₹70');
+  act(() => tree.unmount());
 });
