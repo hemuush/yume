@@ -10,6 +10,9 @@ import { useUiScale } from '@/lib/uiScale';
 import { DURATIONS } from '@/lib/motionTimings';
 import { useReduceMotion } from '@/lib/useReduceMotion';
 
+import { useAccent } from '@/theme/AccentContext';
+import { interactionColors } from '@/theme/interactionColors';
+
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 const HIT_SLOP = { top: 3, bottom: 3 };
@@ -32,7 +35,7 @@ interface Props extends Omit<PressableProps, 'style'> {
 }
 
 /**
- * The one button in the app. Primary is a solid ink pill (fixed brand colour, not the user's accent);
+ * The one button in the app. Primary is a deep pill derived from the user's theme;
  * secondary is a quiet cream pill with a hairline; danger is the red one a confirm dialog uses for Delete.
  */
 export function PrimaryButton({
@@ -49,6 +52,8 @@ export function PrimaryButton({
 }: Props) {
   const { animatedStyle, onPressIn, onPressOut } = usePressScale();
   const uiScale = useUiScale();
+  const { accent } = useAccent();
+  const colors = interactionColors(accent);
   const reduceMotion = useReduceMotion();
   // Fires once as the checkmark comes in; every Pay/Save/Restore confirm funnels through `done`,
   // so none needs its own haptic.
@@ -69,6 +74,8 @@ export function PrimaryButton({
         // Padding follows the font size at half rate; the default (1) leaves the designed 12 / 7.
         { paddingVertical: Math.round((compact ? 7 : 12) * uiScale) },
         variantStyle,
+        variant === 'primary' && { backgroundColor: colors.ink },
+        secondary && { borderColor: colors.edge },
         icon && !done && styles.withIcon,
         disabled && styles.disabled,
         animatedStyle,

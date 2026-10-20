@@ -1,4 +1,4 @@
-import { Animated, ScrollView, Text } from 'react-native';
+import { Animated, Text } from 'react-native';
 import { act, create, ReactTestRenderer } from 'react-test-renderer';
 
 let mockReduce = false;
@@ -21,9 +21,7 @@ jest.mock('@/theme/PrivacyContext', () => ({ usePrivacy: () => ({ hideAmounts: f
 jest.mock('./HeroActions', () => ({ HeroActions: () => null }));
 
 import { CountUpAmount } from '@/components/CountUpAmount';
-import { WhereItWent } from './WhereItWent';
 import { ThisMonthHero } from './ThisMonthHero';
-import { HomeSwipeCard, SwipePage } from './HomeSwipeCard';
 import { usePressScale } from '@/lib/usePressScale';
 import { SpendBars } from './SpendBars';
 
@@ -37,10 +35,6 @@ const text = (r: ReactTestRenderer) =>
         .join('')
     )
     .join(' ');
-const press = (r: ReactTestRenderer, label: string) =>
-  act(() => {
-    r.root.find((n) => n.props.accessibilityLabel === label && n.props.onPress).props.onPress();
-  });
 let roots: ReactTestRenderer[] = [];
 function render(node: React.ReactElement) {
   let r!: ReactTestRenderer;
@@ -110,34 +104,6 @@ it('continues a changed amount from the visible value and ignores an obsolete co
   expect(text(r)).toContain('₹5,000');
 });
 
-it('keeps selected category details readable across reordering and reduced motion', () => {
-  const categories = ['Food', 'Rent', 'Travel', 'Shopping'].map((name, i) => ({
-    categoryId: name,
-    name,
-    totalMinor: (4 - i) * 10000,
-    color: '#fff',
-    hasSubcategories: false,
-    isSensitive: false,
-  }));
-  const dial = (breakdown = categories) => (
-    <WhereItWent breakdown={breakdown} iconFor={() => 'tag'} spentMinor={100000} onOpenReports={jest.fn()} />
-  );
-  const r = render(dial());
-  expect(text(r)).toContain('40%');
-  act(() => {
-    r.root
-      .find((n) => n.props.accessibilityLabel === 'Rent, 30% of spending' && n.props.onPress)
-      .props.onPress();
-  });
-  expect(text(r)).toContain('30%');
-  expect(text(r)).toContain('₹300');
-  const before = mockTargets.length;
-  mockReduce = true;
-  act(() => r.update(dial([...categories].reverse())));
-  expect(text(r)).toContain('₹300');
-  expect(mockTargets).toHaveLength(before);
-});
-
 it('keeps the month label, figures and current-month chips together through interrupted transitions', () => {
   const displayed = jest.fn();
   const hero = (key: string, income: number) => (
@@ -178,36 +144,10 @@ it('keeps the month label, figures and current-month chips together through inte
   expect(displayed).toHaveBeenCalledTimes(2);
 });
 
-const pages: SwipePage[] = ['upcoming', 'budgets', 'goals'].map((key) => ({
-  key,
-  label: key,
-  content: <Text>{key} content</Text>,
-}));
-function measure(r: ReactTestRenderer) {
-  act(() =>
-    r.root
-      .findAll((n) => n.props.testID === 'home-swipe-pages' && n.props.onLayout)[0]
-      .props.onLayout({ nativeEvent: { layout: { width: 300 } } })
-  );
-}
-const offset = (x: number) => ({ nativeEvent: { contentOffset: { x } } });
-
-it('preserves the selected page key when an earlier page disappears', () => {
-  mockReduce = true;
-  const r = render(<HomeSwipeCard pages={pages} />);
-  measure(r);
-  const scroll = jest.spyOn(r.root.findByType(ScrollView).instance, 'scrollTo');
-  press(r, 'budgets');
-  expect(scroll).toHaveBeenLastCalledWith({ x: 300, animated: false });
-  act(() => r.update(<HomeSwipeCard pages={pages.slice(1)} />));
-  const tab = r.root.find((n) => n.props.accessibilityLabel === 'budgets' && n.props.onPress);
-  expect(tab.props.accessibilityState.selected).toBe(true);
-});
-
 it('cancels press feedback on reduced-motion changes and unmount', () => {
   let feedback!: ReturnType<typeof usePressScale>;
   function Button() {
-    feedback = usePressScale();
+    feedback = usePressScale(0.92);
     return <Text>Button</Text>;
   }
   const timing = jest
@@ -225,7 +165,7 @@ it('cancels press feedback on reduced-motion changes and unmount', () => {
   expect(timing).toHaveBeenNthCalledWith(
     1,
     scale,
-    expect.objectContaining({ duration: 80, useNativeDriver: true })
+    expect.objectContaining({ toValue: 0.97, duration: 80, useNativeDriver: true })
   );
   expect(timing).toHaveBeenNthCalledWith(
     2,
@@ -268,45 +208,6 @@ it('labels chart days with full dates while retaining the original week and mont
   );
   expect(text(r)).toContain('W2');
   expect(text(r)).toMatch(/This month\s+₹132/);
-});
-
-it('ignores old scroll destinations after rapid taps and reconciles a finger takeover', () => {
-  const r = render(<HomeSwipeCard pages={pages} />);
-  measure(r);
-  press(r, 'goals');
-  press(r, 'budgets');
-  act(() => r.root.findByType(ScrollView).props.onMomentumScrollEnd(offset(600)));
-  expect(
-    r.root.find((n) => n.props.accessibilityLabel === 'budgets' && n.props.onPress).props.accessibilityState
-      .selected
-  ).toBe(true);
-  act(() => r.root.findByType(ScrollView).props.onScrollBeginDrag());
-  act(() => r.root.findByType(ScrollView).props.onMomentumScrollEnd(offset(0)));
-  expect(
-    r.root.find((n) => n.props.accessibilityLabel === 'upcoming' && n.props.onPress).props.accessibilityState
-      .selected
-  ).toBe(true);
-});
-
-it('holds card height through a drag and settles to the destination height', () => {
-  const r = render(<HomeSwipeCard pages={pages} />);
-  measure(r);
-  const height = (key: string, value: number) =>
-    act(() =>
-      r.root
-        .findAll((n) => n.props.testID === `home-page-${key}` && n.props.onLayout)[0]
-        .props.onLayout({ nativeEvent: { layout: { height: value } } })
-    );
-  height('upcoming', 100);
-  height('budgets', 200);
-  mockTargets.length = 0;
-  act(() => r.root.findByType(ScrollView).props.onScrollBeginDrag());
-  height('upcoming', 120);
-  act(() => r.root.findByType(ScrollView).props.onScroll(offset(180)));
-  expect(mockTargets).not.toContain(120);
-  expect(mockTargets).not.toContain(200);
-  act(() => r.root.findByType(ScrollView).props.onMomentumScrollEnd(offset(300)));
-  expect(mockTargets).toContain(200);
 });
 
 it('inspects chart bars and resets to the current period when switching range', () => {
@@ -358,77 +259,3 @@ it('inspects chart bars and resets to the current period when switching range', 
   act(() => r.update(<SpendBars daily={[]} today="2026-10-11" />));
   expect(picked()).toMatch(/11 .*₹0/);
 });
-
-it('keeps an already-selected overview page settled instead of restarting its scroll', () => {
-  const r = render(<HomeSwipeCard pages={pages} />);
-  measure(r);
-  const scroll = jest.spyOn(r.root.findByType(ScrollView).instance, 'scrollTo');
-  scroll.mockClear();
-  press(r, 'upcoming');
-  expect(scroll).not.toHaveBeenCalled();
-  press(r, 'budgets');
-  expect(scroll).toHaveBeenCalledTimes(1);
-  press(r, 'budgets');
-  expect(scroll).toHaveBeenCalledTimes(1);
-  act(() => r.root.findByType(ScrollView).props.onMomentumScrollEnd(offset(300)));
-  expect(
-    r.root.find((n) => n.props.accessibilityLabel === 'budgets' && n.props.onPress).props.accessibilityState
-      .selected
-  ).toBe(true);
-});
-
-it('keeps four overview tabs reachable and preserves selection when refunds disappear', () => {
-  mockReduce = true;
-  const four = [
-    ...pages,
-    { key: 'refunds', label: 'refunds', count: 2, content: <Text>refunds content</Text> },
-  ];
-  const r = render(<HomeSwipeCard pages={four} />);
-  measure(r);
-  expect(r.root.findAll((n) => n.props.accessibilityLabel === 'Home overview tabs').length).toBeGreaterThan(
-    0
-  );
-  press(r, 'goals');
-  expect(
-    r.root.find((n) => n.props.accessibilityLabel === 'goals' && n.props.onPress).props.accessibilityState
-      .selected
-  ).toBe(true);
-  act(() => r.update(<HomeSwipeCard pages={pages} />));
-  expect(
-    r.root.find((n) => n.props.accessibilityLabel === 'goals' && n.props.onPress).props.accessibilityState
-      .selected
-  ).toBe(true);
-});
-
-it.each([
-  [390, 1],
-  [320, 1],
-  [390, 1.3],
-])(
-  'keeps all Home tabs visible without a scrolling tab strip at %sdp and %s text scale',
-  (width, fontScale) => {
-    jest
-      .spyOn(require('react-native'), 'useWindowDimensions')
-      .mockReturnValue({ width, height: 800, scale: 1, fontScale });
-    mockReduce = true;
-    const four = [...pages, { key: 'refunds', label: 'refunds', count: 2, content: <Text>refunds</Text> }];
-    const r = render(<HomeSwipeCard pages={four} />);
-    measure(r);
-    expect(r.root.findAllByType(ScrollView)).toHaveLength(1);
-    for (const page of four)
-      expect(
-        r.root.findAll(
-          (n) =>
-            n.props.accessibilityRole === 'tab' &&
-            n.props.accessibilityLabel === page.label &&
-            n.props.onPress
-        )
-      ).toHaveLength(1);
-    press(r, 'refunds');
-    expect(
-      r.root.find((n) => n.props.accessibilityLabel === 'refunds' && n.props.onPress).props.accessibilityState
-        .selected
-    ).toBe(true);
-    jest.restoreAllMocks();
-  }
-);

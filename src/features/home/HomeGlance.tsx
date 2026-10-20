@@ -158,51 +158,6 @@ export function largestUpcomingOutgoings(upcoming: Upcoming): UpcomingItem[] {
     .slice(0, 3);
 }
 
-/** One real outgoing priority; incoming money never creates an attention warning. */
-export function homePriority(upcoming: Upcoming): UpcomingItem | undefined {
-  return (
-    upcoming.items.find((item) => item.sign === '-' && item.urgent) ??
-    upcoming.items.find((item) => item.sign === '-' && item.pinned)
-  );
-}
-
-export function HomePriority({ item, onViewPlan }: { item: UpcomingItem; onViewPlan: () => void }) {
-  return (
-    <Section
-      compact
-      title={item.urgent ? 'Needs attention' : 'Coming soon'}
-      actionLabel="View plan"
-      onSeeAll={onViewPlan}
-    >
-      <View
-        style={[
-          styles.card,
-          {
-            borderLeftWidth: 3,
-            borderLeftColor: item.urgent ? theme.colors.expense : theme.colors.slice.due,
-          },
-        ]}
-      >
-        <UpcomingRow
-          icon={item.icon}
-          iconBg={item.iconBg}
-          iconColor={item.iconColor}
-          title={item.title}
-          subtitle={item.subtitle}
-          amountMinor={item.amountMinor}
-          sign={item.sign}
-          date={item.sortDate}
-          dueDate={item.sortDate}
-          urgent={item.urgent}
-          soon={!item.urgent}
-          actionLabel={item.payable ? 'Pay' : undefined}
-          onPress={() => router.push(item.route)}
-        />
-      </View>
-    </Section>
-  );
-}
-
 /** Next payments stay visible; detailed budgets and goals live in Plan. */
 export function HomeGlance({
   upcoming,
@@ -213,7 +168,6 @@ export function HomeGlance({
   openingRefund,
   onOpenRefund,
   onRetryRefunds,
-  priorityKey,
 }: {
   upcoming: Upcoming;
   rowEntering: (i: number) => React.ComponentProps<typeof Animated.View>['entering'];
@@ -223,18 +177,11 @@ export function HomeGlance({
   openingRefund?: string | null;
   onOpenRefund?: (transactionId: string) => void;
   onRetryRefunds?: () => void;
-  priorityKey?: string;
 }) {
-  const visible = largestUpcomingOutgoings(upcoming).filter((item) => item.key !== priorityKey);
-  if (!visible.length && priorityKey && !refunds.length && !refundError) return null;
+  const visible = largestUpcomingOutgoings(upcoming);
   return (
     <>
-      <Section
-        compact
-        title={visible.length || !priorityKey ? 'Next up' : 'Pending refunds'}
-        onSeeAll={onSeeMoreUpcoming}
-        actionLabel="View plan"
-      >
+      <Section compact title="Next up" onSeeAll={onSeeMoreUpcoming} actionLabel="View plan">
         <View style={styles.card}>
           {visible.length ? (
             visible.map((item, i) => (
@@ -258,7 +205,7 @@ export function HomeGlance({
                 />
               </Animated.View>
             ))
-          ) : priorityKey ? null : (
+          ) : (
             <Pressable
               onPress={onSeeMoreUpcoming}
               accessibilityRole="button"

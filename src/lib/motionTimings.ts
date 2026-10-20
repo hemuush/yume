@@ -1,6 +1,6 @@
 /**
  * App motion durations (ms) without a Reanimated import, so core-`Animated` code (useGrowFrom, CountUpAmount,
- * GoalRing) runs in tests without the Reanimated mock. `MOTION` in animation.ts adds the shared curve.
+ * PaceBar) runs in tests without the Reanimated mock. `MOTION` in animation.ts adds the shared curve.
  */
 export const DURATIONS = {
   /** Fades and highlight changes. */

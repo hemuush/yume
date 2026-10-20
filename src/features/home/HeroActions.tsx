@@ -5,7 +5,7 @@ import { pushOnce } from '@/lib/pushOnce';
 import { theme } from '@/constants/theme';
 import { usePressScale } from '@/lib/usePressScale';
 import { useAccent } from '@/theme/AccentContext';
-import { homeInk } from './homeInk';
+import { themeInk } from '@/theme/interactionColors';
 
 const ACTIONS: {
   type: 'expense' | 'income' | 'transfer';
@@ -46,7 +46,7 @@ function Action({ type, label, icon, ink }: (typeof ACTIONS)[number] & { ink: st
 
 export function HeroActions() {
   const { accent } = useAccent();
-  const ink = homeInk(accent);
+  const ink = themeInk(accent);
   return (
     <View style={styles.row}>
       {ACTIONS.map((a) => (

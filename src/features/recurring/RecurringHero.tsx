@@ -10,7 +10,7 @@ import { formatMoney } from '@/lib/money';
 import { dayMonth, weekdayDayMonth } from '@/lib/dateLabels';
 import { addDaysToIsoDate, parseLocalIsoDate } from '@/lib/date';
 import { useAccent } from '@/theme/AccentContext';
-import { homeInk } from '@/features/home/homeInk';
+import { themeInk } from '@/theme/interactionColors';
 import type { SubscriptionTotals } from '@/db/subscriptions';
 import { CostShare, RunMark, RUN_WINDOW_DAYS, topShareLine, groupRunMarks } from './recurring.helpers';
 
@@ -48,7 +48,7 @@ export function RecurringHero({
   hasOtherCurrencies?: boolean;
 }) {
   const { accent } = useAccent();
-  const ink = homeInk(accent);
+  const ink = themeInk(accent);
   const [width, setWidth] = useState(0);
   const running = totals.count > 0;
   const caption = [

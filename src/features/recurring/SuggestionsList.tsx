@@ -1,3 +1,5 @@
+import { useAccent } from '@/theme/AccentContext';
+import { themeInk } from '@/theme/interactionColors';
 import { View, Pressable } from 'react-native';
 import { Text } from '@/components/Text';
 import Feather from '@expo/vector-icons/Feather';
@@ -26,6 +28,8 @@ export function SuggestionsList({
   onMakeRecurring: (s: SubscriptionSuggestion) => void;
   onHide: (s: SubscriptionSuggestion) => void;
 }) {
+  const { accent } = useAccent();
+  const ink = themeInk(accent);
   if (suggestions.length === 0) return null;
   return (
     <>
@@ -46,7 +50,7 @@ export function SuggestionsList({
             </View>
             <View style={styles.suggestionActions}>
               <Pressable
-                style={withPressed(styles.make)}
+                style={withPressed([styles.make, { backgroundColor: ink }])}
                 onPress={() => onMakeRecurring(s)}
                 accessibilityRole="button"
                 accessibilityLabel={`Make ${categorySentence(s.categoryName, s.parentName)} recurring`}

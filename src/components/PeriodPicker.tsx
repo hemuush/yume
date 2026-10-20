@@ -10,7 +10,7 @@ import { haptics } from '@/lib/haptics';
 import { withPressed } from '@/lib/pressed';
 import { usePrivacy } from '@/theme/PrivacyContext';
 import { useAccent } from '@/theme/AccentContext';
-import { homeInk } from '@/features/home/homeInk';
+import { themeInk } from '@/theme/interactionColors';
 
 interface PickedPeriod {
   kind: 'month' | 'year';
@@ -62,7 +62,7 @@ export function PeriodPicker({
 }) {
   const { hideAmounts } = usePrivacy();
   const { accent } = useAccent();
-  const ink = homeInk(accent);
+  const ink = themeInk(accent);
   const [mode, setMode] = useState<'month' | 'year'>(selected.kind);
   const [year, setYear] = useState(selected.year);
   const [spend, setSpend] = useState<{ byMonth: Map<string, number>; firstMonth: string | null } | null>(

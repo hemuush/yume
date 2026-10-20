@@ -6,6 +6,9 @@ import { usePressScale } from '@/lib/usePressScale';
 import { SCREEN } from './screenStyles';
 import { SECTION_TITLE, SECTION_GAP } from '@/constants/textStyles';
 
+import { useAccent } from '@/theme/AccentContext';
+import { themeInk } from '@/theme/interactionColors';
+
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 /**
@@ -36,6 +39,8 @@ export function Section({
   children: React.ReactNode;
 }) {
   const { animatedStyle, onPressIn, onPressOut } = usePressScale();
+  const { accent } = useAccent();
+  const ink = themeInk(accent);
   return (
     <View style={[styles.wrap, compact && { marginTop: 12 }, first && styles.wrapFirst]}>
       <View style={[styles.head, compact && { marginBottom: 4 }]}>
@@ -60,8 +65,8 @@ export function Section({
             accessibilityLabel={`${actionLabel} — ${title}`}
             style={[styles.seeAll, compact && { minHeight: 44 }, animatedStyle]}
           >
-            <Text style={styles.seeAllText}>{actionLabel}</Text>
-            <Feather name="arrow-right" size={14} color={theme.colors.link} />
+            <Text style={[styles.seeAllText, { color: ink }]}>{actionLabel}</Text>
+            <Feather name="arrow-right" size={14} color={ink} />
           </AnimatedPressable>
         )}
       </View>

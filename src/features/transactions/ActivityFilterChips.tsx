@@ -1,6 +1,6 @@
 import { View, Pressable, ScrollView, ActivityIndicator, useWindowDimensions } from 'react-native';
 import { HeaderIconButton } from '@/components/AppHeader';
-import { homeInk } from '@/features/home/homeInk';
+import { themeInk } from '@/theme/interactionColors';
 import { Text } from '@/components/Text';
 import Feather from '@expo/vector-icons/Feather';
 import { theme } from '@/constants/theme';
@@ -54,7 +54,7 @@ export function ActivityFilterChips({
   const chipBg = shade(accent, 95);
   const { width, fontScale } = useWindowDimensions();
   const wrapTabs = width < 360 || fontScale > 1.2;
-  const ink = homeInk(accent);
+  const ink = themeInk(accent);
   return (
     <>
       <View style={styles.typeFilterRow}>

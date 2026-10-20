@@ -6,6 +6,9 @@ import { usePressScale } from '@/lib/usePressScale';
 import { useCardGrow } from '@/lib/cardGrow';
 import { screenStyles as h } from '@/components/screenStyles';
 
+import { useAccent } from '@/theme/AccentContext';
+import { themeInk } from '@/theme/interactionColors';
+
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 /** One shape for the rows of Home's Upcoming, Budgets and Goals pages, so the three read as one list. */
@@ -48,6 +51,8 @@ export function HomeRow({
   grow?: boolean;
   accessibilityLabel: string;
 }) {
+  const { accent } = useAccent();
+  const ink = themeInk(accent);
   const { ref, growFrom } = useCardGrow();
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.98);
   return (
@@ -92,7 +97,7 @@ export function HomeRow({
         </View>
       )}
       {action ? (
-        <View style={styles.action}>
+        <View style={[styles.action, { backgroundColor: ink }]}>
           <Text style={styles.actionText}>{action}</Text>
         </View>
       ) : null}

@@ -1,3 +1,4 @@
+import { themeInk } from '@/theme/interactionColors';
 import { useRef, useState } from 'react';
 import { Animated, View, Pressable, ScrollView } from 'react-native';
 import Svg, { Circle, Line, Polyline, Text as SvgText } from 'react-native-svg';
@@ -28,6 +29,7 @@ const DRAW_MS = 800;
 
 /** The chart's line, drawn in from its first month once after app open; still when you come back to it. */
 function DrawnLine({ animKey, coords }: { animKey: string; coords: { x: number; y: number }[] }) {
+  const { accent } = useAccent();
   const draw = useGrowFrom(animKey, 1, { drawMs: DRAW_MS });
   let length = 0;
   for (let i = 1; i < coords.length; i++) {
@@ -38,7 +40,7 @@ function DrawnLine({ animKey, coords }: { animKey: string; coords: { x: number; 
     <AnimatedPolyline
       points={coords.map((c) => `${c.x},${c.y}`).join(' ')}
       fill="none"
-      stroke={theme.colors.ink}
+      stroke={themeInk(accent)}
       strokeOpacity={0.75}
       strokeWidth={2.2}
       strokeLinejoin="round"
@@ -181,7 +183,10 @@ export function TrendChart({
                   key={k}
                   onPress={() => pick(k)}
                   hitSlop={6}
-                  style={withPressed([styles.trendSwitchBtn, on && styles.trendSwitchBtnOn])}
+                  style={withPressed([
+                    styles.trendSwitchBtn,
+                    on && [styles.trendSwitchBtnOn, { backgroundColor: themeInk(accent) }],
+                  ])}
                   accessibilityRole="radio"
                   accessibilityState={{ selected: on }}
                 >
@@ -240,7 +245,7 @@ export function TrendChart({
                 y1={y(points[lastI - 1].value)}
                 x2={x(lastI)}
                 y2={y(points[lastI].value)}
-                stroke={theme.colors.ink}
+                stroke={themeInk(accent)}
                 strokeOpacity={0.75}
                 strokeWidth={2.2}
                 strokeDasharray="3 5"

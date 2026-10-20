@@ -4,6 +4,9 @@ import { theme } from '@/constants/theme';
 import { haptics } from '@/lib/haptics';
 import { withPressed } from '@/lib/pressed';
 
+import { useAccent } from '@/theme/AccentContext';
+import { interactionColors } from '@/theme/interactionColors';
+
 /** Match the main page filters, with a clear selected state and light tap feedback. */
 export function SheetTabs<T extends string>({
   options,
@@ -16,6 +19,8 @@ export function SheetTabs<T extends string>({
   onChange: (value: T) => void;
   variant?: 'underline' | 'pill';
 }) {
+  const { accent } = useAccent();
+  const colors = interactionColors(accent);
   return (
     <View style={[styles.row, variant === 'pill' && styles.pillRow]} accessibilityRole="tablist">
       {options.map((option) => (
@@ -31,7 +36,10 @@ export function SheetTabs<T extends string>({
           style={withPressed([
             styles.tab,
             variant === 'pill' && styles.pillTab,
-            option.value === value && (variant === 'pill' ? styles.pillSelected : styles.selected),
+            option.value === value &&
+              (variant === 'pill'
+                ? { backgroundColor: colors.ink }
+                : [styles.selected, { borderBottomColor: colors.ink }]),
           ])}
         >
           <Text
@@ -82,7 +90,6 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.borderSoft,
   },
   pillTab: { borderBottomWidth: 0, borderRadius: 21 },
-  pillSelected: { backgroundColor: theme.colors.ink },
   pillActive: { color: theme.colors.surface },
   label: {
     fontFamily: theme.font.body,

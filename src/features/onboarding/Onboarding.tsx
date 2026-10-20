@@ -1,3 +1,4 @@
+import { themeInk } from '@/theme/interactionColors';
 import { useEffect, useRef, useState } from 'react';
 import { View, StyleSheet, Pressable, ScrollView, BackHandler } from 'react-native';
 import { Text, TextInput } from '@/components/Text';
@@ -94,6 +95,7 @@ const SLIDES: Slide[] = [
  */
 export function Onboarding({ onDone }: { onDone: () => void }) {
   const { accent, secondary } = useAccent();
+  const ink = themeInk(accent);
   const insets = useSafeAreaInsets();
   const [index, setIndex] = useState(0);
   const [name, setName] = useState('');
@@ -327,7 +329,12 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
                       >
                         <CategoryIcon name={starter.icon} color={starter.color} size={17} square={36} />
                         <Text style={styles.accountName}>{starter.name}</Text>
-                        <View style={[styles.check, on && styles.checkOn]}>
+                        <View
+                          style={[
+                            styles.check,
+                            on && [styles.checkOn, { backgroundColor: ink, borderColor: ink }],
+                          ]}
+                        >
                           {on && <Feather name="check" size={13} color={theme.colors.surface} />}
                         </View>
                       </Pressable>
@@ -353,16 +360,18 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
               {SLIDES.map((_, i) => (
                 <View
                   key={i}
-                  style={[
-                    styles.dot,
-                    i === index && { width: 20, backgroundColor: theme.colors.ink, opacity: 1 },
-                  ]}
+                  style={[styles.dot, i === index && { width: 20, backgroundColor: ink, opacity: 1 }]}
                 />
               ))}
             </View>
 
             <Pressable
-              style={withPressed([styles.cta, index === 0 && styles.ctaWithLink, creating && styles.ctaBusy])}
+              style={withPressed([
+                styles.cta,
+                { backgroundColor: ink },
+                index === 0 && styles.ctaWithLink,
+                creating && styles.ctaBusy,
+              ])}
               onPress={next}
               disabled={creating}
               accessibilityRole="button"

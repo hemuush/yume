@@ -1,3 +1,4 @@
+import { themeInk } from '@/theme/interactionColors';
 import { View, Pressable, ScrollView } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import { theme } from '@/constants/theme';
@@ -85,7 +86,10 @@ export function DetailChip({
       disabled={disabled}
       style={withPressed([
         styles.detailChip,
-        active && styles.detailChipActive,
+        active && [
+          styles.detailChipActive,
+          { backgroundColor: themeInk(accent), borderColor: themeInk(accent) },
+        ],
         disabled && styles.detailChipDisabled,
       ])}
       accessibilityRole={active === undefined ? 'button' : 'switch'}

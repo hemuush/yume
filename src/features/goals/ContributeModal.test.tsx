@@ -28,6 +28,7 @@ jest.mock('@/db/savingsGoals', () => ({
 }));
 jest.mock('@/db/settings', () => ({
   getCachedCurrency: () => 'INR',
+  getCachedAccentColor: () => '#8FCBFF',
   getMilestonesSeen: async () => mockSeen.keys,
   markMilestonesSeen: async (keys: string[]) => {
     mockSeen.keys = [...mockSeen.keys, ...keys];

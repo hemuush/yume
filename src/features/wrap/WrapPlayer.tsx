@@ -1,3 +1,4 @@
+import { themeInk } from '@/theme/interactionColors';
 import { useEffect, useRef, useState } from 'react';
 import {
   View,
@@ -266,7 +267,13 @@ export function WrapPlayer({
                 setReplay((value) => value + 1);
                 setPaused(true);
               }}
-              style={withPressed([styles.chapter, chapterIndex === index && styles.chapterSelected])}
+              style={withPressed([
+                styles.chapter,
+                chapterIndex === index && [
+                  styles.chapterSelected,
+                  { backgroundColor: themeInk(accent), borderColor: themeInk(accent) },
+                ],
+              ])}
               accessibilityRole="button"
               accessibilityLabel={`Jump to ${CHAPTER_LABELS[part.kind]}`}
               accessibilityState={{ selected: chapterIndex === index }}

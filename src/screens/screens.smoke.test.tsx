@@ -768,8 +768,7 @@ describe('Home, stepping between months on a lived-in phone', () => {
     expect(titles.indexOf('Accounts')).toBeGreaterThanOrEqual(0);
     expect(titles.indexOf('Next up')).toBeGreaterThan(titles.indexOf('Accounts'));
     expect(titles).not.toContain('Spending');
-    const { HomeSwipeCard } = require('@/features/home/HomeSwipeCard');
-    expect(tree.root.findAllByType(HomeSwipeCard)).toHaveLength(0);
+    expect(tree.root.findAllByProps({ testID: 'home-swipe-pages' })).toHaveLength(0);
     const { RecentTransactionRow } = require('@/features/home/RecentTransactionRow');
     const row = tree.root.findAllByType(RecentTransactionRow)[0];
     expect(row).toBeDefined();

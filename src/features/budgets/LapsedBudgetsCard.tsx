@@ -1,3 +1,5 @@
+import { useAccent } from '@/theme/AccentContext';
+import { themeInk } from '@/theme/interactionColors';
 import { useState } from 'react';
 import { View, Pressable, type StyleProp, type ViewStyle } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
@@ -29,6 +31,8 @@ export function LapsedBudgetsCard({
   onContinueAll: () => void;
   style?: StyleProp<ViewStyle>;
 }) {
+  const { accent } = useAccent();
+  const ink = themeInk(accent);
   const [open, setOpen] = useState(false);
   const many = items.length > 1;
   const busy = continuingAll || continuingId != null;
@@ -45,7 +49,7 @@ export function LapsedBudgetsCard({
           </Text>
         </View>
         <Pressable
-          style={withPressed(styles.continueBtn)}
+          style={withPressed([styles.continueBtn, { backgroundColor: ink }])}
           onPress={onContinueAll}
           disabled={busy}
           accessibilityRole="button"
@@ -79,7 +83,7 @@ export function LapsedBudgetsCard({
             <Text style={styles.lapsedName}>{categorySentence(item.categoryName, item.parentName)}</Text>
             <Text style={styles.lapsedAmount}>{formatMoney(item.limitAmountMinor)}/mo</Text>
             <Pressable
-              style={withPressed(styles.continueBtn)}
+              style={withPressed([styles.continueBtn, { backgroundColor: ink }])}
               onPress={() => onContinue(item)}
               disabled={busy}
               accessibilityRole="button"

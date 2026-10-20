@@ -6,6 +6,9 @@ import { useReduceMotion } from '@/lib/useReduceMotion';
 import { formatMoney } from '@/lib/money';
 import { SpendBar, ChartLegendItem } from './spendChart';
 
+import { useAccent } from '@/theme/AccentContext';
+import { themeInk } from '@/theme/interactionColors';
+
 const MAX_BAR_HEIGHT = 60;
 // A day with any spend is at least this tall, so a small one still reads as a bar.
 const MIN_BAR_HEIGHT = 6;
@@ -80,6 +83,8 @@ export function SpendBarChart({
   /** Side padding — 0 when the chart sits inside a card that already pads it. */
   inset?: number;
 }) {
+  const { accent } = useAccent();
+  const ink = themeInk(accent);
   const maxTotal = Math.max(1, ...bars.map((b) => b.totalMinor));
 
   return (
@@ -138,17 +143,17 @@ export function SpendBarChart({
               )}
               {selected && (
                 <View style={[styles.bubbleWrap, { bottom: Math.max(barPx, 2) + 6 }]} pointerEvents="none">
-                  <View style={styles.bubble}>
+                  <View style={[styles.bubble, { backgroundColor: ink }]}>
                     <Text style={styles.bubbleText} numberOfLines={1}>
                       {formatMoney(bar.totalMinor)}
                     </Text>
-                    <View style={styles.bubbleNub} />
+                    <View style={[styles.bubbleNub, { backgroundColor: ink }]} />
                   </View>
                 </View>
               )}
             </View>
             {bar.isCurrent ? (
-              <View style={styles.todayPill}>
+              <View style={[styles.todayPill, { backgroundColor: ink }]}>
                 <Text style={styles.todayText}>{bar.label}</Text>
               </View>
             ) : (

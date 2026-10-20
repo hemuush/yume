@@ -15,7 +15,7 @@ import { timing } from '@/lib/animation';
 import { useReduceMotion } from '@/lib/useReduceMotion';
 import { useAccent } from '@/theme/AccentContext';
 import { hexToRgba } from '@/lib/color';
-import { homeInk } from './homeInk';
+import { themeInk } from '@/theme/interactionColors';
 import { defaultBar, monthBars, weekBars, SpendBar } from './spendBarData';
 import Feather from '@expo/vector-icons/Feather';
 import { withPressed } from '@/lib/pressed';
@@ -138,7 +138,7 @@ export function SpendBars({
   const chart = useRef<ScrollView>(null);
   const { fontScale } = useWindowDimensions();
   const { accent } = useAccent();
-  const ink = homeInk(accent);
+  const ink = themeInk(accent);
   const tint = hexToRgba(accent, 0.55);
   const [chosenRange, setRange] = useState<Range>('week');
   const range = embedded ? periodMode : chosenRange;

@@ -15,7 +15,7 @@ import { useUiScale } from '@/lib/uiScale';
 import { usePressScale } from '@/lib/usePressScale';
 import { useReduceMotion } from '@/lib/useReduceMotion';
 import { useAccent } from '@/theme/AccentContext';
-import { homeInk } from '@/features/home/homeInk';
+import { themeInk } from '@/theme/interactionColors';
 
 type TabBarProps = Parameters<NonNullable<React.ComponentProps<typeof Tabs>['tabBar']>>[0];
 
@@ -37,7 +37,7 @@ function Tab({
   size,
   onPress,
   onLongPress,
-  homeLayout = false,
+  logAgain = false,
 }: {
   label: string;
   Icon: typeof HomeIcon;
@@ -46,7 +46,7 @@ function Tab({
   size: number;
   onPress: () => void;
   onLongPress: () => void;
-  homeLayout?: boolean;
+  logAgain?: boolean;
 }) {
   const reduce = useReduceMotion();
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.92);
@@ -59,7 +59,7 @@ function Tab({
       accessibilityRole="tab"
       accessibilityState={{ selected: focused }}
       accessibilityLabel={label}
-      accessibilityHint={homeLayout && focused ? 'Long-press to log a recent entry again' : undefined}
+      accessibilityHint={logAgain && focused ? 'Long-press to log a recent entry again' : undefined}
     >
       {/* The press is core Animated (usePressScale) on its own view; the resize is Reanimated on the one
           inside. Never both on one view. */}
@@ -70,17 +70,12 @@ function Tab({
             styles.tab,
             { height: size, minWidth: size, borderRadius: size / 2 },
             focused && { backgroundColor: ink, paddingHorizontal: 16 },
-            homeLayout && !focused && styles.homeInactive,
           ]}
         >
           <Icon color={focused ? theme.colors.white : theme.colors.inkSoft} size={20} />
-          {(focused || homeLayout) && (
+          {focused && (
             <View>
-              <Text
-                style={[styles.label, homeLayout && !focused && styles.homeLabel]}
-                numberOfLines={1}
-                maxFontSizeMultiplier={1.15}
-              >
+              <Text style={styles.label} numberOfLines={1} maxFontSizeMultiplier={1.15}>
                 {label}
               </Text>
             </View>
@@ -105,7 +100,7 @@ export function PillTabBar({
   onAddLongPress,
 }: TabBarProps & { onAdd: () => void; onAddLongPress: () => void }) {
   const { accent } = useAccent();
-  const ink = homeInk(accent);
+  const ink = themeInk(accent);
   const scale = useUiScale();
   const height = Math.round(PILL_BAR.height * scale);
   const inner = height - 12;
@@ -147,7 +142,7 @@ export function PillTabBar({
               focused={focused}
               ink={ink}
               size={inner}
-              homeLayout={false}
+              logAgain={isHome}
               onPress={() => {
                 const event = navigation.emit({
                   type: 'tabPress',
@@ -207,8 +202,6 @@ const styles = StyleSheet.create({
     borderColor: GLASS.edge,
     boxShadow: '0px 10px 28px rgba(16,32,51,0.12)',
   },
-  homeInactive: { flexDirection: 'column', gap: 3 },
-  homeLabel: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textMuted },
   tab: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7 },
   label: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.white },
   add: {
