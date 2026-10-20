@@ -12,7 +12,7 @@ import {
 import { captureRows, restoreRows, RowSnapshot } from './undoSnapshot';
 import { keepDeletedEntry, forgetDeletedEntry } from './recentlyDeleted';
 import type { TransactionRow } from './rows';
-import type { Transaction } from '@/types';
+import type { Transaction, PaymentMode } from '@/types';
 
 /**
  * Split payments: one bill (one account, date, note) spread across 2–6 expense categories. Each part is a real
@@ -35,6 +35,7 @@ interface SaveSplitInput {
   date: string;
   note?: string;
   parts: SplitPart[];
+  paymentMode?: PaymentMode | null;
 }
 
 /** Checks the parts, before anything is written. */
@@ -60,6 +61,7 @@ export async function saveSplit(input: SaveSplitInput): Promise<string> {
     amountMinor: p.amountMinor,
     date: input.date,
     note: input.note ?? '',
+    paymentMode: input.paymentMode,
     splitId,
   }));
   const db = await getDb();

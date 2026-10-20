@@ -1,3 +1,5 @@
+import { PaymentMethodPicker } from '@/components/PaymentMethodPicker';
+import type { PaymentMode } from '@/types';
 import { listExpenseLabels } from '@/db/expenseLabels';
 import { usePrivacy } from '@/theme/PrivacyContext';
 import { useEffect, useMemo, useState } from 'react';
@@ -24,6 +26,7 @@ const FILTER_TYPES: { label: string; value: TransactionType | 'all' }[] = [
 
 /** What Activity is filtered to — see FilterModal. */
 export interface ActivityFilter {
+  paymentMode?: PaymentMode | 'unspecified';
   type: TransactionType | 'all';
   expenseLabel?: string;
   categoryIds: string[];
@@ -58,6 +61,9 @@ export function FilterModal({
   const [labels, setLabels] = useState<string[]>([]);
   const { type, categoryIds, accountIds } = filter;
   const [draftLabel, setDraftLabel] = useState(filter.expenseLabel ?? '');
+  const [draftPayment, setDraftPayment] = useState<PaymentMode | 'unspecified' | 'all'>(
+    filter.paymentMode ?? 'all'
+  );
   const [draftType, setDraftType] = useState(type);
   const [draftCategoryIds, setDraftCategoryIds] = useState<string[]>(categoryIds);
   const [draftAccountIds, setDraftAccountIds] = useState<string[]>(accountIds);
@@ -89,12 +95,13 @@ export function FilterModal({
   useEffect(() => {
     if (visible) {
       setDraftLabel(filter.expenseLabel ?? '');
+      setDraftPayment(filter.paymentMode ?? 'all');
       setDraftType(type);
       setDraftCategoryIds(categoryIds);
       setDraftAccountIds(accountIds);
       setExpandedParentId(null);
     }
-  }, [visible, type, categoryIds, accountIds, filter.expenseLabel]);
+  }, [visible, type, categoryIds, accountIds, filter.expenseLabel, filter.paymentMode]);
 
   // A specific type narrows the categories shown (an income one checked under "Expense" could never match);
   // "All"/"Transfer" show every category, as transfers have none of their own to filter by.
@@ -138,6 +145,7 @@ export function FilterModal({
     type: draftType,
     categoryIds: draftCategoryIds,
     accountIds: draftAccountIds,
+    ...(draftPayment !== 'all' ? { paymentMode: draftPayment } : {}),
     ...(draftLabel.trim() ? { expenseLabel: draftLabel.trim() } : {}),
   };
   const count = countFor?.(draft);
@@ -174,6 +182,7 @@ export function FilterModal({
         </View>
       }
     >
+      <PaymentMethodPicker filter value={draftPayment} onChange={setDraftPayment} />
       <Text style={styles.fieldLabel}>Type</Text>
       <SheetTabs options={FILTER_TYPES} value={draftType} onChange={onTypeChange} />
 

@@ -166,6 +166,17 @@ CREATE TABLE IF NOT EXISTS savings_goals (
   CHECK (reserve_account = 0 OR (track_account = 0 AND linked_account_id IS NOT NULL))
 );
 
+CREATE TABLE IF NOT EXISTS goal_activity (
+  id TEXT PRIMARY KEY,
+  goal_id TEXT NOT NULL REFERENCES savings_goals(id) ON DELETE CASCADE,
+  amount_minor INTEGER NOT NULL CHECK (amount_minor != 0),
+  balance_after_minor INTEGER NOT NULL CHECK (balance_after_minor >= 0),
+  kind TEXT NOT NULL CHECK (kind IN ('manual','reservation','opening')),
+  currency TEXT NOT NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_goal_activity_goal ON goal_activity(goal_id, created_at);
+
 CREATE TABLE IF NOT EXISTS budgets (
   id TEXT PRIMARY KEY,
   category_id TEXT NOT NULL REFERENCES categories(id) ON DELETE CASCADE,
@@ -229,7 +240,10 @@ CREATE TABLE IF NOT EXISTS recurring_rules (
   -- day of every month" set up on Jan 31) — next_run_date alone can't hold
   -- it once a short month clamps it to Feb 28. Null on rules saved before
   -- this column existed, which fall back to next_run_date's own day.
-  anchor_day INTEGER
+  anchor_day INTEGER,
+  posting_mode TEXT NOT NULL DEFAULT 'automatic' CHECK (posting_mode IN ('automatic','confirm')),
+  next_amount_minor INTEGER CHECK (next_amount_minor > 0),
+  scheduled_date TEXT
 );
 
 CREATE INDEX IF NOT EXISTS idx_account_valuations_account ON account_valuations(account_id, date);

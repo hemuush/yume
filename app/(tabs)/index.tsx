@@ -211,40 +211,47 @@ export default function DashboardScreen() {
     cursorRef.current = cursor;
   });
 
-  // The three things that change with the period: its entries, its totals
-  // against the one before, and what carried over into it.
+  // Period figures and today's remaining amount commit together, so a month refresh cannot leave the daily strip stale.
   const fetchPeriod = useCallback(
     (c: PeriodCursor) => {
-      const range = periodRange(c);
-      return Promise.all([
-        // Scoped to the navigator's period; unscoped most-recent rows contradicted the selected month/year.
-        listTransactions({ fromDate: range.start, toDate: range.end, limit: RECENT_ROWS }),
-        getRangeComparison(range, previousPeriodRange(c), c.granularity),
-        getCarryInMinor(range.start, hideAmounts),
+      const reference = new Date();
+      const today = toLocalIsoDate(reference);
+      const range = periodRange(c, reference);
+      const daily =
         c.granularity === 'month'
           ? getDailyExpenseTotals(
               {
-                start: c.offset === 0 ? spendBarsStart(toLocalIsoDate(new Date())) : range.start,
-                end: c.offset === 0 ? toLocalIsoDate(new Date()) : range.end,
+                start: c.offset === 0 ? spendBarsStart(today) : range.start,
+                end: c.offset === 0 ? today : range.end,
               },
               hideAmounts
             )
-          : Promise.resolve([]),
+          : Promise.resolve([]);
+      return Promise.all([
+        listTransactions({ fromDate: range.start, toDate: range.end, limit: RECENT_ROWS }),
+        getRangeComparison(range, previousPeriodRange(c, reference), c.granularity),
+        getCarryInMinor(range.start, hideAmounts),
+        daily,
+        c.offset !== 0
+          ? Promise.resolve(0)
+          : c.granularity === 'month'
+            ? daily.then((rows) => rows.find((row) => row.date === today)?.totalMinor ?? 0)
+            : getTodaySpend(today, hideAmounts),
       ]);
     },
     [hideAmounts]
   );
 
-  // Stepping to another month only needs those three — accounts, loans,
-  // budgets, bills and the rest don't depend on it, so they stay as they are.
+  // Accounts, loans and settings stay in place while the selected period reloads.
   const loadPeriod = useCallback(
     async (c: PeriodCursor) => {
       fetchedCursor.current = c;
       const seq = ++periodSeq.current;
       try {
-        const [tx, cmp, carry, daily] = await fetchPeriod(c);
+        const [tx, cmp, carry, daily, todaySpend] = await fetchPeriod(c);
         if (seq !== periodSeq.current) return;
         setDailySpend(daily);
+        setTodaySpendMinor(todaySpend);
         setRecent(tx);
         setComparison(cmp);
         setCarryInMinor(carry);
@@ -275,7 +282,6 @@ export default function DashboardScreen() {
           progress,
           cycles,
           name,
-          todaySpend,
           dailyGoal,
           paceIn,
           stillToPay,
@@ -292,7 +298,6 @@ export default function DashboardScreen() {
           getLoanProgress(),
           listCardCycles().catch(() => []),
           getUserName(),
-          getTodaySpend(undefined, hideAmounts),
           getDailySpendingGoal(),
           getMonthPaceInputs(undefined, hideAmounts),
           getStillToPayThisMonth(undefined, hideAmounts),
@@ -304,8 +309,9 @@ export default function DashboardScreen() {
             .catch(() => ({ rows: [] as ExpectedRefund[], failed: true })),
         ]);
         if (pSeq === periodSeq.current) {
-          const [tx, cmp, carry, periodDaily] = period;
+          const [tx, cmp, carry, periodDaily, todaySpend] = period;
           setDailySpend(periodDaily);
+          setTodaySpendMinor(todaySpend);
           setRecent(tx);
           setComparison(cmp);
           setCarryInMinor(carry);
@@ -331,7 +337,6 @@ export default function DashboardScreen() {
         setUserNameState(name);
         setRefunds(refundResult.rows);
         setRefundError(refundResult.failed);
-        setTodaySpendMinor(todaySpend);
         setDailyGoalMinor(dailyGoal);
         setPaceInputs(paceIn);
         setStillToPayMinor(stillToPay);

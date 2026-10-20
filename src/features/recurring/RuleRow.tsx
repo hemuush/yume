@@ -53,7 +53,7 @@ export function RuleRow({
     ? `${accountName(rule.accountId)} → ${rule.toAccountId ? accountName(rule.toAccountId) : '—'}`
     : (category?.name ?? '—');
   const title = !transfer && rule.note ? rule.note : name;
-  const when = `${ruleCadenceLabel(rule)} · Next ${weekdayDayMonth(rule.nextRunDate)}`;
+  const when = `${ruleCadenceLabel(rule)} · Next ${weekdayDayMonth(rule.nextRunDate)}${rule.postingMode === 'confirm' ? ' · Confirm first' : ''}${rule.nextAmountMinor != null ? ' · One-off amount' : ''}`;
   return (
     <Animated.View
       layout={ROW_LAYOUT}
@@ -70,7 +70,7 @@ export function RuleRow({
         onPress={onPress}
         disabled={busy}
         accessibilityRole="button"
-        accessibilityLabel={`${title}. ${when}. ${formatMaskableMoney(rule.amountMinor, { masked, currency })}. Open recurring entry`}
+        accessibilityLabel={`${title}. ${when}. ${formatMaskableMoney(rule.nextAmountMinor ?? rule.amountMinor, { masked, currency })}. Open recurring entry`}
       >
         <CategoryIcon
           name={transfer ? 'swap-horizontal' : (category?.icon ?? 'repeat')}
@@ -101,7 +101,7 @@ export function RuleRow({
           <Text style={[styles.ruleAmount, rule.type === 'income' && styles.income]}>
             {/* Bills read in ink with no sign, as on Plan's Coming up; only money in is green with a "+". */}
             {rule.type === 'income' ? '+' : ''}
-            {formatMaskableMoney(rule.amountMinor, { masked, currency })}
+            {formatMaskableMoney(rule.nextAmountMinor ?? rule.amountMinor, { masked, currency })}
           </Text>
         </Pressable>
         <ToggleSwitch

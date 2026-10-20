@@ -1,3 +1,4 @@
+import { paymentMethodLabel } from '@/lib/paymentMode';
 import { useSaveOnce } from '@/lib/useSaveOnce';
 import { useEffect, useMemo, useState } from 'react';
 import { View, Pressable } from 'react-native';
@@ -443,6 +444,7 @@ export function TransactionDetailModal({
         meta={route ? weekdayDayMonth(tx.date) : `${weekdayDayMonth(tx.date)} · ${accountName(tx.accountId)}`}
       />
 
+      <StatusBadge label={`Method: ${paymentMethodLabel(tx.paymentMode)}`} />
       {(tx.splitId ||
         link?.kind === 'loan' ||
         link?.kind === 'person' ||

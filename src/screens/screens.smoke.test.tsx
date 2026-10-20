@@ -873,3 +873,109 @@ describe('Plan links open the selected existing flow', () => {
     act(() => tree.unmount());
   });
 });
+
+it('updates Home daily remaining after a transaction save, edit, refund and deletion', async () => {
+  await freshDb();
+  mockHide = false;
+  mockParams = {};
+  const { setDailySpendingGoal } = require('@/db/settings');
+  const { updateTransaction, deleteTransaction } = require('@/db/ledger');
+  const { emitTransactionsChanged } = require('@/lib/dataEvents');
+  await setDailySpendingGoal(50000);
+  const bank = await createAccount({
+    name: 'Today bank',
+    type: 'bank',
+    currency: 'INR',
+    openingBalanceMinor: 100000,
+  });
+  const food = await createCategory({ name: 'Today food', kind: 'expense' });
+  const tree = await open(SCREENS[0][1]);
+  try {
+    expect(textOf(tree)).toContain('₹500 left today');
+    let expense!: Awaited<ReturnType<typeof createTransaction>>;
+    await act(async () => {
+      expense = await createTransaction({
+        type: 'expense',
+        accountId: bank.id,
+        categoryId: food.id,
+        amountMinor: 7000,
+        date: toLocalIsoDate(new Date()),
+      });
+      emitTransactionsChanged();
+      await settle();
+    });
+    expect(textOf(tree)).toContain('₹430 left today');
+    await act(async () => {
+      await updateTransaction(expense.id, {
+        type: 'expense',
+        accountId: bank.id,
+        categoryId: food.id,
+        amountMinor: 10000,
+        date: toLocalIsoDate(new Date()),
+      });
+      emitTransactionsChanged();
+      await settle();
+    });
+    expect(textOf(tree)).toContain('₹400 left today');
+    await act(async () => {
+      await createTransaction({
+        type: 'income',
+        isRefund: true,
+        accountId: bank.id,
+        categoryId: food.id,
+        amountMinor: 2000,
+        date: toLocalIsoDate(new Date()),
+      });
+      emitTransactionsChanged();
+      await settle();
+    });
+    expect(textOf(tree)).toContain('₹420 left today');
+    await act(async () => {
+      await deleteTransaction(expense.id);
+      emitTransactionsChanged();
+      await settle();
+    });
+    expect(textOf(tree)).toContain('₹500 left today');
+  } finally {
+    act(() => tree.unmount());
+  }
+});
+
+it('refreshes daily remaining together with the current month after period navigation', async () => {
+  await freshDb();
+  mockHide = false;
+  mockParams = {};
+  const { setDailySpendingGoal } = require('@/db/settings');
+  const { ThisMonthHero } = require('@/features/home/ThisMonthHero');
+  await setDailySpendingGoal(50000);
+  const bank = await createAccount({
+    name: 'Period bank',
+    type: 'bank',
+    currency: 'INR',
+    openingBalanceMinor: 100000,
+  });
+  const food = await createCategory({ name: 'Period food', kind: 'expense' });
+  const tree = await open(SCREENS[0][1]);
+  try {
+    expect(textOf(tree)).toContain('₹500 left today');
+    await createTransaction({
+      type: 'expense',
+      accountId: bank.id,
+      categoryId: food.id,
+      amountMinor: 7000,
+      date: toLocalIsoDate(new Date()),
+    });
+    await act(async () => {
+      tree.root.findByType(ThisMonthHero).props.onStep(-1);
+      await settle();
+    });
+    await act(async () => {
+      tree.root.findByType(ThisMonthHero).props.onStep(1);
+      await settle();
+    });
+    expect(tree.root.findByType(ThisMonthHero).props.spentMinor).toBe(7000);
+    expect(textOf(tree)).toContain('₹430 left today');
+  } finally {
+    act(() => tree.unmount());
+  }
+});

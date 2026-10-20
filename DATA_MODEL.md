@@ -112,3 +112,11 @@ Purchase checks and spending explanations are calculated, not persisted. Purchas
 ## Expense labels and compatibility
 
 Expense labels reuse the existing `transactions.note` and expense-recurring `note` fields. There is exactly one optional text value per expense; old note text remains available as a label without a migration or duplicate tag relation. Labels are matched as exact trimmed text; existing case variants are not silently merged. Income, transfer, loan and person notes are unchanged. Backup JSON continues using the original column names, preserving older restore compatibility. Label reports net refunds by their recorded label, apply the default currency/date range and exclude private category groups when requested; they do not infer labels or move a refund to a different label.
+
+## Planning additions
+
+`goal_activity` journals manual goal additions/withdrawals and reservation changes atomically with progress. It retains the signed minor-unit change, balance after, currency, kind and timestamp. Whole-account balance fluctuations are not journalled. Goals with history must be archived rather than deleted.
+
+Recurring rules have `posting_mode` (automatic/confirm), optional `next_amount_minor`, and `scheduled_date` for the original date of a postponed occurrence. Advancing clears the one-off fields and preserves the original cadence. Confirm-first rules create no automatic ledger entries.
+
+Transaction `payment_mode` is available in entry/edit/split flows, Activity filters and a net-spending report. Unrecorded methods remain null; no method is inferred. Currency-specific `monthly_plan_income_<currency>` settings hold optional planning estimates without creating income transactions.

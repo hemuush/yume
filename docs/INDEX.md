@@ -73,3 +73,7 @@ See [consolidated UI review](CONSOLIDATED_UI_REVIEW.md) for the final refinement
 See [expense labels](EXPENSE_LABELS.md) for the single-field expense UI, legacy-note compatibility, Activity/Reports usage and fresh validation.
 
 See [20 October UI system refinement](UI_SYSTEM_REFINEMENT_2026_10_20.md) for shared theme controls, popup layout, obsolete UI removal and fresh verification limits.
+
+See [planning workflow improvements](PLANNING_FEATURES_2026_10_20.md) for the five approved feature changes, navigation paths and current verification limits.
+
+See [Home daily remaining refresh](HOME_DAILY_REMAINING_FIX_2026_10_20.md) for the reproduced stale-allowance issue, correction and fresh verification.

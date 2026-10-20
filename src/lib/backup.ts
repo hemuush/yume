@@ -18,7 +18,7 @@ const CURRENT_WINS_SETTINGS = ['app_lock_enabled', 'hide_widget_values'];
 
 const PHONE_SETTINGS = [...DEVICE_BOUND_SETTINGS, ...CURRENT_WINS_SETTINGS];
 
-export const BACKUP_FORMAT_VERSION = 3;
+export const BACKUP_FORMAT_VERSION = 4;
 
 const TABLES = [
   'accounts',
@@ -31,6 +31,7 @@ const TABLES = [
   'refund_expectations',
   'refund_receipts',
   'savings_goals',
+  'goal_activity',
   'budgets',
   'recurring_rules',
   'annual_bill_goals',
@@ -151,6 +152,7 @@ export async function restoreFromSnapshotOn(db: AppDb, snapshot: BackupSnapshot)
       'effective_date',
       'target_date',
       'next_run_date',
+      'scheduled_date',
       'end_date',
     ];
     for (const row of rows) {
@@ -243,6 +245,19 @@ export async function restoreFromSnapshotOn(db: AppDb, snapshot: BackupSnapshot)
   }
   const rulesById = new Map((snapshot.tables.recurring_rules ?? []).map((row) => [row.id, row]));
   const goalsById = new Map((snapshot.tables.savings_goals ?? []).map((row) => [row.id, row]));
+  for (const activity of snapshot.tables.goal_activity ?? []) {
+    if (
+      !goalsById.has(activity.goal_id) ||
+      !['manual', 'reservation', 'opening'].includes(String(activity.kind)) ||
+      Number(activity.amount_minor) === 0 ||
+      Number(activity.balance_after_minor) < 0 ||
+      typeof activity.currency !== 'string' ||
+      !/^[A-Z]{3}$/.test(activity.currency) ||
+      typeof activity.created_at !== 'string' ||
+      !Number.isFinite(Date.parse(activity.created_at))
+    )
+      throw new Error('This backup contains invalid goal history. Nothing was changed.');
+  }
   for (const link of snapshot.tables.annual_bill_goals ?? []) {
     const rule = rulesById.get(link.rule_id),
       goal = goalsById.get(link.goal_id);

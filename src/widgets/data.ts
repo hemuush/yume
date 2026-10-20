@@ -243,7 +243,7 @@ export async function getNextDueWidgetData(): Promise<NextDueWidgetData | null> 
       title:
         rule.note || (cat ? categorySentence(cat.name, parentNameOf(cat.id, categoriesById)) : 'Recurring'),
       subtitle: dueDateLabel(rule.nextRunDate),
-      amountMinor: rule.amountMinor,
+      amountMinor: rule.nextAmountMinor ?? rule.amountMinor,
       sign: rule.type === 'income' ? '+' : '-',
       route: '/recurring',
       dateIso: rule.nextRunDate,

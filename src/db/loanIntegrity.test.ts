@@ -28,6 +28,7 @@ import {
   applyRateChange,
   deleteLoan,
   previewPrepayment,
+  comparePrepayments,
   CreateLoanInput,
 } from '@/db/loans';
 import { getNetWorthTrend } from '@/db/reports';
@@ -68,6 +69,20 @@ describe('loan integrity', () => {
       disbursement: { accountId, categoryId: salaryCategoryId },
       ...extra,
     });
+
+  it('compares an equal extra payment without changing balances or schedules', async () => {
+    const a = await borrowed('Compare A');
+    const b = await borrowed('Compare B', { interestRateAnnualBp: 1800 });
+    const beforeA = await getLoanSchedule(a.id),
+      beforeB = await getLoanSchedule(b.id);
+    const rows = await comparePrepayments([a.id, b.id], 100000, '2026-01-15');
+    expect(rows).toHaveLength(2);
+    expect(rows.every((row) => row.summary && row.summary.interestSavedMinor > 0)).toBe(true);
+    expect(await getLoanSchedule(a.id)).toEqual(beforeA);
+    expect(await getLoanSchedule(b.id)).toEqual(beforeB);
+    expect((await getLoanById(a.id))?.outstandingPrincipalMinor).toBe(a.outstandingPrincipalMinor);
+    expect((await comparePrepayments([a.id], 999999999, '2026-01-15'))[0].error).toContain('exceeds');
+  });
 
   it('undoing an EMI paid after a prepayment restores the post-prepayment balance, not the pre-prepayment one', async () => {
     const loan = await borrowed('Undo-After-Prepay Bank');

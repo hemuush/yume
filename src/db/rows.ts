@@ -157,6 +157,9 @@ export interface PersonLedgerEntryRow {
 
 /** A row of `recurring_rules`. */
 export interface RecurringRuleRow {
+  posting_mode?: 'automatic' | 'confirm';
+  next_amount_minor?: number | null;
+  scheduled_date?: string | null;
   id: string;
   type: 'income' | 'expense' | 'transfer';
   account_id: string;

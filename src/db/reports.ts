@@ -590,13 +590,16 @@ async function recurringExpensesDue(
   const currency = await getDefaultCurrency();
   const rules = await db.getAllAsync<{
     amount_minor: number;
+    next_amount_minor: number | null;
+    scheduled_date: string | null;
+    posting_mode: string;
     next_run_date: string;
     frequency: RecurrenceFrequency;
     interval_count: number;
     anchor_day: number | null;
     end_date: string | null;
   }>(
-    `SELECT r.amount_minor, r.next_run_date, r.frequency, r.interval_count, r.anchor_day, r.end_date
+    `SELECT r.amount_minor, r.next_amount_minor, r.scheduled_date, r.posting_mode, r.next_run_date, r.frequency, r.interval_count, r.anchor_day, r.end_date
      FROM recurring_rules r
      JOIN accounts a ON a.id = r.account_id
      WHERE r.active = 1 AND r.type = 'expense' AND a.currency = ? AND r.next_run_date <= ?${
@@ -614,6 +617,7 @@ async function recurringExpensesDue(
         runsBetween(
           {
             nextRunDate: r.next_run_date,
+            scheduledDate: r.scheduled_date,
             frequency: r.frequency,
             intervalCount: r.interval_count,
             anchorDay: r.anchor_day ?? dayOfIsoDate(r.next_run_date),
@@ -621,7 +625,17 @@ async function recurringExpensesDue(
           },
           today,
           monthEnd
-        ),
+        ) +
+      (r.posting_mode === 'confirm' &&
+      r.next_run_date <= today &&
+      (!r.end_date || r.next_run_date <= r.end_date)
+        ? (r.next_amount_minor ?? r.amount_minor)
+        : 0) +
+      (r.next_run_date > today &&
+      r.next_run_date <= monthEnd &&
+      (!r.end_date || r.next_run_date <= r.end_date)
+        ? (r.next_amount_minor ?? r.amount_minor) - r.amount_minor
+        : 0),
     0
   );
 }

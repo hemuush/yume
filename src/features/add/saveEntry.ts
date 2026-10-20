@@ -75,6 +75,7 @@ export async function persistStaged(r: Staged, categories: Category[]): Promise<
     date: r.date,
     note: r.note,
     isRefund: !!r.isRefund,
+    paymentMode: r.paymentMode,
   });
   return created.id;
 }

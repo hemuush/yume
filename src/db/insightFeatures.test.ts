@@ -395,7 +395,7 @@ it('round-trips the four features through the new backup format', async () => {
   await expectRefund(purchase, 100000, today);
   await receiveRefund(purchase, { accountId: bank, amountMinor: 1000, date: today });
   const snapshot = await buildBackupSnapshot();
-  expect(snapshot.formatVersion).toBe(3);
+  expect(snapshot.formatVersion).toBe(4);
   await closeExpectedRefund(purchase);
   await unlinkAnnualBill(rule.id);
   await restoreFromSnapshot(snapshot);

@@ -34,6 +34,7 @@ export function runsBetween(
     intervalCount: number;
     anchorDay: number;
     endDate: string | null;
+    scheduledDate?: string | null;
   },
   after: string,
   through: string
@@ -44,7 +45,27 @@ export function runsBetween(
   for (let i = 0; i < 400 && cursor <= through; i++) {
     if (rule.endDate && cursor > rule.endDate) break;
     if (cursor > after) runs++;
-    cursor = advanceDate(cursor, rule.frequency, Math.max(1, rule.intervalCount), rule.anchorDay);
+    cursor = advanceOccurrence(rule, cursor);
   }
   return runs;
+}
+
+/** A one-off postponement never becomes the anchor for later occurrences. */
+export function advanceOccurrence(
+  rule: {
+    nextRunDate: string;
+    scheduledDate?: string | null;
+    frequency: RecurrenceFrequency;
+    intervalCount: number;
+    anchorDay?: number | null;
+  },
+  cursor: string
+): string {
+  const base = cursor === rule.nextRunDate ? (rule.scheduledDate ?? cursor) : cursor;
+  return advanceDate(
+    base,
+    rule.frequency,
+    Math.max(1, rule.intervalCount),
+    rule.anchorDay ?? Number(base.slice(8))
+  );
 }

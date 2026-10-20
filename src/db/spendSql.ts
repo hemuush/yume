@@ -36,3 +36,9 @@ export function amountOf(kind: 'expense' | 'income'): string {
 export function countOf(kind: 'expense' | 'income'): string {
   return kind === 'expense' ? `SUM(CASE WHEN t.type = 'expense' THEN 1 ELSE 0 END)` : 'COUNT(*)';
 }
+
+/** Reports exclude the entire parent family if any member is private, including archived children. */
+export const PUBLIC_CATEGORY_FAMILY = `${NOT_SENSITIVE} AND NOT EXISTS (
+  SELECT 1 FROM categories hidden WHERE hidden.is_sensitive = 1 AND
+  COALESCE(hidden.parent_id, hidden.id) = (SELECT COALESCE(c.parent_id, c.id) FROM categories c WHERE c.id = t.category_id)
+)`;

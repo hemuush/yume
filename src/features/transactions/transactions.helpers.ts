@@ -136,6 +136,11 @@ export function filterActivity(
     const filterAs = t.isRefund ? 'expense' : t.type;
     if (filter.expenseLabel && (filterAs !== 'expense' || t.note.trim() !== filter.expenseLabel.trim()))
       return false;
+    if (
+      filter.paymentMode &&
+      (filter.paymentMode === 'unspecified' ? t.paymentMode != null : t.paymentMode !== filter.paymentMode)
+    )
+      return false;
     if (filter.type !== 'all' && filterAs !== filter.type) return false;
     if (
       filter.accountIds.length > 0 &&

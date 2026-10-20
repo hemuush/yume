@@ -414,6 +414,38 @@ export async function previewPrepayment(
   return { ...summary, neverPaysOff };
 }
 
+/** One queue slot gives every alternative the same read-only ledger snapshot. */
+export async function comparePrepayments(
+  loanIds: string[],
+  amountMinor: number,
+  date: string
+): Promise<{ id: string; summary?: PrepaymentSummary; error?: string }[]> {
+  assertValidIsoDate(date);
+  if (!Number.isSafeInteger(amountMinor) || amountMinor <= 0) throw new Error('Enter a valid extra payment.');
+  const db = await getDb();
+  return db.exclusiveAsync(async (handle) => {
+    const rows: { id: string; summary?: PrepaymentSummary; error?: string }[] = [];
+    for (const id of [...new Set(loanIds)]) {
+      const loan = await handle.getFirstAsync<LoanRow>('SELECT * FROM loans WHERE id = ?', [id]);
+      if (!loan || loan.status === 'closed' || loan.direction !== 'borrowed') {
+        rows.push({ id, error: 'This borrowed loan is no longer active' });
+        continue;
+      }
+      if (amountMinor > loan.outstanding_principal_minor) {
+        rows.push({ id, error: 'Amount exceeds remaining principal' });
+        continue;
+      }
+      const { summary, neverPaysOff } = await planPrepayment(handle, loan, amountMinor, date);
+      rows.push(
+        summary.oldRemainingCount > 0 && !neverPaysOff
+          ? { id, summary }
+          : { id, error: 'A reliable payoff comparison is unavailable' }
+      );
+    }
+    return rows;
+  });
+}
+
 export async function applyPrepayment(
   loanId: string,
   opts: {

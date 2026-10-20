@@ -1,4 +1,4 @@
-import { Account, Category, TransactionType } from '@/types';
+import { Account, Category, TransactionType, PaymentMode } from '@/types';
 import { theme } from '@/constants/theme';
 import { shade } from '@/lib/color';
 import { parseLocalIsoDate } from '@/lib/date';
@@ -52,6 +52,7 @@ interface StagedTx {
   note: string;
   /** Money back for a purchase: saved as money in against its expense category. */
   isRefund?: boolean;
+  paymentMode?: PaymentMode | null;
 }
 interface StagedFriend {
   id: string;
@@ -98,6 +99,7 @@ export interface AddForm {
   friendAccountId: string | null;
   /** "Money back" on the Expense tab: this is a refund, not a purchase. */
   refund?: boolean;
+  paymentMode?: PaymentMode | null;
 }
 
 /**
@@ -151,6 +153,7 @@ export function formToStaged(
     row: {
       id,
       kind: 'transaction',
+      paymentMode: form.paymentMode ?? null,
       type: asRefund ? 'income' : type,
       ...(asRefund ? { isRefund: true } : {}),
       accountId,
