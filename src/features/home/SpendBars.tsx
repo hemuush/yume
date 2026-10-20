@@ -244,7 +244,7 @@ const styles = StyleSheet.create({
     height: MAX_H + 52,
   },
   snapshotTotal: {
-    fontFamily: theme.font.bodyLight,
+    fontFamily: theme.font.bodyMedium,
     fontSize: 26,
     lineHeight: 34,
     color: theme.colors.textPrimary,

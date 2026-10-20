@@ -37,8 +37,8 @@ export function Section({
 }) {
   const { animatedStyle, onPressIn, onPressOut } = usePressScale();
   return (
-    <View style={[styles.wrap, compact && { marginTop: 16 }, first && styles.wrapFirst]}>
-      <View style={[styles.head, compact && { marginBottom: 8 }]}>
+    <View style={[styles.wrap, compact && { marginTop: 12 }, first && styles.wrapFirst]}>
+      <View style={[styles.head, compact && { marginBottom: 4 }]}>
         {heading ?? (
           <View style={styles.titleRow}>
             <Text style={styles.title}>{title}</Text>
@@ -58,7 +58,7 @@ export function Section({
             hitSlop={12}
             accessibilityRole="button"
             accessibilityLabel={`${actionLabel} — ${title}`}
-            style={[styles.seeAll, animatedStyle]}
+            style={[styles.seeAll, compact && { minHeight: 44 }, animatedStyle]}
           >
             <Text style={styles.seeAllText}>{actionLabel}</Text>
             <Feather name="arrow-right" size={14} color={theme.colors.link} />

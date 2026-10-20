@@ -141,6 +141,51 @@ export function buildUpcomingItems(input: {
   return { items, next: all.find((i) => daysUntilIsoDate(i.sortDate) > UPCOMING_DAYS) ?? null };
 }
 
+/** One real outgoing priority; incoming money never creates an attention warning. */
+export function homePriority(upcoming: Upcoming): UpcomingItem | undefined {
+  return (
+    upcoming.items.find((item) => item.sign === '-' && item.urgent) ??
+    upcoming.items.find((item) => item.sign === '-' && item.pinned)
+  );
+}
+
+export function HomePriority({ item, onViewPlan }: { item: UpcomingItem; onViewPlan: () => void }) {
+  return (
+    <Section
+      compact
+      title={item.urgent ? 'Needs attention' : 'Coming soon'}
+      actionLabel="View plan"
+      onSeeAll={onViewPlan}
+    >
+      <View
+        style={[
+          styles.card,
+          {
+            borderLeftWidth: 3,
+            borderLeftColor: item.urgent ? theme.colors.expense : theme.colors.slice.due,
+          },
+        ]}
+      >
+        <UpcomingRow
+          icon={item.icon}
+          iconBg={item.iconBg}
+          iconColor={item.iconColor}
+          title={item.title}
+          subtitle={item.subtitle}
+          amountMinor={item.amountMinor}
+          sign={item.sign}
+          date={item.sortDate}
+          dueDate={item.sortDate}
+          urgent={item.urgent}
+          soon={!item.urgent}
+          actionLabel={item.payable ? 'Pay' : undefined}
+          onPress={() => router.push(item.route)}
+        />
+      </View>
+    </Section>
+  );
+}
+
 /** Next payments stay visible; detailed budgets and goals live in Plan. */
 export function HomeGlance({
   upcoming,
@@ -151,6 +196,7 @@ export function HomeGlance({
   openingRefund,
   onOpenRefund,
   onRetryRefunds,
+  priorityKey,
 }: {
   upcoming: Upcoming;
   rowEntering: (i: number) => React.ComponentProps<typeof Animated.View>['entering'];
@@ -160,11 +206,23 @@ export function HomeGlance({
   openingRefund?: string | null;
   onOpenRefund?: (transactionId: string) => void;
   onRetryRefunds?: () => void;
+  priorityKey?: string;
 }) {
-  const visible = upcoming.items.length ? upcoming.items.slice(0, 2) : upcoming.next ? [upcoming.next] : [];
+  const remaining = upcoming.items.filter((item) => item.key !== priorityKey);
+  const visible = remaining.length
+    ? remaining.slice(0, priorityKey ? 1 : 2)
+    : !upcoming.items.length && upcoming.next
+      ? [upcoming.next]
+      : [];
+  if (!visible.length && priorityKey && !refunds.length && !refundError) return null;
   return (
     <>
-      <Section title="Next up" onSeeAll={onSeeMoreUpcoming} actionLabel="View plan">
+      <Section
+        compact
+        title={visible.length || !priorityKey ? 'Next up' : 'Pending refunds'}
+        onSeeAll={onSeeMoreUpcoming}
+        actionLabel="View plan"
+      >
         <View style={styles.card}>
           {visible.length ? (
             visible.map((item, i) => (
@@ -182,12 +240,13 @@ export function HomeGlance({
                   urgent={item.urgent}
                   soon={item.pinned && !item.urgent}
                   date={item.sortDate}
+                  dueDate={item.sortDate}
                   actionLabel={item.pinned && item.payable ? 'Pay' : undefined}
                   highlight={item.pinned}
                 />
               </Animated.View>
             ))
-          ) : (
+          ) : priorityKey ? null : (
             <Pressable
               onPress={onSeeMoreUpcoming}
               accessibilityRole="button"
@@ -220,12 +279,18 @@ export function HomeGlance({
   );
 }
 const styles = StyleSheet.create({
-  card: { marginHorizontal: 16, overflow: 'hidden' },
+  card: {
+    marginHorizontal: 16,
+    paddingHorizontal: 8,
+    borderRadius: 20,
+    backgroundColor: theme.colors.surface,
+    overflow: 'hidden',
+  },
   refunds: {
     marginHorizontal: 16,
-    marginTop: 6,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: theme.colors.borderSoft,
+    marginTop: 8,
+    borderRadius: 20,
+    backgroundColor: theme.colors.surface,
   },
   empty: { minHeight: 80, flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14 },
   copy: { flex: 1, minWidth: 0, gap: 5 },

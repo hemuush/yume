@@ -59,6 +59,21 @@ export function PlanSummaryRow({
   );
 }
 
+/** Footer belongs to its list surface, with a full-height touch target and no extra pill. */
+export function PlanListAdd({ label, onPress }: { label: string; onPress: () => void }) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      onPress={onPress}
+      style={withPressed(s.add)}
+    >
+      <Feather name="plus" size={15} color={theme.colors.link} />
+      <Text style={s.addText}>{label}</Text>
+    </Pressable>
+  );
+}
+
 export const summaryListStyle = {
   marginHorizontal: 16,
   paddingHorizontal: 14,
@@ -66,7 +81,18 @@ export const summaryListStyle = {
   backgroundColor: theme.colors.surface,
 };
 const s = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 12, minHeight: 68 },
+  add: {
+    minHeight: 44,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: theme.colors.borderSoft,
+    marginTop: 4,
+  },
+  addText: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.link },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10, minHeight: 64 },
   icon: {
     width: 34,
     height: 34,
@@ -75,12 +101,12 @@ const s = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  content: { flex: 1, minWidth: 0, gap: 8 },
+  content: { flex: 1, minWidth: 0, gap: 6 },
   line: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   stacked: { flexDirection: 'column', alignItems: 'flex-start', gap: 5 },
   copy: { flex: 1, minWidth: 0, gap: 3 },
-  name: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textPrimary },
-  subtitle: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textSecondary },
+  name: { fontFamily: theme.font.bodyMedium, fontSize: 14, color: theme.colors.textPrimary },
+  subtitle: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
   amount: { fontFamily: theme.font.bodyMedium, fontSize: 13, flexShrink: 1, fontVariant: ['tabular-nums'] },
   track: { height: 4, borderRadius: 2, backgroundColor: theme.colors.surfaceAlt, overflow: 'hidden' },
   fill: { height: 4, borderRadius: 2 },

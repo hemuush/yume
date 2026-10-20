@@ -59,6 +59,7 @@ import {
 } from '@/features/plan/planOverview';
 import { PayInstallmentSheet } from '@/features/loans/PayInstallmentSheet';
 import { PeopleTile, HabitTile, PlanPerson, PEOPLE_SHOWN } from '@/features/plan/PlanTiles';
+import { UpcomingDates } from '@/features/plan/UpcomingDates';
 import { RunwayCard } from '@/features/plan/RunwayCard';
 import { BudgetJars } from '@/features/plan/BudgetJars';
 import { DebtPath } from '@/features/plan/DebtPath';
@@ -413,7 +414,7 @@ export default function PlanScreen() {
           )
         ) : (
           <>
-            <View style={styles.tabs}>
+            <View style={[styles.tabs, tab === 'money' && { marginBottom: 4 }]}>
               <PlanNavigation value={tab} onChange={selectTab} stacked={stackTiles} />
             </View>
             {(tab === 'overview' || tab === 'upcoming') && (
@@ -422,7 +423,6 @@ export default function PlanScreen() {
                 runway={data.runway}
                 hasAccounts={data.hasAccounts}
                 days={PLAN_DAYS}
-                showChart={tab === 'upcoming'}
                 onAddAccount={() => openDetail('new-account', '')}
               />
             )}
@@ -494,43 +494,57 @@ export default function PlanScreen() {
               </>
             )}
             {tab === 'upcoming' && (
-              <>
-                <View style={styles.createActions}>
-                  <PrimaryButton
-                    title="Add recurring"
+              <Section
+                compact
+                title="Upcoming payments"
+                right={
+                  <Pressable
+                    accessibilityRole="button"
                     accessibilityLabel="Add recurring"
-                    icon="repeat"
-                    variant="secondary"
-                    compact
-                    style={styles.createAction}
                     onPress={() => openDetail('new-rule', '')}
-                  />
-                </View>
-                <Section
-                  compact
-                  title="Upcoming payments"
-                  right={
-                    <Pressable
-                      onPress={() => open('/recurring')}
-                      hitSlop={8}
-                      style={withPressed(styles.headLink)}
-                      accessibilityRole="button"
-                      accessibilityLabel="Recurring"
-                    >
-                      <Text style={styles.headLinkText}>Recurring</Text>
-                      <Feather name="arrow-right" size={14} color={theme.colors.link} />
-                    </Pressable>
-                  }
+                    style={withPressed(styles.headLink)}
+                  >
+                    <Feather name="plus" size={14} color={theme.colors.link} />
+                    <Text style={styles.headLinkText}>Add recurring</Text>
+                  </Pressable>
+                }
+              >
+                <UpcomingDates
+                  runway={data.runway}
+                  renderDay={(day) => (
+                    <ComingUpSection
+                      groups={[
+                        {
+                          date: day.date,
+                          outMinor: day.outMinor,
+                          items: day.items.filter((item) => item.kind === 'emi' || item.kind === 'bill'),
+                        },
+                      ]}
+                      today={data.today}
+                      onOpen={open}
+                      onPay={(id) => void payEmi(id)}
+                      onLoan={(id) => openDetail('loan', id)}
+                      onRule={(id) => openDetail('rule', id)}
+                    />
+                  )}
+                />
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Recurring"
+                  onPress={() => open('/recurring')}
+                  style={withPressed(styles.manageRecurring)}
                 >
-                  {upcoming()}
-                </Section>
-              </>
+                  <Text style={styles.headLinkText}>Manage recurring</Text>
+                  <Feather name="arrow-right" size={14} color={theme.colors.link} />
+                </Pressable>
+              </Section>
             )}
             {tab === 'money' && (
               <>
-                <Section compact title="Budgets" onSeeAll={() => open('/budgets')}>
+                <Section compact first title="Budgets" onSeeAll={() => open('/budgets')}>
                   <BudgetJars
                     compact
+                    showAdd
                     summary={data.budgets}
                     onOpen={() => open('/budgets')}
                     onBudget={(id) => openDetail('budget', id)}
@@ -538,20 +552,10 @@ export default function PlanScreen() {
                     limit={data.budgets.rows.length}
                   />
                 </Section>
-                <View style={styles.createActions}>
-                  <PrimaryButton
-                    title="Add budget"
-                    accessibilityLabel="Add budget"
-                    icon="plus"
-                    variant="secondary"
-                    compact
-                    style={styles.createAction}
-                    onPress={() => openDetail('new-budget', '')}
-                  />
-                </View>
                 <Section compact title="Goals" onSeeAll={() => open('/savings-goals')}>
                   <GoalsStrip
                     compact
+                    showAdd
                     goals={data.goals}
                     savingsAccounts={data.savingsAccounts}
                     onOpen={() => open('/savings-goals')}
@@ -560,17 +564,6 @@ export default function PlanScreen() {
                     limit={data.goals.length}
                   />
                 </Section>
-                <View style={styles.createActions}>
-                  <PrimaryButton
-                    title="Add goal"
-                    accessibilityLabel="Add goal"
-                    icon="plus"
-                    variant="secondary"
-                    compact
-                    style={styles.createAction}
-                    onPress={() => openDetail('new-goal', '')}
-                  />
-                </View>
                 <Section compact title="Ideas">
                   <WhatIfCard
                     whatIf={data.whatIf}
@@ -823,6 +816,14 @@ export default function PlanScreen() {
 }
 
 const styles = StyleSheet.create({
+  manageRecurring: {
+    marginHorizontal: 16,
+    minHeight: 44,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    gap: 5,
+  },
   addPlan: {
     minHeight: 44,
     paddingHorizontal: 12,

@@ -254,7 +254,11 @@ describe('Plan tab', () => {
       act(() => jars.props.onBudget('b2'));
       expect(tree.root.findByProps({ testID: 'plan-budget-detail' }).props.progress.budget.id).toBe('b2');
       act(() => tree.root.findByProps({ testID: 'plan-budget-detail' }).props.onClose());
-      act(() => tree.root.findByType(BudgetJars).props.onAdd());
+      act(() =>
+        tree.root
+          .findAll((n) => n.props.accessibilityLabel === 'Add budget' && n.props.onPress)[0]
+          .props.onPress()
+      );
       expect(tree.root.findByProps({ testID: 'plan-new-budget' }).props.visible).toBe(true);
       expect(router.push).not.toHaveBeenCalled();
       act(() => tree.unmount());
@@ -344,16 +348,18 @@ describe('Plan tab', () => {
     }
   });
 
-  it('lists the Upcoming tab in date order, one row per payment', async () => {
+  it('selects upcoming payment dates and shows only that date’s payments', async () => {
     const tree = await render();
     openTab(tree, 'upcoming');
-    const shown = texts(tree);
-    const from = shown.indexOf('Covered');
-    expect(shown.indexOf('Streaming', from)).toBeGreaterThan(from);
-    expect(shown.indexOf('Home loan', from)).toBeGreaterThan(shown.indexOf('Streaming', from));
-    // Each day is a small heading with what leaves that day.
-    expect(shown).toContain('₹25,000 out');
-    expect(shown).toContain('₹450 out');
+    expect(texts(tree)).toContain('Streaming');
+    expect(texts(tree)).not.toContain('Home loan');
+    const dates = tree.root.findAll((n) => n.props.testID?.startsWith('outgoing-day-') && n.props.onPress);
+    expect(dates.length).toBeGreaterThan(1);
+    act(() => dates[dates.length - 1].props.onPress());
+    expect(texts(tree)).toContain('Home loan');
+    expect(texts(tree)).not.toContain('Streaming');
+    expect(texts(tree)).toContain('₹25,000 out');
+    act(() => tree.unmount());
   });
 
   it('says what each section means in plain words', async () => {
@@ -394,7 +400,7 @@ describe('Plan tab', () => {
     act(() => byLabel('See all — Upcoming payments').props.onPress());
     expect(router.push).not.toHaveBeenCalled();
     // Upcoming: Recurring is in the header.
-    expect(texts(tree)).toContain('Recurring');
+    expect(texts(tree)).toContain('Manage recurring');
     act(() => byLabel('Recurring').props.onPress());
     expect(router.push).toHaveBeenLastCalledWith('/recurring');
     // Goals: the full goals page and the what-if sandbox.
@@ -462,9 +468,11 @@ describe('Plan tab', () => {
           .props.style
       ).color;
     // The EMI is 3 days out (amber); the streaming bill tomorrow is not an EMI or card bill.
-    expect(subColor('EMI · ')).toBe(theme.colors.warnInk);
     expect(subColor('Bill')).not.toBe(theme.colors.warnInk);
     expect(subColor('Bill')).not.toBe(theme.colors.expenseText);
+    const dates = tree.root.findAll((n) => n.props.testID?.startsWith('outgoing-day-') && n.props.onPress);
+    act(() => dates[dates.length - 1].props.onPress());
+    expect(subColor('EMI · ')).toBe(theme.colors.warnInk);
   });
 
   it('marks an EMI paid straight from Coming up, showing what the account holds after', async () => {
@@ -669,7 +677,7 @@ it('creates recurring rules and loans directly from Plan and keeps management li
   act(() => goal.props.onClose());
   openTab(tree, 'upcoming');
   expect(texts(tree)).toContain('Add recurring');
-  expect(texts(tree)).toContain('Recurring');
+  expect(texts(tree)).toContain('Manage recurring');
   press('Add recurring');
   rule = tree.root.findByProps({ testID: 'plan-rule' });
   act(() => rule.props.onClose());

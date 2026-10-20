@@ -10,7 +10,7 @@ import { softTint } from '@/components/softTint';
 import type { McIconName } from '@/components/iconName';
 import { BudgetsSummary, PlanBudgetInput } from './planOverview';
 import { styles } from './plan.styles';
-import { PlanSummaryRow, summaryListStyle } from './PlanSummaryRow';
+import { PlanSummaryRow, PlanListAdd, summaryListStyle } from './PlanSummaryRow';
 import { TileGrid } from './PlanGrid';
 
 /** Used this much of its limit, a jar turns amber. */
@@ -28,6 +28,7 @@ export function BudgetJars({
   onAdd,
   limit,
   compact = false,
+  showAdd = false,
 }: {
   summary: BudgetsSummary;
   onOpen: () => void;
@@ -37,6 +38,7 @@ export function BudgetJars({
   limit?: number;
   /** Flat rows used by Plan; limit counts actual budgets, not an Add tile. */
   compact?: boolean;
+  showAdd?: boolean;
 }) {
   if (summary.rows.length === 0) {
     return (
@@ -82,6 +84,7 @@ export function BudgetJars({
             />
           );
         })}
+        {showAdd && <PlanListAdd label="Add budget" onPress={onAdd ?? onOpen} />}
       </View>
     );
   }

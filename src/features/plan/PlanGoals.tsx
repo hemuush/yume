@@ -17,7 +17,7 @@ import { usePrivacy } from '@/theme/PrivacyContext';
 import { Account, SavingsGoal } from '@/types';
 import { WHAT_IF_CUTS } from './planOverview';
 import { styles } from './plan.styles';
-import { PlanSummaryRow, summaryListStyle } from './PlanSummaryRow';
+import { PlanSummaryRow, PlanListAdd, summaryListStyle } from './PlanSummaryRow';
 import { TileGrid } from './PlanGrid';
 import { compactMoney } from '@/lib/compactMoney';
 
@@ -35,6 +35,7 @@ export function GoalsStrip({
   onAdd,
   limit,
   compact = false,
+  showAdd = false,
 }: {
   goals: SavingsGoal[];
   /** Savings accounts a new goal could follow, with their balances. */
@@ -46,6 +47,7 @@ export function GoalsStrip({
   limit?: number;
   /** Flat goal rows; privacy hides both progress and saved amount. */
   compact?: boolean;
+  showAdd?: boolean;
 }) {
   const { hideAmounts } = usePrivacy();
   const active = goals.filter((g) => !g.archived);
@@ -102,6 +104,7 @@ export function GoalsStrip({
             />
           );
         })}
+        {showAdd && <PlanListAdd label="Add goal" onPress={onAdd ?? onOpen} />}
       </View>
     );
   }

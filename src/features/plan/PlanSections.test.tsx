@@ -345,80 +345,107 @@ describe('Runway card', () => {
     expect(tree.root.findAllByType(ForecastDetails)).toHaveLength(0);
   });
 
-  it('lets users inspect negative daily balances and navigate the full forecast', () => {
-    const runway = buildRunway(
-      10000,
-      [
-        {
-          key: 'bill',
-          title: 'Bill',
-          kind: 'bill',
-          dueDate: '2026-10-10',
-          amountMinor: 20000,
-          route: '/recurring',
-        },
-      ],
-      '2026-10-09',
-      30
-    );
-    const tree = render(<RunwayCard dueSoon={dueSoon} runway={runway} hasAccounts days={30} showChart />);
-    const action = (label: string) =>
-      tree.root.findAll((n) => n.props.accessibilityLabel === label && n.props.onPress)[0];
-    const bar = tree.root.findByProps({ testID: 'balance-bar-2026-10-10' });
-    const geometry = StyleSheet.flatten(bar.props.style);
-    expect(geometry.top).toBe(56);
-    expect(geometry.height).toBe(56);
-    const buttons = tree.root.findAll(
-      (n) => n.props.onPress && String(n.props.accessibilityLabel).includes('closing balance')
-    );
-    act(() =>
-      buttons.find((node) => String(node.props.accessibilityLabel).includes('10 Oct'))!.props.onPress()
-    );
-    expect(texts(tree).some((t) => t.includes('Shortfall'))).toBe(true);
-    expect(texts(tree)).toContain('Bill');
-    expect(action('Previous seven days').props.disabled).toBe(true);
-    act(() => action('Next seven days').props.onPress());
-    expect(tree.root.findAllByProps({ testID: 'balance-bar-2026-10-09' })).toHaveLength(0);
-    expect(tree.root.findAllByProps({ testID: 'balance-bar-2026-10-16' }).length).toBeGreaterThan(0);
-    for (let i = 0; i < 3; i++) act(() => action('Next seven days').props.onPress());
-    expect(action('Next seven days').props.disabled).toBe(true);
-    expect(tree.root.findAllByProps({ testID: 'balance-bar-2026-11-07' }).length).toBeGreaterThan(0);
-    act(() => action('Previous seven days').props.onPress());
-    expect(action('Next seven days').props.disabled).toBe(false);
-  });
-
-  it('shows offsetting inflows and outflows even when closing balances stay flat', () => {
+  it('shows only outgoing dates in a scrollable row and preserves the selected date on refresh', () => {
     const items = [
       {
-        key: 'in',
-        title: 'Salary',
-        kind: 'income' as const,
-        dueDate: '2026-10-09',
-        amountMinor: 10000,
+        key: 'bill',
+        title: 'Bill',
+        kind: 'bill' as const,
+        dueDate: '2026-10-10',
+        amountMinor: 20000,
         route: '/recurring' as const,
       },
       {
-        key: 'out',
-        title: 'Rent',
+        key: 'income',
+        title: 'Salary',
+        kind: 'income' as const,
+        dueDate: '2026-10-11',
+        amountMinor: 900000,
+        route: '/recurring' as const,
+      },
+      {
+        key: 'later',
+        title: 'Later bill',
         kind: 'bill' as const,
-        dueDate: '2026-10-09',
+        dueDate: '2026-11-07',
         amountMinor: 10000,
         route: '/recurring' as const,
       },
     ];
-    const tree = render(
-      <RunwayCard
-        dueSoon={dueSoon}
-        runway={buildRunway(0, items, '2026-10-09', 1)}
-        hasAccounts
-        days={1}
-        showChart
-      />
+    const { UpcomingDates } = require('./UpcomingDates');
+    const runway = buildRunway(10000, items, '2026-10-09', 30);
+    const tree = render(<UpcomingDates runway={runway} />);
+    expect(tree.root.findAll((n) => n.props.horizontal === true).length).toBeGreaterThan(0);
+    expect(tree.root.findAllByProps({ testID: 'outgoing-day-2026-10-11' })).toHaveLength(0);
+    expect(tree.root.findAllByProps({ testID: 'outgoing-day-2026-10-09' })).toHaveLength(0);
+    expect(texts(tree)).toContain('Bill');
+    act(() => tree.root.findByProps({ testID: 'outgoing-day-2026-11-07' }).props.onPress());
+    expect(texts(tree)).toContain('Later bill');
+    act(() => tree.update(<UpcomingDates runway={buildRunway(999999, items, '2026-10-09', 30)} />));
+    expect(
+      tree.root.findByProps({ testID: 'outgoing-day-2026-11-07' }).props.accessibilityState.selected
+    ).toBe(true);
+    act(() => tree.update(<UpcomingDates runway={buildRunway(0, items.slice(0, 2), '2026-10-09', 30)} />));
+    expect(texts(tree)).toContain('Bill');
+    expect(texts(tree)).not.toContain('Salary');
+    act(() => tree.unmount());
+  });
+
+  it('does not net income against outgoing on the same day', () => {
+    const { UpcomingDates } = require('./UpcomingDates');
+    const runway = buildRunway(
+      0,
+      [
+        {
+          key: 'in',
+          title: 'Salary',
+          kind: 'income',
+          dueDate: '2026-10-09',
+          amountMinor: 10000,
+          route: '/recurring',
+        },
+        {
+          key: 'out',
+          title: 'Rent',
+          kind: 'bill',
+          dueDate: '2026-10-09',
+          amountMinor: 10000,
+          route: '/recurring',
+        },
+      ],
+      '2026-10-09',
+      1
     );
-    expect(texts(tree)).toEqual(expect.arrayContaining(['In ₹100', 'Out ₹100', 'Salary · Rent']));
-    const bar = StyleSheet.flatten(tree.root.findByProps({ testID: 'balance-bar-2026-10-09' }).props.style);
-    expect(bar.height).toBe(0);
-    expect(Number.isFinite(bar.top)).toBe(true);
+    const tree = render(<UpcomingDates runway={runway} />);
+    expect(texts(tree)).toContain('₹100');
+    expect(texts(tree)).toContain('Rent');
+    expect(texts(tree)).not.toContain('Salary');
+    act(() => tree.unmount());
+  });
+
+  it('shows a useful empty state for income-only or empty forecasts', () => {
+    const { UpcomingDates } = require('./UpcomingDates');
+    const runway = buildRunway(
+      900000,
+      [
+        {
+          key: 'in',
+          title: 'Salary',
+          kind: 'income',
+          dueDate: '2026-10-09',
+          amountMinor: 10000,
+          route: '/recurring',
+        },
+      ],
+      '2026-10-09',
+      1
+    );
+    const tree = render(<UpcomingDates runway={runway} />);
+    expect(texts(tree)).toContain('No upcoming outgoing payments');
+    expect(texts(tree)).not.toContain('Salary');
+    act(() => tree.update(<UpcomingDates runway={{ ...runway, days: [] }} />));
+    expect(texts(tree)).toContain('No upcoming outgoing payments');
+    act(() => tree.unmount());
   });
 
   it('hides a flat chart and says nothing is due', () => {
@@ -438,7 +465,7 @@ describe('Runway card', () => {
     expect(tree.root.findAll((n) => n.props.accessibilityLabel === 'Open Coming up')).toHaveLength(0);
   });
 
-  it('keeps an income-only changing forecast visible without claiming payment coverage', () => {
+  it('keeps income in the forecast summary without claiming payment coverage', () => {
     const item = {
       key: 'salary',
       title: 'Salary',
@@ -453,10 +480,9 @@ describe('Runway card', () => {
         runway={buildRunway(100000, [item], '2026-10-09', 14)}
         hasAccounts
         days={14}
-        showChart
       />
     );
-    expect(tree.root.findAll((n) => n.props.testID === 'runway').length).toBeGreaterThan(0);
+    expect(tree.root.findAll((n) => n.props.testID === 'runway')).toHaveLength(0);
     expect(texts(tree)).not.toContain('Covered');
     expect(texts(tree).some((t) => t.includes('+₹5,000 coming in'))).toBe(true);
   });
