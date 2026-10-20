@@ -767,7 +767,7 @@ describe('Home, stepping between months on a lived-in phone', () => {
     const titles = tree.root.findAllByType(Section).map((n) => n.props.title);
     expect(titles.indexOf('Accounts')).toBeGreaterThanOrEqual(0);
     expect(titles.indexOf('Next up')).toBeGreaterThan(titles.indexOf('Accounts'));
-    expect(titles.indexOf('Spending')).toBeGreaterThan(titles.indexOf('Next up'));
+    expect(titles).not.toContain('Spending');
     const { HomeSwipeCard } = require('@/features/home/HomeSwipeCard');
     expect(tree.root.findAllByType(HomeSwipeCard)).toHaveLength(0);
     const { RecentTransactionRow } = require('@/features/home/RecentTransactionRow');
@@ -790,7 +790,7 @@ describe('Home, stepping between months on a lived-in phone', () => {
     await settle();
     act(() =>
       tree.root
-        .findAll((n) => n.props.accessibilityLabel === 'See insights — Spending' && n.props.onPress)[0]
+        .findAll((n) => n.props.accessibilityLabel === 'See spending insights' && n.props.onPress)[0]
         .props.onPress()
     );
     expect(navigate).toHaveBeenLastCalledWith({ pathname: '/reports', params: { month: '-1' } });

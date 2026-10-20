@@ -18,7 +18,7 @@ const NEAR = 85;
 
 /**
  * This month's budgets as tiles, three to a row, the same tile as the goals: the category, the share of its
- * limit used, a thin bar (amber near the limit, coral past it) and what is left or over. A tile opens its
+ * limit used, a category-coloured progress bar and what is left or over. A tile opens its
  * overview; the header's See all opens Budgets. Empty prompts setup.
  */
 export function BudgetJars({
@@ -107,7 +107,7 @@ function BudgetTile({ budget: b, onPress }: { budget: PlanBudgetInput; onPress: 
   const pct = Math.max(0, b.percentUsed);
   const tone = b.overBudget ? 'over' : pct >= NEAR ? 'near' : 'calm';
   const base = b.categoryColor ?? theme.colors.slice.saved;
-  const fill = tone === 'over' ? theme.colors.slice.spent : tone === 'near' ? theme.colors.slice.due : base;
+  const fill = base;
   const left = b.overBudget
     ? `${formatMoney(-b.remainingMinor)} over`
     : `${formatMoney(b.remainingMinor)} left`;
@@ -120,7 +120,14 @@ function BudgetTile({ budget: b, onPress }: { budget: PlanBudgetInput; onPress: 
         tone === 'near' ? ', near limit' : ''
       }. Open budgets`}
     >
-      <Glass radius={24} style={[styles.tileFill, cardSurface.neutral]}>
+      <Glass
+        radius={20}
+        style={[
+          styles.tileFill,
+          cardSurface.neutral,
+          { backgroundColor: softTint(base, 0.12), borderColor: softTint(base, 0.28) },
+        ]}
+      >
         <View style={[styles.tileIcon, { backgroundColor: softTint(base, 0.6) }]}>
           <MaterialCommunityIcons
             name={(b.categoryIcon ?? 'tag') as McIconName}
@@ -128,12 +135,12 @@ function BudgetTile({ budget: b, onPress }: { budget: PlanBudgetInput; onPress: 
             color={theme.colors.ink}
           />
         </View>
+        <Text style={styles.tileName} numberOfLines={2}>
+          {b.categoryName}
+        </Text>
         <Text style={[styles.tilePct, b.overBudget && styles.tileOver]}>
           {Math.round(pct)}
           <Text style={styles.tilePctSign}>%</Text>
-        </Text>
-        <Text style={styles.tileName} numberOfLines={2}>
-          {b.categoryName}
         </Text>
         <View style={styles.tileTrack} pointerEvents="none">
           <View style={[styles.tileProgress, { width: `${Math.min(100, pct)}%`, backgroundColor: fill }]} />

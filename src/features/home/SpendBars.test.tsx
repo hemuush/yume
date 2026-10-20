@@ -64,3 +64,21 @@ describe('Home spending bars', () => {
     expect(none).toBe(4);
   });
 });
+
+it('fits seven interactive days inside the balance card without range tabs', () => {
+  let r!: ReactTestRenderer;
+  act(() => {
+    r = create(
+      <SpendBars daily={[{ date: '2026-10-16', totalMinor: 92700 }]} today="2026-10-17" compact embedded />
+    );
+  });
+  expect(heights(r)).toHaveLength(7);
+  expect(r.root.findAll((n) => n.props.accessibilityRole === 'tab')).toHaveLength(0);
+  const day = r.root.findAll(
+    (n) =>
+      n.props.accessibilityRole === 'button' && n.props.accessibilityLabel?.includes('17') && n.props.onPress
+  )[0];
+  act(() => day.props.onPress());
+  expect(text(r)).toContain('₹0');
+  act(() => r.unmount());
+});

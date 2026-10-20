@@ -164,47 +164,48 @@ export function HomeAccounts({
   };
 
   if (compact) {
-    const spending = everyday.filter((a) => a.type === 'bank' || a.type === 'cash' || a.type === 'wallet');
-    const preview = (spending.length ? spending : everyday.length ? everyday : savings).slice(0, 2);
+    const preview = [...everyday, ...savings].slice(0, 6);
+    const rows: Account[][] = [];
+    const columns = stacked ? 1 : 2;
+    for (let i = 0; i < preview.length; i += columns) rows.push(preview.slice(i, i + columns));
     return (
-      <Section
-        compact
-        title="Accounts"
-        onSeeAll={onOpenAccounts}
-        actionLabel={compact ? 'View all' : undefined}
-      >
+      <Section compact title="Accounts" onSeeAll={onOpenAccounts} actionLabel="View all">
         <View style={styles.wrap}>
-          <View style={[styles.accountGrid, stacked && { flexDirection: 'column' }]}>
-            {preview.map((a) => (
-              <Pressable
-                key={a.id}
-                onPress={() => onOpenAccount(a)}
-                accessibilityRole="button"
-                accessibilityLabel={`${a.name}, ${accountTypeLabel(a)}. Open summary`}
-                style={withPressed(styles.accountCard)}
-              >
-                <View style={styles.accountCardHead}>
-                  <View style={[styles.chipIcon, { backgroundColor: shade(accountHue(a.type, accent), 88) }]}>
-                    <MaterialCommunityIcons
-                      name={accountIcon(a.type) as McIconName}
-                      size={18}
-                      color={shade(accountHue(a.type, accent), 30, 10)}
-                    />
-                  </View>
-                  <View style={styles.chipText}>
-                    <Text style={styles.chipName}>{a.name}</Text>
-                    <Text style={styles.chipSub}>{accountTypeLabel(a)}</Text>
-                  </View>
-                </View>
-                <Amount
-                  minor={a.currentBalanceMinor}
-                  currency={a.currency}
-                  sensitive={a.type === 'savings'}
-                  style={styles.listAmount}
-                />
-              </Pressable>
+          <Glass radius={24} style={[styles.groupedAccounts, cardSurface.neutral]}>
+            {rows.map((accounts, index) => (
+              <View key={index} style={[styles.accountGrid, stacked && { flexDirection: 'column' }]}>
+                {accounts.map((a) => (
+                  <Pressable
+                    key={a.id}
+                    onPress={() => onOpenAccount(a)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${a.name}, ${accountTypeLabel(a)}. Open summary`}
+                    style={withPressed(styles.accountCard)}
+                  >
+                    <View
+                      style={[styles.chipIcon, { backgroundColor: shade(accountHue(a.type, accent), 88) }]}
+                    >
+                      <MaterialCommunityIcons
+                        name={accountIcon(a.type) as McIconName}
+                        size={18}
+                        color={shade(accountHue(a.type, accent), 30, 10)}
+                      />
+                    </View>
+                    <View style={styles.chipText}>
+                      <Text style={styles.chipName}>{a.name}</Text>
+                      <Amount
+                        minor={a.currentBalanceMinor}
+                        currency={a.currency}
+                        sensitive={a.type === 'savings'}
+                        style={styles.listAmount}
+                      />
+                    </View>
+                  </Pressable>
+                ))}
+                {accounts.length < columns && <View style={{ flex: 1 }} />}
+              </View>
             ))}
-          </View>
+          </Glass>
         </View>
       </Section>
     );
@@ -250,17 +251,17 @@ export function HomeAccounts({
 }
 
 const styles = StyleSheet.create({
+  groupedAccounts: { padding: 12, gap: 8 },
   accountGrid: { flexDirection: 'row', gap: 10 },
   accountCard: {
     flex: 1,
     minWidth: 0,
-    padding: 12,
-    gap: 12,
-    borderRadius: 20,
-    backgroundColor: theme.colors.surface,
-    minHeight: 106,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    gap: 8,
+    minHeight: 64,
   },
-  accountCardHead: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   listAmount: {
     fontFamily: theme.font.bodyMedium,
     fontSize: 17,

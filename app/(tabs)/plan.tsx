@@ -112,7 +112,7 @@ interface PlanData {
 
 /** Overview shows one row of budget and goal tiles and this many payments; the tabs hold the rest. */
 const PREVIEW_PAYMENTS = 3;
-const PREVIEW_TILES = 2;
+const PREVIEW_TILES = 3;
 
 /** Plan previews open item sheets directly; collection links keep the full-screen routes. */
 export default function PlanScreen() {
@@ -430,7 +430,6 @@ export default function PlanScreen() {
               <>
                 <Section compact title="Budgets" onSeeAll={() => selectTab('money')}>
                   <BudgetJars
-                    compact
                     summary={data.budgets}
                     onOpen={() => open('/budgets')}
                     onBudget={(id) => openDetail('budget', id)}
@@ -454,7 +453,6 @@ export default function PlanScreen() {
                 </Section>
                 <Section compact title="Goals" onSeeAll={() => selectTab('money')}>
                   <GoalsStrip
-                    compact
                     goals={data.goals}
                     savingsAccounts={data.savingsAccounts}
                     onOpen={() => open('/savings-goals')}
@@ -543,25 +541,23 @@ export default function PlanScreen() {
               <>
                 <Section compact first title="Budgets" onSeeAll={() => open('/budgets')}>
                   <BudgetJars
-                    compact
                     showAdd
                     summary={data.budgets}
                     onOpen={() => open('/budgets')}
                     onBudget={(id) => openDetail('budget', id)}
                     onAdd={() => openDetail('new-budget', '')}
-                    limit={data.budgets.rows.length}
+                    limit={data.budgets.rows.length + 1}
                   />
                 </Section>
                 <Section compact title="Goals" onSeeAll={() => open('/savings-goals')}>
                   <GoalsStrip
-                    compact
                     showAdd
                     goals={data.goals}
                     savingsAccounts={data.savingsAccounts}
                     onOpen={() => open('/savings-goals')}
                     onGoal={(id) => openDetail('goal', id)}
                     onAdd={() => openDetail('new-goal', '')}
-                    limit={data.goals.length}
+                    limit={data.goals.length + 1}
                   />
                 </Section>
                 <Section compact title="Ideas">
@@ -582,19 +578,13 @@ export default function PlanScreen() {
             {tab === 'debt' && (
               <>
                 <Section compact title="Debt">
-                  <DebtPath loans={data.loans} today={data.today} onOpen={() => open('/loans')} />
-                </Section>
-                <View style={styles.createActions}>
-                  <PrimaryButton
-                    title="Add loan"
-                    accessibilityLabel="Add loan"
-                    icon="plus"
-                    variant="secondary"
-                    compact
-                    style={styles.createAction}
-                    onPress={() => openDetail('new-loan', '')}
+                  <DebtPath
+                    loans={data.loans}
+                    today={data.today}
+                    onOpen={() => open('/loans')}
+                    onAdd={() => openDetail('new-loan', '')}
                   />
-                </View>
+                </Section>
                 {data.loans.rows.length > 0 && (
                   <Section compact title="Loans" onSeeAll={() => open('/loans')}>
                     <DebtLoans loans={data.loans} onLoan={(id) => openDetail('loan', id)} />
@@ -836,8 +826,6 @@ const styles = StyleSheet.create({
   menuRow: { minHeight: 68, paddingVertical: 12, flexDirection: 'row', alignItems: 'center', gap: 14 },
   menuTitle: { fontFamily: theme.font.bodyMedium, fontSize: 15, color: theme.colors.textPrimary },
   menuDescription: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
-  createActions: { marginHorizontal: SCREEN.gutter, marginBottom: 14, flexDirection: 'row', gap: 10 },
-  createAction: { flex: 1, minHeight: 44 },
   tabs: { marginHorizontal: 16, marginTop: theme.layout.screenTopGap, marginBottom: SCREEN.sectionGap },
   headLink: { flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 48 },
   headLinkText: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.link },

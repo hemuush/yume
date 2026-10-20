@@ -47,6 +47,8 @@ interface UpcomingLoanInput {
 }
 
 export interface Upcoming {
+  /** Next occurrence from every supported schedule, before the short-window filter. */
+  all?: UpcomingItem[];
   /** Bills to pay soon (or late) first, then everything else due within UPCOMING_DAYS, each soonest first. */
   items: UpcomingItem[];
   /** The first thing due after the window, for a week with nothing in it. */
@@ -138,7 +140,22 @@ export function buildUpcomingItems(input: {
   const inWindow = all.filter((i) => daysUntilIsoDate(i.sortDate) <= UPCOMING_DAYS);
   // Bills to pay come first, each group still soonest first.
   const items = [...inWindow.filter((i) => i.pinned), ...inWindow.filter((i) => !i.pinned)];
-  return { items, next: all.find((i) => daysUntilIsoDate(i.sortDate) > UPCOMING_DAYS) ?? null };
+  return { all, items, next: all.find((i) => daysUntilIsoDate(i.sortDate) > UPCOMING_DAYS) ?? null };
+}
+
+/** Rank next scheduled money-out occurrences across loans, recurring bills and unpaid cards. */
+export function largestUpcomingOutgoings(upcoming: Upcoming): UpcomingItem[] {
+  const candidates = upcoming.all ?? [...upcoming.items, ...(upcoming.next ? [upcoming.next] : [])];
+  return [
+    ...new Map(
+      candidates.filter((item) => item.sign === '-' && item.amountMinor > 0).map((item) => [item.key, item])
+    ).values(),
+  ]
+    .sort(
+      (a, b) =>
+        b.amountMinor - a.amountMinor || a.sortDate.localeCompare(b.sortDate) || a.key.localeCompare(b.key)
+    )
+    .slice(0, 3);
 }
 
 /** One real outgoing priority; incoming money never creates an attention warning. */
@@ -208,12 +225,7 @@ export function HomeGlance({
   onRetryRefunds?: () => void;
   priorityKey?: string;
 }) {
-  const remaining = upcoming.items.filter((item) => item.key !== priorityKey);
-  const visible = remaining.length
-    ? remaining.slice(0, priorityKey ? 1 : 2)
-    : !upcoming.items.length && upcoming.next
-      ? [upcoming.next]
-      : [];
+  const visible = largestUpcomingOutgoings(upcoming).filter((item) => item.key !== priorityKey);
   if (!visible.length && priorityKey && !refunds.length && !refundError) return null;
   return (
     <>

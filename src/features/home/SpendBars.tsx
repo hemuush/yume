@@ -97,16 +97,19 @@ export function SpendBars({
   daily,
   today,
   compact = false,
+  embedded = false,
 }: {
   daily: { date: string; totalMinor: number }[];
   today: string;
   compact?: boolean;
+  embedded?: boolean;
 }) {
   const chart = useRef<ScrollView>(null);
   const { accent } = useAccent();
   const ink = homeInk(accent);
   const tint = hexToRgba(ink, 0.22);
-  const [range, setRange] = useState<Range>('week');
+  const [chosenRange, setRange] = useState<Range>('week');
+  const range = embedded ? 'week' : chosenRange;
   const [switched, setSwitched] = useState(false);
   const [picked, setPicked] = useState<{ range: Range; today: string; key: string } | null>(null);
   const bars = range === 'week' ? weekBars(daily, today) : monthBars(daily, today);
@@ -133,36 +136,40 @@ export function SpendBars({
               </>
             )}
           </Text>
-          {compact && <Text style={styles.snapshotTotal}>{formatMoney(total)}</Text>}
+          {compact && (
+            <Text style={[styles.snapshotTotal, embedded && styles.embeddedTotal]}>{formatMoney(total)}</Text>
+          )}
         </View>
-        <View style={styles.switch} accessibilityRole="tablist">
-          {(['week', 'month'] as const).map((r) => (
-            <Pressable
-              key={r}
-              onPress={() => {
-                if (r === range) return;
-                haptics.tap();
-                setSwitched(true);
-                setRange(r);
-                setPicked(null);
-              }}
-              hitSlop={{ top: 7, bottom: 7, left: 0, right: 0 }}
-              style={[styles.seg, r === range && [styles.segOn, { backgroundColor: ink }]]}
-              accessibilityRole="tab"
-              accessibilityState={{ selected: r === range }}
-            >
-              <Text style={[styles.segText, r === range && styles.segTextOn]}>
-                {r === 'week' ? 'Week' : 'Month'}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
+        {!embedded && (
+          <View style={styles.switch} accessibilityRole="tablist">
+            {(['week', 'month'] as const).map((r) => (
+              <Pressable
+                key={r}
+                onPress={() => {
+                  if (r === range) return;
+                  haptics.tap();
+                  setSwitched(true);
+                  setRange(r);
+                  setPicked(null);
+                }}
+                hitSlop={{ top: 7, bottom: 7, left: 0, right: 0 }}
+                style={[styles.seg, r === range && [styles.segOn, { backgroundColor: ink }]]}
+                accessibilityRole="tab"
+                accessibilityState={{ selected: r === range }}
+              >
+                <Text style={[styles.segText, r === range && styles.segTextOn]}>
+                  {r === 'week' ? 'Week' : 'Month'}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+        )}
       </View>
       <ScrollView
         ref={chart}
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={[styles.bars, compact && styles.barsCompact]}
+        contentContainerStyle={[styles.bars, compact && styles.barsCompact, embedded && styles.barsEmbedded]}
         onContentSizeChange={() => chart.current?.scrollToEnd({ animated: false })}
       >
         {bars.map((b, i) => (
@@ -193,7 +200,7 @@ export function SpendBars({
         ))}
       </ScrollView>
       {compact && (
-        <View style={styles.chartFooter}>
+        <View style={[styles.chartFooter, embedded && styles.footerEmbedded]}>
           <Text style={styles.pickedAmount}>
             {range === 'week'
               ? parseLocalIsoDate(selectedKey).toLocaleDateString(undefined, {
@@ -251,6 +258,9 @@ const styles = StyleSheet.create({
     marginTop: 3,
   },
   barsCompact: { height: 112 },
+  barsEmbedded: { height: 88 },
+  embeddedTotal: { fontFamily: theme.font.bodyMedium, fontSize: 15, lineHeight: 20, marginTop: 0 },
+  footerEmbedded: { paddingTop: 2, borderTopWidth: 0 },
   chartFooter: {
     paddingTop: 10,
     borderTopWidth: StyleSheet.hairlineWidth,

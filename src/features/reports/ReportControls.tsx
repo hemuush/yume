@@ -4,6 +4,7 @@ import Feather from '@expo/vector-icons/Feather';
 import { Text } from '@/components/Text';
 import { ActionSheet } from '@/components/ActionSheet';
 import { ModalSheet } from '@/components/ModalSheet';
+import { GLASS } from '@/components/Glass';
 import { theme } from '@/constants/theme';
 import { withPressed } from '@/lib/pressed';
 
@@ -23,10 +24,9 @@ export function ReportTabs({ value, onChange }: { value: ReportTab; onChange: (v
           onPress={() => onChange(key)}
           accessibilityRole="tab"
           accessibilityState={{ selected: value === key }}
-          style={withPressed(s.tab)}
+          style={withPressed([s.tab, value === key && s.tabActive])}
         >
           <Text style={[s.tabText, value === key && s.tabOn]}>{label}</Text>
-          <View style={[s.underline, value === key && s.underlineOn]} />
         </Pressable>
       ))}
     </View>
@@ -132,14 +132,32 @@ const s = StyleSheet.create({
   tabs: {
     flexDirection: 'row',
     marginHorizontal: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.borderSoft,
+    marginTop: theme.layout.screenTopGap,
+    marginBottom: 14,
+    padding: 4,
+    borderRadius: theme.radius.pill,
+    borderWidth: 1,
+    borderColor: GLASS.edge,
+    backgroundColor: GLASS.fill,
   },
-  tab: { flex: 1, minHeight: 48, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 4 },
-  tabText: { fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textMuted },
-  tabOn: { fontFamily: theme.font.bodyBold, color: theme.colors.ink },
-  underline: { position: 'absolute', bottom: 0, height: 3, left: '18%', right: '18%', borderRadius: 3 },
-  underlineOn: { backgroundColor: theme.colors.ink },
+  tab: {
+    flex: 1,
+    minWidth: 0,
+    minHeight: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 4,
+    paddingVertical: 6,
+    borderRadius: theme.radius.pill,
+  },
+  tabActive: { backgroundColor: theme.colors.ink },
+  tabText: {
+    fontFamily: theme.font.roundedMedium,
+    fontSize: 13,
+    color: theme.colors.textSecondary,
+    textAlign: 'center',
+  },
+  tabOn: { fontFamily: theme.font.roundedBold, color: theme.colors.surface },
   filters: { flexDirection: 'row', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 14 },
   flow: { flexDirection: 'row', backgroundColor: theme.colors.inkWash, borderRadius: 12, padding: 3 },
   flowButton: {

@@ -127,7 +127,7 @@ it('shows compact refunds below Coming up only for pending data or a failed read
   expect(texts(tree)).toContain('Couldn’t load refunds');
 });
 
-it('previews two payments without tabs and keeps the full schedule reachable', () => {
+it('previews three outgoing payments without tabs and keeps the full schedule reachable', () => {
   const { router } = require('expo-router');
   const item = (key: string) => ({
     key,
@@ -153,7 +153,7 @@ it('previews two payments without tabs and keeps the full schedule reachable', (
   );
   expect(texts(tree)).toContain('First');
   expect(texts(tree)).toContain('Second');
-  expect(texts(tree)).not.toContain('Third');
+  expect(texts(tree)).toContain('Third');
   const { UpcomingRow } = require('./UpcomingRow');
   act(() => tree.root.findAllByType(UpcomingRow)[0].props.onPress());
   expect(router.push).toHaveBeenCalledWith('/recurring');
@@ -193,7 +193,8 @@ it('surfaces one outgoing priority and does not repeat it in Next up', () => {
     />
   );
   expect(texts(rest)).not.toContain('Internet bill');
-  expect(texts(rest)).toContain('Salary');
+  expect(texts(rest)).not.toContain('Salary');
+  expect(texts(rest)).toContain('Insurance');
   const only = render(
     <HomeGlance
       upcoming={{ items: [bill], next: null }}

@@ -454,3 +454,17 @@ it('keeps every ready recap available from the calculation disclosure', () => {
   expect(month).toHaveBeenCalledTimes(1);
   expect(week).toHaveBeenCalledTimes(1);
 });
+
+it('keeps the embedded trend and insights attached to the displayed period', () => {
+  const onSeeInsights = jest.fn();
+  const r = render({ spendingTrend: { daily: [], today: '2026-10-20' }, onSeeInsights });
+  const { SpendBars } = require('./SpendBars');
+  expect(r.root.findAllByType(SpendBars)).toHaveLength(1);
+  act(() => byLabel(r, 'See spending insights').props.onPress());
+  expect(onSeeInsights).toHaveBeenLastCalledWith('month:0');
+  act(() => r.update(hero({ periodKey: 'month:-1', spendingTrend: null, onSeeInsights })));
+  expect(r.root.findAllByType(SpendBars)).toHaveLength(0);
+  act(() => byLabel(r, 'See spending insights').props.onPress());
+  expect(onSeeInsights).toHaveBeenLastCalledWith('month:-1');
+  act(() => r.unmount());
+});
