@@ -146,7 +146,10 @@ describe('recurring sheet', () => {
     tree.root.findAll((n) => n.props.label === 'Amount' && typeof n.props.onChangeText === 'function')[0];
   const save = async (tree: ReactTestRenderer) => {
     await act(async () => {
-      await tree.root.findByType(PrimaryButton).props.onPress();
+      await tree.root
+        .findAllByType(PrimaryButton)
+        .find((n) => /^(Save|Add)/.test(n.props.title))!
+        .props.onPress();
     });
   };
 
@@ -210,5 +213,33 @@ it.each([true, false])('confirms a status change from active=%s before writing',
     await args[2][1].onPress();
   });
   expect(setRecurringRuleActive).toHaveBeenCalledWith('r1', !active);
+  alert.mockRestore();
+});
+
+it('warns before changing an overdue confirm-first rule to automatic posting', async () => {
+  const dialog = require('@/components/AppDialog');
+  const alert = jest.spyOn(dialog, 'showAlert').mockImplementation(() => {});
+  (updateRecurringRule as jest.Mock).mockClear();
+  const tree = await render({ ...rule, postingMode: 'confirm', nextRunDate: '2020-01-01' });
+  act(() => tree.root.find((n) => n.props.value === 'setup' && n.props.onChange).props.onChange('schedule'));
+  act(() =>
+    tree.root.find((n) => n.props.value === 'confirm' && n.props.onChange).props.onChange('automatic')
+  );
+  await act(async () =>
+    tree.root
+      .findAllByType(PrimaryButton)
+      .find((n) => /^(Save|Add)/.test(n.props.title))!
+      .props.onPress()
+  );
+  expect(updateRecurringRule).not.toHaveBeenCalled();
+  expect(alert.mock.calls.at(-1)?.[0]).toMatch(/^Log \d+ past entries\?$/);
+  const buttons = alert.mock.calls.at(-1)?.[2] as { onPress?: () => Promise<void> }[];
+  await act(async () => {
+    await buttons[1].onPress!();
+  });
+  expect(updateRecurringRule).toHaveBeenCalledWith(
+    'r1',
+    expect.objectContaining({ postingMode: 'automatic' })
+  );
   alert.mockRestore();
 });

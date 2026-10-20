@@ -1,3 +1,4 @@
+import { NextOccurrenceSheet } from './NextOccurrenceSheet';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { View } from 'react-native';
 import { Text } from '@/components/Text';
@@ -100,6 +101,8 @@ export function RuleModal({
   const [categoryId, setCategoryId] = useState<string | null>(null);
   const [amount, setAmount] = useState('');
   const [note, setNote] = useState('');
+  const [postingMode, setPostingMode] = useState<'automatic' | 'confirm'>('automatic');
+  const [occurrenceVisible, setOccurrenceVisible] = useState(false);
   const [frequency, setFrequency] = useState<RecurrenceFrequency>('monthly');
   const [intervalCount, setIntervalCount] = useState('1');
   const [startDate, setStartDate] = useState(() => toLocalIsoDate(new Date()));
@@ -122,6 +125,8 @@ export function RuleModal({
     if (!visible) return;
     // Taken when it opens, not frozen at mount: the screen stays alive past midnight.
     const today = toLocalIsoDate(new Date());
+    setOccurrenceVisible(false);
+    setPostingMode(editing?.postingMode ?? 'automatic');
     if (editing) {
       setType(editing.type);
       setAccountId(editing.accountId);
@@ -211,12 +216,18 @@ export function RuleModal({
       frequency,
       intervalCount: interval,
       nextRunDate: startDate,
+      postingMode,
+      paymentMode: editing?.paymentMode ?? null,
       endDate: hasEndDate ? endDate : null,
     };
 
     // A start in the past posts every missed run the next time the app opens: say how many first.
     const today = toLocalIsoDate(new Date());
-    if (startDate < today && startDate !== editing?.nextRunDate) {
+    if (
+      postingMode === 'automatic' &&
+      startDate < today &&
+      (startDate !== editing?.nextRunDate || editing?.postingMode === 'confirm')
+    ) {
       const past = runsBetween(
         {
           nextRunDate: startDate,
@@ -310,11 +321,21 @@ export function RuleModal({
   const interval = Math.min(MAX_INTERVAL[frequency], Math.max(1, parseInt(intervalCount || '1', 10) || 1));
   // An unchanged start keeps the rule's real day: a 31st rule now sitting on the 30th still previews the 31st.
   const previewAnchor =
-    editing && startDate === editing.nextRunDate && editing.anchorDay
+    editing &&
+    startDate === editing.nextRunDate &&
+    frequency === editing.frequency &&
+    interval === editing.intervalCount &&
+    editing.anchorDay
       ? editing.anchorDay
       : Number(startDate.slice(8));
   const upcoming = !hasEndDate || startDate <= endDate ? [startDate] : [];
-  let previewDate = startDate;
+  let previewDate =
+    editing &&
+    startDate === editing.nextRunDate &&
+    frequency === editing.frequency &&
+    interval === editing.intervalCount
+      ? (editing.scheduledDate ?? startDate)
+      : startDate;
   while (upcoming.length < 3) {
     previewDate = advanceDate(previewDate, frequency, interval, previewAnchor);
     if (hasEndDate && previewDate > endDate) break;
@@ -323,200 +344,237 @@ export function RuleModal({
   const toggle = (which: 'account' | 'to' | 'category') => setOpen((o) => (o === which ? null : which));
 
   return (
-    <ModalSheet
-      dismissible={!saving}
-      visible={visible}
-      title={editing ? 'Edit recurring entry' : 'New recurring entry'}
-      onClose={onClose}
-      footer={
-        <View style={f.footerCol}>
-          {error && <Text style={styles.errorText}>{error}</Text>}
-          <PrimaryButton
-            title={saving ? 'Saving…' : editing ? 'Save changes' : 'Create'}
-            onPress={submitOnce}
-            disabled={saving}
-          />
-        </View>
-      }
-    >
-      <SheetCard
-        compact
-        hue={type === 'transfer' ? secondary : (cat?.color ?? accent)}
-        icon={type === 'transfer' ? 'swap-horizontal' : (cat?.icon ?? 'repeat')}
-        kicker={cadenceLabel(frequency, interval)}
-        amount={formatMoney(inputMinor(amount))}
-        title={
-          note ||
-          (type === 'transfer'
-            ? `${accountName(effectiveAccountId) ?? '—'} → ${accountName(toAccountId) ?? '…'}`
-            : cat
-              ? categorySentence(cat.name, parentNameOf(cat.id, categoriesById))
-              : editing
-                ? 'Recurring entry'
-                : 'New recurring entry')
-        }
-        meta={`${type === 'income' ? 'Into' : 'From'} ${accountName(effectiveAccountId) ?? '—'} · next ${weekdayDayMonth(startDate)}`}
-      />
-      {editing && editing.type === 'expense' && editing.frequency === 'yearly' && (
-        <AnnualBillPreparation
-          rule={editing}
-          accounts={accounts}
-          onNavigate={onClose}
-          sensitive={
-            !!(
-              categoriesById.get(editing.categoryId ?? '')?.isSensitive ||
-              categoriesById.get(categoriesById.get(editing.categoryId ?? '')?.parentId ?? '')?.isSensitive
-            )
-          }
-        />
-      )}
-      <SheetTabs
-        options={[
-          { label: 'Set up', value: 'setup' },
-          { label: 'Schedule', value: 'schedule' },
-        ]}
-        value={tab}
-        onChange={setTab}
-      />
-
-      {tab === 'setup' ? (
-        <>
-          <SheetTabs options={TX_TYPES} value={type} onChange={onTypeChange} />
-          <View style={styles.gap} />
-          <AmountField label="Amount" value={amount} onChangeText={setAmount} placeholder="0.00" />
-          <View style={[h.card, h.cardInSheet]}>
-            <SettingsRow
-              round
-              icon="bank"
-              label={type === 'transfer' ? 'From' : 'Account'}
-              value={accountName(effectiveAccountId)}
-              onPress={() => toggle('account')}
-              expanded={open === 'account'}
+    <>
+      <ModalSheet
+        dismissible={!saving}
+        visible={visible && !occurrenceVisible}
+        title={editing ? 'Edit recurring entry' : 'New recurring entry'}
+        onClose={onClose}
+        footer={
+          <View style={f.footerCol}>
+            {error && <Text style={styles.errorText}>{error}</Text>}
+            <PrimaryButton
+              title={saving ? 'Saving…' : editing ? 'Save changes' : 'Create'}
+              onPress={submitOnce}
+              disabled={saving}
             />
-            {open === 'account' && (
-              <View style={styles.rowPanel}>
-                {pickableAccounts.map((acc) => (
-                  <Chip
-                    key={acc.id}
-                    label={acc.name}
-                    active={effectiveAccountId === acc.id}
-                    onPress={() => {
-                      setAccountId(acc.id);
-                      setOpen(null);
-                    }}
-                  />
-                ))}
-              </View>
-            )}
-            {type === 'transfer' ? (
-              <>
-                <SettingsRow
-                  round
-                  icon="swap-horizontal"
-                  label="To"
-                  value={accountName(toAccountId) ?? 'Pick one'}
-                  onPress={() => toggle('to')}
-                  expanded={open === 'to'}
-                  divider
-                />
-                {open === 'to' && (
-                  <View style={styles.rowPanel}>
-                    {accounts
-                      .filter((a) => a.id !== effectiveAccountId)
-                      .map((acc) => (
-                        <Chip
-                          key={acc.id}
-                          label={acc.name}
-                          active={toAccountId === acc.id}
-                          onPress={() => {
-                            setToAccountId(acc.id);
-                            setOpen(null);
-                          }}
-                        />
-                      ))}
-                  </View>
-                )}
-              </>
-            ) : (
-              <>
-                <SettingsRow
-                  round
-                  icon={cat?.icon ?? 'shape-outline'}
-                  iconBg={cat ? hexToRgba(cat.color, 0.25) : theme.colors.surfaceAlt}
-                  label="Category"
-                  value={cat ? categorySentence(cat.name, parentNameOf(cat.id, categoriesById)) : 'Pick one'}
-                  onPress={() => toggle('category')}
-                  expanded={open === 'category'}
-                  divider
-                />
-                {open === 'category' && (
-                  <View style={styles.rowPanelGrid}>
-                    <CategoryPicker
-                      categories={filteredCategories}
-                      selectedId={categoryId}
-                      onSelect={(id) => {
-                        setCategoryId(id);
+          </View>
+        }
+      >
+        <SheetCard
+          compact
+          hue={type === 'transfer' ? secondary : (cat?.color ?? accent)}
+          icon={type === 'transfer' ? 'swap-horizontal' : (cat?.icon ?? 'repeat')}
+          kicker={cadenceLabel(frequency, interval)}
+          amount={formatMoney(inputMinor(amount))}
+          title={
+            note ||
+            (type === 'transfer'
+              ? `${accountName(effectiveAccountId) ?? '—'} → ${accountName(toAccountId) ?? '…'}`
+              : cat
+                ? categorySentence(cat.name, parentNameOf(cat.id, categoriesById))
+                : editing
+                  ? 'Recurring entry'
+                  : 'New recurring entry')
+          }
+          meta={`${type === 'income' ? 'Into' : 'From'} ${accountName(effectiveAccountId) ?? '—'} · next ${weekdayDayMonth(startDate)}`}
+        />
+        {editing?.active && (
+          <PrimaryButton
+            variant="secondary"
+            compact
+            title="Manage next occurrence"
+            onPress={() => setOccurrenceVisible(true)}
+          />
+        )}
+        {editing && editing.type === 'expense' && editing.frequency === 'yearly' && (
+          <AnnualBillPreparation
+            rule={editing}
+            accounts={accounts}
+            onNavigate={onClose}
+            sensitive={
+              !!(
+                categoriesById.get(editing.categoryId ?? '')?.isSensitive ||
+                categoriesById.get(categoriesById.get(editing.categoryId ?? '')?.parentId ?? '')?.isSensitive
+              )
+            }
+          />
+        )}
+        <SheetTabs
+          options={[
+            { label: 'Set up', value: 'setup' },
+            { label: 'Schedule', value: 'schedule' },
+          ]}
+          value={tab}
+          onChange={setTab}
+        />
+
+        {tab === 'setup' ? (
+          <>
+            <SheetTabs options={TX_TYPES} value={type} onChange={onTypeChange} />
+            <View style={styles.gap} />
+            <AmountField label="Amount" value={amount} onChangeText={setAmount} placeholder="0.00" />
+            <View style={[h.card, h.cardInSheet]}>
+              <SettingsRow
+                round
+                icon="bank"
+                label={type === 'transfer' ? 'From' : 'Account'}
+                value={accountName(effectiveAccountId)}
+                onPress={() => toggle('account')}
+                expanded={open === 'account'}
+              />
+              {open === 'account' && (
+                <View style={styles.rowPanel}>
+                  {pickableAccounts.map((acc) => (
+                    <Chip
+                      key={acc.id}
+                      label={acc.name}
+                      active={effectiveAccountId === acc.id}
+                      onPress={() => {
+                        setAccountId(acc.id);
                         setOpen(null);
                       }}
-                      variant="medal"
                     />
-                  </View>
-                )}
-              </>
-            )}
-          </View>
-          <FormInput
-            label={type === 'expense' ? 'Label (optional)' : 'Note (optional)'}
-            value={note}
-            onChangeText={setNote}
-            placeholder="e.g. Netflix"
-          />
-          {editing && (
-            <InsightDisclosure title="More options">
-              <SheetLink
-                label={editing.active ? 'Pause recurring entry' : 'Resume recurring entry'}
-                onPress={confirmActive}
-                disabled={saving}
-              />
-              <SheetLink label="Delete recurring entry" onPress={confirmDelete} disabled={saving} />
-            </InsightDisclosure>
-          )}
-        </>
-      ) : (
-        <>
-          <SheetTabs options={FREQUENCIES} value={frequency} onChange={setFrequency} />
-          <View style={styles.gap} />
-          <AmountField
-            decimal={false}
-            label={`Every how many ${frequencyNoun(frequency, 2)}`}
-            value={intervalCount}
-            onChangeText={setIntervalCount}
-            placeholder="1"
-          />
-          <DateField
-            label={editing ? 'Next entry on' : 'Starts on'}
-            value={startDate}
-            onChange={setStartDate}
-          />
-          <View style={styles.endDateRow}>
-            <Text style={styles.fieldLabel}>Ends on a specific date</Text>
-            <ToggleSwitch
-              value={hasEndDate}
-              onChange={setHasEndDate}
-              accessibilityLabel="Ends on a specific date"
+                  ))}
+                </View>
+              )}
+              {type === 'transfer' ? (
+                <>
+                  <SettingsRow
+                    round
+                    icon="swap-horizontal"
+                    label="To"
+                    value={accountName(toAccountId) ?? 'Pick one'}
+                    onPress={() => toggle('to')}
+                    expanded={open === 'to'}
+                    divider
+                  />
+                  {open === 'to' && (
+                    <View style={styles.rowPanel}>
+                      {accounts
+                        .filter((a) => a.id !== effectiveAccountId)
+                        .map((acc) => (
+                          <Chip
+                            key={acc.id}
+                            label={acc.name}
+                            active={toAccountId === acc.id}
+                            onPress={() => {
+                              setToAccountId(acc.id);
+                              setOpen(null);
+                            }}
+                          />
+                        ))}
+                    </View>
+                  )}
+                </>
+              ) : (
+                <>
+                  <SettingsRow
+                    round
+                    icon={cat?.icon ?? 'shape-outline'}
+                    iconBg={cat ? hexToRgba(cat.color, 0.25) : theme.colors.surfaceAlt}
+                    label="Category"
+                    value={
+                      cat ? categorySentence(cat.name, parentNameOf(cat.id, categoriesById)) : 'Pick one'
+                    }
+                    onPress={() => toggle('category')}
+                    expanded={open === 'category'}
+                    divider
+                  />
+                  {open === 'category' && (
+                    <View style={styles.rowPanelGrid}>
+                      <CategoryPicker
+                        categories={filteredCategories}
+                        selectedId={categoryId}
+                        onSelect={(id) => {
+                          setCategoryId(id);
+                          setOpen(null);
+                        }}
+                        variant="medal"
+                      />
+                    </View>
+                  )}
+                </>
+              )}
+            </View>
+            <FormInput
+              label={type === 'expense' ? 'Label (optional)' : 'Note (optional)'}
+              value={note}
+              onChangeText={setNote}
+              placeholder="e.g. Netflix"
             />
-          </View>
-          {hasEndDate && (
-            <DateField label="Ends on" value={endDate} onChange={setEndDate} minDate={startDate} />
-          )}
-          <Text style={[styles.fieldLabel, styles.upcomingLabel]}>Coming up</Text>
-          <View style={styles.upcoming}>
-            {upcoming.map((d, i) => (
-              <DateTile key={d} iso={d} background={i === 0 ? shade(accent, 95) : undefined} />
-            ))}
-          </View>
-        </>
+            {editing && (
+              <InsightDisclosure title="More options">
+                <SheetLink
+                  label={editing.active ? 'Pause recurring entry' : 'Resume recurring entry'}
+                  onPress={confirmActive}
+                  disabled={saving}
+                />
+                <SheetLink label="Delete recurring entry" onPress={confirmDelete} disabled={saving} />
+              </InsightDisclosure>
+            )}
+          </>
+        ) : (
+          <>
+            <Text style={styles.fieldLabel}>Recording</Text>
+            <SheetTabs
+              options={[
+                { label: 'Automatic', value: 'automatic' },
+                { label: 'Confirm first', value: 'confirm' },
+              ]}
+              value={postingMode}
+              onChange={setPostingMode}
+            />
+            <Text style={styles.hint}>
+              {postingMode === 'confirm'
+                ? 'Due entries stay planned until you record them. No automatic account movement.'
+                : 'Due entries are recorded when Yume runs its catch-up.'}
+            </Text>
+            <SheetTabs options={FREQUENCIES} value={frequency} onChange={setFrequency} />
+            <View style={styles.gap} />
+            <AmountField
+              decimal={false}
+              label={`Every how many ${frequencyNoun(frequency, 2)}`}
+              value={intervalCount}
+              onChangeText={setIntervalCount}
+              placeholder="1"
+            />
+            <DateField
+              label={editing ? 'Next entry on' : 'Starts on'}
+              value={startDate}
+              onChange={setStartDate}
+            />
+            <View style={styles.endDateRow}>
+              <Text style={styles.fieldLabel}>Ends on a specific date</Text>
+              <ToggleSwitch
+                value={hasEndDate}
+                onChange={setHasEndDate}
+                accessibilityLabel="Ends on a specific date"
+              />
+            </View>
+            {hasEndDate && (
+              <DateField label="Ends on" value={endDate} onChange={setEndDate} minDate={startDate} />
+            )}
+            <Text style={[styles.fieldLabel, styles.upcomingLabel]}>Coming up</Text>
+            <View style={styles.upcoming}>
+              {upcoming.map((d, i) => (
+                <DateTile key={d} iso={d} background={i === 0 ? shade(accent, 95) : undefined} />
+              ))}
+            </View>
+          </>
+        )}
+      </ModalSheet>
+      {visible && occurrenceVisible && editing && (
+        <NextOccurrenceSheet
+          rule={editing}
+          onClose={() => setOccurrenceVisible(false)}
+          onSaved={() => {
+            setOccurrenceVisible(false);
+            onSaved();
+            onClose();
+          }}
+        />
       )}
-    </ModalSheet>
+    </>
   );
 }

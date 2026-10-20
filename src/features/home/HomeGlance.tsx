@@ -125,7 +125,7 @@ export function buildUpcomingItems(input: {
         ? `${input.accountName(rule.accountId) ?? '—'} → ${input.accountName(rule.toAccountId) ?? '—'}`
         : rule.note || input.categoryName(rule.categoryId) || 'Recurring',
       subtitle: dueDateLabel(rule.nextRunDate),
-      amountMinor: rule.amountMinor,
+      amountMinor: rule.nextAmountMinor ?? rule.amountMinor,
       sign: rule.type === 'income' ? '+' : rule.type === 'expense' ? '-' : '',
       sortDate: rule.nextRunDate,
       route: '/recurring',

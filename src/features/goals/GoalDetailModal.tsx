@@ -270,7 +270,8 @@ export function GoalDetailModal({
               disabled={busy}
               danger={false}
             />
-          ) : !goal.tracksAccount && (goal.currentAmountMinor > 0 || goal.reservesAccount) ? (
+          ) : goal.hasHistory ||
+            (!goal.tracksAccount && (goal.currentAmountMinor > 0 || goal.reservesAccount)) ? (
             <View>
               <SheetLink
                 label={

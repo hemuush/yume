@@ -35,10 +35,16 @@ export async function estimatePurchase(accountId: string, amountMinor: number, p
           sensitiveForecast = true;
         movements.push({
           date,
-          deltaMinor: credit ? rule.amount_minor : -rule.amount_minor,
+          deltaMinor:
+            (credit ? 1 : -1) * (n === 0 ? (rule.next_amount_minor ?? rule.amount_minor) : rule.amount_minor),
           label: rule.note || 'Scheduled entry',
         });
-        const next = advanceDate(date, rule.frequency, rule.interval_count, anchor);
+        const next = advanceDate(
+          n === 0 ? (rule.scheduled_date ?? date) : date,
+          rule.frequency,
+          rule.interval_count,
+          anchor
+        );
         if (next <= date) throw new Error('Fix this recurring schedule before estimating.');
         date = next;
       }

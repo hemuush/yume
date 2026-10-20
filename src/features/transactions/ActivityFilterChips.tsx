@@ -4,7 +4,8 @@ import { themeInk } from '@/theme/interactionColors';
 import { Text } from '@/components/Text';
 import Feather from '@expo/vector-icons/Feather';
 import { theme } from '@/constants/theme';
-import { TransactionType } from '@/types';
+import { TransactionType, PaymentMode } from '@/types';
+import { paymentMethodLabel } from '@/lib/paymentMode';
 import { EmptyState } from '@/components/EmptyState';
 import { styles } from './transactions.styles';
 import { withPressed } from '@/lib/pressed';
@@ -36,6 +37,8 @@ export function ActivityFilterChips({
   onClearAll,
   onOpenFilters,
   filterCount = 0,
+  paymentMode,
+  onRemovePayment,
 }: {
   filterType: TransactionType | 'all';
   onFilterType: (type: TransactionType | 'all') => void;
@@ -48,8 +51,13 @@ export function ActivityFilterChips({
   onClearAll: () => void;
   onOpenFilters?: () => void;
   filterCount?: number;
+  paymentMode?: PaymentMode | 'unspecified';
+  onRemovePayment?: () => void;
 }) {
-  const picked = categoryIds.length + accountIds.length + (filterType === 'all' ? 0 : 1);
+  const picked =
+    categoryIds.length + accountIds.length + (filterType === 'all' ? 0 : 1) + (paymentMode ? 1 : 0);
+  const methodLabel =
+    paymentMode === 'unspecified' ? 'Not recorded' : paymentMode ? paymentMethodLabel(paymentMode) : '';
   const { accent } = useAccent();
   const chipBg = shade(accent, 95);
   const { width, fontScale } = useWindowDimensions();
@@ -97,6 +105,18 @@ export function ActivityFilterChips({
           contentContainerStyle={styles.chipsRow}
           keyboardShouldPersistTaps="handled"
         >
+          {paymentMode && (
+            <Pressable
+              onPress={onRemovePayment}
+              style={withPressed([styles.chip, { backgroundColor: chipBg }])}
+              accessibilityRole="button"
+              accessibilityLabel={`Remove payment method filter: ${methodLabel}`}
+            >
+              <Feather name="credit-card" size={12} color={theme.colors.textSecondary} />
+              <Text style={styles.chipText}>{methodLabel}</Text>
+              <Feather name="x" size={12} color={theme.colors.textSecondary} />
+            </Pressable>
+          )}
           {categoryIds.map((id) => (
             <Pressable
               key={id}

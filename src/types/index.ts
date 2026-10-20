@@ -122,6 +122,8 @@ export interface LoanPayment {
 }
 
 export interface SavingsGoal {
+  /** Derived from the journal; history survives withdrawals back to zero. */
+  hasHistory?: boolean;
   id: string;
   name: string;
   targetAmountMinor: number;
@@ -178,6 +180,9 @@ export interface PersonLedgerEntry {
 export type RecurrenceFrequency = 'daily' | 'weekly' | 'monthly' | 'yearly';
 
 export interface RecurringRule {
+  postingMode?: 'automatic' | 'confirm';
+  nextAmountMinor?: number | null;
+  scheduledDate?: string | null;
   id: string;
   /** The rule's real day of the month (a 31st rule clamped to the 30th still runs on the 31st when it can). */
   anchorDay?: number | null;

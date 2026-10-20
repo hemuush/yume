@@ -31,6 +31,9 @@ function rowToRule(row: RecurringRuleRow): RecurringRule {
     endDate: row.end_date,
     active: !!row.active,
     anchorDay: row.anchor_day ?? null,
+    postingMode: row.posting_mode ?? 'automatic',
+    nextAmountMinor: row.next_amount_minor ?? null,
+    scheduledDate: row.scheduled_date ?? null,
   };
 }
 
@@ -46,7 +49,10 @@ function sameRuleInputs(a: RecurringRuleRow, b: RecurringRuleRow): boolean {
     a.frequency === b.frequency &&
     a.interval_count === b.interval_count &&
     a.end_date === b.end_date &&
-    a.anchor_day === b.anchor_day
+    a.anchor_day === b.anchor_day &&
+    (a.posting_mode ?? 'automatic') === (b.posting_mode ?? 'automatic') &&
+    (a.next_amount_minor ?? null) === (b.next_amount_minor ?? null) &&
+    (a.scheduled_date ?? null) === (b.scheduled_date ?? null)
   );
 }
 
@@ -54,6 +60,7 @@ function sameRuleInputs(a: RecurringRuleRow, b: RecurringRuleRow): boolean {
 export { advanceDate };
 
 export interface RecurringRuleInput {
+  postingMode?: 'automatic' | 'confirm';
   type: TransactionType;
   accountId: string;
   toAccountId?: string | null;
@@ -83,6 +90,8 @@ async function validate(input: RecurringRuleInput) {
   if (!Number.isInteger(input.intervalCount) || input.intervalCount <= 0) {
     throw new Error('Repeat interval must be a whole number of 1 or more');
   }
+  if (input.postingMode != null && !['automatic', 'confirm'].includes(input.postingMode))
+    throw new Error('Choose how this entry is recorded.');
   assertValidIsoDate(input.nextRunDate);
   if (input.endDate) assertValidIsoDate(input.endDate);
   if (!['daily', 'weekly', 'monthly', 'yearly'].includes(input.frequency))
@@ -118,8 +127,8 @@ export async function createRecurringRule(input: RecurringRuleInput): Promise<Re
   await db.runAsync(
     `INSERT INTO recurring_rules
       (id, type, account_id, to_account_id, category_id, amount_minor, note, payment_mode,
-       frequency, interval_count, next_run_date, end_date, active, anchor_day)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?)`,
+       frequency, interval_count, next_run_date, end_date, active, anchor_day, posting_mode)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)`,
     [
       id,
       input.type,
@@ -134,6 +143,7 @@ export async function createRecurringRule(input: RecurringRuleInput): Promise<Re
       input.nextRunDate,
       input.endDate ?? null,
       dayOfIsoDate(input.nextRunDate),
+      input.postingMode ?? 'automatic',
     ]
   );
   const row = await db.getFirstAsync<RecurringRuleRow>('SELECT * FROM recurring_rules WHERE id = ?', [id]);
@@ -146,15 +156,21 @@ export async function updateRecurringRule(id: string, input: RecurringRuleInput)
   const db = await getDb();
   // Keep the rule's real day unless its date moved, so an amount-only edit of a "31st" rule that shows the
   // clamped Feb 28 doesn't turn it into a "28th" rule. A genuinely new date re-anchors to its own day.
-  const current = await db.getFirstAsync<{ next_run_date: string; anchor_day: number | null }>(
-    'SELECT next_run_date, anchor_day FROM recurring_rules WHERE id = ?',
-    [id]
-  );
+  const current = await db.getFirstAsync<RecurringRuleRow>('SELECT * FROM recurring_rules WHERE id = ?', [
+    id,
+  ]);
+  const keepsSchedule =
+    current?.next_run_date === input.nextRunDate &&
+    current.frequency === input.frequency &&
+    current.interval_count === input.intervalCount;
   const anchorDay =
-    current && current.next_run_date === input.nextRunDate
+    keepsSchedule && current
       ? (current.anchor_day ?? dayOfIsoDate(input.nextRunDate))
       : dayOfIsoDate(input.nextRunDate);
   await db.withTransactionAsync(async (tx) => {
+    const live = await tx.getFirstAsync<RecurringRuleRow>('SELECT * FROM recurring_rules WHERE id = ?', [id]);
+    if (!live || JSON.stringify(live) !== JSON.stringify(current))
+      throw new Error('This recurring entry changed. Close and reopen it.');
     const linked = await tx.getFirstAsync<{ funding_currency: string | null; bill_currency: string | null }>(
       `SELECT funding.currency AS funding_currency, bill.currency AS bill_currency
        FROM annual_bill_goals b
@@ -175,7 +191,7 @@ export async function updateRecurringRule(id: string, input: RecurringRuleInput)
     await tx.runAsync(
       `UPDATE recurring_rules SET
        type = ?, account_id = ?, to_account_id = ?, category_id = ?, amount_minor = ?, note = ?,
-       payment_mode = ?, frequency = ?, interval_count = ?, next_run_date = ?, end_date = ?, anchor_day = ?
+       payment_mode = ?, frequency = ?, interval_count = ?, next_run_date = ?, end_date = ?, anchor_day = ?, posting_mode = ?, next_amount_minor = ?, scheduled_date = ?
      WHERE id = ?`,
       [
         input.type,
@@ -190,6 +206,9 @@ export async function updateRecurringRule(id: string, input: RecurringRuleInput)
         input.nextRunDate,
         input.endDate ?? null,
         anchorDay,
+        input.postingMode ?? current?.posting_mode ?? 'automatic',
+        keepsSchedule ? (current.next_amount_minor ?? null) : null,
+        keepsSchedule ? (current.scheduled_date ?? null) : null,
         id,
       ]
     );
@@ -222,12 +241,25 @@ export async function setRecurringRuleActive(
   let next = row.next_run_date;
   // Bounded like the runner: a broken interval can't spin forever.
   for (let i = 0; i < 5000 && next < today; i++) {
-    next = advanceDate(next, row.frequency, Math.max(1, row.interval_count), anchorDay);
+    next = advanceDate(
+      next === row.next_run_date ? (row.scheduled_date ?? next) : next,
+      row.frequency,
+      Math.max(1, row.interval_count),
+      anchorDay
+    );
   }
   if (row.end_date && next > row.end_date) {
     throw new Error('This recurring entry has already ended. Edit its end date to resume it.');
   }
-  await db.runAsync('UPDATE recurring_rules SET active = 1, next_run_date = ? WHERE id = ?', [next, id]);
+  await db.runAsync(
+    'UPDATE recurring_rules SET active = 1, next_run_date = ?, next_amount_minor = ?, scheduled_date = ? WHERE id = ?',
+    [
+      next,
+      next === row.next_run_date ? (row.next_amount_minor ?? null) : null,
+      next === row.next_run_date ? (row.scheduled_date ?? null) : null,
+      id,
+    ]
+  );
   await rebuildAttentionNotificationsAfterCommit('recurringAlerts');
 }
 
@@ -281,6 +313,7 @@ async function runDueRecurringRulesOnce(referenceDate: string): Promise<number> 
 
   let created = 0;
   for (const row of dueRules) {
+    if (row.posting_mode === 'confirm') continue;
     const rule = rowToRule(row);
     // Null on rules saved before anchor_day existed — their stored date's own
     // day is the best record of their real day that survives.
@@ -290,7 +323,7 @@ async function runDueRecurringRulesOnce(referenceDate: string): Promise<number> 
       accountId: rule.accountId,
       toAccountId: rule.toAccountId,
       categoryId: rule.categoryId,
-      amountMinor: rule.amountMinor,
+      amountMinor: date === rule.nextRunDate ? (rule.nextAmountMinor ?? rule.amountMinor) : rule.amountMinor,
       date,
       note: rule.note,
       paymentMode: rule.paymentMode ?? undefined,
@@ -303,7 +336,7 @@ async function runDueRecurringRulesOnce(referenceDate: string): Promise<number> 
       let iterations = 0;
       while (cursor <= referenceDate && iterations < 500) {
         const input = occurrence(cursor);
-        const next = advanceDate(cursor, rule.frequency, rule.intervalCount, anchorDay);
+        const next = advanceDate(row.scheduled_date ?? cursor, rule.frequency, rule.intervalCount, anchorDay);
         const expired = !!rule.endDate && next > rule.endDate;
         let posted = false;
         await db.withTransactionAsync(async (tx) => {
@@ -325,11 +358,10 @@ async function runDueRecurringRulesOnce(referenceDate: string): Promise<number> 
             return;
           }
           await insertTransactionRow(tx, input);
-          await tx.runAsync('UPDATE recurring_rules SET next_run_date = ?, active = ? WHERE id = ?', [
-            next,
-            expired ? 0 : 1,
-            rule.id,
-          ]);
+          await tx.runAsync(
+            'UPDATE recurring_rules SET next_run_date = ?, active = ?, next_amount_minor = NULL, scheduled_date = NULL WHERE id = ?',
+            [next, expired ? 0 : 1, rule.id]
+          );
           posted = true;
         });
         if (!posted) break;
@@ -337,6 +369,8 @@ async function runDueRecurringRulesOnce(referenceDate: string): Promise<number> 
         created++;
         iterations++;
         cursor = next;
+        row.next_amount_minor = null;
+        row.scheduled_date = null;
         if (expired) break;
       }
     } catch (err) {

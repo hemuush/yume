@@ -1,3 +1,6 @@
+import { PaymentMethodPicker } from '@/components/PaymentMethodPicker';
+import { isPaymentMode } from '@/lib/paymentMode';
+import type { PaymentMode } from '@/types';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View, Pressable, Keyboard } from 'react-native';
 import { Text } from '@/components/Text';
@@ -128,6 +131,7 @@ export default function AddTransactionScreen() {
   const [toAccountId, setToAccountId] = useState<string | null>(null);
   const [categoryId, setCategoryId] = useState<string | null>(null);
   const [note, setNote] = useState('');
+  const [paymentMode, setPaymentMode] = useState<PaymentMode | null>(null);
   const [date, setDate] = useState(() => toLocalIsoDate(new Date()));
 
   // Friend mode
@@ -196,7 +200,8 @@ export default function AddTransactionScreen() {
     editBaseline !== null &&
     (!untouchedEdit && !editing.splitId
       ? true
-      : note !== editBaseline.note ||
+      : paymentMode !== editing.paymentMode ||
+        note !== editBaseline.note ||
         date !== editBaseline.date ||
         categoryId !== editBaseline.categoryId ||
         accountId !== editBaseline.accountId);
@@ -205,7 +210,11 @@ export default function AddTransactionScreen() {
       !saving &&
       (editingId
         ? editChanged
-        : expr !== initialExpr || note.trim() !== '' || rows.length > 0 || splitParts !== null)
+        : paymentMode !== null ||
+          expr !== initialExpr ||
+          note.trim() !== '' ||
+          rows.length > 0 ||
+          splitParts !== null)
   );
 
   const { frequentAmounts, usual } = useAddSuggestions({
@@ -287,6 +296,7 @@ export default function AddTransactionScreen() {
         setToAccountId(tx.toAccountId);
         setCategoryId(tx.categoryId);
         setNote(tx.note);
+        setPaymentMode(tx.paymentMode);
         setDate(tx.date);
         // Editing any part of a split edits the whole payment.
         if (tx.splitId) {
@@ -454,6 +464,7 @@ export default function AddTransactionScreen() {
         friendSign,
         friendAccountId,
         refund,
+        paymentMode,
       },
       { accounts, categories, people }
     );
@@ -543,6 +554,7 @@ export default function AddTransactionScreen() {
         date,
         note: note.trim(),
         parts: toSplitParts(amountMinor, splitParts),
+        paymentMode,
       });
       // The lists you land back on glow the new parts, like any saved entry.
       markJustAdded((await getSplitParts(splitId)).map((p) => p.id));
@@ -593,6 +605,7 @@ export default function AddTransactionScreen() {
         note: r.note,
         // Turning Money back off makes it an expense again, and on makes it a refund.
         isRefund: !!r.isRefund,
+        paymentMode: r.paymentMode,
       });
       markJustAdded([editing.id]);
       goBackAfterSave();
@@ -942,6 +955,14 @@ export default function AddTransactionScreen() {
           </>
         )}
 
+        {type !== 'friend' && !isLinked && (
+          <View style={{ marginHorizontal: 16 }}>
+            <PaymentMethodPicker
+              value={paymentMode ?? 'unspecified'}
+              onChange={(value) => setPaymentMode(isPaymentMode(value) ? value : null)}
+            />
+          </View>
+        )}
         {rows.length > 0 && (
           <StagedList
             rows={rows}

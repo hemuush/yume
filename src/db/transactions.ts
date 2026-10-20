@@ -1,3 +1,4 @@
+import { isPaymentMode } from '@/lib/paymentMode';
 import { rebuildNotificationsAfterCommit } from './afterCommit';
 import { found } from './found';
 import { TransactionRow } from './rows';
@@ -105,6 +106,8 @@ export async function assertValidTransactionInput(
   handle?: AppDb
 ): Promise<void> {
   assertValidIsoDate(input.date);
+  if (input.paymentMode != null && !isPaymentMode(input.paymentMode))
+    throw new Error('Choose a valid payment method.');
   if (!Number.isFinite(input.amountMinor) || input.amountMinor <= 0) {
     throw new Error('Amount must be a positive number');
   }

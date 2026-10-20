@@ -281,6 +281,19 @@ async function applyIdempotentMigrations(db: AppDb): Promise<void> {
   // Null on existing rules, not backfilled from next_run_date: a drifted rule (31st → 3rd) would lock in
   // the drifted day, and null already falls back to that day at run time (see runDueRecurringRules).
   await ensureColumn(db, 'recurring_rules', 'anchor_day', `anchor_day INTEGER`);
+  await ensureColumn(
+    db,
+    'recurring_rules',
+    'posting_mode',
+    `posting_mode TEXT NOT NULL DEFAULT 'automatic' CHECK (posting_mode IN ('automatic','confirm'))`
+  );
+  await ensureColumn(
+    db,
+    'recurring_rules',
+    'next_amount_minor',
+    `next_amount_minor INTEGER CHECK (next_amount_minor > 0)`
+  );
+  await ensureColumn(db, 'recurring_rules', 'scheduled_date', `scheduled_date TEXT`);
 
   await ensureColumn(
     db,

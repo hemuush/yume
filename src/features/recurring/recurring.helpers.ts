@@ -1,8 +1,8 @@
 import { Category, RecurringRule, RecurrenceFrequency } from '@/types';
 import { monthlyCostMinor } from '@/db/subscriptions';
 import { categorySentence, parentNameOf } from '@/lib/categoryLabel';
-import { addDaysToIsoDate, dayOfIsoDate } from '@/lib/date';
-import { advanceDate } from '@/lib/recurrence';
+import { addDaysToIsoDate } from '@/lib/date';
+import { advanceOccurrence } from '@/lib/recurrence';
 
 export function frequencyNoun(freq: RecurrenceFrequency, count: number): string {
   const plural = count === 1 ? '' : 's';
@@ -107,7 +107,16 @@ export const RUN_WINDOW_DAYS = 30;
 export function runMarks(
   rules: Pick<
     RecurringRule,
-    'id' | 'type' | 'nextRunDate' | 'frequency' | 'intervalCount' | 'endDate' | 'amountMinor' | 'anchorDay'
+    | 'id'
+    | 'type'
+    | 'nextRunDate'
+    | 'frequency'
+    | 'intervalCount'
+    | 'endDate'
+    | 'amountMinor'
+    | 'anchorDay'
+    | 'scheduledDate'
+    | 'nextAmountMinor'
   >[],
   today: string,
   days = RUN_WINDOW_DAYS
@@ -116,17 +125,16 @@ export function runMarks(
   const marks: RunMark[] = [];
   for (const r of rules) {
     // The rule's real day of the month (a 31st rule clamped to the 28th still lands on the 31st next).
-    const anchor = r.anchorDay ?? dayOfIsoDate(r.nextRunDate);
     let date = r.nextRunDate;
     for (let n = 0; n < 400 && date <= until; n++) {
       if (r.endDate && date > r.endDate) break;
       marks.push({
         key: `${r.id}-${date}`,
         date: date < today ? today : date,
-        amountMinor: r.amountMinor,
+        amountMinor: n === 0 ? (r.nextAmountMinor ?? r.amountMinor) : r.amountMinor,
         incoming: r.type === 'income',
       });
-      date = advanceDate(date, r.frequency, Math.max(1, r.intervalCount), anchor);
+      date = advanceOccurrence(r, date);
     }
   }
   return marks.sort((a, b) => a.date.localeCompare(b.date));

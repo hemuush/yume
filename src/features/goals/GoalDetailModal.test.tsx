@@ -283,6 +283,12 @@ describe('archive and delete', () => {
     }
   });
 
+  it('offers Archive after recorded progress is withdrawn back to zero', async () => {
+    const { tree } = await render(makeGoal({ currentAmountMinor: 0, hasHistory: true }));
+    openMore(tree);
+    expect(link(tree).props.label).toBe('Archive goal');
+  });
+
   it('offers Unarchive for an archived goal', async () => {
     const { tree, onChanged } = await render(makeGoal({ archived: true, currentAmountMinor: 5_000 }));
     openMore(tree);

@@ -1,5 +1,5 @@
-import { addDaysToIsoDate, dayOfIsoDate, parseLocalIsoDate } from '@/lib/date';
-import { advanceDate } from '@/lib/recurrence';
+import { addDaysToIsoDate, parseLocalIsoDate } from '@/lib/date';
+import { advanceOccurrence } from '@/lib/recurrence';
 import type { RecurrenceFrequency } from '@/types';
 import { peopleTotals } from '@/features/people/people.helpers';
 import { payCardRoute, PayCardRoute } from '@/lib/payCard';
@@ -110,6 +110,8 @@ export function buildLoansSummary(loans: PlanLoanInput[], progress: PlanLoanProg
 /* ---------- Coming up / Due in the next 2 weeks ---------- */
 
 export interface PlanRuleInput {
+  nextAmountMinor?: number | null;
+  scheduledDate?: string | null;
   id: string;
   type: 'income' | 'expense' | 'transfer';
   active: boolean;
@@ -174,7 +176,6 @@ export function buildDueItems(
   for (const r of rules) {
     if (!r.active) continue;
     // The next run always; then, with a cadence and a window, each later run up to the window's end.
-    const anchorDay = r.anchorDay ?? dayOfIsoDate(r.nextRunDate);
     let date = r.nextRunDate;
     for (let n = 0; n < 100; n++) {
       items.push({
@@ -182,12 +183,12 @@ export function buildDueItems(
         title: r.label,
         kind: r.type === 'expense' ? 'bill' : r.type,
         dueDate: date,
-        amountMinor: r.amountMinor,
+        amountMinor: n === 0 ? (r.nextAmountMinor ?? r.amountMinor) : r.amountMinor,
         route: '/recurring',
         ruleId: r.id,
       });
       if (!r.frequency || !untilDate) break;
-      date = advanceDate(date, r.frequency, Math.max(1, r.intervalCount ?? 1), anchorDay);
+      date = advanceOccurrence({ ...r, frequency: r.frequency, intervalCount: r.intervalCount ?? 1 }, date);
       if (date > untilDate || (r.endDate && date > r.endDate)) break;
     }
   }

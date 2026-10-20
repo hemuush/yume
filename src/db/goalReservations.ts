@@ -1,3 +1,4 @@
+import { recordGoalActivity } from './goalHistory';
 import { getDb, AppDb } from './client';
 import { ledgerFlowSql, valuationAdjSql } from './valuationSql';
 
@@ -107,6 +108,7 @@ export async function changeReservationOn(db: AppDb, goalId: string, deltaMinor:
       throw new Error('Not enough unreserved money in this account. Refresh and reserve a smaller amount.');
   }
   await db.runAsync('UPDATE savings_goals SET reserved_amount_minor = ? WHERE id = ?', [next, goalId]);
+  await recordGoalActivity(db, goalId, deltaMinor, next, 'reservation');
 }
 
 /** Reassigns a reservation atomically; never creates a ledger movement, even during a shortfall. */
@@ -148,6 +150,14 @@ export async function moveGoalReservation(fromId: string, toId: string, amountMi
       'UPDATE savings_goals SET reserved_amount_minor = reserved_amount_minor + ? WHERE id = ?',
       [amountMinor, toId]
     );
+    await recordGoalActivity(
+      tx,
+      fromId,
+      -amountMinor,
+      from.reserved_amount_minor - amountMinor,
+      'reservation'
+    );
+    await recordGoalActivity(tx, toId, amountMinor, to.reserved_amount_minor + amountMinor, 'reservation');
   });
 }
 
@@ -155,11 +165,12 @@ export async function moveGoalReservation(fromId: string, toId: string, amountMi
 export async function releaseGoalReservation(goalId: string): Promise<void> {
   const db = await getDb();
   await db.withTransactionAsync(async (tx) => {
-    const goal = await tx.getFirstAsync<{ reserve_account: number }>(
-      'SELECT reserve_account FROM savings_goals WHERE id = ?',
+    const goal = await tx.getFirstAsync<{ reserve_account: number; reserved_amount_minor: number }>(
+      'SELECT reserve_account, reserved_amount_minor FROM savings_goals WHERE id = ?',
       [goalId]
     );
     if (!goal?.reserve_account) throw new Error('This goal no longer reserves money.');
     await tx.runAsync('UPDATE savings_goals SET reserved_amount_minor = 0 WHERE id = ?', [goalId]);
+    await recordGoalActivity(tx, goalId, -goal.reserved_amount_minor, 0, 'reservation');
   });
 }

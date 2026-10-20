@@ -77,7 +77,7 @@ export function AnnualBillPreparation({
     }
   });
   const plan = annualPreparation(
-    rule.amountMinor,
+    rule.nextAmountMinor ?? rule.amountMinor,
     goal?.reserved_amount_minor ?? 0,
     rule.nextRunDate,
     toLocalIsoDate(new Date())
@@ -105,7 +105,9 @@ export function AnnualBillPreparation({
         <>
           <InsightRow
             label="Annual bill"
-            value={formatMaskableMoney(rule.amountMinor, { masked: hideAmounts && sensitive })}
+            value={formatMaskableMoney(rule.nextAmountMinor ?? rule.amountMinor, {
+              masked: hideAmounts && sensitive,
+            })}
           />
           <View style={insight.facts}>
             <InsightStat label="Set aside" value={money(goal.reserved_amount_minor)} />
@@ -150,7 +152,7 @@ export function AnnualBillPreparation({
               label={plan.overdue ? 'Needed now' : 'Set aside each month'}
               value={money(plan.overdue ? plan.remainingMinor : plan.perMonthMinor)}
             />
-            <InsightStat label="Annual bill" value={money(rule.amountMinor)} />
+            <InsightStat label="Annual bill" value={money(rule.nextAmountMinor ?? rule.amountMinor)} />
           </View>
           <Text style={insight.caption}>Choose where to prepare. Money stays in your account.</Text>
           {!eligible.length && !goals.length && (

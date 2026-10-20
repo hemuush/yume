@@ -1,3 +1,4 @@
+import { recordGoalActivity } from './goalHistory';
 import { found } from './found';
 import { assertDefaultCurrencyAccount } from './currencyInvariant';
 import { SavingsGoalRow } from './rows';
@@ -17,7 +18,7 @@ import { assertReservableAccount, changeReservationOn } from './goalReservations
 
 /** Reads SELECTed through GOAL_SELECT: the goal's row plus its account's balance when it follows one. */
 const GOAL_SELECT = `
-  SELECT g.*,
+  SELECT g.*, EXISTS(SELECT 1 FROM goal_activity history WHERE history.goal_id = g.id) AS has_history,
     CASE WHEN g.track_account = 1 AND a.id IS NOT NULL THEN
       a.opening_balance_minor
       + COALESCE((SELECT SUM(t.amount_minor) FROM transactions t
@@ -32,11 +33,14 @@ const GOAL_SELECT = `
   LEFT JOIN accounts a ON a.id = g.linked_account_id
     AND a.currency = COALESCE((SELECT value FROM settings WHERE key = 'default_currency'), 'INR')`;
 
-function rowToGoal(row: SavingsGoalRow & { account_balance_minor: number | null }): SavingsGoal {
+function rowToGoal(
+  row: SavingsGoalRow & { account_balance_minor: number | null; has_history?: number }
+): SavingsGoal {
   const balance = row.account_balance_minor;
   const tracksAccount = !!row.track_account && row.linked_account_id != null && balance != null;
   return {
     id: row.id,
+    ...(row.has_history ? { hasHistory: true } : {}),
     name: row.name,
     targetAmountMinor: row.target_amount_minor,
     currentAmountMinor: row.reserve_account
@@ -227,6 +231,7 @@ export async function contributeToGoal(id: string, deltaMinor: number): Promise<
       'UPDATE savings_goals SET current_amount_minor = current_amount_minor + ? WHERE id = ?',
       [deltaMinor, id]
     );
+    await recordGoalActivity(tx, id, deltaMinor, next, 'manual');
   });
 }
 
@@ -241,10 +246,19 @@ export async function markGoalLetterRevealed(id: string): Promise<void> {
 
 export async function archiveSavingsGoal(id: string, releaseReservation = false): Promise<void> {
   const db = await getDb();
-  await db.runAsync(
-    'UPDATE savings_goals SET archived = 1, reserved_amount_minor = CASE WHEN ? THEN 0 ELSE reserved_amount_minor END WHERE id = ?',
-    [releaseReservation ? 1 : 0, id]
-  );
+  await db.withTransactionAsync(async (tx) => {
+    const goal = await tx.getFirstAsync<{ reserved_amount_minor: number }>(
+      'SELECT reserved_amount_minor FROM savings_goals WHERE id = ?',
+      [id]
+    );
+    if (!goal) throw new Error('This goal no longer exists.');
+    await tx.runAsync(
+      'UPDATE savings_goals SET archived = 1, reserved_amount_minor = CASE WHEN ? THEN 0 ELSE reserved_amount_minor END WHERE id = ?',
+      [releaseReservation ? 1 : 0, id]
+    );
+    if (releaseReservation && goal.reserved_amount_minor)
+      await recordGoalActivity(tx, id, -goal.reserved_amount_minor, 0, 'reservation');
+  });
 }
 
 export async function unarchiveSavingsGoal(id: string): Promise<void> {
@@ -287,6 +301,8 @@ export async function deleteSavingsGoal(id: string): Promise<RowSnapshot> {
         'This goal already has money saved toward it — archive it instead, so its progress stays intact.'
       );
     }
+    if (await tx.getFirstAsync('SELECT id FROM goal_activity WHERE goal_id = ? LIMIT 1', [id]))
+      throw new Error('This goal has progress history. Archive it to preserve that history.');
     const bill = await tx.getFirstAsync('SELECT rule_id FROM annual_bill_goals WHERE goal_id = ?', [id]);
     if (bill) throw new Error('Unlink this goal from its annual bill before deleting it.');
     const captured = await captureRow(tx, 'savings_goals', id);

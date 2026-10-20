@@ -169,7 +169,7 @@ it('round-trips reservation amounts through backup, accepts v1 and rejects malfo
   const a = await createSavingsGoal(input('A'));
   await contributeToGoal(a.id, 120000);
   const snapshot = await buildBackupSnapshot();
-  expect(snapshot.formatVersion).toBe(3);
+  expect(snapshot.formatVersion).toBe(4);
   await releaseGoalReservation(a.id);
   await restoreFromSnapshot(snapshot);
   expect((await getGoalReservationSummary(accountId)).reservedMinor).toBe(120000);

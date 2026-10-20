@@ -1,3 +1,5 @@
+import { MonthlyPlanCheck } from '@/features/plan/MonthlyPlanCheck';
+import { LoanComparison } from '@/features/loans/LoanComparison';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { View, Pressable, StyleSheet, useWindowDimensions } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
@@ -143,6 +145,7 @@ export default function PlanScreen() {
   } | null>(null);
   const [refundTx, setRefundTx] = useState<Transaction | null>(null);
   const [tab, setTab] = useState<PlanTab>('overview');
+  const [comparisonOpen, setComparisonOpen] = useState(false);
   // Home's "See all upcoming" arrives with ?tab=upcoming; the param is spent once it has picked the tab.
   const { tab: tabParam } = useLocalSearchParams<{ tab?: string }>();
   useEffect(() => {
@@ -215,6 +218,8 @@ export default function PlanScreen() {
       frequency: r.frequency,
       intervalCount: r.intervalCount,
       anchorDay: r.anchorDay,
+      nextAmountMinor: r.nextAmountMinor,
+      scheduledDate: r.scheduledDate,
       endDate: r.endDate,
       amountMinor: r.amountMinor,
       label:
@@ -510,6 +515,23 @@ export default function PlanScreen() {
               )}
               {tab === 'money' && (
                 <>
+                  <MonthlyPlanCheck
+                    refreshToken={data}
+                    currency={data.currency}
+                    hidden={hideAmounts}
+                    input={{
+                      categories: data.categories,
+                      accounts: data.accounts,
+                      rules: data.ruleDetails,
+                      budgets: data.budgetDetails.map((b) => ({
+                        categoryId: b.budget.categoryId,
+                        limitMinor: b.effectiveLimitMinor,
+                      })),
+                      goals: data.goals,
+                      loans: data.loans.rows,
+                      today: data.today,
+                    }}
+                  />
                   <Section
                     compact
                     first
@@ -559,6 +581,16 @@ export default function PlanScreen() {
               )}
               {tab === 'debt' && (
                 <>
+                  {data.loans.rows.filter((loan) => loan.direction === 'borrowed').length >= 2 && (
+                    <View style={{ marginHorizontal: 16, marginTop: 12 }}>
+                      <PrimaryButton
+                        variant="secondary"
+                        compact
+                        title="Compare an extra payment"
+                        onPress={() => setComparisonOpen(true)}
+                      />
+                    </View>
+                  )}
                   <Section compact title="Debt">
                     <DebtPath
                       loans={data.loans}
@@ -623,6 +655,20 @@ export default function PlanScreen() {
           ) : undefined
         }
       />
+      {scoped && (
+        <LoanComparison
+          refreshToken={scoped}
+          visible={comparisonOpen}
+          hidden={hideAmounts}
+          currency={scoped.currency}
+          loans={scoped.loans.rows.filter((loan) => loan.direction === 'borrowed')}
+          onClose={() => setComparisonOpen(false)}
+          onOpenLoan={(id) => {
+            setComparisonOpen(false);
+            openDetail('loan', id);
+          }}
+        />
+      )}
       {creationMenu && scoped && (
         <ModalSheet
           visible

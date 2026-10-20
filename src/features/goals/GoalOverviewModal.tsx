@@ -1,3 +1,4 @@
+import { GoalHistory } from './GoalHistory';
 import { useRef, useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Text } from '@/components/Text';
@@ -102,6 +103,11 @@ export function GoalOverviewModal({
                 : 'Adding money updates goal progress; it does not create a bank transfer.'}
           </Text>
         </View>
+        <GoalHistory
+          key={`${goal.id}:${goal.currentAmountMinor}:${goal.reservedAmountMinor}`}
+          goalId={goal.id}
+          refreshToken={goal}
+        />
         {!hideAmounts && goal.letterRevealed && goal.noteToSelf && (
           <View style={styles.card}>
             <Text style={styles.caption}>Why you started this</Text>

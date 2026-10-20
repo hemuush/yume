@@ -2,7 +2,7 @@
 
 ## Current backup contract
 
-- New backups are plain JSON, format version 3, containing the tables explicitly listed in [backup.ts](src/lib/backup.ts). Format-1 and format-2 files remain readable. Recently deleted records are not included. Sharing a copy sends it to the destination the user selects.
+- New backups are plain JSON, format version 4, containing the tables explicitly listed in [backup.ts](src/lib/backup.ts). Format-1, format-2 and format-3 files remain readable. Recently deleted records are not included. Sharing a copy sends it to the destination the user selects.
 - Android folder access uses a persisted storage grant. Choosing a folder scans existing valid files before a write; newer folder data requires an explicit choice rather than silent replacement. Restore replaces records; it does not merge ledgers.
 - Snapshot table reads are serialized in one exclusive database section. Restore validates data and foreign-key consistency; unknown columns and tables emptied by older backups are reported.
 - Restore repairs exact legacy labels on app-created linked refund receipts inside the restore transaction, matching startup repair. Manually linked refunds and custom receipt text are preserved.
@@ -63,4 +63,6 @@ Only the latest copy is kept. It's written to a pending file first and replaces 
 
 ## Shared goal reservations
 
-New exports use backup format 3 to preserve goal reservations, expected refunds, receipt links and annual-bill goal links. Format-1 and format-2 backups remain readable; missing planner tables restore as empty, and missing reservation fields default to zero. Earlier app versions reject newer formats rather than silently losing data. Invalid reservation modes, negative/fractional amounts, missing linked accounts and combined whole-account tracking are rejected before replacement. Refund receipts must match the purchase category/currency and cannot exceed the expectation; annual preparation requires a yearly expense and a reservation goal in the same currency. A valid snapshot may contain a shortfall after a withdrawal; reservations remain intact and the app shows the shortfall.
+New exports use backup format 4 to preserve goal reservations, expected refunds, receipt links and annual-bill goal links. Format-1, format-2 and format-3 backups remain readable; missing planner tables restore as empty, and missing reservation fields default to zero. Earlier app versions reject newer formats rather than silently losing data. Invalid reservation modes, negative/fractional amounts, missing linked accounts and combined whole-account tracking are rejected before replacement. Refund receipts must match the purchase category/currency and cannot exceed the expectation; annual preparation requires a yearly expense and a reservation goal in the same currency. A valid snapshot may contain a shortfall after a withdrawal; reservations remain intact and the app shows the shortfall.
+
+Format 4 also preserves goal activity and one-off recurring overrides, including confirm-first recording. Older backups restore with empty goal history and automatic recurring recording. Historical goal activity is not reconstructed.
