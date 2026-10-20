@@ -159,6 +159,26 @@ describe('buildUpcomingItems', () => {
     });
     expect(quiet.items).toEqual([]);
     expect(quiet.next?.key).toBe('loan-l');
-    expect(buildUpcomingItems(base)).toEqual({ items: [], next: null });
+    expect(buildUpcomingItems(base)).toEqual({ all: [], items: [], next: null });
   });
+});
+
+it('selects the three largest outgoing schedules across all dates and sources', () => {
+  const { largestUpcomingOutgoings } = require('./HomeGlance');
+  const schedules = buildUpcomingItems({
+    ...base,
+    loans: [{ id: 'loan', name: 'Loan', nextDueDate: inDays(20), nextEmiMinor: 50000 }],
+    cardBills: [{ accountId: 'credit', accountName: 'Card', dueDate: inDays(12), leftToPayMinor: 60000 }],
+    rules: [
+      rule({ id: 'salary', type: 'income', amountMinor: 999999, nextRunDate: inDays(1) }),
+      rule({ id: 'big', type: 'expense', amountMinor: 80000, nextRunDate: inDays(15) }),
+      rule({ id: 'small', type: 'expense', amountMinor: 100, nextRunDate: inDays(1) }),
+      rule({ id: 'middle', type: 'expense', amountMinor: 30000, nextRunDate: inDays(10) }),
+    ],
+  });
+  expect(largestUpcomingOutgoings(schedules).map((item: { key: string }) => item.key)).toEqual([
+    'big',
+    'card-credit',
+    'loan-loan',
+  ]);
 });

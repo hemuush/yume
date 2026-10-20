@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Pressable, StyleProp, ViewStyle } from 'react-native';
+import { View, Pressable, StyleProp, ViewStyle, useWindowDimensions } from 'react-native';
 import { Text } from '@/components/Text';
 import { ActionSheet } from '@/components/ActionSheet';
 import Feather from '@expo/vector-icons/Feather';
@@ -34,6 +34,8 @@ export function PeriodRow({
   style?: StyleProp<ViewStyle>;
   compact?: boolean;
 }) {
+  const { width, fontScale } = useWindowDimensions();
+  const stacked = compact && (width < 360 || fontScale > 1.2);
   const [rangeOpen, setRangeOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const fwd = canStepWindowForward(cursor);
@@ -56,20 +58,8 @@ export function PeriodRow({
   );
   const granLabel = GRANULARITIES.find((g) => g.key === cursor.granularity)?.label ?? 'Month';
   return (
-    <View
-      style={[
-        styles.periodRow,
-        compact && { borderBottomWidth: 1, borderBottomColor: theme.colors.borderSoft, paddingBottom: 6 },
-        style,
-      ]}
-    >
-      <View
-        style={[
-          styles.periodPill,
-          compact && { backgroundColor: 'transparent', borderWidth: 0, borderRadius: 0 },
-        ]}
-        {...swipe.panHandlers}
-      >
+    <View style={[styles.periodRow, stacked && { flexDirection: 'column', alignItems: 'stretch' }, style]}>
+      <View style={[styles.periodPill, stacked && { flex: 0 }]} {...swipe.panHandlers}>
         <Pressable
           onPress={() => change(stepWindow(cursor, -1))}
           hitSlop={4}
@@ -104,7 +94,7 @@ export function PeriodRow({
           haptics.tap();
           setMenuOpen(true);
         }}
-        style={withPressed([styles.granChip, compact && { borderRadius: 12, minHeight: 44 }])}
+        style={withPressed([styles.granChip, stacked && { justifyContent: 'center' }])}
         accessibilityRole="button"
         accessibilityLabel={`Period type: ${granLabel}. Change`}
       >

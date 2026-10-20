@@ -45,9 +45,14 @@ function render(index: number) {
   });
   return { tree, navigation, add, repeat };
 }
-it('keeps Home focused on four destinations and preserves repeat entry on long press', () => {
-  const { tree, repeat, navigation } = render(0);
-  expect(tree.root.findAll((n) => n.props.accessibilityLabel === 'Add a transaction')).toHaveLength(0);
+it('shows Home Add and preserves repeat entry on long press', () => {
+  const { tree, repeat, navigation, add } = render(0);
+  const addButton = tree.root.findAll(
+    (n) => n.props.accessibilityLabel === 'Add a transaction' && n.props.onPress
+  )[0];
+  expect(addButton).toBeDefined();
+  act(() => addButton.props.onPress());
+  expect(add).toHaveBeenCalledTimes(1);
   const home = tree.root.findAll((n) => n.props.accessibilityLabel === 'Home' && n.props.onLongPress)[0];
   act(() => home.props.onLongPress());
   expect(repeat).toHaveBeenCalledTimes(1);

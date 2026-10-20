@@ -146,8 +146,8 @@ export function PillTabBar({
               Icon={Icon}
               focused={focused}
               ink={ink}
-              size={isHome ? Math.min(inner, 48) : inner}
-              homeLayout={isHome}
+              size={inner}
+              homeLayout={false}
               onPress={() => {
                 const event = navigation.emit({
                   type: 'tabPress',
@@ -167,30 +167,28 @@ export function PillTabBar({
           );
         })}
       </View>
-      {!isHome && (
-        <Pressable
-          onPress={onAdd}
-          onLongPress={() => {
-            haptics.tap();
-            onAddLongPress();
-          }}
-          onPressIn={add.onPressIn}
-          onPressOut={add.onPressOut}
-          accessibilityRole="button"
-          accessibilityLabel="Add a transaction"
-          accessibilityHint="Long-press to log a recent entry again"
+      <Pressable
+        onPress={onAdd}
+        onLongPress={() => {
+          haptics.tap();
+          onAddLongPress();
+        }}
+        onPressIn={add.onPressIn}
+        onPressOut={add.onPressOut}
+        accessibilityRole="button"
+        accessibilityLabel="Add a transaction"
+        accessibilityHint="Long-press to log a recent entry again"
+      >
+        <RNAnimated.View
+          style={[
+            styles.add,
+            { width: height, height, borderRadius: height / 2, backgroundColor: ink },
+            add.animatedStyle,
+          ]}
         >
-          <RNAnimated.View
-            style={[
-              styles.add,
-              { width: height, height, borderRadius: height / 2, backgroundColor: ink },
-              add.animatedStyle,
-            ]}
-          >
-            <Feather name="plus" size={24} color={theme.colors.white} />
-          </RNAnimated.View>
-        </Pressable>
-      )}
+          <Feather name="plus" size={24} color={theme.colors.white} />
+        </RNAnimated.View>
+      </Pressable>
     </View>
   );
 }

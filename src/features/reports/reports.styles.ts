@@ -29,7 +29,7 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    minHeight: 48,
+    minHeight: 52,
     paddingHorizontal: 4,
     borderWidth: 1,
     borderColor: GLASS.edge,
@@ -50,7 +50,7 @@ export const styles = StyleSheet.create({
     flexShrink: 1,
     textAlign: 'center',
     fontFamily: theme.font.roundedBold,
-    fontSize: 15,
+    fontSize: 13,
     color: theme.colors.textPrimary,
   },
   granChip: {

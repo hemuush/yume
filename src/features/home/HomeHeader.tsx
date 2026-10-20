@@ -199,11 +199,6 @@ export function HomeHeader({
           <ReanimatedAnimated.View
             entering={FadeIn.duration(MOTION.enter).easing(MOTION.ease).reduceMotion(ReduceMotion.System)}
           >
-            <Text style={styles.date}>
-              {new Date()
-                .toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' })
-                .toUpperCase()}
-            </Text>
             <Text style={styles.greet}>
               Good {greetingWord()}
               {userName ? (
@@ -212,6 +207,9 @@ export function HomeHeader({
                 </>
               ) : null}
               .
+            </Text>
+            <Text style={styles.date}>
+              {new Date().toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' })}
             </Text>
             {line ? <Text style={styles.insight}>{line}</Text> : null}
           </ReanimatedAnimated.View>

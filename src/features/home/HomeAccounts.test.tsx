@@ -246,7 +246,7 @@ it('adds another account from the free preview slot', () => {
   act(() => r.unmount());
 });
 
-it('shows only two everyday previews while keeping the complete account list reachable', () => {
+it('groups spending and savings previews while keeping the complete account list reachable', () => {
   const onOpenAccounts = jest.fn();
   const tree = render({
     compact: true,
@@ -259,8 +259,8 @@ it('shows only two everyday previews while keeping the complete account list rea
     onOpenAccounts,
   });
   expect(texts(tree)).toEqual(expect.arrayContaining(['Accounts', 'SBI', 'Cash']));
-  expect(texts(tree)).not.toContain('Pot');
-  expect(texts(tree)).not.toContain('Wise');
+  expect(texts(tree)).toContain('Pot');
+  expect(texts(tree)).toContain('Wise');
   act(() =>
     tree.root
       .find((n) => n.props.accessibilityLabel === 'View all — Accounts' && n.props.onPress)

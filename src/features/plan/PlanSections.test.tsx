@@ -623,3 +623,65 @@ it.each([
     dimensions.mockRestore();
   }
 });
+
+it.each([false, true])('keeps integrated Add loan separate from opening Loans (has debt: %s)', (hasDebt) => {
+  const loans = buildLoansSummary(
+    hasDebt
+      ? [
+          {
+            id: 'loan',
+            counterparty: 'Bank',
+            direction: 'borrowed',
+            status: 'active',
+            principalMinor: 10000,
+            outstandingPrincipalMinor: 8000,
+          },
+        ]
+      : [],
+    []
+  );
+  const open = jest.fn(),
+    add = jest.fn();
+  const tree = render(<DebtPath loans={loans} today="2026-10-20" onOpen={open} onAdd={add} />);
+  const action = tree.root.findAll((n) => n.props.accessibilityLabel === 'Add loan' && n.props.onPress)[0];
+  for (let parent = action.parent; parent; parent = parent.parent)
+    expect(parent.props.accessibilityRole).not.toBe('button');
+  act(() => action.props.onPress());
+  expect(add).toHaveBeenCalledTimes(1);
+  expect(open).not.toHaveBeenCalled();
+  const summary = tree.root.findAll(
+    (n) =>
+      n.props.onPress &&
+      (String(n.props.accessibilityLabel).startsWith('Principal left') ||
+        n.props.accessibilityLabel === 'Track an EMI. Open loans')
+  )[0];
+  act(() => summary.props.onPress());
+  expect(open).toHaveBeenCalledTimes(1);
+  act(() => tree.unmount());
+});
+
+it('keeps the selected category colour on an over-budget progress card', () => {
+  const summary = buildBudgetsSummary([
+    {
+      id: 'coloured',
+      categoryName: 'Travel',
+      categoryColor: '#A56ABC',
+      spentMinor: 12000,
+      effectiveLimitMinor: 10000,
+      remainingMinor: -2000,
+      percentUsed: 120,
+      overBudget: true,
+    },
+  ]);
+  const tree = render(<BudgetJars summary={summary} onOpen={jest.fn()} />);
+  const progress = tree.root
+    .findAllByType(View)
+    .find(
+      (n) =>
+        StyleSheet.flatten(n.props.style)?.width === '100%' &&
+        StyleSheet.flatten(n.props.style)?.backgroundColor === '#A56ABC'
+    );
+  expect(progress).toBeDefined();
+  expect(texts(tree).join(' ')).toContain('over');
+  act(() => tree.unmount());
+});

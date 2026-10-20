@@ -129,7 +129,7 @@ export function GoalsStrip({
 function GoalCard({ goal, masked, onPress }: { goal: SavingsGoal; masked: boolean; onPress: () => void }) {
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.98);
   const { percent, done } = goalProgress(goal.currentAmountMinor, goal.targetAmountMinor);
-  const hue = done ? theme.colors.income : hueFor(goal.id);
+  const hue = hueFor(goal.id);
   const pct = Math.round(Math.min(100, percent));
   return (
     <AnimatedPressable
@@ -146,7 +146,14 @@ function GoalCard({ goal, masked, onPress }: { goal: SavingsGoal; masked: boolea
             }. Open savings goals`
       }
     >
-      <Glass radius={24} style={[styles.tileFill, cardSurface.savings]}>
+      <Glass
+        radius={20}
+        style={[
+          styles.tileFill,
+          cardSurface.neutral,
+          { backgroundColor: softTint(hue, 0.12), borderColor: softTint(hue, 0.28) },
+        ]}
+      >
         <View style={[styles.tileIcon, { backgroundColor: softTint(hue, 0.75) }]}>
           <MaterialCommunityIcons
             name={goal.linkedAccountId ? 'bank-outline' : 'flag-variant-outline'}
@@ -154,6 +161,9 @@ function GoalCard({ goal, masked, onPress }: { goal: SavingsGoal; masked: boolea
             color={theme.colors.ink}
           />
         </View>
+        <Text style={styles.tileName} numberOfLines={2}>
+          {goal.name}
+        </Text>
         {masked ? (
           <Feather name="eye-off" size={20} color={theme.colors.textMuted} />
         ) : done ? (
@@ -164,17 +174,15 @@ function GoalCard({ goal, masked, onPress }: { goal: SavingsGoal; masked: boolea
             <Text style={styles.tilePctSign}>%</Text>
           </Text>
         )}
-        <Text style={styles.tileName} numberOfLines={2}>
-          {goal.name}
-        </Text>
         {!masked && (
           <View style={styles.tileTrack} pointerEvents="none">
             <View style={[styles.tileProgress, { width: `${pct}%`, backgroundColor: hue }]} />
           </View>
         )}
         <Text style={styles.tileAmt} numberOfLines={2}>
-          {masked ? '' : `${compactMoney(goal.currentAmountMinor)}\n`}of{' '}
-          {compactMoney(goal.targetAmountMinor)}
+          {masked
+            ? `Target ${compactMoney(goal.targetAmountMinor)}`
+            : `${compactMoney(goal.currentAmountMinor)} of ${compactMoney(goal.targetAmountMinor)}`}
         </Text>
       </Glass>
     </AnimatedPressable>

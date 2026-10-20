@@ -3,6 +3,20 @@ import { theme } from '@/constants/theme';
 import { GLASS } from '@/components/Glass';
 
 export const styles = StyleSheet.create({
+  trend: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: theme.colors.borderSoft,
+    paddingTop: 10,
+    gap: 2,
+  },
+  insightsLink: {
+    minHeight: 44,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    gap: 4,
+  },
+  insightsText: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.link },
   card: {
     marginHorizontal: 16,
     paddingHorizontal: 18,

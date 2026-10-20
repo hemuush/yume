@@ -22,10 +22,12 @@ import { heroSlices, withoutSavings } from './heroSlices';
 import { DURATIONS } from '@/lib/motionTimings';
 import { styles } from './hero.styles';
 import { WorkingRow } from './WorkingRow';
+import { SpendBars } from './SpendBars';
 import { HeroActions } from './HeroActions';
 import { withPressed } from '@/lib/pressed';
 
 interface HeroContent {
+  spendingTrend?: { daily: { date: string; totalMinor: number }[]; today: string } | null;
   incomeMinor: number;
   spentMinor: number;
   /** Net moved into savings accounts this period (negative = more came out). */
@@ -53,7 +55,7 @@ const SWIPE_STEP_PX = 60;
 
 /**
  * Home's compact month card: available money, an inline period footer and calculation disclosure,
- * with entry shortcuts below. Daily goals and ready recaps stay in the disclosure. Swipe it sideways
+ * with entry shortcuts below. Daily allowance and recent spending remain visible; recaps stay in the disclosure. Swipe it sideways
  * to step the period. `displayed` lags `periodKey` so the old figures slide out first; a `runId` guard stops
  * a stale slide overwriting a newer one.
  */
@@ -74,7 +76,10 @@ export function ThisMonthHero({
   today = null,
   pace = null,
   recaps = [],
+  spendingTrend = null,
+  onSeeInsights,
 }: Omit<HeroContent, 'dueMinor' | 'carryMinor'> & {
+  onSeeInsights?: (periodKey: string) => void;
   dueMinor?: number | null;
   carryMinor?: number;
   periodKey: string;
@@ -106,6 +111,7 @@ export function ThisMonthHero({
     periodKey,
     today,
     pace,
+    spendingTrend,
   });
   // The sum behind "Free after bills", opened from the "still to pay" chip.
   const [showWorking, setShowWorking] = useState(false);
@@ -122,6 +128,8 @@ export function ThisMonthHero({
   const todayGoal = today?.goalMinor;
   const paceProjected = pace?.projectedMinor;
   const paceLabel = pace?.byLabel;
+  const trendDaily = spendingTrend?.daily;
+  const trendToday = spendingTrend?.today;
 
   useEffect(() => {
     const myRun = ++runId.current;
@@ -136,6 +144,7 @@ export function ThisMonthHero({
       carryMinor,
       dueMinor,
       periodKey,
+      spendingTrend: trendDaily && trendToday ? { daily: trendDaily, today: trendToday } : null,
       today:
         todaySpent != null && todayGoal != null ? { spentMinor: todaySpent, goalMinor: todayGoal } : null,
       pace:
@@ -194,6 +203,8 @@ export function ThisMonthHero({
     todayGoal,
     paceProjected,
     paceLabel,
+    trendDaily,
+    trendToday,
     reduce,
     opacity,
     tx,
@@ -396,6 +407,30 @@ export function ThisMonthHero({
                   </Text>
                 </Pressable>
               ))}
+            </View>
+          )}
+
+          {(displayed.spendingTrend || onSeeInsights) && (
+            <View style={styles.trend}>
+              {displayed.spendingTrend && (
+                <SpendBars
+                  daily={displayed.spendingTrend.daily}
+                  today={displayed.spendingTrend.today}
+                  compact
+                  embedded
+                />
+              )}
+              {onSeeInsights && (
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="See spending insights"
+                  onPress={() => onSeeInsights(displayed.periodKey)}
+                  style={withPressed(styles.insightsLink)}
+                >
+                  <Text style={styles.insightsText}>See insights</Text>
+                  <Feather name="arrow-up-right" size={14} color={theme.colors.link} />
+                </Pressable>
+              )}
             </View>
           )}
 

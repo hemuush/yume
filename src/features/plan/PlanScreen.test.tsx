@@ -250,13 +250,14 @@ describe('Plan tab', () => {
       const { BudgetJars } = require('./BudgetJars');
       expect(tree.root.findByType(PlanNavigation).props.value).toBe('money');
       const jars = tree.root.findByType(BudgetJars);
-      expect(jars.props.limit).toBe(jars.props.summary.rows.length);
+      expect(jars.props.limit).toBe(jars.props.summary.rows.length + 1);
+      expect(jars.props.compact).toBeUndefined();
       act(() => jars.props.onBudget('b2'));
       expect(tree.root.findByProps({ testID: 'plan-budget-detail' }).props.progress.budget.id).toBe('b2');
       act(() => tree.root.findByProps({ testID: 'plan-budget-detail' }).props.onClose());
       act(() =>
         tree.root
-          .findAll((n) => n.props.accessibilityLabel === 'Add budget' && n.props.onPress)[0]
+          .findAll((n) => n.props.accessibilityLabel === 'Add a budget' && n.props.onPress)[0]
           .props.onPress()
       );
       expect(tree.root.findByProps({ testID: 'plan-new-budget' }).props.visible).toBe(true);

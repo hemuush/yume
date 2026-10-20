@@ -1,6 +1,6 @@
 jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMock').createReanimatedMock());
 import { act, create, ReactTestRenderer } from 'react-test-renderer';
-import { BreakdownControls } from './ReportControls';
+import { BreakdownControls, ReportTabs } from './ReportControls';
 import { ActionSheet } from '@/components/ActionSheet';
 jest.mock('@/components/ActionSheet', () => ({ ActionSheet: () => null }));
 jest.mock('@/components/ModalSheet', () => ({ ModalSheet: () => null }));
@@ -49,4 +49,18 @@ it('does not offer expense labels in income or when no label action is provided'
     ]);
     act(() => tree.unmount());
   }
+});
+
+it('keeps every report tab selectable and marks the active destination', () => {
+  const onChange = jest.fn();
+  act(() => {
+    tree = create(<ReportTabs value="cats" onChange={onChange} />);
+  });
+  const tabs = tree.root.findAll(
+    (n) => n.props.accessibilityRole === 'tab' && typeof n.props.onPress === 'function'
+  );
+  expect(tabs).toHaveLength(3);
+  expect(tabs.map((n) => n.props.accessibilityState.selected)).toEqual([false, true, false]);
+  act(() => tabs[2].props.onPress());
+  expect(onChange).toHaveBeenCalledWith('trends');
 });

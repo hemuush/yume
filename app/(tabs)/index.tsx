@@ -1,4 +1,3 @@
-import { formatMoney } from '@/lib/money';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View, StyleSheet, RefreshControl } from 'react-native';
 import { Text } from '@/components/Text';
@@ -56,14 +55,11 @@ import { ThisMonthHeroSkeleton, CardRowsSkeleton } from '@/features/home/HomeSke
 import { MonthPill } from '@/features/home/MonthPill';
 import { HomeWallpaper } from '@/features/home/HomeWallpaper';
 import { HomeAccounts } from '@/features/home/HomeAccounts';
-import { SpendBars } from '@/features/home/SpendBars';
 import { spendBarsStart } from '@/features/home/spendBarData';
-import { Glass } from '@/components/Glass';
-import { cardSurface } from '@/components/CardSurface';
 import { SuuRefreshBadge } from '@/features/home/SuuRefreshBadge';
 import { Section } from '@/components/Section';
 import { SCREEN } from '@/components/screenStyles';
-import { homePriority, HomePriority, HomeGlance, buildUpcomingItems } from '@/features/home/HomeGlance';
+import { HomeGlance, buildUpcomingItems } from '@/features/home/HomeGlance';
 import { recurringRulesInCurrency } from '@/lib/recurringScope';
 import { buildLoansSummary } from '@/features/plan/planOverview';
 import { RecentTransactionRow } from '@/features/home/RecentTransactionRow';
@@ -81,7 +77,7 @@ import { errorMessage } from '@/lib/errorMessage';
 import { payCardRoute } from '@/lib/payCard';
 
 /** Home shows this many of the period's latest entries; fetch no more than that. */
-const RECENT_ROWS = 3;
+const RECENT_ROWS = 5;
 
 export default function DashboardScreen() {
   const insets = useSafeAreaInsets();
@@ -491,16 +487,17 @@ export default function DashboardScreen() {
     currency,
   ]);
 
-  const priority = homePriority(upcoming);
   const openUpcomingPlan = () => router.navigate({ pathname: '/plan', params: { tab: 'upcoming' } });
 
-  const openSpendingReports = () => {
-    const range = periodRange(loadedCursor);
+  const openSpendingReports = (key: string) => {
+    const [kind, offset] = key.split(':');
+    const shown: PeriodCursor = { granularity: kind === 'year' ? 'year' : 'month', offset: Number(offset) };
+    const range = periodRange(shown);
     router.navigate({
       pathname: '/reports',
       params:
-        loadedCursor.granularity === 'month'
-          ? { month: String(loadedCursor.offset) }
+        shown.granularity === 'month'
+          ? { month: String(shown.offset) }
           : { from: range.start, to: range.end },
     });
   };
@@ -508,7 +505,7 @@ export default function DashboardScreen() {
   return (
     <View style={styles.container}>
       <HomeWallpaper accent={accent} secondary={secondary} plain />
-      {/* Balance and daily allowance, one payment priority, accounts, then supporting activity. */}
+      {/* Balance and daily allowance, grouped accounts, largest upcoming outgoings and recent activity. */}
       <Animated.ScrollView
         ref={scrollRef}
         style={styles.scroll}
@@ -555,6 +552,12 @@ export default function DashboardScreen() {
                 onPeriodDisplayed={setDisplayedPeriodKey}
                 canStepForward={canStepForward(cursor)}
                 onStep={(dir) => handleCursorChange(stepPeriod(cursor, dir))}
+                spendingTrend={
+                  loadedCursor.granularity === 'month' && loadedCursor.offset === 0
+                    ? { daily: dailySpend, today: todayIso }
+                    : null
+                }
+                onSeeInsights={openSpendingReports}
                 incomeMinor={dispIncome}
                 spentMinor={dispExpense}
                 savingsMinor={savingsInPeriod}
@@ -595,13 +598,7 @@ export default function DashboardScreen() {
           </>
         )}
 
-        {loaded && historyAccounts.length > 0 && priority && (
-          <Animated.View entering={sectionEntering(1)}>
-            <HomePriority item={priority} onViewPlan={openUpcomingPlan} />
-          </Animated.View>
-        )}
-
-        {/* Accounts remain visible after the one actionable priority, when present. */}
+        {/* Accounts remain directly below the balance area. */}
         {loaded && (
           <Animated.View entering={sectionEntering(1)}>
             <HomeAccounts
@@ -620,7 +617,6 @@ export default function DashboardScreen() {
           <Animated.View entering={sectionEntering(2)}>
             <HomeGlance
               upcoming={upcoming}
-              priorityKey={priority?.key}
               refunds={refunds}
               refundError={refundError}
               openingRefund={openingRefund}
@@ -629,26 +625,6 @@ export default function DashboardScreen() {
               rowEntering={rowEntering}
               onSeeMoreUpcoming={openUpcomingPlan}
             />
-          </Animated.View>
-        )}
-
-        {loaded && comparison && historyAccounts.length > 0 && (
-          <Animated.View entering={sectionEntering(3)}>
-            <Section compact title="Spending" onSeeAll={openSpendingReports} actionLabel="See insights">
-              <Glass radius={24} style={[styles.spendingSnapshot, cardSurface.neutral]}>
-                {dailySpend.length > 0 &&
-                loadedCursor.granularity === 'month' &&
-                loadedCursor.offset === 0 ? (
-                  <SpendBars daily={dailySpend} today={todayIso} compact />
-                ) : (
-                  <>
-                    <Text style={styles.snapshotCaption}>Spent in this period</Text>
-                    <Text style={styles.snapshotValue}>{formatMoney(dispExpense)}</Text>
-                    <Text style={styles.snapshotCaption}>See Reports for categories and comparisons.</Text>
-                  </>
-                )}
-              </Glass>
-            </Section>
           </Animated.View>
         )}
 
@@ -664,7 +640,7 @@ export default function DashboardScreen() {
                 <EmptyState title="Nothing logged" subtitle="Try another period." />
               ) : (
                 <View style={styles.recent}>
-                  {recent.slice(0, 2).map((tx, i) => (
+                  {recent.slice(0, 5).map((tx, i) => (
                     <Animated.View
                       key={tx.id}
                       entering={rowEntering(i)}
@@ -775,19 +751,6 @@ export default function DashboardScreen() {
 }
 
 const styles = StyleSheet.create({
-  spendingSnapshot: { marginHorizontal: 16, padding: 16, gap: 6 },
-  snapshotCaption: {
-    fontFamily: theme.font.body,
-    fontSize: 12,
-    lineHeight: 18,
-    color: theme.colors.textSecondary,
-  },
-  snapshotValue: {
-    fontFamily: theme.font.bodyLight,
-    fontSize: 30,
-    lineHeight: 36,
-    color: theme.colors.textPrimary,
-  },
   container: { flex: 1, backgroundColor: theme.colors.background },
   scroll: { flex: 1 },
   heroGap: { marginTop: 4 },
