@@ -80,7 +80,7 @@ const s = StyleSheet.create({
   stacked: { flexDirection: 'column', alignItems: 'flex-start', gap: 5 },
   copy: { flex: 1, minWidth: 0, gap: 3 },
   name: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textPrimary },
-  subtitle: { fontSize: 11, color: theme.colors.textSecondary },
+  subtitle: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textSecondary },
   amount: { fontFamily: theme.font.bodyMedium, fontSize: 13, flexShrink: 1, fontVariant: ['tabular-nums'] },
   track: { height: 4, borderRadius: 2, backgroundColor: theme.colors.surfaceAlt, overflow: 'hidden' },
   fill: { height: 4, borderRadius: 2 },

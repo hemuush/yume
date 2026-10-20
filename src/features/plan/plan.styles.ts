@@ -211,7 +211,7 @@ export const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: 4,
   },
-  compactValue: { fontSize: 18, lineHeight: 24 },
+  compactValue: { fontFamily: theme.font.bodyMedium, fontSize: 18, lineHeight: 24 },
   tile: { flex: 1, minWidth: 0, padding: 14, gap: 6 },
   go: { position: 'absolute', top: 14, right: 14 },
   value: { ...figure },
