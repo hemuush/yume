@@ -179,56 +179,16 @@ it('does not mount pending refund expectations in Activity', async () => {
   act(() => tree.unmount());
 });
 
-it.each([
-  ['upi', 'UPI'],
-  ['unspecified', 'Not recorded'],
-])('removes the %s payment capsule independently and clears all filters together', async (method, label) => {
-  const tree = await render();
+it('ignores legacy payment metadata in Activity filters', async () => {
   const { FilterModal } = require('./FilterModal');
   const { ActivityFilterChips } = require('./ActivityFilterChips');
-  await act(async () =>
-    tree.root.findByType(FilterModal).props.onApply({
-      type: 'expense',
-      categoryIds: ['category'],
-      accountIds: ['bank'],
-      paymentMode: method,
-    })
+  const tree = await render();
+  act(() =>
+    tree.root
+      .findByType(FilterModal)
+      .props.onApply({ type: 'all', categoryIds: [], accountIds: ['bank'], paymentMode: 'upi' })
   );
-  const remove = tree.root.findAll(
-    (node) =>
-      node.props.accessibilityLabel === `Remove payment method filter: ${label}` &&
-      typeof node.props.onPress === 'function'
-  )[0];
-  expect(remove).toBeDefined();
-  await act(async () => remove.props.onPress());
-  expect(tree.root.findByType(ActivityFilterChips).props).toMatchObject({
-    paymentMode: undefined,
-    filterType: 'expense',
-    categoryIds: ['category'],
-    accountIds: ['bank'],
-  });
-  await act(async () =>
-    tree.root.findByType(FilterModal).props.onApply({
-      type: 'all',
-      categoryIds: [],
-      accountIds: [],
-      paymentMode: method,
-    })
-  );
-  const clear = tree.root.findAll(
-    (node) =>
-      node.props.accessibilityLabel === 'Clear all Activity filters' &&
-      typeof node.props.onPress === 'function'
-  )[0];
-  expect(clear).toBeDefined();
-  await act(async () => clear.props.onPress());
-  expect(tree.root.findByType(ActivityFilterChips).props).toMatchObject({
-    paymentMode: undefined,
-    filterType: 'all',
-    categoryIds: [],
-    accountIds: [],
-  });
-  expect(
-    tree.root.findAll((node) => node.props.accessibilityLabel?.startsWith('Remove payment method filter:'))
-  ).toHaveLength(0);
+  expect(tree.root.findByType(ActivityFilterChips).props.accountIds).toEqual(['bank']);
+  expect(tree.root.findByType(ActivityFilterChips).props.filterCount).toBe(1);
+  expect(texts(tree).join(' ')).not.toContain('Payment method');
 });

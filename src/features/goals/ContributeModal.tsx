@@ -187,6 +187,7 @@ export function ContributeModal({
             {error && <Text style={styles.errorText}>{error}</Text>}
             {goal.reservesAccount && (
               <PrimaryButton
+                loading={saving}
                 variant="secondary"
                 title={saving ? 'Releasing…' : 'Release reservation'}
                 disabled={saving}

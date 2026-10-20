@@ -245,7 +245,7 @@ describe('buildExportWorkbook', () => {
     const txs = XLSX.utils.sheet_to_json<any[]>(wb.Sheets['Transactions'], { header: 1 });
     expect(txs.some((r) => r[2] === 'Chase')).toBe(true);
     const foreignRow = txs.find((r) => r[2] === 'Chase')!;
-    expect(foreignRow[8]).toBe('USD');
+    expect(foreignRow[7]).toBe('USD');
     const rowIndex = txs.indexOf(foreignRow) + 1;
     expect(wb.Sheets['Transactions'][`F${rowIndex}`].s.numFmt).toContain('$');
     const total = wb.Sheets['Transactions'][`F${txs.length}`];
@@ -286,4 +286,18 @@ describe('buildExportWorkbook', () => {
     const bytes = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
     expect(bytes).toBeTruthy();
   });
+});
+
+it('exports account-based transactions without a payment-method column', () => {
+  const workbook = buildExportWorkbook({
+    currency: 'INR',
+    accounts: [],
+    categories: [],
+    transactions: [],
+    loans: [],
+    people: [],
+  });
+  const rows = XLSX.utils.sheet_to_json<string[]>(workbook.Sheets.Transactions, { header: 1 });
+  expect(rows[0]).toContain('Account');
+  expect(rows[0]).not.toContain('Payment Mode');
 });

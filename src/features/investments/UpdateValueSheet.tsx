@@ -141,6 +141,7 @@ export function UpdateValueSheet({
             disabled={saving}
           >
             <PrimaryButton
+              loading={saving}
               title={saving ? 'Saving…' : 'Save value'}
               onPress={submit}
               disabled={saving}

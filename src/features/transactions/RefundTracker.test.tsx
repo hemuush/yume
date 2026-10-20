@@ -136,3 +136,72 @@ it('opens receipt recording for an existing expectation without creating another
   expect(receiveRefund).not.toHaveBeenCalled();
   act(() => tree.unmount());
 });
+
+it('reports a refresh failure as saved and clears the receipt amount instead of inviting a second receipt', async () => {
+  mockRefund.value = {
+    id: 'e1',
+    expectedMinor: 100000,
+    receivedMinor: 0,
+    remainingMinor: 100000,
+    dueDate: null,
+    closed: false,
+    receipts: [],
+  };
+  const changed = jest.fn(() => {
+    throw new Error('refresh failed');
+  });
+  let tree!: ReactTestRenderer;
+  await act(async () => {
+    tree = create(
+      <RefundTracker
+        transaction={transaction}
+        accounts={accounts}
+        onChanged={changed}
+        request={{ sequence: 1, mode: 'receive' }}
+      />
+    );
+  });
+  try {
+    act(() => tree.root.findByProps({ testID: 'Refund received' }).props.onChangeText('100'));
+    await act(async () => {
+      await press(tree, 'Record received refund').props.onPress();
+    });
+    expect(receiveRefund).toHaveBeenCalledTimes(1);
+    expect(tree.root.findByProps({ testID: 'Refund received' }).props.value).toBe('');
+    expect(JSON.stringify(tree.toJSON())).toContain('Saved. Couldn’t refresh');
+  } finally {
+    act(() => tree.unmount());
+  }
+});
+
+it('keeps a receipt draft and skips refresh when the write itself fails', async () => {
+  mockRefund.value = {
+    id: 'e1',
+    expectedMinor: 100000,
+    receivedMinor: 0,
+    remainingMinor: 100000,
+    dueDate: null,
+    closed: false,
+    receipts: [],
+  };
+  jest.mocked(receiveRefund).mockRejectedValueOnce(new Error('write failed'));
+  const { tree, changed } = await render();
+  try {
+    act(() =>
+      tree.root
+        .find(
+          (n) =>
+            n.props.accessibilityLabel === 'Record money received' && typeof n.props.onPress === 'function'
+        )
+        .props.onPress()
+    );
+    act(() => tree.root.findByProps({ testID: 'Refund received' }).props.onChangeText('100'));
+    await act(async () => {
+      await press(tree, 'Record received refund').props.onPress();
+    });
+    expect(tree.root.findByProps({ testID: 'Refund received' }).props.value).toBe('100');
+    expect(changed).not.toHaveBeenCalled();
+  } finally {
+    act(() => tree.unmount());
+  }
+});

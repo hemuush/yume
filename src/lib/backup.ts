@@ -1,3 +1,4 @@
+import { ENTRY_DRAFT_KEY } from '@/features/add/entryDraft';
 import { getDb, type AppDb } from '@/db/client';
 import { resetSettingsCache } from '@/db/settings';
 import { assertValidIsoDate } from './date';
@@ -65,6 +66,7 @@ export async function buildBackupSnapshotOn(db: AppDb): Promise<BackupSnapshot> 
   await db.exclusiveAsync(async (xdb) => {
     for (const table of TABLES) {
       tables[table] = await xdb.getAllAsync<BackupRow>(`SELECT * FROM ${table}`);
+      if (table === 'settings') tables[table] = tables[table].filter((row) => row.key !== ENTRY_DRAFT_KEY);
     }
   });
   return {
@@ -299,6 +301,7 @@ export async function restoreFromSnapshotOn(db: AppDb, snapshot: BackupSnapshot)
           const rows = snapshot.tables[table] ?? [];
           const validColumns = columnsByTable[table];
           for (const row of rows) {
+            if (table === 'settings' && row.key === ENTRY_DRAFT_KEY) continue;
             const columns: string[] = [];
             for (const key of Object.keys(row)) {
               if (validColumns.has(key)) columns.push(key);

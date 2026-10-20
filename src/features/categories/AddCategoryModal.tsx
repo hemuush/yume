@@ -134,6 +134,7 @@ export function AddCategoryModal({
         <View style={f.footerCol}>
           {error && <Text style={styles.errorText}>{error}</Text>}
           <PrimaryButton
+            loading={saving}
             title={saving ? 'Saving…' : category ? 'Save changes' : 'Create category'}
             onPress={submitOnce}
             disabled={saving}

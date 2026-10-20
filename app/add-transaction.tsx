@@ -1,5 +1,6 @@
-import { PaymentMethodPicker } from '@/components/PaymentMethodPicker';
-import { isPaymentMode } from '@/lib/paymentMode';
+import { emitTransactionsChanged } from '@/lib/dataEvents';
+import { useEntryDraftRecovery } from '@/features/add/useEntryDraftRecovery';
+import type { EntryDraft } from '@/features/add/entryDraft';
 import type { PaymentMode } from '@/types';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View, Pressable, Keyboard } from 'react-native';
@@ -120,6 +121,7 @@ export default function AddTransactionScreen() {
   const [isLinked, setIsLinked] = useState(false);
   // Whether this screen has filled its form once; a ref so the focus reload keeps one identity.
   const seeded = useRef(false);
+  const [formReady, setFormReady] = useState(false);
 
   const [type, setType] = useState<EntryType>(isTxType(params.type) ? params.type : 'expense');
   // What's been typed on the number pad — a number, or a sum like "120+45".
@@ -182,18 +184,89 @@ export default function AddTransactionScreen() {
   const listFade = useFadeIn();
   // The pending "done → back"; cleared on unmount so a swipe-back in that window can't pop a second screen.
   const backTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(
-    () => () => {
+  const mounted = useRef(true);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
       if (backTimer.current) clearTimeout(backTimer.current);
-    },
-    []
-  );
+    };
+  }, []);
 
   const amountValue = evaluateAmount(expr);
   // Typed amounts are whole rupees, but an edit left untouched keeps its exact amount (paise and all).
   const untouchedEdit = editing !== null && !editing.splitId && expr === exprFromMinor(editing.amountMinor);
   const amountMinor = untouchedEdit ? editing.amountMinor : amountValue === null ? 0 : toMinor(amountValue);
 
+  const recovery = useEntryDraftRecovery(
+    {
+      type,
+      expr,
+      accountId,
+      toAccountId,
+      categoryId,
+      note,
+      paymentMode,
+      date,
+      personId,
+      friendSign,
+      friendAccountId,
+      refund,
+      rows,
+      splitParts,
+    },
+    !editingId && formReady,
+    expr !== '' || note.trim() !== '' || rows.length > 0 || splitParts !== null
+  );
+  const resumeDraft = () => {
+    const d: EntryDraft | null = recovery.candidate;
+    if (!d) return;
+    const accountExists = (id: string | null) => !id || accounts.some((a) => a.id === id && !a.archived);
+    const categoryExists = (id: string | null) => !id || categories.some((c) => c.id === id && !c.archived);
+    const personExists = (id: string | null) => !id || people.some((p) => p.id === id);
+    const formReferencesExist =
+      d.type === 'friend'
+        ? accountExists(d.friendAccountId) && personExists(d.personId)
+        : accountExists(d.accountId) &&
+          (d.type === 'transfer'
+            ? accountExists(d.toAccountId)
+            : !!d.splitParts || categoryExists(d.categoryId));
+    const valid =
+      formReferencesExist &&
+      d.rows.every(
+        (r) =>
+          accountExists(r.accountId) &&
+          (r.kind === 'transaction'
+            ? r.type === 'transfer'
+              ? accountExists(r.toAccountId)
+              : categoryExists(r.categoryId)
+            : personExists(r.personId))
+      ) &&
+      (!d.splitParts || d.splitParts.every((p) => categoryExists(p.categoryId)));
+    if (!valid) {
+      showAlert(
+        'Draft references unavailable data',
+        'An account, category or person in this draft is no longer available. Restore that item first, or discard this draft and start a new entry.'
+      );
+      return;
+    }
+    if (!recovery.resume()) return;
+    setType(d.type);
+    setExpr(d.expr);
+    setAccountId(d.accountId);
+    setToAccountId(d.toAccountId);
+    setCategoryId(d.categoryId);
+    setNote(d.note);
+    setPaymentMode(d.paymentMode);
+    setDate(d.date);
+    setPersonId(d.personId);
+    setFriendSign(d.friendSign);
+    setFriendAccountId(d.friendAccountId);
+    setRefund(d.refund);
+    setRows(d.rows);
+    setSplitParts(d.splitParts?.map((p, i) => ({ ...p, key: `recovered-${i}` })) ?? null);
+    accountPickedByHand.current = true;
+  };
   const [initialExpr] = useState(expr);
   const editChanged =
     editing !== null &&
@@ -210,11 +283,8 @@ export default function AddTransactionScreen() {
       !saving &&
       (editingId
         ? editChanged
-        : paymentMode !== null ||
-          expr !== initialExpr ||
-          note.trim() !== '' ||
-          rows.length > 0 ||
-          splitParts !== null)
+        : expr !== initialExpr || note.trim() !== '' || rows.length > 0 || splitParts !== null),
+    !editingId ? { onDiscard: recovery.discardCurrent, onKeepDraft: recovery.keep } : undefined
   );
 
   const { frequentAmounts, usual } = useAddSuggestions({
@@ -345,6 +415,7 @@ export default function AddTransactionScreen() {
       }
     }
     seeded.current = true;
+    setFormReady(true);
   }, [
     editingId,
     initialType,
@@ -400,6 +471,7 @@ export default function AddTransactionScreen() {
   }, [expr, type, effectiveAccountId, toAccountId, categoryId, date]);
 
   const onTypeChange = (next: EntryType) => {
+    if (saveInFlight.current || saving || addingRow || saveDone) return;
     // A saved split is one expense across categories: switching it to income or a transfer would save only
     // the tapped part, as the whole payment. It stays an expense here.
     if (editing?.splitId && next !== 'expense') {
@@ -525,8 +597,21 @@ export default function AddTransactionScreen() {
   // A brief "done" checkmark (PrimaryButton `done`) before navigating back; the data is already saved, so
   // the delay is purely felt confirmation.
   const goBackAfterSave = () => {
+    emitTransactionsChanged();
+    if (!editingId)
+      void recovery
+        .clear()
+        .catch(() =>
+          showAlert(
+            'Entry saved',
+            'The entry was saved, but its recovery draft could not be removed. Discard that draft if it appears again.'
+          )
+        );
+    if (!mounted.current) return;
     setSaveDone(true);
-    backTimer.current = setTimeout(() => router.back(), 320);
+    backTimer.current = setTimeout(() => {
+      if (mounted.current) router.back();
+    }, 320);
   };
 
   const onSaveSplit = async () => {
@@ -546,6 +631,7 @@ export default function AddTransactionScreen() {
     }
     setSaving(true);
     try {
+      if (!editingId) await recovery.prepareSave();
       const splitId = await saveSplit({
         splitId: editing?.splitId ?? null,
         // Splitting an ordinary entry being edited: the parts take its place.
@@ -557,9 +643,14 @@ export default function AddTransactionScreen() {
         paymentMode,
       });
       // The lists you land back on glow the new parts, like any saved entry.
-      markJustAdded((await getSplitParts(splitId)).map((p) => p.id));
+      try {
+        markJustAdded((await getSplitParts(splitId)).map((p) => p.id));
+      } catch {
+        /* The split is saved; highlight lookup failure must never invite a second save. */
+      }
       goBackAfterSave();
     } catch (e) {
+      if (!editingId) recovery.resumeAfterFailedSave();
       setError(errorMessage(e));
       setSaving(false);
     }
@@ -635,7 +726,10 @@ export default function AddTransactionScreen() {
     setSaving(true);
     let saved = 0;
     const savedIds: string[] = [];
+    let prepared = false;
     try {
+      await recovery.prepareSave();
+      prepared = true;
       for (const r of pending) {
         const id = await persistStaged(r, categories);
         if (id) savedIds.push(id);
@@ -646,6 +740,13 @@ export default function AddTransactionScreen() {
       rememberDefaults(pending);
       goBackAfterSave();
     } catch (e) {
+      recovery.resumeAfterFailedSave();
+      if (!prepared) {
+        setError(`Couldn’t prepare this save: ${errorMessage(e)}`);
+        setSaving(false);
+        return;
+      }
+      if (saved > 0) emitTransactionsChanged();
       // Keep only what didn't make it in, so a retry doesn't double up.
       setRows(pending.slice(saved));
       clearForm();
@@ -662,8 +763,11 @@ export default function AddTransactionScreen() {
   const runSave = async (save: () => Promise<void>, dateChecked = false) => {
     if (saveInFlight.current) return;
     // A date well ahead is usually a typo (the wrong year), and it moves today's balances straight away.
-    if (!dateChecked && date > addDaysToIsoDate(today, FUTURE_DATE_CHECK_DAYS)) {
-      showAlert(`Save it for ${dateChipLabel(date)}?`, "That's more than a week from today.", [
+    const pendingDates = !editing && !splitParts ? rows.map((row) => row.date) : [];
+    if (editing || splitParts || expr !== '') pendingDates.push(date);
+    const futureDate = pendingDates.find((d) => d > addDaysToIsoDate(today, FUTURE_DATE_CHECK_DAYS));
+    if (!dateChecked && futureDate) {
+      showAlert(`Save it for ${dateChipLabel(futureDate)}?`, "That's more than a week from today.", [
         { text: 'Change date', style: 'cancel' },
         { text: 'Save', onPress: () => void runSave(save, true) },
       ]);
@@ -678,7 +782,7 @@ export default function AddTransactionScreen() {
   };
 
   const onDelete = () => {
-    if (!editing) return;
+    if (!editing || saveInFlight.current || saving || addingRow || saveDone) return;
     confirmDeleteEntry({ editing, splitParts: splitParts?.length ?? 2, showUndo, onError: setError });
   };
 
@@ -739,6 +843,7 @@ export default function AddTransactionScreen() {
       title={saveTitle}
       icon="check"
       done={saveDone}
+      loading={saving && !saveDone}
       onPress={() => void runSave(splitParts ? onSaveSplit : editing ? onSaveSingleEdit : onSaveAll)}
       disabled={saving || addingRow || saveDone || isLinked || cannotSave}
       style={styles.saveBtn}
@@ -773,6 +878,8 @@ export default function AddTransactionScreen() {
             !isLinked ? (
               <Pressable
                 onPress={onDelete}
+                disabled={saving || addingRow || saveDone}
+                accessibilityState={{ disabled: saving || addingRow || saveDone }}
                 hitSlop={8}
                 accessibilityRole="button"
                 accessibilityLabel="Delete entry"
@@ -783,7 +890,11 @@ export default function AddTransactionScreen() {
             ) : undefined
           ) : (
             <Pressable
-              onPress={() => setRepeatSheetVisible(true)}
+              onPress={() => {
+                if (!saveInFlight.current && !saving && !addingRow && !saveDone) setRepeatSheetVisible(true);
+              }}
+              disabled={saving || addingRow || saveDone}
+              accessibilityState={{ disabled: saving || addingRow || saveDone }}
               hitSlop={8}
               accessibilityRole="button"
               accessibilityLabel="Repeat a recent entry"
@@ -850,6 +961,45 @@ export default function AddTransactionScreen() {
           onPickAmount={(minor) => setExpr(exprFromMinor(minor))}
         />
 
+        {recovery.candidate && (
+          <View
+            style={{
+              marginHorizontal: 16,
+              marginBottom: 12,
+              padding: 14,
+              gap: 8,
+              backgroundColor: theme.colors.surface,
+              borderRadius: theme.radius.lg,
+            }}
+          >
+            <Text style={{ fontFamily: theme.font.bodyBold }}>Continue your unfinished entry?</Text>
+            <Text style={{ color: theme.colors.textSecondary }}>
+              Nothing in this draft has been recorded. Check its date and accounts before saving.
+            </Text>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+              <PrimaryButton
+                compact
+                title="Resume draft"
+                disabled={recovery.discarding}
+                onPress={resumeDraft}
+              />
+              <PrimaryButton
+                compact
+                variant="secondary"
+                title="Discard draft"
+                loading={recovery.discarding}
+                onPress={() =>
+                  void recovery
+                    .discardCandidate()
+                    .catch(() => setError('Couldn’t remove the draft. Try again.'))
+                }
+              />
+            </View>
+          </View>
+        )}
+        {recovery.error && (
+          <Text style={{ marginHorizontal: 16, color: theme.colors.textSecondary }}>{recovery.error}</Text>
+        )}
         {repeatWarning && (
           <View style={styles.repeatNote} accessibilityLiveRegion="polite">
             <Feather name="alert-triangle" size={14} color={theme.colors.idGoldDeep} />
@@ -955,14 +1105,6 @@ export default function AddTransactionScreen() {
           </>
         )}
 
-        {type !== 'friend' && !isLinked && (
-          <View style={{ marginHorizontal: 16 }}>
-            <PaymentMethodPicker
-              value={paymentMode ?? 'unspecified'}
-              onChange={(value) => setPaymentMode(isPaymentMode(value) ? value : null)}
-            />
-          </View>
-        )}
         {rows.length > 0 && (
           <StagedList
             rows={rows}

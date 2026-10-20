@@ -52,7 +52,12 @@ export function AddPersonModal({
       footer={
         <View style={f.footerCol}>
           {error && <Text style={styles.errorText}>{error}</Text>}
-          <PrimaryButton title={saving ? 'Saving…' : 'Add person'} onPress={submitOnce} disabled={saving} />
+          <PrimaryButton
+            loading={saving}
+            title={saving ? 'Saving…' : 'Add person'}
+            onPress={submitOnce}
+            disabled={saving}
+          />
         </View>
       }
     >

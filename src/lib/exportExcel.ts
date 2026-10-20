@@ -309,17 +309,7 @@ export function buildExportWorkbook(data: ExportData): XLSX.WorkBook {
   XLSX.utils.book_append_sheet(wb, summary, 'Summary');
 
   // ----------------------------------------------------------- Transactions
-  const txHeaders = [
-    'Date',
-    'Type',
-    'Account',
-    'To Account',
-    'Category',
-    'Amount',
-    'Note',
-    'Payment Mode',
-    'Currency',
-  ];
+  const txHeaders = ['Date', 'Type', 'Account', 'To Account', 'Category', 'Amount', 'Note', 'Currency'];
   const transactionCurrencies = new Set(sorted.map((t) => currencyOf.get(t.accountId) ?? currency));
   const mixedCurrencies = transactionCurrencies.size > 1;
   const transactionMoneyStyle = moneyFmt(currencySymbol([...transactionCurrencies][0] ?? currency));
@@ -331,7 +321,6 @@ export function buildExportWorkbook(data: ExportData): XLSX.WorkBook {
     categoryLabel(t.categoryId),
     toMajor(t.amountMinor),
     t.note ?? '',
-    t.paymentMode ? t.paymentMode.replace('_', ' ') : '',
     currencyOf.get(t.accountId) ?? currency,
   ]);
   const txSheet = XLSX.utils.aoa_to_sheet([txHeaders, ...txRows]);
@@ -407,7 +396,6 @@ export function buildExportWorkbook(data: ExportData): XLSX.WorkBook {
     { wch: 26 },
     { wch: 14 },
     { wch: 32 },
-    { wch: 14 },
   ];
   txSheet['!cols'].push({ wch: 10 });
   XLSX.utils.book_append_sheet(wb, txSheet, 'Transactions');

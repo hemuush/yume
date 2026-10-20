@@ -7,7 +7,10 @@ import { showAlert } from '@/components/AppDialog';
  * Leaving a new entry that has something typed asks first. `leave(go)` lifts the guard for one render and then
  * runs `go` — Discard and "Log again" use it. A save lifts the guard by making `shouldAsk` false.
  */
-export function useDiscardGuard(shouldAsk: boolean) {
+export function useDiscardGuard(
+  shouldAsk: boolean,
+  draft?: { onDiscard: () => Promise<void>; onKeepDraft: () => Promise<void> }
+) {
   const navigation = useNavigation();
   const [leaving, setLeaving] = useState(false);
   const leaveWith = useRef<(() => void) | null>(null);
@@ -16,9 +19,34 @@ export function useDiscardGuard(shouldAsk: boolean) {
     setLeaving(true);
   };
   usePreventRemove(shouldAsk && !leaving, ({ data }) => {
-    showAlert('Discard this entry?', "What you've entered hasn't been saved.", [
+    showAlert(draft ? 'Leave this entry?' : 'Discard this entry?', "What you've entered hasn't been saved.", [
       { text: 'Keep editing', style: 'cancel' },
-      { text: 'Discard', style: 'destructive', onPress: () => leave(() => navigation.dispatch(data.action)) },
+      ...(draft
+        ? [
+            {
+              text: 'Keep draft',
+              onPress: () => {
+                void draft.onKeepDraft().then(
+                  () => leave(() => navigation.dispatch(data.action)),
+                  () =>
+                    showAlert('Couldn’t keep draft', 'Your entry is still open. Try again before leaving.')
+                );
+              },
+            },
+          ]
+        : []),
+      {
+        text: 'Discard',
+        style: 'destructive',
+        onPress: () => {
+          if (draft)
+            void draft.onDiscard().then(
+              () => leave(() => navigation.dispatch(data.action)),
+              () => showAlert('Couldn’t discard draft', 'Your entry is still open. Try again.')
+            );
+          else leave(() => navigation.dispatch(data.action));
+        },
+      },
     ]);
   });
   useEffect(() => {

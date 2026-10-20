@@ -268,6 +268,7 @@ export function PersonDetailModal({
             {liveBalanceMinor < 0 ? (
               <>
                 <PrimaryButton
+                  loading={saving}
                   title={saving ? 'Saving…' : 'I owe more'}
                   variant="secondary"
                   onPress={() => record(-1)}
@@ -275,6 +276,7 @@ export function PersonDetailModal({
                   style={[f.footerBtn, stacked && styles.footerStackButton]}
                 />
                 <PrimaryButton
+                  loading={saving}
                   title={saving ? 'Saving…' : 'I paid them back'}
                   onPress={() => record(1)}
                   disabled={saving || !detailsLoaded || !!loadError}
@@ -284,6 +286,7 @@ export function PersonDetailModal({
             ) : (
               <>
                 <PrimaryButton
+                  loading={saving}
                   title={saving ? 'Saving…' : 'They owe more'}
                   variant="secondary"
                   onPress={() => record(1)}
@@ -291,6 +294,7 @@ export function PersonDetailModal({
                   style={[f.footerBtn, stacked && styles.footerStackButton]}
                 />
                 <PrimaryButton
+                  loading={saving}
                   title={saving ? 'Saving…' : 'They repaid'}
                   onPress={() => record(-1)}
                   disabled={saving || !detailsLoaded || !!loadError}

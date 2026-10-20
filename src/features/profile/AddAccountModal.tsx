@@ -157,7 +157,12 @@ export function AddAccountModal({
       footer={
         <View style={f.footerCol}>
           {error && <Text style={styles.errorText}>{error}</Text>}
-          <PrimaryButton title={saving ? 'Saving…' : 'Create account'} onPress={submit} disabled={saving} />
+          <PrimaryButton
+            loading={saving}
+            title={saving ? 'Saving…' : 'Create account'}
+            onPress={submit}
+            disabled={saving}
+          />
         </View>
       }
     >

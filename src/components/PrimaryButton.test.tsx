@@ -17,6 +17,13 @@ const pressable = (tree: ReactTestRenderer) =>
   tree.root.findAll((n) => n.props.accessibilityRole === 'button')[0];
 
 describe('PrimaryButton', () => {
+  it('announces loading and disables repeated presses while preserving its title', () => {
+    const tree = render({ loading: true, title: 'Saving…' });
+    expect(pressable(tree).props.disabled).toBe(true);
+    expect(pressable(tree).props.accessibilityState).toEqual({ busy: true, disabled: true });
+    expect(JSON.stringify(tree.toJSON())).toContain('Saving…');
+  });
+
   it('is a button that reports taps', () => {
     const onPress = jest.fn();
     const tree = render({ onPress });

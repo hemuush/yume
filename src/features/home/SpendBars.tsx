@@ -74,7 +74,13 @@ function Bar({
     selection.value = reduce ? Number(selected) : withTiming(Number(selected), timing(160));
     return () => cancelAnimation(selection);
   }, [selected, reduce, selection]);
+  const height = useSharedValue(target);
+  useEffect(() => {
+    height.value = reduce ? target : withTiming(target, timing(180));
+    return () => cancelAnimation(height);
+  }, [target, reduce, height]);
   const style = useAnimatedStyle(() => ({
+    height: height.value,
     transform: [{ scaleY: growth.value }],
   }));
   const selectedStyle = useAnimatedStyle(() => ({ opacity: selection.value }));

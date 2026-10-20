@@ -80,7 +80,12 @@ export function AssetModal({
       footer={
         <View style={f.footerCol}>
           {error && <Text style={styles.errorText}>{error}</Text>}
-          <PrimaryButton title={saving ? 'Saving…' : 'Save'} onPress={submit} disabled={saving} />
+          <PrimaryButton
+            loading={saving}
+            title={saving ? 'Saving…' : 'Save'}
+            onPress={submit}
+            disabled={saving}
+          />
         </View>
       }
     >

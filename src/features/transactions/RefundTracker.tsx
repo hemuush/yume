@@ -85,10 +85,27 @@ export function RefundTracker({
     setError(null);
     try {
       await action();
-      emitTransactionsChanged();
-      onChanged();
     } catch (e) {
       setError(errorMessage(e));
+      setBusy(false);
+      return;
+    }
+    // Money/expectation changes are committed. Never present a later refresh error as a failed write.
+    emitTransactionsChanged();
+    setAmount('');
+    setEditing(false);
+    try {
+      const [updated, matches] = await Promise.all([
+        getExpectedRefund(transaction.id),
+        refundCandidates(transaction.id),
+      ]);
+      setRefund(updated);
+      setCandidates(matches);
+      await onChanged();
+    } catch (e) {
+      setError(
+        `Saved. Couldn’t refresh the refund details: ${errorMessage(e)}. Reopen this entry; do not record it again.`
+      );
     } finally {
       setBusy(false);
     }
@@ -172,6 +189,7 @@ export function RefundTracker({
               </Text>
               <PrimaryButton
                 title="Save expectation"
+                loading={busy}
                 disabled={busy}
                 onPress={() =>
                   void run(() => expectRefund(transaction.id, toMinor(Number(expected)), hasDue ? due : null))
@@ -221,6 +239,7 @@ export function RefundTracker({
                   </View>
                   <PrimaryButton
                     title="Record received refund"
+                    loading={busy}
                     disabled={busy}
                     onPress={() =>
                       void run(() =>

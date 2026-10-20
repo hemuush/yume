@@ -81,3 +81,11 @@ See [Home daily remaining refresh](HOME_DAILY_REMAINING_FIX_2026_10_20.md) for t
 See [Home and planning screenshot refinements](SCREENSHOT_REFINEMENTS_2026_10_20.md) for current-day chart selection, foreground refresh and compact recurring/plan layouts.
 
 See [Activity interaction refinement](ACTIVITY_INTERACTION_REFINEMENT_2026_10_20.md) for filter hierarchy, transaction action corrections, popup handoff and fresh validation limits.
+
+See [daily outgoing/refund correction](DAILY_OUTGOING_REFUND_FIX_2026_10_20.md) for the backup-reproduced daily allowance issue and its regression validation.
+
+See [interaction and recovery refinement](INTERACTION_RECOVERY_2026_10_20.md) for animation, loading states, draft recovery, date rollover and validation limits.
+
+Payment-method entry/filter/detail/report UI was removed at the owner's request; see the current architecture guide. Account-based entry and filtering remain. Older implementation reports describe the previous feature state.
+
+See [current flow audit](CURRENT_FLOW_AUDIT_2026_10_20.md) for the latest cross-screen review, reproduced flow corrections and fresh validation limits.

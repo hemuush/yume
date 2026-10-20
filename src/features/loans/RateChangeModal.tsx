@@ -92,7 +92,12 @@ export function RateChangeModal({
       footer={
         <View style={f.footerCol}>
           {error && <Text style={styles.errorText}>{error}</Text>}
-          <PrimaryButton title={saving ? 'Saving…' : 'Update rate'} onPress={submit} disabled={saving} />
+          <PrimaryButton
+            loading={saving}
+            title={saving ? 'Saving…' : 'Update rate'}
+            onPress={submit}
+            disabled={saving}
+          />
         </View>
       }
     >
