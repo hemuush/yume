@@ -146,14 +146,7 @@ function GoalCard({ goal, masked, onPress }: { goal: SavingsGoal; masked: boolea
             }. Open savings goals`
       }
     >
-      <Glass
-        radius={20}
-        style={[
-          styles.tileFill,
-          cardSurface.neutral,
-          { backgroundColor: softTint(hue, 0.12), borderColor: softTint(hue, 0.28) },
-        ]}
-      >
+      <Glass radius={20} style={[styles.tileFill, cardSurface.neutral]}>
         <View style={[styles.tileIcon, { backgroundColor: softTint(hue, 0.75) }]}>
           <MaterialCommunityIcons
             name={goal.linkedAccountId ? 'bank-outline' : 'flag-variant-outline'}

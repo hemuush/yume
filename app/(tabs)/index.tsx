@@ -221,6 +221,15 @@ export default function DashboardScreen() {
         listTransactions({ fromDate: range.start, toDate: range.end, limit: RECENT_ROWS }),
         getRangeComparison(range, previousPeriodRange(c), c.granularity),
         getCarryInMinor(range.start, hideAmounts),
+        c.granularity === 'month'
+          ? getDailyExpenseTotals(
+              {
+                start: c.offset === 0 ? spendBarsStart(toLocalIsoDate(new Date())) : range.start,
+                end: c.offset === 0 ? toLocalIsoDate(new Date()) : range.end,
+              },
+              hideAmounts
+            )
+          : Promise.resolve([]),
       ]);
     },
     [hideAmounts]
@@ -233,8 +242,9 @@ export default function DashboardScreen() {
       fetchedCursor.current = c;
       const seq = ++periodSeq.current;
       try {
-        const [tx, cmp, carry] = await fetchPeriod(c);
+        const [tx, cmp, carry, daily] = await fetchPeriod(c);
         if (seq !== periodSeq.current) return;
+        setDailySpend(daily);
         setRecent(tx);
         setComparison(cmp);
         setCarryInMinor(carry);
@@ -265,7 +275,6 @@ export default function DashboardScreen() {
           progress,
           cycles,
           name,
-          daily,
           todaySpend,
           dailyGoal,
           paceIn,
@@ -283,11 +292,6 @@ export default function DashboardScreen() {
           getLoanProgress(),
           listCardCycles().catch(() => []),
           getUserName(),
-          // Daily spending always follows today, independently of the browsed period.
-          getDailyExpenseTotals(
-            { start: spendBarsStart(toLocalIsoDate(new Date())), end: toLocalIsoDate(new Date()) },
-            hideAmounts
-          ),
           getTodaySpend(undefined, hideAmounts),
           getDailySpendingGoal(),
           getMonthPaceInputs(undefined, hideAmounts),
@@ -300,7 +304,8 @@ export default function DashboardScreen() {
             .catch(() => ({ rows: [] as ExpectedRefund[], failed: true })),
         ]);
         if (pSeq === periodSeq.current) {
-          const [tx, cmp, carry] = period;
+          const [tx, cmp, carry, periodDaily] = period;
+          setDailySpend(periodDaily);
           setRecent(tx);
           setComparison(cmp);
           setCarryInMinor(carry);
@@ -326,7 +331,6 @@ export default function DashboardScreen() {
         setUserNameState(name);
         setRefunds(refundResult.rows);
         setRefundError(refundResult.failed);
-        setDailySpend(daily);
         setTodaySpendMinor(todaySpend);
         setDailyGoalMinor(dailyGoal);
         setPaceInputs(paceIn);
@@ -553,8 +557,12 @@ export default function DashboardScreen() {
                 canStepForward={canStepForward(cursor)}
                 onStep={(dir) => handleCursorChange(stepPeriod(cursor, dir))}
                 spendingTrend={
-                  loadedCursor.granularity === 'month' && loadedCursor.offset === 0
-                    ? { daily: dailySpend, today: todayIso }
+                  loadedCursor.granularity === 'month'
+                    ? {
+                        daily: dailySpend,
+                        today: loadedCursor.offset === 0 ? todayIso : periodRange(loadedCursor).end,
+                        mode: loadedCursor.offset === 0 ? 'week' : 'month',
+                      }
                     : null
                 }
                 onSeeInsights={openSpendingReports}

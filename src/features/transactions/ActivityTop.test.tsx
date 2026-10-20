@@ -91,11 +91,13 @@ describe('Spent card', () => {
 });
 
 describe('Activity filter bar', () => {
-  function bar(categoryIds: string[]) {
+  function bar(categoryIds: string[], onOpenFilters?: () => void, filterCount = 0) {
     let r!: ReactTestRenderer;
     act(() => {
       r = create(
         <ActivityFilterChips
+          onOpenFilters={onOpenFilters}
+          filterCount={filterCount}
           filterType="all"
           onFilterType={jest.fn()}
           categoryIds={categoryIds}
@@ -114,6 +116,18 @@ describe('Activity filter bar', () => {
   it('is one bar of types, with no second line when nothing is picked', () => {
     const all = texts(bar([]));
     expect(all).toEqual(['All', 'Spent', 'Income', 'Transfers']);
+  });
+
+  it('opens Filters beside the type group and retains its active count', () => {
+    const open = jest.fn();
+    const tree = bar([], open, 2);
+    const { HeaderIconButton } = require('@/components/AppHeader');
+    const action = tree.root.findByType(HeaderIconButton);
+    expect(action.props.label).toBe('Filters, 2 on');
+    expect(action.props.count).toBe(2);
+    act(() => action.props.onPress());
+    expect(open).toHaveBeenCalledTimes(1);
+    act(() => tree.unmount());
   });
 
   it('adds a removable chip for a picked category', () => {

@@ -166,21 +166,21 @@ export function HomeAccounts({
   if (compact) {
     const preview = [...everyday, ...savings].slice(0, 6);
     const rows: Account[][] = [];
-    const columns = stacked ? 1 : 2;
+    const columns = fontScale > 1.2 ? 1 : width < 360 ? 2 : 3;
     for (let i = 0; i < preview.length; i += columns) rows.push(preview.slice(i, i + columns));
     return (
       <Section compact title="Accounts" onSeeAll={onOpenAccounts} actionLabel="View all">
         <View style={styles.wrap}>
           <Glass radius={24} style={[styles.groupedAccounts, cardSurface.neutral]}>
             {rows.map((accounts, index) => (
-              <View key={index} style={[styles.accountGrid, stacked && { flexDirection: 'column' }]}>
+              <View key={index} style={[styles.accountGrid, columns === 1 && { flexDirection: 'column' }]}>
                 {accounts.map((a) => (
                   <Pressable
                     key={a.id}
                     onPress={() => onOpenAccount(a)}
                     accessibilityRole="button"
                     accessibilityLabel={`${a.name}, ${accountTypeLabel(a)}. Open summary`}
-                    style={withPressed(styles.accountCard)}
+                    style={withPressed([styles.accountCard, columns === 1 && styles.accountCardWide])}
                   >
                     <View
                       style={[styles.chipIcon, { backgroundColor: shade(accountHue(a.type, accent), 88) }]}
@@ -191,8 +191,8 @@ export function HomeAccounts({
                         color={shade(accountHue(a.type, accent), 30, 10)}
                       />
                     </View>
-                    <View style={styles.chipText}>
-                      <Text style={styles.chipName}>{a.name}</Text>
+                    <View style={[styles.accountCopy, columns === 1 && styles.accountCopyWide]}>
+                      <Text style={styles.accountName}>{a.name}</Text>
                       <Amount
                         minor={a.currentBalanceMinor}
                         currency={a.currency}
@@ -202,7 +202,9 @@ export function HomeAccounts({
                     </View>
                   </Pressable>
                 ))}
-                {accounts.length < columns && <View style={{ flex: 1 }} />}
+                {Array.from({ length: columns - accounts.length }, (_, i) => (
+                  <View key={`empty-${i}`} style={{ flex: 1 }} />
+                ))}
               </View>
             ))}
           </Glass>
@@ -253,19 +255,22 @@ export function HomeAccounts({
 const styles = StyleSheet.create({
   groupedAccounts: { padding: 12, gap: 8 },
   accountGrid: { flexDirection: 'row', gap: 10 },
-  accountCard: {
-    flex: 1,
-    minWidth: 0,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 10,
-    gap: 8,
-    minHeight: 64,
+  accountCard: { flex: 1, minWidth: 0, alignItems: 'center', paddingVertical: 8, gap: 7, minHeight: 100 },
+  accountCardWide: { flexDirection: 'row', minHeight: 64, gap: 10 },
+  accountCopy: { alignSelf: 'stretch', alignItems: 'center', gap: 3 },
+  accountCopyWide: { flex: 1, alignItems: 'flex-start', alignSelf: 'auto' },
+  accountName: {
+    fontFamily: theme.font.bodyMedium,
+    fontSize: 12,
+    lineHeight: 16,
+    textAlign: 'center',
+    color: theme.colors.textPrimary,
   },
   listAmount: {
     fontFamily: theme.font.bodyMedium,
-    fontSize: 17,
-    lineHeight: 23,
+    fontSize: 14,
+    lineHeight: 20,
+    textAlign: 'center',
     color: theme.colors.textPrimary,
   },
   wrap: { marginHorizontal: 16 },

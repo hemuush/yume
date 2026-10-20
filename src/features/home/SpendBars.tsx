@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { View, Pressable, StyleSheet, ScrollView } from 'react-native';
+import { View, Pressable, StyleSheet, ScrollView, useWindowDimensions } from 'react-native';
 import Animated, {
   cancelAnimation,
   useSharedValue,
@@ -17,6 +17,8 @@ import { useAccent } from '@/theme/AccentContext';
 import { hexToRgba } from '@/lib/color';
 import { homeInk } from './homeInk';
 import { defaultBar, monthBars, weekBars, SpendBar } from './spendBarData';
+import Feather from '@expo/vector-icons/Feather';
+import { withPressed } from '@/lib/pressed';
 import { parseLocalIsoDate } from '@/lib/date';
 
 /** The tallest bar's height; the amount over the selected bar sits above it. */
@@ -38,6 +40,7 @@ function Bar({
   selected,
   onSelect,
   compact,
+  embedded,
 }: {
   bar: SpendBar;
   maxMinor: number;
@@ -50,19 +53,30 @@ function Bar({
   selected: boolean;
   onSelect: () => void;
   compact?: boolean;
+  embedded?: boolean;
 }) {
   const reduce = useReduceMotion();
   // Square-root scaled: one big payment would otherwise flatten every ordinary day to a sliver.
   const target =
     bar.totalMinor > 0 && maxMinor > 0
-      ? Math.round(MIN_H + Math.sqrt(bar.totalMinor / maxMinor) * ((compact ? 64 : MAX_H) - MIN_H))
+      ? Math.round(
+          MIN_H + Math.sqrt(bar.totalMinor / maxMinor) * ((embedded ? 36 : compact ? 64 : MAX_H) - MIN_H)
+        )
       : EMPTY_H;
   const growth = useSharedValue(reduce || !animateEntry ? 1 : 0);
   useEffect(() => {
     growth.value = reduce || !animateEntry ? 1 : withDelay(delay, withTiming(1, timing(240)));
     return () => cancelAnimation(growth);
   }, [reduce, animateEntry, delay, growth]);
-  const style = useAnimatedStyle(() => ({ transform: [{ scaleY: growth.value }] }));
+  const selection = useSharedValue(selected ? 1 : 0);
+  useEffect(() => {
+    selection.value = reduce ? Number(selected) : withTiming(Number(selected), timing(160));
+    return () => cancelAnimation(selection);
+  }, [selected, reduce, selection]);
+  const style = useAnimatedStyle(() => ({
+    transform: [{ scaleY: growth.value }],
+  }));
+  const selectedStyle = useAnimatedStyle(() => ({ opacity: selection.value }));
   return (
     <Pressable
       style={[styles.col, compact && styles.colFit]}
@@ -79,12 +93,21 @@ function Bar({
       <Animated.View
         style={[
           styles.bar,
-          { height: target, transformOrigin: 'bottom', backgroundColor: selected ? ink : tint },
+          { height: target, transformOrigin: 'bottom', backgroundColor: tint },
           bar.totalMinor === 0 && !selected && styles.barEmpty,
           style,
         ]}
-      />
-      <Text style={[styles.label, selected && styles.labelOn]}>{bar.label}</Text>
+      >
+        <Animated.View
+          pointerEvents="none"
+          style={[StyleSheet.absoluteFill, { backgroundColor: ink, borderRadius: 10 }, selectedStyle]}
+        />
+      </Animated.View>
+      <View style={[styles.dayLabel, embedded && selected && { backgroundColor: ink }]}>
+        <Text style={[styles.label, selected && styles.labelOn, embedded && selected && styles.selectedDay]}>
+          {bar.label}
+        </Text>
+      </View>
     </Pressable>
   );
 }
@@ -98,18 +121,23 @@ export function SpendBars({
   today,
   compact = false,
   embedded = false,
+  onSeeInsights,
+  periodMode = 'week',
 }: {
   daily: { date: string; totalMinor: number }[];
   today: string;
   compact?: boolean;
   embedded?: boolean;
+  onSeeInsights?: () => void;
+  periodMode?: Range;
 }) {
   const chart = useRef<ScrollView>(null);
+  const { fontScale } = useWindowDimensions();
   const { accent } = useAccent();
   const ink = homeInk(accent);
-  const tint = hexToRgba(ink, 0.22);
+  const tint = hexToRgba(accent, 0.55);
   const [chosenRange, setRange] = useState<Range>('week');
-  const range = embedded ? 'week' : chosenRange;
+  const range = embedded ? periodMode : chosenRange;
   const [switched, setSwitched] = useState(false);
   const [picked, setPicked] = useState<{ range: Range; today: string; key: string } | null>(null);
   const bars = range === 'week' ? weekBars(daily, today) : monthBars(daily, today);
@@ -125,21 +153,32 @@ export function SpendBars({
         <View
           style={{ flex: 1, minWidth: 0 }}
           accessible
-          accessibilityLabel={`Spending ${range === 'week' ? 'in the last 7 days' : 'this month'}, ${formatMoney(total)}`}
+          accessibilityLabel={`Spending ${range === 'week' ? 'in the last 7 days' : 'in the selected month'}, ${formatMoney(total)}`}
         >
           <Text style={styles.title}>
-            {range === 'week' ? 'Last 7 days' : 'This month'}
-            {!compact && (
+            {range === 'week' ? 'Last 7 days' : embedded ? 'Weekly spending' : 'This month'}
+            {(!compact || embedded) && (
               <>
                 {' '}
                 <Text style={styles.total}>{formatMoney(total)}</Text>
               </>
             )}
           </Text>
-          {compact && (
+          {compact && !embedded && (
             <Text style={[styles.snapshotTotal, embedded && styles.embeddedTotal]}>{formatMoney(total)}</Text>
           )}
         </View>
+        {embedded && onSeeInsights && (
+          <Pressable
+            onPress={onSeeInsights}
+            accessibilityRole="button"
+            accessibilityLabel="See spending insights"
+            style={withPressed(styles.insights)}
+          >
+            <Text style={styles.insightsText}>Insights</Text>
+            <Feather name="arrow-up-right" size={14} color={theme.colors.link} />
+          </Pressable>
+        )}
         {!embedded && (
           <View style={styles.switch} accessibilityRole="tablist">
             {(['week', 'month'] as const).map((r) => (
@@ -169,14 +208,20 @@ export function SpendBars({
         ref={chart}
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={[styles.bars, compact && styles.barsCompact, embedded && styles.barsEmbedded]}
+        contentContainerStyle={[
+          styles.bars,
+          compact && styles.barsCompact,
+          embedded && styles.barsEmbedded,
+          embedded && { height: 68 + 24 * Math.max(0, fontScale - 1) },
+        ]}
         onContentSizeChange={() => chart.current?.scrollToEnd({ animated: false })}
       >
         {bars.map((b, i) => (
           <Bar
             key={`${range}:${b.key}`}
             bar={b}
-            compact={compact && range === 'week'}
+            embedded={embedded}
+            compact={compact}
             selected={b.key === selectedKey}
             onSelect={() => {
               haptics.tap();
@@ -208,12 +253,16 @@ export function SpendBars({
                   day: 'numeric',
                   month: 'short',
                 })
-              : `Week ${bars.findIndex((b) => b.key === selectedKey) + 1}`}{' '}
+              : `Week ${bars.findIndex((b) => b.key === selectedKey) + 1} · ${bars.findIndex((b) => b.key === selectedKey) * 7 + 1}–${Math.min((bars.findIndex((b) => b.key === selectedKey) + 1) * 7, Number(today.slice(8, 10)))} ${parseLocalIsoDate(today).toLocaleDateString(undefined, { month: 'short' })}`}{' '}
             · {formatMoney(bars.find((b) => b.key === selectedKey)?.totalMinor ?? 0)}
           </Text>
         </View>
       )}
-      <Text style={styles.scaleHint}>Bar heights are compressed. Tap a bar for its exact amount.</Text>
+      <Text style={styles.scaleHint}>
+        {embedded
+          ? 'Compressed scale · tap a day to explore'
+          : 'Bar heights are compressed. Tap a bar for its exact amount.'}
+      </Text>
     </View>
   );
 }
@@ -258,9 +307,19 @@ const styles = StyleSheet.create({
     marginTop: 3,
   },
   barsCompact: { height: 112 },
-  barsEmbedded: { height: 88 },
+  barsEmbedded: { height: 68 },
+  insights: { minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 3, paddingLeft: 8 },
+  insightsText: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.link },
+  dayLabel: { minHeight: 24, justifyContent: 'center', paddingHorizontal: 4, borderRadius: 8 },
+  selectedDay: { color: theme.colors.surface, fontFamily: theme.font.bodyBold },
   embeddedTotal: { fontFamily: theme.font.bodyMedium, fontSize: 15, lineHeight: 20, marginTop: 0 },
-  footerEmbedded: { paddingTop: 2, borderTopWidth: 0 },
+  footerEmbedded: {
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+    borderTopWidth: 0,
+    borderRadius: 10,
+    backgroundColor: theme.colors.surfaceAlt,
+  },
   chartFooter: {
     paddingTop: 10,
     borderTopWidth: StyleSheet.hairlineWidth,
